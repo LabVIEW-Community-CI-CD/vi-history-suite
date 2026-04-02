@@ -125,6 +125,9 @@
 - `TEST-UNIT-030`: validate the core harness smoke runner writes retained JSON,
   Markdown, and HTML artifacts from shared history-model facts and fails closed
   when the target file is not tracked
+- `TEST-UNIT-031`: validate `VI History` successful command flow for active
+  editor fallback, panel creation, copied review packet, copied commit hash,
+  opened Git revision, and diff-against-previous execution
 - `TEST-DOC-003`: review architecture and product docs for the published
   WebviewPanel-only surface, desktop/remote-host boundary, and no-publish
   TimelineProvider policy

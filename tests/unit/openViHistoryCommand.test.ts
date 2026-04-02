@@ -234,6 +234,176 @@ describe('createOpenViHistoryCommand', () => {
     expect(executeCommandMock).not.toHaveBeenCalled();
   });
 
+  it('loads history from the active editor, opens a panel, and retains the opened-panel summary', async () => {
+    const tracker = new HistoryPanelTracker();
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    windowState.activeTextEditor = {
+      document: {
+        uri: targetUri
+      }
+    };
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Update VI',
+            previousHash: '1111111122222222'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker
+    );
+
+    await command();
+
+    expect(eligibilityIndexer.isEligible).toHaveBeenCalledWith(targetUri);
+    expect(historyService.load).toHaveBeenCalledWith(targetUri);
+    expect(createWebviewPanelMock).toHaveBeenCalledWith(
+      'viHistorySuite.history',
+      'VI History: eligible.vi',
+      1,
+      {
+        enableScripts: true
+      }
+    );
+    expect(tracker.getOpenCount()).toBe(1);
+    expect(tracker.getLastOpenedPanel()).toMatchObject({
+      title: 'VI History: eligible.vi',
+      targetFsPath: '/workspace/eligible.vi',
+      relativePath: 'eligible.vi',
+      commitCount: 1,
+      eligible: true
+    });
+    expect(tracker.getLastOpenedPanel()?.renderedHtml).toContain('VI History');
+  });
+
+  it('handles successful copy-review, copy-hash, open-commit, and diff-previous actions', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Update VI',
+            previousHash: '1111111122222222'
+          },
+          {
+            hash: '1111111122222222',
+            authorDate: '2026-04-01T00:00:00Z',
+            authorName: 'B User',
+            subject: 'Initial revision'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+    const gitApi = {
+      toGitUri: vi.fn().mockImplementation((_uri: MockUri, ref: string) =>
+        createMockUri(`/git/${ref}`, 'git')
+      )
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      gitApi as never,
+      tracker
+    );
+
+    await command(targetUri as never);
+
+    await tracker.dispatchLastPanelMessage({
+      command: 'copyReviewPacket'
+    });
+    expect(clipboardWriteTextMock).toHaveBeenCalledTimes(1);
+    expect(clipboardWriteTextMock.mock.calls[0]?.[0]).toContain('VI History Review Packet');
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'copyReviewPacket',
+      outcome: 'copied-review-packet',
+      copiedTextLength: clipboardWriteTextMock.mock.calls[0]?.[0].length
+    });
+
+    await tracker.dispatchLastPanelMessage({
+      command: 'copyHash',
+      hash: 'abcdef1234567890'
+    });
+    expect(clipboardWriteTextMock).toHaveBeenNthCalledWith(2, 'abcdef1234567890');
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'copyHash',
+      hash: 'abcdef1234567890',
+      outcome: 'copied-hash',
+      copiedHash: 'abcdef1234567890'
+    });
+
+    await tracker.dispatchLastPanelMessage({
+      command: 'openCommit',
+      hash: 'abcdef1234567890'
+    });
+    expect(executeCommandMock).toHaveBeenCalledTimes(1);
+    expect(executeCommandMock.mock.calls[0]?.[0]).toBe('vscode.open');
+    expect(executeCommandMock.mock.calls[0]?.[1]?.toString()).toBe(
+      'git:/git/abcdef1234567890'
+    );
+    expect(executeCommandMock.mock.calls[0]?.[2]).toEqual({ preview: false });
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'openCommit',
+      hash: 'abcdef1234567890',
+      outcome: 'opened-commit',
+      openedUri: 'git:/git/abcdef1234567890'
+    });
+
+    await tracker.dispatchLastPanelMessage({
+      command: 'diffPrevious',
+      hash: 'abcdef1234567890'
+    });
+    expect(executeCommandMock).toHaveBeenCalledTimes(2);
+    expect(executeCommandMock.mock.calls[1]?.[0]).toBe('vscode.diff');
+    expect(executeCommandMock.mock.calls[1]?.[1]?.toString()).toBe(
+      'git:/git/1111111122222222'
+    );
+    expect(executeCommandMock.mock.calls[1]?.[2]?.toString()).toBe(
+      'git:/git/abcdef1234567890'
+    );
+    expect(executeCommandMock.mock.calls[1]?.[3]).toBe(
+      'eligible.vi (11111111..abcdef12)'
+    );
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'diffPrevious',
+      hash: 'abcdef1234567890',
+      outcome: 'diffed-previous',
+      leftUri: 'git:/git/1111111122222222',
+      rightUri: 'git:/git/abcdef1234567890',
+      title: 'eligible.vi (11111111..abcdef12)'
+    });
+  });
+
   it('retains explicit outcomes for missing previous revisions and malformed panel messages', async () => {
     const targetUri = createMockUri('/workspace/eligible.vi');
     const tracker = new HistoryPanelTracker();
