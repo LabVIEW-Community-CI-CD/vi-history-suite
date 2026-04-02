@@ -213,6 +213,9 @@
 - `TEST-UNIT-068`: validate the stored comparison-report packet distinguishes
   `blocked-runtime` from `blocked-preflight` and renders runtime-selection
   facts in HTML plus metadata
+- `TEST-UNIT-069`: validate the pure comparison-report execution planner maps
+  ready packets to exact LabVIEW CLI or LVCompare command lines and fails
+  closed on blocked or incomplete runtime state
 - `TEST-UNIT-063`: validate explicit runtime settings override auto-discovery,
   Windows registry/install-root discovery is retained, and runtime selection
   chooses the governed host-native engine deterministically

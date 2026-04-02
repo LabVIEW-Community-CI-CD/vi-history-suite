@@ -1,0 +1,191 @@
+import { describe, expect, it } from 'vitest';
+
+import { buildComparisonReportExecutionPlan } from '../../src/reporting/comparisonReportExecutionPlan';
+import { ComparisonReportPacketRecord } from '../../src/reporting/comparisonReportPacket';
+
+function createBaseRecord(): ComparisonReportPacketRecord {
+  return {
+    generatedAt: '2026-04-02T00:00:00.000Z',
+    reportTitle: 'VI Comparison Report: foo.vi',
+    reportStatus: 'ready-for-runtime',
+    reportType: 'diff',
+    selectedHash: 'abcdef1234567890',
+    baseHash: '1111111122222222',
+    artifactPlan: {
+      repoId: 'repoid123456',
+      fileId: 'fileid123456',
+      reportType: 'diff',
+      fullFilename: 'foo.vi',
+      normalizedRelativePath: 'foo.vi',
+      reportDirectory: '/workspace/.storage/reports/repoid123456/fileid123456',
+      stagingDirectory: '/workspace/.storage/reports/repoid123456/fileid123456/staging',
+      reportFilename: 'diff-report-foo.vi.html',
+      reportFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
+      metadataFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-metadata.json',
+      allowedLocalRootPaths: [
+        '/workspace/.storage',
+        '/workspace/.storage/reports/repoid123456'
+      ]
+    },
+    stagedRevisionPlan: {
+      leftFilename: 'left-111111112222-foo.vi',
+      leftFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/staging/left-111111112222-foo.vi',
+      rightFilename: 'right-abcdef123456-foo.vi',
+      rightFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/staging/right-abcdef123456-foo.vi'
+    },
+    preflight: {
+      normalizedRelativePath: 'foo.vi',
+      ready: true,
+      left: {
+        revisionId: '1111111122222222',
+        blobSpecifier: '1111111122222222:foo.vi',
+        signature: 'LVIN',
+        isVi: true
+      },
+      right: {
+        revisionId: 'abcdef1234567890',
+        blobSpecifier: 'abcdef1234567890:foo.vi',
+        signature: 'LVCC',
+        isVi: true
+      }
+    },
+    runtimeSelection: {
+      platform: 'win32',
+      preferBitness: 'x86',
+      provider: 'host-native',
+      engine: 'labview-cli',
+      labviewExe: {
+        kind: 'labview-exe',
+        path: 'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
+        source: 'scan',
+        exists: true,
+        bitness: 'x86'
+      },
+      labviewCli: {
+        kind: 'labview-cli',
+        path: 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+        source: 'scan',
+        exists: true,
+        bitness: 'x64'
+      },
+      notes: [],
+      registryQueryPlans: [],
+      candidates: []
+    },
+    runtimeExecutionState: 'not-run'
+  };
+}
+
+describe('comparisonReportExecutionPlan', () => {
+  it('builds a LabVIEW CLI execution plan from a ready host-native runtime selection', () => {
+    const result = buildComparisonReportExecutionPlan(createBaseRecord());
+
+    expect(result).toEqual({
+      outcome: 'ready',
+      engine: 'labview-cli',
+      commandPlan: {
+        executable: 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+        args: [
+          '-OperationName',
+          'CreateComparisonReport',
+          '-vi1',
+          '/workspace/.storage/reports/repoid123456/fileid123456/staging/left-111111112222-foo.vi',
+          '-vi2',
+          '/workspace/.storage/reports/repoid123456/fileid123456/staging/right-abcdef123456-foo.vi',
+          '-reportType',
+          'HTMLSingleFile',
+          '-reportPath',
+          '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
+          '-c',
+          '-o',
+          '-d',
+          '-Headless',
+          '-LabVIEWPath',
+          'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe'
+        ]
+      }
+    });
+  });
+
+  it('builds an LVCompare execution plan when the selected engine is LVCompare', () => {
+    const record = createBaseRecord();
+    record.runtimeSelection.engine = 'lvcompare';
+    record.runtimeSelection.lvCompare = {
+      kind: 'lvcompare',
+      path: 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe',
+      source: 'scan',
+      exists: true
+    };
+    delete record.runtimeSelection.labviewCli;
+
+    const result = buildComparisonReportExecutionPlan(record);
+
+    expect(result).toEqual({
+      outcome: 'ready',
+      engine: 'lvcompare',
+      commandPlan: {
+        executable: 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe',
+        args: [
+          '/workspace/.storage/reports/repoid123456/fileid123456/staging/left-111111112222-foo.vi',
+          '/workspace/.storage/reports/repoid123456/fileid123456/staging/right-abcdef123456-foo.vi',
+          '-lvpath',
+          'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe'
+        ]
+      }
+    });
+  });
+
+  it('fails closed on blocked preflight or blocked runtime packets', () => {
+    const blockedPreflight = createBaseRecord();
+    blockedPreflight.reportStatus = 'blocked-preflight';
+    blockedPreflight.preflight.blockedReason = 'right-blob-not-vi';
+
+    expect(buildComparisonReportExecutionPlan(blockedPreflight)).toEqual({
+      outcome: 'blocked',
+      blockedReason: 'right-blob-not-vi'
+    });
+
+    const blockedRuntime = createBaseRecord();
+    blockedRuntime.reportStatus = 'blocked-runtime';
+    blockedRuntime.runtimeSelection.provider = 'unavailable';
+    blockedRuntime.runtimeSelection.blockedReason = 'comparison-tool-not-found';
+
+    expect(buildComparisonReportExecutionPlan(blockedRuntime)).toEqual({
+      outcome: 'blocked',
+      blockedReason: 'comparison-tool-not-found'
+    });
+  });
+
+  it('fails closed when the runtime selection is incomplete or unsupported', () => {
+    const missingCli = createBaseRecord();
+    delete missingCli.runtimeSelection.labviewCli;
+    expect(buildComparisonReportExecutionPlan(missingCli)).toEqual({
+      outcome: 'blocked',
+      blockedReason: 'labview-cli-selection-incomplete'
+    });
+
+    const missingLvCompare = createBaseRecord();
+    missingLvCompare.runtimeSelection.engine = 'lvcompare';
+    delete missingLvCompare.runtimeSelection.labviewCli;
+    expect(buildComparisonReportExecutionPlan(missingLvCompare)).toEqual({
+      outcome: 'blocked',
+      blockedReason: 'lvcompare-selection-incomplete'
+    });
+
+    const unsupportedProvider = createBaseRecord();
+    unsupportedProvider.runtimeSelection.provider = 'unavailable';
+    unsupportedProvider.reportStatus = 'ready-for-runtime';
+    delete unsupportedProvider.runtimeSelection.engine;
+    expect(buildComparisonReportExecutionPlan(unsupportedProvider)).toEqual({
+      outcome: 'blocked',
+      blockedReason: 'unsupported-runtime-provider'
+    });
+
+    const missingEngine = createBaseRecord();
+    delete missingEngine.runtimeSelection.engine;
+    expect(buildComparisonReportExecutionPlan(missingEngine)).toEqual({
+      outcome: 'blocked',
+      blockedReason: 'runtime-engine-not-selected'
+    });
+  });
+});
