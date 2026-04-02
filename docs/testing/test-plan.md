@@ -77,6 +77,10 @@
   explicit options, help, and invalid arguments
 - `TEST-UNIT-014`: validate the reusable harness smoke CLI runner prints the
   deterministic retained success summary and forwards governed options
+- `TEST-UNIT-015`: validate VI history service repository-root resolution for
+  nested Git API roots and CLI fallback behavior
+- `TEST-UNIT-016`: validate VI history service configuration forwarding and
+  Git-URI translation behavior
 - `TEST-SMOKE-001`: run the canonical harness smoke and retain JSON, Markdown,
   and HTML reports under `.cache/harness-reports/`
 - `TEST-INTEG-001`: run a real VS Code extension host against a temporary Git
