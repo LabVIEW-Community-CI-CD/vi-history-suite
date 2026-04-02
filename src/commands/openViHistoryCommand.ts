@@ -5,7 +5,10 @@ import { GitApi } from '../git/gitApi';
 import { ViEligibilityIndexer } from '../indexing/viEligibilityIndexer';
 import { ViHistoryService } from '../services/viHistoryService';
 import { renderHistoryPanelHtml } from '../ui/historyPanel';
-import { HistoryPanelTracker } from '../ui/historyPanelTracker';
+import {
+  HistoryPanelMessage,
+  HistoryPanelTracker
+} from '../ui/historyPanelTracker';
 
 export function createOpenViHistoryCommand(
   historyService: ViHistoryService,
@@ -45,50 +48,97 @@ export function createOpenViHistoryCommand(
     );
 
     panel.webview.html = renderedHtml;
-    panelTracker?.record(panel, targetUri, model, renderedHtml);
-
-    panel.webview.onDidReceiveMessage(async (message) => {
+    const handleMessage = async (message: HistoryPanelMessage) => {
+      const command = String(message.command ?? '');
       const hash = String(message.hash ?? '');
       if (!hash) {
+        panelTracker?.recordAction({
+          command,
+          outcome: 'ignored-missing-hash'
+        });
         return;
       }
 
-      if (message.command === 'copyHash') {
+      if (command === 'copyHash') {
         await vscode.env.clipboard.writeText(hash);
+        panelTracker?.recordAction({
+          command,
+          hash,
+          outcome: 'copied-hash',
+          copiedHash: hash
+        });
         return;
       }
 
       const gitUri = gitApi?.toGitUri(targetUri, hash);
       if (!gitUri) {
-        return;
-      }
-
-      if (message.command === 'openCommit') {
-        const document = await vscode.workspace.openTextDocument(gitUri);
-        await vscode.window.showTextDocument(document, {
-          preview: false
+        panelTracker?.recordAction({
+          command,
+          hash,
+          outcome: 'missing-git-uri'
         });
         return;
       }
 
-      if (message.command === 'diffPrevious') {
+      if (command === 'openCommit') {
+        await vscode.commands.executeCommand('vscode.open', gitUri, {
+          preview: false
+        });
+        panelTracker?.recordAction({
+          command,
+          hash,
+          outcome: 'opened-commit',
+          openedUri: gitUri.toString()
+        });
+        return;
+      }
+
+      if (command === 'diffPrevious') {
         const selectedCommit = model.commits.find((commit) => commit.hash === hash);
         if (!selectedCommit?.previousHash) {
+          panelTracker?.recordAction({
+            command,
+            hash,
+            outcome: 'missing-previous-hash'
+          });
           return;
         }
 
         const previousUri = gitApi?.toGitUri(targetUri, selectedCommit.previousHash);
         if (!previousUri) {
+          panelTracker?.recordAction({
+            command,
+            hash,
+            outcome: 'missing-git-uri'
+          });
           return;
         }
 
+        const title = `${path.basename(targetUri.fsPath)} (${selectedCommit.previousHash.slice(0, 8)}..${hash.slice(0, 8)})`;
         await vscode.commands.executeCommand(
           'vscode.diff',
           previousUri,
           gitUri,
-          `${path.basename(targetUri.fsPath)} (${selectedCommit.previousHash.slice(0, 8)}..${hash.slice(0, 8)})`
+          title
         );
+        panelTracker?.recordAction({
+          command,
+          hash,
+          outcome: 'diffed-previous',
+          leftUri: previousUri.toString(),
+          rightUri: gitUri.toString(),
+          title
+        });
+        return;
       }
-    });
+
+      panelTracker?.recordAction({
+        command,
+        hash,
+        outcome: 'unsupported-command'
+      });
+    };
+    panelTracker?.record(panel, targetUri, model, renderedHtml, handleMessage);
+    panel.webview.onDidReceiveMessage(handleMessage);
   };
 }

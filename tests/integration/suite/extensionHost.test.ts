@@ -107,6 +107,51 @@ async function testPanelOpenFlow(
   assert.match(panel.renderedHtml, /fixtures\/eligible-content-detected\.bin/);
   assert.match(panel.renderedHtml, /Update eligible fixture/);
   assert.match(panel.renderedHtml, /Add initial integration fixtures/);
+
+  const history = await api.loadHistory(eligibleUri);
+  const selectedCommit = history.commits[0];
+  assert.ok(selectedCommit);
+  assert.ok(selectedCommit.previousHash);
+
+  await api.dispatchLastPanelMessage({
+    command: 'copyHash',
+    hash: selectedCommit.hash
+  });
+  assert.equal(await vscode.env.clipboard.readText(), selectedCommit.hash);
+  assert.deepEqual(api.getLastPanelActionSummary(), {
+    command: 'copyHash',
+    hash: selectedCommit.hash,
+    outcome: 'copied-hash',
+    copiedHash: selectedCommit.hash
+  });
+
+  await api.dispatchLastPanelMessage({
+    command: 'openCommit',
+    hash: selectedCommit.hash
+  });
+  const openedAction = api.getLastPanelActionSummary();
+  assert.ok(openedAction);
+  assert.equal(openedAction.command, 'openCommit');
+  assert.equal(openedAction.hash, selectedCommit.hash);
+  assert.equal(openedAction.outcome, 'opened-commit');
+  assert.match(openedAction.openedUri ?? '', /^git:/);
+
+  await api.dispatchLastPanelMessage({
+    command: 'diffPrevious',
+    hash: selectedCommit.hash
+  });
+  const diffAction = api.getLastPanelActionSummary();
+  assert.ok(diffAction);
+  assert.equal(diffAction.command, 'diffPrevious');
+  assert.equal(diffAction.hash, selectedCommit.hash);
+  assert.equal(diffAction.outcome, 'diffed-previous');
+  assert.match(diffAction.leftUri ?? '', /^git:/);
+  assert.match(diffAction.rightUri ?? '', /^git:/);
+  assert.match(
+    diffAction.title ?? '',
+    /^eligible-content-detected\.bin \([0-9a-f]{8}\.\.[0-9a-f]{8}\)$/
+  );
+  assert.equal(api.getPanelActionCount(), 3);
 }
 
 async function waitFor(

@@ -49,7 +49,8 @@
 - `TEST-INTEG-001`: activate extension, compute eligibility context, and open
   the history panel for an eligible file, then assert the rendered HTML retains
   stable semantic anchors plus factual eligibility, signature, path, and commit
-  subjects
+  subjects, and then dispatch `copyHash`, `openCommit`, and `diffPrevious`
+  through the real panel message handler
 - `TEST-INTEG-002`: validate non-file URI detection fallback behavior
 - `TEST-UNIT-005`: build a temporary Git repo with a content-detected VI and
   assert the shared core history model returns eligible history

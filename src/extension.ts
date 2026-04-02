@@ -9,6 +9,8 @@ import {
 import { ViHistoryViewModel } from './services/viHistoryModel';
 import { ViHistoryService } from './services/viHistoryService';
 import {
+  HistoryPanelActionSummary,
+  HistoryPanelMessage,
   HistoryPanelTracker,
   OpenedHistoryPanelSummary
 } from './ui/historyPanelTracker';
@@ -20,6 +22,9 @@ export interface ViHistorySuiteApi {
   getEligibilityDebugSnapshot(): EligibilityDebugSnapshot;
   getLastOpenedPanel(): OpenedHistoryPanelSummary | undefined;
   getOpenHistoryPanelCount(): number;
+  dispatchLastPanelMessage(message: HistoryPanelMessage): Promise<void>;
+  getLastPanelActionSummary(): HistoryPanelActionSummary | undefined;
+  getPanelActionCount(): number;
   clearHistoryPanelTracking(): void;
 }
 
@@ -60,6 +65,10 @@ export async function activate(
     getEligibilityDebugSnapshot: () => eligibilityIndexer.getDebugSnapshot(),
     getLastOpenedPanel: () => panelTracker.getLastOpenedPanel(),
     getOpenHistoryPanelCount: () => panelTracker.getOpenCount(),
+    dispatchLastPanelMessage: (message: HistoryPanelMessage) =>
+      panelTracker.dispatchLastPanelMessage(message),
+    getLastPanelActionSummary: () => panelTracker.getLastActionSummary(),
+    getPanelActionCount: () => panelTracker.getActionCount(),
     clearHistoryPanelTracking: () => panelTracker.clear()
   };
 }
