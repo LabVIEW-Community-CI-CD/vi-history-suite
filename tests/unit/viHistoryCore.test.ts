@@ -30,6 +30,18 @@ async function writeViFile(fsPath: string, payload: string): Promise<void> {
   await fs.writeFile(fsPath, header);
 }
 
+async function writeOffsetMagicFile(
+  fsPath: string,
+  signature: 'LVIN' | 'LVCC',
+  payload: string
+): Promise<void> {
+  const buffer = Buffer.alloc(12 + Buffer.byteLength(payload));
+  buffer.write(signature, 8, 'ascii');
+  buffer.write(payload, 12, 'utf8');
+  await fs.mkdir(path.dirname(fsPath), { recursive: true });
+  await fs.writeFile(fsPath, buffer);
+}
+
 async function commitAll(repoRoot: string, message: string): Promise<void> {
   await runGit(['add', '.'], repoRoot);
   await runGit(['commit', '-m', message], repoRoot);
@@ -82,5 +94,48 @@ describe('viHistoryModel', () => {
     expect(eligibility.signature).toBe('LVIN');
     expect(eligibility.commitHashes).toHaveLength(1);
     expect(eligibility.eligible).toBe(false);
+  });
+
+  it('auto-discovers the repo root and preserves default non-strict signature detection', async () => {
+    const repoRoot = await createTempGitRepo();
+    const targetPath = path.join(repoRoot, 'nested', 'content-detected.bin');
+
+    await writeOffsetMagicFile(targetPath, 'LVCC', 'first');
+    await commitAll(repoRoot, 'Add content-detected control');
+    await writeOffsetMagicFile(targetPath, 'LVCC', 'second');
+    await commitAll(repoRoot, 'Update content-detected control');
+
+    const eligibility = await evaluateViEligibilityForFsPath(targetPath);
+
+    expect(eligibility.repositoryRoot).toBe(repoRoot);
+    expect(eligibility.relativePath).toBe('nested/content-detected.bin');
+    expect(eligibility.signature).toBe('LVCC');
+    expect(eligibility.commitHashes).toHaveLength(2);
+    expect(eligibility.eligible).toBe(true);
+  });
+
+  it('loads the full available history by default and omits previousHash on the oldest commit', async () => {
+    const repoRoot = await createTempGitRepo();
+    const targetPath = path.join(repoRoot, 'nested', 'default-history.weird');
+
+    await writeViFile(targetPath, 'first');
+    await commitAll(repoRoot, 'Add initial VI');
+    await writeViFile(targetPath, 'second');
+    await commitAll(repoRoot, 'Update VI behavior');
+    await writeViFile(targetPath, 'third');
+    await commitAll(repoRoot, 'Finalize VI behavior');
+
+    const viewModel = await loadViHistoryViewModelFromFsPath(targetPath);
+
+    expect(viewModel.repositoryRoot).toBe(repoRoot);
+    expect(viewModel.repositoryName).toBe(path.basename(repoRoot));
+    expect(viewModel.relativePath).toBe('nested/default-history.weird');
+    expect(viewModel.signature).toBe('LVIN');
+    expect(viewModel.eligible).toBe(true);
+    expect(viewModel.commits).toHaveLength(3);
+    expect(viewModel.commits[0]?.subject).toBe('Finalize VI behavior');
+    expect(viewModel.commits[0]?.previousHash).toBe(viewModel.commits[1]?.hash);
+    expect(viewModel.commits[1]?.previousHash).toBe(viewModel.commits[2]?.hash);
+    expect(viewModel.commits[2]?.previousHash).toBeUndefined();
   });
 });

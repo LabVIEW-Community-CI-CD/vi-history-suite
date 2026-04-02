@@ -132,6 +132,12 @@
   and stable failure-message rendering for Error and non-Error failures
 - `TEST-UNIT-033`: validate the history-panel tracker retains opened-panel
   summaries, action summaries, dispatcher behavior, and clear/reset semantics
+- `TEST-UNIT-034`: validate the core history model auto-discovers the Git root
+  from a tracked filesystem path and preserves default non-strict VI detection
+  for offset-8 `LVIN`/`LVCC` content
+- `TEST-UNIT-035`: validate the core history model default history load returns
+  the full available commit chain and leaves the oldest commit without a
+  `previousHash`
 - `TEST-DOC-003`: review architecture and product docs for the published
   WebviewPanel-only surface, desktop/remote-host boundary, and no-publish
   TimelineProvider policy
