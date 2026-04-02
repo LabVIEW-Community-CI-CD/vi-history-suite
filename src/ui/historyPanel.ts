@@ -92,6 +92,17 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
       .guidance li {
         margin-bottom: 6px;
       }
+      .confidence {
+        margin-bottom: 16px;
+        padding: 12px;
+        border: 1px solid var(--vscode-panel-border);
+      }
+      .confidence-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(240px, 1fr));
+        gap: 8px 16px;
+        margin-top: 8px;
+      }
     </style>
   </head>
   <body>
@@ -122,6 +133,15 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
         <li data-testid="history-guidance-step">Use the compare pair in each row to see exactly which retained base revision a <code>Diff prev</code> action targets.</li>
         <li data-testid="history-guidance-step">For binary VI inspection, use <code>Open@commit</code> or external tooling when chronology facts alone are not sufficient.</li>
       </ol>
+    </div>
+    <div class="confidence" data-testid="history-confidence-scope">
+      <strong>Confidence and scope:</strong>
+      <div class="confidence-grid">
+        <div data-testid="history-confidence-basis"><strong>Basis:</strong> Local Git history, tracked-file status, and content-detected VI signature checks.</div>
+        <div data-testid="history-confidence-rating"><strong>Confidence:</strong> Direct local evidence for chronology, path provenance, retained hashes, and command routing.</div>
+        <div data-testid="history-scope-included"><strong>Included here:</strong> Repository/path facts, retained commit chronology, selected-versus-base pairing, and VS Code action delegation.</div>
+        <div data-testid="history-scope-excluded"><strong>Needs external comparison tooling:</strong> Binary semantic differences, visual or cosmetic change detection, and NI comparison-report output.</div>
+      </div>
     </div>
     <table data-testid="history-table">
       <thead>

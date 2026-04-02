@@ -104,6 +104,11 @@ async function testPanelOpenFlow(
   assert.match(panel.renderedHtml, /data-testid="history-binary-limitations"/);
   assert.match(panel.renderedHtml, /data-testid="history-review-guidance"/);
   assert.match(panel.renderedHtml, /data-testid="history-guidance-step"/);
+  assert.match(panel.renderedHtml, /data-testid="history-confidence-scope"/);
+  assert.match(panel.renderedHtml, /data-testid="history-confidence-basis"/);
+  assert.match(panel.renderedHtml, /data-testid="history-confidence-rating"/);
+  assert.match(panel.renderedHtml, /data-testid="history-scope-included"/);
+  assert.match(panel.renderedHtml, /data-testid="history-scope-excluded"/);
   assert.match(panel.renderedHtml, /data-testid="history-table"/);
   assert.match(panel.renderedHtml, /data-testid="history-row"/);
   assert.match(panel.renderedHtml, /data-testid="history-compare-base"/);
@@ -116,6 +121,11 @@ async function testPanelOpenFlow(
   assert.match(panel.renderedHtml, /Newest commit first/);
   assert.match(panel.renderedHtml, /Binary review limits:/);
   assert.match(panel.renderedHtml, /Reviewer guidance:/);
+  assert.match(panel.renderedHtml, /Confidence and scope:/);
+  assert.match(panel.renderedHtml, /Local Git history, tracked-file status, and content-detected VI signature checks\./);
+  assert.match(panel.renderedHtml, /Direct local evidence for chronology, path provenance, retained hashes, and command routing\./);
+  assert.match(panel.renderedHtml, /Needs external comparison tooling:/);
+  assert.match(panel.renderedHtml, /Binary semantic differences, visual or cosmetic change detection, and NI comparison-report output\./);
   assert.match(panel.renderedHtml, /Selected:<\/strong> <code>[0-9a-f]{8}<\/code> <strong>vs base:<\/strong> <code>[0-9a-f]{8}<\/code>/);
   assert.match(panel.renderedHtml, /fixtures\/eligible-content-detected\.bin/);
   assert.match(panel.renderedHtml, /Update eligible fixture/);

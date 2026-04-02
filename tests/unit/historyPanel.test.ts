@@ -43,6 +43,11 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('data-testid="history-binary-limitations"');
     expect(html).toContain('data-testid="history-review-guidance"');
     expect(html).toContain('data-testid="history-guidance-step"');
+    expect(html).toContain('data-testid="history-confidence-scope"');
+    expect(html).toContain('data-testid="history-confidence-basis"');
+    expect(html).toContain('data-testid="history-confidence-rating"');
+    expect(html).toContain('data-testid="history-scope-included"');
+    expect(html).toContain('data-testid="history-scope-excluded"');
     expect(html).toContain('data-testid="history-row"');
     expect(html).toContain('data-testid="history-compare-base"');
     expect(html).toContain('data-testid="history-compare-pair"');
@@ -53,6 +58,11 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('Oldest retained revision');
     expect(html).toContain('Binary review limits:');
     expect(html).toContain('Reviewer guidance:');
+    expect(html).toContain('Confidence and scope:');
+    expect(html).toContain('Local Git history, tracked-file status, and content-detected VI signature checks.');
+    expect(html).toContain('Direct local evidence for chronology, path provenance, retained hashes, and command routing.');
+    expect(html).toContain('Needs external comparison tooling:');
+    expect(html).toContain('Binary semantic differences, visual or cosmetic change detection, and NI comparison-report output.');
     expect(html).toContain('Selected:</strong> <code>abcdef12</code>');
     expect(html).toContain('vs base:</strong> <code>11111111</code>');
   });
