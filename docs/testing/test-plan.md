@@ -228,6 +228,9 @@
   TimelineProvider policy
 - `TEST-DOC-005`: review architecture for the Windows 64-bit runtime-provider
   boundary and the future isolated container execution path
+- `TEST-DOC-006`: review architecture for the dedicated extension-user Windows
+  64-bit `labview2026q1` container isolation policy and confirm it remains
+  separate from host-native 32-bit execution
 - `TEST-DOC-004`: review packaging and release guidance for `vsce package`,
   VSIX installation, and Marketplace publishing prerequisites
 - `TEST-SMOKE-001`: run the canonical harness smoke and retain JSON, Markdown,

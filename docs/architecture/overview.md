@@ -38,7 +38,7 @@
 | Extension runtime | indexing, command execution, trust gating | TypeScript / Node |
 | Git adapter | tracked-file and history queries | Git CLI plus built-in Git API |
 | Review UI | history presentation and review actions | WebviewPanel |
-| Report subsystem | report planning, runtime/tool selection, later runtime execution, report storage | TypeScript / Node |
+| Report subsystem | report planning, runtime/tool selection, later runtime execution, report storage, and provider isolation policy | TypeScript / Node |
 | Harness smoke runner | clone-on-demand canonical harness verification | TypeScript / Node CLI |
 | Governance pack | requirements, tests, ADRs, traceability | Markdown / CSV |
 
@@ -68,6 +68,8 @@
   - Git executable on PATH
   - optional LabVIEW 2026 Q1 host-native tooling for future report execution
   - optional Windows container runtime for future isolated 64-bit report execution
+    without colliding with an already-open host-native LabVIEW 2026 64-bit
+    session
 
 ## Correspondence And Rationale
 
@@ -82,8 +84,9 @@
 - Known tradeoffs:
   - Git CLI requires Git on PATH
   - non-file URI fallback is less I/O efficient than local partial reads
-  - Windows 64-bit isolated container execution is architecture-approved but not
-    yet wired into live report generation
+  - Windows 64-bit isolated container execution is architecture-approved as the
+    preferred extension-user isolation path, but not yet wired into live report
+    generation
 
 ## ADR Index
 
@@ -97,3 +100,5 @@
   Report-generation subsystem baseline
 - [ADR-0005](./adr/ADR-0005-runtime-provider-selection-and-windows64-isolation.md):
   Runtime-provider selection and Windows 64-bit isolation
+- [ADR-0006](./adr/ADR-0006-windows64-container-isolation-for-extension-users.md):
+  Windows 64-bit container isolation for extension users

@@ -26,5 +26,12 @@
     "status": "queued",
     "source": "authoritative research",
     "summary": "Promote bounded progress, cancellation, and trust-aware execution UX for long-running indexing and report tasks."
+  },
+  {
+    "id": "TRANCHE-005",
+    "title": "Introduce Windows 64-bit isolated container report provider",
+    "status": "queued",
+    "source": "author direction",
+    "summary": "Implement the dedicated labview2026q1 Windows container provider so extension users can execute 64-bit report generation without colliding with an already-open host-native LabVIEW 2026 64-bit session."
   }
 ]

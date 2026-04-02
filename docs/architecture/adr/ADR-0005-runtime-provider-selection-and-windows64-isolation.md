@@ -28,6 +28,8 @@
 - Keep Windows 32-bit report execution on the host-native path.
 - Continue to prefer LabVIEW CLI as the primary report engine and LVCompare as
   the fallback when CLI is unavailable.
+- Capture the extension-user Windows 64-bit isolation policy in a dedicated
+  follow-on ADR so provider selection and user-isolation intent do not drift.
 
 ## Rationale
 
