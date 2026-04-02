@@ -8,10 +8,23 @@ export interface RunDesignGateCliDeps {
   runner?: (repoRoot: string) => Promise<DesignGateReport>;
 }
 
+export function resolveRunDesignGateRepoRoot(dirnameValue: string = __dirname): string {
+  return path.resolve(dirnameValue, '..', '..');
+}
+
+export function reportRunDesignGateCliFailure(
+  error: unknown,
+  stderr: Pick<NodeJS.WriteStream, 'write'> = process.stderr
+): string {
+  const message = error instanceof Error ? error.message : String(error);
+  stderr.write(`${message}\n`);
+  return message;
+}
+
 export async function runDesignGateCli(
   deps: RunDesignGateCliDeps = {}
 ): Promise<DesignGateReport> {
-  const repoRoot = deps.repoRoot ?? path.resolve(__dirname, '..', '..');
+  const repoRoot = deps.repoRoot ?? resolveRunDesignGateRepoRoot();
   const report = await (deps.runner ?? runDesignGate)(repoRoot);
 
   if (report.status !== 'pass') {
@@ -23,7 +36,7 @@ export async function runDesignGateCli(
 
 if (require.main === module) {
   void runDesignGateCli().catch((error) => {
-    console.error(error instanceof Error ? error.message : String(error));
+    reportRunDesignGateCliFailure(error);
     process.exitCode = 1;
   });
 }

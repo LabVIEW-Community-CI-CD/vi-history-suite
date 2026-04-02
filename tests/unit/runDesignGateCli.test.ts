@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { runDesignGateCli } from '../../src/cli/runDesignGate';
+import {
+  reportRunDesignGateCliFailure,
+  resolveRunDesignGateRepoRoot,
+  runDesignGateCli
+} from '../../src/cli/runDesignGate';
 
 describe('runDesignGateCli', () => {
   it('returns the retained report when the shared runner passes', async () => {
@@ -32,5 +36,27 @@ describe('runDesignGateCli', () => {
         })
       })
     ).rejects.toThrow('design gate failed');
+  });
+
+  it('resolves the default repo root relative to the CLI module directory', () => {
+    expect(resolveRunDesignGateRepoRoot('/tmp/vi-history-suite/out/cli')).toBe(
+      '/tmp/vi-history-suite'
+    );
+  });
+
+  it('writes a stable CLI failure message for Error and non-Error failures', () => {
+    const writes: string[] = [];
+    const stderr = {
+      write(text: string) {
+        writes.push(text);
+        return true;
+      }
+    };
+
+    expect(reportRunDesignGateCliFailure(new Error('design gate failed'), stderr)).toBe(
+      'design gate failed'
+    );
+    expect(reportRunDesignGateCliFailure('string failure', stderr)).toBe('string failure');
+    expect(writes).toEqual(['design gate failed\n', 'string failure\n']);
   });
 });

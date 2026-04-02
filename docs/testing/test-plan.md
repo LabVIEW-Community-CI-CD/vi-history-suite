@@ -128,6 +128,8 @@
 - `TEST-UNIT-031`: validate `VI History` successful command flow for active
   editor fallback, panel creation, copied review packet, copied commit hash,
   opened Git revision, and diff-against-previous execution
+- `TEST-UNIT-032`: validate the design-gate CLI default repo-root resolution
+  and stable failure-message rendering for Error and non-Error failures
 - `TEST-DOC-003`: review architecture and product docs for the published
   WebviewPanel-only surface, desktop/remote-host boundary, and no-publish
   TimelineProvider policy
