@@ -208,9 +208,18 @@
   and preflight facts
 - `TEST-UNIT-062`: validate the comparison-report action opens a dedicated
   report panel with `asWebviewUri` plus narrow `localResourceRoots`
+- `TEST-UNIT-063`: validate explicit runtime settings override auto-discovery,
+  Windows registry/install-root discovery is retained, and runtime selection
+  chooses the governed host-native engine deterministically
+- `TEST-UNIT-064`: validate runtime discovery retains explicit Linux/macOS
+  availability constraints and fallback behavior when CLI tooling is missing
+- `TEST-UNIT-066`: validate the extension manifest exposes `labviewCliPath`
+  and keeps all external runtime settings restricted in untrusted workspaces
 - `TEST-DOC-003`: review architecture and product docs for the published
   WebviewPanel-only surface, desktop/remote-host boundary, and no-publish
   TimelineProvider policy
+- `TEST-DOC-005`: review architecture for the Windows 64-bit runtime-provider
+  boundary and the future isolated container execution path
 - `TEST-DOC-004`: review packaging and release guidance for `vsce package`,
   VSIX installation, and Marketplace publishing prerequisites
 - `TEST-SMOKE-001`: run the canonical harness smoke and retain JSON, Markdown,

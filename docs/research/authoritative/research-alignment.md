@@ -23,7 +23,7 @@
 | Verify both revision blobs are VIs before compare/report generation | aligned in this tranche | `src/reporting/comparisonReportPreflight.ts`; `VHS-REQ-127..129` | wire preflight into report-generation runtime path |
 | Generate report with `{type}-report-{fullFilename}.html` | partial | `src/reporting/comparisonReportPlan.ts`; `VHS-REQ-100` | wire planner into runtime execution |
 | Store retained report packets under `context.storageUri` and surface them via `asWebviewUri` plus `localResourceRoots` | aligned in this tranche | `src/reporting/comparisonReportPacket.ts`; `src/reporting/comparisonReportAction.ts`; `VHS-REQ-134..137` | wire actual LabVIEW runtime execution into the stored packet path |
-| LabVIEW 2026 Q1 32/64 runtime detection and selection | missing | settings placeholders only in `package.json` | add governed runtime-detection tranche |
+| LabVIEW 2026 Q1 32/64 runtime detection and selection | partial in this tranche | `src/reporting/comparisonRuntimeLocator.ts`; `package.json`; `VHS-REQ-094..096`; `VHS-REQ-138` | wire the locator into live NI execution and future Windows 64-bit container provider |
 | Status-bar progress item plus richer percent/items/ETA progress UX | partial | `src/indexing/viEligibilityIndexer.ts` currently uses `window.withProgress` only | add governed progress tranche |
 | Manifest trust declaration through `capabilities.untrustedWorkspaces` | aligned in this tranche | `package.json`; `VHS-REQ-084`; `tests/unit/packageManifest.test.ts` | sustain |
 | Treat `TimelineProvider` as experimental only, not published product surface | aligned in docs | `docs/architecture/adr/ADR-0002-published-review-surface-webview.md`; `VHS-REQ-085` | sustain |

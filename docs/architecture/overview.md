@@ -38,7 +38,7 @@
 | Extension runtime | indexing, command execution, trust gating | TypeScript / Node |
 | Git adapter | tracked-file and history queries | Git CLI plus built-in Git API |
 | Review UI | history presentation and review actions | WebviewPanel |
-| Report subsystem | report planning, later runtime/tool execution, report storage | TypeScript / Node |
+| Report subsystem | report planning, runtime/tool selection, later runtime execution, report storage | TypeScript / Node |
 | Harness smoke runner | clone-on-demand canonical harness verification | TypeScript / Node CLI |
 | Governance pack | requirements, tests, ADRs, traceability | Markdown / CSV |
 
@@ -52,6 +52,7 @@
 | History panel | Review UI | render factual commit review surface |
 | Git CLI adapter | Git adapter | execute and parse bounded Git commands |
 | Comparison report planner | Report subsystem | derive deterministic report naming, staging, storage, and command plans |
+| Comparison runtime locator | Report subsystem | detect LabVIEW 2026 Q1 tooling and select the governed host-native runtime path |
 | Harness smoke command | Harness smoke runner | clone the canonical harness and emit factual local reports |
 
 ## Deployment View
@@ -65,6 +66,8 @@
 - Runtime dependencies:
   - Node runtime bundled with VS Code extension host
   - Git executable on PATH
+  - optional LabVIEW 2026 Q1 host-native tooling for future report execution
+  - optional Windows container runtime for future isolated 64-bit report execution
 
 ## Correspondence And Rationale
 
@@ -79,6 +82,8 @@
 - Known tradeoffs:
   - Git CLI requires Git on PATH
   - non-file URI fallback is less I/O efficient than local partial reads
+  - Windows 64-bit isolated container execution is architecture-approved but not
+    yet wired into live report generation
 
 ## ADR Index
 
@@ -90,3 +95,5 @@
   Workspace-scoped report storage and desktop-host product boundary
 - [ADR-0004](./adr/ADR-0004-report-generation-subsystem-baseline.md):
   Report-generation subsystem baseline
+- [ADR-0005](./adr/ADR-0005-runtime-provider-selection-and-windows64-isolation.md):
+  Runtime-provider selection and Windows 64-bit isolation

@@ -19,6 +19,10 @@ interface ExtensionManifest {
       title?: string;
       category?: string;
     }>;
+    configuration?: {
+      title?: string;
+      properties?: Record<string, unknown>;
+    };
     menus?: Record<
       string,
       Array<{
@@ -71,10 +75,15 @@ describe('extension manifest research alignment', () => {
       description:
         'VI History disables background indexing and external LabVIEW comparison-tool execution in untrusted workspaces.',
       restrictedConfigurations: [
+        'viHistorySuite.labviewCliPath',
         'viHistorySuite.lvComparePath',
         'viHistorySuite.labviewExePath',
         'viHistorySuite.preferBitness'
       ]
     });
+
+    expect(manifest.contributes?.configuration?.properties).toHaveProperty(
+      'viHistorySuite.labviewCliPath'
+    );
   });
 });

@@ -14,6 +14,7 @@
       "supported": "limited",
       "description": "VI History disables background indexing and external LabVIEW comparison-tool execution in untrusted workspaces.",
       "restrictedConfigurations": [
+        "viHistorySuite.labviewCliPath",
         "viHistorySuite.lvComparePath",
         "viHistorySuite.labviewExePath",
         "viHistorySuite.preferBitness"
@@ -82,6 +83,11 @@
           "type": "string",
           "default": "",
           "description": "Optional explicit path to LVCompare."
+        },
+        "viHistorySuite.labviewCliPath": {
+          "type": "string",
+          "default": "",
+          "description": "Optional explicit path to LabVIEWCLI."
         },
         "viHistorySuite.labviewExePath": {
           "type": "string",
