@@ -58,6 +58,20 @@ describe('comparisonReportPlan', () => {
     expect(plan.rightFilePath).toBe(path.join('/workspace/.storage/reports/repo/file/staging', plan.rightFilename));
   });
 
+  it('falls back to deterministic left/right staged filenames when revision identifiers are omitted or blank', () => {
+    const plan = buildStagedRevisionPlan({
+      stagingDirectory: '/workspace/.storage/reports/repo/file/staging',
+      fullFilename: 'foo.vi',
+      leftRevisionId: '   ',
+      rightRevisionId: undefined
+    });
+
+    expect(plan.leftFilename).toBe('left-foo.vi');
+    expect(plan.rightFilename).toBe('right-foo.vi');
+    expect(plan.leftFilePath).toBe(path.join('/workspace/.storage/reports/repo/file/staging', 'left-foo.vi'));
+    expect(plan.rightFilePath).toBe(path.join('/workspace/.storage/reports/repo/file/staging', 'right-foo.vi'));
+  });
+
   it('builds the primary CreateComparisonReport command plan with HTMLSingleFile defaults', () => {
     const plan = buildLabviewCliCreateComparisonReportPlan({
       leftViPath: '/tmp/left-foo.vi',
@@ -100,5 +114,35 @@ describe('comparisonReportPlan', () => {
       executable: 'LVCompare',
       args: ['/tmp/left-foo.vi', '/tmp/right-foo.vi', '-lvpath', '/opt/labview/LabVIEW']
     });
+  });
+
+  it('fails closed on empty required planning identifiers and paths', () => {
+    expect(() =>
+      buildComparisonArtifactPlan({
+        storageRoot: '   ',
+        repositoryRoot: '/workspace/repo',
+        relativePath: 'foo.vi',
+        reportType: 'diff'
+      })
+    ).toThrow('storageRoot must be non-empty');
+
+    expect(() => buildComparisonReportFilename('diff', '   ')).toThrow(
+      'fullFilename must be non-empty'
+    );
+
+    expect(() =>
+      buildLabviewCliCreateComparisonReportPlan({
+        leftViPath: '   ',
+        rightViPath: '/tmp/right.vi',
+        reportFilePath: '/tmp/report.html'
+      })
+    ).toThrow('leftViPath must be non-empty');
+
+    expect(() =>
+      buildLvComparePlan({
+        leftViPath: '/tmp/left.vi',
+        rightViPath: '   '
+      })
+    ).toThrow('rightViPath must be non-empty');
   });
 });

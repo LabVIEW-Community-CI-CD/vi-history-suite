@@ -168,6 +168,11 @@
 - `TEST-UNIT-047`: validate the eligibility indexer helper layer ignores empty
   context-key values, adds lowercase Windows path variants, and stops cleanly
   when concurrent workers outnumber queued items
+- `TEST-UNIT-048`: validate the comparison-report staging planner falls back to
+  deterministic `left-` and `right-` staged filenames when revision identifiers
+  are omitted or blank
+- `TEST-UNIT-049`: validate the comparison-report planning helpers fail closed
+  on empty required storage roots, filenames, and VI/report paths
 - `TEST-DOC-003`: review architecture and product docs for the published
   WebviewPanel-only surface, desktop/remote-host boundary, and no-publish
   TimelineProvider policy

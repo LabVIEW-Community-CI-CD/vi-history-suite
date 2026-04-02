@@ -113,10 +113,6 @@ export function buildStagedRevisionPlan(options: StagedRevisionPlanOptions): Sta
   const leftFilename = `${leftLabel}-${fullFilename}`;
   const rightFilename = `${rightLabel}-${fullFilename}`;
 
-  if (leftFilename === rightFilename) {
-    throw new Error('Staged revision filenames must be distinct');
-  }
-
   return {
     leftFilename,
     leftFilePath: path.join(stagingDirectory, leftFilename),
