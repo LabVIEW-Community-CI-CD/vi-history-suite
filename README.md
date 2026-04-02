@@ -1,7 +1,50 @@
 # vi-history-suite
 
-`vi-history-suite` is a source-available project for working on VI history
-tooling.
+`vi-history-suite` is a TypeScript-first Visual Studio Code extension project
+for developer-facing VI history review in Git repositories.
+
+The first product target is narrow and factual:
+
+- detect LabVIEW VIs by content, not by file extension
+- show an Explorer context-menu command `VI History` only for eligible files
+- require the file to be tracked in Git and touched by at least two commits
+- open a review-oriented history panel with commit facts and core actions
+
+The initial governed baseline is anchored to the user-supplied design research
+captured in [docs/research/extension-design-summary.md](./docs/research/extension-design-summary.md).
+
+## Product Docs
+
+- [Product Charter](./docs/product/charter.md)
+- [Problem Statement](./docs/product/problem-statement.md)
+- [First Epic](./docs/product/epics/EPIC-0001-core-content-detected-history-viewer.md)
+- [Harness Definitions](./docs/product/harnesses.md)
+- [Software Requirements Specification](./docs/requirements/srs.md)
+- [Architecture Overview](./docs/architecture/overview.md)
+- [Test Plan](./docs/testing/test-plan.md)
+
+## Local Development
+
+```bash
+npm ci
+npm run compile
+npm run test
+```
+
+## Current Scope
+
+Included in the first baseline:
+
+- VS Code command and Explorer menu contribution
+- content-based VI detection for `LVIN` / `LVCC` at offset `8`
+- Git-backed eligibility indexing using tracked files and bounded file history
+- basic webview history panel with commit list and review actions
+
+Deferred beyond the first baseline:
+
+- LabVIEW comparison report generation
+- timeline-provider integration
+- marketplace publishing and release automation beyond local CI
 
 ## License
 

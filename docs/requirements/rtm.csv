@@ -1,0 +1,22 @@
+ReqID,Requirement,Source,Priority,TestID,TestArtifact,CodeRef,Status
+VHS-REQ-001,"Detect VI candidates by bytes 8..11 with LVIN/LVCC","research summary",High,TEST-UNIT-001,"tests/unit/viMagic.test.ts","src/domain/viMagic.ts",Implemented
+VHS-REQ-002,"Do not rely on filename or file extension for detection","research summary",High,TEST-UNIT-001,"tests/unit/viMagic.test.ts","src/domain/viMagic.ts",Implemented
+VHS-REQ-003,"Support optional stricter RSRC header mode","research summary",Medium,TEST-UNIT-001,"tests/unit/viMagic.test.ts","src/domain/viMagic.ts",Implemented
+VHS-REQ-004,"Contribute Explorer command VI History","research summary",High,TEST-INTEG-001,"planned extension smoke","package.json",Implemented
+VHS-REQ-005,"Only show command inside opened Git repositories","research summary",High,TEST-INTEG-001,"planned extension smoke","package.json; src/indexing/viEligibilityIndexer.ts",Implemented
+VHS-REQ-006,"Only show command for tracked files with at least two modifying commits","research summary",High,TEST-UNIT-002,"tests/unit/gitCli.test.ts","src/indexing/viEligibilityIndexer.ts; src/git/gitCli.ts",Implemented
+VHS-REQ-007,"Enumerate tracked files using git ls-files -z or equivalent","research summary",High,TEST-UNIT-002,"tests/unit/gitCli.test.ts","src/git/gitCli.ts",Implemented
+VHS-REQ-008,"Use bounded commit query for eligibility","research summary",High,TEST-UNIT-002,"tests/unit/gitCli.test.ts","src/git/gitCli.ts",Implemented
+VHS-REQ-009,"Treat rename following as best effort","research summary",Medium,TEST-DOC-001,"doc review","docs/research/extension-design-summary.md; docs/requirements/srs.md",Implemented
+VHS-REQ-010,"Use partial reads for file URIs","research summary",High,TEST-UNIT-001,"tests/unit/viMagic.test.ts","src/domain/viMagic.ts",Implemented
+VHS-REQ-011,"Fallback to workspace.fs for non-file URIs","research summary",Medium,TEST-INTEG-002,"planned virtual-workspace smoke","src/domain/viMagic.ts",Implemented
+VHS-REQ-012,"Gate scanning and external execution on workspace trust","research summary",High,TEST-INTEG-001,"planned extension smoke","src/extension.ts; src/indexing/viEligibilityIndexer.ts",Implemented
+VHS-REQ-013,"Maintain visibility via setContext object membership","research summary",High,TEST-INTEG-001,"planned extension smoke","src/indexing/viEligibilityIndexer.ts",Implemented
+VHS-REQ-014,"Cache eligibility by repo root, path, and HEAD","research summary",Medium,TEST-UNIT-003,"tests/unit/gitCli.test.ts","src/indexing/viEligibilityIndexer.ts",Implemented
+VHS-REQ-015,"Bound indexing concurrency through configuration","research summary",Medium,TEST-UNIT-003,"tests/unit/gitCli.test.ts","src/indexing/viEligibilityIndexer.ts",Implemented
+VHS-REQ-016,"Open a webview history panel for the selected file","research summary",High,TEST-UNIT-004,"tests/unit/historyPanel.test.ts","src/ui/historyPanel.ts; src/commands/openViHistoryCommand.ts",Implemented
+VHS-REQ-017,"Show repository, path, signature, and commit facts in the panel","research summary",High,TEST-UNIT-004,"tests/unit/historyPanel.test.ts","src/ui/historyPanel.ts",Implemented
+VHS-REQ-018,"Expose open, diff, and copy-hash review actions","research summary",High,TEST-UNIT-004,"tests/unit/historyPanel.test.ts","src/ui/historyPanel.ts; src/commands/openViHistoryCommand.ts",Implemented
+VHS-REQ-019,"Remain self-contained without comparevi repo dependencies","author direction",High,TEST-STATIC-001,"repo inspection","package.json; docs/requirements/srs.md",Implemented
+VHS-REQ-020,"Define first real-history harness against cloned ni/labview-icon-editor","author direction",High,TEST-DOC-002,"doc review","docs/product/harnesses.md",Implemented
+

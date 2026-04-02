@@ -1,0 +1,73 @@
+stages:
+  - docs
+  - test
+  - release
+
+docs_link_check:
+  stage: docs
+  image: lycheeverse/lychee:latest
+  script:
+    - lychee --verbose --no-progress --include-fragments README.md docs/**/*.md
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH'
+
+test_extension:
+  stage: test
+  image: node:24
+  script:
+    - npm ci
+    - npm run compile
+    - npm run test
+    - echo "PR Coverage Gate / coverage"
+    - |
+      node - <<'NODE'
+      const fs = require('node:fs');
+      const summary = JSON.parse(
+        fs.readFileSync('coverage/coverage-summary.json', 'utf8')
+      );
+      const pct = Number(summary.total.lines.pct || 0);
+      console.log(`coverage summary ${pct.toFixed(1)}%`);
+      if (pct < 80) {
+        process.exit(1);
+      }
+      NODE
+  artifacts:
+    when: always
+    paths:
+      - coverage/
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage/cobertura-coverage.xml
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH'
+
+release_extension:
+  stage: release
+  image: node:24
+  script:
+    - npm ci
+    - npm run compile
+    - npm run test
+    - mkdir -p release-evidence
+    - cp -R coverage release-evidence/coverage
+    - cp coverage/cobertura-coverage.xml release-evidence/coverage.xml
+    - |
+      cat <<'EOF' > release-evidence/release-record.md
+      # Release Record
+
+      - Tag: ${CI_COMMIT_TAG}
+      - Baseline rule: SemVer tag release with retained compile, test, and coverage evidence
+      - Evidence retained:
+        - release-evidence/coverage/
+        - release-evidence/coverage.xml
+      EOF
+  artifacts:
+    when: always
+    paths:
+      - release-evidence/
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
+

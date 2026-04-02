@@ -1,0 +1,105 @@
+{
+  "name": "vi-history-suite",
+  "displayName": "VI History Suite",
+  "description": "VS Code extension for content-detected LabVIEW VI history review in Git repositories.",
+  "version": "0.1.0",
+  "publisher": "svelderrainruiz",
+  "license": "SEE LICENSE IN LICENSE",
+  "private": true,
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other",
+    "SCM Providers"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "onStartupFinished",
+    "onCommand:viHistorySuite.openViHistory"
+  ],
+  "extensionDependencies": [
+    "vscode.git"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "viHistorySuite.openViHistory",
+        "title": "VI History",
+        "category": "VI History"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "viHistorySuite.openViHistory",
+          "group": "3_compare",
+          "when": "gitOpenRepositoryCount >= 1 && viHistorySuite.isWorkspaceTrusted && resourcePath in viHistorySuite.eligiblePaths"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "VI History Suite",
+      "properties": {
+        "viHistorySuite.strictRsrcHeader": {
+          "type": "boolean",
+          "default": false,
+          "description": "When enabled, require the leading RSRC CRLF bytes in addition to LVIN/LVCC at offset 8."
+        },
+        "viHistorySuite.maxIndexedConcurrency": {
+          "type": "number",
+          "default": 6,
+          "minimum": 1,
+          "maximum": 16,
+          "description": "Maximum concurrent eligibility checks during repository indexing."
+        },
+        "viHistorySuite.maxHistoryEntries": {
+          "type": "number",
+          "default": 100,
+          "minimum": 2,
+          "maximum": 500,
+          "description": "Maximum number of history entries to show in the VI History panel."
+        },
+        "viHistorySuite.lvComparePath": {
+          "type": "string",
+          "default": "",
+          "description": "Optional explicit path to LVCompare."
+        },
+        "viHistorySuite.labviewExePath": {
+          "type": "string",
+          "default": "",
+          "description": "Optional explicit path to the preferred LabVIEW executable."
+        },
+        "viHistorySuite.preferBitness": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "x86",
+            "x64"
+          ],
+          "default": "auto",
+          "description": "Preferred LabVIEW bitness when both x86 and x64 are installed."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "clean": "rimraf out coverage",
+    "compile": "tsc -p .",
+    "check": "tsc -p . --noEmit",
+    "pretest": "npm run compile",
+    "test": "vitest run --coverage",
+    "test:watch": "vitest",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^24.6.0",
+    "@types/vscode": "^1.90.0",
+    "@vitest/coverage-v8": "^3.2.4",
+    "@vscode/vsce": "^3.6.2",
+    "@vscode/test-electron": "^2.5.2",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}
