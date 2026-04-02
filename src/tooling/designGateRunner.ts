@@ -5,13 +5,16 @@ import * as path from 'node:path';
 import {
   buildDesignGatePlan,
   designGateCoverageSummaryPath,
+  designGateDevelopmentQueuePath,
   DesignGateReport,
   DesignGateStepResult,
+  DevelopmentQueueEntry,
   designGateReportJsonPath,
   designGateReportMarkdownPath,
   extractAssuranceGateSummary,
   extractWeakestCoverageFocus,
-  renderDesignGateMarkdown
+  renderDesignGateMarkdown,
+  selectNextDevelopmentTranche
 } from './designGate';
 
 export interface DesignGateRunnerDeps {
@@ -67,6 +70,14 @@ export async function runDesignGate(
   }
 
   const coverageFocus = await readDesignGateCoverageFocus(repoRoot, deps.readFile);
+  const nextCoverageFocusEntry =
+    coverageFocus.status === 'available' && coverageFocus.entries.length > 0
+      ? coverageFocus.entries[0]
+      : undefined;
+  const nextTranche =
+    nextCoverageFocusEntry && nextCoverageFocusEntry.linesPct >= 100
+      ? await readDesignGateNextTranche(repoRoot, deps.readFile)
+      : undefined;
 
   const report: DesignGateReport = {
     generatedAt: (deps.now ?? defaultNow)(),
@@ -77,14 +88,49 @@ export async function runDesignGate(
     coverageFocusUnavailableReason:
       coverageFocus.status === 'unavailable' ? coverageFocus.reason : undefined,
     nextFocus:
-      coverageFocus.status === 'available' && coverageFocus.entries.length > 0
-        ? `${coverageFocus.entries[0].relativePath} (${coverageFocus.entries[0].linesPct.toFixed(1)}% lines)`
+      nextCoverageFocusEntry && nextCoverageFocusEntry.linesPct < 100
+        ? `${nextCoverageFocusEntry.relativePath} (${nextCoverageFocusEntry.linesPct.toFixed(1)}% lines)`
         : undefined,
+    nextTranche: nextTranche?.status === 'available' ? `${nextTranche.entry.id}: ${nextTranche.entry.title}` : undefined,
+    nextTrancheUnavailableReason:
+      nextTranche?.status === 'unavailable' ? nextTranche.reason : undefined,
     steps: results
   };
 
   await persistDesignGateReport(repoRoot, report, deps.mkdir, deps.writeFile);
   return report;
+}
+
+export async function readDesignGateNextTranche(
+  repoRoot: string,
+  readFile: DesignGateRunnerDeps['readFile'] = defaultReadFile
+): Promise<
+  | { status: 'available'; entry: DevelopmentQueueEntry }
+  | { status: 'unavailable'; reason: string }
+> {
+  const queuePath = designGateDevelopmentQueuePath(repoRoot);
+
+  try {
+    const queueText = await readFile(queuePath, 'utf8');
+    const parsed = JSON.parse(queueText) as DevelopmentQueueEntry[];
+    const entry = selectNextDevelopmentTranche(parsed);
+    if (!entry) {
+      return {
+        status: 'unavailable',
+        reason: `no-active-or-queued-development-tranche:${queuePath}`
+      };
+    }
+
+    return {
+      status: 'available',
+      entry
+    };
+  } catch (error) {
+    return {
+      status: 'unavailable',
+      reason: `development-queue-unavailable:${queuePath}:${String(error)}`
+    };
+  }
 }
 
 export async function readDesignGateCoverageFocus(

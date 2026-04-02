@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   persistDesignGateReport,
+  readDesignGateNextTranche,
   runDesignGate,
   readDesignGateCoverageFocus,
   spawnDesignGateStep
@@ -241,6 +242,85 @@ describe('designGateRunner', () => {
     expect(writes.get('/tmp/vi-history-suite/.cache/design-gate/latest-report.md')).not.toContain(
       'Next focus:'
     );
+  });
+
+  it('derives the next product tranche from the governed development queue after line coverage is saturated', async () => {
+    const writes = new Map<string, string>();
+
+    const report = await runDesignGate('/tmp/vi-history-suite', {
+      now: () => '2026-04-02T00:00:00.000Z',
+      runStep: async (_command, _args, _cwd, id, title) => ({
+        id,
+        title,
+        command: 'stub',
+        args: [],
+        exitCode: 0,
+        durationMs: 5,
+        stdout:
+          id === 'standards-assurance'
+            ? 'Executive Brief\n- Gate summary: 5 PASS, 0 FAIL, 1 N/A\n'
+            : 'ok',
+        stderr: ''
+      }),
+      readFile: async (filePath) => {
+        if (filePath.endsWith('coverage/coverage-summary.json')) {
+          return JSON.stringify({
+            '/tmp/vi-history-suite/src/indexing/viEligibilityIndexer.ts': {
+              lines: { pct: 100, covered: 227, total: 227 }
+            }
+          });
+        }
+
+        if (filePath.endsWith('docs/product/development-queue.json')) {
+          return JSON.stringify([
+            {
+              id: 'TRANCHE-001',
+              title: 'Wire report preflight into report runtime planning and storage integration',
+              status: 'active',
+              source: 'authoritative research',
+              summary: 'summary'
+            }
+          ]);
+        }
+
+        throw new Error(`unexpected file read: ${filePath}`);
+      },
+      mkdir: async () => undefined,
+      writeFile: async (filePath, contents) => {
+        writes.set(filePath, contents);
+      }
+    });
+
+    expect(report.nextFocus).toBeUndefined();
+    expect(report.nextTranche).toBe(
+      'TRANCHE-001: Wire report preflight into report runtime planning and storage integration'
+    );
+    expect(
+      writes.get('/tmp/vi-history-suite/.cache/design-gate/latest-report.md')
+    ).toContain(
+      'Next tranche: TRANCHE-001: Wire report preflight into report runtime planning and storage integration'
+    );
+  });
+
+  it('reports an explicit unavailable reason when the governed development queue cannot yield a next tranche', async () => {
+    await expect(
+      readDesignGateNextTranche('/tmp/vi-history-suite', async () => '[]')
+    ).resolves.toEqual({
+      status: 'unavailable',
+      reason: 'no-active-or-queued-development-tranche:/tmp/vi-history-suite/docs/product/development-queue.json'
+    });
+  });
+
+  it('reports an explicit unavailable reason when the governed development queue cannot be read', async () => {
+    await expect(
+      readDesignGateNextTranche('/tmp/vi-history-suite', async () => {
+        throw new Error('missing queue');
+      })
+    ).resolves.toEqual({
+      status: 'unavailable',
+      reason:
+        'development-queue-unavailable:/tmp/vi-history-suite/docs/product/development-queue.json:Error: missing queue'
+    });
   });
 
   it('creates the retained report directory recursively before writing JSON and Markdown reports', async () => {

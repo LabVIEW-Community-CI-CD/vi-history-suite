@@ -26,6 +26,8 @@ export interface DesignGateReport {
   coverageFocus?: CoverageFocusEntry[];
   coverageFocusUnavailableReason?: string;
   nextFocus?: string;
+  nextTranche?: string;
+  nextTrancheUnavailableReason?: string;
   steps: DesignGateStepResult[];
 }
 
@@ -34,6 +36,14 @@ export interface CoverageFocusEntry {
   linesPct: number;
   linesCovered: number;
   linesTotal: number;
+}
+
+export interface DevelopmentQueueEntry {
+  id: string;
+  title: string;
+  status: 'active' | 'queued' | 'done';
+  source: string;
+  summary: string;
 }
 
 export function defaultAssuranceScriptPath(): string {
@@ -96,6 +106,10 @@ export function designGateCoverageSummaryPath(repoRoot: string): string {
   return path.join(repoRoot, 'coverage', 'coverage-summary.json');
 }
 
+export function designGateDevelopmentQueuePath(repoRoot: string): string {
+  return path.join(repoRoot, 'docs', 'product', 'development-queue.json');
+}
+
 export function extractWeakestCoverageFocus(
   repoRoot: string,
   coverageSummaryText: string,
@@ -150,6 +164,12 @@ export function renderDesignGateMarkdown(report: DesignGateReport): string {
     lines.push(`- Next focus: ${report.nextFocus}`);
   }
 
+  if (report.nextTranche) {
+    lines.push(`- Next tranche: ${report.nextTranche}`);
+  } else if (report.nextTrancheUnavailableReason) {
+    lines.push(`- Next tranche unavailable: ${report.nextTrancheUnavailableReason}`);
+  }
+
   lines.push(
     '',
     '| Step | Status | Duration (ms) |',
@@ -182,4 +202,10 @@ export function renderDesignGateMarkdown(report: DesignGateReport): string {
   }
 
   return `${lines.join('\n')}\n`;
+}
+
+export function selectNextDevelopmentTranche(
+  entries: DevelopmentQueueEntry[]
+): DevelopmentQueueEntry | undefined {
+  return entries.find((entry) => entry.status === 'active') ?? entries.find((entry) => entry.status === 'queued');
 }

@@ -192,6 +192,12 @@
 - `TEST-UNIT-056`: validate the comparison-report preflight fails closed with
   explicit side-specific blocked reasons when a selected blob is unreadable or
   not a VI
+- `TEST-UNIT-057`: validate the design gate suppresses line-coverage
+  `nextFocus` and promotes the first governed development tranche when source
+  coverage is saturated at 100%
+- `TEST-UNIT-058`: validate the design gate retains an explicit unavailable
+  reason when the governed development queue cannot yield an active or queued
+  tranche
 - `TEST-DOC-003`: review architecture and product docs for the published
   WebviewPanel-only surface, desktop/remote-host boundary, and no-publish
   TimelineProvider policy

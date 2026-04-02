@@ -3,11 +3,13 @@ import { describe, expect, it } from 'vitest';
 import {
   buildDesignGatePlan,
   designGateCoverageSummaryPath,
+  designGateDevelopmentQueuePath,
   designGateReportJsonPath,
   designGateReportMarkdownPath,
   extractWeakestCoverageFocus,
   extractAssuranceGateSummary,
-  renderDesignGateMarkdown
+  renderDesignGateMarkdown,
+  selectNextDevelopmentTranche
 } from '../../src/tooling/designGate';
 
 describe('designGate tooling', () => {
@@ -62,6 +64,9 @@ describe('designGate tooling', () => {
     expect(designGateCoverageSummaryPath('/tmp/vi-history-suite')).toBe(
       '/tmp/vi-history-suite/coverage/coverage-summary.json'
     );
+    expect(designGateDevelopmentQueuePath('/tmp/vi-history-suite')).toBe(
+      '/tmp/vi-history-suite/docs/product/development-queue.json'
+    );
 
     const markdown = renderDesignGateMarkdown({
       generatedAt: '2026-04-02T00:00:00.000Z',
@@ -96,6 +101,30 @@ describe('designGate tooling', () => {
     expect(markdown).toContain('- Next focus: src/indexing/viEligibilityIndexer.ts (20.6% lines)');
     expect(markdown).toContain('| unit-and-coverage | pass | 1234 |');
     expect(markdown).toContain('| src/indexing/viEligibilityIndexer.ts | 20.6% | 41/199 |');
+  });
+
+  it('renders the next tranche when coverage is saturated instead of a fake file-level focus', () => {
+    const markdown = renderDesignGateMarkdown({
+      generatedAt: '2026-04-02T00:00:00.000Z',
+      repoRoot: '/tmp/vi-history-suite',
+      status: 'pass',
+      assuranceGateSummary: '5 PASS, 0 FAIL, 1 N/A',
+      nextTranche: 'TRANCHE-001: Wire report preflight into report runtime planning and storage integration',
+      coverageFocus: [
+        {
+          relativePath: 'src/indexing/viEligibilityIndexer.ts',
+          linesPct: 100,
+          linesCovered: 227,
+          linesTotal: 227
+        }
+      ],
+      steps: []
+    });
+
+    expect(markdown).not.toContain('Next focus:');
+    expect(markdown).toContain(
+      'Next tranche: TRANCHE-001: Wire report preflight into report runtime planning and storage integration'
+    );
   });
 
   it('extracts the weakest covered source files from retained coverage summary data', () => {
@@ -175,5 +204,55 @@ describe('designGate tooling', () => {
     expect(markdown).toContain(
       '- Coverage focus unavailable: coverage-summary-unavailable:/tmp/vi-history-suite/coverage/coverage-summary.json'
     );
+  });
+
+  it('renders an explicit unavailable reason when the next tranche cannot be derived', () => {
+    const markdown = renderDesignGateMarkdown({
+      generatedAt: '2026-04-02T00:00:00.000Z',
+      repoRoot: '/tmp/vi-history-suite',
+      status: 'pass',
+      nextTrancheUnavailableReason:
+        'no-active-or-queued-development-tranche:/tmp/vi-history-suite/docs/product/development-queue.json',
+      coverageFocus: [
+        {
+          relativePath: 'src/indexing/viEligibilityIndexer.ts',
+          linesPct: 100,
+          linesCovered: 227,
+          linesTotal: 227
+        }
+      ],
+      steps: []
+    });
+
+    expect(markdown).toContain(
+      '- Next tranche unavailable: no-active-or-queued-development-tranche:/tmp/vi-history-suite/docs/product/development-queue.json'
+    );
+  });
+
+  it('selects the active development tranche before queued entries', () => {
+    expect(
+      selectNextDevelopmentTranche([
+        {
+          id: 'TRANCHE-002',
+          title: 'Queued',
+          status: 'queued',
+          source: 'authoritative research',
+          summary: 'queued summary'
+        },
+        {
+          id: 'TRANCHE-001',
+          title: 'Active',
+          status: 'active',
+          source: 'authoritative research',
+          summary: 'active summary'
+        }
+      ])
+    ).toEqual({
+      id: 'TRANCHE-001',
+      title: 'Active',
+      status: 'active',
+      source: 'authoritative research',
+      summary: 'active summary'
+    });
   });
 });
