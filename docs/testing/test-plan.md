@@ -138,6 +138,10 @@
 - `TEST-UNIT-035`: validate the core history model default history load returns
   the full available commit chain and leaves the oldest commit without a
   `previousHash`
+- `TEST-UNIT-036`: validate the design-gate runner default filesystem-backed
+  coverage read and retained report persistence without injected file helpers
+- `TEST-UNIT-037`: validate the design-gate spawned-step executor preserves the
+  first settled result and ignores later `error` or `close` events
 - `TEST-DOC-003`: review architecture and product docs for the published
   WebviewPanel-only surface, desktop/remote-host boundary, and no-publish
   TimelineProvider policy

@@ -1,6 +1,9 @@
+import * as fs from 'node:fs/promises';
 import { EventEmitter } from 'node:events';
+import * as os from 'node:os';
+import * as path from 'node:path';
 
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   persistDesignGateReport,
@@ -17,6 +20,14 @@ class FakeChildProcess extends EventEmitter {
   stderr = new FakeReadable();
 }
 
+const tempDirectories: string[] = [];
+
+async function createTempRepoRoot(): Promise<string> {
+  const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-design-gate-'));
+  tempDirectories.push(repoRoot);
+  return repoRoot;
+}
+
 function createWritableCollector() {
   const writes: string[] = [];
 
@@ -30,6 +41,14 @@ function createWritableCollector() {
     }
   };
 }
+
+afterEach(async () => {
+  await Promise.all(
+    tempDirectories.splice(0, tempDirectories.length).map((directory) =>
+      fs.rm(directory, { recursive: true, force: true })
+    )
+  );
+});
 
 describe('designGateRunner', () => {
   it('executes the governed plan, retains the report, and derives the next focus', async () => {
@@ -308,5 +327,83 @@ describe('designGateRunner', () => {
       stdout: '',
       stderr: ''
     });
+  });
+
+  it('uses default filesystem-backed coverage reads and report persistence when helper overrides are omitted', async () => {
+    const repoRoot = await createTempRepoRoot();
+    const coverageRoot = path.join(repoRoot, 'coverage');
+    await fs.mkdir(coverageRoot, { recursive: true });
+    await fs.writeFile(
+      path.join(coverageRoot, 'coverage-summary.json'),
+      JSON.stringify({
+        total: {
+          lines: { pct: 94.38, covered: 84, total: 89 }
+        },
+        [path.join(repoRoot, 'src/services/viHistoryModel.ts')]: {
+          lines: { pct: 86.95, covered: 40, total: 46 }
+        }
+      })
+    );
+
+    const report = await runDesignGate(repoRoot, {
+      runStep: async (_command, _args, _cwd, id, title) => ({
+        id,
+        title,
+        command: 'stub',
+        args: [],
+        exitCode: 0,
+        durationMs: 5,
+        stdout:
+          id === 'standards-assurance'
+            ? 'Executive Brief\n- Gate summary: 5 PASS, 0 FAIL, 1 N/A\n'
+            : 'ok',
+        stderr: ''
+      })
+    });
+
+    expect(report.status).toBe('pass');
+    expect(Date.parse(report.generatedAt)).not.toBeNaN();
+    expect(report.nextFocus).toBe('src/services/viHistoryModel.ts (87.0% lines)');
+
+    const persistedJson = JSON.parse(
+      await fs.readFile(path.join(repoRoot, '.cache', 'design-gate', 'latest-report.json'), 'utf8')
+    );
+    const persistedMarkdown = await fs.readFile(
+      path.join(repoRoot, '.cache', 'design-gate', 'latest-report.md'),
+      'utf8'
+    );
+
+    expect(persistedJson.nextFocus).toBe('src/services/viHistoryModel.ts (87.0% lines)');
+    expect(persistedMarkdown).toContain('Next focus: src/services/viHistoryModel.ts (87.0% lines)');
+  });
+
+  it('ignores late child-process events after the spawned step has already settled', async () => {
+    const child = new FakeChildProcess();
+    const resultPromise = spawnDesignGateStep(
+      'npm',
+      ['run', 'test'],
+      '/tmp/vi-history-suite',
+      'unit-and-coverage',
+      'Unit tests and coverage',
+      {
+        spawnImpl: vi.fn().mockReturnValue(child),
+        nowMs: vi.fn<() => number>().mockReturnValueOnce(100).mockReturnValueOnce(125),
+        stdout: createWritableCollector().writer,
+        stderr: createWritableCollector().writer
+      }
+    );
+
+    child.stdout.emit('data', 'stdout line\n');
+    child.emit('close', 0);
+
+    await expect(resultPromise).resolves.toMatchObject({
+      exitCode: 0,
+      durationMs: 25,
+      stdout: 'stdout line\n',
+      stderr: ''
+    });
+
+    child.stderr.emit('data', 'late stderr\n');
+    child.emit('error', new Error('late failure'));
   });
 });
