@@ -22,6 +22,13 @@ export interface DesignGateRunnerDeps {
   writeFile?: (filePath: string, contents: string) => Promise<void>;
 }
 
+export interface DesignGateStepSpawnDeps {
+  spawnImpl?: typeof spawn;
+  stdout?: Pick<NodeJS.WriteStream, 'write'>;
+  stderr?: Pick<NodeJS.WriteStream, 'write'>;
+  nowMs?: () => number;
+}
+
 export type DesignGateStepExecutor = (
   command: string,
   args: string[],
@@ -128,30 +135,34 @@ export async function spawnDesignGateStep(
   args: string[],
   cwd: string,
   id: string,
-  title: string
+  title: string,
+  deps: DesignGateStepSpawnDeps = {}
 ): Promise<DesignGateStepResult> {
   return new Promise((resolve) => {
-    const startedAt = Date.now();
-    const child = spawn(command, args, {
+    const nowMs = deps.nowMs ?? defaultNowMs;
+    const startedAt = nowMs();
+    const child = (deps.spawnImpl ?? spawn)(command, args, {
       cwd,
       env: process.env,
       stdio: ['ignore', 'pipe', 'pipe']
     });
+    const stdoutWriter = deps.stdout ?? process.stdout;
+    const stderrWriter = deps.stderr ?? process.stderr;
 
     let stdout = '';
     let stderr = '';
     let settled = false;
 
-    child.stdout.on('data', (chunk: Buffer | string) => {
+    child.stdout?.on('data', (chunk: Buffer | string) => {
       const text = String(chunk);
       stdout += text;
-      process.stdout.write(text);
+      stdoutWriter.write(text);
     });
 
-    child.stderr.on('data', (chunk: Buffer | string) => {
+    child.stderr?.on('data', (chunk: Buffer | string) => {
       const text = String(chunk);
       stderr += text;
-      process.stderr.write(text);
+      stderrWriter.write(text);
     });
 
     child.on('error', (error) => {
@@ -167,7 +178,7 @@ export async function spawnDesignGateStep(
         command,
         args,
         exitCode: 1,
-        durationMs: Date.now() - startedAt,
+        durationMs: nowMs() - startedAt,
         stdout,
         stderr
       });
@@ -185,7 +196,7 @@ export async function spawnDesignGateStep(
         command,
         args,
         exitCode: code ?? 1,
-        durationMs: Date.now() - startedAt,
+        durationMs: nowMs() - startedAt,
         stdout,
         stderr
       });
@@ -195,6 +206,10 @@ export async function spawnDesignGateStep(
 
 function defaultNow(): string {
   return new Date().toISOString();
+}
+
+function defaultNowMs(): number {
+  return Date.now();
 }
 
 async function defaultReadFile(filePath: string, encoding: BufferEncoding): Promise<string> {

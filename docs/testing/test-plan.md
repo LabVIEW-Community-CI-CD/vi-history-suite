@@ -90,6 +90,13 @@
 - `TEST-UNIT-020`: validate the eligibility indexer refresh path for untrusted
   clearing, cache reuse, HEAD invalidation, repo/file fail-closed behavior, and
   dynamic repository-state listener handling
+- `TEST-UNIT-021`: validate design-gate runner unavailable-reason handling for
+  coverage summaries with no governed `src/` entries, and retained report
+  persistence through recursive cache-directory creation
+- `TEST-UNIT-022`: validate spawned design-gate step execution retains stdout,
+  stderr, and duration while streaming both channels to the active sinks
+- `TEST-UNIT-023`: validate spawned design-gate step execution fails closed on
+  process errors and `close(null)` termination
 - `TEST-SMOKE-001`: run the canonical harness smoke and retain JSON, Markdown,
   and HTML reports under `.cache/harness-reports/`
 - `TEST-INTEG-001`: run a real VS Code extension host against a temporary Git
