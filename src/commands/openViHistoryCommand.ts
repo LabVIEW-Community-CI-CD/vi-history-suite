@@ -3,6 +3,10 @@ import * as vscode from 'vscode';
 
 import { GitApi } from '../git/gitApi';
 import { ViEligibilityIndexer } from '../indexing/viEligibilityIndexer';
+import {
+  ComparisonReportActionResult,
+  createComparisonReportAction
+} from '../reporting/comparisonReportAction';
 import { ViHistoryService } from '../services/viHistoryService';
 import {
   renderHistoryPanelHtml,
@@ -17,7 +21,11 @@ export function createOpenViHistoryCommand(
   historyService: ViHistoryService,
   eligibilityIndexer: ViEligibilityIndexer,
   gitApi: GitApi | undefined,
-  panelTracker?: HistoryPanelTracker
+  panelTracker?: HistoryPanelTracker,
+  comparisonReportAction?: (request: {
+    model: Awaited<ReturnType<ViHistoryService['load']>>;
+    selectedHash: string;
+  }) => Promise<ComparisonReportActionResult>
 ): (uri?: vscode.Uri) => Promise<void> {
   return async (uri?: vscode.Uri) => {
     const targetUri = uri ?? vscode.window.activeTextEditor?.document.uri;
@@ -84,6 +92,49 @@ export function createOpenViHistoryCommand(
           hash,
           outcome: 'copied-hash',
           copiedHash: hash
+        });
+        return;
+      }
+
+      if (command === 'generateComparisonReport') {
+        if (!comparisonReportAction) {
+          panelTracker?.recordAction({
+            command,
+            hash,
+            outcome: 'unsupported-command'
+          });
+          return;
+        }
+
+        const result = await comparisonReportAction({
+          model,
+          selectedHash: hash
+        });
+
+        if (result.outcome === 'missing-storage-uri') {
+          void vscode.window.showWarningMessage(
+            'VI History comparison reports require an open workspace so reports can be stored under workspace-scoped extension storage.'
+          );
+        } else if (result.outcome === 'missing-selected-commit') {
+          void vscode.window.showInformationMessage(
+            'VI History could not resolve the selected retained revision for report generation.'
+          );
+        } else if (result.outcome === 'missing-previous-hash') {
+          void vscode.window.showInformationMessage(
+            'VI History has no previous retained revision for this entry.'
+          );
+        }
+
+        panelTracker?.recordAction({
+          command,
+          hash,
+          outcome: result.outcome,
+          reportStatus: result.reportStatus,
+          blockedReason: result.blockedReason,
+          reportFilePath: result.reportFilePath,
+          metadataFilePath: result.metadataFilePath,
+          reportWebviewUri: result.reportWebviewUri,
+          title: result.title
         });
         return;
       }

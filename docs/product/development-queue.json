@@ -2,14 +2,14 @@
   {
     "id": "TRANCHE-001",
     "title": "Wire report preflight into report runtime planning and storage integration",
-    "status": "active",
+    "status": "done",
     "source": "authoritative research",
     "summary": "Connect revision-blob preflight to report staging, workspace-scoped storage, and secure webview linking."
   },
   {
     "id": "TRANCHE-002",
     "title": "Implement LabVIEW 2026 Q1 runtime detection and tool selection",
-    "status": "queued",
+    "status": "active",
     "source": "authoritative research",
     "summary": "Detect supported LabVIEW 2026 Q1 tooling and select the correct report-generation path by host and bitness."
   },

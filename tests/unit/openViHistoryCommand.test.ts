@@ -404,6 +404,75 @@ describe('createOpenViHistoryCommand', () => {
     });
   });
 
+  it('handles successful comparison-report panel actions', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    const comparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'opened-comparison-report',
+      reportStatus: 'blocked-preflight',
+      blockedReason: 'right-blob-not-vi',
+      reportFilePath: '/workspace/.storage/reports/repo/file/diff-report-eligible.vi.html',
+      metadataFilePath: '/workspace/.storage/reports/repo/file/report-metadata.json',
+      reportWebviewUri: 'webview:/report',
+      title: 'VI Comparison Report: eligible.vi'
+    });
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Update VI',
+            previousHash: '1111111122222222'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      comparisonReportAction
+    );
+
+    await command(targetUri as never);
+    await tracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReport',
+      hash: 'abcdef1234567890'
+    });
+
+    expect(comparisonReportAction).toHaveBeenCalledWith({
+      model: expect.objectContaining({
+        relativePath: 'eligible.vi'
+      }),
+      selectedHash: 'abcdef1234567890'
+    });
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'generateComparisonReport',
+      hash: 'abcdef1234567890',
+      outcome: 'opened-comparison-report',
+      reportStatus: 'blocked-preflight',
+      blockedReason: 'right-blob-not-vi',
+      reportFilePath: '/workspace/.storage/reports/repo/file/diff-report-eligible.vi.html',
+      metadataFilePath: '/workspace/.storage/reports/repo/file/report-metadata.json',
+      reportWebviewUri: 'webview:/report',
+      title: 'VI Comparison Report: eligible.vi'
+    });
+    expect(showWarningMessageMock).not.toHaveBeenCalled();
+    expect(showInformationMessageMock).not.toHaveBeenCalled();
+  });
+
   it('retains explicit outcomes for missing previous revisions and malformed panel messages', async () => {
     const targetUri = createMockUri('/workspace/eligible.vi');
     const tracker = new HistoryPanelTracker();
@@ -475,6 +544,194 @@ describe('createOpenViHistoryCommand', () => {
 
     expect(clipboardWriteTextMock).not.toHaveBeenCalled();
     expect(executeCommandMock).not.toHaveBeenCalled();
+  });
+
+  it('surfaces a stable warning when comparison-report storage is unavailable', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    const comparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'missing-storage-uri'
+    });
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Update VI',
+            previousHash: '1111111122222222'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      comparisonReportAction
+    );
+
+    await command(targetUri as never);
+    await tracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReport',
+      hash: 'abcdef1234567890'
+    });
+
+    expect(showWarningMessageMock).toHaveBeenCalledWith(
+      'VI History comparison reports require an open workspace so reports can be stored under workspace-scoped extension storage.'
+    );
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'generateComparisonReport',
+      hash: 'abcdef1234567890',
+      outcome: 'missing-storage-uri',
+      reportStatus: undefined,
+      blockedReason: undefined,
+      reportFilePath: undefined,
+      metadataFilePath: undefined,
+      reportWebviewUri: undefined,
+      title: undefined
+    });
+  });
+
+  it('surfaces stable informational outcomes when report generation cannot resolve the retained pair', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    const comparisonReportAction = vi
+      .fn()
+      .mockResolvedValueOnce({
+        outcome: 'missing-selected-commit'
+      })
+      .mockResolvedValueOnce({
+        outcome: 'missing-previous-hash'
+      });
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Update VI',
+            previousHash: '1111111122222222'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      comparisonReportAction
+    );
+
+    await command(targetUri as never);
+    await tracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReport',
+      hash: 'abcdef1234567890'
+    });
+
+    expect(showInformationMessageMock).toHaveBeenCalledWith(
+      'VI History could not resolve the selected retained revision for report generation.'
+    );
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'generateComparisonReport',
+      hash: 'abcdef1234567890',
+      outcome: 'missing-selected-commit',
+      reportStatus: undefined,
+      blockedReason: undefined,
+      reportFilePath: undefined,
+      metadataFilePath: undefined,
+      reportWebviewUri: undefined,
+      title: undefined
+    });
+
+    await tracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReport',
+      hash: 'abcdef1234567890'
+    });
+
+    expect(showInformationMessageMock).toHaveBeenCalledWith(
+      'VI History has no previous retained revision for this entry.'
+    );
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'generateComparisonReport',
+      hash: 'abcdef1234567890',
+      outcome: 'missing-previous-hash',
+      reportStatus: undefined,
+      blockedReason: undefined,
+      reportFilePath: undefined,
+      metadataFilePath: undefined,
+      reportWebviewUri: undefined,
+      title: undefined
+    });
+  });
+
+  it('fails closed when the panel requests report generation but no report action is wired', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Update VI',
+            previousHash: '1111111122222222'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker
+    );
+
+    await command(targetUri as never);
+    await tracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReport',
+      hash: 'abcdef1234567890'
+    });
+
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'generateComparisonReport',
+      hash: 'abcdef1234567890',
+      outcome: 'unsupported-command'
+    });
+    expect(showInformationMessageMock).not.toHaveBeenCalled();
+    expect(showWarningMessageMock).not.toHaveBeenCalled();
   });
 
   it('retains missing-git-uri when the selected revision resolves but the previous revision does not', async () => {

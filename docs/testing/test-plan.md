@@ -198,6 +198,16 @@
 - `TEST-UNIT-058`: validate the design gate retains an explicit unavailable
   reason when the governed development queue cannot yield an active or queued
   tranche
+- `TEST-UNIT-059`: validate the VI History panel exposes `Generate report`
+  only for revisions that have a retained base revision
+- `TEST-UNIT-060`: validate the comparison-report action fails closed when
+  workspace-scoped storage is unavailable and the command surfaces the stable
+  warning
+- `TEST-UNIT-061`: validate the retained comparison-report packet writes the
+  governed report HTML, metadata, staged revision plan, runtime-not-run state,
+  and preflight facts
+- `TEST-UNIT-062`: validate the comparison-report action opens a dedicated
+  report panel with `asWebviewUri` plus narrow `localResourceRoots`
 - `TEST-DOC-003`: review architecture and product docs for the published
   WebviewPanel-only surface, desktop/remote-host boundary, and no-publish
   TimelineProvider policy
@@ -207,6 +217,8 @@
   and HTML reports under `.cache/harness-reports/`
 - `TEST-INTEG-001`: run a real VS Code extension host against a temporary Git
   workspace and prove eligible versus ineligible command flow behavior
+- `TEST-INTEG-002`: run the real extension-host report action and retain the
+  stored comparison-report packet plus action summary under workspace storage
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

@@ -6,6 +6,7 @@ import {
   EligibilityDebugSnapshot,
   ViEligibilityIndexer
 } from './indexing/viEligibilityIndexer';
+import { createComparisonReportAction } from './reporting/comparisonReportAction';
 import { ViHistoryViewModel } from './services/viHistoryModel';
 import { ViHistoryService } from './services/viHistoryService';
 import {
@@ -35,6 +36,7 @@ export async function activate(
   const eligibilityIndexer = new ViEligibilityIndexer(gitApi);
   const historyService = new ViHistoryService(gitApi);
   const panelTracker = new HistoryPanelTracker();
+  const comparisonReportAction = createComparisonReportAction(context);
 
   context.subscriptions.push(eligibilityIndexer);
 
@@ -45,7 +47,8 @@ export async function activate(
         historyService,
         eligibilityIndexer,
         gitApi,
-        panelTracker
+        panelTracker,
+        comparisonReportAction
       )
     )
   );

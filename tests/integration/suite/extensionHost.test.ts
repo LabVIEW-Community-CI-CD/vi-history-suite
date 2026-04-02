@@ -115,6 +115,7 @@ async function testPanelOpenFlow(
   assert.match(panel.renderedHtml, /data-testid="history-compare-pair"/);
   assert.match(panel.renderedHtml, /data-testid="history-action-open"/);
   assert.match(panel.renderedHtml, /data-testid="history-action-diff"/);
+  assert.match(panel.renderedHtml, /data-testid="history-action-report"/);
   assert.match(panel.renderedHtml, /data-testid="history-action-copy"/);
   assert.match(panel.renderedHtml, /data-testid="history-action-copy-review-packet"/);
   assert.match(panel.renderedHtml, /Eligible/);
@@ -125,6 +126,7 @@ async function testPanelOpenFlow(
   assert.match(panel.renderedHtml, /Confidence and scope:/);
   assert.match(panel.renderedHtml, /Local Git history, tracked-file status, and content-detected VI signature checks\./);
   assert.match(panel.renderedHtml, /Direct local evidence for chronology, path provenance, retained hashes, and command routing\./);
+  assert.match(panel.renderedHtml, /report preflight planning/);
   assert.match(panel.renderedHtml, /Needs external comparison tooling:/);
   assert.match(panel.renderedHtml, /Binary semantic differences, visual or cosmetic change detection, and NI comparison-report output\./);
   assert.match(panel.renderedHtml, /Selected:<\/strong> <code>[0-9a-f]{8}<\/code> <strong>vs base:<\/strong> <code>[0-9a-f]{8}<\/code>/);
@@ -192,6 +194,24 @@ async function testPanelOpenFlow(
     /^eligible-content-detected\.bin \([0-9a-f]{8}\.\.[0-9a-f]{8}\)$/
   );
   assert.equal(api.getPanelActionCount(), 4);
+
+  await api.dispatchLastPanelMessage({
+    command: 'generateComparisonReport',
+    hash: selectedCommit.hash
+  });
+  const reportAction = api.getLastPanelActionSummary();
+  assert.ok(reportAction);
+  assert.equal(reportAction.command, 'generateComparisonReport');
+  assert.equal(reportAction.hash, selectedCommit.hash);
+  assert.equal(reportAction.outcome, 'opened-comparison-report');
+  assert.match(reportAction.title ?? '', /^VI Comparison Report:/);
+  assert.match(reportAction.reportFilePath ?? '', /diff-report-eligible-content-detected\.bin\.html$/);
+  assert.match(reportAction.metadataFilePath ?? '', /report-metadata\.json$/);
+  assert.ok(reportAction.reportWebviewUri);
+  assert.ok(reportAction.reportStatus);
+  assert.ok(await fs.readFile(reportAction.reportFilePath ?? '', 'utf8'));
+  assert.ok(await fs.readFile(reportAction.metadataFilePath ?? '', 'utf8'));
+  assert.equal(api.getPanelActionCount(), 5);
 }
 
 async function waitFor(

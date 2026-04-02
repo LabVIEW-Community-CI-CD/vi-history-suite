@@ -8,6 +8,9 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
       const diffButton = commit.previousHash
         ? `<button data-testid="history-action-diff" data-command="diffPrevious" data-hash="${escapeHtml(commit.hash)}">Diff prev</button>`
         : '<button data-testid="history-action-diff" disabled>Diff prev</button>';
+      const reportButton = commit.previousHash
+        ? `<button data-testid="history-action-report" data-command="generateComparisonReport" data-hash="${escapeHtml(commit.hash)}">Generate report</button>`
+        : '<button data-testid="history-action-report" disabled>Generate report</button>';
       const compareBase = commit.previousHash
         ? `<div data-testid="history-compare-pair"><strong>Selected:</strong> <code>${escapeHtml(commit.hash.slice(0, 8))}</code> <strong>vs base:</strong> <code>${escapeHtml(commit.previousHash.slice(0, 8))}</code></div>`
         : 'Oldest retained revision';
@@ -22,6 +25,7 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
           <td data-testid="history-commit-actions">
             <button data-testid="history-action-open" data-command="openCommit" data-hash="${escapeHtml(commit.hash)}">Open@commit</button>
             ${diffButton}
+            ${reportButton}
             <button data-testid="history-action-copy" data-command="copyHash" data-hash="${escapeHtml(commit.hash)}">Copy hash</button>
           </td>
         </tr>
@@ -140,7 +144,7 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
       <div class="confidence-grid">
         <div data-testid="history-confidence-basis"><strong>Basis:</strong> Local Git history, tracked-file status, and content-detected VI signature checks.</div>
         <div data-testid="history-confidence-rating"><strong>Confidence:</strong> Direct local evidence for chronology, path provenance, retained hashes, and command routing.</div>
-        <div data-testid="history-scope-included"><strong>Included here:</strong> Repository/path facts, retained commit chronology, selected-versus-base pairing, and VS Code action delegation.</div>
+        <div data-testid="history-scope-included"><strong>Included here:</strong> Repository/path facts, retained commit chronology, selected-versus-base pairing, report preflight planning, and VS Code action delegation.</div>
         <div data-testid="history-scope-excluded"><strong>Needs external comparison tooling:</strong> Binary semantic differences, visual or cosmetic change detection, and NI comparison-report output.</div>
       </div>
     </div>
@@ -203,7 +207,7 @@ export function renderHistoryReviewPacketText(model: ViHistoryViewModel): string
     `Oldest retained commit: ${renderCommitSummary(oldestCommit)}`,
     'Confidence and scope:',
     '- Basis: local Git history, tracked-file status, and content-detected VI signature checks.',
-    '- Included here: chronology, path provenance, retained hashes, compare pairs, and command routing.',
+    '- Included here: chronology, path provenance, retained hashes, compare pairs, report preflight planning, and command routing.',
     '- Needs external comparison tooling: binary semantic differences, visual or cosmetic change detection, and NI comparison-report output.',
     'Retained compare pairs:',
     comparePairs

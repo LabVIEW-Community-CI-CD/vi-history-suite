@@ -35,6 +35,7 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('Improve deployment behavior');
     expect(html).toContain('Open@commit');
     expect(html).toContain('Diff prev');
+    expect(html).toContain('Generate report');
     expect(html).toContain('Copy hash');
     expect(html).toContain('Copy review packet');
     expect(html).toContain('data-testid="history-status"');
@@ -57,6 +58,7 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('data-testid="history-compare-pair"');
     expect(html).toContain('data-testid="history-action-open"');
     expect(html).toContain('data-testid="history-action-diff"');
+    expect(html).toContain('data-testid="history-action-report"');
     expect(html).toContain('data-testid="history-action-copy"');
     expect(html).toContain('Newest commit first');
     expect(html).toContain('Oldest retained revision');
@@ -100,7 +102,7 @@ describe('renderHistoryPanelHtml', () => {
     expect(reviewPacket).toContain('Path: Tooling/deployment/VIP_Pre-Install Custom Action.vi');
     expect(reviewPacket).toContain('Retained revisions: 2');
     expect(reviewPacket).toContain('Confidence and scope:');
-    expect(reviewPacket).toContain('Included here: chronology, path provenance, retained hashes, compare pairs, and command routing.');
+    expect(reviewPacket).toContain('Included here: chronology, path provenance, retained hashes, compare pairs, report preflight planning, and command routing.');
     expect(reviewPacket).toContain('Needs external comparison tooling: binary semantic differences, visual or cosmetic change detection, and NI comparison-report output.');
     expect(reviewPacket).toContain('- abcdef12 vs 11111111 :: Improve deployment behavior');
     expect(reviewPacket).toContain('- 11111111 :: oldest retained revision :: Initial deployment behavior');

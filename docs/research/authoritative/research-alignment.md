@@ -22,7 +22,7 @@
 | Webview history panel with `Open at commit`, `Diff vs previous`, `Copy hash` | aligned | `src/ui/historyPanel.ts`; `src/commands/openViHistoryCommand.ts`; `VHS-REQ-016..018`; `VHS-REQ-027..040` | sustain |
 | Verify both revision blobs are VIs before compare/report generation | aligned in this tranche | `src/reporting/comparisonReportPreflight.ts`; `VHS-REQ-127..129` | wire preflight into report-generation runtime path |
 | Generate report with `{type}-report-{fullFilename}.html` | partial | `src/reporting/comparisonReportPlan.ts`; `VHS-REQ-100` | wire planner into runtime execution |
-| Store generated reports under `context.storageUri` and surface via `asWebviewUri` plus `localResourceRoots` | partial | `src/reporting/comparisonReportPlan.ts`; `VHS-REQ-102`; ADR-0003; ADR-0004 | add report store and webview integration tranche |
+| Store retained report packets under `context.storageUri` and surface them via `asWebviewUri` plus `localResourceRoots` | aligned in this tranche | `src/reporting/comparisonReportPacket.ts`; `src/reporting/comparisonReportAction.ts`; `VHS-REQ-134..137` | wire actual LabVIEW runtime execution into the stored packet path |
 | LabVIEW 2026 Q1 32/64 runtime detection and selection | missing | settings placeholders only in `package.json` | add governed runtime-detection tranche |
 | Status-bar progress item plus richer percent/items/ETA progress UX | partial | `src/indexing/viEligibilityIndexer.ts` currently uses `window.withProgress` only | add governed progress tranche |
 | Manifest trust declaration through `capabilities.untrustedWorkspaces` | aligned in this tranche | `package.json`; `VHS-REQ-084`; `tests/unit/packageManifest.test.ts` | sustain |
@@ -32,11 +32,8 @@
 
 ## Recommended Order
 
-1. Report-generation governance:
-   - blob verification
-   - runtime wiring from the pure planner
-   - storage and webview linking
-2. LabVIEW 2026 Q1 runtime/tool selection
+1. LabVIEW 2026 Q1 runtime/tool selection
+2. Runtime wiring from the pure planner into actual NI report execution
 3. Progress-surface uplift
 4. Explicit architecture decision for proposed APIs and desktop-only scope
 5. Packaging and release guidance aligned to the refreshed authoritative research

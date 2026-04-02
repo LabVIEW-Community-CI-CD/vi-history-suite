@@ -15,8 +15,11 @@ export interface HistoryPanelActionSummary {
     | 'copied-review-packet'
     | 'opened-commit'
     | 'diffed-previous'
+    | 'opened-comparison-report'
     | 'ignored-missing-hash'
     | 'missing-git-uri'
+    | 'missing-selected-commit'
+    | 'missing-storage-uri'
     | 'missing-previous-hash'
     | 'unsupported-command';
   openedUri?: string;
@@ -25,6 +28,11 @@ export interface HistoryPanelActionSummary {
   title?: string;
   copiedHash?: string;
   copiedTextLength?: number;
+  reportStatus?: 'ready-for-runtime' | 'blocked-preflight';
+  blockedReason?: string;
+  reportFilePath?: string;
+  metadataFilePath?: string;
+  reportWebviewUri?: string;
 }
 
 export interface OpenedHistoryPanelSummary {
