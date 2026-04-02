@@ -8,20 +8,27 @@ export interface OpenedHistoryPanelSummary {
   relativePath: string;
   commitCount: number;
   eligible: boolean;
+  renderedHtml: string;
 }
 
 export class HistoryPanelTracker {
   private lastOpenedPanel: OpenedHistoryPanelSummary | undefined;
   private openCount = 0;
 
-  record(panel: vscode.WebviewPanel, targetUri: vscode.Uri, model: ViHistoryViewModel): void {
+  record(
+    panel: vscode.WebviewPanel,
+    targetUri: vscode.Uri,
+    model: ViHistoryViewModel,
+    renderedHtml: string
+  ): void {
     this.openCount += 1;
     this.lastOpenedPanel = {
       title: panel.title,
       targetFsPath: targetUri.fsPath,
       relativePath: model.relativePath,
       commitCount: model.commits.length,
-      eligible: model.eligible
+      eligible: model.eligible,
+      renderedHtml
     };
   }
 
@@ -38,4 +45,3 @@ export class HistoryPanelTracker {
     this.openCount = 0;
   }
 }
-

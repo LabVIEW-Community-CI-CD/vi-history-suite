@@ -94,6 +94,19 @@ async function testPanelOpenFlow(
   assert.equal(panel.eligible, true);
   assert.match(panel.title, /^VI History:/);
   assert.equal(api.getOpenHistoryPanelCount(), 1);
+  assert.match(panel.renderedHtml, /data-testid="history-status"/);
+  assert.match(panel.renderedHtml, /data-testid="history-meta-repository"/);
+  assert.match(panel.renderedHtml, /data-testid="history-meta-path"/);
+  assert.match(panel.renderedHtml, /data-testid="history-table"/);
+  assert.match(panel.renderedHtml, /data-testid="history-row"/);
+  assert.match(panel.renderedHtml, /data-testid="history-action-open"/);
+  assert.match(panel.renderedHtml, /data-testid="history-action-diff"/);
+  assert.match(panel.renderedHtml, /data-testid="history-action-copy"/);
+  assert.match(panel.renderedHtml, /Eligible/);
+  assert.match(panel.renderedHtml, /LVIN/);
+  assert.match(panel.renderedHtml, /fixtures\/eligible-content-detected\.bin/);
+  assert.match(panel.renderedHtml, /Update eligible fixture/);
+  assert.match(panel.renderedHtml, /Add initial integration fixtures/);
 }
 
 async function waitFor(

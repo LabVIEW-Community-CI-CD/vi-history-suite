@@ -34,6 +34,7 @@ export function createOpenViHistoryCommand(
     }
 
     const model = await historyService.load(targetUri);
+    const renderedHtml = renderHistoryPanelHtml(model);
     const panel = vscode.window.createWebviewPanel(
       'viHistorySuite.history',
       `VI History: ${path.basename(targetUri.fsPath)}`,
@@ -43,8 +44,8 @@ export function createOpenViHistoryCommand(
       }
     );
 
-    panelTracker?.record(panel, targetUri, model);
-    panel.webview.html = renderHistoryPanelHtml(model);
+    panel.webview.html = renderedHtml;
+    panelTracker?.record(panel, targetUri, model, renderedHtml);
 
     panel.webview.onDidReceiveMessage(async (message) => {
       const hash = String(message.hash ?? '');

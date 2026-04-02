@@ -47,7 +47,9 @@
 - `TEST-UNIT-003`: prove cache-key and concurrency helpers behave deterministically
 - `TEST-UNIT-004`: render a history panel with factual metadata and action hooks
 - `TEST-INTEG-001`: activate extension, compute eligibility context, and open
-  the history panel for an eligible file
+  the history panel for an eligible file, then assert the rendered HTML retains
+  stable semantic anchors plus factual eligibility, signature, path, and commit
+  subjects
 - `TEST-INTEG-002`: validate non-file URI detection fallback behavior
 - `TEST-UNIT-005`: build a temporary Git repo with a content-detected VI and
   assert the shared core history model returns eligible history

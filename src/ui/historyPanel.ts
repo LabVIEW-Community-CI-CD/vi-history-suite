@@ -2,21 +2,21 @@ import { ViHistoryCommit, ViHistoryViewModel } from '../services/viHistoryModel'
 
 export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
   const rows = model.commits
-    .map((commit: ViHistoryCommit) => {
+    .map((commit: ViHistoryCommit, index: number) => {
       const diffButton = commit.previousHash
-        ? `<button data-command="diffPrevious" data-hash="${escapeHtml(commit.hash)}">Diff prev</button>`
-        : '<button disabled>Diff prev</button>';
+        ? `<button data-testid="history-action-diff" data-command="diffPrevious" data-hash="${escapeHtml(commit.hash)}">Diff prev</button>`
+        : '<button data-testid="history-action-diff" disabled>Diff prev</button>';
 
       return `
-        <tr>
-          <td><code>${escapeHtml(commit.hash.slice(0, 8))}</code></td>
-          <td>${escapeHtml(commit.authorDate)}</td>
-          <td>${escapeHtml(commit.authorName)}</td>
-          <td>${escapeHtml(commit.subject)}</td>
-          <td>
-            <button data-command="openCommit" data-hash="${escapeHtml(commit.hash)}">Open@commit</button>
+        <tr data-testid="history-row" data-commit-index="${index}">
+          <td data-testid="history-commit-hash"><code>${escapeHtml(commit.hash.slice(0, 8))}</code></td>
+          <td data-testid="history-commit-date">${escapeHtml(commit.authorDate)}</td>
+          <td data-testid="history-commit-author">${escapeHtml(commit.authorName)}</td>
+          <td data-testid="history-commit-subject">${escapeHtml(commit.subject)}</td>
+          <td data-testid="history-commit-actions">
+            <button data-testid="history-action-open" data-command="openCommit" data-hash="${escapeHtml(commit.hash)}">Open@commit</button>
             ${diffButton}
-            <button data-command="copyHash" data-hash="${escapeHtml(commit.hash)}">Copy hash</button>
+            <button data-testid="history-action-copy" data-command="copyHash" data-hash="${escapeHtml(commit.hash)}">Copy hash</button>
           </td>
         </tr>
       `;
@@ -64,18 +64,18 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
     </style>
   </head>
   <body>
-    <div class="status">
-      <strong>Eligibility:</strong> ${model.eligible ? 'Eligible' : 'Not eligible'}<br />
-      <strong>Signature:</strong> ${escapeHtml(model.signature)}<br />
-      <strong>Commits:</strong> ${model.commits.length}
+    <div class="status" data-testid="history-status">
+      <strong>Eligibility:</strong> <span data-testid="history-status-eligibility">${model.eligible ? 'Eligible' : 'Not eligible'}</span><br />
+      <strong>Signature:</strong> <span data-testid="history-status-signature">${escapeHtml(model.signature)}</span><br />
+      <strong>Commits:</strong> <span data-testid="history-status-commit-count">${model.commits.length}</span>
     </div>
-    <div class="meta">
-      <div><strong>Repository:</strong> ${escapeHtml(model.repositoryName)}</div>
-      <div><strong>Root:</strong> ${escapeHtml(model.repositoryRoot)}</div>
-      <div><strong>Path:</strong> ${escapeHtml(model.relativePath)}</div>
-      <div><strong>Surface:</strong> VI History</div>
+    <div class="meta" data-testid="history-meta">
+      <div data-testid="history-meta-repository"><strong>Repository:</strong> ${escapeHtml(model.repositoryName)}</div>
+      <div data-testid="history-meta-root"><strong>Root:</strong> ${escapeHtml(model.repositoryRoot)}</div>
+      <div data-testid="history-meta-path"><strong>Path:</strong> ${escapeHtml(model.relativePath)}</div>
+      <div data-testid="history-meta-surface"><strong>Surface:</strong> VI History</div>
     </div>
-    <table>
+    <table data-testid="history-table">
       <thead>
         <tr>
           <th>Commit</th>

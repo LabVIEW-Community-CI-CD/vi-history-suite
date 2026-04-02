@@ -27,6 +27,12 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('Open@commit');
     expect(html).toContain('Diff prev');
     expect(html).toContain('Copy hash');
+    expect(html).toContain('data-testid="history-status"');
+    expect(html).toContain('data-testid="history-meta-repository"');
+    expect(html).toContain('data-testid="history-meta-path"');
+    expect(html).toContain('data-testid="history-row"');
+    expect(html).toContain('data-testid="history-action-open"');
+    expect(html).toContain('data-testid="history-action-diff"');
+    expect(html).toContain('data-testid="history-action-copy"');
   });
 });
-
