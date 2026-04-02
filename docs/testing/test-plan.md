@@ -142,6 +142,8 @@
   coverage read and retained report persistence without injected file helpers
 - `TEST-UNIT-037`: validate the design-gate spawned-step executor preserves the
   first settled result and ignores later `error` or `close` events
+- `TEST-UNIT-038`: validate the canonical harness registry rejects unknown
+  harness identifiers with a stable fail-closed error
 - `TEST-DOC-003`: review architecture and product docs for the published
   WebviewPanel-only surface, desktop/remote-host boundary, and no-publish
   TimelineProvider policy

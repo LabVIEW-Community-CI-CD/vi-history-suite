@@ -13,6 +13,12 @@ describe('canonical harness definitions', () => {
   it('returns the canonical harness by id', () => {
     expect(getCanonicalHarnessDefinition('HARNESS-VHS-001')).toEqual(HARNESS_VHS_001);
   });
+
+  it('fails closed for unknown harness ids', () => {
+    expect(() => getCanonicalHarnessDefinition('HARNESS-VHS-999')).toThrowError(
+      'Unknown harness id: HARNESS-VHS-999'
+    );
+  });
 });
 
 describe('harness smoke renderers', () => {
@@ -62,4 +68,3 @@ describe('harness smoke renderers', () => {
     expect(html).toContain('First subject');
   });
 });
-
