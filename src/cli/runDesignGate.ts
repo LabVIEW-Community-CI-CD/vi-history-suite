@@ -34,9 +34,21 @@ export async function runDesignGateCli(
   return report;
 }
 
+export async function runDesignGateCliMain(
+  deps: RunDesignGateCliDeps = {},
+  stderr: Pick<NodeJS.WriteStream, 'write'> = process.stderr
+): Promise<number> {
+  try {
+    await runDesignGateCli(deps);
+    return 0;
+  } catch (error) {
+    reportRunDesignGateCliFailure(error, stderr);
+    return 1;
+  }
+}
+
 if (require.main === module) {
-  void runDesignGateCli().catch((error) => {
-    reportRunDesignGateCliFailure(error);
-    process.exitCode = 1;
+  void runDesignGateCliMain().then((exitCode) => {
+    process.exitCode = exitCode;
   });
 }

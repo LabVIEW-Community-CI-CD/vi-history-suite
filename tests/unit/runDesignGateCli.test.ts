@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   reportRunDesignGateCliFailure,
   resolveRunDesignGateRepoRoot,
+  runDesignGateCliMain,
   runDesignGateCli
 } from '../../src/cli/runDesignGate';
 
@@ -58,5 +59,47 @@ describe('runDesignGateCli', () => {
     );
     expect(reportRunDesignGateCliFailure('string failure', stderr)).toBe('string failure');
     expect(writes).toEqual(['design gate failed\n', 'string failure\n']);
+  });
+
+  it('returns process-style exit codes for success and failure in the CLI main helper', async () => {
+    const writes: string[] = [];
+    const stderr = {
+      write(text: string) {
+        writes.push(text);
+        return true;
+      }
+    };
+
+    await expect(
+      runDesignGateCliMain(
+        {
+          repoRoot: '/tmp/vi-history-suite',
+          runner: async () => ({
+            generatedAt: '2026-04-02T00:00:00.000Z',
+            repoRoot: '/tmp/vi-history-suite',
+            status: 'pass',
+            steps: []
+          })
+        },
+        stderr
+      )
+    ).resolves.toBe(0);
+
+    await expect(
+      runDesignGateCliMain(
+        {
+          repoRoot: '/tmp/vi-history-suite',
+          runner: async () => ({
+            generatedAt: '2026-04-02T00:00:00.000Z',
+            repoRoot: '/tmp/vi-history-suite',
+            status: 'fail',
+            steps: []
+          })
+        },
+        stderr
+      )
+    ).resolves.toBe(1);
+
+    expect(writes).toEqual(['design gate failed\n']);
   });
 });
