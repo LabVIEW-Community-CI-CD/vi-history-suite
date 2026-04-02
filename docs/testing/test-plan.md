@@ -68,6 +68,11 @@
   when a gated step stops the sequence before completion
 - `TEST-UNIT-010`: validate the CLI entrypoint delegates to the shared
   design-gate runner and throws on a failed retained report
+- `TEST-UNIT-011`: validate `VI History` command entry handling for missing
+  target, untrusted workspace, and ineligible-file conditions
+- `TEST-UNIT-012`: validate `VI History` panel-action handling for missing Git
+  URIs, missing previous revisions, hashless messages, and unsupported
+  commands
 - `TEST-SMOKE-001`: run the canonical harness smoke and retain JSON, Markdown,
   and HTML reports under `.cache/harness-reports/`
 - `TEST-INTEG-001`: run a real VS Code extension host against a temporary Git

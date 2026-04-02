@@ -22,6 +22,9 @@ export function createOpenViHistoryCommand(
   return async (uri?: vscode.Uri) => {
     const targetUri = uri ?? vscode.window.activeTextEditor?.document.uri;
     if (!targetUri) {
+      void vscode.window.showInformationMessage(
+        'Select a tracked LabVIEW VI to open VI History.'
+      );
       return;
     }
 
@@ -87,6 +90,9 @@ export function createOpenViHistoryCommand(
 
       const gitUri = gitApi?.toGitUri(targetUri, hash);
       if (!gitUri) {
+        void vscode.window.showWarningMessage(
+          'VI History could not resolve the selected Git revision.'
+        );
         panelTracker?.recordAction({
           command,
           hash,
@@ -111,6 +117,9 @@ export function createOpenViHistoryCommand(
       if (command === 'diffPrevious') {
         const selectedCommit = model.commits.find((commit) => commit.hash === hash);
         if (!selectedCommit?.previousHash) {
+          void vscode.window.showInformationMessage(
+            'VI History has no previous retained revision for this entry.'
+          );
           panelTracker?.recordAction({
             command,
             hash,
