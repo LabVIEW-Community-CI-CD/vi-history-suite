@@ -1,4 +1,3 @@
-import * as fs from 'node:fs/promises';
 import * as vscode from 'vscode';
 
 import {
@@ -8,24 +7,13 @@ import {
   VI_MAGIC_LENGTH,
   VI_MAGIC_OFFSET
 } from './viMagicCore';
+import { readViProbeBytesFromFsPath } from './viFile';
 
 const MINIMUM_HEADER_LENGTH = VI_MAGIC_OFFSET + VI_MAGIC_LENGTH;
 
 export async function readViProbeBytes(uri: vscode.Uri): Promise<Uint8Array> {
   if (uri.scheme === 'file') {
-    const fileHandle = await fs.open(uri.fsPath, 'r');
-    try {
-      const buffer = Buffer.alloc(MINIMUM_HEADER_LENGTH);
-      const { bytesRead } = await fileHandle.read(
-        buffer,
-        0,
-        MINIMUM_HEADER_LENGTH,
-        0
-      );
-      return buffer.subarray(0, bytesRead);
-    } finally {
-      await fileHandle.close();
-    }
+    return readViProbeBytesFromFsPath(uri.fsPath);
   }
 
   const bytes = await vscode.workspace.fs.readFile(uri);

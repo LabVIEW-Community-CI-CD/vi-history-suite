@@ -38,6 +38,7 @@
 | Extension runtime | indexing, command execution, trust gating | TypeScript / Node |
 | Git adapter | tracked-file and history queries | Git CLI plus built-in Git API |
 | Review UI | history presentation and review actions | WebviewPanel |
+| Harness smoke runner | clone-on-demand canonical harness verification | TypeScript / Node CLI |
 | Governance pack | requirements, tests, ADRs, traceability | Markdown / CSV |
 
 ## Component View
@@ -49,6 +50,7 @@
 | History service | Extension runtime | load commit history for the selected file |
 | History panel | Review UI | render factual commit review surface |
 | Git CLI adapter | Git adapter | execute and parse bounded Git commands |
+| Harness smoke command | Harness smoke runner | clone the canonical harness and emit factual local reports |
 
 ## Deployment View
 
@@ -80,4 +82,3 @@
 
 - [ADR-0001](./adr/ADR-0001-vscode-typescript-baseline.md): TypeScript-first
   VS Code desktop extension baseline
-

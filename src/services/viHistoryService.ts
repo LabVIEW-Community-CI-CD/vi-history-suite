@@ -1,59 +1,26 @@
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 
-import { detectViSignatureFromUri } from '../domain/viMagic';
-import { ViSignature } from '../domain/viMagicCore';
 import { GitApi } from '../git/gitApi';
+import { getRepoRoot } from '../git/gitCli';
 import {
-  getFileHistoryEntries,
-  getRepoRoot,
-  GitHistoryEntry,
-  normalizeRelativeGitPath
-} from '../git/gitCli';
-
-export interface ViHistoryCommit extends GitHistoryEntry {
-  previousHash?: string;
-}
-
-export interface ViHistoryViewModel {
-  repositoryName: string;
-  repositoryRoot: string;
-  relativePath: string;
-  signature: ViSignature | 'unknown';
-  eligible: boolean;
-  commits: ViHistoryCommit[];
-}
+  loadViHistoryViewModelFromFsPath,
+  ViHistoryViewModel
+} from './viHistoryModel';
 
 export class ViHistoryService {
   constructor(private readonly gitApi: GitApi | undefined) {}
 
   async load(uri: vscode.Uri): Promise<ViHistoryViewModel> {
-    const repositoryRoot = await this.resolveRepositoryRoot(uri);
-    const relativePath = normalizeRelativeGitPath(path.relative(repositoryRoot, uri.fsPath));
-    const historyLimit = vscode.workspace
-      .getConfiguration('viHistorySuite')
-      .get<number>('maxHistoryEntries', 100);
-
-    const signature =
-      (await detectViSignatureFromUri(uri, {
-        strictRsrcHeader: vscode.workspace
-          .getConfiguration('viHistorySuite')
-          .get<boolean>('strictRsrcHeader', false)
-      })) ?? 'unknown';
-
-    const commits = await getFileHistoryEntries(repositoryRoot, relativePath, historyLimit);
-
-    return {
-      repositoryName: path.basename(repositoryRoot),
-      repositoryRoot,
-      relativePath,
-      signature,
-      eligible: commits.length >= 2 && signature !== 'unknown',
-      commits: commits.map((commit, index) => ({
-        ...commit,
-        previousHash: commits[index + 1]?.hash
-      }))
-    };
+    return loadViHistoryViewModelFromFsPath(uri.fsPath, {
+      repoRoot: await this.resolveRepositoryRoot(uri),
+      strictRsrcHeader: vscode.workspace
+        .getConfiguration('viHistorySuite')
+        .get<boolean>('strictRsrcHeader', false),
+      historyLimit: vscode.workspace
+        .getConfiguration('viHistorySuite')
+        .get<number>('maxHistoryEntries', 100)
+    });
   }
 
   toGitUri(uri: vscode.Uri, ref: string): vscode.Uri | undefined {

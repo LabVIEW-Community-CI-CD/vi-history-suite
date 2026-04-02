@@ -29,6 +29,7 @@ captured in [docs/research/extension-design-summary.md](./docs/research/extensio
 npm ci
 npm run compile
 npm run test
+npm run harness:smoke
 ```
 
 ## Current Scope
@@ -39,12 +40,26 @@ Included in the first baseline:
 - content-based VI detection for `LVIN` / `LVCC` at offset `8`
 - Git-backed eligibility indexing using tracked files and bounded file history
 - basic webview history panel with commit list and review actions
+- clone-on-demand canonical harness smoke for real Git-backed VI history
 
 Deferred beyond the first baseline:
 
 - LabVIEW comparison report generation
 - timeline-provider integration
 - marketplace publishing and release automation beyond local CI
+
+## Canonical Harness Smoke
+
+The repo includes a clone-on-demand smoke path for the first real-history
+harness:
+
+```bash
+npm run harness:smoke
+```
+
+That command clones `ni/labview-icon-editor` into the repo-local ignored cache
+when needed, evaluates the canonical target VI with the same core history logic
+used by the extension, and writes factual smoke reports under `.cache/`.
 
 ## License
 

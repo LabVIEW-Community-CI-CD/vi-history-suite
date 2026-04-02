@@ -24,3 +24,17 @@
 - prove there are at least two modifying commits
 - open the history panel against the selected file
 
+### Local Smoke Path
+
+- command: `npm run harness:smoke`
+- clone policy: clone on demand into `.cache/harnesses/`
+- retained outputs:
+  - `.cache/harness-reports/HARNESS-VHS-001/report.json`
+  - `.cache/harness-reports/HARNESS-VHS-001/report.md`
+  - `.cache/harness-reports/HARNESS-VHS-001/report.html`
+
+### Constraints
+
+- do not vendor `ni/labview-icon-editor` into this repository
+- do not rely on comparevi repositories to exercise the first live harness
+- use the same core history-model logic for extension runtime and harness smoke

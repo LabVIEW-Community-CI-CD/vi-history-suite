@@ -5,4 +5,5 @@ coverage/
 .vscode-test/
 *.vsix
 *.log
-
+.cache/
+tmp/

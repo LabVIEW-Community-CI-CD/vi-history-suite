@@ -1,14 +1,9 @@
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 
-import { detectViSignatureFromUri } from '../domain/viMagic';
 import { GitApi, GitRepository } from '../git/gitApi';
-import {
-  getFileCommitHashes,
-  getRepoHead,
-  listTrackedFiles,
-  normalizeRelativeGitPath
-} from '../git/gitCli';
+import { getRepoHead, listTrackedFiles, normalizeRelativeGitPath } from '../git/gitCli';
+import { evaluateViEligibilityForFsPath } from '../services/viHistoryModel';
 
 type EligibilityMap = Record<string, true>;
 
@@ -92,6 +87,7 @@ export class ViEligibilityIndexer implements vscode.Disposable {
       return;
     }
 
+    const gitApi = this.gitApi;
     const nextEligiblePaths: EligibilityMap = {};
 
     await vscode.window.withProgress(
@@ -100,7 +96,7 @@ export class ViEligibilityIndexer implements vscode.Disposable {
         title: 'Indexing LabVIEW VIs'
       },
       async (progress) => {
-        const repositories = [...this.gitApi!.repositories];
+        const repositories = [...gitApi.repositories];
         let processed = 0;
 
         for (const repository of repositories) {
@@ -114,21 +110,11 @@ export class ViEligibilityIndexer implements vscode.Disposable {
 
             let isEligible = this.eligibilityCache.get(cacheKey);
             if (isEligible === undefined) {
-              const signature = await detectViSignatureFromUri(fileUri, {
+              const eligibility = await evaluateViEligibilityForFsPath(fileUri.fsPath, {
+                repoRoot: repository.rootUri.fsPath,
                 strictRsrcHeader: getStrictHeaderSetting()
               });
-
-              if (!signature) {
-                isEligible = false;
-              } else {
-                const commits = await getFileCommitHashes(
-                  repository.rootUri.fsPath,
-                  normalizeRelativeGitPath(relativePath),
-                  2
-                );
-                isEligible = commits.length >= 2;
-              }
-
+              isEligible = eligibility.eligible;
               this.eligibilityCache.set(cacheKey, isEligible);
             }
 
@@ -200,4 +186,3 @@ async function forEachConcurrent<T>(
 
   await Promise.all(workers);
 }
-

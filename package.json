@@ -87,6 +87,7 @@
     "clean": "rimraf out coverage",
     "compile": "tsc -p .",
     "check": "tsc -p . --noEmit",
+    "harness:smoke": "npm run compile && node out/cli/runHarnessSmoke.js --harness-id HARNESS-VHS-001",
     "pretest": "npm run compile",
     "test": "vitest run --coverage",
     "test:watch": "vitest",

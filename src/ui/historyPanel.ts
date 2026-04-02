@@ -1,8 +1,8 @@
-import { ViHistoryViewModel } from '../services/viHistoryService';
+import { ViHistoryCommit, ViHistoryViewModel } from '../services/viHistoryModel';
 
 export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
   const rows = model.commits
-    .map((commit) => {
+    .map((commit: ViHistoryCommit) => {
       const diffButton = commit.previousHash
         ? `<button data-command="diffPrevious" data-hash="${escapeHtml(commit.hash)}">Diff prev</button>`
         : '<button disabled>Diff prev</button>';
@@ -118,4 +118,3 @@ function escapeHtml(value: string): string {
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
 }
-

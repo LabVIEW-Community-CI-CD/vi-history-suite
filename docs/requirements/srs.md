@@ -40,6 +40,10 @@
 | VHS-REQ-018 | The history panel shall expose actions to open a revision, diff against the previous revision, and copy a commit hash. | These are the core review actions in the design paper. | Rendered HTML and command handlers support those actions. | Unit and integration tests |
 | VHS-REQ-019 | The repo shall remain self-contained and shall not depend on `comparevi-history` or `compare-vi-cli-action`. | The new product should iterate locally without upstream churn. | No package or source dependency references those repos. | Static inspection |
 | VHS-REQ-020 | The repo shall define the first real-history harness against a cloned external Git repository rather than vendored history. | Real Git history must stay external to this repo. | `HARNESS-VHS-001` is documented against `ni/labview-icon-editor`. | Documentation review |
+| VHS-REQ-021 | The repo shall provide a clone-on-demand canonical harness smoke command for `HARNESS-VHS-001`. | The first live path should be runnable locally without manual repo setup. | `npm run harness:smoke` produces a factual harness report. | Smoke test |
+| VHS-REQ-022 | The canonical harness smoke command shall reuse the same core history-model logic as the extension runtime. | The smoke path should validate product logic, not a parallel implementation. | Shared core modules are used by both the extension wrapper and harness smoke runner. | Static inspection and unit test |
+| VHS-REQ-023 | The canonical harness smoke command shall write factual JSON, Markdown, and HTML reports under an ignored cache path. | Local review needs retained evidence without polluting tracked source. | Smoke outputs are written under `.cache/harness-reports/`. | Smoke test |
+| VHS-REQ-024 | The repo shall include a real-Git unit test for the core history model using a temporary local repository. | Core history behavior should be verified without requiring VS Code runtime. | Tests create a local Git repo, commit a VI fixture twice, and assert eligibility/history. | Unit test |
 
 ## Assumptions
 
@@ -52,4 +56,3 @@
 - public repository with restrictive source-available licensing
 - sole-author maintenance model
 - no external contribution intake by default
-
