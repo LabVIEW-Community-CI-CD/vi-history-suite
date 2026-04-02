@@ -20,7 +20,7 @@
 | Explorer and `editor/title/context` command visibility | aligned in this tranche | `package.json`; `VHS-REQ-004`; `VHS-REQ-082` | sustain |
 | Background eligibility indexing with bounded concurrency, cache, and debounce | aligned | `src/indexing/viEligibilityIndexer.ts`; `VHS-REQ-014..015`; `VHS-REQ-072..078` | sustain |
 | Webview history panel with `Open at commit`, `Diff vs previous`, `Copy hash` | aligned | `src/ui/historyPanel.ts`; `src/commands/openViHistoryCommand.ts`; `VHS-REQ-016..018`; `VHS-REQ-027..040` | sustain |
-| Verify both revision blobs are VIs before compare/report generation | missing | authoritative research only; no implementing code yet | add governed report preflight tranche |
+| Verify both revision blobs are VIs before compare/report generation | aligned in this tranche | `src/reporting/comparisonReportPreflight.ts`; `VHS-REQ-127..129` | wire preflight into report-generation runtime path |
 | Generate report with `{type}-report-{fullFilename}.html` | partial | `src/reporting/comparisonReportPlan.ts`; `VHS-REQ-100` | wire planner into runtime execution |
 | Store generated reports under `context.storageUri` and surface via `asWebviewUri` plus `localResourceRoots` | partial | `src/reporting/comparisonReportPlan.ts`; `VHS-REQ-102`; ADR-0003; ADR-0004 | add report store and webview integration tranche |
 | LabVIEW 2026 Q1 32/64 runtime detection and selection | missing | settings placeholders only in `package.json` | add governed runtime-detection tranche |

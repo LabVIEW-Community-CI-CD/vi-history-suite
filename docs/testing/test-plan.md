@@ -185,6 +185,13 @@
   supplied
 - `TEST-UNIT-053`: validate the harness-smoke runner stamps generated reports
   from the default ISO timestamp path when no injected clock is supplied
+- `TEST-UNIT-054`: validate the comparison-report subsystem derives revision
+  blob Git specifiers as `<revision>:<normalized/relative/path>`
+- `TEST-UNIT-055`: validate the comparison-report preflight reports `ready`
+  only when both selected revision blobs are content-detected VIs
+- `TEST-UNIT-056`: validate the comparison-report preflight fails closed with
+  explicit side-specific blocked reasons when a selected blob is unreadable or
+  not a VI
 - `TEST-DOC-003`: review architecture and product docs for the published
   WebviewPanel-only surface, desktop/remote-host boundary, and no-publish
   TimelineProvider policy
