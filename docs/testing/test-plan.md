@@ -158,6 +158,10 @@
   tracked file
 - `TEST-UNIT-043`: validate the Git CLI helper layer falls back to bare `git`
   when no Windows candidate exists and rejects Git subprocess failures
+- `TEST-UNIT-044`: validate the filesystem VI-probe helper returns only the
+  bytes actually read, bounded to the minimum detection-header length
+- `TEST-UNIT-045`: validate the filesystem VI-signature detector fails closed
+  to `undefined` when the probe read cannot be completed
 - `TEST-DOC-003`: review architecture and product docs for the published
   WebviewPanel-only surface, desktop/remote-host boundary, and no-publish
   TimelineProvider policy
