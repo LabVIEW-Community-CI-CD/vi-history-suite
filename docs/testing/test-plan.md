@@ -85,6 +85,11 @@
   delegation, workspace-fs truncation, and fail-closed behavior
 - `TEST-UNIT-018`: validate the built-in Git API resolver for missing
   extension, activation, missing `getAPI`, and activation-failure behavior
+- `TEST-UNIT-019`: validate the eligibility indexer helper surface for cache
+  keys, normalized context keys, configuration, and bounded concurrency
+- `TEST-UNIT-020`: validate the eligibility indexer refresh path for untrusted
+  clearing, cache reuse, HEAD invalidation, repo/file fail-closed behavior, and
+  dynamic repository-state listener handling
 - `TEST-SMOKE-001`: run the canonical harness smoke and retain JSON, Markdown,
   and HTML reports under `.cache/harness-reports/`
 - `TEST-INTEG-001`: run a real VS Code extension host against a temporary Git

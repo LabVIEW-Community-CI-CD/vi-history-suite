@@ -1,15 +1,103 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+const {
+  workspaceState,
+  configurationValues,
+  commandExecuteMock,
+  withProgressMock,
+  progressReportMock,
+  workspaceFolderListeners,
+  workspaceTrustListeners,
+  getRepoRootMock,
+  listTrackedFilesMock,
+  getRepoHeadMock,
+  evaluateViEligibilityMock
+} = vi.hoisted(() => ({
+  workspaceState: {
+    isTrusted: true,
+    workspaceFolders: [] as Array<{ uri: { fsPath: string; path: string } }>
+  },
+  configurationValues: new Map<string, unknown>([
+    ['strictRsrcHeader', false],
+    ['maxIndexedConcurrency', 6]
+  ]),
+  commandExecuteMock: vi.fn(),
+  withProgressMock: vi.fn(),
+  progressReportMock: vi.fn(),
+  workspaceFolderListeners: [] as Array<() => unknown>,
+  workspaceTrustListeners: [] as Array<() => unknown>,
+  getRepoRootMock: vi.fn<(fsPath: string) => Promise<string>>(),
+  listTrackedFilesMock: vi.fn<(cwd: string) => Promise<string[]>>(),
+  getRepoHeadMock: vi.fn<(cwd: string) => Promise<string>>(),
+  evaluateViEligibilityMock: vi.fn<(fsPath: string, options: unknown) => Promise<{ eligible: boolean }>>()
+}));
+
 vi.mock('vscode', () => ({
   Uri: {
     file: (fsPath: string) => ({
       fsPath,
       path: fsPath
-    })
+    }),
+    joinPath: (base: { fsPath: string }, ...segments: string[]) => {
+      const joined = [base.fsPath, ...segments]
+        .join('/')
+        .replace(/\/+/g, '/')
+        .replace(':/', '://');
+      return {
+        fsPath: joined,
+        path: joined
+      };
+    }
+  },
+  workspace: {
+    get isTrusted() {
+      return workspaceState.isTrusted;
+    },
+    get workspaceFolders() {
+      return workspaceState.workspaceFolders;
+    },
+    getConfiguration: vi.fn(() => ({
+      get: (key: string, fallback: unknown) =>
+        configurationValues.has(key) ? configurationValues.get(key) : fallback
+    })),
+    onDidChangeWorkspaceFolders: (listener: () => unknown) => {
+      workspaceFolderListeners.push(listener);
+      return {
+        dispose() {
+          // no-op
+        }
+      };
+    },
+    onDidGrantWorkspaceTrust: (listener: () => unknown) => {
+      workspaceTrustListeners.push(listener);
+      return {
+        dispose() {
+          // no-op
+        }
+      };
+    }
+  },
+  window: {
+    withProgress: withProgressMock
+  },
+  commands: {
+    executeCommand: commandExecuteMock
+  },
+  ProgressLocation: {
+    Window: 10
+  },
+  Disposable: class Disposable {
+    static from(...disposables: Array<{ dispose?: () => void }>) {
+      return {
+        dispose() {
+          for (const disposable of disposables) {
+            disposable?.dispose?.();
+          }
+        }
+      };
+    }
   }
 }));
-
-const getRepoRootMock = vi.fn<(fsPath: string) => Promise<string>>();
 
 vi.mock('../../src/git/gitCli', async () => {
   const actual = await vi.importActual<typeof import('../../src/git/gitCli')>(
@@ -17,13 +105,79 @@ vi.mock('../../src/git/gitCli', async () => {
   );
   return {
     ...actual,
-    getRepoRoot: getRepoRootMock
+    getRepoRoot: getRepoRootMock,
+    listTrackedFiles: listTrackedFilesMock,
+    getRepoHead: getRepoHeadMock
   };
 });
 
-describe('resolveIndexedRepositories', () => {
+vi.mock('../../src/services/viHistoryModel', async () => {
+  const actual = await vi.importActual<typeof import('../../src/services/viHistoryModel')>(
+    '../../src/services/viHistoryModel'
+  );
+  return {
+    ...actual,
+    evaluateViEligibilityForFsPath: evaluateViEligibilityMock
+  };
+});
+
+import {
+  buildCacheKey,
+  contextKeysForUri,
+  forEachConcurrent,
+  getConfiguredConcurrency,
+  getStrictHeaderSetting,
+  resolveIndexedRepositories,
+  ViEligibilityIndexer
+} from '../../src/indexing/viEligibilityIndexer';
+
+describe('viEligibilityIndexer helpers', () => {
   beforeEach(() => {
+    configurationValues.set('strictRsrcHeader', false);
+    configurationValues.set('maxIndexedConcurrency', 6);
     getRepoRootMock.mockReset();
+    listTrackedFilesMock.mockReset();
+    getRepoHeadMock.mockReset();
+    evaluateViEligibilityMock.mockReset();
+    commandExecuteMock.mockReset();
+    progressReportMock.mockReset();
+    workspaceFolderListeners.length = 0;
+    workspaceTrustListeners.length = 0;
+    workspaceState.isTrusted = true;
+    workspaceState.workspaceFolders = [];
+    withProgressMock.mockReset();
+    withProgressMock.mockImplementation(async (_options, task) =>
+      task({
+        report: progressReportMock
+      })
+    );
+  });
+
+  it('builds cache keys, context keys, settings, and bounded concurrency deterministically', async () => {
+    configurationValues.set('strictRsrcHeader', true);
+    configurationValues.set('maxIndexedConcurrency', 0);
+
+    expect(
+      buildCacheKey(
+        { rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' } },
+        'head123',
+        'nested\\file.vi'
+      )
+    ).toBe('/workspace/repo::nested/file.vi::head123');
+    expect(
+      contextKeysForUri({
+        fsPath: 'C:\\Repo\\nested\\file.vi',
+        path: 'C:\\Repo\\nested\\file.vi'
+      } as never)
+    ).toContain('C:/Repo/nested/file.vi');
+    expect(getStrictHeaderSetting()).toBe(true);
+    expect(getConfiguredConcurrency()).toBe(0);
+
+    const processed: number[] = [];
+    await forEachConcurrent([1, 2, 3], 0, async (value) => {
+      processed.push(value);
+    });
+    expect(processed.sort()).toEqual([1, 2, 3]);
   });
 
   it('keeps discovered git repositories and adds workspace git roots that are missing', async () => {
@@ -31,15 +185,11 @@ describe('resolveIndexedRepositories', () => {
       fsPath === '/workspace/repo-a' ? '/workspace/repo-a' : '/workspace/repo-b'
     );
 
-    const { resolveIndexedRepositories } = await import(
-      '../../src/indexing/viEligibilityIndexer'
-    );
-
     const repositories = await resolveIndexedRepositories(
-      [{ rootUri: { fsPath: '/workspace/repo-a' } as { fsPath: string } }],
+      [{ rootUri: { fsPath: '/workspace/repo-a', path: '/workspace/repo-a' } } as never],
       [
-        { uri: { fsPath: '/workspace/repo-a' } as { fsPath: string } },
-        { uri: { fsPath: '/workspace/nested/subdir' } as { fsPath: string } }
+        { uri: { fsPath: '/workspace/repo-a', path: '/workspace/repo-a' } } as never,
+        { uri: { fsPath: '/workspace/nested/subdir', path: '/workspace/nested/subdir' } } as never
       ]
     );
 
@@ -52,14 +202,181 @@ describe('resolveIndexedRepositories', () => {
   it('ignores workspace folders that are not inside a git working tree', async () => {
     getRepoRootMock.mockRejectedValue(new Error('not a repo'));
 
-    const { resolveIndexedRepositories } = await import(
-      '../../src/indexing/viEligibilityIndexer'
-    );
-
     const repositories = await resolveIndexedRepositories([], [
-      { uri: { fsPath: '/workspace/not-a-repo' } as { fsPath: string } }
+      { uri: { fsPath: '/workspace/not-a-repo', path: '/workspace/not-a-repo' } } as never
     ]);
 
     expect(repositories).toEqual([]);
+  });
+});
+
+describe('ViEligibilityIndexer refresh and listeners', () => {
+  beforeEach(() => {
+    configurationValues.set('strictRsrcHeader', false);
+    configurationValues.set('maxIndexedConcurrency', 6);
+    getRepoRootMock.mockReset();
+    listTrackedFilesMock.mockReset();
+    getRepoHeadMock.mockReset();
+    evaluateViEligibilityMock.mockReset();
+    commandExecuteMock.mockReset();
+    progressReportMock.mockReset();
+    workspaceFolderListeners.length = 0;
+    workspaceTrustListeners.length = 0;
+    workspaceState.isTrusted = true;
+    workspaceState.workspaceFolders = [];
+    withProgressMock.mockReset();
+    withProgressMock.mockImplementation(async (_options, task) =>
+      task({
+        report: progressReportMock
+      })
+    );
+  });
+
+  it('clears eligible paths and indexed roots when the workspace is untrusted', async () => {
+    workspaceState.isTrusted = false;
+    const indexer = new ViEligibilityIndexer(undefined);
+
+    await indexer.refresh();
+
+    expect(indexer.getDebugSnapshot()).toEqual({
+      indexedRepositoryRoots: [],
+      eligiblePathCount: 0,
+      eligiblePathsSample: []
+    });
+    expect(commandExecuteMock.mock.calls).toEqual([
+      ['setContext', 'viHistorySuite.isWorkspaceTrusted', false],
+      ['setContext', 'viHistorySuite.eligiblePaths', {}]
+    ]);
+    expect(withProgressMock).not.toHaveBeenCalled();
+  });
+
+  it('reuses cached eligibility for the same HEAD and invalidates when HEAD changes', async () => {
+    configurationValues.set('strictRsrcHeader', true);
+    const indexer = new ViEligibilityIndexer({
+      repositories: [
+        {
+          rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' }
+        }
+      ],
+      onDidOpenRepository: vi.fn(() => ({ dispose() {} })),
+      onDidCloseRepository: vi.fn(() => ({ dispose() {} })),
+      toGitUri: vi.fn()
+    } as never);
+
+    listTrackedFilesMock.mockResolvedValue(['tracked.vi']);
+    getRepoHeadMock
+      .mockResolvedValueOnce('head-1')
+      .mockResolvedValueOnce('head-1')
+      .mockResolvedValueOnce('head-2');
+    evaluateViEligibilityMock.mockResolvedValue({ eligible: true });
+
+    await indexer.refresh();
+    await indexer.refresh();
+    await indexer.refresh();
+
+    expect(evaluateViEligibilityMock).toHaveBeenCalledTimes(2);
+    expect(evaluateViEligibilityMock).toHaveBeenNthCalledWith(
+      1,
+      '/workspace/repo/tracked.vi',
+      {
+        repoRoot: '/workspace/repo',
+        strictRsrcHeader: true
+      }
+    );
+    expect(indexer.isEligible({ fsPath: '/workspace/repo/tracked.vi', path: '/workspace/repo/tracked.vi' } as never)).toBe(true);
+    expect(indexer.getDebugSnapshot().indexedRepositoryRoots).toEqual(['/workspace/repo']);
+  });
+
+  it('fails closed on repository and file errors while still indexing successful files', async () => {
+    const indexer = new ViEligibilityIndexer({
+      repositories: [
+        {
+          rootUri: { fsPath: '/workspace/repo-a', path: '/workspace/repo-a' }
+        },
+        {
+          rootUri: { fsPath: '/workspace/repo-b', path: '/workspace/repo-b' }
+        }
+      ],
+      onDidOpenRepository: vi.fn(() => ({ dispose() {} })),
+      onDidCloseRepository: vi.fn(() => ({ dispose() {} })),
+      toGitUri: vi.fn()
+    } as never);
+
+    listTrackedFilesMock.mockImplementation(async (cwd: string) => {
+      if (cwd === '/workspace/repo-a') {
+        throw new Error('cannot enumerate repo-a');
+      }
+
+      return ['good.vi', 'bad.vi'];
+    });
+    getRepoHeadMock.mockResolvedValue('head-good');
+    evaluateViEligibilityMock.mockImplementation(async (fsPath: string) => {
+      if (fsPath.endsWith('bad.vi')) {
+        throw new Error('bad file');
+      }
+
+      return { eligible: true };
+    });
+
+    await expect(indexer.refresh()).resolves.toBeUndefined();
+
+    expect(indexer.isEligible({ fsPath: '/workspace/repo-b/good.vi', path: '/workspace/repo-b/good.vi' } as never)).toBe(true);
+    expect(indexer.isEligible({ fsPath: '/workspace/repo-b/bad.vi', path: '/workspace/repo-b/bad.vi' } as never)).toBe(false);
+    expect(indexer.getDebugSnapshot().indexedRepositoryRoots).toEqual([
+      '/workspace/repo-a',
+      '/workspace/repo-b'
+    ]);
+  });
+
+  it('registers state listeners for initial and newly opened repositories and disposes them on close', async () => {
+    workspaceState.isTrusted = false;
+    const openListeners: Array<(repository: never) => unknown> = [];
+    const closeListeners: Array<(repository: never) => unknown> = [];
+    const initialStateDispose = vi.fn();
+    const openedStateDispose = vi.fn();
+    const initialRepository = {
+      rootUri: { fsPath: '/workspace/repo-a', path: '/workspace/repo-a' },
+      state: {
+        onDidChange: vi.fn(() => ({
+          dispose: initialStateDispose
+        }))
+      }
+    };
+    const openedRepository = {
+      rootUri: { fsPath: '/workspace/repo-b', path: '/workspace/repo-b' },
+      state: {
+        onDidChange: vi.fn(() => ({
+          dispose: openedStateDispose
+        }))
+      }
+    };
+
+    const indexer = new ViEligibilityIndexer({
+      repositories: [initialRepository],
+      onDidOpenRepository: vi.fn((listener) => {
+        openListeners.push(listener as never);
+        return { dispose() {} };
+      }),
+      onDidCloseRepository: vi.fn((listener) => {
+        closeListeners.push(listener as never);
+        return { dispose() {} };
+      }),
+      toGitUri: vi.fn()
+    } as never);
+
+    await indexer.start();
+
+    expect(initialRepository.state.onDidChange).toHaveBeenCalledTimes(1);
+    expect(openListeners).toHaveLength(1);
+    expect(closeListeners).toHaveLength(1);
+
+    openListeners[0](openedRepository as never);
+    expect(openedRepository.state.onDidChange).toHaveBeenCalledTimes(1);
+
+    closeListeners[0](openedRepository as never);
+    expect(openedStateDispose).toHaveBeenCalledTimes(1);
+
+    indexer.dispose();
+    expect(initialStateDispose).toHaveBeenCalledTimes(1);
   });
 });

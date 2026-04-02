@@ -21,6 +21,7 @@ export interface EligibilityDebugSnapshot {
 
 export class ViEligibilityIndexer implements vscode.Disposable {
   private readonly disposables: vscode.Disposable[] = [];
+  private readonly repositoryStateDisposables = new Map<string, vscode.Disposable>();
   private readonly eligibilityCache = new Map<string, boolean>();
   private refreshHandle: NodeJS.Timeout | undefined;
   private eligiblePaths: EligibilityMap = {};
@@ -38,7 +39,11 @@ export class ViEligibilityIndexer implements vscode.Disposable {
       clearTimeout(this.refreshHandle);
     }
 
-    vscode.Disposable.from(...this.disposables).dispose();
+    vscode.Disposable.from(
+      ...this.disposables,
+      ...this.repositoryStateDisposables.values()
+    ).dispose();
+    this.repositoryStateDisposables.clear();
   }
 
   isEligible(uri: vscode.Uri): boolean {
@@ -81,15 +86,34 @@ export class ViEligibilityIndexer implements vscode.Disposable {
     }
 
     this.disposables.push(
-      this.gitApi.onDidOpenRepository(() => this.scheduleRefresh()),
-      this.gitApi.onDidCloseRepository(() => this.scheduleRefresh())
+      this.gitApi.onDidOpenRepository((repository) => {
+        this.registerRepositoryStateListener(repository);
+        this.scheduleRefresh();
+      }),
+      this.gitApi.onDidCloseRepository((repository) => {
+        this.repositoryStateDisposables.get(repository.rootUri.fsPath)?.dispose();
+        this.repositoryStateDisposables.delete(repository.rootUri.fsPath);
+        this.scheduleRefresh();
+      })
     );
 
     for (const repository of this.gitApi.repositories) {
-      if (repository.state?.onDidChange) {
-        this.disposables.push(repository.state.onDidChange(() => this.scheduleRefresh()));
-      }
+      this.registerRepositoryStateListener(repository);
     }
+  }
+
+  private registerRepositoryStateListener(repository: GitRepository): void {
+    if (
+      this.repositoryStateDisposables.has(repository.rootUri.fsPath) ||
+      !repository.state?.onDidChange
+    ) {
+      return;
+    }
+
+    this.repositoryStateDisposables.set(
+      repository.rootUri.fsPath,
+      repository.state.onDidChange(() => this.scheduleRefresh())
+    );
   }
 
   private async updateTrustContext(): Promise<void> {
@@ -105,6 +129,7 @@ export class ViEligibilityIndexer implements vscode.Disposable {
 
     if (!vscode.workspace.isTrusted) {
       this.eligiblePaths = {};
+      this.lastIndexedRepositoryRoots = [];
       await vscode.commands.executeCommand('setContext', 'viHistorySuite.eligiblePaths', {});
       return;
     }
@@ -125,8 +150,16 @@ export class ViEligibilityIndexer implements vscode.Disposable {
         let processed = 0;
 
         for (const repository of repositories) {
-          const trackedFiles = await listTrackedFiles(repository.rootUri.fsPath);
-          const head = await getRepoHead(repository.rootUri.fsPath);
+          let trackedFiles: string[];
+          let head: string;
+
+          try {
+            trackedFiles = await listTrackedFiles(repository.rootUri.fsPath);
+            head = await getRepoHead(repository.rootUri.fsPath);
+          } catch {
+            continue;
+          }
+
           const concurrency = getConfiguredConcurrency();
 
           await forEachConcurrent(trackedFiles, concurrency, async (relativePath) => {
@@ -135,12 +168,16 @@ export class ViEligibilityIndexer implements vscode.Disposable {
 
             let isEligible = this.eligibilityCache.get(cacheKey);
             if (isEligible === undefined) {
-              const eligibility = await evaluateViEligibilityForFsPath(fileUri.fsPath, {
-                repoRoot: repository.rootUri.fsPath,
-                strictRsrcHeader: getStrictHeaderSetting()
-              });
-              isEligible = eligibility.eligible;
-              this.eligibilityCache.set(cacheKey, isEligible);
+              try {
+                const eligibility = await evaluateViEligibilityForFsPath(fileUri.fsPath, {
+                  repoRoot: repository.rootUri.fsPath,
+                  strictRsrcHeader: getStrictHeaderSetting()
+                });
+                isEligible = eligibility.eligible;
+                this.eligibilityCache.set(cacheKey, isEligible);
+              } catch {
+                isEligible = false;
+              }
             }
 
             if (isEligible) {
@@ -167,11 +204,15 @@ export class ViEligibilityIndexer implements vscode.Disposable {
   }
 }
 
-function buildCacheKey(repository: IndexedRepository, head: string, relativePath: string): string {
+export function buildCacheKey(
+  repository: IndexedRepository,
+  head: string,
+  relativePath: string
+): string {
   return [repository.rootUri.fsPath, normalizeRelativeGitPath(relativePath), head].join('::');
 }
 
-function contextKeysForUri(uri: vscode.Uri): string[] {
+export function contextKeysForUri(uri: vscode.Uri): string[] {
   const keys = new Set<string>();
   addContextKeyVariants(keys, uri.fsPath);
   addContextKeyVariants(keys, uri.path);
@@ -197,19 +238,19 @@ function addContextKeyVariants(keys: Set<string>, value: string | undefined): vo
   }
 }
 
-function getStrictHeaderSetting(): boolean {
+export function getStrictHeaderSetting(): boolean {
   return vscode.workspace
     .getConfiguration('viHistorySuite')
     .get<boolean>('strictRsrcHeader', false);
 }
 
-function getConfiguredConcurrency(): number {
+export function getConfiguredConcurrency(): number {
   return vscode.workspace
     .getConfiguration('viHistorySuite')
     .get<number>('maxIndexedConcurrency', 6);
 }
 
-async function forEachConcurrent<T>(
+export async function forEachConcurrent<T>(
   values: T[],
   concurrency: number,
   worker: (value: T) => Promise<void>
