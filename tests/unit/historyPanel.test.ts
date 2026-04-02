@@ -17,6 +17,12 @@ describe('renderHistoryPanelHtml', () => {
           authorName: 'A User',
           subject: 'Improve deployment behavior',
           previousHash: '1111111122222222'
+        },
+        {
+          hash: '1111111122222222',
+          authorDate: '2026-04-01T00:00:00Z',
+          authorName: 'B User',
+          subject: 'Initial deployment behavior'
         }
       ]
     });
@@ -28,11 +34,20 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('Diff prev');
     expect(html).toContain('Copy hash');
     expect(html).toContain('data-testid="history-status"');
+    expect(html).toContain('data-testid="history-review-packet"');
+    expect(html).toContain('data-testid="history-chronology-order"');
+    expect(html).toContain('data-testid="history-newest-commit"');
+    expect(html).toContain('data-testid="history-oldest-commit"');
     expect(html).toContain('data-testid="history-meta-repository"');
     expect(html).toContain('data-testid="history-meta-path"');
+    expect(html).toContain('data-testid="history-binary-limitations"');
     expect(html).toContain('data-testid="history-row"');
+    expect(html).toContain('data-testid="history-compare-base"');
     expect(html).toContain('data-testid="history-action-open"');
     expect(html).toContain('data-testid="history-action-diff"');
     expect(html).toContain('data-testid="history-action-copy"');
+    expect(html).toContain('Newest commit first');
+    expect(html).toContain('Oldest retained revision');
+    expect(html).toContain('Binary review limits:');
   });
 });

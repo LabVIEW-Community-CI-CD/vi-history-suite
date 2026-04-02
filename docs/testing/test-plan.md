@@ -50,7 +50,8 @@
   the history panel for an eligible file, then assert the rendered HTML retains
   stable semantic anchors plus factual eligibility, signature, path, and commit
   subjects, and then dispatch `copyHash`, `openCommit`, and `diffPrevious`
-  through the real panel message handler
+  through the real panel message handler; the same lane shall also prove the
+  chronology packet, compare-base context, and binary-review limitation note
 - `TEST-INTEG-002`: validate non-file URI detection fallback behavior
 - `TEST-UNIT-005`: build a temporary Git repo with a content-detected VI and
   assert the shared core history model returns eligible history
