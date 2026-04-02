@@ -7,20 +7,22 @@ open-source project.
 
 Do not open merge requests containing code, documentation, or other copyrighted
 material for inclusion unless the licensor has explicitly invited the
-contribution and accepted a signed contributor agreement.
+contribution and entered into a separate private written agreement with you.
 
 By default:
 
 - issue reports and discussion are fine
-- proposed patches are not accepted without a separate signed agreement
+- proposed patches are not accepted
 - submitting a merge request does not, by itself, grant the licensor any rights
   beyond what is already provided by law and the repository license
 
 ## Contribution Gate
 
-If the licensor wants to accept a contribution, the contributor must first
-complete a separate contributor agreement. The current scaffold is in
-[CONTRIBUTOR-LICENSE-AGREEMENT.md](./CONTRIBUTOR-LICENSE-AGREEMENT.md).
+This repository is maintained by its sole author.
+
+If the licensor ever wants to accept an invited contribution, that will be
+handled through a separate private written agreement outside the public
+repository.
 
 Until that agreement is completed:
 

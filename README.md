@@ -21,7 +21,8 @@ different license grant, contact the licensor directly.
 
 External contributions are not accepted by default.
 
-Before any contribution can be reviewed for inclusion, the contributor must
-enter into a separate contributor agreement acceptable to the licensor. See
-[CONTRIBUTING.md](./CONTRIBUTING.md) and
-[CONTRIBUTOR-LICENSE-AGREEMENT.md](./CONTRIBUTOR-LICENSE-AGREEMENT.md).
+This repository is currently maintained by its sole author. If that ever
+changes, any exception for invited contributions will be handled through a
+separate private written agreement, not through the public repository files.
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md).
