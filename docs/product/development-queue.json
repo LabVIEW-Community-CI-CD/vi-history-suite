@@ -18,7 +18,7 @@
     "title": "Wire governed runtime selection into live NI report execution",
     "status": "active",
     "source": "authoritative research",
-    "summary": "Use the stored runtime selection and preflight facts to run LabVIEW CLI or LVCompare truthfully and retain execution evidence in the report packet."
+    "summary": "Use the stored runtime selection and preflight facts to run LabVIEW CLI or LVCompare truthfully, reserve the governed diff-report path for actual NI output, and retain execution evidence in the packet artifact."
   },
   {
     "id": "TRANCHE-004",

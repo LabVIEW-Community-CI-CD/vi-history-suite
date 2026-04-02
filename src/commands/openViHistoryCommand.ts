@@ -130,10 +130,14 @@ export function createOpenViHistoryCommand(
           hash,
           outcome: result.outcome,
           reportStatus: result.reportStatus,
+          runtimeExecutionState: result.runtimeExecutionState,
           blockedReason: result.blockedReason,
+          runtimeFailureReason: result.runtimeFailureReason,
+          packetFilePath: result.packetFilePath,
           reportFilePath: result.reportFilePath,
           metadataFilePath: result.metadataFilePath,
           reportWebviewUri: result.reportWebviewUri,
+          generatedReportExists: result.generatedReportExists,
           title: result.title
         });
         return;

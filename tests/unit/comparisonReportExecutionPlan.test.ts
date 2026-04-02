@@ -21,7 +21,11 @@ function createBaseRecord(): ComparisonReportPacketRecord {
       stagingDirectory: '/workspace/.storage/reports/repoid123456/fileid123456/staging',
       reportFilename: 'diff-report-foo.vi.html',
       reportFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
+      packetFilename: 'report-packet.html',
+      packetFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-packet.html',
       metadataFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-metadata.json',
+      runtimeStdoutFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/runtime-stdout.txt',
+      runtimeStderrFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/runtime-stderr.txt',
       allowedLocalRootPaths: [
         '/workspace/.storage',
         '/workspace/.storage/reports/repoid123456'
@@ -72,7 +76,14 @@ function createBaseRecord(): ComparisonReportPacketRecord {
       registryQueryPlans: [],
       candidates: []
     },
-    runtimeExecutionState: 'not-run'
+    runtimeExecutionState: 'not-run',
+    runtimeExecution: {
+      state: 'not-run',
+      attempted: false,
+      reportExists: false,
+      stdoutFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/runtime-stdout.txt',
+      stderrFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/runtime-stderr.txt'
+    }
   };
 }
 

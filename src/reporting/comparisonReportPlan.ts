@@ -23,7 +23,11 @@ export interface ComparisonArtifactPlan {
   stagingDirectory: string;
   reportFilename: string;
   reportFilePath: string;
+  packetFilename: string;
+  packetFilePath: string;
   metadataFilePath: string;
+  runtimeStdoutFilePath: string;
+  runtimeStderrFilePath: string;
   allowedLocalRootPaths: string[];
 }
 
@@ -66,6 +70,9 @@ export interface LvComparePlanOptions {
 
 const REPORTS_DIRECTORY = 'reports';
 const METADATA_FILENAME = 'report-metadata.json';
+const PACKET_FILENAME = 'report-packet.html';
+const RUNTIME_STDOUT_FILENAME = 'runtime-stdout.txt';
+const RUNTIME_STDERR_FILENAME = 'runtime-stderr.txt';
 
 export function buildComparisonArtifactPlan(
   options: ComparisonArtifactPlanOptions
@@ -93,7 +100,11 @@ export function buildComparisonArtifactPlan(
     stagingDirectory,
     reportFilename,
     reportFilePath: path.join(reportDirectory, reportFilename),
+    packetFilename: PACKET_FILENAME,
+    packetFilePath: path.join(reportDirectory, PACKET_FILENAME),
     metadataFilePath: path.join(reportDirectory, METADATA_FILENAME),
+    runtimeStdoutFilePath: path.join(reportDirectory, RUNTIME_STDOUT_FILENAME),
+    runtimeStderrFilePath: path.join(reportDirectory, RUNTIME_STDERR_FILENAME),
     allowedLocalRootPaths: [storageRoot, path.join(storageRoot, REPORTS_DIRECTORY, repoId)]
   };
 }

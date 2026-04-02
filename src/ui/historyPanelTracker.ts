@@ -29,10 +29,14 @@ export interface HistoryPanelActionSummary {
   copiedHash?: string;
   copiedTextLength?: number;
   reportStatus?: 'ready-for-runtime' | 'blocked-preflight' | 'blocked-runtime';
+  runtimeExecutionState?: 'not-run' | 'not-available' | 'succeeded' | 'failed';
   blockedReason?: string;
+  runtimeFailureReason?: string;
+  packetFilePath?: string;
   reportFilePath?: string;
   metadataFilePath?: string;
   reportWebviewUri?: string;
+  generatedReportExists?: boolean;
 }
 
 export interface OpenedHistoryPanelSummary {

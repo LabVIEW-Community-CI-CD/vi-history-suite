@@ -7,6 +7,7 @@ import {
 } from './comparisonRuntimeLocator';
 import { ViHistoryViewModel } from '../services/viHistoryModel';
 import { persistComparisonReportPacket } from './comparisonReportPacket';
+import { executeComparisonReport } from './comparisonReportRuntimeExecution';
 import { preflightComparisonReportRevisions } from './comparisonReportPreflight';
 
 export interface ComparisonReportActionRequest {
@@ -21,10 +22,14 @@ export interface ComparisonReportActionResult {
     | 'missing-selected-commit'
     | 'missing-previous-hash';
   reportStatus?: 'ready-for-runtime' | 'blocked-preflight' | 'blocked-runtime';
+  runtimeExecutionState?: 'not-run' | 'not-available' | 'succeeded' | 'failed';
   blockedReason?: string;
+  runtimeFailureReason?: string;
+  packetFilePath?: string;
   reportFilePath?: string;
   metadataFilePath?: string;
   reportWebviewUri?: string;
+  generatedReportExists?: boolean;
   title?: string;
 }
 
@@ -35,6 +40,7 @@ export interface ComparisonReportActionDeps {
   uriFile?: typeof vscode.Uri.file;
   joinPath?: typeof vscode.Uri.joinPath;
   locateRuntime?: typeof locateComparisonRuntime;
+  executeComparisonReport?: typeof executeComparisonReport;
   getRuntimeSettings?: () => ComparisonRuntimeSettings;
 }
 
@@ -67,7 +73,7 @@ export function createComparisonReportAction(
       (deps.getRuntimeSettings ?? readComparisonRuntimeSettings)()
     );
 
-    const packet = await (deps.persistComparisonReport ?? persistComparisonReportPacket)({
+    let packet = await (deps.persistComparisonReport ?? persistComparisonReportPacket)({
       storageRoot: context.storageUri.fsPath,
       repositoryRoot: request.model.repositoryRoot,
       relativePath: request.model.relativePath,
@@ -77,12 +83,18 @@ export function createComparisonReportAction(
       preflight,
       runtimeSelection
     });
+    if (packet.record.reportStatus === 'ready-for-runtime') {
+      packet = await (deps.executeComparisonReport ?? executeComparisonReport)({
+        record: packet.record,
+        repositoryRoot: request.model.repositoryRoot
+      });
+    }
 
     const createWebviewPanel = deps.createWebviewPanel ?? vscode.window.createWebviewPanel;
     const uriFile = deps.uriFile ?? vscode.Uri.file;
     const joinPath = deps.joinPath ?? vscode.Uri.joinPath;
     const repoRootUri = joinPath(context.storageUri, 'reports', packet.record.artifactPlan.repoId);
-    const reportFileUri = uriFile(packet.reportFilePath);
+    const packetFileUri = uriFile(packet.packetFilePath);
 
     const panel = createWebviewPanel(
       'viHistorySuite.comparisonReport',
@@ -93,24 +105,29 @@ export function createComparisonReportAction(
         localResourceRoots: [context.storageUri, repoRootUri]
       }
     );
-    const reportWebviewUri = panel.webview.asWebviewUri(reportFileUri);
+    const reportWebviewUri = panel.webview.asWebviewUri(packetFileUri);
     panel.webview.html = renderComparisonReportPanelHtml({
       title: packet.record.reportTitle,
       reportWebviewUri: reportWebviewUri.toString(),
       reportStatus: packet.record.reportStatus,
+      runtimeExecutionState: packet.record.runtimeExecutionState,
       cspSource: panel.webview.cspSource
     });
 
     return {
       outcome: 'opened-comparison-report',
       reportStatus: packet.record.reportStatus,
+      runtimeExecutionState: packet.record.runtimeExecutionState,
       blockedReason:
         packet.record.reportStatus === 'blocked-runtime'
           ? packet.record.runtimeSelection.blockedReason
           : preflight.blockedReason,
+      runtimeFailureReason: packet.record.runtimeExecution.failureReason,
+      packetFilePath: packet.packetFilePath,
       reportFilePath: packet.reportFilePath,
       metadataFilePath: packet.metadataFilePath,
       reportWebviewUri: reportWebviewUri.toString(),
+      generatedReportExists: packet.record.runtimeExecution.reportExists,
       title: panel.title
     };
   };
@@ -120,6 +137,7 @@ export function renderComparisonReportPanelHtml(options: {
   title: string;
   reportWebviewUri: string;
   reportStatus: 'ready-for-runtime' | 'blocked-preflight' | 'blocked-runtime';
+  runtimeExecutionState: 'not-run' | 'not-available' | 'succeeded' | 'failed';
   cspSource: string;
 }): string {
   const safeTitle = escapeHtml(options.title);
@@ -140,6 +158,8 @@ export function renderComparisonReportPanelHtml(options: {
   <body>
     <div class="status" data-testid="comparison-report-panel-status">
       <strong>Status:</strong> ${escapeHtml(options.reportStatus)}
+      <br />
+      <strong>Runtime execution:</strong> ${escapeHtml(options.runtimeExecutionState)}
     </div>
     <iframe data-testid="comparison-report-panel-frame" src="${safeUri}" title="${safeTitle}"></iframe>
   </body>

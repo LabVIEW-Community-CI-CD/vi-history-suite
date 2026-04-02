@@ -84,9 +84,10 @@ describe('comparisonReportPacket', () => {
       'right-abcdef123456-VIP_Pre-Install Custom Action.vi'
     );
     expect(writes.get(result.metadataFilePath)).toContain('"reportStatus": "blocked-preflight"');
-    expect(writes.get(result.reportFilePath)).toContain('No NI-generated comparison report has been executed yet.');
-    expect(writes.get(result.reportFilePath)).toContain('right-blob-not-vi');
-    expect(writes.get(result.reportFilePath)).toContain('data-testid="comparison-report-runtime-selection"');
+    expect(writes.has(result.reportFilePath)).toBe(false);
+    expect(writes.get(result.packetFilePath)).toContain('No NI-generated comparison report has been executed yet.');
+    expect(writes.get(result.packetFilePath)).toContain('right-blob-not-vi');
+    expect(writes.get(result.packetFilePath)).toContain('data-testid="comparison-report-runtime-selection"');
   });
 
   it('persists a ready-for-runtime report packet when preflight clears both revision blobs', async () => {
@@ -151,7 +152,9 @@ describe('comparisonReportPacket', () => {
 
     expect(result.record.reportStatus).toBe('ready-for-runtime');
     expect(writes.get(result.metadataFilePath)).toContain('"reportStatus": "ready-for-runtime"');
-    expect(writes.get(result.reportFilePath)).toContain('Ready for runtime:</strong> yes');
+    expect(writes.has(result.reportFilePath)).toBe(false);
+    expect(writes.get(result.packetFilePath)).toContain('Ready for runtime:</strong> yes');
+    expect(writes.get(result.packetFilePath)).toContain('data-testid="comparison-report-generated-report-missing"');
   });
 
   it('persists a blocked-runtime packet when preflight clears but no runtime provider is available', async () => {
@@ -203,9 +206,10 @@ describe('comparisonReportPacket', () => {
     expect(result.record.reportStatus).toBe('blocked-runtime');
     expect(result.record.runtimeExecutionState).toBe('not-available');
     expect(writes.get(result.metadataFilePath)).toContain('"reportStatus": "blocked-runtime"');
-    expect(writes.get(result.reportFilePath)).toContain('comparison-tool-not-found');
-    expect(writes.get(result.reportFilePath)).toContain('Provider:</strong> unavailable');
-    expect(writes.get(result.reportFilePath)).toContain('Runtime execution:</strong> not-available');
+    expect(writes.has(result.reportFilePath)).toBe(false);
+    expect(writes.get(result.packetFilePath)).toContain('comparison-tool-not-found');
+    expect(writes.get(result.packetFilePath)).toContain('Provider:</strong> unavailable');
+    expect(writes.get(result.packetFilePath)).toContain('Runtime execution:</strong> not-available');
   });
 
   it('uses the default clock when no explicit timestamp provider is injected', async () => {

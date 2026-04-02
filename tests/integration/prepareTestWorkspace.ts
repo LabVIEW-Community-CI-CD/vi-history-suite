@@ -35,6 +35,23 @@ export async function prepareIntegrationWorkspace(
     ineligibleRelativePath
   };
 
+  await fs.mkdir(path.join(workspacePath, '.vscode'), { recursive: true });
+  await fs.writeFile(
+    path.join(workspacePath, '.vscode', 'settings.json'),
+    JSON.stringify(
+      {
+        'viHistorySuite.labviewCliPath': path.join(
+          workspacePath,
+          '.vihs-missing-tools',
+          'LabVIEWCLI.exe'
+        ),
+        'viHistorySuite.preferBitness': 'x86'
+      },
+      null,
+      2
+    )
+  );
+
   const metadataPath = path.join(workspacePath, '.vihs-test-meta.json');
   await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
 

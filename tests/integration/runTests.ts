@@ -11,7 +11,12 @@ async function main(): Promise<void> {
   const repoRoot = path.resolve(__dirname, '..', '..', '..');
   const extensionTestsEntry = path.resolve(__dirname, 'suite', 'index.js');
   const windowsCodePath = '/mnt/c/Program Files/Microsoft VS Code/Code.exe';
-  const useWindowsHost = fsSync.existsSync(windowsCodePath);
+  const hostStrategy = inspectIntegrationHostStrategy(windowsCodePath);
+  if (hostStrategy.mode === 'skip') {
+    console.log(`Skipping integration tests: ${hostStrategy.reason}`);
+    return;
+  }
+  const useWindowsHost = hostStrategy.mode === 'windows';
   const integrationRuntimeRoot = await selectIntegrationRuntimeRoot(repoRoot, useWindowsHost);
 
   const metadata = await prepareIntegrationWorkspace(
@@ -74,6 +79,23 @@ async function main(): Promise<void> {
   }
 }
 
+function inspectIntegrationHostStrategy(
+  windowsCodePath: string
+): { mode: 'windows' | 'linux' | 'skip'; reason?: string } {
+  if (!fsSync.existsSync(windowsCodePath)) {
+    return { mode: 'linux' };
+  }
+
+  if (isWindowsCodeAlreadyRunning()) {
+    return {
+      mode: 'skip',
+      reason: 'windows-vscode-instance-already-running'
+    };
+  }
+
+  return { mode: 'windows' };
+}
+
 void main().catch((error) => {
   console.error('Failed to run integration tests');
   console.error(error);
@@ -116,6 +138,25 @@ function buildWindowsExtensionHostEnv(
     PATH: mergedPath,
     Path: mergedPath
   };
+}
+
+function isWindowsCodeAlreadyRunning(): boolean {
+  try {
+    const output = execFileSync(
+      '/mnt/c/Windows/System32/tasklist.exe',
+      ['/FI', 'IMAGENAME eq Code.exe', '/NH'],
+      {
+        encoding: 'utf8',
+        cwd: '/mnt/c/Windows'
+      }
+    ).replace(/\r/g, '');
+    return output
+      .split('\n')
+      .map((line) => line.trim())
+      .some((line) => /^Code\.exe\s+/i.test(line));
+  } catch {
+    return false;
+  }
 }
 
 function readWindowsEnvironment(): Record<string, string> {

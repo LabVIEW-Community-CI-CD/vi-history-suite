@@ -216,6 +216,12 @@
 - `TEST-UNIT-069`: validate the pure comparison-report execution planner maps
   ready packets to exact LabVIEW CLI or LVCompare command lines and fails
   closed on blocked or incomplete runtime state
+- `TEST-UNIT-070`: validate the governed comparison-report storage contract
+  keeps the retained packet artifact separate from the reserved NI-generated
+  `diff-report-*.html` output path
+- `TEST-UNIT-071`: validate the host-native comparison-report execution runner
+  stages revision blobs, runs the governed command, retains stdout/stderr
+  artifacts, and records explicit failure reasons
 - `TEST-UNIT-063`: validate explicit runtime settings override auto-discovery,
   Windows registry/install-root discovery is retained, and runtime selection
   chooses the governed host-native engine deterministically
@@ -238,7 +244,9 @@
 - `TEST-INTEG-001`: run a real VS Code extension host against a temporary Git
   workspace and prove eligible versus ineligible command flow behavior
 - `TEST-INTEG-002`: run the real extension-host report action and retain the
-  stored comparison-report packet plus action summary under workspace storage
+  stored comparison-report packet artifact plus action summary under workspace
+  storage, while only reading the governed report file when execution retained
+  `reportExists: true`
 - `TEST-INTEG-003`: run the real extension-host report action and retain a
   truthful runtime-selection summary that justifies either `ready-for-runtime`
   or `blocked-runtime` on the active host
