@@ -58,7 +58,8 @@
 - `TEST-UNIT-005`: build a temporary Git repo with a content-detected VI and
   assert the shared core history model returns eligible history
 - `TEST-UNIT-006`: validate the local design-gate plan, assurance-summary
-  parsing, weakest-coverage extraction, and retained report rendering helpers
+  parsing, weakest-coverage extraction with deterministic tie ordering, and
+  retained report rendering helpers
 - `TEST-UNIT-007`: validate explicit design-gate unavailable-reason rendering
   when coverage-focus facts cannot be retained
 - `TEST-UNIT-008`: validate the shared design-gate runner executes ordered

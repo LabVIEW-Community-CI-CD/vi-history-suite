@@ -138,6 +138,31 @@ describe('designGate tooling', () => {
     ]);
   });
 
+  it('breaks weakest-coverage ties deterministically by larger file scope and then relative path', () => {
+    const repoRoot = '/tmp/vi-history-suite';
+    const coverageFocus = extractWeakestCoverageFocus(
+      repoRoot,
+      JSON.stringify({
+        '/tmp/vi-history-suite/src/zeta.ts': {
+          lines: { pct: 50, covered: 10, total: 20 }
+        },
+        '/tmp/vi-history-suite/src/alpha.ts': {
+          lines: { pct: 50, covered: 5, total: 20 }
+        },
+        '/tmp/vi-history-suite/src/beta.ts': {
+          lines: { pct: 50, covered: 25, total: 50 }
+        }
+      }),
+      3
+    );
+
+    expect(coverageFocus.map((entry) => entry.relativePath)).toEqual([
+      'src/beta.ts',
+      'src/alpha.ts',
+      'src/zeta.ts'
+    ]);
+  });
+
   it('renders an explicit unavailable reason when coverage focus facts are missing', () => {
     const markdown = renderDesignGateMarkdown({
       generatedAt: '2026-04-02T00:00:00.000Z',
