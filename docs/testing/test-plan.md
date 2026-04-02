@@ -162,6 +162,12 @@
   bytes actually read, bounded to the minimum detection-header length
 - `TEST-UNIT-045`: validate the filesystem VI-signature detector fails closed
   to `undefined` when the probe read cannot be completed
+- `TEST-UNIT-046`: validate the eligibility indexer debounces workspace-triggered
+  refreshes, tolerates missing Git API startup, and ignores duplicate or
+  state-less repository listener registrations
+- `TEST-UNIT-047`: validate the eligibility indexer helper layer ignores empty
+  context-key values, adds lowercase Windows path variants, and stops cleanly
+  when concurrent workers outnumber queued items
 - `TEST-DOC-003`: review architecture and product docs for the published
   WebviewPanel-only surface, desktop/remote-host boundary, and no-publish
   TimelineProvider policy

@@ -246,7 +246,7 @@ export async function forEachConcurrent<T>(
 ): Promise<void> {
   const queue = [...values];
   const workers = Array.from({ length: Math.max(1, concurrency) }, async () => {
-    while (queue.length > 0) {
+    while (true) {
       const next = queue.shift();
       if (next === undefined) {
         return;

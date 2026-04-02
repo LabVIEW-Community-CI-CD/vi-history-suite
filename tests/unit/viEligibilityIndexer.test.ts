@@ -378,4 +378,91 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
     indexer.dispose();
     expect(initialStateDispose).toHaveBeenCalledTimes(1);
   });
+
+  it('debounces workspace-triggered refreshes, tolerates missing Git API startup, and ignores duplicate or state-less repository listeners', async () => {
+    vi.useFakeTimers();
+    try {
+      workspaceState.isTrusted = false;
+      const indexer = new ViEligibilityIndexer(undefined);
+      const refreshSpy = vi.spyOn(indexer, 'refresh').mockResolvedValue(undefined);
+
+      await indexer.start();
+
+      expect(workspaceFolderListeners).toHaveLength(1);
+      expect(workspaceTrustListeners).toHaveLength(1);
+      expect(refreshSpy).toHaveBeenCalledTimes(1);
+
+      workspaceFolderListeners[0]();
+      workspaceTrustListeners[0]();
+      await vi.advanceTimersByTimeAsync(299);
+      expect(refreshSpy).toHaveBeenCalledTimes(1);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(refreshSpy).toHaveBeenCalledTimes(2);
+
+      const openListeners: Array<(repository: never) => unknown> = [];
+      const duplicateRepository = {
+        rootUri: { fsPath: '/workspace/repo-a', path: '/workspace/repo-a' },
+        state: {
+          onDidChange: vi.fn(() => ({ dispose() {} }))
+        }
+      };
+      const statelessRepository = {
+        rootUri: { fsPath: '/workspace/repo-b', path: '/workspace/repo-b' },
+        state: {}
+      };
+
+      const indexerWithGit = new ViEligibilityIndexer({
+        repositories: [duplicateRepository],
+        onDidOpenRepository: vi.fn((listener) => {
+          openListeners.push(listener as never);
+          return { dispose() {} };
+        }),
+        onDidCloseRepository: vi.fn(() => ({ dispose() {} })),
+        toGitUri: vi.fn()
+      } as never);
+
+      await indexerWithGit.start();
+      expect(duplicateRepository.state.onDidChange).toHaveBeenCalledTimes(1);
+
+      openListeners[0](duplicateRepository as never);
+      openListeners[0](statelessRepository as never);
+      expect(duplicateRepository.state.onDidChange).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('adds windows lowercase context keys, ignores empty values, and stops concurrent workers cleanly when the queue is exhausted', async () => {
+    expect(contextKeysForUri({ fsPath: '', path: '' } as never)).toEqual([]);
+
+    const originalPlatform = Object.getOwnPropertyDescriptor(process, 'platform');
+    Object.defineProperty(process, 'platform', {
+      value: 'win32'
+    });
+    try {
+      expect(
+        contextKeysForUri({
+          fsPath: 'C:\\Repo\\Nested\\File.vi',
+          path: 'C:\\Repo\\Nested\\File.vi'
+        } as never)
+      ).toEqual(
+        expect.arrayContaining([
+          'C:\\Repo\\Nested\\File.vi',
+          'C:/Repo/Nested/File.vi',
+          'c:\\repo\\nested\\file.vi',
+          'c:/repo/nested/file.vi'
+        ])
+      );
+    } finally {
+      if (originalPlatform) {
+        Object.defineProperty(process, 'platform', originalPlatform);
+      }
+    }
+
+    const processed: number[] = [];
+    await forEachConcurrent([1], 3, async (value) => {
+      processed.push(value);
+    });
+    expect(processed).toEqual([1]);
+  });
 });
