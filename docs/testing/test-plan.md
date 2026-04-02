@@ -174,6 +174,9 @@
   are omitted or blank
 - `TEST-UNIT-049`: validate the comparison-report planning helpers fail closed
   on empty required storage roots, filenames, and VI/report paths
+- `TEST-UNIT-050`: validate the history panel and copied review packet render
+  an explicit `No retained commits` fallback when the retained commit list is
+  empty
 - `TEST-DOC-003`: review architecture and product docs for the published
   WebviewPanel-only surface, desktop/remote-host boundary, and no-publish
   TimelineProvider policy

@@ -105,4 +105,22 @@ describe('renderHistoryPanelHtml', () => {
     expect(reviewPacket).toContain('- abcdef12 vs 11111111 :: Improve deployment behavior');
     expect(reviewPacket).toContain('- 11111111 :: oldest retained revision :: Initial deployment behavior');
   });
+
+  it('renders an explicit no-retained-commits fallback in HTML and the copied review packet', () => {
+    const model = {
+      repositoryName: 'labview-icon-editor',
+      repositoryRoot: '/tmp/labview-icon-editor',
+      relativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+      signature: 'LVIN' as const,
+      eligible: false,
+      commits: []
+    };
+
+    const html = renderHistoryPanelHtml(model);
+    const reviewPacket = renderHistoryReviewPacketText(model);
+
+    expect(html).toContain('No retained commits');
+    expect(reviewPacket).toContain('Newest retained commit: No retained commits');
+    expect(reviewPacket).toContain('Oldest retained commit: No retained commits');
+  });
 });
