@@ -476,4 +476,59 @@ describe('createOpenViHistoryCommand', () => {
     expect(clipboardWriteTextMock).not.toHaveBeenCalled();
     expect(executeCommandMock).not.toHaveBeenCalled();
   });
+
+  it('retains missing-git-uri when the selected revision resolves but the previous revision does not', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Update VI',
+            previousHash: '1111111122222222'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+    const gitApi = {
+      toGitUri: vi.fn().mockImplementation((_uri: MockUri, ref: string) => {
+        if (ref === 'abcdef1234567890') {
+          return createMockUri(`/git/${ref}`, 'git');
+        }
+        return undefined;
+      })
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      gitApi as never,
+      tracker
+    );
+
+    await command(targetUri as never);
+    await tracker.dispatchLastPanelMessage({
+      command: 'diffPrevious',
+      hash: 'abcdef1234567890'
+    });
+
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'diffPrevious',
+      hash: 'abcdef1234567890',
+      outcome: 'missing-git-uri'
+    });
+    expect(showWarningMessageMock).not.toHaveBeenCalled();
+    expect(executeCommandMock).not.toHaveBeenCalled();
+  });
 });
