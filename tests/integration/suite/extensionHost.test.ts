@@ -81,7 +81,7 @@ async function testPanelOpenFlow(
   );
 
   api.clearHistoryPanelTracking();
-  await vscode.commands.executeCommand('viHistorySuite.openViHistory', eligibleUri);
+  await vscode.commands.executeCommand('labviewViHistory.open', eligibleUri);
 
   await waitFor(async () => {
     const panel = api.getLastOpenedPanel();

@@ -1,5 +1,9 @@
 # Extension Design Summary
 
+This summary is informational only. The authoritative research stack lives
+under `docs/research/authoritative/`, with
+`deep-research-report.cleaned.md` as the primary reading surface.
+
 This repository baseline is anchored to the user-provided research paper:
 
 - `Building a VS Code "VI History" Extension for Content-Detected LabVIEW VIs in Git Repos`
@@ -10,14 +14,17 @@ This repository baseline is anchored to the user-provided research paper:
   extension.
 - The content signature check is `LVIN` or `LVCC` at byte offset `8`
   (0-based), with an optional stricter `RSRC\r\n` header check.
-- The Explorer context-menu command should be visible only when the selected
-  file:
+- The `VI History` context-menu command should be visible only when the
+  selected file:
   - is inside an opened Git repository
   - is a content-detected VI
   - has at least two modifying commits
-- Dynamic menu visibility should use a `when` clause backed by `setContext`
-  object membership:
-  - `resourcePath in viHistorySuite.eligiblePaths`
+- Dynamic menu visibility should use the authoritative `when` clause backed by
+  `setContext` object membership:
+  - `resourcePath in labviewViHistory.eligiblePaths && isWorkspaceTrusted && gitOpenRepositoryCount >= 1`
+- The command should be contributed through both:
+  - `explorer/context`
+  - `editor/title/context`
 - Eligibility indexing should enumerate tracked files and use bounded history
   checks:
   - `git ls-files -z`
@@ -29,8 +36,8 @@ This repository baseline is anchored to the user-provided research paper:
   - copy hash
   - later report generation
 - Workspace trust must gate file scanning and external process execution.
-- Report generation is a later milestone and should prefer LabVIEW CLI
-  `CreateComparisonReport` when introduced.
+- Report generation remains a future implementation tranche and should prefer
+  LabVIEW CLI `CreateComparisonReport` when introduced.
 - The first real harness should use cloned Git history from
   `ni/labview-icon-editor`, not vendored copies.
 
@@ -45,4 +52,3 @@ This repository baseline is anchored to the user-provided research paper:
   `comparevi-history` or `compare-vi-cli-action`.
 - The first governed baseline should be TypeScript-first because the product is
   a VS Code extension that runs in the Node extension host.
-

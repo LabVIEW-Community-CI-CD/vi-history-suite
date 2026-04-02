@@ -10,11 +10,13 @@
 ## Scope
 
 - Purpose: deliver a governed VS Code extension baseline for content-detected VI
-  history review in Git repositories.
-- In scope: content detection, eligibility indexing, history panel, local CI,
-  and repo-native governance artifacts.
-- Out of scope: NI report generation in the first baseline, VS Code for Web,
-  and external runtime dependencies on other VI-history repos.
+  history review in Git repositories, aligned to the authoritative research
+  packet under `docs/research/authoritative/`.
+- In scope: content detection, eligibility indexing, authoritative menu gating,
+  history panel, local CI, and repo-native governance artifacts.
+- Out of scope for the current implemented tranche: NI report generation,
+  TimelineProvider publishable support, VS Code for Web, and external runtime
+  dependencies on other VI-history repos.
 
 ## Requirements
 
@@ -23,8 +25,8 @@
 | VHS-REQ-001 | The extension shall detect candidate LabVIEW VIs by reading bytes 8..11 and accepting `LVIN` or `LVCC`. | The product is content-based, not extension-based. | Positive and negative fixtures classify correctly. | Unit test |
 | VHS-REQ-002 | The extension shall not rely on filename or file extension for VI detection. | The research paper forbids extension-based gating. | Files without `.vi` are still eligible when bytes match. | Unit and integration tests |
 | VHS-REQ-003 | The extension shall support an optional stricter mode that also checks the leading `RSRC` header bytes. | The paper recommends stricter-mode mitigation against false positives. | Strict mode rejects a buffer with only offset-8 magic. | Unit test |
-| VHS-REQ-004 | The extension shall contribute an Explorer context-menu command named `VI History`. | This is the primary user entry point. | The extension manifest declares the command and menu contribution. | Static inspection and integration test |
-| VHS-REQ-005 | The `VI History` command shall only be visible when the selected resource is inside an opened Git repository. | History review is meaningful only in Git context. | Menu contribution uses Git-aware visibility gating. | Manifest inspection |
+| VHS-REQ-004 | The extension shall contribute a `VI History` context-menu command through both `explorer/context` and `editor/title/context`. | The authoritative research calls for the command to be reachable from Explorer and editor title context menus. | The extension manifest contributes `VI History` through both menu locations. | Unit test and static inspection |
+| VHS-REQ-005 | The `VI History` command shall only be visible through the authoritative menu gate `resourcePath in labviewViHistory.eligiblePaths && isWorkspaceTrusted && gitOpenRepositoryCount >= 1`. | The authoritative research defines the precise dynamic visibility gate for the first product surface. | The manifest uses that exact `when` clause for the contributed menu entries. | Unit test and static inspection |
 | VHS-REQ-006 | The `VI History` command shall only be visible for tracked files that satisfy VI detection and have at least two modifying commits. | The history panel should only appear when history exists. | Eligibility context excludes files with fewer than two commits. | Unit and integration tests |
 | VHS-REQ-007 | The extension shall enumerate tracked files using `git ls-files -z` or a functionally equivalent Git API-backed result. | NUL-safe tracked enumeration is the recommended baseline. | Indexer parses tracked files robustly, including paths with spaces. | Unit test |
 | VHS-REQ-008 | The extension shall determine minimum eligibility history with a bounded query equivalent to `git log -n 2 --format=%H --follow -- <path>`. | The product only needs two commits to establish useful history. | Eligibility queries read at most two hashes per file. | Code review and unit test |
@@ -32,7 +34,7 @@
 | VHS-REQ-010 | The extension shall use partial local file reads for `file` URIs during VI detection. | Minimal I/O keeps indexing lightweight. | The local detection path reads only the bytes needed for signature checks. | Unit test and code review |
 | VHS-REQ-011 | The extension shall fall back to `workspace.fs.readFile` for non-`file` URI schemes. | Remote and virtual workspaces may not expose local paths. | Detection succeeds or fails cleanly on non-file scheme stubs. | Unit test |
 | VHS-REQ-012 | The extension shall gate scanning and external process execution on workspace trust. | Workspace trust is the correct safety boundary for this extension type. | Untrusted workspaces set an empty eligibility context. | Integration test and code review |
-| VHS-REQ-013 | The extension shall maintain dynamic menu visibility through `setContext` object membership. | This is the documented VS Code pattern for dynamic menus. | The context key `viHistorySuite.eligiblePaths` is populated with eligible resource paths. | Code review |
+| VHS-REQ-013 | The extension shall maintain dynamic menu visibility through `setContext` object membership under `labviewViHistory.eligiblePaths`. | The authoritative research uses the `labviewViHistory.eligiblePaths` membership map as the dynamic menu gate. | The context key `labviewViHistory.eligiblePaths` is populated with eligible resource paths. | Unit test and code review |
 | VHS-REQ-014 | The extension shall cache eligibility results by repository root, relative path, and `HEAD`. | Re-indexing every file on every event is wasteful. | Cache keys include repo root, file path, and HEAD. | Code review |
 | VHS-REQ-015 | The extension shall bound indexing concurrency through configuration. | Large repositories require controlled background work. | The indexer respects `viHistorySuite.maxIndexedConcurrency`. | Unit test |
 | VHS-REQ-016 | The extension shall open a webview history panel for the selected file. | The first review surface is a WebviewPanel. | Command execution opens a panel with file and commit metadata. | Integration test |
@@ -101,6 +103,7 @@
 | VHS-REQ-079 | The design-gate runner shall create the retained design-gate report directory recursively before writing latest JSON and Markdown report artifacts. | A self-propelling gate should not rely on a precreated cache directory to retain its evidence. | Persisting a design-gate report first creates `.cache/design-gate/` recursively, then writes `latest-report.json` and `latest-report.md`. | Unit test |
 | VHS-REQ-080 | The design-gate runner shall retain spawned-step stdout, stderr, and duration while streaming the same bytes to the active operator output channels. | Autonomous gate debugging needs retained evidence and live operator visibility from the same execution facts. | The shared spawned-step executor returns accumulated stdout, stderr, and duration while forwarding emitted bytes to the configured stdout/stderr sinks. | Unit test |
 | VHS-REQ-081 | The design-gate runner shall fail closed when a spawned gate step emits a process error or closes without an exit code. | The autonomous lane should not treat startup failures or ambiguous process termination as a successful gate step. | Spawn errors resolve to exit code `1` with retained error text, and `close(null)` is coerced to exit code `1`. | Unit test |
+| VHS-REQ-082 | The extension shall register its primary command under the authoritative command identifier `labviewViHistory.open`. | The authoritative research uses `labviewViHistory.open` as the product command identity for menu wiring and activation. | The manifest and activation events declare `labviewViHistory.open` and the extension registers that command at runtime. | Unit test and static inspection |
 
 ## Assumptions
 

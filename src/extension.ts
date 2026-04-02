@@ -38,15 +38,9 @@ export async function activate(
 
   context.subscriptions.push(eligibilityIndexer);
 
-  await vscode.commands.executeCommand(
-    'setContext',
-    'viHistorySuite.isWorkspaceTrusted',
-    vscode.workspace.isTrusted
-  );
-
   context.subscriptions.push(
     vscode.commands.registerCommand(
-      'viHistorySuite.openViHistory',
+      'labviewViHistory.open',
       createOpenViHistoryCommand(
         historyService,
         eligibilityIndexer,

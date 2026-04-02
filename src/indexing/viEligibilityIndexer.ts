@@ -76,7 +76,6 @@ export class ViEligibilityIndexer implements vscode.Disposable {
 
     this.disposables.push(
       vscode.workspace.onDidGrantWorkspaceTrust(() => {
-        void this.updateTrustContext();
         this.scheduleRefresh();
       })
     );
@@ -116,21 +115,11 @@ export class ViEligibilityIndexer implements vscode.Disposable {
     );
   }
 
-  private async updateTrustContext(): Promise<void> {
-    await vscode.commands.executeCommand(
-      'setContext',
-      'viHistorySuite.isWorkspaceTrusted',
-      vscode.workspace.isTrusted
-    );
-  }
-
   async refresh(): Promise<void> {
-    await this.updateTrustContext();
-
     if (!vscode.workspace.isTrusted) {
       this.eligiblePaths = {};
       this.lastIndexedRepositoryRoots = [];
-      await vscode.commands.executeCommand('setContext', 'viHistorySuite.eligiblePaths', {});
+      await vscode.commands.executeCommand('setContext', 'labviewViHistory.eligiblePaths', {});
       return;
     }
 
@@ -198,7 +187,7 @@ export class ViEligibilityIndexer implements vscode.Disposable {
     this.eligiblePaths = nextEligiblePaths;
     await vscode.commands.executeCommand(
       'setContext',
-      'viHistorySuite.eligiblePaths',
+      'labviewViHistory.eligiblePaths',
       nextEligiblePaths
     );
   }

@@ -97,6 +97,9 @@
   stderr, and duration while streaming both channels to the active sinks
 - `TEST-UNIT-023`: validate spawned design-gate step execution fails closed on
   process errors and `close(null)` termination
+- `TEST-UNIT-024`: validate the extension manifest uses the authoritative
+  `labviewViHistory` command id, eligibility context key, and menu `when`
+  clause for both Explorer and editor title context menus
 - `TEST-SMOKE-001`: run the canonical harness smoke and retain JSON, Markdown,
   and HTML reports under `.cache/harness-reports/`
 - `TEST-INTEG-001`: run a real VS Code extension host against a temporary Git

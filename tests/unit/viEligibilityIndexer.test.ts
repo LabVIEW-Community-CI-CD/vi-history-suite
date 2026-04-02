@@ -244,8 +244,7 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
       eligiblePathsSample: []
     });
     expect(commandExecuteMock.mock.calls).toEqual([
-      ['setContext', 'viHistorySuite.isWorkspaceTrusted', false],
-      ['setContext', 'viHistorySuite.eligiblePaths', {}]
+      ['setContext', 'labviewViHistory.eligiblePaths', {}]
     ]);
     expect(withProgressMock).not.toHaveBeenCalled();
   });

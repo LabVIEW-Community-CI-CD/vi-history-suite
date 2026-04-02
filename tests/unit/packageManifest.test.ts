@@ -1,0 +1,55 @@
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+
+import { describe, expect, it } from 'vitest';
+
+interface ExtensionManifest {
+  activationEvents?: string[];
+  contributes?: {
+    commands?: Array<{
+      command?: string;
+      title?: string;
+      category?: string;
+    }>;
+    menus?: Record<
+      string,
+      Array<{
+        command?: string;
+        group?: string;
+        when?: string;
+      }>
+    >;
+  };
+}
+
+function readManifest(): ExtensionManifest {
+  const manifestPath = path.resolve(__dirname, '..', '..', 'package.json');
+  return JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as ExtensionManifest;
+}
+
+describe('extension manifest research alignment', () => {
+  it('uses the authoritative labviewViHistory command id and activation event', () => {
+    const manifest = readManifest();
+
+    expect(manifest.activationEvents).toContain('onCommand:labviewViHistory.open');
+    expect(manifest.contributes?.commands).toContainEqual({
+      command: 'labviewViHistory.open',
+      title: 'VI History',
+      category: 'VI History'
+    });
+  });
+
+  it('contributes the authoritative visibility gate in explorer and editor title menus', () => {
+    const manifest = readManifest();
+    const expectedMenuEntry = {
+      command: 'labviewViHistory.open',
+      group: '3_compare',
+      when: 'resourcePath in labviewViHistory.eligiblePaths && isWorkspaceTrusted && gitOpenRepositoryCount >= 1'
+    };
+
+    expect(manifest.contributes?.menus?.['explorer/context']).toContainEqual(expectedMenuEntry);
+    expect(manifest.contributes?.menus?.['editor/title/context']).toContainEqual(
+      expectedMenuEntry
+    );
+  });
+});

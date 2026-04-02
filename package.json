@@ -16,7 +16,7 @@
   "main": "./out/extension.js",
   "activationEvents": [
     "onStartupFinished",
-    "onCommand:viHistorySuite.openViHistory"
+    "onCommand:labviewViHistory.open"
   ],
   "extensionDependencies": [
     "vscode.git"
@@ -24,7 +24,7 @@
   "contributes": {
     "commands": [
       {
-        "command": "viHistorySuite.openViHistory",
+        "command": "labviewViHistory.open",
         "title": "VI History",
         "category": "VI History"
       }
@@ -32,9 +32,16 @@
     "menus": {
       "explorer/context": [
         {
-          "command": "viHistorySuite.openViHistory",
+          "command": "labviewViHistory.open",
           "group": "3_compare",
-          "when": "gitOpenRepositoryCount >= 1 && viHistorySuite.isWorkspaceTrusted && resourcePath in viHistorySuite.eligiblePaths"
+          "when": "resourcePath in labviewViHistory.eligiblePaths && isWorkspaceTrusted && gitOpenRepositoryCount >= 1"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "labviewViHistory.open",
+          "group": "3_compare",
+          "when": "resourcePath in labviewViHistory.eligiblePaths && isWorkspaceTrusted && gitOpenRepositoryCount >= 1"
         }
       ]
     },
