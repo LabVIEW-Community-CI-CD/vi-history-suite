@@ -18,17 +18,33 @@ export interface GitApi {
   toGitUri: (uri: vscode.Uri, ref: string) => vscode.Uri;
 }
 
+export function hasGitApiFactory(
+  value: unknown
+): value is { getAPI: (version: number) => GitApi } {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as { getAPI?: unknown }).getAPI === 'function'
+  );
+}
+
 export async function getBuiltInGitApi(): Promise<GitApi | undefined> {
   const extension = vscode.extensions.getExtension('vscode.git');
   if (!extension) {
     return undefined;
   }
 
-  const gitExtension = extension.isActive ? extension.exports : await extension.activate();
-  if (!gitExtension?.getAPI) {
+  let gitExtension: unknown;
+
+  try {
+    gitExtension = extension.isActive ? extension.exports : await extension.activate();
+  } catch {
     return undefined;
   }
 
-  return gitExtension.getAPI(1) as GitApi;
-}
+  if (!hasGitApiFactory(gitExtension)) {
+    return undefined;
+  }
 
+  return gitExtension.getAPI(1);
+}

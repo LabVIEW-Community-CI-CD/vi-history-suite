@@ -83,6 +83,8 @@
   Git-URI translation behavior
 - `TEST-UNIT-017`: validate the URI-based VI magic wrapper for file-path
   delegation, workspace-fs truncation, and fail-closed behavior
+- `TEST-UNIT-018`: validate the built-in Git API resolver for missing
+  extension, activation, missing `getAPI`, and activation-failure behavior
 - `TEST-SMOKE-001`: run the canonical harness smoke and retain JSON, Markdown,
   and HTML reports under `.cache/harness-reports/`
 - `TEST-INTEG-001`: run a real VS Code extension host against a temporary Git

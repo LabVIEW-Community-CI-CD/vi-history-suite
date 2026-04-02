@@ -66,3 +66,7 @@ VHS-REQ-064,"Expose Git-URI translation only through the available Git API","aut
 VHS-REQ-065,"Delegate file URIs in the VI magic wrapper to the file-system probe helper","author direction",Medium,TEST-UNIT-017,"tests/unit/viMagicWrapper.test.ts","src/domain/viMagic.ts",Implemented
 VHS-REQ-066,"Truncate non-file workspace-fs reads in the VI magic wrapper to the minimum detection-header length","author direction",Medium,TEST-UNIT-017,"tests/unit/viMagicWrapper.test.ts","src/domain/viMagic.ts",Implemented
 VHS-REQ-067,"Fail closed in the VI magic wrapper when probe reads throw","author direction",Medium,TEST-UNIT-017,"tests/unit/viMagicWrapper.test.ts","src/domain/viMagic.ts",Implemented
+VHS-REQ-068,"Return undefined from the built-in Git API resolver when the vscode.git extension is not installed","author direction",Medium,TEST-UNIT-018,"tests/unit/gitApi.test.ts","src/git/gitApi.ts",Implemented
+VHS-REQ-069,"Request API version 1 from the active or activated vscode.git extension","author direction",High,TEST-UNIT-018,"tests/unit/gitApi.test.ts","src/git/gitApi.ts",Implemented
+VHS-REQ-070,"Return undefined from the built-in Git API resolver when Git extension exports do not provide getAPI","author direction",Medium,TEST-UNIT-018,"tests/unit/gitApi.test.ts","src/git/gitApi.ts",Implemented
+VHS-REQ-071,"Fail closed in the built-in Git API resolver when Git extension activation throws","author direction",High,TEST-UNIT-018,"tests/unit/gitApi.test.ts","src/git/gitApi.ts",Implemented
