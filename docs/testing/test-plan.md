@@ -114,6 +114,12 @@
   `context.storageUri`, and report links only appear when HTML output exists
 - `TEST-INTEG-006`: validate runtime discovery honors explicit user tool-path
   overrides before Windows/macOS/Linux auto-detection
+- `TEST-UNIT-027`: validate the pure comparison-report planning module for
+  exact `{type}-report-{fullFilename}.html` naming, deterministic workspace
+  storage layout, and narrow local-root planning
+- `TEST-UNIT-028`: validate the pure comparison-report planning module for
+  same-name staged revision filenames plus primary `CreateComparisonReport`
+  and fallback `LVCompare` command plans
 - `TEST-DOC-003`: review architecture and product docs for the published
   WebviewPanel-only surface, desktop/remote-host boundary, and no-publish
   TimelineProvider policy

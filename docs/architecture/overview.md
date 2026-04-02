@@ -38,6 +38,7 @@
 | Extension runtime | indexing, command execution, trust gating | TypeScript / Node |
 | Git adapter | tracked-file and history queries | Git CLI plus built-in Git API |
 | Review UI | history presentation and review actions | WebviewPanel |
+| Report subsystem | report planning, later runtime/tool execution, report storage | TypeScript / Node |
 | Harness smoke runner | clone-on-demand canonical harness verification | TypeScript / Node CLI |
 | Governance pack | requirements, tests, ADRs, traceability | Markdown / CSV |
 
@@ -50,6 +51,7 @@
 | History service | Extension runtime | load commit history for the selected file |
 | History panel | Review UI | render factual commit review surface |
 | Git CLI adapter | Git adapter | execute and parse bounded Git commands |
+| Comparison report planner | Report subsystem | derive deterministic report naming, staging, storage, and command plans |
 | Harness smoke command | Harness smoke runner | clone the canonical harness and emit factual local reports |
 
 ## Deployment View
@@ -86,3 +88,5 @@
   review surface uses WebviewPanel
 - [ADR-0003](./adr/ADR-0003-workspace-report-storage-and-desktop-boundary.md):
   Workspace-scoped report storage and desktop-host product boundary
+- [ADR-0004](./adr/ADR-0004-report-generation-subsystem-baseline.md):
+  Report-generation subsystem baseline
