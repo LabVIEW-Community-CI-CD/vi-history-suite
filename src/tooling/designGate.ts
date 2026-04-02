@@ -23,7 +23,17 @@ export interface DesignGateReport {
   repoRoot: string;
   status: 'pass' | 'fail';
   assuranceGateSummary?: string;
+  coverageFocus?: CoverageFocusEntry[];
+  coverageFocusUnavailableReason?: string;
+  nextFocus?: string;
   steps: DesignGateStepResult[];
+}
+
+export interface CoverageFocusEntry {
+  relativePath: string;
+  linesPct: number;
+  linesCovered: number;
+  linesTotal: number;
 }
 
 export function defaultAssuranceScriptPath(): string {
@@ -82,6 +92,50 @@ export function designGateReportMarkdownPath(repoRoot: string): string {
   return path.join(designGateReportDirectory(repoRoot), 'latest-report.md');
 }
 
+export function designGateCoverageSummaryPath(repoRoot: string): string {
+  return path.join(repoRoot, 'coverage', 'coverage-summary.json');
+}
+
+export function extractWeakestCoverageFocus(
+  repoRoot: string,
+  coverageSummaryText: string,
+  limit = 5
+): CoverageFocusEntry[] {
+  const parsed = JSON.parse(coverageSummaryText) as Record<string, unknown>;
+  const repoSrcRoot = `${path.join(repoRoot, 'src')}${path.sep}`;
+
+  return Object.entries(parsed)
+    .filter(([key]) => key !== 'total' && key.startsWith(repoSrcRoot))
+    .map(([key, value]) => {
+      const typedValue = value as {
+        lines?: { covered?: number; total?: number; pct?: number };
+      };
+      const relativePath = path.relative(repoRoot, key).split(path.sep).join('/');
+      const linesCovered = Number(typedValue.lines?.covered ?? 0);
+      const linesTotal = Number(typedValue.lines?.total ?? 0);
+      const linesPct = Number(typedValue.lines?.pct ?? 0);
+
+      return {
+        relativePath,
+        linesPct,
+        linesCovered,
+        linesTotal
+      };
+    })
+    .sort((left, right) => {
+      if (left.linesPct !== right.linesPct) {
+        return left.linesPct - right.linesPct;
+      }
+
+      if (left.linesTotal !== right.linesTotal) {
+        return right.linesTotal - left.linesTotal;
+      }
+
+      return left.relativePath.localeCompare(right.relativePath);
+    })
+    .slice(0, limit);
+}
+
 export function renderDesignGateMarkdown(report: DesignGateReport): string {
   const lines = [
     '# Design Gate Report',
@@ -90,6 +144,7 @@ export function renderDesignGateMarkdown(report: DesignGateReport): string {
     `- Repo root: ${report.repoRoot}`,
     `- Status: ${report.status}`,
     `- Assurance gate summary: ${report.assuranceGateSummary ?? 'not-retained'}`,
+    `- Next focus: ${report.nextFocus ?? 'not-retained'}`,
     '',
     '| Step | Status | Duration (ms) |',
     '| --- | --- | ---: |'
@@ -98,6 +153,25 @@ export function renderDesignGateMarkdown(report: DesignGateReport): string {
   for (const step of report.steps) {
     lines.push(
       `| ${step.id} | ${step.exitCode === 0 ? 'pass' : 'fail'} | ${step.durationMs} |`
+    );
+  }
+
+  lines.push('', '## Coverage Focus', '');
+
+  if (report.coverageFocus && report.coverageFocus.length > 0) {
+    lines.push('| Source file | Line coverage | Covered/Total |');
+    lines.push('| --- | ---: | ---: |');
+
+    for (const entry of report.coverageFocus) {
+      lines.push(
+        `| ${entry.relativePath} | ${entry.linesPct.toFixed(1)}% | ${entry.linesCovered}/${entry.linesTotal} |`
+      );
+    }
+  } else {
+    lines.push(
+      `- Coverage focus unavailable: ${
+        report.coverageFocusUnavailableReason ?? 'coverage-summary-missing'
+      }`
     );
   }
 

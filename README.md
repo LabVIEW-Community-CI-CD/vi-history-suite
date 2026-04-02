@@ -34,6 +34,9 @@ npm run harness:smoke
 npm run design:gate
 ```
 
+`npm run design:gate` writes retained reports under `.cache/design-gate/` and
+surfaces the weakest covered source files as the next local development focus.
+
 ## Current Scope
 
 Included in the first baseline:

@@ -58,13 +58,18 @@
 - `TEST-UNIT-005`: build a temporary Git repo with a content-detected VI and
   assert the shared core history model returns eligible history
 - `TEST-UNIT-006`: validate the local design-gate plan, assurance-summary
-  parsing, and retained report rendering helpers
+  parsing, weakest-coverage extraction, and retained report rendering helpers
+- `TEST-UNIT-007`: validate explicit design-gate unavailable-reason rendering
+  when coverage-focus facts cannot be retained
 - `TEST-SMOKE-001`: run the canonical harness smoke and retain JSON, Markdown,
   and HTML reports under `.cache/harness-reports/`
 - `TEST-INTEG-001`: run a real VS Code extension host against a temporary Git
   workspace and prove eligible versus ineligible command flow behavior
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
+- `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source
+  coverage focus plus a deterministic next-focus cue in the latest design-gate
+  report
 
 ## Reporting
 
