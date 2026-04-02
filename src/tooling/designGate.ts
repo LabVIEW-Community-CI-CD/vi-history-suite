@@ -143,12 +143,18 @@ export function renderDesignGateMarkdown(report: DesignGateReport): string {
     `- Generated: ${report.generatedAt}`,
     `- Repo root: ${report.repoRoot}`,
     `- Status: ${report.status}`,
-    `- Assurance gate summary: ${report.assuranceGateSummary ?? 'not-retained'}`,
-    `- Next focus: ${report.nextFocus ?? 'not-retained'}`,
+    `- Assurance gate summary: ${report.assuranceGateSummary ?? 'not-retained'}`
+  ];
+
+  if (report.nextFocus) {
+    lines.push(`- Next focus: ${report.nextFocus}`);
+  }
+
+  lines.push(
     '',
     '| Step | Status | Duration (ms) |',
     '| --- | --- | ---: |'
-  ];
+  );
 
   for (const step of report.steps) {
     lines.push(

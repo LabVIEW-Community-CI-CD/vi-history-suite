@@ -177,6 +177,12 @@
 - `TEST-UNIT-050`: validate the history panel and copied review packet render
   an explicit `No retained commits` fallback when the retained commit list is
   empty
+- `TEST-UNIT-051`: validate the design-gate runner retains the explicit
+  coverage-focus unavailable reason and omits `nextFocus` when no governed
+  source coverage entries are available
+- `TEST-UNIT-052`: validate the spawned design-gate step runner derives
+  duration from the default wall clock when no injected time source is
+  supplied
 - `TEST-DOC-003`: review architecture and product docs for the published
   WebviewPanel-only surface, desktop/remote-host boundary, and no-publish
   TimelineProvider policy

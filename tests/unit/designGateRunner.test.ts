@@ -190,6 +190,59 @@ describe('designGateRunner', () => {
     });
   });
 
+  it('retains an explicit unavailable coverage reason and omits nextFocus when source coverage facts are unavailable', async () => {
+    const writes = new Map<string, string>();
+
+    const report = await runDesignGate('/tmp/vi-history-suite', {
+      now: () => '2026-04-02T00:00:00.000Z',
+      runStep: async (_command, _args, _cwd, id, title) => ({
+        id,
+        title,
+        command: 'stub',
+        args: [],
+        exitCode: 0,
+        durationMs: 5,
+        stdout:
+          id === 'standards-assurance'
+            ? 'Executive Brief\n- Gate summary: 5 PASS, 0 FAIL, 1 N/A\n'
+            : 'ok',
+        stderr: ''
+      }),
+      readFile: async () =>
+        JSON.stringify({
+          total: {
+            lines: { pct: 84.2, covered: 42, total: 50 }
+          },
+          '/tmp/vi-history-suite/tests/unit/designGateRunner.test.ts': {
+            lines: { pct: 100, covered: 10, total: 10 }
+          }
+        }),
+      mkdir: async () => undefined,
+      writeFile: async (filePath, contents) => {
+        writes.set(filePath, contents);
+      }
+    });
+
+    expect(report.coverageFocus).toBeUndefined();
+    expect(report.coverageFocusUnavailableReason).toBe(
+      'no-src-coverage-entries:/tmp/vi-history-suite/coverage/coverage-summary.json'
+    );
+    expect(report.nextFocus).toBeUndefined();
+    expect(
+      writes.get('/tmp/vi-history-suite/.cache/design-gate/latest-report.json')
+    ).toContain(
+      '"coverageFocusUnavailableReason": "no-src-coverage-entries:/tmp/vi-history-suite/coverage/coverage-summary.json"'
+    );
+    expect(
+      writes.get('/tmp/vi-history-suite/.cache/design-gate/latest-report.md')
+    ).toContain(
+      'Coverage focus unavailable: no-src-coverage-entries:/tmp/vi-history-suite/coverage/coverage-summary.json'
+    );
+    expect(writes.get('/tmp/vi-history-suite/.cache/design-gate/latest-report.md')).not.toContain(
+      'Next focus:'
+    );
+  });
+
   it('creates the retained report directory recursively before writing JSON and Markdown reports', async () => {
     const operations: string[] = [];
     const writes = new Map<string, string>();
@@ -405,5 +458,45 @@ describe('designGateRunner', () => {
 
     child.stderr.emit('data', 'late stderr\n');
     child.emit('error', new Error('late failure'));
+  });
+
+  it('uses the default wall clock when spawned steps omit an injected time source', async () => {
+    const child = new FakeChildProcess();
+    const spawnImpl = vi.fn().mockReturnValue(child);
+    const stdoutCollector = createWritableCollector();
+    const stderrCollector = createWritableCollector();
+    const dateNowSpy = vi
+      .spyOn(Date, 'now')
+      .mockReturnValueOnce(1000)
+      .mockReturnValueOnce(1025);
+
+    const resultPromise = spawnDesignGateStep(
+      'npm',
+      ['run', 'design:gate'],
+      '/tmp/vi-history-suite',
+      'design-gate',
+      'Design gate',
+      {
+        spawnImpl,
+        stdout: stdoutCollector.writer,
+        stderr: stderrCollector.writer
+      }
+    );
+
+    child.stdout.emit('data', 'design gate stdout\n');
+    child.stderr.emit('data', 'design gate stderr\n');
+    child.emit('close', 0);
+
+    await expect(resultPromise).resolves.toEqual({
+      id: 'design-gate',
+      title: 'Design gate',
+      command: 'npm',
+      args: ['run', 'design:gate'],
+      exitCode: 0,
+      durationMs: 25,
+      stdout: 'design gate stdout\n',
+      stderr: 'design gate stderr\n'
+    });
+    expect(dateNowSpy).toHaveBeenCalledTimes(2);
   });
 });
