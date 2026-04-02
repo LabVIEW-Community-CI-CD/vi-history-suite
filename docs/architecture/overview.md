@@ -82,3 +82,7 @@
 
 - [ADR-0001](./adr/ADR-0001-vscode-typescript-baseline.md): TypeScript-first
   VS Code desktop extension baseline
+- [ADR-0002](./adr/ADR-0002-published-review-surface-webview.md): Published
+  review surface uses WebviewPanel
+- [ADR-0003](./adr/ADR-0003-workspace-report-storage-and-desktop-boundary.md):
+  Workspace-scoped report storage and desktop-host product boundary

@@ -9,6 +9,17 @@
   "engines": {
     "vscode": "^1.90.0"
   },
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "VI History disables background indexing and external LabVIEW comparison-tool execution in untrusted workspaces.",
+      "restrictedConfigurations": [
+        "viHistorySuite.lvComparePath",
+        "viHistorySuite.labviewExePath",
+        "viHistorySuite.preferBitness"
+      ]
+    }
+  },
   "categories": [
     "Other",
     "SCM Providers"

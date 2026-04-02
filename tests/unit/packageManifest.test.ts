@@ -5,6 +5,14 @@ import { describe, expect, it } from 'vitest';
 
 interface ExtensionManifest {
   activationEvents?: string[];
+  extensionDependencies?: string[];
+  capabilities?: {
+    untrustedWorkspaces?: {
+      supported?: string;
+      description?: string;
+      restrictedConfigurations?: string[];
+    };
+  };
   contributes?: {
     commands?: Array<{
       command?: string;
@@ -31,7 +39,9 @@ describe('extension manifest research alignment', () => {
   it('uses the authoritative labviewViHistory command id and activation event', () => {
     const manifest = readManifest();
 
+    expect(manifest.activationEvents).toContain('onStartupFinished');
     expect(manifest.activationEvents).toContain('onCommand:labviewViHistory.open');
+    expect(manifest.extensionDependencies).toContain('vscode.git');
     expect(manifest.contributes?.commands).toContainEqual({
       command: 'labviewViHistory.open',
       title: 'VI History',
@@ -51,5 +61,20 @@ describe('extension manifest research alignment', () => {
     expect(manifest.contributes?.menus?.['editor/title/context']).toContainEqual(
       expectedMenuEntry
     );
+  });
+
+  it('declares limited untrusted-workspace support and restricts external tool settings', () => {
+    const manifest = readManifest();
+
+    expect(manifest.capabilities?.untrustedWorkspaces).toEqual({
+      supported: 'limited',
+      description:
+        'VI History disables background indexing and external LabVIEW comparison-tool execution in untrusted workspaces.',
+      restrictedConfigurations: [
+        'viHistorySuite.lvComparePath',
+        'viHistorySuite.labviewExePath',
+        'viHistorySuite.preferBitness'
+      ]
+    });
   });
 });

@@ -100,6 +100,25 @@
 - `TEST-UNIT-024`: validate the extension manifest uses the authoritative
   `labviewViHistory` command id, eligibility context key, and menu `when`
   clause for both Explorer and editor title context menus
+- `TEST-UNIT-025`: validate the extension manifest retains the authoritative
+  Git extension dependency, activation events, and limited untrusted-workspace
+  capability declaration
+- `TEST-INTEG-003`: validate indexing progress retains percent, processed/total,
+  and ETA through notification progress and a status-bar surface
+- `TEST-INTEG-004`: validate report-generation progress appears in the webview
+  review surface and completes or fails with retained status
+- `TEST-UNIT-026`: validate report-generation preflight verifies both revision
+  blobs as VIs, preserves the `{type}-report-{fullFilename}.html` naming
+  contract, and writes distinct same-name temporary filenames
+- `TEST-INTEG-005`: validate report artifacts and metadata are stored under
+  `context.storageUri`, and report links only appear when HTML output exists
+- `TEST-INTEG-006`: validate runtime discovery honors explicit user tool-path
+  overrides before Windows/macOS/Linux auto-detection
+- `TEST-DOC-003`: review architecture and product docs for the published
+  WebviewPanel-only surface, desktop/remote-host boundary, and no-publish
+  TimelineProvider policy
+- `TEST-DOC-004`: review packaging and release guidance for `vsce package`,
+  VSIX installation, and Marketplace publishing prerequisites
 - `TEST-SMOKE-001`: run the canonical harness smoke and retain JSON, Markdown,
   and HTML reports under `.cache/harness-reports/`
 - `TEST-INTEG-001`: run a real VS Code extension host against a temporary Git

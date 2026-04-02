@@ -23,7 +23,10 @@
 | Store generated reports under `context.storageUri` and surface via `asWebviewUri` plus `localResourceRoots` | missing | authoritative research only; no implementing code yet | add governed report-generation tranche |
 | LabVIEW 2026 Q1 32/64 runtime detection and selection | missing | settings placeholders only in `package.json` | add governed runtime-detection tranche |
 | Status-bar progress item plus richer percent/items/ETA progress UX | partial | `src/indexing/viEligibilityIndexer.ts` currently uses `window.withProgress` only | add governed progress tranche |
-| Treat `TimelineProvider` as experimental only, not published product surface | partial | current product uses webview only, but no explicit ADR/policy yet | capture as architecture decision |
+| Manifest trust declaration through `capabilities.untrustedWorkspaces` | aligned in this tranche | `package.json`; `VHS-REQ-084`; `tests/unit/packageManifest.test.ts` | sustain |
+| Treat `TimelineProvider` as experimental only, not published product surface | aligned in docs | `docs/architecture/adr/ADR-0002-published-review-surface-webview.md`; `VHS-REQ-085` | sustain |
+| Desktop/remote-host boundary and workspace-scoped report storage policy | aligned in docs | `docs/architecture/adr/ADR-0003-workspace-report-storage-and-desktop-boundary.md`; `VHS-REQ-092`; `VHS-REQ-097` | implement report tranche |
+| Packaging/testing/CI/research refresh guidance | aligned as backlog | `VHS-REQ-098`; `docs/research/authoritative/next-research-prompt.md` | use for next research cycle |
 
 ## Recommended Order
 
@@ -34,3 +37,4 @@
 2. LabVIEW 2026 Q1 runtime/tool selection
 3. Progress-surface uplift
 4. Explicit architecture decision for proposed APIs and desktop-only scope
+5. Packaging and release guidance aligned to the refreshed authoritative research
