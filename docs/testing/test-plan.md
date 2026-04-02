@@ -208,6 +208,11 @@
   and preflight facts
 - `TEST-UNIT-062`: validate the comparison-report action opens a dedicated
   report panel with `asWebviewUri` plus narrow `localResourceRoots`
+- `TEST-UNIT-067`: validate the comparison-report action resolves runtime
+  selection before packet persistence and records the retained runtime summary
+- `TEST-UNIT-068`: validate the stored comparison-report packet distinguishes
+  `blocked-runtime` from `blocked-preflight` and renders runtime-selection
+  facts in HTML plus metadata
 - `TEST-UNIT-063`: validate explicit runtime settings override auto-discovery,
   Windows registry/install-root discovery is retained, and runtime selection
   chooses the governed host-native engine deterministically
@@ -228,6 +233,9 @@
   workspace and prove eligible versus ineligible command flow behavior
 - `TEST-INTEG-002`: run the real extension-host report action and retain the
   stored comparison-report packet plus action summary under workspace storage
+- `TEST-INTEG-003`: run the real extension-host report action and retain a
+  truthful runtime-selection summary that justifies either `ready-for-runtime`
+  or `blocked-runtime` on the active host
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

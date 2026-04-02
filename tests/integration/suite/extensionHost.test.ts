@@ -208,9 +208,27 @@ async function testPanelOpenFlow(
   assert.match(reportAction.reportFilePath ?? '', /diff-report-eligible-content-detected\.bin\.html$/);
   assert.match(reportAction.metadataFilePath ?? '', /report-metadata\.json$/);
   assert.ok(reportAction.reportWebviewUri);
-  assert.ok(reportAction.reportStatus);
+  assert.ok(
+    reportAction.reportStatus === 'ready-for-runtime' ||
+      reportAction.reportStatus === 'blocked-runtime' ||
+      reportAction.reportStatus === 'blocked-preflight'
+  );
   assert.ok(await fs.readFile(reportAction.reportFilePath ?? '', 'utf8'));
-  assert.ok(await fs.readFile(reportAction.metadataFilePath ?? '', 'utf8'));
+  const reportMetadata = JSON.parse(await fs.readFile(reportAction.metadataFilePath ?? '', 'utf8')) as {
+    reportStatus?: string;
+    runtimeSelection?: { provider?: string; blockedReason?: string; engine?: string };
+  };
+  assert.equal(reportMetadata.reportStatus, reportAction.reportStatus);
+  assert.ok(reportMetadata.runtimeSelection);
+  assert.ok(reportMetadata.runtimeSelection?.provider);
+  if (reportMetadata.reportStatus === 'ready-for-runtime') {
+    assert.equal(reportMetadata.runtimeSelection?.provider, 'host-native');
+    assert.ok(reportMetadata.runtimeSelection?.engine);
+  }
+  if (reportMetadata.reportStatus === 'blocked-runtime') {
+    assert.equal(reportMetadata.runtimeSelection?.provider, 'unavailable');
+    assert.ok(reportMetadata.runtimeSelection?.blockedReason);
+  }
   assert.equal(api.getPanelActionCount(), 5);
 }
 

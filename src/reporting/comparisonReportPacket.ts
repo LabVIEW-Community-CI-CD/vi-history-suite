@@ -8,6 +8,7 @@ import {
   ComparisonReportType,
   StagedRevisionPlan
 } from './comparisonReportPlan';
+import { ComparisonRuntimeSelection } from './comparisonRuntimeLocator';
 import { ComparisonReportPreflightResult } from './comparisonReportPreflight';
 
 export interface PersistComparisonReportPacketOptions {
@@ -18,19 +19,21 @@ export interface PersistComparisonReportPacketOptions {
   selectedHash: string;
   baseHash: string;
   preflight: ComparisonReportPreflightResult;
+  runtimeSelection: ComparisonRuntimeSelection;
 }
 
 export interface ComparisonReportPacketRecord {
   generatedAt: string;
   reportTitle: string;
-  reportStatus: 'ready-for-runtime' | 'blocked-preflight';
+  reportStatus: 'ready-for-runtime' | 'blocked-preflight' | 'blocked-runtime';
   reportType: ComparisonReportType;
   selectedHash: string;
   baseHash: string;
   artifactPlan: ComparisonArtifactPlan;
   stagedRevisionPlan: StagedRevisionPlan;
   preflight: ComparisonReportPreflightResult;
-  runtimeExecutionState: 'not-run';
+  runtimeSelection: ComparisonRuntimeSelection;
+  runtimeExecutionState: 'not-run' | 'not-available';
 }
 
 export interface PersistComparisonReportPacketResult {
@@ -65,14 +68,18 @@ export async function persistComparisonReportPacket(
   const record: ComparisonReportPacketRecord = {
     generatedAt: (deps.now ?? defaultNow)(),
     reportTitle: `VI Comparison Report: ${artifactPlan.fullFilename}`,
-    reportStatus: options.preflight.ready ? 'ready-for-runtime' : 'blocked-preflight',
+    reportStatus: deriveReportStatus(options.preflight, options.runtimeSelection),
     reportType: options.reportType,
     selectedHash: options.selectedHash,
     baseHash: options.baseHash,
     artifactPlan,
     stagedRevisionPlan,
     preflight: options.preflight,
-    runtimeExecutionState: 'not-run'
+    runtimeSelection: options.runtimeSelection,
+    runtimeExecutionState:
+      options.preflight.ready && options.runtimeSelection.provider === 'unavailable'
+        ? 'not-available'
+        : 'not-run'
   };
 
   const mkdir = deps.mkdir ?? fs.mkdir;
@@ -93,6 +100,11 @@ export async function persistComparisonReportPacket(
 export function renderComparisonReportPacketHtml(record: ComparisonReportPacketRecord): string {
   const left = record.preflight.left;
   const right = record.preflight.right;
+  const runtimeSelection = record.runtimeSelection;
+  const runtimeNote =
+    record.reportStatus === 'blocked-runtime'
+      ? 'No NI-generated comparison report has been executed because the governed runtime selection is currently unavailable for this workspace and platform.'
+      : 'No NI-generated comparison report has been executed yet. This stored packet captures the governed preflight, runtime selection, and artifact plan for the selected retained revision pair.';
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -125,7 +137,21 @@ export function renderComparisonReportPacketHtml(record: ComparisonReportPacketR
       <div><strong>Right staged file:</strong> ${escapeHtml(record.stagedRevisionPlan.rightFilename)}</div>
     </div>
     <div class="note" data-testid="comparison-report-runtime-note">
-      <strong>Runtime note:</strong> No NI-generated comparison report has been executed yet. This stored packet captures the governed preflight and artifact plan for the selected retained revision pair.
+      <strong>Runtime note:</strong> ${escapeHtml(runtimeNote)}
+    </div>
+    <h2>Runtime selection</h2>
+    <div class="grid" data-testid="comparison-report-runtime-selection">
+      <div><strong>Provider:</strong> ${escapeHtml(runtimeSelection.provider)}</div>
+      <div><strong>Engine:</strong> ${escapeHtml(runtimeSelection.engine ?? 'none')}</div>
+      <div><strong>Blocked reason:</strong> ${escapeHtml(runtimeSelection.blockedReason ?? 'none')}</div>
+      <div><strong>Preferred bitness:</strong> ${escapeHtml(runtimeSelection.preferBitness)}</div>
+      <div><strong>LabVIEW path:</strong> ${escapeHtml(runtimeSelection.labviewExe?.path ?? 'none')}</div>
+      <div><strong>LabVIEWCLI path:</strong> ${escapeHtml(runtimeSelection.labviewCli?.path ?? 'none')}</div>
+      <div><strong>LVCompare path:</strong> ${escapeHtml(runtimeSelection.lvCompare?.path ?? 'none')}</div>
+      <div><strong>Platform:</strong> ${escapeHtml(runtimeSelection.platform)}</div>
+    </div>
+    <div class="note" data-testid="comparison-report-runtime-selection-notes">
+      <strong>Runtime notes:</strong> ${escapeHtml(runtimeSelection.notes.join(' | ') || 'none')}
     </div>
     <h2>Preflight</h2>
     <div class="grid" data-testid="comparison-report-preflight">
@@ -151,4 +177,19 @@ function escapeHtml(value: string): string {
 
 function defaultNow(): string {
   return new Date().toISOString();
+}
+
+function deriveReportStatus(
+  preflight: ComparisonReportPreflightResult,
+  runtimeSelection: ComparisonRuntimeSelection
+): 'ready-for-runtime' | 'blocked-preflight' | 'blocked-runtime' {
+  if (!preflight.ready) {
+    return 'blocked-preflight';
+  }
+
+  if (runtimeSelection.provider === 'unavailable') {
+    return 'blocked-runtime';
+  }
+
+  return 'ready-for-runtime';
 }

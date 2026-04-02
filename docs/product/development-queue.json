@@ -9,12 +9,19 @@
   {
     "id": "TRANCHE-002",
     "title": "Implement LabVIEW 2026 Q1 runtime detection and tool selection",
-    "status": "active",
+    "status": "done",
     "source": "authoritative research",
     "summary": "Detect supported LabVIEW 2026 Q1 tooling and select the correct report-generation path by host and bitness."
   },
   {
     "id": "TRANCHE-003",
+    "title": "Wire governed runtime selection into live NI report execution",
+    "status": "active",
+    "source": "authoritative research",
+    "summary": "Use the stored runtime selection and preflight facts to run LabVIEW CLI or LVCompare truthfully and retain execution evidence in the report packet."
+  },
+  {
+    "id": "TRANCHE-004",
     "title": "Add progress-surface uplift for indexing and report generation",
     "status": "queued",
     "source": "authoritative research",

@@ -28,7 +28,7 @@ export interface HistoryPanelActionSummary {
   title?: string;
   copiedHash?: string;
   copiedTextLength?: number;
-  reportStatus?: 'ready-for-runtime' | 'blocked-preflight';
+  reportStatus?: 'ready-for-runtime' | 'blocked-preflight' | 'blocked-runtime';
   blockedReason?: string;
   reportFilePath?: string;
   metadataFilePath?: string;

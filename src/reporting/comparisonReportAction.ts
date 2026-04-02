@@ -1,5 +1,10 @@
 import * as vscode from 'vscode';
 
+import {
+  ComparisonRuntimeSettings,
+  locateComparisonRuntime,
+  RuntimePlatform
+} from './comparisonRuntimeLocator';
 import { ViHistoryViewModel } from '../services/viHistoryModel';
 import { persistComparisonReportPacket } from './comparisonReportPacket';
 import { preflightComparisonReportRevisions } from './comparisonReportPreflight';
@@ -15,7 +20,7 @@ export interface ComparisonReportActionResult {
     | 'missing-storage-uri'
     | 'missing-selected-commit'
     | 'missing-previous-hash';
-  reportStatus?: 'ready-for-runtime' | 'blocked-preflight';
+  reportStatus?: 'ready-for-runtime' | 'blocked-preflight' | 'blocked-runtime';
   blockedReason?: string;
   reportFilePath?: string;
   metadataFilePath?: string;
@@ -29,6 +34,8 @@ export interface ComparisonReportActionDeps {
   createWebviewPanel?: typeof vscode.window.createWebviewPanel;
   uriFile?: typeof vscode.Uri.file;
   joinPath?: typeof vscode.Uri.joinPath;
+  locateRuntime?: typeof locateComparisonRuntime;
+  getRuntimeSettings?: () => ComparisonRuntimeSettings;
 }
 
 export function createComparisonReportAction(
@@ -55,6 +62,10 @@ export function createComparisonReportAction(
       leftRevisionId: selectedCommit.previousHash,
       rightRevisionId: selectedCommit.hash
     });
+    const runtimeSelection = await (deps.locateRuntime ?? locateComparisonRuntime)(
+      resolveRuntimePlatform(process.platform),
+      (deps.getRuntimeSettings ?? readComparisonRuntimeSettings)()
+    );
 
     const packet = await (deps.persistComparisonReport ?? persistComparisonReportPacket)({
       storageRoot: context.storageUri.fsPath,
@@ -63,7 +74,8 @@ export function createComparisonReportAction(
       reportType: 'diff',
       selectedHash: selectedCommit.hash,
       baseHash: selectedCommit.previousHash,
-      preflight
+      preflight,
+      runtimeSelection
     });
 
     const createWebviewPanel = deps.createWebviewPanel ?? vscode.window.createWebviewPanel;
@@ -92,7 +104,10 @@ export function createComparisonReportAction(
     return {
       outcome: 'opened-comparison-report',
       reportStatus: packet.record.reportStatus,
-      blockedReason: preflight.blockedReason,
+      blockedReason:
+        packet.record.reportStatus === 'blocked-runtime'
+          ? packet.record.runtimeSelection.blockedReason
+          : preflight.blockedReason,
       reportFilePath: packet.reportFilePath,
       metadataFilePath: packet.metadataFilePath,
       reportWebviewUri: reportWebviewUri.toString(),
@@ -104,7 +119,7 @@ export function createComparisonReportAction(
 export function renderComparisonReportPanelHtml(options: {
   title: string;
   reportWebviewUri: string;
-  reportStatus: 'ready-for-runtime' | 'blocked-preflight';
+  reportStatus: 'ready-for-runtime' | 'blocked-preflight' | 'blocked-runtime';
   cspSource: string;
 }): string {
   const safeTitle = escapeHtml(options.title);
@@ -138,4 +153,25 @@ function escapeHtml(value: string): string {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
+}
+
+export function readComparisonRuntimeSettings(
+  configuration: Pick<vscode.WorkspaceConfiguration, 'get'> = vscode.workspace.getConfiguration(
+    'viHistorySuite'
+  )
+): ComparisonRuntimeSettings {
+  return {
+    labviewCliPath: configuration.get<string>('labviewCliPath', ''),
+    lvComparePath: configuration.get<string>('lvComparePath', ''),
+    labviewExePath: configuration.get<string>('labviewExePath', ''),
+    preferBitness: configuration.get<'auto' | 'x86' | 'x64'>('preferBitness', 'auto')
+  };
+}
+
+export function resolveRuntimePlatform(platform: NodeJS.Platform): RuntimePlatform {
+  if (platform === 'win32' || platform === 'linux' || platform === 'darwin') {
+    return platform;
+  }
+
+  return 'linux';
 }

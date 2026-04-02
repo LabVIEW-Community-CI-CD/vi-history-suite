@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { createWebviewPanelMock } = vi.hoisted(() => ({
-  createWebviewPanelMock: vi.fn()
+const { createWebviewPanelMock, getConfigurationMock } = vi.hoisted(() => ({
+  createWebviewPanelMock: vi.fn(),
+  getConfigurationMock: vi.fn()
 }));
 
 interface MockUri {
@@ -40,6 +41,9 @@ vi.mock('vscode', () => ({
   window: {
     createWebviewPanel: createWebviewPanelMock
   },
+  workspace: {
+    getConfiguration: getConfigurationMock
+  },
   ViewColumn: {
     Active: 1
   },
@@ -50,7 +54,11 @@ vi.mock('vscode', () => ({
   }
 }));
 
-import { createComparisonReportAction } from '../../src/reporting/comparisonReportAction';
+import {
+  createComparisonReportAction,
+  readComparisonRuntimeSettings,
+  resolveRuntimePlatform
+} from '../../src/reporting/comparisonReportAction';
 
 describe('comparisonReportAction', () => {
   beforeEach(() => {
@@ -58,6 +66,10 @@ describe('comparisonReportAction', () => {
     createWebviewPanelMock.mockImplementation((_viewType: string, title: string) =>
       createMockPanel(title)
     );
+    getConfigurationMock.mockReset();
+    getConfigurationMock.mockReturnValue({
+      get: <T>(_key: string, defaultValue: T) => defaultValue
+    });
   });
 
   it('fails closed when workspace-scoped storage is unavailable', async () => {
@@ -136,6 +148,50 @@ describe('comparisonReportAction', () => {
   });
 
   it('opens a secure webview panel for a persisted comparison report packet', async () => {
+    const locateRuntime = vi.fn().mockResolvedValue({
+      platform: 'win32',
+      preferBitness: 'x86',
+      provider: 'host-native',
+      engine: 'labview-cli',
+      labviewExe: {
+        kind: 'labview-exe',
+        path: 'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
+        source: 'scan',
+        exists: true,
+        bitness: 'x86'
+      },
+      labviewCli: {
+        kind: 'labview-cli',
+        path: 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+        source: 'scan',
+        exists: true,
+        bitness: 'x64'
+      },
+      notes: [],
+      registryQueryPlans: [],
+      candidates: []
+    });
+    const persistComparisonReport = vi.fn().mockResolvedValue({
+      record: {
+        reportTitle: 'VI Comparison Report: foo.vi',
+        reportStatus: 'blocked-preflight',
+        runtimeSelection: {
+          platform: 'win32',
+          preferBitness: 'x86',
+          provider: 'host-native',
+          notes: [],
+          registryQueryPlans: [],
+          candidates: []
+        },
+        artifactPlan: {
+          repoId: 'repoid123456',
+          reportDirectory: '/workspace/.storage/reports/repoid123456/fileid123456',
+          reportFilename: 'diff-report-foo.vi.html'
+        }
+      },
+      reportFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
+      metadataFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-metadata.json'
+    });
     const action = createComparisonReportAction(
       {
         storageUri: createMockUri('/workspace/.storage')
@@ -158,10 +214,114 @@ describe('comparisonReportAction', () => {
             blockedReason: 'blob-not-vi'
           }
         }),
+        locateRuntime,
+        getRuntimeSettings: () => ({
+          preferBitness: 'x86'
+        }),
+        persistComparisonReport
+      }
+    );
+
+    await expect(
+      action({
+        model: {
+          repositoryName: 'repo',
+          repositoryRoot: '/workspace/repo',
+          relativePath: 'foo.vi',
+          signature: 'LVIN',
+          eligible: true,
+          commits: [
+            {
+              hash: 'abcdef1234567890',
+              authorDate: '2026-04-02T00:00:00Z',
+              authorName: 'A User',
+              subject: 'Update VI',
+              previousHash: '1111111122222222'
+            }
+          ]
+        },
+        selectedHash: 'abcdef1234567890'
+      })
+    ).resolves.toEqual({
+      outcome: 'opened-comparison-report',
+      reportStatus: 'blocked-preflight',
+      blockedReason: 'right-blob-not-vi',
+      reportFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
+      metadataFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-metadata.json',
+      reportWebviewUri:
+        'webview:/webview/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
+      title: 'VI Comparison Report: foo.vi'
+    });
+    expect(locateRuntime).toHaveBeenCalledWith('linux', {
+      preferBitness: 'x86'
+    });
+    expect(persistComparisonReport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        runtimeSelection: expect.objectContaining({
+          provider: 'host-native',
+          engine: 'labview-cli'
+        })
+      })
+    );
+
+    const panelCall = createWebviewPanelMock.mock.calls[0];
+    expect(panelCall?.[0]).toBe('viHistorySuite.comparisonReport');
+    expect(panelCall?.[1]).toBe('VI Comparison Report: foo.vi');
+    expect(panelCall?.[2]).toBe(1);
+    expect(panelCall?.[3]?.enableScripts).toBe(false);
+    expect(panelCall?.[3]?.localResourceRoots?.map((root: MockUri) => root.fsPath)).toEqual([
+      '/workspace/.storage',
+      '/workspace/.storage/reports/repoid123456'
+    ]);
+  });
+
+  it('surfaces blocked-runtime when runtime discovery cannot locate a usable provider', async () => {
+    const action = createComparisonReportAction(
+      {
+        storageUri: createMockUri('/workspace/.storage')
+      } as never,
+      {
+        preflightComparisonReport: vi.fn().mockResolvedValue({
+          normalizedRelativePath: 'foo.vi',
+          ready: true,
+          left: {
+            revisionId: '1111111122222222',
+            blobSpecifier: '1111111122222222:foo.vi',
+            signature: 'LVIN',
+            isVi: true
+          },
+          right: {
+            revisionId: 'abcdef1234567890',
+            blobSpecifier: 'abcdef1234567890:foo.vi',
+            signature: 'LVCC',
+            isVi: true
+          }
+        }),
+        locateRuntime: vi.fn().mockResolvedValue({
+          platform: 'linux',
+          preferBitness: 'auto',
+          provider: 'unavailable',
+          blockedReason: 'comparison-tool-not-found',
+          notes: ['Linux report generation remains best-effort.'],
+          registryQueryPlans: [],
+          candidates: []
+        }),
+        getRuntimeSettings: () => ({
+          preferBitness: 'auto'
+        }),
         persistComparisonReport: vi.fn().mockResolvedValue({
           record: {
             reportTitle: 'VI Comparison Report: foo.vi',
-            reportStatus: 'blocked-preflight',
+            reportStatus: 'blocked-runtime',
+            runtimeSelection: {
+              platform: 'linux',
+              preferBitness: 'auto',
+              provider: 'unavailable',
+              blockedReason: 'comparison-tool-not-found',
+              notes: ['Linux report generation remains best-effort.'],
+              registryQueryPlans: [],
+              candidates: []
+            },
             artifactPlan: {
               repoId: 'repoid123456',
               reportDirectory: '/workspace/.storage/reports/repoid123456/fileid123456',
@@ -196,23 +356,35 @@ describe('comparisonReportAction', () => {
       })
     ).resolves.toEqual({
       outcome: 'opened-comparison-report',
-      reportStatus: 'blocked-preflight',
-      blockedReason: 'right-blob-not-vi',
+      reportStatus: 'blocked-runtime',
+      blockedReason: 'comparison-tool-not-found',
       reportFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
       metadataFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-metadata.json',
       reportWebviewUri:
         'webview:/webview/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
       title: 'VI Comparison Report: foo.vi'
     });
+  });
 
-    const panelCall = createWebviewPanelMock.mock.calls[0];
-    expect(panelCall?.[0]).toBe('viHistorySuite.comparisonReport');
-    expect(panelCall?.[1]).toBe('VI Comparison Report: foo.vi');
-    expect(panelCall?.[2]).toBe(1);
-    expect(panelCall?.[3]?.enableScripts).toBe(false);
-    expect(panelCall?.[3]?.localResourceRoots?.map((root: MockUri) => root.fsPath)).toEqual([
-      '/workspace/.storage',
-      '/workspace/.storage/reports/repoid123456'
-    ]);
+  it('reads runtime settings from the workspace configuration and normalizes unknown runtime platforms', () => {
+    getConfigurationMock.mockReturnValue({
+      get: <T>(key: string, defaultValue: T) => {
+        const values: Record<string, unknown> = {
+          labviewCliPath: 'C:\\Tools\\LabVIEWCLI.exe',
+          lvComparePath: 'C:\\Tools\\LVCompare.exe',
+          labviewExePath: 'C:\\Tools\\LabVIEW.exe',
+          preferBitness: 'x64'
+        };
+        return (values[key] as T | undefined) ?? defaultValue;
+      }
+    });
+
+    expect(readComparisonRuntimeSettings()).toEqual({
+      labviewCliPath: 'C:\\Tools\\LabVIEWCLI.exe',
+      lvComparePath: 'C:\\Tools\\LVCompare.exe',
+      labviewExePath: 'C:\\Tools\\LabVIEW.exe',
+      preferBitness: 'x64'
+    });
+    expect(resolveRuntimePlatform('freebsd' as NodeJS.Platform)).toBe('linux');
   });
 });
