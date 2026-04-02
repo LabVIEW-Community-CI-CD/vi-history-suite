@@ -47,8 +47,8 @@ export async function executeComparisonReport(
   const plan = buildComparisonReportExecutionPlan(options.record);
   const mkdir = deps.mkdir ?? fs.mkdir;
   const writeFile = deps.writeFile ?? fs.writeFile;
-  const pathExists = deps.pathExists ?? defaultPathExists;
-  const runCommand = deps.runCommand ?? defaultRunCommand;
+  const pathExists = deps.pathExists ?? pathExistsForReport;
+  const runCommand = deps.runCommand ?? runComparisonCommandPlan;
   const nowIso = deps.nowIso ?? defaultNowIso;
   const nowMs = deps.nowMs ?? defaultNowMs;
   const writePacketRecord = deps.writePacketRecord ?? writeComparisonReportPacketRecord;
@@ -192,7 +192,7 @@ async function runHostNativeExecution(
   } catch (error) {
     const completedAt = deps.nowIso();
     const durationMs = Math.max(0, deps.nowMs() - startedMs);
-    const processError = normalizeProcessError(error);
+    const processError = normalizeComparisonProcessError(error);
     await deps.writeFile(record.artifactPlan.runtimeStdoutFilePath, processError.stdout, 'utf8');
     await deps.writeFile(record.artifactPlan.runtimeStderrFilePath, processError.stderr, 'utf8');
 
@@ -213,14 +213,14 @@ async function runHostNativeExecution(
   }
 }
 
-function defaultPathExists(filePath: string): Promise<boolean> {
+export function pathExistsForReport(filePath: string): Promise<boolean> {
   return fs
     .stat(filePath)
     .then(() => true)
     .catch(() => false);
 }
 
-function defaultRunCommand(commandPlan: ComparisonCommandPlan): Promise<RunCommandResult> {
+export function runComparisonCommandPlan(commandPlan: ComparisonCommandPlan): Promise<RunCommandResult> {
   return new Promise((resolve, reject) => {
     execFile(
       commandPlan.executable,
@@ -250,7 +250,7 @@ function defaultRunCommand(commandPlan: ComparisonCommandPlan): Promise<RunComma
         if (typeof execError.code === 'number') {
           resolve({
             exitCode: execError.code,
-            signal: execError.signal,
+            signal: execError.signal ?? undefined,
             stdout: String(stdout ?? execError.stdout ?? ''),
             stderr: String(stderr ?? execError.stderr ?? '')
           });
@@ -263,7 +263,11 @@ function defaultRunCommand(commandPlan: ComparisonCommandPlan): Promise<RunComma
   });
 }
 
-function normalizeProcessError(error: unknown): { stdout: string; stderr: string; signal?: string } {
+export function normalizeComparisonProcessError(error: unknown): {
+  stdout: string;
+  stderr: string;
+  signal?: string;
+} {
   if (error && typeof error === 'object') {
     const maybeError = error as {
       stdout?: string;
@@ -275,7 +279,7 @@ function normalizeProcessError(error: unknown): { stdout: string; stderr: string
     return {
       stdout: String(maybeError.stdout ?? ''),
       stderr: String(maybeError.stderr ?? maybeError.message ?? ''),
-      signal: maybeError.signal
+      signal: maybeError.signal ?? undefined
     };
   }
 
@@ -285,10 +289,10 @@ function normalizeProcessError(error: unknown): { stdout: string; stderr: string
   };
 }
 
-function defaultNowIso(): string {
+export function defaultNowIso(): string {
   return new Date().toISOString();
 }
 
-function defaultNowMs(): number {
+export function defaultNowMs(): number {
   return Date.now();
 }

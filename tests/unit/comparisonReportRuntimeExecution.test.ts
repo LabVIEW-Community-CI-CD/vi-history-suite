@@ -1,6 +1,17 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { executeComparisonReport } from '../../src/reporting/comparisonReportRuntimeExecution';
+import * as fs from 'node:fs/promises';
+import * as os from 'node:os';
+import * as path from 'node:path';
+
+import {
+  defaultNowIso,
+  defaultNowMs,
+  executeComparisonReport,
+  normalizeComparisonProcessError,
+  pathExistsForReport,
+  runComparisonCommandPlan
+} from '../../src/reporting/comparisonReportRuntimeExecution';
 import { ComparisonReportPacketRecord } from '../../src/reporting/comparisonReportPacket';
 
 function createReadyRecord(): ComparisonReportPacketRecord {
@@ -238,5 +249,175 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(result.record.runtimeExecutionState).toBe('failed');
     expect(result.record.runtimeExecution.failureReason).toBe('left-stage-blob-write-failed');
     expect(result.record.runtimeExecution.attempted).toBe(false);
+  });
+
+  it('retains blocked runtime state without attempting execution when the governed plan is unavailable', async () => {
+    const record = createReadyRecord();
+    record.reportStatus = 'blocked-runtime';
+    record.runtimeSelection.provider = 'unavailable';
+    record.runtimeSelection.blockedReason = 'comparison-tool-not-found';
+    delete record.runtimeSelection.engine;
+
+    const readRevisionBlob = vi.fn();
+    const runCommand = vi.fn();
+
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob,
+        runCommand,
+        writePacketRecord: vi.fn().mockResolvedValue(undefined)
+      }
+    );
+
+    expect(result.record.runtimeExecutionState).toBe('not-available');
+    expect(result.record.runtimeExecution.attempted).toBe(false);
+    expect(result.record.runtimeExecution.blockedReason).toBe('comparison-tool-not-found');
+    expect(readRevisionBlob).not.toHaveBeenCalled();
+    expect(runCommand).not.toHaveBeenCalled();
+  });
+
+  it('retains a failed execution-plan-blocked state when preflight is blocked before runtime execution', async () => {
+    const record = createReadyRecord();
+    record.reportStatus = 'blocked-preflight';
+    record.preflight.ready = false;
+    record.preflight.blockedReason = 'right-blob-not-vi';
+
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        writePacketRecord: vi.fn().mockResolvedValue(undefined)
+      }
+    );
+
+    expect(result.record.runtimeExecutionState).toBe('failed');
+    expect(result.record.runtimeExecution.attempted).toBe(false);
+    expect(result.record.runtimeExecution.failureReason).toBe('execution-plan-blocked');
+    expect(result.record.runtimeExecution.blockedReason).toBe('right-blob-not-vi');
+  });
+
+  it('fails closed before command launch when staging the right revision blob fails', async () => {
+    const runCommand = vi.fn();
+    const result = await executeComparisonReport(
+      {
+        record: createReadyRecord(),
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockRejectedValueOnce(new Error('missing blob')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        pathExists: vi.fn().mockResolvedValue(false),
+        runCommand,
+        nowIso: vi.fn().mockReturnValue('2026-04-02T01:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined)
+      }
+    );
+
+    expect(result.record.runtimeExecutionState).toBe('failed');
+    expect(result.record.runtimeExecution.failureReason).toBe('right-stage-blob-write-failed');
+    expect(result.record.runtimeExecution.attempted).toBe(false);
+    expect(runCommand).not.toHaveBeenCalled();
+  });
+
+  it('retains command-spawn-failed with normalized stdout and stderr when the tool cannot be launched', async () => {
+    const result = await executeComparisonReport(
+      {
+        record: createReadyRecord(),
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        pathExists: vi.fn().mockResolvedValue(false),
+        runCommand: vi.fn().mockRejectedValue({
+          stdout: 'partial stdout',
+          stderr: 'spawn failed',
+          signal: 'SIGTERM'
+        }),
+        nowIso: vi
+          .fn()
+          .mockReturnValueOnce('2026-04-02T01:00:00.000Z')
+          .mockReturnValueOnce('2026-04-02T01:00:02.000Z'),
+        nowMs: vi.fn().mockReturnValueOnce(1000).mockReturnValueOnce(3000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined)
+      }
+    );
+
+    expect(result.record.runtimeExecutionState).toBe('failed');
+    expect(result.record.runtimeExecution.failureReason).toBe('command-spawn-failed');
+    expect(result.record.runtimeExecution.attempted).toBe(true);
+    expect(result.record.runtimeExecution.signal).toBe('SIGTERM');
+    expect(result.record.runtimeExecution.durationMs).toBe(2000);
+  });
+
+  it('runs a simple command plan and resolves nonzero exits without throwing', async () => {
+    await expect(
+      runComparisonCommandPlan({
+        executable: process.execPath,
+        args: ['-e', 'process.stdout.write("ok"); process.stderr.write("warn");']
+      })
+    ).resolves.toEqual({
+      exitCode: 0,
+      stdout: 'ok',
+      stderr: 'warn'
+    });
+
+    await expect(
+      runComparisonCommandPlan({
+        executable: process.execPath,
+        args: ['-e', 'process.stdout.write("x"); process.stderr.write("bad"); process.exit(3);']
+      })
+    ).resolves.toEqual({
+      exitCode: 3,
+      signal: undefined,
+      stdout: 'x',
+      stderr: 'bad'
+    });
+  });
+
+  it('normalizes comparison-process errors and report-path existence using the default helpers', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-runtime-execution-'));
+    const existingPath = path.join(tempRoot, 'report.html');
+    await fs.writeFile(existingPath, '<html></html>');
+
+    await expect(pathExistsForReport(existingPath)).resolves.toBe(true);
+    await expect(pathExistsForReport(path.join(tempRoot, 'missing.html'))).resolves.toBe(false);
+
+    expect(
+      normalizeComparisonProcessError({
+        stdout: 'a',
+        stderr: 'b',
+        signal: 'SIGKILL'
+      })
+    ).toEqual({
+      stdout: 'a',
+      stderr: 'b',
+      signal: 'SIGKILL'
+    });
+
+    expect(normalizeComparisonProcessError('plain failure')).toEqual({
+      stdout: '',
+      stderr: 'plain failure'
+    });
+
+    expect(defaultNowIso()).toMatch(/^20\d\d-\d\d-\d\dT/);
+    expect(defaultNowMs()).toBeTypeOf('number');
+
+    await fs.rm(tempRoot, { recursive: true, force: true });
   });
 });
