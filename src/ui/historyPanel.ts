@@ -9,7 +9,7 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
         ? `<button data-testid="history-action-diff" data-command="diffPrevious" data-hash="${escapeHtml(commit.hash)}">Diff prev</button>`
         : '<button data-testid="history-action-diff" disabled>Diff prev</button>';
       const compareBase = commit.previousHash
-        ? `<code>${escapeHtml(commit.previousHash.slice(0, 8))}</code>`
+        ? `<div data-testid="history-compare-pair"><strong>Selected:</strong> <code>${escapeHtml(commit.hash.slice(0, 8))}</code> <strong>vs base:</strong> <code>${escapeHtml(commit.previousHash.slice(0, 8))}</code></div>`
         : 'Oldest retained revision';
 
       return `
@@ -80,6 +80,18 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
         padding: 12px;
         border-left: 4px solid var(--vscode-textLink-foreground);
       }
+      .guidance {
+        margin-bottom: 16px;
+        padding: 12px;
+        border: 1px dashed var(--vscode-panel-border);
+      }
+      .guidance ol {
+        margin: 8px 0 0 20px;
+        padding: 0;
+      }
+      .guidance li {
+        margin-bottom: 6px;
+      }
     </style>
   </head>
   <body>
@@ -102,6 +114,14 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
     </div>
     <div class="limitations" data-testid="history-binary-limitations">
       <strong>Binary review limits:</strong> Git-backed LabVIEW VI revisions are binary artifacts. This surface retains chronology and commit facts; open and diff actions delegate to VS Code handlers and installed tooling.
+    </div>
+    <div class="guidance" data-testid="history-review-guidance">
+      <strong>Reviewer guidance:</strong>
+      <ol>
+        <li data-testid="history-guidance-step">Use the newest/oldest packet to confirm the retained review window before acting on a specific revision.</li>
+        <li data-testid="history-guidance-step">Use the compare pair in each row to see exactly which retained base revision a <code>Diff prev</code> action targets.</li>
+        <li data-testid="history-guidance-step">For binary VI inspection, use <code>Open@commit</code> or external tooling when chronology facts alone are not sufficient.</li>
+      </ol>
     </div>
     <table data-testid="history-table">
       <thead>

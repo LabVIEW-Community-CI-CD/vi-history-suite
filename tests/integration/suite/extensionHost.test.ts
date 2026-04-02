@@ -102,9 +102,12 @@ async function testPanelOpenFlow(
   assert.match(panel.renderedHtml, /data-testid="history-meta-repository"/);
   assert.match(panel.renderedHtml, /data-testid="history-meta-path"/);
   assert.match(panel.renderedHtml, /data-testid="history-binary-limitations"/);
+  assert.match(panel.renderedHtml, /data-testid="history-review-guidance"/);
+  assert.match(panel.renderedHtml, /data-testid="history-guidance-step"/);
   assert.match(panel.renderedHtml, /data-testid="history-table"/);
   assert.match(panel.renderedHtml, /data-testid="history-row"/);
   assert.match(panel.renderedHtml, /data-testid="history-compare-base"/);
+  assert.match(panel.renderedHtml, /data-testid="history-compare-pair"/);
   assert.match(panel.renderedHtml, /data-testid="history-action-open"/);
   assert.match(panel.renderedHtml, /data-testid="history-action-diff"/);
   assert.match(panel.renderedHtml, /data-testid="history-action-copy"/);
@@ -112,6 +115,8 @@ async function testPanelOpenFlow(
   assert.match(panel.renderedHtml, /LVIN/);
   assert.match(panel.renderedHtml, /Newest commit first/);
   assert.match(panel.renderedHtml, /Binary review limits:/);
+  assert.match(panel.renderedHtml, /Reviewer guidance:/);
+  assert.match(panel.renderedHtml, /Selected:<\/strong> <code>[0-9a-f]{8}<\/code> <strong>vs base:<\/strong> <code>[0-9a-f]{8}<\/code>/);
   assert.match(panel.renderedHtml, /fixtures\/eligible-content-detected\.bin/);
   assert.match(panel.renderedHtml, /Update eligible fixture/);
   assert.match(panel.renderedHtml, /Add initial integration fixtures/);
