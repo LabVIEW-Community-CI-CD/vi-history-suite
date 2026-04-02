@@ -1,9 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+  applyHarnessSmokeCliExitCode,
   formatHarnessSmokeSuccess,
   getHarnessSmokeUsage,
+  maybeRunHarnessSmokeCliAsMain,
   parseHarnessSmokeArgs,
+  runHarnessSmokeCliMain,
   runHarnessSmokeCli
 } from '../../src/cli/runHarnessSmoke';
 
@@ -133,5 +136,121 @@ describe('runHarnessSmokeCli', () => {
       'Signature: LVIN',
       'Commit count: 18'
     ]);
+  });
+
+  it('returns process-style exit codes for harness-smoke CLI success and failure', async () => {
+    const stderrWrites: string[] = [];
+    const stderr = {
+      write(text: string) {
+        stderrWrites.push(text);
+        return true;
+      }
+    };
+
+    await expect(
+      runHarnessSmokeCliMain(
+        [],
+        {
+          repoRoot: '/tmp/vi-history-suite',
+          runner: async () => ({
+            report: {
+              harnessId: 'HARNESS-VHS-001',
+              repositoryUrl: 'https://github.com/ni/labview-icon-editor.git',
+              cloneDirectory: '/tmp/harnesses/ni-labview-icon-editor',
+              targetRelativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+              head: 'abcdef1234567890',
+              tracked: true,
+              signature: 'LVIN',
+              eligible: true,
+              commitCount: 18,
+              commits: [],
+              generatedAt: '2026-04-02T00:00:00.000Z'
+            },
+            reportJsonPath: '/tmp/reports/HARNESS-VHS-001/report.json',
+            reportMarkdownPath: '/tmp/reports/HARNESS-VHS-001/report.md',
+            reportHtmlPath: '/tmp/reports/HARNESS-VHS-001/report.html'
+          }),
+          stdout: { write() {} }
+        },
+        stderr
+      )
+    ).resolves.toBe(0);
+
+    await expect(
+      runHarnessSmokeCliMain(
+        ['--unknown-flag'],
+        {
+          stdout: { write() {} }
+        },
+        stderr
+      )
+    ).resolves.toBe(1);
+
+    expect(stderrWrites).toEqual([
+      expect.stringContaining('Unknown argument: --unknown-flag')
+    ]);
+  });
+
+  it('applies the retained harness-smoke exit code through a process-like target', () => {
+    const processLike: { exitCode?: number } = {};
+
+    expect(applyHarnessSmokeCliExitCode(9, processLike)).toBe(9);
+    expect(processLike.exitCode).toBe(9);
+  });
+
+  it('runs the harness-smoke script-mode branch only when the current module is the main module', async () => {
+    const processLike: { exitCode?: number } = {};
+    const stderrWrites: string[] = [];
+    const stderr = {
+      write(text: string) {
+        stderrWrites.push(text);
+        return true;
+      }
+    };
+    const mainModule = {} as NodeModule;
+    const currentModule = {} as NodeModule;
+
+    expect(
+      maybeRunHarnessSmokeCliAsMain([], mainModule, currentModule, {}, processLike, stderr)
+    ).toBe(false);
+    expect(processLike.exitCode).toBeUndefined();
+
+    const sharedModule = {} as NodeModule;
+    expect(
+      maybeRunHarnessSmokeCliAsMain(
+        [],
+        sharedModule,
+        sharedModule,
+        {
+          repoRoot: '/tmp/vi-history-suite',
+          runner: async () => ({
+            report: {
+              harnessId: 'HARNESS-VHS-001',
+              repositoryUrl: 'https://github.com/ni/labview-icon-editor.git',
+              cloneDirectory: '/tmp/harnesses/ni-labview-icon-editor',
+              targetRelativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+              head: 'abcdef1234567890',
+              tracked: true,
+              signature: 'LVIN',
+              eligible: true,
+              commitCount: 18,
+              commits: [],
+              generatedAt: '2026-04-02T00:00:00.000Z'
+            },
+            reportJsonPath: '/tmp/reports/HARNESS-VHS-001/report.json',
+            reportMarkdownPath: '/tmp/reports/HARNESS-VHS-001/report.md',
+            reportHtmlPath: '/tmp/reports/HARNESS-VHS-001/report.html'
+          }),
+          stdout: { write() {} }
+        },
+        processLike,
+        stderr
+      )
+    ).toBe(true);
+
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(processLike.exitCode).toBe(0);
+    expect(stderrWrites).toEqual([]);
   });
 });

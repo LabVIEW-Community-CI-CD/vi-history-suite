@@ -147,6 +147,9 @@
 - `TEST-UNIT-039`: validate the design-gate CLI script-mode helper applies the
   retained main exit code to `process.exitCode` without forcing an immediate
   process exit
+- `TEST-UNIT-040`: validate the harness-smoke CLI script-mode helper applies
+  retained success or failure to `process.exitCode` and writes a stable stderr
+  line on failure without forcing an immediate process exit
 - `TEST-DOC-003`: review architecture and product docs for the published
   WebviewPanel-only surface, desktop/remote-host boundary, and no-publish
   TimelineProvider policy

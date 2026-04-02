@@ -123,13 +123,44 @@ export function formatHarnessSmokeSuccess(
   ];
 }
 
-async function main(): Promise<void> {
-  await runHarnessSmokeCli(process.argv.slice(2));
+export async function runHarnessSmokeCliMain(
+  argv: string[] = process.argv.slice(2),
+  deps: HarnessSmokeCliDeps = {},
+  stderr: Pick<NodeJS.WriteStream, 'write'> = process.stderr
+): Promise<number> {
+  try {
+    await runHarnessSmokeCli(argv, deps);
+    return 0;
+  } catch (error) {
+    stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
+    return 1;
+  }
 }
 
-if (require.main === module) {
-  void main().catch((error) => {
-    console.error(error instanceof Error ? error.message : String(error));
-    process.exitCode = 1;
-  });
+export function applyHarnessSmokeCliExitCode(
+  exitCode: number,
+  processLike: Pick<NodeJS.Process, 'exitCode'> = process
+): number {
+  processLike.exitCode = exitCode;
+  return exitCode;
 }
+
+export function maybeRunHarnessSmokeCliAsMain(
+  argv: string[] = process.argv.slice(2),
+  mainModule: NodeModule | undefined = require.main,
+  currentModule: NodeModule = module,
+  deps: HarnessSmokeCliDeps = {},
+  processLike: Pick<NodeJS.Process, 'exitCode'> = process,
+  stderr: Pick<NodeJS.WriteStream, 'write'> = process.stderr
+): boolean {
+  if (mainModule !== currentModule) {
+    return false;
+  }
+
+  void runHarnessSmokeCliMain(argv, deps, stderr).then((exitCode) => {
+    applyHarnessSmokeCliExitCode(exitCode, processLike);
+  });
+  return true;
+}
+
+maybeRunHarnessSmokeCliAsMain();
