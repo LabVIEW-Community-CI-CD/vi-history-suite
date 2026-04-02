@@ -81,6 +81,8 @@
   nested Git API roots and CLI fallback behavior
 - `TEST-UNIT-016`: validate VI history service configuration forwarding and
   Git-URI translation behavior
+- `TEST-UNIT-017`: validate the URI-based VI magic wrapper for file-path
+  delegation, workspace-fs truncation, and fail-closed behavior
 - `TEST-SMOKE-001`: run the canonical harness smoke and retain JSON, Markdown,
   and HTML reports under `.cache/harness-reports/`
 - `TEST-INTEG-001`: run a real VS Code extension host against a temporary Git

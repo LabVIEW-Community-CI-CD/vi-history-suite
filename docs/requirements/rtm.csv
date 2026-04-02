@@ -63,3 +63,6 @@ VHS-REQ-061,"Select the most specific matching Git repository root when multiple
 VHS-REQ-062,"Fall back to Git CLI repository-root resolution when no Git API repository matches the target path","author direction",High,TEST-UNIT-015,"tests/unit/viHistoryService.test.ts","src/services/viHistoryService.ts",Implemented
 VHS-REQ-063,"Forward strictRsrcHeader and maxHistoryEntries settings to the shared history-model loader","author direction",Medium,TEST-UNIT-016,"tests/unit/viHistoryService.test.ts","src/services/viHistoryService.ts",Implemented
 VHS-REQ-064,"Expose Git-URI translation only through the available Git API","author direction",Medium,TEST-UNIT-016,"tests/unit/viHistoryService.test.ts","src/services/viHistoryService.ts",Implemented
+VHS-REQ-065,"Delegate file URIs in the VI magic wrapper to the file-system probe helper","author direction",Medium,TEST-UNIT-017,"tests/unit/viMagicWrapper.test.ts","src/domain/viMagic.ts",Implemented
+VHS-REQ-066,"Truncate non-file workspace-fs reads in the VI magic wrapper to the minimum detection-header length","author direction",Medium,TEST-UNIT-017,"tests/unit/viMagicWrapper.test.ts","src/domain/viMagic.ts",Implemented
+VHS-REQ-067,"Fail closed in the VI magic wrapper when probe reads throw","author direction",Medium,TEST-UNIT-017,"tests/unit/viMagicWrapper.test.ts","src/domain/viMagic.ts",Implemented
