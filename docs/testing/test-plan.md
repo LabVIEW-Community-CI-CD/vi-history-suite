@@ -130,6 +130,8 @@
   opened Git revision, and diff-against-previous execution
 - `TEST-UNIT-032`: validate the design-gate CLI default repo-root resolution
   and stable failure-message rendering for Error and non-Error failures
+- `TEST-UNIT-033`: validate the history-panel tracker retains opened-panel
+  summaries, action summaries, dispatcher behavior, and clear/reset semantics
 - `TEST-DOC-003`: review architecture and product docs for the published
   WebviewPanel-only surface, desktop/remote-host boundary, and no-publish
   TimelineProvider policy
