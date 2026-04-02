@@ -116,6 +116,7 @@ async function testPanelOpenFlow(
   assert.match(panel.renderedHtml, /data-testid="history-action-open"/);
   assert.match(panel.renderedHtml, /data-testid="history-action-diff"/);
   assert.match(panel.renderedHtml, /data-testid="history-action-copy"/);
+  assert.match(panel.renderedHtml, /data-testid="history-action-copy-review-packet"/);
   assert.match(panel.renderedHtml, /Eligible/);
   assert.match(panel.renderedHtml, /LVIN/);
   assert.match(panel.renderedHtml, /Newest commit first/);
@@ -135,6 +136,22 @@ async function testPanelOpenFlow(
   const selectedCommit = history.commits[0];
   assert.ok(selectedCommit);
   assert.ok(selectedCommit.previousHash);
+
+  await api.dispatchLastPanelMessage({
+    command: 'copyReviewPacket'
+  });
+  const copiedReviewPacket = await vscode.env.clipboard.readText();
+  assert.match(copiedReviewPacket, /VI History Review Packet/);
+  assert.match(copiedReviewPacket, /Repository: vihs-integration-/);
+  assert.match(copiedReviewPacket, /Path: fixtures\/eligible-content-detected\.bin/);
+  assert.match(copiedReviewPacket, /Confidence and scope:/);
+  assert.match(copiedReviewPacket, /Needs external comparison tooling: binary semantic differences, visual or cosmetic change detection, and NI comparison-report output\./);
+  assert.match(copiedReviewPacket, /- [0-9a-f]{8} vs [0-9a-f]{8} :: Update eligible fixture/);
+  const copiedReviewAction = api.getLastPanelActionSummary();
+  assert.ok(copiedReviewAction);
+  assert.equal(copiedReviewAction.command, 'copyReviewPacket');
+  assert.equal(copiedReviewAction.outcome, 'copied-review-packet');
+  assert.equal(copiedReviewAction.copiedTextLength, copiedReviewPacket.length);
 
   await api.dispatchLastPanelMessage({
     command: 'copyHash',
@@ -174,7 +191,7 @@ async function testPanelOpenFlow(
     diffAction.title ?? '',
     /^eligible-content-detected\.bin \([0-9a-f]{8}\.\.[0-9a-f]{8}\)$/
   );
-  assert.equal(api.getPanelActionCount(), 3);
+  assert.equal(api.getPanelActionCount(), 4);
 }
 
 async function waitFor(

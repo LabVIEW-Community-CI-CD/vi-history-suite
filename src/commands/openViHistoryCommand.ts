@@ -4,7 +4,10 @@ import * as vscode from 'vscode';
 import { GitApi } from '../git/gitApi';
 import { ViEligibilityIndexer } from '../indexing/viEligibilityIndexer';
 import { ViHistoryService } from '../services/viHistoryService';
-import { renderHistoryPanelHtml } from '../ui/historyPanel';
+import {
+  renderHistoryPanelHtml,
+  renderHistoryReviewPacketText
+} from '../ui/historyPanel';
 import {
   HistoryPanelMessage,
   HistoryPanelTracker
@@ -51,6 +54,18 @@ export function createOpenViHistoryCommand(
     const handleMessage = async (message: HistoryPanelMessage) => {
       const command = String(message.command ?? '');
       const hash = String(message.hash ?? '');
+
+      if (command === 'copyReviewPacket') {
+        const reviewPacket = renderHistoryReviewPacketText(model);
+        await vscode.env.clipboard.writeText(reviewPacket);
+        panelTracker?.recordAction({
+          command,
+          outcome: 'copied-review-packet',
+          copiedTextLength: reviewPacket.length
+        });
+        return;
+      }
+
       if (!hash) {
         panelTracker?.recordAction({
           command,

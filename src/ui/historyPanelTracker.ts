@@ -12,6 +12,7 @@ export interface HistoryPanelActionSummary {
   hash?: string;
   outcome:
     | 'copied-hash'
+    | 'copied-review-packet'
     | 'opened-commit'
     | 'diffed-previous'
     | 'ignored-missing-hash'
@@ -23,6 +24,7 @@ export interface HistoryPanelActionSummary {
   rightUri?: string;
   title?: string;
   copiedHash?: string;
+  copiedTextLength?: number;
 }
 
 export interface OpenedHistoryPanelSummary {

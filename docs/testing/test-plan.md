@@ -52,8 +52,8 @@
   subjects, and then dispatch `copyHash`, `openCommit`, and `diffPrevious`
   through the real panel message handler; the same lane shall also prove the
   chronology packet, compare-base context, explicit selected-versus-base pairing,
-  binary-review limitation note, reviewer-guidance block, and
-  confidence-and-scope packet
+  binary-review limitation note, reviewer-guidance block,
+  confidence-and-scope packet, and panel-level copied review packet
 - `TEST-INTEG-002`: validate non-file URI detection fallback behavior
 - `TEST-UNIT-005`: build a temporary Git repo with a content-detected VI and
   assert the shared core history model returns eligible history

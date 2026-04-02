@@ -109,7 +109,8 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
     <div class="status" data-testid="history-status">
       <strong>Eligibility:</strong> <span data-testid="history-status-eligibility">${model.eligible ? 'Eligible' : 'Not eligible'}</span><br />
       <strong>Signature:</strong> <span data-testid="history-status-signature">${escapeHtml(model.signature)}</span><br />
-      <strong>Commits:</strong> <span data-testid="history-status-commit-count">${model.commits.length}</span>
+      <strong>Commits:</strong> <span data-testid="history-status-commit-count">${model.commits.length}</span><br />
+      <button data-testid="history-action-copy-review-packet" data-command="copyReviewPacket">Copy review packet</button>
     </div>
     <div class="packet" data-testid="history-review-packet">
       <div data-testid="history-chronology-order"><strong>Order:</strong> Newest commit first</div>
@@ -168,15 +169,45 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
 
         const command = target.dataset.command;
         const hash = target.dataset.hash;
-        if (!command || !hash) {
+        if (!command) {
           return;
         }
 
-        vscode.postMessage({ command, hash });
+        vscode.postMessage(hash ? { command, hash } : { command });
       });
     </script>
   </body>
 </html>`;
+}
+
+export function renderHistoryReviewPacketText(model: ViHistoryViewModel): string {
+  const newestCommit = model.commits[0];
+  const oldestCommit = model.commits[model.commits.length - 1];
+  const comparePairs = model.commits
+    .map((commit) =>
+      commit.previousHash
+        ? `- ${commit.hash.slice(0, 8)} vs ${commit.previousHash.slice(0, 8)} :: ${commit.subject}`
+        : `- ${commit.hash.slice(0, 8)} :: oldest retained revision :: ${commit.subject}`
+    )
+    .join('\n');
+
+  return [
+    'VI History Review Packet',
+    `Repository: ${model.repositoryName}`,
+    `Root: ${model.repositoryRoot}`,
+    `Path: ${model.relativePath}`,
+    `Signature: ${model.signature}`,
+    `Eligibility: ${model.eligible ? 'Eligible' : 'Not eligible'}`,
+    `Retained revisions: ${model.commits.length}`,
+    `Newest retained commit: ${renderCommitSummary(newestCommit)}`,
+    `Oldest retained commit: ${renderCommitSummary(oldestCommit)}`,
+    'Confidence and scope:',
+    '- Basis: local Git history, tracked-file status, and content-detected VI signature checks.',
+    '- Included here: chronology, path provenance, retained hashes, compare pairs, and command routing.',
+    '- Needs external comparison tooling: binary semantic differences, visual or cosmetic change detection, and NI comparison-report output.',
+    'Retained compare pairs:',
+    comparePairs
+  ].join('\n');
 }
 
 function escapeHtml(value: string): string {

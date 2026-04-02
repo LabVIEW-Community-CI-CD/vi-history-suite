@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { renderHistoryPanelHtml } from '../../src/ui/historyPanel';
+import {
+  renderHistoryPanelHtml,
+  renderHistoryReviewPacketText
+} from '../../src/ui/historyPanel';
 
 describe('renderHistoryPanelHtml', () => {
   it('renders metadata, commit facts, and review actions', () => {
@@ -33,6 +36,7 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('Open@commit');
     expect(html).toContain('Diff prev');
     expect(html).toContain('Copy hash');
+    expect(html).toContain('Copy review packet');
     expect(html).toContain('data-testid="history-status"');
     expect(html).toContain('data-testid="history-review-packet"');
     expect(html).toContain('data-testid="history-chronology-order"');
@@ -65,5 +69,40 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('Binary semantic differences, visual or cosmetic change detection, and NI comparison-report output.');
     expect(html).toContain('Selected:</strong> <code>abcdef12</code>');
     expect(html).toContain('vs base:</strong> <code>11111111</code>');
+  });
+
+  it('renders a portable factual review packet', () => {
+    const reviewPacket = renderHistoryReviewPacketText({
+      repositoryName: 'labview-icon-editor',
+      repositoryRoot: '/tmp/labview-icon-editor',
+      relativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+      signature: 'LVIN',
+      eligible: true,
+      commits: [
+        {
+          hash: 'abcdef1234567890',
+          authorDate: '2026-04-02T00:00:00Z',
+          authorName: 'A User',
+          subject: 'Improve deployment behavior',
+          previousHash: '1111111122222222'
+        },
+        {
+          hash: '1111111122222222',
+          authorDate: '2026-04-01T00:00:00Z',
+          authorName: 'B User',
+          subject: 'Initial deployment behavior'
+        }
+      ]
+    });
+
+    expect(reviewPacket).toContain('VI History Review Packet');
+    expect(reviewPacket).toContain('Repository: labview-icon-editor');
+    expect(reviewPacket).toContain('Path: Tooling/deployment/VIP_Pre-Install Custom Action.vi');
+    expect(reviewPacket).toContain('Retained revisions: 2');
+    expect(reviewPacket).toContain('Confidence and scope:');
+    expect(reviewPacket).toContain('Included here: chronology, path provenance, retained hashes, compare pairs, and command routing.');
+    expect(reviewPacket).toContain('Needs external comparison tooling: binary semantic differences, visual or cosmetic change detection, and NI comparison-report output.');
+    expect(reviewPacket).toContain('- abcdef12 vs 11111111 :: Improve deployment behavior');
+    expect(reviewPacket).toContain('- 11111111 :: oldest retained revision :: Initial deployment behavior');
   });
 });
