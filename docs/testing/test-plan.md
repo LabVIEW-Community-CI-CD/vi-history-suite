@@ -73,6 +73,10 @@
 - `TEST-UNIT-012`: validate `VI History` panel-action handling for missing Git
   URIs, missing previous revisions, hashless messages, and unsupported
   commands
+- `TEST-UNIT-013`: validate harness smoke CLI argument parsing for defaults,
+  explicit options, help, and invalid arguments
+- `TEST-UNIT-014`: validate the reusable harness smoke CLI runner prints the
+  deterministic retained success summary and forwards governed options
 - `TEST-SMOKE-001`: run the canonical harness smoke and retain JSON, Markdown,
   and HTML reports under `.cache/harness-reports/`
 - `TEST-INTEG-001`: run a real VS Code extension host against a temporary Git
