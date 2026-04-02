@@ -1,13 +1,42 @@
-import { describe, expect, it } from 'vitest';
+import * as fs from 'node:fs/promises';
+import * as os from 'node:os';
+import * as path from 'node:path';
+
+import { afterEach, describe, expect, it } from 'vitest';
 
 import {
+  getFileCommitHashes,
+  getFileHistoryEntries,
+  getRepoHead,
+  getRepoRoot,
   getWindowsGitExecutableCandidates,
+  listTrackedFiles,
   normalizeRelativeGitPath,
   parseCommitHashes,
   parseHistoryEntries,
   parseLsFilesZ,
+  runGit,
   resolveGitExecutable
 } from '../../src/git/gitCli';
+
+const tempDirectories: string[] = [];
+
+async function createTempGitRepo(): Promise<string> {
+  const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-git-cli-'));
+  tempDirectories.push(repoRoot);
+  await runGit(['init'], repoRoot);
+  await runGit(['config', 'user.name', 'VI History Suite Test'], repoRoot);
+  await runGit(['config', 'user.email', 'vihs@example.invalid'], repoRoot);
+  return repoRoot;
+}
+
+afterEach(async () => {
+  await Promise.all(
+    tempDirectories.splice(0, tempDirectories.length).map((directory) =>
+      fs.rm(directory, { recursive: true, force: true })
+    )
+  );
+});
 
 describe('gitCli parsing', () => {
   it('parses NUL-separated tracked files safely', () => {
@@ -84,5 +113,65 @@ describe('gitCli parsing', () => {
       'C:\\Program Files (x86)\\Git\\cmd\\git.exe',
       'C:\\Program Files (x86)\\Git\\bin\\git.exe'
     ]);
+  });
+
+  it('returns trimmed HEAD, repository root, and tracked files from a real temporary Git repo', async () => {
+    const repoRoot = await createTempGitRepo();
+    const nestedRoot = path.join(repoRoot, 'nested');
+    const trackedPath = path.join(nestedRoot, 'sample.vi');
+    const secondTrackedPath = path.join(repoRoot, 'folder with spaces', 'other.vi');
+
+    await fs.mkdir(path.dirname(trackedPath), { recursive: true });
+    await fs.mkdir(path.dirname(secondTrackedPath), { recursive: true });
+    await fs.writeFile(trackedPath, 'first');
+    await fs.writeFile(secondTrackedPath, 'second');
+    await runGit(['add', '.'], repoRoot);
+    await runGit(['commit', '-m', 'Add tracked files'], repoRoot);
+
+    const head = await getRepoHead(repoRoot);
+    const resolvedRoot = await getRepoRoot(nestedRoot);
+    const trackedFiles = await listTrackedFiles(repoRoot);
+
+    expect(head).toMatch(/^[0-9a-f]{40}$/);
+    expect(resolvedRoot).toBe(repoRoot);
+    expect(trackedFiles).toEqual(['folder with spaces/other.vi', 'nested/sample.vi']);
+  });
+
+  it('returns bounded commit hashes and structured history entries from a real temporary Git repo', async () => {
+    const repoRoot = await createTempGitRepo();
+    const trackedPath = path.join(repoRoot, 'nested', 'history.vi');
+
+    await fs.mkdir(path.dirname(trackedPath), { recursive: true });
+    await fs.writeFile(trackedPath, 'first');
+    await runGit(['add', '.'], repoRoot);
+    await runGit(['commit', '-m', 'First revision'], repoRoot);
+    await fs.writeFile(trackedPath, 'second');
+    await runGit(['add', '.'], repoRoot);
+    await runGit(['commit', '-m', 'Second revision'], repoRoot);
+    await fs.writeFile(trackedPath, 'third');
+    await runGit(['add', '.'], repoRoot);
+    await runGit(['commit', '-m', 'Third revision'], repoRoot);
+
+    const commitHashes = await getFileCommitHashes(repoRoot, 'nested\\history.vi', 2);
+    const historyEntries = await getFileHistoryEntries(repoRoot, 'nested\\history.vi', 3);
+
+    expect(commitHashes).toHaveLength(2);
+    expect(commitHashes[0]).toMatch(/^[0-9a-f]{40}$/);
+    expect(commitHashes[1]).toMatch(/^[0-9a-f]{40}$/);
+    expect(historyEntries).toHaveLength(3);
+    expect(historyEntries[0]?.subject).toBe('Third revision');
+    expect(historyEntries[1]?.subject).toBe('Second revision');
+    expect(historyEntries[2]?.subject).toBe('First revision');
+    expect(historyEntries[0]?.hash).toBe(commitHashes[0]);
+    expect(historyEntries[0]?.authorName).toBe('VI History Suite Test');
+    expect(historyEntries[0]?.authorDate).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+  });
+
+  it('falls back to bare git when no Windows candidate exists and rejects Git subprocess failures', async () => {
+    expect(resolveGitExecutable({}, 'win32', () => false)).toBe('git');
+
+    const repoRoot = await createTempGitRepo();
+
+    await expect(runGit(['definitely-not-a-real-subcommand'], repoRoot, 'utf8')).rejects.toThrow();
   });
 });

@@ -150,6 +150,14 @@
 - `TEST-UNIT-040`: validate the harness-smoke CLI script-mode helper applies
   retained success or failure to `process.exitCode` and writes a stable stderr
   line on failure without forcing an immediate process exit
+- `TEST-UNIT-041`: validate the Git CLI helper layer against a real temporary
+  Git repository for trimmed `HEAD`, repository-root discovery, and tracked-file
+  enumeration
+- `TEST-UNIT-042`: validate the Git CLI helper layer against a real temporary
+  Git repository for bounded commit hashes and structured history entries on a
+  tracked file
+- `TEST-UNIT-043`: validate the Git CLI helper layer falls back to bare `git`
+  when no Windows candidate exists and rejects Git subprocess failures
 - `TEST-DOC-003`: review architecture and product docs for the published
   WebviewPanel-only surface, desktop/remote-host boundary, and no-publish
   TimelineProvider policy
