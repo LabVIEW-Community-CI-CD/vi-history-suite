@@ -61,6 +61,13 @@
   parsing, weakest-coverage extraction, and retained report rendering helpers
 - `TEST-UNIT-007`: validate explicit design-gate unavailable-reason rendering
   when coverage-focus facts cannot be retained
+- `TEST-UNIT-008`: validate the shared design-gate runner executes ordered
+  steps, retains reports, and derives the next focus from retained coverage
+  facts
+- `TEST-UNIT-009`: validate the shared design-gate runner retains a fail report
+  when a gated step stops the sequence before completion
+- `TEST-UNIT-010`: validate the CLI entrypoint delegates to the shared
+  design-gate runner and throws on a failed retained report
 - `TEST-SMOKE-001`: run the canonical harness smoke and retain JSON, Markdown,
   and HTML reports under `.cache/harness-reports/`
 - `TEST-INTEG-001`: run a real VS Code extension host against a temporary Git
