@@ -57,10 +57,14 @@
 - `TEST-INTEG-002`: validate non-file URI detection fallback behavior
 - `TEST-UNIT-005`: build a temporary Git repo with a content-detected VI and
   assert the shared core history model returns eligible history
+- `TEST-UNIT-006`: validate the local design-gate plan, assurance-summary
+  parsing, and retained report rendering helpers
 - `TEST-SMOKE-001`: run the canonical harness smoke and retain JSON, Markdown,
   and HTML reports under `.cache/harness-reports/`
 - `TEST-INTEG-001`: run a real VS Code extension host against a temporary Git
   workspace and prove eligible versus ineligible command flow behavior
+- `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
+  report artifacts under `.cache/design-gate/`
 
 ## Reporting
 

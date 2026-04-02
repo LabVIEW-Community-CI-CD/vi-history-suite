@@ -31,6 +31,7 @@ npm run compile
 npm run test
 npm run test:integration
 npm run harness:smoke
+npm run design:gate
 ```
 
 ## Current Scope
