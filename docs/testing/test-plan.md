@@ -183,6 +183,8 @@
 - `TEST-UNIT-052`: validate the spawned design-gate step runner derives
   duration from the default wall clock when no injected time source is
   supplied
+- `TEST-UNIT-053`: validate the harness-smoke runner stamps generated reports
+  from the default ISO timestamp path when no injected clock is supplied
 - `TEST-DOC-003`: review architecture and product docs for the published
   WebviewPanel-only surface, desktop/remote-host boundary, and no-publish
   TimelineProvider policy

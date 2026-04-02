@@ -173,4 +173,47 @@ describe('runHarnessSmoke', () => {
     expect(result.report.signature).toBe('LVIN');
     expect(result.report.commitCount).toBe(2);
   });
+
+  it('stamps generated reports from the default ISO clock path when no injected time source is supplied', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-04-03T01:02:03.000Z'));
+
+    const writes = new Map<string, string>();
+
+    try {
+      const result = await runHarnessSmoke(
+        'HARNESS-VHS-001',
+        {
+          cloneRoot: '/tmp/harnesses',
+          reportRoot: '/tmp/reports'
+        },
+        {
+          stat: vi.fn().mockResolvedValue({ isDirectory: () => true }),
+          mkdir: vi.fn().mockResolvedValue(undefined),
+          writeFile: vi.fn(async (filePath: string, contents: string) => {
+            writes.set(filePath, contents);
+          }) as never,
+          getRepoHead: vi.fn().mockResolvedValue('abcdef1234567890'),
+          listTrackedFiles: vi
+            .fn()
+            .mockResolvedValue(['Tooling/deployment/VIP_Pre-Install Custom Action.vi']),
+          loadViHistoryViewModelFromFsPath: vi.fn().mockResolvedValue(model),
+          evaluateViEligibilityForFsPath: vi.fn().mockResolvedValue({
+            repositoryRoot: '/tmp/harnesses/ni-labview-icon-editor',
+            relativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+            signature: 'LVIN',
+            commitHashes: ['abcdef1234567890', '1111111122222222'],
+            eligible: true
+          })
+        }
+      );
+
+      expect(result.report.generatedAt).toBe('2026-04-03T01:02:03.000Z');
+      expect(writes.get('/tmp/reports/HARNESS-VHS-001/report.json')).toContain(
+        '"generatedAt": "2026-04-03T01:02:03.000Z"'
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
