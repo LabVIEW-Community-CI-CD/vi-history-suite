@@ -47,8 +47,29 @@ export async function runDesignGateCliMain(
   }
 }
 
-if (require.main === module) {
-  void runDesignGateCliMain().then((exitCode) => {
-    process.exitCode = exitCode;
-  });
+export function applyRunDesignGateCliExitCode(
+  exitCode: number,
+  processLike: Pick<NodeJS.Process, 'exitCode'> = process
+): number {
+  processLike.exitCode = exitCode;
+  return exitCode;
 }
+
+export function maybeRunDesignGateCliAsMain(
+  mainModule: NodeModule | undefined = require.main,
+  currentModule: NodeModule = module,
+  deps: RunDesignGateCliDeps = {},
+  processLike: Pick<NodeJS.Process, 'exitCode'> = process,
+  stderr: Pick<NodeJS.WriteStream, 'write'> = process.stderr
+): boolean {
+  if (mainModule !== currentModule) {
+    return false;
+  }
+
+  void runDesignGateCliMain(deps, stderr).then((exitCode) => {
+    applyRunDesignGateCliExitCode(exitCode, processLike);
+  });
+  return true;
+}
+
+maybeRunDesignGateCliAsMain();

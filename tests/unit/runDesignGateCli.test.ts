@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  applyRunDesignGateCliExitCode,
+  maybeRunDesignGateCliAsMain,
   reportRunDesignGateCliFailure,
   resolveRunDesignGateRepoRoot,
   runDesignGateCliMain,
@@ -101,5 +103,54 @@ describe('runDesignGateCli', () => {
     ).resolves.toBe(1);
 
     expect(writes).toEqual(['design gate failed\n']);
+  });
+
+  it('applies the retained CLI exit code through a process-like target', () => {
+    const processLike: { exitCode?: number } = {};
+
+    expect(applyRunDesignGateCliExitCode(7, processLike)).toBe(7);
+    expect(processLike.exitCode).toBe(7);
+  });
+
+  it('runs the script-mode branch only when the current module is the main module', async () => {
+    const processLike: { exitCode?: number } = {};
+    const stderrWrites: string[] = [];
+    const stderr = {
+      write(text: string) {
+        stderrWrites.push(text);
+        return true;
+      }
+    };
+    const mainModule = {} as NodeModule;
+    const currentModule = {} as NodeModule;
+
+    expect(
+      maybeRunDesignGateCliAsMain(mainModule, currentModule, {}, processLike, stderr)
+    ).toBe(false);
+    expect(processLike.exitCode).toBeUndefined();
+
+    const sharedModule = {} as NodeModule;
+    expect(
+      maybeRunDesignGateCliAsMain(
+        sharedModule,
+        sharedModule,
+        {
+          repoRoot: '/tmp/vi-history-suite',
+          runner: async () => ({
+            generatedAt: '2026-04-02T00:00:00.000Z',
+            repoRoot: '/tmp/vi-history-suite',
+            status: 'pass',
+            steps: []
+          })
+        },
+        processLike,
+        stderr
+      )
+    ).toBe(true);
+
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(processLike.exitCode).toBe(0);
+    expect(stderrWrites).toEqual([]);
   });
 });
