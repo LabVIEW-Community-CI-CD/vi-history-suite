@@ -44,6 +44,8 @@
 | VHS-REQ-022 | The canonical harness smoke command shall reuse the same core history-model logic as the extension runtime. | The smoke path should validate product logic, not a parallel implementation. | Shared core modules are used by both the extension wrapper and harness smoke runner. | Static inspection and unit test |
 | VHS-REQ-023 | The canonical harness smoke command shall write factual JSON, Markdown, and HTML reports under an ignored cache path. | Local review needs retained evidence without polluting tracked source. | Smoke outputs are written under `.cache/harness-reports/`. | Smoke test |
 | VHS-REQ-024 | The repo shall include a real-Git unit test for the core history model using a temporary local repository. | Core history behavior should be verified without requiring VS Code runtime. | Tests create a local Git repo, commit a VI fixture twice, and assert eligibility/history. | Unit test |
+| VHS-REQ-025 | The repo shall provide a VS Code extension-host integration test runner for the actual `VI History` command flow. | The extension should prove behavior in a real extension host, not only through unit tests. | `npm run test:integration` executes extension-host tests successfully. | Integration test |
+| VHS-REQ-026 | The extension-host integration runner shall provision a temporary Git workspace containing both eligible and ineligible content-detected files. | Command gating must be proven against real workspace state. | The integration fixture workspace includes one two-commit VI candidate and one ineligible file, and tests assert different outcomes. | Integration test |
 
 ## Assumptions
 

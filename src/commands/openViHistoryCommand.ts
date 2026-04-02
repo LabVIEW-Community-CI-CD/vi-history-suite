@@ -5,11 +5,13 @@ import { GitApi } from '../git/gitApi';
 import { ViEligibilityIndexer } from '../indexing/viEligibilityIndexer';
 import { ViHistoryService } from '../services/viHistoryService';
 import { renderHistoryPanelHtml } from '../ui/historyPanel';
+import { HistoryPanelTracker } from '../ui/historyPanelTracker';
 
 export function createOpenViHistoryCommand(
   historyService: ViHistoryService,
   eligibilityIndexer: ViEligibilityIndexer,
-  gitApi: GitApi | undefined
+  gitApi: GitApi | undefined,
+  panelTracker?: HistoryPanelTracker
 ): (uri?: vscode.Uri) => Promise<void> {
   return async (uri?: vscode.Uri) => {
     const targetUri = uri ?? vscode.window.activeTextEditor?.document.uri;
@@ -41,6 +43,7 @@ export function createOpenViHistoryCommand(
       }
     );
 
+    panelTracker?.record(panel, targetUri, model);
     panel.webview.html = renderHistoryPanelHtml(model);
 
     panel.webview.onDidReceiveMessage(async (message) => {
@@ -88,4 +91,3 @@ export function createOpenViHistoryCommand(
     });
   };
 }
-

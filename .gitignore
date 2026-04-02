@@ -1,5 +1,6 @@
 node_modules/
 out/
+out-tests/
 dist/
 coverage/
 .vscode-test/

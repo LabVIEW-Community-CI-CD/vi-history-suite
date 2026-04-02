@@ -1,4 +1,5 @@
 import { execFile } from 'node:child_process';
+import * as fs from 'node:fs';
 import * as path from 'node:path';
 
 export interface GitHistoryEntry {
@@ -18,7 +19,7 @@ export async function runGit(
 ): Promise<string | Buffer> {
   return new Promise((resolve, reject) => {
     execFile(
-      'git',
+      resolveGitExecutable(),
       args,
       {
         cwd,
@@ -35,6 +36,47 @@ export async function runGit(
       }
     );
   });
+}
+
+export function resolveGitExecutable(
+  environment: NodeJS.ProcessEnv = process.env,
+  platform: NodeJS.Platform = process.platform,
+  pathExists: (candidate: string) => boolean = (candidate) => fs.existsSync(candidate)
+): string {
+  const override = environment.VI_HISTORY_SUITE_GIT_EXE?.trim();
+  if (override) {
+    return override;
+  }
+
+  if (platform === 'win32') {
+    for (const candidate of getWindowsGitExecutableCandidates(environment)) {
+      if (pathExists(candidate)) {
+        return candidate;
+      }
+    }
+  }
+
+  return 'git';
+}
+
+export function getWindowsGitExecutableCandidates(
+  environment: NodeJS.ProcessEnv = process.env
+): string[] {
+  const candidates = new Set<string>();
+  const roots = [
+    environment['ProgramW6432'],
+    environment['ProgramFiles'],
+    environment['ProgramFiles(x86)'],
+    'C:\\Program Files',
+    'C:\\Program Files (x86)'
+  ].filter((value): value is string => Boolean(value && value.trim().length > 0));
+
+  for (const root of roots) {
+    candidates.add(path.win32.join(root, 'Git', 'cmd', 'git.exe'));
+    candidates.add(path.win32.join(root, 'Git', 'bin', 'git.exe'));
+  }
+
+  return [...candidates];
 }
 
 export function normalizeRelativeGitPath(input: string): string {

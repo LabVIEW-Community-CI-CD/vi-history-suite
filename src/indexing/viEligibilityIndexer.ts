@@ -2,16 +2,29 @@ import * as path from 'node:path';
 import * as vscode from 'vscode';
 
 import { GitApi, GitRepository } from '../git/gitApi';
-import { getRepoHead, listTrackedFiles, normalizeRelativeGitPath } from '../git/gitCli';
+import {
+  getRepoHead,
+  getRepoRoot,
+  listTrackedFiles,
+  normalizeRelativeGitPath
+} from '../git/gitCli';
 import { evaluateViEligibilityForFsPath } from '../services/viHistoryModel';
 
 type EligibilityMap = Record<string, true>;
+type IndexedRepository = Pick<GitRepository, 'rootUri'>;
+
+export interface EligibilityDebugSnapshot {
+  indexedRepositoryRoots: string[];
+  eligiblePathCount: number;
+  eligiblePathsSample: string[];
+}
 
 export class ViEligibilityIndexer implements vscode.Disposable {
   private readonly disposables: vscode.Disposable[] = [];
   private readonly eligibilityCache = new Map<string, boolean>();
   private refreshHandle: NodeJS.Timeout | undefined;
   private eligiblePaths: EligibilityMap = {};
+  private lastIndexedRepositoryRoots: string[] = [];
 
   constructor(private readonly gitApi: GitApi | undefined) {}
 
@@ -30,6 +43,15 @@ export class ViEligibilityIndexer implements vscode.Disposable {
 
   isEligible(uri: vscode.Uri): boolean {
     return contextKeysForUri(uri).some((key) => this.eligiblePaths[key] === true);
+  }
+
+  getDebugSnapshot(): EligibilityDebugSnapshot {
+    const eligiblePaths = Object.keys(this.eligiblePaths).sort();
+    return {
+      indexedRepositoryRoots: [...this.lastIndexedRepositoryRoots],
+      eligiblePathCount: eligiblePaths.length,
+      eligiblePathsSample: eligiblePaths.slice(0, 12)
+    };
   }
 
   scheduleRefresh(): void {
@@ -81,13 +103,17 @@ export class ViEligibilityIndexer implements vscode.Disposable {
   async refresh(): Promise<void> {
     await this.updateTrustContext();
 
-    if (!vscode.workspace.isTrusted || !this.gitApi) {
+    if (!vscode.workspace.isTrusted) {
       this.eligiblePaths = {};
       await vscode.commands.executeCommand('setContext', 'viHistorySuite.eligiblePaths', {});
       return;
     }
 
-    const gitApi = this.gitApi;
+    const repositories = await resolveIndexedRepositories(
+      this.gitApi?.repositories ?? [],
+      vscode.workspace.workspaceFolders ?? []
+    );
+    this.lastIndexedRepositoryRoots = repositories.map((repository) => repository.rootUri.fsPath);
     const nextEligiblePaths: EligibilityMap = {};
 
     await vscode.window.withProgress(
@@ -96,7 +122,6 @@ export class ViEligibilityIndexer implements vscode.Disposable {
         title: 'Indexing LabVIEW VIs'
       },
       async (progress) => {
-        const repositories = [...gitApi.repositories];
         let processed = 0;
 
         for (const repository of repositories) {
@@ -142,17 +167,34 @@ export class ViEligibilityIndexer implements vscode.Disposable {
   }
 }
 
-function buildCacheKey(repository: GitRepository, head: string, relativePath: string): string {
+function buildCacheKey(repository: IndexedRepository, head: string, relativePath: string): string {
   return [repository.rootUri.fsPath, normalizeRelativeGitPath(relativePath), head].join('::');
 }
 
 function contextKeysForUri(uri: vscode.Uri): string[] {
   const keys = new Set<string>();
-  if (uri.fsPath) {
-    keys.add(uri.fsPath);
-  }
-  keys.add(uri.path);
+  addContextKeyVariants(keys, uri.fsPath);
+  addContextKeyVariants(keys, uri.path);
   return [...keys];
+}
+
+function addContextKeyVariants(keys: Set<string>, value: string | undefined): void {
+  if (!value) {
+    return;
+  }
+
+  const normalizedPath = path.normalize(value);
+  const slashNormalized = normalizedPath.replaceAll('\\', '/');
+
+  keys.add(value);
+  keys.add(normalizedPath);
+  keys.add(slashNormalized);
+
+  if (process.platform === 'win32') {
+    keys.add(value.toLowerCase());
+    keys.add(normalizedPath.toLowerCase());
+    keys.add(slashNormalized.toLowerCase());
+  }
 }
 
 function getStrictHeaderSetting(): boolean {
@@ -185,4 +227,30 @@ async function forEachConcurrent<T>(
   });
 
   await Promise.all(workers);
+}
+
+export async function resolveIndexedRepositories(
+  gitRepositories: readonly Pick<GitRepository, 'rootUri'>[],
+  workspaceFolders: readonly Pick<vscode.WorkspaceFolder, 'uri'>[]
+): Promise<IndexedRepository[]> {
+  const repositories = new Map<string, IndexedRepository>();
+
+  for (const repository of gitRepositories) {
+    repositories.set(repository.rootUri.fsPath, { rootUri: repository.rootUri });
+  }
+
+  for (const folder of workspaceFolders) {
+    try {
+      const repositoryRoot = await getRepoRoot(folder.uri.fsPath);
+      repositories.set(repositoryRoot, {
+        rootUri: vscode.Uri.file(repositoryRoot)
+      });
+    } catch {
+      // Ignore folders that are not part of a Git working tree.
+    }
+  }
+
+  return [...repositories.values()].sort((left, right) =>
+    left.rootUri.fsPath.localeCompare(right.rootUri.fsPath)
+  );
 }

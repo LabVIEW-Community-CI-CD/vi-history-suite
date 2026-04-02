@@ -2,13 +2,34 @@ import * as vscode from 'vscode';
 
 import { createOpenViHistoryCommand } from './commands/openViHistoryCommand';
 import { getBuiltInGitApi } from './git/gitApi';
-import { ViEligibilityIndexer } from './indexing/viEligibilityIndexer';
+import {
+  EligibilityDebugSnapshot,
+  ViEligibilityIndexer
+} from './indexing/viEligibilityIndexer';
+import { ViHistoryViewModel } from './services/viHistoryModel';
 import { ViHistoryService } from './services/viHistoryService';
+import {
+  HistoryPanelTracker,
+  OpenedHistoryPanelSummary
+} from './ui/historyPanelTracker';
 
-export async function activate(context: vscode.ExtensionContext): Promise<void> {
+export interface ViHistorySuiteApi {
+  refreshEligibility(): Promise<void>;
+  isEligible(uri: vscode.Uri): boolean;
+  loadHistory(uri: vscode.Uri): Promise<ViHistoryViewModel>;
+  getEligibilityDebugSnapshot(): EligibilityDebugSnapshot;
+  getLastOpenedPanel(): OpenedHistoryPanelSummary | undefined;
+  getOpenHistoryPanelCount(): number;
+  clearHistoryPanelTracking(): void;
+}
+
+export async function activate(
+  context: vscode.ExtensionContext
+): Promise<ViHistorySuiteApi> {
   const gitApi = await getBuiltInGitApi();
   const eligibilityIndexer = new ViEligibilityIndexer(gitApi);
   const historyService = new ViHistoryService(gitApi);
+  const panelTracker = new HistoryPanelTracker();
 
   context.subscriptions.push(eligibilityIndexer);
 
@@ -21,14 +42,28 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   context.subscriptions.push(
     vscode.commands.registerCommand(
       'viHistorySuite.openViHistory',
-      createOpenViHistoryCommand(historyService, eligibilityIndexer, gitApi)
+      createOpenViHistoryCommand(
+        historyService,
+        eligibilityIndexer,
+        gitApi,
+        panelTracker
+      )
     )
   );
 
   await eligibilityIndexer.start();
+
+  return {
+    refreshEligibility: async () => eligibilityIndexer.refresh(),
+    isEligible: (uri: vscode.Uri) => eligibilityIndexer.isEligible(uri),
+    loadHistory: (uri: vscode.Uri) => historyService.load(uri),
+    getEligibilityDebugSnapshot: () => eligibilityIndexer.getDebugSnapshot(),
+    getLastOpenedPanel: () => panelTracker.getLastOpenedPanel(),
+    getOpenHistoryPanelCount: () => panelTracker.getOpenCount(),
+    clearHistoryPanelTracking: () => panelTracker.clear()
+  };
 }
 
 export function deactivate(): void {
   // Nothing to do yet.
 }
-

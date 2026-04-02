@@ -53,6 +53,8 @@
   assert the shared core history model returns eligible history
 - `TEST-SMOKE-001`: run the canonical harness smoke and retain JSON, Markdown,
   and HTML reports under `.cache/harness-reports/`
+- `TEST-INTEG-001`: run a real VS Code extension host against a temporary Git
+  workspace and prove eligible versus ineligible command flow behavior
 
 ## Reporting
 

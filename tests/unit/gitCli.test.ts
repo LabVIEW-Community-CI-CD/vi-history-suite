@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  getWindowsGitExecutableCandidates,
   normalizeRelativeGitPath,
   parseCommitHashes,
   parseHistoryEntries,
-  parseLsFilesZ
+  parseLsFilesZ,
+  resolveGitExecutable
 } from '../../src/git/gitCli';
 
 describe('gitCli parsing', () => {
@@ -45,5 +47,42 @@ describe('gitCli parsing', () => {
       'folder/nested/file.vi'
     );
   });
-});
 
+  it('prefers an explicit git executable override', () => {
+    expect(
+      resolveGitExecutable(
+        {
+          VI_HISTORY_SUITE_GIT_EXE: 'D:\\tools\\git\\bin\\git.exe'
+        },
+        'win32'
+      )
+    ).toBe('D:\\tools\\git\\bin\\git.exe');
+  });
+
+  it('resolves a deterministic Windows git path when PATH is unavailable', () => {
+    expect(
+      resolveGitExecutable(
+        {
+          ProgramFiles: 'C:\\Program Files'
+        },
+        'win32',
+        (candidate) => candidate.endsWith('C:\\Program Files\\Git\\cmd\\git.exe')
+      )
+    ).toBe('C:\\Program Files\\Git\\cmd\\git.exe');
+  });
+
+  it('returns stable Windows git candidates without duplicates', () => {
+    expect(
+      getWindowsGitExecutableCandidates({
+        ProgramFiles: 'C:\\Program Files',
+        ProgramW6432: 'C:\\Program Files',
+        'ProgramFiles(x86)': 'C:\\Program Files (x86)'
+      })
+    ).toEqual([
+      'C:\\Program Files\\Git\\cmd\\git.exe',
+      'C:\\Program Files\\Git\\bin\\git.exe',
+      'C:\\Program Files (x86)\\Git\\cmd\\git.exe',
+      'C:\\Program Files (x86)\\Git\\bin\\git.exe'
+    ]);
+  });
+});

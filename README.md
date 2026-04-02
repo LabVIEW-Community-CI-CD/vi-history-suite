@@ -29,6 +29,7 @@ captured in [docs/research/extension-design-summary.md](./docs/research/extensio
 npm ci
 npm run compile
 npm run test
+npm run test:integration
 npm run harness:smoke
 ```
 
