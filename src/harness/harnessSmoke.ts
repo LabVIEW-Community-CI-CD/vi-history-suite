@@ -38,13 +38,26 @@ export interface HarnessSmokeReport {
   generatedAt: string;
 }
 
+export interface HarnessSmokeDeps {
+  stat?: typeof fs.stat;
+  mkdir?: typeof fs.mkdir;
+  writeFile?: typeof fs.writeFile;
+  runGit?: typeof runGit;
+  getRepoHead?: typeof getRepoHead;
+  listTrackedFiles?: typeof listTrackedFiles;
+  loadViHistoryViewModelFromFsPath?: typeof loadViHistoryViewModelFromFsPath;
+  evaluateViEligibilityForFsPath?: typeof evaluateViEligibilityForFsPath;
+  now?: () => string;
+}
+
 export async function ensureHarnessClone(
   definition: CanonicalHarnessDefinition,
-  cloneRoot: string
+  cloneRoot: string,
+  deps: HarnessSmokeDeps = {}
 ): Promise<string> {
   const cloneDirectory = path.join(cloneRoot, definition.cloneDirectoryName);
   try {
-    const stats = await fs.stat(path.join(cloneDirectory, '.git'));
+    const stats = await (deps.stat ?? fs.stat)(path.join(cloneDirectory, '.git'));
     if (stats.isDirectory()) {
       return cloneDirectory;
     }
@@ -52,14 +65,18 @@ export async function ensureHarnessClone(
     // Clone on demand below.
   }
 
-  await fs.mkdir(cloneRoot, { recursive: true });
-  await runGit(['clone', '--filter=blob:none', definition.repositoryUrl, cloneDirectory], cloneRoot);
+  await (deps.mkdir ?? fs.mkdir)(cloneRoot, { recursive: true });
+  await (deps.runGit ?? runGit)(
+    ['clone', '--filter=blob:none', definition.repositoryUrl, cloneDirectory],
+    cloneRoot
+  );
   return cloneDirectory;
 }
 
 export async function runHarnessSmoke(
   harnessId: string,
-  options: HarnessSmokeOptions
+  options: HarnessSmokeOptions,
+  deps: HarnessSmokeDeps = {}
 ): Promise<{
   report: HarnessSmokeReport;
   reportJsonPath: string;
@@ -67,17 +84,17 @@ export async function runHarnessSmoke(
   reportHtmlPath: string;
 }> {
   const definition = getCanonicalHarnessDefinition(harnessId);
-  const cloneDirectory = await ensureHarnessClone(definition, options.cloneRoot);
+  const cloneDirectory = await ensureHarnessClone(definition, options.cloneRoot, deps);
   const targetAbsolutePath = path.join(cloneDirectory, definition.targetRelativePath);
   const [head, trackedFiles, model, eligibility] = await Promise.all([
-    getRepoHead(cloneDirectory),
-    listTrackedFiles(cloneDirectory),
-    loadViHistoryViewModelFromFsPath(targetAbsolutePath, {
+    (deps.getRepoHead ?? getRepoHead)(cloneDirectory),
+    (deps.listTrackedFiles ?? listTrackedFiles)(cloneDirectory),
+    (deps.loadViHistoryViewModelFromFsPath ?? loadViHistoryViewModelFromFsPath)(targetAbsolutePath, {
       repoRoot: cloneDirectory,
       strictRsrcHeader: options.strictRsrcHeader ?? false,
       historyLimit: options.historyLimit ?? 50
     }),
-    evaluateViEligibilityForFsPath(targetAbsolutePath, {
+    (deps.evaluateViEligibilityForFsPath ?? evaluateViEligibilityForFsPath)(targetAbsolutePath, {
       repoRoot: cloneDirectory,
       strictRsrcHeader: options.strictRsrcHeader ?? false
     })
@@ -98,19 +115,19 @@ export async function runHarnessSmoke(
     eligible: tracked && model.eligible,
     commitCount: model.commits.length,
     commits: model.commits,
-    generatedAt: new Date().toISOString()
+    generatedAt: (deps.now ?? defaultNow)()
   };
 
   const outputDirectory = path.join(options.reportRoot, definition.id);
-  await fs.mkdir(outputDirectory, { recursive: true });
+  await (deps.mkdir ?? fs.mkdir)(outputDirectory, { recursive: true });
 
   const reportJsonPath = path.join(outputDirectory, 'report.json');
   const reportMarkdownPath = path.join(outputDirectory, 'report.md');
   const reportHtmlPath = path.join(outputDirectory, 'report.html');
 
-  await fs.writeFile(reportJsonPath, JSON.stringify(report, null, 2));
-  await fs.writeFile(reportMarkdownPath, renderHarnessSmokeMarkdown(report));
-  await fs.writeFile(reportHtmlPath, renderHarnessSmokeHtml(report));
+  await (deps.writeFile ?? fs.writeFile)(reportJsonPath, JSON.stringify(report, null, 2));
+  await (deps.writeFile ?? fs.writeFile)(reportMarkdownPath, renderHarnessSmokeMarkdown(report));
+  await (deps.writeFile ?? fs.writeFile)(reportHtmlPath, renderHarnessSmokeHtml(report));
 
   return { report, reportJsonPath, reportMarkdownPath, reportHtmlPath };
 }
@@ -207,3 +224,6 @@ function escapeHtml(value: string): string {
     .replaceAll("'", '&#39;');
 }
 
+function defaultNow(): string {
+  return new Date().toISOString();
+}
