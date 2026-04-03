@@ -798,6 +798,9 @@ describe('multiReportDashboardAction', () => {
     expect(openedPanel.webview.html).toContain(
       '2 adjacent pair(s) were refreshed for retained comparison evidence before this dashboard was concentrated.'
     );
+    expect(openedPanel.webview.html).toContain(
+      'Refresh outcomes: 2 generated reports.'
+    );
     expect(openedPanel.webview.html).toContain('data-testid="dashboard-eta-accuracy-summary"');
     expect(openedPanel.webview.html).toContain('measured=1/2 prepared pair(s)');
     expect(openedPanel.webview.html).toContain('mean-abs-error=0m 1s');
@@ -830,6 +833,202 @@ describe('multiReportDashboardAction', () => {
         signedErrorSeconds: 1
       })
     ]);
+  });
+
+  it('surfaces blocked, failed, and no-generated-report refresh outcomes during dashboard pair preparation', async () => {
+    const progressUpdates: Array<{ message: string; increment?: number }> = [];
+    const readArchivedComparisonReportSourceRecord = vi.fn().mockResolvedValue(undefined);
+    const writeFile = vi.fn().mockResolvedValue(undefined);
+    const ensureComparisonReportEvidence = vi
+      .fn()
+      .mockResolvedValueOnce({
+        outcome: 'retained-comparison-report-evidence',
+        reportStatus: 'ready-for-runtime',
+        runtimeExecutionState: 'succeeded',
+        generatedReportExists: true
+      })
+      .mockResolvedValueOnce({
+        outcome: 'retained-comparison-report-evidence',
+        reportStatus: 'blocked-runtime',
+        runtimeExecutionState: 'not-available',
+        blockedReason: 'runtime-provider-unavailable',
+        runtimeDiagnosticReason: 'runtime-provider-unavailable',
+        generatedReportExists: false
+      })
+      .mockResolvedValueOnce({
+        outcome: 'retained-comparison-report-evidence',
+        reportStatus: 'ready-for-runtime',
+        runtimeExecutionState: 'failed',
+        runtimeFailureReason: 'command-exited-nonzero',
+        runtimeDiagnosticReason: 'command-exited-nonzero',
+        generatedReportExists: false
+      })
+      .mockResolvedValueOnce({
+        outcome: 'retained-comparison-report-evidence',
+        reportStatus: 'ready-for-runtime',
+        runtimeExecutionState: 'not-run',
+        generatedReportExists: false
+      });
+    const buildDashboard = vi.fn().mockResolvedValue({
+      record: {
+        generatedAt: '2026-04-03T00:00:00.000Z',
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace/repo',
+        relativePath: 'foo.vi',
+        signature: 'LVIN',
+        artifactPlan: {
+          repoId: 'repoid123456',
+          fileId: 'fileid123456',
+          windowId: 'windowid12345',
+          dashboardDirectory:
+            '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345',
+          jsonFilePath:
+            '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.json',
+          htmlFilePath:
+            '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.html',
+          assetsDirectory:
+            '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/assets'
+        },
+        commitWindow: {
+          commitCount: 5,
+          pairCount: 4,
+          newestHash: 'aaaaaaaabbbbbbbb',
+          oldestHash: '9999999900000000'
+        },
+        summary: {
+          representedPairCount: 4,
+          windowCompletenessState: 'complete',
+          archivedPairCount: 4,
+          missingPairCount: 0,
+          missingPairIds: [],
+          generatedReportCount: 1,
+          reportMetadataPairCount: 1,
+          failedPairCount: 1,
+          failedPairIds: ['pair-3'],
+          blockedPairCount: 1,
+          blockedPairIds: ['pair-2'],
+          overviewSectionCount: 0,
+          overviewImageCount: 0,
+          includedAttributeCount: 0,
+          detailSectionCount: 0,
+          detailItemCount: 0,
+          pairWithOverviewImageCount: 0,
+          pairWithDetailCount: 0,
+          overviewCaptionSummaries: [],
+          includedAttributeSummaries: [],
+          detailHeadingSummaries: [],
+          evidenceStateSummaries: [],
+          providerSummaries: []
+        },
+        entries: []
+      },
+      jsonFilePath:
+        '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.json',
+      htmlFilePath:
+        '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.html'
+    });
+    const action = createMultiReportDashboardAction(
+      {
+        storageUri: createMockUri('/workspace/.storage')
+      } as never,
+      {
+        buildDashboard,
+        ensureComparisonReportEvidence,
+        readArchivedComparisonReportSourceRecord,
+        writeFile
+      }
+    );
+
+    await action({
+      model: {
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace/repo',
+        relativePath: 'foo.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'aaaaaaaabbbbbbbb',
+            authorDate: '2026-04-05T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Newest revision',
+            previousHash: 'ccccccccdddddddd'
+          },
+          {
+            hash: 'ccccccccdddddddd',
+            authorDate: '2026-04-04T00:00:00Z',
+            authorName: 'B User',
+            subject: 'Revision 2',
+            previousHash: 'eeeeeeeeffffffff'
+          },
+          {
+            hash: 'eeeeeeeeffffffff',
+            authorDate: '2026-04-03T00:00:00Z',
+            authorName: 'C User',
+            subject: 'Revision 3',
+            previousHash: '1111111122222222'
+          },
+          {
+            hash: '1111111122222222',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'D User',
+            subject: 'Revision 4',
+            previousHash: '9999999900000000'
+          },
+          {
+            hash: '9999999900000000',
+            authorDate: '2026-04-01T00:00:00Z',
+            authorName: 'E User',
+            subject: 'Initial revision'
+          }
+        ]
+      },
+      reportProgress: (update) => {
+        progressUpdates.push(update);
+      }
+    });
+
+    expect(readArchivedComparisonReportSourceRecord).toHaveBeenCalledTimes(4);
+    expect(ensureComparisonReportEvidence).toHaveBeenCalledTimes(4);
+    expect(
+      progressUpdates.some((update) =>
+        update.message.includes(
+          'Prepared dashboard pair 1/4: aaaaaaaa vs cccccccc (missing archive); retained generated comparison metadata is ready.'
+        )
+      )
+    ).toBe(true);
+    expect(
+      progressUpdates.some((update) =>
+        update.message.includes(
+          'Prepared dashboard pair 2/4: cccccccc vs eeeeeeee (missing archive); retained pair evidence is blocked (runtime-provider-unavailable).'
+        )
+      )
+    ).toBe(true);
+    expect(
+      progressUpdates.some((update) =>
+        update.message.includes(
+          'Prepared dashboard pair 3/4: eeeeeeee vs 11111111 (missing archive); retained pair evidence reflects a failed runtime (command-exited-nonzero).'
+        )
+      )
+    ).toBe(true);
+    expect(
+      progressUpdates.some((update) =>
+        update.message.includes(
+          'Prepared dashboard pair 4/4: 11111111 vs 99999999 (missing archive); retained pair evidence was refreshed without a generated comparison report.'
+        )
+      )
+    ).toBe(true);
+
+    const openedPanel = createWebviewPanelMock.mock.results[0]?.value as ReturnType<
+      typeof createMockPanel
+    >;
+    expect(openedPanel.webview.html).toContain('data-testid="dashboard-preparation-summary"');
+    expect(openedPanel.webview.html).toContain(
+      'Refresh outcomes: 1 generated report, 1 blocked pair, 1 failed pair, 1 pair without a generated report.'
+    );
+    expect(openedPanel.webview.html).toContain(
+      'Review the pair ledger or Open compare for runtime doctor details.'
+    );
   });
 
   it('surfaces explicit progress and dashboard guidance when pair refresh is unavailable in this build', async () => {

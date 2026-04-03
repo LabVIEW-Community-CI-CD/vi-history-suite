@@ -78,6 +78,11 @@ requiring raw-log inspection.
   missing pairs before concentration, or concentrated only the currently
   retained archive set because dashboard-driven pair refresh was unavailable in
   the current build
+- dashboard pair-preparation progress and the retained dashboard preparation
+  summary now distinguish refreshed pairs that produced generated NI reports
+  from pairs that ended blocked, failed, or still lacked generated reports,
+  with follow-up guidance to use the pair ledger or `Open compare` for runtime
+  doctor details
 - stale history-panel commands now fail closed with explicit build-capability
   guidance instead of silent unsupported-command handling, and `Diff prev` on a
   content-detected VI now refuses text-diff fallback when comparison-report

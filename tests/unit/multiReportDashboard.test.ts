@@ -90,6 +90,79 @@ describe('buildAndPersistMultiReportDashboard', () => {
     expect(html).toContain('Historical or already retained pairs are excluded.');
   });
 
+  it('renders refreshed pair outcome counts in the preparation summary when dashboard backfill produced mixed results', () => {
+    const html = renderMultiReportDashboardHtml(
+      {
+        generatedAt: '2026-04-03T05:06:07.000Z',
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace/repo',
+        relativePath: 'foo.vi',
+        signature: 'LVIN',
+        artifactPlan: {
+          repoId: 'repoid123456',
+          fileId: 'fileid123456',
+          windowId: 'windowid12345',
+          dashboardDirectory: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345',
+          jsonFilePath: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.json',
+          htmlFilePath: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.html',
+          assetsDirectory: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/assets'
+        },
+        commitWindow: {
+          commitCount: 5,
+          pairCount: 4,
+          newestHash: 'abcdef1234567890',
+          oldestHash: '5555555566666666'
+        },
+        summary: {
+          representedPairCount: 4,
+          windowCompletenessState: 'complete',
+          archivedPairCount: 4,
+          missingPairCount: 0,
+          missingPairIds: [],
+          generatedReportCount: 1,
+          reportMetadataPairCount: 1,
+          failedPairCount: 1,
+          failedPairIds: ['pair-3'],
+          blockedPairCount: 1,
+          blockedPairIds: ['pair-2'],
+          overviewSectionCount: 0,
+          overviewImageCount: 0,
+          includedAttributeCount: 0,
+          detailSectionCount: 0,
+          detailItemCount: 0,
+          pairWithOverviewImageCount: 0,
+          pairWithDetailCount: 0,
+          providerSummaries: [],
+          overviewCaptionSummaries: [],
+          includedAttributeSummaries: [],
+          detailHeadingSummaries: [],
+          evidenceStateSummaries: []
+        },
+        entries: []
+      },
+      {
+        preparationSummary: {
+          mode: 'backfilled-before-build',
+          pairsNeedingEvidenceCount: 4,
+          preparedPairCount: 4,
+          preparedGeneratedReportCount: 1,
+          preparedBlockedPairCount: 1,
+          preparedFailedPairCount: 1,
+          preparedNoGeneratedReportCount: 1
+        }
+      }
+    );
+
+    expect(html).toContain('data-testid="dashboard-preparation-summary"');
+    expect(html).toContain(
+      '4 adjacent pair(s) were refreshed for retained comparison evidence before this dashboard was concentrated.'
+    );
+    expect(html).toContain(
+      'Refresh outcomes: 1 generated report, 1 blocked pair, 1 failed pair, 1 pair without a generated report.'
+    );
+    expect(html).toContain('Review the pair ledger or Open compare for runtime doctor details.');
+  });
+
   it('retains explicit pair evidence states and completeness facts for succeeded, failed, and missing pairs', async () => {
     const storageRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-dashboard-'));
     tempRoots.push(storageRoot);

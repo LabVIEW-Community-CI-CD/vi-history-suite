@@ -76,6 +76,12 @@ interface DashboardPairEvidenceCandidate {
   reason: 'missing-archive' | 'missing-generated-report' | 'missing-report-file';
 }
 
+type PreparedDashboardPairOutcome =
+  | 'generated-report'
+  | 'blocked'
+  | 'failed'
+  | 'no-generated-report';
+
 const DASHBOARD_PAIR_EVIDENCE_INCREMENT_TOTAL = 40;
 const DASHBOARD_PAIR_CONCENTRATION_INCREMENT_TOTAL = 30;
 const DEFAULT_DASHBOARD_PAIR_CONCENTRATION_INCREMENT_TOTAL = 70;
@@ -129,7 +135,11 @@ export function createMultiReportDashboardAction(
     let preparationSummary: MultiReportDashboardPreparationSummary = {
       mode: 'retained-evidence-complete',
       pairsNeedingEvidenceCount: pairsNeedingEvidence.length,
-      preparedPairCount: 0
+      preparedPairCount: 0,
+      preparedGeneratedReportCount: 0,
+      preparedBlockedPairCount: 0,
+      preparedFailedPairCount: 0,
+      preparedNoGeneratedReportCount: 0
     };
     if (pairsNeedingEvidence.length === 0) {
       await request.reportProgress?.({
@@ -144,7 +154,11 @@ export function createMultiReportDashboardAction(
       preparationSummary = {
         mode: 'backfill-unavailable',
         pairsNeedingEvidenceCount: pairsNeedingEvidence.length,
-        preparedPairCount: 0
+        preparedPairCount: 0,
+        preparedGeneratedReportCount: 0,
+        preparedBlockedPairCount: 0,
+        preparedFailedPairCount: 0,
+        preparedNoGeneratedReportCount: 0
       };
       await request.reportProgress?.({
         message: `This build cannot refresh ${pairsNeedingEvidence.length} dashboard pair(s) from Open dashboard. Concentrating the currently retained archive set only.`
@@ -154,7 +168,11 @@ export function createMultiReportDashboardAction(
       preparationSummary = {
         mode: 'backfilled-before-build',
         pairsNeedingEvidenceCount: pairsNeedingEvidence.length,
-        preparedPairCount: 0
+        preparedPairCount: 0,
+        preparedGeneratedReportCount: 0,
+        preparedBlockedPairCount: 0,
+        preparedFailedPairCount: 0,
+        preparedNoGeneratedReportCount: 0
       };
       pairConcentrationIncrementTotal = DASHBOARD_PAIR_CONCENTRATION_INCREMENT_TOTAL;
       const pairBudget =
@@ -239,6 +257,7 @@ export function createMultiReportDashboardAction(
           increment: remainingPairIncrement > 0 ? remainingPairIncrement : undefined
         });
         preparationSummary.preparedPairCount = index + 1;
+        applyPreparedDashboardPairOutcome(preparationSummary, result);
       }
       etaAccuracyRecord = buildDashboardPairEtaAccuracyRecord(
         pairsNeedingEvidence.length,
@@ -498,12 +517,79 @@ function buildDashboardPairPreparedMessage(
     pair.reason === 'missing-archive'
       ? 'missing archive'
       : pair.reason === 'missing-generated-report'
-        ? 'missing generated report'
-        : 'missing retained report file';
-  const completionLabel = result.generatedReportExists
-    ? 'retained generated comparison metadata is ready'
-    : 'retained pair evidence was refreshed without a generated comparison report';
+      ? 'missing generated report'
+      : 'missing retained report file';
+  const completionLabel = describePreparedDashboardPairOutcome(result);
   return `Prepared dashboard pair ${index + 1}/${total}: ${pairLabel} (${reasonLabel}); ${completionLabel}.`;
+}
+
+function applyPreparedDashboardPairOutcome(
+  summary: MultiReportDashboardPreparationSummary,
+  result: ComparisonReportActionResult
+): void {
+  const outcome = classifyPreparedDashboardPairOutcome(result);
+  if (outcome === 'generated-report') {
+    summary.preparedGeneratedReportCount += 1;
+    return;
+  }
+  if (outcome === 'blocked') {
+    summary.preparedBlockedPairCount += 1;
+    return;
+  }
+  if (outcome === 'failed') {
+    summary.preparedFailedPairCount += 1;
+    return;
+  }
+  summary.preparedNoGeneratedReportCount += 1;
+}
+
+function classifyPreparedDashboardPairOutcome(
+  result: ComparisonReportActionResult
+): PreparedDashboardPairOutcome {
+  if (result.generatedReportExists) {
+    return 'generated-report';
+  }
+  if (
+    result.reportStatus === 'blocked-preflight' ||
+    result.reportStatus === 'blocked-runtime' ||
+    Boolean(result.blockedReason)
+  ) {
+    return 'blocked';
+  }
+  if (
+    result.runtimeExecutionState === 'failed' ||
+    Boolean(result.runtimeFailureReason)
+  ) {
+    return 'failed';
+  }
+  return 'no-generated-report';
+}
+
+function describePreparedDashboardPairOutcome(
+  result: ComparisonReportActionResult
+): string {
+  if (result.generatedReportExists) {
+    return 'retained generated comparison metadata is ready';
+  }
+  if (
+    result.reportStatus === 'blocked-preflight' ||
+    result.reportStatus === 'blocked-runtime' ||
+    result.blockedReason
+  ) {
+    return `retained pair evidence is blocked${formatPreparedDashboardPairReason(result.blockedReason ?? result.runtimeDiagnosticReason)}`;
+  }
+  if (
+    result.runtimeExecutionState === 'failed' ||
+    result.runtimeFailureReason
+  ) {
+    return `retained pair evidence reflects a failed runtime${formatPreparedDashboardPairReason(result.runtimeFailureReason ?? result.runtimeDiagnosticReason)}`;
+  }
+  return 'retained pair evidence was refreshed without a generated comparison report';
+}
+
+function formatPreparedDashboardPairReason(reason: string | undefined): string {
+  const normalizedReason = reason?.trim();
+  return normalizedReason ? ` (${normalizedReason})` : '';
 }
 
 interface DashboardArtifactMessage {

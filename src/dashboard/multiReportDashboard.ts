@@ -198,6 +198,10 @@ export interface MultiReportDashboardPreparationSummary {
     | 'backfill-unavailable';
   pairsNeedingEvidenceCount: number;
   preparedPairCount: number;
+  preparedGeneratedReportCount: number;
+  preparedBlockedPairCount: number;
+  preparedFailedPairCount: number;
+  preparedNoGeneratedReportCount: number;
 }
 
 export async function buildAndPersistMultiReportDashboard(
@@ -1329,7 +1333,37 @@ function renderPreparationSummary(
   }
 
   if (summary.mode === 'backfilled-before-build') {
-    return `${summary.preparedPairCount} adjacent pair(s) were refreshed for retained comparison evidence before this dashboard was concentrated.`;
+    const outcomeParts: string[] = [];
+    if (summary.preparedGeneratedReportCount > 0) {
+      outcomeParts.push(
+        `${summary.preparedGeneratedReportCount} generated report${summary.preparedGeneratedReportCount === 1 ? '' : 's'}`
+      );
+    }
+    if (summary.preparedBlockedPairCount > 0) {
+      outcomeParts.push(
+        `${summary.preparedBlockedPairCount} blocked pair${summary.preparedBlockedPairCount === 1 ? '' : 's'}`
+      );
+    }
+    if (summary.preparedFailedPairCount > 0) {
+      outcomeParts.push(
+        `${summary.preparedFailedPairCount} failed pair${summary.preparedFailedPairCount === 1 ? '' : 's'}`
+      );
+    }
+    if (summary.preparedNoGeneratedReportCount > 0) {
+      outcomeParts.push(
+        `${summary.preparedNoGeneratedReportCount} pair${summary.preparedNoGeneratedReportCount === 1 ? '' : 's'} without a generated report`
+      );
+    }
+    const baseSummary = `${summary.preparedPairCount} adjacent pair(s) were refreshed for retained comparison evidence before this dashboard was concentrated.`;
+    if (outcomeParts.length === 0) {
+      return baseSummary;
+    }
+
+    const needsFollowUpGuidance =
+      summary.preparedBlockedPairCount > 0 ||
+      summary.preparedFailedPairCount > 0 ||
+      summary.preparedNoGeneratedReportCount > 0;
+    return `${baseSummary} Refresh outcomes: ${outcomeParts.join(', ')}.${needsFollowUpGuidance ? ' Review the pair ledger or Open compare for runtime doctor details.' : ''}`;
   }
 
   return `${summary.pairsNeedingEvidenceCount} adjacent pair(s) still lacked retained comparison evidence, and this build could not refresh them from Open dashboard. This dashboard concentrates the currently retained archive set only.`;

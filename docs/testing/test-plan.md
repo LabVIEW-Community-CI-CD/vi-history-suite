@@ -830,6 +830,10 @@
   history panel fall back to the packaged overview page when the bundle is
   available, and that missing bundled docs still fail closed with a stable
   warning
+- `TEST-UNIT-232`: verify dashboard pair-preparation progress and the retained
+  dashboard preparation summary distinguish refreshed generated-report,
+  blocked, failed, and no-generated-report outcomes, with follow-up guidance
+  when usable NI report evidence was not produced for every refreshed pair
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed product, wiki, and assurance-skill repos with authority roles,
   expected remotes, and primary entrypoints
