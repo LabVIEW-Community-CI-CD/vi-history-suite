@@ -79,5 +79,15 @@
     "issues": [
       "ISSUE-0406"
     ]
+  },
+  {
+    "id": "TRANCHE-010",
+    "title": "Public facade installer and Windows acceptance",
+    "status": "queued",
+    "source": "author direction",
+    "summary": "After the first immutable SemVer VSIX release exists, turn the public GitHub facade repo into the installer, release, and support surface using a Windows Docker + NSIS builder lane and a fresh Windows 11 VM acceptance lane with Visual Studio Code CLI automation plus a manual right-click human gate.",
+    "issues": [
+      "ISSUE-0407"
+    ]
   }
 ]

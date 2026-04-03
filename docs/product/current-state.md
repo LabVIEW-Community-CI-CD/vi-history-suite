@@ -29,6 +29,7 @@ Read these in order:
 13. [Documentation Package Workbench](../documentation-workbench.md)
 14. [program-repo-jump.md](./program-repo-jump.md)
 15. [PROGRAM-0001: Next Product Layer](./execution-programs/PROGRAM-0001-next-product-layer.md)
+16. [PROGRAM-0002: Public Facade Installer And Windows Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
 
 ## Authority Stack
 
@@ -60,6 +61,7 @@ Current control-plane surfaces:
 14. [program-repo-jump.md](./program-repo-jump.md)
 15. [PROGRAM-0001: Next Product Layer](./execution-programs/PROGRAM-0001-next-product-layer.md)
 16. [Fast VS Code Loop](../dev-fast-loop.md)
+17. [PROGRAM-0002: Public Facade Installer And Windows Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
 
 ## Committed Capability State
 
@@ -101,11 +103,25 @@ Queued follow-on tranches:
 
 - `TRANCHE-004`: Add progress-surface uplift for indexing and report generation
 - `TRANCHE-008`: Introduce runtime-doctor and dashboard-refresh developer experience
+- `TRANCHE-010`: Public facade installer and Windows acceptance
+
+Approved post-release program:
+
+- [PROGRAM-0002: Public Facade Installer And Windows Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
+- first queued issue: [ISSUE-0407 Public Facade Installer And Windows Acceptance](./issues/ISSUE-0407-public-facade-installer-and-windows-acceptance.md)
+- trust boundary:
+  - private GitLab immutable release remains product truth
+  - public GitHub facade repo is the public installer/support surface
+  - Windows Docker builds the installer
+  - the fresh Windows 11 VM proves the installed-user flow
+  - Visual Studio Code CLI automates install/verify/open surfaces
+  - the manual right-click review pass remains the human UX gate
 
 The queue source of truth is:
 
 - [development-queue.json](./development-queue.json)
 - [PROGRAM-0001: Next Product Layer](./execution-programs/PROGRAM-0001-next-product-layer.md)
+- [PROGRAM-0002: Public Facade Installer And Windows Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
 - [release-readiness-matrix.json](./release-readiness-matrix.json)
 - [blocker-ledger.json](./blocker-ledger.json)
 - [wiki-authority-map.md](./wiki-authority-map.md)

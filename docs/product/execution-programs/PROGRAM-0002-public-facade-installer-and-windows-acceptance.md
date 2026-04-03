@@ -1,0 +1,201 @@
+# PROGRAM-0002: Public Facade Installer And Windows Acceptance
+
+## Status
+
+Approved and queued as the next post-release direction.
+
+This program is intentionally not active in
+[`development-queue.json`](../development-queue.json). It starts only after
+the first immutable SemVer release of `vi-history-suite` is published.
+
+## Purpose
+
+Define the governed post-release program for turning `vi-history-suite` into a
+publicly installable, publicly supportable Windows product without exposing the
+private GitLab engineering control plane.
+
+## Trigger
+
+This program starts only after all of these are true:
+
+- `vi-history-suite` has an immutable released VSIX at the governed target
+  version
+- the release evidence proves the exact VSIX identity
+- the public GitHub facade repo is ready to consume that immutable release
+- the Windows 11 acceptance VM is prepared for installed-user proof
+
+## North Star
+
+A user downloads a public Windows installer from the public facade repo, runs
+it on a fresh Windows 11 VM, installs the exact released `vi-history-suite`
+build, opens a pinned `labview-icon-editor` workspace, and can successfully
+exercise the real right-click review flow for the canonical VI while retained
+evidence is captured for both automation and human review.
+
+## Authority And Trust Boundary
+
+### Product Truth
+
+- private GitLab release for `vi-history-suite`
+- exact released VSIX artifact
+- retained release evidence and manifest
+
+### Public Distribution Truth
+
+- public GitHub facade repo:
+  `https://github.com/svelderrainruiz/vi-history-suite`
+- public installer project
+- public release notes and issue intake
+
+### Execution Truth
+
+- fresh Windows 11 VM
+- Visual Studio Code CLI for install, verification, and workspace launch
+- real human manual right-click review pass for the final UX gate
+
+### Explicit Boundaries
+
+- the GitHub facade repo is not the private engineering source of truth
+- the Windows Docker image builds the installer, but does not replace the VM
+  as the installed-user proof surface
+- Visual Studio Code CLI proves install/verify/open surfaces, but does not
+  replace the human right-click gate
+
+## Chosen Design
+
+### Lane 1: Immutable Release Ingestion
+
+Use the immutable released VSIX from private GitLab as the only installer
+payload source.
+
+No public build lane may point at:
+
+- a working tree
+- a floating preview artifact
+- an unpublished package version
+
+### Lane 2: Public Facade Distribution
+
+Use the public GitHub repo as the consumer-facing facade for:
+
+- installer downloads
+- installation guidance
+- support guidance
+- public issue intake
+- public release notes
+
+The facade repo will not mirror the private GitLab source tree blindly.
+
+### Lane 3: Windows Installer Build
+
+Build a Windows installer from the immutable released VSIX using:
+
+- a Windows Docker builder image
+- NSIS for packaging
+
+Version 1 assumptions:
+
+- the VM already has Visual Studio Code installed
+- the pinned proof repo is provisioned separately from the installer
+- the installer is responsible for placing the exact VSIX and related public
+  docs/support surfaces, not for bootstrapping every external dependency
+
+### Lane 4: Automated Windows 11 Proof
+
+Use the Windows 11 VM plus PowerShell and Visual Studio Code CLI to automate:
+
+- installer invocation
+- exact extension installation verification
+- version verification
+- workspace launch against the pinned `labview-icon-editor` repo
+- capture of CLI outputs and retained proof artifacts
+
+### Lane 5: Human UX Gate
+
+Use the same VM for manual proof of the user-real path that CLI cannot close:
+
+- right-click invocation on the canonical VI
+- wording clarity
+- trust prompts
+- panel behavior
+- first-use friction
+
+This is the bounded human gate that promotes the scenario from strong
+automation to trustworthy installed-user evidence.
+
+## Workstreams
+
+1. public facade repo release/distribution scaffolding
+2. Windows Docker installer-builder image and NSIS project
+3. pinned fixture/repo provisioning manifest for `labview-icon-editor`
+4. Windows 11 VM PowerShell + VS Code CLI acceptance harness
+5. retained installed-user evidence pack and human-check worksheet
+
+## Planned Deliverables
+
+- `installer/nsis/` in the public facade repo
+- `docker/windows-installer-builder/` in the public facade repo
+- `acceptance/windows11/` in the public facade repo
+- a pinned fixture manifest for the canonical proof repo and VI
+- public `INSTALL.md` / `SUPPORT.md` updates for installer-based use
+- a VM acceptance checklist for the manual right-click gate
+
+## Non-Goals
+
+- exposing the private GitLab source repositories publicly
+- claiming the public facade repo is the engineering source of truth
+- replacing the Windows 11 VM with container-only proof
+- replacing the human gate with CLI-only proof
+- bundling the proof repo inside the installer by default
+- Marketplace publication in this program's first slice
+
+## Acceptance Gates
+
+### Gate A: Immutable Release Consumption
+
+- the installer build consumes only an immutable released VSIX
+- the installer metadata retains the exact released version and artifact
+  identity
+
+### Gate B: Public Installer Build
+
+- the Windows Docker image can build the installer deterministically
+- NSIS packaging emits a versioned installer artifact
+
+### Gate C: Automated VM Proof
+
+- the Windows 11 VM can install the product using the produced installer
+- Visual Studio Code CLI can verify the installed extension version
+- the VM can open the pinned proof workspace deterministically
+
+### Gate D: Human UX Gate
+
+- a human can complete the real right-click flow on the canonical VI
+- first-use friction is retained as evidence, not just remembered in chat
+
+### Gate E: Public Support Surface
+
+- the public facade repo has truthful install, support, and release guidance
+- users have a bounded public issue surface that does not expose private GitLab
+
+## First Slice
+
+If approved, the first slice should:
+
+- create the public installer/build/acceptance skeleton in the public facade
+  repo
+- define the immutable release ingestion contract from GitLab release evidence
+- define the pinned fixture manifest for `labview-icon-editor`
+- define the VM acceptance harness shape and the manual right-click worksheet
+- stop short of claiming user-proof closure until the VM gate runs
+
+## Explicit Approval Question
+
+Approval of this program means approval for me to:
+
+- queue this as the next post-release direction
+- scaffold the public facade repo around installer/distribution/acceptance work
+- preserve the trust boundary that private GitLab remains source truth and the
+  VM plus human gate remain execution truth
+
+Rejecting or revising this program leaves the current release program unchanged.
