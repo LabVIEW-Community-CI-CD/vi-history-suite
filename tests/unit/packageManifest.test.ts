@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 interface ExtensionManifest {
   activationEvents?: string[];
   extensionDependencies?: string[];
+  scripts?: Record<string, string>;
   capabilities?: {
     untrustedWorkspaces?: {
       supported?: string;
@@ -89,5 +90,15 @@ describe('extension manifest research alignment', () => {
     expect(manifest.contributes?.configuration?.properties).toHaveProperty(
       'viHistorySuite.windowsContainerImage'
     );
+  });
+
+  it('exposes the fast local VS Code loop and preview refresh scripts', () => {
+    const manifest = readManifest();
+
+    expect(manifest.scripts?.['dev:watch']).toBe('tsc -p . --watch --preserveWatchOutput');
+    expect(manifest.scripts?.['dev:workspace']).toContain('runDevHost.js --prepare-workspace-only');
+    expect(manifest.scripts?.['dev:host']).toContain('runDevHost.js');
+    expect(manifest.scripts?.['preview:refresh']).toContain('preview-evidence');
+    expect(manifest.scripts?.['preview:refresh']).toContain('/mnt/c/Users/sveld/Downloads');
   });
 });

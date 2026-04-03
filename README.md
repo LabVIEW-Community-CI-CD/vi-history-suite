@@ -181,6 +181,7 @@ See:
 - [Release Readiness Matrix](./docs/product/release-readiness-matrix.json)
 - [Blocker Ledger](./docs/product/blocker-ledger.json)
 - [Release Procedure](./docs/release-procedure.md)
+- [Fast VS Code Loop](./docs/dev-fast-loop.md)
 - [Research Alignment Matrix](./docs/research/authoritative/research-alignment.md)
 - [Next Research Prompt](./docs/research/authoritative/next-research-prompt.md)
 
@@ -203,6 +204,19 @@ Primary commands:
 - `npm run harness:report:smoke`
 - `npm run harness:dashboard:smoke`
 - `npm run harness:decision:record`
+- `npm run dev:watch`
+- `npm run dev:workspace`
+- `npm run dev:host`
+- `npm run preview:refresh`
+
+Fast inner loop:
+
+1. `npm run dev:watch`
+2. `npm run dev:host`
+3. inside the dev host, use `Developer: Reload Window` after code changes
+
+Use `npm run preview:refresh` only when a slice needs a refreshed installable
+VSIX. The dedicated dev host is the default inner loop.
 
 Primary generated evidence:
 

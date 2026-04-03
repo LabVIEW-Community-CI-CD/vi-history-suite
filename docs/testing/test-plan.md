@@ -716,10 +716,16 @@
   pair metadata ledger that recollects retained NI pair metadata before the
   detailed per-pair sections, including bounded no-metadata wording when a pair
   has no retained NI report metadata
+- `TEST-UNIT-207`: prove the fast-loop dev-host CLI parses stable arguments,
+  prepares a reusable fixture workspace without requiring `Code.exe`, and
+  builds a stable launch plan for either direct or staged extension mode
 - `TEST-INTEG-004`: run the real extension-host lane with retained comparison
   packet and dashboard artifact opening, and prove the flow completes without
   the earlier retained-HTML resource-host failure warning becoming a test
   failure
+- `TEST-DOC-017`: review the fast-loop docs and manifest scripts to confirm the
+  repo differentiates the default development-host inner loop from preview VSIX
+  refresh
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

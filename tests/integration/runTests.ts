@@ -103,9 +103,9 @@ void main().catch((error) => {
 });
 
 function toWindowsPath(value: string): string {
-  if (value.startsWith('/mnt/') && value.length > 6) {
+  if (value.startsWith('/mnt/') && value.length > 7) {
     const driveLetter = value[5].toUpperCase();
-    const remainder = value.slice(6).replaceAll('/', '\\');
+    const remainder = value.slice(7).replaceAll('/', '\\');
     return `${driveLetter}:\\${remainder}`;
   }
 

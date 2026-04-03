@@ -45,6 +45,7 @@ Current control-plane surfaces:
 6. [release-readiness-matrix.json](./release-readiness-matrix.json)
 7. [blocker-ledger.json](./blocker-ledger.json)
 8. [PROGRAM-0001: Next Product Layer](./execution-programs/PROGRAM-0001-next-product-layer.md)
+9. [Fast VS Code Loop](../dev-fast-loop.md)
 
 ## Committed Capability State
 
@@ -62,6 +63,7 @@ Current control-plane surfaces:
 | Review-scenario registry and human decision records | partially implemented and active | `src/scenarios/reviewScenarioRegistry.ts`; `src/scenarios/decisionRecord.ts`; `src/harness/harnessDecisionRecord.ts`; `src/cli/runHarnessDecisionRecord.ts`; `docs/product/review-scenarios.md`; `docs/product/decision-record-template.md`; `VHS-REQ-307..312` | `TRANCHE-007` |
 | Runtime-doctor and dashboard-refresh developer experience | partially implemented and active | `src/reporting/comparisonRuntimeDoctor.ts`; `src/reporting/comparisonRuntimeLocator.ts`; `src/reporting/comparisonReportPacket.ts`; `src/reporting/comparisonReportAction.ts`; `src/dashboard/multiReportDashboardAction.ts`; `src/commands/openViHistoryCommand.ts`; `VHS-REQ-224..236`; `VHS-REQ-241`; `VHS-REQ-244..247`; `VHS-REQ-251..258` | `TRANCHE-008` |
 | Ship-control system and SemVer release target | implemented and active with preview VSIX delivery plus first tagged release proof pending | `docs/product/SHIP-0001-releasable-vi-history-suite.md`; `docs/product/release-readiness-matrix.json`; `docs/product/blocker-ledger.json`; `docs/release-procedure.md`; `.gitlab-ci.yml`; `tests/unit/shipControlDocs.test.ts`; `VHS-REQ-313..323` | `TRANCHE-009` |
+| Fast local VS Code development-host loop | implemented and active with reusable fixture-workspace prep, explicit workspace override, direct or staged extension-host launch, and separate preview VSIX refresh | `src/tooling/devHostLoop.ts`; `src/cli/runDevHost.ts`; `docs/dev-fast-loop.md`; `package.json`; `tests/unit/runDevHostCli.test.ts`; `tests/unit/packageManifest.test.ts`; `VHS-REQ-338..339` | sustain |
 
 ## Active Queue
 
@@ -118,6 +120,10 @@ These are generated locally and are not the committed source of truth:
   - `.cache/harness-reports/HARNESS-VHS-001/dashboard-smoke.json`
   - `.cache/harness-reports/HARNESS-VHS-001/dashboard-smoke.md`
   - `.cache/harness-reports/HARNESS-VHS-001/dashboard-smoke.html`
+- fast local dev-host loop:
+  - `.cache/dev-host/` or `C:\Users\sveld\AppData\Local\Temp\vihs-dev-host\`
+  - reusable fixture workspace via `npm run dev:workspace`
+  - dedicated development host via `npm run dev:host`
 - concentrated review dashboard:
   - `<workspace-storage>/report-history/<repoId>/<fileId>/pairs/<pairId>/source-record.json`
   - `<workspace-storage>/dashboards/<repoId>/<fileId>/<windowId>/dashboard.json`

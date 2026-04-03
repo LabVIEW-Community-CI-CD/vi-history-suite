@@ -120,6 +120,9 @@
   "scripts": {
     "clean": "rimraf out coverage",
     "compile": "tsc -p .",
+    "dev:watch": "tsc -p . --watch --preserveWatchOutput",
+    "dev:workspace": "npm run compile && node out/cli/runDevHost.js --prepare-workspace-only",
+    "dev:host": "npm run compile && node out/cli/runDevHost.js",
     "check": "tsc -p . --noEmit",
     "design:gate": "npm run compile && node out/cli/runDesignGate.js",
     "harness:decision:record": "npm run compile && node out/cli/runHarnessDecisionRecord.js --harness-id HARNESS-VHS-001 --reviewer Codex --review-question \"Does the concentrated evidence support bounded review completion?\" --outcome needs-more-review --confidence medium --decision-rationale \"The dashboard is evidence-rich, but the reviewer should still verify whether more manual inspection is needed.\"",
@@ -127,6 +130,7 @@
     "harness:report:smoke": "npm run compile && node out/cli/runHarnessReportSmoke.js --harness-id HARNESS-VHS-001",
     "harness:dashboard:smoke": "npm run compile && node out/cli/runHarnessDashboardSmoke.js --harness-id HARNESS-VHS-001",
     "pretest": "npm run compile",
+    "preview:refresh": "npm run package && node -e \"const fs=require('node:fs'); const p=require('./package.json'); const name=p.name+'-'+p.version+'.vsix'; fs.copyFileSync(name, 'preview-evidence/'+name); fs.copyFileSync(name, '/mnt/c/Users/sveld/Downloads/'+name); console.log('Refreshed '+name);\"",
     "test": "vitest run --coverage",
     "test:integration:compile": "tsc -p tsconfig.integration.json",
     "test:integration": "npm run compile && npm run test:integration:compile && node out-tests/tests/integration/runTests.js",
