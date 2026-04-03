@@ -22,7 +22,9 @@ Do not draft or refresh wiki pages until:
   `docs/product/wiki-publication-ledger.md`
 - **User Workflow**: published on `2026-04-03`; see
   `docs/product/wiki-publication-ledger.md`
-- **Next page**: `Comparison Reports And Dashboard Review`
+- **Comparison Reports And Dashboard Review**: published on `2026-04-03`; see
+  `docs/product/wiki-publication-ledger.md`
+- **Next page**: `Review Scenarios And Decision Records`
 
 ## Page Order
 
