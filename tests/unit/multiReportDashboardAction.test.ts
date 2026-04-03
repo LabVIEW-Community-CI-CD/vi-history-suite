@@ -145,22 +145,40 @@ describe('multiReportDashboardAction', () => {
           oldestHash: '3333333344444444'
         },
         summary: {
+          representedPairCount: 2,
+          windowCompletenessState: 'incomplete-missing-archives',
           archivedPairCount: 1,
           missingPairCount: 1,
+          missingPairIds: ['pairid999999'],
           generatedReportCount: 1,
+          reportMetadataPairCount: 1,
           failedPairCount: 0,
+          failedPairIds: [],
           blockedPairCount: 0,
+          blockedPairIds: [],
+          overviewSectionCount: 2,
           overviewImageCount: 2,
+          includedAttributeCount: 5,
+          detailSectionCount: 1,
           detailItemCount: 3,
           pairWithOverviewImageCount: 1,
           pairWithDetailCount: 1,
+          evidenceStateSummaries: [
+            {
+              state: 'archived-generated-report',
+              pairCount: 1
+            },
+            {
+              state: 'missing-archive',
+              pairCount: 1
+            }
+          ],
           providerSummaries: [
             {
               label: 'host-native / labview-cli / x86 / win32',
               pairCount: 1
             }
-          ],
-          highestEvidencePairId: 'pairid123456'
+          ]
         },
         entries: []
       },
@@ -215,6 +233,12 @@ describe('multiReportDashboardAction', () => {
     expect(panelCall?.[2]).toBe(1);
     expect(panelCall?.[3]?.enableScripts).toBe(true);
     expect(panelCall?.[3]?.localResourceRoots?.[0]?.fsPath).toBe('/workspace/.storage');
+    const openedPanel = createWebviewPanelMock.mock.results[0]?.value as ReturnType<
+      typeof createMockPanel
+    >;
+    expect(openedPanel.webview.html).toContain('data-testid="dashboard-chronology-order"');
+    expect(openedPanel.webview.html).toContain('data-testid="dashboard-metadata-summary"');
+    expect(openedPanel.webview.html).toContain('data-testid="dashboard-metadata-fields"');
     expect(result).toEqual({
       outcome: 'opened-review-dashboard',
       dashboardFilePath: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.html',
@@ -250,22 +274,40 @@ describe('multiReportDashboardAction', () => {
           oldestHash: '3333333344444444'
         },
         summary: {
+          representedPairCount: 2,
+          windowCompletenessState: 'incomplete-missing-archives',
           archivedPairCount: 1,
           missingPairCount: 1,
+          missingPairIds: ['pairid999999'],
           generatedReportCount: 1,
+          reportMetadataPairCount: 1,
           failedPairCount: 0,
+          failedPairIds: [],
           blockedPairCount: 0,
+          blockedPairIds: [],
+          overviewSectionCount: 2,
           overviewImageCount: 2,
+          includedAttributeCount: 5,
+          detailSectionCount: 1,
           detailItemCount: 3,
           pairWithOverviewImageCount: 1,
           pairWithDetailCount: 1,
+          evidenceStateSummaries: [
+            {
+              state: 'archived-generated-report',
+              pairCount: 1
+            },
+            {
+              state: 'missing-archive',
+              pairCount: 1
+            }
+          ],
           providerSummaries: [
             {
               label: 'host-native / labview-cli / x86 / win32',
               pairCount: 1
             }
-          ],
-          highestEvidencePairId: 'pairid123456'
+          ]
         },
         entries: []
       },

@@ -112,8 +112,14 @@ describe('buildAndPersistMultiReportDashboard', () => {
     expect(dashboard.record.summary.archivedPairCount).toBe(2);
     expect(dashboard.record.summary.missingPairCount).toBe(1);
     expect(dashboard.record.summary.generatedReportCount).toBe(1);
+    expect(dashboard.record.summary.reportMetadataPairCount).toBe(1);
     expect(dashboard.record.summary.failedPairCount).toBe(1);
     expect(dashboard.record.summary.blockedPairCount).toBe(0);
+    expect(dashboard.record.summary.overviewSectionCount).toBe(1);
+    expect(dashboard.record.summary.overviewImageCount).toBe(1);
+    expect(dashboard.record.summary.includedAttributeCount).toBe(1);
+    expect(dashboard.record.summary.detailSectionCount).toBe(1);
+    expect(dashboard.record.summary.detailItemCount).toBe(1);
     expect(dashboard.record.summary.evidenceStateSummaries).toEqual([
       { state: 'archived-failed', pairCount: 1 },
       { state: 'archived-generated-report', pairCount: 1 },
@@ -131,10 +137,28 @@ describe('buildAndPersistMultiReportDashboard', () => {
       'source-record-json'
     ]);
     await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
-      'Window completeness'
+      'Concentrated comparison-report metadata'
     );
     await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
       'Evidence state:'
+    );
+    await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
+      'data-testid="dashboard-chronology-order"'
+    );
+    await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
+      'data-testid="dashboard-metadata-summary"'
+    );
+    await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
+      'data-testid="dashboard-metadata-fields"'
+    );
+    await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
+      'data-testid="dashboard-entry-report-metadata"'
+    );
+    await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
+      'Front Panel Overview · 1 image(s)'
+    );
+    await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
+      'Included: Front Panel'
     );
   });
 
@@ -220,7 +244,10 @@ describe('buildAndPersistMultiReportDashboard', () => {
     expect(secondDashboard.record.entries[0]?.dashboardImageAssets).toEqual([]);
     await expect(fs.access(staleCopiedAssetPath)).rejects.toBeDefined();
     await expect(fs.readFile(secondDashboard.htmlFilePath, 'utf8')).resolves.toContain(
-      'No concentrated images are currently retained for this pair.'
+      'No retained overview image metadata is currently available for this pair.'
+    );
+    await expect(fs.readFile(secondDashboard.htmlFilePath, 'utf8')).resolves.toContain(
+      'data-testid="dashboard-entry-overview-metadata"'
     );
   });
 });

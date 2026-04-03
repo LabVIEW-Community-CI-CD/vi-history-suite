@@ -111,17 +111,20 @@ export interface MultiReportDashboardRecord {
     missingPairCount: number;
     missingPairIds: string[];
     generatedReportCount: number;
+    reportMetadataPairCount: number;
     failedPairCount: number;
     failedPairIds: string[];
     blockedPairCount: number;
     blockedPairIds: string[];
+    overviewSectionCount: number;
     overviewImageCount: number;
+    includedAttributeCount: number;
+    detailSectionCount: number;
     detailItemCount: number;
     pairWithOverviewImageCount: number;
     pairWithDetailCount: number;
     providerSummaries: MultiReportDashboardProviderSummary[];
     evidenceStateSummaries: MultiReportDashboardEvidenceStateSummary[];
-    highestEvidencePairId?: string;
   };
   entries: MultiReportDashboardEntry[];
 }
@@ -221,28 +224,30 @@ export function renderMultiReportDashboardHtml(
 ): string {
   const representedPairCount =
     record.summary.representedPairCount ?? record.commitWindow.pairCount;
-  const windowCompletenessState =
-    record.summary.windowCompletenessState ??
-    ((record.summary.missingPairCount ?? 0) === 0
-      ? ('complete' as const)
-      : ('incomplete-missing-archives' as const));
-  const missingPairIds = record.summary.missingPairIds ?? [];
-  const blockedPairIds = record.summary.blockedPairIds ?? [];
-  const failedPairIds = record.summary.failedPairIds ?? [];
   const providerSummaries = record.summary.providerSummaries ?? [];
+  const chronologyHtml = record.entries.length
+    ? `<ol data-testid="dashboard-chronology-list">${record.entries
+        .map(
+          (entry, index) => `<li data-testid="dashboard-chronology-item">
+            Pair ${index + 1} of ${record.entries.length}: <code>${escapeHtml(
+              entry.selectedHash.slice(0, 8)
+            )}</code> vs <code>${escapeHtml(entry.baseHash.slice(0, 8))}</code> ·
+            ${escapeHtml(entry.selectedSubject)} ·
+            ${escapeHtml(entry.pairEvidenceState)}
+          </li>`
+        )
+        .join('')}</ol>`
+    : '<div class="note">No retained commit pairs are currently available for this dashboard window.</div>';
   const summaryCards = [
     ['Retained commits', String(record.commitWindow.commitCount)],
     ['Retained pairs', String(record.commitWindow.pairCount)],
     ['Represented pairs', String(representedPairCount)],
-    ['Window completeness', windowCompletenessState],
     ['Archived pairs', String(record.summary.archivedPairCount)],
-    ['Missing pairs', String(record.summary.missingPairCount)],
-    ['Generated reports', String(record.summary.generatedReportCount)],
-    ['Failed pairs', String(record.summary.failedPairCount)],
-    ['Blocked pairs', String(record.summary.blockedPairCount)],
+    ['Pairs with report metadata', String(record.summary.reportMetadataPairCount)],
+    ['Overview sections', String(record.summary.overviewSectionCount)],
     ['Overview images', String(record.summary.overviewImageCount)],
-    ['Pairs with images', String(record.summary.pairWithOverviewImageCount)],
-    ['Pairs with detail', String(record.summary.pairWithDetailCount)],
+    ['Included attributes', String(record.summary.includedAttributeCount)],
+    ['Detail sections', String(record.summary.detailSectionCount)],
     ['Detail items', String(record.summary.detailItemCount)],
     ['Provider variants', String(providerSummaries.length)]
   ]
@@ -253,57 +258,47 @@ export function renderMultiReportDashboardHtml(
   const entriesHtml = record.entries
     .map((entry, index) => {
       const parsed = entry.parsedReport;
-      const reviewCue =
-        record.summary.highestEvidencePairId === entry.pairId
-          ? `<div class="note review-cue" data-testid="dashboard-review-cue">
-            <strong>Review cue:</strong> This pair currently carries the highest retained evidence density in the window.
+      const noMetadataHtml = parsed
+        ? ''
+        : `<div class="note" data-testid="dashboard-entry-no-metadata">
+            No retained VI Comparison Report metadata is currently available for this pair.
+          </div>`;
+      const reportMetadataHtml = parsed
+        ? `<div class="note" data-testid="dashboard-entry-report-metadata">
+            <strong>Comparison Report metadata:</strong>
+            title=${escapeHtml(parsed.reportTitle)} ·
+            generated=${escapeHtml(parsed.generationTime ?? 'none')} ·
+            first-vi=${escapeHtml(parsed.firstViPath ?? 'none')} ·
+            second-vi=${escapeHtml(parsed.secondViPath ?? 'none')} ·
+            overview-sections=${escapeHtml(String(parsed.overviewSections.length))} ·
+            overview-images=${escapeHtml(String(entry.overviewImageCount))} ·
+            included-attributes=${escapeHtml(String(parsed.includedAttributes.length))} ·
+            detail-sections=${escapeHtml(String(parsed.detailSections.length))} ·
+            detail-items=${escapeHtml(String(entry.detailItemCount))}
           </div>`
-          : '';
-      const artifactLinksHtml = entry.artifactLinks.length
-        ? `<div class="artifact-actions" data-testid="dashboard-entry-artifacts">
-            ${entry.artifactLinks
-              .map(
-                (artifact) => `<button
-                    data-testid="dashboard-artifact-action"
-                    data-command="openDashboardArtifact"
-                    data-path="${escapeHtml(artifact.filePath)}"
-                    data-kind="${escapeHtml(artifact.kind)}"
-                    data-label="${escapeHtml(artifact.label)}"
-                  >${escapeHtml(artifact.label)}</button>`
-              )
-              .join('\n')}
-          </div>`
-        : '<div class="note">No archived artifact drill-down is currently available for this pair.</div>';
-      const imageHtml = entry.dashboardImageAssets.length
-        ? `<div class="image-grid" data-testid="dashboard-entry-images">
-            ${entry.dashboardImageAssets
-              .map((image) => {
-                const resolved = options.assetUriResolver
-                  ? options.assetUriResolver(
-                      path.join(record.artifactPlan.dashboardDirectory, image.dashboardRelativePath),
-                      image.dashboardRelativePath
-                    )
-                  : image.dashboardRelativePath;
-                return `<figure class="image-card">
-                    <img src="${escapeHtml(resolved)}" alt="${escapeHtml(image.caption)}" />
-                    <figcaption>${escapeHtml(image.caption)} · image ${image.position + 1}</figcaption>
-                  </figure>`;
-              })
-              .join('\n')}
-          </div>`
-        : `<div class="note">No concentrated images are currently retained for this pair.</div>`;
+        : '';
+      const overviewMetadataHtml = parsed?.overviewSections.length
+        ? `<ul data-testid="dashboard-entry-overview-metadata">${parsed.overviewSections
+            .map(
+              (section) =>
+                `<li>${escapeHtml(section.caption)} · ${escapeHtml(
+                  String(section.images.length)
+                )} image(s)</li>`
+            )
+            .join('')}</ul>`
+        : '<div class="note" data-testid="dashboard-entry-overview-metadata">No retained overview image metadata is currently available for this pair.</div>';
       const attributesHtml = parsed?.includedAttributes.length
-        ? `<ul class="attribute-list">${parsed.includedAttributes
+        ? `<ul class="attribute-list" data-testid="dashboard-entry-attribute-metadata">${parsed.includedAttributes
             .map(
               (attribute) =>
                 `<li>${attribute.included ? 'Included' : 'Excluded'}: ${escapeHtml(attribute.label)}</li>`
             )
             .join('')}</ul>`
-        : '<div class="note">No included-attribute facts are currently retained.</div>';
+        : '<div class="note" data-testid="dashboard-entry-attribute-metadata">No included-attribute metadata is currently retained for this pair.</div>';
       const detailsHtml = parsed?.detailSections.length
         ? parsed.detailSections
             .map(
-              (section) => `<details class="detail-section">
+              (section) => `<details class="detail-section" data-testid="dashboard-entry-detail-section">
                 <summary>${escapeHtml(section.heading)}</summary>
                 <ol>${section.items
                   .map((item) => `<li>${escapeHtml(item)}</li>`)
@@ -311,13 +306,15 @@ export function renderMultiReportDashboardHtml(
               </details>`
             )
             .join('\n')
-        : '<div class="note">No detailed report sections are currently retained for this pair.</div>';
+        : '<div class="note" data-testid="dashboard-entry-detail-metadata">No detailed-information metadata is currently retained for this pair.</div>';
 
-      return `<section class="entry" data-testid="dashboard-entry" data-entry-index="${index}">
-        <div class="entry-header">
-          <h2>${escapeHtml(entry.selectedHash.slice(0, 8))} vs ${escapeHtml(
-            entry.baseHash.slice(0, 8)
-          )}</h2>
+	      return `<section class="entry" data-testid="dashboard-entry" data-entry-index="${index}">
+	        <div class="entry-header">
+	          <h2>Pair ${index + 1} of ${record.entries.length}: ${escapeHtml(
+            entry.selectedHash.slice(0, 8)
+          )} vs ${escapeHtml(
+	            entry.baseHash.slice(0, 8)
+	          )}</h2>
           <div class="entry-state">
             <strong>Evidence state:</strong> ${escapeHtml(entry.pairEvidenceState)} ·
             <strong>Archive:</strong> ${escapeHtml(entry.archiveStatus)} ·
@@ -325,20 +322,14 @@ export function renderMultiReportDashboardHtml(
             <strong>Runtime:</strong> ${escapeHtml(entry.runtimeExecutionState ?? 'not-run')}
           </div>
         </div>
-        <div class="entry-grid">
-          <div><strong>Selected subject:</strong> ${escapeHtml(entry.selectedSubject)}</div>
+	        <div class="entry-grid" data-testid="dashboard-entry-provenance">
+	          <div><strong>Selected hash:</strong> <code>${escapeHtml(entry.selectedHash)}</code></div>
+	          <div><strong>Base hash:</strong> <code>${escapeHtml(entry.baseHash)}</code></div>
+	          <div><strong>Selected subject:</strong> ${escapeHtml(entry.selectedSubject)}</div>
           <div><strong>Selected author/date:</strong> ${escapeHtml(
             `${entry.selectedAuthorName} · ${entry.selectedAuthorDate}`
           )}</div>
-          <div><strong>Pair evidence state:</strong> ${escapeHtml(entry.pairEvidenceState)}</div>
           <div><strong>Base subject:</strong> ${escapeHtml(entry.baseSubject ?? 'none')}</div>
-          <div><strong>Evidence count:</strong> ${escapeHtml(String(entry.evidenceCount))}</div>
-          <div><strong>Generated report exists:</strong> ${entry.generatedReportExists ? 'yes' : 'no'}</div>
-          <div><strong>Failure reason:</strong> ${escapeHtml(entry.runtimeFailureReason ?? 'none')}</div>
-          <div><strong>Blocked reason:</strong> ${escapeHtml(entry.blockedReason ?? 'none')}</div>
-          <div><strong>Diagnostic reason:</strong> ${escapeHtml(
-            entry.runtimeDiagnosticReason ?? 'none'
-          )}</div>
           <div><strong>Provider:</strong> ${escapeHtml(entry.runtimeProvider ?? 'none')}</div>
           <div><strong>Engine:</strong> ${escapeHtml(entry.runtimeEngine ?? 'none')}</div>
           <div><strong>Platform:</strong> ${escapeHtml(entry.runtimePlatform ?? 'none')}</div>
@@ -348,29 +339,13 @@ export function renderMultiReportDashboardHtml(
           <div><strong>Provider label:</strong> ${escapeHtml(
             entry.runtimeProviderLabel ?? 'none'
           )}</div>
-          <div><strong>Archive packet:</strong> ${escapeHtml(entry.packetFilePath ?? 'none')}</div>
-          <div><strong>Archive report:</strong> ${escapeHtml(entry.reportFilePath ?? 'none')}</div>
-          <div><strong>Archive metadata:</strong> ${escapeHtml(entry.metadataFilePath ?? 'none')}</div>
-          <div><strong>Archive source record:</strong> ${escapeHtml(
-            entry.packetRecordPath ?? 'none'
-          )}</div>
-        </div>
-        ${reviewCue}
-        <h3>Artifact drill-down</h3>
-        ${artifactLinksHtml}
-        <div class="note">
-          <strong>Concentrated report facts:</strong>
-          ${escapeHtml(parsed?.reportTitle ?? 'No retained NI report content for this pair.')}
-          ${parsed?.generationTime ? ` · Generated ${escapeHtml(parsed.generationTime)}` : ''}
-        </div>
-        <div class="entry-grid">
-          <div><strong>First VI:</strong> ${escapeHtml(parsed?.firstViPath ?? 'none')}</div>
-          <div><strong>Second VI:</strong> ${escapeHtml(parsed?.secondViPath ?? 'none')}</div>
-        </div>
-        <h3>Overview images</h3>
-        ${imageHtml}
-        <h3>Included attributes</h3>
-        ${attributesHtml}
+	        </div>
+          ${reportMetadataHtml}
+          ${noMetadataHtml}
+	        <h3>Overview metadata</h3>
+	        ${overviewMetadataHtml}
+	        <h3>Included attributes</h3>
+	        ${attributesHtml}
         <h3>Detailed information</h3>
         ${detailsHtml}
       </section>`;
@@ -467,7 +442,7 @@ export function renderMultiReportDashboardHtml(
         <div><strong>Generated at:</strong> ${escapeHtml(record.generatedAt)}</div>
       </div>
       <div class="note" data-testid="dashboard-purpose">
-        This dashboard concentrates multiple retained VI Comparison Reports for one VI so a human reviewer can triage a commit window without opening every individual report first.
+        This dashboard concentrates retained VI Comparison Report metadata for one VI across a commit window so an expert can review multiple report pairs from one HTML surface.
       </div>
       <div class="note" data-testid="dashboard-provider-summary">
         <strong>Provider coverage:</strong>
@@ -480,44 +455,30 @@ export function renderMultiReportDashboardHtml(
               .join('')}</ul>`
           : ' No retained provider evidence is currently concentrated for this window.'}
       </div>
-      <div class="note" data-testid="dashboard-completeness-summary">
-        <strong>Window completeness:</strong> ${escapeHtml(windowCompletenessState)} ·
-        <strong>Missing pair ids:</strong> ${escapeHtml(missingPairIds.join(' | ') || 'none')} ·
-        <strong>Blocked pair ids:</strong> ${escapeHtml(blockedPairIds.join(' | ') || 'none')} ·
-        <strong>Failed pair ids:</strong> ${escapeHtml(failedPairIds.join(' | ') || 'none')}
+      <div class="note" data-testid="dashboard-chronology-order">
+        <strong>Chronology order:</strong> newest selected/base pairs first.
+      </div>
+      <div class="note" data-testid="dashboard-chronology-summary">
+        <strong>Pair chronology:</strong>
+        ${chronologyHtml}
+      </div>
+      <div class="note" data-testid="dashboard-metadata-summary">
+        <strong>Concentrated comparison-report metadata:</strong>
+        metadata-backed-pairs=${escapeHtml(String(record.summary.reportMetadataPairCount))} ·
+        overview-sections=${escapeHtml(String(record.summary.overviewSectionCount))} ·
+        overview-images=${escapeHtml(String(record.summary.overviewImageCount))} ·
+        included-attributes=${escapeHtml(String(record.summary.includedAttributeCount))} ·
+        detail-sections=${escapeHtml(String(record.summary.detailSectionCount))} ·
+        detail-items=${escapeHtml(String(record.summary.detailItemCount))}
+      </div>
+      <div class="note" data-testid="dashboard-metadata-fields">
+        <strong>Retained metadata fields:</strong> report title, generation time, compared VI paths, overview section captions and image counts, included attributes, and detailed-information headings and items.
       </div>
       <div class="summary-grid" data-testid="dashboard-summary-grid">
         ${summaryCards}
       </div>
     </section>
     ${entriesHtml}
-    <script>
-      const vscode = acquireVsCodeApi();
-      document.addEventListener('click', (event) => {
-        const target = event.target;
-        if (!(target instanceof HTMLButtonElement)) {
-          return;
-        }
-
-        if (target.dataset.command !== 'openDashboardArtifact') {
-          return;
-        }
-
-        const filePath = target.dataset.path;
-        const kind = target.dataset.kind;
-        const label = target.dataset.label;
-        if (!filePath || !kind || !label) {
-          return;
-        }
-
-        vscode.postMessage({
-          command: 'openDashboardArtifact',
-          filePath,
-          kind,
-          label
-        });
-      });
-    </script>
   </body>
 </html>`;
 }
@@ -650,28 +611,32 @@ function buildDashboardSummary(entries: MultiReportDashboardEntry[]) {
     .filter((entry) => entry.archiveStatus === 'missing')
     .map((entry) => entry.pairId);
   const generatedReportCount = entries.filter((entry) => entry.generatedReportExists).length;
+  const reportMetadataPairCount = entries.filter((entry) => Boolean(entry.parsedReport)).length;
   const failedEntries = entries.filter((entry) => entry.pairEvidenceState === 'archived-failed');
   const failedPairCount = failedEntries.length;
   const failedPairIds = failedEntries.map((entry) => entry.pairId);
   const blockedEntries = entries.filter((entry) => entry.pairEvidenceState === 'archived-blocked');
   const blockedPairCount = blockedEntries.length;
   const blockedPairIds = blockedEntries.map((entry) => entry.pairId);
+  const overviewSectionCount = entries.reduce(
+    (total, entry) => total + (entry.parsedReport?.overviewSections.length ?? 0),
+    0
+  );
   const overviewImageCount = entries.reduce(
     (total, entry) => total + entry.overviewImageCount,
+    0
+  );
+  const includedAttributeCount = entries.reduce(
+    (total, entry) => total + (entry.parsedReport?.includedAttributes.length ?? 0),
+    0
+  );
+  const detailSectionCount = entries.reduce(
+    (total, entry) => total + (entry.parsedReport?.detailSections.length ?? 0),
     0
   );
   const detailItemCount = entries.reduce((total, entry) => total + entry.detailItemCount, 0);
   const pairWithOverviewImageCount = entries.filter((entry) => entry.overviewImageCount > 0).length;
   const pairWithDetailCount = entries.filter((entry) => entry.detailItemCount > 0).length;
-  const highestEvidenceEntry = entries.reduce<MultiReportDashboardEntry | undefined>(
-    (highest, entry) => {
-      if (!highest || entry.evidenceCount > highest.evidenceCount) {
-        return entry;
-      }
-      return highest;
-    },
-    undefined
-  );
   const providerCounts = new Map<string, number>();
   for (const entry of entries) {
     const label = entry.runtimeProviderLabel ?? 'none';
@@ -701,17 +666,20 @@ function buildDashboardSummary(entries: MultiReportDashboardEntry[]) {
     missingPairCount,
     missingPairIds,
     generatedReportCount,
+    reportMetadataPairCount,
     failedPairCount,
     failedPairIds,
     blockedPairCount,
     blockedPairIds,
+    overviewSectionCount,
     overviewImageCount,
+    includedAttributeCount,
+    detailSectionCount,
     detailItemCount,
     pairWithOverviewImageCount,
     pairWithDetailCount,
     providerSummaries,
-    evidenceStateSummaries,
-    highestEvidencePairId: highestEvidenceEntry?.pairId
+    evidenceStateSummaries
   };
 }
 

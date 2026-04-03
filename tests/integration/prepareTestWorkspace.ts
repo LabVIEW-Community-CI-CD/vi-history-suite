@@ -29,6 +29,9 @@ export async function prepareIntegrationWorkspace(
   await writeViFixture(path.join(workspacePath, eligibleRelativePath), 'eligible-2');
   await commitAll(workspacePath, 'Update eligible fixture');
 
+  await writeViFixture(path.join(workspacePath, eligibleRelativePath), 'eligible-3');
+  await commitAll(workspacePath, 'Add third eligible fixture revision');
+
   const metadata: IntegrationWorkspaceMetadata = {
     workspacePath,
     eligibleRelativePath,

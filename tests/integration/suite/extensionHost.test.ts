@@ -47,7 +47,7 @@ async function testEligibleVersusIneligibleFlow(
   const history = await api.loadHistory(eligibleUri);
   assert.equal(history.signature, 'LVIN');
   assert.equal(history.eligible, true);
-  assert.equal(history.commits.length, 2);
+  assert.equal(history.commits.length, 3);
 
   await waitFor(
     async () => {
@@ -119,7 +119,6 @@ async function testPanelOpenFlow(
   assert.match(panel.renderedHtml, /data-testid="history-action-copy"/);
   assert.match(panel.renderedHtml, /data-testid="history-action-copy-review-packet"/);
   assert.match(panel.renderedHtml, /data-testid="history-action-dashboard"/);
-  assert.match(panel.renderedHtml, /data-testid="history-action-dashboard" disabled/);
   assert.match(panel.renderedHtml, /Eligible/);
   assert.match(panel.renderedHtml, /LVIN/);
   assert.match(panel.renderedHtml, /Newest commit first/);
@@ -135,6 +134,7 @@ async function testPanelOpenFlow(
   assert.match(panel.renderedHtml, /fixtures\/eligible-content-detected\.bin/);
   assert.match(panel.renderedHtml, /Update eligible fixture/);
   assert.match(panel.renderedHtml, /Add initial integration fixtures/);
+  assert.match(panel.renderedHtml, /Add third eligible fixture revision/);
 
   const history = await api.loadHistory(eligibleUri);
   const selectedCommit = history.commits[0];
@@ -151,6 +151,7 @@ async function testPanelOpenFlow(
   assert.match(copiedReviewPacket, /Confidence and scope:/);
   assert.match(copiedReviewPacket, /Needs external comparison tooling: binary semantic differences, visual or cosmetic change detection, and NI comparison-report output\./);
   assert.match(copiedReviewPacket, /- [0-9a-f]{8} vs [0-9a-f]{8} :: Update eligible fixture/);
+  assert.match(copiedReviewPacket, /- [0-9a-f]{8} vs [0-9a-f]{8} :: Add third eligible fixture revision/);
   const copiedReviewAction = api.getLastPanelActionSummary();
   assert.ok(copiedReviewAction);
   assert.equal(copiedReviewAction.command, 'copyReviewPacket');
@@ -233,6 +234,28 @@ async function testPanelOpenFlow(
   assert.ok(reportMetadata.runtimeSelection?.blockedReason);
   assert.equal(reportMetadata.runtimeExecution?.reportExists, false);
   assert.equal(api.getPanelActionCount(), 5);
+
+  await api.dispatchLastPanelMessage({
+    command: 'openDashboard'
+  });
+  const dashboardAction = api.getLastPanelActionSummary();
+  assert.ok(dashboardAction);
+  assert.equal(dashboardAction.command, 'openDashboard');
+  assert.equal(dashboardAction.outcome, 'opened-review-dashboard');
+  assert.equal(dashboardAction.dashboardPairCount, 2);
+  assert.equal(dashboardAction.dashboardArchivedPairCount, 1);
+  assert.equal(dashboardAction.dashboardMissingPairCount, 1);
+  assert.ok(dashboardAction.dashboardFilePath);
+  assert.ok(dashboardAction.dashboardJsonFilePath);
+  const dashboardHtml = await fs.readFile(dashboardAction.dashboardFilePath ?? '', 'utf8');
+  assert.match(dashboardHtml, /data-testid="dashboard-chronology-order"/);
+  assert.match(dashboardHtml, /data-testid="dashboard-metadata-summary"/);
+  assert.match(dashboardHtml, /data-testid="dashboard-metadata-fields"/);
+  assert.match(
+    dashboardHtml,
+    /No retained VI Comparison Report metadata is currently available for this pair\./
+  );
+  assert.equal(api.getPanelActionCount(), 6);
 }
 
 async function waitFor(

@@ -56,6 +56,7 @@ Use these repo-native control-plane entrypoints instead:
 - [Development Queue](./docs/product/development-queue.json)
 - [First Epic](./docs/product/epics/EPIC-0001-core-content-detected-history-viewer.md)
 - [Dashboard Epic](./docs/product/epics/EPIC-0004-multi-report-developer-dashboard.md)
+- [NI Comparison Report Metadata Inventory](./docs/product/ni-comparison-report-metadata-inventory.md)
 - [PROGRAM-0001: Next Product Layer](./docs/product/execution-programs/PROGRAM-0001-next-product-layer.md)
 - [Review Scenarios](./docs/product/review-scenarios.md)
 - [Harness Definitions](./docs/product/harnesses.md)
@@ -80,9 +81,10 @@ Committed and governed today:
   container report execution on the canonical harness
 - pairwise dashboard-source archiving so multiple report attempts for one VI can
   coexist without overwriting
-- concentrated dashboard JSON and HTML packets that recollect retained report
-  images, included-attribute facts, detailed NI report sections, provider
-  provenance, and raw artifact drill-down actions
+- concentrated dashboard JSON and HTML packets that recollect retained VI
+  Comparison Report metadata, including report title, generation time,
+  compared VI paths, overview section/image counts, included-attribute facts,
+  detailed NI report sections, and provider provenance
 - canonical real-history smoke and canonical comparison-report smoke on
   `HARNESS-VHS-001`
 - retained design gate that chooses the next tranche from committed evidence

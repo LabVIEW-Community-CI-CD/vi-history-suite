@@ -42,7 +42,7 @@
     "title": "Introduce a first-class multi-report developer dashboard",
     "status": "active",
     "source": "author direction",
-    "summary": "Concentrate multiple retained VI Comparison Reports for one VI into a chronology-aware dashboard that supports human review decisions across at least three commits, archives pairwise evidence by commit pair, surfaces provider provenance and factual concentration cues, preserves drill-down to raw evidence, and reduces the wear of opening individual reports one by one.",
+    "summary": "Concentrate multiple retained VI Comparison Reports for one VI into a chronology-aware dashboard that recollects actual comparison-report metadata across at least three commits, archives pairwise evidence by commit pair, surfaces provider provenance, and reduces the wear of opening individual reports one by one.",
     "issues": [
       "ISSUE-0401",
       "ISSUE-0402",

@@ -383,7 +383,9 @@
   current dashboard/runtime baseline and does not restate the consumed
   unresolved-workstream round
 - `TEST-UNIT-106`: prove the concentrated dashboard record and HTML surface
-  provider provenance, concentration cues, and per-pair drill-down actions
+  provider provenance plus real VI Comparison Report metadata, including
+  report title, generation time, compared VI paths, overview section/image
+  counts, included attributes, and detailed-information sections/items
 - `TEST-UNIT-107`: prove the dashboard action opens archived HTML artifacts in
   dedicated panels, opens archived JSON artifacts in the editor, and rejects
   artifact paths outside workspace-scoped extension storage
@@ -397,7 +399,8 @@
   retains the copied artifact path on a successful execution record
 - `TEST-UNIT-110`: prove the dashboard packet retains explicit per-pair
   evidence states and explicit window-completeness facts across archived
-  succeeded, archived failed, and missing pairs in one commit window
+  succeeded, archived failed, and missing pairs in one commit window while
+  the dashboard HTML stays focused on concentrated comparison-report metadata
 - `TEST-UNIT-111`: prove rebuilding the same dashboard window removes stale
   copied dashboard assets before regenerating from the current retained pair
   archives

@@ -15,8 +15,7 @@ uses one extension-native dashboard to:
 
 - review multiple retained VI Comparison Reports from one place
 - understand chronology and pair provenance clearly
-- see missing, blocked, and failed report facts explicitly
-- navigate to raw packet/report/image artifacts when needed
+- see concentrated comparison-report metadata from each retained pair
 - make a bounded human decision without opening every pairwise report first
 
 ## Program Shape
@@ -24,7 +23,7 @@ uses one extension-native dashboard to:
 This product layer is delivered through five issue-ready workstreams:
 
 1. dashboard evidence core and refresh completeness
-2. dashboard review UX and raw drill-down
+2. dashboard metadata concentration UX
 3. progress, cancellation, and runtime-doctor developer experience
 4. review-scenario registry and human decision records
 5. dashboard smoke and extension-host proof
@@ -32,7 +31,7 @@ This product layer is delivered through five issue-ready workstreams:
 ## Issue Order
 
 1. [ISSUE-0401 Dashboard Evidence Core And Refresh Completeness](../issues/ISSUE-0401-dashboard-evidence-core-and-refresh-completeness.md)
-2. [ISSUE-0402 Dashboard Review UX And Raw Drill-Down](../issues/ISSUE-0402-dashboard-review-ux-and-raw-drill-down.md)
+2. [ISSUE-0402 Dashboard Metadata Concentration UX](../issues/ISSUE-0402-dashboard-review-ux-and-raw-drill-down.md)
 3. [ISSUE-0403 Progress Cancellation And Runtime Doctor UX](../issues/ISSUE-0403-progress-cancellation-and-runtime-doctor-ux.md)
 4. [ISSUE-0404 Review Scenario Registry And Human Decision Records](../issues/ISSUE-0404-review-scenario-registry-and-human-decision-records.md)
 5. [ISSUE-0405 Dashboard Smoke And Extension-Host Proof](../issues/ISSUE-0405-dashboard-smoke-and-extension-host-proof.md)
@@ -63,9 +62,11 @@ This product layer is delivered through five issue-ready workstreams:
 ### Gate B: Dashboard Review Surface
 
 - dashboard HTML is chronology-first and concentration-first
-- dashboard shows factual concentration cues without semantic overreach
-- drill-down into raw packet/report/metadata/source-record artifacts is present
-- missing raw report artifacts remain visible instead of disappearing silently
+- dashboard shows only retained comparison-report metadata without semantic
+  overreach
+- dashboard metadata is derived from actual NI report fields, not invented
+  summary cues
+- completeness and exception facts remain retained without overtaking the HTML
 
 ### Gate C: Developer Experience
 

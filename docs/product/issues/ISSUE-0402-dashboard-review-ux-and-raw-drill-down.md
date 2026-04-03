@@ -1,22 +1,24 @@
-# ISSUE-0402: Dashboard Review UX And Raw Drill-Down
+# ISSUE-0402: Dashboard Metadata Concentration UX
 
 ## Goal
 
-Turn the concentrated dashboard into the main expert-review surface instead of
-just a packet renderer.
+Turn the concentrated dashboard into the main expert-review surface for
+coherent VI Comparison Report metadata instead of a packet-and-artifact viewer.
 
 ## Scope
 
 - chronology-first dashboard HTML
-- factual concentration cues
+- concentrated VI Comparison Report metadata derived from actual NI report
+  surfaces
 - clear pair provenance presentation
-- raw drill-down actions for:
-  - packet HTML
-  - NI report HTML
-  - metadata JSON
-  - source-record JSON
-- explicit missing-report and missing-asset visibility
-- reviewer wording for scope, limits, and escalation
+- actual metadata surfaces from retained comparison reports:
+  - report title
+  - generation time
+  - compared VI paths
+  - overview section captions and image counts
+  - included attributes
+  - detailed-information headings and items
+- metadata-first wording that avoids ranking or semantic interpretation
 
 ## Non-Goals
 
@@ -31,10 +33,10 @@ just a packet renderer.
 ## Acceptance Criteria
 
 - dashboard HTML surfaces chronology and pair ordering clearly
-- provider provenance and concentration cues are visible without opening raw
-  artifacts
-- raw drill-down actions are present for all available artifacts
-- missing artifacts are stated explicitly
+- provider provenance and concentrated comparison metadata are visible without
+  opening raw artifacts
+- the HTML reflects actual NI comparison-report metadata fields instead of
+  invented dashboard cues
 - dashboard wording remains factual and does not imply semantic certainty
 
 ## Required Evidence
@@ -45,5 +47,7 @@ just a packet renderer.
 
 ## First Slice
 
-- improve dashboard HTML sections and cue layout
-- prove drill-down actions and missing-artifact states
+- inventory the actual NI comparison-report metadata surfaces from a generated
+  report
+- improve dashboard HTML sections around those metadata surfaces
+- prove metadata concentration and chronology on the dashboard

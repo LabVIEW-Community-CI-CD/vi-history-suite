@@ -21,19 +21,21 @@ facing a massive amount of changes to one VI and needs to decide where to focus
 attention first.
 
 The product needs a dashboard that helps a human reviewer answer a bounded
-decision question about one VI after multiple modifications, without hiding the
-raw report evidence.
+decision question about one VI after multiple modifications by concentrating
+the actual metadata emitted by retained VI Comparison Reports into one HTML
+surface.
 
 ## Scope
 
 - select a commit window covering at least three commits for one VI
 - retain multiple selected/base comparison pairs for that window
 - aggregate multiple retained comparison-report packets into one review surface
-- concentrate large review sets into a smaller set of chronology-aware cues
+- concentrate retained VI Comparison Report metadata into a chronology-aware
+  dashboard surface
 - surface explicit provider provenance for every retained pair
 - show chronology and pair provenance clearly
-- surface missing, blocked, or failed report facts next to successful ones
-- keep raw packet and raw report navigation available
+- retain missing, blocked, or failed report facts in the packet without making
+  exception bookkeeping the primary dashboard HTML
 - preserve factual confidence and limitation language
 - support a bounded human decision record for the selected VI review scenario
 
@@ -49,12 +51,12 @@ raw report evidence.
 2. The selected VI has at least three commits in the retained window.
 3. The extension concentrates the relevant pairwise comparison reports for that
    window into one dashboard.
-4. The human reviewer can inspect chronology, pair provenance, report status,
-   and raw artifacts from one place.
+4. The human reviewer can inspect chronology, pair provenance, and concentrated
+   comparison-report metadata from one place.
 5. The reviewer makes a bounded decision with better evidence than a single
    report or a plain commit list would provide.
-6. The reviewer does not need to open every individual report just to discover
-   where the most important changes are concentrated.
+6. The reviewer does not need to open every individual report just to
+   reconstruct the retained report metadata across the commit window.
 
 ## Child Slices
 
@@ -66,8 +68,8 @@ raw report evidence.
 6. Harness proof for a VI with at least three commits and at least two report
    pairs
 7. Windows x64 isolated-provider contribution into the same dashboard
-8. Provider-provenance cues, factual concentration cues, and raw drill-down
-   actions inside the dashboard itself
+8. Provider provenance and concentrated comparison-report metadata inside the
+   dashboard itself
 
 ## Execution Program
 
@@ -78,7 +80,7 @@ The approved execution program for this epic is:
 Issue-ready child issues for that program:
 
 1. [ISSUE-0401 Dashboard Evidence Core And Refresh Completeness](../issues/ISSUE-0401-dashboard-evidence-core-and-refresh-completeness.md)
-2. [ISSUE-0402 Dashboard Review UX And Raw Drill-Down](../issues/ISSUE-0402-dashboard-review-ux-and-raw-drill-down.md)
+2. [ISSUE-0402 Dashboard Metadata Concentration UX](../issues/ISSUE-0402-dashboard-review-ux-and-raw-drill-down.md)
 3. [ISSUE-0403 Progress Cancellation And Runtime Doctor UX](../issues/ISSUE-0403-progress-cancellation-and-runtime-doctor-ux.md)
 4. [ISSUE-0404 Review Scenario Registry And Human Decision Records](../issues/ISSUE-0404-review-scenario-registry-and-human-decision-records.md)
 5. [ISSUE-0405 Dashboard Smoke And Extension-Host Proof](../issues/ISSUE-0405-dashboard-smoke-and-extension-host-proof.md)
@@ -97,11 +99,10 @@ Execution order:
   dashboard packet
 - the dashboard shows multiple retained pairwise reports with explicit commit
   provenance
-- the dashboard shows provider provenance and factual concentration cues for
-  each retained pair
-- missing or blocked reports are surfaced factually, not hidden
-- the human reviewer can navigate from the dashboard to the underlying raw
-  packet/report artifacts
+- the dashboard shows provider provenance and concentrated comparison-report
+  metadata for each retained pair
+- missing or blocked reports are retained factually without displacing the
+  metadata-focused HTML surface
 - the dashboard improves human decision making without overclaiming what the
   product knows
 - the review scenario and human decision outcome can be retained separately from
