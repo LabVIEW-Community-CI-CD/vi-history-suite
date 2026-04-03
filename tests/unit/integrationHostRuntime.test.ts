@@ -191,4 +191,78 @@ describe('integrationHostRuntime', () => {
     ).toEqual(['libwebkit2gtk-4.1.so.0']);
     expect(execFileSync).toHaveBeenCalledTimes(1);
   });
+
+  it('skips runtime tree entries whose stat probe does not resolve to a regular file', async () => {
+    const runtimeRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-linux-runtime-nonfile-'));
+    const pseudoTargetPath = path.join(runtimeRoot, 'code');
+    await fs.writeFile(pseudoTargetPath, elfStub());
+
+    const readdirSync = vi.fn((current: string) => {
+      if (current !== runtimeRoot) {
+        return [];
+      }
+
+      return [
+        {
+          name: 'code',
+          isDirectory: () => false
+        }
+      ];
+    });
+    const statSync = vi.fn(() => ({
+      isFile: () => false
+    }));
+    const execFileSync = vi.fn();
+
+    expect(
+      collectMissingLinuxSharedLibraries(runtimeRoot, {
+        readdirSync: readdirSync as never,
+        statSync: statSync as never,
+        execFileSync: execFileSync as never
+      })
+    ).toEqual([]);
+    expect(execFileSync).not.toHaveBeenCalled();
+  });
+
+  it('ignores ELF targets whose ldd probe reports that they are not dynamic executables', async () => {
+    const runtimeRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-linux-runtime-static-'));
+    const runtimeCodePath = path.join(runtimeRoot, 'code');
+    await fs.writeFile(runtimeCodePath, elfStub());
+
+    const execFileSync = vi.fn(() => {
+      const error = new Error('ldd reported not a dynamic executable') as Error & {
+        stderr?: string;
+      };
+      error.stderr = 'not a dynamic executable';
+      throw error;
+    });
+
+    expect(
+      collectMissingLinuxSharedLibraries(runtimeRoot, {
+        execFileSync: execFileSync as never
+      })
+    ).toEqual([]);
+    expect(execFileSync).toHaveBeenCalledTimes(1);
+  });
+
+  it('rethrows unexpected ldd probe failures while collecting missing Linux shared libraries', async () => {
+    const runtimeRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-linux-runtime-ldd-error-'));
+    const runtimeCodePath = path.join(runtimeRoot, 'code');
+    await fs.writeFile(runtimeCodePath, elfStub());
+
+    const execFileSync = vi.fn(() => {
+      const error = new Error('ldd failed with permission denied') as Error & {
+        stderr?: string;
+      };
+      error.stderr = 'permission denied';
+      throw error;
+    });
+
+    expect(() =>
+      collectMissingLinuxSharedLibraries(runtimeRoot, {
+        execFileSync: execFileSync as never
+      })
+    ).toThrow('ldd failed with permission denied');
+    expect(execFileSync).toHaveBeenCalledTimes(1);
+  });
 });
