@@ -65,8 +65,13 @@ requiring raw-log inspection.
 - stable informational cancellation surfaces on the history panel command flow
 - governed dashboard artifact action validation for malformed messages,
   storage-root targets, and kind/path mismatches
+- cancellable eligibility refresh that preserves the previous eligible-path
+  snapshot when cancellation is requested mid-refresh
+- fail-closed eligibility refresh behavior that clears the eligible-path context
+  if workspace trust is lost during an in-flight refresh
 
 ## Remaining Focus
 
-- trust-aware refresh progress and cancellation UX beyond the current
-  action-level cancellation boundaries
+- extend the same governed progress/cancellation semantics beyond eligibility
+  refresh and current action-level boundaries where additional long-running
+  refresh lanes are introduced

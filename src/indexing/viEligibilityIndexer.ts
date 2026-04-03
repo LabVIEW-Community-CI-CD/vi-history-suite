@@ -127,18 +127,29 @@ export class ViEligibilityIndexer implements vscode.Disposable {
       this.gitApi?.repositories ?? [],
       vscode.workspace.workspaceFolders ?? []
     );
-    this.lastIndexedRepositoryRoots = repositories.map((repository) => repository.rootUri.fsPath);
+    const nextIndexedRepositoryRoots = repositories.map((repository) => repository.rootUri.fsPath);
     const nextEligiblePaths: EligibilityMap = {};
+    let refreshOutcome: 'applied' | 'cancelled' | 'workspace-untrusted' = 'applied';
 
     await vscode.window.withProgress(
       {
         location: vscode.ProgressLocation.Window,
-        title: 'Indexing LabVIEW VIs'
+        title: 'Indexing LabVIEW VIs',
+        cancellable: true
       },
-      async (progress) => {
+      async (progress, cancellationToken) => {
         let processed = 0;
 
         for (const repository of repositories) {
+          if (cancellationToken.isCancellationRequested) {
+            refreshOutcome = 'cancelled';
+            return;
+          }
+          if (!vscode.workspace.isTrusted) {
+            refreshOutcome = 'workspace-untrusted';
+            return;
+          }
+
           let trackedFiles: string[];
           let head: string;
 
@@ -152,6 +163,18 @@ export class ViEligibilityIndexer implements vscode.Disposable {
           const concurrency = getConfiguredConcurrency();
 
           await forEachConcurrent(trackedFiles, concurrency, async (relativePath) => {
+            if (refreshOutcome !== 'applied') {
+              return;
+            }
+            if (cancellationToken.isCancellationRequested) {
+              refreshOutcome = 'cancelled';
+              return;
+            }
+            if (!vscode.workspace.isTrusted) {
+              refreshOutcome = 'workspace-untrusted';
+              return;
+            }
+
             const cacheKey = buildCacheKey(repository, head, relativePath);
             const fileUri = vscode.Uri.joinPath(repository.rootUri, relativePath);
 
@@ -180,10 +203,31 @@ export class ViEligibilityIndexer implements vscode.Disposable {
               message: `${path.basename(repository.rootUri.fsPath)} ${processed}/${trackedFiles.length}`
             });
           });
+
+          if (refreshOutcome !== 'applied') {
+            return;
+          }
         }
       }
     );
 
+    const finalRefreshOutcome = refreshOutcome as
+      | 'applied'
+      | 'cancelled'
+      | 'workspace-untrusted';
+
+    if (finalRefreshOutcome === 'cancelled') {
+      return;
+    }
+
+    if (finalRefreshOutcome === 'workspace-untrusted') {
+      this.eligiblePaths = {};
+      this.lastIndexedRepositoryRoots = [];
+      await vscode.commands.executeCommand('setContext', 'labviewViHistory.eligiblePaths', {});
+      return;
+    }
+
+    this.lastIndexedRepositoryRoots = nextIndexedRepositoryRoots;
     this.eligiblePaths = nextEligiblePaths;
     await vscode.commands.executeCommand(
       'setContext',

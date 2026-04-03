@@ -147,9 +147,15 @@ describe('viEligibilityIndexer helpers', () => {
     workspaceState.workspaceFolders = [];
     withProgressMock.mockReset();
     withProgressMock.mockImplementation(async (_options, task) =>
-      task({
-        report: progressReportMock
-      })
+      task(
+        {
+          report: progressReportMock
+        },
+        {
+          isCancellationRequested: false,
+          onCancellationRequested: vi.fn(() => ({ dispose() {} }))
+        }
+      )
     );
   });
 
@@ -226,9 +232,15 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
     workspaceState.workspaceFolders = [];
     withProgressMock.mockReset();
     withProgressMock.mockImplementation(async (_options, task) =>
-      task({
-        report: progressReportMock
-      })
+      task(
+        {
+          report: progressReportMock
+        },
+        {
+          isCancellationRequested: false,
+          onCancellationRequested: vi.fn(() => ({ dispose() {} }))
+        }
+      )
     );
   });
 
@@ -325,6 +337,125 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
       '/workspace/repo-a',
       '/workspace/repo-b'
     ]);
+  });
+
+  it('preserves the previous eligibility snapshot when cancellation is requested mid-refresh', async () => {
+    configurationValues.set('maxIndexedConcurrency', 1);
+    const indexer = new ViEligibilityIndexer({
+      repositories: [
+        {
+          rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' }
+        }
+      ],
+      onDidOpenRepository: vi.fn(() => ({ dispose() {} })),
+      onDidCloseRepository: vi.fn(() => ({ dispose() {} })),
+      toGitUri: vi.fn()
+    } as never);
+
+    listTrackedFilesMock.mockResolvedValue(['tracked.vi']);
+    getRepoHeadMock.mockResolvedValueOnce('head-1');
+    evaluateViEligibilityMock.mockResolvedValueOnce({ eligible: true });
+
+    await indexer.refresh();
+
+    const cancellationToken = {
+      isCancellationRequested: false,
+      onCancellationRequested: vi.fn(() => ({ dispose() {} }))
+    };
+    withProgressMock.mockImplementationOnce(async (options, task) => {
+      expect(options).toMatchObject({
+        title: 'Indexing LabVIEW VIs',
+        cancellable: true
+      });
+      return task(
+        {
+          report: vi.fn(() => {
+            cancellationToken.isCancellationRequested = true;
+          })
+        },
+        cancellationToken as never
+      );
+    });
+    listTrackedFilesMock.mockResolvedValue(['other-a.vi', 'other-b.vi']);
+    getRepoHeadMock.mockResolvedValueOnce('head-2');
+    evaluateViEligibilityMock
+      .mockResolvedValueOnce({ eligible: false })
+      .mockResolvedValueOnce({ eligible: false });
+
+    await indexer.refresh();
+
+    expect(
+      indexer.isEligible({
+        fsPath: '/workspace/repo/tracked.vi',
+        path: '/workspace/repo/tracked.vi'
+      } as never)
+    ).toBe(true);
+    expect(
+      indexer.isEligible({
+        fsPath: '/workspace/repo/other-a.vi',
+        path: '/workspace/repo/other-a.vi'
+      } as never)
+    ).toBe(false);
+    expect(indexer.getDebugSnapshot().indexedRepositoryRoots).toEqual(['/workspace/repo']);
+    expect(commandExecuteMock.mock.calls.at(-1)).toEqual([
+      'setContext',
+      'labviewViHistory.eligiblePaths',
+      {
+        '/workspace/repo/tracked.vi': true
+      }
+    ]);
+  });
+
+  it('fails closed and clears eligibility when workspace trust is lost during refresh', async () => {
+    configurationValues.set('maxIndexedConcurrency', 1);
+    const indexer = new ViEligibilityIndexer({
+      repositories: [
+        {
+          rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' }
+        }
+      ],
+      onDidOpenRepository: vi.fn(() => ({ dispose() {} })),
+      onDidCloseRepository: vi.fn(() => ({ dispose() {} })),
+      toGitUri: vi.fn()
+    } as never);
+
+    listTrackedFilesMock.mockResolvedValue(['tracked.vi']);
+    getRepoHeadMock.mockResolvedValueOnce('head-1');
+    evaluateViEligibilityMock.mockResolvedValueOnce({ eligible: true });
+    await indexer.refresh();
+
+    listTrackedFilesMock.mockResolvedValue(['other-a.vi', 'other-b.vi']);
+    getRepoHeadMock.mockResolvedValueOnce('head-2');
+    let eligibilityCallCount = 0;
+    evaluateViEligibilityMock.mockImplementation(async () => {
+      eligibilityCallCount += 1;
+      if (eligibilityCallCount === 1) {
+        workspaceState.isTrusted = false;
+        return { eligible: true };
+      }
+
+      return { eligible: false };
+    });
+
+    await indexer.refresh();
+
+    expect(indexer.getDebugSnapshot()).toEqual({
+      indexedRepositoryRoots: [],
+      eligiblePathCount: 0,
+      eligiblePathsSample: []
+    });
+    expect(
+      indexer.isEligible({
+        fsPath: '/workspace/repo/tracked.vi',
+        path: '/workspace/repo/tracked.vi'
+      } as never)
+    ).toBe(false);
+    expect(commandExecuteMock.mock.calls.at(-1)).toEqual([
+      'setContext',
+      'labviewViHistory.eligiblePaths',
+      {}
+    ]);
+    workspaceState.isTrusted = true;
   });
 
   it('registers state listeners for initial and newly opened repositories and disposes them on close', async () => {

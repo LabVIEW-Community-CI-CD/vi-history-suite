@@ -621,6 +621,12 @@
   heading concentration summaries across multiple metadata-backed pairs
 - `TEST-UNIT-185`: prove the dashboard panel webview renders the whole-window
   metadata concentration sections before per-pair review details
+- `TEST-UNIT-186`: prove the eligibility indexer refresh lane is cancellable and
+  preserves the previous eligible-path snapshot when cancellation is requested
+  mid-refresh
+- `TEST-UNIT-187`: prove the eligibility indexer fails closed and clears the
+  eligible-path context when workspace trust is lost during an in-flight
+  refresh
 - `TEST-SMOKE-001`: run `npm run harness:dashboard:smoke -- --platform win32
   --prefer-bitness auto --dashboard-commit-window 3` and retain
   `dashboard-smoke.json`, `dashboard-smoke.md`, and `dashboard-smoke.html`
