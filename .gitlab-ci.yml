@@ -49,25 +49,79 @@ release_extension:
   image: node:24
   script:
     - npm ci
+    - export PACKAGE_VERSION="$(node -p \"require('./package.json').version\")"
+    - |
+      if [ "v${PACKAGE_VERSION}" != "${CI_COMMIT_TAG}" ]; then
+        echo "Tag ${CI_COMMIT_TAG} does not match package version ${PACKAGE_VERSION}" >&2
+        exit 1
+      fi
     - npm run compile
     - npm run test
     - mkdir -p release-evidence
     - cp -R coverage release-evidence/coverage
     - cp coverage/cobertura-coverage.xml release-evidence/coverage.xml
+    - npm run package -- --out "release-evidence/vi-history-suite-${PACKAGE_VERSION}.vsix"
     - |
-      cat <<'EOF' > release-evidence/release-record.md
-      # Release Record
+      node - <<'NODE'
+      const crypto = require('node:crypto');
+      const fs = require('node:fs');
+      const path = require('node:path');
 
-      - Tag: ${CI_COMMIT_TAG}
-      - Baseline rule: SemVer tag release with retained compile, test, and coverage evidence
-      - Evidence retained:
-        - release-evidence/coverage/
-        - release-evidence/coverage.xml
-      EOF
+      const pkg = require('./package.json');
+      const tag = process.env.CI_COMMIT_TAG || '';
+      const commitSha = process.env.CI_COMMIT_SHA || '';
+      const version = pkg.version;
+      const vsixFileName = `vi-history-suite-${version}.vsix`;
+      const vsixPath = path.join('release-evidence', vsixFileName);
+      const manifestPath = path.join('release-evidence', 'release-manifest.json');
+      const checksum = crypto
+        .createHash('sha256')
+        .update(fs.readFileSync(vsixPath))
+        .digest('hex');
+
+      const manifest = {
+        shipId: 'SHIP-0001',
+        tag,
+        packageVersion: version,
+        commitSha,
+        vsixArtifact: {
+          fileName: vsixFileName,
+          path: vsixPath,
+          sha256: checksum
+        },
+        retainedEvidence: [
+          'release-evidence/coverage/',
+          'release-evidence/coverage.xml',
+          'release-evidence/release-record.md',
+          'release-evidence/release-manifest.json'
+        ]
+      };
+
+      fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+      fs.writeFileSync(
+        path.join('release-evidence', `${vsixFileName}.sha256`),
+        `${checksum}  ${vsixFileName}\n`
+      );
+      fs.writeFileSync(
+        path.join('release-evidence', 'release-record.md'),
+        [
+          '# Release Record',
+          '',
+          `- Tag: ${tag}`,
+          `- Package version: ${version}`,
+          `- Commit: ${commitSha}`,
+          `- VSIX: release-evidence/${vsixFileName}`,
+          `- SHA-256: ${checksum}`,
+          '- Evidence retained:',
+          '  - release-evidence/coverage/',
+          '  - release-evidence/coverage.xml',
+          '  - release-evidence/release-manifest.json'
+        ].join('\n') + '\n'
+      );
+      NODE
   artifacts:
     when: always
     paths:
       - release-evidence/
   rules:
     - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
-

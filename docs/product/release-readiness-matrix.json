@@ -1,0 +1,103 @@
+{
+  "shipId": "SHIP-0001",
+  "activeIssueId": "ISSUE-0406",
+  "currentPackageVersion": "0.1.0",
+  "releaseTarget": "v0.2.0",
+  "targetVsixArtifact": "vi-history-suite-0.2.0.vsix",
+  "targetReleaseManifest": "release-evidence/release-manifest.json",
+  "activeTrancheId": "TRANCHE-009",
+  "criteria": [
+    {
+      "id": "RR-001",
+      "pillar": "installable-extension-surface",
+      "issueId": "ISSUE-0406",
+      "criterion": "The extension is installable as a governed VSIX and exposes VI History on eligible VIs in trusted Git workspaces.",
+      "status": "done",
+      "evidence": [
+        "package.json",
+        "src/commands/openViHistoryCommand.ts",
+        "tests/integration/suite/extensionHost.test.ts"
+      ],
+      "blockerId": null,
+      "blocker": null,
+      "nextAction": "Sustain the installed command surface while release packaging is hardened."
+    },
+    {
+      "id": "RR-002",
+      "pillar": "reliable-comparison-report-execution",
+      "issueId": "ISSUE-0406",
+      "criterion": "Reliable NI comparison-report execution remains proven on the governed runtime path.",
+      "status": "done",
+      "evidence": [
+        "src/reporting/comparisonReportRuntimeExecution.ts",
+        ".cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.json",
+        "docs/product/current-state.md"
+      ],
+      "blockerId": null,
+      "blocker": null,
+      "nextAction": "Sustain the live runtime proof while releaseability is added."
+    },
+    {
+      "id": "RR-003",
+      "pillar": "dashboard-first-expert-review-surface",
+      "issueId": "ISSUE-0406",
+      "criterion": "The dashboard is the default expert review surface for one VI across at least three commits.",
+      "status": "done",
+      "evidence": [
+        "src/dashboard/multiReportDashboard.ts",
+        "src/harness/harnessDashboardSmoke.ts",
+        ".cache/harness-reports/HARNESS-VHS-001/dashboard-smoke.json"
+      ],
+      "blockerId": null,
+      "blocker": null,
+      "nextAction": "Sustain the dashboard while release blockers are removed."
+    },
+    {
+      "id": "RR-004",
+      "pillar": "runtime-doctor-progress-and-trust-aware-ux",
+      "issueId": "ISSUE-0406",
+      "criterion": "Long-running report and dashboard flows expose bounded progress, cancellation, trust-aware refusals, and runtime-doctor guidance without requiring raw-log inspection first.",
+      "status": "active",
+      "evidence": [
+        "src/reporting/comparisonRuntimeDoctor.ts",
+        "src/dashboard/multiReportDashboardAction.ts",
+        "src/indexing/viEligibilityIndexer.ts"
+      ],
+      "blockerId": "BL-001",
+      "blocker": "The extension-facing developer experience is still partial and not yet governed as a full release-ready UX layer.",
+      "nextAction": "Finish the remaining progress/trust UX surfaces under ISSUE-0403."
+    },
+    {
+      "id": "RR-005",
+      "pillar": "review-scenario-and-decision-record-flow",
+      "issueId": "ISSUE-0406",
+      "criterion": "A reviewer can create a separate decision record from retained dashboard evidence through a governed product flow.",
+      "status": "active",
+      "evidence": [
+        "src/scenarios/reviewScenarioRegistry.ts",
+        "src/scenarios/decisionRecord.ts",
+        "src/harness/harnessDecisionRecord.ts",
+        ".cache/harness-reports/HARNESS-VHS-001/workspace-storage/decision-records/"
+      ],
+      "blockerId": "BL-002",
+      "blocker": "The canonical scenario flow exists, but extension-facing decision-record creation is not yet implemented.",
+      "nextAction": "Extend the retained scenario flow into the extension UX after the ship-control tranche stabilizes."
+    },
+    {
+      "id": "RR-006",
+      "pillar": "semantic-versioned-vsix-release-and-evidence",
+      "issueId": "ISSUE-0406",
+      "criterion": "A SemVer tag produces a versioned VSIX artifact and retained release evidence that point to the exact installable extension version.",
+      "status": "active",
+      "evidence": [
+        "package.json",
+        ".gitlab-ci.yml",
+        "docs/release-procedure.md",
+        "tests/unit/shipControlDocs.test.ts"
+      ],
+      "blockerId": "BL-003",
+      "blocker": "The GitLab release lane is configured to package a versioned VSIX and release manifest, but the first successful SemVer-tagged release run has not yet been retained as ship evidence.",
+      "nextAction": "Run the first governed SemVer tag pipeline and retain the generated VSIX plus release manifest as release evidence."
+    }
+  ]
+}

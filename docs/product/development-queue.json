@@ -40,7 +40,7 @@
   {
     "id": "TRANCHE-006",
     "title": "Introduce a first-class multi-report developer dashboard",
-    "status": "active",
+    "status": "done",
     "source": "author direction",
     "summary": "Concentrate multiple retained VI Comparison Reports for one VI into a chronology-aware dashboard that recollects actual comparison-report metadata across at least three commits, archives pairwise evidence by commit pair, surfaces provider provenance, and reduces the wear of opening individual reports one by one.",
     "issues": [
@@ -62,12 +62,22 @@
   {
     "id": "TRANCHE-008",
     "title": "Introduce runtime-doctor and dashboard-refresh developer experience",
-    "status": "active",
+    "status": "queued",
     "source": "future-facing research",
     "summary": "Add provider-doctor guidance, rejected-provider reasoning, bounded progress, cancellation, and partial-evidence retention so dashboard refresh and report execution remain understandable without raw-log inspection.",
     "issues": [
       "ISSUE-0403",
       "ISSUE-0405"
+    ]
+  },
+  {
+    "id": "TRANCHE-009",
+    "title": "Ship vi-history-suite as a releasable SemVer VSIX",
+    "status": "active",
+    "source": "author direction",
+    "summary": "Make ship direction explicit with one authoritative release target, one release-readiness matrix, one blocker ledger, one active tranche, and the remaining work required to produce a governed SemVer VSIX release artifact.",
+    "issues": [
+      "ISSUE-0406"
     ]
   }
 ]

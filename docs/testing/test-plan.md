@@ -654,6 +654,19 @@
   alignment/index surfaces to prove the canonical review-scenario registry and
   separate decision-record path are described as partially implemented
   evidence rather than future-only modeling
+- `TEST-DOC-018`: review the README, current-state, ship target, blocker
+  ledger, and release procedure to prove the SemVer ship-control system is the
+  primary direction surface for the remaining release work
+- `TEST-UNIT-192`: prove the ship-control system keeps the ship target,
+  development queue, package baseline, release-readiness matrix, blocker
+  ledger, and repo entrypoints aligned around one active `TRANCHE-009` ship
+  lane
+- `TEST-UNIT-193`: prove the GitLab release lane fails closed on tag/package
+  mismatch, packages `release-evidence/vi-history-suite-<version>.vsix`, and
+  retains the release manifest plus checksum evidence paths
+- `TEST-DOC-019`: review the ship target, readiness matrix, blocker ledger,
+  current-state, README, and release procedure to prove the GitLab VSIX
+  release lane is configured and the remaining blocker is first tagged proof
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

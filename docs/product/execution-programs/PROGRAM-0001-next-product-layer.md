@@ -5,6 +5,11 @@
 Define the governed execution program for the next product layer after reliable
 Windows 64-bit comparison-report execution.
 
+This program is now subordinate to
+[SHIP-0001: Releasable VI History Suite](../SHIP-0001-releasable-vi-history-suite.md).
+`PROGRAM-0001` remains the product-layer decomposition, but ship direction is
+owned by the repo-wide ship-control surfaces.
+
 This program turns `vi-history-suite` from a strong pairwise report generator
 into a first-class human review system for one VI across multiple modifications.
 

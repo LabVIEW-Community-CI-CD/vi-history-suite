@@ -23,7 +23,9 @@ If you are new to the repo, read these in order:
 3. [Development Queue](./docs/product/development-queue.json)
 4. [Architecture Overview](./docs/architecture/overview.md)
 5. [Software Requirements Specification](./docs/requirements/srs.md)
-6. [PROGRAM-0001: Next Product Layer](./docs/product/execution-programs/PROGRAM-0001-next-product-layer.md)
+6. [SHIP-0001: Releasable VI History Suite](./docs/product/SHIP-0001-releasable-vi-history-suite.md)
+7. [Release Readiness Matrix](./docs/product/release-readiness-matrix.json)
+8. [PROGRAM-0001: Next Product Layer](./docs/product/execution-programs/PROGRAM-0001-next-product-layer.md)
 
 For machine-friendly repo orientation, start with:
 
@@ -59,6 +61,9 @@ Use these repo-native control-plane entrypoints instead:
 - [Dashboard Epic](./docs/product/epics/EPIC-0004-multi-report-developer-dashboard.md)
 - [NI Comparison Report Metadata Inventory](./docs/product/ni-comparison-report-metadata-inventory.md)
 - [PROGRAM-0001: Next Product Layer](./docs/product/execution-programs/PROGRAM-0001-next-product-layer.md)
+- [SHIP-0001: Releasable VI History Suite](./docs/product/SHIP-0001-releasable-vi-history-suite.md)
+- [Release Readiness Matrix](./docs/product/release-readiness-matrix.json)
+- [Blocker Ledger](./docs/product/blocker-ledger.json)
 - [Review Scenarios](./docs/product/review-scenarios.md)
 - [Harness Definitions](./docs/product/harnesses.md)
 - [Software Requirements Specification](./docs/requirements/srs.md)
@@ -119,15 +124,24 @@ Committed and governed today:
 - retained design gate that refreshes `latest-report.{json,md}` after each
   successful stage so a stuck assurance tail does not leave stale tranche
   evidence
+- authoritative ship-control surfaces that keep one active tranche, one release
+  target, one readiness matrix, and one blocker ledger in the repo itself
+- a configured GitLab SemVer release lane that validates tag/package sync,
+  packages a versioned VSIX, and retains a machine-readable release manifest
 
 ## Active Work
 
-The active product queue is:
+The active ship target is:
 
-- `TRANCHE-006`: first-class multi-report developer dashboard
-- `TRANCHE-004`: progress-surface uplift for indexing and report generation
-- `TRANCHE-007`: review-scenario registry and human decision records
-- `TRANCHE-008`: runtime-doctor and dashboard-refresh developer experience
+- `SHIP-0001`: releasable `v0.2.0` VSIX product
+- current package baseline: `0.1.0`
+- target release artifact: `vi-history-suite-0.2.0.vsix`
+- target release manifest: `release-evidence/release-manifest.json`
+- remaining release blocker: first successful retained `v0.2.0` tag pipeline
+
+The single active tranche is:
+
+- `TRANCHE-009`: ship `vi-history-suite` as a releasable SemVer VSIX
 
 Issue-ready execution program:
 
@@ -137,6 +151,10 @@ See:
 
 - [Current State](./docs/product/current-state.md)
 - [Development Queue](./docs/product/development-queue.json)
+- [SHIP-0001: Releasable VI History Suite](./docs/product/SHIP-0001-releasable-vi-history-suite.md)
+- [Release Readiness Matrix](./docs/product/release-readiness-matrix.json)
+- [Blocker Ledger](./docs/product/blocker-ledger.json)
+- [Release Procedure](./docs/release-procedure.md)
 - [Research Alignment Matrix](./docs/research/authoritative/research-alignment.md)
 - [Next Research Prompt](./docs/research/authoritative/next-research-prompt.md)
 
