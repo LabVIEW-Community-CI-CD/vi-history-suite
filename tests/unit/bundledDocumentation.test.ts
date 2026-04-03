@@ -48,7 +48,7 @@ describe('bundled documentation', () => {
     expect(loaded?.pageBodyHtml).toContain('data-external-href="https://gitlab.com/');
 
     const rendered = renderBundledDocumentationPanelHtml({
-      extensionVersion: '0.1.0',
+      extensionVersion: '0.2.0',
       manifest: loaded!.manifest,
       page: loaded!.page,
       pageBodyHtml: loaded!.pageBodyHtml
@@ -58,7 +58,7 @@ describe('bundled documentation', () => {
     expect(rendered).toContain('data-testid="documentation-sidebar"');
     expect(rendered).toContain('data-testid="documentation-nav"');
     expect(rendered).toContain('data-testid="documentation-page-body"');
-    expect(rendered).toContain('Installed extension version: 0.1.0');
+    expect(rendered).toContain('Installed extension version: 0.2.0');
     expect(rendered).toContain('data-page-id="install-and-release"');
     expect(rendered).toContain('data-external-href="https://gitlab.com/');
   });

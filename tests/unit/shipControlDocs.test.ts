@@ -63,7 +63,7 @@ describe('ship-control direction system', () => {
 
     expect(shipDoc).toContain('# SHIP-0001: Releasable VI History Suite');
     expect(shipDoc).toContain('- Target release: `v0.2.0`');
-    expect(shipDoc).toContain('- Current package baseline: `0.1.0`');
+    expect(shipDoc).toContain('- Current package baseline: `0.2.0`');
     expect(shipDoc).toContain('- Target VSIX artifact: `vi-history-suite-0.2.0.vsix`');
     expect(shipDoc).toContain('- Target release manifest: `release-evidence/release-manifest.json`');
     expect(shipDoc).toContain('[release-readiness-matrix.json](./release-readiness-matrix.json)');
@@ -87,7 +87,7 @@ describe('ship-control direction system', () => {
 
     expect(matrix.shipId).toBe('SHIP-0001');
     expect(matrix.activeIssueId).toBe('ISSUE-0406');
-    expect(matrix.currentPackageVersion).toBe('0.1.0');
+    expect(matrix.currentPackageVersion).toBe('0.2.0');
     expect(matrix.currentPackageVersion).toBe(pkg.version);
     expect(matrix.releaseTarget).toBe('v0.2.0');
     expect(matrix.targetVsixArtifact).toBe('vi-history-suite-0.2.0.vsix');
@@ -176,7 +176,7 @@ describe('ship-control direction system', () => {
     expect(readme).toContain('[Release Procedure](./docs/release-procedure.md)');
     expect(readme).toContain('npm run design:gate:assert-complete');
     expect(readme).toContain('- `SHIP-0001`: releasable `v0.2.0` VSIX product');
-    expect(readme).toContain('- current package baseline: `0.1.0`');
+    expect(readme).toContain('- current package baseline: `0.2.0`');
     expect(readme).toContain('- target release artifact: `vi-history-suite-0.2.0.vsix`');
 
     expect(currentState).toContain('[SHIP-0001: Releasable VI History Suite](./SHIP-0001-releasable-vi-history-suite.md)');
@@ -190,7 +190,7 @@ describe('ship-control direction system', () => {
     expect(currentState).toContain('[Documentation Package Workbench](../documentation-workbench.md)');
     expect(currentState).toContain('npm run design:gate:assert-complete');
     expect(currentState).toContain('- `TRANCHE-009`: Ship `vi-history-suite` as a releasable SemVer VSIX');
-    expect(currentState).toContain('- current package baseline: `0.1.0`');
+    expect(currentState).toContain('- current package baseline: `0.2.0`');
     expect(currentState).toContain('- target release artifact: `vi-history-suite-0.2.0.vsix`');
 
     expect(informationItemMap).toContain('| Ship target | `docs/product/SHIP-0001-releasable-vi-history-suite.md` |');

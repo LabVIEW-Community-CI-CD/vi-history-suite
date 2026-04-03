@@ -90,7 +90,7 @@ Current active ship tranche:
 
 - `TRANCHE-009`: Ship `vi-history-suite` as a releasable SemVer VSIX
 - release target: `v0.2.0`
-- current package baseline: `0.1.0`
+- current package baseline: `0.2.0`
 - preview install surface: `preview-evidence/vi-history-suite-<version>.vsix`
 - target release artifact: `vi-history-suite-0.2.0.vsix`
 - target release manifest: `release-evidence/release-manifest.json`

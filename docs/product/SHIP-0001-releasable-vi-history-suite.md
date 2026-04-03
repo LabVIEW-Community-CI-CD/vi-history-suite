@@ -8,7 +8,7 @@ driven by release criteria instead of open-ended tranche iteration.
 ## Release Target
 
 - Target release: `v0.2.0`
-- Current package baseline: `0.1.0`
+- Current package baseline: `0.2.0`
 - Primary release artifact: versioned VSIX package
 - Distribution baseline: shareable GitLab release artifact for exact-version
   installation

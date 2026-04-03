@@ -94,7 +94,7 @@ describe('bundledDocumentationAction', () => {
         extensionUri: { fsPath: '/workspace/ext' },
         extension: {
           packageJSON: {
-            version: '0.1.0'
+            version: '0.2.0'
           }
         }
       } as never,
@@ -117,7 +117,7 @@ describe('bundledDocumentationAction', () => {
         extensionUri: { fsPath: '/workspace/ext' },
         extension: {
           packageJSON: {
-            version: '0.1.0'
+            version: '0.2.0'
           }
         }
       } as never,
@@ -198,7 +198,7 @@ describe('bundledDocumentationAction', () => {
         extensionUri: { fsPath: '/workspace/ext' },
         extension: {
           packageJSON: {
-            version: '0.1.0'
+            version: '0.2.0'
           }
         }
       } as never,
@@ -220,7 +220,7 @@ describe('bundledDocumentationAction', () => {
     expect(tracker.getLastOpenedDocumentationPanel()).toMatchObject({
       pageId: 'user-workflow',
       pageTitle: 'User Workflow',
-      bundledVersion: '0.1.0'
+      bundledVersion: '0.2.0'
     });
 
     await panel.__dispatchMessage({

@@ -1,7 +1,7 @@
 {
   "shipId": "SHIP-0001",
   "activeIssueId": "ISSUE-0406",
-  "currentPackageVersion": "0.1.0",
+  "currentPackageVersion": "0.2.0",
   "releaseTarget": "v0.2.0",
   "targetVsixArtifact": "vi-history-suite-0.2.0.vsix",
   "targetReleaseManifest": "release-evidence/release-manifest.json",

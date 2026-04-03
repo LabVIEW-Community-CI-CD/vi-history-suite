@@ -191,12 +191,11 @@ Committed and governed today:
 The active ship target is:
 
 - `SHIP-0001`: releasable `v0.2.0` VSIX product
-- current package baseline: `0.1.0`
+- current package baseline: `0.2.0`
 - target release artifact: `vi-history-suite-0.2.0.vsix`
 - target release manifest: `release-evidence/release-manifest.json`
 - docs-authoring image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
 - remaining release blockers:
-  - `BL-001`: finish the remaining release-ready progress/cancellation/trust UX layer
   - `BL-003`: retain the first successful retained `v0.2.0` tag pipeline
 
 ## Install Surface
