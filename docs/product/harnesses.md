@@ -36,6 +36,8 @@
 ### Local Comparison-Report Smoke Path
 
 - command: `npm run harness:report:smoke`
+- parity probe form:
+  - `node out/cli/runHarnessReportSmoke.js --harness-id HARNESS-VHS-001 --engine lvcompare`
 - purpose: retain a factual report-generation smoke packet for the latest
   comparable revision pair of the canonical VI history target
 - retained outputs:
@@ -48,3 +50,5 @@
 - do not vendor `ni/labview-icon-editor` into this repository
 - do not rely on comparevi repositories to exercise the first live harness
 - use the same core history-model logic for extension runtime and harness smoke
+- keep engine-parity probing inside the governed smoke lane instead of relying
+  on ad hoc external scripts

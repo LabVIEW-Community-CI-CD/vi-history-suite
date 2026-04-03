@@ -261,6 +261,18 @@
 - `TEST-DOC-010`: review the dashboard direction docs and confirm the dashboard
   is modeled as concentration-first for high-volume open-source review, with
   drill-down preserved to raw packet and raw comparison-report artifacts
+- `TEST-UNIT-096`: validate the canonical comparison-report smoke CLI parses
+  `--engine labview-cli|lvcompare`, rejects unsupported engine values, and
+  forwards the override into the smoke runner
+- `TEST-UNIT-097`: validate the canonical comparison-report smoke runner
+  applies governed runtime-engine overrides and fails closed with explicit
+  blocked reasons when the requested engine is unavailable
+- `TEST-UNIT-098`: validate the canonical comparison-report smoke runner
+  persists the effective runtime engine and explicit override notes into the
+  retained packet path when an engine override is requested
+- `TEST-UNIT-099`: validate the runtime executor clears stale diagnostic-log
+  artifacts on runs without a current diagnostic log and classifies the
+  `lvcompare` exit-0/no-report lane with a dedicated failure reason
 - `TEST-INTEG-001`: run a real VS Code extension host against a temporary Git
   workspace and prove eligible versus ineligible command flow behavior
 - `TEST-INTEG-002`: run the real extension-host report action and retain the

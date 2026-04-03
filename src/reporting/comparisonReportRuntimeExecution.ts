@@ -29,6 +29,7 @@ export interface ComparisonReportRuntimeExecutionDeps {
   mkdir?: typeof fs.mkdir;
   writeFile?: typeof fs.writeFile;
   copyFile?: typeof fs.copyFile;
+  unlinkFile?: typeof fs.unlink;
   readFile?: typeof fs.readFile;
   pathExists?: (filePath: string) => Promise<boolean>;
   runCommand?: (commandPlan: ComparisonCommandPlan) => Promise<RunCommandResult>;
@@ -102,6 +103,7 @@ export async function executeComparisonReport(
   const mkdir = deps.mkdir ?? fs.mkdir;
   const writeFile = deps.writeFile ?? fs.writeFile;
   const copyFile = deps.copyFile ?? fs.copyFile;
+  const unlinkFile = deps.unlinkFile ?? fs.unlink;
   const readFile = deps.readFile ?? fs.readFile;
   const pathExists = deps.pathExists ?? pathExistsForReport;
   const processPlatform = deps.processPlatform ?? process.platform;
@@ -142,6 +144,7 @@ export async function executeComparisonReport(
         mkdir,
         writeFile,
         copyFile,
+        unlinkFile,
         readFile,
         pathExists,
         runCommand,
@@ -180,6 +183,7 @@ async function runHostNativeExecution(
     mkdir: typeof fs.mkdir;
     writeFile: typeof fs.writeFile;
     copyFile: typeof fs.copyFile;
+    unlinkFile: typeof fs.unlink;
     readFile: typeof fs.readFile;
     pathExists: (filePath: string) => Promise<boolean>;
     runCommand: (commandPlan: ComparisonCommandPlan) => Promise<RunCommandResult>;
@@ -270,6 +274,7 @@ async function runHostNativeExecution(
     const diagnostics = await captureRuntimeDiagnostics(record, commandResult.stdout, {
       pathExists: deps.pathExists,
       copyFile: deps.copyFile,
+      unlinkFile: deps.unlinkFile,
       readFile: deps.readFile,
       mkdir: deps.mkdir,
       processPlatform: deps.processPlatform,
@@ -351,6 +356,7 @@ async function runHostNativeExecution(
     const diagnostics = await captureRuntimeDiagnostics(record, processError.stdout, {
       pathExists: deps.pathExists,
       copyFile: deps.copyFile,
+      unlinkFile: deps.unlinkFile,
       readFile: deps.readFile,
       mkdir: deps.mkdir,
       processPlatform: deps.processPlatform,
@@ -433,17 +439,30 @@ async function captureRuntimeDiagnostics(
   deps: {
     pathExists: (filePath: string) => Promise<boolean>;
     copyFile: typeof fs.copyFile;
+    unlinkFile: typeof fs.unlink;
     readFile: typeof fs.readFile;
     mkdir: typeof fs.mkdir;
     processPlatform: NodeJS.Platform;
     expectedLabviewPath?: string;
   }
 ): Promise<CapturedRuntimeDiagnostics> {
+  const clearStaleArtifactIfPresent = async (): Promise<void> => {
+    if (!(await deps.pathExists(record.artifactPlan.runtimeDiagnosticLogFilePath))) {
+      return;
+    }
+
+    try {
+      await deps.unlinkFile(record.artifactPlan.runtimeDiagnosticLogFilePath);
+    } catch {
+      // Preserve deterministic execution results even if stale cleanup fails.
+    }
+  };
+
   const diagnosticLogSourcePath = parseLabviewCliDiagnosticLogPath(stdout);
   if (!diagnosticLogSourcePath) {
+    await clearStaleArtifactIfPresent();
     return {
-      notes: [],
-      artifactPath: record.artifactPlan.runtimeDiagnosticLogFilePath
+      notes: []
     };
   }
 
@@ -452,10 +471,10 @@ async function captureRuntimeDiagnostics(
     deps.processPlatform
   );
   if (!hostReadablePath || !(await deps.pathExists(hostReadablePath))) {
+    await clearStaleArtifactIfPresent();
     return {
       notes: ['LabVIEW CLI reported a diagnostic log path, but the log file was not readable from the active host.'],
       sourcePath: diagnosticLogSourcePath,
-      artifactPath: record.artifactPlan.runtimeDiagnosticLogFilePath,
       reason: 'runtime-diagnostic-log-unreadable'
     };
   }
@@ -826,6 +845,13 @@ function classifyRuntimeFailure(options: {
   notes: string[];
 } {
   if (options.exitCode === 0 && !options.reportExists) {
+    if (options.engine === 'lvcompare') {
+      return {
+        reason: 'lvcompare-exited-zero-without-report',
+        notes: ['LVCompare exited 0 without generating the governed report file.']
+      };
+    }
+
     return {
       reason: 'report-file-not-generated',
       notes: []

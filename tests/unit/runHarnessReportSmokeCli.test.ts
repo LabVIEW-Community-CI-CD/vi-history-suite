@@ -17,6 +17,7 @@ describe('runHarnessReportSmokeCli', () => {
       strictRsrcHeader: false,
       helpRequested: false,
       runtimePlatform: undefined,
+      runtimeEngineOverride: undefined,
       preferBitness: undefined,
       labviewCliPath: undefined,
       labviewExePath: undefined,
@@ -30,6 +31,8 @@ describe('runHarnessReportSmokeCli', () => {
         '--strict-rsrc-header',
         '--platform',
         'win32',
+        '--engine',
+        'lvcompare',
         '--prefer-bitness',
         'x86',
         '--labview-cli-path',
@@ -44,6 +47,7 @@ describe('runHarnessReportSmokeCli', () => {
       strictRsrcHeader: true,
       helpRequested: false,
       runtimePlatform: 'win32',
+      runtimeEngineOverride: 'lvcompare',
       preferBitness: 'x86',
       labviewCliPath: 'C:\\LabVIEWCLI.exe',
       labviewExePath: 'C:\\LabVIEW.exe',
@@ -55,6 +59,7 @@ describe('runHarnessReportSmokeCli', () => {
       strictRsrcHeader: false,
       helpRequested: true,
       runtimePlatform: undefined,
+      runtimeEngineOverride: undefined,
       preferBitness: undefined,
       labviewCliPath: undefined,
       labviewExePath: undefined,
@@ -63,6 +68,9 @@ describe('runHarnessReportSmokeCli', () => {
 
     expect(() => parseHarnessReportSmokeArgs(['--platform', 'weird'])).toThrow(
       /Unsupported value for --platform/
+    );
+    expect(() => parseHarnessReportSmokeArgs(['--engine', 'weird'])).toThrow(
+      /Unsupported value for --engine/
     );
     expect(() => parseHarnessReportSmokeArgs(['--prefer-bitness', 'bad'])).toThrow(
       /Unsupported value for --prefer-bitness/
@@ -104,6 +112,8 @@ describe('runHarnessReportSmokeCli', () => {
         [
           '--platform',
           'win32',
+          '--engine',
+          'lvcompare',
           '--prefer-bitness',
           'x64',
           '--labview-cli-path',
@@ -126,6 +136,7 @@ describe('runHarnessReportSmokeCli', () => {
       reportRoot: '/tmp/vi-history-suite/.cache/harness-reports',
       strictRsrcHeader: false,
       runtimePlatform: 'win32',
+      runtimeEngineOverride: 'lvcompare',
       runtimeSettings: {
         preferBitness: 'x64',
         labviewCliPath: 'C:\\LabVIEWCLI.exe',

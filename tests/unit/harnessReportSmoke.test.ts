@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  applyRuntimeEngineOverride,
   renderHarnessReportSmokeHtml,
   renderHarnessReportSmokeMarkdown,
   resolveHarnessReportSmokeRuntimePlatform,
@@ -115,6 +116,55 @@ describe('harness report smoke renderers', () => {
   it('fails closed to linux when an unsupported runtime-platform token is supplied to the helper', () => {
     expect(resolveHarnessReportSmokeRuntimePlatform('weird-platform')).toBe('linux');
     expect(resolveHarnessReportSmokeRuntimePlatform('win32')).toBe('win32');
+  });
+
+  it('applies governed runtime-engine overrides deterministically', () => {
+    const runtimeSelection = {
+      platform: 'win32' as const,
+      preferBitness: 'x86' as const,
+      provider: 'host-native' as const,
+      engine: 'labview-cli' as const,
+      labviewExe: { kind: 'labview-exe' as const, path: 'C:\\LabVIEW.exe', source: 'configured' as const, exists: true, bitness: 'x86' as const },
+      labviewCli: { kind: 'labview-cli' as const, path: 'C:\\LabVIEWCLI.exe', source: 'configured' as const, exists: true, bitness: 'x64' as const },
+      lvCompare: { kind: 'lvcompare' as const, path: 'C:\\LVCompare.exe', source: 'configured' as const, exists: true },
+      notes: [],
+      registryQueryPlans: [],
+      candidates: []
+    };
+
+    expect(applyRuntimeEngineOverride(runtimeSelection, undefined)).toBe(runtimeSelection);
+    expect(applyRuntimeEngineOverride(runtimeSelection, 'lvcompare')).toMatchObject({
+      provider: 'host-native',
+      engine: 'lvcompare',
+      notes: ['Requested runtime engine override: lvcompare.']
+    });
+    expect(
+      applyRuntimeEngineOverride(
+        {
+          ...runtimeSelection,
+          engine: 'lvcompare',
+          lvCompare: undefined
+        },
+        'labview-cli'
+      )
+    ).toMatchObject({
+      provider: 'host-native',
+      engine: 'labview-cli',
+      notes: ['Requested runtime engine override: labview-cli.']
+    });
+    expect(
+      applyRuntimeEngineOverride(
+        {
+          ...runtimeSelection,
+          lvCompare: undefined
+        },
+        'lvcompare'
+      )
+    ).toMatchObject({
+      provider: 'unavailable',
+      engine: undefined,
+      blockedReason: 'requested-lvcompare-not-available'
+    });
   });
 });
 
@@ -577,6 +627,153 @@ describe('runHarnessReportSmoke', () => {
       repositoryRoot: '/tmp/harnesses/ni-labview-icon-editor',
       interopWorkspaceRoot: '/mnt/c/Users/sveld/AppData/Local/Temp/vi-history-suite-runtime'
     });
+  });
+
+  it('forwards a requested runtime-engine override into packet persistence via the effective runtime selection', async () => {
+    const persistComparisonReportPacket = vi.fn().mockResolvedValue({
+      record: {
+        reportTitle: 'VI Comparison Report: VIP_Pre-Install Custom Action.vi',
+        reportStatus: 'blocked-runtime',
+        reportType: 'diff',
+        selectedHash: 'abcdef1234567890',
+        baseHash: '1111111122222222',
+        artifactPlan: {
+          repoId: 'repoid123456',
+          fileId: 'fileid123456',
+          reportType: 'diff',
+          fullFilename: 'VIP_Pre-Install Custom Action.vi',
+          normalizedRelativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+          reportDirectory: '/tmp/reports/HARNESS-VHS-001/workspace-storage/reports/repoid123456/fileid123456',
+          stagingDirectory: '/tmp/reports/HARNESS-VHS-001/workspace-storage/reports/repoid123456/fileid123456/staging',
+          reportFilename: 'diff-report-VIP_Pre-Install Custom Action.vi.html',
+          reportFilePath: '/tmp/reports/HARNESS-VHS-001/workspace-storage/reports/repoid123456/fileid123456/diff-report-VIP_Pre-Install Custom Action.vi.html',
+          packetFilename: 'report-packet.html',
+          packetFilePath: '/tmp/reports/HARNESS-VHS-001/workspace-storage/reports/repoid123456/fileid123456/report-packet.html',
+          metadataFilePath: '/tmp/reports/HARNESS-VHS-001/workspace-storage/reports/repoid123456/fileid123456/report-metadata.json',
+          runtimeStdoutFilePath: '/tmp/stdout.txt',
+          runtimeStderrFilePath: '/tmp/stderr.txt',
+          allowedLocalRootPaths: []
+        },
+        stagedRevisionPlan: {
+          leftFilename: 'left.vi',
+          leftFilePath: '/tmp/left.vi',
+          rightFilename: 'right.vi',
+          rightFilePath: '/tmp/right.vi'
+        },
+        preflight: {
+          normalizedRelativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+          ready: true,
+          left: {
+            revisionId: '1111111122222222',
+            blobSpecifier: '1111111122222222:Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+            signature: 'LVIN',
+            isVi: true
+          },
+          right: {
+            revisionId: 'abcdef1234567890',
+            blobSpecifier: 'abcdef1234567890:Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+            signature: 'LVIN',
+            isVi: true
+          }
+        },
+        runtimeSelection: {
+          platform: 'win32',
+          preferBitness: 'x86',
+          provider: 'host-native',
+          engine: 'lvcompare',
+          labviewExe: { kind: 'labview-exe', path: 'C:\\LabVIEW.exe', source: 'configured', exists: true, bitness: 'x86' },
+          lvCompare: { kind: 'lvcompare', path: 'C:\\LVCompare.exe', source: 'configured', exists: true },
+          notes: ['Requested runtime engine override: lvcompare.'],
+          registryQueryPlans: [],
+          candidates: []
+        },
+        runtimeExecutionState: 'not-available',
+        runtimeExecution: {
+          state: 'not-available',
+          attempted: false,
+          reportExists: false,
+          blockedReason: 'blocked'
+        }
+      },
+      packetFilePath: '/tmp/report-packet.html',
+      reportFilePath: '/tmp/report.html',
+      metadataFilePath: '/tmp/report.json'
+    });
+
+    await runHarnessReportSmoke(
+      'HARNESS-VHS-001',
+      {
+        cloneRoot: '/tmp/harnesses',
+        reportRoot: '/tmp/reports',
+        runtimePlatform: 'win32',
+        runtimeEngineOverride: 'lvcompare'
+      },
+      {
+        ensureHarnessClone: vi.fn().mockResolvedValue('/tmp/harness') as never,
+        getRepoHead: vi.fn().mockResolvedValue('abcdef1234567890') as never,
+        loadViHistoryViewModelFromFsPath: vi.fn().mockResolvedValue({
+          repositoryName: 'ni/labview-icon-editor',
+          repositoryRoot: '/tmp/harness',
+          relativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+          signature: 'LVIN',
+          eligible: true,
+          commits: [
+            {
+              hash: 'abcdef1234567890',
+              authorDate: '2026-04-02T00:00:00Z',
+              authorName: 'A User',
+              subject: 'Update VI',
+              previousHash: '1111111122222222'
+            }
+          ]
+        }) as never,
+        evaluateViEligibilityForFsPath: vi.fn().mockResolvedValue({
+          eligible: true,
+          signature: 'LVIN'
+        }) as never,
+        preflightComparisonReportRevisions: vi.fn().mockResolvedValue({
+          normalizedRelativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+          ready: true,
+          left: {
+            revisionId: '1111111122222222',
+            blobSpecifier: '1111111122222222:Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+            signature: 'LVIN',
+            isVi: true
+          },
+          right: {
+            revisionId: 'abcdef1234567890',
+            blobSpecifier: 'abcdef1234567890:Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+            signature: 'LVIN',
+            isVi: true
+          }
+        }) as never,
+        locateComparisonRuntime: vi.fn().mockResolvedValue({
+          platform: 'win32',
+          preferBitness: 'x86',
+          provider: 'host-native',
+          engine: 'labview-cli',
+          labviewExe: { kind: 'labview-exe', path: 'C:\\LabVIEW.exe', source: 'configured', exists: true, bitness: 'x86' },
+          labviewCli: { kind: 'labview-cli', path: 'C:\\LabVIEWCLI.exe', source: 'configured', exists: true, bitness: 'x64' },
+          lvCompare: { kind: 'lvcompare', path: 'C:\\LVCompare.exe', source: 'configured', exists: true },
+          notes: [],
+          registryQueryPlans: [],
+          candidates: []
+        }) as never,
+        persistComparisonReportPacket: persistComparisonReportPacket as never,
+        mkdir: vi.fn().mockResolvedValue(undefined) as never,
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        now: () => '2026-04-03T00:00:00.000Z'
+      }
+    );
+
+    expect(persistComparisonReportPacket).toHaveBeenCalledWith(
+      expect.objectContaining({
+        runtimeSelection: expect.objectContaining({
+          engine: 'lvcompare',
+          notes: expect.arrayContaining(['Requested runtime engine override: lvcompare.'])
+        })
+      })
+    );
   });
 
   it('falls back to a report-scoped /mnt interop root when default Windows temp roots are unavailable', async () => {

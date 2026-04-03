@@ -5,13 +5,14 @@ import {
   HarnessReportSmokeReport,
   runHarnessReportSmoke
 } from '../harness/harnessReportSmoke';
-import { RuntimePlatform } from '../reporting/comparisonRuntimeLocator';
+import { ComparisonRuntimeEngine, RuntimePlatform } from '../reporting/comparisonRuntimeLocator';
 
 export interface HarnessReportSmokeCliArgs {
   harnessId: string;
   strictRsrcHeader: boolean;
   helpRequested: boolean;
   runtimePlatform?: RuntimePlatform;
+  runtimeEngineOverride?: ComparisonRuntimeEngine;
   preferBitness?: 'auto' | 'x86' | 'x64';
   labviewCliPath?: string;
   labviewExePath?: string;
@@ -34,12 +35,13 @@ export interface HarnessReportSmokeCliDeps {
 
 export function getHarnessReportSmokeUsage(): string {
   return [
-    'Usage: runHarnessReportSmoke [--harness-id <id>] [--strict-rsrc-header] [--platform <win32|linux|darwin>] [--prefer-bitness <auto|x86|x64>] [--labview-cli-path <path>] [--labview-exe-path <path>] [--lvcompare-path <path>] [--help]',
+    'Usage: runHarnessReportSmoke [--harness-id <id>] [--strict-rsrc-header] [--platform <win32|linux|darwin>] [--engine <labview-cli|lvcompare>] [--prefer-bitness <auto|x86|x64>] [--labview-cli-path <path>] [--labview-exe-path <path>] [--lvcompare-path <path>] [--help]',
     '',
     'Options:',
     '  --harness-id <id>         Select the canonical harness to run.',
     '  --strict-rsrc-header      Require RSRC header validation during VI detection.',
     '  --platform <value>        Override runtime detection platform for report-tool selection.',
+    '  --engine <value>          Override the selected report engine for the smoke run.',
     '  --prefer-bitness <value>  Set runtime bitness preference for report-tool selection.',
     '  --labview-cli-path <path> Provide an explicit LabVIEWCLI path for report-tool selection.',
     '  --labview-exe-path <path> Provide an explicit LabVIEW executable path for report-tool selection.',
@@ -53,6 +55,7 @@ export function parseHarnessReportSmokeArgs(argv: string[]): HarnessReportSmokeC
   let strictRsrcHeader = false;
   let helpRequested = false;
   let runtimePlatform: RuntimePlatform | undefined;
+  let runtimeEngineOverride: ComparisonRuntimeEngine | undefined;
   let preferBitness: 'auto' | 'x86' | 'x64' | undefined;
   let labviewCliPath: string | undefined;
   let labviewExePath: string | undefined;
@@ -88,6 +91,16 @@ export function parseHarnessReportSmokeArgs(argv: string[]): HarnessReportSmokeC
       }
 
       runtimePlatform = candidate;
+      continue;
+    }
+
+    if (current === '--engine') {
+      const candidate = requireValue('--engine');
+      if (candidate !== 'labview-cli' && candidate !== 'lvcompare') {
+        throw new Error(`Unsupported value for --engine: ${candidate}\n\n${getHarnessReportSmokeUsage()}`);
+      }
+
+      runtimeEngineOverride = candidate;
       continue;
     }
 
@@ -129,6 +142,7 @@ export function parseHarnessReportSmokeArgs(argv: string[]): HarnessReportSmokeC
     strictRsrcHeader,
     helpRequested,
     runtimePlatform,
+    runtimeEngineOverride,
     preferBitness,
     labviewCliPath,
     labviewExePath,
@@ -155,9 +169,10 @@ export async function runHarnessReportSmokeCli(
   const result = await (deps.runner ?? runHarnessReportSmoke)(args.harnessId, {
     cloneRoot,
     reportRoot,
-    strictRsrcHeader: args.strictRsrcHeader,
-    runtimePlatform: args.runtimePlatform,
-    runtimeSettings: {
+      strictRsrcHeader: args.strictRsrcHeader,
+      runtimePlatform: args.runtimePlatform,
+      runtimeEngineOverride: args.runtimeEngineOverride,
+      runtimeSettings: {
       preferBitness: args.preferBitness,
       labviewCliPath: args.labviewCliPath,
       labviewExePath: args.labviewExePath,

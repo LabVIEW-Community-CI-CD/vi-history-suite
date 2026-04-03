@@ -745,6 +745,63 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(result.record.runtimeExecutionState).toBe('succeeded');
   });
 
+  it('clears stale diagnostic-log artifacts and classifies lvcompare zero-exit no-report failures specifically', async () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.engine = 'lvcompare';
+    record.runtimeSelection.lvCompare = {
+      kind: 'lvcompare',
+      path: '/mnt/c/Program Files (x86)/National Instruments/Shared/LabVIEW Compare/LVCompare.exe',
+      source: 'configured',
+      exists: true
+    };
+
+    const unlinkFile = vi.fn().mockResolvedValue(undefined);
+
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: unlinkFile as never,
+        pathExists: vi.fn(async (filePath: string) =>
+          filePath === '/workspace/.storage/reports/repoid123456/fileid123456/runtime-diagnostic-log.txt'
+        ),
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 0,
+          stdout: '',
+          stderr: ''
+        }),
+        nowIso: vi
+          .fn()
+          .mockReturnValueOnce('2026-04-02T01:00:00.000Z')
+          .mockReturnValueOnce('2026-04-02T01:00:05.000Z'),
+        nowMs: vi.fn().mockReturnValueOnce(1000).mockReturnValueOnce(6000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32'
+      }
+    );
+
+    expect(unlinkFile).toHaveBeenCalledWith(
+      '/workspace/.storage/reports/repoid123456/fileid123456/runtime-diagnostic-log.txt'
+    );
+    expect(result.record.runtimeExecution.failureReason).toBe(
+      'lvcompare-exited-zero-without-report'
+    );
+    expect(result.record.runtimeExecution.diagnosticLogSourcePath).toBeUndefined();
+    expect(result.record.runtimeExecution.diagnosticLogArtifactPath).toBeUndefined();
+    expect(result.record.runtimeExecution.diagnosticNotes).toEqual([
+      'LVCompare exited 0 without generating the governed report file.'
+    ]);
+  });
+
   it('fails closed when interop path normalization cannot map the selected tool arguments', async () => {
     const record = createReadyRecord();
     record.runtimeSelection.labviewExe = {

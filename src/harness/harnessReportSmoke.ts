@@ -3,6 +3,7 @@ import * as path from 'node:path';
 
 import { getRepoHead } from '../git/gitCli';
 import {
+  ComparisonRuntimeEngine,
   ComparisonRuntimeSettings,
   ComparisonRuntimeSelection,
   locateComparisonRuntime,
@@ -32,6 +33,7 @@ export interface HarnessReportSmokeOptions {
   historyLimit?: number;
   runtimePlatform?: RuntimePlatform;
   runtimeSettings?: ComparisonRuntimeSettings;
+  runtimeEngineOverride?: ComparisonRuntimeEngine;
   windowsInteropRoot?: string;
 }
 
@@ -202,6 +204,10 @@ async function buildHarnessReportExecutionReport(
     options.runtimePlatform ?? resolveCurrentRuntimePlatform(),
     options.runtimeSettings ?? {}
   );
+  const effectiveRuntimeSelection = applyRuntimeEngineOverride(
+    runtimeSelection,
+    options.runtimeEngineOverride
+  );
   const storageRoot = path.join(options.reportRoot, definition.id, 'workspace-storage');
   let packet = await (deps.persistComparisonReportPacket ?? persistComparisonReportPacket)({
     storageRoot,
@@ -211,7 +217,7 @@ async function buildHarnessReportExecutionReport(
     selectedHash: compareCommit.hash,
     baseHash: compareCommit.previousHash!,
     preflight,
-    runtimeSelection
+    runtimeSelection: effectiveRuntimeSelection
   });
 
   if (packet.record.reportStatus === 'ready-for-runtime') {
@@ -240,6 +246,53 @@ async function buildHarnessReportExecutionReport(
     metadataFilePath: packet.metadataFilePath,
     generatedAt: (deps.now ?? defaultNow)()
   });
+}
+
+export function applyRuntimeEngineOverride(
+  runtimeSelection: ComparisonRuntimeSelection,
+  requestedEngine: ComparisonRuntimeEngine | undefined
+): ComparisonRuntimeSelection {
+  if (!requestedEngine || runtimeSelection.provider === 'unavailable') {
+    return runtimeSelection;
+  }
+
+  if (runtimeSelection.engine === requestedEngine) {
+    return runtimeSelection;
+  }
+
+  if (requestedEngine === 'lvcompare') {
+    if (runtimeSelection.labviewExe && runtimeSelection.lvCompare) {
+      return {
+        ...runtimeSelection,
+        engine: 'lvcompare',
+        notes: [...runtimeSelection.notes, 'Requested runtime engine override: lvcompare.']
+      };
+    }
+
+    return {
+      ...runtimeSelection,
+      provider: 'unavailable',
+      engine: undefined,
+      blockedReason: 'requested-lvcompare-not-available',
+      notes: [...runtimeSelection.notes, 'Requested runtime engine override failed: lvcompare was not available.']
+    };
+  }
+
+  if (runtimeSelection.labviewCli) {
+    return {
+      ...runtimeSelection,
+      engine: 'labview-cli',
+      notes: [...runtimeSelection.notes, 'Requested runtime engine override: labview-cli.']
+    };
+  }
+
+  return {
+    ...runtimeSelection,
+    provider: 'unavailable',
+    engine: undefined,
+    blockedReason: 'requested-labview-cli-not-available',
+    notes: [...runtimeSelection.notes, 'Requested runtime engine override failed: labview-cli was not available.']
+  };
 }
 
 function buildHarnessReportSmokeReport(options: {
