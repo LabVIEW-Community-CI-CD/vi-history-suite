@@ -859,12 +859,32 @@ describe('comparisonReportRuntimeExecution', () => {
         'The retained LabVIEW CLI diagnostic log did not report successful LabVIEW launch before exit.'
       ]
     });
+    expect(
+      classifyLabviewCliDiagnosticText(
+        '"LabVIEWPath" command line argument is not passed. Using last used LabVIEW: "C:\\Program Files\\National Instruments\\LabVIEW 2025\\LabVIEW.exe"',
+        '   '
+      )
+    ).toEqual({
+      reason: 'labview-path-ignored-last-used-default',
+      notes: [
+        'LabVIEW CLI ignored the explicit -LabVIEWPath selection and used the last-used LabVIEW instead: C:\\Program Files\\National Instruments\\LabVIEW 2025\\LabVIEW.exe.',
+        'The retained LabVIEW CLI diagnostic log did not report successful LabVIEW launch before exit.'
+      ]
+    });
     expect(requiresWindowsInterop('win32', 'linux')).toBe(true);
     expect(requiresWindowsInterop('win32', 'win32')).toBe(false);
     expect(requiresWindowsInterop('linux', 'linux')).toBe(false);
   });
 
   it('parses Windows tasklist CSV and retains only observed LabVIEW runtime processes', async () => {
+    await expect(
+      observeWindowsRuntimeProcesses({
+        hostPlatform: 'linux',
+        runtimePlatform: 'linux',
+        trigger: 'cli-log-banner'
+      })
+    ).resolves.toBeUndefined();
+
     expect(
       parseWindowsTasklistCsv(
         '"LabVIEWCLI.exe","44152","Console","1","105,184 K"\r\n' +
@@ -894,6 +914,21 @@ describe('comparisonReportRuntimeExecution', () => {
         memUsage: '250,000 K'
       }
     ]);
+    expect(
+      parseWindowsTasklistCsv(
+        '"LabVIEW ""Quoted"".exe","44161","Console","1","10,240 K"\r\n' +
+          '"bad-pid.exe","oops","Console","1","8,192 K"\r\n'
+      )
+    ).toEqual([
+      {
+        imageName: 'LabVIEW "Quoted".exe',
+        pid: 44161,
+        sessionName: 'Console',
+        sessionNumber: 1,
+        memUsage: '10,240 K'
+      }
+    ]);
+    expect(parseWindowsTasklistCsv('"missing-columns-only"\r\n')).toEqual([]);
 
     const observation = await observeWindowsRuntimeProcesses(
       {
@@ -952,6 +987,35 @@ describe('comparisonReportRuntimeExecution', () => {
       labviewCliProcessObserved: true,
       lvcompareProcessObserved: false
     });
+
+    const execFileImpl = vi.fn(
+      (
+        file: string,
+        _args: readonly string[] | undefined,
+        _options:
+          | { encoding: BufferEncoding; maxBuffer: number; windowsHide: boolean }
+          | undefined,
+        callback:
+          | ((error: Error | null, stdout: string | Buffer, stderr: string | Buffer) => void)
+          | undefined
+      ) => {
+        expect(file).toBe('tasklist');
+        callback?.(new Error('tasklist-failed'), '', '');
+      }
+    );
+
+    await expect(
+      observeWindowsRuntimeProcesses(
+        {
+          hostPlatform: 'win32',
+          runtimePlatform: 'win32',
+          trigger: 'process-exit'
+        },
+        {
+          execFileImpl: execFileImpl as never
+        }
+      )
+    ).rejects.toThrow('tasklist-failed');
   });
 
   it('adds scoped observation notes when only LabVIEWCLI is seen at the retained snapshot', async () => {
@@ -1200,6 +1264,92 @@ describe('comparisonReportRuntimeExecution', () => {
     });
   });
 
+  it('does not start runtime observation when stdout never emits the LabVIEW CLI banner', async () => {
+    const observeWindowsProcesses = vi.fn();
+    const spawnImpl = vi.fn(() => {
+      const child = new EventEmitter() as EventEmitter & {
+        stdout: EventEmitter & { setEncoding: (encoding: string) => void };
+        stderr: EventEmitter & { setEncoding: (encoding: string) => void };
+      };
+      child.stdout = Object.assign(new EventEmitter(), {
+        setEncoding: (_encoding: string) => undefined
+      });
+      child.stderr = Object.assign(new EventEmitter(), {
+        setEncoding: (_encoding: string) => undefined
+      });
+
+      queueMicrotask(() => {
+        child.stdout.emit('data', 'non-banner stdout\r\n');
+        child.emit('close', 0, null);
+      });
+
+      return child as never;
+    });
+
+    await expect(
+      runComparisonCommandPlanWithObservation(
+        {
+          executable: '/mnt/c/Program Files (x86)/National Instruments/Shared/LabVIEW CLI/LabVIEWCLI.exe',
+          args: ['-OperationName', 'CreateComparisonReport']
+        },
+        {
+          spawnImpl: spawnImpl as never,
+          hostPlatform: 'linux',
+          runtimePlatform: 'win32',
+          observeWindowsProcesses
+        }
+      )
+    ).resolves.toEqual({
+      exitCode: 0,
+      signal: undefined,
+      stdout: 'non-banner stdout\r\n',
+      stderr: '',
+      processObservation: undefined,
+      exitProcessObservation: undefined
+    });
+    expect(observeWindowsProcesses).not.toHaveBeenCalled();
+  });
+
+  it('fails closed when banner process observation capture errors', async () => {
+    const spawnImpl = vi.fn(() => {
+      const child = new EventEmitter() as EventEmitter & {
+        stdout: EventEmitter & { setEncoding: (encoding: string) => void };
+        stderr: EventEmitter & { setEncoding: (encoding: string) => void };
+      };
+      child.stdout = Object.assign(new EventEmitter(), {
+        setEncoding: (_encoding: string) => undefined
+      });
+      child.stderr = Object.assign(new EventEmitter(), {
+        setEncoding: (_encoding: string) => undefined
+      });
+
+      queueMicrotask(() => {
+        child.stdout.emit(
+          'data',
+          'LabVIEWCLI started logging in file:  C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log\r\n'
+        );
+        child.emit('close', 1, null);
+      });
+
+      return child as never;
+    });
+
+    await expect(
+      runComparisonCommandPlanWithObservation(
+        {
+          executable: '/mnt/c/Program Files (x86)/National Instruments/Shared/LabVIEW CLI/LabVIEWCLI.exe',
+          args: ['-OperationName', 'CreateComparisonReport']
+        },
+        {
+          spawnImpl: spawnImpl as never,
+          hostPlatform: 'linux',
+          runtimePlatform: 'win32',
+          observeWindowsProcesses: vi.fn().mockRejectedValue(new Error('banner-observation-failed'))
+        }
+      )
+    ).rejects.toThrow('banner-observation-failed');
+  });
+
   it('fails closed when the observed command closes without an exit code', async () => {
     const spawnImpl = vi.fn(() => {
       const child = new EventEmitter() as EventEmitter & {
@@ -1233,6 +1383,60 @@ describe('comparisonReportRuntimeExecution', () => {
         }
       )
     ).rejects.toThrow('comparison-command-closed-without-exit-code');
+  });
+
+  it('fails closed when exit process observation capture errors after the banner snapshot', async () => {
+    const spawnImpl = vi.fn(() => {
+      const child = new EventEmitter() as EventEmitter & {
+        stdout: EventEmitter & { setEncoding: (encoding: string) => void };
+        stderr: EventEmitter & { setEncoding: (encoding: string) => void };
+      };
+      child.stdout = Object.assign(new EventEmitter(), {
+        setEncoding: (_encoding: string) => undefined
+      });
+      child.stderr = Object.assign(new EventEmitter(), {
+        setEncoding: (_encoding: string) => undefined
+      });
+
+      queueMicrotask(() => {
+        child.stdout.emit(
+          'data',
+          'LabVIEWCLI started logging in file:  C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log\r\n'
+        );
+        child.emit('close', 1, null);
+      });
+
+      return child as never;
+    });
+    const observeWindowsProcesses = vi
+      .fn()
+      .mockResolvedValueOnce({
+        capturedAt: '2026-04-03T00:00:01.000Z',
+        hostPlatform: 'linux' as const,
+        runtimePlatform: 'win32',
+        trigger: 'cli-log-banner' as const,
+        observedProcesses: [{ imageName: 'LabVIEWCLI.exe', pid: 44152 }],
+        observedProcessNames: ['LabVIEWCLI.exe'],
+        labviewProcessObserved: false,
+        labviewCliProcessObserved: true,
+        lvcompareProcessObserved: false
+      })
+      .mockRejectedValueOnce(new Error('exit-observation-failed'));
+
+    await expect(
+      runComparisonCommandPlanWithObservation(
+        {
+          executable: '/mnt/c/Program Files (x86)/National Instruments/Shared/LabVIEW CLI/LabVIEWCLI.exe',
+          args: ['-OperationName', 'CreateComparisonReport']
+        },
+        {
+          spawnImpl: spawnImpl as never,
+          hostPlatform: 'linux',
+          runtimePlatform: 'win32',
+          observeWindowsProcesses
+        }
+      )
+    ).rejects.toThrow('exit-observation-failed');
   });
 
   it('normalizes comparison-process errors and report-path existence using the default helpers', async () => {
