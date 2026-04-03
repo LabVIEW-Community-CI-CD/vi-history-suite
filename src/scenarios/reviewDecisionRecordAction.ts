@@ -156,6 +156,17 @@ export function createReviewDecisionRecordAction(
     const dashboard = await buildDashboard(context.storageUri.fsPath, request.model, {
       reportProgress: request.reportProgress
     });
+    const title = buildReviewDecisionRecordTitle(request.model.relativePath);
+
+    if (request.cancellationToken?.isCancellationRequested) {
+      return {
+        outcome: 'cancelled',
+        cancellationStage: 'after-dashboard-build',
+        dashboardFilePath: dashboard.htmlFilePath,
+        dashboardJsonFilePath: dashboard.jsonFilePath,
+        title
+      };
+    }
 
     const readRepoRemoteUrl = deps.readRepoRemoteUrl ?? defaultReadRepoRemoteUrl;
     const repositoryUrl = await readRepoRemoteUrl(request.model.repositoryRoot);
@@ -195,6 +206,17 @@ export function createReviewDecisionRecordAction(
       };
     }
 
+    if (request.cancellationToken?.isCancellationRequested) {
+      return {
+        outcome: 'cancelled',
+        cancellationStage: 'before-decision-record-persist',
+        scenarioId: scenario.id,
+        dashboardFilePath: dashboard.htmlFilePath,
+        dashboardJsonFilePath: dashboard.jsonFilePath,
+        title
+      };
+    }
+
     const pairwiseReportPaths = collectDecisionRecordPairwiseReportPaths(dashboard.record);
     const missingOrBlockedFacts = buildDecisionRecordMissingOrBlockedFacts(dashboard.record);
     const persistDecisionRecord = deps.persistDecisionRecord ?? persistReviewDecisionRecord;
@@ -221,6 +243,19 @@ export function createReviewDecisionRecordAction(
       deps
     );
 
+    if (request.cancellationToken?.isCancellationRequested) {
+      return {
+        outcome: 'cancelled',
+        cancellationStage: 'before-decision-record-open',
+        scenarioId: scenario.id,
+        dashboardFilePath: dashboard.htmlFilePath,
+        dashboardJsonFilePath: dashboard.jsonFilePath,
+        decisionRecordJsonPath: persisted.artifactPlan.jsonFilePath,
+        decisionRecordMarkdownPath: persisted.artifactPlan.markdownFilePath,
+        title
+      };
+    }
+
     const executeCommand = deps.executeCommand ?? vscode.commands.executeCommand;
     const uriFile = deps.uriFile ?? vscode.Uri.file;
     await executeCommand('vscode.open', uriFile(persisted.artifactPlan.markdownFilePath), {
@@ -234,9 +269,13 @@ export function createReviewDecisionRecordAction(
       dashboardJsonFilePath: dashboard.jsonFilePath,
       decisionRecordJsonPath: persisted.artifactPlan.jsonFilePath,
       decisionRecordMarkdownPath: persisted.artifactPlan.markdownFilePath,
-      title: `Review Decision Record: ${request.model.relativePath.split('/').pop() ?? request.model.relativePath}`
+      title
     };
   };
+}
+
+function buildReviewDecisionRecordTitle(relativePath: string): string {
+  return `Review Decision Record: ${relativePath.split('/').pop() ?? relativePath}`;
 }
 
 async function collectDecisionRecordPromptInputs(

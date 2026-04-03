@@ -848,6 +848,14 @@
   standards assurance
 - `TEST-UNIT-236`: verify a timed-out standards-assurance gate step exits with
   code `124`, retains a timeout message, and does not hang the design gate
+- `TEST-UNIT-237`: verify the decision-record action honors cancellation after
+  dashboard build and before decision-record persistence, returning stable
+  cancellation stages while preserving any already-built dashboard artifact
+  paths
+- `TEST-UNIT-238`: verify cancellation after decision-record persistence and
+  before Markdown open preserves both dashboard and decision-record artifact
+  paths and that the history command surface uses stable preserved-artifact
+  cancellation guidance
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed product, wiki, and assurance-skill repos with authority roles,
   expected remotes, and primary entrypoints

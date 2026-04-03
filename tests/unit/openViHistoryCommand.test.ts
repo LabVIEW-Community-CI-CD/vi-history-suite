@@ -1405,6 +1405,88 @@ describe('createOpenViHistoryCommand', () => {
     });
   });
 
+  it('retains preserved decision-record artifacts when creation is cancelled after persistence', async () => {
+    const targetUri = createMockUri('/workspace/Tooling/deployment/VIP_Pre-Install Custom Action.vi');
+    const tracker = new HistoryPanelTracker();
+    const reviewDecisionRecordAction = vi.fn().mockResolvedValue({
+      outcome: 'cancelled',
+      cancellationStage: 'before-decision-record-open',
+      scenarioId: 'SCENARIO-VHS-001',
+      dashboardFilePath: '/workspace/.storage/dashboards/dashboard.html',
+      dashboardJsonFilePath: '/workspace/.storage/dashboards/dashboard.json',
+      decisionRecordJsonPath: '/workspace/.storage/decision-records/decision-record.json',
+      decisionRecordMarkdownPath: '/workspace/.storage/decision-records/decision-record.md',
+      title: 'Review Decision Record: VIP_Pre-Install Custom Action.vi'
+    });
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Update VI',
+            previousHash: '1111111122222222'
+          },
+          {
+            hash: '1111111122222222',
+            authorDate: '2026-04-01T00:00:00Z',
+            authorName: 'B User',
+            subject: 'Middle revision',
+            previousHash: '3333333344444444'
+          },
+          {
+            hash: '3333333344444444',
+            authorDate: '2026-03-31T00:00:00Z',
+            authorName: 'C User',
+            subject: 'Initial revision'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      reviewDecisionRecordAction as never
+    );
+
+    await command(targetUri as never);
+    await tracker.dispatchLastPanelMessage({
+      command: 'createDecisionRecord'
+    });
+
+    expect(showInformationMessageMock).toHaveBeenCalledWith(
+      'VI review decision record creation was cancelled. Retained dashboard and decision-record artifacts, if any, were preserved.'
+    );
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'createDecisionRecord',
+      outcome: 'cancelled',
+      dashboardFilePath: '/workspace/.storage/dashboards/dashboard.html',
+      dashboardJsonFilePath: '/workspace/.storage/dashboards/dashboard.json',
+      decisionRecordJsonPath: '/workspace/.storage/decision-records/decision-record.json',
+      decisionRecordMarkdownPath: '/workspace/.storage/decision-records/decision-record.md',
+      scenarioId: 'SCENARIO-VHS-001',
+      mismatchSummary: undefined,
+      cancellationStage: 'before-decision-record-open',
+      title: 'Review Decision Record: VIP_Pre-Install Custom Action.vi'
+    });
+  });
+
   it('retains runtime diagnostics from comparison-report generation results', async () => {
     const targetUri = createMockUri('/workspace/eligible.vi');
     const tracker = new HistoryPanelTracker();

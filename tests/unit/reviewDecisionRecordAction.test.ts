@@ -756,6 +756,146 @@ describe('reviewDecisionRecordAction', () => {
     expect(buildDashboard).not.toHaveBeenCalled();
   });
 
+  it('retains dashboard artifact paths when cancellation is requested after dashboard build', async () => {
+    let cancelled = false;
+    const readRepoRemoteUrl = vi.fn();
+    const action = createReviewDecisionRecordAction(
+      {
+        storageUri: {
+          fsPath: '/workspace/.storage'
+        },
+        globalState,
+        extensionMode: 3
+      } as never,
+      {
+        buildDashboard: vi.fn().mockImplementation(async () => {
+          cancelled = true;
+          return createCanonicalDashboardResult();
+        }),
+        readRepoRemoteUrl
+      }
+    );
+
+    await expect(
+      action({
+        model: createCanonicalModel(),
+        cancellationToken: {
+          get isCancellationRequested() {
+            return cancelled;
+          }
+        } as never
+      })
+    ).resolves.toEqual({
+      outcome: 'cancelled',
+      cancellationStage: 'after-dashboard-build',
+      dashboardFilePath: '/workspace/.storage/dashboards/repo-id/file-id/window-id/dashboard.html',
+      dashboardJsonFilePath: '/workspace/.storage/dashboards/repo-id/file-id/window-id/dashboard.json',
+      title: 'Review Decision Record: VIP_Pre-Install Custom Action.vi'
+    });
+
+    expect(readRepoRemoteUrl).not.toHaveBeenCalled();
+  });
+
+  it('retains dashboard artifact paths when cancellation is requested before decision-record persistence', async () => {
+    let cancelled = false;
+    const persistDecisionRecord = vi.fn();
+    const action = createReviewDecisionRecordAction(
+      {
+        storageUri: {
+          fsPath: '/workspace/.storage'
+        },
+        globalState,
+        extensionMode: 3
+      } as never,
+      {
+        buildDashboard: vi.fn().mockResolvedValue(createCanonicalDashboardResult()),
+        persistDecisionRecord,
+        readRepoRemoteUrl: vi.fn().mockImplementation(async () => {
+          cancelled = true;
+          return 'https://github.com/ni/labview-icon-editor.git';
+        })
+      }
+    );
+
+    await expect(
+      action({
+        model: createCanonicalModel(),
+        cancellationToken: {
+          get isCancellationRequested() {
+            return cancelled;
+          }
+        } as never
+      })
+    ).resolves.toEqual({
+      outcome: 'cancelled',
+      cancellationStage: 'before-decision-record-persist',
+      scenarioId: 'SCENARIO-VHS-001',
+      dashboardFilePath: '/workspace/.storage/dashboards/repo-id/file-id/window-id/dashboard.html',
+      dashboardJsonFilePath: '/workspace/.storage/dashboards/repo-id/file-id/window-id/dashboard.json',
+      title: 'Review Decision Record: VIP_Pre-Install Custom Action.vi'
+    });
+
+    expect(persistDecisionRecord).not.toHaveBeenCalled();
+  });
+
+  it('retains dashboard and decision-record artifact paths when cancellation is requested before opening the markdown artifact', async () => {
+    let cancelled = false;
+    const persistDecisionRecord = vi.fn().mockImplementation(async () => {
+      cancelled = true;
+      return {
+        artifactPlan: {
+          scenarioId: 'SCENARIO-VHS-001',
+          decisionId: 'decision-id',
+          decisionDirectory: '/workspace/.storage/decision-records/scenario/decision-id',
+          jsonFilePath: '/workspace/.storage/decision-records/scenario/decision-id/decision.json',
+          markdownFilePath:
+            '/workspace/.storage/decision-records/scenario/decision-id/decision.md'
+        },
+        record: {
+          generatedAt: '2026-04-03T16:00:00.000Z'
+        }
+      };
+    });
+    const action = createReviewDecisionRecordAction(
+      {
+        storageUri: {
+          fsPath: '/workspace/.storage'
+        },
+        globalState,
+        extensionMode: 3
+      } as never,
+      {
+        buildDashboard: vi.fn().mockResolvedValue(createCanonicalDashboardResult()),
+        persistDecisionRecord,
+        readRepoRemoteUrl: vi
+          .fn()
+          .mockResolvedValue('https://github.com/ni/labview-icon-editor.git')
+      }
+    );
+
+    await expect(
+      action({
+        model: createCanonicalModel(),
+        cancellationToken: {
+          get isCancellationRequested() {
+            return cancelled;
+          }
+        } as never
+      })
+    ).resolves.toEqual({
+      outcome: 'cancelled',
+      cancellationStage: 'before-decision-record-open',
+      scenarioId: 'SCENARIO-VHS-001',
+      dashboardFilePath: '/workspace/.storage/dashboards/repo-id/file-id/window-id/dashboard.html',
+      dashboardJsonFilePath: '/workspace/.storage/dashboards/repo-id/file-id/window-id/dashboard.json',
+      decisionRecordJsonPath: '/workspace/.storage/decision-records/scenario/decision-id/decision.json',
+      decisionRecordMarkdownPath: '/workspace/.storage/decision-records/scenario/decision-id/decision.md',
+      title: 'Review Decision Record: VIP_Pre-Install Custom Action.vi'
+    });
+
+    expect(executeCommandMock).not.toHaveBeenCalled();
+  });
+
   it('returns a stable cancellation when reviewer input is dismissed', async () => {
     showInputBoxMock.mockResolvedValueOnce(undefined);
     const buildDashboard = vi.fn();

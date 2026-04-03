@@ -153,6 +153,9 @@ Committed and governed today:
 - canonical scenario registry and separate decision-record generation for the
   canonical dashboard evidence flow plus extension-facing `Create decision
   record` UX for three-plus-commit retained review windows
+- decision-record cancellation that now stops cleanly after dashboard build,
+  before decision-record persistence, and before Markdown open while preserving
+  already-built dashboard or decision-record artifacts
 - retained design gate that chooses the next tranche from committed evidence
 - retained design gate that refreshes `latest-report.{json,md}` after each
   successful stage so a stuck assurance tail does not leave stale tranche

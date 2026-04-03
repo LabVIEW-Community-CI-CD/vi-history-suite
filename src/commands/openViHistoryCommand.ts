@@ -470,7 +470,7 @@ export function createOpenViHistoryCommand(
         );
         if (result.outcome === 'cancelled') {
           void vscode.window.showInformationMessage(
-            'VI review decision record creation was cancelled. Retained dashboard artifacts, if any, were preserved.'
+            'VI review decision record creation was cancelled. Retained dashboard and decision-record artifacts, if any, were preserved.'
           );
         } else if (result.outcome === 'workspace-untrusted') {
           void vscode.window.showWarningMessage(
