@@ -273,6 +273,9 @@
 - `TEST-UNIT-099`: validate the runtime executor clears stale diagnostic-log
   artifacts on runs without a current diagnostic log and classifies the
   `lvcompare` exit-0/no-report lane with a dedicated failure reason
+- `TEST-UNIT-100`: validate the direct runtime-command observation runner
+  captures `process-spawn` plus `process-exit` snapshots for `lvcompare` parity
+  probes and fails closed when spawn-time observation capture errors
 - `TEST-INTEG-001`: run a real VS Code extension host against a temporary Git
   workspace and prove eligible versus ineligible command flow behavior
 - `TEST-INTEG-002`: run the real extension-host report action and retain the

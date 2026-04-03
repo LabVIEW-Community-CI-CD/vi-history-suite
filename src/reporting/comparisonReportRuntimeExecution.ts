@@ -67,7 +67,7 @@ export interface RuntimeProcessObservation {
   capturedAt: string;
   hostPlatform: NodeJS.Platform;
   runtimePlatform: string;
-  trigger: 'cli-log-banner' | 'process-exit';
+  trigger: 'cli-log-banner' | 'process-spawn' | 'process-exit';
   observedProcesses: RuntimeObservedProcess[];
   observedProcessNames: string[];
   labviewProcessObserved: boolean;
@@ -93,6 +93,7 @@ export interface RunComparisonCommandPlanWithObservationDeps {
   ) => Promise<RuntimeProcessObservation | undefined>;
   hostPlatform?: NodeJS.Platform;
   runtimePlatform?: string;
+  engine?: 'labview-cli' | 'lvcompare';
 }
 
 export async function executeComparisonReport(
@@ -114,7 +115,8 @@ export async function executeComparisonReport(
       runComparisonCommandPlanWithObservation(commandPlan, {
         hostPlatform: processPlatform,
         runtimePlatform: options.record.runtimeSelection.platform,
-        observeWindowsProcesses
+        observeWindowsProcesses,
+        engine: options.record.runtimeSelection.engine
       }));
   const nowIso = deps.nowIso ?? defaultNowIso;
   const nowMs = deps.nowMs ?? defaultNowMs;
@@ -1090,8 +1092,8 @@ export function runComparisonCommandPlanWithObservation(
     let observationError: unknown;
     let observationStarted = false;
 
-    const maybeStartObservation = () => {
-      if (observationStarted || !parseLabviewCliDiagnosticLogPath(stdout)) {
+    const startObservation = (trigger: RuntimeProcessObservation['trigger']) => {
+      if (observationStarted) {
         return;
       }
 
@@ -1100,7 +1102,7 @@ export function runComparisonCommandPlanWithObservation(
         (deps.observeWindowsProcesses ?? observeWindowsRuntimeProcesses)({
           hostPlatform: deps.hostPlatform ?? process.platform,
           runtimePlatform: deps.runtimePlatform ?? process.platform,
-          trigger: 'cli-log-banner'
+          trigger
         })
       )
         .then((capturedObservation) => {
@@ -1111,8 +1113,21 @@ export function runComparisonCommandPlanWithObservation(
         });
     };
 
+    const maybeStartObservation = () => {
+      if (!parseLabviewCliDiagnosticLogPath(stdout)) {
+        return;
+      }
+
+      startObservation('cli-log-banner');
+    };
+
     child.stdout?.setEncoding('utf8');
     child.stderr?.setEncoding('utf8');
+    child.on('spawn', () => {
+      if (deps.engine === 'lvcompare') {
+        startObservation('process-spawn');
+      }
+    });
     child.stdout?.on('data', (chunk: string | Buffer) => {
       stdout += String(chunk);
       maybeStartObservation();

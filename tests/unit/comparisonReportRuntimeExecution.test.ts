@@ -1321,6 +1321,88 @@ describe('comparisonReportRuntimeExecution', () => {
     });
   });
 
+  it('captures process observations at process spawn and again at process exit for lvcompare', async () => {
+    const spawnObservation = {
+      capturedAt: '2026-04-03T00:00:01.000Z',
+      hostPlatform: 'linux' as const,
+      runtimePlatform: 'win32',
+      trigger: 'process-spawn' as const,
+      observedProcesses: [{ imageName: 'LVCompare.exe', pid: 55221 }],
+      observedProcessNames: ['LVCompare.exe'],
+      labviewProcessObserved: false,
+      labviewCliProcessObserved: false,
+      lvcompareProcessObserved: true
+    };
+    const exitObservation = {
+      capturedAt: '2026-04-03T00:00:03.000Z',
+      hostPlatform: 'linux' as const,
+      runtimePlatform: 'win32',
+      trigger: 'process-exit' as const,
+      observedProcesses: [],
+      observedProcessNames: [],
+      labviewProcessObserved: false,
+      labviewCliProcessObserved: false,
+      lvcompareProcessObserved: false
+    };
+    const observeWindowsProcesses = vi
+      .fn()
+      .mockResolvedValueOnce(spawnObservation)
+      .mockResolvedValueOnce(exitObservation);
+
+    const spawnImpl = vi.fn(() => {
+      const child = new EventEmitter() as EventEmitter & {
+        stdout: EventEmitter & { setEncoding: (encoding: string) => void };
+        stderr: EventEmitter & { setEncoding: (encoding: string) => void };
+      };
+      child.stdout = Object.assign(new EventEmitter(), {
+        setEncoding: (_encoding: string) => undefined
+      });
+      child.stderr = Object.assign(new EventEmitter(), {
+        setEncoding: (_encoding: string) => undefined
+      });
+
+      queueMicrotask(() => {
+        child.emit('spawn');
+        child.emit('close', 0, null);
+      });
+
+      return child as never;
+    });
+
+    await expect(
+      runComparisonCommandPlanWithObservation(
+        {
+          executable: '/mnt/c/Program Files (x86)/National Instruments/Shared/LabVIEW Compare/LVCompare.exe',
+          args: ['left.vi', 'right.vi', '-lvpath', 'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe']
+        },
+        {
+          spawnImpl: spawnImpl as never,
+          hostPlatform: 'linux',
+          runtimePlatform: 'win32',
+          engine: 'lvcompare',
+          observeWindowsProcesses
+        }
+      )
+    ).resolves.toEqual({
+      exitCode: 0,
+      signal: undefined,
+      stdout: '',
+      stderr: '',
+      processObservation: spawnObservation,
+      exitProcessObservation: exitObservation
+    });
+    expect(observeWindowsProcesses).toHaveBeenNthCalledWith(1, {
+      hostPlatform: 'linux',
+      runtimePlatform: 'win32',
+      trigger: 'process-spawn'
+    });
+    expect(observeWindowsProcesses).toHaveBeenNthCalledWith(2, {
+      hostPlatform: 'linux',
+      runtimePlatform: 'win32',
+      trigger: 'process-exit'
+    });
+  });
+
   it('does not start runtime observation when stdout never emits the LabVIEW CLI banner', async () => {
     const observeWindowsProcesses = vi.fn();
     const spawnImpl = vi.fn(() => {
@@ -1405,6 +1487,44 @@ describe('comparisonReportRuntimeExecution', () => {
         }
       )
     ).rejects.toThrow('banner-observation-failed');
+  });
+
+  it('fails closed when lvcompare spawn observation capture errors', async () => {
+    const spawnImpl = vi.fn(() => {
+      const child = new EventEmitter() as EventEmitter & {
+        stdout: EventEmitter & { setEncoding: (encoding: string) => void };
+        stderr: EventEmitter & { setEncoding: (encoding: string) => void };
+      };
+      child.stdout = Object.assign(new EventEmitter(), {
+        setEncoding: (_encoding: string) => undefined
+      });
+      child.stderr = Object.assign(new EventEmitter(), {
+        setEncoding: (_encoding: string) => undefined
+      });
+
+      queueMicrotask(() => {
+        child.emit('spawn');
+        child.emit('close', 0, null);
+      });
+
+      return child as never;
+    });
+
+    await expect(
+      runComparisonCommandPlanWithObservation(
+        {
+          executable: '/mnt/c/Program Files (x86)/National Instruments/Shared/LabVIEW Compare/LVCompare.exe',
+          args: ['left.vi', 'right.vi']
+        },
+        {
+          spawnImpl: spawnImpl as never,
+          hostPlatform: 'linux',
+          runtimePlatform: 'win32',
+          engine: 'lvcompare',
+          observeWindowsProcesses: vi.fn().mockRejectedValue(new Error('spawn-observation-failed'))
+        }
+      )
+    ).rejects.toThrow('spawn-observation-failed');
   });
 
   it('fails closed when the observed command closes without an exit code', async () => {
