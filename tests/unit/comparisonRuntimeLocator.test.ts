@@ -6,6 +6,7 @@ import {
   locateComparisonRuntime,
   parseWindowsRegistryLabviewCandidates,
   pathExistsWithFsAccess,
+  queryWindowsContainerImageAvailability,
   runWindowsRegistryQuery
 } from '../../src/reporting/comparisonRuntimeLocator';
 
@@ -371,6 +372,58 @@ HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\National Instruments\\LabVIEW
         })
       )
     ).resolves.toBe('C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe');
+  });
+
+  it('probes Windows container image availability through the correct host command path', async () => {
+    const windowsRunner = vi.fn().mockResolvedValue({ stdout: '' });
+    await expect(
+      queryWindowsContainerImageAvailability(
+        'nationalinstruments/labview:2026q1-windows',
+        'win32',
+        windowsRunner
+      )
+    ).resolves.toBe(true);
+    expect(windowsRunner).toHaveBeenCalledWith(
+      'docker',
+      ['image', 'inspect', 'nationalinstruments/labview:2026q1-windows'],
+      {
+        windowsHide: true,
+        maxBuffer: 1024 * 1024
+      }
+    );
+
+    const linuxRunner = vi.fn().mockResolvedValue({ stdout: '' });
+    await expect(
+      queryWindowsContainerImageAvailability(
+        'nationalinstruments/labview:2026q1-windows',
+        'linux',
+        linuxRunner
+      )
+    ).resolves.toBe(true);
+    expect(linuxRunner).toHaveBeenCalledWith(
+      '/mnt/c/Windows/System32/cmd.exe',
+      ['/c', 'docker', 'image', 'inspect', 'nationalinstruments/labview:2026q1-windows'],
+      {
+        windowsHide: true,
+        maxBuffer: 1024 * 1024
+      }
+    );
+
+    await expect(
+      queryWindowsContainerImageAvailability(
+        'nationalinstruments/labview:2026q1-windows',
+        'win32',
+        vi.fn().mockRejectedValue(new Error('docker-missing'))
+      )
+    ).resolves.toBe(false);
+
+    await expect(
+      queryWindowsContainerImageAvailability(
+        'nationalinstruments/labview:2026q1-windows',
+        'linux',
+        vi.fn().mockRejectedValue(new Error('cmd-missing'))
+      )
+    ).resolves.toBe(false);
   });
 
   it('ignores failed registry probes and can fall back to the first configured LabVIEW path when bitness is unknown', async () => {

@@ -286,7 +286,7 @@ export async function locateComparisonRuntime(
 
   const windowsContainerAvailable =
     platform === 'win32' && preferBitness !== 'x86'
-      ? await (deps.queryWindowsContainerImage ?? defaultQueryWindowsContainerImage)(
+      ? await (deps.queryWindowsContainerImage ?? queryWindowsContainerImageAvailability)(
           windowsContainerImage,
           hostPlatform
         )
@@ -727,13 +727,19 @@ export async function runWindowsRegistryQuery(
   return stdout;
 }
 
-async function defaultQueryWindowsContainerImage(
+export async function queryWindowsContainerImageAvailability(
   image: string,
-  hostPlatform: NodeJS.Platform
+  hostPlatform: NodeJS.Platform,
+  execFileRunner: (
+    file: string,
+    args: readonly string[],
+    options: { windowsHide: boolean; maxBuffer: number }
+  ) => Promise<{ stdout: string }>
+    = execFileAsync
 ): Promise<boolean> {
   if (hostPlatform === 'win32') {
     try {
-      await execFileAsync('docker', ['image', 'inspect', image], {
+      await execFileRunner('docker', ['image', 'inspect', image], {
         windowsHide: true,
         maxBuffer: 1024 * 1024
       });
@@ -744,7 +750,7 @@ async function defaultQueryWindowsContainerImage(
   }
 
   try {
-    await execFileAsync('/mnt/c/Windows/System32/cmd.exe', ['/c', 'docker', 'image', 'inspect', image], {
+    await execFileRunner('/mnt/c/Windows/System32/cmd.exe', ['/c', 'docker', 'image', 'inspect', image], {
       windowsHide: true,
       maxBuffer: 1024 * 1024
     });

@@ -473,6 +473,9 @@
   packet evidence
 - `TEST-UNIT-136`: prove the comparison-report panel renders retained non-empty
   exit observed process names exactly as a joined list
+- `TEST-UNIT-137`: prove the default Windows-container image probe uses the
+  correct Windows-versus-cross-host command path and returns `false` on probe
+  failure instead of throwing
 - `TEST-DOC-014`: review the queue, epic, ADR, and current-state surfaces to
   prove the future-facing dashboard research was normalized into governed repo
   control-plane artifacts and the incoming research artifact was deleted
