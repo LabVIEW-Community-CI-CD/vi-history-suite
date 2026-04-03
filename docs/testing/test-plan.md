@@ -460,6 +460,14 @@
 - `TEST-UNIT-131`: prove the Windows-container provider fails closed with
   `windows-container-image-unavailable` before command execution when selected
   without a configured image
+- `TEST-UNIT-132`: prove container-reported NI diagnostic log paths only map
+  into host-readable storage when they remain under the governed runtime root
+- `TEST-UNIT-133`: prove NI diagnostic logs that report `LabVIEW launched
+  successfully.` retain an explicit launch-success note without inventing a
+  `LabVIEWPath` anomaly
+- `TEST-UNIT-134`: prove runtime execution retains `observed LabVIEW-related
+  processes: none` when a governed process snapshot is captured with zero
+  matching LabVIEW-related processes
 - `TEST-DOC-014`: review the queue, epic, ADR, and current-state surfaces to
   prove the future-facing dashboard research was normalized into governed repo
   control-plane artifacts and the incoming research artifact was deleted

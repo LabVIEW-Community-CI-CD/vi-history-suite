@@ -81,6 +81,9 @@ Committed and governed today:
   container report execution on the canonical harness
 - first runtime-doctor summaries on retained comparison-report packet and panel
   surfaces
+- retained runtime-diagnostic facts that distinguish governed container-log
+  path mapping, positive LabVIEW launch confirmation, and explicit zero-process
+  observations
 - pairwise dashboard-source archiving so multiple report attempts for one VI can
   coexist without overwriting
 - concentrated dashboard JSON and HTML packets that recollect retained VI

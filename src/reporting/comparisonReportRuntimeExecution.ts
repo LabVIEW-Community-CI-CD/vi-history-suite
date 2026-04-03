@@ -1203,6 +1203,10 @@ export function resolveHostReadableDiagnosticPath(
     return mappedContainerPath;
   }
 
+  if (diagnosticPathMapping) {
+    return undefined;
+  }
+
   if (processPlatform === 'win32') {
     return diagnosticLogPath.trim() || undefined;
   }

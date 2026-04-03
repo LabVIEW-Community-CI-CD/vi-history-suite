@@ -1353,6 +1353,41 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(requiresWindowsInterop('linux', 'linux')).toBe(false);
   });
 
+  it('maps runtime diagnostic logs only when they remain under the governed runtime root', () => {
+    expect(
+      resolveHostReadableDiagnosticPath(
+        'C:\\vi-history-suite\\container-temp\\logs\\lvtemporary_123.log',
+        'linux',
+        {
+          runtimeRoot: 'C:\\vi-history-suite\\container-temp',
+          hostRoot: '/workspace/.interop/container-temp'
+        }
+      )
+    ).toBe('/workspace/.interop/container-temp/logs/lvtemporary_123.log');
+
+    expect(
+      resolveHostReadableDiagnosticPath(
+        'C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log',
+        'linux',
+        {
+          runtimeRoot: 'C:\\vi-history-suite\\container-temp',
+          hostRoot: '/workspace/.interop/container-temp'
+        }
+      )
+    ).toBeUndefined();
+  });
+
+  it('retains an explicit launch-success note when the NI diagnostic log confirms LabVIEW launched', () => {
+    expect(
+      classifyLabviewCliDiagnosticText(
+        'LabVIEW launched successfully.\nThe operation failed later.',
+        'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe'
+      )
+    ).toEqual({
+      notes: ['LabVIEW CLI reported that LabVIEW launched successfully before the operation failed.']
+    });
+  });
+
   it('parses Windows tasklist CSV and retains only observed LabVIEW runtime processes', async () => {
     await expect(
       observeWindowsRuntimeProcesses({
@@ -1553,6 +1588,58 @@ describe('comparisonReportRuntimeExecution', () => {
     );
     expect(result.record.runtimeExecution.diagnosticNotes).toContain(
       'LabVIEW CLI exited nonzero without stderr and without generating a report; at the retained cli-log-banner snapshot, LabVIEWCLI.exe was observed while LabVIEW.exe was not observed.'
+    );
+  });
+
+  it('retains explicit none notes when a governed process snapshot captured zero LabVIEW-related processes', async () => {
+    const result = await executeComparisonReport(
+      {
+        record: createReadyRecord(),
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        pathExists: vi.fn().mockResolvedValue(false),
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 1,
+          stdout: 'LabVIEWCLI started logging in file:  C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log\r\n',
+          stderr: '',
+          processObservation: {
+            capturedAt: '2026-04-03T00:00:02.000Z',
+            hostPlatform: 'linux',
+            runtimePlatform: 'win32',
+            trigger: 'cli-log-banner',
+            observedProcesses: [],
+            observedProcessNames: [],
+            labviewProcessObserved: false,
+            labviewCliProcessObserved: false,
+            lvcompareProcessObserved: false
+          }
+        }),
+        nowIso: vi
+          .fn()
+          .mockReturnValueOnce('2026-04-02T01:00:00.000Z')
+          .mockReturnValueOnce('2026-04-02T01:00:03.000Z'),
+        nowMs: vi.fn().mockReturnValueOnce(1000).mockReturnValueOnce(4000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32'
+      }
+    );
+
+    expect(result.record.runtimeExecution.failureReason).toBe(
+      'labview-cli-exited-nonzero-log-only-no-report'
+    );
+    expect(result.record.runtimeExecution.observedProcessNames).toEqual([]);
+    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+      'At the retained cli-log-banner snapshot (2026-04-03T00:00:02.000Z), observed LabVIEW-related processes: none.'
+    );
+    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+      'At the retained cli-log-banner snapshot, LVCompare.exe was not observed.'
     );
   });
 
