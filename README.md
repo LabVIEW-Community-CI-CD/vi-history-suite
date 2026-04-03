@@ -112,8 +112,9 @@ Committed and governed today:
   counts, provider provenance, and retained overview image assets rendered on
   the dashboard through webview-safe URIs
 - bounded dashboard progress that surfaces commit-window preparation,
-  pair-by-pair concentration, retained-asset finalization, and dashboard
-  opening during heavier metadata concentration runs
+  pair-evidence backfill for missing or stale adjacent pairs, pair-by-pair
+  concentration, retained-asset finalization, and dashboard opening during
+  heavier metadata concentration runs
 - governed dashboard artifact-opening rules that accept only retained
   `report-packet.html`, `report-metadata.json`, `source-record.json`, and
   `*-report-*.html` files from workspace-scoped extension storage

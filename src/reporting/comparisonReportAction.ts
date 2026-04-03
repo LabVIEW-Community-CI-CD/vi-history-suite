@@ -27,6 +27,7 @@ export interface ComparisonReportActionRequest {
 export interface ComparisonReportActionResult {
   outcome:
     | 'opened-comparison-report'
+    | 'retained-comparison-report-evidence'
     | 'missing-retained-comparison-report'
     | 'cancelled'
     | 'workspace-untrusted'
@@ -85,113 +86,9 @@ export function createComparisonReportAction(
   deps: ComparisonReportActionDeps = {}
 ): (request: ComparisonReportActionRequest) => Promise<ComparisonReportActionResult> {
   return async (request: ComparisonReportActionRequest): Promise<ComparisonReportActionResult> => {
-    if (request.cancellationToken?.isCancellationRequested) {
-      return {
-        outcome: 'cancelled',
-        cancellationStage: 'before-revision-pair-resolution'
-      };
-    }
-
-    if (!vscode.workspace.isTrusted) {
-      return { outcome: 'workspace-untrusted' };
-    }
-
-    await request.reportProgress?.({
-      message: 'Resolving retained revision pair.',
-      increment: 10
-    });
-    const selectedCommit = request.model.commits.find((commit) => commit.hash === request.selectedHash);
-    if (!selectedCommit) {
-      return { outcome: 'missing-selected-commit' };
-    }
-
-    if (!selectedCommit.previousHash) {
-      return { outcome: 'missing-previous-hash' };
-    }
-
-    if (!context.storageUri) {
-      return { outcome: 'missing-storage-uri' };
-    }
-
-    if (request.cancellationToken?.isCancellationRequested) {
-      return {
-        outcome: 'cancelled',
-        cancellationStage: 'before-preflight'
-      };
-    }
-
-    await request.reportProgress?.({
-      message: 'Validating retained VI revisions.',
-      increment: 20
-    });
-    const preflight = await (deps.preflightComparisonReport ?? preflightComparisonReportRevisions)({
-      repoRoot: request.model.repositoryRoot,
-      relativePath: request.model.relativePath,
-      leftRevisionId: selectedCommit.previousHash,
-      rightRevisionId: selectedCommit.hash
-    });
-    if (request.cancellationToken?.isCancellationRequested) {
-      return {
-        outcome: 'cancelled',
-        cancellationStage: 'after-preflight'
-      };
-    }
-
-    await request.reportProgress?.({
-      message: 'Selecting comparison-report runtime.',
-      increment: 20
-    });
-    const runtimeSelection = await (deps.locateRuntime ?? locateComparisonRuntime)(
-      resolveRuntimePlatform(process.platform),
-      (deps.getRuntimeSettings ?? readComparisonRuntimeSettings)()
-    );
-    if (request.cancellationToken?.isCancellationRequested) {
-      return {
-        outcome: 'cancelled',
-        cancellationStage: 'after-runtime-selection'
-      };
-    }
-
-    await request.reportProgress?.({
-      message: 'Persisting governed comparison-report packet.',
-      increment: 20
-    });
-    let packet = await (deps.persistComparisonReport ?? persistComparisonReportPacket)({
-      storageRoot: context.storageUri.fsPath,
-      repositoryRoot: request.model.repositoryRoot,
-      relativePath: request.model.relativePath,
-      reportType: 'diff',
-      selectedHash: selectedCommit.hash,
-      baseHash: selectedCommit.previousHash,
-      preflight,
-      runtimeSelection
-    });
-    if (request.cancellationToken?.isCancellationRequested) {
-      return buildCancelledComparisonReportResult('after-packet-persist', packet);
-    }
-
-    if (packet.record.reportStatus === 'ready-for-runtime') {
-      await request.reportProgress?.({
-        message: 'Executing NI comparison-report runtime.',
-        increment: 20
-      });
-      packet = await (deps.executeComparisonReport ?? executeComparisonReport)({
-        record: packet.record,
-        repositoryRoot: request.model.repositoryRoot
-      });
-      if (request.cancellationToken?.isCancellationRequested) {
-        return buildCancelledComparisonReportResult('after-runtime-execution', packet);
-      }
-    }
-    if (canArchiveComparisonReport(packet.record)) {
-      await request.reportProgress?.({
-        message: 'Archiving comparison-report evidence.',
-        increment: 5
-      });
-      await (deps.archiveComparisonReportSource ?? archiveComparisonReportSource)(packet.record);
-      if (request.cancellationToken?.isCancellationRequested) {
-        return buildCancelledComparisonReportResult('after-archive', packet);
-      }
+    const ensured = await ensureComparisonReportEvidence(context, request, deps);
+    if (!('packet' in ensured)) {
+      return ensured;
     }
 
     await request.reportProgress?.({
@@ -202,14 +99,24 @@ export function createComparisonReportAction(
     return openPersistedComparisonReportPanel(
       {
         context,
-        record: packet.record,
-        packetFilePath: packet.packetFilePath,
-        reportFilePath: packet.reportFilePath,
-        metadataFilePath: packet.metadataFilePath,
+        record: ensured.packet.record,
+        packetFilePath: ensured.packet.packetFilePath,
+        reportFilePath: ensured.packet.reportFilePath,
+        metadataFilePath: ensured.packet.metadataFilePath,
         localResourceSegment: 'reports'
       },
       deps
     );
+  };
+}
+
+export function createEnsureComparisonReportEvidenceAction(
+  context: vscode.ExtensionContext,
+  deps: ComparisonReportActionDeps = {}
+): (request: ComparisonReportActionRequest) => Promise<ComparisonReportActionResult> {
+  return async (request: ComparisonReportActionRequest): Promise<ComparisonReportActionResult> => {
+    const ensured = await ensureComparisonReportEvidence(context, request, deps);
+    return 'packet' in ensured ? ensured.result : ensured;
   };
 }
 
@@ -276,6 +183,132 @@ export function createOpenRetainedComparisonReportAction(
   };
 }
 
+async function ensureComparisonReportEvidence(
+  context: vscode.ExtensionContext,
+  request: ComparisonReportActionRequest,
+  deps: ComparisonReportActionDeps
+): Promise<
+  | ComparisonReportActionResult
+  | {
+      packet: Awaited<ReturnType<typeof persistComparisonReportPacket>>;
+      result: ComparisonReportActionResult;
+    }
+> {
+  if (request.cancellationToken?.isCancellationRequested) {
+    return {
+      outcome: 'cancelled',
+      cancellationStage: 'before-revision-pair-resolution'
+    };
+  }
+
+  if (!vscode.workspace.isTrusted) {
+    return { outcome: 'workspace-untrusted' };
+  }
+
+  await request.reportProgress?.({
+    message: 'Resolving retained revision pair.',
+    increment: 10
+  });
+  const selectedCommit = request.model.commits.find((commit) => commit.hash === request.selectedHash);
+  if (!selectedCommit) {
+    return { outcome: 'missing-selected-commit' };
+  }
+
+  if (!selectedCommit.previousHash) {
+    return { outcome: 'missing-previous-hash' };
+  }
+
+  if (!context.storageUri) {
+    return { outcome: 'missing-storage-uri' };
+  }
+
+  if (request.cancellationToken?.isCancellationRequested) {
+    return {
+      outcome: 'cancelled',
+      cancellationStage: 'before-preflight'
+    };
+  }
+
+  await request.reportProgress?.({
+    message: 'Validating retained VI revisions.',
+    increment: 20
+  });
+  const preflight = await (deps.preflightComparisonReport ?? preflightComparisonReportRevisions)({
+    repoRoot: request.model.repositoryRoot,
+    relativePath: request.model.relativePath,
+    leftRevisionId: selectedCommit.previousHash,
+    rightRevisionId: selectedCommit.hash
+  });
+  if (request.cancellationToken?.isCancellationRequested) {
+    return {
+      outcome: 'cancelled',
+      cancellationStage: 'after-preflight'
+    };
+  }
+
+  await request.reportProgress?.({
+    message: 'Selecting comparison-report runtime.',
+    increment: 20
+  });
+  const runtimeSelection = await (deps.locateRuntime ?? locateComparisonRuntime)(
+    resolveRuntimePlatform(process.platform),
+    (deps.getRuntimeSettings ?? readComparisonRuntimeSettings)()
+  );
+  if (request.cancellationToken?.isCancellationRequested) {
+    return {
+      outcome: 'cancelled',
+      cancellationStage: 'after-runtime-selection'
+    };
+  }
+
+  await request.reportProgress?.({
+    message: 'Persisting governed comparison-report packet.',
+    increment: 20
+  });
+  let packet = await (deps.persistComparisonReport ?? persistComparisonReportPacket)({
+    storageRoot: context.storageUri.fsPath,
+    repositoryRoot: request.model.repositoryRoot,
+    relativePath: request.model.relativePath,
+    reportType: 'diff',
+    selectedHash: selectedCommit.hash,
+    baseHash: selectedCommit.previousHash,
+    preflight,
+    runtimeSelection
+  });
+  if (request.cancellationToken?.isCancellationRequested) {
+    return buildCancelledComparisonReportResult('after-packet-persist', packet);
+  }
+
+  if (packet.record.reportStatus === 'ready-for-runtime') {
+    await request.reportProgress?.({
+      message: 'Executing NI comparison-report runtime.',
+      increment: 20
+    });
+    packet = await (deps.executeComparisonReport ?? executeComparisonReport)({
+      record: packet.record,
+      repositoryRoot: request.model.repositoryRoot
+    });
+    if (request.cancellationToken?.isCancellationRequested) {
+      return buildCancelledComparisonReportResult('after-runtime-execution', packet);
+    }
+  }
+  if (canArchiveComparisonReport(packet.record)) {
+    await request.reportProgress?.({
+      message: 'Archiving comparison-report evidence.',
+      increment: 5
+    });
+    await (deps.archiveComparisonReportSource ?? archiveComparisonReportSource)(packet.record);
+    if (request.cancellationToken?.isCancellationRequested) {
+      return buildCancelledComparisonReportResult('after-archive', packet);
+    }
+  }
+
+  return {
+    packet,
+    result: buildRetainedComparisonReportEvidenceResult(packet)
+  };
+}
+
 function buildCancelledComparisonReportResult(
   cancellationStage: string,
   packet: Awaited<ReturnType<typeof persistComparisonReportPacket>> | Awaited<ReturnType<typeof executeComparisonReport>>
@@ -285,10 +318,7 @@ function buildCancelledComparisonReportResult(
     cancellationStage,
     reportStatus: packet.record.reportStatus,
     runtimeExecutionState: packet.record.runtimeExecutionState,
-    blockedReason:
-      packet.record.reportStatus === 'blocked-runtime'
-        ? packet.record.runtimeSelection.blockedReason
-        : packet.record.preflight.blockedReason,
+    blockedReason: deriveComparisonBlockedReason(packet.record),
     runtimeFailureReason: packet.record.runtimeExecution.failureReason,
     packetFilePath: packet.packetFilePath,
     reportFilePath: packet.reportFilePath,
@@ -306,6 +336,60 @@ function canArchiveComparisonReport(
       record.artifactPlan.reportFilename &&
       record.artifactPlan.packetFilename
   );
+}
+
+function deriveComparisonBlockedReason(
+  record: Awaited<ReturnType<typeof persistComparisonReportPacket>>['record']
+): string | undefined {
+  return record.reportStatus === 'blocked-runtime'
+    ? record.runtimeSelection?.blockedReason
+    : record.reportStatus === 'blocked-preflight'
+      ? record.preflight?.blockedReason
+      : undefined;
+}
+
+function buildRetainedComparisonReportEvidenceResult(
+  packet: Awaited<ReturnType<typeof persistComparisonReportPacket>> | Awaited<ReturnType<typeof executeComparisonReport>>
+): ComparisonReportActionResult {
+  return {
+    outcome: 'retained-comparison-report-evidence',
+    reportStatus: packet.record.reportStatus,
+    runtimeExecutionState: packet.record.runtimeExecutionState,
+    blockedReason: deriveComparisonBlockedReason(packet.record),
+    runtimeFailureReason: packet.record.runtimeExecution.failureReason,
+    runtimeDiagnosticReason: packet.record.runtimeExecution.diagnosticReason,
+    runtimeDiagnosticNotes: packet.record.runtimeExecution.diagnosticNotes,
+    runtimeDiagnosticLogSourcePath: packet.record.runtimeExecution.diagnosticLogSourcePath,
+    runtimeDiagnosticLogArtifactPath: packet.record.runtimeExecution.diagnosticLogArtifactPath,
+    runtimeDoctorSummaryLines: packet.record.runtimeExecution.doctorSummaryLines,
+    runtimeExecutable: packet.record.runtimeExecution.executable,
+    runtimeArgs: packet.record.runtimeExecution.args,
+    runtimeProcessObservationArtifactPath:
+      packet.record.runtimeExecution.processObservationArtifactPath,
+    runtimeProcessObservationCapturedAt:
+      packet.record.runtimeExecution.processObservationCapturedAt,
+    runtimeProcessObservationTrigger: packet.record.runtimeExecution.processObservationTrigger,
+    runtimeObservedProcessNames: packet.record.runtimeExecution.observedProcessNames,
+    runtimeLabviewProcessObserved: packet.record.runtimeExecution.labviewProcessObserved,
+    runtimeLabviewCliProcessObserved: packet.record.runtimeExecution.labviewCliProcessObserved,
+    runtimeLvcompareProcessObserved: packet.record.runtimeExecution.lvcompareProcessObserved,
+    runtimeExitProcessObservationCapturedAt:
+      packet.record.runtimeExecution.exitProcessObservationCapturedAt,
+    runtimeExitProcessObservationTrigger:
+      packet.record.runtimeExecution.exitProcessObservationTrigger,
+    runtimeExitObservedProcessNames: packet.record.runtimeExecution.exitObservedProcessNames,
+    runtimeLabviewProcessObservedAtExit:
+      packet.record.runtimeExecution.labviewProcessObservedAtExit,
+    runtimeLabviewCliProcessObservedAtExit:
+      packet.record.runtimeExecution.labviewCliProcessObservedAtExit,
+    runtimeLvcompareProcessObservedAtExit:
+      packet.record.runtimeExecution.lvcompareProcessObservedAtExit,
+    packetFilePath: packet.packetFilePath,
+    reportFilePath: packet.reportFilePath,
+    metadataFilePath: packet.metadataFilePath,
+    generatedReportExists: packet.record.runtimeExecution.reportExists,
+    title: packet.record.reportTitle
+  };
 }
 
 async function openPersistedComparisonReportPanel(

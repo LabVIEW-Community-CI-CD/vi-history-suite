@@ -9,8 +9,11 @@ import {
   EligibilityDebugSnapshot,
   ViEligibilityIndexer
 } from './indexing/viEligibilityIndexer';
-import { createComparisonReportAction } from './reporting/comparisonReportAction';
-import { createOpenRetainedComparisonReportAction } from './reporting/comparisonReportAction';
+import {
+  createComparisonReportAction,
+  createEnsureComparisonReportEvidenceAction,
+  createOpenRetainedComparisonReportAction
+} from './reporting/comparisonReportAction';
 import { ViHistoryViewModel } from './services/viHistoryModel';
 import { ViHistoryService } from './services/viHistoryService';
 import {
@@ -49,8 +52,16 @@ export async function activate(
   const historyService = new ViHistoryService(gitApi);
   const panelTracker = new HistoryPanelTracker();
   const comparisonReportAction = createComparisonReportAction(context);
+  const ensureComparisonReportEvidenceAction =
+    createEnsureComparisonReportEvidenceAction(context);
   const openRetainedComparisonReportAction = createOpenRetainedComparisonReportAction(context);
-  const multiReportDashboardAction = createMultiReportDashboardAction(context, {}, panelTracker);
+  const multiReportDashboardAction = createMultiReportDashboardAction(
+    context,
+    {
+      ensureComparisonReportEvidence: ensureComparisonReportEvidenceAction
+    },
+    panelTracker
+  );
   const hasRetainedComparisonReport = async (request: {
     model: ViHistoryViewModel;
     selectedHash: string;

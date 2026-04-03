@@ -172,6 +172,8 @@ export interface BuildMultiReportDashboardDeps {
   writeFile?: typeof fs.writeFile;
   copyFile?: typeof fs.copyFile;
   reportProgress?: (update: { message: string; increment?: number }) => void | Promise<void>;
+  pairConcentrationIncrementTotal?: number;
+  assetIncrementTotal?: number;
 }
 
 export interface BuildMultiReportDashboardResult {
@@ -193,11 +195,14 @@ export async function buildAndPersistMultiReportDashboard(
   const writeFile = deps.writeFile ?? fs.writeFile;
   const copyFile = deps.copyFile ?? fs.copyFile;
   const reportProgress = deps.reportProgress;
+  const pairConcentrationIncrementTotal = deps.pairConcentrationIncrementTotal ?? 70;
+  const assetIncrementTotal = deps.assetIncrementTotal ?? 10;
 
   const artifactPlan = buildMultiReportDashboardArtifactPlan(storageRoot, model);
   const commitPairs = deriveCommitPairs(model.commits);
   const entries: MultiReportDashboardEntry[] = [];
-  const pairIncrement = commitPairs.length > 0 ? 70 / commitPairs.length : 0;
+  const pairIncrement =
+    commitPairs.length > 0 ? pairConcentrationIncrementTotal / commitPairs.length : 0;
   for (const [index, pair] of commitPairs.entries()) {
     const entry = await buildDashboardEntry(pair, storageRoot, model, { pathExists, readFile });
     entries.push(entry);
@@ -230,7 +235,8 @@ export async function buildAndPersistMultiReportDashboard(
     (total, entry) => total + (entry.parsedReport?.overviewImageCount ?? 0),
     0
   );
-  const imageIncrement = dashboardImageCount > 0 ? 10 / dashboardImageCount : 10;
+  const imageIncrement =
+    dashboardImageCount > 0 ? assetIncrementTotal / dashboardImageCount : assetIncrementTotal;
   let copiedDashboardImageCount = 0;
   for (const entry of record.entries) {
     if (!entry.parsedReport) {
@@ -262,7 +268,7 @@ export async function buildAndPersistMultiReportDashboard(
   if (dashboardImageCount === 0) {
     await reportProgress?.({
       message: 'Finalizing concentrated dashboard assets.',
-      increment: 10
+      increment: assetIncrementTotal
     });
   }
 

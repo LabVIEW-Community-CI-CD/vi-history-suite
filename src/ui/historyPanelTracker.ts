@@ -24,6 +24,7 @@ export interface HistoryPanelActionSummary {
     | 'opened-commit'
     | 'diffed-previous'
     | 'opened-comparison-report'
+    | 'retained-comparison-report-evidence'
     | 'cancelled'
     | 'workspace-untrusted'
     | 'ignored-missing-hash'

@@ -545,6 +545,251 @@ describe('multiReportDashboardAction', () => {
     ]);
   });
 
+  it('backfills missing or stale pair evidence before concentrating the dashboard', async () => {
+    const progressUpdates: Array<{ message: string; increment?: number }> = [];
+    const readArchivedComparisonReportSourceRecord = vi
+      .fn()
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce({
+        archivePlan: {
+          reportFilePath:
+            '/workspace/.storage/report-history/repo/file/pairs/pair-2/diff-report-foo.vi.html'
+        },
+        packetRecord: {
+          runtimeExecution: {
+            reportExists: false
+          }
+        }
+      });
+    const ensureComparisonReportEvidence = vi
+      .fn()
+      .mockImplementation(async ({ reportProgress }) => {
+        await reportProgress?.({
+          message: 'Executing NI comparison-report runtime.',
+          increment: 95
+        });
+        return {
+          outcome: 'retained-comparison-report-evidence',
+          generatedReportExists: true
+        };
+      });
+    const buildDashboard = vi.fn().mockResolvedValue({
+      record: {
+        generatedAt: '2026-04-03T00:00:00.000Z',
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace/repo',
+        relativePath: 'foo.vi',
+        signature: 'LVIN',
+        artifactPlan: {
+          repoId: 'repoid123456',
+          fileId: 'fileid123456',
+          windowId: 'windowid12345',
+          dashboardDirectory:
+            '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345',
+          jsonFilePath:
+            '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.json',
+          htmlFilePath:
+            '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.html',
+          assetsDirectory:
+            '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/assets'
+        },
+        commitWindow: {
+          commitCount: 3,
+          pairCount: 2,
+          newestHash: 'abcdef1234567890',
+          oldestHash: '3333333344444444'
+        },
+        summary: {
+          representedPairCount: 2,
+          windowCompletenessState: 'complete',
+          archivedPairCount: 2,
+          missingPairCount: 0,
+          missingPairIds: [],
+          generatedReportCount: 2,
+          reportMetadataPairCount: 2,
+          failedPairCount: 0,
+          failedPairIds: [],
+          blockedPairCount: 0,
+          blockedPairIds: [],
+          overviewSectionCount: 2,
+          overviewImageCount: 2,
+          includedAttributeCount: 5,
+          detailSectionCount: 1,
+          detailItemCount: 3,
+          pairWithOverviewImageCount: 2,
+          pairWithDetailCount: 2,
+          overviewCaptionSummaries: [],
+          includedAttributeSummaries: [],
+          detailHeadingSummaries: [],
+          evidenceStateSummaries: [],
+          providerSummaries: []
+        },
+        entries: []
+      },
+      jsonFilePath:
+        '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.json',
+      htmlFilePath:
+        '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.html'
+    });
+    const action = createMultiReportDashboardAction(
+      {
+        storageUri: createMockUri('/workspace/.storage')
+      } as never,
+      {
+        buildDashboard,
+        ensureComparisonReportEvidence,
+        readArchivedComparisonReportSourceRecord
+      }
+    );
+
+    await action({
+      model: {
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace/repo',
+        relativePath: 'foo.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Newest revision',
+            previousHash: '1111111122222222'
+          },
+          {
+            hash: '1111111122222222',
+            authorDate: '2026-04-01T00:00:00Z',
+            authorName: 'B User',
+            subject: 'Middle revision',
+            previousHash: '3333333344444444'
+          },
+          {
+            hash: '3333333344444444',
+            authorDate: '2026-03-31T00:00:00Z',
+            authorName: 'C User',
+            subject: 'Initial revision'
+          }
+        ]
+      },
+      reportProgress: (update) => {
+        progressUpdates.push(update);
+      }
+    });
+
+    expect(readArchivedComparisonReportSourceRecord).toHaveBeenCalledTimes(2);
+    expect(ensureComparisonReportEvidence).toHaveBeenCalledTimes(2);
+    expect(ensureComparisonReportEvidence.mock.calls[0]?.[0]?.selectedHash).toBe(
+      'abcdef1234567890'
+    );
+    expect(ensureComparisonReportEvidence.mock.calls[1]?.[0]?.selectedHash).toBe(
+      '1111111122222222'
+    );
+    expect(buildDashboard).toHaveBeenCalledWith(
+      '/workspace/.storage',
+      expect.any(Object),
+      expect.objectContaining({
+        reportProgress: expect.any(Function),
+        pairConcentrationIncrementTotal: 30,
+        assetIncrementTotal: 10
+      })
+    );
+    expect(progressUpdates).toEqual(
+      expect.arrayContaining([
+        {
+          message: 'Preparing VI Review Dashboard commit window.',
+          increment: 5
+        },
+        {
+          message:
+            'Preparing dashboard pair 1/2: Executing NI comparison-report runtime.',
+          increment: 20
+        },
+        {
+          message:
+            'Preparing dashboard pair 2/2: Executing NI comparison-report runtime.',
+          increment: 20
+        },
+        {
+          message: 'Opening VI Review Dashboard.',
+          increment: 15
+        }
+      ])
+    );
+    expect(
+      progressUpdates.some((update) =>
+        update.message.includes(
+          'Prepared dashboard pair 1/2: abcdef12 vs 11111111 (missing archive); retained generated comparison metadata is ready.'
+        )
+      )
+    ).toBe(true);
+    expect(
+      progressUpdates.some((update) =>
+        update.message.includes(
+          'Prepared dashboard pair 2/2: 11111111 vs 33333333 (missing generated report); retained generated comparison metadata is ready.'
+        )
+      )
+    ).toBe(true);
+  });
+
+  it('fails closed when dashboard pair evidence generation is cancelled before concentration', async () => {
+    const readArchivedComparisonReportSourceRecord = vi.fn().mockResolvedValue(undefined);
+    const ensureComparisonReportEvidence = vi.fn().mockResolvedValue({
+      outcome: 'cancelled',
+      cancellationStage: 'after-preflight'
+    });
+    const buildDashboard = vi.fn();
+    const action = createMultiReportDashboardAction(
+      {
+        storageUri: createMockUri('/workspace/.storage')
+      } as never,
+      {
+        buildDashboard,
+        ensureComparisonReportEvidence,
+        readArchivedComparisonReportSourceRecord
+      }
+    );
+
+    await expect(
+      action({
+        model: {
+          repositoryName: 'repo',
+          repositoryRoot: '/workspace/repo',
+          relativePath: 'foo.vi',
+          signature: 'LVIN',
+          eligible: true,
+          commits: [
+            {
+              hash: 'abcdef1234567890',
+              authorDate: '2026-04-02T00:00:00Z',
+              authorName: 'A User',
+              subject: 'Newest revision',
+              previousHash: '1111111122222222'
+            },
+            {
+              hash: '1111111122222222',
+              authorDate: '2026-04-01T00:00:00Z',
+              authorName: 'B User',
+              subject: 'Middle revision',
+              previousHash: '3333333344444444'
+            },
+            {
+              hash: '3333333344444444',
+              authorDate: '2026-03-31T00:00:00Z',
+              authorName: 'C User',
+              subject: 'Initial revision'
+            }
+          ]
+        }
+      })
+    ).resolves.toEqual({
+      outcome: 'cancelled',
+      cancellationStage: 'during-dashboard-pair-generation:after-preflight'
+    });
+
+    expect(buildDashboard).not.toHaveBeenCalled();
+  });
+
   it('renders retained concentrated overview images through webview-safe asset URIs', async () => {
     const buildDashboard = vi.fn().mockResolvedValue({
       record: {

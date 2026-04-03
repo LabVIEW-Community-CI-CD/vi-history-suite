@@ -47,6 +47,11 @@ export interface ArchiveComparisonReportSourceDeps {
   pathExists?: (targetPath: string) => Promise<boolean>;
 }
 
+export interface ReadArchivedComparisonReportSourceRecordDeps {
+  pathExists?: (targetPath: string) => Promise<boolean>;
+  readFile?: typeof fs.readFile;
+}
+
 export function buildComparisonReportArchivePlan(
   record: ComparisonReportPacketRecord
 ): ComparisonReportArchivePlan {
@@ -222,6 +227,29 @@ export async function archiveComparisonReportSource(
     'utf8'
   );
   return archivedRecord;
+}
+
+export async function readArchivedComparisonReportSourceRecordFromSelection(
+  options: {
+    storageRoot: string;
+    repositoryRoot: string;
+    relativePath: string;
+    reportType: ComparisonReportType;
+    selectedHash: string;
+    baseHash: string;
+  },
+  deps: ReadArchivedComparisonReportSourceRecordDeps = {}
+): Promise<ArchivedComparisonReportSourceRecord | undefined> {
+  const archivePlan = buildComparisonReportArchivePlanFromSelection(options);
+  const pathExists = deps.pathExists ?? defaultPathExists;
+  if (!(await pathExists(archivePlan.sourceRecordFilePath))) {
+    return undefined;
+  }
+
+  const readFile = deps.readFile ?? fs.readFile;
+  return JSON.parse(
+    await readFile(archivePlan.sourceRecordFilePath, 'utf8')
+  ) as ArchivedComparisonReportSourceRecord;
 }
 
 function buildReportAssetsDirectoryName(reportFilename: string): string {

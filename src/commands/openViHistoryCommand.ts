@@ -258,7 +258,11 @@ export function createOpenViHistoryCommand(
           );
         }
 
-        if (actionCommand === 'generateComparisonReport' && result.outcome === 'opened-comparison-report') {
+        if (
+          actionCommand === 'generateComparisonReport' &&
+          (result.outcome === 'opened-comparison-report' ||
+            result.outcome === 'retained-comparison-report-evidence')
+        ) {
           const selectedCommit = model.commits.find((commit) => commit.hash === hash);
           if (selectedCommit?.previousHash) {
             selectedCommit.retainedComparisonEvidenceAvailable = true;

@@ -695,6 +695,11 @@
 - `TEST-UNIT-201`: prove the concentrated dashboard retains compared-path and
   detail-item whole-window concentration summaries derived from retained NI
   comparison-report metadata
+- `TEST-UNIT-202`: prove the dashboard action backfills missing or stale
+  adjacent-pair comparison evidence before concentrating dashboard metadata
+- `TEST-UNIT-203`: prove the dashboard action returns the stable
+  `during-dashboard-pair-generation` cancellation stage when pair-evidence
+  backfill is cancelled before dashboard build
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

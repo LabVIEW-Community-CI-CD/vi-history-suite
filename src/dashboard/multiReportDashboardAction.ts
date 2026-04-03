@@ -1,11 +1,14 @@
+import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 
+import { readArchivedComparisonReportSourceRecordFromSelection } from './comparisonReportArchive';
 import {
   buildAndPersistMultiReportDashboard,
   BuildMultiReportDashboardResult,
   renderMultiReportDashboardHtml
 } from './multiReportDashboard';
+import { ComparisonReportActionResult } from '../reporting/comparisonReportAction';
 import { ViHistoryViewModel } from '../services/viHistoryModel';
 import { HistoryPanelTracker } from '../ui/historyPanelTracker';
 
@@ -37,12 +40,35 @@ export interface MultiReportDashboardActionDeps {
     model: ViHistoryViewModel,
     options?: {
       reportProgress?: (update: { message: string; increment?: number }) => void | Promise<void>;
+      pairConcentrationIncrementTotal?: number;
+      assetIncrementTotal?: number;
     }
   ) => Promise<BuildMultiReportDashboardResult>;
   createWebviewPanel?: typeof vscode.window.createWebviewPanel;
   executeCommand?: typeof vscode.commands.executeCommand;
   uriFile?: typeof vscode.Uri.file;
+  ensureComparisonReportEvidence?: (request: {
+    model: ViHistoryViewModel;
+    selectedHash: string;
+    reportProgress?: (update: { message: string; increment?: number }) => void | Promise<void>;
+    cancellationToken?: vscode.CancellationToken;
+  }) => Promise<ComparisonReportActionResult>;
+  readArchivedComparisonReportSourceRecord?: typeof readArchivedComparisonReportSourceRecordFromSelection;
+  pathExists?: (targetPath: string) => Promise<boolean>;
 }
+
+interface DashboardPairEvidenceCandidate {
+  selectedHash: string;
+  baseHash: string;
+  reason: 'missing-archive' | 'missing-generated-report' | 'missing-report-file';
+}
+
+const DASHBOARD_PAIR_EVIDENCE_INCREMENT_TOTAL = 40;
+const DASHBOARD_PAIR_CONCENTRATION_INCREMENT_TOTAL = 30;
+const DEFAULT_DASHBOARD_PAIR_CONCENTRATION_INCREMENT_TOTAL = 70;
+const DASHBOARD_ASSET_INCREMENT_TOTAL = 10;
+const DASHBOARD_OPEN_INCREMENT = 15;
+const EXPECTED_COMPARISON_EVIDENCE_INCREMENT_TOTAL = 95;
 
 export function createMultiReportDashboardAction(
   context: vscode.ExtensionContext,
@@ -71,12 +97,86 @@ export function createMultiReportDashboardAction(
     }
 
     const buildDashboard = deps.buildDashboard ?? buildAndPersistMultiReportDashboard;
+    const ensureComparisonReportEvidence = deps.ensureComparisonReportEvidence;
+    const pairsNeedingEvidence = await collectDashboardPairsNeedingEvidence(
+      storageUri.fsPath,
+      request.model,
+      deps
+    );
     await request.reportProgress?.({
       message: 'Preparing VI Review Dashboard commit window.',
       increment: 5
     });
+    let pairConcentrationIncrementTotal =
+      DEFAULT_DASHBOARD_PAIR_CONCENTRATION_INCREMENT_TOTAL;
+    if (pairsNeedingEvidence.length > 0 && ensureComparisonReportEvidence) {
+      pairConcentrationIncrementTotal = DASHBOARD_PAIR_CONCENTRATION_INCREMENT_TOTAL;
+      const pairBudget =
+        pairsNeedingEvidence.length > 0
+          ? DASHBOARD_PAIR_EVIDENCE_INCREMENT_TOTAL / pairsNeedingEvidence.length
+          : 0;
+      for (const [index, pair] of pairsNeedingEvidence.entries()) {
+        if (request.cancellationToken?.isCancellationRequested) {
+          return {
+            outcome: 'cancelled',
+            cancellationStage: 'during-dashboard-pair-generation'
+          };
+        }
+
+        let remainingPairIncrement = pairBudget;
+        const pairPrefix = `Preparing dashboard pair ${index + 1}/${pairsNeedingEvidence.length}: `;
+        const scaledPairProgress = async (update: {
+          message: string;
+          increment?: number;
+        }): Promise<void> => {
+          const scaledIncrement =
+            typeof update.increment === 'number' && update.increment > 0
+              ? Math.min(
+                  remainingPairIncrement,
+                  (update.increment / EXPECTED_COMPARISON_EVIDENCE_INCREMENT_TOTAL) *
+                    pairBudget
+                )
+              : 0;
+          remainingPairIncrement = Math.max(0, remainingPairIncrement - scaledIncrement);
+          await request.reportProgress?.({
+            message: `${pairPrefix}${update.message}`,
+            increment: scaledIncrement > 0 ? scaledIncrement : undefined
+          });
+        };
+
+        const result = await ensureComparisonReportEvidence({
+          model: request.model,
+          selectedHash: pair.selectedHash,
+          reportProgress: scaledPairProgress,
+          cancellationToken: request.cancellationToken
+        });
+        if (result.outcome === 'cancelled') {
+          return {
+            outcome: 'cancelled',
+            cancellationStage: result.cancellationStage
+              ? `during-dashboard-pair-generation:${result.cancellationStage}`
+              : 'during-dashboard-pair-generation'
+          };
+        }
+        if (result.outcome === 'workspace-untrusted' || result.outcome === 'missing-storage-uri') {
+          return { outcome: result.outcome };
+        }
+
+        await request.reportProgress?.({
+          message: buildDashboardPairPreparedMessage(
+            index,
+            pairsNeedingEvidence.length,
+            pair,
+            result
+          ),
+          increment: remainingPairIncrement > 0 ? remainingPairIncrement : undefined
+        });
+      }
+    }
     const dashboard = await buildDashboard(storageUri.fsPath, request.model, {
-      reportProgress: request.reportProgress
+      reportProgress: request.reportProgress,
+      pairConcentrationIncrementTotal,
+      assetIncrementTotal: DASHBOARD_ASSET_INCREMENT_TOTAL
     });
     if (request.cancellationToken?.isCancellationRequested) {
       return {
@@ -94,7 +194,7 @@ export function createMultiReportDashboardAction(
     const uriFile = deps.uriFile ?? vscode.Uri.file;
     await request.reportProgress?.({
       message: 'Opening VI Review Dashboard.',
-      increment: 15
+      increment: DASHBOARD_OPEN_INCREMENT
     });
     const panel = createWebviewPanel(
       'viHistorySuite.reviewDashboard',
@@ -214,6 +314,87 @@ export function createMultiReportDashboardAction(
   };
 }
 
+async function collectDashboardPairsNeedingEvidence(
+  storageRoot: string,
+  model: ViHistoryViewModel,
+  deps: MultiReportDashboardActionDeps
+): Promise<DashboardPairEvidenceCandidate[]> {
+  const readArchivedSourceRecord =
+    deps.readArchivedComparisonReportSourceRecord ??
+    readArchivedComparisonReportSourceRecordFromSelection;
+  const pathExists = deps.pathExists ?? defaultPathExists;
+  const pairs: DashboardPairEvidenceCandidate[] = [];
+
+  for (const commit of model.commits) {
+    if (!commit.previousHash) {
+      continue;
+    }
+
+    try {
+      const sourceRecord = await readArchivedSourceRecord({
+        storageRoot,
+        repositoryRoot: model.repositoryRoot,
+        relativePath: model.relativePath,
+        reportType: 'diff',
+        selectedHash: commit.hash,
+        baseHash: commit.previousHash
+      });
+      if (!sourceRecord) {
+        pairs.push({
+          selectedHash: commit.hash,
+          baseHash: commit.previousHash,
+          reason: 'missing-archive'
+        });
+        continue;
+      }
+
+      if (!sourceRecord.packetRecord.runtimeExecution.reportExists) {
+        pairs.push({
+          selectedHash: commit.hash,
+          baseHash: commit.previousHash,
+          reason: 'missing-generated-report'
+        });
+        continue;
+      }
+
+      if (!(await pathExists(sourceRecord.archivePlan.reportFilePath))) {
+        pairs.push({
+          selectedHash: commit.hash,
+          baseHash: commit.previousHash,
+          reason: 'missing-report-file'
+        });
+      }
+    } catch {
+      pairs.push({
+        selectedHash: commit.hash,
+        baseHash: commit.previousHash,
+        reason: 'missing-archive'
+      });
+    }
+  }
+
+  return pairs;
+}
+
+function buildDashboardPairPreparedMessage(
+  index: number,
+  total: number,
+  pair: DashboardPairEvidenceCandidate,
+  result: ComparisonReportActionResult
+): string {
+  const pairLabel = `${pair.selectedHash.slice(0, 8)} vs ${pair.baseHash.slice(0, 8)}`;
+  const reasonLabel =
+    pair.reason === 'missing-archive'
+      ? 'missing archive'
+      : pair.reason === 'missing-generated-report'
+        ? 'missing generated report'
+        : 'missing retained report file';
+  const completionLabel = result.generatedReportExists
+    ? 'retained generated comparison metadata is ready'
+    : 'retained pair evidence was refreshed without a generated comparison report';
+  return `Prepared dashboard pair ${index + 1}/${total}: ${pairLabel} (${reasonLabel}); ${completionLabel}.`;
+}
+
 interface DashboardArtifactMessage {
   command: 'openDashboardArtifact';
   filePath: string;
@@ -328,4 +509,13 @@ function escapeHtml(value: string): string {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
+}
+
+async function defaultPathExists(targetPath: string): Promise<boolean> {
+  try {
+    await fs.access(targetPath);
+    return true;
+  } catch {
+    return false;
+  }
 }
