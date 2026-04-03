@@ -202,6 +202,7 @@ export interface MultiReportDashboardPreparationSummary {
   preparedBlockedPairCount: number;
   preparedFailedPairCount: number;
   preparedNoGeneratedReportCount: number;
+  preparedMissingRetainedArchiveCount: number;
 }
 
 export async function buildAndPersistMultiReportDashboard(
@@ -1354,6 +1355,11 @@ function renderPreparationSummary(
         `${summary.preparedNoGeneratedReportCount} pair${summary.preparedNoGeneratedReportCount === 1 ? '' : 's'} without a generated report`
       );
     }
+    if (summary.preparedMissingRetainedArchiveCount > 0) {
+      outcomeParts.push(
+        `${summary.preparedMissingRetainedArchiveCount} pair${summary.preparedMissingRetainedArchiveCount === 1 ? '' : 's'} without retained archive evidence`
+      );
+    }
     const baseSummary = `${summary.preparedPairCount} adjacent pair(s) were refreshed for retained comparison evidence before this dashboard was concentrated.`;
     if (outcomeParts.length === 0) {
       return baseSummary;
@@ -1362,7 +1368,8 @@ function renderPreparationSummary(
     const needsFollowUpGuidance =
       summary.preparedBlockedPairCount > 0 ||
       summary.preparedFailedPairCount > 0 ||
-      summary.preparedNoGeneratedReportCount > 0;
+      summary.preparedNoGeneratedReportCount > 0 ||
+      summary.preparedMissingRetainedArchiveCount > 0;
     return `${baseSummary} Refresh outcomes: ${outcomeParts.join(', ')}.${needsFollowUpGuidance ? ' Review the pair ledger or Open compare for runtime doctor details.' : ''}`;
   }
 

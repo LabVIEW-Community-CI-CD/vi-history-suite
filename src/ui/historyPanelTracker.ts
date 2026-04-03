@@ -88,6 +88,8 @@ export interface HistoryPanelActionSummary {
   metadataFilePath?: string;
   reportWebviewUri?: string;
   generatedReportExists?: boolean;
+  retainedArchiveAvailable?: boolean;
+  archiveFailureReason?: 'retained-archive-unavailable' | 'retained-archive-write-failed';
   dashboardFilePath?: string;
   dashboardJsonFilePath?: string;
   dashboardPairCount?: number;

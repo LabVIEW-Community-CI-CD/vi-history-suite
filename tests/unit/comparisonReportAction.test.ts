@@ -1,3 +1,5 @@
+import * as path from 'node:path';
+
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildComparisonReportArchivePlanFromSelection } from '../../src/dashboard/comparisonReportArchive';
 
@@ -312,7 +314,24 @@ describe('comparisonReportAction', () => {
         archivePlan,
         packetRecord: {
           selectedHash: 'abcdef1234567890',
-          baseHash: '1111111122222222'
+          baseHash: '1111111122222222',
+          reportTitle: 'VI Comparison Report: foo.vi',
+          reportStatus: 'ready-for-runtime',
+          runtimeExecutionState: 'succeeded',
+          runtimeExecution: {
+            state: 'succeeded',
+            attempted: true,
+            reportExists: true
+          },
+          artifactPlan: {
+            repoId: archivePlan.repoId,
+            fileId: archivePlan.fileId,
+            normalizedRelativePath: 'foo.vi',
+            reportDirectory: archivePlan.archiveDirectory,
+            packetFilename: 'report-packet.html',
+            reportFilename: 'diff-report-foo.vi.html',
+            allowedLocalRootPaths: ['/workspace/.storage']
+          }
         }
       })
     );
@@ -355,6 +374,84 @@ describe('comparisonReportAction', () => {
     expect(createWebviewPanelMock).not.toHaveBeenCalled();
   });
 
+  it('returns a stable invalid-retained result when the archived retained comparison packet record violates the panel render contract', async () => {
+    const archivePlan = buildComparisonReportArchivePlanFromSelection({
+      storageRoot: '/workspace/.storage',
+      repositoryRoot: '/workspace/repo',
+      relativePath: 'foo.vi',
+      reportType: 'diff',
+      selectedHash: 'abcdef1234567890',
+      baseHash: '1111111122222222',
+      reportFilename: 'diff-report-foo.vi.html',
+      packetFilename: 'report-packet.html',
+      metadataFilename: 'report-metadata.json'
+    });
+    const pathExists = vi.fn().mockImplementation(async (targetPath: string) =>
+      targetPath === archivePlan.sourceRecordFilePath || targetPath === archivePlan.packetFilePath
+    );
+    const readFile = vi.fn().mockResolvedValue(
+      JSON.stringify({
+        archivePlan,
+        packetRecord: {
+          selectedHash: 'abcdef1234567890',
+          baseHash: '1111111122222222',
+          reportTitle: 'VI Comparison Report: foo.vi',
+          reportStatus: 'bogus',
+          runtimeExecutionState: 'succeeded',
+          runtimeExecution: {
+            state: 'succeeded',
+            attempted: true,
+            reportExists: true
+          },
+          artifactPlan: {
+            repoId: archivePlan.repoId,
+            fileId: archivePlan.fileId,
+            normalizedRelativePath: 'foo.vi',
+            reportDirectory: archivePlan.archiveDirectory,
+            packetFilename: 'report-packet.html',
+            reportFilename: 'diff-report-foo.vi.html',
+            allowedLocalRootPaths: ['/workspace/.storage']
+          }
+        }
+      })
+    );
+    const action = createOpenRetainedComparisonReportAction(
+      {
+        storageUri: createMockUri('/workspace/.storage')
+      } as never,
+      {
+        pathExists,
+        readFile: readFile as never
+      }
+    );
+
+    await expect(
+      action({
+        model: {
+          repositoryName: 'repo',
+          repositoryRoot: '/workspace/repo',
+          relativePath: 'foo.vi',
+          signature: 'LVIN',
+          eligible: true,
+          commits: [
+            {
+              hash: 'abcdef1234567890',
+              authorDate: '2026-04-02T00:00:00Z',
+              authorName: 'A User',
+              subject: 'Update VI',
+              previousHash: '1111111122222222'
+            }
+          ]
+        },
+        selectedHash: 'abcdef1234567890'
+      })
+    ).resolves.toEqual({
+      outcome: 'invalid-retained-comparison-report'
+    });
+
+    expect(createWebviewPanelMock).not.toHaveBeenCalled();
+  });
+
   it('returns a stable cancelled result when retained comparison opening is cancelled after the source record is loaded', async () => {
     const token = {
       isCancellationRequested: false
@@ -370,42 +467,43 @@ describe('comparisonReportAction', () => {
       packetFilename: 'report-packet.html',
       metadataFilename: 'report-metadata.json'
     });
-    const readFile = vi.fn().mockImplementation(async (targetPath: string) => {
-      if (targetPath.endsWith('source-record.json')) {
-        token.isCancellationRequested = true;
-        return JSON.stringify({
-          archivePlan,
-          packetRecord: {
-            selectedHash: 'abcdef1234567890',
-            baseHash: '1111111122222222',
-            reportTitle: 'VI Comparison Report: foo.vi',
-            reportStatus: 'ready-for-runtime',
-            runtimeExecutionState: 'succeeded',
-            runtimeExecution: {
-              state: 'succeeded',
-              attempted: true,
-              reportExists: true
-            },
-            artifactPlan: {
-              repoId: 'repoid123456',
-              fileId: 'fileid123456',
-              normalizedRelativePath: 'foo.vi',
-              reportDirectory: '/workspace/.storage/report-history/repoid123456/fileid123456/pairid123456',
-              packetFilename: 'report-packet.html',
-              reportFilename: 'diff-report-foo.vi.html',
-              allowedLocalRootPaths: ['/workspace/.storage']
-            }
+    const readFile = vi.fn().mockResolvedValue(
+      JSON.stringify({
+        archivePlan,
+        packetRecord: {
+          selectedHash: 'abcdef1234567890',
+          baseHash: '1111111122222222',
+          reportTitle: 'VI Comparison Report: foo.vi',
+          reportStatus: 'ready-for-runtime',
+          runtimeExecutionState: 'succeeded',
+          runtimeExecution: {
+            state: 'succeeded',
+            attempted: true,
+            reportExists: true
+          },
+          artifactPlan: {
+            repoId: archivePlan.repoId,
+            fileId: archivePlan.fileId,
+            normalizedRelativePath: 'foo.vi',
+            reportDirectory: archivePlan.archiveDirectory,
+            packetFilename: path.basename(archivePlan.packetFilePath),
+            reportFilename: path.basename(archivePlan.reportFilePath),
+            allowedLocalRootPaths: ['/workspace/.storage']
           }
-        });
-      }
-      return '';
-    });
+        }
+      })
+    );
     const action = createOpenRetainedComparisonReportAction(
       {
         storageUri: createMockUri('/workspace/.storage')
       } as never,
       {
-        pathExists: vi.fn().mockResolvedValue(true),
+        pathExists: vi.fn().mockImplementation(async (targetPath: string) => {
+          if (targetPath === archivePlan.packetFilePath) {
+            token.isCancellationRequested = true;
+          }
+          return true;
+        }),
         readFile: readFile as never
       }
     );
@@ -711,6 +809,7 @@ describe('comparisonReportAction', () => {
       metadataFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-metadata.json',
       reportWebviewUri:
         'webview:/webview/workspace/.storage/reports/repoid123456/fileid123456/report-packet.html',
+      retainedArchiveAvailable: true,
       generatedReportExists: false,
       displayedEvidenceKind: 'packet',
       title: 'VI Comparison Report: foo.vi'
@@ -878,6 +977,134 @@ describe('comparisonReportAction', () => {
       { message: 'Archiving comparison-report evidence.', increment: 5 },
       { message: 'Opening retained comparison-report view.', increment: 5 }
     ]);
+  });
+
+  it('opens the current comparison view but retains unavailable archive state when governed archive persistence fails', async () => {
+    const persistComparisonReport = vi.fn().mockResolvedValue({
+      record: {
+        reportTitle: 'VI Comparison Report: foo.vi',
+        reportStatus: 'blocked-preflight',
+        runtimeExecutionState: 'not-run',
+        preflight: {
+          normalizedRelativePath: 'foo.vi',
+          ready: false,
+          blockedReason: 'right-blob-not-vi',
+          left: {
+            revisionId: '1111111122222222',
+            blobSpecifier: '1111111122222222:foo.vi',
+            signature: 'LVIN',
+            isVi: true
+          },
+          right: {
+            revisionId: 'abcdef1234567890',
+            blobSpecifier: 'abcdef1234567890:foo.vi',
+            isVi: false,
+            blockedReason: 'blob-not-vi'
+          }
+        },
+        runtimeExecution: {
+          state: 'not-run',
+          attempted: false,
+          reportExists: false
+        },
+        runtimeSelection: {
+          platform: 'win32',
+          preferBitness: 'x86',
+          provider: 'host-native',
+          notes: [],
+          registryQueryPlans: [],
+          candidates: []
+        },
+        artifactPlan: {
+          repoId: 'repoid123456',
+          fileId: 'fileid123456',
+          normalizedRelativePath: 'foo.vi',
+          reportDirectory: '/workspace/.storage/reports/repoid123456/fileid123456',
+          packetFilename: 'report-packet.html',
+          reportFilename: 'diff-report-foo.vi.html',
+          allowedLocalRootPaths: ['/workspace/.storage']
+        }
+      },
+      packetFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-packet.html',
+      reportFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
+      metadataFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-metadata.json'
+    });
+    const action = createComparisonReportAction(
+      {
+        storageUri: createMockUri('/workspace/.storage')
+      } as never,
+      {
+        preflightComparisonReport: vi.fn().mockResolvedValue({
+          normalizedRelativePath: 'foo.vi',
+          ready: false,
+          blockedReason: 'right-blob-not-vi',
+          left: {
+            revisionId: '1111111122222222',
+            blobSpecifier: '1111111122222222:foo.vi',
+            signature: 'LVIN',
+            isVi: true
+          },
+          right: {
+            revisionId: 'abcdef1234567890',
+            blobSpecifier: 'abcdef1234567890:foo.vi',
+            isVi: false,
+            blockedReason: 'blob-not-vi'
+          }
+        }),
+        locateRuntime: vi.fn().mockResolvedValue({
+          platform: 'linux',
+          preferBitness: 'x86',
+          provider: 'host-native',
+          engine: 'labview-cli',
+          notes: [],
+          registryQueryPlans: [],
+          candidates: []
+        }),
+        getRuntimeSettings: () => ({
+          preferBitness: 'x86'
+        }),
+        persistComparisonReport,
+        archiveComparisonReportSource: vi.fn().mockRejectedValue(new Error('archive failed'))
+      }
+    );
+
+    await expect(
+      action({
+        model: {
+          repositoryName: 'repo',
+          repositoryRoot: '/workspace/repo',
+          relativePath: 'foo.vi',
+          signature: 'LVIN',
+          eligible: true,
+          commits: [
+            {
+              hash: 'abcdef1234567890',
+              authorDate: '2026-04-02T00:00:00Z',
+              authorName: 'A User',
+              subject: 'Update VI',
+              previousHash: '1111111122222222'
+            }
+          ]
+        },
+        selectedHash: 'abcdef1234567890'
+      })
+    ).resolves.toEqual({
+      outcome: 'opened-comparison-report',
+      reportStatus: 'blocked-preflight',
+      runtimeExecutionState: 'not-run',
+      blockedReason: 'right-blob-not-vi',
+      runtimeFailureReason: undefined,
+      packetFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-packet.html',
+      reportFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
+      metadataFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-metadata.json',
+      reportWebviewUri:
+        'webview:/webview/workspace/.storage/reports/repoid123456/fileid123456/report-packet.html',
+      generatedReportExists: false,
+      retainedArchiveAvailable: false,
+      archiveFailureReason: 'retained-archive-write-failed',
+      displayedEvidenceKind: 'packet',
+      title: 'VI Comparison Report: foo.vi'
+    });
   });
 
   it('opens the generated NI report directly in the live panel when one was retained', async () => {
@@ -1563,6 +1790,8 @@ describe('comparisonReportAction', () => {
       metadataFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-metadata.json',
       reportWebviewUri:
         'webview:/webview/workspace/.storage/reports/repoid123456/fileid123456/report-packet.html',
+      retainedArchiveAvailable: false,
+      archiveFailureReason: 'retained-archive-unavailable',
       generatedReportExists: false,
       displayedEvidenceKind: 'packet',
       title: 'VI Comparison Report: foo.vi'
@@ -1705,6 +1934,7 @@ describe('comparisonReportAction', () => {
       packetFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-packet.html',
       reportFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
       metadataFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-metadata.json',
+      retainedArchiveAvailable: true,
       generatedReportExists: false
     });
 
@@ -2034,6 +2264,8 @@ describe('comparisonReportAction', () => {
       metadataFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-metadata.json',
       reportWebviewUri:
         'webview:/webview/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
+      retainedArchiveAvailable: false,
+      archiveFailureReason: 'retained-archive-unavailable',
       generatedReportExists: true,
       displayedEvidenceKind: 'generated-report',
       title: 'VI Comparison Report: foo.vi'
@@ -2230,6 +2462,8 @@ describe('comparisonReportAction', () => {
       metadataFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-metadata.json',
       reportWebviewUri:
         'webview:/webview/workspace/.storage/reports/repoid123456/fileid123456/report-packet.html',
+      retainedArchiveAvailable: false,
+      archiveFailureReason: 'retained-archive-unavailable',
       generatedReportExists: false,
       displayedEvidenceKind: 'packet',
       title: 'VI Comparison Report: foo.vi'
@@ -2397,6 +2631,8 @@ describe('comparisonReportAction', () => {
       metadataFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-metadata.json',
       reportWebviewUri:
         'webview:/webview/workspace/.storage/reports/repoid123456/fileid123456/report-packet.html',
+      retainedArchiveAvailable: false,
+      archiveFailureReason: 'retained-archive-unavailable',
       generatedReportExists: true,
       displayedEvidenceKind: 'packet',
       title: 'VI Comparison Report: foo.vi'

@@ -66,6 +66,8 @@ export interface ComparisonReportActionResult {
   metadataFilePath?: string;
   reportWebviewUri?: string;
   generatedReportExists?: boolean;
+  retainedArchiveAvailable?: boolean;
+  archiveFailureReason?: 'retained-archive-unavailable' | 'retained-archive-write-failed';
   displayedEvidenceKind?: 'generated-report' | 'packet';
   title?: string;
 }
@@ -109,7 +111,9 @@ export function createComparisonReportAction(
         packetFilePath: ensured.packet.packetFilePath,
         reportFilePath: ensured.packet.reportFilePath,
         metadataFilePath: ensured.packet.metadataFilePath,
-        localResourceSegment: 'reports'
+        localResourceSegment: 'reports',
+        retainedArchiveAvailable: ensured.result.retainedArchiveAvailable,
+        archiveFailureReason: ensured.result.archiveFailureReason
       },
       deps
     );
@@ -213,7 +217,8 @@ export function createOpenRetainedComparisonReportAction(
         packetFilePath: sourceRecord.archivePlan.packetFilePath,
         reportFilePath: sourceRecord.archivePlan.reportFilePath,
         metadataFilePath: sourceRecord.archivePlan.metadataFilePath,
-        localResourceSegment: 'report-history'
+        localResourceSegment: 'report-history',
+        retainedArchiveAvailable: true
       },
       deps
     );
@@ -365,28 +370,49 @@ async function ensureComparisonReportEvidence(
       return buildCancelledComparisonReportResult('after-runtime-execution', packet);
     }
   }
+  let retainedArchiveAvailable = false;
+  let archiveFailureReason:
+    | ComparisonReportActionResult['archiveFailureReason']
+    | undefined;
   if (canArchiveComparisonReport(packet.record)) {
     await request.reportProgress?.({
       message: 'Archiving comparison-report evidence.',
       increment: 5
     });
-    await (deps.archiveComparisonReportSource ?? archiveComparisonReportSource)(packet.record);
-    if (request.cancellationToken?.isCancellationRequested) {
-      return buildCancelledComparisonReportResult('after-archive', packet);
+    try {
+      await (deps.archiveComparisonReportSource ?? archiveComparisonReportSource)(packet.record);
+      retainedArchiveAvailable = true;
+    } catch {
+      archiveFailureReason = 'retained-archive-write-failed';
     }
+    if (request.cancellationToken?.isCancellationRequested) {
+      return buildCancelledComparisonReportResult('after-archive', packet, {
+        retainedArchiveAvailable,
+        archiveFailureReason
+      });
+    }
+  } else {
+    archiveFailureReason = 'retained-archive-unavailable';
   }
 
   return {
     packet,
-    result: buildRetainedComparisonReportEvidenceResult(packet)
+    result: buildRetainedComparisonReportEvidenceResult(packet, {
+      retainedArchiveAvailable,
+      archiveFailureReason
+    })
   };
 }
 
 function buildCancelledComparisonReportResult(
   cancellationStage: string,
-  packet: Awaited<ReturnType<typeof persistComparisonReportPacket>> | Awaited<ReturnType<typeof executeComparisonReport>>
+  packet: Awaited<ReturnType<typeof persistComparisonReportPacket>> | Awaited<ReturnType<typeof executeComparisonReport>>,
+  options: {
+    retainedArchiveAvailable?: boolean;
+    archiveFailureReason?: ComparisonReportActionResult['archiveFailureReason'];
+  } = {}
 ): ComparisonReportActionResult {
-  return {
+  const result: ComparisonReportActionResult = {
     outcome: 'cancelled',
     cancellationStage,
     reportStatus: packet.record.reportStatus,
@@ -398,6 +424,13 @@ function buildCancelledComparisonReportResult(
     metadataFilePath: packet.metadataFilePath,
     generatedReportExists: packet.record.runtimeExecution.reportExists
   };
+  if (options.retainedArchiveAvailable !== undefined) {
+    result.retainedArchiveAvailable = options.retainedArchiveAvailable;
+  }
+  if (options.archiveFailureReason) {
+    result.archiveFailureReason = options.archiveFailureReason;
+  }
+  return result;
 }
 
 function canArchiveComparisonReport(
@@ -422,9 +455,13 @@ function deriveComparisonBlockedReason(
 }
 
 function buildRetainedComparisonReportEvidenceResult(
-  packet: Awaited<ReturnType<typeof persistComparisonReportPacket>> | Awaited<ReturnType<typeof executeComparisonReport>>
+  packet: Awaited<ReturnType<typeof persistComparisonReportPacket>> | Awaited<ReturnType<typeof executeComparisonReport>>,
+  options: {
+    retainedArchiveAvailable?: boolean;
+    archiveFailureReason?: ComparisonReportActionResult['archiveFailureReason'];
+  } = {}
 ): ComparisonReportActionResult {
-  return {
+  const result: ComparisonReportActionResult = {
     outcome: 'retained-comparison-report-evidence',
     reportStatus: packet.record.reportStatus,
     runtimeExecutionState: packet.record.runtimeExecutionState,
@@ -463,6 +500,13 @@ function buildRetainedComparisonReportEvidenceResult(
     generatedReportExists: packet.record.runtimeExecution.reportExists,
     title: packet.record.reportTitle
   };
+  if (options.retainedArchiveAvailable !== undefined) {
+    result.retainedArchiveAvailable = options.retainedArchiveAvailable;
+  }
+  if (options.archiveFailureReason) {
+    result.archiveFailureReason = options.archiveFailureReason;
+  }
+  return result;
 }
 
 async function openPersistedComparisonReportPanel(
@@ -473,6 +517,8 @@ async function openPersistedComparisonReportPanel(
     reportFilePath: string;
     metadataFilePath: string;
     localResourceSegment: 'reports' | 'report-history';
+    retainedArchiveAvailable?: boolean;
+    archiveFailureReason?: ComparisonReportActionResult['archiveFailureReason'];
   },
   deps: ComparisonReportActionDeps
 ): Promise<ComparisonReportActionResult> {
@@ -593,6 +639,12 @@ async function openPersistedComparisonReportPanel(
     displayedEvidenceKind,
     title: panel.title
   };
+  if (options.retainedArchiveAvailable !== undefined) {
+    result.retainedArchiveAvailable = options.retainedArchiveAvailable;
+  }
+  if (options.archiveFailureReason) {
+    result.archiveFailureReason = options.archiveFailureReason;
+  }
 
   if (options.record.runtimeExecution.diagnosticReason) {
     result.runtimeDiagnosticReason = options.record.runtimeExecution.diagnosticReason;
@@ -1088,7 +1140,57 @@ function isValidArchivedComparisonReportSourceRecord(
     return false;
   }
 
+  if (!isValidArchivedComparisonPacketRecord(packetRecord, expectedArchivePlan)) {
+    return false;
+  }
+
   return true;
+}
+
+function isValidArchivedComparisonPacketRecord(
+  value: Record<string, any>,
+  expectedArchivePlan: ComparisonReportArchivePlan
+): boolean {
+  if (
+    typeof value.reportTitle !== 'string' ||
+    value.reportTitle.length === 0 ||
+    !isValidComparisonReportStatus(value.reportStatus) ||
+    !isValidComparisonRuntimeExecutionState(value.runtimeExecutionState) ||
+    !isRecord(value.runtimeExecution) ||
+    !isValidComparisonRuntimeExecutionState(value.runtimeExecution.state) ||
+    typeof value.runtimeExecution.reportExists !== 'boolean' ||
+    !isRecord(value.artifactPlan)
+  ) {
+    return false;
+  }
+
+  const artifactPlan = value.artifactPlan;
+  return (
+    typeof artifactPlan.repoId === 'string' &&
+    artifactPlan.repoId.length > 0 &&
+    typeof artifactPlan.fileId === 'string' &&
+    artifactPlan.fileId.length > 0 &&
+    artifactPlan.repoId === expectedArchivePlan.repoId &&
+    artifactPlan.fileId === expectedArchivePlan.fileId &&
+    typeof artifactPlan.reportFilename === 'string' &&
+    artifactPlan.reportFilename.length > 0 &&
+    artifactPlan.reportFilename === path.basename(expectedArchivePlan.reportFilePath) &&
+    typeof artifactPlan.packetFilename === 'string' &&
+    artifactPlan.packetFilename.length > 0 &&
+    artifactPlan.packetFilename === path.basename(expectedArchivePlan.packetFilePath)
+  );
+}
+
+function isValidComparisonReportStatus(
+  value: unknown
+): value is ComparisonReportActionResult['reportStatus'] {
+  return value === 'ready-for-runtime' || value === 'blocked-preflight' || value === 'blocked-runtime';
+}
+
+function isValidComparisonRuntimeExecutionState(
+  value: unknown
+): value is ComparisonReportActionResult['runtimeExecutionState'] {
+  return value === 'not-run' || value === 'not-available' || value === 'succeeded' || value === 'failed';
 }
 
 function matchesExpectedArchivePath(value: unknown, expectedPath: string): boolean {

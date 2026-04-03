@@ -835,7 +835,7 @@ describe('multiReportDashboardAction', () => {
     ]);
   });
 
-  it('surfaces blocked, failed, and no-generated-report refresh outcomes during dashboard pair preparation', async () => {
+  it('surfaces blocked, failed, no-generated, and missing-archive refresh outcomes during dashboard pair preparation', async () => {
     const progressUpdates: Array<{ message: string; increment?: number }> = [];
     const readArchivedComparisonReportSourceRecord = vi.fn().mockResolvedValue(undefined);
     const writeFile = vi.fn().mockResolvedValue(undefined);
@@ -868,6 +868,14 @@ describe('multiReportDashboardAction', () => {
         reportStatus: 'ready-for-runtime',
         runtimeExecutionState: 'not-run',
         generatedReportExists: false
+      })
+      .mockResolvedValueOnce({
+        outcome: 'retained-comparison-report-evidence',
+        reportStatus: 'ready-for-runtime',
+        runtimeExecutionState: 'succeeded',
+        generatedReportExists: true,
+        retainedArchiveAvailable: false,
+        archiveFailureReason: 'retained-archive-write-failed'
       });
     const buildDashboard = vi.fn().mockResolvedValue({
       record: {
@@ -890,17 +898,17 @@ describe('multiReportDashboardAction', () => {
             '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/assets'
         },
         commitWindow: {
-          commitCount: 5,
-          pairCount: 4,
+          commitCount: 6,
+          pairCount: 5,
           newestHash: 'aaaaaaaabbbbbbbb',
-          oldestHash: '9999999900000000'
+          oldestHash: '7777777766666666'
         },
         summary: {
-          representedPairCount: 4,
+          representedPairCount: 5,
           windowCompletenessState: 'complete',
           archivedPairCount: 4,
-          missingPairCount: 0,
-          missingPairIds: [],
+          missingPairCount: 1,
+          missingPairIds: ['pair-5'],
           generatedReportCount: 1,
           reportMetadataPairCount: 1,
           failedPairCount: 1,
@@ -979,6 +987,13 @@ describe('multiReportDashboardAction', () => {
             hash: '9999999900000000',
             authorDate: '2026-04-01T00:00:00Z',
             authorName: 'E User',
+            subject: 'Revision 5',
+            previousHash: '7777777766666666'
+          },
+          {
+            hash: '7777777766666666',
+            authorDate: '2026-03-31T00:00:00Z',
+            authorName: 'F User',
             subject: 'Initial revision'
           }
         ]
@@ -988,33 +1003,40 @@ describe('multiReportDashboardAction', () => {
       }
     });
 
-    expect(readArchivedComparisonReportSourceRecord).toHaveBeenCalledTimes(4);
-    expect(ensureComparisonReportEvidence).toHaveBeenCalledTimes(4);
+    expect(readArchivedComparisonReportSourceRecord).toHaveBeenCalledTimes(5);
+    expect(ensureComparisonReportEvidence).toHaveBeenCalledTimes(5);
     expect(
       progressUpdates.some((update) =>
         update.message.includes(
-          'Prepared dashboard pair 1/4: aaaaaaaa vs cccccccc (missing archive); retained generated comparison metadata is ready.'
+          'Prepared dashboard pair 1/5: aaaaaaaa vs cccccccc (missing archive); retained generated comparison metadata is ready.'
         )
       )
     ).toBe(true);
     expect(
       progressUpdates.some((update) =>
         update.message.includes(
-          'Prepared dashboard pair 2/4: cccccccc vs eeeeeeee (missing archive); retained pair evidence is blocked (runtime-provider-unavailable).'
+          'Prepared dashboard pair 2/5: cccccccc vs eeeeeeee (missing archive); retained pair evidence is blocked (runtime-provider-unavailable).'
         )
       )
     ).toBe(true);
     expect(
       progressUpdates.some((update) =>
         update.message.includes(
-          'Prepared dashboard pair 3/4: eeeeeeee vs 11111111 (missing archive); retained pair evidence reflects a failed runtime (command-exited-nonzero).'
+          'Prepared dashboard pair 3/5: eeeeeeee vs 11111111 (missing archive); retained pair evidence reflects a failed runtime (command-exited-nonzero).'
         )
       )
     ).toBe(true);
     expect(
       progressUpdates.some((update) =>
         update.message.includes(
-          'Prepared dashboard pair 4/4: 11111111 vs 99999999 (missing archive); retained pair evidence was refreshed without a generated comparison report.'
+          'Prepared dashboard pair 4/5: 11111111 vs 99999999 (missing archive); retained pair evidence was refreshed without a generated comparison report.'
+        )
+      )
+    ).toBe(true);
+    expect(
+      progressUpdates.some((update) =>
+        update.message.includes(
+          'Prepared dashboard pair 5/5: 99999999 vs 77777777 (missing archive); comparison view opened, but retained archive evidence is unavailable (archive write failed).'
         )
       )
     ).toBe(true);
@@ -1024,7 +1046,7 @@ describe('multiReportDashboardAction', () => {
     >;
     expect(openedPanel.webview.html).toContain('data-testid="dashboard-preparation-summary"');
     expect(openedPanel.webview.html).toContain(
-      'Refresh outcomes: 1 generated report, 1 blocked pair, 1 failed pair, 1 pair without a generated report.'
+      'Refresh outcomes: 1 generated report, 1 blocked pair, 1 failed pair, 1 pair without a generated report, 1 pair without retained archive evidence.'
     );
     expect(openedPanel.webview.html).toContain(
       'Review the pair ledger or Open compare for runtime doctor details.'

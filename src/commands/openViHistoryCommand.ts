@@ -152,6 +152,12 @@ export function createOpenViHistoryCommand(
           generatedReportExists: result.generatedReportExists,
           title: result.title
         };
+        if (result.retainedArchiveAvailable !== undefined) {
+          actionSummary.retainedArchiveAvailable = result.retainedArchiveAvailable;
+        }
+        if (result.archiveFailureReason) {
+          actionSummary.archiveFailureReason = result.archiveFailureReason;
+        }
         if (result.runtimeDiagnosticReason) {
           actionSummary.runtimeDiagnosticReason = result.runtimeDiagnosticReason;
         }
@@ -301,10 +307,16 @@ export function createOpenViHistoryCommand(
           (result.outcome === 'opened-comparison-report' ||
             result.outcome === 'retained-comparison-report-evidence')
         ) {
-          const selectedCommit = model.commits.find((commit) => commit.hash === hash);
-          if (selectedCommit?.previousHash) {
-            selectedCommit.retainedComparisonEvidenceAvailable = true;
-            panel.webview.html = renderHistoryPanelHtml(model);
+          if (result.retainedArchiveAvailable === false) {
+            void vscode.window.showInformationMessage(
+              'VI Comparison Report opened, but retained pair evidence was not archived for later reuse. Use Refresh compare to rebuild retained evidence for this pair if Open compare remains unavailable.'
+            );
+          } else {
+            const selectedCommit = model.commits.find((commit) => commit.hash === hash);
+            if (selectedCommit?.previousHash) {
+              selectedCommit.retainedComparisonEvidenceAvailable = true;
+              panel.webview.html = renderHistoryPanelHtml(model);
+            }
           }
         }
 

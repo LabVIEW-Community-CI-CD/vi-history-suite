@@ -143,22 +143,23 @@ describe('buildAndPersistMultiReportDashboard', () => {
       {
         preparationSummary: {
           mode: 'backfilled-before-build',
-          pairsNeedingEvidenceCount: 4,
-          preparedPairCount: 4,
+          pairsNeedingEvidenceCount: 5,
+          preparedPairCount: 5,
           preparedGeneratedReportCount: 1,
           preparedBlockedPairCount: 1,
           preparedFailedPairCount: 1,
-          preparedNoGeneratedReportCount: 1
+          preparedNoGeneratedReportCount: 1,
+          preparedMissingRetainedArchiveCount: 1
         }
       }
     );
 
     expect(html).toContain('data-testid="dashboard-preparation-summary"');
     expect(html).toContain(
-      '4 adjacent pair(s) were refreshed for retained comparison evidence before this dashboard was concentrated.'
+      '5 adjacent pair(s) were refreshed for retained comparison evidence before this dashboard was concentrated.'
     );
     expect(html).toContain(
-      'Refresh outcomes: 1 generated report, 1 blocked pair, 1 failed pair, 1 pair without a generated report.'
+      'Refresh outcomes: 1 generated report, 1 blocked pair, 1 failed pair, 1 pair without a generated report, 1 pair without retained archive evidence.'
     );
     expect(html).toContain('Review the pair ledger or Open compare for runtime doctor details.');
   });

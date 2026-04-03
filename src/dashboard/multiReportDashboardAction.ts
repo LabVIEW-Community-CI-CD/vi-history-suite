@@ -80,7 +80,8 @@ type PreparedDashboardPairOutcome =
   | 'generated-report'
   | 'blocked'
   | 'failed'
-  | 'no-generated-report';
+  | 'no-generated-report'
+  | 'missing-retained-archive';
 
 const DASHBOARD_PAIR_EVIDENCE_INCREMENT_TOTAL = 40;
 const DASHBOARD_PAIR_CONCENTRATION_INCREMENT_TOTAL = 30;
@@ -139,7 +140,8 @@ export function createMultiReportDashboardAction(
       preparedGeneratedReportCount: 0,
       preparedBlockedPairCount: 0,
       preparedFailedPairCount: 0,
-      preparedNoGeneratedReportCount: 0
+      preparedNoGeneratedReportCount: 0,
+      preparedMissingRetainedArchiveCount: 0
     };
     if (pairsNeedingEvidence.length === 0) {
       await request.reportProgress?.({
@@ -158,7 +160,8 @@ export function createMultiReportDashboardAction(
         preparedGeneratedReportCount: 0,
         preparedBlockedPairCount: 0,
         preparedFailedPairCount: 0,
-        preparedNoGeneratedReportCount: 0
+        preparedNoGeneratedReportCount: 0,
+        preparedMissingRetainedArchiveCount: 0
       };
       await request.reportProgress?.({
         message: `This build cannot refresh ${pairsNeedingEvidence.length} dashboard pair(s) from Open dashboard. Concentrating the currently retained archive set only.`
@@ -172,7 +175,8 @@ export function createMultiReportDashboardAction(
         preparedGeneratedReportCount: 0,
         preparedBlockedPairCount: 0,
         preparedFailedPairCount: 0,
-        preparedNoGeneratedReportCount: 0
+        preparedNoGeneratedReportCount: 0,
+        preparedMissingRetainedArchiveCount: 0
       };
       pairConcentrationIncrementTotal = DASHBOARD_PAIR_CONCENTRATION_INCREMENT_TOTAL;
       const pairBudget =
@@ -540,12 +544,19 @@ function applyPreparedDashboardPairOutcome(
     summary.preparedFailedPairCount += 1;
     return;
   }
+  if (outcome === 'missing-retained-archive') {
+    summary.preparedMissingRetainedArchiveCount += 1;
+    return;
+  }
   summary.preparedNoGeneratedReportCount += 1;
 }
 
 function classifyPreparedDashboardPairOutcome(
   result: ComparisonReportActionResult
 ): PreparedDashboardPairOutcome {
+  if (result.retainedArchiveAvailable === false) {
+    return 'missing-retained-archive';
+  }
   if (result.generatedReportExists) {
     return 'generated-report';
   }
@@ -568,6 +579,13 @@ function classifyPreparedDashboardPairOutcome(
 function describePreparedDashboardPairOutcome(
   result: ComparisonReportActionResult
 ): string {
+  if (result.retainedArchiveAvailable === false) {
+    return `comparison view opened, but retained archive evidence is unavailable${formatPreparedDashboardPairReason(
+      result.archiveFailureReason === 'retained-archive-write-failed'
+        ? 'archive write failed'
+        : 'archive contract unavailable'
+    )}`;
+  }
   if (result.generatedReportExists) {
     return 'retained generated comparison metadata is ready';
   }

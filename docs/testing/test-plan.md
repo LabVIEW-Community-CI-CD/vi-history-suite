@@ -856,6 +856,15 @@
   before Markdown open preserves both dashboard and decision-record artifact
   paths and that the history command surface uses stable preserved-artifact
   cancellation guidance
+- `TEST-UNIT-239`: verify retained comparison reopening fails closed with
+  `invalid-retained-comparison-report` when the archived `packetRecord` payload
+  is present but lacks the render-critical contract required by the live panel
+- `TEST-UNIT-240`: verify comparison-report generation preserves the current
+  compare view yet records retained-archive unavailability when governed pair
+  archive persistence fails or is unavailable
+- `TEST-UNIT-241`: verify dashboard pair-preparation summaries count retained
+  archive-unavailable refreshes separately from generated, blocked, failed, and
+  no-generated-report outcomes
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed product, wiki, and assurance-skill repos with authority roles,
   expected remotes, and primary entrypoints

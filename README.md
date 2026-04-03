@@ -156,6 +156,10 @@ Committed and governed today:
 - decision-record cancellation that now stops cleanly after dashboard build,
   before decision-record persistence, and before Markdown open while preserving
   already-built dashboard or decision-record artifacts
+- compare generation that now preserves the current comparison view while
+  keeping `Generate compare` truthful whenever governed retained archive
+  persistence was unavailable or failed, plus retained-open validation that now
+  fails closed on malformed render-critical archived packet payloads
 - retained design gate that chooses the next tranche from committed evidence
 - retained design gate that refreshes `latest-report.{json,md}` after each
   successful stage so a stuck assurance tail does not leave stale tranche
