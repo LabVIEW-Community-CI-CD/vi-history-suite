@@ -5,13 +5,16 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 
 import {
+  classifyLabviewCliDiagnosticText,
   defaultNowIso,
   defaultNowMs,
   executeComparisonReport,
   normalizeWindowsInteropExecutable,
   normalizeWindowsInteropPath,
+  parseLabviewCliDiagnosticLogPath,
   normalizeComparisonProcessError,
   pathExistsForReport,
+  resolveHostReadableDiagnosticPath,
   requiresWindowsInterop,
   runComparisonCommandPlan
 } from '../../src/reporting/comparisonReportRuntimeExecution';
@@ -40,6 +43,8 @@ function createReadyRecord(): ComparisonReportPacketRecord {
       metadataFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-metadata.json',
       runtimeStdoutFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/runtime-stdout.txt',
       runtimeStderrFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/runtime-stderr.txt',
+      runtimeDiagnosticLogFilePath:
+        '/workspace/.storage/reports/repoid123456/fileid123456/runtime-diagnostic-log.txt',
       allowedLocalRootPaths: [
         '/workspace/.storage',
         '/workspace/.storage/reports/repoid123456'
@@ -379,6 +384,70 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(result.record.runtimeExecution.durationMs).toBe(2000);
   });
 
+  it('captures and classifies the NI CLI diagnostic log when LabVIEWPath is ignored', async () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.labviewCli = {
+      kind: 'labview-cli',
+      path: 'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+      source: 'configured',
+      exists: true,
+      bitness: 'x86'
+    };
+    const copyFile = vi.fn().mockResolvedValue(undefined);
+
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: copyFile as never,
+        readFile: vi.fn().mockResolvedValue(
+          '"LabVIEWPath" command line argument is not passed. Using last used LabVIEW: "C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe"\nLabVIEW launched successfully.\n'
+        ) as never,
+        pathExists: vi.fn(async (filePath: string) =>
+          filePath === 'C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log'
+        ),
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 1,
+          stdout:
+            'LabVIEWCLI started logging in file:  C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log\r\n',
+          stderr: ''
+        }),
+        nowIso: vi
+          .fn()
+          .mockReturnValueOnce('2026-04-02T01:00:00.000Z')
+          .mockReturnValueOnce('2026-04-02T01:00:02.000Z'),
+        nowMs: vi.fn().mockReturnValueOnce(1000).mockReturnValueOnce(3000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32'
+      }
+    );
+
+    expect(copyFile).toHaveBeenCalledWith(
+      'C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log',
+      '/workspace/.storage/reports/repoid123456/fileid123456/runtime-diagnostic-log.txt'
+    );
+    expect(result.record.runtimeExecution.diagnosticReason).toBe(
+      'labview-path-ignored-last-used-default'
+    );
+    expect(result.record.runtimeExecution.diagnosticLogSourcePath).toBe(
+      'C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log'
+    );
+    expect(result.record.runtimeExecution.diagnosticLogArtifactPath).toBe(
+      '/workspace/.storage/reports/repoid123456/fileid123456/runtime-diagnostic-log.txt'
+    );
+    expect(result.record.runtimeExecution.diagnosticNotes).toEqual([
+      'LabVIEW CLI ignored the explicit -LabVIEWPath selection and used the last-used LabVIEW instead: C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe.'
+    ]);
+  });
+
   it('normalizes staged, report, and executable paths for win32 execution from a non-Windows host', async () => {
     const runCommand = vi.fn().mockResolvedValue({
       exitCode: 0,
@@ -625,6 +694,27 @@ describe('comparisonReportRuntimeExecution', () => {
     ).toBe('/mnt/c/Program Files/National Instruments/Shared/LabVIEW CLI/LabVIEWCLI.exe');
     expect(normalizeWindowsInteropExecutable('LabVIEWCLI')).toBe('LabVIEWCLI');
     expect(normalizeWindowsInteropExecutable('   ')).toBeUndefined();
+    expect(
+      parseLabviewCliDiagnosticLogPath(
+        'LabVIEWCLI started logging in file:  C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log\r\n'
+      )
+    ).toBe('C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log');
+    expect(
+      resolveHostReadableDiagnosticPath(
+        'C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log',
+        'linux'
+      )
+    ).toBe('/mnt/c/Users/sveld/AppData/Local/Temp/lvtemporary_123.log');
+    expect(
+      classifyLabviewCliDiagnosticText(
+        '"LabVIEWPath" command line argument is not passed. Using last used LabVIEW: "C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe"\nLabVIEW launched successfully.'
+      )
+    ).toEqual({
+      reason: 'labview-path-ignored-last-used-default',
+      notes: [
+        'LabVIEW CLI ignored the explicit -LabVIEWPath selection and used the last-used LabVIEW instead: C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe.'
+      ]
+    });
     expect(requiresWindowsInterop('win32', 'linux')).toBe(true);
     expect(requiresWindowsInterop('win32', 'win32')).toBe(false);
     expect(requiresWindowsInterop('linux', 'linux')).toBe(false);

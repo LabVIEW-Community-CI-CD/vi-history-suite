@@ -321,6 +321,36 @@ describe('comparisonReportPacket', () => {
     expect(html).toContain('report-file-not-generated');
     expect(html).toContain('data-testid="comparison-report-generated-report-missing"');
   });
+
+  it('renders diagnostic log and classification facts when runtime diagnostics are retained', async () => {
+    const record = await createReadyPacketRecord();
+    const diagnosedRecord: ComparisonReportPacketRecord = {
+      ...record,
+      runtimeExecutionState: 'failed',
+      runtimeExecution: {
+        ...record.runtimeExecution,
+        state: 'failed',
+        attempted: true,
+        reportExists: false,
+        failureReason: 'command-exited-nonzero',
+        diagnosticReason: 'labview-path-ignored-last-used-default',
+        diagnosticNotes: [
+          'LabVIEW CLI ignored the explicit -LabVIEWPath selection and used the last-used LabVIEW instead: C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe.'
+        ],
+        diagnosticLogSourcePath: 'C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log',
+        diagnosticLogArtifactPath: '/workspace/.storage/reports/repoid123456/fileid123456/runtime-diagnostic-log.txt'
+      }
+    };
+
+    const html = renderComparisonReportPacketHtml(diagnosedRecord);
+
+    expect(html).toContain('Diagnostic reason:</strong> labview-path-ignored-last-used-default');
+    expect(html).toContain('runtime-diagnostic-log.txt');
+    expect(html).toContain(
+      'LabVIEW CLI ignored the explicit -LabVIEWPath selection and used the last-used LabVIEW instead'
+    );
+    expect(html).toContain('data-testid="comparison-report-runtime-diagnostics"');
+  });
 });
 
 async function createReadyPacketRecord(): Promise<ComparisonReportPacketRecord> {

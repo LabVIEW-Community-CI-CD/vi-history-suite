@@ -23,6 +23,10 @@ export interface ComparisonReportRuntimeExecution {
   reportExists: boolean;
   blockedReason?: string;
   failureReason?: string;
+  diagnosticReason?: string;
+  diagnosticNotes?: string[];
+  diagnosticLogSourcePath?: string;
+  diagnosticLogArtifactPath?: string;
   executable?: string;
   args?: string[];
   startedAt?: string;
@@ -217,9 +221,17 @@ export function renderComparisonReportPacketHtml(record: ComparisonReportPacketR
       <div><strong>Signal:</strong> ${escapeHtml(runtimeExecution.signal ?? 'none')}</div>
       <div><strong>Stdout artifact:</strong> ${escapeHtml(runtimeExecution.stdoutFilePath ?? 'none')}</div>
       <div><strong>Stderr artifact:</strong> ${escapeHtml(runtimeExecution.stderrFilePath ?? 'none')}</div>
+      <div><strong>Diagnostic reason:</strong> ${escapeHtml(runtimeExecution.diagnosticReason ?? 'none')}</div>
+      <div><strong>Diagnostic log artifact:</strong> ${escapeHtml(runtimeExecution.diagnosticLogArtifactPath ?? 'none')}</div>
+      <div><strong>Diagnostic log source:</strong> ${escapeHtml(runtimeExecution.diagnosticLogSourcePath ?? 'none')}</div>
     </div>
     <div class="note" data-testid="comparison-report-runtime-command">
       <strong>Command:</strong> ${escapeHtml(renderCommand(runtimeExecution))}
+    </div>
+    <div class="note" data-testid="comparison-report-runtime-diagnostics">
+      <strong>Diagnostic notes:</strong> ${escapeHtml(
+        runtimeExecution.diagnosticNotes?.join(' | ') || 'none'
+      )}
     </div>
     <h2>Generated report</h2>
     ${generatedReportSection}
@@ -261,7 +273,9 @@ function buildInitialRuntimeExecution(
       reportExists: false,
       blockedReason: runtimeSelection.blockedReason,
       stdoutFilePath: artifactPlan.runtimeStdoutFilePath,
-      stderrFilePath: artifactPlan.runtimeStderrFilePath
+      stderrFilePath: artifactPlan.runtimeStderrFilePath,
+      diagnosticLogArtifactPath: artifactPlan.runtimeDiagnosticLogFilePath,
+      diagnosticNotes: []
     };
   }
 
@@ -270,7 +284,9 @@ function buildInitialRuntimeExecution(
     attempted: false,
     reportExists: false,
     stdoutFilePath: artifactPlan.runtimeStdoutFilePath,
-    stderrFilePath: artifactPlan.runtimeStderrFilePath
+    stderrFilePath: artifactPlan.runtimeStderrFilePath,
+    diagnosticLogArtifactPath: artifactPlan.runtimeDiagnosticLogFilePath,
+    diagnosticNotes: []
   };
 }
 

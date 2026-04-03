@@ -264,6 +264,11 @@
   closed when the interop root is unavailable
 - `TEST-UNIT-076`: prove the canonical comparison-report smoke runner forwards a
   Windows interop workspace for win32 proof runs from non-Windows hosts
+- `TEST-UNIT-077`: prove the runtime executor captures the LabVIEW CLI
+  diagnostic log, retains the source and artifact paths, and classifies the
+  retained `-LabVIEWPath` ignored / last-used-LabVIEW message
+- `TEST-UNIT-078`: prove the packet and smoke artifact surfaces render the
+  retained NI diagnostic reason, diagnostic log path, and explanatory notes
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

@@ -29,6 +29,7 @@ export interface ComparisonReportRuntimeExecutionDeps {
   mkdir?: typeof fs.mkdir;
   writeFile?: typeof fs.writeFile;
   copyFile?: typeof fs.copyFile;
+  readFile?: typeof fs.readFile;
   pathExists?: (filePath: string) => Promise<boolean>;
   runCommand?: (commandPlan: ComparisonCommandPlan) => Promise<RunCommandResult>;
   nowIso?: () => string;
@@ -56,6 +57,7 @@ export async function executeComparisonReport(
   const mkdir = deps.mkdir ?? fs.mkdir;
   const writeFile = deps.writeFile ?? fs.writeFile;
   const copyFile = deps.copyFile ?? fs.copyFile;
+  const readFile = deps.readFile ?? fs.readFile;
   const pathExists = deps.pathExists ?? pathExistsForReport;
   const runCommand = deps.runCommand ?? runComparisonCommandPlan;
   const nowIso = deps.nowIso ?? defaultNowIso;
@@ -86,6 +88,7 @@ export async function executeComparisonReport(
         mkdir,
         writeFile,
         copyFile,
+        readFile,
         pathExists,
         runCommand,
         nowIso,
@@ -123,6 +126,7 @@ async function runHostNativeExecution(
     mkdir: typeof fs.mkdir;
     writeFile: typeof fs.writeFile;
     copyFile: typeof fs.copyFile;
+    readFile: typeof fs.readFile;
     pathExists: (filePath: string) => Promise<boolean>;
     runCommand: (commandPlan: ComparisonCommandPlan) => Promise<RunCommandResult>;
     nowIso: () => string;
@@ -205,6 +209,13 @@ async function runHostNativeExecution(
     const durationMs = Math.max(0, deps.nowMs() - startedMs);
     await deps.writeFile(record.artifactPlan.runtimeStdoutFilePath, commandResult.stdout, 'utf8');
     await deps.writeFile(record.artifactPlan.runtimeStderrFilePath, commandResult.stderr, 'utf8');
+    const diagnostics = await captureRuntimeDiagnostics(record, commandResult.stdout, {
+      pathExists: deps.pathExists,
+      copyFile: deps.copyFile,
+      readFile: deps.readFile,
+      mkdir: deps.mkdir,
+      processPlatform: deps.processPlatform
+    });
     const reportExists = await finalizeExecutedReport(
       record,
       executionContext,
@@ -225,6 +236,10 @@ async function runHostNativeExecution(
         : commandResult.exitCode !== 0
           ? 'command-exited-nonzero'
           : 'report-file-not-generated',
+      diagnosticReason: diagnostics.reason,
+      diagnosticNotes: diagnostics.notes,
+      diagnosticLogSourcePath: diagnostics.sourcePath,
+      diagnosticLogArtifactPath: diagnostics.artifactPath,
       executable: executionContext.commandPlan.executable,
       args: executionContext.commandPlan.args,
       startedAt,
@@ -241,12 +256,23 @@ async function runHostNativeExecution(
     const processError = normalizeComparisonProcessError(error);
     await deps.writeFile(record.artifactPlan.runtimeStdoutFilePath, processError.stdout, 'utf8');
     await deps.writeFile(record.artifactPlan.runtimeStderrFilePath, processError.stderr, 'utf8');
+    const diagnostics = await captureRuntimeDiagnostics(record, processError.stdout, {
+      pathExists: deps.pathExists,
+      copyFile: deps.copyFile,
+      readFile: deps.readFile,
+      mkdir: deps.mkdir,
+      processPlatform: deps.processPlatform
+    });
 
     return {
       state: 'failed',
       attempted: true,
       reportExists: false,
       failureReason: 'command-spawn-failed',
+      diagnosticReason: diagnostics.reason,
+      diagnosticNotes: diagnostics.notes,
+      diagnosticLogSourcePath: diagnostics.sourcePath,
+      diagnosticLogArtifactPath: diagnostics.artifactPath,
       executable: executionContext.commandPlan.executable,
       args: executionContext.commandPlan.args,
       startedAt,
@@ -257,6 +283,58 @@ async function runHostNativeExecution(
       stderrFilePath: record.artifactPlan.runtimeStderrFilePath
     };
   }
+}
+
+interface CapturedRuntimeDiagnostics {
+  reason?: string;
+  notes: string[];
+  sourcePath?: string;
+  artifactPath?: string;
+}
+
+async function captureRuntimeDiagnostics(
+  record: ComparisonReportPacketRecord,
+  stdout: string,
+  deps: {
+    pathExists: (filePath: string) => Promise<boolean>;
+    copyFile: typeof fs.copyFile;
+    readFile: typeof fs.readFile;
+    mkdir: typeof fs.mkdir;
+    processPlatform: NodeJS.Platform;
+  }
+): Promise<CapturedRuntimeDiagnostics> {
+  const diagnosticLogSourcePath = parseLabviewCliDiagnosticLogPath(stdout);
+  if (!diagnosticLogSourcePath) {
+    return {
+      notes: [],
+      artifactPath: record.artifactPlan.runtimeDiagnosticLogFilePath
+    };
+  }
+
+  const hostReadablePath = resolveHostReadableDiagnosticPath(
+    diagnosticLogSourcePath,
+    deps.processPlatform
+  );
+  if (!hostReadablePath || !(await deps.pathExists(hostReadablePath))) {
+    return {
+      notes: ['LabVIEW CLI reported a diagnostic log path, but the log file was not readable from the active host.'],
+      sourcePath: diagnosticLogSourcePath,
+      artifactPath: record.artifactPlan.runtimeDiagnosticLogFilePath,
+      reason: 'runtime-diagnostic-log-unreadable'
+    };
+  }
+
+  await deps.mkdir(path.dirname(record.artifactPlan.runtimeDiagnosticLogFilePath), { recursive: true });
+  await deps.copyFile(hostReadablePath, record.artifactPlan.runtimeDiagnosticLogFilePath);
+  const diagnosticText = await deps.readFile(hostReadablePath, 'utf8');
+  const classification = classifyLabviewCliDiagnosticText(diagnosticText);
+
+  return {
+    reason: classification.reason,
+    notes: classification.notes,
+    sourcePath: diagnosticLogSourcePath,
+    artifactPath: record.artifactPlan.runtimeDiagnosticLogFilePath
+  };
 }
 
 interface PreparedExecutionContext {
@@ -518,6 +596,49 @@ export function normalizeWindowsInteropExecutable(filePath: string): string | un
   const [, driveLetter, tail] = windowsPathMatch;
   const normalizedTail = tail.replaceAll('\\', '/');
   return `/mnt/${driveLetter.toLowerCase()}/${normalizedTail}`;
+}
+
+export function parseLabviewCliDiagnosticLogPath(stdout: string): string | undefined {
+  const match = stdout.match(/LabVIEWCLI started logging in file:\s*([^\r\n]+)/m);
+  return match?.[1]?.trim();
+}
+
+export function resolveHostReadableDiagnosticPath(
+  diagnosticLogPath: string,
+  processPlatform: NodeJS.Platform = process.platform
+): string | undefined {
+  if (processPlatform === 'win32') {
+    return diagnosticLogPath.trim() || undefined;
+  }
+
+  return normalizeWindowsInteropExecutable(diagnosticLogPath);
+}
+
+export function classifyLabviewCliDiagnosticText(diagnosticText: string): {
+  reason?: string;
+  notes: string[];
+} {
+  const notes: string[] = [];
+  const ignoredLabviewPathMatch = diagnosticText.match(
+    /"LabVIEWPath" command line argument is not passed\.\s*Using last used LabVIEW:\s*"([^"]+)"/i
+  );
+  if (ignoredLabviewPathMatch) {
+    notes.push(
+      `LabVIEW CLI ignored the explicit -LabVIEWPath selection and used the last-used LabVIEW instead: ${ignoredLabviewPathMatch[1]}.`
+    );
+    return {
+      reason: 'labview-path-ignored-last-used-default',
+      notes
+    };
+  }
+
+  if (/LabVIEW launched successfully\./i.test(diagnosticText)) {
+    notes.push('LabVIEW CLI reported that LabVIEW launched successfully before the operation failed.');
+  }
+
+  return {
+    notes
+  };
 }
 
 export function requiresWindowsInterop(

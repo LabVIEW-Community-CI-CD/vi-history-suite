@@ -28,6 +28,7 @@ export interface ComparisonArtifactPlan {
   metadataFilePath: string;
   runtimeStdoutFilePath: string;
   runtimeStderrFilePath: string;
+  runtimeDiagnosticLogFilePath: string;
   allowedLocalRootPaths: string[];
 }
 
@@ -73,6 +74,7 @@ const METADATA_FILENAME = 'report-metadata.json';
 const PACKET_FILENAME = 'report-packet.html';
 const RUNTIME_STDOUT_FILENAME = 'runtime-stdout.txt';
 const RUNTIME_STDERR_FILENAME = 'runtime-stderr.txt';
+const RUNTIME_DIAGNOSTIC_LOG_FILENAME = 'runtime-diagnostic-log.txt';
 
 export function buildComparisonArtifactPlan(
   options: ComparisonArtifactPlanOptions
@@ -102,10 +104,11 @@ export function buildComparisonArtifactPlan(
     reportFilePath: path.join(reportDirectory, reportFilename),
     packetFilename: PACKET_FILENAME,
     packetFilePath: path.join(reportDirectory, PACKET_FILENAME),
-    metadataFilePath: path.join(reportDirectory, METADATA_FILENAME),
-    runtimeStdoutFilePath: path.join(reportDirectory, RUNTIME_STDOUT_FILENAME),
-    runtimeStderrFilePath: path.join(reportDirectory, RUNTIME_STDERR_FILENAME),
-    allowedLocalRootPaths: [storageRoot, path.join(storageRoot, REPORTS_DIRECTORY, repoId)]
+  metadataFilePath: path.join(reportDirectory, METADATA_FILENAME),
+  runtimeStdoutFilePath: path.join(reportDirectory, RUNTIME_STDOUT_FILENAME),
+  runtimeStderrFilePath: path.join(reportDirectory, RUNTIME_STDERR_FILENAME),
+  runtimeDiagnosticLogFilePath: path.join(reportDirectory, RUNTIME_DIAGNOSTIC_LOG_FILENAME),
+  allowedLocalRootPaths: [storageRoot, path.join(storageRoot, REPORTS_DIRECTORY, repoId)]
   };
 }
 

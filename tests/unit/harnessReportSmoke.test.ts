@@ -26,6 +26,8 @@ describe('harness report smoke renderers', () => {
     runtimeEngine: 'labview-cli' as const,
     runtimeBlockedReason: undefined,
     runtimeFailureReason: undefined,
+    runtimeDiagnosticReason: 'labview-path-ignored-last-used-default',
+    runtimeDiagnosticLogPath: '/tmp/runtime-diagnostic-log.txt',
     runtimeNotes: ['Runtime note one', 'Runtime note two'],
     generatedReportExists: true,
     packetFilePath: '/tmp/report-packet.html',
@@ -38,6 +40,8 @@ describe('harness report smoke renderers', () => {
 
     expect(markdown).toContain('Harness Comparison Report Smoke');
     expect(markdown).toContain('Runtime execution: succeeded');
+    expect(markdown).toContain('Runtime diagnostic reason: labview-path-ignored-last-used-default');
+    expect(markdown).toContain('Runtime diagnostic log: /tmp/runtime-diagnostic-log.txt');
     expect(markdown).toContain('Runtime notes: Runtime note one | Runtime note two');
     expect(markdown).toContain('Generated report exists: yes');
     expect(markdown).toContain('/tmp/diff-report-foo.vi.html');
@@ -48,6 +52,8 @@ describe('harness report smoke renderers', () => {
 
     expect(html).toContain('Harness Comparison Report Smoke');
     expect(html).toContain('labview-cli');
+    expect(html).toContain('labview-path-ignored-last-used-default');
+    expect(html).toContain('/tmp/runtime-diagnostic-log.txt');
     expect(html).toContain('Runtime note one | Runtime note two');
     expect(html).toContain('diff-report-foo.vi.html');
   });

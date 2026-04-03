@@ -62,6 +62,8 @@ export interface HarnessReportSmokeReport {
   runtimeEngine?: ComparisonRuntimeSelection['engine'];
   runtimeBlockedReason?: string;
   runtimeFailureReason?: string;
+  runtimeDiagnosticReason?: string;
+  runtimeDiagnosticLogPath?: string;
   runtimeNotes: string[];
   generatedReportExists: boolean;
   packetFilePath?: string;
@@ -257,7 +259,9 @@ function buildHarnessReportSmokeReport(options: {
         ? record.runtimeSelection.blockedReason
         : record.preflight.blockedReason,
     runtimeFailureReason: record.runtimeExecution.failureReason,
-    runtimeNotes: record.runtimeSelection.notes,
+    runtimeDiagnosticReason: record.runtimeExecution.diagnosticReason,
+    runtimeDiagnosticLogPath: record.runtimeExecution.diagnosticLogArtifactPath,
+    runtimeNotes: [...record.runtimeSelection.notes, ...(record.runtimeExecution.diagnosticNotes ?? [])],
     generatedReportExists: record.runtimeExecution.reportExists,
     packetFilePath: options.packetFilePath,
     reportFilePath: options.reportFilePath,
@@ -284,6 +288,8 @@ export function renderHarnessReportSmokeMarkdown(report: HarnessReportSmokeRepor
 - Runtime engine: ${report.runtimeEngine ?? 'none'}
 - Runtime blocked reason: ${report.runtimeBlockedReason ?? 'none'}
 - Runtime failure reason: ${report.runtimeFailureReason ?? 'none'}
+- Runtime diagnostic reason: ${report.runtimeDiagnosticReason ?? 'none'}
+- Runtime diagnostic log: ${report.runtimeDiagnosticLogPath ?? 'none'}
 - Runtime notes: ${report.runtimeNotes.length > 0 ? report.runtimeNotes.join(' | ') : 'none'}
 - Generated report exists: ${report.generatedReportExists ? 'yes' : 'no'}
 - Packet file: ${report.packetFilePath ?? 'none'}
@@ -323,6 +329,8 @@ export function renderHarnessReportSmokeHtml(report: HarnessReportSmokeReport): 
       <div><strong>Runtime engine:</strong> ${escapeHtml(report.runtimeEngine ?? 'none')}</div>
       <div><strong>Runtime blocked reason:</strong> ${escapeHtml(report.runtimeBlockedReason ?? 'none')}</div>
       <div><strong>Runtime failure reason:</strong> ${escapeHtml(report.runtimeFailureReason ?? 'none')}</div>
+      <div><strong>Runtime diagnostic reason:</strong> ${escapeHtml(report.runtimeDiagnosticReason ?? 'none')}</div>
+      <div><strong>Runtime diagnostic log:</strong> ${escapeHtml(report.runtimeDiagnosticLogPath ?? 'none')}</div>
       <div><strong>Runtime notes:</strong> ${escapeHtml(
         report.runtimeNotes.length > 0 ? report.runtimeNotes.join(' | ') : 'none'
       )}</div>
