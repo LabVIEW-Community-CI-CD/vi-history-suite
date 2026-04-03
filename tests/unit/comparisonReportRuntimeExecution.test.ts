@@ -6,6 +6,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 
 import {
+  buildWindowsContainerCommandPlan,
   classifyLabviewCliDiagnosticText,
   buildWindowsContainerLabviewCliScript,
   defaultNowIso,
@@ -1431,6 +1432,47 @@ describe('comparisonReportRuntimeExecution', () => {
     ).toContain(
       "$labviewPath = 'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe'"
     );
+  });
+
+  it('fails closed when the Windows-container command planner lacks a governed engine or rewritten args', () => {
+    const missingEngineRecord = createReadyRecord();
+    missingEngineRecord.runtimeSelection.engine = undefined;
+
+    expect(
+      buildWindowsContainerCommandPlan(
+        missingEngineRecord,
+        {
+          executable: 'LabVIEWCLI',
+          args: ['-OperationName', 'CreateComparisonReport']
+        },
+        {
+          hostReportDirectory: 'C:\\vi-history-suite\\reports',
+          hostTempDirectory: 'C:\\vi-history-suite\\temp',
+          containerWorkspaceRoot: 'C:\\vi-history-suite\\workspace',
+          containerImage: 'ni/labview:2026q1-windows',
+          processPlatform: 'linux'
+        }
+      )
+    ).toBeUndefined();
+
+    const missingArgsRecord = createReadyRecord();
+    missingArgsRecord.runtimeSelection.engine = 'lvcompare';
+    expect(
+      buildWindowsContainerCommandPlan(
+        missingArgsRecord,
+        {
+          executable: 'LVCompare',
+          args: ['C:\\left.vi']
+        },
+        {
+          hostReportDirectory: 'C:\\vi-history-suite\\reports',
+          hostTempDirectory: 'C:\\vi-history-suite\\temp',
+          containerWorkspaceRoot: 'C:\\vi-history-suite\\workspace',
+          containerImage: 'ni/labview:2026q1-windows',
+          processPlatform: 'linux'
+        }
+      )
+    ).toBeUndefined();
   });
 
   it('retains an explicit launch-success note when the NI diagnostic log confirms LabVIEW launched', () => {

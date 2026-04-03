@@ -860,7 +860,7 @@ async function prepareWindowsContainerExecutionContext(
   };
 }
 
-function buildWindowsContainerCommandPlan(
+export function buildWindowsContainerCommandPlan(
   record: ComparisonReportPacketRecord,
   commandPlan: ComparisonCommandPlan,
   options: {

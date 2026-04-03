@@ -516,6 +516,9 @@
 - `TEST-UNIT-151`: prove the comparison-report plan builder trims a nonblank
   description into `-description` and omits `-c` plus `-o` when those options
   are explicitly disabled
+- `TEST-UNIT-152`: prove the Windows-container command planner fails closed
+  when no governed engine is selected or when the selected engine cannot be
+  rewritten into a container command
 - `TEST-DOC-014`: review the queue, epic, ADR, and current-state surfaces to
   prove the future-facing dashboard research was normalized into governed repo
   control-plane artifacts and the incoming research artifact was deleted
