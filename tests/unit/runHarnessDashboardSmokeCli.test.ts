@@ -27,6 +27,9 @@ describe('runHarnessDashboardSmokeCli', () => {
 
     expect(
       parseHarnessDashboardSmokeArgs([
+        '--harness-id',
+        'HARNESS-VHS-999',
+        '--strict-rsrc-header',
         '--platform',
         'win32',
         '--engine',
@@ -41,8 +44,8 @@ describe('runHarnessDashboardSmokeCli', () => {
         '4'
       ])
     ).toEqual({
-      harnessId: 'HARNESS-VHS-001',
-      strictRsrcHeader: false,
+      harnessId: 'HARNESS-VHS-999',
+      strictRsrcHeader: true,
       helpRequested: false,
       runtimePlatform: 'win32',
       runtimeEngineOverride: 'lvcompare',
@@ -55,6 +58,24 @@ describe('runHarnessDashboardSmokeCli', () => {
 
     expect(() => parseHarnessDashboardSmokeArgs(['--dashboard-commit-window', '2'])).toThrow(
       /Unsupported value for --dashboard-commit-window/
+    );
+    expect(() => parseHarnessDashboardSmokeArgs(['--platform', 'weird'])).toThrow(
+      /Unsupported value for --platform/
+    );
+    expect(() => parseHarnessDashboardSmokeArgs(['--engine', 'weird'])).toThrow(
+      /Unsupported value for --engine/
+    );
+    expect(() => parseHarnessDashboardSmokeArgs(['--prefer-bitness', 'bad'])).toThrow(
+      /Unsupported value for --prefer-bitness/
+    );
+    expect(() => parseHarnessDashboardSmokeArgs(['--labview-cli-path'])).toThrow(
+      /Missing value for --labview-cli-path/
+    );
+    expect(() => parseHarnessDashboardSmokeArgs(['--labview-exe-path'])).toThrow(
+      /Missing value for --labview-exe-path/
+    );
+    expect(() => parseHarnessDashboardSmokeArgs(['--lvcompare-path'])).toThrow(
+      /Missing value for --lvcompare-path/
     );
     expect(getHarnessDashboardSmokeUsage()).toContain('--dashboard-commit-window');
   });
@@ -92,7 +113,18 @@ describe('runHarnessDashboardSmokeCli', () => {
 
     await expect(
       runHarnessDashboardSmokeCli(
-        ['--platform', 'win32', '--dashboard-commit-window', '4'],
+        [
+          '--platform',
+          'win32',
+          '--dashboard-commit-window',
+          '4',
+          '--labview-cli-path',
+          'C:\\LabVIEWCLI.exe',
+          '--labview-exe-path',
+          'C:\\LabVIEW.exe',
+          '--lvcompare-path',
+          'C:\\LVCompare.exe'
+        ],
         {
           repoRoot: '/tmp/vi-history-suite',
           runner,
@@ -114,9 +146,9 @@ describe('runHarnessDashboardSmokeCli', () => {
       dashboardCommitWindow: 4,
       runtimeSettings: {
         preferBitness: undefined,
-        labviewCliPath: undefined,
-        labviewExePath: undefined,
-        lvComparePath: undefined
+        labviewCliPath: 'C:\\LabVIEWCLI.exe',
+        labviewExePath: 'C:\\LabVIEW.exe',
+        lvComparePath: 'C:\\LVCompare.exe'
       }
     });
     expect(writes.join('')).toContain('Harness dashboard smoke completed for HARNESS-VHS-001');
