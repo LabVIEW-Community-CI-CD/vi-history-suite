@@ -332,6 +332,10 @@ describe('comparisonReportPacket', () => {
         state: 'failed',
         attempted: true,
         reportExists: false,
+        doctorSummaryLines: [
+          'Selected provider=host-native; engine=labview-cli; platform=win32; preferBitness=x86.',
+          'Next action: use the retained runtime notes, stdout/stderr artifacts, and diagnostic log to correct the runtime environment, then rerun comparison report generation.'
+        ],
         failureReason: 'command-exited-nonzero',
         diagnosticReason: 'labview-path-ignored-last-used-default',
         diagnosticNotes: [
@@ -346,6 +350,8 @@ describe('comparisonReportPacket', () => {
 
     expect(html).toContain('Diagnostic reason:</strong> labview-path-ignored-last-used-default');
     expect(html).toContain('runtime-diagnostic-log.txt');
+    expect(html).toContain('data-testid="comparison-report-runtime-doctor"');
+    expect(html).toContain('Selected provider=host-native; engine=labview-cli; platform=win32; preferBitness=x86.');
     expect(html).toContain(
       'LabVIEW CLI ignored the explicit -LabVIEWPath selection and used the last-used LabVIEW instead'
     );

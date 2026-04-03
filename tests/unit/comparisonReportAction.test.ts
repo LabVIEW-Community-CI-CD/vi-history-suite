@@ -561,6 +561,10 @@ describe('comparisonReportAction', () => {
           state: 'failed',
           attempted: true,
           reportExists: false,
+          doctorSummaryLines: [
+            'Selected provider=host-native; engine=labview-cli; platform=win32; preferBitness=x86.',
+            'Next action: use the retained runtime notes, stdout/stderr artifacts, and diagnostic log to correct the runtime environment, then rerun comparison report generation.'
+          ],
           failureReason: 'command-exited-nonzero',
           diagnosticReason: 'labview-path-ignored-last-used-default',
           diagnosticNotes: [
@@ -703,6 +707,10 @@ describe('comparisonReportAction', () => {
         'C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log',
       runtimeDiagnosticLogArtifactPath:
         '/workspace/.storage/reports/repoid123456/fileid123456/runtime-diagnostic-log.txt',
+      runtimeDoctorSummaryLines: [
+        'Selected provider=host-native; engine=labview-cli; platform=win32; preferBitness=x86.',
+        'Next action: use the retained runtime notes, stdout/stderr artifacts, and diagnostic log to correct the runtime environment, then rerun comparison report generation.'
+      ],
       runtimeExecutable: 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
       runtimeArgs: ['-OperationName', 'CreateComparisonReport', '-LabVIEWPath', 'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'],
       runtimeProcessObservationArtifactPath:
@@ -730,6 +738,8 @@ describe('comparisonReportAction', () => {
     const panel = createWebviewPanelMock.mock.results.at(-1)?.value as MockPanel;
     expect(panel.webview.html).toContain('labview-path-ignored-last-used-default');
     expect(panel.webview.html).toContain('command-exited-nonzero');
+    expect(panel.webview.html).toContain('data-testid="comparison-report-panel-runtime-doctor"');
+    expect(panel.webview.html).toContain('Selected provider=host-native; engine=labview-cli; platform=win32; preferBitness=x86.');
     expect(panel.webview.html).toContain('Runtime diagnostic log source:</strong> C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log');
     expect(panel.webview.html).toContain('Runtime executable:</strong> C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe');
     expect(panel.webview.html).toContain('Runtime args:</strong> -OperationName CreateComparisonReport -LabVIEWPath C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe');

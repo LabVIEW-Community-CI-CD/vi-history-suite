@@ -30,6 +30,7 @@ export interface ComparisonReportActionResult {
   runtimeDiagnosticNotes?: string[];
   runtimeDiagnosticLogSourcePath?: string;
   runtimeDiagnosticLogArtifactPath?: string;
+  runtimeDoctorSummaryLines?: string[];
   runtimeExecutable?: string;
   runtimeArgs?: string[];
   runtimeProcessObservationArtifactPath?: string;
@@ -143,6 +144,7 @@ export function createComparisonReportAction(
       runtimeDiagnosticReason: packet.record.runtimeExecution.diagnosticReason,
       runtimeDiagnosticNotes: packet.record.runtimeExecution.diagnosticNotes,
       runtimeDiagnosticLogSourcePath: packet.record.runtimeExecution.diagnosticLogSourcePath,
+      runtimeDoctorSummaryLines: packet.record.runtimeExecution.doctorSummaryLines,
       runtimeProcessObservationArtifactPath:
         packet.record.runtimeExecution.processObservationArtifactPath,
       runtimeExecutable: packet.record.runtimeExecution.executable,
@@ -199,6 +201,10 @@ export function createComparisonReportAction(
     if (packet.record.runtimeExecution.diagnosticLogArtifactPath) {
       result.runtimeDiagnosticLogArtifactPath =
         packet.record.runtimeExecution.diagnosticLogArtifactPath;
+    }
+    if (packet.record.runtimeExecution.doctorSummaryLines?.length) {
+      result.runtimeDoctorSummaryLines =
+        packet.record.runtimeExecution.doctorSummaryLines;
     }
     if (packet.record.runtimeExecution.executable) {
       result.runtimeExecutable = packet.record.runtimeExecution.executable;
@@ -281,6 +287,7 @@ export function renderComparisonReportPanelHtml(options: {
   runtimeDiagnosticReason?: string;
   runtimeDiagnosticNotes?: string[];
   runtimeDiagnosticLogSourcePath?: string;
+  runtimeDoctorSummaryLines?: string[];
   runtimeProcessObservationArtifactPath?: string;
   runtimeExecutable?: string;
   runtimeArgs?: string[];
@@ -319,6 +326,12 @@ export function renderComparisonReportPanelHtml(options: {
     options.runtimeDiagnosticNotes && options.runtimeDiagnosticNotes.length > 0
       ? `<div><strong>Runtime notes:</strong><ul>${options.runtimeDiagnosticNotes
           .map((note) => `<li>${escapeHtml(note)}</li>`)
+          .join('')}</ul></div>`
+      : '';
+  const runtimeDoctorMarkup =
+    options.runtimeDoctorSummaryLines && options.runtimeDoctorSummaryLines.length > 0
+      ? `<div data-testid="comparison-report-panel-runtime-doctor"><strong>Runtime doctor:</strong><ul>${options.runtimeDoctorSummaryLines
+          .map((line) => `<li>${escapeHtml(line)}</li>`)
           .join('')}</ul></div>`
       : '';
   const processObservationMarkup = options.runtimeProcessObservationArtifactPath
@@ -413,6 +426,7 @@ export function renderComparisonReportPanelHtml(options: {
       ${failureReasonMarkup}
       ${diagnosticReasonMarkup}
       ${diagnosticLogSourceMarkup}
+      ${runtimeDoctorMarkup}
       ${diagnosticNotesMarkup}
       ${runtimeExecutableMarkup}
       ${runtimeArgsMarkup}

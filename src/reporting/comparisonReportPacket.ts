@@ -8,6 +8,7 @@ import {
   ComparisonReportType,
   StagedRevisionPlan
 } from './comparisonReportPlan';
+import { buildComparisonRuntimeDoctorSummary } from './comparisonRuntimeDoctor';
 import { ComparisonRuntimeSelection } from './comparisonRuntimeLocator';
 import { ComparisonReportPreflightResult } from './comparisonReportPreflight';
 
@@ -21,6 +22,7 @@ export interface ComparisonReportRuntimeExecution {
   state: ComparisonReportRuntimeExecutionState;
   attempted: boolean;
   reportExists: boolean;
+  doctorSummaryLines?: string[];
   blockedReason?: string;
   failureReason?: string;
   diagnosticReason?: string;
@@ -125,6 +127,7 @@ export async function persistComparisonReportPacket(
         : 'not-run'
   };
   record.runtimeExecutionState = record.runtimeExecution.state;
+  record.runtimeExecution.doctorSummaryLines = buildComparisonRuntimeDoctorSummary(record);
 
   await writeComparisonReportPacketRecord(record, deps);
 
@@ -155,6 +158,13 @@ export function renderComparisonReportPacketHtml(record: ComparisonReportPacketR
   const runtimeSelection = record.runtimeSelection;
   const runtimeExecution = record.runtimeExecution;
   const runtimeNote = renderRuntimeNote(record);
+  const runtimeDoctorMarkup =
+    runtimeExecution.doctorSummaryLines && runtimeExecution.doctorSummaryLines.length > 0
+      ? `<div class="note" data-testid="comparison-report-runtime-doctor">
+      <strong>Runtime doctor:</strong>
+      <ul>${runtimeExecution.doctorSummaryLines.map((line) => `<li>${escapeHtml(line)}</li>`).join('')}</ul>
+    </div>`
+      : '';
   const generatedReportSection = runtimeExecution.reportExists
     ? `<div class="status" data-testid="comparison-report-generated-report">
       <strong>Generated report file:</strong> ${escapeHtml(record.artifactPlan.reportFilename)}<br />
@@ -204,6 +214,7 @@ export function renderComparisonReportPacketHtml(record: ComparisonReportPacketR
     <div class="note" data-testid="comparison-report-runtime-note">
       <strong>Runtime note:</strong> ${escapeHtml(runtimeNote)}
     </div>
+    ${runtimeDoctorMarkup}
     <h2>Runtime selection</h2>
     <div class="grid" data-testid="comparison-report-runtime-selection">
       <div><strong>Provider:</strong> ${escapeHtml(runtimeSelection.provider)}</div>

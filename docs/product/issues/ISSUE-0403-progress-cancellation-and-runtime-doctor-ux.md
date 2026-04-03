@@ -44,4 +44,5 @@ requiring raw-log inspection.
 ## First Slice
 
 - add bounded progress state for dashboard/report refresh
-- add the first provider-doctor summary surface using existing runtime facts
+- add the first provider-doctor summary surface using existing runtime facts on
+  the retained comparison-report packet and live comparison-report panel

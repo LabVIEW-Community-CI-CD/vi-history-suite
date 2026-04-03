@@ -9,6 +9,7 @@ import {
   ComparisonReportRuntimeExecution,
   writeComparisonReportPacketRecord
 } from './comparisonReportPacket';
+import { buildComparisonRuntimeDoctorSummary } from './comparisonRuntimeDoctor';
 import { readRevisionBlob } from './comparisonReportPreflight';
 
 export interface ExecuteComparisonReportOptions {
@@ -165,8 +166,11 @@ export async function executeComparisonReport(
   const updatedRecord: ComparisonReportPacketRecord = {
     ...options.record,
     runtimeExecutionState: runtimeExecution.state,
-    runtimeExecution
+    runtimeExecution: {
+      ...runtimeExecution
+    }
   };
+  updatedRecord.runtimeExecution.doctorSummaryLines = buildComparisonRuntimeDoctorSummary(updatedRecord);
   await writePacketRecord(updatedRecord, {
     mkdir,
     writeFile

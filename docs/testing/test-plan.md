@@ -404,6 +404,13 @@
 - `TEST-UNIT-111`: prove rebuilding the same dashboard window removes stale
   copied dashboard assets before regenerating from the current retained pair
   archives
+- `TEST-UNIT-112`: prove the runtime-doctor summary is derived only from
+  retained runtime-selection and runtime-execution facts and emits one bounded
+  next action
+- `TEST-UNIT-113`: prove the stored comparison-report packet HTML renders the
+  retained runtime-doctor summary
+- `TEST-UNIT-114`: prove the live comparison-report panel surfaces the runtime
+  doctor summary alongside retained execution diagnostics
 - `TEST-DOC-014`: review the queue, epic, ADR, and current-state surfaces to
   prove the future-facing dashboard research was normalized into governed repo
   control-plane artifacts and the incoming research artifact was deleted

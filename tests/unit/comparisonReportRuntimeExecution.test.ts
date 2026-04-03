@@ -1535,6 +1535,87 @@ describe('comparisonReportRuntimeExecution', () => {
     });
   });
 
+  it('captures the LabVIEW CLI banner observation only once even when stdout repeats the banner', async () => {
+    const bannerObservation = {
+      capturedAt: '2026-04-03T00:00:01.000Z',
+      hostPlatform: 'linux' as const,
+      runtimePlatform: 'win32',
+      trigger: 'cli-log-banner' as const,
+      observedProcesses: [{ imageName: 'LabVIEWCLI.exe', pid: 44152 }],
+      observedProcessNames: ['LabVIEWCLI.exe'],
+      labviewProcessObserved: false,
+      labviewCliProcessObserved: true,
+      lvcompareProcessObserved: false
+    };
+    const exitObservation = {
+      capturedAt: '2026-04-03T00:00:02.000Z',
+      hostPlatform: 'linux' as const,
+      runtimePlatform: 'win32',
+      trigger: 'process-exit' as const,
+      observedProcesses: [],
+      observedProcessNames: [],
+      labviewProcessObserved: false,
+      labviewCliProcessObserved: false,
+      lvcompareProcessObserved: false
+    };
+    const observeWindowsProcesses = vi
+      .fn()
+      .mockResolvedValueOnce(bannerObservation)
+      .mockResolvedValueOnce(exitObservation);
+
+    const spawnImpl = vi.fn(() => {
+      const child = new EventEmitter() as EventEmitter & {
+        stdout: EventEmitter & { setEncoding: (encoding: string) => void };
+        stderr: EventEmitter & { setEncoding: (encoding: string) => void };
+      };
+      child.stdout = Object.assign(new EventEmitter(), {
+        setEncoding: (_encoding: string) => undefined
+      });
+      child.stderr = Object.assign(new EventEmitter(), {
+        setEncoding: (_encoding: string) => undefined
+      });
+
+      queueMicrotask(() => {
+        child.stdout.emit(
+          'data',
+          'LabVIEWCLI started logging in file:  C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log\r\n'
+        );
+        child.stdout.emit(
+          'data',
+          'LabVIEWCLI started logging in file:  C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log\r\n'
+        );
+        child.emit('close', 1, null);
+      });
+
+      return child as never;
+    });
+
+    await expect(
+      runComparisonCommandPlanWithObservation(
+        {
+          executable: '/mnt/c/Program Files (x86)/National Instruments/Shared/LabVIEW CLI/LabVIEWCLI.exe',
+          args: ['-OperationName', 'CreateComparisonReport']
+        },
+        {
+          spawnImpl: spawnImpl as never,
+          hostPlatform: 'linux',
+          runtimePlatform: 'win32',
+          observeWindowsProcesses
+        }
+      )
+    ).resolves.toEqual({
+      exitCode: 1,
+      signal: undefined,
+      stdout:
+        'LabVIEWCLI started logging in file:  C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log\r\n' +
+        'LabVIEWCLI started logging in file:  C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log\r\n',
+      stderr: '',
+      processObservation: bannerObservation,
+      exitProcessObservation: exitObservation
+    });
+    expect(observeWindowsProcesses).toHaveBeenCalledTimes(2);
+  });
+
   it('captures process observations at process spawn and again at process exit for lvcompare', async () => {
     const spawnObservation = {
       capturedAt: '2026-04-03T00:00:01.000Z',
@@ -1828,6 +1909,40 @@ describe('comparisonReportRuntimeExecution', () => {
         }
       )
     ).rejects.toThrow('exit-observation-failed');
+  });
+
+  it('fails with a container-command-build reason when a Windows container run has no supported PowerShell host', async () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.provider = 'windows-container';
+    record.runtimeSelection.windowsContainerImage = 'nationalinstruments/labview:2026q1-windows';
+    record.runtimeSelection.engine = 'labview-cli';
+
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo',
+        interopWorkspaceRoot: '/mnt/c/interop'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'darwin'
+      }
+    );
+
+    expect(result.record.runtimeExecutionState).toBe('failed');
+    expect(result.record.runtimeExecution.attempted).toBe(false);
+    expect(result.record.runtimeExecution.failureReason).toBe(
+      'windows-container-command-build-failed'
+    );
+    expect(result.record.runtimeExecution.doctorSummaryLines).toContain(
+      'Selected provider=windows-container; engine=labview-cli; platform=win32; preferBitness=x86.'
+    );
   });
 
   it('normalizes comparison-process errors and report-path existence using the default helpers', async () => {

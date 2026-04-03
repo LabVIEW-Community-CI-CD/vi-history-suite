@@ -79,6 +79,8 @@ Committed and governed today:
 - comparison-report preflight, staging, packet storage, and packet webview
 - LabVIEW 2026 Q1 runtime detection plus reliable Windows 64-bit isolated
   container report execution on the canonical harness
+- first runtime-doctor summaries on retained comparison-report packet and panel
+  surfaces
 - pairwise dashboard-source archiving so multiple report attempts for one VI can
   coexist without overwriting
 - concentrated dashboard JSON and HTML packets that recollect retained VI
