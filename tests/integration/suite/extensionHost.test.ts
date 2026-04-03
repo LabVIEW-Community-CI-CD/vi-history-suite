@@ -273,6 +273,8 @@ async function testPanelOpenFlow(
   assert.match(dashboardHtml, /data-testid="dashboard-chronology-order"/);
   assert.match(dashboardHtml, /data-testid="dashboard-metadata-summary"/);
   assert.match(dashboardHtml, /data-testid="dashboard-metadata-fields"/);
+  assert.match(dashboardHtml, /data-testid="dashboard-pair-ledger-summary"/);
+  assert.match(dashboardHtml, /data-testid="dashboard-pair-ledger"/);
   assert.match(
     dashboardHtml,
     /No retained VI Comparison Report metadata is currently available for this pair\./
@@ -283,6 +285,7 @@ async function testPanelOpenFlow(
   assert.equal(openedDashboard.dashboardArchivedPairCount, 2);
   assert.equal(openedDashboard.dashboardMissingPairCount, 0);
   assert.match(openedDashboard.renderedHtml, /data-testid="dashboard-review-lens"/);
+  assert.match(openedDashboard.renderedHtml, /data-testid="dashboard-pair-ledger"/);
   assert.match(openedDashboard.renderedHtml, /data-testid="dashboard-entry-provenance"/);
   assert.equal(api.getOpenDashboardPanelCount(), 1);
 

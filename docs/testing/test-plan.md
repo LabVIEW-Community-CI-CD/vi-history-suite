@@ -712,6 +712,10 @@
   dashboard packet artifacts prefer direct local HTML rendering with injected
   base-path/CSP controls, while failing soft to the older iframe wrapper if the
   local HTML file cannot be read
+- `TEST-UNIT-206`: prove the concentrated dashboard renders a chronology-first
+  pair metadata ledger that recollects retained NI pair metadata before the
+  detailed per-pair sections, including bounded no-metadata wording when a pair
+  has no retained NI report metadata
 - `TEST-INTEG-004`: run the real extension-host lane with retained comparison
   packet and dashboard artifact opening, and prove the flow completes without
   the earlier retained-HTML resource-host failure warning becoming a test

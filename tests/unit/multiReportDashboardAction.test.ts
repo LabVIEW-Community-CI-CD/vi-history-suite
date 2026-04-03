@@ -406,6 +406,10 @@ describe('multiReportDashboardAction', () => {
     expect(openedPanel.webview.html).toContain('data-testid="dashboard-metadata-summary"');
     expect(openedPanel.webview.html).toContain('data-testid="dashboard-metadata-fields"');
     expect(openedPanel.webview.html).toContain('data-testid="dashboard-review-lens"');
+    expect(openedPanel.webview.html).toContain('data-testid="dashboard-pair-ledger-summary"');
+    expect(openedPanel.webview.html).toContain(
+      'No retained pair metadata is currently available for this dashboard window.'
+    );
     expect(openedPanel.webview.html).toContain('data-testid="dashboard-overview-caption-concentration"');
     expect(openedPanel.webview.html).toContain('data-testid="dashboard-attribute-concentration"');
     expect(openedPanel.webview.html).toContain('data-testid="dashboard-detail-heading-concentration"');

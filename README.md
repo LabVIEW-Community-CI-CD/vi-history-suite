@@ -108,9 +108,10 @@ Committed and governed today:
   compared VI paths, whole-window overview-caption concentration,
   whole-window included-attribute concentration, whole-window
   detailed-information heading concentration, whole-window compared-path
-  concentration, whole-window detail-item concentration, per-pair metadata
-  counts, provider provenance, and retained overview image assets rendered on
-  the dashboard through webview-safe URIs
+  concentration, whole-window detail-item concentration, a chronology-first
+  pair metadata ledger, per-pair metadata counts, provider provenance, and
+  retained overview image assets rendered on the dashboard through webview-safe
+  URIs
 - bounded dashboard progress that surfaces commit-window preparation,
   pair-evidence backfill for missing or stale adjacent pairs, pair-by-pair
   concentration, retained-asset finalization, dashboard opening, and a

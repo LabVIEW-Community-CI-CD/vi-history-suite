@@ -413,6 +413,34 @@ describe('buildAndPersistMultiReportDashboard', () => {
       'data-testid="dashboard-compared-path-concentration"'
     );
     await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
+      'data-testid="dashboard-pair-ledger-summary"'
+    );
+    await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
+      'data-testid="dashboard-pair-ledger"'
+    );
+    await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
+      'data-testid="dashboard-pair-ledger-report"'
+    );
+    await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
+      'data-testid="dashboard-pair-ledger-detail-items"'
+    );
+    await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain('Pair 1 of 2');
+    await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
+      'Compared VI paths:</strong> First VI=C:\\compare\\Base.vi · Second VI=C:\\compare\\Head.vi'
+    );
+    await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
+      'Overview captions:</strong> Front Panel Overview (1 image(s))'
+    );
+    await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
+      'Included attributes:</strong> Front Panel'
+    );
+    await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
+      'Excluded attributes:</strong> none'
+    );
+    await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
+      'Detail items:</strong> VI Version : changed from &quot;21.0&quot; to &quot;20.0&quot;'
+    );
+    await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
       'data-testid="dashboard-overview-caption-concentration"'
     );
     await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(

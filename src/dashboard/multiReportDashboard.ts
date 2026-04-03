@@ -429,6 +429,11 @@ export function renderMultiReportDashboardHtml(
         )
         .join('')}</ul>`
     : 'No retained detailed-information item concentration is currently available for this window.';
+  const pairLedgerHtml = record.entries.length
+    ? `<div class="pair-ledger" data-testid="dashboard-pair-ledger">${record.entries
+        .map((entry, index) => renderPairMetadataLedgerRow(entry, index, record.entries.length))
+        .join('')}</div>`
+    : '<div class="note">No retained pair metadata is currently available for this dashboard window.</div>';
   const entriesHtml = record.entries
     .map((entry, index) => {
       const parsed = entry.parsedReport;
@@ -596,6 +601,27 @@ export function renderMultiReportDashboardHtml(
         grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
         gap: 12px;
       }
+      .pair-ledger {
+        display: grid;
+        gap: 12px;
+        margin: 12px 0;
+      }
+      .pair-ledger-row {
+        border: 1px solid var(--vscode-panel-border, #555);
+        padding: 12px;
+        background: color-mix(in srgb, var(--vscode-editor-background, #1e1e1e) 94%, white 6%);
+      }
+      .pair-ledger-row h3 {
+        margin: 0 0 8px 0;
+      }
+      .pair-ledger-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(280px, 1fr));
+        gap: 10px 16px;
+      }
+      .pair-ledger-block {
+        line-height: 1.45;
+      }
       .image-card {
         margin: 0;
         border: 1px solid var(--vscode-panel-border, #555);
@@ -684,6 +710,10 @@ export function renderMultiReportDashboardHtml(
       <div class="note" data-testid="dashboard-metadata-fields">
         <strong>Retained metadata fields:</strong> report title, generation time, compared VI paths, overview section captions and image counts, included attributes, and detailed-information headings and items.
       </div>
+      <div class="note" data-testid="dashboard-pair-ledger-summary">
+        <strong>Chronology-first pair metadata ledger:</strong> every adjacent pair is listed once here with its retained NI comparison-report metadata so expert review can compare the whole window before dropping into the detailed per-pair sections below.
+      </div>
+      ${pairLedgerHtml}
       ${etaAccuracySummaryHtml}
       <div class="note" data-testid="dashboard-compared-path-concentration">
         <strong>Compared VI path concentration:</strong>
@@ -712,6 +742,93 @@ export function renderMultiReportDashboardHtml(
     ${entriesHtml}
   </body>
 </html>`;
+}
+
+function renderPairMetadataLedgerRow(
+  entry: MultiReportDashboardEntry,
+  index: number,
+  pairCount: number
+): string {
+  const parsed = entry.parsedReport;
+  const chronologySummary = `<strong>Selected:</strong> ${escapeHtml(
+    entry.selectedSubject
+  )} <code>${escapeHtml(entry.selectedHash.slice(0, 8))}</code> · <strong>Base:</strong> ${escapeHtml(
+    entry.baseSubject ?? 'none'
+  )} <code>${escapeHtml(entry.baseHash.slice(0, 8))}</code>`;
+
+  if (!parsed) {
+    return `<section class="pair-ledger-row" data-testid="dashboard-pair-ledger-row">
+      <h3>Pair ${index + 1} of ${pairCount}</h3>
+      <div class="pair-ledger-block" data-testid="dashboard-pair-ledger-chronology">${chronologySummary}</div>
+      <div class="note" data-testid="dashboard-pair-ledger-no-metadata">
+        No retained VI Comparison Report metadata is currently available for this pair.
+      </div>
+    </section>`;
+  }
+
+  return `<section class="pair-ledger-row" data-testid="dashboard-pair-ledger-row">
+    <h3>Pair ${index + 1} of ${pairCount}</h3>
+    <div class="pair-ledger-block" data-testid="dashboard-pair-ledger-chronology">${chronologySummary}</div>
+    <div class="pair-ledger-grid">
+      <div class="pair-ledger-block" data-testid="dashboard-pair-ledger-report">
+        <strong>Report:</strong> ${escapeHtml(parsed.reportTitle)} · generated ${escapeHtml(
+          parsed.generationTime ?? 'none'
+        )}
+      </div>
+      <div class="pair-ledger-block" data-testid="dashboard-pair-ledger-compared-paths">
+        <strong>Compared VI paths:</strong> First VI=${escapeHtml(
+          parsed.firstViPath ?? 'none'
+        )} · Second VI=${escapeHtml(parsed.secondViPath ?? 'none')}
+      </div>
+      <div class="pair-ledger-block" data-testid="dashboard-pair-ledger-overview">
+        <strong>Overview captions:</strong> ${escapeHtml(formatOverviewCaptionLedger(parsed))}
+      </div>
+      <div class="pair-ledger-block" data-testid="dashboard-pair-ledger-attributes">
+        <strong>Included attributes:</strong> ${escapeHtml(
+          formatAttributeLedger(parsed, true)
+        )}<br />
+        <strong>Excluded attributes:</strong> ${escapeHtml(formatAttributeLedger(parsed, false))}
+      </div>
+      <div class="pair-ledger-block" data-testid="dashboard-pair-ledger-detail-headings">
+        <strong>Detail headings:</strong> ${escapeHtml(formatDetailHeadingLedger(parsed))}
+      </div>
+      <div class="pair-ledger-block" data-testid="dashboard-pair-ledger-detail-items">
+        <strong>Detail items:</strong> ${escapeHtml(formatDetailItemLedger(parsed))}
+      </div>
+    </div>
+  </section>`;
+}
+
+function formatOverviewCaptionLedger(parsed: ParsedNiComparisonReport): string {
+  if (parsed.overviewSections.length === 0) {
+    return 'none';
+  }
+
+  return parsed.overviewSections
+    .map((section) => `${section.caption} (${section.images.length} image(s))`)
+    .join('; ');
+}
+
+function formatAttributeLedger(parsed: ParsedNiComparisonReport, included: boolean): string {
+  const labels = parsed.includedAttributes
+    .filter((attribute) => attribute.included === included)
+    .map((attribute) => attribute.label);
+  return labels.length > 0 ? labels.join('; ') : 'none';
+}
+
+function formatDetailHeadingLedger(parsed: ParsedNiComparisonReport): string {
+  if (parsed.detailSections.length === 0) {
+    return 'none';
+  }
+
+  return parsed.detailSections
+    .map((section) => `${section.heading} (${section.items.length} item(s))`)
+    .join('; ');
+}
+
+function formatDetailItemLedger(parsed: ParsedNiComparisonReport): string {
+  const items = parsed.detailSections.flatMap((section) => section.items);
+  return items.length > 0 ? items.join('; ') : 'none';
 }
 
 function buildMultiReportDashboardArtifactPlan(
