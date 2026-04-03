@@ -242,7 +242,8 @@ export async function locateComparisonRuntime(
       provider: 'unavailable',
       blockedReason: 'labview-exe-not-found',
       notes: [
-        'No supported LabVIEW 2026 runtime was located for report generation.'
+        'No supported LabVIEW 2026 runtime was located for report generation.',
+        'Install LabVIEW 2026 Q1 or configure viHistorySuite.labviewExePath to an explicit LabVIEW 2026 executable.'
       ],
       registryQueryPlans,
       candidates
@@ -291,6 +292,10 @@ export async function locateComparisonRuntime(
       'Linux report generation remains best-effort; configure viHistorySuite.labviewCliPath when LabVIEW CLI is installed outside documented scan roots.'
     );
   }
+
+  notes.push(
+    'Configure viHistorySuite.labviewCliPath or viHistorySuite.lvComparePath to an installed comparison tool when the documented scan roots do not contain one.'
+  );
 
   return {
     platform,

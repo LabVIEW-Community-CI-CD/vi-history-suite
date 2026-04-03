@@ -26,6 +26,7 @@ describe('harness report smoke renderers', () => {
     runtimeEngine: 'labview-cli' as const,
     runtimeBlockedReason: undefined,
     runtimeFailureReason: undefined,
+    runtimeNotes: ['Runtime note one', 'Runtime note two'],
     generatedReportExists: true,
     packetFilePath: '/tmp/report-packet.html',
     reportFilePath: '/tmp/diff-report-foo.vi.html',
@@ -37,6 +38,7 @@ describe('harness report smoke renderers', () => {
 
     expect(markdown).toContain('Harness Comparison Report Smoke');
     expect(markdown).toContain('Runtime execution: succeeded');
+    expect(markdown).toContain('Runtime notes: Runtime note one | Runtime note two');
     expect(markdown).toContain('Generated report exists: yes');
     expect(markdown).toContain('/tmp/diff-report-foo.vi.html');
   });
@@ -46,6 +48,7 @@ describe('harness report smoke renderers', () => {
 
     expect(html).toContain('Harness Comparison Report Smoke');
     expect(html).toContain('labview-cli');
+    expect(html).toContain('Runtime note one | Runtime note two');
     expect(html).toContain('diff-report-foo.vi.html');
   });
 
@@ -320,6 +323,7 @@ describe('runHarnessReportSmoke', () => {
     expect(result.report.reportStatus).toBe('missing-compare-pair');
     expect(result.report.runtimeExecutionState).toBe('not-applicable');
     expect(result.report.runtimeFailureReason).toBe('missing-compare-pair');
+    expect(result.report.runtimeNotes).toEqual([]);
     expect(result.report.generatedAt).toBe('2026-04-03T01:02:03.000Z');
     expect(preflightComparisonReportRevisions).not.toHaveBeenCalled();
     expect(locateComparisonRuntime).not.toHaveBeenCalled();
@@ -463,6 +467,7 @@ describe('runHarnessReportSmoke', () => {
     expect(result.report.reportStatus).toBe('blocked-runtime');
     expect(result.report.runtimeExecutionState).toBe('not-available');
     expect(result.report.runtimeBlockedReason).toBe('comparison-tool-not-found');
+    expect(result.report.runtimeNotes).toEqual(['Tool not installed on this host.']);
     expect(result.report.generatedReportExists).toBe(false);
   });
 });

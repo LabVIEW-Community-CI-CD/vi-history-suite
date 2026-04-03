@@ -61,6 +61,7 @@ export interface HarnessReportSmokeReport {
   runtimeEngine?: ComparisonRuntimeSelection['engine'];
   runtimeBlockedReason?: string;
   runtimeFailureReason?: string;
+  runtimeNotes: string[];
   generatedReportExists: boolean;
   packetFilePath?: string;
   reportFilePath?: string;
@@ -130,6 +131,7 @@ export async function runHarnessReportSmoke(
       reportStatus: 'missing-compare-pair',
       runtimeExecutionState: 'not-applicable',
       runtimeFailureReason: 'missing-compare-pair',
+      runtimeNotes: [],
       generatedReportExists: false
     };
   } else {
@@ -245,6 +247,7 @@ function buildHarnessReportSmokeReport(options: {
         ? record.runtimeSelection.blockedReason
         : record.preflight.blockedReason,
     runtimeFailureReason: record.runtimeExecution.failureReason,
+    runtimeNotes: record.runtimeSelection.notes,
     generatedReportExists: record.runtimeExecution.reportExists,
     packetFilePath: options.packetFilePath,
     reportFilePath: options.reportFilePath,
@@ -271,6 +274,7 @@ export function renderHarnessReportSmokeMarkdown(report: HarnessReportSmokeRepor
 - Runtime engine: ${report.runtimeEngine ?? 'none'}
 - Runtime blocked reason: ${report.runtimeBlockedReason ?? 'none'}
 - Runtime failure reason: ${report.runtimeFailureReason ?? 'none'}
+- Runtime notes: ${report.runtimeNotes.length > 0 ? report.runtimeNotes.join(' | ') : 'none'}
 - Generated report exists: ${report.generatedReportExists ? 'yes' : 'no'}
 - Packet file: ${report.packetFilePath ?? 'none'}
 - Report file: ${report.reportFilePath ?? 'none'}
@@ -309,6 +313,9 @@ export function renderHarnessReportSmokeHtml(report: HarnessReportSmokeReport): 
       <div><strong>Runtime engine:</strong> ${escapeHtml(report.runtimeEngine ?? 'none')}</div>
       <div><strong>Runtime blocked reason:</strong> ${escapeHtml(report.runtimeBlockedReason ?? 'none')}</div>
       <div><strong>Runtime failure reason:</strong> ${escapeHtml(report.runtimeFailureReason ?? 'none')}</div>
+      <div><strong>Runtime notes:</strong> ${escapeHtml(
+        report.runtimeNotes.length > 0 ? report.runtimeNotes.join(' | ') : 'none'
+      )}</div>
       <div><strong>Generated report exists:</strong> ${report.generatedReportExists ? 'yes' : 'no'}</div>
       <div><strong>Packet file:</strong> ${escapeHtml(report.packetFilePath ?? 'none')}</div>
       <div><strong>Report file:</strong> ${escapeHtml(report.reportFilePath ?? 'none')}</div>

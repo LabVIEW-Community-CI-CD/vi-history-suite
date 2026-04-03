@@ -145,6 +145,9 @@ describe('comparisonRuntimeLocator', () => {
 
     expect(result.provider).toBe('unavailable');
     expect(result.blockedReason).toBe('labview-exe-not-found');
+    expect(result.notes).toContain(
+      'Install LabVIEW 2026 Q1 or configure viHistorySuite.labviewExePath to an explicit LabVIEW 2026 executable.'
+    );
   });
 
   it('retains the best-effort Linux note when LabVIEW exists but no comparison tool is available', async () => {
@@ -163,6 +166,9 @@ describe('comparisonRuntimeLocator', () => {
     expect(result.labviewExe?.path).toBe('/usr/local/natinst/LabVIEW-2026Q1-64/labview');
     expect(result.notes).toContain(
       'Linux report generation remains best-effort; configure viHistorySuite.labviewCliPath when LabVIEW CLI is installed outside documented scan roots.'
+    );
+    expect(result.notes).toContain(
+      'Configure viHistorySuite.labviewCliPath or viHistorySuite.lvComparePath to an installed comparison tool when the documented scan roots do not contain one.'
     );
   });
 
