@@ -37,6 +37,8 @@ export interface ComparisonReportRuntimeExecution {
   stdoutFilePath?: string;
   stderrFilePath?: string;
   processObservationArtifactPath?: string;
+  processObservationCapturedAt?: string;
+  processObservationTrigger?: string;
   observedProcessNames?: string[];
   labviewProcessObserved?: boolean;
   labviewCliProcessObserved?: boolean;
@@ -228,6 +230,12 @@ export function renderComparisonReportPacketHtml(record: ComparisonReportPacketR
       <div><strong>Stderr artifact:</strong> ${escapeHtml(runtimeExecution.stderrFilePath ?? 'none')}</div>
       <div><strong>Process observation artifact:</strong> ${escapeHtml(
         runtimeExecution.processObservationArtifactPath ?? 'none'
+      )}</div>
+      <div><strong>Process observation captured at:</strong> ${escapeHtml(
+        runtimeExecution.processObservationCapturedAt ?? 'none'
+      )}</div>
+      <div><strong>Process observation trigger:</strong> ${escapeHtml(
+        runtimeExecution.processObservationTrigger ?? 'none'
       )}</div>
       <div><strong>Observed process names:</strong> ${escapeHtml(
         runtimeExecution.observedProcessNames?.join(' | ') || 'none'

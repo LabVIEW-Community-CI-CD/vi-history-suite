@@ -365,6 +365,8 @@ describe('comparisonReportPacket', () => {
         failureReason: 'labview-cli-exited-nonzero-log-only-no-report',
         processObservationArtifactPath:
           '/workspace/.storage/reports/repoid123456/fileid123456/runtime-process-observation.json',
+        processObservationCapturedAt: '2026-04-03T00:00:01.000Z',
+        processObservationTrigger: 'cli-log-banner',
         observedProcessNames: ['LabVIEWCLI.exe', 'LabVIEW.exe'],
         labviewProcessObserved: true,
         labviewCliProcessObserved: true,
@@ -375,6 +377,8 @@ describe('comparisonReportPacket', () => {
     const html = renderComparisonReportPacketHtml(observedRecord);
 
     expect(html).toContain('runtime-process-observation.json');
+    expect(html).toContain('Process observation captured at:</strong> 2026-04-03T00:00:01.000Z');
+    expect(html).toContain('Process observation trigger:</strong> cli-log-banner');
     expect(html).toContain('Observed process names:</strong> LabVIEWCLI.exe | LabVIEW.exe');
     expect(html).toContain('Observed LabVIEW.exe:</strong> yes');
     expect(html).toContain('Observed LabVIEWCLI.exe:</strong> yes');

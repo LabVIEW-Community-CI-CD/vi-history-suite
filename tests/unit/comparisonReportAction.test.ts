@@ -559,6 +559,8 @@ describe('comparisonReportAction', () => {
             '/workspace/.storage/reports/repoid123456/fileid123456/runtime-diagnostic-log.txt',
           processObservationArtifactPath:
             '/workspace/.storage/reports/repoid123456/fileid123456/runtime-process-observation.json',
+          processObservationCapturedAt: '2026-04-03T00:00:01.000Z',
+          processObservationTrigger: 'cli-log-banner',
           observedProcessNames: ['LabVIEWCLI.exe', 'LabVIEW.exe'],
           labviewProcessObserved: true,
           labviewCliProcessObserved: true,
@@ -680,6 +682,8 @@ describe('comparisonReportAction', () => {
         '/workspace/.storage/reports/repoid123456/fileid123456/runtime-diagnostic-log.txt',
       runtimeProcessObservationArtifactPath:
         '/workspace/.storage/reports/repoid123456/fileid123456/runtime-process-observation.json',
+      runtimeProcessObservationCapturedAt: '2026-04-03T00:00:01.000Z',
+      runtimeProcessObservationTrigger: 'cli-log-banner',
       runtimeObservedProcessNames: ['LabVIEWCLI.exe', 'LabVIEW.exe'],
       runtimeLabviewProcessObserved: true,
       runtimeLabviewCliProcessObserved: true,
@@ -698,6 +702,8 @@ describe('comparisonReportAction', () => {
     expect(panel.webview.html).toContain('command-exited-nonzero');
     expect(panel.webview.html).toContain('Generated report exists:</strong> no');
     expect(panel.webview.html).toContain('runtime-process-observation.json');
+    expect(panel.webview.html).toContain('Process observation captured at:</strong> 2026-04-03T00:00:01.000Z');
+    expect(panel.webview.html).toContain('Process observation trigger:</strong> cli-log-banner');
     expect(panel.webview.html).toContain('LabVIEWCLI.exe | LabVIEW.exe');
     expect(panel.webview.html).toContain('Observed LabVIEW.exe:</strong> yes');
     expect(panel.webview.html).toContain('Observed LabVIEWCLI.exe:</strong> yes');

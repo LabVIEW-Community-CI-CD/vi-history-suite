@@ -314,6 +314,8 @@ async function runHostNativeExecution(
       stdoutFilePath: record.artifactPlan.runtimeStdoutFilePath,
       stderrFilePath: record.artifactPlan.runtimeStderrFilePath,
       processObservationArtifactPath: processObservation?.artifactPath,
+      processObservationCapturedAt: processObservation?.observation.capturedAt,
+      processObservationTrigger: processObservation?.observation.trigger,
       observedProcessNames: processObservation?.observation.observedProcessNames,
       labviewProcessObserved: processObservation?.observation.labviewProcessObserved,
       labviewCliProcessObserved: processObservation?.observation.labviewCliProcessObserved,

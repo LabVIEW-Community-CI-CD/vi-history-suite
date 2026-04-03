@@ -29,6 +29,8 @@ export interface ComparisonReportActionResult {
   runtimeDiagnosticNotes?: string[];
   runtimeDiagnosticLogArtifactPath?: string;
   runtimeProcessObservationArtifactPath?: string;
+  runtimeProcessObservationCapturedAt?: string;
+  runtimeProcessObservationTrigger?: string;
   runtimeObservedProcessNames?: string[];
   runtimeLabviewProcessObserved?: boolean;
   runtimeLabviewCliProcessObserved?: boolean;
@@ -128,6 +130,9 @@ export function createComparisonReportAction(
       runtimeDiagnosticNotes: packet.record.runtimeExecution.diagnosticNotes,
       runtimeProcessObservationArtifactPath:
         packet.record.runtimeExecution.processObservationArtifactPath,
+      runtimeProcessObservationCapturedAt:
+        packet.record.runtimeExecution.processObservationCapturedAt,
+      runtimeProcessObservationTrigger: packet.record.runtimeExecution.processObservationTrigger,
       runtimeObservedProcessNames: packet.record.runtimeExecution.observedProcessNames,
       runtimeLabviewProcessObserved: packet.record.runtimeExecution.labviewProcessObserved,
       runtimeLabviewCliProcessObserved: packet.record.runtimeExecution.labviewCliProcessObserved,
@@ -167,6 +172,14 @@ export function createComparisonReportAction(
       result.runtimeProcessObservationArtifactPath =
         packet.record.runtimeExecution.processObservationArtifactPath;
     }
+    if (packet.record.runtimeExecution.processObservationCapturedAt) {
+      result.runtimeProcessObservationCapturedAt =
+        packet.record.runtimeExecution.processObservationCapturedAt;
+    }
+    if (packet.record.runtimeExecution.processObservationTrigger) {
+      result.runtimeProcessObservationTrigger =
+        packet.record.runtimeExecution.processObservationTrigger;
+    }
     if (packet.record.runtimeExecution.observedProcessNames?.length) {
       result.runtimeObservedProcessNames = packet.record.runtimeExecution.observedProcessNames;
     }
@@ -195,6 +208,8 @@ export function renderComparisonReportPanelHtml(options: {
   runtimeDiagnosticReason?: string;
   runtimeDiagnosticNotes?: string[];
   runtimeProcessObservationArtifactPath?: string;
+  runtimeProcessObservationCapturedAt?: string;
+  runtimeProcessObservationTrigger?: string;
   runtimeObservedProcessNames?: string[];
   runtimeLabviewProcessObserved?: boolean;
   runtimeLabviewCliProcessObserved?: boolean;
@@ -222,6 +237,16 @@ export function renderComparisonReportPanelHtml(options: {
   const processObservationMarkup = options.runtimeProcessObservationArtifactPath
     ? `<div><strong>Process observation artifact:</strong> ${escapeHtml(
         options.runtimeProcessObservationArtifactPath
+      )}</div>`
+    : '';
+  const processObservationCapturedAtMarkup = options.runtimeProcessObservationCapturedAt
+    ? `<div><strong>Process observation captured at:</strong> ${escapeHtml(
+        options.runtimeProcessObservationCapturedAt
+      )}</div>`
+    : '';
+  const processObservationTriggerMarkup = options.runtimeProcessObservationTrigger
+    ? `<div><strong>Process observation trigger:</strong> ${escapeHtml(
+        options.runtimeProcessObservationTrigger
       )}</div>`
     : '';
   const observedProcessNamesMarkup =
@@ -267,6 +292,8 @@ export function renderComparisonReportPanelHtml(options: {
       ${diagnosticReasonMarkup}
       ${diagnosticNotesMarkup}
       ${processObservationMarkup}
+      ${processObservationCapturedAtMarkup}
+      ${processObservationTriggerMarkup}
       ${observedProcessNamesMarkup}
       ${observedLabviewMarkup}
       ${observedLabviewCliMarkup}

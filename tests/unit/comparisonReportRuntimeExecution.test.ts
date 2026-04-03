@@ -342,6 +342,10 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(result.record.runtimeExecution.processObservationArtifactPath).toBe(
       '/workspace/.storage/reports/repoid123456/fileid123456/runtime-process-observation.json'
     );
+    expect(result.record.runtimeExecution.processObservationCapturedAt).toBe(
+      '2026-04-03T00:00:01.000Z'
+    );
+    expect(result.record.runtimeExecution.processObservationTrigger).toBe('cli-log-banner');
     expect(result.record.runtimeExecution.observedProcessNames).toEqual([
       'LabVIEWCLI.exe',
       'LabVIEW.exe'

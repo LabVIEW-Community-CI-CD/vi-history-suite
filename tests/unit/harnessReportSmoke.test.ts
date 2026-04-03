@@ -31,6 +31,8 @@ describe('harness report smoke renderers', () => {
     runtimeStdoutPath: '/tmp/runtime-stdout.txt',
     runtimeStderrPath: '/tmp/runtime-stderr.txt',
     runtimeProcessObservationPath: '/tmp/runtime-process-observation.json',
+    runtimeProcessObservationCapturedAt: '2026-04-03T00:00:01.000Z',
+    runtimeProcessObservationTrigger: 'cli-log-banner',
     runtimeObservedProcessNames: ['LabVIEWCLI.exe', 'LabVIEW.exe'],
     runtimeLabviewProcessObserved: true,
     runtimeLabviewCliProcessObserved: true,
@@ -52,6 +54,8 @@ describe('harness report smoke renderers', () => {
     expect(markdown).toContain('Runtime stdout artifact: /tmp/runtime-stdout.txt');
     expect(markdown).toContain('Runtime stderr artifact: /tmp/runtime-stderr.txt');
     expect(markdown).toContain('Runtime process observation artifact: /tmp/runtime-process-observation.json');
+    expect(markdown).toContain('Runtime process observation captured at: 2026-04-03T00:00:01.000Z');
+    expect(markdown).toContain('Runtime process observation trigger: cli-log-banner');
     expect(markdown).toContain('Runtime observed process names: LabVIEWCLI.exe | LabVIEW.exe');
     expect(markdown).toContain('Runtime observed LabVIEW.exe: yes');
     expect(markdown).toContain('Runtime observed LabVIEWCLI.exe: yes');
@@ -71,6 +75,8 @@ describe('harness report smoke renderers', () => {
     expect(html).toContain('/tmp/runtime-stdout.txt');
     expect(html).toContain('/tmp/runtime-stderr.txt');
     expect(html).toContain('/tmp/runtime-process-observation.json');
+    expect(html).toContain('Runtime process observation captured at:</strong> 2026-04-03T00:00:01.000Z');
+    expect(html).toContain('Runtime process observation trigger:</strong> cli-log-banner');
     expect(html).toContain('LabVIEWCLI.exe | LabVIEW.exe');
     expect(html).toContain('Runtime observed LabVIEW.exe:</strong> yes');
     expect(html).toContain('Runtime observed LabVIEWCLI.exe:</strong> yes');
@@ -280,6 +286,8 @@ describe('runHarnessReportSmoke', () => {
               attempted: true,
               reportExists: true,
               processObservationArtifactPath: '/tmp/runtime-process-observation.json',
+              processObservationCapturedAt: '2026-04-03T00:00:01.000Z',
+              processObservationTrigger: 'cli-log-banner',
               observedProcessNames: ['LabVIEWCLI.exe', 'LabVIEW.exe'],
               labviewProcessObserved: true,
               labviewCliProcessObserved: true,
@@ -303,6 +311,8 @@ describe('runHarnessReportSmoke', () => {
     expect(result.report.runtimeProvider).toBe('host-native');
     expect(result.report.runtimeEngine).toBe('labview-cli');
     expect(result.report.runtimeProcessObservationPath).toBe('/tmp/runtime-process-observation.json');
+    expect(result.report.runtimeProcessObservationCapturedAt).toBe('2026-04-03T00:00:01.000Z');
+    expect(result.report.runtimeProcessObservationTrigger).toBe('cli-log-banner');
     expect(result.report.runtimeObservedProcessNames).toEqual(['LabVIEWCLI.exe', 'LabVIEW.exe']);
     expect(result.report.runtimeLabviewProcessObserved).toBe(true);
     expect(result.report.runtimeLabviewCliProcessObserved).toBe(true);

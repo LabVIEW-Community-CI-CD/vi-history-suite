@@ -67,6 +67,8 @@ export interface HarnessReportSmokeReport {
   runtimeStdoutPath?: string;
   runtimeStderrPath?: string;
   runtimeProcessObservationPath?: string;
+  runtimeProcessObservationCapturedAt?: string;
+  runtimeProcessObservationTrigger?: string;
   runtimeObservedProcessNames?: string[];
   runtimeLabviewProcessObserved?: boolean;
   runtimeLabviewCliProcessObserved?: boolean;
@@ -271,6 +273,8 @@ function buildHarnessReportSmokeReport(options: {
     runtimeStdoutPath: record.runtimeExecution.stdoutFilePath,
     runtimeStderrPath: record.runtimeExecution.stderrFilePath,
     runtimeProcessObservationPath: record.runtimeExecution.processObservationArtifactPath,
+    runtimeProcessObservationCapturedAt: record.runtimeExecution.processObservationCapturedAt,
+    runtimeProcessObservationTrigger: record.runtimeExecution.processObservationTrigger,
     runtimeObservedProcessNames: record.runtimeExecution.observedProcessNames,
     runtimeLabviewProcessObserved: record.runtimeExecution.labviewProcessObserved,
     runtimeLabviewCliProcessObserved: record.runtimeExecution.labviewCliProcessObserved,
@@ -307,6 +311,8 @@ export function renderHarnessReportSmokeMarkdown(report: HarnessReportSmokeRepor
 - Runtime stdout artifact: ${report.runtimeStdoutPath ?? 'none'}
 - Runtime stderr artifact: ${report.runtimeStderrPath ?? 'none'}
 - Runtime process observation artifact: ${report.runtimeProcessObservationPath ?? 'none'}
+- Runtime process observation captured at: ${report.runtimeProcessObservationCapturedAt ?? 'none'}
+- Runtime process observation trigger: ${report.runtimeProcessObservationTrigger ?? 'none'}
 - Runtime observed process names: ${report.runtimeObservedProcessNames?.join(' | ') || 'none'}
 - Runtime observed LabVIEW.exe: ${renderOptionalYesNo(report.runtimeLabviewProcessObserved)}
 - Runtime observed LabVIEWCLI.exe: ${renderOptionalYesNo(report.runtimeLabviewCliProcessObserved)}
@@ -356,6 +362,12 @@ export function renderHarnessReportSmokeHtml(report: HarnessReportSmokeReport): 
       <div><strong>Runtime stderr artifact:</strong> ${escapeHtml(report.runtimeStderrPath ?? 'none')}</div>
       <div><strong>Runtime process observation artifact:</strong> ${escapeHtml(
         report.runtimeProcessObservationPath ?? 'none'
+      )}</div>
+      <div><strong>Runtime process observation captured at:</strong> ${escapeHtml(
+        report.runtimeProcessObservationCapturedAt ?? 'none'
+      )}</div>
+      <div><strong>Runtime process observation trigger:</strong> ${escapeHtml(
+        report.runtimeProcessObservationTrigger ?? 'none'
       )}</div>
       <div><strong>Runtime observed process names:</strong> ${escapeHtml(
         report.runtimeObservedProcessNames?.join(' | ') || 'none'
