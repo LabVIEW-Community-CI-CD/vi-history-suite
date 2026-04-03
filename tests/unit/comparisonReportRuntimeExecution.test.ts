@@ -898,7 +898,8 @@ describe('comparisonReportRuntimeExecution', () => {
     const observation = await observeWindowsRuntimeProcesses(
       {
         hostPlatform: 'linux',
-        runtimePlatform: 'win32'
+        runtimePlatform: 'win32',
+        trigger: 'cli-log-banner'
       },
       {
         nowIso: () => '2026-04-03T00:00:01.000Z',
@@ -1014,6 +1015,75 @@ describe('comparisonReportRuntimeExecution', () => {
     );
   });
 
+  it('classifies a stricter failure when LabVIEW stays absent through the retained exit snapshot', async () => {
+    const result = await executeComparisonReport(
+      {
+        record: createReadyRecord(),
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        pathExists: vi.fn().mockResolvedValue(false),
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 1,
+          stdout: 'LabVIEWCLI started logging in file:  C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log\r\n',
+          stderr: '',
+          processObservation: {
+            capturedAt: '2026-04-03T00:00:02.000Z',
+            hostPlatform: 'linux',
+            runtimePlatform: 'win32',
+            trigger: 'cli-log-banner',
+            observedProcesses: [{ imageName: 'LabVIEWCLI.exe', pid: 44152 }],
+            observedProcessNames: ['LabVIEWCLI.exe'],
+            labviewProcessObserved: false,
+            labviewCliProcessObserved: true,
+            lvcompareProcessObserved: false
+          },
+          exitProcessObservation: {
+            capturedAt: '2026-04-03T00:00:03.000Z',
+            hostPlatform: 'linux',
+            runtimePlatform: 'win32',
+            trigger: 'process-exit',
+            observedProcesses: [{ imageName: 'LabVIEWCLI.exe', pid: 44152 }],
+            observedProcessNames: ['LabVIEWCLI.exe'],
+            labviewProcessObserved: false,
+            labviewCliProcessObserved: true,
+            lvcompareProcessObserved: false
+          }
+        }),
+        nowIso: vi
+          .fn()
+          .mockReturnValueOnce('2026-04-02T01:00:00.000Z')
+          .mockReturnValueOnce('2026-04-02T01:00:03.000Z'),
+        nowMs: vi.fn().mockReturnValueOnce(1000).mockReturnValueOnce(4000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32',
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        readFile: vi.fn().mockResolvedValue(
+          '"LabVIEWPath" command line argument is not passed. Using last used LabVIEW: "C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe"\n'
+        ) as never
+      }
+    );
+
+    expect(result.record.runtimeExecution.failureReason).toBe(
+      'labview-cli-log-only-no-labview-through-exit'
+    );
+    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+      'At the retained process-exit snapshot (2026-04-03T00:00:03.000Z), observed LabVIEW-related processes: LabVIEWCLI.exe.'
+    );
+    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+      'At the retained process-exit snapshot, LabVIEWCLI.exe was observed while LabVIEW.exe was not observed.'
+    );
+    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+      'LabVIEW CLI exited nonzero without stderr and without generating a report; at the retained cli-log-banner and process-exit snapshots, LabVIEWCLI.exe was observed while LabVIEW.exe was not observed.'
+    );
+  });
+
   it('rejects raw execFile failures when the process never returns a numeric exit code', async () => {
     const execFileImpl = vi.fn(
       (
@@ -1044,8 +1114,8 @@ describe('comparisonReportRuntimeExecution', () => {
     });
   });
 
-  it('captures process observation when the LabVIEW CLI banner appears on stdout before close', async () => {
-    const observation = {
+  it('captures process observations at the LabVIEW CLI banner and again at process exit', async () => {
+    const bannerObservation = {
       capturedAt: '2026-04-03T00:00:01.000Z',
       hostPlatform: 'linux' as const,
       runtimePlatform: 'win32',
@@ -1056,6 +1126,21 @@ describe('comparisonReportRuntimeExecution', () => {
       labviewCliProcessObserved: true,
       lvcompareProcessObserved: false
     };
+    const exitObservation = {
+      capturedAt: '2026-04-03T00:00:02.000Z',
+      hostPlatform: 'linux' as const,
+      runtimePlatform: 'win32',
+      trigger: 'process-exit' as const,
+      observedProcesses: [{ imageName: 'LabVIEWCLI.exe', pid: 44152 }],
+      observedProcessNames: ['LabVIEWCLI.exe'],
+      labviewProcessObserved: false,
+      labviewCliProcessObserved: true,
+      lvcompareProcessObserved: false
+    };
+    const observeWindowsProcesses = vi
+      .fn()
+      .mockResolvedValueOnce(bannerObservation)
+      .mockResolvedValueOnce(exitObservation);
 
     const spawnImpl = vi.fn(() => {
       const child = new EventEmitter() as EventEmitter & {
@@ -1091,7 +1176,7 @@ describe('comparisonReportRuntimeExecution', () => {
           spawnImpl: spawnImpl as never,
           hostPlatform: 'linux',
           runtimePlatform: 'win32',
-          observeWindowsProcesses: vi.fn().mockResolvedValue(observation)
+          observeWindowsProcesses
         }
       )
     ).resolves.toEqual({
@@ -1100,7 +1185,18 @@ describe('comparisonReportRuntimeExecution', () => {
       stdout:
         'LabVIEWCLI started logging in file:  C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log\r\n',
       stderr: '',
-      processObservation: observation
+      processObservation: bannerObservation,
+      exitProcessObservation: exitObservation
+    });
+    expect(observeWindowsProcesses).toHaveBeenNthCalledWith(1, {
+      hostPlatform: 'linux',
+      runtimePlatform: 'win32',
+      trigger: 'cli-log-banner'
+    });
+    expect(observeWindowsProcesses).toHaveBeenNthCalledWith(2, {
+      hostPlatform: 'linux',
+      runtimePlatform: 'win32',
+      trigger: 'process-exit'
     });
   });
 

@@ -47,6 +47,7 @@ export interface RunCommandResult {
   stdout: string;
   stderr: string;
   processObservation?: RuntimeProcessObservation;
+  exitProcessObservation?: RuntimeProcessObservation;
 }
 
 export interface RunComparisonCommandPlanDeps {
@@ -65,7 +66,7 @@ export interface RuntimeProcessObservation {
   capturedAt: string;
   hostPlatform: NodeJS.Platform;
   runtimePlatform: string;
-  trigger: 'cli-log-banner';
+  trigger: 'cli-log-banner' | 'process-exit';
   observedProcesses: RuntimeObservedProcess[];
   observedProcessNames: string[];
   labviewProcessObserved: boolean;
@@ -76,6 +77,7 @@ export interface RuntimeProcessObservation {
 export interface ObserveWindowsProcessesOptions {
   hostPlatform: NodeJS.Platform;
   runtimePlatform: string;
+  trigger: RuntimeProcessObservation['trigger'];
 }
 
 export interface ObserveWindowsProcessesDeps {
@@ -289,10 +291,11 @@ async function runHostNativeExecution(
       reportExists,
       stdout: commandResult.stdout,
       stderr: commandResult.stderr,
-      processObservation: processObservation?.observation
+      processObservation: processObservation?.bannerSnapshot,
+      exitProcessObservation: processObservation?.exitSnapshot
     });
     const diagnosticNotes = mergeDiagnosticNotes(
-      buildProcessObservationNotes(processObservation?.observation),
+      buildProcessObservationNotes(processObservation),
       diagnostics.notes,
       failureClassification.notes
     );
@@ -316,12 +319,22 @@ async function runHostNativeExecution(
       stdoutFilePath: record.artifactPlan.runtimeStdoutFilePath,
       stderrFilePath: record.artifactPlan.runtimeStderrFilePath,
       processObservationArtifactPath: processObservation?.artifactPath,
-      processObservationCapturedAt: processObservation?.observation.capturedAt,
-      processObservationTrigger: processObservation?.observation.trigger,
-      observedProcessNames: processObservation?.observation.observedProcessNames,
-      labviewProcessObserved: processObservation?.observation.labviewProcessObserved,
-      labviewCliProcessObserved: processObservation?.observation.labviewCliProcessObserved,
-      lvcompareProcessObserved: processObservation?.observation.lvcompareProcessObserved
+      processObservationCapturedAt:
+        processObservation?.bannerSnapshot?.capturedAt ?? processObservation?.exitSnapshot?.capturedAt,
+      processObservationTrigger:
+        processObservation?.bannerSnapshot?.trigger ?? processObservation?.exitSnapshot?.trigger,
+      observedProcessNames:
+        processObservation?.bannerSnapshot?.observedProcessNames ??
+        processObservation?.exitSnapshot?.observedProcessNames,
+      labviewProcessObserved:
+        processObservation?.bannerSnapshot?.labviewProcessObserved ??
+        processObservation?.exitSnapshot?.labviewProcessObserved,
+      labviewCliProcessObserved:
+        processObservation?.bannerSnapshot?.labviewCliProcessObserved ??
+        processObservation?.exitSnapshot?.labviewCliProcessObserved,
+      lvcompareProcessObserved:
+        processObservation?.bannerSnapshot?.lvcompareProcessObserved ??
+        processObservation?.exitSnapshot?.lvcompareProcessObserved
     };
   } catch (error) {
     const completedAt = deps.nowIso();
@@ -366,8 +379,15 @@ async function persistRuntimeProcessObservation(
     writeFile: typeof fs.writeFile;
     mkdir: typeof fs.mkdir;
   }
-): Promise<{ artifactPath: string; observation: RuntimeProcessObservation } | undefined> {
-  if (!commandResult.processObservation) {
+): Promise<
+  | {
+      artifactPath: string;
+      bannerSnapshot?: RuntimeProcessObservation;
+      exitSnapshot?: RuntimeProcessObservation;
+    }
+  | undefined
+> {
+  if (!commandResult.processObservation && !commandResult.exitProcessObservation) {
     return undefined;
   }
 
@@ -376,13 +396,21 @@ async function persistRuntimeProcessObservation(
   });
   await deps.writeFile(
     record.artifactPlan.runtimeProcessObservationFilePath,
-    JSON.stringify(commandResult.processObservation, null, 2),
+    JSON.stringify(
+      {
+        bannerSnapshot: commandResult.processObservation,
+        exitSnapshot: commandResult.exitProcessObservation
+      },
+      null,
+      2
+    ),
     'utf8'
   );
 
   return {
     artifactPath: record.artifactPlan.runtimeProcessObservationFilePath,
-    observation: commandResult.processObservation
+    bannerSnapshot: commandResult.processObservation,
+    exitSnapshot: commandResult.exitProcessObservation
   };
 }
 
@@ -786,6 +814,7 @@ function classifyRuntimeFailure(options: {
   stdout: string;
   stderr: string;
   processObservation?: RuntimeProcessObservation;
+  exitProcessObservation?: RuntimeProcessObservation;
 }): {
   reason: string;
   notes: string[];
@@ -804,6 +833,22 @@ function classifyRuntimeFailure(options: {
     options.stderr.trim().length === 0 &&
     isLabviewCliLogOnlyStdout(options.stdout)
   ) {
+    if (
+      options.processObservation?.trigger === 'cli-log-banner' &&
+      options.processObservation.labviewCliProcessObserved &&
+      !options.processObservation.labviewProcessObserved &&
+      options.exitProcessObservation?.trigger === 'process-exit' &&
+      options.exitProcessObservation.labviewCliProcessObserved &&
+      !options.exitProcessObservation.labviewProcessObserved
+    ) {
+      return {
+        reason: 'labview-cli-log-only-no-labview-through-exit',
+        notes: [
+          'LabVIEW CLI exited nonzero without stderr and without generating a report; at the retained cli-log-banner and process-exit snapshots, LabVIEWCLI.exe was observed while LabVIEW.exe was not observed.'
+        ]
+      };
+    }
+
     if (
       options.processObservation?.trigger === 'cli-log-banner' &&
       options.processObservation.labviewCliProcessObserved &&
@@ -864,32 +909,39 @@ function mergeDiagnosticNotes(...noteGroups: Array<string[] | undefined>): strin
 }
 
 function buildProcessObservationNotes(
-  observation: RuntimeProcessObservation | undefined
+  observations:
+    | {
+        bannerSnapshot?: RuntimeProcessObservation;
+        exitSnapshot?: RuntimeProcessObservation;
+      }
+    | undefined
 ): string[] {
-  if (!observation) {
-    return [];
-  }
-
   const notes: string[] = [];
-  const observedProcessNames =
-    observation.observedProcessNames.length > 0
-      ? observation.observedProcessNames.join(', ')
-      : 'none';
+  for (const observation of [observations?.bannerSnapshot, observations?.exitSnapshot]) {
+    if (!observation) {
+      continue;
+    }
 
-  notes.push(
-    `At the retained ${observation.trigger} snapshot (${observation.capturedAt}), observed LabVIEW-related processes: ${observedProcessNames}.`
-  );
+    const observedProcessNames =
+      observation.observedProcessNames.length > 0
+        ? observation.observedProcessNames.join(', ')
+        : 'none';
 
-  if (observation.labviewCliProcessObserved && !observation.labviewProcessObserved) {
     notes.push(
-      `At the retained ${observation.trigger} snapshot, LabVIEWCLI.exe was observed while LabVIEW.exe was not observed.`
+      `At the retained ${observation.trigger} snapshot (${observation.capturedAt}), observed LabVIEW-related processes: ${observedProcessNames}.`
     );
-  }
 
-  if (!observation.lvcompareProcessObserved) {
-    notes.push(
-      `At the retained ${observation.trigger} snapshot, LVCompare.exe was not observed.`
-    );
+    if (observation.labviewCliProcessObserved && !observation.labviewProcessObserved) {
+      notes.push(
+        `At the retained ${observation.trigger} snapshot, LabVIEWCLI.exe was observed while LabVIEW.exe was not observed.`
+      );
+    }
+
+    if (!observation.lvcompareProcessObserved) {
+      notes.push(
+        `At the retained ${observation.trigger} snapshot, LVCompare.exe was not observed.`
+      );
+    }
   }
 
   return notes;
@@ -973,7 +1025,7 @@ export async function observeWindowsRuntimeProcesses(
     capturedAt: (deps.nowIso ?? defaultNowIso)(),
     hostPlatform: options.hostPlatform,
     runtimePlatform: options.runtimePlatform,
-    trigger: 'cli-log-banner',
+    trigger: options.trigger,
     observedProcesses,
     observedProcessNames,
     labviewProcessObserved: observedProcesses.some((processInfo) =>
@@ -1001,6 +1053,8 @@ export function runComparisonCommandPlanWithObservation(
     let stderr = '';
     let observationPromise: Promise<void> | undefined;
     let processObservation: RuntimeProcessObservation | undefined;
+    let exitObservationPromise: Promise<void> | undefined;
+    let exitProcessObservation: RuntimeProcessObservation | undefined;
     let observationError: unknown;
     let observationStarted = false;
 
@@ -1013,7 +1067,8 @@ export function runComparisonCommandPlanWithObservation(
       observationPromise = Promise.resolve(
         (deps.observeWindowsProcesses ?? observeWindowsRuntimeProcesses)({
           hostPlatform: deps.hostPlatform ?? process.platform,
-          runtimePlatform: deps.runtimePlatform ?? process.platform
+          runtimePlatform: deps.runtimePlatform ?? process.platform,
+          trigger: 'cli-log-banner'
         })
       )
         .then((capturedObservation) => {
@@ -1039,6 +1094,26 @@ export function runComparisonCommandPlanWithObservation(
         await observationPromise;
       }
 
+      if (observationStarted) {
+        exitObservationPromise = Promise.resolve(
+          (deps.observeWindowsProcesses ?? observeWindowsRuntimeProcesses)({
+            hostPlatform: deps.hostPlatform ?? process.platform,
+            runtimePlatform: deps.runtimePlatform ?? process.platform,
+            trigger: 'process-exit'
+          })
+        )
+          .then((capturedObservation) => {
+            exitProcessObservation = capturedObservation;
+          })
+          .catch((error) => {
+            observationError = error;
+          });
+      }
+
+      if (exitObservationPromise) {
+        await exitObservationPromise;
+      }
+
       if (observationError) {
         reject(observationError);
         return;
@@ -1054,7 +1129,8 @@ export function runComparisonCommandPlanWithObservation(
         signal: signal ?? undefined,
         stdout,
         stderr,
-        processObservation
+        processObservation,
+        exitProcessObservation
       });
     });
   });
