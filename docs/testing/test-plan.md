@@ -488,6 +488,13 @@
 - `TEST-UNIT-141`: prove comparison-report cancellation after runtime
   execution returns the stable `after-runtime-execution` stage, preserves
   runtime-executed packet evidence, and avoids archive plus panel open
+- `TEST-UNIT-142`: prove the history-panel command flow surfaces the stable
+  dashboard storage warning and records `missing-dashboard-storage` when the
+  dashboard action returns `missing-storage-uri`
+- `TEST-UNIT-143`: prove the history-panel command flow surfaces the stable
+  insufficient-commits informational message and records
+  `insufficient-dashboard-commits` when the dashboard action returns
+  `insufficient-commits`
 - `TEST-DOC-014`: review the queue, epic, ADR, and current-state surfaces to
   prove the future-facing dashboard research was normalized into governed repo
   control-plane artifacts and the incoming research artifact was deleted

@@ -991,6 +991,141 @@ describe('createOpenViHistoryCommand', () => {
     });
   });
 
+  it('surfaces a stable warning when dashboard generation cannot persist artifacts under workspace storage', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Newest revision',
+            previousHash: '1111111122222222'
+          },
+          {
+            hash: '1111111122222222',
+            authorDate: '2026-04-01T00:00:00Z',
+            authorName: 'B User',
+            subject: 'Middle revision',
+            previousHash: '3333333344444444'
+          },
+          {
+            hash: '3333333344444444',
+            authorDate: '2026-03-31T00:00:00Z',
+            authorName: 'C User',
+            subject: 'Initial revision'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+    const dashboardAction = vi.fn().mockResolvedValue({
+      outcome: 'missing-storage-uri'
+    });
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      undefined,
+      dashboardAction as never
+    );
+
+    await command(targetUri as never);
+    await tracker.dispatchLastPanelMessage({
+      command: 'openDashboard'
+    });
+
+    expect(showWarningMessageMock).toHaveBeenCalledWith(
+      'VI Review Dashboard requires an open workspace so concentrated dashboard artifacts can be stored under workspace-scoped extension storage.'
+    );
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'openDashboard',
+      outcome: 'missing-dashboard-storage',
+      dashboardFilePath: undefined,
+      dashboardJsonFilePath: undefined,
+      dashboardPairCount: undefined,
+      dashboardArchivedPairCount: undefined,
+      dashboardMissingPairCount: undefined,
+      cancellationStage: undefined,
+      title: undefined
+    });
+  });
+
+  it('surfaces a stable informational message when dashboard generation requires more retained commits', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Newest revision',
+            previousHash: '1111111122222222'
+          },
+          {
+            hash: '1111111122222222',
+            authorDate: '2026-04-01T00:00:00Z',
+            authorName: 'B User',
+            subject: 'Initial revision'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+    const dashboardAction = vi.fn().mockResolvedValue({
+      outcome: 'insufficient-commits'
+    });
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      undefined,
+      dashboardAction as never
+    );
+
+    await command(targetUri as never);
+    await tracker.dispatchLastPanelMessage({
+      command: 'openDashboard'
+    });
+
+    expect(showInformationMessageMock).toHaveBeenCalledWith(
+      'VI Review Dashboard requires at least three retained commits for the selected VI.'
+    );
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'openDashboard',
+      outcome: 'insufficient-dashboard-commits',
+      dashboardFilePath: undefined,
+      dashboardJsonFilePath: undefined,
+      dashboardPairCount: undefined,
+      dashboardArchivedPairCount: undefined,
+      dashboardMissingPairCount: undefined,
+      cancellationStage: undefined,
+      title: undefined
+    });
+  });
+
   it('retains explicit outcomes for missing previous revisions and malformed panel messages', async () => {
     const targetUri = createMockUri('/workspace/eligible.vi');
     const tracker = new HistoryPanelTracker();
