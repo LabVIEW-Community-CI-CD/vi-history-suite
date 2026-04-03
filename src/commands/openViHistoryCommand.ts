@@ -28,10 +28,12 @@ export function createOpenViHistoryCommand(
     model: Awaited<ReturnType<ViHistoryService['load']>>;
     selectedHash: string;
     reportProgress?: (update: { message: string; increment?: number }) => void | Promise<void>;
+    cancellationToken?: vscode.CancellationToken;
   }) => Promise<ComparisonReportActionResult>,
   multiReportDashboardAction?: (request: {
     model: Awaited<ReturnType<ViHistoryService['load']>>;
     reportProgress?: (update: { message: string; increment?: number }) => void | Promise<void>;
+    cancellationToken?: vscode.CancellationToken;
   }) => Promise<MultiReportDashboardActionResult>
 ): (uri?: vscode.Uri) => Promise<void> {
   return async (uri?: vscode.Uri) => {
@@ -95,13 +97,18 @@ export function createOpenViHistoryCommand(
 
         const result = await runProgressWrappedAction(
           'Building VI Review Dashboard',
-          (reportProgress) =>
+          (reportProgress, cancellationToken) =>
             multiReportDashboardAction({
               model,
-              reportProgress
+              reportProgress,
+              cancellationToken
             })
         );
-        if (result.outcome === 'workspace-untrusted') {
+        if (result.outcome === 'cancelled') {
+          void vscode.window.showInformationMessage(
+            'VI Review Dashboard refresh was cancelled. Retained dashboard artifacts, if any, were preserved.'
+          );
+        } else if (result.outcome === 'workspace-untrusted') {
           void vscode.window.showWarningMessage(
             'VI Review Dashboard is disabled in untrusted workspaces.'
           );
@@ -120,6 +127,8 @@ export function createOpenViHistoryCommand(
           outcome:
             result.outcome === 'opened-review-dashboard'
               ? 'opened-review-dashboard'
+              : result.outcome === 'cancelled'
+                ? 'cancelled'
               : result.outcome === 'workspace-untrusted'
                 ? 'workspace-untrusted'
               : result.outcome === 'missing-storage-uri'
@@ -130,6 +139,7 @@ export function createOpenViHistoryCommand(
           dashboardPairCount: result.dashboardPairCount,
           dashboardArchivedPairCount: result.dashboardArchivedPairCount,
           dashboardMissingPairCount: result.dashboardMissingPairCount,
+          cancellationStage: result.cancellationStage,
           title: result.title
         });
         return;
@@ -166,15 +176,20 @@ export function createOpenViHistoryCommand(
 
         const result = await runProgressWrappedAction(
           'Generating VI Comparison Report',
-          (reportProgress) =>
+          (reportProgress, cancellationToken) =>
             comparisonReportAction({
               model,
               selectedHash: hash,
-              reportProgress
+              reportProgress,
+              cancellationToken
             })
         );
 
-        if (result.outcome === 'workspace-untrusted') {
+        if (result.outcome === 'cancelled') {
+          void vscode.window.showInformationMessage(
+            'VI History comparison report generation was cancelled. Retained comparison-report artifacts, if any, were preserved.'
+          );
+        } else if (result.outcome === 'workspace-untrusted') {
           void vscode.window.showWarningMessage(
             'VI History comparison reports are disabled in untrusted workspaces.'
           );
@@ -200,6 +215,7 @@ export function createOpenViHistoryCommand(
           runtimeExecutionState: result.runtimeExecutionState,
           blockedReason: result.blockedReason,
           runtimeFailureReason: result.runtimeFailureReason,
+          cancellationStage: result.cancellationStage,
           packetFilePath: result.packetFilePath,
           reportFilePath: result.reportFilePath,
           metadataFilePath: result.metadataFilePath,
@@ -363,17 +379,20 @@ export function createOpenViHistoryCommand(
 
 async function runProgressWrappedAction<Result>(
   title: string,
-  task: (reportProgress: (update: { message: string; increment?: number }) => void) => Promise<Result>
+  task: (
+    reportProgress: (update: { message: string; increment?: number }) => void,
+    cancellationToken: vscode.CancellationToken
+  ) => Promise<Result>
 ): Promise<Result> {
   return vscode.window.withProgress(
     {
       location: vscode.ProgressLocation.Notification,
       title,
-      cancellable: false
+      cancellable: true
     },
-    async (progress) =>
+    async (progress, cancellationToken) =>
       task((update) => {
         progress.report(update);
-      })
+      }, cancellationToken)
   );
 }

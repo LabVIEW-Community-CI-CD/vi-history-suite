@@ -104,11 +104,23 @@ describe('createOpenViHistoryCommand', () => {
     withProgressMock.mockImplementation(
       async (
         _options: unknown,
-        task: (progress: { report(update: { message?: string; increment?: number }): void }) => Promise<unknown>
+        task: (
+          progress: { report(update: { message?: string; increment?: number }): void },
+          token: { isCancellationRequested: boolean; onCancellationRequested: () => { dispose(): void } }
+        ) => Promise<unknown>
       ) =>
         task({
           report() {
             // no-op
+          }
+        }, {
+          isCancellationRequested: false,
+          onCancellationRequested() {
+            return {
+              dispose() {
+                // no-op
+              }
+            };
           }
         })
     );
@@ -861,11 +873,121 @@ describe('createOpenViHistoryCommand', () => {
     expect(withProgressMock).toHaveBeenCalledTimes(2);
     expect(withProgressMock.mock.calls[0]?.[0]).toMatchObject({
       title: 'Generating VI Comparison Report',
-      cancellable: false
+      cancellable: true
     });
     expect(withProgressMock.mock.calls[1]?.[0]).toMatchObject({
       title: 'Building VI Review Dashboard',
-      cancellable: false
+      cancellable: true
+    });
+  });
+
+  it('surfaces stable informational outcomes when report or dashboard generation is cancelled after retaining partial evidence', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    const comparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'cancelled',
+      cancellationStage: 'after-packet-persist',
+      reportStatus: 'ready-for-runtime',
+      runtimeExecutionState: 'not-run',
+      packetFilePath: '/workspace/.storage/reports/repo/file/report-packet.html',
+      reportFilePath: '/workspace/.storage/reports/repo/file/diff-report-eligible.vi.html',
+      metadataFilePath: '/workspace/.storage/reports/repo/file/report-metadata.json',
+      generatedReportExists: false
+    });
+    const dashboardAction = vi.fn().mockResolvedValue({
+      outcome: 'cancelled',
+      cancellationStage: 'after-dashboard-build',
+      dashboardFilePath: '/workspace/.storage/dashboards/repo/file/dashboard.html',
+      dashboardJsonFilePath: '/workspace/.storage/dashboards/repo/file/dashboard.json',
+      dashboardPairCount: 2,
+      dashboardArchivedPairCount: 2,
+      dashboardMissingPairCount: 0
+    });
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Newest revision',
+            previousHash: '1111111122222222'
+          },
+          {
+            hash: '1111111122222222',
+            authorDate: '2026-04-01T00:00:00Z',
+            authorName: 'B User',
+            subject: 'Middle revision',
+            previousHash: '3333333344444444'
+          },
+          {
+            hash: '3333333344444444',
+            authorDate: '2026-03-31T00:00:00Z',
+            authorName: 'C User',
+            subject: 'Initial revision'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      comparisonReportAction,
+      dashboardAction as never
+    );
+
+    await command(targetUri as never);
+    await tracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReport',
+      hash: 'abcdef1234567890'
+    });
+    expect(showInformationMessageMock).toHaveBeenCalledWith(
+      'VI History comparison report generation was cancelled. Retained comparison-report artifacts, if any, were preserved.'
+    );
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'generateComparisonReport',
+      hash: 'abcdef1234567890',
+      outcome: 'cancelled',
+      reportStatus: 'ready-for-runtime',
+      runtimeExecutionState: 'not-run',
+      blockedReason: undefined,
+      runtimeFailureReason: undefined,
+      cancellationStage: 'after-packet-persist',
+      packetFilePath: '/workspace/.storage/reports/repo/file/report-packet.html',
+      reportFilePath: '/workspace/.storage/reports/repo/file/diff-report-eligible.vi.html',
+      metadataFilePath: '/workspace/.storage/reports/repo/file/report-metadata.json',
+      reportWebviewUri: undefined,
+      generatedReportExists: false,
+      title: undefined
+    });
+
+    await tracker.dispatchLastPanelMessage({
+      command: 'openDashboard'
+    });
+    expect(showInformationMessageMock).toHaveBeenCalledWith(
+      'VI Review Dashboard refresh was cancelled. Retained dashboard artifacts, if any, were preserved.'
+    );
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'openDashboard',
+      outcome: 'cancelled',
+      dashboardFilePath: '/workspace/.storage/dashboards/repo/file/dashboard.html',
+      dashboardJsonFilePath: '/workspace/.storage/dashboards/repo/file/dashboard.json',
+      dashboardPairCount: 2,
+      dashboardArchivedPairCount: 2,
+      dashboardMissingPairCount: 0,
+      cancellationStage: 'after-dashboard-build',
+      title: undefined
     });
   });
 

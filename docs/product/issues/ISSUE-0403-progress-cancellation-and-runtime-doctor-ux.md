@@ -60,8 +60,11 @@ requiring raw-log inspection.
   generation
 - notification progress wrapping on panel-triggered report and dashboard
   actions
+- cancellation with partial-evidence retention for dashboard and comparison
+  report actions
+- stable informational cancellation surfaces on the history panel command flow
 
 ## Remaining Focus
 
-- cancellation with partial-evidence retention
-- trust-aware refresh progress and cancellation UX
+- trust-aware refresh progress and cancellation UX beyond the current
+  action-level cancellation boundaries

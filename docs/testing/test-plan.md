@@ -434,6 +434,15 @@
 - `TEST-UNIT-122`: prove the history-panel command flow wraps comparison-report
   and dashboard actions in non-cancellable notification progress with stable
   titles
+- `TEST-UNIT-123`: prove the comparison-report action returns `cancelled` with
+  a stable stage and retained packet/report artifact paths when cancellation is
+  observed after packet persistence
+- `TEST-UNIT-124`: prove the dashboard action returns `cancelled` with a
+  stable stage and retained dashboard artifact paths when cancellation is
+  observed after dashboard build
+- `TEST-UNIT-125`: prove the history-panel command flow surfaces stable
+  informational messages and explicit `cancelled` action summaries when report
+  or dashboard actions are cancelled after retaining partial evidence
 - `TEST-DOC-014`: review the queue, epic, ADR, and current-state surfaces to
   prove the future-facing dashboard research was normalized into governed repo
   control-plane artifacts and the incoming research artifact was deleted

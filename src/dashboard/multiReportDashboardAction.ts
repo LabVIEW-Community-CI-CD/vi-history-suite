@@ -11,14 +11,17 @@ import { ViHistoryViewModel } from '../services/viHistoryModel';
 export interface MultiReportDashboardActionRequest {
   model: ViHistoryViewModel;
   reportProgress?: (update: { message: string; increment?: number }) => void | Promise<void>;
+  cancellationToken?: vscode.CancellationToken;
 }
 
 export interface MultiReportDashboardActionResult {
   outcome:
     | 'opened-review-dashboard'
+    | 'cancelled'
     | 'workspace-untrusted'
     | 'missing-storage-uri'
     | 'insufficient-commits';
+  cancellationStage?: string;
   dashboardFilePath?: string;
   dashboardJsonFilePath?: string;
   dashboardPairCount?: number;
@@ -42,6 +45,13 @@ export function createMultiReportDashboardAction(
   deps: MultiReportDashboardActionDeps = {}
 ): (request: MultiReportDashboardActionRequest) => Promise<MultiReportDashboardActionResult> {
   return async (request) => {
+    if (request.cancellationToken?.isCancellationRequested) {
+      return {
+        outcome: 'cancelled',
+        cancellationStage: 'before-dashboard-build'
+      };
+    }
+
     if (!vscode.workspace.isTrusted) {
       return { outcome: 'workspace-untrusted' };
     }
@@ -61,6 +71,17 @@ export function createMultiReportDashboardAction(
       increment: 70
     });
     const dashboard = await buildDashboard(storageUri.fsPath, request.model);
+    if (request.cancellationToken?.isCancellationRequested) {
+      return {
+        outcome: 'cancelled',
+        cancellationStage: 'after-dashboard-build',
+        dashboardFilePath: dashboard.htmlFilePath,
+        dashboardJsonFilePath: dashboard.jsonFilePath,
+        dashboardPairCount: dashboard.record.commitWindow.pairCount,
+        dashboardArchivedPairCount: dashboard.record.summary.archivedPairCount,
+        dashboardMissingPairCount: dashboard.record.summary.missingPairCount
+      };
+    }
     const createWebviewPanel = deps.createWebviewPanel ?? vscode.window.createWebviewPanel;
     const executeCommand = deps.executeCommand ?? vscode.commands.executeCommand;
     const uriFile = deps.uriFile ?? vscode.Uri.file;

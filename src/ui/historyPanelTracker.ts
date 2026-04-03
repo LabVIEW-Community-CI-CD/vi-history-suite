@@ -17,6 +17,7 @@ export interface HistoryPanelActionSummary {
     | 'opened-commit'
     | 'diffed-previous'
     | 'opened-comparison-report'
+    | 'cancelled'
     | 'workspace-untrusted'
     | 'ignored-missing-hash'
     | 'insufficient-dashboard-commits'
@@ -55,6 +56,7 @@ export interface HistoryPanelActionSummary {
   runtimeLabviewProcessObservedAtExit?: boolean;
   runtimeLabviewCliProcessObservedAtExit?: boolean;
   runtimeLvcompareProcessObservedAtExit?: boolean;
+  cancellationStage?: string;
   packetFilePath?: string;
   reportFilePath?: string;
   metadataFilePath?: string;
