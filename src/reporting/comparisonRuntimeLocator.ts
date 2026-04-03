@@ -11,6 +11,7 @@ export type ComparisonRuntimeEngine = 'labview-cli' | 'lvcompare';
 export type ComparisonRuntimeProvider = 'host-native' | 'windows-container' | 'unavailable';
 export type RuntimeCandidateSource = 'configured' | 'scan' | 'registry';
 export type RuntimeCandidateKind = 'labview-exe' | 'labview-cli' | 'lvcompare';
+export type RuntimeSelectableProvider = Exclude<ComparisonRuntimeProvider, 'unavailable'>;
 
 export interface ComparisonRuntimeSettings {
   labviewCliPath?: string;
@@ -35,6 +36,13 @@ export interface RuntimeToolCandidate {
   bitness?: RuntimeBitness;
 }
 
+export interface RuntimeProviderDecision {
+  provider: RuntimeSelectableProvider;
+  outcome: 'selected' | 'rejected';
+  reason: string;
+  detail: string;
+}
+
 export interface ComparisonRuntimeSelection {
   platform: RuntimePlatform;
   preferBitness: RuntimeBitnessPreference;
@@ -45,6 +53,7 @@ export interface ComparisonRuntimeSelection {
   labviewCli?: RuntimeToolCandidate;
   lvCompare?: RuntimeToolCandidate;
   blockedReason?: string;
+  providerDecisions?: RuntimeProviderDecision[];
   notes: string[];
   registryQueryPlans: WindowsRegistryQueryPlan[];
   candidates: RuntimeToolCandidate[];
@@ -58,6 +67,20 @@ export interface ComparisonRuntimeLocatorDeps {
     hostPlatform: NodeJS.Platform
   ) => Promise<boolean>;
   hostPlatform?: NodeJS.Platform;
+}
+
+interface BuildProviderDecisionsOptions {
+  platform: RuntimePlatform;
+  preferBitness: RuntimeBitnessPreference;
+  windowsContainerImage: string;
+  windowsContainerAvailable: boolean;
+  selectedProvider?: RuntimeSelectableProvider;
+  selectedEngine?: ComparisonRuntimeEngine;
+  blockedReason?: string;
+  configuredFailure?: RuntimeToolCandidate;
+  labviewExeFound?: boolean;
+  labviewCliFound?: boolean;
+  lvCompareFound?: boolean;
 }
 
 const WINDOWS_PROGRAM_FILES = 'C:\\Program Files';
@@ -205,6 +228,13 @@ export async function locateComparisonRuntime(
       preferBitness,
       provider: 'unavailable',
       blockedReason: 'labview-2026q1-unsupported-on-macos',
+      providerDecisions: buildProviderDecisions({
+        platform,
+        preferBitness,
+        windowsContainerImage,
+        windowsContainerAvailable: false,
+        blockedReason: 'labview-2026q1-unsupported-on-macos'
+      }),
       notes: [
         'Authoritative research treats LabVIEW 2026 Q1 report generation as unavailable on macOS.'
       ],
@@ -224,6 +254,14 @@ export async function locateComparisonRuntime(
       preferBitness,
       provider: 'unavailable',
       blockedReason: `configured-${configuredFailure.kind}-path-missing`,
+      providerDecisions: buildProviderDecisions({
+        platform,
+        preferBitness,
+        windowsContainerImage,
+        windowsContainerAvailable: false,
+        blockedReason: `configured-${configuredFailure.kind}-path-missing`,
+        configuredFailure
+      }),
       notes: [
         `Configured ${configuredFailure.kind} path does not exist: ${configuredFailure.path}`
       ],
@@ -259,6 +297,14 @@ export async function locateComparisonRuntime(
       platform,
       preferBitness,
       provider: 'windows-container',
+      providerDecisions: buildProviderDecisions({
+        platform,
+        preferBitness,
+        windowsContainerImage,
+        windowsContainerAvailable,
+        selectedProvider: 'windows-container',
+        selectedEngine: 'labview-cli'
+      }),
       windowsContainerImage,
       engine: 'labview-cli',
       labviewExe: {
@@ -306,6 +352,14 @@ export async function locateComparisonRuntime(
       preferBitness,
       provider: 'unavailable',
       blockedReason: 'labview-exe-not-found',
+      providerDecisions: buildProviderDecisions({
+        platform,
+        preferBitness,
+        windowsContainerImage,
+        windowsContainerAvailable,
+        blockedReason: 'labview-exe-not-found',
+        labviewExeFound: false
+      }),
       notes: [
         'No supported LabVIEW 2026 runtime was located for report generation.',
         'Install LabVIEW 2026 Q1 or configure viHistorySuite.labviewExePath to an explicit LabVIEW 2026 executable.'
@@ -327,6 +381,17 @@ export async function locateComparisonRuntime(
       platform,
       preferBitness,
       provider: 'host-native',
+      providerDecisions: buildProviderDecisions({
+        platform,
+        preferBitness,
+        windowsContainerImage,
+        windowsContainerAvailable,
+        selectedProvider: 'host-native',
+        selectedEngine: 'labview-cli',
+        labviewExeFound: true,
+        labviewCliFound: true,
+        lvCompareFound: Boolean(lvCompare)
+      }),
       engine: 'labview-cli',
       labviewExe,
       labviewCli,
@@ -343,6 +408,17 @@ export async function locateComparisonRuntime(
       platform,
       preferBitness,
       provider: 'host-native',
+      providerDecisions: buildProviderDecisions({
+        platform,
+        preferBitness,
+        windowsContainerImage,
+        windowsContainerAvailable,
+        selectedProvider: 'host-native',
+        selectedEngine: 'lvcompare',
+        labviewExeFound: true,
+        labviewCliFound: false,
+        lvCompareFound: true
+      }),
       engine: 'lvcompare',
       labviewExe,
       lvCompare,
@@ -367,11 +443,130 @@ export async function locateComparisonRuntime(
     preferBitness,
     provider: 'unavailable',
     blockedReason: 'comparison-tool-not-found',
+    providerDecisions: buildProviderDecisions({
+      platform,
+      preferBitness,
+      windowsContainerImage,
+      windowsContainerAvailable,
+      blockedReason: 'comparison-tool-not-found',
+      labviewExeFound: true,
+      labviewCliFound: false,
+      lvCompareFound: false
+    }),
     labviewExe,
     notes,
     registryQueryPlans,
     candidates
   };
+}
+
+function buildProviderDecisions(
+  options: BuildProviderDecisionsOptions
+): RuntimeProviderDecision[] {
+  const decisions: RuntimeProviderDecision[] = [];
+  const containerRelevant = options.platform === 'win32';
+
+  if (options.selectedProvider === 'windows-container') {
+    decisions.push({
+      provider: 'windows-container',
+      outcome: 'selected',
+      reason: 'windows-container-preferred-and-available',
+      detail: `Windows container image ${options.windowsContainerImage} is available and Windows 64-bit comparison-report execution prefers isolation.`
+    });
+    decisions.push({
+      provider: 'host-native',
+      outcome: 'rejected',
+      reason: 'windows-container-preferred-over-host-native',
+      detail:
+        'Host-native Windows 64-bit execution was not selected because isolated Windows container execution is preferred when available.'
+    });
+    return decisions;
+  }
+
+  if (containerRelevant) {
+    decisions.push(
+      options.preferBitness === 'x86'
+        ? {
+            provider: 'windows-container',
+            outcome: 'rejected',
+            reason: 'windows-x86-reference-lane-stays-host-native',
+            detail:
+              'Windows x86 comparison-report execution stays host-native, so the Windows container provider was not selected for this lane.'
+          }
+        : options.windowsContainerAvailable
+          ? {
+              provider: 'windows-container',
+              outcome: 'rejected',
+              reason: 'windows-container-available-but-not-selected',
+              detail:
+                'The Windows container provider was available but was not selected because a higher-priority runtime-selection block prevented container execution.'
+            }
+          : {
+              provider: 'windows-container',
+              outcome: 'rejected',
+              reason: 'windows-container-image-unavailable',
+              detail: `Windows container image ${options.windowsContainerImage} was not available to the current host.`
+            }
+    );
+  }
+
+  if (options.selectedProvider === 'host-native') {
+    decisions.push({
+      provider: 'host-native',
+      outcome: 'selected',
+      reason:
+        options.selectedEngine === 'lvcompare'
+          ? 'host-native-lvcompare-fallback-selected'
+          : 'host-native-labview-cli-selected',
+      detail:
+        options.selectedEngine === 'lvcompare'
+          ? 'Host-native LabVIEW 2026 and LVCompare were available, while LabVIEWCLI was not located.'
+          : options.preferBitness === 'x86'
+            ? 'Host-native LabVIEW 2026 and LabVIEWCLI were available, and the Windows x86 lane prefers host-native execution.'
+            : 'Host-native LabVIEW 2026 and LabVIEWCLI were available for comparison-report execution.'
+    });
+    return decisions;
+  }
+
+  decisions.push({
+    provider: 'host-native',
+    outcome: 'rejected',
+    reason: deriveHostNativeRejectedReason(options),
+    detail: deriveHostNativeRejectedDetail(options)
+  });
+  return decisions;
+}
+
+function deriveHostNativeRejectedReason(options: BuildProviderDecisionsOptions): string {
+  if (options.blockedReason === 'labview-2026q1-unsupported-on-macos') {
+    return 'host-native-unsupported-on-macos';
+  }
+  if (options.configuredFailure) {
+    return `host-native-configured-${options.configuredFailure.kind}-path-missing`;
+  }
+  if (options.blockedReason === 'labview-exe-not-found' || options.labviewExeFound === false) {
+    return 'host-native-labview-exe-not-found';
+  }
+  if (options.blockedReason === 'comparison-tool-not-found') {
+    return 'host-native-comparison-tool-not-found';
+  }
+  return options.blockedReason ?? 'host-native-not-selected';
+}
+
+function deriveHostNativeRejectedDetail(options: BuildProviderDecisionsOptions): string {
+  if (options.blockedReason === 'labview-2026q1-unsupported-on-macos') {
+    return 'LabVIEW 2026 Q1 comparison-report execution is unsupported on macOS.';
+  }
+  if (options.configuredFailure) {
+    return `Configured ${options.configuredFailure.kind} path does not exist: ${options.configuredFailure.path}`;
+  }
+  if (options.blockedReason === 'labview-exe-not-found' || options.labviewExeFound === false) {
+    return 'No supported LabVIEW 2026 executable was located for host-native comparison-report execution.';
+  }
+  if (options.blockedReason === 'comparison-tool-not-found') {
+    return 'A supported LabVIEW 2026 executable was located, but neither LabVIEWCLI nor LVCompare was located for host-native comparison-report execution.';
+  }
+  return 'Host-native comparison-report execution was not selected.';
 }
 
 function resolveWindowsContainerImage(rawImage: string | undefined): string {

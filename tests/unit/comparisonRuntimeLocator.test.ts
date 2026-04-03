@@ -83,6 +83,22 @@ describe('comparisonRuntimeLocator', () => {
       'C:\\Program Files\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe'
     );
     expect(result.notes).toContain('LabVIEWCLI was not located; falling back to LVCompare.');
+    expect(result.providerDecisions).toEqual([
+      {
+        provider: 'windows-container',
+        outcome: 'rejected',
+        reason: 'windows-container-image-unavailable',
+        detail:
+          'Windows container image nationalinstruments/labview:2026q1-windows was not available to the current host.'
+      },
+      {
+        provider: 'host-native',
+        outcome: 'selected',
+        reason: 'host-native-lvcompare-fallback-selected',
+        detail:
+          'Host-native LabVIEW 2026 and LVCompare were available, while LabVIEWCLI was not located.'
+      }
+    ]);
   });
 
   it('defaults Windows auto bitness to x86 when both host installs are available', async () => {
@@ -106,6 +122,22 @@ describe('comparisonRuntimeLocator', () => {
 
     expect(result.engine).toBe('labview-cli');
     expect(result.labviewExe?.bitness).toBe('x86');
+    expect(result.providerDecisions).toEqual([
+      {
+        provider: 'windows-container',
+        outcome: 'rejected',
+        reason: 'windows-container-image-unavailable',
+        detail:
+          'Windows container image nationalinstruments/labview:2026q1-windows was not available to the current host.'
+      },
+      {
+        provider: 'host-native',
+        outcome: 'selected',
+        reason: 'host-native-labview-cli-selected',
+        detail:
+          'Host-native LabVIEW 2026 and LabVIEWCLI were available for comparison-report execution.'
+      }
+    ]);
   });
 
   it('honors an explicit x86 preference when both Windows bitnesses are available', async () => {
@@ -129,6 +161,22 @@ describe('comparisonRuntimeLocator', () => {
 
     expect(result.engine).toBe('labview-cli');
     expect(result.labviewExe?.bitness).toBe('x86');
+    expect(result.providerDecisions).toEqual([
+      {
+        provider: 'windows-container',
+        outcome: 'rejected',
+        reason: 'windows-x86-reference-lane-stays-host-native',
+        detail:
+          'Windows x86 comparison-report execution stays host-native, so the Windows container provider was not selected for this lane.'
+      },
+      {
+        provider: 'host-native',
+        outcome: 'selected',
+        reason: 'host-native-labview-cli-selected',
+        detail:
+          'Host-native LabVIEW 2026 and LabVIEWCLI were available, and the Windows x86 lane prefers host-native execution.'
+      }
+    ]);
   });
 
   it('prefers the isolated windows container provider for auto or x64 report execution when the image is available', async () => {
@@ -154,6 +202,22 @@ describe('comparisonRuntimeLocator', () => {
       'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
     );
     expect(result.notes[0]).toContain('isolated Windows container provider image');
+    expect(result.providerDecisions).toEqual([
+      {
+        provider: 'windows-container',
+        outcome: 'selected',
+        reason: 'windows-container-preferred-and-available',
+        detail:
+          'Windows container image nationalinstruments/labview:2026q1-windows is available and Windows 64-bit comparison-report execution prefers isolation.'
+      },
+      {
+        provider: 'host-native',
+        outcome: 'rejected',
+        reason: 'windows-container-preferred-over-host-native',
+        detail:
+          'Host-native Windows 64-bit execution was not selected because isolated Windows container execution is preferred when available.'
+      }
+    ]);
   });
 
   it('retains the explicit macOS 2026 Q1 unsupported constraint', async () => {
@@ -200,6 +264,15 @@ describe('comparisonRuntimeLocator', () => {
     expect(result.notes).toContain(
       'Configure viHistorySuite.labviewCliPath or viHistorySuite.lvComparePath to an installed comparison tool when the documented scan roots do not contain one.'
     );
+    expect(result.providerDecisions).toEqual([
+      {
+        provider: 'host-native',
+        outcome: 'rejected',
+        reason: 'host-native-comparison-tool-not-found',
+        detail:
+          'A supported LabVIEW 2026 executable was located, but neither LabVIEWCLI nor LVCompare was located for host-native comparison-report execution.'
+      }
+    ]);
   });
 
   it('retains Windows registry probe plans and parses registry-discovered LabVIEW executables', async () => {

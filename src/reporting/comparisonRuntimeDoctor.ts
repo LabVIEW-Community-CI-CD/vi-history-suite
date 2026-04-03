@@ -28,6 +28,17 @@ export function buildComparisonRuntimeDoctorSummaryFromFacts(options: {
     `Selected provider=${selection.provider}; engine=${selection.engine ?? 'none'}; platform=${selection.platform}; preferBitness=${selection.preferBitness}.`
   );
 
+  if (selection.providerDecisions?.length) {
+    lines.push(
+      ...selection.providerDecisions.map(
+        (decision) =>
+          `Provider decision: ${decision.outcome} ${decision.provider} because ${stripTerminalPunctuation(
+            decision.detail
+          )}.`
+      )
+    );
+  }
+
   const toolFacts = [
     selection.labviewExe?.path ? `LabVIEW=${selection.labviewExe.path}` : undefined,
     selection.labviewCli?.path ? `LabVIEWCLI=${selection.labviewCli.path}` : undefined,

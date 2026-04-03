@@ -46,3 +46,15 @@ requiring raw-log inspection.
 - add bounded progress state for dashboard/report refresh
 - add the first provider-doctor summary surface using existing runtime facts on
   the retained comparison-report packet and live comparison-report panel
+
+## Implemented So Far
+
+- compact runtime-doctor summary on stored packet and live panel
+- structured provider-decision facts for selected and rejected providers
+- provider-decision runtime-doctor lines on stored packet and live panel
+
+## Remaining Focus
+
+- bounded progress for dashboard and report refresh
+- cancellation with partial-evidence retention
+- trust-aware refresh and execution UX

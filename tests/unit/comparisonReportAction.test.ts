@@ -563,6 +563,7 @@ describe('comparisonReportAction', () => {
           reportExists: false,
           doctorSummaryLines: [
             'Selected provider=host-native; engine=labview-cli; platform=win32; preferBitness=x86.',
+            'Provider decision: rejected windows-container because Windows x86 comparison-report execution stays host-native, so the Windows container provider was not selected for this lane.',
             'Next action: use the retained runtime notes, stdout/stderr artifacts, and diagnostic log to correct the runtime environment, then rerun comparison report generation.'
           ],
           failureReason: 'command-exited-nonzero',
@@ -709,6 +710,7 @@ describe('comparisonReportAction', () => {
         '/workspace/.storage/reports/repoid123456/fileid123456/runtime-diagnostic-log.txt',
       runtimeDoctorSummaryLines: [
         'Selected provider=host-native; engine=labview-cli; platform=win32; preferBitness=x86.',
+        'Provider decision: rejected windows-container because Windows x86 comparison-report execution stays host-native, so the Windows container provider was not selected for this lane.',
         'Next action: use the retained runtime notes, stdout/stderr artifacts, and diagnostic log to correct the runtime environment, then rerun comparison report generation.'
       ],
       runtimeExecutable: 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
@@ -740,6 +742,9 @@ describe('comparisonReportAction', () => {
     expect(panel.webview.html).toContain('command-exited-nonzero');
     expect(panel.webview.html).toContain('data-testid="comparison-report-panel-runtime-doctor"');
     expect(panel.webview.html).toContain('Selected provider=host-native; engine=labview-cli; platform=win32; preferBitness=x86.');
+    expect(panel.webview.html).toContain(
+      'Provider decision: rejected windows-container because Windows x86 comparison-report execution stays host-native, so the Windows container provider was not selected for this lane.'
+    );
     expect(panel.webview.html).toContain('Runtime diagnostic log source:</strong> C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log');
     expect(panel.webview.html).toContain('Runtime executable:</strong> C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe');
     expect(panel.webview.html).toContain('Runtime args:</strong> -OperationName CreateComparisonReport -LabVIEWPath C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe');

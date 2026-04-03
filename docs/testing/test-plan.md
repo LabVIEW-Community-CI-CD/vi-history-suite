@@ -411,6 +411,12 @@
   retained runtime-doctor summary
 - `TEST-UNIT-114`: prove the live comparison-report panel surfaces the runtime
   doctor summary alongside retained execution diagnostics
+- `TEST-UNIT-115`: prove runtime selection retains structured provider-decision
+  facts for selected and rejected providers across Windows container,
+  host-native, and blocked-provider paths
+- `TEST-UNIT-116`: prove stored packet and live comparison-report panel
+  surfaces include provider-decision runtime-doctor lines when those retained
+  facts are present
 - `TEST-DOC-014`: review the queue, epic, ADR, and current-state surfaces to
   prove the future-facing dashboard research was normalized into governed repo
   control-plane artifacts and the incoming research artifact was deleted

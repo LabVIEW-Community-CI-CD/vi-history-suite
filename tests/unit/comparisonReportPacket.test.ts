@@ -334,6 +334,7 @@ describe('comparisonReportPacket', () => {
         reportExists: false,
         doctorSummaryLines: [
           'Selected provider=host-native; engine=labview-cli; platform=win32; preferBitness=x86.',
+          'Provider decision: rejected windows-container because Windows x86 comparison-report execution stays host-native, so the Windows container provider was not selected for this lane.',
           'Next action: use the retained runtime notes, stdout/stderr artifacts, and diagnostic log to correct the runtime environment, then rerun comparison report generation.'
         ],
         failureReason: 'command-exited-nonzero',
@@ -352,6 +353,9 @@ describe('comparisonReportPacket', () => {
     expect(html).toContain('runtime-diagnostic-log.txt');
     expect(html).toContain('data-testid="comparison-report-runtime-doctor"');
     expect(html).toContain('Selected provider=host-native; engine=labview-cli; platform=win32; preferBitness=x86.');
+    expect(html).toContain(
+      'Provider decision: rejected windows-container because Windows x86 comparison-report execution stays host-native, so the Windows container provider was not selected for this lane.'
+    );
     expect(html).toContain(
       'LabVIEW CLI ignored the explicit -LabVIEWPath selection and used the last-used LabVIEW instead'
     );
