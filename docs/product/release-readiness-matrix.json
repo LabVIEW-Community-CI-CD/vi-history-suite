@@ -97,12 +97,14 @@
         ".gitlab-ci.yml",
         "docker/docs-authoring/Dockerfile",
         "docs/documentation-workbench.md",
+        "docs/product/documentation-coherence-ledger.md",
+        "docs/product/wiki-seed-plan.md",
         "docs/release-procedure.md",
         "tests/unit/shipControlDocs.test.ts"
       ],
       "blockerId": "BL-003",
-      "blocker": "The GitLab pipeline now retains preview VSIX artifacts on main, is configured for tagged release packaging, and is configured to publish the docs-authoring workbench image, but the first successful SemVer-tagged release run has not yet been retained as ship evidence.",
-      "nextAction": "Use the main-branch preview VSIX artifact for install testing, keep the docs-authoring workbench image current on main for documentation-package iteration, then run the first governed SemVer tag pipeline and retain the generated VSIX plus release manifest as release evidence."
+      "blocker": "The GitLab pipeline now retains preview VSIX artifacts on main, is configured for tagged release packaging, is configured to publish the docs-authoring workbench image, and now retains a docs-package coherence ledger plus wiki seed plan, but the first successful SemVer-tagged release run has not yet been retained as ship evidence.",
+      "nextAction": "Use the main-branch preview VSIX artifact for install testing, keep the docs-authoring workbench image and docs-package coherence surfaces current on main for documentation-package iteration, then run the first governed SemVer tag pipeline and retain the generated VSIX plus release manifest as release evidence."
     }
   ]
 }

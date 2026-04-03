@@ -136,4 +136,59 @@ describe('integrationHostRuntime', () => {
       })
     ).toThrow(new RegExp(VI_HISTORY_SUITE_LINUX_BOOTSTRAP_COMMAND.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   });
+
+  it('accepts a Linux runtime when no shared libraries are missing', async () => {
+    const runtimeRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-linux-runtime-ready-'));
+    const runtimeCodePath = path.join(runtimeRoot, 'code');
+    await fs.writeFile(runtimeCodePath, elfStub());
+
+    expect(() =>
+      assertLinuxVsCodeRuntimeReady(runtimeCodePath, {
+        execFileSync: vi.fn().mockReturnValue('linux-vdso.so.1 =>  (0x0000)\n') as never
+      })
+    ).not.toThrow();
+  });
+
+  it('checks shared-object runtime artifacts and ignores unreadable ELF probes', async () => {
+    const runtimeRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-linux-runtime-shared-'));
+    const sharedObjectPath = path.join(runtimeRoot, 'libexample.so.1');
+    await fs.writeFile(sharedObjectPath, elfStub());
+
+    const missingProbePath = path.join(runtimeRoot, 'missing-libexample.so.1');
+    const readdirSync = vi.fn((current: string) => {
+      if (current !== runtimeRoot) {
+        return [];
+      }
+
+      return [
+        {
+          name: path.basename(sharedObjectPath),
+          isDirectory: () => false
+        },
+        {
+          name: path.basename(missingProbePath),
+          isDirectory: () => false
+        }
+      ];
+    });
+
+    const statSync = vi.fn((target: string) => ({
+      isFile: () => target === sharedObjectPath || target === missingProbePath
+    }));
+
+    const execFileSync = vi.fn((command: string, args: readonly string[]) => {
+      expect(command).toBe('ldd');
+      expect(String(args[0])).toBe(sharedObjectPath);
+      return 'libwebkit2gtk-4.1.so.0 => not found\n';
+    });
+
+    expect(
+      collectMissingLinuxSharedLibraries(runtimeRoot, {
+        readdirSync: readdirSync as never,
+        statSync: statSync as never,
+        execFileSync: execFileSync as never
+      })
+    ).toEqual(['libwebkit2gtk-4.1.so.0']);
+    expect(execFileSync).toHaveBeenCalledTimes(1);
+  });
 });

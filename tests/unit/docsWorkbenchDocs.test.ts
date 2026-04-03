@@ -20,6 +20,18 @@ const docsGate = require(path.join(repoRoot, 'scripts', 'run-docs-gate.js')) as 
     command: string;
     args: string[];
   }>;
+  runDocsGate: (
+    argv?: string[],
+    deps?: {
+      cwd?: string;
+      stdout?: { write: (text: string) => void };
+      spawnSync?: (
+        command: string,
+        args: string[],
+        options: { cwd: string; stdio: string; shell: boolean }
+      ) => { status?: number; error?: NodeJS.ErrnoException };
+    }
+  ) => string;
   parseDocsGateArgs: (argv: string[]) => { helpRequested: boolean; skipLinks: boolean };
   getDocsGateUsage: () => string;
 };
@@ -67,6 +79,29 @@ describe('documentation-package workbench', () => {
     expect(docsGate.createDocsGateSteps({ skipLinks: true }).map((step) => step.id)).toEqual([
       'compile',
       'docs-tests'
+    ]);
+  });
+
+  it('defaults the docs gate working directory to the repo root when invoked elsewhere', () => {
+    const spawned: string[] = [];
+
+    const result = docsGate.runDocsGate(['--skip-links'], {
+      stdout: {
+        write: () => {}
+      },
+      spawnSync: (command, args, options) => {
+        spawned.push(`${command} ${args.join(' ')}`);
+        expect(options.cwd).toBe(repoRoot);
+        expect(options.stdio).toBe('inherit');
+        expect(options.shell).toBe(false);
+        return { status: 0 };
+      }
+    });
+
+    expect(result).toBe('pass');
+    expect(spawned).toEqual([
+      'npm run compile',
+      'npx vitest run tests/unit/packageManifest.test.ts tests/unit/shipControlDocs.test.ts tests/unit/docsWorkbenchDocs.test.ts'
     ]);
   });
 

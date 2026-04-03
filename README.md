@@ -26,8 +26,10 @@ If you are new to the repo, read these in order:
 6. [SHIP-0001: Releasable VI History Suite](./docs/product/SHIP-0001-releasable-vi-history-suite.md)
 7. [Release Readiness Matrix](./docs/product/release-readiness-matrix.json)
 8. [Wiki Authority Map](./docs/product/wiki-authority-map.md)
-9. [PROGRAM-0001: Next Product Layer](./docs/product/execution-programs/PROGRAM-0001-next-product-layer.md)
-10. [Documentation Package Workbench](./docs/documentation-workbench.md)
+9. [Documentation Coherence Ledger](./docs/product/documentation-coherence-ledger.md)
+10. [Wiki Seed Plan](./docs/product/wiki-seed-plan.md)
+11. [PROGRAM-0001: Next Product Layer](./docs/product/execution-programs/PROGRAM-0001-next-product-layer.md)
+12. [Documentation Package Workbench](./docs/documentation-workbench.md)
 
 For machine-friendly repo orientation, start with:
 
@@ -67,6 +69,8 @@ Use these repo-native control-plane entrypoints instead:
 - [Release Readiness Matrix](./docs/product/release-readiness-matrix.json)
 - [Blocker Ledger](./docs/product/blocker-ledger.json)
 - [Wiki Authority Map](./docs/product/wiki-authority-map.md)
+- [Documentation Coherence Ledger](./docs/product/documentation-coherence-ledger.md)
+- [Wiki Seed Plan](./docs/product/wiki-seed-plan.md)
 - [Documentation Package Workbench](./docs/documentation-workbench.md)
 - [Review Scenarios](./docs/product/review-scenarios.md)
 - [Harness Definitions](./docs/product/harnesses.md)
@@ -152,6 +156,8 @@ Committed and governed today:
 - a published docs-authoring workbench image plus a repo-native docs gate for
   iterating on requirements, ADRs, release-readiness docs, and future
   wiki-source material in a governed environment
+- a retained documentation coherence ledger and wiki seed plan so future wiki
+  work starts from governed docs instead of source or chat memory
 - a configured GitLab SemVer release lane that validates tag/package sync,
   packages a versioned VSIX, and retains a machine-readable release manifest
 - a `main`-branch preview VSIX artifact lane so extension users can install the
@@ -200,6 +206,8 @@ See:
 - [Release Readiness Matrix](./docs/product/release-readiness-matrix.json)
 - [Blocker Ledger](./docs/product/blocker-ledger.json)
 - [Wiki Authority Map](./docs/product/wiki-authority-map.md)
+- [Documentation Coherence Ledger](./docs/product/documentation-coherence-ledger.md)
+- [Wiki Seed Plan](./docs/product/wiki-seed-plan.md)
 - [Documentation Package Workbench](./docs/documentation-workbench.md)
 - [Release Procedure](./docs/release-procedure.md)
 - [Fast VS Code Loop](./docs/dev-fast-loop.md)

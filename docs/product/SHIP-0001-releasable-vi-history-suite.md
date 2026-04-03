@@ -81,6 +81,8 @@ These files are now the authoritative direction surfaces for ship work:
 4. [current-state.md](./current-state.md)
 5. [release-procedure.md](../release-procedure.md)
 6. [documentation-workbench.md](../documentation-workbench.md)
+7. [documentation-coherence-ledger.md](./documentation-coherence-ledger.md)
+8. [wiki-seed-plan.md](./wiki-seed-plan.md)
 
 ## Queue Rule
 

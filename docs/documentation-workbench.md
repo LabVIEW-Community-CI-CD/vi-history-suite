@@ -77,6 +77,12 @@ Use this workbench when the change is primarily about:
 - release procedure and documentation-package coherence
 - wiki-preparation work driven from governed docs
 
+Primary repo surfaces for that work include:
+
+- `docs/product/documentation-coherence-ledger.md`
+- `docs/product/wiki-seed-plan.md`
+- `docs/product/wiki-authority-map.md`
+
 Do not use this workbench as the primary surface for:
 
 - Windows NI comparison-report proof

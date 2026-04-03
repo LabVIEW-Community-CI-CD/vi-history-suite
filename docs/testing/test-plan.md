@@ -747,6 +747,9 @@
   last persisted reviewer name as the next reviewer default and retains stable
   cancellation outcomes when the review-question, outcome, confidence, or
   rationale prompts are dismissed
+- `TEST-UNIT-217`: prove ship-control entrypoints and documentation workbench
+  surfaces point future documentation work to the documentation coherence
+  ledger and wiki seed plan
 - `TEST-UNIT-207`: prove the fast-loop dev-host CLI parses stable arguments,
   prepares a reusable fixture workspace without requiring `Code.exe`, and
   builds a stable launch plan for either direct or staged extension mode
@@ -768,6 +771,17 @@
   README, current state, wiki-authority, release procedure, and ship-control
   surfaces all point future documentation/wiki work to the published
   docs-authoring workbench instead of ad hoc host setup
+- `TEST-DOC-022`: review the documentation coherence ledger to confirm it names
+  the audited authority stack, latest docs-gate and standards-review pass,
+  resolved contradictions, residual risks, and next documentation moves
+- `TEST-DOC-023`: review the wiki seed plan to confirm it maps incremental wiki
+  pages to governed authority docs and excludes source, tests, shell
+  transcripts, and chat history as primary inputs
+- `TEST-DOC-024`: review README, current state, ship control, information-item,
+  wiki-authority, documentation-workbench, and release-procedure surfaces to
+  confirm they all point to the coherence ledger and wiki seed plan
+- `TEST-DOC-025`: review the architecture overview and ADR packet to confirm
+  `ADR-0012` and `ADR-0013` are committed, accepted, and referenced correctly
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

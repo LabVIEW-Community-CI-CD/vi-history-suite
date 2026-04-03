@@ -129,3 +129,5 @@
   Dashboard pair ETA characterization benchmark
 - [ADR-0012](./adr/ADR-0012-documentation-package-workbench-image.md):
   Documentation-package workbench image
+- [ADR-0013](./adr/ADR-0013-authority-first-wiki-seeding.md):
+  Authority-first wiki seeding from the governed docs package

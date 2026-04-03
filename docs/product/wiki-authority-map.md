@@ -18,11 +18,13 @@ When future sessions create or refresh wiki pages, use this order:
 6. [srs.md](../requirements/srs.md)
 7. [rtm.csv](../requirements/rtm.csv)
 8. [test-plan.md](../testing/test-plan.md)
-9. [overview.md](../architecture/overview.md)
-10. `docs/architecture/adr/`
-11. [README.md](../../README.md)
-12. [research-alignment.md](../research/authoritative/research-alignment.md)
-13. [research-implementation-index.json](../research/authoritative/research-implementation-index.json)
+9. [documentation-coherence-ledger.md](./documentation-coherence-ledger.md)
+10. [wiki-seed-plan.md](./wiki-seed-plan.md)
+11. [overview.md](../architecture/overview.md)
+12. `docs/architecture/adr/`
+13. [README.md](../../README.md)
+14. [research-alignment.md](../research/authoritative/research-alignment.md)
+15. [research-implementation-index.json](../research/authoritative/research-implementation-index.json)
 
 If two documents disagree, the higher document in this list wins until the
 lower document is corrected.
@@ -52,6 +54,8 @@ Do not create or refresh wiki pages until these are true:
   the same implemented product truth without unresolved contradiction
 - the documentation-package workbench has been updated when the wiki-relevant
   docs stack changed materially
+- the documentation coherence ledger records no unresolved internal
+  contradiction across the audited authority surfaces
 
 ## Incremental Wiki Workflow
 
@@ -72,5 +76,7 @@ Do not create or refresh wiki pages until these are true:
 - user workflow: README, current state, SRS
 - architecture: architecture overview plus ADRs
 - documentation-package iteration: `docs/documentation-workbench.md`
+- documentation coherence: `docs/product/documentation-coherence-ledger.md`
+- incremental wiki page order: `docs/product/wiki-seed-plan.md`
 - proof and verification: RTM, test plan, retained design-gate and harness
   evidence paths

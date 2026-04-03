@@ -1,6 +1,10 @@
 #!/usr/bin/env node
 
 const { spawnSync } = require('node:child_process');
+const fs = require('node:fs');
+const path = require('node:path');
+
+const repoRoot = path.resolve(path.dirname(fs.realpathSync.native(__filename)), '..');
 
 function getDocsGateUsage() {
   return [
@@ -75,7 +79,7 @@ function runDocsGate(argv = process.argv.slice(2), deps = {}) {
   const options = parseDocsGateArgs(argv);
   const stdout = deps.stdout ?? process.stdout;
   const spawnSyncImpl = deps.spawnSync ?? spawnSync;
-  const cwd = deps.cwd ?? process.cwd();
+  const cwd = deps.cwd ?? repoRoot;
 
   if (options.helpRequested) {
     stdout.write(`${getDocsGateUsage()}\n`);

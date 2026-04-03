@@ -17,6 +17,8 @@ one explicit SemVer release target.
 - SemVer-governed VSIX releaseability evidence expectations
 - published docs-authoring workbench image plus docs gate for requirements,
   ADR, release-readiness, and wiki-authority iteration
+- retained documentation coherence ledger and wiki seed plan for future
+  authority-first wiki work
 
 ## Non-Goals
 
@@ -45,6 +47,8 @@ one explicit SemVer release target.
   docs-workbench manifest through GitLab CI
 - the repo documents how future documentation-package and wiki-preparation work
   should use that workbench instead of ad hoc host setup
+- the repo retains a documentation coherence ledger and wiki seed plan that
+  future sessions can use before drafting wiki content
 
 ## Required Evidence
 
