@@ -1,12 +1,17 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   buildReviewDecisionRecordArtifactPlan,
-  persistReviewDecisionRecord
+  persistReviewDecisionRecord,
+  renderReviewDecisionRecordMarkdown
 } from '../../src/scenarios/decisionRecord';
 import { getReviewScenarioDefinition } from '../../src/scenarios/reviewScenarioRegistry';
 
 describe('decisionRecord', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('builds a separate decision-record artifact plan from the dashboard packet', () => {
     const artifactPlan = buildReviewDecisionRecordArtifactPlan(
       '/tmp/storage',
@@ -164,5 +169,86 @@ describe('decisionRecord', () => {
     });
     expect(mkdir).toHaveBeenCalledOnce();
     expect(writeFile).toHaveBeenCalledTimes(2);
+  });
+
+  it('renders empty evidence sections explicitly and uses the system clock when no time override is provided', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-04-03T12:34:56.000Z'));
+    const mkdir = vi.fn(async () => undefined);
+    const writeFile = vi.fn(async () => undefined);
+    const scenario = getReviewScenarioDefinition('SCENARIO-VHS-001');
+
+    const persisted = await persistReviewDecisionRecord(
+      '/tmp/storage',
+      {
+        scenario,
+        harnessId: 'HARNESS-VHS-001',
+        repositoryUrl: 'https://github.com/ni/labview-icon-editor.git',
+        targetRelativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+        dashboardRecord: {
+          repositoryName: 'labview-icon-editor',
+          repositoryRoot: '/repo',
+          relativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+          signature: 'LVIN',
+          artifactPlan: {
+            repoId: 'repo-id',
+            fileId: 'file-id',
+            windowId: 'window-id',
+            dashboardDirectory: '/tmp/storage/dashboards/repo-id/file-id/window-id',
+            jsonFilePath: '/tmp/storage/dashboards/repo-id/file-id/window-id/dashboard.json',
+            htmlFilePath: '/tmp/storage/dashboards/repo-id/file-id/window-id/dashboard.html',
+            assetsDirectory: '/tmp/storage/dashboards/repo-id/file-id/window-id/assets'
+          },
+          commitWindow: {
+            commitCount: 3,
+            pairCount: 2
+          },
+          summary: {
+            representedPairCount: 2,
+            windowCompletenessState: 'complete',
+            archivedPairCount: 2,
+            missingPairCount: 0,
+            missingPairIds: [],
+            generatedReportCount: 0,
+            reportMetadataPairCount: 0,
+            failedPairCount: 0,
+            failedPairIds: [],
+            blockedPairCount: 0,
+            blockedPairIds: [],
+            overviewSectionCount: 0,
+            overviewImageCount: 0,
+            includedAttributeCount: 0,
+            detailSectionCount: 0,
+            detailItemCount: 0,
+            pairWithOverviewImageCount: 0,
+            pairWithDetailCount: 0,
+            providerSummaries: [],
+            overviewCaptionSummaries: [],
+            includedAttributeSummaries: [],
+            detailHeadingSummaries: [],
+            evidenceStateSummaries: []
+          },
+          entries: []
+        },
+        dashboardHtmlPath: '/tmp/storage/dashboards/repo-id/file-id/window-id/dashboard.html',
+        dashboardJsonPath: '/tmp/storage/dashboards/repo-id/file-id/window-id/dashboard.json',
+        reviewer: 'Reviewer',
+        reviewQuestion: 'Question?',
+        outcome: 'approved',
+        confidence: 'high',
+        decisionRationale: 'Rationale',
+        pairwiseReportPaths: [],
+        missingOrBlockedFacts: []
+      },
+      {
+        mkdir,
+        writeFile
+      }
+    );
+
+    expect(persisted.record.generatedAt).toBe('2026-04-03T12:34:56.000Z');
+    expect(renderReviewDecisionRecordMarkdown(persisted.record)).toContain('- Commit-window start: unknown');
+    expect(renderReviewDecisionRecordMarkdown(persisted.record)).toContain('### Underlying Pairwise Report Paths');
+    expect(renderReviewDecisionRecordMarkdown(persisted.record)).toContain('- none');
   });
 });

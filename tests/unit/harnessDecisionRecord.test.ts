@@ -78,14 +78,14 @@ describe('harnessDecisionRecord', () => {
           representedPairCount: 2,
           windowCompletenessState: 'complete',
           archivedPairCount: 2,
-          missingPairCount: 0,
-          missingPairIds: [],
+          missingPairCount: 1,
+          missingPairIds: ['pair-missing'],
           generatedReportCount: 2,
           reportMetadataPairCount: 2,
-          failedPairCount: 0,
-          failedPairIds: [],
-          blockedPairCount: 0,
-          blockedPairIds: [],
+          failedPairCount: 1,
+          failedPairIds: ['pair-failed'],
+          blockedPairCount: 1,
+          blockedPairIds: ['pair-blocked'],
           overviewSectionCount: 1,
           overviewImageCount: 2,
           includedAttributeCount: 1,
@@ -139,6 +139,18 @@ describe('harnessDecisionRecord', () => {
     expect(result.report.scenarioId).toBe('SCENARIO-VHS-001');
     expect(result.report.decisionRecordJsonPath).toMatch(/decision-record\.json$/);
     expect(persistDecisionRecord).toHaveBeenCalledOnce();
+    expect(persistDecisionRecord).toHaveBeenCalledWith(
+      '/tmp/reports/HARNESS-VHS-001/workspace-storage',
+      expect.objectContaining({
+        pairwiseReportPaths: ['/tmp/a-report.html', '/tmp/b-report.html'],
+        missingOrBlockedFacts: [
+          'Missing archived pair evidence: pair-missing',
+          'Blocked pair evidence: pair-blocked',
+          'Failed pair evidence: pair-failed'
+        ]
+      }),
+      expect.anything()
+    );
   });
 
   it('fails closed when scenario evidence does not satisfy the scenario contract', async () => {

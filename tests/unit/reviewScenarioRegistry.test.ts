@@ -15,6 +15,7 @@ describe('reviewScenarioRegistry', () => {
       minimumCommitWindow: 3,
       minimumComparisonPairs: 2
     });
+    expect(getDefaultReviewScenarioForHarness('HARNESS-VHS-999')).toBeUndefined();
   });
 
   it('validates scenario evidence against the canonical harness contract', () => {
@@ -41,6 +42,20 @@ describe('reviewScenarioRegistry', () => {
       'Scenario SCENARIO-VHS-001 requires at least 3 commits, got 2.',
       'Scenario SCENARIO-VHS-001 requires at least 2 comparison pairs, got 1.'
     ]);
+
+    expect(
+      validateReviewScenarioEvidence(scenario, {
+        harnessId: 'HARNESS-VHS-999',
+        repositoryUrl: 'https://github.com/example/other.git',
+        targetRelativePath: 'Other.vi',
+        commitCount: 3,
+        comparisonPairCount: 2
+      })
+    ).toEqual([
+      'Scenario SCENARIO-VHS-001 requires harness HARNESS-VHS-001, got HARNESS-VHS-999.',
+      'Scenario SCENARIO-VHS-001 requires repository https://github.com/ni/labview-icon-editor.git, got https://github.com/example/other.git.',
+      'Scenario SCENARIO-VHS-001 requires target Tooling/deployment/VIP_Pre-Install Custom Action.vi, got Other.vi.'
+    ]);
   });
 
   it('lists the modeled scenario inventory', () => {
@@ -48,5 +63,11 @@ describe('reviewScenarioRegistry', () => {
       'SCENARIO-VHS-001',
       'SCENARIO-VHS-002'
     ]);
+  });
+
+  it('fails closed on unknown scenarios', () => {
+    expect(() => getReviewScenarioDefinition('SCENARIO-VHS-404')).toThrow(
+      'Unknown review scenario: SCENARIO-VHS-404'
+    );
   });
 });
