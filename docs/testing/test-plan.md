@@ -17,6 +17,7 @@
 | History panel rendering | Unit | Medium | Primary review surface |
 | Extension activation and command flow | Integration | High | VS Code runtime behavior |
 | Harness smoke against cloned real repo | Smoke | High | Real history path |
+| Repo entrypoint and research-status docs | Documentation review | Medium | Future-reader control plane |
 
 ## Entry Criteria
 
@@ -244,6 +245,22 @@
 - `TEST-SMOKE-002`: run the canonical comparison-report smoke and retain JSON,
   Markdown, and HTML report-execution evidence for the latest comparable pair
   under `.cache/harness-reports/`
+- `TEST-DOC-007`: review the committed repo entrypoint stack and confirm
+  `README.md`, `docs/product/current-state.md`, and
+  `docs/research/authoritative/research-implementation-index.json` point to the
+  authoritative research stack, the research-alignment matrix, the active
+  development queue, and the committed implementation-status surfaces
+- `TEST-DOC-008`: review the forward-looking program docs and confirm the
+  research infrastructure, development queue, dashboard epic, and dashboard ADR
+  define a first-class multi-report developer dashboard for one VI across at
+  least three commits
+- `TEST-DOC-009`: review the decision-support docs and confirm the scenario
+  registry plus decision-record template model one canonical VI review scenario
+  with at least three commits, at least two comparison pairs, and a separate
+  human decision outcome
+- `TEST-DOC-010`: review the dashboard direction docs and confirm the dashboard
+  is modeled as concentration-first for high-volume open-source review, with
+  drill-down preserved to raw packet and raw comparison-report artifacts
 - `TEST-INTEG-001`: run a real VS Code extension host against a temporary Git
   workspace and prove eligible versus ineligible command flow behavior
 - `TEST-INTEG-002`: run the real extension-host report action and retain the

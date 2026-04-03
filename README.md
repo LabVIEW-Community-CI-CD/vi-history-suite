@@ -1,70 +1,129 @@
 # vi-history-suite
 
-`vi-history-suite` is a TypeScript-first Visual Studio Code extension project
-for developer-facing VI history review in Git repositories.
+`vi-history-suite` is a governed TypeScript-first Visual Studio Code extension
+for developer-facing review of LabVIEW VI history in Git repositories.
 
-The first product target is narrow and factual:
+It is no longer just an initial command-and-panel baseline. The repo now
+contains:
 
-- detect LabVIEW VIs by content, not by file extension
-- show an Explorer context-menu command `VI History` only for eligible files
-- require the file to be tracked in Git and touched by at least two commits
-- open a review-oriented history panel with commit facts and core actions
+- content-detected VI eligibility and history review
+- governed comparison-report planning, storage, and runtime execution
+- canonical real-history harnesses and smoke lanes
+- retained design-gate guidance for the next development tranche
 
-The initial governed baseline is anchored to the user-supplied design research
-captured in [docs/research/extension-design-summary.md](./docs/research/extension-design-summary.md).
+## Start Here
+
+If you are new to the repo, read these in order:
+
+1. [Current State](./docs/product/current-state.md)
+2. [Research Alignment Matrix](./docs/research/authoritative/research-alignment.md)
+3. [Development Queue](./docs/product/development-queue.json)
+4. [Architecture Overview](./docs/architecture/overview.md)
+5. [Software Requirements Specification](./docs/requirements/srs.md)
+
+For machine-friendly repo orientation, start with:
+
+- [Research Implementation Index](./docs/research/authoritative/research-implementation-index.json)
+
+## Authoritative Research Stack
+
+The repo is governed by the committed research stack, in this order:
+
+1. [deep-research-report.cleaned.md](./docs/research/authoritative/deep-research-report.cleaned.md)
+2. [deep-research-report.md](./docs/research/authoritative/deep-research-report.md)
+3. [next-round-research.md](./docs/research/authoritative/next-round-research.md)
+4. [vi-history-suite-authoritative-research.pdf](./docs/research/authoritative/vi-history-suite-authoritative-research.pdf)
+5. [research-alignment.md](./docs/research/authoritative/research-alignment.md)
+
+The alignment matrix is the committed indicator of what from research is already
+implemented, what is partial, and what remains queued.
 
 ## Product Docs
 
+- [Current State](./docs/product/current-state.md)
 - [Product Charter](./docs/product/charter.md)
 - [Problem Statement](./docs/product/problem-statement.md)
+- [Development Queue](./docs/product/development-queue.json)
 - [First Epic](./docs/product/epics/EPIC-0001-core-content-detected-history-viewer.md)
+- [Dashboard Epic](./docs/product/epics/EPIC-0004-multi-report-developer-dashboard.md)
+- [Review Scenarios](./docs/product/review-scenarios.md)
 - [Harness Definitions](./docs/product/harnesses.md)
 - [Software Requirements Specification](./docs/requirements/srs.md)
 - [Architecture Overview](./docs/architecture/overview.md)
 - [Test Plan](./docs/testing/test-plan.md)
+- [Information Item Map](./docs/information-item-map.md)
+- [Research Infrastructure](./docs/research/authoritative/research-infrastructure.md)
+
+## Implemented Now
+
+Committed and governed today:
+
+- content-based VI detection using `LVIN` and `LVCC` bytes at offset `8`
+- command visibility through both `explorer/context` and `editor/title/context`
+- trust-gated and Git-backed eligibility indexing
+- review-oriented history panel with `Open at commit`, `Diff vs previous`, and
+  `Copy hash`
+- comparison-report preflight, staging, packet storage, and packet webview
+- LabVIEW 2026 Q1 runtime detection and governed host-native report execution
+  proof lanes
+- canonical real-history smoke and canonical comparison-report smoke on
+  `HARNESS-VHS-001`
+- retained design gate that chooses the next tranche from committed evidence
+
+## Active Work
+
+The active product queue is:
+
+- `TRANCHE-003`: live NI report execution and runtime-proof tightening
+- `TRANCHE-004`: progress-surface uplift for indexing and report generation
+- `TRANCHE-005`: Windows 64-bit isolated container provider
+- `TRANCHE-006`: first-class multi-report developer dashboard
+- `TRANCHE-007`: review-scenario registry and human decision records
+
+See:
+
+- [Current State](./docs/product/current-state.md)
+- [Development Queue](./docs/product/development-queue.json)
+- [Research Alignment Matrix](./docs/research/authoritative/research-alignment.md)
 
 ## Local Development
 
 ```bash
 npm ci
-npm run compile
-npm run test
-npm run test:integration
-npm run harness:smoke
 npm run design:gate
 ```
 
-`npm run design:gate` writes retained reports under `.cache/design-gate/` and
-surfaces the weakest covered source files as the next local development focus.
+Primary commands:
 
-## Current Scope
+- `npm run design:gate`
+  - compile
+  - unit coverage
+  - extension-host integration
+  - canonical harness smoke
+  - standards quick-triage assurance
+- `npm run harness:smoke`
+- `npm run harness:report:smoke`
 
-Included in the first baseline:
+Primary generated evidence:
 
-- VS Code command and Explorer menu contribution
-- content-based VI detection for `LVIN` / `LVCC` at offset `8`
-- Git-backed eligibility indexing using tracked files and bounded file history
-- basic webview history panel with commit list and review actions
-- clone-on-demand canonical harness smoke for real Git-backed VI history
+- `.cache/design-gate/latest-report.json`
+- `.cache/design-gate/latest-report.md`
+- `.cache/harness-reports/HARNESS-VHS-001/report.json`
+- `.cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.json`
 
-Deferred beyond the first baseline:
+The generated `.cache/` evidence is local and regenerated. The committed source
+of truth for implemented-versus-partial research work is the documentation stack
+linked above.
 
-- LabVIEW comparison report generation
-- timeline-provider integration
-- marketplace publishing and release automation beyond local CI
+## Canonical Harness
 
-## Canonical Harness Smoke
+The canonical real-history harness is `HARNESS-VHS-001`, backed by
+`ni/labview-icon-editor`, with:
 
-The repo includes a clone-on-demand smoke path for the first real-history
-harness:
+- history smoke via `npm run harness:smoke`
+- comparison-report smoke via `npm run harness:report:smoke`
 
-```bash
-npm run harness:smoke
-```
-
-That command clones `ni/labview-icon-editor` into the repo-local ignored cache
-when needed, evaluates the canonical target VI with the same core history logic
-used by the extension, and writes factual smoke reports under `.cache/`.
+See [Harness Definitions](./docs/product/harnesses.md).
 
 ## License
 

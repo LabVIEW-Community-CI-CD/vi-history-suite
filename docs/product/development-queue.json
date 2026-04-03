@@ -33,5 +33,19 @@
     "status": "queued",
     "source": "author direction",
     "summary": "Implement the dedicated labview2026q1 Windows container provider so extension users can execute 64-bit report generation without colliding with an already-open host-native LabVIEW 2026 64-bit session."
+  },
+  {
+    "id": "TRANCHE-006",
+    "title": "Introduce a first-class multi-report developer dashboard",
+    "status": "queued",
+    "source": "author direction",
+    "summary": "Concentrate multiple retained VI Comparison Reports for one VI into a chronology-aware dashboard that supports human review decisions across at least three commits and reduces the wear of opening individual reports one by one."
+  },
+  {
+    "id": "TRANCHE-007",
+    "title": "Introduce a review-scenario registry and human decision records",
+    "status": "queued",
+    "source": "author direction",
+    "summary": "Model the dashboard as a decision-support system with explicit review scenarios, commit-window contracts, and separate human decision records."
   }
 ]

@@ -1,5 +1,9 @@
 # Research Alignment Matrix
 
+This is the human-readable status matrix for how the committed repo aligns to
+the authoritative research stack. For a machine-friendly entrypoint, start with
+[research-implementation-index.json](./research-implementation-index.json).
+
 ## Authority Surface
 
 - Primary source for unresolved workstreams:
@@ -24,6 +28,8 @@
 | Generate report with `{type}-report-{fullFilename}.html` | partial in this tranche | `src/reporting/comparisonReportPlan.ts`; `src/reporting/comparisonReportExecutionPlan.ts`; `src/reporting/comparisonReportRuntimeExecution.ts`; `src/harness/harnessReportSmoke.ts`; `VHS-REQ-100`; `VHS-REQ-142..163` | run the canonical comparison-report smoke on the active host and retain successful HTML output evidence when tooling is available |
 | Store retained report packets under `context.storageUri` and surface them via `asWebviewUri` plus `localResourceRoots` | aligned in this tranche | `src/reporting/comparisonReportPacket.ts`; `src/reporting/comparisonReportAction.ts`; `VHS-REQ-134..141`; `VHS-REQ-150..151`; `VHS-REQ-161..162` | sustain the packet artifact while improving the live execution and developer-facing summary surface |
 | LabVIEW 2026 Q1 32/64 runtime detection and selection | partial in this tranche | `src/reporting/comparisonRuntimeLocator.ts`; `package.json`; `VHS-REQ-094..096`; `VHS-REQ-138`; `VHS-REQ-146`; `docs/architecture/adr/ADR-0006-windows64-container-isolation-for-extension-users.md` | wire the locator into live NI execution and future Windows 64-bit container provider, keeping containerized x64 isolation as the preferred extension-user path |
+| First-class developer dashboard concentrating multiple VI Comparison Reports across at least three commits | modeled in this tranche | `docs/research/authoritative/research-infrastructure.md`; `docs/product/epics/EPIC-0004-multi-report-developer-dashboard.md`; `docs/architecture/adr/ADR-0007-multi-report-review-dashboard.md`; `docs/architecture/adr/ADR-0008-concentration-first-dashboard-for-high-volume-review.md`; `docs/product/development-queue.json` | define the retained dashboard packet and implement the first concentration-first commit-window review surface once pairwise report proof is stable |
+| Review-scenario registry and separate human decision records for dashboard-driven VI review | modeled in this tranche | `docs/product/review-scenarios.md`; `docs/product/decision-record-template.md`; `docs/research/authoritative/research-infrastructure.md`; `docs/product/development-queue.json` | implement the first canonical scenario packet and one high-volume review scenario after the dashboard packet exists |
 | Status-bar progress item plus richer percent/items/ETA progress UX | partial | `src/indexing/viEligibilityIndexer.ts` currently uses `window.withProgress` only | add governed progress tranche |
 | Manifest trust declaration through `capabilities.untrustedWorkspaces` | aligned in this tranche | `package.json`; `VHS-REQ-084`; `tests/unit/packageManifest.test.ts` | sustain |
 | Treat `TimelineProvider` as experimental only, not published product surface | aligned in docs | `docs/architecture/adr/ADR-0002-published-review-surface-webview.md`; `VHS-REQ-085` | sustain |
@@ -34,5 +40,6 @@
 
 1. Runtime wiring from the pure planner and runtime locator into actual NI report execution
 2. Progress-surface uplift
-3. Explicit architecture decision for proposed APIs and desktop-only scope
-4. Packaging and release guidance aligned to the refreshed authoritative research
+3. Multi-report developer dashboard for commit-window review across at least three commits
+4. Review-scenario registry and human decision records
+5. Packaging and release guidance aligned to the refreshed authoritative research

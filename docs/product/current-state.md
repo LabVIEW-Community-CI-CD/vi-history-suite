@@ -1,0 +1,99 @@
+# Current State
+
+## Purpose
+
+This document is the committed repo entrypoint for human readers and future
+LLMs. It answers four questions without requiring chat history:
+
+1. what is authoritative
+2. what research has already been implemented
+3. what is active now
+4. where local evidence is generated
+
+## Read Order
+
+Read these in order:
+
+1. [README.md](../../README.md)
+2. [Research Implementation Index](../research/authoritative/research-implementation-index.json)
+3. [Research Alignment Matrix](../research/authoritative/research-alignment.md)
+4. [Development Queue](./development-queue.json)
+5. [Architecture Overview](../architecture/overview.md)
+6. [Software Requirements Specification](../requirements/srs.md)
+
+## Authority Stack
+
+Primary authority surfaces:
+
+1. [deep-research-report.cleaned.md](../research/authoritative/deep-research-report.cleaned.md)
+2. [deep-research-report.md](../research/authoritative/deep-research-report.md)
+3. [next-round-research.md](../research/authoritative/next-round-research.md)
+4. [vi-history-suite-authoritative-research.pdf](../research/authoritative/vi-history-suite-authoritative-research.pdf)
+5. [research-alignment.md](../research/authoritative/research-alignment.md)
+
+## Committed Capability State
+
+| Capability Surface | Status | Evidence | Governing Queue |
+| --- | --- | --- | --- |
+| Content-detected VI eligibility and menu gating | implemented | `package.json`; `src/domain/viMagicCore.ts`; `src/indexing/viEligibilityIndexer.ts`; `VHS-REQ-001..015` | sustain |
+| Review-oriented history panel and actions | implemented | `src/ui/historyPanel.ts`; `src/commands/openViHistoryCommand.ts`; `VHS-REQ-016..040` | sustain |
+| Canonical real-history harness smoke | implemented | `src/harness/harnessSmoke.ts`; `src/cli/runHarnessSmoke.ts`; `npm run harness:smoke`; `VHS-REQ-029..030` | sustain |
+| Comparison-report preflight, planning, and packet storage | implemented | `src/reporting/comparisonReportPreflight.ts`; `src/reporting/comparisonReportPlan.ts`; `src/reporting/comparisonReportPacket.ts`; `VHS-REQ-127..145` | sustain |
+| LabVIEW 2026 Q1 runtime detection and governed host-native execution | implemented and active | `src/reporting/comparisonRuntimeLocator.ts`; `src/reporting/comparisonReportRuntimeExecution.ts`; `VHS-REQ-146..181` | `TRANCHE-003` |
+| Canonical comparison-report smoke lane | implemented and active | `src/harness/harnessReportSmoke.ts`; `src/cli/runHarnessReportSmoke.ts`; `npm run harness:report:smoke`; `VHS-REQ-152..180` | `TRANCHE-003` |
+| Indexing and report progress uplift | partial | `src/indexing/viEligibilityIndexer.ts`; `VHS-REQ-093`; research alignment marks this partial | `TRANCHE-004` |
+| Windows 64-bit isolated container provider | architecture-approved, not yet wired live | `docs/architecture/adr/ADR-0006-windows64-container-isolation-for-extension-users.md`; `VHS-REQ-146` | `TRANCHE-005` |
+| Multi-report developer dashboard for one VI across at least three commits | architecture-approved, not yet implemented | `docs/product/epics/EPIC-0004-multi-report-developer-dashboard.md`; `docs/architecture/adr/ADR-0007-multi-report-review-dashboard.md`; `docs/architecture/adr/ADR-0008-concentration-first-dashboard-for-high-volume-review.md`; `docs/research/authoritative/research-infrastructure.md` | `TRANCHE-006` |
+| Review-scenario registry and human decision records | modeled, not yet implemented | `docs/product/review-scenarios.md`; `docs/product/decision-record-template.md`; `docs/research/authoritative/research-infrastructure.md` | `TRANCHE-007` |
+
+## Active Queue
+
+Current committed queue:
+
+- `TRANCHE-003`: Wire governed runtime selection into live NI report execution
+- `TRANCHE-004`: Add progress-surface uplift for indexing and report generation
+- `TRANCHE-005`: Introduce Windows 64-bit isolated container report provider
+- `TRANCHE-006`: Introduce a first-class multi-report developer dashboard
+- `TRANCHE-007`: Introduce a review-scenario registry and human decision records
+
+The queue source of truth is:
+
+- [development-queue.json](./development-queue.json)
+
+## Local Evidence Surfaces
+
+These are generated locally and are not the committed source of truth:
+
+- design gate:
+  - `.cache/design-gate/latest-report.json`
+  - `.cache/design-gate/latest-report.md`
+- canonical history smoke:
+  - `.cache/harness-reports/HARNESS-VHS-001/report.json`
+  - `.cache/harness-reports/HARNESS-VHS-001/report.md`
+  - `.cache/harness-reports/HARNESS-VHS-001/report.html`
+- canonical comparison-report smoke:
+  - `.cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.json`
+  - `.cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.md`
+  - `.cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.html`
+
+## Commands
+
+Primary local commands:
+
+```bash
+npm run design:gate
+npm run harness:smoke
+npm run harness:report:smoke
+```
+
+## Update Rule
+
+When the repo meaningfully changes, update these together:
+
+- [README.md](../../README.md)
+- [Research Alignment Matrix](../research/authoritative/research-alignment.md)
+- [Research Implementation Index](../research/authoritative/research-implementation-index.json)
+- [Development Queue](./development-queue.json)
+- [Software Requirements Specification](../requirements/srs.md)
+- [Traceability Matrix](../requirements/rtm.csv)
+- [Test Plan](../testing/test-plan.md)

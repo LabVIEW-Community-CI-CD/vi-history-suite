@@ -15,6 +15,10 @@
 | --- | --- | --- | --- |
 | Source repo | Code | sole author | `main` is the working integration branch |
 | Product docs | Document | sole author | versioned with code changes |
+| Authoritative research stack | Document | sole author | updated together with research-alignment and current-state surfaces |
+| Repo entrypoint stack | Document | sole author | `README.md`, `docs/product/current-state.md`, and `docs/research/authoritative/research-implementation-index.json` move together when repo meaning changes |
+| Forward-looking program docs | Document | sole author | research infrastructure, dashboard epic, queue, and ADR move together when product direction changes |
+| Review decision-support docs | Document | sole author | review scenarios and decision-record template move together when dashboard decision-support scope changes |
 | Test evidence | Artifact | sole author | regenerated on each CI run |
 | Extension package manifest | Build input | sole author | versioned with releases |
 
@@ -37,4 +41,3 @@
 - Record location: Git history and GitLab pipelines
 - Release record owner: sole author
 - Audit trail: repository commits, tags, and CI artifacts
-

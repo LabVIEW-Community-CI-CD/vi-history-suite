@@ -38,7 +38,7 @@
 | Extension runtime | indexing, command execution, trust gating | TypeScript / Node |
 | Git adapter | tracked-file and history queries | Git CLI plus built-in Git API |
 | Review UI | history presentation and review actions | WebviewPanel |
-| Report subsystem | report planning, runtime/tool selection, later runtime execution, report storage, and provider isolation policy | TypeScript / Node |
+| Report subsystem | report planning, runtime/tool selection, runtime execution, packet storage, multi-report dashboard preparation, and provider isolation policy | TypeScript / Node |
 | Harness smoke runner | clone-on-demand canonical harness verification | TypeScript / Node CLI |
 | Governance pack | requirements, tests, ADRs, traceability | Markdown / CSV |
 
@@ -50,9 +50,11 @@
 | Eligibility indexer | Extension runtime | compute dynamic menu visibility |
 | History service | Extension runtime | load commit history for the selected file |
 | History panel | Review UI | render factual commit review surface |
+| Developer dashboard | Review UI | concentrate multiple retained comparison reports for one VI across a commit window, surface review hotspots, and preserve drill-down to raw evidence |
 | Git CLI adapter | Git adapter | execute and parse bounded Git commands |
 | Comparison report planner | Report subsystem | derive deterministic report naming, staging, storage, and command plans |
 | Comparison runtime locator | Report subsystem | detect LabVIEW 2026 Q1 tooling and select the governed host-native runtime path |
+| Dashboard packet builder | Report subsystem | aggregate multiple retained comparison-report packets into one chronology-aware review packet |
 | Harness smoke command | Harness smoke runner | clone the canonical harness and emit factual local reports |
 
 ## Deployment View
@@ -87,6 +89,9 @@
   - Windows 64-bit isolated container execution is architecture-approved as the
     preferred extension-user isolation path, but not yet wired into live report
     generation
+  - the first-class multi-report dashboard is architecture-approved but not yet
+    implemented, so human reviewers still consume pairwise report evidence
+    through narrower surfaces today
 
 ## ADR Index
 
@@ -102,3 +107,7 @@
   Runtime-provider selection and Windows 64-bit isolation
 - [ADR-0006](./adr/ADR-0006-windows64-container-isolation-for-extension-users.md):
   Windows 64-bit container isolation for extension users
+- [ADR-0007](./adr/ADR-0007-multi-report-review-dashboard.md):
+  Multi-report review dashboard
+- [ADR-0008](./adr/ADR-0008-concentration-first-dashboard-for-high-volume-review.md):
+  Concentration-first dashboard for high-volume review

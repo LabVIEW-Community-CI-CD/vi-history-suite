@@ -1,0 +1,178 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Committed machine-friendly index for authoritative research consumption and implementation status.",
+  "authorityStack": [
+    {
+      "role": "primary-authoritative-research",
+      "path": "docs/research/authoritative/deep-research-report.cleaned.md"
+    },
+    {
+      "role": "secondary-authoritative-research",
+      "path": "docs/research/authoritative/deep-research-report.md"
+    },
+    {
+      "role": "active-round-research",
+      "path": "docs/research/authoritative/next-round-research.md"
+    },
+    {
+      "role": "original-pdf-artifact",
+      "path": "docs/research/authoritative/vi-history-suite-authoritative-research.pdf"
+    },
+    {
+      "role": "human-readable-alignment-matrix",
+      "path": "docs/research/authoritative/research-alignment.md"
+    }
+  ],
+  "readOrder": [
+    "README.md",
+    "docs/product/current-state.md",
+    "docs/research/authoritative/research-alignment.md",
+    "docs/product/development-queue.json",
+    "docs/architecture/overview.md",
+    "docs/requirements/srs.md"
+  ],
+  "implementationState": [
+    {
+      "surface": "content-detected-vi-eligibility-and-menu-gating",
+      "status": "implemented",
+      "evidence": [
+        "package.json",
+        "src/domain/viMagicCore.ts",
+        "src/indexing/viEligibilityIndexer.ts"
+      ],
+      "requirements": [
+        "VHS-REQ-001",
+        "VHS-REQ-005",
+        "VHS-REQ-014"
+      ],
+      "nextMove": "sustain"
+    },
+    {
+      "surface": "history-panel-and-review-actions",
+      "status": "implemented",
+      "evidence": [
+        "src/ui/historyPanel.ts",
+        "src/commands/openViHistoryCommand.ts",
+        "src/ui/historyPanelTracker.ts"
+      ],
+      "requirements": [
+        "VHS-REQ-016",
+        "VHS-REQ-017",
+        "VHS-REQ-018"
+      ],
+      "nextMove": "sustain"
+    },
+    {
+      "surface": "canonical-real-history-harness-smoke",
+      "status": "implemented",
+      "evidence": [
+        "src/harness/harnessSmoke.ts",
+        "src/cli/runHarnessSmoke.ts",
+        "docs/product/harnesses.md"
+      ],
+      "requirements": [
+        "VHS-REQ-029",
+        "VHS-REQ-030"
+      ],
+      "nextMove": "sustain"
+    },
+    {
+      "surface": "comparison-report-preflight-planning-and-packet-storage",
+      "status": "implemented",
+      "evidence": [
+        "src/reporting/comparisonReportPreflight.ts",
+        "src/reporting/comparisonReportPlan.ts",
+        "src/reporting/comparisonReportPacket.ts",
+        "src/reporting/comparisonReportAction.ts"
+      ],
+      "requirements": [
+        "VHS-REQ-127",
+        "VHS-REQ-135",
+        "VHS-REQ-151"
+      ],
+      "nextMove": "sustain"
+    },
+    {
+      "surface": "labview-2026q1-runtime-selection-and-host-native-execution-proof",
+      "status": "implemented-and-active",
+      "evidence": [
+        "src/reporting/comparisonRuntimeLocator.ts",
+        "src/reporting/comparisonReportRuntimeExecution.ts",
+        "src/harness/harnessReportSmoke.ts"
+      ],
+      "requirements": [
+        "VHS-REQ-146",
+        "VHS-REQ-148",
+        "VHS-REQ-159",
+        "VHS-REQ-173"
+      ],
+      "nextMove": "continue TRANCHE-003 runtime proof tightening"
+    },
+    {
+      "surface": "progress-surface-uplift",
+      "status": "partial",
+      "evidence": [
+        "src/indexing/viEligibilityIndexer.ts",
+        "docs/research/authoritative/research-alignment.md"
+      ],
+      "requirements": [
+        "VHS-REQ-093"
+      ],
+      "nextMove": "TRANCHE-004"
+    },
+    {
+      "surface": "windows-x64-isolated-container-provider",
+      "status": "approved-not-yet-live",
+      "evidence": [
+        "docs/architecture/adr/ADR-0006-windows64-container-isolation-for-extension-users.md",
+        "docs/product/development-queue.json"
+      ],
+      "requirements": [
+        "VHS-REQ-146"
+      ],
+      "nextMove": "TRANCHE-005"
+    },
+    {
+      "surface": "multi-report-developer-dashboard-for-three-plus-commits",
+      "status": "modeled-not-yet-implemented",
+      "evidence": [
+        "docs/research/authoritative/research-infrastructure.md",
+        "docs/product/epics/EPIC-0004-multi-report-developer-dashboard.md",
+        "docs/architecture/adr/ADR-0007-multi-report-review-dashboard.md",
+        "docs/architecture/adr/ADR-0008-concentration-first-dashboard-for-high-volume-review.md",
+        "docs/product/development-queue.json"
+      ],
+      "requirements": [
+        "VHS-REQ-185",
+        "VHS-REQ-186",
+        "VHS-REQ-187",
+        "VHS-REQ-190",
+        "VHS-REQ-192"
+      ],
+      "nextMove": "TRANCHE-006"
+    },
+    {
+      "surface": "review-scenario-registry-and-human-decision-records",
+      "status": "modeled-not-yet-implemented",
+      "evidence": [
+        "docs/product/review-scenarios.md",
+        "docs/product/decision-record-template.md",
+        "docs/research/authoritative/research-infrastructure.md",
+        "docs/product/development-queue.json"
+      ],
+      "requirements": [
+        "VHS-REQ-188",
+        "VHS-REQ-189",
+        "VHS-REQ-191"
+      ],
+      "nextMove": "TRANCHE-007"
+    }
+  ],
+  "activeProgram": {
+    "currentStatePath": "docs/product/current-state.md",
+    "developmentQueuePath": "docs/product/development-queue.json",
+    "designGateEvidencePath": ".cache/design-gate/latest-report.json",
+    "comparisonReportSmokePath": ".cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.json",
+    "note": "The .cache evidence is local and regenerated; committed status lives in the docs listed above."
+  }
+}
