@@ -592,6 +592,9 @@
 - `TEST-UNIT-177`: prove the history-panel command flow retains
   `unsupported-command` when `openDashboard` is dispatched but no dashboard
   action is wired
+- `TEST-UNIT-178`: prove comparison-report packet HTML omits the
+  `comparison-report-runtime-doctor` section when no retained runtime-doctor
+  summary lines are present
 - `TEST-DOC-014`: review the queue, epic, ADR, and current-state surfaces to
   prove the future-facing dashboard research was normalized into governed repo
   control-plane artifacts and the incoming research artifact was deleted

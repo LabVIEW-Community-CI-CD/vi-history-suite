@@ -406,6 +406,19 @@ describe('comparisonReportPacket', () => {
     expect(html).toContain('Observed LabVIEWCLI.exe at exit:</strong> no');
     expect(html).toContain('Observed LVCompare.exe at exit:</strong> no');
   });
+
+  it('omits the runtime-doctor section when no retained runtime-doctor summary lines are present', async () => {
+    const record = await createReadyPacketRecord();
+    const html = renderComparisonReportPacketHtml({
+      ...record,
+      runtimeExecution: {
+        ...record.runtimeExecution,
+        doctorSummaryLines: []
+      }
+    });
+
+    expect(html).not.toContain('data-testid="comparison-report-runtime-doctor"');
+  });
 });
 
 async function createReadyPacketRecord(): Promise<ComparisonReportPacketRecord> {
