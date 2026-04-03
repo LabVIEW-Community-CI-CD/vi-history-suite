@@ -100,6 +100,8 @@ export interface HistoryPanelActionSummary {
   documentationPageTitle?: string;
   documentationManifestPath?: string;
   documentationPageFilePath?: string;
+  requestedDocumentationPageId?: string;
+  documentationFallbackUsed?: boolean;
 }
 
 export interface DashboardArtifactActionSummary {

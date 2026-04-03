@@ -568,10 +568,152 @@ describe('createOpenViHistoryCommand', () => {
       documentationPageTitle: 'User Workflow',
       documentationManifestPath: '/workspace/resources/bundled-docs/manifest.json',
       documentationPageFilePath: '/workspace/resources/bundled-docs/pages/user-workflow.html',
+      requestedDocumentationPageId: 'user-workflow',
       title: 'VI History Docs: User Workflow'
     });
     expect(showWarningMessageMock).not.toHaveBeenCalled();
     expect(showInformationMessageMock).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the bundled overview page when a stale documentation page id is requested', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    const openDocumentationAction = vi
+      .fn()
+      .mockResolvedValueOnce({
+        outcome: 'unknown-documentation-page',
+        pageId: 'stale-page'
+      })
+      .mockResolvedValueOnce({
+        outcome: 'opened-documentation',
+        pageId: 'overview',
+        pageTitle: 'Overview',
+        title: 'VI History Docs: Overview',
+        manifestFilePath: '/workspace/resources/bundled-docs/manifest.json',
+        pageFilePath: '/workspace/resources/bundled-docs/pages/overview.html'
+      });
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'BINX',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Update VI',
+            previousHash: '1111111122222222'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      openDocumentationAction
+    );
+
+    await command(targetUri as never);
+    await tracker.dispatchLastPanelMessage({
+      command: 'openDocumentation',
+      pageId: 'stale-page'
+    });
+
+    expect(openDocumentationAction).toHaveBeenNthCalledWith(1, {
+      pageId: 'stale-page'
+    });
+    expect(openDocumentationAction).toHaveBeenNthCalledWith(2);
+    expect(showInformationMessageMock).toHaveBeenCalledWith(
+      'VI History could not resolve the requested bundled documentation page. Opened the bundled overview page instead.'
+    );
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'openDocumentation',
+      outcome: 'opened-documentation',
+      documentationPageId: 'overview',
+      documentationPageTitle: 'Overview',
+      documentationManifestPath: '/workspace/resources/bundled-docs/manifest.json',
+      documentationPageFilePath: '/workspace/resources/bundled-docs/pages/overview.html',
+      requestedDocumentationPageId: 'stale-page',
+      documentationFallbackUsed: true,
+      title: 'VI History Docs: Overview'
+    });
+    expect(showWarningMessageMock).not.toHaveBeenCalled();
+  });
+
+  it('surfaces a stable warning when bundled documentation assets are missing', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    const openDocumentationAction = vi.fn().mockResolvedValue({
+      outcome: 'missing-bundled-documentation'
+    });
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'BINX',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Update VI',
+            previousHash: '1111111122222222'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      openDocumentationAction
+    );
+
+    await command(targetUri as never);
+    await tracker.dispatchLastPanelMessage({
+      command: 'openDocumentation',
+      pageId: 'user-workflow'
+    });
+
+    expect(showWarningMessageMock).toHaveBeenCalledWith(
+      'Bundled VI History documentation is not available in this extension build.'
+    );
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'openDocumentation',
+      outcome: 'missing-bundled-documentation',
+      requestedDocumentationPageId: 'user-workflow',
+      documentationPageId: undefined,
+      documentationPageTitle: undefined,
+      documentationManifestPath: undefined,
+      documentationPageFilePath: undefined,
+      title: undefined
+    });
   });
 
   it('renders capability-truthful disabled actions when optional panel surfaces are not wired', async () => {

@@ -82,6 +82,10 @@ requiring raw-log inspection.
   guidance instead of silent unsupported-command handling, and `Diff prev` on a
   content-detected VI now refuses text-diff fallback when comparison-report
   routing is unavailable in the current build
+- stale bundled-documentation page requests from older or mismatched history
+  panels now fall back to the packaged overview page when the installed bundle
+  is still available, retaining the requested page id and fallback fact in the
+  action summary instead of dead-ending on a stale page id
 - governed dashboard artifact action validation for malformed messages,
   storage-root targets, and kind/path mismatches
 - cancellable eligibility refresh that preserves the previous eligible-path

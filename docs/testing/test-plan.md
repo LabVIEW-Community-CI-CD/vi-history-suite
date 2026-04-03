@@ -826,6 +826,10 @@
   stable build-capability guidance, and that `Diff prev` for content-detected
   LabVIEW VIs does not fall back to text diff when the current build lacks
   comparison-report support
+- `TEST-UNIT-231`: verify stale bundled-documentation page requests from the
+  history panel fall back to the packaged overview page when the bundle is
+  available, and that missing bundled docs still fail closed with a stable
+  warning
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed product, wiki, and assurance-skill repos with authority roles,
   expected remotes, and primary entrypoints

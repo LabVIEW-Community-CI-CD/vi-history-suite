@@ -330,9 +330,23 @@ export function createOpenViHistoryCommand(
           return;
         }
 
-        const result = await openDocumentationAction({
-          pageId: message.pageId
+        const requestedPageId = message.pageId;
+        let documentationFallbackUsed = false;
+        let result = await openDocumentationAction({
+          pageId: requestedPageId
         });
+        if (result.outcome === 'unknown-documentation-page' && requestedPageId) {
+          const fallbackResult = await openDocumentationAction();
+          if (fallbackResult.outcome === 'opened-documentation') {
+            documentationFallbackUsed = true;
+            result = fallbackResult;
+            void vscode.window.showInformationMessage(
+              'VI History could not resolve the requested bundled documentation page. Opened the bundled overview page instead.'
+            );
+          } else {
+            result = fallbackResult;
+          }
+        }
         if (result.outcome === 'missing-bundled-documentation') {
           void vscode.window.showWarningMessage(
             'Bundled VI History documentation is not available in this extension build.'
@@ -343,7 +357,7 @@ export function createOpenViHistoryCommand(
           );
         }
 
-        panelTracker?.recordAction({
+        const documentationActionSummary: Parameters<HistoryPanelTracker['recordAction']>[0] = {
           command,
           outcome:
             result.outcome === 'opened-documentation'
@@ -356,7 +370,14 @@ export function createOpenViHistoryCommand(
           documentationManifestPath: result.manifestFilePath,
           documentationPageFilePath: result.pageFilePath,
           title: result.title
-        });
+        };
+        if (requestedPageId) {
+          documentationActionSummary.requestedDocumentationPageId = requestedPageId;
+        }
+        if (documentationFallbackUsed) {
+          documentationActionSummary.documentationFallbackUsed = true;
+        }
+        panelTracker?.recordAction(documentationActionSummary);
         return;
       }
 
