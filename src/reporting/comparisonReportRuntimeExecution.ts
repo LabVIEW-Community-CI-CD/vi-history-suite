@@ -291,6 +291,7 @@ async function runHostNativeExecution(
       stderr: commandResult.stderr
     });
     const diagnosticNotes = mergeDiagnosticNotes(
+      buildProcessObservationNotes(processObservation?.observation),
       diagnostics.notes,
       failureClassification.notes
     );
@@ -845,6 +846,38 @@ function mergeDiagnosticNotes(...noteGroups: Array<string[] | undefined>): strin
   }
 
   return merged;
+}
+
+function buildProcessObservationNotes(
+  observation: RuntimeProcessObservation | undefined
+): string[] {
+  if (!observation) {
+    return [];
+  }
+
+  const notes: string[] = [];
+  const observedProcessNames =
+    observation.observedProcessNames.length > 0
+      ? observation.observedProcessNames.join(', ')
+      : 'none';
+
+  notes.push(
+    `At the retained ${observation.trigger} snapshot (${observation.capturedAt}), observed LabVIEW-related processes: ${observedProcessNames}.`
+  );
+
+  if (observation.labviewCliProcessObserved && !observation.labviewProcessObserved) {
+    notes.push(
+      `At the retained ${observation.trigger} snapshot, LabVIEWCLI.exe was observed while LabVIEW.exe was not observed.`
+    );
+  }
+
+  if (!observation.lvcompareProcessObserved) {
+    notes.push(
+      `At the retained ${observation.trigger} snapshot, LVCompare.exe was not observed.`
+    );
+  }
+
+  return notes;
 }
 
 function extractCommandOptionValue(args: string[], optionName: string): string | undefined {

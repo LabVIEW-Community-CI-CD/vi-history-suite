@@ -355,6 +355,12 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(result.record.runtimeExecution.labviewProcessObserved).toBe(true);
     expect(result.record.runtimeExecution.labviewCliProcessObserved).toBe(true);
     expect(result.record.runtimeExecution.lvcompareProcessObserved).toBe(false);
+    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+      'At the retained cli-log-banner snapshot (2026-04-03T00:00:01.000Z), observed LabVIEW-related processes: LabVIEWCLI.exe, LabVIEW.exe.'
+    );
+    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+      'At the retained cli-log-banner snapshot, LVCompare.exe was not observed.'
+    );
     expect(writes).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -945,6 +951,61 @@ describe('comparisonReportRuntimeExecution', () => {
       labviewCliProcessObserved: true,
       lvcompareProcessObserved: false
     });
+  });
+
+  it('adds scoped observation notes when only LabVIEWCLI is seen at the retained snapshot', async () => {
+    const result = await executeComparisonReport(
+      {
+        record: createReadyRecord(),
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        pathExists: vi.fn().mockResolvedValue(false),
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 1,
+          stdout: 'LabVIEWCLI started logging in file:  C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log\r\n',
+          stderr: '',
+          processObservation: {
+            capturedAt: '2026-04-03T00:00:02.000Z',
+            hostPlatform: 'linux',
+            runtimePlatform: 'win32',
+            trigger: 'cli-log-banner',
+            observedProcesses: [{ imageName: 'LabVIEWCLI.exe', pid: 44152 }],
+            observedProcessNames: ['LabVIEWCLI.exe'],
+            labviewProcessObserved: false,
+            labviewCliProcessObserved: true,
+            lvcompareProcessObserved: false
+          }
+        }),
+        nowIso: vi
+          .fn()
+          .mockReturnValueOnce('2026-04-02T01:00:00.000Z')
+          .mockReturnValueOnce('2026-04-02T01:00:03.000Z'),
+        nowMs: vi.fn().mockReturnValueOnce(1000).mockReturnValueOnce(4000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32',
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        readFile: vi.fn().mockResolvedValue(
+          '"LabVIEWPath" command line argument is not passed. Using last used LabVIEW: "C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe"\n'
+        ) as never
+      }
+    );
+
+    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+      'At the retained cli-log-banner snapshot (2026-04-03T00:00:02.000Z), observed LabVIEW-related processes: LabVIEWCLI.exe.'
+    );
+    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+      'At the retained cli-log-banner snapshot, LabVIEWCLI.exe was observed while LabVIEW.exe was not observed.'
+    );
+    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+      'At the retained cli-log-banner snapshot, LVCompare.exe was not observed.'
+    );
   });
 
   it('rejects raw execFile failures when the process never returns a numeric exit code', async () => {
