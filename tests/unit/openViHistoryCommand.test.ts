@@ -639,7 +639,7 @@ describe('createOpenViHistoryCommand', () => {
     });
 
     expect(showInformationMessageMock).toHaveBeenCalledWith(
-      'No retained VI Comparison Report exists for this pair yet. Use Generate/refresh to create or update it.'
+      'No retained VI Comparison Report exists for this pair yet. Use Generate compare to create retained evidence for it.'
     );
     expect(tracker.getLastActionSummary()).toEqual({
       command: 'diffPrevious',
@@ -1032,6 +1032,69 @@ describe('createOpenViHistoryCommand', () => {
       title: 'Building VI Review Dashboard',
       cancellable: true
     });
+  });
+
+  it('updates the live history panel from generate to refresh state after retained comparison evidence is created', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    const comparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'opened-comparison-report',
+      reportStatus: 'ready-for-runtime',
+      runtimeExecutionState: 'succeeded'
+    });
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Newest revision',
+            previousHash: '1111111122222222'
+          },
+          {
+            hash: '1111111122222222',
+            authorDate: '2026-04-01T00:00:00Z',
+            authorName: 'B User',
+            subject: 'Older revision'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+    const retainedAvailability = vi.fn().mockResolvedValue(false);
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      comparisonReportAction,
+      undefined,
+      undefined,
+      retainedAvailability as never
+    );
+
+    await command(targetUri as never);
+
+    const panel = createWebviewPanelMock.mock.results[0]?.value as MockPanel | undefined;
+    expect(panel?.webview.html).toContain('Generate compare');
+    expect(panel?.webview.html).toContain('data-testid="history-action-diff" disabled');
+
+    await tracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReport',
+      hash: 'abcdef1234567890'
+    });
+
+    expect(panel?.webview.html).toContain('Refresh compare');
+    expect(panel?.webview.html).toContain('data-command="diffPrevious"');
   });
 
   it('surfaces stable informational outcomes when report or dashboard generation is cancelled after retaining partial evidence', async () => {

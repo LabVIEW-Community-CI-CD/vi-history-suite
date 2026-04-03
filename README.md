@@ -80,9 +80,9 @@ Committed and governed today:
 - content-based VI detection using `LVIN` and `LVCC` bytes at offset `8`
 - command visibility through both `explorer/context` and `editor/title/context`
 - trust-gated and Git-backed eligibility indexing
-- review-oriented history panel with `Open at commit`, `Open compare`,
-  `Generate/refresh`, and `Copy hash`, plus `Open dashboard` for retained
-  three-plus-commit windows
+- review-oriented history panel with `Open at commit`, stateful retained-pair
+  actions (`Generate compare`, `Refresh compare`, `Open compare`), and
+  `Copy hash`, plus `Open dashboard` for retained three-plus-commit windows
 - comparison-report preflight, staging, packet storage, and packet webview
 - LabVIEW 2026 Q1 runtime detection plus reliable Windows 64-bit isolated
   container report execution on the canonical harness

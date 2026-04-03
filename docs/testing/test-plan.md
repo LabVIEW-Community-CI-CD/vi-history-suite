@@ -199,8 +199,10 @@
 - `TEST-UNIT-058`: validate the design gate retains an explicit unavailable
   reason when the governed development queue cannot yield an active or queued
   tranche
-- `TEST-UNIT-059`: validate the VI History panel exposes `Open compare` plus
-  `Generate/refresh` only for revisions that have a retained base revision
+- `TEST-UNIT-059`: validate the VI History panel exposes stateful retained-pair
+  actions so rows without retained evidence show `Generate compare`, rows with
+  retained evidence show `Refresh compare`, and `Open compare` is enabled only
+  when retained pair evidence exists
 - `TEST-UNIT-060`: validate the comparison-report action fails closed when
   workspace-scoped storage is unavailable and the command surfaces the stable
   warning
@@ -688,7 +690,7 @@
   evidence for content-detected VI items when retained pair evidence exists,
   instead of invoking VS Code text diff on binary content
 - `TEST-UNIT-200`: prove `diffPrevious` fails closed with
-  `missing-retained-comparison-report` and a stable `Generate/refresh` hint
+  `missing-retained-comparison-report` and a stable `Generate compare` hint
   when retained pair evidence is absent
 - `TEST-UNIT-201`: prove the concentrated dashboard retains compared-path and
   detail-item whole-window concentration summaries derived from retained NI

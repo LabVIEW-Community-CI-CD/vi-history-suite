@@ -147,6 +147,7 @@ async function testPanelOpenFlow(
   assert.match(panel.renderedHtml, /Update eligible fixture/);
   assert.match(panel.renderedHtml, /Add initial integration fixtures/);
   assert.match(panel.renderedHtml, /Add third eligible fixture revision/);
+  assert.match(panel.renderedHtml, /Generate compare/);
 
   const history = await api.loadHistory(eligibleUri);
   const selectedCommit = history.commits[0];

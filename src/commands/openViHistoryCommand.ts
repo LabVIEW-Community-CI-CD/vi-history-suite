@@ -40,7 +40,12 @@ export function createOpenViHistoryCommand(
     selectedHash: string;
     reportProgress?: (update: { message: string; increment?: number }) => void | Promise<void>;
     cancellationToken?: vscode.CancellationToken;
-  }) => Promise<ComparisonReportActionResult>
+  }) => Promise<ComparisonReportActionResult>,
+  hasRetainedComparisonReport?: (request: {
+    model: Awaited<ReturnType<ViHistoryService['load']>>;
+    selectedHash: string;
+    baseHash: string;
+  }) => Promise<boolean>
 ): (uri?: vscode.Uri) => Promise<void> {
   return async (uri?: vscode.Uri) => {
     const targetUri = uri ?? vscode.window.activeTextEditor?.document.uri;
@@ -65,7 +70,24 @@ export function createOpenViHistoryCommand(
       return;
     }
 
-    const model = await historyService.load(targetUri);
+    const loadedModel = await historyService.load(targetUri);
+    const model = hasRetainedComparisonReport
+      ? {
+          ...loadedModel,
+          commits: await Promise.all(
+            loadedModel.commits.map(async (commit) => ({
+              ...commit,
+              retainedComparisonEvidenceAvailable: commit.previousHash
+                ? await hasRetainedComparisonReport({
+                    model: loadedModel,
+                    selectedHash: commit.hash,
+                    baseHash: commit.previousHash
+                  })
+                : false
+            }))
+          )
+        }
+      : loadedModel;
     const renderedHtml = renderHistoryPanelHtml(model);
     const panel = vscode.window.createWebviewPanel(
       'viHistorySuite.history',
@@ -232,8 +254,16 @@ export function createOpenViHistoryCommand(
           );
         } else if (result.outcome === 'missing-retained-comparison-report') {
           void vscode.window.showInformationMessage(
-            'No retained VI Comparison Report exists for this pair yet. Use Generate/refresh to create or update it.'
+            'No retained VI Comparison Report exists for this pair yet. Use Generate compare to create retained evidence for it.'
           );
+        }
+
+        if (actionCommand === 'generateComparisonReport' && result.outcome === 'opened-comparison-report') {
+          const selectedCommit = model.commits.find((commit) => commit.hash === hash);
+          if (selectedCommit?.previousHash) {
+            selectedCommit.retainedComparisonEvidenceAvailable = true;
+            panel.webview.html = renderHistoryPanelHtml(model);
+          }
         }
 
         recordComparisonResult(actionCommand, hash, result);

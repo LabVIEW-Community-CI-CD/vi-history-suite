@@ -19,7 +19,8 @@ describe('renderHistoryPanelHtml', () => {
           authorDate: '2026-04-02T00:00:00Z',
           authorName: 'A User',
           subject: 'Improve deployment behavior',
-          previousHash: '1111111122222222'
+          previousHash: '1111111122222222',
+          retainedComparisonEvidenceAvailable: false
         },
         {
           hash: '1111111122222222',
@@ -35,7 +36,7 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('Improve deployment behavior');
     expect(html).toContain('Open@commit');
     expect(html).toContain('Open compare');
-    expect(html).toContain('Generate/refresh');
+    expect(html).toContain('Generate compare');
     expect(html).toContain('Open dashboard');
     expect(html).toContain('Copy hash');
     expect(html).toContain('Copy review packet');
@@ -74,8 +75,40 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('Binary semantic differences, visual or cosmetic change detection, and NI comparison-report output.');
     expect(html).toContain('Selected:</strong> <code>abcdef12</code>');
     expect(html).toContain('vs base:</strong> <code>11111111</code>');
-    expect(html).toContain('Open compare</code> action targets.');
-    expect(html).toContain('Generate/refresh</code> when you want to create or update retained comparison evidence');
+    expect(html).toContain('Open compare</code> action targets once retained pair evidence exists.');
+    expect(html).toContain('Generate compare</code> when a pair has no retained evidence yet');
+    expect(html).toContain('Refresh compare</code> when you want to update already-retained evidence');
+  });
+
+  it('renders refresh-state pair actions when retained comparison evidence already exists', () => {
+    const html = renderHistoryPanelHtml({
+      repositoryName: 'labview-icon-editor',
+      repositoryRoot: '/tmp/labview-icon-editor',
+      relativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+      signature: 'LVIN',
+      eligible: true,
+      commits: [
+        {
+          hash: 'abcdef1234567890',
+          authorDate: '2026-04-02T00:00:00Z',
+          authorName: 'A User',
+          subject: 'Improve deployment behavior',
+          previousHash: '1111111122222222',
+          retainedComparisonEvidenceAvailable: true
+        },
+        {
+          hash: '1111111122222222',
+          authorDate: '2026-04-01T00:00:00Z',
+          authorName: 'B User',
+          subject: 'Initial deployment behavior'
+        }
+      ]
+    });
+
+    expect(html).toContain('Open compare');
+    expect(html).toContain('Refresh compare');
+    expect(html).toContain('data-command="generateComparisonReport" data-hash="abcdef1234567890">Refresh compare</button>');
+    expect(html).toContain('data-testid="history-action-report" disabled>Generate compare</button>');
   });
 
   it('renders a portable factual review packet', () => {

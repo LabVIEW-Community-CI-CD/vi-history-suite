@@ -9,12 +9,16 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
       : '<button data-testid="history-action-dashboard" disabled>Open dashboard</button>';
   const rows = model.commits
     .map((commit: ViHistoryCommit, index: number) => {
-      const diffButton = commit.previousHash
+      const hasRetainedComparisonEvidence = commit.retainedComparisonEvidenceAvailable === true;
+      const diffButton = commit.previousHash && hasRetainedComparisonEvidence
         ? `<button data-testid="history-action-diff" data-command="diffPrevious" data-hash="${escapeHtml(commit.hash)}">Open compare</button>`
         : '<button data-testid="history-action-diff" disabled>Open compare</button>';
+      const reportActionLabel = hasRetainedComparisonEvidence
+        ? 'Refresh compare'
+        : 'Generate compare';
       const reportButton = commit.previousHash
-        ? `<button data-testid="history-action-report" data-command="generateComparisonReport" data-hash="${escapeHtml(commit.hash)}">Generate/refresh</button>`
-        : '<button data-testid="history-action-report" disabled>Generate/refresh</button>';
+        ? `<button data-testid="history-action-report" data-command="generateComparisonReport" data-hash="${escapeHtml(commit.hash)}">${reportActionLabel}</button>`
+        : `<button data-testid="history-action-report" disabled>${reportActionLabel}</button>`;
       const compareBase = commit.previousHash
         ? `<div data-testid="history-compare-pair"><strong>Selected:</strong> <code>${escapeHtml(commit.hash.slice(0, 8))}</code> <strong>vs base:</strong> <code>${escapeHtml(commit.previousHash.slice(0, 8))}</code></div>`
         : 'Oldest retained revision';
@@ -140,9 +144,9 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
       <strong>Reviewer guidance:</strong>
       <ol>
         <li data-testid="history-guidance-step">Use the newest/oldest packet to confirm the retained review window before acting on a specific revision.</li>
-        <li data-testid="history-guidance-step">Use the compare pair in each row to see exactly which retained base revision an <code>Open compare</code> action targets.</li>
+        <li data-testid="history-guidance-step">Use the compare pair in each row to see exactly which retained base revision an <code>Open compare</code> action targets once retained pair evidence exists.</li>
         <li data-testid="history-guidance-step">Use <code>Open dashboard</code> when the retained window has at least three commits and you want concentrated comparison-report evidence in one place.</li>
-        <li data-testid="history-guidance-step">Use <code>Generate/refresh</code> when you want to create or update retained comparison evidence for the selected pair before reviewing it.</li>
+        <li data-testid="history-guidance-step">Use <code>Generate compare</code> when a pair has no retained evidence yet, and <code>Refresh compare</code> when you want to update already-retained evidence for that pair.</li>
       </ol>
     </div>
     <div class="confidence" data-testid="history-confidence-scope">

@@ -12,6 +12,7 @@ import {
 
 export interface ViHistoryCommit extends GitHistoryEntry {
   previousHash?: string;
+  retainedComparisonEvidenceAvailable?: boolean;
 }
 
 export interface ViHistoryViewModel {
@@ -83,4 +84,3 @@ export async function loadViHistoryViewModelFromFsPath(
     }))
   };
 }
-

@@ -1,6 +1,8 @@
+import * as fs from 'node:fs/promises';
 import * as vscode from 'vscode';
 
 import { createOpenViHistoryCommand } from './commands/openViHistoryCommand';
+import { buildComparisonReportArchivePlanFromSelection } from './dashboard/comparisonReportArchive';
 import { createMultiReportDashboardAction } from './dashboard/multiReportDashboardAction';
 import { getBuiltInGitApi } from './git/gitApi';
 import {
@@ -49,6 +51,31 @@ export async function activate(
   const comparisonReportAction = createComparisonReportAction(context);
   const openRetainedComparisonReportAction = createOpenRetainedComparisonReportAction(context);
   const multiReportDashboardAction = createMultiReportDashboardAction(context, {}, panelTracker);
+  const hasRetainedComparisonReport = async (request: {
+    model: ViHistoryViewModel;
+    selectedHash: string;
+    baseHash: string;
+  }): Promise<boolean> => {
+    if (!context.storageUri) {
+      return false;
+    }
+
+    const archivePlan = buildComparisonReportArchivePlanFromSelection({
+      storageRoot: context.storageUri.fsPath,
+      repositoryRoot: request.model.repositoryRoot,
+      relativePath: request.model.relativePath,
+      reportType: 'diff',
+      selectedHash: request.selectedHash,
+      baseHash: request.baseHash
+    });
+
+    try {
+      await fs.access(archivePlan.sourceRecordFilePath);
+      return true;
+    } catch {
+      return false;
+    }
+  };
 
   context.subscriptions.push(eligibilityIndexer);
 
@@ -62,7 +89,8 @@ export async function activate(
         panelTracker,
         comparisonReportAction,
         multiReportDashboardAction,
-        openRetainedComparisonReportAction
+        openRetainedComparisonReportAction,
+        hasRetainedComparisonReport
       )
     )
   );
