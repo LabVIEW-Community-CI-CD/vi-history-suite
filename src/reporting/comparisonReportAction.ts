@@ -14,6 +14,7 @@ import { preflightComparisonReportRevisions } from './comparisonReportPreflight'
 export interface ComparisonReportActionRequest {
   model: ViHistoryViewModel;
   selectedHash: string;
+  reportProgress?: (update: { message: string; increment?: number }) => void | Promise<void>;
 }
 
 export interface ComparisonReportActionResult {
@@ -76,6 +77,10 @@ export function createComparisonReportAction(
       return { outcome: 'workspace-untrusted' };
     }
 
+    await request.reportProgress?.({
+      message: 'Resolving retained revision pair.',
+      increment: 10
+    });
     const selectedCommit = request.model.commits.find((commit) => commit.hash === request.selectedHash);
     if (!selectedCommit) {
       return { outcome: 'missing-selected-commit' };
@@ -89,17 +94,29 @@ export function createComparisonReportAction(
       return { outcome: 'missing-storage-uri' };
     }
 
+    await request.reportProgress?.({
+      message: 'Validating retained VI revisions.',
+      increment: 20
+    });
     const preflight = await (deps.preflightComparisonReport ?? preflightComparisonReportRevisions)({
       repoRoot: request.model.repositoryRoot,
       relativePath: request.model.relativePath,
       leftRevisionId: selectedCommit.previousHash,
       rightRevisionId: selectedCommit.hash
     });
+    await request.reportProgress?.({
+      message: 'Selecting comparison-report runtime.',
+      increment: 20
+    });
     const runtimeSelection = await (deps.locateRuntime ?? locateComparisonRuntime)(
       resolveRuntimePlatform(process.platform),
       (deps.getRuntimeSettings ?? readComparisonRuntimeSettings)()
     );
 
+    await request.reportProgress?.({
+      message: 'Persisting governed comparison-report packet.',
+      increment: 20
+    });
     let packet = await (deps.persistComparisonReport ?? persistComparisonReportPacket)({
       storageRoot: context.storageUri.fsPath,
       repositoryRoot: request.model.repositoryRoot,
@@ -111,12 +128,20 @@ export function createComparisonReportAction(
       runtimeSelection
     });
     if (packet.record.reportStatus === 'ready-for-runtime') {
+      await request.reportProgress?.({
+        message: 'Executing NI comparison-report runtime.',
+        increment: 20
+      });
       packet = await (deps.executeComparisonReport ?? executeComparisonReport)({
         record: packet.record,
         repositoryRoot: request.model.repositoryRoot
       });
     }
     if (canArchiveComparisonReport(packet.record)) {
+      await request.reportProgress?.({
+        message: 'Archiving comparison-report evidence.',
+        increment: 5
+      });
       await (deps.archiveComparisonReportSource ?? archiveComparisonReportSource)(packet.record);
     }
 
@@ -126,6 +151,10 @@ export function createComparisonReportAction(
     const repoRootUri = joinPath(context.storageUri, 'reports', packet.record.artifactPlan.repoId);
     const packetFileUri = uriFile(packet.packetFilePath);
 
+    await request.reportProgress?.({
+      message: 'Opening retained comparison-report view.',
+      increment: 5
+    });
     const panel = createWebviewPanel(
       'viHistorySuite.comparisonReport',
       packet.record.reportTitle,

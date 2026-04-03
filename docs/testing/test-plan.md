@@ -426,6 +426,14 @@
 - `TEST-UNIT-119`: prove the history-panel command flow surfaces stable
   warnings and explicit `workspace-untrusted` action outcomes when report or
   dashboard actions are invoked after workspace trust is lost
+- `TEST-UNIT-120`: prove the comparison-report action emits deterministic
+  bounded progress stages across retained-pair resolution, preflight, runtime
+  selection, persistence, execution, archival, and panel opening
+- `TEST-UNIT-121`: prove the dashboard action emits deterministic bounded
+  progress stages for metadata concentration and dashboard opening
+- `TEST-UNIT-122`: prove the history-panel command flow wraps comparison-report
+  and dashboard actions in non-cancellable notification progress with stable
+  titles
 - `TEST-DOC-014`: review the queue, epic, ADR, and current-state surfaces to
   prove the future-facing dashboard research was normalized into governed repo
   control-plane artifacts and the incoming research artifact was deleted

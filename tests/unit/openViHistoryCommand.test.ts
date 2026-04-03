@@ -6,6 +6,7 @@ const {
   clipboardWriteTextMock,
   executeCommandMock,
   createWebviewPanelMock,
+  withProgressMock,
   workspaceState,
   windowState
 } = vi.hoisted(() => ({
@@ -14,6 +15,7 @@ const {
   clipboardWriteTextMock: vi.fn(),
   executeCommandMock: vi.fn(),
   createWebviewPanelMock: vi.fn(),
+  withProgressMock: vi.fn(),
   workspaceState: {
     isTrusted: true
   },
@@ -63,7 +65,8 @@ vi.mock('vscode', () => ({
     },
     showWarningMessage: showWarningMessageMock,
     showInformationMessage: showInformationMessageMock,
-    createWebviewPanel: createWebviewPanelMock
+    createWebviewPanel: createWebviewPanelMock,
+    withProgress: withProgressMock
   },
   workspace: workspaceState,
   env: {
@@ -76,6 +79,9 @@ vi.mock('vscode', () => ({
   },
   ViewColumn: {
     Active: 1
+  },
+  ProgressLocation: {
+    Notification: 15
   }
 }));
 
@@ -91,8 +97,20 @@ describe('createOpenViHistoryCommand', () => {
     clipboardWriteTextMock.mockReset();
     executeCommandMock.mockReset();
     createWebviewPanelMock.mockReset();
+    withProgressMock.mockReset();
     createWebviewPanelMock.mockImplementation((_viewType: string, title: string) =>
       createMockPanel(title)
+    );
+    withProgressMock.mockImplementation(
+      async (
+        _options: unknown,
+        task: (progress: { report(update: { message?: string; increment?: number }): void }) => Promise<unknown>
+      ) =>
+        task({
+          report() {
+            // no-op
+          }
+        })
     );
   });
 
@@ -452,12 +470,15 @@ describe('createOpenViHistoryCommand', () => {
       hash: 'abcdef1234567890'
     });
 
-    expect(comparisonReportAction).toHaveBeenCalledWith({
-      model: expect.objectContaining({
-        relativePath: 'eligible.vi'
-      }),
-      selectedHash: 'abcdef1234567890'
-    });
+    expect(comparisonReportAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: expect.objectContaining({
+          relativePath: 'eligible.vi'
+        }),
+        selectedHash: 'abcdef1234567890',
+        reportProgress: expect.any(Function)
+      })
+    );
     expect(tracker.getLastActionSummary()).toEqual({
       command: 'generateComparisonReport',
       hash: 'abcdef1234567890',
@@ -534,11 +555,14 @@ describe('createOpenViHistoryCommand', () => {
       command: 'openDashboard'
     });
 
-    expect(dashboardAction).toHaveBeenCalledWith({
-      model: expect.objectContaining({
-        relativePath: 'eligible.vi'
+    expect(dashboardAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: expect.objectContaining({
+          relativePath: 'eligible.vi'
+        }),
+        reportProgress: expect.any(Function)
       })
-    });
+    );
     expect(tracker.getLastActionSummary()).toEqual({
       command: 'openDashboard',
       outcome: 'opened-review-dashboard',
@@ -752,6 +776,96 @@ describe('createOpenViHistoryCommand', () => {
       dashboardArchivedPairCount: undefined,
       dashboardMissingPairCount: undefined,
       title: undefined
+    });
+  });
+
+  it('wraps dashboard and comparison-report actions in bounded progress notifications', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    const comparisonReportAction = vi.fn().mockImplementation(async ({ reportProgress }) => {
+      reportProgress?.({
+        message: 'Executing NI comparison-report runtime.',
+        increment: 20
+      });
+      return {
+        outcome: 'opened-comparison-report',
+        reportStatus: 'ready-for-runtime',
+        runtimeExecutionState: 'succeeded'
+      };
+    });
+    const dashboardAction = vi.fn().mockImplementation(async ({ reportProgress }) => {
+      reportProgress?.({
+        message: 'Concentrating retained comparison-report metadata.',
+        increment: 70
+      });
+      return {
+        outcome: 'opened-review-dashboard',
+        dashboardPairCount: 2,
+        dashboardArchivedPairCount: 2,
+        dashboardMissingPairCount: 0
+      };
+    });
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Newest revision',
+            previousHash: '1111111122222222'
+          },
+          {
+            hash: '1111111122222222',
+            authorDate: '2026-04-01T00:00:00Z',
+            authorName: 'B User',
+            subject: 'Middle revision',
+            previousHash: '3333333344444444'
+          },
+          {
+            hash: '3333333344444444',
+            authorDate: '2026-03-31T00:00:00Z',
+            authorName: 'C User',
+            subject: 'Initial revision'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      comparisonReportAction,
+      dashboardAction as never
+    );
+
+    await command(targetUri as never);
+    await tracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReport',
+      hash: 'abcdef1234567890'
+    });
+    await tracker.dispatchLastPanelMessage({
+      command: 'openDashboard'
+    });
+
+    expect(withProgressMock).toHaveBeenCalledTimes(2);
+    expect(withProgressMock.mock.calls[0]?.[0]).toMatchObject({
+      title: 'Generating VI Comparison Report',
+      cancellable: false
+    });
+    expect(withProgressMock.mock.calls[1]?.[0]).toMatchObject({
+      title: 'Building VI Review Dashboard',
+      cancellable: false
     });
   });
 

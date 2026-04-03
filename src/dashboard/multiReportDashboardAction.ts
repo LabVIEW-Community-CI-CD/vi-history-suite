@@ -10,6 +10,7 @@ import { ViHistoryViewModel } from '../services/viHistoryModel';
 
 export interface MultiReportDashboardActionRequest {
   model: ViHistoryViewModel;
+  reportProgress?: (update: { message: string; increment?: number }) => void | Promise<void>;
 }
 
 export interface MultiReportDashboardActionResult {
@@ -55,10 +56,18 @@ export function createMultiReportDashboardAction(
     }
 
     const buildDashboard = deps.buildDashboard ?? buildAndPersistMultiReportDashboard;
+    await request.reportProgress?.({
+      message: 'Concentrating retained comparison-report metadata.',
+      increment: 70
+    });
     const dashboard = await buildDashboard(storageUri.fsPath, request.model);
     const createWebviewPanel = deps.createWebviewPanel ?? vscode.window.createWebviewPanel;
     const executeCommand = deps.executeCommand ?? vscode.commands.executeCommand;
     const uriFile = deps.uriFile ?? vscode.Uri.file;
+    await request.reportProgress?.({
+      message: 'Opening VI Review Dashboard.',
+      increment: 30
+    });
     const panel = createWebviewPanel(
       'viHistorySuite.reviewDashboard',
       `VI Review Dashboard: ${request.model.relativePath.split('/').pop() ?? request.model.relativePath}`,

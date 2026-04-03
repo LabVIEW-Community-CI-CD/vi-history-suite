@@ -56,9 +56,12 @@ requiring raw-log inspection.
   `workspace-untrusted` outcomes
 - stable warning surfaces when trust is lost after the history panel is already
   open
+- bounded progress stages for comparison-report generation and dashboard
+  generation
+- notification progress wrapping on panel-triggered report and dashboard
+  actions
 
 ## Remaining Focus
 
-- bounded progress for dashboard and report refresh
 - cancellation with partial-evidence retention
 - trust-aware refresh progress and cancellation UX

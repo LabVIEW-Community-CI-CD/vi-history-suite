@@ -27,9 +27,11 @@ export function createOpenViHistoryCommand(
   comparisonReportAction?: (request: {
     model: Awaited<ReturnType<ViHistoryService['load']>>;
     selectedHash: string;
+    reportProgress?: (update: { message: string; increment?: number }) => void | Promise<void>;
   }) => Promise<ComparisonReportActionResult>,
   multiReportDashboardAction?: (request: {
     model: Awaited<ReturnType<ViHistoryService['load']>>;
+    reportProgress?: (update: { message: string; increment?: number }) => void | Promise<void>;
   }) => Promise<MultiReportDashboardActionResult>
 ): (uri?: vscode.Uri) => Promise<void> {
   return async (uri?: vscode.Uri) => {
@@ -91,9 +93,14 @@ export function createOpenViHistoryCommand(
           return;
         }
 
-        const result = await multiReportDashboardAction({
-          model
-        });
+        const result = await runProgressWrappedAction(
+          'Building VI Review Dashboard',
+          (reportProgress) =>
+            multiReportDashboardAction({
+              model,
+              reportProgress
+            })
+        );
         if (result.outcome === 'workspace-untrusted') {
           void vscode.window.showWarningMessage(
             'VI Review Dashboard is disabled in untrusted workspaces.'
@@ -157,10 +164,15 @@ export function createOpenViHistoryCommand(
           return;
         }
 
-        const result = await comparisonReportAction({
-          model,
-          selectedHash: hash
-        });
+        const result = await runProgressWrappedAction(
+          'Generating VI Comparison Report',
+          (reportProgress) =>
+            comparisonReportAction({
+              model,
+              selectedHash: hash,
+              reportProgress
+            })
+        );
 
         if (result.outcome === 'workspace-untrusted') {
           void vscode.window.showWarningMessage(
@@ -344,7 +356,24 @@ export function createOpenViHistoryCommand(
         outcome: 'unsupported-command'
       });
     };
-      panelTracker?.record(panel, targetUri, model, renderedHtml, handleMessage);
+    panelTracker?.record(panel, targetUri, model, renderedHtml, handleMessage);
     panel.webview.onDidReceiveMessage(handleMessage);
   };
+}
+
+async function runProgressWrappedAction<Result>(
+  title: string,
+  task: (reportProgress: (update: { message: string; increment?: number }) => void) => Promise<Result>
+): Promise<Result> {
+  return vscode.window.withProgress(
+    {
+      location: vscode.ProgressLocation.Notification,
+      title,
+      cancellable: false
+    },
+    async (progress) =>
+      task((update) => {
+        progress.report(update);
+      })
+  );
 }
