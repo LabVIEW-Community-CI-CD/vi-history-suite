@@ -107,6 +107,49 @@ describe('comparisonReportAction', () => {
     });
   });
 
+  it('returns a stable cancelled result when cancellation is already requested before revision-pair resolution', async () => {
+    const preflightComparisonReport = vi.fn();
+    const action = createComparisonReportAction(
+      {
+        storageUri: createMockUri('/workspace/.storage')
+      } as never,
+      {
+        preflightComparisonReport: preflightComparisonReport as never
+      }
+    );
+
+    await expect(
+      action({
+        model: {
+          repositoryName: 'repo',
+          repositoryRoot: '/workspace/repo',
+          relativePath: 'foo.vi',
+          signature: 'LVIN',
+          eligible: true,
+          commits: [
+            {
+              hash: 'abcdef1234567890',
+              authorDate: '2026-04-02T00:00:00Z',
+              authorName: 'A User',
+              subject: 'Update VI',
+              previousHash: '1111111122222222'
+            }
+          ]
+        },
+        selectedHash: 'abcdef1234567890',
+        cancellationToken: {
+          isCancellationRequested: true
+        } as never
+      })
+    ).resolves.toEqual({
+      outcome: 'cancelled',
+      cancellationStage: 'before-revision-pair-resolution'
+    });
+
+    expect(preflightComparisonReport).not.toHaveBeenCalled();
+    expect(createWebviewPanelMock).not.toHaveBeenCalled();
+  });
+
   it('fails closed when comparison-report generation is requested from an untrusted workspace', async () => {
     workspaceState.isTrusted = false;
     const preflightComparisonReport = vi.fn();
@@ -607,6 +650,116 @@ describe('comparisonReportAction', () => {
     });
 
     expect(executeComparisonReport).not.toHaveBeenCalled();
+    expect(createWebviewPanelMock).not.toHaveBeenCalled();
+  });
+
+  it('returns a stable cancelled result when cancellation is requested before preflight begins', async () => {
+    const token = {
+      isCancellationRequested: false
+    };
+    const preflightComparisonReport = vi.fn();
+    const action = createComparisonReportAction(
+      {
+        storageUri: createMockUri('/workspace/.storage')
+      } as never,
+      {
+        preflightComparisonReport: preflightComparisonReport as never
+      }
+    );
+
+    await expect(
+      action({
+        model: {
+          repositoryName: 'repo',
+          repositoryRoot: '/workspace/repo',
+          relativePath: 'foo.vi',
+          signature: 'LVIN',
+          eligible: true,
+          commits: [
+            {
+              hash: 'abcdef1234567890',
+              authorDate: '2026-04-02T00:00:00Z',
+              authorName: 'A User',
+              subject: 'Update VI',
+              previousHash: '1111111122222222'
+            }
+          ]
+        },
+        selectedHash: 'abcdef1234567890',
+        cancellationToken: token as never,
+        reportProgress: () => {
+          token.isCancellationRequested = true;
+        }
+      })
+    ).resolves.toEqual({
+      outcome: 'cancelled',
+      cancellationStage: 'before-preflight'
+    });
+
+    expect(preflightComparisonReport).not.toHaveBeenCalled();
+    expect(createWebviewPanelMock).not.toHaveBeenCalled();
+  });
+
+  it('returns a stable cancelled result when cancellation is requested after preflight and before runtime selection', async () => {
+    const token = {
+      isCancellationRequested: false
+    };
+    const locateRuntime = vi.fn();
+    const action = createComparisonReportAction(
+      {
+        storageUri: createMockUri('/workspace/.storage')
+      } as never,
+      {
+        preflightComparisonReport: vi.fn().mockImplementation(async () => {
+          token.isCancellationRequested = true;
+          return {
+            normalizedRelativePath: 'foo.vi',
+            ready: true,
+            left: {
+              revisionId: '1111111122222222',
+              blobSpecifier: '1111111122222222:foo.vi',
+              signature: 'LVIN',
+              isVi: true
+            },
+            right: {
+              revisionId: 'abcdef1234567890',
+              blobSpecifier: 'abcdef1234567890:foo.vi',
+              signature: 'LVCC',
+              isVi: true
+            }
+          };
+        }),
+        locateRuntime: locateRuntime as never
+      }
+    );
+
+    await expect(
+      action({
+        model: {
+          repositoryName: 'repo',
+          repositoryRoot: '/workspace/repo',
+          relativePath: 'foo.vi',
+          signature: 'LVIN',
+          eligible: true,
+          commits: [
+            {
+              hash: 'abcdef1234567890',
+              authorDate: '2026-04-02T00:00:00Z',
+              authorName: 'A User',
+              subject: 'Update VI',
+              previousHash: '1111111122222222'
+            }
+          ]
+        },
+        selectedHash: 'abcdef1234567890',
+        cancellationToken: token as never
+      })
+    ).resolves.toEqual({
+      outcome: 'cancelled',
+      cancellationStage: 'after-preflight'
+    });
+
+    expect(locateRuntime).not.toHaveBeenCalled();
     expect(createWebviewPanelMock).not.toHaveBeenCalled();
   });
 

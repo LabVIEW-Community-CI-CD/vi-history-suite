@@ -532,6 +532,15 @@
   or opening a panel
 - `TEST-UNIT-157`: prove retained concentrated overview-image assets render in
   the dashboard HTML through webview-safe asset URIs
+- `TEST-UNIT-158`: prove the comparison-report action returns the stable
+  `before-preflight` cancellation stage after revision-pair resolution while
+  skipping preflight and panel creation
+- `TEST-UNIT-159`: prove the comparison-report action returns the stable
+  `after-preflight` cancellation stage after revision validation while
+  skipping runtime selection and panel creation
+- `TEST-UNIT-160`: prove the comparison-report action returns the stable
+  `before-revision-pair-resolution` cancellation stage when the request is
+  already cancelled before any retained-pair lookup begins
 - `TEST-DOC-014`: review the queue, epic, ADR, and current-state surfaces to
   prove the future-facing dashboard research was normalized into governed repo
   control-plane artifacts and the incoming research artifact was deleted
