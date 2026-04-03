@@ -214,7 +214,8 @@ async function runHostNativeExecution(
       copyFile: deps.copyFile,
       readFile: deps.readFile,
       mkdir: deps.mkdir,
-      processPlatform: deps.processPlatform
+      processPlatform: deps.processPlatform,
+      expectedLabviewPath: extractCommandOptionValue(executionContext.commandPlan.args, '-LabVIEWPath')
     });
     const reportExists = await finalizeExecutedReport(
       record,
@@ -261,7 +262,8 @@ async function runHostNativeExecution(
       copyFile: deps.copyFile,
       readFile: deps.readFile,
       mkdir: deps.mkdir,
-      processPlatform: deps.processPlatform
+      processPlatform: deps.processPlatform,
+      expectedLabviewPath: extractCommandOptionValue(executionContext.commandPlan.args, '-LabVIEWPath')
     });
 
     return {
@@ -301,6 +303,7 @@ async function captureRuntimeDiagnostics(
     readFile: typeof fs.readFile;
     mkdir: typeof fs.mkdir;
     processPlatform: NodeJS.Platform;
+    expectedLabviewPath?: string;
   }
 ): Promise<CapturedRuntimeDiagnostics> {
   const diagnosticLogSourcePath = parseLabviewCliDiagnosticLogPath(stdout);
@@ -327,7 +330,7 @@ async function captureRuntimeDiagnostics(
   await deps.mkdir(path.dirname(record.artifactPlan.runtimeDiagnosticLogFilePath), { recursive: true });
   await deps.copyFile(hostReadablePath, record.artifactPlan.runtimeDiagnosticLogFilePath);
   const diagnosticText = await deps.readFile(hostReadablePath, 'utf8');
-  const classification = classifyLabviewCliDiagnosticText(diagnosticText);
+  const classification = classifyLabviewCliDiagnosticText(diagnosticText, deps.expectedLabviewPath);
 
   return {
     reason: classification.reason,
@@ -614,7 +617,10 @@ export function resolveHostReadableDiagnosticPath(
   return normalizeWindowsInteropExecutable(diagnosticLogPath);
 }
 
-export function classifyLabviewCliDiagnosticText(diagnosticText: string): {
+export function classifyLabviewCliDiagnosticText(
+  diagnosticText: string,
+  expectedLabviewPath?: string
+): {
   reason?: string;
   notes: string[];
 } {
@@ -623,8 +629,32 @@ export function classifyLabviewCliDiagnosticText(diagnosticText: string): {
     /"LabVIEWPath" command line argument is not passed\.\s*Using last used LabVIEW:\s*"([^"]+)"/i
   );
   if (ignoredLabviewPathMatch) {
+    const actualLabviewPath = ignoredLabviewPathMatch[1];
+    const normalizedExpectedPath = normalizeComparablePath(expectedLabviewPath);
+    const normalizedActualPath = normalizeComparablePath(actualLabviewPath);
+    if (normalizedExpectedPath && normalizedExpectedPath === normalizedActualPath) {
+      notes.push(
+        `LabVIEW CLI ignored the explicit -LabVIEWPath selection, but the last-used LabVIEW matched the intended executable: ${actualLabviewPath}.`
+      );
+      return {
+        reason: 'labview-path-ignored-last-used-matched-selection',
+        notes
+      };
+    }
+
+    if (normalizedExpectedPath && normalizedExpectedPath !== normalizedActualPath) {
+      notes.push(
+        `LabVIEW CLI ignored the explicit -LabVIEWPath selection and used a different last-used LabVIEW instead: ${actualLabviewPath}.`
+      );
+      notes.push(`Intended explicit LabVIEW path: ${expectedLabviewPath}.`);
+      return {
+        reason: 'labview-path-ignored-last-used-diverged-selection',
+        notes
+      };
+    }
+
     notes.push(
-      `LabVIEW CLI ignored the explicit -LabVIEWPath selection and used the last-used LabVIEW instead: ${ignoredLabviewPathMatch[1]}.`
+      `LabVIEW CLI ignored the explicit -LabVIEWPath selection and used the last-used LabVIEW instead: ${actualLabviewPath}.`
     );
     return {
       reason: 'labview-path-ignored-last-used-default',
@@ -639,6 +669,27 @@ export function classifyLabviewCliDiagnosticText(diagnosticText: string): {
   return {
     notes
   };
+}
+
+function extractCommandOptionValue(args: string[], optionName: string): string | undefined {
+  for (let index = 0; index < args.length - 1; index += 1) {
+    if (args[index] === optionName) {
+      const value = args[index + 1]?.trim();
+      return value ? value : undefined;
+    }
+  }
+
+  return undefined;
+}
+
+function normalizeComparablePath(filePath?: string): string | undefined {
+  const trimmed = filePath?.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  const windowsPath = normalizeWindowsInteropPath(trimmed) ?? trimmed.replaceAll('/', '\\');
+  return windowsPath.replaceAll('/', '\\').toLowerCase();
 }
 
 export function requiresWindowsInterop(

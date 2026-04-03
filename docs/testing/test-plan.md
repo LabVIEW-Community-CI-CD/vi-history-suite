@@ -275,6 +275,9 @@
 - `TEST-UNIT-080`: prove the history-panel command path retains comparison
   runtime diagnostics in the panel action tracker when report generation
   returns a classified NI runtime diagnosis
+- `TEST-UNIT-081`: prove the runtime executor distinguishes ignored
+  `-LabVIEWPath` diagnostics that still match the intended LabVIEW executable
+  from diagnostics that diverge to a different installed LabVIEW
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

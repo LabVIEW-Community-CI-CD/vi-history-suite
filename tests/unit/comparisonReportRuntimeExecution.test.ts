@@ -435,7 +435,7 @@ describe('comparisonReportRuntimeExecution', () => {
       '/workspace/.storage/reports/repoid123456/fileid123456/runtime-diagnostic-log.txt'
     );
     expect(result.record.runtimeExecution.diagnosticReason).toBe(
-      'labview-path-ignored-last-used-default'
+      'labview-path-ignored-last-used-diverged-selection'
     );
     expect(result.record.runtimeExecution.diagnosticLogSourcePath).toBe(
       'C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log'
@@ -444,7 +444,8 @@ describe('comparisonReportRuntimeExecution', () => {
       '/workspace/.storage/reports/repoid123456/fileid123456/runtime-diagnostic-log.txt'
     );
     expect(result.record.runtimeExecution.diagnosticNotes).toEqual([
-      'LabVIEW CLI ignored the explicit -LabVIEWPath selection and used the last-used LabVIEW instead: C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe.'
+      'LabVIEW CLI ignored the explicit -LabVIEWPath selection and used a different last-used LabVIEW instead: C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe.',
+      'Intended explicit LabVIEW path: C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe.'
     ]);
   });
 
@@ -707,12 +708,25 @@ describe('comparisonReportRuntimeExecution', () => {
     ).toBe('/mnt/c/Users/sveld/AppData/Local/Temp/lvtemporary_123.log');
     expect(
       classifyLabviewCliDiagnosticText(
-        '"LabVIEWPath" command line argument is not passed. Using last used LabVIEW: "C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe"\nLabVIEW launched successfully.'
+        '"LabVIEWPath" command line argument is not passed. Using last used LabVIEW: "C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe"\nLabVIEW launched successfully.',
+        'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe'
       )
     ).toEqual({
-      reason: 'labview-path-ignored-last-used-default',
+      reason: 'labview-path-ignored-last-used-matched-selection',
       notes: [
-        'LabVIEW CLI ignored the explicit -LabVIEWPath selection and used the last-used LabVIEW instead: C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe.'
+        'LabVIEW CLI ignored the explicit -LabVIEWPath selection, but the last-used LabVIEW matched the intended executable: C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe.'
+      ]
+    });
+    expect(
+      classifyLabviewCliDiagnosticText(
+        '"LabVIEWPath" command line argument is not passed. Using last used LabVIEW: "C:\\Program Files\\National Instruments\\LabVIEW 2025\\LabVIEW.exe"',
+        'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe'
+      )
+    ).toEqual({
+      reason: 'labview-path-ignored-last-used-diverged-selection',
+      notes: [
+        'LabVIEW CLI ignored the explicit -LabVIEWPath selection and used a different last-used LabVIEW instead: C:\\Program Files\\National Instruments\\LabVIEW 2025\\LabVIEW.exe.',
+        'Intended explicit LabVIEW path: C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe.'
       ]
     });
     expect(requiresWindowsInterop('win32', 'linux')).toBe(true);
