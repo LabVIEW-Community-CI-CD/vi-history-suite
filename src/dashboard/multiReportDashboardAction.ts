@@ -416,7 +416,7 @@ function buildDashboardPairProgressPrefix(
   const etaSuffix =
     estimatedSecondsLeft === undefined
       ? ''
-      : `; est. ${estimatedSecondsLeft}s left`;
+      : `; est. ${formatEstimatedDuration(estimatedSecondsLeft)} left`;
   return `Preparing dashboard pair ${index + 1}/${total}${etaSuffix}: `;
 }
 
@@ -435,6 +435,13 @@ function deriveEstimatedSecondsRemaining(
   const averageCompletedPairDurationMs =
     totalCompletedDurationMs / completedPairDurationsMs.length;
   return Math.ceil((averageCompletedPairDurationMs * remainingPairCount) / 1000);
+}
+
+function formatEstimatedDuration(totalSeconds: number): string {
+  const boundedSeconds = Math.max(0, Math.ceil(totalSeconds));
+  const minutes = Math.floor(boundedSeconds / 60);
+  const seconds = boundedSeconds % 60;
+  return `${minutes}m ${seconds}s`;
 }
 
 interface DashboardArtifactMessage {

@@ -698,7 +698,7 @@
 - `TEST-UNIT-202`: prove the dashboard action backfills missing or stale
   adjacent-pair comparison evidence before concentrating dashboard metadata,
   and once at least one pair completes, prove the next pair progress message
-  includes a bounded seconds-left estimate derived from completed pair
+  includes a bounded minutes-and-seconds estimate derived from completed pair
   durations in the current dashboard refresh session
 - `TEST-UNIT-203`: prove the dashboard action returns the stable
   `during-dashboard-pair-generation` cancellation stage when pair-evidence

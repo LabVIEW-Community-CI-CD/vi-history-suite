@@ -714,7 +714,7 @@ describe('multiReportDashboardAction', () => {
         },
         {
           message:
-            'Preparing dashboard pair 2/2; est. 4s left: Executing NI comparison-report runtime.',
+            'Preparing dashboard pair 2/2; est. 0m 4s left: Executing NI comparison-report runtime.',
           increment: 20
         },
         {

@@ -114,8 +114,8 @@ Committed and governed today:
 - bounded dashboard progress that surfaces commit-window preparation,
   pair-evidence backfill for missing or stale adjacent pairs, pair-by-pair
   concentration, retained-asset finalization, dashboard opening, and a
-  bounded seconds-left estimate during pair-evidence backfill once at least
-  one pair has completed
+  bounded minutes-and-seconds estimate during pair-evidence backfill once at
+  least one pair has completed
 - governed dashboard artifact-opening rules that accept only retained
   `report-packet.html`, `report-metadata.json`, `source-record.json`, and
   `*-report-*.html` files from workspace-scoped extension storage
