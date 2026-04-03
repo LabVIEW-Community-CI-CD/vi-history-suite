@@ -5,6 +5,14 @@
 Make long-running dashboard/report work understandable and interruptible without
 requiring raw-log inspection.
 
+## Status
+
+Implemented for the current `SHIP-0001` release target.
+
+The acceptance criteria for this issue are satisfied in the current product
+baseline. Remaining work in this area is sustainment or future expansion when a
+new long-running refresh lane is introduced.
+
 ## Scope
 
 - bounded progress for indexing and dashboard/report refresh
@@ -115,6 +123,6 @@ requiring raw-log inspection.
 
 ## Remaining Focus
 
-- extend the same governed progress/cancellation semantics beyond eligibility
-  refresh and current action-level boundaries where additional long-running
-  refresh lanes are introduced
+- sustain the current release-ready UX layer
+- extend the same governed progress/cancellation semantics only when a new
+  long-running refresh lane is introduced

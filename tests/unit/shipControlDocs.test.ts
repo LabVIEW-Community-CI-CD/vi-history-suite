@@ -126,7 +126,7 @@ describe('ship-control direction system', () => {
       expect(criterionIds.has(blocker.criterionId)).toBe(true);
       expect(blocker.trancheId).toBe(matrix.activeTrancheId);
       expect(blocker.issueId).toBe(matrix.activeIssueId);
-      expect(blocker.status).toBe('open');
+      expect(['open', 'closed', 'mitigated']).toContain(blocker.status);
       expect(blocker.summary.length).toBeGreaterThan(0);
     }
 
@@ -134,6 +134,13 @@ describe('ship-control direction system', () => {
       if (criterion.blockerId) {
         expect(blockerIds.has(criterion.blockerId)).toBe(true);
       }
+    }
+
+    const openBlockers = ledger.blockers.filter((blocker) => blocker.status === 'open');
+    expect(openBlockers.length).toBeGreaterThan(0);
+    for (const blocker of openBlockers) {
+      const criterion = matrix.criteria.find((entry) => entry.id === blocker.criterionId);
+      expect(criterion?.status).not.toBe('done');
     }
   });
 

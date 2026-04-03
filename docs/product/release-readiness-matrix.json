@@ -57,15 +57,17 @@
       "pillar": "runtime-doctor-progress-and-trust-aware-ux",
       "issueId": "ISSUE-0406",
       "criterion": "Long-running report and dashboard flows expose bounded progress, cancellation, trust-aware refusals, and runtime-doctor guidance without requiring raw-log inspection first.",
-      "status": "active",
+      "status": "done",
       "evidence": [
         "src/reporting/comparisonRuntimeDoctor.ts",
         "src/dashboard/multiReportDashboardAction.ts",
-        "src/indexing/viEligibilityIndexer.ts"
+        "src/indexing/viEligibilityIndexer.ts",
+        "src/commands/openViHistoryCommand.ts",
+        "tests/integration/suite/extensionHost.test.ts"
       ],
-      "blockerId": "BL-001",
-      "blocker": "The extension-facing developer experience is still partial and not yet governed as a full release-ready UX layer.",
-      "nextAction": "Finish the remaining progress/trust UX surfaces under ISSUE-0403."
+      "blockerId": null,
+      "blocker": null,
+      "nextAction": "Sustain the current release-ready UX layer and reopen only if a new long-running refresh surface introduces uncovered progress, cancellation, or trust seams."
     },
     {
       "id": "RR-005",

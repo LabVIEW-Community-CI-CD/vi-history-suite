@@ -69,7 +69,7 @@ No work is in scope unless it moves one release-readiness criterion toward
 
 - `TRANCHE-009`
 - issue: [ISSUE-0406 Ship Control And SemVer Releaseability](./issues/ISSUE-0406-ship-control-and-semver-releaseability.md)
-- targeted blocker ids: `BL-001`, `BL-003`
+- targeted blocker ids: `BL-003`
 
 ## Control Plane
 

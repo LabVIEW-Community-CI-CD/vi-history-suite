@@ -9,14 +9,14 @@
       "trancheId": "TRANCHE-009",
       "issueId": "ISSUE-0406",
       "criterionId": "RR-004",
-      "status": "open",
-      "summary": "Progress, cancellation, and trust-aware UX remain partial at the product surface.",
+      "status": "closed",
+      "summary": "Release-ready progress, cancellation, trust-aware refusal, and runtime-doctor UX are now implemented at the product surface for the current ship target.",
       "evidence": [
         "docs/product/current-state.md",
         "docs/product/issues/ISSUE-0403-progress-cancellation-and-runtime-doctor-ux.md"
       ],
-      "impact": "A released extension could still require users to infer parts of the long-running refresh behavior from partial cues.",
-      "resolutionPath": "Complete ISSUE-0403 and promote the remaining UX gaps to done or sustain."
+      "impact": "This blocker no longer prevents the `v0.2.0` release target.",
+      "resolutionPath": "Sustain the current UX layer and reopen only if a new long-running refresh lane or installed-user proof surfaces a concrete regression."
     },
     {
       "id": "BL-003",

@@ -62,7 +62,7 @@
   {
     "id": "TRANCHE-008",
     "title": "Introduce runtime-doctor and dashboard-refresh developer experience",
-    "status": "queued",
+    "status": "done",
     "source": "future-facing research",
     "summary": "Add provider-doctor guidance, rejected-provider reasoning, bounded progress, cancellation, and partial-evidence retention so dashboard refresh and report execution remain understandable without raw-log inspection.",
     "issues": [
