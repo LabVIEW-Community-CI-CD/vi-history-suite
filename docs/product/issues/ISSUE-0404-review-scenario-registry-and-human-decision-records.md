@@ -41,3 +41,19 @@ and separate retained human decisions.
 
 - activate `SCENARIO-VHS-001` with explicit evidence expectations
 - normalize the decision-record template into a governed scenario flow
+
+## Implemented So Far
+
+- governed review-scenario registry with active `SCENARIO-VHS-001`
+- scenario-contract validation for harness, repository, VI path, minimum
+  commit window, and minimum comparison-pair count
+- separate decision-record artifact persistence under workspace-scoped
+  `decision-records/...` storage
+- canonical harness decision-record command that reuses dashboard smoke
+  evidence and explicit human reviewer inputs
+
+## Remaining Focus
+
+- extension-facing decision-record creation UX on top of the retained
+  scenario/decision-record artifact flow
+- additional scenario activation beyond the canonical baseline

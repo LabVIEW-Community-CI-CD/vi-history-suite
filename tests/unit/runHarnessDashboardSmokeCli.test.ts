@@ -10,6 +10,13 @@ import {
   runHarnessDashboardSmokeCliMain
 } from '../../src/cli/runHarnessDashboardSmoke';
 
+const WINDOWS_LABVIEW_CLI_PATH =
+  'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe';
+const WINDOWS_LABVIEW_EXE_PATH =
+  'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe';
+const WINDOWS_LVCOMPARE_PATH =
+  'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe';
+
 describe('runHarnessDashboardSmokeCli', () => {
   it('parses deterministic dashboard smoke args', () => {
     expect(parseHarnessDashboardSmokeArgs([])).toEqual({
@@ -37,9 +44,9 @@ describe('runHarnessDashboardSmokeCli', () => {
         '--prefer-bitness',
         'x64',
         '--labview-exe-path',
-        'C:\\LabVIEW.exe',
+        WINDOWS_LABVIEW_EXE_PATH,
         '--lvcompare-path',
-        'C:\\LVCompare.exe',
+        WINDOWS_LVCOMPARE_PATH,
         '--dashboard-commit-window',
         '4'
       ])
@@ -51,8 +58,8 @@ describe('runHarnessDashboardSmokeCli', () => {
       runtimeEngineOverride: 'lvcompare',
       preferBitness: 'x64',
       labviewCliPath: undefined,
-      labviewExePath: 'C:\\LabVIEW.exe',
-      lvComparePath: 'C:\\LVCompare.exe',
+      labviewExePath: WINDOWS_LABVIEW_EXE_PATH,
+      lvComparePath: WINDOWS_LVCOMPARE_PATH,
       dashboardCommitWindow: 4
     });
 
@@ -119,11 +126,11 @@ describe('runHarnessDashboardSmokeCli', () => {
           '--dashboard-commit-window',
           '4',
           '--labview-cli-path',
-          'C:\\LabVIEWCLI.exe',
+          WINDOWS_LABVIEW_CLI_PATH,
           '--labview-exe-path',
-          'C:\\LabVIEW.exe',
+          WINDOWS_LABVIEW_EXE_PATH,
           '--lvcompare-path',
-          'C:\\LVCompare.exe'
+          WINDOWS_LVCOMPARE_PATH
         ],
         {
           repoRoot: '/tmp/vi-history-suite',
@@ -146,9 +153,9 @@ describe('runHarnessDashboardSmokeCli', () => {
       dashboardCommitWindow: 4,
       runtimeSettings: {
         preferBitness: undefined,
-        labviewCliPath: 'C:\\LabVIEWCLI.exe',
-        labviewExePath: 'C:\\LabVIEW.exe',
-        lvComparePath: 'C:\\LVCompare.exe'
+        labviewCliPath: WINDOWS_LABVIEW_CLI_PATH,
+        labviewExePath: WINDOWS_LABVIEW_EXE_PATH,
+        lvComparePath: WINDOWS_LVCOMPARE_PATH
       }
     });
     expect(writes.join('')).toContain('Harness dashboard smoke completed for HARNESS-VHS-001');

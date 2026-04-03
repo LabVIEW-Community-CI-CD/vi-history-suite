@@ -122,6 +122,7 @@
     "compile": "tsc -p .",
     "check": "tsc -p . --noEmit",
     "design:gate": "npm run compile && node out/cli/runDesignGate.js",
+    "harness:decision:record": "npm run compile && node out/cli/runHarnessDecisionRecord.js --harness-id HARNESS-VHS-001 --reviewer Codex --review-question \"Does the concentrated evidence support bounded review completion?\" --outcome needs-more-review --confidence medium --decision-rationale \"The dashboard is evidence-rich, but the reviewer should still verify whether more manual inspection is needed.\"",
     "harness:smoke": "npm run compile && node out/cli/runHarnessSmoke.js --harness-id HARNESS-VHS-001",
     "harness:report:smoke": "npm run compile && node out/cli/runHarnessReportSmoke.js --harness-id HARNESS-VHS-001",
     "harness:dashboard:smoke": "npm run compile && node out/cli/runHarnessDashboardSmoke.js --harness-id HARNESS-VHS-001",

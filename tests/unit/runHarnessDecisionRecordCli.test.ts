@@ -1,0 +1,256 @@
+import { describe, expect, it, vi } from 'vitest';
+
+import {
+  formatHarnessDecisionRecordSuccess,
+  getHarnessDecisionRecordUsage,
+  parseHarnessDecisionRecordArgs,
+  runHarnessDecisionRecordCli
+} from '../../src/cli/runHarnessDecisionRecord';
+
+const WINDOWS_LABVIEW_CLI_PATH =
+  'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe';
+const WINDOWS_LABVIEW_EXE_PATH =
+  'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe';
+const WINDOWS_LVCOMPARE_PATH =
+  'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe';
+
+describe('runHarnessDecisionRecordCli', () => {
+  it('parses reviewer and outcome arguments', () => {
+    expect(
+      parseHarnessDecisionRecordArgs([
+        '--harness-id',
+        'HARNESS-VHS-001',
+        '--scenario-id',
+        'SCENARIO-VHS-001',
+        '--reviewer',
+        'Reviewer',
+        '--review-question',
+        'Question?',
+        '--outcome',
+        'needs-more-review',
+        '--confidence',
+        'medium',
+        '--decision-rationale',
+        'Rationale',
+        '--platform',
+        'win32',
+        '--engine',
+        'lvcompare',
+        '--prefer-bitness',
+        'x64',
+        '--labview-cli-path',
+        WINDOWS_LABVIEW_CLI_PATH,
+        '--labview-exe-path',
+        WINDOWS_LABVIEW_EXE_PATH,
+        '--lvcompare-path',
+        WINDOWS_LVCOMPARE_PATH,
+        '--dashboard-commit-window',
+        '4',
+        '--strict-rsrc-header',
+        '--additional-report-generation-required',
+        '--additional-manual-labview-inspection-required',
+        '--issue',
+        'ISSUE-0999'
+      ])
+    ).toMatchObject({
+      harnessId: 'HARNESS-VHS-001',
+      scenarioId: 'SCENARIO-VHS-001',
+      reviewer: 'Reviewer',
+      reviewQuestion: 'Question?',
+      outcome: 'needs-more-review',
+      confidence: 'medium',
+      decisionRationale: 'Rationale',
+      runtimePlatform: 'win32',
+      runtimeEngineOverride: 'lvcompare',
+      preferBitness: 'x64',
+      labviewCliPath: WINDOWS_LABVIEW_CLI_PATH,
+      labviewExePath: WINDOWS_LABVIEW_EXE_PATH,
+      lvComparePath: WINDOWS_LVCOMPARE_PATH,
+      dashboardCommitWindow: 4,
+      strictRsrcHeader: true,
+      additionalReportGenerationRequired: true,
+      additionalManualLabVIEWInspectionRequired: true,
+      issuesOrBacklogItemsCreated: ['ISSUE-0999']
+    });
+  });
+
+  it('fails closed on unsupported outcome', () => {
+    expect(() => parseHarnessDecisionRecordArgs(['--outcome', 'maybe'])).toThrow(
+      'Unsupported value for --outcome: maybe'
+    );
+  });
+
+  it('fails closed on unsupported confidence, platform, engine, prefer-bitness, dashboard window, and unknown args', () => {
+    expect(() => parseHarnessDecisionRecordArgs(['--confidence', 'certain'])).toThrow(
+      'Unsupported value for --confidence: certain'
+    );
+    expect(() => parseHarnessDecisionRecordArgs(['--platform', 'amiga'])).toThrow(
+      'Unsupported value for --platform: amiga'
+    );
+    expect(() => parseHarnessDecisionRecordArgs(['--engine', 'compare'])).toThrow(
+      'Unsupported value for --engine: compare'
+    );
+    expect(() => parseHarnessDecisionRecordArgs(['--prefer-bitness', 'x128'])).toThrow(
+      'Unsupported value for --prefer-bitness: x128'
+    );
+    expect(() => parseHarnessDecisionRecordArgs(['--dashboard-commit-window', '2'])).toThrow(
+      'Unsupported value for --dashboard-commit-window: 2'
+    );
+    expect(() => parseHarnessDecisionRecordArgs(['--unknown'])).toThrow('Unknown argument: --unknown');
+  });
+
+  it('fails closed when required flag values are missing', () => {
+    expect(() => parseHarnessDecisionRecordArgs(['--scenario-id'])).toThrow(
+      'Missing value for --scenario-id.'
+    );
+    expect(() => parseHarnessDecisionRecordArgs(['--labview-cli-path'])).toThrow(
+      'Missing value for --labview-cli-path.'
+    );
+    expect(() => parseHarnessDecisionRecordArgs(['--labview-exe-path'])).toThrow(
+      'Missing value for --labview-exe-path.'
+    );
+    expect(() => parseHarnessDecisionRecordArgs(['--lvcompare-path'])).toThrow(
+      'Missing value for --lvcompare-path.'
+    );
+  });
+
+  it('prints help without running the harness', async () => {
+    const stdout = { write: vi.fn() };
+    const runner = vi.fn();
+
+    await expect(runHarnessDecisionRecordCli(['--help'], { stdout, runner })).resolves.toBe('help');
+    expect(stdout.write).toHaveBeenCalledWith(`${getHarnessDecisionRecordUsage()}\n`);
+    expect(runner).not.toHaveBeenCalled();
+  });
+
+  it('requires reviewer, question, outcome, confidence, and rationale', async () => {
+    await expect(runHarnessDecisionRecordCli([])).rejects.toThrow(
+      'Missing required reviewer, review-question, outcome, confidence, or decision-rationale.'
+    );
+  });
+
+  it('passes explicit runtime overrides and follow-up flags to the harness runner', async () => {
+    const stdout = { write: vi.fn() };
+    const runner = vi.fn(async () => ({
+      report: {
+        harnessId: 'HARNESS-VHS-001',
+        scenarioId: 'SCENARIO-VHS-001',
+        generatedAt: '2026-04-03T12:34:56.000Z',
+        reviewer: 'Reviewer',
+        outcome: 'rejected' as const,
+        confidence: 'low' as const,
+        dashboardSmokeJsonPath: '/tmp/dashboard-smoke.json',
+        dashboardJsonPath: '/tmp/dashboard.json',
+        dashboardHtmlPath: '/tmp/dashboard.html',
+        decisionRecordJsonPath: '/tmp/decision-record.json',
+        decisionRecordMarkdownPath: '/tmp/decision-record.md'
+      },
+      reportJsonPath: '/tmp/decision-record.json',
+      reportMarkdownPath: '/tmp/decision-record.md'
+    }));
+
+    await expect(
+      runHarnessDecisionRecordCli(
+        [
+          '--harness-id',
+          'HARNESS-VHS-001',
+          '--scenario-id',
+          'SCENARIO-VHS-001',
+          '--reviewer',
+          'Reviewer',
+          '--review-question',
+          'Question?',
+          '--outcome',
+          'rejected',
+          '--confidence',
+          'low',
+          '--decision-rationale',
+          'Rationale',
+          '--platform',
+          'win32',
+          '--engine',
+          'labview-cli',
+          '--prefer-bitness',
+          'auto',
+          '--labview-cli-path',
+          WINDOWS_LABVIEW_CLI_PATH,
+          '--labview-exe-path',
+          WINDOWS_LABVIEW_EXE_PATH,
+          '--lvcompare-path',
+          WINDOWS_LVCOMPARE_PATH,
+          '--dashboard-commit-window',
+          '5',
+          '--additional-report-generation-required',
+          '--additional-manual-labview-inspection-required',
+          '--issue',
+          'ISSUE-1000'
+        ],
+        {
+          repoRoot: '/repo',
+          runner,
+          stdout
+        }
+      )
+    ).resolves.toBe('pass');
+
+    expect(runner).toHaveBeenCalledWith('HARNESS-VHS-001', {
+      cloneRoot: '/repo/.cache/harnesses',
+      reportRoot: '/repo/.cache/harness-reports',
+      scenarioId: 'SCENARIO-VHS-001',
+      reviewer: 'Reviewer',
+      reviewQuestion: 'Question?',
+      outcome: 'rejected',
+      confidence: 'low',
+      decisionRationale: 'Rationale',
+      strictRsrcHeader: false,
+      runtimePlatform: 'win32',
+      runtimeEngineOverride: 'labview-cli',
+      dashboardCommitWindow: 5,
+      additionalReportGenerationRequired: true,
+      additionalManualLabVIEWInspectionRequired: true,
+      issuesOrBacklogItemsCreated: ['ISSUE-1000'],
+      runtimeSettings: {
+        preferBitness: 'auto',
+        labviewCliPath: WINDOWS_LABVIEW_CLI_PATH,
+        labviewExePath: WINDOWS_LABVIEW_EXE_PATH,
+        lvComparePath: WINDOWS_LVCOMPARE_PATH
+      }
+    });
+    expect(stdout.write).toHaveBeenCalledWith('Harness decision record completed for HARNESS-VHS-001\n');
+  });
+
+  it('formats success output with decision and dashboard artifact paths', () => {
+    expect(
+      formatHarnessDecisionRecordSuccess(
+        {
+          report: {
+            harnessId: 'HARNESS-VHS-001',
+            scenarioId: 'SCENARIO-VHS-001',
+            generatedAt: '2026-04-03T12:34:56.000Z',
+            reviewer: 'Reviewer',
+            outcome: 'approved',
+            confidence: 'high',
+            dashboardSmokeJsonPath: '/tmp/dashboard-smoke.json',
+            dashboardJsonPath: '/tmp/dashboard.json',
+            dashboardHtmlPath: '/tmp/dashboard.html',
+            decisionRecordJsonPath: '/tmp/decision-record.json',
+            decisionRecordMarkdownPath: '/tmp/decision-record.md'
+          },
+          reportJsonPath: '/tmp/decision-record.json',
+          reportMarkdownPath: '/tmp/decision-record.md'
+        },
+        'HARNESS-VHS-001'
+      )
+    ).toEqual([
+      'Harness decision record completed for HARNESS-VHS-001',
+      'Scenario: SCENARIO-VHS-001',
+      'Reviewer: Reviewer',
+      'Outcome: approved',
+      'Confidence: high',
+      'Decision JSON: /tmp/decision-record.json',
+      'Decision Markdown: /tmp/decision-record.md',
+      'Dashboard JSON: /tmp/dashboard.json',
+      'Dashboard HTML: /tmp/dashboard.html'
+    ]);
+  });
+});

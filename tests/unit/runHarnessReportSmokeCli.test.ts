@@ -10,6 +10,13 @@ import {
   runHarnessReportSmokeCliMain
 } from '../../src/cli/runHarnessReportSmoke';
 
+const WINDOWS_LABVIEW_CLI_PATH =
+  'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe';
+const WINDOWS_LABVIEW_EXE_PATH =
+  'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe';
+const WINDOWS_LVCOMPARE_PATH =
+  'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe';
+
 describe('runHarnessReportSmokeCli', () => {
   it('parses deterministic runtime override flags and help', () => {
     expect(parseHarnessReportSmokeArgs([])).toEqual({
@@ -36,11 +43,11 @@ describe('runHarnessReportSmokeCli', () => {
         '--prefer-bitness',
         'x86',
         '--labview-cli-path',
-        'C:\\LabVIEWCLI.exe',
+        WINDOWS_LABVIEW_CLI_PATH,
         '--labview-exe-path',
-        'C:\\LabVIEW.exe',
+        WINDOWS_LABVIEW_EXE_PATH,
         '--lvcompare-path',
-        'C:\\LVCompare.exe'
+        WINDOWS_LVCOMPARE_PATH
       ])
     ).toEqual({
       harnessId: 'HARNESS-VHS-001',
@@ -49,9 +56,9 @@ describe('runHarnessReportSmokeCli', () => {
       runtimePlatform: 'win32',
       runtimeEngineOverride: 'lvcompare',
       preferBitness: 'x86',
-      labviewCliPath: 'C:\\LabVIEWCLI.exe',
-      labviewExePath: 'C:\\LabVIEW.exe',
-      lvComparePath: 'C:\\LVCompare.exe'
+      labviewCliPath: WINDOWS_LABVIEW_CLI_PATH,
+      labviewExePath: WINDOWS_LABVIEW_EXE_PATH,
+      lvComparePath: WINDOWS_LVCOMPARE_PATH
     });
 
     expect(parseHarnessReportSmokeArgs(['--help'])).toEqual({
@@ -117,7 +124,7 @@ describe('runHarnessReportSmokeCli', () => {
           '--prefer-bitness',
           'x64',
           '--labview-cli-path',
-          'C:\\LabVIEWCLI.exe'
+          WINDOWS_LABVIEW_CLI_PATH
         ],
         {
           repoRoot: '/tmp/vi-history-suite',
@@ -139,7 +146,7 @@ describe('runHarnessReportSmokeCli', () => {
       runtimeEngineOverride: 'lvcompare',
       runtimeSettings: {
         preferBitness: 'x64',
-        labviewCliPath: 'C:\\LabVIEWCLI.exe',
+        labviewCliPath: WINDOWS_LABVIEW_CLI_PATH,
         labviewExePath: undefined,
         lvComparePath: undefined
       }

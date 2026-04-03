@@ -194,19 +194,25 @@
     },
     {
       "surface": "review-scenario-registry-and-human-decision-records",
-      "status": "modeled-not-yet-implemented",
+      "status": "partially-implemented",
       "evidence": [
+        "src/scenarios/reviewScenarioRegistry.ts",
+        "src/scenarios/decisionRecord.ts",
+        "src/harness/harnessDecisionRecord.ts",
+        "src/cli/runHarnessDecisionRecord.ts",
         "docs/product/review-scenarios.md",
         "docs/product/decision-record-template.md",
-        "docs/research/authoritative/research-infrastructure.md",
-        "docs/product/development-queue.json"
+        "docs/research/authoritative/research-infrastructure.md"
       ],
       "requirements": [
-        "VHS-REQ-188",
-        "VHS-REQ-189",
-        "VHS-REQ-191"
+        "VHS-REQ-307",
+        "VHS-REQ-308",
+        "VHS-REQ-309",
+        "VHS-REQ-310",
+        "VHS-REQ-311",
+        "VHS-REQ-312"
       ],
-      "nextMove": "TRANCHE-007"
+      "nextMove": "Extend the retained scenario flow into extension UX and activate additional scenario shapes beyond the canonical baseline."
     },
     {
       "surface": "consumed-research-retirement-and-future-research-prompt",

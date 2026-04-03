@@ -1418,10 +1418,15 @@ describe('comparisonReportRuntimeExecution', () => {
     ).toBeUndefined();
     expect(
       extractCommandOptionValue(
-        ['-OperationName', 'CreateComparisonReport', '-LabVIEWPath', 'C:\\LabVIEW\\LabVIEW.exe'],
+        [
+          '-OperationName',
+          'CreateComparisonReport',
+          '-LabVIEWPath',
+          'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe'
+        ],
         '-LabVIEWPath'
       )
-    ).toBe('C:\\LabVIEW\\LabVIEW.exe');
+    ).toBe('C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe');
   });
 
   it('nulls the governed LabVIEW path in the container CLI script when no usable path is provided', () => {
@@ -1981,7 +1986,7 @@ describe('comparisonReportRuntimeExecution', () => {
           '-ReportPath',
           'C:\\old\\report.html',
           '-LabVIEWPath',
-          'C:\\Wrong\\LabVIEW.exe',
+          'C:\\Program Files\\National Instruments\\LabVIEW 2025\\LabVIEW.exe',
           '-Headless',
           'false',
           '-c',
@@ -2035,7 +2040,7 @@ describe('comparisonReportRuntimeExecution', () => {
           'C:\\old\\left.vi',
           'C:\\old\\right.vi',
           '-lvpath',
-          'C:\\Wrong\\LabVIEW.exe',
+          'C:\\Program Files\\National Instruments\\LabVIEW 2025\\LabVIEW.exe',
           '-nobdcosm',
           '-nofp'
         ],

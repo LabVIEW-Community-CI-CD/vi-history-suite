@@ -627,6 +627,16 @@
 - `TEST-UNIT-187`: prove the eligibility indexer fails closed and clears the
   eligible-path context when workspace trust is lost during an in-flight
   refresh
+- `TEST-UNIT-188`: prove the review-scenario registry exposes the active
+  canonical scenario and validates commit-window plus comparison-pair contracts
+- `TEST-UNIT-189`: prove decision-record persistence writes separate
+  `decision-record.json` and `decision-record.md` artifacts rather than
+  mutating the dashboard packet
+- `TEST-UNIT-190`: prove canonical harness decision-record generation uses
+  dashboard smoke evidence and fails closed when the scenario contract is not
+  satisfied
+- `TEST-UNIT-191`: prove the harness decision-record CLI parses reviewer and
+  outcome fields, prints help, and formats retained decision/dashboard paths
 - `TEST-SMOKE-001`: run `npm run harness:dashboard:smoke -- --platform win32
   --prefer-bitness auto --dashboard-commit-window 3` and retain
   `dashboard-smoke.json`, `dashboard-smoke.md`, and `dashboard-smoke.html`
@@ -640,6 +650,10 @@
 - `TEST-DOC-016`: review the repo entrypoints and research-control-plane docs
   to prove live dashboard smoke and extension-host dashboard proof are
   described as implemented evidence instead of future-only dashboard intent
+- `TEST-DOC-017`: review the repo entrypoints, issue tracking, and research
+  alignment/index surfaces to prove the canonical review-scenario registry and
+  separate decision-record path are described as partially implemented
+  evidence rather than future-only modeling
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

@@ -10,6 +10,7 @@ contains:
 - governed comparison-report planning, storage, and runtime execution
 - pair-archived comparison-report retention by commit pair
 - concentrated multi-report dashboard packets and extension dashboard action
+- governed review-scenario registry and separate human decision-record artifacts
 - canonical real-history harnesses and smoke lanes
 - retained design-gate guidance for the next development tranche
 
@@ -112,6 +113,8 @@ Committed and governed today:
   concentration artifacts under `.cache/harness-reports/HARNESS-VHS-001/`
 - real extension-host dashboard proof for dashboard-open, dashboard-refresh,
   and governed artifact-open behavior
+- canonical scenario registry and separate decision-record generation for the
+  canonical dashboard evidence flow
 - retained design gate that chooses the next tranche from committed evidence
 - retained design gate that refreshes `latest-report.{json,md}` after each
   successful stage so a stuck assurance tail does not leave stale tranche
@@ -155,6 +158,7 @@ Primary commands:
 - `npm run harness:smoke`
 - `npm run harness:report:smoke`
 - `npm run harness:dashboard:smoke`
+- `npm run harness:decision:record`
 
 Primary generated evidence:
 
@@ -163,6 +167,8 @@ Primary generated evidence:
 - `.cache/harness-reports/HARNESS-VHS-001/report.json`
 - `.cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.json`
 - `.cache/harness-reports/HARNESS-VHS-001/dashboard-smoke.json`
+- `<workspace-storage>/decision-records/<repoId>/<fileId>/<windowId>/<scenarioId>/<decisionId>/decision-record.json`
+- `<workspace-storage>/decision-records/<repoId>/<fileId>/<windowId>/<scenarioId>/<decisionId>/decision-record.md`
 - `<workspace-storage>/report-history/<repoId>/<fileId>/pairs/<pairId>/source-record.json`
 - `<workspace-storage>/dashboards/<repoId>/<fileId>/<windowId>/dashboard.json`
 - `<workspace-storage>/dashboards/<repoId>/<fileId>/<windowId>/dashboard.html`
@@ -179,6 +185,7 @@ The canonical real-history harness is `HARNESS-VHS-001`, backed by
 - history smoke via `npm run harness:smoke`
 - comparison-report smoke via `npm run harness:report:smoke`
 - dashboard smoke via `npm run harness:dashboard:smoke`
+- scenario decision-record generation via `npm run harness:decision:record`
 
 See [Harness Definitions](./docs/product/harnesses.md).
 
