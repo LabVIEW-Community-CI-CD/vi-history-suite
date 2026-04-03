@@ -20,11 +20,12 @@ When future sessions create or refresh wiki pages, use this order:
 8. [test-plan.md](../testing/test-plan.md)
 9. [documentation-coherence-ledger.md](./documentation-coherence-ledger.md)
 10. [wiki-seed-plan.md](./wiki-seed-plan.md)
-11. [overview.md](../architecture/overview.md)
-12. `docs/architecture/adr/`
-13. [README.md](../../README.md)
-14. [research-alignment.md](../research/authoritative/research-alignment.md)
-15. [research-implementation-index.json](../research/authoritative/research-implementation-index.json)
+11. [wiki-publication-ledger.md](./wiki-publication-ledger.md)
+12. [overview.md](../architecture/overview.md)
+13. `docs/architecture/adr/`
+14. [README.md](../../README.md)
+15. [research-alignment.md](../research/authoritative/research-alignment.md)
+16. [research-implementation-index.json](../research/authoritative/research-implementation-index.json)
 
 If two documents disagree, the higher document in this list wins until the
 lower document is corrected.
@@ -56,6 +57,8 @@ Do not create or refresh wiki pages until these are true:
   docs stack changed materially
 - the documentation coherence ledger records no unresolved internal
   contradiction across the audited authority surfaces
+- the wiki publication ledger is updated when a page is actually pushed to the
+  wiki repository
 
 ## Incremental Wiki Workflow
 
@@ -78,5 +81,6 @@ Do not create or refresh wiki pages until these are true:
 - documentation-package iteration: `docs/documentation-workbench.md`
 - documentation coherence: `docs/product/documentation-coherence-ledger.md`
 - incremental wiki page order: `docs/product/wiki-seed-plan.md`
+- published wiki inventory: `docs/product/wiki-publication-ledger.md`
 - proof and verification: RTM, test plan, retained design-gate and harness
   evidence paths

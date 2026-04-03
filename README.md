@@ -28,8 +28,9 @@ If you are new to the repo, read these in order:
 8. [Wiki Authority Map](./docs/product/wiki-authority-map.md)
 9. [Documentation Coherence Ledger](./docs/product/documentation-coherence-ledger.md)
 10. [Wiki Seed Plan](./docs/product/wiki-seed-plan.md)
-11. [PROGRAM-0001: Next Product Layer](./docs/product/execution-programs/PROGRAM-0001-next-product-layer.md)
-12. [Documentation Package Workbench](./docs/documentation-workbench.md)
+11. [Wiki Publication Ledger](./docs/product/wiki-publication-ledger.md)
+12. [PROGRAM-0001: Next Product Layer](./docs/product/execution-programs/PROGRAM-0001-next-product-layer.md)
+13. [Documentation Package Workbench](./docs/documentation-workbench.md)
 
 For machine-friendly repo orientation, start with:
 
@@ -71,6 +72,7 @@ Use these repo-native control-plane entrypoints instead:
 - [Wiki Authority Map](./docs/product/wiki-authority-map.md)
 - [Documentation Coherence Ledger](./docs/product/documentation-coherence-ledger.md)
 - [Wiki Seed Plan](./docs/product/wiki-seed-plan.md)
+- [Wiki Publication Ledger](./docs/product/wiki-publication-ledger.md)
 - [Documentation Package Workbench](./docs/documentation-workbench.md)
 - [Review Scenarios](./docs/product/review-scenarios.md)
 - [Harness Definitions](./docs/product/harnesses.md)
@@ -158,6 +160,8 @@ Committed and governed today:
   wiki-source material in a governed environment
 - a retained documentation coherence ledger and wiki seed plan so future wiki
   work starts from governed docs instead of source or chat memory
+- a retained wiki publication ledger so actual published wiki pages are tracked
+  from the main repo control plane instead of being inferred from the wiki repo
 - a configured GitLab SemVer release lane that validates tag/package sync,
   packages a versioned VSIX, and retains a machine-readable release manifest
 - a `main`-branch preview VSIX artifact lane so extension users can install the
@@ -208,6 +212,7 @@ See:
 - [Wiki Authority Map](./docs/product/wiki-authority-map.md)
 - [Documentation Coherence Ledger](./docs/product/documentation-coherence-ledger.md)
 - [Wiki Seed Plan](./docs/product/wiki-seed-plan.md)
+- [Wiki Publication Ledger](./docs/product/wiki-publication-ledger.md)
 - [Documentation Package Workbench](./docs/documentation-workbench.md)
 - [Release Procedure](./docs/release-procedure.md)
 - [Fast VS Code Loop](./docs/dev-fast-loop.md)

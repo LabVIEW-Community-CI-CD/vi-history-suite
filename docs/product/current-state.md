@@ -24,8 +24,9 @@ Read these in order:
 8. [wiki-authority-map.md](./wiki-authority-map.md)
 9. [documentation-coherence-ledger.md](./documentation-coherence-ledger.md)
 10. [wiki-seed-plan.md](./wiki-seed-plan.md)
-11. [PROGRAM-0001: Next Product Layer](./execution-programs/PROGRAM-0001-next-product-layer.md)
-12. [Documentation Package Workbench](../documentation-workbench.md)
+11. [wiki-publication-ledger.md](./wiki-publication-ledger.md)
+12. [PROGRAM-0001: Next Product Layer](./execution-programs/PROGRAM-0001-next-product-layer.md)
+13. [Documentation Package Workbench](../documentation-workbench.md)
 
 ## Authority Stack
 
@@ -51,9 +52,10 @@ Current control-plane surfaces:
 8. [wiki-authority-map.md](./wiki-authority-map.md)
 9. [documentation-coherence-ledger.md](./documentation-coherence-ledger.md)
 10. [wiki-seed-plan.md](./wiki-seed-plan.md)
-11. [PROGRAM-0001: Next Product Layer](./execution-programs/PROGRAM-0001-next-product-layer.md)
-12. [Fast VS Code Loop](../dev-fast-loop.md)
-13. [Documentation Package Workbench](../documentation-workbench.md)
+11. [wiki-publication-ledger.md](./wiki-publication-ledger.md)
+12. [PROGRAM-0001: Next Product Layer](./execution-programs/PROGRAM-0001-next-product-layer.md)
+13. [Fast VS Code Loop](../dev-fast-loop.md)
+14. [Documentation Package Workbench](../documentation-workbench.md)
 
 ## Committed Capability State
 
@@ -71,7 +73,7 @@ Current control-plane surfaces:
 | Review-scenario registry and human decision records | implemented and active with extension-facing decision-record creation from the history panel, scenario matching by repository remote URL plus VI path, separate Markdown/JSON artifact persistence, persisted reviewer-name defaults across decision-record runs, and real extension-host proof | `src/scenarios/reviewScenarioRegistry.ts`; `src/scenarios/decisionRecord.ts`; `src/scenarios/reviewDecisionRecordAction.ts`; `src/harness/harnessDecisionRecord.ts`; `src/commands/openViHistoryCommand.ts`; `tests/integration/suite/extensionHost.test.ts`; `docs/product/review-scenarios.md`; `docs/product/decision-record-template.md`; `VHS-REQ-307..312`; `VHS-REQ-341..354` | `TRANCHE-007` |
 | Runtime-doctor and dashboard-refresh developer experience | partially implemented and active | `src/reporting/comparisonRuntimeDoctor.ts`; `src/reporting/comparisonRuntimeLocator.ts`; `src/reporting/comparisonReportPacket.ts`; `src/reporting/comparisonReportAction.ts`; `src/dashboard/multiReportDashboardAction.ts`; `src/commands/openViHistoryCommand.ts`; `VHS-REQ-224..236`; `VHS-REQ-241`; `VHS-REQ-244..247`; `VHS-REQ-251..258` | `TRANCHE-008` |
 | Ship-control system and SemVer release target | implemented and active with preview VSIX delivery plus first tagged release proof pending, and a governed wiki-authority map that constrains future wiki generation to repo docs instead of source or chat memory | `docs/product/SHIP-0001-releasable-vi-history-suite.md`; `docs/product/release-readiness-matrix.json`; `docs/product/blocker-ledger.json`; `docs/product/wiki-authority-map.md`; `docs/release-procedure.md`; `.gitlab-ci.yml`; `tests/unit/shipControlDocs.test.ts`; `VHS-REQ-313..323` | `TRANCHE-009` |
-| Documentation-package workbench image and docs gate | implemented and active with a repo-published docs-authoring image, local workbench commands, a repo-native docs gate, a retained documentation coherence ledger, a wiki seed plan, and a retained publish-manifest lane for future documentation and wiki iteration | `docker/docs-authoring/Dockerfile`; `docker/docs-authoring/entrypoint.sh`; `scripts/run-docs-gate.js`; `docs/documentation-workbench.md`; `docs/product/documentation-coherence-ledger.md`; `docs/product/wiki-seed-plan.md`; `.gitlab-ci.yml`; `tests/unit/docsWorkbenchDocs.test.ts`; `VHS-REQ-350..358` | `TRANCHE-009` |
+| Documentation-package workbench image and docs gate | implemented and active with a repo-published docs-authoring image, local workbench commands, a repo-native docs gate, a retained documentation coherence ledger, a wiki seed plan, a wiki publication ledger, and a retained publish-manifest lane for future documentation and wiki iteration | `docker/docs-authoring/Dockerfile`; `docker/docs-authoring/entrypoint.sh`; `scripts/run-docs-gate.js`; `docs/documentation-workbench.md`; `docs/product/documentation-coherence-ledger.md`; `docs/product/wiki-seed-plan.md`; `docs/product/wiki-publication-ledger.md`; `.gitlab-ci.yml`; `tests/unit/docsWorkbenchDocs.test.ts`; `VHS-REQ-350..360` | `TRANCHE-009` |
 | Fast local VS Code development-host loop | implemented and active with reusable fixture-workspace prep, explicit workspace override, direct or staged extension-host launch, explicit Linux/Windows integration-host selection, Linux runtime preflight, and a least-privilege root-owned Linux bootstrap command | `src/tooling/devHostLoop.ts`; `src/cli/runDevHost.ts`; `src/tooling/integrationHostRuntime.ts`; `docs/dev-fast-loop.md`; `package.json`; `tests/unit/runDevHostCli.test.ts`; `tests/unit/integrationHostRuntime.test.ts`; `tests/unit/packageManifest.test.ts`; `VHS-REQ-338..339`; `VHS-REQ-344..346`; `docs/architecture/adr/ADR-0010-dual-host-extension-proof-and-linux-bootstrap.md` | sustain |
 
 ## Active Queue
@@ -103,6 +105,7 @@ The queue source of truth is:
 - [wiki-authority-map.md](./wiki-authority-map.md)
 - [documentation-coherence-ledger.md](./documentation-coherence-ledger.md)
 - [wiki-seed-plan.md](./wiki-seed-plan.md)
+- [wiki-publication-ledger.md](./wiki-publication-ledger.md)
 - [release-procedure.md](../release-procedure.md)
 - [Documentation Package Workbench](../documentation-workbench.md)
 
@@ -139,6 +142,7 @@ These are generated locally and are not the committed source of truth:
 - documentation-package workbench:
   - `docker/docs-authoring/Dockerfile`
   - `docs/documentation-workbench.md`
+  - `docs/product/wiki-publication-ledger.md`
   - `docs-workbench-evidence/docs-workbench-manifest.json`
   - local gate via `npm run docs:gate`
   - local workbench image via `npm run docs:workbench:build`

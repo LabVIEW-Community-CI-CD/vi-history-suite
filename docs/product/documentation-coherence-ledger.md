@@ -21,6 +21,7 @@ source inference or chat memory.
 - `README.md`
 - `docs/product/wiki-authority-map.md`
 - `docs/product/wiki-seed-plan.md`
+- `docs/product/wiki-publication-ledger.md`
 - `docs/documentation-workbench.md`
 - `docs/release-procedure.md`
 - `docs/research/authoritative/research-alignment.md`
@@ -54,6 +55,8 @@ source inference or chat memory.
 - Active tranche, active ship issue, release target, and open blocker ids agree
   across ship-control docs.
 - Wiki preparation is now constrained to the documentation package, not source.
+- The first incremental wiki seed is now published and tracked in
+  `docs/product/wiki-publication-ledger.md`.
 
 ## Residual External Risks
 
@@ -71,6 +74,6 @@ source inference or chat memory.
    documentation tranche.
 2. Merge the `repo-standards-review` skill branch so docs-workbench discovery
    becomes default skill behavior.
-3. Use the incremental page order in `wiki-seed-plan.md` to start wiki drafting
-   from the governed documentation stack.
-
+3. Continue wiki drafting in the incremental order retained in
+   `wiki-seed-plan.md`, with each publication recorded in
+   `docs/product/wiki-publication-ledger.md`.

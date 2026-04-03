@@ -81,6 +81,7 @@ Primary repo surfaces for that work include:
 
 - `docs/product/documentation-coherence-ledger.md`
 - `docs/product/wiki-seed-plan.md`
+- `docs/product/wiki-publication-ledger.md`
 - `docs/product/wiki-authority-map.md`
 
 Do not use this workbench as the primary surface for:
@@ -90,3 +91,7 @@ Do not use this workbench as the primary surface for:
 - installed-extension milestone testing
 
 Those remain separate product-proof lanes.
+
+When a wiki page is actually published, update
+`docs/product/wiki-publication-ledger.md` in the same documentation tranche so
+publication state stays governed inside the main repo.

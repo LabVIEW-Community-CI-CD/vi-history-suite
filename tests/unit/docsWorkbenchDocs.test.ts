@@ -110,6 +110,7 @@ describe('documentation-package workbench', () => {
     const dockerfile = readText('docker/docs-authoring/Dockerfile');
     const entrypoint = readText('docker/docs-authoring/entrypoint.sh');
     const workbenchDoc = readText('docs/documentation-workbench.md');
+    const wikiPublicationLedger = readText('docs/product/wiki-publication-ledger.md');
     const gitlabCi = readText('.gitlab-ci.yml');
 
     expect(manifest.scripts?.['docs:gate']).toBe('node scripts/run-docs-gate.js');
@@ -137,6 +138,13 @@ describe('documentation-package workbench', () => {
     expect(workbenchDoc).toContain('npm run docs:workbench:shell');
     expect(workbenchDoc).toContain('registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main');
     expect(workbenchDoc).toContain('docs-workbench-evidence/docs-workbench-manifest.json');
+    expect(workbenchDoc).toContain('docs/product/wiki-publication-ledger.md');
+
+    expect(wikiPublicationLedger).toContain('# Wiki Publication Ledger');
+    expect(wikiPublicationLedger).toContain('| Overview | `home` | published | `2026-04-03` | `61ed90c` |');
+    expect(wikiPublicationLedger).toContain('docs/product/SHIP-0001-releasable-vi-history-suite.md');
+    expect(wikiPublicationLedger).toContain('docs/product/current-state.md');
+    expect(wikiPublicationLedger).toContain('docs/product/release-readiness-matrix.json');
 
     expect(gitlabCi).toContain('docs_control_plane_check:');
     expect(gitlabCi).toContain('npm run docs:gate:core');

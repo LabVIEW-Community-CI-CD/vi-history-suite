@@ -782,6 +782,13 @@
   confirm they all point to the coherence ledger and wiki seed plan
 - `TEST-DOC-025`: review the architecture overview and ADR packet to confirm
   `ADR-0012` and `ADR-0013` are committed, accepted, and referenced correctly
+- `TEST-DOC-026`: review `docs/product/wiki-publication-ledger.md` to confirm
+  each published wiki page retains its wiki path, publication date, wiki
+  commit, and primary authority docs
+- `TEST-DOC-027`: review README, current state, wiki-authority,
+  documentation-workbench, release-procedure, and information-item surfaces to
+  confirm they point to `docs/product/wiki-publication-ledger.md` once wiki
+  publication begins
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

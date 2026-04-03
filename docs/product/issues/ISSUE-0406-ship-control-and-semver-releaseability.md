@@ -19,6 +19,7 @@ one explicit SemVer release target.
   ADR, release-readiness, and wiki-authority iteration
 - retained documentation coherence ledger and wiki seed plan for future
   authority-first wiki work
+- retained wiki publication ledger once wiki seeding begins
 
 ## Non-Goals
 
@@ -49,6 +50,8 @@ one explicit SemVer release target.
   should use that workbench instead of ad hoc host setup
 - the repo retains a documentation coherence ledger and wiki seed plan that
   future sessions can use before drafting wiki content
+- the repo retains a wiki publication ledger once pages are actually pushed to
+  the wiki
 
 ## Required Evidence
 

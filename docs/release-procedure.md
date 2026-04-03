@@ -17,6 +17,7 @@
 - Documentation-package coherence and future wiki seeding are tracked in:
   - `docs/product/documentation-coherence-ledger.md`
   - `docs/product/wiki-seed-plan.md`
+  - `docs/product/wiki-publication-ledger.md`
 
 ## Steps
 

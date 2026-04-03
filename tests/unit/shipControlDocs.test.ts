@@ -146,6 +146,7 @@ describe('ship-control direction system', () => {
     const workbenchDoc = readText('docs/documentation-workbench.md');
     const coherenceLedger = readText('docs/product/documentation-coherence-ledger.md');
     const wikiSeedPlan = readText('docs/product/wiki-seed-plan.md');
+    const wikiPublicationLedger = readText('docs/product/wiki-publication-ledger.md');
     const wikiAuthorityMap = readText('docs/product/wiki-authority-map.md');
     const architectureOverview = readText('docs/architecture/overview.md');
     const adr0012 = readText('docs/architecture/adr/ADR-0012-documentation-package-workbench-image.md');
@@ -157,6 +158,7 @@ describe('ship-control direction system', () => {
     expect(readme).toContain('[Wiki Authority Map](./docs/product/wiki-authority-map.md)');
     expect(readme).toContain('[Documentation Coherence Ledger](./docs/product/documentation-coherence-ledger.md)');
     expect(readme).toContain('[Wiki Seed Plan](./docs/product/wiki-seed-plan.md)');
+    expect(readme).toContain('[Wiki Publication Ledger](./docs/product/wiki-publication-ledger.md)');
     expect(readme).toContain('[Documentation Package Workbench](./docs/documentation-workbench.md)');
     expect(readme).toContain('[Release Procedure](./docs/release-procedure.md)');
     expect(readme).toContain('- `SHIP-0001`: releasable `v0.2.0` VSIX product');
@@ -180,6 +182,7 @@ describe('ship-control direction system', () => {
     expect(informationItemMap).toContain('| Wiki authority map | `docs/product/wiki-authority-map.md` |');
     expect(informationItemMap).toContain('| Documentation coherence ledger | `docs/product/documentation-coherence-ledger.md` |');
     expect(informationItemMap).toContain('| Wiki seed plan | `docs/product/wiki-seed-plan.md` |');
+    expect(informationItemMap).toContain('| Wiki publication ledger | `docs/product/wiki-publication-ledger.md` |');
     expect(informationItemMap).toContain('| Documentation package workbench | `docs/documentation-workbench.md` |');
     expect(informationItemMap).toContain('| Release procedure | `docs/release-procedure.md` |');
 
@@ -192,24 +195,32 @@ describe('ship-control direction system', () => {
     expect(releaseProcedure).toContain('release-evidence/release-manifest.json');
     expect(releaseProcedure).toContain('docs/product/documentation-coherence-ledger.md');
     expect(releaseProcedure).toContain('docs/product/wiki-seed-plan.md');
+    expect(releaseProcedure).toContain('docs/product/wiki-publication-ledger.md');
 
     expect(workbenchDoc).toContain('registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main');
     expect(workbenchDoc).toContain('npm run docs:workbench:gate');
     expect(workbenchDoc).toContain('docs/product/documentation-coherence-ledger.md');
     expect(workbenchDoc).toContain('docs/product/wiki-seed-plan.md');
+    expect(workbenchDoc).toContain('docs/product/wiki-publication-ledger.md');
 
     expect(coherenceLedger).toContain('# Documentation Coherence Ledger');
     expect(coherenceLedger).toContain('run-docs-gate.js --skip-links');
     expect(coherenceLedger).toContain('run_assurance.py /home/sveld/code/standards/vi-history-suite --profile release-gate');
     expect(coherenceLedger).toContain('DOC-001');
     expect(coherenceLedger).toContain('DOC-004');
+    expect(coherenceLedger).toContain('docs/product/wiki-publication-ledger.md');
 
     expect(wikiSeedPlan).toContain('# Wiki Seed Plan');
     expect(wikiSeedPlan).toContain('docs/product/documentation-coherence-ledger.md');
+    expect(wikiSeedPlan).toContain('docs/product/wiki-publication-ledger.md');
     expect(wikiSeedPlan).toContain('src/');
+
+    expect(wikiPublicationLedger).toContain('# Wiki Publication Ledger');
+    expect(wikiPublicationLedger).toContain('| Overview | `home` | published | `2026-04-03` | `61ed90c` |');
 
     expect(wikiAuthorityMap).toContain('[documentation-coherence-ledger.md](./documentation-coherence-ledger.md)');
     expect(wikiAuthorityMap).toContain('[wiki-seed-plan.md](./wiki-seed-plan.md)');
+    expect(wikiAuthorityMap).toContain('[wiki-publication-ledger.md](./wiki-publication-ledger.md)');
 
     expect(architectureOverview).toContain('[ADR-0012](./adr/ADR-0012-documentation-package-workbench-image.md)');
     expect(architectureOverview).toContain('[ADR-0013](./adr/ADR-0013-authority-first-wiki-seeding.md)');

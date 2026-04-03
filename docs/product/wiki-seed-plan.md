@@ -14,6 +14,12 @@ Do not draft or refresh wiki pages until:
   internal contradiction across the authority stack
 - the latest retained design gate is `pass`
 
+## Publication Status
+
+- **Overview**: published on `2026-04-03`; see
+  `docs/product/wiki-publication-ledger.md`
+- **Next page**: `Install And Release`
+
 ## Page Order
 
 1. **Overview**
@@ -93,4 +99,3 @@ Do not use these as primary wiki inputs:
 - `tests/`
 - shell transcripts
 - prior chat messages
-
