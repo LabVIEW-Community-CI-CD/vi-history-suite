@@ -78,6 +78,10 @@ requiring raw-log inspection.
   missing pairs before concentration, or concentrated only the currently
   retained archive set because dashboard-driven pair refresh was unavailable in
   the current build
+- stale history-panel commands now fail closed with explicit build-capability
+  guidance instead of silent unsupported-command handling, and `Diff prev` on a
+  content-detected VI now refuses text-diff fallback when comparison-report
+  routing is unavailable in the current build
 - governed dashboard artifact action validation for malformed messages,
   storage-root targets, and kind/path mismatches
 - cancellable eligibility refresh that preserves the previous eligible-path

@@ -822,6 +822,10 @@
   refresh is retained-complete, backfilling missing pair evidence, or
   concentrating retained archives only because pair refresh is unavailable, and
   that the rendered dashboard retains the same preparation summary
+- `TEST-UNIT-230`: verify unsupported history-panel commands fail closed with
+  stable build-capability guidance, and that `Diff prev` for content-detected
+  LabVIEW VIs does not fall back to text diff when the current build lacks
+  comparison-report support
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed product, wiki, and assurance-skill repos with authority roles,
   expected remotes, and primary entrypoints

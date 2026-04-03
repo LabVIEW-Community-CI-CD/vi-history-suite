@@ -208,7 +208,7 @@ describe('createOpenViHistoryCommand', () => {
         repositoryName: 'repo',
         repositoryRoot: '/workspace',
         relativePath: 'eligible.vi',
-        signature: 'LVIN',
+        signature: 'BINX',
         eligible: true,
         commits: [
           {
@@ -277,7 +277,7 @@ describe('createOpenViHistoryCommand', () => {
         repositoryName: 'repo',
         repositoryRoot: '/workspace',
         relativePath: 'eligible.vi',
-        signature: 'LVIN',
+        signature: 'BINX',
         eligible: true,
         commits: [
           {
@@ -332,7 +332,7 @@ describe('createOpenViHistoryCommand', () => {
         repositoryName: 'repo',
         repositoryRoot: '/workspace',
         relativePath: 'eligible.vi',
-        signature: 'LVIN',
+        signature: 'BINX',
         eligible: true,
         commits: [
           {
@@ -451,7 +451,7 @@ describe('createOpenViHistoryCommand', () => {
         repositoryName: 'repo',
         repositoryRoot: '/workspace',
         relativePath: 'eligible.vi',
-        signature: 'LVIN',
+        signature: 'BINX',
         eligible: true,
         commits: [
           {
@@ -522,7 +522,7 @@ describe('createOpenViHistoryCommand', () => {
         repositoryName: 'repo',
         repositoryRoot: '/workspace',
         relativePath: 'eligible.vi',
-        signature: 'LVIN',
+        signature: 'BINX',
         eligible: true,
         commits: [
           {
@@ -582,7 +582,7 @@ describe('createOpenViHistoryCommand', () => {
         repositoryName: 'repo',
         repositoryRoot: '/workspace',
         relativePath: 'eligible.vi',
-        signature: 'LVIN',
+        signature: 'BINX',
         eligible: true,
         commits: [
           {
@@ -631,6 +631,108 @@ describe('createOpenViHistoryCommand', () => {
     expect(panel?.webview.html).toContain('Dashboard:</strong> Unavailable in this build');
     expect(panel?.webview.html).toContain('Decision record:</strong> Unavailable in this build');
     expect(panel?.webview.html).toContain('Documentation:</strong> Unavailable in this build');
+  });
+
+  it('fails closed with build-capability guidance when stale panel commands target unsupported optional surfaces', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Newest revision',
+            previousHash: '1111111122222222'
+          },
+          {
+            hash: '1111111122222222',
+            authorDate: '2026-04-01T00:00:00Z',
+            authorName: 'B User',
+            subject: 'Initial revision'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker
+    );
+
+    await command(targetUri as never);
+
+    await tracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReport',
+      hash: 'abcdef1234567890'
+    });
+    expect(showInformationMessageMock).toHaveBeenLastCalledWith(
+      'VI Comparison Report generation is not available in this extension build.'
+    );
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'generateComparisonReport',
+      hash: 'abcdef1234567890',
+      outcome: 'unsupported-command'
+    });
+
+    await tracker.dispatchLastPanelMessage({
+      command: 'diffPrevious',
+      hash: 'abcdef1234567890'
+    });
+    expect(showInformationMessageMock).toHaveBeenLastCalledWith(
+      'Diff prev for LabVIEW VIs requires VI Comparison Report support in this extension build.'
+    );
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'diffPrevious',
+      hash: 'abcdef1234567890',
+      outcome: 'unsupported-command'
+    });
+
+    await tracker.dispatchLastPanelMessage({
+      command: 'openDashboard'
+    });
+    expect(showInformationMessageMock).toHaveBeenLastCalledWith(
+      'VI Review Dashboard is not available in this extension build.'
+    );
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'openDashboard',
+      outcome: 'unsupported-command'
+    });
+
+    await tracker.dispatchLastPanelMessage({
+      command: 'createDecisionRecord'
+    });
+    expect(showInformationMessageMock).toHaveBeenLastCalledWith(
+      'VI review decision records are not available in this extension build.'
+    );
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'createDecisionRecord',
+      outcome: 'unsupported-command'
+    });
+
+    await tracker.dispatchLastPanelMessage({
+      command: 'openDocumentation',
+      pageId: 'user-workflow'
+    });
+    expect(showInformationMessageMock).toHaveBeenLastCalledWith(
+      'Bundled VI History documentation is not available in this extension build.'
+    );
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'openDocumentation',
+      outcome: 'unsupported-command'
+    });
+    expect(executeCommandMock).not.toHaveBeenCalled();
   });
 
   it('routes diffPrevious through retained comparison-report opening for content-detected VIs when retained report support is available', async () => {
@@ -1707,7 +1809,7 @@ describe('createOpenViHistoryCommand', () => {
         repositoryName: 'repo',
         repositoryRoot: '/workspace',
         relativePath: 'eligible.vi',
-        signature: 'LVIN',
+        signature: 'BINX',
         eligible: true,
         commits: [
           {
@@ -1956,7 +2058,9 @@ describe('createOpenViHistoryCommand', () => {
       hash: 'abcdef1234567890',
       outcome: 'unsupported-command'
     });
-    expect(showInformationMessageMock).not.toHaveBeenCalled();
+    expect(showInformationMessageMock).toHaveBeenCalledWith(
+      'VI Comparison Report generation is not available in this extension build.'
+    );
     expect(showWarningMessageMock).not.toHaveBeenCalled();
   });
 
@@ -2014,7 +2118,9 @@ describe('createOpenViHistoryCommand', () => {
       command: 'openDashboard',
       outcome: 'unsupported-command'
     });
-    expect(showInformationMessageMock).not.toHaveBeenCalled();
+    expect(showInformationMessageMock).toHaveBeenCalledWith(
+      'VI Review Dashboard is not available in this extension build.'
+    );
     expect(showWarningMessageMock).not.toHaveBeenCalled();
   });
 
@@ -2026,7 +2132,7 @@ describe('createOpenViHistoryCommand', () => {
         repositoryName: 'repo',
         repositoryRoot: '/workspace',
         relativePath: 'eligible.vi',
-        signature: 'LVIN',
+        signature: 'BINX',
         eligible: true,
         commits: [
           {

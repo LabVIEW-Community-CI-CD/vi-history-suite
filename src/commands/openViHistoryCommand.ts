@@ -240,6 +240,15 @@ export function createOpenViHistoryCommand(
           | undefined
       ): Promise<void> => {
         if (!action) {
+          if (actionCommand === 'generateComparisonReport') {
+            void vscode.window.showInformationMessage(
+              'VI Comparison Report generation is not available in this extension build.'
+            );
+          } else if (actionCommand === 'diffPrevious') {
+            void vscode.window.showInformationMessage(
+              'Diff prev for LabVIEW VIs requires VI Comparison Report support in this extension build.'
+            );
+          }
           panelTracker?.recordAction({
             command: actionCommand,
             hash,
@@ -311,6 +320,9 @@ export function createOpenViHistoryCommand(
 
       if (command === 'openDocumentation') {
         if (!openDocumentationAction) {
+          void vscode.window.showInformationMessage(
+            'Bundled VI History documentation is not available in this extension build.'
+          );
           panelTracker?.recordAction({
             command,
             outcome: 'unsupported-command'
@@ -350,6 +362,9 @@ export function createOpenViHistoryCommand(
 
       if (command === 'openDashboard') {
         if (!multiReportDashboardAction) {
+          void vscode.window.showInformationMessage(
+            'VI Review Dashboard is not available in this extension build.'
+          );
           panelTracker?.recordAction({
             command,
             outcome: 'unsupported-command'
@@ -409,6 +424,9 @@ export function createOpenViHistoryCommand(
 
       if (command === 'createDecisionRecord') {
         if (!reviewDecisionRecordAction) {
+          void vscode.window.showInformationMessage(
+            'VI review decision records are not available in this extension build.'
+          );
           panelTracker?.recordAction({
             command,
             outcome: 'unsupported-command'
@@ -538,6 +556,23 @@ export function createOpenViHistoryCommand(
           );
           return;
         }
+        return;
+      }
+
+      if (
+        command === 'diffPrevious' &&
+        isComparisonReportCapableVi &&
+        !openRetainedComparisonReportAction &&
+        !comparisonReportAction
+      ) {
+        void vscode.window.showInformationMessage(
+          'Diff prev for LabVIEW VIs requires VI Comparison Report support in this extension build.'
+        );
+        panelTracker?.recordAction({
+          command,
+          hash,
+          outcome: 'unsupported-command'
+        });
         return;
       }
 
