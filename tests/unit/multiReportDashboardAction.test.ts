@@ -280,6 +280,27 @@ describe('multiReportDashboardAction', () => {
           detailItemCount: 3,
           pairWithOverviewImageCount: 1,
           pairWithDetailCount: 1,
+          overviewCaptionSummaries: [
+            {
+              caption: 'Front Panel Overview',
+              pairCount: 1,
+              imageCount: 2
+            }
+          ],
+          includedAttributeSummaries: [
+            {
+              label: 'Front Panel',
+              includedPairCount: 1,
+              excludedPairCount: 0
+            }
+          ],
+          detailHeadingSummaries: [
+            {
+              heading: '1. VI Attribute - Miscellaneous',
+              pairCount: 1,
+              itemCount: 3
+            }
+          ],
           evidenceStateSummaries: [
             {
               state: 'archived-generated-report',
@@ -357,6 +378,9 @@ describe('multiReportDashboardAction', () => {
     expect(openedPanel.webview.html).toContain('data-testid="dashboard-metadata-summary"');
     expect(openedPanel.webview.html).toContain('data-testid="dashboard-metadata-fields"');
     expect(openedPanel.webview.html).toContain('data-testid="dashboard-review-lens"');
+    expect(openedPanel.webview.html).toContain('data-testid="dashboard-overview-caption-concentration"');
+    expect(openedPanel.webview.html).toContain('data-testid="dashboard-attribute-concentration"');
+    expect(openedPanel.webview.html).toContain('data-testid="dashboard-detail-heading-concentration"');
     expect(result).toEqual({
       outcome: 'opened-review-dashboard',
       dashboardFilePath: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.html',

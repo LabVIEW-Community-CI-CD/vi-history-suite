@@ -180,6 +180,149 @@ describe('buildAndPersistMultiReportDashboard', () => {
     );
   });
 
+  it('concentrates overview captions, included attributes, and detail headings across metadata-backed pairs', async () => {
+    const storageRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-dashboard-concentration-'));
+    tempRoots.push(storageRoot);
+    const repositoryRoot = '/workspace/repo';
+    const relativePath = 'foo.vi';
+    const repoId = createHash('sha256').update(repositoryRoot).digest('hex').slice(0, 12);
+    const fileId = createHash('sha256')
+      .update(`${repositoryRoot}\n${relativePath}`)
+      .digest('hex')
+      .slice(0, 12);
+
+    await createArchivedPacket(storageRoot, {
+      repositoryRoot,
+      relativePath,
+      repoId,
+      fileId,
+      selectedHash: 'abcdef1234567890',
+      baseHash: '1111111122222222',
+      currentDirectoryName: 'current-concentration-a',
+      runtimeExecutionState: 'succeeded',
+      reportExists: true,
+      reportHtml: succeededReportHtml(),
+      reportAssetFiles: [
+        {
+          relativePath: 'diff-report-foo.vi_files/fp_1.png',
+          contents: 'png-a'
+        }
+      ]
+    });
+
+    await createArchivedPacket(storageRoot, {
+      repositoryRoot,
+      relativePath,
+      repoId,
+      fileId,
+      selectedHash: '1111111122222222',
+      baseHash: '3333333344444444',
+      currentDirectoryName: 'current-concentration-b',
+      runtimeExecutionState: 'succeeded',
+      reportExists: true,
+      reportHtml: secondSucceededReportHtml(),
+      reportAssetFiles: [
+        {
+          relativePath: 'diff-report-foo.vi_files/fp_1.png',
+          contents: 'png-b1'
+        },
+        {
+          relativePath: 'diff-report-foo.vi_files/fp_2.png',
+          contents: 'png-b2'
+        },
+        {
+          relativePath: 'diff-report-foo.vi_files/bd_1.png',
+          contents: 'png-bd'
+        }
+      ]
+    });
+
+    const dashboard = await buildAndPersistMultiReportDashboard(
+      storageRoot,
+      {
+        repositoryName: 'repo',
+        repositoryRoot,
+        relativePath,
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Newest revision',
+            previousHash: '1111111122222222'
+          },
+          {
+            hash: '1111111122222222',
+            authorDate: '2026-04-01T00:00:00Z',
+            authorName: 'B User',
+            subject: 'Middle revision',
+            previousHash: '3333333344444444'
+          },
+          {
+            hash: '3333333344444444',
+            authorDate: '2026-03-31T00:00:00Z',
+            authorName: 'C User',
+            subject: 'Initial revision'
+          }
+        ]
+      },
+      {
+        now: () => '2026-04-03T10:11:12.000Z'
+      }
+    );
+
+    expect(dashboard.record.summary.overviewCaptionSummaries).toEqual([
+      {
+        caption: 'Front Panel Overview',
+        pairCount: 2,
+        imageCount: 3
+      },
+      {
+        caption: 'Block Diagram Overview',
+        pairCount: 1,
+        imageCount: 1
+      }
+    ]);
+    expect(dashboard.record.summary.includedAttributeSummaries).toEqual([
+      {
+        label: 'Front Panel',
+        includedPairCount: 1,
+        excludedPairCount: 1
+      },
+      {
+        label: 'Block Diagram',
+        includedPairCount: 1,
+        excludedPairCount: 0
+      }
+    ]);
+    expect(dashboard.record.summary.detailHeadingSummaries).toEqual([
+      {
+        heading: '1. VI Attribute - Miscellaneous',
+        pairCount: 2,
+        itemCount: 3
+      },
+      {
+        heading: '2. Front Panel',
+        pairCount: 1,
+        itemCount: 1
+      }
+    ]);
+    await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
+      'data-testid="dashboard-overview-caption-concentration"'
+    );
+    await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
+      'Front Panel Overview · 2 pair(s) · 3 image(s)'
+    );
+    await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
+      'Front Panel · included=1 · excluded=1'
+    );
+    await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
+      '1. VI Attribute - Miscellaneous · 2 pair(s) · 3 item(s)'
+    );
+  });
+
   it('removes stale copied dashboard assets before rebuilding from retained archives', async () => {
     const storageRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-dashboard-refresh-'));
     tempRoots.push(storageRoot);
@@ -638,6 +781,10 @@ async function createArchivedPacket(
 
 function succeededReportHtml(): string {
   return '<!DOCTYPE html><html><body><div class="report"><h1 class="report-title">LabVIEW VI Comparison Report</h1><p class="generation-time">4/1/2026 11:01:16 AM</p><div class="compared-VIs"><details><summary class="difference-heading"><div class="dropdown-left">First VI: C:\\compare\\Base.vi</div><div class="dropdown-right">Second VI: C:\\compare\\Head.vi</div></summary><table class="difference"><tr class="compared-vi-image-captions"><td class="compared-vi-image-caption">Front Panel Overview</td></tr><tr class="compared-images"><td class="diff-image"><img class="difference-image" src="diff-report-foo.vi_files/fp_1.png"/></td></tr></table></details></div><div class="included-attributes"><ul class="inclusion-list"><li class="checked">Front Panel</li></ul></div><h2 class="section-header">Detailed Information</h2><details open><summary class="difference-heading">1. VI Attribute - Miscellaneous</summary><ol class="detailed-description-list" type="A"><li class="diff-detail">VI Version : changed from \"21.0\" to \"20.0\"</li></ol></details></div></body></html>';
+}
+
+function secondSucceededReportHtml(): string {
+  return '<!DOCTYPE html><html><body><div class="report"><h1 class="report-title">LabVIEW VI Comparison Report</h1><p class="generation-time">4/2/2026 12:00:00 PM</p><div class="compared-VIs"><details><summary class="difference-heading"><div class="dropdown-left">First VI: C:\\compare\\Base-2.vi</div><div class="dropdown-right">Second VI: C:\\compare\\Head-2.vi</div></summary><table class="difference"><tr class="compared-vi-image-captions"><td class="compared-vi-image-caption">Front Panel Overview</td></tr><tr class="compared-images"><td class="diff-image"><img class="difference-image" src="diff-report-foo.vi_files/fp_1.png"/></td><td class="diff-image"><img class="difference-image" src="diff-report-foo.vi_files/fp_2.png"/></td></tr><tr class="compared-vi-image-captions"><td class="compared-vi-image-caption">Block Diagram Overview</td></tr><tr class="compared-images"><td class="diff-image"><img class="difference-image" src="diff-report-foo.vi_files/bd_1.png"/></td></tr></table></details></div><div class="included-attributes"><ul class="inclusion-list"><li class="unchecked">Front Panel</li><li class="checked">Block Diagram</li></ul></div><h2 class="section-header">Detailed Information</h2><details open><summary class="difference-heading">1. VI Attribute - Miscellaneous</summary><ol class="detailed-description-list" type="A"><li class="diff-detail">Execution setting changed</li><li class="diff-detail">Connector pane changed</li></ol></details><details open><summary class="difference-heading">2. Front Panel</summary><ol class="detailed-description-list" type="A"><li class="diff-detail">Control resized</li></ol></details></div></body></html>';
 }
 
 function reportHtmlWithoutImages(): string {

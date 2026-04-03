@@ -50,6 +50,24 @@ export interface MultiReportDashboardProviderSummary {
   pairCount: number;
 }
 
+export interface MultiReportDashboardOverviewCaptionSummary {
+  caption: string;
+  pairCount: number;
+  imageCount: number;
+}
+
+export interface MultiReportDashboardAttributeSummary {
+  label: string;
+  includedPairCount: number;
+  excludedPairCount: number;
+}
+
+export interface MultiReportDashboardDetailHeadingSummary {
+  heading: string;
+  pairCount: number;
+  itemCount: number;
+}
+
 export interface MultiReportDashboardEvidenceStateSummary {
   state: MultiReportDashboardEntryEvidenceState;
   pairCount: number;
@@ -124,6 +142,9 @@ export interface MultiReportDashboardRecord {
     pairWithOverviewImageCount: number;
     pairWithDetailCount: number;
     providerSummaries: MultiReportDashboardProviderSummary[];
+    overviewCaptionSummaries: MultiReportDashboardOverviewCaptionSummary[];
+    includedAttributeSummaries: MultiReportDashboardAttributeSummary[];
+    detailHeadingSummaries: MultiReportDashboardDetailHeadingSummary[];
     evidenceStateSummaries: MultiReportDashboardEvidenceStateSummary[];
   };
   entries: MultiReportDashboardEntry[];
@@ -225,6 +246,9 @@ export function renderMultiReportDashboardHtml(
   const representedPairCount =
     record.summary.representedPairCount ?? record.commitWindow.pairCount;
   const providerSummaries = record.summary.providerSummaries ?? [];
+  const overviewCaptionSummaries = record.summary.overviewCaptionSummaries ?? [];
+  const includedAttributeSummaries = record.summary.includedAttributeSummaries ?? [];
+  const detailHeadingSummaries = record.summary.detailHeadingSummaries ?? [];
   const chronologyHtml = record.entries.length
     ? `<ol data-testid="dashboard-chronology-list">${record.entries
         .map(
@@ -256,6 +280,36 @@ export function renderMultiReportDashboardHtml(
       ([label, value]) => `<div class="metric"><strong>${escapeHtml(label)}:</strong> ${escapeHtml(value)}</div>`
     )
     .join('\n');
+  const overviewCaptionConcentrationHtml = overviewCaptionSummaries.length
+    ? `<ul data-testid="dashboard-overview-caption-concentration-list">${overviewCaptionSummaries
+        .map(
+          (summary) =>
+            `<li>${escapeHtml(summary.caption)} · ${escapeHtml(
+              String(summary.pairCount)
+            )} pair(s) · ${escapeHtml(String(summary.imageCount))} image(s)</li>`
+        )
+        .join('')}</ul>`
+    : 'No retained overview-caption concentration is currently available for this window.';
+  const includedAttributeConcentrationHtml = includedAttributeSummaries.length
+    ? `<ul data-testid="dashboard-attribute-concentration-list">${includedAttributeSummaries
+        .map(
+          (summary) =>
+            `<li>${escapeHtml(summary.label)} · included=${escapeHtml(
+              String(summary.includedPairCount)
+            )} · excluded=${escapeHtml(String(summary.excludedPairCount))}</li>`
+        )
+        .join('')}</ul>`
+    : 'No retained included-attribute concentration is currently available for this window.';
+  const detailHeadingConcentrationHtml = detailHeadingSummaries.length
+    ? `<ul data-testid="dashboard-detail-heading-concentration-list">${detailHeadingSummaries
+        .map(
+          (summary) =>
+            `<li>${escapeHtml(summary.heading)} · ${escapeHtml(
+              String(summary.pairCount)
+            )} pair(s) · ${escapeHtml(String(summary.itemCount))} item(s)</li>`
+        )
+        .join('')}</ul>`
+    : 'No retained detailed-information heading concentration is currently available for this window.';
   const entriesHtml = record.entries
     .map((entry, index) => {
       const parsed = entry.parsedReport;
@@ -511,6 +565,18 @@ export function renderMultiReportDashboardHtml(
       <div class="note" data-testid="dashboard-metadata-fields">
         <strong>Retained metadata fields:</strong> report title, generation time, compared VI paths, overview section captions and image counts, included attributes, and detailed-information headings and items.
       </div>
+      <div class="note" data-testid="dashboard-overview-caption-concentration">
+        <strong>Overview caption concentration:</strong>
+        ${overviewCaptionConcentrationHtml}
+      </div>
+      <div class="note" data-testid="dashboard-attribute-concentration">
+        <strong>Included-attribute concentration:</strong>
+        ${includedAttributeConcentrationHtml}
+      </div>
+      <div class="note" data-testid="dashboard-detail-heading-concentration">
+        <strong>Detailed-information heading concentration:</strong>
+        ${detailHeadingConcentrationHtml}
+      </div>
       <div class="summary-grid" data-testid="dashboard-summary-grid">
         ${summaryCards}
       </div>
@@ -675,13 +741,89 @@ function buildDashboardSummary(entries: MultiReportDashboardEntry[]) {
   const pairWithOverviewImageCount = entries.filter((entry) => entry.overviewImageCount > 0).length;
   const pairWithDetailCount = entries.filter((entry) => entry.detailItemCount > 0).length;
   const providerCounts = new Map<string, number>();
+  const overviewCaptionCounts = new Map<
+    string,
+    {
+      pairIds: Set<string>;
+      imageCount: number;
+    }
+  >();
+  const includedAttributeCounts = new Map<
+    string,
+    {
+      includedPairIds: Set<string>;
+      excludedPairIds: Set<string>;
+    }
+  >();
+  const detailHeadingCounts = new Map<
+    string,
+    {
+      pairIds: Set<string>;
+      itemCount: number;
+    }
+  >();
   for (const entry of entries) {
     const label = entry.runtimeProviderLabel ?? 'none';
     providerCounts.set(label, (providerCounts.get(label) ?? 0) + 1);
+    for (const section of entry.parsedReport?.overviewSections ?? []) {
+      const summary = overviewCaptionCounts.get(section.caption) ?? {
+        pairIds: new Set<string>(),
+        imageCount: 0
+      };
+      summary.pairIds.add(entry.pairId);
+      summary.imageCount += section.images.length;
+      overviewCaptionCounts.set(section.caption, summary);
+    }
+    for (const attribute of entry.parsedReport?.includedAttributes ?? []) {
+      const summary = includedAttributeCounts.get(attribute.label) ?? {
+        includedPairIds: new Set<string>(),
+        excludedPairIds: new Set<string>()
+      };
+      if (attribute.included) {
+        summary.includedPairIds.add(entry.pairId);
+      } else {
+        summary.excludedPairIds.add(entry.pairId);
+      }
+      includedAttributeCounts.set(attribute.label, summary);
+    }
+    for (const section of entry.parsedReport?.detailSections ?? []) {
+      const summary = detailHeadingCounts.get(section.heading) ?? {
+        pairIds: new Set<string>(),
+        itemCount: 0
+      };
+      summary.pairIds.add(entry.pairId);
+      summary.itemCount += section.items.length;
+      detailHeadingCounts.set(section.heading, summary);
+    }
   }
   const providerSummaries = [...providerCounts.entries()]
     .map(([label, pairCount]) => ({ label, pairCount }))
     .sort((left, right) => right.pairCount - left.pairCount || left.label.localeCompare(right.label));
+  const overviewCaptionSummaries = [...overviewCaptionCounts.entries()]
+    .map(([caption, summary]) => ({
+      caption,
+      pairCount: summary.pairIds.size,
+      imageCount: summary.imageCount
+    }))
+    .sort((left, right) => right.pairCount - left.pairCount || left.caption.localeCompare(right.caption));
+  const includedAttributeSummaries = [...includedAttributeCounts.entries()]
+    .map(([label, summary]) => ({
+      label,
+      includedPairCount: summary.includedPairIds.size,
+      excludedPairCount: summary.excludedPairIds.size
+    }))
+    .sort((left, right) => {
+      const leftTotal = left.includedPairCount + left.excludedPairCount;
+      const rightTotal = right.includedPairCount + right.excludedPairCount;
+      return rightTotal - leftTotal || left.label.localeCompare(right.label);
+    });
+  const detailHeadingSummaries = [...detailHeadingCounts.entries()]
+    .map(([heading, summary]) => ({
+      heading,
+      pairCount: summary.pairIds.size,
+      itemCount: summary.itemCount
+    }))
+    .sort((left, right) => right.pairCount - left.pairCount || left.heading.localeCompare(right.heading));
   const evidenceStateCounts = new Map<MultiReportDashboardEntryEvidenceState, number>();
   for (const entry of entries) {
     evidenceStateCounts.set(
@@ -716,6 +858,9 @@ function buildDashboardSummary(entries: MultiReportDashboardEntry[]) {
     pairWithOverviewImageCount,
     pairWithDetailCount,
     providerSummaries,
+    overviewCaptionSummaries,
+    includedAttributeSummaries,
+    detailHeadingSummaries,
     evidenceStateSummaries
   };
 }

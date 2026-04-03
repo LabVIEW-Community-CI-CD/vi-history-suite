@@ -98,9 +98,11 @@ Committed and governed today:
   coexist without overwriting
 - concentrated dashboard JSON and HTML packets that recollect retained VI
   Comparison Report metadata, including report title, generation time,
-  compared VI paths, overview section/image counts, included-attribute facts,
-  detailed NI report sections, provider provenance, and retained overview
-  image assets rendered on the dashboard through webview-safe URIs
+  compared VI paths, whole-window overview-caption concentration,
+  whole-window included-attribute concentration, whole-window
+  detailed-information heading concentration, per-pair metadata counts,
+  provider provenance, and retained overview image assets rendered on the
+  dashboard through webview-safe URIs
 - governed dashboard artifact-opening rules that accept only retained
   `report-packet.html`, `report-metadata.json`, `source-record.json`, and
   `*-report-*.html` files from workspace-scoped extension storage

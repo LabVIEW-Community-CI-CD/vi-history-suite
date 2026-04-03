@@ -184,9 +184,13 @@
         "VHS-REQ-297",
         "VHS-REQ-298",
         "VHS-REQ-299",
-        "VHS-REQ-300"
+        "VHS-REQ-300",
+        "VHS-REQ-301",
+        "VHS-REQ-302",
+        "VHS-REQ-303",
+        "VHS-REQ-304"
       ],
-      "nextMove": "Sustain live dashboard proof while extending runtime-doctor UX and review-scenario decision support."
+      "nextMove": "Sustain live dashboard proof while extending runtime-doctor UX, trust-aware refresh, and review-scenario decision support."
     },
     {
       "surface": "review-scenario-registry-and-human-decision-records",

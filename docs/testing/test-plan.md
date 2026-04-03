@@ -616,6 +616,11 @@
 - `TEST-UNIT-183`: prove dashboard panel tracking retains a separate dashboard
   panel summary, dashboard artifact action summary, dashboard message
   dispatcher, and clear behavior without overwriting the history-panel tracker
+- `TEST-UNIT-184`: prove the concentrated dashboard retains and renders
+  whole-window overview-caption, included-attribute, and detailed-information
+  heading concentration summaries across multiple metadata-backed pairs
+- `TEST-UNIT-185`: prove the dashboard panel webview renders the whole-window
+  metadata concentration sections before per-pair review details
 - `TEST-SMOKE-001`: run `npm run harness:dashboard:smoke -- --platform win32
   --prefer-bitness auto --dashboard-commit-window 3` and retain
   `dashboard-smoke.json`, `dashboard-smoke.md`, and `dashboard-smoke.html`
