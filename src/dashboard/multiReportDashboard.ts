@@ -232,8 +232,9 @@ export function renderMultiReportDashboardHtml(
             Pair ${index + 1} of ${record.entries.length}: <code>${escapeHtml(
               entry.selectedHash.slice(0, 8)
             )}</code> vs <code>${escapeHtml(entry.baseHash.slice(0, 8))}</code> ·
-            ${escapeHtml(entry.selectedSubject)} ·
-            ${escapeHtml(entry.pairEvidenceState)}
+            selected=${escapeHtml(entry.selectedSubject)} ·
+            base=${escapeHtml(entry.baseSubject ?? 'none')} ·
+            evidence=${escapeHtml(entry.pairEvidenceState)}
           </li>`
         )
         .join('')}</ol>`
@@ -264,18 +265,20 @@ export function renderMultiReportDashboardHtml(
             No retained VI Comparison Report metadata is currently available for this pair.
           </div>`;
       const reportMetadataHtml = parsed
-        ? `<div class="note" data-testid="dashboard-entry-report-metadata">
-            <strong>Comparison Report metadata:</strong>
-            title=${escapeHtml(parsed.reportTitle)} ·
-            generated=${escapeHtml(parsed.generationTime ?? 'none')} ·
-            first-vi=${escapeHtml(parsed.firstViPath ?? 'none')} ·
-            second-vi=${escapeHtml(parsed.secondViPath ?? 'none')} ·
-            overview-sections=${escapeHtml(String(parsed.overviewSections.length))} ·
-            overview-images=${escapeHtml(String(entry.overviewImageCount))} ·
-            included-attributes=${escapeHtml(String(parsed.includedAttributes.length))} ·
-            detail-sections=${escapeHtml(String(parsed.detailSections.length))} ·
-            detail-items=${escapeHtml(String(entry.detailItemCount))}
-          </div>`
+        ? `<section class="note" data-testid="dashboard-entry-report-metadata">
+            <strong>Comparison Report metadata</strong>
+            <div class="entry-grid metadata-grid">
+              <div><strong>Report title:</strong> ${escapeHtml(parsed.reportTitle)}</div>
+              <div><strong>Generation time:</strong> ${escapeHtml(parsed.generationTime ?? 'none')}</div>
+              <div><strong>First VI path:</strong> ${escapeHtml(parsed.firstViPath ?? 'none')}</div>
+              <div><strong>Second VI path:</strong> ${escapeHtml(parsed.secondViPath ?? 'none')}</div>
+              <div><strong>Overview section count:</strong> ${escapeHtml(String(parsed.overviewSections.length))}</div>
+              <div><strong>Overview image count:</strong> ${escapeHtml(String(entry.overviewImageCount))}</div>
+              <div><strong>Included attribute count:</strong> ${escapeHtml(String(parsed.includedAttributes.length))}</div>
+              <div><strong>Detail section count:</strong> ${escapeHtml(String(parsed.detailSections.length))}</div>
+              <div><strong>Detail item count:</strong> ${escapeHtml(String(entry.detailItemCount))}</div>
+            </div>
+          </section>`
         : '';
       const overviewMetadataHtml = parsed?.overviewSections.length
         ? `<ul data-testid="dashboard-entry-overview-metadata">${parsed.overviewSections
@@ -329,7 +332,7 @@ export function renderMultiReportDashboardHtml(
             .join('\n')
         : '<div class="note" data-testid="dashboard-entry-detail-metadata">No detailed-information metadata is currently retained for this pair.</div>';
 
-	      return `<section class="entry" data-testid="dashboard-entry" data-entry-index="${index}">
+      return `<section class="entry" data-testid="dashboard-entry" data-entry-index="${index}">
 	        <div class="entry-header">
 	          <h2>Pair ${index + 1} of ${record.entries.length}: ${escapeHtml(
             entry.selectedHash.slice(0, 8)
@@ -343,7 +346,7 @@ export function renderMultiReportDashboardHtml(
             <strong>Runtime:</strong> ${escapeHtml(entry.runtimeExecutionState ?? 'not-run')}
           </div>
         </div>
-	        <div class="entry-grid" data-testid="dashboard-entry-provenance">
+        <div class="entry-grid" data-testid="dashboard-entry-provenance">
 	          <div><strong>Selected hash:</strong> <code>${escapeHtml(entry.selectedHash)}</code></div>
 	          <div><strong>Base hash:</strong> <code>${escapeHtml(entry.baseHash)}</code></div>
 	          <div><strong>Selected subject:</strong> ${escapeHtml(entry.selectedSubject)}</div>
@@ -351,6 +354,11 @@ export function renderMultiReportDashboardHtml(
             `${entry.selectedAuthorName} · ${entry.selectedAuthorDate}`
           )}</div>
           <div><strong>Base subject:</strong> ${escapeHtml(entry.baseSubject ?? 'none')}</div>
+          <div><strong>Base author/date:</strong> ${escapeHtml(
+            entry.baseAuthorDate && entry.baseAuthorName
+              ? `${entry.baseAuthorName} · ${entry.baseAuthorDate}`
+              : 'none'
+          )}</div>
           <div><strong>Provider:</strong> ${escapeHtml(entry.runtimeProvider ?? 'none')}</div>
           <div><strong>Engine:</strong> ${escapeHtml(entry.runtimeEngine ?? 'none')}</div>
           <div><strong>Platform:</strong> ${escapeHtml(entry.runtimePlatform ?? 'none')}</div>
@@ -400,6 +408,9 @@ export function renderMultiReportDashboardHtml(
         display: grid;
         grid-template-columns: repeat(3, minmax(220px, 1fr));
         gap: 12px;
+      }
+      .metadata-grid {
+        margin-top: 8px;
       }
       .entry-header {
         display: flex;
@@ -484,6 +495,9 @@ export function renderMultiReportDashboardHtml(
       <div class="note" data-testid="dashboard-chronology-summary">
         <strong>Pair chronology:</strong>
         ${chronologyHtml}
+      </div>
+      <div class="note" data-testid="dashboard-review-lens">
+        <strong>Review lens:</strong> This dashboard concentrates retained VI Comparison Report metadata across adjacent pairs so expert review can start from chronology, compared VI identity, overview sections, included attributes, and detailed-information items before opening any individual pair report.
       </div>
       <div class="note" data-testid="dashboard-metadata-summary">
         <strong>Concentrated comparison-report metadata:</strong>

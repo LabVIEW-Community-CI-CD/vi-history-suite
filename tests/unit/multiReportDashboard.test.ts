@@ -149,10 +149,28 @@ describe('buildAndPersistMultiReportDashboard', () => {
       'data-testid="dashboard-metadata-summary"'
     );
     await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
+      'data-testid="dashboard-review-lens"'
+    );
+    await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
       'data-testid="dashboard-metadata-fields"'
     );
     await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
       'data-testid="dashboard-entry-report-metadata"'
+    );
+    await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
+      'Report title:</strong> LabVIEW VI Comparison Report'
+    );
+    await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
+      'Generation time:</strong> 4/1/2026 11:01:16 AM'
+    );
+    await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
+      'First VI path:</strong> C:\\compare\\Base.vi'
+    );
+    await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
+      'Second VI path:</strong> C:\\compare\\Head.vi'
+    );
+    await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
+      'base=Middle revision'
     );
     await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
       'Front Panel Overview · 1 image(s)'

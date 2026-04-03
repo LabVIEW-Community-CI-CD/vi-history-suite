@@ -356,6 +356,7 @@ describe('multiReportDashboardAction', () => {
     expect(openedPanel.webview.html).toContain('data-testid="dashboard-chronology-order"');
     expect(openedPanel.webview.html).toContain('data-testid="dashboard-metadata-summary"');
     expect(openedPanel.webview.html).toContain('data-testid="dashboard-metadata-fields"');
+    expect(openedPanel.webview.html).toContain('data-testid="dashboard-review-lens"');
     expect(result).toEqual({
       outcome: 'opened-review-dashboard',
       dashboardFilePath: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.html',

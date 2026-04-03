@@ -595,6 +595,11 @@
 - `TEST-UNIT-178`: prove comparison-report packet HTML omits the
   `comparison-report-runtime-doctor` section when no retained runtime-doctor
   summary lines are present
+- `TEST-UNIT-179`: prove the concentrated dashboard HTML renders labeled NI
+  report metadata fields plus selected/base chronology wording for retained
+  adjacent pairs
+- `TEST-UNIT-180`: prove the dashboard action webview renders the concentrated
+  metadata-first review lens and labeled NI metadata surface
 - `TEST-DOC-014`: review the queue, epic, ADR, and current-state surfaces to
   prove the future-facing dashboard research was normalized into governed repo
   control-plane artifacts and the incoming research artifact was deleted
