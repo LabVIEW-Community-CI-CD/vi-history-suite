@@ -473,6 +473,84 @@ describe('createOpenViHistoryCommand', () => {
     expect(showInformationMessageMock).not.toHaveBeenCalled();
   });
 
+  it('opens a multi-report dashboard when the retained window has at least three commits', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    const dashboardAction = vi.fn().mockResolvedValue({
+      outcome: 'opened-review-dashboard',
+      dashboardFilePath: '/workspace/.storage/dashboards/dashboard.html',
+      dashboardJsonFilePath: '/workspace/.storage/dashboards/dashboard.json',
+      dashboardPairCount: 2,
+      dashboardArchivedPairCount: 1,
+      dashboardMissingPairCount: 1,
+      title: 'VI Review Dashboard: eligible.vi'
+    });
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Update VI',
+            previousHash: '1111111122222222'
+          },
+          {
+            hash: '1111111122222222',
+            authorDate: '2026-04-01T00:00:00Z',
+            authorName: 'B User',
+            subject: 'Middle revision',
+            previousHash: '3333333344444444'
+          },
+          {
+            hash: '3333333344444444',
+            authorDate: '2026-03-31T00:00:00Z',
+            authorName: 'C User',
+            subject: 'Initial revision'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      undefined,
+      dashboardAction as never
+    );
+
+    await command(targetUri as never);
+    await tracker.dispatchLastPanelMessage({
+      command: 'openDashboard'
+    });
+
+    expect(dashboardAction).toHaveBeenCalledWith({
+      model: expect.objectContaining({
+        relativePath: 'eligible.vi'
+      })
+    });
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'openDashboard',
+      outcome: 'opened-review-dashboard',
+      dashboardFilePath: '/workspace/.storage/dashboards/dashboard.html',
+      dashboardJsonFilePath: '/workspace/.storage/dashboards/dashboard.json',
+      dashboardPairCount: 2,
+      dashboardArchivedPairCount: 1,
+      dashboardMissingPairCount: 1,
+      title: 'VI Review Dashboard: eligible.vi'
+    });
+  });
+
   it('retains runtime diagnostics from comparison-report generation results', async () => {
     const targetUri = createMockUri('/workspace/eligible.vi');
     const tracker = new HistoryPanelTracker();

@@ -36,6 +36,7 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('Open@commit');
     expect(html).toContain('Diff prev');
     expect(html).toContain('Generate report');
+    expect(html).toContain('Open dashboard');
     expect(html).toContain('Copy hash');
     expect(html).toContain('Copy review packet');
     expect(html).toContain('data-testid="history-status"');
@@ -60,6 +61,7 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('data-testid="history-action-diff"');
     expect(html).toContain('data-testid="history-action-report"');
     expect(html).toContain('data-testid="history-action-copy"');
+    expect(html).toContain('data-testid="history-action-dashboard"');
     expect(html).toContain('Newest commit first');
     expect(html).toContain('Oldest retained revision');
     expect(html).toContain('Binary review limits:');
@@ -101,6 +103,7 @@ describe('renderHistoryPanelHtml', () => {
     expect(reviewPacket).toContain('Repository: labview-icon-editor');
     expect(reviewPacket).toContain('Path: Tooling/deployment/VIP_Pre-Install Custom Action.vi');
     expect(reviewPacket).toContain('Retained revisions: 2');
+    expect(reviewPacket).toContain('Dashboard available: no');
     expect(reviewPacket).toContain('Confidence and scope:');
     expect(reviewPacket).toContain('Included here: chronology, path provenance, retained hashes, compare pairs, report preflight planning, and command routing.');
     expect(reviewPacket).toContain('Needs external comparison tooling: binary semantic differences, visual or cosmetic change detection, and NI comparison-report output.');
@@ -122,6 +125,7 @@ describe('renderHistoryPanelHtml', () => {
     const reviewPacket = renderHistoryReviewPacketText(model);
 
     expect(html).toContain('No retained commits');
+    expect(html).toContain('data-testid="history-action-dashboard" disabled');
     expect(reviewPacket).toContain('Newest retained commit: No retained commits');
     expect(reviewPacket).toContain('Oldest retained commit: No retained commits');
   });

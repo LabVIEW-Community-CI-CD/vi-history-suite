@@ -134,22 +134,33 @@
     },
     {
       "surface": "multi-report-developer-dashboard-for-three-plus-commits",
-      "status": "modeled-not-yet-implemented",
+      "status": "partial",
       "evidence": [
-        "docs/research/authoritative/research-infrastructure.md",
-        "docs/product/epics/EPIC-0004-multi-report-developer-dashboard.md",
-        "docs/architecture/adr/ADR-0007-multi-report-review-dashboard.md",
-        "docs/architecture/adr/ADR-0008-concentration-first-dashboard-for-high-volume-review.md",
-        "docs/product/development-queue.json"
+        "src/dashboard/comparisonReportArchive.ts",
+        "src/dashboard/niComparisonReportParser.ts",
+        "src/dashboard/multiReportDashboard.ts",
+        "src/dashboard/multiReportDashboardAction.ts",
+        "src/ui/historyPanel.ts",
+        "src/commands/openViHistoryCommand.ts",
+        "docs/architecture/adr/ADR-0009-dashboard-pair-archive-and-concentration-packet.md"
       ],
       "requirements": [
         "VHS-REQ-185",
         "VHS-REQ-186",
         "VHS-REQ-187",
         "VHS-REQ-190",
-        "VHS-REQ-192"
+        "VHS-REQ-192",
+        "VHS-REQ-200",
+        "VHS-REQ-201",
+        "VHS-REQ-202",
+        "VHS-REQ-203",
+        "VHS-REQ-204",
+        "VHS-REQ-205",
+        "VHS-REQ-206",
+        "VHS-REQ-207",
+        "VHS-REQ-208"
       ],
-      "nextMove": "TRANCHE-006"
+      "nextMove": "Add drill-down actions, dashboard smoke proof, and richer expert-review concentration cues."
     },
     {
       "surface": "review-scenario-registry-and-human-decision-records",

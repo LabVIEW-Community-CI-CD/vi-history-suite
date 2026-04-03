@@ -191,14 +191,19 @@ describe('comparisonReportAction', () => {
         },
         artifactPlan: {
           repoId: 'repoid123456',
+          fileId: 'fileid123456',
+          normalizedRelativePath: 'foo.vi',
           reportDirectory: '/workspace/.storage/reports/repoid123456/fileid123456',
-          reportFilename: 'diff-report-foo.vi.html'
+          packetFilename: 'report-packet.html',
+          reportFilename: 'diff-report-foo.vi.html',
+          allowedLocalRootPaths: ['/workspace/.storage']
         }
       },
       packetFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-packet.html',
       reportFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
       metadataFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-metadata.json'
     });
+    const archiveComparisonReportSource = vi.fn().mockResolvedValue(undefined);
     const action = createComparisonReportAction(
       {
         storageUri: createMockUri('/workspace/.storage')
@@ -225,7 +230,8 @@ describe('comparisonReportAction', () => {
         getRuntimeSettings: () => ({
           preferBitness: 'x86'
         }),
-        persistComparisonReport
+        persistComparisonReport,
+        archiveComparisonReportSource
       }
     );
 
@@ -272,6 +278,11 @@ describe('comparisonReportAction', () => {
           provider: 'host-native',
           engine: 'labview-cli'
         })
+      })
+    );
+    expect(archiveComparisonReportSource).toHaveBeenCalledWith(
+      expect.objectContaining({
+        reportTitle: 'VI Comparison Report: foo.vi'
       })
     );
 

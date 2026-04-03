@@ -118,6 +118,8 @@ async function testPanelOpenFlow(
   assert.match(panel.renderedHtml, /data-testid="history-action-report"/);
   assert.match(panel.renderedHtml, /data-testid="history-action-copy"/);
   assert.match(panel.renderedHtml, /data-testid="history-action-copy-review-packet"/);
+  assert.match(panel.renderedHtml, /data-testid="history-action-dashboard"/);
+  assert.match(panel.renderedHtml, /data-testid="history-action-dashboard" disabled/);
   assert.match(panel.renderedHtml, /Eligible/);
   assert.match(panel.renderedHtml, /LVIN/);
   assert.match(panel.renderedHtml, /Newest commit first/);

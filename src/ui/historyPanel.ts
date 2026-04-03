@@ -3,6 +3,10 @@ import { ViHistoryCommit, ViHistoryViewModel } from '../services/viHistoryModel'
 export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
   const newestCommit = model.commits[0];
   const oldestCommit = model.commits[model.commits.length - 1];
+  const dashboardButton =
+    model.commits.length >= 3
+      ? '<button data-testid="history-action-dashboard" data-command="openDashboard">Open dashboard</button>'
+      : '<button data-testid="history-action-dashboard" disabled>Open dashboard</button>';
   const rows = model.commits
     .map((commit: ViHistoryCommit, index: number) => {
       const diffButton = commit.previousHash
@@ -115,6 +119,7 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
       <strong>Signature:</strong> <span data-testid="history-status-signature">${escapeHtml(model.signature)}</span><br />
       <strong>Commits:</strong> <span data-testid="history-status-commit-count">${model.commits.length}</span><br />
       <button data-testid="history-action-copy-review-packet" data-command="copyReviewPacket">Copy review packet</button>
+      ${dashboardButton}
     </div>
     <div class="packet" data-testid="history-review-packet">
       <div data-testid="history-chronology-order"><strong>Order:</strong> Newest commit first</div>
@@ -136,6 +141,7 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
       <ol>
         <li data-testid="history-guidance-step">Use the newest/oldest packet to confirm the retained review window before acting on a specific revision.</li>
         <li data-testid="history-guidance-step">Use the compare pair in each row to see exactly which retained base revision a <code>Diff prev</code> action targets.</li>
+        <li data-testid="history-guidance-step">Use <code>Open dashboard</code> when the retained window has at least three commits and you want concentrated comparison-report evidence in one place.</li>
         <li data-testid="history-guidance-step">For binary VI inspection, use <code>Open@commit</code> or external tooling when chronology facts alone are not sufficient.</li>
       </ol>
     </div>
@@ -203,6 +209,7 @@ export function renderHistoryReviewPacketText(model: ViHistoryViewModel): string
     `Signature: ${model.signature}`,
     `Eligibility: ${model.eligible ? 'Eligible' : 'Not eligible'}`,
     `Retained revisions: ${model.commits.length}`,
+    `Dashboard available: ${model.commits.length >= 3 ? 'yes' : 'no'}`,
     `Newest retained commit: ${renderCommitSummary(newestCommit)}`,
     `Oldest retained commit: ${renderCommitSummary(oldestCommit)}`,
     'Confidence and scope:',

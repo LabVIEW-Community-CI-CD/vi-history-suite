@@ -8,6 +8,8 @@ contains:
 
 - content-detected VI eligibility and history review
 - governed comparison-report planning, storage, and runtime execution
+- pair-archived comparison-report retention by commit pair
+- concentrated multi-report dashboard packets and extension dashboard action
 - canonical real-history harnesses and smoke lanes
 - retained design-gate guidance for the next development tranche
 
@@ -62,10 +64,14 @@ Committed and governed today:
 - command visibility through both `explorer/context` and `editor/title/context`
 - trust-gated and Git-backed eligibility indexing
 - review-oriented history panel with `Open at commit`, `Diff vs previous`, and
-  `Copy hash`
+  `Copy hash`, plus `Open dashboard` for retained three-plus-commit windows
 - comparison-report preflight, staging, packet storage, and packet webview
 - LabVIEW 2026 Q1 runtime detection and governed host-native report execution
   proof lanes
+- pairwise dashboard-source archiving so multiple report attempts for one VI can
+  coexist without overwriting
+- concentrated dashboard JSON and HTML packets that recollect retained report
+  images, included-attribute facts, and detailed NI report sections
 - canonical real-history smoke and canonical comparison-report smoke on
   `HARNESS-VHS-001`
 - retained design gate that chooses the next tranche from committed evidence
@@ -74,10 +80,10 @@ Committed and governed today:
 
 The active product queue is:
 
+- `TRANCHE-006`: first-class multi-report developer dashboard
 - `TRANCHE-003`: live NI report execution and runtime-proof tightening
 - `TRANCHE-004`: progress-surface uplift for indexing and report generation
 - `TRANCHE-005`: Windows 64-bit isolated container provider
-- `TRANCHE-006`: first-class multi-report developer dashboard
 - `TRANCHE-007`: review-scenario registry and human decision records
 
 See:
@@ -110,6 +116,9 @@ Primary generated evidence:
 - `.cache/design-gate/latest-report.md`
 - `.cache/harness-reports/HARNESS-VHS-001/report.json`
 - `.cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.json`
+- `<workspace-storage>/report-history/<repoId>/<fileId>/pairs/<pairId>/source-record.json`
+- `<workspace-storage>/dashboards/<repoId>/<fileId>/<windowId>/dashboard.json`
+- `<workspace-storage>/dashboards/<repoId>/<fileId>/<windowId>/dashboard.html`
 
 The generated `.cache/` evidence is local and regenerated. The committed source
 of truth for implemented-versus-partial research work is the documentation stack

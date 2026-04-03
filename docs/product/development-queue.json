@@ -16,7 +16,7 @@
   {
     "id": "TRANCHE-003",
     "title": "Wire governed runtime selection into live NI report execution",
-    "status": "active",
+    "status": "queued",
     "source": "authoritative research",
     "summary": "Use the stored runtime selection and preflight facts to run LabVIEW CLI or LVCompare truthfully, reserve the governed diff-report path for actual NI output, and retain execution evidence in the packet artifact."
   },
@@ -37,9 +37,9 @@
   {
     "id": "TRANCHE-006",
     "title": "Introduce a first-class multi-report developer dashboard",
-    "status": "queued",
+    "status": "active",
     "source": "author direction",
-    "summary": "Concentrate multiple retained VI Comparison Reports for one VI into a chronology-aware dashboard that supports human review decisions across at least three commits and reduces the wear of opening individual reports one by one."
+    "summary": "Concentrate multiple retained VI Comparison Reports for one VI into a chronology-aware dashboard that supports human review decisions across at least three commits, archives pairwise evidence by commit pair, and reduces the wear of opening individual reports one by one."
   },
   {
     "id": "TRANCHE-007",

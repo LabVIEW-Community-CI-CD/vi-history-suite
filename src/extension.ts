@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 
 import { createOpenViHistoryCommand } from './commands/openViHistoryCommand';
+import { createMultiReportDashboardAction } from './dashboard/multiReportDashboardAction';
 import { getBuiltInGitApi } from './git/gitApi';
 import {
   EligibilityDebugSnapshot,
@@ -37,6 +38,7 @@ export async function activate(
   const historyService = new ViHistoryService(gitApi);
   const panelTracker = new HistoryPanelTracker();
   const comparisonReportAction = createComparisonReportAction(context);
+  const multiReportDashboardAction = createMultiReportDashboardAction(context);
 
   context.subscriptions.push(eligibilityIndexer);
 
@@ -48,7 +50,8 @@ export async function activate(
         eligibilityIndexer,
         gitApi,
         panelTracker,
-        comparisonReportAction
+        comparisonReportAction,
+        multiReportDashboardAction
       )
     )
   );

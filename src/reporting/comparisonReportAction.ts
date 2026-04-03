@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 
+import { archiveComparisonReportSource } from '../dashboard/comparisonReportArchive';
 import {
   ComparisonRuntimeSettings,
   locateComparisonRuntime,
@@ -61,6 +62,7 @@ export interface ComparisonReportActionDeps {
   locateRuntime?: typeof locateComparisonRuntime;
   executeComparisonReport?: typeof executeComparisonReport;
   getRuntimeSettings?: () => ComparisonRuntimeSettings;
+  archiveComparisonReportSource?: typeof archiveComparisonReportSource;
 }
 
 export function createComparisonReportAction(
@@ -107,6 +109,9 @@ export function createComparisonReportAction(
         record: packet.record,
         repositoryRoot: request.model.repositoryRoot
       });
+    }
+    if (canArchiveComparisonReport(packet.record)) {
+      await (deps.archiveComparisonReportSource ?? archiveComparisonReportSource)(packet.record);
     }
 
     const createWebviewPanel = deps.createWebviewPanel ?? vscode.window.createWebviewPanel;
@@ -253,6 +258,17 @@ export function createComparisonReportAction(
 
     return result;
   };
+}
+
+function canArchiveComparisonReport(
+  record: Parameters<typeof archiveComparisonReportSource>[0]
+): boolean {
+  return Boolean(
+    record.artifactPlan.allowedLocalRootPaths?.[0] &&
+      record.artifactPlan.normalizedRelativePath &&
+      record.artifactPlan.reportFilename &&
+      record.artifactPlan.packetFilename
+  );
 }
 
 export function renderComparisonReportPanelHtml(options: {

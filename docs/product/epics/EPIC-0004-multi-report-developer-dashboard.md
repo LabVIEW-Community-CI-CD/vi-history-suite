@@ -58,7 +58,7 @@ raw report evidence.
 ## Child Slices
 
 1. Commit-window model and retained dashboard packet
-2. Multi-report storage/index contract
+2. Pair-archive storage/index contract for multiple selected/base report pairs
 3. Concentration-first dashboard HTML surface inside the extension
 4. Developer-facing confidence, limitation, and escalation guidance
 5. Review scenario registry and human decision record template

@@ -65,6 +65,7 @@ The minimum governed review scenario is:
 The dashboard should therefore evolve around:
 
 - commit-window selection, not only one selected/base pair
+- pair-archive retention so multiple pairwise reports for one VI can coexist
 - aggregation of multiple retained pairwise comparison reports
 - chronology-aware navigation across at least three commits
 - concentration of retained report artifacts, runtime status, and missing-report

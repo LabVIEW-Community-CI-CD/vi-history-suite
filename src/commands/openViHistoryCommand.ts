@@ -5,8 +5,10 @@ import { GitApi } from '../git/gitApi';
 import { ViEligibilityIndexer } from '../indexing/viEligibilityIndexer';
 import {
   ComparisonReportActionResult,
-  createComparisonReportAction
 } from '../reporting/comparisonReportAction';
+import {
+  MultiReportDashboardActionResult,
+} from '../dashboard/multiReportDashboardAction';
 import { ViHistoryService } from '../services/viHistoryService';
 import {
   renderHistoryPanelHtml,
@@ -25,7 +27,10 @@ export function createOpenViHistoryCommand(
   comparisonReportAction?: (request: {
     model: Awaited<ReturnType<ViHistoryService['load']>>;
     selectedHash: string;
-  }) => Promise<ComparisonReportActionResult>
+  }) => Promise<ComparisonReportActionResult>,
+  multiReportDashboardAction?: (request: {
+    model: Awaited<ReturnType<ViHistoryService['load']>>;
+  }) => Promise<MultiReportDashboardActionResult>
 ): (uri?: vscode.Uri) => Promise<void> {
   return async (uri?: vscode.Uri) => {
     const targetUri = uri ?? vscode.window.activeTextEditor?.document.uri;
@@ -73,6 +78,46 @@ export function createOpenViHistoryCommand(
           command,
           outcome: 'copied-review-packet',
           copiedTextLength: reviewPacket.length
+        });
+        return;
+      }
+
+      if (command === 'openDashboard') {
+        if (!multiReportDashboardAction) {
+          panelTracker?.recordAction({
+            command,
+            outcome: 'unsupported-command'
+          });
+          return;
+        }
+
+        const result = await multiReportDashboardAction({
+          model
+        });
+        if (result.outcome === 'missing-storage-uri') {
+          void vscode.window.showWarningMessage(
+            'VI Review Dashboard requires an open workspace so concentrated dashboard artifacts can be stored under workspace-scoped extension storage.'
+          );
+        } else if (result.outcome === 'insufficient-commits') {
+          void vscode.window.showInformationMessage(
+            'VI Review Dashboard requires at least three retained commits for the selected VI.'
+          );
+        }
+
+        panelTracker?.recordAction({
+          command,
+          outcome:
+            result.outcome === 'opened-review-dashboard'
+              ? 'opened-review-dashboard'
+              : result.outcome === 'missing-storage-uri'
+                ? 'missing-dashboard-storage'
+                : 'insufficient-dashboard-commits',
+          dashboardFilePath: result.dashboardFilePath,
+          dashboardJsonFilePath: result.dashboardJsonFilePath,
+          dashboardPairCount: result.dashboardPairCount,
+          dashboardArchivedPairCount: result.dashboardArchivedPairCount,
+          dashboardMissingPairCount: result.dashboardMissingPairCount,
+          title: result.title
         });
         return;
       }
@@ -289,7 +334,7 @@ export function createOpenViHistoryCommand(
         outcome: 'unsupported-command'
       });
     };
-    panelTracker?.record(panel, targetUri, model, renderedHtml, handleMessage);
+      panelTracker?.record(panel, targetUri, model, renderedHtml, handleMessage);
     panel.webview.onDidReceiveMessage(handleMessage);
   };
 }

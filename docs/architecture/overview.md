@@ -38,7 +38,7 @@
 | Extension runtime | indexing, command execution, trust gating | TypeScript / Node |
 | Git adapter | tracked-file and history queries | Git CLI plus built-in Git API |
 | Review UI | history presentation and review actions | WebviewPanel |
-| Report subsystem | report planning, runtime/tool selection, runtime execution, packet storage, multi-report dashboard preparation, and provider isolation policy | TypeScript / Node |
+| Report subsystem | report planning, runtime/tool selection, runtime execution, mutable packet storage, pair-archive retention, multi-report dashboard preparation, and provider isolation policy | TypeScript / Node |
 | Harness smoke runner | clone-on-demand canonical harness verification | TypeScript / Node CLI |
 | Governance pack | requirements, tests, ADRs, traceability | Markdown / CSV |
 
@@ -54,7 +54,8 @@
 | Git CLI adapter | Git adapter | execute and parse bounded Git commands |
 | Comparison report planner | Report subsystem | derive deterministic report naming, staging, storage, and command plans |
 | Comparison runtime locator | Report subsystem | detect LabVIEW 2026 Q1 tooling and select the governed host-native runtime path |
-| Dashboard packet builder | Report subsystem | aggregate multiple retained comparison-report packets into one chronology-aware review packet |
+| Dashboard archive layer | Report subsystem | retain pairwise packet/report/runtime artifacts by commit pair for later dashboard concentration |
+| Dashboard packet builder | Report subsystem | aggregate multiple retained comparison-report archives into one chronology-aware review packet |
 | Harness smoke command | Harness smoke runner | clone the canonical harness and emit factual local reports |
 
 ## Deployment View
@@ -89,9 +90,9 @@
   - Windows 64-bit isolated container execution is architecture-approved as the
     preferred extension-user isolation path, but not yet wired into live report
     generation
-  - the first-class multi-report dashboard is architecture-approved but not yet
-    implemented, so human reviewers still consume pairwise report evidence
-    through narrower surfaces today
+  - the first-class multi-report dashboard is partially implemented through a
+    retained pair-archive contract and concentrated dashboard packet, but raw
+    drill-down actions from the dashboard are still a follow-on slice
 
 ## ADR Index
 
@@ -111,3 +112,5 @@
   Multi-report review dashboard
 - [ADR-0008](./adr/ADR-0008-concentration-first-dashboard-for-high-volume-review.md):
   Concentration-first dashboard for high-volume review
+- [ADR-0009](./adr/ADR-0009-dashboard-pair-archive-and-concentration-packet.md):
+  Pair archive and concentration packet for dashboard review

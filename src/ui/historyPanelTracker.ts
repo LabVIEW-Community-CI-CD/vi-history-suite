@@ -13,10 +13,13 @@ export interface HistoryPanelActionSummary {
   outcome:
     | 'copied-hash'
     | 'copied-review-packet'
+    | 'opened-review-dashboard'
     | 'opened-commit'
     | 'diffed-previous'
     | 'opened-comparison-report'
     | 'ignored-missing-hash'
+    | 'insufficient-dashboard-commits'
+    | 'missing-dashboard-storage'
     | 'missing-git-uri'
     | 'missing-selected-commit'
     | 'missing-storage-uri'
@@ -56,6 +59,11 @@ export interface HistoryPanelActionSummary {
   metadataFilePath?: string;
   reportWebviewUri?: string;
   generatedReportExists?: boolean;
+  dashboardFilePath?: string;
+  dashboardJsonFilePath?: string;
+  dashboardPairCount?: number;
+  dashboardArchivedPairCount?: number;
+  dashboardMissingPairCount?: number;
 }
 
 export interface OpenedHistoryPanelSummary {

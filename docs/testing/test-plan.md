@@ -360,6 +360,22 @@
 - `TEST-UNIT-095`: prove the comparison-report panel/action surface, canonical
   smoke artifacts, and active-panel action summary surface the retained runtime
   executable, runtime argument string, and diagnostic-log source path
+- `TEST-UNIT-101`: prove pair-archive retention copies packet, metadata,
+  runtime artifacts, and report assets into a pair-scoped archive root
+- `TEST-UNIT-102`: prove NI comparison-report HTML parsing collects compared VI
+  paths, overview images, included attributes, and detailed information
+- `TEST-UNIT-103`: prove the dashboard builder persists dashboard JSON and HTML,
+  copies recollected overview images, and surfaces archived-versus-missing pair
+  counts
+- `TEST-UNIT-104`: prove the dedicated dashboard action fails closed on missing
+  storage or insufficient commit windows and opens the concentrated dashboard
+  panel otherwise
+- `TEST-UNIT-105`: prove the history panel and command layer expose and handle
+  the `Open dashboard` action only for commit windows with at least three
+  retained commits
+- `TEST-DOC-011`: review the repo entrypoints and research-control-plane docs
+  for explicit dashboard partial-implementation status and pair-archive
+  direction
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

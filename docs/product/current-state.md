@@ -43,17 +43,17 @@ Primary authority surfaces:
 | Canonical comparison-report smoke lane | implemented and active | `src/harness/harnessReportSmoke.ts`; `src/cli/runHarnessReportSmoke.ts`; `npm run harness:report:smoke`; `VHS-REQ-152..180` | `TRANCHE-003` |
 | Indexing and report progress uplift | partial | `src/indexing/viEligibilityIndexer.ts`; `VHS-REQ-093`; research alignment marks this partial | `TRANCHE-004` |
 | Windows 64-bit isolated container provider | architecture-approved, not yet wired live | `docs/architecture/adr/ADR-0006-windows64-container-isolation-for-extension-users.md`; `VHS-REQ-146` | `TRANCHE-005` |
-| Multi-report developer dashboard for one VI across at least three commits | architecture-approved, not yet implemented | `docs/product/epics/EPIC-0004-multi-report-developer-dashboard.md`; `docs/architecture/adr/ADR-0007-multi-report-review-dashboard.md`; `docs/architecture/adr/ADR-0008-concentration-first-dashboard-for-high-volume-review.md`; `docs/research/authoritative/research-infrastructure.md` | `TRANCHE-006` |
+| Multi-report developer dashboard for one VI across at least three commits | partially implemented and active | `src/dashboard/comparisonReportArchive.ts`; `src/dashboard/niComparisonReportParser.ts`; `src/dashboard/multiReportDashboard.ts`; `src/dashboard/multiReportDashboardAction.ts`; `docs/architecture/adr/ADR-0009-dashboard-pair-archive-and-concentration-packet.md` | `TRANCHE-006` |
 | Review-scenario registry and human decision records | modeled, not yet implemented | `docs/product/review-scenarios.md`; `docs/product/decision-record-template.md`; `docs/research/authoritative/research-infrastructure.md` | `TRANCHE-007` |
 
 ## Active Queue
 
 Current committed queue:
 
+- `TRANCHE-006`: Introduce a first-class multi-report developer dashboard
 - `TRANCHE-003`: Wire governed runtime selection into live NI report execution
 - `TRANCHE-004`: Add progress-surface uplift for indexing and report generation
 - `TRANCHE-005`: Introduce Windows 64-bit isolated container report provider
-- `TRANCHE-006`: Introduce a first-class multi-report developer dashboard
 - `TRANCHE-007`: Introduce a review-scenario registry and human decision records
 
 The queue source of truth is:
@@ -75,6 +75,10 @@ These are generated locally and are not the committed source of truth:
   - `.cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.json`
   - `.cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.md`
   - `.cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.html`
+- concentrated review dashboard:
+  - `<workspace-storage>/report-history/<repoId>/<fileId>/pairs/<pairId>/source-record.json`
+  - `<workspace-storage>/dashboards/<repoId>/<fileId>/<windowId>/dashboard.json`
+  - `<workspace-storage>/dashboards/<repoId>/<fileId>/<windowId>/dashboard.html`
 
 ## Commands
 
