@@ -104,6 +104,57 @@ describe('comparisonReportPlan', () => {
     });
   });
 
+  it('maps every governed report format to the exact LabVIEW CLI report-type token', () => {
+    expect(
+      buildLabviewCliCreateComparisonReportPlan({
+        leftViPath: '/tmp/left-foo.vi',
+        rightViPath: '/tmp/right-foo.vi',
+        reportFilePath: '/tmp/report.html',
+        reportFormat: 'HTMLSingleFile'
+      }).args
+    ).toContain('htmlsinglefile');
+    expect(
+      buildLabviewCliCreateComparisonReportPlan({
+        leftViPath: '/tmp/left-foo.vi',
+        rightViPath: '/tmp/right-foo.vi',
+        reportFilePath: '/tmp/report.html',
+        reportFormat: 'XML'
+      }).args
+    ).toContain('xml');
+    expect(
+      buildLabviewCliCreateComparisonReportPlan({
+        leftViPath: '/tmp/left-foo.vi',
+        rightViPath: '/tmp/right-foo.vi',
+        reportFilePath: '/tmp/report.txt',
+        reportFormat: 'PlainText'
+      }).args
+    ).toContain('plaintext');
+    expect(
+      buildLabviewCliCreateComparisonReportPlan({
+        leftViPath: '/tmp/left-foo.vi',
+        rightViPath: '/tmp/right-foo.vi',
+        reportFilePath: '/tmp/report.docx',
+        reportFormat: 'MicrosoftWord'
+      }).args
+    ).toContain('microsoftword');
+  });
+
+  it('includes a trimmed description only when provided and honors opt-out flags for output-directory creation and overwrite', () => {
+    const plan = buildLabviewCliCreateComparisonReportPlan({
+      leftViPath: '/tmp/left-foo.vi',
+      rightViPath: '/tmp/right-foo.vi',
+      reportFilePath: '/tmp/report.html',
+      description: '  focused review window  ',
+      createOutputDirectory: false,
+      overwrite: false
+    });
+
+    expect(plan.args).toContain('-description');
+    expect(plan.args).toContain('focused review window');
+    expect(plan.args).not.toContain('-c');
+    expect(plan.args).not.toContain('-o');
+  });
+
   it('builds the interactive LVCompare fallback command plan with optional lvpath', () => {
     expect(
       buildLvComparePlan({

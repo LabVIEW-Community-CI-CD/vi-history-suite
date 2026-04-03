@@ -511,6 +511,11 @@
   complete report is written
 - `TEST-UNIT-149`: prove the retained design-gate JSON and Markdown surfaces
   expose explicit completion-state and pending-step facts
+- `TEST-UNIT-150`: prove the comparison-report plan builder maps every
+  governed report format to the exact LabVIEW CLI `-ReportType` token
+- `TEST-UNIT-151`: prove the comparison-report plan builder trims a nonblank
+  description into `-description` and omits `-c` plus `-o` when those options
+  are explicitly disabled
 - `TEST-DOC-014`: review the queue, epic, ADR, and current-state surfaces to
   prove the future-facing dashboard research was normalized into governed repo
   control-plane artifacts and the incoming research artifact was deleted
