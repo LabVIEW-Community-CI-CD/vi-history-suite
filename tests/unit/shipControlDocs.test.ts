@@ -181,6 +181,7 @@ describe('ship-control direction system', () => {
 
     expect(gitlabCi).toContain('package_extension_preview:');
     expect(gitlabCi).toContain('stage: package');
+    expect(gitlabCi).toContain('PACKAGE_VERSION=$(node -p "require(\'./package.json\').version")');
     expect(gitlabCi).toContain('preview-evidence/vi-history-suite-${PACKAGE_VERSION}.vsix');
     expect(gitlabCi).toContain("path.join('preview-evidence', 'preview-manifest.json')");
     expect(gitlabCi).toContain('release_extension:');

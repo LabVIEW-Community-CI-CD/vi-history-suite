@@ -55,7 +55,7 @@ package_extension_preview:
     - test_extension
   script:
     - npm ci
-    - export PACKAGE_VERSION="$(node -p \"require('./package.json').version\")"
+    - PACKAGE_VERSION=$(node -p "require('./package.json').version")
     - mkdir -p preview-evidence
     - npm run compile
     - npm run package -- --out "preview-evidence/vi-history-suite-${PACKAGE_VERSION}.vsix"
@@ -93,7 +93,7 @@ release_extension:
     - test_extension
   script:
     - npm ci
-    - export PACKAGE_VERSION="$(node -p \"require('./package.json').version\")"
+    - PACKAGE_VERSION=$(node -p "require('./package.json').version")
     - |
       if [ "v${PACKAGE_VERSION}" != "${CI_COMMIT_TAG}" ]; then
         echo "Tag ${CI_COMMIT_TAG} does not match package version ${PACKAGE_VERSION}" >&2
