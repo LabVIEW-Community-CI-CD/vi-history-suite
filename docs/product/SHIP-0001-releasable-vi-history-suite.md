@@ -12,6 +12,7 @@ driven by release criteria instead of open-ended tranche iteration.
 - Primary release artifact: versioned VSIX package
 - Distribution baseline: shareable GitLab release artifact for exact-version
   installation
+- Pre-release install surface: `main` pipeline preview VSIX artifact
 - Target VSIX artifact: `vi-history-suite-0.2.0.vsix`
 - Target release manifest: `release-evidence/release-manifest.json`
 

@@ -96,8 +96,8 @@
         "tests/unit/shipControlDocs.test.ts"
       ],
       "blockerId": "BL-003",
-      "blocker": "The GitLab release lane is configured to package a versioned VSIX and release manifest, but the first successful SemVer-tagged release run has not yet been retained as ship evidence.",
-      "nextAction": "Run the first governed SemVer tag pipeline and retain the generated VSIX plus release manifest as release evidence."
+      "blocker": "The GitLab pipeline now retains preview VSIX artifacts on main and is configured for tagged release packaging, but the first successful SemVer-tagged release run has not yet been retained as ship evidence.",
+      "nextAction": "Use the main-branch preview VSIX artifact for install testing, then run the first governed SemVer tag pipeline and retain the generated VSIX plus release manifest as release evidence."
     }
   ]
 }

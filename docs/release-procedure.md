@@ -2,6 +2,8 @@
 
 ## Trigger
 
+- For pre-release install testing, use the `package_extension_preview` artifact
+  from the latest successful `main` pipeline.
 - Release from a SemVer tag matching `vX.Y.Z`.
 - Only release when [SHIP-0001](./product/SHIP-0001-releasable-vi-history-suite.md)
   and the [release readiness matrix](./product/release-readiness-matrix.json)
@@ -26,6 +28,8 @@
 
 ## Retained Evidence
 
+- `preview-evidence/vi-history-suite-<version>.vsix`
+- `preview-evidence/preview-manifest.json`
 - `release-evidence/coverage/`
 - `release-evidence/coverage.xml`
 - `release-evidence/vi-history-suite-<version>.vsix`
@@ -36,6 +40,8 @@
 ## Current Limitation
 
 - Marketplace publishing is not active in the current baseline.
+- Preview VSIX artifacts are available from `main`, but they are not the same
+  thing as the governed SemVer release artifact.
 - The GitLab release lane is configured to build the governed versioned VSIX
   artifact and release manifest.
 - `SHIP-0001` still requires the first successful SemVer-tagged retained

@@ -1,11 +1,15 @@
 stages:
   - docs
   - test
+  - package
   - release
 
 docs_link_check:
   stage: docs
-  image: lycheeverse/lychee:latest
+  image:
+    name: lycheeverse/lychee:latest
+    entrypoint:
+      - ""
   script:
     - lychee --verbose --no-progress --include-fragments README.md docs/**/*.md
   rules:
@@ -44,9 +48,49 @@ test_extension:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH'
 
+package_extension_preview:
+  stage: package
+  image: node:24
+  needs:
+    - test_extension
+  script:
+    - npm ci
+    - export PACKAGE_VERSION="$(node -p \"require('./package.json').version\")"
+    - mkdir -p preview-evidence
+    - npm run compile
+    - npm run package -- --out "preview-evidence/vi-history-suite-${PACKAGE_VERSION}.vsix"
+    - |
+      node - <<'NODE'
+      const fs = require('node:fs');
+      const path = require('node:path');
+      const pkg = require('./package.json');
+      const manifest = {
+        shipId: 'SHIP-0001',
+        ref: process.env.CI_COMMIT_REF_NAME || '',
+        commitSha: process.env.CI_COMMIT_SHA || '',
+        packageVersion: pkg.version,
+        previewVsix: {
+          fileName: `vi-history-suite-${pkg.version}.vsix`,
+          path: `preview-evidence/vi-history-suite-${pkg.version}.vsix`
+        }
+      };
+      fs.writeFileSync(
+        path.join('preview-evidence', 'preview-manifest.json'),
+        `${JSON.stringify(manifest, null, 2)}\n`
+      );
+      NODE
+  artifacts:
+    when: always
+    paths:
+      - preview-evidence/
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+
 release_extension:
   stage: release
   image: node:24
+  needs:
+    - test_extension
   script:
     - npm ci
     - export PACKAGE_VERSION="$(node -p \"require('./package.json').version\")"

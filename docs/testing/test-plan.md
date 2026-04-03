@@ -667,6 +667,12 @@
 - `TEST-DOC-019`: review the ship target, readiness matrix, blocker ledger,
   current-state, README, and release procedure to prove the GitLab VSIX
   release lane is configured and the remaining blocker is first tagged proof
+- `TEST-UNIT-194`: prove the GitLab `main` pipeline retains a preview VSIX
+  artifact and preview manifest, and keeps that preview lane distinct from the
+  formal tagged release artifact lane
+- `TEST-DOC-020`: review README, current-state, release procedure, readiness
+  matrix, and blocker ledger to prove preview VSIX delivery is described as an
+  install surface but not as the final SemVer release proof
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

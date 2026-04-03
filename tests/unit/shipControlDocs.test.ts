@@ -175,7 +175,14 @@ describe('ship-control direction system', () => {
 
   it('configures the GitLab release lane for SemVer-safe VSIX packaging and retained release evidence', () => {
     const gitlabCi = readText('.gitlab-ci.yml');
+    const readme = readText('README.md');
+    const currentState = readText('docs/product/current-state.md');
+    const releaseProcedure = readText('docs/release-procedure.md');
 
+    expect(gitlabCi).toContain('package_extension_preview:');
+    expect(gitlabCi).toContain('stage: package');
+    expect(gitlabCi).toContain('preview-evidence/vi-history-suite-${PACKAGE_VERSION}.vsix');
+    expect(gitlabCi).toContain("path.join('preview-evidence', 'preview-manifest.json')");
     expect(gitlabCi).toContain('release_extension:');
     expect(gitlabCi).toContain('if [ "v${PACKAGE_VERSION}" != "${CI_COMMIT_TAG}" ]; then');
     expect(gitlabCi).toContain('npm run package -- --out "release-evidence/vi-history-suite-${PACKAGE_VERSION}.vsix"');
@@ -183,5 +190,11 @@ describe('ship-control direction system', () => {
     expect(gitlabCi).toContain("release-evidence', `${vsixFileName}.sha256`");
     expect(gitlabCi).toContain("shipId: 'SHIP-0001'");
     expect(gitlabCi).toContain("- release-evidence/release-manifest.json");
+
+    expect(readme).toContain('preview-evidence/vi-history-suite-<version>.vsix');
+    expect(readme).toContain('future governed tagged release artifact');
+    expect(currentState).toContain('preview install surface: `preview-evidence/vi-history-suite-<version>.vsix`');
+    expect(releaseProcedure).toContain('For pre-release install testing, use the `package_extension_preview` artifact');
+    expect(releaseProcedure).toContain('Preview VSIX artifacts are available from `main`');
   });
 });

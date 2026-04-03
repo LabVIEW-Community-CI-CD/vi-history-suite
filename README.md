@@ -128,6 +128,8 @@ Committed and governed today:
   target, one readiness matrix, and one blocker ledger in the repo itself
 - a configured GitLab SemVer release lane that validates tag/package sync,
   packages a versioned VSIX, and retains a machine-readable release manifest
+- a `main`-branch preview VSIX artifact lane so extension users can install the
+  latest governed build before the first tagged release is retained
 
 ## Active Work
 
@@ -138,6 +140,16 @@ The active ship target is:
 - target release artifact: `vi-history-suite-0.2.0.vsix`
 - target release manifest: `release-evidence/release-manifest.json`
 - remaining release blocker: first successful retained `v0.2.0` tag pipeline
+
+## Install Surface
+
+Current install paths are:
+
+- local package output via `npm run package`
+- GitLab `main` pipeline preview artifact:
+  `preview-evidence/vi-history-suite-<version>.vsix`
+- future governed tagged release artifact:
+  `release-evidence/vi-history-suite-<version>.vsix`
 
 The single active tranche is:
 

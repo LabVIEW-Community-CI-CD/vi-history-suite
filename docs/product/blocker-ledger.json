@@ -38,15 +38,15 @@
       "issueId": "ISSUE-0406",
       "criterionId": "RR-006",
       "status": "open",
-      "summary": "The release lane is configured, but the first successful SemVer-tagged VSIX artifact and release-manifest evidence set has not yet been retained.",
+      "summary": "The pipeline now provides preview VSIX artifacts and a configured release lane, but the first successful SemVer-tagged VSIX artifact and release-manifest evidence set has not yet been retained.",
       "evidence": [
         ".gitlab-ci.yml",
         "docs/release-procedure.md",
         "package.json",
         "tests/unit/shipControlDocs.test.ts"
       ],
-      "impact": "Users still do not have a retained exact-version release artifact to install, even though the release lane is now defined.",
-      "resolutionPath": "Run the first governed `v0.2.0` tag pipeline, retain the VSIX plus release manifest under release-evidence, and then close the release blocker."
+      "impact": "Users can install preview artifacts from main, but the governed exact-version release artifact is still not retained as formal ship evidence.",
+      "resolutionPath": "Use the preview VSIX artifact for extension-user install testing, then run the first governed `v0.2.0` tag pipeline, retain the VSIX plus release manifest under release-evidence, and then close the release blocker."
     }
   ]
 }
