@@ -577,6 +577,18 @@
 - `TEST-UNIT-172`: prove the default runtime executor routes
   `windows-container` through raw command execution and routes non-container
   providers through observation-enabled command execution
+- `TEST-UNIT-173`: prove the concentrated dashboard retains
+  `archived-no-generated-report` when an archived pair has no generated report
+  and was neither blocked nor failed
+- `TEST-UNIT-174`: prove the concentrated dashboard default build path stamps
+  `generatedAt` with a governed ISO-8601 UTC timestamp when no clock override
+  is provided
+- `TEST-UNIT-175`: prove the concentrated dashboard retains
+  `archived-blocked` and blocked-pair summary facts when an archived pair was
+  blocked before or during runtime execution
+- `TEST-UNIT-176`: prove the concentrated dashboard skips copying a parsed
+  overview image when the retained source image asset is missing on disk while
+  preserving the entry's parsed overview metadata counts
 - `TEST-DOC-014`: review the queue, epic, ADR, and current-state surfaces to
   prove the future-facing dashboard research was normalized into governed repo
   control-plane artifacts and the incoming research artifact was deleted

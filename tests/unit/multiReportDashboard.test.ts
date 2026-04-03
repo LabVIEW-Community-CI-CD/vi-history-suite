@@ -250,6 +250,258 @@ describe('buildAndPersistMultiReportDashboard', () => {
       'data-testid="dashboard-entry-overview-metadata"'
     );
   });
+
+  it('retains archived-no-generated-report when an archived pair has no generated report and no blocked or failed runtime state', async () => {
+    const storageRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-dashboard-no-report-'));
+    tempRoots.push(storageRoot);
+    const repositoryRoot = '/workspace/repo';
+    const relativePath = 'foo.vi';
+    const repoId = createHash('sha256').update(repositoryRoot).digest('hex').slice(0, 12);
+    const fileId = createHash('sha256')
+      .update(`${repositoryRoot}\n${relativePath}`)
+      .digest('hex')
+      .slice(0, 12);
+
+    await createArchivedPacket(storageRoot, {
+      repositoryRoot,
+      relativePath,
+      repoId,
+      fileId,
+      selectedHash: 'abcdef1234567890',
+      baseHash: '1111111122222222',
+      currentDirectoryName: 'current-no-report',
+      runtimeExecutionState: 'succeeded',
+      reportExists: false
+    });
+
+    const dashboard = await buildAndPersistMultiReportDashboard(
+      storageRoot,
+      {
+        repositoryName: 'repo',
+        repositoryRoot,
+        relativePath,
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Newest revision',
+            previousHash: '1111111122222222'
+          },
+          {
+            hash: '1111111122222222',
+            authorDate: '2026-04-01T00:00:00Z',
+            authorName: 'B User',
+            subject: 'Initial revision'
+          }
+        ]
+      },
+      {
+        now: () => '2026-04-03T07:08:09.000Z'
+      }
+    );
+
+    expect(dashboard.record.summary.evidenceStateSummaries).toEqual([
+      { state: 'archived-no-generated-report', pairCount: 1 }
+    ]);
+    expect(dashboard.record.entries[0]?.pairEvidenceState).toBe('archived-no-generated-report');
+    expect(dashboard.record.entries[0]?.generatedReportExists).toBe(false);
+    expect(dashboard.record.entries[0]?.artifactLinks.map((artifact) => artifact.kind)).toEqual([
+      'packet-html',
+      'metadata-json',
+      'source-record-json'
+    ]);
+    await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
+      'archived-no-generated-report'
+    );
+  });
+
+  it('stamps generatedAt with a governed ISO-8601 UTC timestamp when no dashboard clock override is provided', async () => {
+    const storageRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-dashboard-default-now-'));
+    tempRoots.push(storageRoot);
+
+    const dashboard = await buildAndPersistMultiReportDashboard(storageRoot, {
+      repositoryName: 'repo',
+      repositoryRoot: '/workspace/repo',
+      relativePath: 'foo.vi',
+      signature: 'LVIN',
+      eligible: true,
+      commits: [
+        {
+          hash: 'abcdef1234567890',
+          authorDate: '2026-04-02T00:00:00Z',
+          authorName: 'A User',
+          subject: 'Newest revision',
+          previousHash: '1111111122222222'
+        },
+        {
+          hash: '1111111122222222',
+          authorDate: '2026-04-01T00:00:00Z',
+          authorName: 'B User',
+          subject: 'Initial revision'
+        }
+      ]
+    });
+
+    expect(Date.parse(dashboard.record.generatedAt)).not.toBeNaN();
+    expect(dashboard.record.generatedAt).toMatch(
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/
+    );
+  });
+
+  it('retains archived-blocked when an archived pair is blocked before or during runtime execution', async () => {
+    const storageRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-dashboard-blocked-'));
+    tempRoots.push(storageRoot);
+    const repositoryRoot = '/workspace/repo';
+    const relativePath = 'foo.vi';
+    const repoId = createHash('sha256').update(repositoryRoot).digest('hex').slice(0, 12);
+    const fileId = createHash('sha256')
+      .update(`${repositoryRoot}\n${relativePath}`)
+      .digest('hex')
+      .slice(0, 12);
+
+    await createArchivedPacket(storageRoot, {
+      repositoryRoot,
+      relativePath,
+      repoId,
+      fileId,
+      selectedHash: 'abcdef1234567890',
+      baseHash: '1111111122222222',
+      currentDirectoryName: 'current-blocked',
+      reportStatus: 'blocked-runtime',
+      runtimeExecutionState: 'not-available',
+      reportExists: false
+    });
+
+    const dashboard = await buildAndPersistMultiReportDashboard(
+      storageRoot,
+      {
+        repositoryName: 'repo',
+        repositoryRoot,
+        relativePath,
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Newest revision',
+            previousHash: '1111111122222222'
+          },
+          {
+            hash: '1111111122222222',
+            authorDate: '2026-04-01T00:00:00Z',
+            authorName: 'B User',
+            subject: 'Initial revision'
+          }
+        ]
+      },
+      {
+        now: () => '2026-04-03T08:09:10.000Z'
+      }
+    );
+
+    expect(dashboard.record.summary.blockedPairCount).toBe(1);
+    expect(dashboard.record.summary.blockedPairIds).toEqual([dashboard.record.entries[0]?.pairId]);
+    expect(dashboard.record.summary.evidenceStateSummaries).toEqual([
+      { state: 'archived-blocked', pairCount: 1 }
+    ]);
+    expect(dashboard.record.entries[0]?.pairEvidenceState).toBe('archived-blocked');
+    await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain('archived-blocked');
+  });
+
+  it('skips copying a parsed overview image when the retained image asset is missing on disk', async () => {
+    const storageRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-dashboard-missing-image-'));
+    tempRoots.push(storageRoot);
+    const repositoryRoot = '/workspace/repo';
+    const relativePath = 'foo.vi';
+    const repoId = createHash('sha256').update(repositoryRoot).digest('hex').slice(0, 12);
+    const fileId = createHash('sha256')
+      .update(`${repositoryRoot}\n${relativePath}`)
+      .digest('hex')
+      .slice(0, 12);
+
+    const archived = await createArchivedPacket(storageRoot, {
+      repositoryRoot,
+      relativePath,
+      repoId,
+      fileId,
+      selectedHash: 'abcdef1234567890',
+      baseHash: '1111111122222222',
+      currentDirectoryName: 'current-missing-image',
+      runtimeExecutionState: 'succeeded',
+      reportExists: true,
+      reportHtml: succeededReportHtml(),
+      reportAssetFiles: [
+        {
+          relativePath: 'diff-report-foo.vi_files/fp_1.png',
+          contents: 'png-will-go-missing'
+        }
+      ]
+    });
+
+    const missingImagePath = path.join(
+      archived.archivePlan.reportAssetsDirectoryPath,
+      'fp_1.png'
+    );
+
+    const dashboard = await buildAndPersistMultiReportDashboard(
+      storageRoot,
+      {
+        repositoryName: 'repo',
+        repositoryRoot,
+        relativePath,
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Newest revision',
+            previousHash: '1111111122222222'
+          },
+          {
+            hash: '1111111122222222',
+            authorDate: '2026-04-01T00:00:00Z',
+            authorName: 'B User',
+            subject: 'Initial revision'
+          }
+        ]
+      },
+      {
+        now: () => '2026-04-03T09:10:11.000Z',
+        pathExists: async (targetPath: string) => {
+          if (targetPath === missingImagePath) {
+            return false;
+          }
+          try {
+            await fs.access(targetPath);
+            return true;
+          } catch {
+            return false;
+          }
+        }
+      }
+    );
+
+    expect(dashboard.record.entries[0]?.overviewImageCount).toBe(1);
+    expect(dashboard.record.entries[0]?.dashboardImageAssets).toEqual([]);
+    await expect(
+      fs.access(
+        path.join(
+          dashboard.record.artifactPlan.dashboardDirectory,
+          'assets',
+          dashboard.record.entries[0].pairId,
+          'diff-report-foo.vi_files',
+          'fp_1.png'
+        )
+      )
+    ).rejects.toBeDefined();
+  });
 });
 
 async function createArchivedPacket(
@@ -262,6 +514,7 @@ async function createArchivedPacket(
     selectedHash: string;
     baseHash: string;
     currentDirectoryName: string;
+    reportStatus?: 'ready-for-runtime' | 'blocked-preflight' | 'blocked-runtime';
     runtimeExecutionState: 'succeeded' | 'failed' | 'not-run' | 'not-available';
     reportExists: boolean;
     failureReason?: string;
@@ -296,7 +549,7 @@ async function createArchivedPacket(
   const packetRecord: ComparisonReportPacketRecord = {
     generatedAt: '2026-04-03T00:00:00.000Z',
     reportTitle: 'VI Comparison Report: foo.vi',
-    reportStatus: 'ready-for-runtime',
+    reportStatus: options.reportStatus ?? 'ready-for-runtime',
     reportType: 'diff',
     selectedHash: options.selectedHash,
     baseHash: options.baseHash,
