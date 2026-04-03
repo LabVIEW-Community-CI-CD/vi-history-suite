@@ -241,6 +241,9 @@
   VSIX installation, and Marketplace publishing prerequisites
 - `TEST-SMOKE-001`: run the canonical harness smoke and retain JSON, Markdown,
   and HTML reports under `.cache/harness-reports/`
+- `TEST-SMOKE-002`: run the canonical comparison-report smoke and retain JSON,
+  Markdown, and HTML report-execution evidence for the latest comparable pair
+  under `.cache/harness-reports/`
 - `TEST-INTEG-001`: run a real VS Code extension host against a temporary Git
   workspace and prove eligible versus ineligible command flow behavior
 - `TEST-INTEG-002`: run the real extension-host report action and retain the
@@ -250,6 +253,10 @@
 - `TEST-INTEG-003`: run the real extension-host report action and retain a
   truthful runtime-selection summary that justifies either `ready-for-runtime`
   or `blocked-runtime` on the active host
+- `TEST-UNIT-072`: prove the canonical comparison-report smoke runner selects a
+  retained compare pair, persists report artifacts, and records runtime facts
+- `TEST-UNIT-073`: prove the canonical comparison-report smoke CLI parses
+  runtime-selection overrides and prints a deterministic success summary
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

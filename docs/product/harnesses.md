@@ -33,6 +33,16 @@
   - `.cache/harness-reports/HARNESS-VHS-001/report.md`
   - `.cache/harness-reports/HARNESS-VHS-001/report.html`
 
+### Local Comparison-Report Smoke Path
+
+- command: `npm run harness:report:smoke`
+- purpose: retain a factual report-generation smoke packet for the latest
+  comparable revision pair of the canonical VI history target
+- retained outputs:
+  - `.cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.json`
+  - `.cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.md`
+  - `.cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.html`
+
 ### Constraints
 
 - do not vendor `ni/labview-icon-editor` into this repository

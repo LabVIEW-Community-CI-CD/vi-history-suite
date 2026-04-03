@@ -1,0 +1,345 @@
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
+
+import { getRepoHead } from '../git/gitCli';
+import {
+  ComparisonRuntimeSettings,
+  ComparisonRuntimeSelection,
+  locateComparisonRuntime,
+  RuntimePlatform
+} from '../reporting/comparisonRuntimeLocator';
+import {
+  ComparisonReportPacketRecord,
+  persistComparisonReportPacket
+} from '../reporting/comparisonReportPacket';
+import { executeComparisonReport } from '../reporting/comparisonReportRuntimeExecution';
+import { preflightComparisonReportRevisions } from '../reporting/comparisonReportPreflight';
+import {
+  evaluateViEligibilityForFsPath,
+  loadViHistoryViewModelFromFsPath,
+  ViHistoryViewModel
+} from '../services/viHistoryModel';
+import { ensureHarnessClone } from './harnessSmoke';
+import {
+  CanonicalHarnessDefinition,
+  getCanonicalHarnessDefinition
+} from './canonicalHarnesses';
+
+export interface HarnessReportSmokeOptions {
+  cloneRoot: string;
+  reportRoot: string;
+  strictRsrcHeader?: boolean;
+  historyLimit?: number;
+  runtimePlatform?: RuntimePlatform;
+  runtimeSettings?: ComparisonRuntimeSettings;
+}
+
+export interface HarnessReportSmokeReport {
+  harnessId: string;
+  repositoryUrl: string;
+  cloneDirectory: string;
+  targetRelativePath: string;
+  head: string;
+  generatedAt: string;
+  selectedHash?: string;
+  baseHash?: string;
+  comparePairAvailable: boolean;
+  eligible: boolean;
+  signature: ViHistoryViewModel['signature'];
+  reportStatus:
+    | 'missing-compare-pair'
+    | 'ready-for-runtime'
+    | 'blocked-preflight'
+    | 'blocked-runtime';
+  runtimeExecutionState:
+    | 'not-run'
+    | 'not-available'
+    | 'succeeded'
+    | 'failed'
+    | 'not-applicable';
+  runtimeProvider?: ComparisonRuntimeSelection['provider'];
+  runtimeEngine?: ComparisonRuntimeSelection['engine'];
+  runtimeBlockedReason?: string;
+  runtimeFailureReason?: string;
+  generatedReportExists: boolean;
+  packetFilePath?: string;
+  reportFilePath?: string;
+  metadataFilePath?: string;
+}
+
+export interface HarnessReportSmokeDeps {
+  mkdir?: typeof fs.mkdir;
+  writeFile?: typeof fs.writeFile;
+  ensureHarnessClone?: typeof ensureHarnessClone;
+  getRepoHead?: typeof getRepoHead;
+  loadViHistoryViewModelFromFsPath?: typeof loadViHistoryViewModelFromFsPath;
+  evaluateViEligibilityForFsPath?: typeof evaluateViEligibilityForFsPath;
+  preflightComparisonReportRevisions?: typeof preflightComparisonReportRevisions;
+  locateComparisonRuntime?: typeof locateComparisonRuntime;
+  persistComparisonReportPacket?: typeof persistComparisonReportPacket;
+  executeComparisonReport?: typeof executeComparisonReport;
+  now?: () => string;
+}
+
+export async function runHarnessReportSmoke(
+  harnessId: string,
+  options: HarnessReportSmokeOptions,
+  deps: HarnessReportSmokeDeps = {}
+): Promise<{
+  report: HarnessReportSmokeReport;
+  reportJsonPath: string;
+  reportMarkdownPath: string;
+  reportHtmlPath: string;
+}> {
+  const definition = getCanonicalHarnessDefinition(harnessId);
+  const cloneDirectory = await (deps.ensureHarnessClone ?? ensureHarnessClone)(
+    definition,
+    options.cloneRoot,
+    deps
+  );
+  const targetAbsolutePath = path.join(cloneDirectory, definition.targetRelativePath);
+  const [head, model, eligibility] = await Promise.all([
+    (deps.getRepoHead ?? getRepoHead)(cloneDirectory),
+    (deps.loadViHistoryViewModelFromFsPath ?? loadViHistoryViewModelFromFsPath)(targetAbsolutePath, {
+      repoRoot: cloneDirectory,
+      strictRsrcHeader: options.strictRsrcHeader ?? false,
+      historyLimit: options.historyLimit ?? 50
+    }),
+    (deps.evaluateViEligibilityForFsPath ?? evaluateViEligibilityForFsPath)(targetAbsolutePath, {
+      repoRoot: cloneDirectory,
+      strictRsrcHeader: options.strictRsrcHeader ?? false
+    })
+  ]);
+
+  const compareCommit = model.commits.find((commit) => commit.previousHash);
+  const outputDirectory = path.join(options.reportRoot, definition.id);
+  await (deps.mkdir ?? fs.mkdir)(outputDirectory, { recursive: true });
+
+  let report: HarnessReportSmokeReport;
+  if (!compareCommit?.previousHash) {
+    report = {
+      harnessId: definition.id,
+      repositoryUrl: definition.repositoryUrl,
+      cloneDirectory,
+      targetRelativePath: definition.targetRelativePath,
+      head,
+      generatedAt: (deps.now ?? defaultNow)(),
+      comparePairAvailable: false,
+      eligible: model.eligible,
+      signature: eligibility.signature,
+      reportStatus: 'missing-compare-pair',
+      runtimeExecutionState: 'not-applicable',
+      runtimeFailureReason: 'missing-compare-pair',
+      generatedReportExists: false
+    };
+  } else {
+    report = await buildHarnessReportExecutionReport(
+      definition,
+      cloneDirectory,
+      head,
+      model,
+      eligibility.signature,
+      compareCommit,
+      options,
+      deps
+    );
+  }
+
+  const reportJsonPath = path.join(outputDirectory, 'comparison-report-smoke.json');
+  const reportMarkdownPath = path.join(outputDirectory, 'comparison-report-smoke.md');
+  const reportHtmlPath = path.join(outputDirectory, 'comparison-report-smoke.html');
+
+  await (deps.writeFile ?? fs.writeFile)(reportJsonPath, JSON.stringify(report, null, 2));
+  await (deps.writeFile ?? fs.writeFile)(reportMarkdownPath, renderHarnessReportSmokeMarkdown(report));
+  await (deps.writeFile ?? fs.writeFile)(reportHtmlPath, renderHarnessReportSmokeHtml(report));
+
+  return { report, reportJsonPath, reportMarkdownPath, reportHtmlPath };
+}
+
+async function buildHarnessReportExecutionReport(
+  definition: CanonicalHarnessDefinition,
+  cloneDirectory: string,
+  head: string,
+  model: ViHistoryViewModel,
+  signature: ViHistoryViewModel['signature'],
+  compareCommit: ViHistoryViewModel['commits'][number],
+  options: HarnessReportSmokeOptions,
+  deps: HarnessReportSmokeDeps
+): Promise<HarnessReportSmokeReport> {
+  const preflight = await (deps.preflightComparisonReportRevisions ??
+    preflightComparisonReportRevisions)({
+    repoRoot: cloneDirectory,
+    relativePath: definition.targetRelativePath,
+    leftRevisionId: compareCommit.previousHash!,
+    rightRevisionId: compareCommit.hash
+  });
+  const runtimeSelection = await (deps.locateComparisonRuntime ?? locateComparisonRuntime)(
+    options.runtimePlatform ?? resolveCurrentRuntimePlatform(),
+    options.runtimeSettings ?? {}
+  );
+  const storageRoot = path.join(options.reportRoot, definition.id, 'workspace-storage');
+  let packet = await (deps.persistComparisonReportPacket ?? persistComparisonReportPacket)({
+    storageRoot,
+    repositoryRoot: cloneDirectory,
+    relativePath: definition.targetRelativePath,
+    reportType: 'diff',
+    selectedHash: compareCommit.hash,
+    baseHash: compareCommit.previousHash!,
+    preflight,
+    runtimeSelection
+  });
+
+  if (packet.record.reportStatus === 'ready-for-runtime') {
+    packet = await (deps.executeComparisonReport ?? executeComparisonReport)({
+      record: packet.record,
+      repositoryRoot: cloneDirectory
+    });
+  }
+
+  return buildHarnessReportSmokeReport({
+    definition,
+    cloneDirectory,
+    head,
+    model,
+    signature,
+    packetRecord: packet.record,
+    packetFilePath: packet.packetFilePath,
+    reportFilePath: packet.reportFilePath,
+    metadataFilePath: packet.metadataFilePath,
+    generatedAt: (deps.now ?? defaultNow)()
+  });
+}
+
+function buildHarnessReportSmokeReport(options: {
+  definition: CanonicalHarnessDefinition;
+  cloneDirectory: string;
+  head: string;
+  model: ViHistoryViewModel;
+  signature: ViHistoryViewModel['signature'];
+  packetRecord: ComparisonReportPacketRecord;
+  packetFilePath: string;
+  reportFilePath: string;
+  metadataFilePath: string;
+  generatedAt: string;
+}): HarnessReportSmokeReport {
+  const record = options.packetRecord;
+
+  return {
+    harnessId: options.definition.id,
+    repositoryUrl: options.definition.repositoryUrl,
+    cloneDirectory: options.cloneDirectory,
+    targetRelativePath: options.definition.targetRelativePath,
+    head: options.head,
+    generatedAt: options.generatedAt,
+    selectedHash: record.selectedHash,
+    baseHash: record.baseHash,
+    comparePairAvailable: true,
+    eligible: options.model.eligible,
+    signature: options.signature,
+    reportStatus: record.reportStatus,
+    runtimeExecutionState: record.runtimeExecutionState,
+    runtimeProvider: record.runtimeSelection.provider,
+    runtimeEngine: record.runtimeSelection.engine,
+    runtimeBlockedReason:
+      record.reportStatus === 'blocked-runtime'
+        ? record.runtimeSelection.blockedReason
+        : record.preflight.blockedReason,
+    runtimeFailureReason: record.runtimeExecution.failureReason,
+    generatedReportExists: record.runtimeExecution.reportExists,
+    packetFilePath: options.packetFilePath,
+    reportFilePath: options.reportFilePath,
+    metadataFilePath: options.metadataFilePath
+  };
+}
+
+export function renderHarnessReportSmokeMarkdown(report: HarnessReportSmokeReport): string {
+  return `# Harness Comparison Report Smoke
+
+- Harness: ${report.harnessId}
+- Repository URL: ${report.repositoryUrl}
+- Clone directory: ${report.cloneDirectory}
+- Target path: ${report.targetRelativePath}
+- HEAD: ${report.head}
+- Selected hash: ${report.selectedHash ?? 'none'}
+- Base hash: ${report.baseHash ?? 'none'}
+- Compare pair available: ${report.comparePairAvailable ? 'yes' : 'no'}
+- Eligible: ${report.eligible ? 'yes' : 'no'}
+- Signature: ${report.signature}
+- Report status: ${report.reportStatus}
+- Runtime execution: ${report.runtimeExecutionState}
+- Runtime provider: ${report.runtimeProvider ?? 'none'}
+- Runtime engine: ${report.runtimeEngine ?? 'none'}
+- Runtime blocked reason: ${report.runtimeBlockedReason ?? 'none'}
+- Runtime failure reason: ${report.runtimeFailureReason ?? 'none'}
+- Generated report exists: ${report.generatedReportExists ? 'yes' : 'no'}
+- Packet file: ${report.packetFilePath ?? 'none'}
+- Report file: ${report.reportFilePath ?? 'none'}
+- Metadata file: ${report.metadataFilePath ?? 'none'}
+- Generated at: ${report.generatedAt}
+`;
+}
+
+export function renderHarnessReportSmokeHtml(report: HarnessReportSmokeReport): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Harness Comparison Report Smoke</title>
+    <style>
+      body { font-family: sans-serif; margin: 24px; }
+      .meta { display: grid; grid-template-columns: repeat(2, minmax(260px, 1fr)); gap: 8px 16px; }
+      code { word-break: break-all; }
+    </style>
+  </head>
+  <body>
+    <h1>Harness Comparison Report Smoke</h1>
+    <div class="meta">
+      <div><strong>Harness:</strong> ${escapeHtml(report.harnessId)}</div>
+      <div><strong>Repository URL:</strong> ${escapeHtml(report.repositoryUrl)}</div>
+      <div><strong>Target path:</strong> ${escapeHtml(report.targetRelativePath)}</div>
+      <div><strong>HEAD:</strong> <code>${escapeHtml(report.head)}</code></div>
+      <div><strong>Selected hash:</strong> <code>${escapeHtml(report.selectedHash ?? 'none')}</code></div>
+      <div><strong>Base hash:</strong> <code>${escapeHtml(report.baseHash ?? 'none')}</code></div>
+      <div><strong>Compare pair available:</strong> ${report.comparePairAvailable ? 'yes' : 'no'}</div>
+      <div><strong>Eligible:</strong> ${report.eligible ? 'yes' : 'no'}</div>
+      <div><strong>Signature:</strong> ${escapeHtml(report.signature)}</div>
+      <div><strong>Report status:</strong> ${escapeHtml(report.reportStatus)}</div>
+      <div><strong>Runtime execution:</strong> ${escapeHtml(report.runtimeExecutionState)}</div>
+      <div><strong>Runtime provider:</strong> ${escapeHtml(report.runtimeProvider ?? 'none')}</div>
+      <div><strong>Runtime engine:</strong> ${escapeHtml(report.runtimeEngine ?? 'none')}</div>
+      <div><strong>Runtime blocked reason:</strong> ${escapeHtml(report.runtimeBlockedReason ?? 'none')}</div>
+      <div><strong>Runtime failure reason:</strong> ${escapeHtml(report.runtimeFailureReason ?? 'none')}</div>
+      <div><strong>Generated report exists:</strong> ${report.generatedReportExists ? 'yes' : 'no'}</div>
+      <div><strong>Packet file:</strong> ${escapeHtml(report.packetFilePath ?? 'none')}</div>
+      <div><strong>Report file:</strong> ${escapeHtml(report.reportFilePath ?? 'none')}</div>
+      <div><strong>Metadata file:</strong> ${escapeHtml(report.metadataFilePath ?? 'none')}</div>
+      <div><strong>Generated at:</strong> ${escapeHtml(report.generatedAt)}</div>
+    </div>
+  </body>
+</html>`;
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function defaultNow(): string {
+  return new Date().toISOString();
+}
+
+export function resolveHarnessReportSmokeRuntimePlatform(platform: string): RuntimePlatform {
+  if (platform === 'win32' || platform === 'linux' || platform === 'darwin') {
+    return platform;
+  }
+
+  return 'linux';
+}
+
+function resolveCurrentRuntimePlatform(): RuntimePlatform {
+  return resolveHarnessReportSmokeRuntimePlatform(process.platform);
+}
