@@ -287,6 +287,27 @@ export function renderMultiReportDashboardHtml(
             )
             .join('')}</ul>`
         : '<div class="note" data-testid="dashboard-entry-overview-metadata">No retained overview image metadata is currently available for this pair.</div>';
+      const overviewImagesHtml = entry.dashboardImageAssets.length
+        ? `<div class="image-grid" data-testid="dashboard-entry-overview-images">${entry.dashboardImageAssets
+            .map((image) => {
+              const absolutePath = path.join(
+                record.artifactPlan.dashboardDirectory,
+                image.dashboardRelativePath
+              );
+              const imageSource = options.assetUriResolver
+                ? options.assetUriResolver(absolutePath, image.dashboardRelativePath)
+                : image.dashboardRelativePath;
+              return `<figure class="overview-image">
+                <img src="${escapeHtml(imageSource)}" alt="${escapeHtml(
+                  `${image.caption} image ${image.position + 1}`
+                )}" />
+                <figcaption>${escapeHtml(image.caption)} · image ${escapeHtml(
+                  String(image.position + 1)
+                )}</figcaption>
+              </figure>`;
+            })
+            .join('')}</div>`
+        : '<div class="note" data-testid="dashboard-entry-overview-images">No retained overview images are currently concentrated for this pair.</div>';
       const attributesHtml = parsed?.includedAttributes.length
         ? `<ul class="attribute-list" data-testid="dashboard-entry-attribute-metadata">${parsed.includedAttributes
             .map(
@@ -340,12 +361,14 @@ export function renderMultiReportDashboardHtml(
             entry.runtimeProviderLabel ?? 'none'
           )}</div>
 	        </div>
-          ${reportMetadataHtml}
-          ${noMetadataHtml}
-	        <h3>Overview metadata</h3>
-	        ${overviewMetadataHtml}
-	        <h3>Included attributes</h3>
-	        ${attributesHtml}
+	          ${reportMetadataHtml}
+	          ${noMetadataHtml}
+		        <h3>Overview metadata</h3>
+		        ${overviewMetadataHtml}
+          <h3>Overview images</h3>
+          ${overviewImagesHtml}
+		        <h3>Included attributes</h3>
+		        ${attributesHtml}
         <h3>Detailed information</h3>
         ${detailsHtml}
       </section>`;

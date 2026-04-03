@@ -183,6 +183,61 @@ describe('multiReportDashboardAction', () => {
     expect(createWebviewPanelMock).not.toHaveBeenCalled();
   });
 
+  it('returns a stable before-dashboard-build cancellation without opening a panel or building the dashboard', async () => {
+    const buildDashboard = vi.fn();
+    const action = createMultiReportDashboardAction(
+      {
+        storageUri: createMockUri('/workspace/.storage')
+      } as never,
+      {
+        buildDashboard
+      }
+    );
+
+    await expect(
+      action({
+        model: {
+          repositoryName: 'repo',
+          repositoryRoot: '/workspace/repo',
+          relativePath: 'foo.vi',
+          signature: 'LVIN',
+          eligible: true,
+          commits: [
+            {
+              hash: 'abcdef1234567890',
+              authorDate: '2026-04-02T00:00:00Z',
+              authorName: 'A User',
+              subject: 'Newest revision',
+              previousHash: '1111111122222222'
+            },
+            {
+              hash: '1111111122222222',
+              authorDate: '2026-04-01T00:00:00Z',
+              authorName: 'B User',
+              subject: 'Middle revision',
+              previousHash: '3333333344444444'
+            },
+            {
+              hash: '3333333344444444',
+              authorDate: '2026-03-31T00:00:00Z',
+              authorName: 'C User',
+              subject: 'Initial revision'
+            }
+          ]
+        },
+        cancellationToken: {
+          isCancellationRequested: true
+        } as never
+      })
+    ).resolves.toEqual({
+      outcome: 'cancelled',
+      cancellationStage: 'before-dashboard-build'
+    });
+
+    expect(buildDashboard).not.toHaveBeenCalled();
+    expect(createWebviewPanelMock).not.toHaveBeenCalled();
+  });
+
   it('opens a concentrated dashboard panel from a persisted dashboard record', async () => {
     const buildDashboard = vi.fn().mockResolvedValue({
       record: {
@@ -417,6 +472,160 @@ describe('multiReportDashboardAction', () => {
         increment: 30
       }
     ]);
+  });
+
+  it('renders retained concentrated overview images through webview-safe asset URIs', async () => {
+    const buildDashboard = vi.fn().mockResolvedValue({
+      record: {
+        generatedAt: '2026-04-03T00:00:00.000Z',
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace/repo',
+        relativePath: 'foo.vi',
+        signature: 'LVIN',
+        artifactPlan: {
+          repoId: 'repoid123456',
+          fileId: 'fileid123456',
+          windowId: 'windowid12345',
+          dashboardDirectory: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345',
+          jsonFilePath: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.json',
+          htmlFilePath: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.html',
+          assetsDirectory: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/assets'
+        },
+        commitWindow: {
+          commitCount: 3,
+          pairCount: 2,
+          newestHash: 'abcdef1234567890',
+          oldestHash: '3333333344444444'
+        },
+        summary: {
+          representedPairCount: 2,
+          windowCompletenessState: 'complete',
+          archivedPairCount: 2,
+          missingPairCount: 0,
+          missingPairIds: [],
+          generatedReportCount: 2,
+          reportMetadataPairCount: 2,
+          failedPairCount: 0,
+          failedPairIds: [],
+          blockedPairCount: 0,
+          blockedPairIds: [],
+          overviewSectionCount: 1,
+          overviewImageCount: 1,
+          includedAttributeCount: 2,
+          detailSectionCount: 1,
+          detailItemCount: 1,
+          pairWithOverviewImageCount: 1,
+          pairWithDetailCount: 1,
+          evidenceStateSummaries: [],
+          providerSummaries: []
+        },
+        entries: [
+          {
+            pairId: 'pairid123456',
+            selectedHash: 'abcdef1234567890',
+            baseHash: '1111111122222222',
+            selectedSubject: 'Newest revision',
+            selectedAuthorName: 'A User',
+            selectedAuthorDate: '2026-04-02T00:00:00Z',
+            baseSubject: 'Middle revision',
+            archiveStatus: 'archived',
+            pairEvidenceState: 'archived-generated-report',
+            generatedReportExists: true,
+            parsedReport: {
+              reportTitle: 'VI Comparison Report: foo.vi',
+              generationTime: '2026-04-03T00:00:00Z',
+              firstViPath: 'foo.vi',
+              secondViPath: 'foo.vi',
+              overviewSections: [
+                {
+                  caption: 'Front Panel',
+                  images: [
+                    {
+                      position: 0,
+                      sourceRelativePath: 'foo_files/front-panel.png',
+                      sourceFilePath: '/workspace/source/front-panel.png'
+                    }
+                  ]
+                }
+              ],
+              includedAttributes: [{ label: 'Connector pane', included: true }],
+              detailSections: [{ heading: 'Front Panel', items: ['Changed'] }],
+              overviewImageCount: 1,
+              detailItemCount: 1
+            },
+            dashboardImageAssets: [
+              {
+                caption: 'Front Panel',
+                position: 0,
+                sourceFilePath: '/workspace/source/front-panel.png',
+                dashboardRelativePath: 'assets/pairid123456/foo_files/front-panel.png'
+              }
+            ],
+            artifactLinks: [],
+            overviewImageCount: 1,
+            detailItemCount: 1,
+            evidenceCount: 2,
+            runtimeProvider: 'windows-container',
+            runtimeEngine: 'labview-cli',
+            runtimePlatform: 'win32',
+            runtimePreferBitness: 'x64',
+            runtimeProviderLabel: 'windows-container / labview-cli / x64 / win32'
+          }
+        ]
+      },
+      jsonFilePath: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.json',
+      htmlFilePath: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.html'
+    });
+    const action = createMultiReportDashboardAction(
+      {
+        storageUri: createMockUri('/workspace/.storage')
+      } as never,
+      {
+        buildDashboard
+      }
+    );
+
+    await action({
+      model: {
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace/repo',
+        relativePath: 'foo.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Newest revision',
+            previousHash: '1111111122222222'
+          },
+          {
+            hash: '1111111122222222',
+            authorDate: '2026-04-01T00:00:00Z',
+            authorName: 'B User',
+            subject: 'Middle revision',
+            previousHash: '3333333344444444'
+          },
+          {
+            hash: '3333333344444444',
+            authorDate: '2026-03-31T00:00:00Z',
+            authorName: 'C User',
+            subject: 'Initial revision'
+          }
+        ]
+      }
+    });
+
+    const openedPanel = createWebviewPanelMock.mock.results[0]?.value as ReturnType<
+      typeof createMockPanel
+    >;
+    expect(openedPanel.webview.html).toContain(
+      'data-testid="dashboard-entry-overview-images"'
+    );
+    expect(openedPanel.webview.html).toContain(
+      'webview:/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/assets/pairid123456/foo_files/front-panel.png'
+    );
   });
 
   it('retains partial dashboard evidence when cancellation is requested after dashboard build', async () => {

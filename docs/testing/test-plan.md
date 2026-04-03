@@ -527,6 +527,11 @@
 - `TEST-UNIT-155`: prove Windows-container execution-context preparation fails
   closed with `windows-path-normalization-failed` when the selected host
   report directory cannot be normalized into governed Windows form
+- `TEST-UNIT-156`: prove the dashboard action returns the stable
+  `before-dashboard-build` cancellation stage without building the dashboard
+  or opening a panel
+- `TEST-UNIT-157`: prove retained concentrated overview-image assets render in
+  the dashboard HTML through webview-safe asset URIs
 - `TEST-DOC-014`: review the queue, epic, ADR, and current-state surfaces to
   prove the future-facing dashboard research was normalized into governed repo
   control-plane artifacts and the incoming research artifact was deleted
