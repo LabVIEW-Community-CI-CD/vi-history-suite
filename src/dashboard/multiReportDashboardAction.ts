@@ -683,7 +683,7 @@ function doesArtifactPathMatchKind(
   }
 }
 
-function renderDashboardArtifactHtml(options: {
+export function renderDashboardArtifactHtml(options: {
   title: string;
   artifactFilePath: string;
   artifactDirectoryWebviewUri: string;
