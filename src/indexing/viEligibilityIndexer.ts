@@ -24,6 +24,8 @@ export class ViEligibilityIndexer implements vscode.Disposable {
   private readonly repositoryStateDisposables = new Map<string, vscode.Disposable>();
   private readonly eligibilityCache = new Map<string, boolean>();
   private refreshHandle: NodeJS.Timeout | undefined;
+  private refreshRunning = false;
+  private refreshPending = false;
   private eligiblePaths: EligibilityMap = {};
   private lastIndexedRepositoryRoots: string[] = [];
 
@@ -71,11 +73,15 @@ export class ViEligibilityIndexer implements vscode.Disposable {
 
   private registerListeners(): void {
     this.disposables.push(
-      vscode.workspace.onDidChangeWorkspaceFolders(() => this.scheduleRefresh())
+      vscode.workspace.onDidChangeWorkspaceFolders(() => {
+        this.syncRepositoryStateListeners();
+        this.scheduleRefresh();
+      })
     );
 
     this.disposables.push(
       vscode.workspace.onDidGrantWorkspaceTrust(() => {
+        this.syncRepositoryStateListeners();
         this.scheduleRefresh();
       })
     );
@@ -86,19 +92,23 @@ export class ViEligibilityIndexer implements vscode.Disposable {
 
     this.disposables.push(
       this.gitApi.onDidOpenRepository((repository) => {
+        if (!isRepositoryRelevantToWorkspace(repository.rootUri.fsPath, vscode.workspace.workspaceFolders ?? [])) {
+          return;
+        }
         this.registerRepositoryStateListener(repository);
         this.scheduleRefresh();
       }),
       this.gitApi.onDidCloseRepository((repository) => {
-        this.repositoryStateDisposables.get(repository.rootUri.fsPath)?.dispose();
-        this.repositoryStateDisposables.delete(repository.rootUri.fsPath);
-        this.scheduleRefresh();
+        const existingDisposable = this.repositoryStateDisposables.get(repository.rootUri.fsPath);
+        existingDisposable?.dispose();
+        if (existingDisposable) {
+          this.repositoryStateDisposables.delete(repository.rootUri.fsPath);
+          this.scheduleRefresh();
+        }
       })
     );
 
-    for (const repository of this.gitApi.repositories) {
-      this.registerRepositoryStateListener(repository);
-    }
+    this.syncRepositoryStateListeners();
   }
 
   private registerRepositoryStateListener(repository: GitRepository): void {
@@ -115,7 +125,56 @@ export class ViEligibilityIndexer implements vscode.Disposable {
     );
   }
 
+  private syncRepositoryStateListeners(): void {
+    if (!this.gitApi) {
+      return;
+    }
+
+    const workspaceFolders = vscode.workspace.workspaceFolders ?? [];
+    const relevantRoots = new Set(
+      this.gitApi.repositories
+        .filter((repository) =>
+          isRepositoryRelevantToWorkspace(repository.rootUri.fsPath, workspaceFolders)
+        )
+        .map((repository) => repository.rootUri.fsPath)
+    );
+
+    for (const [repositoryRoot, disposable] of this.repositoryStateDisposables.entries()) {
+      if (relevantRoots.has(repositoryRoot)) {
+        continue;
+      }
+
+      disposable.dispose();
+      this.repositoryStateDisposables.delete(repositoryRoot);
+    }
+
+    for (const repository of this.gitApi.repositories) {
+      if (!relevantRoots.has(repository.rootUri.fsPath)) {
+        continue;
+      }
+
+      this.registerRepositoryStateListener(repository);
+    }
+  }
+
   async refresh(): Promise<void> {
+    if (this.refreshRunning) {
+      this.refreshPending = true;
+      return;
+    }
+
+    this.refreshRunning = true;
+    try {
+      do {
+        this.refreshPending = false;
+        await this.runRefresh();
+      } while (this.refreshPending);
+    } finally {
+      this.refreshRunning = false;
+    }
+  }
+
+  private async runRefresh(): Promise<void> {
     if (!vscode.workspace.isTrusted) {
       this.eligiblePaths = {};
       this.lastIndexedRepositoryRoots = [];
@@ -309,6 +368,10 @@ export async function resolveIndexedRepositories(
   const repositories = new Map<string, IndexedRepository>();
 
   for (const repository of gitRepositories) {
+    if (!isRepositoryRelevantToWorkspace(repository.rootUri.fsPath, workspaceFolders)) {
+      continue;
+    }
+
     repositories.set(repository.rootUri.fsPath, { rootUri: repository.rootUri });
   }
 
@@ -326,4 +389,29 @@ export async function resolveIndexedRepositories(
   return [...repositories.values()].sort((left, right) =>
     left.rootUri.fsPath.localeCompare(right.rootUri.fsPath)
   );
+}
+
+export function isRepositoryRelevantToWorkspace(
+  repositoryRoot: string,
+  workspaceFolders: readonly Pick<vscode.WorkspaceFolder, 'uri'>[]
+): boolean {
+  if (workspaceFolders.length === 0) {
+    return false;
+  }
+
+  const normalizedRepositoryRoot = normalizeScopePath(repositoryRoot);
+
+  return workspaceFolders.some((folder) => {
+    const normalizedWorkspaceRoot = normalizeScopePath(folder.uri.fsPath);
+    return (
+      normalizedWorkspaceRoot === normalizedRepositoryRoot ||
+      normalizedWorkspaceRoot.startsWith(`${normalizedRepositoryRoot}${path.sep}`) ||
+      normalizedRepositoryRoot.startsWith(`${normalizedWorkspaceRoot}${path.sep}`)
+    );
+  });
+}
+
+function normalizeScopePath(value: string): string {
+  const normalized = path.resolve(value);
+  return process.platform === 'win32' ? normalized.toLowerCase() : normalized;
 }

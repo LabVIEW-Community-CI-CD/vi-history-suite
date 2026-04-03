@@ -126,6 +126,7 @@ import {
   contextKeysForUri,
   forEachConcurrent,
   getConfiguredConcurrency,
+  isRepositoryRelevantToWorkspace,
   getStrictHeaderSetting,
   resolveIndexedRepositories,
   ViEligibilityIndexer
@@ -136,6 +137,7 @@ describe('viEligibilityIndexer helpers', () => {
     configurationValues.set('strictRsrcHeader', false);
     configurationValues.set('maxIndexedConcurrency', 6);
     getRepoRootMock.mockReset();
+    getRepoRootMock.mockImplementation(async (fsPath: string) => fsPath);
     listTrackedFilesMock.mockReset();
     getRepoHeadMock.mockReset();
     evaluateViEligibilityMock.mockReset();
@@ -214,6 +216,34 @@ describe('viEligibilityIndexer helpers', () => {
 
     expect(repositories).toEqual([]);
   });
+
+  it('filters repository relevance to the current workspace scope', () => {
+    const workspaceFolders = [
+      { uri: { fsPath: '/workspace/repo', path: '/workspace/repo' } } as never,
+      { uri: { fsPath: '/workspace/nested/child', path: '/workspace/nested/child' } } as never
+    ];
+
+    expect(isRepositoryRelevantToWorkspace('/workspace/repo', workspaceFolders)).toBe(true);
+    expect(isRepositoryRelevantToWorkspace('/workspace', workspaceFolders)).toBe(true);
+    expect(isRepositoryRelevantToWorkspace('/workspace/nested/child', workspaceFolders)).toBe(true);
+    expect(isRepositoryRelevantToWorkspace('/elsewhere/other', workspaceFolders)).toBe(false);
+  });
+
+  it('ignores git-api repositories that are outside the current workspace scope', async () => {
+    getRepoRootMock.mockResolvedValue('/workspace/repo');
+
+    const repositories = await resolveIndexedRepositories(
+      [
+        { rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' } } as never,
+        { rootUri: { fsPath: '/elsewhere/unrelated', path: '/elsewhere/unrelated' } } as never
+      ],
+      [{ uri: { fsPath: '/workspace/repo', path: '/workspace/repo' } } as never]
+    );
+
+    expect(repositories.map((repository) => repository.rootUri.fsPath)).toEqual([
+      '/workspace/repo'
+    ]);
+  });
 });
 
 describe('ViEligibilityIndexer refresh and listeners', () => {
@@ -221,6 +251,7 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
     configurationValues.set('strictRsrcHeader', false);
     configurationValues.set('maxIndexedConcurrency', 6);
     getRepoRootMock.mockReset();
+    getRepoRootMock.mockImplementation(async (fsPath: string) => fsPath);
     listTrackedFilesMock.mockReset();
     getRepoHeadMock.mockReset();
     evaluateViEligibilityMock.mockReset();
@@ -263,6 +294,9 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
 
   it('reuses cached eligibility for the same HEAD and invalidates when HEAD changes', async () => {
     configurationValues.set('strictRsrcHeader', true);
+    workspaceState.workspaceFolders = [
+      { uri: { fsPath: '/workspace/repo', path: '/workspace/repo' } } as never
+    ];
     const indexer = new ViEligibilityIndexer({
       repositories: [
         {
@@ -299,6 +333,10 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
   });
 
   it('fails closed on repository and file errors while still indexing successful files', async () => {
+    workspaceState.workspaceFolders = [
+      { uri: { fsPath: '/workspace/repo-a', path: '/workspace/repo-a' } } as never,
+      { uri: { fsPath: '/workspace/repo-b', path: '/workspace/repo-b' } } as never
+    ];
     const indexer = new ViEligibilityIndexer({
       repositories: [
         {
@@ -341,6 +379,10 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
 
   it('keeps indexing progress counts truthful within each repository', async () => {
     configurationValues.set('maxIndexedConcurrency', 1);
+    workspaceState.workspaceFolders = [
+      { uri: { fsPath: '/workspace/repo-a', path: '/workspace/repo-a' } } as never,
+      { uri: { fsPath: '/workspace/repo-b', path: '/workspace/repo-b' } } as never
+    ];
     const indexer = new ViEligibilityIndexer({
       repositories: [
         {
@@ -378,6 +420,9 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
 
   it('preserves the previous eligibility snapshot when cancellation is requested mid-refresh', async () => {
     configurationValues.set('maxIndexedConcurrency', 1);
+    workspaceState.workspaceFolders = [
+      { uri: { fsPath: '/workspace/repo', path: '/workspace/repo' } } as never
+    ];
     const indexer = new ViEligibilityIndexer({
       repositories: [
         {
@@ -497,6 +542,9 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
 
   it('registers state listeners for initial and newly opened repositories and disposes them on close', async () => {
     workspaceState.isTrusted = false;
+    workspaceState.workspaceFolders = [
+      { uri: { fsPath: '/workspace/repo-a', path: '/workspace/repo-a' } } as never
+    ];
     const openListeners: Array<(repository: never) => unknown> = [];
     const closeListeners: Array<(repository: never) => unknown> = [];
     const initialStateDispose = vi.fn();
@@ -510,7 +558,7 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
       }
     };
     const openedRepository = {
-      rootUri: { fsPath: '/workspace/repo-b', path: '/workspace/repo-b' },
+      rootUri: { fsPath: '/workspace/repo-a/nested-repo', path: '/workspace/repo-a/nested-repo' },
       state: {
         onDidChange: vi.fn(() => ({
           dispose: openedStateDispose
@@ -568,6 +616,9 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
       expect(refreshSpy).toHaveBeenCalledTimes(2);
 
       const openListeners: Array<(repository: never) => unknown> = [];
+      workspaceState.workspaceFolders = [
+        { uri: { fsPath: '/workspace/repo-a', path: '/workspace/repo-a' } } as never
+      ];
       const duplicateRepository = {
         rootUri: { fsPath: '/workspace/repo-a', path: '/workspace/repo-a' },
         state: {
@@ -598,6 +649,100 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('coalesces refresh requests that arrive while a refresh is already running', async () => {
+    configurationValues.set('maxIndexedConcurrency', 1);
+    workspaceState.workspaceFolders = [
+      { uri: { fsPath: '/workspace/repo', path: '/workspace/repo' } } as never
+    ];
+    const indexer = new ViEligibilityIndexer({
+      repositories: [
+        {
+          rootUri: { fsPath: '/workspace/repo', path: '/workspace/repo' }
+        }
+      ],
+      onDidOpenRepository: vi.fn(() => ({ dispose() {} })),
+      onDidCloseRepository: vi.fn(() => ({ dispose() {} })),
+      toGitUri: vi.fn()
+    } as never);
+
+    let signalFirstEvaluationStarted: (() => void) | undefined;
+    const firstEvaluationStarted = new Promise<void>((resolve) => {
+      signalFirstEvaluationStarted = resolve;
+    });
+    let releaseFirstEvaluation: (() => void) | undefined;
+    evaluateViEligibilityMock.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          if (!releaseFirstEvaluation) {
+            signalFirstEvaluationStarted?.();
+            releaseFirstEvaluation = () => resolve({ eligible: true });
+            return;
+          }
+
+          resolve({ eligible: true });
+        })
+    );
+    listTrackedFilesMock.mockResolvedValue(['tracked.vi']);
+    getRepoHeadMock.mockResolvedValue('head-1');
+
+    const firstRefresh = indexer.refresh();
+    const secondRefresh = indexer.refresh();
+    await firstEvaluationStarted;
+    expect(withProgressMock).toHaveBeenCalledTimes(1);
+
+    releaseFirstEvaluation?.();
+    await firstRefresh;
+    await secondRefresh;
+
+    expect(withProgressMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('ignores newly opened repositories that are outside the current workspace scope', async () => {
+    workspaceState.isTrusted = false;
+    workspaceState.workspaceFolders = [
+      { uri: { fsPath: '/workspace/repo-a', path: '/workspace/repo-a' } } as never
+    ];
+    const openListeners: Array<(repository: never) => unknown> = [];
+    const closeListeners: Array<(repository: never) => unknown> = [];
+    const inScopeDispose = vi.fn();
+    const outOfScopeOnDidChange = vi.fn(() => ({ dispose() {} }));
+    const inScopeRepository = {
+      rootUri: { fsPath: '/workspace/repo-a', path: '/workspace/repo-a' },
+      state: {
+        onDidChange: vi.fn(() => ({
+          dispose: inScopeDispose
+        }))
+      }
+    };
+    const outOfScopeRepository = {
+      rootUri: { fsPath: '/elsewhere/repo-b', path: '/elsewhere/repo-b' },
+      state: {
+        onDidChange: outOfScopeOnDidChange
+      }
+    };
+
+    const indexer = new ViEligibilityIndexer({
+      repositories: [inScopeRepository],
+      onDidOpenRepository: vi.fn((listener) => {
+        openListeners.push(listener as never);
+        return { dispose() {} };
+      }),
+      onDidCloseRepository: vi.fn((listener) => {
+        closeListeners.push(listener as never);
+        return { dispose() {} };
+      }),
+      toGitUri: vi.fn()
+    } as never);
+
+    await indexer.start();
+    expect(openListeners).toHaveLength(1);
+    expect(closeListeners).toHaveLength(1);
+
+    openListeners[0](outOfScopeRepository as never);
+
+    expect(outOfScopeOnDidChange).not.toHaveBeenCalled();
   });
 
   it('adds windows lowercase context keys, ignores empty values, and stops concurrent workers cleanly when the queue is exhausted', async () => {
