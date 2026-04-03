@@ -134,12 +134,16 @@ describe('multiReportDashboardAction', () => {
   it('fails closed when dashboard generation is requested from an untrusted workspace', async () => {
     workspaceState.isTrusted = false;
     const buildDashboard = vi.fn();
+    const readFile = vi.fn().mockResolvedValue(
+      '<!DOCTYPE html><html><head><title>Artifact</title></head><body><div>Retained artifact body</div></body></html>'
+    );
     const action = createMultiReportDashboardAction(
       {
         storageUri: createMockUri('/workspace/.storage')
       } as never,
       {
-        buildDashboard
+        buildDashboard,
+        readFile
       }
     );
 
@@ -185,12 +189,16 @@ describe('multiReportDashboardAction', () => {
 
   it('returns a stable before-dashboard-build cancellation without opening a panel or building the dashboard', async () => {
     const buildDashboard = vi.fn();
+    const readFile = vi.fn().mockResolvedValue(
+      '<!DOCTYPE html><html><head><title>Artifact</title></head><body><div>Retained artifact body</div></body></html>'
+    );
     const action = createMultiReportDashboardAction(
       {
         storageUri: createMockUri('/workspace/.storage')
       } as never,
       {
-        buildDashboard
+        buildDashboard,
+        readFile
       }
     );
 
@@ -339,12 +347,16 @@ describe('multiReportDashboardAction', () => {
       htmlFilePath: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.html'
       };
     });
+    const readFile = vi.fn().mockResolvedValue(
+      '<!DOCTYPE html><html><head><title>Artifact</title></head><body><div>Retained artifact body</div></body></html>'
+    );
     const action = createMultiReportDashboardAction(
       {
         storageUri: createMockUri('/workspace/.storage')
       } as never,
       {
-        buildDashboard
+        buildDashboard,
+        readFile
       }
     );
 
@@ -934,12 +946,16 @@ describe('multiReportDashboardAction', () => {
       jsonFilePath: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.json',
       htmlFilePath: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.html'
     });
+    const readFile = vi.fn().mockResolvedValue(
+      '<!DOCTYPE html><html><head><title>Artifact</title></head><body><div>Retained artifact body</div></body></html>'
+    );
     const action = createMultiReportDashboardAction(
       {
         storageUri: createMockUri('/workspace/.storage')
       } as never,
       {
-        buildDashboard
+        buildDashboard,
+        readFile
       }
     );
 
@@ -1161,12 +1177,16 @@ describe('multiReportDashboardAction', () => {
       jsonFilePath: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.json',
       htmlFilePath: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.html'
     });
+    const readFile = vi.fn().mockResolvedValue(
+      '<!DOCTYPE html><html><head><title>Artifact</title></head><body><div>Retained artifact body</div></body></html>'
+    );
     const action = createMultiReportDashboardAction(
       {
         storageUri: createMockUri('/workspace/.storage')
       } as never,
       {
-        buildDashboard
+        buildDashboard,
+        readFile
       }
     );
 
@@ -1215,6 +1235,19 @@ describe('multiReportDashboardAction', () => {
       'viHistorySuite.reviewDashboardArtifact'
     );
     expect(createWebviewPanelMock.mock.calls[1]?.[1]).toBe('Open archived packet');
+    const artifactPanel = createWebviewPanelMock.mock.results[1]?.value as ReturnType<
+      typeof createMockPanel
+    >;
+    expect(readFile).toHaveBeenCalledWith(
+      '/workspace/.storage/report-history/repo/file/pairs/pair/report-packet.html',
+      'utf8'
+    );
+    expect(artifactPanel.webview.html).toContain('Retained artifact body');
+    expect(artifactPanel.webview.html).toContain('vihs-dashboard-artifact-header');
+    expect(artifactPanel.webview.html).toContain(
+      '<base href="webview:/workspace/.storage/report-history/repo/file/pairs/pair/" />'
+    );
+    expect(artifactPanel.webview.html).not.toContain('<iframe src=');
 
     await dashboardPanel.__dispatchMessage({
       command: 'openDashboardArtifact',

@@ -997,6 +997,9 @@ describe('comparisonReportAction', () => {
   });
 
   it('surfaces blocked-runtime when runtime discovery cannot locate a usable provider', async () => {
+    const readFile = vi.fn().mockResolvedValue(
+      '<!DOCTYPE html><html><head><title>Packet</title></head><body><div>Blocked packet body</div></body></html>'
+    );
     const action = createComparisonReportAction(
       {
         storageUri: createMockUri('/workspace/.storage')
@@ -1059,7 +1062,8 @@ describe('comparisonReportAction', () => {
           packetFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-packet.html',
           reportFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
           metadataFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-metadata.json'
-        })
+        }),
+        readFile
       }
     );
 
@@ -1097,6 +1101,16 @@ describe('comparisonReportAction', () => {
       generatedReportExists: false,
       title: 'VI Comparison Report: foo.vi'
     });
+    const panel = createWebviewPanelMock.mock.results.at(-1)?.value as MockPanel;
+    expect(readFile).toHaveBeenCalledWith(
+      '/workspace/.storage/reports/repoid123456/fileid123456/report-packet.html',
+      'utf8'
+    );
+    expect(panel.webview.html).toContain('Blocked packet body');
+    expect(panel.webview.html).toContain(
+      '<base href="webview:/webview/workspace/.storage/reports/repoid123456/fileid123456/" />'
+    );
+    expect(panel.webview.html).not.toContain('data-testid="comparison-report-panel-frame"');
   });
 
   it('retains blocked runtime evidence when cancellation is requested after governed archive completion', async () => {

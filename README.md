@@ -119,6 +119,9 @@ Committed and governed today:
 - retained pair-level ETA accuracy characterization for dashboard pair
   preparation, including a dashboard summary and sidecar evidence that exclude
   previously retained pairs from the current-session accuracy measurement
+- direct local rendering for retained comparison packets and dashboard HTML
+  artifacts, with injected base-path/CSP controls and soft iframe fallback if a
+  local HTML artifact is unavailable
 - governed dashboard artifact-opening rules that accept only retained
   `report-packet.html`, `report-metadata.json`, `source-record.json`, and
   `*-report-*.html` files from workspace-scoped extension storage

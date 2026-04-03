@@ -57,6 +57,7 @@ export interface MultiReportDashboardActionDeps {
   }) => Promise<ComparisonReportActionResult>;
   readArchivedComparisonReportSourceRecord?: typeof readArchivedComparisonReportSourceRecordFromSelection;
   pathExists?: (targetPath: string) => Promise<boolean>;
+  readFile?: typeof fs.readFile;
   writeFile?: typeof fs.writeFile;
   now?: () => number;
 }
@@ -104,6 +105,7 @@ export function createMultiReportDashboardAction(
     const buildDashboard = deps.buildDashboard ?? buildAndPersistMultiReportDashboard;
     const ensureComparisonReportEvidence = deps.ensureComparisonReportEvidence;
     const pathExists = deps.pathExists ?? defaultPathExists;
+    const readFile = deps.readFile ?? fs.readFile;
     const writeFile = deps.writeFile ?? fs.writeFile;
     const now = deps.now ?? Date.now;
     const pairsNeedingEvidence = await collectDashboardPairsNeedingEvidence(
@@ -314,9 +316,14 @@ export function createMultiReportDashboardAction(
           }
         );
         const artifactUri = artifactPanel.webview.asWebviewUri(uriFile(artifactPath)).toString();
-        artifactPanel.webview.html = renderDashboardArtifactHtml({
+        artifactPanel.webview.html = await renderDashboardArtifactHtml({
           title: payload.label,
-          artifactUri
+          artifactFilePath: artifactPath,
+          artifactDirectoryWebviewUri: ensureTrailingSlash(
+            artifactPanel.webview.asWebviewUri(uriFile(path.dirname(artifactPath))).toString()
+          ),
+          cspSource: artifactPanel.webview.cspSource,
+          readFile
         });
         panelTracker?.recordDashboardArtifactAction({
           command: 'openDashboardArtifact',
@@ -640,6 +647,74 @@ function doesArtifactPathMatchKind(
 }
 
 function renderDashboardArtifactHtml(options: {
+  title: string;
+  artifactFilePath: string;
+  artifactDirectoryWebviewUri: string;
+  cspSource: string;
+  readFile: typeof fs.readFile;
+}): Promise<string> {
+  return renderInlineDashboardArtifactHtml(options);
+}
+
+async function renderInlineDashboardArtifactHtml(options: {
+  title: string;
+  artifactFilePath: string;
+  artifactDirectoryWebviewUri: string;
+  cspSource: string;
+  readFile: typeof fs.readFile;
+}): Promise<string> {
+  try {
+    const originalHtml = await options.readFile(options.artifactFilePath, 'utf8');
+    const csp = [
+      "default-src 'none'",
+      `frame-src ${options.cspSource} https:`,
+      `img-src ${options.cspSource} https: data:`,
+      `style-src ${options.cspSource} 'unsafe-inline'`,
+      `font-src ${options.cspSource} https: data:`
+    ].join('; ');
+    const headInjection = `<meta http-equiv="Content-Security-Policy" content="${escapeHtml(
+      csp
+    )}" /><base href="${escapeHtml(options.artifactDirectoryWebviewUri)}" /><style>
+        body { margin: 0; background: var(--vscode-editor-background, #1e1e1e); color: var(--vscode-foreground, #ddd); }
+        .vihs-dashboard-artifact-header {
+          font-family: var(--vscode-font-family, Segoe UI, sans-serif);
+          padding: 12px 16px;
+          border-bottom: 1px solid var(--vscode-panel-border, #555);
+          background: var(--vscode-editor-background, #1e1e1e);
+          color: var(--vscode-foreground, #ddd);
+        }
+      </style>`;
+    const withHead = /<head\b[^>]*>/i.test(originalHtml)
+      ? originalHtml.replace(/<head\b[^>]*>/i, (match) => `${match}${headInjection}`)
+      : `<!DOCTYPE html><html><head><meta charset="UTF-8" />${headInjection}<title>${escapeHtml(
+          options.title
+        )}</title></head><body>${originalHtml}</body></html>`;
+    const headerMarkup = `<div class="vihs-dashboard-artifact-header"><strong>${escapeHtml(
+      options.title
+    )}</strong></div>`;
+
+    if (/<body\b[^>]*>/i.test(withHead)) {
+      return withHead.replace(/<body\b([^>]*)>/i, `<body$1>${headerMarkup}`);
+    }
+
+    return `<!DOCTYPE html><html><head><meta charset="UTF-8" />${headInjection}<title>${escapeHtml(
+      options.title
+    )}</title></head><body>${headerMarkup}${withHead}</body></html>`;
+  } catch {
+    return renderDashboardArtifactIframeHtml({
+      title: options.title,
+      artifactUri: `${options.artifactDirectoryWebviewUri}${encodeURIComponent(
+        path.basename(options.artifactFilePath)
+      )}`
+    });
+  }
+}
+
+function ensureTrailingSlash(value: string): string {
+  return value.endsWith('/') ? value : `${value}/`;
+}
+
+function renderDashboardArtifactIframeHtml(options: {
   title: string;
   artifactUri: string;
 }): string {

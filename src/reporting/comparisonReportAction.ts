@@ -475,7 +475,14 @@ async function openPersistedComparisonReportPanel(
         ),
         readFile: deps.readFile ?? fs.readFile
       })
-    : renderComparisonReportPanelHtml(panelHtmlOptions);
+    : await renderPersistedComparisonReportPacketPanelHtml({
+        ...panelHtmlOptions,
+        packetFilePath: options.packetFilePath,
+        packetDirectoryWebviewUri: ensureTrailingSlash(
+          panel.webview.asWebviewUri(uriFile(path.dirname(options.packetFilePath))).toString()
+        ),
+        readFile: deps.readFile ?? fs.readFile
+      });
 
   const result: ComparisonReportActionResult = {
     outcome: 'opened-comparison-report',
@@ -696,6 +703,63 @@ async function renderGeneratedComparisonReportPanelHtml(options: {
   return `<!DOCTYPE html><html><head><meta charset="UTF-8" />${headInjection}<title>${escapeHtml(
     options.title
   )}</title></head><body>${statusMarkup}${withHead}</body></html>`;
+}
+
+async function renderPersistedComparisonReportPacketPanelHtml(options: {
+  title: string;
+  packetFilePath: string;
+  packetDirectoryWebviewUri: string;
+  reportWebviewUri: string;
+  reportStatus: 'ready-for-runtime' | 'blocked-preflight' | 'blocked-runtime';
+  runtimeExecutionState: 'not-run' | 'not-available' | 'succeeded' | 'failed';
+  blockedReason?: string;
+  runtimeFailureReason?: string;
+  runtimeDiagnosticReason?: string;
+  runtimeDiagnosticNotes?: string[];
+  runtimeDiagnosticLogSourcePath?: string;
+  runtimeDoctorSummaryLines?: string[];
+  runtimeProcessObservationArtifactPath?: string;
+  runtimeExecutable?: string;
+  runtimeArgs?: string[];
+  runtimeProcessObservationCapturedAt?: string;
+  runtimeProcessObservationTrigger?: string;
+  runtimeObservedProcessNames?: string[];
+  runtimeLabviewProcessObserved?: boolean;
+  runtimeLabviewCliProcessObserved?: boolean;
+  runtimeLvcompareProcessObserved?: boolean;
+  runtimeExitProcessObservationCapturedAt?: string;
+  runtimeExitProcessObservationTrigger?: string;
+  runtimeExitObservedProcessNames?: string[];
+  runtimeLabviewProcessObservedAtExit?: boolean;
+  runtimeLabviewCliProcessObservedAtExit?: boolean;
+  runtimeLvcompareProcessObservedAtExit?: boolean;
+  generatedReportExists: boolean;
+  cspSource: string;
+  readFile: typeof fs.readFile;
+}): Promise<string> {
+  try {
+    const originalPacketHtml = await options.readFile(options.packetFilePath, 'utf8');
+    const csp = [
+      "default-src 'none'",
+      `frame-src ${options.cspSource} https:`,
+      `img-src ${options.cspSource} https: data:`,
+      `style-src ${options.cspSource} 'unsafe-inline'`,
+      `font-src ${options.cspSource} https: data:`
+    ].join('; ');
+    const headInjection = `<meta http-equiv="Content-Security-Policy" content="${escapeHtml(
+      csp
+    )}" /><base href="${escapeHtml(options.packetDirectoryWebviewUri)}" />`;
+
+    if (/<head\b[^>]*>/i.test(originalPacketHtml)) {
+      return originalPacketHtml.replace(/<head\b[^>]*>/i, (match) => `${match}${headInjection}`);
+    }
+
+    return `<!DOCTYPE html><html><head><meta charset="UTF-8" />${headInjection}<title>${escapeHtml(
+      options.title
+    )}</title></head><body>${originalPacketHtml}</body></html>`;
+  } catch {
+    return renderComparisonReportPanelHtml(options);
+  }
 }
 
 function renderComparisonReportPanelStatusMarkup(options: {

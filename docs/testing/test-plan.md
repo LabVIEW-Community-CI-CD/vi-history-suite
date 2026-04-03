@@ -708,6 +708,14 @@
   renders a bounded dashboard summary that excludes previously retained pairs;
   also prove the dashboard renders a not-yet-measurable note when only one
   current-session pair was prepared
+- `TEST-UNIT-205`: prove blocked-runtime retained comparison packets and
+  dashboard packet artifacts prefer direct local HTML rendering with injected
+  base-path/CSP controls, while failing soft to the older iframe wrapper if the
+  local HTML file cannot be read
+- `TEST-INTEG-004`: run the real extension-host lane with retained comparison
+  packet and dashboard artifact opening, and prove the flow completes without
+  the earlier retained-HTML resource-host failure warning becoming a test
+  failure
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source
