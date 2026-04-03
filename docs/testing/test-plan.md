@@ -395,6 +395,12 @@
 - `TEST-UNIT-109`: prove the Windows-container runtime executor copies a
   container-local CLI diagnostic log into governed workspace storage and
   retains the copied artifact path on a successful execution record
+- `TEST-UNIT-110`: prove the dashboard packet retains explicit per-pair
+  evidence states and explicit window-completeness facts across archived
+  succeeded, archived failed, and missing pairs in one commit window
+- `TEST-UNIT-111`: prove rebuilding the same dashboard window removes stale
+  copied dashboard assets before regenerating from the current retained pair
+  archives
 - `TEST-DOC-014`: review the queue, epic, ADR, and current-state surfaces to
   prove the future-facing dashboard research was normalized into governed repo
   control-plane artifacts and the incoming research artifact was deleted

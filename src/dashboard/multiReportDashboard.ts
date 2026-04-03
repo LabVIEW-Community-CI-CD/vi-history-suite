@@ -38,8 +38,20 @@ export interface MultiReportDashboardArtifactLink {
   filePath: string;
 }
 
+export type MultiReportDashboardEntryEvidenceState =
+  | 'missing-archive'
+  | 'archived-generated-report'
+  | 'archived-blocked'
+  | 'archived-failed'
+  | 'archived-no-generated-report';
+
 export interface MultiReportDashboardProviderSummary {
   label: string;
+  pairCount: number;
+}
+
+export interface MultiReportDashboardEvidenceStateSummary {
+  state: MultiReportDashboardEntryEvidenceState;
   pairCount: number;
 }
 
@@ -69,6 +81,7 @@ export interface MultiReportDashboardEntry {
   runtimePlatform?: string;
   runtimePreferBitness?: string;
   runtimeProviderLabel?: string;
+  pairEvidenceState: MultiReportDashboardEntryEvidenceState;
   generatedReportExists: boolean;
   parsedReport?: ParsedNiComparisonReport;
   dashboardImageAssets: MultiReportDashboardImageAsset[];
@@ -92,16 +105,22 @@ export interface MultiReportDashboardRecord {
     oldestHash?: string;
   };
   summary: {
+    representedPairCount: number;
+    windowCompletenessState: 'complete' | 'incomplete-missing-archives';
     archivedPairCount: number;
     missingPairCount: number;
+    missingPairIds: string[];
     generatedReportCount: number;
     failedPairCount: number;
+    failedPairIds: string[];
     blockedPairCount: number;
+    blockedPairIds: string[];
     overviewImageCount: number;
     detailItemCount: number;
     pairWithOverviewImageCount: number;
     pairWithDetailCount: number;
     providerSummaries: MultiReportDashboardProviderSummary[];
+    evidenceStateSummaries: MultiReportDashboardEvidenceStateSummary[];
     highestEvidencePairId?: string;
   };
   entries: MultiReportDashboardEntry[];
@@ -112,6 +131,7 @@ export interface BuildMultiReportDashboardDeps {
   pathExists?: (targetPath: string) => Promise<boolean>;
   readFile?: typeof fs.readFile;
   mkdir?: typeof fs.mkdir;
+  rm?: typeof fs.rm;
   writeFile?: typeof fs.writeFile;
   copyFile?: typeof fs.copyFile;
 }
@@ -131,6 +151,7 @@ export async function buildAndPersistMultiReportDashboard(
   const pathExists = deps.pathExists ?? defaultPathExists;
   const readFile = deps.readFile ?? fs.readFile;
   const mkdir = deps.mkdir ?? fs.mkdir;
+  const rm = deps.rm ?? fs.rm;
   const writeFile = deps.writeFile ?? fs.writeFile;
   const copyFile = deps.copyFile ?? fs.copyFile;
 
@@ -157,6 +178,7 @@ export async function buildAndPersistMultiReportDashboard(
     entries
   };
 
+  await rm(artifactPlan.dashboardDirectory, { recursive: true, force: true });
   await mkdir(artifactPlan.dashboardDirectory, { recursive: true });
   await mkdir(artifactPlan.assetsDirectory, { recursive: true });
   for (const entry of record.entries) {
@@ -197,9 +219,22 @@ export function renderMultiReportDashboardHtml(
     assetUriResolver?: (absolutePath: string, fallbackRelativePath: string) => string;
   } = {}
 ): string {
+  const representedPairCount =
+    record.summary.representedPairCount ?? record.commitWindow.pairCount;
+  const windowCompletenessState =
+    record.summary.windowCompletenessState ??
+    ((record.summary.missingPairCount ?? 0) === 0
+      ? ('complete' as const)
+      : ('incomplete-missing-archives' as const));
+  const missingPairIds = record.summary.missingPairIds ?? [];
+  const blockedPairIds = record.summary.blockedPairIds ?? [];
+  const failedPairIds = record.summary.failedPairIds ?? [];
+  const providerSummaries = record.summary.providerSummaries ?? [];
   const summaryCards = [
     ['Retained commits', String(record.commitWindow.commitCount)],
     ['Retained pairs', String(record.commitWindow.pairCount)],
+    ['Represented pairs', String(representedPairCount)],
+    ['Window completeness', windowCompletenessState],
     ['Archived pairs', String(record.summary.archivedPairCount)],
     ['Missing pairs', String(record.summary.missingPairCount)],
     ['Generated reports', String(record.summary.generatedReportCount)],
@@ -209,7 +244,7 @@ export function renderMultiReportDashboardHtml(
     ['Pairs with images', String(record.summary.pairWithOverviewImageCount)],
     ['Pairs with detail', String(record.summary.pairWithDetailCount)],
     ['Detail items', String(record.summary.detailItemCount)],
-    ['Provider variants', String(record.summary.providerSummaries.length)]
+    ['Provider variants', String(providerSummaries.length)]
   ]
     .map(
       ([label, value]) => `<div class="metric"><strong>${escapeHtml(label)}:</strong> ${escapeHtml(value)}</div>`
@@ -284,6 +319,7 @@ export function renderMultiReportDashboardHtml(
             entry.baseHash.slice(0, 8)
           )}</h2>
           <div class="entry-state">
+            <strong>Evidence state:</strong> ${escapeHtml(entry.pairEvidenceState)} ·
             <strong>Archive:</strong> ${escapeHtml(entry.archiveStatus)} ·
             <strong>Report:</strong> ${escapeHtml(entry.reportStatus ?? 'missing-packet')} ·
             <strong>Runtime:</strong> ${escapeHtml(entry.runtimeExecutionState ?? 'not-run')}
@@ -294,6 +330,7 @@ export function renderMultiReportDashboardHtml(
           <div><strong>Selected author/date:</strong> ${escapeHtml(
             `${entry.selectedAuthorName} · ${entry.selectedAuthorDate}`
           )}</div>
+          <div><strong>Pair evidence state:</strong> ${escapeHtml(entry.pairEvidenceState)}</div>
           <div><strong>Base subject:</strong> ${escapeHtml(entry.baseSubject ?? 'none')}</div>
           <div><strong>Evidence count:</strong> ${escapeHtml(String(entry.evidenceCount))}</div>
           <div><strong>Generated report exists:</strong> ${entry.generatedReportExists ? 'yes' : 'no'}</div>
@@ -434,14 +471,20 @@ export function renderMultiReportDashboardHtml(
       </div>
       <div class="note" data-testid="dashboard-provider-summary">
         <strong>Provider coverage:</strong>
-        ${record.summary.providerSummaries.length
-          ? `<ul class="provider-summary-list">${record.summary.providerSummaries
+        ${providerSummaries.length
+          ? `<ul class="provider-summary-list">${providerSummaries
               .map(
                 (summary) =>
                   `<li>${escapeHtml(summary.label)} · ${escapeHtml(String(summary.pairCount))} pair(s)</li>`
               )
               .join('')}</ul>`
           : ' No retained provider evidence is currently concentrated for this window.'}
+      </div>
+      <div class="note" data-testid="dashboard-completeness-summary">
+        <strong>Window completeness:</strong> ${escapeHtml(windowCompletenessState)} ·
+        <strong>Missing pair ids:</strong> ${escapeHtml(missingPairIds.join(' | ') || 'none')} ·
+        <strong>Blocked pair ids:</strong> ${escapeHtml(blockedPairIds.join(' | ') || 'none')} ·
+        <strong>Failed pair ids:</strong> ${escapeHtml(failedPairIds.join(' | ') || 'none')}
       </div>
       <div class="summary-grid" data-testid="dashboard-summary-grid">
         ${summaryCards}
@@ -537,6 +580,7 @@ async function buildDashboardEntry(
       baseSubject: pair.base.subject,
       archiveStatus: 'missing',
       archivePlan,
+      pairEvidenceState: 'missing-archive',
       generatedReportExists: false,
       dashboardImageAssets: [],
       artifactLinks: [],
@@ -549,13 +593,14 @@ async function buildDashboardEntry(
   const sourceRecord = JSON.parse(
     await deps.readFile(archivePlan.sourceRecordFilePath, 'utf8')
   ) as ArchivedComparisonReportSourceRecord;
-  const parsedReport =
+  const generatedReportExists =
     sourceRecord.packetRecord.runtimeExecution.reportExists &&
-    (await deps.pathExists(sourceRecord.archivePlan.reportFilePath))
-      ? await parseNiComparisonReportFile(sourceRecord.archivePlan.reportFilePath, {
-          readFile: deps.readFile
-        })
-      : undefined;
+    (await deps.pathExists(sourceRecord.archivePlan.reportFilePath));
+  const parsedReport = generatedReportExists
+    ? await parseNiComparisonReportFile(sourceRecord.archivePlan.reportFilePath, {
+        readFile: deps.readFile
+      })
+    : undefined;
 
   return {
     pairId: sourceRecord.archivePlan.pairId,
@@ -586,10 +631,11 @@ async function buildDashboardEntry(
     runtimePlatform: sourceRecord.packetRecord.runtimeSelection.platform,
     runtimePreferBitness: sourceRecord.packetRecord.runtimeSelection.preferBitness,
     runtimeProviderLabel: buildProviderLabel(sourceRecord.packetRecord),
-    generatedReportExists: sourceRecord.packetRecord.runtimeExecution.reportExists,
+    pairEvidenceState: derivePairEvidenceState(sourceRecord, generatedReportExists),
+    generatedReportExists,
     parsedReport,
     dashboardImageAssets: [],
-    artifactLinks: buildArtifactLinks(sourceRecord),
+    artifactLinks: buildArtifactLinks(sourceRecord, generatedReportExists),
     overviewImageCount: parsedReport?.overviewImageCount ?? 0,
     detailItemCount: parsedReport?.detailItemCount ?? 0,
     evidenceCount: (parsedReport?.overviewImageCount ?? 0) + (parsedReport?.detailItemCount ?? 0)
@@ -597,13 +643,19 @@ async function buildDashboardEntry(
 }
 
 function buildDashboardSummary(entries: MultiReportDashboardEntry[]) {
+  const representedPairCount = entries.length;
   const archivedPairCount = entries.filter((entry) => entry.archiveStatus === 'archived').length;
   const missingPairCount = entries.filter((entry) => entry.archiveStatus === 'missing').length;
+  const missingPairIds = entries
+    .filter((entry) => entry.archiveStatus === 'missing')
+    .map((entry) => entry.pairId);
   const generatedReportCount = entries.filter((entry) => entry.generatedReportExists).length;
-  const failedPairCount = entries.filter((entry) => entry.runtimeExecutionState === 'failed').length;
-  const blockedPairCount = entries.filter(
-    (entry) => entry.reportStatus === 'blocked-preflight' || entry.reportStatus === 'blocked-runtime'
-  ).length;
+  const failedEntries = entries.filter((entry) => entry.pairEvidenceState === 'archived-failed');
+  const failedPairCount = failedEntries.length;
+  const failedPairIds = failedEntries.map((entry) => entry.pairId);
+  const blockedEntries = entries.filter((entry) => entry.pairEvidenceState === 'archived-blocked');
+  const blockedPairCount = blockedEntries.length;
+  const blockedPairIds = blockedEntries.map((entry) => entry.pairId);
   const overviewImageCount = entries.reduce(
     (total, entry) => total + entry.overviewImageCount,
     0
@@ -611,7 +663,15 @@ function buildDashboardSummary(entries: MultiReportDashboardEntry[]) {
   const detailItemCount = entries.reduce((total, entry) => total + entry.detailItemCount, 0);
   const pairWithOverviewImageCount = entries.filter((entry) => entry.overviewImageCount > 0).length;
   const pairWithDetailCount = entries.filter((entry) => entry.detailItemCount > 0).length;
-  const highestEvidenceEntry = [...entries].sort((left, right) => right.evidenceCount - left.evidenceCount)[0];
+  const highestEvidenceEntry = entries.reduce<MultiReportDashboardEntry | undefined>(
+    (highest, entry) => {
+      if (!highest || entry.evidenceCount > highest.evidenceCount) {
+        return entry;
+      }
+      return highest;
+    },
+    undefined
+  );
   const providerCounts = new Map<string, number>();
   for (const entry of entries) {
     const label = entry.runtimeProviderLabel ?? 'none';
@@ -620,24 +680,44 @@ function buildDashboardSummary(entries: MultiReportDashboardEntry[]) {
   const providerSummaries = [...providerCounts.entries()]
     .map(([label, pairCount]) => ({ label, pairCount }))
     .sort((left, right) => right.pairCount - left.pairCount || left.label.localeCompare(right.label));
+  const evidenceStateCounts = new Map<MultiReportDashboardEntryEvidenceState, number>();
+  for (const entry of entries) {
+    evidenceStateCounts.set(
+      entry.pairEvidenceState,
+      (evidenceStateCounts.get(entry.pairEvidenceState) ?? 0) + 1
+    );
+  }
+  const evidenceStateSummaries = [...evidenceStateCounts.entries()]
+    .map(([state, pairCount]) => ({ state, pairCount }))
+    .sort((left, right) => right.pairCount - left.pairCount || left.state.localeCompare(right.state));
 
   return {
+    representedPairCount,
+    windowCompletenessState:
+      missingPairCount === 0
+        ? ('complete' as const)
+        : ('incomplete-missing-archives' as const),
     archivedPairCount,
     missingPairCount,
+    missingPairIds,
     generatedReportCount,
     failedPairCount,
+    failedPairIds,
     blockedPairCount,
+    blockedPairIds,
     overviewImageCount,
     detailItemCount,
     pairWithOverviewImageCount,
     pairWithDetailCount,
     providerSummaries,
+    evidenceStateSummaries,
     highestEvidencePairId: highestEvidenceEntry?.pairId
   };
 }
 
 function buildArtifactLinks(
-  sourceRecord: ArchivedComparisonReportSourceRecord
+  sourceRecord: ArchivedComparisonReportSourceRecord,
+  generatedReportExists: boolean
 ): MultiReportDashboardArtifactLink[] {
   const links: MultiReportDashboardArtifactLink[] = [
     {
@@ -657,7 +737,7 @@ function buildArtifactLinks(
     }
   ];
 
-  if (sourceRecord.packetRecord.runtimeExecution.reportExists) {
+  if (generatedReportExists) {
     links.splice(1, 0, {
       kind: 'report-html',
       label: 'Open archived NI report',
@@ -676,6 +756,29 @@ function buildProviderLabel(record: ArchivedComparisonReportSourceRecord['packet
     selection.preferBitness,
     selection.platform
   ].join(' / ');
+}
+
+function derivePairEvidenceState(
+  sourceRecord: ArchivedComparisonReportSourceRecord,
+  generatedReportExists: boolean
+): MultiReportDashboardEntryEvidenceState {
+  if (generatedReportExists) {
+    return 'archived-generated-report';
+  }
+
+  if (
+    sourceRecord.packetRecord.reportStatus === 'blocked-preflight' ||
+    sourceRecord.packetRecord.reportStatus === 'blocked-runtime' ||
+    sourceRecord.packetRecord.runtimeExecutionState === 'not-available'
+  ) {
+    return 'archived-blocked';
+  }
+
+  if (sourceRecord.packetRecord.runtimeExecutionState === 'failed') {
+    return 'archived-failed';
+  }
+
+  return 'archived-no-generated-report';
 }
 
 function deriveCommitPairs(commits: ViHistoryCommit[]): Array<{ selected: ViHistoryCommit; base: ViHistoryCommit }> {
