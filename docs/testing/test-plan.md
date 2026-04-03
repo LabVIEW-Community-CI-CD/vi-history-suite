@@ -468,6 +468,11 @@
 - `TEST-UNIT-134`: prove runtime execution retains `observed LabVIEW-related
   processes: none` when a governed process snapshot is captured with zero
   matching LabVIEW-related processes
+- `TEST-UNIT-135`: prove comparison-report cancellation after governed archive
+  completion retains the `after-archive` stage plus preserved blocked-runtime
+  packet evidence
+- `TEST-UNIT-136`: prove the comparison-report panel renders retained non-empty
+  exit observed process names exactly as a joined list
 - `TEST-DOC-014`: review the queue, epic, ADR, and current-state surfaces to
   prove the future-facing dashboard research was normalized into governed repo
   control-plane artifacts and the incoming research artifact was deleted

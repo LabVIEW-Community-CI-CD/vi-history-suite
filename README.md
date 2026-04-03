@@ -84,6 +84,8 @@ Committed and governed today:
 - retained runtime-diagnostic facts that distinguish governed container-log
   path mapping, positive LabVIEW launch confirmation, and explicit zero-process
   observations
+- comparison-report action proof for post-archive cancellation retention and
+  exact non-empty exit-process rendering on the expert panel
 - pairwise dashboard-source archiving so multiple report attempts for one VI can
   coexist without overwriting
 - concentrated dashboard JSON and HTML packets that recollect retained VI
