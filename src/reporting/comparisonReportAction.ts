@@ -1134,6 +1134,10 @@ function isValidArchivedComparisonReportSourceRecord(
     return false;
   }
 
+  if (!isArchivePlanWithinStorageRoot(storageRoot, expectedArchivePlan)) {
+    return false;
+  }
+
   const archivePlan = value.archivePlan;
   const packetRecord = value.packetRecord;
   if (
@@ -1141,14 +1145,6 @@ function isValidArchivedComparisonReportSourceRecord(
     !matchesExpectedArchivePath(archivePlan.packetFilePath, expectedArchivePlan.packetFilePath) ||
     !matchesExpectedArchivePath(archivePlan.reportFilePath, expectedArchivePlan.reportFilePath) ||
     !matchesExpectedArchivePath(archivePlan.metadataFilePath, expectedArchivePlan.metadataFilePath)
-  ) {
-    return false;
-  }
-
-  if (
-    !isDescendantPath(storageRoot, archivePlan.packetFilePath) ||
-    !isDescendantPath(storageRoot, archivePlan.reportFilePath) ||
-    !isDescendantPath(storageRoot, archivePlan.metadataFilePath)
   ) {
     return false;
   }
@@ -1214,11 +1210,22 @@ function matchesExpectedArchivePath(value: unknown, expectedPath: string): boole
   return typeof value === 'string' && value.length > 0 && path.resolve(value) === path.resolve(expectedPath);
 }
 
-function isDescendantPath(rootPath: string, targetPath: unknown): boolean {
-  if (typeof targetPath !== 'string' || targetPath.length === 0) {
-    return false;
-  }
+function isArchivePlanWithinStorageRoot(
+  storageRoot: string,
+  archivePlan: Pick<
+    ComparisonReportArchivePlan,
+    'sourceRecordFilePath' | 'packetFilePath' | 'reportFilePath' | 'metadataFilePath'
+  >
+): boolean {
+  return (
+    isDescendantPath(storageRoot, archivePlan.sourceRecordFilePath) &&
+    isDescendantPath(storageRoot, archivePlan.packetFilePath) &&
+    isDescendantPath(storageRoot, archivePlan.reportFilePath) &&
+    isDescendantPath(storageRoot, archivePlan.metadataFilePath)
+  );
+}
 
+function isDescendantPath(rootPath: string, targetPath: string): boolean {
   const resolvedRoot = path.resolve(rootPath);
   const resolvedTarget = path.resolve(targetPath);
   const relativeTarget = path.relative(resolvedRoot, resolvedTarget);
