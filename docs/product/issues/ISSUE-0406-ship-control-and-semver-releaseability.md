@@ -5,6 +5,14 @@
 Turn `vi-history-suite` into a directed ship program with one active tranche and
 one explicit SemVer release target.
 
+## Status
+
+Closed for the first immutable release target:
+
+- retained release: `v0.2.0`
+- retained pipeline: `2428809456`
+- retained release job: `13779604462`
+
 ## Scope
 
 - authoritative ship target

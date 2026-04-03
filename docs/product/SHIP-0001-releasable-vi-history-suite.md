@@ -15,6 +15,8 @@ driven by release criteria instead of open-ended tranche iteration.
 - Pre-release install surface: `main` pipeline preview VSIX artifact
 - Target VSIX artifact: `vi-history-suite-0.2.0.vsix`
 - Target release manifest: `release-evidence/release-manifest.json`
+- Retained release evidence: GitLab release `v0.2.0`, pipeline `2428809456`,
+  release job `13779604462`
 
 ## Product Promise
 
@@ -69,7 +71,7 @@ No work is in scope unless it moves one release-readiness criterion toward
 
 - `TRANCHE-009`
 - issue: [ISSUE-0406 Ship Control And SemVer Releaseability](./issues/ISSUE-0406-ship-control-and-semver-releaseability.md)
-- targeted blocker ids: `BL-003`
+- targeted blocker ids: `none`
 
 ## Control Plane
 

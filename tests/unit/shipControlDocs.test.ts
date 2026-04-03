@@ -80,7 +80,7 @@ describe('ship-control direction system', () => {
     expect(activeTranches[0]?.id).toBe(matrix.activeTrancheId);
   });
 
-  it('retains a machine-readable readiness matrix with unique criteria and actionable non-done rows', () => {
+  it('retains a machine-readable readiness matrix with unique criteria and consistent blocker wiring', () => {
     const matrix = readJson<ReadinessMatrix>('docs/product/release-readiness-matrix.json');
     const pkg = readJson<PackageManifest>('package.json');
     const ids = matrix.criteria.map((criterion) => criterion.id);
@@ -93,9 +93,7 @@ describe('ship-control direction system', () => {
     expect(matrix.targetVsixArtifact).toBe('vi-history-suite-0.2.0.vsix');
     expect(matrix.targetReleaseManifest).toBe('release-evidence/release-manifest.json');
     expect(new Set(ids).size).toBe(ids.length);
-    expect(matrix.criteria.map((criterion) => criterion.status)).toEqual(
-      expect.arrayContaining(['done', 'active'])
-    );
+    expect(matrix.criteria.map((criterion) => criterion.status)).toContain('done');
 
     for (const criterion of matrix.criteria) {
       expect(criterion.issueId).toBe('ISSUE-0406');
@@ -137,10 +135,12 @@ describe('ship-control direction system', () => {
     }
 
     const openBlockers = ledger.blockers.filter((blocker) => blocker.status === 'open');
-    expect(openBlockers.length).toBeGreaterThan(0);
     for (const blocker of openBlockers) {
       const criterion = matrix.criteria.find((entry) => entry.id === blocker.criterionId);
       expect(criterion?.status).not.toBe('done');
+    }
+    if (openBlockers.length === 0) {
+      expect(matrix.criteria.every((criterion) => criterion.status === 'done')).toBe(true);
     }
   });
 
@@ -292,7 +292,7 @@ describe('ship-control direction system', () => {
 
     expect(readme).toContain('preview-evidence/vi-history-suite-<version>.vsix');
     expect(readme).toContain('registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main');
-    expect(readme).toContain('future governed tagged release artifact');
+    expect(readme).toContain('governed tagged release artifact');
     expect(currentState).toContain('docs-workbench image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`');
     expect(currentState).toContain('preview install surface: `preview-evidence/vi-history-suite-<version>.vsix`');
     expect(releaseProcedure).toContain('For pre-release install testing, use the `package_extension_preview` artifact');

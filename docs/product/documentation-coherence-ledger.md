@@ -73,8 +73,8 @@ source inference or chat memory.
   API path on this machine.
 - The docs-authoring image is fully wired in the repo and CI, but local Docker
   runtime proof is still environment-dependent on this machine.
-- The first successful retained `v0.2.0` tag pipeline remains an open release
-  blocker.
+- The public GitHub facade installer/support surface is scaffolded, but it has
+  not yet ingested the immutable `v0.2.0` release artifact set.
 
 ## Next Documentation Moves
 

@@ -19,12 +19,12 @@ code. The current authority surfaces for this page are:</p>
 <ul>
 <li>preview VSIX artifact from the latest successful <code>main</code> pipeline</li>
 <li>local package output via <code>npm run package</code></li>
-<li>future governed tagged release artifact under <code>release-evidence/</code></li>
+<li>governed tagged release artifact under <code>release-evidence/</code></li>
 <li>packaged bundled user docs surfaced through
 <code>VI History: Open Documentation</code> and the history-panel <code>Open docs</code> action</li>
 </ul>
 <p>The preview VSIX is the current install surface for extension-user testing.
-The tagged release artifact is the future governed exact-version install
+The tagged release artifact is the current governed exact-version install
 surface.</p>
 <h2>Release Procedure Summary</h2>
 <p>The current governed release flow is:</p>
@@ -48,11 +48,14 @@ distribution</li>
 <li><code>docs-workbench-evidence/docs-workbench-manifest.json</code></li>
 <li>packaged bundled-doc metadata under <code>resources/bundled-docs/manifest.json</code></li>
 </ul>
-<h2>Current Limitation</h2>
-<p>The release path is not fully closed yet. The remaining release-side blocker is:</p>
+<h2>Release Status</h2>
+<p>The first governed exact-version release is now retained:</p>
 <ul>
-<li><code>BL-003</code>: the first successful SemVer-tagged <code>v0.2.0</code> VSIX artifact and
-release-manifest evidence set has not yet been retained</li>
+<li>GitLab release: <code>v0.2.0</code></li>
+<li>tag pipeline: <code>2428809456</code></li>
+<li>kept release job: <code>13779604462</code></li>
+<li>retained VSIX artifact: <code>release-evidence/vi-history-suite-0.2.0.vsix</code></li>
+<li>retained manifest: <code>release-evidence/release-manifest.json</code></li>
 </ul>
 <h2>Read Next</h2>
 <ul>

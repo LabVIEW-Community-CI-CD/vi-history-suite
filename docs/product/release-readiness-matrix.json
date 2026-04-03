@@ -93,10 +93,13 @@
       "pillar": "semantic-versioned-vsix-release-and-evidence",
       "issueId": "ISSUE-0406",
       "criterion": "A SemVer tag produces a versioned VSIX artifact and retained release evidence that point to the exact installable extension version.",
-      "status": "active",
+      "status": "done",
       "evidence": [
         "package.json",
         ".gitlab-ci.yml",
+        "GitLab release v0.2.0",
+        "GitLab pipeline 2428809456",
+        "GitLab job 13779604462",
         "docker/docs-authoring/Dockerfile",
         "docs/documentation-workbench.md",
         "docs/product/documentation-coherence-ledger.md",
@@ -105,9 +108,9 @@
         "docs/release-procedure.md",
         "tests/unit/shipControlDocs.test.ts"
       ],
-      "blockerId": "BL-003",
-      "blocker": "The GitLab pipeline now retains preview VSIX artifacts on main, is configured for tagged release packaging, is configured to publish the docs-authoring workbench image, and now retains a docs-package coherence ledger plus wiki seed plan and wiki publication ledger, but the first successful SemVer-tagged release run has not yet been retained as ship evidence.",
-      "nextAction": "Use the main-branch preview VSIX artifact for install testing, keep the docs-authoring workbench image and docs-package coherence surfaces current on main for documentation-package iteration, then run the first governed SemVer tag pipeline and retain the generated VSIX plus release manifest as release evidence."
+      "blockerId": null,
+      "blocker": null,
+      "nextAction": "Sustain the immutable `v0.2.0` release evidence, keep future SemVer release artifacts non-expiring, and use the retained exact-version release as source truth for the public facade installer and Windows acceptance program."
     }
   ]
 }

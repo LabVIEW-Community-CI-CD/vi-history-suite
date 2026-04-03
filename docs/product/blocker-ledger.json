@@ -23,10 +23,13 @@
       "trancheId": "TRANCHE-009",
       "issueId": "ISSUE-0406",
       "criterionId": "RR-006",
-      "status": "open",
-      "summary": "The pipeline now provides preview VSIX artifacts, a docs-authoring workbench publish lane, docs-package coherence and wiki-seeding control surfaces, a wiki publication ledger, and a configured release lane, but the first successful SemVer-tagged VSIX artifact and release-manifest evidence set has not yet been retained.",
+      "status": "closed",
+      "summary": "The first governed `v0.2.0` SemVer tag pipeline succeeded, retained the exact VSIX plus release manifest, and those artifacts are now explicitly kept.",
       "evidence": [
         ".gitlab-ci.yml",
+        "GitLab release v0.2.0",
+        "GitLab pipeline 2428809456",
+        "GitLab job 13779604462",
         "docs/product/documentation-coherence-ledger.md",
         "docs/product/wiki-seed-plan.md",
         "docs/product/wiki-publication-ledger.md",
@@ -34,8 +37,8 @@
         "package.json",
         "tests/unit/shipControlDocs.test.ts"
       ],
-      "impact": "Users can install preview artifacts from main, but the governed exact-version release artifact is still not retained as formal ship evidence.",
-      "resolutionPath": "Use the preview VSIX artifact for extension-user install testing, sustain the docs-authoring workbench image plus coherence/wiki-seeding/publication docs on main for documentation-package iteration, then run the first governed `v0.2.0` tag pipeline, retain the VSIX plus release manifest under release-evidence, and then close the release blocker."
+      "impact": "The governed exact-version release artifact is now retained as formal ship evidence, so this blocker no longer prevents the `v0.2.0` release target.",
+      "resolutionPath": "Sustain immutable release evidence for `v0.2.0`, keep future SemVer tag artifacts non-expiring, and use the retained release as the source truth for the public facade installer and Windows acceptance program."
     }
   ]
 }

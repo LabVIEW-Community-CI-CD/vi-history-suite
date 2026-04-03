@@ -94,6 +94,7 @@ publish_docs_authoring_image:
       NODE
   artifacts:
     when: always
+    expire_in: never
     paths:
       - docs-workbench-evidence/
   rules:
@@ -250,6 +251,7 @@ release_extension:
       NODE
   artifacts:
     when: always
+    expire_in: never
     paths:
       - release-evidence/
   rules:

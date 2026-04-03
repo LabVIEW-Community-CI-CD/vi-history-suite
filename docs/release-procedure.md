@@ -59,7 +59,7 @@
 - `resources/bundled-docs/manifest.json`
 - `.cache/design-gate/assurance-skill/repo-standards-review/`
 
-## Current Limitation
+## Current State
 
 - Marketplace publishing is not active in the current baseline.
 - Preview VSIX artifacts are available from `main`, but they are not the same
@@ -68,5 +68,6 @@
   surface, not the end-user extension artifact.
 - The GitLab release lane is configured to build the governed versioned VSIX
   artifact and release manifest.
-- `SHIP-0001` still requires the first successful SemVer-tagged retained
-  release evidence set before the release blocker can close.
+- The first governed `v0.2.0` release evidence set is now retained through
+  GitLab release `v0.2.0`, tag pipeline `2428809456`, and kept release job
+  `13779604462`.

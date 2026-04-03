@@ -195,8 +195,9 @@ The active ship target is:
 - target release artifact: `vi-history-suite-0.2.0.vsix`
 - target release manifest: `release-evidence/release-manifest.json`
 - docs-authoring image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
-- remaining release blockers:
-  - `BL-003`: retain the first successful retained `v0.2.0` tag pipeline
+- retained release evidence: GitLab release `v0.2.0`, tag pipeline `2428809456`,
+  release job `13779604462`
+- remaining release blockers: none
 
 ## Install Surface
 
@@ -205,7 +206,7 @@ Current install paths are:
 - local package output via `npm run package`
 - GitLab `main` pipeline preview artifact:
   `preview-evidence/vi-history-suite-<version>.vsix`
-- future governed tagged release artifact:
+- governed tagged release artifact:
   `release-evidence/vi-history-suite-<version>.vsix`
 - packaged bundled user docs surfaced through
   `VI History: Open Documentation` and the history-panel `Open docs` action
