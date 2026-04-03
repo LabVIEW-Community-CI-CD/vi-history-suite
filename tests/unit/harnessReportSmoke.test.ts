@@ -28,6 +28,8 @@ describe('harness report smoke renderers', () => {
     runtimeFailureReason: undefined,
     runtimeDiagnosticReason: 'labview-path-ignored-last-used-default',
     runtimeDiagnosticLogPath: '/tmp/runtime-diagnostic-log.txt',
+    runtimeStdoutPath: '/tmp/runtime-stdout.txt',
+    runtimeStderrPath: '/tmp/runtime-stderr.txt',
     runtimeNotes: ['Runtime note one', 'Runtime note two'],
     generatedReportExists: true,
     packetFilePath: '/tmp/report-packet.html',
@@ -42,6 +44,8 @@ describe('harness report smoke renderers', () => {
     expect(markdown).toContain('Runtime execution: succeeded');
     expect(markdown).toContain('Runtime diagnostic reason: labview-path-ignored-last-used-default');
     expect(markdown).toContain('Runtime diagnostic log: /tmp/runtime-diagnostic-log.txt');
+    expect(markdown).toContain('Runtime stdout artifact: /tmp/runtime-stdout.txt');
+    expect(markdown).toContain('Runtime stderr artifact: /tmp/runtime-stderr.txt');
     expect(markdown).toContain('Runtime notes: Runtime note one | Runtime note two');
     expect(markdown).toContain('Generated report exists: yes');
     expect(markdown).toContain('/tmp/diff-report-foo.vi.html');
@@ -54,6 +58,8 @@ describe('harness report smoke renderers', () => {
     expect(html).toContain('labview-cli');
     expect(html).toContain('labview-path-ignored-last-used-default');
     expect(html).toContain('/tmp/runtime-diagnostic-log.txt');
+    expect(html).toContain('/tmp/runtime-stdout.txt');
+    expect(html).toContain('/tmp/runtime-stderr.txt');
     expect(html).toContain('Runtime note one | Runtime note two');
     expect(html).toContain('diff-report-foo.vi.html');
   });

@@ -64,6 +64,8 @@ export interface HarnessReportSmokeReport {
   runtimeFailureReason?: string;
   runtimeDiagnosticReason?: string;
   runtimeDiagnosticLogPath?: string;
+  runtimeStdoutPath?: string;
+  runtimeStderrPath?: string;
   runtimeNotes: string[];
   generatedReportExists: boolean;
   packetFilePath?: string;
@@ -261,6 +263,8 @@ function buildHarnessReportSmokeReport(options: {
     runtimeFailureReason: record.runtimeExecution.failureReason,
     runtimeDiagnosticReason: record.runtimeExecution.diagnosticReason,
     runtimeDiagnosticLogPath: record.runtimeExecution.diagnosticLogArtifactPath,
+    runtimeStdoutPath: record.runtimeExecution.stdoutFilePath,
+    runtimeStderrPath: record.runtimeExecution.stderrFilePath,
     runtimeNotes: [...record.runtimeSelection.notes, ...(record.runtimeExecution.diagnosticNotes ?? [])],
     generatedReportExists: record.runtimeExecution.reportExists,
     packetFilePath: options.packetFilePath,
@@ -290,6 +294,8 @@ export function renderHarnessReportSmokeMarkdown(report: HarnessReportSmokeRepor
 - Runtime failure reason: ${report.runtimeFailureReason ?? 'none'}
 - Runtime diagnostic reason: ${report.runtimeDiagnosticReason ?? 'none'}
 - Runtime diagnostic log: ${report.runtimeDiagnosticLogPath ?? 'none'}
+- Runtime stdout artifact: ${report.runtimeStdoutPath ?? 'none'}
+- Runtime stderr artifact: ${report.runtimeStderrPath ?? 'none'}
 - Runtime notes: ${report.runtimeNotes.length > 0 ? report.runtimeNotes.join(' | ') : 'none'}
 - Generated report exists: ${report.generatedReportExists ? 'yes' : 'no'}
 - Packet file: ${report.packetFilePath ?? 'none'}
@@ -331,6 +337,8 @@ export function renderHarnessReportSmokeHtml(report: HarnessReportSmokeReport): 
       <div><strong>Runtime failure reason:</strong> ${escapeHtml(report.runtimeFailureReason ?? 'none')}</div>
       <div><strong>Runtime diagnostic reason:</strong> ${escapeHtml(report.runtimeDiagnosticReason ?? 'none')}</div>
       <div><strong>Runtime diagnostic log:</strong> ${escapeHtml(report.runtimeDiagnosticLogPath ?? 'none')}</div>
+      <div><strong>Runtime stdout artifact:</strong> ${escapeHtml(report.runtimeStdoutPath ?? 'none')}</div>
+      <div><strong>Runtime stderr artifact:</strong> ${escapeHtml(report.runtimeStderrPath ?? 'none')}</div>
       <div><strong>Runtime notes:</strong> ${escapeHtml(
         report.runtimeNotes.length > 0 ? report.runtimeNotes.join(' | ') : 'none'
       )}</div>

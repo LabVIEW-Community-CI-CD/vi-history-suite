@@ -284,6 +284,9 @@
 - `TEST-UNIT-083`: prove the runtime executor retains an explicit note when the
   captured LabVIEW CLI diagnostic log never reports successful LabVIEW launch
   before exit
+- `TEST-UNIT-084`: prove the canonical comparison-report smoke artifacts expose
+  retained runtime stdout and stderr artifact paths when report execution is
+  attempted
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source
