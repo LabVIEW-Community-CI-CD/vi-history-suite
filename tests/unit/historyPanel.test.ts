@@ -68,7 +68,8 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('Reviewer guidance:');
     expect(html).toContain('Confidence and scope:');
     expect(html).toContain('Local Git history, tracked-file status, and content-detected VI signature checks.');
-    expect(html).toContain('Direct local evidence for chronology, path provenance, retained hashes, and command routing.');
+    expect(html).toContain('Direct local evidence for chronology, path provenance, retained hashes, and retained compare pairing.');
+    expect(html).toContain('Repository/path facts, retained commit chronology, selected-versus-base pairing, compare-pair summaries, and dashboard availability.');
     expect(html).toContain('Needs external comparison tooling:');
     expect(html).toContain('Binary semantic differences, visual or cosmetic change detection, and NI comparison-report output.');
     expect(html).toContain('Selected:</strong> <code>abcdef12</code>');
@@ -105,7 +106,7 @@ describe('renderHistoryPanelHtml', () => {
     expect(reviewPacket).toContain('Retained revisions: 2');
     expect(reviewPacket).toContain('Dashboard available: no');
     expect(reviewPacket).toContain('Confidence and scope:');
-    expect(reviewPacket).toContain('Included here: chronology, path provenance, retained hashes, compare pairs, report preflight planning, and command routing.');
+    expect(reviewPacket).toContain('Included here: chronology, path provenance, retained hashes, compare pairs, and dashboard availability.');
     expect(reviewPacket).toContain('Needs external comparison tooling: binary semantic differences, visual or cosmetic change detection, and NI comparison-report output.');
     expect(reviewPacket).toContain('- abcdef12 vs 11111111 :: Improve deployment behavior');
     expect(reviewPacket).toContain('- 11111111 :: oldest retained revision :: Initial deployment behavior');

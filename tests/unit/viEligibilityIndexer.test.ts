@@ -339,6 +339,43 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
     ]);
   });
 
+  it('keeps indexing progress counts truthful within each repository', async () => {
+    configurationValues.set('maxIndexedConcurrency', 1);
+    const indexer = new ViEligibilityIndexer({
+      repositories: [
+        {
+          rootUri: { fsPath: '/workspace/repo-a', path: '/workspace/repo-a' }
+        },
+        {
+          rootUri: { fsPath: '/workspace/repo-b', path: '/workspace/repo-b' }
+        }
+      ],
+      onDidOpenRepository: vi.fn(() => ({ dispose() {} })),
+      onDidCloseRepository: vi.fn(() => ({ dispose() {} })),
+      toGitUri: vi.fn()
+    } as never);
+
+    listTrackedFilesMock.mockImplementation(async (cwd: string) => {
+      if (cwd === '/workspace/repo-a') {
+        return ['a-1.vi', 'a-2.vi'];
+      }
+
+      return ['b-1.vi'];
+    });
+    getRepoHeadMock
+      .mockResolvedValueOnce('head-a')
+      .mockResolvedValueOnce('head-b');
+    evaluateViEligibilityMock.mockResolvedValue({ eligible: false });
+
+    await indexer.refresh();
+
+    expect(progressReportMock.mock.calls).toEqual([
+      [{ message: 'repo-a 1/2' }],
+      [{ message: 'repo-a 2/2' }],
+      [{ message: 'repo-b 1/1' }]
+    ]);
+  });
+
   it('preserves the previous eligibility snapshot when cancellation is requested mid-refresh', async () => {
     configurationValues.set('maxIndexedConcurrency', 1);
     const indexer = new ViEligibilityIndexer({

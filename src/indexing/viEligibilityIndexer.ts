@@ -138,8 +138,6 @@ export class ViEligibilityIndexer implements vscode.Disposable {
         cancellable: true
       },
       async (progress, cancellationToken) => {
-        let processed = 0;
-
         for (const repository of repositories) {
           if (cancellationToken.isCancellationRequested) {
             refreshOutcome = 'cancelled';
@@ -161,6 +159,7 @@ export class ViEligibilityIndexer implements vscode.Disposable {
           }
 
           const concurrency = getConfiguredConcurrency();
+          let processedWithinRepository = 0;
 
           await forEachConcurrent(trackedFiles, concurrency, async (relativePath) => {
             if (refreshOutcome !== 'applied') {
@@ -198,9 +197,9 @@ export class ViEligibilityIndexer implements vscode.Disposable {
               }
             }
 
-            processed += 1;
+            processedWithinRepository += 1;
             progress.report({
-              message: `${path.basename(repository.rootUri.fsPath)} ${processed}/${trackedFiles.length}`
+              message: `${path.basename(repository.rootUri.fsPath)} ${processedWithinRepository}/${trackedFiles.length}`
             });
           });
 

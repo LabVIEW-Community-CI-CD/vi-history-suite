@@ -673,6 +673,12 @@
 - `TEST-DOC-020`: review README, current-state, release procedure, readiness
   matrix, and blocker ledger to prove preview VSIX delivery is described as an
   install surface but not as the final SemVer release proof
+- `TEST-UNIT-195`: prove the eligibility indexer progress message keeps
+  repository-scoped processed/total counts truthful across multi-repository
+  refreshes
+- `TEST-UNIT-196`: prove the live comparison-report panel frames the retained
+  NI-generated HTML report directly when one exists, while blocked or no-report
+  cases still open the governed packet artifact
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

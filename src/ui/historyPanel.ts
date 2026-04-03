@@ -149,8 +149,8 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
       <strong>Confidence and scope:</strong>
       <div class="confidence-grid">
         <div data-testid="history-confidence-basis"><strong>Basis:</strong> Local Git history, tracked-file status, and content-detected VI signature checks.</div>
-        <div data-testid="history-confidence-rating"><strong>Confidence:</strong> Direct local evidence for chronology, path provenance, retained hashes, and command routing.</div>
-        <div data-testid="history-scope-included"><strong>Included here:</strong> Repository/path facts, retained commit chronology, selected-versus-base pairing, report preflight planning, and VS Code action delegation.</div>
+        <div data-testid="history-confidence-rating"><strong>Confidence:</strong> Direct local evidence for chronology, path provenance, retained hashes, and retained compare pairing.</div>
+        <div data-testid="history-scope-included"><strong>Included here:</strong> Repository/path facts, retained commit chronology, selected-versus-base pairing, compare-pair summaries, and dashboard availability.</div>
         <div data-testid="history-scope-excluded"><strong>Needs external comparison tooling:</strong> Binary semantic differences, visual or cosmetic change detection, and NI comparison-report output.</div>
       </div>
     </div>
@@ -214,7 +214,7 @@ export function renderHistoryReviewPacketText(model: ViHistoryViewModel): string
     `Oldest retained commit: ${renderCommitSummary(oldestCommit)}`,
     'Confidence and scope:',
     '- Basis: local Git history, tracked-file status, and content-detected VI signature checks.',
-    '- Included here: chronology, path provenance, retained hashes, compare pairs, report preflight planning, and command routing.',
+    '- Included here: chronology, path provenance, retained hashes, compare pairs, and dashboard availability.',
     '- Needs external comparison tooling: binary semantic differences, visual or cosmetic change detection, and NI comparison-report output.',
     'Retained compare pairs:',
     comparePairs

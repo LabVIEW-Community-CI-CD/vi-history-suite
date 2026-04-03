@@ -190,6 +190,7 @@ export function createComparisonReportAction(
     const joinPath = deps.joinPath ?? vscode.Uri.joinPath;
     const repoRootUri = joinPath(context.storageUri, 'reports', packet.record.artifactPlan.repoId);
     const packetFileUri = uriFile(packet.packetFilePath);
+    const reportFileUri = uriFile(packet.reportFilePath);
 
     await request.reportProgress?.({
       message: 'Opening retained comparison-report view.',
@@ -204,10 +205,12 @@ export function createComparisonReportAction(
         localResourceRoots: [context.storageUri, repoRootUri]
       }
     );
-    const reportWebviewUri = panel.webview.asWebviewUri(packetFileUri);
+    const renderedContentUri = panel.webview.asWebviewUri(
+      packet.record.runtimeExecution.reportExists ? reportFileUri : packetFileUri
+    );
     panel.webview.html = renderComparisonReportPanelHtml({
       title: packet.record.reportTitle,
-      reportWebviewUri: reportWebviewUri.toString(),
+      reportWebviewUri: renderedContentUri.toString(),
       reportStatus: packet.record.reportStatus,
       runtimeExecutionState: packet.record.runtimeExecutionState,
       blockedReason:
@@ -257,7 +260,7 @@ export function createComparisonReportAction(
       packetFilePath: packet.packetFilePath,
       reportFilePath: packet.reportFilePath,
       metadataFilePath: packet.metadataFilePath,
-      reportWebviewUri: reportWebviewUri.toString(),
+      reportWebviewUri: renderedContentUri.toString(),
       generatedReportExists: packet.record.runtimeExecution.reportExists,
       title: panel.title
     };
