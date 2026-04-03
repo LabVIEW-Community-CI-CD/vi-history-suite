@@ -7,6 +7,7 @@ import {
   renderMultiReportDashboardHtml
 } from './multiReportDashboard';
 import { ViHistoryViewModel } from '../services/viHistoryModel';
+import { HistoryPanelTracker } from '../ui/historyPanelTracker';
 
 export interface MultiReportDashboardActionRequest {
   model: ViHistoryViewModel;
@@ -42,7 +43,8 @@ export interface MultiReportDashboardActionDeps {
 
 export function createMultiReportDashboardAction(
   context: vscode.ExtensionContext,
-  deps: MultiReportDashboardActionDeps = {}
+  deps: MultiReportDashboardActionDeps = {},
+  panelTracker?: HistoryPanelTracker
 ): (request: MultiReportDashboardActionRequest) => Promise<MultiReportDashboardActionResult> {
   return async (request) => {
     if (request.cancellationToken?.isCancellationRequested) {
@@ -98,19 +100,31 @@ export function createMultiReportDashboardAction(
         localResourceRoots: [storageUri]
       }
     );
-    panel.webview.html = renderMultiReportDashboardHtml(dashboard.record, {
+    const renderedHtml = renderMultiReportDashboardHtml(dashboard.record, {
       assetUriResolver: (absolutePath) =>
         panel.webview.asWebviewUri(uriFile(absolutePath)).toString()
     });
-    panel.webview.onDidReceiveMessage(async (message: unknown) => {
+    panel.webview.html = renderedHtml;
+    const handleDashboardMessage = async (message: unknown) => {
       const payload = normalizeDashboardArtifactMessage(message);
       if (!payload) {
+        panelTracker?.recordDashboardArtifactAction({
+          command: 'openDashboardArtifact',
+          outcome: 'ignored-malformed'
+        });
         return;
       }
 
       const storageRoot = path.resolve(storageUri.fsPath);
       const artifactPath = path.resolve(payload.filePath);
       if (!isDescendantPath(storageRoot, artifactPath)) {
+        panelTracker?.recordDashboardArtifactAction({
+          command: 'openDashboardArtifact',
+          outcome: 'ignored-outside-storage',
+          kind: payload.kind,
+          label: payload.label,
+          filePath: artifactPath
+        });
         void vscode.window.showWarningMessage(
           'VI Review Dashboard ignored an artifact path outside workspace-scoped extension storage.'
         );
@@ -118,6 +132,13 @@ export function createMultiReportDashboardAction(
       }
 
       if (!doesArtifactPathMatchKind(artifactPath, payload.kind)) {
+        panelTracker?.recordDashboardArtifactAction({
+          command: 'openDashboardArtifact',
+          outcome: 'ignored-kind-mismatch',
+          kind: payload.kind,
+          label: payload.label,
+          filePath: artifactPath
+        });
         void vscode.window.showWarningMessage(DASHBOARD_ARTIFACT_CONTRACT_WARNING);
         return;
       }
@@ -137,13 +158,44 @@ export function createMultiReportDashboardAction(
           title: payload.label,
           artifactUri
         });
+        panelTracker?.recordDashboardArtifactAction({
+          command: 'openDashboardArtifact',
+          outcome: 'opened-artifact-panel',
+          kind: payload.kind,
+          label: payload.label,
+          filePath: artifactPath,
+          title: artifactPanel.title,
+          openedUri: artifactUri
+        });
         return;
       }
 
       await executeCommand('vscode.open', uriFile(artifactPath), {
         preview: false
       });
-    });
+      panelTracker?.recordDashboardArtifactAction({
+        command: 'openDashboardArtifact',
+        outcome: 'opened-artifact-editor',
+        kind: payload.kind,
+        label: payload.label,
+        filePath: artifactPath
+      });
+    };
+    panelTracker?.recordDashboard(
+      {
+        title: panel.title,
+        relativePath: request.model.relativePath,
+        commitCount: request.model.commits.length,
+        dashboardFilePath: dashboard.htmlFilePath,
+        dashboardJsonFilePath: dashboard.jsonFilePath,
+        dashboardPairCount: dashboard.record.commitWindow.pairCount,
+        dashboardArchivedPairCount: dashboard.record.summary.archivedPairCount,
+        dashboardMissingPairCount: dashboard.record.summary.missingPairCount,
+        renderedHtml
+      },
+      handleDashboardMessage
+    );
+    panel.webview.onDidReceiveMessage(handleDashboardMessage);
 
     return {
       outcome: 'opened-review-dashboard',

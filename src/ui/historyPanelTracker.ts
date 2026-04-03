@@ -7,6 +7,13 @@ export interface HistoryPanelMessage {
   hash?: string;
 }
 
+export interface DashboardPanelMessage {
+  command?: string;
+  filePath?: string;
+  kind?: string;
+  label?: string;
+}
+
 export interface HistoryPanelActionSummary {
   command: string;
   hash?: string;
@@ -69,6 +76,21 @@ export interface HistoryPanelActionSummary {
   dashboardMissingPairCount?: number;
 }
 
+export interface DashboardArtifactActionSummary {
+  command: 'openDashboardArtifact';
+  outcome:
+    | 'opened-artifact-panel'
+    | 'opened-artifact-editor'
+    | 'ignored-malformed'
+    | 'ignored-outside-storage'
+    | 'ignored-kind-mismatch';
+  kind?: 'packet-html' | 'report-html' | 'metadata-json' | 'source-record-json';
+  label?: string;
+  filePath?: string;
+  title?: string;
+  openedUri?: string;
+}
+
 export interface OpenedHistoryPanelSummary {
   title: string;
   targetFsPath: string;
@@ -78,13 +100,32 @@ export interface OpenedHistoryPanelSummary {
   renderedHtml: string;
 }
 
+export interface OpenedDashboardPanelSummary {
+  title: string;
+  relativePath: string;
+  commitCount: number;
+  dashboardFilePath: string;
+  dashboardJsonFilePath: string;
+  dashboardPairCount: number;
+  dashboardArchivedPairCount: number;
+  dashboardMissingPairCount: number;
+  renderedHtml: string;
+}
+
 export class HistoryPanelTracker {
   private lastOpenedPanel: OpenedHistoryPanelSummary | undefined;
   private lastActionSummary: HistoryPanelActionSummary | undefined;
+  private lastOpenedDashboardPanel: OpenedDashboardPanelSummary | undefined;
+  private lastDashboardArtifactActionSummary: DashboardArtifactActionSummary | undefined;
   private openCount = 0;
   private actionCount = 0;
+  private dashboardOpenCount = 0;
+  private dashboardArtifactActionCount = 0;
   private lastMessageDispatcher:
     | ((message: HistoryPanelMessage) => Promise<void>)
+    | undefined;
+  private lastDashboardMessageDispatcher:
+    | ((message: DashboardPanelMessage) => Promise<void>)
     | undefined;
 
   record(
@@ -127,6 +168,36 @@ export class HistoryPanelTracker {
     return this.actionCount;
   }
 
+  recordDashboard(
+    summary: OpenedDashboardPanelSummary,
+    dispatchMessage: (message: DashboardPanelMessage) => Promise<void>
+  ): void {
+    this.dashboardOpenCount += 1;
+    this.lastDashboardMessageDispatcher = dispatchMessage;
+    this.lastOpenedDashboardPanel = summary;
+  }
+
+  getLastOpenedDashboardPanel(): OpenedDashboardPanelSummary | undefined {
+    return this.lastOpenedDashboardPanel;
+  }
+
+  getDashboardOpenCount(): number {
+    return this.dashboardOpenCount;
+  }
+
+  recordDashboardArtifactAction(summary: DashboardArtifactActionSummary): void {
+    this.dashboardArtifactActionCount += 1;
+    this.lastDashboardArtifactActionSummary = summary;
+  }
+
+  getLastDashboardArtifactActionSummary(): DashboardArtifactActionSummary | undefined {
+    return this.lastDashboardArtifactActionSummary;
+  }
+
+  getDashboardArtifactActionCount(): number {
+    return this.dashboardArtifactActionCount;
+  }
+
   async dispatchLastPanelMessage(message: HistoryPanelMessage): Promise<void> {
     if (!this.lastMessageDispatcher) {
       return;
@@ -135,11 +206,24 @@ export class HistoryPanelTracker {
     await this.lastMessageDispatcher(message);
   }
 
+  async dispatchLastDashboardPanelMessage(message: DashboardPanelMessage): Promise<void> {
+    if (!this.lastDashboardMessageDispatcher) {
+      return;
+    }
+
+    await this.lastDashboardMessageDispatcher(message);
+  }
+
   clear(): void {
     this.lastOpenedPanel = undefined;
     this.lastActionSummary = undefined;
+    this.lastOpenedDashboardPanel = undefined;
+    this.lastDashboardArtifactActionSummary = undefined;
     this.openCount = 0;
     this.actionCount = 0;
+    this.dashboardOpenCount = 0;
+    this.dashboardArtifactActionCount = 0;
     this.lastMessageDispatcher = undefined;
+    this.lastDashboardMessageDispatcher = undefined;
   }
 }

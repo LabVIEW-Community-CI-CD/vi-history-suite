@@ -147,15 +147,18 @@
     },
     {
       "surface": "multi-report-developer-dashboard-for-three-plus-commits",
-      "status": "partial",
+      "status": "implemented-and-active",
       "evidence": [
         "src/dashboard/comparisonReportArchive.ts",
         "src/dashboard/niComparisonReportParser.ts",
         "src/dashboard/multiReportDashboard.ts",
         "src/dashboard/multiReportDashboardAction.ts",
+        "src/harness/harnessDashboardSmoke.ts",
+        "src/cli/runHarnessDashboardSmoke.ts",
         "src/ui/historyPanel.ts",
         "src/commands/openViHistoryCommand.ts",
-        "docs/architecture/adr/ADR-0009-dashboard-pair-archive-and-concentration-packet.md"
+        "docs/architecture/adr/ADR-0009-dashboard-pair-archive-and-concentration-packet.md",
+        ".cache/harness-reports/HARNESS-VHS-001/dashboard-smoke.json"
       ],
       "requirements": [
         "VHS-REQ-185",
@@ -175,9 +178,15 @@
         "VHS-REQ-212",
         "VHS-REQ-213",
         "VHS-REQ-214",
-        "VHS-REQ-215"
+        "VHS-REQ-215",
+        "VHS-REQ-295",
+        "VHS-REQ-296",
+        "VHS-REQ-297",
+        "VHS-REQ-298",
+        "VHS-REQ-299",
+        "VHS-REQ-300"
       ],
-      "nextMove": "Add dashboard smoke proof, runtime-doctor UX, and mixed-provider contribution."
+      "nextMove": "Sustain live dashboard proof while extending runtime-doctor UX and review-scenario decision support."
     },
     {
       "surface": "review-scenario-registry-and-human-decision-records",
@@ -218,6 +227,7 @@
     "developmentQueuePath": "docs/product/development-queue.json",
     "designGateEvidencePath": ".cache/design-gate/latest-report.json",
     "comparisonReportSmokePath": ".cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.json",
+    "dashboardSmokePath": ".cache/harness-reports/HARNESS-VHS-001/dashboard-smoke.json",
     "note": "The .cache evidence is local and regenerated; committed status lives in the docs listed above."
   }
 }

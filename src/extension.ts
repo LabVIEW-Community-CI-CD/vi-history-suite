@@ -11,9 +11,12 @@ import { createComparisonReportAction } from './reporting/comparisonReportAction
 import { ViHistoryViewModel } from './services/viHistoryModel';
 import { ViHistoryService } from './services/viHistoryService';
 import {
+  DashboardArtifactActionSummary,
+  DashboardPanelMessage,
   HistoryPanelActionSummary,
   HistoryPanelMessage,
   HistoryPanelTracker,
+  OpenedDashboardPanelSummary,
   OpenedHistoryPanelSummary
 } from './ui/historyPanelTracker';
 
@@ -27,6 +30,11 @@ export interface ViHistorySuiteApi {
   dispatchLastPanelMessage(message: HistoryPanelMessage): Promise<void>;
   getLastPanelActionSummary(): HistoryPanelActionSummary | undefined;
   getPanelActionCount(): number;
+  getLastOpenedDashboardPanel(): OpenedDashboardPanelSummary | undefined;
+  getOpenDashboardPanelCount(): number;
+  dispatchLastDashboardPanelMessage(message: DashboardPanelMessage): Promise<void>;
+  getLastDashboardArtifactActionSummary(): DashboardArtifactActionSummary | undefined;
+  getDashboardArtifactActionCount(): number;
   clearHistoryPanelTracking(): void;
 }
 
@@ -38,7 +46,7 @@ export async function activate(
   const historyService = new ViHistoryService(gitApi);
   const panelTracker = new HistoryPanelTracker();
   const comparisonReportAction = createComparisonReportAction(context);
-  const multiReportDashboardAction = createMultiReportDashboardAction(context);
+  const multiReportDashboardAction = createMultiReportDashboardAction(context, {}, panelTracker);
 
   context.subscriptions.push(eligibilityIndexer);
 
@@ -69,6 +77,13 @@ export async function activate(
       panelTracker.dispatchLastPanelMessage(message),
     getLastPanelActionSummary: () => panelTracker.getLastActionSummary(),
     getPanelActionCount: () => panelTracker.getActionCount(),
+    getLastOpenedDashboardPanel: () => panelTracker.getLastOpenedDashboardPanel(),
+    getOpenDashboardPanelCount: () => panelTracker.getDashboardOpenCount(),
+    dispatchLastDashboardPanelMessage: (message: DashboardPanelMessage) =>
+      panelTracker.dispatchLastDashboardPanelMessage(message),
+    getLastDashboardArtifactActionSummary: () =>
+      panelTracker.getLastDashboardArtifactActionSummary(),
+    getDashboardArtifactActionCount: () => panelTracker.getDashboardArtifactActionCount(),
     clearHistoryPanelTracking: () => panelTracker.clear()
   };
 }

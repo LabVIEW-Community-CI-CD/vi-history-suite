@@ -11,6 +11,18 @@ interface IntegrationWorkspaceMetadata {
   ineligibleRelativePath: string;
 }
 
+interface DashboardArtifactLink {
+  kind: 'packet-html' | 'report-html' | 'metadata-json' | 'source-record-json';
+  label: string;
+  filePath: string;
+}
+
+interface DashboardRecord {
+  entries: Array<{
+    artifactLinks?: DashboardArtifactLink[];
+  }>;
+}
+
 export async function runIntegrationSuite(): Promise<void> {
   const metadata = await loadMetadata();
   const api = await loadExtensionApi();
@@ -255,7 +267,66 @@ async function testPanelOpenFlow(
     dashboardHtml,
     /No retained VI Comparison Report metadata is currently available for this pair\./
   );
-  assert.equal(api.getPanelActionCount(), 6);
+  const openedDashboard = api.getLastOpenedDashboardPanel();
+  assert.ok(openedDashboard);
+  assert.equal(openedDashboard.dashboardPairCount, 2);
+  assert.equal(openedDashboard.dashboardArchivedPairCount, 1);
+  assert.equal(openedDashboard.dashboardMissingPairCount, 1);
+  assert.match(openedDashboard.renderedHtml, /data-testid="dashboard-review-lens"/);
+  assert.match(openedDashboard.renderedHtml, /data-testid="dashboard-entry-provenance"/);
+  assert.equal(api.getOpenDashboardPanelCount(), 1);
+
+  const dashboardRecord = JSON.parse(
+    await fs.readFile(dashboardAction.dashboardJsonFilePath ?? '', 'utf8')
+  ) as DashboardRecord;
+  const archivedEntry = dashboardRecord.entries.find(
+    (entry) => Array.isArray(entry.artifactLinks) && entry.artifactLinks.length > 0
+  );
+  assert.ok(archivedEntry);
+  const packetArtifact = archivedEntry.artifactLinks?.find((artifact) => artifact.kind === 'packet-html');
+  const metadataArtifact = archivedEntry.artifactLinks?.find(
+    (artifact) => artifact.kind === 'metadata-json'
+  );
+  assert.ok(packetArtifact);
+  assert.ok(metadataArtifact);
+
+  await api.dispatchLastDashboardPanelMessage({
+    command: 'openDashboardArtifact',
+    kind: packetArtifact.kind,
+    label: packetArtifact.label,
+    filePath: packetArtifact.filePath
+  });
+  const packetArtifactAction = api.getLastDashboardArtifactActionSummary();
+  assert.ok(packetArtifactAction);
+  assert.equal(packetArtifactAction.command, 'openDashboardArtifact');
+  assert.equal(packetArtifactAction.outcome, 'opened-artifact-panel');
+  assert.equal(packetArtifactAction.kind, 'packet-html');
+  assert.equal(packetArtifactAction.filePath, packetArtifact.filePath);
+  assert.ok(packetArtifactAction.openedUri);
+
+  await api.dispatchLastDashboardPanelMessage({
+    command: 'openDashboardArtifact',
+    kind: metadataArtifact.kind,
+    label: metadataArtifact.label,
+    filePath: metadataArtifact.filePath
+  });
+  const metadataArtifactAction = api.getLastDashboardArtifactActionSummary();
+  assert.ok(metadataArtifactAction);
+  assert.equal(metadataArtifactAction.command, 'openDashboardArtifact');
+  assert.equal(metadataArtifactAction.outcome, 'opened-artifact-editor');
+  assert.equal(metadataArtifactAction.kind, 'metadata-json');
+  assert.equal(metadataArtifactAction.filePath, metadataArtifact.filePath);
+  assert.equal(api.getDashboardArtifactActionCount(), 2);
+
+  await api.dispatchLastPanelMessage({
+    command: 'openDashboard'
+  });
+  const refreshedDashboardAction = api.getLastPanelActionSummary();
+  assert.ok(refreshedDashboardAction);
+  assert.equal(refreshedDashboardAction.command, 'openDashboard');
+  assert.equal(refreshedDashboardAction.outcome, 'opened-review-dashboard');
+  assert.equal(api.getOpenDashboardPanelCount(), 2);
+  assert.equal(api.getPanelActionCount(), 7);
 }
 
 async function waitFor(

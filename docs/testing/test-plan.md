@@ -600,12 +600,35 @@
   adjacent pairs
 - `TEST-UNIT-180`: prove the dashboard action webview renders the concentrated
   metadata-first review lens and labeled NI metadata surface
+- `TEST-UNIT-181`: prove the canonical dashboard smoke runner retains a factual
+  dashboard-smoke artifact set with a bounded three-commit window, pair
+  summaries, and concentrated dashboard summary counts
+- `TEST-UNIT-182`: prove the dashboard smoke CLI parses bounded runtime and
+  commit-window overrides, writes a stable success summary, and supports help
+  plus process-style exit codes
+- `TEST-INTEG-007`: run the real extension-host dashboard flow, retain the
+  opened dashboard panel HTML/path summary, and prove `packet-html` and
+  `metadata-json` artifact-open behavior through the real dashboard message
+  handler
+- `TEST-INTEG-008`: run the real extension-host dashboard flow twice and prove
+  repeated `openDashboard` requests reopen the dashboard as a refresh action
+  with incremented dashboard-open tracking
+- `TEST-UNIT-183`: prove dashboard panel tracking retains a separate dashboard
+  panel summary, dashboard artifact action summary, dashboard message
+  dispatcher, and clear behavior without overwriting the history-panel tracker
+- `TEST-SMOKE-001`: run `npm run harness:dashboard:smoke -- --platform win32
+  --prefer-bitness auto --dashboard-commit-window 3` and retain
+  `dashboard-smoke.json`, `dashboard-smoke.md`, and `dashboard-smoke.html`
+  under `.cache/harness-reports/HARNESS-VHS-001/`
 - `TEST-DOC-014`: review the queue, epic, ADR, and current-state surfaces to
   prove the future-facing dashboard research was normalized into governed repo
   control-plane artifacts and the incoming research artifact was deleted
 - `TEST-DOC-015`: review the repo entrypoints, architecture, alignment matrix,
   and queue to prove Windows 64-bit isolated container execution is no longer
   described as future-only once the canonical NI smoke lane succeeds
+- `TEST-DOC-016`: review the repo entrypoints and research-control-plane docs
+  to prove live dashboard smoke and extension-host dashboard proof are
+  described as implemented evidence instead of future-only dashboard intent
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

@@ -1,6 +1,10 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
+import {
+  archiveComparisonReportSource,
+  ArchivedComparisonReportSourceRecord
+} from '../dashboard/comparisonReportArchive';
 import { getRepoHead } from '../git/gitCli';
 import {
   ComparisonRuntimeEngine,
@@ -102,9 +106,18 @@ export interface HarnessReportSmokeDeps {
   locateComparisonRuntime?: typeof locateComparisonRuntime;
   persistComparisonReportPacket?: typeof persistComparisonReportPacket;
   executeComparisonReport?: typeof executeComparisonReport;
+  archiveComparisonReportSource?: typeof archiveComparisonReportSource;
   now?: () => string;
   pathExists?: typeof fs.stat;
   hostPlatform?: NodeJS.Platform;
+}
+
+export interface HarnessComparisonReportExecutionResult {
+  record: ComparisonReportPacketRecord;
+  packetFilePath: string;
+  reportFilePath: string;
+  metadataFilePath: string;
+  archivedSourceRecord?: ArchivedComparisonReportSourceRecord;
 }
 
 export async function runHarnessReportSmoke(
@@ -193,6 +206,42 @@ async function buildHarnessReportExecutionReport(
   options: HarnessReportSmokeOptions,
   deps: HarnessReportSmokeDeps
 ): Promise<HarnessReportSmokeReport> {
+  const execution = await executeHarnessComparisonReportForCommit(
+    definition,
+    cloneDirectory,
+    head,
+    model,
+    signature,
+    compareCommit,
+    options,
+    deps
+  );
+
+  return buildHarnessReportSmokeReport({
+    definition,
+    cloneDirectory,
+    head,
+    model,
+    signature,
+    packetRecord: execution.record,
+    packetFilePath: execution.packetFilePath,
+    reportFilePath: execution.reportFilePath,
+    metadataFilePath: execution.metadataFilePath,
+    generatedAt: (deps.now ?? defaultNow)()
+  });
+}
+
+export async function executeHarnessComparisonReportForCommit(
+  definition: CanonicalHarnessDefinition,
+  cloneDirectory: string,
+  head: string,
+  model: ViHistoryViewModel,
+  signature: ViHistoryViewModel['signature'],
+  compareCommit: ViHistoryViewModel['commits'][number],
+  options: HarnessReportSmokeOptions,
+  deps: HarnessReportSmokeDeps,
+  archiveResult = false
+): Promise<HarnessComparisonReportExecutionResult> {
   const preflight = await (deps.preflightComparisonReportRevisions ??
     preflightComparisonReportRevisions)({
     repoRoot: cloneDirectory,
@@ -234,18 +283,16 @@ async function buildHarnessReportExecutionReport(
     });
   }
 
-  return buildHarnessReportSmokeReport({
-    definition,
-    cloneDirectory,
-    head,
-    model,
-    signature,
-    packetRecord: packet.record,
+  return {
+    record: packet.record,
     packetFilePath: packet.packetFilePath,
     reportFilePath: packet.reportFilePath,
     metadataFilePath: packet.metadataFilePath,
-    generatedAt: (deps.now ?? defaultNow)()
-  });
+    archivedSourceRecord:
+      archiveResult && canArchiveComparisonReport(packet.record)
+        ? await (deps.archiveComparisonReportSource ?? archiveComparisonReportSource)(packet.record)
+        : undefined
+  };
 }
 
 export function applyRuntimeEngineOverride(
@@ -535,7 +582,7 @@ function resolveCurrentRuntimePlatform(): RuntimePlatform {
   return resolveHarnessReportSmokeRuntimePlatform(process.platform);
 }
 
-async function resolveHarnessWindowsInteropRoot(
+export async function resolveHarnessWindowsInteropRoot(
   configuredRoot: string | undefined,
   reportScopedFallback: string,
   runtimePlatform: RuntimePlatform,
@@ -593,4 +640,13 @@ async function canWriteDirectory(directoryPath: string, deps: HarnessReportSmoke
   } catch {
     return false;
   }
+}
+
+function canArchiveComparisonReport(record: ComparisonReportPacketRecord): boolean {
+  return Boolean(
+    record.artifactPlan.allowedLocalRootPaths?.[0] &&
+      record.artifactPlan.normalizedRelativePath &&
+      record.artifactPlan.reportFilename &&
+      record.artifactPlan.packetFilename
+  );
 }

@@ -106,6 +106,10 @@ Committed and governed today:
   `*-report-*.html` files from workspace-scoped extension storage
 - canonical real-history smoke and canonical comparison-report smoke on
   `HARNESS-VHS-001`
+- canonical dashboard smoke on `HARNESS-VHS-001`, with retained three-commit
+  concentration artifacts under `.cache/harness-reports/HARNESS-VHS-001/`
+- real extension-host dashboard proof for dashboard-open, dashboard-refresh,
+  and governed artifact-open behavior
 - retained design gate that chooses the next tranche from committed evidence
 - retained design gate that refreshes `latest-report.{json,md}` after each
   successful stage so a stuck assurance tail does not leave stale tranche
@@ -148,6 +152,7 @@ Primary commands:
   - standards quick-triage assurance
 - `npm run harness:smoke`
 - `npm run harness:report:smoke`
+- `npm run harness:dashboard:smoke`
 
 Primary generated evidence:
 
@@ -155,6 +160,7 @@ Primary generated evidence:
 - `.cache/design-gate/latest-report.md`
 - `.cache/harness-reports/HARNESS-VHS-001/report.json`
 - `.cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.json`
+- `.cache/harness-reports/HARNESS-VHS-001/dashboard-smoke.json`
 - `<workspace-storage>/report-history/<repoId>/<fileId>/pairs/<pairId>/source-record.json`
 - `<workspace-storage>/dashboards/<repoId>/<fileId>/<windowId>/dashboard.json`
 - `<workspace-storage>/dashboards/<repoId>/<fileId>/<windowId>/dashboard.html`
@@ -170,6 +176,7 @@ The canonical real-history harness is `HARNESS-VHS-001`, backed by
 
 - history smoke via `npm run harness:smoke`
 - comparison-report smoke via `npm run harness:report:smoke`
+- dashboard smoke via `npm run harness:dashboard:smoke`
 
 See [Harness Definitions](./docs/product/harnesses.md).
 

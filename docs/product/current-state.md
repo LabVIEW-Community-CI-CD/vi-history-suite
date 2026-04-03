@@ -54,7 +54,7 @@ Current control-plane surfaces:
 | Canonical comparison-report smoke lane | implemented with succeeded NI proof | `src/harness/harnessReportSmoke.ts`; `src/cli/runHarnessReportSmoke.ts`; `npm run harness:report:smoke`; `.cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.html`; `VHS-REQ-152..180`; `VHS-REQ-220` | sustain |
 | Indexing and report progress uplift | partial | `src/indexing/viEligibilityIndexer.ts`; `VHS-REQ-093`; research alignment marks this partial | `TRANCHE-004` |
 | Windows 64-bit isolated container provider | implemented and active | `docs/architecture/adr/ADR-0006-windows64-container-isolation-for-extension-users.md`; `src/reporting/comparisonRuntimeLocator.ts`; `src/reporting/comparisonReportRuntimeExecution.ts`; `VHS-REQ-146`; `VHS-REQ-217..220` | sustain |
-| Multi-report developer dashboard for one VI across at least three commits | partially implemented and active | `src/dashboard/comparisonReportArchive.ts`; `src/dashboard/niComparisonReportParser.ts`; `src/dashboard/multiReportDashboard.ts`; `src/dashboard/multiReportDashboardAction.ts`; `docs/architecture/adr/ADR-0009-dashboard-pair-archive-and-concentration-packet.md`; `VHS-REQ-212..215`; `VHS-REQ-221..223`; `VHS-REQ-237..238`; `VHS-REQ-268` | `TRANCHE-006` |
+| Multi-report developer dashboard for one VI across at least three commits | implemented and active with canonical dashboard smoke plus extension-host proof | `src/dashboard/comparisonReportArchive.ts`; `src/dashboard/niComparisonReportParser.ts`; `src/dashboard/multiReportDashboard.ts`; `src/dashboard/multiReportDashboardAction.ts`; `src/harness/harnessDashboardSmoke.ts`; `src/cli/runHarnessDashboardSmoke.ts`; `.cache/harness-reports/HARNESS-VHS-001/dashboard-smoke.json`; `tests/integration/suite/extensionHost.test.ts`; `VHS-REQ-212..215`; `VHS-REQ-221..223`; `VHS-REQ-237..238`; `VHS-REQ-268`; `VHS-REQ-295..300` | `TRANCHE-006` |
 | Review-scenario registry and human decision records | modeled, not yet implemented | `docs/product/review-scenarios.md`; `docs/product/decision-record-template.md`; `docs/research/authoritative/research-infrastructure.md` | `TRANCHE-007` |
 | Runtime-doctor and dashboard-refresh developer experience | partially implemented and active | `src/reporting/comparisonRuntimeDoctor.ts`; `src/reporting/comparisonRuntimeLocator.ts`; `src/reporting/comparisonReportPacket.ts`; `src/reporting/comparisonReportAction.ts`; `src/dashboard/multiReportDashboardAction.ts`; `src/commands/openViHistoryCommand.ts`; `VHS-REQ-224..236`; `VHS-REQ-241`; `VHS-REQ-244..247`; `VHS-REQ-251..258` | `TRANCHE-008` |
 
@@ -97,6 +97,10 @@ These are generated locally and are not the committed source of truth:
   - `.cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.json`
   - `.cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.md`
   - `.cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.html`
+- canonical dashboard smoke:
+  - `.cache/harness-reports/HARNESS-VHS-001/dashboard-smoke.json`
+  - `.cache/harness-reports/HARNESS-VHS-001/dashboard-smoke.md`
+  - `.cache/harness-reports/HARNESS-VHS-001/dashboard-smoke.html`
 - concentrated review dashboard:
   - `<workspace-storage>/report-history/<repoId>/<fileId>/pairs/<pairId>/source-record.json`
   - `<workspace-storage>/dashboards/<repoId>/<fileId>/<windowId>/dashboard.json`
@@ -110,6 +114,7 @@ Primary local commands:
 npm run design:gate
 npm run harness:smoke
 npm run harness:report:smoke
+npm run harness:dashboard:smoke
 ```
 
 ## Update Rule

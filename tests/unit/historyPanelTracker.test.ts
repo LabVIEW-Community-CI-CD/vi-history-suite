@@ -97,9 +97,77 @@ describe('HistoryPanelTracker', () => {
     });
   });
 
+  it('retains dashboard panel summaries, dispatchers, and artifact actions separately from history panels', async () => {
+    const tracker = new HistoryPanelTracker();
+    const dashboardDispatch = vi.fn().mockResolvedValue(undefined);
+
+    tracker.recordDashboard(
+      {
+        title: 'VI Review Dashboard: sample.vi',
+        relativePath: 'sample.vi',
+        commitCount: 3,
+        dashboardFilePath: '/workspace/.storage/dashboards/repo/file/window/dashboard.html',
+        dashboardJsonFilePath: '/workspace/.storage/dashboards/repo/file/window/dashboard.json',
+        dashboardPairCount: 2,
+        dashboardArchivedPairCount: 2,
+        dashboardMissingPairCount: 0,
+        renderedHtml: '<html>dashboard</html>'
+      },
+      dashboardDispatch
+    );
+    tracker.recordDashboardArtifactAction({
+      command: 'openDashboardArtifact',
+      outcome: 'opened-artifact-panel',
+      kind: 'packet-html',
+      label: 'Open archived packet',
+      filePath: '/workspace/.storage/report-history/repo/file/pairs/pair123/report-packet.html',
+      title: 'Open archived packet',
+      openedUri: 'webview:/workspace/.storage/report-history/repo/file/pairs/pair123/report-packet.html'
+    });
+
+    expect(tracker.getDashboardOpenCount()).toBe(1);
+    expect(tracker.getLastOpenedDashboardPanel()).toEqual({
+      title: 'VI Review Dashboard: sample.vi',
+      relativePath: 'sample.vi',
+      commitCount: 3,
+      dashboardFilePath: '/workspace/.storage/dashboards/repo/file/window/dashboard.html',
+      dashboardJsonFilePath: '/workspace/.storage/dashboards/repo/file/window/dashboard.json',
+      dashboardPairCount: 2,
+      dashboardArchivedPairCount: 2,
+      dashboardMissingPairCount: 0,
+      renderedHtml: '<html>dashboard</html>'
+    });
+    expect(tracker.getDashboardArtifactActionCount()).toBe(1);
+    expect(tracker.getLastDashboardArtifactActionSummary()).toEqual({
+      command: 'openDashboardArtifact',
+      outcome: 'opened-artifact-panel',
+      kind: 'packet-html',
+      label: 'Open archived packet',
+      filePath: '/workspace/.storage/report-history/repo/file/pairs/pair123/report-packet.html',
+      title: 'Open archived packet',
+      openedUri: 'webview:/workspace/.storage/report-history/repo/file/pairs/pair123/report-packet.html'
+    });
+
+    await expect(
+      tracker.dispatchLastDashboardPanelMessage({
+        command: 'openDashboardArtifact',
+        kind: 'metadata-json',
+        label: 'Open archived metadata',
+        filePath: '/workspace/.storage/report-history/repo/file/pairs/pair123/report-metadata.json'
+      })
+    ).resolves.toBeUndefined();
+    expect(dashboardDispatch).toHaveBeenCalledWith({
+      command: 'openDashboardArtifact',
+      kind: 'metadata-json',
+      label: 'Open archived metadata',
+      filePath: '/workspace/.storage/report-history/repo/file/pairs/pair123/report-metadata.json'
+    });
+  });
+
   it('clears retained panel, action, and dispatcher state', async () => {
     const tracker = new HistoryPanelTracker();
     const dispatchMessage = vi.fn().mockResolvedValue(undefined);
+    const dashboardDispatch = vi.fn().mockResolvedValue(undefined);
 
     tracker.record(
       {
@@ -122,19 +190,51 @@ describe('HistoryPanelTracker', () => {
       outcome: 'copied-hash',
       copiedHash: 'abcdef1234567890'
     });
+    tracker.recordDashboard(
+      {
+        title: 'VI Review Dashboard: sample.vi',
+        relativePath: 'sample.vi',
+        commitCount: 3,
+        dashboardFilePath: '/workspace/.storage/dashboards/repo/file/window/dashboard.html',
+        dashboardJsonFilePath: '/workspace/.storage/dashboards/repo/file/window/dashboard.json',
+        dashboardPairCount: 2,
+        dashboardArchivedPairCount: 1,
+        dashboardMissingPairCount: 1,
+        renderedHtml: '<html>dashboard</html>'
+      },
+      dashboardDispatch
+    );
+    tracker.recordDashboardArtifactAction({
+      command: 'openDashboardArtifact',
+      outcome: 'opened-artifact-editor',
+      kind: 'metadata-json',
+      label: 'Open archived metadata',
+      filePath: '/workspace/.storage/report-history/repo/file/pairs/pair123/report-metadata.json'
+    });
 
     tracker.clear();
 
     expect(tracker.getOpenCount()).toBe(0);
     expect(tracker.getActionCount()).toBe(0);
+    expect(tracker.getDashboardOpenCount()).toBe(0);
+    expect(tracker.getDashboardArtifactActionCount()).toBe(0);
     expect(tracker.getLastOpenedPanel()).toBeUndefined();
     expect(tracker.getLastActionSummary()).toBeUndefined();
+    expect(tracker.getLastOpenedDashboardPanel()).toBeUndefined();
+    expect(tracker.getLastDashboardArtifactActionSummary()).toBeUndefined();
 
     await tracker.dispatchLastPanelMessage({
       command: 'copyHash',
       hash: 'abcdef1234567890'
     });
+    await tracker.dispatchLastDashboardPanelMessage({
+      command: 'openDashboardArtifact',
+      kind: 'metadata-json',
+      label: 'Open archived metadata',
+      filePath: '/workspace/.storage/report-history/repo/file/pairs/pair123/report-metadata.json'
+    });
 
     expect(dispatchMessage).not.toHaveBeenCalled();
+    expect(dashboardDispatch).not.toHaveBeenCalled();
   });
 });
