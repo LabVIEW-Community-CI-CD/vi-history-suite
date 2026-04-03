@@ -29,8 +29,9 @@ If you are new to the repo, read these in order:
 9. [Documentation Coherence Ledger](./docs/product/documentation-coherence-ledger.md)
 10. [Wiki Seed Plan](./docs/product/wiki-seed-plan.md)
 11. [Wiki Publication Ledger](./docs/product/wiki-publication-ledger.md)
-12. [PROGRAM-0001: Next Product Layer](./docs/product/execution-programs/PROGRAM-0001-next-product-layer.md)
-13. [Documentation Package Workbench](./docs/documentation-workbench.md)
+12. [Documentation Package Workbench](./docs/documentation-workbench.md)
+13. [Program Repo Jump](./docs/product/program-repo-jump.md)
+14. [PROGRAM-0001: Next Product Layer](./docs/product/execution-programs/PROGRAM-0001-next-product-layer.md)
 
 For machine-friendly repo orientation, start with:
 
@@ -74,6 +75,7 @@ Use these repo-native control-plane entrypoints instead:
 - [Wiki Seed Plan](./docs/product/wiki-seed-plan.md)
 - [Wiki Publication Ledger](./docs/product/wiki-publication-ledger.md)
 - [Documentation Package Workbench](./docs/documentation-workbench.md)
+- [Program Repo Jump](./docs/product/program-repo-jump.md)
 - [Review Scenarios](./docs/product/review-scenarios.md)
 - [Harness Definitions](./docs/product/harnesses.md)
 - [Software Requirements Specification](./docs/requirements/srs.md)
@@ -158,6 +160,9 @@ Committed and governed today:
 - a published docs-authoring workbench image plus a repo-native docs gate for
   iterating on requirements, ADRs, release-readiness docs, and future
   wiki-source material in a governed environment
+- a governed cross-repo jump surface that resolves the product repo, wiki repo,
+  and companion `repo-standards-review` skill repo from one local map and one
+  CLI entrypoint
 - a retained documentation coherence ledger and wiki seed plan so future wiki
   work starts from governed docs instead of source or chat memory
 - a retained wiki publication ledger so actual published wiki pages are tracked
@@ -214,6 +219,7 @@ See:
 - [Wiki Seed Plan](./docs/product/wiki-seed-plan.md)
 - [Wiki Publication Ledger](./docs/product/wiki-publication-ledger.md)
 - [Documentation Package Workbench](./docs/documentation-workbench.md)
+- [Program Repo Jump](./docs/product/program-repo-jump.md)
 - [Release Procedure](./docs/release-procedure.md)
 - [Fast VS Code Loop](./docs/dev-fast-loop.md)
 - [Research Alignment Matrix](./docs/research/authoritative/research-alignment.md)

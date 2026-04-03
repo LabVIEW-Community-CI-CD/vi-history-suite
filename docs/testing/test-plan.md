@@ -796,6 +796,17 @@
 - `TEST-UNIT-220`: verify dashboard opening returns a stable cancelled outcome
   with retained dashboard artifact paths when cancellation is requested before
   the dashboard view opens
+- `TEST-UNIT-221`: verify the governed repo-jump CLI parses stable args,
+  resolves current-repo, sibling-repo, and Codex-skill path strategies, and
+  renders deterministic text and JSON output
+- `TEST-UNIT-222`: verify the manifest and documentation entrypoints expose the
+  governed cross-repo jump surface and its local CLI script
+- `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
+  governed product, wiki, and assurance-skill repos with authority roles,
+  expected remotes, and primary entrypoints
+- `TEST-DOC-029`: review the documentation package and confirm README,
+  current-state, architecture, workbench, and coherence surfaces point future
+  sessions to the governed cross-repo jump surface
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

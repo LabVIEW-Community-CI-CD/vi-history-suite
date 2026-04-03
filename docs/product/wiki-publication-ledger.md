@@ -17,6 +17,7 @@ remains the authority of record.
 | Install And Release | `Install-And-Release` | published | `2026-04-03` | `eb4febe` | `docs/release-procedure.md`; `docs/product/release-readiness-matrix.json`; `README.md`; `docs/product/blocker-ledger.json` |
 | User Workflow | `User-Workflow` | published | `2026-04-03` | `db44152` | `docs/requirements/srs.md`; `docs/product/current-state.md`; `README.md`; `docs/testing/test-plan.md` |
 | Comparison Reports And Dashboard Review | `Comparison-Reports-And-Dashboard-Review` | published | `2026-04-03` | `9b32d5a` | `docs/requirements/srs.md`; `docs/product/ni-comparison-report-metadata-inventory.md`; `docs/product/current-state.md`; `docs/testing/test-plan.md`; `docs/research/authoritative/research-alignment.md` |
+| Review Scenarios And Decision Records | `Review-Scenarios-And-Decision-Records` | published | `2026-04-03` | `5c1d3ef` | `docs/product/review-scenarios.md`; `docs/product/decision-record-template.md`; `docs/requirements/srs.md`; `docs/testing/test-plan.md`; `docs/product/current-state.md` |
 
 ## Publication Rules
 
@@ -31,11 +32,9 @@ remains the authority of record.
 
 The next incremental page, once the documentation package is ready, is:
 
-1. **Review Scenarios And Decision Records**
+1. **Architecture**
    - primary authority:
-     - `docs/requirements/srs.md`
-     - `docs/product/review-scenarios.md`
-     - `docs/product/decision-record-template.md`
+     - `docs/architecture/overview.md`
+     - `docs/architecture/adr/`
    - secondary authority:
-     - `docs/testing/test-plan.md`
-     - `docs/product/current-state.md`
+     - `docs/requirements/srs.md`

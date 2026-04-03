@@ -42,6 +42,7 @@
 | Harness smoke runner | clone-on-demand canonical harness verification | TypeScript / Node CLI |
 | Governance pack | requirements, tests, ADRs, traceability | Markdown / CSV |
 | Documentation-package workbench | requirements, ADR, RTM, release-readiness, and wiki-authority iteration | Docker / Node / Markdown tooling |
+| Cross-repo navigation surface | local jump map and repo-entrypoint CLI for the product repo, wiki repo, and companion assurance skill repo | Markdown / JSON / TypeScript CLI |
 
 ## Component View
 
@@ -100,8 +101,10 @@
   - dashboard ETA quality is currently characterized through retained
     pair-level benchmark evidence; it is not yet treated as a calibrated
     release gate
-  - documentation-package iteration now has its own published workbench image,
-    separate from extension runtime proof lanes
+- documentation-package iteration now has its own published workbench image,
+  separate from extension runtime proof lanes
+- cross-repo navigation is governed from the main repo docs package and
+  mirrored into the assurance skill instead of being rediscovered per session
 
 ## ADR Index
 
@@ -131,3 +134,5 @@
   Documentation-package workbench image
 - [ADR-0013](./adr/ADR-0013-authority-first-wiki-seeding.md):
   Authority-first wiki seeding from the governed docs package
+- [ADR-0014](./adr/ADR-0014-cross-repo-navigation-control-plane.md):
+  Cross-repo navigation control plane

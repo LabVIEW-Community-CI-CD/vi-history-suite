@@ -123,6 +123,7 @@
     "dev:watch": "tsc -p . --watch --preserveWatchOutput",
     "dev:workspace": "npm run compile && node out/cli/runDevHost.js --prepare-workspace-only",
     "dev:host": "npm run compile && node out/cli/runDevHost.js",
+    "program:repos": "npm run compile && node out/cli/runProgramRepoJump.js",
     "docs:gate": "node scripts/run-docs-gate.js",
     "docs:gate:core": "node scripts/run-docs-gate.js --skip-links",
     "docs:workbench:build": "docker build -f docker/docs-authoring/Dockerfile -t vi-history-suite-docs-authoring:local .",

@@ -79,6 +79,7 @@ Do not create or refresh wiki pages until these are true:
 - user workflow: README, current state, SRS
 - architecture: architecture overview plus ADRs
 - documentation-package iteration: `docs/documentation-workbench.md`
+- cross-repo orientation: `docs/product/program-repo-jump.md`
 - documentation coherence: `docs/product/documentation-coherence-ledger.md`
 - incremental wiki page order: `docs/product/wiki-seed-plan.md`
 - published wiki inventory: `docs/product/wiki-publication-ledger.md`

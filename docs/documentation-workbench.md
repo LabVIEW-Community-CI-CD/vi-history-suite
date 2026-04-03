@@ -83,6 +83,15 @@ Primary repo surfaces for that work include:
 - `docs/product/wiki-seed-plan.md`
 - `docs/product/wiki-publication-ledger.md`
 - `docs/product/wiki-authority-map.md`
+- `docs/product/program-repo-jump.md`
+
+Use the governed local repo-jump surface when the work spans this repo, the
+wiki repo, and the companion assurance-skill repo:
+
+```bash
+npm run program:repos
+python3 /mnt/c/Users/sveld/.codex/skills/repo-standards-review/scripts/repo_jump.py /home/sveld/code/standards/vi-history-suite --format text
+```
 
 Do not use this workbench as the primary surface for:
 

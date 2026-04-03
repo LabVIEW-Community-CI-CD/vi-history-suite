@@ -92,12 +92,15 @@ describe('extension manifest research alignment', () => {
     );
   });
 
-  it('exposes the fast local VS Code loop, docs-package workbench, and preview refresh scripts', () => {
+  it('exposes the fast local VS Code loop, docs-package workbench, repo-jump, and preview refresh scripts', () => {
     const manifest = readManifest();
 
     expect(manifest.scripts?.['dev:watch']).toBe('tsc -p . --watch --preserveWatchOutput');
     expect(manifest.scripts?.['dev:workspace']).toContain('runDevHost.js --prepare-workspace-only');
     expect(manifest.scripts?.['dev:host']).toContain('runDevHost.js');
+    expect(manifest.scripts?.['program:repos']).toBe(
+      'npm run compile && node out/cli/runProgramRepoJump.js'
+    );
     expect(manifest.scripts?.['docs:gate']).toBe('node scripts/run-docs-gate.js');
     expect(manifest.scripts?.['docs:gate:core']).toBe(
       'node scripts/run-docs-gate.js --skip-links'

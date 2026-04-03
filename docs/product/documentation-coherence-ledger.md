@@ -22,6 +22,8 @@ source inference or chat memory.
 - `docs/product/wiki-authority-map.md`
 - `docs/product/wiki-seed-plan.md`
 - `docs/product/wiki-publication-ledger.md`
+- `docs/product/program-repo-jump.md`
+- `docs/product/program-repo-jump-map.json`
 - `docs/documentation-workbench.md`
 - `docs/release-procedure.md`
 - `docs/research/authoritative/research-alignment.md`
@@ -47,6 +49,7 @@ source inference or chat memory.
 | DOC-002 | architecture docs | `docs/architecture/overview.md` referenced `ADR-0012` even though the ADR file was absent | `ADR-0012` is now committed as the architecture decision for the docs-authoring workbench image |
 | DOC-003 | wiki preparation | wiki generation rules existed, but there was no retained page-seeding surface or coherence ledger to ground incremental work | added this ledger, a wiki seed plan, and `ADR-0013` to keep wiki work authority-first |
 | DOC-004 | decision-record docs | repeated reviewer entry in the extension-facing flow was not modeled in requirements/docs | decision-record reviewer defaults are now implemented and reflected in SRS, RTM, test plan, and current state |
+| DOC-005 | cross-repo navigation | documentation-package and skill work spanned three repos, but there was no governed local jump surface tying product, wiki, and assurance entrypoints together | added `program-repo-jump-map.json`, `program-repo-jump.md`, `ADR-0014`, a local `program:repos` CLI, and a mirrored `repo_jump.py` surface in `repo-standards-review` |
 
 ## Current Internal Status
 
@@ -60,9 +63,9 @@ source inference or chat memory.
 
 ## Residual External Risks
 
-- The `repo-standards-review` skill update is published on
-  `codex/repo-docs-workbench-integration` and still depends on a later merge to
-  protected `main`.
+- The companion `repo-standards-review` release is tagged locally as `v0.2.2`,
+  but GitLab release-publication proof could not be confirmed through the local
+  API path on this machine.
 - The docs-authoring image is fully wired in the repo and CI, but local Docker
   runtime proof is still environment-dependent on this machine.
 - The first successful retained `v0.2.0` tag pipeline remains an open release
@@ -72,8 +75,8 @@ source inference or chat memory.
 
 1. Keep the docs gate and standards-review release gate green after each
    documentation tranche.
-2. Merge the `repo-standards-review` skill branch so docs-workbench discovery
-   becomes default skill behavior.
+2. Keep the `repo-standards-review` jump resolver and docs-workbench discovery
+   surfaces aligned with `docs/product/program-repo-jump-map.json`.
 3. Continue wiki drafting in the incremental order retained in
    `wiki-seed-plan.md`, with each publication recorded in
    `docs/product/wiki-publication-ledger.md`.

@@ -24,7 +24,9 @@ Do not draft or refresh wiki pages until:
   `docs/product/wiki-publication-ledger.md`
 - **Comparison Reports And Dashboard Review**: published on `2026-04-03`; see
   `docs/product/wiki-publication-ledger.md`
-- **Next page**: `Review Scenarios And Decision Records`
+- **Review Scenarios And Decision Records**: published on `2026-04-03`; see
+  `docs/product/wiki-publication-ledger.md`
+- **Next page**: `Architecture`
 
 ## Page Order
 

@@ -1,0 +1,57 @@
+{
+  "programId": "comparevi",
+  "version": 1,
+  "description": "Governed local navigation map for the VI History Suite product repo, its derived wiki repo, and the companion repo-standards-review assurance skill repo.",
+  "repos": [
+    {
+      "id": "vi-history-suite",
+      "displayName": "VI History Suite",
+      "role": "product-authority",
+      "expectedRemote": "https://gitlab.com/svelderrainruiz/vi-history-suite.git",
+      "localPath": {
+        "kind": "current-repo"
+      },
+      "primaryEntrypoints": [
+        "README.md",
+        "docs/product/current-state.md",
+        "docs/product/SHIP-0001-releasable-vi-history-suite.md",
+        "docs/product/wiki-authority-map.md",
+        "docs/documentation-workbench.md"
+      ]
+    },
+    {
+      "id": "vi-history-suite.wiki",
+      "displayName": "VI History Suite Wiki",
+      "role": "derived-reader-surface",
+      "expectedRemote": "https://gitlab.com/svelderrainruiz/vi-history-suite.wiki.git",
+      "localPath": {
+        "kind": "sibling",
+        "relativePath": "../vi-history-suite.wiki"
+      },
+      "primaryEntrypoints": [
+        "home.md",
+        "Install-And-Release.md",
+        "User-Workflow.md",
+        "Comparison-Reports-And-Dashboard-Review.md",
+        "Review-Scenarios-And-Decision-Records.md"
+      ]
+    },
+    {
+      "id": "repo-standards-review",
+      "displayName": "repo-standards-review",
+      "role": "assurance-skill",
+      "expectedRemote": "https://gitlab.com/svelderrainruiz/repo-standards-review.git",
+      "localPath": {
+        "kind": "codex-skill",
+        "skillName": "repo-standards-review"
+      },
+      "primaryEntrypoints": [
+        "README.md",
+        "SKILL.md",
+        "references/repo-workbench-integration.md",
+        "scripts/repo_docs_workbench.py",
+        "scripts/repo_jump.py"
+      ]
+    }
+  ]
+}

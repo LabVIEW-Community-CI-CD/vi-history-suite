@@ -25,8 +25,9 @@ Read these in order:
 9. [documentation-coherence-ledger.md](./documentation-coherence-ledger.md)
 10. [wiki-seed-plan.md](./wiki-seed-plan.md)
 11. [wiki-publication-ledger.md](./wiki-publication-ledger.md)
-12. [PROGRAM-0001: Next Product Layer](./execution-programs/PROGRAM-0001-next-product-layer.md)
-13. [Documentation Package Workbench](../documentation-workbench.md)
+12. [Documentation Package Workbench](../documentation-workbench.md)
+13. [program-repo-jump.md](./program-repo-jump.md)
+14. [PROGRAM-0001: Next Product Layer](./execution-programs/PROGRAM-0001-next-product-layer.md)
 
 ## Authority Stack
 
@@ -53,9 +54,10 @@ Current control-plane surfaces:
 9. [documentation-coherence-ledger.md](./documentation-coherence-ledger.md)
 10. [wiki-seed-plan.md](./wiki-seed-plan.md)
 11. [wiki-publication-ledger.md](./wiki-publication-ledger.md)
-12. [PROGRAM-0001: Next Product Layer](./execution-programs/PROGRAM-0001-next-product-layer.md)
-13. [Fast VS Code Loop](../dev-fast-loop.md)
-14. [Documentation Package Workbench](../documentation-workbench.md)
+12. [Documentation Package Workbench](../documentation-workbench.md)
+13. [program-repo-jump.md](./program-repo-jump.md)
+14. [PROGRAM-0001: Next Product Layer](./execution-programs/PROGRAM-0001-next-product-layer.md)
+15. [Fast VS Code Loop](../dev-fast-loop.md)
 
 ## Committed Capability State
 
@@ -74,6 +76,7 @@ Current control-plane surfaces:
 | Runtime-doctor and dashboard-refresh developer experience | partially implemented and active | `src/reporting/comparisonRuntimeDoctor.ts`; `src/reporting/comparisonRuntimeLocator.ts`; `src/reporting/comparisonReportPacket.ts`; `src/reporting/comparisonReportAction.ts`; `src/dashboard/multiReportDashboardAction.ts`; `src/commands/openViHistoryCommand.ts`; `VHS-REQ-224..236`; `VHS-REQ-241`; `VHS-REQ-244..247`; `VHS-REQ-251..258` | `TRANCHE-008` |
 | Ship-control system and SemVer release target | implemented and active with preview VSIX delivery plus first tagged release proof pending, and a governed wiki-authority map that constrains future wiki generation to repo docs instead of source or chat memory | `docs/product/SHIP-0001-releasable-vi-history-suite.md`; `docs/product/release-readiness-matrix.json`; `docs/product/blocker-ledger.json`; `docs/product/wiki-authority-map.md`; `docs/release-procedure.md`; `.gitlab-ci.yml`; `tests/unit/shipControlDocs.test.ts`; `VHS-REQ-313..323` | `TRANCHE-009` |
 | Documentation-package workbench image and docs gate | implemented and active with a repo-published docs-authoring image, local workbench commands, a repo-native docs gate, a retained documentation coherence ledger, a wiki seed plan, a wiki publication ledger, and a retained publish-manifest lane for future documentation and wiki iteration | `docker/docs-authoring/Dockerfile`; `docker/docs-authoring/entrypoint.sh`; `scripts/run-docs-gate.js`; `docs/documentation-workbench.md`; `docs/product/documentation-coherence-ledger.md`; `docs/product/wiki-seed-plan.md`; `docs/product/wiki-publication-ledger.md`; `.gitlab-ci.yml`; `tests/unit/docsWorkbenchDocs.test.ts`; `VHS-REQ-350..360` | `TRANCHE-009` |
+| Cross-repo navigation control plane | implemented and active with a governed repo-constellation map, a local repo-jump CLI, and mirrored skill-side resolver entrypoints for `vi-history-suite`, `vi-history-suite.wiki`, and `repo-standards-review` | `docs/product/program-repo-jump-map.json`; `docs/product/program-repo-jump.md`; `src/tooling/programRepoJump.ts`; `src/cli/runProgramRepoJump.ts`; `tests/unit/runProgramRepoJumpCli.test.ts`; `VHS-REQ-364..366` | `TRANCHE-009` |
 | Fast local VS Code development-host loop | implemented and active with reusable fixture-workspace prep, explicit workspace override, direct or staged extension-host launch, explicit Linux/Windows integration-host selection, Linux runtime preflight, and a least-privilege root-owned Linux bootstrap command | `src/tooling/devHostLoop.ts`; `src/cli/runDevHost.ts`; `src/tooling/integrationHostRuntime.ts`; `docs/dev-fast-loop.md`; `package.json`; `tests/unit/runDevHostCli.test.ts`; `tests/unit/integrationHostRuntime.test.ts`; `tests/unit/packageManifest.test.ts`; `VHS-REQ-338..339`; `VHS-REQ-344..346`; `docs/architecture/adr/ADR-0010-dual-host-extension-proof-and-linux-bootstrap.md` | sustain |
 
 ## Active Queue
@@ -108,6 +111,7 @@ The queue source of truth is:
 - [wiki-publication-ledger.md](./wiki-publication-ledger.md)
 - [release-procedure.md](../release-procedure.md)
 - [Documentation Package Workbench](../documentation-workbench.md)
+- [program-repo-jump.md](./program-repo-jump.md)
 
 ## Research Refresh
 
@@ -172,6 +176,7 @@ npm run harness:decision:record
 npm run docs:gate
 npm run docs:workbench:build
 npm run docs:workbench:gate
+npm run program:repos
 npm run test:integration:linux
 npm run test:integration:windows
 ```
@@ -188,6 +193,7 @@ When the repo meaningfully changes, update these together:
 - [release-readiness-matrix.json](./release-readiness-matrix.json)
 - [blocker-ledger.json](./blocker-ledger.json)
 - [wiki-authority-map.md](./wiki-authority-map.md)
+- [program-repo-jump.md](./program-repo-jump.md)
 - [Documentation Package Workbench](../documentation-workbench.md)
 - [Software Requirements Specification](../requirements/srs.md)
 - [Traceability Matrix](../requirements/rtm.csv)

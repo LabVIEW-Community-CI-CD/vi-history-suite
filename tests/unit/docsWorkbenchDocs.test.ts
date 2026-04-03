@@ -110,6 +110,8 @@ describe('documentation-package workbench', () => {
     const dockerfile = readText('docker/docs-authoring/Dockerfile');
     const entrypoint = readText('docker/docs-authoring/entrypoint.sh');
     const workbenchDoc = readText('docs/documentation-workbench.md');
+    const programRepoJump = readText('docs/product/program-repo-jump.md');
+    const programRepoJumpMap = readText('docs/product/program-repo-jump-map.json');
     const wikiPublicationLedger = readText('docs/product/wiki-publication-ledger.md');
     const gitlabCi = readText('.gitlab-ci.yml');
 
@@ -126,6 +128,7 @@ describe('documentation-package workbench', () => {
     expect(manifest.scripts?.['docs:workbench:shell']).toContain(
       'vi-history-suite-docs-authoring:local bash'
     );
+    expect(manifest.scripts?.['program:repos']).toContain('runProgramRepoJump.js');
 
     expect(dockerfile).toContain('FROM node:24-bookworm');
     expect(dockerfile).toContain('lychee-x86_64-unknown-linux-gnu.tar.gz');
@@ -139,6 +142,19 @@ describe('documentation-package workbench', () => {
     expect(workbenchDoc).toContain('registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main');
     expect(workbenchDoc).toContain('docs-workbench-evidence/docs-workbench-manifest.json');
     expect(workbenchDoc).toContain('docs/product/wiki-publication-ledger.md');
+    expect(workbenchDoc).toContain('npm run program:repos');
+    expect(workbenchDoc).toContain('scripts/repo_jump.py /home/sveld/code/standards/vi-history-suite');
+
+    expect(programRepoJump).toContain('# Program Repo Jump');
+    expect(programRepoJump).toContain('docs/product/program-repo-jump-map.json');
+    expect(programRepoJump).toContain('npm run program:repos');
+    expect(programRepoJump).toContain(
+      'scripts/repo_jump.py /home/sveld/code/standards/vi-history-suite --format text'
+    );
+    expect(programRepoJumpMap).toContain('"id": "vi-history-suite"');
+    expect(programRepoJumpMap).toContain('"id": "vi-history-suite.wiki"');
+    expect(programRepoJumpMap).toContain('"id": "repo-standards-review"');
+    expect(programRepoJumpMap).toContain('"kind": "codex-skill"');
 
     expect(wikiPublicationLedger).toContain('# Wiki Publication Ledger');
     expect(wikiPublicationLedger).toContain('| Overview | `home` | published | `2026-04-03` | `61ed90c` |');
