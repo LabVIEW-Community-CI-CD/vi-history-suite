@@ -117,6 +117,11 @@ export function createMultiReportDashboardAction(
         return;
       }
 
+      if (!doesArtifactPathMatchKind(artifactPath, payload.kind)) {
+        void vscode.window.showWarningMessage(DASHBOARD_ARTIFACT_CONTRACT_WARNING);
+        return;
+      }
+
       if (payload.kind === 'packet-html' || payload.kind === 'report-html') {
         const artifactPanel = createWebviewPanel(
           'viHistorySuite.reviewDashboardArtifact',
@@ -159,6 +164,9 @@ interface DashboardArtifactMessage {
   label: string;
 }
 
+const DASHBOARD_ARTIFACT_CONTRACT_WARNING =
+  'VI Review Dashboard ignored an artifact path that did not match the governed retained artifact contract.';
+
 function normalizeDashboardArtifactMessage(message: unknown): DashboardArtifactMessage | undefined {
   if (!message || typeof message !== 'object') {
     return undefined;
@@ -200,12 +208,26 @@ function normalizeDashboardArtifactMessage(message: unknown): DashboardArtifactM
 }
 
 function isDescendantPath(rootPath: string, candidatePath: string): boolean {
-  if (rootPath === candidatePath) {
-    return true;
-  }
-
   const relativePath = path.relative(rootPath, candidatePath);
   return relativePath !== '' && !relativePath.startsWith('..') && !path.isAbsolute(relativePath);
+}
+
+function doesArtifactPathMatchKind(
+  artifactPath: string,
+  kind: DashboardArtifactMessage['kind']
+): boolean {
+  const basename = path.basename(artifactPath).toLowerCase();
+
+  switch (kind) {
+    case 'packet-html':
+      return basename === 'report-packet.html' || basename === 'packet.html';
+    case 'report-html':
+      return /^(diff|print)-report-.+\.html$/i.test(basename);
+    case 'metadata-json':
+      return basename === 'report-metadata.json';
+    case 'source-record-json':
+      return basename === 'source-record.json';
+  }
 }
 
 function renderDashboardArtifactHtml(options: {

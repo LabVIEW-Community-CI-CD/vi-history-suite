@@ -63,6 +63,8 @@ requiring raw-log inspection.
 - cancellation with partial-evidence retention for dashboard and comparison
   report actions
 - stable informational cancellation surfaces on the history panel command flow
+- governed dashboard artifact action validation for malformed messages,
+  storage-root targets, and kind/path mismatches
 
 ## Remaining Focus
 

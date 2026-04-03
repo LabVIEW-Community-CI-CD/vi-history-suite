@@ -87,6 +87,9 @@ Committed and governed today:
   Comparison Report metadata, including report title, generation time,
   compared VI paths, overview section/image counts, included-attribute facts,
   detailed NI report sections, and provider provenance
+- governed dashboard artifact-opening rules that accept only retained
+  `report-packet.html`, `report-metadata.json`, `source-record.json`, and
+  `*-report-*.html` files from workspace-scoped extension storage
 - canonical real-history smoke and canonical comparison-report smoke on
   `HARNESS-VHS-001`
 - retained design gate that chooses the next tranche from committed evidence

@@ -443,6 +443,12 @@
 - `TEST-UNIT-125`: prove the history-panel command flow surfaces stable
   informational messages and explicit `cancelled` action summaries when report
   or dashboard actions are cancelled after retaining partial evidence
+- `TEST-UNIT-126`: prove malformed dashboard artifact messages, unsupported
+  artifact kinds, and blank required fields are ignored without opening
+  artifacts or surfacing warnings
+- `TEST-UNIT-127`: prove the dashboard action rejects storage-root targets and
+  kind/path mismatches with a stable warning while keeping governed retained
+  artifact openings available
 - `TEST-DOC-014`: review the queue, epic, ADR, and current-state surfaces to
   prove the future-facing dashboard research was normalized into governed repo
   control-plane artifacts and the incoming research artifact was deleted
