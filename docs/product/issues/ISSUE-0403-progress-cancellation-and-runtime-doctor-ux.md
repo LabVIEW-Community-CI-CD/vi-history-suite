@@ -65,6 +65,9 @@ requiring raw-log inspection.
 - comparison view opening now honors cancellation before panel open for both
   generated and retained flows, with retained-open-specific `Diff prev`
   cancellation wording
+- dashboard view opening now honors cancellation before panel open and retains
+  built dashboard artifact paths instead of opening the panel after user
+  cancellation
 - stable informational cancellation surfaces on the history panel command flow
 - governed dashboard artifact action validation for malformed messages,
   storage-root targets, and kind/path mismatches

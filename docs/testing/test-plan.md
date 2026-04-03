@@ -793,6 +793,9 @@
   stable cancelled outcomes before the comparison view opens
 - `TEST-UNIT-219`: verify `Diff prev` uses retained-compare-specific
   cancellation wording when retained comparison opening is cancelled
+- `TEST-UNIT-220`: verify dashboard opening returns a stable cancelled outcome
+  with retained dashboard artifact paths when cancellation is requested before
+  the dashboard view opens
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

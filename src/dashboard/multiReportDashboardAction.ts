@@ -257,6 +257,17 @@ export function createMultiReportDashboardAction(
       message: 'Opening VI Review Dashboard.',
       increment: DASHBOARD_OPEN_INCREMENT
     });
+    if (request.cancellationToken?.isCancellationRequested) {
+      return {
+        outcome: 'cancelled',
+        cancellationStage: 'before-dashboard-open',
+        dashboardFilePath: dashboard.htmlFilePath,
+        dashboardJsonFilePath: dashboard.jsonFilePath,
+        dashboardPairCount: dashboard.record.commitWindow.pairCount,
+        dashboardArchivedPairCount: dashboard.record.summary.archivedPairCount,
+        dashboardMissingPairCount: dashboard.record.summary.missingPairCount
+      };
+    }
     const panel = createWebviewPanel(
       'viHistorySuite.reviewDashboard',
       `VI Review Dashboard: ${request.model.relativePath.split('/').pop() ?? request.model.relativePath}`,
