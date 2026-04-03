@@ -88,6 +88,8 @@ Committed and governed today:
   exact non-empty exit-process rendering on the expert panel
 - governed host-specific Windows-container image probing for provider selection
 - governed container command-rewrite contracts for LabVIEW CLI and LVCompare
+- governed comparison-report cancellation stage coverage through runtime
+  selection and runtime execution
 - pairwise dashboard-source archiving so multiple report attempts for one VI can
   coexist without overwriting
 - concentrated dashboard JSON and HTML packets that recollect retained VI

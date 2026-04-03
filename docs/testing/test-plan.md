@@ -482,6 +482,12 @@
 - `TEST-UNIT-139`: prove the Windows-container LVCompare arg rewrite fails
   closed without a full staged pair and otherwise preserves additional
   comparison flags while rewriting the staged pair and governed `-lvpath`
+- `TEST-UNIT-140`: prove comparison-report cancellation after runtime
+  selection returns the stable `after-runtime-selection` stage and avoids
+  packet persistence
+- `TEST-UNIT-141`: prove comparison-report cancellation after runtime
+  execution returns the stable `after-runtime-execution` stage, preserves
+  runtime-executed packet evidence, and avoids archive plus panel open
 - `TEST-DOC-014`: review the queue, epic, ADR, and current-state surfaces to
   prove the future-facing dashboard research was normalized into governed repo
   control-plane artifacts and the incoming research artifact was deleted

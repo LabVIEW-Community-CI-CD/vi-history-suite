@@ -610,6 +610,79 @@ describe('comparisonReportAction', () => {
     expect(createWebviewPanelMock).not.toHaveBeenCalled();
   });
 
+  it('returns a stable cancelled result when cancellation is requested after runtime selection and before packet persistence', async () => {
+    const token = {
+      isCancellationRequested: false
+    };
+    const locateRuntime = vi.fn().mockImplementation(async () => {
+      token.isCancellationRequested = true;
+      return {
+        platform: 'win32',
+        preferBitness: 'x86',
+        provider: 'host-native',
+        engine: 'labview-cli',
+        notes: [],
+        registryQueryPlans: [],
+        candidates: []
+      };
+    });
+    const persistComparisonReport = vi.fn();
+    const action = createComparisonReportAction(
+      {
+        storageUri: createMockUri('/workspace/.storage')
+      } as never,
+      {
+        preflightComparisonReport: vi.fn().mockResolvedValue({
+          normalizedRelativePath: 'foo.vi',
+          ready: true,
+          left: {
+            revisionId: '1111111122222222',
+            blobSpecifier: '1111111122222222:foo.vi',
+            signature: 'LVIN',
+            isVi: true
+          },
+          right: {
+            revisionId: 'abcdef1234567890',
+            blobSpecifier: 'abcdef1234567890:foo.vi',
+            signature: 'LVCC',
+            isVi: true
+          }
+        }),
+        locateRuntime,
+        persistComparisonReport: persistComparisonReport as never
+      }
+    );
+
+    await expect(
+      action({
+        model: {
+          repositoryName: 'repo',
+          repositoryRoot: '/workspace/repo',
+          relativePath: 'foo.vi',
+          signature: 'LVIN',
+          eligible: true,
+          commits: [
+            {
+              hash: 'abcdef1234567890',
+              authorDate: '2026-04-02T00:00:00Z',
+              authorName: 'A User',
+              subject: 'Update VI',
+              previousHash: '1111111122222222'
+            }
+          ]
+        },
+        selectedHash: 'abcdef1234567890',
+        cancellationToken: token as never
+      })
+    ).resolves.toEqual({
+      outcome: 'cancelled',
+      cancellationStage: 'after-runtime-selection'
+    });
+
+    expect(persistComparisonReport).not.toHaveBeenCalled();
+    expect(createWebviewPanelMock).not.toHaveBeenCalled();
+  });
+
   it('surfaces blocked-runtime when runtime discovery cannot locate a usable provider', async () => {
     const action = createComparisonReportAction(
       {
@@ -842,6 +915,186 @@ describe('comparisonReportAction', () => {
     });
 
     expect(archiveComparisonReportSource).toHaveBeenCalledTimes(1);
+    expect(createWebviewPanelMock).not.toHaveBeenCalled();
+  });
+
+  it('retains runtime-executed comparison-report evidence when cancellation is requested after runtime execution', async () => {
+    const token = {
+      isCancellationRequested: false
+    };
+    const executeComparisonReport = vi.fn().mockImplementation(async () => {
+      token.isCancellationRequested = true;
+      return {
+        record: {
+          reportTitle: 'VI Comparison Report: foo.vi',
+          reportStatus: 'ready-for-runtime',
+          runtimeExecutionState: 'failed',
+          runtimeExecution: {
+            state: 'failed',
+            attempted: true,
+            reportExists: false,
+            failureReason: 'command-exited-nonzero'
+          },
+          preflight: {
+            normalizedRelativePath: 'foo.vi',
+            ready: true,
+            left: {
+              revisionId: '1111111122222222',
+              blobSpecifier: '1111111122222222:foo.vi',
+              signature: 'LVIN',
+              isVi: true
+            },
+            right: {
+              revisionId: 'abcdef1234567890',
+              blobSpecifier: 'abcdef1234567890:foo.vi',
+              signature: 'LVCC',
+              isVi: true
+            }
+          },
+          runtimeSelection: {
+            platform: 'win32',
+            preferBitness: 'x86',
+            provider: 'host-native',
+            engine: 'labview-cli',
+            notes: [],
+            registryQueryPlans: [],
+            candidates: []
+          },
+          artifactPlan: {
+            repoId: 'repoid123456',
+            fileId: 'fileid123456',
+            normalizedRelativePath: 'foo.vi',
+            reportDirectory: '/workspace/.storage/reports/repoid123456/fileid123456',
+            reportFilename: 'diff-report-foo.vi.html',
+            packetFilename: 'report-packet.html',
+            allowedLocalRootPaths: ['/workspace/.storage']
+          }
+        },
+        packetFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-packet.html',
+        reportFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
+        metadataFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-metadata.json'
+      };
+    });
+    const archiveComparisonReportSource = vi.fn();
+    const action = createComparisonReportAction(
+      {
+        storageUri: createMockUri('/workspace/.storage')
+      } as never,
+      {
+        preflightComparisonReport: vi.fn().mockResolvedValue({
+          normalizedRelativePath: 'foo.vi',
+          ready: true,
+          left: {
+            revisionId: '1111111122222222',
+            blobSpecifier: '1111111122222222:foo.vi',
+            signature: 'LVIN',
+            isVi: true
+          },
+          right: {
+            revisionId: 'abcdef1234567890',
+            blobSpecifier: 'abcdef1234567890:foo.vi',
+            signature: 'LVCC',
+            isVi: true
+          }
+        }),
+        locateRuntime: vi.fn().mockResolvedValue({
+          platform: 'win32',
+          preferBitness: 'x86',
+          provider: 'host-native',
+          engine: 'labview-cli',
+          notes: [],
+          registryQueryPlans: [],
+          candidates: []
+        }),
+        persistComparisonReport: vi.fn().mockResolvedValue({
+          record: {
+            reportTitle: 'VI Comparison Report: foo.vi',
+            reportStatus: 'ready-for-runtime',
+            runtimeExecutionState: 'not-run',
+            runtimeExecution: {
+              state: 'not-run',
+              attempted: false,
+              reportExists: false
+            },
+            preflight: {
+              normalizedRelativePath: 'foo.vi',
+              ready: true,
+              left: {
+                revisionId: '1111111122222222',
+                blobSpecifier: '1111111122222222:foo.vi',
+                signature: 'LVIN',
+                isVi: true
+              },
+              right: {
+                revisionId: 'abcdef1234567890',
+                blobSpecifier: 'abcdef1234567890:foo.vi',
+                signature: 'LVCC',
+                isVi: true
+              }
+            },
+            runtimeSelection: {
+              platform: 'win32',
+              preferBitness: 'x86',
+              provider: 'host-native',
+              engine: 'labview-cli',
+              notes: [],
+              registryQueryPlans: [],
+              candidates: []
+            },
+            artifactPlan: {
+              repoId: 'repoid123456',
+              fileId: 'fileid123456',
+              normalizedRelativePath: 'foo.vi',
+              reportDirectory: '/workspace/.storage/reports/repoid123456/fileid123456',
+              reportFilename: 'diff-report-foo.vi.html',
+              packetFilename: 'report-packet.html',
+              allowedLocalRootPaths: ['/workspace/.storage']
+            }
+          },
+          packetFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-packet.html',
+          reportFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
+          metadataFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-metadata.json'
+        }),
+        executeComparisonReport,
+        archiveComparisonReportSource
+      }
+    );
+
+    await expect(
+      action({
+        model: {
+          repositoryName: 'repo',
+          repositoryRoot: '/workspace/repo',
+          relativePath: 'foo.vi',
+          signature: 'LVIN',
+          eligible: true,
+          commits: [
+            {
+              hash: 'abcdef1234567890',
+              authorDate: '2026-04-02T00:00:00Z',
+              authorName: 'A User',
+              subject: 'Update VI',
+              previousHash: '1111111122222222'
+            }
+          ]
+        },
+        selectedHash: 'abcdef1234567890',
+        cancellationToken: token as never
+      })
+    ).resolves.toEqual({
+      outcome: 'cancelled',
+      cancellationStage: 'after-runtime-execution',
+      reportStatus: 'ready-for-runtime',
+      runtimeExecutionState: 'failed',
+      blockedReason: undefined,
+      runtimeFailureReason: 'command-exited-nonzero',
+      packetFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-packet.html',
+      reportFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
+      metadataFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-metadata.json',
+      generatedReportExists: false
+    });
+
+    expect(archiveComparisonReportSource).not.toHaveBeenCalled();
     expect(createWebviewPanelMock).not.toHaveBeenCalled();
   });
 
