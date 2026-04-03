@@ -48,6 +48,7 @@ export interface HistoryPanelActionSummary {
     | 'missing-storage-uri'
     | 'missing-previous-hash'
     | 'missing-retained-comparison-report'
+    | 'invalid-retained-comparison-report'
     | 'opened-documentation'
     | 'missing-bundled-documentation'
     | 'unknown-documentation-page'

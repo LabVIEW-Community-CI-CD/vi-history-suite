@@ -5,7 +5,8 @@ import * as vscode from 'vscode';
 import {
   archiveComparisonReportSource,
   ArchivedComparisonReportSourceRecord,
-  buildComparisonReportArchivePlanFromSelection
+  buildComparisonReportArchivePlanFromSelection,
+  ComparisonReportArchivePlan
 } from '../dashboard/comparisonReportArchive';
 import {
   ComparisonRuntimeSettings,
@@ -29,6 +30,7 @@ export interface ComparisonReportActionResult {
     | 'opened-comparison-report'
     | 'retained-comparison-report-evidence'
     | 'missing-retained-comparison-report'
+    | 'invalid-retained-comparison-report'
     | 'cancelled'
     | 'workspace-untrusted'
     | 'missing-storage-uri'
@@ -179,6 +181,20 @@ export function createOpenRetainedComparisonReportAction(
       };
     }
 
+    const sourceRecord = await readValidatedArchivedComparisonReportSourceRecord({
+      storageRoot: context.storageUri.fsPath,
+      expectedArchivePlan: archivePlan,
+      selectedHash: selectedCommit.hash,
+      baseHash: selectedCommit.previousHash,
+      pathExists,
+      readFile: deps.readFile ?? fs.readFile
+    });
+    if (!sourceRecord) {
+      return {
+        outcome: 'invalid-retained-comparison-report'
+      };
+    }
+
     await request.reportProgress?.({
       message: 'Opening retained pair comparison view.',
       increment: 60
@@ -189,9 +205,6 @@ export function createOpenRetainedComparisonReportAction(
         cancellationStage: 'before-retained-comparison-open'
       };
     }
-    const sourceRecord = JSON.parse(
-      await (deps.readFile ?? fs.readFile)(archivePlan.sourceRecordFilePath, 'utf8')
-    ) as ArchivedComparisonReportSourceRecord;
     if (request.cancellationToken?.isCancellationRequested) {
       return {
         outcome: 'cancelled',
@@ -211,6 +224,42 @@ export function createOpenRetainedComparisonReportAction(
       deps
     );
   };
+}
+
+async function readValidatedArchivedComparisonReportSourceRecord(options: {
+  storageRoot: string;
+  expectedArchivePlan: ReturnType<typeof buildComparisonReportArchivePlanFromSelection>;
+  selectedHash: string;
+  baseHash: string;
+  pathExists: (targetPath: string) => Promise<boolean>;
+  readFile: typeof fs.readFile;
+}): Promise<ArchivedComparisonReportSourceRecord | undefined> {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(
+      await options.readFile(options.expectedArchivePlan.sourceRecordFilePath, 'utf8')
+    );
+  } catch {
+    return undefined;
+  }
+
+  if (
+    !isValidArchivedComparisonReportSourceRecord(
+      parsed,
+      options.storageRoot,
+      options.expectedArchivePlan,
+      options.selectedHash,
+      options.baseHash
+    )
+  ) {
+    return undefined;
+  }
+
+  if (!(await options.pathExists(parsed.archivePlan.packetFilePath))) {
+    return undefined;
+  }
+
+  return parsed;
 }
 
 async function ensureComparisonReportEvidence(
@@ -1009,6 +1058,62 @@ function renderOptionalYesNoLine(label: string, value: boolean | undefined): str
   }
 
   return `<div><strong>${escapeHtml(label)}:</strong> ${value ? 'yes' : 'no'}</div>`;
+}
+
+function isValidArchivedComparisonReportSourceRecord(
+  value: unknown,
+  storageRoot: string,
+  expectedArchivePlan: ComparisonReportArchivePlan,
+  selectedHash: string,
+  baseHash: string
+): value is ArchivedComparisonReportSourceRecord {
+  if (!isRecord(value) || !isRecord(value.archivePlan) || !isRecord(value.packetRecord)) {
+    return false;
+  }
+
+  const archivePlan = value.archivePlan;
+  const packetRecord = value.packetRecord;
+  if (
+    !matchesExpectedArchivePath(archivePlan.sourceRecordFilePath, expectedArchivePlan.sourceRecordFilePath) ||
+    !matchesExpectedArchivePath(archivePlan.packetFilePath, expectedArchivePlan.packetFilePath) ||
+    !matchesExpectedArchivePath(archivePlan.reportFilePath, expectedArchivePlan.reportFilePath) ||
+    !matchesExpectedArchivePath(archivePlan.metadataFilePath, expectedArchivePlan.metadataFilePath)
+  ) {
+    return false;
+  }
+
+  if (
+    !isDescendantPath(storageRoot, archivePlan.packetFilePath) ||
+    !isDescendantPath(storageRoot, archivePlan.reportFilePath) ||
+    !isDescendantPath(storageRoot, archivePlan.metadataFilePath)
+  ) {
+    return false;
+  }
+
+  if (packetRecord.selectedHash !== selectedHash || packetRecord.baseHash !== baseHash) {
+    return false;
+  }
+
+  return true;
+}
+
+function matchesExpectedArchivePath(value: unknown, expectedPath: string): boolean {
+  return typeof value === 'string' && value.length > 0 && path.resolve(value) === path.resolve(expectedPath);
+}
+
+function isDescendantPath(rootPath: string, targetPath: unknown): boolean {
+  if (typeof targetPath !== 'string' || targetPath.length === 0) {
+    return false;
+  }
+
+  const resolvedRoot = path.resolve(rootPath);
+  const resolvedTarget = path.resolve(targetPath);
+  const relativeTarget = path.relative(resolvedRoot, resolvedTarget);
+  return relativeTarget.length > 0 && !relativeTarget.startsWith('..') && !path.isAbsolute(relativeTarget);
+}
+
+function isRecord(value: unknown): value is Record<string, any> {
+  return Boolean(value) && typeof value === 'object';
 }
 
 export function readComparisonRuntimeSettings(

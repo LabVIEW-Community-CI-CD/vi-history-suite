@@ -290,6 +290,10 @@ export function createOpenViHistoryCommand(
           void vscode.window.showInformationMessage(
             'No retained VI Comparison Report exists for this pair yet. Use Generate compare to create retained evidence for it.'
           );
+        } else if (result.outcome === 'invalid-retained-comparison-report') {
+          void vscode.window.showInformationMessage(
+            'Retained VI Comparison evidence for this pair is stale or invalid. Use Refresh compare to rebuild retained evidence for it.'
+          );
         }
 
         if (

@@ -90,6 +90,9 @@ requiring raw-log inspection.
 - compare opening now falls back from unreadable retained generated-report HTML
   to the retained packet surface and states whether the panel is showing the
   generated NI report or a retained packet fallback
+- retained compare reopening now fails closed with stable `Refresh compare`
+  guidance when the archived source record is malformed, mismatched to the
+  selected/base pair, or no longer points at a usable workspace-scoped packet
 - stale bundled-documentation page requests from older or mismatched history
   panels now fall back to the packaged overview page when the installed bundle
   is still available, retaining the requested page id and fallback fact in the

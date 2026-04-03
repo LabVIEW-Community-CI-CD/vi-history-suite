@@ -1030,6 +1030,71 @@ describe('createOpenViHistoryCommand', () => {
     });
   });
 
+  it('surfaces a stable informational message when diffPrevious retained comparison evidence is stale or invalid', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    const openRetainedComparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'invalid-retained-comparison-report'
+    });
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Update VI',
+            previousHash: '1111111122222222'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      undefined,
+      undefined,
+      openRetainedComparisonReportAction
+    );
+
+    await command(targetUri as never);
+    await tracker.dispatchLastPanelMessage({
+      command: 'diffPrevious',
+      hash: 'abcdef1234567890'
+    });
+
+    expect(showInformationMessageMock).toHaveBeenCalledWith(
+      'Retained VI Comparison evidence for this pair is stale or invalid. Use Refresh compare to rebuild retained evidence for it.'
+    );
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'diffPrevious',
+      hash: 'abcdef1234567890',
+      outcome: 'invalid-retained-comparison-report',
+      reportStatus: undefined,
+      runtimeExecutionState: undefined,
+      blockedReason: undefined,
+      runtimeFailureReason: undefined,
+      cancellationStage: undefined,
+      packetFilePath: undefined,
+      reportFilePath: undefined,
+      metadataFilePath: undefined,
+      reportWebviewUri: undefined,
+      generatedReportExists: undefined,
+      title: undefined
+    });
+  });
+
   it('uses retained-compare-specific cancellation messaging when diffPrevious opening is cancelled', async () => {
     const targetUri = createMockUri('/workspace/eligible.vi');
     const tracker = new HistoryPanelTracker();
