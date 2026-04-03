@@ -632,6 +632,7 @@ export function classifyLabviewCliDiagnosticText(
   notes: string[];
 } {
   const notes: string[] = [];
+  const launchSucceeded = /LabVIEW launched successfully\./i.test(diagnosticText);
   const ignoredLabviewPathMatch = diagnosticText.match(
     /"LabVIEWPath" command line argument is not passed\.\s*Using last used LabVIEW:\s*"([^"]+)"/i
   );
@@ -645,7 +646,7 @@ export function classifyLabviewCliDiagnosticText(
       );
       return {
         reason: 'labview-path-ignored-last-used-matched-selection',
-        notes
+        notes: appendLaunchConfirmationNote(notes, launchSucceeded)
       };
     }
 
@@ -656,7 +657,7 @@ export function classifyLabviewCliDiagnosticText(
       notes.push(`Intended explicit LabVIEW path: ${expectedLabviewPath}.`);
       return {
         reason: 'labview-path-ignored-last-used-diverged-selection',
-        notes
+        notes: appendLaunchConfirmationNote(notes, launchSucceeded)
       };
     }
 
@@ -665,17 +666,25 @@ export function classifyLabviewCliDiagnosticText(
     );
     return {
       reason: 'labview-path-ignored-last-used-default',
-      notes
+      notes: appendLaunchConfirmationNote(notes, launchSucceeded)
     };
   }
 
-  if (/LabVIEW launched successfully\./i.test(diagnosticText)) {
+  if (launchSucceeded) {
     notes.push('LabVIEW CLI reported that LabVIEW launched successfully before the operation failed.');
   }
 
   return {
     notes
   };
+}
+
+function appendLaunchConfirmationNote(notes: string[], launchSucceeded: boolean): string[] {
+  if (!launchSucceeded) {
+    notes.push('The retained LabVIEW CLI diagnostic log did not report successful LabVIEW launch before exit.');
+  }
+
+  return notes;
 }
 
 function classifyRuntimeFailure(options: {

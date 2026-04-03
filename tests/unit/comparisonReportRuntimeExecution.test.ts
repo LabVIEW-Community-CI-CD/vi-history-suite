@@ -772,7 +772,8 @@ describe('comparisonReportRuntimeExecution', () => {
       reason: 'labview-path-ignored-last-used-diverged-selection',
       notes: [
         'LabVIEW CLI ignored the explicit -LabVIEWPath selection and used a different last-used LabVIEW instead: C:\\Program Files\\National Instruments\\LabVIEW 2025\\LabVIEW.exe.',
-        'Intended explicit LabVIEW path: C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe.'
+        'Intended explicit LabVIEW path: C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe.',
+        'The retained LabVIEW CLI diagnostic log did not report successful LabVIEW launch before exit.'
       ]
     });
     expect(requiresWindowsInterop('win32', 'linux')).toBe(true);

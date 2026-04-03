@@ -281,6 +281,9 @@
 - `TEST-UNIT-082`: prove the runtime executor classifies a log-only LabVIEW CLI
   nonzero exit with no generated report and empty stderr as a dedicated
   failure reason with a retained explanatory note
+- `TEST-UNIT-083`: prove the runtime executor retains an explicit note when the
+  captured LabVIEW CLI diagnostic log never reports successful LabVIEW launch
+  before exit
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source
