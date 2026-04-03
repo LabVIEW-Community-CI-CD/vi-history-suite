@@ -212,4 +212,105 @@ describe('runHarnessDashboardSmoke', () => {
     expect(writes.get(result.reportMarkdownPath)).toContain('Harness Dashboard Smoke');
     expect(writes.get(result.reportHtmlPath)).toContain('Harness Dashboard Smoke');
   });
+
+  it('stamps dashboard smoke output with the default ISO clock when no now override is supplied', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-04-03T00:00:00.000Z'));
+
+    try {
+      const result = await runHarnessDashboardSmoke(
+        'HARNESS-VHS-001',
+        {
+          cloneRoot: '/tmp/harnesses',
+          reportRoot: '/tmp/reports',
+          runtimePlatform: 'win32',
+          dashboardCommitWindow: 3
+        },
+        {
+          ensureHarnessClone: vi.fn().mockResolvedValue('/tmp/harnesses/ni-labview-icon-editor') as never,
+          getRepoHead: vi.fn().mockResolvedValue('abcdef1234567890') as never,
+          loadViHistoryViewModelFromFsPath: vi.fn().mockResolvedValue({
+            repositoryName: 'ni-labview-icon-editor',
+            repositoryRoot: '/tmp/harnesses/ni-labview-icon-editor',
+            relativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+            signature: 'LVIN',
+            eligible: true,
+            commits: [
+              {
+                hash: '3333333344444444',
+                authorDate: '2026-04-03T00:00:00Z',
+                authorName: 'A User',
+                subject: 'Newest',
+                previousHash: '1111111122222222'
+              },
+              {
+                hash: '1111111122222222',
+                authorDate: '2026-04-02T00:00:00Z',
+                authorName: 'B User',
+                subject: 'Middle',
+                previousHash: 'aaaaaaaa55555555'
+              },
+              {
+                hash: 'aaaaaaaa55555555',
+                authorDate: '2026-04-01T00:00:00Z',
+                authorName: 'C User',
+                subject: 'Oldest'
+              }
+            ]
+          }) as never,
+          evaluateViEligibilityForFsPath: vi.fn().mockResolvedValue({
+            eligible: true,
+            signature: 'LVIN'
+          }) as never,
+          executeHarnessComparisonReportForCommit: vi
+            .fn()
+            .mockResolvedValue({
+              record: {
+                selectedHash: '3333333344444444',
+                baseHash: '1111111122222222',
+                reportStatus: 'ready-for-runtime',
+                runtimeExecutionState: 'succeeded',
+                runtimeSelection: {
+                  provider: 'windows-container',
+                  engine: 'lvcompare'
+                },
+                runtimeExecution: {
+                  reportExists: true
+                }
+              },
+              packetFilePath: '/tmp/report-packet-a.html',
+              reportFilePath: '/tmp/diff-report-a.html',
+              metadataFilePath: '/tmp/report-metadata-a.json',
+              archivedSourceRecord: {
+                archivePlan: {
+                  sourceRecordFilePath: '/tmp/source-record-a.json'
+                }
+              }
+            }) as never,
+          buildDashboard: vi.fn().mockResolvedValue({
+            record: {
+              summary: {
+                windowCompletenessState: 'complete',
+                archivedPairCount: 2,
+                missingPairCount: 0,
+                generatedReportCount: 1,
+                reportMetadataPairCount: 1,
+                overviewImageCount: 2,
+                detailItemCount: 5,
+                providerSummaries: [{ label: 'windows-container / lvcompare / x64 / win32', pairCount: 2 }]
+              }
+            },
+            jsonFilePath: '/tmp/reports/HARNESS-VHS-001/workspace-storage/dashboards/repo/file/window/dashboard.json',
+            htmlFilePath: '/tmp/reports/HARNESS-VHS-001/workspace-storage/dashboards/repo/file/window/dashboard.html'
+          }) as never,
+          mkdir: vi.fn().mockResolvedValue(undefined) as never,
+          writeFile: vi.fn().mockResolvedValue(undefined) as never
+        }
+      );
+
+      expect(result.report.generatedAt).toBe('2026-04-03T00:00:00.000Z');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
