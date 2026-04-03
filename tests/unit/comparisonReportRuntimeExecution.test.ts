@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
@@ -99,6 +99,10 @@ function createReadyRecord(): ComparisonReportPacketRecord {
 }
 
 describe('comparisonReportRuntimeExecution', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('stages revision blobs, runs the governed command, and retains successful execution evidence', async () => {
     const writes: Array<{ filePath: string; value: string | Buffer }> = [];
     const writePacketRecord = vi.fn().mockResolvedValue(undefined);
@@ -387,6 +391,36 @@ describe('comparisonReportRuntimeExecution', () => {
       signal: undefined,
       stdout: 'x',
       stderr: 'bad'
+    });
+  });
+
+  it('rejects raw execFile failures when the process never returns a numeric exit code', async () => {
+    const execFileImpl = vi.fn(
+      (
+        _file: string,
+        _args: readonly string[] | undefined,
+        _options:
+          | { encoding: BufferEncoding; maxBuffer: number; windowsHide: boolean }
+          | undefined,
+        callback:
+          | ((error: Error | null, stdout: string | Buffer, stderr: string | Buffer) => void)
+          | undefined
+      ) => {
+        const error = Object.assign(new Error('spawn failed'), { code: 'ENOENT' });
+        callback?.(error, '', '');
+      }
+    );
+
+    await expect(
+      runComparisonCommandPlan({
+        executable: 'missing-command',
+        args: []
+      }, {
+        execFileImpl: execFileImpl as never
+      })
+    ).rejects.toMatchObject({
+      message: 'spawn failed',
+      code: 'ENOENT'
     });
   });
 

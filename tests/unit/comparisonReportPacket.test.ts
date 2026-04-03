@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { persistComparisonReportPacket } from '../../src/reporting/comparisonReportPacket';
+import {
+  ComparisonReportPacketRecord,
+  persistComparisonReportPacket,
+  renderComparisonReportPacketHtml
+} from '../../src/reporting/comparisonReportPacket';
 
 describe('comparisonReportPacket', () => {
   afterEach(() => {
@@ -264,4 +268,116 @@ describe('comparisonReportPacket', () => {
 
     expect(result.record.generatedAt).toBe('2026-04-04T05:06:07.000Z');
   });
+
+  it('renders the generated-report iframe and success note when execution succeeds', async () => {
+    const record = await createReadyPacketRecord();
+    const succeededRecord: ComparisonReportPacketRecord = {
+      ...record,
+      runtimeExecutionState: 'succeeded',
+      runtimeExecution: {
+        ...record.runtimeExecution,
+        state: 'succeeded',
+        attempted: true,
+        reportExists: true,
+        executable: 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+        args: ['-OperationName', 'CreateComparisonReport'],
+        exitCode: 0,
+        durationMs: 1234
+      }
+    };
+
+    const html = renderComparisonReportPacketHtml(succeededRecord);
+
+    expect(html).toContain(
+      'NI-generated comparison report execution succeeded and the governed HTML output is retained at the report path shown below.'
+    );
+    expect(html).toContain('data-testid="comparison-report-generated-frame"');
+    expect(html).toContain(succeededRecord.artifactPlan.reportFilename);
+  });
+
+  it('renders the failure note when execution fails after being attempted', async () => {
+    const record = await createReadyPacketRecord();
+    const failedRecord: ComparisonReportPacketRecord = {
+      ...record,
+      runtimeExecutionState: 'failed',
+      runtimeExecution: {
+        ...record.runtimeExecution,
+        state: 'failed',
+        attempted: true,
+        reportExists: false,
+        failureReason: 'report-file-not-generated',
+        executable: 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+        args: ['-OperationName', 'CreateComparisonReport'],
+        exitCode: 0,
+        durationMs: 4321
+      }
+    };
+
+    const html = renderComparisonReportPacketHtml(failedRecord);
+
+    expect(html).toContain(
+      'NI-generated comparison report execution was attempted, but the governed output is not currently usable. Review the retained execution summary and stdout/stderr artifact paths below.'
+    );
+    expect(html).toContain('report-file-not-generated');
+    expect(html).toContain('data-testid="comparison-report-generated-report-missing"');
+  });
 });
+
+async function createReadyPacketRecord(): Promise<ComparisonReportPacketRecord> {
+  const result = await persistComparisonReportPacket(
+    {
+      storageRoot: '/workspace/.storage',
+      repositoryRoot: '/workspace/repo',
+      relativePath: 'foo.vi',
+      reportType: 'diff',
+      selectedHash: 'abcdef1234567890',
+      baseHash: '1111111122222222',
+      preflight: {
+        normalizedRelativePath: 'foo.vi',
+        ready: true,
+        left: {
+          revisionId: '1111111122222222',
+          blobSpecifier: '1111111122222222:foo.vi',
+          signature: 'LVIN',
+          isVi: true
+        },
+        right: {
+          revisionId: 'abcdef1234567890',
+          blobSpecifier: 'abcdef1234567890:foo.vi',
+          signature: 'LVCC',
+          isVi: true
+        }
+      },
+      runtimeSelection: {
+        platform: 'win32',
+        preferBitness: 'x64',
+        provider: 'host-native',
+        engine: 'labview-cli',
+        labviewExe: {
+          kind: 'labview-exe',
+          path: 'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
+          source: 'scan',
+          exists: true,
+          bitness: 'x64'
+        },
+        labviewCli: {
+          kind: 'labview-cli',
+          path: 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+          source: 'scan',
+          exists: true,
+          bitness: 'x64'
+        },
+        notes: [],
+        registryQueryPlans: [],
+        candidates: []
+      }
+    },
+    {
+      now: () => '2026-04-05T00:00:00.000Z',
+      mkdir: vi.fn().mockResolvedValue(undefined),
+      writeFile: vi.fn().mockResolvedValue(undefined) as never
+    }
+  );
+
+  return result.record;
+}

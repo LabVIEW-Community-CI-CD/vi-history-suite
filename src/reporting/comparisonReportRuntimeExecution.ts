@@ -40,6 +40,10 @@ export interface RunCommandResult {
   stderr: string;
 }
 
+export interface RunComparisonCommandPlanDeps {
+  execFileImpl?: typeof execFile;
+}
+
 export async function executeComparisonReport(
   options: ExecuteComparisonReportOptions,
   deps: ComparisonReportRuntimeExecutionDeps = {}
@@ -220,9 +224,12 @@ export function pathExistsForReport(filePath: string): Promise<boolean> {
     .catch(() => false);
 }
 
-export function runComparisonCommandPlan(commandPlan: ComparisonCommandPlan): Promise<RunCommandResult> {
+export function runComparisonCommandPlan(
+  commandPlan: ComparisonCommandPlan,
+  deps: RunComparisonCommandPlanDeps = {}
+): Promise<RunCommandResult> {
   return new Promise((resolve, reject) => {
-    execFile(
+    (deps.execFileImpl ?? execFile)(
       commandPlan.executable,
       commandPlan.args,
       {
