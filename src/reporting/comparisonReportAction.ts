@@ -581,6 +581,8 @@ async function openPersistedComparisonReportPanel(
     runtimeLvcompareProcessObservedAtExit:
       options.record.runtimeExecution.lvcompareProcessObservedAtExit,
     generatedReportExists: options.record.runtimeExecution.reportExists,
+    retainedArchiveAvailable: options.retainedArchiveAvailable,
+    archiveFailureReason: options.archiveFailureReason,
     cspSource: panel.webview.cspSource
   } as const;
   const packetPanelHtmlOptions = {
@@ -946,6 +948,8 @@ function renderComparisonReportPanelStatusMarkup(options: {
   runtimeLabviewCliProcessObservedAtExit?: boolean;
   runtimeLvcompareProcessObservedAtExit?: boolean;
   generatedReportExists: boolean;
+  retainedArchiveAvailable?: boolean;
+  archiveFailureReason?: ComparisonReportActionResult['archiveFailureReason'];
   displayedEvidenceKind: 'generated-report' | 'packet';
 }): string {
   const displayedEvidenceMarkup = `<div><strong>Displayed evidence:</strong> ${escapeHtml(
@@ -955,6 +959,17 @@ function renderComparisonReportPanelStatusMarkup(options: {
         ? 'retained packet fallback'
         : 'retained packet'
   )}</div>`;
+  const retainedArchiveAvailableMarkup =
+    options.retainedArchiveAvailable !== undefined
+      ? `<div><strong>Retained archive available:</strong> ${options.retainedArchiveAvailable ? 'yes' : 'no'}</div>`
+      : '';
+  const retainedArchiveStatusMarkup = options.archiveFailureReason
+    ? `<div><strong>Retained archive status:</strong> ${escapeHtml(
+        options.archiveFailureReason === 'retained-archive-write-failed'
+          ? 'archive write failed'
+          : 'archive persistence unavailable'
+      )}</div>`
+    : '';
   const blockedReasonMarkup = options.blockedReason
     ? `<div><strong>Blocked reason:</strong> ${escapeHtml(options.blockedReason)}</div>`
     : '';
@@ -1061,6 +1076,8 @@ function renderComparisonReportPanelStatusMarkup(options: {
       <br />
       <strong>Generated report exists:</strong> ${options.generatedReportExists ? 'yes' : 'no'}
       ${displayedEvidenceMarkup}
+      ${retainedArchiveAvailableMarkup}
+      ${retainedArchiveStatusMarkup}
       ${blockedReasonMarkup}
       ${failureReasonMarkup}
       ${diagnosticReasonMarkup}

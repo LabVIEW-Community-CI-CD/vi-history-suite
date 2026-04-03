@@ -374,6 +374,84 @@ describe('comparisonReportAction', () => {
     expect(createWebviewPanelMock).not.toHaveBeenCalled();
   });
 
+  it('returns a stable invalid-retained result when the archived retained comparison packet record hashes do not match the requested pair', async () => {
+    const archivePlan = buildComparisonReportArchivePlanFromSelection({
+      storageRoot: '/workspace/.storage',
+      repositoryRoot: '/workspace/repo',
+      relativePath: 'foo.vi',
+      reportType: 'diff',
+      selectedHash: 'abcdef1234567890',
+      baseHash: '1111111122222222',
+      reportFilename: 'diff-report-foo.vi.html',
+      packetFilename: 'report-packet.html',
+      metadataFilename: 'report-metadata.json'
+    });
+    const pathExists = vi.fn().mockImplementation(async (targetPath: string) =>
+      targetPath === archivePlan.sourceRecordFilePath || targetPath === archivePlan.packetFilePath
+    );
+    const readFile = vi.fn().mockResolvedValue(
+      JSON.stringify({
+        archivePlan,
+        packetRecord: {
+          selectedHash: 'ffffffffeeeeeeee',
+          baseHash: '1111111122222222',
+          reportTitle: 'VI Comparison Report: foo.vi',
+          reportStatus: 'ready-for-runtime',
+          runtimeExecutionState: 'succeeded',
+          runtimeExecution: {
+            state: 'succeeded',
+            attempted: true,
+            reportExists: true
+          },
+          artifactPlan: {
+            repoId: archivePlan.repoId,
+            fileId: archivePlan.fileId,
+            normalizedRelativePath: 'foo.vi',
+            reportDirectory: archivePlan.archiveDirectory,
+            packetFilename: path.basename(archivePlan.packetFilePath),
+            reportFilename: path.basename(archivePlan.reportFilePath),
+            allowedLocalRootPaths: ['/workspace/.storage']
+          }
+        }
+      })
+    );
+    const action = createOpenRetainedComparisonReportAction(
+      {
+        storageUri: createMockUri('/workspace/.storage')
+      } as never,
+      {
+        pathExists,
+        readFile: readFile as never
+      }
+    );
+
+    await expect(
+      action({
+        model: {
+          repositoryName: 'repo',
+          repositoryRoot: '/workspace/repo',
+          relativePath: 'foo.vi',
+          signature: 'LVIN',
+          eligible: true,
+          commits: [
+            {
+              hash: 'abcdef1234567890',
+              authorDate: '2026-04-02T00:00:00Z',
+              authorName: 'A User',
+              subject: 'Update VI',
+              previousHash: '1111111122222222'
+            }
+          ]
+        },
+        selectedHash: 'abcdef1234567890'
+      })
+    ).resolves.toEqual({
+      outcome: 'invalid-retained-comparison-report'
+    });
+
+    expect(createWebviewPanelMock).not.toHaveBeenCalled();
+  });
+
   it('returns a stable invalid-retained result when the archived retained comparison packet record violates the panel render contract', async () => {
     const archivePlan = buildComparisonReportArchivePlanFromSelection({
       storageRoot: '/workspace/.storage',
@@ -1105,6 +1183,9 @@ describe('comparisonReportAction', () => {
       displayedEvidenceKind: 'packet',
       title: 'VI Comparison Report: foo.vi'
     });
+    const panel = createWebviewPanelMock.mock.results.at(-1)?.value as MockPanel;
+    expect(panel.webview.html).toContain('Retained archive available:</strong> no');
+    expect(panel.webview.html).toContain('Retained archive status:</strong> archive write failed');
   });
 
   it('opens the generated NI report directly in the live panel when one was retained', async () => {
@@ -1806,6 +1887,10 @@ describe('comparisonReportAction', () => {
       '<base href="webview:/webview/workspace/.storage/reports/repoid123456/fileid123456/" />'
     );
     expect(panel.webview.html).toContain('Displayed evidence:</strong> retained packet');
+    expect(panel.webview.html).toContain('Retained archive available:</strong> no');
+    expect(panel.webview.html).toContain(
+      'Retained archive status:</strong> archive persistence unavailable'
+    );
     expect(panel.webview.html).not.toContain('data-testid="comparison-report-panel-frame"');
   });
 
