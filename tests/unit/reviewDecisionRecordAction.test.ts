@@ -4,15 +4,33 @@ const {
   executeCommandMock,
   showInputBoxMock,
   showQuickPickMock,
-  workspaceState
-} = vi.hoisted(() => ({
-  executeCommandMock: vi.fn(),
-  showInputBoxMock: vi.fn(),
-  showQuickPickMock: vi.fn(),
-  workspaceState: {
-    isTrusted: true
-  }
-}));
+  workspaceState,
+  globalState
+} = vi.hoisted(() => {
+  const reviewerState = {
+    storedValue: undefined as string | undefined
+  };
+
+  return {
+    executeCommandMock: vi.fn(),
+    showInputBoxMock: vi.fn(),
+    showQuickPickMock: vi.fn(),
+    workspaceState: {
+      isTrusted: true
+    },
+    globalState: {
+      get: vi.fn((key: string) =>
+        key === 'viHistorySuite.lastDecisionReviewer' ? reviewerState.storedValue : undefined
+      ),
+      update: vi.fn(async (key: string, value: string) => {
+        if (key === 'viHistorySuite.lastDecisionReviewer') {
+          reviewerState.storedValue = value;
+        }
+      }),
+      reviewerState
+    }
+  };
+});
 
 vi.mock('vscode', () => ({
   workspace: workspaceState,
@@ -205,6 +223,9 @@ describe('reviewDecisionRecordAction', () => {
     executeCommandMock.mockReset();
     showInputBoxMock.mockReset();
     showQuickPickMock.mockReset();
+    globalState.reviewerState.storedValue = undefined;
+    globalState.get.mockClear();
+    globalState.update.mockClear();
   });
 
   it('creates a separate decision record from retained dashboard evidence', async () => {
@@ -350,7 +371,8 @@ describe('reviewDecisionRecordAction', () => {
       {
         storageUri: {
           fsPath: '/workspace/.storage'
-        }
+        },
+        globalState
       } as never,
       {
         buildDashboard,
@@ -434,6 +456,10 @@ describe('reviewDecisionRecordAction', () => {
         preview: false
       }
     );
+    expect(globalState.update).toHaveBeenCalledWith(
+      'viHistorySuite.lastDecisionReviewer',
+      'Reviewer'
+    );
   });
 
   it('fails closed when no active review scenario matches the repository and VI', async () => {
@@ -493,7 +519,8 @@ describe('reviewDecisionRecordAction', () => {
       {
         storageUri: {
           fsPath: '/workspace/.storage'
-        }
+        },
+        globalState
       } as never,
       {
         buildDashboard,
@@ -554,7 +581,8 @@ describe('reviewDecisionRecordAction', () => {
       {
         storageUri: {
           fsPath: '/workspace/.storage'
-        }
+        },
+        globalState
       } as never
     );
     await expect(
@@ -579,7 +607,8 @@ describe('reviewDecisionRecordAction', () => {
       {
         storageUri: {
           fsPath: '/workspace/.storage'
-        }
+        },
+        globalState
       } as never
     );
     await expect(
@@ -597,7 +626,8 @@ describe('reviewDecisionRecordAction', () => {
       {
         storageUri: {
           fsPath: '/workspace/.storage'
-        }
+        },
+        globalState
       } as never
     );
     await expect(
@@ -620,7 +650,8 @@ describe('reviewDecisionRecordAction', () => {
       {
         storageUri: {
           fsPath: '/workspace/.storage'
-        }
+        },
+        globalState
       } as never,
       {
         buildDashboard,
@@ -651,7 +682,8 @@ describe('reviewDecisionRecordAction', () => {
       {
         storageUri: {
           fsPath: '/workspace/.storage'
-        }
+        },
+        globalState
       } as never,
       {
         buildDashboard: vi.fn().mockResolvedValue(
@@ -693,6 +725,7 @@ describe('reviewDecisionRecordAction', () => {
         storageUri: {
           fsPath: '/workspace/.storage'
         },
+        globalState,
         extensionMode: 3
       } as never,
       {
@@ -730,7 +763,8 @@ describe('reviewDecisionRecordAction', () => {
       {
         storageUri: {
           fsPath: '/workspace/.storage'
-        }
+        },
+        globalState
       } as never,
       {
         buildDashboard
@@ -774,5 +808,113 @@ describe('reviewDecisionRecordAction', () => {
       cancellationStage: 'during-decision-record-input'
     });
     expect(buildDashboard).not.toHaveBeenCalled();
+  });
+
+  it('reuses the last persisted reviewer name as the next default', async () => {
+    globalState.reviewerState.storedValue = 'Persisted Reviewer';
+    showInputBoxMock
+      .mockResolvedValueOnce('Persisted Reviewer')
+      .mockResolvedValueOnce('Question')
+      .mockResolvedValueOnce('Rationale');
+    showQuickPickMock
+      .mockResolvedValueOnce({ value: 'approved' })
+      .mockResolvedValueOnce({ value: 'high' });
+
+    const action = createReviewDecisionRecordAction(
+      {
+        storageUri: {
+          fsPath: '/workspace/.storage'
+        },
+        globalState
+      } as never,
+      {
+        buildDashboard: vi.fn().mockResolvedValue(createCanonicalDashboardResult()),
+        persistDecisionRecord: vi.fn().mockResolvedValue({
+          artifactPlan: {
+            scenarioId: 'SCENARIO-VHS-001',
+            decisionId: 'decision-id',
+            decisionDirectory: '/workspace/.storage/decision-records/scenario/decision-id',
+            jsonFilePath: '/workspace/.storage/decision-records/scenario/decision-id/decision.json',
+            markdownFilePath:
+              '/workspace/.storage/decision-records/scenario/decision-id/decision.md'
+          },
+          record: {
+            generatedAt: '2026-04-03T16:00:00.000Z'
+          }
+        }),
+        readRepoRemoteUrl: vi
+          .fn()
+          .mockResolvedValue('https://github.com/ni/labview-icon-editor.git')
+      }
+    );
+
+    const result = await action({
+      model: createCanonicalModel()
+    });
+
+    expect(result.outcome).toBe('created-decision-record');
+    expect(showInputBoxMock).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        value: 'Persisted Reviewer'
+      })
+    );
+    expect(globalState.get).toHaveBeenCalledWith('viHistorySuite.lastDecisionReviewer');
+    expect(globalState.update).toHaveBeenCalledWith(
+      'viHistorySuite.lastDecisionReviewer',
+      'Persisted Reviewer'
+    );
+  });
+
+  it('keeps the action cancellable across question, outcome, confidence, and rationale prompts', async () => {
+    const createPromptAction = () =>
+      createReviewDecisionRecordAction(
+        {
+          storageUri: {
+            fsPath: '/workspace/.storage'
+          },
+          globalState
+        } as never
+      );
+
+    showInputBoxMock.mockResolvedValueOnce('Reviewer').mockResolvedValueOnce(undefined);
+    await expect(createPromptAction()({ model: createCanonicalModel() })).resolves.toEqual({
+      outcome: 'cancelled',
+      cancellationStage: 'during-decision-record-input'
+    });
+
+    showInputBoxMock.mockReset();
+    showQuickPickMock.mockReset();
+    showInputBoxMock.mockResolvedValueOnce('Reviewer').mockResolvedValueOnce('Question');
+    showQuickPickMock.mockResolvedValueOnce(undefined);
+    await expect(createPromptAction()({ model: createCanonicalModel() })).resolves.toEqual({
+      outcome: 'cancelled',
+      cancellationStage: 'during-decision-record-input'
+    });
+
+    showInputBoxMock.mockReset();
+    showQuickPickMock.mockReset();
+    showInputBoxMock.mockResolvedValueOnce('Reviewer').mockResolvedValueOnce('Question');
+    showQuickPickMock
+      .mockResolvedValueOnce({ value: 'approved' })
+      .mockResolvedValueOnce(undefined);
+    await expect(createPromptAction()({ model: createCanonicalModel() })).resolves.toEqual({
+      outcome: 'cancelled',
+      cancellationStage: 'during-decision-record-input'
+    });
+
+    showInputBoxMock.mockReset();
+    showQuickPickMock.mockReset();
+    showInputBoxMock
+      .mockResolvedValueOnce('Reviewer')
+      .mockResolvedValueOnce('Question')
+      .mockResolvedValueOnce(undefined);
+    showQuickPickMock
+      .mockResolvedValueOnce({ value: 'approved' })
+      .mockResolvedValueOnce({ value: 'medium' });
+    await expect(createPromptAction()({ model: createCanonicalModel() })).resolves.toEqual({
+      outcome: 'cancelled',
+      cancellationStage: 'during-decision-record-input'
+    });
   });
 });

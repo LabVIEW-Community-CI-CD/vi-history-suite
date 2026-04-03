@@ -30,6 +30,8 @@ and separate retained human decisions.
   packet itself
 - scenario contracts define minimum commits and comparison pairs
 - docs and retained artifacts clearly distinguish evidence from decision
+- repeat decision-record creation reuses the most recently persisted reviewer
+  name as the default without weakening stable cancellation behavior
 
 ## Required Evidence
 
@@ -56,6 +58,8 @@ and separate retained human decisions.
 - repository-remote plus VI-path scenario matching for the extension flow
 - real extension-host proof that decision-record creation writes separate JSON
   and Markdown artifacts and opens the retained Markdown artifact
+- persisted reviewer-name defaults across repeated extension-facing
+  decision-record runs
 
 ## Remaining Focus
 

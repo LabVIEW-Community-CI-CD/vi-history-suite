@@ -743,6 +743,10 @@
 - `TEST-UNIT-215`: prove the docs-authoring Dockerfile, entrypoint,
   package-manifest scripts, workbench documentation, and GitLab publish lane
   remain aligned as one governed documentation-package surface
+- `TEST-UNIT-216`: prove the extension-facing decision-record action reuses the
+  last persisted reviewer name as the next reviewer default and retains stable
+  cancellation outcomes when the review-question, outcome, confidence, or
+  rationale prompts are dismissed
 - `TEST-UNIT-207`: prove the fast-loop dev-host CLI parses stable arguments,
   prepares a reusable fixture workspace without requiring `Code.exe`, and
   builds a stable launch plan for either direct or staged extension mode

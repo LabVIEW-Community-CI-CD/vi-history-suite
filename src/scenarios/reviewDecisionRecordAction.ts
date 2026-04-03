@@ -68,6 +68,8 @@ export interface ReviewDecisionRecordActionDeps
   reviewerNameProvider?: () => string;
 }
 
+const LAST_REVIEWER_STATE_KEY = 'viHistorySuite.lastDecisionReviewer';
+
 const OUTCOME_ITEMS: DecisionRecordQuickPickItem<ReviewDecisionOutcome>[] = [
   {
     label: 'Needs More Review',
@@ -135,6 +137,8 @@ export function createReviewDecisionRecordAction(
         cancellationStage: 'during-decision-record-input'
       };
     }
+
+    await persistLastReviewerName(context, prompts.reviewer);
 
     if (request.cancellationToken?.isCancellationRequested) {
       return {
@@ -250,7 +254,10 @@ async function collectDecisionRecordPromptInputs(
 
   const showInputBox = deps.showInputBox ?? vscode.window.showInputBox;
   const showQuickPick = deps.showQuickPick ?? vscode.window.showQuickPick;
-  const defaultReviewer = (deps.reviewerNameProvider ?? defaultReviewerNameProvider)();
+  const defaultReviewer =
+    automationInputs.reviewer ??
+    readPersistedReviewerName(context) ??
+    (deps.reviewerNameProvider ?? defaultReviewerNameProvider)();
   const reviewer = await showInputBox({
     title: 'Create Review Decision Record',
     prompt: 'Reviewer name',
@@ -388,6 +395,29 @@ function defaultReviewerNameProvider(): string {
     return os.userInfo().username;
   } catch {
     return 'Reviewer';
+  }
+}
+
+function readPersistedReviewerName(context: vscode.ExtensionContext): string | undefined {
+  const candidate = context.globalState?.get<string>(LAST_REVIEWER_STATE_KEY);
+  return typeof candidate === 'string' && candidate.trim().length > 0
+    ? candidate.trim()
+    : undefined;
+}
+
+async function persistLastReviewerName(
+  context: vscode.ExtensionContext,
+  reviewer: string
+): Promise<void> {
+  const trimmed = reviewer.trim();
+  if (trimmed.length === 0 || !context.globalState?.update) {
+    return;
+  }
+
+  try {
+    await context.globalState.update(LAST_REVIEWER_STATE_KEY, trimmed);
+  } catch {
+    // Best-effort only. Reviewer persistence should not block decision creation.
   }
 }
 
