@@ -64,6 +64,7 @@ export interface ComparisonReportActionResult {
   metadataFilePath?: string;
   reportWebviewUri?: string;
   generatedReportExists?: boolean;
+  displayedEvidenceKind?: 'generated-report' | 'packet';
   title?: string;
 }
 
@@ -451,12 +452,10 @@ async function openPersistedComparisonReportPanel(
       localResourceRoots: [options.context.storageUri!, repoRootUri]
     }
   );
-  const renderedContentUri = panel.webview.asWebviewUri(
-    options.record.runtimeExecution.reportExists ? reportFileUri : packetFileUri
-  );
+  const packetWebviewUri = panel.webview.asWebviewUri(packetFileUri).toString();
+  const reportWebviewUri = panel.webview.asWebviewUri(reportFileUri).toString();
   const panelHtmlOptions = {
     title: options.record.reportTitle,
-    reportWebviewUri: renderedContentUri.toString(),
     reportStatus: options.record.reportStatus,
     runtimeExecutionState: options.record.runtimeExecutionState,
     blockedReason:
@@ -495,23 +494,41 @@ async function openPersistedComparisonReportPanel(
     generatedReportExists: options.record.runtimeExecution.reportExists,
     cspSource: panel.webview.cspSource
   } as const;
-  panel.webview.html = options.record.runtimeExecution.reportExists
-    ? await renderGeneratedComparisonReportPanelHtml({
+  const packetPanelHtmlOptions = {
+    ...panelHtmlOptions,
+    reportWebviewUri: packetWebviewUri,
+    packetFilePath: options.packetFilePath,
+    packetDirectoryWebviewUri: ensureTrailingSlash(
+      panel.webview.asWebviewUri(uriFile(path.dirname(options.packetFilePath))).toString()
+    ),
+    readFile: deps.readFile ?? fs.readFile
+  } as const;
+  let displayedEvidenceKind: 'generated-report' | 'packet' =
+    options.record.runtimeExecution.reportExists ? 'generated-report' : 'packet';
+  if (options.record.runtimeExecution.reportExists) {
+    try {
+      panel.webview.html = await renderGeneratedComparisonReportPanelHtml({
         ...panelHtmlOptions,
+        displayedEvidenceKind,
         reportFilePath: options.reportFilePath,
         reportDirectoryWebviewUri: ensureTrailingSlash(
           panel.webview.asWebviewUri(uriFile(path.dirname(options.reportFilePath))).toString()
         ),
         readFile: deps.readFile ?? fs.readFile
-      })
-    : await renderPersistedComparisonReportPacketPanelHtml({
-        ...panelHtmlOptions,
-        packetFilePath: options.packetFilePath,
-        packetDirectoryWebviewUri: ensureTrailingSlash(
-          panel.webview.asWebviewUri(uriFile(path.dirname(options.packetFilePath))).toString()
-        ),
-        readFile: deps.readFile ?? fs.readFile
       });
+    } catch {
+      displayedEvidenceKind = 'packet';
+      panel.webview.html = await renderPersistedComparisonReportPacketPanelHtml({
+        ...packetPanelHtmlOptions,
+        displayedEvidenceKind
+      });
+    }
+  } else {
+    panel.webview.html = await renderPersistedComparisonReportPacketPanelHtml({
+      ...packetPanelHtmlOptions,
+      displayedEvidenceKind
+    });
+  }
 
   const result: ComparisonReportActionResult = {
     outcome: 'opened-comparison-report',
@@ -527,8 +544,10 @@ async function openPersistedComparisonReportPanel(
     packetFilePath: options.packetFilePath,
     reportFilePath: options.reportFilePath,
     metadataFilePath: options.metadataFilePath,
-    reportWebviewUri: renderedContentUri.toString(),
+    reportWebviewUri:
+      displayedEvidenceKind === 'generated-report' ? reportWebviewUri : packetWebviewUri,
     generatedReportExists: options.record.runtimeExecution.reportExists,
+    displayedEvidenceKind,
     title: panel.title
   };
 
@@ -645,6 +664,7 @@ export function renderComparisonReportPanelHtml(options: {
   runtimeLabviewCliProcessObservedAtExit?: boolean;
   runtimeLvcompareProcessObservedAtExit?: boolean;
   generatedReportExists: boolean;
+  displayedEvidenceKind: 'generated-report' | 'packet';
   cspSource: string;
 }): string {
   const safeTitle = escapeHtml(options.title);
@@ -698,6 +718,7 @@ async function renderGeneratedComparisonReportPanelHtml(options: {
   runtimeLabviewCliProcessObservedAtExit?: boolean;
   runtimeLvcompareProcessObservedAtExit?: boolean;
   generatedReportExists: boolean;
+  displayedEvidenceKind: 'generated-report' | 'packet';
   cspSource: string;
   readFile: typeof fs.readFile;
 }): Promise<string> {
@@ -763,6 +784,7 @@ async function renderPersistedComparisonReportPacketPanelHtml(options: {
   runtimeLabviewCliProcessObservedAtExit?: boolean;
   runtimeLvcompareProcessObservedAtExit?: boolean;
   generatedReportExists: boolean;
+  displayedEvidenceKind: 'generated-report' | 'packet';
   cspSource: string;
   readFile: typeof fs.readFile;
 }): Promise<string> {
@@ -777,15 +799,28 @@ async function renderPersistedComparisonReportPacketPanelHtml(options: {
     ].join('; ');
     const headInjection = `<meta http-equiv="Content-Security-Policy" content="${escapeHtml(
       csp
-    )}" /><base href="${escapeHtml(options.packetDirectoryWebviewUri)}" />`;
+    )}" /><base href="${escapeHtml(options.packetDirectoryWebviewUri)}" /><style>
+      body { margin: 0; background: white; }
+      .vihs-runtime-status { font-family: var(--vscode-font-family); margin: 0; padding: 16px; background: var(--vscode-editor-background); color: var(--vscode-foreground); border-bottom: 1px solid var(--vscode-panel-border); }
+      .vihs-runtime-status ul { margin: 4px 0 0 18px; }
+    </style>`;
+    const withHead = /<head\b[^>]*>/i.test(originalPacketHtml)
+      ? originalPacketHtml.replace(/<head\b[^>]*>/i, (match) => `${match}${headInjection}`)
+      : `<!DOCTYPE html><html><head><meta charset="UTF-8" />${headInjection}<title>${escapeHtml(
+          options.title
+        )}</title></head><body>${originalPacketHtml}</body></html>`;
+    const statusMarkup = renderComparisonReportPanelStatusMarkup(options).replace(
+      'class="status"',
+      'class="status vihs-runtime-status"'
+    );
 
-    if (/<head\b[^>]*>/i.test(originalPacketHtml)) {
-      return originalPacketHtml.replace(/<head\b[^>]*>/i, (match) => `${match}${headInjection}`);
+    if (/<body\b[^>]*>/i.test(withHead)) {
+      return withHead.replace(/<body\b([^>]*)>/i, `<body$1>${statusMarkup}`);
     }
 
     return `<!DOCTYPE html><html><head><meta charset="UTF-8" />${headInjection}<title>${escapeHtml(
       options.title
-    )}</title></head><body>${originalPacketHtml}</body></html>`;
+    )}</title></head><body>${statusMarkup}${withHead}</body></html>`;
   } catch {
     return renderComparisonReportPanelHtml(options);
   }
@@ -816,7 +851,15 @@ function renderComparisonReportPanelStatusMarkup(options: {
   runtimeLabviewCliProcessObservedAtExit?: boolean;
   runtimeLvcompareProcessObservedAtExit?: boolean;
   generatedReportExists: boolean;
+  displayedEvidenceKind: 'generated-report' | 'packet';
 }): string {
+  const displayedEvidenceMarkup = `<div><strong>Displayed evidence:</strong> ${escapeHtml(
+    options.displayedEvidenceKind === 'generated-report'
+      ? 'generated NI report'
+      : options.generatedReportExists
+        ? 'retained packet fallback'
+        : 'retained packet'
+  )}</div>`;
   const blockedReasonMarkup = options.blockedReason
     ? `<div><strong>Blocked reason:</strong> ${escapeHtml(options.blockedReason)}</div>`
     : '';
@@ -922,6 +965,7 @@ function renderComparisonReportPanelStatusMarkup(options: {
       <strong>Runtime execution:</strong> ${escapeHtml(options.runtimeExecutionState)}
       <br />
       <strong>Generated report exists:</strong> ${options.generatedReportExists ? 'yes' : 'no'}
+      ${displayedEvidenceMarkup}
       ${blockedReasonMarkup}
       ${failureReasonMarkup}
       ${diagnosticReasonMarkup}

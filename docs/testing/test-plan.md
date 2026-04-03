@@ -834,6 +834,9 @@
   dashboard preparation summary distinguish refreshed generated-report,
   blocked, failed, and no-generated-report outcomes, with follow-up guidance
   when usable NI report evidence was not produced for every refreshed pair
+- `TEST-UNIT-233`: verify compare opening falls back from an unreadable
+  retained generated-report HTML file to the retained packet view and that the
+  comparison panel status states which evidence surface was actually displayed
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed product, wiki, and assurance-skill repos with authority roles,
   expected remotes, and primary entrypoints

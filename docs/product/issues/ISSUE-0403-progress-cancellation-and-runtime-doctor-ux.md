@@ -87,6 +87,9 @@ requiring raw-log inspection.
   guidance instead of silent unsupported-command handling, and `Diff prev` on a
   content-detected VI now refuses text-diff fallback when comparison-report
   routing is unavailable in the current build
+- compare opening now falls back from unreadable retained generated-report HTML
+  to the retained packet surface and states whether the panel is showing the
+  generated NI report or a retained packet fallback
 - stale bundled-documentation page requests from older or mismatched history
   panels now fall back to the packaged overview page when the installed bundle
   is still available, retaining the requested page id and fallback fact in the
