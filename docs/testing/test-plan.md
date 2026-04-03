@@ -519,6 +519,14 @@
 - `TEST-UNIT-152`: prove the Windows-container command planner fails closed
   when no governed engine is selected or when the selected engine cannot be
   rewritten into a container command
+- `TEST-UNIT-153`: prove Windows-container execution derives the container
+  temp directory from the normalized Windows host report directory
+- `TEST-UNIT-154`: prove Windows-container execution-context preparation fails
+  closed with `windows-interop-root-unavailable` when a non-Windows host lacks
+  the required interop workspace root
+- `TEST-UNIT-155`: prove Windows-container execution-context preparation fails
+  closed with `windows-path-normalization-failed` when the selected host
+  report directory cannot be normalized into governed Windows form
 - `TEST-DOC-014`: review the queue, epic, ADR, and current-state surfaces to
   prove the future-facing dashboard research was normalized into governed repo
   control-plane artifacts and the incoming research artifact was deleted

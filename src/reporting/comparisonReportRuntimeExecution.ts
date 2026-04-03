@@ -536,7 +536,7 @@ async function captureRuntimeDiagnostics(
   };
 }
 
-interface PreparedExecutionContext {
+export interface PreparedExecutionContext {
   outcome: 'ready' | 'blocked';
   commandPlan: ComparisonCommandPlan;
   reportFilePath: string;
@@ -763,7 +763,7 @@ function buildWindowsInteropCommandPlan(
   return undefined;
 }
 
-async function prepareWindowsContainerExecutionContext(
+export async function prepareWindowsContainerExecutionContext(
   record: ComparisonReportPacketRecord,
   commandPlan: ComparisonCommandPlan,
   interopWorkspaceRoot: string | undefined,
@@ -822,16 +822,8 @@ async function prepareWindowsContainerExecutionContext(
   }
 
   const hostTempDirectory = path.join(hostLayout.reportDirectory, 'container-temp');
+  const hostTempDirectoryWindows = path.win32.join(hostReportDirectory, 'container-temp');
   await deps.mkdir(hostTempDirectory, { recursive: true });
-  const hostTempDirectoryWindows = normalizeWindowsInteropPath(hostTempDirectory);
-  if (!hostTempDirectoryWindows) {
-    return {
-      outcome: 'blocked',
-      commandPlan,
-      reportFilePath: record.artifactPlan.reportFilePath,
-      failureReason: 'windows-path-normalization-failed'
-    };
-  }
 
   const containerCommandPlan = buildWindowsContainerCommandPlan(record, commandPlan, {
     hostReportDirectory,

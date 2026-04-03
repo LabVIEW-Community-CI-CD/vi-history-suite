@@ -20,6 +20,7 @@ import {
   parseLabviewCliDiagnosticLogPath,
   parseWindowsTasklistCsv,
   pathExistsForReport,
+  prepareWindowsContainerExecutionContext,
   resolveHostReadableDiagnosticPath,
   resolveMappedRuntimeDiagnosticPath,
   rewriteLabviewCliArgsForContainerWorkspace,
@@ -811,6 +812,8 @@ describe('comparisonReportRuntimeExecution', () => {
       stderr: ''
     });
 
+    const mkdir = vi.fn().mockResolvedValue(undefined);
+
     await executeComparisonReport(
       {
         record,
@@ -822,7 +825,7 @@ describe('comparisonReportRuntimeExecution', () => {
           .fn()
           .mockResolvedValueOnce(Buffer.from('left'))
           .mockResolvedValueOnce(Buffer.from('right')),
-        mkdir: vi.fn().mockResolvedValue(undefined),
+        mkdir: mkdir as never,
         writeFile: vi.fn().mockResolvedValue(undefined) as never,
         copyFile: vi.fn().mockResolvedValue(undefined) as never,
         copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
@@ -863,6 +866,10 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(innerCommand).toContain("Set-IniToken -Path $cliIni -Key 'AfterLaunchOpenAppReferenceTimeoutInSecond' -Value '180'");
     expect(innerCommand).toContain("'-Headless', 'true'");
     expect(innerCommand).toContain("'-o'");
+    expect(mkdir).toHaveBeenCalledWith(
+      '/mnt/c/Users/sveld/AppData/Local/Temp/vi-history-suite-runtime/reports/repoid123456/fileid123456/container-temp',
+      { recursive: true }
+    );
   });
 
   it('wraps the governed LabVIEW CLI command in the windows container provider from a native Windows host without interop staging', async () => {
@@ -1473,6 +1480,137 @@ describe('comparisonReportRuntimeExecution', () => {
         }
       )
     ).toBeUndefined();
+  });
+
+  it('retains separate host and normalized Windows temp roots for windows-container execution context', async () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.provider = 'windows-container';
+    record.runtimeSelection.windowsContainerImage = 'nationalinstruments/labview:2026q1-windows';
+    record.runtimeSelection.labviewExe = {
+      kind: 'labview-exe',
+      path: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+      source: 'scan',
+      exists: true,
+      bitness: 'x64'
+    };
+    record.runtimeSelection.labviewCli = {
+      kind: 'labview-cli',
+      path: 'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+      source: 'scan',
+      exists: true,
+      bitness: 'x86'
+    };
+
+    const mkdir = vi.fn().mockResolvedValue(undefined);
+    const writeFile = vi.fn().mockResolvedValue(undefined);
+
+    const executionContext = await prepareWindowsContainerExecutionContext(
+      record,
+      {
+        executable: 'LabVIEWCLI',
+        args: [
+          '-OperationName',
+          'CreateComparisonReport',
+          '-VI1',
+          '/workspace/.storage/reports/repoid123456/fileid123456/staging/left-111111112222-foo.vi',
+          '-VI2',
+          '/workspace/.storage/reports/repoid123456/fileid123456/staging/right-abcdef123456-foo.vi',
+          '-ReportType',
+          'html',
+          '-ReportPath',
+          '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
+          '-c',
+          '-o'
+        ]
+      },
+      '/mnt/c/Users/sveld/AppData/Local/Temp/vi-history-suite-runtime',
+      {
+        mkdir: mkdir as never,
+        writeFile: writeFile as never,
+        processPlatform: 'linux',
+        leftBlob: Buffer.from('left'),
+        rightBlob: Buffer.from('right')
+      }
+    );
+
+    expect(executionContext.outcome).toBe('ready');
+    expect(executionContext.diagnosticPathMapping).toEqual({
+      runtimeRoot: 'C:\\vi-history-suite\\container-temp',
+      hostRoot:
+        '/mnt/c/Users/sveld/AppData/Local/Temp/vi-history-suite-runtime/reports/repoid123456/fileid123456/container-temp'
+    });
+    expect(mkdir).toHaveBeenCalledWith(
+      '/mnt/c/Users/sveld/AppData/Local/Temp/vi-history-suite-runtime/reports/repoid123456/fileid123456/container-temp',
+      { recursive: true }
+    );
+    expect(executionContext.commandPlan.executable).toBe(
+      '/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe'
+    );
+  });
+
+  it('fails closed for windows-container execution context when a non-Windows host has no interop root', async () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.provider = 'windows-container';
+    record.runtimeSelection.windowsContainerImage = 'nationalinstruments/labview:2026q1-windows';
+
+    await expect(
+      prepareWindowsContainerExecutionContext(
+        record,
+        {
+          executable: 'LabVIEWCLI',
+          args: ['-OperationName', 'CreateComparisonReport']
+        },
+        undefined,
+        {
+          mkdir: vi.fn().mockResolvedValue(undefined) as never,
+          writeFile: vi.fn().mockResolvedValue(undefined) as never,
+          processPlatform: 'linux',
+          leftBlob: Buffer.from('left'),
+          rightBlob: Buffer.from('right')
+        }
+      )
+    ).resolves.toEqual({
+      outcome: 'blocked',
+      commandPlan: {
+        executable: 'LabVIEWCLI',
+        args: ['-OperationName', 'CreateComparisonReport']
+      },
+      reportFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
+      failureReason: 'windows-interop-root-unavailable'
+    });
+  });
+
+  it('fails closed for windows-container execution context when the host report directory cannot be normalized to Windows form', async () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.provider = 'windows-container';
+    record.runtimeSelection.windowsContainerImage = 'nationalinstruments/labview:2026q1-windows';
+    record.artifactPlan.reportDirectory = '/workspace/not-windows-report-root';
+
+    await expect(
+      prepareWindowsContainerExecutionContext(
+        record,
+        {
+          executable: 'LabVIEWCLI',
+          args: ['-OperationName', 'CreateComparisonReport']
+        },
+        '/mnt/c/Users/sveld/AppData/Local/Temp/vi-history-suite-runtime',
+        {
+          mkdir: vi.fn().mockResolvedValue(undefined) as never,
+          writeFile: vi.fn().mockResolvedValue(undefined) as never,
+          processPlatform: 'win32',
+          leftBlob: Buffer.from('left'),
+          rightBlob: Buffer.from('right')
+        }
+      )
+    ).resolves.toEqual({
+      outcome: 'blocked',
+      commandPlan: {
+        executable: 'LabVIEWCLI',
+        args: ['-OperationName', 'CreateComparisonReport']
+      },
+      reportFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
+      failureReason: 'windows-path-normalization-failed'
+    });
   });
 
   it('retains an explicit launch-success note when the NI diagnostic log confirms LabVIEW launched', () => {
