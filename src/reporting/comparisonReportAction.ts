@@ -25,6 +25,9 @@ export interface ComparisonReportActionResult {
   runtimeExecutionState?: 'not-run' | 'not-available' | 'succeeded' | 'failed';
   blockedReason?: string;
   runtimeFailureReason?: string;
+  runtimeDiagnosticReason?: string;
+  runtimeDiagnosticNotes?: string[];
+  runtimeDiagnosticLogArtifactPath?: string;
   packetFilePath?: string;
   reportFilePath?: string;
   metadataFilePath?: string;
@@ -111,10 +114,18 @@ export function createComparisonReportAction(
       reportWebviewUri: reportWebviewUri.toString(),
       reportStatus: packet.record.reportStatus,
       runtimeExecutionState: packet.record.runtimeExecutionState,
+      blockedReason:
+        packet.record.reportStatus === 'blocked-runtime'
+          ? packet.record.runtimeSelection.blockedReason
+          : preflight.blockedReason,
+      runtimeFailureReason: packet.record.runtimeExecution.failureReason,
+      runtimeDiagnosticReason: packet.record.runtimeExecution.diagnosticReason,
+      runtimeDiagnosticNotes: packet.record.runtimeExecution.diagnosticNotes,
+      generatedReportExists: packet.record.runtimeExecution.reportExists,
       cspSource: panel.webview.cspSource
     });
 
-    return {
+    const result: ComparisonReportActionResult = {
       outcome: 'opened-comparison-report',
       reportStatus: packet.record.reportStatus,
       runtimeExecutionState: packet.record.runtimeExecutionState,
@@ -130,6 +141,19 @@ export function createComparisonReportAction(
       generatedReportExists: packet.record.runtimeExecution.reportExists,
       title: panel.title
     };
+
+    if (packet.record.runtimeExecution.diagnosticReason) {
+      result.runtimeDiagnosticReason = packet.record.runtimeExecution.diagnosticReason;
+    }
+    if (packet.record.runtimeExecution.diagnosticNotes?.length) {
+      result.runtimeDiagnosticNotes = packet.record.runtimeExecution.diagnosticNotes;
+    }
+    if (packet.record.runtimeExecution.diagnosticLogArtifactPath) {
+      result.runtimeDiagnosticLogArtifactPath =
+        packet.record.runtimeExecution.diagnosticLogArtifactPath;
+    }
+
+    return result;
   };
 }
 
@@ -138,10 +162,30 @@ export function renderComparisonReportPanelHtml(options: {
   reportWebviewUri: string;
   reportStatus: 'ready-for-runtime' | 'blocked-preflight' | 'blocked-runtime';
   runtimeExecutionState: 'not-run' | 'not-available' | 'succeeded' | 'failed';
+  blockedReason?: string;
+  runtimeFailureReason?: string;
+  runtimeDiagnosticReason?: string;
+  runtimeDiagnosticNotes?: string[];
+  generatedReportExists: boolean;
   cspSource: string;
 }): string {
   const safeTitle = escapeHtml(options.title);
   const safeUri = escapeHtml(options.reportWebviewUri);
+  const blockedReasonMarkup = options.blockedReason
+    ? `<div><strong>Blocked reason:</strong> ${escapeHtml(options.blockedReason)}</div>`
+    : '';
+  const failureReasonMarkup = options.runtimeFailureReason
+    ? `<div><strong>Runtime failure reason:</strong> ${escapeHtml(options.runtimeFailureReason)}</div>`
+    : '';
+  const diagnosticReasonMarkup = options.runtimeDiagnosticReason
+    ? `<div><strong>Runtime diagnostic:</strong> ${escapeHtml(options.runtimeDiagnosticReason)}</div>`
+    : '';
+  const diagnosticNotesMarkup =
+    options.runtimeDiagnosticNotes && options.runtimeDiagnosticNotes.length > 0
+      ? `<div><strong>Runtime notes:</strong><ul>${options.runtimeDiagnosticNotes
+          .map((note) => `<li>${escapeHtml(note)}</li>`)
+          .join('')}</ul></div>`
+      : '';
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -160,6 +204,12 @@ export function renderComparisonReportPanelHtml(options: {
       <strong>Status:</strong> ${escapeHtml(options.reportStatus)}
       <br />
       <strong>Runtime execution:</strong> ${escapeHtml(options.runtimeExecutionState)}
+      <br />
+      <strong>Generated report exists:</strong> ${options.generatedReportExists ? 'yes' : 'no'}
+      ${blockedReasonMarkup}
+      ${failureReasonMarkup}
+      ${diagnosticReasonMarkup}
+      ${diagnosticNotesMarkup}
     </div>
     <iframe data-testid="comparison-report-panel-frame" src="${safeUri}" title="${safeTitle}"></iframe>
   </body>

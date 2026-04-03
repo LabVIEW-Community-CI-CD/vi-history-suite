@@ -540,6 +540,153 @@ describe('comparisonReportAction', () => {
     });
   });
 
+  it('surfaces runtime diagnostics in the action result and rendered comparison-report panel', async () => {
+    const executeComparisonReport = vi.fn().mockResolvedValue({
+      record: {
+        reportTitle: 'VI Comparison Report: foo.vi',
+        reportStatus: 'ready-for-runtime',
+        runtimeExecutionState: 'failed',
+        runtimeExecution: {
+          state: 'failed',
+          attempted: true,
+          reportExists: false,
+          failureReason: 'command-exited-nonzero',
+          diagnosticReason: 'labview-path-ignored-last-used-default',
+          diagnosticNotes: [
+            'LabVIEW CLI ignored the explicit -LabVIEWPath selection and used the last-used LabVIEW instead: C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe.'
+          ],
+          diagnosticLogArtifactPath:
+            '/workspace/.storage/reports/repoid123456/fileid123456/runtime-diagnostic-log.txt'
+        },
+        runtimeSelection: {
+          platform: 'win32',
+          preferBitness: 'x86',
+          provider: 'host-native',
+          engine: 'labview-cli',
+          notes: [],
+          registryQueryPlans: [],
+          candidates: []
+        },
+        artifactPlan: {
+          repoId: 'repoid123456',
+          reportDirectory: '/workspace/.storage/reports/repoid123456/fileid123456',
+          reportFilename: 'diff-report-foo.vi.html'
+        }
+      },
+      packetFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-packet.html',
+      reportFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
+      metadataFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-metadata.json'
+    });
+    const action = createComparisonReportAction(
+      {
+        storageUri: createMockUri('/workspace/.storage')
+      } as never,
+      {
+        preflightComparisonReport: vi.fn().mockResolvedValue({
+          normalizedRelativePath: 'foo.vi',
+          ready: true,
+          left: {
+            revisionId: '1111111122222222',
+            blobSpecifier: '1111111122222222:foo.vi',
+            signature: 'LVIN',
+            isVi: true
+          },
+          right: {
+            revisionId: 'abcdef1234567890',
+            blobSpecifier: 'abcdef1234567890:foo.vi',
+            signature: 'LVCC',
+            isVi: true
+          }
+        }),
+        locateRuntime: vi.fn().mockResolvedValue({
+          platform: 'win32',
+          preferBitness: 'x86',
+          provider: 'host-native',
+          engine: 'labview-cli',
+          notes: [],
+          registryQueryPlans: [],
+          candidates: []
+        }),
+        persistComparisonReport: vi.fn().mockResolvedValue({
+          record: {
+            reportTitle: 'VI Comparison Report: foo.vi',
+            reportStatus: 'ready-for-runtime',
+            runtimeExecutionState: 'not-run',
+            runtimeExecution: {
+              state: 'not-run',
+              attempted: false,
+              reportExists: false
+            },
+            runtimeSelection: {
+              platform: 'win32',
+              preferBitness: 'x86',
+              provider: 'host-native',
+              engine: 'labview-cli',
+              notes: [],
+              registryQueryPlans: [],
+              candidates: []
+            },
+            artifactPlan: {
+              repoId: 'repoid123456',
+              reportDirectory: '/workspace/.storage/reports/repoid123456/fileid123456',
+              reportFilename: 'diff-report-foo.vi.html'
+            }
+          },
+          packetFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-packet.html',
+          reportFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
+          metadataFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-metadata.json'
+        }),
+        executeComparisonReport
+      }
+    );
+
+    const result = await action({
+      model: {
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace/repo',
+        relativePath: 'foo.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Update VI',
+            previousHash: '1111111122222222'
+          }
+        ]
+      },
+      selectedHash: 'abcdef1234567890'
+    });
+
+    expect(result).toEqual({
+      outcome: 'opened-comparison-report',
+      reportStatus: 'ready-for-runtime',
+      runtimeExecutionState: 'failed',
+      blockedReason: undefined,
+      runtimeFailureReason: 'command-exited-nonzero',
+      runtimeDiagnosticReason: 'labview-path-ignored-last-used-default',
+      runtimeDiagnosticNotes: [
+        'LabVIEW CLI ignored the explicit -LabVIEWPath selection and used the last-used LabVIEW instead: C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe.'
+      ],
+      runtimeDiagnosticLogArtifactPath:
+        '/workspace/.storage/reports/repoid123456/fileid123456/runtime-diagnostic-log.txt',
+      packetFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-packet.html',
+      reportFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
+      metadataFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-metadata.json',
+      reportWebviewUri:
+        'webview:/webview/workspace/.storage/reports/repoid123456/fileid123456/report-packet.html',
+      generatedReportExists: false,
+      title: 'VI Comparison Report: foo.vi'
+    });
+
+    const panel = createWebviewPanelMock.mock.results.at(-1)?.value as MockPanel;
+    expect(panel.webview.html).toContain('labview-path-ignored-last-used-default');
+    expect(panel.webview.html).toContain('command-exited-nonzero');
+    expect(panel.webview.html).toContain('Generated report exists:</strong> no');
+  });
+
   it('reads runtime settings from the workspace configuration and normalizes unknown runtime platforms', () => {
     getConfigurationMock.mockReturnValue({
       get: <T>(key: string, defaultValue: T) => {

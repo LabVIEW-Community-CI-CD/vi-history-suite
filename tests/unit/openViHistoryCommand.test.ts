@@ -473,6 +473,82 @@ describe('createOpenViHistoryCommand', () => {
     expect(showInformationMessageMock).not.toHaveBeenCalled();
   });
 
+  it('retains runtime diagnostics from comparison-report generation results', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    const comparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'opened-comparison-report',
+      reportStatus: 'ready-for-runtime',
+      runtimeExecutionState: 'failed',
+      runtimeFailureReason: 'command-exited-nonzero',
+      runtimeDiagnosticReason: 'labview-path-ignored-last-used-default',
+      runtimeDiagnosticNotes: [
+        'LabVIEW CLI ignored the explicit -LabVIEWPath selection and used the last-used LabVIEW instead: C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe.'
+      ],
+      runtimeDiagnosticLogArtifactPath:
+        '/workspace/.storage/reports/repo/file/runtime-diagnostic-log.txt',
+      reportFilePath: '/workspace/.storage/reports/repo/file/diff-report-eligible.vi.html',
+      metadataFilePath: '/workspace/.storage/reports/repo/file/report-metadata.json',
+      reportWebviewUri: 'webview:/report',
+      title: 'VI Comparison Report: eligible.vi'
+    });
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Update VI',
+            previousHash: '1111111122222222'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      comparisonReportAction
+    );
+
+    await command(targetUri as never);
+    await tracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReport',
+      hash: 'abcdef1234567890'
+    });
+
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'generateComparisonReport',
+      hash: 'abcdef1234567890',
+      outcome: 'opened-comparison-report',
+      reportStatus: 'ready-for-runtime',
+      runtimeExecutionState: 'failed',
+      blockedReason: undefined,
+      runtimeFailureReason: 'command-exited-nonzero',
+      runtimeDiagnosticReason: 'labview-path-ignored-last-used-default',
+      runtimeDiagnosticNotes: [
+        'LabVIEW CLI ignored the explicit -LabVIEWPath selection and used the last-used LabVIEW instead: C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe.'
+      ],
+      runtimeDiagnosticLogArtifactPath:
+        '/workspace/.storage/reports/repo/file/runtime-diagnostic-log.txt',
+      reportFilePath: '/workspace/.storage/reports/repo/file/diff-report-eligible.vi.html',
+      metadataFilePath: '/workspace/.storage/reports/repo/file/report-metadata.json',
+      reportWebviewUri: 'webview:/report',
+      title: 'VI Comparison Report: eligible.vi'
+    });
+  });
+
   it('retains explicit outcomes for missing previous revisions and malformed panel messages', async () => {
     const targetUri = createMockUri('/workspace/eligible.vi');
     const tracker = new HistoryPanelTracker();

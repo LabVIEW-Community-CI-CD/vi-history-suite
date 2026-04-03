@@ -269,6 +269,12 @@
   retained `-LabVIEWPath` ignored / last-used-LabVIEW message
 - `TEST-UNIT-078`: prove the packet and smoke artifact surfaces render the
   retained NI diagnostic reason, diagnostic log path, and explanatory notes
+- `TEST-UNIT-079`: prove the comparison-report action returns retained runtime
+  diagnostics and renders a panel summary with actionable blocked, failure, and
+  diagnosis facts
+- `TEST-UNIT-080`: prove the history-panel command path retains comparison
+  runtime diagnostics in the panel action tracker when report generation
+  returns a classified NI runtime diagnosis
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

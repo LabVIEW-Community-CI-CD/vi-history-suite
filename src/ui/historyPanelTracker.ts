@@ -32,6 +32,9 @@ export interface HistoryPanelActionSummary {
   runtimeExecutionState?: 'not-run' | 'not-available' | 'succeeded' | 'failed';
   blockedReason?: string;
   runtimeFailureReason?: string;
+  runtimeDiagnosticReason?: string;
+  runtimeDiagnosticNotes?: string[];
+  runtimeDiagnosticLogArtifactPath?: string;
   packetFilePath?: string;
   reportFilePath?: string;
   metadataFilePath?: string;

@@ -125,7 +125,7 @@ export function createOpenViHistoryCommand(
           );
         }
 
-        panelTracker?.recordAction({
+        const actionSummary: Parameters<HistoryPanelTracker['recordAction']>[0] = {
           command,
           hash,
           outcome: result.outcome,
@@ -139,7 +139,18 @@ export function createOpenViHistoryCommand(
           reportWebviewUri: result.reportWebviewUri,
           generatedReportExists: result.generatedReportExists,
           title: result.title
-        });
+        };
+        if (result.runtimeDiagnosticReason) {
+          actionSummary.runtimeDiagnosticReason = result.runtimeDiagnosticReason;
+        }
+        if (result.runtimeDiagnosticNotes?.length) {
+          actionSummary.runtimeDiagnosticNotes = result.runtimeDiagnosticNotes;
+        }
+        if (result.runtimeDiagnosticLogArtifactPath) {
+          actionSummary.runtimeDiagnosticLogArtifactPath =
+            result.runtimeDiagnosticLogArtifactPath;
+        }
+        panelTracker?.recordAction(actionSummary);
         return;
       }
 
