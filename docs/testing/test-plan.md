@@ -455,6 +455,8 @@
 - `TEST-UNIT-129`: prove the Windows-container provider rewrites `lvcompare`
   parity probes into container workspace paths and invokes them through the
   governed PowerShell wrapper from a non-Windows host
+- `TEST-UNIT-130`: prove the comparison-report action preserves explicit empty
+  observed-process arrays and renders them as `none` on the retained panel HTML
 - `TEST-DOC-014`: review the queue, epic, ADR, and current-state surfaces to
   prove the future-facing dashboard research was normalized into governed repo
   control-plane artifacts and the incoming research artifact was deleted

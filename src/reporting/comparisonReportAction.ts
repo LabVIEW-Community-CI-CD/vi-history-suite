@@ -298,7 +298,7 @@ export function createComparisonReportAction(
       result.runtimeProcessObservationTrigger =
         packet.record.runtimeExecution.processObservationTrigger;
     }
-    if (packet.record.runtimeExecution.observedProcessNames?.length) {
+    if (packet.record.runtimeExecution.observedProcessNames !== undefined) {
       result.runtimeObservedProcessNames = packet.record.runtimeExecution.observedProcessNames;
     }
     if (packet.record.runtimeExecution.labviewProcessObserved !== undefined) {
@@ -319,7 +319,7 @@ export function createComparisonReportAction(
       result.runtimeExitProcessObservationTrigger =
         packet.record.runtimeExecution.exitProcessObservationTrigger;
     }
-    if (packet.record.runtimeExecution.exitObservedProcessNames?.length) {
+    if (packet.record.runtimeExecution.exitObservedProcessNames !== undefined) {
       result.runtimeExitObservedProcessNames =
         packet.record.runtimeExecution.exitObservedProcessNames;
     }
@@ -452,9 +452,11 @@ export function renderComparisonReportPanelHtml(options: {
       )}</div>`
     : '';
   const observedProcessNamesMarkup =
-    options.runtimeObservedProcessNames && options.runtimeObservedProcessNames.length > 0
+    options.runtimeObservedProcessNames !== undefined
       ? `<div><strong>Observed process names:</strong> ${escapeHtml(
-          options.runtimeObservedProcessNames.join(' | ')
+          options.runtimeObservedProcessNames.length > 0
+            ? options.runtimeObservedProcessNames.join(' | ')
+            : 'none'
         )}</div>`
       : '';
   const observedLabviewMarkup = renderOptionalYesNoLine(
@@ -480,9 +482,11 @@ export function renderComparisonReportPanelHtml(options: {
       )}</div>`
     : '';
   const exitObservedProcessNamesMarkup =
-    options.runtimeExitObservedProcessNames && options.runtimeExitObservedProcessNames.length > 0
+    options.runtimeExitObservedProcessNames !== undefined
       ? `<div><strong>Exit observed process names:</strong> ${escapeHtml(
-          options.runtimeExitObservedProcessNames.join(' | ')
+          options.runtimeExitObservedProcessNames.length > 0
+            ? options.runtimeExitObservedProcessNames.join(' | ')
+            : 'none'
         )}</div>`
       : '';
   const observedLabviewAtExitMarkup = renderOptionalYesNoLine(
