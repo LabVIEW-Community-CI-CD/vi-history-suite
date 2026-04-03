@@ -589,6 +589,9 @@
 - `TEST-UNIT-176`: prove the concentrated dashboard skips copying a parsed
   overview image when the retained source image asset is missing on disk while
   preserving the entry's parsed overview metadata counts
+- `TEST-UNIT-177`: prove the history-panel command flow retains
+  `unsupported-command` when `openDashboard` is dispatched but no dashboard
+  action is wired
 - `TEST-DOC-014`: review the queue, epic, ADR, and current-state surfaces to
   prove the future-facing dashboard research was normalized into governed repo
   control-plane artifacts and the incoming research artifact was deleted
