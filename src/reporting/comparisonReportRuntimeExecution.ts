@@ -1,5 +1,6 @@
 import { execFile, ExecFileException } from 'node:child_process';
 import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
 
 import { ComparisonCommandPlan } from './comparisonReportPlan';
 import { buildComparisonReportExecutionPlan } from './comparisonReportExecutionPlan';
@@ -13,6 +14,7 @@ import { readRevisionBlob } from './comparisonReportPreflight';
 export interface ExecuteComparisonReportOptions {
   record: ComparisonReportPacketRecord;
   repositoryRoot: string;
+  interopWorkspaceRoot?: string;
 }
 
 export interface ExecuteComparisonReportResult {
@@ -26,11 +28,13 @@ export interface ComparisonReportRuntimeExecutionDeps {
   readRevisionBlob?: typeof readRevisionBlob;
   mkdir?: typeof fs.mkdir;
   writeFile?: typeof fs.writeFile;
+  copyFile?: typeof fs.copyFile;
   pathExists?: (filePath: string) => Promise<boolean>;
   runCommand?: (commandPlan: ComparisonCommandPlan) => Promise<RunCommandResult>;
   nowIso?: () => string;
   nowMs?: () => number;
   writePacketRecord?: typeof writeComparisonReportPacketRecord;
+  processPlatform?: NodeJS.Platform;
 }
 
 export interface RunCommandResult {
@@ -51,6 +55,7 @@ export async function executeComparisonReport(
   const plan = buildComparisonReportExecutionPlan(options.record);
   const mkdir = deps.mkdir ?? fs.mkdir;
   const writeFile = deps.writeFile ?? fs.writeFile;
+  const copyFile = deps.copyFile ?? fs.copyFile;
   const pathExists = deps.pathExists ?? pathExistsForReport;
   const runCommand = deps.runCommand ?? runComparisonCommandPlan;
   const nowIso = deps.nowIso ?? defaultNowIso;
@@ -75,14 +80,17 @@ export async function executeComparisonReport(
       options.record,
       options.repositoryRoot,
       plan.commandPlan,
+      options.interopWorkspaceRoot,
       {
         readBlob: deps.readRevisionBlob ?? readRevisionBlob,
         mkdir,
         writeFile,
+        copyFile,
         pathExists,
         runCommand,
         nowIso,
-        nowMs
+        nowMs,
+        processPlatform: deps.processPlatform ?? process.platform
       }
     );
   }
@@ -109,21 +117,25 @@ async function runHostNativeExecution(
   record: ComparisonReportPacketRecord,
   repositoryRoot: string,
   commandPlan: ComparisonCommandPlan,
+  interopWorkspaceRoot: string | undefined,
   deps: {
     readBlob: typeof readRevisionBlob;
     mkdir: typeof fs.mkdir;
     writeFile: typeof fs.writeFile;
+    copyFile: typeof fs.copyFile;
     pathExists: (filePath: string) => Promise<boolean>;
     runCommand: (commandPlan: ComparisonCommandPlan) => Promise<RunCommandResult>;
     nowIso: () => string;
     nowMs: () => number;
+    processPlatform: NodeJS.Platform;
   }
 ): Promise<ComparisonReportRuntimeExecution> {
   await deps.mkdir(record.artifactPlan.reportDirectory, { recursive: true });
   await deps.mkdir(record.artifactPlan.stagingDirectory, { recursive: true });
 
+  let leftBlob: Buffer;
   try {
-    const leftBlob = await deps.readBlob(
+    leftBlob = await deps.readBlob(
       repositoryRoot,
       record.preflight.left.revisionId,
       record.preflight.normalizedRelativePath
@@ -142,8 +154,9 @@ async function runHostNativeExecution(
     };
   }
 
+  let rightBlob: Buffer;
   try {
-    const rightBlob = await deps.readBlob(
+    rightBlob = await deps.readBlob(
       repositoryRoot,
       record.preflight.right.revisionId,
       record.preflight.normalizedRelativePath
@@ -162,16 +175,45 @@ async function runHostNativeExecution(
     };
   }
 
+  const executionContext = await prepareExecutionContext(record, commandPlan, interopWorkspaceRoot, {
+    mkdir: deps.mkdir,
+    writeFile: deps.writeFile,
+    processPlatform: deps.processPlatform,
+    leftBlob,
+    rightBlob
+  });
+
+  if (executionContext.outcome === 'blocked') {
+    return {
+      state: 'failed',
+      attempted: false,
+      reportExists: false,
+      failureReason: executionContext.failureReason,
+      executable: commandPlan.executable,
+      args: commandPlan.args,
+      stdoutFilePath: record.artifactPlan.runtimeStdoutFilePath,
+      stderrFilePath: record.artifactPlan.runtimeStderrFilePath
+    };
+  }
+
   const startedAt = deps.nowIso();
   const startedMs = deps.nowMs();
 
   try {
-    const commandResult = await deps.runCommand(commandPlan);
+    const commandResult = await deps.runCommand(executionContext.commandPlan);
     const completedAt = deps.nowIso();
     const durationMs = Math.max(0, deps.nowMs() - startedMs);
     await deps.writeFile(record.artifactPlan.runtimeStdoutFilePath, commandResult.stdout, 'utf8');
     await deps.writeFile(record.artifactPlan.runtimeStderrFilePath, commandResult.stderr, 'utf8');
-    const reportExists = await deps.pathExists(record.artifactPlan.reportFilePath);
+    const reportExists = await finalizeExecutedReport(
+      record,
+      executionContext,
+      {
+        pathExists: deps.pathExists,
+        copyFile: deps.copyFile,
+        mkdir: deps.mkdir
+      }
+    );
     const succeeded = commandResult.exitCode === 0 && reportExists;
 
     return {
@@ -183,8 +225,8 @@ async function runHostNativeExecution(
         : commandResult.exitCode !== 0
           ? 'command-exited-nonzero'
           : 'report-file-not-generated',
-      executable: commandPlan.executable,
-      args: commandPlan.args,
+      executable: executionContext.commandPlan.executable,
+      args: executionContext.commandPlan.args,
       startedAt,
       completedAt,
       durationMs,
@@ -205,8 +247,8 @@ async function runHostNativeExecution(
       attempted: true,
       reportExists: false,
       failureReason: 'command-spawn-failed',
-      executable: commandPlan.executable,
-      args: commandPlan.args,
+      executable: executionContext.commandPlan.executable,
+      args: executionContext.commandPlan.args,
       startedAt,
       completedAt,
       durationMs,
@@ -215,6 +257,274 @@ async function runHostNativeExecution(
       stderrFilePath: record.artifactPlan.runtimeStderrFilePath
     };
   }
+}
+
+interface PreparedExecutionContext {
+  outcome: 'ready' | 'blocked';
+  commandPlan: ComparisonCommandPlan;
+  reportFilePath: string;
+  failureReason?: string;
+}
+
+async function prepareExecutionContext(
+  record: ComparisonReportPacketRecord,
+  commandPlan: ComparisonCommandPlan,
+  interopWorkspaceRoot: string | undefined,
+  deps: {
+    mkdir: typeof fs.mkdir;
+    writeFile: typeof fs.writeFile;
+    processPlatform: NodeJS.Platform;
+    leftBlob: Buffer;
+    rightBlob: Buffer;
+  }
+): Promise<PreparedExecutionContext> {
+  if (!requiresWindowsInterop(record.runtimeSelection.platform, deps.processPlatform)) {
+    return {
+      outcome: 'ready',
+      commandPlan,
+      reportFilePath: record.artifactPlan.reportFilePath
+    };
+  }
+
+  if (!interopWorkspaceRoot?.trim()) {
+    return {
+      outcome: 'blocked',
+      commandPlan,
+      reportFilePath: record.artifactPlan.reportFilePath,
+      failureReason: 'windows-interop-root-unavailable'
+    };
+  }
+
+  const interopLayout = buildWindowsInteropLayout(record, interopWorkspaceRoot);
+  await deps.mkdir(interopLayout.reportDirectory, { recursive: true });
+  await deps.mkdir(interopLayout.stagingDirectory, { recursive: true });
+  await deps.writeFile(interopLayout.leftFilePath, deps.leftBlob);
+  await deps.writeFile(interopLayout.rightFilePath, deps.rightBlob);
+
+  const interopCommandPlan = buildWindowsInteropCommandPlan(record, commandPlan, interopLayout);
+  if (!interopCommandPlan) {
+    return {
+      outcome: 'blocked',
+      commandPlan,
+      reportFilePath: record.artifactPlan.reportFilePath,
+      failureReason: 'windows-path-normalization-failed'
+    };
+  }
+
+  return {
+    outcome: 'ready',
+    commandPlan: interopCommandPlan,
+    reportFilePath: interopLayout.reportFilePath
+  };
+}
+
+async function finalizeExecutedReport(
+  record: ComparisonReportPacketRecord,
+  executionContext: PreparedExecutionContext,
+  deps: {
+    pathExists: (filePath: string) => Promise<boolean>;
+    copyFile: typeof fs.copyFile;
+    mkdir: typeof fs.mkdir;
+  }
+): Promise<boolean> {
+  const executedReportExists = await deps.pathExists(executionContext.reportFilePath);
+  if (!executedReportExists) {
+    return false;
+  }
+
+  if (executionContext.reportFilePath === record.artifactPlan.reportFilePath) {
+    return true;
+  }
+
+  await deps.mkdir(path.dirname(record.artifactPlan.reportFilePath), { recursive: true });
+  await deps.copyFile(executionContext.reportFilePath, record.artifactPlan.reportFilePath);
+  return true;
+}
+
+interface WindowsInteropLayout {
+  reportDirectory: string;
+  stagingDirectory: string;
+  leftFilePath: string;
+  rightFilePath: string;
+  reportFilePath: string;
+}
+
+function buildWindowsInteropLayout(
+  record: ComparisonReportPacketRecord,
+  interopWorkspaceRoot: string
+): WindowsInteropLayout {
+  const reportDirectory = path.join(
+    interopWorkspaceRoot,
+    'reports',
+    record.artifactPlan.repoId,
+    record.artifactPlan.fileId
+  );
+  const stagingDirectory = path.join(reportDirectory, 'staging');
+  return {
+    reportDirectory,
+    stagingDirectory,
+    leftFilePath: path.join(stagingDirectory, record.stagedRevisionPlan.leftFilename),
+    rightFilePath: path.join(stagingDirectory, record.stagedRevisionPlan.rightFilename),
+    reportFilePath: path.join(reportDirectory, record.artifactPlan.reportFilename)
+  };
+}
+
+function buildWindowsInteropCommandPlan(
+  record: ComparisonReportPacketRecord,
+  commandPlan: ComparisonCommandPlan,
+  interopLayout: WindowsInteropLayout
+): ComparisonCommandPlan | undefined {
+  const executable = normalizeWindowsInteropExecutable(commandPlan.executable);
+  if (!executable) {
+    return undefined;
+  }
+
+  if (record.runtimeSelection.engine === 'labview-cli') {
+    const args: string[] = [];
+    for (let index = 0; index < commandPlan.args.length; index += 1) {
+      const current = commandPlan.args[index];
+      const next = commandPlan.args[index + 1];
+
+      if (current === '-vi1') {
+        const leftFilePath = normalizeWindowsInteropPath(interopLayout.leftFilePath);
+        if (!leftFilePath) {
+          return undefined;
+        }
+        args.push(current, leftFilePath);
+        index += 1;
+        continue;
+      }
+
+      if (current === '-vi2') {
+        const rightFilePath = normalizeWindowsInteropPath(interopLayout.rightFilePath);
+        if (!rightFilePath) {
+          return undefined;
+        }
+        args.push(current, rightFilePath);
+        index += 1;
+        continue;
+      }
+
+      if (current === '-reportPath') {
+        const reportFilePath = normalizeWindowsInteropPath(interopLayout.reportFilePath);
+        if (!reportFilePath) {
+          return undefined;
+        }
+        args.push(current, reportFilePath);
+        index += 1;
+        continue;
+      }
+
+      if (current === '-LabVIEWPath') {
+        const labviewPath = normalizeWindowsInteropPath(next ?? '');
+        if (!labviewPath) {
+          return undefined;
+        }
+        args.push(current, labviewPath);
+        index += 1;
+        continue;
+      }
+
+      args.push(current);
+    }
+
+    return {
+      executable,
+      args
+    };
+  }
+
+  if (record.runtimeSelection.engine === 'lvcompare') {
+    if (commandPlan.args.length < 2) {
+      return undefined;
+    }
+
+    const leftFilePath = normalizeWindowsInteropPath(interopLayout.leftFilePath);
+    const rightFilePath = normalizeWindowsInteropPath(interopLayout.rightFilePath);
+    if (!leftFilePath || !rightFilePath) {
+      return undefined;
+    }
+
+    const args = [
+      leftFilePath,
+      rightFilePath
+    ];
+
+    for (let index = 2; index < commandPlan.args.length; index += 1) {
+      const current = commandPlan.args[index];
+      const next = commandPlan.args[index + 1];
+      if (current === '-lvpath') {
+        const labviewPath = normalizeWindowsInteropPath(next ?? '');
+        if (!labviewPath) {
+          return undefined;
+        }
+        args.push(current, labviewPath);
+        index += 1;
+        continue;
+      }
+
+      args.push(current);
+    }
+
+    return {
+      executable,
+      args
+    };
+  }
+
+  return undefined;
+}
+
+export function normalizeWindowsInteropPath(filePath: string): string | undefined {
+  const trimmed = filePath.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  if (/^[A-Za-z]:[\\/]/.test(trimmed)) {
+    return trimmed.replaceAll('/', '\\');
+  }
+
+  const match = trimmed.match(/^\/mnt\/([a-zA-Z])\/(.*)$/);
+  if (!match) {
+    return undefined;
+  }
+
+  const [, driveLetter, tail] = match;
+  const normalizedTail = tail
+    .split('/')
+    .filter((segment) => segment.length > 0)
+    .join('\\');
+  return normalizedTail.length > 0
+    ? `${driveLetter.toUpperCase()}:\\${normalizedTail}`
+    : `${driveLetter.toUpperCase()}:\\`;
+}
+
+export function normalizeWindowsInteropExecutable(filePath: string): string | undefined {
+  const trimmed = filePath.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  if (trimmed.startsWith('/mnt/')) {
+    return trimmed;
+  }
+
+  const windowsPathMatch = trimmed.match(/^([A-Za-z]):[\\/](.*)$/);
+  if (!windowsPathMatch) {
+    return trimmed;
+  }
+
+  const [, driveLetter, tail] = windowsPathMatch;
+  const normalizedTail = tail.replaceAll('\\', '/');
+  return `/mnt/${driveLetter.toLowerCase()}/${normalizedTail}`;
+}
+
+export function requiresWindowsInterop(
+  runtimePlatform: string,
+  processPlatform: NodeJS.Platform = process.platform
+): boolean {
+  return runtimePlatform === 'win32' && processPlatform !== 'win32';
 }
 
 export function pathExistsForReport(filePath: string): Promise<boolean> {

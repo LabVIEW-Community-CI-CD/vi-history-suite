@@ -32,6 +32,7 @@ export interface HarnessReportSmokeOptions {
   historyLimit?: number;
   runtimePlatform?: RuntimePlatform;
   runtimeSettings?: ComparisonRuntimeSettings;
+  windowsInteropRoot?: string;
 }
 
 export interface HarnessReportSmokeReport {
@@ -80,6 +81,8 @@ export interface HarnessReportSmokeDeps {
   persistComparisonReportPacket?: typeof persistComparisonReportPacket;
   executeComparisonReport?: typeof executeComparisonReport;
   now?: () => string;
+  pathExists?: typeof fs.stat;
+  hostPlatform?: NodeJS.Platform;
 }
 
 export async function runHarnessReportSmoke(
@@ -192,9 +195,16 @@ async function buildHarnessReportExecutionReport(
   });
 
   if (packet.record.reportStatus === 'ready-for-runtime') {
+    const interopWorkspaceRoot = await resolveHarnessWindowsInteropRoot(
+      options.windowsInteropRoot,
+      path.join(options.reportRoot, definition.id, 'windows-interop'),
+      packet.record.runtimeSelection.platform,
+      deps
+    );
     packet = await (deps.executeComparisonReport ?? executeComparisonReport)({
       record: packet.record,
-      repositoryRoot: cloneDirectory
+      repositoryRoot: cloneDirectory,
+      interopWorkspaceRoot
     });
   }
 
@@ -349,4 +359,64 @@ export function resolveHarnessReportSmokeRuntimePlatform(platform: string): Runt
 
 function resolveCurrentRuntimePlatform(): RuntimePlatform {
   return resolveHarnessReportSmokeRuntimePlatform(process.platform);
+}
+
+async function resolveHarnessWindowsInteropRoot(
+  configuredRoot: string | undefined,
+  reportScopedFallback: string,
+  runtimePlatform: RuntimePlatform,
+  deps: HarnessReportSmokeDeps
+): Promise<string | undefined> {
+  const hostPlatform = deps.hostPlatform ?? process.platform;
+  if (runtimePlatform !== 'win32' || hostPlatform === 'win32') {
+    return undefined;
+  }
+
+  if (configuredRoot?.trim()) {
+    return configuredRoot;
+  }
+
+  const defaultRoot = await selectDefaultWindowsInteropRoot(deps);
+  if (defaultRoot) {
+    return defaultRoot;
+  }
+
+  if (reportScopedFallback.startsWith('/mnt/')) {
+    return reportScopedFallback;
+  }
+
+  return undefined;
+}
+
+async function selectDefaultWindowsInteropRoot(
+  deps: HarnessReportSmokeDeps
+): Promise<string | undefined> {
+  const username = (process.env.USERNAME ?? process.env.USER ?? '').trim();
+  const candidates = [
+    username ? `/mnt/c/Users/${username}/AppData/Local/Temp/vi-history-suite-runtime` : undefined,
+    '/mnt/c/Windows/Temp/vi-history-suite-runtime'
+  ].filter((value): value is string => Boolean(value));
+
+  for (const candidate of candidates) {
+    if (await canWriteDirectory(candidate, deps)) {
+      return candidate;
+    }
+  }
+
+  return undefined;
+}
+
+async function canWriteDirectory(directoryPath: string, deps: HarnessReportSmokeDeps): Promise<boolean> {
+  try {
+    await (deps.mkdir ?? fs.mkdir)(directoryPath, { recursive: true });
+    const probePath = path.join(
+      directoryPath,
+      `.vihs-write-probe-${process.pid}-${Date.now().toString(16)}`
+    );
+    await (deps.writeFile ?? fs.writeFile)(probePath, 'ok');
+    await fs.rm(probePath, { force: true });
+    return true;
+  } catch {
+    return false;
+  }
 }

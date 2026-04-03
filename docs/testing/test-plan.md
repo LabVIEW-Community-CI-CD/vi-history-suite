@@ -259,6 +259,11 @@
   runtime-selection overrides and prints a deterministic success summary
 - `TEST-UNIT-074`: prove the runtime locator retains actionable missing-runtime
   and missing-tool notes for blocked report generation
+- `TEST-UNIT-075`: prove the runtime executor normalizes win32 interop paths,
+  mirrors staged/runtime output into a Windows-accessible workspace, and fails
+  closed when the interop root is unavailable
+- `TEST-UNIT-076`: prove the canonical comparison-report smoke runner forwards a
+  Windows interop workspace for win32 proof runs from non-Windows hosts
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source
