@@ -69,6 +69,28 @@ raw report evidence.
 8. Provider-provenance cues, factual concentration cues, and raw drill-down
    actions inside the dashboard itself
 
+## Execution Program
+
+The approved execution program for this epic is:
+
+- [PROGRAM-0001: Next Product Layer](../execution-programs/PROGRAM-0001-next-product-layer.md)
+
+Issue-ready child issues for that program:
+
+1. [ISSUE-0401 Dashboard Evidence Core And Refresh Completeness](../issues/ISSUE-0401-dashboard-evidence-core-and-refresh-completeness.md)
+2. [ISSUE-0402 Dashboard Review UX And Raw Drill-Down](../issues/ISSUE-0402-dashboard-review-ux-and-raw-drill-down.md)
+3. [ISSUE-0403 Progress Cancellation And Runtime Doctor UX](../issues/ISSUE-0403-progress-cancellation-and-runtime-doctor-ux.md)
+4. [ISSUE-0404 Review Scenario Registry And Human Decision Records](../issues/ISSUE-0404-review-scenario-registry-and-human-decision-records.md)
+5. [ISSUE-0405 Dashboard Smoke And Extension-Host Proof](../issues/ISSUE-0405-dashboard-smoke-and-extension-host-proof.md)
+
+Execution order:
+
+1. dashboard evidence core
+2. dashboard review UX
+3. progress, cancellation, and runtime doctor
+4. review scenarios and decision records
+5. dashboard smoke and extension-host proof
+
 ## Exit Criteria
 
 - one VI with at least three commits can produce a retained multi-report

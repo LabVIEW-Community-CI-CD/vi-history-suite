@@ -20,6 +20,7 @@ Read these in order:
 4. [Development Queue](./development-queue.json)
 5. [Architecture Overview](../architecture/overview.md)
 6. [Software Requirements Specification](../requirements/srs.md)
+7. [PROGRAM-0001: Next Product Layer](./execution-programs/PROGRAM-0001-next-product-layer.md)
 
 ## Authority Stack
 
@@ -39,6 +40,7 @@ Current control-plane surfaces:
 2. [research-implementation-index.json](../research/authoritative/research-implementation-index.json)
 3. [development-queue.json](./development-queue.json)
 4. [next-research-prompt.md](../research/authoritative/next-research-prompt.md)
+5. [PROGRAM-0001: Next Product Layer](./execution-programs/PROGRAM-0001-next-product-layer.md)
 
 ## Committed Capability State
 
@@ -68,6 +70,7 @@ Current committed queue:
 The queue source of truth is:
 
 - [development-queue.json](./development-queue.json)
+- [PROGRAM-0001: Next Product Layer](./execution-programs/PROGRAM-0001-next-product-layer.md)
 
 ## Research Refresh
 

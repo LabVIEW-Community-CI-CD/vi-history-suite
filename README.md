@@ -22,6 +22,7 @@ If you are new to the repo, read these in order:
 3. [Development Queue](./docs/product/development-queue.json)
 4. [Architecture Overview](./docs/architecture/overview.md)
 5. [Software Requirements Specification](./docs/requirements/srs.md)
+6. [PROGRAM-0001: Next Product Layer](./docs/product/execution-programs/PROGRAM-0001-next-product-layer.md)
 
 For machine-friendly repo orientation, start with:
 
@@ -55,6 +56,7 @@ Use these repo-native control-plane entrypoints instead:
 - [Development Queue](./docs/product/development-queue.json)
 - [First Epic](./docs/product/epics/EPIC-0001-core-content-detected-history-viewer.md)
 - [Dashboard Epic](./docs/product/epics/EPIC-0004-multi-report-developer-dashboard.md)
+- [PROGRAM-0001: Next Product Layer](./docs/product/execution-programs/PROGRAM-0001-next-product-layer.md)
 - [Review Scenarios](./docs/product/review-scenarios.md)
 - [Harness Definitions](./docs/product/harnesses.md)
 - [Software Requirements Specification](./docs/requirements/srs.md)
@@ -93,6 +95,10 @@ The active product queue is:
 - `TRANCHE-004`: progress-surface uplift for indexing and report generation
 - `TRANCHE-007`: review-scenario registry and human decision records
 - `TRANCHE-008`: runtime-doctor and dashboard-refresh developer experience
+
+Issue-ready execution program:
+
+- [PROGRAM-0001: Next Product Layer](./docs/product/execution-programs/PROGRAM-0001-next-product-layer.md)
 
 See:
 
