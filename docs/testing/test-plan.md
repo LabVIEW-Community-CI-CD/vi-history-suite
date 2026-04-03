@@ -541,6 +541,18 @@
 - `TEST-UNIT-160`: prove the comparison-report action returns the stable
   `before-revision-pair-resolution` cancellation stage when the request is
   already cancelled before any retained-pair lookup begins
+- `TEST-UNIT-161`: prove the comparison-report archive subsystem stamps
+  archived source records with a governed ISO-8601 UTC timestamp when no
+  explicit archive clock override is provided
+- `TEST-UNIT-162`: prove the comparison-report archive planner fails closed
+  with `storageRoot must be non-empty` when the retained archive storage root
+  is blank after trimming
+- `TEST-UNIT-163`: prove the comparison-report archive planner defaults the
+  runtime diagnostic-log and process-observation archive filenames from the
+  governed artifact plan when explicit overrides are absent
+- `TEST-UNIT-164`: prove the comparison-report archive writer skips missing
+  runtime artifacts while still writing the pair-scoped source record and other
+  existing copied artifacts
 - `TEST-DOC-014`: review the queue, epic, ADR, and current-state surfaces to
   prove the future-facing dashboard research was normalized into governed repo
   control-plane artifacts and the incoming research artifact was deleted
