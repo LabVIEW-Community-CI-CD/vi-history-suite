@@ -309,8 +309,44 @@ describe('buildAndPersistMultiReportDashboard', () => {
         itemCount: 1
       }
     ]);
+    expect(dashboard.record.summary.comparedPathSummaries).toEqual([
+      {
+        firstViPath: 'C:\\compare\\Base-2.vi',
+        secondViPath: 'C:\\compare\\Head-2.vi',
+        pairCount: 1
+      },
+      {
+        firstViPath: 'C:\\compare\\Base.vi',
+        secondViPath: 'C:\\compare\\Head.vi',
+        pairCount: 1
+      }
+    ]);
+    expect(dashboard.record.summary.detailItemSummaries).toEqual([
+      {
+        item: 'Connector pane changed',
+        pairCount: 1
+      },
+      {
+        item: 'Control resized',
+        pairCount: 1
+      },
+      {
+        item: 'Execution setting changed',
+        pairCount: 1
+      },
+      {
+        item: 'VI Version : changed from "21.0" to "20.0"',
+        pairCount: 1
+      }
+    ]);
+    await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
+      'data-testid="dashboard-compared-path-concentration"'
+    );
     await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
       'data-testid="dashboard-overview-caption-concentration"'
+    );
+    await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
+      'First VI=C:\\compare\\Base.vi · Second VI=C:\\compare\\Head.vi · 1 pair(s)'
     );
     await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
       'Front Panel Overview · 2 pair(s) · 3 image(s)'
@@ -320,6 +356,12 @@ describe('buildAndPersistMultiReportDashboard', () => {
     );
     await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
       '1. VI Attribute - Miscellaneous · 2 pair(s) · 3 item(s)'
+    );
+    await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
+      'data-testid="dashboard-detail-item-concentration"'
+    );
+    await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
+      'Execution setting changed · 1 pair(s)'
     );
   });
 

@@ -34,8 +34,8 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('labview-icon-editor');
     expect(html).toContain('Improve deployment behavior');
     expect(html).toContain('Open@commit');
-    expect(html).toContain('Diff prev');
-    expect(html).toContain('Generate report');
+    expect(html).toContain('Open compare');
+    expect(html).toContain('Generate/refresh');
     expect(html).toContain('Open dashboard');
     expect(html).toContain('Copy hash');
     expect(html).toContain('Copy review packet');
@@ -74,6 +74,8 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('Binary semantic differences, visual or cosmetic change detection, and NI comparison-report output.');
     expect(html).toContain('Selected:</strong> <code>abcdef12</code>');
     expect(html).toContain('vs base:</strong> <code>11111111</code>');
+    expect(html).toContain('Open compare</code> action targets.');
+    expect(html).toContain('Generate/refresh</code> when you want to create or update retained comparison evidence');
   });
 
   it('renders a portable factual review packet', () => {

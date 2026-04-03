@@ -10,11 +10,11 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
   const rows = model.commits
     .map((commit: ViHistoryCommit, index: number) => {
       const diffButton = commit.previousHash
-        ? `<button data-testid="history-action-diff" data-command="diffPrevious" data-hash="${escapeHtml(commit.hash)}">Diff prev</button>`
-        : '<button data-testid="history-action-diff" disabled>Diff prev</button>';
+        ? `<button data-testid="history-action-diff" data-command="diffPrevious" data-hash="${escapeHtml(commit.hash)}">Open compare</button>`
+        : '<button data-testid="history-action-diff" disabled>Open compare</button>';
       const reportButton = commit.previousHash
-        ? `<button data-testid="history-action-report" data-command="generateComparisonReport" data-hash="${escapeHtml(commit.hash)}">Generate report</button>`
-        : '<button data-testid="history-action-report" disabled>Generate report</button>';
+        ? `<button data-testid="history-action-report" data-command="generateComparisonReport" data-hash="${escapeHtml(commit.hash)}">Generate/refresh</button>`
+        : '<button data-testid="history-action-report" disabled>Generate/refresh</button>';
       const compareBase = commit.previousHash
         ? `<div data-testid="history-compare-pair"><strong>Selected:</strong> <code>${escapeHtml(commit.hash.slice(0, 8))}</code> <strong>vs base:</strong> <code>${escapeHtml(commit.previousHash.slice(0, 8))}</code></div>`
         : 'Oldest retained revision';
@@ -134,15 +134,15 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
       <div data-testid="history-meta-surface"><strong>Surface:</strong> VI History</div>
     </div>
     <div class="limitations" data-testid="history-binary-limitations">
-      <strong>Binary review limits:</strong> Git-backed LabVIEW VI revisions are binary artifacts. This surface retains chronology and commit facts; open and diff actions delegate to VS Code handlers and installed tooling.
+      <strong>Binary review limits:</strong> Git-backed LabVIEW VI revisions are binary artifacts. This surface retains chronology and commit facts; pairwise compare actions use retained NI comparison-report evidence and installed tooling instead of plain text diff.
     </div>
     <div class="guidance" data-testid="history-review-guidance">
       <strong>Reviewer guidance:</strong>
       <ol>
         <li data-testid="history-guidance-step">Use the newest/oldest packet to confirm the retained review window before acting on a specific revision.</li>
-        <li data-testid="history-guidance-step">Use the compare pair in each row to see exactly which retained base revision a <code>Diff prev</code> action targets.</li>
+        <li data-testid="history-guidance-step">Use the compare pair in each row to see exactly which retained base revision an <code>Open compare</code> action targets.</li>
         <li data-testid="history-guidance-step">Use <code>Open dashboard</code> when the retained window has at least three commits and you want concentrated comparison-report evidence in one place.</li>
-        <li data-testid="history-guidance-step">For binary VI inspection, use <code>Open@commit</code> or external tooling when chronology facts alone are not sufficient.</li>
+        <li data-testid="history-guidance-step">Use <code>Generate/refresh</code> when you want to create or update retained comparison evidence for the selected pair before reviewing it.</li>
       </ol>
     </div>
     <div class="confidence" data-testid="history-confidence-scope">

@@ -506,10 +506,20 @@ describe('createOpenViHistoryCommand', () => {
     expect(showInformationMessageMock).not.toHaveBeenCalled();
   });
 
-  it('routes diffPrevious through comparison-report generation for content-detected VIs when report support is available', async () => {
+  it('routes diffPrevious through retained comparison-report opening for content-detected VIs when retained report support is available', async () => {
     const targetUri = createMockUri('/workspace/eligible.vi');
     const tracker = new HistoryPanelTracker();
     const comparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'opened-comparison-report',
+      reportStatus: 'ready-for-runtime',
+      runtimeExecutionState: 'succeeded',
+      reportFilePath: '/workspace/.storage/reports/repo/file/diff-report-eligible.vi.html',
+      metadataFilePath: '/workspace/.storage/reports/repo/file/report-metadata.json',
+      reportWebviewUri: 'webview:/report',
+      generatedReportExists: true,
+      title: 'VI Comparison Report: eligible.vi'
+    });
+    const openRetainedComparisonReportAction = vi.fn().mockResolvedValue({
       outcome: 'opened-comparison-report',
       reportStatus: 'ready-for-runtime',
       runtimeExecutionState: 'succeeded',
@@ -546,7 +556,9 @@ describe('createOpenViHistoryCommand', () => {
       eligibilityIndexer as never,
       undefined,
       tracker,
-      comparisonReportAction
+      comparisonReportAction,
+      undefined,
+      openRetainedComparisonReportAction
     );
 
     await command(targetUri as never);
@@ -555,12 +567,13 @@ describe('createOpenViHistoryCommand', () => {
       hash: 'abcdef1234567890'
     });
 
-    expect(comparisonReportAction).toHaveBeenCalledWith(
+    expect(openRetainedComparisonReportAction).toHaveBeenCalledWith(
       expect.objectContaining({
         selectedHash: 'abcdef1234567890',
         reportProgress: expect.any(Function)
       })
     );
+    expect(comparisonReportAction).not.toHaveBeenCalled();
     expect(executeCommandMock).not.toHaveBeenCalledWith(
       'vscode.diff',
       expect.anything(),
@@ -578,6 +591,71 @@ describe('createOpenViHistoryCommand', () => {
       reportWebviewUri: 'webview:/report',
       generatedReportExists: true,
       title: 'VI Comparison Report: eligible.vi'
+    });
+  });
+
+  it('surfaces a stable informational message when diffPrevious has no retained comparison report yet', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    const openRetainedComparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'missing-retained-comparison-report'
+    });
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Update VI',
+            previousHash: '1111111122222222'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      undefined,
+      undefined,
+      openRetainedComparisonReportAction
+    );
+
+    await command(targetUri as never);
+    await tracker.dispatchLastPanelMessage({
+      command: 'diffPrevious',
+      hash: 'abcdef1234567890'
+    });
+
+    expect(showInformationMessageMock).toHaveBeenCalledWith(
+      'No retained VI Comparison Report exists for this pair yet. Use Generate/refresh to create or update it.'
+    );
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'diffPrevious',
+      hash: 'abcdef1234567890',
+      outcome: 'missing-retained-comparison-report',
+      reportStatus: undefined,
+      runtimeExecutionState: undefined,
+      blockedReason: undefined,
+      runtimeFailureReason: undefined,
+      cancellationStage: undefined,
+      packetFilePath: undefined,
+      reportFilePath: undefined,
+      metadataFilePath: undefined,
+      reportWebviewUri: undefined,
+      generatedReportExists: undefined,
+      title: undefined
     });
   });
 

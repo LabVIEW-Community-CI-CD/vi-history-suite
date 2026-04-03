@@ -239,7 +239,22 @@ describe('multiReportDashboardAction', () => {
   });
 
   it('opens a concentrated dashboard panel from a persisted dashboard record', async () => {
-    const buildDashboard = vi.fn().mockResolvedValue({
+    const buildDashboard = vi.fn().mockImplementation(async (_storageRoot, _model, options) => {
+      await options?.reportProgress?.({
+        message:
+          'Concentrating retained comparison-report metadata for pair 1/2: abcdef12 vs 11111111.',
+        increment: 35
+      });
+      await options?.reportProgress?.({
+        message:
+          'Concentrating retained comparison-report metadata for pair 2/2: 11111111 vs 33333333.',
+        increment: 35
+      });
+      await options?.reportProgress?.({
+        message: 'Finalizing concentrated dashboard assets.',
+        increment: 10
+      });
+      return {
       record: {
         generatedAt: '2026-04-03T00:00:00.000Z',
         repositoryName: 'repo',
@@ -322,6 +337,7 @@ describe('multiReportDashboardAction', () => {
       },
       jsonFilePath: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.json',
       htmlFilePath: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.html'
+      };
     });
     const action = createMultiReportDashboardAction(
       {
@@ -394,54 +410,70 @@ describe('multiReportDashboardAction', () => {
 
   it('reports bounded progress stages while building the dashboard', async () => {
     const progressUpdates: Array<{ message: string; increment?: number }> = [];
-    const buildDashboard = vi.fn().mockResolvedValue({
-      record: {
-        generatedAt: '2026-04-03T00:00:00.000Z',
-        repositoryName: 'repo',
-        repositoryRoot: '/workspace/repo',
-        relativePath: 'foo.vi',
-        signature: 'LVIN',
-        artifactPlan: {
-          repoId: 'repoid123456',
-          fileId: 'fileid123456',
-          windowId: 'windowid12345',
-          dashboardDirectory: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345',
-          jsonFilePath: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.json',
-          htmlFilePath: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.html',
-          assetsDirectory: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/assets'
+    const buildDashboard = vi.fn().mockImplementation(async (_storageRoot, _model, options) => {
+      await options?.reportProgress?.({
+        message:
+          'Concentrating retained comparison-report metadata for pair 1/2: abcdef12 vs 11111111.',
+        increment: 35
+      });
+      await options?.reportProgress?.({
+        message:
+          'Concentrating retained comparison-report metadata for pair 2/2: 11111111 vs 33333333.',
+        increment: 35
+      });
+      await options?.reportProgress?.({
+        message: 'Finalizing concentrated dashboard assets.',
+        increment: 10
+      });
+      return {
+        record: {
+          generatedAt: '2026-04-03T00:00:00.000Z',
+          repositoryName: 'repo',
+          repositoryRoot: '/workspace/repo',
+          relativePath: 'foo.vi',
+          signature: 'LVIN',
+          artifactPlan: {
+            repoId: 'repoid123456',
+            fileId: 'fileid123456',
+            windowId: 'windowid12345',
+            dashboardDirectory: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345',
+            jsonFilePath: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.json',
+            htmlFilePath: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.html',
+            assetsDirectory: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/assets'
+          },
+          commitWindow: {
+            commitCount: 3,
+            pairCount: 2,
+            newestHash: 'abcdef1234567890',
+            oldestHash: '3333333344444444'
+          },
+          summary: {
+            representedPairCount: 2,
+            windowCompletenessState: 'complete',
+            archivedPairCount: 2,
+            missingPairCount: 0,
+            missingPairIds: [],
+            generatedReportCount: 2,
+            reportMetadataPairCount: 2,
+            failedPairCount: 0,
+            failedPairIds: [],
+            blockedPairCount: 0,
+            blockedPairIds: [],
+            overviewSectionCount: 2,
+            overviewImageCount: 2,
+            includedAttributeCount: 5,
+            detailSectionCount: 1,
+            detailItemCount: 3,
+            pairWithOverviewImageCount: 2,
+            pairWithDetailCount: 2,
+            evidenceStateSummaries: [],
+            providerSummaries: []
+          },
+          entries: []
         },
-        commitWindow: {
-          commitCount: 3,
-          pairCount: 2,
-          newestHash: 'abcdef1234567890',
-          oldestHash: '3333333344444444'
-        },
-        summary: {
-          representedPairCount: 2,
-          windowCompletenessState: 'complete',
-          archivedPairCount: 2,
-          missingPairCount: 0,
-          missingPairIds: [],
-          generatedReportCount: 2,
-          reportMetadataPairCount: 2,
-          failedPairCount: 0,
-          failedPairIds: [],
-          blockedPairCount: 0,
-          blockedPairIds: [],
-          overviewSectionCount: 2,
-          overviewImageCount: 2,
-          includedAttributeCount: 5,
-          detailSectionCount: 1,
-          detailItemCount: 3,
-          pairWithOverviewImageCount: 2,
-          pairWithDetailCount: 2,
-          evidenceStateSummaries: [],
-          providerSummaries: []
-        },
-        entries: []
-      },
-      jsonFilePath: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.json',
-      htmlFilePath: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.html'
+        jsonFilePath: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.json',
+        htmlFilePath: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.html'
+      };
     });
     const action = createMultiReportDashboardAction(
       {
@@ -489,12 +521,26 @@ describe('multiReportDashboardAction', () => {
 
     expect(progressUpdates).toEqual([
       {
-        message: 'Concentrating retained comparison-report metadata.',
-        increment: 70
+        message: 'Preparing VI Review Dashboard commit window.',
+        increment: 5
+      },
+      {
+        message:
+          'Concentrating retained comparison-report metadata for pair 1/2: abcdef12 vs 11111111.',
+        increment: 35
+      },
+      {
+        message:
+          'Concentrating retained comparison-report metadata for pair 2/2: 11111111 vs 33333333.',
+        increment: 35
+      },
+      {
+        message: 'Finalizing concentrated dashboard assets.',
+        increment: 10
       },
       {
         message: 'Opening VI Review Dashboard.',
-        increment: 30
+        increment: 15
       }
     ]);
   });

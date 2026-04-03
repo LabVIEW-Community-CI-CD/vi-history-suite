@@ -8,6 +8,7 @@ import {
   ViEligibilityIndexer
 } from './indexing/viEligibilityIndexer';
 import { createComparisonReportAction } from './reporting/comparisonReportAction';
+import { createOpenRetainedComparisonReportAction } from './reporting/comparisonReportAction';
 import { ViHistoryViewModel } from './services/viHistoryModel';
 import { ViHistoryService } from './services/viHistoryService';
 import {
@@ -46,6 +47,7 @@ export async function activate(
   const historyService = new ViHistoryService(gitApi);
   const panelTracker = new HistoryPanelTracker();
   const comparisonReportAction = createComparisonReportAction(context);
+  const openRetainedComparisonReportAction = createOpenRetainedComparisonReportAction(context);
   const multiReportDashboardAction = createMultiReportDashboardAction(context, {}, panelTracker);
 
   context.subscriptions.push(eligibilityIndexer);
@@ -59,7 +61,8 @@ export async function activate(
         gitApi,
         panelTracker,
         comparisonReportAction,
-        multiReportDashboardAction
+        multiReportDashboardAction,
+        openRetainedComparisonReportAction
       )
     )
   );

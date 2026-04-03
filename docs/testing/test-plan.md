@@ -199,8 +199,8 @@
 - `TEST-UNIT-058`: validate the design gate retains an explicit unavailable
   reason when the governed development queue cannot yield an active or queued
   tranche
-- `TEST-UNIT-059`: validate the VI History panel exposes `Generate report`
-  only for revisions that have a retained base revision
+- `TEST-UNIT-059`: validate the VI History panel exposes `Open compare` plus
+  `Generate/refresh` only for revisions that have a retained base revision
 - `TEST-UNIT-060`: validate the comparison-report action fails closed when
   workspace-scoped storage is unavailable and the command surfaces the stable
   warning
@@ -430,7 +430,8 @@
   bounded progress stages across retained-pair resolution, preflight, runtime
   selection, persistence, execution, archival, and panel opening
 - `TEST-UNIT-121`: prove the dashboard action emits deterministic bounded
-  progress stages for metadata concentration and dashboard opening
+  progress stages for commit-window preparation, pair-by-pair metadata
+  concentration, retained-asset finalization, and dashboard opening
 - `TEST-UNIT-122`: prove the history-panel command flow wraps comparison-report
   and dashboard actions in non-cancellable notification progress with stable
   titles
@@ -683,9 +684,15 @@
   repository-state listeners that are outside the current workspace scope
 - `TEST-UNIT-198`: prove the eligibility indexer coalesces refresh requests
   that arrive while a refresh is already running into one follow-up pass
-- `TEST-UNIT-199`: prove `diffPrevious` routes content-detected VI items
-  through the governed comparison-report action when available instead of
-  invoking VS Code text diff on binary content
+- `TEST-UNIT-199`: prove `diffPrevious` opens retained comparison-report
+  evidence for content-detected VI items when retained pair evidence exists,
+  instead of invoking VS Code text diff on binary content
+- `TEST-UNIT-200`: prove `diffPrevious` fails closed with
+  `missing-retained-comparison-report` and a stable `Generate/refresh` hint
+  when retained pair evidence is absent
+- `TEST-UNIT-201`: prove the concentrated dashboard retains compared-path and
+  detail-item whole-window concentration summaries derived from retained NI
+  comparison-report metadata
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

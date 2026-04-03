@@ -34,7 +34,10 @@ export interface MultiReportDashboardActionResult {
 export interface MultiReportDashboardActionDeps {
   buildDashboard?: (
     storageRoot: string,
-    model: ViHistoryViewModel
+    model: ViHistoryViewModel,
+    options?: {
+      reportProgress?: (update: { message: string; increment?: number }) => void | Promise<void>;
+    }
   ) => Promise<BuildMultiReportDashboardResult>;
   createWebviewPanel?: typeof vscode.window.createWebviewPanel;
   executeCommand?: typeof vscode.commands.executeCommand;
@@ -69,10 +72,12 @@ export function createMultiReportDashboardAction(
 
     const buildDashboard = deps.buildDashboard ?? buildAndPersistMultiReportDashboard;
     await request.reportProgress?.({
-      message: 'Concentrating retained comparison-report metadata.',
-      increment: 70
+      message: 'Preparing VI Review Dashboard commit window.',
+      increment: 5
     });
-    const dashboard = await buildDashboard(storageUri.fsPath, request.model);
+    const dashboard = await buildDashboard(storageUri.fsPath, request.model, {
+      reportProgress: request.reportProgress
+    });
     if (request.cancellationToken?.isCancellationRequested) {
       return {
         outcome: 'cancelled',
@@ -89,7 +94,7 @@ export function createMultiReportDashboardAction(
     const uriFile = deps.uriFile ?? vscode.Uri.file;
     await request.reportProgress?.({
       message: 'Opening VI Review Dashboard.',
-      increment: 30
+      increment: 15
     });
     const panel = createWebviewPanel(
       'viHistorySuite.reviewDashboard',

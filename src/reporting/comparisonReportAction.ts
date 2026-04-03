@@ -2,7 +2,11 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 
-import { archiveComparisonReportSource } from '../dashboard/comparisonReportArchive';
+import {
+  archiveComparisonReportSource,
+  ArchivedComparisonReportSourceRecord,
+  buildComparisonReportArchivePlanFromSelection
+} from '../dashboard/comparisonReportArchive';
 import {
   ComparisonRuntimeSettings,
   locateComparisonRuntime,
@@ -23,6 +27,7 @@ export interface ComparisonReportActionRequest {
 export interface ComparisonReportActionResult {
   outcome:
     | 'opened-comparison-report'
+    | 'missing-retained-comparison-report'
     | 'cancelled'
     | 'workspace-untrusted'
     | 'missing-storage-uri'
@@ -70,6 +75,7 @@ export interface ComparisonReportActionDeps {
   locateRuntime?: typeof locateComparisonRuntime;
   executeComparisonReport?: typeof executeComparisonReport;
   readFile?: typeof fs.readFile;
+  pathExists?: (targetPath: string) => Promise<boolean>;
   getRuntimeSettings?: () => ComparisonRuntimeSettings;
   archiveComparisonReportSource?: typeof archiveComparisonReportSource;
 }
@@ -188,171 +194,85 @@ export function createComparisonReportAction(
       }
     }
 
-    const createWebviewPanel = deps.createWebviewPanel ?? vscode.window.createWebviewPanel;
-    const uriFile = deps.uriFile ?? vscode.Uri.file;
-    const joinPath = deps.joinPath ?? vscode.Uri.joinPath;
-    const repoRootUri = joinPath(context.storageUri, 'reports', packet.record.artifactPlan.repoId);
-    const packetFileUri = uriFile(packet.packetFilePath);
-    const reportFileUri = uriFile(packet.reportFilePath);
-
     await request.reportProgress?.({
       message: 'Opening retained comparison-report view.',
       increment: 5
     });
-    const panel = createWebviewPanel(
-      'viHistorySuite.comparisonReport',
-      packet.record.reportTitle,
-      vscode.ViewColumn.Active,
+
+    return openPersistedComparisonReportPanel(
       {
-        enableScripts: false,
-        localResourceRoots: [context.storageUri, repoRootUri]
-      }
+        context,
+        record: packet.record,
+        packetFilePath: packet.packetFilePath,
+        reportFilePath: packet.reportFilePath,
+        metadataFilePath: packet.metadataFilePath,
+        localResourceSegment: 'reports'
+      },
+      deps
     );
-    const renderedContentUri = panel.webview.asWebviewUri(
-      packet.record.runtimeExecution.reportExists ? reportFileUri : packetFileUri
+  };
+}
+
+export function createOpenRetainedComparisonReportAction(
+  context: vscode.ExtensionContext,
+  deps: ComparisonReportActionDeps = {}
+): (request: ComparisonReportActionRequest) => Promise<ComparisonReportActionResult> {
+  return async (request: ComparisonReportActionRequest): Promise<ComparisonReportActionResult> => {
+    if (!vscode.workspace.isTrusted) {
+      return { outcome: 'workspace-untrusted' };
+    }
+
+    if (!context.storageUri) {
+      return { outcome: 'missing-storage-uri' };
+    }
+
+    const selectedCommit = request.model.commits.find((commit) => commit.hash === request.selectedHash);
+    if (!selectedCommit) {
+      return { outcome: 'missing-selected-commit' };
+    }
+
+    if (!selectedCommit.previousHash) {
+      return { outcome: 'missing-previous-hash' };
+    }
+
+    await request.reportProgress?.({
+      message: 'Resolving retained pair comparison evidence.',
+      increment: 40
+    });
+    const archivePlan = buildComparisonReportArchivePlanFromSelection({
+      storageRoot: context.storageUri.fsPath,
+      repositoryRoot: request.model.repositoryRoot,
+      relativePath: request.model.relativePath,
+      reportType: 'diff',
+      selectedHash: selectedCommit.hash,
+      baseHash: selectedCommit.previousHash
+    });
+    const pathExists = deps.pathExists ?? defaultPathExists;
+    if (!(await pathExists(archivePlan.sourceRecordFilePath))) {
+      return {
+        outcome: 'missing-retained-comparison-report'
+      };
+    }
+
+    await request.reportProgress?.({
+      message: 'Opening retained pair comparison view.',
+      increment: 60
+    });
+    const sourceRecord = JSON.parse(
+      await (deps.readFile ?? fs.readFile)(archivePlan.sourceRecordFilePath, 'utf8')
+    ) as ArchivedComparisonReportSourceRecord;
+
+    return openPersistedComparisonReportPanel(
+      {
+        context,
+        record: sourceRecord.packetRecord,
+        packetFilePath: sourceRecord.archivePlan.packetFilePath,
+        reportFilePath: sourceRecord.archivePlan.reportFilePath,
+        metadataFilePath: sourceRecord.archivePlan.metadataFilePath,
+        localResourceSegment: 'report-history'
+      },
+      deps
     );
-    const panelHtmlOptions = {
-      title: packet.record.reportTitle,
-      reportWebviewUri: renderedContentUri.toString(),
-      reportStatus: packet.record.reportStatus,
-      runtimeExecutionState: packet.record.runtimeExecutionState,
-      blockedReason:
-        packet.record.reportStatus === 'blocked-runtime'
-          ? packet.record.runtimeSelection.blockedReason
-          : preflight.blockedReason,
-      runtimeFailureReason: packet.record.runtimeExecution.failureReason,
-      runtimeDiagnosticReason: packet.record.runtimeExecution.diagnosticReason,
-      runtimeDiagnosticNotes: packet.record.runtimeExecution.diagnosticNotes,
-      runtimeDiagnosticLogSourcePath: packet.record.runtimeExecution.diagnosticLogSourcePath,
-      runtimeDoctorSummaryLines: packet.record.runtimeExecution.doctorSummaryLines,
-      runtimeProcessObservationArtifactPath:
-        packet.record.runtimeExecution.processObservationArtifactPath,
-      runtimeExecutable: packet.record.runtimeExecution.executable,
-      runtimeArgs: packet.record.runtimeExecution.args,
-      runtimeProcessObservationCapturedAt:
-        packet.record.runtimeExecution.processObservationCapturedAt,
-      runtimeProcessObservationTrigger: packet.record.runtimeExecution.processObservationTrigger,
-      runtimeObservedProcessNames: packet.record.runtimeExecution.observedProcessNames,
-      runtimeLabviewProcessObserved: packet.record.runtimeExecution.labviewProcessObserved,
-      runtimeLabviewCliProcessObserved: packet.record.runtimeExecution.labviewCliProcessObserved,
-      runtimeLvcompareProcessObserved: packet.record.runtimeExecution.lvcompareProcessObserved,
-      runtimeExitProcessObservationCapturedAt:
-        packet.record.runtimeExecution.exitProcessObservationCapturedAt,
-      runtimeExitProcessObservationTrigger:
-        packet.record.runtimeExecution.exitProcessObservationTrigger,
-      runtimeExitObservedProcessNames: packet.record.runtimeExecution.exitObservedProcessNames,
-      runtimeLabviewProcessObservedAtExit:
-        packet.record.runtimeExecution.labviewProcessObservedAtExit,
-      runtimeLabviewCliProcessObservedAtExit:
-        packet.record.runtimeExecution.labviewCliProcessObservedAtExit,
-      runtimeLvcompareProcessObservedAtExit:
-        packet.record.runtimeExecution.lvcompareProcessObservedAtExit,
-      generatedReportExists: packet.record.runtimeExecution.reportExists,
-      cspSource: panel.webview.cspSource
-    } as const;
-    panel.webview.html = packet.record.runtimeExecution.reportExists
-      ? await renderGeneratedComparisonReportPanelHtml({
-          ...panelHtmlOptions,
-          reportFilePath: packet.reportFilePath,
-          reportDirectoryWebviewUri: ensureTrailingSlash(
-            panel.webview.asWebviewUri(uriFile(path.dirname(packet.reportFilePath))).toString()
-          ),
-          readFile: deps.readFile ?? fs.readFile
-        })
-      : renderComparisonReportPanelHtml(panelHtmlOptions);
-
-    const result: ComparisonReportActionResult = {
-      outcome: 'opened-comparison-report',
-      reportStatus: packet.record.reportStatus,
-      runtimeExecutionState: packet.record.runtimeExecutionState,
-      blockedReason:
-        packet.record.reportStatus === 'blocked-runtime'
-          ? packet.record.runtimeSelection.blockedReason
-          : preflight.blockedReason,
-      runtimeFailureReason: packet.record.runtimeExecution.failureReason,
-      packetFilePath: packet.packetFilePath,
-      reportFilePath: packet.reportFilePath,
-      metadataFilePath: packet.metadataFilePath,
-      reportWebviewUri: renderedContentUri.toString(),
-      generatedReportExists: packet.record.runtimeExecution.reportExists,
-      title: panel.title
-    };
-
-    if (packet.record.runtimeExecution.diagnosticReason) {
-      result.runtimeDiagnosticReason = packet.record.runtimeExecution.diagnosticReason;
-    }
-    if (packet.record.runtimeExecution.diagnosticNotes?.length) {
-      result.runtimeDiagnosticNotes = packet.record.runtimeExecution.diagnosticNotes;
-    }
-    if (packet.record.runtimeExecution.diagnosticLogSourcePath) {
-      result.runtimeDiagnosticLogSourcePath =
-        packet.record.runtimeExecution.diagnosticLogSourcePath;
-    }
-    if (packet.record.runtimeExecution.diagnosticLogArtifactPath) {
-      result.runtimeDiagnosticLogArtifactPath =
-        packet.record.runtimeExecution.diagnosticLogArtifactPath;
-    }
-    if (packet.record.runtimeExecution.doctorSummaryLines?.length) {
-      result.runtimeDoctorSummaryLines =
-        packet.record.runtimeExecution.doctorSummaryLines;
-    }
-    if (packet.record.runtimeExecution.executable) {
-      result.runtimeExecutable = packet.record.runtimeExecution.executable;
-    }
-    if (packet.record.runtimeExecution.args?.length) {
-      result.runtimeArgs = packet.record.runtimeExecution.args;
-    }
-    if (packet.record.runtimeExecution.processObservationArtifactPath) {
-      result.runtimeProcessObservationArtifactPath =
-        packet.record.runtimeExecution.processObservationArtifactPath;
-    }
-    if (packet.record.runtimeExecution.processObservationCapturedAt) {
-      result.runtimeProcessObservationCapturedAt =
-        packet.record.runtimeExecution.processObservationCapturedAt;
-    }
-    if (packet.record.runtimeExecution.processObservationTrigger) {
-      result.runtimeProcessObservationTrigger =
-        packet.record.runtimeExecution.processObservationTrigger;
-    }
-    if (packet.record.runtimeExecution.observedProcessNames !== undefined) {
-      result.runtimeObservedProcessNames = packet.record.runtimeExecution.observedProcessNames;
-    }
-    if (packet.record.runtimeExecution.labviewProcessObserved !== undefined) {
-      result.runtimeLabviewProcessObserved = packet.record.runtimeExecution.labviewProcessObserved;
-    }
-    if (packet.record.runtimeExecution.labviewCliProcessObserved !== undefined) {
-      result.runtimeLabviewCliProcessObserved =
-        packet.record.runtimeExecution.labviewCliProcessObserved;
-    }
-    if (packet.record.runtimeExecution.lvcompareProcessObserved !== undefined) {
-      result.runtimeLvcompareProcessObserved = packet.record.runtimeExecution.lvcompareProcessObserved;
-    }
-    if (packet.record.runtimeExecution.exitProcessObservationCapturedAt) {
-      result.runtimeExitProcessObservationCapturedAt =
-        packet.record.runtimeExecution.exitProcessObservationCapturedAt;
-    }
-    if (packet.record.runtimeExecution.exitProcessObservationTrigger) {
-      result.runtimeExitProcessObservationTrigger =
-        packet.record.runtimeExecution.exitProcessObservationTrigger;
-    }
-    if (packet.record.runtimeExecution.exitObservedProcessNames !== undefined) {
-      result.runtimeExitObservedProcessNames =
-        packet.record.runtimeExecution.exitObservedProcessNames;
-    }
-    if (packet.record.runtimeExecution.labviewProcessObservedAtExit !== undefined) {
-      result.runtimeLabviewProcessObservedAtExit =
-        packet.record.runtimeExecution.labviewProcessObservedAtExit;
-    }
-    if (packet.record.runtimeExecution.labviewCliProcessObservedAtExit !== undefined) {
-      result.runtimeLabviewCliProcessObservedAtExit =
-        packet.record.runtimeExecution.labviewCliProcessObservedAtExit;
-    }
-    if (packet.record.runtimeExecution.lvcompareProcessObservedAtExit !== undefined) {
-      result.runtimeLvcompareProcessObservedAtExit =
-        packet.record.runtimeExecution.lvcompareProcessObservedAtExit;
-    }
-
-    return result;
   };
 }
 
@@ -386,6 +306,196 @@ function canArchiveComparisonReport(
       record.artifactPlan.reportFilename &&
       record.artifactPlan.packetFilename
   );
+}
+
+async function openPersistedComparisonReportPanel(
+  options: {
+    context: vscode.ExtensionContext;
+    record: Awaited<ReturnType<typeof persistComparisonReportPacket>>['record'];
+    packetFilePath: string;
+    reportFilePath: string;
+    metadataFilePath: string;
+    localResourceSegment: 'reports' | 'report-history';
+  },
+  deps: ComparisonReportActionDeps
+): Promise<ComparisonReportActionResult> {
+  const createWebviewPanel = deps.createWebviewPanel ?? vscode.window.createWebviewPanel;
+  const uriFile = deps.uriFile ?? vscode.Uri.file;
+  const joinPath = deps.joinPath ?? vscode.Uri.joinPath;
+  const repoRootUri = joinPath(
+    options.context.storageUri!,
+    options.localResourceSegment,
+    options.record.artifactPlan.repoId
+  );
+  const packetFileUri = uriFile(options.packetFilePath);
+  const reportFileUri = uriFile(options.reportFilePath);
+  const panel = createWebviewPanel(
+    'viHistorySuite.comparisonReport',
+    options.record.reportTitle,
+    vscode.ViewColumn.Active,
+    {
+      enableScripts: false,
+      localResourceRoots: [options.context.storageUri!, repoRootUri]
+    }
+  );
+  const renderedContentUri = panel.webview.asWebviewUri(
+    options.record.runtimeExecution.reportExists ? reportFileUri : packetFileUri
+  );
+  const panelHtmlOptions = {
+    title: options.record.reportTitle,
+    reportWebviewUri: renderedContentUri.toString(),
+    reportStatus: options.record.reportStatus,
+    runtimeExecutionState: options.record.runtimeExecutionState,
+    blockedReason:
+      options.record.reportStatus === 'blocked-runtime'
+        ? options.record.runtimeSelection?.blockedReason
+        : options.record.reportStatus === 'blocked-preflight'
+          ? options.record.preflight?.blockedReason
+          : undefined,
+    runtimeFailureReason: options.record.runtimeExecution.failureReason,
+    runtimeDiagnosticReason: options.record.runtimeExecution.diagnosticReason,
+    runtimeDiagnosticNotes: options.record.runtimeExecution.diagnosticNotes,
+    runtimeDiagnosticLogSourcePath: options.record.runtimeExecution.diagnosticLogSourcePath,
+    runtimeDoctorSummaryLines: options.record.runtimeExecution.doctorSummaryLines,
+    runtimeProcessObservationArtifactPath:
+      options.record.runtimeExecution.processObservationArtifactPath,
+    runtimeExecutable: options.record.runtimeExecution.executable,
+    runtimeArgs: options.record.runtimeExecution.args,
+    runtimeProcessObservationCapturedAt:
+      options.record.runtimeExecution.processObservationCapturedAt,
+    runtimeProcessObservationTrigger: options.record.runtimeExecution.processObservationTrigger,
+    runtimeObservedProcessNames: options.record.runtimeExecution.observedProcessNames,
+    runtimeLabviewProcessObserved: options.record.runtimeExecution.labviewProcessObserved,
+    runtimeLabviewCliProcessObserved: options.record.runtimeExecution.labviewCliProcessObserved,
+    runtimeLvcompareProcessObserved: options.record.runtimeExecution.lvcompareProcessObserved,
+    runtimeExitProcessObservationCapturedAt:
+      options.record.runtimeExecution.exitProcessObservationCapturedAt,
+    runtimeExitProcessObservationTrigger:
+      options.record.runtimeExecution.exitProcessObservationTrigger,
+    runtimeExitObservedProcessNames: options.record.runtimeExecution.exitObservedProcessNames,
+    runtimeLabviewProcessObservedAtExit:
+      options.record.runtimeExecution.labviewProcessObservedAtExit,
+    runtimeLabviewCliProcessObservedAtExit:
+      options.record.runtimeExecution.labviewCliProcessObservedAtExit,
+    runtimeLvcompareProcessObservedAtExit:
+      options.record.runtimeExecution.lvcompareProcessObservedAtExit,
+    generatedReportExists: options.record.runtimeExecution.reportExists,
+    cspSource: panel.webview.cspSource
+  } as const;
+  panel.webview.html = options.record.runtimeExecution.reportExists
+    ? await renderGeneratedComparisonReportPanelHtml({
+        ...panelHtmlOptions,
+        reportFilePath: options.reportFilePath,
+        reportDirectoryWebviewUri: ensureTrailingSlash(
+          panel.webview.asWebviewUri(uriFile(path.dirname(options.reportFilePath))).toString()
+        ),
+        readFile: deps.readFile ?? fs.readFile
+      })
+    : renderComparisonReportPanelHtml(panelHtmlOptions);
+
+  const result: ComparisonReportActionResult = {
+    outcome: 'opened-comparison-report',
+    reportStatus: options.record.reportStatus,
+    runtimeExecutionState: options.record.runtimeExecutionState,
+    blockedReason:
+      options.record.reportStatus === 'blocked-runtime'
+        ? options.record.runtimeSelection?.blockedReason
+        : options.record.reportStatus === 'blocked-preflight'
+          ? options.record.preflight?.blockedReason
+          : undefined,
+    runtimeFailureReason: options.record.runtimeExecution.failureReason,
+    packetFilePath: options.packetFilePath,
+    reportFilePath: options.reportFilePath,
+    metadataFilePath: options.metadataFilePath,
+    reportWebviewUri: renderedContentUri.toString(),
+    generatedReportExists: options.record.runtimeExecution.reportExists,
+    title: panel.title
+  };
+
+  if (options.record.runtimeExecution.diagnosticReason) {
+    result.runtimeDiagnosticReason = options.record.runtimeExecution.diagnosticReason;
+  }
+  if (options.record.runtimeExecution.diagnosticNotes?.length) {
+    result.runtimeDiagnosticNotes = options.record.runtimeExecution.diagnosticNotes;
+  }
+  if (options.record.runtimeExecution.diagnosticLogSourcePath) {
+    result.runtimeDiagnosticLogSourcePath =
+      options.record.runtimeExecution.diagnosticLogSourcePath;
+  }
+  if (options.record.runtimeExecution.diagnosticLogArtifactPath) {
+    result.runtimeDiagnosticLogArtifactPath =
+      options.record.runtimeExecution.diagnosticLogArtifactPath;
+  }
+  if (options.record.runtimeExecution.doctorSummaryLines?.length) {
+    result.runtimeDoctorSummaryLines =
+      options.record.runtimeExecution.doctorSummaryLines;
+  }
+  if (options.record.runtimeExecution.executable) {
+    result.runtimeExecutable = options.record.runtimeExecution.executable;
+  }
+  if (options.record.runtimeExecution.args?.length) {
+    result.runtimeArgs = options.record.runtimeExecution.args;
+  }
+  if (options.record.runtimeExecution.processObservationArtifactPath) {
+    result.runtimeProcessObservationArtifactPath =
+      options.record.runtimeExecution.processObservationArtifactPath;
+  }
+  if (options.record.runtimeExecution.processObservationCapturedAt) {
+    result.runtimeProcessObservationCapturedAt =
+      options.record.runtimeExecution.processObservationCapturedAt;
+  }
+  if (options.record.runtimeExecution.processObservationTrigger) {
+    result.runtimeProcessObservationTrigger =
+      options.record.runtimeExecution.processObservationTrigger;
+  }
+  if (options.record.runtimeExecution.observedProcessNames !== undefined) {
+    result.runtimeObservedProcessNames = options.record.runtimeExecution.observedProcessNames;
+  }
+  if (options.record.runtimeExecution.labviewProcessObserved !== undefined) {
+    result.runtimeLabviewProcessObserved = options.record.runtimeExecution.labviewProcessObserved;
+  }
+  if (options.record.runtimeExecution.labviewCliProcessObserved !== undefined) {
+    result.runtimeLabviewCliProcessObserved =
+      options.record.runtimeExecution.labviewCliProcessObserved;
+  }
+  if (options.record.runtimeExecution.lvcompareProcessObserved !== undefined) {
+    result.runtimeLvcompareProcessObserved = options.record.runtimeExecution.lvcompareProcessObserved;
+  }
+  if (options.record.runtimeExecution.exitProcessObservationCapturedAt) {
+    result.runtimeExitProcessObservationCapturedAt =
+      options.record.runtimeExecution.exitProcessObservationCapturedAt;
+  }
+  if (options.record.runtimeExecution.exitProcessObservationTrigger) {
+    result.runtimeExitProcessObservationTrigger =
+      options.record.runtimeExecution.exitProcessObservationTrigger;
+  }
+  if (options.record.runtimeExecution.exitObservedProcessNames !== undefined) {
+    result.runtimeExitObservedProcessNames =
+      options.record.runtimeExecution.exitObservedProcessNames;
+  }
+  if (options.record.runtimeExecution.labviewProcessObservedAtExit !== undefined) {
+    result.runtimeLabviewProcessObservedAtExit =
+      options.record.runtimeExecution.labviewProcessObservedAtExit;
+  }
+  if (options.record.runtimeExecution.labviewCliProcessObservedAtExit !== undefined) {
+    result.runtimeLabviewCliProcessObservedAtExit =
+      options.record.runtimeExecution.labviewCliProcessObservedAtExit;
+  }
+  if (options.record.runtimeExecution.lvcompareProcessObservedAtExit !== undefined) {
+    result.runtimeLvcompareProcessObservedAtExit =
+      options.record.runtimeExecution.lvcompareProcessObservedAtExit;
+  }
+
+  return result;
+}
+
+async function defaultPathExists(targetPath: string): Promise<boolean> {
+  try {
+    await fs.access(targetPath);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function renderComparisonReportPanelHtml(options: {

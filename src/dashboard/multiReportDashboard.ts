@@ -56,6 +56,12 @@ export interface MultiReportDashboardOverviewCaptionSummary {
   imageCount: number;
 }
 
+export interface MultiReportDashboardComparedPathSummary {
+  firstViPath: string;
+  secondViPath: string;
+  pairCount: number;
+}
+
 export interface MultiReportDashboardAttributeSummary {
   label: string;
   includedPairCount: number;
@@ -66,6 +72,11 @@ export interface MultiReportDashboardDetailHeadingSummary {
   heading: string;
   pairCount: number;
   itemCount: number;
+}
+
+export interface MultiReportDashboardDetailItemSummary {
+  item: string;
+  pairCount: number;
 }
 
 export interface MultiReportDashboardEvidenceStateSummary {
@@ -142,9 +153,11 @@ export interface MultiReportDashboardRecord {
     pairWithOverviewImageCount: number;
     pairWithDetailCount: number;
     providerSummaries: MultiReportDashboardProviderSummary[];
+    comparedPathSummaries?: MultiReportDashboardComparedPathSummary[];
     overviewCaptionSummaries: MultiReportDashboardOverviewCaptionSummary[];
     includedAttributeSummaries: MultiReportDashboardAttributeSummary[];
     detailHeadingSummaries: MultiReportDashboardDetailHeadingSummary[];
+    detailItemSummaries?: MultiReportDashboardDetailItemSummary[];
     evidenceStateSummaries: MultiReportDashboardEvidenceStateSummary[];
   };
   entries: MultiReportDashboardEntry[];
@@ -158,6 +171,7 @@ export interface BuildMultiReportDashboardDeps {
   rm?: typeof fs.rm;
   writeFile?: typeof fs.writeFile;
   copyFile?: typeof fs.copyFile;
+  reportProgress?: (update: { message: string; increment?: number }) => void | Promise<void>;
 }
 
 export interface BuildMultiReportDashboardResult {
@@ -178,13 +192,20 @@ export async function buildAndPersistMultiReportDashboard(
   const rm = deps.rm ?? fs.rm;
   const writeFile = deps.writeFile ?? fs.writeFile;
   const copyFile = deps.copyFile ?? fs.copyFile;
+  const reportProgress = deps.reportProgress;
 
   const artifactPlan = buildMultiReportDashboardArtifactPlan(storageRoot, model);
-  const entries = await Promise.all(
-    deriveCommitPairs(model.commits).map((pair) =>
-      buildDashboardEntry(pair, storageRoot, model, { pathExists, readFile })
-    )
-  );
+  const commitPairs = deriveCommitPairs(model.commits);
+  const entries: MultiReportDashboardEntry[] = [];
+  const pairIncrement = commitPairs.length > 0 ? 70 / commitPairs.length : 0;
+  for (const [index, pair] of commitPairs.entries()) {
+    const entry = await buildDashboardEntry(pair, storageRoot, model, { pathExists, readFile });
+    entries.push(entry);
+    await reportProgress?.({
+      message: `Concentrating retained comparison-report metadata for pair ${index + 1}/${commitPairs.length}: ${pair.selected.hash.slice(0, 8)} vs ${pair.base.hash.slice(0, 8)}.`,
+      increment: pairIncrement
+    });
+  }
   const record: MultiReportDashboardRecord = {
     generatedAt: now(),
     repositoryName: model.repositoryName,
@@ -205,6 +226,12 @@ export async function buildAndPersistMultiReportDashboard(
   await rm(artifactPlan.dashboardDirectory, { recursive: true, force: true });
   await mkdir(artifactPlan.dashboardDirectory, { recursive: true });
   await mkdir(artifactPlan.assetsDirectory, { recursive: true });
+  const dashboardImageCount = record.entries.reduce(
+    (total, entry) => total + (entry.parsedReport?.overviewImageCount ?? 0),
+    0
+  );
+  const imageIncrement = dashboardImageCount > 0 ? 10 / dashboardImageCount : 10;
+  let copiedDashboardImageCount = 0;
   for (const entry of record.entries) {
     if (!entry.parsedReport) {
       continue;
@@ -224,8 +251,19 @@ export async function buildAndPersistMultiReportDashboard(
           sourceFilePath: image.sourceFilePath,
           dashboardRelativePath: relativePath
         });
+        copiedDashboardImageCount += 1;
+        await reportProgress?.({
+          message: `Copying retained overview image ${copiedDashboardImageCount}/${dashboardImageCount}: ${entry.selectedHash.slice(0, 8)} vs ${entry.baseHash.slice(0, 8)}.`,
+          increment: imageIncrement
+        });
       }
     }
+  }
+  if (dashboardImageCount === 0) {
+    await reportProgress?.({
+      message: 'Finalizing concentrated dashboard assets.',
+      increment: 10
+    });
   }
 
   await writeFile(artifactPlan.jsonFilePath, JSON.stringify(record, null, 2), 'utf8');
@@ -246,9 +284,11 @@ export function renderMultiReportDashboardHtml(
   const representedPairCount =
     record.summary.representedPairCount ?? record.commitWindow.pairCount;
   const providerSummaries = record.summary.providerSummaries ?? [];
+  const comparedPathSummaries = record.summary.comparedPathSummaries ?? [];
   const overviewCaptionSummaries = record.summary.overviewCaptionSummaries ?? [];
   const includedAttributeSummaries = record.summary.includedAttributeSummaries ?? [];
   const detailHeadingSummaries = record.summary.detailHeadingSummaries ?? [];
+  const detailItemSummaries = record.summary.detailItemSummaries ?? [];
   const chronologyHtml = record.entries.length
     ? `<ol data-testid="dashboard-chronology-list">${record.entries
         .map(
@@ -310,6 +350,26 @@ export function renderMultiReportDashboardHtml(
         )
         .join('')}</ul>`
     : 'No retained detailed-information heading concentration is currently available for this window.';
+  const comparedPathConcentrationHtml = comparedPathSummaries.length
+    ? `<ul data-testid="dashboard-compared-path-concentration-list">${comparedPathSummaries
+        .map(
+          (summary) =>
+            `<li>First VI=${escapeHtml(summary.firstViPath)} · Second VI=${escapeHtml(
+              summary.secondViPath
+            )} · ${escapeHtml(String(summary.pairCount))} pair(s)</li>`
+        )
+        .join('')}</ul>`
+    : 'No retained compared-VI path concentration is currently available for this window.';
+  const detailItemConcentrationHtml = detailItemSummaries.length
+    ? `<ul data-testid="dashboard-detail-item-concentration-list">${detailItemSummaries
+        .map(
+          (summary) =>
+            `<li>${escapeHtml(summary.item)} · ${escapeHtml(
+              String(summary.pairCount)
+            )} pair(s)</li>`
+        )
+        .join('')}</ul>`
+    : 'No retained detailed-information item concentration is currently available for this window.';
   const entriesHtml = record.entries
     .map((entry, index) => {
       const parsed = entry.parsedReport;
@@ -565,6 +625,10 @@ export function renderMultiReportDashboardHtml(
       <div class="note" data-testid="dashboard-metadata-fields">
         <strong>Retained metadata fields:</strong> report title, generation time, compared VI paths, overview section captions and image counts, included attributes, and detailed-information headings and items.
       </div>
+      <div class="note" data-testid="dashboard-compared-path-concentration">
+        <strong>Compared VI path concentration:</strong>
+        ${comparedPathConcentrationHtml}
+      </div>
       <div class="note" data-testid="dashboard-overview-caption-concentration">
         <strong>Overview caption concentration:</strong>
         ${overviewCaptionConcentrationHtml}
@@ -576,6 +640,10 @@ export function renderMultiReportDashboardHtml(
       <div class="note" data-testid="dashboard-detail-heading-concentration">
         <strong>Detailed-information heading concentration:</strong>
         ${detailHeadingConcentrationHtml}
+      </div>
+      <div class="note" data-testid="dashboard-detail-item-concentration">
+        <strong>Detailed-information item concentration:</strong>
+        ${detailItemConcentrationHtml}
       </div>
       <div class="summary-grid" data-testid="dashboard-summary-grid">
         ${summaryCards}
@@ -741,6 +809,14 @@ function buildDashboardSummary(entries: MultiReportDashboardEntry[]) {
   const pairWithOverviewImageCount = entries.filter((entry) => entry.overviewImageCount > 0).length;
   const pairWithDetailCount = entries.filter((entry) => entry.detailItemCount > 0).length;
   const providerCounts = new Map<string, number>();
+  const comparedPathCounts = new Map<
+    string,
+    {
+      firstViPath: string;
+      secondViPath: string;
+      pairIds: Set<string>;
+    }
+  >();
   const overviewCaptionCounts = new Map<
     string,
     {
@@ -762,9 +838,27 @@ function buildDashboardSummary(entries: MultiReportDashboardEntry[]) {
       itemCount: number;
     }
   >();
+  const detailItemCounts = new Map<
+    string,
+    {
+      pairIds: Set<string>;
+    }
+  >();
   for (const entry of entries) {
     const label = entry.runtimeProviderLabel ?? 'none';
     providerCounts.set(label, (providerCounts.get(label) ?? 0) + 1);
+    if (entry.parsedReport?.firstViPath || entry.parsedReport?.secondViPath) {
+      const firstViPath = entry.parsedReport?.firstViPath ?? 'none';
+      const secondViPath = entry.parsedReport?.secondViPath ?? 'none';
+      const key = `${firstViPath}\n${secondViPath}`;
+      const summary = comparedPathCounts.get(key) ?? {
+        firstViPath,
+        secondViPath,
+        pairIds: new Set<string>()
+      };
+      summary.pairIds.add(entry.pairId);
+      comparedPathCounts.set(key, summary);
+    }
     for (const section of entry.parsedReport?.overviewSections ?? []) {
       const summary = overviewCaptionCounts.get(section.caption) ?? {
         pairIds: new Set<string>(),
@@ -794,11 +888,31 @@ function buildDashboardSummary(entries: MultiReportDashboardEntry[]) {
       summary.pairIds.add(entry.pairId);
       summary.itemCount += section.items.length;
       detailHeadingCounts.set(section.heading, summary);
+      for (const item of section.items) {
+        const itemSummary = detailItemCounts.get(item) ?? {
+          pairIds: new Set<string>()
+        };
+        itemSummary.pairIds.add(entry.pairId);
+        detailItemCounts.set(item, itemSummary);
+      }
     }
   }
   const providerSummaries = [...providerCounts.entries()]
     .map(([label, pairCount]) => ({ label, pairCount }))
     .sort((left, right) => right.pairCount - left.pairCount || left.label.localeCompare(right.label));
+  const comparedPathSummaries = [...comparedPathCounts.values()]
+    .map((summary) => ({
+      firstViPath: summary.firstViPath,
+      secondViPath: summary.secondViPath,
+      pairCount: summary.pairIds.size
+    }))
+    .sort((left, right) => {
+      return (
+        right.pairCount - left.pairCount ||
+        left.firstViPath.localeCompare(right.firstViPath) ||
+        left.secondViPath.localeCompare(right.secondViPath)
+      );
+    });
   const overviewCaptionSummaries = [...overviewCaptionCounts.entries()]
     .map(([caption, summary]) => ({
       caption,
@@ -824,6 +938,12 @@ function buildDashboardSummary(entries: MultiReportDashboardEntry[]) {
       itemCount: summary.itemCount
     }))
     .sort((left, right) => right.pairCount - left.pairCount || left.heading.localeCompare(right.heading));
+  const detailItemSummaries = [...detailItemCounts.entries()]
+    .map(([item, summary]) => ({
+      item,
+      pairCount: summary.pairIds.size
+    }))
+    .sort((left, right) => right.pairCount - left.pairCount || left.item.localeCompare(right.item));
   const evidenceStateCounts = new Map<MultiReportDashboardEntryEvidenceState, number>();
   for (const entry of entries) {
     evidenceStateCounts.set(
@@ -858,9 +978,11 @@ function buildDashboardSummary(entries: MultiReportDashboardEntry[]) {
     pairWithOverviewImageCount,
     pairWithDetailCount,
     providerSummaries,
+    comparedPathSummaries,
     overviewCaptionSummaries,
     includedAttributeSummaries,
     detailHeadingSummaries,
+    detailItemSummaries,
     evidenceStateSummaries
   };
 }

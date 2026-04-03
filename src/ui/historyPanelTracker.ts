@@ -33,6 +33,7 @@ export interface HistoryPanelActionSummary {
     | 'missing-selected-commit'
     | 'missing-storage-uri'
     | 'missing-previous-hash'
+    | 'missing-retained-comparison-report'
     | 'unsupported-command';
   openedUri?: string;
   leftUri?: string;

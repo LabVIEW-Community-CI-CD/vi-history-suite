@@ -80,8 +80,9 @@ Committed and governed today:
 - content-based VI detection using `LVIN` and `LVCC` bytes at offset `8`
 - command visibility through both `explorer/context` and `editor/title/context`
 - trust-gated and Git-backed eligibility indexing
-- review-oriented history panel with `Open at commit`, `Diff vs previous`, and
-  `Copy hash`, plus `Open dashboard` for retained three-plus-commit windows
+- review-oriented history panel with `Open at commit`, `Open compare`,
+  `Generate/refresh`, and `Copy hash`, plus `Open dashboard` for retained
+  three-plus-commit windows
 - comparison-report preflight, staging, packet storage, and packet webview
 - LabVIEW 2026 Q1 runtime detection plus reliable Windows 64-bit isolated
   container report execution on the canonical harness
@@ -106,9 +107,13 @@ Committed and governed today:
   Comparison Report metadata, including report title, generation time,
   compared VI paths, whole-window overview-caption concentration,
   whole-window included-attribute concentration, whole-window
-  detailed-information heading concentration, per-pair metadata counts,
-  provider provenance, and retained overview image assets rendered on the
-  dashboard through webview-safe URIs
+  detailed-information heading concentration, whole-window compared-path
+  concentration, whole-window detail-item concentration, per-pair metadata
+  counts, provider provenance, and retained overview image assets rendered on
+  the dashboard through webview-safe URIs
+- bounded dashboard progress that surfaces commit-window preparation,
+  pair-by-pair concentration, retained-asset finalization, and dashboard
+  opening during heavier metadata concentration runs
 - governed dashboard artifact-opening rules that accept only retained
   `report-packet.html`, `report-metadata.json`, `source-record.json`, and
   `*-report-*.html` files from workspace-scoped extension storage

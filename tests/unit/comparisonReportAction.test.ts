@@ -272,6 +272,23 @@ describe('comparisonReportAction', () => {
         reportTitle: 'VI Comparison Report: foo.vi',
         reportStatus: 'blocked-preflight',
         runtimeExecutionState: 'not-run',
+        preflight: {
+          normalizedRelativePath: 'foo.vi',
+          ready: false,
+          blockedReason: 'right-blob-not-vi',
+          left: {
+            revisionId: '1111111122222222',
+            blobSpecifier: '1111111122222222:foo.vi',
+            signature: 'LVIN',
+            isVi: true
+          },
+          right: {
+            revisionId: 'abcdef1234567890',
+            blobSpecifier: 'abcdef1234567890:foo.vi',
+            isVi: false,
+            blockedReason: 'blob-not-vi'
+          }
+        },
         runtimeExecution: {
           state: 'not-run',
           attempted: false,

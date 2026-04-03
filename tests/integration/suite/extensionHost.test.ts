@@ -201,11 +201,7 @@ async function testPanelOpenFlow(
   assert.ok(diffAction);
   assert.equal(diffAction.command, 'diffPrevious');
   assert.equal(diffAction.hash, selectedCommit.hash);
-  assert.equal(diffAction.outcome, 'opened-comparison-report');
-  assert.match(diffAction.title ?? '', /^VI Comparison Report:/);
-  assert.match(diffAction.reportFilePath ?? '', /diff-report-eligible-content-detected\.bin\.html$/);
-  assert.match(diffAction.metadataFilePath ?? '', /report-metadata\.json$/);
-  assert.ok(diffAction.reportWebviewUri);
+  assert.equal(diffAction.outcome, 'missing-retained-comparison-report');
   assert.equal(api.getPanelActionCount(), 4);
 
   await api.dispatchLastPanelMessage({
@@ -244,6 +240,21 @@ async function testPanelOpenFlow(
   assert.ok(reportMetadata.runtimeSelection?.blockedReason);
   assert.equal(reportMetadata.runtimeExecution?.reportExists, false);
   assert.equal(api.getPanelActionCount(), 5);
+
+  await api.dispatchLastPanelMessage({
+    command: 'diffPrevious',
+    hash: selectedCommit.hash
+  });
+  const retainedDiffAction = api.getLastPanelActionSummary();
+  assert.ok(retainedDiffAction);
+  assert.equal(retainedDiffAction.command, 'diffPrevious');
+  assert.equal(retainedDiffAction.hash, selectedCommit.hash);
+  assert.equal(retainedDiffAction.outcome, 'opened-comparison-report');
+  assert.match(retainedDiffAction.title ?? '', /^VI Comparison Report:/);
+  assert.match(retainedDiffAction.packetFilePath ?? '', /report-packet\.html$/);
+  assert.match(retainedDiffAction.metadataFilePath ?? '', /report-metadata\.json$/);
+  assert.ok(retainedDiffAction.reportWebviewUri);
+  assert.equal(api.getPanelActionCount(), 6);
 
   await api.dispatchLastPanelMessage({
     command: 'openDashboard'
@@ -324,7 +335,7 @@ async function testPanelOpenFlow(
   assert.equal(refreshedDashboardAction.command, 'openDashboard');
   assert.equal(refreshedDashboardAction.outcome, 'opened-review-dashboard');
   assert.equal(api.getOpenDashboardPanelCount(), 2);
-  assert.equal(api.getPanelActionCount(), 7);
+  assert.equal(api.getPanelActionCount(), 8);
 }
 
 async function waitFor(

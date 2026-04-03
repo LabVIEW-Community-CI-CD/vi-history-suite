@@ -34,7 +34,13 @@ export function createOpenViHistoryCommand(
     model: Awaited<ReturnType<ViHistoryService['load']>>;
     reportProgress?: (update: { message: string; increment?: number }) => void | Promise<void>;
     cancellationToken?: vscode.CancellationToken;
-  }) => Promise<MultiReportDashboardActionResult>
+  }) => Promise<MultiReportDashboardActionResult>,
+  openRetainedComparisonReportAction?: (request: {
+    model: Awaited<ReturnType<ViHistoryService['load']>>;
+    selectedHash: string;
+    reportProgress?: (update: { message: string; increment?: number }) => void | Promise<void>;
+    cancellationToken?: vscode.CancellationToken;
+  }) => Promise<ComparisonReportActionResult>
 ): (uri?: vscode.Uri) => Promise<void> {
   return async (uri?: vscode.Uri) => {
     const targetUri = uri ?? vscode.window.activeTextEditor?.document.uri;
@@ -77,52 +83,14 @@ export function createOpenViHistoryCommand(
       const isComparisonReportCapableVi =
         model.signature === 'LVIN' || model.signature === 'LVCC';
 
-      const runComparisonReportCommand = async (actionCommand: string): Promise<void> => {
-        if (!comparisonReportAction) {
-          panelTracker?.recordAction({
-            command: actionCommand,
-            hash,
-            outcome: 'unsupported-command'
-          });
-          return;
-        }
-
-        const result = await runProgressWrappedAction(
-          'Generating VI Comparison Report',
-          (reportProgress, cancellationToken) =>
-            comparisonReportAction({
-              model,
-              selectedHash: hash,
-              reportProgress,
-              cancellationToken
-            })
-        );
-
-        if (result.outcome === 'cancelled') {
-          void vscode.window.showInformationMessage(
-            'VI History comparison report generation was cancelled. Retained comparison-report artifacts, if any, were preserved.'
-          );
-        } else if (result.outcome === 'workspace-untrusted') {
-          void vscode.window.showWarningMessage(
-            'VI History comparison reports are disabled in untrusted workspaces.'
-          );
-        } else if (result.outcome === 'missing-storage-uri') {
-          void vscode.window.showWarningMessage(
-            'VI History comparison reports require an open workspace so reports can be stored under workspace-scoped extension storage.'
-          );
-        } else if (result.outcome === 'missing-selected-commit') {
-          void vscode.window.showInformationMessage(
-            'VI History could not resolve the selected retained revision for report generation.'
-          );
-        } else if (result.outcome === 'missing-previous-hash') {
-          void vscode.window.showInformationMessage(
-            'VI History has no previous retained revision for this entry.'
-          );
-        }
-
+      const recordComparisonResult = (
+        actionCommand: string,
+        hashValue: string,
+        result: ComparisonReportActionResult
+      ): void => {
         const actionSummary: Parameters<HistoryPanelTracker['recordAction']>[0] = {
           command: actionCommand,
-          hash,
+          hash: hashValue,
           outcome: result.outcome,
           reportStatus: result.reportStatus,
           runtimeExecutionState: result.runtimeExecutionState,
@@ -208,6 +176,67 @@ export function createOpenViHistoryCommand(
             result.runtimeLvcompareProcessObservedAtExit;
         }
         panelTracker?.recordAction(actionSummary);
+      };
+
+      const runComparisonReportCommand = async (
+        actionCommand: string,
+        title: string,
+        action:
+          | ((request: {
+              model: Awaited<ReturnType<ViHistoryService['load']>>;
+              selectedHash: string;
+              reportProgress?: (update: { message: string; increment?: number }) => void | Promise<void>;
+              cancellationToken?: vscode.CancellationToken;
+            }) => Promise<ComparisonReportActionResult>)
+          | undefined
+      ): Promise<void> => {
+        if (!action) {
+          panelTracker?.recordAction({
+            command: actionCommand,
+            hash,
+            outcome: 'unsupported-command'
+          });
+          return;
+        }
+
+        const result = await runProgressWrappedAction(
+          title,
+          (reportProgress, cancellationToken) =>
+            action({
+              model,
+              selectedHash: hash,
+              reportProgress,
+              cancellationToken
+            })
+        );
+
+        if (result.outcome === 'cancelled') {
+          void vscode.window.showInformationMessage(
+            'VI History comparison report generation was cancelled. Retained comparison-report artifacts, if any, were preserved.'
+          );
+        } else if (result.outcome === 'workspace-untrusted') {
+          void vscode.window.showWarningMessage(
+            'VI History comparison reports are disabled in untrusted workspaces.'
+          );
+        } else if (result.outcome === 'missing-storage-uri') {
+          void vscode.window.showWarningMessage(
+            'VI History comparison reports require an open workspace so reports can be stored under workspace-scoped extension storage.'
+          );
+        } else if (result.outcome === 'missing-selected-commit') {
+          void vscode.window.showInformationMessage(
+            'VI History could not resolve the selected retained revision for report generation.'
+          );
+        } else if (result.outcome === 'missing-previous-hash') {
+          void vscode.window.showInformationMessage(
+            'VI History has no previous retained revision for this entry.'
+          );
+        } else if (result.outcome === 'missing-retained-comparison-report') {
+          void vscode.window.showInformationMessage(
+            'No retained VI Comparison Report exists for this pair yet. Use Generate/refresh to create or update it.'
+          );
+        }
+
+        recordComparisonResult(actionCommand, hash, result);
       };
 
       if (command === 'copyReviewPacket') {
@@ -300,12 +329,35 @@ export function createOpenViHistoryCommand(
       }
 
       if (command === 'generateComparisonReport') {
-        await runComparisonReportCommand(command);
+        await runComparisonReportCommand(
+          command,
+          'Generating VI Comparison Report',
+          comparisonReportAction
+        );
         return;
       }
 
-      if (command === 'diffPrevious' && comparisonReportAction && isComparisonReportCapableVi) {
-        await runComparisonReportCommand(command);
+      if (
+        command === 'diffPrevious' &&
+        isComparisonReportCapableVi &&
+        (openRetainedComparisonReportAction || comparisonReportAction)
+      ) {
+        if (openRetainedComparisonReportAction) {
+          await runComparisonReportCommand(
+            command,
+            'Opening retained VI Comparison Report',
+            openRetainedComparisonReportAction
+          );
+          return;
+        }
+        if (comparisonReportAction) {
+          await runComparisonReportCommand(
+            command,
+            'Generating VI Comparison Report',
+            comparisonReportAction
+          );
+          return;
+        }
         return;
       }
 
