@@ -18,6 +18,8 @@ import {
   parseWindowsTasklistCsv,
   pathExistsForReport,
   resolveHostReadableDiagnosticPath,
+  rewriteLabviewCliArgsForContainerWorkspace,
+  rewriteLvcompareArgsForContainerWorkspace,
   requiresWindowsInterop,
   runComparisonCommandPlan,
   runComparisonCommandPlanWithObservation
@@ -1386,6 +1388,94 @@ describe('comparisonReportRuntimeExecution', () => {
     ).toEqual({
       notes: ['LabVIEW CLI reported that LabVIEW launched successfully before the operation failed.']
     });
+  });
+
+  it('rewrites container LabVIEW CLI args with governed LabVIEWPath and forced headless execution', () => {
+    expect(
+      rewriteLabviewCliArgsForContainerWorkspace(
+        [
+          '-OperationName',
+          'CreateComparisonReport',
+          '-VI1',
+          'C:\\old\\left.vi',
+          '-VI2',
+          'C:\\old\\right.vi',
+          '-ReportPath',
+          'C:\\old\\report.html',
+          '-LabVIEWPath',
+          'C:\\Wrong\\LabVIEW.exe',
+          '-Headless',
+          'false',
+          '-c',
+          '-o',
+          '-description',
+          'hello'
+        ],
+        {
+          containerWorkspaceRoot: 'C:\\vi-history-suite',
+          leftFilename: 'left.vi',
+          rightFilename: 'right.vi',
+          reportFilename: 'diff-report.vi.html',
+          labviewPath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+        }
+      )
+    ).toEqual([
+      '-OperationName',
+      'CreateComparisonReport',
+      '-VI1',
+      'C:\\vi-history-suite\\staging\\left.vi',
+      '-VI2',
+      'C:\\vi-history-suite\\staging\\right.vi',
+      '-ReportPath',
+      'C:\\vi-history-suite\\diff-report.vi.html',
+      '-o',
+      '-description',
+      'hello',
+      '-LabVIEWPath',
+      'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+      '-Headless',
+      'true'
+    ]);
+  });
+
+  it('rewrites container LVCompare args only when both staged VI paths are present and preserves comparison flags', () => {
+    expect(
+      rewriteLvcompareArgsForContainerWorkspace(
+        ['left.vi'],
+        {
+          containerWorkspaceRoot: 'C:\\vi-history-suite',
+          leftFilename: 'left.vi',
+          rightFilename: 'right.vi',
+          labviewPath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+        }
+      )
+    ).toBeUndefined();
+
+    expect(
+      rewriteLvcompareArgsForContainerWorkspace(
+        [
+          'C:\\old\\left.vi',
+          'C:\\old\\right.vi',
+          '-lvpath',
+          'C:\\Wrong\\LabVIEW.exe',
+          '-nobdcosm',
+          '-nofp'
+        ],
+        {
+          containerWorkspaceRoot: 'C:\\vi-history-suite',
+          leftFilename: 'left.vi',
+          rightFilename: 'right.vi',
+          labviewPath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+        }
+      )
+    ).toEqual([
+      'C:\\vi-history-suite\\staging\\left.vi',
+      'C:\\vi-history-suite\\staging\\right.vi',
+      '-lvpath',
+      'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+      '-nobdcosm',
+      '-nofp'
+    ]);
   });
 
   it('parses Windows tasklist CSV and retains only observed LabVIEW runtime processes', async () => {

@@ -476,6 +476,12 @@
 - `TEST-UNIT-137`: prove the default Windows-container image probe uses the
   correct Windows-versus-cross-host command path and returns `false` on probe
   failure instead of throwing
+- `TEST-UNIT-138`: prove the Windows-container LabVIEW CLI arg rewrite ignores
+  caller `-LabVIEWPath` and `-Headless`, drops `-c`, preserves other supported
+  args, and appends governed `-LabVIEWPath` plus `-Headless true`
+- `TEST-UNIT-139`: prove the Windows-container LVCompare arg rewrite fails
+  closed without a full staged pair and otherwise preserves additional
+  comparison flags while rewriting the staged pair and governed `-lvpath`
 - `TEST-DOC-014`: review the queue, epic, ADR, and current-state surfaces to
   prove the future-facing dashboard research was normalized into governed repo
   control-plane artifacts and the incoming research artifact was deleted

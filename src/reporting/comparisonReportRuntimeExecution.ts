@@ -928,7 +928,7 @@ function buildWindowsContainerCommandPlan(
   };
 }
 
-function rewriteLabviewCliArgsForContainerWorkspace(
+export function rewriteLabviewCliArgsForContainerWorkspace(
   args: string[],
   options: {
     containerWorkspaceRoot: string;
@@ -1085,7 +1085,7 @@ function buildWindowsContainerDirectCommandScript(executable: string, args: stri
   ].join('\n');
 }
 
-function rewriteLvcompareArgsForContainerWorkspace(
+export function rewriteLvcompareArgsForContainerWorkspace(
   args: string[],
   options: {
     containerWorkspaceRoot: string;
