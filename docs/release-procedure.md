@@ -11,6 +11,9 @@
 - The release target for the current ship program is `v0.2.0`, with expected
   artifact `vi-history-suite-0.2.0.vsix` and manifest
   `release-evidence/release-manifest.json`.
+- The repo also publishes a separate docs-authoring workbench image for
+  documentation-package iteration:
+  `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
 
 ## Steps
 
@@ -36,12 +39,15 @@
 - `release-evidence/vi-history-suite-<version>.vsix.sha256`
 - `release-evidence/release-record.md`
 - `release-evidence/release-manifest.json`
+- `docs-workbench-evidence/docs-workbench-manifest.json`
 
 ## Current Limitation
 
 - Marketplace publishing is not active in the current baseline.
 - Preview VSIX artifacts are available from `main`, but they are not the same
   thing as the governed SemVer release artifact.
+- The docs-authoring workbench image is a supporting documentation-package
+  surface, not the end-user extension artifact.
 - The GitLab release lane is configured to build the governed versioned VSIX
   artifact and release manifest.
 - `SHIP-0001` still requires the first successful SemVer-tagged retained

@@ -7,6 +7,10 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
     model.commits.length >= 3
       ? '<button data-testid="history-action-dashboard" data-command="openDashboard">Open dashboard</button>'
       : '<button data-testid="history-action-dashboard" disabled>Open dashboard</button>';
+  const decisionRecordButton =
+    model.commits.length >= 3
+      ? '<button data-testid="history-action-decision-record" data-command="createDecisionRecord">Create decision record</button>'
+      : '<button data-testid="history-action-decision-record" disabled>Create decision record</button>';
   const rows = model.commits
     .map((commit: ViHistoryCommit, index: number) => {
       const hasRetainedComparisonEvidence = commit.retainedComparisonEvidenceAvailable === true;
@@ -124,6 +128,7 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
       <strong>Commits:</strong> <span data-testid="history-status-commit-count">${model.commits.length}</span><br />
       <button data-testid="history-action-copy-review-packet" data-command="copyReviewPacket">Copy review packet</button>
       ${dashboardButton}
+      ${decisionRecordButton}
     </div>
     <div class="packet" data-testid="history-review-packet">
       <div data-testid="history-chronology-order"><strong>Order:</strong> Newest commit first</div>
@@ -146,6 +151,7 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
         <li data-testid="history-guidance-step">Use the newest/oldest packet to confirm the retained review window before acting on a specific revision.</li>
         <li data-testid="history-guidance-step">Use the compare pair in each row to see exactly which retained base revision an <code>Open compare</code> action targets once retained pair evidence exists.</li>
         <li data-testid="history-guidance-step">Use <code>Open dashboard</code> when the retained window has at least three commits and you want concentrated comparison-report evidence in one place.</li>
+        <li data-testid="history-guidance-step">Use <code>Create decision record</code> when you want to retain a separate human review outcome from the current VI review evidence without mutating the machine-generated dashboard packet.</li>
         <li data-testid="history-guidance-step">Use <code>Generate compare</code> when a pair has no retained evidence yet, and <code>Refresh compare</code> when you want to update already-retained evidence for that pair.</li>
       </ol>
     </div>

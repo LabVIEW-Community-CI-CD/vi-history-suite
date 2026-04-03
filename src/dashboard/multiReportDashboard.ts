@@ -8,6 +8,9 @@ import {
   ComparisonReportArchivePlan
 } from './comparisonReportArchive';
 import {
+  MultiReportDashboardEtaAccuracyRecord
+} from './dashboardEtaAccuracy';
+import {
   ParsedNiComparisonReport,
   parseNiComparisonReportFile
 } from './niComparisonReportParser';
@@ -36,29 +39,6 @@ export interface MultiReportDashboardArtifactLink {
   kind: 'packet-html' | 'report-html' | 'metadata-json' | 'source-record-json';
   label: string;
   filePath: string;
-}
-
-export interface MultiReportDashboardEtaAccuracySample {
-  pairOrdinal: number;
-  pairCount: number;
-  estimatedPairSeconds: number;
-  actualPairSeconds: number;
-  absoluteErrorSeconds: number;
-  signedErrorSeconds: number;
-  sampledAt: string;
-}
-
-export interface MultiReportDashboardEtaAccuracyRecord {
-  recordedAt: string;
-  stage: 'pair-preparation';
-  preparedPairCount: number;
-  measuredPairCount: number;
-  unmeasuredPairCount: number;
-  meanAbsoluteErrorSeconds?: number;
-  maxAbsoluteErrorSeconds?: number;
-  meanSignedErrorSeconds?: number;
-  meanAbsolutePercentageError?: number;
-  samples: MultiReportDashboardEtaAccuracySample[];
 }
 
 export type MultiReportDashboardEntryEvidenceState =

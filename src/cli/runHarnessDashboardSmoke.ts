@@ -220,8 +220,20 @@ export function formatHarnessDashboardSmokeSuccess(
     `HTML: ${result.reportHtmlPath}`,
     `Dashboard completeness: ${result.report.dashboardWindowCompletenessState}`,
     `Dashboard archived pairs: ${result.report.dashboardArchivedPairCount}`,
-    `Dashboard metadata pairs: ${result.report.dashboardMetadataPairCount}`
+    `Dashboard metadata pairs: ${result.report.dashboardMetadataPairCount}`,
+    `Dashboard ETA accuracy: ${formatEtaAccuracySummary(result.report)}`
   ];
+}
+
+function formatEtaAccuracySummary(report: HarnessDashboardSmokeReport): string {
+  const record = report.dashboardEtaAccuracyRecord;
+  if (!record) {
+    return 'not-retained';
+  }
+  if (record.measuredPairCount <= 0) {
+    return `not-yet-measurable (${record.preparedPairCount} prepared pair(s))`;
+  }
+  return `measured=${record.measuredPairCount}/${record.preparedPairCount} mean-abs=${record.meanAbsoluteErrorSeconds ?? 0}s max-abs=${record.maxAbsoluteErrorSeconds ?? 0}s mape=${record.meanAbsolutePercentageError === undefined ? 'n/a' : `${Math.round(record.meanAbsolutePercentageError)}%`}`;
 }
 
 export async function runHarnessDashboardSmokeCliMain(

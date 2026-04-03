@@ -25,7 +25,9 @@ If you are new to the repo, read these in order:
 5. [Software Requirements Specification](./docs/requirements/srs.md)
 6. [SHIP-0001: Releasable VI History Suite](./docs/product/SHIP-0001-releasable-vi-history-suite.md)
 7. [Release Readiness Matrix](./docs/product/release-readiness-matrix.json)
-8. [PROGRAM-0001: Next Product Layer](./docs/product/execution-programs/PROGRAM-0001-next-product-layer.md)
+8. [Wiki Authority Map](./docs/product/wiki-authority-map.md)
+9. [PROGRAM-0001: Next Product Layer](./docs/product/execution-programs/PROGRAM-0001-next-product-layer.md)
+10. [Documentation Package Workbench](./docs/documentation-workbench.md)
 
 For machine-friendly repo orientation, start with:
 
@@ -64,6 +66,8 @@ Use these repo-native control-plane entrypoints instead:
 - [SHIP-0001: Releasable VI History Suite](./docs/product/SHIP-0001-releasable-vi-history-suite.md)
 - [Release Readiness Matrix](./docs/product/release-readiness-matrix.json)
 - [Blocker Ledger](./docs/product/blocker-ledger.json)
+- [Wiki Authority Map](./docs/product/wiki-authority-map.md)
+- [Documentation Package Workbench](./docs/documentation-workbench.md)
 - [Review Scenarios](./docs/product/review-scenarios.md)
 - [Harness Definitions](./docs/product/harnesses.md)
 - [Software Requirements Specification](./docs/requirements/srs.md)
@@ -121,6 +125,9 @@ Committed and governed today:
 - retained pair-level ETA accuracy characterization for dashboard pair
   preparation, including a dashboard summary and sidecar evidence that exclude
   previously retained pairs from the current-session accuracy measurement
+- canonical dashboard smoke retention for pair-level ETA characterization,
+  including actual-vs-estimated preparation timing per prepared pair and a
+  retained `dashboard-pair-eta-accuracy.json` sidecar
 - direct local rendering for retained comparison packets and dashboard HTML
   artifacts, with injected base-path/CSP controls and soft iframe fallback if a
   local HTML artifact is unavailable
@@ -134,17 +141,23 @@ Committed and governed today:
 - real extension-host dashboard proof for dashboard-open, dashboard-refresh,
   and governed artifact-open behavior
 - canonical scenario registry and separate decision-record generation for the
-  canonical dashboard evidence flow
+  canonical dashboard evidence flow plus extension-facing `Create decision
+  record` UX for three-plus-commit retained review windows
 - retained design gate that chooses the next tranche from committed evidence
 - retained design gate that refreshes `latest-report.{json,md}` after each
   successful stage so a stuck assurance tail does not leave stale tranche
   evidence
 - authoritative ship-control surfaces that keep one active tranche, one release
   target, one readiness matrix, and one blocker ledger in the repo itself
+- a published docs-authoring workbench image plus a repo-native docs gate for
+  iterating on requirements, ADRs, release-readiness docs, and future
+  wiki-source material in a governed environment
 - a configured GitLab SemVer release lane that validates tag/package sync,
   packages a versioned VSIX, and retains a machine-readable release manifest
 - a `main`-branch preview VSIX artifact lane so extension users can install the
   latest governed build before the first tagged release is retained
+- explicit Linux and Windows extension-host proof scripts plus a least-privilege
+  Linux VS Code bootstrap command for faster autonomous iteration
 
 ## Active Work
 
@@ -154,7 +167,10 @@ The active ship target is:
 - current package baseline: `0.1.0`
 - target release artifact: `vi-history-suite-0.2.0.vsix`
 - target release manifest: `release-evidence/release-manifest.json`
-- remaining release blocker: first successful retained `v0.2.0` tag pipeline
+- docs-authoring image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
+- remaining release blockers:
+  - `BL-001`: finish the remaining release-ready progress/cancellation/trust UX layer
+  - `BL-003`: retain the first successful retained `v0.2.0` tag pipeline
 
 ## Install Surface
 
@@ -165,6 +181,8 @@ Current install paths are:
   `preview-evidence/vi-history-suite-<version>.vsix`
 - future governed tagged release artifact:
   `release-evidence/vi-history-suite-<version>.vsix`
+- documentation-package workbench image:
+  `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
 
 The single active tranche is:
 
@@ -181,6 +199,8 @@ See:
 - [SHIP-0001: Releasable VI History Suite](./docs/product/SHIP-0001-releasable-vi-history-suite.md)
 - [Release Readiness Matrix](./docs/product/release-readiness-matrix.json)
 - [Blocker Ledger](./docs/product/blocker-ledger.json)
+- [Wiki Authority Map](./docs/product/wiki-authority-map.md)
+- [Documentation Package Workbench](./docs/documentation-workbench.md)
 - [Release Procedure](./docs/release-procedure.md)
 - [Fast VS Code Loop](./docs/dev-fast-loop.md)
 - [Research Alignment Matrix](./docs/research/authoritative/research-alignment.md)
@@ -205,9 +225,15 @@ Primary commands:
 - `npm run harness:report:smoke`
 - `npm run harness:dashboard:smoke`
 - `npm run harness:decision:record`
+- `npm run docs:gate`
+- `npm run docs:workbench:build`
+- `npm run docs:workbench:gate`
+- `npm run docs:workbench:shell`
 - `npm run dev:watch`
 - `npm run dev:workspace`
 - `npm run dev:host`
+- `npm run test:integration:linux`
+- `npm run test:integration:windows`
 - `npm run preview:refresh`
 
 Fast inner loop:
@@ -219,6 +245,12 @@ Fast inner loop:
 Use `npm run preview:refresh` only when a slice needs a refreshed installable
 VSIX. The dedicated dev host is the default inner loop.
 
+Linux integration-host bootstrap:
+
+```bash
+sudo /usr/local/bin/vihs-bootstrap-vscode-linux-host install
+```
+
 Primary generated evidence:
 
 - `.cache/design-gate/latest-report.json`
@@ -226,6 +258,7 @@ Primary generated evidence:
 - `.cache/harness-reports/HARNESS-VHS-001/report.json`
 - `.cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.json`
 - `.cache/harness-reports/HARNESS-VHS-001/dashboard-smoke.json`
+- `<workspace-storage>/dashboards/<repoId>/<fileId>/<windowId>/dashboard-pair-eta-accuracy.json`
 - `<workspace-storage>/decision-records/<repoId>/<fileId>/<windowId>/<scenarioId>/<decisionId>/decision-record.json`
 - `<workspace-storage>/decision-records/<repoId>/<fileId>/<windowId>/<scenarioId>/<decisionId>/decision-record.md`
 - `<workspace-storage>/report-history/<repoId>/<fileId>/pairs/<pairId>/source-record.json`

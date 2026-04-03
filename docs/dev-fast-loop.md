@@ -31,6 +31,42 @@ Use two terminals and one disposable VS Code development host:
 This is the fast inner loop. It avoids packaging and reinstalling a VSIX after
 every product slice.
 
+## Linux Host Bootstrap
+
+If the governed extension-host lane needs to run on the Linux VS Code test host
+instead of the Windows `Code.exe` host, install the Ubuntu runtime libraries
+once:
+
+```bash
+sudo /usr/local/bin/vihs-bootstrap-vscode-linux-host install
+```
+
+To force the integration lane onto the Linux host even when Windows VS Code is
+available:
+
+```bash
+npm run test:integration:linux
+```
+
+To force the Windows host explicitly:
+
+```bash
+npm run test:integration:windows
+```
+
+If the variable is omitted or set to `auto`, the runner keeps the default
+behavior:
+
+- use Windows `Code.exe` when it is available and not already running
+- fall back to the Linux VS Code test host when Windows VS Code is unavailable
+  or already busy
+
+You can verify the Linux prerequisite set without reinstalling anything:
+
+```bash
+sudo /usr/local/bin/vihs-bootstrap-vscode-linux-host verify
+```
+
 ## Workspace Modes
 
 ### Reusable Fixture Workspace

@@ -92,12 +92,31 @@ describe('extension manifest research alignment', () => {
     );
   });
 
-  it('exposes the fast local VS Code loop and preview refresh scripts', () => {
+  it('exposes the fast local VS Code loop, docs-package workbench, and preview refresh scripts', () => {
     const manifest = readManifest();
 
     expect(manifest.scripts?.['dev:watch']).toBe('tsc -p . --watch --preserveWatchOutput');
     expect(manifest.scripts?.['dev:workspace']).toContain('runDevHost.js --prepare-workspace-only');
     expect(manifest.scripts?.['dev:host']).toContain('runDevHost.js');
+    expect(manifest.scripts?.['docs:gate']).toBe('node scripts/run-docs-gate.js');
+    expect(manifest.scripts?.['docs:gate:core']).toBe(
+      'node scripts/run-docs-gate.js --skip-links'
+    );
+    expect(manifest.scripts?.['docs:workbench:build']).toContain(
+      'docker/docs-authoring/Dockerfile'
+    );
+    expect(manifest.scripts?.['docs:workbench:gate']).toContain(
+      'vi-history-suite-docs-authoring:local npm run docs:gate'
+    );
+    expect(manifest.scripts?.['docs:workbench:shell']).toContain(
+      'vi-history-suite-docs-authoring:local bash'
+    );
+    expect(manifest.scripts?.['test:integration:linux']).toBe(
+      'VI_HISTORY_SUITE_INTEGRATION_HOST=linux npm run test:integration'
+    );
+    expect(manifest.scripts?.['test:integration:windows']).toBe(
+      'VI_HISTORY_SUITE_INTEGRATION_HOST=windows npm run test:integration'
+    );
     expect(manifest.scripts?.['preview:refresh']).toContain('preview-evidence');
     expect(manifest.scripts?.['preview:refresh']).toContain('/mnt/c/Users/sveld/Downloads');
   });

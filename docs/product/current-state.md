@@ -21,7 +21,9 @@ Read these in order:
 5. [Architecture Overview](../architecture/overview.md)
 6. [Software Requirements Specification](../requirements/srs.md)
 7. [SHIP-0001: Releasable VI History Suite](./SHIP-0001-releasable-vi-history-suite.md)
-8. [PROGRAM-0001: Next Product Layer](./execution-programs/PROGRAM-0001-next-product-layer.md)
+8. [wiki-authority-map.md](./wiki-authority-map.md)
+9. [PROGRAM-0001: Next Product Layer](./execution-programs/PROGRAM-0001-next-product-layer.md)
+10. [Documentation Package Workbench](../documentation-workbench.md)
 
 ## Authority Stack
 
@@ -44,8 +46,10 @@ Current control-plane surfaces:
 5. [SHIP-0001: Releasable VI History Suite](./SHIP-0001-releasable-vi-history-suite.md)
 6. [release-readiness-matrix.json](./release-readiness-matrix.json)
 7. [blocker-ledger.json](./blocker-ledger.json)
-8. [PROGRAM-0001: Next Product Layer](./execution-programs/PROGRAM-0001-next-product-layer.md)
-9. [Fast VS Code Loop](../dev-fast-loop.md)
+8. [wiki-authority-map.md](./wiki-authority-map.md)
+9. [PROGRAM-0001: Next Product Layer](./execution-programs/PROGRAM-0001-next-product-layer.md)
+10. [Fast VS Code Loop](../dev-fast-loop.md)
+11. [Documentation Package Workbench](../documentation-workbench.md)
 
 ## Committed Capability State
 
@@ -59,11 +63,12 @@ Current control-plane surfaces:
 | Canonical comparison-report smoke lane | implemented with succeeded NI proof | `src/harness/harnessReportSmoke.ts`; `src/cli/runHarnessReportSmoke.ts`; `npm run harness:report:smoke`; `.cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.html`; `VHS-REQ-152..180`; `VHS-REQ-220` | sustain |
 | Indexing and report progress uplift | partially implemented and active | `src/indexing/viEligibilityIndexer.ts`; `VHS-REQ-093`; `VHS-REQ-305..306`; research alignment marks this partial | `TRANCHE-004` |
 | Windows 64-bit isolated container provider | implemented and active | `docs/architecture/adr/ADR-0006-windows64-container-isolation-for-extension-users.md`; `src/reporting/comparisonRuntimeLocator.ts`; `src/reporting/comparisonReportRuntimeExecution.ts`; `VHS-REQ-146`; `VHS-REQ-217..220` | sustain |
-| Multi-report developer dashboard for one VI across at least three commits | implemented and active with canonical dashboard smoke, extension-host proof, whole-window metadata concentration, chronology-aware pair-position references in those whole-window summaries, a chronology-first pair metadata ledger, pair-evidence backfill for missing or stale adjacent pairs, progress-aware dashboard refresh stages, bounded minutes-and-seconds estimates during pair preparation, retained pair-level ETA accuracy characterization for the current refresh session, and direct local rendering for retained HTML artifacts | `src/dashboard/comparisonReportArchive.ts`; `src/dashboard/niComparisonReportParser.ts`; `src/dashboard/multiReportDashboard.ts`; `src/dashboard/multiReportDashboardAction.ts`; `src/harness/harnessDashboardSmoke.ts`; `src/cli/runHarnessDashboardSmoke.ts`; `.cache/harness-reports/HARNESS-VHS-001/dashboard-smoke.json`; `tests/integration/suite/extensionHost.test.ts`; `VHS-REQ-212..215`; `VHS-REQ-221..223`; `VHS-REQ-232`; `VHS-REQ-237..238`; `VHS-REQ-268`; `VHS-REQ-295..304`; `VHS-REQ-330..340` | `TRANCHE-006` |
-| Review-scenario registry and human decision records | partially implemented and active | `src/scenarios/reviewScenarioRegistry.ts`; `src/scenarios/decisionRecord.ts`; `src/harness/harnessDecisionRecord.ts`; `src/cli/runHarnessDecisionRecord.ts`; `docs/product/review-scenarios.md`; `docs/product/decision-record-template.md`; `VHS-REQ-307..312` | `TRANCHE-007` |
+| Multi-report developer dashboard for one VI across at least three commits | implemented and active with canonical dashboard smoke, extension-host proof, whole-window metadata concentration, chronology-aware pair-position references in those whole-window summaries, a chronology-first pair metadata ledger, pair-evidence backfill for missing or stale adjacent pairs, progress-aware dashboard refresh stages, bounded minutes-and-seconds estimates during pair preparation, retained pair-level ETA accuracy characterization for the current refresh session, retained pair-level ETA characterization in canonical dashboard smoke, and direct local rendering for retained HTML artifacts | `src/dashboard/comparisonReportArchive.ts`; `src/dashboard/dashboardEtaAccuracy.ts`; `src/dashboard/niComparisonReportParser.ts`; `src/dashboard/multiReportDashboard.ts`; `src/dashboard/multiReportDashboardAction.ts`; `src/harness/harnessDashboardSmoke.ts`; `src/cli/runHarnessDashboardSmoke.ts`; `.cache/harness-reports/HARNESS-VHS-001/dashboard-smoke.json`; `tests/integration/suite/extensionHost.test.ts`; `VHS-REQ-212..215`; `VHS-REQ-221..223`; `VHS-REQ-232`; `VHS-REQ-237..238`; `VHS-REQ-268`; `VHS-REQ-295..304`; `VHS-REQ-330..340`; `VHS-REQ-347..349` | `TRANCHE-006` |
+| Review-scenario registry and human decision records | implemented and active with extension-facing decision-record creation from the history panel, scenario matching by repository remote URL plus VI path, separate Markdown/JSON artifact persistence, and real extension-host proof | `src/scenarios/reviewScenarioRegistry.ts`; `src/scenarios/decisionRecord.ts`; `src/scenarios/reviewDecisionRecordAction.ts`; `src/harness/harnessDecisionRecord.ts`; `src/commands/openViHistoryCommand.ts`; `tests/integration/suite/extensionHost.test.ts`; `docs/product/review-scenarios.md`; `docs/product/decision-record-template.md`; `VHS-REQ-307..312`; `VHS-REQ-341..343` | `TRANCHE-007` |
 | Runtime-doctor and dashboard-refresh developer experience | partially implemented and active | `src/reporting/comparisonRuntimeDoctor.ts`; `src/reporting/comparisonRuntimeLocator.ts`; `src/reporting/comparisonReportPacket.ts`; `src/reporting/comparisonReportAction.ts`; `src/dashboard/multiReportDashboardAction.ts`; `src/commands/openViHistoryCommand.ts`; `VHS-REQ-224..236`; `VHS-REQ-241`; `VHS-REQ-244..247`; `VHS-REQ-251..258` | `TRANCHE-008` |
-| Ship-control system and SemVer release target | implemented and active with preview VSIX delivery plus first tagged release proof pending | `docs/product/SHIP-0001-releasable-vi-history-suite.md`; `docs/product/release-readiness-matrix.json`; `docs/product/blocker-ledger.json`; `docs/release-procedure.md`; `.gitlab-ci.yml`; `tests/unit/shipControlDocs.test.ts`; `VHS-REQ-313..323` | `TRANCHE-009` |
-| Fast local VS Code development-host loop | implemented and active with reusable fixture-workspace prep, explicit workspace override, direct or staged extension-host launch, and separate preview VSIX refresh | `src/tooling/devHostLoop.ts`; `src/cli/runDevHost.ts`; `docs/dev-fast-loop.md`; `package.json`; `tests/unit/runDevHostCli.test.ts`; `tests/unit/packageManifest.test.ts`; `VHS-REQ-338..339` | sustain |
+| Ship-control system and SemVer release target | implemented and active with preview VSIX delivery plus first tagged release proof pending, and a governed wiki-authority map that constrains future wiki generation to repo docs instead of source or chat memory | `docs/product/SHIP-0001-releasable-vi-history-suite.md`; `docs/product/release-readiness-matrix.json`; `docs/product/blocker-ledger.json`; `docs/product/wiki-authority-map.md`; `docs/release-procedure.md`; `.gitlab-ci.yml`; `tests/unit/shipControlDocs.test.ts`; `VHS-REQ-313..323` | `TRANCHE-009` |
+| Documentation-package workbench image and docs gate | implemented and active with a repo-published docs-authoring image, local workbench commands, a repo-native docs gate, and a retained publish-manifest lane for future documentation and wiki iteration | `docker/docs-authoring/Dockerfile`; `docker/docs-authoring/entrypoint.sh`; `scripts/run-docs-gate.js`; `docs/documentation-workbench.md`; `.gitlab-ci.yml`; `tests/unit/docsWorkbenchDocs.test.ts`; `VHS-REQ-350..353` | `TRANCHE-009` |
+| Fast local VS Code development-host loop | implemented and active with reusable fixture-workspace prep, explicit workspace override, direct or staged extension-host launch, explicit Linux/Windows integration-host selection, Linux runtime preflight, and a least-privilege root-owned Linux bootstrap command | `src/tooling/devHostLoop.ts`; `src/cli/runDevHost.ts`; `src/tooling/integrationHostRuntime.ts`; `docs/dev-fast-loop.md`; `package.json`; `tests/unit/runDevHostCli.test.ts`; `tests/unit/integrationHostRuntime.test.ts`; `tests/unit/packageManifest.test.ts`; `VHS-REQ-338..339`; `VHS-REQ-344..346`; `docs/architecture/adr/ADR-0010-dual-host-extension-proof-and-linux-bootstrap.md` | sustain |
 
 ## Active Queue
 
@@ -75,12 +80,14 @@ Current active ship tranche:
 - preview install surface: `preview-evidence/vi-history-suite-<version>.vsix`
 - target release artifact: `vi-history-suite-0.2.0.vsix`
 - target release manifest: `release-evidence/release-manifest.json`
-- remaining blocker: first successful retained SemVer-tagged release evidence
+- docs-workbench image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
+- remaining blockers:
+  - `BL-001`: finish the remaining release-ready progress/cancellation/trust UX layer
+  - `BL-003`: retain the first successful SemVer-tagged release evidence
 
 Queued follow-on tranches:
 
 - `TRANCHE-004`: Add progress-surface uplift for indexing and report generation
-- `TRANCHE-007`: Introduce a review-scenario registry and human decision records
 - `TRANCHE-008`: Introduce runtime-doctor and dashboard-refresh developer experience
 
 The queue source of truth is:
@@ -89,7 +96,9 @@ The queue source of truth is:
 - [PROGRAM-0001: Next Product Layer](./execution-programs/PROGRAM-0001-next-product-layer.md)
 - [release-readiness-matrix.json](./release-readiness-matrix.json)
 - [blocker-ledger.json](./blocker-ledger.json)
+- [wiki-authority-map.md](./wiki-authority-map.md)
 - [release-procedure.md](../release-procedure.md)
+- [Documentation Package Workbench](../documentation-workbench.md)
 
 ## Research Refresh
 
@@ -120,10 +129,21 @@ These are generated locally and are not the committed source of truth:
   - `.cache/harness-reports/HARNESS-VHS-001/dashboard-smoke.json`
   - `.cache/harness-reports/HARNESS-VHS-001/dashboard-smoke.md`
   - `.cache/harness-reports/HARNESS-VHS-001/dashboard-smoke.html`
+  - `<workspace-storage>/dashboards/<repoId>/<fileId>/<windowId>/dashboard-pair-eta-accuracy.json`
+- documentation-package workbench:
+  - `docker/docs-authoring/Dockerfile`
+  - `docs/documentation-workbench.md`
+  - `docs-workbench-evidence/docs-workbench-manifest.json`
+  - local gate via `npm run docs:gate`
+  - local workbench image via `npm run docs:workbench:build`
+  - local container gate via `npm run docs:workbench:gate`
 - fast local dev-host loop:
   - `.cache/dev-host/` or `C:\Users\sveld\AppData\Local\Temp\vihs-dev-host\`
   - reusable fixture workspace via `npm run dev:workspace`
   - dedicated development host via `npm run dev:host`
+  - explicit Linux integration-host proof via `npm run test:integration:linux`
+  - explicit Windows integration-host proof via `npm run test:integration:windows`
+  - Linux bootstrap via `sudo /usr/local/bin/vihs-bootstrap-vscode-linux-host install`
 - concentrated review dashboard:
   - `<workspace-storage>/report-history/<repoId>/<fileId>/pairs/<pairId>/source-record.json`
   - `<workspace-storage>/dashboards/<repoId>/<fileId>/<windowId>/dashboard.json`
@@ -139,6 +159,11 @@ npm run harness:smoke
 npm run harness:report:smoke
 npm run harness:dashboard:smoke
 npm run harness:decision:record
+npm run docs:gate
+npm run docs:workbench:build
+npm run docs:workbench:gate
+npm run test:integration:linux
+npm run test:integration:windows
 ```
 
 ## Update Rule
@@ -152,6 +177,8 @@ When the repo meaningfully changes, update these together:
 - [SHIP-0001: Releasable VI History Suite](./SHIP-0001-releasable-vi-history-suite.md)
 - [release-readiness-matrix.json](./release-readiness-matrix.json)
 - [blocker-ledger.json](./blocker-ledger.json)
+- [wiki-authority-map.md](./wiki-authority-map.md)
+- [Documentation Package Workbench](../documentation-workbench.md)
 - [Software Requirements Specification](../requirements/srs.md)
 - [Traceability Matrix](../requirements/rtm.csv)
 - [Test Plan](../testing/test-plan.md)

@@ -143,10 +143,13 @@ describe('ship-control direction system', () => {
     const informationItemMap = readText('docs/information-item-map.md');
     const programDoc = readText('docs/product/execution-programs/PROGRAM-0001-next-product-layer.md');
     const releaseProcedure = readText('docs/release-procedure.md');
+    const workbenchDoc = readText('docs/documentation-workbench.md');
 
     expect(readme).toContain('[SHIP-0001: Releasable VI History Suite](./docs/product/SHIP-0001-releasable-vi-history-suite.md)');
     expect(readme).toContain('[Release Readiness Matrix](./docs/product/release-readiness-matrix.json)');
     expect(readme).toContain('[Blocker Ledger](./docs/product/blocker-ledger.json)');
+    expect(readme).toContain('[Wiki Authority Map](./docs/product/wiki-authority-map.md)');
+    expect(readme).toContain('[Documentation Package Workbench](./docs/documentation-workbench.md)');
     expect(readme).toContain('[Release Procedure](./docs/release-procedure.md)');
     expect(readme).toContain('- `SHIP-0001`: releasable `v0.2.0` VSIX product');
     expect(readme).toContain('- current package baseline: `0.1.0`');
@@ -155,6 +158,8 @@ describe('ship-control direction system', () => {
     expect(currentState).toContain('[SHIP-0001: Releasable VI History Suite](./SHIP-0001-releasable-vi-history-suite.md)');
     expect(currentState).toContain('[release-readiness-matrix.json](./release-readiness-matrix.json)');
     expect(currentState).toContain('[blocker-ledger.json](./blocker-ledger.json)');
+    expect(currentState).toContain('[wiki-authority-map.md](./wiki-authority-map.md)');
+    expect(currentState).toContain('[Documentation Package Workbench](../documentation-workbench.md)');
     expect(currentState).toContain('- `TRANCHE-009`: Ship `vi-history-suite` as a releasable SemVer VSIX');
     expect(currentState).toContain('- current package baseline: `0.1.0`');
     expect(currentState).toContain('- target release artifact: `vi-history-suite-0.2.0.vsix`');
@@ -162,6 +167,8 @@ describe('ship-control direction system', () => {
     expect(informationItemMap).toContain('| Ship target | `docs/product/SHIP-0001-releasable-vi-history-suite.md` |');
     expect(informationItemMap).toContain('| Release readiness matrix | `docs/product/release-readiness-matrix.json` |');
     expect(informationItemMap).toContain('| Blocker ledger | `docs/product/blocker-ledger.json` |');
+    expect(informationItemMap).toContain('| Wiki authority map | `docs/product/wiki-authority-map.md` |');
+    expect(informationItemMap).toContain('| Documentation package workbench | `docs/documentation-workbench.md` |');
     expect(informationItemMap).toContain('| Release procedure | `docs/release-procedure.md` |');
 
     expect(programDoc).toContain('[SHIP-0001: Releasable VI History Suite](../SHIP-0001-releasable-vi-history-suite.md)');
@@ -171,14 +178,23 @@ describe('ship-control direction system', () => {
     expect(releaseProcedure).toContain('[release readiness matrix](./product/release-readiness-matrix.json)');
     expect(releaseProcedure).toContain('vi-history-suite-0.2.0.vsix');
     expect(releaseProcedure).toContain('release-evidence/release-manifest.json');
+
+    expect(workbenchDoc).toContain('registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main');
+    expect(workbenchDoc).toContain('npm run docs:workbench:gate');
   });
 
-  it('configures the GitLab release lane for SemVer-safe VSIX packaging and retained release evidence', () => {
+  it('configures the GitLab release lane plus docs-package workbench publish lane', () => {
     const gitlabCi = readText('.gitlab-ci.yml');
     const readme = readText('README.md');
     const currentState = readText('docs/product/current-state.md');
     const releaseProcedure = readText('docs/release-procedure.md');
 
+    expect(gitlabCi).toContain('docs_control_plane_check:');
+    expect(gitlabCi).toContain('npm run docs:gate:core');
+    expect(gitlabCi).toContain('publish_docs_authoring_image:');
+    expect(gitlabCi).toContain('--dockerfile "${CI_PROJECT_DIR}/docker/docs-authoring/Dockerfile"');
+    expect(gitlabCi).toContain('${CI_REGISTRY_IMAGE}/docs-authoring:main');
+    expect(gitlabCi).toContain("path.join('docs-workbench-evidence', 'docs-workbench-manifest.json')");
     expect(gitlabCi).toContain('package_extension_preview:');
     expect(gitlabCi).toContain('stage: package');
     expect(gitlabCi).toContain('PACKAGE_VERSION=$(node -p "require(\'./package.json\').version")');
@@ -193,9 +209,12 @@ describe('ship-control direction system', () => {
     expect(gitlabCi).toContain("- release-evidence/release-manifest.json");
 
     expect(readme).toContain('preview-evidence/vi-history-suite-<version>.vsix');
+    expect(readme).toContain('registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main');
     expect(readme).toContain('future governed tagged release artifact');
+    expect(currentState).toContain('docs-workbench image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`');
     expect(currentState).toContain('preview install surface: `preview-evidence/vi-history-suite-<version>.vsix`');
     expect(releaseProcedure).toContain('For pre-release install testing, use the `package_extension_preview` artifact');
+    expect(releaseProcedure).toContain('The repo also publishes a separate docs-authoring workbench image');
     expect(releaseProcedure).toContain('Preview VSIX artifacts are available from `main`');
   });
 });

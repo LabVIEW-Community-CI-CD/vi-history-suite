@@ -15,12 +15,16 @@ export async function prepareIntegrationWorkspace(
 ): Promise<IntegrationWorkspaceMetadata> {
   await fs.mkdir(baseDirectory, { recursive: true });
   const workspacePath = await fs.mkdtemp(path.join(baseDirectory, 'vihs-integration-'));
-  const eligibleRelativePath = 'fixtures/eligible-content-detected.bin';
+  const eligibleRelativePath = 'Tooling/deployment/VIP_Pre-Install Custom Action.vi';
   const ineligibleRelativePath = 'fixtures/ineligible-content-detected.bin';
 
   await runGit(['init'], workspacePath);
   await runGit(['config', 'user.name', 'VI History Suite Integration'], workspacePath);
   await runGit(['config', 'user.email', 'vihs-integration@example.invalid'], workspacePath);
+  await runGit(
+    ['remote', 'add', 'origin', 'https://github.com/ni/labview-icon-editor.git'],
+    workspacePath
+  );
 
   await writeViFixture(path.join(workspacePath, eligibleRelativePath), 'eligible-1');
   await writeViFixture(path.join(workspacePath, ineligibleRelativePath), 'ineligible-only');

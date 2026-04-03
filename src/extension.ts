@@ -14,6 +14,7 @@ import {
   createEnsureComparisonReportEvidenceAction,
   createOpenRetainedComparisonReportAction
 } from './reporting/comparisonReportAction';
+import { createReviewDecisionRecordAction } from './scenarios/reviewDecisionRecordAction';
 import { ViHistoryViewModel } from './services/viHistoryModel';
 import { ViHistoryService } from './services/viHistoryService';
 import {
@@ -55,6 +56,7 @@ export async function activate(
   const ensureComparisonReportEvidenceAction =
     createEnsureComparisonReportEvidenceAction(context);
   const openRetainedComparisonReportAction = createOpenRetainedComparisonReportAction(context);
+  const reviewDecisionRecordAction = createReviewDecisionRecordAction(context);
   const multiReportDashboardAction = createMultiReportDashboardAction(
     context,
     {
@@ -101,7 +103,8 @@ export async function activate(
         comparisonReportAction,
         multiReportDashboardAction,
         openRetainedComparisonReportAction,
-        hasRetainedComparisonReport
+        hasRetainedComparisonReport,
+        reviewDecisionRecordAction
       )
     )
   );

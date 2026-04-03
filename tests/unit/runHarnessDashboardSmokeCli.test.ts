@@ -111,6 +111,20 @@ describe('runHarnessDashboardSmokeCli', () => {
         dashboardOverviewImageCount: 4,
         dashboardDetailItemCount: 8,
         dashboardProviderSummaries: [],
+        dashboardEtaAccuracyFilePath:
+          '/tmp/reports/HARNESS-VHS-001/workspace-storage/dashboards/repo/file/window/dashboard-pair-eta-accuracy.json',
+        dashboardEtaAccuracyRecord: {
+          recordedAt: '2026-04-03T00:00:00.000Z',
+          stage: 'pair-preparation',
+          preparedPairCount: 2,
+          measuredPairCount: 1,
+          unmeasuredPairCount: 1,
+          meanAbsoluteErrorSeconds: 6,
+          maxAbsoluteErrorSeconds: 6,
+          meanSignedErrorSeconds: 6,
+          meanAbsolutePercentageError: 33.333,
+          samples: []
+        },
         pairSummaries: []
       },
       reportJsonPath: '/tmp/reports/HARNESS-VHS-001/dashboard-smoke.json',
@@ -161,6 +175,7 @@ describe('runHarnessDashboardSmokeCli', () => {
     expect(writes.join('')).toContain('Harness dashboard smoke completed for HARNESS-VHS-001');
     expect(writes.join('')).toContain('Dashboard completeness: complete');
     expect(writes.join('')).toContain('Dashboard metadata pairs: 2');
+    expect(writes.join('')).toContain('Dashboard ETA accuracy: measured=1/2');
   });
 
   it('supports help, exit codes, and main-module execution', async () => {
@@ -223,6 +238,8 @@ describe('runHarnessDashboardSmokeCli', () => {
               dashboardOverviewImageCount: 4,
               dashboardDetailItemCount: 8,
               dashboardProviderSummaries: [],
+              dashboardEtaAccuracyFilePath: undefined,
+              dashboardEtaAccuracyRecord: undefined,
               pairSummaries: []
             },
             reportJsonPath: '/tmp/reports/HARNESS-VHS-001/dashboard-smoke.json',
@@ -264,6 +281,8 @@ describe('runHarnessDashboardSmokeCli', () => {
             dashboardOverviewImageCount: 4,
             dashboardDetailItemCount: 8,
             dashboardProviderSummaries: [],
+            dashboardEtaAccuracyFilePath: undefined,
+            dashboardEtaAccuracyRecord: undefined,
             pairSummaries: []
           },
           reportJsonPath: '/tmp/reports/HARNESS-VHS-001/dashboard-smoke.json',
@@ -279,7 +298,8 @@ describe('runHarnessDashboardSmokeCli', () => {
       'HTML: /tmp/reports/HARNESS-VHS-001/dashboard-smoke.html',
       'Dashboard completeness: complete',
       'Dashboard archived pairs: 2',
-      'Dashboard metadata pairs: 2'
+      'Dashboard metadata pairs: 2',
+      'Dashboard ETA accuracy: not-retained'
     ]);
   });
 });

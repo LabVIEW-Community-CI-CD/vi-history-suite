@@ -20,6 +20,7 @@ export interface HistoryPanelActionSummary {
   outcome:
     | 'copied-hash'
     | 'copied-review-packet'
+    | 'created-decision-record'
     | 'opened-review-dashboard'
     | 'opened-commit'
     | 'diffed-previous'
@@ -29,7 +30,12 @@ export interface HistoryPanelActionSummary {
     | 'workspace-untrusted'
     | 'ignored-missing-hash'
     | 'insufficient-dashboard-commits'
+    | 'insufficient-decision-commits'
     | 'missing-dashboard-storage'
+    | 'missing-decision-storage'
+    | 'missing-repository-url'
+    | 'missing-review-scenario'
+    | 'scenario-contract-mismatch'
     | 'missing-git-uri'
     | 'missing-selected-commit'
     | 'missing-storage-uri'
@@ -76,6 +82,10 @@ export interface HistoryPanelActionSummary {
   dashboardPairCount?: number;
   dashboardArchivedPairCount?: number;
   dashboardMissingPairCount?: number;
+  scenarioId?: string;
+  decisionRecordJsonPath?: string;
+  decisionRecordMarkdownPath?: string;
+  mismatchSummary?: string;
 }
 
 export interface DashboardArtifactActionSummary {

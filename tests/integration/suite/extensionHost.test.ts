@@ -143,11 +143,12 @@ async function testPanelOpenFlow(
   assert.match(panel.renderedHtml, /Needs external comparison tooling:/);
   assert.match(panel.renderedHtml, /Binary semantic differences, visual or cosmetic change detection, and NI comparison-report output\./);
   assert.match(panel.renderedHtml, /Selected:<\/strong> <code>[0-9a-f]{8}<\/code> <strong>vs base:<\/strong> <code>[0-9a-f]{8}<\/code>/);
-  assert.match(panel.renderedHtml, /fixtures\/eligible-content-detected\.bin/);
+  assert.match(panel.renderedHtml, /Tooling\/deployment\/VIP_Pre-Install Custom Action\.vi/);
   assert.match(panel.renderedHtml, /Update eligible fixture/);
   assert.match(panel.renderedHtml, /Add initial integration fixtures/);
   assert.match(panel.renderedHtml, /Add third eligible fixture revision/);
   assert.match(panel.renderedHtml, /Generate compare/);
+  assert.match(panel.renderedHtml, /Create decision record/);
 
   const history = await api.loadHistory(eligibleUri);
   const selectedCommit = history.commits[0];
@@ -160,7 +161,10 @@ async function testPanelOpenFlow(
   const copiedReviewPacket = await vscode.env.clipboard.readText();
   assert.match(copiedReviewPacket, /VI History Review Packet/);
   assert.match(copiedReviewPacket, /Repository: vihs-integration-/);
-  assert.match(copiedReviewPacket, /Path: fixtures\/eligible-content-detected\.bin/);
+  assert.match(
+    copiedReviewPacket,
+    /Path: Tooling\/deployment\/VIP_Pre-Install Custom Action\.vi/
+  );
   assert.match(copiedReviewPacket, /Confidence and scope:/);
   assert.match(copiedReviewPacket, /Needs external comparison tooling: binary semantic differences, visual or cosmetic change detection, and NI comparison-report output\./);
   assert.match(copiedReviewPacket, /- [0-9a-f]{8} vs [0-9a-f]{8} :: Update eligible fixture/);
@@ -216,7 +220,10 @@ async function testPanelOpenFlow(
   assert.equal(reportAction.outcome, 'opened-comparison-report');
   assert.match(reportAction.title ?? '', /^VI Comparison Report:/);
   assert.match(reportAction.packetFilePath ?? '', /report-packet\.html$/);
-  assert.match(reportAction.reportFilePath ?? '', /diff-report-eligible-content-detected\.bin\.html$/);
+  assert.match(
+    reportAction.reportFilePath ?? '',
+    /diff-report-VIP_Pre-Install Custom Action\.vi\.html$/
+  );
   assert.match(reportAction.metadataFilePath ?? '', /report-metadata\.json$/);
   assert.ok(reportAction.reportWebviewUri);
   assert.ok(
@@ -256,6 +263,32 @@ async function testPanelOpenFlow(
   assert.match(retainedDiffAction.metadataFilePath ?? '', /report-metadata\.json$/);
   assert.ok(retainedDiffAction.reportWebviewUri);
   assert.equal(api.getPanelActionCount(), 6);
+
+  await api.dispatchLastPanelMessage({
+    command: 'createDecisionRecord'
+  });
+  const decisionRecordAction = api.getLastPanelActionSummary();
+  assert.ok(decisionRecordAction);
+  assert.equal(decisionRecordAction.command, 'createDecisionRecord');
+  assert.equal(decisionRecordAction.outcome, 'created-decision-record');
+  assert.equal(decisionRecordAction.scenarioId, 'SCENARIO-VHS-001');
+  assert.match(decisionRecordAction.decisionRecordJsonPath ?? '', /decision-record\.json$/);
+  assert.match(decisionRecordAction.decisionRecordMarkdownPath ?? '', /decision-record\.md$/);
+  const decisionRecordMarkdown = await fs.readFile(
+    decisionRecordAction.decisionRecordMarkdownPath ?? '',
+    'utf8'
+  );
+  assert.match(decisionRecordMarkdown, /# Review Decision Record/);
+  assert.match(decisionRecordMarkdown, /Scenario ID: SCENARIO-VHS-001/);
+  assert.match(
+    decisionRecordMarkdown,
+    /Repository URL: https:\/\/github\.com\/ni\/labview-icon-editor\.git/
+  );
+  assert.match(
+    decisionRecordMarkdown,
+    /VI path: Tooling\/deployment\/VIP_Pre-Install Custom Action\.vi/
+  );
+  assert.equal(api.getPanelActionCount(), 7);
 
   await api.dispatchLastPanelMessage({
     command: 'openDashboard'
@@ -339,7 +372,7 @@ async function testPanelOpenFlow(
   assert.equal(refreshedDashboardAction.command, 'openDashboard');
   assert.equal(refreshedDashboardAction.outcome, 'opened-review-dashboard');
   assert.equal(api.getOpenDashboardPanelCount(), 2);
-  assert.equal(api.getPanelActionCount(), 8);
+  assert.equal(api.getPanelActionCount(), 9);
 }
 
 async function waitFor(

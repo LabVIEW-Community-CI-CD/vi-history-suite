@@ -5,17 +5,19 @@ import * as path from 'node:path';
 
 import { downloadAndUnzipVSCode, runTests } from '@vscode/test-electron';
 
+import {
+  assertLinuxVsCodeRuntimeReady,
+  inspectIntegrationHostStrategy
+} from '../../src/tooling/integrationHostRuntime';
 import { prepareIntegrationWorkspace } from './prepareTestWorkspace';
 
 async function main(): Promise<void> {
   const repoRoot = path.resolve(__dirname, '..', '..', '..');
   const extensionTestsEntry = path.resolve(__dirname, 'suite', 'index.js');
   const windowsCodePath = '/mnt/c/Program Files/Microsoft VS Code/Code.exe';
-  const hostStrategy = inspectIntegrationHostStrategy(windowsCodePath);
-  if (hostStrategy.mode === 'skip') {
-    console.log(`Skipping integration tests: ${hostStrategy.reason}`);
-    return;
-  }
+  const hostStrategy = inspectIntegrationHostStrategy(windowsCodePath, process.env.VI_HISTORY_SUITE_INTEGRATION_HOST, {
+    windowsCodeAlreadyRunning: isWindowsCodeAlreadyRunning
+  });
   const useWindowsHost = hostStrategy.mode === 'windows';
   const integrationRuntimeRoot = await selectIntegrationRuntimeRoot(repoRoot, useWindowsHost);
 
@@ -27,7 +29,7 @@ async function main(): Promise<void> {
   let vscodeExecutablePath: string;
   let extensionDevelopmentPath = repoRoot;
   let extensionTestsPath = extensionTestsEntry;
-  let testEnv: Record<string, string> = {};
+  let testEnv: Record<string, string> = buildDecisionRecordAutomationEnv();
   let stagedExtensionRoot: string | undefined;
 
   try {
@@ -42,7 +44,10 @@ async function main(): Promise<void> {
         path.join(stagedExtensionRoot, 'out-tests', 'tests', 'integration', 'suite', 'index.js')
       );
       process.chdir('/mnt/c/Windows');
-      testEnv = buildWindowsExtensionHostEnv(launchArgs[0]);
+      testEnv = {
+        ...buildWindowsExtensionHostEnv(launchArgs[0]),
+        ...buildDecisionRecordAutomationEnv()
+      };
       launchArgs[0] = toWindowsPath(metadata.workspacePath);
       await writeRuntimeConfig(
         path.join(stagedExtensionRoot, 'out-tests', 'tests', 'integration', 'test-runtime.json'),
@@ -54,6 +59,7 @@ async function main(): Promise<void> {
       );
     } else {
       vscodeExecutablePath = await downloadAndUnzipVSCode('stable');
+      assertLinuxVsCodeRuntimeReady(vscodeExecutablePath);
       await writeRuntimeConfig(
         path.join(repoRoot, 'out-tests', 'tests', 'integration', 'test-runtime.json'),
         {
@@ -79,21 +85,16 @@ async function main(): Promise<void> {
   }
 }
 
-function inspectIntegrationHostStrategy(
-  windowsCodePath: string
-): { mode: 'windows' | 'linux' | 'skip'; reason?: string } {
-  if (!fsSync.existsSync(windowsCodePath)) {
-    return { mode: 'linux' };
-  }
-
-  if (isWindowsCodeAlreadyRunning()) {
-    return {
-      mode: 'skip',
-      reason: 'windows-vscode-instance-already-running'
-    };
-  }
-
-  return { mode: 'windows' };
+function buildDecisionRecordAutomationEnv(): Record<string, string> {
+  return {
+    VI_HISTORY_SUITE_DECISION_REVIEWER: 'Integration Reviewer',
+    VI_HISTORY_SUITE_DECISION_QUESTION:
+      'Does the retained dashboard evidence support a bounded extension-host decision?',
+    VI_HISTORY_SUITE_DECISION_OUTCOME: 'needs-more-review',
+    VI_HISTORY_SUITE_DECISION_CONFIDENCE: 'medium',
+    VI_HISTORY_SUITE_DECISION_RATIONALE:
+      'Integration automation uses a stable bounded rationale to avoid UI prompts during the extension-host lane.'
+  };
 }
 
 void main().catch((error) => {

@@ -15,6 +15,8 @@ one explicit SemVer release target.
 - target VSIX artifact and release-manifest identity
 - GitLab SemVer-tag validation, VSIX packaging, and release-manifest retention
 - SemVer-governed VSIX releaseability evidence expectations
+- published docs-authoring workbench image plus docs gate for requirements,
+  ADR, release-readiness, and wiki-authority iteration
 
 ## Non-Goals
 
@@ -39,6 +41,10 @@ one explicit SemVer release target.
 - the GitLab release lane packages a versioned VSIX and retains a release
   manifest
 - the active tranche maps to the release target and explicit ship blockers
+- the repo publishes a docs-authoring workbench image and retained
+  docs-workbench manifest through GitLab CI
+- the repo documents how future documentation-package and wiki-preparation work
+  should use that workbench instead of ad hoc host setup
 
 ## Required Evidence
 

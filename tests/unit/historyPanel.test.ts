@@ -38,6 +38,7 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('Open compare');
     expect(html).toContain('Generate compare');
     expect(html).toContain('Open dashboard');
+    expect(html).toContain('Create decision record');
     expect(html).toContain('Copy hash');
     expect(html).toContain('Copy review packet');
     expect(html).toContain('data-testid="history-status"');
@@ -63,6 +64,7 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('data-testid="history-action-report"');
     expect(html).toContain('data-testid="history-action-copy"');
     expect(html).toContain('data-testid="history-action-dashboard"');
+    expect(html).toContain('data-testid="history-action-decision-record"');
     expect(html).toContain('Newest commit first');
     expect(html).toContain('Oldest retained revision');
     expect(html).toContain('Binary review limits:');
@@ -78,6 +80,9 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('Open compare</code> action targets once retained pair evidence exists.');
     expect(html).toContain('Generate compare</code> when a pair has no retained evidence yet');
     expect(html).toContain('Refresh compare</code> when you want to update already-retained evidence');
+    expect(html).toContain(
+      'Create decision record</code> when you want to retain a separate human review outcome'
+    );
   });
 
   it('renders refresh-state pair actions when retained comparison evidence already exists', () => {
@@ -109,6 +114,7 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('Refresh compare');
     expect(html).toContain('data-command="generateComparisonReport" data-hash="abcdef1234567890">Refresh compare</button>');
     expect(html).toContain('data-testid="history-action-report" disabled>Generate compare</button>');
+    expect(html).toContain('data-testid="history-action-decision-record" disabled');
   });
 
   it('renders a portable factual review packet', () => {

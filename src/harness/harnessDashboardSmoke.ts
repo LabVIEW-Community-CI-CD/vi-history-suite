@@ -3,6 +3,13 @@ import * as path from 'node:path';
 
 import { archiveComparisonReportSource } from '../dashboard/comparisonReportArchive';
 import {
+  buildDashboardPairEtaAccuracyRecord,
+  buildPairEtaAccuracySample,
+  DASHBOARD_PAIR_ETA_ACCURACY_FILENAME,
+  deriveEstimatedPairSeconds,
+  MultiReportDashboardEtaAccuracyRecord
+} from '../dashboard/dashboardEtaAccuracy';
+import {
   buildAndPersistMultiReportDashboard,
   BuildMultiReportDashboardResult,
   MultiReportDashboardRecord
@@ -38,6 +45,10 @@ export interface HarnessDashboardSmokePairSummary {
   reportFilePath: string;
   metadataFilePath: string;
   sourceRecordFilePath?: string;
+  actualPreparationSeconds: number;
+  estimatedPreparationSeconds?: number;
+  absoluteEtaErrorSeconds?: number;
+  signedEtaErrorSeconds?: number;
 }
 
 export interface HarnessDashboardSmokeReport {
@@ -61,6 +72,8 @@ export interface HarnessDashboardSmokeReport {
   dashboardOverviewImageCount: number;
   dashboardDetailItemCount: number;
   dashboardProviderSummaries: MultiReportDashboardRecord['summary']['providerSummaries'];
+  dashboardEtaAccuracyFilePath?: string;
+  dashboardEtaAccuracyRecord?: MultiReportDashboardEtaAccuracyRecord;
   pairSummaries: HarnessDashboardSmokePairSummary[];
 }
 
@@ -70,6 +83,7 @@ export interface HarnessDashboardSmokeDeps extends HarnessReportSmokeDeps {
     storageRoot: string,
     model: ViHistoryViewModel
   ) => Promise<BuildMultiReportDashboardResult>;
+  nowMs?: () => number;
 }
 
 export async function runHarnessDashboardSmoke(
@@ -108,8 +122,13 @@ export async function runHarnessDashboardSmoke(
   };
   const pairCommits = dashboardModel.commits.filter((commit) => Boolean(commit.previousHash));
   const pairSummaries: HarnessDashboardSmokePairSummary[] = [];
+  const completedPairDurationsMs: number[] = [];
+  const etaAccuracySamples: MultiReportDashboardEtaAccuracyRecord['samples'] = [];
+  const nowMs = deps.nowMs ?? Date.now;
 
-  for (const compareCommit of pairCommits) {
+  for (const [index, compareCommit] of pairCommits.entries()) {
+    const pairStartMs = nowMs();
+    const estimatedPairSeconds = deriveEstimatedPairSeconds(completedPairDurationsMs);
     const execution = await (
       deps.executeHarnessComparisonReportForCommit ?? executeHarnessComparisonReportForCommit
     )(
@@ -130,6 +149,21 @@ export async function runHarnessDashboardSmoke(
       },
       true
     );
+    const pairDurationMs = Math.max(0, nowMs() - pairStartMs);
+    completedPairDurationsMs.push(pairDurationMs);
+    const accuracySample =
+      estimatedPairSeconds === undefined
+        ? undefined
+        : buildPairEtaAccuracySample(
+            index,
+            pairCommits.length,
+            estimatedPairSeconds,
+            pairDurationMs,
+            nowMs
+          );
+    if (accuracySample) {
+      etaAccuracySamples.push(accuracySample);
+    }
     pairSummaries.push({
       pairId: execution.archivedSourceRecord?.archivePlan.pairId,
       selectedHash: execution.record.selectedHash,
@@ -145,15 +179,38 @@ export async function runHarnessDashboardSmoke(
         execution.archivedSourceRecord?.archivePlan.reportFilePath ?? execution.reportFilePath,
       metadataFilePath:
         execution.archivedSourceRecord?.archivePlan.metadataFilePath ?? execution.metadataFilePath,
-      sourceRecordFilePath: execution.archivedSourceRecord?.archivePlan.sourceRecordFilePath
+      sourceRecordFilePath: execution.archivedSourceRecord?.archivePlan.sourceRecordFilePath,
+      actualPreparationSeconds: roundSeconds(pairDurationMs / 1000),
+      estimatedPreparationSeconds: accuracySample?.estimatedPairSeconds,
+      absoluteEtaErrorSeconds: accuracySample?.absoluteErrorSeconds,
+      signedEtaErrorSeconds: accuracySample?.signedErrorSeconds
     });
   }
+  const etaAccuracyRecord = buildDashboardPairEtaAccuracyRecord(
+    pairSummaries.length,
+    etaAccuracySamples,
+    nowMs
+  );
 
   const storageRoot = path.join(options.reportRoot, definition.id, 'workspace-storage');
   const dashboard = await (deps.buildDashboard ?? buildAndPersistMultiReportDashboard)(
     storageRoot,
     dashboardModel
   );
+  let dashboardEtaAccuracyFilePath: string | undefined;
+  if (etaAccuracyRecord) {
+    dashboardEtaAccuracyFilePath = path.join(
+      dashboard.record.artifactPlan.dashboardDirectory,
+      DASHBOARD_PAIR_ETA_ACCURACY_FILENAME
+    );
+    await (deps.mkdir ?? fs.mkdir)(dashboard.record.artifactPlan.dashboardDirectory, {
+      recursive: true
+    });
+    await (deps.writeFile ?? fs.writeFile)(
+      dashboardEtaAccuracyFilePath,
+      JSON.stringify(etaAccuracyRecord, null, 2)
+    );
+  }
   const report: HarnessDashboardSmokeReport = {
     harnessId: definition.id,
     repositoryUrl: definition.repositoryUrl,
@@ -175,6 +232,8 @@ export async function runHarnessDashboardSmoke(
     dashboardOverviewImageCount: dashboard.record.summary.overviewImageCount,
     dashboardDetailItemCount: dashboard.record.summary.detailItemCount,
     dashboardProviderSummaries: dashboard.record.summary.providerSummaries,
+    dashboardEtaAccuracyFilePath,
+    dashboardEtaAccuracyRecord: etaAccuracyRecord,
     pairSummaries
   };
 
@@ -198,7 +257,7 @@ export function renderHarnessDashboardSmokeMarkdown(report: HarnessDashboardSmok
   const pairLines = report.pairSummaries
     .map(
       (pair) =>
-        `- \`${pair.selectedHash.slice(0, 8)}\` vs \`${pair.baseHash.slice(0, 8)}\` :: status=${pair.reportStatus} runtime=${pair.runtimeExecutionState} provider=${pair.runtimeProvider ?? 'none'} engine=${pair.runtimeEngine ?? 'none'} metadata=${pair.generatedReportExists ? 'yes' : 'no'}`
+        `- \`${pair.selectedHash.slice(0, 8)}\` vs \`${pair.baseHash.slice(0, 8)}\` :: status=${pair.reportStatus} runtime=${pair.runtimeExecutionState} provider=${pair.runtimeProvider ?? 'none'} engine=${pair.runtimeEngine ?? 'none'} metadata=${pair.generatedReportExists ? 'yes' : 'no'} actual-prep=${formatOptionalSeconds(pair.actualPreparationSeconds)} estimated-prep=${formatOptionalSeconds(pair.estimatedPreparationSeconds)} abs-eta-error=${formatOptionalSeconds(pair.absoluteEtaErrorSeconds)}`
     )
     .join('\n');
 
@@ -220,6 +279,8 @@ export function renderHarnessDashboardSmokeMarkdown(report: HarnessDashboardSmok
 - Dashboard metadata pairs: ${report.dashboardMetadataPairCount}
 - Dashboard overview images: ${report.dashboardOverviewImageCount}
 - Dashboard detail items: ${report.dashboardDetailItemCount}
+- Dashboard ETA accuracy: ${formatHarnessDashboardEtaAccuracySummary(report.dashboardEtaAccuracyRecord)}
+- Dashboard ETA accuracy file: ${report.dashboardEtaAccuracyFilePath ?? 'none'}
 - Dashboard HTML: ${report.dashboardFilePath}
 - Dashboard JSON: ${report.dashboardJsonFilePath}
 - Provider summaries: ${report.dashboardProviderSummaries.map((summary) => `${summary.label}=${summary.pairCount}`).join(' | ') || 'none'}
@@ -242,6 +303,9 @@ export function renderHarnessDashboardSmokeHtml(report: HarnessDashboardSmokeRep
   <td>${escapeHtml(pair.runtimeProvider ?? 'none')}</td>
   <td>${escapeHtml(pair.runtimeEngine ?? 'none')}</td>
   <td>${pair.generatedReportExists ? 'yes' : 'no'}</td>
+  <td>${escapeHtml(formatOptionalSeconds(pair.actualPreparationSeconds))}</td>
+  <td>${escapeHtml(formatOptionalSeconds(pair.estimatedPreparationSeconds))}</td>
+  <td>${escapeHtml(formatOptionalSeconds(pair.absoluteEtaErrorSeconds))}</td>
 </tr>`
     )
     .join('\n');
@@ -277,6 +341,12 @@ export function renderHarnessDashboardSmokeHtml(report: HarnessDashboardSmokeRep
       <div><strong>Dashboard metadata pairs:</strong> ${report.dashboardMetadataPairCount}</div>
       <div><strong>Dashboard overview images:</strong> ${report.dashboardOverviewImageCount}</div>
       <div><strong>Dashboard detail items:</strong> ${report.dashboardDetailItemCount}</div>
+      <div><strong>Dashboard ETA accuracy:</strong> ${escapeHtml(
+        formatHarnessDashboardEtaAccuracySummary(report.dashboardEtaAccuracyRecord)
+      )}</div>
+      <div><strong>Dashboard ETA accuracy file:</strong> ${escapeHtml(
+        report.dashboardEtaAccuracyFilePath ?? 'none'
+      )}</div>
       <div><strong>Dashboard HTML:</strong> ${escapeHtml(report.dashboardFilePath)}</div>
       <div><strong>Dashboard JSON:</strong> ${escapeHtml(report.dashboardJsonFilePath)}</div>
       <div><strong>Provider summaries:</strong> ${escapeHtml(
@@ -294,10 +364,13 @@ export function renderHarnessDashboardSmokeHtml(report: HarnessDashboardSmokeRep
           <th>Provider</th>
           <th>Engine</th>
           <th>Generated report</th>
+          <th>Actual prep</th>
+          <th>Estimated prep</th>
+          <th>Abs ETA error</th>
         </tr>
       </thead>
       <tbody>
-        ${pairRows}
+        ${pairRows || '<tr><td colspan="10">No pair summaries were retained.</td></tr>'}
       </tbody>
     </table>
   </body>
@@ -315,4 +388,32 @@ function escapeHtml(value: string): string {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
+}
+
+function formatOptionalSeconds(value: number | undefined): string {
+  return value === undefined ? 'n/a' : `${value}s`;
+}
+
+function formatHarnessDashboardEtaAccuracySummary(
+  record: MultiReportDashboardEtaAccuracyRecord | undefined
+): string {
+  if (!record) {
+    return 'not-retained';
+  }
+  if (record.measuredPairCount <= 0) {
+    return `not-yet-measurable (${record.preparedPairCount} prepared pair(s))`;
+  }
+  return `measured=${record.measuredPairCount}/${record.preparedPairCount} mean-abs=${formatOptionalSeconds(
+    record.meanAbsoluteErrorSeconds
+  )} max-abs=${formatOptionalSeconds(
+    record.maxAbsoluteErrorSeconds
+  )} mean-bias=${formatOptionalSeconds(record.meanSignedErrorSeconds)} mape=${
+    record.meanAbsolutePercentageError === undefined
+      ? 'n/a'
+      : `${Math.round(record.meanAbsolutePercentageError)}%`
+  }`;
+}
+
+function roundSeconds(value: number): number {
+  return Math.round(value * 1000) / 1000;
 }

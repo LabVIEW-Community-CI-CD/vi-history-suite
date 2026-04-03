@@ -376,7 +376,7 @@
   the `Open dashboard` action only for commit windows with at least three
   retained commits
 - `TEST-DOC-011`: review the repo entrypoints and research-control-plane docs
-  for explicit dashboard partial-implementation status and pair-archive
+  for the correct current dashboard implementation maturity and pair-archive
   direction
 - `TEST-DOC-012`: review the repo entrypoints and research-control-plane docs
   to prove consumed research rounds are deleted and no longer referenced as
@@ -655,8 +655,8 @@
   described as implemented evidence instead of future-only dashboard intent
 - `TEST-DOC-017`: review the repo entrypoints, issue tracking, and research
   alignment/index surfaces to prove the canonical review-scenario registry and
-  separate decision-record path are described as partially implemented
-  evidence rather than future-only modeling
+  separate decision-record path are described at the correct current
+  implementation maturity rather than future-only modeling
 - `TEST-DOC-018`: review the README, current-state, ship target, blocker
   ledger, and release procedure to prove the SemVer ship-control system is the
   primary direction surface for the remaining release work
@@ -720,6 +720,29 @@
   retain chronology-aware `pair N` or `pairs N, M` references for retained NI
   metadata patterns so the reviewer can locate where each pattern appears in
   the adjacent-pair window
+- `TEST-UNIT-209`: prove the extension-facing decision-record flow exposes a
+  first-class history-panel action, fails closed on missing scenario/storage
+  conditions, and persists separate decision-record artifacts on success
+- `TEST-UNIT-210`: prove the integration-host runtime tooling supports
+  explicit `auto|windows|linux` host selection and fails closed with actionable
+  bootstrap guidance when Linux VS Code runtime libraries are missing
+- `TEST-UNIT-211`: prove the shared dashboard ETA characterization tooling
+  derives estimates only from current-session prepared pairs, retains
+  pair-level actual-versus-estimated samples, and records explicit unmeasured
+  coverage when too few pairs were prepared
+- `TEST-UNIT-212`: prove the canonical dashboard smoke lane retains pair-level
+  preparation timing, writes `dashboard-pair-eta-accuracy.json`, and renders
+  the retained ETA characterization summary in dashboard-smoke Markdown and
+  HTML
+- `TEST-UNIT-213`: prove the canonical dashboard smoke CLI prints a stable
+  `Dashboard ETA accuracy:` summary line for retained, not-yet-measurable, and
+  not-retained cases
+- `TEST-UNIT-214`: prove the documentation-package gate exposes a stable
+  compile -> docs-tests -> links plan and that `--skip-links` removes only the
+  link-check step
+- `TEST-UNIT-215`: prove the docs-authoring Dockerfile, entrypoint,
+  package-manifest scripts, workbench documentation, and GitLab publish lane
+  remain aligned as one governed documentation-package surface
 - `TEST-UNIT-207`: prove the fast-loop dev-host CLI parses stable arguments,
   prepares a reusable fixture workspace without requiring `Code.exe`, and
   builds a stable launch plan for either direct or staged extension mode
@@ -727,9 +750,20 @@
   packet and dashboard artifact opening, and prove the flow completes without
   the earlier retained-HTML resource-host failure warning becoming a test
   failure
+- `TEST-INTEG-008`: run the real extension-host lane through
+  `Create decision record` and prove the flow writes separate Markdown/JSON
+  artifacts from retained dashboard evidence and opens the retained Markdown
+  artifact
 - `TEST-DOC-017`: review the fast-loop docs and manifest scripts to confirm the
   repo differentiates the default development-host inner loop from preview VSIX
   refresh
+- `TEST-DOC-019`: review the fast-loop and ship-control docs to confirm the
+  explicit Linux/Windows integration-host scripts and least-privilege Linux
+  bootstrap command are discoverable without chat history
+- `TEST-DOC-021`: review the documentation-package workbench docs to confirm
+  README, current state, wiki-authority, release procedure, and ship-control
+  surfaces all point future documentation/wiki work to the published
+  docs-authoring workbench instead of ad hoc host setup
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

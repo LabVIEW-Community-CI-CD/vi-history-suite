@@ -41,6 +41,7 @@
 | Report subsystem | report planning, runtime/tool selection, runtime execution, mutable packet storage, pair-archive retention, multi-report dashboard preparation, and provider isolation policy | TypeScript / Node |
 | Harness smoke runner | clone-on-demand canonical harness verification | TypeScript / Node CLI |
 | Governance pack | requirements, tests, ADRs, traceability | Markdown / CSV |
+| Documentation-package workbench | requirements, ADR, RTM, release-readiness, and wiki-authority iteration | Docker / Node / Markdown tooling |
 
 ## Component View
 
@@ -63,6 +64,7 @@
 - Environments:
   - local developer workstation
   - GitLab CI for compile/test/coverage
+  - GitLab container registry for the docs-authoring workbench image
 - Nodes:
   - VS Code desktop extension host
   - local filesystem and Git installation
@@ -73,6 +75,9 @@
   - optional Windows container runtime for active isolated 64-bit report
     execution without colliding with an already-open host-native LabVIEW 2026
     64-bit session
+  - optional Linux VS Code runtime bootstrap for the governed fallback
+    extension-host proof lane
+  - dedicated docs-authoring image for documentation-package iteration
 
 ## Correspondence And Rationale
 
@@ -89,9 +94,14 @@
   - non-file URI fallback is less I/O efficient than local partial reads
   - Windows 64-bit isolated container execution is the preferred extension-user
     isolation path and is now wired into live report generation
-  - the first-class multi-report dashboard is partially implemented through a
-    retained pair-archive contract and concentrated dashboard packet, but raw
-    drill-down actions from the dashboard are still a follow-on slice
+  - the first-class multi-report dashboard is implemented as a retained
+    pair-archive and concentration packet surface, while additional review UX
+    tuning remains a follow-on slice
+  - dashboard ETA quality is currently characterized through retained
+    pair-level benchmark evidence; it is not yet treated as a calibrated
+    release gate
+  - documentation-package iteration now has its own published workbench image,
+    separate from extension runtime proof lanes
 
 ## ADR Index
 
@@ -113,3 +123,9 @@
   Concentration-first dashboard for high-volume review
 - [ADR-0009](./adr/ADR-0009-dashboard-pair-archive-and-concentration-packet.md):
   Pair archive and concentration packet for dashboard review
+- [ADR-0010](./adr/ADR-0010-dual-host-extension-proof-and-linux-bootstrap.md):
+  Dual-host extension proof and Linux bootstrap
+- [ADR-0011](./adr/ADR-0011-dashboard-pair-eta-characterization-benchmark.md):
+  Dashboard pair ETA characterization benchmark
+- [ADR-0012](./adr/ADR-0012-documentation-package-workbench-image.md):
+  Documentation-package workbench image

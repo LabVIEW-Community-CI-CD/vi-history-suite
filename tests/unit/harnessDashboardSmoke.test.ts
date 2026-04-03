@@ -28,6 +28,20 @@ describe('harness dashboard smoke renderers', () => {
     dashboardOverviewImageCount: 4,
     dashboardDetailItemCount: 6,
     dashboardProviderSummaries: [{ label: 'windows-container / lvcompare / x64 / win32', pairCount: 2 }],
+    dashboardEtaAccuracyFilePath:
+      '/tmp/reports/HARNESS-VHS-001/workspace-storage/dashboards/repo/file/window/dashboard-pair-eta-accuracy.json',
+    dashboardEtaAccuracyRecord: {
+      recordedAt: '2026-04-03T00:00:00.000Z',
+      stage: 'pair-preparation' as const,
+      preparedPairCount: 2,
+      measuredPairCount: 1,
+      unmeasuredPairCount: 1,
+      meanAbsoluteErrorSeconds: 4,
+      maxAbsoluteErrorSeconds: 4,
+      meanSignedErrorSeconds: -4,
+      meanAbsolutePercentageError: 20,
+      samples: []
+    },
     pairSummaries: [
       {
         pairId: 'pair123',
@@ -41,7 +55,11 @@ describe('harness dashboard smoke renderers', () => {
         packetFilePath: '/tmp/report-packet.html',
         reportFilePath: '/tmp/diff-report-foo.vi.html',
         metadataFilePath: '/tmp/report-metadata.json',
-        sourceRecordFilePath: '/tmp/source-record.json'
+        sourceRecordFilePath: '/tmp/source-record.json',
+        actualPreparationSeconds: 24,
+        estimatedPreparationSeconds: 20,
+        absoluteEtaErrorSeconds: 4,
+        signedEtaErrorSeconds: 4
       }
     ]
   };
@@ -54,9 +72,12 @@ describe('harness dashboard smoke renderers', () => {
     expect(markdown).toContain('Dashboard completeness: complete');
     expect(markdown).toContain('Dashboard archived pairs: 2');
     expect(markdown).toContain('Dashboard metadata pairs: 2');
+    expect(markdown).toContain('Dashboard ETA accuracy: measured=1/2');
     expect(markdown).toContain('windows-container / lvcompare / x64 / win32=2');
     expect(markdown).toContain('abcdef12');
     expect(markdown).toContain('metadata=yes');
+    expect(markdown).toContain('actual-prep=24s');
+    expect(markdown).toContain('estimated-prep=20s');
   });
 
   it('renders html with dashboard smoke summary facts', () => {
@@ -66,8 +87,11 @@ describe('harness dashboard smoke renderers', () => {
     expect(html).toContain('Dashboard completeness:</strong> complete');
     expect(html).toContain('Dashboard archived pairs:</strong> 2');
     expect(html).toContain('Dashboard metadata pairs:</strong> 2');
+    expect(html).toContain('Dashboard ETA accuracy:</strong> measured=1/2');
     expect(html).toContain('windows-container / lvcompare / x64 / win32=2');
     expect(html).toContain('<td>windows-container</td>');
+    expect(html).toContain('<td>24s</td>');
+    expect(html).toContain('<td>20s</td>');
   });
 });
 
@@ -75,6 +99,7 @@ describe('runHarnessDashboardSmoke', () => {
   it('retains a factual dashboard smoke artifact set for the canonical harness', async () => {
     const writes = new Map<string, string>();
 
+    let currentNowMs = Date.parse('2026-04-03T00:00:00.000Z');
     const result = await runHarnessDashboardSmoke(
       'HARNESS-VHS-001',
       {
@@ -121,54 +146,64 @@ describe('runHarnessDashboardSmoke', () => {
         }) as never,
         executeHarnessComparisonReportForCommit: vi
           .fn()
-          .mockResolvedValueOnce({
-            record: {
-              selectedHash: '3333333344444444',
-              baseHash: '1111111122222222',
-              reportStatus: 'ready-for-runtime',
-              runtimeExecutionState: 'succeeded',
-              runtimeSelection: {
-                provider: 'windows-container',
-                engine: 'lvcompare'
+          .mockImplementationOnce(async () => {
+            currentNowMs += 12_000;
+            return {
+              record: {
+                selectedHash: '3333333344444444',
+                baseHash: '1111111122222222',
+                reportStatus: 'ready-for-runtime',
+                runtimeExecutionState: 'succeeded',
+                runtimeSelection: {
+                  provider: 'windows-container',
+                  engine: 'lvcompare'
+                },
+                runtimeExecution: {
+                  reportExists: true
+                }
               },
-              runtimeExecution: {
-                reportExists: true
+              packetFilePath: '/tmp/report-packet-a.html',
+              reportFilePath: '/tmp/diff-report-a.html',
+              metadataFilePath: '/tmp/report-metadata-a.json',
+              archivedSourceRecord: {
+                archivePlan: {
+                  sourceRecordFilePath: '/tmp/source-record-a.json'
+                }
               }
-            },
-            packetFilePath: '/tmp/report-packet-a.html',
-            reportFilePath: '/tmp/diff-report-a.html',
-            metadataFilePath: '/tmp/report-metadata-a.json',
-            archivedSourceRecord: {
-              archivePlan: {
-                sourceRecordFilePath: '/tmp/source-record-a.json'
-              }
-            }
+            };
           })
-          .mockResolvedValueOnce({
-            record: {
-              selectedHash: '1111111122222222',
-              baseHash: 'aaaaaaaa55555555',
-              reportStatus: 'ready-for-runtime',
-              runtimeExecutionState: 'failed',
-              runtimeSelection: {
-                provider: 'windows-container',
-                engine: 'lvcompare'
+          .mockImplementationOnce(async () => {
+            currentNowMs += 18_000;
+            return {
+              record: {
+                selectedHash: '1111111122222222',
+                baseHash: 'aaaaaaaa55555555',
+                reportStatus: 'ready-for-runtime',
+                runtimeExecutionState: 'failed',
+                runtimeSelection: {
+                  provider: 'windows-container',
+                  engine: 'lvcompare'
+                },
+                runtimeExecution: {
+                  reportExists: false
+                }
               },
-              runtimeExecution: {
-                reportExists: false
+              packetFilePath: '/tmp/report-packet-b.html',
+              reportFilePath: '/tmp/diff-report-b.html',
+              metadataFilePath: '/tmp/report-metadata-b.json',
+              archivedSourceRecord: {
+                archivePlan: {
+                  sourceRecordFilePath: '/tmp/source-record-b.json'
+                }
               }
-            },
-            packetFilePath: '/tmp/report-packet-b.html',
-            reportFilePath: '/tmp/diff-report-b.html',
-            metadataFilePath: '/tmp/report-metadata-b.json',
-            archivedSourceRecord: {
-              archivePlan: {
-                sourceRecordFilePath: '/tmp/source-record-b.json'
-              }
-            }
+            };
           }) as never,
         buildDashboard: vi.fn().mockResolvedValue({
           record: {
+            artifactPlan: {
+              dashboardDirectory:
+                '/tmp/reports/HARNESS-VHS-001/workspace-storage/dashboards/repo/file/window'
+            },
             summary: {
               windowCompletenessState: 'complete',
               archivedPairCount: 2,
@@ -187,7 +222,8 @@ describe('runHarnessDashboardSmoke', () => {
         writeFile: vi.fn(async (filePath: string, contents: string) => {
           writes.set(filePath, contents);
         }) as never,
-        now: () => '2026-04-03T00:00:00.000Z'
+        now: () => '2026-04-03T00:00:00.000Z',
+        nowMs: () => currentNowMs
       }
     );
 
@@ -199,18 +235,40 @@ describe('runHarnessDashboardSmoke', () => {
     expect(result.report.dashboardMetadataPairCount).toBe(1);
     expect(result.report.dashboardOverviewImageCount).toBe(2);
     expect(result.report.dashboardDetailItemCount).toBe(5);
+    expect(result.report.dashboardEtaAccuracyFilePath).toBe(
+      '/tmp/reports/HARNESS-VHS-001/workspace-storage/dashboards/repo/file/window/dashboard-pair-eta-accuracy.json'
+    );
+    expect(result.report.dashboardEtaAccuracyRecord).toMatchObject({
+      preparedPairCount: 2,
+      measuredPairCount: 1,
+      meanAbsoluteErrorSeconds: 6,
+      maxAbsoluteErrorSeconds: 6,
+      meanSignedErrorSeconds: 6,
+      meanAbsolutePercentageError: 33.333
+    });
     expect(result.report.pairSummaries).toHaveLength(2);
     expect(result.report.pairSummaries[0]).toMatchObject({
       selectedHash: '3333333344444444',
       baseHash: '1111111122222222',
-      generatedReportExists: true
+      generatedReportExists: true,
+      actualPreparationSeconds: 12,
+      estimatedPreparationSeconds: undefined
+    });
+    expect(result.report.pairSummaries[1]).toMatchObject({
+      actualPreparationSeconds: 18,
+      estimatedPreparationSeconds: 12,
+      absoluteEtaErrorSeconds: 6,
+      signedEtaErrorSeconds: 6
     });
     expect(result.reportJsonPath).toBe('/tmp/reports/HARNESS-VHS-001/dashboard-smoke.json');
     expect(result.reportMarkdownPath).toBe('/tmp/reports/HARNESS-VHS-001/dashboard-smoke.md');
     expect(result.reportHtmlPath).toBe('/tmp/reports/HARNESS-VHS-001/dashboard-smoke.html');
     expect(writes.get(result.reportJsonPath)).toContain('"dashboardArchivedPairCount": 2');
+    expect(writes.get(result.reportJsonPath)).toContain('"dashboardEtaAccuracyFilePath"');
     expect(writes.get(result.reportMarkdownPath)).toContain('Harness Dashboard Smoke');
+    expect(writes.get(result.reportMarkdownPath)).toContain('Dashboard ETA accuracy: measured=1/2');
     expect(writes.get(result.reportHtmlPath)).toContain('Harness Dashboard Smoke');
+    expect(writes.get(result.reportHtmlPath)).toContain('Dashboard ETA accuracy:</strong> measured=1/2');
   });
 
   it('stamps dashboard smoke output with the default ISO clock when no now override is supplied', async () => {
@@ -289,6 +347,10 @@ describe('runHarnessDashboardSmoke', () => {
             }) as never,
           buildDashboard: vi.fn().mockResolvedValue({
             record: {
+              artifactPlan: {
+                dashboardDirectory:
+                  '/tmp/reports/HARNESS-VHS-001/workspace-storage/dashboards/repo/file/window'
+              },
               summary: {
                 windowCompletenessState: 'complete',
                 archivedPairCount: 2,

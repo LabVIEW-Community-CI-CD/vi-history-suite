@@ -22,6 +22,8 @@
 | Ship target | `docs/product/SHIP-0001-releasable-vi-history-suite.md` | sole author | release target, stop rule, or definition of done changes | ship target matches the active release objective and queue |
 | Release readiness matrix | `docs/product/release-readiness-matrix.json` | sole author | ship criterion state, evidence, blocker, or next action changes | readiness matrix matches the active tranche and blocker ledger |
 | Blocker ledger | `docs/product/blocker-ledger.json` | sole author | ship blocker state or resolution path changes | blocker ledger matches the release readiness matrix |
+| Wiki authority map | `docs/product/wiki-authority-map.md` | sole author | the governed documentation stack or wiki-generation preconditions change | future wiki work can be derived from docs without falling back to source or chat memory |
+| Documentation package workbench | `docs/documentation-workbench.md` | sole author | docs-authoring workflow, published image references, or docs-gate commands change | future requirements/wiki iteration can start from one published workbench instead of ad hoc host setup |
 | Development queue | `docs/product/development-queue.json` | sole author | tranche order or status changes | queue reflects the active implementation program |
 | Dashboard epic | `docs/product/epics/EPIC-0004-multi-report-developer-dashboard.md` | sole author | multi-report dashboard scope changes | epic matches the active product direction and queue |
 | Dashboard ADR | `docs/architecture/adr/ADR-0007-multi-report-review-dashboard.md` | sole author | multi-report dashboard architecture changes | ADR rationale matches the product and report-subsystem direction |

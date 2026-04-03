@@ -194,15 +194,18 @@
     },
     {
       "surface": "review-scenario-registry-and-human-decision-records",
-      "status": "partially-implemented",
+      "status": "implemented-and-active",
       "evidence": [
         "src/scenarios/reviewScenarioRegistry.ts",
         "src/scenarios/decisionRecord.ts",
+        "src/scenarios/reviewDecisionRecordAction.ts",
         "src/harness/harnessDecisionRecord.ts",
         "src/cli/runHarnessDecisionRecord.ts",
+        "src/commands/openViHistoryCommand.ts",
         "docs/product/review-scenarios.md",
         "docs/product/decision-record-template.md",
-        "docs/research/authoritative/research-infrastructure.md"
+        "docs/research/authoritative/research-infrastructure.md",
+        "tests/integration/suite/extensionHost.test.ts"
       ],
       "requirements": [
         "VHS-REQ-307",
@@ -210,9 +213,30 @@
         "VHS-REQ-309",
         "VHS-REQ-310",
         "VHS-REQ-311",
-        "VHS-REQ-312"
+        "VHS-REQ-312",
+        "VHS-REQ-341",
+        "VHS-REQ-342",
+        "VHS-REQ-343"
       ],
-      "nextMove": "Extend the retained scenario flow into extension UX and activate additional scenario shapes beyond the canonical baseline."
+      "nextMove": "Sustain the extension-facing decision-record flow and activate additional scenario shapes beyond the canonical baseline."
+    },
+    {
+      "surface": "documentation-package-workbench-and-governed-docs-gate",
+      "status": "implemented-and-active",
+      "evidence": [
+        "docker/docs-authoring/Dockerfile",
+        "scripts/run-docs-gate.js",
+        "docs/documentation-workbench.md",
+        ".gitlab-ci.yml",
+        "tests/unit/docsWorkbenchDocs.test.ts"
+      ],
+      "requirements": [
+        "VHS-REQ-350",
+        "VHS-REQ-351",
+        "VHS-REQ-352",
+        "VHS-REQ-353"
+      ],
+      "nextMove": "Sustain the docs-authoring image and use it as the preferred environment for documentation-package and future wiki-preparation work."
     },
     {
       "surface": "consumed-research-retirement-and-future-research-prompt",

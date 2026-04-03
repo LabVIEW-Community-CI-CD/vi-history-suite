@@ -1,6 +1,7 @@
 stages:
   - docs
   - test
+  - image
   - package
   - release
 
@@ -15,6 +16,87 @@ docs_link_check:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH'
+
+docs_control_plane_check:
+  stage: docs
+  image: node:24
+  script:
+    - npm ci
+    - npm run docs:gate:core
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH'
+
+publish_docs_authoring_image:
+  stage: image
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint:
+      - ""
+  script:
+    - mkdir -p /kaniko/.docker docs-workbench-evidence
+    - |
+      cat > /kaniko/.docker/config.json <<JSON
+      {
+        "auths": {
+          "${CI_REGISTRY}": {
+            "username": "${CI_REGISTRY_USER}",
+            "password": "${CI_REGISTRY_PASSWORD}"
+          }
+        }
+      }
+      JSON
+    - |
+      DESTINATIONS="--destination=${CI_REGISTRY_IMAGE}/docs-authoring:sha-${CI_COMMIT_SHORT_SHA}"
+      if [ "${CI_COMMIT_BRANCH}" = "${CI_DEFAULT_BRANCH}" ]; then
+        DESTINATIONS="${DESTINATIONS} --destination=${CI_REGISTRY_IMAGE}/docs-authoring:main"
+      fi
+      if echo "${CI_COMMIT_TAG}" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+        DESTINATIONS="${DESTINATIONS} --destination=${CI_REGISTRY_IMAGE}/docs-authoring:${CI_COMMIT_TAG}"
+      fi
+      /kaniko/executor \
+        --context "${CI_PROJECT_DIR}" \
+        --dockerfile "${CI_PROJECT_DIR}/docker/docs-authoring/Dockerfile" \
+        ${DESTINATIONS}
+    - |
+      node - <<'NODE'
+      const fs = require('node:fs');
+      const path = require('node:path');
+      const pkg = require('./package.json');
+
+      const pushedTags = [`sha-${process.env.CI_COMMIT_SHORT_SHA || ''}`].filter(Boolean);
+      if ((process.env.CI_COMMIT_BRANCH || '') === (process.env.CI_DEFAULT_BRANCH || '')) {
+        pushedTags.push('main');
+      }
+      if (/^v\d+\.\d+\.\d+$/.test(process.env.CI_COMMIT_TAG || '')) {
+        pushedTags.push(process.env.CI_COMMIT_TAG);
+      }
+
+      const manifest = {
+        shipId: 'SHIP-0001',
+        activeIssueId: 'ISSUE-0406',
+        packageVersion: pkg.version,
+        commitSha: process.env.CI_COMMIT_SHA || '',
+        ref: process.env.CI_COMMIT_REF_NAME || '',
+        imageName: `${process.env.CI_REGISTRY_IMAGE}/docs-authoring`,
+        pushedTags,
+        defaultCommand: 'npm run docs:gate',
+        dockerfile: 'docker/docs-authoring/Dockerfile',
+        workbenchDoc: 'docs/documentation-workbench.md'
+      };
+
+      fs.writeFileSync(
+        path.join('docs-workbench-evidence', 'docs-workbench-manifest.json'),
+        `${JSON.stringify(manifest, null, 2)}\n`
+      );
+      NODE
+  artifacts:
+    when: always
+    paths:
+      - docs-workbench-evidence/
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
 
 test_extension:
   stage: test

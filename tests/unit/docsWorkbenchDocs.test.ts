@@ -1,0 +1,113 @@
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+
+import { describe, expect, it } from 'vitest';
+
+const repoRoot = path.resolve(__dirname, '..', '..');
+
+function readText(relativePath: string): string {
+  return fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
+}
+
+function readManifest(): { scripts?: Record<string, string> } {
+  return JSON.parse(readText('package.json')) as { scripts?: Record<string, string> };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const docsGate = require(path.join(repoRoot, 'scripts', 'run-docs-gate.js')) as {
+  createDocsGateSteps: (options?: { skipLinks?: boolean }) => Array<{
+    id: string;
+    command: string;
+    args: string[];
+  }>;
+  parseDocsGateArgs: (argv: string[]) => { helpRequested: boolean; skipLinks: boolean };
+  getDocsGateUsage: () => string;
+};
+
+describe('documentation-package workbench', () => {
+  it('retains a deterministic docs gate plan with an optional link-check step', () => {
+    expect(docsGate.parseDocsGateArgs([])).toEqual({
+      helpRequested: false,
+      skipLinks: false
+    });
+    expect(docsGate.parseDocsGateArgs(['--skip-links'])).toEqual({
+      helpRequested: false,
+      skipLinks: true
+    });
+    expect(() => docsGate.parseDocsGateArgs(['--weird'])).toThrow(/Unknown argument/);
+    expect(docsGate.getDocsGateUsage()).toContain('--skip-links');
+
+    expect(docsGate.createDocsGateSteps()).toEqual([
+      {
+        id: 'compile',
+        title: 'Compile TypeScript surfaces',
+        command: 'npm',
+        args: ['run', 'compile']
+      },
+      {
+        id: 'docs-tests',
+        title: 'Run documentation-package alignment tests',
+        command: 'npx',
+        args: [
+          'vitest',
+          'run',
+          'tests/unit/packageManifest.test.ts',
+          'tests/unit/shipControlDocs.test.ts',
+          'tests/unit/docsWorkbenchDocs.test.ts'
+        ]
+      },
+      {
+        id: 'links',
+        title: 'Check README and docs links',
+        command: 'lychee',
+        args: ['--verbose', '--no-progress', '--include-fragments', 'README.md', 'docs/**/*.md']
+      }
+    ]);
+
+    expect(docsGate.createDocsGateSteps({ skipLinks: true }).map((step) => step.id)).toEqual([
+      'compile',
+      'docs-tests'
+    ]);
+  });
+
+  it('keeps the Dockerfile, package scripts, docs, and GitLab publish lane aligned', () => {
+    const manifest = readManifest();
+    const dockerfile = readText('docker/docs-authoring/Dockerfile');
+    const entrypoint = readText('docker/docs-authoring/entrypoint.sh');
+    const workbenchDoc = readText('docs/documentation-workbench.md');
+    const gitlabCi = readText('.gitlab-ci.yml');
+
+    expect(manifest.scripts?.['docs:gate']).toBe('node scripts/run-docs-gate.js');
+    expect(manifest.scripts?.['docs:gate:core']).toBe(
+      'node scripts/run-docs-gate.js --skip-links'
+    );
+    expect(manifest.scripts?.['docs:workbench:build']).toContain(
+      'docker/docs-authoring/Dockerfile'
+    );
+    expect(manifest.scripts?.['docs:workbench:gate']).toContain(
+      'vi-history-suite-docs-authoring:local npm run docs:gate'
+    );
+    expect(manifest.scripts?.['docs:workbench:shell']).toContain(
+      'vi-history-suite-docs-authoring:local bash'
+    );
+
+    expect(dockerfile).toContain('FROM node:24-bookworm');
+    expect(dockerfile).toContain('lychee-x86_64-unknown-linux-gnu.tar.gz');
+    expect(dockerfile).toContain('CMD ["npm", "run", "docs:gate"]');
+    expect(entrypoint).toContain('if [[ ! -d node_modules ]]; then');
+    expect(entrypoint).toContain('npm ci');
+
+    expect(workbenchDoc).toContain('npm run docs:workbench:build');
+    expect(workbenchDoc).toContain('npm run docs:workbench:gate');
+    expect(workbenchDoc).toContain('npm run docs:workbench:shell');
+    expect(workbenchDoc).toContain('registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main');
+    expect(workbenchDoc).toContain('docs-workbench-evidence/docs-workbench-manifest.json');
+
+    expect(gitlabCi).toContain('docs_control_plane_check:');
+    expect(gitlabCi).toContain('npm run docs:gate:core');
+    expect(gitlabCi).toContain('publish_docs_authoring_image:');
+    expect(gitlabCi).toContain('/kaniko/executor');
+    expect(gitlabCi).toContain("path.join('docs-workbench-evidence', 'docs-workbench-manifest.json')");
+    expect(gitlabCi).toContain('${CI_REGISTRY_IMAGE}/docs-authoring:main');
+  });
+});

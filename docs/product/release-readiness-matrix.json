@@ -72,16 +72,19 @@
       "pillar": "review-scenario-and-decision-record-flow",
       "issueId": "ISSUE-0406",
       "criterion": "A reviewer can create a separate decision record from retained dashboard evidence through a governed product flow.",
-      "status": "active",
+      "status": "done",
       "evidence": [
         "src/scenarios/reviewScenarioRegistry.ts",
         "src/scenarios/decisionRecord.ts",
+        "src/scenarios/reviewDecisionRecordAction.ts",
         "src/harness/harnessDecisionRecord.ts",
+        "src/commands/openViHistoryCommand.ts",
+        "tests/integration/suite/extensionHost.test.ts",
         ".cache/harness-reports/HARNESS-VHS-001/workspace-storage/decision-records/"
       ],
-      "blockerId": "BL-002",
-      "blocker": "The canonical scenario flow exists, but extension-facing decision-record creation is not yet implemented.",
-      "nextAction": "Extend the retained scenario flow into the extension UX after the ship-control tranche stabilizes."
+      "blockerId": null,
+      "blocker": null,
+      "nextAction": "Sustain the extension-facing decision-record flow while additional scenario shapes remain future work."
     },
     {
       "id": "RR-006",
@@ -92,12 +95,14 @@
       "evidence": [
         "package.json",
         ".gitlab-ci.yml",
+        "docker/docs-authoring/Dockerfile",
+        "docs/documentation-workbench.md",
         "docs/release-procedure.md",
         "tests/unit/shipControlDocs.test.ts"
       ],
       "blockerId": "BL-003",
-      "blocker": "The GitLab pipeline now retains preview VSIX artifacts on main and is configured for tagged release packaging, but the first successful SemVer-tagged release run has not yet been retained as ship evidence.",
-      "nextAction": "Use the main-branch preview VSIX artifact for install testing, then run the first governed SemVer tag pipeline and retain the generated VSIX plus release manifest as release evidence."
+      "blocker": "The GitLab pipeline now retains preview VSIX artifacts on main, is configured for tagged release packaging, and is configured to publish the docs-authoring workbench image, but the first successful SemVer-tagged release run has not yet been retained as ship evidence.",
+      "nextAction": "Use the main-branch preview VSIX artifact for install testing, keep the docs-authoring workbench image current on main for documentation-package iteration, then run the first governed SemVer tag pipeline and retain the generated VSIX plus release manifest as release evidence."
     }
   ]
 }

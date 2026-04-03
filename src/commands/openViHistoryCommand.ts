@@ -9,6 +9,9 @@ import {
 import {
   MultiReportDashboardActionResult,
 } from '../dashboard/multiReportDashboardAction';
+import {
+  ReviewDecisionRecordActionResult,
+} from '../scenarios/reviewDecisionRecordAction';
 import { ViHistoryService } from '../services/viHistoryService';
 import {
   renderHistoryPanelHtml,
@@ -45,7 +48,12 @@ export function createOpenViHistoryCommand(
     model: Awaited<ReturnType<ViHistoryService['load']>>;
     selectedHash: string;
     baseHash: string;
-  }) => Promise<boolean>
+  }) => Promise<boolean>,
+  reviewDecisionRecordAction?: (request: {
+    model: Awaited<ReturnType<ViHistoryService['load']>>;
+    reportProgress?: (update: { message: string; increment?: number }) => void | Promise<void>;
+    cancellationToken?: vscode.CancellationToken;
+  }) => Promise<ReviewDecisionRecordActionResult>
 ): (uri?: vscode.Uri) => Promise<void> {
   return async (uri?: vscode.Uri) => {
     const targetUri = uri ?? vscode.window.activeTextEditor?.document.uri;
@@ -337,6 +345,85 @@ export function createOpenViHistoryCommand(
           dashboardPairCount: result.dashboardPairCount,
           dashboardArchivedPairCount: result.dashboardArchivedPairCount,
           dashboardMissingPairCount: result.dashboardMissingPairCount,
+          cancellationStage: result.cancellationStage,
+          title: result.title
+        });
+        return;
+      }
+
+      if (command === 'createDecisionRecord') {
+        if (!reviewDecisionRecordAction) {
+          panelTracker?.recordAction({
+            command,
+            outcome: 'unsupported-command'
+          });
+          return;
+        }
+
+        const result = await runProgressWrappedAction(
+          'Creating Review Decision Record',
+          (reportProgress, cancellationToken) =>
+            reviewDecisionRecordAction({
+              model,
+              reportProgress,
+              cancellationToken
+            })
+        );
+        if (result.outcome === 'cancelled') {
+          void vscode.window.showInformationMessage(
+            'VI review decision record creation was cancelled. Retained dashboard artifacts, if any, were preserved.'
+          );
+        } else if (result.outcome === 'workspace-untrusted') {
+          void vscode.window.showWarningMessage(
+            'VI review decision records are disabled in untrusted workspaces.'
+          );
+        } else if (result.outcome === 'missing-storage-uri') {
+          void vscode.window.showWarningMessage(
+            'VI review decision records require an open workspace so decision artifacts can be stored under workspace-scoped extension storage.'
+          );
+        } else if (result.outcome === 'insufficient-commits') {
+          void vscode.window.showInformationMessage(
+            'VI review decision records require at least three retained commits for the selected VI.'
+          );
+        } else if (result.outcome === 'missing-repository-url') {
+          void vscode.window.showInformationMessage(
+            'VI review decision records require a Git origin remote URL so the active review scenario can be matched truthfully.'
+          );
+        } else if (result.outcome === 'missing-review-scenario') {
+          void vscode.window.showInformationMessage(
+            'No active VI review scenario matches this repository and VI yet.'
+          );
+        } else if (result.outcome === 'scenario-contract-mismatch') {
+          void vscode.window.showInformationMessage(
+            result.mismatchSummary ??
+              'The retained dashboard evidence did not satisfy the selected review scenario contract.'
+          );
+        }
+
+        panelTracker?.recordAction({
+          command,
+          outcome:
+            result.outcome === 'created-decision-record'
+              ? 'created-decision-record'
+              : result.outcome === 'cancelled'
+                ? 'cancelled'
+              : result.outcome === 'workspace-untrusted'
+                ? 'workspace-untrusted'
+              : result.outcome === 'missing-storage-uri'
+                ? 'missing-decision-storage'
+              : result.outcome === 'insufficient-commits'
+                ? 'insufficient-decision-commits'
+              : result.outcome === 'missing-repository-url'
+                ? 'missing-repository-url'
+              : result.outcome === 'missing-review-scenario'
+                ? 'missing-review-scenario'
+                : 'scenario-contract-mismatch',
+          dashboardFilePath: result.dashboardFilePath,
+          dashboardJsonFilePath: result.dashboardJsonFilePath,
+          decisionRecordJsonPath: result.decisionRecordJsonPath,
+          decisionRecordMarkdownPath: result.decisionRecordMarkdownPath,
+          scenarioId: result.scenarioId,
+          mismatchSummary: result.mismatchSummary,
           cancellationStage: result.cancellationStage,
           title: result.title
         });

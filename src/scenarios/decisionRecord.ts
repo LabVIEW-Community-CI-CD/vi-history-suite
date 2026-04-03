@@ -18,7 +18,7 @@ export interface ReviewDecisionRecordArtifactPlan {
 
 export interface PersistReviewDecisionRecordInput {
   scenario: ReviewScenarioDefinition;
-  harnessId: string;
+  harnessId?: string;
   repositoryUrl: string;
   targetRelativePath: string;
   dashboardRecord: MultiReportDashboardRecord;
@@ -39,7 +39,7 @@ export interface PersistReviewDecisionRecordInput {
 export interface ReviewDecisionRecord {
   scenarioId: string;
   scenarioTitle: string;
-  harnessId: string;
+  harnessId?: string;
   repositoryUrl: string;
   repositoryName: string;
   viPath: string;
@@ -195,7 +195,7 @@ export function renderReviewDecisionRecordMarkdown(record: ReviewDecisionRecord)
 
 - Scenario ID: ${record.scenarioId}
 - Scenario Title: ${record.scenarioTitle}
-- Harness ID: ${record.harnessId}
+- Harness ID: ${record.harnessId ?? 'none'}
 - Repository URL: ${record.repositoryUrl}
 - VI path: ${record.viPath}
 - Commit-window start: ${record.commitWindowStart ?? 'unknown'}
@@ -238,6 +238,36 @@ ${missingOrBlockedLines}
 
 ${issueLines}
 `;
+}
+
+export function collectDecisionRecordPairwiseReportPaths(
+  dashboardRecord: MultiReportDashboardRecord
+): string[] {
+  return dashboardRecord.entries
+    .map((entry) => entry.reportFilePath)
+    .filter(
+      (targetPath, index, values): targetPath is string =>
+        typeof targetPath === 'string' &&
+        targetPath.length > 0 &&
+        values.indexOf(targetPath) === index
+    );
+}
+
+export function buildDecisionRecordMissingOrBlockedFacts(
+  dashboardRecord: MultiReportDashboardRecord
+): string[] {
+  const facts: string[] = [];
+  for (const pairId of dashboardRecord.summary.missingPairIds) {
+    facts.push(`Missing archived pair evidence: ${pairId}`);
+  }
+  for (const pairId of dashboardRecord.summary.blockedPairIds) {
+    facts.push(`Blocked pair evidence: ${pairId}`);
+  }
+  for (const pairId of dashboardRecord.summary.failedPairIds) {
+    facts.push(`Failed pair evidence: ${pairId}`);
+  }
+
+  return facts;
 }
 
 function defaultNow(): string {

@@ -14,9 +14,9 @@ export interface ReviewScenarioDefinition {
 }
 
 export interface ReviewScenarioEvidence {
-  harnessId: string;
-  repositoryUrl: string;
-  targetRelativePath: string;
+  harnessId?: string;
+  repositoryUrl?: string;
+  targetRelativePath?: string;
   commitCount: number;
   comparisonPairCount: number;
 }
@@ -74,25 +74,44 @@ export function getDefaultReviewScenarioForHarness(
   return scenario ? { ...scenario } : undefined;
 }
 
+export function getDefaultReviewScenarioForRepository(
+  repositoryUrl: string,
+  targetRelativePath: string
+): ReviewScenarioDefinition | undefined {
+  const scenario = REVIEW_SCENARIOS.find(
+    (candidate) =>
+      candidate.maturity === 'active' &&
+      candidate.repositoryUrl === repositoryUrl &&
+      candidate.targetRelativePath === targetRelativePath
+  );
+  return scenario ? { ...scenario } : undefined;
+}
+
 export function validateReviewScenarioEvidence(
   scenario: ReviewScenarioDefinition,
   evidence: ReviewScenarioEvidence
 ): string[] {
   const mismatches: string[] = [];
 
-  if (scenario.harnessId !== evidence.harnessId) {
+  if (evidence.harnessId !== undefined && scenario.harnessId !== evidence.harnessId) {
     mismatches.push(
       `Scenario ${scenario.id} requires harness ${scenario.harnessId}, got ${evidence.harnessId}.`
     );
   }
 
-  if (scenario.repositoryUrl !== evidence.repositoryUrl) {
+  if (
+    evidence.repositoryUrl !== undefined &&
+    scenario.repositoryUrl !== evidence.repositoryUrl
+  ) {
     mismatches.push(
       `Scenario ${scenario.id} requires repository ${scenario.repositoryUrl}, got ${evidence.repositoryUrl}.`
     );
   }
 
-  if (scenario.targetRelativePath !== evidence.targetRelativePath) {
+  if (
+    evidence.targetRelativePath !== undefined &&
+    scenario.targetRelativePath !== evidence.targetRelativePath
+  ) {
     mismatches.push(
       `Scenario ${scenario.id} requires target ${scenario.targetRelativePath}, got ${evidence.targetRelativePath}.`
     );

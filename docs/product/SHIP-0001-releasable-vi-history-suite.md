@@ -49,6 +49,8 @@ user can install at a specific semantic version and use to:
 - the dashboard remains the default multi-commit review surface
 - a separate human decision record can be created from retained dashboard
   evidence
+- the repo publishes and documents a docs-authoring workbench for governed
+  requirements/documentation-package iteration and future wiki preparation
 - repo-native control-plane docs agree on what is blocked, what is done, and
   what the single active tranche is
 
@@ -67,7 +69,7 @@ No work is in scope unless it moves one release-readiness criterion toward
 
 - `TRANCHE-009`
 - issue: [ISSUE-0406 Ship Control And SemVer Releaseability](./issues/ISSUE-0406-ship-control-and-semver-releaseability.md)
-- targeted blocker ids: `BL-001`, `BL-002`, `BL-003`
+- targeted blocker ids: `BL-001`, `BL-003`
 
 ## Control Plane
 
@@ -78,6 +80,7 @@ These files are now the authoritative direction surfaces for ship work:
 3. [development-queue.json](./development-queue.json)
 4. [current-state.md](./current-state.md)
 5. [release-procedure.md](../release-procedure.md)
+6. [documentation-workbench.md](../documentation-workbench.md)
 
 ## Queue Rule
 

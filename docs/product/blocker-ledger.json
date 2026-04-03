@@ -19,26 +19,12 @@
       "resolutionPath": "Complete ISSUE-0403 and promote the remaining UX gaps to done or sustain."
     },
     {
-      "id": "BL-002",
-      "trancheId": "TRANCHE-009",
-      "issueId": "ISSUE-0406",
-      "criterionId": "RR-005",
-      "status": "open",
-      "summary": "Decision-record generation is governed at the harness layer but not yet available through the installed extension UX.",
-      "evidence": [
-        "src/harness/harnessDecisionRecord.ts",
-        "docs/product/issues/ISSUE-0404-review-scenario-registry-and-human-decision-records.md"
-      ],
-      "impact": "The release would still require a repo-local command instead of a first-class extension flow for human decision retention.",
-      "resolutionPath": "Add extension-facing decision-record creation that reuses the governed scenario and decision-record artifacts."
-    },
-    {
       "id": "BL-003",
       "trancheId": "TRANCHE-009",
       "issueId": "ISSUE-0406",
       "criterionId": "RR-006",
       "status": "open",
-      "summary": "The pipeline now provides preview VSIX artifacts and a configured release lane, but the first successful SemVer-tagged VSIX artifact and release-manifest evidence set has not yet been retained.",
+      "summary": "The pipeline now provides preview VSIX artifacts, a docs-authoring workbench publish lane, and a configured release lane, but the first successful SemVer-tagged VSIX artifact and release-manifest evidence set has not yet been retained.",
       "evidence": [
         ".gitlab-ci.yml",
         "docs/release-procedure.md",
@@ -46,7 +32,7 @@
         "tests/unit/shipControlDocs.test.ts"
       ],
       "impact": "Users can install preview artifacts from main, but the governed exact-version release artifact is still not retained as formal ship evidence.",
-      "resolutionPath": "Use the preview VSIX artifact for extension-user install testing, then run the first governed `v0.2.0` tag pipeline, retain the VSIX plus release manifest under release-evidence, and then close the release blocker."
+      "resolutionPath": "Use the preview VSIX artifact for extension-user install testing, sustain the docs-authoring workbench image on main for documentation-package iteration, then run the first governed `v0.2.0` tag pipeline, retain the VSIX plus release manifest under release-evidence, and then close the release blocker."
     }
   ]
 }

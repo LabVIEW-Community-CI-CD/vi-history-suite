@@ -52,9 +52,9 @@
   {
     "id": "TRANCHE-007",
     "title": "Introduce a review-scenario registry and human decision records",
-    "status": "queued",
+    "status": "done",
     "source": "author direction",
-    "summary": "Model the dashboard as a decision-support system with explicit review scenarios, commit-window contracts, and separate human decision records.",
+    "summary": "Model the dashboard as a decision-support system with explicit review scenarios, commit-window contracts, separate human decision records, and an extension-facing decision-record creation flow.",
     "issues": [
       "ISSUE-0404"
     ]
@@ -75,7 +75,7 @@
     "title": "Ship vi-history-suite as a releasable SemVer VSIX",
     "status": "active",
     "source": "author direction",
-    "summary": "Make ship direction explicit with one authoritative release target, one release-readiness matrix, one blocker ledger, one active tranche, and the remaining work required to produce a governed SemVer VSIX release artifact.",
+    "summary": "Make ship direction explicit with one authoritative release target, one release-readiness matrix, one blocker ledger, one active tranche, explicit dual-host extension proof control, a published documentation-package workbench image, and the remaining work required to produce a governed SemVer VSIX release artifact.",
     "issues": [
       "ISSUE-0406"
     ]

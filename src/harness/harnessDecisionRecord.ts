@@ -9,6 +9,8 @@ import {
 } from './harnessDashboardSmoke';
 import { MultiReportDashboardRecord } from '../dashboard/multiReportDashboard';
 import {
+  buildDecisionRecordMissingOrBlockedFacts,
+  collectDecisionRecordPairwiseReportPaths,
   PersistReviewDecisionRecordDeps,
   persistReviewDecisionRecord,
   ReviewDecisionConfidence,
@@ -97,10 +99,19 @@ export async function runHarnessDecisionRecord(
     deps.readFile ?? fs.readFile
   );
   const storageRoot = path.join(options.reportRoot, definition.id, 'workspace-storage');
-  const pairwiseReportPaths = dashboardSmokeResult.report.pairSummaries
-    .map((pair) => pair.reportFilePath)
-    .filter((targetPath, index, values) => Boolean(targetPath) && values.indexOf(targetPath) === index);
-  const missingOrBlockedFacts = buildMissingOrBlockedFacts(dashboardRecord);
+  const pairwiseReportPaths = collectDecisionRecordPairwiseReportPaths(dashboardRecord);
+  const retainedPairwiseReportPaths =
+    pairwiseReportPaths.length > 0
+      ? pairwiseReportPaths
+      : dashboardSmokeResult.report.pairSummaries
+          .map((pair) => pair.reportFilePath)
+          .filter(
+            (targetPath, index, values): targetPath is string =>
+              typeof targetPath === 'string' &&
+              targetPath.length > 0 &&
+              values.indexOf(targetPath) === index
+          );
+  const missingOrBlockedFacts = buildDecisionRecordMissingOrBlockedFacts(dashboardRecord);
   const persisted = await (deps.persistDecisionRecord ?? persistReviewDecisionRecord)(
     storageRoot,
     {
@@ -116,7 +127,7 @@ export async function runHarnessDecisionRecord(
       outcome: options.outcome,
       confidence: options.confidence,
       decisionRationale: options.decisionRationale,
-      pairwiseReportPaths,
+      pairwiseReportPaths: retainedPairwiseReportPaths,
       missingOrBlockedFacts,
       additionalReportGenerationRequired: options.additionalReportGenerationRequired,
       additionalManualLabVIEWInspectionRequired:
@@ -152,19 +163,4 @@ async function readDashboardRecord(
   readFile: typeof fs.readFile
 ): Promise<MultiReportDashboardRecord> {
   return JSON.parse(await readFile(dashboardJsonPath, 'utf8')) as MultiReportDashboardRecord;
-}
-
-function buildMissingOrBlockedFacts(record: MultiReportDashboardRecord): string[] {
-  const facts: string[] = [];
-  for (const pairId of record.summary.missingPairIds) {
-    facts.push(`Missing archived pair evidence: ${pairId}`);
-  }
-  for (const pairId of record.summary.blockedPairIds) {
-    facts.push(`Blocked pair evidence: ${pairId}`);
-  }
-  for (const pairId of record.summary.failedPairIds) {
-    facts.push(`Failed pair evidence: ${pairId}`);
-  }
-
-  return facts;
 }

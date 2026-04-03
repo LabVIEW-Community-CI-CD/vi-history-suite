@@ -51,9 +51,12 @@ and separate retained human decisions.
   `decision-records/...` storage
 - canonical harness decision-record command that reuses dashboard smoke
   evidence and explicit human reviewer inputs
+- extension-facing `Create decision record` history-panel action for retained
+  three-plus-commit windows
+- repository-remote plus VI-path scenario matching for the extension flow
+- real extension-host proof that decision-record creation writes separate JSON
+  and Markdown artifacts and opens the retained Markdown artifact
 
 ## Remaining Focus
 
-- extension-facing decision-record creation UX on top of the retained
-  scenario/decision-record artifact flow
 - additional scenario activation beyond the canonical baseline
