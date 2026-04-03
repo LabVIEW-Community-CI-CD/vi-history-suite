@@ -1161,6 +1161,81 @@ describe('createOpenViHistoryCommand', () => {
     });
   });
 
+  it('routes diffPrevious through comparison-report generation when retained reopen support is unavailable', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    const comparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'opened-comparison-report',
+      reportStatus: 'ready-for-runtime',
+      runtimeExecutionState: 'succeeded',
+      packetFilePath: '/workspace/.storage/reports/repo/file/report-packet.html',
+      reportFilePath: '/workspace/.storage/reports/repo/file/diff-report-eligible.vi.html',
+      metadataFilePath: '/workspace/.storage/reports/repo/file/report-metadata.json',
+      reportWebviewUri: 'webview:/report',
+      generatedReportExists: false,
+      title: 'VI Comparison Report: eligible.vi'
+    });
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Update VI',
+            previousHash: '1111111122222222'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      comparisonReportAction as never
+    );
+
+    await command(targetUri as never);
+    await tracker.dispatchLastPanelMessage({
+      command: 'diffPrevious',
+      hash: 'abcdef1234567890'
+    });
+
+    expect(comparisonReportAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        selectedHash: 'abcdef1234567890',
+        reportProgress: expect.any(Function)
+      })
+    );
+    expect(showInformationMessageMock).not.toHaveBeenCalled();
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'diffPrevious',
+      hash: 'abcdef1234567890',
+      outcome: 'opened-comparison-report',
+      reportStatus: 'ready-for-runtime',
+      runtimeExecutionState: 'succeeded',
+      blockedReason: undefined,
+      runtimeFailureReason: undefined,
+      cancellationStage: undefined,
+      packetFilePath: '/workspace/.storage/reports/repo/file/report-packet.html',
+      reportFilePath: '/workspace/.storage/reports/repo/file/diff-report-eligible.vi.html',
+      metadataFilePath: '/workspace/.storage/reports/repo/file/report-metadata.json',
+      reportWebviewUri: 'webview:/report',
+      generatedReportExists: false,
+      title: 'VI Comparison Report: eligible.vi'
+    });
+  });
+
   it('opens a multi-report dashboard when the retained window has at least three commits', async () => {
     const targetUri = createMockUri('/workspace/eligible.vi');
     const tracker = new HistoryPanelTracker();
@@ -1400,6 +1475,306 @@ describe('createOpenViHistoryCommand', () => {
       decisionRecordMarkdownPath: undefined,
       scenarioId: undefined,
       mismatchSummary: undefined,
+      cancellationStage: undefined,
+      title: undefined
+    });
+  });
+
+  it('surfaces missing decision-storage failures from decision-record creation', async () => {
+    const targetUri = createMockUri('/workspace/Tooling/deployment/VIP_Pre-Install Custom Action.vi');
+    const tracker = new HistoryPanelTracker();
+    const reviewDecisionRecordAction = vi.fn().mockResolvedValue({
+      outcome: 'missing-storage-uri'
+    });
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Update VI',
+            previousHash: '1111111122222222'
+          },
+          {
+            hash: '1111111122222222',
+            authorDate: '2026-04-01T00:00:00Z',
+            authorName: 'B User',
+            subject: 'Middle revision',
+            previousHash: '3333333344444444'
+          },
+          {
+            hash: '3333333344444444',
+            authorDate: '2026-03-31T00:00:00Z',
+            authorName: 'C User',
+            subject: 'Initial revision'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      reviewDecisionRecordAction as never
+    );
+
+    await command(targetUri as never);
+    await tracker.dispatchLastPanelMessage({
+      command: 'createDecisionRecord'
+    });
+
+    expect(showWarningMessageMock).toHaveBeenCalledWith(
+      'VI review decision records require an open workspace so decision artifacts can be stored under workspace-scoped extension storage.'
+    );
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'createDecisionRecord',
+      outcome: 'missing-decision-storage',
+      dashboardFilePath: undefined,
+      dashboardJsonFilePath: undefined,
+      decisionRecordJsonPath: undefined,
+      decisionRecordMarkdownPath: undefined,
+      scenarioId: undefined,
+      mismatchSummary: undefined,
+      cancellationStage: undefined,
+      title: undefined
+    });
+  });
+
+  it('surfaces insufficient retained-commit failures from decision-record creation', async () => {
+    const targetUri = createMockUri('/workspace/Tooling/deployment/VIP_Pre-Install Custom Action.vi');
+    const tracker = new HistoryPanelTracker();
+    const reviewDecisionRecordAction = vi.fn().mockResolvedValue({
+      outcome: 'insufficient-commits'
+    });
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Update VI',
+            previousHash: '1111111122222222'
+          },
+          {
+            hash: '1111111122222222',
+            authorDate: '2026-04-01T00:00:00Z',
+            authorName: 'B User',
+            subject: 'Initial revision'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      reviewDecisionRecordAction as never
+    );
+
+    await command(targetUri as never);
+    await tracker.dispatchLastPanelMessage({
+      command: 'createDecisionRecord'
+    });
+
+    expect(showInformationMessageMock).toHaveBeenCalledWith(
+      'VI review decision records require at least three retained commits for the selected VI.'
+    );
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'createDecisionRecord',
+      outcome: 'insufficient-decision-commits',
+      dashboardFilePath: undefined,
+      dashboardJsonFilePath: undefined,
+      decisionRecordJsonPath: undefined,
+      decisionRecordMarkdownPath: undefined,
+      scenarioId: undefined,
+      mismatchSummary: undefined,
+      cancellationStage: undefined,
+      title: undefined
+    });
+  });
+
+  it('surfaces missing repository-url failures from decision-record creation', async () => {
+    const targetUri = createMockUri('/workspace/Tooling/deployment/VIP_Pre-Install Custom Action.vi');
+    const tracker = new HistoryPanelTracker();
+    const reviewDecisionRecordAction = vi.fn().mockResolvedValue({
+      outcome: 'missing-repository-url',
+      dashboardFilePath: '/workspace/.storage/dashboards/dashboard.html',
+      dashboardJsonFilePath: '/workspace/.storage/dashboards/dashboard.json'
+    });
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Update VI',
+            previousHash: '1111111122222222'
+          },
+          {
+            hash: '1111111122222222',
+            authorDate: '2026-04-01T00:00:00Z',
+            authorName: 'B User',
+            subject: 'Middle revision',
+            previousHash: '3333333344444444'
+          },
+          {
+            hash: '3333333344444444',
+            authorDate: '2026-03-31T00:00:00Z',
+            authorName: 'C User',
+            subject: 'Initial revision'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      reviewDecisionRecordAction as never
+    );
+
+    await command(targetUri as never);
+    await tracker.dispatchLastPanelMessage({
+      command: 'createDecisionRecord'
+    });
+
+    expect(showInformationMessageMock).toHaveBeenCalledWith(
+      'VI review decision records require a Git origin remote URL so the active review scenario can be matched truthfully.'
+    );
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'createDecisionRecord',
+      outcome: 'missing-repository-url',
+      dashboardFilePath: '/workspace/.storage/dashboards/dashboard.html',
+      dashboardJsonFilePath: '/workspace/.storage/dashboards/dashboard.json',
+      decisionRecordJsonPath: undefined,
+      decisionRecordMarkdownPath: undefined,
+      scenarioId: undefined,
+      mismatchSummary: undefined,
+      cancellationStage: undefined,
+      title: undefined
+    });
+  });
+
+  it('surfaces scenario contract mismatches from decision-record creation', async () => {
+    const targetUri = createMockUri('/workspace/Tooling/deployment/VIP_Pre-Install Custom Action.vi');
+    const tracker = new HistoryPanelTracker();
+    const reviewDecisionRecordAction = vi.fn().mockResolvedValue({
+      outcome: 'scenario-contract-mismatch',
+      mismatchSummary:
+        'The retained dashboard evidence did not satisfy the selected review scenario contract.',
+      dashboardFilePath: '/workspace/.storage/dashboards/dashboard.html',
+      dashboardJsonFilePath: '/workspace/.storage/dashboards/dashboard.json'
+    });
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Update VI',
+            previousHash: '1111111122222222'
+          },
+          {
+            hash: '1111111122222222',
+            authorDate: '2026-04-01T00:00:00Z',
+            authorName: 'B User',
+            subject: 'Middle revision',
+            previousHash: '3333333344444444'
+          },
+          {
+            hash: '3333333344444444',
+            authorDate: '2026-03-31T00:00:00Z',
+            authorName: 'C User',
+            subject: 'Initial revision'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      reviewDecisionRecordAction as never
+    );
+
+    await command(targetUri as never);
+    await tracker.dispatchLastPanelMessage({
+      command: 'createDecisionRecord'
+    });
+
+    expect(showInformationMessageMock).toHaveBeenCalledWith(
+      'The retained dashboard evidence did not satisfy the selected review scenario contract.'
+    );
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'createDecisionRecord',
+      outcome: 'scenario-contract-mismatch',
+      dashboardFilePath: '/workspace/.storage/dashboards/dashboard.html',
+      dashboardJsonFilePath: '/workspace/.storage/dashboards/dashboard.json',
+      decisionRecordJsonPath: undefined,
+      decisionRecordMarkdownPath: undefined,
+      scenarioId: undefined,
+      mismatchSummary:
+        'The retained dashboard evidence did not satisfy the selected review scenario contract.',
       cancellationStage: undefined,
       title: undefined
     });

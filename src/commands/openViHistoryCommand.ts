@@ -593,7 +593,6 @@ export function createOpenViHistoryCommand(
           );
           return;
         }
-        return;
       }
 
       if (
