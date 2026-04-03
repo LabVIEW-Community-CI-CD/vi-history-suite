@@ -19,6 +19,7 @@ interface ReadinessCriterion {
 
 interface ReadinessMatrix {
   shipId: string;
+  lifecycleState?: string;
   activeIssueId: string;
   currentPackageVersion: string;
   releaseTarget: string;
@@ -39,6 +40,7 @@ interface BlockerLedgerEntry {
 
 interface BlockerLedger {
   shipId: string;
+  lifecycleState?: string;
   releaseTarget: string;
   activeTrancheId: string;
   activeIssueId: string;
@@ -71,13 +73,12 @@ describe('ship-control direction system', () => {
     expect(shipDoc).toContain('- `TRANCHE-009`');
   });
 
-  it('keeps exactly one active tranche in the development queue and aligns it to the readiness matrix', () => {
+  it('keeps exactly one active tranche in the development queue and advances it after ship closure without rewriting the landed ship record', () => {
     const queue = readJson<QueueEntry[]>('docs/product/development-queue.json');
-    const matrix = readJson<ReadinessMatrix>('docs/product/release-readiness-matrix.json');
     const activeTranches = queue.filter((entry) => entry.status === 'active');
 
     expect(activeTranches).toHaveLength(1);
-    expect(activeTranches[0]?.id).toBe(matrix.activeTrancheId);
+    expect(activeTranches[0]?.id).toBe('TRANCHE-010');
   });
 
   it('retains a machine-readable readiness matrix with unique criteria and consistent blocker wiring', () => {
@@ -86,7 +87,9 @@ describe('ship-control direction system', () => {
     const ids = matrix.criteria.map((criterion) => criterion.id);
 
     expect(matrix.shipId).toBe('SHIP-0001');
+    expect(matrix.lifecycleState).toBe('closed');
     expect(matrix.activeIssueId).toBe('ISSUE-0406');
+    expect(matrix.activeTrancheId).toBe('TRANCHE-009');
     expect(matrix.currentPackageVersion).toBe('0.2.0');
     expect(matrix.currentPackageVersion).toBe(pkg.version);
     expect(matrix.releaseTarget).toBe('v0.2.0');
@@ -115,6 +118,7 @@ describe('ship-control direction system', () => {
     const blockerIds = new Set(ledger.blockers.map((blocker) => blocker.id));
 
     expect(ledger.shipId).toBe('SHIP-0001');
+    expect(ledger.lifecycleState).toBe('closed');
     expect(ledger.releaseTarget).toBe('v0.2.0');
     expect(ledger.activeTrancheId).toBe(matrix.activeTrancheId);
     expect(ledger.activeIssueId).toBe(matrix.activeIssueId);
@@ -149,6 +153,9 @@ describe('ship-control direction system', () => {
     const currentState = readText('docs/product/current-state.md');
     const informationItemMap = readText('docs/information-item-map.md');
     const programDoc = readText('docs/product/execution-programs/PROGRAM-0001-next-product-layer.md');
+    const programDoc2 = readText(
+      'docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md',
+    );
     const releaseProcedure = readText('docs/release-procedure.md');
     const workbenchDoc = readText('docs/documentation-workbench.md');
     const coherenceLedger = readText('docs/product/documentation-coherence-ledger.md');
@@ -173,11 +180,14 @@ describe('ship-control direction system', () => {
     expect(readme).toContain('[Wiki Publication Ledger JSON](./docs/product/wiki-publication-ledger.json)');
     expect(readme).toContain('[Documentation Package Workbench](./docs/documentation-workbench.md)');
     expect(readme).toContain('[Program Repo Jump](./docs/product/program-repo-jump.md)');
+    expect(readme).toContain('[PROGRAM-0002: Public Facade Installer And Windows Acceptance](./docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)');
     expect(readme).toContain('[Release Procedure](./docs/release-procedure.md)');
     expect(readme).toContain('npm run design:gate:assert-complete');
     expect(readme).toContain('- `SHIP-0001`: releasable `v0.2.0` VSIX product');
+    expect(readme).toContain('- landed ship tranche: `TRANCHE-009`');
     expect(readme).toContain('- current package baseline: `0.2.0`');
     expect(readme).toContain('- target release artifact: `vi-history-suite-0.2.0.vsix`');
+    expect(readme).toContain('- `TRANCHE-010`: public facade installer and Windows acceptance');
 
     expect(currentState).toContain('[SHIP-0001: Releasable VI History Suite](./SHIP-0001-releasable-vi-history-suite.md)');
     expect(currentState).toContain('[release-readiness-matrix.json](./release-readiness-matrix.json)');
@@ -189,9 +199,12 @@ describe('ship-control direction system', () => {
     expect(currentState).toContain('[program-repo-jump.md](./program-repo-jump.md)');
     expect(currentState).toContain('[Documentation Package Workbench](../documentation-workbench.md)');
     expect(currentState).toContain('npm run design:gate:assert-complete');
-    expect(currentState).toContain('- `TRANCHE-009`: Ship `vi-history-suite` as a releasable SemVer VSIX');
+    expect(currentState).toContain('- `SHIP-0001`: releasable `v0.2.0` VSIX product');
+    expect(currentState).toContain('- landed ship tranche: `TRANCHE-009`');
     expect(currentState).toContain('- current package baseline: `0.2.0`');
     expect(currentState).toContain('- target release artifact: `vi-history-suite-0.2.0.vsix`');
+    expect(currentState).toContain('- `TRANCHE-010`: Public facade installer and Windows acceptance');
+    expect(currentState).toContain('[PROGRAM-0002: Public Facade Installer And Windows Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)');
 
     expect(informationItemMap).toContain('| Ship target | `docs/product/SHIP-0001-releasable-vi-history-suite.md` |');
     expect(informationItemMap).toContain('| Release readiness matrix | `docs/product/release-readiness-matrix.json` |');
@@ -208,6 +221,8 @@ describe('ship-control direction system', () => {
 
     expect(programDoc).toContain('[SHIP-0001: Releasable VI History Suite](../SHIP-0001-releasable-vi-history-suite.md)');
     expect(programDoc).toContain('ship-control surfaces');
+    expect(programDoc2).toContain('Active post-release program.');
+    expect(programDoc2).toContain('retained immutable `v0.2.0` release');
 
     expect(releaseProcedure).toContain('[SHIP-0001](./product/SHIP-0001-releasable-vi-history-suite.md)');
     expect(releaseProcedure).toContain('[release readiness matrix](./product/release-readiness-matrix.json)');

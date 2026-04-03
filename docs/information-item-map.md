@@ -12,16 +12,16 @@
 | Item Type | Current Path | Owner | Trigger | Proving Evidence |
 | --- | --- | --- | --- | --- |
 | Repository entrypoint | `README.md` | sole author | repo orientation or active program meaning changes | README points to authoritative research, current state, and active queue |
-| Current state | `docs/product/current-state.md` | sole author | active tranche, committed capability state, or reading order changes | current state matches development queue and research alignment |
+| Current state | `docs/product/current-state.md` | sole author | active tranche, landed ship state, committed capability state, or reading order changes | current state matches development queue, closed ship control, and research alignment |
 | Product charter | `docs/product/charter.md` | sole author | mission or scope change | charter matches live repo direction |
 | Problem statement | `docs/product/problem-statement.md` | sole author | problem framing changes | statement aligns with current epic |
 | Research summary | `docs/research/extension-design-summary.md` | sole author | upstream research changes | design summary remains anchored to source research |
 | Research implementation index | `docs/research/authoritative/research-implementation-index.json` | sole author | authoritative research, implementation status, or repo reading order changes | index matches current state and research alignment |
 | Research alignment matrix | `docs/research/authoritative/research-alignment.md` | sole author | authoritative research or implementation status changes | alignment matrix matches live code and queue |
 | Research infrastructure | `docs/research/authoritative/research-infrastructure.md` | sole author | research intake flow or forward-looking program modeling changes | the infrastructure doc matches the authority stack, queue, epics, and ADRs |
-| Ship target | `docs/product/SHIP-0001-releasable-vi-history-suite.md` | sole author | release target, stop rule, or definition of done changes | ship target matches the active release objective and queue |
-| Release readiness matrix | `docs/product/release-readiness-matrix.json` | sole author | ship criterion state, evidence, blocker, or next action changes | readiness matrix matches the active tranche and blocker ledger |
-| Blocker ledger | `docs/product/blocker-ledger.json` | sole author | ship blocker state or resolution path changes | blocker ledger matches the release readiness matrix |
+| Ship target | `docs/product/SHIP-0001-releasable-vi-history-suite.md` | sole author | release target, stop rule, landed-ship state, or definition of done changes | ship target matches the landed release objective and closed ship record |
+| Release readiness matrix | `docs/product/release-readiness-matrix.json` | sole author | ship criterion state, evidence, blocker, or next action changes | readiness matrix matches the closed ship record and blocker ledger |
+| Blocker ledger | `docs/product/blocker-ledger.json` | sole author | ship blocker state or resolution path changes | blocker ledger matches the release readiness matrix and closed ship record |
 | Wiki authority map | `docs/product/wiki-authority-map.md` | sole author | the governed documentation stack or wiki-generation preconditions change | future wiki work can be derived from docs without falling back to source or chat memory |
 | Documentation coherence ledger | `docs/product/documentation-coherence-ledger.md` | sole author | documentation-package contradictions are resolved or a fresh coherence pass is completed | the latest docs gate and standards-review pass are reflected with resolved contradictions and residual risks |
 | Wiki seed plan | `docs/product/wiki-seed-plan.md` | sole author | wiki page order, source authority, or drafting rules change | future wiki pages can be drafted incrementally from governed docs without falling back to source |

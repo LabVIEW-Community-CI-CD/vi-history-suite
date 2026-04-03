@@ -6,13 +6,23 @@ Turn the public `vi-history-suite` GitHub facade repo into the governed public
 distribution and support surface for the released product, with a Windows
 installer build lane and a Windows 11 VM acceptance lane.
 
+## Status
+
+Active post-release issue.
+
+Activation evidence:
+
+- immutable retained release: `v0.2.0`
+- retained pipeline: `2428809456`
+- retained release job: `13779604462`
+
 ## Scope
 
 - public facade repo release/distribution scaffolding
 - immutable VSIX ingestion contract from private GitLab releases
 - Windows Docker builder image for installer production
 - NSIS-based Windows installer project
-- pinned fixture manifest for `labview-icon-editor`
+- pinned fixture manifest for `ni/labview-icon-editor`
 - Windows 11 VM acceptance harness using PowerShell plus Visual Studio Code CLI
 - retained manual right-click acceptance worksheet for the human UX gate
 
@@ -52,13 +62,10 @@ installer build lane and a Windows 11 VM acceptance lane.
 - control-plane docs updated in the private source-of-truth repo
 - design-gate pass after private-doc updates
 
-## First Slice
+## First Active Slice
 
-- queue the approved post-release program in the private repo control plane
-- scaffold the public facade repo with:
-  - `installer/nsis/`
-  - `docker/windows-installer-builder/`
-  - `acceptance/windows11/`
-  - a pinned fixture manifest
-- keep the current private release tranche active until the immutable VSIX
-  release exists
+- activate `TRANCHE-010` and `PROGRAM-0002` in the private repo control plane
+- ingest the exact immutable `v0.2.0` release contract into the public facade repo
+- pin the canonical `ni/labview-icon-editor` fixture and selected VI path
+- align public install, support, acceptance, and license surfaces to current truth
+- stop short of claiming installer-build or Windows VM proof closure until those gates run

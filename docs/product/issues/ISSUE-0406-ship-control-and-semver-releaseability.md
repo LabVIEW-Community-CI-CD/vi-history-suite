@@ -13,6 +13,10 @@ Closed for the first immutable release target:
 - retained pipeline: `2428809456`
 - retained release job: `13779604462`
 
+The ship-control surfaces retained by this issue are now closed historical
+evidence for `SHIP-0001`. Current repo-active work moved to
+`TRANCHE-010` / `ISSUE-0407` after the immutable `v0.2.0` release landed.
+
 ## Scope
 
 - authoritative ship target

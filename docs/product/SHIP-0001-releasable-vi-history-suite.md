@@ -5,6 +5,16 @@
 Install one authoritative ship target for `vi-history-suite` so future work is
 driven by release criteria instead of open-ended tranche iteration.
 
+## Status
+
+Closed and landed for the first immutable SemVer release:
+
+- retained release: `v0.2.0`
+- retained pipeline: `2428809456`
+- retained release job: `13779604462`
+- current repo-active tranche: `TRANCHE-010`
+- current repo-active issue: [ISSUE-0407 Public Facade Installer And Windows Acceptance](./issues/ISSUE-0407-public-facade-installer-and-windows-acceptance.md)
+
 ## Release Target
 
 - Target release: `v0.2.0`
@@ -53,8 +63,8 @@ user can install at a specific semantic version and use to:
   evidence
 - the repo publishes and documents a docs-authoring workbench for governed
   requirements/documentation-package iteration and future wiki preparation
-- repo-native control-plane docs agree on what is blocked, what is done, and
-  what the single active tranche is
+- repo-native control-plane docs agree on what was blocked, what is done, and
+  which tranche landed the release target
 
 ## Out Of Scope
 
@@ -67,15 +77,19 @@ user can install at a specific semantic version and use to:
 No work is in scope unless it moves one release-readiness criterion toward
 `done`, reduces one active blocker, or sustains an already-shipped criterion.
 
-## Active Ship Tranche
+## Landed Ship Tranche
 
 - `TRANCHE-009`
 - issue: [ISSUE-0406 Ship Control And SemVer Releaseability](./issues/ISSUE-0406-ship-control-and-semver-releaseability.md)
 - targeted blocker ids: `none`
 
+This closed ship record is retained as historical release evidence. Current
+repo-active work may advance under a separate post-release tranche without
+rewriting this ship target.
+
 ## Control Plane
 
-These files are now the authoritative direction surfaces for ship work:
+These files are the authoritative retained ship-record surfaces:
 
 1. [release-readiness-matrix.json](./release-readiness-matrix.json)
 2. [blocker-ledger.json](./blocker-ledger.json)
@@ -92,15 +106,18 @@ These files are now the authoritative direction surfaces for ship work:
 
 `development-queue.json` shall have exactly one `active` tranche at a time.
 Everything else is `queued`, `done`, or sustain work described outside the
-active implementation lane.
+active implementation lane. While a ship target is still open, that active
+tranche must match the active ship record. After ship closure, the queue may
+advance to one governed post-release tranche while this ship record remains
+closed historical evidence.
 
 ## Evidence Rule
 
-The ship-control surfaces shall agree on these identities without relying on
-chat history:
+The landed ship-control surfaces shall agree on these identities without
+relying on chat history:
 
-- active tranche id
-- active ship issue id
+- landed tranche id
+- landed ship issue id
 - current package version
 - target release version
 - target VSIX artifact name

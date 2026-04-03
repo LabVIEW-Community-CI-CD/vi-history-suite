@@ -1,5 +1,6 @@
 {
   "shipId": "SHIP-0001",
+  "lifecycleState": "closed",
   "releaseTarget": "v0.2.0",
   "activeTrancheId": "TRANCHE-009",
   "activeIssueId": "ISSUE-0406",

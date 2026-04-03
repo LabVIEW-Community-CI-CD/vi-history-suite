@@ -1,5 +1,6 @@
 {
   "shipId": "SHIP-0001",
+  "lifecycleState": "closed",
   "activeIssueId": "ISSUE-0406",
   "currentPackageVersion": "0.2.0",
   "releaseTarget": "v0.2.0",

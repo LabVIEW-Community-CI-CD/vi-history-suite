@@ -86,9 +86,11 @@ Current control-plane surfaces:
 
 ## Active Queue
 
-Current active ship tranche:
+Latest landed ship target:
 
-- `TRANCHE-009`: Ship `vi-history-suite` as a releasable SemVer VSIX
+- `SHIP-0001`: releasable `v0.2.0` VSIX product
+- landed ship tranche: `TRANCHE-009`
+- landed ship issue: `ISSUE-0406`
 - release target: `v0.2.0`
 - current package baseline: `0.2.0`
 - preview install surface: `preview-evidence/vi-history-suite-<version>.vsix`
@@ -100,15 +102,24 @@ Current active ship tranche:
 - docs-workbench image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
 - remaining blockers: none
 
+Current active tranche:
+
+- `TRANCHE-010`: Public facade installer and Windows acceptance
+- active issue: [ISSUE-0407 Public Facade Installer And Windows Acceptance](./issues/ISSUE-0407-public-facade-installer-and-windows-acceptance.md)
+- active execution program: [PROGRAM-0002: Public Facade Installer And Windows Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
+- current first slice:
+  - ingest immutable `v0.2.0` release truth into the public facade repo
+  - pin the canonical `ni/labview-icon-editor` acceptance fixture
+  - keep installer and Windows VM work fail-closed until those inputs are exact
+
 Queued follow-on tranches:
 
 - `TRANCHE-004`: Add progress-surface uplift for indexing and report generation
-- `TRANCHE-010`: Public facade installer and Windows acceptance
 
-Approved post-release program:
+Current active post-release program:
 
 - [PROGRAM-0002: Public Facade Installer And Windows Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
-- first queued issue: [ISSUE-0407 Public Facade Installer And Windows Acceptance](./issues/ISSUE-0407-public-facade-installer-and-windows-acceptance.md)
+- active issue: [ISSUE-0407 Public Facade Installer And Windows Acceptance](./issues/ISSUE-0407-public-facade-installer-and-windows-acceptance.md)
 - trust boundary:
   - private GitLab immutable release remains product truth
   - public GitHub facade repo is the public installer/support surface
@@ -117,13 +128,10 @@ Approved post-release program:
   - Visual Studio Code CLI automates install/verify/open surfaces
   - the manual right-click review pass remains the human UX gate
 
-The queue source of truth is:
+The active-queue source of truth is:
 
 - [development-queue.json](./development-queue.json)
-- [PROGRAM-0001: Next Product Layer](./execution-programs/PROGRAM-0001-next-product-layer.md)
 - [PROGRAM-0002: Public Facade Installer And Windows Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
-- [release-readiness-matrix.json](./release-readiness-matrix.json)
-- [blocker-ledger.json](./blocker-ledger.json)
 - [wiki-authority-map.md](./wiki-authority-map.md)
 - [documentation-coherence-ledger.md](./documentation-coherence-ledger.md)
 - [wiki-seed-plan.md](./wiki-seed-plan.md)
@@ -132,6 +140,13 @@ The queue source of truth is:
 - [release-procedure.md](../release-procedure.md)
 - [Documentation Package Workbench](../documentation-workbench.md)
 - [program-repo-jump.md](./program-repo-jump.md)
+
+The landed ship-record source of truth is:
+
+- [SHIP-0001: Releasable VI History Suite](./SHIP-0001-releasable-vi-history-suite.md)
+- [release-readiness-matrix.json](./release-readiness-matrix.json)
+- [blocker-ledger.json](./blocker-ledger.json)
+- [release-procedure.md](../release-procedure.md)
 
 ## Research Refresh
 

@@ -2,11 +2,14 @@
 
 ## Status
 
-Approved and queued as the next post-release direction.
+Active post-release program.
 
-This program is intentionally not active in
-[`development-queue.json`](../development-queue.json). It starts only after
-the first immutable SemVer release of `vi-history-suite` is published.
+Trigger satisfied by the retained immutable `v0.2.0` release:
+
+- retained release: `v0.2.0`
+- retained pipeline: `2428809456`
+- retained release job: `13779604462`
+- current queue tranche: `TRANCHE-010`
 
 ## Purpose
 
@@ -24,11 +27,14 @@ This program starts only after all of these are true:
 - the public GitHub facade repo is ready to consume that immutable release
 - the Windows 11 acceptance VM is prepared for installed-user proof
 
+That trigger is now satisfied for the first executable slice: immutable release
+ingestion contract plus public truth alignment.
+
 ## North Star
 
 A user downloads a public Windows installer from the public facade repo, runs
 it on a fresh Windows 11 VM, installs the exact released `vi-history-suite`
-build, opens a pinned `labview-icon-editor` workspace, and can successfully
+build, opens a pinned `ni/labview-icon-editor` workspace, and can successfully
 exercise the real right-click review flow for the canonical VI while retained
 evidence is captured for both automation and human review.
 
@@ -107,7 +113,7 @@ Use the Windows 11 VM plus PowerShell and Visual Studio Code CLI to automate:
 - installer invocation
 - exact extension installation verification
 - version verification
-- workspace launch against the pinned `labview-icon-editor` repo
+- workspace launch against the pinned `ni/labview-icon-editor` repo
 - capture of CLI outputs and retained proof artifacts
 
 ### Lane 5: Human UX Gate
@@ -127,7 +133,7 @@ automation to trustworthy installed-user evidence.
 
 1. public facade repo release/distribution scaffolding
 2. Windows Docker installer-builder image and NSIS project
-3. pinned fixture/repo provisioning manifest for `labview-icon-editor`
+3. pinned fixture/repo provisioning manifest for `ni/labview-icon-editor`
 4. Windows 11 VM PowerShell + VS Code CLI acceptance harness
 5. retained installed-user evidence pack and human-check worksheet
 
@@ -180,22 +186,21 @@ automation to trustworthy installed-user evidence.
 
 ## First Slice
 
-If approved, the first slice should:
+The current first slice is:
 
-- create the public installer/build/acceptance skeleton in the public facade
-  repo
-- define the immutable release ingestion contract from GitLab release evidence
-- define the pinned fixture manifest for `labview-icon-editor`
-- define the VM acceptance harness shape and the manual right-click worksheet
-- stop short of claiming user-proof closure until the VM gate runs
+- activate the public-facade program in the private control plane
+- define the immutable `v0.2.0` release ingestion contract from retained GitLab release evidence
+- define the pinned fixture manifest for `ni/labview-icon-editor`
+- align the public facade docs and license to current truth
+- stop short of claiming user-proof closure until the installer and VM gates run
 
-## Explicit Approval Question
+## Approval Outcome
 
-Approval of this program means approval for me to:
+This program was approved and is now active through `TRANCHE-010`.
 
-- queue this as the next post-release direction
-- scaffold the public facade repo around installer/distribution/acceptance work
-- preserve the trust boundary that private GitLab remains source truth and the
-  VM plus human gate remain execution truth
+The approved trust boundary remains:
 
-Rejecting or revising this program leaves the current release program unchanged.
+- private GitLab remains source truth
+- the public GitHub facade repo remains the installer/distribution/support surface
+- Windows Docker remains the installer build surface
+- the Windows 11 VM plus human right-click gate remain execution truth

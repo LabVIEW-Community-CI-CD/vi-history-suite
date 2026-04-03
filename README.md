@@ -33,6 +33,7 @@ If you are new to the repo, read these in order:
 13. [Documentation Package Workbench](./docs/documentation-workbench.md)
 14. [Program Repo Jump](./docs/product/program-repo-jump.md)
 15. [PROGRAM-0001: Next Product Layer](./docs/product/execution-programs/PROGRAM-0001-next-product-layer.md)
+16. [PROGRAM-0002: Public Facade Installer And Windows Acceptance](./docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
 
 For machine-friendly repo orientation, start with:
 
@@ -68,6 +69,7 @@ Use these repo-native control-plane entrypoints instead:
 - [Dashboard Epic](./docs/product/epics/EPIC-0004-multi-report-developer-dashboard.md)
 - [NI Comparison Report Metadata Inventory](./docs/product/ni-comparison-report-metadata-inventory.md)
 - [PROGRAM-0001: Next Product Layer](./docs/product/execution-programs/PROGRAM-0001-next-product-layer.md)
+- [PROGRAM-0002: Public Facade Installer And Windows Acceptance](./docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
 - [SHIP-0001: Releasable VI History Suite](./docs/product/SHIP-0001-releasable-vi-history-suite.md)
 - [Release Readiness Matrix](./docs/product/release-readiness-matrix.json)
 - [Blocker Ledger](./docs/product/blocker-ledger.json)
@@ -164,8 +166,9 @@ Committed and governed today:
 - retained design gate that refreshes `latest-report.{json,md}` after each
   successful stage so a stuck assurance tail does not leave stale tranche
   evidence
-- authoritative ship-control surfaces that keep one active tranche, one release
-  target, one readiness matrix, and one blocker ledger in the repo itself
+- authoritative ship-control surfaces that retain one landed release target,
+  one readiness matrix, and one blocker ledger in the repo itself while the
+  development queue carries the single active post-release tranche
 - a published docs-authoring workbench image plus a repo-native docs gate for
   iterating on requirements, ADRs, release-readiness docs, and future
   wiki-source material in a governed environment
@@ -188,9 +191,11 @@ Committed and governed today:
 
 ## Active Work
 
-The active ship target is:
+Latest landed ship target:
 
 - `SHIP-0001`: releasable `v0.2.0` VSIX product
+- landed ship tranche: `TRANCHE-009`
+- landed ship issue: `ISSUE-0406`
 - current package baseline: `0.2.0`
 - target release artifact: `vi-history-suite-0.2.0.vsix`
 - target release manifest: `release-evidence/release-manifest.json`
@@ -213,18 +218,20 @@ Current install paths are:
 - documentation-package workbench image:
   `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
 
-The single active tranche is:
+The current active tranche is:
 
-- `TRANCHE-009`: ship `vi-history-suite` as a releasable SemVer VSIX
+- `TRANCHE-010`: public facade installer and Windows acceptance
+- active issue: `ISSUE-0407`
 
 Issue-ready execution program:
 
-- [PROGRAM-0001: Next Product Layer](./docs/product/execution-programs/PROGRAM-0001-next-product-layer.md)
+- [PROGRAM-0002: Public Facade Installer And Windows Acceptance](./docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
 
 See:
 
 - [Current State](./docs/product/current-state.md)
 - [Development Queue](./docs/product/development-queue.json)
+- [PROGRAM-0002: Public Facade Installer And Windows Acceptance](./docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
 - [SHIP-0001: Releasable VI History Suite](./docs/product/SHIP-0001-releasable-vi-history-suite.md)
 - [Release Readiness Matrix](./docs/product/release-readiness-matrix.json)
 - [Blocker Ledger](./docs/product/blocker-ledger.json)

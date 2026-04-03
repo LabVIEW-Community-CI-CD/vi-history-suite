@@ -658,18 +658,20 @@
   separate decision-record path are described at the correct current
   implementation maturity rather than future-only modeling
 - `TEST-DOC-018`: review the README, current-state, ship target, blocker
-  ledger, and release procedure to prove the SemVer ship-control system is the
-  primary direction surface for the remaining release work
+  ledger, and release procedure to prove the SemVer ship-control system is
+  retained as the landed `v0.2.0` release record while the repo entrypoints
+  also surface the active post-release program truthfully
 - `TEST-UNIT-192`: prove the ship-control system keeps the ship target,
   development queue, package baseline, release-readiness matrix, blocker
-  ledger, and repo entrypoints aligned around one active `TRANCHE-009` ship
-  lane
+  ledger, and repo entrypoints aligned across the closed `TRANCHE-009`
+  ship record and the active `TRANCHE-010` post-release lane
 - `TEST-UNIT-193`: prove the GitLab release lane fails closed on tag/package
   mismatch, packages `release-evidence/vi-history-suite-<version>.vsix`, and
   retains the release manifest plus checksum evidence paths
 - `TEST-DOC-019`: review the ship target, readiness matrix, blocker ledger,
   current-state, README, and release procedure to prove the GitLab VSIX
-  release lane is configured and the remaining blocker is first tagged proof
+  release lane is configured, the first tagged proof landed, and the retained
+  ship record now points forward to the public-facade follow-on program
 - `TEST-UNIT-194`: prove the GitLab `main` pipeline retains a preview VSIX
   artifact and preview manifest, and keeps that preview lane distinct from the
   formal tagged release artifact lane
