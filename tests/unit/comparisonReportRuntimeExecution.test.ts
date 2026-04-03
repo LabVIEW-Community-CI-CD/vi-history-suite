@@ -992,6 +992,85 @@ describe('comparisonReportRuntimeExecution', () => {
     );
   });
 
+  it('wraps lvcompare parity probes in the windows container provider from a non-Windows host', async () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.provider = 'windows-container';
+    record.runtimeSelection.engine = 'lvcompare';
+    record.runtimeSelection.windowsContainerImage = 'nationalinstruments/labview:2026q1-windows';
+    record.runtimeSelection.labviewExe = {
+      kind: 'labview-exe',
+      path: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+      source: 'scan',
+      exists: true,
+      bitness: 'x64'
+    };
+    record.runtimeSelection.lvCompare = {
+      kind: 'lvcompare',
+      path: 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe',
+      source: 'scan',
+      exists: true
+    };
+    delete record.runtimeSelection.labviewCli;
+
+    const runCommand = vi.fn().mockResolvedValue({
+      exitCode: 0,
+      stdout: '',
+      stderr: ''
+    });
+
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo',
+        interopWorkspaceRoot: '/mnt/c/Users/sveld/AppData/Local/Temp/vi-history-suite-runtime'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        pathExists: vi.fn(async (filePath: string) =>
+          filePath ===
+          '/mnt/c/Users/sveld/AppData/Local/Temp/vi-history-suite-runtime/reports/repoid123456/fileid123456/diff-report-foo.vi.html'
+        ),
+        runCommand,
+        nowIso: vi
+          .fn()
+          .mockReturnValueOnce('2026-04-02T01:00:00.000Z')
+          .mockReturnValueOnce('2026-04-02T01:00:01.000Z'),
+        nowMs: vi.fn().mockReturnValueOnce(1000).mockReturnValueOnce(2000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'linux'
+      }
+    );
+
+    expect(result.record.runtimeExecutionState).toBe('succeeded');
+    expect(runCommand).toHaveBeenCalledWith(
+      expect.objectContaining({
+        executable: '/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe',
+        args: expect.arrayContaining(['-NoProfile', '-EncodedCommand'])
+      })
+    );
+    const encodedOuterCommand = runCommand.mock.calls[0]?.[0].args[2];
+    const outerCommand = decodeWindowsEncodedCommand(encodedOuterCommand);
+    expect(outerCommand).toContain(
+      "docker run --rm -v 'C:\\Users\\sveld\\AppData\\Local\\Temp\\vi-history-suite-runtime\\reports\\repoid123456\\fileid123456:C:\\vi-history-suite'"
+    );
+    const innerEncodedCommandMatch = outerCommand.match(/-EncodedCommand ([A-Za-z0-9+/=]+)/);
+    expect(innerEncodedCommandMatch?.[1]).toBeTruthy();
+    const innerCommand = decodeWindowsEncodedCommand(innerEncodedCommandMatch![1]);
+    expect(innerCommand).toContain(
+      "$executable = 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe'"
+    );
+    expect(innerCommand).toContain(
+      "'C:\\vi-history-suite\\staging\\left-111111112222-foo.vi', 'C:\\vi-history-suite\\staging\\right-abcdef123456-foo.vi', '-lvpath', 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'"
+    );
+  });
+
   it('normalizes LVCompare arguments for win32 execution from a non-Windows host', async () => {
     const record = createReadyRecord();
     record.runtimeSelection.engine = 'lvcompare';

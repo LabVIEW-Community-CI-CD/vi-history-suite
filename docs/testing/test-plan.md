@@ -452,6 +452,9 @@
 - `TEST-UNIT-128`: prove native Windows-host container report execution uses
   `powershell.exe`, governed native Windows report/staging paths, and no
   interop workspace root
+- `TEST-UNIT-129`: prove the Windows-container provider rewrites `lvcompare`
+  parity probes into container workspace paths and invokes them through the
+  governed PowerShell wrapper from a non-Windows host
 - `TEST-DOC-014`: review the queue, epic, ADR, and current-state surfaces to
   prove the future-facing dashboard research was normalized into governed repo
   control-plane artifacts and the incoming research artifact was deleted
