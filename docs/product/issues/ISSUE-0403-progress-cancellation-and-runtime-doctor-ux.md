@@ -52,9 +52,13 @@ requiring raw-log inspection.
 - compact runtime-doctor summary on stored packet and live panel
 - structured provider-decision facts for selected and rejected providers
 - provider-decision runtime-doctor lines on stored packet and live panel
+- trust-aware report and dashboard action refusal with explicit
+  `workspace-untrusted` outcomes
+- stable warning surfaces when trust is lost after the history panel is already
+  open
 
 ## Remaining Focus
 
 - bounded progress for dashboard and report refresh
 - cancellation with partial-evidence retention
-- trust-aware refresh and execution UX
+- trust-aware refresh progress and cancellation UX

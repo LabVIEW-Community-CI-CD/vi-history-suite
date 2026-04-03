@@ -94,7 +94,11 @@ export function createOpenViHistoryCommand(
         const result = await multiReportDashboardAction({
           model
         });
-        if (result.outcome === 'missing-storage-uri') {
+        if (result.outcome === 'workspace-untrusted') {
+          void vscode.window.showWarningMessage(
+            'VI Review Dashboard is disabled in untrusted workspaces.'
+          );
+        } else if (result.outcome === 'missing-storage-uri') {
           void vscode.window.showWarningMessage(
             'VI Review Dashboard requires an open workspace so concentrated dashboard artifacts can be stored under workspace-scoped extension storage.'
           );
@@ -109,6 +113,8 @@ export function createOpenViHistoryCommand(
           outcome:
             result.outcome === 'opened-review-dashboard'
               ? 'opened-review-dashboard'
+              : result.outcome === 'workspace-untrusted'
+                ? 'workspace-untrusted'
               : result.outcome === 'missing-storage-uri'
                 ? 'missing-dashboard-storage'
                 : 'insufficient-dashboard-commits',
@@ -156,7 +162,11 @@ export function createOpenViHistoryCommand(
           selectedHash: hash
         });
 
-        if (result.outcome === 'missing-storage-uri') {
+        if (result.outcome === 'workspace-untrusted') {
+          void vscode.window.showWarningMessage(
+            'VI History comparison reports are disabled in untrusted workspaces.'
+          );
+        } else if (result.outcome === 'missing-storage-uri') {
           void vscode.window.showWarningMessage(
             'VI History comparison reports require an open workspace so reports can be stored under workspace-scoped extension storage.'
           );

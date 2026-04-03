@@ -3,11 +3,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const {
   createWebviewPanelMock,
   executeCommandMock,
-  showWarningMessageMock
+  showWarningMessageMock,
+  workspaceState
 } = vi.hoisted(() => ({
   createWebviewPanelMock: vi.fn(),
   executeCommandMock: vi.fn(),
-  showWarningMessageMock: vi.fn()
+  showWarningMessageMock: vi.fn(),
+  workspaceState: {
+    isTrusted: true
+  }
 }));
 
 function createMockUri(fsPath: string) {
@@ -48,6 +52,11 @@ vi.mock('vscode', () => ({
     createWebviewPanel: createWebviewPanelMock,
     showWarningMessage: showWarningMessageMock
   },
+  workspace: {
+    get isTrusted() {
+      return workspaceState.isTrusted;
+    }
+  },
   commands: {
     executeCommand: executeCommandMock
   },
@@ -63,6 +72,7 @@ import { createMultiReportDashboardAction } from '../../src/dashboard/multiRepor
 
 describe('multiReportDashboardAction', () => {
   beforeEach(() => {
+    workspaceState.isTrusted = true;
     createWebviewPanelMock.mockReset();
     executeCommandMock.mockReset();
     showWarningMessageMock.mockReset();
@@ -119,6 +129,58 @@ describe('multiReportDashboardAction', () => {
     ).resolves.toEqual({
       outcome: 'insufficient-commits'
     });
+  });
+
+  it('fails closed when dashboard generation is requested from an untrusted workspace', async () => {
+    workspaceState.isTrusted = false;
+    const buildDashboard = vi.fn();
+    const action = createMultiReportDashboardAction(
+      {
+        storageUri: createMockUri('/workspace/.storage')
+      } as never,
+      {
+        buildDashboard
+      }
+    );
+
+    await expect(
+      action({
+        model: {
+          repositoryName: 'repo',
+          repositoryRoot: '/workspace/repo',
+          relativePath: 'foo.vi',
+          signature: 'LVIN',
+          eligible: true,
+          commits: [
+            {
+              hash: 'abcdef1234567890',
+              authorDate: '2026-04-02T00:00:00Z',
+              authorName: 'A User',
+              subject: 'Newest revision',
+              previousHash: '1111111122222222'
+            },
+            {
+              hash: '1111111122222222',
+              authorDate: '2026-04-01T00:00:00Z',
+              authorName: 'B User',
+              subject: 'Middle revision',
+              previousHash: '3333333344444444'
+            },
+            {
+              hash: '3333333344444444',
+              authorDate: '2026-03-31T00:00:00Z',
+              authorName: 'C User',
+              subject: 'Initial revision'
+            }
+          ]
+        }
+      })
+    ).resolves.toEqual({
+      outcome: 'workspace-untrusted'
+    });
+
+    expect(buildDashboard).not.toHaveBeenCalled();
+    expect(createWebviewPanelMock).not.toHaveBeenCalled();
   });
 
   it('opens a concentrated dashboard panel from a persisted dashboard record', async () => {

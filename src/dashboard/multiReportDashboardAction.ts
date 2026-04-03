@@ -15,6 +15,7 @@ export interface MultiReportDashboardActionRequest {
 export interface MultiReportDashboardActionResult {
   outcome:
     | 'opened-review-dashboard'
+    | 'workspace-untrusted'
     | 'missing-storage-uri'
     | 'insufficient-commits';
   dashboardFilePath?: string;
@@ -40,6 +41,10 @@ export function createMultiReportDashboardAction(
   deps: MultiReportDashboardActionDeps = {}
 ): (request: MultiReportDashboardActionRequest) => Promise<MultiReportDashboardActionResult> {
   return async (request) => {
+    if (!vscode.workspace.isTrusted) {
+      return { outcome: 'workspace-untrusted' };
+    }
+
     if (!context.storageUri) {
       return { outcome: 'missing-storage-uri' };
     }

@@ -17,6 +17,7 @@ export interface HistoryPanelActionSummary {
     | 'opened-commit'
     | 'diffed-previous'
     | 'opened-comparison-report'
+    | 'workspace-untrusted'
     | 'ignored-missing-hash'
     | 'insufficient-dashboard-commits'
     | 'missing-dashboard-storage'

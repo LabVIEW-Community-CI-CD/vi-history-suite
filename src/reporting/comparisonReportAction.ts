@@ -19,6 +19,7 @@ export interface ComparisonReportActionRequest {
 export interface ComparisonReportActionResult {
   outcome:
     | 'opened-comparison-report'
+    | 'workspace-untrusted'
     | 'missing-storage-uri'
     | 'missing-selected-commit'
     | 'missing-previous-hash';
@@ -71,6 +72,10 @@ export function createComparisonReportAction(
   deps: ComparisonReportActionDeps = {}
 ): (request: ComparisonReportActionRequest) => Promise<ComparisonReportActionResult> {
   return async (request: ComparisonReportActionRequest): Promise<ComparisonReportActionResult> => {
+    if (!vscode.workspace.isTrusted) {
+      return { outcome: 'workspace-untrusted' };
+    }
+
     const selectedCommit = request.model.commits.find((commit) => commit.hash === request.selectedHash);
     if (!selectedCommit) {
       return { outcome: 'missing-selected-commit' };

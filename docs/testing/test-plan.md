@@ -417,6 +417,15 @@
 - `TEST-UNIT-116`: prove stored packet and live comparison-report panel
   surfaces include provider-decision runtime-doctor lines when those retained
   facts are present
+- `TEST-UNIT-117`: prove the comparison-report action returns
+  `workspace-untrusted` and does not start preflight, runtime discovery,
+  persistence, or panel creation when workspace trust is absent
+- `TEST-UNIT-118`: prove the multi-report dashboard action returns
+  `workspace-untrusted` and does not build or open the dashboard when
+  workspace trust is absent
+- `TEST-UNIT-119`: prove the history-panel command flow surfaces stable
+  warnings and explicit `workspace-untrusted` action outcomes when report or
+  dashboard actions are invoked after workspace trust is lost
 - `TEST-DOC-014`: review the queue, epic, ADR, and current-state surfaces to
   prove the future-facing dashboard research was normalized into governed repo
   control-plane artifacts and the incoming research artifact was deleted

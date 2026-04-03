@@ -663,6 +663,98 @@ describe('createOpenViHistoryCommand', () => {
     });
   });
 
+  it('surfaces stable warnings when panel actions are blocked by workspace trust after the panel is already open', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    const comparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'workspace-untrusted'
+    });
+    const dashboardAction = vi.fn().mockResolvedValue({
+      outcome: 'workspace-untrusted'
+    });
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Newest revision',
+            previousHash: '1111111122222222'
+          },
+          {
+            hash: '1111111122222222',
+            authorDate: '2026-04-01T00:00:00Z',
+            authorName: 'B User',
+            subject: 'Middle revision',
+            previousHash: '3333333344444444'
+          },
+          {
+            hash: '3333333344444444',
+            authorDate: '2026-03-31T00:00:00Z',
+            authorName: 'C User',
+            subject: 'Initial revision'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      comparisonReportAction,
+      dashboardAction as never
+    );
+
+    await command(targetUri as never);
+
+    await tracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReport',
+      hash: 'abcdef1234567890'
+    });
+    expect(showWarningMessageMock).toHaveBeenCalledWith(
+      'VI History comparison reports are disabled in untrusted workspaces.'
+    );
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'generateComparisonReport',
+      hash: 'abcdef1234567890',
+      outcome: 'workspace-untrusted',
+      reportStatus: undefined,
+      blockedReason: undefined,
+      reportFilePath: undefined,
+      metadataFilePath: undefined,
+      reportWebviewUri: undefined,
+      title: undefined
+    });
+
+    await tracker.dispatchLastPanelMessage({
+      command: 'openDashboard'
+    });
+    expect(showWarningMessageMock).toHaveBeenCalledWith(
+      'VI Review Dashboard is disabled in untrusted workspaces.'
+    );
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'openDashboard',
+      outcome: 'workspace-untrusted',
+      dashboardFilePath: undefined,
+      dashboardJsonFilePath: undefined,
+      dashboardPairCount: undefined,
+      dashboardArchivedPairCount: undefined,
+      dashboardMissingPairCount: undefined,
+      title: undefined
+    });
+  });
+
   it('retains explicit outcomes for missing previous revisions and malformed panel messages', async () => {
     const targetUri = createMockUri('/workspace/eligible.vi');
     const tracker = new HistoryPanelTracker();

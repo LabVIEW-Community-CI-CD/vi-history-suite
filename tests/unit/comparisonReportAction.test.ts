@@ -1,8 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { createWebviewPanelMock, getConfigurationMock } = vi.hoisted(() => ({
+const { createWebviewPanelMock, getConfigurationMock, workspaceState } = vi.hoisted(() => ({
   createWebviewPanelMock: vi.fn(),
-  getConfigurationMock: vi.fn()
+  getConfigurationMock: vi.fn(),
+  workspaceState: {
+    isTrusted: true
+  }
 }));
 
 interface MockUri {
@@ -42,6 +45,9 @@ vi.mock('vscode', () => ({
     createWebviewPanel: createWebviewPanelMock
   },
   workspace: {
+    get isTrusted() {
+      return workspaceState.isTrusted;
+    },
     getConfiguration: getConfigurationMock
   },
   ViewColumn: {
@@ -62,6 +68,7 @@ import {
 
 describe('comparisonReportAction', () => {
   beforeEach(() => {
+    workspaceState.isTrusted = true;
     createWebviewPanelMock.mockReset();
     createWebviewPanelMock.mockImplementation((_viewType: string, title: string) =>
       createMockPanel(title)
@@ -98,6 +105,52 @@ describe('comparisonReportAction', () => {
     ).resolves.toEqual({
       outcome: 'missing-storage-uri'
     });
+  });
+
+  it('fails closed when comparison-report generation is requested from an untrusted workspace', async () => {
+    workspaceState.isTrusted = false;
+    const preflightComparisonReport = vi.fn();
+    const locateRuntime = vi.fn();
+    const persistComparisonReport = vi.fn();
+    const action = createComparisonReportAction(
+      {
+        storageUri: createMockUri('/workspace/.storage')
+      } as never,
+      {
+        preflightComparisonReport: preflightComparisonReport as never,
+        locateRuntime: locateRuntime as never,
+        persistComparisonReport: persistComparisonReport as never
+      }
+    );
+
+    await expect(
+      action({
+        model: {
+          repositoryName: 'repo',
+          repositoryRoot: '/workspace/repo',
+          relativePath: 'foo.vi',
+          signature: 'LVIN',
+          eligible: true,
+          commits: [
+            {
+              hash: 'abcdef1234567890',
+              authorDate: '2026-04-02T00:00:00Z',
+              authorName: 'A User',
+              subject: 'Update VI',
+              previousHash: '1111111122222222'
+            }
+          ]
+        },
+        selectedHash: 'abcdef1234567890'
+      })
+    ).resolves.toEqual({
+      outcome: 'workspace-untrusted'
+    });
+
+    expect(preflightComparisonReport).not.toHaveBeenCalled();
+    expect(locateRuntime).not.toHaveBeenCalled();
+    expect(persistComparisonReport).not.toHaveBeenCalled();
+    expect(createWebviewPanelMock).not.toHaveBeenCalled();
   });
 
   it('fails closed when the selected retained revision is missing or has no retained base revision', async () => {
