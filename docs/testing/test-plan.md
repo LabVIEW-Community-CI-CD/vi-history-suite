@@ -319,6 +319,9 @@
 - `TEST-UNIT-092`: prove the retained packet, comparison-report panel/action
   result, and canonical smoke artifacts surface the retained `process-exit`
   snapshot facts directly when that governed exit snapshot exists
+- `TEST-UNIT-093`: prove `openViHistoryCommand` propagates retained
+  comparison-report runtime diagnostics plus banner and exit snapshot facts
+  into the last recorded panel action summary
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source
