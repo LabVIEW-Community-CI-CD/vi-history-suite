@@ -347,66 +347,80 @@ describe('buildAndPersistMultiReportDashboard', () => {
       {
         caption: 'Front Panel Overview',
         pairCount: 2,
-        imageCount: 3
+        imageCount: 3,
+        pairOrdinals: [1, 2]
       },
       {
         caption: 'Block Diagram Overview',
         pairCount: 1,
-        imageCount: 1
+        imageCount: 1,
+        pairOrdinals: [2]
       }
     ]);
     expect(dashboard.record.summary.includedAttributeSummaries).toEqual([
       {
         label: 'Front Panel',
         includedPairCount: 1,
-        excludedPairCount: 1
+        excludedPairCount: 1,
+        includedPairOrdinals: [1],
+        excludedPairOrdinals: [2]
       },
       {
         label: 'Block Diagram',
         includedPairCount: 1,
-        excludedPairCount: 0
+        excludedPairCount: 0,
+        includedPairOrdinals: [2],
+        excludedPairOrdinals: []
       }
     ]);
     expect(dashboard.record.summary.detailHeadingSummaries).toEqual([
       {
         heading: '1. VI Attribute - Miscellaneous',
         pairCount: 2,
-        itemCount: 3
+        itemCount: 3,
+        pairOrdinals: [1, 2]
       },
       {
         heading: '2. Front Panel',
         pairCount: 1,
-        itemCount: 1
+        itemCount: 1,
+        pairOrdinals: [2]
       }
     ]);
     expect(dashboard.record.summary.comparedPathSummaries).toEqual([
       {
         firstViPath: 'C:\\compare\\Base-2.vi',
         secondViPath: 'C:\\compare\\Head-2.vi',
-        pairCount: 1
+        pairCount: 1,
+        pairOrdinals: [2]
       },
       {
         firstViPath: 'C:\\compare\\Base.vi',
         secondViPath: 'C:\\compare\\Head.vi',
-        pairCount: 1
+        pairCount: 1,
+        pairOrdinals: [1]
       }
     ]);
     expect(dashboard.record.summary.detailItemSummaries).toEqual([
       {
         item: 'Connector pane changed',
-        pairCount: 1
+        pairCount: 1,
+        pairOrdinals: [2]
       },
       {
         item: 'Control resized',
-        pairCount: 1
+        pairCount: 1,
+        pairOrdinals: [2]
       },
       {
         item: 'Execution setting changed',
-        pairCount: 1
+        pairCount: 1,
+        pairOrdinals: [2]
       },
       {
         item: 'VI Version : changed from "21.0" to "20.0"',
-        pairCount: 1
+        pairCount: 1,
+        pairOrdinals: [1]
       }
     ]);
     await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
@@ -444,22 +458,22 @@ describe('buildAndPersistMultiReportDashboard', () => {
       'data-testid="dashboard-overview-caption-concentration"'
     );
     await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
-      'First VI=C:\\compare\\Base.vi · Second VI=C:\\compare\\Head.vi · 1 pair(s)'
+      'First VI=C:\\compare\\Base.vi · Second VI=C:\\compare\\Head.vi · 1 pair(s) · pair 1'
     );
     await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
-      'Front Panel Overview · 2 pair(s) · 3 image(s)'
+      'Front Panel Overview · 2 pair(s) · 3 image(s) · pairs 1, 2'
     );
     await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
-      'Front Panel · included=1 · excluded=1'
+      'Front Panel · included=1 (pair 1) · excluded=1 (pair 2)'
     );
     await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
-      '1. VI Attribute - Miscellaneous · 2 pair(s) · 3 item(s)'
+      '1. VI Attribute - Miscellaneous · 2 pair(s) · 3 item(s) · pairs 1, 2'
     );
     await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
       'data-testid="dashboard-detail-item-concentration"'
     );
     await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
-      'Execution setting changed · 1 pair(s)'
+      'Execution setting changed · 1 pair(s) · pair 2'
     );
   });
 

@@ -77,29 +77,35 @@ export interface MultiReportDashboardOverviewCaptionSummary {
   caption: string;
   pairCount: number;
   imageCount: number;
+  pairOrdinals: number[];
 }
 
 export interface MultiReportDashboardComparedPathSummary {
   firstViPath: string;
   secondViPath: string;
   pairCount: number;
+  pairOrdinals: number[];
 }
 
 export interface MultiReportDashboardAttributeSummary {
   label: string;
   includedPairCount: number;
   excludedPairCount: number;
+  includedPairOrdinals: number[];
+  excludedPairOrdinals: number[];
 }
 
 export interface MultiReportDashboardDetailHeadingSummary {
   heading: string;
   pairCount: number;
   itemCount: number;
+  pairOrdinals: number[];
 }
 
 export interface MultiReportDashboardDetailItemSummary {
   item: string;
   pairCount: number;
+  pairOrdinals: number[];
 }
 
 export interface MultiReportDashboardEvidenceStateSummary {
@@ -385,7 +391,9 @@ export function renderMultiReportDashboardHtml(
           (summary) =>
             `<li>${escapeHtml(summary.caption)} · ${escapeHtml(
               String(summary.pairCount)
-            )} pair(s) · ${escapeHtml(String(summary.imageCount))} image(s)</li>`
+            )} pair(s) · ${escapeHtml(String(summary.imageCount))} image(s) · ${escapeHtml(
+              formatPairOrdinalSummary(summary.pairOrdinals)
+            )}</li>`
         )
         .join('')}</ul>`
     : 'No retained overview-caption concentration is currently available for this window.';
@@ -395,7 +403,11 @@ export function renderMultiReportDashboardHtml(
           (summary) =>
             `<li>${escapeHtml(summary.label)} · included=${escapeHtml(
               String(summary.includedPairCount)
-            )} · excluded=${escapeHtml(String(summary.excludedPairCount))}</li>`
+            )} (${escapeHtml(
+              formatPairOrdinalSummary(summary.includedPairOrdinals)
+            )}) · excluded=${escapeHtml(String(summary.excludedPairCount))} (${escapeHtml(
+              formatPairOrdinalSummary(summary.excludedPairOrdinals)
+            )})</li>`
         )
         .join('')}</ul>`
     : 'No retained included-attribute concentration is currently available for this window.';
@@ -405,7 +417,9 @@ export function renderMultiReportDashboardHtml(
           (summary) =>
             `<li>${escapeHtml(summary.heading)} · ${escapeHtml(
               String(summary.pairCount)
-            )} pair(s) · ${escapeHtml(String(summary.itemCount))} item(s)</li>`
+            )} pair(s) · ${escapeHtml(String(summary.itemCount))} item(s) · ${escapeHtml(
+              formatPairOrdinalSummary(summary.pairOrdinals)
+            )}</li>`
         )
         .join('')}</ul>`
     : 'No retained detailed-information heading concentration is currently available for this window.';
@@ -415,7 +429,9 @@ export function renderMultiReportDashboardHtml(
           (summary) =>
             `<li>First VI=${escapeHtml(summary.firstViPath)} · Second VI=${escapeHtml(
               summary.secondViPath
-            )} · ${escapeHtml(String(summary.pairCount))} pair(s)</li>`
+            )} · ${escapeHtml(String(summary.pairCount))} pair(s) · ${escapeHtml(
+              formatPairOrdinalSummary(summary.pairOrdinals)
+            )}</li>`
         )
         .join('')}</ul>`
     : 'No retained compared-VI path concentration is currently available for this window.';
@@ -425,7 +441,7 @@ export function renderMultiReportDashboardHtml(
           (summary) =>
             `<li>${escapeHtml(summary.item)} · ${escapeHtml(
               String(summary.pairCount)
-            )} pair(s)</li>`
+            )} pair(s) · ${escapeHtml(formatPairOrdinalSummary(summary.pairOrdinals))}</li>`
         )
         .join('')}</ul>`
     : 'No retained detailed-information item concentration is currently available for this window.';
@@ -831,6 +847,28 @@ function formatDetailItemLedger(parsed: ParsedNiComparisonReport): string {
   return items.length > 0 ? items.join('; ') : 'none';
 }
 
+function mapPairIdsToOrdinals(
+  pairIds: Iterable<string>,
+  pairOrdinalById: ReadonlyMap<string, number>
+): number[] {
+  return [...pairIds]
+    .map((pairId) => pairOrdinalById.get(pairId))
+    .filter((ordinal): ordinal is number => ordinal !== undefined)
+    .sort((left, right) => left - right);
+}
+
+function formatPairOrdinalSummary(pairOrdinals: readonly number[]): string {
+  if (pairOrdinals.length === 0) {
+    return 'no pair positions retained';
+  }
+
+  if (pairOrdinals.length === 1) {
+    return `pair ${pairOrdinals[0]}`;
+  }
+
+  return `pairs ${pairOrdinals.join(', ')}`;
+}
+
 function buildMultiReportDashboardArtifactPlan(
   storageRoot: string,
   model: ViHistoryViewModel
@@ -1021,6 +1059,7 @@ function buildDashboardSummary(entries: MultiReportDashboardEntry[]) {
       pairIds: Set<string>;
     }
   >();
+  const pairOrdinalById = new Map(entries.map((entry, index) => [entry.pairId, index + 1]));
   for (const entry of entries) {
     const label = entry.runtimeProviderLabel ?? 'none';
     providerCounts.set(label, (providerCounts.get(label) ?? 0) + 1);
@@ -1081,7 +1120,8 @@ function buildDashboardSummary(entries: MultiReportDashboardEntry[]) {
     .map((summary) => ({
       firstViPath: summary.firstViPath,
       secondViPath: summary.secondViPath,
-      pairCount: summary.pairIds.size
+      pairCount: summary.pairIds.size,
+      pairOrdinals: mapPairIdsToOrdinals(summary.pairIds, pairOrdinalById)
     }))
     .sort((left, right) => {
       return (
@@ -1094,14 +1134,17 @@ function buildDashboardSummary(entries: MultiReportDashboardEntry[]) {
     .map(([caption, summary]) => ({
       caption,
       pairCount: summary.pairIds.size,
-      imageCount: summary.imageCount
+      imageCount: summary.imageCount,
+      pairOrdinals: mapPairIdsToOrdinals(summary.pairIds, pairOrdinalById)
     }))
     .sort((left, right) => right.pairCount - left.pairCount || left.caption.localeCompare(right.caption));
   const includedAttributeSummaries = [...includedAttributeCounts.entries()]
     .map(([label, summary]) => ({
       label,
       includedPairCount: summary.includedPairIds.size,
-      excludedPairCount: summary.excludedPairIds.size
+      excludedPairCount: summary.excludedPairIds.size,
+      includedPairOrdinals: mapPairIdsToOrdinals(summary.includedPairIds, pairOrdinalById),
+      excludedPairOrdinals: mapPairIdsToOrdinals(summary.excludedPairIds, pairOrdinalById)
     }))
     .sort((left, right) => {
       const leftTotal = left.includedPairCount + left.excludedPairCount;
@@ -1112,13 +1155,15 @@ function buildDashboardSummary(entries: MultiReportDashboardEntry[]) {
     .map(([heading, summary]) => ({
       heading,
       pairCount: summary.pairIds.size,
-      itemCount: summary.itemCount
+      itemCount: summary.itemCount,
+      pairOrdinals: mapPairIdsToOrdinals(summary.pairIds, pairOrdinalById)
     }))
     .sort((left, right) => right.pairCount - left.pairCount || left.heading.localeCompare(right.heading));
   const detailItemSummaries = [...detailItemCounts.entries()]
     .map(([item, summary]) => ({
       item,
-      pairCount: summary.pairIds.size
+      pairCount: summary.pairIds.size,
+      pairOrdinals: mapPairIdsToOrdinals(summary.pairIds, pairOrdinalById)
     }))
     .sort((left, right) => right.pairCount - left.pairCount || left.item.localeCompare(right.item));
   const evidenceStateCounts = new Map<MultiReportDashboardEntryEvidenceState, number>();

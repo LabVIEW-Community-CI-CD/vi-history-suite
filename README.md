@@ -108,7 +108,8 @@ Committed and governed today:
   compared VI paths, whole-window overview-caption concentration,
   whole-window included-attribute concentration, whole-window
   detailed-information heading concentration, whole-window compared-path
-  concentration, whole-window detail-item concentration, a chronology-first
+  concentration, whole-window detail-item concentration, chronology-aware
+  pair-position references in those whole-window summaries, a chronology-first
   pair metadata ledger, per-pair metadata counts, provider provenance, and
   retained overview image assets rendered on the dashboard through webview-safe
   URIs

@@ -307,21 +307,25 @@ describe('multiReportDashboardAction', () => {
             {
               caption: 'Front Panel Overview',
               pairCount: 1,
-              imageCount: 2
+              imageCount: 2,
+              pairOrdinals: [1]
             }
           ],
           includedAttributeSummaries: [
             {
               label: 'Front Panel',
               includedPairCount: 1,
-              excludedPairCount: 0
+              excludedPairCount: 0,
+              includedPairOrdinals: [1],
+              excludedPairOrdinals: []
             }
           ],
           detailHeadingSummaries: [
             {
               heading: '1. VI Attribute - Miscellaneous',
               pairCount: 1,
-              itemCount: 3
+              itemCount: 3,
+              pairOrdinals: [1]
             }
           ],
           evidenceStateSummaries: [

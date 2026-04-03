@@ -716,6 +716,10 @@
   pair metadata ledger that recollects retained NI pair metadata before the
   detailed per-pair sections, including bounded no-metadata wording when a pair
   has no retained NI report metadata
+- `TEST-UNIT-208`: prove the whole-window dashboard concentration sections
+  retain chronology-aware `pair N` or `pairs N, M` references for retained NI
+  metadata patterns so the reviewer can locate where each pattern appears in
+  the adjacent-pair window
 - `TEST-UNIT-207`: prove the fast-loop dev-host CLI parses stable arguments,
   prepares a reusable fixture workspace without requiring `Code.exe`, and
   builds a stable launch plan for either direct or staged extension mode
