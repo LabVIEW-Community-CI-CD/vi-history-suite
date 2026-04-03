@@ -34,7 +34,10 @@ export interface HistoryPanelActionSummary {
   runtimeFailureReason?: string;
   runtimeDiagnosticReason?: string;
   runtimeDiagnosticNotes?: string[];
+  runtimeDiagnosticLogSourcePath?: string;
   runtimeDiagnosticLogArtifactPath?: string;
+  runtimeExecutable?: string;
+  runtimeArgs?: string[];
   runtimeProcessObservationArtifactPath?: string;
   runtimeProcessObservationCapturedAt?: string;
   runtimeProcessObservationTrigger?: string;

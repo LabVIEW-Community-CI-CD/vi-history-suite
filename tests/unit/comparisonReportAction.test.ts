@@ -555,8 +555,12 @@ describe('comparisonReportAction', () => {
           diagnosticNotes: [
             'LabVIEW CLI ignored the explicit -LabVIEWPath selection and used the last-used LabVIEW instead: C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe.'
           ],
+          diagnosticLogSourcePath:
+            'C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log',
           diagnosticLogArtifactPath:
             '/workspace/.storage/reports/repoid123456/fileid123456/runtime-diagnostic-log.txt',
+          executable: 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+          args: ['-OperationName', 'CreateComparisonReport', '-LabVIEWPath', 'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'],
           processObservationArtifactPath:
             '/workspace/.storage/reports/repoid123456/fileid123456/runtime-process-observation.json',
           processObservationCapturedAt: '2026-04-03T00:00:01.000Z',
@@ -684,8 +688,12 @@ describe('comparisonReportAction', () => {
       runtimeDiagnosticNotes: [
         'LabVIEW CLI ignored the explicit -LabVIEWPath selection and used the last-used LabVIEW instead: C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe.'
       ],
+      runtimeDiagnosticLogSourcePath:
+        'C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log',
       runtimeDiagnosticLogArtifactPath:
         '/workspace/.storage/reports/repoid123456/fileid123456/runtime-diagnostic-log.txt',
+      runtimeExecutable: 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+      runtimeArgs: ['-OperationName', 'CreateComparisonReport', '-LabVIEWPath', 'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'],
       runtimeProcessObservationArtifactPath:
         '/workspace/.storage/reports/repoid123456/fileid123456/runtime-process-observation.json',
       runtimeProcessObservationCapturedAt: '2026-04-03T00:00:01.000Z',
@@ -711,6 +719,9 @@ describe('comparisonReportAction', () => {
     const panel = createWebviewPanelMock.mock.results.at(-1)?.value as MockPanel;
     expect(panel.webview.html).toContain('labview-path-ignored-last-used-default');
     expect(panel.webview.html).toContain('command-exited-nonzero');
+    expect(panel.webview.html).toContain('Runtime diagnostic log source:</strong> C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log');
+    expect(panel.webview.html).toContain('Runtime executable:</strong> C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe');
+    expect(panel.webview.html).toContain('Runtime args:</strong> -OperationName CreateComparisonReport -LabVIEWPath C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe');
     expect(panel.webview.html).toContain('Generated report exists:</strong> no');
     expect(panel.webview.html).toContain('runtime-process-observation.json');
     expect(panel.webview.html).toContain('Process observation captured at:</strong> 2026-04-03T00:00:01.000Z');

@@ -325,6 +325,9 @@
 - `TEST-UNIT-094`: prove the direct runtime-command observation runner fails
   closed when `process-exit` snapshot capture errors after a retained
   `cli-log-banner` snapshot
+- `TEST-UNIT-095`: prove the comparison-report panel/action surface, canonical
+  smoke artifacts, and active-panel action summary surface the retained runtime
+  executable, runtime argument string, and diagnostic-log source path
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

@@ -485,8 +485,12 @@ describe('createOpenViHistoryCommand', () => {
       runtimeDiagnosticNotes: [
         'LabVIEW CLI ignored the explicit -LabVIEWPath selection and used the last-used LabVIEW instead: C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe.'
       ],
+      runtimeDiagnosticLogSourcePath:
+        'C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log',
       runtimeDiagnosticLogArtifactPath:
         '/workspace/.storage/reports/repo/file/runtime-diagnostic-log.txt',
+      runtimeExecutable: 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+      runtimeArgs: ['-OperationName', 'CreateComparisonReport', '-LabVIEWPath', 'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'],
       runtimeProcessObservationArtifactPath:
         '/workspace/.storage/reports/repo/file/runtime-process-observation.json',
       runtimeProcessObservationCapturedAt: '2026-04-03T00:00:01.000Z',
@@ -554,8 +558,12 @@ describe('createOpenViHistoryCommand', () => {
       runtimeDiagnosticNotes: [
         'LabVIEW CLI ignored the explicit -LabVIEWPath selection and used the last-used LabVIEW instead: C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe.'
       ],
+      runtimeDiagnosticLogSourcePath:
+        'C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log',
       runtimeDiagnosticLogArtifactPath:
         '/workspace/.storage/reports/repo/file/runtime-diagnostic-log.txt',
+      runtimeExecutable: 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+      runtimeArgs: ['-OperationName', 'CreateComparisonReport', '-LabVIEWPath', 'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'],
       runtimeProcessObservationArtifactPath:
         '/workspace/.storage/reports/repo/file/runtime-process-observation.json',
       runtimeProcessObservationCapturedAt: '2026-04-03T00:00:01.000Z',

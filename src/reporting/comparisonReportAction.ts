@@ -27,7 +27,10 @@ export interface ComparisonReportActionResult {
   runtimeFailureReason?: string;
   runtimeDiagnosticReason?: string;
   runtimeDiagnosticNotes?: string[];
+  runtimeDiagnosticLogSourcePath?: string;
   runtimeDiagnosticLogArtifactPath?: string;
+  runtimeExecutable?: string;
+  runtimeArgs?: string[];
   runtimeProcessObservationArtifactPath?: string;
   runtimeProcessObservationCapturedAt?: string;
   runtimeProcessObservationTrigger?: string;
@@ -134,8 +137,11 @@ export function createComparisonReportAction(
       runtimeFailureReason: packet.record.runtimeExecution.failureReason,
       runtimeDiagnosticReason: packet.record.runtimeExecution.diagnosticReason,
       runtimeDiagnosticNotes: packet.record.runtimeExecution.diagnosticNotes,
+      runtimeDiagnosticLogSourcePath: packet.record.runtimeExecution.diagnosticLogSourcePath,
       runtimeProcessObservationArtifactPath:
         packet.record.runtimeExecution.processObservationArtifactPath,
+      runtimeExecutable: packet.record.runtimeExecution.executable,
+      runtimeArgs: packet.record.runtimeExecution.args,
       runtimeProcessObservationCapturedAt:
         packet.record.runtimeExecution.processObservationCapturedAt,
       runtimeProcessObservationTrigger: packet.record.runtimeExecution.processObservationTrigger,
@@ -181,9 +187,19 @@ export function createComparisonReportAction(
     if (packet.record.runtimeExecution.diagnosticNotes?.length) {
       result.runtimeDiagnosticNotes = packet.record.runtimeExecution.diagnosticNotes;
     }
+    if (packet.record.runtimeExecution.diagnosticLogSourcePath) {
+      result.runtimeDiagnosticLogSourcePath =
+        packet.record.runtimeExecution.diagnosticLogSourcePath;
+    }
     if (packet.record.runtimeExecution.diagnosticLogArtifactPath) {
       result.runtimeDiagnosticLogArtifactPath =
         packet.record.runtimeExecution.diagnosticLogArtifactPath;
+    }
+    if (packet.record.runtimeExecution.executable) {
+      result.runtimeExecutable = packet.record.runtimeExecution.executable;
+    }
+    if (packet.record.runtimeExecution.args?.length) {
+      result.runtimeArgs = packet.record.runtimeExecution.args;
     }
     if (packet.record.runtimeExecution.processObservationArtifactPath) {
       result.runtimeProcessObservationArtifactPath =
@@ -248,7 +264,10 @@ export function renderComparisonReportPanelHtml(options: {
   runtimeFailureReason?: string;
   runtimeDiagnosticReason?: string;
   runtimeDiagnosticNotes?: string[];
+  runtimeDiagnosticLogSourcePath?: string;
   runtimeProcessObservationArtifactPath?: string;
+  runtimeExecutable?: string;
+  runtimeArgs?: string[];
   runtimeProcessObservationCapturedAt?: string;
   runtimeProcessObservationTrigger?: string;
   runtimeObservedProcessNames?: string[];
@@ -275,6 +294,11 @@ export function renderComparisonReportPanelHtml(options: {
   const diagnosticReasonMarkup = options.runtimeDiagnosticReason
     ? `<div><strong>Runtime diagnostic:</strong> ${escapeHtml(options.runtimeDiagnosticReason)}</div>`
     : '';
+  const diagnosticLogSourceMarkup = options.runtimeDiagnosticLogSourcePath
+    ? `<div><strong>Runtime diagnostic log source:</strong> ${escapeHtml(
+        options.runtimeDiagnosticLogSourcePath
+      )}</div>`
+    : '';
   const diagnosticNotesMarkup =
     options.runtimeDiagnosticNotes && options.runtimeDiagnosticNotes.length > 0
       ? `<div><strong>Runtime notes:</strong><ul>${options.runtimeDiagnosticNotes
@@ -286,6 +310,13 @@ export function renderComparisonReportPanelHtml(options: {
         options.runtimeProcessObservationArtifactPath
       )}</div>`
     : '';
+  const runtimeExecutableMarkup = options.runtimeExecutable
+    ? `<div><strong>Runtime executable:</strong> ${escapeHtml(options.runtimeExecutable)}</div>`
+    : '';
+  const runtimeArgsMarkup =
+    options.runtimeArgs && options.runtimeArgs.length > 0
+      ? `<div><strong>Runtime args:</strong> ${escapeHtml(options.runtimeArgs.join(' '))}</div>`
+      : '';
   const processObservationCapturedAtMarkup = options.runtimeProcessObservationCapturedAt
     ? `<div><strong>Process observation captured at:</strong> ${escapeHtml(
         options.runtimeProcessObservationCapturedAt
@@ -365,7 +396,10 @@ export function renderComparisonReportPanelHtml(options: {
       ${blockedReasonMarkup}
       ${failureReasonMarkup}
       ${diagnosticReasonMarkup}
+      ${diagnosticLogSourceMarkup}
       ${diagnosticNotesMarkup}
+      ${runtimeExecutableMarkup}
+      ${runtimeArgsMarkup}
       ${processObservationMarkup}
       ${processObservationCapturedAtMarkup}
       ${processObservationTriggerMarkup}

@@ -146,9 +146,19 @@ export function createOpenViHistoryCommand(
         if (result.runtimeDiagnosticNotes?.length) {
           actionSummary.runtimeDiagnosticNotes = result.runtimeDiagnosticNotes;
         }
+        if (result.runtimeDiagnosticLogSourcePath) {
+          actionSummary.runtimeDiagnosticLogSourcePath =
+            result.runtimeDiagnosticLogSourcePath;
+        }
         if (result.runtimeDiagnosticLogArtifactPath) {
           actionSummary.runtimeDiagnosticLogArtifactPath =
             result.runtimeDiagnosticLogArtifactPath;
+        }
+        if (result.runtimeExecutable) {
+          actionSummary.runtimeExecutable = result.runtimeExecutable;
+        }
+        if (result.runtimeArgs?.length) {
+          actionSummary.runtimeArgs = result.runtimeArgs;
         }
         if (result.runtimeProcessObservationArtifactPath) {
           actionSummary.runtimeProcessObservationArtifactPath =

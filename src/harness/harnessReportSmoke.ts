@@ -63,7 +63,10 @@ export interface HarnessReportSmokeReport {
   runtimeBlockedReason?: string;
   runtimeFailureReason?: string;
   runtimeDiagnosticReason?: string;
+  runtimeDiagnosticLogSourcePath?: string;
   runtimeDiagnosticLogPath?: string;
+  runtimeExecutable?: string;
+  runtimeArgs?: string[];
   runtimeStdoutPath?: string;
   runtimeStderrPath?: string;
   runtimeProcessObservationPath?: string;
@@ -275,7 +278,10 @@ function buildHarnessReportSmokeReport(options: {
         : record.preflight.blockedReason,
     runtimeFailureReason: record.runtimeExecution.failureReason,
     runtimeDiagnosticReason: record.runtimeExecution.diagnosticReason,
+    runtimeDiagnosticLogSourcePath: record.runtimeExecution.diagnosticLogSourcePath,
     runtimeDiagnosticLogPath: record.runtimeExecution.diagnosticLogArtifactPath,
+    runtimeExecutable: record.runtimeExecution.executable,
+    runtimeArgs: record.runtimeExecution.args,
     runtimeStdoutPath: record.runtimeExecution.stdoutFilePath,
     runtimeStderrPath: record.runtimeExecution.stderrFilePath,
     runtimeProcessObservationPath: record.runtimeExecution.processObservationArtifactPath,
@@ -324,7 +330,10 @@ export function renderHarnessReportSmokeMarkdown(report: HarnessReportSmokeRepor
 - Runtime blocked reason: ${report.runtimeBlockedReason ?? 'none'}
 - Runtime failure reason: ${report.runtimeFailureReason ?? 'none'}
 - Runtime diagnostic reason: ${report.runtimeDiagnosticReason ?? 'none'}
+- Runtime diagnostic log source: ${report.runtimeDiagnosticLogSourcePath ?? 'none'}
 - Runtime diagnostic log: ${report.runtimeDiagnosticLogPath ?? 'none'}
+- Runtime executable: ${report.runtimeExecutable ?? 'none'}
+- Runtime args: ${report.runtimeArgs?.join(' ') ?? 'none'}
 - Runtime stdout artifact: ${report.runtimeStdoutPath ?? 'none'}
 - Runtime stderr artifact: ${report.runtimeStderrPath ?? 'none'}
 - Runtime process observation artifact: ${report.runtimeProcessObservationPath ?? 'none'}
@@ -380,7 +389,12 @@ export function renderHarnessReportSmokeHtml(report: HarnessReportSmokeReport): 
       <div><strong>Runtime blocked reason:</strong> ${escapeHtml(report.runtimeBlockedReason ?? 'none')}</div>
       <div><strong>Runtime failure reason:</strong> ${escapeHtml(report.runtimeFailureReason ?? 'none')}</div>
       <div><strong>Runtime diagnostic reason:</strong> ${escapeHtml(report.runtimeDiagnosticReason ?? 'none')}</div>
+      <div><strong>Runtime diagnostic log source:</strong> ${escapeHtml(
+        report.runtimeDiagnosticLogSourcePath ?? 'none'
+      )}</div>
       <div><strong>Runtime diagnostic log:</strong> ${escapeHtml(report.runtimeDiagnosticLogPath ?? 'none')}</div>
+      <div><strong>Runtime executable:</strong> ${escapeHtml(report.runtimeExecutable ?? 'none')}</div>
+      <div><strong>Runtime args:</strong> ${escapeHtml(report.runtimeArgs?.join(' ') ?? 'none')}</div>
       <div><strong>Runtime stdout artifact:</strong> ${escapeHtml(report.runtimeStdoutPath ?? 'none')}</div>
       <div><strong>Runtime stderr artifact:</strong> ${escapeHtml(report.runtimeStderrPath ?? 'none')}</div>
       <div><strong>Runtime process observation artifact:</strong> ${escapeHtml(

@@ -27,7 +27,10 @@ describe('harness report smoke renderers', () => {
     runtimeBlockedReason: undefined,
     runtimeFailureReason: undefined,
     runtimeDiagnosticReason: 'labview-path-ignored-last-used-default',
+    runtimeDiagnosticLogSourcePath: 'C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log',
     runtimeDiagnosticLogPath: '/tmp/runtime-diagnostic-log.txt',
+    runtimeExecutable: 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+    runtimeArgs: ['-OperationName', 'CreateComparisonReport', '-LabVIEWPath', 'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'],
     runtimeStdoutPath: '/tmp/runtime-stdout.txt',
     runtimeStderrPath: '/tmp/runtime-stderr.txt',
     runtimeProcessObservationPath: '/tmp/runtime-process-observation.json',
@@ -56,7 +59,10 @@ describe('harness report smoke renderers', () => {
     expect(markdown).toContain('Harness Comparison Report Smoke');
     expect(markdown).toContain('Runtime execution: succeeded');
     expect(markdown).toContain('Runtime diagnostic reason: labview-path-ignored-last-used-default');
+    expect(markdown).toContain('Runtime diagnostic log source: C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log');
     expect(markdown).toContain('Runtime diagnostic log: /tmp/runtime-diagnostic-log.txt');
+    expect(markdown).toContain('Runtime executable: C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe');
+    expect(markdown).toContain('Runtime args: -OperationName CreateComparisonReport -LabVIEWPath C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe');
     expect(markdown).toContain('Runtime stdout artifact: /tmp/runtime-stdout.txt');
     expect(markdown).toContain('Runtime stderr artifact: /tmp/runtime-stderr.txt');
     expect(markdown).toContain('Runtime process observation artifact: /tmp/runtime-process-observation.json');
@@ -83,7 +89,10 @@ describe('harness report smoke renderers', () => {
     expect(html).toContain('Harness Comparison Report Smoke');
     expect(html).toContain('labview-cli');
     expect(html).toContain('labview-path-ignored-last-used-default');
+    expect(html).toContain('Runtime diagnostic log source:</strong> C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log');
     expect(html).toContain('/tmp/runtime-diagnostic-log.txt');
+    expect(html).toContain('Runtime executable:</strong> C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe');
+    expect(html).toContain('Runtime args:</strong> -OperationName CreateComparisonReport -LabVIEWPath C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe');
     expect(html).toContain('/tmp/runtime-stdout.txt');
     expect(html).toContain('/tmp/runtime-stderr.txt');
     expect(html).toContain('/tmp/runtime-process-observation.json');
@@ -303,6 +312,10 @@ describe('runHarnessReportSmoke', () => {
               state: 'succeeded',
               attempted: true,
               reportExists: true,
+              diagnosticLogSourcePath: 'C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log',
+              diagnosticLogArtifactPath: '/tmp/runtime-diagnostic-log.txt',
+              executable: 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+              args: ['-OperationName', 'CreateComparisonReport', '-LabVIEWPath', 'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'],
               processObservationArtifactPath: '/tmp/runtime-process-observation.json',
               processObservationCapturedAt: '2026-04-03T00:00:01.000Z',
               processObservationTrigger: 'cli-log-banner',
@@ -334,6 +347,10 @@ describe('runHarnessReportSmoke', () => {
     expect(result.report.runtimeExecutionState).toBe('succeeded');
     expect(result.report.runtimeProvider).toBe('host-native');
     expect(result.report.runtimeEngine).toBe('labview-cli');
+    expect(result.report.runtimeDiagnosticLogSourcePath).toBe('C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log');
+    expect(result.report.runtimeDiagnosticLogPath).toBe('/tmp/runtime-diagnostic-log.txt');
+    expect(result.report.runtimeExecutable).toBe('C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe');
+    expect(result.report.runtimeArgs).toEqual(['-OperationName', 'CreateComparisonReport', '-LabVIEWPath', 'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe']);
     expect(result.report.runtimeProcessObservationPath).toBe('/tmp/runtime-process-observation.json');
     expect(result.report.runtimeProcessObservationCapturedAt).toBe('2026-04-03T00:00:01.000Z');
     expect(result.report.runtimeProcessObservationTrigger).toBe('cli-log-banner');
