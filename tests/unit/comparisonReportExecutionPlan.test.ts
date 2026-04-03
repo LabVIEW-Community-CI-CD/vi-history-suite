@@ -26,6 +26,10 @@ function createBaseRecord(): ComparisonReportPacketRecord {
       metadataFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-metadata.json',
       runtimeStdoutFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/runtime-stdout.txt',
       runtimeStderrFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/runtime-stderr.txt',
+      runtimeDiagnosticLogFilePath:
+        '/workspace/.storage/reports/repoid123456/fileid123456/runtime-diagnostic-log.txt',
+      runtimeProcessObservationFilePath:
+        '/workspace/.storage/reports/repoid123456/fileid123456/runtime-process-observation.json',
       allowedLocalRootPaths: [
         '/workspace/.storage',
         '/workspace/.storage/reports/repoid123456'

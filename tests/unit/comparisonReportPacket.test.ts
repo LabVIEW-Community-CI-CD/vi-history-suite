@@ -351,6 +351,35 @@ describe('comparisonReportPacket', () => {
     );
     expect(html).toContain('data-testid="comparison-report-runtime-diagnostics"');
   });
+
+  it('renders retained process-observation facts when runtime execution captures them', async () => {
+    const record = await createReadyPacketRecord();
+    const observedRecord: ComparisonReportPacketRecord = {
+      ...record,
+      runtimeExecutionState: 'failed',
+      runtimeExecution: {
+        ...record.runtimeExecution,
+        state: 'failed',
+        attempted: true,
+        reportExists: false,
+        failureReason: 'labview-cli-exited-nonzero-log-only-no-report',
+        processObservationArtifactPath:
+          '/workspace/.storage/reports/repoid123456/fileid123456/runtime-process-observation.json',
+        observedProcessNames: ['LabVIEWCLI.exe', 'LabVIEW.exe'],
+        labviewProcessObserved: true,
+        labviewCliProcessObserved: true,
+        lvcompareProcessObserved: false
+      }
+    };
+
+    const html = renderComparisonReportPacketHtml(observedRecord);
+
+    expect(html).toContain('runtime-process-observation.json');
+    expect(html).toContain('Observed process names:</strong> LabVIEWCLI.exe | LabVIEW.exe');
+    expect(html).toContain('Observed LabVIEW.exe:</strong> yes');
+    expect(html).toContain('Observed LabVIEWCLI.exe:</strong> yes');
+    expect(html).toContain('Observed LVCompare.exe:</strong> no');
+  });
 });
 
 async function createReadyPacketRecord(): Promise<ComparisonReportPacketRecord> {

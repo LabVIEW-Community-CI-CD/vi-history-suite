@@ -66,6 +66,11 @@ export interface HarnessReportSmokeReport {
   runtimeDiagnosticLogPath?: string;
   runtimeStdoutPath?: string;
   runtimeStderrPath?: string;
+  runtimeProcessObservationPath?: string;
+  runtimeObservedProcessNames?: string[];
+  runtimeLabviewProcessObserved?: boolean;
+  runtimeLabviewCliProcessObserved?: boolean;
+  runtimeLvcompareProcessObserved?: boolean;
   runtimeNotes: string[];
   generatedReportExists: boolean;
   packetFilePath?: string;
@@ -265,6 +270,11 @@ function buildHarnessReportSmokeReport(options: {
     runtimeDiagnosticLogPath: record.runtimeExecution.diagnosticLogArtifactPath,
     runtimeStdoutPath: record.runtimeExecution.stdoutFilePath,
     runtimeStderrPath: record.runtimeExecution.stderrFilePath,
+    runtimeProcessObservationPath: record.runtimeExecution.processObservationArtifactPath,
+    runtimeObservedProcessNames: record.runtimeExecution.observedProcessNames,
+    runtimeLabviewProcessObserved: record.runtimeExecution.labviewProcessObserved,
+    runtimeLabviewCliProcessObserved: record.runtimeExecution.labviewCliProcessObserved,
+    runtimeLvcompareProcessObserved: record.runtimeExecution.lvcompareProcessObserved,
     runtimeNotes: [...record.runtimeSelection.notes, ...(record.runtimeExecution.diagnosticNotes ?? [])],
     generatedReportExists: record.runtimeExecution.reportExists,
     packetFilePath: options.packetFilePath,
@@ -296,6 +306,11 @@ export function renderHarnessReportSmokeMarkdown(report: HarnessReportSmokeRepor
 - Runtime diagnostic log: ${report.runtimeDiagnosticLogPath ?? 'none'}
 - Runtime stdout artifact: ${report.runtimeStdoutPath ?? 'none'}
 - Runtime stderr artifact: ${report.runtimeStderrPath ?? 'none'}
+- Runtime process observation artifact: ${report.runtimeProcessObservationPath ?? 'none'}
+- Runtime observed process names: ${report.runtimeObservedProcessNames?.join(' | ') || 'none'}
+- Runtime observed LabVIEW.exe: ${renderOptionalYesNo(report.runtimeLabviewProcessObserved)}
+- Runtime observed LabVIEWCLI.exe: ${renderOptionalYesNo(report.runtimeLabviewCliProcessObserved)}
+- Runtime observed LVCompare.exe: ${renderOptionalYesNo(report.runtimeLvcompareProcessObserved)}
 - Runtime notes: ${report.runtimeNotes.length > 0 ? report.runtimeNotes.join(' | ') : 'none'}
 - Generated report exists: ${report.generatedReportExists ? 'yes' : 'no'}
 - Packet file: ${report.packetFilePath ?? 'none'}
@@ -339,6 +354,21 @@ export function renderHarnessReportSmokeHtml(report: HarnessReportSmokeReport): 
       <div><strong>Runtime diagnostic log:</strong> ${escapeHtml(report.runtimeDiagnosticLogPath ?? 'none')}</div>
       <div><strong>Runtime stdout artifact:</strong> ${escapeHtml(report.runtimeStdoutPath ?? 'none')}</div>
       <div><strong>Runtime stderr artifact:</strong> ${escapeHtml(report.runtimeStderrPath ?? 'none')}</div>
+      <div><strong>Runtime process observation artifact:</strong> ${escapeHtml(
+        report.runtimeProcessObservationPath ?? 'none'
+      )}</div>
+      <div><strong>Runtime observed process names:</strong> ${escapeHtml(
+        report.runtimeObservedProcessNames?.join(' | ') || 'none'
+      )}</div>
+      <div><strong>Runtime observed LabVIEW.exe:</strong> ${renderOptionalYesNo(
+        report.runtimeLabviewProcessObserved
+      )}</div>
+      <div><strong>Runtime observed LabVIEWCLI.exe:</strong> ${renderOptionalYesNo(
+        report.runtimeLabviewCliProcessObserved
+      )}</div>
+      <div><strong>Runtime observed LVCompare.exe:</strong> ${renderOptionalYesNo(
+        report.runtimeLvcompareProcessObserved
+      )}</div>
       <div><strong>Runtime notes:</strong> ${escapeHtml(
         report.runtimeNotes.length > 0 ? report.runtimeNotes.join(' | ') : 'none'
       )}</div>
@@ -359,6 +389,14 @@ function escapeHtml(value: string): string {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
+}
+
+function renderOptionalYesNo(value: boolean | undefined): string {
+  if (value === undefined) {
+    return 'none';
+  }
+
+  return value ? 'yes' : 'no';
 }
 
 function defaultNow(): string {

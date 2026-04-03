@@ -287,6 +287,16 @@
 - `TEST-UNIT-084`: prove the canonical comparison-report smoke artifacts expose
   retained runtime stdout and stderr artifact paths when report execution is
   attempted
+- `TEST-UNIT-085`: prove the runtime executor persists a governed
+  runtime-process-observation artifact and packet execution facts when a
+  Windows report run captures LabVIEW-related process observations, and prove
+  the Windows tasklist parser/observer retains only the governed LabVIEW
+  runtime process facts
+- `TEST-UNIT-086`: prove the retained comparison-report packet,
+  comparison-report panel, and canonical comparison-report smoke render the
+  process-observation artifact path, observed process names, and explicit
+  yes/no facts for observed `LabVIEW.exe`, `LabVIEWCLI.exe`, and
+  `LVCompare.exe`
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

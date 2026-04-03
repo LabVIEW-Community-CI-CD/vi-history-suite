@@ -30,6 +30,11 @@ describe('harness report smoke renderers', () => {
     runtimeDiagnosticLogPath: '/tmp/runtime-diagnostic-log.txt',
     runtimeStdoutPath: '/tmp/runtime-stdout.txt',
     runtimeStderrPath: '/tmp/runtime-stderr.txt',
+    runtimeProcessObservationPath: '/tmp/runtime-process-observation.json',
+    runtimeObservedProcessNames: ['LabVIEWCLI.exe', 'LabVIEW.exe'],
+    runtimeLabviewProcessObserved: true,
+    runtimeLabviewCliProcessObserved: true,
+    runtimeLvcompareProcessObserved: false,
     runtimeNotes: ['Runtime note one', 'Runtime note two'],
     generatedReportExists: true,
     packetFilePath: '/tmp/report-packet.html',
@@ -46,6 +51,11 @@ describe('harness report smoke renderers', () => {
     expect(markdown).toContain('Runtime diagnostic log: /tmp/runtime-diagnostic-log.txt');
     expect(markdown).toContain('Runtime stdout artifact: /tmp/runtime-stdout.txt');
     expect(markdown).toContain('Runtime stderr artifact: /tmp/runtime-stderr.txt');
+    expect(markdown).toContain('Runtime process observation artifact: /tmp/runtime-process-observation.json');
+    expect(markdown).toContain('Runtime observed process names: LabVIEWCLI.exe | LabVIEW.exe');
+    expect(markdown).toContain('Runtime observed LabVIEW.exe: yes');
+    expect(markdown).toContain('Runtime observed LabVIEWCLI.exe: yes');
+    expect(markdown).toContain('Runtime observed LVCompare.exe: no');
     expect(markdown).toContain('Runtime notes: Runtime note one | Runtime note two');
     expect(markdown).toContain('Generated report exists: yes');
     expect(markdown).toContain('/tmp/diff-report-foo.vi.html');
@@ -60,6 +70,11 @@ describe('harness report smoke renderers', () => {
     expect(html).toContain('/tmp/runtime-diagnostic-log.txt');
     expect(html).toContain('/tmp/runtime-stdout.txt');
     expect(html).toContain('/tmp/runtime-stderr.txt');
+    expect(html).toContain('/tmp/runtime-process-observation.json');
+    expect(html).toContain('LabVIEWCLI.exe | LabVIEW.exe');
+    expect(html).toContain('Runtime observed LabVIEW.exe:</strong> yes');
+    expect(html).toContain('Runtime observed LabVIEWCLI.exe:</strong> yes');
+    expect(html).toContain('Runtime observed LVCompare.exe:</strong> no');
     expect(html).toContain('Runtime note one | Runtime note two');
     expect(html).toContain('diff-report-foo.vi.html');
   });
@@ -263,7 +278,12 @@ describe('runHarnessReportSmoke', () => {
             runtimeExecution: {
               state: 'succeeded',
               attempted: true,
-              reportExists: true
+              reportExists: true,
+              processObservationArtifactPath: '/tmp/runtime-process-observation.json',
+              observedProcessNames: ['LabVIEWCLI.exe', 'LabVIEW.exe'],
+              labviewProcessObserved: true,
+              labviewCliProcessObserved: true,
+              lvcompareProcessObserved: false
             }
           },
           packetFilePath: '/tmp/reports/HARNESS-VHS-001/workspace-storage/reports/repoid123456/fileid123456/report-packet.html',
@@ -282,6 +302,11 @@ describe('runHarnessReportSmoke', () => {
     expect(result.report.runtimeExecutionState).toBe('succeeded');
     expect(result.report.runtimeProvider).toBe('host-native');
     expect(result.report.runtimeEngine).toBe('labview-cli');
+    expect(result.report.runtimeProcessObservationPath).toBe('/tmp/runtime-process-observation.json');
+    expect(result.report.runtimeObservedProcessNames).toEqual(['LabVIEWCLI.exe', 'LabVIEW.exe']);
+    expect(result.report.runtimeLabviewProcessObserved).toBe(true);
+    expect(result.report.runtimeLabviewCliProcessObserved).toBe(true);
+    expect(result.report.runtimeLvcompareProcessObserved).toBe(false);
     expect(result.report.generatedReportExists).toBe(true);
     expect(result.report.selectedHash).toBe('abcdef1234567890');
     expect(result.report.baseHash).toBe('1111111122222222');

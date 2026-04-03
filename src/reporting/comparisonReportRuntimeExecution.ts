@@ -1,4 +1,4 @@
-import { execFile, ExecFileException } from 'node:child_process';
+import { execFile, ExecFileException, spawn } from 'node:child_process';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
@@ -36,6 +36,9 @@ export interface ComparisonReportRuntimeExecutionDeps {
   nowMs?: () => number;
   writePacketRecord?: typeof writeComparisonReportPacketRecord;
   processPlatform?: NodeJS.Platform;
+  observeWindowsProcesses?: (
+    options: ObserveWindowsProcessesOptions
+  ) => Promise<RuntimeProcessObservation | undefined>;
 }
 
 export interface RunCommandResult {
@@ -43,10 +46,50 @@ export interface RunCommandResult {
   signal?: string;
   stdout: string;
   stderr: string;
+  processObservation?: RuntimeProcessObservation;
 }
 
 export interface RunComparisonCommandPlanDeps {
   execFileImpl?: typeof execFile;
+}
+
+export interface RuntimeObservedProcess {
+  imageName: string;
+  pid: number;
+  sessionName?: string;
+  sessionNumber?: number;
+  memUsage?: string;
+}
+
+export interface RuntimeProcessObservation {
+  capturedAt: string;
+  hostPlatform: NodeJS.Platform;
+  runtimePlatform: string;
+  trigger: 'cli-log-banner';
+  observedProcesses: RuntimeObservedProcess[];
+  observedProcessNames: string[];
+  labviewProcessObserved: boolean;
+  labviewCliProcessObserved: boolean;
+  lvcompareProcessObserved: boolean;
+}
+
+export interface ObserveWindowsProcessesOptions {
+  hostPlatform: NodeJS.Platform;
+  runtimePlatform: string;
+}
+
+export interface ObserveWindowsProcessesDeps {
+  execFileImpl?: typeof execFile;
+  nowIso?: () => string;
+}
+
+export interface RunComparisonCommandPlanWithObservationDeps {
+  spawnImpl?: typeof spawn;
+  observeWindowsProcesses?: (
+    options: ObserveWindowsProcessesOptions
+  ) => Promise<RuntimeProcessObservation | undefined>;
+  hostPlatform?: NodeJS.Platform;
+  runtimePlatform?: string;
 }
 
 export async function executeComparisonReport(
@@ -59,7 +102,16 @@ export async function executeComparisonReport(
   const copyFile = deps.copyFile ?? fs.copyFile;
   const readFile = deps.readFile ?? fs.readFile;
   const pathExists = deps.pathExists ?? pathExistsForReport;
-  const runCommand = deps.runCommand ?? runComparisonCommandPlan;
+  const processPlatform = deps.processPlatform ?? process.platform;
+  const observeWindowsProcesses = deps.observeWindowsProcesses ?? observeWindowsRuntimeProcesses;
+  const runCommand =
+    deps.runCommand ??
+    ((commandPlan: ComparisonCommandPlan) =>
+      runComparisonCommandPlanWithObservation(commandPlan, {
+        hostPlatform: processPlatform,
+        runtimePlatform: options.record.runtimeSelection.platform,
+        observeWindowsProcesses
+      }));
   const nowIso = deps.nowIso ?? defaultNowIso;
   const nowMs = deps.nowMs ?? defaultNowMs;
   const writePacketRecord = deps.writePacketRecord ?? writeComparisonReportPacketRecord;
@@ -93,7 +145,7 @@ export async function executeComparisonReport(
         runCommand,
         nowIso,
         nowMs,
-        processPlatform: deps.processPlatform ?? process.platform
+        processPlatform
       }
     );
   }
@@ -209,6 +261,10 @@ async function runHostNativeExecution(
     const durationMs = Math.max(0, deps.nowMs() - startedMs);
     await deps.writeFile(record.artifactPlan.runtimeStdoutFilePath, commandResult.stdout, 'utf8');
     await deps.writeFile(record.artifactPlan.runtimeStderrFilePath, commandResult.stderr, 'utf8');
+    const processObservation = await persistRuntimeProcessObservation(record, commandResult, {
+      writeFile: deps.writeFile,
+      mkdir: deps.mkdir
+    });
     const diagnostics = await captureRuntimeDiagnostics(record, commandResult.stdout, {
       pathExists: deps.pathExists,
       copyFile: deps.copyFile,
@@ -256,7 +312,12 @@ async function runHostNativeExecution(
       exitCode: commandResult.exitCode,
       signal: commandResult.signal,
       stdoutFilePath: record.artifactPlan.runtimeStdoutFilePath,
-      stderrFilePath: record.artifactPlan.runtimeStderrFilePath
+      stderrFilePath: record.artifactPlan.runtimeStderrFilePath,
+      processObservationArtifactPath: processObservation?.artifactPath,
+      observedProcessNames: processObservation?.observation.observedProcessNames,
+      labviewProcessObserved: processObservation?.observation.labviewProcessObserved,
+      labviewCliProcessObserved: processObservation?.observation.labviewCliProcessObserved,
+      lvcompareProcessObserved: processObservation?.observation.lvcompareProcessObserved
     };
   } catch (error) {
     const completedAt = deps.nowIso();
@@ -292,6 +353,33 @@ async function runHostNativeExecution(
       stderrFilePath: record.artifactPlan.runtimeStderrFilePath
     };
   }
+}
+
+async function persistRuntimeProcessObservation(
+  record: ComparisonReportPacketRecord,
+  commandResult: RunCommandResult,
+  deps: {
+    writeFile: typeof fs.writeFile;
+    mkdir: typeof fs.mkdir;
+  }
+): Promise<{ artifactPath: string; observation: RuntimeProcessObservation } | undefined> {
+  if (!commandResult.processObservation) {
+    return undefined;
+  }
+
+  await deps.mkdir(path.dirname(record.artifactPlan.runtimeProcessObservationFilePath), {
+    recursive: true
+  });
+  await deps.writeFile(
+    record.artifactPlan.runtimeProcessObservationFilePath,
+    JSON.stringify(commandResult.processObservation, null, 2),
+    'utf8'
+  );
+
+  return {
+    artifactPath: record.artifactPlan.runtimeProcessObservationFilePath,
+    observation: commandResult.processObservation
+  };
 }
 
 interface CapturedRuntimeDiagnostics {
@@ -785,6 +873,143 @@ export function requiresWindowsInterop(
   return runtimePlatform === 'win32' && processPlatform !== 'win32';
 }
 
+export function parseWindowsTasklistCsv(stdout: string): RuntimeObservedProcess[] {
+  return stdout
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+    .map(parseWindowsTasklistCsvLine)
+    .filter((entry): entry is RuntimeObservedProcess => Boolean(entry));
+}
+
+export async function observeWindowsRuntimeProcesses(
+  options: ObserveWindowsProcessesOptions,
+  deps: ObserveWindowsProcessesDeps = {}
+): Promise<RuntimeProcessObservation | undefined> {
+  if (options.runtimePlatform !== 'win32') {
+    return undefined;
+  }
+
+  const executable = options.hostPlatform === 'win32'
+    ? 'tasklist'
+    : '/mnt/c/Windows/System32/tasklist.exe';
+
+  const stdout = await new Promise<string>((resolve, reject) => {
+    (deps.execFileImpl ?? execFile)(
+      executable,
+      ['/FO', 'CSV', '/NH'],
+      {
+        encoding: 'utf8',
+        maxBuffer: 16 * 1024 * 1024,
+        windowsHide: true
+      },
+      (error, capturedStdout) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve(String(capturedStdout ?? ''));
+      }
+    );
+  });
+
+  const observedProcesses = parseWindowsTasklistCsv(stdout).filter((processInfo) =>
+    isObservedRuntimeProcessName(processInfo.imageName)
+  );
+  const observedProcessNames = [...new Set(observedProcesses.map((processInfo) => processInfo.imageName))];
+
+  return {
+    capturedAt: (deps.nowIso ?? defaultNowIso)(),
+    hostPlatform: options.hostPlatform,
+    runtimePlatform: options.runtimePlatform,
+    trigger: 'cli-log-banner',
+    observedProcesses,
+    observedProcessNames,
+    labviewProcessObserved: observedProcesses.some((processInfo) =>
+      isExactObservedRuntimeProcessName(processInfo.imageName, 'LabVIEW.exe')
+    ),
+    labviewCliProcessObserved: observedProcesses.some((processInfo) =>
+      isExactObservedRuntimeProcessName(processInfo.imageName, 'LabVIEWCLI.exe')
+    ),
+    lvcompareProcessObserved: observedProcesses.some((processInfo) =>
+      isExactObservedRuntimeProcessName(processInfo.imageName, 'LVCompare.exe')
+    )
+  };
+}
+
+export function runComparisonCommandPlanWithObservation(
+  commandPlan: ComparisonCommandPlan,
+  deps: RunComparisonCommandPlanWithObservationDeps = {}
+): Promise<RunCommandResult> {
+  return new Promise((resolve, reject) => {
+    const child = (deps.spawnImpl ?? spawn)(commandPlan.executable, commandPlan.args, {
+      windowsHide: true,
+      shell: false
+    });
+    let stdout = '';
+    let stderr = '';
+    let observationPromise: Promise<void> | undefined;
+    let processObservation: RuntimeProcessObservation | undefined;
+    let observationError: unknown;
+    let observationStarted = false;
+
+    const maybeStartObservation = () => {
+      if (observationStarted || !parseLabviewCliDiagnosticLogPath(stdout)) {
+        return;
+      }
+
+      observationStarted = true;
+      observationPromise = Promise.resolve(
+        (deps.observeWindowsProcesses ?? observeWindowsRuntimeProcesses)({
+          hostPlatform: deps.hostPlatform ?? process.platform,
+          runtimePlatform: deps.runtimePlatform ?? process.platform
+        })
+      )
+        .then((capturedObservation) => {
+          processObservation = capturedObservation;
+        })
+        .catch((error) => {
+          observationError = error;
+        });
+    };
+
+    child.stdout?.setEncoding('utf8');
+    child.stderr?.setEncoding('utf8');
+    child.stdout?.on('data', (chunk: string | Buffer) => {
+      stdout += String(chunk);
+      maybeStartObservation();
+    });
+    child.stderr?.on('data', (chunk: string | Buffer) => {
+      stderr += String(chunk);
+    });
+    child.on('error', reject);
+    child.on('close', async (exitCode, signal) => {
+      if (observationPromise) {
+        await observationPromise;
+      }
+
+      if (observationError) {
+        reject(observationError);
+        return;
+      }
+
+      if (typeof exitCode !== 'number') {
+        reject(new Error('comparison-command-closed-without-exit-code'));
+        return;
+      }
+
+      resolve({
+        exitCode,
+        signal: signal ?? undefined,
+        stdout,
+        stderr,
+        processObservation
+      });
+    });
+  });
+}
+
 export function pathExistsForReport(filePath: string): Promise<boolean> {
   return fs
     .stat(filePath)
@@ -870,4 +1095,71 @@ export function defaultNowIso(): string {
 
 export function defaultNowMs(): number {
   return Date.now();
+}
+
+function parseWindowsTasklistCsvLine(line: string): RuntimeObservedProcess | undefined {
+  const columns = parseCsvColumns(line);
+  if (columns.length < 2) {
+    return undefined;
+  }
+
+  const imageName = columns[0]?.trim();
+  const pid = Number.parseInt(columns[1] ?? '', 10);
+  if (!imageName || !Number.isFinite(pid)) {
+    return undefined;
+  }
+
+  const sessionNumber = Number.parseInt((columns[3] ?? '').replaceAll(',', ''), 10);
+
+  return {
+    imageName,
+    pid,
+    sessionName: columns[2]?.trim() || undefined,
+    sessionNumber: Number.isFinite(sessionNumber) ? sessionNumber : undefined,
+    memUsage: columns[4]?.trim() || undefined
+  };
+}
+
+function parseCsvColumns(line: string): string[] {
+  const columns: string[] = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let index = 0; index < line.length; index += 1) {
+    const character = line[index];
+
+    if (character === '"') {
+      if (inQuotes && line[index + 1] === '"') {
+        current += '"';
+        index += 1;
+        continue;
+      }
+
+      inQuotes = !inQuotes;
+      continue;
+    }
+
+    if (character === ',' && !inQuotes) {
+      columns.push(current);
+      current = '';
+      continue;
+    }
+
+    current += character;
+  }
+
+  columns.push(current);
+  return columns;
+}
+
+function isObservedRuntimeProcessName(imageName: string): boolean {
+  return (
+    isExactObservedRuntimeProcessName(imageName, 'LabVIEW.exe') ||
+    isExactObservedRuntimeProcessName(imageName, 'LabVIEWCLI.exe') ||
+    isExactObservedRuntimeProcessName(imageName, 'LVCompare.exe')
+  );
+}
+
+function isExactObservedRuntimeProcessName(imageName: string, expected: string): boolean {
+  return imageName.trim().toLowerCase() === expected.toLowerCase();
 }

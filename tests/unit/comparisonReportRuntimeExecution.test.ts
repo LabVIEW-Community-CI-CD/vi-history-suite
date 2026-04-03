@@ -11,8 +11,10 @@ import {
   executeComparisonReport,
   normalizeWindowsInteropExecutable,
   normalizeWindowsInteropPath,
-  parseLabviewCliDiagnosticLogPath,
   normalizeComparisonProcessError,
+  observeWindowsRuntimeProcesses,
+  parseLabviewCliDiagnosticLogPath,
+  parseWindowsTasklistCsv,
   pathExistsForReport,
   resolveHostReadableDiagnosticPath,
   requiresWindowsInterop,
@@ -45,6 +47,8 @@ function createReadyRecord(): ComparisonReportPacketRecord {
       runtimeStderrFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/runtime-stderr.txt',
       runtimeDiagnosticLogFilePath:
         '/workspace/.storage/reports/repoid123456/fileid123456/runtime-diagnostic-log.txt',
+      runtimeProcessObservationFilePath:
+        '/workspace/.storage/reports/repoid123456/fileid123456/runtime-process-observation.json',
       allowedLocalRootPaths: [
         '/workspace/.storage',
         '/workspace/.storage/reports/repoid123456'
@@ -285,6 +289,73 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(result.record.runtimeExecution.reportExists).toBe(false);
     expect(result.record.runtimeExecution.diagnosticNotes).toContain(
       'LabVIEW CLI exited nonzero without stderr and without generating a report; stdout only advertised the diagnostic log path.'
+    );
+  });
+
+  it('retains a governed process-observation artifact when runtime execution captures it', async () => {
+    const writes: Array<{ filePath: string; value: string | Buffer }> = [];
+
+    const result = await executeComparisonReport(
+      {
+        record: createReadyRecord(),
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn(async (filePath: string, value: string | Buffer) => {
+          writes.push({ filePath, value });
+        }) as never,
+        pathExists: vi.fn().mockResolvedValue(true),
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 0,
+          stdout: 'command stdout',
+          stderr: '',
+          processObservation: {
+            capturedAt: '2026-04-03T00:00:01.000Z',
+            hostPlatform: 'linux',
+            runtimePlatform: 'win32',
+            trigger: 'cli-log-banner',
+            observedProcesses: [
+              { imageName: 'LabVIEWCLI.exe', pid: 1234 },
+              { imageName: 'LabVIEW.exe', pid: 5678 }
+            ],
+            observedProcessNames: ['LabVIEWCLI.exe', 'LabVIEW.exe'],
+            labviewProcessObserved: true,
+            labviewCliProcessObserved: true,
+            lvcompareProcessObserved: false
+          }
+        }),
+        nowIso: vi
+          .fn()
+          .mockReturnValueOnce('2026-04-02T01:00:00.000Z')
+          .mockReturnValueOnce('2026-04-02T01:00:03.000Z'),
+        nowMs: vi.fn().mockReturnValueOnce(1000).mockReturnValueOnce(4000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32'
+      }
+    );
+
+    expect(result.record.runtimeExecution.processObservationArtifactPath).toBe(
+      '/workspace/.storage/reports/repoid123456/fileid123456/runtime-process-observation.json'
+    );
+    expect(result.record.runtimeExecution.observedProcessNames).toEqual([
+      'LabVIEWCLI.exe',
+      'LabVIEW.exe'
+    ]);
+    expect(result.record.runtimeExecution.labviewProcessObserved).toBe(true);
+    expect(result.record.runtimeExecution.labviewCliProcessObserved).toBe(true);
+    expect(result.record.runtimeExecution.lvcompareProcessObserved).toBe(false);
+    expect(writes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          filePath:
+            '/workspace/.storage/reports/repoid123456/fileid123456/runtime-process-observation.json'
+        })
+      ])
     );
   });
 
@@ -779,6 +850,95 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(requiresWindowsInterop('win32', 'linux')).toBe(true);
     expect(requiresWindowsInterop('win32', 'win32')).toBe(false);
     expect(requiresWindowsInterop('linux', 'linux')).toBe(false);
+  });
+
+  it('parses Windows tasklist CSV and retains only observed LabVIEW runtime processes', async () => {
+    expect(
+      parseWindowsTasklistCsv(
+        '"LabVIEWCLI.exe","44152","Console","1","105,184 K"\r\n' +
+          '"notepad.exe","111","Console","1","1,024 K"\r\n' +
+          '"LabVIEW.exe","44160","Console","1","250,000 K"\r\n'
+      )
+    ).toEqual([
+      {
+        imageName: 'LabVIEWCLI.exe',
+        pid: 44152,
+        sessionName: 'Console',
+        sessionNumber: 1,
+        memUsage: '105,184 K'
+      },
+      {
+        imageName: 'notepad.exe',
+        pid: 111,
+        sessionName: 'Console',
+        sessionNumber: 1,
+        memUsage: '1,024 K'
+      },
+      {
+        imageName: 'LabVIEW.exe',
+        pid: 44160,
+        sessionName: 'Console',
+        sessionNumber: 1,
+        memUsage: '250,000 K'
+      }
+    ]);
+
+    const observation = await observeWindowsRuntimeProcesses(
+      {
+        hostPlatform: 'linux',
+        runtimePlatform: 'win32'
+      },
+      {
+        nowIso: () => '2026-04-03T00:00:01.000Z',
+        execFileImpl: vi.fn(
+          (
+            _file: string,
+            _args: readonly string[] | undefined,
+            _options:
+              | { encoding: BufferEncoding; maxBuffer: number; windowsHide: boolean }
+              | undefined,
+            callback:
+              | ((error: Error | null, stdout: string | Buffer, stderr: string | Buffer) => void)
+              | undefined
+          ) => {
+            callback?.(
+              null,
+              '"LabVIEWCLI.exe","44152","Console","1","105,184 K"\r\n' +
+                '"notepad.exe","111","Console","1","1,024 K"\r\n' +
+                '"LabVIEW.exe","44160","Console","1","250,000 K"\r\n',
+              ''
+            );
+          }
+        ) as never
+      }
+    );
+
+    expect(observation).toEqual({
+      capturedAt: '2026-04-03T00:00:01.000Z',
+      hostPlatform: 'linux',
+      runtimePlatform: 'win32',
+      trigger: 'cli-log-banner',
+      observedProcesses: [
+        {
+          imageName: 'LabVIEWCLI.exe',
+          pid: 44152,
+          sessionName: 'Console',
+          sessionNumber: 1,
+          memUsage: '105,184 K'
+        },
+        {
+          imageName: 'LabVIEW.exe',
+          pid: 44160,
+          sessionName: 'Console',
+          sessionNumber: 1,
+          memUsage: '250,000 K'
+        }
+      ],
+      observedProcessNames: ['LabVIEWCLI.exe', 'LabVIEW.exe'],
+      labviewProcessObserved: true,
+      labviewCliProcessObserved: true,
+      lvcompareProcessObserved: false
+    });
   });
 
   it('rejects raw execFile failures when the process never returns a numeric exit code', async () => {

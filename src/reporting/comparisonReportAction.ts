@@ -28,6 +28,11 @@ export interface ComparisonReportActionResult {
   runtimeDiagnosticReason?: string;
   runtimeDiagnosticNotes?: string[];
   runtimeDiagnosticLogArtifactPath?: string;
+  runtimeProcessObservationArtifactPath?: string;
+  runtimeObservedProcessNames?: string[];
+  runtimeLabviewProcessObserved?: boolean;
+  runtimeLabviewCliProcessObserved?: boolean;
+  runtimeLvcompareProcessObserved?: boolean;
   packetFilePath?: string;
   reportFilePath?: string;
   metadataFilePath?: string;
@@ -121,6 +126,12 @@ export function createComparisonReportAction(
       runtimeFailureReason: packet.record.runtimeExecution.failureReason,
       runtimeDiagnosticReason: packet.record.runtimeExecution.diagnosticReason,
       runtimeDiagnosticNotes: packet.record.runtimeExecution.diagnosticNotes,
+      runtimeProcessObservationArtifactPath:
+        packet.record.runtimeExecution.processObservationArtifactPath,
+      runtimeObservedProcessNames: packet.record.runtimeExecution.observedProcessNames,
+      runtimeLabviewProcessObserved: packet.record.runtimeExecution.labviewProcessObserved,
+      runtimeLabviewCliProcessObserved: packet.record.runtimeExecution.labviewCliProcessObserved,
+      runtimeLvcompareProcessObserved: packet.record.runtimeExecution.lvcompareProcessObserved,
       generatedReportExists: packet.record.runtimeExecution.reportExists,
       cspSource: panel.webview.cspSource
     });
@@ -152,6 +163,23 @@ export function createComparisonReportAction(
       result.runtimeDiagnosticLogArtifactPath =
         packet.record.runtimeExecution.diagnosticLogArtifactPath;
     }
+    if (packet.record.runtimeExecution.processObservationArtifactPath) {
+      result.runtimeProcessObservationArtifactPath =
+        packet.record.runtimeExecution.processObservationArtifactPath;
+    }
+    if (packet.record.runtimeExecution.observedProcessNames?.length) {
+      result.runtimeObservedProcessNames = packet.record.runtimeExecution.observedProcessNames;
+    }
+    if (packet.record.runtimeExecution.labviewProcessObserved !== undefined) {
+      result.runtimeLabviewProcessObserved = packet.record.runtimeExecution.labviewProcessObserved;
+    }
+    if (packet.record.runtimeExecution.labviewCliProcessObserved !== undefined) {
+      result.runtimeLabviewCliProcessObserved =
+        packet.record.runtimeExecution.labviewCliProcessObserved;
+    }
+    if (packet.record.runtimeExecution.lvcompareProcessObserved !== undefined) {
+      result.runtimeLvcompareProcessObserved = packet.record.runtimeExecution.lvcompareProcessObserved;
+    }
 
     return result;
   };
@@ -166,6 +194,11 @@ export function renderComparisonReportPanelHtml(options: {
   runtimeFailureReason?: string;
   runtimeDiagnosticReason?: string;
   runtimeDiagnosticNotes?: string[];
+  runtimeProcessObservationArtifactPath?: string;
+  runtimeObservedProcessNames?: string[];
+  runtimeLabviewProcessObserved?: boolean;
+  runtimeLabviewCliProcessObserved?: boolean;
+  runtimeLvcompareProcessObserved?: boolean;
   generatedReportExists: boolean;
   cspSource: string;
 }): string {
@@ -186,6 +219,29 @@ export function renderComparisonReportPanelHtml(options: {
           .map((note) => `<li>${escapeHtml(note)}</li>`)
           .join('')}</ul></div>`
       : '';
+  const processObservationMarkup = options.runtimeProcessObservationArtifactPath
+    ? `<div><strong>Process observation artifact:</strong> ${escapeHtml(
+        options.runtimeProcessObservationArtifactPath
+      )}</div>`
+    : '';
+  const observedProcessNamesMarkup =
+    options.runtimeObservedProcessNames && options.runtimeObservedProcessNames.length > 0
+      ? `<div><strong>Observed process names:</strong> ${escapeHtml(
+          options.runtimeObservedProcessNames.join(' | ')
+        )}</div>`
+      : '';
+  const observedLabviewMarkup = renderOptionalYesNoLine(
+    'Observed LabVIEW.exe',
+    options.runtimeLabviewProcessObserved
+  );
+  const observedLabviewCliMarkup = renderOptionalYesNoLine(
+    'Observed LabVIEWCLI.exe',
+    options.runtimeLabviewCliProcessObserved
+  );
+  const observedLvcompareMarkup = renderOptionalYesNoLine(
+    'Observed LVCompare.exe',
+    options.runtimeLvcompareProcessObserved
+  );
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -210,6 +266,11 @@ export function renderComparisonReportPanelHtml(options: {
       ${failureReasonMarkup}
       ${diagnosticReasonMarkup}
       ${diagnosticNotesMarkup}
+      ${processObservationMarkup}
+      ${observedProcessNamesMarkup}
+      ${observedLabviewMarkup}
+      ${observedLabviewCliMarkup}
+      ${observedLvcompareMarkup}
     </div>
     <iframe data-testid="comparison-report-panel-frame" src="${safeUri}" title="${safeTitle}"></iframe>
   </body>
@@ -223,6 +284,14 @@ function escapeHtml(value: string): string {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
+}
+
+function renderOptionalYesNoLine(label: string, value: boolean | undefined): string {
+  if (value === undefined) {
+    return '';
+  }
+
+  return `<div><strong>${escapeHtml(label)}:</strong> ${value ? 'yes' : 'no'}</div>`;
 }
 
 export function readComparisonRuntimeSettings(

@@ -40,6 +40,9 @@ describe('comparisonReportPlan', () => {
     expect(plan.metadataFilePath).toBe(path.join(plan.reportDirectory, 'report-metadata.json'));
     expect(plan.runtimeStdoutFilePath).toBe(path.join(plan.reportDirectory, 'runtime-stdout.txt'));
     expect(plan.runtimeStderrFilePath).toBe(path.join(plan.reportDirectory, 'runtime-stderr.txt'));
+    expect(plan.runtimeProcessObservationFilePath).toBe(
+      path.join(plan.reportDirectory, 'runtime-process-observation.json')
+    );
     expect(plan.allowedLocalRootPaths).toEqual([
       '/workspace/.storage',
       path.join('/workspace/.storage', 'reports', plan.repoId)

@@ -556,7 +556,13 @@ describe('comparisonReportAction', () => {
             'LabVIEW CLI ignored the explicit -LabVIEWPath selection and used the last-used LabVIEW instead: C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe.'
           ],
           diagnosticLogArtifactPath:
-            '/workspace/.storage/reports/repoid123456/fileid123456/runtime-diagnostic-log.txt'
+            '/workspace/.storage/reports/repoid123456/fileid123456/runtime-diagnostic-log.txt',
+          processObservationArtifactPath:
+            '/workspace/.storage/reports/repoid123456/fileid123456/runtime-process-observation.json',
+          observedProcessNames: ['LabVIEWCLI.exe', 'LabVIEW.exe'],
+          labviewProcessObserved: true,
+          labviewCliProcessObserved: true,
+          lvcompareProcessObserved: false
         },
         runtimeSelection: {
           platform: 'win32',
@@ -672,6 +678,12 @@ describe('comparisonReportAction', () => {
       ],
       runtimeDiagnosticLogArtifactPath:
         '/workspace/.storage/reports/repoid123456/fileid123456/runtime-diagnostic-log.txt',
+      runtimeProcessObservationArtifactPath:
+        '/workspace/.storage/reports/repoid123456/fileid123456/runtime-process-observation.json',
+      runtimeObservedProcessNames: ['LabVIEWCLI.exe', 'LabVIEW.exe'],
+      runtimeLabviewProcessObserved: true,
+      runtimeLabviewCliProcessObserved: true,
+      runtimeLvcompareProcessObserved: false,
       packetFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-packet.html',
       reportFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
       metadataFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-metadata.json',
@@ -685,6 +697,11 @@ describe('comparisonReportAction', () => {
     expect(panel.webview.html).toContain('labview-path-ignored-last-used-default');
     expect(panel.webview.html).toContain('command-exited-nonzero');
     expect(panel.webview.html).toContain('Generated report exists:</strong> no');
+    expect(panel.webview.html).toContain('runtime-process-observation.json');
+    expect(panel.webview.html).toContain('LabVIEWCLI.exe | LabVIEW.exe');
+    expect(panel.webview.html).toContain('Observed LabVIEW.exe:</strong> yes');
+    expect(panel.webview.html).toContain('Observed LabVIEWCLI.exe:</strong> yes');
+    expect(panel.webview.html).toContain('Observed LVCompare.exe:</strong> no');
   });
 
   it('reads runtime settings from the workspace configuration and normalizes unknown runtime platforms', () => {

@@ -36,6 +36,11 @@ export interface ComparisonReportRuntimeExecution {
   signal?: string;
   stdoutFilePath?: string;
   stderrFilePath?: string;
+  processObservationArtifactPath?: string;
+  observedProcessNames?: string[];
+  labviewProcessObserved?: boolean;
+  labviewCliProcessObserved?: boolean;
+  lvcompareProcessObserved?: boolean;
 }
 
 export interface PersistComparisonReportPacketOptions {
@@ -221,6 +226,21 @@ export function renderComparisonReportPacketHtml(record: ComparisonReportPacketR
       <div><strong>Signal:</strong> ${escapeHtml(runtimeExecution.signal ?? 'none')}</div>
       <div><strong>Stdout artifact:</strong> ${escapeHtml(runtimeExecution.stdoutFilePath ?? 'none')}</div>
       <div><strong>Stderr artifact:</strong> ${escapeHtml(runtimeExecution.stderrFilePath ?? 'none')}</div>
+      <div><strong>Process observation artifact:</strong> ${escapeHtml(
+        runtimeExecution.processObservationArtifactPath ?? 'none'
+      )}</div>
+      <div><strong>Observed process names:</strong> ${escapeHtml(
+        runtimeExecution.observedProcessNames?.join(' | ') || 'none'
+      )}</div>
+      <div><strong>Observed LabVIEW.exe:</strong> ${renderOptionalYesNo(
+        runtimeExecution.labviewProcessObserved
+      )}</div>
+      <div><strong>Observed LabVIEWCLI.exe:</strong> ${renderOptionalYesNo(
+        runtimeExecution.labviewCliProcessObserved
+      )}</div>
+      <div><strong>Observed LVCompare.exe:</strong> ${renderOptionalYesNo(
+        runtimeExecution.lvcompareProcessObserved
+      )}</div>
       <div><strong>Diagnostic reason:</strong> ${escapeHtml(runtimeExecution.diagnosticReason ?? 'none')}</div>
       <div><strong>Diagnostic log artifact:</strong> ${escapeHtml(runtimeExecution.diagnosticLogArtifactPath ?? 'none')}</div>
       <div><strong>Diagnostic log source:</strong> ${escapeHtml(runtimeExecution.diagnosticLogSourcePath ?? 'none')}</div>
@@ -312,6 +332,14 @@ function renderCommand(runtimeExecution: ComparisonReportRuntimeExecution): stri
   }
 
   return [runtimeExecution.executable, ...(runtimeExecution.args ?? [])].join(' ');
+}
+
+function renderOptionalYesNo(value: boolean | undefined): string {
+  if (value === undefined) {
+    return 'none';
+  }
+
+  return value ? 'yes' : 'no';
 }
 
 function deriveReportStatus(
