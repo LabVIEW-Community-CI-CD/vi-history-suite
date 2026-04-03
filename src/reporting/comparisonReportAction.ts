@@ -1,3 +1,5 @@
+import * as fs from 'node:fs/promises';
+import * as path from 'node:path';
 import * as vscode from 'vscode';
 
 import { archiveComparisonReportSource } from '../dashboard/comparisonReportArchive';
@@ -67,6 +69,7 @@ export interface ComparisonReportActionDeps {
   joinPath?: typeof vscode.Uri.joinPath;
   locateRuntime?: typeof locateComparisonRuntime;
   executeComparisonReport?: typeof executeComparisonReport;
+  readFile?: typeof fs.readFile;
   getRuntimeSettings?: () => ComparisonRuntimeSettings;
   archiveComparisonReportSource?: typeof archiveComparisonReportSource;
 }
@@ -208,7 +211,7 @@ export function createComparisonReportAction(
     const renderedContentUri = panel.webview.asWebviewUri(
       packet.record.runtimeExecution.reportExists ? reportFileUri : packetFileUri
     );
-    panel.webview.html = renderComparisonReportPanelHtml({
+    const panelHtmlOptions = {
       title: packet.record.reportTitle,
       reportWebviewUri: renderedContentUri.toString(),
       reportStatus: packet.record.reportStatus,
@@ -246,7 +249,17 @@ export function createComparisonReportAction(
         packet.record.runtimeExecution.lvcompareProcessObservedAtExit,
       generatedReportExists: packet.record.runtimeExecution.reportExists,
       cspSource: panel.webview.cspSource
-    });
+    } as const;
+    panel.webview.html = packet.record.runtimeExecution.reportExists
+      ? await renderGeneratedComparisonReportPanelHtml({
+          ...panelHtmlOptions,
+          reportFilePath: packet.reportFilePath,
+          reportDirectoryWebviewUri: ensureTrailingSlash(
+            panel.webview.asWebviewUri(uriFile(path.dirname(packet.reportFilePath))).toString()
+          ),
+          readFile: deps.readFile ?? fs.readFile
+        })
+      : renderComparisonReportPanelHtml(panelHtmlOptions);
 
     const result: ComparisonReportActionResult = {
       outcome: 'opened-comparison-report',
@@ -406,6 +419,117 @@ export function renderComparisonReportPanelHtml(options: {
 }): string {
   const safeTitle = escapeHtml(options.title);
   const safeUri = escapeHtml(options.reportWebviewUri);
+  const statusMarkup = renderComparisonReportPanelStatusMarkup(options);
+
+  return `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; frame-src ${escapeHtml(options.cspSource)} https:; style-src 'unsafe-inline';" />
+    <title>${safeTitle}</title>
+    <style>
+      body { font-family: var(--vscode-font-family); margin: 0; padding: 16px; background: var(--vscode-editor-background); color: var(--vscode-foreground); }
+      .status { margin-bottom: 12px; }
+      iframe { width: 100%; height: 80vh; border: 1px solid var(--vscode-panel-border); background: white; }
+    </style>
+  </head>
+  <body>
+    ${statusMarkup}
+    <iframe data-testid="comparison-report-panel-frame" src="${safeUri}" title="${safeTitle}"></iframe>
+  </body>
+</html>`;
+}
+
+async function renderGeneratedComparisonReportPanelHtml(options: {
+  title: string;
+  reportFilePath: string;
+  reportDirectoryWebviewUri: string;
+  reportStatus: 'ready-for-runtime' | 'blocked-preflight' | 'blocked-runtime';
+  runtimeExecutionState: 'not-run' | 'not-available' | 'succeeded' | 'failed';
+  blockedReason?: string;
+  runtimeFailureReason?: string;
+  runtimeDiagnosticReason?: string;
+  runtimeDiagnosticNotes?: string[];
+  runtimeDiagnosticLogSourcePath?: string;
+  runtimeDoctorSummaryLines?: string[];
+  runtimeProcessObservationArtifactPath?: string;
+  runtimeExecutable?: string;
+  runtimeArgs?: string[];
+  runtimeProcessObservationCapturedAt?: string;
+  runtimeProcessObservationTrigger?: string;
+  runtimeObservedProcessNames?: string[];
+  runtimeLabviewProcessObserved?: boolean;
+  runtimeLabviewCliProcessObserved?: boolean;
+  runtimeLvcompareProcessObserved?: boolean;
+  runtimeExitProcessObservationCapturedAt?: string;
+  runtimeExitProcessObservationTrigger?: string;
+  runtimeExitObservedProcessNames?: string[];
+  runtimeLabviewProcessObservedAtExit?: boolean;
+  runtimeLabviewCliProcessObservedAtExit?: boolean;
+  runtimeLvcompareProcessObservedAtExit?: boolean;
+  generatedReportExists: boolean;
+  cspSource: string;
+  readFile: typeof fs.readFile;
+}): Promise<string> {
+  const originalReportHtml = await options.readFile(options.reportFilePath, 'utf8');
+  const csp = [
+    "default-src 'none'",
+    `img-src ${options.cspSource} https: data:`,
+    `style-src ${options.cspSource} 'unsafe-inline'`,
+    `font-src ${options.cspSource} https: data:`
+  ].join('; ');
+  const headInjection = `<meta http-equiv="Content-Security-Policy" content="${escapeHtml(
+    csp
+  )}" /><base href="${escapeHtml(options.reportDirectoryWebviewUri)}" /><style>
+      body { margin: 0; background: white; }
+      .vihs-runtime-status { font-family: var(--vscode-font-family); margin: 0; padding: 16px; background: var(--vscode-editor-background); color: var(--vscode-foreground); border-bottom: 1px solid var(--vscode-panel-border); }
+      .vihs-runtime-status ul { margin: 4px 0 0 18px; }
+    </style>`;
+  const withHead = /<head\b[^>]*>/i.test(originalReportHtml)
+    ? originalReportHtml.replace(/<head\b[^>]*>/i, (match) => `${match}${headInjection}`)
+    : `<!DOCTYPE html><html><head><meta charset="UTF-8" />${headInjection}<title>${escapeHtml(
+        options.title
+      )}</title></head><body>${originalReportHtml}</body></html>`;
+  const statusMarkup = renderComparisonReportPanelStatusMarkup(options).replace(
+    'class="status"',
+    'class="status vihs-runtime-status"'
+  );
+
+  if (/<body\b[^>]*>/i.test(withHead)) {
+    return withHead.replace(/<body\b([^>]*)>/i, `<body$1>${statusMarkup}`);
+  }
+
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8" />${headInjection}<title>${escapeHtml(
+    options.title
+  )}</title></head><body>${statusMarkup}${withHead}</body></html>`;
+}
+
+function renderComparisonReportPanelStatusMarkup(options: {
+  reportStatus: 'ready-for-runtime' | 'blocked-preflight' | 'blocked-runtime';
+  runtimeExecutionState: 'not-run' | 'not-available' | 'succeeded' | 'failed';
+  blockedReason?: string;
+  runtimeFailureReason?: string;
+  runtimeDiagnosticReason?: string;
+  runtimeDiagnosticNotes?: string[];
+  runtimeDiagnosticLogSourcePath?: string;
+  runtimeDoctorSummaryLines?: string[];
+  runtimeProcessObservationArtifactPath?: string;
+  runtimeExecutable?: string;
+  runtimeArgs?: string[];
+  runtimeProcessObservationCapturedAt?: string;
+  runtimeProcessObservationTrigger?: string;
+  runtimeObservedProcessNames?: string[];
+  runtimeLabviewProcessObserved?: boolean;
+  runtimeLabviewCliProcessObserved?: boolean;
+  runtimeLvcompareProcessObserved?: boolean;
+  runtimeExitProcessObservationCapturedAt?: string;
+  runtimeExitProcessObservationTrigger?: string;
+  runtimeExitObservedProcessNames?: string[];
+  runtimeLabviewProcessObservedAtExit?: boolean;
+  runtimeLabviewCliProcessObservedAtExit?: boolean;
+  runtimeLvcompareProcessObservedAtExit?: boolean;
+  generatedReportExists: boolean;
+}): string {
   const blockedReasonMarkup = options.blockedReason
     ? `<div><strong>Blocked reason:</strong> ${escapeHtml(options.blockedReason)}</div>`
     : '';
@@ -505,20 +629,7 @@ export function renderComparisonReportPanelHtml(options: {
     options.runtimeLvcompareProcessObservedAtExit
   );
 
-  return `<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; frame-src ${escapeHtml(options.cspSource)} https:; style-src 'unsafe-inline';" />
-    <title>${safeTitle}</title>
-    <style>
-      body { font-family: var(--vscode-font-family); margin: 0; padding: 16px; background: var(--vscode-editor-background); color: var(--vscode-foreground); }
-      .status { margin-bottom: 12px; }
-      iframe { width: 100%; height: 80vh; border: 1px solid var(--vscode-panel-border); background: white; }
-    </style>
-  </head>
-  <body>
-    <div class="status" data-testid="comparison-report-panel-status">
+  return `<div class="status" data-testid="comparison-report-panel-status">
       <strong>Status:</strong> ${escapeHtml(options.reportStatus)}
       <br />
       <strong>Runtime execution:</strong> ${escapeHtml(options.runtimeExecutionState)}
@@ -545,10 +656,11 @@ export function renderComparisonReportPanelHtml(options: {
       ${observedLabviewAtExitMarkup}
       ${observedLabviewCliAtExitMarkup}
       ${observedLvcompareAtExitMarkup}
-    </div>
-    <iframe data-testid="comparison-report-panel-frame" src="${safeUri}" title="${safeTitle}"></iframe>
-  </body>
-</html>`;
+    </div>`;
+}
+
+function ensureTrailingSlash(value: string): string {
+  return value.endsWith('/') ? value : `${value}/`;
 }
 
 function escapeHtml(value: string): string {

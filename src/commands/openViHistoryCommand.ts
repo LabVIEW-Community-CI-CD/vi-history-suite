@@ -74,6 +74,141 @@ export function createOpenViHistoryCommand(
     const handleMessage = async (message: HistoryPanelMessage) => {
       const command = String(message.command ?? '');
       const hash = String(message.hash ?? '');
+      const isComparisonReportCapableVi =
+        model.signature === 'LVIN' || model.signature === 'LVCC';
+
+      const runComparisonReportCommand = async (actionCommand: string): Promise<void> => {
+        if (!comparisonReportAction) {
+          panelTracker?.recordAction({
+            command: actionCommand,
+            hash,
+            outcome: 'unsupported-command'
+          });
+          return;
+        }
+
+        const result = await runProgressWrappedAction(
+          'Generating VI Comparison Report',
+          (reportProgress, cancellationToken) =>
+            comparisonReportAction({
+              model,
+              selectedHash: hash,
+              reportProgress,
+              cancellationToken
+            })
+        );
+
+        if (result.outcome === 'cancelled') {
+          void vscode.window.showInformationMessage(
+            'VI History comparison report generation was cancelled. Retained comparison-report artifacts, if any, were preserved.'
+          );
+        } else if (result.outcome === 'workspace-untrusted') {
+          void vscode.window.showWarningMessage(
+            'VI History comparison reports are disabled in untrusted workspaces.'
+          );
+        } else if (result.outcome === 'missing-storage-uri') {
+          void vscode.window.showWarningMessage(
+            'VI History comparison reports require an open workspace so reports can be stored under workspace-scoped extension storage.'
+          );
+        } else if (result.outcome === 'missing-selected-commit') {
+          void vscode.window.showInformationMessage(
+            'VI History could not resolve the selected retained revision for report generation.'
+          );
+        } else if (result.outcome === 'missing-previous-hash') {
+          void vscode.window.showInformationMessage(
+            'VI History has no previous retained revision for this entry.'
+          );
+        }
+
+        const actionSummary: Parameters<HistoryPanelTracker['recordAction']>[0] = {
+          command: actionCommand,
+          hash,
+          outcome: result.outcome,
+          reportStatus: result.reportStatus,
+          runtimeExecutionState: result.runtimeExecutionState,
+          blockedReason: result.blockedReason,
+          runtimeFailureReason: result.runtimeFailureReason,
+          cancellationStage: result.cancellationStage,
+          packetFilePath: result.packetFilePath,
+          reportFilePath: result.reportFilePath,
+          metadataFilePath: result.metadataFilePath,
+          reportWebviewUri: result.reportWebviewUri,
+          generatedReportExists: result.generatedReportExists,
+          title: result.title
+        };
+        if (result.runtimeDiagnosticReason) {
+          actionSummary.runtimeDiagnosticReason = result.runtimeDiagnosticReason;
+        }
+        if (result.runtimeDiagnosticNotes?.length) {
+          actionSummary.runtimeDiagnosticNotes = result.runtimeDiagnosticNotes;
+        }
+        if (result.runtimeDiagnosticLogSourcePath) {
+          actionSummary.runtimeDiagnosticLogSourcePath =
+            result.runtimeDiagnosticLogSourcePath;
+        }
+        if (result.runtimeDiagnosticLogArtifactPath) {
+          actionSummary.runtimeDiagnosticLogArtifactPath =
+            result.runtimeDiagnosticLogArtifactPath;
+        }
+        if (result.runtimeExecutable) {
+          actionSummary.runtimeExecutable = result.runtimeExecutable;
+        }
+        if (result.runtimeArgs?.length) {
+          actionSummary.runtimeArgs = result.runtimeArgs;
+        }
+        if (result.runtimeProcessObservationArtifactPath) {
+          actionSummary.runtimeProcessObservationArtifactPath =
+            result.runtimeProcessObservationArtifactPath;
+        }
+        if (result.runtimeProcessObservationCapturedAt) {
+          actionSummary.runtimeProcessObservationCapturedAt =
+            result.runtimeProcessObservationCapturedAt;
+        }
+        if (result.runtimeProcessObservationTrigger) {
+          actionSummary.runtimeProcessObservationTrigger =
+            result.runtimeProcessObservationTrigger;
+        }
+        if (result.runtimeObservedProcessNames?.length) {
+          actionSummary.runtimeObservedProcessNames = result.runtimeObservedProcessNames;
+        }
+        if (result.runtimeLabviewProcessObserved !== undefined) {
+          actionSummary.runtimeLabviewProcessObserved =
+            result.runtimeLabviewProcessObserved;
+        }
+        if (result.runtimeLabviewCliProcessObserved !== undefined) {
+          actionSummary.runtimeLabviewCliProcessObserved =
+            result.runtimeLabviewCliProcessObserved;
+        }
+        if (result.runtimeLvcompareProcessObserved !== undefined) {
+          actionSummary.runtimeLvcompareProcessObserved =
+            result.runtimeLvcompareProcessObserved;
+        }
+        if (result.runtimeExitProcessObservationCapturedAt) {
+          actionSummary.runtimeExitProcessObservationCapturedAt =
+            result.runtimeExitProcessObservationCapturedAt;
+        }
+        if (result.runtimeExitProcessObservationTrigger) {
+          actionSummary.runtimeExitProcessObservationTrigger =
+            result.runtimeExitProcessObservationTrigger;
+        }
+        if (result.runtimeExitObservedProcessNames?.length) {
+          actionSummary.runtimeExitObservedProcessNames =
+            result.runtimeExitObservedProcessNames;
+        }
+        if (result.runtimeLabviewProcessObservedAtExit !== undefined) {
+          actionSummary.runtimeLabviewProcessObservedAtExit =
+            result.runtimeLabviewProcessObservedAtExit;
+        }
+        if (result.runtimeLabviewCliProcessObservedAtExit !== undefined) {
+          actionSummary.runtimeLabviewCliProcessObservedAtExit =
+            result.runtimeLabviewCliProcessObservedAtExit;
+        }
+        if (result.runtimeLvcompareProcessObservedAtExit !== undefined) {
+          actionSummary.runtimeLvcompareProcessObservedAtExit =
+            result.runtimeLvcompareProcessObservedAtExit;
+        }
+        panelTracker?.recordAction(actionSummary);
+      };
 
       if (command === 'copyReviewPacket') {
         const reviewPacket = renderHistoryReviewPacketText(model);
@@ -165,136 +300,12 @@ export function createOpenViHistoryCommand(
       }
 
       if (command === 'generateComparisonReport') {
-        if (!comparisonReportAction) {
-          panelTracker?.recordAction({
-            command,
-            hash,
-            outcome: 'unsupported-command'
-          });
-          return;
-        }
+        await runComparisonReportCommand(command);
+        return;
+      }
 
-        const result = await runProgressWrappedAction(
-          'Generating VI Comparison Report',
-          (reportProgress, cancellationToken) =>
-            comparisonReportAction({
-              model,
-              selectedHash: hash,
-              reportProgress,
-              cancellationToken
-            })
-        );
-
-        if (result.outcome === 'cancelled') {
-          void vscode.window.showInformationMessage(
-            'VI History comparison report generation was cancelled. Retained comparison-report artifacts, if any, were preserved.'
-          );
-        } else if (result.outcome === 'workspace-untrusted') {
-          void vscode.window.showWarningMessage(
-            'VI History comparison reports are disabled in untrusted workspaces.'
-          );
-        } else if (result.outcome === 'missing-storage-uri') {
-          void vscode.window.showWarningMessage(
-            'VI History comparison reports require an open workspace so reports can be stored under workspace-scoped extension storage.'
-          );
-        } else if (result.outcome === 'missing-selected-commit') {
-          void vscode.window.showInformationMessage(
-            'VI History could not resolve the selected retained revision for report generation.'
-          );
-        } else if (result.outcome === 'missing-previous-hash') {
-          void vscode.window.showInformationMessage(
-            'VI History has no previous retained revision for this entry.'
-          );
-        }
-
-        const actionSummary: Parameters<HistoryPanelTracker['recordAction']>[0] = {
-          command,
-          hash,
-          outcome: result.outcome,
-          reportStatus: result.reportStatus,
-          runtimeExecutionState: result.runtimeExecutionState,
-          blockedReason: result.blockedReason,
-          runtimeFailureReason: result.runtimeFailureReason,
-          cancellationStage: result.cancellationStage,
-          packetFilePath: result.packetFilePath,
-          reportFilePath: result.reportFilePath,
-          metadataFilePath: result.metadataFilePath,
-          reportWebviewUri: result.reportWebviewUri,
-          generatedReportExists: result.generatedReportExists,
-          title: result.title
-        };
-        if (result.runtimeDiagnosticReason) {
-          actionSummary.runtimeDiagnosticReason = result.runtimeDiagnosticReason;
-        }
-        if (result.runtimeDiagnosticNotes?.length) {
-          actionSummary.runtimeDiagnosticNotes = result.runtimeDiagnosticNotes;
-        }
-        if (result.runtimeDiagnosticLogSourcePath) {
-          actionSummary.runtimeDiagnosticLogSourcePath =
-            result.runtimeDiagnosticLogSourcePath;
-        }
-        if (result.runtimeDiagnosticLogArtifactPath) {
-          actionSummary.runtimeDiagnosticLogArtifactPath =
-            result.runtimeDiagnosticLogArtifactPath;
-        }
-        if (result.runtimeExecutable) {
-          actionSummary.runtimeExecutable = result.runtimeExecutable;
-        }
-        if (result.runtimeArgs?.length) {
-          actionSummary.runtimeArgs = result.runtimeArgs;
-        }
-        if (result.runtimeProcessObservationArtifactPath) {
-          actionSummary.runtimeProcessObservationArtifactPath =
-            result.runtimeProcessObservationArtifactPath;
-        }
-        if (result.runtimeProcessObservationCapturedAt) {
-          actionSummary.runtimeProcessObservationCapturedAt =
-            result.runtimeProcessObservationCapturedAt;
-        }
-        if (result.runtimeProcessObservationTrigger) {
-          actionSummary.runtimeProcessObservationTrigger =
-            result.runtimeProcessObservationTrigger;
-        }
-        if (result.runtimeObservedProcessNames?.length) {
-          actionSummary.runtimeObservedProcessNames = result.runtimeObservedProcessNames;
-        }
-        if (result.runtimeLabviewProcessObserved !== undefined) {
-          actionSummary.runtimeLabviewProcessObserved =
-            result.runtimeLabviewProcessObserved;
-        }
-        if (result.runtimeLabviewCliProcessObserved !== undefined) {
-          actionSummary.runtimeLabviewCliProcessObserved =
-            result.runtimeLabviewCliProcessObserved;
-        }
-        if (result.runtimeLvcompareProcessObserved !== undefined) {
-          actionSummary.runtimeLvcompareProcessObserved =
-            result.runtimeLvcompareProcessObserved;
-        }
-        if (result.runtimeExitProcessObservationCapturedAt) {
-          actionSummary.runtimeExitProcessObservationCapturedAt =
-            result.runtimeExitProcessObservationCapturedAt;
-        }
-        if (result.runtimeExitProcessObservationTrigger) {
-          actionSummary.runtimeExitProcessObservationTrigger =
-            result.runtimeExitProcessObservationTrigger;
-        }
-        if (result.runtimeExitObservedProcessNames?.length) {
-          actionSummary.runtimeExitObservedProcessNames =
-            result.runtimeExitObservedProcessNames;
-        }
-        if (result.runtimeLabviewProcessObservedAtExit !== undefined) {
-          actionSummary.runtimeLabviewProcessObservedAtExit =
-            result.runtimeLabviewProcessObservedAtExit;
-        }
-        if (result.runtimeLabviewCliProcessObservedAtExit !== undefined) {
-          actionSummary.runtimeLabviewCliProcessObservedAtExit =
-            result.runtimeLabviewCliProcessObservedAtExit;
-        }
-        if (result.runtimeLvcompareProcessObservedAtExit !== undefined) {
-          actionSummary.runtimeLvcompareProcessObservedAtExit =
-            result.runtimeLvcompareProcessObservedAtExit;
-        }
-        panelTracker?.recordAction(actionSummary);
+      if (command === 'diffPrevious' && comparisonReportAction && isComparisonReportCapableVi) {
+        await runComparisonReportCommand(command);
         return;
       }
 

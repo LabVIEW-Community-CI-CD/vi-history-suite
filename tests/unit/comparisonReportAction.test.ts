@@ -489,6 +489,9 @@ describe('comparisonReportAction', () => {
           reportFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
           metadataFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-metadata.json'
         }),
+        readFile: vi
+          .fn()
+          .mockResolvedValue('<html><head></head><body><img src="diff-report-foo.vi_files/fp_1.png" /></body></html>'),
         archiveComparisonReportSource: vi.fn().mockResolvedValue(undefined)
       }
     );
@@ -622,6 +625,9 @@ describe('comparisonReportAction', () => {
           reportFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
           metadataFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-metadata.json'
         }),
+        readFile: vi
+          .fn()
+          .mockResolvedValue('<html><head><link href="diff-report-foo.vi_files/support/style.css" rel="stylesheet" /></head><body><img src="diff-report-foo.vi_files/fp_1.png" /></body></html>'),
         archiveComparisonReportSource: vi.fn().mockResolvedValue(undefined)
       }
     );
@@ -656,11 +662,12 @@ describe('comparisonReportAction', () => {
 
     const panel = createWebviewPanelMock.mock.results.at(-1)?.value as MockPanel;
     expect(panel.webview.html).toContain(
-      'src="webview:/webview/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html"'
+      '<base href="webview:/webview/workspace/.storage/reports/repoid123456/fileid123456/" />'
     );
-    expect(panel.webview.html).not.toContain(
-      'src="webview:/webview/workspace/.storage/reports/repoid123456/fileid123456/report-packet.html"'
+    expect(panel.webview.html).toContain(
+      '<img src="diff-report-foo.vi_files/fp_1.png" />'
     );
+    expect(panel.webview.html).not.toContain('data-testid="comparison-report-panel-frame"');
   });
 
   it('retains partial comparison-report evidence when cancellation is requested after packet persistence', async () => {
@@ -1491,6 +1498,9 @@ describe('comparisonReportAction', () => {
           reportFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
           metadataFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-metadata.json'
         }),
+        readFile: vi
+          .fn()
+          .mockResolvedValue('<html><head></head><body><img src="diff-report-foo.vi_files/fp_1.png" /></body></html>'),
         executeComparisonReport
       }
     );

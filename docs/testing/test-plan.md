@@ -677,12 +677,15 @@
   repository-scoped processed/total counts truthful across multi-repository
   refreshes
 - `TEST-UNIT-196`: prove the live comparison-report panel frames the retained
-  NI-generated HTML report directly when one exists, while blocked or no-report
-  cases still open the governed packet artifact
+  NI-generated HTML report directly inside the webview when one exists, while
+  blocked or no-report cases still open the governed packet artifact
 - `TEST-UNIT-197`: prove the eligibility indexer ignores Git repositories and
   repository-state listeners that are outside the current workspace scope
 - `TEST-UNIT-198`: prove the eligibility indexer coalesces refresh requests
   that arrive while a refresh is already running into one follow-up pass
+- `TEST-UNIT-199`: prove `diffPrevious` routes content-detected VI items
+  through the governed comparison-report action when available instead of
+  invoking VS Code text diff on binary content
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

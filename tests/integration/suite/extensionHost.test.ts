@@ -201,13 +201,11 @@ async function testPanelOpenFlow(
   assert.ok(diffAction);
   assert.equal(diffAction.command, 'diffPrevious');
   assert.equal(diffAction.hash, selectedCommit.hash);
-  assert.equal(diffAction.outcome, 'diffed-previous');
-  assert.match(diffAction.leftUri ?? '', /^git:/);
-  assert.match(diffAction.rightUri ?? '', /^git:/);
-  assert.match(
-    diffAction.title ?? '',
-    /^eligible-content-detected\.bin \([0-9a-f]{8}\.\.[0-9a-f]{8}\)$/
-  );
+  assert.equal(diffAction.outcome, 'opened-comparison-report');
+  assert.match(diffAction.title ?? '', /^VI Comparison Report:/);
+  assert.match(diffAction.reportFilePath ?? '', /diff-report-eligible-content-detected\.bin\.html$/);
+  assert.match(diffAction.metadataFilePath ?? '', /report-metadata\.json$/);
+  assert.ok(diffAction.reportWebviewUri);
   assert.equal(api.getPanelActionCount(), 4);
 
   await api.dispatchLastPanelMessage({
