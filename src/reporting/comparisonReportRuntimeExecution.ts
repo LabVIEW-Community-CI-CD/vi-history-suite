@@ -992,7 +992,7 @@ function buildWindowsPowerShellArrayLiteral(values: string[]): string {
   return `@(${values.map((value) => quotePowerShellLiteral(value)).join(', ')})`;
 }
 
-function buildWindowsContainerLabviewCliScript(
+export function buildWindowsContainerLabviewCliScript(
   executable: string,
   args: string[],
   labviewPath?: string
@@ -1214,7 +1214,7 @@ export function resolveHostReadableDiagnosticPath(
   return normalizeWindowsInteropExecutable(diagnosticLogPath);
 }
 
-function resolveMappedRuntimeDiagnosticPath(
+export function resolveMappedRuntimeDiagnosticPath(
   diagnosticLogPath: string,
   diagnosticPathMapping?: RuntimeDiagnosticPathMapping
 ): string | undefined {
@@ -1454,7 +1454,7 @@ function buildProcessObservationNotes(
   return notes;
 }
 
-function extractCommandOptionValue(args: string[], optionName: string): string | undefined {
+export function extractCommandOptionValue(args: string[], optionName: string): string | undefined {
   for (let index = 0; index < args.length - 1; index += 1) {
     if (args[index] === optionName) {
       const value = args[index + 1]?.trim();

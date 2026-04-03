@@ -495,6 +495,17 @@
   insufficient-commits informational message and records
   `insufficient-dashboard-commits` when the dashboard action returns
   `insufficient-commits`
+- `TEST-UNIT-144`: prove runtime diagnostic-path mapping fails closed when no
+  mapping exists or when the diagnostic path or governed runtime root cannot
+  be normalized into comparable Windows paths
+- `TEST-UNIT-145`: prove governed command-option extraction ignores blank
+  option values and only returns nonblank overrides for runtime diagnosis
+- `TEST-UNIT-146`: prove Windows-path normalization returns `undefined` for
+  blank inputs while preserving valid Windows and `/mnt/<drive>/...` path
+  normalization behavior
+- `TEST-UNIT-147`: prove the Windows-container LabVIEW CLI script builder
+  emits `$labviewPath = $null` for blank governed LabVIEW paths and emits the
+  quoted explicit path only for nonblank input
 - `TEST-DOC-014`: review the queue, epic, ADR, and current-state surfaces to
   prove the future-facing dashboard research was normalized into governed repo
   control-plane artifacts and the incoming research artifact was deleted

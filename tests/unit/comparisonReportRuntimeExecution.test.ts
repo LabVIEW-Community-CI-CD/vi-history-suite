@@ -7,9 +7,11 @@ import * as path from 'node:path';
 
 import {
   classifyLabviewCliDiagnosticText,
+  buildWindowsContainerLabviewCliScript,
   defaultNowIso,
   defaultNowMs,
   executeComparisonReport,
+  extractCommandOptionValue,
   normalizeWindowsInteropExecutable,
   normalizeWindowsInteropPath,
   normalizeComparisonProcessError,
@@ -18,6 +20,7 @@ import {
   parseWindowsTasklistCsv,
   pathExistsForReport,
   resolveHostReadableDiagnosticPath,
+  resolveMappedRuntimeDiagnosticPath,
   rewriteLabviewCliArgsForContainerWorkspace,
   rewriteLvcompareArgsForContainerWorkspace,
   requiresWindowsInterop,
@@ -1295,6 +1298,7 @@ describe('comparisonReportRuntimeExecution', () => {
     );
     expect(normalizeWindowsInteropPath('/mnt/c/')).toBe('C:\\');
     expect(normalizeWindowsInteropPath('/home/sveld/not-windows')).toBeUndefined();
+    expect(normalizeWindowsInteropPath('   ')).toBeUndefined();
     expect(
       normalizeWindowsInteropExecutable('C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe')
     ).toBe('/mnt/c/Program Files/National Instruments/Shared/LabVIEW CLI/LabVIEWCLI.exe');
@@ -1377,6 +1381,56 @@ describe('comparisonReportRuntimeExecution', () => {
         }
       )
     ).toBeUndefined();
+  });
+
+  it('fails closed for unmapped or non-normalizable diagnostic-path inputs', () => {
+    expect(resolveMappedRuntimeDiagnosticPath('C:\\temp\\lvtemporary_123.log')).toBeUndefined();
+    expect(
+      resolveMappedRuntimeDiagnosticPath('   ', {
+        runtimeRoot: 'C:\\vi-history-suite\\container-temp',
+        hostRoot: '/workspace/.interop/container-temp'
+      })
+    ).toBeUndefined();
+    expect(
+      resolveMappedRuntimeDiagnosticPath('C:\\vi-history-suite\\container-temp\\logs\\lvtemporary_123.log', {
+        runtimeRoot: '   ',
+        hostRoot: '/workspace/.interop/container-temp'
+      })
+    ).toBeUndefined();
+  });
+
+  it('ignores blank command-option values when extracting governed runtime overrides', () => {
+    expect(
+      extractCommandOptionValue(
+        ['-OperationName', 'CreateComparisonReport', '-LabVIEWPath', '   ', '-Headless', 'true'],
+        '-LabVIEWPath'
+      )
+    ).toBeUndefined();
+    expect(
+      extractCommandOptionValue(
+        ['-OperationName', 'CreateComparisonReport', '-LabVIEWPath', 'C:\\LabVIEW\\LabVIEW.exe'],
+        '-LabVIEWPath'
+      )
+    ).toBe('C:\\LabVIEW\\LabVIEW.exe');
+  });
+
+  it('nulls the governed LabVIEW path in the container CLI script when no usable path is provided', () => {
+    expect(
+      buildWindowsContainerLabviewCliScript(
+        'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+        ['-OperationName', 'CreateComparisonReport'],
+        '   '
+      )
+    ).toContain('$labviewPath = $null');
+    expect(
+      buildWindowsContainerLabviewCliScript(
+        'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+        ['-OperationName', 'CreateComparisonReport'],
+        'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe'
+      )
+    ).toContain(
+      "$labviewPath = 'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe'"
+    );
   });
 
   it('retains an explicit launch-success note when the NI diagnostic log confirms LabVIEW launched', () => {

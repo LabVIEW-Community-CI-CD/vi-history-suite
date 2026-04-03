@@ -92,6 +92,8 @@ Committed and governed today:
   selection and runtime execution
 - governed dashboard refusal handling for missing workspace storage and
   insufficient retained commits on the history command surface
+- governed runtime diagnostic-path fail-closed behavior and blank
+  `-LabVIEWPath` override handling in the executor/runtime-doctor path
 - pairwise dashboard-source archiving so multiple report attempts for one VI can
   coexist without overwriting
 - concentrated dashboard JSON and HTML packets that recollect retained VI
