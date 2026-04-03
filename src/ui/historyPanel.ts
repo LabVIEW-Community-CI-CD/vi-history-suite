@@ -1,28 +1,41 @@
-import { ViHistoryCommit, ViHistoryViewModel } from '../services/viHistoryModel';
+import {
+  ViHistoryCommit,
+  ViHistorySurfaceCapabilities,
+  ViHistoryViewModel
+} from '../services/viHistoryModel';
 
 export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
+  const capabilities = model.surfaceCapabilities ?? {};
   const newestCommit = model.commits[0];
   const oldestCommit = model.commits[model.commits.length - 1];
   const dashboardButton =
-    model.commits.length >= 3
+    capabilities.dashboardAvailable !== false && model.commits.length >= 3
       ? '<button data-testid="history-action-dashboard" data-command="openDashboard">Open dashboard</button>'
       : '<button data-testid="history-action-dashboard" disabled>Open dashboard</button>';
   const documentationButton =
-    '<button data-testid="history-action-documentation" data-command="openDocumentation" data-page-id="user-workflow">Open docs</button>';
+    capabilities.documentationAvailable !== false
+      ? '<button data-testid="history-action-documentation" data-command="openDocumentation" data-page-id="user-workflow">Open docs</button>'
+      : '<button data-testid="history-action-documentation" disabled>Open docs</button>';
   const decisionRecordButton =
-    model.commits.length >= 3
+    capabilities.decisionRecordAvailable !== false && model.commits.length >= 3
       ? '<button data-testid="history-action-decision-record" data-command="createDecisionRecord">Create decision record</button>'
       : '<button data-testid="history-action-decision-record" disabled>Create decision record</button>';
+  const capabilitySummary = renderCapabilitySummary(capabilities, model.commits.length);
   const rows = model.commits
     .map((commit: ViHistoryCommit, index: number) => {
       const hasRetainedComparisonEvidence = commit.retainedComparisonEvidenceAvailable === true;
-      const diffButton = commit.previousHash && hasRetainedComparisonEvidence
+      const diffButton =
+        commit.previousHash &&
+        hasRetainedComparisonEvidence &&
+        capabilities.retainedComparisonOpenAvailable !== false
         ? `<button data-testid="history-action-diff" data-command="diffPrevious" data-hash="${escapeHtml(commit.hash)}">Open compare</button>`
         : '<button data-testid="history-action-diff" disabled>Open compare</button>';
       const reportActionLabel = hasRetainedComparisonEvidence
         ? 'Refresh compare'
         : 'Generate compare';
-      const reportButton = commit.previousHash
+      const reportButton =
+        commit.previousHash &&
+        capabilities.comparisonGenerationAvailable !== false
         ? `<button data-testid="history-action-report" data-command="generateComparisonReport" data-hash="${escapeHtml(commit.hash)}">${reportActionLabel}</button>`
         : `<button data-testid="history-action-report" disabled>${reportActionLabel}</button>`;
       const compareBase = commit.previousHash
@@ -145,6 +158,13 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
       <div data-testid="history-meta-path"><strong>Path:</strong> ${escapeHtml(model.relativePath)}</div>
       <div data-testid="history-meta-surface"><strong>Surface:</strong> VI History</div>
     </div>
+    <div class="packet" data-testid="history-surface-capabilities">
+      <div data-testid="history-capability-comparison"><strong>Compare generation:</strong> ${capabilitySummary.comparisonGeneration}</div>
+      <div data-testid="history-capability-open-compare"><strong>Open compare:</strong> ${capabilitySummary.openCompare}</div>
+      <div data-testid="history-capability-dashboard"><strong>Dashboard:</strong> ${capabilitySummary.dashboard}</div>
+      <div data-testid="history-capability-decision-record"><strong>Decision record:</strong> ${capabilitySummary.decisionRecord}</div>
+      <div data-testid="history-capability-documentation"><strong>Documentation:</strong> ${capabilitySummary.documentation}</div>
+    </div>
     <div class="limitations" data-testid="history-binary-limitations">
       <strong>Binary review limits:</strong> Git-backed LabVIEW VI revisions are binary artifacts. This surface retains chronology and commit facts; pairwise compare actions use retained NI comparison-report evidence and installed tooling instead of plain text diff.
     </div>
@@ -152,11 +172,11 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
       <strong>Reviewer guidance:</strong>
       <ol>
         <li data-testid="history-guidance-step">Use the newest/oldest packet to confirm the retained review window before acting on a specific revision.</li>
-        <li data-testid="history-guidance-step">Use the compare pair in each row to see exactly which retained base revision an <code>Open compare</code> action targets once retained pair evidence exists.</li>
+        <li data-testid="history-guidance-step">Use the compare pair in each row to see exactly which retained base revision an <code>Open compare</code> action targets once retained pair evidence exists and retained compare opening is available in this build.</li>
         <li data-testid="history-guidance-step">Use <code>Open docs</code> to open the bundled user documentation that ships with this installed extension version instead of leaving VS Code for repo-hosted docs.</li>
-        <li data-testid="history-guidance-step">Use <code>Open dashboard</code> when the retained window has at least three commits and you want concentrated comparison-report evidence in one place.</li>
-        <li data-testid="history-guidance-step">Use <code>Create decision record</code> when you want to retain a separate human review outcome from the current VI review evidence without mutating the machine-generated dashboard packet.</li>
-        <li data-testid="history-guidance-step">Use <code>Generate compare</code> when a pair has no retained evidence yet, and <code>Refresh compare</code> when you want to update already-retained evidence for that pair.</li>
+        <li data-testid="history-guidance-step">Use <code>Open dashboard</code> when the retained window has at least three commits, dashboard review is available in this build, and you want concentrated comparison-report evidence in one place.</li>
+        <li data-testid="history-guidance-step">Use <code>Create decision record</code> when decision-record support is available in this build and you want to retain a separate human review outcome from the current VI review evidence without mutating the machine-generated dashboard packet.</li>
+        <li data-testid="history-guidance-step">Use <code>Generate compare</code> when a pair has no retained evidence yet, and <code>Refresh compare</code> when you want to update already-retained evidence for that pair, but only when comparison generation is available in this build.</li>
       </ol>
     </div>
     <div class="confidence" data-testid="history-confidence-scope">
@@ -258,4 +278,42 @@ function renderCommitSummary(commit: ViHistoryCommit | undefined): string {
   }
 
   return `${escapeHtml(commit.hash.slice(0, 8))} · ${escapeHtml(commit.authorDate)} · ${escapeHtml(commit.authorName)}`;
+}
+
+function renderCapabilitySummary(
+  capabilities: ViHistorySurfaceCapabilities,
+  commitCount: number
+): {
+  comparisonGeneration: string;
+  openCompare: string;
+  dashboard: string;
+  decisionRecord: string;
+  documentation: string;
+} {
+  return {
+    comparisonGeneration:
+      capabilities.comparisonGenerationAvailable === false
+        ? 'Unavailable in this build'
+        : 'Available for retained pairs that have a base revision',
+    openCompare:
+      capabilities.retainedComparisonOpenAvailable === false
+        ? 'Unavailable in this build'
+        : 'Available once retained pair evidence exists',
+    dashboard:
+      capabilities.dashboardAvailable === false
+        ? 'Unavailable in this build'
+        : commitCount >= 3
+          ? 'Available for this retained review window'
+          : 'Available when the retained review window reaches at least three commits',
+    decisionRecord:
+      capabilities.decisionRecordAvailable === false
+        ? 'Unavailable in this build'
+        : commitCount >= 3
+          ? 'Available for this retained review window'
+          : 'Available when the retained review window reaches at least three commits',
+    documentation:
+      capabilities.documentationAvailable === false
+        ? 'Unavailable in this build'
+        : 'Available in this build'
+  };
 }

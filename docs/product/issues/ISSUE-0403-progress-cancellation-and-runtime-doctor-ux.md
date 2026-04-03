@@ -69,6 +69,10 @@ requiring raw-log inspection.
   built dashboard artifact paths instead of opening the panel after user
   cancellation
 - stable informational cancellation surfaces on the history panel command flow
+- capability-truthful history-panel action rendering now disables optional
+  compare/dashboard/docs/decision controls when the current build does not wire
+  those surfaces and renders an explicit installed action-surface availability
+  packet
 - governed dashboard artifact action validation for malformed messages,
   storage-root targets, and kind/path mismatches
 - cancellable eligibility refresh that preserves the previous eligible-path

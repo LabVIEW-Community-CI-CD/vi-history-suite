@@ -85,6 +85,17 @@ export function createOpenViHistoryCommand(
     }
 
     const loadedModel = await historyService.load(targetUri);
+    const isComparisonReportCapableVi =
+      loadedModel.signature === 'LVIN' || loadedModel.signature === 'LVCC';
+    const surfaceCapabilities = {
+      comparisonGenerationAvailable:
+        isComparisonReportCapableVi && comparisonReportAction !== undefined,
+      retainedComparisonOpenAvailable:
+        isComparisonReportCapableVi && openRetainedComparisonReportAction !== undefined,
+      dashboardAvailable: multiReportDashboardAction !== undefined,
+      decisionRecordAvailable: reviewDecisionRecordAction !== undefined,
+      documentationAvailable: openDocumentationAction !== undefined
+    };
     const model = hasRetainedComparisonReport
       ? {
           ...loadedModel,
@@ -99,9 +110,13 @@ export function createOpenViHistoryCommand(
                   })
                 : false
             }))
-          )
+          ),
+          surfaceCapabilities
         }
-      : loadedModel;
+      : {
+          ...loadedModel,
+          surfaceCapabilities
+        };
     const renderedHtml = renderHistoryPanelHtml(model);
     const panel = vscode.window.createWebviewPanel(
       'viHistorySuite.history',
@@ -116,9 +131,6 @@ export function createOpenViHistoryCommand(
     const handleMessage = async (message: HistoryPanelMessage) => {
       const command = String(message.command ?? '');
       const hash = String(message.hash ?? '');
-      const isComparisonReportCapableVi =
-        model.signature === 'LVIN' || model.signature === 'LVCC';
-
       const recordComparisonResult = (
         actionCommand: string,
         hashValue: string,

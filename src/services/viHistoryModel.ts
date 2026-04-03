@@ -15,6 +15,14 @@ export interface ViHistoryCommit extends GitHistoryEntry {
   retainedComparisonEvidenceAvailable?: boolean;
 }
 
+export interface ViHistorySurfaceCapabilities {
+  comparisonGenerationAvailable?: boolean;
+  retainedComparisonOpenAvailable?: boolean;
+  dashboardAvailable?: boolean;
+  decisionRecordAvailable?: boolean;
+  documentationAvailable?: boolean;
+}
+
 export interface ViHistoryViewModel {
   repositoryName: string;
   repositoryRoot: string;
@@ -22,6 +30,7 @@ export interface ViHistoryViewModel {
   signature: ViSignature | 'unknown';
   eligible: boolean;
   commits: ViHistoryCommit[];
+  surfaceCapabilities?: ViHistorySurfaceCapabilities;
 }
 
 export interface ViHistoryModelOptions {

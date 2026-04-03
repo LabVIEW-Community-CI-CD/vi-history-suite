@@ -57,6 +57,12 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('data-testid="history-confidence-rating"');
     expect(html).toContain('data-testid="history-scope-included"');
     expect(html).toContain('data-testid="history-scope-excluded"');
+    expect(html).toContain('data-testid="history-surface-capabilities"');
+    expect(html).toContain('data-testid="history-capability-comparison"');
+    expect(html).toContain('data-testid="history-capability-open-compare"');
+    expect(html).toContain('data-testid="history-capability-dashboard"');
+    expect(html).toContain('data-testid="history-capability-decision-record"');
+    expect(html).toContain('data-testid="history-capability-documentation"');
     expect(html).toContain('data-testid="history-row"');
     expect(html).toContain('data-testid="history-compare-base"');
     expect(html).toContain('data-testid="history-compare-pair"');
@@ -75,16 +81,21 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('Local Git history, tracked-file status, and content-detected VI signature checks.');
     expect(html).toContain('Direct local evidence for chronology, path provenance, retained hashes, and retained compare pairing.');
     expect(html).toContain('Repository/path facts, retained commit chronology, selected-versus-base pairing, compare-pair summaries, and dashboard availability.');
+    expect(html).toContain('Compare generation:</strong> Available for retained pairs that have a base revision');
+    expect(html).toContain('Open compare:</strong> Available once retained pair evidence exists');
+    expect(html).toContain('Dashboard:</strong> Available when the retained review window reaches at least three commits');
+    expect(html).toContain('Decision record:</strong> Available when the retained review window reaches at least three commits');
+    expect(html).toContain('Documentation:</strong> Available in this build');
     expect(html).toContain('Needs external comparison tooling:');
     expect(html).toContain('Binary semantic differences, visual or cosmetic change detection, and NI comparison-report output.');
     expect(html).toContain('Selected:</strong> <code>abcdef12</code>');
     expect(html).toContain('vs base:</strong> <code>11111111</code>');
-    expect(html).toContain('Open compare</code> action targets once retained pair evidence exists.');
+    expect(html).toContain('Open compare</code> action targets once retained pair evidence exists and retained compare opening is available in this build.');
     expect(html).toContain('Generate compare</code> when a pair has no retained evidence yet');
     expect(html).toContain('Refresh compare</code> when you want to update already-retained evidence');
     expect(html).toContain('Open docs</code> to open the bundled user documentation');
     expect(html).toContain(
-      'Create decision record</code> when you want to retain a separate human review outcome'
+      'Create decision record</code> when decision-record support is available in this build and you want to retain a separate human review outcome'
     );
   });
 
@@ -118,6 +129,57 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('data-command="generateComparisonReport" data-hash="abcdef1234567890">Refresh compare</button>');
     expect(html).toContain('data-testid="history-action-report" disabled>Generate compare</button>');
     expect(html).toContain('data-testid="history-action-decision-record" disabled');
+  });
+
+  it('renders capability-truthful disabled actions when optional surfaces are unavailable in this build', () => {
+    const html = renderHistoryPanelHtml({
+      repositoryName: 'labview-icon-editor',
+      repositoryRoot: '/tmp/labview-icon-editor',
+      relativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+      signature: 'LVIN',
+      eligible: true,
+      surfaceCapabilities: {
+        comparisonGenerationAvailable: false,
+        retainedComparisonOpenAvailable: false,
+        dashboardAvailable: false,
+        decisionRecordAvailable: false,
+        documentationAvailable: false
+      },
+      commits: [
+        {
+          hash: 'abcdef1234567890',
+          authorDate: '2026-04-02T00:00:00Z',
+          authorName: 'A User',
+          subject: 'Improve deployment behavior',
+          previousHash: '1111111122222222',
+          retainedComparisonEvidenceAvailable: true
+        },
+        {
+          hash: '1111111122222222',
+          authorDate: '2026-04-01T00:00:00Z',
+          authorName: 'B User',
+          subject: 'Older deployment behavior',
+          previousHash: '3333333344444444'
+        },
+        {
+          hash: '3333333344444444',
+          authorDate: '2026-03-31T00:00:00Z',
+          authorName: 'C User',
+          subject: 'Initial deployment behavior'
+        }
+      ]
+    });
+
+    expect(html).toContain('data-testid="history-action-documentation" disabled');
+    expect(html).toContain('data-testid="history-action-dashboard" disabled');
+    expect(html).toContain('data-testid="history-action-decision-record" disabled');
+    expect(html).toContain('data-testid="history-action-diff" disabled');
+    expect(html).toContain('data-testid="history-action-report" disabled>Refresh compare</button>');
+    expect(html).toContain('Compare generation:</strong> Unavailable in this build');
+    expect(html).toContain('Open compare:</strong> Unavailable in this build');
+    expect(html).toContain('Dashboard:</strong> Unavailable in this build');
+    expect(html).toContain('Decision record:</strong> Unavailable in this build');
+    expect(html).toContain('Documentation:</strong> Unavailable in this build');
   });
 
   it('renders a portable factual review packet', () => {

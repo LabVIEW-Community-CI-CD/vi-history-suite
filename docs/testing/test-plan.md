@@ -812,6 +812,12 @@
 - `TEST-UNIT-226`: verify the retained design-gate verifier fails closed for
   running retained reports and succeeds only for completed passing retained
   reports
+- `TEST-UNIT-227`: verify the history panel disables optional compare,
+  dashboard, decision-record, and documentation actions when the current build
+  does not wire those surfaces
+- `TEST-UNIT-228`: verify the history panel renders a stable installed
+  action-surface availability packet for compare generation, retained compare
+  opening, dashboard review, decision records, and documentation
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed product, wiki, and assurance-skill repos with authority roles,
   expected remotes, and primary entrypoints
