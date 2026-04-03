@@ -553,6 +553,12 @@
 - `TEST-UNIT-164`: prove the comparison-report archive writer skips missing
   runtime artifacts while still writing the pair-scoped source record and other
   existing copied artifacts
+- `TEST-UNIT-165`: prove a requested runtime-engine override that already
+  matches the retained runtime engine is treated as a no-op and preserves the
+  original runtime-selection object
+- `TEST-UNIT-166`: prove the canonical comparison-report smoke runner fails
+  closed with `requested-labview-cli-not-available` when `labview-cli` is
+  requested but no governed LabVIEW CLI executable is available
 - `TEST-DOC-014`: review the queue, epic, ADR, and current-state surfaces to
   prove the future-facing dashboard research was normalized into governed repo
   control-plane artifacts and the incoming research artifact was deleted

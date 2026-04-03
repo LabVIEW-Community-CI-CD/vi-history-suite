@@ -133,6 +133,7 @@ describe('harness report smoke renderers', () => {
     };
 
     expect(applyRuntimeEngineOverride(runtimeSelection, undefined)).toBe(runtimeSelection);
+    expect(applyRuntimeEngineOverride(runtimeSelection, 'labview-cli')).toBe(runtimeSelection);
     expect(applyRuntimeEngineOverride(runtimeSelection, 'lvcompare')).toMatchObject({
       provider: 'host-native',
       engine: 'lvcompare',
@@ -164,6 +165,20 @@ describe('harness report smoke renderers', () => {
       provider: 'unavailable',
       engine: undefined,
       blockedReason: 'requested-lvcompare-not-available'
+    });
+    expect(
+      applyRuntimeEngineOverride(
+        {
+          ...runtimeSelection,
+          engine: 'lvcompare',
+          labviewCli: undefined
+        },
+        'labview-cli'
+      )
+    ).toMatchObject({
+      provider: 'unavailable',
+      engine: undefined,
+      blockedReason: 'requested-labview-cli-not-available'
     });
   });
 });
