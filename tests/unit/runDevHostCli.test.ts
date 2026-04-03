@@ -125,6 +125,35 @@ describe('runDevHostCli', () => {
     expect(writes.join('')).toContain('fixtures/eligible-dev-loop.vi');
   });
 
+  it('prepares an explicitly requested relative workspace path without resolving Code.exe', async () => {
+    const writes: string[] = [];
+    const prepareFixtureWorkspace = vi.fn().mockResolvedValue({
+      workspacePath: path.resolve('relative-dev-workspace'),
+      eligibleRelativePath: 'fixtures/eligible-dev-loop.vi',
+      ineligibleRelativePath: 'fixtures/ineligible-dev-loop.bin',
+      metadataPath: path.resolve('relative-dev-workspace/.vihs-dev-host-meta.json')
+    });
+    const resolveCodeExecutablePath = vi.fn();
+
+    await expect(
+      runDevHostCli(['--workspace-path', 'relative-dev-workspace', '--prepare-workspace-only'], {
+        repoRoot: '/workspace/vi-history-suite',
+        resolveRuntimeRoot: async () => '/tmp/vihs-dev-host',
+        resolveCodeExecutablePath,
+        prepareFixtureWorkspace,
+        stdout: {
+          write(text: string) {
+            writes.push(text);
+          }
+        }
+      })
+    ).resolves.toBe('prepared');
+
+    expect(resolveCodeExecutablePath).not.toHaveBeenCalled();
+    expect(prepareFixtureWorkspace).toHaveBeenCalledWith('/tmp/vihs-dev-host/workspace-fixture');
+    expect(writes.join('')).toContain(path.resolve('relative-dev-workspace'));
+  });
+
   it('launches the dev host in direct or staged mode with a stable summary', async () => {
     const writes: string[] = [];
     const launcher = vi.fn().mockResolvedValue(undefined);
@@ -159,6 +188,35 @@ describe('runDevHostCli', () => {
     expect(formatViHistoryDevHostSummary(launchedPlan).join('\n')).toContain(
       'Extension mode: staged'
     );
+  });
+
+  it('launches the dev host in direct mode with a normalized relative workspace path', async () => {
+    const writes: string[] = [];
+    const launcher = vi.fn().mockResolvedValue(undefined);
+    const stageExtension = vi.fn();
+
+    await expect(
+      runDevHostCli(['--workspace-path', 'relative-dev-workspace'], {
+        repoRoot: '/workspace/vi-history-suite',
+        resolveRuntimeRoot: async () => '/tmp/vihs-dev-host',
+        resolveCodeExecutablePath: () => 'C:\\Program Files\\Microsoft VS Code\\Code.exe',
+        stageExtension,
+        launcher,
+        stdout: {
+          write(text: string) {
+            writes.push(text);
+          }
+        }
+      })
+    ).resolves.toBe('launched');
+
+    expect(stageExtension).not.toHaveBeenCalled();
+    expect(launcher).toHaveBeenCalledTimes(1);
+    const launchedPlan = launcher.mock.calls[0]?.[0];
+    expect(launchedPlan.extensionMode).toBe('direct');
+    expect(launchedPlan.extensionDevelopmentPath).toBe('/workspace/vi-history-suite');
+    expect(launchedPlan.workspacePath).toBe(path.resolve('relative-dev-workspace'));
+    expect(writes.join('')).toContain('Extension mode: direct');
   });
 
   it('supports help, exit codes, and main-module execution', async () => {
