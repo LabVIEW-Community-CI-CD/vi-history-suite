@@ -824,6 +824,98 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(innerCommand).toContain("'-o'");
   });
 
+  it('wraps the governed LabVIEW CLI command in the windows container provider from a native Windows host without interop staging', async () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.provider = 'windows-container';
+    record.runtimeSelection.windowsContainerImage = 'nationalinstruments/labview:2026q1-windows';
+    record.runtimeSelection.labviewExe = {
+      kind: 'labview-exe',
+      path: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+      source: 'scan',
+      exists: true,
+      bitness: 'x64'
+    };
+    record.runtimeSelection.labviewCli = {
+      kind: 'labview-cli',
+      path: 'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+      source: 'scan',
+      exists: true,
+      bitness: 'x86'
+    };
+    record.artifactPlan.reportDirectory =
+      'C:\\Users\\sveld\\AppData\\Local\\vi-history-suite\\reports\\repoid123456\\fileid123456';
+    record.artifactPlan.stagingDirectory =
+      'C:\\Users\\sveld\\AppData\\Local\\vi-history-suite\\reports\\repoid123456\\fileid123456\\staging';
+    record.artifactPlan.reportFilePath =
+      'C:\\Users\\sveld\\AppData\\Local\\vi-history-suite\\reports\\repoid123456\\fileid123456\\diff-report-foo.vi.html';
+    record.artifactPlan.packetFilePath =
+      'C:\\Users\\sveld\\AppData\\Local\\vi-history-suite\\reports\\repoid123456\\fileid123456\\report-packet.html';
+    record.artifactPlan.metadataFilePath =
+      'C:\\Users\\sveld\\AppData\\Local\\vi-history-suite\\reports\\repoid123456\\fileid123456\\report-metadata.json';
+    record.artifactPlan.runtimeStdoutFilePath =
+      'C:\\Users\\sveld\\AppData\\Local\\vi-history-suite\\reports\\repoid123456\\fileid123456\\runtime-stdout.txt';
+    record.artifactPlan.runtimeStderrFilePath =
+      'C:\\Users\\sveld\\AppData\\Local\\vi-history-suite\\reports\\repoid123456\\fileid123456\\runtime-stderr.txt';
+    record.artifactPlan.runtimeDiagnosticLogFilePath =
+      'C:\\Users\\sveld\\AppData\\Local\\vi-history-suite\\reports\\repoid123456\\fileid123456\\runtime-diagnostic-log.txt';
+    record.artifactPlan.runtimeProcessObservationFilePath =
+      'C:\\Users\\sveld\\AppData\\Local\\vi-history-suite\\reports\\repoid123456\\fileid123456\\runtime-process-observation.json';
+    record.stagedRevisionPlan.leftFilePath =
+      'C:\\Users\\sveld\\AppData\\Local\\vi-history-suite\\reports\\repoid123456\\fileid123456\\staging\\left-111111112222-foo.vi';
+    record.stagedRevisionPlan.rightFilePath =
+      'C:\\Users\\sveld\\AppData\\Local\\vi-history-suite\\reports\\repoid123456\\fileid123456\\staging\\right-abcdef123456-foo.vi';
+
+    const runCommand = vi.fn().mockResolvedValue({
+      exitCode: 0,
+      stdout: '',
+      stderr: ''
+    });
+
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        pathExists: vi.fn(async (filePath: string) =>
+          filePath ===
+          'C:\\Users\\sveld\\AppData\\Local\\vi-history-suite\\reports\\repoid123456\\fileid123456\\diff-report-foo.vi.html'
+        ),
+        runCommand,
+        nowIso: vi
+          .fn()
+          .mockReturnValueOnce('2026-04-02T01:00:00.000Z')
+          .mockReturnValueOnce('2026-04-02T01:00:01.000Z'),
+        nowMs: vi.fn().mockReturnValueOnce(1000).mockReturnValueOnce(2000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32'
+      }
+    );
+
+    expect(result.record.runtimeExecutionState).toBe('succeeded');
+    expect(runCommand).toHaveBeenCalledWith(
+      expect.objectContaining({
+        executable: 'powershell.exe',
+        args: expect.arrayContaining(['-NoProfile', '-EncodedCommand'])
+      })
+    );
+    const encodedOuterCommand = runCommand.mock.calls[0]?.[0].args[2];
+    const outerCommand = decodeWindowsEncodedCommand(encodedOuterCommand);
+    expect(outerCommand).toContain(
+      "docker run --rm -v 'C:\\Users\\sveld\\AppData\\Local\\vi-history-suite\\reports\\repoid123456\\fileid123456:C:\\vi-history-suite'"
+    );
+    expect(outerCommand).toContain("-e TEMP='C:\\vi-history-suite\\container-temp'");
+    expect(outerCommand).toContain("-e TMP='C:\\vi-history-suite\\container-temp'");
+  });
+
   it('copies container-local diagnostic logs back into governed storage for windows-container execution', async () => {
     const record = createReadyRecord();
     record.runtimeSelection.provider = 'windows-container';

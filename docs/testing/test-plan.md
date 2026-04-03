@@ -449,6 +449,9 @@
 - `TEST-UNIT-127`: prove the dashboard action rejects storage-root targets and
   kind/path mismatches with a stable warning while keeping governed retained
   artifact openings available
+- `TEST-UNIT-128`: prove native Windows-host container report execution uses
+  `powershell.exe`, governed native Windows report/staging paths, and no
+  interop workspace root
 - `TEST-DOC-014`: review the queue, epic, ADR, and current-state surfaces to
   prove the future-facing dashboard research was normalized into governed repo
   control-plane artifacts and the incoming research artifact was deleted
