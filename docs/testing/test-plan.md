@@ -302,6 +302,9 @@
   execution metadata render the process-observation `capturedAt` timestamp and
   trigger so the observed-process facts stay explicitly scoped to the retained
   snapshot
+- `TEST-UNIT-088`: prove the direct runtime-command observation runner starts
+  observation when the LabVIEW CLI diagnostic-log banner appears on stdout and
+  fails closed if the observed command closes without an exit code
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

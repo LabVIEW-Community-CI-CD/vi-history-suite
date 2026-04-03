@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { EventEmitter } from 'node:events';
 import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
@@ -18,7 +19,8 @@ import {
   pathExistsForReport,
   resolveHostReadableDiagnosticPath,
   requiresWindowsInterop,
-  runComparisonCommandPlan
+  runComparisonCommandPlan,
+  runComparisonCommandPlanWithObservation
 } from '../../src/reporting/comparisonReportRuntimeExecution';
 import { ComparisonReportPacketRecord } from '../../src/reporting/comparisonReportPacket';
 
@@ -973,6 +975,101 @@ describe('comparisonReportRuntimeExecution', () => {
       message: 'spawn failed',
       code: 'ENOENT'
     });
+  });
+
+  it('captures process observation when the LabVIEW CLI banner appears on stdout before close', async () => {
+    const observation = {
+      capturedAt: '2026-04-03T00:00:01.000Z',
+      hostPlatform: 'linux' as const,
+      runtimePlatform: 'win32',
+      trigger: 'cli-log-banner' as const,
+      observedProcesses: [{ imageName: 'LabVIEWCLI.exe', pid: 44152 }],
+      observedProcessNames: ['LabVIEWCLI.exe'],
+      labviewProcessObserved: false,
+      labviewCliProcessObserved: true,
+      lvcompareProcessObserved: false
+    };
+
+    const spawnImpl = vi.fn(() => {
+      const child = new EventEmitter() as EventEmitter & {
+        stdout: EventEmitter & { setEncoding: (encoding: string) => void };
+        stderr: EventEmitter & { setEncoding: (encoding: string) => void };
+      };
+      child.stdout = Object.assign(new EventEmitter(), {
+        setEncoding: (_encoding: string) => undefined
+      });
+      child.stderr = Object.assign(new EventEmitter(), {
+        setEncoding: (_encoding: string) => undefined
+      });
+
+      queueMicrotask(() => {
+        child.stdout.emit(
+          'data',
+          'LabVIEWCLI started logging in file:  C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log\r\n'
+        );
+        child.stderr.emit('data', '');
+        child.emit('close', 1, null);
+      });
+
+      return child as never;
+    });
+
+    await expect(
+      runComparisonCommandPlanWithObservation(
+        {
+          executable: '/mnt/c/Program Files (x86)/National Instruments/Shared/LabVIEW CLI/LabVIEWCLI.exe',
+          args: ['-OperationName', 'CreateComparisonReport']
+        },
+        {
+          spawnImpl: spawnImpl as never,
+          hostPlatform: 'linux',
+          runtimePlatform: 'win32',
+          observeWindowsProcesses: vi.fn().mockResolvedValue(observation)
+        }
+      )
+    ).resolves.toEqual({
+      exitCode: 1,
+      signal: undefined,
+      stdout:
+        'LabVIEWCLI started logging in file:  C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log\r\n',
+      stderr: '',
+      processObservation: observation
+    });
+  });
+
+  it('fails closed when the observed command closes without an exit code', async () => {
+    const spawnImpl = vi.fn(() => {
+      const child = new EventEmitter() as EventEmitter & {
+        stdout: EventEmitter & { setEncoding: (encoding: string) => void };
+        stderr: EventEmitter & { setEncoding: (encoding: string) => void };
+      };
+      child.stdout = Object.assign(new EventEmitter(), {
+        setEncoding: (_encoding: string) => undefined
+      });
+      child.stderr = Object.assign(new EventEmitter(), {
+        setEncoding: (_encoding: string) => undefined
+      });
+
+      queueMicrotask(() => {
+        child.emit('close', null, null);
+      });
+
+      return child as never;
+    });
+
+    await expect(
+      runComparisonCommandPlanWithObservation(
+        {
+          executable: '/mnt/c/Program Files (x86)/National Instruments/Shared/LabVIEW CLI/LabVIEWCLI.exe',
+          args: ['-OperationName', 'CreateComparisonReport']
+        },
+        {
+          spawnImpl: spawnImpl as never,
+          hostPlatform: 'linux',
+          runtimePlatform: 'win32'
+        }
+      )
+    ).rejects.toThrow('comparison-command-closed-without-exit-code');
   });
 
   it('normalizes comparison-process errors and report-path existence using the default helpers', async () => {
