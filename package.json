@@ -6,6 +6,10 @@
   "publisher": "svelderrainruiz",
   "license": "SEE LICENSE IN LICENSE",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab.com/svelderrainruiz/vi-history-suite.git"
+  },
   "engines": {
     "vscode": "^1.90.0"
   },
