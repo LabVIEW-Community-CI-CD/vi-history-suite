@@ -745,6 +745,41 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(runCommand).not.toHaveBeenCalled();
   });
 
+  it('fails closed when the windows-container provider is selected without an image', async () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.provider = 'windows-container';
+    delete record.runtimeSelection.windowsContainerImage;
+
+    const runCommand = vi.fn();
+
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo',
+        interopWorkspaceRoot: '/mnt/c/Users/sveld/AppData/Local/Temp/vi-history-suite-runtime'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        pathExists: vi.fn().mockResolvedValue(false),
+        runCommand,
+        nowIso: vi.fn().mockReturnValue('2026-04-02T01:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'linux'
+      }
+    );
+
+    expect(result.record.runtimeExecutionState).toBe('failed');
+    expect(result.record.runtimeExecution.failureReason).toBe('windows-container-image-unavailable');
+    expect(result.record.runtimeExecution.attempted).toBe(false);
+    expect(runCommand).not.toHaveBeenCalled();
+  });
+
   it('wraps the governed LabVIEW CLI command in the windows container provider from a non-Windows host', async () => {
     const record = createReadyRecord();
     record.runtimeSelection.provider = 'windows-container';
