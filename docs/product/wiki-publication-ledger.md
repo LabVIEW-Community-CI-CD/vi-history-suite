@@ -15,6 +15,7 @@ remains the authority of record.
 | --- | --- | --- | --- | --- | --- |
 | Overview | `home` | published | `2026-04-03` | `61ed90c` | `docs/product/SHIP-0001-releasable-vi-history-suite.md`; `docs/product/current-state.md`; `README.md`; `docs/product/release-readiness-matrix.json` |
 | Install And Release | `Install-And-Release` | published | `2026-04-03` | `eb4febe` | `docs/release-procedure.md`; `docs/product/release-readiness-matrix.json`; `README.md`; `docs/product/blocker-ledger.json` |
+| User Workflow | `User-Workflow` | published | `2026-04-03` | `db44152` | `docs/requirements/srs.md`; `docs/product/current-state.md`; `README.md`; `docs/testing/test-plan.md` |
 
 ## Publication Rules
 
@@ -29,10 +30,11 @@ remains the authority of record.
 
 The next incremental page, once the documentation package is ready, is:
 
-1. **User Workflow**
+1. **Comparison Reports And Dashboard Review**
    - primary authority:
      - `docs/requirements/srs.md`
+     - `docs/product/ni-comparison-report-metadata-inventory.md`
      - `docs/product/current-state.md`
    - secondary authority:
-     - `README.md`
      - `docs/testing/test-plan.md`
+     - `docs/research/authoritative/research-alignment.md`

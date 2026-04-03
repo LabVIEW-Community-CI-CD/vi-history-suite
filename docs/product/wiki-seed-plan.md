@@ -20,7 +20,9 @@ Do not draft or refresh wiki pages until:
   `docs/product/wiki-publication-ledger.md`
 - **Install And Release**: published on `2026-04-03`; see
   `docs/product/wiki-publication-ledger.md`
-- **Next page**: `User Workflow`
+- **User Workflow**: published on `2026-04-03`; see
+  `docs/product/wiki-publication-ledger.md`
+- **Next page**: `Comparison Reports And Dashboard Review`
 
 ## Page Order
 
