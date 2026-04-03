@@ -696,7 +696,10 @@
   detail-item whole-window concentration summaries derived from retained NI
   comparison-report metadata
 - `TEST-UNIT-202`: prove the dashboard action backfills missing or stale
-  adjacent-pair comparison evidence before concentrating dashboard metadata
+  adjacent-pair comparison evidence before concentrating dashboard metadata,
+  and once at least one pair completes, prove the next pair progress message
+  includes a bounded seconds-left estimate derived from completed pair
+  durations in the current dashboard refresh session
 - `TEST-UNIT-203`: prove the dashboard action returns the stable
   `during-dashboard-pair-generation` cancellation stage when pair-evidence
   backfill is cancelled before dashboard build

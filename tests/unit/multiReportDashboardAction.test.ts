@@ -547,6 +547,12 @@ describe('multiReportDashboardAction', () => {
 
   it('backfills missing or stale pair evidence before concentrating the dashboard', async () => {
     const progressUpdates: Array<{ message: string; increment?: number }> = [];
+    const now = vi
+      .fn()
+      .mockReturnValueOnce(1_000)
+      .mockReturnValueOnce(4_500)
+      .mockReturnValueOnce(5_000)
+      .mockReturnValueOnce(8_500);
     const readArchivedComparisonReportSourceRecord = vi
       .fn()
       .mockResolvedValueOnce(undefined)
@@ -638,7 +644,8 @@ describe('multiReportDashboardAction', () => {
       {
         buildDashboard,
         ensureComparisonReportEvidence,
-        readArchivedComparisonReportSourceRecord
+        readArchivedComparisonReportSourceRecord,
+        now
       }
     );
 
@@ -707,7 +714,7 @@ describe('multiReportDashboardAction', () => {
         },
         {
           message:
-            'Preparing dashboard pair 2/2: Executing NI comparison-report runtime.',
+            'Preparing dashboard pair 2/2; est. 4s left: Executing NI comparison-report runtime.',
           increment: 20
         },
         {

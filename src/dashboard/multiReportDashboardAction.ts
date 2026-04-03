@@ -55,6 +55,7 @@ export interface MultiReportDashboardActionDeps {
   }) => Promise<ComparisonReportActionResult>;
   readArchivedComparisonReportSourceRecord?: typeof readArchivedComparisonReportSourceRecordFromSelection;
   pathExists?: (targetPath: string) => Promise<boolean>;
+  now?: () => number;
 }
 
 interface DashboardPairEvidenceCandidate {
@@ -98,6 +99,7 @@ export function createMultiReportDashboardAction(
 
     const buildDashboard = deps.buildDashboard ?? buildAndPersistMultiReportDashboard;
     const ensureComparisonReportEvidence = deps.ensureComparisonReportEvidence;
+    const now = deps.now ?? Date.now;
     const pairsNeedingEvidence = await collectDashboardPairsNeedingEvidence(
       storageUri.fsPath,
       request.model,
@@ -115,6 +117,7 @@ export function createMultiReportDashboardAction(
         pairsNeedingEvidence.length > 0
           ? DASHBOARD_PAIR_EVIDENCE_INCREMENT_TOTAL / pairsNeedingEvidence.length
           : 0;
+      const completedPairDurationsMs: number[] = [];
       for (const [index, pair] of pairsNeedingEvidence.entries()) {
         if (request.cancellationToken?.isCancellationRequested) {
           return {
@@ -124,7 +127,12 @@ export function createMultiReportDashboardAction(
         }
 
         let remainingPairIncrement = pairBudget;
-        const pairPrefix = `Preparing dashboard pair ${index + 1}/${pairsNeedingEvidence.length}: `;
+        const pairStartMs = now();
+        const pairPrefix = buildDashboardPairProgressPrefix(
+          index,
+          pairsNeedingEvidence.length,
+          completedPairDurationsMs
+        );
         const scaledPairProgress = async (update: {
           message: string;
           increment?: number;
@@ -161,6 +169,7 @@ export function createMultiReportDashboardAction(
         if (result.outcome === 'workspace-untrusted' || result.outcome === 'missing-storage-uri') {
           return { outcome: result.outcome };
         }
+        completedPairDurationsMs.push(Math.max(0, now() - pairStartMs));
 
         await request.reportProgress?.({
           message: buildDashboardPairPreparedMessage(
@@ -393,6 +402,39 @@ function buildDashboardPairPreparedMessage(
     ? 'retained generated comparison metadata is ready'
     : 'retained pair evidence was refreshed without a generated comparison report';
   return `Prepared dashboard pair ${index + 1}/${total}: ${pairLabel} (${reasonLabel}); ${completionLabel}.`;
+}
+
+function buildDashboardPairProgressPrefix(
+  index: number,
+  total: number,
+  completedPairDurationsMs: number[]
+): string {
+  const estimatedSecondsLeft = deriveEstimatedSecondsRemaining(
+    completedPairDurationsMs,
+    total - index
+  );
+  const etaSuffix =
+    estimatedSecondsLeft === undefined
+      ? ''
+      : `; est. ${estimatedSecondsLeft}s left`;
+  return `Preparing dashboard pair ${index + 1}/${total}${etaSuffix}: `;
+}
+
+function deriveEstimatedSecondsRemaining(
+  completedPairDurationsMs: number[],
+  remainingPairCount: number
+): number | undefined {
+  if (completedPairDurationsMs.length === 0 || remainingPairCount <= 0) {
+    return undefined;
+  }
+
+  const totalCompletedDurationMs = completedPairDurationsMs.reduce(
+    (sum, durationMs) => sum + Math.max(0, durationMs),
+    0
+  );
+  const averageCompletedPairDurationMs =
+    totalCompletedDurationMs / completedPairDurationsMs.length;
+  return Math.ceil((averageCompletedPairDurationMs * remainingPairCount) / 1000);
 }
 
 interface DashboardArtifactMessage {
