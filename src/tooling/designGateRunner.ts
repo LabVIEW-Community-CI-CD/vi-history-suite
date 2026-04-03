@@ -50,6 +50,7 @@ export async function runDesignGate(
   let assuranceGateSummary: string | undefined;
 
   for (const step of steps) {
+    const stepIndex = results.length;
     const result = await (deps.runStep ?? spawnDesignGateStep)(
       step.command,
       step.args,
@@ -67,22 +68,63 @@ export async function runDesignGate(
       status = 'fail';
       break;
     }
+
+    const nextPendingStep = steps[stepIndex + 1];
+    if (nextPendingStep) {
+      const runningReport = await buildDesignGateReport(
+        repoRoot,
+        status,
+        assuranceGateSummary,
+        results,
+        deps.readFile,
+        deps.now,
+        'running',
+        nextPendingStep
+      );
+      await persistDesignGateReport(repoRoot, runningReport, deps.mkdir, deps.writeFile);
+    }
   }
 
-  const coverageFocus = await readDesignGateCoverageFocus(repoRoot, deps.readFile);
+  const report = await buildDesignGateReport(
+    repoRoot,
+    status,
+    assuranceGateSummary,
+    results,
+    deps.readFile,
+    deps.now,
+    'complete'
+  );
+  await persistDesignGateReport(repoRoot, report, deps.mkdir, deps.writeFile);
+  return report;
+}
+
+async function buildDesignGateReport(
+  repoRoot: string,
+  status: 'pass' | 'fail',
+  assuranceGateSummary: string | undefined,
+  results: DesignGateStepResult[],
+  readFile: DesignGateRunnerDeps['readFile'],
+  now: DesignGateRunnerDeps['now'],
+  completionState: 'running' | 'complete',
+  pendingStep?: { id: string; title: string }
+): Promise<DesignGateReport> {
+  const coverageFocus = await readDesignGateCoverageFocus(repoRoot, readFile);
   const nextCoverageFocusEntry =
     coverageFocus.status === 'available' && coverageFocus.entries.length > 0
       ? coverageFocus.entries[0]
       : undefined;
   const nextTranche =
     nextCoverageFocusEntry && nextCoverageFocusEntry.linesPct >= 100
-      ? await readDesignGateNextTranche(repoRoot, deps.readFile)
+      ? await readDesignGateNextTranche(repoRoot, readFile)
       : undefined;
 
-  const report: DesignGateReport = {
-    generatedAt: (deps.now ?? defaultNow)(),
+  return {
+    generatedAt: (now ?? defaultNow)(),
     repoRoot,
     status,
+    completionState,
+    pendingStepId: completionState === 'running' ? pendingStep?.id : undefined,
+    pendingStepTitle: completionState === 'running' ? pendingStep?.title : undefined,
     assuranceGateSummary,
     coverageFocus: coverageFocus.status === 'available' ? coverageFocus.entries : undefined,
     coverageFocusUnavailableReason:
@@ -94,11 +136,8 @@ export async function runDesignGate(
     nextTranche: nextTranche?.status === 'available' ? `${nextTranche.entry.id}: ${nextTranche.entry.title}` : undefined,
     nextTrancheUnavailableReason:
       nextTranche?.status === 'unavailable' ? nextTranche.reason : undefined,
-    steps: results
+    steps: [...results]
   };
-
-  await persistDesignGateReport(repoRoot, report, deps.mkdir, deps.writeFile);
-  return report;
 }
 
 export async function readDesignGateNextTranche(

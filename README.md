@@ -106,6 +106,9 @@ Committed and governed today:
 - canonical real-history smoke and canonical comparison-report smoke on
   `HARNESS-VHS-001`
 - retained design gate that chooses the next tranche from committed evidence
+- retained design gate that refreshes `latest-report.{json,md}` after each
+  successful stage so a stuck assurance tail does not leave stale tranche
+  evidence
 
 ## Active Work
 

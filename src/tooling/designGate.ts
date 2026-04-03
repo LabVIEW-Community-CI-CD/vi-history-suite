@@ -22,6 +22,9 @@ export interface DesignGateReport {
   generatedAt: string;
   repoRoot: string;
   status: 'pass' | 'fail';
+  completionState?: 'running' | 'complete';
+  pendingStepId?: string;
+  pendingStepTitle?: string;
   assuranceGateSummary?: string;
   coverageFocus?: CoverageFocusEntry[];
   coverageFocusUnavailableReason?: string;
@@ -157,8 +160,17 @@ export function renderDesignGateMarkdown(report: DesignGateReport): string {
     `- Generated: ${report.generatedAt}`,
     `- Repo root: ${report.repoRoot}`,
     `- Status: ${report.status}`,
+    `- Completion: ${report.completionState ?? 'complete'}`,
     `- Assurance gate summary: ${report.assuranceGateSummary ?? 'not-retained'}`
   ];
+
+  if (report.pendingStepId) {
+    lines.push(
+      `- Pending step: ${report.pendingStepId}${
+        report.pendingStepTitle ? ` (${report.pendingStepTitle})` : ''
+      }`
+    );
+  }
 
   if (report.nextFocus) {
     lines.push(`- Next focus: ${report.nextFocus}`);

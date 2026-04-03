@@ -506,6 +506,11 @@
 - `TEST-UNIT-147`: prove the Windows-container LabVIEW CLI script builder
   emits `$labviewPath = $null` for blank governed LabVIEW paths and emits the
   quoted explicit path only for nonblank input
+- `TEST-UNIT-148`: prove the design gate persists running retained reports
+  with the pending next step after each successful stage before the final
+  complete report is written
+- `TEST-UNIT-149`: prove the retained design-gate JSON and Markdown surfaces
+  expose explicit completion-state and pending-step facts
 - `TEST-DOC-014`: review the queue, epic, ADR, and current-state surfaces to
   prove the future-facing dashboard research was normalized into governed repo
   control-plane artifacts and the incoming research artifact was deleted

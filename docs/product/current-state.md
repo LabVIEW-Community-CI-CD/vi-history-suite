@@ -87,6 +87,8 @@ These are generated locally and are not the committed source of truth:
 - design gate:
   - `.cache/design-gate/latest-report.json`
   - `.cache/design-gate/latest-report.md`
+  - retained reports now distinguish `running` versus `complete` gate state
+    and retain the pending next step when a later stage has not finished yet
 - canonical history smoke:
   - `.cache/harness-reports/HARNESS-VHS-001/report.json`
   - `.cache/harness-reports/HARNESS-VHS-001/report.md`

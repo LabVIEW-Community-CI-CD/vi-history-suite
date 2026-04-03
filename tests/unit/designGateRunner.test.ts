@@ -53,7 +53,7 @@ afterEach(async () => {
 
 describe('designGateRunner', () => {
   it('executes the governed plan, retains the report, and derives the next focus', async () => {
-    const writes = new Map<string, string>();
+    const writes = new Map<string, string[]>();
     const calls: string[] = [];
     const repoRoot = '/tmp/vi-history-suite';
 
@@ -94,7 +94,9 @@ describe('designGateRunner', () => {
       },
       mkdir: async () => undefined,
       writeFile: async (filePath, contents) => {
-        writes.set(filePath, contents);
+        const entries = writes.get(filePath) ?? [];
+        entries.push(contents);
+        writes.set(filePath, entries);
       }
     });
 
@@ -105,15 +107,25 @@ describe('designGateRunner', () => {
       'standards-assurance'
     ]);
     expect(report.status).toBe('pass');
+    expect(report.completionState).toBe('complete');
     expect(report.assuranceGateSummary).toBe('5 PASS, 0 FAIL, 1 N/A');
     expect(report.nextFocus).toBe('src/cli/runDesignGate.ts (0.0% lines)');
     expect(report.coverageFocus?.[0]?.relativePath).toBe('src/cli/runDesignGate.ts');
+    const markdownWrites = writes.get('/tmp/vi-history-suite/.cache/design-gate/latest-report.md') ?? [];
+    const jsonWrites = writes.get('/tmp/vi-history-suite/.cache/design-gate/latest-report.json') ?? [];
+    expect(markdownWrites.length).toBe(4);
+    expect(jsonWrites.length).toBe(4);
+    expect(markdownWrites.some((contents) => contents.includes('## Coverage Focus'))).toBe(true);
     expect(
-      writes.get('/tmp/vi-history-suite/.cache/design-gate/latest-report.md')
-    ).toContain('## Coverage Focus');
+      markdownWrites.some((contents) =>
+        contents.includes('Pending step: standards-assurance (Standards assurance)')
+      )
+    ).toBe(true);
     expect(
-      writes.get('/tmp/vi-history-suite/.cache/design-gate/latest-report.json')
-    ).toContain('"nextFocus": "src/cli/runDesignGate.ts (0.0% lines)"');
+      jsonWrites.some((contents) => contents.includes('"completionState": "running"'))
+    ).toBe(true);
+    expect(jsonWrites.at(-1)).toContain('"completionState": "complete"');
+    expect(jsonWrites.at(-1)).toContain('"nextFocus": "src/cli/runDesignGate.ts (0.0% lines)"');
   });
 
   it('stops after a failing step and still retains a fail report', async () => {
@@ -154,6 +166,7 @@ describe('designGateRunner', () => {
 
     expect(calls).toEqual(['unit-and-coverage', 'extension-host-integration']);
     expect(report.status).toBe('fail');
+    expect(report.completionState).toBe('complete');
     expect(report.nextFocus).toBe('src/commands/openViHistoryCommand.ts (0.0% lines)');
     expect(
       writes.get('/tmp/vi-history-suite/.cache/design-gate/latest-report.json')
