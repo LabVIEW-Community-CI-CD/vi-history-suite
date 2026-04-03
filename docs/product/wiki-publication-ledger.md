@@ -14,6 +14,7 @@ remains the authority of record.
 | Page | Wiki Path | Status | Published | Wiki Commit | Primary Authority |
 | --- | --- | --- | --- | --- | --- |
 | Overview | `home` | published | `2026-04-03` | `61ed90c` | `docs/product/SHIP-0001-releasable-vi-history-suite.md`; `docs/product/current-state.md`; `README.md`; `docs/product/release-readiness-matrix.json` |
+| Install And Release | `Install-And-Release` | published | `2026-04-03` | `eb4febe` | `docs/release-procedure.md`; `docs/product/release-readiness-matrix.json`; `README.md`; `docs/product/blocker-ledger.json` |
 
 ## Publication Rules
 
@@ -28,10 +29,10 @@ remains the authority of record.
 
 The next incremental page, once the documentation package is ready, is:
 
-1. **Install And Release**
+1. **User Workflow**
    - primary authority:
-     - `docs/release-procedure.md`
-     - `docs/product/release-readiness-matrix.json`
+     - `docs/requirements/srs.md`
+     - `docs/product/current-state.md`
    - secondary authority:
      - `README.md`
-     - `docs/product/blocker-ledger.json`
+     - `docs/testing/test-plan.md`
