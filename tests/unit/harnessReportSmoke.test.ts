@@ -37,6 +37,12 @@ describe('harness report smoke renderers', () => {
     runtimeLabviewProcessObserved: true,
     runtimeLabviewCliProcessObserved: true,
     runtimeLvcompareProcessObserved: false,
+    runtimeExitProcessObservationCapturedAt: '2026-04-03T00:00:02.000Z',
+    runtimeExitProcessObservationTrigger: 'process-exit',
+    runtimeExitObservedProcessNames: [],
+    runtimeLabviewProcessObservedAtExit: false,
+    runtimeLabviewCliProcessObservedAtExit: false,
+    runtimeLvcompareProcessObservedAtExit: false,
     runtimeNotes: ['Runtime note one', 'Runtime note two'],
     generatedReportExists: true,
     packetFilePath: '/tmp/report-packet.html',
@@ -60,6 +66,12 @@ describe('harness report smoke renderers', () => {
     expect(markdown).toContain('Runtime observed LabVIEW.exe: yes');
     expect(markdown).toContain('Runtime observed LabVIEWCLI.exe: yes');
     expect(markdown).toContain('Runtime observed LVCompare.exe: no');
+    expect(markdown).toContain('Runtime exit observation captured at: 2026-04-03T00:00:02.000Z');
+    expect(markdown).toContain('Runtime exit observation trigger: process-exit');
+    expect(markdown).toContain('Runtime exit observed process names: none');
+    expect(markdown).toContain('Runtime observed LabVIEW.exe at exit: no');
+    expect(markdown).toContain('Runtime observed LabVIEWCLI.exe at exit: no');
+    expect(markdown).toContain('Runtime observed LVCompare.exe at exit: no');
     expect(markdown).toContain('Runtime notes: Runtime note one | Runtime note two');
     expect(markdown).toContain('Generated report exists: yes');
     expect(markdown).toContain('/tmp/diff-report-foo.vi.html');
@@ -81,6 +93,12 @@ describe('harness report smoke renderers', () => {
     expect(html).toContain('Runtime observed LabVIEW.exe:</strong> yes');
     expect(html).toContain('Runtime observed LabVIEWCLI.exe:</strong> yes');
     expect(html).toContain('Runtime observed LVCompare.exe:</strong> no');
+    expect(html).toContain('Runtime exit observation captured at:</strong> 2026-04-03T00:00:02.000Z');
+    expect(html).toContain('Runtime exit observation trigger:</strong> process-exit');
+    expect(html).toContain('Runtime exit observed process names:</strong> none');
+    expect(html).toContain('Runtime observed LabVIEW.exe at exit:</strong> no');
+    expect(html).toContain('Runtime observed LabVIEWCLI.exe at exit:</strong> no');
+    expect(html).toContain('Runtime observed LVCompare.exe at exit:</strong> no');
     expect(html).toContain('Runtime note one | Runtime note two');
     expect(html).toContain('diff-report-foo.vi.html');
   });
@@ -291,7 +309,13 @@ describe('runHarnessReportSmoke', () => {
               observedProcessNames: ['LabVIEWCLI.exe', 'LabVIEW.exe'],
               labviewProcessObserved: true,
               labviewCliProcessObserved: true,
-              lvcompareProcessObserved: false
+              lvcompareProcessObserved: false,
+              exitProcessObservationCapturedAt: '2026-04-03T00:00:02.000Z',
+              exitProcessObservationTrigger: 'process-exit',
+              exitObservedProcessNames: [],
+              labviewProcessObservedAtExit: false,
+              labviewCliProcessObservedAtExit: false,
+              lvcompareProcessObservedAtExit: false
             }
           },
           packetFilePath: '/tmp/reports/HARNESS-VHS-001/workspace-storage/reports/repoid123456/fileid123456/report-packet.html',
@@ -317,6 +341,12 @@ describe('runHarnessReportSmoke', () => {
     expect(result.report.runtimeLabviewProcessObserved).toBe(true);
     expect(result.report.runtimeLabviewCliProcessObserved).toBe(true);
     expect(result.report.runtimeLvcompareProcessObserved).toBe(false);
+    expect(result.report.runtimeExitProcessObservationCapturedAt).toBe('2026-04-03T00:00:02.000Z');
+    expect(result.report.runtimeExitProcessObservationTrigger).toBe('process-exit');
+    expect(result.report.runtimeExitObservedProcessNames).toEqual([]);
+    expect(result.report.runtimeLabviewProcessObservedAtExit).toBe(false);
+    expect(result.report.runtimeLabviewCliProcessObservedAtExit).toBe(false);
+    expect(result.report.runtimeLvcompareProcessObservedAtExit).toBe(false);
     expect(result.report.generatedReportExists).toBe(true);
     expect(result.report.selectedHash).toBe('abcdef1234567890');
     expect(result.report.baseHash).toBe('1111111122222222');

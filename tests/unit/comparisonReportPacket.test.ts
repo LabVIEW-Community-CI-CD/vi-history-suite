@@ -370,7 +370,13 @@ describe('comparisonReportPacket', () => {
         observedProcessNames: ['LabVIEWCLI.exe', 'LabVIEW.exe'],
         labviewProcessObserved: true,
         labviewCliProcessObserved: true,
-        lvcompareProcessObserved: false
+        lvcompareProcessObserved: false,
+        exitProcessObservationCapturedAt: '2026-04-03T00:00:02.000Z',
+        exitProcessObservationTrigger: 'process-exit',
+        exitObservedProcessNames: [],
+        labviewProcessObservedAtExit: false,
+        labviewCliProcessObservedAtExit: false,
+        lvcompareProcessObservedAtExit: false
       }
     };
 
@@ -383,6 +389,12 @@ describe('comparisonReportPacket', () => {
     expect(html).toContain('Observed LabVIEW.exe:</strong> yes');
     expect(html).toContain('Observed LabVIEWCLI.exe:</strong> yes');
     expect(html).toContain('Observed LVCompare.exe:</strong> no');
+    expect(html).toContain('Exit process observation captured at:</strong> 2026-04-03T00:00:02.000Z');
+    expect(html).toContain('Exit process observation trigger:</strong> process-exit');
+    expect(html).toContain('Exit observed process names:</strong> none');
+    expect(html).toContain('Observed LabVIEW.exe at exit:</strong> no');
+    expect(html).toContain('Observed LabVIEWCLI.exe at exit:</strong> no');
+    expect(html).toContain('Observed LVCompare.exe at exit:</strong> no');
   });
 });
 

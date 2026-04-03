@@ -564,7 +564,13 @@ describe('comparisonReportAction', () => {
           observedProcessNames: ['LabVIEWCLI.exe', 'LabVIEW.exe'],
           labviewProcessObserved: true,
           labviewCliProcessObserved: true,
-          lvcompareProcessObserved: false
+          lvcompareProcessObserved: false,
+          exitProcessObservationCapturedAt: '2026-04-03T00:00:02.000Z',
+          exitProcessObservationTrigger: 'process-exit',
+          exitObservedProcessNames: [],
+          labviewProcessObservedAtExit: false,
+          labviewCliProcessObservedAtExit: false,
+          lvcompareProcessObservedAtExit: false
         },
         runtimeSelection: {
           platform: 'win32',
@@ -688,6 +694,11 @@ describe('comparisonReportAction', () => {
       runtimeLabviewProcessObserved: true,
       runtimeLabviewCliProcessObserved: true,
       runtimeLvcompareProcessObserved: false,
+      runtimeExitProcessObservationCapturedAt: '2026-04-03T00:00:02.000Z',
+      runtimeExitProcessObservationTrigger: 'process-exit',
+      runtimeLabviewProcessObservedAtExit: false,
+      runtimeLabviewCliProcessObservedAtExit: false,
+      runtimeLvcompareProcessObservedAtExit: false,
       packetFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-packet.html',
       reportFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
       metadataFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-metadata.json',
@@ -708,6 +719,11 @@ describe('comparisonReportAction', () => {
     expect(panel.webview.html).toContain('Observed LabVIEW.exe:</strong> yes');
     expect(panel.webview.html).toContain('Observed LabVIEWCLI.exe:</strong> yes');
     expect(panel.webview.html).toContain('Observed LVCompare.exe:</strong> no');
+    expect(panel.webview.html).toContain('Exit process observation captured at:</strong> 2026-04-03T00:00:02.000Z');
+    expect(panel.webview.html).toContain('Exit process observation trigger:</strong> process-exit');
+    expect(panel.webview.html).toContain('Observed LabVIEW.exe at exit:</strong> no');
+    expect(panel.webview.html).toContain('Observed LabVIEWCLI.exe at exit:</strong> no');
+    expect(panel.webview.html).toContain('Observed LVCompare.exe at exit:</strong> no');
   });
 
   it('reads runtime settings from the workspace configuration and normalizes unknown runtime platforms', () => {

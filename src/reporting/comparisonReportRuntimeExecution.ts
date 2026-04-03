@@ -334,7 +334,13 @@ async function runHostNativeExecution(
         processObservation?.exitSnapshot?.labviewCliProcessObserved,
       lvcompareProcessObserved:
         processObservation?.bannerSnapshot?.lvcompareProcessObserved ??
-        processObservation?.exitSnapshot?.lvcompareProcessObserved
+        processObservation?.exitSnapshot?.lvcompareProcessObserved,
+      exitProcessObservationCapturedAt: processObservation?.exitSnapshot?.capturedAt,
+      exitProcessObservationTrigger: processObservation?.exitSnapshot?.trigger,
+      exitObservedProcessNames: processObservation?.exitSnapshot?.observedProcessNames,
+      labviewProcessObservedAtExit: processObservation?.exitSnapshot?.labviewProcessObserved,
+      labviewCliProcessObservedAtExit: processObservation?.exitSnapshot?.labviewCliProcessObserved,
+      lvcompareProcessObservedAtExit: processObservation?.exitSnapshot?.lvcompareProcessObserved
     };
   } catch (error) {
     const completedAt = deps.nowIso();

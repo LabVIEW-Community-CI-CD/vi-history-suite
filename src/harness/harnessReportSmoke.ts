@@ -73,6 +73,12 @@ export interface HarnessReportSmokeReport {
   runtimeLabviewProcessObserved?: boolean;
   runtimeLabviewCliProcessObserved?: boolean;
   runtimeLvcompareProcessObserved?: boolean;
+  runtimeExitProcessObservationCapturedAt?: string;
+  runtimeExitProcessObservationTrigger?: string;
+  runtimeExitObservedProcessNames?: string[];
+  runtimeLabviewProcessObservedAtExit?: boolean;
+  runtimeLabviewCliProcessObservedAtExit?: boolean;
+  runtimeLvcompareProcessObservedAtExit?: boolean;
   runtimeNotes: string[];
   generatedReportExists: boolean;
   packetFilePath?: string;
@@ -279,6 +285,17 @@ function buildHarnessReportSmokeReport(options: {
     runtimeLabviewProcessObserved: record.runtimeExecution.labviewProcessObserved,
     runtimeLabviewCliProcessObserved: record.runtimeExecution.labviewCliProcessObserved,
     runtimeLvcompareProcessObserved: record.runtimeExecution.lvcompareProcessObserved,
+    runtimeExitProcessObservationCapturedAt:
+      record.runtimeExecution.exitProcessObservationCapturedAt,
+    runtimeExitProcessObservationTrigger:
+      record.runtimeExecution.exitProcessObservationTrigger,
+    runtimeExitObservedProcessNames: record.runtimeExecution.exitObservedProcessNames,
+    runtimeLabviewProcessObservedAtExit:
+      record.runtimeExecution.labviewProcessObservedAtExit,
+    runtimeLabviewCliProcessObservedAtExit:
+      record.runtimeExecution.labviewCliProcessObservedAtExit,
+    runtimeLvcompareProcessObservedAtExit:
+      record.runtimeExecution.lvcompareProcessObservedAtExit,
     runtimeNotes: [...record.runtimeSelection.notes, ...(record.runtimeExecution.diagnosticNotes ?? [])],
     generatedReportExists: record.runtimeExecution.reportExists,
     packetFilePath: options.packetFilePath,
@@ -317,6 +334,12 @@ export function renderHarnessReportSmokeMarkdown(report: HarnessReportSmokeRepor
 - Runtime observed LabVIEW.exe: ${renderOptionalYesNo(report.runtimeLabviewProcessObserved)}
 - Runtime observed LabVIEWCLI.exe: ${renderOptionalYesNo(report.runtimeLabviewCliProcessObserved)}
 - Runtime observed LVCompare.exe: ${renderOptionalYesNo(report.runtimeLvcompareProcessObserved)}
+- Runtime exit observation captured at: ${report.runtimeExitProcessObservationCapturedAt ?? 'none'}
+- Runtime exit observation trigger: ${report.runtimeExitProcessObservationTrigger ?? 'none'}
+- Runtime exit observed process names: ${report.runtimeExitObservedProcessNames?.join(' | ') || 'none'}
+- Runtime observed LabVIEW.exe at exit: ${renderOptionalYesNo(report.runtimeLabviewProcessObservedAtExit)}
+- Runtime observed LabVIEWCLI.exe at exit: ${renderOptionalYesNo(report.runtimeLabviewCliProcessObservedAtExit)}
+- Runtime observed LVCompare.exe at exit: ${renderOptionalYesNo(report.runtimeLvcompareProcessObservedAtExit)}
 - Runtime notes: ${report.runtimeNotes.length > 0 ? report.runtimeNotes.join(' | ') : 'none'}
 - Generated report exists: ${report.generatedReportExists ? 'yes' : 'no'}
 - Packet file: ${report.packetFilePath ?? 'none'}
@@ -380,6 +403,24 @@ export function renderHarnessReportSmokeHtml(report: HarnessReportSmokeReport): 
       )}</div>
       <div><strong>Runtime observed LVCompare.exe:</strong> ${renderOptionalYesNo(
         report.runtimeLvcompareProcessObserved
+      )}</div>
+      <div><strong>Runtime exit observation captured at:</strong> ${escapeHtml(
+        report.runtimeExitProcessObservationCapturedAt ?? 'none'
+      )}</div>
+      <div><strong>Runtime exit observation trigger:</strong> ${escapeHtml(
+        report.runtimeExitProcessObservationTrigger ?? 'none'
+      )}</div>
+      <div><strong>Runtime exit observed process names:</strong> ${escapeHtml(
+        report.runtimeExitObservedProcessNames?.join(' | ') || 'none'
+      )}</div>
+      <div><strong>Runtime observed LabVIEW.exe at exit:</strong> ${renderOptionalYesNo(
+        report.runtimeLabviewProcessObservedAtExit
+      )}</div>
+      <div><strong>Runtime observed LabVIEWCLI.exe at exit:</strong> ${renderOptionalYesNo(
+        report.runtimeLabviewCliProcessObservedAtExit
+      )}</div>
+      <div><strong>Runtime observed LVCompare.exe at exit:</strong> ${renderOptionalYesNo(
+        report.runtimeLvcompareProcessObservedAtExit
       )}</div>
       <div><strong>Runtime notes:</strong> ${escapeHtml(
         report.runtimeNotes.length > 0 ? report.runtimeNotes.join(' | ') : 'none'

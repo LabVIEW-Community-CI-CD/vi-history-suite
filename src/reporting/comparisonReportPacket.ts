@@ -43,6 +43,12 @@ export interface ComparisonReportRuntimeExecution {
   labviewProcessObserved?: boolean;
   labviewCliProcessObserved?: boolean;
   lvcompareProcessObserved?: boolean;
+  exitProcessObservationCapturedAt?: string;
+  exitProcessObservationTrigger?: string;
+  exitObservedProcessNames?: string[];
+  labviewProcessObservedAtExit?: boolean;
+  labviewCliProcessObservedAtExit?: boolean;
+  lvcompareProcessObservedAtExit?: boolean;
 }
 
 export interface PersistComparisonReportPacketOptions {
@@ -248,6 +254,24 @@ export function renderComparisonReportPacketHtml(record: ComparisonReportPacketR
       )}</div>
       <div><strong>Observed LVCompare.exe:</strong> ${renderOptionalYesNo(
         runtimeExecution.lvcompareProcessObserved
+      )}</div>
+      <div><strong>Exit process observation captured at:</strong> ${escapeHtml(
+        runtimeExecution.exitProcessObservationCapturedAt ?? 'none'
+      )}</div>
+      <div><strong>Exit process observation trigger:</strong> ${escapeHtml(
+        runtimeExecution.exitProcessObservationTrigger ?? 'none'
+      )}</div>
+      <div><strong>Exit observed process names:</strong> ${escapeHtml(
+        runtimeExecution.exitObservedProcessNames?.join(' | ') || 'none'
+      )}</div>
+      <div><strong>Observed LabVIEW.exe at exit:</strong> ${renderOptionalYesNo(
+        runtimeExecution.labviewProcessObservedAtExit
+      )}</div>
+      <div><strong>Observed LabVIEWCLI.exe at exit:</strong> ${renderOptionalYesNo(
+        runtimeExecution.labviewCliProcessObservedAtExit
+      )}</div>
+      <div><strong>Observed LVCompare.exe at exit:</strong> ${renderOptionalYesNo(
+        runtimeExecution.lvcompareProcessObservedAtExit
       )}</div>
       <div><strong>Diagnostic reason:</strong> ${escapeHtml(runtimeExecution.diagnosticReason ?? 'none')}</div>
       <div><strong>Diagnostic log artifact:</strong> ${escapeHtml(runtimeExecution.diagnosticLogArtifactPath ?? 'none')}</div>

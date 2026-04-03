@@ -35,6 +35,12 @@ export interface ComparisonReportActionResult {
   runtimeLabviewProcessObserved?: boolean;
   runtimeLabviewCliProcessObserved?: boolean;
   runtimeLvcompareProcessObserved?: boolean;
+  runtimeExitProcessObservationCapturedAt?: string;
+  runtimeExitProcessObservationTrigger?: string;
+  runtimeExitObservedProcessNames?: string[];
+  runtimeLabviewProcessObservedAtExit?: boolean;
+  runtimeLabviewCliProcessObservedAtExit?: boolean;
+  runtimeLvcompareProcessObservedAtExit?: boolean;
   packetFilePath?: string;
   reportFilePath?: string;
   metadataFilePath?: string;
@@ -137,6 +143,17 @@ export function createComparisonReportAction(
       runtimeLabviewProcessObserved: packet.record.runtimeExecution.labviewProcessObserved,
       runtimeLabviewCliProcessObserved: packet.record.runtimeExecution.labviewCliProcessObserved,
       runtimeLvcompareProcessObserved: packet.record.runtimeExecution.lvcompareProcessObserved,
+      runtimeExitProcessObservationCapturedAt:
+        packet.record.runtimeExecution.exitProcessObservationCapturedAt,
+      runtimeExitProcessObservationTrigger:
+        packet.record.runtimeExecution.exitProcessObservationTrigger,
+      runtimeExitObservedProcessNames: packet.record.runtimeExecution.exitObservedProcessNames,
+      runtimeLabviewProcessObservedAtExit:
+        packet.record.runtimeExecution.labviewProcessObservedAtExit,
+      runtimeLabviewCliProcessObservedAtExit:
+        packet.record.runtimeExecution.labviewCliProcessObservedAtExit,
+      runtimeLvcompareProcessObservedAtExit:
+        packet.record.runtimeExecution.lvcompareProcessObservedAtExit,
       generatedReportExists: packet.record.runtimeExecution.reportExists,
       cspSource: panel.webview.cspSource
     });
@@ -193,6 +210,30 @@ export function createComparisonReportAction(
     if (packet.record.runtimeExecution.lvcompareProcessObserved !== undefined) {
       result.runtimeLvcompareProcessObserved = packet.record.runtimeExecution.lvcompareProcessObserved;
     }
+    if (packet.record.runtimeExecution.exitProcessObservationCapturedAt) {
+      result.runtimeExitProcessObservationCapturedAt =
+        packet.record.runtimeExecution.exitProcessObservationCapturedAt;
+    }
+    if (packet.record.runtimeExecution.exitProcessObservationTrigger) {
+      result.runtimeExitProcessObservationTrigger =
+        packet.record.runtimeExecution.exitProcessObservationTrigger;
+    }
+    if (packet.record.runtimeExecution.exitObservedProcessNames?.length) {
+      result.runtimeExitObservedProcessNames =
+        packet.record.runtimeExecution.exitObservedProcessNames;
+    }
+    if (packet.record.runtimeExecution.labviewProcessObservedAtExit !== undefined) {
+      result.runtimeLabviewProcessObservedAtExit =
+        packet.record.runtimeExecution.labviewProcessObservedAtExit;
+    }
+    if (packet.record.runtimeExecution.labviewCliProcessObservedAtExit !== undefined) {
+      result.runtimeLabviewCliProcessObservedAtExit =
+        packet.record.runtimeExecution.labviewCliProcessObservedAtExit;
+    }
+    if (packet.record.runtimeExecution.lvcompareProcessObservedAtExit !== undefined) {
+      result.runtimeLvcompareProcessObservedAtExit =
+        packet.record.runtimeExecution.lvcompareProcessObservedAtExit;
+    }
 
     return result;
   };
@@ -214,6 +255,12 @@ export function renderComparisonReportPanelHtml(options: {
   runtimeLabviewProcessObserved?: boolean;
   runtimeLabviewCliProcessObserved?: boolean;
   runtimeLvcompareProcessObserved?: boolean;
+  runtimeExitProcessObservationCapturedAt?: string;
+  runtimeExitProcessObservationTrigger?: string;
+  runtimeExitObservedProcessNames?: string[];
+  runtimeLabviewProcessObservedAtExit?: boolean;
+  runtimeLabviewCliProcessObservedAtExit?: boolean;
+  runtimeLvcompareProcessObservedAtExit?: boolean;
   generatedReportExists: boolean;
   cspSource: string;
 }): string {
@@ -267,6 +314,34 @@ export function renderComparisonReportPanelHtml(options: {
     'Observed LVCompare.exe',
     options.runtimeLvcompareProcessObserved
   );
+  const exitProcessObservationCapturedAtMarkup = options.runtimeExitProcessObservationCapturedAt
+    ? `<div><strong>Exit process observation captured at:</strong> ${escapeHtml(
+        options.runtimeExitProcessObservationCapturedAt
+      )}</div>`
+    : '';
+  const exitProcessObservationTriggerMarkup = options.runtimeExitProcessObservationTrigger
+    ? `<div><strong>Exit process observation trigger:</strong> ${escapeHtml(
+        options.runtimeExitProcessObservationTrigger
+      )}</div>`
+    : '';
+  const exitObservedProcessNamesMarkup =
+    options.runtimeExitObservedProcessNames && options.runtimeExitObservedProcessNames.length > 0
+      ? `<div><strong>Exit observed process names:</strong> ${escapeHtml(
+          options.runtimeExitObservedProcessNames.join(' | ')
+        )}</div>`
+      : '';
+  const observedLabviewAtExitMarkup = renderOptionalYesNoLine(
+    'Observed LabVIEW.exe at exit',
+    options.runtimeLabviewProcessObservedAtExit
+  );
+  const observedLabviewCliAtExitMarkup = renderOptionalYesNoLine(
+    'Observed LabVIEWCLI.exe at exit',
+    options.runtimeLabviewCliProcessObservedAtExit
+  );
+  const observedLvcompareAtExitMarkup = renderOptionalYesNoLine(
+    'Observed LVCompare.exe at exit',
+    options.runtimeLvcompareProcessObservedAtExit
+  );
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -298,6 +373,12 @@ export function renderComparisonReportPanelHtml(options: {
       ${observedLabviewMarkup}
       ${observedLabviewCliMarkup}
       ${observedLvcompareMarkup}
+      ${exitProcessObservationCapturedAtMarkup}
+      ${exitProcessObservationTriggerMarkup}
+      ${exitObservedProcessNamesMarkup}
+      ${observedLabviewAtExitMarkup}
+      ${observedLabviewCliAtExitMarkup}
+      ${observedLvcompareAtExitMarkup}
     </div>
     <iframe data-testid="comparison-report-panel-frame" src="${safeUri}" title="${safeTitle}"></iframe>
   </body>

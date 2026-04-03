@@ -150,6 +150,57 @@ export function createOpenViHistoryCommand(
           actionSummary.runtimeDiagnosticLogArtifactPath =
             result.runtimeDiagnosticLogArtifactPath;
         }
+        if (result.runtimeProcessObservationArtifactPath) {
+          actionSummary.runtimeProcessObservationArtifactPath =
+            result.runtimeProcessObservationArtifactPath;
+        }
+        if (result.runtimeProcessObservationCapturedAt) {
+          actionSummary.runtimeProcessObservationCapturedAt =
+            result.runtimeProcessObservationCapturedAt;
+        }
+        if (result.runtimeProcessObservationTrigger) {
+          actionSummary.runtimeProcessObservationTrigger =
+            result.runtimeProcessObservationTrigger;
+        }
+        if (result.runtimeObservedProcessNames?.length) {
+          actionSummary.runtimeObservedProcessNames = result.runtimeObservedProcessNames;
+        }
+        if (result.runtimeLabviewProcessObserved !== undefined) {
+          actionSummary.runtimeLabviewProcessObserved =
+            result.runtimeLabviewProcessObserved;
+        }
+        if (result.runtimeLabviewCliProcessObserved !== undefined) {
+          actionSummary.runtimeLabviewCliProcessObserved =
+            result.runtimeLabviewCliProcessObserved;
+        }
+        if (result.runtimeLvcompareProcessObserved !== undefined) {
+          actionSummary.runtimeLvcompareProcessObserved =
+            result.runtimeLvcompareProcessObserved;
+        }
+        if (result.runtimeExitProcessObservationCapturedAt) {
+          actionSummary.runtimeExitProcessObservationCapturedAt =
+            result.runtimeExitProcessObservationCapturedAt;
+        }
+        if (result.runtimeExitProcessObservationTrigger) {
+          actionSummary.runtimeExitProcessObservationTrigger =
+            result.runtimeExitProcessObservationTrigger;
+        }
+        if (result.runtimeExitObservedProcessNames?.length) {
+          actionSummary.runtimeExitObservedProcessNames =
+            result.runtimeExitObservedProcessNames;
+        }
+        if (result.runtimeLabviewProcessObservedAtExit !== undefined) {
+          actionSummary.runtimeLabviewProcessObservedAtExit =
+            result.runtimeLabviewProcessObservedAtExit;
+        }
+        if (result.runtimeLabviewCliProcessObservedAtExit !== undefined) {
+          actionSummary.runtimeLabviewCliProcessObservedAtExit =
+            result.runtimeLabviewCliProcessObservedAtExit;
+        }
+        if (result.runtimeLvcompareProcessObservedAtExit !== undefined) {
+          actionSummary.runtimeLvcompareProcessObservedAtExit =
+            result.runtimeLvcompareProcessObservedAtExit;
+        }
         panelTracker?.recordAction(actionSummary);
         return;
       }
