@@ -112,7 +112,7 @@ export function createComparisonReportAction(
         reportFilePath: ensured.packet.reportFilePath,
         metadataFilePath: ensured.packet.metadataFilePath,
         localResourceSegment: 'reports',
-        retainedArchiveAvailable: ensured.result.retainedArchiveAvailable,
+        retainedArchiveAvailable: ensured.result.retainedArchiveAvailable ?? false,
         archiveFailureReason: ensured.result.archiveFailureReason
       },
       deps
@@ -517,7 +517,7 @@ async function openPersistedComparisonReportPanel(
     reportFilePath: string;
     metadataFilePath: string;
     localResourceSegment: 'reports' | 'report-history';
-    retainedArchiveAvailable?: boolean;
+    retainedArchiveAvailable: boolean;
     archiveFailureReason?: ComparisonReportActionResult['archiveFailureReason'];
   },
   deps: ComparisonReportActionDeps
@@ -761,6 +761,8 @@ export function renderComparisonReportPanelHtml(options: {
   runtimeLabviewCliProcessObservedAtExit?: boolean;
   runtimeLvcompareProcessObservedAtExit?: boolean;
   generatedReportExists: boolean;
+  retainedArchiveAvailable: boolean;
+  archiveFailureReason?: ComparisonReportActionResult['archiveFailureReason'];
   displayedEvidenceKind: 'generated-report' | 'packet';
   cspSource: string;
 }): string {
@@ -815,6 +817,8 @@ async function renderGeneratedComparisonReportPanelHtml(options: {
   runtimeLabviewCliProcessObservedAtExit?: boolean;
   runtimeLvcompareProcessObservedAtExit?: boolean;
   generatedReportExists: boolean;
+  retainedArchiveAvailable: boolean;
+  archiveFailureReason?: ComparisonReportActionResult['archiveFailureReason'];
   displayedEvidenceKind: 'generated-report' | 'packet';
   cspSource: string;
   readFile: typeof fs.readFile;
@@ -881,6 +885,8 @@ async function renderPersistedComparisonReportPacketPanelHtml(options: {
   runtimeLabviewCliProcessObservedAtExit?: boolean;
   runtimeLvcompareProcessObservedAtExit?: boolean;
   generatedReportExists: boolean;
+  retainedArchiveAvailable: boolean;
+  archiveFailureReason?: ComparisonReportActionResult['archiveFailureReason'];
   displayedEvidenceKind: 'generated-report' | 'packet';
   cspSource: string;
   readFile: typeof fs.readFile;
@@ -948,7 +954,7 @@ function renderComparisonReportPanelStatusMarkup(options: {
   runtimeLabviewCliProcessObservedAtExit?: boolean;
   runtimeLvcompareProcessObservedAtExit?: boolean;
   generatedReportExists: boolean;
-  retainedArchiveAvailable?: boolean;
+  retainedArchiveAvailable: boolean;
   archiveFailureReason?: ComparisonReportActionResult['archiveFailureReason'];
   displayedEvidenceKind: 'generated-report' | 'packet';
 }): string {
@@ -959,10 +965,7 @@ function renderComparisonReportPanelStatusMarkup(options: {
         ? 'retained packet fallback'
         : 'retained packet'
   )}</div>`;
-  const retainedArchiveAvailableMarkup =
-    options.retainedArchiveAvailable !== undefined
-      ? `<div><strong>Retained archive available:</strong> ${options.retainedArchiveAvailable ? 'yes' : 'no'}</div>`
-      : '';
+  const retainedArchiveAvailableMarkup = `<div><strong>Retained archive available:</strong> ${options.retainedArchiveAvailable ? 'yes' : 'no'}</div>`;
   const retainedArchiveStatusMarkup = options.archiveFailureReason
     ? `<div><strong>Retained archive status:</strong> ${escapeHtml(
         options.archiveFailureReason === 'retained-archive-write-failed'
@@ -1125,16 +1128,12 @@ function renderOptionalYesNoLine(label: string, value: boolean | undefined): str
 
 function isValidArchivedComparisonReportSourceRecord(
   value: unknown,
-  storageRoot: string,
+  _storageRoot: string,
   expectedArchivePlan: ComparisonReportArchivePlan,
   selectedHash: string,
   baseHash: string
 ): value is ArchivedComparisonReportSourceRecord {
   if (!isRecord(value) || !isRecord(value.archivePlan) || !isRecord(value.packetRecord)) {
-    return false;
-  }
-
-  if (!isArchivePlanWithinStorageRoot(storageRoot, expectedArchivePlan)) {
     return false;
   }
 
@@ -1208,28 +1207,6 @@ function isValidComparisonRuntimeExecutionState(
 
 function matchesExpectedArchivePath(value: unknown, expectedPath: string): boolean {
   return typeof value === 'string' && value.length > 0 && path.resolve(value) === path.resolve(expectedPath);
-}
-
-function isArchivePlanWithinStorageRoot(
-  storageRoot: string,
-  archivePlan: Pick<
-    ComparisonReportArchivePlan,
-    'sourceRecordFilePath' | 'packetFilePath' | 'reportFilePath' | 'metadataFilePath'
-  >
-): boolean {
-  return (
-    isDescendantPath(storageRoot, archivePlan.sourceRecordFilePath) &&
-    isDescendantPath(storageRoot, archivePlan.packetFilePath) &&
-    isDescendantPath(storageRoot, archivePlan.reportFilePath) &&
-    isDescendantPath(storageRoot, archivePlan.metadataFilePath)
-  );
-}
-
-function isDescendantPath(rootPath: string, targetPath: string): boolean {
-  const resolvedRoot = path.resolve(rootPath);
-  const resolvedTarget = path.resolve(targetPath);
-  const relativeTarget = path.relative(resolvedRoot, resolvedTarget);
-  return relativeTarget.length > 0 && !relativeTarget.startsWith('..') && !path.isAbsolute(relativeTarget);
 }
 
 function isRecord(value: unknown): value is Record<string, any> {

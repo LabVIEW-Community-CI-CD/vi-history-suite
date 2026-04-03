@@ -294,6 +294,53 @@ describe('comparisonReportAction', () => {
     expect(createWebviewPanelMock).not.toHaveBeenCalled();
   });
 
+  it('returns a stable invalid-retained result when the archived retained comparison source record omits governed top-level members', async () => {
+    const pathExists = vi.fn().mockResolvedValue(true);
+    const readFile = vi.fn().mockResolvedValue(
+      JSON.stringify({
+        archivePlan: {
+          sourceRecordFilePath:
+            '/workspace/.storage/report-history/repoid123456/fileid123456/pairid123456/source-record.json'
+        }
+      })
+    );
+    const action = createOpenRetainedComparisonReportAction(
+      {
+        storageUri: createMockUri('/workspace/.storage')
+      } as never,
+      {
+        pathExists,
+        readFile: readFile as never
+      }
+    );
+
+    await expect(
+      action({
+        model: {
+          repositoryName: 'repo',
+          repositoryRoot: '/workspace/repo',
+          relativePath: 'foo.vi',
+          signature: 'LVIN',
+          eligible: true,
+          commits: [
+            {
+              hash: 'abcdef1234567890',
+              authorDate: '2026-04-02T00:00:00Z',
+              authorName: 'A User',
+              subject: 'Update VI',
+              previousHash: '1111111122222222'
+            }
+          ]
+        },
+        selectedHash: 'abcdef1234567890'
+      })
+    ).resolves.toEqual({
+      outcome: 'invalid-retained-comparison-report'
+    });
+
+    expect(createWebviewPanelMock).not.toHaveBeenCalled();
+  });
+
   it('returns a stable invalid-retained result when the archived retained comparison packet no longer exists', async () => {
     const archivePlan = buildComparisonReportArchivePlanFromSelection({
       storageRoot: '/workspace/.storage',
@@ -613,6 +660,200 @@ describe('comparisonReportAction', () => {
     });
 
     expect(createWebviewPanelMock).not.toHaveBeenCalled();
+  });
+
+  it('opens retained packet evidence when the archived packet html omits a head element', async () => {
+    const archivePlan = buildComparisonReportArchivePlanFromSelection({
+      storageRoot: '/workspace/.storage',
+      repositoryRoot: '/workspace/repo',
+      relativePath: 'foo.vi',
+      reportType: 'diff',
+      selectedHash: 'abcdef1234567890',
+      baseHash: '1111111122222222',
+      reportFilename: 'diff-report-foo.vi.html',
+      packetFilename: 'report-packet.html',
+      metadataFilename: 'report-metadata.json'
+    });
+    const readFile = vi.fn().mockImplementation(async (targetPath: string) => {
+      if (targetPath === archivePlan.sourceRecordFilePath) {
+        return JSON.stringify({
+          archivePlan,
+          packetRecord: {
+            selectedHash: 'abcdef1234567890',
+            baseHash: '1111111122222222',
+            reportTitle: 'VI Comparison Report: foo.vi',
+            reportStatus: 'blocked-preflight',
+            runtimeExecutionState: 'not-run',
+            runtimeExecution: {
+              state: 'not-run',
+              attempted: false,
+              reportExists: false
+            },
+            artifactPlan: {
+              repoId: archivePlan.repoId,
+              fileId: archivePlan.fileId,
+              normalizedRelativePath: 'foo.vi',
+              reportDirectory: archivePlan.archiveDirectory,
+              packetFilename: path.basename(archivePlan.packetFilePath),
+              reportFilename: path.basename(archivePlan.reportFilePath),
+              allowedLocalRootPaths: ['/workspace/.storage']
+            }
+          }
+        });
+      }
+      if (targetPath === archivePlan.packetFilePath) {
+        return '<div>Headless retained packet body</div>';
+      }
+      return '';
+    });
+    const action = createOpenRetainedComparisonReportAction(
+      {
+        storageUri: createMockUri('/workspace/.storage')
+      } as never,
+      {
+        pathExists: vi.fn().mockResolvedValue(true),
+        readFile: readFile as never
+      }
+    );
+
+    await expect(
+      action({
+        model: {
+          repositoryName: 'repo',
+          repositoryRoot: '/workspace/repo',
+          relativePath: 'foo.vi',
+          signature: 'LVIN',
+          eligible: true,
+          commits: [
+            {
+              hash: 'abcdef1234567890',
+              authorDate: '2026-04-02T00:00:00Z',
+              authorName: 'A User',
+              subject: 'Update VI',
+              previousHash: '1111111122222222'
+            }
+          ]
+        },
+        selectedHash: 'abcdef1234567890'
+      })
+    ).resolves.toEqual({
+      outcome: 'opened-comparison-report',
+      reportStatus: 'blocked-preflight',
+      runtimeExecutionState: 'not-run',
+      blockedReason: undefined,
+      runtimeFailureReason: undefined,
+      packetFilePath: archivePlan.packetFilePath,
+      reportFilePath: archivePlan.reportFilePath,
+      metadataFilePath: archivePlan.metadataFilePath,
+      reportWebviewUri: `webview:/webview${archivePlan.packetFilePath}`,
+      retainedArchiveAvailable: true,
+      generatedReportExists: false,
+      displayedEvidenceKind: 'packet',
+      title: 'VI Comparison Report: foo.vi'
+    });
+
+    const panel = createWebviewPanelMock.mock.results.at(-1)?.value as MockPanel;
+    expect(panel.webview.html).toContain('Headless retained packet body');
+    expect(panel.webview.html).toContain(
+      `<base href="webview:/webview${archivePlan.archiveDirectory}/" />`
+    );
+    expect(panel.webview.html).not.toContain('data-testid="comparison-report-panel-frame"');
+  });
+
+  it('opens retained packet evidence when the archived packet html omits a body element', async () => {
+    const archivePlan = buildComparisonReportArchivePlanFromSelection({
+      storageRoot: '/workspace/.storage',
+      repositoryRoot: '/workspace/repo',
+      relativePath: 'foo.vi',
+      reportType: 'diff',
+      selectedHash: 'abcdef1234567890',
+      baseHash: '1111111122222222',
+      reportFilename: 'diff-report-foo.vi.html',
+      packetFilename: 'report-packet.html',
+      metadataFilename: 'report-metadata.json'
+    });
+    const readFile = vi.fn().mockImplementation(async (targetPath: string) => {
+      if (targetPath === archivePlan.sourceRecordFilePath) {
+        return JSON.stringify({
+          archivePlan,
+          packetRecord: {
+            selectedHash: 'abcdef1234567890',
+            baseHash: '1111111122222222',
+            reportTitle: 'VI Comparison Report: foo.vi',
+            reportStatus: 'blocked-preflight',
+            runtimeExecutionState: 'not-run',
+            runtimeExecution: {
+              state: 'not-run',
+              attempted: false,
+              reportExists: false
+            },
+            artifactPlan: {
+              repoId: archivePlan.repoId,
+              fileId: archivePlan.fileId,
+              normalizedRelativePath: 'foo.vi',
+              reportDirectory: archivePlan.archiveDirectory,
+              packetFilename: path.basename(archivePlan.packetFilePath),
+              reportFilename: path.basename(archivePlan.reportFilePath),
+              allowedLocalRootPaths: ['/workspace/.storage']
+            }
+          }
+        });
+      }
+      if (targetPath === archivePlan.packetFilePath) {
+        return '<!DOCTYPE html><html><head><title>Packet</title></head><div>Bodyless retained packet body</div></html>';
+      }
+      return '';
+    });
+    const action = createOpenRetainedComparisonReportAction(
+      {
+        storageUri: createMockUri('/workspace/.storage')
+      } as never,
+      {
+        pathExists: vi.fn().mockResolvedValue(true),
+        readFile: readFile as never
+      }
+    );
+
+    await expect(
+      action({
+        model: {
+          repositoryName: 'repo',
+          repositoryRoot: '/workspace/repo',
+          relativePath: 'foo.vi',
+          signature: 'LVIN',
+          eligible: true,
+          commits: [
+            {
+              hash: 'abcdef1234567890',
+              authorDate: '2026-04-02T00:00:00Z',
+              authorName: 'A User',
+              subject: 'Update VI',
+              previousHash: '1111111122222222'
+            }
+          ]
+        },
+        selectedHash: 'abcdef1234567890'
+      })
+    ).resolves.toEqual({
+      outcome: 'opened-comparison-report',
+      reportStatus: 'blocked-preflight',
+      runtimeExecutionState: 'not-run',
+      blockedReason: undefined,
+      runtimeFailureReason: undefined,
+      packetFilePath: archivePlan.packetFilePath,
+      reportFilePath: archivePlan.reportFilePath,
+      metadataFilePath: archivePlan.metadataFilePath,
+      reportWebviewUri: `webview:/webview${archivePlan.packetFilePath}`,
+      retainedArchiveAvailable: true,
+      generatedReportExists: false,
+      displayedEvidenceKind: 'packet',
+      title: 'VI Comparison Report: foo.vi'
+    });
+
+    const panel = createWebviewPanelMock.mock.results.at(-1)?.value as MockPanel;
+    expect(panel.webview.html).toContain('Bodyless retained packet body');
+    expect(panel.webview.html).toContain('Retained archive available:</strong> yes');
+    expect(panel.webview.html).not.toContain('data-testid="comparison-report-panel-frame"');
   });
 
   it('returns a stable cancelled result when cancellation is already requested before revision-pair resolution', async () => {
