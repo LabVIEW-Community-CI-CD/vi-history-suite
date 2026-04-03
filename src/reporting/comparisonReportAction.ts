@@ -461,7 +461,11 @@ export function readComparisonRuntimeSettings(
     labviewCliPath: configuration.get<string>('labviewCliPath', ''),
     lvComparePath: configuration.get<string>('lvComparePath', ''),
     labviewExePath: configuration.get<string>('labviewExePath', ''),
-    preferBitness: configuration.get<'auto' | 'x86' | 'x64'>('preferBitness', 'auto')
+    preferBitness: configuration.get<'auto' | 'x86' | 'x64'>('preferBitness', 'auto'),
+    windowsContainerImage: configuration.get<string>(
+      'windowsContainerImage',
+      'nationalinstruments/labview:2026q1-windows'
+    )
   };
 }
 

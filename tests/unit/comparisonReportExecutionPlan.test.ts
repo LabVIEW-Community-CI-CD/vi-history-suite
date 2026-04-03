@@ -97,26 +97,68 @@ describe('comparisonReportExecutionPlan', () => {
 
     expect(result).toEqual({
       outcome: 'ready',
+      provider: 'host-native',
       engine: 'labview-cli',
       commandPlan: {
         executable: 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
         args: [
           '-OperationName',
           'CreateComparisonReport',
-          '-vi1',
+          '-VI1',
           '/workspace/.storage/reports/repoid123456/fileid123456/staging/left-111111112222-foo.vi',
-          '-vi2',
+          '-VI2',
           '/workspace/.storage/reports/repoid123456/fileid123456/staging/right-abcdef123456-foo.vi',
-          '-reportType',
-          'HTMLSingleFile',
-          '-reportPath',
+          '-ReportType',
+          'html',
+          '-ReportPath',
           '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
           '-c',
-          '-o',
-          '-d',
-          '-Headless',
-          '-LabVIEWPath',
-          'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe'
+          '-o'
+        ]
+      }
+    });
+  });
+
+  it('builds a LabVIEW CLI execution plan from a ready windows-container runtime selection', () => {
+    const record = createBaseRecord();
+    record.runtimeSelection.provider = 'windows-container';
+    record.runtimeSelection.windowsContainerImage = 'nationalinstruments/labview:2026q1-windows';
+    record.runtimeSelection.labviewExe = {
+      kind: 'labview-exe',
+      path: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+      source: 'scan',
+      exists: true,
+      bitness: 'x64'
+    };
+    record.runtimeSelection.labviewCli = {
+      kind: 'labview-cli',
+      path: 'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+      source: 'scan',
+      exists: true,
+      bitness: 'x86'
+    };
+
+    const result = buildComparisonReportExecutionPlan(record);
+
+    expect(result).toEqual({
+      outcome: 'ready',
+      provider: 'windows-container',
+      engine: 'labview-cli',
+      commandPlan: {
+        executable: 'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+        args: [
+          '-OperationName',
+          'CreateComparisonReport',
+          '-VI1',
+          '/workspace/.storage/reports/repoid123456/fileid123456/staging/left-111111112222-foo.vi',
+          '-VI2',
+          '/workspace/.storage/reports/repoid123456/fileid123456/staging/right-abcdef123456-foo.vi',
+          '-ReportType',
+          'html',
+          '-ReportPath',
+          '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
+          '-c',
+          '-o'
         ]
       }
     });
@@ -137,6 +179,7 @@ describe('comparisonReportExecutionPlan', () => {
 
     expect(result).toEqual({
       outcome: 'ready',
+      provider: 'host-native',
       engine: 'lvcompare',
       commandPlan: {
         executable: 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe',

@@ -53,7 +53,7 @@
 | Developer dashboard | Review UI | concentrate multiple retained comparison reports for one VI across a commit window, surface review hotspots, and preserve drill-down to raw evidence |
 | Git CLI adapter | Git adapter | execute and parse bounded Git commands |
 | Comparison report planner | Report subsystem | derive deterministic report naming, staging, storage, and command plans |
-| Comparison runtime locator | Report subsystem | detect LabVIEW 2026 Q1 tooling and select the governed host-native runtime path |
+| Comparison runtime locator | Report subsystem | detect LabVIEW 2026 Q1 tooling and select the governed runtime provider and engine |
 | Dashboard archive layer | Report subsystem | retain pairwise packet/report/runtime artifacts by commit pair for later dashboard concentration |
 | Dashboard packet builder | Report subsystem | aggregate multiple retained comparison-report archives into one chronology-aware review packet |
 | Harness smoke command | Harness smoke runner | clone the canonical harness and emit factual local reports |
@@ -69,10 +69,10 @@
 - Runtime dependencies:
   - Node runtime bundled with VS Code extension host
   - Git executable on PATH
-  - optional LabVIEW 2026 Q1 host-native tooling for future report execution
-  - optional Windows container runtime for future isolated 64-bit report execution
-    without colliding with an already-open host-native LabVIEW 2026 64-bit
-    session
+  - optional LabVIEW 2026 Q1 host-native tooling, primarily for Windows x32
+  - optional Windows container runtime for active isolated 64-bit report
+    execution without colliding with an already-open host-native LabVIEW 2026
+    64-bit session
 
 ## Correspondence And Rationale
 
@@ -87,9 +87,8 @@
 - Known tradeoffs:
   - Git CLI requires Git on PATH
   - non-file URI fallback is less I/O efficient than local partial reads
-  - Windows 64-bit isolated container execution is architecture-approved as the
-    preferred extension-user isolation path, but not yet wired into live report
-    generation
+  - Windows 64-bit isolated container execution is the preferred extension-user
+    isolation path and is now wired into live report generation
   - the first-class multi-report dashboard is partially implemented through a
     retained pair-archive contract and concentrated dashboard packet, but raw
     drill-down actions from the dashboard are still a follow-on slice

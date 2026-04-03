@@ -8,7 +8,7 @@ export type RuntimePlatform = 'win32' | 'linux' | 'darwin';
 export type RuntimeBitnessPreference = 'auto' | 'x86' | 'x64';
 export type RuntimeBitness = 'x86' | 'x64';
 export type ComparisonRuntimeEngine = 'labview-cli' | 'lvcompare';
-export type ComparisonRuntimeProvider = 'host-native' | 'unavailable';
+export type ComparisonRuntimeProvider = 'host-native' | 'windows-container' | 'unavailable';
 export type RuntimeCandidateSource = 'configured' | 'scan' | 'registry';
 export type RuntimeCandidateKind = 'labview-exe' | 'labview-cli' | 'lvcompare';
 
@@ -17,6 +17,7 @@ export interface ComparisonRuntimeSettings {
   lvComparePath?: string;
   labviewExePath?: string;
   preferBitness?: RuntimeBitnessPreference;
+  windowsContainerImage?: string;
 }
 
 export interface WindowsRegistryQueryPlan {
@@ -39,6 +40,7 @@ export interface ComparisonRuntimeSelection {
   preferBitness: RuntimeBitnessPreference;
   provider: ComparisonRuntimeProvider;
   engine?: ComparisonRuntimeEngine;
+  windowsContainerImage?: string;
   labviewExe?: RuntimeToolCandidate;
   labviewCli?: RuntimeToolCandidate;
   lvCompare?: RuntimeToolCandidate;
@@ -51,11 +53,23 @@ export interface ComparisonRuntimeSelection {
 export interface ComparisonRuntimeLocatorDeps {
   pathExists?: (filePath: string) => Promise<boolean>;
   queryWindowsRegistry?: (plan: WindowsRegistryQueryPlan) => Promise<string>;
+  queryWindowsContainerImage?: (
+    image: string,
+    hostPlatform: NodeJS.Platform
+  ) => Promise<boolean>;
+  hostPlatform?: NodeJS.Platform;
 }
 
 const WINDOWS_PROGRAM_FILES = 'C:\\Program Files';
 const WINDOWS_PROGRAM_FILES_X86 = 'C:\\Program Files (x86)';
 const WINDOWS_LABVIEW_FOLDERS = ['LabVIEW 2026 Q1', 'LabVIEW 2026'];
+const DEFAULT_WINDOWS_CONTAINER_IMAGE = 'nationalinstruments/labview:2026q1-windows';
+const WINDOWS_CONTAINER_LABVIEW_EXE =
+  'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe';
+const WINDOWS_CONTAINER_LABVIEW_CLI =
+  'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe';
+const WINDOWS_CONTAINER_LVCOMPARE =
+  'C:\\Program Files\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe';
 
 export function buildWindowsRegistryQueryPlans(): WindowsRegistryQueryPlan[] {
   return [
@@ -182,6 +196,8 @@ export async function locateComparisonRuntime(
   const notes: string[] = [];
   const registryQueryPlans = platform === 'win32' ? buildWindowsRegistryQueryPlans() : [];
   const pathExists = deps.pathExists ?? defaultPathExists;
+  const hostPlatform = deps.hostPlatform ?? process.platform;
+  const windowsContainerImage = resolveWindowsContainerImage(settings.windowsContainerImage);
 
   if (platform === 'darwin') {
     return {
@@ -229,6 +245,55 @@ export async function locateComparisonRuntime(
     ...registryCandidates,
     ...scannedCandidates
   ]);
+
+  const windowsContainerAvailable =
+    platform === 'win32' && preferBitness !== 'x86'
+      ? await (deps.queryWindowsContainerImage ?? defaultQueryWindowsContainerImage)(
+          windowsContainerImage,
+          hostPlatform
+        )
+      : false;
+
+  if (windowsContainerAvailable) {
+    return {
+      platform,
+      preferBitness,
+      provider: 'windows-container',
+      windowsContainerImage,
+      engine: 'labview-cli',
+      labviewExe: {
+        kind: 'labview-exe',
+        path: WINDOWS_CONTAINER_LABVIEW_EXE,
+        source: 'scan',
+        exists: true,
+        bitness: 'x64'
+      },
+      labviewCli: {
+        kind: 'labview-cli',
+        path: WINDOWS_CONTAINER_LABVIEW_CLI,
+        source: 'scan',
+        exists: true,
+        bitness: 'x86'
+      },
+      lvCompare: {
+        kind: 'lvcompare',
+        path: WINDOWS_CONTAINER_LVCOMPARE,
+        source: 'scan',
+        exists: true
+      },
+      notes: [
+        `Using isolated Windows container provider image ${windowsContainerImage} for 64-bit comparison-report execution.`
+      ],
+      registryQueryPlans,
+      candidates
+    };
+  }
+
+  if (platform === 'win32' && preferBitness !== 'x86') {
+    notes.push(
+      `Windows container provider image ${windowsContainerImage} was not available; falling back to host-native runtime discovery.`
+    );
+  }
 
   const labviewCandidates = candidates.filter(
     (candidate) => candidate.kind === 'labview-exe' && candidate.exists
@@ -307,6 +372,11 @@ export async function locateComparisonRuntime(
     registryQueryPlans,
     candidates
   };
+}
+
+function resolveWindowsContainerImage(rawImage: string | undefined): string {
+  const trimmed = rawImage?.trim();
+  return trimmed || DEFAULT_WINDOWS_CONTAINER_IMAGE;
 }
 
 async function resolveConfiguredCandidates(
@@ -460,4 +530,31 @@ export async function runWindowsRegistryQuery(
     maxBuffer: 1024 * 1024
   });
   return stdout;
+}
+
+async function defaultQueryWindowsContainerImage(
+  image: string,
+  hostPlatform: NodeJS.Platform
+): Promise<boolean> {
+  if (hostPlatform === 'win32') {
+    try {
+      await execFileAsync('docker', ['image', 'inspect', image], {
+        windowsHide: true,
+        maxBuffer: 1024 * 1024
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  try {
+    await execFileAsync('/mnt/c/Windows/System32/cmd.exe', ['/c', 'docker', 'image', 'inspect', image], {
+      windowsHide: true,
+      maxBuffer: 1024 * 1024
+    });
+    return true;
+  } catch {
+    return false;
+  }
 }

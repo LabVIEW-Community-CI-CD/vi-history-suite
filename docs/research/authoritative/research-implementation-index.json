@@ -95,20 +95,25 @@
       "nextMove": "sustain"
     },
     {
-      "surface": "labview-2026q1-runtime-selection-and-host-native-execution-proof",
+      "surface": "labview-2026q1-runtime-selection-and-live-container-proof",
       "status": "implemented-and-active",
       "evidence": [
         "src/reporting/comparisonRuntimeLocator.ts",
         "src/reporting/comparisonReportRuntimeExecution.ts",
-        "src/harness/harnessReportSmoke.ts"
+        "src/harness/harnessReportSmoke.ts",
+        ".cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.json"
       ],
       "requirements": [
         "VHS-REQ-146",
         "VHS-REQ-148",
         "VHS-REQ-159",
-        "VHS-REQ-173"
+        "VHS-REQ-173",
+        "VHS-REQ-217",
+        "VHS-REQ-218",
+        "VHS-REQ-219",
+        "VHS-REQ-220"
       ],
-      "nextMove": "continue TRANCHE-003 runtime proof tightening"
+      "nextMove": "sustain and improve runtime-doctor UX"
     },
     {
       "surface": "progress-surface-uplift",
@@ -124,15 +129,21 @@
     },
     {
       "surface": "windows-x64-isolated-container-provider",
-      "status": "approved-not-yet-live",
+      "status": "implemented-and-active",
       "evidence": [
         "docs/architecture/adr/ADR-0006-windows64-container-isolation-for-extension-users.md",
-        "docs/product/development-queue.json"
+        "src/reporting/comparisonRuntimeLocator.ts",
+        "src/reporting/comparisonReportRuntimeExecution.ts",
+        ".cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.json"
       ],
       "requirements": [
-        "VHS-REQ-146"
+        "VHS-REQ-146",
+        "VHS-REQ-217",
+        "VHS-REQ-218",
+        "VHS-REQ-219",
+        "VHS-REQ-220"
       ],
-      "nextMove": "TRANCHE-005"
+      "nextMove": "sustain"
     },
     {
       "surface": "multi-report-developer-dashboard-for-three-plus-commits",

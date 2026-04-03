@@ -78,12 +78,16 @@ describe('extension manifest research alignment', () => {
         'viHistorySuite.labviewCliPath',
         'viHistorySuite.lvComparePath',
         'viHistorySuite.labviewExePath',
+        'viHistorySuite.windowsContainerImage',
         'viHistorySuite.preferBitness'
       ]
     });
 
     expect(manifest.contributes?.configuration?.properties).toHaveProperty(
       'viHistorySuite.labviewCliPath'
+    );
+    expect(manifest.contributes?.configuration?.properties).toHaveProperty(
+      'viHistorySuite.windowsContainerImage'
     );
   });
 });

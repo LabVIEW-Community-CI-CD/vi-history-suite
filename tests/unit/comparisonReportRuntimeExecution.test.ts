@@ -24,6 +24,10 @@ import {
 } from '../../src/reporting/comparisonReportRuntimeExecution';
 import { ComparisonReportPacketRecord } from '../../src/reporting/comparisonReportPacket';
 
+function decodeWindowsEncodedCommand(value: string): string {
+  return Buffer.from(value, 'base64').toString('utf16le');
+}
+
 function createReadyRecord(): ComparisonReportPacketRecord {
   return {
     generatedAt: '2026-04-02T00:00:00.000Z',
@@ -623,20 +627,16 @@ describe('comparisonReportRuntimeExecution', () => {
       args: [
         '-OperationName',
         'CreateComparisonReport',
-        '-vi1',
+        '-VI1',
         'C:\\Users\\sveld\\AppData\\Local\\Temp\\vi-history-suite-runtime\\reports\\repoid123456\\fileid123456\\staging\\left-111111112222-foo.vi',
-        '-vi2',
+        '-VI2',
         'C:\\Users\\sveld\\AppData\\Local\\Temp\\vi-history-suite-runtime\\reports\\repoid123456\\fileid123456\\staging\\right-abcdef123456-foo.vi',
-        '-reportType',
-        'HTMLSingleFile',
-        '-reportPath',
+        '-ReportType',
+        'html',
+        '-ReportPath',
         'C:\\Users\\sveld\\AppData\\Local\\Temp\\vi-history-suite-runtime\\reports\\repoid123456\\fileid123456\\diff-report-foo.vi.html',
         '-c',
-        '-o',
-        '-d',
-        '-Headless',
-        '-LabVIEWPath',
-        'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe'
+        '-o'
       ]
     });
     expect(writes).toEqual(
@@ -658,6 +658,61 @@ describe('comparisonReportRuntimeExecution', () => {
       '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html'
     );
     expect(result.record.runtimeExecutionState).toBe('succeeded');
+  });
+
+  it('copies generated report asset directories back into the stored report root after interop execution', async () => {
+    const runCommand = vi.fn().mockResolvedValue({
+      exitCode: 0,
+      stdout: 'ok',
+      stderr: ''
+    });
+    const copyFile = vi.fn().mockResolvedValue(undefined);
+    const copyDirectory = vi.fn().mockResolvedValue(undefined);
+
+    await executeComparisonReport(
+      {
+        record: createReadyRecord(),
+        repositoryRoot: '/workspace/repo',
+        interopWorkspaceRoot: '/mnt/c/Users/sveld/AppData/Local/Temp/vi-history-suite-runtime'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: copyFile as never,
+        copyDirectory: copyDirectory as never,
+        pathExists: vi.fn(async (filePath: string) =>
+          filePath ===
+            '/mnt/c/Users/sveld/AppData/Local/Temp/vi-history-suite-runtime/reports/repoid123456/fileid123456/diff-report-foo.vi.html' ||
+          filePath ===
+            '/mnt/c/Users/sveld/AppData/Local/Temp/vi-history-suite-runtime/reports/repoid123456/fileid123456/diff-report-foo.vi_files'
+        ),
+        runCommand,
+        nowIso: vi
+          .fn()
+          .mockReturnValueOnce('2026-04-02T01:00:00.000Z')
+          .mockReturnValueOnce('2026-04-02T01:00:01.000Z'),
+        nowMs: vi.fn().mockReturnValueOnce(1000).mockReturnValueOnce(2000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'linux'
+      }
+    );
+
+    expect(copyFile).toHaveBeenCalledWith(
+      '/mnt/c/Users/sveld/AppData/Local/Temp/vi-history-suite-runtime/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
+      '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html'
+    );
+    expect(copyDirectory).toHaveBeenCalledWith(
+      '/mnt/c/Users/sveld/AppData/Local/Temp/vi-history-suite-runtime/reports/repoid123456/fileid123456/diff-report-foo.vi_files',
+      '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi_files',
+      {
+        recursive: true,
+        force: true
+      }
+    );
   });
 
   it('fails closed when win32 execution from a non-Windows host has no interop workspace root', async () => {
@@ -688,6 +743,161 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(result.record.runtimeExecution.failureReason).toBe('windows-interop-root-unavailable');
     expect(result.record.runtimeExecution.attempted).toBe(false);
     expect(runCommand).not.toHaveBeenCalled();
+  });
+
+  it('wraps the governed LabVIEW CLI command in the windows container provider from a non-Windows host', async () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.provider = 'windows-container';
+    record.runtimeSelection.windowsContainerImage = 'nationalinstruments/labview:2026q1-windows';
+    record.runtimeSelection.labviewExe = {
+      kind: 'labview-exe',
+      path: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+      source: 'scan',
+      exists: true,
+      bitness: 'x64'
+    };
+    record.runtimeSelection.labviewCli = {
+      kind: 'labview-cli',
+      path: 'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+      source: 'scan',
+      exists: true,
+      bitness: 'x86'
+    };
+
+    const runCommand = vi.fn().mockResolvedValue({
+      exitCode: 0,
+      stdout: '',
+      stderr: ''
+    });
+
+    await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo',
+        interopWorkspaceRoot: '/mnt/c/Users/sveld/AppData/Local/Temp/vi-history-suite-runtime'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        pathExists: vi.fn(async (filePath: string) =>
+          filePath ===
+          '/mnt/c/Users/sveld/AppData/Local/Temp/vi-history-suite-runtime/reports/repoid123456/fileid123456/diff-report-foo.vi.html'
+        ),
+        runCommand,
+        nowIso: vi
+          .fn()
+          .mockReturnValueOnce('2026-04-02T01:00:00.000Z')
+          .mockReturnValueOnce('2026-04-02T01:00:01.000Z'),
+        nowMs: vi.fn().mockReturnValueOnce(1000).mockReturnValueOnce(2000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'linux'
+      }
+    );
+
+    expect(runCommand).toHaveBeenCalledWith(
+      expect.objectContaining({
+        executable: '/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe',
+        args: expect.arrayContaining(['-NoProfile', '-EncodedCommand'])
+      })
+    );
+    const encodedOuterCommand = runCommand.mock.calls[0]?.[0].args[2];
+    expect(encodedOuterCommand).toMatch(/^[A-Za-z0-9+/=]+$/);
+    const outerCommand = decodeWindowsEncodedCommand(encodedOuterCommand);
+    expect(outerCommand).toContain("$ProgressPreference = 'SilentlyContinue'");
+    expect(outerCommand).toContain("-e TEMP='C:\\vi-history-suite\\container-temp'");
+    expect(outerCommand).toContain("-e TMP='C:\\vi-history-suite\\container-temp'");
+    const innerEncodedCommandMatch = outerCommand.match(/-EncodedCommand ([A-Za-z0-9+/=]+)/);
+    expect(innerEncodedCommandMatch?.[1]).toBeTruthy();
+    const innerCommand = decodeWindowsEncodedCommand(innerEncodedCommandMatch![1]);
+    expect(innerCommand).toContain("function Set-IniToken {");
+    expect(innerCommand).toContain("$ProgressPreference = 'SilentlyContinue'");
+    expect(innerCommand).toContain("Start-Process -FilePath $labviewPath -ArgumentList '--headless'");
+    expect(innerCommand).toContain("Set-IniToken -Path $cliIni -Key 'OpenAppReferenceTimeoutInSecond' -Value '180'");
+    expect(innerCommand).toContain("Set-IniToken -Path $cliIni -Key 'AfterLaunchOpenAppReferenceTimeoutInSecond' -Value '180'");
+    expect(innerCommand).toContain("'-Headless', 'true'");
+    expect(innerCommand).toContain("'-o'");
+  });
+
+  it('copies container-local diagnostic logs back into governed storage for windows-container execution', async () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.provider = 'windows-container';
+    record.runtimeSelection.windowsContainerImage = 'nationalinstruments/labview:2026q1-windows';
+    record.runtimeSelection.labviewExe = {
+      kind: 'labview-exe',
+      path: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+      source: 'scan',
+      exists: true,
+      bitness: 'x64'
+    };
+    record.runtimeSelection.labviewCli = {
+      kind: 'labview-cli',
+      path: 'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+      source: 'scan',
+      exists: true,
+      bitness: 'x86'
+    };
+
+    const copyFile = vi.fn().mockResolvedValue(undefined);
+
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo',
+        interopWorkspaceRoot: '/mnt/c/Users/sveld/AppData/Local/Temp/vi-history-suite-runtime'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: copyFile as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        readFile: vi
+          .fn()
+          .mockResolvedValue(
+            'Using LabVIEW: "C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe"\nConnection established with LabVIEW at port number 3363.\nCreateComparisonReport operation succeeded.\n'
+          ) as never,
+        pathExists: vi.fn(async (filePath: string) =>
+          filePath ===
+            '/mnt/c/Users/sveld/AppData/Local/Temp/vi-history-suite-runtime/reports/repoid123456/fileid123456/diff-report-foo.vi.html' ||
+          filePath ===
+            '/mnt/c/Users/sveld/AppData/Local/Temp/vi-history-suite-runtime/reports/repoid123456/fileid123456/container-temp/lvtemporary_123.log'
+        ),
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 0,
+          stdout:
+            'LabVIEWCLI started logging in file:  C:\\vi-history-suite\\container-temp\\lvtemporary_123.log\r\nUsing LabVIEW: "C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe"\r\nConnection established with LabVIEW at port number 3363.\r\nCreateComparisonReport operation succeeded.\r\n',
+          stderr: ''
+        }),
+        nowIso: vi
+          .fn()
+          .mockReturnValueOnce('2026-04-02T01:00:00.000Z')
+          .mockReturnValueOnce('2026-04-02T01:00:03.000Z'),
+        nowMs: vi.fn().mockReturnValueOnce(1000).mockReturnValueOnce(4000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'linux'
+      }
+    );
+
+    expect(copyFile).toHaveBeenCalledWith(
+      '/mnt/c/Users/sveld/AppData/Local/Temp/vi-history-suite-runtime/reports/repoid123456/fileid123456/container-temp/lvtemporary_123.log',
+      '/workspace/.storage/reports/repoid123456/fileid123456/runtime-diagnostic-log.txt'
+    );
+    expect(result.record.runtimeExecutionState).toBe('succeeded');
+    expect(result.record.runtimeExecution.diagnosticLogSourcePath).toBe(
+      'C:\\vi-history-suite\\container-temp\\lvtemporary_123.log'
+    );
+    expect(result.record.runtimeExecution.diagnosticLogArtifactPath).toBe(
+      '/workspace/.storage/reports/repoid123456/fileid123456/runtime-diagnostic-log.txt'
+    );
   });
 
   it('normalizes LVCompare arguments for win32 execution from a non-Windows host', async () => {
@@ -721,7 +931,11 @@ describe('comparisonReportRuntimeExecution', () => {
         mkdir: vi.fn().mockResolvedValue(undefined),
         writeFile: vi.fn().mockResolvedValue(undefined) as never,
         copyFile: vi.fn().mockResolvedValue(undefined) as never,
-        pathExists: vi.fn().mockResolvedValue(true),
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        pathExists: vi.fn(async (filePath: string) =>
+          filePath ===
+          '/mnt/c/Users/sveld/AppData/Local/Temp/vi-history-suite-runtime/reports/repoid123456/fileid123456/diff-report-foo.vi.html'
+        ),
         runCommand,
         nowIso: vi
           .fn()
@@ -804,9 +1018,9 @@ describe('comparisonReportRuntimeExecution', () => {
 
   it('fails closed when interop path normalization cannot map the selected tool arguments', async () => {
     const record = createReadyRecord();
-    record.runtimeSelection.labviewExe = {
-      kind: 'labview-exe',
-      path: '/home/sveld/not-a-windows-path/LabVIEW.exe',
+    record.runtimeSelection.labviewCli = {
+      kind: 'labview-cli',
+      path: '/home/sveld/not-a-windows-path/LabVIEWCLI.exe',
       source: 'configured',
       exists: true,
       bitness: 'x86'
@@ -879,7 +1093,7 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(
       normalizeWindowsInteropExecutable('/mnt/c/Program Files/National Instruments/Shared/LabVIEW CLI/LabVIEWCLI.exe')
     ).toBe('/mnt/c/Program Files/National Instruments/Shared/LabVIEW CLI/LabVIEWCLI.exe');
-    expect(normalizeWindowsInteropExecutable('LabVIEWCLI')).toBe('LabVIEWCLI');
+    expect(normalizeWindowsInteropExecutable('LabVIEWCLI')).toBeUndefined();
     expect(normalizeWindowsInteropExecutable('   ')).toBeUndefined();
     expect(
       parseLabviewCliDiagnosticLogPath(

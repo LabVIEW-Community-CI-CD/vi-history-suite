@@ -16,9 +16,9 @@
   {
     "id": "TRANCHE-003",
     "title": "Wire governed runtime selection into live NI report execution",
-    "status": "queued",
+    "status": "done",
     "source": "authoritative research",
-    "summary": "Use the stored runtime selection and preflight facts to run LabVIEW CLI or LVCompare truthfully, reserve the governed diff-report path for actual NI output, and retain execution evidence in the packet artifact."
+    "summary": "Use the stored runtime selection and preflight facts to run LabVIEW CLI truthfully, reserve the governed diff-report path for actual NI output, and retain execution evidence plus diagnostic artifacts in the packet artifact."
   },
   {
     "id": "TRANCHE-004",
@@ -30,7 +30,7 @@
   {
     "id": "TRANCHE-005",
     "title": "Introduce Windows 64-bit isolated container report provider",
-    "status": "queued",
+    "status": "done",
     "source": "author direction",
     "summary": "Implement the dedicated labview2026q1 Windows container provider so extension users can execute 64-bit report generation without colliding with an already-open host-native LabVIEW 2026 64-bit session."
   },

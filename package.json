@@ -21,6 +21,7 @@
         "viHistorySuite.labviewCliPath",
         "viHistorySuite.lvComparePath",
         "viHistorySuite.labviewExePath",
+        "viHistorySuite.windowsContainerImage",
         "viHistorySuite.preferBitness"
       ]
     }
@@ -97,6 +98,11 @@
           "type": "string",
           "default": "",
           "description": "Optional explicit path to the preferred LabVIEW executable."
+        },
+        "viHistorySuite.windowsContainerImage": {
+          "type": "string",
+          "default": "nationalinstruments/labview:2026q1-windows",
+          "description": "Preferred Windows LabVIEW container image for isolated 64-bit comparison-report execution."
         },
         "viHistorySuite.preferBitness": {
           "type": "string",

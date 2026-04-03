@@ -29,6 +29,7 @@ export interface ComparisonReportRuntimeExecutionDeps {
   mkdir?: typeof fs.mkdir;
   writeFile?: typeof fs.writeFile;
   copyFile?: typeof fs.copyFile;
+  copyDirectory?: typeof fs.cp;
   unlinkFile?: typeof fs.unlink;
   readFile?: typeof fs.readFile;
   pathExists?: (filePath: string) => Promise<boolean>;
@@ -104,6 +105,7 @@ export async function executeComparisonReport(
   const mkdir = deps.mkdir ?? fs.mkdir;
   const writeFile = deps.writeFile ?? fs.writeFile;
   const copyFile = deps.copyFile ?? fs.copyFile;
+  const copyDirectory = deps.copyDirectory ?? fs.cp;
   const unlinkFile = deps.unlinkFile ?? fs.unlink;
   const readFile = deps.readFile ?? fs.readFile;
   const pathExists = deps.pathExists ?? pathExistsForReport;
@@ -112,12 +114,14 @@ export async function executeComparisonReport(
   const runCommand =
     deps.runCommand ??
     ((commandPlan: ComparisonCommandPlan) =>
-      runComparisonCommandPlanWithObservation(commandPlan, {
-        hostPlatform: processPlatform,
-        runtimePlatform: options.record.runtimeSelection.platform,
-        observeWindowsProcesses,
-        engine: options.record.runtimeSelection.engine
-      }));
+      plan.provider === 'windows-container'
+        ? runComparisonCommandPlan(commandPlan)
+        : runComparisonCommandPlanWithObservation(commandPlan, {
+            hostPlatform: processPlatform,
+            runtimePlatform: options.record.runtimeSelection.platform,
+            observeWindowsProcesses,
+            engine: options.record.runtimeSelection.engine
+          }));
   const nowIso = deps.nowIso ?? defaultNowIso;
   const nowMs = deps.nowMs ?? defaultNowMs;
   const writePacketRecord = deps.writePacketRecord ?? writeComparisonReportPacketRecord;
@@ -146,6 +150,7 @@ export async function executeComparisonReport(
         mkdir,
         writeFile,
         copyFile,
+        copyDirectory,
         unlinkFile,
         readFile,
         pathExists,
@@ -185,6 +190,7 @@ async function runHostNativeExecution(
     mkdir: typeof fs.mkdir;
     writeFile: typeof fs.writeFile;
     copyFile: typeof fs.copyFile;
+    copyDirectory: typeof fs.cp;
     unlinkFile: typeof fs.unlink;
     readFile: typeof fs.readFile;
     pathExists: (filePath: string) => Promise<boolean>;
@@ -271,7 +277,9 @@ async function runHostNativeExecution(
     await deps.writeFile(record.artifactPlan.runtimeStderrFilePath, commandResult.stderr, 'utf8');
     const processObservation = await persistRuntimeProcessObservation(record, commandResult, {
       writeFile: deps.writeFile,
-      mkdir: deps.mkdir
+      mkdir: deps.mkdir,
+      unlinkFile: deps.unlinkFile,
+      pathExists: deps.pathExists
     });
     const diagnostics = await captureRuntimeDiagnostics(record, commandResult.stdout, {
       pathExists: deps.pathExists,
@@ -280,7 +288,10 @@ async function runHostNativeExecution(
       readFile: deps.readFile,
       mkdir: deps.mkdir,
       processPlatform: deps.processPlatform,
-      expectedLabviewPath: extractCommandOptionValue(executionContext.commandPlan.args, '-LabVIEWPath')
+      expectedLabviewPath:
+        extractCommandOptionValue(executionContext.commandPlan.args, '-LabVIEWPath') ??
+        record.runtimeSelection.labviewExe?.path,
+      diagnosticPathMapping: executionContext.diagnosticPathMapping
     });
     const reportExists = await finalizeExecutedReport(
       record,
@@ -288,6 +299,7 @@ async function runHostNativeExecution(
       {
         pathExists: deps.pathExists,
         copyFile: deps.copyFile,
+        copyDirectory: deps.copyDirectory,
         mkdir: deps.mkdir
       }
     );
@@ -362,7 +374,9 @@ async function runHostNativeExecution(
       readFile: deps.readFile,
       mkdir: deps.mkdir,
       processPlatform: deps.processPlatform,
-      expectedLabviewPath: extractCommandOptionValue(executionContext.commandPlan.args, '-LabVIEWPath')
+      expectedLabviewPath:
+        extractCommandOptionValue(executionContext.commandPlan.args, '-LabVIEWPath') ??
+        record.runtimeSelection.labviewExe?.path
     });
 
     return {
@@ -392,6 +406,8 @@ async function persistRuntimeProcessObservation(
   deps: {
     writeFile: typeof fs.writeFile;
     mkdir: typeof fs.mkdir;
+    unlinkFile: typeof fs.unlink;
+    pathExists: (filePath: string) => Promise<boolean>;
   }
 ): Promise<
   | {
@@ -402,6 +418,13 @@ async function persistRuntimeProcessObservation(
   | undefined
 > {
   if (!commandResult.processObservation && !commandResult.exitProcessObservation) {
+    if (await deps.pathExists(record.artifactPlan.runtimeProcessObservationFilePath)) {
+      try {
+        await deps.unlinkFile(record.artifactPlan.runtimeProcessObservationFilePath);
+      } catch {
+        // Preserve deterministic execution results even if stale cleanup fails.
+      }
+    }
     return undefined;
   }
 
@@ -435,6 +458,19 @@ interface CapturedRuntimeDiagnostics {
   artifactPath?: string;
 }
 
+interface RuntimeDiagnosticPathMapping {
+  runtimeRoot: string;
+  hostRoot: string;
+}
+
+const WINDOWS_CONTAINER_WORKSPACE_ROOT = 'C:\\vi-history-suite';
+const WINDOWS_CONTAINER_TEMP_ROOT = `${WINDOWS_CONTAINER_WORKSPACE_ROOT}\\container-temp`;
+const WINDOWS_CONTAINER_OPEN_APP_TIMEOUT_SECONDS = 180;
+const WINDOWS_CONTAINER_AFTER_LAUNCH_TIMEOUT_SECONDS = 180;
+const WINDOWS_CONTAINER_PRELAUNCH_WAIT_SECONDS = 8;
+const WINDOWS_CONTAINER_STARTUP_RETRY_COUNT = 1;
+const WINDOWS_CONTAINER_RETRY_DELAY_SECONDS = 8;
+
 async function captureRuntimeDiagnostics(
   record: ComparisonReportPacketRecord,
   stdout: string,
@@ -446,6 +482,7 @@ async function captureRuntimeDiagnostics(
     mkdir: typeof fs.mkdir;
     processPlatform: NodeJS.Platform;
     expectedLabviewPath?: string;
+    diagnosticPathMapping?: RuntimeDiagnosticPathMapping;
   }
 ): Promise<CapturedRuntimeDiagnostics> {
   const clearStaleArtifactIfPresent = async (): Promise<void> => {
@@ -470,7 +507,8 @@ async function captureRuntimeDiagnostics(
 
   const hostReadablePath = resolveHostReadableDiagnosticPath(
     diagnosticLogSourcePath,
-    deps.processPlatform
+    deps.processPlatform,
+    deps.diagnosticPathMapping
   );
   if (!hostReadablePath || !(await deps.pathExists(hostReadablePath))) {
     await clearStaleArtifactIfPresent();
@@ -499,6 +537,7 @@ interface PreparedExecutionContext {
   commandPlan: ComparisonCommandPlan;
   reportFilePath: string;
   failureReason?: string;
+  diagnosticPathMapping?: RuntimeDiagnosticPathMapping;
 }
 
 async function prepareExecutionContext(
@@ -513,6 +552,10 @@ async function prepareExecutionContext(
     rightBlob: Buffer;
   }
 ): Promise<PreparedExecutionContext> {
+  if (record.runtimeSelection.provider === 'windows-container') {
+    return prepareWindowsContainerExecutionContext(record, commandPlan, interopWorkspaceRoot, deps);
+  }
+
   if (!requiresWindowsInterop(record.runtimeSelection.platform, deps.processPlatform)) {
     return {
       outcome: 'ready',
@@ -559,6 +602,7 @@ async function finalizeExecutedReport(
   deps: {
     pathExists: (filePath: string) => Promise<boolean>;
     copyFile: typeof fs.copyFile;
+    copyDirectory: typeof fs.cp;
     mkdir: typeof fs.mkdir;
   }
 ): Promise<boolean> {
@@ -573,6 +617,11 @@ async function finalizeExecutedReport(
 
   await deps.mkdir(path.dirname(record.artifactPlan.reportFilePath), { recursive: true });
   await deps.copyFile(executionContext.reportFilePath, record.artifactPlan.reportFilePath);
+  await copyReportAssetsDirectory(executionContext.reportFilePath, record.artifactPlan.reportFilePath, {
+    pathExists: deps.pathExists,
+    copyDirectory: deps.copyDirectory,
+    mkdir: deps.mkdir
+  });
   return true;
 }
 
@@ -620,7 +669,7 @@ function buildWindowsInteropCommandPlan(
       const current = commandPlan.args[index];
       const next = commandPlan.args[index + 1];
 
-      if (current === '-vi1') {
+      if (current === '-VI1' || current === '-vi1') {
         const leftFilePath = normalizeWindowsInteropPath(interopLayout.leftFilePath);
         if (!leftFilePath) {
           return undefined;
@@ -630,7 +679,7 @@ function buildWindowsInteropCommandPlan(
         continue;
       }
 
-      if (current === '-vi2') {
+      if (current === '-VI2' || current === '-vi2') {
         const rightFilePath = normalizeWindowsInteropPath(interopLayout.rightFilePath);
         if (!rightFilePath) {
           return undefined;
@@ -640,7 +689,7 @@ function buildWindowsInteropCommandPlan(
         continue;
       }
 
-      if (current === '-reportPath') {
+      if (current === '-ReportPath' || current === '-reportPath') {
         const reportFilePath = normalizeWindowsInteropPath(interopLayout.reportFilePath);
         if (!reportFilePath) {
           return undefined;
@@ -710,6 +759,386 @@ function buildWindowsInteropCommandPlan(
   return undefined;
 }
 
+async function prepareWindowsContainerExecutionContext(
+  record: ComparisonReportPacketRecord,
+  commandPlan: ComparisonCommandPlan,
+  interopWorkspaceRoot: string | undefined,
+  deps: {
+    mkdir: typeof fs.mkdir;
+    writeFile: typeof fs.writeFile;
+    processPlatform: NodeJS.Platform;
+    leftBlob: Buffer;
+    rightBlob: Buffer;
+  }
+): Promise<PreparedExecutionContext> {
+  const containerImage = record.runtimeSelection.windowsContainerImage?.trim();
+  if (!containerImage) {
+    return {
+      outcome: 'blocked',
+      commandPlan,
+      reportFilePath: record.artifactPlan.reportFilePath,
+      failureReason: 'windows-container-image-unavailable'
+    };
+  }
+
+  let hostLayout: WindowsInteropLayout;
+  if (requiresWindowsInterop(record.runtimeSelection.platform, deps.processPlatform)) {
+    if (!interopWorkspaceRoot?.trim()) {
+      return {
+        outcome: 'blocked',
+        commandPlan,
+        reportFilePath: record.artifactPlan.reportFilePath,
+        failureReason: 'windows-interop-root-unavailable'
+      };
+    }
+
+    hostLayout = buildWindowsInteropLayout(record, interopWorkspaceRoot);
+    await deps.mkdir(hostLayout.reportDirectory, { recursive: true });
+    await deps.mkdir(hostLayout.stagingDirectory, { recursive: true });
+    await deps.writeFile(hostLayout.leftFilePath, deps.leftBlob);
+    await deps.writeFile(hostLayout.rightFilePath, deps.rightBlob);
+  } else {
+    hostLayout = {
+      reportDirectory: record.artifactPlan.reportDirectory,
+      stagingDirectory: record.artifactPlan.stagingDirectory,
+      leftFilePath: record.stagedRevisionPlan.leftFilePath,
+      rightFilePath: record.stagedRevisionPlan.rightFilePath,
+      reportFilePath: record.artifactPlan.reportFilePath
+    };
+  }
+
+  const hostReportDirectory = normalizeWindowsInteropPath(hostLayout.reportDirectory);
+  if (!hostReportDirectory) {
+    return {
+      outcome: 'blocked',
+      commandPlan,
+      reportFilePath: record.artifactPlan.reportFilePath,
+      failureReason: 'windows-path-normalization-failed'
+    };
+  }
+
+  const hostTempDirectory = path.join(hostLayout.reportDirectory, 'container-temp');
+  await deps.mkdir(hostTempDirectory, { recursive: true });
+  const hostTempDirectoryWindows = normalizeWindowsInteropPath(hostTempDirectory);
+  if (!hostTempDirectoryWindows) {
+    return {
+      outcome: 'blocked',
+      commandPlan,
+      reportFilePath: record.artifactPlan.reportFilePath,
+      failureReason: 'windows-path-normalization-failed'
+    };
+  }
+
+  const containerCommandPlan = buildWindowsContainerCommandPlan(record, commandPlan, {
+    hostReportDirectory,
+    hostTempDirectory: hostTempDirectoryWindows,
+    containerWorkspaceRoot: WINDOWS_CONTAINER_WORKSPACE_ROOT,
+    containerImage,
+    processPlatform: deps.processPlatform
+  });
+  if (!containerCommandPlan) {
+    return {
+      outcome: 'blocked',
+      commandPlan,
+      reportFilePath: record.artifactPlan.reportFilePath,
+      failureReason: 'windows-container-command-build-failed'
+    };
+  }
+
+  return {
+    outcome: 'ready',
+    commandPlan: containerCommandPlan,
+    reportFilePath: hostLayout.reportFilePath,
+    diagnosticPathMapping: {
+      runtimeRoot: WINDOWS_CONTAINER_TEMP_ROOT,
+      hostRoot: hostTempDirectory
+    }
+  };
+}
+
+function buildWindowsContainerCommandPlan(
+  record: ComparisonReportPacketRecord,
+  commandPlan: ComparisonCommandPlan,
+  options: {
+    hostReportDirectory: string;
+    hostTempDirectory: string;
+    containerWorkspaceRoot: string;
+    containerImage: string;
+    processPlatform: NodeJS.Platform;
+  }
+): ComparisonCommandPlan | undefined {
+  if (!record.runtimeSelection.engine) {
+    return undefined;
+  }
+
+  const hostExecutable = resolveWindowsPowerShellHostExecutable(options.processPlatform);
+  if (!hostExecutable) {
+    return undefined;
+  }
+
+  const containerArgs =
+    record.runtimeSelection.engine === 'labview-cli'
+      ? rewriteLabviewCliArgsForContainerWorkspace(commandPlan.args, {
+          containerWorkspaceRoot: options.containerWorkspaceRoot,
+          leftFilename: record.stagedRevisionPlan.leftFilename,
+          rightFilename: record.stagedRevisionPlan.rightFilename,
+          reportFilename: record.artifactPlan.reportFilename,
+          labviewPath: record.runtimeSelection.labviewExe?.path
+        })
+      : rewriteLvcompareArgsForContainerWorkspace(commandPlan.args, {
+          containerWorkspaceRoot: options.containerWorkspaceRoot,
+          leftFilename: record.stagedRevisionPlan.leftFilename,
+          rightFilename: record.stagedRevisionPlan.rightFilename,
+          labviewPath: record.runtimeSelection.labviewExe?.path
+        });
+  if (!containerArgs) {
+    return undefined;
+  }
+
+  const encodedContainerCommand =
+    record.runtimeSelection.engine === 'labview-cli'
+      ? encodeWindowsPowerShellScript(
+          buildWindowsContainerLabviewCliScript(
+            commandPlan.executable,
+            containerArgs,
+            record.runtimeSelection.labviewExe?.path
+          )
+        )
+      : encodeWindowsPowerShellScript(
+          buildWindowsContainerDirectCommandScript(commandPlan.executable, containerArgs)
+        );
+  const script = [
+    "$ErrorActionPreference = 'Stop'",
+    "$ProgressPreference = 'SilentlyContinue'",
+    `docker run --rm -v ${quotePowerShellLiteral(
+      `${options.hostReportDirectory}:${options.containerWorkspaceRoot}`
+    )} -e TEMP=${quotePowerShellLiteral(WINDOWS_CONTAINER_TEMP_ROOT)} -e TMP=${quotePowerShellLiteral(
+      WINDOWS_CONTAINER_TEMP_ROOT
+    )} ${quotePowerShellLiteral(options.containerImage)} powershell -NoProfile -EncodedCommand ${encodedContainerCommand}`,
+    'exit $LASTEXITCODE'
+  ].join('; ');
+
+  return {
+    executable: hostExecutable,
+    args: ['-NoProfile', '-EncodedCommand', encodeWindowsPowerShellScript(script)]
+  };
+}
+
+function rewriteLabviewCliArgsForContainerWorkspace(
+  args: string[],
+  options: {
+    containerWorkspaceRoot: string;
+    leftFilename: string;
+    rightFilename: string;
+    reportFilename: string;
+    labviewPath?: string;
+  }
+): string[] | undefined {
+  const rewritten: string[] = [];
+
+  for (let index = 0; index < args.length; index += 1) {
+    const current = args[index];
+    if (current === '-VI1' || current === '-vi1') {
+      rewritten.push(current, `${options.containerWorkspaceRoot}\\staging\\${options.leftFilename}`);
+      index += 1;
+      continue;
+    }
+
+    if (current === '-VI2' || current === '-vi2') {
+      rewritten.push(current, `${options.containerWorkspaceRoot}\\staging\\${options.rightFilename}`);
+      index += 1;
+      continue;
+    }
+
+    if (current === '-ReportPath' || current === '-reportPath') {
+      rewritten.push(current, `${options.containerWorkspaceRoot}\\${options.reportFilename}`);
+      index += 1;
+      continue;
+    }
+
+    if (current === '-LabVIEWPath') {
+      index += 1;
+      continue;
+    }
+
+    if (current === '-Headless') {
+      const next = args[index + 1];
+      if (next && !next.startsWith('-')) {
+        index += 1;
+      }
+      continue;
+    }
+
+    if (current === '-c') {
+      continue;
+    }
+
+    rewritten.push(current);
+  }
+
+  if (options.labviewPath?.trim()) {
+    rewritten.push('-LabVIEWPath', options.labviewPath.trim());
+  }
+  rewritten.push('-Headless', 'true');
+
+  return rewritten.length > 0 ? rewritten : undefined;
+}
+
+function buildWindowsPowerShellArrayLiteral(values: string[]): string {
+  return `@(${values.map((value) => quotePowerShellLiteral(value)).join(', ')})`;
+}
+
+function buildWindowsContainerLabviewCliScript(
+  executable: string,
+  args: string[],
+  labviewPath?: string
+): string {
+  const cliIniCandidates = [
+    'C:\\ProgramData\\National Instruments\\LabVIEW CLI\\LabVIEWCLI.ini',
+    'C:\\ProgramData\\National Instruments\\LabVIEWCLI\\LabVIEWCLI.ini',
+    'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.ini',
+    'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.ini'
+  ];
+  const effectiveLabviewPath = labviewPath?.trim();
+
+  return [
+    "$ErrorActionPreference = 'Stop'",
+    "$ProgressPreference = 'SilentlyContinue'",
+    'function Set-IniToken {',
+    '  param([string]$Path, [string]$Key, [string]$Value)',
+    '  if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return }',
+    "  $content = Get-Content -LiteralPath $Path -Raw -ErrorAction SilentlyContinue",
+    "  if ($null -eq $content) { $content = '' }",
+    "  if ($content -match (\"(?m)^\\s*{0}\\s*=\" -f [regex]::Escape($Key))) {",
+    '    $updated = [regex]::Replace($content, ("(?m)^\\s*{0}\\s*=.*$" -f [regex]::Escape($Key)), ("{0}={1}" -f $Key, $Value))',
+    '  } else {',
+    '    $updated = ($content.TrimEnd() + [Environment]::NewLine + ("{0}={1}" -f $Key, $Value) + [Environment]::NewLine)',
+    '  }',
+    "  Set-Content -LiteralPath $Path -Value $updated -Encoding utf8",
+    '}',
+    `$env:TEMP = ${quotePowerShellLiteral(WINDOWS_CONTAINER_TEMP_ROOT)}`,
+    '$env:TMP = $env:TEMP',
+    `$cliPath = ${quotePowerShellLiteral(executable)}`,
+    effectiveLabviewPath
+      ? `$labviewPath = ${quotePowerShellLiteral(effectiveLabviewPath)}`
+      : '$labviewPath = $null',
+    `$args = ${buildWindowsPowerShellArrayLiteral(args)}`,
+    `$cliIniCandidates = ${buildWindowsPowerShellArrayLiteral(cliIniCandidates)}`,
+    '$cliIni = $cliIniCandidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1',
+    'if ($cliIni) {',
+    `  Set-IniToken -Path $cliIni -Key 'OpenAppReferenceTimeoutInSecond' -Value '${WINDOWS_CONTAINER_OPEN_APP_TIMEOUT_SECONDS}'`,
+    `  Set-IniToken -Path $cliIni -Key 'AfterLaunchOpenAppReferenceTimeoutInSecond' -Value '${WINDOWS_CONTAINER_AFTER_LAUNCH_TIMEOUT_SECONDS}'`,
+    '}',
+    '$prelaunchAttempted = $false',
+    "if (-not [string]::IsNullOrWhiteSpace([string]$labviewPath) -and (Test-Path -LiteralPath $labviewPath)) {",
+    '  $prelaunchAttempted = $true',
+    "  Start-Process -FilePath $labviewPath -ArgumentList '--headless' -WindowStyle Hidden | Out-Null",
+    `  Start-Sleep -Seconds ${WINDOWS_CONTAINER_PRELAUNCH_WAIT_SECONDS}`,
+    '}',
+    '$attempt = 0',
+    '$maxAttempts = [Math]::Max(1, 1 + ' + WINDOWS_CONTAINER_STARTUP_RETRY_COUNT + ')',
+    '$lastExit = 1',
+    'while ($attempt -lt $maxAttempts) {',
+    '  $attempt++',
+    "  $previousErrorActionPreference = $ErrorActionPreference",
+    "  $ErrorActionPreference = 'Continue'",
+    '  try {',
+    '    $output = @(& $cliPath @args 2>&1)',
+    '    $lastExit = [int]$LASTEXITCODE',
+    '  } finally {',
+    '    $ErrorActionPreference = $previousErrorActionPreference',
+    '  }',
+    '  $output | ForEach-Object { if (-not [string]::IsNullOrWhiteSpace([string]$_)) { Write-Output $_ } }',
+    '  if ($lastExit -eq 0) { break }',
+    "  $text = @($output | ForEach-Object { [string]$_ }) -join [Environment]::NewLine",
+    "  $isStartupConnectivity = ($lastExit -in @(-350000, -350051) -or $text -match '-350000' -or $text -match '-350051' -or $text -match '(?i)failed to establish a connection with LabVIEW')",
+    '  if ($isStartupConnectivity -and $attempt -lt $maxAttempts) {',
+    `    Start-Sleep -Seconds ${WINDOWS_CONTAINER_RETRY_DELAY_SECONDS}`,
+    '    continue',
+    '  }',
+    '  break',
+    '}',
+    `Write-Output ('[vi-history-suite-container-meta]retryAttempts={0};prelaunchAttempted={1};iniPath={2};openTimeout=${WINDOWS_CONTAINER_OPEN_APP_TIMEOUT_SECONDS};afterLaunchTimeout=${WINDOWS_CONTAINER_AFTER_LAUNCH_TIMEOUT_SECONDS}' -f $attempt, ($(if ($prelaunchAttempted) { 1 } else { 0 })), $cliIni)`,
+    'exit $lastExit'
+  ].join('\n');
+}
+
+function buildWindowsContainerDirectCommandScript(executable: string, args: string[]): string {
+  return [
+    "$ErrorActionPreference = 'Stop'",
+    "$ProgressPreference = 'SilentlyContinue'",
+    `$executable = ${quotePowerShellLiteral(executable)}`,
+    `$args = ${buildWindowsPowerShellArrayLiteral(args)}`,
+    "$previousErrorActionPreference = $ErrorActionPreference",
+    "$ErrorActionPreference = 'Continue'",
+    'try {',
+    '  $output = @(& $executable @args 2>&1)',
+    '} finally {',
+    '  $ErrorActionPreference = $previousErrorActionPreference',
+    '}',
+    '$output | ForEach-Object { if (-not [string]::IsNullOrWhiteSpace([string]$_)) { Write-Output $_ } }',
+    'exit $LASTEXITCODE'
+  ].join('\n');
+}
+
+function rewriteLvcompareArgsForContainerWorkspace(
+  args: string[],
+  options: {
+    containerWorkspaceRoot: string;
+    leftFilename: string;
+    rightFilename: string;
+    labviewPath?: string;
+  }
+): string[] | undefined {
+  if (args.length < 2) {
+    return undefined;
+  }
+
+  const rewritten = [
+    `${options.containerWorkspaceRoot}\\staging\\${options.leftFilename}`,
+    `${options.containerWorkspaceRoot}\\staging\\${options.rightFilename}`
+  ];
+
+  for (let index = 2; index < args.length; index += 1) {
+    const current = args[index];
+    if (current === '-lvpath') {
+      rewritten.push(current, options.labviewPath ?? args[index + 1] ?? '');
+      index += 1;
+      continue;
+    }
+
+    rewritten.push(current);
+  }
+
+  return rewritten;
+}
+
+async function copyReportAssetsDirectory(
+  sourceReportFilePath: string,
+  destinationReportFilePath: string,
+  deps: {
+    pathExists: (filePath: string) => Promise<boolean>;
+    copyDirectory: typeof fs.cp;
+    mkdir: typeof fs.mkdir;
+  }
+): Promise<void> {
+  const sourceAssetsDirectory = buildReportAssetsDirectoryPath(sourceReportFilePath);
+  if (!(await deps.pathExists(sourceAssetsDirectory))) {
+    return;
+  }
+
+  const destinationAssetsDirectory = buildReportAssetsDirectoryPath(destinationReportFilePath);
+  await deps.mkdir(path.dirname(destinationAssetsDirectory), { recursive: true });
+  await deps.copyDirectory(sourceAssetsDirectory, destinationAssetsDirectory, {
+    recursive: true,
+    force: true
+  });
+}
+
+function buildReportAssetsDirectoryPath(reportFilePath: string): string {
+  return reportFilePath.replace(/\.html$/i, '') + '_files';
+}
+
 export function normalizeWindowsInteropPath(filePath: string): string | undefined {
   const trimmed = filePath.trim();
   if (!trimmed) {
@@ -747,7 +1176,7 @@ export function normalizeWindowsInteropExecutable(filePath: string): string | un
 
   const windowsPathMatch = trimmed.match(/^([A-Za-z]):[\\/](.*)$/);
   if (!windowsPathMatch) {
-    return trimmed;
+    return undefined;
   }
 
   const [, driveLetter, tail] = windowsPathMatch;
@@ -762,13 +1191,49 @@ export function parseLabviewCliDiagnosticLogPath(stdout: string): string | undef
 
 export function resolveHostReadableDiagnosticPath(
   diagnosticLogPath: string,
-  processPlatform: NodeJS.Platform = process.platform
+  processPlatform: NodeJS.Platform = process.platform,
+  diagnosticPathMapping?: RuntimeDiagnosticPathMapping
 ): string | undefined {
+  const mappedContainerPath = resolveMappedRuntimeDiagnosticPath(diagnosticLogPath, diagnosticPathMapping);
+  if (mappedContainerPath) {
+    return mappedContainerPath;
+  }
+
   if (processPlatform === 'win32') {
     return diagnosticLogPath.trim() || undefined;
   }
 
   return normalizeWindowsInteropExecutable(diagnosticLogPath);
+}
+
+function resolveMappedRuntimeDiagnosticPath(
+  diagnosticLogPath: string,
+  diagnosticPathMapping?: RuntimeDiagnosticPathMapping
+): string | undefined {
+  if (!diagnosticPathMapping) {
+    return undefined;
+  }
+
+  const normalizedRuntimeRoot = normalizeComparablePath(diagnosticPathMapping.runtimeRoot);
+  const normalizedDiagnostic = normalizeComparablePath(diagnosticLogPath);
+  if (!normalizedRuntimeRoot || !normalizedDiagnostic) {
+    return undefined;
+  }
+
+  if (!normalizedDiagnostic.startsWith(normalizedRuntimeRoot)) {
+    return undefined;
+  }
+
+  const relativeWindowsPath = diagnosticLogPath
+    .trim()
+    .slice(diagnosticPathMapping.runtimeRoot.length)
+    .replace(/^[\\/]+/, '');
+  const relativeSegments = relativeWindowsPath
+    .replaceAll('\\', '/')
+    .split('/')
+    .filter((segment) => segment.length > 0);
+
+  return path.join(diagnosticPathMapping.hostRoot, ...relativeSegments);
 }
 
 export function classifyLabviewCliDiagnosticText(
@@ -1000,6 +1465,28 @@ function normalizeComparablePath(filePath?: string): string | undefined {
 
   const windowsPath = normalizeWindowsInteropPath(trimmed) ?? trimmed.replaceAll('/', '\\');
   return windowsPath.replaceAll('/', '\\').toLowerCase();
+}
+
+function resolveWindowsPowerShellHostExecutable(
+  processPlatform: NodeJS.Platform
+): string | undefined {
+  if (processPlatform === 'win32') {
+    return 'powershell.exe';
+  }
+
+  if (processPlatform === 'linux') {
+    return '/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe';
+  }
+
+  return undefined;
+}
+
+function encodeWindowsPowerShellScript(script: string): string {
+  return Buffer.from(script, 'utf16le').toString('base64');
+}
+
+function quotePowerShellLiteral(value: string): string {
+  return `'${value.replace(/'/g, "''")}'`;
 }
 
 export function requiresWindowsInterop(

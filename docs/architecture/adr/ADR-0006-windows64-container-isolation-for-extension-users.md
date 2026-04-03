@@ -26,9 +26,8 @@
 - Do not treat host-native Windows 64-bit execution as the ambient default
   once the isolated provider exists; it remains an explicit provider choice,
   not an assumed fallback.
-- Keep the current repo self-contained by retaining this as an architectural
-  commitment first, with live container execution remaining a later governed
-  tranche.
+- Keep Windows x64 execution inside the isolated provider and preserve Windows
+  x32 as the separate host-native path.
 
 ## Rationale
 
@@ -52,6 +51,7 @@
   - host-native 64-bit collision avoidance is retained as architecture, not
     chat memory
 - Negative:
-  - live container execution is still not implemented
-  - future runtime execution must handle container availability, trust gating,
-    and report-artifact exchange explicitly
+  - Windows x64 report execution now depends on Docker image availability and
+    container-health diagnostics
+  - runtime execution still needs first-class runtime-doctor UX and clearer
+    provider troubleshooting on top of the now-live path

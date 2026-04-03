@@ -74,8 +74,8 @@ Committed and governed today:
 - review-oriented history panel with `Open at commit`, `Diff vs previous`, and
   `Copy hash`, plus `Open dashboard` for retained three-plus-commit windows
 - comparison-report preflight, staging, packet storage, and packet webview
-- LabVIEW 2026 Q1 runtime detection and governed host-native report execution
-  proof lanes
+- LabVIEW 2026 Q1 runtime detection plus reliable Windows 64-bit isolated
+  container report execution on the canonical harness
 - pairwise dashboard-source archiving so multiple report attempts for one VI can
   coexist without overwriting
 - concentrated dashboard JSON and HTML packets that recollect retained report
@@ -90,9 +90,7 @@ Committed and governed today:
 The active product queue is:
 
 - `TRANCHE-006`: first-class multi-report developer dashboard
-- `TRANCHE-003`: live NI report execution and runtime-proof tightening
 - `TRANCHE-004`: progress-surface uplift for indexing and report generation
-- `TRANCHE-005`: Windows 64-bit isolated container provider
 - `TRANCHE-007`: review-scenario registry and human decision records
 - `TRANCHE-008`: runtime-doctor and dashboard-refresh developer experience
 

@@ -19,6 +19,7 @@ describe('comparisonRuntimeLocator', () => {
         preferBitness: 'x64'
       },
       {
+        queryWindowsContainerImage: vi.fn().mockResolvedValue(false),
         pathExists: vi.fn(async (filePath: string) =>
           [
             'C:\\Tools\\LabVIEWCLI.exe',
@@ -48,6 +49,7 @@ describe('comparisonRuntimeLocator', () => {
         labviewCliPath: 'C:\\Broken\\LabVIEWCLI.exe'
       },
       {
+        queryWindowsContainerImage: vi.fn().mockResolvedValue(false),
         pathExists: vi.fn().mockResolvedValue(false)
       }
     );
@@ -64,6 +66,7 @@ describe('comparisonRuntimeLocator', () => {
         preferBitness: 'x64'
       },
       {
+        queryWindowsContainerImage: vi.fn().mockResolvedValue(false),
         pathExists: vi.fn(async (filePath: string) =>
           [
             'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
@@ -89,6 +92,7 @@ describe('comparisonRuntimeLocator', () => {
         preferBitness: 'auto'
       },
       {
+        queryWindowsContainerImage: vi.fn().mockResolvedValue(false),
         pathExists: vi.fn(async (filePath: string) =>
           [
             'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
@@ -111,6 +115,7 @@ describe('comparisonRuntimeLocator', () => {
         preferBitness: 'x86'
       },
       {
+        queryWindowsContainerImage: vi.fn().mockResolvedValue(false),
         pathExists: vi.fn(async (filePath: string) =>
           [
             'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
@@ -124,6 +129,31 @@ describe('comparisonRuntimeLocator', () => {
 
     expect(result.engine).toBe('labview-cli');
     expect(result.labviewExe?.bitness).toBe('x86');
+  });
+
+  it('prefers the isolated windows container provider for auto or x64 report execution when the image is available', async () => {
+    const result = await locateComparisonRuntime(
+      'win32',
+      {
+        preferBitness: 'auto'
+      },
+      {
+        queryWindowsContainerImage: vi.fn().mockResolvedValue(true),
+        pathExists: vi.fn().mockResolvedValue(false),
+        queryWindowsRegistry: vi.fn().mockResolvedValue('')
+      }
+    );
+
+    expect(result.provider).toBe('windows-container');
+    expect(result.engine).toBe('labview-cli');
+    expect(result.windowsContainerImage).toBe('nationalinstruments/labview:2026q1-windows');
+    expect(result.labviewExe?.path).toBe(
+      'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+    );
+    expect(result.labviewCli?.path).toBe(
+      'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
+    );
+    expect(result.notes[0]).toContain('isolated Windows container provider image');
   });
 
   it('retains the explicit macOS 2026 Q1 unsupported constraint', async () => {
@@ -279,6 +309,7 @@ HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\National Instruments\\LabVIEW
         preferBitness: 'x64'
       },
       {
+        queryWindowsContainerImage: vi.fn().mockResolvedValue(false),
         pathExists: vi.fn(async (filePath: string) =>
           [
             'D:\\NI\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',

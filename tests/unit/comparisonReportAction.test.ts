@@ -755,6 +755,7 @@ describe('comparisonReportAction', () => {
           labviewCliPath: 'C:\\Tools\\LabVIEWCLI.exe',
           lvComparePath: 'C:\\Tools\\LVCompare.exe',
           labviewExePath: 'C:\\Tools\\LabVIEW.exe',
+          windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
           preferBitness: 'x64'
         };
         return (values[key] as T | undefined) ?? defaultValue;
@@ -765,6 +766,7 @@ describe('comparisonReportAction', () => {
       labviewCliPath: 'C:\\Tools\\LabVIEWCLI.exe',
       lvComparePath: 'C:\\Tools\\LVCompare.exe',
       labviewExePath: 'C:\\Tools\\LabVIEW.exe',
+      windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
       preferBitness: 'x64'
     });
     expect(resolveRuntimePlatform('freebsd' as NodeJS.Platform)).toBe('linux');

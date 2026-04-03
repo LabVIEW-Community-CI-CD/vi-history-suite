@@ -387,9 +387,20 @@
 - `TEST-UNIT-107`: prove the dashboard action opens archived HTML artifacts in
   dedicated panels, opens archived JSON artifacts in the editor, and rejects
   artifact paths outside workspace-scoped extension storage
+- `TEST-UNIT-108`: prove the Windows-container runtime wrapper injects
+  governed container-local `TEMP`/`TMP`, tunes LabVIEW CLI timeouts to 180
+  seconds, prelaunches LabVIEW headlessly, preserves overwrite semantics, and
+  retains the nested PowerShell command surface that drives container
+  execution
+- `TEST-UNIT-109`: prove the Windows-container runtime executor copies a
+  container-local CLI diagnostic log into governed workspace storage and
+  retains the copied artifact path on a successful execution record
 - `TEST-DOC-014`: review the queue, epic, ADR, and current-state surfaces to
   prove the future-facing dashboard research was normalized into governed repo
   control-plane artifacts and the incoming research artifact was deleted
+- `TEST-DOC-015`: review the repo entrypoints, architecture, alignment matrix,
+  and queue to prove Windows 64-bit isolated container execution is no longer
+  described as future-only once the canonical NI smoke lane succeeds
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

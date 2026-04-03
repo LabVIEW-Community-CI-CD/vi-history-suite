@@ -7,6 +7,7 @@ import { ComparisonReportPacketRecord } from './comparisonReportPacket';
 
 export interface ComparisonReportExecutionPlan {
   outcome: 'ready' | 'blocked';
+  provider?: 'host-native' | 'windows-container';
   engine?: 'labview-cli' | 'lvcompare';
   blockedReason?: string;
   commandPlan?: ComparisonCommandPlan;
@@ -29,7 +30,10 @@ export function buildComparisonReportExecutionPlan(
     };
   }
 
-  if (record.runtimeSelection.provider !== 'host-native') {
+  if (
+    record.runtimeSelection.provider !== 'host-native' &&
+    record.runtimeSelection.provider !== 'windows-container'
+  ) {
     return {
       outcome: 'blocked',
       blockedReason: 'unsupported-runtime-provider'
@@ -37,9 +41,8 @@ export function buildComparisonReportExecutionPlan(
   }
 
   if (record.runtimeSelection.engine === 'labview-cli') {
-    const labviewExePath = record.runtimeSelection.labviewExe?.path?.trim();
     const labviewCliPath = record.runtimeSelection.labviewCli?.path?.trim();
-    if (!labviewExePath || !labviewCliPath) {
+    if (!labviewCliPath) {
       return {
         outcome: 'blocked',
         blockedReason: 'labview-cli-selection-incomplete'
@@ -50,16 +53,14 @@ export function buildComparisonReportExecutionPlan(
       leftViPath: record.stagedRevisionPlan.leftFilePath,
       rightViPath: record.stagedRevisionPlan.rightFilePath,
       reportFilePath: record.artifactPlan.reportFilePath,
-      reportFormat: 'HTMLSingleFile',
-      labviewPath: labviewExePath,
-      headless: true,
+      reportFormat: 'HTML',
       overwrite: true,
-      createOutputDirectory: true,
-      includeDiagnostics: true
+      createOutputDirectory: true
     });
 
     return {
       outcome: 'ready',
+      provider: record.runtimeSelection.provider,
       engine: 'labview-cli',
       commandPlan: {
         executable: labviewCliPath,
@@ -86,6 +87,7 @@ export function buildComparisonReportExecutionPlan(
 
     return {
       outcome: 'ready',
+      provider: record.runtimeSelection.provider,
       engine: 'lvcompare',
       commandPlan: {
         executable: lvComparePath,

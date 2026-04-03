@@ -52,11 +52,9 @@ export interface LabviewCliComparisonReportPlanOptions {
   rightViPath: string;
   reportFilePath: string;
   reportFormat?: ComparisonReportFormat;
-  labviewPath?: string;
   overwrite?: boolean;
   createOutputDirectory?: boolean;
-  headless?: boolean;
-  includeDiagnostics?: boolean;
+  description?: string;
 }
 
 export interface ComparisonCommandPlan {
@@ -147,15 +145,19 @@ export function buildLabviewCliCreateComparisonReportPlan(
   const args = [
     '-OperationName',
     'CreateComparisonReport',
-    '-vi1',
+    '-VI1',
     requireNonEmpty(options.leftViPath, 'leftViPath'),
-    '-vi2',
+    '-VI2',
     requireNonEmpty(options.rightViPath, 'rightViPath'),
-    '-reportType',
-    options.reportFormat ?? 'HTMLSingleFile',
-    '-reportPath',
+    '-ReportType',
+    mapReportFormatToCliValue(options.reportFormat ?? 'HTML'),
+    '-ReportPath',
     requireNonEmpty(options.reportFilePath, 'reportFilePath')
   ];
+
+  if (options.description?.trim()) {
+    args.push('-description', options.description.trim());
+  }
 
   if (options.createOutputDirectory ?? true) {
     args.push('-c');
@@ -163,18 +165,6 @@ export function buildLabviewCliCreateComparisonReportPlan(
 
   if (options.overwrite ?? true) {
     args.push('-o');
-  }
-
-  if (options.includeDiagnostics ?? true) {
-    args.push('-d');
-  }
-
-  if (options.headless ?? true) {
-    args.push('-Headless');
-  }
-
-  if (options.labviewPath?.trim()) {
-    args.push('-LabVIEWPath', options.labviewPath.trim());
   }
 
   return {
@@ -220,4 +210,19 @@ function requireNonEmpty(value: string, field: string): string {
   }
 
   return trimmed;
+}
+
+function mapReportFormatToCliValue(reportFormat: ComparisonReportFormat): string {
+  switch (reportFormat) {
+    case 'HTMLSingleFile':
+      return 'htmlsinglefile';
+    case 'HTML':
+      return 'html';
+    case 'XML':
+      return 'xml';
+    case 'PlainText':
+      return 'plaintext';
+    case 'MicrosoftWord':
+      return 'microsoftword';
+  }
 }

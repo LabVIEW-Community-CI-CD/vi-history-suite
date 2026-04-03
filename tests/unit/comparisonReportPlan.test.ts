@@ -78,12 +78,11 @@ describe('comparisonReportPlan', () => {
     expect(plan.rightFilePath).toBe(path.join('/workspace/.storage/reports/repo/file/staging', 'right-foo.vi'));
   });
 
-  it('builds the primary CreateComparisonReport command plan with HTMLSingleFile defaults', () => {
+  it('builds the primary CreateComparisonReport command plan with asset-backed HTML defaults', () => {
     const plan = buildLabviewCliCreateComparisonReportPlan({
       leftViPath: '/tmp/left-foo.vi',
       rightViPath: '/tmp/right-foo.vi',
-      reportFilePath: '/workspace/.storage/reports/repo/file/diff-report-foo.vi.html',
-      labviewPath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+      reportFilePath: '/workspace/.storage/reports/repo/file/diff-report-foo.vi.html'
     });
 
     expect(plan).toEqual({
@@ -91,20 +90,16 @@ describe('comparisonReportPlan', () => {
       args: [
         '-OperationName',
         'CreateComparisonReport',
-        '-vi1',
+        '-VI1',
         '/tmp/left-foo.vi',
-        '-vi2',
+        '-VI2',
         '/tmp/right-foo.vi',
-        '-reportType',
-        'HTMLSingleFile',
-        '-reportPath',
+        '-ReportType',
+        'html',
+        '-ReportPath',
         '/workspace/.storage/reports/repo/file/diff-report-foo.vi.html',
         '-c',
-        '-o',
-        '-d',
-        '-Headless',
-        '-LabVIEWPath',
-        'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+        '-o'
       ]
     });
   });
