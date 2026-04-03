@@ -559,6 +559,24 @@
 - `TEST-UNIT-166`: prove the canonical comparison-report smoke runner fails
   closed with `requested-labview-cli-not-available` when `labview-cli` is
   requested but no governed LabVIEW CLI executable is available
+- `TEST-UNIT-167`: prove the Windows interop command planner preserves
+  additional `lvcompare` flags after rewriting the staged pair and governed
+  `-lvpath`, and fails closed on unsupported runtime-engine tokens
+- `TEST-UNIT-168`: prove the Windows interop `lvcompare` command planner fails
+  closed when staged VI paths or the governed `-lvpath` cannot be normalized
+  into Windows interop form
+- `TEST-UNIT-169`: prove the Windows interop command planner rewrites governed
+  `labview-cli` path-bearing args into Windows-native form and fails closed
+  when an `lvcompare` interop command has fewer than two staged VI args
+- `TEST-UNIT-170`: prove the Windows interop `labview-cli` command planner
+  fails closed when the governed `-ReportPath` or `-LabVIEWPath` cannot be
+  normalized into Windows interop form
+- `TEST-UNIT-171`: prove the Windows interop `labview-cli` command planner
+  fails closed when the governed staged `-VI1` or `-VI2` paths cannot be
+  normalized into Windows interop form
+- `TEST-UNIT-172`: prove the default runtime executor routes
+  `windows-container` through raw command execution and routes non-container
+  providers through observation-enabled command execution
 - `TEST-DOC-014`: review the queue, epic, ADR, and current-state surfaces to
   prove the future-facing dashboard research was normalized into governed repo
   control-plane artifacts and the incoming research artifact was deleted

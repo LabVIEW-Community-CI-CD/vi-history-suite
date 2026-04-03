@@ -44,6 +44,18 @@ export interface ComparisonReportRuntimeExecutionDeps {
   ) => Promise<RuntimeProcessObservation | undefined>;
 }
 
+export interface BuildDefaultRunCommandOptions {
+  provider: 'host-native' | 'windows-container' | undefined;
+  processPlatform: NodeJS.Platform;
+  runtimePlatform: ComparisonReportPacketRecord['runtimeSelection']['platform'];
+  engine: ComparisonReportPacketRecord['runtimeSelection']['engine'];
+  observeWindowsProcesses?: (
+    options: ObserveWindowsProcessesOptions
+  ) => Promise<RuntimeProcessObservation | undefined>;
+  runComparisonCommandPlanImpl?: typeof runComparisonCommandPlan;
+  runComparisonCommandPlanWithObservationImpl?: typeof runComparisonCommandPlanWithObservation;
+}
+
 export interface RunCommandResult {
   exitCode: number;
   signal?: string;
@@ -114,15 +126,13 @@ export async function executeComparisonReport(
   const observeWindowsProcesses = deps.observeWindowsProcesses ?? observeWindowsRuntimeProcesses;
   const runCommand =
     deps.runCommand ??
-    ((commandPlan: ComparisonCommandPlan) =>
-      plan.provider === 'windows-container'
-        ? runComparisonCommandPlan(commandPlan)
-        : runComparisonCommandPlanWithObservation(commandPlan, {
-            hostPlatform: processPlatform,
-            runtimePlatform: options.record.runtimeSelection.platform,
-            observeWindowsProcesses,
-            engine: options.record.runtimeSelection.engine
-          }));
+    buildDefaultRunCommand({
+      provider: plan.provider,
+      processPlatform,
+      runtimePlatform: options.record.runtimeSelection.platform,
+      observeWindowsProcesses,
+      engine: options.record.runtimeSelection.engine
+    });
   const nowIso = deps.nowIso ?? defaultNowIso;
   const nowMs = deps.nowMs ?? defaultNowMs;
   const writePacketRecord = deps.writePacketRecord ?? writeComparisonReportPacketRecord;
@@ -182,6 +192,26 @@ export async function executeComparisonReport(
     reportFilePath: updatedRecord.artifactPlan.reportFilePath,
     metadataFilePath: updatedRecord.artifactPlan.metadataFilePath
   };
+}
+
+export function buildDefaultRunCommand(
+  options: BuildDefaultRunCommandOptions
+): (commandPlan: ComparisonCommandPlan) => Promise<RunCommandResult> {
+  const observeWindowsProcesses = options.observeWindowsProcesses ?? observeWindowsRuntimeProcesses;
+  const runWithoutObservation = options.runComparisonCommandPlanImpl ?? runComparisonCommandPlan;
+  const runWithObservation =
+    options.runComparisonCommandPlanWithObservationImpl ??
+    runComparisonCommandPlanWithObservation;
+
+  return (commandPlan: ComparisonCommandPlan) =>
+    options.provider === 'windows-container'
+      ? runWithoutObservation(commandPlan)
+      : runWithObservation(commandPlan, {
+          hostPlatform: options.processPlatform,
+          runtimePlatform: options.runtimePlatform,
+          observeWindowsProcesses,
+          engine: options.engine
+        });
 }
 
 async function runHostNativeExecution(
@@ -657,7 +687,7 @@ function buildWindowsInteropLayout(
   };
 }
 
-function buildWindowsInteropCommandPlan(
+export function buildWindowsInteropCommandPlan(
   record: ComparisonReportPacketRecord,
   commandPlan: ComparisonCommandPlan,
   interopLayout: WindowsInteropLayout

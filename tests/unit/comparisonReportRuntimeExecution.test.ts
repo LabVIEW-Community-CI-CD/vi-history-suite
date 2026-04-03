@@ -6,7 +6,9 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 
 import {
+  buildDefaultRunCommand,
   buildWindowsContainerCommandPlan,
+  buildWindowsInteropCommandPlan,
   classifyLabviewCliDiagnosticText,
   buildWindowsContainerLabviewCliScript,
   defaultNowIso,
@@ -1480,6 +1482,348 @@ describe('comparisonReportRuntimeExecution', () => {
         }
       )
     ).toBeUndefined();
+  });
+
+  it('preserves additional lvcompare flags and fails closed on unsupported engines in the Windows interop command planner', () => {
+    const lvcompareRecord = createReadyRecord();
+    lvcompareRecord.runtimeSelection.engine = 'lvcompare';
+
+    expect(
+      buildWindowsInteropCommandPlan(
+        lvcompareRecord,
+        {
+          executable: '/mnt/c/Program Files/National Instruments/Shared/LVCompare.exe',
+          args: [
+            'C:\\old\\left.vi',
+            'C:\\old\\right.vi',
+            '-lvpath',
+            'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+            '-nobdcosm',
+            '-nofp'
+          ]
+        },
+        {
+          reportDirectory: '/mnt/c/temp/reports',
+          stagingDirectory: '/mnt/c/temp/reports/staging',
+          leftFilePath: '/mnt/c/temp/reports/staging/left.vi',
+          rightFilePath: '/mnt/c/temp/reports/staging/right.vi',
+          reportFilePath: '/mnt/c/temp/reports/diff-report.vi.html'
+        }
+      )
+    ).toEqual({
+      executable: '/mnt/c/Program Files/National Instruments/Shared/LVCompare.exe',
+      args: [
+        'C:\\temp\\reports\\staging\\left.vi',
+        'C:\\temp\\reports\\staging\\right.vi',
+        '-lvpath',
+        'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+        '-nobdcosm',
+        '-nofp'
+      ]
+    });
+
+    const unsupportedEngineRecord = createReadyRecord();
+    unsupportedEngineRecord.runtimeSelection.engine = 'custom-engine' as never;
+    expect(
+      buildWindowsInteropCommandPlan(
+        unsupportedEngineRecord,
+        {
+          executable: '/mnt/c/Program Files/National Instruments/Shared/LVCompare.exe',
+          args: ['C:\\old\\left.vi', 'C:\\old\\right.vi']
+        },
+        {
+          reportDirectory: '/mnt/c/temp/reports',
+          stagingDirectory: '/mnt/c/temp/reports/staging',
+          leftFilePath: '/mnt/c/temp/reports/staging/left.vi',
+          rightFilePath: '/mnt/c/temp/reports/staging/right.vi',
+          reportFilePath: '/mnt/c/temp/reports/diff-report.vi.html'
+        }
+      )
+    ).toBeUndefined();
+  });
+
+  it('fails closed when lvcompare Windows interop paths cannot be normalized', () => {
+    const lvcompareRecord = createReadyRecord();
+    lvcompareRecord.runtimeSelection.engine = 'lvcompare';
+
+    expect(
+      buildWindowsInteropCommandPlan(
+        lvcompareRecord,
+        {
+          executable: '/mnt/c/Program Files/National Instruments/Shared/LVCompare.exe',
+          args: [
+            'C:\\old\\left.vi',
+            'C:\\old\\right.vi',
+            '-lvpath',
+            'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+          ]
+        },
+        {
+          reportDirectory: '/mnt/c/temp/reports',
+          stagingDirectory: '/mnt/c/temp/reports/staging',
+          leftFilePath: 'not-a-windows-interop-path',
+          rightFilePath: '/mnt/c/temp/reports/staging/right.vi',
+          reportFilePath: '/mnt/c/temp/reports/diff-report.vi.html'
+        }
+      )
+    ).toBeUndefined();
+
+    expect(
+      buildWindowsInteropCommandPlan(
+        lvcompareRecord,
+        {
+          executable: '/mnt/c/Program Files/National Instruments/Shared/LVCompare.exe',
+          args: [
+            'C:\\old\\left.vi',
+            'C:\\old\\right.vi',
+            '-lvpath',
+            'not-a-windows-interop-path'
+          ]
+        },
+        {
+          reportDirectory: '/mnt/c/temp/reports',
+          stagingDirectory: '/mnt/c/temp/reports/staging',
+          leftFilePath: '/mnt/c/temp/reports/staging/left.vi',
+          rightFilePath: '/mnt/c/temp/reports/staging/right.vi',
+          reportFilePath: '/mnt/c/temp/reports/diff-report.vi.html'
+        }
+      )
+    ).toBeUndefined();
+  });
+
+  it('rewrites governed labview-cli interop paths and fails closed when lvcompare interop args are incomplete', () => {
+    const labviewCliRecord = createReadyRecord();
+    labviewCliRecord.runtimeSelection.engine = 'labview-cli';
+
+    expect(
+      buildWindowsInteropCommandPlan(
+        labviewCliRecord,
+        {
+          executable: '/mnt/c/Program Files/National Instruments/Shared/LabVIEW CLI/LabVIEWCLI.exe',
+          args: [
+            '-OperationName',
+            'CreateComparisonReport',
+            '-VI1',
+            'C:\\old\\left.vi',
+            '-VI2',
+            'C:\\old\\right.vi',
+            '-ReportPath',
+            'C:\\old\\report.html',
+            '-LabVIEWPath',
+            'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+          ]
+        },
+        {
+          reportDirectory: '/mnt/c/temp/reports',
+          stagingDirectory: '/mnt/c/temp/reports/staging',
+          leftFilePath: '/mnt/c/temp/reports/staging/left.vi',
+          rightFilePath: '/mnt/c/temp/reports/staging/right.vi',
+          reportFilePath: '/mnt/c/temp/reports/diff-report.vi.html'
+        }
+      )
+    ).toEqual({
+      executable:
+        '/mnt/c/Program Files/National Instruments/Shared/LabVIEW CLI/LabVIEWCLI.exe',
+      args: [
+        '-OperationName',
+        'CreateComparisonReport',
+        '-VI1',
+        'C:\\temp\\reports\\staging\\left.vi',
+        '-VI2',
+        'C:\\temp\\reports\\staging\\right.vi',
+        '-ReportPath',
+        'C:\\temp\\reports\\diff-report.vi.html',
+        '-LabVIEWPath',
+        'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+      ]
+    });
+
+    const lvcompareRecord = createReadyRecord();
+    lvcompareRecord.runtimeSelection.engine = 'lvcompare';
+    expect(
+      buildWindowsInteropCommandPlan(
+        lvcompareRecord,
+        {
+          executable: '/mnt/c/Program Files/National Instruments/Shared/LVCompare.exe',
+          args: ['C:\\old\\left.vi']
+        },
+        {
+          reportDirectory: '/mnt/c/temp/reports',
+          stagingDirectory: '/mnt/c/temp/reports/staging',
+          leftFilePath: '/mnt/c/temp/reports/staging/left.vi',
+          rightFilePath: '/mnt/c/temp/reports/staging/right.vi',
+          reportFilePath: '/mnt/c/temp/reports/diff-report.vi.html'
+        }
+      )
+    ).toBeUndefined();
+  });
+
+  it('fails closed when labview-cli Windows interop report or LabVIEW paths cannot be normalized', () => {
+    const labviewCliRecord = createReadyRecord();
+    labviewCliRecord.runtimeSelection.engine = 'labview-cli';
+
+    expect(
+      buildWindowsInteropCommandPlan(
+        labviewCliRecord,
+        {
+          executable: '/mnt/c/Program Files/National Instruments/Shared/LabVIEW CLI/LabVIEWCLI.exe',
+          args: [
+            '-OperationName',
+            'CreateComparisonReport',
+            '-VI1',
+            'C:\\old\\left.vi',
+            '-VI2',
+            'C:\\old\\right.vi',
+            '-ReportPath',
+            'C:\\old\\report.html'
+          ]
+        },
+        {
+          reportDirectory: '/mnt/c/temp/reports',
+          stagingDirectory: '/mnt/c/temp/reports/staging',
+          leftFilePath: '/mnt/c/temp/reports/staging/left.vi',
+          rightFilePath: '/mnt/c/temp/reports/staging/right.vi',
+          reportFilePath: 'not-a-windows-interop-path'
+        }
+      )
+    ).toBeUndefined();
+
+    expect(
+      buildWindowsInteropCommandPlan(
+        labviewCliRecord,
+        {
+          executable: '/mnt/c/Program Files/National Instruments/Shared/LabVIEW CLI/LabVIEWCLI.exe',
+          args: [
+            '-OperationName',
+            'CreateComparisonReport',
+            '-VI1',
+            'C:\\old\\left.vi',
+            '-VI2',
+            'C:\\old\\right.vi',
+            '-ReportPath',
+            'C:\\old\\report.html',
+            '-LabVIEWPath',
+            'not-a-windows-interop-path'
+          ]
+        },
+        {
+          reportDirectory: '/mnt/c/temp/reports',
+          stagingDirectory: '/mnt/c/temp/reports/staging',
+          leftFilePath: '/mnt/c/temp/reports/staging/left.vi',
+          rightFilePath: '/mnt/c/temp/reports/staging/right.vi',
+          reportFilePath: '/mnt/c/temp/reports/diff-report.vi.html'
+        }
+      )
+    ).toBeUndefined();
+  });
+
+  it('fails closed when labview-cli Windows interop staged VI paths cannot be normalized', () => {
+    const labviewCliRecord = createReadyRecord();
+    labviewCliRecord.runtimeSelection.engine = 'labview-cli';
+
+    expect(
+      buildWindowsInteropCommandPlan(
+        labviewCliRecord,
+        {
+          executable: '/mnt/c/Program Files/National Instruments/Shared/LabVIEW CLI/LabVIEWCLI.exe',
+          args: [
+            '-OperationName',
+            'CreateComparisonReport',
+            '-VI1',
+            'C:\\old\\left.vi',
+            '-VI2',
+            'C:\\old\\right.vi'
+          ]
+        },
+        {
+          reportDirectory: '/mnt/c/temp/reports',
+          stagingDirectory: '/mnt/c/temp/reports/staging',
+          leftFilePath: 'not-a-windows-interop-path',
+          rightFilePath: '/mnt/c/temp/reports/staging/right.vi',
+          reportFilePath: '/mnt/c/temp/reports/diff-report.vi.html'
+        }
+      )
+    ).toBeUndefined();
+
+    expect(
+      buildWindowsInteropCommandPlan(
+        labviewCliRecord,
+        {
+          executable: '/mnt/c/Program Files/National Instruments/Shared/LabVIEW CLI/LabVIEWCLI.exe',
+          args: [
+            '-OperationName',
+            'CreateComparisonReport',
+            '-VI1',
+            'C:\\old\\left.vi',
+            '-VI2',
+            'C:\\old\\right.vi'
+          ]
+        },
+        {
+          reportDirectory: '/mnt/c/temp/reports',
+          stagingDirectory: '/mnt/c/temp/reports/staging',
+          leftFilePath: '/mnt/c/temp/reports/staging/left.vi',
+          rightFilePath: 'not-a-windows-interop-path',
+          reportFilePath: '/mnt/c/temp/reports/diff-report.vi.html'
+        }
+      )
+    ).toBeUndefined();
+  });
+
+  it('routes the default runtime executor through raw runs for windows-container and observed runs for non-container providers', async () => {
+    const runComparisonCommandPlanImpl = vi.fn().mockResolvedValue({
+      exitCode: 0,
+      stdout: 'raw',
+      stderr: ''
+    });
+    const runComparisonCommandPlanWithObservationImpl = vi.fn().mockResolvedValue({
+      exitCode: 0,
+      stdout: 'observed',
+      stderr: ''
+    });
+    const observeWindowsProcesses = vi.fn();
+    const commandPlan = {
+      executable: 'tool.exe',
+      args: ['arg1']
+    };
+
+    const windowsContainerRunCommand = buildDefaultRunCommand({
+      provider: 'windows-container',
+      processPlatform: 'linux',
+      runtimePlatform: 'win32',
+      engine: 'labview-cli',
+      observeWindowsProcesses,
+      runComparisonCommandPlanImpl,
+      runComparisonCommandPlanWithObservationImpl
+    });
+    await expect(windowsContainerRunCommand(commandPlan)).resolves.toEqual({
+      exitCode: 0,
+      stdout: 'raw',
+      stderr: ''
+    });
+    expect(runComparisonCommandPlanImpl).toHaveBeenCalledWith(commandPlan);
+    expect(runComparisonCommandPlanWithObservationImpl).not.toHaveBeenCalled();
+
+    const observedRunCommand = buildDefaultRunCommand({
+      provider: 'host-native',
+      processPlatform: 'linux',
+      runtimePlatform: 'win32',
+      engine: 'labview-cli',
+      observeWindowsProcesses,
+      runComparisonCommandPlanImpl,
+      runComparisonCommandPlanWithObservationImpl
+    });
+    await expect(observedRunCommand(commandPlan)).resolves.toEqual({
+      exitCode: 0,
+      stdout: 'observed',
+      stderr: ''
+    });
+    expect(runComparisonCommandPlanWithObservationImpl).toHaveBeenCalledWith(commandPlan, {
+      hostPlatform: 'linux',
+      runtimePlatform: 'win32',
+      observeWindowsProcesses,
+      engine: 'labview-cli'
+    });
   });
 
   it('retains separate host and normalized Windows temp roots for windows-container execution context', async () => {
