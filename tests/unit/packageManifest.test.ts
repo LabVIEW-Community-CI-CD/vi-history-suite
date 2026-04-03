@@ -46,10 +46,16 @@ describe('extension manifest research alignment', () => {
 
     expect(manifest.activationEvents).toContain('onStartupFinished');
     expect(manifest.activationEvents).toContain('onCommand:labviewViHistory.open');
+    expect(manifest.activationEvents).toContain('onCommand:labviewViHistory.openDocumentation');
     expect(manifest.extensionDependencies).toContain('vscode.git');
     expect(manifest.contributes?.commands).toContainEqual({
       command: 'labviewViHistory.open',
       title: 'VI History',
+      category: 'VI History'
+    });
+    expect(manifest.contributes?.commands).toContainEqual({
+      command: 'labviewViHistory.openDocumentation',
+      title: 'Open Documentation',
       category: 'VI History'
     });
   });
@@ -101,6 +107,7 @@ describe('extension manifest research alignment', () => {
     expect(manifest.scripts?.['program:repos']).toBe(
       'npm run compile && node out/cli/runProgramRepoJump.js'
     );
+    expect(manifest.scripts?.['docs:bundle']).toBe('node scripts/syncBundledDocs.js');
     expect(manifest.scripts?.['docs:gate']).toBe('node scripts/run-docs-gate.js');
     expect(manifest.scripts?.['docs:gate:core']).toBe(
       'node scripts/run-docs-gate.js --skip-links'
@@ -113,6 +120,9 @@ describe('extension manifest research alignment', () => {
     );
     expect(manifest.scripts?.['docs:workbench:shell']).toContain(
       'vi-history-suite-docs-authoring:local bash'
+    );
+    expect(manifest.scripts?.['design:gate:assert-complete']).toBe(
+      'npm run compile && node out/cli/runVerifyDesignGateCompletion.js'
     );
     expect(manifest.scripts?.['test:integration:linux']).toBe(
       'VI_HISTORY_SUITE_INTEGRATION_HOST=linux npm run test:integration'

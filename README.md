@@ -29,9 +29,10 @@ If you are new to the repo, read these in order:
 9. [Documentation Coherence Ledger](./docs/product/documentation-coherence-ledger.md)
 10. [Wiki Seed Plan](./docs/product/wiki-seed-plan.md)
 11. [Wiki Publication Ledger](./docs/product/wiki-publication-ledger.md)
-12. [Documentation Package Workbench](./docs/documentation-workbench.md)
-13. [Program Repo Jump](./docs/product/program-repo-jump.md)
-14. [PROGRAM-0001: Next Product Layer](./docs/product/execution-programs/PROGRAM-0001-next-product-layer.md)
+12. [Wiki Publication Ledger JSON](./docs/product/wiki-publication-ledger.json)
+13. [Documentation Package Workbench](./docs/documentation-workbench.md)
+14. [Program Repo Jump](./docs/product/program-repo-jump.md)
+15. [PROGRAM-0001: Next Product Layer](./docs/product/execution-programs/PROGRAM-0001-next-product-layer.md)
 
 For machine-friendly repo orientation, start with:
 
@@ -74,6 +75,7 @@ Use these repo-native control-plane entrypoints instead:
 - [Documentation Coherence Ledger](./docs/product/documentation-coherence-ledger.md)
 - [Wiki Seed Plan](./docs/product/wiki-seed-plan.md)
 - [Wiki Publication Ledger](./docs/product/wiki-publication-ledger.md)
+- [Wiki Publication Ledger JSON](./docs/product/wiki-publication-ledger.json)
 - [Documentation Package Workbench](./docs/documentation-workbench.md)
 - [Program Repo Jump](./docs/product/program-repo-jump.md)
 - [Review Scenarios](./docs/product/review-scenarios.md)
@@ -94,7 +96,7 @@ Committed and governed today:
 - trust-gated and Git-backed eligibility indexing
 - review-oriented history panel with `Open at commit`, stateful retained-pair
   actions (`Generate compare`, `Refresh compare`, `Open compare`), and
-  `Copy hash`, plus `Open dashboard` for retained three-plus-commit windows
+  `Copy hash`, `Open docs`, plus `Open dashboard` for retained three-plus-commit windows
 - comparison-report preflight, staging, packet storage, and packet webview
 - LabVIEW 2026 Q1 runtime detection plus reliable Windows 64-bit isolated
   container report execution on the canonical harness
@@ -167,6 +169,9 @@ Committed and governed today:
   work starts from governed docs instead of source or chat memory
 - a retained wiki publication ledger so actual published wiki pages are tracked
   from the main repo control plane instead of being inferred from the wiki repo
+- a machine-readable wiki publication ledger plus a generated bundled-docs pack
+  under `resources/bundled-docs/` so published user docs can ship inside the
+  VSIX instead of requiring repo access
 - a configured GitLab SemVer release lane that validates tag/package sync,
   packages a versioned VSIX, and retains a machine-readable release manifest
 - a `main`-branch preview VSIX artifact lane so extension users can install the
@@ -196,6 +201,8 @@ Current install paths are:
   `preview-evidence/vi-history-suite-<version>.vsix`
 - future governed tagged release artifact:
   `release-evidence/vi-history-suite-<version>.vsix`
+- packaged bundled user docs surfaced through
+  `VI History: Open Documentation` and the history-panel `Open docs` action
 - documentation-package workbench image:
   `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
 
@@ -232,6 +239,13 @@ npm ci
 npm run design:gate
 ```
 
+If you are checking retained gate evidence instead of waiting on the live
+process, fail closed with:
+
+```bash
+npm run design:gate:assert-complete
+```
+
 Primary commands:
 
 - `npm run design:gate`
@@ -240,6 +254,9 @@ Primary commands:
   - extension-host integration
   - canonical harness smoke
   - standards quick-triage assurance
+- `npm run design:gate:assert-complete`
+  - verifies the retained latest report is both `pass` and
+    `completionState: complete`
 - `npm run harness:smoke`
 - `npm run harness:report:smoke`
 - `npm run harness:dashboard:smoke`

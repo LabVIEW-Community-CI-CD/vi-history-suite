@@ -7,6 +7,8 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
     model.commits.length >= 3
       ? '<button data-testid="history-action-dashboard" data-command="openDashboard">Open dashboard</button>'
       : '<button data-testid="history-action-dashboard" disabled>Open dashboard</button>';
+  const documentationButton =
+    '<button data-testid="history-action-documentation" data-command="openDocumentation" data-page-id="user-workflow">Open docs</button>';
   const decisionRecordButton =
     model.commits.length >= 3
       ? '<button data-testid="history-action-decision-record" data-command="createDecisionRecord">Create decision record</button>'
@@ -127,6 +129,7 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
       <strong>Signature:</strong> <span data-testid="history-status-signature">${escapeHtml(model.signature)}</span><br />
       <strong>Commits:</strong> <span data-testid="history-status-commit-count">${model.commits.length}</span><br />
       <button data-testid="history-action-copy-review-packet" data-command="copyReviewPacket">Copy review packet</button>
+      ${documentationButton}
       ${dashboardButton}
       ${decisionRecordButton}
     </div>
@@ -150,6 +153,7 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
       <ol>
         <li data-testid="history-guidance-step">Use the newest/oldest packet to confirm the retained review window before acting on a specific revision.</li>
         <li data-testid="history-guidance-step">Use the compare pair in each row to see exactly which retained base revision an <code>Open compare</code> action targets once retained pair evidence exists.</li>
+        <li data-testid="history-guidance-step">Use <code>Open docs</code> to open the bundled user documentation that ships with this installed extension version instead of leaving VS Code for repo-hosted docs.</li>
         <li data-testid="history-guidance-step">Use <code>Open dashboard</code> when the retained window has at least three commits and you want concentrated comparison-report evidence in one place.</li>
         <li data-testid="history-guidance-step">Use <code>Create decision record</code> when you want to retain a separate human review outcome from the current VI review evidence without mutating the machine-generated dashboard packet.</li>
         <li data-testid="history-guidance-step">Use <code>Generate compare</code> when a pair has no retained evidence yet, and <code>Refresh compare</code> when you want to update already-retained evidence for that pair.</li>
@@ -189,11 +193,19 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
 
         const command = target.dataset.command;
         const hash = target.dataset.hash;
+        const pageId = target.dataset.pageId;
         if (!command) {
           return;
         }
 
-        vscode.postMessage(hash ? { command, hash } : { command });
+        const payload = { command };
+        if (hash) {
+          payload.hash = hash;
+        }
+        if (pageId) {
+          payload.pageId = pageId;
+        }
+        vscode.postMessage(payload);
       });
     </script>
   </body>

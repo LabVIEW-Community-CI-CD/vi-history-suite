@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  assertCompletedPassingDesignGateReport,
   buildDesignGatePlan,
   designGateCoverageSummaryPath,
   designGateDevelopmentQueuePath,
@@ -254,5 +255,25 @@ describe('designGate tooling', () => {
       source: 'authoritative research',
       summary: 'active summary'
     });
+  });
+
+  it('fails closed when a retained pass report is still running', () => {
+    expect(() =>
+      assertCompletedPassingDesignGateReport({
+        status: 'pass',
+        completionState: 'running',
+        pendingStepId: 'standards-assurance',
+        pendingStepTitle: 'Standards assurance'
+      })
+    ).toThrow('design gate report is still running; pending step: standards-assurance (Standards assurance)');
+  });
+
+  it('accepts completed retained pass reports', () => {
+    expect(() =>
+      assertCompletedPassingDesignGateReport({
+        status: 'pass',
+        completionState: 'complete'
+      })
+    ).not.toThrow();
   });
 });

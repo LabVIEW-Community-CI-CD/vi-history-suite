@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 import { createOpenViHistoryCommand } from './commands/openViHistoryCommand';
 import { buildComparisonReportArchivePlanFromSelection } from './dashboard/comparisonReportArchive';
 import { createMultiReportDashboardAction } from './dashboard/multiReportDashboardAction';
+import { createBundledDocumentationAction } from './docs/bundledDocumentationAction';
 import { getBuiltInGitApi } from './git/gitApi';
 import {
   EligibilityDebugSnapshot,
@@ -19,6 +20,7 @@ import { ViHistoryViewModel } from './services/viHistoryModel';
 import { ViHistoryService } from './services/viHistoryService';
 import {
   DashboardArtifactActionSummary,
+  OpenedDocumentationPanelSummary,
   DashboardPanelMessage,
   HistoryPanelActionSummary,
   HistoryPanelMessage,
@@ -42,6 +44,8 @@ export interface ViHistorySuiteApi {
   dispatchLastDashboardPanelMessage(message: DashboardPanelMessage): Promise<void>;
   getLastDashboardArtifactActionSummary(): DashboardArtifactActionSummary | undefined;
   getDashboardArtifactActionCount(): number;
+  getLastOpenedDocumentationPanel(): OpenedDocumentationPanelSummary | undefined;
+  getOpenDocumentationPanelCount(): number;
   clearHistoryPanelTracking(): void;
 }
 
@@ -57,6 +61,7 @@ export async function activate(
     createEnsureComparisonReportEvidenceAction(context);
   const openRetainedComparisonReportAction = createOpenRetainedComparisonReportAction(context);
   const reviewDecisionRecordAction = createReviewDecisionRecordAction(context);
+  const bundledDocumentationAction = createBundledDocumentationAction(context, panelTracker);
   const multiReportDashboardAction = createMultiReportDashboardAction(
     context,
     {
@@ -104,8 +109,29 @@ export async function activate(
         multiReportDashboardAction,
         openRetainedComparisonReportAction,
         hasRetainedComparisonReport,
-        reviewDecisionRecordAction
+        reviewDecisionRecordAction,
+        bundledDocumentationAction
       )
+    )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      'labviewViHistory.openDocumentation',
+      async (pageId?: string) => {
+        const result = await bundledDocumentationAction({
+          pageId: typeof pageId === 'string' ? pageId : undefined
+        });
+        if (result.outcome === 'missing-bundled-documentation') {
+          void vscode.window.showWarningMessage(
+            'Bundled VI History documentation is not available in this extension build.'
+          );
+        } else if (result.outcome === 'unknown-documentation-page') {
+          void vscode.window.showInformationMessage(
+            'VI History could not resolve the requested bundled documentation page.'
+          );
+        }
+      }
     )
   );
 
@@ -129,6 +155,8 @@ export async function activate(
     getLastDashboardArtifactActionSummary: () =>
       panelTracker.getLastDashboardArtifactActionSummary(),
     getDashboardArtifactActionCount: () => panelTracker.getDashboardArtifactActionCount(),
+    getLastOpenedDocumentationPanel: () => panelTracker.getLastOpenedDocumentationPanel(),
+    getOpenDocumentationPanelCount: () => panelTracker.getDocumentationOpenCount(),
     clearHistoryPanelTracking: () => panelTracker.clear()
   };
 }

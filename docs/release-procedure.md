@@ -18,20 +18,28 @@
   - `docs/product/documentation-coherence-ledger.md`
   - `docs/product/wiki-seed-plan.md`
   - `docs/product/wiki-publication-ledger.md`
+  - `docs/product/wiki-publication-ledger.json`
 
 ## Steps
 
 1. Ensure `main` is in a governed baseline state.
+   - Either wait for `npm run design:gate` to exit `0`, or run
+     `npm run design:gate:assert-complete` against the retained latest report
+     before claiming the gate is green.
 2. Ensure `package.json` matches the release tag version exactly.
-3. Run compile, test, coverage generation, and VSIX packaging through GitLab
+3. If the published wiki set changed in the release tranche, refresh bundled
+   user docs with `npm run docs:bundle` before packaging.
+4. Run compile, test, coverage generation, and VSIX packaging through GitLab
    CI.
-4. Retain release evidence under `release-evidence/`.
-5. Review the generated release record and release manifest before any
+5. Retain release evidence under `release-evidence/`.
+6. Review the generated release record and release manifest before any
    downstream distribution step.
-6. Ensure the release artifact includes the exact versioned VSIX intended for
+7. Ensure the release artifact includes the exact versioned VSIX intended for
    installation and sharing.
-7. Ensure the retained release manifest names the tag, package version, commit,
+8. Ensure the retained release manifest names the tag, package version, commit,
    VSIX filename, and retained evidence paths.
+9. Ensure the packaged extension still contains the bundled user-doc surface
+   under `resources/bundled-docs/`.
 
 ## Retained Evidence
 
@@ -44,6 +52,7 @@
 - `release-evidence/release-record.md`
 - `release-evidence/release-manifest.json`
 - `docs-workbench-evidence/docs-workbench-manifest.json`
+- `resources/bundled-docs/manifest.json`
 
 ## Current Limitation
 

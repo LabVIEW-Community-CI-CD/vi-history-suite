@@ -10,6 +10,9 @@ import {
   MultiReportDashboardActionResult,
 } from '../dashboard/multiReportDashboardAction';
 import {
+  DocumentationActionResult
+} from '../docs/bundledDocumentationAction';
+import {
   ReviewDecisionRecordActionResult,
 } from '../scenarios/reviewDecisionRecordAction';
 import { ViHistoryService } from '../services/viHistoryService';
@@ -53,7 +56,10 @@ export function createOpenViHistoryCommand(
     model: Awaited<ReturnType<ViHistoryService['load']>>;
     reportProgress?: (update: { message: string; increment?: number }) => void | Promise<void>;
     cancellationToken?: vscode.CancellationToken;
-  }) => Promise<ReviewDecisionRecordActionResult>
+  }) => Promise<ReviewDecisionRecordActionResult>,
+  openDocumentationAction?: (request?: {
+    pageId?: string;
+  }) => Promise<DocumentationActionResult>
 ): (uri?: vscode.Uri) => Promise<void> {
   return async (uri?: vscode.Uri) => {
     const targetUri = uri ?? vscode.window.activeTextEditor?.document.uri;
@@ -287,6 +293,45 @@ export function createOpenViHistoryCommand(
           command,
           outcome: 'copied-review-packet',
           copiedTextLength: reviewPacket.length
+        });
+        return;
+      }
+
+      if (command === 'openDocumentation') {
+        if (!openDocumentationAction) {
+          panelTracker?.recordAction({
+            command,
+            outcome: 'unsupported-command'
+          });
+          return;
+        }
+
+        const result = await openDocumentationAction({
+          pageId: message.pageId
+        });
+        if (result.outcome === 'missing-bundled-documentation') {
+          void vscode.window.showWarningMessage(
+            'Bundled VI History documentation is not available in this extension build.'
+          );
+        } else if (result.outcome === 'unknown-documentation-page') {
+          void vscode.window.showInformationMessage(
+            'VI History could not resolve the requested bundled documentation page.'
+          );
+        }
+
+        panelTracker?.recordAction({
+          command,
+          outcome:
+            result.outcome === 'opened-documentation'
+              ? 'opened-documentation'
+              : result.outcome === 'missing-bundled-documentation'
+                ? 'missing-bundled-documentation'
+                : 'unknown-documentation-page',
+          documentationPageId: result.pageId,
+          documentationPageTitle: result.pageTitle,
+          documentationManifestPath: result.manifestFilePath,
+          documentationPageFilePath: result.pageFilePath,
+          title: result.title
         });
         return;
       }

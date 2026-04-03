@@ -1,0 +1,112 @@
+{
+  "generatedFor": "vi-history-suite",
+  "pages": [
+    {
+      "id": "overview",
+      "title": "Overview",
+      "wikiPath": "home",
+      "wikiFileName": "home.md",
+      "status": "published",
+      "publishedDate": "2026-04-03",
+      "wikiCommit": "3aa0c49",
+      "primaryAuthority": [
+        "docs/product/SHIP-0001-releasable-vi-history-suite.md",
+        "docs/product/current-state.md",
+        "README.md",
+        "docs/product/release-readiness-matrix.json"
+      ]
+    },
+    {
+      "id": "install-and-release",
+      "title": "Install And Release",
+      "wikiPath": "Install-And-Release",
+      "wikiFileName": "Install-And-Release.md",
+      "status": "published",
+      "publishedDate": "2026-04-03",
+      "wikiCommit": "3aa0c49",
+      "primaryAuthority": [
+        "docs/release-procedure.md",
+        "docs/product/release-readiness-matrix.json",
+        "README.md",
+        "docs/product/blocker-ledger.json"
+      ]
+    },
+    {
+      "id": "user-workflow",
+      "title": "User Workflow",
+      "wikiPath": "User-Workflow",
+      "wikiFileName": "User-Workflow.md",
+      "status": "published",
+      "publishedDate": "2026-04-03",
+      "wikiCommit": "3aa0c49",
+      "primaryAuthority": [
+        "docs/requirements/srs.md",
+        "docs/product/current-state.md",
+        "README.md",
+        "docs/testing/test-plan.md"
+      ]
+    },
+    {
+      "id": "comparison-reports-and-dashboard-review",
+      "title": "Comparison Reports And Dashboard Review",
+      "wikiPath": "Comparison-Reports-And-Dashboard-Review",
+      "wikiFileName": "Comparison-Reports-And-Dashboard-Review.md",
+      "status": "published",
+      "publishedDate": "2026-04-03",
+      "wikiCommit": "9b32d5a",
+      "primaryAuthority": [
+        "docs/requirements/srs.md",
+        "docs/product/ni-comparison-report-metadata-inventory.md",
+        "docs/product/current-state.md",
+        "docs/testing/test-plan.md",
+        "docs/research/authoritative/research-alignment.md"
+      ]
+    },
+    {
+      "id": "review-scenarios-and-decision-records",
+      "title": "Review Scenarios And Decision Records",
+      "wikiPath": "Review-Scenarios-And-Decision-Records",
+      "wikiFileName": "Review-Scenarios-And-Decision-Records.md",
+      "status": "published",
+      "publishedDate": "2026-04-03",
+      "wikiCommit": "5c1d3ef",
+      "primaryAuthority": [
+        "docs/product/review-scenarios.md",
+        "docs/product/decision-record-template.md",
+        "docs/requirements/srs.md",
+        "docs/testing/test-plan.md",
+        "docs/product/current-state.md"
+      ]
+    },
+    {
+      "id": "architecture",
+      "title": "Architecture",
+      "wikiPath": "Architecture",
+      "wikiFileName": "Architecture.md",
+      "status": "published",
+      "publishedDate": "2026-04-03",
+      "wikiCommit": "d3d4be6",
+      "primaryAuthority": [
+        "docs/architecture/overview.md",
+        "docs/requirements/srs.md",
+        "docs/architecture/adr/ADR-0006-windows64-container-isolation-for-extension-users.md",
+        "docs/architecture/adr/ADR-0009-dashboard-pair-archive-and-concentration-packet.md",
+        "docs/architecture/adr/ADR-0010-dual-host-extension-proof-and-linux-bootstrap.md",
+        "docs/architecture/adr/ADR-0012-documentation-package-workbench-image.md",
+        "docs/architecture/adr/ADR-0013-authority-first-wiki-seeding.md",
+        "docs/architecture/adr/ADR-0014-cross-repo-navigation-control-plane.md"
+      ]
+    }
+  ],
+  "nextPage": {
+    "id": "documentation-workbench",
+    "title": "Documentation Workbench",
+    "primaryAuthority": [
+      "docs/documentation-workbench.md",
+      "docs/product/documentation-coherence-ledger.md"
+    ],
+    "secondaryAuthority": [
+      "docs/product/wiki-authority-map.md"
+    ]
+  }
+}

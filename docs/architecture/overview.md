@@ -42,6 +42,7 @@
 | Harness smoke runner | clone-on-demand canonical harness verification | TypeScript / Node CLI |
 | Governance pack | requirements, tests, ADRs, traceability | Markdown / CSV |
 | Documentation-package workbench | requirements, ADR, RTM, release-readiness, and wiki-authority iteration | Docker / Node / Markdown tooling |
+| Bundled documentation pack | version-matched local user docs derived from the published wiki set and packaged inside the extension | HTML fragments / JSON manifest / WebviewPanel |
 | Cross-repo navigation surface | local jump map and repo-entrypoint CLI for the product repo, wiki repo, and companion assurance skill repo | Markdown / JSON / TypeScript CLI |
 
 ## Component View
@@ -58,6 +59,7 @@
 | Comparison runtime locator | Report subsystem | detect LabVIEW 2026 Q1 tooling and select the governed runtime provider and engine |
 | Dashboard archive layer | Report subsystem | retain pairwise packet/report/runtime artifacts by commit pair for later dashboard concentration |
 | Dashboard packet builder | Report subsystem | aggregate multiple retained comparison-report archives into one chronology-aware review packet |
+| Bundled documentation action | Review UI | open packaged local documentation pages and surface version-matched navigation without repo access |
 | Harness smoke command | Harness smoke runner | clone the canonical harness and emit factual local reports |
 
 ## Deployment View
@@ -79,6 +81,8 @@
   - optional Linux VS Code runtime bootstrap for the governed fallback
     extension-host proof lane
   - dedicated docs-authoring image for documentation-package iteration
+  - packaged bundled documentation under `resources/bundled-docs/` inside the
+    shipped VSIX
 
 ## Correspondence And Rationale
 
@@ -103,6 +107,8 @@
     release gate
 - documentation-package iteration now has its own published workbench image,
   separate from extension runtime proof lanes
+- published wiki pages now also drive a version-matched bundled user-doc
+  surface that can be opened from the installed extension without repo access
 - cross-repo navigation is governed from the main repo docs package and
   mirrored into the assurance skill instead of being rediscovered per session
 
@@ -136,3 +142,5 @@
   Authority-first wiki seeding from the governed docs package
 - [ADR-0014](./adr/ADR-0014-cross-repo-navigation-control-plane.md):
   Cross-repo navigation control plane
+- [ADR-0015](./adr/ADR-0015-version-matched-bundled-user-documentation.md):
+  Version-matched bundled user documentation

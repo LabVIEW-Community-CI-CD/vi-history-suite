@@ -21,11 +21,12 @@ When future sessions create or refresh wiki pages, use this order:
 9. [documentation-coherence-ledger.md](./documentation-coherence-ledger.md)
 10. [wiki-seed-plan.md](./wiki-seed-plan.md)
 11. [wiki-publication-ledger.md](./wiki-publication-ledger.md)
-12. [overview.md](../architecture/overview.md)
-13. `docs/architecture/adr/`
-14. [README.md](../../README.md)
-15. [research-alignment.md](../research/authoritative/research-alignment.md)
-16. [research-implementation-index.json](../research/authoritative/research-implementation-index.json)
+12. [wiki-publication-ledger.json](./wiki-publication-ledger.json)
+13. [overview.md](../architecture/overview.md)
+14. `docs/architecture/adr/`
+15. [README.md](../../README.md)
+16. [research-alignment.md](../research/authoritative/research-alignment.md)
+17. [research-implementation-index.json](../research/authoritative/research-implementation-index.json)
 
 If two documents disagree, the higher document in this list wins until the
 lower document is corrected.
@@ -59,6 +60,8 @@ Do not create or refresh wiki pages until these are true:
   contradiction across the audited authority surfaces
 - the wiki publication ledger is updated when a page is actually pushed to the
   wiki repository
+- packaged bundled docs are refreshed when the published wiki set changes and
+  the packaged user-doc surface is meant to stay version-matched to that set
 
 ## Incremental Wiki Workflow
 
@@ -83,5 +86,7 @@ Do not create or refresh wiki pages until these are true:
 - documentation coherence: `docs/product/documentation-coherence-ledger.md`
 - incremental wiki page order: `docs/product/wiki-seed-plan.md`
 - published wiki inventory: `docs/product/wiki-publication-ledger.md`
+- machine-readable published wiki inventory:
+  `docs/product/wiki-publication-ledger.json`
 - proof and verification: RTM, test plan, retained design-gate and harness
   evidence paths

@@ -130,6 +130,7 @@ async function testPanelOpenFlow(
   assert.match(panel.renderedHtml, /data-testid="history-action-report"/);
   assert.match(panel.renderedHtml, /data-testid="history-action-copy"/);
   assert.match(panel.renderedHtml, /data-testid="history-action-copy-review-packet"/);
+  assert.match(panel.renderedHtml, /data-testid="history-action-documentation"/);
   assert.match(panel.renderedHtml, /data-testid="history-action-dashboard"/);
   assert.match(panel.renderedHtml, /Eligible/);
   assert.match(panel.renderedHtml, /LVIN/);
@@ -148,6 +149,7 @@ async function testPanelOpenFlow(
   assert.match(panel.renderedHtml, /Add initial integration fixtures/);
   assert.match(panel.renderedHtml, /Add third eligible fixture revision/);
   assert.match(panel.renderedHtml, /Generate compare/);
+  assert.match(panel.renderedHtml, /Open docs/);
   assert.match(panel.renderedHtml, /Create decision record/);
 
   const history = await api.loadHistory(eligibleUri);
@@ -210,6 +212,24 @@ async function testPanelOpenFlow(
   assert.equal(api.getPanelActionCount(), 4);
 
   await api.dispatchLastPanelMessage({
+    command: 'openDocumentation',
+    pageId: 'user-workflow'
+  });
+  await waitFor(async () => api.getLastOpenedDocumentationPanel()?.pageId === 'user-workflow', 10000);
+  const documentationPanel = api.getLastOpenedDocumentationPanel();
+  assert.ok(documentationPanel);
+  assert.equal(documentationPanel.pageId, 'user-workflow');
+  assert.equal(documentationPanel.pageTitle, 'User Workflow');
+  assert.match(documentationPanel.title, /^VI History Docs:/);
+  assert.equal(api.getOpenDocumentationPanelCount(), 1);
+  assert.match(documentationPanel.renderedHtml, /data-testid="documentation-shell"/);
+  assert.match(documentationPanel.renderedHtml, /Installed extension version:/);
+  const documentationAction = api.getLastPanelActionSummary();
+  assert.ok(documentationAction);
+  assert.equal(documentationAction.command, 'openDocumentation');
+  assert.equal(documentationAction.outcome, 'opened-documentation');
+
+  await api.dispatchLastPanelMessage({
     command: 'generateComparisonReport',
     hash: selectedCommit.hash
   });
@@ -247,7 +267,7 @@ async function testPanelOpenFlow(
   assert.equal(reportMetadata.runtimeSelection?.provider, 'unavailable');
   assert.ok(reportMetadata.runtimeSelection?.blockedReason);
   assert.equal(reportMetadata.runtimeExecution?.reportExists, false);
-  assert.equal(api.getPanelActionCount(), 5);
+  assert.equal(api.getPanelActionCount(), 6);
 
   await api.dispatchLastPanelMessage({
     command: 'diffPrevious',
@@ -262,7 +282,7 @@ async function testPanelOpenFlow(
   assert.match(retainedDiffAction.packetFilePath ?? '', /report-packet\.html$/);
   assert.match(retainedDiffAction.metadataFilePath ?? '', /report-metadata\.json$/);
   assert.ok(retainedDiffAction.reportWebviewUri);
-  assert.equal(api.getPanelActionCount(), 6);
+  assert.equal(api.getPanelActionCount(), 7);
 
   await api.dispatchLastPanelMessage({
     command: 'createDecisionRecord'
@@ -288,7 +308,7 @@ async function testPanelOpenFlow(
     decisionRecordMarkdown,
     /VI path: Tooling\/deployment\/VIP_Pre-Install Custom Action\.vi/
   );
-  assert.equal(api.getPanelActionCount(), 7);
+  assert.equal(api.getPanelActionCount(), 8);
 
   await api.dispatchLastPanelMessage({
     command: 'openDashboard'
@@ -372,7 +392,7 @@ async function testPanelOpenFlow(
   assert.equal(refreshedDashboardAction.command, 'openDashboard');
   assert.equal(refreshedDashboardAction.outcome, 'opened-review-dashboard');
   assert.equal(api.getOpenDashboardPanelCount(), 2);
-  assert.equal(api.getPanelActionCount(), 9);
+  assert.equal(api.getPanelActionCount(), 10);
 }
 
 async function waitFor(

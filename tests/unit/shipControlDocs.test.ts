@@ -148,11 +148,13 @@ describe('ship-control direction system', () => {
     const programRepoJump = readText('docs/product/program-repo-jump.md');
     const wikiSeedPlan = readText('docs/product/wiki-seed-plan.md');
     const wikiPublicationLedger = readText('docs/product/wiki-publication-ledger.md');
+    const wikiPublicationLedgerJson = readText('docs/product/wiki-publication-ledger.json');
     const wikiAuthorityMap = readText('docs/product/wiki-authority-map.md');
     const architectureOverview = readText('docs/architecture/overview.md');
     const adr0012 = readText('docs/architecture/adr/ADR-0012-documentation-package-workbench-image.md');
     const adr0013 = readText('docs/architecture/adr/ADR-0013-authority-first-wiki-seeding.md');
     const adr0014 = readText('docs/architecture/adr/ADR-0014-cross-repo-navigation-control-plane.md');
+    const adr0015 = readText('docs/architecture/adr/ADR-0015-version-matched-bundled-user-documentation.md');
 
     expect(readme).toContain('[SHIP-0001: Releasable VI History Suite](./docs/product/SHIP-0001-releasable-vi-history-suite.md)');
     expect(readme).toContain('[Release Readiness Matrix](./docs/product/release-readiness-matrix.json)');
@@ -161,9 +163,11 @@ describe('ship-control direction system', () => {
     expect(readme).toContain('[Documentation Coherence Ledger](./docs/product/documentation-coherence-ledger.md)');
     expect(readme).toContain('[Wiki Seed Plan](./docs/product/wiki-seed-plan.md)');
     expect(readme).toContain('[Wiki Publication Ledger](./docs/product/wiki-publication-ledger.md)');
+    expect(readme).toContain('[Wiki Publication Ledger JSON](./docs/product/wiki-publication-ledger.json)');
     expect(readme).toContain('[Documentation Package Workbench](./docs/documentation-workbench.md)');
     expect(readme).toContain('[Program Repo Jump](./docs/product/program-repo-jump.md)');
     expect(readme).toContain('[Release Procedure](./docs/release-procedure.md)');
+    expect(readme).toContain('npm run design:gate:assert-complete');
     expect(readme).toContain('- `SHIP-0001`: releasable `v0.2.0` VSIX product');
     expect(readme).toContain('- current package baseline: `0.1.0`');
     expect(readme).toContain('- target release artifact: `vi-history-suite-0.2.0.vsix`');
@@ -174,8 +178,10 @@ describe('ship-control direction system', () => {
     expect(currentState).toContain('[wiki-authority-map.md](./wiki-authority-map.md)');
     expect(currentState).toContain('[documentation-coherence-ledger.md](./documentation-coherence-ledger.md)');
     expect(currentState).toContain('[wiki-seed-plan.md](./wiki-seed-plan.md)');
+    expect(currentState).toContain('[wiki-publication-ledger.json](./wiki-publication-ledger.json)');
     expect(currentState).toContain('[program-repo-jump.md](./program-repo-jump.md)');
     expect(currentState).toContain('[Documentation Package Workbench](../documentation-workbench.md)');
+    expect(currentState).toContain('npm run design:gate:assert-complete');
     expect(currentState).toContain('- `TRANCHE-009`: Ship `vi-history-suite` as a releasable SemVer VSIX');
     expect(currentState).toContain('- current package baseline: `0.1.0`');
     expect(currentState).toContain('- target release artifact: `vi-history-suite-0.2.0.vsix`');
@@ -187,6 +193,8 @@ describe('ship-control direction system', () => {
     expect(informationItemMap).toContain('| Documentation coherence ledger | `docs/product/documentation-coherence-ledger.md` |');
     expect(informationItemMap).toContain('| Wiki seed plan | `docs/product/wiki-seed-plan.md` |');
     expect(informationItemMap).toContain('| Wiki publication ledger | `docs/product/wiki-publication-ledger.md` |');
+    expect(informationItemMap).toContain('| Machine-readable wiki publication ledger | `docs/product/wiki-publication-ledger.json` |');
+    expect(informationItemMap).toContain('| Bundled user documentation pack | `resources/bundled-docs/manifest.json` |');
     expect(informationItemMap).toContain('| Documentation package workbench | `docs/documentation-workbench.md` |');
     expect(informationItemMap).toContain('| Program repo jump surface | `docs/product/program-repo-jump.md` |');
     expect(informationItemMap).toContain('| Release procedure | `docs/release-procedure.md` |');
@@ -201,12 +209,18 @@ describe('ship-control direction system', () => {
     expect(releaseProcedure).toContain('docs/product/documentation-coherence-ledger.md');
     expect(releaseProcedure).toContain('docs/product/wiki-seed-plan.md');
     expect(releaseProcedure).toContain('docs/product/wiki-publication-ledger.md');
+    expect(releaseProcedure).toContain('docs/product/wiki-publication-ledger.json');
+    expect(releaseProcedure).toContain('resources/bundled-docs/manifest.json');
+    expect(releaseProcedure).toContain('npm run design:gate:assert-complete');
 
     expect(workbenchDoc).toContain('registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main');
+    expect(workbenchDoc).toContain('npm run docs:bundle');
     expect(workbenchDoc).toContain('npm run docs:workbench:gate');
     expect(workbenchDoc).toContain('docs/product/documentation-coherence-ledger.md');
     expect(workbenchDoc).toContain('docs/product/wiki-seed-plan.md');
     expect(workbenchDoc).toContain('docs/product/wiki-publication-ledger.md');
+    expect(workbenchDoc).toContain('docs/product/wiki-publication-ledger.json');
+    expect(workbenchDoc).toContain('resources/bundled-docs/manifest.json');
     expect(workbenchDoc).toContain('docs/product/program-repo-jump.md');
 
     expect(coherenceLedger).toContain('# Documentation Coherence Ledger');
@@ -224,7 +238,9 @@ describe('ship-control direction system', () => {
     expect(wikiSeedPlan).toContain('src/');
 
     expect(wikiPublicationLedger).toContain('# Wiki Publication Ledger');
-    expect(wikiPublicationLedger).toContain('| Overview | `home` | published | `2026-04-03` | `61ed90c` |');
+    expect(wikiPublicationLedger).toContain('| Overview | `home` | published | `2026-04-03` | `3aa0c49` |');
+    expect(wikiPublicationLedgerJson).toContain('"id": "overview"');
+    expect(wikiPublicationLedgerJson).toContain('"title": "Overview"');
 
     expect(wikiAuthorityMap).toContain('[documentation-coherence-ledger.md](./documentation-coherence-ledger.md)');
     expect(wikiAuthorityMap).toContain('[wiki-seed-plan.md](./wiki-seed-plan.md)');
@@ -234,10 +250,12 @@ describe('ship-control direction system', () => {
     expect(architectureOverview).toContain('[ADR-0012](./adr/ADR-0012-documentation-package-workbench-image.md)');
     expect(architectureOverview).toContain('[ADR-0013](./adr/ADR-0013-authority-first-wiki-seeding.md)');
     expect(architectureOverview).toContain('[ADR-0014](./adr/ADR-0014-cross-repo-navigation-control-plane.md)');
+    expect(architectureOverview).toContain('[ADR-0015](./adr/ADR-0015-version-matched-bundled-user-documentation.md)');
     expect(programRepoJump).toContain('# Program Repo Jump');
     expect(adr0012).toContain('# ADR-0012: Documentation-Package Workbench Image');
     expect(adr0013).toContain('# ADR-0013: Authority-First Wiki Seeding');
     expect(adr0014).toContain('# ADR-0014: Cross-Repo Navigation Control Plane');
+    expect(adr0015).toContain('# ADR-0015: Version-Matched Bundled User Documentation');
   });
 
   it('configures the GitLab release lane plus docs-package workbench publish lane', () => {

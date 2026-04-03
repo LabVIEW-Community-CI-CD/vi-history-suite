@@ -38,6 +38,7 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('Open compare');
     expect(html).toContain('Generate compare');
     expect(html).toContain('Open dashboard');
+    expect(html).toContain('Open docs');
     expect(html).toContain('Create decision record');
     expect(html).toContain('Copy hash');
     expect(html).toContain('Copy review packet');
@@ -64,6 +65,7 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('data-testid="history-action-report"');
     expect(html).toContain('data-testid="history-action-copy"');
     expect(html).toContain('data-testid="history-action-dashboard"');
+    expect(html).toContain('data-testid="history-action-documentation"');
     expect(html).toContain('data-testid="history-action-decision-record"');
     expect(html).toContain('Newest commit first');
     expect(html).toContain('Oldest retained revision');
@@ -80,6 +82,7 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('Open compare</code> action targets once retained pair evidence exists.');
     expect(html).toContain('Generate compare</code> when a pair has no retained evidence yet');
     expect(html).toContain('Refresh compare</code> when you want to update already-retained evidence');
+    expect(html).toContain('Open docs</code> to open the bundled user documentation');
     expect(html).toContain(
       'Create decision record</code> when you want to retain a separate human review outcome'
     );

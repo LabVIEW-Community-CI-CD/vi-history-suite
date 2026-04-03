@@ -11,7 +11,9 @@ documentation package of `vi-history-suite`:
 - current-state, wiki-authority, and release procedure surfaces
 
 This workbench is for documentation-package iteration only. It is not the NI
-runtime-proof lane and it is not the extension-user VSIX install surface.
+runtime-proof lane and it is not itself the extension-user VSIX install
+surface, although it prepares bundled user-doc content that can ship inside
+that surface.
 
 ## Local Commands
 
@@ -33,6 +35,12 @@ Open an interactive shell in the workbench:
 npm run docs:workbench:shell
 ```
 
+Refresh the packaged bundled user docs from the current published wiki set:
+
+```bash
+npm run docs:bundle
+```
+
 The default container command is:
 
 ```bash
@@ -46,6 +54,13 @@ The documentation-package gate is:
 1. compile current TypeScript surfaces
 2. run the governed documentation-alignment unit suite
 3. run link checking over `README.md` and `docs/**/*.md`
+
+The bundled user-doc surface is refreshed separately from the gate:
+
+- `npm run docs:bundle`
+- output:
+  - `resources/bundled-docs/manifest.json`
+  - `resources/bundled-docs/pages/*.html`
 
 Run it directly on the host only when the required tooling is available:
 
@@ -76,12 +91,15 @@ Use this workbench when the change is primarily about:
 - ship-control surfaces
 - release procedure and documentation-package coherence
 - wiki-preparation work driven from governed docs
+- packaged bundled-user-doc refresh when the published wiki set changes
 
 Primary repo surfaces for that work include:
 
 - `docs/product/documentation-coherence-ledger.md`
 - `docs/product/wiki-seed-plan.md`
 - `docs/product/wiki-publication-ledger.md`
+- `docs/product/wiki-publication-ledger.json`
+- `resources/bundled-docs/manifest.json`
 - `docs/product/wiki-authority-map.md`
 - `docs/product/program-repo-jump.md`
 
@@ -102,5 +120,8 @@ Do not use this workbench as the primary surface for:
 Those remain separate product-proof lanes.
 
 When a wiki page is actually published, update
-`docs/product/wiki-publication-ledger.md` in the same documentation tranche so
-publication state stays governed inside the main repo.
+`docs/product/wiki-publication-ledger.md`,
+`docs/product/wiki-publication-ledger.json`, and the packaged bundle via
+`npm run docs:bundle` in the same documentation tranche so publication state
+and the version-matched bundled-doc surface stay governed inside the main
+repo.

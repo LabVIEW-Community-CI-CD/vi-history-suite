@@ -9,13 +9,17 @@ publication commits.
 The wiki is a derived reader surface. The repository documentation package
 remains the authority of record.
 
+The machine-readable companion surface for this ledger is:
+
+- `docs/product/wiki-publication-ledger.json`
+
 ## Published Pages
 
 | Page | Wiki Path | Status | Published | Wiki Commit | Primary Authority |
 | --- | --- | --- | --- | --- | --- |
-| Overview | `home` | published | `2026-04-03` | `61ed90c` | `docs/product/SHIP-0001-releasable-vi-history-suite.md`; `docs/product/current-state.md`; `README.md`; `docs/product/release-readiness-matrix.json` |
-| Install And Release | `Install-And-Release` | published | `2026-04-03` | `eb4febe` | `docs/release-procedure.md`; `docs/product/release-readiness-matrix.json`; `README.md`; `docs/product/blocker-ledger.json` |
-| User Workflow | `User-Workflow` | published | `2026-04-03` | `db44152` | `docs/requirements/srs.md`; `docs/product/current-state.md`; `README.md`; `docs/testing/test-plan.md` |
+| Overview | `home` | published | `2026-04-03` | `3aa0c49` | `docs/product/SHIP-0001-releasable-vi-history-suite.md`; `docs/product/current-state.md`; `README.md`; `docs/product/release-readiness-matrix.json` |
+| Install And Release | `Install-And-Release` | published | `2026-04-03` | `3aa0c49` | `docs/release-procedure.md`; `docs/product/release-readiness-matrix.json`; `README.md`; `docs/product/blocker-ledger.json` |
+| User Workflow | `User-Workflow` | published | `2026-04-03` | `3aa0c49` | `docs/requirements/srs.md`; `docs/product/current-state.md`; `README.md`; `docs/testing/test-plan.md` |
 | Comparison Reports And Dashboard Review | `Comparison-Reports-And-Dashboard-Review` | published | `2026-04-03` | `9b32d5a` | `docs/requirements/srs.md`; `docs/product/ni-comparison-report-metadata-inventory.md`; `docs/product/current-state.md`; `docs/testing/test-plan.md`; `docs/research/authoritative/research-alignment.md` |
 | Review Scenarios And Decision Records | `Review-Scenarios-And-Decision-Records` | published | `2026-04-03` | `5c1d3ef` | `docs/product/review-scenarios.md`; `docs/product/decision-record-template.md`; `docs/requirements/srs.md`; `docs/testing/test-plan.md`; `docs/product/current-state.md` |
 | Architecture | `Architecture` | published | `2026-04-03` | `d3d4be6` | `docs/architecture/overview.md`; `docs/requirements/srs.md`; `docs/architecture/adr/ADR-0006-windows64-container-isolation-for-extension-users.md`; `docs/architecture/adr/ADR-0009-dashboard-pair-archive-and-concentration-packet.md`; `docs/architecture/adr/ADR-0010-dual-host-extension-proof-and-linux-bootstrap.md`; `docs/architecture/adr/ADR-0012-documentation-package-workbench-image.md`; `docs/architecture/adr/ADR-0013-authority-first-wiki-seeding.md`; `docs/architecture/adr/ADR-0014-cross-repo-navigation-control-plane.md` |

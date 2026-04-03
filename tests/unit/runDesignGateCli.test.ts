@@ -41,6 +41,25 @@ describe('runDesignGateCli', () => {
     ).rejects.toThrow('design gate failed');
   });
 
+  it('throws when the shared runner returns a still-running retained report', async () => {
+    await expect(
+      runDesignGateCli({
+        repoRoot: '/tmp/vi-history-suite',
+        runner: async () => ({
+          generatedAt: '2026-04-02T00:00:00.000Z',
+          repoRoot: '/tmp/vi-history-suite',
+          status: 'pass',
+          completionState: 'running',
+          pendingStepId: 'standards-assurance',
+          pendingStepTitle: 'Standards assurance',
+          steps: []
+        })
+      })
+    ).rejects.toThrow(
+      'design gate report is still running; pending step: standards-assurance (Standards assurance)'
+    );
+  });
+
   it('resolves the default repo root relative to the CLI module directory', () => {
     expect(resolveRunDesignGateRepoRoot('/tmp/vi-history-suite/out/cli')).toBe(
       '/tmp/vi-history-suite'

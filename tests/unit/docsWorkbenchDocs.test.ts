@@ -63,6 +63,7 @@ describe('documentation-package workbench', () => {
         args: [
           'vitest',
           'run',
+          'tests/unit/bundledDocumentation.test.ts',
           'tests/unit/packageManifest.test.ts',
           'tests/unit/shipControlDocs.test.ts',
           'tests/unit/docsWorkbenchDocs.test.ts'
@@ -101,7 +102,7 @@ describe('documentation-package workbench', () => {
     expect(result).toBe('pass');
     expect(spawned).toEqual([
       'npm run compile',
-      'npx vitest run tests/unit/packageManifest.test.ts tests/unit/shipControlDocs.test.ts tests/unit/docsWorkbenchDocs.test.ts'
+      'npx vitest run tests/unit/bundledDocumentation.test.ts tests/unit/packageManifest.test.ts tests/unit/shipControlDocs.test.ts tests/unit/docsWorkbenchDocs.test.ts'
     ]);
   });
 
@@ -113,8 +114,10 @@ describe('documentation-package workbench', () => {
     const programRepoJump = readText('docs/product/program-repo-jump.md');
     const programRepoJumpMap = readText('docs/product/program-repo-jump-map.json');
     const wikiPublicationLedger = readText('docs/product/wiki-publication-ledger.md');
+    const wikiPublicationLedgerJson = readText('docs/product/wiki-publication-ledger.json');
     const gitlabCi = readText('.gitlab-ci.yml');
 
+    expect(manifest.scripts?.['docs:bundle']).toBe('node scripts/syncBundledDocs.js');
     expect(manifest.scripts?.['docs:gate']).toBe('node scripts/run-docs-gate.js');
     expect(manifest.scripts?.['docs:gate:core']).toBe(
       'node scripts/run-docs-gate.js --skip-links'
@@ -139,9 +142,12 @@ describe('documentation-package workbench', () => {
     expect(workbenchDoc).toContain('npm run docs:workbench:build');
     expect(workbenchDoc).toContain('npm run docs:workbench:gate');
     expect(workbenchDoc).toContain('npm run docs:workbench:shell');
+    expect(workbenchDoc).toContain('npm run docs:bundle');
     expect(workbenchDoc).toContain('registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main');
     expect(workbenchDoc).toContain('docs-workbench-evidence/docs-workbench-manifest.json');
     expect(workbenchDoc).toContain('docs/product/wiki-publication-ledger.md');
+    expect(workbenchDoc).toContain('docs/product/wiki-publication-ledger.json');
+    expect(workbenchDoc).toContain('resources/bundled-docs/manifest.json');
     expect(workbenchDoc).toContain('npm run program:repos');
     expect(workbenchDoc).toContain('scripts/repo_jump.py /home/sveld/code/standards/vi-history-suite');
 
@@ -157,10 +163,13 @@ describe('documentation-package workbench', () => {
     expect(programRepoJumpMap).toContain('"kind": "codex-skill"');
 
     expect(wikiPublicationLedger).toContain('# Wiki Publication Ledger');
-    expect(wikiPublicationLedger).toContain('| Overview | `home` | published | `2026-04-03` | `61ed90c` |');
+    expect(wikiPublicationLedger).toContain('| Overview | `home` | published | `2026-04-03` | `3aa0c49` |');
     expect(wikiPublicationLedger).toContain('docs/product/SHIP-0001-releasable-vi-history-suite.md');
     expect(wikiPublicationLedger).toContain('docs/product/current-state.md');
     expect(wikiPublicationLedger).toContain('docs/product/release-readiness-matrix.json');
+    expect(wikiPublicationLedgerJson).toContain('"id": "overview"');
+    expect(wikiPublicationLedgerJson).toContain('"wikiFileName": "home.md"');
+    expect(wikiPublicationLedgerJson).toContain('"nextPage"');
 
     expect(gitlabCi).toContain('docs_control_plane_check:');
     expect(gitlabCi).toContain('npm run docs:gate:core');

@@ -49,6 +49,23 @@ export interface DevelopmentQueueEntry {
   summary: string;
 }
 
+export function assertCompletedPassingDesignGateReport(
+  report: Pick<DesignGateReport, 'status' | 'completionState' | 'pendingStepId' | 'pendingStepTitle'>
+): void {
+  if (report.completionState && report.completionState !== 'complete') {
+    const pendingSummary = report.pendingStepId
+      ? `; pending step: ${report.pendingStepId}${
+          report.pendingStepTitle ? ` (${report.pendingStepTitle})` : ''
+        }`
+      : '';
+    throw new Error(`design gate report is still running${pendingSummary}`);
+  }
+
+  if (report.status !== 'pass') {
+    throw new Error('design gate failed');
+  }
+}
+
 export function defaultAssuranceScriptPath(): string {
   return '/mnt/c/Users/sveld/.codex/skills/repo-standards-review/scripts/run_assurance.py';
 }

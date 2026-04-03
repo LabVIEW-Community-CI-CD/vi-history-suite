@@ -1,0 +1,116 @@
+<h1>User Workflow</h1>
+<p>This page is derived from governed repository documentation, not from source
+code. The current authority surfaces for this page are:</p>
+<ul>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/requirements/srs.md"><code>docs/requirements/srs.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/current-state.md"><code>docs/product/current-state.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/README.md"><code>README.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/testing/test-plan.md"><code>docs/testing/test-plan.md</code></a></li>
+</ul>
+<h2>Preconditions</h2>
+<p>The current governed workflow assumes:</p>
+<ul>
+<li>the extension is installed from the preview VSIX or a future tagged release</li>
+<li>the workspace is trusted</li>
+<li>the target file is inside an open Git repository</li>
+<li>the target file is content-detected as a LabVIEW VI</li>
+</ul>
+<p>The extension only surfaces <code>VI History</code> for tracked files that satisfy VI
+detection and have at least two modifying commits.</p>
+<p>The installed extension also exposes a first-class documentation command:</p>
+<ul>
+<li><code>VI History: Open Documentation</code></li>
+</ul>
+<h2>Primary Review Flow</h2>
+<ol>
+<li>Right-click an eligible VI and choose <code>VI History</code>.</li>
+<li>Review the history panel facts:<ul>
+<li>repository name</li>
+<li>relative path</li>
+<li>VI signature</li>
+<li>retained commit chronology</li>
+</ul>
+</li>
+<li>Use the row actions that match the current evidence state.</li>
+</ol>
+<p>The current action model is:</p>
+<ul>
+<li><code>Open at commit</code>: open the selected retained revision</li>
+<li><code>Copy hash</code>: copy the retained commit hash</li>
+<li><code>Open docs</code>: open the bundled user documentation that ships with the
+installed extension version</li>
+<li><code>Generate compare</code>: create retained pair comparison evidence when it does not
+already exist</li>
+<li><code>Refresh compare</code>: rerun comparison generation for a retained pair</li>
+<li><code>Open compare</code>: open retained pair comparison evidence when it already exists</li>
+<li><code>Diff prev</code>: open retained pair comparison evidence for content-detected VIs
+when that evidence exists; otherwise the extension fails closed and directs
+the reviewer to <code>Generate compare</code></li>
+</ul>
+<h2>Comparison Report Flow</h2>
+<p>Comparison-report generation and opening are treated as governed review actions,
+not ad hoc shell commands.</p>
+<p>When a pair comparison is generated or refreshed, the extension retains:</p>
+<ul>
+<li>the comparison-report packet</li>
+<li>report metadata</li>
+<li>the generated NI comparison report when one exists</li>
+<li>bounded runtime-doctor facts for provider, engine, platform, tool selection,
+and next action</li>
+</ul>
+<p>If the user cancels comparison work before the comparison view opens, the
+extension returns a stable cancelled outcome instead of opening the view after
+cancellation.</p>
+<h2>Dashboard Flow</h2>
+<p>When a VI has at least three retained commits, the history panel exposes
+<code>Open dashboard</code>.</p>
+<p>The dashboard is the concentrated review surface for one VI across adjacent
+retained pairs. The current governed dashboard flow:</p>
+<ul>
+<li>prepares the commit window</li>
+<li>backfills missing or stale adjacent-pair evidence when needed</li>
+<li>concentrates retained NI comparison-report metadata across the window</li>
+<li>finalizes retained dashboard assets</li>
+<li>opens the dashboard view</li>
+</ul>
+<p>The dashboard currently emphasizes:</p>
+<ul>
+<li>chronology-first pair metadata</li>
+<li>concentrated comparison-report metadata across the retained window</li>
+<li>bounded progress during heavier refresh work</li>
+<li>a bounded current-session ETA during pair preparation</li>
+<li>retained pair-level ETA accuracy characterization for the current refresh</li>
+</ul>
+<h2>Decision Record Flow</h2>
+<p>When a retained review window has at least three commits, the history panel also
+exposes <code>Create decision record</code>.</p>
+<p>That action creates separate human-review artifacts from retained dashboard
+evidence. The decision record is intentionally separate from the dashboard and
+comparison-report evidence so human judgment does not overwrite machine-retained
+facts.</p>
+<h2>Trust, Progress, And Cancellation</h2>
+<p>The current workflow is explicitly trust-gated.</p>
+<ul>
+<li>comparison-report actions fail closed in untrusted workspaces</li>
+<li>dashboard actions fail closed in untrusted workspaces</li>
+<li>the history-panel command flow surfaces stable trust warnings when an already
+opened panel later reaches a trust-gated action</li>
+</ul>
+<p>Long-running comparison and dashboard actions execute with bounded progress and
+cancellation support. Cancellation is intended to preserve already retained
+evidence instead of discarding it silently.</p>
+<h2>Bundled Documentation</h2>
+<p>The extension packages a version-matched bundled documentation surface so
+reviewers do not need repo access just to read guidance.</p>
+<p>That packaged surface can be opened from:</p>
+<ul>
+<li>the Command Palette via <code>VI History: Open Documentation</code></li>
+<li>the history panel via <code>Open docs</code></li>
+</ul>
+<h2>Read Next</h2>
+<ul>
+<li><a href="#" data-page-id="overview">Home</a></li>
+<li><a href="#" data-page-id="install-and-release">Install And Release</a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/current-state.md">Current State</a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/requirements/srs.md">Software Requirements Specification</a></li>
+</ul>

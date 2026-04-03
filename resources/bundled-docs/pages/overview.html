@@ -1,0 +1,74 @@
+<h1>VI History Suite</h1>
+<p><code>vi-history-suite</code> is a governed Visual Studio Code extension for expert review
+of LabVIEW VI history in Git repositories.</p>
+<p>This wiki is seeded from governed repository documentation, not from source
+code or prior chat state. The current authority surfaces for this page are:</p>
+<ul>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/SHIP-0001-releasable-vi-history-suite.md"><code>docs/product/SHIP-0001-releasable-vi-history-suite.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/current-state.md"><code>docs/product/current-state.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/README.md"><code>README.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/release-readiness-matrix.json"><code>docs/product/release-readiness-matrix.json</code></a></li>
+</ul>
+<h2>Product Promise</h2>
+<p>The current ship target is to release <code>vi-history-suite</code> as a versioned VSIX
+that a user can install and use to:</p>
+<ul>
+<li>right-click an eligible LabVIEW VI in a trusted Git repository</li>
+<li>review commit history for that VI</li>
+<li>generate reliable NI comparison reports</li>
+<li>review a metadata-concentrated dashboard across at least three commits</li>
+<li>retain a separate human decision record without mutating machine evidence</li>
+</ul>
+<h2>Current Release State</h2>
+<ul>
+<li>Target release: <code>v0.2.0</code></li>
+<li>Current package baseline: <code>0.1.0</code></li>
+<li>Preview install surface: <code>main</code> pipeline preview VSIX artifact</li>
+<li>Target release artifact: <code>vi-history-suite-0.2.0.vsix</code></li>
+</ul>
+<p>Current ship criteria that are already done:</p>
+<ul>
+<li>installable extension surface</li>
+<li>reliable comparison-report execution</li>
+<li>dashboard-first expert review surface</li>
+<li>review-scenario and decision-record flow</li>
+</ul>
+<p>Current remaining blockers:</p>
+<ul>
+<li><code>BL-001</code>: complete the remaining release-ready progress, cancellation, and
+trust-aware UX layer</li>
+<li><code>BL-003</code>: retain the first successful SemVer-tagged <code>v0.2.0</code> release
+evidence set</li>
+</ul>
+<h2>What Exists Now</h2>
+<p>The extension currently provides:</p>
+<ul>
+<li>content-detected VI eligibility and menu gating</li>
+<li>review-oriented history panel actions</li>
+<li>version-matched bundled user documentation that opens locally inside the
+installed extension</li>
+<li>reliable governed NI comparison-report generation</li>
+<li>a multi-report dashboard for one VI across at least three commits</li>
+<li>dashboard progress and retained pair-level ETA characterization</li>
+<li>runtime-doctor surfaces</li>
+<li>separate decision-record creation from retained dashboard evidence</li>
+<li>a docs-authoring workbench and repo-native docs gate for governed
+documentation iteration</li>
+</ul>
+<h2>Install Surfaces</h2>
+<p>Current install and release surfaces are:</p>
+<ul>
+<li>preview VSIX artifact from the <code>main</code> pipeline</li>
+<li>local package output via <code>npm run package</code></li>
+<li>future tagged release artifact retained under <code>release-evidence/</code></li>
+<li>packaged bundled user docs opened through <code>VI History: Open Documentation</code>
+and the history-panel <code>Open docs</code> action</li>
+</ul>
+<h2>Read Next</h2>
+<ul>
+<li><a href="#" data-page-id="install-and-release">Install And Release</a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/current-state.md">Current State</a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/release-readiness-matrix.json">Release Readiness Matrix</a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/documentation-coherence-ledger.md">Documentation Coherence Ledger</a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/wiki-seed-plan.md">Wiki Seed Plan</a></li>
+</ul>

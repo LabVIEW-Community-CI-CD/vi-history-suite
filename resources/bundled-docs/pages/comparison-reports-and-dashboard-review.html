@@ -1,0 +1,112 @@
+<h1>Comparison Reports And Dashboard Review</h1>
+<p>This page is derived from governed repository documentation, not from source
+code. The current authority surfaces for this page are:</p>
+<ul>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/requirements/srs.md"><code>docs/requirements/srs.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/ni-comparison-report-metadata-inventory.md"><code>docs/product/ni-comparison-report-metadata-inventory.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/current-state.md"><code>docs/product/current-state.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/testing/test-plan.md"><code>docs/testing/test-plan.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/research/authoritative/research-alignment.md"><code>docs/research/authoritative/research-alignment.md</code></a></li>
+</ul>
+<h2>Comparison Report Contract</h2>
+<p><code>vi-history-suite</code> treats a VI comparison report as governed retained evidence,
+not as a transient shell output.</p>
+<p>The retained comparison-report flow currently covers:</p>
+<ul>
+<li>revision-pair preflight against content-detected VI blobs</li>
+<li>runtime/tool selection</li>
+<li>retained packet and metadata persistence under workspace-scoped storage</li>
+<li>reliable governed NI report generation on the preferred Windows 64-bit
+isolated container path</li>
+<li>rendering of retained comparison evidence inside the extension</li>
+</ul>
+<p>The comparison-report surface is intended to remain factual even when NI report
+generation is blocked, cancelled, or only partially complete.</p>
+<h2>Observed NI Metadata</h2>
+<p>The dashboard contract is derived from actual observed NI report metadata, not
+from invented reviewer fields.</p>
+<p>The currently inventoried NI comparison report surfaces include:</p>
+<ul>
+<li>report title</li>
+<li>generation time</li>
+<li>compared VI paths</li>
+<li>overview section captions</li>
+<li>overview image counts per section</li>
+<li>included attributes</li>
+<li>detailed-information headings</li>
+<li>detailed-information items</li>
+</ul>
+<p>The canonical observed inventory is retained in:</p>
+<ul>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/ni-comparison-report-metadata-inventory.md"><code>docs/product/ni-comparison-report-metadata-inventory.md</code></a></li>
+</ul>
+<h2>Runtime Doctor</h2>
+<p>The comparison-report subsystem also retains a compact runtime-doctor summary so
+users do not need raw logs first.</p>
+<p>That retained runtime-doctor surface includes:</p>
+<ul>
+<li>chosen provider</li>
+<li>chosen engine</li>
+<li>platform</li>
+<li>preferred bitness</li>
+<li>selected runtime tools</li>
+<li>blocked or failure reason when present</li>
+<li>one bounded next action</li>
+</ul>
+<h2>Retained Pair Review</h2>
+<p>At the history-panel level, pair review is intentionally stateful.</p>
+<ul>
+<li><code>Generate compare</code> creates retained pair evidence when it does not exist yet</li>
+<li><code>Refresh compare</code> reruns pair evidence generation for an already retained pair</li>
+<li><code>Open compare</code> opens retained pair evidence when it already exists</li>
+<li><code>Diff prev</code> uses retained comparison evidence for governed VI review instead
+of falling back to VS Code’s unsupported text diff on binary VI content</li>
+</ul>
+<p>If retained pair evidence is missing, the extension fails closed and directs the
+reviewer to generate that evidence first.</p>
+<h2>Dashboard Review</h2>
+<p>The multi-report dashboard is the concentration surface for one VI across at
+least three commits.</p>
+<p>The dashboard currently concentrates retained NI metadata across the commit
+window, including:</p>
+<ul>
+<li>chronology-first pair metadata</li>
+<li>whole-window overview-caption concentration</li>
+<li>whole-window included-attribute concentration</li>
+<li>whole-window detailed-information heading concentration</li>
+<li>whole-window compared-path concentration</li>
+<li>whole-window detail-item concentration</li>
+<li>overview image counts and retained overview image assets</li>
+</ul>
+<p>The dashboard is intended to reduce the wear of opening every pairwise report
+while keeping the underlying pair evidence available when the reviewer decides
+to drill down.</p>
+<h2>Progress, Cancellation, And Trust</h2>
+<p>Report and dashboard work are long-running enough that the extension treats them
+as governed progress surfaces.</p>
+<p>Current behavior includes:</p>
+<ul>
+<li>bounded progress during report and dashboard refresh</li>
+<li>trust-aware refusal in untrusted workspaces</li>
+<li>retained partial evidence when cancellation happens after artifacts are built</li>
+<li>cancellation honored before comparison-report and dashboard panel open</li>
+</ul>
+<p>That means the extension is designed to preserve already-built evidence instead
+of opening a panel after cancellation or silently discarding retained artifacts.</p>
+<h2>Proof Surfaces</h2>
+<p>The repo currently retains dedicated proof lanes for both pairwise reports and
+dashboard concentration:</p>
+<ul>
+<li>canonical comparison-report smoke</li>
+<li>canonical dashboard smoke</li>
+<li>real extension-host dashboard proof</li>
+</ul>
+<p>Those proof surfaces exist so future sessions can verify the review flow from
+retained evidence instead of from chat memory.</p>
+<h2>Read Next</h2>
+<ul>
+<li><a href="#" data-page-id="user-workflow">User Workflow</a></li>
+<li><a href="#" data-page-id="install-and-release">Install And Release</a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/current-state.md">Current State</a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/ni-comparison-report-metadata-inventory.md">NI Comparison Report Metadata Inventory</a></li>
+</ul>

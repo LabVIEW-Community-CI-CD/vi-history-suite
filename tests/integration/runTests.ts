@@ -9,6 +9,7 @@ import {
   assertLinuxVsCodeRuntimeReady,
   inspectIntegrationHostStrategy
 } from '../../src/tooling/integrationHostRuntime';
+import { stageExtensionForWindowsHost } from '../../src/tooling/integrationHostStage';
 import { prepareIntegrationWorkspace } from './prepareTestWorkspace';
 
 async function main(): Promise<void> {
@@ -34,7 +35,7 @@ async function main(): Promise<void> {
 
   try {
     if (useWindowsHost) {
-      stagedExtensionRoot = await stageExtensionForWindows(
+      stagedExtensionRoot = await stageExtensionForWindowsHost(
         repoRoot,
         path.join(integrationRuntimeRoot, 'extension-host')
       );
@@ -257,15 +258,6 @@ function appendGitConfigEntries(
   return mergedEnvironment;
 }
 
-async function stageExtensionForWindows(repoRoot: string, baseDirectory: string): Promise<string> {
-  await fs.mkdir(baseDirectory, { recursive: true });
-  const stageRoot = await fs.mkdtemp(path.join(baseDirectory, 'vihs-ext-host-'));
-  await copyRecursive(path.join(repoRoot, 'package.json'), path.join(stageRoot, 'package.json'));
-  await copyRecursive(path.join(repoRoot, 'out'), path.join(stageRoot, 'out'));
-  await copyRecursive(path.join(repoRoot, 'out-tests'), path.join(stageRoot, 'out-tests'));
-  return stageRoot;
-}
-
 async function selectIntegrationRuntimeRoot(
   repoRoot: string,
   useWindowsHost: boolean
@@ -298,20 +290,6 @@ async function canWriteDirectory(directoryPath: string): Promise<boolean> {
   } catch {
     return false;
   }
-}
-
-async function copyRecursive(source: string, destination: string): Promise<void> {
-  const stats = await fs.stat(source);
-  if (stats.isDirectory()) {
-    await fs.mkdir(destination, { recursive: true });
-    for (const entry of await fs.readdir(source)) {
-      await copyRecursive(path.join(source, entry), path.join(destination, entry));
-    }
-    return;
-  }
-
-  await fs.mkdir(path.dirname(destination), { recursive: true });
-  await fs.copyFile(source, destination);
 }
 
 async function writeRuntimeConfig(

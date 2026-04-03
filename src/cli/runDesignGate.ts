@@ -1,6 +1,9 @@
 import * as path from 'node:path';
 
-import { DesignGateReport } from '../tooling/designGate';
+import {
+  assertCompletedPassingDesignGateReport,
+  DesignGateReport
+} from '../tooling/designGate';
 import { runDesignGate } from '../tooling/designGateRunner';
 
 export interface RunDesignGateCliDeps {
@@ -26,10 +29,7 @@ export async function runDesignGateCli(
 ): Promise<DesignGateReport> {
   const repoRoot = deps.repoRoot ?? resolveRunDesignGateRepoRoot();
   const report = await (deps.runner ?? runDesignGate)(repoRoot);
-
-  if (report.status !== 'pass') {
-    throw new Error('design gate failed');
-  }
+  assertCompletedPassingDesignGateReport(report);
 
   return report;
 }

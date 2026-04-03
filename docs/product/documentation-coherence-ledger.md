@@ -22,10 +22,12 @@ source inference or chat memory.
 - `docs/product/wiki-authority-map.md`
 - `docs/product/wiki-seed-plan.md`
 - `docs/product/wiki-publication-ledger.md`
+- `docs/product/wiki-publication-ledger.json`
 - `docs/product/program-repo-jump.md`
 - `docs/product/program-repo-jump-map.json`
 - `docs/documentation-workbench.md`
 - `docs/release-procedure.md`
+- `resources/bundled-docs/manifest.json`
 - `docs/research/authoritative/research-alignment.md`
 - `docs/research/authoritative/research-implementation-index.json`
 
@@ -50,6 +52,7 @@ source inference or chat memory.
 | DOC-003 | wiki preparation | wiki generation rules existed, but there was no retained page-seeding surface or coherence ledger to ground incremental work | added this ledger, a wiki seed plan, and `ADR-0013` to keep wiki work authority-first |
 | DOC-004 | decision-record docs | repeated reviewer entry in the extension-facing flow was not modeled in requirements/docs | decision-record reviewer defaults are now implemented and reflected in SRS, RTM, test plan, and current state |
 | DOC-005 | cross-repo navigation | documentation-package and skill work spanned three repos, but there was no governed local jump surface tying product, wiki, and assurance entrypoints together | added `program-repo-jump-map.json`, `program-repo-jump.md`, `ADR-0014`, a local `program:repos` CLI, and a mirrored `repo_jump.py` surface in `repo-standards-review` |
+| DOC-006 | packaged user guidance | users could read the wiki or repo docs, but the installed extension had no version-matched local documentation surface and no machine-readable published wiki inventory to drive one | added `docs/product/wiki-publication-ledger.json`, `resources/bundled-docs/`, `scripts/syncBundledDocs.js`, `ADR-0015`, and the extension-facing bundled documentation command/panel |
 
 ## Current Internal Status
 
@@ -58,6 +61,8 @@ source inference or chat memory.
 - Active tranche, active ship issue, release target, and open blocker ids agree
   across ship-control docs.
 - Wiki preparation is now constrained to the documentation package, not source.
+- Published wiki state now also drives a packaged bundled-doc surface that can
+  ship inside the installed extension.
 - The first incremental wiki seed is now published and tracked in
   `docs/product/wiki-publication-ledger.md`.
 

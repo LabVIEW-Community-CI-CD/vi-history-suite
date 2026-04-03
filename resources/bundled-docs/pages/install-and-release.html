@@ -1,0 +1,63 @@
+<h1>Install And Release</h1>
+<p>This page is derived from governed repository documentation, not from source
+code. The current authority surfaces for this page are:</p>
+<ul>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/release-procedure.md"><code>docs/release-procedure.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/release-readiness-matrix.json"><code>docs/product/release-readiness-matrix.json</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/README.md"><code>README.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/blocker-ledger.json"><code>docs/product/blocker-ledger.json</code></a></li>
+</ul>
+<h2>Current Release Target</h2>
+<ul>
+<li>Target release: <code>v0.2.0</code></li>
+<li>Current package baseline: <code>0.1.0</code></li>
+<li>Target release artifact: <code>vi-history-suite-0.2.0.vsix</code></li>
+<li>Target release manifest: <code>release-evidence/release-manifest.json</code></li>
+</ul>
+<h2>Install Surfaces</h2>
+<p>Current install and packaging paths are:</p>
+<ul>
+<li>preview VSIX artifact from the latest successful <code>main</code> pipeline</li>
+<li>local package output via <code>npm run package</code></li>
+<li>future governed tagged release artifact under <code>release-evidence/</code></li>
+<li>packaged bundled user docs surfaced through
+<code>VI History: Open Documentation</code> and the history-panel <code>Open docs</code> action</li>
+</ul>
+<p>The preview VSIX is the current install surface for extension-user testing.
+The tagged release artifact is the future governed exact-version install
+surface.</p>
+<h2>Release Procedure Summary</h2>
+<p>The current governed release flow is:</p>
+<ol>
+<li>keep <code>main</code> in a governed baseline state</li>
+<li>ensure <code>package.json</code> matches the <code>vX.Y.Z</code> tag exactly</li>
+<li>let GitLab CI run compile, tests, coverage, and VSIX packaging</li>
+<li>retain release evidence under <code>release-evidence/</code></li>
+<li>review the release record and machine-readable manifest before downstream
+distribution</li>
+</ol>
+<h2>Retained Evidence</h2>
+<p>The governed release lane is expected to retain:</p>
+<ul>
+<li><code>preview-evidence/vi-history-suite-&lt;version&gt;.vsix</code></li>
+<li><code>preview-evidence/preview-manifest.json</code></li>
+<li><code>release-evidence/vi-history-suite-&lt;version&gt;.vsix</code></li>
+<li><code>release-evidence/vi-history-suite-&lt;version&gt;.vsix.sha256</code></li>
+<li><code>release-evidence/release-record.md</code></li>
+<li><code>release-evidence/release-manifest.json</code></li>
+<li><code>docs-workbench-evidence/docs-workbench-manifest.json</code></li>
+<li>packaged bundled-doc metadata under <code>resources/bundled-docs/manifest.json</code></li>
+</ul>
+<h2>Current Limitation</h2>
+<p>The release path is not fully closed yet. The remaining release-side blocker is:</p>
+<ul>
+<li><code>BL-003</code>: the first successful SemVer-tagged <code>v0.2.0</code> VSIX artifact and
+release-manifest evidence set has not yet been retained</li>
+</ul>
+<h2>Read Next</h2>
+<ul>
+<li><a href="#" data-page-id="overview">Home</a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/README.md">Repository README</a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/release-procedure.md">Release Procedure</a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/release-readiness-matrix.json">Release Readiness Matrix</a></li>
+</ul>

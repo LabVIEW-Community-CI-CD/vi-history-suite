@@ -1,0 +1,115 @@
+<h1>Architecture</h1>
+<p>This page is derived from governed repository documentation, not from source
+code or prior chat state. The current authority surfaces for this page are:</p>
+<ul>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/architecture/overview.md"><code>docs/architecture/overview.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/requirements/srs.md"><code>docs/requirements/srs.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/architecture/adr/ADR-0006-windows64-container-isolation-for-extension-users.md"><code>docs/architecture/adr/ADR-0006-windows64-container-isolation-for-extension-users.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/architecture/adr/ADR-0009-dashboard-pair-archive-and-concentration-packet.md"><code>docs/architecture/adr/ADR-0009-dashboard-pair-archive-and-concentration-packet.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/architecture/adr/ADR-0010-dual-host-extension-proof-and-linux-bootstrap.md"><code>docs/architecture/adr/ADR-0010-dual-host-extension-proof-and-linux-bootstrap.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/architecture/adr/ADR-0012-documentation-package-workbench-image.md"><code>docs/architecture/adr/ADR-0012-documentation-package-workbench-image.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/architecture/adr/ADR-0013-authority-first-wiki-seeding.md"><code>docs/architecture/adr/ADR-0013-authority-first-wiki-seeding.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/architecture/adr/ADR-0014-cross-repo-navigation-control-plane.md"><code>docs/architecture/adr/ADR-0014-cross-repo-navigation-control-plane.md</code></a></li>
+</ul>
+<h2>System Boundary</h2>
+<p><code>vi-history-suite</code> is a VS Code desktop extension for expert review of
+LabVIEW VI history in Git repositories.</p>
+<p>The architecture is intentionally local-first and bounded:</p>
+<ul>
+<li>the user works inside VS Code</li>
+<li>Git history and tracked-file state come from local Git plus the built-in
+<code>vscode.git</code> extension</li>
+<li>VI review happens through governed history, comparison-report, dashboard, and
+decision-record surfaces</li>
+<li>documentation-package work and future wiki seeding use a separate
+docs-authoring workbench instead of the runtime proof lanes</li>
+</ul>
+<h2>Main Containers</h2>
+<p>The governed architecture overview currently distinguishes these major
+containers:</p>
+<ul>
+<li>extension manifest for commands, menus, and settings</li>
+<li>extension runtime for indexing, trust gating, and command execution</li>
+<li>Git adapter for tracked-file and history queries</li>
+<li>review UI for history presentation and review actions</li>
+<li>report subsystem for planning, runtime/tool selection, report execution, and
+retained dashboard preparation</li>
+<li>harness smoke runner for canonical proof lanes</li>
+<li>governance pack for requirements, ADRs, RTM, and tests</li>
+<li>documentation-package workbench for requirements and release-doc iteration</li>
+<li>cross-repo navigation surface for jumping between the product repo, wiki
+repo, and companion assurance-skill repo</li>
+</ul>
+<h2>Review Architecture</h2>
+<p>The core review flow is split deliberately:</p>
+<ul>
+<li>history-panel review is the bounded chronology surface</li>
+<li>pairwise NI comparison reports are retained evidence for adjacent revisions</li>
+<li>the multi-report dashboard is the concentration surface for one VI across at
+least three commits</li>
+<li>human decision records stay separate from machine-generated evidence</li>
+</ul>
+<p>This separation matters because the product is meant to reduce reviewer wear
+without pretending to replace human judgment.</p>
+<h2>Runtime And Isolation</h2>
+<p>Comparison-report generation is governed separately from the basic history
+experience.</p>
+<p>Key architectural decisions in the current baseline:</p>
+<ul>
+<li>Windows 64-bit isolated container execution is the preferred extension-user
+path when available</li>
+<li>host-native execution remains relevant primarily for bounded Windows x86
+cases</li>
+<li>Linux can serve as an explicit extension-host proof lane for faster local
+iteration</li>
+<li>retained packets and dashboards are rendered locally in the extension so
+already-built HTML evidence is usable without depending on external
+navigation behavior</li>
+</ul>
+<h2>Documentation And Control Plane</h2>
+<p>The architecture now explicitly includes design-governance surfaces, not just
+runtime components.</p>
+<p>Important control-plane decisions include:</p>
+<ul>
+<li>docs-authoring workbench image for governed documentation-package iteration</li>
+<li>authority-first wiki seeding from requirements, ADRs, RTM, current-state, and
+ship-control docs</li>
+<li>cross-repo navigation control plane tying together:<ul>
+<li><code>vi-history-suite</code></li>
+<li><code>vi-history-suite.wiki</code></li>
+<li><code>repo-standards-review</code></li>
+</ul>
+</li>
+</ul>
+<p>That means future documentation and wiki work is expected to start from the
+repo docs stack, not from source spelunking.</p>
+<h2>Key ADRs</h2>
+<p>The current accepted ADR set includes:</p>
+<ul>
+<li><code>ADR-0001</code>: TypeScript-first VS Code extension baseline</li>
+<li><code>ADR-0006</code>: Windows 64-bit container isolation for extension users</li>
+<li><code>ADR-0009</code>: dashboard pair archive and concentration packet</li>
+<li><code>ADR-0010</code>: dual-host extension proof and Linux bootstrap</li>
+<li><code>ADR-0012</code>: documentation-package workbench image</li>
+<li><code>ADR-0013</code>: authority-first wiki seeding</li>
+<li><code>ADR-0014</code>: cross-repo navigation control plane</li>
+</ul>
+<p>The full accepted set is listed in the governed architecture overview.</p>
+<h2>Current Tradeoffs</h2>
+<p>The architecture currently accepts these important tradeoffs:</p>
+<ul>
+<li>Git on <code>PATH</code> remains a runtime dependency</li>
+<li>dashboard ETA is characterized from retained evidence but not yet treated as
+a calibrated release gate</li>
+<li>documentation-package iteration is intentionally separated from NI runtime
+proof</li>
+<li>the product still tracks a release blocker for the remaining progress,
+cancellation, and trust-aware UX layer</li>
+</ul>
+<h2>Read Next</h2>
+<ul>
+<li><a href="#" data-page-id="comparison-reports-and-dashboard-review">Comparison Reports And Dashboard Review</a></li>
+<li><a href="#" data-page-id="install-and-release">Install And Release</a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/architecture/overview.md">Current Architecture Overview</a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/wiki-authority-map.md">Wiki Authority Map</a></li>
+</ul>

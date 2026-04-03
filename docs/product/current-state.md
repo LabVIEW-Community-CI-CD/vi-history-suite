@@ -25,9 +25,10 @@ Read these in order:
 9. [documentation-coherence-ledger.md](./documentation-coherence-ledger.md)
 10. [wiki-seed-plan.md](./wiki-seed-plan.md)
 11. [wiki-publication-ledger.md](./wiki-publication-ledger.md)
-12. [Documentation Package Workbench](../documentation-workbench.md)
-13. [program-repo-jump.md](./program-repo-jump.md)
-14. [PROGRAM-0001: Next Product Layer](./execution-programs/PROGRAM-0001-next-product-layer.md)
+12. [wiki-publication-ledger.json](./wiki-publication-ledger.json)
+13. [Documentation Package Workbench](../documentation-workbench.md)
+14. [program-repo-jump.md](./program-repo-jump.md)
+15. [PROGRAM-0001: Next Product Layer](./execution-programs/PROGRAM-0001-next-product-layer.md)
 
 ## Authority Stack
 
@@ -54,17 +55,18 @@ Current control-plane surfaces:
 9. [documentation-coherence-ledger.md](./documentation-coherence-ledger.md)
 10. [wiki-seed-plan.md](./wiki-seed-plan.md)
 11. [wiki-publication-ledger.md](./wiki-publication-ledger.md)
-12. [Documentation Package Workbench](../documentation-workbench.md)
-13. [program-repo-jump.md](./program-repo-jump.md)
-14. [PROGRAM-0001: Next Product Layer](./execution-programs/PROGRAM-0001-next-product-layer.md)
-15. [Fast VS Code Loop](../dev-fast-loop.md)
+12. [wiki-publication-ledger.json](./wiki-publication-ledger.json)
+13. [Documentation Package Workbench](../documentation-workbench.md)
+14. [program-repo-jump.md](./program-repo-jump.md)
+15. [PROGRAM-0001: Next Product Layer](./execution-programs/PROGRAM-0001-next-product-layer.md)
+16. [Fast VS Code Loop](../dev-fast-loop.md)
 
 ## Committed Capability State
 
 | Capability Surface | Status | Evidence | Governing Queue |
 | --- | --- | --- | --- |
 | Content-detected VI eligibility and menu gating | implemented | `package.json`; `src/domain/viMagicCore.ts`; `src/indexing/viEligibilityIndexer.ts`; `VHS-REQ-001..015` | sustain |
-| Review-oriented history panel and actions | implemented with stateful retained-pair actions so first-use rows show `Generate compare`, retained rows show `Refresh compare`, `Open compare` is enabled only when retained evidence exists, comparison view opening honors cancellation before panel open, and retained comparison opening from `Diff prev` uses retained-open-specific wording | `src/ui/historyPanel.ts`; `src/commands/openViHistoryCommand.ts`; `src/reporting/comparisonReportAction.ts`; `src/extension.ts`; `VHS-REQ-016..040`; `VHS-REQ-328..329`; `VHS-REQ-361..362` | sustain |
+| Review-oriented history panel and actions | implemented with stateful retained-pair actions so first-use rows show `Generate compare`, retained rows show `Refresh compare`, `Open compare` is enabled only when retained evidence exists, comparison view opening honors cancellation before panel open, retained comparison opening from `Diff prev` uses retained-open-specific wording, and the panel exposes `Open docs` into the packaged bundled documentation surface | `src/ui/historyPanel.ts`; `src/commands/openViHistoryCommand.ts`; `src/reporting/comparisonReportAction.ts`; `src/docs/bundledDocumentationAction.ts`; `src/extension.ts`; `VHS-REQ-016..040`; `VHS-REQ-328..329`; `VHS-REQ-361..362`; `VHS-REQ-369` | sustain |
 | Canonical real-history harness smoke | implemented | `src/harness/harnessSmoke.ts`; `src/cli/runHarnessSmoke.ts`; `npm run harness:smoke`; `VHS-REQ-029..030` | sustain |
 | Comparison-report preflight, planning, and packet storage | implemented | `src/reporting/comparisonReportPreflight.ts`; `src/reporting/comparisonReportPlan.ts`; `src/reporting/comparisonReportPacket.ts`; `VHS-REQ-127..145` | sustain |
 | LabVIEW 2026 Q1 runtime detection and governed live report execution | implemented and active | `src/reporting/comparisonRuntimeLocator.ts`; `src/reporting/comparisonReportRuntimeExecution.ts`; `.cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.json`; `VHS-REQ-146..181`; `VHS-REQ-217..220`; `VHS-REQ-239..250` | sustain |
@@ -75,7 +77,8 @@ Current control-plane surfaces:
 | Review-scenario registry and human decision records | implemented and active with extension-facing decision-record creation from the history panel, scenario matching by repository remote URL plus VI path, separate Markdown/JSON artifact persistence, persisted reviewer-name defaults across decision-record runs, and real extension-host proof | `src/scenarios/reviewScenarioRegistry.ts`; `src/scenarios/decisionRecord.ts`; `src/scenarios/reviewDecisionRecordAction.ts`; `src/harness/harnessDecisionRecord.ts`; `src/commands/openViHistoryCommand.ts`; `tests/integration/suite/extensionHost.test.ts`; `docs/product/review-scenarios.md`; `docs/product/decision-record-template.md`; `VHS-REQ-307..312`; `VHS-REQ-341..354` | `TRANCHE-007` |
 | Runtime-doctor and dashboard-refresh developer experience | partially implemented and active | `src/reporting/comparisonRuntimeDoctor.ts`; `src/reporting/comparisonRuntimeLocator.ts`; `src/reporting/comparisonReportPacket.ts`; `src/reporting/comparisonReportAction.ts`; `src/dashboard/multiReportDashboardAction.ts`; `src/commands/openViHistoryCommand.ts`; `VHS-REQ-224..236`; `VHS-REQ-241`; `VHS-REQ-244..247`; `VHS-REQ-251..258` | `TRANCHE-008` |
 | Ship-control system and SemVer release target | implemented and active with preview VSIX delivery plus first tagged release proof pending, and a governed wiki-authority map that constrains future wiki generation to repo docs instead of source or chat memory | `docs/product/SHIP-0001-releasable-vi-history-suite.md`; `docs/product/release-readiness-matrix.json`; `docs/product/blocker-ledger.json`; `docs/product/wiki-authority-map.md`; `docs/release-procedure.md`; `.gitlab-ci.yml`; `tests/unit/shipControlDocs.test.ts`; `VHS-REQ-313..323` | `TRANCHE-009` |
-| Documentation-package workbench image and docs gate | implemented and active with a repo-published docs-authoring image, local workbench commands, a repo-native docs gate, a retained documentation coherence ledger, a wiki seed plan, a wiki publication ledger, and a retained publish-manifest lane for future documentation and wiki iteration | `docker/docs-authoring/Dockerfile`; `docker/docs-authoring/entrypoint.sh`; `scripts/run-docs-gate.js`; `docs/documentation-workbench.md`; `docs/product/documentation-coherence-ledger.md`; `docs/product/wiki-seed-plan.md`; `docs/product/wiki-publication-ledger.md`; `.gitlab-ci.yml`; `tests/unit/docsWorkbenchDocs.test.ts`; `VHS-REQ-350..360` | `TRANCHE-009` |
+| Documentation-package workbench image and docs gate | implemented and active with a repo-published docs-authoring image, local workbench commands, a repo-native docs gate, a retained documentation coherence ledger, a wiki seed plan, Markdown and JSON wiki publication ledgers, a generated packaged docs bundle, and a retained publish-manifest lane for future documentation and wiki iteration | `docker/docs-authoring/Dockerfile`; `docker/docs-authoring/entrypoint.sh`; `scripts/run-docs-gate.js`; `scripts/syncBundledDocs.js`; `docs/documentation-workbench.md`; `docs/product/documentation-coherence-ledger.md`; `docs/product/wiki-seed-plan.md`; `docs/product/wiki-publication-ledger.md`; `docs/product/wiki-publication-ledger.json`; `resources/bundled-docs/manifest.json`; `.gitlab-ci.yml`; `tests/unit/docsWorkbenchDocs.test.ts`; `VHS-REQ-350..360`; `VHS-REQ-367..370` | `TRANCHE-009` |
+| Bundled version-matched user documentation | implemented and active with a machine-readable wiki publication ledger, generated packaged HTML fragments under `resources/bundled-docs/`, a command-palette documentation command, and a local documentation panel that keeps users inside VS Code instead of requiring repo access | `docs/product/wiki-publication-ledger.json`; `scripts/syncBundledDocs.js`; `resources/bundled-docs/manifest.json`; `src/docs/bundledDocumentation.ts`; `src/docs/bundledDocumentationAction.ts`; `src/extension.ts`; `tests/unit/bundledDocumentation.test.ts`; `tests/integration/suite/extensionHost.test.ts`; `VHS-REQ-367..370` | sustain |
 | Cross-repo navigation control plane | implemented and active with a governed repo-constellation map, a local repo-jump CLI, and mirrored skill-side resolver entrypoints for `vi-history-suite`, `vi-history-suite.wiki`, and `repo-standards-review` | `docs/product/program-repo-jump-map.json`; `docs/product/program-repo-jump.md`; `src/tooling/programRepoJump.ts`; `src/cli/runProgramRepoJump.ts`; `tests/unit/runProgramRepoJumpCli.test.ts`; `VHS-REQ-364..366` | `TRANCHE-009` |
 | Fast local VS Code development-host loop | implemented and active with reusable fixture-workspace prep, explicit workspace override, direct or staged extension-host launch, explicit Linux/Windows integration-host selection, Linux runtime preflight, and a least-privilege root-owned Linux bootstrap command | `src/tooling/devHostLoop.ts`; `src/cli/runDevHost.ts`; `src/tooling/integrationHostRuntime.ts`; `docs/dev-fast-loop.md`; `package.json`; `tests/unit/runDevHostCli.test.ts`; `tests/unit/integrationHostRuntime.test.ts`; `tests/unit/packageManifest.test.ts`; `VHS-REQ-338..339`; `VHS-REQ-344..346`; `docs/architecture/adr/ADR-0010-dual-host-extension-proof-and-linux-bootstrap.md` | sustain |
 
@@ -109,6 +112,7 @@ The queue source of truth is:
 - [documentation-coherence-ledger.md](./documentation-coherence-ledger.md)
 - [wiki-seed-plan.md](./wiki-seed-plan.md)
 - [wiki-publication-ledger.md](./wiki-publication-ledger.md)
+- [wiki-publication-ledger.json](./wiki-publication-ledger.json)
 - [release-procedure.md](../release-procedure.md)
 - [Documentation Package Workbench](../documentation-workbench.md)
 - [program-repo-jump.md](./program-repo-jump.md)
@@ -130,6 +134,9 @@ These are generated locally and are not the committed source of truth:
   - `.cache/design-gate/latest-report.md`
   - retained reports now distinguish `running` versus `complete` gate state
     and retain the pending next step when a later stage has not finished yet
+  - use `npm run design:gate:assert-complete` before treating a retained
+    report as a finished green gate, unless you already waited for the live
+    `npm run design:gate` process to exit `0`
 - canonical history smoke:
   - `.cache/harness-reports/HARNESS-VHS-001/report.json`
   - `.cache/harness-reports/HARNESS-VHS-001/report.md`
@@ -147,8 +154,11 @@ These are generated locally and are not the committed source of truth:
   - `docker/docs-authoring/Dockerfile`
   - `docs/documentation-workbench.md`
   - `docs/product/wiki-publication-ledger.md`
+  - `docs/product/wiki-publication-ledger.json`
+  - `resources/bundled-docs/manifest.json`
   - `docs-workbench-evidence/docs-workbench-manifest.json`
   - local gate via `npm run docs:gate`
+  - local bundle refresh via `npm run docs:bundle`
   - local workbench image via `npm run docs:workbench:build`
   - local container gate via `npm run docs:workbench:gate`
 - fast local dev-host loop:
@@ -169,11 +179,13 @@ Primary local commands:
 
 ```bash
 npm run design:gate
+npm run design:gate:assert-complete
 npm run harness:smoke
 npm run harness:report:smoke
 npm run harness:dashboard:smoke
 npm run harness:decision:record
 npm run docs:gate
+npm run docs:bundle
 npm run docs:workbench:build
 npm run docs:workbench:gate
 npm run program:repos
@@ -195,6 +207,7 @@ When the repo meaningfully changes, update these together:
 - [wiki-authority-map.md](./wiki-authority-map.md)
 - [program-repo-jump.md](./program-repo-jump.md)
 - [Documentation Package Workbench](../documentation-workbench.md)
+- [wiki-publication-ledger.json](./wiki-publication-ledger.json)
 - [Software Requirements Specification](../requirements/srs.md)
 - [Traceability Matrix](../requirements/rtm.csv)
 - [Test Plan](../testing/test-plan.md)

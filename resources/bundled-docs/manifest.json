@@ -1,0 +1,62 @@
+{
+  "generatedAt": "2026-04-03T18:33:45.053Z",
+  "sourceLedgerPath": "docs/product/wiki-publication-ledger.json",
+  "sourceWikiRepoPath": "../vi-history-suite.wiki",
+  "defaultPageId": "overview",
+  "pages": [
+    {
+      "id": "overview",
+      "title": "Overview",
+      "wikiPath": "home",
+      "wikiFileName": "home.md",
+      "htmlFileName": "overview.html",
+      "publishedDate": "2026-04-03",
+      "wikiCommit": "3aa0c49"
+    },
+    {
+      "id": "install-and-release",
+      "title": "Install And Release",
+      "wikiPath": "Install-And-Release",
+      "wikiFileName": "Install-And-Release.md",
+      "htmlFileName": "install-and-release.html",
+      "publishedDate": "2026-04-03",
+      "wikiCommit": "3aa0c49"
+    },
+    {
+      "id": "user-workflow",
+      "title": "User Workflow",
+      "wikiPath": "User-Workflow",
+      "wikiFileName": "User-Workflow.md",
+      "htmlFileName": "user-workflow.html",
+      "publishedDate": "2026-04-03",
+      "wikiCommit": "3aa0c49"
+    },
+    {
+      "id": "comparison-reports-and-dashboard-review",
+      "title": "Comparison Reports And Dashboard Review",
+      "wikiPath": "Comparison-Reports-And-Dashboard-Review",
+      "wikiFileName": "Comparison-Reports-And-Dashboard-Review.md",
+      "htmlFileName": "comparison-reports-and-dashboard-review.html",
+      "publishedDate": "2026-04-03",
+      "wikiCommit": "9b32d5a"
+    },
+    {
+      "id": "review-scenarios-and-decision-records",
+      "title": "Review Scenarios And Decision Records",
+      "wikiPath": "Review-Scenarios-And-Decision-Records",
+      "wikiFileName": "Review-Scenarios-And-Decision-Records.md",
+      "htmlFileName": "review-scenarios-and-decision-records.html",
+      "publishedDate": "2026-04-03",
+      "wikiCommit": "5c1d3ef"
+    },
+    {
+      "id": "architecture",
+      "title": "Architecture",
+      "wikiPath": "Architecture",
+      "wikiFileName": "Architecture.md",
+      "htmlFileName": "architecture.html",
+      "publishedDate": "2026-04-03",
+      "wikiCommit": "d3d4be6"
+    }
+  ]
+}

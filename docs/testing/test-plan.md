@@ -801,12 +801,33 @@
   renders deterministic text and JSON output
 - `TEST-UNIT-222`: verify the manifest and documentation entrypoints expose the
   governed cross-repo jump surface and its local CLI script
+- `TEST-UNIT-223`: verify the packaged bundled-documentation manifest matches
+  the machine-readable wiki publication ledger, retains generated page
+  fragments for every published page, and renders local/external navigation
+  hooks
+- `TEST-UNIT-224`: verify the history panel routes `Open docs` through the
+  bundled documentation action and records the selected packaged page facts
+- `TEST-UNIT-225`: verify the package manifest exposes the bundled-docs script,
+  documentation command, and activation path
+- `TEST-UNIT-226`: verify the retained design-gate verifier fails closed for
+  running retained reports and succeeds only for completed passing retained
+  reports
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed product, wiki, and assurance-skill repos with authority roles,
   expected remotes, and primary entrypoints
 - `TEST-DOC-029`: review the documentation package and confirm README,
   current-state, architecture, workbench, and coherence surfaces point future
   sessions to the governed cross-repo jump surface
+- `TEST-DOC-030`: review the Markdown and JSON wiki publication ledgers plus
+  the bundled-documentation resources to confirm the published wiki set and the
+  packaged docs set agree
+- `TEST-DOC-031`: review README, current-state, release, workbench, and
+  architecture surfaces to confirm bundled user documentation is documented as
+  a packaged extension surface and not only as repo-hosted wiki content
+- `TEST-DOC-032`: review README, current-state, and release-procedure surfaces
+  to confirm future sessions may only treat retained design-gate evidence as
+  complete after `npm run design:gate:assert-complete` succeeds, unless they
+  already waited on the live `npm run design:gate` process
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

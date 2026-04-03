@@ -506,6 +506,74 @@ describe('createOpenViHistoryCommand', () => {
     expect(showInformationMessageMock).not.toHaveBeenCalled();
   });
 
+  it('opens bundled documentation from the history panel and records the selected page facts', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    const openDocumentationAction = vi.fn().mockResolvedValue({
+      outcome: 'opened-documentation',
+      pageId: 'user-workflow',
+      pageTitle: 'User Workflow',
+      title: 'VI History Docs: User Workflow',
+      manifestFilePath: '/workspace/resources/bundled-docs/manifest.json',
+      pageFilePath: '/workspace/resources/bundled-docs/pages/user-workflow.html'
+    });
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Update VI',
+            previousHash: '1111111122222222'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      openDocumentationAction
+    );
+
+    await command(targetUri as never);
+    await tracker.dispatchLastPanelMessage({
+      command: 'openDocumentation',
+      pageId: 'user-workflow'
+    });
+
+    expect(openDocumentationAction).toHaveBeenCalledWith({
+      pageId: 'user-workflow'
+    });
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'openDocumentation',
+      outcome: 'opened-documentation',
+      documentationPageId: 'user-workflow',
+      documentationPageTitle: 'User Workflow',
+      documentationManifestPath: '/workspace/resources/bundled-docs/manifest.json',
+      documentationPageFilePath: '/workspace/resources/bundled-docs/pages/user-workflow.html',
+      title: 'VI History Docs: User Workflow'
+    });
+    expect(showWarningMessageMock).not.toHaveBeenCalled();
+    expect(showInformationMessageMock).not.toHaveBeenCalled();
+  });
+
   it('routes diffPrevious through retained comparison-report opening for content-detected VIs when retained report support is available', async () => {
     const targetUri = createMockUri('/workspace/eligible.vi');
     const tracker = new HistoryPanelTracker();
