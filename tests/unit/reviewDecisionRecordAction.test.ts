@@ -5,7 +5,8 @@ const {
   showInputBoxMock,
   showQuickPickMock,
   workspaceState,
-  globalState
+  globalState,
+  runGitMock
 } = vi.hoisted(() => {
   const reviewerState = {
     storedValue: undefined as string | undefined
@@ -15,6 +16,7 @@ const {
     executeCommandMock: vi.fn(),
     showInputBoxMock: vi.fn(),
     showQuickPickMock: vi.fn(),
+    runGitMock: vi.fn(),
     workspaceState: {
       isTrusted: true
     },
@@ -52,6 +54,10 @@ vi.mock('vscode', () => ({
       toString: () => `file:${fsPath}`
     })
   }
+}));
+
+vi.mock('../../src/git/gitCli', () => ({
+  runGit: runGitMock
 }));
 
 import { createReviewDecisionRecordAction } from '../../src/scenarios/reviewDecisionRecordAction';
@@ -223,6 +229,7 @@ describe('reviewDecisionRecordAction', () => {
     executeCommandMock.mockReset();
     showInputBoxMock.mockReset();
     showQuickPickMock.mockReset();
+    runGitMock.mockReset();
     globalState.reviewerState.storedValue = undefined;
     globalState.get.mockClear();
     globalState.update.mockClear();
@@ -1004,6 +1011,154 @@ describe('reviewDecisionRecordAction', () => {
       'viHistorySuite.lastDecisionReviewer',
       'Persisted Reviewer'
     );
+  });
+
+  it('reports retained dashboard preparation progress and keeps decision creation stable when reviewer persistence fails', async () => {
+    const reportProgress = vi.fn();
+    const buildDashboard = vi.fn().mockResolvedValue(createCanonicalDashboardResult());
+    const persistDecisionRecord = vi.fn().mockResolvedValue({
+      artifactPlan: {
+        scenarioId: 'SCENARIO-VHS-001',
+        decisionId: 'decision-id',
+        decisionDirectory: '/workspace/.storage/decision-records/scenario/decision-id',
+        jsonFilePath: '/workspace/.storage/decision-records/scenario/decision-id/decision.json',
+        markdownFilePath: '/workspace/.storage/decision-records/scenario/decision-id/decision.md'
+      },
+      record: {
+        generatedAt: '2026-04-03T16:00:00.000Z'
+      }
+    });
+    globalState.update.mockRejectedValueOnce(new Error('state unavailable'));
+
+    const action = createReviewDecisionRecordAction(
+      {
+        storageUri: {
+          fsPath: '/workspace/.storage'
+        },
+        globalState
+      } as never,
+      {
+        buildDashboard,
+        persistDecisionRecord,
+        readRepoRemoteUrl: vi
+          .fn()
+          .mockResolvedValue('https://github.com/ni/labview-icon-editor.git'),
+        automationInputs: {
+          reviewer: 'Reviewer',
+          reviewQuestion: 'Question',
+          outcome: 'approved',
+          confidence: 'high',
+          decisionRationale: 'Rationale'
+        }
+      }
+    );
+
+    await expect(
+      action({
+        model: createCanonicalModel(),
+        reportProgress
+      })
+    ).resolves.toEqual({
+      outcome: 'created-decision-record',
+      scenarioId: 'SCENARIO-VHS-001',
+      dashboardFilePath: '/workspace/.storage/dashboards/repo-id/file-id/window-id/dashboard.html',
+      dashboardJsonFilePath: '/workspace/.storage/dashboards/repo-id/file-id/window-id/dashboard.json',
+      decisionRecordJsonPath: '/workspace/.storage/decision-records/scenario/decision-id/decision.json',
+      decisionRecordMarkdownPath: '/workspace/.storage/decision-records/scenario/decision-id/decision.md',
+      title: 'Review Decision Record: VIP_Pre-Install Custom Action.vi'
+    });
+
+    expect(reportProgress).toHaveBeenCalledWith({
+      message: 'Preparing retained dashboard evidence for the review decision record.',
+      increment: 5
+    });
+    expect(buildDashboard).toHaveBeenCalledWith('/workspace/.storage', createCanonicalModel(), {
+      reportProgress
+    });
+  });
+
+  it('uses git remote origin discovery when an explicit repository-url reader is not supplied', async () => {
+    runGitMock.mockResolvedValueOnce('https://github.com/ni/labview-icon-editor.git\n');
+
+    const action = createReviewDecisionRecordAction(
+      {
+        storageUri: {
+          fsPath: '/workspace/.storage'
+        },
+        globalState,
+        extensionMode: 3
+      } as never,
+      {
+        buildDashboard: vi.fn().mockResolvedValue(createCanonicalDashboardResult()),
+        persistDecisionRecord: vi.fn().mockResolvedValue({
+          artifactPlan: {
+            scenarioId: 'SCENARIO-VHS-001',
+            decisionId: 'decision-id',
+            decisionDirectory: '/workspace/.storage/decision-records/scenario/decision-id',
+            jsonFilePath: '/workspace/.storage/decision-records/scenario/decision-id/decision.json',
+            markdownFilePath: '/workspace/.storage/decision-records/scenario/decision-id/decision.md'
+          },
+          record: {
+            generatedAt: '2026-04-03T16:00:00.000Z'
+          }
+        })
+      }
+    );
+
+    await expect(
+      action({
+        model: createCanonicalModel()
+      })
+    ).resolves.toEqual(
+      expect.objectContaining({
+        outcome: 'created-decision-record',
+        scenarioId: 'SCENARIO-VHS-001'
+      })
+    );
+
+    expect(runGitMock).toHaveBeenCalledWith(
+      ['remote', 'get-url', 'origin'],
+      '/workspace/repo',
+      'utf8'
+    );
+  });
+
+  it('fails closed when default git remote origin discovery returns no usable repository url', async () => {
+    const createDefaultRemoteAction = () =>
+      createReviewDecisionRecordAction(
+        {
+          storageUri: {
+            fsPath: '/workspace/.storage'
+          },
+          globalState,
+          extensionMode: 3
+        } as never,
+        {
+          buildDashboard: vi.fn().mockResolvedValue(createCanonicalDashboardResult())
+        }
+      );
+
+    runGitMock.mockResolvedValueOnce('   \n');
+    await expect(
+      createDefaultRemoteAction()({
+        model: createCanonicalModel()
+      })
+    ).resolves.toEqual({
+      outcome: 'missing-repository-url',
+      dashboardFilePath: '/workspace/.storage/dashboards/repo-id/file-id/window-id/dashboard.html',
+      dashboardJsonFilePath: '/workspace/.storage/dashboards/repo-id/file-id/window-id/dashboard.json'
+    });
+
+    runGitMock.mockRejectedValueOnce(new Error('git unavailable'));
+    await expect(
+      createDefaultRemoteAction()({
+        model: createCanonicalModel()
+      })
+    ).resolves.toEqual({
+      outcome: 'missing-repository-url',
+      dashboardFilePath: '/workspace/.storage/dashboards/repo-id/file-id/window-id/dashboard.html',
+      dashboardJsonFilePath: '/workspace/.storage/dashboards/repo-id/file-id/window-id/dashboard.json'
+    });
   });
 
   it('keeps the action cancellable across question, outcome, confidence, and rationale prompts', async () => {
