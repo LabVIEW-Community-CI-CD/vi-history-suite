@@ -997,6 +997,9 @@ describe('comparisonReportRuntimeExecution', () => {
       }
     );
 
+    expect(result.record.runtimeExecution.failureReason).toBe(
+      'labview-cli-log-only-no-labview-at-banner-snapshot'
+    );
     expect(result.record.runtimeExecution.diagnosticNotes).toContain(
       'At the retained cli-log-banner snapshot (2026-04-03T00:00:02.000Z), observed LabVIEW-related processes: LabVIEWCLI.exe.'
     );
@@ -1005,6 +1008,9 @@ describe('comparisonReportRuntimeExecution', () => {
     );
     expect(result.record.runtimeExecution.diagnosticNotes).toContain(
       'At the retained cli-log-banner snapshot, LVCompare.exe was not observed.'
+    );
+    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+      'LabVIEW CLI exited nonzero without stderr and without generating a report; at the retained cli-log-banner snapshot, LabVIEWCLI.exe was observed while LabVIEW.exe was not observed.'
     );
   });
 

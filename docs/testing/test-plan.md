@@ -309,6 +309,9 @@
   diagnostic notes from retained process observations, including explicit
   absence notes when `LabVIEW.exe` or `LVCompare.exe` were not observed at the
   retained snapshot
+- `TEST-UNIT-090`: prove the runtime executor classifies the retained
+  banner-snapshot-without-LabVIEW case into a dedicated failure reason rather
+  than the generic log-only LabVIEW CLI nonzero bucket
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

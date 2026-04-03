@@ -288,7 +288,8 @@ async function runHostNativeExecution(
       exitCode: commandResult.exitCode,
       reportExists,
       stdout: commandResult.stdout,
-      stderr: commandResult.stderr
+      stderr: commandResult.stderr,
+      processObservation: processObservation?.observation
     });
     const diagnosticNotes = mergeDiagnosticNotes(
       buildProcessObservationNotes(processObservation?.observation),
@@ -784,6 +785,7 @@ function classifyRuntimeFailure(options: {
   reportExists: boolean;
   stdout: string;
   stderr: string;
+  processObservation?: RuntimeProcessObservation;
 }): {
   reason: string;
   notes: string[];
@@ -802,6 +804,19 @@ function classifyRuntimeFailure(options: {
     options.stderr.trim().length === 0 &&
     isLabviewCliLogOnlyStdout(options.stdout)
   ) {
+    if (
+      options.processObservation?.trigger === 'cli-log-banner' &&
+      options.processObservation.labviewCliProcessObserved &&
+      !options.processObservation.labviewProcessObserved
+    ) {
+      return {
+        reason: 'labview-cli-log-only-no-labview-at-banner-snapshot',
+        notes: [
+          'LabVIEW CLI exited nonzero without stderr and without generating a report; at the retained cli-log-banner snapshot, LabVIEWCLI.exe was observed while LabVIEW.exe was not observed.'
+        ]
+      };
+    }
+
     return {
       reason: 'labview-cli-exited-nonzero-log-only-no-report',
       notes: [
