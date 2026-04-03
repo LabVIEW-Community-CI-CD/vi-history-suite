@@ -27,18 +27,25 @@ For machine-friendly repo orientation, start with:
 
 - [Research Implementation Index](./docs/research/authoritative/research-implementation-index.json)
 
-## Authoritative Research Stack
+## Research Control Plane
 
-The repo is governed by the committed research stack, in this order:
+Baseline reference research retained in the repo:
 
 1. [deep-research-report.cleaned.md](./docs/research/authoritative/deep-research-report.cleaned.md)
 2. [deep-research-report.md](./docs/research/authoritative/deep-research-report.md)
-3. [next-round-research.md](./docs/research/authoritative/next-round-research.md)
-4. [vi-history-suite-authoritative-research.pdf](./docs/research/authoritative/vi-history-suite-authoritative-research.pdf)
-5. [research-alignment.md](./docs/research/authoritative/research-alignment.md)
+3. [vi-history-suite-authoritative-research.pdf](./docs/research/authoritative/vi-history-suite-authoritative-research.pdf)
 
-The alignment matrix is the committed indicator of what from research is already
-implemented, what is partial, and what remains queued.
+There is no active unresolved research-round artifact checked into the repo.
+Consumed research rounds are deleted after their findings are normalized into
+the committed implementation, queue, ADR, and requirement surfaces.
+
+Use these repo-native control-plane entrypoints instead:
+
+1. [Research Alignment Matrix](./docs/research/authoritative/research-alignment.md)
+2. [Research Implementation Index](./docs/research/authoritative/research-implementation-index.json)
+3. [Current State](./docs/product/current-state.md)
+4. [Development Queue](./docs/product/development-queue.json)
+5. [Next Research Prompt](./docs/research/authoritative/next-research-prompt.md)
 
 ## Product Docs
 
@@ -55,6 +62,7 @@ implemented, what is partial, and what remains queued.
 - [Test Plan](./docs/testing/test-plan.md)
 - [Information Item Map](./docs/information-item-map.md)
 - [Research Infrastructure](./docs/research/authoritative/research-infrastructure.md)
+- [Next Research Prompt](./docs/research/authoritative/next-research-prompt.md)
 
 ## Implemented Now
 
@@ -91,6 +99,7 @@ See:
 - [Current State](./docs/product/current-state.md)
 - [Development Queue](./docs/product/development-queue.json)
 - [Research Alignment Matrix](./docs/research/authoritative/research-alignment.md)
+- [Next Research Prompt](./docs/research/authoritative/next-research-prompt.md)
 
 ## Local Development
 

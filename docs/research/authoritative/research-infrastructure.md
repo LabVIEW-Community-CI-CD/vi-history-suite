@@ -15,13 +15,18 @@ Use these surfaces in order:
 
 1. [deep-research-report.cleaned.md](./deep-research-report.cleaned.md)
 2. [deep-research-report.md](./deep-research-report.md)
-3. [next-round-research.md](./next-round-research.md)
-4. [vi-history-suite-authoritative-research.pdf](./vi-history-suite-authoritative-research.pdf)
+3. [vi-history-suite-authoritative-research.pdf](./vi-history-suite-authoritative-research.pdf)
+4. [research-alignment.md](./research-alignment.md)
+5. [next-research-prompt.md](./next-research-prompt.md)
 
 Status and implementation mapping live here:
 
 - [research-implementation-index.json](./research-implementation-index.json)
 - [research-alignment.md](./research-alignment.md)
+
+There is no committed active unresolved research-round artifact at this time.
+Consumed ad hoc research rounds are deleted after their findings are normalized
+into committed implementation, queue, ADR, and requirement surfaces.
 
 ## Intake Flow
 
@@ -38,16 +43,35 @@ Every new authoritative research round should update these surfaces together:
    [docs/testing/test-plan.md](../../testing/test-plan.md) when behavior becomes
    governed work
 
+After the research findings have been converted into governed product work, the
+round artifact set itself shall be deleted and all repo entrypoints shall stop
+referencing it directly.
+
 ## Program Layers
 
 | Layer | Purpose | Primary Artifact |
 | --- | --- | --- |
-| Research authority | what the repo should do | `deep-research-report.cleaned.md`; `next-round-research.md` |
+| Baseline research authority | what the repo should do | `deep-research-report.cleaned.md`; `deep-research-report.md` |
 | Implementation status | what is already live | `research-implementation-index.json`; `research-alignment.md` |
 | Product queue | what gets built next | `docs/product/development-queue.json` |
 | Product shaping | why a capability exists | `docs/product/epics/` |
 | Architecture shaping | how a capability should exist | `docs/architecture/adr/` |
 | Governed implementation | what is testable and releasable | `docs/requirements/srs.md`; `docs/requirements/rtm.csv`; `docs/testing/test-plan.md` |
+| Research refresh | how to request the next research round | `next-research-prompt.md` |
+
+## Retirement Rule
+
+Retire a research round by deleting its artifact set once both conditions are
+true:
+
+1. Every actionable finding from that round has been converted into either:
+   - committed implemented capability, or
+   - explicit governed queue, ADR, epic, requirement, and test-plan surfaces.
+2. README, current-state, alignment, and the implementation index no longer
+   need the round itself to explain what to build next.
+
+Retiring a round means removing the research artifact files and their direct
+references, not preserving them as a lingering active authority surface.
 
 ## Dashboard Direction
 

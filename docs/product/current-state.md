@@ -23,13 +23,22 @@ Read these in order:
 
 ## Authority Stack
 
-Primary authority surfaces:
+Baseline retained research surfaces:
 
 1. [deep-research-report.cleaned.md](../research/authoritative/deep-research-report.cleaned.md)
 2. [deep-research-report.md](../research/authoritative/deep-research-report.md)
-3. [next-round-research.md](../research/authoritative/next-round-research.md)
-4. [vi-history-suite-authoritative-research.pdf](../research/authoritative/vi-history-suite-authoritative-research.pdf)
-5. [research-alignment.md](../research/authoritative/research-alignment.md)
+3. [vi-history-suite-authoritative-research.pdf](../research/authoritative/vi-history-suite-authoritative-research.pdf)
+
+There is no active unresolved research-round artifact checked into the repo.
+Consumed research rounds are deleted after their findings are normalized into
+the committed queue, ADR, requirement, and implementation surfaces.
+
+Current control-plane surfaces:
+
+1. [research-alignment.md](../research/authoritative/research-alignment.md)
+2. [research-implementation-index.json](../research/authoritative/research-implementation-index.json)
+3. [development-queue.json](./development-queue.json)
+4. [next-research-prompt.md](../research/authoritative/next-research-prompt.md)
 
 ## Committed Capability State
 
@@ -59,6 +68,14 @@ Current committed queue:
 The queue source of truth is:
 
 - [development-queue.json](./development-queue.json)
+
+## Research Refresh
+
+There is no committed active research round at this time.
+
+When a future research cycle is needed, start from:
+
+- [next-research-prompt.md](../research/authoritative/next-research-prompt.md)
 
 ## Local Evidence Surfaces
 

@@ -376,6 +376,12 @@
 - `TEST-DOC-011`: review the repo entrypoints and research-control-plane docs
   for explicit dashboard partial-implementation status and pair-archive
   direction
+- `TEST-DOC-012`: review the repo entrypoints and research-control-plane docs
+  to prove consumed research rounds are deleted and no longer referenced as
+  active authority surfaces
+- `TEST-DOC-013`: review the next research prompt to prove it starts from the
+  current dashboard/runtime baseline and does not restate the consumed
+  unresolved-workstream round
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

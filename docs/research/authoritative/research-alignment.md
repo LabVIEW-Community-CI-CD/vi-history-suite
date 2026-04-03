@@ -6,14 +6,15 @@ the authoritative research stack. For a machine-friendly entrypoint, start with
 
 ## Authority Surface
 
-- Primary source for unresolved workstreams:
-  [next-round-research.md](./next-round-research.md)
 - Primary source:
   [deep-research-report.cleaned.md](./deep-research-report.cleaned.md)
 - Secondary source:
   [deep-research-report.md](./deep-research-report.md)
 - Original artifact:
   [vi-history-suite-authoritative-research.pdf](./vi-history-suite-authoritative-research.pdf)
+- There is no active unresolved research-round artifact checked into the repo.
+- Next research intake prompt:
+  [next-research-prompt.md](./next-research-prompt.md)
 
 ## Current Alignment
 
@@ -31,6 +32,7 @@ the authoritative research stack. For a machine-friendly entrypoint, start with
 | LabVIEW 2026 Q1 32/64 runtime detection and selection | partial in this tranche | `src/reporting/comparisonRuntimeLocator.ts`; `package.json`; `VHS-REQ-094..096`; `VHS-REQ-138`; `VHS-REQ-146`; `docs/architecture/adr/ADR-0006-windows64-container-isolation-for-extension-users.md` | wire the locator into live NI execution and future Windows 64-bit container provider, keeping containerized x64 isolation as the preferred extension-user path |
 | First-class developer dashboard concentrating multiple VI Comparison Reports across at least three commits | partial in this tranche | `src/dashboard/comparisonReportArchive.ts`; `src/dashboard/niComparisonReportParser.ts`; `src/dashboard/multiReportDashboard.ts`; `src/dashboard/multiReportDashboardAction.ts`; `src/ui/historyPanel.ts`; `src/commands/openViHistoryCommand.ts`; `docs/architecture/adr/ADR-0009-dashboard-pair-archive-and-concentration-packet.md`; `VHS-REQ-200..208` | add drill-down actions, dashboard smoke proof, and richer expert-review concentration cues on top of the retained pair archive |
 | Review-scenario registry and separate human decision records for dashboard-driven VI review | modeled in this tranche | `docs/product/review-scenarios.md`; `docs/product/decision-record-template.md`; `docs/research/authoritative/research-infrastructure.md`; `docs/product/development-queue.json` | implement the first canonical scenario packet and one high-volume review scenario after the dashboard packet exists |
+| Consumed research-round retirement and future research prompt | aligned in this tranche | `README.md`; `docs/product/current-state.md`; `docs/research/authoritative/research-implementation-index.json`; `docs/research/authoritative/research-infrastructure.md`; `docs/research/authoritative/next-research-prompt.md`; `VHS-REQ-209..211` | sustain |
 | Status-bar progress item plus richer percent/items/ETA progress UX | partial | `src/indexing/viEligibilityIndexer.ts` currently uses `window.withProgress` only | add governed progress tranche |
 | Manifest trust declaration through `capabilities.untrustedWorkspaces` | aligned in this tranche | `package.json`; `VHS-REQ-084`; `tests/unit/packageManifest.test.ts` | sustain |
 | Treat `TimelineProvider` as experimental only, not published product surface | aligned in docs | `docs/architecture/adr/ADR-0002-published-review-surface-webview.md`; `VHS-REQ-085` | sustain |
@@ -39,8 +41,8 @@ the authoritative research stack. For a machine-friendly entrypoint, start with
 
 ## Recommended Order
 
-1. Runtime wiring from the pure planner and runtime locator into actual NI report execution
-2. Progress-surface uplift
-3. Multi-report developer dashboard for commit-window review across at least three commits
-4. Review-scenario registry and human decision records
-5. Packaging and release guidance aligned to the refreshed authoritative research
+1. Multi-report developer dashboard drill-down, concentration cues, and dashboard smoke proof
+2. Runtime wiring from the governed planner and runtime locator into successful NI report execution
+3. Progress-surface uplift
+4. Windows 64-bit isolated container provider
+5. Review-scenario registry, human decision records, and future research refresh
