@@ -253,7 +253,10 @@ Primary commands:
   - unit coverage
   - extension-host integration
   - canonical harness smoke
-  - standards quick-triage assurance
+  - repo-local mirrored standards quick-triage assurance when the available
+    skill path resolves under `/mnt`
+  - fail-closed timeout on a stalled standards-assurance tail instead of
+    waiting indefinitely
 - `npm run design:gate:assert-complete`
   - verifies the retained latest report is both `pass` and
     `completionState: complete`

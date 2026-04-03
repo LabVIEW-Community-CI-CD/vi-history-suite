@@ -10,6 +10,7 @@ import {
   readDesignGateNextTranche,
   runDesignGate,
   readDesignGateCoverageFocus,
+  resolveDesignGateAssuranceScriptPath,
   spawnDesignGateStep
 } from '../../src/tooling/designGateRunner';
 import { DesignGateReport } from '../../src/tooling/designGate';
@@ -19,6 +20,7 @@ class FakeReadable extends EventEmitter {}
 class FakeChildProcess extends EventEmitter {
   stdout = new FakeReadable();
   stderr = new FakeReadable();
+  kill = vi.fn().mockReturnValue(true);
 }
 
 const tempDirectories: string[] = [];
@@ -523,6 +525,40 @@ describe('designGateRunner', () => {
     expect(persistedMarkdown).toContain('Next focus: src/services/viHistoryModel.ts (87.0% lines)');
   });
 
+  it('mirrors a mounted Windows assurance skill into repo-local storage before execution', async () => {
+    const repoRoot = await createTempRepoRoot();
+    const sourceRoot = path.join(repoRoot, 'mounted-skill-source');
+    const sourceScripts = path.join(sourceRoot, 'scripts');
+    const sourceScriptPath = path.join(sourceScripts, 'run_assurance.py');
+    await fs.mkdir(sourceScripts, { recursive: true });
+    await fs.writeFile(sourceScriptPath, '#!/usr/bin/env python3\nprint("ok")\n');
+    await fs.writeFile(path.join(sourceRoot, 'SKILL.md'), '# skill\n');
+
+    const resolvedPath = await resolveDesignGateAssuranceScriptPath(repoRoot, {
+      assuranceScriptCandidates: [sourceScriptPath],
+      realpath: async (targetPath) =>
+        targetPath === sourceScriptPath
+          ? '/mnt/c/Users/sveld/.codex/skills/repo-standards-review/scripts/run_assurance.py'
+          : targetPath,
+      copyDirectory: async (_sourcePath, targetPath) => {
+        await fs.cp(sourceRoot, targetPath, { recursive: true, force: true });
+      }
+    });
+
+    expect(resolvedPath).toBe(
+      path.join(
+        repoRoot,
+        '.cache',
+        'design-gate',
+        'assurance-skill',
+        'repo-standards-review',
+        'scripts',
+        'run_assurance.py'
+      )
+    );
+    await expect(fs.readFile(resolvedPath, 'utf8')).resolves.toContain('print("ok")');
+  });
+
   it('ignores late child-process events after the spawned step has already settled', async () => {
     const child = new FakeChildProcess();
     const resultPromise = spawnDesignGateStep(
@@ -591,5 +627,42 @@ describe('designGateRunner', () => {
       stderr: 'design gate stderr\n'
     });
     expect(dateNowSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it('fails closed when a spawned step exceeds its timeout budget', async () => {
+    const child = new FakeChildProcess();
+    let timeoutCallback: (() => void) | undefined;
+    const setTimeoutImpl = vi.fn((callback: () => void) => {
+      timeoutCallback = callback;
+      return {} as never;
+    });
+    const clearTimeoutImpl = vi.fn();
+
+    const resultPromise = spawnDesignGateStep(
+      'python3',
+      ['tool.py'],
+      '/tmp/vi-history-suite',
+      'standards-assurance',
+      'Standards assurance',
+      {
+        spawnImpl: vi.fn().mockReturnValue(child),
+        nowMs: vi.fn<() => number>().mockReturnValueOnce(100).mockReturnValueOnce(160),
+        stdout: createWritableCollector().writer,
+        stderr: createWritableCollector().writer,
+        timeoutMs: 5000,
+        setTimeoutImpl: setTimeoutImpl as never,
+        clearTimeoutImpl: clearTimeoutImpl as never
+      }
+    );
+
+    timeoutCallback?.();
+
+    await expect(resultPromise).resolves.toMatchObject({
+      exitCode: 124,
+      durationMs: 60,
+      stdout: '',
+      stderr: expect.stringContaining('design gate step timed out after 5000ms')
+    });
+    expect(child.kill).toHaveBeenCalledWith('SIGKILL');
   });
 });

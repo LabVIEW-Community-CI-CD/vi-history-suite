@@ -839,8 +839,15 @@
   comparison panel status states which evidence surface was actually displayed
 - `TEST-UNIT-234`: verify retained compare reopening fails closed with
   `invalid-retained-comparison-report` when the archived source record is
-  corrupt or violates the governed storage contract, and that `Diff prev`
-  surfaces stable `Refresh compare` guidance instead of raw archive errors
+  corrupt, mismatched to the governed storage contract, or no longer points to
+  a usable retained packet, and that `Diff prev` surfaces stable `Refresh
+  compare` guidance instead of raw archive errors
+- `TEST-UNIT-235`: verify the design gate resolves a mounted-Windows
+  `run_assurance.py` candidate into a repo-local mirror under
+  `.cache/design-gate/assurance-skill/repo-standards-review/` before running
+  standards assurance
+- `TEST-UNIT-236`: verify a timed-out standards-assurance gate step exits with
+  code `124`, retains a timeout message, and does not hang the design gate
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed product, wiki, and assurance-skill repos with authority roles,
   expected remotes, and primary entrypoints

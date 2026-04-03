@@ -4,6 +4,10 @@ import * as path from 'node:path';
 
 import {
   buildDesignGatePlan,
+  defaultAssuranceScriptPath,
+  defaultAssuranceScriptPathCandidates,
+  designGateAssuranceMirrorRoot,
+  designGateAssuranceMirrorScriptPath,
   designGateCoverageSummaryPath,
   designGateDevelopmentQueuePath,
   DesignGateReport,
@@ -13,6 +17,7 @@ import {
   designGateReportMarkdownPath,
   extractAssuranceGateSummary,
   extractWeakestCoverageFocus,
+  isMountedWindowsPath,
   renderDesignGateMarkdown,
   selectNextDevelopmentTranche
 } from './designGate';
@@ -23,6 +28,11 @@ export interface DesignGateRunnerDeps {
   readFile?: (filePath: string, encoding: BufferEncoding) => Promise<string>;
   mkdir?: (directoryPath: string, options?: { recursive?: boolean }) => Promise<void>;
   writeFile?: (filePath: string, contents: string) => Promise<void>;
+  access?: typeof fs.access;
+  realpath?: typeof fs.realpath;
+  copyDirectory?: typeof fs.cp;
+  assuranceScriptCandidates?: string[];
+  env?: NodeJS.ProcessEnv;
 }
 
 export interface DesignGateStepSpawnDeps {
@@ -30,6 +40,9 @@ export interface DesignGateStepSpawnDeps {
   stdout?: Pick<NodeJS.WriteStream, 'write'>;
   stderr?: Pick<NodeJS.WriteStream, 'write'>;
   nowMs?: () => number;
+  timeoutMs?: number;
+  setTimeoutImpl?: typeof setTimeout;
+  clearTimeoutImpl?: typeof clearTimeout;
 }
 
 export type DesignGateStepExecutor = (
@@ -44,20 +57,19 @@ export async function runDesignGate(
   repoRoot: string,
   deps: DesignGateRunnerDeps = {}
 ): Promise<DesignGateReport> {
-  const steps = buildDesignGatePlan(repoRoot);
+  const assuranceScriptPath = await resolveDesignGateAssuranceScriptPath(repoRoot, deps);
+  const steps = buildDesignGatePlan(repoRoot, assuranceScriptPath);
   const results: DesignGateStepResult[] = [];
   let status: 'pass' | 'fail' = 'pass';
   let assuranceGateSummary: string | undefined;
 
   for (const step of steps) {
     const stepIndex = results.length;
-    const result = await (deps.runStep ?? spawnDesignGateStep)(
-      step.command,
-      step.args,
-      repoRoot,
-      step.id,
-      step.title
-    );
+    const result = deps.runStep
+      ? await deps.runStep(step.command, step.args, repoRoot, step.id, step.title)
+      : await spawnDesignGateStep(step.command, step.args, repoRoot, step.id, step.title, {
+          timeoutMs: step.timeoutMs
+        });
     results.push(result);
 
     if (step.id === 'standards-assurance') {
@@ -96,6 +108,54 @@ export async function runDesignGate(
   );
   await persistDesignGateReport(repoRoot, report, deps.mkdir, deps.writeFile);
   return report;
+}
+
+export async function resolveDesignGateAssuranceScriptPath(
+  repoRoot: string,
+  deps: Pick<
+    DesignGateRunnerDeps,
+    'access' | 'realpath' | 'mkdir' | 'copyDirectory' | 'assuranceScriptCandidates' | 'env'
+  > = {}
+): Promise<string> {
+  const access = deps.access ?? fs.access;
+  const realpath = deps.realpath ?? fs.realpath;
+  const mkdir = deps.mkdir ?? defaultMkdir;
+  const copyDirectory = deps.copyDirectory ?? fs.cp;
+  const env = deps.env ?? process.env;
+  const explicitScriptPath = env.VI_HISTORY_SUITE_ASSURANCE_SCRIPT?.trim();
+  const mirrorScriptPath = designGateAssuranceMirrorScriptPath(repoRoot);
+
+  if (explicitScriptPath && (await pathIsAccessible(explicitScriptPath, access))) {
+    return explicitScriptPath;
+  }
+
+  if (await pathIsAccessible(mirrorScriptPath, access)) {
+    return mirrorScriptPath;
+  }
+
+  const candidates =
+    deps.assuranceScriptCandidates ??
+    defaultAssuranceScriptPathCandidates(undefined, env);
+  for (const candidate of candidates) {
+    if (!(await pathIsAccessible(candidate, access))) {
+      continue;
+    }
+
+    const resolvedCandidate = await realpath(candidate).catch(() => path.resolve(candidate));
+    if (!isMountedWindowsPath(resolvedCandidate)) {
+      return resolvedCandidate;
+    }
+
+    const mirrorRoot = designGateAssuranceMirrorRoot(repoRoot);
+    await mkdir(path.dirname(mirrorRoot), { recursive: true });
+    await copyDirectory(path.dirname(path.dirname(resolvedCandidate)), mirrorRoot, {
+      recursive: true,
+      force: true
+    });
+    return mirrorScriptPath;
+  }
+
+  return explicitScriptPath || candidates[0] || defaultAssuranceScriptPath();
 }
 
 async function buildDesignGateReport(
@@ -225,6 +285,8 @@ export async function spawnDesignGateStep(
 ): Promise<DesignGateStepResult> {
   return new Promise((resolve) => {
     const nowMs = deps.nowMs ?? defaultNowMs;
+    const setTimeoutImpl = deps.setTimeoutImpl ?? setTimeout;
+    const clearTimeoutImpl = deps.clearTimeoutImpl ?? clearTimeout;
     const startedAt = nowMs();
     const child = (deps.spawnImpl ?? spawn)(command, args, {
       cwd,
@@ -237,6 +299,30 @@ export async function spawnDesignGateStep(
     let stdout = '';
     let stderr = '';
     let settled = false;
+    const timeoutHandle =
+      typeof deps.timeoutMs === 'number' && deps.timeoutMs > 0
+        ? setTimeoutImpl(() => {
+            if (settled) {
+              return;
+            }
+
+            settled = true;
+            child.kill?.('SIGKILL');
+            const timeoutSummary = `design gate step timed out after ${deps.timeoutMs}ms\n`;
+            stderr += timeoutSummary;
+            stderrWriter.write(timeoutSummary);
+            resolve({
+              id,
+              title,
+              command,
+              args,
+              exitCode: 124,
+              durationMs: nowMs() - startedAt,
+              stdout,
+              stderr
+            });
+          }, deps.timeoutMs)
+        : undefined;
 
     child.stdout?.on('data', (chunk: Buffer | string) => {
       const text = String(chunk);
@@ -256,6 +342,9 @@ export async function spawnDesignGateStep(
       }
 
       settled = true;
+      if (timeoutHandle) {
+        clearTimeoutImpl(timeoutHandle);
+      }
       stderr += `${String(error)}\n`;
       resolve({
         id,
@@ -275,6 +364,9 @@ export async function spawnDesignGateStep(
       }
 
       settled = true;
+      if (timeoutHandle) {
+        clearTimeoutImpl(timeoutHandle);
+      }
       resolve({
         id,
         title,
@@ -287,6 +379,18 @@ export async function spawnDesignGateStep(
       });
     });
   });
+}
+
+async function pathIsAccessible(
+  targetPath: string,
+  access: DesignGateRunnerDeps['access'] = fs.access
+): Promise<boolean> {
+  try {
+    await access(targetPath);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function defaultNow(): string {

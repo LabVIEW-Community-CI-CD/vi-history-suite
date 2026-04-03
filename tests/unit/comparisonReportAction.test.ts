@@ -292,6 +292,69 @@ describe('comparisonReportAction', () => {
     expect(createWebviewPanelMock).not.toHaveBeenCalled();
   });
 
+  it('returns a stable invalid-retained result when the archived retained comparison packet no longer exists', async () => {
+    const archivePlan = buildComparisonReportArchivePlanFromSelection({
+      storageRoot: '/workspace/.storage',
+      repositoryRoot: '/workspace/repo',
+      relativePath: 'foo.vi',
+      reportType: 'diff',
+      selectedHash: 'abcdef1234567890',
+      baseHash: '1111111122222222',
+      reportFilename: 'diff-report-foo.vi.html',
+      packetFilename: 'report-packet.html',
+      metadataFilename: 'report-metadata.json'
+    });
+    const pathExists = vi.fn().mockImplementation(async (targetPath: string) =>
+      targetPath === archivePlan.sourceRecordFilePath
+    );
+    const readFile = vi.fn().mockResolvedValue(
+      JSON.stringify({
+        archivePlan,
+        packetRecord: {
+          selectedHash: 'abcdef1234567890',
+          baseHash: '1111111122222222'
+        }
+      })
+    );
+    const action = createOpenRetainedComparisonReportAction(
+      {
+        storageUri: createMockUri('/workspace/.storage')
+      } as never,
+      {
+        pathExists,
+        readFile: readFile as never
+      }
+    );
+
+    await expect(
+      action({
+        model: {
+          repositoryName: 'repo',
+          repositoryRoot: '/workspace/repo',
+          relativePath: 'foo.vi',
+          signature: 'LVIN',
+          eligible: true,
+          commits: [
+            {
+              hash: 'abcdef1234567890',
+              authorDate: '2026-04-02T00:00:00Z',
+              authorName: 'A User',
+              subject: 'Update VI',
+              previousHash: '1111111122222222'
+            }
+          ]
+        },
+        selectedHash: 'abcdef1234567890'
+      })
+    ).resolves.toEqual({
+      outcome: 'invalid-retained-comparison-report'
+    });
+
+    expect(pathExists).toHaveBeenCalledWith(archivePlan.sourceRecordFilePath);
+    expect(pathExists).toHaveBeenCalledWith(archivePlan.packetFilePath);
+    expect(createWebviewPanelMock).not.toHaveBeenCalled();
+  });
+
   it('returns a stable cancelled result when retained comparison opening is cancelled after the source record is loaded', async () => {
     const token = {
       isCancellationRequested: false

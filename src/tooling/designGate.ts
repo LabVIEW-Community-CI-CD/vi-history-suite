@@ -1,3 +1,4 @@
+import * as os from 'node:os';
 import * as path from 'node:path';
 
 export interface DesignGateStepSpec {
@@ -5,6 +6,7 @@ export interface DesignGateStepSpec {
   title: string;
   command: string;
   args: string[];
+  timeoutMs?: number;
 }
 
 export interface DesignGateStepResult {
@@ -67,7 +69,48 @@ export function assertCompletedPassingDesignGateReport(
 }
 
 export function defaultAssuranceScriptPath(): string {
-  return '/mnt/c/Users/sveld/.codex/skills/repo-standards-review/scripts/run_assurance.py';
+  return defaultAssuranceScriptPathCandidates()[0];
+}
+
+export function defaultAssuranceScriptPathCandidates(
+  homeDirectory = os.homedir(),
+  env: NodeJS.ProcessEnv = process.env
+): string[] {
+  const candidates = [
+    env.VI_HISTORY_SUITE_ASSURANCE_SCRIPT?.trim(),
+    env.CODEX_HOME?.trim()
+      ? path.join(
+          env.CODEX_HOME.trim(),
+          'skills',
+          'repo-standards-review',
+          'scripts',
+          'run_assurance.py'
+        )
+      : undefined,
+    path.join(
+      homeDirectory,
+      '.codex',
+      'skills',
+      'repo-standards-review',
+      'scripts',
+      'run_assurance.py'
+    ),
+    '/mnt/c/Users/sveld/.codex/skills/repo-standards-review/scripts/run_assurance.py'
+  ].filter((candidate): candidate is string => Boolean(candidate && candidate.length > 0));
+
+  return [...new Set(candidates)];
+}
+
+export function designGateAssuranceMirrorRoot(repoRoot: string): string {
+  return path.join(designGateReportDirectory(repoRoot), 'assurance-skill', 'repo-standards-review');
+}
+
+export function designGateAssuranceMirrorScriptPath(repoRoot: string): string {
+  return path.join(designGateAssuranceMirrorRoot(repoRoot), 'scripts', 'run_assurance.py');
+}
+
+export function isMountedWindowsPath(targetPath: string): boolean {
+  return path.resolve(targetPath).startsWith('/mnt/');
 }
 
 export function buildDesignGatePlan(
@@ -97,7 +140,8 @@ export function buildDesignGatePlan(
       id: 'standards-assurance',
       title: 'Standards assurance',
       command: 'python3',
-      args: [assuranceScriptPath, repoRoot, '--profile', 'quick-triage']
+      args: [assuranceScriptPath, repoRoot, '--profile', 'quick-triage'],
+      timeoutMs: 180000
     }
   ];
 }

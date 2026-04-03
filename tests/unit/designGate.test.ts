@@ -3,12 +3,16 @@ import { describe, expect, it } from 'vitest';
 import {
   assertCompletedPassingDesignGateReport,
   buildDesignGatePlan,
+  defaultAssuranceScriptPathCandidates,
+  designGateAssuranceMirrorScriptPath,
+  designGateAssuranceMirrorRoot,
   designGateCoverageSummaryPath,
   designGateDevelopmentQueuePath,
   designGateReportJsonPath,
   designGateReportMarkdownPath,
   extractWeakestCoverageFocus,
   extractAssuranceGateSummary,
+  isMountedWindowsPath,
   renderDesignGateMarkdown,
   selectNextDevelopmentTranche
 } from '../../src/tooling/designGate';
@@ -40,9 +44,35 @@ describe('designGate tooling', () => {
         id: 'standards-assurance',
         title: 'Standards assurance',
         command: 'python3',
-        args: ['/tmp/run_assurance.py', '/tmp/vi-history-suite', '--profile', 'quick-triage']
+        args: ['/tmp/run_assurance.py', '/tmp/vi-history-suite', '--profile', 'quick-triage'],
+        timeoutMs: 180000
       }
     ]);
+  });
+
+  it('prefers explicit and Linux-local assurance script candidates before the Windows-mounted fallback', () => {
+    expect(
+      defaultAssuranceScriptPathCandidates('/home/tester', {
+        VI_HISTORY_SUITE_ASSURANCE_SCRIPT: '/opt/assurance/run_assurance.py',
+        CODEX_HOME: '/workspace/codex'
+      })
+    ).toEqual([
+      '/opt/assurance/run_assurance.py',
+      '/workspace/codex/skills/repo-standards-review/scripts/run_assurance.py',
+      '/home/tester/.codex/skills/repo-standards-review/scripts/run_assurance.py',
+      '/mnt/c/Users/sveld/.codex/skills/repo-standards-review/scripts/run_assurance.py'
+    ]);
+  });
+
+  it('derives deterministic repo-local mirror paths for the assurance skill and detects mounted Windows paths', () => {
+    expect(designGateAssuranceMirrorRoot('/tmp/vi-history-suite')).toBe(
+      '/tmp/vi-history-suite/.cache/design-gate/assurance-skill/repo-standards-review'
+    );
+    expect(designGateAssuranceMirrorScriptPath('/tmp/vi-history-suite')).toBe(
+      '/tmp/vi-history-suite/.cache/design-gate/assurance-skill/repo-standards-review/scripts/run_assurance.py'
+    );
+    expect(isMountedWindowsPath('/mnt/c/Users/sveld/.codex/skills/repo-standards-review/scripts/run_assurance.py')).toBe(true);
+    expect(isMountedWindowsPath('/home/sveld/code/tools/repo-standards-review/scripts/run_assurance.py')).toBe(false);
   });
 
   it('extracts the retained assurance gate summary from standards output', () => {

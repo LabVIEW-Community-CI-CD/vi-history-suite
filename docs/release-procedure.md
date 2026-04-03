@@ -26,6 +26,10 @@
    - Either wait for `npm run design:gate` to exit `0`, or run
      `npm run design:gate:assert-complete` against the retained latest report
      before claiming the gate is green.
+   - If the available assurance skill path resolves under a mounted Windows
+     path, the design gate mirrors it under
+     `.cache/design-gate/assurance-skill/repo-standards-review/` before
+     executing standards assurance.
 2. Ensure `package.json` matches the release tag version exactly.
 3. If the published wiki set changed in the release tranche, refresh bundled
    user docs with `npm run docs:bundle` before packaging.
@@ -53,6 +57,7 @@
 - `release-evidence/release-manifest.json`
 - `docs-workbench-evidence/docs-workbench-manifest.json`
 - `resources/bundled-docs/manifest.json`
+- `.cache/design-gate/assurance-skill/repo-standards-review/`
 
 ## Current Limitation
 

@@ -205,12 +205,6 @@ export function createOpenRetainedComparisonReportAction(
         cancellationStage: 'before-retained-comparison-open'
       };
     }
-    if (request.cancellationToken?.isCancellationRequested) {
-      return {
-        outcome: 'cancelled',
-        cancellationStage: 'before-retained-comparison-open'
-      };
-    }
 
     return openPersistedComparisonReportPanel(
       {
