@@ -15,6 +15,7 @@ import {
 import {
   buildAndPersistMultiReportDashboard,
   BuildMultiReportDashboardResult,
+  MultiReportDashboardPreparationSummary,
   renderMultiReportDashboardHtml
 } from './multiReportDashboard';
 import { ComparisonReportActionResult } from '../reporting/comparisonReportAction';
@@ -125,7 +126,36 @@ export function createMultiReportDashboardAction(
     let pairConcentrationIncrementTotal =
       DEFAULT_DASHBOARD_PAIR_CONCENTRATION_INCREMENT_TOTAL;
     let etaAccuracyRecord: MultiReportDashboardEtaAccuracyRecord | undefined;
+    let preparationSummary: MultiReportDashboardPreparationSummary = {
+      mode: 'retained-evidence-complete',
+      pairsNeedingEvidenceCount: pairsNeedingEvidence.length,
+      preparedPairCount: 0
+    };
+    if (pairsNeedingEvidence.length === 0) {
+      await request.reportProgress?.({
+        message:
+          'All adjacent retained pairs already have retained comparison evidence. Concentrating retained dashboard metadata only.'
+      });
+    } else if (ensureComparisonReportEvidence) {
+      await request.reportProgress?.({
+        message: `Preparing ${pairsNeedingEvidence.length} dashboard pair(s) that still need retained comparison evidence.`
+      });
+    } else {
+      preparationSummary = {
+        mode: 'backfill-unavailable',
+        pairsNeedingEvidenceCount: pairsNeedingEvidence.length,
+        preparedPairCount: 0
+      };
+      await request.reportProgress?.({
+        message: `This build cannot refresh ${pairsNeedingEvidence.length} dashboard pair(s) from Open dashboard. Concentrating the currently retained archive set only.`
+      });
+    }
     if (pairsNeedingEvidence.length > 0 && ensureComparisonReportEvidence) {
+      preparationSummary = {
+        mode: 'backfilled-before-build',
+        pairsNeedingEvidenceCount: pairsNeedingEvidence.length,
+        preparedPairCount: 0
+      };
       pairConcentrationIncrementTotal = DASHBOARD_PAIR_CONCENTRATION_INCREMENT_TOTAL;
       const pairBudget =
         pairsNeedingEvidence.length > 0
@@ -208,6 +238,7 @@ export function createMultiReportDashboardAction(
           ),
           increment: remainingPairIncrement > 0 ? remainingPairIncrement : undefined
         });
+        preparationSummary.preparedPairCount = index + 1;
       }
       etaAccuracyRecord = buildDashboardPairEtaAccuracyRecord(
         pairsNeedingEvidence.length,
@@ -220,23 +251,24 @@ export function createMultiReportDashboardAction(
       pairConcentrationIncrementTotal,
       assetIncrementTotal: DASHBOARD_ASSET_INCREMENT_TOTAL
     });
-    if (etaAccuracyRecord) {
-      const dashboardDirectoryExists = await pathExists(
-        dashboard.record.artifactPlan.dashboardDirectory
+    const dashboardDirectoryExists = await pathExists(
+      dashboard.record.artifactPlan.dashboardDirectory
+    );
+    if (dashboardDirectoryExists) {
+      await writeFile(
+        dashboard.htmlFilePath,
+        renderMultiReportDashboardHtml(dashboard.record, {
+          etaAccuracyRecord,
+          preparationSummary
+        }),
+        'utf8'
       );
-      if (dashboardDirectoryExists) {
+      if (etaAccuracyRecord) {
         const etaAccuracyFilePath = path.join(
           dashboard.record.artifactPlan.dashboardDirectory,
           DASHBOARD_PAIR_ETA_ACCURACY_FILENAME
         );
         await writeFile(etaAccuracyFilePath, JSON.stringify(etaAccuracyRecord, null, 2), 'utf8');
-        await writeFile(
-          dashboard.htmlFilePath,
-          renderMultiReportDashboardHtml(dashboard.record, {
-            etaAccuracyRecord
-          }),
-          'utf8'
-        );
       }
     }
     if (request.cancellationToken?.isCancellationRequested) {
@@ -278,6 +310,7 @@ export function createMultiReportDashboardAction(
       }
     );
     const renderedHtml = renderMultiReportDashboardHtml(dashboard.record, {
+      preparationSummary,
       etaAccuracyRecord,
       assetUriResolver: (absolutePath) =>
         panel.webview.asWebviewUri(uriFile(absolutePath)).toString()

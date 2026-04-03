@@ -818,6 +818,10 @@
 - `TEST-UNIT-228`: verify the history panel renders a stable installed
   action-surface availability packet for compare generation, retained compare
   opening, dashboard review, decision records, and documentation
+- `TEST-UNIT-229`: verify the dashboard action reports whether the current
+  refresh is retained-complete, backfilling missing pair evidence, or
+  concentrating retained archives only because pair refresh is unavailable, and
+  that the rendered dashboard retains the same preparation summary
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed product, wiki, and assurance-skill repos with authority roles,
   expected remotes, and primary entrypoints

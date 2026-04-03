@@ -73,6 +73,11 @@ requiring raw-log inspection.
   compare/dashboard/docs/decision controls when the current build does not wire
   those surfaces and renders an explicit installed action-surface availability
   packet
+- dashboard refresh progress and dashboard HTML now both retain whether the
+  current refresh reused already-retained adjacent-pair evidence, refreshed
+  missing pairs before concentration, or concentrated only the currently
+  retained archive set because dashboard-driven pair refresh was unavailable in
+  the current build
 - governed dashboard artifact action validation for malformed messages,
   storage-root targets, and kind/path mismatches
 - cancellable eligibility refresh that preserves the previous eligible-path

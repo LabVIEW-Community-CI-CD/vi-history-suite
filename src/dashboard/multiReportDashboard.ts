@@ -191,6 +191,15 @@ export interface BuildMultiReportDashboardResult {
   htmlFilePath: string;
 }
 
+export interface MultiReportDashboardPreparationSummary {
+  mode:
+    | 'retained-evidence-complete'
+    | 'backfilled-before-build'
+    | 'backfill-unavailable';
+  pairsNeedingEvidenceCount: number;
+  preparedPairCount: number;
+}
+
 export async function buildAndPersistMultiReportDashboard(
   storageRoot: string,
   model: ViHistoryViewModel,
@@ -295,6 +304,7 @@ export function renderMultiReportDashboardHtml(
   options: {
     assetUriResolver?: (absolutePath: string, fallbackRelativePath: string) => string;
     etaAccuracyRecord?: MultiReportDashboardEtaAccuracyRecord;
+    preparationSummary?: MultiReportDashboardPreparationSummary;
   } = {}
 ): string {
   const representedPairCount =
@@ -364,6 +374,12 @@ export function renderMultiReportDashboardHtml(
             String(options.etaAccuracyRecord.preparedPairCount)
           )} pair(s) were prepared in the current session. Historical or already retained pairs are excluded.
         </div>`
+    : '';
+  const preparationSummaryHtml = options.preparationSummary
+    ? `<div class="note" data-testid="dashboard-preparation-summary">
+        <strong>Preparation this refresh:</strong>
+        ${escapeHtml(renderPreparationSummary(options.preparationSummary))}
+      </div>`
     : '';
   const overviewCaptionConcentrationHtml = overviewCaptionSummaries.length
     ? `<ul data-testid="dashboard-overview-caption-concentration-list">${overviewCaptionSummaries
@@ -710,6 +726,7 @@ export function renderMultiReportDashboardHtml(
         <strong>Chronology-first pair metadata ledger:</strong> every adjacent pair is listed once here with its retained NI comparison-report metadata so expert review can compare the whole window before dropping into the detailed per-pair sections below.
       </div>
       ${pairLedgerHtml}
+      ${preparationSummaryHtml}
       ${etaAccuracySummaryHtml}
       <div class="note" data-testid="dashboard-compared-path-concentration">
         <strong>Compared VI path concentration:</strong>
@@ -1302,4 +1319,18 @@ function formatDurationMinutesSeconds(totalSeconds: number): string {
 function formatSignedDurationMinutesSeconds(totalSeconds: number): string {
   const sign = totalSeconds < 0 ? '-' : '+';
   return `${sign}${formatDurationMinutesSeconds(Math.abs(totalSeconds))}`;
+}
+
+function renderPreparationSummary(
+  summary: MultiReportDashboardPreparationSummary
+): string {
+  if (summary.mode === 'retained-evidence-complete') {
+    return 'All adjacent retained pairs already had retained comparison evidence before dashboard concentration began.';
+  }
+
+  if (summary.mode === 'backfilled-before-build') {
+    return `${summary.preparedPairCount} adjacent pair(s) were refreshed for retained comparison evidence before this dashboard was concentrated.`;
+  }
+
+  return `${summary.pairsNeedingEvidenceCount} adjacent pair(s) still lacked retained comparison evidence, and this build could not refresh them from Open dashboard. This dashboard concentrates the currently retained archive set only.`;
 }

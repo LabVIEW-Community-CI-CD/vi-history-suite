@@ -430,6 +430,20 @@ describe('multiReportDashboardAction', () => {
 
   it('reports bounded progress stages while building the dashboard', async () => {
     const progressUpdates: Array<{ message: string; increment?: number }> = [];
+    const readArchivedComparisonReportSourceRecord = vi.fn().mockResolvedValue({
+      archivePlan: {
+        reportFilePath:
+          '/workspace/.storage/report-history/repo/file/pairs/pair-1/diff-report-foo.vi.html'
+      },
+      packetRecord: {
+        runtimeExecution: {
+          reportExists: true
+        }
+      }
+    });
+    const pathExists = vi.fn(async (targetPath: string) =>
+      targetPath.endsWith('diff-report-foo.vi.html')
+    );
     const buildDashboard = vi.fn().mockImplementation(async (_storageRoot, _model, options) => {
       await options?.reportProgress?.({
         message:
@@ -500,7 +514,9 @@ describe('multiReportDashboardAction', () => {
         storageUri: createMockUri('/workspace/.storage')
       } as never,
       {
-        buildDashboard
+        buildDashboard,
+        readArchivedComparisonReportSourceRecord,
+        pathExists
       }
     );
 
@@ -546,6 +562,10 @@ describe('multiReportDashboardAction', () => {
       },
       {
         message:
+          'All adjacent retained pairs already have retained comparison evidence. Concentrating retained dashboard metadata only.'
+      },
+      {
+        message:
           'Concentrating retained comparison-report metadata for pair 1/2: abcdef12 vs 11111111.',
         increment: 35
       },
@@ -563,6 +583,13 @@ describe('multiReportDashboardAction', () => {
         increment: 15
       }
     ]);
+    const openedPanel = createWebviewPanelMock.mock.results[0]?.value as ReturnType<
+      typeof createMockPanel
+    >;
+    expect(openedPanel.webview.html).toContain('data-testid="dashboard-preparation-summary"');
+    expect(openedPanel.webview.html).toContain(
+      'All adjacent retained pairs already had retained comparison evidence before dashboard concentration began.'
+    );
   });
 
   it('backfills missing or stale pair evidence before concentrating the dashboard', async () => {
@@ -746,6 +773,13 @@ describe('multiReportDashboardAction', () => {
     expect(
       progressUpdates.some((update) =>
         update.message.includes(
+          'Preparing 2 dashboard pair(s) that still need retained comparison evidence.'
+        )
+      )
+    ).toBe(true);
+    expect(
+      progressUpdates.some((update) =>
+        update.message.includes(
           'Prepared dashboard pair 1/2: abcdef12 vs 11111111 (missing archive); retained generated comparison metadata is ready.'
         )
       )
@@ -760,6 +794,10 @@ describe('multiReportDashboardAction', () => {
     const openedPanel = createWebviewPanelMock.mock.results[0]?.value as ReturnType<
       typeof createMockPanel
     >;
+    expect(openedPanel.webview.html).toContain('data-testid="dashboard-preparation-summary"');
+    expect(openedPanel.webview.html).toContain(
+      '2 adjacent pair(s) were refreshed for retained comparison evidence before this dashboard was concentrated.'
+    );
     expect(openedPanel.webview.html).toContain('data-testid="dashboard-eta-accuracy-summary"');
     expect(openedPanel.webview.html).toContain('measured=1/2 prepared pair(s)');
     expect(openedPanel.webview.html).toContain('mean-abs-error=0m 1s');
@@ -792,6 +830,147 @@ describe('multiReportDashboardAction', () => {
         signedErrorSeconds: 1
       })
     ]);
+  });
+
+  it('surfaces explicit progress and dashboard guidance when pair refresh is unavailable in this build', async () => {
+    const progressUpdates: Array<{ message: string; increment?: number }> = [];
+    const readArchivedComparisonReportSourceRecord = vi.fn().mockResolvedValue(undefined);
+    const buildDashboard = vi.fn().mockImplementation(async (_storageRoot, _model, options) => {
+      await options?.reportProgress?.({
+        message:
+          'Concentrating retained comparison-report metadata for pair 1/2: abcdef12 vs 11111111.',
+        increment: 35
+      });
+      await options?.reportProgress?.({
+        message:
+          'Concentrating retained comparison-report metadata for pair 2/2: 11111111 vs 33333333.',
+        increment: 35
+      });
+      await options?.reportProgress?.({
+        message: 'Finalizing concentrated dashboard assets.',
+        increment: 10
+      });
+      return {
+        record: {
+          generatedAt: '2026-04-03T00:00:00.000Z',
+          repositoryName: 'repo',
+          repositoryRoot: '/workspace/repo',
+          relativePath: 'foo.vi',
+          signature: 'LVIN',
+          artifactPlan: {
+            repoId: 'repoid123456',
+            fileId: 'fileid123456',
+            windowId: 'windowid12345',
+            dashboardDirectory: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345',
+            jsonFilePath: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.json',
+            htmlFilePath: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.html',
+            assetsDirectory: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/assets'
+          },
+          commitWindow: {
+            commitCount: 3,
+            pairCount: 2,
+            newestHash: 'abcdef1234567890',
+            oldestHash: '3333333344444444'
+          },
+          summary: {
+            representedPairCount: 2,
+            windowCompletenessState: 'incomplete-missing-archives',
+            archivedPairCount: 0,
+            missingPairCount: 2,
+            missingPairIds: ['pair-1', 'pair-2'],
+            generatedReportCount: 0,
+            reportMetadataPairCount: 0,
+            failedPairCount: 0,
+            failedPairIds: [],
+            blockedPairCount: 0,
+            blockedPairIds: [],
+            overviewSectionCount: 0,
+            overviewImageCount: 0,
+            includedAttributeCount: 0,
+            detailSectionCount: 0,
+            detailItemCount: 0,
+            pairWithOverviewImageCount: 0,
+            pairWithDetailCount: 0,
+            overviewCaptionSummaries: [],
+            includedAttributeSummaries: [],
+            detailHeadingSummaries: [],
+            evidenceStateSummaries: [],
+            providerSummaries: []
+          },
+          entries: []
+        },
+        jsonFilePath: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.json',
+        htmlFilePath: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.html'
+      };
+    });
+    const action = createMultiReportDashboardAction(
+      {
+        storageUri: createMockUri('/workspace/.storage')
+      } as never,
+      {
+        buildDashboard,
+        readArchivedComparisonReportSourceRecord
+      }
+    );
+
+    await action({
+      model: {
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace/repo',
+        relativePath: 'foo.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Newest revision',
+            previousHash: '1111111122222222'
+          },
+          {
+            hash: '1111111122222222',
+            authorDate: '2026-04-01T00:00:00Z',
+            authorName: 'B User',
+            subject: 'Middle revision',
+            previousHash: '3333333344444444'
+          },
+          {
+            hash: '3333333344444444',
+            authorDate: '2026-03-31T00:00:00Z',
+            authorName: 'C User',
+            subject: 'Initial revision'
+          }
+        ]
+      },
+      reportProgress: (update) => {
+        progressUpdates.push(update);
+      }
+    });
+
+    expect(progressUpdates).toEqual(
+      expect.arrayContaining([
+        {
+          message: 'Preparing VI Review Dashboard commit window.',
+          increment: 5
+        },
+        {
+          message:
+            'This build cannot refresh 2 dashboard pair(s) from Open dashboard. Concentrating the currently retained archive set only.'
+        },
+        {
+          message: 'Opening VI Review Dashboard.',
+          increment: 15
+        }
+      ])
+    );
+    const openedPanel = createWebviewPanelMock.mock.results[0]?.value as ReturnType<
+      typeof createMockPanel
+    >;
+    expect(openedPanel.webview.html).toContain('data-testid="dashboard-preparation-summary"');
+    expect(openedPanel.webview.html).toContain(
+      '2 adjacent pair(s) still lacked retained comparison evidence, and this build could not refresh them from Open dashboard. This dashboard concentrates the currently retained archive set only.'
+    );
   });
 
   it('fails closed when dashboard pair evidence generation is cancelled before concentration', async () => {
