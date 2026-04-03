@@ -278,6 +278,9 @@
 - `TEST-UNIT-081`: prove the runtime executor distinguishes ignored
   `-LabVIEWPath` diagnostics that still match the intended LabVIEW executable
   from diagnostics that diverge to a different installed LabVIEW
+- `TEST-UNIT-082`: prove the runtime executor classifies a log-only LabVIEW CLI
+  nonzero exit with no generated report and empty stderr as a dedicated
+  failure reason with a retained explanatory note
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

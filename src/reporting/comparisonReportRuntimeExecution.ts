@@ -227,18 +227,25 @@ async function runHostNativeExecution(
       }
     );
     const succeeded = commandResult.exitCode === 0 && reportExists;
+    const failureClassification = classifyRuntimeFailure({
+      engine: record.runtimeSelection.engine,
+      exitCode: commandResult.exitCode,
+      reportExists,
+      stdout: commandResult.stdout,
+      stderr: commandResult.stderr
+    });
+    const diagnosticNotes = mergeDiagnosticNotes(
+      diagnostics.notes,
+      failureClassification.notes
+    );
 
     return {
       state: succeeded ? 'succeeded' : 'failed',
       attempted: true,
       reportExists,
-      failureReason: succeeded
-        ? undefined
-        : commandResult.exitCode !== 0
-          ? 'command-exited-nonzero'
-          : 'report-file-not-generated',
+      failureReason: succeeded ? undefined : failureClassification.reason,
       diagnosticReason: diagnostics.reason,
-      diagnosticNotes: diagnostics.notes,
+      diagnosticNotes,
       diagnosticLogSourcePath: diagnostics.sourcePath,
       diagnosticLogArtifactPath: diagnostics.artifactPath,
       executable: executionContext.commandPlan.executable,
@@ -669,6 +676,76 @@ export function classifyLabviewCliDiagnosticText(
   return {
     notes
   };
+}
+
+function classifyRuntimeFailure(options: {
+  engine?: 'labview-cli' | 'lvcompare';
+  exitCode: number;
+  reportExists: boolean;
+  stdout: string;
+  stderr: string;
+}): {
+  reason: string;
+  notes: string[];
+} {
+  if (options.exitCode === 0 && !options.reportExists) {
+    return {
+      reason: 'report-file-not-generated',
+      notes: []
+    };
+  }
+
+  if (
+    options.exitCode !== 0 &&
+    !options.reportExists &&
+    options.engine === 'labview-cli' &&
+    options.stderr.trim().length === 0 &&
+    isLabviewCliLogOnlyStdout(options.stdout)
+  ) {
+    return {
+      reason: 'labview-cli-exited-nonzero-log-only-no-report',
+      notes: [
+        'LabVIEW CLI exited nonzero without stderr and without generating a report; stdout only advertised the diagnostic log path.'
+      ]
+    };
+  }
+
+  if (options.exitCode !== 0) {
+    return {
+      reason: 'command-exited-nonzero',
+      notes: []
+    };
+  }
+
+  return {
+    reason: 'report-file-not-generated',
+    notes: []
+  };
+}
+
+function isLabviewCliLogOnlyStdout(stdout: string): boolean {
+  const lines = stdout
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+
+  return (
+    lines.length === 1 &&
+    /^LabVIEWCLI started logging in file:\s*\S+/i.test(lines[0])
+  );
+}
+
+function mergeDiagnosticNotes(...noteGroups: Array<string[] | undefined>): string[] {
+  const merged: string[] = [];
+  for (const noteGroup of noteGroups) {
+    for (const note of noteGroup ?? []) {
+      if (!merged.includes(note)) {
+        merged.push(note);
+      }
+    }
+  }
+
+  return merged;
 }
 
 function extractCommandOptionValue(args: string[], optionName: string): string | undefined {

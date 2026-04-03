@@ -243,6 +243,51 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(result.record.runtimeExecution.reportExists).toBe(true);
   });
 
+  it('classifies a log-only nonzero LabVIEW CLI failure when no report is generated', async () => {
+    const result = await executeComparisonReport(
+      {
+        record: createReadyRecord(),
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        readFile: vi.fn().mockResolvedValue(
+          '"LabVIEWPath" command line argument is not passed. Using last used LabVIEW: "C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe"\n'
+        ) as never,
+        pathExists: vi.fn(async (filePath: string) =>
+          filePath === 'C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_999.log'
+        ),
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 1,
+          stdout:
+            'LabVIEWCLI started logging in file:  C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_999.log\r\n',
+          stderr: ''
+        }),
+        nowIso: vi
+          .fn()
+          .mockReturnValueOnce('2026-04-02T01:00:00.000Z')
+          .mockReturnValueOnce('2026-04-02T01:00:02.000Z'),
+        nowMs: vi.fn().mockReturnValueOnce(1000).mockReturnValueOnce(3000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32'
+      }
+    );
+
+    expect(result.record.runtimeExecution.failureReason).toBe(
+      'labview-cli-exited-nonzero-log-only-no-report'
+    );
+    expect(result.record.runtimeExecution.reportExists).toBe(false);
+    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+      'LabVIEW CLI exited nonzero without stderr and without generating a report; stdout only advertised the diagnostic log path.'
+    );
+  });
+
   it('fails closed before command launch when staging the left revision blob fails', async () => {
     const result = await executeComparisonReport(
       {
@@ -445,7 +490,8 @@ describe('comparisonReportRuntimeExecution', () => {
     );
     expect(result.record.runtimeExecution.diagnosticNotes).toEqual([
       'LabVIEW CLI ignored the explicit -LabVIEWPath selection and used a different last-used LabVIEW instead: C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe.',
-      'Intended explicit LabVIEW path: C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe.'
+      'Intended explicit LabVIEW path: C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe.',
+      'LabVIEW CLI exited nonzero without stderr and without generating a report; stdout only advertised the diagnostic log path.'
     ]);
   });
 
