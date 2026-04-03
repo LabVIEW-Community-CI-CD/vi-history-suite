@@ -160,9 +160,13 @@
         "VHS-REQ-205",
         "VHS-REQ-206",
         "VHS-REQ-207",
-        "VHS-REQ-208"
+        "VHS-REQ-208",
+        "VHS-REQ-212",
+        "VHS-REQ-213",
+        "VHS-REQ-214",
+        "VHS-REQ-215"
       ],
-      "nextMove": "Add drill-down actions, dashboard smoke proof, and richer expert-review concentration cues."
+      "nextMove": "Add dashboard smoke proof, runtime-doctor UX, and mixed-provider contribution."
     },
     {
       "surface": "review-scenario-registry-and-human-decision-records",

@@ -30,6 +30,11 @@ That means:
   the single mutable current-pair report directory
 - the dashboard persists its own concentrated JSON and HTML packet separately
   from the pair archive
+- dashboard entries retain provider provenance from the archived packet so
+  mixed-provider commit windows remain reviewable without ambiguity
+- the concentrated dashboard is expected to preserve drill-down into archived
+  packet/report/metadata/source-record artifacts rather than forcing a reviewer
+  back to filesystem spelunking
 
 ## Consequences
 
@@ -56,3 +61,5 @@ Tradeoffs:
 - add dashboard smoke coverage once multiple real pair archives can be produced
 - add drill-down actions from the dashboard into raw archived packet/report
   artifacts
+- add runtime-doctor and provider-choice guidance once dashboard refresh and
+  mixed-provider contribution are live

@@ -382,6 +382,14 @@
 - `TEST-DOC-013`: review the next research prompt to prove it starts from the
   current dashboard/runtime baseline and does not restate the consumed
   unresolved-workstream round
+- `TEST-UNIT-106`: prove the concentrated dashboard record and HTML surface
+  provider provenance, concentration cues, and per-pair drill-down actions
+- `TEST-UNIT-107`: prove the dashboard action opens archived HTML artifacts in
+  dedicated panels, opens archived JSON artifacts in the editor, and rejects
+  artifact paths outside workspace-scoped extension storage
+- `TEST-DOC-014`: review the queue, epic, ADR, and current-state surfaces to
+  prove the future-facing dashboard research was normalized into governed repo
+  control-plane artifacts and the incoming research artifact was deleted
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

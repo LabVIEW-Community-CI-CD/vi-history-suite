@@ -158,8 +158,35 @@ describe('buildAndPersistMultiReportDashboard', () => {
     expect(dashboard.record.summary.generatedReportCount).toBe(1);
     expect(dashboard.record.summary.overviewImageCount).toBe(1);
     expect(dashboard.record.summary.detailItemCount).toBe(1);
+    expect(dashboard.record.summary.pairWithOverviewImageCount).toBe(1);
+    expect(dashboard.record.summary.pairWithDetailCount).toBe(1);
+    expect(dashboard.record.summary.providerSummaries).toEqual([
+      {
+        label: 'host-native / labview-cli / x86 / win32',
+        pairCount: 1
+      },
+      {
+        label: 'none',
+        pairCount: 1
+      }
+    ]);
+    expect(dashboard.record.entries[0]?.runtimeProvider).toBe('host-native');
+    expect(dashboard.record.entries[0]?.runtimeEngine).toBe('labview-cli');
+    expect(dashboard.record.entries[0]?.runtimePlatform).toBe('win32');
+    expect(dashboard.record.entries[0]?.runtimePreferBitness).toBe('x86');
+    expect(dashboard.record.entries[0]?.artifactLinks.map((artifact) => artifact.kind)).toEqual([
+      'packet-html',
+      'report-html',
+      'metadata-json',
+      'source-record-json'
+    ]);
     await expect(fs.readFile(dashboard.jsonFilePath, 'utf8')).resolves.toContain('"relativePath": "foo.vi"');
     await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain('VI Review Dashboard');
+    await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain('Provider coverage');
+    await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain('Open archived packet');
+    await expect(fs.readFile(dashboard.htmlFilePath, 'utf8')).resolves.toContain(
+      'This pair currently carries the highest retained evidence density in the window.'
+    );
     await expect(
       fs.readFile(
         path.join(

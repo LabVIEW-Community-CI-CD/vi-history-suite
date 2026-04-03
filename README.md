@@ -79,7 +79,8 @@ Committed and governed today:
 - pairwise dashboard-source archiving so multiple report attempts for one VI can
   coexist without overwriting
 - concentrated dashboard JSON and HTML packets that recollect retained report
-  images, included-attribute facts, and detailed NI report sections
+  images, included-attribute facts, detailed NI report sections, provider
+  provenance, and raw artifact drill-down actions
 - canonical real-history smoke and canonical comparison-report smoke on
   `HARNESS-VHS-001`
 - retained design gate that chooses the next tranche from committed evidence
@@ -93,6 +94,7 @@ The active product queue is:
 - `TRANCHE-004`: progress-surface uplift for indexing and report generation
 - `TRANCHE-005`: Windows 64-bit isolated container provider
 - `TRANCHE-007`: review-scenario registry and human decision records
+- `TRANCHE-008`: runtime-doctor and dashboard-refresh developer experience
 
 See:
 

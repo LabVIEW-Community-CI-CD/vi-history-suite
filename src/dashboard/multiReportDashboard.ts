@@ -32,6 +32,17 @@ export interface MultiReportDashboardImageAsset {
   dashboardRelativePath: string;
 }
 
+export interface MultiReportDashboardArtifactLink {
+  kind: 'packet-html' | 'report-html' | 'metadata-json' | 'source-record-json';
+  label: string;
+  filePath: string;
+}
+
+export interface MultiReportDashboardProviderSummary {
+  label: string;
+  pairCount: number;
+}
+
 export interface MultiReportDashboardEntry {
   pairId: string;
   selectedHash: string;
@@ -53,9 +64,15 @@ export interface MultiReportDashboardEntry {
   blockedReason?: string;
   runtimeFailureReason?: string;
   runtimeDiagnosticReason?: string;
+  runtimeProvider?: string;
+  runtimeEngine?: string;
+  runtimePlatform?: string;
+  runtimePreferBitness?: string;
+  runtimeProviderLabel?: string;
   generatedReportExists: boolean;
   parsedReport?: ParsedNiComparisonReport;
   dashboardImageAssets: MultiReportDashboardImageAsset[];
+  artifactLinks: MultiReportDashboardArtifactLink[];
   overviewImageCount: number;
   detailItemCount: number;
   evidenceCount: number;
@@ -82,6 +99,9 @@ export interface MultiReportDashboardRecord {
     blockedPairCount: number;
     overviewImageCount: number;
     detailItemCount: number;
+    pairWithOverviewImageCount: number;
+    pairWithDetailCount: number;
+    providerSummaries: MultiReportDashboardProviderSummary[];
     highestEvidencePairId?: string;
   };
   entries: MultiReportDashboardEntry[];
@@ -186,7 +206,10 @@ export function renderMultiReportDashboardHtml(
     ['Failed pairs', String(record.summary.failedPairCount)],
     ['Blocked pairs', String(record.summary.blockedPairCount)],
     ['Overview images', String(record.summary.overviewImageCount)],
-    ['Detail items', String(record.summary.detailItemCount)]
+    ['Pairs with images', String(record.summary.pairWithOverviewImageCount)],
+    ['Pairs with detail', String(record.summary.pairWithDetailCount)],
+    ['Detail items', String(record.summary.detailItemCount)],
+    ['Provider variants', String(record.summary.providerSummaries.length)]
   ]
     .map(
       ([label, value]) => `<div class="metric"><strong>${escapeHtml(label)}:</strong> ${escapeHtml(value)}</div>`
@@ -195,6 +218,27 @@ export function renderMultiReportDashboardHtml(
   const entriesHtml = record.entries
     .map((entry, index) => {
       const parsed = entry.parsedReport;
+      const reviewCue =
+        record.summary.highestEvidencePairId === entry.pairId
+          ? `<div class="note review-cue" data-testid="dashboard-review-cue">
+            <strong>Review cue:</strong> This pair currently carries the highest retained evidence density in the window.
+          </div>`
+          : '';
+      const artifactLinksHtml = entry.artifactLinks.length
+        ? `<div class="artifact-actions" data-testid="dashboard-entry-artifacts">
+            ${entry.artifactLinks
+              .map(
+                (artifact) => `<button
+                    data-testid="dashboard-artifact-action"
+                    data-command="openDashboardArtifact"
+                    data-path="${escapeHtml(artifact.filePath)}"
+                    data-kind="${escapeHtml(artifact.kind)}"
+                    data-label="${escapeHtml(artifact.label)}"
+                  >${escapeHtml(artifact.label)}</button>`
+              )
+              .join('\n')}
+          </div>`
+        : '<div class="note">No archived artifact drill-down is currently available for this pair.</div>';
       const imageHtml = entry.dashboardImageAssets.length
         ? `<div class="image-grid" data-testid="dashboard-entry-images">
             ${entry.dashboardImageAssets
@@ -258,6 +302,15 @@ export function renderMultiReportDashboardHtml(
           <div><strong>Diagnostic reason:</strong> ${escapeHtml(
             entry.runtimeDiagnosticReason ?? 'none'
           )}</div>
+          <div><strong>Provider:</strong> ${escapeHtml(entry.runtimeProvider ?? 'none')}</div>
+          <div><strong>Engine:</strong> ${escapeHtml(entry.runtimeEngine ?? 'none')}</div>
+          <div><strong>Platform:</strong> ${escapeHtml(entry.runtimePlatform ?? 'none')}</div>
+          <div><strong>Preferred bitness:</strong> ${escapeHtml(
+            entry.runtimePreferBitness ?? 'none'
+          )}</div>
+          <div><strong>Provider label:</strong> ${escapeHtml(
+            entry.runtimeProviderLabel ?? 'none'
+          )}</div>
           <div><strong>Archive packet:</strong> ${escapeHtml(entry.packetFilePath ?? 'none')}</div>
           <div><strong>Archive report:</strong> ${escapeHtml(entry.reportFilePath ?? 'none')}</div>
           <div><strong>Archive metadata:</strong> ${escapeHtml(entry.metadataFilePath ?? 'none')}</div>
@@ -265,6 +318,9 @@ export function renderMultiReportDashboardHtml(
             entry.packetRecordPath ?? 'none'
           )}</div>
         </div>
+        ${reviewCue}
+        <h3>Artifact drill-down</h3>
+        ${artifactLinksHtml}
         <div class="note">
           <strong>Concentrated report facts:</strong>
           ${escapeHtml(parsed?.reportTitle ?? 'No retained NI report content for this pair.')}
@@ -335,11 +391,23 @@ export function renderMultiReportDashboardHtml(
         padding: 12px;
         margin: 12px 0;
       }
+      .artifact-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+      .artifact-actions button {
+        padding: 6px 10px;
+      }
       .attribute-list, .detail-section ol {
         margin-top: 8px;
       }
       .metric {
         padding: 12px;
+      }
+      .provider-summary-list {
+        margin-top: 8px;
       }
       code {
         word-break: break-all;
@@ -364,11 +432,49 @@ export function renderMultiReportDashboardHtml(
       <div class="note" data-testid="dashboard-purpose">
         This dashboard concentrates multiple retained VI Comparison Reports for one VI so a human reviewer can triage a commit window without opening every individual report first.
       </div>
+      <div class="note" data-testid="dashboard-provider-summary">
+        <strong>Provider coverage:</strong>
+        ${record.summary.providerSummaries.length
+          ? `<ul class="provider-summary-list">${record.summary.providerSummaries
+              .map(
+                (summary) =>
+                  `<li>${escapeHtml(summary.label)} · ${escapeHtml(String(summary.pairCount))} pair(s)</li>`
+              )
+              .join('')}</ul>`
+          : ' No retained provider evidence is currently concentrated for this window.'}
+      </div>
       <div class="summary-grid" data-testid="dashboard-summary-grid">
         ${summaryCards}
       </div>
     </section>
     ${entriesHtml}
+    <script>
+      const vscode = acquireVsCodeApi();
+      document.addEventListener('click', (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLButtonElement)) {
+          return;
+        }
+
+        if (target.dataset.command !== 'openDashboardArtifact') {
+          return;
+        }
+
+        const filePath = target.dataset.path;
+        const kind = target.dataset.kind;
+        const label = target.dataset.label;
+        if (!filePath || !kind || !label) {
+          return;
+        }
+
+        vscode.postMessage({
+          command: 'openDashboardArtifact',
+          filePath,
+          kind,
+          label
+        });
+      });
+    </script>
   </body>
 </html>`;
 }
@@ -433,6 +539,7 @@ async function buildDashboardEntry(
       archivePlan,
       generatedReportExists: false,
       dashboardImageAssets: [],
+      artifactLinks: [],
       overviewImageCount: 0,
       detailItemCount: 0,
       evidenceCount: 0
@@ -474,9 +581,15 @@ async function buildDashboardEntry(
         : sourceRecord.packetRecord.preflight.blockedReason,
     runtimeFailureReason: sourceRecord.packetRecord.runtimeExecution.failureReason,
     runtimeDiagnosticReason: sourceRecord.packetRecord.runtimeExecution.diagnosticReason,
+    runtimeProvider: sourceRecord.packetRecord.runtimeSelection.provider,
+    runtimeEngine: sourceRecord.packetRecord.runtimeSelection.engine,
+    runtimePlatform: sourceRecord.packetRecord.runtimeSelection.platform,
+    runtimePreferBitness: sourceRecord.packetRecord.runtimeSelection.preferBitness,
+    runtimeProviderLabel: buildProviderLabel(sourceRecord.packetRecord),
     generatedReportExists: sourceRecord.packetRecord.runtimeExecution.reportExists,
     parsedReport,
     dashboardImageAssets: [],
+    artifactLinks: buildArtifactLinks(sourceRecord),
     overviewImageCount: parsedReport?.overviewImageCount ?? 0,
     detailItemCount: parsedReport?.detailItemCount ?? 0,
     evidenceCount: (parsedReport?.overviewImageCount ?? 0) + (parsedReport?.detailItemCount ?? 0)
@@ -496,7 +609,17 @@ function buildDashboardSummary(entries: MultiReportDashboardEntry[]) {
     0
   );
   const detailItemCount = entries.reduce((total, entry) => total + entry.detailItemCount, 0);
+  const pairWithOverviewImageCount = entries.filter((entry) => entry.overviewImageCount > 0).length;
+  const pairWithDetailCount = entries.filter((entry) => entry.detailItemCount > 0).length;
   const highestEvidenceEntry = [...entries].sort((left, right) => right.evidenceCount - left.evidenceCount)[0];
+  const providerCounts = new Map<string, number>();
+  for (const entry of entries) {
+    const label = entry.runtimeProviderLabel ?? 'none';
+    providerCounts.set(label, (providerCounts.get(label) ?? 0) + 1);
+  }
+  const providerSummaries = [...providerCounts.entries()]
+    .map(([label, pairCount]) => ({ label, pairCount }))
+    .sort((left, right) => right.pairCount - left.pairCount || left.label.localeCompare(right.label));
 
   return {
     archivedPairCount,
@@ -506,8 +629,53 @@ function buildDashboardSummary(entries: MultiReportDashboardEntry[]) {
     blockedPairCount,
     overviewImageCount,
     detailItemCount,
+    pairWithOverviewImageCount,
+    pairWithDetailCount,
+    providerSummaries,
     highestEvidencePairId: highestEvidenceEntry?.pairId
   };
+}
+
+function buildArtifactLinks(
+  sourceRecord: ArchivedComparisonReportSourceRecord
+): MultiReportDashboardArtifactLink[] {
+  const links: MultiReportDashboardArtifactLink[] = [
+    {
+      kind: 'packet-html',
+      label: 'Open archived packet',
+      filePath: sourceRecord.archivePlan.packetFilePath
+    },
+    {
+      kind: 'metadata-json',
+      label: 'Open archived metadata',
+      filePath: sourceRecord.archivePlan.metadataFilePath
+    },
+    {
+      kind: 'source-record-json',
+      label: 'Open archive source record',
+      filePath: sourceRecord.archivePlan.sourceRecordFilePath
+    }
+  ];
+
+  if (sourceRecord.packetRecord.runtimeExecution.reportExists) {
+    links.splice(1, 0, {
+      kind: 'report-html',
+      label: 'Open archived NI report',
+      filePath: sourceRecord.archivePlan.reportFilePath
+    });
+  }
+
+  return links;
+}
+
+function buildProviderLabel(record: ArchivedComparisonReportSourceRecord['packetRecord']): string {
+  const selection = record.runtimeSelection;
+  return [
+    selection.provider,
+    selection.engine ?? 'none',
+    selection.preferBitness,
+    selection.platform
+  ].join(' / ');
 }
 
 function deriveCommitPairs(commits: ViHistoryCommit[]): Array<{ selected: ViHistoryCommit; base: ViHistoryCommit }> {

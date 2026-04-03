@@ -52,8 +52,9 @@ Current control-plane surfaces:
 | Canonical comparison-report smoke lane | implemented and active | `src/harness/harnessReportSmoke.ts`; `src/cli/runHarnessReportSmoke.ts`; `npm run harness:report:smoke`; `VHS-REQ-152..180` | `TRANCHE-003` |
 | Indexing and report progress uplift | partial | `src/indexing/viEligibilityIndexer.ts`; `VHS-REQ-093`; research alignment marks this partial | `TRANCHE-004` |
 | Windows 64-bit isolated container provider | architecture-approved, not yet wired live | `docs/architecture/adr/ADR-0006-windows64-container-isolation-for-extension-users.md`; `VHS-REQ-146` | `TRANCHE-005` |
-| Multi-report developer dashboard for one VI across at least three commits | partially implemented and active | `src/dashboard/comparisonReportArchive.ts`; `src/dashboard/niComparisonReportParser.ts`; `src/dashboard/multiReportDashboard.ts`; `src/dashboard/multiReportDashboardAction.ts`; `docs/architecture/adr/ADR-0009-dashboard-pair-archive-and-concentration-packet.md` | `TRANCHE-006` |
+| Multi-report developer dashboard for one VI across at least three commits | partially implemented and active | `src/dashboard/comparisonReportArchive.ts`; `src/dashboard/niComparisonReportParser.ts`; `src/dashboard/multiReportDashboard.ts`; `src/dashboard/multiReportDashboardAction.ts`; `docs/architecture/adr/ADR-0009-dashboard-pair-archive-and-concentration-packet.md`; `VHS-REQ-212..215` | `TRANCHE-006` |
 | Review-scenario registry and human decision records | modeled, not yet implemented | `docs/product/review-scenarios.md`; `docs/product/decision-record-template.md`; `docs/research/authoritative/research-infrastructure.md` | `TRANCHE-007` |
+| Runtime-doctor and dashboard-refresh developer experience | modeled from future-facing research, not yet implemented | `docs/product/development-queue.json`; `docs/research/authoritative/next-research-prompt.md` | `TRANCHE-008` |
 
 ## Active Queue
 
@@ -64,6 +65,7 @@ Current committed queue:
 - `TRANCHE-004`: Add progress-surface uplift for indexing and report generation
 - `TRANCHE-005`: Introduce Windows 64-bit isolated container report provider
 - `TRANCHE-007`: Introduce a review-scenario registry and human decision records
+- `TRANCHE-008`: Introduce runtime-doctor and dashboard-refresh developer experience
 
 The queue source of truth is:
 

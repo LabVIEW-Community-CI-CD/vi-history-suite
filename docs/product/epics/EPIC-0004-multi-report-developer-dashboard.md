@@ -30,6 +30,7 @@ raw report evidence.
 - retain multiple selected/base comparison pairs for that window
 - aggregate multiple retained comparison-report packets into one review surface
 - concentrate large review sets into a smaller set of chronology-aware cues
+- surface explicit provider provenance for every retained pair
 - show chronology and pair provenance clearly
 - surface missing, blocked, or failed report facts next to successful ones
 - keep raw packet and raw report navigation available
@@ -65,6 +66,8 @@ raw report evidence.
 6. Harness proof for a VI with at least three commits and at least two report
    pairs
 7. Windows x64 isolated-provider contribution into the same dashboard
+8. Provider-provenance cues, factual concentration cues, and raw drill-down
+   actions inside the dashboard itself
 
 ## Exit Criteria
 
@@ -72,6 +75,8 @@ raw report evidence.
   dashboard packet
 - the dashboard shows multiple retained pairwise reports with explicit commit
   provenance
+- the dashboard shows provider provenance and factual concentration cues for
+  each retained pair
 - missing or blocked reports are surfaced factually, not hidden
 - the human reviewer can navigate from the dashboard to the underlying raw
   packet/report artifacts

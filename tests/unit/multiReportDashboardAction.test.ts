@@ -1,7 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { createWebviewPanelMock } = vi.hoisted(() => ({
-  createWebviewPanelMock: vi.fn()
+const {
+  createWebviewPanelMock,
+  executeCommandMock,
+  showWarningMessageMock
+} = vi.hoisted(() => ({
+  createWebviewPanelMock: vi.fn(),
+  executeCommandMock: vi.fn(),
+  showWarningMessageMock: vi.fn()
 }));
 
 function createMockUri(fsPath: string) {
@@ -12,20 +18,38 @@ function createMockUri(fsPath: string) {
 }
 
 function createMockPanel(title: string) {
+  let messageListener:
+    | ((message: unknown) => void | Promise<void>)
+    | undefined;
   return {
     title,
     webview: {
       html: '',
+      onDidReceiveMessage: (listener: (message: unknown) => void | Promise<void>) => {
+        messageListener = listener;
+        return {
+          dispose() {
+            // no-op
+          }
+        };
+      },
       asWebviewUri: (uri: { fsPath: string }) => ({
         toString: () => `webview:${uri.fsPath}`
       })
+    },
+    async __dispatchMessage(message: unknown) {
+      await messageListener?.(message);
     }
   };
 }
 
 vi.mock('vscode', () => ({
   window: {
-    createWebviewPanel: createWebviewPanelMock
+    createWebviewPanel: createWebviewPanelMock,
+    showWarningMessage: showWarningMessageMock
+  },
+  commands: {
+    executeCommand: executeCommandMock
   },
   ViewColumn: {
     Active: 1
@@ -40,6 +64,8 @@ import { createMultiReportDashboardAction } from '../../src/dashboard/multiRepor
 describe('multiReportDashboardAction', () => {
   beforeEach(() => {
     createWebviewPanelMock.mockReset();
+    executeCommandMock.mockReset();
+    showWarningMessageMock.mockReset();
     createWebviewPanelMock.mockImplementation((_viewType: string, title: string) =>
       createMockPanel(title)
     );
@@ -126,6 +152,14 @@ describe('multiReportDashboardAction', () => {
           blockedPairCount: 0,
           overviewImageCount: 2,
           detailItemCount: 3,
+          pairWithOverviewImageCount: 1,
+          pairWithDetailCount: 1,
+          providerSummaries: [
+            {
+              label: 'host-native / labview-cli / x86 / win32',
+              pairCount: 1
+            }
+          ],
           highestEvidencePairId: 'pairid123456'
         },
         entries: []
@@ -179,7 +213,7 @@ describe('multiReportDashboardAction', () => {
     expect(panelCall?.[0]).toBe('viHistorySuite.reviewDashboard');
     expect(panelCall?.[1]).toBe('VI Review Dashboard: foo.vi');
     expect(panelCall?.[2]).toBe(1);
-    expect(panelCall?.[3]?.enableScripts).toBe(false);
+    expect(panelCall?.[3]?.enableScripts).toBe(true);
     expect(panelCall?.[3]?.localResourceRoots?.[0]?.fsPath).toBe('/workspace/.storage');
     expect(result).toEqual({
       outcome: 'opened-review-dashboard',
@@ -190,5 +224,131 @@ describe('multiReportDashboardAction', () => {
       dashboardMissingPairCount: 1,
       title: 'VI Review Dashboard: foo.vi'
     });
+  });
+
+  it('opens archived HTML artifacts in dedicated panels and JSON artifacts in the editor', async () => {
+    const buildDashboard = vi.fn().mockResolvedValue({
+      record: {
+        generatedAt: '2026-04-03T00:00:00.000Z',
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace/repo',
+        relativePath: 'foo.vi',
+        signature: 'LVIN',
+        artifactPlan: {
+          repoId: 'repoid123456',
+          fileId: 'fileid123456',
+          windowId: 'windowid12345',
+          dashboardDirectory: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345',
+          jsonFilePath: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.json',
+          htmlFilePath: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.html',
+          assetsDirectory: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/assets'
+        },
+        commitWindow: {
+          commitCount: 3,
+          pairCount: 2,
+          newestHash: 'abcdef1234567890',
+          oldestHash: '3333333344444444'
+        },
+        summary: {
+          archivedPairCount: 1,
+          missingPairCount: 1,
+          generatedReportCount: 1,
+          failedPairCount: 0,
+          blockedPairCount: 0,
+          overviewImageCount: 2,
+          detailItemCount: 3,
+          pairWithOverviewImageCount: 1,
+          pairWithDetailCount: 1,
+          providerSummaries: [
+            {
+              label: 'host-native / labview-cli / x86 / win32',
+              pairCount: 1
+            }
+          ],
+          highestEvidencePairId: 'pairid123456'
+        },
+        entries: []
+      },
+      jsonFilePath: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.json',
+      htmlFilePath: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.html'
+    });
+    const action = createMultiReportDashboardAction(
+      {
+        storageUri: createMockUri('/workspace/.storage')
+      } as never,
+      {
+        buildDashboard
+      }
+    );
+
+    await action({
+      model: {
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace/repo',
+        relativePath: 'foo.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Newest revision',
+            previousHash: '1111111122222222'
+          },
+          {
+            hash: '1111111122222222',
+            authorDate: '2026-04-01T00:00:00Z',
+            authorName: 'B User',
+            subject: 'Middle revision',
+            previousHash: '3333333344444444'
+          },
+          {
+            hash: '3333333344444444',
+            authorDate: '2026-03-31T00:00:00Z',
+            authorName: 'C User',
+            subject: 'Initial revision'
+          }
+        ]
+      }
+    });
+
+    const dashboardPanel = createWebviewPanelMock.mock.results[0]?.value as ReturnType<
+      typeof createMockPanel
+    >;
+    await dashboardPanel.__dispatchMessage({
+      command: 'openDashboardArtifact',
+      filePath: '/workspace/.storage/report-history/repo/file/pairs/pair/packet.html',
+      kind: 'packet-html',
+      label: 'Open archived packet'
+    });
+    expect(createWebviewPanelMock.mock.calls[1]?.[0]).toBe(
+      'viHistorySuite.reviewDashboardArtifact'
+    );
+    expect(createWebviewPanelMock.mock.calls[1]?.[1]).toBe('Open archived packet');
+
+    await dashboardPanel.__dispatchMessage({
+      command: 'openDashboardArtifact',
+      filePath: '/workspace/.storage/report-history/repo/file/pairs/pair/source-record.json',
+      kind: 'source-record-json',
+      label: 'Open archive source record'
+    });
+    expect(executeCommandMock).toHaveBeenCalledWith(
+      'vscode.open',
+      expect.objectContaining({
+        fsPath: '/workspace/.storage/report-history/repo/file/pairs/pair/source-record.json'
+      }),
+      {
+        preview: false
+      }
+    );
+
+    await dashboardPanel.__dispatchMessage({
+      command: 'openDashboardArtifact',
+      filePath: '/workspace/outside.json',
+      kind: 'metadata-json',
+      label: 'Outside'
+    });
+    expect(executeCommandMock).toHaveBeenCalledTimes(1);
   });
 });
