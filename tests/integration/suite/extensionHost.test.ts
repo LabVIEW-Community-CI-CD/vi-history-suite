@@ -138,8 +138,8 @@ async function testPanelOpenFlow(
   assert.match(panel.renderedHtml, /Reviewer guidance:/);
   assert.match(panel.renderedHtml, /Confidence and scope:/);
   assert.match(panel.renderedHtml, /Local Git history, tracked-file status, and content-detected VI signature checks\./);
-  assert.match(panel.renderedHtml, /Direct local evidence for chronology, path provenance, retained hashes, and command routing\./);
-  assert.match(panel.renderedHtml, /report preflight planning/);
+  assert.match(panel.renderedHtml, /Direct local evidence for chronology, path provenance, retained hashes, and retained compare pairing\./);
+  assert.match(panel.renderedHtml, /compare-pair summaries, and dashboard availability/);
   assert.match(panel.renderedHtml, /Needs external comparison tooling:/);
   assert.match(panel.renderedHtml, /Binary semantic differences, visual or cosmetic change detection, and NI comparison-report output\./);
   assert.match(panel.renderedHtml, /Selected:<\/strong> <code>[0-9a-f]{8}<\/code> <strong>vs base:<\/strong> <code>[0-9a-f]{8}<\/code>/);
@@ -265,8 +265,8 @@ async function testPanelOpenFlow(
   assert.equal(dashboardAction.command, 'openDashboard');
   assert.equal(dashboardAction.outcome, 'opened-review-dashboard');
   assert.equal(dashboardAction.dashboardPairCount, 2);
-  assert.equal(dashboardAction.dashboardArchivedPairCount, 1);
-  assert.equal(dashboardAction.dashboardMissingPairCount, 1);
+  assert.equal(dashboardAction.dashboardArchivedPairCount, 2);
+  assert.equal(dashboardAction.dashboardMissingPairCount, 0);
   assert.ok(dashboardAction.dashboardFilePath);
   assert.ok(dashboardAction.dashboardJsonFilePath);
   const dashboardHtml = await fs.readFile(dashboardAction.dashboardFilePath ?? '', 'utf8');
@@ -280,8 +280,8 @@ async function testPanelOpenFlow(
   const openedDashboard = api.getLastOpenedDashboardPanel();
   assert.ok(openedDashboard);
   assert.equal(openedDashboard.dashboardPairCount, 2);
-  assert.equal(openedDashboard.dashboardArchivedPairCount, 1);
-  assert.equal(openedDashboard.dashboardMissingPairCount, 1);
+  assert.equal(openedDashboard.dashboardArchivedPairCount, 2);
+  assert.equal(openedDashboard.dashboardMissingPairCount, 0);
   assert.match(openedDashboard.renderedHtml, /data-testid="dashboard-review-lens"/);
   assert.match(openedDashboard.renderedHtml, /data-testid="dashboard-entry-provenance"/);
   assert.equal(api.getOpenDashboardPanelCount(), 1);
