@@ -493,20 +493,12 @@ function buildProviderDecisions(
             detail:
               'Windows x86 comparison-report execution stays host-native, so the Windows container provider was not selected for this lane.'
           }
-        : options.windowsContainerAvailable
-          ? {
-              provider: 'windows-container',
-              outcome: 'rejected',
-              reason: 'windows-container-available-but-not-selected',
-              detail:
-                'The Windows container provider was available but was not selected because a higher-priority runtime-selection block prevented container execution.'
-            }
-          : {
-              provider: 'windows-container',
-              outcome: 'rejected',
-              reason: 'windows-container-image-unavailable',
-              detail: `Windows container image ${options.windowsContainerImage} was not available to the current host.`
-            }
+        : {
+            provider: 'windows-container',
+            outcome: 'rejected',
+            reason: 'windows-container-image-unavailable',
+            detail: `Windows container image ${options.windowsContainerImage} was not available to the current host.`
+          }
     );
   }
 
@@ -547,10 +539,7 @@ function deriveHostNativeRejectedReason(options: BuildProviderDecisionsOptions):
   if (options.blockedReason === 'labview-exe-not-found' || options.labviewExeFound === false) {
     return 'host-native-labview-exe-not-found';
   }
-  if (options.blockedReason === 'comparison-tool-not-found') {
-    return 'host-native-comparison-tool-not-found';
-  }
-  return options.blockedReason ?? 'host-native-not-selected';
+  return 'host-native-comparison-tool-not-found';
 }
 
 function deriveHostNativeRejectedDetail(options: BuildProviderDecisionsOptions): string {
@@ -563,10 +552,7 @@ function deriveHostNativeRejectedDetail(options: BuildProviderDecisionsOptions):
   if (options.blockedReason === 'labview-exe-not-found' || options.labviewExeFound === false) {
     return 'No supported LabVIEW 2026 executable was located for host-native comparison-report execution.';
   }
-  if (options.blockedReason === 'comparison-tool-not-found') {
-    return 'A supported LabVIEW 2026 executable was located, but neither LabVIEWCLI nor LVCompare was located for host-native comparison-report execution.';
-  }
-  return 'Host-native comparison-report execution was not selected.';
+  return 'A supported LabVIEW 2026 executable was located, but neither LabVIEWCLI nor LVCompare was located for host-native comparison-report execution.';
 }
 
 function resolveWindowsContainerImage(rawImage: string | undefined): string {
