@@ -38,6 +38,29 @@ export interface MultiReportDashboardArtifactLink {
   filePath: string;
 }
 
+export interface MultiReportDashboardEtaAccuracySample {
+  pairOrdinal: number;
+  pairCount: number;
+  estimatedPairSeconds: number;
+  actualPairSeconds: number;
+  absoluteErrorSeconds: number;
+  signedErrorSeconds: number;
+  sampledAt: string;
+}
+
+export interface MultiReportDashboardEtaAccuracyRecord {
+  recordedAt: string;
+  stage: 'pair-preparation';
+  preparedPairCount: number;
+  measuredPairCount: number;
+  unmeasuredPairCount: number;
+  meanAbsoluteErrorSeconds?: number;
+  maxAbsoluteErrorSeconds?: number;
+  meanSignedErrorSeconds?: number;
+  meanAbsolutePercentageError?: number;
+  samples: MultiReportDashboardEtaAccuracySample[];
+}
+
 export type MultiReportDashboardEntryEvidenceState =
   | 'missing-archive'
   | 'archived-generated-report'
@@ -285,6 +308,7 @@ export function renderMultiReportDashboardHtml(
   record: MultiReportDashboardRecord,
   options: {
     assetUriResolver?: (absolutePath: string, fallbackRelativePath: string) => string;
+    etaAccuracyRecord?: MultiReportDashboardEtaAccuracyRecord;
   } = {}
 ): string {
   const representedPairCount =
@@ -326,6 +350,35 @@ export function renderMultiReportDashboardHtml(
       ([label, value]) => `<div class="metric"><strong>${escapeHtml(label)}:</strong> ${escapeHtml(value)}</div>`
     )
     .join('\n');
+  const etaAccuracySummaryHtml = options.etaAccuracyRecord
+    ? options.etaAccuracyRecord.measuredPairCount > 0
+      ? `<div class="note" data-testid="dashboard-eta-accuracy-summary">
+          <strong>Pair ETA accuracy this refresh:</strong>
+          measured=${escapeHtml(
+            String(options.etaAccuracyRecord.measuredPairCount)
+          )}/${escapeHtml(String(options.etaAccuracyRecord.preparedPairCount))} prepared pair(s) ·
+          mean-abs-error=${escapeHtml(
+            formatDurationMinutesSeconds(options.etaAccuracyRecord.meanAbsoluteErrorSeconds ?? 0)
+          )} ·
+          max-abs-error=${escapeHtml(
+            formatDurationMinutesSeconds(options.etaAccuracyRecord.maxAbsoluteErrorSeconds ?? 0)
+          )} ·
+          mean-bias=${escapeHtml(
+            formatSignedDurationMinutesSeconds(options.etaAccuracyRecord.meanSignedErrorSeconds ?? 0)
+          )}${options.etaAccuracyRecord.meanAbsolutePercentageError !== undefined
+            ? ` · mape=${escapeHtml(
+                `${Math.round(options.etaAccuracyRecord.meanAbsolutePercentageError)}%`
+              )}`
+            : ''} ·
+          current-session prepared pairs only
+        </div>`
+      : `<div class="note" data-testid="dashboard-eta-accuracy-summary">
+          <strong>Pair ETA accuracy this refresh:</strong>
+          not yet measurable for this dashboard refresh because only ${escapeHtml(
+            String(options.etaAccuracyRecord.preparedPairCount)
+          )} pair(s) were prepared in the current session. Historical or already retained pairs are excluded.
+        </div>`
+    : '';
   const overviewCaptionConcentrationHtml = overviewCaptionSummaries.length
     ? `<ul data-testid="dashboard-overview-caption-concentration-list">${overviewCaptionSummaries
         .map(
@@ -631,6 +684,7 @@ export function renderMultiReportDashboardHtml(
       <div class="note" data-testid="dashboard-metadata-fields">
         <strong>Retained metadata fields:</strong> report title, generation time, compared VI paths, overview section captions and image counts, included attributes, and detailed-information headings and items.
       </div>
+      ${etaAccuracySummaryHtml}
       <div class="note" data-testid="dashboard-compared-path-concentration">
         <strong>Compared VI path concentration:</strong>
         ${comparedPathConcentrationHtml}
@@ -1094,4 +1148,16 @@ function escapeHtml(value: string): string {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
+}
+
+function formatDurationMinutesSeconds(totalSeconds: number): string {
+  const boundedSeconds = Math.max(0, Math.ceil(totalSeconds));
+  const minutes = Math.floor(boundedSeconds / 60);
+  const seconds = boundedSeconds % 60;
+  return `${minutes}m ${seconds}s`;
+}
+
+function formatSignedDurationMinutesSeconds(totalSeconds: number): string {
+  const sign = totalSeconds < 0 ? '-' : '+';
+  return `${sign}${formatDurationMinutesSeconds(Math.abs(totalSeconds))}`;
 }

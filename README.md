@@ -116,6 +116,9 @@ Committed and governed today:
   concentration, retained-asset finalization, dashboard opening, and a
   bounded minutes-and-seconds estimate during pair-evidence backfill once at
   least one pair has completed
+- retained pair-level ETA accuracy characterization for dashboard pair
+  preparation, including a dashboard summary and sidecar evidence that exclude
+  previously retained pairs from the current-session accuracy measurement
 - governed dashboard artifact-opening rules that accept only retained
   `report-packet.html`, `report-metadata.json`, `source-record.json`, and
   `*-report-*.html` files from workspace-scoped extension storage

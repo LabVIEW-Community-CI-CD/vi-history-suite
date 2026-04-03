@@ -547,12 +547,10 @@ describe('multiReportDashboardAction', () => {
 
   it('backfills missing or stale pair evidence before concentrating the dashboard', async () => {
     const progressUpdates: Array<{ message: string; increment?: number }> = [];
-    const now = vi
-      .fn()
-      .mockReturnValueOnce(1_000)
-      .mockReturnValueOnce(4_500)
-      .mockReturnValueOnce(5_000)
-      .mockReturnValueOnce(8_500);
+    const nowValues = [1_000, 4_500, 5_000, 9_500, 9_500, 9_500];
+    const now = vi.fn(() => nowValues.shift() ?? 9_500);
+    const pathExists = vi.fn().mockResolvedValue(true);
+    const writeFile = vi.fn().mockResolvedValue(undefined);
     const readArchivedComparisonReportSourceRecord = vi
       .fn()
       .mockResolvedValueOnce(undefined)
@@ -645,6 +643,8 @@ describe('multiReportDashboardAction', () => {
         buildDashboard,
         ensureComparisonReportEvidence,
         readArchivedComparisonReportSourceRecord,
+        pathExists,
+        writeFile,
         now
       }
     );
@@ -737,6 +737,41 @@ describe('multiReportDashboardAction', () => {
         )
       )
     ).toBe(true);
+    const openedPanel = createWebviewPanelMock.mock.results[0]?.value as ReturnType<
+      typeof createMockPanel
+    >;
+    expect(openedPanel.webview.html).toContain('data-testid="dashboard-eta-accuracy-summary"');
+    expect(openedPanel.webview.html).toContain('measured=1/2 prepared pair(s)');
+    expect(openedPanel.webview.html).toContain('mean-abs-error=0m 1s');
+    expect(openedPanel.webview.html).toContain('mean-bias=+0m 1s');
+    expect(openedPanel.webview.html).toContain('current-session prepared pairs only');
+    const etaAccuracyWriteCall = writeFile.mock.calls.find(
+      ([filePath]) =>
+        filePath ===
+        '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard-pair-eta-accuracy.json'
+    );
+    expect(etaAccuracyWriteCall).toBeTruthy();
+    const etaAccuracyRecord = JSON.parse(String(etaAccuracyWriteCall?.[1]));
+    expect(etaAccuracyRecord).toMatchObject({
+      stage: 'pair-preparation',
+      preparedPairCount: 2,
+      measuredPairCount: 1,
+      unmeasuredPairCount: 1,
+      meanAbsoluteErrorSeconds: 1,
+      maxAbsoluteErrorSeconds: 1,
+      meanSignedErrorSeconds: 1
+    });
+    expect(etaAccuracyRecord.meanAbsolutePercentageError).toBeCloseTo(22.222, 3);
+    expect(etaAccuracyRecord.samples).toEqual([
+      expect.objectContaining({
+        pairOrdinal: 2,
+        pairCount: 2,
+        estimatedPairSeconds: 3.5,
+        actualPairSeconds: 4.5,
+        absoluteErrorSeconds: 1,
+        signedErrorSeconds: 1
+      })
+    ]);
   });
 
   it('fails closed when dashboard pair evidence generation is cancelled before concentration', async () => {

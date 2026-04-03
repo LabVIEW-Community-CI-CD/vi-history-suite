@@ -6,6 +6,8 @@ import { readArchivedComparisonReportSourceRecordFromSelection } from './compari
 import {
   buildAndPersistMultiReportDashboard,
   BuildMultiReportDashboardResult,
+  MultiReportDashboardEtaAccuracyRecord,
+  MultiReportDashboardEtaAccuracySample,
   renderMultiReportDashboardHtml
 } from './multiReportDashboard';
 import { ComparisonReportActionResult } from '../reporting/comparisonReportAction';
@@ -55,6 +57,7 @@ export interface MultiReportDashboardActionDeps {
   }) => Promise<ComparisonReportActionResult>;
   readArchivedComparisonReportSourceRecord?: typeof readArchivedComparisonReportSourceRecordFromSelection;
   pathExists?: (targetPath: string) => Promise<boolean>;
+  writeFile?: typeof fs.writeFile;
   now?: () => number;
 }
 
@@ -70,6 +73,7 @@ const DEFAULT_DASHBOARD_PAIR_CONCENTRATION_INCREMENT_TOTAL = 70;
 const DASHBOARD_ASSET_INCREMENT_TOTAL = 10;
 const DASHBOARD_OPEN_INCREMENT = 15;
 const EXPECTED_COMPARISON_EVIDENCE_INCREMENT_TOTAL = 95;
+const DASHBOARD_PAIR_ETA_ACCURACY_FILENAME = 'dashboard-pair-eta-accuracy.json';
 
 export function createMultiReportDashboardAction(
   context: vscode.ExtensionContext,
@@ -99,6 +103,8 @@ export function createMultiReportDashboardAction(
 
     const buildDashboard = deps.buildDashboard ?? buildAndPersistMultiReportDashboard;
     const ensureComparisonReportEvidence = deps.ensureComparisonReportEvidence;
+    const pathExists = deps.pathExists ?? defaultPathExists;
+    const writeFile = deps.writeFile ?? fs.writeFile;
     const now = deps.now ?? Date.now;
     const pairsNeedingEvidence = await collectDashboardPairsNeedingEvidence(
       storageUri.fsPath,
@@ -111,6 +117,7 @@ export function createMultiReportDashboardAction(
     });
     let pairConcentrationIncrementTotal =
       DEFAULT_DASHBOARD_PAIR_CONCENTRATION_INCREMENT_TOTAL;
+    let etaAccuracyRecord: MultiReportDashboardEtaAccuracyRecord | undefined;
     if (pairsNeedingEvidence.length > 0 && ensureComparisonReportEvidence) {
       pairConcentrationIncrementTotal = DASHBOARD_PAIR_CONCENTRATION_INCREMENT_TOTAL;
       const pairBudget =
@@ -118,6 +125,7 @@ export function createMultiReportDashboardAction(
           ? DASHBOARD_PAIR_EVIDENCE_INCREMENT_TOTAL / pairsNeedingEvidence.length
           : 0;
       const completedPairDurationsMs: number[] = [];
+      const etaAccuracySamples: MultiReportDashboardEtaAccuracySample[] = [];
       for (const [index, pair] of pairsNeedingEvidence.entries()) {
         if (request.cancellationToken?.isCancellationRequested) {
           return {
@@ -128,6 +136,7 @@ export function createMultiReportDashboardAction(
 
         let remainingPairIncrement = pairBudget;
         const pairStartMs = now();
+        const estimatedPairSeconds = deriveEstimatedPairSeconds(completedPairDurationsMs);
         const pairPrefix = buildDashboardPairProgressPrefix(
           index,
           pairsNeedingEvidence.length,
@@ -169,7 +178,19 @@ export function createMultiReportDashboardAction(
         if (result.outcome === 'workspace-untrusted' || result.outcome === 'missing-storage-uri') {
           return { outcome: result.outcome };
         }
-        completedPairDurationsMs.push(Math.max(0, now() - pairStartMs));
+        const pairDurationMs = Math.max(0, now() - pairStartMs);
+        completedPairDurationsMs.push(pairDurationMs);
+        if (estimatedPairSeconds !== undefined) {
+          etaAccuracySamples.push(
+            buildPairEtaAccuracySample(
+              index,
+              pairsNeedingEvidence.length,
+              estimatedPairSeconds,
+              pairDurationMs,
+              now
+            )
+          );
+        }
 
         await request.reportProgress?.({
           message: buildDashboardPairPreparedMessage(
@@ -181,12 +202,36 @@ export function createMultiReportDashboardAction(
           increment: remainingPairIncrement > 0 ? remainingPairIncrement : undefined
         });
       }
+      etaAccuracyRecord = buildDashboardPairEtaAccuracyRecord(
+        pairsNeedingEvidence.length,
+        etaAccuracySamples,
+        now
+      );
     }
     const dashboard = await buildDashboard(storageUri.fsPath, request.model, {
       reportProgress: request.reportProgress,
       pairConcentrationIncrementTotal,
       assetIncrementTotal: DASHBOARD_ASSET_INCREMENT_TOTAL
     });
+    if (etaAccuracyRecord) {
+      const dashboardDirectoryExists = await pathExists(
+        dashboard.record.artifactPlan.dashboardDirectory
+      );
+      if (dashboardDirectoryExists) {
+        const etaAccuracyFilePath = path.join(
+          dashboard.record.artifactPlan.dashboardDirectory,
+          DASHBOARD_PAIR_ETA_ACCURACY_FILENAME
+        );
+        await writeFile(etaAccuracyFilePath, JSON.stringify(etaAccuracyRecord, null, 2), 'utf8');
+        await writeFile(
+          dashboard.htmlFilePath,
+          renderMultiReportDashboardHtml(dashboard.record, {
+            etaAccuracyRecord
+          }),
+          'utf8'
+        );
+      }
+    }
     if (request.cancellationToken?.isCancellationRequested) {
       return {
         outcome: 'cancelled',
@@ -215,6 +260,7 @@ export function createMultiReportDashboardAction(
       }
     );
     const renderedHtml = renderMultiReportDashboardHtml(dashboard.record, {
+      etaAccuracyRecord,
       assetUriResolver: (absolutePath) =>
         panel.webview.asWebviewUri(uriFile(absolutePath)).toString()
     });
@@ -424,17 +470,93 @@ function deriveEstimatedSecondsRemaining(
   completedPairDurationsMs: number[],
   remainingPairCount: number
 ): number | undefined {
-  if (completedPairDurationsMs.length === 0 || remainingPairCount <= 0) {
+  const estimatedPairSeconds = deriveEstimatedPairSeconds(completedPairDurationsMs);
+  if (estimatedPairSeconds === undefined || remainingPairCount <= 0) {
     return undefined;
   }
+  return Math.ceil(estimatedPairSeconds * remainingPairCount);
+}
 
+function deriveEstimatedPairSeconds(
+  completedPairDurationsMs: number[]
+): number | undefined {
+  if (completedPairDurationsMs.length === 0) {
+    return undefined;
+  }
   const totalCompletedDurationMs = completedPairDurationsMs.reduce(
     (sum, durationMs) => sum + Math.max(0, durationMs),
     0
   );
-  const averageCompletedPairDurationMs =
-    totalCompletedDurationMs / completedPairDurationsMs.length;
-  return Math.ceil((averageCompletedPairDurationMs * remainingPairCount) / 1000);
+  return totalCompletedDurationMs / completedPairDurationsMs.length / 1000;
+}
+
+function buildPairEtaAccuracySample(
+  index: number,
+  total: number,
+  estimatedPairSeconds: number,
+  actualPairDurationMs: number,
+  now: () => number
+): MultiReportDashboardEtaAccuracySample {
+  const actualPairSeconds = actualPairDurationMs / 1000;
+  const signedErrorSeconds = actualPairSeconds - estimatedPairSeconds;
+  return {
+    pairOrdinal: index + 1,
+    pairCount: total,
+    estimatedPairSeconds: roundSeconds(estimatedPairSeconds),
+    actualPairSeconds: roundSeconds(actualPairSeconds),
+    absoluteErrorSeconds: roundSeconds(Math.abs(signedErrorSeconds)),
+    signedErrorSeconds: roundSeconds(signedErrorSeconds),
+    sampledAt: new Date(now()).toISOString()
+  };
+}
+
+function buildDashboardPairEtaAccuracyRecord(
+  preparedPairCount: number,
+  samples: MultiReportDashboardEtaAccuracySample[],
+  now: () => number
+): MultiReportDashboardEtaAccuracyRecord | undefined {
+  if (preparedPairCount <= 0) {
+    return undefined;
+  }
+  const measuredPairCount = samples.length;
+  const unmeasuredPairCount = Math.max(0, preparedPairCount - measuredPairCount);
+  const absoluteErrorSeconds = samples.map((sample) => sample.absoluteErrorSeconds);
+  const signedErrorSeconds = samples.map((sample) => sample.signedErrorSeconds);
+  const percentageErrors = samples
+    .filter((sample) => sample.actualPairSeconds > 0)
+    .map((sample) => (sample.absoluteErrorSeconds / sample.actualPairSeconds) * 100);
+
+  return {
+    recordedAt: new Date(now()).toISOString(),
+    stage: 'pair-preparation',
+    preparedPairCount,
+    measuredPairCount,
+    unmeasuredPairCount,
+    meanAbsoluteErrorSeconds:
+      absoluteErrorSeconds.length > 0
+        ? roundSeconds(meanOf(absoluteErrorSeconds))
+        : undefined,
+    maxAbsoluteErrorSeconds:
+      absoluteErrorSeconds.length > 0
+        ? roundSeconds(Math.max(...absoluteErrorSeconds))
+        : undefined,
+    meanSignedErrorSeconds:
+      signedErrorSeconds.length > 0 ? roundSeconds(meanOf(signedErrorSeconds)) : undefined,
+    meanAbsolutePercentageError:
+      percentageErrors.length > 0 ? roundSeconds(meanOf(percentageErrors)) : undefined,
+    samples
+  };
+}
+
+function meanOf(values: number[]): number {
+  if (values.length === 0) {
+    return 0;
+  }
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function roundSeconds(value: number): number {
+  return Math.round(value * 1000) / 1000;
 }
 
 function formatEstimatedDuration(totalSeconds: number): string {

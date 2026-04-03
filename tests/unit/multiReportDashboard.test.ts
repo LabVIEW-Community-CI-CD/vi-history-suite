@@ -5,7 +5,10 @@ import * as path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { archiveComparisonReportSource } from '../../src/dashboard/comparisonReportArchive';
-import { buildAndPersistMultiReportDashboard } from '../../src/dashboard/multiReportDashboard';
+import {
+  buildAndPersistMultiReportDashboard,
+  renderMultiReportDashboardHtml
+} from '../../src/dashboard/multiReportDashboard';
 import { ComparisonReportPacketRecord } from '../../src/reporting/comparisonReportPacket';
 
 describe('buildAndPersistMultiReportDashboard', () => {
@@ -18,6 +21,73 @@ describe('buildAndPersistMultiReportDashboard', () => {
         await fs.rm(root, { recursive: true, force: true });
       }
     }
+  });
+
+  it('renders a bounded note when pair ETA accuracy is not yet measurable for the current refresh', () => {
+    const html = renderMultiReportDashboardHtml(
+      {
+        generatedAt: '2026-04-03T05:06:07.000Z',
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace/repo',
+        relativePath: 'foo.vi',
+        signature: 'LVIN',
+        artifactPlan: {
+          repoId: 'repoid123456',
+          fileId: 'fileid123456',
+          windowId: 'windowid12345',
+          dashboardDirectory: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345',
+          jsonFilePath: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.json',
+          htmlFilePath: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.html',
+          assetsDirectory: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/assets'
+        },
+        commitWindow: {
+          commitCount: 3,
+          pairCount: 2,
+          newestHash: 'abcdef1234567890',
+          oldestHash: '3333333344444444'
+        },
+        summary: {
+          representedPairCount: 2,
+          windowCompletenessState: 'complete',
+          archivedPairCount: 2,
+          missingPairCount: 0,
+          missingPairIds: [],
+          generatedReportCount: 2,
+          reportMetadataPairCount: 2,
+          failedPairCount: 0,
+          failedPairIds: [],
+          blockedPairCount: 0,
+          blockedPairIds: [],
+          overviewSectionCount: 0,
+          overviewImageCount: 0,
+          includedAttributeCount: 0,
+          detailSectionCount: 0,
+          detailItemCount: 0,
+          pairWithOverviewImageCount: 0,
+          pairWithDetailCount: 0,
+          providerSummaries: [],
+          overviewCaptionSummaries: [],
+          includedAttributeSummaries: [],
+          detailHeadingSummaries: [],
+          evidenceStateSummaries: []
+        },
+        entries: []
+      },
+      {
+        etaAccuracyRecord: {
+          recordedAt: '2026-04-03T05:06:08.000Z',
+          stage: 'pair-preparation',
+          preparedPairCount: 1,
+          measuredPairCount: 0,
+          unmeasuredPairCount: 1,
+          samples: []
+        }
+      }
+    );
+
+    expect(html).toContain('data-testid="dashboard-eta-accuracy-summary"');
+    expect(html).toContain('not yet measurable for this dashboard refresh');
+    expect(html).toContain('Historical or already retained pairs are excluded.');
   });
 
   it('retains explicit pair evidence states and completeness facts for succeeded, failed, and missing pairs', async () => {
