@@ -95,6 +95,9 @@ export function createComparisonReportAction(
       message: 'Opening retained comparison-report view.',
       increment: 5
     });
+    if (request.cancellationToken?.isCancellationRequested) {
+      return buildCancelledComparisonReportResult('before-comparison-report-open', ensured.packet);
+    }
 
     return openPersistedComparisonReportPanel(
       {
@@ -125,6 +128,13 @@ export function createOpenRetainedComparisonReportAction(
   deps: ComparisonReportActionDeps = {}
 ): (request: ComparisonReportActionRequest) => Promise<ComparisonReportActionResult> {
   return async (request: ComparisonReportActionRequest): Promise<ComparisonReportActionResult> => {
+    if (request.cancellationToken?.isCancellationRequested) {
+      return {
+        outcome: 'cancelled',
+        cancellationStage: 'before-retained-comparison-resolution'
+      };
+    }
+
     if (!vscode.workspace.isTrusted) {
       return { outcome: 'workspace-untrusted' };
     }
@@ -146,6 +156,13 @@ export function createOpenRetainedComparisonReportAction(
       message: 'Resolving retained pair comparison evidence.',
       increment: 40
     });
+    if (request.cancellationToken?.isCancellationRequested) {
+      return {
+        outcome: 'cancelled',
+        cancellationStage: 'before-retained-comparison-open'
+      };
+    }
+
     const archivePlan = buildComparisonReportArchivePlanFromSelection({
       storageRoot: context.storageUri.fsPath,
       repositoryRoot: request.model.repositoryRoot,
@@ -165,9 +182,21 @@ export function createOpenRetainedComparisonReportAction(
       message: 'Opening retained pair comparison view.',
       increment: 60
     });
+    if (request.cancellationToken?.isCancellationRequested) {
+      return {
+        outcome: 'cancelled',
+        cancellationStage: 'before-retained-comparison-open'
+      };
+    }
     const sourceRecord = JSON.parse(
       await (deps.readFile ?? fs.readFile)(archivePlan.sourceRecordFilePath, 'utf8')
     ) as ArchivedComparisonReportSourceRecord;
+    if (request.cancellationToken?.isCancellationRequested) {
+      return {
+        outcome: 'cancelled',
+        cancellationStage: 'before-retained-comparison-open'
+      };
+    }
 
     return openPersistedComparisonReportPanel(
       {

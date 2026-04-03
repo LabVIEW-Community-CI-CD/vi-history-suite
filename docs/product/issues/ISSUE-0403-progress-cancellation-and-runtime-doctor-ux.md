@@ -62,6 +62,9 @@ requiring raw-log inspection.
   actions
 - cancellation with partial-evidence retention for dashboard and comparison
   report actions
+- comparison view opening now honors cancellation before panel open for both
+  generated and retained flows, with retained-open-specific `Diff prev`
+  cancellation wording
 - stable informational cancellation surfaces on the history panel command flow
 - governed dashboard artifact action validation for malformed messages,
   storage-root targets, and kind/path mismatches

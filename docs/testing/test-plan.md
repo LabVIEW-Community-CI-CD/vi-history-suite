@@ -789,6 +789,10 @@
   documentation-workbench, release-procedure, and information-item surfaces to
   confirm they point to `docs/product/wiki-publication-ledger.md` once wiki
   publication begins
+- `TEST-UNIT-218`: verify generated and retained comparison opening return
+  stable cancelled outcomes before the comparison view opens
+- `TEST-UNIT-219`: verify `Diff prev` uses retained-compare-specific
+  cancellation wording when retained comparison opening is cancelled
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

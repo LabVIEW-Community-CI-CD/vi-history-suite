@@ -659,6 +659,72 @@ describe('createOpenViHistoryCommand', () => {
     });
   });
 
+  it('uses retained-compare-specific cancellation messaging when diffPrevious opening is cancelled', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    const openRetainedComparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'cancelled',
+      cancellationStage: 'before-retained-comparison-open'
+    });
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Update VI',
+            previousHash: '1111111122222222'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      undefined,
+      undefined,
+      openRetainedComparisonReportAction
+    );
+
+    await command(targetUri as never);
+    await tracker.dispatchLastPanelMessage({
+      command: 'diffPrevious',
+      hash: 'abcdef1234567890'
+    });
+
+    expect(showInformationMessageMock).toHaveBeenCalledWith(
+      'Opening retained VI Comparison Report was cancelled before the retained comparison view opened.'
+    );
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'diffPrevious',
+      hash: 'abcdef1234567890',
+      outcome: 'cancelled',
+      reportStatus: undefined,
+      runtimeExecutionState: undefined,
+      blockedReason: undefined,
+      runtimeFailureReason: undefined,
+      cancellationStage: 'before-retained-comparison-open',
+      packetFilePath: undefined,
+      reportFilePath: undefined,
+      metadataFilePath: undefined,
+      reportWebviewUri: undefined,
+      generatedReportExists: undefined,
+      title: undefined
+    });
+  });
+
   it('opens a multi-report dashboard when the retained window has at least three commits', async () => {
     const targetUri = createMockUri('/workspace/eligible.vi');
     const tracker = new HistoryPanelTracker();

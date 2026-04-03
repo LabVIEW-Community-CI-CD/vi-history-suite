@@ -211,6 +211,7 @@ export function createOpenViHistoryCommand(
       const runComparisonReportCommand = async (
         actionCommand: string,
         title: string,
+        cancelledMessage: string,
         action:
           | ((request: {
               model: Awaited<ReturnType<ViHistoryService['load']>>;
@@ -241,9 +242,7 @@ export function createOpenViHistoryCommand(
         );
 
         if (result.outcome === 'cancelled') {
-          void vscode.window.showInformationMessage(
-            'VI History comparison report generation was cancelled. Retained comparison-report artifacts, if any, were preserved.'
-          );
+          void vscode.window.showInformationMessage(cancelledMessage);
         } else if (result.outcome === 'workspace-untrusted') {
           void vscode.window.showWarningMessage(
             'VI History comparison reports are disabled in untrusted workspaces.'
@@ -453,6 +452,7 @@ export function createOpenViHistoryCommand(
         await runComparisonReportCommand(
           command,
           'Generating VI Comparison Report',
+          'VI History comparison report generation was cancelled. Retained comparison-report artifacts, if any, were preserved.',
           comparisonReportAction
         );
         return;
@@ -467,6 +467,7 @@ export function createOpenViHistoryCommand(
           await runComparisonReportCommand(
             command,
             'Opening retained VI Comparison Report',
+            'Opening retained VI Comparison Report was cancelled before the retained comparison view opened.',
             openRetainedComparisonReportAction
           );
           return;
@@ -475,6 +476,7 @@ export function createOpenViHistoryCommand(
           await runComparisonReportCommand(
             command,
             'Generating VI Comparison Report',
+            'VI History comparison report generation was cancelled. Retained comparison-report artifacts, if any, were preserved.',
             comparisonReportAction
           );
           return;
