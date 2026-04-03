@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   applyRuntimeEngineOverride,
+  executeHarnessComparisonReportForCommit,
   renderHarnessReportSmokeHtml,
   renderHarnessReportSmokeMarkdown,
   resolveHarnessReportSmokeRuntimePlatform,
@@ -187,6 +188,117 @@ describe('runHarnessReportSmoke', () => {
   afterEach(() => {
     vi.useRealTimers();
   });
+
+  const canonicalHarnessDefinition = {
+    id: 'HARNESS-VHS-001',
+    repositoryUrl: 'https://github.com/ni/labview-icon-editor.git',
+    cloneDirectoryName: 'ni-labview-icon-editor',
+    targetRelativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+    description: 'Canonical real-history harness for content-detected VI history against ni/labview-icon-editor.'
+  } as const;
+
+  const canonicalCompareCommit = {
+    hash: 'abcdef1234567890',
+    authorDate: '2026-04-02T00:00:00Z',
+    authorName: 'A User',
+    subject: 'Update VI',
+    previousHash: '1111111122222222'
+  } as const;
+
+  const canonicalHistoryModel = {
+    repositoryName: 'ni/labview-icon-editor',
+    repositoryRoot: '/tmp/harness',
+    relativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+    signature: 'LVIN' as const,
+    eligible: true,
+    commits: [canonicalCompareCommit]
+  };
+
+  const readyPreflight = {
+    normalizedRelativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+    ready: true,
+    left: {
+      revisionId: '1111111122222222',
+      blobSpecifier: '1111111122222222:Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+      signature: 'LVIN' as const,
+      isVi: true
+    },
+    right: {
+      revisionId: 'abcdef1234567890',
+      blobSpecifier: 'abcdef1234567890:Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+      signature: 'LVIN' as const,
+      isVi: true
+    }
+  };
+
+  const hostNativeRuntimeSelection = {
+    platform: 'win32' as const,
+    preferBitness: 'x86' as const,
+    provider: 'host-native' as const,
+    engine: 'labview-cli' as const,
+    notes: [],
+    registryQueryPlans: [],
+    candidates: []
+  };
+
+  function createPersistedPacketRecord(overrides: Record<string, unknown> = {}) {
+    return {
+      reportTitle: 'VI Comparison Report: VIP_Pre-Install Custom Action.vi',
+      reportStatus: 'blocked-runtime' as const,
+      reportType: 'diff' as const,
+      selectedHash: 'abcdef1234567890',
+      baseHash: '1111111122222222',
+      artifactPlan: {
+        repoId: 'repoid123456',
+        fileId: 'fileid123456',
+        reportType: 'diff',
+        fullFilename: 'VIP_Pre-Install Custom Action.vi',
+        normalizedRelativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+        reportDirectory: '/tmp/reports/HARNESS-VHS-001/workspace-storage/reports/repoid123456/fileid123456',
+        stagingDirectory:
+          '/tmp/reports/HARNESS-VHS-001/workspace-storage/reports/repoid123456/fileid123456/staging',
+        reportFilename: 'diff-report-VIP_Pre-Install Custom Action.vi.html',
+        reportFilePath:
+          '/tmp/reports/HARNESS-VHS-001/workspace-storage/reports/repoid123456/fileid123456/diff-report-VIP_Pre-Install Custom Action.vi.html',
+        packetFilename: 'report-packet.html',
+        packetFilePath:
+          '/tmp/reports/HARNESS-VHS-001/workspace-storage/reports/repoid123456/fileid123456/report-packet.html',
+        metadataFilePath:
+          '/tmp/reports/HARNESS-VHS-001/workspace-storage/reports/repoid123456/fileid123456/report-metadata.json',
+        runtimeStdoutFilePath: '/tmp/stdout.txt',
+        runtimeStderrFilePath: '/tmp/stderr.txt',
+        allowedLocalRootPaths: ['/tmp/reports/HARNESS-VHS-001/workspace-storage']
+      },
+      stagedRevisionPlan: {
+        leftFilename: 'left.vi',
+        leftFilePath: '/tmp/left.vi',
+        rightFilename: 'right.vi',
+        rightFilePath: '/tmp/right.vi'
+      },
+      preflight: readyPreflight,
+      runtimeSelection: hostNativeRuntimeSelection,
+      runtimeExecutionState: 'not-available' as const,
+      runtimeExecution: {
+        state: 'not-available' as const,
+        attempted: false,
+        reportExists: false,
+        blockedReason: 'blocked'
+      },
+      ...overrides
+    };
+  }
+
+  function createPersistPacketResult(recordOverrides: Record<string, unknown> = {}) {
+    return {
+      record: createPersistedPacketRecord(recordOverrides),
+      packetFilePath:
+        '/tmp/reports/HARNESS-VHS-001/workspace-storage/reports/repoid123456/fileid123456/report-packet.html',
+      reportFilePath:
+        '/tmp/reports/HARNESS-VHS-001/workspace-storage/reports/repoid123456/fileid123456/diff-report-VIP_Pre-Install Custom Action.vi.html',
+      metadataFilePath:
+        '/tmp/reports/HARNESS-VHS-001/workspace-storage/reports/repoid123456/fileid123456/report-metadata.json'
+    };
+  }
 
   it('retains a factual comparison-report smoke packet for the canonical harness', async () => {
     const writes = new Map<string, string>();
@@ -1605,5 +1717,82 @@ describe('runHarnessReportSmoke', () => {
     expect(result.report.runtimeBlockedReason).toBe('comparison-tool-not-found');
     expect(result.report.runtimeNotes).toEqual(['Tool not installed on this host.']);
     expect(result.report.generatedReportExists).toBe(false);
+  });
+
+  it('archives the retained packet source when archiveResult is requested and the packet is archive-complete', async () => {
+    const archiveComparisonReportSource = vi.fn().mockResolvedValue({
+      archiveDirectory: '/tmp/archive',
+      sourceRecordPath: '/tmp/archive/source-record.json',
+      record: {
+        archivedAt: '2026-04-03T00:00:00.000Z',
+        reportType: 'diff',
+        baseHash: '1111111122222222',
+        selectedHash: 'abcdef1234567890'
+      }
+    });
+
+    const result = await executeHarnessComparisonReportForCommit(
+      canonicalHarnessDefinition,
+      '/tmp/harness',
+      'abcdef1234567890',
+      canonicalHistoryModel,
+      'LVIN',
+      canonicalCompareCommit,
+      {
+        cloneRoot: '/tmp/harnesses',
+        reportRoot: '/tmp/reports',
+        runtimePlatform: 'win32'
+      },
+      {
+        preflightComparisonReportRevisions: vi.fn().mockResolvedValue(readyPreflight) as never,
+        locateComparisonRuntime: vi.fn().mockResolvedValue(hostNativeRuntimeSelection) as never,
+        persistComparisonReportPacket: vi.fn().mockResolvedValue(createPersistPacketResult()) as never,
+        archiveComparisonReportSource: archiveComparisonReportSource as never
+      },
+      true
+    );
+
+    expect(archiveComparisonReportSource).toHaveBeenCalledWith(result.record);
+    expect(result.archivedSourceRecord).toMatchObject({
+      archiveDirectory: '/tmp/archive',
+      sourceRecordPath: '/tmp/archive/source-record.json'
+    });
+  });
+
+  it('fails closed on archive export when the retained packet is missing archive-required artifact fields', async () => {
+    const archiveComparisonReportSource = vi.fn();
+
+    const result = await executeHarnessComparisonReportForCommit(
+      canonicalHarnessDefinition,
+      '/tmp/harness',
+      'abcdef1234567890',
+      canonicalHistoryModel,
+      'LVIN',
+      canonicalCompareCommit,
+      {
+        cloneRoot: '/tmp/harnesses',
+        reportRoot: '/tmp/reports',
+        runtimePlatform: 'win32'
+      },
+      {
+        preflightComparisonReportRevisions: vi.fn().mockResolvedValue(readyPreflight) as never,
+        locateComparisonRuntime: vi.fn().mockResolvedValue(hostNativeRuntimeSelection) as never,
+        persistComparisonReportPacket: vi
+          .fn()
+          .mockResolvedValue(
+            createPersistPacketResult({
+              artifactPlan: {
+                ...createPersistedPacketRecord().artifactPlan,
+                reportFilename: undefined
+              }
+            })
+          ) as never,
+        archiveComparisonReportSource: archiveComparisonReportSource as never
+      },
+      true
+    );
+
+    expect(archiveComparisonReportSource).not.toHaveBeenCalled();
+    expect(result.archivedSourceRecord).toBeUndefined();
   });
 });
