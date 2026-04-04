@@ -21,6 +21,10 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
     capabilities.decisionRecordAvailable !== false && model.commits.length >= 3
       ? '<button data-testid="history-action-decision-record" data-command="createDecisionRecord">Create decision record</button>'
       : '<button data-testid="history-action-decision-record" disabled>Create decision record</button>';
+  const submitHumanReviewButton =
+    capabilities.humanReviewSubmissionAvailable !== false
+      ? '<button data-testid="history-action-submit-human-review" data-command="submitHumanReview">Submit host review</button>'
+      : '<button data-testid="history-action-submit-human-review" disabled>Submit host review</button>';
   const capabilitySummary = renderCapabilitySummary(capabilities, model.commits.length);
   const rows = model.commits
     .map((commit: ViHistoryCommit, index: number) => {
@@ -135,6 +139,34 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
         gap: 8px 16px;
         margin-top: 8px;
       }
+      .review-submit {
+        margin-bottom: 16px;
+        padding: 12px;
+        border: 1px solid var(--vscode-panel-border);
+      }
+      .review-submit-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(240px, 1fr));
+        gap: 8px 16px;
+        margin-top: 10px;
+      }
+      .review-submit label {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .review-submit textarea {
+        min-height: 90px;
+        resize: vertical;
+      }
+      .review-submit select,
+      .review-submit textarea {
+        color: var(--vscode-input-foreground);
+        background: var(--vscode-input-background);
+        border: 1px solid var(--vscode-input-border, var(--vscode-panel-border));
+        padding: 8px;
+        font: inherit;
+      }
     </style>
   </head>
   <body>
@@ -167,6 +199,7 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
       <div data-testid="history-capability-dashboard"><strong>Dashboard:</strong> ${capabilitySummary.dashboard}</div>
       <div data-testid="history-capability-decision-record"><strong>Decision record:</strong> ${capabilitySummary.decisionRecord}</div>
       <div data-testid="history-capability-documentation"><strong>Documentation:</strong> ${capabilitySummary.documentation}</div>
+      <div data-testid="history-capability-human-review"><strong>Host review submission:</strong> ${capabilitySummary.humanReviewSubmission}</div>
     </div>
     <div class="limitations" data-testid="history-binary-limitations">
       <strong>Binary review limits:</strong> Git-backed LabVIEW VI revisions are binary artifacts. This surface retains chronology and commit facts; pairwise compare actions use retained NI comparison-report evidence and installed tooling instead of plain text diff.
@@ -179,6 +212,7 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
         <li data-testid="history-guidance-step">Use <code>Open docs</code> to open the bundled user documentation that ships with this installed extension version instead of leaving VS Code for repo-hosted docs.</li>
         <li data-testid="history-guidance-step">Use <code>Open dashboard</code> when the retained window has at least three commits, dashboard review is available in this build, and you want concentrated comparison-report evidence in one place.</li>
         <li data-testid="history-guidance-step">Use <code>Create decision record</code> when decision-record support is available in this build and you want to retain a separate human review outcome from the current VI review evidence without mutating the machine-generated dashboard packet.</li>
+        <li data-testid="history-guidance-step">Use <code>Submit host review</code> after the manual right-click pass on the canonical Windows 11 host machine so the result is retained to a stable latest-review manifest future sessions can consume automatically.</li>
         <li data-testid="history-guidance-step">Use <code>Generate compare</code> when a pair has no retained evidence yet, and <code>Refresh compare</code> when you want to update already-retained evidence for that pair, but only when comparison generation is available in this build.</li>
       </ol>
     </div>
@@ -190,6 +224,32 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
         <div data-testid="history-scope-included"><strong>Included here:</strong> Repository/path facts, retained commit chronology, selected-versus-base pairing, compare-pair summaries, and dashboard availability.</div>
         <div data-testid="history-scope-excluded"><strong>Needs external comparison tooling:</strong> Binary semantic differences, visual or cosmetic change detection, and NI comparison-report output.</div>
       </div>
+    </div>
+    <div class="review-submit" data-testid="history-human-review-submit">
+      <strong>Host-machine review submission:</strong> Use this deterministic submission surface after the manual right-click review pass on the canonical Windows 11 development and review machine.
+      <div class="review-submit-grid">
+        <label data-testid="history-human-review-outcome-field">
+          Outcome
+          <select id="host-review-outcome">
+            <option value="passed-human-review">Pass</option>
+            <option value="needs-more-review" selected>Needs more review</option>
+            <option value="failed-human-review">Fail</option>
+          </select>
+        </label>
+        <label data-testid="history-human-review-confidence-field">
+          Confidence
+          <select id="host-review-confidence">
+            <option value="high">High</option>
+            <option value="medium" selected>Medium</option>
+            <option value="low">Low</option>
+          </select>
+        </label>
+        <label data-testid="history-human-review-note-field" style="grid-column: 1 / -1;">
+          Review note
+          <textarea id="host-review-note" placeholder="Summarize the manual right-click result, any surprises, and whether the review surface behaved as expected."></textarea>
+        </label>
+      </div>
+      ${submitHumanReviewButton}
     </div>
     <table data-testid="history-table">
       <thead>
@@ -227,6 +287,20 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
         }
         if (pageId) {
           payload.pageId = pageId;
+        }
+        if (command === 'submitHumanReview') {
+          const outcome = document.getElementById('host-review-outcome');
+          const confidence = document.getElementById('host-review-confidence');
+          const note = document.getElementById('host-review-note');
+          if (outcome instanceof HTMLSelectElement) {
+            payload.reviewOutcome = outcome.value;
+          }
+          if (confidence instanceof HTMLSelectElement) {
+            payload.reviewConfidence = confidence.value;
+          }
+          if (note instanceof HTMLTextAreaElement) {
+            payload.reviewNote = note.value;
+          }
         }
         vscode.postMessage(payload);
       });
@@ -316,6 +390,7 @@ function renderCapabilitySummary(
   dashboard: string;
   decisionRecord: string;
   documentation: string;
+  humanReviewSubmission: string;
 } {
   return {
     comparisonGeneration:
@@ -341,6 +416,10 @@ function renderCapabilitySummary(
     documentation:
       capabilities.documentationAvailable === false
         ? 'Unavailable in this build'
-        : 'Available in this build'
+        : 'Available in this build',
+    humanReviewSubmission:
+      capabilities.humanReviewSubmissionAvailable === false
+        ? 'Unavailable in this build'
+        : 'Available on the canonical host machine'
   };
 }

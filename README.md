@@ -11,7 +11,10 @@ contains:
 - pair-archived comparison-report retention by commit pair
 - concentrated multi-report dashboard packets and extension dashboard action
 - governed review-scenario registry and separate human decision-record artifacts
+- deterministic in-IDE host-review submission with canonical-machine binding
 - canonical real-history harnesses and smoke lanes
+- a private GitHub Linux benchmark lane for `lv_icon.vi` experiments while
+  GitLab remains authority
 - retained design-gate guidance for the next development tranche
 
 ## Start Here
@@ -146,6 +149,10 @@ Committed and governed today:
   the newest dashboard run without manually surfacing hashed storage paths,
   including retained history-window mode, effective ceiling, known total file
   history count, truncation state, phase timings, and progress events
+- stable `latest-human-review-submission.json` retention at the
+  workspace-storage human-review root plus an extension-global canonical
+  host-machine fingerprint, so Sergio's maintainer click-pass submission can be
+  consumed deterministically without shell notes
 - direct local rendering for retained comparison packets and dashboard HTML
   artifacts, with injected base-path/CSP controls and soft iframe fallback if a
   local HTML artifact is unavailable
@@ -181,6 +188,12 @@ Committed and governed today:
 - a governed cross-repo jump surface that resolves the product repo, wiki repo,
   and companion `repo-standards-review` skill repo from one local map and one
   CLI entrypoint
+- local evidence-consumer scripts for the newest dashboard run and newest human
+  review submission via `npm run dashboard:latest` and `npm run review:latest`
+- a GitHub-hosted Linux dashboard benchmark lane that pins
+  `nationalinstruments/labview:2026q1-linux`, targets
+  `HARNESS-VHS-002` / `resource/plugins/lv_icon.vi`, and retains machine-readable
+  benchmark summaries under `.cache/github-experiments/linux-dashboard-benchmark/`
 - a retained documentation coherence ledger and wiki seed plan so future wiki
   work starts from governed docs instead of source or chat memory
 - a retained wiki publication ledger so actual published wiki pages are tracked
@@ -194,6 +207,10 @@ Committed and governed today:
   latest governed build before the first tagged release is retained
 - explicit Linux and Windows extension-host proof scripts plus a least-privilege
   Linux VS Code bootstrap command for faster autonomous iteration
+- explicit GitHub Linux benchmark preparation via
+  `npm run benchmark:github:linux:lv-icon` in the authority repo, ready to be
+  mirrored into a future private GitHub experiment repo while GitLab remains
+  the authority source repo and release-control surface
 
 ## Active Work
 

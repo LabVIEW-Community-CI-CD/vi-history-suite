@@ -17,6 +17,7 @@ import {
   readComparisonRuntimeSettings,
   createOpenRetainedComparisonReportAction
 } from './reporting/comparisonReportAction';
+import { createHumanReviewSubmissionAction } from './review/humanReviewSubmissionAction';
 import { createReviewDecisionRecordAction } from './scenarios/reviewDecisionRecordAction';
 import { ViHistoryViewModel } from './services/viHistoryModel';
 import { getViHistoryServiceSettings, ViHistoryService } from './services/viHistoryService';
@@ -63,6 +64,7 @@ export async function activate(
     createEnsureComparisonReportEvidenceAction(context);
   const openRetainedComparisonReportAction = createOpenRetainedComparisonReportAction(context);
   const reviewDecisionRecordAction = createReviewDecisionRecordAction(context);
+  const humanReviewSubmissionAction = createHumanReviewSubmissionAction(context);
   const bundledDocumentationAction = createBundledDocumentationAction(context, panelTracker);
   const multiReportDashboardAction = createMultiReportDashboardAction(
     context,
@@ -115,7 +117,8 @@ export async function activate(
         openRetainedComparisonReportAction,
         hasRetainedComparisonReport,
         reviewDecisionRecordAction,
-        bundledDocumentationAction
+        bundledDocumentationAction,
+        humanReviewSubmissionAction
       )
     )
   );

@@ -15,6 +15,9 @@ import {
 import {
   ReviewDecisionRecordActionResult,
 } from '../scenarios/reviewDecisionRecordAction';
+import {
+  HumanReviewSubmissionActionResult
+} from '../review/humanReviewSubmissionAction';
 import { ViHistoryService } from '../services/viHistoryService';
 import {
   renderHistoryPanelHtml,
@@ -59,7 +62,14 @@ export function createOpenViHistoryCommand(
   }) => Promise<ReviewDecisionRecordActionResult>,
   openDocumentationAction?: (request?: {
     pageId?: string;
-  }) => Promise<DocumentationActionResult>
+  }) => Promise<DocumentationActionResult>,
+  humanReviewSubmissionAction?: (request: {
+    model: Awaited<ReturnType<ViHistoryService['load']>>;
+    source: 'history-panel';
+    draftOutcome?: string;
+    draftConfidence?: string;
+    draftNote?: string;
+  }) => Promise<HumanReviewSubmissionActionResult>
 ): (uri?: vscode.Uri) => Promise<void> {
   return async (uri?: vscode.Uri) => {
     const targetUri = uri ?? vscode.window.activeTextEditor?.document.uri;
@@ -94,7 +104,8 @@ export function createOpenViHistoryCommand(
         isComparisonReportCapableVi && openRetainedComparisonReportAction !== undefined,
       dashboardAvailable: multiReportDashboardAction !== undefined,
       decisionRecordAvailable: reviewDecisionRecordAction !== undefined,
-      documentationAvailable: openDocumentationAction !== undefined
+      documentationAvailable: openDocumentationAction !== undefined,
+      humanReviewSubmissionAvailable: humanReviewSubmissionAction !== undefined
     };
     const model = hasRetainedComparisonReport
       ? {
@@ -537,6 +548,68 @@ export function createOpenViHistoryCommand(
           mismatchSummary: result.mismatchSummary,
           cancellationStage: result.cancellationStage,
           title: result.title
+        });
+        return;
+      }
+
+      if (command === 'submitHumanReview') {
+        if (!humanReviewSubmissionAction) {
+          void vscode.window.showInformationMessage(
+            'Host-machine human review submission is not available in this extension build.'
+          );
+          panelTracker?.recordAction({
+            command,
+            outcome: 'unsupported-command'
+          });
+          return;
+        }
+
+        const result = await humanReviewSubmissionAction({
+          model,
+          source: 'history-panel',
+          draftOutcome: message.reviewOutcome,
+          draftConfidence: message.reviewConfidence,
+          draftNote: message.reviewNote
+        });
+        if (result.outcome === 'submitted-human-review') {
+          void vscode.window.showInformationMessage(
+            'Host-machine review submitted. Future sessions can consume the retained latest-review manifest automatically.'
+          );
+        } else if (result.outcome === 'workspace-untrusted') {
+          void vscode.window.showWarningMessage(
+            'Host-machine review submission is disabled in untrusted workspaces.'
+          );
+        } else if (result.outcome === 'missing-storage-uri') {
+          void vscode.window.showWarningMessage(
+            'Host-machine review submission requires an open workspace so review artifacts can be stored under workspace-scoped extension storage.'
+          );
+        } else if (result.outcome === 'canonical-machine-mismatch') {
+          void vscode.window.showWarningMessage(
+            'This review submission was blocked because the current machine fingerprint does not match the canonical Windows 11 review host.'
+          );
+        } else if (result.validationMessage) {
+          void vscode.window.showInformationMessage(result.validationMessage);
+        }
+
+        panelTracker?.recordAction({
+          command,
+          outcome:
+            result.outcome === 'submitted-human-review'
+              ? 'submitted-human-review'
+              : result.outcome === 'workspace-untrusted'
+                ? 'workspace-untrusted'
+              : result.outcome === 'missing-storage-uri'
+                ? 'missing-human-review-storage'
+              : result.outcome === 'canonical-machine-mismatch'
+                ? 'canonical-machine-mismatch'
+                : 'invalid-human-review-submission',
+          humanReviewSubmissionFilePath: result.submissionFilePath,
+          humanReviewLatestManifestPath: result.latestSubmissionFilePath,
+          humanReviewCanonicalMachineFilePath: result.canonicalHostMachineFilePath,
+          humanReviewMachineFingerprintId: result.machineFingerprintId,
+          humanReviewCanonicalMachineFingerprintId:
+            result.canonicalMachineFingerprintId,
+          humanReviewValidationMessage: result.validationMessage
         });
         return;
       }

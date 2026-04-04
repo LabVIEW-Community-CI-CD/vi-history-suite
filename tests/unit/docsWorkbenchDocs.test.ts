@@ -160,6 +160,7 @@ describe('documentation-package workbench', () => {
       'scripts/repo_jump.py /home/sveld/code/standards/vi-history-suite --format text'
     );
     expect(programRepoJumpMap).toContain('"id": "vi-history-suite"');
+    expect(programRepoJumpMap).toContain('"id": "vi-history-suite-source-experiments"');
     expect(programRepoJumpMap).toContain('"id": "vi-history-suite.wiki"');
     expect(programRepoJumpMap).toContain('"id": "repo-standards-review"');
     expect(programRepoJumpMap).toContain('"kind": "codex-skill"');

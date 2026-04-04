@@ -30,6 +30,9 @@ The dashboard will:
 - aggregate multiple retained pairwise comparison-report packets
 - remain separate from the human decision record so the raw dashboard evidence
   and the reviewer outcome are not conflated
+- remain separate from the deterministic host-machine human-review submission so
+  concentrated dashboard evidence, reviewer submission, and downstream
+  acceptance records are not conflated
 - preserve explicit selected/base provenance for every report
 - surface missing, blocked, or failed report facts alongside successful reports
 - keep raw packet and raw HTML report navigation available
@@ -43,6 +46,8 @@ Positive:
 - chronology becomes a first-class concern rather than an implied one
 - the dashboard can evolve into a concentration-first review surface for
   high-volume open-source VI review
+- the product can retain one stable latest-dashboard manifest and one stable
+  latest-human-review manifest without mutating concentrated evidence packets
 
 Tradeoffs:
 
@@ -54,6 +59,8 @@ Tradeoffs:
 - harness proof must cover multi-commit scenarios, not only one pair
 - future dashboard work must preserve drill-down to raw reports even when the
   primary surface becomes less linear
+- the canonical host-machine closeout path now needs its own governed
+  retention contract instead of ad hoc notes or shell transcripts
 
 ## Follow-On Work
 

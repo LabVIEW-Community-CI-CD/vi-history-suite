@@ -44,6 +44,7 @@
 | Documentation-package workbench | requirements, ADR, RTM, release-readiness, and wiki-authority iteration | Docker / Node / Markdown tooling |
 | Bundled documentation pack | version-matched local user docs derived from the published wiki set and packaged inside the extension | HTML fragments / JSON manifest / WebviewPanel |
 | Cross-repo navigation surface | local jump map and repo-entrypoint CLI for the product repo, wiki repo, and companion assurance skill repo | Markdown / JSON / TypeScript CLI |
+| GitHub Linux benchmark lane | prepared in the authority repo for future non-authoritative `lv_icon.vi` performance experiments against the NI Linux runtime image while GitLab remains authority | GitHub Actions / Docker / TypeScript CLI |
 
 ## Component View
 
@@ -67,6 +68,7 @@
 - Environments:
   - local developer workstation
   - GitLab CI for compile/test/coverage
+  - private GitHub Actions experiment mirror for Linux benchmark iteration
   - GitLab container registry for the docs-authoring workbench image
 - Nodes:
   - VS Code desktop extension host
@@ -111,6 +113,8 @@
   surface that can be opened from the installed extension without repo access
 - cross-repo navigation is governed from the main repo docs package and
   mirrored into the assurance skill instead of being rediscovered per session
+- GitHub-hosted Linux benchmarks are retained diagnostic evidence only; they do
+  not replace GitLab authority or Windows installed-user proof
 
 ## ADR Index
 
@@ -144,3 +148,5 @@
   Cross-repo navigation control plane
 - [ADR-0015](./adr/ADR-0015-version-matched-bundled-user-documentation.md):
   Version-matched bundled user documentation
+- [ADR-0016](./adr/ADR-0016-gitlab-authority-and-github-linux-experiment-lane.md):
+  GitLab authority with a GitHub Linux experiment lane

@@ -49,6 +49,11 @@ Current landed scaffold state:
   prerequisite
 - the local container public-release-kit smoke now passes against the live
   `v0.2.0` GitHub release assets
+- the authority repo now retains a ready-to-mirror GitHub Linux benchmark lane
+  for `HARNESS-VHS-002` / `resource/plugins/lv_icon.vi`, while GitLab remains
+  the authority source repo and release-control surface
+- no private GitHub experiment mirror exists yet; creating it remains gated on
+  a green design gate for the four-surface authority model
 - the host-machine automated acceptance lane now succeeds with a retained
   acceptance record at
   `C:\Users\sveld\AppData\Local\VI History Suite\acceptance\host-machine\acceptance-record.json`
@@ -67,11 +72,15 @@ Current landed scaffold state:
   Studio Code CLI
 - retained manual right-click acceptance worksheet for the human UX gate
 - future container-image automation lane planning
+- private GitHub Linux benchmark experimentation planning, implementation, and
+  later mirror creation after design-gate approval
 
 ## Non-Goals
 
 - exposing private GitLab source repositories publicly
 - treating the public GitHub repo as the engineering source of truth
+- treating the private GitHub experiment mirror as authority or as the public
+  facade repo
 - reintroducing NSIS into the active public toolchain
 - shipping Docker in the default public setup path
 - replacing the Windows 11 host-machine proof lane with public-issue feedback
@@ -106,6 +115,9 @@ Current landed scaffold state:
   prerequisite
 - the canonical fixture repo and VI are retained in a pinned provisioning
   manifest
+- the prepared GitHub Linux benchmark lane is documented as non-authoritative,
+  and any future private GitHub experiment mirror is documented as benchmark
+  only
 
 ## Required Evidence
 

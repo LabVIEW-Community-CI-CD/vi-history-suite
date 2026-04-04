@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd /workspace
+
+git config --global --add safe.directory /workspace
+
+npm ci
+npm run compile
+
+args=(
+  --harness-id
+  "${VIHS_GITHUB_BENCHMARK_HARNESS_ID:-HARNESS-VHS-002}"
+)
+
+if [[ -n "${VIHS_GITHUB_BENCHMARK_DASHBOARD_COMMIT_WINDOW:-}" ]]; then
+  args+=(
+    --dashboard-commit-window
+    "${VIHS_GITHUB_BENCHMARK_DASHBOARD_COMMIT_WINDOW}"
+  )
+fi
+
+if [[ -n "${VIHS_GITHUB_BENCHMARK_ENGINE:-}" ]]; then
+  args+=(
+    --engine
+    "${VIHS_GITHUB_BENCHMARK_ENGINE}"
+  )
+fi
+
+if [[ -n "${VIHS_GITHUB_BENCHMARK_LABVIEW_CLI_PATH:-}" ]]; then
+  args+=(
+    --labview-cli-path
+    "${VIHS_GITHUB_BENCHMARK_LABVIEW_CLI_PATH}"
+  )
+fi
+
+if [[ -n "${VIHS_GITHUB_BENCHMARK_LABVIEW_EXE_PATH:-}" ]]; then
+  args+=(
+    --labview-exe-path
+    "${VIHS_GITHUB_BENCHMARK_LABVIEW_EXE_PATH}"
+  )
+fi
+
+if [[ -n "${VIHS_GITHUB_BENCHMARK_LVCOMPARE_PATH:-}" ]]; then
+  args+=(
+    --lvcompare-path
+    "${VIHS_GITHUB_BENCHMARK_LVCOMPARE_PATH}"
+  )
+fi
+
+if [[ "${VIHS_GITHUB_BENCHMARK_STRICT_RSRC_HEADER:-false}" == "true" ]]; then
+  args+=(--strict-rsrc-header)
+fi
+
+node out/cli/runGitHubLinuxDashboardBenchmark.js "${args[@]}"

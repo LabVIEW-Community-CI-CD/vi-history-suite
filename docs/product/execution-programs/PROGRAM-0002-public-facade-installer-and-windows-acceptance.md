@@ -68,6 +68,11 @@ automation and human evidence are captured.
   replaces VM replay as the preferred automation surface
 - the current first slice of that lane is a scaffolded container
   public-release-kit smoke recipe and GitHub workflow
+- the authority repo now retains a ready-to-mirror GitHub Linux benchmark lane
+  for non-authoritative experiments against `HARNESS-VHS-002` /
+  `resource/plugins/lv_icon.vi`
+- a private GitHub experiment mirror may be created after the design gate is
+  green for the four-surface authority model
 
 ### Supplemental Feedback Truth
 
@@ -76,6 +81,10 @@ automation and human evidence are captured.
 ### Explicit Boundaries
 
 - the GitHub facade repo is not the private engineering source of truth
+- any future private GitHub experiment mirror is not the public facade repo
+- GitLab remains the authority source repo and release-control surface
+- GitHub experiment results are benchmark evidence only; they do not close
+  product truth or release truth
 - private requirements, design gates, and retained engineering evidence do not
   get published on the public facade repo
 - the GitHub workflow is the active public release-kit publication surface
@@ -172,6 +181,7 @@ Current first slice:
 4. Windows 11 host-machine PowerShell + VS Code CLI acceptance harness
 5. retained installed-user evidence pack and human-check worksheet
 6. future container-image automation lane
+7. private GitHub Linux benchmark experiment lane for `lv_icon.vi`
 
 ## Planned Deliverables
 
@@ -185,6 +195,8 @@ Current first slice:
   manifest
 - a scaffolded container public-release-kit smoke recipe and workflow in the
   public facade repo
+- a private GitHub-hosted Linux benchmark workflow plus derived benchmark
+  container recipe for `HARNESS-VHS-002`
 
 ## Non-Goals
 
@@ -262,6 +274,9 @@ The public facade repo now retains:
 - a successful public release-kit publication run `23985908613` on public head
   `9ebee6c` that refreshed the public setup checksum asset after the container
   smoke scaffold landed
+- the authority repo now retains the ready-to-mirror GitHub Linux benchmark
+  workflow, CLI, harness, and container recipe, but the private GitHub
+  experiment repo has not been created yet
 - a local direct-release Windows smoke that now succeeds against the public
   setup manifest, exact VSIX, and pinned fixture bundle
 - a scaffolded container public-release-kit smoke recipe and workflow at
@@ -287,6 +302,8 @@ The approved trust boundary remains:
 - private GitLab remains source truth
 - the public GitHub facade repo remains the public release-kit, setup, and
   support surface
+- a future private GitHub experiment mirror remains distinct from both GitLab
+  authority and the public facade repo
 - the GitHub workflow remains the release-kit publication surface
 - NSIS is removed from the public toolchain
 - Docker is not part of the default public setup path

@@ -112,6 +112,21 @@ describe('extension manifest research alignment', () => {
     expect(manifest.scripts?.['docs:gate:core']).toBe(
       'node scripts/run-docs-gate.js --skip-links'
     );
+    expect(manifest.scripts?.['dashboard:latest']).toBe(
+      'node scripts/printLatestDashboardRun.js'
+    );
+    expect(manifest.scripts?.['dashboard:latest:json']).toBe(
+      'node scripts/printLatestDashboardRun.js --json'
+    );
+    expect(manifest.scripts?.['review:latest']).toBe(
+      'node scripts/printLatestHumanReviewSubmission.js'
+    );
+    expect(manifest.scripts?.['review:latest:json']).toBe(
+      'node scripts/printLatestHumanReviewSubmission.js --json'
+    );
+    expect(manifest.scripts?.['benchmark:github:linux:lv-icon']).toBe(
+      'npm run compile && node out/cli/runGitHubLinuxDashboardBenchmark.js --harness-id HARNESS-VHS-002'
+    );
     expect(manifest.scripts?.['docs:workbench:build']).toContain(
       'docker/docs-authoring/Dockerfile'
     );

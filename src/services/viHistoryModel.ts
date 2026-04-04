@@ -22,6 +22,7 @@ export interface ViHistorySurfaceCapabilities {
   dashboardAvailable?: boolean;
   decisionRecordAvailable?: boolean;
   documentationAvailable?: boolean;
+  humanReviewSubmissionAvailable?: boolean;
 }
 
 export type ViHistoryWindowMode = 'auto' | 'capped';

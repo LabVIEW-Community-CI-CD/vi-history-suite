@@ -47,6 +47,7 @@ describe('post-release control-plane coherence', () => {
 
     expect(readme).toContain('- `TRANCHE-010`: public facade release kit and host-machine acceptance');
     expect(readme).toContain('- active issue: `ISSUE-0407`');
+    expect(readme).toContain('future private GitHub experiment repo');
     expect(readme).toContain(
       '[PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)'
     );
@@ -90,6 +91,7 @@ describe('post-release control-plane coherence', () => {
     expect(currentState).toContain('- NSIS has been removed from the active public toolchain');
     expect(currentState).toContain('- the current Windows 11 host machine has already proven the automated installed-user flow');
     expect(currentState).toContain('- the public facade repo publishes release/setup/support material only; it');
+    expect(currentState).toContain('- no private GitHub experiment mirror exists yet; creating it remains gated on a green design gate');
     expect(currentState).toContain(
       '- a scaffolded container public-release-kit smoke recipe and workflow now exist in the public repo'
     );
@@ -109,6 +111,7 @@ describe('post-release control-plane coherence', () => {
     expect(program).toContain('- NSIS is removed from the active public toolchain');
     expect(program).toContain('- a retained automated host-machine proof record at');
     expect(program).toContain('- private requirements, design gates, and retained engineering evidence do not');
+    expect(program).toContain('- a future private GitHub experiment mirror remains distinct from both GitLab');
     expect(program).toContain('- scaffold `docker/public-release-kit-smoke/`');
     expect(program).toContain('- Sergio Velderrain is the sole named maintainer gate owner for this pass');
     expect(program).toContain(
@@ -123,10 +126,37 @@ describe('post-release control-plane coherence', () => {
     expect(issue).toContain('- the GitHub workflow is documented as the active public release-kit');
     expect(issue).toContain('- the Windows 11 host-machine acceptance lane is documented as the');
     expect(issue).toContain('The public facade is for release, setup, and support only.');
+    expect(issue).toContain('- no private GitHub experiment mirror exists yet; creating it remains gated on');
     expect(issue).toContain('- `docker/public-release-kit-smoke/` plus');
     expect(issue).toContain(
       '- Sergio Velderrain is documented as the sole named maintainer gate owner for'
     );
     expect(issue).toContain('- `acceptance/windows11/` now contains a PowerShell acceptance harness,');
+  });
+
+  it('keeps the GitLab authority, planned GitHub experiment mirror, and public facade boundary explicit', () => {
+    const currentState = readText('docs/product/current-state.md');
+    const program = readText(
+      'docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md'
+    );
+    const issue = readText(
+      'docs/product/issues/ISSUE-0407-public-facade-installer-and-windows-acceptance.md'
+    );
+    const adr = readText(
+      'docs/architecture/adr/ADR-0016-gitlab-authority-and-github-linux-experiment-lane.md'
+    );
+
+    expect(currentState).toContain('ready-to-mirror GitHub Linux benchmark lane');
+    expect(currentState).toContain(
+      'future private GitHub experiment mirror is a non-authoritative Linux benchmark lane only'
+    );
+    expect(program).toContain('ready-to-mirror GitHub Linux benchmark lane');
+    expect(program).toContain(
+      'private GitHub experiment mirror may be created after the design gate is'
+    );
+    expect(issue).toContain('ready-to-mirror GitHub Linux benchmark lane');
+    expect(issue).toContain('private GitHub experiment mirror exists yet');
+    expect(adr).toContain('A separate private GitHub experiment mirror may run');
+    expect(adr).toContain('public GitHub facade remains public release/setup/support only');
   });
 });

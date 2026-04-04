@@ -264,6 +264,94 @@ describe('createOpenViHistoryCommand', () => {
     expect(executeCommandMock).not.toHaveBeenCalled();
   });
 
+  it('routes deterministic host-review submission payloads through the retained history-panel message path', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Update VI',
+            previousHash: '1111111122222222'
+          },
+          {
+            hash: '1111111122222222',
+            authorDate: '2026-04-01T00:00:00Z',
+            authorName: 'B User',
+            subject: 'Older VI'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+    const submitHumanReviewAction = vi.fn().mockResolvedValue({
+      outcome: 'submitted-human-review',
+      submissionFilePath: '/workspace/.storage/human-reviews/review-1/human-review-submission.json',
+      latestSubmissionFilePath: '/workspace/.storage/human-reviews/latest-human-review-submission.json',
+      canonicalHostMachineFilePath: '/workspace/.storage/human-reviews/canonical-host-machine.json',
+      machineFingerprintId: 'fingerprint-1'
+    });
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      submitHumanReviewAction as never
+    );
+
+    await command(targetUri as never);
+    await tracker.dispatchLastPanelMessage({
+      command: 'submitHumanReview',
+      reviewOutcome: 'passed-human-review',
+      reviewConfidence: 'high',
+      reviewNote: 'The manual right-click flow behaved as expected.'
+    });
+
+    expect(submitHumanReviewAction).toHaveBeenCalledWith({
+      model: expect.objectContaining({
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi'
+      }),
+      source: 'history-panel',
+      draftOutcome: 'passed-human-review',
+      draftConfidence: 'high',
+      draftNote: 'The manual right-click flow behaved as expected.'
+    });
+    expect(showInformationMessageMock).toHaveBeenCalledWith(
+      'Host-machine review submitted. Future sessions can consume the retained latest-review manifest automatically.'
+    );
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'submitHumanReview',
+      outcome: 'submitted-human-review',
+      humanReviewSubmissionFilePath:
+        '/workspace/.storage/human-reviews/review-1/human-review-submission.json',
+      humanReviewLatestManifestPath:
+        '/workspace/.storage/human-reviews/latest-human-review-submission.json',
+      humanReviewCanonicalMachineFilePath:
+        '/workspace/.storage/human-reviews/canonical-host-machine.json',
+      humanReviewMachineFingerprintId: 'fingerprint-1',
+      humanReviewCanonicalMachineFingerprintId: undefined,
+      humanReviewValidationMessage: undefined
+    });
+  });
+
   it('loads history from the active editor, opens a panel, and retains the opened-panel summary', async () => {
     const tracker = new HistoryPanelTracker();
     const targetUri = createMockUri('/workspace/eligible.vi');

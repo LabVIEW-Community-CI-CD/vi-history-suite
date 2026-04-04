@@ -49,6 +49,7 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('Open dashboard');
     expect(html).toContain('Open docs');
     expect(html).toContain('Create decision record');
+    expect(html).toContain('Submit host review');
     expect(html).toContain('Copy hash');
     expect(html).toContain('Copy review packet');
     expect(html).toContain('data-testid="history-status"');
@@ -74,6 +75,7 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('data-testid="history-capability-dashboard"');
     expect(html).toContain('data-testid="history-capability-decision-record"');
     expect(html).toContain('data-testid="history-capability-documentation"');
+    expect(html).toContain('data-testid="history-capability-human-review"');
     expect(html).toContain('data-testid="history-row"');
     expect(html).toContain('data-testid="history-compare-base"');
     expect(html).toContain('data-testid="history-compare-pair"');
@@ -84,6 +86,11 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('data-testid="history-action-dashboard"');
     expect(html).toContain('data-testid="history-action-documentation"');
     expect(html).toContain('data-testid="history-action-decision-record"');
+    expect(html).toContain('data-testid="history-action-submit-human-review"');
+    expect(html).toContain('data-testid="history-human-review-submit"');
+    expect(html).toContain('data-testid="history-human-review-outcome-field"');
+    expect(html).toContain('data-testid="history-human-review-confidence-field"');
+    expect(html).toContain('data-testid="history-human-review-note-field"');
     expect(html).toContain('Newest commit first');
     expect(html).toContain('full history loaded automatically (2/2 commits)');
     expect(html).toContain('Oldest retained revision');
@@ -98,6 +105,7 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('Dashboard:</strong> Available when the retained review window reaches at least three commits');
     expect(html).toContain('Decision record:</strong> Available when the retained review window reaches at least three commits');
     expect(html).toContain('Documentation:</strong> Available in this build');
+    expect(html).toContain('Host review submission:</strong> Available on the canonical host machine');
     expect(html).toContain('Needs external comparison tooling:');
     expect(html).toContain('Binary semantic differences, visual or cosmetic change detection, and NI comparison-report output.');
     expect(html).toContain('Selected:</strong> <code>abcdef12</code>');
@@ -108,6 +116,9 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('Open docs</code> to open the bundled user documentation');
     expect(html).toContain(
       'Create decision record</code> when decision-record support is available in this build and you want to retain a separate human review outcome'
+    );
+    expect(html).toContain(
+      'Submit host review</code> after the manual right-click pass on the canonical Windows 11 host machine'
     );
   });
 
@@ -155,7 +166,8 @@ describe('renderHistoryPanelHtml', () => {
         retainedComparisonOpenAvailable: false,
         dashboardAvailable: false,
         decisionRecordAvailable: false,
-        documentationAvailable: false
+        documentationAvailable: false,
+        humanReviewSubmissionAvailable: false
       },
       commits: [
         {
@@ -192,6 +204,8 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('Dashboard:</strong> Unavailable in this build');
     expect(html).toContain('Decision record:</strong> Unavailable in this build');
     expect(html).toContain('Documentation:</strong> Unavailable in this build');
+    expect(html).toContain('Host review submission:</strong> Unavailable in this build');
+    expect(html).toContain('data-testid="history-action-submit-human-review" disabled');
   });
 
   it('renders a portable factual review packet', () => {

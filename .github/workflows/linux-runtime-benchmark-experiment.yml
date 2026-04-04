@@ -1,0 +1,151 @@
+name: Linux Runtime Benchmark Experiment
+
+on:
+  workflow_dispatch:
+    inputs:
+      harness_id:
+        description: Canonical harness id to benchmark
+        required: false
+        default: HARNESS-VHS-002
+      dashboard_commit_window:
+        description: Optional explicit dashboard commit window
+        required: false
+        default: ""
+      engine:
+        description: Optional runtime engine override
+        required: false
+        type: choice
+        options:
+          - ""
+          - labview-cli
+          - lvcompare
+        default: ""
+      strict_rsrc_header:
+        description: Require strict RSRC header validation
+        required: false
+        type: boolean
+        default: false
+  push:
+    branches:
+      - main
+      - experiment/**
+    paths:
+      - .github/workflows/linux-runtime-benchmark-experiment.yml
+      - docker/github-linux-dashboard-benchmark/**
+      - package.json
+      - src/cli/runGitHubLinuxDashboardBenchmark.ts
+      - src/harness/**
+      - src/dashboard/**
+      - src/reporting/**
+      - tests/unit/runGitHubLinuxDashboardBenchmarkCli.test.ts
+      - tests/unit/githubLinuxBenchmarkWorkflow.test.ts
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vihs-linux-runtime-benchmark-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    env:
+      NI_LINUX_IMAGE: nationalinstruments/labview:2026q1-linux
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Write benchmark plan receipt
+        shell: bash
+        run: |
+          mkdir -p .cache/github-experiments/linux-dashboard-benchmark/plan
+          cat > .cache/github-experiments/linux-dashboard-benchmark/plan/linux-benchmark-plan.json <<'JSON'
+          {
+            "schema": "vi-history-suite/github-linux-dashboard-benchmark-plan@v1",
+            "runtimeImage": "nationalinstruments/labview:2026q1-linux",
+            "dockerfile": "docker/github-linux-dashboard-benchmark/Dockerfile",
+            "benchmarkEntrypoint": "docker/github-linux-dashboard-benchmark/run-benchmark.sh",
+            "benchmarkScript": "npm run benchmark:github:linux:lv-icon",
+            "defaultHarnessId": "HARNESS-VHS-002",
+            "defaultTargetRelativePath": "resource/plugins/lv_icon.vi",
+            "authorityBoundary": {
+              "gitlab": "authority",
+              "github": "experiment"
+            }
+          }
+          JSON
+          {
+            echo "## Linux runtime benchmark plan"
+            echo
+            echo "- runtime image: \`$NI_LINUX_IMAGE\`"
+            echo "- harness: \`HARNESS-VHS-002\`"
+            echo "- target: \`resource/plugins/lv_icon.vi\`"
+            echo "- authority boundary: GitLab = authority, GitHub = experiment"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload plan receipt
+        uses: actions/upload-artifact@v5
+        with:
+          name: linux-runtime-benchmark-plan
+          path: .cache/github-experiments/linux-dashboard-benchmark/plan/linux-benchmark-plan.json
+          if-no-files-found: error
+
+  benchmark:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    needs:
+      - plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      NI_LINUX_IMAGE: nationalinstruments/labview:2026q1-linux
+      BENCHMARK_IMAGE: vi-history-suite-github-linux-dashboard-benchmark:${{ github.sha }}
+      VIHS_GITHUB_BENCHMARK_HARNESS_ID: ${{ inputs.harness_id }}
+      VIHS_GITHUB_BENCHMARK_DASHBOARD_COMMIT_WINDOW: ${{ inputs.dashboard_commit_window }}
+      VIHS_GITHUB_BENCHMARK_ENGINE: ${{ inputs.engine }}
+      VIHS_GITHUB_BENCHMARK_STRICT_RSRC_HEADER: ${{ inputs.strict_rsrc_header }}
+      VIHS_GITHUB_BENCHMARK_RUNTIME_IMAGE: nationalinstruments/labview:2026q1-linux
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Pre-pull NI Linux image
+        shell: bash
+        run: docker pull "$NI_LINUX_IMAGE"
+
+      - name: Build benchmark image
+        shell: bash
+        run: |
+          docker build \
+            --build-arg BASE_IMAGE="$NI_LINUX_IMAGE" \
+            -f docker/github-linux-dashboard-benchmark/Dockerfile \
+            -t "$BENCHMARK_IMAGE" \
+            .
+
+      - name: Run lv_icon benchmark inside derived image
+        shell: bash
+        run: |
+          docker run --rm \
+            -e GITHUB_ACTIONS \
+            -e GITHUB_REPOSITORY \
+            -e GITHUB_RUN_ID \
+            -e GITHUB_RUN_ATTEMPT \
+            -e GITHUB_SHA \
+            -e GITHUB_REF_NAME \
+            -e VIHS_GITHUB_BENCHMARK_HARNESS_ID \
+            -e VIHS_GITHUB_BENCHMARK_DASHBOARD_COMMIT_WINDOW \
+            -e VIHS_GITHUB_BENCHMARK_ENGINE \
+            -e VIHS_GITHUB_BENCHMARK_STRICT_RSRC_HEADER \
+            -e VIHS_GITHUB_BENCHMARK_RUNTIME_IMAGE \
+            -v "$PWD":/workspace \
+            -w /workspace \
+            "$BENCHMARK_IMAGE" \
+            bash /workspace/docker/github-linux-dashboard-benchmark/run-benchmark.sh
+
+      - name: Upload benchmark artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v5
+        with:
+          name: linux-runtime-benchmark-${{ inputs.harness_id || 'HARNESS-VHS-002' }}
+          path: |
+            .cache/github-experiments/linux-dashboard-benchmark/**
+            .cache/harness-reports/HARNESS-VHS-002/**
+          if-no-files-found: error

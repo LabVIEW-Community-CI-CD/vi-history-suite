@@ -6,6 +6,9 @@ export interface HistoryPanelMessage {
   command?: string;
   hash?: string;
   pageId?: string;
+  reviewOutcome?: string;
+  reviewConfidence?: string;
+  reviewNote?: string;
 }
 
 export interface DashboardPanelMessage {
@@ -52,6 +55,10 @@ export interface HistoryPanelActionSummary {
     | 'opened-documentation'
     | 'missing-bundled-documentation'
     | 'unknown-documentation-page'
+    | 'submitted-human-review'
+    | 'invalid-human-review-submission'
+    | 'missing-human-review-storage'
+    | 'canonical-machine-mismatch'
     | 'unsupported-command';
   openedUri?: string;
   leftUri?: string;
@@ -105,6 +112,12 @@ export interface HistoryPanelActionSummary {
   documentationPageFilePath?: string;
   requestedDocumentationPageId?: string;
   documentationFallbackUsed?: boolean;
+  humanReviewSubmissionFilePath?: string;
+  humanReviewLatestManifestPath?: string;
+  humanReviewCanonicalMachineFilePath?: string;
+  humanReviewMachineFingerprintId?: string;
+  humanReviewCanonicalMachineFingerprintId?: string;
+  humanReviewValidationMessage?: string;
 }
 
 export interface DashboardArtifactActionSummary {

@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import {
   getCanonicalHarnessDefinition,
-  HARNESS_VHS_001
+  HARNESS_VHS_001,
+  HARNESS_VHS_002
 } from '../../src/harness/canonicalHarnesses';
 import {
   renderHarnessSmokeHtml,
@@ -12,6 +13,7 @@ import {
 describe('canonical harness definitions', () => {
   it('returns the canonical harness by id', () => {
     expect(getCanonicalHarnessDefinition('HARNESS-VHS-001')).toEqual(HARNESS_VHS_001);
+    expect(getCanonicalHarnessDefinition('HARNESS-VHS-002')).toEqual(HARNESS_VHS_002);
   });
 
   it('fails closed for unknown harness ids', () => {
@@ -57,6 +59,7 @@ describe('harness smoke renderers', () => {
     expect(markdown).toContain('Eligible: yes');
     expect(markdown).toContain('VIP_Pre-Install Custom Action.vi');
     expect(markdown).toContain('First subject');
+    expect(HARNESS_VHS_002.targetRelativePath).toBe('resource/plugins/lv_icon.vi');
   });
 
   it('renders html with factual smoke fields', () => {

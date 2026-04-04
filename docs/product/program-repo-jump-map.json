@@ -1,7 +1,7 @@
 {
   "programId": "comparevi",
   "version": 1,
-  "description": "Governed local navigation map for the VI History Suite product repo, its derived wiki repo, and the companion repo-standards-review assurance skill repo.",
+  "description": "Governed local navigation map for the VI History Suite authority repo, its private GitHub experiment mirror, its derived wiki repo, and the companion repo-standards-review assurance skill repo.",
   "repos": [
     {
       "id": "vi-history-suite",
@@ -17,6 +17,21 @@
         "docs/product/SHIP-0001-releasable-vi-history-suite.md",
         "docs/product/wiki-authority-map.md",
         "docs/documentation-workbench.md"
+      ]
+    },
+    {
+      "id": "vi-history-suite-source-experiments",
+      "displayName": "VI History Suite Source Experiments",
+      "role": "experiment-mirror",
+      "expectedRemote": "https://github.com/svelderrainruiz/vi-history-suite-source-experiments.git",
+      "localPath": {
+        "kind": "sibling",
+        "relativePath": "../vi-history-suite-source-experiments"
+      },
+      "primaryEntrypoints": [
+        "README.md",
+        ".github/workflows/linux-runtime-benchmark-experiment.yml",
+        "docker/github-linux-dashboard-benchmark/Dockerfile"
       ]
     },
     {

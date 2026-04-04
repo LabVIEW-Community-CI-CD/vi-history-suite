@@ -892,9 +892,42 @@
   active post-release tranche/issue/program identities or the retained open
   Gate C-D Windows-proof truth drift across `development-queue.json`,
   `current-state.md`, `PROGRAM-0002`, and `ISSUE-0407`
+- `TEST-UNIT-247`: verify the history panel renders a deterministic in-IDE
+  host-review submission surface with fixed outcome, confidence, and note
+  fields plus a truthful `Submit host review` capability state
+- `TEST-UNIT-248`: verify host-review submission persistence writes a
+  per-submission JSON artifact plus `human-reviews/latest-human-review-submission.json`,
+  registers or matches a canonical host-machine fingerprint, fails closed on a
+  different machine fingerprint, and keeps the fingerprint stable across VS
+  Code version changes on the same machine
+- `TEST-UNIT-249`: verify the history-panel command router accepts the
+  deterministic host-review submission payload, routes it to retained review
+  persistence, and records submission/latest/canonical artifact paths in the
+  last action summary
+- `TEST-UNIT-250`: verify the package manifest exposes the governed
+  `dashboard:latest`, `dashboard:latest:json`, `review:latest`, and
+  `review:latest:json` local evidence-consumer scripts
+- `TEST-UNIT-251`: verify `HARNESS-VHS-002` is retained as the canonical
+  `lv_icon.vi` high-history benchmark harness against `ni/labview-icon-editor`
+- `TEST-UNIT-252`: verify the GitHub Linux benchmark CLI defaults to
+  `HARNESS-VHS-002`, uses a high-history commit window by default, and writes
+  stable benchmark summaries under
+  `.cache/github-experiments/linux-dashboard-benchmark/`
+- `TEST-UNIT-253`: verify the GitHub Linux benchmark workflow, derived
+  benchmark Dockerfile, and runner script pin
+  `nationalinstruments/labview:2026q1-linux` and execute the benchmark through
+  the derived container
+- `TEST-UNIT-254`: verify the actual governed repo-jump map includes the
+  planned `vi-history-suite-source-experiments` mirror with the expected GitHub
+  remote, sibling-path strategy, and Linux benchmark entrypoints
+- `TEST-UNIT-255`: verify the active post-release control-plane docs
+  distinguish GitLab authority, the planned private GitHub experiment mirror,
+  and the public GitHub facade without implying the private mirror already
+  exists
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
-  governed product, wiki, and assurance-skill repos with authority roles,
-  expected remotes, and primary entrypoints
+  governed authority repo, planned experiment mirror, wiki, and
+  assurance-skill repos with authority roles, expected remotes, and primary
+  entrypoints
 - `TEST-DOC-029`: review the documentation package and confirm README,
   current-state, architecture, workbench, and coherence surfaces point future
   sessions to the governed cross-repo jump surface
@@ -908,6 +941,15 @@
   to confirm future sessions may only treat retained design-gate evidence as
   complete after `npm run design:gate:assert-complete` succeeds, unless they
   already waited on the live `npm run design:gate` process
+- `TEST-DOC-033`: review README, current-state, SRS/RTM/test-plan, and
+  ADR-0007/ADR-0008 to confirm the deterministic in-IDE host-review
+  submission surface and canonical Windows 11 host-machine proof boundary are
+  governed explicitly and remain separate from the concentrated dashboard
+  evidence packet
+- `TEST-DOC-034`: review README, current-state, program-repo-jump,
+  PROGRAM-0002, ISSUE-0407, and ADR-0016 to confirm GitLab remains authority,
+  the private GitHub experiment mirror is planned and non-authoritative, and
+  the public GitHub facade remains release/setup/support only
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

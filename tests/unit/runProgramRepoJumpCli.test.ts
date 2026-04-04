@@ -1,4 +1,5 @@
 import * as fs from 'node:fs/promises';
+import * as fsSync from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
@@ -190,5 +191,36 @@ describe('runProgramRepoJumpCli', () => {
       )
     ).toBe(true);
     expect(processLike.exitCode).toBe(0);
+  });
+
+  it('keeps the actual governed map aligned with the planned GitHub experiment mirror', () => {
+    const repoRoot = path.resolve(__dirname, '..', '..');
+    const map = readProgramRepoJumpMap(repoRoot);
+    const experimentRepo = map.repos.find((repo) => repo.id === 'vi-history-suite-source-experiments');
+
+    expect(experimentRepo).toEqual({
+      id: 'vi-history-suite-source-experiments',
+      displayName: 'VI History Suite Source Experiments',
+      role: 'experiment-mirror',
+      expectedRemote: 'https://github.com/svelderrainruiz/vi-history-suite-source-experiments.git',
+      localPath: {
+        kind: 'sibling',
+        relativePath: '../vi-history-suite-source-experiments'
+      },
+      primaryEntrypoints: [
+        'README.md',
+        '.github/workflows/linux-runtime-benchmark-experiment.yml',
+        'docker/github-linux-dashboard-benchmark/Dockerfile'
+      ]
+    });
+
+    const resolved = resolveProgramRepoDescriptors(map, repoRoot, experimentRepo?.id, process.env, {
+      existsSync: fsSync.existsSync
+    });
+
+    expect(resolved).toHaveLength(1);
+    expect(resolved[0].localPathResolved).toBe(
+      path.resolve(repoRoot, '../vi-history-suite-source-experiments')
+    );
   });
 });

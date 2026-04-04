@@ -27,6 +27,9 @@ That means the dashboard should:
 - surface chronology-aware hotspots, missing-report gaps, and review priorities
 - preserve drill-down to raw pairwise packet/report artifacts for verification
 - keep all higher-level cues factual and traceable back to retained evidence
+- hand off the final maintainer judgment to a separate deterministic host-review
+  submission surface on the canonical Windows 11 machine instead of embedding
+  free-form human outcome text inside the concentrated dashboard packet
 
 ## Consequences
 
@@ -36,6 +39,8 @@ Positive:
 - human reviewers can focus on the most decision-relevant changes first
 - raw pairwise reports remain available without becoming the default linear
   workflow
+- the canonical host machine can retain an immutable human-review trail that
+  references the dashboard without mutating the dashboard packet itself
 
 Tradeoffs:
 
@@ -43,6 +48,8 @@ Tradeoffs:
 - dashboard packet design becomes more important than individual report storage
 - review scenarios must cover high-volume commit windows, not only minimal
   three-commit cases
+- the canonical host-machine proof lane now needs explicit fingerprint and
+  latest-review retention rules so human closeout stays deterministic
 
 ## Follow-On Work
 
