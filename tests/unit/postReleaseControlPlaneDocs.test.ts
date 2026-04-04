@@ -96,6 +96,9 @@ describe('post-release control-plane coherence', () => {
     expect(currentState).toContain(
       '- the manual right-click review pass remains the human UX gate, and Sergio Velderrain is the sole named maintainer gate owner for that host-machine click pass'
     );
+    expect(currentState).toContain(
+      '- the public acceptance surface now includes a dedicated host-machine human-gate closeout script with structured checklist retention in the acceptance record'
+    );
 
     expect(program).toContain('The program still intentionally holds these gates open:');
     expect(program).toContain('- Gate D human right-click proof');
@@ -107,6 +110,7 @@ describe('post-release control-plane coherence', () => {
     expect(program).toContain(
       '- Sergio Velderrain is the sole named maintainer authorized to close the'
     );
+    expect(program).toContain('- a dedicated `Invoke-Windows11HumanGate.ps1` closeout script plus structured');
 
     expect(issue).toContain('- the host-machine automated acceptance lane now succeeds with a retained');
     expect(issue).toContain(
@@ -118,5 +122,6 @@ describe('post-release control-plane coherence', () => {
     expect(issue).toContain(
       '- Sergio Velderrain is documented as the sole named maintainer gate owner for'
     );
+    expect(issue).toContain('- `acceptance/windows11/` now contains a PowerShell acceptance harness,');
   });
 });

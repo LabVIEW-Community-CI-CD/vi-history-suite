@@ -32,8 +32,8 @@ Current landed scaffold state:
   `ni/labview-icon-editor` fixture bundle with commit history plus the pinned
   fixture manifest and metadata
 - `acceptance/windows11/` now contains a PowerShell acceptance harness,
-  acceptance-record template, and retained manual right-click checklist for the
-  host-machine lane
+  human-gate closeout script, acceptance-record template, and retained manual
+  right-click checklist for the host-machine lane
 - the GitHub workflow now publishes the public release kit only and deletes
   retired legacy installer assets when present
 - successful public release-kit publication run `23985423058` on public head

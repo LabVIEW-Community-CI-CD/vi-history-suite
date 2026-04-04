@@ -171,7 +171,7 @@ container runtime a default end-user prerequisite.
 - `acceptance/windows11/` in the public facade repo
 - a pinned fixture manifest and Git bundle for the canonical proof repo and VI
 - public `INSTALL.md` / `SUPPORT.md` updates for release-kit setup
-- a Windows 11 host-machine acceptance checklist for the manual right-click gate
+- a Windows 11 host-machine acceptance checklist plus a dedicated human-gate closeout script for the manual right-click gate
 - a future container-image automation recipe that mirrors the public setup
   manifest
 
@@ -242,6 +242,8 @@ The public facade repo now retains:
   `scripts/Sync-PinnedFixtureBundle.ps1`
 - a PowerShell acceptance harness, acceptance-record template, and manual
   right-click checklist for the host-machine lane
+- a dedicated `Invoke-Windows11HumanGate.ps1` closeout script plus structured
+  checklist state in the retained acceptance record
 - exact retained release evidence from GitLab release job `13779604462` staged
   under `releases/v0.2.0/release-evidence/`
 - a GitHub workflow that now publishes the public release kit only and deletes

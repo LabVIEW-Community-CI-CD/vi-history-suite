@@ -115,7 +115,7 @@ Current active tranche:
     - scaffold validation script
     - primary public setup manifest plus Windows and Linux setup adapters
     - pinned `ni/labview-icon-editor` Git fixture bundle, manifest, and metadata
-    - Windows 11 host-machine acceptance harness, record template, and manual checklist
+    - Windows 11 host-machine acceptance harness, human-gate closeout script, record template, and manual checklist
     - direct-release Windows smoke against the public setup manifest, exact VSIX, and pinned fixture bundle
   - exact retained `v0.2.0` release evidence is now staged in the public facade repo from GitLab release job `13779604462`
   - the GitHub workflow now publishes only the public release kit and deletes retired legacy installer assets when they are still present on the GitHub release
@@ -146,6 +146,7 @@ Current active post-release program:
   - the setup adapters prepare Visual Studio Code and Git when needed, install the exact VSIX, and materialize the local `ni/labview-icon-editor` Git fixture workspace with commit history
   - Visual Studio Code CLI automates install/verify/open surfaces after setup
   - the manual right-click review pass remains the human UX gate, and Sergio Velderrain is the sole named maintainer gate owner for that host-machine click pass
+  - the public acceptance surface now includes a dedicated host-machine human-gate closeout script with structured checklist retention in the acceptance record
   - public GitHub issues are supplemental field feedback, not gate-closing proof
 
 The active-queue source of truth is:
