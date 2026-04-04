@@ -45,7 +45,8 @@ Current landed scaffold state:
 - the host-machine automated acceptance lane now succeeds with a retained
   acceptance record at
   `C:\Users\sveld\AppData\Local\VI History Suite\acceptance\host-machine\acceptance-record.json`
-- only the manual human UX proof gate remains open
+- only the manual human UX proof gate remains open, and Sergio Velderrain is
+  the sole named maintainer gate owner for that host-machine click pass
 
 ## Scope
 
@@ -92,6 +93,8 @@ Current landed scaffold state:
   installed-user proof surface, includes Visual Studio Code CLI verification
   plus an explicit manual right-click human gate, and no longer depends on a
   fresh VM as the primary replay surface
+- Sergio Velderrain is documented as the sole named maintainer gate owner for
+  the host-machine click UX pass
 - Docker is documented as optional future provider work, not a default public
   prerequisite
 - the canonical fixture repo and VI are retained in a pinned provisioning

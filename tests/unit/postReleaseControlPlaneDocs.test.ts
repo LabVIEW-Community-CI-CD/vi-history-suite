@@ -90,7 +90,12 @@ describe('post-release control-plane coherence', () => {
     expect(currentState).toContain('- NSIS has been removed from the active public toolchain');
     expect(currentState).toContain('- the current Windows 11 host machine has already proven the automated installed-user flow');
     expect(currentState).toContain('- the public facade repo publishes release/setup/support material only; it');
-    expect(currentState).toContain('- Gate D remains open pending the manual right-click acceptance pass');
+    expect(currentState).toContain(
+      '- Gate D remains open pending the manual right-click acceptance pass by Sergio Velderrain on the current Windows 11 host machine'
+    );
+    expect(currentState).toContain(
+      '- the manual right-click review pass remains the human UX gate, and Sergio Velderrain is the sole named maintainer gate owner for that host-machine click pass'
+    );
 
     expect(program).toContain('The program still intentionally holds these gates open:');
     expect(program).toContain('- Gate D human right-click proof');
@@ -98,11 +103,20 @@ describe('post-release control-plane coherence', () => {
     expect(program).toContain('- NSIS is removed from the active public toolchain');
     expect(program).toContain('- a retained automated host-machine proof record at');
     expect(program).toContain('- private requirements, design gates, and retained engineering evidence do not');
+    expect(program).toContain('- Sergio Velderrain is the sole named maintainer gate owner for this pass');
+    expect(program).toContain(
+      '- Sergio Velderrain is the sole named maintainer authorized to close the'
+    );
 
     expect(issue).toContain('- the host-machine automated acceptance lane now succeeds with a retained');
-    expect(issue).toContain('- only the manual human UX proof gate remains open');
+    expect(issue).toContain(
+      '- only the manual human UX proof gate remains open, and Sergio Velderrain is'
+    );
     expect(issue).toContain('- the GitHub workflow is documented as the active public release-kit');
     expect(issue).toContain('- the Windows 11 host-machine acceptance lane is documented as the');
     expect(issue).toContain('The public facade is for release, setup, and support only.');
+    expect(issue).toContain(
+      '- Sergio Velderrain is documented as the sole named maintainer gate owner for'
+    );
   });
 });

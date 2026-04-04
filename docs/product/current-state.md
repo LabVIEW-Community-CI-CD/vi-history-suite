@@ -123,7 +123,7 @@ Current active tranche:
   - Docker is no longer part of the default public setup path
   - a future container image is the intended reproducible automation follow-on, replacing VM replay as the preferred direction
   - automated Windows 11 host-machine proof now succeeds through the direct-release setup lane with retained records at `C:\Users\sveld\AppData\Local\VI History Suite\acceptance\host-machine\setup\setup-record.json` and `C:\Users\sveld\AppData\Local\VI History Suite\acceptance\host-machine\acceptance-record.json`
-  - Gate D remains open pending the manual right-click acceptance pass
+  - Gate D remains open pending the manual right-click acceptance pass by Sergio Velderrain on the current Windows 11 host machine
 
 Queued follow-on tranches:
 
@@ -145,7 +145,7 @@ Current active post-release program:
   - a future published container image is the preferred reproducible automation follow-on
   - the setup adapters prepare Visual Studio Code and Git when needed, install the exact VSIX, and materialize the local `ni/labview-icon-editor` Git fixture workspace with commit history
   - Visual Studio Code CLI automates install/verify/open surfaces after setup
-  - the manual right-click review pass remains the human UX gate
+  - the manual right-click review pass remains the human UX gate, and Sergio Velderrain is the sole named maintainer gate owner for that host-machine click pass
   - public GitHub issues are supplemental field feedback, not gate-closing proof
 
 The active-queue source of truth is:

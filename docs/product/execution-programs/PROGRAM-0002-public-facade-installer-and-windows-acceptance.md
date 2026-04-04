@@ -81,6 +81,8 @@ automation and human evidence are captured.
 - Docker is not part of the default public setup path
 - Visual Studio Code CLI proves install/verify/open surfaces, but does not
   replace the human right-click gate
+- Sergio Velderrain is the sole named maintainer authorized to close the
+  host-machine human UX gate
 - public GitHub issues are supplemental evidence, not gate-closing proof
 
 ## Chosen Design
@@ -140,6 +142,7 @@ CLI to automate:
 Use the same Windows 11 host machine for manual proof of the user-real path
 that CLI cannot close:
 
+- Sergio Velderrain is the sole named maintainer gate owner for this pass
 - right-click invocation on the canonical VI
 - wording clarity
 - trust prompts
@@ -206,7 +209,7 @@ container runtime a default end-user prerequisite.
 
 ### Gate D: Human UX Gate
 
-- a human can complete the real right-click flow on the canonical VI
+- Sergio Velderrain can complete the real right-click flow on the canonical VI
 - first-use friction is retained as evidence, not just remembered in chat
 
 ### Gate E: Public Support Surface
@@ -249,6 +252,8 @@ The public facade repo now retains:
   setup manifest, exact VSIX, and pinned fixture bundle
 - a retained automated host-machine proof record at
   `C:\Users\sveld\AppData\Local\VI History Suite\acceptance\host-machine\acceptance-record.json`
+- Sergio Velderrain remains the sole named maintainer gate owner for the
+  pending host-machine manual right-click pass
 
 The program still intentionally holds these gates open:
 
