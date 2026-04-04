@@ -107,10 +107,19 @@ Current active tranche:
 - `TRANCHE-010`: Public facade installer and Windows acceptance
 - active issue: [ISSUE-0407 Public Facade Installer And Windows Acceptance](./issues/ISSUE-0407-public-facade-installer-and-windows-acceptance.md)
 - active execution program: [PROGRAM-0002: Public Facade Installer And Windows Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
-- current first slice:
+  - current first slice:
   - ingest immutable `v0.2.0` release truth into the public facade repo
   - pin the canonical `ni/labview-icon-editor` acceptance fixture
-  - keep installer and Windows VM work fail-closed until those inputs are exact
+  - land the public facade scaffold surfaces:
+    - immutable release contract plus `release-evidence` staging README
+    - scaffold validation script
+    - Windows Docker builder scaffold with pinned NSIS 3.11, Visual Studio Code, and Git bootstrap references
+    - NSIS installer scaffold for fresh Windows 11 VMs
+    - Windows 11 acceptance harness, record template, and manual checklist
+    - local Windows `makensis` smoke compile against a temporary synthetic contract using the tag-reproduced `v0.2.0` VSIX plus the pinned bootstrap installers
+  - exact retained `v0.2.0` release evidence is now staged in the public facade repo from GitLab release job `13779604462`
+  - GitHub workflow run `23968715268` now builds and publishes the exact public VSIX and NSIS installer release assets on GitHub
+  - Gates C-D remain open pending fresh Windows 11 VM proof and the manual right-click acceptance pass
 
 Queued follow-on tranches:
 
@@ -123,9 +132,13 @@ Current active post-release program:
 - trust boundary:
   - private GitLab immutable release remains product truth
   - public GitHub facade repo is the public installer/support surface
-  - Windows Docker builds the installer
+  - the GitHub workflow is the active installer build and publication surface
+  - the Windows builder Docker scaffold remains available for future hardening
   - the fresh Windows 11 VM proves the installed-user flow
-  - Visual Studio Code CLI automates install/verify/open surfaces
+  - the installer bootstraps pinned Visual Studio Code and Git prerequisites on
+    that fresh VM
+  - Visual Studio Code CLI automates install/verify/open surfaces after
+    bootstrap
   - the manual right-click review pass remains the human UX gate
 
 The active-queue source of truth is:

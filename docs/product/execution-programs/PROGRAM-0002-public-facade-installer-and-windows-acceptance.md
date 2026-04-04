@@ -62,8 +62,9 @@ evidence is captured for both automation and human review.
 ### Explicit Boundaries
 
 - the GitHub facade repo is not the private engineering source of truth
-- the Windows Docker image builds the installer, but does not replace the VM
-  as the installed-user proof surface
+- the GitHub workflow is the active installer build/publication surface
+- the retained Windows builder Docker scaffold does not replace the VM as the
+  installed-user proof surface
 - Visual Studio Code CLI proves install/verify/open surfaces, but does not
   replace the human right-click gate
 
@@ -96,15 +97,19 @@ The facade repo will not mirror the private GitLab source tree blindly.
 
 Build a Windows installer from the immutable released VSIX using:
 
-- a Windows Docker builder image
+- a GitHub workflow on a Windows runner
+- the retained Windows builder scaffold for builder-entrypoint hardening
 - NSIS for packaging
 
 Version 1 assumptions:
 
-- the VM already has Visual Studio Code installed
+- the VM is treated as a fresh Windows 11 install with neither Visual Studio
+  Code nor Git preinstalled
 - the pinned proof repo is provisioned separately from the installer
 - the installer is responsible for placing the exact VSIX and related public
-  docs/support surfaces, not for bootstrapping every external dependency
+  docs/support surfaces, bootstrapping pinned Visual Studio Code and Git
+  installers, and then using the Visual Studio Code CLI for extension install
+  and proof automation
 
 ### Lane 4: Automated Windows 11 Proof
 
@@ -165,8 +170,9 @@ automation to trustworthy installed-user evidence.
 
 ### Gate B: Public Installer Build
 
-- the Windows Docker image can build the installer deterministically
-- NSIS packaging emits a versioned installer artifact
+- the GitHub workflow can build and publish the installer deterministically from
+  the exact immutable released VSIX
+- NSIS packaging emits a versioned installer artifact with retained metadata
 
 ### Gate C: Automated VM Proof
 
@@ -192,7 +198,38 @@ The current first slice is:
 - define the immutable `v0.2.0` release ingestion contract from retained GitLab release evidence
 - define the pinned fixture manifest for `ni/labview-icon-editor`
 - align the public facade docs and license to current truth
-- stop short of claiming user-proof closure until the installer and VM gates run
+- stop short of claiming user-proof closure until the VM gates run
+
+## Current Landed Scaffold
+
+The public facade repo now retains:
+
+- the immutable `v0.2.0` release contract plus bounded `release-evidence`
+  staging guidance
+- a scaffold validation script for the public release/support/build surfaces
+- `docker/windows-installer-builder/Dockerfile` and
+  `docker/windows-installer-builder/Invoke-InstallerBuild.ps1`
+- a pinned NSIS 3.11 bootstrap reference plus
+  `docker/windows-installer-builder/Stage-NsisBootstrap.ps1`
+- pinned Visual Studio Code and Git bootstrap references plus
+  `docker/windows-installer-builder/Stage-VsCodeBootstrap.ps1` and
+  `docker/windows-installer-builder/Stage-GitBootstrap.ps1`
+- `installer/nsis/vi-history-suite-installer.nsi`
+- `acceptance/windows11/Invoke-Windows11Acceptance.ps1`
+- `acceptance/windows11/acceptance-record.template.json`
+- `acceptance/windows11/manual-right-click-checklist.md`
+- a local Windows `makensis` smoke compile succeeded against a temporary
+  synthetic contract that used the tag-reproduced `v0.2.0` VSIX plus the
+  pinned NSIS, Visual Studio Code, and Git bootstrap installers
+- exact retained release evidence from GitLab release job `13779604462` staged
+  under `releases/v0.2.0/release-evidence/`
+- GitHub workflow run `23968715268` published the exact public VSIX and NSIS
+  installer assets to GitHub release `v0.2.0`
+
+The program still intentionally holds these gates open:
+
+- Gate C automated Windows 11 VM proof
+- Gate D human right-click proof
 
 ## Approval Outcome
 
@@ -202,5 +239,6 @@ The approved trust boundary remains:
 
 - private GitLab remains source truth
 - the public GitHub facade repo remains the installer/distribution/support surface
-- Windows Docker remains the installer build surface
+- the GitHub workflow remains the installer build/publication surface
+- the Windows builder Docker scaffold remains an optional hardening surface
 - the Windows 11 VM plus human right-click gate remain execution truth
