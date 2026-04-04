@@ -50,12 +50,13 @@ function findLatestDashboardRun(repoRoot) {
         mode: 'latest-manifest',
         manifestPath: filePath,
         record: parsed,
-        sortTimestamp: parseTimestamp(parsed.recordedAt, filePath)
+        sortTimestamp: parseTimestamp(parsed.recordedAt, filePath),
+        priority: getDiscoveryPriority(filePath)
       });
     }
   }
   if (manifestCandidates.length > 0) {
-    manifestCandidates.sort((left, right) => right.sortTimestamp - left.sortTimestamp);
+    manifestCandidates.sort(compareCandidates);
     return manifestCandidates[0];
   }
 
@@ -76,14 +77,15 @@ function findLatestDashboardRun(repoRoot) {
         sortTimestamp: parseTimestamp(
           eta.recordedAt ?? dashboard?.generatedAt,
           etaPath
-        )
+        ),
+        priority: getDiscoveryPriority(etaPath)
       });
     }
   }
   if (legacyCandidates.length === 0) {
     return undefined;
   }
-  legacyCandidates.sort((left, right) => right.sortTimestamp - left.sortTimestamp);
+  legacyCandidates.sort(compareCandidates);
   return legacyCandidates[0];
 }
 
@@ -192,6 +194,27 @@ function collectSearchRoots(repoRoot) {
   }
 
   return [...roots].filter((root) => fs.existsSync(root));
+}
+
+function compareCandidates(left, right) {
+  if (right.priority !== left.priority) {
+    return right.priority - left.priority;
+  }
+  return right.sortTimestamp - left.sortTimestamp;
+}
+
+function getDiscoveryPriority(filePath) {
+  if (isRepoVscodeTestPath(filePath)) {
+    return 0;
+  }
+  if (filePath.includes(`${path.sep}.cache${path.sep}harness-reports${path.sep}`)) {
+    return 1;
+  }
+  return 2;
+}
+
+function isRepoVscodeTestPath(filePath) {
+  return filePath.includes(`${path.sep}.vscode-test${path.sep}`);
 }
 
 function findFilesNamed(root, filename) {
@@ -318,4 +341,17 @@ function formatOptionalSignedSeconds(value) {
   return `${value >= 0 ? '+' : ''}${value}s`;
 }
 
-main();
+module.exports = {
+  buildLegacyRecord,
+  collectSearchRoots,
+  compareCandidates,
+  findLatestDashboardRun,
+  formatLatestDashboardRun,
+  getDiscoveryPriority,
+  isRepoVscodeTestPath,
+  parseArgs
+};
+
+if (require.main === module) {
+  main();
+}
