@@ -91,7 +91,7 @@ describe('post-release control-plane coherence', () => {
     expect(currentState).toContain('- the current Windows 11 host machine has already proven the automated installed-user flow');
     expect(currentState).toContain('- the public facade repo publishes release/setup/support material only; it');
     expect(currentState).toContain(
-      '- a scaffolded container public-release-kit smoke recipe and workflow now exist in the public repo while a future published container image remains the preferred reproducible automation follow-on'
+      '- a scaffolded container public-release-kit smoke recipe and workflow now exist in the public repo'
     );
     expect(currentState).toContain(
       '- Gate D remains open pending the manual right-click acceptance pass by Sergio Velderrain on the current Windows 11 host machine'

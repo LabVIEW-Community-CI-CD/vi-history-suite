@@ -259,14 +259,16 @@ The public facade repo now retains:
   under `releases/v0.2.0/release-evidence/`
 - a GitHub workflow that now publishes the public release kit only and deletes
   retired legacy installer assets when present
-- a successful public release-kit publication run `23985796126` on public head
-  `d6357d9` that published the host-machine human-gate helper assets into the
-  GitHub release
+- a successful public release-kit publication run `23985908613` on public head
+  `9ebee6c` that refreshed the public setup checksum asset after the container
+  smoke scaffold landed
 - a local direct-release Windows smoke that now succeeds against the public
   setup manifest, exact VSIX, and pinned fixture bundle
 - a scaffolded container public-release-kit smoke recipe and workflow at
   `docker/public-release-kit-smoke/` and
   `.github/workflows/container-public-release-kit-smoke.yml`
+- a local container public-release-kit smoke that now passes against the live
+  `v0.2.0` GitHub release assets
 - a retained automated host-machine proof record at
   `C:\Users\sveld\AppData\Local\VI History Suite\acceptance\host-machine\acceptance-record.json`
 - Sergio Velderrain remains the sole named maintainer gate owner for the
