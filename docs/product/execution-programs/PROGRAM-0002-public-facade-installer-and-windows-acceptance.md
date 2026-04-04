@@ -77,7 +77,7 @@ automation and human evidence are captured.
 - private requirements, design gates, and retained engineering evidence do not
   get published on the public facade repo
 - the GitHub workflow is the active public release-kit publication surface
-- NSIS is retained only as optional legacy wrapper work
+- NSIS is removed from the active public toolchain
 - Docker is not part of the default public setup path
 - Visual Studio Code CLI proves install/verify/open surfaces, but does not
   replace the human right-click gate
@@ -122,7 +122,6 @@ Version 1 assumptions:
 - Visual Studio Code and Git may be installed by the Windows adapter when they
   are missing
 - Docker is not required in the default public setup path
-- NSIS remains optional legacy wrapper work only
 
 ### Lane 4: Automated Host-Machine Proof
 
@@ -177,7 +176,7 @@ container runtime a default end-user prerequisite.
 
 - exposing the private GitLab source repositories publicly
 - claiming the public facade repo is the engineering source of truth
-- keeping NSIS on the critical path
+- reintroducing NSIS into the active public toolchain
 - making Docker a default public prerequisite
 - replacing the human gate with CLI-only proof
 - treating public GitHub issues as gate-closing acceptance
@@ -242,16 +241,17 @@ The public facade repo now retains:
   right-click checklist for the host-machine lane
 - exact retained release evidence from GitLab release job `13779604462` staged
   under `releases/v0.2.0/release-evidence/`
-- a GitHub workflow that now stages and publishes the public release kit first
-  and only retains the NSIS wrapper path as optional legacy work
-- legacy `docker/windows-installer-builder/` and `installer/nsis/` scaffolds as
-  secondary paths
+- a GitHub workflow that now publishes the public release kit only and deletes
+  retired legacy installer assets when present
+- a successful public release-kit publication run `23985423058` on public head
+  `1b08d92` that removed the retired installer assets from the GitHub release
 - a local direct-release Windows smoke that now succeeds against the public
   setup manifest, exact VSIX, and pinned fixture bundle
+- a retained automated host-machine proof record at
+  `C:\Users\sveld\AppData\Local\VI History Suite\acceptance\host-machine\acceptance-record.json`
 
 The program still intentionally holds these gates open:
 
-- Gate C automated Windows 11 host-machine proof
 - Gate D human right-click proof
 
 ## Approval Outcome
@@ -264,7 +264,7 @@ The approved trust boundary remains:
 - the public GitHub facade repo remains the public release-kit, setup, and
   support surface
 - the GitHub workflow remains the release-kit publication surface
-- NSIS remains optional legacy wrapper scaffolding
+- NSIS is removed from the public toolchain
 - Docker is not part of the default public setup path
 - the current Windows 11 host machine plus human right-click gate remain
   execution truth

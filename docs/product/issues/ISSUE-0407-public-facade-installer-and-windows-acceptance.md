@@ -34,14 +34,18 @@ Current landed scaffold state:
 - `acceptance/windows11/` now contains a PowerShell acceptance harness,
   acceptance-record template, and retained manual right-click checklist for the
   host-machine lane
-- the GitHub workflow now stages the public release kit as the primary surface
-  and retains NSIS/builder work only as optional legacy scaffolding
+- the GitHub workflow now publishes the public release kit only and deletes
+  retired legacy installer assets when present
+- successful public release-kit publication run `23985423058` on public head
+  `1b08d92` removed the retired installer assets from GitHub Releases
 - the exact retained `v0.2.0` release evidence is staged into the public facade
   repo from GitLab release job `13779604462`
 - a local direct-release Windows smoke now succeeds against the public setup
   manifest, the exact VSIX, and the pinned fixture bundle
-- Windows 11 host-machine proof and human UX proof gates remain open pending
-  Gates C-D
+- the host-machine automated acceptance lane now succeeds with a retained
+  acceptance record at
+  `C:\Users\sveld\AppData\Local\VI History Suite\acceptance\host-machine\acceptance-record.json`
+- only the manual human UX proof gate remains open
 
 ## Scope
 
@@ -60,7 +64,7 @@ Current landed scaffold state:
 
 - exposing private GitLab source repositories publicly
 - treating the public GitHub repo as the engineering source of truth
-- keeping NSIS on the critical path
+- reintroducing NSIS into the active public toolchain
 - shipping Docker in the default public setup path
 - replacing the Windows 11 host-machine proof lane with public-issue feedback
 - replacing the human right-click gate with CLI-only proof
@@ -80,7 +84,7 @@ Current landed scaffold state:
 - the GitHub workflow is documented as the active public release-kit
   publication surface
 - the default public setup lane is the setup-manifest plus setup-adapter path,
-  not an NSIS-first lane
+  and NSIS is absent from the active public toolchain
 - the default public setup lane installs the exact released VSIX and
   materializes the canonical proof workspace from a bundled Git fixture with
   commit history
@@ -98,6 +102,8 @@ Current landed scaffold state:
 - public facade repo scaffolding committed and published
 - public GitHub release `v0.2.0` contains the exact VSIX plus the public
   release-kit assets
+- retained host-machine acceptance evidence proves automated setup and workspace
+  launch from the public release kit
 - control-plane docs updated in the private source-of-truth repo
 - design-gate pass after private-doc updates
 
@@ -109,4 +115,5 @@ Current landed scaffold state:
   selected VI path
 - align public install, support, acceptance, and release-kit surfaces to
   current truth
-- stop short of claiming installed-user proof closure until Gates C-D run
+- stop short of claiming installed-user proof closure until the manual human
+  UX gate runs

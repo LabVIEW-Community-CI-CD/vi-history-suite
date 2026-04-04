@@ -118,10 +118,12 @@ Current active tranche:
     - Windows 11 host-machine acceptance harness, record template, and manual checklist
     - direct-release Windows smoke against the public setup manifest, exact VSIX, and pinned fixture bundle
   - exact retained `v0.2.0` release evidence is now staged in the public facade repo from GitLab release job `13779604462`
-  - the GitHub workflow now publishes the public release kit first and retains the NSIS path only as optional legacy wrapper work
+  - the GitHub workflow now publishes only the public release kit and deletes retired legacy installer assets when they are still present on the GitHub release
+  - the latest successful public release-kit publication run is `23985423058` on public facade head `1b08d92`, and that run removed the retired installer exe/checksum/build-metadata assets from GitHub Releases
   - Docker is no longer part of the default public setup path
   - a future container image is the intended reproducible automation follow-on, replacing VM replay as the preferred direction
-  - Gates C-D remain open pending Windows 11 host-machine proof through the direct-release setup lane and the manual right-click acceptance pass
+  - automated Windows 11 host-machine proof now succeeds through the direct-release setup lane with retained records at `C:\Users\sveld\AppData\Local\VI History Suite\acceptance\host-machine\setup\setup-record.json` and `C:\Users\sveld\AppData\Local\VI History Suite\acceptance\host-machine\acceptance-record.json`
+  - Gate D remains open pending the manual right-click acceptance pass
 
 Queued follow-on tranches:
 
@@ -137,9 +139,9 @@ Current active post-release program:
   - the public facade repo publishes release/setup/support material only; it
     does not publish private requirements or design-gate docs
   - the GitHub workflow is the active public release-kit publication surface
-  - NSIS remains optional legacy wrapper scaffolding
+  - NSIS has been removed from the active public toolchain
   - Docker is not part of the default public setup path
-  - the current Windows 11 host machine proves the installed-user flow
+  - the current Windows 11 host machine has already proven the automated installed-user flow
   - a future published container image is the preferred reproducible automation follow-on
   - the setup adapters prepare Visual Studio Code and Git when needed, install the exact VSIX, and materialize the local `ni/labview-icon-editor` Git fixture workspace with commit history
   - Visual Studio Code CLI automates install/verify/open surfaces after setup
@@ -227,6 +229,9 @@ These are generated locally and are not the committed source of truth:
   - `<workspace-storage>/report-history/<repoId>/<fileId>/pairs/<pairId>/source-record.json`
   - `<workspace-storage>/dashboards/<repoId>/<fileId>/<windowId>/dashboard.json`
   - `<workspace-storage>/dashboards/<repoId>/<fileId>/<windowId>/dashboard.html`
+- public facade host-machine acceptance:
+  - `C:\Users\sveld\AppData\Local\VI History Suite\acceptance\host-machine\setup\setup-record.json`
+  - `C:\Users\sveld\AppData\Local\VI History Suite\acceptance\host-machine\acceptance-record.json`
 
 ## Commands
 

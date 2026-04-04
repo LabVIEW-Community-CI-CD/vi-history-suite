@@ -84,20 +84,23 @@ describe('post-release control-plane coherence', () => {
     );
 
     expect(currentState).toContain(
-      '- Gates C-D remain open pending Windows 11 host-machine proof through the direct-release setup lane and the manual right-click acceptance pass'
+      '- automated Windows 11 host-machine proof now succeeds through the direct-release setup lane'
     );
     expect(currentState).toContain('- the GitHub workflow is the active public release-kit publication surface');
-    expect(currentState).toContain('- the current Windows 11 host machine proves the installed-user flow');
+    expect(currentState).toContain('- NSIS has been removed from the active public toolchain');
+    expect(currentState).toContain('- the current Windows 11 host machine has already proven the automated installed-user flow');
     expect(currentState).toContain('- the public facade repo publishes release/setup/support material only; it');
+    expect(currentState).toContain('- Gate D remains open pending the manual right-click acceptance pass');
 
     expect(program).toContain('The program still intentionally holds these gates open:');
-    expect(program).toContain('- Gate C automated Windows 11 host-machine proof');
     expect(program).toContain('- Gate D human right-click proof');
     expect(program).toContain('- the GitHub workflow is the active public release-kit publication surface');
-    expect(program).toContain('- the current Windows 11 host machine plus human right-click gate remain');
+    expect(program).toContain('- NSIS is removed from the active public toolchain');
+    expect(program).toContain('- a retained automated host-machine proof record at');
     expect(program).toContain('- private requirements, design gates, and retained engineering evidence do not');
 
-    expect(issue).toContain('- Windows 11 host-machine proof and human UX proof gates remain open pending');
+    expect(issue).toContain('- the host-machine automated acceptance lane now succeeds with a retained');
+    expect(issue).toContain('- only the manual human UX proof gate remains open');
     expect(issue).toContain('- the GitHub workflow is documented as the active public release-kit');
     expect(issue).toContain('- the Windows 11 host-machine acceptance lane is documented as the');
     expect(issue).toContain('The public facade is for release, setup, and support only.');
