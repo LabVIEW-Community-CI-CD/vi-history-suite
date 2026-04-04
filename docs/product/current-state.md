@@ -119,7 +119,7 @@ Current active tranche:
     - Windows 11 acceptance harness, record template, and manual checklist
     - local Windows `makensis` smoke compile against a temporary synthetic contract using the tag-reproduced `v0.2.0` VSIX plus the pinned bootstrap installers
   - exact retained `v0.2.0` release evidence is now staged in the public facade repo from GitLab release job `13779604462`
-  - GitHub workflow run `23969693630` now builds and publishes the exact public VSIX and NSIS installer release assets on GitHub
+  - GitHub workflow run `23970596820` now builds and publishes the exact public VSIX and NSIS installer release assets on GitHub
   - Gates C-D remain open pending fresh Windows 11 VM proof and the manual right-click acceptance pass
 
 Queued follow-on tranches:
