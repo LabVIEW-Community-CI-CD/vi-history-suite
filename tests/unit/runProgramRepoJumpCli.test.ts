@@ -193,7 +193,7 @@ describe('runProgramRepoJumpCli', () => {
     expect(processLike.exitCode).toBe(0);
   });
 
-  it('keeps the actual governed map aligned with the planned GitHub experiment mirror', () => {
+  it('keeps the actual governed map aligned with the existing GitHub experiment mirror', () => {
     const repoRoot = path.resolve(__dirname, '..', '..');
     const map = readProgramRepoJumpMap(repoRoot);
     const experimentRepo = map.repos.find((repo) => repo.id === 'vi-history-suite-source-experiments');
@@ -210,7 +210,8 @@ describe('runProgramRepoJumpCli', () => {
       primaryEntrypoints: [
         'README.md',
         '.github/workflows/linux-runtime-benchmark-experiment.yml',
-        'docker/github-linux-dashboard-benchmark/Dockerfile'
+        'docker/github-linux-dashboard-benchmark/Dockerfile',
+        'docker/github-linux-dashboard-benchmark/run-benchmark.sh'
       ]
     });
 

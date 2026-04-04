@@ -68,11 +68,13 @@ automation and human evidence are captured.
   replaces VM replay as the preferred automation surface
 - the current first slice of that lane is a scaffolded container
   public-release-kit smoke recipe and GitHub workflow
-- the authority repo now retains a ready-to-mirror GitHub Linux benchmark lane
-  for non-authoritative experiments against `HARNESS-VHS-002` /
+- the authority repo now mirrors a GitHub Linux benchmark lane into the
+  private GitHub experiment repo for non-authoritative experiments against
+  `HARNESS-VHS-002` /
   `resource/plugins/lv_icon.vi`
-- a private GitHub experiment mirror may be created after the design gate is
-  green for the four-surface authority model
+- that GitHub experiment lane now publishes a dedicated headless Linux
+  benchmark/source-experiment image so benchmark runs can reuse the derived
+  container by digest
 
 ### Supplemental Feedback Truth
 
@@ -81,7 +83,7 @@ automation and human evidence are captured.
 ### Explicit Boundaries
 
 - the GitHub facade repo is not the private engineering source of truth
-- any future private GitHub experiment mirror is not the public facade repo
+- the private GitHub experiment mirror is not the public facade repo
 - GitLab remains the authority source repo and release-control surface
 - GitHub experiment results are benchmark evidence only; they do not close
   product truth or release truth
@@ -274,9 +276,11 @@ The public facade repo now retains:
 - a successful public release-kit publication run `23985908613` on public head
   `9ebee6c` that refreshed the public setup checksum asset after the container
   smoke scaffold landed
-- the authority repo now retains the ready-to-mirror GitHub Linux benchmark
-  workflow, CLI, harness, and container recipe, but the private GitHub
-  experiment repo has not been created yet
+- the authority repo now mirrors the GitHub Linux benchmark workflow, CLI,
+  harness, and container recipe into the private GitHub experiment repo
+- that GitHub experiment lane now publishes a dedicated benchmark/source-experiment
+  image and runs Linux `LVCompare` benchmarks headlessly through the derived
+  container
 - a local direct-release Windows smoke that now succeeds against the public
   setup manifest, exact VSIX, and pinned fixture bundle
 - a scaffolded container public-release-kit smoke recipe and workflow at
@@ -302,7 +306,7 @@ The approved trust boundary remains:
 - private GitLab remains source truth
 - the public GitHub facade repo remains the public release-kit, setup, and
   support surface
-- a future private GitHub experiment mirror remains distinct from both GitLab
+- the private GitHub experiment mirror remains distinct from both GitLab
   authority and the public facade repo
 - the GitHub workflow remains the release-kit publication surface
 - NSIS is removed from the public toolchain

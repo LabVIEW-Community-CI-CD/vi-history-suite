@@ -42,6 +42,7 @@ on:
 
 permissions:
   contents: read
+  packages: write
 
 concurrency:
   group: vihs-linux-runtime-benchmark-${{ github.ref }}
@@ -59,10 +60,13 @@ jobs:
         shell: bash
         run: |
           mkdir -p .cache/github-experiments/linux-dashboard-benchmark/plan
-          cat > .cache/github-experiments/linux-dashboard-benchmark/plan/linux-benchmark-plan.json <<'JSON'
+          owner_lc="$(printf '%s' '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
+          benchmark_image="ghcr.io/${owner_lc}/vi-history-suite-source-experiments/linux-dashboard-benchmark"
+          cat > .cache/github-experiments/linux-dashboard-benchmark/plan/linux-benchmark-plan.json <<JSON
           {
             "schema": "vi-history-suite/github-linux-dashboard-benchmark-plan@v1",
             "runtimeImage": "nationalinstruments/labview:2026q1-linux",
+            "publishedBenchmarkImage": "${benchmark_image}",
             "dockerfile": "docker/github-linux-dashboard-benchmark/Dockerfile",
             "benchmarkEntrypoint": "docker/github-linux-dashboard-benchmark/run-benchmark.sh",
             "benchmarkScript": "npm run benchmark:github:linux:lv-icon",
@@ -78,6 +82,7 @@ jobs:
             echo "## Linux runtime benchmark plan"
             echo
             echo "- runtime image: \`$NI_LINUX_IMAGE\`"
+            echo "- published benchmark image: \`$benchmark_image\`"
             echo "- harness: \`HARNESS-VHS-002\`"
             echo "- target: \`resource/plugins/lv_icon.vi\`"
             echo "- authority boundary: GitLab = authority, GitHub = experiment"
@@ -90,22 +95,29 @@ jobs:
           path: .cache/github-experiments/linux-dashboard-benchmark/plan/linux-benchmark-plan.json
           if-no-files-found: error
 
-  benchmark:
-    if: ${{ github.event_name == 'workflow_dispatch' }}
+  publish_image:
     needs:
       - plan
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    outputs:
+      benchmark_image_ref: ${{ steps.meta.outputs.image_ref }}
+      benchmark_image_digest: ${{ steps.push.outputs.image_digest }}
     env:
       NI_LINUX_IMAGE: nationalinstruments/labview:2026q1-linux
-      BENCHMARK_IMAGE: vi-history-suite-github-linux-dashboard-benchmark:${{ github.sha }}
-      VIHS_GITHUB_BENCHMARK_HARNESS_ID: ${{ inputs.harness_id }}
-      VIHS_GITHUB_BENCHMARK_DASHBOARD_COMMIT_WINDOW: ${{ inputs.dashboard_commit_window }}
-      VIHS_GITHUB_BENCHMARK_ENGINE: ${{ inputs.engine }}
-      VIHS_GITHUB_BENCHMARK_STRICT_RSRC_HEADER: ${{ inputs.strict_rsrc_header }}
-      VIHS_GITHUB_BENCHMARK_RUNTIME_IMAGE: nationalinstruments/labview:2026q1-linux
+      LOCAL_BENCHMARK_IMAGE: vi-history-suite-github-linux-dashboard-benchmark:${{ github.sha }}
     steps:
       - uses: actions/checkout@v5
+
+      - id: meta
+        name: Resolve benchmark image reference
+        shell: bash
+        run: |
+          owner_lc="$(printf '%s' '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
+          echo "image_ref=ghcr.io/${owner_lc}/vi-history-suite-source-experiments/linux-dashboard-benchmark" >> "$GITHUB_OUTPUT"
+
+      - name: Login to GHCR
+        shell: bash
+        run: echo "${{ github.token }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
       - name: Pre-pull NI Linux image
         shell: bash
@@ -117,8 +129,85 @@ jobs:
           docker build \
             --build-arg BASE_IMAGE="$NI_LINUX_IMAGE" \
             -f docker/github-linux-dashboard-benchmark/Dockerfile \
-            -t "$BENCHMARK_IMAGE" \
+            -t "$LOCAL_BENCHMARK_IMAGE" \
             .
+
+      - id: push
+        name: Push benchmark image to GHCR
+        shell: bash
+        run: |
+          image_ref="${{ steps.meta.outputs.image_ref }}"
+          sha_tag="sha-${GITHUB_SHA}"
+          published_tags=("$sha_tag")
+          docker tag "$LOCAL_BENCHMARK_IMAGE" "$image_ref:$sha_tag"
+          docker push "$image_ref:$sha_tag"
+          if [[ "${GITHUB_REF_NAME}" == "main" ]]; then
+            published_tags+=("main")
+            docker tag "$LOCAL_BENCHMARK_IMAGE" "$image_ref:main"
+            docker push "$image_ref:main"
+          fi
+          repo_digest="$(docker image inspect "$image_ref:$sha_tag" --format '{{index .RepoDigests 0}}')"
+          image_digest="${repo_digest#*@}"
+          echo "image_digest=$image_digest" >> "$GITHUB_OUTPUT"
+          mkdir -p .cache/github-experiments/linux-dashboard-benchmark/image
+          BENCHMARK_IMAGE_REF="$image_ref" BENCHMARK_IMAGE_DIGEST="$image_digest" python3 - <<'PY'
+import json
+import os
+from pathlib import Path
+
+published_tags = [f"sha-{os.environ['GITHUB_SHA']}"]
+if os.environ.get("GITHUB_REF_NAME") == "main":
+    published_tags.append("main")
+
+payload = {
+    "schema": "vi-history-suite/github-linux-dashboard-benchmark-image@v1",
+    "runtimeImage": os.environ["NI_LINUX_IMAGE"],
+    "benchmarkImageRef": os.environ["BENCHMARK_IMAGE_REF"],
+    "benchmarkImageDigest": os.environ["BENCHMARK_IMAGE_DIGEST"],
+    "github": {
+        "repository": os.environ.get("GITHUB_REPOSITORY"),
+        "runId": os.environ.get("GITHUB_RUN_ID"),
+        "runAttempt": os.environ.get("GITHUB_RUN_ATTEMPT"),
+        "sha": os.environ.get("GITHUB_SHA"),
+        "refName": os.environ.get("GITHUB_REF_NAME"),
+        "publishedTags": published_tags
+    }
+}
+root = Path(".cache/github-experiments/linux-dashboard-benchmark/image")
+root.mkdir(parents=True, exist_ok=True)
+(root / "latest-image.json").write_text(json.dumps(payload, indent=2) + "\n")
+PY
+
+      - name: Upload image receipt
+        uses: actions/upload-artifact@v5
+        with:
+          name: linux-runtime-benchmark-image
+          path: .cache/github-experiments/linux-dashboard-benchmark/image/latest-image.json
+          if-no-files-found: error
+
+  benchmark:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    needs:
+      - plan
+      - publish_image
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      NI_LINUX_IMAGE: nationalinstruments/labview:2026q1-linux
+      BENCHMARK_IMAGE: ${{ needs.publish_image.outputs.benchmark_image_ref }}@${{ needs.publish_image.outputs.benchmark_image_digest }}
+      VIHS_GITHUB_BENCHMARK_HARNESS_ID: ${{ inputs.harness_id }}
+      VIHS_GITHUB_BENCHMARK_DASHBOARD_COMMIT_WINDOW: ${{ inputs.dashboard_commit_window }}
+      VIHS_GITHUB_BENCHMARK_ENGINE: ${{ inputs.engine }}
+      VIHS_GITHUB_BENCHMARK_STRICT_RSRC_HEADER: ${{ inputs.strict_rsrc_header }}
+      VIHS_GITHUB_BENCHMARK_RUNTIME_IMAGE: nationalinstruments/labview:2026q1-linux
+      VIHS_GITHUB_BENCHMARK_IMAGE_REF: ${{ needs.publish_image.outputs.benchmark_image_ref }}
+      VIHS_GITHUB_BENCHMARK_IMAGE_DIGEST: ${{ needs.publish_image.outputs.benchmark_image_digest }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Pull published benchmark image
+        shell: bash
+        run: docker pull "$BENCHMARK_IMAGE"
 
       - name: Run lv_icon benchmark inside derived image
         shell: bash
@@ -135,6 +224,8 @@ jobs:
             -e VIHS_GITHUB_BENCHMARK_ENGINE \
             -e VIHS_GITHUB_BENCHMARK_STRICT_RSRC_HEADER \
             -e VIHS_GITHUB_BENCHMARK_RUNTIME_IMAGE \
+            -e VIHS_GITHUB_BENCHMARK_IMAGE_REF \
+            -e VIHS_GITHUB_BENCHMARK_IMAGE_DIGEST \
             -v "$PWD":/workspace \
             -w /workspace \
             "$BENCHMARK_IMAGE" \

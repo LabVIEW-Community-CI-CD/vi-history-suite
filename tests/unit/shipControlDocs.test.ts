@@ -189,7 +189,7 @@ describe('ship-control direction system', () => {
     expect(readme).toContain('- current package baseline: `0.2.0`');
     expect(readme).toContain('- target release artifact: `vi-history-suite-0.2.0.vsix`');
     expect(readme).toContain('- `TRANCHE-010`: public facade release kit and host-machine acceptance');
-    expect(readme).toContain('future private GitHub experiment repo');
+    expect(readme).toContain('private GitHub experiment repo');
 
     expect(currentState).toContain('[SHIP-0001: Releasable VI History Suite](./SHIP-0001-releasable-vi-history-suite.md)');
     expect(currentState).toContain('[release-readiness-matrix.json](./release-readiness-matrix.json)');
@@ -207,7 +207,7 @@ describe('ship-control direction system', () => {
     expect(currentState).toContain('- target release artifact: `vi-history-suite-0.2.0.vsix`');
     expect(currentState).toContain('- `TRANCHE-010`: Public facade release kit and host-machine acceptance');
     expect(currentState).toContain('[PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)');
-    expect(currentState).toContain('planned `vi-history-suite-source-experiments` mirror');
+    expect(currentState).toContain('`vi-history-suite-source-experiments`');
 
     expect(informationItemMap).toContain('| Ship target | `docs/product/SHIP-0001-releasable-vi-history-suite.md` |');
     expect(informationItemMap).toContain('| Release readiness matrix | `docs/product/release-readiness-matrix.json` |');
@@ -259,6 +259,7 @@ describe('ship-control direction system', () => {
     expect(coherenceLedger).toContain('docs/product/wiki-publication-ledger.md');
     expect(coherenceLedger).toContain('docs/product/program-repo-jump.md');
     expect(coherenceLedger).toContain('planned fourth experiment mirror');
+    expect(coherenceLedger).toContain('DOC-012');
 
     expect(wikiSeedPlan).toContain('# Wiki Seed Plan');
     expect(wikiSeedPlan).toContain('docs/product/documentation-coherence-ledger.md');
@@ -281,7 +282,7 @@ describe('ship-control direction system', () => {
     expect(architectureOverview).toContain('[ADR-0015](./adr/ADR-0015-version-matched-bundled-user-documentation.md)');
     expect(architectureOverview).toContain('[ADR-0016](./adr/ADR-0016-gitlab-authority-and-github-linux-experiment-lane.md)');
     expect(programRepoJump).toContain('# Program Repo Jump');
-    expect(programRepoJump).toContain('planned private GitHub experiment');
+    expect(programRepoJump).toContain('private GitHub experiment mirror');
     expect(adr0012).toContain('# ADR-0012: Documentation-Package Workbench Image');
     expect(adr0013).toContain('# ADR-0013: Authority-First Wiki Seeding');
     expect(adr0014).toContain('# ADR-0014: Cross-Repo Navigation Control Plane');

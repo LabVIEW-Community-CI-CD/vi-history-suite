@@ -915,17 +915,18 @@
   `.cache/github-experiments/linux-dashboard-benchmark/`
 - `TEST-UNIT-253`: verify the GitHub Linux benchmark workflow, derived
   benchmark Dockerfile, and runner script pin
-  `nationalinstruments/labview:2026q1-linux` and execute the benchmark through
-  the derived container
+  `nationalinstruments/labview:2026q1-linux`, publish a dedicated experiment
+  image to GHCR, and execute the benchmark headlessly through the published
+  derived container
 - `TEST-UNIT-254`: verify the actual governed repo-jump map includes the
-  planned `vi-history-suite-source-experiments` mirror with the expected GitHub
-  remote, sibling-path strategy, and Linux benchmark entrypoints
+  `vi-history-suite-source-experiments` mirror with the actual GitHub remote,
+  sibling-path strategy, and Linux benchmark entrypoints
 - `TEST-UNIT-255`: verify the active post-release control-plane docs
-  distinguish GitLab authority, the planned private GitHub experiment mirror,
-  and the public GitHub facade without implying the private mirror already
-  exists
+  distinguish GitLab authority, the existing private GitHub experiment mirror,
+  and the public GitHub facade without collapsing authority, experiment, or
+  public-distribution roles
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
-  governed authority repo, planned experiment mirror, wiki, and
+  governed authority repo, private experiment mirror, wiki, and
   assurance-skill repos with authority roles, expected remotes, and primary
   entrypoints
 - `TEST-DOC-029`: review the documentation package and confirm README,
@@ -948,8 +949,8 @@
   evidence packet
 - `TEST-DOC-034`: review README, current-state, program-repo-jump,
   PROGRAM-0002, ISSUE-0407, and ADR-0016 to confirm GitLab remains authority,
-  the private GitHub experiment mirror is planned and non-authoritative, and
-  the public GitHub facade remains release/setup/support only
+  the private GitHub experiment mirror is non-authoritative, and the public
+  GitHub facade remains release/setup/support only
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

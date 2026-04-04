@@ -208,9 +208,9 @@ Committed and governed today:
 - explicit Linux and Windows extension-host proof scripts plus a least-privilege
   Linux VS Code bootstrap command for faster autonomous iteration
 - explicit GitHub Linux benchmark preparation via
-  `npm run benchmark:github:linux:lv-icon` in the authority repo, ready to be
-  mirrored into a future private GitHub experiment repo while GitLab remains
-  the authority source repo and release-control surface
+  `npm run benchmark:github:linux:lv-icon` in the authority repo, mirrored into
+  the private GitHub experiment repo with a published benchmark image while
+  GitLab remains the authority source repo and release-control surface
 
 ## Active Work
 

@@ -202,65 +202,103 @@ describe('runGitHubLinuxDashboardBenchmarkCli', () => {
   });
 
   it('formats a stable summary packet, help, and main-module execution', async () => {
-    const summary = buildGitHubLinuxDashboardBenchmarkSummary(
-      {
-        report: {
-          harnessId: 'HARNESS-VHS-002',
-          repositoryUrl: 'https://github.com/ni/labview-icon-editor.git',
-          cloneDirectory: '/tmp/harness',
-          targetRelativePath: 'resource/plugins/lv_icon.vi',
-          head: 'abcdef1234567890',
-          generatedAt: '2026-04-04T18:00:00.000Z',
-          eligible: true,
-          signature: 'LVIN',
-          dashboardCommitWindow: 139,
-          comparePairCount: 138,
-          dashboardFilePath: '/tmp/dashboard.html',
-          dashboardJsonFilePath: '/tmp/dashboard.json',
-          dashboardWindowCompletenessState: 'complete',
-          dashboardArchivedPairCount: 138,
-          dashboardMissingPairCount: 0,
-          dashboardGeneratedReportCount: 138,
-          dashboardMetadataPairCount: 138,
-          dashboardOverviewImageCount: 276,
-          dashboardDetailItemCount: 552,
-          dashboardProviderSummaries: [],
-          dashboardEtaAccuracyFilePath: undefined,
-          dashboardEtaAccuracyRecord: undefined,
-          pairSummaries: [
-            {
-              selectedHash: 'aaaa',
-              baseHash: 'bbbb',
-              reportStatus: 'ready-for-runtime',
-              runtimeExecutionState: 'succeeded',
-              runtimeProvider: 'host-native',
-              runtimeEngine: 'lvcompare',
-              generatedReportExists: true,
-              packetFilePath: '/tmp/packet.json',
-              reportFilePath: '/tmp/report.html',
-              metadataFilePath: '/tmp/metadata.json',
-              actualPreparationSeconds: 12
-            }
-          ]
-        },
-        reportJsonPath: '/tmp/reports/HARNESS-VHS-002/dashboard-smoke.json',
-        reportMarkdownPath: '/tmp/reports/HARNESS-VHS-002/dashboard-smoke.md',
-        reportHtmlPath: '/tmp/reports/HARNESS-VHS-002/dashboard-smoke.html'
-      },
-      {
-        startedAt: new Date('2026-04-04T18:00:00.000Z'),
-        completedAt: new Date('2026-04-04T18:00:12.000Z'),
-        benchmarkRoot: '/tmp/github-experiments/HARNESS-VHS-002',
-        runtimeImage: 'nationalinstruments/labview:2026q1-linux'
-      }
-    );
+    const previousImageRef = process.env.VIHS_GITHUB_BENCHMARK_IMAGE_REF;
+    const previousImageDigest = process.env.VIHS_GITHUB_BENCHMARK_IMAGE_DIGEST;
+    const previousHeadlessProvider = process.env.VIHS_GITHUB_BENCHMARK_HEADLESS_DISPLAY_PROVIDER;
+    process.env.VIHS_GITHUB_BENCHMARK_IMAGE_REF =
+      'ghcr.io/svelderrainruiz/vi-history-suite-source-experiments/linux-dashboard-benchmark';
+    process.env.VIHS_GITHUB_BENCHMARK_IMAGE_DIGEST = 'sha256:abc123';
+    process.env.VIHS_GITHUB_BENCHMARK_HEADLESS_DISPLAY_PROVIDER = 'xvfb-run';
 
-    expect(summary.wallClockSeconds).toBe(12);
-    expect(summary.totalPairPreparationSeconds).toBe(12);
-    expect(summary.providerCounts).toEqual({ 'host-native': 1 });
-    expect(formatGitHubLinuxDashboardBenchmarkSuccess(summary).join('\n')).toContain(
-      'Runtime image: nationalinstruments/labview:2026q1-linux'
-    );
+    try {
+      const summary = buildGitHubLinuxDashboardBenchmarkSummary(
+        {
+          report: {
+            harnessId: 'HARNESS-VHS-002',
+            repositoryUrl: 'https://github.com/ni/labview-icon-editor.git',
+            cloneDirectory: '/tmp/harness',
+            targetRelativePath: 'resource/plugins/lv_icon.vi',
+            head: 'abcdef1234567890',
+            generatedAt: '2026-04-04T18:00:00.000Z',
+            eligible: true,
+            signature: 'LVIN',
+            dashboardCommitWindow: 139,
+            comparePairCount: 138,
+            dashboardFilePath: '/tmp/dashboard.html',
+            dashboardJsonFilePath: '/tmp/dashboard.json',
+            dashboardWindowCompletenessState: 'complete',
+            dashboardArchivedPairCount: 138,
+            dashboardMissingPairCount: 0,
+            dashboardGeneratedReportCount: 138,
+            dashboardMetadataPairCount: 138,
+            dashboardOverviewImageCount: 276,
+            dashboardDetailItemCount: 552,
+            dashboardProviderSummaries: [],
+            dashboardEtaAccuracyFilePath: undefined,
+            dashboardEtaAccuracyRecord: undefined,
+            pairSummaries: [
+              {
+                selectedHash: 'aaaa',
+                baseHash: 'bbbb',
+                reportStatus: 'ready-for-runtime',
+                runtimeExecutionState: 'succeeded',
+                runtimeProvider: 'host-native',
+                runtimeEngine: 'lvcompare',
+                generatedReportExists: true,
+                packetFilePath: '/tmp/packet.json',
+                reportFilePath: '/tmp/report.html',
+                metadataFilePath: '/tmp/metadata.json',
+                actualPreparationSeconds: 12
+              }
+            ]
+          },
+          reportJsonPath: '/tmp/reports/HARNESS-VHS-002/dashboard-smoke.json',
+          reportMarkdownPath: '/tmp/reports/HARNESS-VHS-002/dashboard-smoke.md',
+          reportHtmlPath: '/tmp/reports/HARNESS-VHS-002/dashboard-smoke.html'
+        },
+        {
+          startedAt: new Date('2026-04-04T18:00:00.000Z'),
+          completedAt: new Date('2026-04-04T18:00:12.000Z'),
+          benchmarkRoot: '/tmp/github-experiments/HARNESS-VHS-002',
+          runtimeImage: 'nationalinstruments/labview:2026q1-linux'
+        }
+      );
+
+      expect(summary.wallClockSeconds).toBe(12);
+      expect(summary.totalPairPreparationSeconds).toBe(12);
+      expect(summary.providerCounts).toEqual({ 'host-native': 1 });
+      expect(summary.benchmarkImage).toEqual({
+        reference:
+          'ghcr.io/svelderrainruiz/vi-history-suite-source-experiments/linux-dashboard-benchmark',
+        digest: 'sha256:abc123'
+      });
+      expect(summary.headlessDisplayProvider).toBe('xvfb-run');
+      expect(formatGitHubLinuxDashboardBenchmarkSuccess(summary).join('\n')).toContain(
+        'Runtime image: nationalinstruments/labview:2026q1-linux'
+      );
+      expect(formatGitHubLinuxDashboardBenchmarkSuccess(summary).join('\n')).toContain(
+        'Benchmark image: ghcr.io/svelderrainruiz/vi-history-suite-source-experiments/linux-dashboard-benchmark@sha256:abc123'
+      );
+      expect(formatGitHubLinuxDashboardBenchmarkSuccess(summary).join('\n')).toContain(
+        'Headless display: xvfb-run'
+      );
+    } finally {
+      if (previousImageRef === undefined) {
+        delete process.env.VIHS_GITHUB_BENCHMARK_IMAGE_REF;
+      } else {
+        process.env.VIHS_GITHUB_BENCHMARK_IMAGE_REF = previousImageRef;
+      }
+      if (previousImageDigest === undefined) {
+        delete process.env.VIHS_GITHUB_BENCHMARK_IMAGE_DIGEST;
+      } else {
+        process.env.VIHS_GITHUB_BENCHMARK_IMAGE_DIGEST = previousImageDigest;
+      }
+      if (previousHeadlessProvider === undefined) {
+        delete process.env.VIHS_GITHUB_BENCHMARK_HEADLESS_DISPLAY_PROVIDER;
+      } else {
+        process.env.VIHS_GITHUB_BENCHMARK_HEADLESS_DISPLAY_PROVIDER = previousHeadlessProvider;
+      }
+    }
 
     const helpWrites: string[] = [];
     await expect(

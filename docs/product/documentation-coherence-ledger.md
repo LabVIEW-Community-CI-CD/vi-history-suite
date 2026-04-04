@@ -56,6 +56,7 @@ source inference or chat memory.
 | DOC-004 | decision-record docs | repeated reviewer entry in the extension-facing flow was not modeled in requirements/docs | decision-record reviewer defaults are now implemented and reflected in SRS, RTM, test plan, and current state |
 | DOC-005 | cross-repo navigation | documentation-package and skill work first spanned three repos and later expanded to a planned fourth experiment mirror, but there was no governed local jump surface tying authority, experiment, wiki, and assurance entrypoints together | added `program-repo-jump-map.json`, `program-repo-jump.md`, `ADR-0014`, a local `program:repos` CLI, and a mirrored `repo_jump.py` surface in `repo-standards-review` |
 | DOC-011 | GitHub experiment authority split | the repo had a prepared GitHub Linux benchmark lane, but some docs risked implying the private GitHub mirror already existed instead of clearly marking it as a planned mirror distinct from both GitLab authority and the public facade | tightened the control-plane docs, repo-jump surface, RTM/test plan, and control-plane tests so the mirror is modeled as planned until it is actually created |
+| DOC-012 | GitHub experiment realization | the private GitHub experiment mirror was later created and the Linux lane needed a reusable published image, but several governed docs/tests still described the mirror as hypothetical and the benchmark image as only a derived local recipe | updated the control-plane docs, RTM/test plan, repo-jump surface, ADR-0016, and benchmark workflow/tests so they model the existing mirror truthfully and require a published headless Linux benchmark image |
 | DOC-006 | packaged user guidance | users could read the wiki or repo docs, but the installed extension had no version-matched local documentation surface and no machine-readable published wiki inventory to drive one | added `docs/product/wiki-publication-ledger.json`, `resources/bundled-docs/`, `scripts/syncBundledDocs.js`, `ADR-0015`, and the extension-facing bundled documentation command/panel |
 | DOC-007 | requirements traceability | `docs/requirements/rtm.csv` cited proving test ids that `docs/testing/test-plan.md` did not enumerate, while the test plan also contained stale ids that were not traced back through RTM | reconciled RTM and test-plan ids in both directions so the governed verification inventory now matches exactly |
 | DOC-008 | research control plane | the research alignment matrix and implementation index still described an older, narrower history-panel and dashboard surface after adaptive history-window and latest-dashboard-run work landed | updated `research-alignment.md` and `research-implementation-index.json` so they now reflect the live history-window packet, `latest-dashboard-run.json`, and current dashboard/history evidence set |
@@ -70,9 +71,9 @@ source inference or chat memory.
   the key research-facing history-panel/dashboard trace surfaces, and active
   post-release control-plane coherence for `TRANCHE-010` / `ISSUE-0407` /
   `PROGRAM-0002`.
-- The cross-repo jump surface now distinguishes authority repo, planned private
-  GitHub experiment mirror, public facade, wiki repo, and assurance skill
-  without implying the private mirror already exists.
+- The cross-repo jump surface now distinguishes authority repo, private GitHub
+  experiment mirror, public facade, wiki repo, and assurance skill without
+  confusing the experiment mirror with authority or public distribution.
 - Active tranche, active ship issue, release target, and open blocker ids agree
   across ship-control docs.
 - Wiki preparation is now constrained to the documentation package, not source.

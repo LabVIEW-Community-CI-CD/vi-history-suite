@@ -31,7 +31,8 @@
       "primaryEntrypoints": [
         "README.md",
         ".github/workflows/linux-runtime-benchmark-experiment.yml",
-        "docker/github-linux-dashboard-benchmark/Dockerfile"
+        "docker/github-linux-dashboard-benchmark/Dockerfile",
+        "docker/github-linux-dashboard-benchmark/run-benchmark.sh"
       ]
     },
     {

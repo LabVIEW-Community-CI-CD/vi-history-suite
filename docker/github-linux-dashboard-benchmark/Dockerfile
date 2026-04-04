@@ -19,6 +19,7 @@ RUN apt-get update \
     jq \
     procps \
     unzip \
+    xauth \
     xvfb \
   && curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash - \
   && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \

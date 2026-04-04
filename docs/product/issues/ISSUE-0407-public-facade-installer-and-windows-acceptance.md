@@ -49,11 +49,13 @@ Current landed scaffold state:
   prerequisite
 - the local container public-release-kit smoke now passes against the live
   `v0.2.0` GitHub release assets
-- the authority repo now retains a ready-to-mirror GitHub Linux benchmark lane
-  for `HARNESS-VHS-002` / `resource/plugins/lv_icon.vi`, while GitLab remains
-  the authority source repo and release-control surface
-- no private GitHub experiment mirror exists yet; creating it remains gated on
-  a green design gate for the four-surface authority model
+- the authority repo now mirrors a GitHub Linux benchmark lane into the
+  private `vi-history-suite-source-experiments` repo for
+  `HARNESS-VHS-002` / `resource/plugins/lv_icon.vi`, while GitLab remains the
+  authority source repo and release-control surface
+- that GitHub experiment lane now publishes a dedicated headless Linux
+  benchmark/source-experiment image so benchmark runs can reuse the derived
+  container by digest
 - the host-machine automated acceptance lane now succeeds with a retained
   acceptance record at
   `C:\Users\sveld\AppData\Local\VI History Suite\acceptance\host-machine\acceptance-record.json`
@@ -72,8 +74,7 @@ Current landed scaffold state:
   Studio Code CLI
 - retained manual right-click acceptance worksheet for the human UX gate
 - future container-image automation lane planning
-- private GitHub Linux benchmark experimentation planning, implementation, and
-  later mirror creation after design-gate approval
+- private GitHub Linux benchmark experimentation implementation and iteration
 
 ## Non-Goals
 
@@ -116,8 +117,9 @@ Current landed scaffold state:
 - the canonical fixture repo and VI are retained in a pinned provisioning
   manifest
 - the prepared GitHub Linux benchmark lane is documented as non-authoritative,
-  and any future private GitHub experiment mirror is documented as benchmark
-  only
+  the private GitHub experiment mirror is documented as benchmark only, and the
+  published Linux benchmark image remains experiment evidence rather than
+  product distribution
 
 ## Required Evidence
 

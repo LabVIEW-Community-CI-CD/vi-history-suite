@@ -17,8 +17,8 @@ memory or ad hoc shell history.
 ## Authority Roles
 
 - `vi-history-suite`: product authority and ship-control repo
-- `vi-history-suite-source-experiments`: planned private GitHub experiment
-  mirror for non-authoritative Linux benchmark iteration
+- `vi-history-suite-source-experiments`: private GitHub experiment mirror for
+  non-authoritative Linux benchmark iteration
 - `vi-history-suite.wiki`: derived reader surface
 - `repo-standards-review`: companion assurance skill and docs-package audit
   surface
@@ -27,9 +27,9 @@ If those repos disagree, the main repo documentation package in
 `vi-history-suite` remains the authority of record until the other repo is
 aligned.
 
-At the moment, `vi-history-suite-source-experiments` is a governed planned
-mirror with an expected remote and local sibling path, but the private GitHub
-repo has not been created yet.
+`vi-history-suite-source-experiments` is a governed private mirror with an
+actual remote and local sibling path on this machine. It remains benchmark
+evidence only and does not replace GitLab authority.
 
 ## Governed Map
 
@@ -99,6 +99,5 @@ authority.
 The governed boundary is:
 
 - GitLab `vi-history-suite`: authority
-- private GitHub `vi-history-suite-source-experiments`: planned experiment
-  mirror only
+- private GitHub `vi-history-suite-source-experiments`: experiment mirror only
 - public GitHub facade: public release/setup/support only

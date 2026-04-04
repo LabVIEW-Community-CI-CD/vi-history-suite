@@ -27,6 +27,11 @@ export interface GitHubLinuxDashboardBenchmarkSummary {
   targetRelativePath: string;
   runtimePlatform: 'linux';
   runtimeImage: string;
+  benchmarkImage?: {
+    reference?: string;
+    digest?: string;
+  };
+  headlessDisplayProvider?: string;
   startedAt: string;
   completedAt: string;
   wallClockSeconds: number;
@@ -303,6 +308,9 @@ export function buildGitHubLinuxDashboardBenchmarkSummary(
     return counts;
   }, {});
   const etaAccuracy = result.report.dashboardEtaAccuracyRecord;
+  const benchmarkImageReference = process.env.VIHS_GITHUB_BENCHMARK_IMAGE_REF;
+  const benchmarkImageDigest = process.env.VIHS_GITHUB_BENCHMARK_IMAGE_DIGEST;
+  const headlessDisplayProvider = process.env.VIHS_GITHUB_BENCHMARK_HEADLESS_DISPLAY_PROVIDER;
 
   return {
     schema: 'vi-history-suite/github-linux-dashboard-benchmark@v1',
@@ -312,6 +320,14 @@ export function buildGitHubLinuxDashboardBenchmarkSummary(
     targetRelativePath: result.report.targetRelativePath,
     runtimePlatform: 'linux',
     runtimeImage: options.runtimeImage,
+    benchmarkImage:
+      benchmarkImageReference || benchmarkImageDigest
+        ? {
+            reference: benchmarkImageReference,
+            digest: benchmarkImageDigest
+          }
+        : undefined,
+    headlessDisplayProvider: headlessDisplayProvider?.trim() || undefined,
     startedAt: options.startedAt.toISOString(),
     completedAt: options.completedAt.toISOString(),
     wallClockSeconds: roundSeconds(
@@ -365,10 +381,18 @@ export function buildGitHubLinuxDashboardBenchmarkSummary(
 export function formatGitHubLinuxDashboardBenchmarkSuccess(
   summary: GitHubLinuxDashboardBenchmarkSummary
 ): string[] {
+  const benchmarkImageSummary = summary.benchmarkImage?.reference
+    ? `${summary.benchmarkImage.reference}${summary.benchmarkImage.digest ? `@${summary.benchmarkImage.digest}` : ''}`
+    : undefined;
+
   return [
     `GitHub Linux dashboard benchmark completed for ${summary.harnessId}`,
     `Target: ${summary.targetRelativePath}`,
     `Runtime image: ${summary.runtimeImage}`,
+    benchmarkImageSummary ? `Benchmark image: ${benchmarkImageSummary}` : undefined,
+    summary.headlessDisplayProvider
+      ? `Headless display: ${summary.headlessDisplayProvider}`
+      : undefined,
     `Wall clock: ${summary.wallClockSeconds}s`,
     `Pair preparation total: ${summary.totalPairPreparationSeconds}s`,
     `Pair preparation mean/max: ${summary.meanPairPreparationSeconds}s / ${summary.maxPairPreparationSeconds}s`,
@@ -376,7 +400,7 @@ export function formatGitHubLinuxDashboardBenchmarkSuccess(
     `Providers: ${formatProviderCounts(summary.providerCounts)}`,
     `Smoke JSON: ${summary.retainedArtifacts.smokeJsonPath}`,
     `Benchmark summary: ${summary.retainedArtifacts.latestSummaryPath}`
-  ];
+  ].filter((line): line is string => Boolean(line));
 }
 
 function formatProviderCounts(providerCounts: Record<string, number>): string {

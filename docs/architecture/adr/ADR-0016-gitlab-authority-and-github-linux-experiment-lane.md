@@ -11,7 +11,7 @@ sessions could easily confuse:
 
 - the private GitLab source repo
 - the public GitHub facade repo
-- a desired cheap GitHub experiment lane for Linux performance iteration
+- the private GitHub experiment mirror for Linux performance iteration
 
 The current high-friction benchmark question is not public distribution. It is
 whether the `lv_icon.vi` dashboard pair-preparation path can run faster on the
@@ -31,20 +31,25 @@ The repo keeps this authority split:
 1. Private GitLab remains the authority source repo and release-control
    surface.
 2. The public GitHub facade remains public release/setup/support only.
-3. A separate private GitHub experiment mirror may run non-authoritative Linux
+3. A separate private GitHub experiment mirror runs non-authoritative Linux
    benchmark workflows.
 4. The canonical high-history Linux benchmark target is
    `HARNESS-VHS-002` / `resource/plugins/lv_icon.vi`.
 5. The GitHub experiment lane shall pin
    `nationalinstruments/labview:2026q1-linux` and run through a derived
-   benchmark container that adds Node/Git tooling without changing the pinned
-   NI runtime base.
+   benchmark/source-experiment container that adds Node/Git/headless-X tooling
+   without changing the pinned NI runtime base.
+6. That derived container shall be published as a dedicated experiment image so
+   benchmark runs can reuse it by digest instead of rebuilding ad hoc on every
+   iteration.
+7. Linux host-native `LVCompare` experiments shall run headlessly through the
+   derived image rather than assuming an interactive X display exists.
 6. Benchmark outputs from the GitHub experiment lane are retained diagnostic
    evidence only. They do not replace GitLab authority or Windows installed-user
    proof.
-7. Until that private GitHub mirror is actually created, the authority repo
-   retains the prepared benchmark workflow, CLI, harness, expected remote, and
-   container recipe as the governed source for the experiment lane.
+8. The authority repo retains the prepared benchmark workflow, CLI, harness,
+   expected remote, and container recipe as the governed source for the
+   experiment lane, while the private GitHub mirror remains non-authoritative.
 
 ## Consequences
 
@@ -64,6 +69,8 @@ Tradeoffs:
   authority proof
 - the experiment lane adds a derived Docker image to maintain alongside the
   pinned NI Linux runtime image
+- headless Linux runtime proof now depends on a maintained Xvfb-capable
+  experiment image instead of only the pinned NI base image
 
 ## Evidence
 
