@@ -14,8 +14,9 @@ sessions could easily confuse:
 - the private GitHub experiment mirror for Linux performance iteration
 
 The current high-friction benchmark question is not public distribution. It is
-whether the `lv_icon.vi` dashboard pair-preparation path can run faster on the
-Linux comparison-report runtime than on the current Windows host baseline.
+whether the deep `lv_icon.vi` dashboard pair-preparation path can run faster on
+the Linux comparison-report runtime than on the current Windows host baseline,
+while GitHub-hosted Linux iteration stays cheap enough to run frequently.
 
 If that experiment lane is modeled weakly, future sessions will risk at least
 three failures:
@@ -33,34 +34,39 @@ The repo keeps this authority split:
 2. The public GitHub facade remains public release/setup/support only.
 3. A separate private GitHub experiment mirror runs non-authoritative Linux
    benchmark workflows.
-4. The canonical high-history Linux benchmark target is
-   `HARNESS-VHS-002` / `resource/plugins/lv_icon.vi`.
-5. The GitHub experiment lane shall pin
+4. The GitHub-hosted benchmark workflow shall default to
+   `HARNESS-VHS-001` / `Tooling/deployment/VIP_Pre-Install Custom Action.vi`.
+5. The canonical deep-history Linux benchmark target remains
+   `HARNESS-VHS-002` / `resource/plugins/lv_icon.vi`, and that deep benchmark
+   is owned by Sergio's canonical Windows 11 host lane.
+6. The GitHub experiment lane shall pin
    `nationalinstruments/labview:2026q1-linux` and run through a derived
    benchmark/source-experiment container that adds Node/Git/headless-X tooling
    without changing the pinned NI runtime base.
-6. That derived container shall be published as a dedicated experiment image so
+7. That derived container shall be published as a dedicated experiment image so
    benchmark runs can reuse it by digest instead of rebuilding ad hoc on every
    iteration.
-7. Linux host-native `LVCompare` experiments shall run headlessly through the
+8. Linux host-native `LVCompare` experiments shall run headlessly through the
    derived image rather than assuming an interactive X display exists.
-8. Sergio's canonical Windows 11 host shall expose an in-IDE benchmark-status
+9. Sergio's canonical Windows 11 host shall expose an in-IDE benchmark-status
    surface that reads the retained Windows baseline plus the retained host
    Linux benchmark launch/log/summary state, mirrors active host Linux
    benchmark progress into a VS Code status-bar indicator, defaults each host
    run to the current published benchmark image tag unless explicitly
    overridden, and can launch or stop the host Linux benchmark without
    requiring detached shell-only observation.
-9. Benchmark outputs from the GitHub experiment lane are retained diagnostic
+10. Benchmark outputs from the GitHub experiment lane are retained diagnostic
    evidence only. They do not replace GitLab authority or Windows installed-user
    proof.
-10. The authority repo retains the prepared benchmark workflow, CLI, harness,
-   expected remote, and container recipe as the governed source for the
-   experiment lane, while the private GitHub mirror remains non-authoritative.
-11. Host-machine Linux benchmark evidence and private GitHub experiment
+11. The authority repo retains the prepared benchmark workflow, CLI, harness,
+    expected remote, and container recipe as the governed source for the
+    experiment lane, while the private GitHub mirror remains non-authoritative.
+12. Host-machine Linux benchmark evidence and private GitHub experiment
     evidence shall only be compared when the same authority commit has been
     pushed to both GitLab authority and the private GitHub experiment mirror,
-    and both lanes are using the same published benchmark-image contract.
+    both lanes are using the same published benchmark-image contract, and the
+    comparison is truthful about whether it is using the hosted canonical
+    harness or the host-owned deep-history harness.
 
 ## Consequences
 
@@ -68,7 +74,8 @@ Positive:
 
 - GitHub can absorb cheap Linux runtime iteration without rewriting the public
   facade model
-- the benchmark target stays aligned with the real long-running `lv_icon.vi`
+- the GitHub-hosted experiment lane stays cheaper by default while the deep
+  benchmark target remains aligned with the real long-running `lv_icon.vi`
   dashboard path on the canonical Windows host
 - the maintainer can see and control the host Linux benchmark from inside VS
   Code, and that host benchmark now resolves the canonical `vi-history-suite`
@@ -90,7 +97,7 @@ Tradeoffs:
 
 - the program now carries another governed repo surface
 - GitHub experiment evidence must be interpreted carefully because it is not
-  authority proof
+  authority proof and its hosted default harness is intentionally shallower
 - the experiment lane adds a derived Docker image to maintain alongside the
   pinned NI Linux runtime image
 - headless Linux runtime proof now depends on a maintained Xvfb-capable

@@ -134,6 +134,9 @@ describe('extension manifest research alignment', () => {
     expect(manifest.scripts?.['review:latest:json']).toBe(
       'node scripts/printLatestHumanReviewSubmission.js --json'
     );
+    expect(manifest.scripts?.['benchmark:github:linux:canonical']).toBe(
+      'npm run compile && node out/cli/runGitHubLinuxDashboardBenchmark.js --harness-id HARNESS-VHS-001'
+    );
     expect(manifest.scripts?.['benchmark:github:linux:lv-icon']).toBe(
       'npm run compile && node out/cli/runGitHubLinuxDashboardBenchmark.js --harness-id HARNESS-VHS-002'
     );

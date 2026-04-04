@@ -13,8 +13,7 @@ contains:
 - governed review-scenario registry and separate human decision-record artifacts
 - deterministic in-IDE host-review submission with canonical-machine binding
 - canonical real-history harnesses and smoke lanes
-- a private GitHub Linux benchmark lane for `lv_icon.vi` experiments while
-  GitLab remains authority
+- a private GitHub Linux benchmark lane, mirrored into the private GitHub experiment repo, that defaults hosted runs to the shallower canonical harness while the canonical Windows host owns the deep `lv_icon.vi` benchmark
 - a canonical-host in-IDE benchmark-status surface so Linux benchmark progress
   and retained outcome stay visible inside VS Code
 - retained design-gate guidance for the next development tranche
@@ -198,9 +197,12 @@ Committed and governed today:
   review submission via `npm run dashboard:latest`,
   `npm run dashboard:latest:host`, and `npm run review:latest`
 - a GitHub-hosted Linux dashboard benchmark lane that pins
-  `nationalinstruments/labview:2026q1-linux`, targets
-  `HARNESS-VHS-002` / `resource/plugins/lv_icon.vi`, and retains machine-readable
-  benchmark summaries under `.cache/github-experiments/linux-dashboard-benchmark/`
+  `nationalinstruments/labview:2026q1-linux`, defaults hosted runs to
+  `HARNESS-VHS-001` / `Tooling/deployment/VIP_Pre-Install Custom Action.vi`,
+  and retains machine-readable benchmark summaries under
+  `.cache/github-experiments/linux-dashboard-benchmark/` while the canonical
+  Windows host owns the deep `HARNESS-VHS-002` / `resource/plugins/lv_icon.vi`
+  benchmark
 - a retained documentation coherence ledger and wiki seed plan so future wiki
   work starts from governed docs instead of source or chat memory
 - a retained wiki publication ledger so actual published wiki pages are tracked
@@ -221,21 +223,24 @@ Committed and governed today:
 - explicit Linux and Windows extension-host proof scripts plus a least-privilege
   Linux VS Code bootstrap command for faster autonomous iteration
 - explicit GitHub Linux benchmark preparation via
-  `npm run benchmark:github:linux:lv-icon` in the authority repo, mirrored into
-  the private GitHub experiment repo with a published benchmark image and a
-  retained consumer at `npm run benchmark:github:latest`, while the canonical
-  host in-IDE Linux benchmark resolves the canonical `vi-history-suite`
-  authority workspace even when the current VI History target lives in a
-  different repo, stages that authority workspace into a fresh Windows-local
-  benchmark workspace before launch without repo-local transient/test-runtime
-  artifacts such as `.vscode-test`, defaults each host run to the current
-  published benchmark image tag unless an explicit override is configured,
-  filters raw `npm warn` noise out of the front-facing progress channel, fails
-  closed when only a stale launch receipt remains and no live host Linux
-  benchmark container exists, and requires host-versus-GitHub timing
-  comparisons to use the same authority commit pushed to both GitLab authority
-  and the private GitHub experiment mirror while GitLab remains the authority
-  source repo and release-control surface
+  `npm run benchmark:github:linux:canonical` for the cheaper hosted canonical
+  harness and `npm run benchmark:github:linux:lv-icon` for the explicit deep
+  `lv_icon.vi` lane in the authority repo, mirrored into the private GitHub
+  experiment repo with a published benchmark image and a retained consumer at
+  `npm run benchmark:github:latest`, while the canonical host in-IDE Linux
+  benchmark resolves the canonical `vi-history-suite` authority workspace even
+  when the current VI History target lives in a different repo, stages that
+  authority workspace into a fresh Windows-local benchmark workspace before
+  launch without repo-local transient/test-runtime artifacts such as
+  `.vscode-test`, defaults each host run to the current published benchmark
+  image tag unless an explicit override is configured, filters raw `npm warn`
+  noise out of the front-facing progress channel, fails closed when only a
+  stale launch receipt remains and no live host Linux benchmark container
+  exists, keeps the hosted GitHub lane on the shallower canonical harness, and
+  requires host-versus-GitHub timing comparisons to use the same authority
+  commit pushed to both GitLab authority and the private GitHub experiment
+  mirror while GitLab remains the authority source repo and release-control
+  surface
 
 ## Active Work
 
@@ -389,7 +394,9 @@ GitHub Linux benchmark discovery:
 
 The helper prefers the latest successful `workflow_dispatch` artifact from the
 private GitHub experiment mirror and falls back to cached downloads under
-`.cache/github-experiment-downloads/` when needed.
+`.cache/github-experiment-downloads/` when needed. That hosted consumer is
+expected to resolve the cheaper canonical harness by default; the deep
+`lv_icon.vi` benchmark remains owned by the canonical host lane.
 
 The generated `.cache/` evidence is local and regenerated. The committed source
 of truth for implemented-versus-partial research work is the documentation stack
@@ -404,6 +411,10 @@ The canonical real-history harness is `HARNESS-VHS-001`, backed by
 - comparison-report smoke via `npm run harness:report:smoke`
 - dashboard smoke via `npm run harness:dashboard:smoke`
 - scenario decision-record generation via `npm run harness:decision:record`
+
+The explicit deep-history benchmark harness is `HARNESS-VHS-002` for
+`resource/plugins/lv_icon.vi`. The canonical host owns that benchmark lane,
+while GitHub-hosted experiments default to `HARNESS-VHS-001`.
 
 See [Harness Definitions](./docs/product/harnesses.md).
 

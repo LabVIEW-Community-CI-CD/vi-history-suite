@@ -913,14 +913,16 @@
 - `TEST-UNIT-251`: verify `HARNESS-VHS-002` is retained as the canonical
   `lv_icon.vi` high-history benchmark harness against `ni/labview-icon-editor`
 - `TEST-UNIT-252`: verify the GitHub Linux benchmark CLI defaults to
-  `HARNESS-VHS-002`, uses a high-history commit window by default, and writes
-  stable benchmark summaries under
-  `.cache/github-experiments/linux-dashboard-benchmark/`
+  `HARNESS-VHS-001`, retains an explicit deep-history
+  `benchmark:github:linux:lv-icon` entrypoint for `HARNESS-VHS-002`, uses a
+  governed nontrivial commit window by default, and writes stable benchmark
+  summaries under `.cache/github-experiments/linux-dashboard-benchmark/`
 - `TEST-UNIT-253`: verify the GitHub Linux benchmark workflow, derived
   benchmark Dockerfile, and runner script pin
   `nationalinstruments/labview:2026q1-linux`, publish a dedicated experiment
-  image to GHCR, and execute the benchmark headlessly through the published
-  derived container
+  image to GHCR, execute the benchmark headlessly through the published
+  derived container, default hosted runs to `HARNESS-VHS-001`, and retain
+  `HARNESS-VHS-002` as the explicit deep-history lane
 - `TEST-UNIT-254`: verify the actual governed repo-jump map includes the
   `vi-history-suite-source-experiments` mirror with the actual GitHub remote,
   sibling-path strategy, and Linux benchmark entrypoints
@@ -961,7 +963,9 @@
 - `TEST-DOC-037`: review README, current-state, and ADR-0016 and confirm the
   canonical host Linux benchmark lane and the private GitHub experiment lane
   are governed to stay aligned on the same authority-repo commit and published
-  benchmark-image contract before timing evidence is compared
+  benchmark-image contract before evidence is compared, while the GitHub-
+  hosted workflow stays on the shallower canonical harness and the canonical
+  host retains ownership of the deep `lv_icon.vi` benchmark
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed authority repo, private experiment mirror, wiki, and
   assurance-skill repos with authority roles, expected remotes, and primary

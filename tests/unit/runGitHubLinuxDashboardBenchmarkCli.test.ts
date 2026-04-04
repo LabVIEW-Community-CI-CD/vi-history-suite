@@ -15,9 +15,9 @@ const LINUX_LABVIEW_EXE_PATH = '/usr/local/natinst/LabVIEW-2026Q1-64/labview';
 const LINUX_LVCOMPARE_PATH = '/usr/local/bin/LVCompare';
 
 describe('runGitHubLinuxDashboardBenchmarkCli', () => {
-  it('parses deterministic benchmark args with a high-history default window', () => {
+  it('parses deterministic benchmark args with a hosted canonical default and high-history window', () => {
     expect(parseGitHubLinuxDashboardBenchmarkArgs([])).toEqual({
-      harnessId: 'HARNESS-VHS-002',
+      harnessId: 'HARNESS-VHS-001',
       dashboardCommitWindow: 1000,
       runtimeEngineOverride: undefined,
       labviewCliPath: undefined,
@@ -61,6 +61,7 @@ describe('runGitHubLinuxDashboardBenchmarkCli', () => {
     expect(() => parseGitHubLinuxDashboardBenchmarkArgs(['--labview-exe-path'])).toThrow(
       /Missing value for --labview-exe-path/
     );
+    expect(getGitHubLinuxDashboardBenchmarkUsage()).toContain('Defaults to HARNESS-VHS-001');
     expect(getGitHubLinuxDashboardBenchmarkUsage()).toContain('Defaults to 1000');
   });
 
@@ -70,33 +71,33 @@ describe('runGitHubLinuxDashboardBenchmarkCli', () => {
     const writeFile = vi.fn().mockResolvedValue(undefined);
     const runner = vi.fn().mockResolvedValue({
       report: {
-        harnessId: 'HARNESS-VHS-002',
+        harnessId: 'HARNESS-VHS-001',
         repositoryUrl: 'https://github.com/ni/labview-icon-editor.git',
         cloneDirectory: '/tmp/harness',
-        targetRelativePath: 'resource/plugins/lv_icon.vi',
+        targetRelativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
         head: 'abcdef1234567890',
         generatedAt: '2026-04-04T18:00:00.000Z',
         eligible: true,
         signature: 'LVIN',
-        dashboardCommitWindow: 139,
-        comparePairCount: 138,
+        dashboardCommitWindow: 21,
+        comparePairCount: 20,
         dashboardFilePath: '/tmp/dashboard.html',
         dashboardJsonFilePath: '/tmp/dashboard.json',
         dashboardWindowCompletenessState: 'complete',
-        dashboardArchivedPairCount: 138,
+        dashboardArchivedPairCount: 20,
         dashboardMissingPairCount: 0,
-        dashboardGeneratedReportCount: 136,
-        dashboardMetadataPairCount: 136,
-        dashboardOverviewImageCount: 272,
-        dashboardDetailItemCount: 544,
+        dashboardGeneratedReportCount: 18,
+        dashboardMetadataPairCount: 18,
+        dashboardOverviewImageCount: 36,
+        dashboardDetailItemCount: 72,
         dashboardProviderSummaries: [],
         dashboardEtaAccuracyFilePath: '/tmp/dashboard-pair-eta-accuracy.json',
         dashboardEtaAccuracyRecord: {
           recordedAt: '2026-04-04T18:00:00.000Z',
           stage: 'pair-preparation',
-          preparedPairCount: 138,
-          etaEligiblePairCount: 136,
-          measuredPairCount: 135,
+          preparedPairCount: 20,
+          etaEligiblePairCount: 18,
+          measuredPairCount: 17,
           unmeasuredPairCount: 3,
           excludedPairCount: 2,
           meanAbsoluteErrorSeconds: 5.2,
@@ -150,9 +151,9 @@ describe('runGitHubLinuxDashboardBenchmarkCli', () => {
           }
         ]
       },
-      reportJsonPath: '/tmp/reports/HARNESS-VHS-002/dashboard-smoke.json',
-      reportMarkdownPath: '/tmp/reports/HARNESS-VHS-002/dashboard-smoke.md',
-      reportHtmlPath: '/tmp/reports/HARNESS-VHS-002/dashboard-smoke.html'
+      reportJsonPath: '/tmp/reports/HARNESS-VHS-001/dashboard-smoke.json',
+      reportMarkdownPath: '/tmp/reports/HARNESS-VHS-001/dashboard-smoke.md',
+      reportHtmlPath: '/tmp/reports/HARNESS-VHS-001/dashboard-smoke.html'
     });
 
     await expect(
@@ -177,7 +178,7 @@ describe('runGitHubLinuxDashboardBenchmarkCli', () => {
     ).resolves.toBe('pass');
 
     expect(runner).toHaveBeenCalledWith(
-      'HARNESS-VHS-002',
+      'HARNESS-VHS-001',
       expect.objectContaining({
         cloneRoot: '/tmp/vi-history-suite/.cache/harnesses',
         reportRoot: '/tmp/vi-history-suite/.cache/harness-reports',
@@ -194,7 +195,7 @@ describe('runGitHubLinuxDashboardBenchmarkCli', () => {
       })
     );
     expect(mkdir).toHaveBeenCalledWith(
-      '/tmp/vi-history-suite/.cache/github-experiments/linux-dashboard-benchmark/HARNESS-VHS-002',
+      '/tmp/vi-history-suite/.cache/github-experiments/linux-dashboard-benchmark/HARNESS-VHS-001',
       { recursive: true }
     );
     expect(writeFile).toHaveBeenCalledTimes(4);
@@ -203,10 +204,10 @@ describe('runGitHubLinuxDashboardBenchmarkCli', () => {
     expect(writeFile.mock.calls[3]?.[0]).toContain('latest-progress.json');
     expect(writeFile.mock.calls[3]?.[1]).toContain('"phase": "completed"');
     expect(writes.join('')).toContain(
-      'GitHub Linux dashboard benchmark completed for HARNESS-VHS-002'
+      'GitHub Linux dashboard benchmark completed for HARNESS-VHS-001'
     );
-    expect(writes.join('')).toContain('Target: resource/plugins/lv_icon.vi');
-    expect(writes.join('')).toContain('Pair outcomes: generated=136 blocked=1 failed=1 no-generated=0');
+    expect(writes.join('')).toContain('Target: Tooling/deployment/VIP_Pre-Install Custom Action.vi');
+    expect(writes.join('')).toContain('Pair outcomes: generated=18 blocked=1 failed=1 no-generated=0');
   });
 
   it('retains a failed progress receipt when the benchmark runner throws', async () => {

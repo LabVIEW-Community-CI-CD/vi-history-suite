@@ -10,7 +10,7 @@ function readText(relativePath: string): string {
 }
 
 describe('github linux benchmark workflow', () => {
-  it('pins the NI Linux image, publishes a dedicated benchmark image, and runs the lv_icon benchmark headlessly', () => {
+  it('pins the NI Linux image, publishes a dedicated benchmark image, and defaults GitHub runs to the shallower canonical harness while the host owns lv_icon', () => {
     const workflow = readText('.github/workflows/linux-runtime-benchmark-experiment.yml');
     const dockerfile = readText('docker/github-linux-dashboard-benchmark/Dockerfile');
     const runScript = readText('docker/github-linux-dashboard-benchmark/run-benchmark.sh');
@@ -28,7 +28,10 @@ describe('github linux benchmark workflow', () => {
     expect(workflow).toContain('VIHS_GITHUB_BENCHMARK_IMAGE_DIGEST');
     expect(workflow).toContain('docker/github-linux-dashboard-benchmark/Dockerfile');
     expect(workflow).toContain('docker/github-linux-dashboard-benchmark/run-benchmark.sh');
+    expect(workflow).toContain('HARNESS-VHS-001');
     expect(workflow).toContain('HARNESS-VHS-002');
+    expect(workflow).toContain('Tooling/deployment/VIP_Pre-Install Custom Action.vi');
+    expect(workflow).toContain('resource/plugins/lv_icon.vi');
     expect(workflow).toContain('.cache/github-experiments/linux-dashboard-benchmark/**');
     expect(workflow).toContain('linux-runtime-benchmark-image');
     expect(workflow).toContain('if-no-files-found: warn');
@@ -40,7 +43,7 @@ describe('github linux benchmark workflow', () => {
     expect(dockerfile).toContain('xvfb');
 
     expect(runScript).toContain('VIHS_GITHUB_BENCHMARK_HARNESS_ID');
-    expect(runScript).toContain('HARNESS-VHS-002');
+    expect(runScript).toContain('HARNESS-VHS-001');
     expect(runScript).toContain('runGitHubLinuxDashboardBenchmark.js');
     expect(runScript).toContain('VIHS_GITHUB_BENCHMARK_HEADLESS_DISPLAY_PROVIDER');
     expect(runScript).toContain('xvfb-run');

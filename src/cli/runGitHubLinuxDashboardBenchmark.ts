@@ -1,6 +1,7 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
+import { getCanonicalHarnessDefinition } from '../harness/canonicalHarnesses';
 import {
   HarnessDashboardSmokeOptions,
   HarnessDashboardSmokeReport,
@@ -102,8 +103,8 @@ export function getGitHubLinuxDashboardBenchmarkUsage(): string {
     'Usage: runGitHubLinuxDashboardBenchmark [--harness-id <id>] [--dashboard-commit-window <count>] [--engine <labview-cli|lvcompare>] [--labview-cli-path <path>] [--labview-exe-path <path>] [--lvcompare-path <path>] [--strict-rsrc-header] [--help]',
     '',
     'Options:',
-    '  --harness-id <id>              Canonical harness id. Defaults to HARNESS-VHS-002.',
-    '  --dashboard-commit-window <n>  Limit the retained dashboard window to at least 3 commits. Defaults to 1000 for the high-history benchmark lane.',
+    '  --harness-id <id>              Canonical harness id. Defaults to HARNESS-VHS-001 for the GitHub-hosted benchmark lane.',
+    '  --dashboard-commit-window <n>  Limit the retained dashboard window to at least 3 commits. Defaults to 1000 for the hosted benchmark lane.',
     '  --engine <value>               Override the selected report engine for the benchmark.',
     '  --labview-cli-path <path>      Provide an explicit LabVIEWCLI path.',
     '  --labview-exe-path <path>      Provide an explicit LabVIEW executable path.',
@@ -116,7 +117,7 @@ export function getGitHubLinuxDashboardBenchmarkUsage(): string {
 export function parseGitHubLinuxDashboardBenchmarkArgs(
   argv: string[]
 ): GitHubLinuxDashboardBenchmarkCliArgs {
-  let harnessId = 'HARNESS-VHS-002';
+  let harnessId = 'HARNESS-VHS-001';
   let dashboardCommitWindow = 1000;
   let runtimeEngineOverride: ComparisonRuntimeEngine | undefined;
   let labviewCliPath: string | undefined;
@@ -230,6 +231,7 @@ export async function runGitHubLinuxDashboardBenchmarkCli(
     'linux-dashboard-benchmark',
     args.harnessId
   );
+  const harnessDefinition = getCanonicalHarnessDefinition(args.harnessId);
   const now = deps.now ?? (() => new Date());
   const startedAtDate = now();
   const latestProgressPath = path.join(benchmarkRoot, 'latest-progress.json');
@@ -248,7 +250,7 @@ export async function runGitHubLinuxDashboardBenchmarkCli(
           schema: 'vi-history-suite/github-linux-dashboard-benchmark-progress@v1',
           benchmarkId: 'GITHUB-VHS-LINUX-DASHBOARD-BENCHMARK',
           harnessId: args.harnessId,
-          targetRelativePath: 'resource/plugins/lv_icon.vi',
+          targetRelativePath: harnessDefinition.targetRelativePath,
           recordedAt: now().toISOString(),
           phase,
           message
@@ -259,7 +261,10 @@ export async function runGitHubLinuxDashboardBenchmarkCli(
     );
   };
 
-  await writeProgress('starting', 'Preparing the Linux benchmark workspace.');
+  await writeProgress(
+    'starting',
+    `Preparing the Linux benchmark workspace for ${args.harnessId}.`
+  );
 
   let result: Awaited<ReturnType<typeof runHarnessDashboardSmoke>>;
   try {

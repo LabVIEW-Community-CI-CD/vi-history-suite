@@ -148,6 +148,7 @@
     "dashboard:latest:host:json": "node scripts/printLatestDashboardRun.js --host-only --json",
     "review:latest": "node scripts/printLatestHumanReviewSubmission.js",
     "review:latest:json": "node scripts/printLatestHumanReviewSubmission.js --json",
+    "benchmark:github:linux:canonical": "npm run compile && node out/cli/runGitHubLinuxDashboardBenchmark.js --harness-id HARNESS-VHS-001",
     "benchmark:github:linux:lv-icon": "npm run compile && node out/cli/runGitHubLinuxDashboardBenchmark.js --harness-id HARNESS-VHS-002",
     "benchmark:github:latest": "node scripts/printLatestGitHubLinuxBenchmark.js",
     "benchmark:github:latest:json": "node scripts/printLatestGitHubLinuxBenchmark.js --json",

@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       harness_id:
-        description: Canonical harness id to benchmark
+        description: Canonical harness id to benchmark; defaults to HARNESS-VHS-001 for hosted runs
         required: false
-        default: HARNESS-VHS-002
+        default: HARNESS-VHS-001
       dashboard_commit_window:
         description: Optional explicit dashboard commit window
         required: false
@@ -69,9 +69,11 @@ jobs:
             "publishedBenchmarkImage": "${benchmark_image}",
             "dockerfile": "docker/github-linux-dashboard-benchmark/Dockerfile",
             "benchmarkEntrypoint": "docker/github-linux-dashboard-benchmark/run-benchmark.sh",
-            "benchmarkScript": "npm run benchmark:github:linux:lv-icon",
-            "defaultHarnessId": "HARNESS-VHS-002",
-            "defaultTargetRelativePath": "resource/plugins/lv_icon.vi",
+            "benchmarkScript": "npm run benchmark:github:linux:canonical",
+            "defaultHarnessId": "HARNESS-VHS-001",
+            "defaultTargetRelativePath": "Tooling/deployment/VIP_Pre-Install Custom Action.vi",
+            "hostOwnedDeepBenchmarkHarnessId": "HARNESS-VHS-002",
+            "hostOwnedDeepBenchmarkTargetRelativePath": "resource/plugins/lv_icon.vi",
             "authorityBoundary": {
               "gitlab": "authority",
               "github": "experiment"
@@ -83,8 +85,9 @@ jobs:
             echo
             echo "- runtime image: \`$NI_LINUX_IMAGE\`"
             echo "- published benchmark image: \`$benchmark_image\`"
-            echo "- harness: \`HARNESS-VHS-002\`"
-            echo "- target: \`resource/plugins/lv_icon.vi\`"
+            echo "- GitHub default harness: \`HARNESS-VHS-001\`"
+            echo "- GitHub default target: \`Tooling/deployment/VIP_Pre-Install Custom Action.vi\`"
+            echo "- host-owned deep benchmark: \`HARNESS-VHS-002\` / \`resource/plugins/lv_icon.vi\`"
             echo "- authority boundary: GitLab = authority, GitHub = experiment"
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -212,7 +215,7 @@ jobs:
         shell: bash
         run: docker pull "$BENCHMARK_IMAGE"
 
-      - name: Run lv_icon benchmark inside derived image
+      - name: Run canonical GitHub benchmark inside derived image
         shell: bash
         run: |
           docker run --rm \
@@ -238,8 +241,8 @@ jobs:
         if: ${{ always() }}
         uses: actions/upload-artifact@v5
         with:
-          name: linux-runtime-benchmark-${{ inputs.harness_id || 'HARNESS-VHS-002' }}
+          name: linux-runtime-benchmark-${{ inputs.harness_id || 'HARNESS-VHS-001' }}
           path: |
             .cache/github-experiments/linux-dashboard-benchmark/**
-            .cache/harness-reports/HARNESS-VHS-002/**
+            .cache/harness-reports/${{ inputs.harness_id || 'HARNESS-VHS-001' }}/**
           if-no-files-found: warn

@@ -50,9 +50,12 @@ Current landed scaffold state:
 - the local container public-release-kit smoke now passes against the live
   `v0.2.0` GitHub release assets
 - the authority repo now mirrors a GitHub Linux benchmark lane into the
-  private `vi-history-suite-source-experiments` repo for
-  `HARNESS-VHS-002` / `resource/plugins/lv_icon.vi`, while GitLab remains the
-  authority source repo and release-control surface
+  private `vi-history-suite-source-experiments` repo with hosted runs
+  defaulting to `HARNESS-VHS-001` /
+  `Tooling/deployment/VIP_Pre-Install Custom Action.vi`, while the canonical
+  host retains ownership of the deep `HARNESS-VHS-002` /
+  `resource/plugins/lv_icon.vi` benchmark and GitLab remains the authority
+  source repo and release-control surface
 - that GitHub experiment lane now publishes a dedicated headless Linux
   benchmark/source-experiment image so benchmark runs can reuse the derived
   container by digest

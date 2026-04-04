@@ -45,6 +45,21 @@
   - `.cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.md`
   - `.cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.html`
 
+### GitHub-Hosted Linux Benchmark Path
+
+- local command from the authority repo:
+  `npm run benchmark:github:linux:canonical`
+- GitHub workflow default:
+  `.github/workflows/linux-runtime-benchmark-experiment.yml`
+- purpose: keep the GitHub-hosted experiment lane on a shallower canonical
+  real-history target so hosted iteration stays cheaper than the deep
+  maintainer-owned benchmark
+- retained outputs:
+  - `.cache/github-experiments/linux-dashboard-benchmark/HARNESS-VHS-001/latest-summary.json`
+  - `.cache/harness-reports/HARNESS-VHS-001/dashboard-smoke.json`
+  - `.cache/harness-reports/HARNESS-VHS-001/dashboard-smoke.md`
+  - `.cache/harness-reports/HARNESS-VHS-001/dashboard-smoke.html`
+
 ### Constraints
 
 - do not vendor `ni/labview-icon-editor` into this repository
@@ -80,15 +95,18 @@
 - benchmark the same class of dashboard pair preparation that the Windows host
   currently performs on `lv_icon.vi`
 - retain machine-readable benchmark summaries under
-  `.cache/github-experiments/linux-dashboard-benchmark/HARNESS-VHS-002/`
-- use GitHub as an experiment lane only; GitLab and Windows proof remain the
-  authority surfaces
+  `.cache/github-experiments/linux-dashboard-benchmark/HARNESS-VHS-002/` when
+  the explicit deep-history lane is invoked
+- keep this harness as the owned before/after timing target for the canonical
+  Windows 11 host rather than the default GitHub-hosted workflow target
 
-### Local And GitHub Benchmark Path
+### Host-Owned Deep Benchmark Path
 
-- local command from the authority repo: `npm run benchmark:github:linux:lv-icon`
-- GitHub workflow:
-  `.github/workflows/linux-runtime-benchmark-experiment.yml`
+- local explicit deep benchmark command from the authority repo:
+  `npm run benchmark:github:linux:lv-icon`
+- canonical-host in-IDE path: `Open benchmark status` -> `Run host Linux benchmark`
+- GitHub-hosted workflow default remains `HARNESS-VHS-001`; do not treat
+  `HARNESS-VHS-002` as the hosted default
 - pinned runtime image: `nationalinstruments/labview:2026q1-linux`
 - derived benchmark container:
   `docker/github-linux-dashboard-benchmark/Dockerfile`
@@ -101,3 +119,5 @@
 - keep the benchmark lane distinct from the public GitHub facade repo
 - keep the benchmark window large enough to characterize the real high-history
   path instead of a toy three-commit slice
+- do not make the GitHub-hosted workflow default to `HARNESS-VHS-002`; the
+  canonical host owns the deep-history benchmark lane

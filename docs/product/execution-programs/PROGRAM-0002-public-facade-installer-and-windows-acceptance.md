@@ -69,9 +69,11 @@ automation and human evidence are captured.
 - the current first slice of that lane is a scaffolded container
   public-release-kit smoke recipe and GitHub workflow
 - the authority repo now mirrors a GitHub Linux benchmark lane into the
-  private GitHub experiment repo for non-authoritative experiments against
-  `HARNESS-VHS-002` /
-  `resource/plugins/lv_icon.vi`
+  private GitHub experiment repo for non-authoritative experiments, with the
+  hosted workflow defaulting to `HARNESS-VHS-001` /
+  `Tooling/deployment/VIP_Pre-Install Custom Action.vi` while the canonical
+  host retains ownership of the deep `HARNESS-VHS-002` /
+  `resource/plugins/lv_icon.vi` benchmark
 - that GitHub experiment lane now publishes a dedicated headless Linux
   benchmark/source-experiment image so benchmark runs can reuse the derived
   container by digest
@@ -183,7 +185,8 @@ Current first slice:
 4. Windows 11 host-machine PowerShell + VS Code CLI acceptance harness
 5. retained installed-user evidence pack and human-check worksheet
 6. future container-image automation lane
-7. private GitHub Linux benchmark experiment lane for `lv_icon.vi`
+7. private GitHub Linux benchmark experiment lane with a cheaper hosted
+   canonical harness and a host-owned deep `lv_icon.vi` benchmark
 
 ## Planned Deliverables
 
@@ -198,7 +201,8 @@ Current first slice:
 - a scaffolded container public-release-kit smoke recipe and workflow in the
   public facade repo
 - a private GitHub-hosted Linux benchmark workflow plus derived benchmark
-  container recipe for `HARNESS-VHS-002`
+  container recipe that defaults to `HARNESS-VHS-001` while retaining
+  `HARNESS-VHS-002` as the explicit deep-history lane
 
 ## Non-Goals
 
@@ -277,7 +281,9 @@ The public facade repo now retains:
   `9ebee6c` that refreshed the public setup checksum asset after the container
   smoke scaffold landed
 - the authority repo now mirrors the GitHub Linux benchmark workflow, CLI,
-  harness, and container recipe into the private GitHub experiment repo
+  harness, and container recipe into the private GitHub experiment repo, with
+  hosted runs defaulting to `HARNESS-VHS-001` while the canonical host owns
+  the deep `HARNESS-VHS-002` benchmark
 - that GitHub experiment lane now publishes a dedicated benchmark/source-experiment
   image and runs Linux `LVCompare` benchmarks headlessly through the derived
   container

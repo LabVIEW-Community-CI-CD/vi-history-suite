@@ -12,7 +12,7 @@ npm run compile
 
 args=(
   --harness-id
-  "${VIHS_GITHUB_BENCHMARK_HARNESS_ID:-HARNESS-VHS-002}"
+  "${VIHS_GITHUB_BENCHMARK_HARNESS_ID:-HARNESS-VHS-001}"
 )
 
 if [[ -n "${VIHS_GITHUB_BENCHMARK_DASHBOARD_COMMIT_WINDOW:-}" ]]; then
@@ -60,7 +60,7 @@ benchmark_cmd=(
   "${args[@]}"
 )
 
-echo "VIHS_PROGRESS: Starting host Linux lv_icon benchmark."
+echo "VIHS_PROGRESS: Starting GitHub Linux dashboard benchmark."
 
 if command -v xvfb-run >/dev/null 2>&1; then
   export VIHS_GITHUB_BENCHMARK_HEADLESS_DISPLAY_PROVIDER="xvfb-run"
