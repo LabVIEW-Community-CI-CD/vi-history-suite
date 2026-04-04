@@ -33,6 +33,7 @@ interface MockPanel {
   title: string;
   webview: {
     html: string;
+    postMessage: ReturnType<typeof vi.fn>;
     onDidReceiveMessage: (listener: (message: unknown) => Promise<void>) => { dispose(): void };
   };
 }
@@ -49,6 +50,7 @@ function createMockPanel(title: string): MockPanel {
     title,
     webview: {
       html: '',
+      postMessage: vi.fn().mockResolvedValue(true),
       onDidReceiveMessage: () => ({
         dispose() {
           // no-op
@@ -323,6 +325,7 @@ describe('createOpenViHistoryCommand', () => {
       reviewConfidence: 'high',
       reviewNote: 'The manual right-click flow behaved as expected.'
     });
+    const panel = createWebviewPanelMock.mock.results[0]?.value as MockPanel | undefined;
 
     expect(submitHumanReviewAction).toHaveBeenCalledWith({
       model: expect.objectContaining({
@@ -335,8 +338,13 @@ describe('createOpenViHistoryCommand', () => {
       draftNote: 'The manual right-click flow behaved as expected.'
     });
     expect(showInformationMessageMock).toHaveBeenCalledWith(
-      'Host-machine review submitted. Future sessions can consume the retained latest-review manifest automatically.'
+      'Host-machine review submitted and retained. Future sessions can consume the retained latest-review manifest automatically.'
     );
+    expect(panel?.webview.postMessage).toHaveBeenCalledWith({
+      type: 'humanReviewSubmissionResult',
+      status: 'success',
+      message: 'Host review submitted and retained in latest-human-review-submission.json.'
+    });
     expect(tracker.getLastActionSummary()).toEqual({
       command: 'submitHumanReview',
       outcome: 'submitted-human-review',
@@ -349,6 +357,88 @@ describe('createOpenViHistoryCommand', () => {
       humanReviewMachineFingerprintId: 'fingerprint-1',
       humanReviewCanonicalMachineFingerprintId: undefined,
       humanReviewValidationMessage: undefined
+    });
+  });
+
+  it('routes benchmark-status requests through the retained history-panel message path', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Update VI',
+            previousHash: '1111111122222222'
+          },
+          {
+            hash: '1111111122222222',
+            authorDate: '2026-04-01T00:00:00Z',
+            authorName: 'B User',
+            subject: 'Older VI'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+    const openBenchmarkStatusAction = vi.fn().mockResolvedValue({
+      outcome: 'opened-benchmark-status',
+      title: 'VI History Benchmark Status',
+      windowsLatestRunPath: '/workspace/.storage/dashboards/latest-dashboard-run.json',
+      hostLaunchReceiptPath:
+        '/workspace/.cache/host-linux-dashboard-benchmark/latest-launch.json',
+      hostLatestSummaryPath:
+        '/workspace/.cache/github-experiments/linux-dashboard-benchmark/HARNESS-VHS-002/latest-summary.json',
+      hostLogPath:
+        '/workspace/.cache/host-linux-dashboard-benchmark/run-20260404-170000.log',
+      hostState: 'running'
+    });
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      openBenchmarkStatusAction as never
+    );
+
+    await command(targetUri as never);
+    await tracker.dispatchLastPanelMessage({
+      command: 'openBenchmarkStatus'
+    });
+
+    expect(openBenchmarkStatusAction).toHaveBeenCalledWith({
+      authorityRepoRoot: '/workspace'
+    });
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'openBenchmarkStatus',
+      outcome: 'opened-benchmark-status',
+      title: 'VI History Benchmark Status',
+      benchmarkWindowsLatestRunPath:
+        '/workspace/.storage/dashboards/latest-dashboard-run.json',
+      benchmarkHostLaunchReceiptPath:
+        '/workspace/.cache/host-linux-dashboard-benchmark/latest-launch.json',
+      benchmarkHostLatestSummaryPath:
+        '/workspace/.cache/github-experiments/linux-dashboard-benchmark/HARNESS-VHS-002/latest-summary.json',
+      benchmarkHostLogPath:
+        '/workspace/.cache/host-linux-dashboard-benchmark/run-20260404-170000.log',
+      benchmarkHostState: 'running'
     });
   });
 
@@ -2159,7 +2249,7 @@ describe('createOpenViHistoryCommand', () => {
     const tracker = new HistoryPanelTracker();
     const comparisonReportAction = vi.fn().mockImplementation(async ({ reportProgress }) => {
       reportProgress?.({
-        message: 'Executing NI comparison-report runtime.',
+        message: 'Executing LabVIEW comparison-report runtime.',
         increment: 20
       });
       return {

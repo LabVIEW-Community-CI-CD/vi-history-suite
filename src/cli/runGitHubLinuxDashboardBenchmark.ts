@@ -70,6 +70,16 @@ export interface GitHubLinuxDashboardBenchmarkSummary {
   };
 }
 
+export interface GitHubLinuxDashboardBenchmarkProgressRecord {
+  schema: 'vi-history-suite/github-linux-dashboard-benchmark-progress@v1';
+  benchmarkId: 'GITHUB-VHS-LINUX-DASHBOARD-BENCHMARK';
+  harnessId: string;
+  targetRelativePath: string;
+  recordedAt: string;
+  phase: 'starting' | 'running' | 'completed' | 'failed';
+  message: string;
+}
+
 export interface GitHubLinuxDashboardBenchmarkCliDeps {
   repoRoot?: string;
   runner?: (
@@ -222,20 +232,58 @@ export async function runGitHubLinuxDashboardBenchmarkCli(
   );
   const now = deps.now ?? (() => new Date());
   const startedAtDate = now();
+  const latestProgressPath = path.join(benchmarkRoot, 'latest-progress.json');
+  const mkdir = deps.mkdir ?? fs.mkdir;
+  const writeFile = deps.writeFile ?? fs.writeFile;
 
-  const result = await (deps.runner ?? runHarnessDashboardSmoke)(args.harnessId, {
-    cloneRoot,
-    reportRoot,
-    strictRsrcHeader: args.strictRsrcHeader,
-    runtimePlatform: 'linux',
-    runtimeEngineOverride: args.runtimeEngineOverride,
-    dashboardCommitWindow: args.dashboardCommitWindow,
-    runtimeSettings: {
-      labviewCliPath: args.labviewCliPath,
-      labviewExePath: args.labviewExePath,
-      lvComparePath: args.lvComparePath
-    }
-  });
+  await mkdir(benchmarkRoot, { recursive: true });
+  const writeProgress = async (
+    phase: GitHubLinuxDashboardBenchmarkProgressRecord['phase'],
+    message: string
+  ): Promise<void> => {
+    await writeFile(
+      latestProgressPath,
+      `${JSON.stringify(
+        {
+          schema: 'vi-history-suite/github-linux-dashboard-benchmark-progress@v1',
+          benchmarkId: 'GITHUB-VHS-LINUX-DASHBOARD-BENCHMARK',
+          harnessId: args.harnessId,
+          targetRelativePath: 'resource/plugins/lv_icon.vi',
+          recordedAt: now().toISOString(),
+          phase,
+          message
+        } satisfies GitHubLinuxDashboardBenchmarkProgressRecord,
+        null,
+        2
+      )}\n`
+    );
+  };
+
+  await writeProgress('starting', 'Preparing the Linux benchmark workspace.');
+
+  let result: Awaited<ReturnType<typeof runHarnessDashboardSmoke>>;
+  try {
+    result = await (deps.runner ?? runHarnessDashboardSmoke)(args.harnessId, {
+      cloneRoot,
+      reportRoot,
+      strictRsrcHeader: args.strictRsrcHeader,
+      runtimePlatform: 'linux',
+      runtimeEngineOverride: args.runtimeEngineOverride,
+      dashboardCommitWindow: args.dashboardCommitWindow,
+      runtimeSettings: {
+        labviewCliPath: args.labviewCliPath,
+        labviewExePath: args.labviewExePath,
+        lvComparePath: args.lvComparePath
+      },
+      reportProgress: async (update) => {
+        await writeProgress('running', update.message);
+      }
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    await writeProgress('failed', message);
+    throw error;
+  }
 
   const completedAtDate = now();
   const summary = buildGitHubLinuxDashboardBenchmarkSummary(result, {
@@ -255,11 +303,14 @@ export async function runGitHubLinuxDashboardBenchmarkCli(
   summary.retainedArtifacts.runSummaryPath = runSummaryPath;
   summary.retainedArtifacts.latestSummaryPath = latestSummaryPath;
 
-  await (deps.mkdir ?? fs.mkdir)(benchmarkRoot, { recursive: true });
-  await (deps.writeFile ?? fs.writeFile)(runSummaryPath, `${JSON.stringify(summary, null, 2)}\n`);
-  await (deps.writeFile ?? fs.writeFile)(
+  await writeFile(runSummaryPath, `${JSON.stringify(summary, null, 2)}\n`);
+  await writeFile(
     latestSummaryPath,
     `${JSON.stringify(summary, null, 2)}\n`
+  );
+  await writeProgress(
+    'completed',
+    `Completed ${summary.comparePairCount} compare pair(s); generated=${summary.generatedReportCount}, blocked=${summary.blockedPairCount}, failed=${summary.failedPairCount}.`
   );
 
   for (const line of formatGitHubLinuxDashboardBenchmarkSuccess(summary)) {

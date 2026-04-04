@@ -50,6 +50,9 @@ Tradeoffs:
   three-commit cases
 - the canonical host-machine proof lane now needs explicit fingerprint and
   latest-review retention rules so human closeout stays deterministic
+- the canonical host-machine closeout surface must remain maintainer-only and
+  provide explicit in-panel submit feedback so Sergio can trust whether the
+  human gate actually closed
 
 ## Follow-On Work
 

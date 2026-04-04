@@ -35,6 +35,14 @@
    user docs with `npm run docs:bundle` before packaging.
 4. Run compile, test, coverage generation, and VSIX packaging through GitLab
    CI.
+   - The guarded `npm run package` path now runs compile plus
+     `npm run package:audit` before `vsce package`.
+   - Packaging-only npm tooling is intentionally excluded from the default
+     repo `npm ci` surface and is invoked only on demand through the pinned
+     `scripts/runPinnedVsce.js` helper when packaging is requested.
+   - Packaging must fail closed if the packaged surface includes runtime
+     `node_modules` or transient/test artifacts such as `.cache` or
+     `.vscode-test`.
 5. Retain release evidence under `release-evidence/`.
 6. Review the generated release record and release manifest before any
    downstream distribution step.

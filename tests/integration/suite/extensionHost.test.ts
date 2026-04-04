@@ -142,7 +142,7 @@ async function testPanelOpenFlow(
   assert.match(panel.renderedHtml, /Direct local evidence for chronology, path provenance, retained hashes, and retained compare pairing\./);
   assert.match(panel.renderedHtml, /compare-pair summaries, and dashboard availability/);
   assert.match(panel.renderedHtml, /Needs external comparison tooling:/);
-  assert.match(panel.renderedHtml, /Binary semantic differences, visual or cosmetic change detection, and NI comparison-report output\./);
+  assert.match(panel.renderedHtml, /Binary semantic differences, visual or cosmetic change detection, and LabVIEW comparison-report output\./);
   assert.match(panel.renderedHtml, /Selected:<\/strong> <code>[0-9a-f]{8}<\/code> <strong>vs base:<\/strong> <code>[0-9a-f]{8}<\/code>/);
   assert.match(panel.renderedHtml, /Tooling\/deployment\/VIP_Pre-Install Custom Action\.vi/);
   assert.match(panel.renderedHtml, /Update eligible fixture/);
@@ -168,7 +168,7 @@ async function testPanelOpenFlow(
     /Path: Tooling\/deployment\/VIP_Pre-Install Custom Action\.vi/
   );
   assert.match(copiedReviewPacket, /Confidence and scope:/);
-  assert.match(copiedReviewPacket, /Needs external comparison tooling: binary semantic differences, visual or cosmetic change detection, and NI comparison-report output\./);
+  assert.match(copiedReviewPacket, /Needs external comparison tooling: binary semantic differences, visual or cosmetic change detection, and LabVIEW comparison-report output\./);
   assert.match(copiedReviewPacket, /- [0-9a-f]{8} vs [0-9a-f]{8} :: Update eligible fixture/);
   assert.match(copiedReviewPacket, /- [0-9a-f]{8} vs [0-9a-f]{8} :: Add third eligible fixture revision/);
   const copiedReviewAction = api.getLastPanelActionSummary();

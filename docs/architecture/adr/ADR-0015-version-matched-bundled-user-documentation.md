@@ -51,6 +51,11 @@ The bundled docs are a version-matched user surface for the installed
 extension. They do not replace the repository documentation package as the
 authority of record.
 
+The governed VSIX install surface remains compiled-only. The package path is
+guarded by `npm run package:audit`, which fails closed if runtime
+`node_modules` content or transient/test artifacts such as `.cache` or
+`.vscode-test` would enter the shipped package.
+
 ## Consequences
 
 Positive:

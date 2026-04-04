@@ -89,7 +89,7 @@ describe('comparisonReportPacket', () => {
     );
     expect(writes.get(result.metadataFilePath)).toContain('"reportStatus": "blocked-preflight"');
     expect(writes.has(result.reportFilePath)).toBe(false);
-    expect(writes.get(result.packetFilePath)).toContain('No NI-generated comparison report has been executed yet.');
+    expect(writes.get(result.packetFilePath)).toContain('No LabVIEW-generated comparison report has been executed yet.');
     expect(writes.get(result.packetFilePath)).toContain('right-blob-not-vi');
     expect(writes.get(result.packetFilePath)).toContain('data-testid="comparison-report-runtime-selection"');
   });
@@ -289,7 +289,7 @@ describe('comparisonReportPacket', () => {
     const html = renderComparisonReportPacketHtml(succeededRecord);
 
     expect(html).toContain(
-      'NI-generated comparison report execution succeeded and the governed HTML output is retained at the report path shown below.'
+      'LabVIEW-generated comparison report execution succeeded and the governed HTML output is retained at the report path shown below.'
     );
     expect(html).toContain('data-testid="comparison-report-generated-frame"');
     expect(html).toContain(succeededRecord.artifactPlan.reportFilename);
@@ -316,7 +316,7 @@ describe('comparisonReportPacket', () => {
     const html = renderComparisonReportPacketHtml(failedRecord);
 
     expect(html).toContain(
-      'NI-generated comparison report execution was attempted, but the governed output is not currently usable. Review the retained execution summary and stdout/stderr artifact paths below.'
+      'LabVIEW-generated comparison report execution was attempted, but the governed output is not currently usable. Review the retained execution summary and stdout/stderr artifact paths below.'
     );
     expect(html).toContain('report-file-not-generated');
     expect(html).toContain('data-testid="comparison-report-generated-report-missing"');

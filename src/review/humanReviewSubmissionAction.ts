@@ -9,8 +9,10 @@ import {
 import { ViHistoryViewModel } from '../services/viHistoryModel';
 import {
   buildHostMachineFingerprint,
+  CANONICAL_HOST_MACHINE_FINGERPRINT_ID,
   HumanReviewSubmissionConfidence,
   HumanReviewSubmissionOutcome,
+  isCanonicalHostMachineFingerprint,
   persistHumanReviewSubmission
 } from './humanReviewSubmission';
 
@@ -40,15 +42,53 @@ export interface HumanReviewSubmissionActionResult {
 export interface HumanReviewSubmissionActionDeps {
   readFile?: typeof import('node:fs/promises').readFile;
   persistSubmission?: typeof persistHumanReviewSubmission;
+  machineId?: string;
+  hostname?: string;
+  platform?: NodeJS.Platform;
+  arch?: string;
+  osRelease?: string;
+  vscodeVersion?: string;
 }
 
 const REVIEWER_NAME = 'Sergio Velderrain';
+
+export interface HumanReviewMachineCapability {
+  isCanonicalHostMachine: boolean;
+  machineFingerprintId: string;
+}
+
+export function resolveHumanReviewMachineCapability(
+  deps: HumanReviewSubmissionActionDeps = {}
+): HumanReviewMachineCapability {
+  const machineFingerprint = buildHostMachineFingerprint({
+    machineId: deps.machineId ?? vscode.env.machineId,
+    hostname: deps.hostname ?? os.hostname(),
+    platform: deps.platform ?? process.platform,
+    arch: deps.arch ?? process.arch,
+    osRelease: deps.osRelease ?? os.release(),
+    vscodeVersion: deps.vscodeVersion ?? vscode.version
+  });
+
+  return {
+    isCanonicalHostMachine: isCanonicalHostMachineFingerprint(machineFingerprint),
+    machineFingerprintId: machineFingerprint.fingerprintId
+  };
+}
 
 export function createHumanReviewSubmissionAction(
   context: vscode.ExtensionContext,
   deps: HumanReviewSubmissionActionDeps = {}
 ): (request: HumanReviewSubmissionActionRequest) => Promise<HumanReviewSubmissionActionResult> {
   return async (request) => {
+    const machineCapability = resolveHumanReviewMachineCapability(deps);
+    if (!machineCapability.isCanonicalHostMachine) {
+      return {
+        outcome: 'canonical-machine-mismatch',
+        machineFingerprintId: machineCapability.machineFingerprintId,
+        canonicalMachineFingerprintId: CANONICAL_HOST_MACHINE_FINGERPRINT_ID
+      };
+    }
+
     if (!vscode.workspace.isTrusted) {
       return { outcome: 'workspace-untrusted' };
     }
@@ -93,12 +133,12 @@ export function createHumanReviewSubmissionAction(
     );
     const persistSubmission = deps.persistSubmission ?? persistHumanReviewSubmission;
     const machineFingerprint = buildHostMachineFingerprint({
-      machineId: vscode.env.machineId,
-      hostname: os.hostname(),
-      platform: process.platform,
-      arch: process.arch,
-      osRelease: os.release(),
-      vscodeVersion: vscode.version
+      machineId: deps.machineId ?? vscode.env.machineId,
+      hostname: deps.hostname ?? os.hostname(),
+      platform: deps.platform ?? process.platform,
+      arch: deps.arch ?? process.arch,
+      osRelease: deps.osRelease ?? os.release(),
+      vscodeVersion: deps.vscodeVersion ?? vscode.version
     });
     const result = await persistSubmission(
       context.storageUri.fsPath,

@@ -13,6 +13,9 @@ describe('renderHistoryPanelHtml', () => {
       relativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
       signature: 'LVIN',
       eligible: true,
+      surfaceCapabilities: {
+        benchmarkStatusAvailable: true
+      },
       historyWindow: {
         mode: 'auto',
         configuredMaxEntries: 100,
@@ -48,8 +51,11 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('Generate compare');
     expect(html).toContain('Open dashboard');
     expect(html).toContain('Open docs');
+    expect(html).toContain('Open benchmark status');
     expect(html).toContain('Create decision record');
     expect(html).toContain('Submit host review');
+    expect(html).toContain('Select outcome');
+    expect(html).toContain('Select confidence');
     expect(html).toContain('Copy hash');
     expect(html).toContain('Copy review packet');
     expect(html).toContain('data-testid="history-status"');
@@ -75,6 +81,7 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('data-testid="history-capability-dashboard"');
     expect(html).toContain('data-testid="history-capability-decision-record"');
     expect(html).toContain('data-testid="history-capability-documentation"');
+    expect(html).toContain('data-testid="history-capability-benchmark-status"');
     expect(html).toContain('data-testid="history-capability-human-review"');
     expect(html).toContain('data-testid="history-row"');
     expect(html).toContain('data-testid="history-compare-base"');
@@ -85,6 +92,7 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('data-testid="history-action-copy"');
     expect(html).toContain('data-testid="history-action-dashboard"');
     expect(html).toContain('data-testid="history-action-documentation"');
+    expect(html).toContain('data-testid="history-action-benchmark-status"');
     expect(html).toContain('data-testid="history-action-decision-record"');
     expect(html).toContain('data-testid="history-action-submit-human-review"');
     expect(html).toContain('data-testid="history-human-review-submit"');
@@ -105,9 +113,14 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('Dashboard:</strong> Available when the retained review window reaches at least three commits');
     expect(html).toContain('Decision record:</strong> Available when the retained review window reaches at least three commits');
     expect(html).toContain('Documentation:</strong> Available in this build');
-    expect(html).toContain('Host review submission:</strong> Available on the canonical host machine');
+    expect(html).toContain(
+      "Benchmark status:</strong> Available only on Sergio Velderrain's canonical Windows 11 host machine"
+    );
+    expect(html).toContain(
+      "Host review submission:</strong> Available only on Sergio Velderrain's canonical Windows 11 host machine"
+    );
     expect(html).toContain('Needs external comparison tooling:');
-    expect(html).toContain('Binary semantic differences, visual or cosmetic change detection, and NI comparison-report output.');
+    expect(html).toContain('Binary semantic differences, visual or cosmetic change detection, and LabVIEW comparison-report output.');
     expect(html).toContain('Selected:</strong> <code>abcdef12</code>');
     expect(html).toContain('vs base:</strong> <code>11111111</code>');
     expect(html).toContain('Open compare</code> action targets once retained pair evidence exists and retained compare opening is available in this build.');
@@ -115,11 +128,18 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('Refresh compare</code> when you want to update already-retained evidence');
     expect(html).toContain('Open docs</code> to open the bundled user documentation');
     expect(html).toContain(
+      'Open benchmark status</code> on the canonical Windows 11 host when you need the retained Windows baseline plus the live or completed Linux benchmark state inside VS Code'
+    );
+    expect(html).toContain(
       'Create decision record</code> when decision-record support is available in this build and you want to retain a separate human review outcome'
     );
     expect(html).toContain(
       'Submit host review</code> after the manual right-click pass on the canonical Windows 11 host machine'
     );
+    expect(html).toContain(
+      'Pass + High: the click flow behaved as expected and no meaningful doubt remains.'
+    );
+    expect(html).toContain('No host review has been submitted from this panel yet.');
   });
 
   it('renders refresh-state pair actions when retained comparison evidence already exists', () => {
@@ -167,6 +187,7 @@ describe('renderHistoryPanelHtml', () => {
         dashboardAvailable: false,
         decisionRecordAvailable: false,
         documentationAvailable: false,
+        benchmarkStatusAvailable: false,
         humanReviewSubmissionAvailable: false
       },
       commits: [
@@ -204,8 +225,11 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('Dashboard:</strong> Unavailable in this build');
     expect(html).toContain('Decision record:</strong> Unavailable in this build');
     expect(html).toContain('Documentation:</strong> Unavailable in this build');
-    expect(html).toContain('Host review submission:</strong> Unavailable in this build');
-    expect(html).toContain('data-testid="history-action-submit-human-review" disabled');
+    expect(html).not.toContain('data-testid="history-capability-benchmark-status"');
+    expect(html).not.toContain('data-testid="history-capability-human-review"');
+    expect(html).not.toContain('data-testid="history-action-benchmark-status"');
+    expect(html).not.toContain('data-testid="history-human-review-submit"');
+    expect(html).not.toContain('data-command="submitHumanReview">Submit host review</button>');
   });
 
   it('renders a portable factual review packet', () => {
@@ -249,7 +273,7 @@ describe('renderHistoryPanelHtml', () => {
     expect(reviewPacket).toContain('Dashboard available: no');
     expect(reviewPacket).toContain('Confidence and scope:');
     expect(reviewPacket).toContain('Included here: chronology, path provenance, retained hashes, compare pairs, and dashboard availability.');
-    expect(reviewPacket).toContain('Needs external comparison tooling: binary semantic differences, visual or cosmetic change detection, and NI comparison-report output.');
+    expect(reviewPacket).toContain('Needs external comparison tooling: binary semantic differences, visual or cosmetic change detection, and LabVIEW comparison-report output.');
     expect(reviewPacket).toContain('- abcdef12 vs 11111111 :: Improve deployment behavior');
     expect(reviewPacket).toContain('- 11111111 :: oldest retained revision :: Initial deployment behavior');
   });

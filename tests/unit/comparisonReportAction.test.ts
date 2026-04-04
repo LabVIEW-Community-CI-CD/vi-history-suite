@@ -1292,7 +1292,7 @@ describe('comparisonReportAction', () => {
       { message: 'Validating retained VI revisions.', increment: 20 },
       { message: 'Selecting comparison-report runtime.', increment: 20 },
       { message: 'Persisting governed comparison-report packet.', increment: 20 },
-      { message: 'Executing NI comparison-report runtime.', increment: 20 },
+      { message: 'Executing LabVIEW comparison-report runtime.', increment: 20 },
       { message: 'Archiving comparison-report evidence.', increment: 5 },
       { message: 'Opening retained comparison-report view.', increment: 5 }
     ]);

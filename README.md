@@ -15,6 +15,8 @@ contains:
 - canonical real-history harnesses and smoke lanes
 - a private GitHub Linux benchmark lane for `lv_icon.vi` experiments while
   GitLab remains authority
+- a canonical-host in-IDE benchmark-status surface so Linux benchmark progress
+  and retained outcome stay visible inside VS Code
 - retained design-gate guidance for the next development tranche
 
 ## Start Here
@@ -151,8 +153,12 @@ Committed and governed today:
   history count, truncation state, phase timings, and progress events
 - stable `latest-human-review-submission.json` retention at the
   workspace-storage human-review root plus an extension-global canonical
-  host-machine fingerprint, so Sergio's maintainer click-pass submission can be
-  consumed deterministically without shell notes
+  host-machine fingerprint, so Sergio's maintainer click-pass submission stays
+  hidden from other installs, reports submit success or blockage explicitly in
+  the panel, and can be consumed deterministically without shell notes
+- a canonical-host `Open benchmark status` action in the history panel so the
+  retained Windows `lv_icon.vi` baseline, retained host Linux launch/log/summary
+  state, and explicit run/stop benchmark controls stay visible inside VS Code
 - direct local rendering for retained comparison packets and dashboard HTML
   artifacts, with injected base-path/CSP controls and soft iframe fallback if a
   local HTML artifact is unavailable
@@ -204,6 +210,12 @@ Committed and governed today:
   VSIX instead of requiring repo access
 - a configured GitLab SemVer release lane that validates tag/package sync,
   packages a versioned VSIX, and retains a machine-readable release manifest
+- a fail-closed package-runtime audit that keeps the shipped VSIX surface
+  compiled-only and blocks runtime `node_modules`, `.cache`, or `.vscode-test`
+  leakage before packaging
+- packaging-only npm tooling is kept out of the default `npm ci` surface for
+  compile/test/benchmark work and is invoked only on demand by the guarded
+  packaging path
 - a `main`-branch preview VSIX artifact lane so extension users can install the
   latest governed build before the first tagged release is retained
 - explicit Linux and Windows extension-host proof scripts plus a least-privilege
@@ -211,8 +223,17 @@ Committed and governed today:
 - explicit GitHub Linux benchmark preparation via
   `npm run benchmark:github:linux:lv-icon` in the authority repo, mirrored into
   the private GitHub experiment repo with a published benchmark image and a
-  retained consumer at `npm run benchmark:github:latest`, while GitLab remains
-  the authority source repo and release-control surface
+  retained consumer at `npm run benchmark:github:latest`, while the canonical
+  host in-IDE Linux benchmark resolves the canonical `vi-history-suite`
+  authority workspace even when the current VI History target lives in a
+  different repo, stages that authority workspace into a fresh Windows-local
+  benchmark workspace before launch without repo-local transient/test-runtime
+  artifacts such as `.vscode-test`, defaults each host run to the current
+  published benchmark image tag unless an explicit override is configured,
+  filters raw `npm warn` noise out of the front-facing progress channel, fails
+  closed when only a stale launch receipt remains and no live host Linux
+  benchmark container exists, and GitLab remains the authority source repo and
+  release-control surface
 
 ## Active Work
 
@@ -234,6 +255,8 @@ Latest landed ship target:
 Current install paths are:
 
 - local package output via `npm run package`
+- guarded package audit via `npm run package:audit` before any local or CI
+  VSIX packaging
 - GitLab `main` pipeline preview artifact:
   `preview-evidence/vi-history-suite-<version>.vsix`
 - governed tagged release artifact:

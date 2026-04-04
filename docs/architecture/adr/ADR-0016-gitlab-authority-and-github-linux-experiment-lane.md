@@ -44,10 +44,17 @@ The repo keeps this authority split:
    iteration.
 7. Linux host-native `LVCompare` experiments shall run headlessly through the
    derived image rather than assuming an interactive X display exists.
-6. Benchmark outputs from the GitHub experiment lane are retained diagnostic
+8. Sergio's canonical Windows 11 host shall expose an in-IDE benchmark-status
+   surface that reads the retained Windows baseline plus the retained host
+   Linux benchmark launch/log/summary state, mirrors active host Linux
+   benchmark progress into a VS Code status-bar indicator, defaults each host
+   run to the current published benchmark image tag unless explicitly
+   overridden, and can launch or stop the host Linux benchmark without
+   requiring detached shell-only observation.
+9. Benchmark outputs from the GitHub experiment lane are retained diagnostic
    evidence only. They do not replace GitLab authority or Windows installed-user
    proof.
-8. The authority repo retains the prepared benchmark workflow, CLI, harness,
+10. The authority repo retains the prepared benchmark workflow, CLI, harness,
    expected remote, and container recipe as the governed source for the
    experiment lane, while the private GitHub mirror remains non-authoritative.
 
@@ -59,6 +66,19 @@ Positive:
   facade model
 - the benchmark target stays aligned with the real long-running `lv_icon.vi`
   dashboard path on the canonical Windows host
+- the maintainer can see and control the host Linux benchmark from inside VS
+  Code, and that host benchmark now resolves the canonical `vi-history-suite`
+  authority workspace even when the current VI History target lives in a
+  different repo, stages that authority workspace into a fresh Windows-local
+  benchmark workspace instead of depending on stale experiment-mirror state or
+  brittle WSL/UNC Docker mounts, excludes repo-local transient/test-runtime
+  artifacts such as `.vscode-test` from that staged workspace, defaults to the
+  current published benchmark image tag rather than inheriting the last launch
+  receipt image by accident, filters raw `npm warn` noise out of the
+  front-facing progress surface, fails closed when a stale launch receipt
+  remains but no live host Linux benchmark container exists, and keeps active
+  benchmark progress visible through a status-bar indicator instead of only a
+  panel refresh
 - future sessions can tell authority, experiment, and public distribution
   surfaces apart deterministically
 
@@ -71,14 +91,20 @@ Tradeoffs:
   pinned NI Linux runtime image
 - headless Linux runtime proof now depends on a maintained Xvfb-capable
   experiment image instead of only the pinned NI base image
+- the canonical-host extension now owns one more maintainer-only control
+  surface that must stay hidden from noncanonical installs
 
 ## Evidence
 
 - `src/harness/canonicalHarnesses.ts`
 - `src/cli/runGitHubLinuxDashboardBenchmark.ts`
+- `src/benchmark/benchmarkStatus.ts`
+- `src/benchmark/benchmarkStatusAction.ts`
+- `src/benchmark/hostLinuxBenchmarkRunner.ts`
 - `.github/workflows/linux-runtime-benchmark-experiment.yml`
 - `docker/github-linux-dashboard-benchmark/Dockerfile`
 - `docker/github-linux-dashboard-benchmark/run-benchmark.sh`
 - `docs/product/program-repo-jump-map.json`
+- `tests/unit/benchmarkStatus.test.ts`
 - `tests/unit/runGitHubLinuxDashboardBenchmarkCli.test.ts`
 - `tests/unit/githubLinuxBenchmarkWorkflow.test.ts`

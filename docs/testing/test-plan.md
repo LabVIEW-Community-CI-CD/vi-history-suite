@@ -893,17 +893,20 @@
   Gate C-D Windows-proof truth drift across `development-queue.json`,
   `current-state.md`, `PROGRAM-0002`, and `ISSUE-0407`
 - `TEST-UNIT-247`: verify the history panel renders a deterministic in-IDE
-  host-review submission surface with fixed outcome, confidence, and note
-  fields plus a truthful `Submit host review` capability state
+  host-review submission surface only on the canonical Sergio-owned Windows 11
+  host, with explicit placeholders, concise nine-way outcome/confidence
+  guidance, visible submit-status feedback, and hidden-off-host capability
+  truth
 - `TEST-UNIT-248`: verify host-review submission persistence writes a
   per-submission JSON artifact plus `human-reviews/latest-human-review-submission.json`,
-  registers or matches a canonical host-machine fingerprint, fails closed on a
-  different machine fingerprint, and keeps the fingerprint stable across VS
-  Code version changes on the same machine
+  uses the fixed canonical host-machine fingerprint, fails closed on any
+  noncanonical machine, and keeps the fingerprint stable across VS Code
+  version changes on the same machine
 - `TEST-UNIT-249`: verify the history-panel command router accepts the
   deterministic host-review submission payload, routes it to retained review
-  persistence, and records submission/latest/canonical artifact paths in the
-  last action summary
+  persistence, posts explicit success or blocked status back into the panel,
+  and records submission/latest/canonical artifact paths in the last action
+  summary
 - `TEST-UNIT-250`: verify the package manifest exposes the governed
   `dashboard:latest`, `dashboard:latest:json`, `review:latest`, and
   `review:latest:json` local evidence-consumer scripts
@@ -925,6 +928,36 @@
   distinguish GitLab authority, the existing private GitHub experiment mirror,
   and the public GitHub facade without collapsing authority, experiment, or
   public-distribution roles
+- `TEST-UNIT-256`: verify the canonical-host benchmark status loader and
+  history-panel router expose the retained Windows baseline plus the retained
+  host Linux benchmark launch/log/progress state inside VS Code, mirror active
+  host Linux progress into a status-bar indicator, keep the benchmark status
+  surface reachable only through the canonical-host benchmark action, resolve
+  the canonical `vi-history-suite` authority workspace even when the currently
+  viewed VI lives in a different repo, stage the benchmark workspace without
+  repo-local transient/test-runtime artifacts such as `.vscode-test`, default
+  host runs to the current published benchmark image tag unless explicitly
+  overridden, and fail closed when only a stale launch receipt remains and no
+  live host Linux benchmark container exists
+- `TEST-UNIT-257`: verify the packaged runtime-surface audit rejects declared
+  runtime npm dependencies, rejects packaged `node_modules` or transient/test
+  artifacts such as `.cache` and `.vscode-test`, and allows the current
+  compiled-only VSIX surface
+- `TEST-UNIT-258`: verify the root manifest excludes packaging-only npm
+  tooling from default `npm ci`, while the guarded package path still invokes
+  the pinned `vsce` package on demand through the dedicated helper script
+- `TEST-DOC-035`: review README, current-state, and ADR-0016 and confirm the
+  canonical-host benchmark status surface is documented as the maintainer-facing
+  in-IDE visibility and launch surface for the host Linux benchmark lane,
+  including the canonical-authority-workspace selection, active status-bar
+  indicator, published-image defaulting, and stale-launch-receipt fail-closed
+  behavior
+- `TEST-DOC-036`: review README, current-state, release procedure, and
+  ADR-0015 and confirm the packaged VSIX surface is documented as a compile-
+  and-audit guarded compiled-only surface that fails closed on runtime
+  `node_modules`, `.cache`, or `.vscode-test` leakage and keeps packaging-only
+  toolchain dependencies out of the default compile/test/benchmark install
+  surface
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed authority repo, private experiment mirror, wiki, and
   assurance-skill repos with authority roles, expected remotes, and primary

@@ -182,7 +182,7 @@ describe('comparisonRuntimeDoctor', () => {
       'Provider decision: rejected host-native because Host-native Windows 64-bit execution was not selected because isolated Windows container execution is preferred when available.'
     );
     expect(lines.at(-1)).toBe(
-      'Next action: review the retained NI comparison report and use the concentrated dashboard metadata surfaces for multi-commit analysis.'
+      'Next action: review the retained LabVIEW comparison report and use the concentrated dashboard metadata surfaces for multi-commit analysis.'
     );
   });
 });

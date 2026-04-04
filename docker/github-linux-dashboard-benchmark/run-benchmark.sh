@@ -5,7 +5,9 @@ cd /workspace
 
 git config --global --add safe.directory /workspace
 
+echo "VIHS_PROGRESS: Installing benchmark workspace dependencies."
 npm ci
+echo "VIHS_PROGRESS: Compiling benchmark workspace."
 npm run compile
 
 args=(
@@ -57,6 +59,8 @@ benchmark_cmd=(
   out/cli/runGitHubLinuxDashboardBenchmark.js
   "${args[@]}"
 )
+
+echo "VIHS_PROGRESS: Starting host Linux lv_icon benchmark."
 
 if command -v xvfb-run >/dev/null 2>&1; then
   export VIHS_GITHUB_BENCHMARK_HEADLESS_DISPLAY_PROVIDER="xvfb-run"

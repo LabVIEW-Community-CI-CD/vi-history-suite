@@ -6,6 +6,8 @@ import {
 
 export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
   const capabilities = model.surfaceCapabilities ?? {};
+  const showBenchmarkStatus = capabilities.benchmarkStatusAvailable === true;
+  const showHumanReviewSubmission = capabilities.humanReviewSubmissionAvailable !== false;
   const newestCommit = model.commits[0];
   const oldestCommit = model.commits[model.commits.length - 1];
   const historyWindowSummary = renderHistoryWindowSummary(model);
@@ -17,15 +19,29 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
     capabilities.documentationAvailable !== false
       ? '<button data-testid="history-action-documentation" data-command="openDocumentation" data-page-id="user-workflow">Open docs</button>'
       : '<button data-testid="history-action-documentation" disabled>Open docs</button>';
+  const benchmarkStatusButton = showBenchmarkStatus
+    ? '<button data-testid="history-action-benchmark-status" data-command="openBenchmarkStatus">Open benchmark status</button>'
+    : '';
   const decisionRecordButton =
     capabilities.decisionRecordAvailable !== false && model.commits.length >= 3
       ? '<button data-testid="history-action-decision-record" data-command="createDecisionRecord">Create decision record</button>'
       : '<button data-testid="history-action-decision-record" disabled>Create decision record</button>';
-  const submitHumanReviewButton =
-    capabilities.humanReviewSubmissionAvailable !== false
-      ? '<button data-testid="history-action-submit-human-review" data-command="submitHumanReview">Submit host review</button>'
-      : '<button data-testid="history-action-submit-human-review" disabled>Submit host review</button>';
   const capabilitySummary = renderCapabilitySummary(capabilities, model.commits.length);
+  const benchmarkStatusCapabilityHtml = showBenchmarkStatus
+    ? `<div data-testid="history-capability-benchmark-status"><strong>Benchmark status:</strong> ${capabilitySummary.benchmarkStatus}</div>`
+    : '';
+  const humanReviewCapabilityHtml = showHumanReviewSubmission
+    ? `<div data-testid="history-capability-human-review"><strong>Host review submission:</strong> ${capabilitySummary.humanReviewSubmission}</div>`
+    : '';
+  const reviewGuidanceBenchmarkStep = showBenchmarkStatus
+    ? '<li data-testid="history-guidance-step">Use <code>Open benchmark status</code> on the canonical Windows 11 host when you need the retained Windows baseline plus the live or completed Linux benchmark state inside VS Code instead of background processes or shell logs.</li>'
+    : '';
+  const reviewGuidanceHumanReviewStep = showHumanReviewSubmission
+    ? '<li data-testid="history-guidance-step">Use <code>Submit host review</code> after the manual right-click pass on the canonical Windows 11 host machine so the result is retained to a stable latest-review manifest future sessions can consume automatically.</li>'
+    : '';
+  const reviewSubmissionHtml = showHumanReviewSubmission
+    ? renderHumanReviewSubmissionSection()
+    : '';
   const rows = model.commits
     .map((commit: ViHistoryCommit, index: number) => {
       const hasRetainedComparisonEvidence = commit.retainedComparisonEvidenceAvailable === true;
@@ -159,6 +175,13 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
         min-height: 90px;
         resize: vertical;
       }
+      .review-submit ul {
+        margin: 8px 0 0 20px;
+        padding: 0;
+      }
+      .review-submit li {
+        margin-bottom: 4px;
+      }
       .review-submit select,
       .review-submit textarea {
         color: var(--vscode-input-foreground);
@@ -166,6 +189,12 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
         border: 1px solid var(--vscode-input-border, var(--vscode-panel-border));
         padding: 8px;
         font: inherit;
+      }
+      .review-submit-status {
+        margin-top: 10px;
+        padding: 8px;
+        border-left: 4px solid var(--vscode-textLink-foreground);
+        background: color-mix(in srgb, var(--vscode-editor-background) 85%, var(--vscode-textLink-foreground) 15%);
       }
     </style>
   </head>
@@ -177,6 +206,7 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
       <strong>History window:</strong> <span data-testid="history-status-history-window">${escapeHtml(historyWindowSummary)}</span><br />
       <button data-testid="history-action-copy-review-packet" data-command="copyReviewPacket">Copy review packet</button>
       ${documentationButton}
+      ${benchmarkStatusButton}
       ${dashboardButton}
       ${decisionRecordButton}
     </div>
@@ -199,10 +229,11 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
       <div data-testid="history-capability-dashboard"><strong>Dashboard:</strong> ${capabilitySummary.dashboard}</div>
       <div data-testid="history-capability-decision-record"><strong>Decision record:</strong> ${capabilitySummary.decisionRecord}</div>
       <div data-testid="history-capability-documentation"><strong>Documentation:</strong> ${capabilitySummary.documentation}</div>
-      <div data-testid="history-capability-human-review"><strong>Host review submission:</strong> ${capabilitySummary.humanReviewSubmission}</div>
+      ${benchmarkStatusCapabilityHtml}
+      ${humanReviewCapabilityHtml}
     </div>
     <div class="limitations" data-testid="history-binary-limitations">
-      <strong>Binary review limits:</strong> Git-backed LabVIEW VI revisions are binary artifacts. This surface retains chronology and commit facts; pairwise compare actions use retained NI comparison-report evidence and installed tooling instead of plain text diff.
+      <strong>Binary review limits:</strong> Git-backed LabVIEW VI revisions are binary artifacts. This surface retains chronology and commit facts; pairwise compare actions use retained LabVIEW comparison-report evidence and installed tooling instead of plain text diff.
     </div>
     <div class="guidance" data-testid="history-review-guidance">
       <strong>Reviewer guidance:</strong>
@@ -210,9 +241,10 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
         <li data-testid="history-guidance-step">Use the newest/oldest packet to confirm the retained review window before acting on a specific revision.</li>
         <li data-testid="history-guidance-step">Use the compare pair in each row to see exactly which retained base revision an <code>Open compare</code> action targets once retained pair evidence exists and retained compare opening is available in this build.</li>
         <li data-testid="history-guidance-step">Use <code>Open docs</code> to open the bundled user documentation that ships with this installed extension version instead of leaving VS Code for repo-hosted docs.</li>
+        ${reviewGuidanceBenchmarkStep}
         <li data-testid="history-guidance-step">Use <code>Open dashboard</code> when the retained window has at least three commits, dashboard review is available in this build, and you want concentrated comparison-report evidence in one place.</li>
         <li data-testid="history-guidance-step">Use <code>Create decision record</code> when decision-record support is available in this build and you want to retain a separate human review outcome from the current VI review evidence without mutating the machine-generated dashboard packet.</li>
-        <li data-testid="history-guidance-step">Use <code>Submit host review</code> after the manual right-click pass on the canonical Windows 11 host machine so the result is retained to a stable latest-review manifest future sessions can consume automatically.</li>
+        ${reviewGuidanceHumanReviewStep}
         <li data-testid="history-guidance-step">Use <code>Generate compare</code> when a pair has no retained evidence yet, and <code>Refresh compare</code> when you want to update already-retained evidence for that pair, but only when comparison generation is available in this build.</li>
       </ol>
     </div>
@@ -222,35 +254,10 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
         <div data-testid="history-confidence-basis"><strong>Basis:</strong> Local Git history, tracked-file status, and content-detected VI signature checks.</div>
         <div data-testid="history-confidence-rating"><strong>Confidence:</strong> Direct local evidence for chronology, path provenance, retained hashes, and retained compare pairing.</div>
         <div data-testid="history-scope-included"><strong>Included here:</strong> Repository/path facts, retained commit chronology, selected-versus-base pairing, compare-pair summaries, and dashboard availability.</div>
-        <div data-testid="history-scope-excluded"><strong>Needs external comparison tooling:</strong> Binary semantic differences, visual or cosmetic change detection, and NI comparison-report output.</div>
+        <div data-testid="history-scope-excluded"><strong>Needs external comparison tooling:</strong> Binary semantic differences, visual or cosmetic change detection, and LabVIEW comparison-report output.</div>
       </div>
     </div>
-    <div class="review-submit" data-testid="history-human-review-submit">
-      <strong>Host-machine review submission:</strong> Use this deterministic submission surface after the manual right-click review pass on the canonical Windows 11 development and review machine.
-      <div class="review-submit-grid">
-        <label data-testid="history-human-review-outcome-field">
-          Outcome
-          <select id="host-review-outcome">
-            <option value="passed-human-review">Pass</option>
-            <option value="needs-more-review" selected>Needs more review</option>
-            <option value="failed-human-review">Fail</option>
-          </select>
-        </label>
-        <label data-testid="history-human-review-confidence-field">
-          Confidence
-          <select id="host-review-confidence">
-            <option value="high">High</option>
-            <option value="medium" selected>Medium</option>
-            <option value="low">Low</option>
-          </select>
-        </label>
-        <label data-testid="history-human-review-note-field" style="grid-column: 1 / -1;">
-          Review note
-          <textarea id="host-review-note" placeholder="Summarize the manual right-click result, any surprises, and whether the review surface behaved as expected."></textarea>
-        </label>
-      </div>
-      ${submitHumanReviewButton}
-    </div>
+    ${reviewSubmissionHtml}
     <table data-testid="history-table">
       <thead>
         <tr>
@@ -268,6 +275,24 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
     </table>
     <script>
       const vscode = acquireVsCodeApi();
+      window.addEventListener('message', (event) => {
+        const message = event.data;
+        if (!message || message.type !== 'humanReviewSubmissionResult') {
+          return;
+        }
+
+        const status = document.getElementById('host-review-status');
+        const submitButton = document.querySelector('[data-testid="history-action-submit-human-review"]');
+        if (status instanceof HTMLElement && typeof message.message === 'string') {
+          status.textContent = message.message;
+          if (typeof message.status === 'string') {
+            status.dataset.state = message.status;
+          }
+        }
+        if (submitButton instanceof HTMLButtonElement) {
+          submitButton.disabled = false;
+        }
+      });
       document.addEventListener('click', (event) => {
         const target = event.target;
         if (!(target instanceof HTMLButtonElement)) {
@@ -292,6 +317,7 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
           const outcome = document.getElementById('host-review-outcome');
           const confidence = document.getElementById('host-review-confidence');
           const note = document.getElementById('host-review-note');
+          const status = document.getElementById('host-review-status');
           if (outcome instanceof HTMLSelectElement) {
             payload.reviewOutcome = outcome.value;
           }
@@ -301,6 +327,11 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
           if (note instanceof HTMLTextAreaElement) {
             payload.reviewNote = note.value;
           }
+          if (status instanceof HTMLElement) {
+            status.textContent = 'Submitting host review...';
+            status.dataset.state = 'submitting';
+          }
+          target.disabled = true;
         }
         vscode.postMessage(payload);
       });
@@ -335,7 +366,7 @@ export function renderHistoryReviewPacketText(model: ViHistoryViewModel): string
     'Confidence and scope:',
     '- Basis: local Git history, tracked-file status, and content-detected VI signature checks.',
     '- Included here: chronology, path provenance, retained hashes, compare pairs, and dashboard availability.',
-    '- Needs external comparison tooling: binary semantic differences, visual or cosmetic change detection, and NI comparison-report output.',
+    '- Needs external comparison tooling: binary semantic differences, visual or cosmetic change detection, and LabVIEW comparison-report output.',
     'Retained compare pairs:',
     comparePairs
   ].join('\n');
@@ -390,7 +421,8 @@ function renderCapabilitySummary(
   dashboard: string;
   decisionRecord: string;
   documentation: string;
-  humanReviewSubmission: string;
+  benchmarkStatus?: string;
+  humanReviewSubmission?: string;
 } {
   return {
     comparisonGeneration:
@@ -417,9 +449,61 @@ function renderCapabilitySummary(
       capabilities.documentationAvailable === false
         ? 'Unavailable in this build'
         : 'Available in this build',
+    benchmarkStatus:
+      capabilities.benchmarkStatusAvailable === false
+        ? undefined
+        : "Available only on Sergio Velderrain's canonical Windows 11 host machine",
     humanReviewSubmission:
       capabilities.humanReviewSubmissionAvailable === false
-        ? 'Unavailable in this build'
-        : 'Available on the canonical host machine'
+        ? undefined
+        : "Available only on Sergio Velderrain's canonical Windows 11 host machine"
   };
+}
+
+function renderHumanReviewSubmissionSection(): string {
+  return `
+    <div class="review-submit" data-testid="history-human-review-submit">
+      <strong>Host-machine review submission:</strong> This maintainer-only surface is shown only on Sergio Velderrain's canonical Windows 11 development and review machine.
+      <div class="review-submit-grid">
+        <label data-testid="history-human-review-outcome-field">
+          Outcome
+          <select id="host-review-outcome">
+            <option value="" selected>Select outcome</option>
+            <option value="passed-human-review">Pass</option>
+            <option value="needs-more-review">Needs more review</option>
+            <option value="failed-human-review">Fail</option>
+          </select>
+        </label>
+        <label data-testid="history-human-review-confidence-field">
+          Confidence
+          <select id="host-review-confidence">
+            <option value="" selected>Select confidence</option>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </select>
+        </label>
+        <label data-testid="history-human-review-note-field" style="grid-column: 1 / -1;">
+          Review note
+          <textarea id="host-review-note" placeholder="Summarize the manual right-click result, any surprises, and whether the review surface behaved as expected."></textarea>
+        </label>
+      </div>
+      <div data-testid="history-human-review-examples">
+        <strong>Outcome/confidence quick guide:</strong> outcome = what happened; confidence = how sure you are.
+        <ul>
+          <li>Pass + High: the click flow behaved as expected and no meaningful doubt remains.</li>
+          <li>Pass + Medium: the click flow behaved as expected, but one minor doubt remains.</li>
+          <li>Pass + Low: it mostly passed, but you want another confirming run.</li>
+          <li>Needs more review + High: you are sure the current evidence is not enough yet.</li>
+          <li>Needs more review + Medium: more review is probably needed.</li>
+          <li>Needs more review + Low: you are only slightly leaning toward more review.</li>
+          <li>Fail + High: the UX or behavior clearly failed.</li>
+          <li>Fail + Medium: a failure likely happened, but one detail is still uncertain.</li>
+          <li>Fail + Low: a failure might have happened, but you want another run to confirm it.</li>
+        </ul>
+      </div>
+      <div class="review-submit-status" data-testid="history-human-review-status" id="host-review-status" role="status" aria-live="polite">No host review has been submitted from this panel yet.</div>
+      <button data-testid="history-action-submit-human-review" data-command="submitHumanReview">Submit host review</button>
+    </div>
+  `;
 }

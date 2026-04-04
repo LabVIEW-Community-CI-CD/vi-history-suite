@@ -61,6 +61,9 @@ Tradeoffs:
   primary surface becomes less linear
 - the canonical host-machine closeout path now needs its own governed
   retention contract instead of ad hoc notes or shell transcripts
+- the maintainer-only host-review submission surface must stay hidden off the
+  canonical Sergio-owned Windows 11 host and must confirm success or blockage
+  explicitly inside the panel so the human gate is trustworthy
 
 ## Follow-On Work
 

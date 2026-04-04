@@ -53,6 +53,7 @@ export interface HistoryPanelActionSummary {
     | 'missing-retained-comparison-report'
     | 'invalid-retained-comparison-report'
     | 'opened-documentation'
+    | 'opened-benchmark-status'
     | 'missing-bundled-documentation'
     | 'unknown-documentation-page'
     | 'submitted-human-review'
@@ -112,6 +113,11 @@ export interface HistoryPanelActionSummary {
   documentationPageFilePath?: string;
   requestedDocumentationPageId?: string;
   documentationFallbackUsed?: boolean;
+  benchmarkWindowsLatestRunPath?: string;
+  benchmarkHostLaunchReceiptPath?: string;
+  benchmarkHostLatestSummaryPath?: string;
+  benchmarkHostLogPath?: string;
+  benchmarkHostState?: 'missing' | 'running' | 'stalled' | 'completed';
   humanReviewSubmissionFilePath?: string;
   humanReviewLatestManifestPath?: string;
   humanReviewCanonicalMachineFilePath?: string;

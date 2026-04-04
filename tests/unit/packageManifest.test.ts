@@ -5,6 +5,8 @@ import { describe, expect, it } from 'vitest';
 
 interface ExtensionManifest {
   activationEvents?: string[];
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
   extensionDependencies?: string[];
   scripts?: Record<string, string>;
   capabilities?: {
@@ -101,6 +103,8 @@ describe('extension manifest research alignment', () => {
   it('exposes the fast local VS Code loop, docs-package workbench, repo-jump, and preview refresh scripts', () => {
     const manifest = readManifest();
 
+    expect(manifest.dependencies ?? {}).toEqual({});
+    expect(manifest.devDependencies).not.toHaveProperty('@vscode/vsce');
     expect(manifest.scripts?.['dev:watch']).toBe('tsc -p . --watch --preserveWatchOutput');
     expect(manifest.scripts?.['dev:workspace']).toContain('runDevHost.js --prepare-workspace-only');
     expect(manifest.scripts?.['dev:host']).toContain('runDevHost.js');
@@ -156,6 +160,12 @@ describe('extension manifest research alignment', () => {
     );
     expect(manifest.scripts?.['test:integration:windows']).toBe(
       'VI_HISTORY_SUITE_INTEGRATION_HOST=windows npm run test:integration'
+    );
+    expect(manifest.scripts?.['package:audit']).toBe(
+      'node scripts/auditPackagedRuntimeSurface.js'
+    );
+    expect(manifest.scripts?.['package']).toBe(
+      'npm run compile && npm run package:audit && node scripts/runPinnedVsce.js package'
     );
     expect(manifest.scripts?.['preview:refresh']).toContain('preview-evidence');
     expect(manifest.scripts?.['preview:refresh']).toContain('/mnt/c/Users/sveld/Downloads');

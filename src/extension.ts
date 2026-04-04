@@ -2,6 +2,7 @@ import * as fs from 'node:fs/promises';
 import * as vscode from 'vscode';
 
 import { createOpenViHistoryCommand } from './commands/openViHistoryCommand';
+import { createBenchmarkStatusAction } from './benchmark/benchmarkStatusAction';
 import { buildComparisonReportArchivePlanFromSelection } from './dashboard/comparisonReportArchive';
 import { createMultiReportDashboardAction } from './dashboard/multiReportDashboardAction';
 import { createBundledDocumentationAction } from './docs/bundledDocumentationAction';
@@ -17,7 +18,10 @@ import {
   readComparisonRuntimeSettings,
   createOpenRetainedComparisonReportAction
 } from './reporting/comparisonReportAction';
-import { createHumanReviewSubmissionAction } from './review/humanReviewSubmissionAction';
+import {
+  createHumanReviewSubmissionAction,
+  resolveHumanReviewMachineCapability
+} from './review/humanReviewSubmissionAction';
 import { createReviewDecisionRecordAction } from './scenarios/reviewDecisionRecordAction';
 import { ViHistoryViewModel } from './services/viHistoryModel';
 import { getViHistoryServiceSettings, ViHistoryService } from './services/viHistoryService';
@@ -64,7 +68,13 @@ export async function activate(
     createEnsureComparisonReportEvidenceAction(context);
   const openRetainedComparisonReportAction = createOpenRetainedComparisonReportAction(context);
   const reviewDecisionRecordAction = createReviewDecisionRecordAction(context);
-  const humanReviewSubmissionAction = createHumanReviewSubmissionAction(context);
+  const humanReviewMachineCapability = resolveHumanReviewMachineCapability();
+  const humanReviewSubmissionAction = humanReviewMachineCapability.isCanonicalHostMachine
+    ? createHumanReviewSubmissionAction(context)
+    : undefined;
+  const benchmarkStatusAction = humanReviewMachineCapability.isCanonicalHostMachine
+    ? createBenchmarkStatusAction(context)
+    : undefined;
   const bundledDocumentationAction = createBundledDocumentationAction(context, panelTracker);
   const multiReportDashboardAction = createMultiReportDashboardAction(
     context,
@@ -118,7 +128,8 @@ export async function activate(
         hasRetainedComparisonReport,
         reviewDecisionRecordAction,
         bundledDocumentationAction,
-        humanReviewSubmissionAction
+        humanReviewSubmissionAction,
+        benchmarkStatusAction
       )
     )
   );

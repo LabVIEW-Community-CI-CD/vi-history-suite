@@ -176,29 +176,60 @@ describe('runGitHubLinuxDashboardBenchmarkCli', () => {
       })
     ).resolves.toBe('pass');
 
-    expect(runner).toHaveBeenCalledWith('HARNESS-VHS-002', {
-      cloneRoot: '/tmp/vi-history-suite/.cache/harnesses',
-      reportRoot: '/tmp/vi-history-suite/.cache/harness-reports',
-      strictRsrcHeader: false,
-      runtimePlatform: 'linux',
-      runtimeEngineOverride: undefined,
-      dashboardCommitWindow: 1000,
-      runtimeSettings: {
-        labviewCliPath: undefined,
-        labviewExePath: undefined,
-        lvComparePath: undefined
-      }
-    });
+    expect(runner).toHaveBeenCalledWith(
+      'HARNESS-VHS-002',
+      expect.objectContaining({
+        cloneRoot: '/tmp/vi-history-suite/.cache/harnesses',
+        reportRoot: '/tmp/vi-history-suite/.cache/harness-reports',
+        strictRsrcHeader: false,
+        runtimePlatform: 'linux',
+        runtimeEngineOverride: undefined,
+        dashboardCommitWindow: 1000,
+        reportProgress: expect.any(Function),
+        runtimeSettings: {
+          labviewCliPath: undefined,
+          labviewExePath: undefined,
+          lvComparePath: undefined
+        }
+      })
+    );
     expect(mkdir).toHaveBeenCalledWith(
       '/tmp/vi-history-suite/.cache/github-experiments/linux-dashboard-benchmark/HARNESS-VHS-002',
       { recursive: true }
     );
-    expect(writeFile).toHaveBeenCalledTimes(2);
+    expect(writeFile).toHaveBeenCalledTimes(4);
+    expect(writeFile.mock.calls[0]?.[0]).toContain('latest-progress.json');
+    expect(writeFile.mock.calls[0]?.[1]).toContain('"phase": "starting"');
+    expect(writeFile.mock.calls[3]?.[0]).toContain('latest-progress.json');
+    expect(writeFile.mock.calls[3]?.[1]).toContain('"phase": "completed"');
     expect(writes.join('')).toContain(
       'GitHub Linux dashboard benchmark completed for HARNESS-VHS-002'
     );
     expect(writes.join('')).toContain('Target: resource/plugins/lv_icon.vi');
     expect(writes.join('')).toContain('Pair outcomes: generated=136 blocked=1 failed=1 no-generated=0');
+  });
+
+  it('retains a failed progress receipt when the benchmark runner throws', async () => {
+    const writeFile = vi.fn().mockResolvedValue(undefined);
+    const runner = vi.fn().mockRejectedValue(new Error('Linux benchmark runner failed.'));
+
+    await expect(
+      runGitHubLinuxDashboardBenchmarkCli([], {
+        repoRoot: '/tmp/vi-history-suite',
+        runner,
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile,
+        now: () => new Date('2026-04-04T18:00:00.000Z'),
+        stdout: { write: vi.fn() }
+      })
+    ).rejects.toThrow('Linux benchmark runner failed.');
+
+    expect(writeFile).toHaveBeenCalledTimes(2);
+    expect(writeFile.mock.calls[0]?.[0]).toContain('latest-progress.json');
+    expect(writeFile.mock.calls[0]?.[1]).toContain('"phase": "starting"');
+    expect(writeFile.mock.calls[1]?.[0]).toContain('latest-progress.json');
+    expect(writeFile.mock.calls[1]?.[1]).toContain('"phase": "failed"');
+    expect(writeFile.mock.calls[1]?.[1]).toContain('Linux benchmark runner failed.');
   });
 
   it('formats a stable summary packet, help, and main-module execution', async () => {

@@ -1,0 +1,205 @@
+import * as fs from 'node:fs/promises';
+import * as os from 'node:os';
+import * as path from 'node:path';
+
+import { afterEach, describe, expect, it } from 'vitest';
+
+import { loadBenchmarkStatusSnapshot } from '../../src/benchmark/benchmarkStatus';
+
+const tempRoots: string[] = [];
+
+async function makeTempDir(): Promise<string> {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-benchmark-status-'));
+  tempRoots.push(root);
+  return root;
+}
+
+describe('benchmark status surfaces', () => {
+  afterEach(async () => {
+    await Promise.all(
+      tempRoots.splice(0).map((root) => fs.rm(root, { recursive: true, force: true }))
+    );
+  });
+
+  it('loads the retained Windows baseline plus the running host Linux benchmark state', async () => {
+    const root = await makeTempDir();
+    const authorityRepoRoot = path.join(root, 'vi-history-suite');
+    const workspaceStorageRoot = path.join(root, 'workspace-storage');
+    const logPath = path.join(
+      authorityRepoRoot,
+      '.cache',
+      'host-linux-dashboard-benchmark',
+      'run-20260404-170000.log'
+    );
+    const metadataPath = path.join(
+      authorityRepoRoot,
+      '.cache',
+      'harness-reports',
+      'HARNESS-VHS-002',
+      'workspace-storage',
+      'reports',
+      'repo',
+      'file',
+      'pair-0001',
+      'report-metadata.json'
+    );
+
+    await fs.mkdir(path.join(authorityRepoRoot, 'docs', 'product'), { recursive: true });
+    await fs.writeFile(
+      path.join(authorityRepoRoot, 'docs', 'product', 'program-repo-jump-map.json'),
+      JSON.stringify({
+        programId: 'comparevi',
+        version: 1,
+        repos: [
+          {
+            id: 'vi-history-suite-source-experiments',
+            displayName: 'VI History Suite Source Experiments',
+            role: 'experiment-mirror',
+            expectedRemote:
+              'https://github.com/svelderrainruiz/vi-history-suite-source-experiments.git',
+            localPath: {
+              kind: 'sibling',
+              relativePath: '../vi-history-suite-source-experiments'
+            },
+            primaryEntrypoints: ['README.md']
+          }
+        ]
+      })
+    );
+
+    await fs.mkdir(path.join(workspaceStorageRoot, 'dashboards'), { recursive: true });
+    await fs.writeFile(
+      path.join(workspaceStorageRoot, 'dashboards', 'latest-dashboard-run.json'),
+      JSON.stringify({
+        recordedAt: '2026-04-04T16:32:26.159Z',
+        source: 'vscode-dashboard-action',
+        workspaceStorageRoot,
+        artifactPaths: {
+          dashboardsDirectory: path.join(workspaceStorageRoot, 'dashboards'),
+          dashboardDirectory: path.join(workspaceStorageRoot, 'dashboards', 'current'),
+          dashboardJsonFilePath: path.join(workspaceStorageRoot, 'dashboards', 'current', 'dashboard.json'),
+          dashboardHtmlFilePath: path.join(workspaceStorageRoot, 'dashboards', 'current', 'dashboard.html')
+        },
+        dashboard: {
+          generatedAt: '2026-04-04T16:32:26.159Z',
+          repositoryName: 'labview-icon-editor',
+          repositoryRoot: 'C:\\dev\\labview-icon-editor',
+          relativePath: 'resource/plugins/lv_icon.vi',
+          signature: 'LVIN',
+          commitWindow: {
+            pairCount: 138
+          },
+          summary: {
+            representedPairCount: 138,
+            windowCompletenessState: 'complete',
+            archivedPairCount: 138,
+            missingPairCount: 0,
+            missingPairIds: [],
+            generatedReportCount: 138,
+            reportMetadataPairCount: 138,
+            failedPairCount: 0,
+            failedPairIds: [],
+            blockedPairCount: 0,
+            blockedPairIds: [],
+            overviewImageCount: 138,
+            detailItemCount: 138,
+            providerSummaries: [
+              {
+                label: 'windows-container / labview-cli / auto / win32',
+                pairCount: 138
+              }
+            ]
+          }
+        },
+        preparationSummary: {
+          pairsNeedingEvidenceCount: 138,
+          preparedPairCount: 138,
+          preparedGeneratedReportCount: 138,
+          preparedBlockedPairCount: 0,
+          preparedFailedPairCount: 0,
+          preparedNoGeneratedReportCount: 0,
+          preparedMissingRetainedArchiveCount: 0,
+          mode: 'backfilled-before-build'
+        },
+        etaAccuracyRecord: {
+          meanAbsolutePercentageError: 8.026
+        },
+        experiment: {
+          timings: {
+            totalDurationMs: 4613884,
+            evidencePreparationDurationMs: 4613144
+          }
+        }
+      })
+    );
+
+    await fs.mkdir(path.dirname(logPath), { recursive: true });
+    await fs.writeFile(
+      path.join(authorityRepoRoot, '.cache', 'host-linux-dashboard-benchmark', 'latest-launch.json'),
+      JSON.stringify({
+        startedAt: '2026-04-04T17:00:00.000Z',
+        pid: 12345,
+        logPath,
+        image:
+          'ghcr.io/svelderrainruiz/vi-history-suite-source-experiments/linux-dashboard-benchmark@sha256:abc123',
+        sourceCommit: 'abcdef1234567890'
+      })
+    );
+    await fs.writeFile(logPath, 'npm ci\nPreparing dashboard pair 1/138\n');
+    await fs.mkdir(path.dirname(metadataPath), { recursive: true });
+    await fs.writeFile(metadataPath, '{}\n');
+
+    const snapshot = await loadBenchmarkStatusSnapshot(authorityRepoRoot, workspaceStorageRoot, {
+      now: () => new Date('2026-04-04T17:02:00.000Z'),
+      resolveContainerState: async () => 'running'
+    });
+
+    expect(snapshot.windowsBaseline.state).toBe('available');
+    expect(snapshot.windowsBaseline.comparePairCount).toBe(138);
+    expect(snapshot.hostLinux.state).toBe('running');
+    expect(snapshot.hostLinux.benchmarkWorkspaceRoot).toBe(authorityRepoRoot);
+    expect(snapshot.hostLinux.materializedMetadataCount).toBe(1);
+    expect(snapshot.hostLinux.latestLogLine).toContain('Preparing dashboard pair 1/138');
+
+    expect(snapshot.hostLinux.statusSummary).toContain(
+      'launch receipt exists and no completed summary has replaced it yet'
+    );
+  });
+
+  it('fails closed to missing when only a stale launch receipt remains and no live container exists', async () => {
+    const root = await makeTempDir();
+    const authorityRepoRoot = path.join(root, 'vi-history-suite');
+    const logPath = path.join(
+      authorityRepoRoot,
+      '.cache',
+      'host-linux-dashboard-benchmark',
+      'run-20260404-170000.log'
+    );
+
+    await fs.mkdir(path.dirname(logPath), { recursive: true });
+    await fs.writeFile(
+      path.join(authorityRepoRoot, '.cache', 'host-linux-dashboard-benchmark', 'latest-launch.json'),
+      JSON.stringify({
+        startedAt: '2026-04-04T17:00:00.000Z',
+        pid: 12345,
+        logPath,
+        repoPath: 'C:\\staged\\workspace',
+        sourceAuthorityRepoPath: 'C:\\source\\workspace',
+        image:
+          'ghcr.io/svelderrainruiz/vi-history-suite-source-experiments/linux-dashboard-benchmark@sha256:abc123',
+        sourceCommit: 'abcdef1234567890'
+      })
+    );
+    await fs.writeFile(logPath, 'tsc -p .\n');
+
+    const snapshot = await loadBenchmarkStatusSnapshot(authorityRepoRoot, undefined, {
+      now: () => new Date('2026-04-04T17:20:00.000Z'),
+      resolveContainerState: async () => 'missing'
+    });
+
+    expect(snapshot.hostLinux.state).toBe('missing');
+    expect(snapshot.hostLinux.statusSummary).toContain(
+      'stale host Linux launch receipt exists, but no live host Linux benchmark container is present'
+    );
+  });
+});

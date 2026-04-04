@@ -737,7 +737,7 @@ export function renderMultiReportDashboardHtml(
         <strong>Retained metadata fields:</strong> report title, generation time, compared VI paths, overview section captions and image counts, included attributes, and detailed-information headings and items.
       </div>
       <div class="note" data-testid="dashboard-pair-ledger-summary">
-        <strong>Chronology-first pair metadata ledger:</strong> every adjacent pair is listed once here with its retained NI comparison-report metadata so expert review can compare the whole window before dropping into the detailed per-pair sections below.
+        <strong>Chronology-first pair metadata ledger:</strong> every adjacent pair is listed once here with its retained LabVIEW comparison-report metadata so expert review can compare the whole window before dropping into the detailed per-pair sections below.
       </div>
       ${pairLedgerHtml}
       ${preparationSummaryHtml}
@@ -1245,7 +1245,7 @@ function buildArtifactLinks(
   if (generatedReportExists) {
     links.splice(1, 0, {
       kind: 'report-html',
-      label: 'Open archived NI report',
+      label: 'Open archived LabVIEW report',
       filePath: sourceRecord.archivePlan.reportFilePath
     });
   }

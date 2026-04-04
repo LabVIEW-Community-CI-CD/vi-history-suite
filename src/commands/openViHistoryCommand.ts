@@ -13,6 +13,9 @@ import {
   DocumentationActionResult
 } from '../docs/bundledDocumentationAction';
 import {
+  BenchmarkStatusActionResult
+} from '../benchmark/benchmarkStatusAction';
+import {
   ReviewDecisionRecordActionResult,
 } from '../scenarios/reviewDecisionRecordAction';
 import {
@@ -69,7 +72,10 @@ export function createOpenViHistoryCommand(
     draftOutcome?: string;
     draftConfidence?: string;
     draftNote?: string;
-  }) => Promise<HumanReviewSubmissionActionResult>
+  }) => Promise<HumanReviewSubmissionActionResult>,
+  openBenchmarkStatusAction?: (request: {
+    authorityRepoRoot: string;
+  }) => Promise<BenchmarkStatusActionResult>
 ): (uri?: vscode.Uri) => Promise<void> {
   return async (uri?: vscode.Uri) => {
     const targetUri = uri ?? vscode.window.activeTextEditor?.document.uri;
@@ -105,6 +111,7 @@ export function createOpenViHistoryCommand(
       dashboardAvailable: multiReportDashboardAction !== undefined,
       decisionRecordAvailable: reviewDecisionRecordAction !== undefined,
       documentationAvailable: openDocumentationAction !== undefined,
+      benchmarkStatusAvailable: openBenchmarkStatusAction !== undefined,
       humanReviewSubmissionAvailable: humanReviewSubmissionAction !== undefined
     };
     const model = hasRetainedComparisonReport
@@ -408,6 +415,34 @@ export function createOpenViHistoryCommand(
         return;
       }
 
+      if (command === 'openBenchmarkStatus') {
+        if (!openBenchmarkStatusAction) {
+          void vscode.window.showInformationMessage(
+            'Benchmark status is only available on the canonical Windows 11 host machine.'
+          );
+          panelTracker?.recordAction({
+            command,
+            outcome: 'unsupported-command'
+          });
+          return;
+        }
+
+        const result = await openBenchmarkStatusAction({
+          authorityRepoRoot: model.repositoryRoot
+        });
+        panelTracker?.recordAction({
+          command,
+          outcome: 'opened-benchmark-status',
+          title: result.title,
+          benchmarkWindowsLatestRunPath: result.windowsLatestRunPath,
+          benchmarkHostLaunchReceiptPath: result.hostLaunchReceiptPath,
+          benchmarkHostLatestSummaryPath: result.hostLatestSummaryPath,
+          benchmarkHostLogPath: result.hostLogPath,
+          benchmarkHostState: result.hostState
+        });
+        return;
+      }
+
       if (command === 'openDashboard') {
         if (!multiReportDashboardAction) {
           void vscode.window.showInformationMessage(
@@ -554,6 +589,12 @@ export function createOpenViHistoryCommand(
 
       if (command === 'submitHumanReview') {
         if (!humanReviewSubmissionAction) {
+          void panel.webview.postMessage({
+            type: 'humanReviewSubmissionResult',
+            status: 'blocked',
+            message:
+              'Blocked: host-machine review submission is not available in this extension build.'
+          });
           void vscode.window.showInformationMessage(
             'Host-machine human review submission is not available in this extension build.'
           );
@@ -571,25 +612,46 @@ export function createOpenViHistoryCommand(
           draftConfidence: message.reviewConfidence,
           draftNote: message.reviewNote
         });
+        let humanReviewSubmissionStatusMessage =
+          'Host review submission did not complete.';
         if (result.outcome === 'submitted-human-review') {
+          humanReviewSubmissionStatusMessage =
+            'Host review submitted and retained in latest-human-review-submission.json.';
           void vscode.window.showInformationMessage(
-            'Host-machine review submitted. Future sessions can consume the retained latest-review manifest automatically.'
+            'Host-machine review submitted and retained. Future sessions can consume the retained latest-review manifest automatically.'
           );
         } else if (result.outcome === 'workspace-untrusted') {
+          humanReviewSubmissionStatusMessage =
+            'Blocked: host-machine review submission is disabled in untrusted workspaces.';
           void vscode.window.showWarningMessage(
             'Host-machine review submission is disabled in untrusted workspaces.'
           );
         } else if (result.outcome === 'missing-storage-uri') {
+          humanReviewSubmissionStatusMessage =
+            'Blocked: open the repository as a workspace before submitting the host review.';
           void vscode.window.showWarningMessage(
             'Host-machine review submission requires an open workspace so review artifacts can be stored under workspace-scoped extension storage.'
           );
         } else if (result.outcome === 'canonical-machine-mismatch') {
+          humanReviewSubmissionStatusMessage =
+            'Blocked: this machine is not the canonical Windows 11 host allowed to submit the maintainer review.';
           void vscode.window.showWarningMessage(
             'This review submission was blocked because the current machine fingerprint does not match the canonical Windows 11 review host.'
           );
         } else if (result.validationMessage) {
+          humanReviewSubmissionStatusMessage = result.validationMessage;
           void vscode.window.showInformationMessage(result.validationMessage);
         }
+        void panel.webview.postMessage({
+          type: 'humanReviewSubmissionResult',
+          status:
+            result.outcome === 'submitted-human-review'
+              ? 'success'
+              : result.outcome === 'invalid-human-review-submission'
+                ? 'validation'
+                : 'blocked',
+          message: humanReviewSubmissionStatusMessage
+        });
 
         panelTracker?.recordAction({
           command,

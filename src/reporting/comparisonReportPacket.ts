@@ -176,7 +176,7 @@ export function renderComparisonReportPacketHtml(record: ComparisonReportPacketR
       title="${escapeHtml(record.reportTitle)}"
     ></iframe>`
     : `<div class="note" data-testid="comparison-report-generated-report-missing">
-      <strong>Generated report:</strong> No NI-generated HTML report is currently retained at the governed output path.
+      <strong>Generated report:</strong> No LabVIEW-generated HTML report is currently retained at the governed output path.
     </div>`;
 
   return `<!DOCTYPE html>
@@ -355,18 +355,18 @@ function buildInitialRuntimeExecution(
 
 function renderRuntimeNote(record: ComparisonReportPacketRecord): string {
   if (record.runtimeExecutionState === 'not-available') {
-    return 'No NI-generated comparison report has been executed because the governed runtime selection is currently unavailable for this workspace and platform.';
+    return 'No LabVIEW-generated comparison report has been executed because the governed runtime selection is currently unavailable for this workspace and platform.';
   }
 
   if (record.runtimeExecutionState === 'succeeded') {
-    return 'NI-generated comparison report execution succeeded and the governed HTML output is retained at the report path shown below.';
+    return 'LabVIEW-generated comparison report execution succeeded and the governed HTML output is retained at the report path shown below.';
   }
 
   if (record.runtimeExecutionState === 'failed') {
-    return 'NI-generated comparison report execution was attempted, but the governed output is not currently usable. Review the retained execution summary and stdout/stderr artifact paths below.';
+    return 'LabVIEW-generated comparison report execution was attempted, but the governed output is not currently usable. Review the retained execution summary and stdout/stderr artifact paths below.';
   }
 
-  return 'No NI-generated comparison report has been executed yet. This retained packet captures the governed preflight, runtime selection, and artifact plan for the selected revision pair.';
+  return 'No LabVIEW-generated comparison report has been executed yet. This retained packet captures the governed preflight, runtime selection, and artifact plan for the selected revision pair.';
 }
 
 function renderCommand(runtimeExecution: ComparisonReportRuntimeExecution): string {

@@ -624,7 +624,7 @@ describe('multiReportDashboardAction', () => {
       .fn()
       .mockImplementation(async ({ reportProgress }) => {
         await reportProgress?.({
-          message: 'Executing NI comparison-report runtime.',
+          message: 'Executing LabVIEW comparison-report runtime.',
           increment: 95
         });
         return {
@@ -765,7 +765,7 @@ describe('multiReportDashboardAction', () => {
         },
         {
           message:
-            'Preparing dashboard pair 1/2: Executing NI comparison-report runtime.',
+            'Preparing dashboard pair 1/2: Executing LabVIEW comparison-report runtime.',
           increment: 20
         },
         {
@@ -779,7 +779,7 @@ describe('multiReportDashboardAction', () => {
         (update) =>
           update.increment === 20 &&
           update.message.startsWith('Preparing dashboard pair 2/2; est. ') &&
-          update.message.endsWith('Executing NI comparison-report runtime.')
+          update.message.endsWith('Executing LabVIEW comparison-report runtime.')
       )
     ).toBe(true);
     expect(
@@ -931,7 +931,7 @@ describe('multiReportDashboardAction', () => {
       .fn()
       .mockImplementationOnce(async ({ reportProgress }) => {
         await reportProgress?.({
-          message: 'Executing NI comparison-report runtime.',
+          message: 'Executing LabVIEW comparison-report runtime.',
           increment: 95
         });
         return {
@@ -943,7 +943,7 @@ describe('multiReportDashboardAction', () => {
       })
       .mockImplementationOnce(async ({ reportProgress }) => {
         await reportProgress?.({
-          message: 'Executing NI comparison-report runtime.',
+          message: 'Executing LabVIEW comparison-report runtime.',
           increment: 95
         });
         return {
@@ -957,7 +957,7 @@ describe('multiReportDashboardAction', () => {
       })
       .mockImplementationOnce(async ({ reportProgress }) => {
         await reportProgress?.({
-          message: 'Executing NI comparison-report runtime.',
+          message: 'Executing LabVIEW comparison-report runtime.',
           increment: 95
         });
         return {
@@ -971,7 +971,7 @@ describe('multiReportDashboardAction', () => {
       })
       .mockImplementationOnce(async ({ reportProgress }) => {
         await reportProgress?.({
-          message: 'Executing NI comparison-report runtime.',
+          message: 'Executing LabVIEW comparison-report runtime.',
           increment: 95
         });
         return {
@@ -983,7 +983,7 @@ describe('multiReportDashboardAction', () => {
       })
       .mockImplementationOnce(async ({ reportProgress }) => {
         await reportProgress?.({
-          message: 'Executing NI comparison-report runtime.',
+          message: 'Executing LabVIEW comparison-report runtime.',
           increment: 95
         });
         return {
@@ -1128,7 +1128,7 @@ describe('multiReportDashboardAction', () => {
     expect(
       progressUpdates.some((update) =>
         update.message.startsWith('Preparing dashboard pair 3/5; est. ') &&
-        update.message.endsWith('Executing NI comparison-report runtime.')
+        update.message.endsWith('Executing LabVIEW comparison-report runtime.')
       )
     ).toBe(true);
     expect(
@@ -1943,7 +1943,7 @@ describe('multiReportDashboardAction', () => {
   it('falls back to an iframe wrapper when a retained dashboard HTML artifact cannot be read inline', async () => {
     await expect(
       renderDashboardArtifactHtml({
-        title: 'Open archived NI report',
+        title: 'Open archived LabVIEW report',
         artifactFilePath: '/workspace/.storage/report-history/repo/file/pairs/pair/diff-report-foo.vi.html',
         artifactDirectoryWebviewUri:
           'webview:/workspace/.storage/report-history/repo/file/pairs/pair/',
@@ -1954,7 +1954,7 @@ describe('multiReportDashboardAction', () => {
 
     await expect(
       renderDashboardArtifactHtml({
-        title: 'Open archived NI report',
+        title: 'Open archived LabVIEW report',
         artifactFilePath: '/workspace/.storage/report-history/repo/file/pairs/pair/diff-report-foo.vi.html',
         artifactDirectoryWebviewUri:
           'webview:/workspace/.storage/report-history/repo/file/pairs/pair/',

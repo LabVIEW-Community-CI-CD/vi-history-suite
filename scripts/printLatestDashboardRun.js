@@ -182,14 +182,23 @@ function collectSearchRoots(repoRoot) {
   roots.add(path.join(repoRoot, '.cache', 'harness-reports'));
   roots.add(path.join(repoRoot, '.vscode-test', 'user-data', 'User', 'workspaceStorage'));
 
+  let discoveredHomeWorkspaceStorage = false;
   const home = os.homedir();
   if (home) {
-    roots.add(path.join(home, '.config', 'Code', 'User', 'workspaceStorage'));
-    roots.add(path.join(home, 'AppData', 'Roaming', 'Code', 'User', 'workspaceStorage'));
+    const homeCandidates = [
+      path.join(home, '.config', 'Code', 'User', 'workspaceStorage'),
+      path.join(home, 'AppData', 'Roaming', 'Code', 'User', 'workspaceStorage')
+    ];
+    for (const candidate of homeCandidates) {
+      if (fs.existsSync(candidate)) {
+        roots.add(candidate);
+        discoveredHomeWorkspaceStorage = true;
+      }
+    }
   }
 
   const windowsUsersRoot = path.join(path.sep, 'mnt', 'c', 'Users');
-  if (fs.existsSync(windowsUsersRoot)) {
+  if (!discoveredHomeWorkspaceStorage && fs.existsSync(windowsUsersRoot)) {
     for (const entry of safeReadDir(windowsUsersRoot)) {
       roots.add(
         path.join(

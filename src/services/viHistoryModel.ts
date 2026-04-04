@@ -22,6 +22,7 @@ export interface ViHistorySurfaceCapabilities {
   dashboardAvailable?: boolean;
   decisionRecordAvailable?: boolean;
   documentationAvailable?: boolean;
+  benchmarkStatusAvailable?: boolean;
   humanReviewSubmissionAvailable?: boolean;
 }
 

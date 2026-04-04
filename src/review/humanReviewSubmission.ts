@@ -8,6 +8,8 @@ export const HUMAN_REVIEWS_DIRECTORY = 'human-reviews';
 export const LATEST_HUMAN_REVIEW_SUBMISSION_FILENAME =
   'latest-human-review-submission.json';
 export const CANONICAL_HOST_MACHINE_FILENAME = 'canonical-host-machine.json';
+export const CANONICAL_HOST_MACHINE_FINGERPRINT_ID = '890ebd25eaf7';
+export const CANONICAL_HOST_MACHINE_HOSTNAME = 'ghost';
 
 export type HumanReviewSubmissionSource = 'history-panel' | 'review-dashboard';
 export type HumanReviewSubmissionOutcome =
@@ -154,6 +156,28 @@ export function buildHostMachineFingerprint(options: {
   };
 }
 
+export function buildExpectedCanonicalHostMachineFingerprint(): HostMachineFingerprint {
+  return {
+    fingerprintVersion: 1,
+    fingerprintId: CANONICAL_HOST_MACHINE_FINGERPRINT_ID,
+    machineId: 'author-designated-canonical-host',
+    hostname: CANONICAL_HOST_MACHINE_HOSTNAME,
+    platform: 'win32',
+    arch: 'x64',
+    osRelease: '10.0.26200.8037'
+  };
+}
+
+export function isCanonicalHostMachineFingerprint(
+  fingerprint: HostMachineFingerprint
+): boolean {
+  return (
+    fingerprint.fingerprintId === CANONICAL_HOST_MACHINE_FINGERPRINT_ID &&
+    fingerprint.platform === 'win32' &&
+    fingerprint.arch === 'x64'
+  );
+}
+
 export async function persistHumanReviewSubmission(
   workspaceStorageRoot: string,
   input: PersistHumanReviewSubmissionInput,
@@ -181,6 +205,17 @@ export async function persistHumanReviewSubmission(
     artifactPlan.canonicalHostMachineFilePath,
     readFile
   );
+  const expectedCanonicalFingerprint =
+    canonicalHostMachine?.fingerprint ?? buildExpectedCanonicalHostMachineFingerprint();
+  if (!isCanonicalHostMachineFingerprint(input.machineFingerprint)) {
+    return {
+      outcome: 'canonical-machine-mismatch',
+      artifactPlan,
+      canonicalHostMachineFilePath: artifactPlan.canonicalHostMachineFilePath,
+      expectedFingerprint: expectedCanonicalFingerprint,
+      actualFingerprint: input.machineFingerprint
+    };
+  }
   if (
     canonicalHostMachine &&
     canonicalHostMachine.fingerprint.fingerprintId !==

@@ -169,17 +169,17 @@
     "test:integration:linux": "VI_HISTORY_SUITE_INTEGRATION_HOST=linux npm run test:integration",
     "test:integration:windows": "VI_HISTORY_SUITE_INTEGRATION_HOST=windows npm run test:integration",
     "test:watch": "vitest",
-    "package": "vsce package"
+    "package:audit": "node scripts/auditPackagedRuntimeSurface.js",
+    "package": "npm run compile && npm run package:audit && node scripts/runPinnedVsce.js package"
   },
   "devDependencies": {
     "@types/node": "^24.6.0",
     "@types/vscode": "^1.90.0",
-    "@vitest/coverage-v8": "^3.2.4",
+    "@vitest/coverage-v8": "^4.1.2",
     "@vscode/test-electron": "^2.5.2",
-    "@vscode/vsce": "^3.6.2",
     "marked": "^17.0.5",
     "rimraf": "^6.0.1",
     "typescript": "^5.9.3",
-    "vitest": "^3.2.4"
+    "vitest": "^4.1.2"
   }
 }

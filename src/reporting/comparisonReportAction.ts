@@ -359,7 +359,7 @@ async function ensureComparisonReportEvidence(
 
   if (packet.record.reportStatus === 'ready-for-runtime') {
     await request.reportProgress?.({
-      message: 'Executing NI comparison-report runtime.',
+      message: 'Executing LabVIEW comparison-report runtime.',
       increment: 20
     });
     packet = await (deps.executeComparisonReport ?? executeComparisonReport)({
@@ -960,7 +960,7 @@ function renderComparisonReportPanelStatusMarkup(options: {
 }): string {
   const displayedEvidenceMarkup = `<div><strong>Displayed evidence:</strong> ${escapeHtml(
     options.displayedEvidenceKind === 'generated-report'
-      ? 'generated NI report'
+      ? 'generated LabVIEW comparison report'
       : options.generatedReportExists
         ? 'retained packet fallback'
         : 'retained packet'

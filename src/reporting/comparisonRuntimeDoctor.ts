@@ -104,10 +104,10 @@ function deriveRuntimeDoctorNextAction(options: {
   }
 
   if (options.runtimeExecution.state === 'succeeded') {
-    return 'Next action: review the retained NI comparison report and use the concentrated dashboard metadata surfaces for multi-commit analysis.';
+    return 'Next action: review the retained LabVIEW comparison report and use the concentrated dashboard metadata surfaces for multi-commit analysis.';
   }
 
-  return 'Next action: run comparison report generation from a trusted workspace to retain NI report artifacts for this revision pair.';
+  return 'Next action: run comparison report generation from a trusted workspace to retain LabVIEW comparison-report artifacts for this revision pair.';
 }
 
 function stripTerminalPunctuation(value: string): string {

@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import {
   buildHostMachineFingerprint,
+  buildExpectedCanonicalHostMachineFingerprint,
   CANONICAL_HOST_MACHINE_FILENAME,
   LATEST_HUMAN_REVIEW_SUBMISSION_FILENAME,
   persistHumanReviewSubmission
@@ -23,20 +24,17 @@ describe('humanReviewSubmission', () => {
     tempRoots.length = 0;
   });
 
-  it('persists a stable latest human review manifest and registers the canonical host machine on first submission', async () => {
+  it('persists a stable latest human review manifest from the fixed canonical host machine', async () => {
     const workspaceStorageRoot = await fs.mkdtemp(
       path.join(os.tmpdir(), 'vihs-human-review-')
     );
     tempRoots.push(workspaceStorageRoot);
 
-    const machineFingerprint = buildHostMachineFingerprint({
-      machineId: 'machine-1',
-      hostname: 'canonical-host',
-      platform: 'win32',
-      arch: 'x64',
-      osRelease: '10.0.26100',
+    const machineFingerprint = {
+      ...buildExpectedCanonicalHostMachineFingerprint(),
+      machineId: 'author-designated-canonical-host',
       vscodeVersion: '1.100.0'
-    });
+    };
     const result = await persistHumanReviewSubmission(workspaceStorageRoot, {
       source: 'history-panel',
       model: buildModel(),
@@ -104,20 +102,55 @@ describe('humanReviewSubmission', () => {
     expect(second.vscodeVersion).toBe('1.101.0');
   });
 
+  it('fails closed before registration when the current machine is not the fixed canonical host', async () => {
+    const workspaceStorageRoot = await fs.mkdtemp(
+      path.join(os.tmpdir(), 'vihs-human-review-')
+    );
+    tempRoots.push(workspaceStorageRoot);
+
+    const differentFingerprint = buildHostMachineFingerprint({
+      machineId: 'machine-2',
+      hostname: 'different-host',
+      platform: 'win32',
+      arch: 'x64',
+      osRelease: '10.0.26100',
+      vscodeVersion: '1.100.0'
+    });
+
+    const mismatch = await persistHumanReviewSubmission(workspaceStorageRoot, {
+      source: 'history-panel',
+      model: buildModel(),
+      reviewerName: 'Sergio Velderrain',
+      outcome: 'needs-more-review',
+      confidence: 'medium',
+      note: 'This should fail closed because the host is not the fixed canonical machine.',
+      machineFingerprint: differentFingerprint
+    });
+
+    expect(mismatch.outcome).toBe('canonical-machine-mismatch');
+    if (mismatch.outcome !== 'canonical-machine-mismatch') {
+      return;
+    }
+    expect(mismatch.expectedFingerprint.hostname).toBe('ghost');
+    expect(mismatch.actualFingerprint.fingerprintId).toBe(
+      differentFingerprint.fingerprintId
+    );
+    await expect(
+      fs.access(path.join(mismatch.artifactPlan.submissionDirectory, 'human-review-submission.json'))
+    ).rejects.toThrow();
+  });
+
   it('fails closed when a later submission comes from a different machine fingerprint', async () => {
     const workspaceStorageRoot = await fs.mkdtemp(
       path.join(os.tmpdir(), 'vihs-human-review-')
     );
     tempRoots.push(workspaceStorageRoot);
 
-    const canonicalFingerprint = buildHostMachineFingerprint({
-      machineId: 'machine-1',
-      hostname: 'canonical-host',
-      platform: 'win32',
-      arch: 'x64',
-      osRelease: '10.0.26100',
+    const canonicalFingerprint = {
+      ...buildExpectedCanonicalHostMachineFingerprint(),
+      machineId: 'author-designated-canonical-host',
       vscodeVersion: '1.100.0'
-    });
+    };
     await persistHumanReviewSubmission(workspaceStorageRoot, {
       source: 'history-panel',
       model: buildModel(),

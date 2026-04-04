@@ -36,6 +36,7 @@ import { getCanonicalHarnessDefinition } from './canonicalHarnesses';
 
 export interface HarnessDashboardSmokeOptions extends HarnessReportSmokeOptions {
   dashboardCommitWindow?: number;
+  reportProgress?: (update: { message: string; increment?: number }) => void | Promise<void>;
 }
 
 export interface HarnessDashboardSmokePairSummary {
@@ -133,9 +134,26 @@ export async function runHarnessDashboardSmoke(
   const etaAccuracySamples: MultiReportDashboardEtaAccuracyRecord['samples'] = [];
   const nowMs = deps.nowMs ?? Date.now;
 
+  await options.reportProgress?.({
+    message: `Loaded ${dashboardModel.commits.length} retained commit(s) and ${pairCommits.length} compare pair(s) for ${definition.targetRelativePath}.`
+  });
+
   for (const [index, compareCommit] of pairCommits.entries()) {
     const pairStartMs = nowMs();
     const estimatedPairSeconds = deriveEstimatedPairSeconds(completedPairDurationsMs);
+    const remainingPairCount = pairCommits.length - index;
+    const estimatedRemainingSeconds =
+      estimatedPairSeconds === undefined
+        ? undefined
+        : roundSeconds(estimatedPairSeconds * remainingPairCount);
+    await options.reportProgress?.({
+      message:
+        estimatedRemainingSeconds === undefined
+          ? `Preparing dashboard pair ${index + 1}/${pairCommits.length}: executing LabVIEW comparison-report runtime.`
+          : `Preparing dashboard pair ${index + 1}/${pairCommits.length}; est. ${formatDurationSeconds(
+              estimatedRemainingSeconds
+            )} left: executing LabVIEW comparison-report runtime.`
+    });
     const execution = await (
       deps.executeHarnessComparisonReportForCommit ?? executeHarnessComparisonReportForCommit
     )(
@@ -184,6 +202,13 @@ export async function runHarnessDashboardSmoke(
     if (accuracySample) {
       etaAccuracySamples.push(accuracySample);
     }
+    await options.reportProgress?.({
+      message: `Prepared dashboard pair ${index + 1}/${pairCommits.length}: ${describePreparedPairOutcome(
+        execution.record.reportStatus,
+        execution.record.runtimeExecutionState,
+        execution.record.runtimeExecution.reportExists
+      )}.`
+    });
     pairSummaries.push({
       pairId: execution.archivedSourceRecord?.archivePlan.pairId,
       selectedHash: execution.record.selectedHash,
@@ -213,6 +238,9 @@ export async function runHarnessDashboardSmoke(
     etaAccuracySamples,
     nowMs
   );
+  await options.reportProgress?.({
+    message: 'Concentrating retained dashboard metadata.'
+  });
 
   const storageRoot = path.join(options.reportRoot, definition.id, 'workspace-storage');
   const dashboard = await (deps.buildDashboard ?? buildAndPersistMultiReportDashboard)(
@@ -299,6 +327,9 @@ export async function runHarnessDashboardSmoke(
     renderHarnessDashboardSmokeMarkdown(report)
   );
   await (deps.writeFile ?? fs.writeFile)(reportHtmlPath, renderHarnessDashboardSmokeHtml(report));
+  await options.reportProgress?.({
+    message: 'Host Linux benchmark dashboard complete.'
+  });
 
   return { report, reportJsonPath, reportMarkdownPath, reportHtmlPath };
 }
@@ -468,4 +499,31 @@ function formatHarnessDashboardEtaAccuracySummary(
 
 function roundSeconds(value: number): number {
   return Math.round(value * 1000) / 1000;
+}
+
+function formatDurationSeconds(value: number): string {
+  if (value >= 3600) {
+    return `${roundSeconds(value / 3600)}h`;
+  }
+  if (value >= 60) {
+    return `${roundSeconds(value / 60)}m`;
+  }
+  return `${roundSeconds(value)}s`;
+}
+
+function describePreparedPairOutcome(
+  reportStatus: HarnessDashboardSmokePairSummary['reportStatus'],
+  runtimeExecutionState: HarnessDashboardSmokePairSummary['runtimeExecutionState'],
+  generatedReportExists: boolean
+): string {
+  if (generatedReportExists) {
+    return 'generated retained comparison metadata';
+  }
+  if (reportStatus === 'blocked-preflight' || reportStatus === 'blocked-runtime') {
+    return 'blocked retained pair evidence';
+  }
+  if (runtimeExecutionState === 'failed') {
+    return 'failed retained pair evidence';
+  }
+  return 'retained pair evidence without a generated comparison report';
 }
