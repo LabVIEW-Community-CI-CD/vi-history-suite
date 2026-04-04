@@ -12,13 +12,17 @@ const latestDashboardRun = require(path.resolve(
   'scripts',
   'printLatestDashboardRun.js'
 )) as {
-  findLatestDashboardRun: (repoRoot: string) => {
+  findLatestDashboardRun: (
+    repoRoot: string,
+    options?: { hostOnly?: boolean }
+  ) => {
     manifestPath: string;
     mode: string;
     sortTimestamp: number;
   } | undefined;
   getDiscoveryPriority: (filePath: string) => number;
   isRepoVscodeTestPath: (filePath: string) => boolean;
+  isHostWorkspaceArtifactPath: (filePath: string) => boolean;
 };
 
 describe('printLatestDashboardRun script', () => {
@@ -90,5 +94,79 @@ describe('printLatestDashboardRun script', () => {
     expect(latestDashboardRun.getDiscoveryPriority(repoTestPath)).toBe(0);
     expect(latestDashboardRun.getDiscoveryPriority(harnessPath)).toBe(1);
     expect(latestDashboardRun.getDiscoveryPriority(userPath)).toBe(2);
+    expect(latestDashboardRun.isHostWorkspaceArtifactPath(repoTestPath)).toBe(false);
+    expect(latestDashboardRun.isHostWorkspaceArtifactPath(harnessPath)).toBe(false);
+    expect(latestDashboardRun.isHostWorkspaceArtifactPath(userPath)).toBe(true);
+  });
+
+  it('supports host-only discovery without falling back to repo-local or harness artifacts', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-latest-dashboard-host-'));
+    const repoRoot = path.join(tempRoot, 'vi-history-suite');
+    const repoStorage = path.join(
+      repoRoot,
+      '.vscode-test',
+      'user-data',
+      'User',
+      'workspaceStorage',
+      'repo-storage',
+      'svelderrainruiz.vi-history-suite',
+      'dashboards'
+    );
+    const harnessStorage = path.join(
+      repoRoot,
+      '.cache',
+      'harness-reports',
+      'HARNESS-VHS-001',
+      'workspace-storage',
+      'dashboards'
+    );
+    const hostStorage = path.join(
+      tempRoot,
+      'home',
+      'AppData',
+      'Roaming',
+      'Code',
+      'User',
+      'workspaceStorage',
+      'user-storage',
+      'svelderrainruiz.vi-history-suite',
+      'dashboards'
+    );
+
+    const repoManifestPath = path.join(repoStorage, 'latest-dashboard-run.json');
+    const harnessManifestPath = path.join(harnessStorage, 'latest-dashboard-run.json');
+    const hostManifestPath = path.join(hostStorage, 'latest-dashboard-run.json');
+
+    await fs.mkdir(path.dirname(repoManifestPath), { recursive: true });
+    await fs.mkdir(path.dirname(harnessManifestPath), { recursive: true });
+    await fs.mkdir(path.dirname(hostManifestPath), { recursive: true });
+    await fs.writeFile(
+      repoManifestPath,
+      JSON.stringify({ recordedAt: '2026-04-04T20:16:49.908Z' }),
+      'utf8'
+    );
+    await fs.writeFile(
+      harnessManifestPath,
+      JSON.stringify({ recordedAt: '2026-04-04T20:17:49.908Z' }),
+      'utf8'
+    );
+    await fs.writeFile(
+      hostManifestPath,
+      JSON.stringify({ recordedAt: '2026-04-04T20:18:49.908Z' }),
+      'utf8'
+    );
+
+    const previousHome = process.env.HOME;
+    process.env.HOME = path.join(tempRoot, 'home');
+    try {
+      const latest = latestDashboardRun.findLatestDashboardRun(repoRoot, { hostOnly: true });
+      expect(latest?.manifestPath).toBe(hostManifestPath);
+    } finally {
+      if (previousHome === undefined) {
+        delete process.env.HOME;
+      } else {
+        process.env.HOME = previousHome;
+      }
+    }
   });
 });

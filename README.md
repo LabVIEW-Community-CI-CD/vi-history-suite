@@ -189,7 +189,8 @@ Committed and governed today:
   and companion `repo-standards-review` skill repo from one local map and one
   CLI entrypoint
 - local evidence-consumer scripts for the newest dashboard run and newest human
-  review submission via `npm run dashboard:latest` and `npm run review:latest`
+  review submission via `npm run dashboard:latest`,
+  `npm run dashboard:latest:host`, and `npm run review:latest`
 - a GitHub-hosted Linux dashboard benchmark lane that pins
   `nationalinstruments/labview:2026q1-linux`, targets
   `HARNESS-VHS-002` / `resource/plugins/lv_icon.vi`, and retains machine-readable
@@ -209,8 +210,9 @@ Committed and governed today:
   Linux VS Code bootstrap command for faster autonomous iteration
 - explicit GitHub Linux benchmark preparation via
   `npm run benchmark:github:linux:lv-icon` in the authority repo, mirrored into
-  the private GitHub experiment repo with a published benchmark image while
-  GitLab remains the authority source repo and release-control surface
+  the private GitHub experiment repo with a published benchmark image and a
+  retained consumer at `npm run benchmark:github:latest`, while GitLab remains
+  the authority source repo and release-control surface
 
 ## Active Work
 
@@ -345,11 +347,24 @@ Dashboard-run discovery:
 
 - `npm run dashboard:latest`
 - `npm run dashboard:latest:json`
+- `npm run dashboard:latest:host`
+- `npm run dashboard:latest:host:json`
 
 The helper searches the stable `latest-dashboard-run.json` manifest first, then
 falls back to legacy retained `dashboard-pair-eta-accuracy.json` plus
-`dashboard.json` evidence when needed.
+`dashboard.json` evidence when needed. The `:host` variants fail closed against
+repo-local `.vscode-test` and harness artifacts so host-machine proof does not
+silently degrade into test evidence.
 - `<workspace-storage>/dashboards/<repoId>/<fileId>/<windowId>/dashboard.html`
+
+GitHub Linux benchmark discovery:
+
+- `npm run benchmark:github:latest`
+- `npm run benchmark:github:latest:json`
+
+The helper prefers the latest successful `workflow_dispatch` artifact from the
+private GitHub experiment mirror and falls back to cached downloads under
+`.cache/github-experiment-downloads/` when needed.
 
 The generated `.cache/` evidence is local and regenerated. The committed source
 of truth for implemented-versus-partial research work is the documentation stack

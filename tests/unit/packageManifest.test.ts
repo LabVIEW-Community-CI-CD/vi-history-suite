@@ -118,6 +118,12 @@ describe('extension manifest research alignment', () => {
     expect(manifest.scripts?.['dashboard:latest:json']).toBe(
       'node scripts/printLatestDashboardRun.js --json'
     );
+    expect(manifest.scripts?.['dashboard:latest:host']).toBe(
+      'node scripts/printLatestDashboardRun.js --host-only'
+    );
+    expect(manifest.scripts?.['dashboard:latest:host:json']).toBe(
+      'node scripts/printLatestDashboardRun.js --host-only --json'
+    );
     expect(manifest.scripts?.['review:latest']).toBe(
       'node scripts/printLatestHumanReviewSubmission.js'
     );
@@ -126,6 +132,12 @@ describe('extension manifest research alignment', () => {
     );
     expect(manifest.scripts?.['benchmark:github:linux:lv-icon']).toBe(
       'npm run compile && node out/cli/runGitHubLinuxDashboardBenchmark.js --harness-id HARNESS-VHS-002'
+    );
+    expect(manifest.scripts?.['benchmark:github:latest']).toBe(
+      'node scripts/printLatestGitHubLinuxBenchmark.js'
+    );
+    expect(manifest.scripts?.['benchmark:github:latest:json']).toBe(
+      'node scripts/printLatestGitHubLinuxBenchmark.js --json'
     );
     expect(manifest.scripts?.['docs:workbench:build']).toContain(
       'docker/docs-authoring/Dockerfile'

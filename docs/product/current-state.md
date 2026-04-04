@@ -243,12 +243,13 @@ These are generated locally and are not the committed source of truth:
   - `<workspace-storage>/dashboards/<repoId>/<fileId>/<windowId>/dashboard.html`
   - `<workspace-storage>/human-reviews/latest-human-review-submission.json`
   - `<extension-global-storage>/human-reviews/canonical-host-machine.json`
-  - local consumer scripts: `npm run dashboard:latest` and `npm run review:latest`
+  - local consumer scripts: `npm run dashboard:latest`, `npm run dashboard:latest:host`, and `npm run review:latest`
 - GitHub Linux benchmark experiment lane:
   - `.cache/github-experiments/linux-dashboard-benchmark/HARNESS-VHS-002/latest-summary.json`
   - `.cache/harness-reports/HARNESS-VHS-002/dashboard-smoke.json`
   - `.cache/harness-reports/HARNESS-VHS-002/dashboard-smoke.md`
   - `.cache/harness-reports/HARNESS-VHS-002/dashboard-smoke.html`
+  - local consumer scripts: `npm run benchmark:github:latest` and `npm run benchmark:github:latest:json`
 - public facade host-machine acceptance:
   - `C:\Users\sveld\AppData\Local\VI History Suite\acceptance\host-machine\setup\setup-record.json`
   - `C:\Users\sveld\AppData\Local\VI History Suite\acceptance\host-machine\acceptance-record.json`

@@ -10,8 +10,8 @@ const ETA_FILENAME = 'dashboard-pair-eta-accuracy.json';
 const DASHBOARD_FILENAME = 'dashboard.json';
 
 function main() {
-  const { repoRoot, json } = parseArgs(process.argv.slice(2));
-  const latest = findLatestDashboardRun(repoRoot);
+  const { repoRoot, json, hostOnly } = parseArgs(process.argv.slice(2));
+  const latest = findLatestDashboardRun(repoRoot, { hostOnly });
   if (!latest) {
     console.error('No retained dashboard run metadata was discovered.');
     process.exitCode = 1;
@@ -27,21 +27,30 @@ function main() {
 function parseArgs(args) {
   const repoRoot = path.resolve(__dirname, '..');
   let json = false;
+  let hostOnly = false;
   for (const arg of args) {
     if (arg === '--json') {
       json = true;
       continue;
     }
+    if (arg === '--host-only') {
+      hostOnly = true;
+      continue;
+    }
     throw new Error(`Unknown argument: ${arg}`);
   }
-  return { repoRoot, json };
+  return { repoRoot, json, hostOnly };
 }
 
-function findLatestDashboardRun(repoRoot) {
+function findLatestDashboardRun(repoRoot, options = {}) {
+  const hostOnly = options.hostOnly === true;
   const roots = collectSearchRoots(repoRoot);
   const manifestCandidates = [];
   for (const root of roots) {
     for (const filePath of findFilesNamed(root, LATEST_RUN_FILENAME)) {
+      if (hostOnly && !isHostWorkspaceArtifactPath(filePath)) {
+        continue;
+      }
       const parsed = tryReadJson(filePath);
       if (!parsed) {
         continue;
@@ -63,6 +72,9 @@ function findLatestDashboardRun(repoRoot) {
   const legacyCandidates = [];
   for (const root of roots) {
     for (const etaPath of findFilesNamed(root, ETA_FILENAME)) {
+      if (hostOnly && !isHostWorkspaceArtifactPath(etaPath)) {
+        continue;
+      }
       const eta = tryReadJson(etaPath);
       if (!eta) {
         continue;
@@ -217,6 +229,10 @@ function isRepoVscodeTestPath(filePath) {
   return filePath.includes(`${path.sep}.vscode-test${path.sep}`);
 }
 
+function isHostWorkspaceArtifactPath(filePath) {
+  return getDiscoveryPriority(filePath) >= 2;
+}
+
 function findFilesNamed(root, filename) {
   const results = [];
   const stack = [root];
@@ -349,6 +365,7 @@ module.exports = {
   formatLatestDashboardRun,
   getDiscoveryPriority,
   isRepoVscodeTestPath,
+  isHostWorkspaceArtifactPath,
   parseArgs
 };
 
