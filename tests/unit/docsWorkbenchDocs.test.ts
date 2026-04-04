@@ -64,6 +64,8 @@ describe('documentation-package workbench', () => {
           'vitest',
           'run',
           'tests/unit/bundledDocumentation.test.ts',
+          'tests/unit/postReleaseControlPlaneDocs.test.ts',
+          'tests/unit/requirementsDocs.test.ts',
           'tests/unit/packageManifest.test.ts',
           'tests/unit/shipControlDocs.test.ts',
           'tests/unit/docsWorkbenchDocs.test.ts'
@@ -102,7 +104,7 @@ describe('documentation-package workbench', () => {
     expect(result).toBe('pass');
     expect(spawned).toEqual([
       'npm run compile',
-      'npx vitest run tests/unit/bundledDocumentation.test.ts tests/unit/packageManifest.test.ts tests/unit/shipControlDocs.test.ts tests/unit/docsWorkbenchDocs.test.ts'
+      'npx vitest run tests/unit/bundledDocumentation.test.ts tests/unit/postReleaseControlPlaneDocs.test.ts tests/unit/requirementsDocs.test.ts tests/unit/packageManifest.test.ts tests/unit/shipControlDocs.test.ts tests/unit/docsWorkbenchDocs.test.ts'
     ]);
   });
 

@@ -9,17 +9,28 @@ import {
   buildPairEtaAccuracySample,
   DASHBOARD_PAIR_ETA_ACCURACY_FILENAME,
   deriveEstimatedPairSeconds,
+  isDashboardPairEtaEligible,
   MultiReportDashboardEtaAccuracyRecord,
   MultiReportDashboardEtaAccuracySample
 } from './dashboardEtaAccuracy';
+import {
+  attachDashboardEtaAccuracyContext,
+  buildDashboardLatestRunFilePath,
+  buildDashboardLatestRunRecord,
+  MultiReportDashboardLatestRunExperimentRecord,
+  MultiReportDashboardLatestRunProgressEvent
+} from './dashboardLatestRun';
 import {
   buildAndPersistMultiReportDashboard,
   BuildMultiReportDashboardResult,
   MultiReportDashboardPreparationSummary,
   renderMultiReportDashboardHtml
 } from './multiReportDashboard';
+import { getFileHistoryCount } from '../git/gitCli';
 import { ComparisonReportActionResult } from '../reporting/comparisonReportAction';
+import { readComparisonRuntimeSettings } from '../reporting/comparisonReportAction';
 import { ViHistoryViewModel } from '../services/viHistoryModel';
+import { getViHistoryServiceSettings } from '../services/viHistoryService';
 import { HistoryPanelTracker } from '../ui/historyPanelTracker';
 
 export interface MultiReportDashboardActionRequest {
@@ -68,6 +79,9 @@ export interface MultiReportDashboardActionDeps {
   readFile?: typeof fs.readFile;
   writeFile?: typeof fs.writeFile;
   now?: () => number;
+  getHistoryServiceSettings?: typeof getViHistoryServiceSettings;
+  getRuntimeSettings?: typeof readComparisonRuntimeSettings;
+  getFileHistoryCount?: typeof getFileHistoryCount;
 }
 
 interface DashboardPairEvidenceCandidate {
@@ -121,12 +135,41 @@ export function createMultiReportDashboardAction(
     const readFile = deps.readFile ?? fs.readFile;
     const writeFile = deps.writeFile ?? fs.writeFile;
     const now = deps.now ?? Date.now;
+    const actionStartMs = now();
+    const progressEvents: MultiReportDashboardLatestRunProgressEvent[] = [];
+    const reportProgress = async (update: { message: string; increment?: number }): Promise<void> => {
+      progressEvents.push({
+        offsetMs: Math.max(0, now() - actionStartMs),
+        message: update.message,
+        increment: update.increment
+      });
+      await request.reportProgress?.(update);
+    };
+    const historyServiceSettings =
+      deps.getHistoryServiceSettings?.() ?? safeGetHistoryServiceSettings();
+    const runtimeSettings =
+      deps.getRuntimeSettings?.() ?? safeReadComparisonRuntimeSettings();
+    const modelHistoryWindow = request.model.historyWindow;
+    let totalCommitCount: number | undefined = modelHistoryWindow?.totalCommitCount;
+    const fileHistoryCountProbe = deps.getFileHistoryCount;
+    if (totalCommitCount === undefined && fileHistoryCountProbe) {
+      try {
+        totalCommitCount = await fileHistoryCountProbe(
+          request.model.repositoryRoot,
+          request.model.relativePath
+        );
+      } catch {
+        totalCommitCount = undefined;
+      }
+    }
+    const pairEvidenceScanStartMs = now();
     const pairsNeedingEvidence = await collectDashboardPairsNeedingEvidence(
       storageUri.fsPath,
       request.model,
       deps
     );
-    await request.reportProgress?.({
+    const pairsNeedingEvidenceScanDurationMs = Math.max(0, now() - pairEvidenceScanStartMs);
+    await reportProgress({
       message: 'Preparing VI Review Dashboard commit window.',
       increment: 5
     });
@@ -144,12 +187,12 @@ export function createMultiReportDashboardAction(
       preparedMissingRetainedArchiveCount: 0
     };
     if (pairsNeedingEvidence.length === 0) {
-      await request.reportProgress?.({
+      await reportProgress({
         message:
           'All adjacent retained pairs already have retained comparison evidence. Concentrating retained dashboard metadata only.'
       });
     } else if (ensureComparisonReportEvidence) {
-      await request.reportProgress?.({
+      await reportProgress({
         message: `Preparing ${pairsNeedingEvidence.length} dashboard pair(s) that still need retained comparison evidence.`
       });
     } else {
@@ -163,10 +206,11 @@ export function createMultiReportDashboardAction(
         preparedNoGeneratedReportCount: 0,
         preparedMissingRetainedArchiveCount: 0
       };
-      await request.reportProgress?.({
+      await reportProgress({
         message: `This build cannot refresh ${pairsNeedingEvidence.length} dashboard pair(s) from Open dashboard. Concentrating the currently retained archive set only.`
       });
     }
+    const evidencePreparationStartMs = now();
     if (pairsNeedingEvidence.length > 0 && ensureComparisonReportEvidence) {
       preparationSummary = {
         mode: 'backfilled-before-build',
@@ -184,6 +228,7 @@ export function createMultiReportDashboardAction(
           ? DASHBOARD_PAIR_EVIDENCE_INCREMENT_TOTAL / pairsNeedingEvidence.length
           : 0;
       const completedPairDurationsMs: number[] = [];
+      let etaEligiblePairCount = 0;
       const etaAccuracySamples: MultiReportDashboardEtaAccuracySample[] = [];
       for (const [index, pair] of pairsNeedingEvidence.entries()) {
         if (request.cancellationToken?.isCancellationRequested) {
@@ -214,7 +259,7 @@ export function createMultiReportDashboardAction(
                 )
               : 0;
           remainingPairIncrement = Math.max(0, remainingPairIncrement - scaledIncrement);
-          await request.reportProgress?.({
+          await reportProgress({
             message: `${pairPrefix}${update.message}`,
             increment: scaledIncrement > 0 ? scaledIncrement : undefined
           });
@@ -238,8 +283,12 @@ export function createMultiReportDashboardAction(
           return { outcome: result.outcome };
         }
         const pairDurationMs = Math.max(0, now() - pairStartMs);
-        completedPairDurationsMs.push(pairDurationMs);
-        if (estimatedPairSeconds !== undefined) {
+        const etaEligible = isDashboardPairEtaEligible(result.generatedReportExists);
+        if (etaEligible) {
+          etaEligiblePairCount += 1;
+          completedPairDurationsMs.push(pairDurationMs);
+        }
+        if (estimatedPairSeconds !== undefined && etaEligible) {
           etaAccuracySamples.push(
             buildPairEtaAccuracySample(
               index,
@@ -251,7 +300,7 @@ export function createMultiReportDashboardAction(
           );
         }
 
-        await request.reportProgress?.({
+        await reportProgress({
           message: buildDashboardPairPreparedMessage(
             index,
             pairsNeedingEvidence.length,
@@ -265,34 +314,102 @@ export function createMultiReportDashboardAction(
       }
       etaAccuracyRecord = buildDashboardPairEtaAccuracyRecord(
         pairsNeedingEvidence.length,
+        etaEligiblePairCount,
         etaAccuracySamples,
         now
       );
     }
+    const evidencePreparationDurationMs = Math.max(0, now() - evidencePreparationStartMs);
+    const dashboardBuildStartMs = now();
     const dashboard = await buildDashboard(storageUri.fsPath, request.model, {
-      reportProgress: request.reportProgress,
+      reportProgress,
       pairConcentrationIncrementTotal,
       assetIncrementTotal: DASHBOARD_ASSET_INCREMENT_TOTAL
     });
+    const dashboardBuildDurationMs = Math.max(0, now() - dashboardBuildStartMs);
     const dashboardDirectoryExists = await pathExists(
       dashboard.record.artifactPlan.dashboardDirectory
     );
     if (dashboardDirectoryExists) {
+      const etaAccuracyFilePath = etaAccuracyRecord
+        ? path.join(
+            dashboard.record.artifactPlan.dashboardDirectory,
+            DASHBOARD_PAIR_ETA_ACCURACY_FILENAME
+          )
+        : undefined;
+      const etaAccuracyRecordWithContext = attachDashboardEtaAccuracyContext(
+        etaAccuracyRecord,
+        {
+          source: 'vscode-dashboard-action',
+          workspaceStorageRoot: storageUri.fsPath,
+          repositoryName: dashboard.record.repositoryName,
+          repositoryRoot: dashboard.record.repositoryRoot,
+          relativePath: dashboard.record.relativePath,
+          signature: dashboard.record.signature,
+          dashboardGeneratedAt: dashboard.record.generatedAt,
+          dashboardDirectory: dashboard.record.artifactPlan.dashboardDirectory,
+          dashboardJsonFilePath: dashboard.jsonFilePath,
+          dashboardHtmlFilePath: dashboard.htmlFilePath,
+          etaAccuracyFilePath
+        }
+      );
       await writeFile(
         dashboard.htmlFilePath,
         renderMultiReportDashboardHtml(dashboard.record, {
-          etaAccuracyRecord,
+          etaAccuracyRecord: etaAccuracyRecordWithContext,
           preparationSummary
         }),
         'utf8'
       );
-      if (etaAccuracyRecord) {
-        const etaAccuracyFilePath = path.join(
-          dashboard.record.artifactPlan.dashboardDirectory,
-          DASHBOARD_PAIR_ETA_ACCURACY_FILENAME
+      if (etaAccuracyRecordWithContext && etaAccuracyFilePath) {
+        await writeFile(
+          etaAccuracyFilePath,
+          JSON.stringify(etaAccuracyRecordWithContext, null, 2),
+          'utf8'
         );
-        await writeFile(etaAccuracyFilePath, JSON.stringify(etaAccuracyRecord, null, 2), 'utf8');
       }
+      const totalDurationMs = Math.max(0, now() - actionStartMs);
+      const dashboardOpenDurationMs = 0;
+      await writeFile(
+        buildDashboardLatestRunFilePath(storageUri.fsPath),
+        JSON.stringify(
+          buildDashboardLatestRunRecord({
+            source: 'vscode-dashboard-action',
+            workspaceStorageRoot: storageUri.fsPath,
+            dashboard,
+            etaAccuracyRecord: etaAccuracyRecordWithContext,
+            preparationSummary,
+            experiment: buildDashboardLatestRunExperimentRecord({
+              loadedCommitCount: request.model.commits.length,
+              loadedPairCount: Math.max(0, request.model.commits.length - 1),
+              historyWindowMode:
+                modelHistoryWindow?.mode ?? historyServiceSettings.historyWindowMode,
+              configuredMaxHistoryEntries:
+                modelHistoryWindow?.configuredMaxEntries ??
+                historyServiceSettings.maxHistoryEntries,
+              effectiveHistoryEntryCeiling:
+                modelHistoryWindow?.effectiveEntryCeiling ??
+                historyServiceSettings.historyLimit,
+              totalCommitCount,
+              historyTruncated: modelHistoryWindow?.truncated,
+              historyWindowDecision: modelHistoryWindow?.decision,
+              strictRsrcHeader: historyServiceSettings.strictRsrcHeader,
+              runtimeSettings,
+              pairsNeedingEvidenceScanDurationMs,
+              evidencePreparationDurationMs,
+              dashboardBuildDurationMs,
+              dashboardOpenDurationMs,
+              totalDurationMs,
+              progressEvents
+            }),
+            recordedAt: new Date(now()).toISOString()
+          }),
+          null,
+          2
+        ),
+        'utf8'
+      );
+      etaAccuracyRecord = etaAccuracyRecordWithContext;
     }
     if (request.cancellationToken?.isCancellationRequested) {
       return {
@@ -308,7 +425,8 @@ export function createMultiReportDashboardAction(
     const createWebviewPanel = deps.createWebviewPanel ?? vscode.window.createWebviewPanel;
     const executeCommand = deps.executeCommand ?? vscode.commands.executeCommand;
     const uriFile = deps.uriFile ?? vscode.Uri.file;
-    await request.reportProgress?.({
+    const dashboardOpenStartMs = now();
+    await reportProgress({
       message: 'Opening VI Review Dashboard.',
       increment: DASHBOARD_OPEN_INCREMENT
     });
@@ -436,6 +554,51 @@ export function createMultiReportDashboardAction(
     );
     panel.webview.onDidReceiveMessage(handleDashboardMessage);
 
+    const dashboardOpenDurationMs = Math.max(0, now() - dashboardOpenStartMs);
+    try {
+      await writeFile(
+        buildDashboardLatestRunFilePath(storageUri.fsPath),
+        JSON.stringify(
+          buildDashboardLatestRunRecord({
+            source: 'vscode-dashboard-action',
+            workspaceStorageRoot: storageUri.fsPath,
+            dashboard,
+            etaAccuracyRecord,
+            preparationSummary,
+            experiment: buildDashboardLatestRunExperimentRecord({
+              loadedCommitCount: request.model.commits.length,
+              loadedPairCount: Math.max(0, request.model.commits.length - 1),
+              historyWindowMode:
+                modelHistoryWindow?.mode ?? historyServiceSettings.historyWindowMode,
+              configuredMaxHistoryEntries:
+                modelHistoryWindow?.configuredMaxEntries ??
+                historyServiceSettings.maxHistoryEntries,
+              effectiveHistoryEntryCeiling:
+                modelHistoryWindow?.effectiveEntryCeiling ??
+                historyServiceSettings.historyLimit,
+              totalCommitCount,
+              historyTruncated: modelHistoryWindow?.truncated,
+              historyWindowDecision: modelHistoryWindow?.decision,
+              strictRsrcHeader: historyServiceSettings.strictRsrcHeader,
+              runtimeSettings,
+              pairsNeedingEvidenceScanDurationMs,
+              evidencePreparationDurationMs,
+              dashboardBuildDurationMs,
+              dashboardOpenDurationMs,
+              totalDurationMs: Math.max(0, now() - actionStartMs),
+              progressEvents
+            }),
+            recordedAt: new Date(now()).toISOString()
+          }),
+          null,
+          2
+        ),
+        'utf8'
+      );
+    } catch {
+      // Best-effort retention only; a successful dashboard open should not fail on manifest refresh.
+    }
+
     return {
       outcome: 'opened-review-dashboard',
       dashboardFilePath: dashboard.htmlFilePath,
@@ -446,6 +609,104 @@ export function createMultiReportDashboardAction(
       title: panel.title
     };
   };
+}
+
+function buildDashboardLatestRunExperimentRecord(options: {
+  loadedCommitCount: number;
+  loadedPairCount: number;
+  historyWindowMode: 'auto' | 'capped';
+  configuredMaxHistoryEntries: number;
+  effectiveHistoryEntryCeiling: number;
+  totalCommitCount?: number;
+  historyTruncated?: boolean;
+  historyWindowDecision?: string;
+  strictRsrcHeader: boolean;
+  runtimeSettings: ReturnType<typeof readComparisonRuntimeSettings>;
+  pairsNeedingEvidenceScanDurationMs: number;
+  evidencePreparationDurationMs: number;
+  dashboardBuildDurationMs: number;
+  dashboardOpenDurationMs: number;
+  totalDurationMs: number;
+  progressEvents: MultiReportDashboardLatestRunProgressEvent[];
+}): MultiReportDashboardLatestRunExperimentRecord {
+  const historyTruncated =
+    options.historyTruncated ??
+    (options.totalCommitCount !== undefined
+      ? options.totalCommitCount > options.loadedCommitCount
+      : options.loadedCommitCount >= options.effectiveHistoryEntryCeiling);
+  return {
+    host: {
+      vscodeVersion: vscode.version,
+      platform: process.platform,
+      arch: process.arch
+    },
+    configuration: {
+      strictRsrcHeader: options.strictRsrcHeader,
+      historyWindowMode: options.historyWindowMode,
+      maxHistoryEntries: options.configuredMaxHistoryEntries,
+      effectiveHistoryEntryCeiling: options.effectiveHistoryEntryCeiling,
+      preferBitness: options.runtimeSettings.preferBitness,
+      windowsContainerImage: options.runtimeSettings.windowsContainerImage,
+      labviewCliPathConfigured: Boolean(options.runtimeSettings.labviewCliPath?.trim()),
+      labviewExePathConfigured: Boolean(options.runtimeSettings.labviewExePath?.trim()),
+      lvComparePathConfigured: Boolean(options.runtimeSettings.lvComparePath?.trim())
+    },
+    historyWindow: {
+      loadedCommitCount: options.loadedCommitCount,
+      loadedPairCount: options.loadedPairCount,
+      configuredMaxHistoryEntries: options.configuredMaxHistoryEntries,
+      effectiveHistoryEntryCeiling: options.effectiveHistoryEntryCeiling,
+      totalCommitCount: options.totalCommitCount,
+      historyTruncated,
+      decision: options.historyWindowDecision,
+      loadedFractionOfTotal:
+        options.totalCommitCount && options.totalCommitCount > 0
+          ? roundRatio(options.loadedCommitCount / options.totalCommitCount)
+          : undefined
+    },
+    timings: {
+      totalDurationMs: options.totalDurationMs,
+      pairsNeedingEvidenceScanDurationMs: options.pairsNeedingEvidenceScanDurationMs,
+      evidencePreparationDurationMs: options.evidencePreparationDurationMs,
+      dashboardBuildDurationMs: options.dashboardBuildDurationMs,
+      dashboardOpenDurationMs: options.dashboardOpenDurationMs
+    },
+    progress: {
+      eventCount: options.progressEvents.length,
+      events: options.progressEvents
+    }
+  };
+}
+
+function safeGetHistoryServiceSettings(): ReturnType<typeof getViHistoryServiceSettings> {
+  try {
+    return getViHistoryServiceSettings();
+  } catch {
+    return {
+      strictRsrcHeader: false,
+      historyWindowMode: 'auto',
+      maxHistoryEntries: 100,
+      historyLimit: 1000
+    };
+  }
+}
+
+function safeReadComparisonRuntimeSettings(): ReturnType<typeof readComparisonRuntimeSettings> {
+  try {
+    return readComparisonRuntimeSettings();
+  } catch {
+    return {
+      labviewCliPath: '',
+      lvComparePath: '',
+      labviewExePath: '',
+      preferBitness: 'auto',
+      windowsContainerImage: 'nationalinstruments/labview:2026q1-windows'
+    };
+  }
+}
+
+function roundRatio(value: number): number {
+  return Math.round(value * 1000) / 1000;
 }
 
 async function collectDashboardPairsNeedingEvidence(

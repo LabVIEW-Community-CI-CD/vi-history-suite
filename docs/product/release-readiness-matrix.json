@@ -111,7 +111,7 @@
       ],
       "blockerId": null,
       "blocker": null,
-      "nextAction": "Sustain the immutable `v0.2.0` release evidence, keep future SemVer release artifacts non-expiring, and use the retained exact-version release as source truth for the public facade installer and Windows acceptance program."
+      "nextAction": "Sustain the immutable `v0.2.0` release evidence, keep future SemVer release artifacts non-expiring, and use the retained exact-version release as source truth for the public facade release-kit and host-machine acceptance program."
     }
   ]
 }

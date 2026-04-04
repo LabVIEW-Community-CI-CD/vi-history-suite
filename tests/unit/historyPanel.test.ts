@@ -13,6 +13,15 @@ describe('renderHistoryPanelHtml', () => {
       relativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
       signature: 'LVIN',
       eligible: true,
+      historyWindow: {
+        mode: 'auto',
+        configuredMaxEntries: 100,
+        effectiveEntryCeiling: 1000,
+        loadedCommitCount: 2,
+        totalCommitCount: 2,
+        truncated: false,
+        decision: 'auto-full-history'
+      },
       commits: [
         {
           hash: 'abcdef1234567890',
@@ -44,6 +53,8 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('Copy review packet');
     expect(html).toContain('data-testid="history-status"');
     expect(html).toContain('data-testid="history-review-packet"');
+    expect(html).toContain('data-testid="history-status-history-window"');
+    expect(html).toContain('data-testid="history-review-window"');
     expect(html).toContain('data-testid="history-chronology-order"');
     expect(html).toContain('data-testid="history-newest-commit"');
     expect(html).toContain('data-testid="history-oldest-commit"');
@@ -74,6 +85,7 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('data-testid="history-action-documentation"');
     expect(html).toContain('data-testid="history-action-decision-record"');
     expect(html).toContain('Newest commit first');
+    expect(html).toContain('full history loaded automatically (2/2 commits)');
     expect(html).toContain('Oldest retained revision');
     expect(html).toContain('Binary review limits:');
     expect(html).toContain('Reviewer guidance:');
@@ -189,6 +201,15 @@ describe('renderHistoryPanelHtml', () => {
       relativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
       signature: 'LVIN',
       eligible: true,
+      historyWindow: {
+        mode: 'capped',
+        configuredMaxEntries: 2,
+        effectiveEntryCeiling: 2,
+        loadedCommitCount: 2,
+        totalCommitCount: 4,
+        truncated: true,
+        decision: 'capped-truncated-to-max'
+      },
       commits: [
         {
           hash: 'abcdef1234567890',
@@ -210,6 +231,7 @@ describe('renderHistoryPanelHtml', () => {
     expect(reviewPacket).toContain('Repository: labview-icon-editor');
     expect(reviewPacket).toContain('Path: Tooling/deployment/VIP_Pre-Install Custom Action.vi');
     expect(reviewPacket).toContain('Retained revisions: 2');
+    expect(reviewPacket).toContain('History window: capped window truncated to 2/4 commits at the configured ceiling (2)');
     expect(reviewPacket).toContain('Dashboard available: no');
     expect(reviewPacket).toContain('Confidence and scope:');
     expect(reviewPacket).toContain('Included here: chronology, path provenance, retained hashes, compare pairs, and dashboard availability.');

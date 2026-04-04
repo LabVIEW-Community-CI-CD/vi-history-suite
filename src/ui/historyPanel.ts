@@ -8,6 +8,7 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
   const capabilities = model.surfaceCapabilities ?? {};
   const newestCommit = model.commits[0];
   const oldestCommit = model.commits[model.commits.length - 1];
+  const historyWindowSummary = renderHistoryWindowSummary(model);
   const dashboardButton =
     capabilities.dashboardAvailable !== false && model.commits.length >= 3
       ? '<button data-testid="history-action-dashboard" data-command="openDashboard">Open dashboard</button>'
@@ -141,6 +142,7 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
       <strong>Eligibility:</strong> <span data-testid="history-status-eligibility">${model.eligible ? 'Eligible' : 'Not eligible'}</span><br />
       <strong>Signature:</strong> <span data-testid="history-status-signature">${escapeHtml(model.signature)}</span><br />
       <strong>Commits:</strong> <span data-testid="history-status-commit-count">${model.commits.length}</span><br />
+      <strong>History window:</strong> <span data-testid="history-status-history-window">${escapeHtml(historyWindowSummary)}</span><br />
       <button data-testid="history-action-copy-review-packet" data-command="copyReviewPacket">Copy review packet</button>
       ${documentationButton}
       ${dashboardButton}
@@ -149,6 +151,7 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
     <div class="packet" data-testid="history-review-packet">
       <div data-testid="history-chronology-order"><strong>Order:</strong> Newest commit first</div>
       <div data-testid="history-retained-span"><strong>Retained revisions:</strong> ${model.commits.length}</div>
+      <div data-testid="history-review-window"><strong>Window:</strong> ${escapeHtml(historyWindowSummary)}</div>
       <div data-testid="history-newest-commit"><strong>Newest:</strong> ${renderCommitSummary(newestCommit)}</div>
       <div data-testid="history-oldest-commit"><strong>Oldest:</strong> ${renderCommitSummary(oldestCommit)}</div>
     </div>
@@ -251,6 +254,7 @@ export function renderHistoryReviewPacketText(model: ViHistoryViewModel): string
     `Signature: ${model.signature}`,
     `Eligibility: ${model.eligible ? 'Eligible' : 'Not eligible'}`,
     `Retained revisions: ${model.commits.length}`,
+    `History window: ${renderHistoryWindowSummary(model)}`,
     `Dashboard available: ${model.commits.length >= 3 ? 'yes' : 'no'}`,
     `Newest retained commit: ${renderCommitSummary(newestCommit)}`,
     `Oldest retained commit: ${renderCommitSummary(oldestCommit)}`,
@@ -278,6 +282,29 @@ function renderCommitSummary(commit: ViHistoryCommit | undefined): string {
   }
 
   return `${escapeHtml(commit.hash.slice(0, 8))} · ${escapeHtml(commit.authorDate)} · ${escapeHtml(commit.authorName)}`;
+}
+
+function renderHistoryWindowSummary(model: ViHistoryViewModel): string {
+  const historyWindow = model.historyWindow;
+  if (!historyWindow) {
+    return `${model.commits.length} retained commit(s) loaded.`;
+  }
+
+  if (historyWindow.totalCommitCount !== undefined) {
+    if (!historyWindow.truncated) {
+      return historyWindow.mode === 'auto'
+        ? `full history loaded automatically (${historyWindow.loadedCommitCount}/${historyWindow.totalCommitCount} commits)`
+        : `full history loaded within capped mode (${historyWindow.loadedCommitCount}/${historyWindow.totalCommitCount} commits)`;
+    }
+
+    return historyWindow.mode === 'auto'
+      ? `auto window truncated to ${historyWindow.loadedCommitCount}/${historyWindow.totalCommitCount} commits at the automatic safety ceiling (${historyWindow.effectiveEntryCeiling})`
+      : `capped window truncated to ${historyWindow.loadedCommitCount}/${historyWindow.totalCommitCount} commits at the configured ceiling (${historyWindow.effectiveEntryCeiling})`;
+  }
+
+  return historyWindow.mode === 'auto'
+    ? `loaded ${historyWindow.loadedCommitCount} commits under auto mode; total history count was unavailable`
+    : `loaded ${historyWindow.loadedCommitCount} commits under capped mode; total history count was unavailable`;
 }
 
 function renderCapabilitySummary(

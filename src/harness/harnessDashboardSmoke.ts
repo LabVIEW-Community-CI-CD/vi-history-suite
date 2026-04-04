@@ -7,8 +7,14 @@ import {
   buildPairEtaAccuracySample,
   DASHBOARD_PAIR_ETA_ACCURACY_FILENAME,
   deriveEstimatedPairSeconds,
+  isDashboardPairEtaEligible,
   MultiReportDashboardEtaAccuracyRecord
 } from '../dashboard/dashboardEtaAccuracy';
+import {
+  attachDashboardEtaAccuracyContext,
+  buildDashboardLatestRunFilePath,
+  buildDashboardLatestRunRecord
+} from '../dashboard/dashboardLatestRun';
 import {
   buildAndPersistMultiReportDashboard,
   BuildMultiReportDashboardResult,
@@ -123,6 +129,7 @@ export async function runHarnessDashboardSmoke(
   const pairCommits = dashboardModel.commits.filter((commit) => Boolean(commit.previousHash));
   const pairSummaries: HarnessDashboardSmokePairSummary[] = [];
   const completedPairDurationsMs: number[] = [];
+  let etaEligiblePairCount = 0;
   const etaAccuracySamples: MultiReportDashboardEtaAccuracyRecord['samples'] = [];
   const nowMs = deps.nowMs ?? Date.now;
 
@@ -150,9 +157,22 @@ export async function runHarnessDashboardSmoke(
       true
     );
     const pairDurationMs = Math.max(0, nowMs() - pairStartMs);
-    completedPairDurationsMs.push(pairDurationMs);
-    const accuracySample =
+    const etaEligible = isDashboardPairEtaEligible(execution.record.runtimeExecution.reportExists);
+    if (etaEligible) {
+      etaEligiblePairCount += 1;
+      completedPairDurationsMs.push(pairDurationMs);
+    }
+    const actualPreparationSeconds = roundSeconds(pairDurationMs / 1000);
+    const signedEtaErrorSeconds =
       estimatedPairSeconds === undefined
+        ? undefined
+        : roundSeconds(actualPreparationSeconds - estimatedPairSeconds);
+    const absoluteEtaErrorSeconds =
+      signedEtaErrorSeconds === undefined
+        ? undefined
+        : roundSeconds(Math.abs(signedEtaErrorSeconds));
+    const accuracySample =
+      estimatedPairSeconds === undefined || !etaEligible
         ? undefined
         : buildPairEtaAccuracySample(
             index,
@@ -180,14 +200,16 @@ export async function runHarnessDashboardSmoke(
       metadataFilePath:
         execution.archivedSourceRecord?.archivePlan.metadataFilePath ?? execution.metadataFilePath,
       sourceRecordFilePath: execution.archivedSourceRecord?.archivePlan.sourceRecordFilePath,
-      actualPreparationSeconds: roundSeconds(pairDurationMs / 1000),
-      estimatedPreparationSeconds: accuracySample?.estimatedPairSeconds,
-      absoluteEtaErrorSeconds: accuracySample?.absoluteErrorSeconds,
-      signedEtaErrorSeconds: accuracySample?.signedErrorSeconds
+      actualPreparationSeconds,
+      estimatedPreparationSeconds:
+        estimatedPairSeconds === undefined ? undefined : roundSeconds(estimatedPairSeconds),
+      absoluteEtaErrorSeconds,
+      signedEtaErrorSeconds
     });
   }
   const etaAccuracyRecord = buildDashboardPairEtaAccuracyRecord(
     pairSummaries.length,
+    etaEligiblePairCount,
     etaAccuracySamples,
     nowMs
   );
@@ -197,20 +219,48 @@ export async function runHarnessDashboardSmoke(
     storageRoot,
     dashboardModel
   );
-  let dashboardEtaAccuracyFilePath: string | undefined;
-  if (etaAccuracyRecord) {
-    dashboardEtaAccuracyFilePath = path.join(
-      dashboard.record.artifactPlan.dashboardDirectory,
-      DASHBOARD_PAIR_ETA_ACCURACY_FILENAME
-    );
-    await (deps.mkdir ?? fs.mkdir)(dashboard.record.artifactPlan.dashboardDirectory, {
-      recursive: true
-    });
+  const dashboardEtaAccuracyFilePath = etaAccuracyRecord
+    ? path.join(
+        dashboard.record.artifactPlan.dashboardDirectory,
+        DASHBOARD_PAIR_ETA_ACCURACY_FILENAME
+      )
+    : undefined;
+  const etaAccuracyRecordWithContext = attachDashboardEtaAccuracyContext(etaAccuracyRecord, {
+    source: 'harness-dashboard-smoke',
+    workspaceStorageRoot: storageRoot,
+    repositoryName: dashboard.record.repositoryName,
+    repositoryRoot: dashboard.record.repositoryRoot,
+    relativePath: dashboard.record.relativePath,
+    signature: dashboard.record.signature,
+    dashboardGeneratedAt: dashboard.record.generatedAt,
+    dashboardDirectory: dashboard.record.artifactPlan.dashboardDirectory,
+    dashboardJsonFilePath: dashboard.jsonFilePath,
+    dashboardHtmlFilePath: dashboard.htmlFilePath,
+    etaAccuracyFilePath: dashboardEtaAccuracyFilePath
+  });
+  await (deps.mkdir ?? fs.mkdir)(dashboard.record.artifactPlan.dashboardDirectory, {
+    recursive: true
+  });
+  if (etaAccuracyRecordWithContext && dashboardEtaAccuracyFilePath) {
     await (deps.writeFile ?? fs.writeFile)(
       dashboardEtaAccuracyFilePath,
-      JSON.stringify(etaAccuracyRecord, null, 2)
+      JSON.stringify(etaAccuracyRecordWithContext, null, 2)
     );
   }
+  await (deps.writeFile ?? fs.writeFile)(
+    buildDashboardLatestRunFilePath(storageRoot),
+    JSON.stringify(
+      buildDashboardLatestRunRecord({
+        source: 'harness-dashboard-smoke',
+        workspaceStorageRoot: storageRoot,
+        dashboard,
+        etaAccuracyRecord: etaAccuracyRecordWithContext,
+        recordedAt: (deps.now ?? defaultNow)()
+      }),
+      null,
+      2
+    )
+  );
   const report: HarnessDashboardSmokeReport = {
     harnessId: definition.id,
     repositoryUrl: definition.repositoryUrl,
@@ -233,7 +283,7 @@ export async function runHarnessDashboardSmoke(
     dashboardDetailItemCount: dashboard.record.summary.detailItemCount,
     dashboardProviderSummaries: dashboard.record.summary.providerSummaries,
     dashboardEtaAccuracyFilePath,
-    dashboardEtaAccuracyRecord: etaAccuracyRecord,
+    dashboardEtaAccuracyRecord: etaAccuracyRecordWithContext,
     pairSummaries
   };
 
@@ -401,9 +451,11 @@ function formatHarnessDashboardEtaAccuracySummary(
     return 'not-retained';
   }
   if (record.measuredPairCount <= 0) {
-    return `not-yet-measurable (${record.preparedPairCount} prepared pair(s))`;
+    return `not-yet-measurable (${record.etaEligiblePairCount} eta-eligible pair(s)${
+      record.excludedPairCount > 0 ? `, ${record.excludedPairCount} excluded` : ''
+    })`;
   }
-  return `measured=${record.measuredPairCount}/${record.preparedPairCount} mean-abs=${formatOptionalSeconds(
+  return `measured=${record.measuredPairCount}/${record.etaEligiblePairCount} mean-abs=${formatOptionalSeconds(
     record.meanAbsoluteErrorSeconds
   )} max-abs=${formatOptionalSeconds(
     record.maxAbsoluteErrorSeconds
@@ -411,7 +463,7 @@ function formatHarnessDashboardEtaAccuracySummary(
     record.meanAbsolutePercentageError === undefined
       ? 'n/a'
       : `${Math.round(record.meanAbsolutePercentageError)}%`
-  }`;
+  }${record.excludedPairCount > 0 ? ` excluded=${record.excludedPairCount}` : ''}`;
 }
 
 function roundSeconds(value: number): number {

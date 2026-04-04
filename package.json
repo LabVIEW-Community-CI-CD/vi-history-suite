@@ -83,12 +83,21 @@
           "maximum": 16,
           "description": "Maximum concurrent eligibility checks during repository indexing."
         },
+        "viHistorySuite.historyWindowMode": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "capped"
+          ],
+          "default": "auto",
+          "description": "How the VI History panel chooses its retained commit window. Auto loads the full file history when it fits within the automatic safety ceiling; capped uses the explicit maxHistoryEntries limit."
+        },
         "viHistorySuite.maxHistoryEntries": {
           "type": "number",
           "default": 100,
           "minimum": 2,
-          "maximum": 500,
-          "description": "Maximum number of history entries to show in the VI History panel."
+          "maximum": 5000,
+          "description": "Explicit retained-commit ceiling when historyWindowMode is capped."
         },
         "viHistorySuite.lvComparePath": {
           "type": "string",
@@ -133,6 +142,8 @@
     "docs:bundle": "node scripts/syncBundledDocs.js",
     "docs:gate": "node scripts/run-docs-gate.js",
     "docs:gate:core": "node scripts/run-docs-gate.js --skip-links",
+    "dashboard:latest": "node scripts/printLatestDashboardRun.js",
+    "dashboard:latest:json": "node scripts/printLatestDashboardRun.js --json",
     "docs:workbench:build": "docker build -f docker/docs-authoring/Dockerfile -t vi-history-suite-docs-authoring:local .",
     "docs:workbench:gate": "docker run --rm -v \"$PWD\":/workspace -w /workspace vi-history-suite-docs-authoring:local npm run docs:gate",
     "docs:workbench:shell": "docker run --rm -it -v \"$PWD\":/workspace -w /workspace vi-history-suite-docs-authoring:local bash",

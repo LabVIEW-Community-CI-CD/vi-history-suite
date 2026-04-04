@@ -52,6 +52,7 @@ function createMockPanel(title: string) {
 }
 
 vi.mock('vscode', () => ({
+  version: '1.101.0',
   window: {
     createWebviewPanel: createWebviewPanelMock,
     showWarningMessage: showWarningMessageMock
@@ -699,7 +700,8 @@ describe('multiReportDashboardAction', () => {
         readArchivedComparisonReportSourceRecord,
         pathExists,
         writeFile,
-        now
+        now,
+        getFileHistoryCount: vi.fn().mockResolvedValue(240)
       }
     );
 
@@ -767,16 +769,19 @@ describe('multiReportDashboardAction', () => {
           increment: 20
         },
         {
-          message:
-            'Preparing dashboard pair 2/2; est. 0m 4s left: Executing NI comparison-report runtime.',
-          increment: 20
-        },
-        {
           message: 'Opening VI Review Dashboard.',
           increment: 15
         }
       ])
     );
+    expect(
+      progressUpdates.some(
+        (update) =>
+          update.increment === 20 &&
+          update.message.startsWith('Preparing dashboard pair 2/2; est. ') &&
+          update.message.endsWith('Executing NI comparison-report runtime.')
+      )
+    ).toBe(true);
     expect(
       progressUpdates.some((update) =>
         update.message.includes(
@@ -809,10 +814,11 @@ describe('multiReportDashboardAction', () => {
       'Refresh outcomes: 2 generated reports.'
     );
     expect(openedPanel.webview.html).toContain('data-testid="dashboard-eta-accuracy-summary"');
-    expect(openedPanel.webview.html).toContain('measured=1/2 prepared pair(s)');
-    expect(openedPanel.webview.html).toContain('mean-abs-error=0m 1s');
-    expect(openedPanel.webview.html).toContain('mean-bias=+0m 1s');
-    expect(openedPanel.webview.html).toContain('current-session prepared pairs only');
+    expect(openedPanel.webview.html).toContain('measured=1/2 eta-eligible pair(s)');
+    expect(openedPanel.webview.html).toContain('prepared=2 pair(s)');
+    expect(openedPanel.webview.html).toContain('mean-abs-error=0m 0s');
+    expect(openedPanel.webview.html).toContain('mean-bias=+0m 0s');
+    expect(openedPanel.webview.html).toContain('current-session generated-report pairs only');
     const etaAccuracyWriteCall = writeFile.mock.calls.find(
       ([filePath]) =>
         filePath ===
@@ -823,66 +829,171 @@ describe('multiReportDashboardAction', () => {
     expect(etaAccuracyRecord).toMatchObject({
       stage: 'pair-preparation',
       preparedPairCount: 2,
+      etaEligiblePairCount: 2,
       measuredPairCount: 1,
       unmeasuredPairCount: 1,
-      meanAbsoluteErrorSeconds: 1,
-      maxAbsoluteErrorSeconds: 1,
-      meanSignedErrorSeconds: 1
+      excludedPairCount: 0,
+      meanAbsoluteErrorSeconds: 0,
+      maxAbsoluteErrorSeconds: 0,
+      meanSignedErrorSeconds: 0
     });
-    expect(etaAccuracyRecord.meanAbsolutePercentageError).toBeCloseTo(22.222, 3);
+    expect(etaAccuracyRecord.context).toMatchObject({
+      source: 'vscode-dashboard-action',
+      workspaceStorageRoot: '/workspace/.storage',
+      repositoryName: 'repo',
+      relativePath: 'foo.vi',
+      dashboardJsonFilePath:
+        '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.json'
+    });
+    expect(etaAccuracyRecord.meanAbsolutePercentageError).toBeUndefined();
     expect(etaAccuracyRecord.samples).toEqual([
       expect.objectContaining({
         pairOrdinal: 2,
         pairCount: 2,
-        estimatedPairSeconds: 3.5,
-        actualPairSeconds: 4.5,
-        absoluteErrorSeconds: 1,
-        signedErrorSeconds: 1
+        estimatedPairSeconds: 0,
+        actualPairSeconds: 0,
+        absoluteErrorSeconds: 0,
+        signedErrorSeconds: 0
       })
     ]);
+    const latestRunWriteCall = writeFile.mock.calls
+      .filter(([filePath]) => filePath === '/workspace/.storage/dashboards/latest-dashboard-run.json')
+      .at(-1);
+    expect(latestRunWriteCall).toBeTruthy();
+    const latestRunRecord = JSON.parse(String(latestRunWriteCall?.[1]));
+    expect(latestRunRecord).toMatchObject({
+      source: 'vscode-dashboard-action',
+      workspaceStorageRoot: '/workspace/.storage',
+      artifactPaths: {
+        dashboardJsonFilePath:
+          '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.json',
+        etaAccuracyFilePath:
+          '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard-pair-eta-accuracy.json'
+      },
+      dashboard: {
+        repositoryName: 'repo',
+        relativePath: 'foo.vi'
+      },
+      experiment: {
+        configuration: {
+          strictRsrcHeader: false,
+          historyWindowMode: 'auto',
+          maxHistoryEntries: 100,
+          effectiveHistoryEntryCeiling: 1000,
+          preferBitness: 'auto',
+          windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
+          labviewCliPathConfigured: false,
+          labviewExePathConfigured: false,
+          lvComparePathConfigured: false
+        },
+        historyWindow: {
+          loadedCommitCount: 3,
+          loadedPairCount: 2,
+          configuredMaxHistoryEntries: 100,
+          effectiveHistoryEntryCeiling: 1000,
+          totalCommitCount: 240,
+          historyTruncated: true,
+          loadedFractionOfTotal: 0.013
+        },
+        timings: {
+          totalDurationMs: expect.any(Number),
+          pairsNeedingEvidenceScanDurationMs: expect.any(Number),
+          evidencePreparationDurationMs: expect.any(Number),
+          dashboardBuildDurationMs: expect.any(Number),
+          dashboardOpenDurationMs: expect.any(Number)
+        }
+      }
+    });
+    expect(latestRunRecord.experiment.progress.eventCount).toBeGreaterThanOrEqual(6);
   });
 
   it('surfaces blocked, failed, no-generated, and missing-archive refresh outcomes during dashboard pair preparation', async () => {
     const progressUpdates: Array<{ message: string; increment?: number }> = [];
+    const nowValues = [
+      1_000,
+      11_000,
+      12_000,
+      13_000,
+      14_000,
+      14_100,
+      15_000,
+      15_100,
+      16_000,
+      26_000,
+      26_000,
+      26_000
+    ];
+    const now = vi.fn(() => nowValues.shift() ?? 26_000);
+    const pathExists = vi.fn().mockResolvedValue(true);
     const readArchivedComparisonReportSourceRecord = vi.fn().mockResolvedValue(undefined);
     const writeFile = vi.fn().mockResolvedValue(undefined);
     const ensureComparisonReportEvidence = vi
       .fn()
-      .mockResolvedValueOnce({
-        outcome: 'retained-comparison-report-evidence',
-        reportStatus: 'ready-for-runtime',
-        runtimeExecutionState: 'succeeded',
-        generatedReportExists: true
+      .mockImplementationOnce(async ({ reportProgress }) => {
+        await reportProgress?.({
+          message: 'Executing NI comparison-report runtime.',
+          increment: 95
+        });
+        return {
+          outcome: 'retained-comparison-report-evidence',
+          reportStatus: 'ready-for-runtime',
+          runtimeExecutionState: 'succeeded',
+          generatedReportExists: true
+        };
       })
-      .mockResolvedValueOnce({
-        outcome: 'retained-comparison-report-evidence',
-        reportStatus: 'blocked-runtime',
-        runtimeExecutionState: 'not-available',
-        blockedReason: 'runtime-provider-unavailable',
-        runtimeDiagnosticReason: 'runtime-provider-unavailable',
-        generatedReportExists: false
+      .mockImplementationOnce(async ({ reportProgress }) => {
+        await reportProgress?.({
+          message: 'Executing NI comparison-report runtime.',
+          increment: 95
+        });
+        return {
+          outcome: 'retained-comparison-report-evidence',
+          reportStatus: 'blocked-runtime',
+          runtimeExecutionState: 'not-available',
+          blockedReason: 'runtime-provider-unavailable',
+          runtimeDiagnosticReason: 'runtime-provider-unavailable',
+          generatedReportExists: false
+        };
       })
-      .mockResolvedValueOnce({
-        outcome: 'retained-comparison-report-evidence',
-        reportStatus: 'ready-for-runtime',
-        runtimeExecutionState: 'failed',
-        runtimeFailureReason: 'command-exited-nonzero',
-        runtimeDiagnosticReason: 'command-exited-nonzero',
-        generatedReportExists: false
+      .mockImplementationOnce(async ({ reportProgress }) => {
+        await reportProgress?.({
+          message: 'Executing NI comparison-report runtime.',
+          increment: 95
+        });
+        return {
+          outcome: 'retained-comparison-report-evidence',
+          reportStatus: 'ready-for-runtime',
+          runtimeExecutionState: 'failed',
+          runtimeFailureReason: 'command-exited-nonzero',
+          runtimeDiagnosticReason: 'command-exited-nonzero',
+          generatedReportExists: false
+        };
       })
-      .mockResolvedValueOnce({
-        outcome: 'retained-comparison-report-evidence',
-        reportStatus: 'ready-for-runtime',
-        runtimeExecutionState: 'not-run',
-        generatedReportExists: false
+      .mockImplementationOnce(async ({ reportProgress }) => {
+        await reportProgress?.({
+          message: 'Executing NI comparison-report runtime.',
+          increment: 95
+        });
+        return {
+          outcome: 'retained-comparison-report-evidence',
+          reportStatus: 'ready-for-runtime',
+          runtimeExecutionState: 'not-run',
+          generatedReportExists: false
+        };
       })
-      .mockResolvedValueOnce({
-        outcome: 'retained-comparison-report-evidence',
-        reportStatus: 'ready-for-runtime',
-        runtimeExecutionState: 'succeeded',
-        generatedReportExists: true,
-        retainedArchiveAvailable: false,
-        archiveFailureReason: 'retained-archive-write-failed'
+      .mockImplementationOnce(async ({ reportProgress }) => {
+        await reportProgress?.({
+          message: 'Executing NI comparison-report runtime.',
+          increment: 95
+        });
+        return {
+          outcome: 'retained-comparison-report-evidence',
+          reportStatus: 'ready-for-runtime',
+          runtimeExecutionState: 'succeeded',
+          generatedReportExists: true,
+          retainedArchiveAvailable: false,
+          archiveFailureReason: 'retained-archive-write-failed'
+        };
       });
     const buildDashboard = vi.fn().mockResolvedValue({
       record: {
@@ -950,7 +1061,9 @@ describe('multiReportDashboardAction', () => {
         buildDashboard,
         ensureComparisonReportEvidence,
         readArchivedComparisonReportSourceRecord,
-        writeFile
+        pathExists,
+        writeFile,
+        now
       }
     );
 
@@ -1014,6 +1127,12 @@ describe('multiReportDashboardAction', () => {
     expect(ensureComparisonReportEvidence).toHaveBeenCalledTimes(5);
     expect(
       progressUpdates.some((update) =>
+        update.message.startsWith('Preparing dashboard pair 3/5; est. ') &&
+        update.message.endsWith('Executing NI comparison-report runtime.')
+      )
+    ).toBe(true);
+    expect(
+      progressUpdates.some((update) =>
         update.message.includes(
           'Prepared dashboard pair 1/5: aaaaaaaa vs cccccccc (missing archive); retained generated comparison metadata is ready.'
         )
@@ -1055,9 +1174,28 @@ describe('multiReportDashboardAction', () => {
     expect(openedPanel.webview.html).toContain(
       'Refresh outcomes: 1 generated report, 1 blocked pair, 1 failed pair, 1 pair without a generated report, 1 pair without retained archive evidence.'
     );
+    expect(openedPanel.webview.html).toContain('measured=1/2 eta-eligible pair(s)');
+    expect(openedPanel.webview.html).toContain('excluded=3 blocked/failed/no-generated pair(s)');
     expect(openedPanel.webview.html).toContain(
       'Review the pair ledger or Open compare for runtime doctor details.'
     );
+    const etaAccuracyWriteCall = writeFile.mock.calls.find(
+      ([filePath]) =>
+        filePath ===
+        '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard-pair-eta-accuracy.json'
+    );
+    expect(etaAccuracyWriteCall).toBeTruthy();
+    const etaAccuracyRecord = JSON.parse(String(etaAccuracyWriteCall?.[1]));
+    expect(etaAccuracyRecord).toMatchObject({
+      preparedPairCount: 5,
+      etaEligiblePairCount: 2,
+      measuredPairCount: 1,
+      unmeasuredPairCount: 1,
+      excludedPairCount: 3,
+      meanAbsoluteErrorSeconds: 1,
+      maxAbsoluteErrorSeconds: 1,
+      meanSignedErrorSeconds: -1
+    });
   });
 
   it('surfaces explicit progress and dashboard guidance when pair refresh is unavailable in this build', async () => {

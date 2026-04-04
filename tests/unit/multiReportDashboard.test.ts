@@ -78,8 +78,10 @@ describe('buildAndPersistMultiReportDashboard', () => {
           recordedAt: '2026-04-03T05:06:08.000Z',
           stage: 'pair-preparation',
           preparedPairCount: 1,
+          etaEligiblePairCount: 1,
           measuredPairCount: 0,
           unmeasuredPairCount: 1,
+          excludedPairCount: 0,
           samples: []
         }
       }
@@ -87,6 +89,7 @@ describe('buildAndPersistMultiReportDashboard', () => {
 
     expect(html).toContain('data-testid="dashboard-eta-accuracy-summary"');
     expect(html).toContain('not yet measurable for this dashboard refresh');
+    expect(html).toContain('only 1 eta-eligible pair(s) produced generated comparison metadata');
     expect(html).toContain('Historical or already retained pairs are excluded.');
   });
 

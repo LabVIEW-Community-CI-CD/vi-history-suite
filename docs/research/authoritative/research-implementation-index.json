@@ -55,12 +55,21 @@
       "evidence": [
         "src/ui/historyPanel.ts",
         "src/commands/openViHistoryCommand.ts",
-        "src/ui/historyPanelTracker.ts"
+        "src/ui/historyPanelTracker.ts",
+        "src/reporting/comparisonReportAction.ts",
+        "src/docs/bundledDocumentationAction.ts",
+        "src/scenarios/reviewDecisionRecordAction.ts"
       ],
       "requirements": [
         "VHS-REQ-016",
-        "VHS-REQ-017",
-        "VHS-REQ-018"
+        "VHS-REQ-027",
+        "VHS-REQ-040",
+        "VHS-REQ-328",
+        "VHS-REQ-341",
+        "VHS-REQ-361",
+        "VHS-REQ-381",
+        "VHS-REQ-386",
+        "VHS-REQ-387"
       ],
       "nextMove": "sustain"
     },
@@ -150,6 +159,8 @@
       "status": "implemented-and-active",
       "evidence": [
         "src/dashboard/comparisonReportArchive.ts",
+        "src/dashboard/dashboardEtaAccuracy.ts",
+        "src/dashboard/dashboardLatestRun.ts",
         "src/dashboard/niComparisonReportParser.ts",
         "src/dashboard/multiReportDashboard.ts",
         "src/dashboard/multiReportDashboardAction.ts",
@@ -179,6 +190,13 @@
         "VHS-REQ-213",
         "VHS-REQ-214",
         "VHS-REQ-215",
+        "VHS-REQ-221",
+        "VHS-REQ-222",
+        "VHS-REQ-223",
+        "VHS-REQ-232",
+        "VHS-REQ-237",
+        "VHS-REQ-238",
+        "VHS-REQ-268",
         "VHS-REQ-295",
         "VHS-REQ-296",
         "VHS-REQ-297",
@@ -188,9 +206,29 @@
         "VHS-REQ-301",
         "VHS-REQ-302",
         "VHS-REQ-303",
-        "VHS-REQ-304"
+        "VHS-REQ-304",
+        "VHS-REQ-330",
+        "VHS-REQ-331",
+        "VHS-REQ-332",
+        "VHS-REQ-333",
+        "VHS-REQ-334",
+        "VHS-REQ-335",
+        "VHS-REQ-336",
+        "VHS-REQ-337",
+        "VHS-REQ-338",
+        "VHS-REQ-339",
+        "VHS-REQ-340",
+        "VHS-REQ-347",
+        "VHS-REQ-348",
+        "VHS-REQ-349",
+        "VHS-REQ-363",
+        "VHS-REQ-375",
+        "VHS-REQ-376",
+        "VHS-REQ-380",
+        "VHS-REQ-388",
+        "VHS-REQ-389"
       ],
-      "nextMove": "Sustain live dashboard proof while extending runtime-doctor UX, trust-aware refresh, and review-scenario decision support."
+      "nextMove": "Sustain live dashboard proof while validating high-history ETA behavior and future decision-support growth."
     },
     {
       "surface": "review-scenario-registry-and-human-decision-records",

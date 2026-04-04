@@ -37,6 +37,7 @@ describe('dashboardEtaAccuracy', () => {
 
     const record = buildDashboardPairEtaAccuracyRecord(
       3,
+      3,
       [
         sample,
         buildPairEtaAccuracySample(2, 4, 20, 16_000, () =>
@@ -50,8 +51,10 @@ describe('dashboardEtaAccuracy', () => {
       recordedAt: '2026-04-03T00:00:37.000Z',
       stage: 'pair-preparation',
       preparedPairCount: 3,
+      etaEligiblePairCount: 3,
       measuredPairCount: 2,
       unmeasuredPairCount: 1,
+      excludedPairCount: 0,
       meanAbsoluteErrorSeconds: 5,
       maxAbsoluteErrorSeconds: 6,
       meanSignedErrorSeconds: 1,
@@ -60,7 +63,7 @@ describe('dashboardEtaAccuracy', () => {
   });
 
   it('retains a not-yet-measurable record when pairs were prepared but none had an estimate yet', () => {
-    const record = buildDashboardPairEtaAccuracyRecord(1, [], () =>
+    const record = buildDashboardPairEtaAccuracyRecord(1, 1, [], () =>
       Date.parse('2026-04-03T00:00:00.000Z')
     );
 
@@ -68,13 +71,36 @@ describe('dashboardEtaAccuracy', () => {
       recordedAt: '2026-04-03T00:00:00.000Z',
       stage: 'pair-preparation',
       preparedPairCount: 1,
+      etaEligiblePairCount: 1,
       measuredPairCount: 0,
       unmeasuredPairCount: 1,
+      excludedPairCount: 0,
       meanAbsoluteErrorSeconds: undefined,
       maxAbsoluteErrorSeconds: undefined,
       meanSignedErrorSeconds: undefined,
       meanAbsolutePercentageError: undefined,
       samples: []
+    });
+  });
+
+  it('retains excluded prepared pairs outside the eta-eligible sample set', () => {
+    const record = buildDashboardPairEtaAccuracyRecord(
+      4,
+      2,
+      [
+        buildPairEtaAccuracySample(3, 4, 15, 18_000, () =>
+          Date.parse('2026-04-03T00:00:18.000Z')
+        )
+      ],
+      () => Date.parse('2026-04-03T00:00:18.000Z')
+    );
+
+    expect(record).toMatchObject({
+      preparedPairCount: 4,
+      etaEligiblePairCount: 2,
+      measuredPairCount: 1,
+      unmeasuredPairCount: 1,
+      excludedPairCount: 2
     });
   });
 });

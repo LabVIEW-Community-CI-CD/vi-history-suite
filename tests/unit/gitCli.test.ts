@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import {
   getFileCommitHashes,
+  getFileHistoryCount,
   getFileHistoryEntries,
   getRepoHead,
   getRepoRoot,
@@ -153,9 +154,11 @@ describe('gitCli parsing', () => {
     await runGit(['commit', '-m', 'Third revision'], repoRoot);
 
     const commitHashes = await getFileCommitHashes(repoRoot, 'nested\\history.vi', 2);
+    const historyCount = await getFileHistoryCount(repoRoot, 'nested\\history.vi');
     const historyEntries = await getFileHistoryEntries(repoRoot, 'nested\\history.vi', 3);
 
     expect(commitHashes).toHaveLength(2);
+    expect(historyCount).toBe(3);
     expect(commitHashes[0]).toMatch(/^[0-9a-f]{40}$/);
     expect(commitHashes[1]).toMatch(/^[0-9a-f]{40}$/);
     expect(historyEntries).toHaveLength(3);

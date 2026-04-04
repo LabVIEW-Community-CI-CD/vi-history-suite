@@ -82,10 +82,10 @@
   },
   {
     "id": "TRANCHE-010",
-    "title": "Public facade installer and Windows acceptance",
+    "title": "Public facade release kit and host-machine acceptance",
     "status": "active",
     "source": "author direction",
-    "summary": "After the first immutable SemVer VSIX release exists, turn the public GitHub facade repo into the installer, release, and support surface using a GitHub workflow-driven NSIS build lane backed by the Windows builder scaffold and a fresh Windows 11 VM acceptance lane where the installer bootstraps Visual Studio Code, Git, and Docker Desktop, prepares the pinned LabVIEW Windows container image, materializes the pinned `ni/labview-icon-editor` Git fixture with commit history, and then relies on Visual Studio Code CLI automation plus the manual right-click human gate.",
+    "summary": "After the first immutable SemVer VSIX release exists, turn the public GitHub facade repo into the public release-kit, setup, and support surface without publishing private requirements. The active lane publishes the exact VSIX, a public setup manifest, Windows and Linux setup adapters, checksums, and a pinned `ni/labview-icon-editor` fixture bundle with commit history. The default proof surface is the current Windows 11 host machine using setup adapters plus Visual Studio Code CLI automation and the manual right-click human gate. NSIS is retained only as optional legacy wrapper work, Docker is not part of the default public setup path, a future container image is the intended reproducible automation lane, and public GitHub issues are supplemental non-gating feedback.",
     "issues": [
       "ISSUE-0407"
     ]

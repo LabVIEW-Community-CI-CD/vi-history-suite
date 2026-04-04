@@ -4,6 +4,7 @@ import { detectViSignatureFromFsPath } from '../domain/viFile';
 import { ViSignature } from '../domain/viMagicCore';
 import {
   getFileCommitHashes,
+  getFileHistoryCount,
   getFileHistoryEntries,
   getRepoRoot,
   GitHistoryEntry,
@@ -23,6 +24,26 @@ export interface ViHistorySurfaceCapabilities {
   documentationAvailable?: boolean;
 }
 
+export type ViHistoryWindowMode = 'auto' | 'capped';
+
+export type ViHistoryWindowDecision =
+  | 'auto-full-history'
+  | 'auto-truncated-to-ceiling'
+  | 'auto-fallback-unknown-total'
+  | 'capped-full-history'
+  | 'capped-truncated-to-max'
+  | 'capped-fallback-unknown-total';
+
+export interface ViHistoryWindow {
+  mode: ViHistoryWindowMode;
+  configuredMaxEntries: number;
+  effectiveEntryCeiling: number;
+  loadedCommitCount: number;
+  totalCommitCount?: number;
+  truncated: boolean;
+  decision: ViHistoryWindowDecision;
+}
+
 export interface ViHistoryViewModel {
   repositoryName: string;
   repositoryRoot: string;
@@ -30,6 +51,7 @@ export interface ViHistoryViewModel {
   signature: ViSignature | 'unknown';
   eligible: boolean;
   commits: ViHistoryCommit[];
+  historyWindow?: ViHistoryWindow;
   surfaceCapabilities?: ViHistorySurfaceCapabilities;
 }
 
@@ -37,6 +59,8 @@ export interface ViHistoryModelOptions {
   repoRoot?: string;
   strictRsrcHeader?: boolean;
   historyLimit?: number;
+  configuredMaxHistoryEntries?: number;
+  historyWindowMode?: ViHistoryWindowMode;
 }
 
 export interface ViEligibilitySnapshot {
@@ -74,12 +98,55 @@ export async function loadViHistoryViewModelFromFsPath(
 ): Promise<ViHistoryViewModel> {
   const repositoryRoot = options.repoRoot ?? (await getRepoRoot(path.dirname(fsPath)));
   const relativePath = normalizeRelativeGitPath(path.relative(repositoryRoot, fsPath));
-  const historyLimit = options.historyLimit ?? 100;
+  const historyWindowMode = options.historyWindowMode ?? 'auto';
+  const effectiveEntryCeiling = Math.max(2, options.historyLimit ?? 100);
+  const configuredMaxEntries = Math.max(
+    2,
+    options.configuredMaxHistoryEntries ?? effectiveEntryCeiling
+  );
   const eligibility = await evaluateViEligibilityForFsPath(fsPath, {
     repoRoot: repositoryRoot,
     strictRsrcHeader: options.strictRsrcHeader
   });
-  const commits = await getFileHistoryEntries(repositoryRoot, relativePath, historyLimit);
+  let totalCommitCount: number | undefined;
+  try {
+    totalCommitCount = await getFileHistoryCount(repositoryRoot, relativePath);
+  } catch {
+    totalCommitCount = undefined;
+  }
+
+  const commits =
+    totalCommitCount === 0
+      ? []
+      : await getFileHistoryEntries(
+          repositoryRoot,
+          relativePath,
+          totalCommitCount === undefined
+            ? effectiveEntryCeiling
+            : Math.min(effectiveEntryCeiling, totalCommitCount)
+        );
+  const truncated =
+    totalCommitCount === undefined ? false : commits.length < totalCommitCount;
+  const historyWindow: ViHistoryWindow = {
+    mode: historyWindowMode,
+    configuredMaxEntries,
+    effectiveEntryCeiling,
+    loadedCommitCount: commits.length,
+    totalCommitCount,
+    truncated,
+    decision:
+      totalCommitCount === undefined
+        ? historyWindowMode === 'auto'
+          ? 'auto-fallback-unknown-total'
+          : 'capped-fallback-unknown-total'
+        : historyWindowMode === 'auto'
+          ? truncated
+            ? 'auto-truncated-to-ceiling'
+            : 'auto-full-history'
+          : truncated
+            ? 'capped-truncated-to-max'
+            : 'capped-full-history'
+  };
 
   return {
     repositoryName: path.basename(repositoryRoot),
@@ -90,6 +157,7 @@ export async function loadViHistoryViewModelFromFsPath(
     commits: commits.map((commit, index) => ({
       ...commit,
       previousHash: commits[index + 1]?.hash
-    }))
+    })),
+    historyWindow
   };
 }

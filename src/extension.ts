@@ -6,6 +6,7 @@ import { buildComparisonReportArchivePlanFromSelection } from './dashboard/compa
 import { createMultiReportDashboardAction } from './dashboard/multiReportDashboardAction';
 import { createBundledDocumentationAction } from './docs/bundledDocumentationAction';
 import { getBuiltInGitApi } from './git/gitApi';
+import { getFileHistoryCount } from './git/gitCli';
 import {
   EligibilityDebugSnapshot,
   ViEligibilityIndexer
@@ -13,11 +14,12 @@ import {
 import {
   createComparisonReportAction,
   createEnsureComparisonReportEvidenceAction,
+  readComparisonRuntimeSettings,
   createOpenRetainedComparisonReportAction
 } from './reporting/comparisonReportAction';
 import { createReviewDecisionRecordAction } from './scenarios/reviewDecisionRecordAction';
 import { ViHistoryViewModel } from './services/viHistoryModel';
-import { ViHistoryService } from './services/viHistoryService';
+import { getViHistoryServiceSettings, ViHistoryService } from './services/viHistoryService';
 import {
   DashboardArtifactActionSummary,
   OpenedDocumentationPanelSummary,
@@ -65,7 +67,10 @@ export async function activate(
   const multiReportDashboardAction = createMultiReportDashboardAction(
     context,
     {
-      ensureComparisonReportEvidence: ensureComparisonReportEvidenceAction
+      ensureComparisonReportEvidence: ensureComparisonReportEvidenceAction,
+      getHistoryServiceSettings: getViHistoryServiceSettings,
+      getRuntimeSettings: readComparisonRuntimeSettings,
+      getFileHistoryCount
     },
     panelTracker
   );

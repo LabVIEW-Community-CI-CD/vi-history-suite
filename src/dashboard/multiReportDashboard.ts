@@ -357,7 +357,12 @@ export function renderMultiReportDashboardHtml(
           <strong>Pair ETA accuracy this refresh:</strong>
           measured=${escapeHtml(
             String(options.etaAccuracyRecord.measuredPairCount)
-          )}/${escapeHtml(String(options.etaAccuracyRecord.preparedPairCount))} prepared pair(s) ·
+          )}/${escapeHtml(String(options.etaAccuracyRecord.etaEligiblePairCount))} eta-eligible pair(s) ·
+          prepared=${escapeHtml(String(options.etaAccuracyRecord.preparedPairCount))} pair(s)${options.etaAccuracyRecord.excludedPairCount > 0
+            ? ` · excluded=${escapeHtml(
+                String(options.etaAccuracyRecord.excludedPairCount)
+              )} blocked/failed/no-generated pair(s)`
+            : ''} ·
           mean-abs-error=${escapeHtml(
             formatDurationMinutesSeconds(options.etaAccuracyRecord.meanAbsoluteErrorSeconds ?? 0)
           )} ·
@@ -371,13 +376,17 @@ export function renderMultiReportDashboardHtml(
                 `${Math.round(options.etaAccuracyRecord.meanAbsolutePercentageError)}%`
               )}`
             : ''} ·
-          current-session prepared pairs only
+          current-session generated-report pairs only
         </div>`
       : `<div class="note" data-testid="dashboard-eta-accuracy-summary">
           <strong>Pair ETA accuracy this refresh:</strong>
           not yet measurable for this dashboard refresh because only ${escapeHtml(
-            String(options.etaAccuracyRecord.preparedPairCount)
-          )} pair(s) were prepared in the current session. Historical or already retained pairs are excluded.
+            String(options.etaAccuracyRecord.etaEligiblePairCount)
+          )} eta-eligible pair(s) produced generated comparison metadata in the current session${options.etaAccuracyRecord.excludedPairCount > 0
+            ? `, and ${escapeHtml(
+                String(options.etaAccuracyRecord.excludedPairCount)
+              )} blocked/failed/no-generated pair(s) were excluded`
+            : ''}. Historical or already retained pairs are excluded.
         </div>`
     : '';
   const preparationSummaryHtml = options.preparationSummary

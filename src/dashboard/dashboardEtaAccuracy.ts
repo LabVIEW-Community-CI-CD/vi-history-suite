@@ -1,5 +1,19 @@
 export const DASHBOARD_PAIR_ETA_ACCURACY_FILENAME = 'dashboard-pair-eta-accuracy.json';
 
+export interface MultiReportDashboardEtaAccuracyContext {
+  source: 'vscode-dashboard-action' | 'harness-dashboard-smoke';
+  workspaceStorageRoot: string;
+  repositoryName: string;
+  repositoryRoot: string;
+  relativePath: string;
+  signature: string;
+  dashboardGeneratedAt: string;
+  dashboardDirectory: string;
+  dashboardJsonFilePath: string;
+  dashboardHtmlFilePath: string;
+  etaAccuracyFilePath?: string;
+}
+
 export interface MultiReportDashboardEtaAccuracySample {
   pairOrdinal: number;
   pairCount: number;
@@ -14,13 +28,20 @@ export interface MultiReportDashboardEtaAccuracyRecord {
   recordedAt: string;
   stage: 'pair-preparation';
   preparedPairCount: number;
+  etaEligiblePairCount: number;
   measuredPairCount: number;
   unmeasuredPairCount: number;
+  excludedPairCount: number;
   meanAbsoluteErrorSeconds?: number;
   maxAbsoluteErrorSeconds?: number;
   meanSignedErrorSeconds?: number;
   meanAbsolutePercentageError?: number;
+  context?: MultiReportDashboardEtaAccuracyContext;
   samples: MultiReportDashboardEtaAccuracySample[];
+}
+
+export function isDashboardPairEtaEligible(generatedReportExists: boolean | undefined): boolean {
+  return generatedReportExists === true;
 }
 
 export function deriveEstimatedPairSeconds(
@@ -92,14 +113,20 @@ export function buildPairEtaAccuracySample(
 
 export function buildDashboardPairEtaAccuracyRecord(
   preparedPairCount: number,
+  etaEligiblePairCount: number,
   samples: MultiReportDashboardEtaAccuracySample[],
   now: () => number
 ): MultiReportDashboardEtaAccuracyRecord | undefined {
   if (preparedPairCount <= 0) {
     return undefined;
   }
-  const measuredPairCount = samples.length;
-  const unmeasuredPairCount = Math.max(0, preparedPairCount - measuredPairCount);
+  const boundedEtaEligiblePairCount = Math.max(
+    0,
+    Math.min(preparedPairCount, etaEligiblePairCount)
+  );
+  const measuredPairCount = Math.min(samples.length, boundedEtaEligiblePairCount);
+  const unmeasuredPairCount = Math.max(0, boundedEtaEligiblePairCount - measuredPairCount);
+  const excludedPairCount = Math.max(0, preparedPairCount - boundedEtaEligiblePairCount);
   const absoluteErrorSeconds = samples.map((sample) => sample.absoluteErrorSeconds);
   const signedErrorSeconds = samples.map((sample) => sample.signedErrorSeconds);
   const percentageErrors = samples
@@ -110,8 +137,10 @@ export function buildDashboardPairEtaAccuracyRecord(
     recordedAt: new Date(now()).toISOString(),
     stage: 'pair-preparation',
     preparedPairCount,
+    etaEligiblePairCount: boundedEtaEligiblePairCount,
     measuredPairCount,
     unmeasuredPairCount,
+    excludedPairCount,
     meanAbsoluteErrorSeconds:
       absoluteErrorSeconds.length > 0
         ? roundSeconds(meanOf(absoluteErrorSeconds))

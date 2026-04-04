@@ -5,19 +5,33 @@ import { GitApi } from '../git/gitApi';
 import { getRepoRoot } from '../git/gitCli';
 import {
   loadViHistoryViewModelFromFsPath,
-  ViHistoryViewModel
+  ViHistoryViewModel,
+  ViHistoryWindowMode
 } from './viHistoryModel';
+
+export const DEFAULT_MAX_HISTORY_ENTRIES = 100;
+export const AUTO_HISTORY_ENTRY_CEILING = 1000;
 
 export interface ViHistoryServiceSettings {
   strictRsrcHeader: boolean;
+  historyWindowMode: ViHistoryWindowMode;
+  maxHistoryEntries: number;
   historyLimit: number;
 }
 
 export function getViHistoryServiceSettings(): ViHistoryServiceSettings {
   const configuration = vscode.workspace.getConfiguration('viHistorySuite');
+  const historyWindowMode = configuration.get<ViHistoryWindowMode>('historyWindowMode', 'auto');
+  const maxHistoryEntries = Math.max(
+    2,
+    configuration.get<number>('maxHistoryEntries', DEFAULT_MAX_HISTORY_ENTRIES)
+  );
   return {
     strictRsrcHeader: configuration.get<boolean>('strictRsrcHeader', false),
-    historyLimit: configuration.get<number>('maxHistoryEntries', 100)
+    historyWindowMode,
+    maxHistoryEntries,
+    historyLimit:
+      historyWindowMode === 'capped' ? maxHistoryEntries : AUTO_HISTORY_ENTRY_CEILING
   };
 }
 
@@ -40,7 +54,9 @@ export class ViHistoryService {
     return loadViHistoryViewModelFromFsPath(uri.fsPath, {
       repoRoot: await this.resolveRepositoryRoot(uri),
       strictRsrcHeader: settings.strictRsrcHeader,
-      historyLimit: settings.historyLimit
+      historyLimit: settings.historyLimit,
+      configuredMaxHistoryEntries: settings.maxHistoryEntries,
+      historyWindowMode: settings.historyWindowMode
     });
   }
 

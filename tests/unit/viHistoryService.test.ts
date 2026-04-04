@@ -37,6 +37,7 @@ vi.mock('../../src/services/viHistoryModel', async () => {
 });
 
 import {
+  AUTO_HISTORY_ENTRY_CEILING,
   getViHistoryServiceSettings,
   selectMostSpecificGitRepositoryRoot,
   ViHistoryService
@@ -50,6 +51,10 @@ describe('viHistoryService', () => {
     workspaceGetMock.mockImplementation((key: string, fallback: unknown) => {
       if (key === 'strictRsrcHeader') {
         return true;
+      }
+
+      if (key === 'historyWindowMode') {
+        return 'auto';
       }
 
       if (key === 'maxHistoryEntries') {
@@ -97,7 +102,9 @@ describe('viHistoryService', () => {
       {
         repoRoot: '/workspace/repo-a/nested',
         strictRsrcHeader: true,
-        historyLimit: 25
+        historyLimit: AUTO_HISTORY_ENTRY_CEILING,
+        configuredMaxHistoryEntries: 25,
+        historyWindowMode: 'auto'
       }
     );
     expect(getRepoRootMock).not.toHaveBeenCalled();
@@ -129,9 +136,33 @@ describe('viHistoryService', () => {
       {
         repoRoot: '/workspace/fallback-root',
         strictRsrcHeader: true,
-        historyLimit: 25
+        historyLimit: AUTO_HISTORY_ENTRY_CEILING,
+        configuredMaxHistoryEntries: 25,
+        historyWindowMode: 'auto'
       }
     );
+  });
+
+  it('uses the explicit capped history window when configured', () => {
+    workspaceGetMock.mockImplementation((key: string, fallback: unknown) => {
+      if (key === 'strictRsrcHeader') {
+        return true;
+      }
+      if (key === 'historyWindowMode') {
+        return 'capped';
+      }
+      if (key === 'maxHistoryEntries') {
+        return 25;
+      }
+      return fallback;
+    });
+
+    expect(getViHistoryServiceSettings()).toEqual({
+      strictRsrcHeader: true,
+      historyWindowMode: 'capped',
+      maxHistoryEntries: 25,
+      historyLimit: 25
+    });
   });
 
   it('delegates Git URI translation only when a Git API is available', () => {
@@ -154,7 +185,9 @@ describe('viHistoryService', () => {
   it('reads the governed history-service settings from workspace configuration', () => {
     expect(getViHistoryServiceSettings()).toEqual({
       strictRsrcHeader: true,
-      historyLimit: 25
+      historyWindowMode: 'auto',
+      maxHistoryEntries: 25,
+      historyLimit: AUTO_HISTORY_ENTRY_CEILING
     });
   });
 });

@@ -68,6 +68,8 @@ describe('viHistoryModel', () => {
     const viewModel = await loadViHistoryViewModelFromFsPath(targetPath, {
       repoRoot,
       historyLimit: 10,
+      configuredMaxHistoryEntries: 10,
+      historyWindowMode: 'capped',
       strictRsrcHeader: true
     });
 
@@ -77,6 +79,15 @@ describe('viHistoryModel', () => {
     expect(viewModel.commits).toHaveLength(2);
     expect(viewModel.commits[0]?.subject).toBe('Update VI behavior');
     expect(viewModel.commits[0]?.previousHash).toBe(viewModel.commits[1]?.hash);
+    expect(viewModel.historyWindow).toEqual({
+      mode: 'capped',
+      configuredMaxEntries: 10,
+      effectiveEntryCeiling: 10,
+      loadedCommitCount: 2,
+      totalCommitCount: 2,
+      truncated: false,
+      decision: 'capped-full-history'
+    });
   });
 
   it('reports ineligible state when a VI has fewer than two commits', async () => {
@@ -137,5 +148,49 @@ describe('viHistoryModel', () => {
     expect(viewModel.commits[0]?.previousHash).toBe(viewModel.commits[1]?.hash);
     expect(viewModel.commits[1]?.previousHash).toBe(viewModel.commits[2]?.hash);
     expect(viewModel.commits[2]?.previousHash).toBeUndefined();
+    expect(viewModel.historyWindow).toEqual({
+      mode: 'auto',
+      configuredMaxEntries: 100,
+      effectiveEntryCeiling: 100,
+      loadedCommitCount: 3,
+      totalCommitCount: 3,
+      truncated: false,
+      decision: 'auto-full-history'
+    });
+  });
+
+  it('retains a truncated auto history window when the effective ceiling is smaller than the known file history', async () => {
+    const repoRoot = await createTempGitRepo();
+    const targetPath = path.join(repoRoot, 'nested', 'truncated-history.weird');
+
+    await writeViFile(targetPath, 'first');
+    await commitAll(repoRoot, 'Add initial VI');
+    await writeViFile(targetPath, 'second');
+    await commitAll(repoRoot, 'Update VI behavior');
+    await writeViFile(targetPath, 'third');
+    await commitAll(repoRoot, 'Refine VI behavior');
+    await writeViFile(targetPath, 'fourth');
+    await commitAll(repoRoot, 'Finalize VI behavior');
+
+    const viewModel = await loadViHistoryViewModelFromFsPath(targetPath, {
+      repoRoot,
+      historyLimit: 3,
+      configuredMaxHistoryEntries: 25,
+      historyWindowMode: 'auto',
+      strictRsrcHeader: true
+    });
+
+    expect(viewModel.commits).toHaveLength(3);
+    expect(viewModel.commits[0]?.subject).toBe('Finalize VI behavior');
+    expect(viewModel.commits[2]?.subject).toBe('Update VI behavior');
+    expect(viewModel.historyWindow).toEqual({
+      mode: 'auto',
+      configuredMaxEntries: 25,
+      effectiveEntryCeiling: 3,
+      loadedCommitCount: 3,
+      totalCommitCount: 4,
+      truncated: true,
+      decision: 'auto-truncated-to-ceiling'
+    });
   });
 });

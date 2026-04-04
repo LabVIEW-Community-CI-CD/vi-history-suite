@@ -29,7 +29,7 @@ Read these in order:
 13. [Documentation Package Workbench](../documentation-workbench.md)
 14. [program-repo-jump.md](./program-repo-jump.md)
 15. [PROGRAM-0001: Next Product Layer](./execution-programs/PROGRAM-0001-next-product-layer.md)
-16. [PROGRAM-0002: Public Facade Installer And Windows Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
+16. [PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
 
 ## Authority Stack
 
@@ -61,25 +61,25 @@ Current control-plane surfaces:
 14. [program-repo-jump.md](./program-repo-jump.md)
 15. [PROGRAM-0001: Next Product Layer](./execution-programs/PROGRAM-0001-next-product-layer.md)
 16. [Fast VS Code Loop](../dev-fast-loop.md)
-17. [PROGRAM-0002: Public Facade Installer And Windows Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
+17. [PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
 
 ## Committed Capability State
 
 | Capability Surface | Status | Evidence | Governing Queue |
 | --- | --- | --- | --- |
 | Content-detected VI eligibility and menu gating | implemented | `package.json`; `src/domain/viMagicCore.ts`; `src/indexing/viEligibilityIndexer.ts`; `VHS-REQ-001..015` | sustain |
-| Review-oriented history panel and actions | implemented with stateful retained-pair actions so first-use rows show `Generate compare`, retained rows show `Refresh compare`, `Open compare` is enabled only when retained evidence exists, comparison view opening honors cancellation before panel open, retained comparison opening from `Diff prev` uses retained-open-specific wording, unreadable retained generated-report HTML now falls back to the retained packet with an explicit displayed-evidence status line, malformed, mismatched, unusable, or render-contract-invalid retained archive records now fail closed with stable `Refresh compare` guidance, compare generation now preserves the current compare view while refusing to flip the row into retained-open state when governed archive persistence was unavailable or failed, the panel exposes `Open docs` into the packaged bundled documentation surface, stale bundled-doc page ids now fall back to the packaged overview page when the installed bundle is available, and the rendered action controls plus the installed action-surface packet now stay truthful to which optional compare/dashboard/docs/decision flows are actually wired in the current build | `src/ui/historyPanel.ts`; `src/commands/openViHistoryCommand.ts`; `src/reporting/comparisonReportAction.ts`; `src/docs/bundledDocumentationAction.ts`; `src/extension.ts`; `VHS-REQ-016..040`; `VHS-REQ-328..329`; `VHS-REQ-361..382`; `VHS-REQ-386` | sustain |
+| Review-oriented history panel and actions | implemented with stateful retained-pair actions so first-use rows show `Generate compare`, retained rows show `Refresh compare`, `Open compare` is enabled only when retained evidence exists, comparison view opening honors cancellation before panel open, retained comparison opening from `Diff prev` uses retained-open-specific wording, unreadable retained generated-report HTML now falls back to the retained packet with an explicit displayed-evidence status line, malformed, mismatched, unusable, or render-contract-invalid retained archive records now fail closed with stable `Refresh compare` guidance, compare generation now preserves the current compare view while refusing to flip the row into retained-open state when governed archive persistence was unavailable or failed, the panel exposes `Open docs` into the packaged bundled documentation surface, stale bundled-doc page ids now fall back to the packaged overview page when the installed bundle is available, the rendered action controls plus the installed action-surface packet now stay truthful to which optional compare/dashboard/docs/decision flows are actually wired in the current build, and the status/review packet now states whether the retained commit set is the full file history or a truncated auto/capped window | `src/ui/historyPanel.ts`; `src/commands/openViHistoryCommand.ts`; `src/reporting/comparisonReportAction.ts`; `src/docs/bundledDocumentationAction.ts`; `src/extension.ts`; `VHS-REQ-016..040`; `VHS-REQ-328..329`; `VHS-REQ-361..382`; `VHS-REQ-386..387` | sustain |
 | Canonical real-history harness smoke | implemented | `src/harness/harnessSmoke.ts`; `src/cli/runHarnessSmoke.ts`; `npm run harness:smoke`; `VHS-REQ-029..030` | sustain |
 | Comparison-report preflight, planning, and packet storage | implemented | `src/reporting/comparisonReportPreflight.ts`; `src/reporting/comparisonReportPlan.ts`; `src/reporting/comparisonReportPacket.ts`; `VHS-REQ-127..145` | sustain |
 | LabVIEW 2026 Q1 runtime detection and governed live report execution | implemented and active | `src/reporting/comparisonRuntimeLocator.ts`; `src/reporting/comparisonReportRuntimeExecution.ts`; `.cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.json`; `VHS-REQ-146..181`; `VHS-REQ-217..220`; `VHS-REQ-239..250` | sustain |
 | Canonical comparison-report smoke lane | implemented with succeeded NI proof | `src/harness/harnessReportSmoke.ts`; `src/cli/runHarnessReportSmoke.ts`; `npm run harness:report:smoke`; `.cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.html`; `VHS-REQ-152..180`; `VHS-REQ-220` | sustain |
 | Indexing and report progress uplift | partially implemented and active | `src/indexing/viEligibilityIndexer.ts`; `VHS-REQ-093`; `VHS-REQ-305..306`; research alignment marks this partial | `TRANCHE-004` |
 | Windows 64-bit isolated container provider | implemented and active | `docs/architecture/adr/ADR-0006-windows64-container-isolation-for-extension-users.md`; `src/reporting/comparisonRuntimeLocator.ts`; `src/reporting/comparisonReportRuntimeExecution.ts`; `VHS-REQ-146`; `VHS-REQ-217..220` | sustain |
-| Multi-report developer dashboard for one VI across at least three commits | implemented and active with canonical dashboard smoke, extension-host proof, whole-window metadata concentration, chronology-aware pair-position references in those whole-window summaries, a chronology-first pair metadata ledger, pair-evidence backfill for missing or stale adjacent pairs, progress-aware dashboard refresh stages, explicit preparation-state reporting for retained-complete, backfill-in-progress, and backfill-unavailable refresh paths, retained preparation summaries in the dashboard HTML itself including refreshed-pair generated/blocked/failed/no-generated outcome counts, bounded minutes-and-seconds estimates during pair preparation, retained pair-level ETA accuracy characterization for the current refresh session, retained pair-level ETA characterization in canonical dashboard smoke, direct local rendering for retained HTML artifacts, and cancellation honored through the final dashboard-open boundary with retained artifact paths preserved | `src/dashboard/comparisonReportArchive.ts`; `src/dashboard/dashboardEtaAccuracy.ts`; `src/dashboard/niComparisonReportParser.ts`; `src/dashboard/multiReportDashboard.ts`; `src/dashboard/multiReportDashboardAction.ts`; `src/harness/harnessDashboardSmoke.ts`; `src/cli/runHarnessDashboardSmoke.ts`; `.cache/harness-reports/HARNESS-VHS-001/dashboard-smoke.json`; `tests/integration/suite/extensionHost.test.ts`; `VHS-REQ-212..215`; `VHS-REQ-221..223`; `VHS-REQ-232`; `VHS-REQ-237..238`; `VHS-REQ-268`; `VHS-REQ-295..304`; `VHS-REQ-330..340`; `VHS-REQ-347..349`; `VHS-REQ-363`; `VHS-REQ-375..376`; `VHS-REQ-380` | `TRANCHE-006` |
+| Multi-report developer dashboard for one VI across at least three commits | implemented and active with canonical dashboard smoke, extension-host proof, whole-window metadata concentration, chronology-aware pair-position references in those whole-window summaries, a chronology-first pair metadata ledger, pair-evidence backfill for missing or stale adjacent pairs, progress-aware dashboard refresh stages, explicit preparation-state reporting for retained-complete, backfill-in-progress, and backfill-unavailable refresh paths, retained preparation summaries in the dashboard HTML itself including refreshed-pair generated/blocked/failed/no-generated outcome counts, bounded minutes-and-seconds estimates during pair preparation, retained pair-level ETA accuracy characterization for the current refresh session, retained pair-level ETA characterization in canonical dashboard smoke, a stable `latest-dashboard-run.json` manifest with retained history-window/config/timing/progress experiment metadata for future-session consumption, direct local rendering for retained HTML artifacts, and cancellation honored through the final dashboard-open boundary with retained artifact paths preserved | `src/dashboard/comparisonReportArchive.ts`; `src/dashboard/dashboardEtaAccuracy.ts`; `src/dashboard/dashboardLatestRun.ts`; `src/dashboard/niComparisonReportParser.ts`; `src/dashboard/multiReportDashboard.ts`; `src/dashboard/multiReportDashboardAction.ts`; `src/harness/harnessDashboardSmoke.ts`; `src/cli/runHarnessDashboardSmoke.ts`; `.cache/harness-reports/HARNESS-VHS-001/dashboard-smoke.json`; `tests/integration/suite/extensionHost.test.ts`; `VHS-REQ-212..215`; `VHS-REQ-221..223`; `VHS-REQ-232`; `VHS-REQ-237..238`; `VHS-REQ-268`; `VHS-REQ-295..304`; `VHS-REQ-330..340`; `VHS-REQ-347..349`; `VHS-REQ-363`; `VHS-REQ-375..376`; `VHS-REQ-380`; `VHS-REQ-388..389` | `TRANCHE-006` |
 | Review-scenario registry and human decision records | implemented and active with extension-facing decision-record creation from the history panel, scenario matching by repository remote URL plus VI path, separate Markdown/JSON artifact persistence, persisted reviewer-name defaults across decision-record runs, cancellation honored after dashboard build and before retained Markdown open with already-built artifact paths preserved, and real extension-host proof | `src/scenarios/reviewScenarioRegistry.ts`; `src/scenarios/decisionRecord.ts`; `src/scenarios/reviewDecisionRecordAction.ts`; `src/harness/harnessDecisionRecord.ts`; `src/commands/openViHistoryCommand.ts`; `tests/integration/suite/extensionHost.test.ts`; `docs/product/review-scenarios.md`; `docs/product/decision-record-template.md`; `VHS-REQ-307..312`; `VHS-REQ-341..355`; `VHS-REQ-385` | `TRANCHE-007` |
 | Runtime-doctor and dashboard-refresh developer experience | implemented and active with history-panel command routing that now fails closed with explicit build-capability guidance when stale panel commands target unsupported optional surfaces, with stale bundled-doc page requests falling back to the packaged overview page when the installed bundle is still available, with `Diff prev` for content-detected VIs refusing text-diff fallback when comparison-report routing is unavailable in the current build, with dashboard pair-preparation progress now distinguishing refreshed generated, blocked, failed, no-generated-report, and missing-retained-archive outcomes, and with compare opening both falling back to the retained packet when retained generated-report HTML is unreadable, rendering retained archive availability/failure facts in the live panel status block, and failing closed with explicit `Refresh compare` guidance when the retained archive source record is malformed, mismatched, render-contract-invalid, or no longer points at a usable retained packet | `src/reporting/comparisonRuntimeDoctor.ts`; `src/reporting/comparisonRuntimeLocator.ts`; `src/reporting/comparisonReportPacket.ts`; `src/reporting/comparisonReportAction.ts`; `src/dashboard/multiReportDashboardAction.ts`; `src/commands/openViHistoryCommand.ts`; `tests/integration/suite/extensionHost.test.ts`; `VHS-REQ-224..236`; `VHS-REQ-241`; `VHS-REQ-244..247`; `VHS-REQ-251..258`; `VHS-REQ-377..382`; `VHS-REQ-386` | sustain |
 | Ship-control system and SemVer release target | implemented and active with retained immutable `v0.2.0` release evidence through GitLab release `v0.2.0`, tag pipeline `2428809456`, kept release job `13779604462`, and a governed wiki-authority map that constrains future wiki generation to repo docs instead of source or chat memory | `docs/product/SHIP-0001-releasable-vi-history-suite.md`; `docs/product/release-readiness-matrix.json`; `docs/product/blocker-ledger.json`; `docs/product/wiki-authority-map.md`; `docs/release-procedure.md`; `.gitlab-ci.yml`; `tests/unit/shipControlDocs.test.ts`; `VHS-REQ-313..323` | `TRANCHE-009` |
-| Documentation-package workbench image and docs gate | implemented and active with a repo-published docs-authoring image, local workbench commands, a repo-native docs gate, a retained documentation coherence ledger, a wiki seed plan, Markdown and JSON wiki publication ledgers, a generated packaged docs bundle, and a retained publish-manifest lane for future documentation and wiki iteration | `docker/docs-authoring/Dockerfile`; `docker/docs-authoring/entrypoint.sh`; `scripts/run-docs-gate.js`; `scripts/syncBundledDocs.js`; `docs/documentation-workbench.md`; `docs/product/documentation-coherence-ledger.md`; `docs/product/wiki-seed-plan.md`; `docs/product/wiki-publication-ledger.md`; `docs/product/wiki-publication-ledger.json`; `resources/bundled-docs/manifest.json`; `.gitlab-ci.yml`; `tests/unit/docsWorkbenchDocs.test.ts`; `VHS-REQ-350..360`; `VHS-REQ-367..370` | `TRANCHE-009` |
+| Documentation-package workbench image and docs gate | implemented and active with a repo-published docs-authoring image, local workbench commands, a repo-native docs gate, automated SRS/RTM/test-plan coherence checks, automated active post-release tranche/issue/program coherence checks plus open Gate C-D truth checks, research-control-plane regression checks for the live history-window/dashboard surfaces, a retained documentation coherence ledger, a wiki seed plan, Markdown and JSON wiki publication ledgers, a generated packaged docs bundle, and a retained publish-manifest lane for future documentation and wiki iteration | `docker/docs-authoring/Dockerfile`; `docker/docs-authoring/entrypoint.sh`; `scripts/run-docs-gate.js`; `scripts/syncBundledDocs.js`; `docs/documentation-workbench.md`; `docs/product/documentation-coherence-ledger.md`; `docs/product/wiki-seed-plan.md`; `docs/product/wiki-publication-ledger.md`; `docs/product/wiki-publication-ledger.json`; `resources/bundled-docs/manifest.json`; `.gitlab-ci.yml`; `tests/unit/docsWorkbenchDocs.test.ts`; `tests/unit/requirementsDocs.test.ts`; `tests/unit/postReleaseControlPlaneDocs.test.ts`; `VHS-REQ-350..360`; `VHS-REQ-367..370`; `VHS-REQ-391` | `TRANCHE-009` |
 | Bundled version-matched user documentation | implemented and active with a machine-readable wiki publication ledger, generated packaged HTML fragments under `resources/bundled-docs/`, a command-palette documentation command, and a local documentation panel that keeps users inside VS Code instead of requiring repo access | `docs/product/wiki-publication-ledger.json`; `scripts/syncBundledDocs.js`; `resources/bundled-docs/manifest.json`; `src/docs/bundledDocumentation.ts`; `src/docs/bundledDocumentationAction.ts`; `src/extension.ts`; `tests/unit/bundledDocumentation.test.ts`; `tests/integration/suite/extensionHost.test.ts`; `VHS-REQ-367..370` | sustain |
 | Cross-repo navigation control plane | implemented and active with a governed repo-constellation map, a local repo-jump CLI, and mirrored skill-side resolver entrypoints for `vi-history-suite`, `vi-history-suite.wiki`, and `repo-standards-review` | `docs/product/program-repo-jump-map.json`; `docs/product/program-repo-jump.md`; `src/tooling/programRepoJump.ts`; `src/cli/runProgramRepoJump.ts`; `tests/unit/runProgramRepoJumpCli.test.ts`; `VHS-REQ-364..366` | `TRANCHE-009` |
 | Fast local VS Code development-host loop | implemented and active with reusable fixture-workspace prep, explicit workspace override, direct or staged extension-host launch, explicit Linux/Windows integration-host selection, Linux runtime preflight, and a least-privilege root-owned Linux bootstrap command | `src/tooling/devHostLoop.ts`; `src/cli/runDevHost.ts`; `src/tooling/integrationHostRuntime.ts`; `docs/dev-fast-loop.md`; `package.json`; `tests/unit/runDevHostCli.test.ts`; `tests/unit/integrationHostRuntime.test.ts`; `tests/unit/packageManifest.test.ts`; `VHS-REQ-338..339`; `VHS-REQ-344..346`; `docs/architecture/adr/ADR-0010-dual-host-extension-proof-and-linux-bootstrap.md` | sustain |
@@ -104,23 +104,24 @@ Latest landed ship target:
 
 Current active tranche:
 
-- `TRANCHE-010`: Public facade installer and Windows acceptance
-- active issue: [ISSUE-0407 Public Facade Installer And Windows Acceptance](./issues/ISSUE-0407-public-facade-installer-and-windows-acceptance.md)
-- active execution program: [PROGRAM-0002: Public Facade Installer And Windows Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
+- `TRANCHE-010`: Public facade release kit and host-machine acceptance
+- active issue: [ISSUE-0407 Public Facade Release Kit And Host-Machine Acceptance](./issues/ISSUE-0407-public-facade-installer-and-windows-acceptance.md)
+- active execution program: [PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
   - current first slice:
   - ingest immutable `v0.2.0` release truth into the public facade repo
   - pin the canonical `ni/labview-icon-editor` acceptance fixture
   - land the public facade scaffold surfaces:
     - immutable release contract plus `release-evidence` staging README
     - scaffold validation script
-    - Windows builder scaffold with pinned NSIS 3.11, Visual Studio Code, Git, and Docker Desktop bootstrap references
-    - pinned LabVIEW Windows container image identity and pinned `ni/labview-icon-editor` Git fixture bundle with commit history
-    - NSIS installer scaffold for fresh Windows 11 VMs that materializes the bundled proof workspace locally
-    - Windows 11 acceptance harness, record template, and manual checklist
-    - local Windows `makensis` smoke compile against a temporary synthetic contract using the tag-reproduced `v0.2.0` VSIX plus the pinned bootstrap installers
+    - primary public setup manifest plus Windows and Linux setup adapters
+    - pinned `ni/labview-icon-editor` Git fixture bundle, manifest, and metadata
+    - Windows 11 host-machine acceptance harness, record template, and manual checklist
+    - direct-release Windows smoke against the public setup manifest, exact VSIX, and pinned fixture bundle
   - exact retained `v0.2.0` release evidence is now staged in the public facade repo from GitLab release job `13779604462`
-  - GitHub workflow run `23972941672` now builds and publishes the exact public VSIX and NSIS installer release assets on GitHub after the 32-bit PowerShell harness fix
-  - Gates C-D remain open pending fresh Windows 11 VM proof and the manual right-click acceptance pass
+  - the GitHub workflow now publishes the public release kit first and retains the NSIS path only as optional legacy wrapper work
+  - Docker is no longer part of the default public setup path
+  - a future container image is the intended reproducible automation follow-on, replacing VM replay as the preferred direction
+  - Gates C-D remain open pending Windows 11 host-machine proof through the direct-release setup lane and the manual right-click acceptance pass
 
 Queued follow-on tranches:
 
@@ -128,26 +129,27 @@ Queued follow-on tranches:
 
 Current active post-release program:
 
-- [PROGRAM-0002: Public Facade Installer And Windows Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
-- active issue: [ISSUE-0407 Public Facade Installer And Windows Acceptance](./issues/ISSUE-0407-public-facade-installer-and-windows-acceptance.md)
+- [PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
+- active issue: [ISSUE-0407 Public Facade Release Kit And Host-Machine Acceptance](./issues/ISSUE-0407-public-facade-installer-and-windows-acceptance.md)
 - trust boundary:
   - private GitLab immutable release remains product truth
-  - public GitHub facade repo is the public installer/support surface
-  - the GitHub workflow is the active installer build and publication surface
-  - the Windows builder Docker scaffold remains available for future hardening
-  - the fresh Windows 11 VM proves the installed-user flow
-  - the installer bootstraps pinned Visual Studio Code, Git, and Docker Desktop
-    prerequisites on that fresh VM
-  - the installer prepares the pinned LabVIEW Windows container image and a
-    local `ni/labview-icon-editor` Git fixture workspace with commit history
-  - Visual Studio Code CLI automates install/verify/open surfaces after
-    bootstrap
+  - public GitHub facade repo is the public release-kit/setup/support surface
+  - the public facade repo publishes release/setup/support material only; it
+    does not publish private requirements or design-gate docs
+  - the GitHub workflow is the active public release-kit publication surface
+  - NSIS remains optional legacy wrapper scaffolding
+  - Docker is not part of the default public setup path
+  - the current Windows 11 host machine proves the installed-user flow
+  - a future published container image is the preferred reproducible automation follow-on
+  - the setup adapters prepare Visual Studio Code and Git when needed, install the exact VSIX, and materialize the local `ni/labview-icon-editor` Git fixture workspace with commit history
+  - Visual Studio Code CLI automates install/verify/open surfaces after setup
   - the manual right-click review pass remains the human UX gate
+  - public GitHub issues are supplemental field feedback, not gate-closing proof
 
 The active-queue source of truth is:
 
 - [development-queue.json](./development-queue.json)
-- [PROGRAM-0002: Public Facade Installer And Windows Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
+- [PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
 - [wiki-authority-map.md](./wiki-authority-map.md)
 - [documentation-coherence-ledger.md](./documentation-coherence-ledger.md)
 - [wiki-seed-plan.md](./wiki-seed-plan.md)

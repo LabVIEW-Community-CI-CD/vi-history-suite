@@ -159,3 +159,15 @@ export async function getFileHistoryEntries(
   );
   return parseHistoryEntries(String(stdout));
 }
+
+export async function getFileHistoryCount(
+  cwd: string,
+  relativePath: string
+): Promise<number> {
+  const stdout = await runGit(
+    ['log', '--follow', '--format=%H', '--', normalizeRelativeGitPath(relativePath)],
+    cwd,
+    'utf8'
+  );
+  return parseCommitHashes(String(stdout)).length;
+}

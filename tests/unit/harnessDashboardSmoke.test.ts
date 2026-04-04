@@ -34,8 +34,10 @@ describe('harness dashboard smoke renderers', () => {
       recordedAt: '2026-04-03T00:00:00.000Z',
       stage: 'pair-preparation' as const,
       preparedPairCount: 2,
+      etaEligiblePairCount: 2,
       measuredPairCount: 1,
       unmeasuredPairCount: 1,
+      excludedPairCount: 0,
       meanAbsoluteErrorSeconds: 4,
       maxAbsoluteErrorSeconds: 4,
       meanSignedErrorSeconds: -4,
@@ -200,16 +202,33 @@ describe('runHarnessDashboardSmoke', () => {
           }) as never,
         buildDashboard: vi.fn().mockResolvedValue({
           record: {
+            generatedAt: '2026-04-03T00:00:00.000Z',
+            repositoryName: 'ni-labview-icon-editor',
+            repositoryRoot: '/tmp/harnesses/ni-labview-icon-editor',
+            relativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+            signature: 'LVIN',
             artifactPlan: {
               dashboardDirectory:
                 '/tmp/reports/HARNESS-VHS-001/workspace-storage/dashboards/repo/file/window'
             },
+            commitWindow: {
+              commitCount: 3,
+              pairCount: 2,
+              newestHash: '3333333344444444',
+              oldestHash: 'aaaaaaaa55555555'
+            },
             summary: {
+              representedPairCount: 2,
               windowCompletenessState: 'complete',
               archivedPairCount: 2,
               missingPairCount: 0,
+              missingPairIds: [],
               generatedReportCount: 1,
               reportMetadataPairCount: 1,
+              failedPairCount: 1,
+              failedPairIds: ['pair-b'],
+              blockedPairCount: 0,
+              blockedPairIds: [],
               overviewImageCount: 2,
               detailItemCount: 5,
               providerSummaries: [{ label: 'windows-container / lvcompare / x64 / win32', pairCount: 2 }]
@@ -240,11 +259,20 @@ describe('runHarnessDashboardSmoke', () => {
     );
     expect(result.report.dashboardEtaAccuracyRecord).toMatchObject({
       preparedPairCount: 2,
-      measuredPairCount: 1,
-      meanAbsoluteErrorSeconds: 6,
-      maxAbsoluteErrorSeconds: 6,
-      meanSignedErrorSeconds: 6,
-      meanAbsolutePercentageError: 33.333
+      etaEligiblePairCount: 1,
+      measuredPairCount: 0,
+      unmeasuredPairCount: 1,
+      excludedPairCount: 1,
+      meanAbsoluteErrorSeconds: undefined,
+      maxAbsoluteErrorSeconds: undefined,
+      meanSignedErrorSeconds: undefined,
+      meanAbsolutePercentageError: undefined
+    });
+    expect(result.report.dashboardEtaAccuracyRecord?.context).toMatchObject({
+      source: 'harness-dashboard-smoke',
+      workspaceStorageRoot: '/tmp/reports/HARNESS-VHS-001/workspace-storage',
+      repositoryName: 'ni-labview-icon-editor',
+      relativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi'
     });
     expect(result.report.pairSummaries).toHaveLength(2);
     expect(result.report.pairSummaries[0]).toMatchObject({
@@ -265,10 +293,17 @@ describe('runHarnessDashboardSmoke', () => {
     expect(result.reportHtmlPath).toBe('/tmp/reports/HARNESS-VHS-001/dashboard-smoke.html');
     expect(writes.get(result.reportJsonPath)).toContain('"dashboardArchivedPairCount": 2');
     expect(writes.get(result.reportJsonPath)).toContain('"dashboardEtaAccuracyFilePath"');
+    expect(
+      writes.get('/tmp/reports/HARNESS-VHS-001/workspace-storage/dashboards/latest-dashboard-run.json')
+    ).toContain('"source": "harness-dashboard-smoke"');
     expect(writes.get(result.reportMarkdownPath)).toContain('Harness Dashboard Smoke');
-    expect(writes.get(result.reportMarkdownPath)).toContain('Dashboard ETA accuracy: measured=1/2');
+    expect(writes.get(result.reportMarkdownPath)).toContain(
+      'Dashboard ETA accuracy: not-yet-measurable (1 eta-eligible pair(s), 1 excluded)'
+    );
     expect(writes.get(result.reportHtmlPath)).toContain('Harness Dashboard Smoke');
-    expect(writes.get(result.reportHtmlPath)).toContain('Dashboard ETA accuracy:</strong> measured=1/2');
+    expect(writes.get(result.reportHtmlPath)).toContain(
+      'Dashboard ETA accuracy:</strong> not-yet-measurable (1 eta-eligible pair(s), 1 excluded)'
+    );
   });
 
   it('stamps dashboard smoke output with the default ISO clock when no now override is supplied', async () => {

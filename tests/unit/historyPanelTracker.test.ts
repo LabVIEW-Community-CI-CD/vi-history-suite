@@ -17,7 +17,16 @@ describe('HistoryPanelTracker', () => {
       {
         relativePath: 'sample.vi',
         commits: [{ hash: 'abcdef1234567890' }],
-        eligible: true
+        eligible: true,
+        historyWindow: {
+          mode: 'auto',
+          configuredMaxEntries: 100,
+          effectiveEntryCeiling: 1000,
+          loadedCommitCount: 1,
+          totalCommitCount: 1,
+          truncated: false,
+          decision: 'auto-full-history'
+        }
       } as never,
       '<html>panel</html>',
       dispatchMessage
@@ -30,6 +39,15 @@ describe('HistoryPanelTracker', () => {
       relativePath: 'sample.vi',
       commitCount: 1,
       eligible: true,
+      historyWindow: {
+        mode: 'auto',
+        configuredMaxEntries: 100,
+        effectiveEntryCeiling: 1000,
+        loadedCommitCount: 1,
+        totalCommitCount: 1,
+        truncated: false,
+        decision: 'auto-full-history'
+      },
       renderedHtml: '<html>panel</html>'
     });
   });

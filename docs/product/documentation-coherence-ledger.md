@@ -33,15 +33,18 @@ source inference or chat memory.
 
 ## Latest Coherence Pass
 
-- Date: `2026-04-03`
+- Date: `2026-04-04`
 - Repo docs gate:
   - command: `node scripts/run-docs-gate.js --skip-links`
+  - result: `pass`
+- Repo design gate:
+  - command: `npm run design:gate`
   - result: `pass`
 - Standards-guided release gate:
   - command:
     `python3 /mnt/c/Users/sveld/.codex/skills/repo-standards-review/scripts/run_assurance.py /home/sveld/code/standards/vi-history-suite --profile release-gate`
   - result:
-    `coverage PASS`, `cm PASS`, `req PASS`, `arch PASS`, `doc PASS`, `dod N/A`
+    `coverage PASS`, `cm PASS`, `req PASS`, `arch PASS`, `doc PASS`, `dod PASS`
 
 ## Resolved Contradictions In This Pass
 
@@ -53,11 +56,19 @@ source inference or chat memory.
 | DOC-004 | decision-record docs | repeated reviewer entry in the extension-facing flow was not modeled in requirements/docs | decision-record reviewer defaults are now implemented and reflected in SRS, RTM, test plan, and current state |
 | DOC-005 | cross-repo navigation | documentation-package and skill work spanned three repos, but there was no governed local jump surface tying product, wiki, and assurance entrypoints together | added `program-repo-jump-map.json`, `program-repo-jump.md`, `ADR-0014`, a local `program:repos` CLI, and a mirrored `repo_jump.py` surface in `repo-standards-review` |
 | DOC-006 | packaged user guidance | users could read the wiki or repo docs, but the installed extension had no version-matched local documentation surface and no machine-readable published wiki inventory to drive one | added `docs/product/wiki-publication-ledger.json`, `resources/bundled-docs/`, `scripts/syncBundledDocs.js`, `ADR-0015`, and the extension-facing bundled documentation command/panel |
+| DOC-007 | requirements traceability | `docs/requirements/rtm.csv` cited proving test ids that `docs/testing/test-plan.md` did not enumerate, while the test plan also contained stale ids that were not traced back through RTM | reconciled RTM and test-plan ids in both directions so the governed verification inventory now matches exactly |
+| DOC-008 | research control plane | the research alignment matrix and implementation index still described an older, narrower history-panel and dashboard surface after adaptive history-window and latest-dashboard-run work landed | updated `research-alignment.md` and `research-implementation-index.json` so they now reflect the live history-window packet, `latest-dashboard-run.json`, and current dashboard/history evidence set |
+| DOC-009 | recurrence prevention | the repo had no automated docs-gate check that would fail when SRS/RTM/test-plan parity or the key research-facing dashboard/history traces drifted again | added `tests/unit/requirementsDocs.test.ts` to the repo-native docs gate and current-state surface so future drift fails closed in CI and local docs iteration |
+| DOC-010 | post-release control plane | the active post-release tranche, issue, and execution program were documented across queue, ship, README, current-state, `PROGRAM-0002`, and `ISSUE-0407`, but there was no dedicated docs-gate check to fail when those identities or the open Gate C-D truth drifted | added `tests/unit/postReleaseControlPlaneDocs.test.ts`, wired it into the docs gate, and reflected that gate in the current-state/docs-package control plane |
 
 ## Current Internal Status
 
 - No unresolved contradiction is currently retained across the audited
   authority surfaces above.
+- The repo-native docs gate now enforces SRS/RTM parity, RTM/test-plan parity,
+  the key research-facing history-panel/dashboard trace surfaces, and active
+  post-release control-plane coherence for `TRANCHE-010` / `ISSUE-0407` /
+  `PROGRAM-0002`.
 - Active tranche, active ship issue, release target, and open blocker ids agree
   across ship-control docs.
 - Wiki preparation is now constrained to the documentation package, not source.
@@ -73,15 +84,22 @@ source inference or chat memory.
   API path on this machine.
 - The docs-authoring image is fully wired in the repo and CI, but local Docker
   runtime proof is still environment-dependent on this machine.
-- The public GitHub facade installer/support surface is scaffolded, but it has
-  not yet ingested the immutable `v0.2.0` release artifact set.
+- `research-implementation-index.json` remains a curated capability-status
+  surface rather than a full 1:1 requirement-trace database, so future audits
+  should continue treating SRS plus RTM as the primary formal trace surfaces.
 
 ## Next Documentation Moves
 
 1. Keep the docs gate and standards-review release gate green after each
    documentation tranche.
-2. Keep the `repo-standards-review` jump resolver and docs-workbench discovery
+2. Treat `tests/unit/requirementsDocs.test.ts` as the first stop when
+   requirements, RTM, test-plan, or research-control-plane edits fail the docs
+   gate, and widen that test rather than relying on ad hoc manual audits.
+3. Treat `tests/unit/postReleaseControlPlaneDocs.test.ts` as the first stop
+   when post-release queue, ship, program, or issue docs drift, and widen that
+   test instead of relying on manual control-plane reconciliation.
+4. Keep the `repo-standards-review` jump resolver and docs-workbench discovery
    surfaces aligned with `docs/product/program-repo-jump-map.json`.
-3. Continue wiki drafting in the incremental order retained in
+5. Continue wiki drafting in the incremental order retained in
    `wiki-seed-plan.md`, with each publication recorded in
    `docs/product/wiki-publication-ledger.md`.

@@ -180,14 +180,14 @@ describe('ship-control direction system', () => {
     expect(readme).toContain('[Wiki Publication Ledger JSON](./docs/product/wiki-publication-ledger.json)');
     expect(readme).toContain('[Documentation Package Workbench](./docs/documentation-workbench.md)');
     expect(readme).toContain('[Program Repo Jump](./docs/product/program-repo-jump.md)');
-    expect(readme).toContain('[PROGRAM-0002: Public Facade Installer And Windows Acceptance](./docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)');
+    expect(readme).toContain('[PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)');
     expect(readme).toContain('[Release Procedure](./docs/release-procedure.md)');
     expect(readme).toContain('npm run design:gate:assert-complete');
     expect(readme).toContain('- `SHIP-0001`: releasable `v0.2.0` VSIX product');
     expect(readme).toContain('- landed ship tranche: `TRANCHE-009`');
     expect(readme).toContain('- current package baseline: `0.2.0`');
     expect(readme).toContain('- target release artifact: `vi-history-suite-0.2.0.vsix`');
-    expect(readme).toContain('- `TRANCHE-010`: public facade installer and Windows acceptance');
+    expect(readme).toContain('- `TRANCHE-010`: public facade release kit and host-machine acceptance');
 
     expect(currentState).toContain('[SHIP-0001: Releasable VI History Suite](./SHIP-0001-releasable-vi-history-suite.md)');
     expect(currentState).toContain('[release-readiness-matrix.json](./release-readiness-matrix.json)');
@@ -203,8 +203,8 @@ describe('ship-control direction system', () => {
     expect(currentState).toContain('- landed ship tranche: `TRANCHE-009`');
     expect(currentState).toContain('- current package baseline: `0.2.0`');
     expect(currentState).toContain('- target release artifact: `vi-history-suite-0.2.0.vsix`');
-    expect(currentState).toContain('- `TRANCHE-010`: Public facade installer and Windows acceptance');
-    expect(currentState).toContain('[PROGRAM-0002: Public Facade Installer And Windows Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)');
+    expect(currentState).toContain('- `TRANCHE-010`: Public facade release kit and host-machine acceptance');
+    expect(currentState).toContain('[PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)');
 
     expect(informationItemMap).toContain('| Ship target | `docs/product/SHIP-0001-releasable-vi-history-suite.md` |');
     expect(informationItemMap).toContain('| Release readiness matrix | `docs/product/release-readiness-matrix.json` |');

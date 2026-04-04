@@ -33,7 +33,7 @@ If you are new to the repo, read these in order:
 13. [Documentation Package Workbench](./docs/documentation-workbench.md)
 14. [Program Repo Jump](./docs/product/program-repo-jump.md)
 15. [PROGRAM-0001: Next Product Layer](./docs/product/execution-programs/PROGRAM-0001-next-product-layer.md)
-16. [PROGRAM-0002: Public Facade Installer And Windows Acceptance](./docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
+16. [PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
 
 For machine-friendly repo orientation, start with:
 
@@ -69,7 +69,7 @@ Use these repo-native control-plane entrypoints instead:
 - [Dashboard Epic](./docs/product/epics/EPIC-0004-multi-report-developer-dashboard.md)
 - [NI Comparison Report Metadata Inventory](./docs/product/ni-comparison-report-metadata-inventory.md)
 - [PROGRAM-0001: Next Product Layer](./docs/product/execution-programs/PROGRAM-0001-next-product-layer.md)
-- [PROGRAM-0002: Public Facade Installer And Windows Acceptance](./docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
+- [PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
 - [SHIP-0001: Releasable VI History Suite](./docs/product/SHIP-0001-releasable-vi-history-suite.md)
 - [Release Readiness Matrix](./docs/product/release-readiness-matrix.json)
 - [Blocker Ledger](./docs/product/blocker-ledger.json)
@@ -136,10 +136,16 @@ Committed and governed today:
   least one pair has completed
 - retained pair-level ETA accuracy characterization for dashboard pair
   preparation, including a dashboard summary and sidecar evidence that exclude
-  previously retained pairs from the current-session accuracy measurement
+  previously retained pairs and non-generated prepared pairs from the
+  current-session accuracy measurement
 - canonical dashboard smoke retention for pair-level ETA characterization,
   including actual-vs-estimated preparation timing per prepared pair and a
   retained `dashboard-pair-eta-accuracy.json` sidecar
+- stable `latest-dashboard-run.json` retention at the workspace-storage
+  dashboards root plus a local consumer script so future sessions can discover
+  the newest dashboard run without manually surfacing hashed storage paths,
+  including retained history-window mode, effective ceiling, known total file
+  history count, truncation state, phase timings, and progress events
 - direct local rendering for retained comparison packets and dashboard HTML
   artifacts, with injected base-path/CSP controls and soft iframe fallback if a
   local HTML artifact is unavailable
@@ -220,18 +226,18 @@ Current install paths are:
 
 The current active tranche is:
 
-- `TRANCHE-010`: public facade installer and Windows acceptance
+- `TRANCHE-010`: public facade release kit and host-machine acceptance
 - active issue: `ISSUE-0407`
 
 Issue-ready execution program:
 
-- [PROGRAM-0002: Public Facade Installer And Windows Acceptance](./docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
+- [PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
 
 See:
 
 - [Current State](./docs/product/current-state.md)
 - [Development Queue](./docs/product/development-queue.json)
-- [PROGRAM-0002: Public Facade Installer And Windows Acceptance](./docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
+- [PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
 - [SHIP-0001: Releasable VI History Suite](./docs/product/SHIP-0001-releasable-vi-history-suite.md)
 - [Release Readiness Matrix](./docs/product/release-readiness-matrix.json)
 - [Blocker Ledger](./docs/product/blocker-ledger.json)
@@ -312,10 +318,20 @@ Primary generated evidence:
 - `.cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.json`
 - `.cache/harness-reports/HARNESS-VHS-001/dashboard-smoke.json`
 - `<workspace-storage>/dashboards/<repoId>/<fileId>/<windowId>/dashboard-pair-eta-accuracy.json`
+- `<workspace-storage>/dashboards/latest-dashboard-run.json`
 - `<workspace-storage>/decision-records/<repoId>/<fileId>/<windowId>/<scenarioId>/<decisionId>/decision-record.json`
 - `<workspace-storage>/decision-records/<repoId>/<fileId>/<windowId>/<scenarioId>/<decisionId>/decision-record.md`
 - `<workspace-storage>/report-history/<repoId>/<fileId>/pairs/<pairId>/source-record.json`
 - `<workspace-storage>/dashboards/<repoId>/<fileId>/<windowId>/dashboard.json`
+
+Dashboard-run discovery:
+
+- `npm run dashboard:latest`
+- `npm run dashboard:latest:json`
+
+The helper searches the stable `latest-dashboard-run.json` manifest first, then
+falls back to legacy retained `dashboard-pair-eta-accuracy.json` plus
+`dashboard.json` evidence when needed.
 - `<workspace-storage>/dashboards/<repoId>/<fileId>/<windowId>/dashboard.html`
 
 The generated `.cache/` evidence is local and regenerated. The committed source

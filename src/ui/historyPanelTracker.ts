@@ -128,6 +128,7 @@ export interface OpenedHistoryPanelSummary {
   relativePath: string;
   commitCount: number;
   eligible: boolean;
+  historyWindow?: ViHistoryViewModel['historyWindow'];
   renderedHtml: string;
 }
 
@@ -186,6 +187,7 @@ export class HistoryPanelTracker {
       relativePath: model.relativePath,
       commitCount: model.commits.length,
       eligible: model.eligible,
+      historyWindow: model.historyWindow,
       renderedHtml
     };
   }

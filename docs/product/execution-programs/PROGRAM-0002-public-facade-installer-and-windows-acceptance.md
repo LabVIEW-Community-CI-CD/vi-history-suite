@@ -1,4 +1,4 @@
-# PROGRAM-0002: Public Facade Installer And Windows Acceptance
+# PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance
 
 ## Status
 
@@ -14,8 +14,10 @@ Trigger satisfied by the retained immutable `v0.2.0` release:
 ## Purpose
 
 Define the governed post-release program for turning `vi-history-suite` into a
-publicly installable, publicly supportable Windows product without exposing the
+publicly setup-capable, publicly supportable product without exposing the
 private GitLab engineering control plane.
+
+The primary public surface is now a release kit, not an installer product.
 
 ## Trigger
 
@@ -25,18 +27,18 @@ This program starts only after all of these are true:
   version
 - the release evidence proves the exact VSIX identity
 - the public GitHub facade repo is ready to consume that immutable release
-- the Windows 11 acceptance VM is prepared for installed-user proof
+- the current Windows 11 host machine is available for installed-user proof
 
-That trigger is now satisfied for the first executable slice: immutable release
-ingestion contract plus public truth alignment.
+That trigger is satisfied.
 
 ## North Star
 
-A user downloads a public Windows installer from the public facade repo, runs
-it on a fresh Windows 11 VM, installs the exact released `vi-history-suite`
-build, opens a pinned `ni/labview-icon-editor` workspace, and can successfully
-exercise the real right-click review flow for the canonical VI while retained
-evidence is captured for both automation and human review.
+A user downloads the public release kit from the public facade repo, runs the
+public setup adapter on the current Windows 11 host machine, installs the exact
+released `vi-history-suite` build, materializes the pinned
+`ni/labview-icon-editor` workspace with commit history, and successfully
+exercises the real right-click review flow for the canonical VI while retained
+automation and human evidence are captured.
 
 ## Authority And Trust Boundary
 
@@ -50,83 +52,94 @@ evidence is captured for both automation and human review.
 
 - public GitHub facade repo:
   `https://github.com/svelderrainruiz/vi-history-suite`
-- public installer project
-- public release notes and issue intake
+- public GitHub release assets
+- public setup manifest, setup adapters, fixture bundle, checksums, release
+  notes, install guidance, and support guidance
 
 ### Execution Truth
 
-- fresh Windows 11 VM
+- current Windows 11 host machine
 - Visual Studio Code CLI for install, verification, and workspace launch
 - real human manual right-click review pass for the final UX gate
+
+### Future Reproducibility Truth
+
+- a future published container image that mirrors the public setup contract and
+  replaces VM replay as the preferred automation surface
+
+### Supplemental Feedback Truth
+
+- public GitHub issues for post-publication drift and field feedback
 
 ### Explicit Boundaries
 
 - the GitHub facade repo is not the private engineering source of truth
-- the GitHub workflow is the active installer build/publication surface
-- the retained Windows builder Docker scaffold does not replace the VM as the
-  installed-user proof surface
+- private requirements, design gates, and retained engineering evidence do not
+  get published on the public facade repo
+- the GitHub workflow is the active public release-kit publication surface
+- NSIS is retained only as optional legacy wrapper work
+- Docker is not part of the default public setup path
 - Visual Studio Code CLI proves install/verify/open surfaces, but does not
   replace the human right-click gate
+- public GitHub issues are supplemental evidence, not gate-closing proof
 
 ## Chosen Design
 
 ### Lane 1: Immutable Release Ingestion
 
-Use the immutable released VSIX from private GitLab as the only installer
-payload source.
+Use the immutable released VSIX from private GitLab as the only public payload
+source.
 
-No public build lane may point at:
+No public lane may point at:
 
 - a working tree
 - a floating preview artifact
 - an unpublished package version
 
-### Lane 2: Public Facade Distribution
+### Lane 2: Public Release Kit Distribution
 
 Use the public GitHub repo as the consumer-facing facade for:
 
-- installer downloads
-- installation guidance
-- support guidance
-- public issue intake
-- public release notes
+- exact VSIX downloads
+- public setup manifest publication
+- Windows and Linux setup adapters
+- fixture bundle and fixture metadata publication
+- checksums
+- public release notes, install guidance, and support guidance
 
-The facade repo will not mirror the private GitLab source tree blindly.
+### Lane 3: Setup Adapters
 
-### Lane 3: Windows Installer Build
+The primary setup lane is direct setup from public assets:
 
-Build a Windows installer from the immutable released VSIX using:
-
-- a GitHub workflow on a Windows runner
-- the retained Windows builder scaffold for builder-entrypoint hardening
-- NSIS for packaging
+- Windows: PowerShell setup adapter
+- Linux: shell setup adapter
+- both consume the public setup manifest
+- both install the exact released VSIX and materialize the pinned fixture
 
 Version 1 assumptions:
 
-- the VM is treated as a fresh Windows 11 install with neither Visual Studio
-  Code, Git, nor Docker Desktop preinstalled
-- the installer is responsible for placing the exact VSIX and related public
-  docs/support surfaces, bootstrapping pinned Visual Studio Code, Git, and
-  Docker Desktop installers, materializing the pinned `ni/labview-icon-editor`
-  proof workspace from a bundled Git fixture with commit history, preparing the
-  pinned LabVIEW Windows container image, and then using the Visual Studio Code
-  CLI for extension install and proof automation
+- the active proof target is the current Windows 11 host machine
+- Visual Studio Code and Git may be installed by the Windows adapter when they
+  are missing
+- Docker is not required in the default public setup path
+- NSIS remains optional legacy wrapper work only
 
-### Lane 4: Automated Windows 11 Proof
+### Lane 4: Automated Host-Machine Proof
 
-Use the Windows 11 VM plus PowerShell and Visual Studio Code CLI to automate:
+Use the current Windows 11 host machine plus PowerShell and Visual Studio Code
+CLI to automate:
 
-- installer invocation
+- setup-adapter invocation
 - exact extension installation verification
 - version verification
-- Docker Desktop Windows-engine verification and pinned image-digest verification
 - workspace launch against the pinned `ni/labview-icon-editor` workspace
   materialized from the bundled Git fixture
 - capture of CLI outputs and retained proof artifacts
 
 ### Lane 5: Human UX Gate
 
-Use the same VM for manual proof of the user-real path that CLI cannot close:
+Use the same Windows 11 host machine for manual proof of the user-real path
+that CLI cannot close:
 
 - right-click invocation on the canonical VI
 - wording clarity
@@ -134,56 +147,63 @@ Use the same VM for manual proof of the user-real path that CLI cannot close:
 - panel behavior
 - first-use friction
 
-This is the bounded human gate that promotes the scenario from strong
-automation to trustworthy installed-user evidence.
+### Lane 6: Future Container Automation
+
+Replace VM replay with a future published container image that mirrors the
+public setup contract and provides reproducible automation without making
+container runtime a default end-user prerequisite.
 
 ## Workstreams
 
-1. public facade repo release/distribution scaffolding
-2. Windows Docker installer-builder image and NSIS project
+1. public facade repo release-kit and support scaffolding
+2. public setup manifest plus Windows/Linux setup adapters
 3. pinned fixture provisioning manifest and Git bundle for `ni/labview-icon-editor`
-4. Windows 11 VM PowerShell + VS Code CLI acceptance harness
+4. Windows 11 host-machine PowerShell + VS Code CLI acceptance harness
 5. retained installed-user evidence pack and human-check worksheet
+6. future container-image automation lane
 
 ## Planned Deliverables
 
-- `installer/nsis/` in the public facade repo
-- `docker/windows-installer-builder/` in the public facade repo
+- `releases/v0.2.0/public-setup-manifest.json` in the public facade repo
+- `setup/windows/Setup-VIHistorySuite.ps1` and `setup/linux/setup-vi-history-suite.sh`
 - `acceptance/windows11/` in the public facade repo
 - a pinned fixture manifest and Git bundle for the canonical proof repo and VI
-- public `INSTALL.md` / `SUPPORT.md` updates for installer-based use
-- a VM acceptance checklist for the manual right-click gate
+- public `INSTALL.md` / `SUPPORT.md` updates for release-kit setup
+- a Windows 11 host-machine acceptance checklist for the manual right-click gate
+- a future container-image automation recipe that mirrors the public setup
+  manifest
 
 ## Non-Goals
 
 - exposing the private GitLab source repositories publicly
 - claiming the public facade repo is the engineering source of truth
-- replacing the Windows 11 VM with container-only proof
+- keeping NSIS on the critical path
+- making Docker a default public prerequisite
 - replacing the human gate with CLI-only proof
+- treating public GitHub issues as gate-closing acceptance
 - Marketplace publication in this program's first slice
 
 ## Acceptance Gates
 
 ### Gate A: Immutable Release Consumption
 
-- the installer build consumes only an immutable released VSIX
-- the installer metadata retains the exact released version and artifact
-  identity
+- the public release kit consumes only an immutable released VSIX
+- the public metadata retains the exact released version and artifact identity
 
-### Gate B: Public Installer Build
+### Gate B: Public Release Kit Publication
 
-- the GitHub workflow can build and publish the installer deterministically from
-  the exact immutable released VSIX
-- NSIS packaging emits a versioned installer artifact with retained metadata
+- the GitHub workflow can build and publish the public release kit
+  deterministically from the exact immutable released VSIX
+- the published kit includes the exact VSIX, public setup manifest, setup
+  adapters, pinned fixture bundle, fixture metadata, and checksums
 
-### Gate C: Automated VM Proof
+### Gate C: Automated Host-Machine Proof
 
-- the Windows 11 VM can install the product using the produced installer
+- the current Windows 11 host machine can complete setup using the public
+  release kit
 - Visual Studio Code CLI can verify the installed extension version
-- the VM can verify Docker Desktop on the Windows containers engine with the
-  pinned LabVIEW image digest present
-- the VM can open the pinned proof workspace deterministically from the bundled
-  Git fixture
+- the proof machine can open the pinned proof workspace deterministically from
+  the bundled Git fixture
 
 ### Gate D: Human UX Gate
 
@@ -200,10 +220,13 @@ automation to trustworthy installed-user evidence.
 The current first slice is:
 
 - activate the public-facade program in the private control plane
-- define the immutable `v0.2.0` release ingestion contract from retained GitLab release evidence
-- define the pinned fixture manifest and Git-bundle strategy for `ni/labview-icon-editor`
-- align the public facade docs and license to current truth
-- stop short of claiming user-proof closure until the VM gates run
+- define the immutable `v0.2.0` release ingestion contract from retained GitLab
+  release evidence
+- define the pinned fixture manifest and Git-bundle strategy for
+  `ni/labview-icon-editor`
+- pivot the public facade from installer-first to release-kit-first
+- stop short of claiming user-proof closure until the host-machine proof gates
+  run
 
 ## Current Landed Scaffold
 
@@ -211,34 +234,24 @@ The public facade repo now retains:
 
 - the immutable `v0.2.0` release contract plus bounded `release-evidence`
   staging guidance
-- a scaffold validation script for the public release/support/build surfaces
-- `docker/windows-installer-builder/Dockerfile` and
-  `docker/windows-installer-builder/Invoke-InstallerBuild.ps1`
-- a pinned NSIS 3.11 bootstrap reference plus
-  `docker/windows-installer-builder/Stage-NsisBootstrap.ps1`
-- pinned Visual Studio Code, Git, and Docker Desktop bootstrap references plus
-  `docker/windows-installer-builder/Stage-VsCodeBootstrap.ps1` and
-  `docker/windows-installer-builder/Stage-GitBootstrap.ps1` and
-  `docker/windows-installer-builder/Stage-DockerDesktopBootstrap.ps1`
+- a primary public setup manifest plus Windows and Linux setup adapters
+- a scaffold validation script plus a direct-release fixture smoke test
 - a pinned `ni/labview-icon-editor` Git fixture bundle with commit history plus
   `scripts/Sync-PinnedFixtureBundle.ps1`
-- `installer/nsis/vi-history-suite-installer.nsi`
-- `installer/nsis/Invoke-HarnessBootstrap.ps1`
-- `acceptance/windows11/Invoke-Windows11Acceptance.ps1`
-- `acceptance/windows11/acceptance-record.template.json`
-- `acceptance/windows11/manual-right-click-checklist.md`
-- a local Windows `makensis` smoke compile succeeded against a temporary
-  synthetic contract that used the tag-reproduced `v0.2.0` VSIX plus the
-  pinned NSIS, Visual Studio Code, Git, and Docker Desktop bootstrap installers
+- a PowerShell acceptance harness, acceptance-record template, and manual
+  right-click checklist for the host-machine lane
 - exact retained release evidence from GitLab release job `13779604462` staged
   under `releases/v0.2.0/release-evidence/`
-- GitHub workflow run `23972941672` published the exact public VSIX and NSIS
-  installer assets to GitHub release `v0.2.0` after the 32-bit PowerShell
-  harness fix
+- a GitHub workflow that now stages and publishes the public release kit first
+  and only retains the NSIS wrapper path as optional legacy work
+- legacy `docker/windows-installer-builder/` and `installer/nsis/` scaffolds as
+  secondary paths
+- a local direct-release Windows smoke that now succeeds against the public
+  setup manifest, exact VSIX, and pinned fixture bundle
 
 The program still intentionally holds these gates open:
 
-- Gate C automated Windows 11 VM proof
+- Gate C automated Windows 11 host-machine proof
 - Gate D human right-click proof
 
 ## Approval Outcome
@@ -248,7 +261,13 @@ This program was approved and is now active through `TRANCHE-010`.
 The approved trust boundary remains:
 
 - private GitLab remains source truth
-- the public GitHub facade repo remains the installer/distribution/support surface
-- the GitHub workflow remains the installer build/publication surface
-- the Windows builder Docker scaffold remains an optional hardening surface
-- the Windows 11 VM plus human right-click gate remain execution truth
+- the public GitHub facade repo remains the public release-kit, setup, and
+  support surface
+- the GitHub workflow remains the release-kit publication surface
+- NSIS remains optional legacy wrapper scaffolding
+- Docker is not part of the default public setup path
+- the current Windows 11 host machine plus human right-click gate remain
+  execution truth
+- a future published container image is the preferred reproducible automation
+  follow-on
+- public GitHub issues remain supplemental field feedback

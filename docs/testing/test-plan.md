@@ -114,8 +114,6 @@
   contract, and writes distinct same-name temporary filenames
 - `TEST-INTEG-005`: validate report artifacts and metadata are stored under
   `context.storageUri`, and report links only appear when HTML output exists
-- `TEST-INTEG-006`: validate runtime discovery honors explicit user tool-path
-  overrides before Windows/macOS/Linux auto-detection
 - `TEST-UNIT-027`: validate the pure comparison-report planning module for
   exact `{type}-report-{fullFilename}.html` naming, deterministic workspace
   storage layout, and narrow local-root planning
@@ -232,6 +230,14 @@
   availability constraints and fallback behavior when CLI tooling is missing
 - `TEST-UNIT-066`: validate the extension manifest exposes `labviewCliPath`
   and keeps all external runtime settings restricted in untrusted workspaces
+- `TEST-DOC-001`: review the extension design summary and SRS to confirm
+  rename following remains explicitly best effort rather than a guaranteed
+  history-rewrite contract
+- `TEST-STATIC-001`: inspect the package manifest and SRS to confirm the
+  extension remains self-contained and does not take a runtime dependency on
+  the external comparevi repositories
+- `TEST-DOC-002`: review the product harness docs to confirm the first real
+  history proof surface is the cloned `ni/labview-icon-editor` repository
 - `TEST-DOC-003`: review architecture and product docs for the published
   WebviewPanel-only surface, desktop/remote-host boundary, and no-publish
   TimelineProvider policy
@@ -867,6 +873,25 @@
 - `TEST-UNIT-241`: verify dashboard pair-preparation summaries count retained
   archive-unavailable refreshes separately from generated, blocked, failed, and
   no-generated-report outcomes
+- `TEST-UNIT-242`: verify the history panel and copied review packet render a
+  retained history-window summary that states the active mode, loaded-versus-total
+  counts when known, and whether the retained window is full history or
+  truncated by the automatic or capped ceiling
+- `TEST-UNIT-243`: verify a dashboard refresh writes
+  `dashboards/latest-dashboard-run.json` with stable artifact paths, summary
+  facts, ETA metadata, and experiment metadata covering history-window policy,
+  known total history count, truncation, timings, and progress events
+- `TEST-UNIT-244`: verify the canonical dashboard smoke lane writes or updates
+  the stable `dashboards/latest-dashboard-run.json` manifest for the newest
+  retained smoke run without requiring hashed workspace-storage path discovery
+- `TEST-UNIT-245`: verify the active post-release control-plane identities stay
+  aligned across `development-queue.json`, README, current-state, `SHIP-0001`,
+  `PROGRAM-0002`, and `ISSUE-0407`, while the landed ship record remains
+  closed historical evidence under `TRANCHE-009` / `ISSUE-0406`
+- `TEST-UNIT-246`: verify the repo-native docs gate fails closed when the
+  active post-release tranche/issue/program identities or the retained open
+  Gate C-D Windows-proof truth drift across `development-queue.json`,
+  `current-state.md`, `PROGRAM-0002`, and `ISSUE-0407`
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed product, wiki, and assurance-skill repos with authority roles,
   expected remotes, and primary entrypoints

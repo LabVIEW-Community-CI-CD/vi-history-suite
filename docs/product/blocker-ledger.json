@@ -39,7 +39,7 @@
         "tests/unit/shipControlDocs.test.ts"
       ],
       "impact": "The governed exact-version release artifact is now retained as formal ship evidence, so this blocker no longer prevents the `v0.2.0` release target.",
-      "resolutionPath": "Sustain immutable release evidence for `v0.2.0`, keep future SemVer tag artifacts non-expiring, and use the retained release as the source truth for the public facade installer and Windows acceptance program."
+      "resolutionPath": "Sustain immutable release evidence for `v0.2.0`, keep future SemVer tag artifacts non-expiring, and use the retained release as the source truth for the public facade release-kit and host-machine acceptance program."
     }
   ]
 }

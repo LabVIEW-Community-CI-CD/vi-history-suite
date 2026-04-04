@@ -13,7 +13,7 @@ Closed and landed for the first immutable SemVer release:
 - retained pipeline: `2428809456`
 - retained release job: `13779604462`
 - current repo-active tranche: `TRANCHE-010`
-- current repo-active issue: [ISSUE-0407 Public Facade Installer And Windows Acceptance](./issues/ISSUE-0407-public-facade-installer-and-windows-acceptance.md)
+- current repo-active issue: [ISSUE-0407 Public Facade Release Kit And Host-Machine Acceptance](./issues/ISSUE-0407-public-facade-installer-and-windows-acceptance.md)
 
 ## Release Target
 
