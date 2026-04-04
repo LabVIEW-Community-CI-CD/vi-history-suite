@@ -130,6 +130,7 @@ Current active tranche:
   - the GitHub experiment lane now publishes a dedicated headless Linux benchmark/source-experiment image so benchmark runs can reuse the derived container by digest
   - the authority repo now guards its local and CI VSIX packaging path with `npm run package:audit`, and that audit fails closed if runtime `node_modules` or transient/test artifacts such as `.cache` or `.vscode-test` would leak into the shipped surface
   - packaging-only npm tooling is now kept out of the default `npm ci` surface used by compile/test/benchmark lanes, and the guarded package path invokes its pinned package manager tooling only on demand
+  - host Linux benchmark evidence and private GitHub experiment evidence are now governed to stay aligned on the same authority commit and published benchmark-image contract before any timing comparison is treated as meaningful
   - automated Windows 11 host-machine proof now succeeds through the direct-release setup lane with retained records at `C:\Users\sveld\AppData\Local\VI History Suite\acceptance\host-machine\setup\setup-record.json` and `C:\Users\sveld\AppData\Local\VI History Suite\acceptance\host-machine\acceptance-record.json`
   - Gate D remains open pending the manual right-click acceptance pass by Sergio Velderrain on the current Windows 11 host machine
 

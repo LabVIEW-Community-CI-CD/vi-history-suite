@@ -958,6 +958,10 @@
   `node_modules`, `.cache`, or `.vscode-test` leakage and keeps packaging-only
   toolchain dependencies out of the default compile/test/benchmark install
   surface
+- `TEST-DOC-037`: review README, current-state, and ADR-0016 and confirm the
+  canonical host Linux benchmark lane and the private GitHub experiment lane
+  are governed to stay aligned on the same authority-repo commit and published
+  benchmark-image contract before timing evidence is compared
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed authority repo, private experiment mirror, wiki, and
   assurance-skill repos with authority roles, expected remotes, and primary

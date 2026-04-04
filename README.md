@@ -232,8 +232,10 @@ Committed and governed today:
   published benchmark image tag unless an explicit override is configured,
   filters raw `npm warn` noise out of the front-facing progress channel, fails
   closed when only a stale launch receipt remains and no live host Linux
-  benchmark container exists, and GitLab remains the authority source repo and
-  release-control surface
+  benchmark container exists, and requires host-versus-GitHub timing
+  comparisons to use the same authority commit pushed to both GitLab authority
+  and the private GitHub experiment mirror while GitLab remains the authority
+  source repo and release-control surface
 
 ## Active Work
 

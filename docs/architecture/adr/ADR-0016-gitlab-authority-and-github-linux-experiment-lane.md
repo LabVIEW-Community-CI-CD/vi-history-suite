@@ -57,6 +57,10 @@ The repo keeps this authority split:
 10. The authority repo retains the prepared benchmark workflow, CLI, harness,
    expected remote, and container recipe as the governed source for the
    experiment lane, while the private GitHub mirror remains non-authoritative.
+11. Host-machine Linux benchmark evidence and private GitHub experiment
+    evidence shall only be compared when the same authority commit has been
+    pushed to both GitLab authority and the private GitHub experiment mirror,
+    and both lanes are using the same published benchmark-image contract.
 
 ## Consequences
 
