@@ -104,12 +104,13 @@ Build a Windows installer from the immutable released VSIX using:
 Version 1 assumptions:
 
 - the VM is treated as a fresh Windows 11 install with neither Visual Studio
-  Code nor Git preinstalled
-- the pinned proof repo is provisioned separately from the installer
+  Code, Git, nor Docker Desktop preinstalled
 - the installer is responsible for placing the exact VSIX and related public
-  docs/support surfaces, bootstrapping pinned Visual Studio Code and Git
-  installers, and then using the Visual Studio Code CLI for extension install
-  and proof automation
+  docs/support surfaces, bootstrapping pinned Visual Studio Code, Git, and
+  Docker Desktop installers, materializing the pinned `ni/labview-icon-editor`
+  proof workspace from a bundled Git fixture with commit history, preparing the
+  pinned LabVIEW Windows container image, and then using the Visual Studio Code
+  CLI for extension install and proof automation
 
 ### Lane 4: Automated Windows 11 Proof
 
@@ -118,7 +119,9 @@ Use the Windows 11 VM plus PowerShell and Visual Studio Code CLI to automate:
 - installer invocation
 - exact extension installation verification
 - version verification
-- workspace launch against the pinned `ni/labview-icon-editor` repo
+- Docker Desktop Windows-engine verification and pinned image-digest verification
+- workspace launch against the pinned `ni/labview-icon-editor` workspace
+  materialized from the bundled Git fixture
 - capture of CLI outputs and retained proof artifacts
 
 ### Lane 5: Human UX Gate
@@ -138,7 +141,7 @@ automation to trustworthy installed-user evidence.
 
 1. public facade repo release/distribution scaffolding
 2. Windows Docker installer-builder image and NSIS project
-3. pinned fixture/repo provisioning manifest for `ni/labview-icon-editor`
+3. pinned fixture provisioning manifest and Git bundle for `ni/labview-icon-editor`
 4. Windows 11 VM PowerShell + VS Code CLI acceptance harness
 5. retained installed-user evidence pack and human-check worksheet
 
@@ -147,7 +150,7 @@ automation to trustworthy installed-user evidence.
 - `installer/nsis/` in the public facade repo
 - `docker/windows-installer-builder/` in the public facade repo
 - `acceptance/windows11/` in the public facade repo
-- a pinned fixture manifest for the canonical proof repo and VI
+- a pinned fixture manifest and Git bundle for the canonical proof repo and VI
 - public `INSTALL.md` / `SUPPORT.md` updates for installer-based use
 - a VM acceptance checklist for the manual right-click gate
 
@@ -157,7 +160,6 @@ automation to trustworthy installed-user evidence.
 - claiming the public facade repo is the engineering source of truth
 - replacing the Windows 11 VM with container-only proof
 - replacing the human gate with CLI-only proof
-- bundling the proof repo inside the installer by default
 - Marketplace publication in this program's first slice
 
 ## Acceptance Gates
@@ -178,7 +180,10 @@ automation to trustworthy installed-user evidence.
 
 - the Windows 11 VM can install the product using the produced installer
 - Visual Studio Code CLI can verify the installed extension version
-- the VM can open the pinned proof workspace deterministically
+- the VM can verify Docker Desktop on the Windows containers engine with the
+  pinned LabVIEW image digest present
+- the VM can open the pinned proof workspace deterministically from the bundled
+  Git fixture
 
 ### Gate D: Human UX Gate
 
@@ -196,7 +201,7 @@ The current first slice is:
 
 - activate the public-facade program in the private control plane
 - define the immutable `v0.2.0` release ingestion contract from retained GitLab release evidence
-- define the pinned fixture manifest for `ni/labview-icon-editor`
+- define the pinned fixture manifest and Git-bundle strategy for `ni/labview-icon-editor`
 - align the public facade docs and license to current truth
 - stop short of claiming user-proof closure until the VM gates run
 
@@ -211,16 +216,20 @@ The public facade repo now retains:
   `docker/windows-installer-builder/Invoke-InstallerBuild.ps1`
 - a pinned NSIS 3.11 bootstrap reference plus
   `docker/windows-installer-builder/Stage-NsisBootstrap.ps1`
-- pinned Visual Studio Code and Git bootstrap references plus
+- pinned Visual Studio Code, Git, and Docker Desktop bootstrap references plus
   `docker/windows-installer-builder/Stage-VsCodeBootstrap.ps1` and
-  `docker/windows-installer-builder/Stage-GitBootstrap.ps1`
+  `docker/windows-installer-builder/Stage-GitBootstrap.ps1` and
+  `docker/windows-installer-builder/Stage-DockerDesktopBootstrap.ps1`
+- a pinned `ni/labview-icon-editor` Git fixture bundle with commit history plus
+  `scripts/Sync-PinnedFixtureBundle.ps1`
 - `installer/nsis/vi-history-suite-installer.nsi`
+- `installer/nsis/Invoke-HarnessBootstrap.ps1`
 - `acceptance/windows11/Invoke-Windows11Acceptance.ps1`
 - `acceptance/windows11/acceptance-record.template.json`
 - `acceptance/windows11/manual-right-click-checklist.md`
 - a local Windows `makensis` smoke compile succeeded against a temporary
   synthetic contract that used the tag-reproduced `v0.2.0` VSIX plus the
-  pinned NSIS, Visual Studio Code, and Git bootstrap installers
+  pinned NSIS, Visual Studio Code, Git, and Docker Desktop bootstrap installers
 - exact retained release evidence from GitLab release job `13779604462` staged
   under `releases/v0.2.0/release-evidence/`
 - GitHub workflow run `23968715268` published the exact public VSIX and NSIS

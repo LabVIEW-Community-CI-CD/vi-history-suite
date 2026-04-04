@@ -113,8 +113,9 @@ Current active tranche:
   - land the public facade scaffold surfaces:
     - immutable release contract plus `release-evidence` staging README
     - scaffold validation script
-    - Windows Docker builder scaffold with pinned NSIS 3.11, Visual Studio Code, and Git bootstrap references
-    - NSIS installer scaffold for fresh Windows 11 VMs
+    - Windows builder scaffold with pinned NSIS 3.11, Visual Studio Code, Git, and Docker Desktop bootstrap references
+    - pinned LabVIEW Windows container image identity and pinned `ni/labview-icon-editor` Git fixture bundle with commit history
+    - NSIS installer scaffold for fresh Windows 11 VMs that materializes the bundled proof workspace locally
     - Windows 11 acceptance harness, record template, and manual checklist
     - local Windows `makensis` smoke compile against a temporary synthetic contract using the tag-reproduced `v0.2.0` VSIX plus the pinned bootstrap installers
   - exact retained `v0.2.0` release evidence is now staged in the public facade repo from GitLab release job `13779604462`
@@ -135,8 +136,10 @@ Current active post-release program:
   - the GitHub workflow is the active installer build and publication surface
   - the Windows builder Docker scaffold remains available for future hardening
   - the fresh Windows 11 VM proves the installed-user flow
-  - the installer bootstraps pinned Visual Studio Code and Git prerequisites on
-    that fresh VM
+  - the installer bootstraps pinned Visual Studio Code, Git, and Docker Desktop
+    prerequisites on that fresh VM
+  - the installer prepares the pinned LabVIEW Windows container image and a
+    local `ni/labview-icon-editor` Git fixture workspace with commit history
   - Visual Studio Code CLI automates install/verify/open surfaces after
     bootstrap
   - the manual right-click review pass remains the human UX gate

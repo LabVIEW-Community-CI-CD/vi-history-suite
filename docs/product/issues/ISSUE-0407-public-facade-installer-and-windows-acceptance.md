@@ -26,11 +26,14 @@ Current landed scaffold state:
   scaffold plus a PowerShell entrypoint that validates the immutable VSIX
   identity before invoking NSIS, plus a pinned NSIS 3.11 bootstrap reference
   and staging script for the Windows builder lane, plus pinned Visual Studio
-  Code and Git bootstrap references for the fresh-VM installer payload
+  Code, Git, and Docker Desktop bootstrap references for the fresh-VM installer
+  payload, plus a pinned `ni/labview-icon-editor` Git fixture bundle with
+  commit history for the installer harness
 - `installer/nsis/` now contains the public installer scaffold that stages the
   exact released VSIX plus public-facing support materials, bootstraps Visual
-  Studio Code and Git on a fresh VM, and installs through the Visual Studio
-  Code CLI
+  Studio Code, Git, and Docker Desktop on a fresh VM, prepares the pinned
+  Windows container image, materializes the pinned proof workspace locally, and
+  installs through the Visual Studio Code CLI
 - `acceptance/windows11/` now contains a PowerShell acceptance harness,
   acceptance-record template, and the retained manual right-click checklist
 - a local Windows `makensis` smoke compile now succeeds against a temporary
@@ -50,6 +53,7 @@ Current landed scaffold state:
 - Windows builder Docker scaffold for future hardening
 - NSIS-based Windows installer project
 - pinned fixture manifest for `ni/labview-icon-editor`
+- pinned fixture bundle for `ni/labview-icon-editor` with commit history
 - Windows 11 VM acceptance harness using PowerShell plus Visual Studio Code CLI
 - retained manual right-click acceptance worksheet for the human UX gate
 
@@ -59,7 +63,6 @@ Current landed scaffold state:
 - treating the public GitHub repo as the engineering source of truth
 - replacing the Windows 11 VM with container-only proof
 - replacing the human right-click gate with CLI-only proof
-- bundling the proof repo inside the installer by default
 - Marketplace publication in the first slice
 
 ## Dependencies
@@ -74,8 +77,11 @@ Current landed scaffold state:
 - the public facade repo retains installer/build/acceptance scaffolding that
   explicitly consumes only immutable released VSIX artifacts
 - the installer design treats the Windows 11 VM as a fresh install with neither
-  Visual Studio Code nor Git preinstalled and bootstraps those prerequisites as
-  part of installer execution
+  Visual Studio Code, Git, nor Docker Desktop preinstalled and bootstraps
+  those prerequisites as part of installer execution
+- the installer design prepares the pinned LabVIEW Windows container image and
+  materializes the canonical proof workspace from a bundled Git fixture with
+  commit history
 - the GitHub workflow is documented as the active installer build/publication
   surface, with the Windows builder scaffold kept distinct from the
   installed-user proof surface
@@ -97,6 +103,6 @@ Current landed scaffold state:
 
 - activate `TRANCHE-010` and `PROGRAM-0002` in the private repo control plane
 - ingest the exact immutable `v0.2.0` release contract into the public facade repo
-- pin the canonical `ni/labview-icon-editor` fixture and selected VI path
+- pin the canonical `ni/labview-icon-editor` fixture, bundle strategy, and selected VI path
 - align public install, support, acceptance, and license surfaces to current truth
 - stop short of claiming installed-user proof closure until Gates C-D run

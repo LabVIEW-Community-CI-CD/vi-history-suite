@@ -85,7 +85,7 @@
     "title": "Public facade installer and Windows acceptance",
     "status": "active",
     "source": "author direction",
-    "summary": "After the first immutable SemVer VSIX release exists, turn the public GitHub facade repo into the installer, release, and support surface using a GitHub workflow-driven NSIS build lane backed by the Windows builder scaffold and a fresh Windows 11 VM acceptance lane where the installer bootstraps Git and Visual Studio Code before Visual Studio Code CLI automation and the manual right-click human gate.",
+    "summary": "After the first immutable SemVer VSIX release exists, turn the public GitHub facade repo into the installer, release, and support surface using a GitHub workflow-driven NSIS build lane backed by the Windows builder scaffold and a fresh Windows 11 VM acceptance lane where the installer bootstraps Visual Studio Code, Git, and Docker Desktop, prepares the pinned LabVIEW Windows container image, materializes the pinned `ni/labview-icon-editor` Git fixture with commit history, and then relies on Visual Studio Code CLI automation plus the manual right-click human gate.",
     "issues": [
       "ISSUE-0407"
     ]
