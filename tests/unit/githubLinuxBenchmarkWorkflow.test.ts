@@ -20,6 +20,7 @@ describe('github linux benchmark workflow', () => {
     expect(workflow).toContain('nationalinstruments/labview:2026q1-linux');
     expect(workflow).toContain('ghcr.io/${owner_lc}/vi-history-suite-source-experiments/linux-dashboard-benchmark');
     expect(workflow).toContain('docker login ghcr.io');
+    expect(workflow).toContain('Pull published benchmark image');
     expect(workflow).toContain('docker pull "$NI_LINUX_IMAGE"');
     expect(workflow).toContain('docker push "$image_ref:$sha_tag"');
     expect(workflow).toContain('docker pull "$BENCHMARK_IMAGE"');
@@ -30,6 +31,7 @@ describe('github linux benchmark workflow', () => {
     expect(workflow).toContain('HARNESS-VHS-002');
     expect(workflow).toContain('.cache/github-experiments/linux-dashboard-benchmark/**');
     expect(workflow).toContain('linux-runtime-benchmark-image');
+    expect(workflow).toContain('if-no-files-found: warn');
 
     expect(dockerfile).toContain('ARG BASE_IMAGE=nationalinstruments/labview:2026q1-linux');
     expect(dockerfile).toContain('io.vihs.runtime-plane="github-linux-dashboard-benchmark"');
