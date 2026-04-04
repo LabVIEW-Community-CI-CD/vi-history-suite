@@ -232,7 +232,7 @@ The public facade repo now retains:
   pinned NSIS, Visual Studio Code, Git, and Docker Desktop bootstrap installers
 - exact retained release evidence from GitLab release job `13779604462` staged
   under `releases/v0.2.0/release-evidence/`
-- GitHub workflow run `23970596820` published the exact public VSIX and NSIS
+- GitHub workflow run `23971788621` published the exact public VSIX and NSIS
   installer assets to GitHub release `v0.2.0`
 
 The program still intentionally holds these gates open:
