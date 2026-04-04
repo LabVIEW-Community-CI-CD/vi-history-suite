@@ -119,9 +119,10 @@ Current active tranche:
     - direct-release Windows smoke against the public setup manifest, exact VSIX, and pinned fixture bundle
   - exact retained `v0.2.0` release evidence is now staged in the public facade repo from GitLab release job `13779604462`
   - the GitHub workflow now publishes only the public release kit and deletes retired legacy installer assets when they are still present on the GitHub release
-  - the latest successful public release-kit publication run is `23985423058` on public facade head `1b08d92`, and that run removed the retired installer exe/checksum/build-metadata assets from GitHub Releases
+  - the latest successful public release-kit publication run is `23985796126` on public facade head `d6357d9`, and that run published the host-machine human-gate helper assets alongside the release kit
   - Docker is no longer part of the default public setup path
-  - a future container image is the intended reproducible automation follow-on, replacing VM replay as the preferred direction
+  - a scaffolded container public-release-kit smoke recipe and workflow now exist at `docker/public-release-kit-smoke/` and `.github/workflows/container-public-release-kit-smoke.yml`
+  - a future published container image remains the intended reproducible automation follow-on, replacing VM replay as the preferred direction
   - automated Windows 11 host-machine proof now succeeds through the direct-release setup lane with retained records at `C:\Users\sveld\AppData\Local\VI History Suite\acceptance\host-machine\setup\setup-record.json` and `C:\Users\sveld\AppData\Local\VI History Suite\acceptance\host-machine\acceptance-record.json`
   - Gate D remains open pending the manual right-click acceptance pass by Sergio Velderrain on the current Windows 11 host machine
 
@@ -142,7 +143,7 @@ Current active post-release program:
   - NSIS has been removed from the active public toolchain
   - Docker is not part of the default public setup path
   - the current Windows 11 host machine has already proven the automated installed-user flow
-  - a future published container image is the preferred reproducible automation follow-on
+  - a scaffolded container public-release-kit smoke recipe and workflow now exist in the public repo while a future published container image remains the preferred reproducible automation follow-on
   - the setup adapters prepare Visual Studio Code and Git when needed, install the exact VSIX, and materialize the local `ni/labview-icon-editor` Git fixture workspace with commit history
   - Visual Studio Code CLI automates install/verify/open surfaces after setup
   - the manual right-click review pass remains the human UX gate, and Sergio Velderrain is the sole named maintainer gate owner for that host-machine click pass
@@ -233,6 +234,8 @@ These are generated locally and are not the committed source of truth:
 - public facade host-machine acceptance:
   - `C:\Users\sveld\AppData\Local\VI History Suite\acceptance\host-machine\setup\setup-record.json`
   - `C:\Users\sveld\AppData\Local\VI History Suite\acceptance\host-machine\acceptance-record.json`
+- public facade container smoke:
+  - `artifacts/container-public-release-kit-smoke/public-release-kit-smoke.json`
 
 ## Commands
 

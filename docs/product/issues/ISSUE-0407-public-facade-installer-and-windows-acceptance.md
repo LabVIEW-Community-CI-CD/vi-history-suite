@@ -36,12 +36,17 @@ Current landed scaffold state:
   right-click checklist for the host-machine lane
 - the GitHub workflow now publishes the public release kit only and deletes
   retired legacy installer assets when present
-- successful public release-kit publication run `23985423058` on public head
-  `1b08d92` removed the retired installer assets from GitHub Releases
+- successful public release-kit publication run `23985796126` on public head
+  `d6357d9` published the host-machine human-gate helper assets into GitHub
+  Releases
 - the exact retained `v0.2.0` release evidence is staged into the public facade
   repo from GitLab release job `13779604462`
 - a local direct-release Windows smoke now succeeds against the public setup
   manifest, the exact VSIX, and the pinned fixture bundle
+- `docker/public-release-kit-smoke/` plus
+  `.github/workflows/container-public-release-kit-smoke.yml` now scaffold the
+  future container automation lane without making Docker a default public
+  prerequisite
 - the host-machine automated acceptance lane now succeeds with a retained
   acceptance record at
   `C:\Users\sveld\AppData\Local\VI History Suite\acceptance\host-machine\acceptance-record.json`

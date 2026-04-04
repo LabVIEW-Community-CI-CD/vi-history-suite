@@ -66,6 +66,8 @@ automation and human evidence are captured.
 
 - a future published container image that mirrors the public setup contract and
   replaces VM replay as the preferred automation surface
+- the current first slice of that lane is a scaffolded container
+  public-release-kit smoke recipe and GitHub workflow
 
 ### Supplemental Feedback Truth
 
@@ -155,6 +157,13 @@ Replace VM replay with a future published container image that mirrors the
 public setup contract and provides reproducible automation without making
 container runtime a default end-user prerequisite.
 
+Current first slice:
+
+- scaffold `docker/public-release-kit-smoke/`
+- scaffold `.github/workflows/container-public-release-kit-smoke.yml`
+- verify live release-kit assets, fixture materialization, and canonical VI
+  presence inside a Linux container smoke lane
+
 ## Workstreams
 
 1. public facade repo release-kit and support scaffolding
@@ -174,6 +183,8 @@ container runtime a default end-user prerequisite.
 - a Windows 11 host-machine acceptance checklist plus a dedicated human-gate closeout script for the manual right-click gate
 - a future container-image automation recipe that mirrors the public setup
   manifest
+- a scaffolded container public-release-kit smoke recipe and workflow in the
+  public facade repo
 
 ## Non-Goals
 
@@ -248,10 +259,14 @@ The public facade repo now retains:
   under `releases/v0.2.0/release-evidence/`
 - a GitHub workflow that now publishes the public release kit only and deletes
   retired legacy installer assets when present
-- a successful public release-kit publication run `23985423058` on public head
-  `1b08d92` that removed the retired installer assets from the GitHub release
+- a successful public release-kit publication run `23985796126` on public head
+  `d6357d9` that published the host-machine human-gate helper assets into the
+  GitHub release
 - a local direct-release Windows smoke that now succeeds against the public
   setup manifest, exact VSIX, and pinned fixture bundle
+- a scaffolded container public-release-kit smoke recipe and workflow at
+  `docker/public-release-kit-smoke/` and
+  `.github/workflows/container-public-release-kit-smoke.yml`
 - a retained automated host-machine proof record at
   `C:\Users\sveld\AppData\Local\VI History Suite\acceptance\host-machine\acceptance-record.json`
 - Sergio Velderrain remains the sole named maintainer gate owner for the
