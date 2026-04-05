@@ -107,11 +107,11 @@
 
 ### Governed Comparable Prefix
 
-- accepted cross-OS comparable window: the first `135` commits / `134` pairs
+- accepted cross-OS comparable window: the first `129` commits / `128` pairs
 - retained comparable-prefix packet:
   - `docs/product/benchmark-packets/HARNESS-VHS-002-comparable-prefix.json`
   - `docs/product/benchmark-packets/HARNESS-VHS-002-comparable-prefix.md`
-- current retained last comparable pair id: `2a28a2b984d9`
+- current retained last comparable pair id: `87792a7b6545`
 - current retained Linux full-window blocker:
   `pair 135 / 138 :: command-exited-nonzero (linux-headless-recursive-load)`
 - the full 139-commit / 138-pair window remains the deep Windows benchmark

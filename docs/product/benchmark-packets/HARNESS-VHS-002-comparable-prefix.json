@@ -1,7 +1,7 @@
 {
   "schema": "vi-history-suite/comparable-prefix-benchmark-packet@v1",
   "benchmarkId": "HARNESS-VHS-002-comparable-prefix",
-  "generatedAt": "2026-04-05T07:13:39.803Z",
+  "generatedAt": "2026-04-05T16:15:03.524Z",
   "harnessId": "HARNESS-VHS-002",
   "targetRelativePath": "resource/plugins/lv_icon.vi",
   "proofState": "bounded-prefix-comparable",
@@ -10,9 +10,9 @@
     "comparePairCount": 138
   },
   "comparablePrefix": {
-    "dashboardCommitWindow": 135,
-    "comparePairCount": 134,
-    "lastComparablePairId": "2a28a2b984d9"
+    "dashboardCommitWindow": 129,
+    "comparePairCount": 128,
+    "lastComparablePairId": "87792a7b6545"
   },
   "surfaces": {
     "windowsHost": {
@@ -20,6 +20,10 @@
       "latestRunPath": "/mnt/c/Users/sveld/AppData/Roaming/Code/User/workspaceStorage/0bca0972b9105eae5fae72858e3399d0/svelderrainruiz.vi-history-suite/dashboards/latest-dashboard-run.json",
       "dashboardJsonPath": "/mnt/c/Users/sveld/AppData/Roaming/Code/User/workspaceStorage/0bca0972b9105eae5fae72858e3399d0/svelderrainruiz.vi-history-suite/dashboards/96d52f06697b/2ce533d51193/242c931b6588/dashboard.json",
       "recordedAt": "2026-04-04T21:02:02.018Z",
+      "validatedComparablePairCount": 128,
+      "firstInvalidPairIndex": 129,
+      "firstInvalidPairId": "3da72eea60aa",
+      "firstInvalidReason": "runtime-failed",
       "providerSummaries": [
         {
           "label": "windows-container / labview-cli / auto / win32",
@@ -27,18 +31,22 @@
         }
       ],
       "representedPairCount": 138,
-      "comparablePrefixRuntimeTotalMs": 4432457
+      "comparablePrefixRuntimeTotalMs": 4210919
     },
     "linuxHost": {
       "state": "bounded-blocked",
       "latestSummaryPath": "/mnt/c/Users/sveld/AppData/Local/VI History Suite/host-linux-dashboard-benchmark/workspace-stage/current/.cache/github-experiments/linux-dashboard-benchmark/HARNESS-VHS-002/latest-summary.json",
       "dashboardSmokePath": "/mnt/c/Users/sveld/AppData/Local/VI History Suite/host-linux-dashboard-benchmark/workspace-stage/current/.cache/harness-reports/HARNESS-VHS-002/dashboard-smoke.json",
       "dashboardJsonPath": "/mnt/c/Users/sveld/AppData/Local/VI History Suite/host-linux-dashboard-benchmark/workspace-stage/current/.cache/harness-reports/HARNESS-VHS-002/workspace-storage/dashboards/5ae492b4571b/4053fc0e2e30/242c931b6588/dashboard.json",
+      "validatedComparablePairCount": 134,
+      "firstInvalidPairIndex": 135,
+      "firstInvalidPairId": "137ea959b82a",
+      "firstInvalidReason": "runtime-failed",
       "providerCounts": {
-        "host-native / labview-cli / auto / linux": 134
+        "host-native / labview-cli / auto / linux": 128
       },
       "representedPairCount": 138,
-      "comparablePrefixRuntimeTotalMs": 489440,
+      "comparablePrefixRuntimeTotalMs": 442451,
       "fullWindowBlocker": {
         "completionState": "failed",
         "comparabilityState": "characterization-only",
@@ -53,21 +61,46 @@
       }
     },
     "windowsBenchmarkImage": {
-      "state": "pending-proof",
-      "imageRef": "ghcr.io/svelderrainruiz/vi-history-suite-source-experiments/windows-dashboard-benchmark:main"
+      "state": "bounded-blocked",
+      "latestSummaryPath": "/mnt/c/Users/sveld/AppData/Local/VI History Suite/windows-benchmark-image-proof/cache/github-experiments/windows-dashboard-benchmark/HARNESS-VHS-002/latest-summary.json",
+      "dashboardSmokePath": "/mnt/c/Users/sveld/AppData/Local/VI History Suite/windows-benchmark-image-proof/cache/harness-reports/HARNESS-VHS-002/dashboard-smoke.json",
+      "dashboardJsonPath": "/mnt/c/Users/sveld/AppData/Local/VI History Suite/windows-benchmark-image-proof/cache/harness-reports/HARNESS-VHS-002/workspace-storage/dashboards/a1fa155b16ea/0ded7fc226bb/5f642f6f0eef/dashboard.json",
+      "imageRef": "ghcr.io/svelderrainruiz/vi-history-suite-source-experiments/windows-dashboard-benchmark:sha-b679b8761f09df3f39d1a2d35addad2aaf0654b9",
+      "imageDigest": "sha256:629d8ca1d25c9f1010ef607fe310e86c0302aa5fcca57ff33f478cb1a864265d",
+      "validatedComparablePairCount": 128,
+      "firstInvalidPairIndex": 129,
+      "firstInvalidPairId": "3da72eea60aa",
+      "firstInvalidReason": "runtime-failed",
+      "providerCounts": {
+        "host-native / labview-cli / auto / win32": 128
+      },
+      "representedPairCount": 134,
+      "comparablePrefixRuntimeTotalMs": 464798,
+      "fullWindowBlocker": {
+        "completionState": "failed",
+        "comparabilityState": "characterization-only",
+        "processedPairCount": 129,
+        "generatedReportCount": 128,
+        "terminalPairIndex": 129,
+        "terminalPairFailureReason": "command-exited-nonzero",
+        "terminalPairDiagnosticReason": "runtime-failed"
+      }
     }
   },
   "comparison": {
-    "lastComparablePairId": "2a28a2b984d9",
-    "linuxVsWindowsRuntimeRatio": 0.11042182699121503,
-    "windowsVsLinuxSpeedupFactor": 9.056180532853874,
-    "deltaRuntimeMs": 3943017
+    "lastComparablePairId": "87792a7b6545",
+    "linuxVsWindowsRuntimeRatio": 0.1050723131933908,
+    "windowsVsLinuxSpeedupFactor": 9.517255018069797,
+    "deltaRuntimeMs": 3768468
   },
   "retainedArtifacts": {
     "windowsHostLatestRunPath": "/mnt/c/Users/sveld/AppData/Roaming/Code/User/workspaceStorage/0bca0972b9105eae5fae72858e3399d0/svelderrainruiz.vi-history-suite/dashboards/latest-dashboard-run.json",
     "windowsHostDashboardJsonPath": "/mnt/c/Users/sveld/AppData/Roaming/Code/User/workspaceStorage/0bca0972b9105eae5fae72858e3399d0/svelderrainruiz.vi-history-suite/dashboards/96d52f06697b/2ce533d51193/242c931b6588/dashboard.json",
     "linuxHostLatestSummaryPath": "/mnt/c/Users/sveld/AppData/Local/VI History Suite/host-linux-dashboard-benchmark/workspace-stage/current/.cache/github-experiments/linux-dashboard-benchmark/HARNESS-VHS-002/latest-summary.json",
     "linuxHostDashboardSmokePath": "/mnt/c/Users/sveld/AppData/Local/VI History Suite/host-linux-dashboard-benchmark/workspace-stage/current/.cache/harness-reports/HARNESS-VHS-002/dashboard-smoke.json",
-    "linuxHostDashboardJsonPath": "/mnt/c/Users/sveld/AppData/Local/VI History Suite/host-linux-dashboard-benchmark/workspace-stage/current/.cache/harness-reports/HARNESS-VHS-002/workspace-storage/dashboards/5ae492b4571b/4053fc0e2e30/242c931b6588/dashboard.json"
+    "linuxHostDashboardJsonPath": "/mnt/c/Users/sveld/AppData/Local/VI History Suite/host-linux-dashboard-benchmark/workspace-stage/current/.cache/harness-reports/HARNESS-VHS-002/workspace-storage/dashboards/5ae492b4571b/4053fc0e2e30/242c931b6588/dashboard.json",
+    "windowsBenchmarkImageLatestSummaryPath": "/mnt/c/Users/sveld/AppData/Local/VI History Suite/windows-benchmark-image-proof/cache/github-experiments/windows-dashboard-benchmark/HARNESS-VHS-002/latest-summary.json",
+    "windowsBenchmarkImageDashboardSmokePath": "/mnt/c/Users/sveld/AppData/Local/VI History Suite/windows-benchmark-image-proof/cache/harness-reports/HARNESS-VHS-002/dashboard-smoke.json",
+    "windowsBenchmarkImageDashboardJsonPath": "/mnt/c/Users/sveld/AppData/Local/VI History Suite/windows-benchmark-image-proof/cache/harness-reports/HARNESS-VHS-002/workspace-storage/dashboards/a1fa155b16ea/0ded7fc226bb/5f642f6f0eef/dashboard.json"
   }
 }

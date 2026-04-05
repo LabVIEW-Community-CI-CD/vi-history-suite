@@ -1121,9 +1121,10 @@
   exists
 - `TEST-DOC-044`: review README, current-state, harnesses, PROGRAM-0003,
   ISSUE-0408, and ADR-0020 and confirm the accepted cross-OS benchmark truth
-  is the retained `135`-commit / `134`-pair comparable-prefix packet, while
-  the full Linux `138`-pair window and the Windows benchmark-image proof both
-  remain explicit open control-plane facts
+  is the retained `129`-commit / `128`-pair comparable-prefix packet derived
+  from the first invalid governed surface, while the full Linux `138`-pair
+  window remains blocked later at pair `135` and the Windows benchmark-image
+  surface remains explicit bounded-blocked at pair `129`
 - `TEST-DOC-045`: review README, current-state, PROGRAM-0003, and ISSUE-0408
   and confirm the repo documents `scripts/runHostWindowsBenchmarkImageProof.js`
   as the governed canonical-host Windows benchmark-image proof surface, that

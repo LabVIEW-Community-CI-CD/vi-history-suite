@@ -33,7 +33,7 @@ Current retained benchmark truth before activation:
 - older retry experiments after timeout degraded into `-350000` connection
   failure instead of recovering the headless session
 - a governed comparable-prefix packet now retains the accepted cross-OS
-  `135`-commit / `134`-pair timing scope in
+  `129`-commit / `128`-pair timing scope in
   `docs/product/benchmark-packets/HARNESS-VHS-002-comparable-prefix.json`
 - the authority repo now retains per-pair failure receipts, terminal partial
   summaries, native Linux diagnostic logs, supplemental headless artifacts, a
@@ -47,7 +47,7 @@ Current retained benchmark truth before activation:
   GHCR tag, pre-seeds the mounted harness cache from the governed local
   `ni-labview-icon-editor` clone when available, normalizes Git safe-directory
   handling for those mounted clones, defaults `HARNESS-VHS-002` to the
-  retained `135`-commit comparable prefix unless overridden, and writes
+  retained `129`-commit comparable prefix unless overridden, and writes
   launch/log/summary receipts under
   `C:\Users\sveld\AppData\Local\VI History Suite\windows-benchmark-image-proof`
 - the latest local Windows benchmark-image proof now reaches pair `129/134`
@@ -87,7 +87,7 @@ Current retained benchmark truth before activation:
 ## Acceptance Criteria
 
 - Linux either completes the deep `138/138` benchmark truthfully or the repo
-  retains the accepted bounded `135`-commit / `134`-pair comparable prefix
+  retains the accepted bounded `129`-commit / `128`-pair comparable prefix
   plus the explicit full-window blocker rationale
 - the published Windows benchmark image is proven locally on the canonical host
 - one comparative benchmark packet exists with explicit comparability outcome
@@ -104,7 +104,7 @@ Current retained benchmark truth before activation:
 
 - consume the retained Linux pair `135/138` failure evidence
 - preserve the Linux headless-runtime blocker as governed benchmark truth
-- retain and normalize the accepted `135`-commit / `134`-pair comparable prefix
+- retain and normalize the accepted `129`-commit / `128`-pair comparable prefix
 - finish the host-runnable Windows benchmark-image proof
 - stop short of claiming full comparability until both image lanes have
   truthful terminal summaries

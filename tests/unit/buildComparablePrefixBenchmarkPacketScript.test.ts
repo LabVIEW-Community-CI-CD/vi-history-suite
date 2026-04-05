@@ -15,7 +15,7 @@ const comparablePacket = require(path.resolve(
   summarizeDashboardPrefix: (
     dashboardJsonPath: string,
     comparablePairCount: number,
-    options?: { linuxWorkspaceRoot?: string }
+    options?: { linuxWorkspaceRoot?: string; windowsWorkspaceRoot?: string }
   ) => {
     representedPairCount: number;
     comparablePairCount: number;
@@ -25,7 +25,7 @@ const comparablePacket = require(path.resolve(
   };
   normalizeArtifactPath: (
     filePath: string,
-    options?: { linuxWorkspaceRoot?: string }
+    options?: { linuxWorkspaceRoot?: string; windowsWorkspaceRoot?: string }
   ) => string;
   renderComparablePrefixBenchmarkPacketMarkdown: (packet: {
     generatedAt: string;
@@ -41,11 +41,13 @@ const comparablePacket = require(path.resolve(
       windowsHost: {
         latestRunPath: string;
         dashboardJsonPath: string;
+        validatedComparablePairCount: number;
         comparablePrefixRuntimeTotalMs: number;
       };
       linuxHost: {
         latestSummaryPath: string;
         dashboardJsonPath: string;
+        validatedComparablePairCount: number;
         comparablePrefixRuntimeTotalMs: number;
         fullWindowBlocker: {
           terminalPairIndex: number;
@@ -55,7 +57,16 @@ const comparablePacket = require(path.resolve(
       };
       windowsBenchmarkImage: {
         state: string;
+        latestSummaryPath: string;
+        dashboardJsonPath: string;
         imageRef: string;
+        validatedComparablePairCount: number;
+        comparablePrefixRuntimeTotalMs: number;
+        fullWindowBlocker: {
+          terminalPairIndex: number;
+          terminalPairFailureReason: string;
+          terminalPairDiagnosticReason: string;
+        };
       };
     };
     comparison: {
@@ -136,6 +147,17 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
       comparablePacket.normalizeArtifactPath('C:\\Users\\sveld\\report-metadata.json')
     ).toBe('/mnt/c/Users/sveld/report-metadata.json');
     expect(
+      comparablePacket.normalizeArtifactPath(
+        'C:\\workspace\\.cache\\harness-reports\\HARNESS-VHS-002\\dashboard-smoke.json',
+        {
+          windowsWorkspaceRoot:
+            '/mnt/c/Users/sveld/AppData/Local/VI History Suite/windows-benchmark-image-proof'
+        }
+      )
+    ).toBe(
+      '/mnt/c/Users/sveld/AppData/Local/VI History Suite/windows-benchmark-image-proof/cache/harness-reports/HARNESS-VHS-002/dashboard-smoke.json'
+    );
+    expect(
       comparablePacket.normalizeArtifactPath('/workspace/.cache/report-metadata.json', {
         linuxWorkspaceRoot: '/mnt/c/Users/sveld/AppData/Local/VI History Suite/host-linux-dashboard-benchmark/workspace-stage/current'
       })
@@ -154,19 +176,21 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
         comparePairCount: 138
       },
       comparablePrefix: {
-        dashboardCommitWindow: 135,
-        comparePairCount: 134,
-        lastComparablePairId: '2a28a2b984d9'
+        dashboardCommitWindow: 129,
+        comparePairCount: 128,
+        lastComparablePairId: '87792a7b6545'
       },
       surfaces: {
         windowsHost: {
           latestRunPath: '/tmp/latest-dashboard-run.json',
           dashboardJsonPath: '/tmp/windows-dashboard.json',
+          validatedComparablePairCount: 128,
           comparablePrefixRuntimeTotalMs: 4432457
         },
         linuxHost: {
           latestSummaryPath: '/tmp/latest-summary.json',
           dashboardJsonPath: '/tmp/linux-dashboard.json',
+          validatedComparablePairCount: 134,
           comparablePrefixRuntimeTotalMs: 489440,
           fullWindowBlocker: {
             terminalPairIndex: 135,
@@ -175,9 +199,18 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
           }
         },
         windowsBenchmarkImage: {
-          state: 'pending-proof',
+          state: 'bounded-blocked',
+          latestSummaryPath: '/tmp/windows-image-summary.json',
+          dashboardJsonPath: '/tmp/windows-image-dashboard.json',
           imageRef:
-            'ghcr.io/svelderrainruiz/vi-history-suite-source-experiments/windows-dashboard-benchmark:main'
+            'ghcr.io/svelderrainruiz/vi-history-suite-source-experiments/windows-dashboard-benchmark:sha-b679b8761f09df3f39d1a2d35addad2aaf0654b9',
+          validatedComparablePairCount: 128,
+          comparablePrefixRuntimeTotalMs: 623664,
+          fullWindowBlocker: {
+            terminalPairIndex: 129,
+            terminalPairFailureReason: 'command-exited-nonzero',
+            terminalPairDiagnosticReason: 'runtime-failed'
+          }
         }
       },
       comparison: {
@@ -188,8 +221,8 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
     });
 
     expect(markdown).toContain('Comparable Prefix Benchmark Packet');
-    expect(markdown).toContain('135 commits / 134 pairs');
+    expect(markdown).toContain('129 commits / 128 pairs');
     expect(markdown).toContain('linux-headless-recursive-load');
-    expect(markdown).toContain('pending-proof');
+    expect(markdown).toContain('bounded-blocked');
   });
 });

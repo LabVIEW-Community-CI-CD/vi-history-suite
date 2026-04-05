@@ -95,7 +95,7 @@
     "title": "Repeatable Windows and Linux benchmark proof",
     "status": "queued",
     "source": "author direction",
-    "summary": "After `PROGRAM-0002` closes Gate D, prove repeatable `HARNESS-VHS-002` benchmark truth across the canonical Windows host baseline, the published Windows benchmark image, and the Linux benchmark image. The tranche now treats the retained `135`-commit / `134`-pair comparable-prefix packet as the accepted cross-OS timing scope while the latest official NI Linux full window remains blocked at pair `135/138`; it closes when the Windows image lane is proven locally on the canonical host and the comparative benchmark packet is normalized into the control plane with the bounded Linux blocker kept explicit.",
+    "summary": "After `PROGRAM-0002` closes Gate D, prove repeatable `HARNESS-VHS-002` benchmark truth across the canonical Windows host baseline, the published Windows benchmark image, and the Linux benchmark image. The tranche now treats the retained `129`-commit / `128`-pair comparable-prefix packet as the accepted cross-OS timing scope because both governed Windows surfaces lose truthful comparability at pair `129` while the latest official NI Linux full window remains blocked later at pair `135/138`; it closes when the Windows image lane is normalized into the comparative benchmark packet and the bounded Linux blocker remains explicit.",
     "issues": [
       "ISSUE-0408"
     ]

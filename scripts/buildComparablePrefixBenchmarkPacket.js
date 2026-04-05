@@ -29,6 +29,25 @@ const HOST_LINUX_SMOKE_RELATIVE_PATH = path.join(
   TARGET_HARNESS_ID,
   'dashboard-smoke.json'
 );
+const HOST_WINDOWS_BENCHMARK_ROOT_RELATIVE_PATH = path.join(
+  'AppData',
+  'Local',
+  'VI History Suite',
+  'windows-benchmark-image-proof'
+);
+const HOST_WINDOWS_SUMMARY_RELATIVE_PATH = path.join(
+  'cache',
+  'github-experiments',
+  'windows-dashboard-benchmark',
+  TARGET_HARNESS_ID,
+  'latest-summary.json'
+);
+const HOST_WINDOWS_SMOKE_RELATIVE_PATH = path.join(
+  'cache',
+  'harness-reports',
+  TARGET_HARNESS_ID,
+  'dashboard-smoke.json'
+);
 const DEFAULT_JSON_OUTPUT_RELATIVE_PATH = path.join(
   'docs',
   'product',
@@ -105,13 +124,23 @@ function parseArgs(args) {
 function buildComparablePrefixBenchmarkPacket(repoRoot, options = {}) {
   const windowsHost = loadWindowsHostSurface(repoRoot);
   const linuxHost = loadLinuxHostSurface(repoRoot);
-  const comparablePairCount =
-    options.prefixPairCount ??
-    linuxHost.summary.generatedReportCount ??
-    linuxHost.summary.processedPairCount;
+  const windowsBenchmarkImage = loadWindowsBenchmarkImageSurface(repoRoot);
+  const maxComparablePairCount = Math.min(
+    windowsHost.validatedPrefix.validatedPairCount,
+    linuxHost.validatedPrefix.validatedPairCount,
+    windowsBenchmarkImage.validatedPrefix.validatedPairCount
+  );
+  const comparablePairCount = options.prefixPairCount ?? maxComparablePairCount;
 
   if (!Number.isFinite(comparablePairCount) || comparablePairCount < 1) {
-    throw new Error('Could not derive a comparable prefix pair count from the retained Linux run.');
+    throw new Error(
+      'Could not derive a comparable prefix pair count from the retained governed benchmark surfaces.'
+    );
+  }
+  if (comparablePairCount > maxComparablePairCount) {
+    throw new Error(
+      `Requested comparable prefix ${String(comparablePairCount)} exceeds the validated governed ceiling ${String(maxComparablePairCount)}.`
+    );
   }
 
   const windowsPrefix = summarizeDashboardPrefix(
@@ -124,15 +153,26 @@ function buildComparablePrefixBenchmarkPacket(repoRoot, options = {}) {
   const linuxPrefix = summarizeDashboardPrefix(linuxHost.dashboardJsonPath, comparablePairCount, {
     linuxWorkspaceRoot: linuxHost.workspaceRoot
   });
+  const windowsBenchmarkImagePrefix = summarizeDashboardPrefix(
+    windowsBenchmarkImage.dashboardJsonPath,
+    comparablePairCount,
+    {
+      windowsWorkspaceRoot: windowsBenchmarkImage.windowsWorkspaceRoot
+    }
+  );
 
-  if (windowsPrefix.lastPairId !== linuxPrefix.lastPairId) {
+  if (
+    windowsPrefix.lastPairId !== linuxPrefix.lastPairId ||
+    windowsPrefix.lastPairId !== windowsBenchmarkImagePrefix.lastPairId
+  ) {
     throw new Error(
-      `Comparable-prefix mismatch: Windows last pair ${String(windowsPrefix.lastPairId)} does not match Linux last pair ${String(linuxPrefix.lastPairId)}.`
+      `Comparable-prefix mismatch: windowsHost=${String(windowsPrefix.lastPairId)} linuxHost=${String(linuxPrefix.lastPairId)} windowsBenchmarkImage=${String(windowsBenchmarkImagePrefix.lastPairId)}.`
     );
   }
 
   const windowsRuntimeTotalMs = windowsPrefix.runtimeTotalMs;
   const linuxRuntimeTotalMs = linuxPrefix.runtimeTotalMs;
+  const windowsBenchmarkImageRuntimeTotalMs = windowsBenchmarkImagePrefix.runtimeTotalMs;
   const linuxVsWindowsRuntimeRatio =
     windowsRuntimeTotalMs > 0 ? linuxRuntimeTotalMs / windowsRuntimeTotalMs : undefined;
   const windowsVsLinuxSpeedupFactor =
@@ -164,6 +204,10 @@ function buildComparablePrefixBenchmarkPacket(repoRoot, options = {}) {
         latestRunPath: windowsHost.latestRun.manifestPath,
         dashboardJsonPath: windowsHost.dashboardJsonPath,
         recordedAt: windowsHost.latestRun.record.recordedAt,
+        validatedComparablePairCount: windowsHost.validatedPrefix.validatedPairCount,
+        firstInvalidPairIndex: windowsHost.validatedPrefix.firstInvalidPairIndex,
+        firstInvalidPairId: windowsHost.validatedPrefix.firstInvalidPairId,
+        firstInvalidReason: windowsHost.validatedPrefix.firstInvalidReason,
         providerSummaries:
           windowsHost.latestRun.record.dashboard.summary.providerSummaries ?? [],
         representedPairCount:
@@ -175,6 +219,10 @@ function buildComparablePrefixBenchmarkPacket(repoRoot, options = {}) {
         latestSummaryPath: linuxHost.summaryPath,
         dashboardSmokePath: linuxHost.dashboardSmokePath,
         dashboardJsonPath: linuxHost.dashboardJsonPath,
+        validatedComparablePairCount: linuxHost.validatedPrefix.validatedPairCount,
+        firstInvalidPairIndex: linuxHost.validatedPrefix.firstInvalidPairIndex,
+        firstInvalidPairId: linuxHost.validatedPrefix.firstInvalidPairId,
+        firstInvalidReason: linuxHost.validatedPrefix.firstInvalidReason,
         providerCounts: linuxPrefix.providerCounts,
         representedPairCount: linuxPrefix.representedPairCount,
         comparablePrefixRuntimeTotalMs: linuxRuntimeTotalMs,
@@ -190,9 +238,35 @@ function buildComparablePrefixBenchmarkPacket(repoRoot, options = {}) {
         }
       },
       windowsBenchmarkImage: {
-        state: 'pending-proof',
+        state:
+          windowsBenchmarkImage.summary.completionState === 'completed'
+            ? 'available'
+            : 'bounded-blocked',
+        latestSummaryPath: windowsBenchmarkImage.summaryPath,
+        dashboardSmokePath: windowsBenchmarkImage.dashboardSmokePath,
+        dashboardJsonPath: windowsBenchmarkImage.dashboardJsonPath,
         imageRef:
-          'ghcr.io/svelderrainruiz/vi-history-suite-source-experiments/windows-dashboard-benchmark:main'
+          windowsBenchmarkImage.summary.benchmarkImage?.reference ??
+          'ghcr.io/svelderrainruiz/vi-history-suite-source-experiments/windows-dashboard-benchmark:main',
+        imageDigest: windowsBenchmarkImage.summary.benchmarkImage?.digest,
+        validatedComparablePairCount: windowsBenchmarkImage.validatedPrefix.validatedPairCount,
+        firstInvalidPairIndex: windowsBenchmarkImage.validatedPrefix.firstInvalidPairIndex,
+        firstInvalidPairId: windowsBenchmarkImage.validatedPrefix.firstInvalidPairId,
+        firstInvalidReason: windowsBenchmarkImage.validatedPrefix.firstInvalidReason,
+        providerCounts: windowsBenchmarkImagePrefix.providerCounts,
+        representedPairCount: windowsBenchmarkImagePrefix.representedPairCount,
+        comparablePrefixRuntimeTotalMs: windowsBenchmarkImageRuntimeTotalMs,
+        fullWindowBlocker: {
+          completionState: windowsBenchmarkImage.summary.completionState,
+          comparabilityState: windowsBenchmarkImage.summary.comparabilityState,
+          processedPairCount: windowsBenchmarkImage.summary.processedPairCount,
+          generatedReportCount: windowsBenchmarkImage.summary.generatedReportCount,
+          terminalPairIndex: windowsBenchmarkImage.summary.terminalPairIndex,
+          terminalPairFailureReason: windowsBenchmarkImage.summary.terminalPairFailureReason,
+          terminalPairDiagnosticReason:
+            windowsBenchmarkImage.summary.terminalPairDiagnosticReason ??
+            windowsBenchmarkImage.validatedPrefix.firstInvalidReason
+        }
       }
     },
     comparison: {
@@ -206,7 +280,10 @@ function buildComparablePrefixBenchmarkPacket(repoRoot, options = {}) {
       windowsHostDashboardJsonPath: windowsHost.dashboardJsonPath,
       linuxHostLatestSummaryPath: linuxHost.summaryPath,
       linuxHostDashboardSmokePath: linuxHost.dashboardSmokePath,
-      linuxHostDashboardJsonPath: linuxHost.dashboardJsonPath
+      linuxHostDashboardJsonPath: linuxHost.dashboardJsonPath,
+      windowsBenchmarkImageLatestSummaryPath: windowsBenchmarkImage.summaryPath,
+      windowsBenchmarkImageDashboardSmokePath: windowsBenchmarkImage.dashboardSmokePath,
+      windowsBenchmarkImageDashboardJsonPath: windowsBenchmarkImage.dashboardJsonPath
     }
   };
 }
@@ -226,6 +303,9 @@ function loadWindowsHostSurface(repoRoot) {
     latestRun,
     dashboardJsonPath: normalizeArtifactPath(
       latestRun.record.artifactPaths.dashboardJsonFilePath
+    ),
+    validatedPrefix: validateDashboardPrefix(
+      normalizeArtifactPath(latestRun.record.artifactPaths.dashboardJsonFilePath)
     )
   };
 }
@@ -242,7 +322,30 @@ function loadLinuxHostSurface(repoRoot) {
 
   return {
     ...latest,
-    dashboardJsonPath
+    dashboardJsonPath,
+    validatedPrefix: validateDashboardPrefix(dashboardJsonPath, {
+      linuxWorkspaceRoot: latest.workspaceRoot
+    })
+  };
+}
+
+function loadWindowsBenchmarkImageSurface(repoRoot) {
+  const latest = findLatestHostWindowsBenchmarkImageProof(repoRoot);
+  if (!latest) {
+    throw new Error('No retained Windows benchmark-image proof summary was discovered.');
+  }
+  const windowsWorkspaceRoot = latest.workspaceRoot;
+  const dashboardJsonPath = normalizeArtifactPath(latest.dashboardSmoke.dashboardJsonFilePath, {
+    windowsWorkspaceRoot
+  });
+
+  return {
+    ...latest,
+    dashboardJsonPath,
+    windowsWorkspaceRoot,
+    validatedPrefix: validateDashboardPrefix(dashboardJsonPath, {
+      windowsWorkspaceRoot
+    })
   };
 }
 
@@ -251,6 +354,37 @@ function findLatestHostLinuxBenchmark(repoRoot) {
   for (const root of collectHostLinuxBenchmarkRoots(repoRoot)) {
     const summaryPath = path.join(root, HOST_LINUX_SUMMARY_RELATIVE_PATH);
     const dashboardSmokePath = path.join(root, HOST_LINUX_SMOKE_RELATIVE_PATH);
+    if (!fs.existsSync(summaryPath) || !fs.existsSync(dashboardSmokePath)) {
+      continue;
+    }
+    const summary = tryReadJson(summaryPath);
+    const dashboardSmoke = tryReadJson(dashboardSmokePath);
+    if (!summary || !dashboardSmoke) {
+      continue;
+    }
+    const sortTimestamp = parseTimestamp(summary.completedAt ?? summary.startedAt, summaryPath);
+    candidates.push({
+      workspaceRoot: root,
+      summaryPath,
+      dashboardSmokePath,
+      summary,
+      dashboardSmoke,
+      sortTimestamp
+    });
+  }
+
+  if (candidates.length === 0) {
+    return undefined;
+  }
+  candidates.sort((left, right) => right.sortTimestamp - left.sortTimestamp);
+  return candidates[0];
+}
+
+function findLatestHostWindowsBenchmarkImageProof(repoRoot) {
+  const candidates = [];
+  for (const root of collectHostWindowsBenchmarkRoots(repoRoot)) {
+    const summaryPath = path.join(root, HOST_WINDOWS_SUMMARY_RELATIVE_PATH);
+    const dashboardSmokePath = path.join(root, HOST_WINDOWS_SMOKE_RELATIVE_PATH);
     if (!fs.existsSync(summaryPath) || !fs.existsSync(dashboardSmokePath)) {
       continue;
     }
@@ -305,6 +439,25 @@ function collectHostLinuxBenchmarkRoots(repoRoot) {
   return [...roots].filter((root) => fs.existsSync(root));
 }
 
+function collectHostWindowsBenchmarkRoots(repoRoot) {
+  const roots = new Set();
+  const home = os.homedir();
+
+  if (home) {
+    roots.add(path.join(home, HOST_WINDOWS_BENCHMARK_ROOT_RELATIVE_PATH));
+  }
+
+  const windowsUsersRoot = path.join(path.sep, 'mnt', 'c', 'Users');
+  if (fs.existsSync(windowsUsersRoot)) {
+    for (const entry of safeReadDir(windowsUsersRoot)) {
+      roots.add(path.join(windowsUsersRoot, entry, HOST_WINDOWS_BENCHMARK_ROOT_RELATIVE_PATH));
+    }
+  }
+
+  roots.add(path.join(repoRoot, '.cache', 'windows-benchmark-image-proof'));
+  return [...roots].filter((root) => fs.existsSync(root));
+}
+
 function summarizeDashboardPrefix(dashboardJsonPath, comparablePairCount, options = {}) {
   const dashboard = readJson(dashboardJsonPath);
   const entries = Array.isArray(dashboard.entries) ? dashboard.entries.slice(0, comparablePairCount) : [];
@@ -333,12 +486,103 @@ function summarizeDashboardPrefix(dashboardJsonPath, comparablePairCount, option
   };
 }
 
+function validateDashboardPrefix(dashboardJsonPath, options = {}) {
+  const dashboard = readJson(dashboardJsonPath);
+  const entries = Array.isArray(dashboard.entries) ? dashboard.entries : [];
+  let validatedPairCount = 0;
+  let firstInvalidPairIndex;
+  let firstInvalidPairId;
+  let firstInvalidReason;
+
+  for (const entry of entries) {
+    const validation = validateDashboardEntry(entry, options);
+    if (!validation.valid) {
+      firstInvalidPairIndex = validatedPairCount + 1;
+      firstInvalidPairId = entry?.pairId;
+      firstInvalidReason = validation.reason;
+      break;
+    }
+    validatedPairCount += 1;
+  }
+
+  return {
+    validatedPairCount,
+    firstInvalidPairIndex,
+    firstInvalidPairId,
+    firstInvalidReason
+  };
+}
+
+function validateDashboardEntry(entry, options = {}) {
+  if (!entry?.metadataFilePath) {
+    return { valid: false, reason: 'missing-metadata-file-path' };
+  }
+  const metadataPath = normalizeArtifactPath(entry.metadataFilePath, options);
+  if (!fs.existsSync(metadataPath)) {
+    return { valid: false, reason: 'missing-metadata-file' };
+  }
+
+  const metadata = readJson(metadataPath);
+  const runtimeExecutionState =
+    metadata.runtimeExecutionState ?? entry.runtimeExecutionState ?? 'unknown';
+  if (runtimeExecutionState !== 'succeeded') {
+    return { valid: false, reason: `runtime-${String(runtimeExecutionState)}` };
+  }
+  if (entry.generatedReportExists !== true) {
+    return { valid: false, reason: 'missing-generated-report' };
+  }
+
+  const sourceRecordPath = path.join(path.dirname(metadataPath), 'source-record.json');
+  if (!fs.existsSync(sourceRecordPath)) {
+    return { valid: true };
+  }
+  const sourceRecord = readJson(sourceRecordPath);
+  const reportFilePath = sourceRecord.archivePlan?.reportFilePath;
+  const leftFilename = sourceRecord.packetRecord?.stagedRevisionPlan?.leftFilename;
+  const rightFilename = sourceRecord.packetRecord?.stagedRevisionPlan?.rightFilename;
+
+  if (typeof reportFilePath !== 'string' || reportFilePath.length === 0) {
+    return { valid: false, reason: 'missing-archived-report-html' };
+  }
+  const archivedReportPath = normalizeArtifactPath(reportFilePath, options);
+  if (!fs.existsSync(archivedReportPath)) {
+    return { valid: false, reason: 'missing-archived-report-html' };
+  }
+  if (leftFilename && rightFilename) {
+    const archivedReportHtml = fs.readFileSync(archivedReportPath, 'utf8');
+    if (
+      !archivedReportHtml.includes(leftFilename) ||
+      !archivedReportHtml.includes(rightFilename)
+    ) {
+      return { valid: false, reason: 'stale-archived-report-html' };
+    }
+  }
+
+  return { valid: true };
+}
+
 function normalizeArtifactPath(filePath, options = {}) {
   if (typeof filePath !== 'string' || filePath.length === 0) {
     throw new Error('Missing artifact path.');
   }
 
   let normalized = filePath.replace(/\\/g, '/');
+  if (normalized.startsWith('C:/workspace/.cache/')) {
+    if (!options.windowsWorkspaceRoot) {
+      throw new Error(`Cannot resolve Windows benchmark workspace cache path: ${filePath}`);
+    }
+    return path.join(
+      options.windowsWorkspaceRoot,
+      'cache',
+      normalized.slice('C:/workspace/.cache/'.length)
+    );
+  }
+  if (normalized.startsWith('C:/workspace/')) {
+    if (!options.windowsWorkspaceRoot) {
+      throw new Error(`Cannot resolve Windows benchmark workspace path: ${filePath}`);
+    }
+    return path.join(options.windowsWorkspaceRoot, normalized.slice('C:/workspace/'.length));
+  }
   if (normalized.startsWith('/workspace/')) {
     if (!options.linuxWorkspaceRoot) {
       throw new Error(`Cannot resolve Linux benchmark workspace path: ${filePath}`);
@@ -379,24 +623,32 @@ function renderComparablePrefixBenchmarkPacketMarkdown(packet) {
     '',
     `- Latest run: ${packet.surfaces.windowsHost.latestRunPath}`,
     `- Dashboard JSON: ${packet.surfaces.windowsHost.dashboardJsonPath}`,
+    `- Validated comparable pairs: ${packet.surfaces.windowsHost.validatedComparablePairCount}`,
     `- Prefix runtime total: ${packet.surfaces.windowsHost.comparablePrefixRuntimeTotalMs} ms`,
     '',
     '## Linux Host',
     '',
     `- Latest summary: ${packet.surfaces.linuxHost.latestSummaryPath}`,
     `- Dashboard JSON: ${packet.surfaces.linuxHost.dashboardJsonPath}`,
+    `- Validated comparable pairs: ${packet.surfaces.linuxHost.validatedComparablePairCount}`,
     `- Prefix runtime total: ${packet.surfaces.linuxHost.comparablePrefixRuntimeTotalMs} ms`,
     `- Full-window blocker: pair ${packet.surfaces.linuxHost.fullWindowBlocker.terminalPairIndex} / ${packet.fullWindow.comparePairCount} :: ${packet.surfaces.linuxHost.fullWindowBlocker.terminalPairFailureReason} (${packet.surfaces.linuxHost.fullWindowBlocker.terminalPairDiagnosticReason})`,
+    '',
+    '## Windows Benchmark Image',
+    '',
+    `- Latest summary: ${packet.surfaces.windowsBenchmarkImage.latestSummaryPath}`,
+    `- Dashboard JSON: ${packet.surfaces.windowsBenchmarkImage.dashboardJsonPath}`,
+    `- State: ${packet.surfaces.windowsBenchmarkImage.state}`,
+    `- Image ref: ${packet.surfaces.windowsBenchmarkImage.imageRef}`,
+    `- Validated comparable pairs: ${packet.surfaces.windowsBenchmarkImage.validatedComparablePairCount}`,
+    `- Prefix runtime total: ${packet.surfaces.windowsBenchmarkImage.comparablePrefixRuntimeTotalMs} ms`,
+    `- Full-window blocker: pair ${packet.surfaces.windowsBenchmarkImage.fullWindowBlocker.terminalPairIndex} / ${packet.fullWindow.comparePairCount} :: ${packet.surfaces.windowsBenchmarkImage.fullWindowBlocker.terminalPairFailureReason} (${packet.surfaces.windowsBenchmarkImage.fullWindowBlocker.terminalPairDiagnosticReason})`,
     '',
     '## Comparison',
     '',
     `- Linux / Windows runtime ratio: ${formatOptionalNumber(packet.comparison.linuxVsWindowsRuntimeRatio)}`,
     `- Windows / Linux speedup factor: ${formatOptionalNumber(packet.comparison.windowsVsLinuxSpeedupFactor)}`,
     `- Runtime delta: ${packet.comparison.deltaRuntimeMs} ms`,
-    '',
-    '## Pending Surface',
-    '',
-    `- Windows benchmark image: ${packet.surfaces.windowsBenchmarkImage.state} (${packet.surfaces.windowsBenchmarkImage.imageRef})`,
     ''
   ].join('\n');
 }
@@ -414,7 +666,8 @@ function formatComparablePrefixBenchmarkPacket(packet) {
     `- linuxVsWindowsRatio: ${formatOptionalNumber(packet.comparison.linuxVsWindowsRuntimeRatio)}`,
     `- windowsVsLinuxSpeedupFactor: ${formatOptionalNumber(packet.comparison.windowsVsLinuxSpeedupFactor)}`,
     `- linuxFullWindowBlocker: pair ${packet.surfaces.linuxHost.fullWindowBlocker.terminalPairIndex} / ${packet.fullWindow.comparePairCount} :: ${packet.surfaces.linuxHost.fullWindowBlocker.terminalPairFailureReason} (${packet.surfaces.linuxHost.fullWindowBlocker.terminalPairDiagnosticReason})`,
-    `- windowsBenchmarkImage: ${packet.surfaces.windowsBenchmarkImage.state}`
+    `- windowsBenchmarkImage: ${packet.surfaces.windowsBenchmarkImage.state}`,
+    `- windowsBenchmarkImageRuntimeMs: ${packet.surfaces.windowsBenchmarkImage.comparablePrefixRuntimeTotalMs}`
   ].join('\n') + '\n';
 }
 
@@ -456,11 +709,13 @@ module.exports = {
   PACKET_SCHEMA,
   buildComparablePrefixBenchmarkPacket,
   findLatestHostLinuxBenchmark,
+  findLatestHostWindowsBenchmarkImageProof,
   formatComparablePrefixBenchmarkPacket,
   normalizeArtifactPath,
   parseArgs,
   renderComparablePrefixBenchmarkPacketMarkdown,
   summarizeDashboardPrefix,
+  validateDashboardPrefix,
   writeComparablePrefixBenchmarkPacket
 };
 

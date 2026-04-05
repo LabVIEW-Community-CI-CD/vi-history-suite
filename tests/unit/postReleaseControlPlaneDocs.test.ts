@@ -223,7 +223,7 @@ describe('post-release control-plane coherence', () => {
     expect(benchmarkIssue).toContain('Queued follow-on post-release issue.');
     expect(benchmarkIssue).toContain('the deep Linux host benchmark now fails truthfully late at pair `135/138`');
     expect(benchmarkIssue).toContain('a governed comparable-prefix packet now retains the accepted cross-OS');
-    expect(benchmarkIssue).toContain('`135`-commit / `134`-pair timing scope');
+    expect(benchmarkIssue).toContain('`129`-commit / `128`-pair timing scope');
     expect(benchmarkIssue).toContain('windows-dashboard-benchmark:main');
 
     expect(sustainmentProgram).toContain('release cadence, benchmark refresh cadence, operator surfaces');

@@ -34,8 +34,8 @@ Adopt a governed bounded cross-OS comparable prefix for `HARNESS-VHS-002`.
 
 1. The full deep target remains `139` commits / `138` pairs for the Windows
    host lane and the Windows benchmark-image lane.
-2. The accepted cross-OS comparable window is the first `135` commits /
-   `134` pairs, ending at retained pair id `2a28a2b984d9`.
+2. The accepted cross-OS comparable window is the first `129` commits /
+   `128` pairs, ending at retained pair id `87792a7b6545`.
 3. The repo shall retain a machine-readable comparable-prefix packet that
    records:
    - the full window
@@ -46,8 +46,10 @@ Adopt a governed bounded cross-OS comparable prefix for `HARNESS-VHS-002`.
 4. The full Linux `138`-pair result remains governed blocker truth until NI
    changes the official Linux runtime/image truth or the benchmark design
    changes.
-5. The Windows benchmark image still must prove the same bounded comparable
-   prefix before the comparative benchmark program can close.
+5. The Windows benchmark image now retains the same first invalid pair as the
+   Windows host, so the accepted comparable prefix is the largest contiguous
+   range validated across all three governed surfaces rather than the Linux
+   generated-report count alone.
 
 ## Consequences
 

@@ -95,7 +95,7 @@ Current retained Linux blocker before activation:
 - older retry experiments after timeout degraded into `-350000` connection
   failure rather than recovering the session
 - a governed comparable-prefix packet now retains the accepted cross-OS
-  `135`-commit / `134`-pair scope in
+  `129`-commit / `128`-pair scope in
   `docs/product/benchmark-packets/HARNESS-VHS-002-comparable-prefix.json`
 
 ## Queue Mapping
@@ -163,7 +163,7 @@ Start with [ISSUE-0408 Repeatable Benchmark Proof](../issues/ISSUE-0408-repeatab
 That slice should:
 
 - finish the late Linux failure diagnosis with retained evidence
-- retain and normalize the bounded `135`-commit / `134`-pair comparable prefix
+- retain and normalize the bounded `129`-commit / `128`-pair comparable prefix
 - prove the published Windows benchmark image locally
 - stop short of claiming final comparability until both image lanes retain
   truthful terminal summaries
