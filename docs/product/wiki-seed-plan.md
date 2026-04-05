@@ -30,9 +30,11 @@ Do not draft or refresh wiki pages until:
   `docs/product/wiki-publication-ledger.md`
 - **Architecture**: published on `2026-04-03`; see
   `docs/product/wiki-publication-ledger.md`
-- **Next page**: `Documentation Workbench`
+- **Documentation Workbench**: published on `2026-04-04`; see
+  `docs/product/wiki-publication-ledger.md`
+- **Next page**: `Program Repo Jump`
   - retain publication prep under
-    `.cache/wiki-workbench/publication-prep/documentation-workbench/`
+    `.cache/wiki-workbench/publication-prep/program-repo-jump/`
 
 ## Page Order
 
@@ -87,13 +89,21 @@ Do not draft or refresh wiki pages until:
      - `docs/requirements/srs.md`
 
 7. **Documentation Workbench**
+  - Primary authority:
+    - `docs/documentation-workbench.md`
+    - `docs/product/documentation-coherence-ledger.md`
+  - Secondary authority:
+    - `docs/product/wiki-authority-map.md`
+    - `docs/product/program-repo-jump.md`
+    - `docs/product/SHIP-0001-releasable-vi-history-suite.md`
+
+8. **Program Repo Jump**
    - Primary authority:
-     - `docs/documentation-workbench.md`
-     - `docs/product/documentation-coherence-ledger.md`
-   - Secondary authority:
-     - `docs/product/wiki-authority-map.md`
      - `docs/product/program-repo-jump.md`
-     - `docs/product/SHIP-0001-releasable-vi-history-suite.md`
+     - `docs/product/program-repo-jump-map.json`
+   - Secondary authority:
+     - `docs/documentation-workbench.md`
+     - `docs/product/current-state.md`
 
 ## Drafting Rules
 

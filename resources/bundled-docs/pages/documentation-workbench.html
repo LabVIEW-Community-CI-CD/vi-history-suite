@@ -1,0 +1,154 @@
+<h1>Documentation Workbench</h1>
+<p>This page is derived from governed repository documentation, not from source
+code or prior chat state. The current authority surfaces for this page are:</p>
+<ul>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/documentation-workbench.md"><code>docs/documentation-workbench.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/documentation-coherence-ledger.md"><code>docs/product/documentation-coherence-ledger.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/wiki-authority-map.md"><code>docs/product/wiki-authority-map.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/wiki-publication-ledger.md"><code>docs/product/wiki-publication-ledger.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/program-repo-jump.md"><code>docs/product/program-repo-jump.md</code></a></li>
+</ul>
+<h2>Purpose</h2>
+<p>The documentation workbench is the governed authoring surface for the
+documentation package of <code>vi-history-suite</code>.</p>
+<p>It exists so documentation work can stay disciplined while still being fast:</p>
+<ul>
+<li>requirements, RTM, and test-plan edits</li>
+<li>ADR and architecture updates</li>
+<li>release-readiness and control-plane documentation</li>
+<li>authority-first wiki staging and publication prep</li>
+<li>bundled user-document refresh work</li>
+</ul>
+<p>It is not the NI comparison-report proof lane and it is not the extension-user
+install surface.</p>
+<h2>Operating Model</h2>
+<p>The workbench keeps a strict boundary between authority and publication:</p>
+<ul>
+<li>the main <code>vi-history-suite</code> repo is the authority of record</li>
+<li><code>vi-history-suite.wiki</code> is a derived reader surface</li>
+<li>wiki work should start from governed docs, not from source spelunking or
+prior chat state</li>
+<li>publication state remains tracked in the main repo through the wiki
+publication ledger and retained workbench receipts</li>
+</ul>
+<p>That means a wiki page is prepared from governed inputs first and only treated
+as published after the wiki repo is actually updated.</p>
+<h2>Workbench Surfaces</h2>
+<p>The workbench currently supports both local and Docker-first operation.</p>
+<p>Local commands:</p>
+<ul>
+<li><code>npm run wiki:workbench:doctor</code></li>
+<li><code>npm run wiki:workbench:plan</code></li>
+<li><code>npm run wiki:workbench:prepare</code></li>
+<li><code>npm run wiki:workbench:sync-bundled-docs</code></li>
+</ul>
+<p>Docker-first equivalents:</p>
+<ul>
+<li><code>npm run docs:workbench:wiki:doctor</code></li>
+<li><code>npm run docs:workbench:wiki:plan</code></li>
+<li><code>npm run docs:workbench:wiki:prepare</code></li>
+<li><code>npm run docs:workbench:wiki:sync-bundled-docs</code></li>
+</ul>
+<p>The workbench resolves the governed repo constellation instead of assuming ad
+hoc shell paths:</p>
+<ul>
+<li><code>vi-history-suite</code></li>
+<li><code>vi-history-suite.wiki</code></li>
+<li>the wiki publication ledger</li>
+<li>the local repo-jump map used for cross-repo navigation</li>
+</ul>
+<h2>Published Image And GitLab Lane</h2>
+<p>The workbench also has a published-image lane for authoritative documentation
+iteration.</p>
+<p>GitLab publishes the docs-authoring image as:</p>
+<ul>
+<li><code>registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main</code></li>
+<li><code>registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:sha-&lt;commit&gt;</code></li>
+<li><code>registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:vX.Y.Z</code> on governed tags</li>
+</ul>
+<p>That matters because the wiki lane is supposed to be reproducible. Local Docker
+iteration is useful, but the stronger automation surface is the repo-published
+image plus the retained workbench evidence from the authoritative pipeline.</p>
+<h2>Retained Evidence</h2>
+<p>The workbench is designed to retain preparation state, not just produce a page
+draft.</p>
+<p>Important retained outputs include:</p>
+<ul>
+<li><code>.cache/wiki-workbench/latest-workbench.json</code></li>
+<li><code>.cache/wiki-workbench/staging/&lt;page-id&gt;/</code></li>
+<li><code>.cache/wiki-workbench/publication-prep/&lt;page-id&gt;/publication-prep.json</code></li>
+<li><code>docs-workbench-evidence/docs-workbench-manifest.json</code> from the published
+docs-authoring image lane</li>
+<li><code>wiki-workbench-evidence/</code> when the GitLab wiki-preparation lane is widened
+further</li>
+</ul>
+<p>Those retained files matter because they let future sessions see:</p>
+<ul>
+<li>which page was targeted</li>
+<li>which authority docs were used</li>
+<li>what the staged wiki draft looked like</li>
+<li>whether publication prep actually completed</li>
+</ul>
+<p>If a stale retained page directory is locally unwritable, the workbench now
+rotates to a writable recovery path instead of failing solely on old cache
+ownership:</p>
+<ul>
+<li><code>.cache/wiki-workbench/staging-runs/&lt;page-id&gt;-&lt;timestamp&gt;/</code></li>
+<li><code>.cache/wiki-workbench/publication-prep-runs/&lt;page-id&gt;-&lt;timestamp&gt;/</code></li>
+</ul>
+<p>The stage or publication-prep receipt records the actual retained path, so the
+recovery is still explicit and reviewable.</p>
+<h2>Governed Flow</h2>
+<p>The intended sequence is:</p>
+<ol>
+<li>run <code>doctor</code> to validate topology, ledger state, and authority readiness</li>
+<li>run <code>plan</code> to resolve the current page set and the next target page</li>
+<li>run <code>prepare</code> to retain the page-authority bundle, draft page, and
+publication-prep receipt</li>
+<li>run <code>sync-bundled-docs</code> only when the staged wiki state is ready to drive
+bundled user-document updates</li>
+</ol>
+<p>The workbench is fail-closed. If the sibling wiki repo, control files, ledger
+targets, or authority docs are wrong, it stops instead of producing weak wiki
+input.</p>
+<p>This is deliberate. The wiki lane is meant to be a governed derived-publication
+surface, not a convenient prose scratchpad.</p>
+<h2>Publication State</h2>
+<p>The wiki publication ledger remains the main source for actual publication
+state.</p>
+<p>That ledger records:</p>
+<ul>
+<li>which pages are published</li>
+<li>which wiki commit carried them</li>
+<li>their publication date</li>
+<li>the primary authority docs for each page</li>
+</ul>
+<p>So the workbench is not just a command wrapper. It is the controlled path
+between authority documentation and derived wiki output, with publication state
+still anchored in the main repo instead of being inferred from the wiki repo
+alone.</p>
+<h2>Scope Boundary</h2>
+<p>Use the workbench when the change is mainly about:</p>
+<ul>
+<li>governed documentation-package iteration</li>
+<li>wiki-authority preparation</li>
+<li>publication-prep evidence</li>
+<li>bundle-refresh readiness</li>
+</ul>
+<p>Do not treat it as the primary surface for:</p>
+<ul>
+<li>Windows comparison-report proof</li>
+<li>installed-extension milestone testing</li>
+<li>extension runtime benchmark work</li>
+</ul>
+<p>It is also not the place to invent new product truth. If a wiki page needs a
+claim that does not already exist in governed authority docs, the repo docs
+must be strengthened first.</p>
+<h2>Read Next</h2>
+<ul>
+<li><a href="#" data-page-id="install-and-release">Install And Release</a></li>
+<li><a href="#" data-page-id="architecture">Architecture</a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/documentation-workbench.md">Documentation Package Workbench</a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/wiki-authority-map.md">Wiki Authority Map</a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/wiki-publication-ledger.md">Wiki Publication Ledger</a></li>
+</ul>

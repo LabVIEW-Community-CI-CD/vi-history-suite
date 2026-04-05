@@ -23,6 +23,7 @@ The machine-readable companion surface for this ledger is:
 | Comparison Reports And Dashboard Review | `Comparison-Reports-And-Dashboard-Review` | published | `2026-04-03` | `9b32d5a` | `docs/requirements/srs.md`; `docs/product/ni-comparison-report-metadata-inventory.md`; `docs/product/current-state.md`; `docs/testing/test-plan.md`; `docs/research/authoritative/research-alignment.md` |
 | Review Scenarios And Decision Records | `Review-Scenarios-And-Decision-Records` | published | `2026-04-03` | `5c1d3ef` | `docs/product/review-scenarios.md`; `docs/product/decision-record-template.md`; `docs/requirements/srs.md`; `docs/testing/test-plan.md`; `docs/product/current-state.md` |
 | Architecture | `Architecture` | published | `2026-04-03` | `d3d4be6` | `docs/architecture/overview.md`; `docs/requirements/srs.md`; `docs/architecture/adr/ADR-0006-windows64-container-isolation-for-extension-users.md`; `docs/architecture/adr/ADR-0009-dashboard-pair-archive-and-concentration-packet.md`; `docs/architecture/adr/ADR-0010-dual-host-extension-proof-and-linux-bootstrap.md`; `docs/architecture/adr/ADR-0012-documentation-package-workbench-image.md`; `docs/architecture/adr/ADR-0013-authority-first-wiki-seeding.md`; `docs/architecture/adr/ADR-0014-cross-repo-navigation-control-plane.md` |
+| Documentation Workbench | `Documentation-Workbench` | published | `2026-04-04` | `4afbea1` | `docs/documentation-workbench.md`; `docs/product/documentation-coherence-ledger.md`; `docs/product/wiki-authority-map.md`; `docs/product/program-repo-jump.md`; `docs/product/wiki-publication-ledger.md` |
 
 ## Publication Rules
 
@@ -40,10 +41,10 @@ The machine-readable companion surface for this ledger is:
 
 The next incremental page, once the documentation package is ready, is:
 
-1. **Documentation Workbench**
+1. **Program Repo Jump**
    - primary authority:
-     - `docs/documentation-workbench.md`
-     - `docs/product/documentation-coherence-ledger.md`
-   - secondary authority:
-     - `docs/product/wiki-authority-map.md`
      - `docs/product/program-repo-jump.md`
+     - `docs/product/program-repo-jump-map.json`
+   - secondary authority:
+     - `docs/documentation-workbench.md`
+     - `docs/product/current-state.md`

@@ -96,18 +96,34 @@
         "docs/architecture/adr/ADR-0013-authority-first-wiki-seeding.md",
         "docs/architecture/adr/ADR-0014-cross-repo-navigation-control-plane.md"
       ]
+    },
+    {
+      "id": "documentation-workbench",
+      "title": "Documentation Workbench",
+      "wikiPath": "Documentation-Workbench",
+      "wikiFileName": "Documentation-Workbench.md",
+      "status": "published",
+      "publishedDate": "2026-04-04",
+      "wikiCommit": "4afbea1",
+      "primaryAuthority": [
+        "docs/documentation-workbench.md",
+        "docs/product/documentation-coherence-ledger.md",
+        "docs/product/wiki-authority-map.md",
+        "docs/product/program-repo-jump.md",
+        "docs/product/wiki-publication-ledger.md"
+      ]
     }
   ],
   "nextPage": {
-    "id": "documentation-workbench",
-    "title": "Documentation Workbench",
+    "id": "program-repo-jump",
+    "title": "Program Repo Jump",
     "primaryAuthority": [
-      "docs/documentation-workbench.md",
-      "docs/product/documentation-coherence-ledger.md"
+      "docs/product/program-repo-jump.md",
+      "docs/product/program-repo-jump-map.json"
     ],
     "secondaryAuthority": [
-      "docs/product/wiki-authority-map.md",
-      "docs/product/program-repo-jump.md"
+      "docs/documentation-workbench.md",
+      "docs/product/current-state.md"
     ]
   }
 }
