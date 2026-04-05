@@ -102,6 +102,11 @@ connected-session retry attempt, `windows-benchmark-image-pair129-lvcompare`
 records `command-timed-out` after the bounded `120000ms` runtime budget, and
 the comparable-prefix packet now retains both exact-pair receipts alongside
 the accepted `129`-commit / `128`-pair timing scope.
+Recovery attempts are also now retained more truthfully: when Linux or Windows
+invokes the governed `CloseLabVIEW -Headless` reset path, the packet keeps the
+reset command, exit code, and dedicated `headless-session-reset-stdout.txt` /
+`headless-session-reset-stderr.txt` artifacts rather than reducing that step
+to free-form notes alone.
 
 Current retained Linux blocker before activation:
 

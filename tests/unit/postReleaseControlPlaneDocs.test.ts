@@ -212,6 +212,7 @@ describe('post-release control-plane coherence', () => {
     expect(currentState).toContain(
       'docs/product/benchmark-packets/HARNESS-VHS-002-comparable-prefix.json'
     );
+    expect(currentState).toContain('headless-session-reset-stdout.txt');
 
     expect(benchmarkProgram).toContain('`resource/plugins/lv_icon.vi` target');
     expect(benchmarkProgram).toContain('the deep Linux `HARNESS-VHS-002` benchmark completes `138/138`');
@@ -220,6 +221,7 @@ describe('post-release control-plane coherence', () => {
     expect(benchmarkProgram).toContain('Windows benchmark-image baseline');
     expect(benchmarkProgram).toContain('Linux benchmark-image result');
     expect(benchmarkProgram).toContain('The same exact blocker pair `6dd65df -> 3408654`');
+    expect(benchmarkProgram).toContain('headless-session-reset-stdout.txt');
 
     expect(benchmarkIssue).toContain('Queued follow-on post-release issue.');
     expect(benchmarkIssue).toContain('the deep Linux host benchmark now fails truthfully late at pair `135/138`');
@@ -228,6 +230,7 @@ describe('post-release control-plane coherence', () => {
     expect(benchmarkIssue).toContain('windows-dashboard-benchmark:main');
     expect(benchmarkIssue).toContain('the same exact blocker pair `6dd65df -> 3408654`');
     expect(benchmarkIssue).toContain('windows-benchmark-image-pair129-labviewcli');
+    expect(benchmarkIssue).toContain('headless-session-reset-stderr.txt');
 
     expect(sustainmentProgram).toContain('release cadence, benchmark refresh cadence, operator surfaces');
     expect(sustainmentIssue).toContain('Queued follow-on post-release issue.');

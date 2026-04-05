@@ -1086,6 +1086,10 @@
   markdown renderer retain governed Windows exact-pair diagnosis receipts for
   both `labview-cli` and `lvcompare`, including the `6dd65df -> 3408654`
   selected/base hashes, proof-root paths, and bounded failure outcomes
+- `TEST-UNIT-290`: verify Linux and Windows headless recovery attempts retain
+  `headless-session-reset-stdout.txt`, `headless-session-reset-stderr.txt`,
+  the recovery exit code, and the governed `CloseLabVIEW` command facts on the
+  resulting runtime execution record
 - `TEST-DOC-035`: review README, current-state, and ADR-0016 and confirm the
   canonical-host benchmark status surface is documented as the maintainer-facing
   in-IDE visibility and launch surface for the host Linux benchmark lane,
@@ -1193,6 +1197,10 @@
   `6dd65df -> 3408654` is documented as failing under both `labview-cli` and
   `lvcompare`, with the packet retaining both exact-pair diagnosis receipts
   instead of only the bounded pair index
+- `TEST-DOC-054`: review current-state, PROGRAM-0003, and ISSUE-0408 and
+  confirm the governed `CloseLabVIEW -Headless` recovery posture is documented
+  as retaining dedicated reset stdout/stderr artifacts and exit-code facts in
+  the comparison-report packet, not only free-form retry notes
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed authority repo, private experiment mirror, wiki, and
   assurance-skill repos with authority roles, expected remotes, and primary

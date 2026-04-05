@@ -581,6 +581,8 @@ const LINUX_HEADLESS_RECOVERY_NOTE =
   'Attempted Linux headless session reset via LabVIEWCLI CloseLabVIEW after recursive-load diagnosis, then retried the pair once.';
 const WINDOWS_HEADLESS_RECOVERY_NOTE =
   'Attempted Windows headless session reset via LabVIEWCLI CloseLabVIEW after call-by-reference diagnosis, then retried the pair once.';
+const HEADLESS_SESSION_RESET_STDOUT_FILENAME = 'headless-session-reset-stdout.txt';
+const HEADLESS_SESSION_RESET_STDERR_FILENAME = 'headless-session-reset-stderr.txt';
 
 async function captureRuntimeDiagnostics(
   record: ComparisonReportPacketRecord,
@@ -706,17 +708,38 @@ async function attemptLabviewCliHeadlessSessionReset(
   deps: {
     runCommand: (commandPlan: ComparisonCommandPlan) => Promise<RunCommandResult>;
     nowMs: () => number;
+    mkdir: typeof fs.mkdir;
+    writeFile: typeof fs.writeFile;
   }
-): Promise<{ notes: string[]; durationMs: number }> {
+): Promise<{
+  notes: string[];
+  durationMs: number;
+  executable: string;
+  args: string[];
+  exitCode?: number;
+  stdoutFilePath: string;
+  stderrFilePath: string;
+}> {
   const startedMs = deps.nowMs();
   const closeCommandPlan = buildLabviewCliCloseLabviewCommandPlan(
     record.runtimeSelection.labviewCli?.path ?? 'LabVIEWCLI',
     record.runtimeSelection.labviewExe?.path
   );
+  const stdoutFilePath = path.join(
+    record.artifactPlan.reportDirectory,
+    HEADLESS_SESSION_RESET_STDOUT_FILENAME
+  );
+  const stderrFilePath = path.join(
+    record.artifactPlan.reportDirectory,
+    HEADLESS_SESSION_RESET_STDERR_FILENAME
+  );
 
   try {
     const result = await deps.runCommand(closeCommandPlan);
     const durationMs = Math.max(0, deps.nowMs() - startedMs);
+    await deps.mkdir(record.artifactPlan.reportDirectory, { recursive: true });
+    await deps.writeFile(stdoutFilePath, result.stdout, 'utf8');
+    await deps.writeFile(stderrFilePath, result.stderr, 'utf8');
     if (result.exitCode === 0) {
       return {
         notes: [
@@ -724,7 +747,12 @@ async function attemptLabviewCliHeadlessSessionReset(
             durationMs
           )}ms before retry.`
         ],
-        durationMs
+        durationMs,
+        executable: closeCommandPlan.executable,
+        args: closeCommandPlan.args,
+        exitCode: result.exitCode,
+        stdoutFilePath,
+        stderrFilePath
       };
     }
 
@@ -734,7 +762,12 @@ async function attemptLabviewCliHeadlessSessionReset(
           result.exitCode
         )} before retry.`
       ],
-      durationMs
+      durationMs,
+      executable: closeCommandPlan.executable,
+      args: closeCommandPlan.args,
+      exitCode: result.exitCode,
+      stdoutFilePath,
+      stderrFilePath
     };
   } catch (error) {
     const durationMs = Math.max(0, deps.nowMs() - startedMs);
@@ -743,14 +776,26 @@ async function attemptLabviewCliHeadlessSessionReset(
       notes: [
         `${platformLabel} headless session reset via LabVIEWCLI CloseLabVIEW failed before retry: ${message}.`
       ],
-      durationMs
+      durationMs,
+      executable: closeCommandPlan.executable,
+      args: closeCommandPlan.args,
+      stdoutFilePath,
+      stderrFilePath
     };
   }
 }
 
 function buildRecoveredExecutionResult(
   initialResult: ComparisonReportRuntimeExecution,
-  recovery: { notes: string[]; durationMs: number },
+  recovery: {
+    notes: string[];
+    durationMs: number;
+    executable: string;
+    args: string[];
+    exitCode?: number;
+    stdoutFilePath: string;
+    stderrFilePath: string;
+  },
   retriedResult: ComparisonReportRuntimeExecution,
   recoveryNote: string
 ): ComparisonReportRuntimeExecution {
@@ -765,7 +810,12 @@ function buildRecoveredExecutionResult(
       retriedResult.diagnosticNotes,
       [recoveryNote],
       recovery.notes
-    )
+    ),
+    headlessSessionResetExecutable: recovery.executable,
+    headlessSessionResetArgs: recovery.args,
+    headlessSessionResetExitCode: recovery.exitCode,
+    headlessSessionResetStdoutFilePath: recovery.stdoutFilePath,
+    headlessSessionResetStderrFilePath: recovery.stderrFilePath
   };
 }
 

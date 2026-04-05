@@ -597,6 +597,13 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(result.record.runtimeExecution.diagnosticNotes).toContain(
       'Linux headless session reset via LabVIEWCLI CloseLabVIEW succeeded in 0ms before retry.'
     );
+    expect(result.record.runtimeExecution.headlessSessionResetExitCode).toBe(0);
+    expect(result.record.runtimeExecution.headlessSessionResetStdoutFilePath).toBe(
+      '/workspace/.storage/reports/repoid123456/fileid123456/headless-session-reset-stdout.txt'
+    );
+    expect(result.record.runtimeExecution.headlessSessionResetStderrFilePath).toBe(
+      '/workspace/.storage/reports/repoid123456/fileid123456/headless-session-reset-stderr.txt'
+    );
   });
 
   it('retries a Windows headless call-by-reference failure once after CloseLabVIEW session reset', async () => {
@@ -741,6 +748,13 @@ describe('comparisonReportRuntimeExecution', () => {
     );
     expect(result.record.runtimeExecution.diagnosticNotes).toContain(
       'Windows headless session reset via LabVIEWCLI CloseLabVIEW succeeded in 0ms before retry.'
+    );
+    expect(result.record.runtimeExecution.headlessSessionResetExitCode).toBe(0);
+    expect(result.record.runtimeExecution.headlessSessionResetStdoutFilePath).toBe(
+      '/workspace/.storage/reports/repoid123456/fileid123456/headless-session-reset-stdout.txt'
+    );
+    expect(result.record.runtimeExecution.headlessSessionResetStderrFilePath).toBe(
+      '/workspace/.storage/reports/repoid123456/fileid123456/headless-session-reset-stderr.txt'
     );
   });
 

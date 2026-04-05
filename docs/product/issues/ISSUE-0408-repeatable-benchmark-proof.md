@@ -82,6 +82,11 @@ Current retained benchmark truth before activation:
   records `command-timed-out` after the bounded `120000ms` budget, and the
   comparable-prefix packet now carries both exact-pair receipts so future
   sessions do not have to rediscover them from AppData
+- the governed `CloseLabVIEW -Headless` recovery posture now also retains
+  dedicated `headless-session-reset-stdout.txt` and
+  `headless-session-reset-stderr.txt` artifacts plus the reset exit code in
+  the comparison-report packet, so the next Linux or Windows blocker rerun can
+  inspect the reset attempt itself instead of only a retry note
 - local host-runnable proof for the Windows benchmark image is still open
 
 ## Scope

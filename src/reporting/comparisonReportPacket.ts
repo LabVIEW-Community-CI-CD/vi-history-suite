@@ -30,6 +30,11 @@ export interface ComparisonReportRuntimeExecution {
   diagnosticLogSourcePath?: string;
   diagnosticLogArtifactPath?: string;
   headlessDiagnosticArtifactPaths?: string[];
+  headlessSessionResetExecutable?: string;
+  headlessSessionResetArgs?: string[];
+  headlessSessionResetExitCode?: number;
+  headlessSessionResetStdoutFilePath?: string;
+  headlessSessionResetStderrFilePath?: string;
   executable?: string;
   args?: string[];
   startedAt?: string;
@@ -251,6 +256,23 @@ export function renderComparisonReportPacketHtml(record: ComparisonReportPacketR
       )}</div>
       <div><strong>Headless diagnostic artifacts:</strong> ${escapeHtml(
         runtimeExecution.headlessDiagnosticArtifactPaths?.join(' | ') ?? 'none'
+      )}</div>
+      <div><strong>Headless session reset executable:</strong> ${escapeHtml(
+        runtimeExecution.headlessSessionResetExecutable ?? 'none'
+      )}</div>
+      <div><strong>Headless session reset args:</strong> ${escapeHtml(
+        runtimeExecution.headlessSessionResetArgs?.join(' ') ?? 'none'
+      )}</div>
+      <div><strong>Headless session reset exit code:</strong> ${escapeHtml(
+        runtimeExecution.headlessSessionResetExitCode === undefined
+          ? 'none'
+          : String(runtimeExecution.headlessSessionResetExitCode)
+      )}</div>
+      <div><strong>Headless session reset stdout artifact:</strong> ${escapeHtml(
+        runtimeExecution.headlessSessionResetStdoutFilePath ?? 'none'
+      )}</div>
+      <div><strong>Headless session reset stderr artifact:</strong> ${escapeHtml(
+        runtimeExecution.headlessSessionResetStderrFilePath ?? 'none'
       )}</div>
       <div><strong>Process observation captured at:</strong> ${escapeHtml(
         runtimeExecution.processObservationCapturedAt ?? 'none'
