@@ -1275,6 +1275,28 @@
   debt wiki pages, and bundled-doc manifest and confirm the published reader
   surfaces represent the debt-retirement contract and debt ledger rather than
   hiding those control-plane surfaces in authority docs only
+- `TEST-UNIT-298`: verify PROGRAM-0003 benchmark-proof entrypoints validate the
+  effective runtime override bundle after CLI/env/default synthesis, reject
+  non-canonical env-derived explicit Windows bundles, and keep default Windows
+  benchmark runtime settings undefined when no explicit override is requested
+- `TEST-UNIT-299`: verify the execution-flexibility control-plane package stays
+  aligned across README, current-state, extension-execution-policy, ADR-0025,
+  queue/program/issue docs, debt ledger, and published reader surfaces while
+  the manifest still lacks a first-class `viHistorySuite.executionMode`
+- `TEST-DOC-064`: review current-state, PROGRAM-0003, ISSUE-0408, canonical
+  exact-pair diagnosis guidance, ADR-0024, and the debt ledger and confirm the
+  repo documents effective runtime override bundle validation rather than a raw
+  CLI-only rule, including the removal of hidden explicit Windows defaults
+- `TEST-DOC-065`: review README, current-state, extension-execution-policy,
+  ADR-0025, PROGRAM-0005, ISSUE-0410, and the debt ledger and confirm the
+  queued `auto` / `host-only` / `docker-only` contract, Docker-required hard
+  stops, visible Windows image-pull progress, no-silent-fallback rule, and
+  user-facing provider transparency are all explicit
+- `TEST-DOC-066`: review the wiki coverage matrix, publication ledger,
+  User-Workflow, Requirements-And-Verification, Current-State, Architecture,
+  and Architecture-Decision-Records pages and confirm the execution-policy
+  package and queued `PROGRAM-0005` control plane are represented on the
+  published reader surfaces
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed authority repo, private experiment mirror, wiki, and
   assurance-skill repos with authority roles, expected remotes, and primary

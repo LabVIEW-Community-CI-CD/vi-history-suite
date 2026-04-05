@@ -22,6 +22,8 @@ Activation depends on:
 - benchmark refresh cadence and image contract upkeep
 - operator-surface and documentation-workbench sustainment
 - post-release control-plane maintenance
+- not the queued extension execution-flexibility feature layer, which belongs
+  to `PROGRAM-0005` / `ISSUE-0410`
 
 ## Non-Goals
 

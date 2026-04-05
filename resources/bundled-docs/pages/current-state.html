@@ -78,6 +78,8 @@ canonical Windows 11 machine</li>
 <li><code>PROGRAM-0003</code>: Repeatable Benchmark Proof</li>
 <li><code>TRANCHE-012</code>: Post-Release Sustainment And Release Cadence</li>
 <li><code>PROGRAM-0004</code>: Post-Release Sustainment And Release Cadence</li>
+<li><code>TRANCHE-013</code>: Extension Execution Flexibility And Runtime Acquisition UX</li>
+<li><code>PROGRAM-0005</code>: Extension Execution Flexibility And Runtime Acquisition UX</li>
 </ul>
 <p>Important truth about that tranche:</p>
 <ul>
@@ -116,6 +118,27 @@ rerun</li>
 <li>the current canonical machine exposes only the x86 <code>LabVIEWCLI.exe</code> install,
 so host-native x64 <code>labview-cli</code> proof is non-canonical there unless a real
 x64 CLI install exists</li>
+<li>benchmark-proof entrypoints now validate the effective runtime override
+bundle after CLI, environment, and entrypoint-default synthesis instead of
+validating only a narrower raw-CLI shape</li>
+</ul>
+<h2>Queued Execution Flexibility State</h2>
+<p>The repo now also carries a separate queued user-facing execution-policy lane.</p>
+<p>That control plane says:</p>
+<ul>
+<li>future installed-extension execution should be explicit as <code>auto</code>,
+<code>host-only</code>, or <code>docker-only</code></li>
+<li>compatible host LabVIEW 2026 Q1 x86 or x64 execution remains valid when the
+selected mode permits host-native launch and the host surface is clean</li>
+<li>if an already-open host LabVIEW 2026 session or governed VI Server collision
+would contaminate host execution, <code>auto</code> requires Docker instead of silently
+continuing on the host</li>
+<li>if Docker is required and unavailable, the product contract is a hard stop
+telling the user to close LabVIEW or install and enable Docker</li>
+<li>if Docker execution is selected and the image is missing, the user should
+see visible pull progress; on Windows that means the governed Windows image</li>
+<li>the current open debt item for that ambiguity is retained in the authority
+debt ledger rather than left implicit</li>
 </ul>
 <h2>Documentation State</h2>
 <p>The docs package now includes:</p>

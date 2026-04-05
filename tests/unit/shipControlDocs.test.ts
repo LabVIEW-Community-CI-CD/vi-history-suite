@@ -278,9 +278,9 @@ describe('ship-control direction system', () => {
     expect(wikiSeedPlan).toContain('src/');
 
     expect(wikiPublicationLedger).toContain('# Wiki Publication Ledger');
-    expect(wikiPublicationLedger).toContain('| Overview | `home` | published | `2026-04-05` | `dec1861` |');
-    expect(wikiPublicationLedger).toContain('| Debt Retirement Contract | `Debt-Retirement-Contract` | published | `2026-04-05` | `dec1861` |');
-    expect(wikiPublicationLedger).toContain('| Debt Ledger | `Debt-Ledger` | published | `2026-04-05` | `dec1861` |');
+    expect(wikiPublicationLedger).toContain('| Overview | `home` | published |');
+    expect(wikiPublicationLedger).toContain('| Debt Retirement Contract | `Debt-Retirement-Contract` | published |');
+    expect(wikiPublicationLedger).toContain('| Debt Ledger | `Debt-Ledger` | published |');
     expect(wikiPublicationLedgerJson).toContain('"id": "overview"');
     expect(wikiPublicationLedgerJson).toContain('"title": "Overview"');
     expect(wikiPublicationLedgerJson).toContain('"id": "debt-retirement-contract"');

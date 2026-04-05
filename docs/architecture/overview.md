@@ -76,10 +76,12 @@
 - Runtime dependencies:
   - Node runtime bundled with VS Code extension host
   - Git executable on PATH
-  - optional LabVIEW 2026 Q1 host-native tooling, primarily for Windows x32
-  - optional Windows container runtime for active isolated 64-bit report
-    execution without colliding with an already-open host-native LabVIEW 2026
-    64-bit session
+  - optional LabVIEW 2026 Q1 host-native tooling for compatible Windows x32 or
+    x64 execution when the selected execution mode permits host-native launch
+    and the host runtime surface is conflict-free
+  - optional Windows container runtime for governed isolated execution when
+    the selected execution mode is `docker-only` or when `auto` detects a
+    conflicting host LabVIEW 2026 session or governed VI Server collision
   - optional Linux VS Code runtime bootstrap for the governed fallback
     extension-host proof lane
   - dedicated docs-authoring image for documentation-package iteration
@@ -109,6 +111,9 @@
     release gate
 - documentation-package iteration now has its own published workbench image,
   separate from extension runtime proof lanes
+- extension execution policy is now governed separately from bitness
+  preference, with future `auto` / `host-only` / `docker-only` mode behavior
+  documented in a dedicated product policy and ADR package
 - published wiki pages now also drive a version-matched bundled user-doc
   surface that can be opened from the installed extension without repo access
 - cross-repo navigation is governed from the main repo docs package and
@@ -156,3 +161,15 @@
   Windows benchmark image lane
 - [ADR-0019](./adr/ADR-0019-governed-wiki-workbench-system.md):
   Governed wiki workbench system
+- [ADR-0020](./adr/ADR-0020-bounded-cross-os-benchmark-prefix-for-harness-vhs-002.md):
+  Bounded cross-OS benchmark prefix for `HARNESS-VHS-002`
+- [ADR-0021](./adr/ADR-0021-canonical-exact-pair-diagnosis-arguments.md):
+  Canonical exact-pair diagnosis arguments
+- [ADR-0022](./adr/ADR-0022-canonical-experiment-admission-control.md):
+  Canonical experiment admission control for `PROGRAM-0003`
+- [ADR-0023](./adr/ADR-0023-governed-debt-retirement-contract.md):
+  Governed debt retirement contract
+- [ADR-0024](./adr/ADR-0024-canonical-effective-runtime-override-validation.md):
+  Canonical effective runtime-override validation
+- [ADR-0025](./adr/ADR-0025-transparent-extension-execution-flexibility-and-runtime-acquisition-ux.md):
+  Transparent extension execution flexibility and runtime acquisition UX

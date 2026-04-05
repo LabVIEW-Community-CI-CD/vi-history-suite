@@ -152,6 +152,74 @@
       "exitCriteria": "Linux full-window proof either completes truthfully or the repo closes PROGRAM-0003 with the bounded full-window blocker explicitly normalized into the benchmark packet and control plane.",
       "retirementCommit": null,
       "acceptedExceptionRationale": null
+    },
+    {
+      "id": "DEBT-0005",
+      "title": "Synthesized effective runtime override bundles previously bypassed canonical admission control",
+      "debtClass": "control-plane",
+      "status": "retired",
+      "severity": "high",
+      "contaminationRisk": "high",
+      "summary": "PROGRAM-0003 benchmark entrypoints could synthesize an explicit effective runtime bundle from CLI arguments, environment variables, and entrypoint-local defaults after raw CLI validation had already passed, weakening canonical admission truth.",
+      "owner": {
+        "trancheId": "TRANCHE-011",
+        "issueId": "ISSUE-0408",
+        "programId": "PROGRAM-0003",
+        "programPath": "docs/product/execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md",
+        "issuePath": "docs/product/issues/ISSUE-0408-repeatable-benchmark-proof.md"
+      },
+      "authoritativeSources": [
+        "docs/architecture/adr/ADR-0024-canonical-effective-runtime-override-validation.md",
+        "docs/product/canonical-exact-pair-diagnosis.md",
+        "docs/product/current-state.md"
+      ],
+      "repoEvidence": [
+        "src/cli/canonicalRuntimeOverrideValidation.ts",
+        "src/cli/runGitHubWindowsDashboardBenchmark.ts",
+        "src/cli/runGitHubLinuxDashboardBenchmark.ts",
+        "tests/unit/canonicalRuntimeOverrideValidation.test.ts",
+        "tests/unit/runGitHubWindowsDashboardBenchmarkCli.test.ts",
+        "tests/unit/runGitHubLinuxDashboardBenchmarkCli.test.ts"
+      ],
+      "discoveredContext": "PROGRAM-0003 effective runtime-override validation hardening",
+      "nextGate": null,
+      "exitCriteria": "Benchmark-proof entrypoints validate the effective runtime override bundle after CLI/env/default synthesis, and no hidden explicit Windows runtime executable default is injected when the operator did not request an explicit override.",
+      "retirementCommit": "2f4ced0",
+      "acceptedExceptionRationale": null
+    },
+    {
+      "id": "DEBT-0006",
+      "title": "Extension execution mode and Docker acquisition UX remain implicit",
+      "debtClass": "control-plane",
+      "status": "open",
+      "severity": "high",
+      "contaminationRisk": "high",
+      "summary": "The installed extension still lacks a first-class execution-mode contract for `auto`, `host-only`, and `docker-only`, so conflict-driven Docker requirements, host-session hard stops, Windows image pulls, and provider transparency remain only partially inferable from narrower runtime/provider surfaces.",
+      "owner": {
+        "trancheId": "TRANCHE-013",
+        "issueId": "ISSUE-0410",
+        "programId": "PROGRAM-0005",
+        "programPath": "docs/product/execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md",
+        "issuePath": "docs/product/issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md"
+      },
+      "authoritativeSources": [
+        "docs/product/extension-execution-policy.md",
+        "docs/product/current-state.md",
+        "docs/product/execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md",
+        "docs/product/issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md",
+        "docs/architecture/adr/ADR-0025-transparent-extension-execution-flexibility-and-runtime-acquisition-ux.md"
+      ],
+      "repoEvidence": [
+        "README.md",
+        "docs/product/development-queue.json",
+        "tests/unit/executionPolicyDocs.test.ts",
+        "docs/requirements/srs.md"
+      ],
+      "discoveredContext": "Post-release execution-flexibility and contamination-safe runtime UX planning",
+      "nextGate": "Land the first-class execution-mode setting, conflict-aware host-vs-Docker provider selection, Docker-required hard stops, visible image-pull progress, and runtime doctor/history-panel transparency without silent fallback.",
+      "exitCriteria": "The installed extension exposes `auto`, `host-only`, and `docker-only`; Docker-required runs fail closed with actionable guidance when unavailable; Windows Docker acquisition surfaces progress while pulling the governed Windows image; and front-facing UX shows chosen provider, rejected providers, acquisition outcome, and next action.",
+      "retirementCommit": null,
+      "acceptedExceptionRationale": null
     }
   ]
 }

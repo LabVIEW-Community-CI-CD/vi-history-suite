@@ -48,6 +48,7 @@ The current in-scope authority surfaces are:
 - review-scenario and decision-record docs
 - benchmark diagnosis control docs
 - debt-retirement contract, taxonomy, and ledger docs
+- extension execution-policy docs
 - configuration-management and documentation-control docs
 - ship, release-readiness, blocker, queue, and current-state docs
 - wiki authority, seed, publication, and cross-repo jump docs
@@ -63,6 +64,7 @@ The current in-scope authority surfaces are:
 | Review scenarios and decision records | `Review-Scenarios-And-Decision-Records.md` |
 | Benchmark diagnosis control | `Comparison-Reports-And-Dashboard-Review.md`, `Current-State.md` |
 | Debt retirement control | `Debt-Retirement-Contract.md`, `Debt-Ledger.md`, `Current-State.md` |
+| Extension execution policy | `User-Workflow.md`, `Requirements-And-Verification.md`, `Current-State.md`, `Architecture.md`, `Architecture-Decision-Records.md` |
 | Requirements and verification | `User-Workflow.md`, `Comparison-Reports-And-Dashboard-Review.md`, `Requirements-And-Verification.md` |
 | Documentation control plane | `Documentation-Workbench.md`, `Documentation-Coherence-Ledger.md`, `Wiki-Authority-Map.md`, `Program-Repo-Jump.md` |
 | Architecture and ADRs | `Architecture.md`, `Architecture-Decision-Records.md` |

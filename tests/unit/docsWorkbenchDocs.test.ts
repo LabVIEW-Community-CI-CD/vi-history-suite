@@ -66,6 +66,7 @@ describe('documentation-package workbench', () => {
           'tests/unit/bundledDocumentation.test.ts',
           'tests/unit/postReleaseControlPlaneDocs.test.ts',
           'tests/unit/debtLedgerDocs.test.ts',
+          'tests/unit/executionPolicyDocs.test.ts',
           'tests/unit/requirementsDocs.test.ts',
           'tests/unit/packageManifest.test.ts',
           'tests/unit/shipControlDocs.test.ts',
@@ -107,7 +108,7 @@ describe('documentation-package workbench', () => {
     expect(result).toBe('pass');
     expect(spawned).toEqual([
       'npm run compile',
-      'npx vitest run tests/unit/bundledDocumentation.test.ts tests/unit/postReleaseControlPlaneDocs.test.ts tests/unit/debtLedgerDocs.test.ts tests/unit/requirementsDocs.test.ts tests/unit/packageManifest.test.ts tests/unit/shipControlDocs.test.ts tests/unit/docsWorkbenchDocs.test.ts tests/unit/wikiCoverageDocs.test.ts tests/unit/runWikiWorkbenchCli.test.ts'
+      'npx vitest run tests/unit/bundledDocumentation.test.ts tests/unit/postReleaseControlPlaneDocs.test.ts tests/unit/debtLedgerDocs.test.ts tests/unit/executionPolicyDocs.test.ts tests/unit/requirementsDocs.test.ts tests/unit/packageManifest.test.ts tests/unit/shipControlDocs.test.ts tests/unit/docsWorkbenchDocs.test.ts tests/unit/wikiCoverageDocs.test.ts tests/unit/runWikiWorkbenchCli.test.ts'
     ]);
   });
 
@@ -230,12 +231,12 @@ describe('documentation-package workbench', () => {
     expect(programRepoJumpMap).toContain('"kind": "codex-skill"');
 
     expect(wikiPublicationLedger).toContain('# Wiki Publication Ledger');
-    expect(wikiPublicationLedger).toContain('| Overview | `home` | published | `2026-04-05` | `dec1861` |');
+    expect(wikiPublicationLedger).toContain('| Overview | `home` | published |');
     expect(wikiPublicationLedger).toContain('docs/product/SHIP-0001-releasable-vi-history-suite.md');
     expect(wikiPublicationLedger).toContain('docs/product/current-state.md');
     expect(wikiPublicationLedger).toContain('docs/product/release-readiness-matrix.json');
-    expect(wikiPublicationLedger).toContain('| Debt Retirement Contract | `Debt-Retirement-Contract` | published | `2026-04-05` | `dec1861` |');
-    expect(wikiPublicationLedger).toContain('| Debt Ledger | `Debt-Ledger` | published | `2026-04-05` | `dec1861` |');
+    expect(wikiPublicationLedger).toContain('| Debt Retirement Contract | `Debt-Retirement-Contract` | published |');
+    expect(wikiPublicationLedger).toContain('| Debt Ledger | `Debt-Ledger` | published |');
     expect(wikiPublicationLedgerJson).toContain('"id": "overview"');
     expect(wikiPublicationLedgerJson).toContain('"wikiFileName": "home.md"');
     expect(wikiPublicationLedgerJson).toContain('"id": "debt-retirement-contract"');

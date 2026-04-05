@@ -164,6 +164,12 @@ still resolve to one coherent x86 or x64 bundle. Mixed x86/x64 manual bundles
 are now treated as experiment contamination instead of being allowed to retain
 misleading blocker evidence.
 
+`ADR-0024` plus `VHS-REQ-457..458` now tighten that PROGRAM-0003 admission
+layer one step further: benchmark-proof entrypoints validate the effective runtime bundle
+after CLI arguments, environment variables, and entrypoint-local defaults have
+been resolved, and the Windows benchmark CLI no longer injects hidden explicit
+Windows executable defaults when no explicit override was requested.
+
 Current retained Linux blocker before activation:
 
 - pair `135/138` is reproducibly failing under the Linux image lane

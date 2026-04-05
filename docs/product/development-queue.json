@@ -105,9 +105,19 @@
     "title": "Post-release sustainment and release cadence",
     "status": "queued",
     "source": "author direction",
-    "summary": "After benchmark proof lands, sustain the public release kit, benchmark refresh cadence, operator surfaces, SemVer discipline, and post-release control-plane upkeep without reopening the public-facade closeout or benchmark-proof programs.",
+    "summary": "After benchmark proof lands, sustain the public release kit, benchmark refresh cadence, operator surfaces, SemVer discipline, and post-release control-plane upkeep without reopening the public-facade closeout or benchmark-proof programs. Feature-layer extension execution flexibility and runtime-acquisition UX belong to the separately queued `TRANCHE-013` / `PROGRAM-0005` lane, not sustainment by implication.",
     "issues": [
       "ISSUE-0409"
+    ]
+  },
+  {
+    "id": "TRANCHE-013",
+    "title": "Extension execution flexibility and runtime acquisition UX",
+    "status": "queued",
+    "source": "author direction",
+    "summary": "After benchmark proof lands, add a transparent installed-extension execution policy that separates `auto`, `host-only`, and `docker-only`, supports compatible host LabVIEW 2026 Q1 x86 or x64 execution when clean, forces Docker isolation when an already-open host LabVIEW 2026 session or governed VI Server collision would contaminate host execution, fails closed with actionable guidance when Docker is required but unavailable, surfaces visible image-pull progress, and on Windows pulls the governed Windows image without silent host/Docker fallback.",
+    "issues": [
+      "ISSUE-0410"
     ]
   }
 ]

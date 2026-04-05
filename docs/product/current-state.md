@@ -38,6 +38,8 @@ Read these in order:
 22. [PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
 23. [PROGRAM-0003: Repeatable Benchmark Proof](./execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md)
 24. [PROGRAM-0004: Post-Release Sustainment And Release Cadence](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)
+25. [Extension Execution Policy](./extension-execution-policy.md)
+26. [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
 
 ## Authority Stack
 
@@ -77,7 +79,9 @@ Current control-plane surfaces:
 22. [PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
 23. [PROGRAM-0003: Repeatable Benchmark Proof](./execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md)
 24. [PROGRAM-0004: Post-Release Sustainment And Release Cadence](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)
-25. [Fast VS Code Loop](../dev-fast-loop.md)
+25. [Extension Execution Policy](./extension-execution-policy.md)
+26. [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
+27. [Fast VS Code Loop](../dev-fast-loop.md)
 
 ## Committed Capability State
 
@@ -171,6 +175,7 @@ Queued follow-on tranches:
   - `VHS-REQ-450` is now implemented for canonical Windows proof hygiene: on the canonical Windows host, explicit runtime override paths must exist before a targeted exact-pair rerun starts, and host-native Windows comparison execution now fails closed with `blockedReason=windows-host-runtime-surface-contaminated` when preflight detects already-running `LabVIEW.exe` / `LabVIEWCLI.exe` / `LVCompare.exe` processes or a preexisting listener on the selected `LabVIEW.ini` VI Server port
   - `VHS-REQ-451` is now implemented for shared `PROGRAM-0003` admission control: dashboard-smoke, decision-record, exact-pair smoke, and the Windows/Linux benchmark CLIs now share one canonical runtime-override validation layer, so contradictory engine/path bundles are rejected before any retained benchmark or diagnosis surface can be produced
   - `VHS-REQ-452` is now implemented for canonical Windows override coherence: explicit Windows runtime path bundles must form one coherent x86 or x64 surface even when `--prefer-bitness` is omitted, so an x86 `LabVIEWCLI.exe` paired with x64 `LabVIEW.exe` or `LVCompare.exe` is rejected as experiment contamination before retained evidence is written
+  - `VHS-REQ-457..458` are now implemented for effective-bundle admission truth: benchmark-proof entrypoints now validate the effective runtime override bundle after CLI arguments, environment variables, and entrypoint-local defaults have been resolved, and the Windows benchmark CLI no longer injects hidden explicit Windows executable defaults when no explicit override was requested
   - `VHS-REQ-442..444` are now implemented for Windows diagnosis reruns: the canonical-host Windows benchmark-image proof runner accepts a governed `--engine` override for targeted reruns while preserving the same proof-root contract, the shared dashboard-smoke progress surface now labels the active Windows lane truthfully instead of leaking Linux wording, and the governed harness report-smoke surface now accepts an exact selected/base hash pair plus `--runtime-timeout-ms` for bounded pair diagnosis reruns
   - host Linux benchmark evidence and private GitHub experiment evidence are governed to stay aligned on the same authority commit and published benchmark-image contract before any evidence comparison is treated as meaningful, while the GitHub-hosted default remains shallower than the host-owned deep benchmark
   - `VHS-REQ-409..412` are implemented for the Linux benchmark lane: bounded per-pair runtime timeout handling, machine-readable per-pair failure receipts, runtime heartbeat progress, and terminal partial-summary retention for failed or timed-out runs
@@ -191,6 +196,12 @@ Queued follow-on tranches:
   - queued issue: [ISSUE-0409 Post-Release Sustainment And Release Cadence](./issues/ISSUE-0409-post-release-sustainment-and-release-cadence.md)
   - queued execution program: [PROGRAM-0004: Post-Release Sustainment And Release Cadence](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)
   - this tranche owns long-tail release cadence, benchmark refresh cadence, operator-surface upkeep, and post-release control-plane maintenance after benchmark proof lands
+  - feature-layer extension execution flexibility and runtime-acquisition UX are intentionally queued separately under `TRANCHE-013` / `PROGRAM-0005`
+- `TRANCHE-013`: Extension execution flexibility and runtime acquisition UX
+  - `PROGRAM-0005`: Extension execution flexibility and runtime acquisition UX
+  - queued issue: [ISSUE-0410 Extension Execution Flexibility And Runtime Acquisition UX](./issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md)
+  - queued execution program: [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
+  - this tranche owns the future transparent `auto` / `host-only` / `docker-only` execution-mode contract, Docker-required hard stops when a conflicting host LabVIEW 2026 session or governed VI Server collision would contaminate host execution, Windows image-acquisition progress, and user-facing provider transparency without silent host/Docker fallback
 
 Current active and queued post-release programs:
 
@@ -219,6 +230,7 @@ Current active and queued post-release programs:
 - queued follow-on execution programs:
   - [PROGRAM-0003: Repeatable Benchmark Proof](./execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md)
   - [PROGRAM-0004: Post-Release Sustainment And Release Cadence](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)
+  - [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
 
 The active-queue source of truth is:
 
@@ -226,6 +238,8 @@ The active-queue source of truth is:
 - [PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
 - [PROGRAM-0003: Repeatable Benchmark Proof](./execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md)
 - [PROGRAM-0004: Post-Release Sustainment And Release Cadence](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)
+- [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
+- [extension-execution-policy.md](./extension-execution-policy.md)
 - [debt-retirement-contract.md](./debt-retirement-contract.md)
 - [debt-taxonomy.md](./debt-taxonomy.md)
 - [debt-ledger.md](./debt-ledger.md)

@@ -57,6 +57,7 @@ describe('post-release control-plane coherence', () => {
     expect(readme).toContain('- active issue: `ISSUE-0407`');
     expect(readme).toContain('- `TRANCHE-011`: repeatable Windows and Linux benchmark proof');
     expect(readme).toContain('- `TRANCHE-012`: post-release sustainment and release cadence');
+    expect(readme).toContain('- `TRANCHE-013`: extension execution flexibility and runtime acquisition UX');
     expect(readme).toContain('private GitHub experiment repo');
     expect(readme).toContain(
       '[PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)'
@@ -66,6 +67,9 @@ describe('post-release control-plane coherence', () => {
     );
     expect(readme).toContain(
       '[PROGRAM-0004: Post-Release Sustainment And Release Cadence](./docs/product/execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)'
+    );
+    expect(readme).toContain(
+      '[PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./docs/product/execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)'
     );
 
     expect(currentState).toContain('- `TRANCHE-010`: Public facade release kit and host-machine acceptance');
@@ -77,11 +81,15 @@ describe('post-release control-plane coherence', () => {
     );
     expect(currentState).toContain('- `TRANCHE-011`: Repeatable Windows and Linux benchmark proof');
     expect(currentState).toContain('- `TRANCHE-012`: Post-release sustainment and release cadence');
+    expect(currentState).toContain('- `TRANCHE-013`: Extension execution flexibility and runtime acquisition UX');
     expect(currentState).toContain(
       '- queued execution program: [PROGRAM-0003: Repeatable Benchmark Proof](./execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md)'
     );
     expect(currentState).toContain(
       '- queued execution program: [PROGRAM-0004: Post-Release Sustainment And Release Cadence](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)'
+    );
+    expect(currentState).toContain(
+      '- queued execution program: [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)'
     );
 
     expect(ship).toContain('- current repo-active tranche: `TRANCHE-010`');
@@ -93,6 +101,7 @@ describe('post-release control-plane coherence', () => {
     );
     expect(ship).toContain('`TRANCHE-011` / [ISSUE-0408 Repeatable Benchmark Proof]');
     expect(ship).toContain('`TRANCHE-012` / [ISSUE-0409 Post-Release Sustainment And Release Cadence]');
+    expect(ship).toContain('`TRANCHE-013` / [ISSUE-0410 Extension Execution Flexibility And Runtime Acquisition UX]');
 
     expect(program).toContain('Active post-release program.');
     expect(program).toContain('- current queue tranche: `TRANCHE-010`');
@@ -107,6 +116,7 @@ describe('post-release control-plane coherence', () => {
     expect(sustainmentProgram).toContain('Queued follow-on post-release program.');
     expect(sustainmentProgram).toContain('- `PROGRAM-0003` closes the benchmark-proof packet under `TRANCHE-011`');
     expect(sustainmentProgram).toContain('- `TRANCHE-012`');
+    expect(sustainmentProgram).toContain('`PROGRAM-0005`');
 
     expect(issue).toContain('# ISSUE-0407: Public Facade Release Kit And Host-Machine Acceptance');
     expect(issue).toContain('## Status');
@@ -208,6 +218,14 @@ describe('post-release control-plane coherence', () => {
       source: 'author direction',
       summary: expect.stringContaining('benchmark refresh cadence'),
       issues: ['ISSUE-0409']
+    });
+    expect(queue).toContainEqual({
+      id: 'TRANCHE-013',
+      title: 'Extension execution flexibility and runtime acquisition UX',
+      status: 'queued',
+      source: 'author direction',
+      summary: expect.stringContaining('transparent installed-extension execution policy'),
+      issues: ['ISSUE-0410']
     });
 
     expect(currentState).toContain('the separate Windows benchmark-image lane is now published');

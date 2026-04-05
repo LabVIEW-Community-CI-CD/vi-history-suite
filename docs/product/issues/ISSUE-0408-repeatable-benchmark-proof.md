@@ -132,6 +132,11 @@ Current retained benchmark truth before activation:
   Windows runtime override bundles that mix x86 and x64 paths are rejected
   even when `--prefer-bitness` is omitted, so a manual x86 `LabVIEWCLI.exe`
   plus x64 `LabVIEW.exe` launch cannot be retained as benchmark truth
+- `VHS-REQ-457..458` now govern the effective runtime override bundle too:
+  benchmark-proof entrypoints validate the effective runtime bundle after CLI
+  arguments, environment variables, and entrypoint-local defaults are resolved,
+  and the Windows benchmark CLI no longer injects hidden explicit Windows
+  executable defaults when no explicit override was requested
 - local host-runnable proof for the Windows benchmark image is still open
 
 ## Scope

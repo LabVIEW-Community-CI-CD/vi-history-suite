@@ -114,6 +114,19 @@
       ]
     },
     {
+      "sourcePath": "docs/product/extension-execution-policy.md",
+      "itemType": "extension-execution-policy",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "User-Workflow.md",
+        "Requirements-And-Verification.md",
+        "Current-State.md",
+        "Architecture.md",
+        "Architecture-Decision-Records.md"
+      ]
+    },
+    {
       "sourcePath": "docs/product/debt-retirement-contract.md",
       "itemType": "debt-retirement-contract",
       "representationStatus": "complete",
@@ -565,6 +578,28 @@
     },
     {
       "sourcePath": "docs/architecture/adr/ADR-0023-governed-debt-retirement-contract.md",
+      "itemType": "adr",
+      "aggregationRuleId": "adr-set-aggregate",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Architecture.md",
+        "Architecture-Decision-Records.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/architecture/adr/ADR-0024-canonical-effective-runtime-override-validation.md",
+      "itemType": "adr",
+      "aggregationRuleId": "adr-set-aggregate",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Architecture.md",
+        "Architecture-Decision-Records.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/architecture/adr/ADR-0025-transparent-extension-execution-flexibility-and-runtime-acquisition-ux.md",
       "itemType": "adr",
       "aggregationRuleId": "adr-set-aggregate",
       "representationStatus": "complete",

@@ -22,13 +22,13 @@ Do not draft or refresh wiki pages until:
   `docs/product/wiki-publication-ledger.md`
 - **Install And Release**: published on `2026-04-03`; see
   `docs/product/wiki-publication-ledger.md`
-- **User Workflow**: published on `2026-04-03`; see
+- **User Workflow**: published on `2026-04-05`; see
   `docs/product/wiki-publication-ledger.md`
 - **Comparison Reports And Dashboard Review**: published on `2026-04-03`; see
   `docs/product/wiki-publication-ledger.md`
 - **Review Scenarios And Decision Records**: published on `2026-04-03`; see
   `docs/product/wiki-publication-ledger.md`
-- **Architecture**: published on `2026-04-03`; see
+- **Architecture**: published on `2026-04-05`; see
   `docs/product/wiki-publication-ledger.md`
 - **Documentation Workbench**: published on `2026-04-04`; see
   `docs/product/wiki-publication-ledger.md`
@@ -36,17 +36,17 @@ Do not draft or refresh wiki pages until:
   `docs/product/wiki-publication-ledger.md`
 - **Documentation Coherence Ledger**: published on `2026-04-04`; see
   `docs/product/wiki-publication-ledger.md`
-- **Current State**: published on `2026-04-04`; see
+- **Current State**: published on `2026-04-05`; see
   `docs/product/wiki-publication-ledger.md`
 - **Wiki Authority Map**: published on `2026-04-04`; see
   `docs/product/wiki-publication-ledger.md`
-- **Development Queue**: published on `2026-04-04`; see
+- **Development Queue**: published on `2026-04-05`; see
   `docs/product/wiki-publication-ledger.md`
 - **Blocker Ledger**: published on `2026-04-04`; see
   `docs/product/wiki-publication-ledger.md`
-- **Requirements And Verification**: published on `2026-04-04`; see
+- **Requirements And Verification**: published on `2026-04-05`; see
   `docs/product/wiki-publication-ledger.md`
-- **Architecture Decision Records**: published on `2026-04-04`; see
+- **Architecture Decision Records**: published on `2026-04-05`; see
   `docs/product/wiki-publication-ledger.md`
 - **Debt Retirement Contract**: published on `2026-04-05`; see
   `docs/product/wiki-publication-ledger.md`
@@ -79,6 +79,7 @@ Do not draft or refresh wiki pages until:
 3. **User Workflow**
    - Primary authority:
      - `docs/requirements/srs.md`
+     - `docs/product/extension-execution-policy.md`
      - `docs/product/current-state.md`
    - Secondary authority:
      - `README.md`
@@ -137,6 +138,7 @@ Do not draft or refresh wiki pages until:
 10. **Current State**
    - Primary authority:
      - `docs/product/current-state.md`
+     - `docs/product/extension-execution-policy.md`
    - Secondary authority:
      - `README.md`
      - `docs/product/SHIP-0001-releasable-vi-history-suite.md`
@@ -173,6 +175,7 @@ Do not draft or refresh wiki pages until:
      - `docs/requirements/rtm.csv`
      - `docs/testing/test-plan.md`
    - Secondary authority:
+     - `docs/product/extension-execution-policy.md`
      - `docs/product/current-state.md`
 
 15. **Architecture Decision Records**
@@ -180,6 +183,7 @@ Do not draft or refresh wiki pages until:
      - `docs/architecture/overview.md`
      - `docs/architecture/adr/`
    - Secondary authority:
+     - `docs/product/extension-execution-policy.md`
      - `docs/product/current-state.md`
 
 16. **Debt Retirement Contract**

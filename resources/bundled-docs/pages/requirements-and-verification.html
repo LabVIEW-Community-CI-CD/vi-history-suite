@@ -16,6 +16,9 @@ governed instead of informal.</p>
 <li>the RTM ties requirements to proof surfaces</li>
 <li>the test plan states how those proofs are exercised and reviewed</li>
 </ul>
+<p>The requirements package now also retains an explicit execution-mode contract
+for future installed-extension runtime choice, so host-versus-Docker behavior
+does not remain only an implementation detail.</p>
 <h2>SRS</h2>
 <p>The Software Requirements Specification is the main normative requirement
 surface.</p>
@@ -23,6 +26,8 @@ surface.</p>
 <ul>
 <li>command and review-surface behavior</li>
 <li>runtime-provider and benchmark behavior</li>
+<li>the queued extension execution-mode contract for <code>auto</code>, <code>host-only</code>, and
+<code>docker-only</code></li>
 <li>documentation-package and wiki-workbench behavior</li>
 <li>bounded repo-family support</li>
 <li>release, setup, and control-plane rules</li>
@@ -62,6 +67,15 @@ what kinds of evidence are expected for each part of the product.</p>
 </ul>
 <p>The product now also carries wiki and packaged-doc requirements in the same
 governed requirements system rather than treating documentation as informal.</p>
+<p>That same system now governs the queued execution-mode contract too, including:</p>
+<ul>
+<li>when Docker becomes a hard requirement because an open host LabVIEW session
+would contaminate host execution</li>
+<li>when the extension must tell the user to close LabVIEW or install Docker</li>
+<li>when Windows must surface visible progress while pulling the governed Windows
+image</li>
+<li>the no-silent-fallback rule between <code>host-only</code>, <code>docker-only</code>, and <code>auto</code></li>
+</ul>
 <h2>Why It Matters</h2>
 <p>This is one of the main differences between a useful engineering wiki and a
 shallow summary surface.</p>

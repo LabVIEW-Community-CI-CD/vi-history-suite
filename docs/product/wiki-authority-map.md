@@ -15,28 +15,29 @@ When future sessions create or refresh wiki pages, use this order:
 3. [blocker-ledger.json](./blocker-ledger.json)
 4. [development-queue.json](./development-queue.json)
 5. [current-state.md](./current-state.md)
-6. [debt-retirement-contract.md](./debt-retirement-contract.md)
-7. [debt-taxonomy.md](./debt-taxonomy.md)
-8. [debt-ledger.md](./debt-ledger.md)
-9. [debt-ledger.json](./debt-ledger.json)
-10. [srs.md](../requirements/srs.md)
-11. [rtm.csv](../requirements/rtm.csv)
-12. [test-plan.md](../testing/test-plan.md)
-13. [documentation-coherence-ledger.md](./documentation-coherence-ledger.md)
-14. [wiki-seed-plan.md](./wiki-seed-plan.md)
-15. [wiki-publication-ledger.md](./wiki-publication-ledger.md)
-16. [wiki-publication-ledger.json](./wiki-publication-ledger.json)
-17. [overview.md](../architecture/overview.md)
-18. `docs/architecture/adr/`
-19. [README.md](../../README.md)
-20. [Documentation Package Workbench](../documentation-workbench.md)
-21. [program-repo-jump.md](./program-repo-jump.md)
-22. [program-repo-jump-map.json](./program-repo-jump-map.json)
-23. [release-procedure.md](../release-procedure.md)
-24. [information-item-map.md](../information-item-map.md)
-25. [cm-plan.md](../cm/cm-plan.md)
-26. [research-alignment.md](../research/authoritative/research-alignment.md)
-27. [research-implementation-index.json](../research/authoritative/research-implementation-index.json)
+6. [extension-execution-policy.md](./extension-execution-policy.md)
+7. [debt-retirement-contract.md](./debt-retirement-contract.md)
+8. [debt-taxonomy.md](./debt-taxonomy.md)
+9. [debt-ledger.md](./debt-ledger.md)
+10. [debt-ledger.json](./debt-ledger.json)
+11. [srs.md](../requirements/srs.md)
+12. [rtm.csv](../requirements/rtm.csv)
+13. [test-plan.md](../testing/test-plan.md)
+14. [documentation-coherence-ledger.md](./documentation-coherence-ledger.md)
+15. [wiki-seed-plan.md](./wiki-seed-plan.md)
+16. [wiki-publication-ledger.md](./wiki-publication-ledger.md)
+17. [wiki-publication-ledger.json](./wiki-publication-ledger.json)
+18. [overview.md](../architecture/overview.md)
+19. `docs/architecture/adr/`
+20. [README.md](../../README.md)
+21. [Documentation Package Workbench](../documentation-workbench.md)
+22. [program-repo-jump.md](./program-repo-jump.md)
+23. [program-repo-jump-map.json](./program-repo-jump-map.json)
+24. [release-procedure.md](../release-procedure.md)
+25. [information-item-map.md](../information-item-map.md)
+26. [cm-plan.md](../cm/cm-plan.md)
+27. [research-alignment.md](../research/authoritative/research-alignment.md)
+28. [research-implementation-index.json](../research/authoritative/research-implementation-index.json)
 
 If two documents disagree, the higher document in this list wins until the
 lower document is corrected.
@@ -119,6 +120,9 @@ That requires:
 - debt retirement contract and active debt picture:
   `docs/product/debt-retirement-contract.md`,
   `docs/product/debt-ledger.json`
+- extension execution policy and queued execution-flexibility tranche:
+  `docs/product/extension-execution-policy.md`,
+  `docs/architecture/adr/ADR-0025-transparent-extension-execution-flexibility-and-runtime-acquisition-ux.md`
 - cross-repo orientation: `docs/product/program-repo-jump.md`
 - documentation coherence: `docs/product/documentation-coherence-ledger.md`
 - incremental wiki page order: `docs/product/wiki-seed-plan.md`

@@ -18,6 +18,11 @@ This program keeps `vi-history-suite` from falling back into ad hoc tail work
 by giving release cadence, benchmark refresh cadence, operator surfaces, and
 control-plane upkeep an explicit home.
 
+Feature-layer extension execution flexibility and runtime-acquisition UX are
+not owned by this sustainment program. They are queued separately under
+`PROGRAM-0005` so the repo does not hide user-facing execution-policy work
+inside generic maintenance language.
+
 ## North Star
 
 `vi-history-suite` remains a governed released product with:

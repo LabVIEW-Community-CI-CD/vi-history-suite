@@ -60,6 +60,7 @@ const expectedCoreSourcePaths = [
   'docs/product/blocker-ledger.json',
   'docs/product/development-queue.json',
   'docs/product/current-state.md',
+  'docs/product/extension-execution-policy.md',
   'docs/product/debt-retirement-contract.md',
   'docs/product/debt-taxonomy.md',
   'docs/product/debt-ledger.md',

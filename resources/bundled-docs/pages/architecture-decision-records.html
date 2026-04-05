@@ -35,6 +35,8 @@ see the current decision set and follow back to the governing records.</p>
 <li><code>ADR-0021</code>: Canonical Exact-Pair Diagnosis Arguments</li>
 <li><code>ADR-0022</code>: Canonical Experiment Admission Control For PROGRAM-0003</li>
 <li><code>ADR-0023</code>: Governed Debt Retirement Contract</li>
+<li><code>ADR-0024</code>: Canonical Effective Runtime Override Validation</li>
+<li><code>ADR-0025</code>: Transparent Extension Execution Flexibility And Runtime Acquisition UX</li>
 </ul>
 <p><code>ADR-0021</code> now stays focused on exact-pair diagnosis arguments. <code>ADR-0022</code>
 lifts the wider PROGRAM-0003 admission-control boundary into its own decision,
@@ -46,6 +48,14 @@ contamination even when <code>--prefer-bitness</code> is omitted.</p>
 <p><code>ADR-0023</code> adds one more control-plane rule on top of that: technical and
 documentation debt is no longer allowed to stay implicit. It must be retired,
 ledgered, or explicitly accepted as a bounded exception.</p>
+<p><code>ADR-0024</code> narrows the benchmark-proof admission rule further: the repo now
+validates the effective runtime override bundle after CLI arguments,
+environment variables, and entrypoint-local defaults have all been resolved.</p>
+<p><code>ADR-0025</code> then widens the user-facing operating model beyond the older
+container-isolation preference in <code>ADR-0006</code>. The primary extension-user
+execution-policy record is now the transparent <code>auto</code> / <code>host-only</code> /
+<code>docker-only</code> contract with conflict-driven Docker hard stops, Windows
+image-pull progress, and no silent provider fallback.</p>
 <h2>Decision Themes</h2>
 <p>The current ADR set clusters into a few major themes:</p>
 <ul>

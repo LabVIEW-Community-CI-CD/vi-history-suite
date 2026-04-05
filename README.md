@@ -46,10 +46,11 @@ If you are new to the repo, read these in order:
 16. [Debt Taxonomy](./docs/product/debt-taxonomy.md)
 17. [Debt Ledger](./docs/product/debt-ledger.md)
 18. [Debt Ledger JSON](./docs/product/debt-ledger.json)
-19. [Documentation Package Workbench](./docs/documentation-workbench.md)
-20. [Program Repo Jump](./docs/product/program-repo-jump.md)
-21. [PROGRAM-0001: Next Product Layer](./docs/product/execution-programs/PROGRAM-0001-next-product-layer.md)
-22. [PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
+19. [Extension Execution Policy](./docs/product/extension-execution-policy.md)
+20. [Documentation Package Workbench](./docs/documentation-workbench.md)
+21. [Program Repo Jump](./docs/product/program-repo-jump.md)
+22. [PROGRAM-0001: Next Product Layer](./docs/product/execution-programs/PROGRAM-0001-next-product-layer.md)
+23. [PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
 
 For machine-friendly repo orientation, start with:
 
@@ -100,6 +101,7 @@ Use these repo-native control-plane entrypoints instead:
 - [Debt Taxonomy](./docs/product/debt-taxonomy.md)
 - [Debt Ledger](./docs/product/debt-ledger.md)
 - [Debt Ledger JSON](./docs/product/debt-ledger.json)
+- [Extension Execution Policy](./docs/product/extension-execution-policy.md)
 - [Documentation Package Workbench](./docs/documentation-workbench.md)
 - [Program Repo Jump](./docs/product/program-repo-jump.md)
 - [Review Scenarios](./docs/product/review-scenarios.md)
@@ -224,6 +226,10 @@ Committed and governed today:
   and `docs/product/debt-ledger.{md,json}` so technical and documentation debt
   cannot remain implicit across future sessions, with retired debt, open debt,
   and accepted exceptions all bound to explicit owner programs and next gates
+- a governed extension-execution-policy package that queues transparent
+  `auto` / `host-only` / `docker-only` execution, Docker-required hard stops,
+  and Windows image-acquisition UX as explicit product truth instead of future
+  chat-only guidance
 - a governed cross-repo jump surface that resolves the product repo, wiki repo,
   and companion `repo-standards-review` skill repo from one local map and one
   CLI entrypoint
@@ -303,8 +309,9 @@ Committed and governed today:
   `LVCompare` and degrades into `-350000` connection failure on retry; the
   accepted cross-OS timing truth is now the retained comparable-prefix packet in
   `docs/product/benchmark-packets/HARNESS-VHS-002-comparable-prefix.json`,
-  which captures the first `135` commits / `134` pairs on both Windows host
-  and Linux host surfaces
+  which captures the first `129` commits / `128` pairs across the governed
+  Windows host, Linux host, and Windows benchmark-image surfaces before the
+  first invalid retained boundary
 
 ## Active Work
 
@@ -344,12 +351,14 @@ The current active tranche is:
 - queued follow-on tranches:
   - `TRANCHE-011`: repeatable Windows and Linux benchmark proof
   - `TRANCHE-012`: post-release sustainment and release cadence
+  - `TRANCHE-013`: extension execution flexibility and runtime acquisition UX
 
 Issue-ready execution programs:
 
 - [PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
 - [PROGRAM-0003: Repeatable Benchmark Proof](./docs/product/execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md)
 - [PROGRAM-0004: Post-Release Sustainment And Release Cadence](./docs/product/execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)
+- [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./docs/product/execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
 
 See:
 
@@ -358,6 +367,8 @@ See:
 - [PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
 - [PROGRAM-0003: Repeatable Benchmark Proof](./docs/product/execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md)
 - [PROGRAM-0004: Post-Release Sustainment And Release Cadence](./docs/product/execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)
+- [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./docs/product/execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
+- [Extension Execution Policy](./docs/product/extension-execution-policy.md)
 - [SHIP-0001: Releasable VI History Suite](./docs/product/SHIP-0001-releasable-vi-history-suite.md)
 - [Release Readiness Matrix](./docs/product/release-readiness-matrix.json)
 - [Blocker Ledger](./docs/product/blocker-ledger.json)

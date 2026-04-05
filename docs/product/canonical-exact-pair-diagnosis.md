@@ -11,7 +11,8 @@ This document defines the exact-pair-specific admission contract for
 
 The wider shared runtime-override admission control for `PROGRAM-0003`
 entrypoints is governed separately in `ADR-0022`. Exact-pair diagnosis
-inherits that shared layer and then adds the selected/base pair contract below.
+inherits that shared layer, inherits the effective runtime bundle validation
+rule from `ADR-0024`, and then adds the selected/base pair contract below.
 
 ## Canonical Profiles
 
@@ -65,6 +66,8 @@ Use when diagnosing the same exact retained pair under Windows `LVCompare`.
 - Shared `PROGRAM-0003` runtime-override validation still applies here:
   - explicit runtime override paths require matching `--platform` and
     `--engine`
+  - CLI arguments, environment variables, and entrypoint-local defaults are
+    validated as one effective runtime bundle before execution begins
   - the same admission layer now governs dashboard-smoke, decision-record,
     and Windows/Linux benchmark CLI entrypoints too
 - `--prefer-bitness` is only valid with `--platform win32`.

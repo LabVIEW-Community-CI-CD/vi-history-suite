@@ -1,6 +1,8 @@
 # ADR-0006: Windows 64-Bit Container Isolation For Extension Users
 
 - Status: accepted
+- Supersession: superseded by ADR-0025 as the primary extension-user
+  execution-policy contract
 - Date: 2026-04-02
 - Deciders: sole author
 
@@ -28,6 +30,9 @@
   not an assumed fallback.
 - Keep Windows x64 execution inside the isolated provider and preserve Windows
   x32 as the separate host-native path.
+- Treat this ADR as historical context once ADR-0025 is active in the control
+  plane; the broader mode-based execution policy supersedes this narrower
+  x64-isolation preference.
 
 ## Rationale
 

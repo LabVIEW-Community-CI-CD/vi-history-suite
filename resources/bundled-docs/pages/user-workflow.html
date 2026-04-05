@@ -3,6 +3,7 @@
 code. The current authority surfaces for this page are:</p>
 <ul>
 <li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/requirements/srs.md"><code>docs/requirements/srs.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/extension-execution-policy.md"><code>docs/product/extension-execution-policy.md</code></a></li>
 <li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/current-state.md"><code>docs/product/current-state.md</code></a></li>
 <li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/README.md"><code>README.md</code></a></li>
 <li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/testing/test-plan.md"><code>docs/testing/test-plan.md</code></a></li>
@@ -20,6 +21,29 @@ detection and have at least two modifying commits.</p>
 <p>The installed extension also exposes a first-class documentation command:</p>
 <ul>
 <li><code>VI History: Open Documentation</code></li>
+</ul>
+<h2>Execution Policy</h2>
+<p>The current authority package now makes the future execution-mode contract
+explicit even though it is not implemented in the manifest yet.</p>
+<p>The queued policy is:</p>
+<ul>
+<li><code>auto</code> / <code>host-only</code> / <code>docker-only</code></li>
+</ul>
+<p>That contract is meant to make host-versus-Docker behavior transparent instead
+of leaving it implicit in bitness preferences or ambient runtime discovery.</p>
+<p>When that tranche lands:</p>
+<ul>
+<li>compatible host LabVIEW 2026 Q1 x86 or x64 execution remains valid when the
+selected mode permits host-native launch and the host surface is clean</li>
+<li>if a conflicting host LabVIEW 2026 session or governed VI Server collision
+would contaminate host execution, <code>auto</code> requires Docker isolation instead</li>
+<li>if Docker is required and unavailable, the extension hard-stops with
+actionable guidance to close the conflicting LabVIEW session or install and
+enable Docker</li>
+<li>if Docker execution is selected and the image is missing locally, the
+extension surfaces visible pull progress; on Windows that means pulling the
+governed Windows image</li>
+<li>no selected mode is allowed to silently fall back to a different provider</li>
 </ul>
 <h2>Primary Review Flow</h2>
 <ol>
@@ -99,6 +123,9 @@ opened panel later reaches a trust-gated action</li>
 <p>Long-running comparison and dashboard actions execute with bounded progress and
 cancellation support. Cancellation is intended to preserve already retained
 evidence instead of discarding it silently.</p>
+<p>That same transparency rule now also governs the queued execution-mode work:
+future provider selection and Docker acquisition progress are expected to be
+visible in front-facing UX rather than discoverable only from shell output.</p>
 <h2>Bundled Documentation</h2>
 <p>The extension packages a version-matched bundled documentation surface so
 reviewers do not need repo access just to read guidance.</p>
