@@ -2,8 +2,8 @@
 
 ## Purpose
 
-Define the first incremental wiki pages for `vi-history-suite` from governed
-documentation only.
+Define the governed wiki publication order and completion state for
+`vi-history-suite` from governed documentation only.
 
 ## Preconditions
 
@@ -42,9 +42,16 @@ Do not draft or refresh wiki pages until:
   `docs/product/wiki-publication-ledger.md`
 - **Development Queue**: published on `2026-04-04`; see
   `docs/product/wiki-publication-ledger.md`
-- **Next page**: `Blocker Ledger`
-  - retain publication prep under
-    `.cache/wiki-workbench/publication-prep/blocker-ledger/`
+- **Blocker Ledger**: published on `2026-04-04`; see
+  `docs/product/wiki-publication-ledger.md`
+- **Requirements And Verification**: published on `2026-04-04`; see
+  `docs/product/wiki-publication-ledger.md`
+- **Architecture Decision Records**: published on `2026-04-04`; see
+  `docs/product/wiki-publication-ledger.md`
+- **Next page**: none
+  - the stop rule is now the zero-gap completion invariant in
+    `docs/product/wiki-coverage-matrix.json`, not a soft “good progress”
+    threshold
 
 ## Page Order
 
@@ -156,6 +163,21 @@ Do not draft or refresh wiki pages until:
      - `docs/product/SHIP-0001-releasable-vi-history-suite.md`
      - `docs/product/development-queue.json`
 
+14. **Requirements And Verification**
+   - Primary authority:
+     - `docs/requirements/srs.md`
+     - `docs/requirements/rtm.csv`
+     - `docs/testing/test-plan.md`
+   - Secondary authority:
+     - `docs/product/current-state.md`
+
+15. **Architecture Decision Records**
+   - Primary authority:
+     - `docs/architecture/overview.md`
+     - `docs/architecture/adr/`
+   - Secondary authority:
+     - `docs/product/current-state.md`
+
 ## Drafting Rules
 
 - Draft only the page currently being seeded; do not widen multiple pages in
@@ -163,6 +185,9 @@ Do not draft or refresh wiki pages until:
 - Retain a governed staging bundle and publication-prep receipt through
   `npm run wiki:workbench:prepare` or `npm run docs:workbench:wiki:prepare`
   before treating a page as ready for publication.
+- Treat the wiki as finished only when `docs/product/wiki-coverage-matrix.json`
+  is zero-gap and `docs/product/wiki-publication-ledger.json` retains no
+  `nextPage` target.
 - Every substantive product claim should cite a repo-relative governed doc
   path.
 - If a fact exists only in `src/` or `tests/`, stop and promote it into the

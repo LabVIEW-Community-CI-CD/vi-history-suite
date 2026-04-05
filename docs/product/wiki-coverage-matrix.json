@@ -1,0 +1,484 @@
+{
+  "generatedFor": "vi-history-suite",
+  "scopeId": "requirements-and-standards-documentation-package",
+  "acceptedAggregationRules": [
+    {
+      "id": "adr-set-aggregate",
+      "description": "Each ADR file shall appear as its own coverage entry, but the ADR set may be represented through the published Architecture and Architecture Decision Records wiki pages."
+    }
+  ],
+  "completionInvariant": {
+    "description": "Wiki completion passes only when every in-scope entry is represented completely on a published wiki page, every ADR file is covered through the accepted aggregation rule, every published wiki page is ledgered, and the machine-readable publication ledger retains no nextPage target.",
+    "requiredRepresentationStatus": "complete",
+    "requiredPublicationStatus": "published"
+  },
+  "coverage": [
+    {
+      "sourcePath": "README.md",
+      "itemType": "repository-entrypoint",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "home.md",
+        "Install-And-Release.md",
+        "User-Workflow.md",
+        "Current-State.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/release-procedure.md",
+      "itemType": "release-procedure",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Install-And-Release.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/cm/cm-plan.md",
+      "itemType": "configuration-management-plan",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Install-And-Release.md",
+        "Documentation-Coherence-Ledger.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/information-item-map.md",
+      "itemType": "information-item-map",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Documentation-Workbench.md",
+        "Wiki-Authority-Map.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/product/SHIP-0001-releasable-vi-history-suite.md",
+      "itemType": "ship-control",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "home.md",
+        "Current-State.md",
+        "Development-Queue.md",
+        "Blocker-Ledger.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/product/release-readiness-matrix.json",
+      "itemType": "release-readiness",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "home.md",
+        "Install-And-Release.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/product/blocker-ledger.json",
+      "itemType": "blocker-ledger",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Install-And-Release.md",
+        "Current-State.md",
+        "Development-Queue.md",
+        "Blocker-Ledger.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/product/development-queue.json",
+      "itemType": "development-queue",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Current-State.md",
+        "Development-Queue.md",
+        "Blocker-Ledger.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/product/current-state.md",
+      "itemType": "current-state",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "home.md",
+        "Current-State.md",
+        "Requirements-And-Verification.md",
+        "Documentation-Coherence-Ledger.md",
+        "Documentation-Workbench.md",
+        "Wiki-Authority-Map.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/product/documentation-coherence-ledger.md",
+      "itemType": "documentation-coherence-ledger",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Documentation-Coherence-Ledger.md",
+        "Documentation-Workbench.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/product/wiki-authority-map.md",
+      "itemType": "wiki-authority-map",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Wiki-Authority-Map.md",
+        "Documentation-Workbench.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/product/wiki-seed-plan.md",
+      "itemType": "wiki-seed-plan",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Wiki-Authority-Map.md",
+        "Documentation-Workbench.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/product/wiki-publication-ledger.md",
+      "itemType": "wiki-publication-ledger",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Documentation-Workbench.md",
+        "Wiki-Authority-Map.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/product/wiki-publication-ledger.json",
+      "itemType": "wiki-publication-ledger-json",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Documentation-Workbench.md",
+        "Wiki-Authority-Map.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/product/program-repo-jump.md",
+      "itemType": "program-repo-jump",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Program-Repo-Jump.md",
+        "Documentation-Workbench.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/product/program-repo-jump-map.json",
+      "itemType": "program-repo-jump-map",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Program-Repo-Jump.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/product/review-scenarios.md",
+      "itemType": "review-scenarios",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Review-Scenarios-And-Decision-Records.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/product/decision-record-template.md",
+      "itemType": "decision-record-template",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Review-Scenarios-And-Decision-Records.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/requirements/srs.md",
+      "itemType": "software-requirements-specification",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "User-Workflow.md",
+        "Comparison-Reports-And-Dashboard-Review.md",
+        "Requirements-And-Verification.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/requirements/rtm.csv",
+      "itemType": "requirements-traceability-matrix",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Requirements-And-Verification.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/testing/test-plan.md",
+      "itemType": "test-plan",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "User-Workflow.md",
+        "Comparison-Reports-And-Dashboard-Review.md",
+        "Requirements-And-Verification.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/architecture/overview.md",
+      "itemType": "architecture-overview",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Architecture.md",
+        "Architecture-Decision-Records.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/documentation-workbench.md",
+      "itemType": "documentation-workbench",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Documentation-Workbench.md",
+        "Wiki-Authority-Map.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/research/authoritative/research-alignment.md",
+      "itemType": "research-alignment",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Current-State.md",
+        "Comparison-Reports-And-Dashboard-Review.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/research/authoritative/research-implementation-index.json",
+      "itemType": "research-implementation-index",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Current-State.md",
+        "Comparison-Reports-And-Dashboard-Review.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/architecture/adr/ADR-0001-vscode-typescript-baseline.md",
+      "itemType": "adr",
+      "aggregationRuleId": "adr-set-aggregate",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Architecture.md",
+        "Architecture-Decision-Records.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/architecture/adr/ADR-0002-published-review-surface-webview.md",
+      "itemType": "adr",
+      "aggregationRuleId": "adr-set-aggregate",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Architecture.md",
+        "Architecture-Decision-Records.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/architecture/adr/ADR-0003-workspace-report-storage-and-desktop-boundary.md",
+      "itemType": "adr",
+      "aggregationRuleId": "adr-set-aggregate",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Architecture.md",
+        "Architecture-Decision-Records.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/architecture/adr/ADR-0004-report-generation-subsystem-baseline.md",
+      "itemType": "adr",
+      "aggregationRuleId": "adr-set-aggregate",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Architecture.md",
+        "Architecture-Decision-Records.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/architecture/adr/ADR-0005-runtime-provider-selection-and-windows64-isolation.md",
+      "itemType": "adr",
+      "aggregationRuleId": "adr-set-aggregate",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Architecture.md",
+        "Architecture-Decision-Records.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/architecture/adr/ADR-0006-windows64-container-isolation-for-extension-users.md",
+      "itemType": "adr",
+      "aggregationRuleId": "adr-set-aggregate",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Architecture.md",
+        "Architecture-Decision-Records.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/architecture/adr/ADR-0007-multi-report-review-dashboard.md",
+      "itemType": "adr",
+      "aggregationRuleId": "adr-set-aggregate",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Architecture.md",
+        "Architecture-Decision-Records.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/architecture/adr/ADR-0008-concentration-first-dashboard-for-high-volume-review.md",
+      "itemType": "adr",
+      "aggregationRuleId": "adr-set-aggregate",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Architecture.md",
+        "Architecture-Decision-Records.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/architecture/adr/ADR-0009-dashboard-pair-archive-and-concentration-packet.md",
+      "itemType": "adr",
+      "aggregationRuleId": "adr-set-aggregate",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Architecture.md",
+        "Architecture-Decision-Records.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/architecture/adr/ADR-0010-dual-host-extension-proof-and-linux-bootstrap.md",
+      "itemType": "adr",
+      "aggregationRuleId": "adr-set-aggregate",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Architecture.md",
+        "Architecture-Decision-Records.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/architecture/adr/ADR-0011-dashboard-pair-eta-characterization-benchmark.md",
+      "itemType": "adr",
+      "aggregationRuleId": "adr-set-aggregate",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Architecture.md",
+        "Architecture-Decision-Records.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/architecture/adr/ADR-0012-documentation-package-workbench-image.md",
+      "itemType": "adr",
+      "aggregationRuleId": "adr-set-aggregate",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Architecture.md",
+        "Architecture-Decision-Records.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/architecture/adr/ADR-0013-authority-first-wiki-seeding.md",
+      "itemType": "adr",
+      "aggregationRuleId": "adr-set-aggregate",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Architecture.md",
+        "Architecture-Decision-Records.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/architecture/adr/ADR-0014-cross-repo-navigation-control-plane.md",
+      "itemType": "adr",
+      "aggregationRuleId": "adr-set-aggregate",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Architecture.md",
+        "Architecture-Decision-Records.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/architecture/adr/ADR-0015-version-matched-bundled-user-documentation.md",
+      "itemType": "adr",
+      "aggregationRuleId": "adr-set-aggregate",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Architecture.md",
+        "Architecture-Decision-Records.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/architecture/adr/ADR-0016-gitlab-authority-and-github-linux-experiment-lane.md",
+      "itemType": "adr",
+      "aggregationRuleId": "adr-set-aggregate",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Architecture.md",
+        "Architecture-Decision-Records.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/architecture/adr/ADR-0017-bounded-repo-family-support.md",
+      "itemType": "adr",
+      "aggregationRuleId": "adr-set-aggregate",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Architecture.md",
+        "Architecture-Decision-Records.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/architecture/adr/ADR-0018-windows-benchmark-image-lane.md",
+      "itemType": "adr",
+      "aggregationRuleId": "adr-set-aggregate",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Architecture.md",
+        "Architecture-Decision-Records.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/architecture/adr/ADR-0019-governed-wiki-workbench-system.md",
+      "itemType": "adr",
+      "aggregationRuleId": "adr-set-aggregate",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Architecture.md",
+        "Architecture-Decision-Records.md"
+      ]
+    }
+  ]
+}

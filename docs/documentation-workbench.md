@@ -75,6 +75,13 @@ The workbench now includes a governed wiki-authoring system that resolves the
 authority repo, sibling wiki repo, and publication ledger from the local
 program repo-jump map instead of from ad hoc shell assumptions.
 
+The wiki is only considered complete when the zero-gap completion contract in:
+
+- `docs/product/wiki-coverage-matrix.md`
+- `docs/product/wiki-coverage-matrix.json`
+
+passes under the docs gate.
+
 Local commands:
 
 ```bash
@@ -121,6 +128,8 @@ The retained workbench outputs are:
 - `.cache/wiki-workbench/latest-workbench.json`
 - `.cache/wiki-workbench/staging/<page-id>/`
 - `.cache/wiki-workbench/publication-prep/<page-id>/publication-prep.json`
+- `docs/product/wiki-coverage-matrix.md`
+- `docs/product/wiki-coverage-matrix.json`
 - `wiki-workbench-evidence/wiki-workbench-manifest.json` from the published-image GitLab lane
 - `wiki-workbench-evidence/iteration-report.md` from the same lane
 
@@ -140,6 +149,9 @@ The intended flow is:
    when present, a draft wiki file, and a publication-prep receipt
 4. run `sync-bundled-docs` only after the staged wiki state and publication
    ledger are ready
+5. treat the tranche as finished only when
+   `docs/product/wiki-coverage-matrix.json` remains zero-gap and
+   `docs/product/wiki-publication-ledger.json` retains `nextPage = null`
 
 The workbench is fail-closed for page staging, publication prep, and bundle
 sync. If the sibling wiki repo, control files, ledger targets, or authority
@@ -214,6 +226,8 @@ Primary repo surfaces for that work include:
 - `docs/product/wiki-seed-plan.md`
 - `docs/product/wiki-publication-ledger.md`
 - `docs/product/wiki-publication-ledger.json`
+- `docs/product/wiki-coverage-matrix.md`
+- `docs/product/wiki-coverage-matrix.json`
 - `resources/bundled-docs/manifest.json`
 - `docs/product/wiki-authority-map.md`
 - `docs/product/program-repo-jump.md`

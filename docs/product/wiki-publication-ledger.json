@@ -104,13 +104,14 @@
       "wikiFileName": "Documentation-Workbench.md",
       "status": "published",
       "publishedDate": "2026-04-04",
-      "wikiCommit": "4afbea1",
+      "wikiCommit": "4e5d3f4",
       "primaryAuthority": [
         "docs/documentation-workbench.md",
         "docs/product/documentation-coherence-ledger.md",
         "docs/product/wiki-authority-map.md",
         "docs/product/program-repo-jump.md",
-        "docs/product/wiki-publication-ledger.md"
+        "docs/product/wiki-publication-ledger.md",
+        "docs/product/wiki-coverage-matrix.md"
       ]
     },
     {
@@ -150,13 +151,14 @@
       "wikiFileName": "Current-State.md",
       "status": "published",
       "publishedDate": "2026-04-04",
-      "wikiCommit": "42856e9",
+      "wikiCommit": "4e5d3f4",
       "primaryAuthority": [
         "docs/product/current-state.md",
         "README.md",
         "docs/product/SHIP-0001-releasable-vi-history-suite.md",
         "docs/product/development-queue.json",
-        "docs/product/blocker-ledger.json"
+        "docs/product/blocker-ledger.json",
+        "docs/product/wiki-coverage-matrix.md"
       ]
     },
     {
@@ -166,12 +168,13 @@
       "wikiFileName": "Wiki-Authority-Map.md",
       "status": "published",
       "publishedDate": "2026-04-04",
-      "wikiCommit": "eea464f",
+      "wikiCommit": "4e5d3f4",
       "primaryAuthority": [
         "docs/product/wiki-authority-map.md",
         "docs/documentation-workbench.md",
         "docs/product/wiki-seed-plan.md",
-        "docs/product/current-state.md"
+        "docs/product/current-state.md",
+        "docs/product/wiki-coverage-matrix.md"
       ]
     },
     {
@@ -188,18 +191,68 @@
         "docs/product/SHIP-0001-releasable-vi-history-suite.md",
         "docs/product/blocker-ledger.json"
       ]
+    },
+    {
+      "id": "blocker-ledger",
+      "title": "Blocker Ledger",
+      "wikiPath": "Blocker-Ledger",
+      "wikiFileName": "Blocker-Ledger.md",
+      "status": "published",
+      "publishedDate": "2026-04-04",
+      "wikiCommit": "3e80690",
+      "primaryAuthority": [
+        "docs/product/blocker-ledger.json",
+        "docs/product/current-state.md",
+        "docs/product/SHIP-0001-releasable-vi-history-suite.md",
+        "docs/product/development-queue.json"
+      ]
+    },
+    {
+      "id": "requirements-and-verification",
+      "title": "Requirements And Verification",
+      "wikiPath": "Requirements-And-Verification",
+      "wikiFileName": "Requirements-And-Verification.md",
+      "status": "published",
+      "publishedDate": "2026-04-04",
+      "wikiCommit": "3e80690",
+      "primaryAuthority": [
+        "docs/requirements/srs.md",
+        "docs/requirements/rtm.csv",
+        "docs/testing/test-plan.md",
+        "docs/product/current-state.md"
+      ]
+    },
+    {
+      "id": "architecture-decision-records",
+      "title": "Architecture Decision Records",
+      "wikiPath": "Architecture-Decision-Records",
+      "wikiFileName": "Architecture-Decision-Records.md",
+      "status": "published",
+      "publishedDate": "2026-04-04",
+      "wikiCommit": "3e80690",
+      "primaryAuthority": [
+        "docs/architecture/overview.md",
+        "docs/architecture/adr/ADR-0001-vscode-typescript-baseline.md",
+        "docs/architecture/adr/ADR-0002-published-review-surface-webview.md",
+        "docs/architecture/adr/ADR-0003-workspace-report-storage-and-desktop-boundary.md",
+        "docs/architecture/adr/ADR-0004-report-generation-subsystem-baseline.md",
+        "docs/architecture/adr/ADR-0005-runtime-provider-selection-and-windows64-isolation.md",
+        "docs/architecture/adr/ADR-0006-windows64-container-isolation-for-extension-users.md",
+        "docs/architecture/adr/ADR-0007-multi-report-review-dashboard.md",
+        "docs/architecture/adr/ADR-0008-concentration-first-dashboard-for-high-volume-review.md",
+        "docs/architecture/adr/ADR-0009-dashboard-pair-archive-and-concentration-packet.md",
+        "docs/architecture/adr/ADR-0010-dual-host-extension-proof-and-linux-bootstrap.md",
+        "docs/architecture/adr/ADR-0011-dashboard-pair-eta-characterization-benchmark.md",
+        "docs/architecture/adr/ADR-0012-documentation-package-workbench-image.md",
+        "docs/architecture/adr/ADR-0013-authority-first-wiki-seeding.md",
+        "docs/architecture/adr/ADR-0014-cross-repo-navigation-control-plane.md",
+        "docs/architecture/adr/ADR-0015-version-matched-bundled-user-documentation.md",
+        "docs/architecture/adr/ADR-0016-gitlab-authority-and-github-linux-experiment-lane.md",
+        "docs/architecture/adr/ADR-0017-bounded-repo-family-support.md",
+        "docs/architecture/adr/ADR-0018-windows-benchmark-image-lane.md",
+        "docs/architecture/adr/ADR-0019-governed-wiki-workbench-system.md"
+      ]
     }
   ],
-  "nextPage": {
-    "id": "blocker-ledger",
-    "title": "Blocker Ledger",
-    "primaryAuthority": [
-      "docs/product/blocker-ledger.json"
-    ],
-    "secondaryAuthority": [
-      "docs/product/current-state.md",
-      "docs/product/SHIP-0001-releasable-vi-history-suite.md",
-      "docs/product/development-queue.json"
-    ]
-  }
+  "nextPage": null
 }

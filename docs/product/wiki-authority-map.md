@@ -25,8 +25,14 @@ When future sessions create or refresh wiki pages, use this order:
 13. [overview.md](../architecture/overview.md)
 14. `docs/architecture/adr/`
 15. [README.md](../../README.md)
-16. [research-alignment.md](../research/authoritative/research-alignment.md)
-17. [research-implementation-index.json](../research/authoritative/research-implementation-index.json)
+16. [Documentation Package Workbench](../documentation-workbench.md)
+17. [program-repo-jump.md](./program-repo-jump.md)
+18. [program-repo-jump-map.json](./program-repo-jump-map.json)
+19. [release-procedure.md](../release-procedure.md)
+20. [information-item-map.md](../information-item-map.md)
+21. [cm-plan.md](../cm/cm-plan.md)
+22. [research-alignment.md](../research/authoritative/research-alignment.md)
+23. [research-implementation-index.json](../research/authoritative/research-implementation-index.json)
 
 If two documents disagree, the higher document in this list wins until the
 lower document is corrected.
@@ -65,6 +71,20 @@ Do not create or refresh wiki pages until these are true:
 - packaged bundled docs are refreshed when the published wiki set changes and
   the packaged user-doc surface is meant to stay version-matched to that set
 
+## Hard Completion Contract
+
+The wiki is not complete until the zero-gap completion invariant passes.
+
+That requires:
+
+- `docs/product/wiki-coverage-matrix.json` to list every in-scope
+  requirements-and-standards source plus every ADR file
+- every matrix row to remain `complete` and `published`
+- the accepted ADR aggregation rule to be satisfied
+- every published wiki page to be recorded in the publication ledger
+- `docs/product/wiki-publication-ledger.json` to retain `nextPage = null`
+- the docs gate to pass with the wiki-coverage invariant test enabled
+
 ## Incremental Wiki Workflow
 
 1. Read the authority order from top to bottom.
@@ -96,5 +116,7 @@ Do not create or refresh wiki pages until these are true:
 - published wiki inventory: `docs/product/wiki-publication-ledger.md`
 - machine-readable published wiki inventory:
   `docs/product/wiki-publication-ledger.json`
+- wiki completion invariant:
+  `docs/product/wiki-coverage-matrix.json`
 - proof and verification: RTM, test plan, retained design-gate and harness
   evidence paths

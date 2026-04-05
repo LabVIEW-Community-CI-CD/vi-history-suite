@@ -36,6 +36,9 @@ The system shall:
    `docs:workbench:wiki:*` commands
 6. keep the main repo documentation package as authority while treating the
    wiki repo as a derived reader surface
+7. make wiki completion a hard repo invariant through a machine-readable
+   coverage matrix, an accepted ADR aggregation rule, and a docs-gate test
+   that fails on uncovered in-scope authority docs
 
 ## Consequences
 
@@ -45,6 +48,8 @@ The system shall:
 - future sessions can discover the current wiki state from retained manifests
 - bundled-doc sync uses the same governed topology as wiki staging
 - Docker-first wiki work no longer depends on chat memory
+- the repo can distinguish a truly finished wiki tranche from broad but still
+  incomplete page coverage
 
 ### Negative
 
@@ -64,5 +69,8 @@ The system shall:
 - `docs/product/wiki-authority-map.md`
 - `docs/product/wiki-seed-plan.md`
 - `docs/product/wiki-publication-ledger.md`
+- `docs/product/wiki-coverage-matrix.md`
+- `docs/product/wiki-coverage-matrix.json`
 - `docs/product/program-repo-jump.md`
+- `tests/unit/wikiCoverageDocs.test.ts`
 - `tests/unit/runWikiWorkbenchCli.test.ts`

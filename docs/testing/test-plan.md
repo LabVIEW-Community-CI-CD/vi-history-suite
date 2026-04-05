@@ -1018,6 +1018,11 @@
   resolves GitLab registry credentials from supported environment variables and
   formats a stable fail-closed registry-access explanation when the published
   image cannot be pulled locally
+- `TEST-UNIT-276`: verify the wiki coverage matrix lists every in-scope
+  requirements-and-standards source plus every ADR file, that every row
+  remains `complete` and `published`, that the live wiki page set matches the
+  publication ledger, and that the publication ledger retains no `nextPage`
+  target while the wiki is considered finished
 - `TEST-DOC-035`: review README, current-state, and ADR-0016 and confirm the
   canonical-host benchmark status surface is documented as the maintainer-facing
   in-IDE visibility and launch surface for the host Linux benchmark lane,
@@ -1059,6 +1064,12 @@
   topology from the repo-jump map, retains `.cache/wiki-workbench/` manifests
   and publication-prep receipts, fails closed on ledger/topology drift, and
   exposes both local and Docker-first wiki command surfaces
+- `TEST-DOC-042`: review README, current-state, documentation-workbench,
+  wiki-authority, wiki-seed-plan, wiki publication ledger, wiki coverage
+  matrix, and ADR-0019 and confirm the wiki stop rule is a zero-gap completion
+  invariant rather than “good progress,” that every in-scope requirements-and-
+  standards source plus every ADR is covered by the matrix, and that the
+  accepted ADR aggregation rule is documented explicitly
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed authority repo, private experiment mirror, wiki, and
   assurance-skill repos with authority roles, expected remotes, and primary

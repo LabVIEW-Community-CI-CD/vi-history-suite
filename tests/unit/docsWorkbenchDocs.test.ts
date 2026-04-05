@@ -69,6 +69,7 @@ describe('documentation-package workbench', () => {
           'tests/unit/packageManifest.test.ts',
           'tests/unit/shipControlDocs.test.ts',
           'tests/unit/docsWorkbenchDocs.test.ts',
+          'tests/unit/wikiCoverageDocs.test.ts',
           'tests/unit/runWikiWorkbenchCli.test.ts'
         ]
       },
@@ -105,7 +106,7 @@ describe('documentation-package workbench', () => {
     expect(result).toBe('pass');
     expect(spawned).toEqual([
       'npm run compile',
-      'npx vitest run tests/unit/bundledDocumentation.test.ts tests/unit/postReleaseControlPlaneDocs.test.ts tests/unit/requirementsDocs.test.ts tests/unit/packageManifest.test.ts tests/unit/shipControlDocs.test.ts tests/unit/docsWorkbenchDocs.test.ts tests/unit/runWikiWorkbenchCli.test.ts'
+      'npx vitest run tests/unit/bundledDocumentation.test.ts tests/unit/postReleaseControlPlaneDocs.test.ts tests/unit/requirementsDocs.test.ts tests/unit/packageManifest.test.ts tests/unit/shipControlDocs.test.ts tests/unit/docsWorkbenchDocs.test.ts tests/unit/wikiCoverageDocs.test.ts tests/unit/runWikiWorkbenchCli.test.ts'
     ]);
   });
 
@@ -204,6 +205,8 @@ describe('documentation-package workbench', () => {
     expect(workbenchDoc).toContain('docs-workbench-evidence/docs-workbench-manifest.json');
     expect(workbenchDoc).toContain('docs/product/wiki-publication-ledger.md');
     expect(workbenchDoc).toContain('docs/product/wiki-publication-ledger.json');
+    expect(workbenchDoc).toContain('docs/product/wiki-coverage-matrix.md');
+    expect(workbenchDoc).toContain('docs/product/wiki-coverage-matrix.json');
     expect(workbenchDoc).toContain('resources/bundled-docs/manifest.json');
     expect(workbenchDoc).toContain('npm run program:repos');
     expect(workbenchDoc).toContain('scripts/repo_jump.py /home/sveld/code/standards/vi-history-suite');

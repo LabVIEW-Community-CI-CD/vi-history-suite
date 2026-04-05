@@ -1,0 +1,77 @@
+<h1>Requirements And Verification</h1>
+<p>This page is derived from governed repository documentation, not from source
+code or prior chat state. The current authority surfaces for this page are:</p>
+<ul>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/requirements/srs.md"><code>docs/requirements/srs.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/requirements/rtm.csv"><code>docs/requirements/rtm.csv</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/testing/test-plan.md"><code>docs/testing/test-plan.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/current-state.md"><code>docs/product/current-state.md</code></a></li>
+</ul>
+<h2>Purpose</h2>
+<p>This page explains how <code>vi-history-suite</code> keeps requirements and verification
+governed instead of informal.</p>
+<p>The current model is three-part:</p>
+<ul>
+<li>the SRS states what the product shall do</li>
+<li>the RTM ties requirements to proof surfaces</li>
+<li>the test plan states how those proofs are exercised and reviewed</li>
+</ul>
+<h2>SRS</h2>
+<p>The Software Requirements Specification is the main normative requirement
+surface.</p>
+<p>It covers:</p>
+<ul>
+<li>command and review-surface behavior</li>
+<li>runtime-provider and benchmark behavior</li>
+<li>documentation-package and wiki-workbench behavior</li>
+<li>bounded repo-family support</li>
+<li>release, setup, and control-plane rules</li>
+</ul>
+<p>Requirements use stable identifiers such as <code>VHS-REQ-001</code> and continue through
+the current governed product surface.</p>
+<h2>RTM</h2>
+<p>The requirements traceability matrix is the machine-readable bridge from
+requirements to proof.</p>
+<p>For each requirement it records:</p>
+<ul>
+<li>the requirement id</li>
+<li>priority and source</li>
+<li>mapped test ids</li>
+<li>test artifacts</li>
+<li>code or doc references</li>
+<li>implementation status</li>
+</ul>
+<p>This is what lets the docs gate fail on real drift instead of on opinion.</p>
+<h2>Test Plan</h2>
+<p>The test plan defines the verification inventory across:</p>
+<ul>
+<li>unit tests</li>
+<li>integration tests</li>
+<li>smoke lanes</li>
+<li>documentation reviews</li>
+</ul>
+<p>It is not only a list of tests. It is also the governed surface that explains
+what kinds of evidence are expected for each part of the product.</p>
+<h2>Current Truth</h2>
+<p>The current repo already enforces requirements coherence through the docs gate.</p>
+<p>That means:</p>
+<ul>
+<li>SRS and RTM must align</li>
+<li>RTM and test-plan ids must align</li>
+<li>documentation-package control surfaces must stay coherent</li>
+</ul>
+<p>The product now also carries wiki and packaged-doc requirements in the same
+governed requirements system rather than treating documentation as informal.</p>
+<h2>Why It Matters</h2>
+<p>This is one of the main differences between a useful engineering wiki and a
+shallow summary surface.</p>
+<p>The wiki does not replace the SRS, RTM, or test plan. It represents them for
+readers, while the authority remains in the main repo.</p>
+<h2>Read Next</h2>
+<ul>
+<li><a href="#" data-page-id="current-state">Current State</a></li>
+<li><a href="#" data-page-id="architecture-decision-records">Architecture Decision Records</a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/requirements/srs.md">SRS</a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/requirements/rtm.csv">RTM</a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/testing/test-plan.md">Test Plan</a></li>
+</ul>

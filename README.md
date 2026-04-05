@@ -40,10 +40,12 @@ If you are new to the repo, read these in order:
 10. [Wiki Seed Plan](./docs/product/wiki-seed-plan.md)
 11. [Wiki Publication Ledger](./docs/product/wiki-publication-ledger.md)
 12. [Wiki Publication Ledger JSON](./docs/product/wiki-publication-ledger.json)
-13. [Documentation Package Workbench](./docs/documentation-workbench.md)
-14. [Program Repo Jump](./docs/product/program-repo-jump.md)
-15. [PROGRAM-0001: Next Product Layer](./docs/product/execution-programs/PROGRAM-0001-next-product-layer.md)
-16. [PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
+13. [Wiki Coverage Matrix](./docs/product/wiki-coverage-matrix.md)
+14. [Wiki Coverage Matrix JSON](./docs/product/wiki-coverage-matrix.json)
+15. [Documentation Package Workbench](./docs/documentation-workbench.md)
+16. [Program Repo Jump](./docs/product/program-repo-jump.md)
+17. [PROGRAM-0001: Next Product Layer](./docs/product/execution-programs/PROGRAM-0001-next-product-layer.md)
+18. [PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
 
 For machine-friendly repo orientation, start with:
 
@@ -88,6 +90,8 @@ Use these repo-native control-plane entrypoints instead:
 - [Wiki Seed Plan](./docs/product/wiki-seed-plan.md)
 - [Wiki Publication Ledger](./docs/product/wiki-publication-ledger.md)
 - [Wiki Publication Ledger JSON](./docs/product/wiki-publication-ledger.json)
+- [Wiki Coverage Matrix](./docs/product/wiki-coverage-matrix.md)
+- [Wiki Coverage Matrix JSON](./docs/product/wiki-coverage-matrix.json)
 - [Documentation Package Workbench](./docs/documentation-workbench.md)
 - [Program Repo Jump](./docs/product/program-repo-jump.md)
 - [Review Scenarios](./docs/product/review-scenarios.md)
@@ -202,6 +206,11 @@ Committed and governed today:
   `latest-workbench.json` and publication-prep receipts under
   `.cache/wiki-workbench/`, and supports both local and Docker-first wiki
   iteration commands
+- a zero-gap wiki completion invariant retained in
+  `docs/product/wiki-coverage-matrix.{md,json}` so the standards-facing wiki
+  tranche is only considered finished when every in-scope control,
+  requirements, verification, and ADR source is represented on published wiki
+  pages
 - a governed cross-repo jump surface that resolves the product repo, wiki repo,
   and companion `repo-standards-review` skill repo from one local map and one
   CLI entrypoint

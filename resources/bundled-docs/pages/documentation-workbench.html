@@ -30,6 +30,9 @@ install surface.</p>
 prior chat state</li>
 <li>publication state remains tracked in the main repo through the wiki
 publication ledger and retained workbench receipts</li>
+<li>the wiki is only considered finished when the authority repo&#39;s zero-gap wiki
+coverage matrix says every in-scope standards surface is represented on
+published wiki pages</li>
 </ul>
 <p>That means a wiki page is prepared from governed inputs first and only treated
 as published after the wiki repo is actually updated.</p>
@@ -102,7 +105,8 @@ recovery is still explicit and reviewable.</p>
 <p>The intended sequence is:</p>
 <ol>
 <li>run <code>doctor</code> to validate topology, ledger state, and authority readiness</li>
-<li>run <code>plan</code> to resolve the current page set and the next target page</li>
+<li>run <code>plan</code> to resolve the current page set and any remaining next target
+page when the coverage matrix is not yet zero-gap</li>
 <li>run <code>prepare</code> to retain the page-authority bundle, draft page, and
 publication-prep receipt</li>
 <li>run <code>sync-bundled-docs</code> only when the staged wiki state is ready to drive
@@ -123,6 +127,10 @@ state.</p>
 <li>their publication date</li>
 <li>the primary authority docs for each page</li>
 </ul>
+<p>The completion contract is stricter than the publication ledger alone. The
+authority repo now also keeps a wiki coverage matrix that lists every in-scope
+requirements-and-standards source plus every ADR file and only treats the wiki
+as finished when every row is complete and published.</p>
 <p>So the workbench is not just a command wrapper. It is the controlled path
 between authority documentation and derived wiki output, with publication state
 still anchored in the main repo instead of being inferred from the wiki repo
@@ -152,4 +160,5 @@ must be strengthened first.</p>
 <li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/documentation-workbench.md">Documentation Package Workbench</a></li>
 <li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/wiki-authority-map.md">Wiki Authority Map</a></li>
 <li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/wiki-publication-ledger.md">Wiki Publication Ledger</a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/wiki-coverage-matrix.md">Wiki Coverage Matrix</a></li>
 </ul>
