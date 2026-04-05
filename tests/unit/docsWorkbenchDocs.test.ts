@@ -287,6 +287,9 @@ describe('documentation-package workbench', () => {
     expect(gitlabCi).toContain('npm run test');
     expect(gitlabCi).toContain('publish_docs_authoring_image:');
     expect(gitlabCi).toContain('wiki_workbench_prepare_published:');
+    expect(gitlabCi).toContain('node out/cli/runWikiWorkbench.js doctor --format json');
+    expect(gitlabCi).toContain('node out/cli/runWikiWorkbench.js plan-pages --format json');
+    expect(gitlabCi).toContain('node out/cli/runWikiWorkbench.js prepare-publication --format json');
     expect(gitlabCi).toContain('/kaniko/executor');
     expect(gitlabCi).toContain("path.join('docs-workbench-evidence', 'docs-workbench-manifest.json')");
     expect(gitlabCi).toContain('${CI_REGISTRY_IMAGE}/docs-authoring:main');

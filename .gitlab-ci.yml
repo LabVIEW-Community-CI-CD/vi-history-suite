@@ -111,9 +111,10 @@ wiki_workbench_prepare_published:
   script:
     - mkdir -p wiki-workbench-evidence
     - git clone "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.wiki.git" ../vi-history-suite.wiki
-    - npm run wiki:workbench:doctor -- --format json > wiki-workbench-evidence/doctor.json
-    - npm run wiki:workbench:plan -- --format json > wiki-workbench-evidence/plan.json
-    - npm run wiki:workbench:prepare -- --format json > wiki-workbench-evidence/prepare.json
+    - npm run compile
+    - node out/cli/runWikiWorkbench.js doctor --format json > wiki-workbench-evidence/doctor.json
+    - node out/cli/runWikiWorkbench.js plan-pages --format json > wiki-workbench-evidence/plan.json
+    - node out/cli/runWikiWorkbench.js prepare-publication --format json > wiki-workbench-evidence/prepare.json
     - cp .cache/wiki-workbench/latest-workbench.json wiki-workbench-evidence/wiki-workbench-manifest.json
     - mkdir -p wiki-workbench-evidence/staging wiki-workbench-evidence/publication-prep
     - if [ -d .cache/wiki-workbench/staging ]; then cp -R .cache/wiki-workbench/staging/. wiki-workbench-evidence/staging/; fi
