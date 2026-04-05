@@ -4,6 +4,7 @@ set -euo pipefail
 cd /workspace
 
 git config --global --add safe.directory /workspace
+export LV_RTE_HEADLESS="${LV_RTE_HEADLESS:-1}"
 
 echo "VIHS_PROGRESS: Installing benchmark workspace dependencies."
 npm ci

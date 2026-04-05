@@ -121,6 +121,19 @@ export async function getRepoRoot(cwd: string): Promise<string> {
   return String(stdout).trim();
 }
 
+export async function getRepoRemoteUrl(
+  cwd: string,
+  remoteName = 'origin'
+): Promise<string | undefined> {
+  try {
+    const stdout = await runGit(['remote', 'get-url', remoteName], cwd, 'utf8');
+    const resolved = String(stdout).trim();
+    return resolved.length > 0 ? resolved : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export async function listTrackedFiles(cwd: string): Promise<string[]> {
   const stdout = await runGit(['ls-files', '-z'], cwd, 'buffer');
   return parseLsFilesZ(stdout);

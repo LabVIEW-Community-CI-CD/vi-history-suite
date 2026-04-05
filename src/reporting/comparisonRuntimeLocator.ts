@@ -183,6 +183,20 @@ export function buildDocumentedRuntimeCandidates(
         bitness: 'x64'
       },
       {
+        kind: 'labview-cli',
+        path: '/usr/local/bin/LabVIEWCLI',
+        source: 'scan',
+        exists: false,
+        bitness: 'x64'
+      },
+      {
+        kind: 'labview-cli',
+        path: '/usr/local/natinst/share/nilvcli/LabVIEWCLI',
+        source: 'scan',
+        exists: false,
+        bitness: 'x64'
+      },
+      {
         kind: 'lvcompare',
         path: '/usr/local/bin/LVCompare',
         source: 'scan',

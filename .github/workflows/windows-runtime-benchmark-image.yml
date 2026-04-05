@@ -1,0 +1,143 @@
+name: Windows Runtime Benchmark Image
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - experiment/**
+    paths:
+      - .github/workflows/windows-runtime-benchmark-image.yml
+      - docker/github-windows-dashboard-benchmark/**
+      - package.json
+      - src/cli/runGitHubWindowsDashboardBenchmark.ts
+      - src/harness/**
+      - src/dashboard/**
+      - src/reporting/**
+      - tests/unit/runGitHubWindowsDashboardBenchmarkCli.test.ts
+      - tests/unit/githubWindowsBenchmarkWorkflow.test.ts
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: vihs-windows-runtime-benchmark-image-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    env:
+      NI_WINDOWS_IMAGE: nationalinstruments/labview:2026q1-windows
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Write benchmark image plan receipt
+        shell: bash
+        run: |
+          mkdir -p .cache/github-experiments/windows-dashboard-benchmark/plan
+          owner_lc="$(printf '%s' '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
+          benchmark_image="ghcr.io/${owner_lc}/vi-history-suite-source-experiments/windows-dashboard-benchmark"
+          cat > .cache/github-experiments/windows-dashboard-benchmark/plan/windows-benchmark-plan.json <<JSON
+          {
+            "schema": "vi-history-suite/github-windows-dashboard-benchmark-plan@v1",
+            "runtimeImage": "nationalinstruments/labview:2026q1-windows",
+            "publishedBenchmarkImage": "${benchmark_image}",
+            "dockerfile": "docker/github-windows-dashboard-benchmark/Dockerfile",
+            "benchmarkEntrypoint": "docker/github-windows-dashboard-benchmark/run-benchmark.ps1",
+            "benchmarkScript": "npm run benchmark:github:windows:lv-icon",
+            "defaultHarnessId": "HARNESS-VHS-002",
+            "defaultTargetRelativePath": "resource/plugins/lv_icon.vi",
+            "authorityBoundary": {
+              "gitlab": "authority",
+              "github": "experiment"
+            },
+            "executionBoundary": {
+              "publishedImage": "yes",
+              "hostedBenchmarkRun": "not-yet-governed"
+            }
+          }
+          JSON
+
+      - name: Upload plan receipt
+        uses: actions/upload-artifact@v5
+        with:
+          name: windows-runtime-benchmark-plan
+          path: .cache/github-experiments/windows-dashboard-benchmark/plan/windows-benchmark-plan.json
+          if-no-files-found: error
+
+  publish_image:
+    needs:
+      - plan
+    runs-on: windows-2022
+    outputs:
+      benchmark_image_ref: ${{ steps.meta.outputs.image_ref }}
+      benchmark_image_digest: ${{ steps.publish.outputs.image_digest }}
+      image_resolution: ${{ steps.publish.outputs.image_resolution }}
+    env:
+      NI_WINDOWS_IMAGE: nationalinstruments/labview:2026q1-windows
+      LOCAL_BENCHMARK_IMAGE: vi-history-suite-github-windows-dashboard-benchmark:${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - id: meta
+        name: Resolve benchmark image reference
+        shell: pwsh
+        run: |
+          $owner = '${{ github.repository_owner }}'.ToLowerInvariant()
+          "image_ref=ghcr.io/$owner/vi-history-suite-source-experiments/windows-dashboard-benchmark" >> $env:GITHUB_OUTPUT
+
+      - name: Login to GHCR
+        shell: pwsh
+        run: |
+          '${{ github.token }}' | docker login ghcr.io -u '${{ github.actor }}' --password-stdin
+
+      - id: publish
+        name: Resolve or publish benchmark image
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $imageRef = '${{ steps.meta.outputs.image_ref }}'
+          $shaTag = "sha-$env:GITHUB_SHA"
+          $imageResolution = 'reused-existing-sha-tag'
+          try {
+            docker pull "$imageRef`:$shaTag" | Out-Null
+          } catch {
+            $imageResolution = 'built-and-pushed'
+            docker pull $env:NI_WINDOWS_IMAGE | Out-Null
+            docker build --build-arg "BASE_IMAGE=$env:NI_WINDOWS_IMAGE" -f docker/github-windows-dashboard-benchmark/Dockerfile -t $env:LOCAL_BENCHMARK_IMAGE .
+            docker tag $env:LOCAL_BENCHMARK_IMAGE "$imageRef`:$shaTag"
+            docker push "$imageRef`:$shaTag" | Out-Null
+            if ($env:GITHUB_REF_NAME -eq 'main') {
+              docker tag $env:LOCAL_BENCHMARK_IMAGE "$imageRef`:main"
+              docker push "$imageRef`:main" | Out-Null
+            }
+          }
+          $repoDigest = docker image inspect "$imageRef`:$shaTag" --format '{{index .RepoDigests 0}}'
+          $imageDigest = ($repoDigest -split '@', 2)[1]
+          "image_digest=$imageDigest" >> $env:GITHUB_OUTPUT
+          "image_resolution=$imageResolution" >> $env:GITHUB_OUTPUT
+          New-Item -ItemType Directory -Path .cache/github-experiments/windows-dashboard-benchmark/image -Force | Out-Null
+          @{
+            schema = 'vi-history-suite/github-windows-dashboard-benchmark-image@v1'
+            runtimeImage = $env:NI_WINDOWS_IMAGE
+            benchmarkImageRef = $imageRef
+            benchmarkImageDigest = $imageDigest
+            github = @{
+              repository = $env:GITHUB_REPOSITORY
+              runId = $env:GITHUB_RUN_ID
+              runAttempt = $env:GITHUB_RUN_ATTEMPT
+              sha = $env:GITHUB_SHA
+              refName = $env:GITHUB_REF_NAME
+              publishedTags = if ($env:GITHUB_REF_NAME -eq 'main') { @("sha-$env:GITHUB_SHA", 'main') } else { @("sha-$env:GITHUB_SHA") }
+            }
+            imageResolution = $imageResolution
+          } | ConvertTo-Json -Depth 6 | Set-Content .cache/github-experiments/windows-dashboard-benchmark/image/latest-image.json
+
+      - name: Upload image receipt
+        uses: actions/upload-artifact@v5
+        with:
+          name: windows-runtime-benchmark-image
+          path: .cache/github-experiments/windows-dashboard-benchmark/image/latest-image.json
+          if-no-files-found: error

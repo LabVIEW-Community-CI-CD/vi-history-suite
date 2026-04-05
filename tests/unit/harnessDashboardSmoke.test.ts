@@ -44,20 +44,32 @@ describe('harness dashboard smoke renderers', () => {
       meanAbsolutePercentageError: 20,
       samples: []
     },
+    completionState: 'completed' as const,
+    processedPairCount: 1,
+    terminalPairIndex: undefined,
+    terminalPairFailureReason: undefined,
+    comparabilityState: 'comparable-to-windows-baseline' as const,
     pairSummaries: [
       {
         pairId: 'pair123',
+        pairIndex: 1,
         selectedHash: 'abcdef1234567890',
         baseHash: '1111111122222222',
         reportStatus: 'ready-for-runtime' as const,
         runtimeExecutionState: 'succeeded' as const,
         runtimeProvider: 'windows-container',
         runtimeEngine: 'lvcompare',
+        runtimeFailureReason: undefined,
+        runtimeDiagnosticReason: undefined,
         generatedReportExists: true,
         packetFilePath: '/tmp/report-packet.html',
         reportFilePath: '/tmp/diff-report-foo.vi.html',
         metadataFilePath: '/tmp/report-metadata.json',
         sourceRecordFilePath: '/tmp/source-record.json',
+        runtimeStdoutPath: undefined,
+        runtimeStderrPath: undefined,
+        runtimeDiagnosticLogPath: undefined,
+        runtimeProcessObservationPath: undefined,
         actualPreparationSeconds: 24,
         estimatedPreparationSeconds: 20,
         absoluteEtaErrorSeconds: 4,
@@ -275,7 +287,13 @@ describe('runHarnessDashboardSmoke', () => {
       relativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi'
     });
     expect(result.report.pairSummaries).toHaveLength(2);
+    expect(result.report.completionState).toBe('failed');
+    expect(result.report.processedPairCount).toBe(2);
+    expect(result.report.terminalPairIndex).toBe(2);
+    expect(result.report.terminalPairFailureReason).toBe('runtime-execution-failed');
+    expect(result.report.comparabilityState).toBe('characterization-only');
     expect(result.report.pairSummaries[0]).toMatchObject({
+      pairIndex: 1,
       selectedHash: '3333333344444444',
       baseHash: '1111111122222222',
       generatedReportExists: true,
@@ -283,6 +301,8 @@ describe('runHarnessDashboardSmoke', () => {
       estimatedPreparationSeconds: undefined
     });
     expect(result.report.pairSummaries[1]).toMatchObject({
+      pairIndex: 2,
+      runtimeFailureReason: undefined,
       actualPreparationSeconds: 18,
       estimatedPreparationSeconds: 12,
       absoluteEtaErrorSeconds: 6,

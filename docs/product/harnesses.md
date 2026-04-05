@@ -74,7 +74,8 @@
 - Acquisition rule: reuse the same clone-on-demand harness root as
   `HARNESS-VHS-001`
 - Purpose: provide a governed high-history benchmark target for `lv_icon.vi`
-  performance experiments against the Linux comparison-report runtime
+  performance experiments against the Linux comparison-report runtime and the
+  repeatable Windows benchmark image lane
 
 ### Benchmark Target File
 
@@ -97,19 +98,29 @@
 - retain machine-readable benchmark summaries under
   `.cache/github-experiments/linux-dashboard-benchmark/HARNESS-VHS-002/` when
   the explicit deep-history lane is invoked
+- retain machine-readable benchmark summaries under
+  `.cache/github-experiments/windows-dashboard-benchmark/HARNESS-VHS-002/`
+  when the Windows benchmark-image lane is invoked
 - keep this harness as the owned before/after timing target for the canonical
-  Windows 11 host rather than the default GitHub-hosted workflow target
+  Windows 11 host UX lane, the Windows benchmark image, and the Linux
+  benchmark-image lane rather than the default GitHub-hosted workflow target
 
 ### Host-Owned Deep Benchmark Path
 
 - local explicit deep benchmark command from the authority repo:
   `npm run benchmark:github:linux:lv-icon`
+- local explicit deep Windows benchmark command from the authority repo:
+  `npm run benchmark:github:windows:lv-icon`
 - canonical-host in-IDE path: `Open benchmark status` -> `Run host Linux benchmark`
 - GitHub-hosted workflow default remains `HARNESS-VHS-001`; do not treat
   `HARNESS-VHS-002` as the hosted default
 - pinned runtime image: `nationalinstruments/labview:2026q1-linux`
 - derived benchmark container:
   `docker/github-linux-dashboard-benchmark/Dockerfile`
+- pinned Windows benchmark runtime image:
+  `nationalinstruments/labview:2026q1-windows`
+- Windows benchmark container scaffold:
+  `docker/github-windows-dashboard-benchmark/Dockerfile`
 
 ### Constraints
 

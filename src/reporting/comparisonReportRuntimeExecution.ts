@@ -42,6 +42,7 @@ export interface ComparisonReportRuntimeExecutionDeps {
   observeWindowsProcesses?: (
     options: ObserveWindowsProcessesOptions
   ) => Promise<RuntimeProcessObservation | undefined>;
+  commandTimeoutMs?: number;
 }
 
 export interface BuildDefaultRunCommandOptions {
@@ -49,6 +50,7 @@ export interface BuildDefaultRunCommandOptions {
   processPlatform: NodeJS.Platform;
   runtimePlatform: ComparisonReportPacketRecord['runtimeSelection']['platform'];
   engine: ComparisonReportPacketRecord['runtimeSelection']['engine'];
+  timeoutMs?: number;
   observeWindowsProcesses?: (
     options: ObserveWindowsProcessesOptions
   ) => Promise<RuntimeProcessObservation | undefined>;
@@ -61,12 +63,15 @@ export interface RunCommandResult {
   signal?: string;
   stdout: string;
   stderr: string;
+  timedOut?: boolean;
+  timeoutMs?: number;
   processObservation?: RuntimeProcessObservation;
   exitProcessObservation?: RuntimeProcessObservation;
 }
 
 export interface RunComparisonCommandPlanDeps {
   execFileImpl?: typeof execFile;
+  timeoutMs?: number;
 }
 
 export interface RuntimeObservedProcess {
@@ -108,6 +113,7 @@ export interface RunComparisonCommandPlanWithObservationDeps {
   hostPlatform?: NodeJS.Platform;
   runtimePlatform?: string;
   engine?: 'labview-cli' | 'lvcompare';
+  timeoutMs?: number;
 }
 
 export async function executeComparisonReport(
@@ -131,7 +137,8 @@ export async function executeComparisonReport(
       processPlatform,
       runtimePlatform: options.record.runtimeSelection.platform,
       observeWindowsProcesses,
-      engine: options.record.runtimeSelection.engine
+      engine: options.record.runtimeSelection.engine,
+      timeoutMs: deps.commandTimeoutMs
     });
   const nowIso = deps.nowIso ?? defaultNowIso;
   const nowMs = deps.nowMs ?? defaultNowMs;
@@ -168,7 +175,8 @@ export async function executeComparisonReport(
         runCommand,
         nowIso,
         nowMs,
-        processPlatform
+        processPlatform,
+        commandTimeoutMs: deps.commandTimeoutMs
       }
     );
   }
@@ -205,12 +213,15 @@ export function buildDefaultRunCommand(
 
   return (commandPlan: ComparisonCommandPlan) =>
     options.provider === 'windows-container'
-      ? runWithoutObservation(commandPlan)
+      ? runWithoutObservation(commandPlan, {
+          timeoutMs: options.timeoutMs
+        })
       : runWithObservation(commandPlan, {
           hostPlatform: options.processPlatform,
           runtimePlatform: options.runtimePlatform,
           observeWindowsProcesses,
-          engine: options.engine
+          engine: options.engine,
+          timeoutMs: options.timeoutMs
         });
 }
 
@@ -232,6 +243,7 @@ async function runHostNativeExecution(
     nowIso: () => string;
     nowMs: () => number;
     processPlatform: NodeJS.Platform;
+    commandTimeoutMs?: number;
   }
 ): Promise<ComparisonReportRuntimeExecution> {
   await deps.mkdir(record.artifactPlan.reportDirectory, { recursive: true });
@@ -337,16 +349,25 @@ async function runHostNativeExecution(
         mkdir: deps.mkdir
       }
     );
-    const succeeded = commandResult.exitCode === 0 && reportExists;
-    const failureClassification = classifyRuntimeFailure({
-      engine: record.runtimeSelection.engine,
-      exitCode: commandResult.exitCode,
-      reportExists,
-      stdout: commandResult.stdout,
-      stderr: commandResult.stderr,
-      processObservation: processObservation?.bannerSnapshot,
-      exitProcessObservation: processObservation?.exitSnapshot
-    });
+    const succeeded = !commandResult.timedOut && commandResult.exitCode === 0 && reportExists;
+    const failureClassification = commandResult.timedOut
+      ? {
+          reason: 'command-timed-out',
+          notes: [
+            `Comparison-report runtime timed out after ${String(
+              commandResult.timeoutMs ?? deps.commandTimeoutMs ?? 'the governed'
+            )}ms.`
+          ]
+        }
+      : classifyRuntimeFailure({
+          engine: record.runtimeSelection.engine,
+          exitCode: commandResult.exitCode,
+          reportExists,
+          stdout: commandResult.stdout,
+          stderr: commandResult.stderr,
+          processObservation: processObservation?.bannerSnapshot,
+          exitProcessObservation: processObservation?.exitSnapshot
+        });
     const diagnosticNotes = mergeDiagnosticNotes(
       buildProcessObservationNotes(processObservation),
       diagnostics.notes,
@@ -1220,6 +1241,7 @@ export function resolveHostReadableDiagnosticPath(
   processPlatform: NodeJS.Platform = process.platform,
   diagnosticPathMapping?: RuntimeDiagnosticPathMapping
 ): string | undefined {
+  const trimmed = diagnosticLogPath.trim();
   const mappedContainerPath = resolveMappedRuntimeDiagnosticPath(diagnosticLogPath, diagnosticPathMapping);
   if (mappedContainerPath) {
     return mappedContainerPath;
@@ -1230,10 +1252,14 @@ export function resolveHostReadableDiagnosticPath(
   }
 
   if (processPlatform === 'win32') {
-    return diagnosticLogPath.trim() || undefined;
+    return trimmed || undefined;
   }
 
-  return normalizeWindowsInteropExecutable(diagnosticLogPath);
+  if (trimmed.startsWith('/')) {
+    return trimmed;
+  }
+
+  return normalizeWindowsInteropExecutable(trimmed);
 }
 
 export function resolveMappedRuntimeDiagnosticPath(
@@ -1608,6 +1634,23 @@ export function runComparisonCommandPlanWithObservation(
     let exitProcessObservation: RuntimeProcessObservation | undefined;
     let observationError: unknown;
     let observationStarted = false;
+    let timedOut = false;
+    const timeoutMs =
+      typeof deps.timeoutMs === 'number' && deps.timeoutMs > 0
+        ? deps.timeoutMs
+        : undefined;
+    const timeoutHandle =
+      timeoutMs === undefined
+        ? undefined
+        : setTimeout(() => {
+            timedOut = true;
+            stderr += `comparison-command timed out after ${String(timeoutMs)}ms\n`;
+            try {
+              child.kill('SIGKILL');
+            } catch {
+              // Preserve fail-closed timeout behavior even if the local kill call throws.
+            }
+          }, timeoutMs);
 
     const startObservation = (trigger: RuntimeProcessObservation['trigger']) => {
       if (observationStarted) {
@@ -1652,8 +1695,17 @@ export function runComparisonCommandPlanWithObservation(
     child.stderr?.on('data', (chunk: string | Buffer) => {
       stderr += String(chunk);
     });
-    child.on('error', reject);
+    child.on('error', (error) => {
+      if (timeoutHandle) {
+        clearTimeout(timeoutHandle);
+      }
+      reject(error);
+    });
     child.on('close', async (exitCode, signal) => {
+      if (timeoutHandle) {
+        clearTimeout(timeoutHandle);
+      }
+
       if (observationPromise) {
         await observationPromise;
       }
@@ -1683,16 +1735,18 @@ export function runComparisonCommandPlanWithObservation(
         return;
       }
 
-      if (typeof exitCode !== 'number') {
+      if (!timedOut && typeof exitCode !== 'number') {
         reject(new Error('comparison-command-closed-without-exit-code'));
         return;
       }
 
       resolve({
-        exitCode,
+        exitCode: typeof exitCode === 'number' ? exitCode : 124,
         signal: signal ?? undefined,
         stdout,
         stderr,
+        timedOut,
+        timeoutMs,
         processObservation,
         exitProcessObservation
       });
@@ -1718,7 +1772,9 @@ export function runComparisonCommandPlan(
       {
         encoding: 'utf8',
         maxBuffer: 16 * 1024 * 1024,
-        windowsHide: true
+        windowsHide: true,
+        timeout: deps.timeoutMs,
+        killSignal: 'SIGKILL'
       },
       (error, stdout, stderr) => {
         if (!error) {
@@ -1735,7 +1791,26 @@ export function runComparisonCommandPlan(
           stdout?: string;
           stderr?: string;
           signal?: string;
+          killed?: boolean;
         };
+
+        const timedOut =
+          Boolean(deps.timeoutMs) &&
+          execError.killed === true &&
+          (execError.signal === 'SIGKILL' || /timed out/i.test(execError.message ?? ''));
+
+        if (timedOut) {
+          resolve({
+            exitCode:
+              typeof execError.code === 'number' ? execError.code : 124,
+            signal: execError.signal ?? undefined,
+            stdout: String(stdout ?? execError.stdout ?? ''),
+            stderr: String(stderr ?? execError.stderr ?? ''),
+            timedOut: true,
+            timeoutMs: deps.timeoutMs
+          });
+          return;
+        }
 
         if (typeof execError.code === 'number') {
           resolve({

@@ -6,10 +6,14 @@ import {
   getFileCommitHashes,
   getFileHistoryCount,
   getFileHistoryEntries,
+  getRepoRemoteUrl,
   getRepoRoot,
   GitHistoryEntry,
   normalizeRelativeGitPath
 } from '../git/gitCli';
+import { classifyRepositorySupportPolicy, RepositorySupportPolicy } from '../support/repositorySupportPolicy';
+
+export type ViHistoryRepositorySupport = RepositorySupportPolicy;
 
 export interface ViHistoryCommit extends GitHistoryEntry {
   previousHash?: string;
@@ -49,11 +53,13 @@ export interface ViHistoryWindow {
 export interface ViHistoryViewModel {
   repositoryName: string;
   repositoryRoot: string;
+  repositoryUrl?: string;
   relativePath: string;
   signature: ViSignature | 'unknown';
   eligible: boolean;
   commits: ViHistoryCommit[];
   historyWindow?: ViHistoryWindow;
+  repositorySupport?: RepositorySupportPolicy;
   surfaceCapabilities?: ViHistorySurfaceCapabilities;
 }
 
@@ -78,6 +84,7 @@ export async function evaluateViEligibilityForFsPath(
   options: ViHistoryModelOptions = {}
 ): Promise<ViEligibilitySnapshot> {
   const repositoryRoot = options.repoRoot ?? (await getRepoRoot(path.dirname(fsPath)));
+  const repositoryUrl = await getRepoRemoteUrl(repositoryRoot);
   const relativePath = normalizeRelativeGitPath(path.relative(repositoryRoot, fsPath));
   const signature =
     (await detectViSignatureFromFsPath(fsPath, {
@@ -99,6 +106,7 @@ export async function loadViHistoryViewModelFromFsPath(
   options: ViHistoryModelOptions = {}
 ): Promise<ViHistoryViewModel> {
   const repositoryRoot = options.repoRoot ?? (await getRepoRoot(path.dirname(fsPath)));
+  const repositoryUrl = await getRepoRemoteUrl(repositoryRoot);
   const relativePath = normalizeRelativeGitPath(path.relative(repositoryRoot, fsPath));
   const historyWindowMode = options.historyWindowMode ?? 'auto';
   const effectiveEntryCeiling = Math.max(2, options.historyLimit ?? 100);
@@ -153,6 +161,7 @@ export async function loadViHistoryViewModelFromFsPath(
   return {
     repositoryName: path.basename(repositoryRoot),
     repositoryRoot,
+    repositoryUrl,
     relativePath,
     signature: eligibility.signature,
     eligible: eligibility.eligible,
@@ -160,6 +169,10 @@ export async function loadViHistoryViewModelFromFsPath(
       ...commit,
       previousHash: commits[index + 1]?.hash
     })),
-    historyWindow
+    historyWindow,
+    repositorySupport: classifyRepositorySupportPolicy(
+      repositoryUrl,
+      path.basename(repositoryRoot)
+    )
   };
 }

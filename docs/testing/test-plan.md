@@ -933,7 +933,9 @@
 - `TEST-UNIT-256`: verify the canonical-host benchmark status loader and
   history-panel router expose the retained Windows baseline plus the retained
   host Linux benchmark launch/log/progress state inside VS Code, mirror active
-  host Linux progress into a status-bar indicator, keep the benchmark status
+  host Linux progress into a status-bar indicator and the same front-facing VS
+  Code progress channel used by the Windows lane, including pair-preparation
+  messages such as `Preparing dashboard pair ...`, keep the benchmark status
   surface reachable only through the canonical-host benchmark action, resolve
   the canonical `vi-history-suite` authority workspace even when the currently
   viewed VI lives in a different repo, stage the benchmark workspace without
@@ -948,12 +950,52 @@
 - `TEST-UNIT-258`: verify the root manifest excludes packaging-only npm
   tooling from default `npm ci`, while the guarded package path still invokes
   the pinned `vsce` package on demand through the dedicated helper script
+- `TEST-UNIT-259`: verify the bounded repo-family support policy normalizes
+  canonical GitHub remotes across HTTPS and SSH forms, recognizes
+  `ni/labview-icon-editor`, `ni/actor-framework`, and same-name GitHub forks,
+  keeps other repos unsupported, and preserves canonical scenario matching
+  across normalized upstream remote forms
+- `TEST-UNIT-260`: verify the VI History panel and open command surface the
+  repo-support classification, keep chronology/docs visible, and fail closed on
+  unsupported repos by blocking compare, dashboard, decision-record,
+  benchmark, and maintainer host-review actions
+- `TEST-UNIT-261`: verify the host and hosted Linux benchmark runners enforce
+  a governed per-pair runtime execution budget and retain an explicit
+  timeout/stall terminal outcome instead of hanging the whole benchmark
+- `TEST-UNIT-262`: verify a Linux benchmark pair that times out or otherwise
+  fails during runtime execution retains a machine-readable per-pair failure
+  receipt with pair ids, provider/engine, image identity, and retained runtime
+  artifact-path presence or absence
+- `TEST-UNIT-263`: verify active Linux benchmark runtime execution emits
+  bounded heartbeat progress updates that identify the current pair plus
+  provider/engine, and that the host in-IDE progress surface mirrors those
+  heartbeats instead of staying stuck on a coarse execution message
+- `TEST-UNIT-264`: verify Linux benchmark runs always retain a terminal
+  latest-summary artifact, including partial/failed runs, with processed pair
+  counts, terminal pair index, terminal outcome classification, and
+  comparability state versus the Windows baseline
+- `TEST-UNIT-265`: verify the Windows benchmark CLI defaults to
+  `HARNESS-VHS-002`, retains the deep `benchmark:github:windows:lv-icon`
+  entrypoint, writes stable summaries under
+  `.cache/github-experiments/windows-dashboard-benchmark/`, and defaults the
+  runtime tool paths to the documented NI Windows image paths unless
+  explicitly overridden
+- `TEST-UNIT-266`: verify the Windows benchmark-image workflow, Dockerfile,
+  and runner script pin `nationalinstruments/labview:2026q1-windows`, publish
+  a dedicated GHCR Windows benchmark image, target the deep
+  `HARNESS-VHS-002` lane, and truthfully mark hosted Windows benchmark
+  execution as not-yet-governed
+- `TEST-UNIT-267`: verify Linux comparison-report runtime-diagnostic capture
+  treats native container paths such as `/tmp/lvtemporary_*.log` as
+  host-readable from within the active benchmark container and retains the
+  copied diagnostic artifact instead of defaulting to
+  `runtime-diagnostic-log-unreadable`
 - `TEST-DOC-035`: review README, current-state, and ADR-0016 and confirm the
   canonical-host benchmark status surface is documented as the maintainer-facing
   in-IDE visibility and launch surface for the host Linux benchmark lane,
-  including the canonical-authority-workspace selection, active status-bar
-  indicator, published-image defaulting, and stale-launch-receipt fail-closed
-  behavior
+  including the canonical-authority-workspace selection, pair-preparation
+  visibility in the live VS Code progress surface, active status-bar indicator,
+  published-image defaulting, and stale-launch-receipt fail-closed behavior
 - `TEST-DOC-036`: review README, current-state, release procedure, and
   ADR-0015 and confirm the packaged VSIX surface is documented as a compile-
   and-audit guarded compiled-only surface that fails closed on runtime
@@ -966,6 +1008,23 @@
   benchmark-image contract before evidence is compared, while the GitHub-
   hosted workflow stays on the shallower canonical harness and the canonical
   host retains ownership of the deep `lv_icon.vi` benchmark
+- `TEST-DOC-038`: review README, current-state, and ADR-0017 and confirm the
+  product is documented as bounded to `ni/labview-icon-editor`,
+  `ni/actor-framework`, same-name GitHub forks, and governed retained local
+  fixture clones of those upstreams, that unsupported repos fail closed in the
+  live UI, and that scenario, benchmark, and host-review lanes remain narrower
+  than generic repo-family membership
+- `TEST-DOC-039`: review README, current-state, and ADR-0016 and confirm the
+  Linux benchmark lane is documented as enforcing bounded per-pair runtime
+  timeouts, per-pair failure receipts, runtime heartbeat progress, and terminal
+  partial-summary retention for failed or timed-out runs, while remaining
+  characterization-only when a retained run exposes a real runtime dependency
+  blocker instead of a completed comparable benchmark
+- `TEST-DOC-040`: review README, current-state, harness docs, and ADR-0018 and
+  confirm the Windows benchmark image is documented as a repeatable deep
+  `HARNESS-VHS-002` baseline distinct from Sergio's canonical Windows host UX
+  lane, and that hosted Windows benchmark execution remains explicitly
+  not-yet-governed
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed authority repo, private experiment mirror, wiki, and
   assurance-skill repos with authority roles, expected remotes, and primary

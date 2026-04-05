@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   getDefaultReviewScenarioForHarness,
+  getDefaultReviewScenarioForRepository,
   getReviewScenarioDefinition,
   listReviewScenarios,
   validateReviewScenarioEvidence
@@ -16,6 +17,17 @@ describe('reviewScenarioRegistry', () => {
       minimumComparisonPairs: 2
     });
     expect(getDefaultReviewScenarioForHarness('HARNESS-VHS-999')).toBeUndefined();
+  });
+
+  it('matches the active canonical scenario across normalized upstream remote forms', () => {
+    expect(
+      getDefaultReviewScenarioForRepository(
+        'git@github.com:ni/labview-icon-editor.git',
+        'Tooling/deployment/VIP_Pre-Install Custom Action.vi'
+      )
+    ).toMatchObject({
+      id: 'SCENARIO-VHS-001'
+    });
   });
 
   it('validates scenario evidence against the canonical harness contract', () => {

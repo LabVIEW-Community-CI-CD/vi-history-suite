@@ -16,6 +16,11 @@ contains:
 - a private GitHub Linux benchmark lane, mirrored into the private GitHub experiment repo, that defaults hosted runs to the shallower canonical harness while the canonical Windows host owns the deep `lv_icon.vi` benchmark
 - a canonical-host in-IDE benchmark-status surface so Linux benchmark progress
   and retained outcome stay visible inside VS Code
+- a governed Linux benchmark liveness contract: stalled pair runtime execution
+  now times out deterministically, retains per-pair failure receipts, emits
+  heartbeat progress while runtime execution is active, and writes terminal
+  partial summaries instead of hanging indefinitely, while deep-host results
+  remain characterization-only until the Linux runtime dependency gap closes
 - retained design-gate guidance for the next development tranche
 
 ## Start Here
@@ -157,7 +162,8 @@ Committed and governed today:
   the panel, and can be consumed deterministically without shell notes
 - a canonical-host `Open benchmark status` action in the history panel so the
   retained Windows `lv_icon.vi` baseline, retained host Linux launch/log/summary
-  state, and explicit run/stop benchmark controls stay visible inside VS Code
+  state, explicit run/stop benchmark controls, and live pair-preparation
+  progress stay visible inside VS Code
 - direct local rendering for retained comparison packets and dashboard HTML
   artifacts, with injected base-path/CSP controls and soft iframe fallback if a
   local HTML artifact is unavailable
@@ -203,6 +209,12 @@ Committed and governed today:
   `.cache/github-experiments/linux-dashboard-benchmark/` while the canonical
   Windows host owns the deep `HARNESS-VHS-002` / `resource/plugins/lv_icon.vi`
   benchmark
+- a scaffolded Windows benchmark-image lane that pins
+  `nationalinstruments/labview:2026q1-windows`, retains deep
+  `HARNESS-VHS-002` benchmark summaries under
+  `.cache/github-experiments/windows-dashboard-benchmark/`, and keeps hosted
+  Windows benchmark execution explicitly not-yet-governed until runner proof
+  exists
 - a retained documentation coherence ledger and wiki seed plan so future wiki
   work starts from governed docs instead of source or chat memory
 - a retained wiki publication ledger so actual published wiki pages are tracked
@@ -240,7 +252,12 @@ Committed and governed today:
   requires host-versus-GitHub timing comparisons to use the same authority
   commit pushed to both GitLab authority and the private GitHub experiment
   mirror while GitLab remains the authority source repo and release-control
-  surface
+  surface; the deep Linux lane now enforces per-pair runtime timeouts, writes
+  machine-readable per-pair failure receipts, emits heartbeat progress during
+  runtime execution, and retains terminal partial summaries for failed runs,
+  but the latest deep-host `lv_icon.vi` run remains characterization-only
+  because pair `1/138` timed out after Linux stderr reported a missing
+  `libniDotNETCoreInterop.so` dependency
 
 ## Active Work
 
@@ -396,7 +413,12 @@ The helper prefers the latest successful `workflow_dispatch` artifact from the
 private GitHub experiment mirror and falls back to cached downloads under
 `.cache/github-experiment-downloads/` when needed. That hosted consumer is
 expected to resolve the cheaper canonical harness by default; the deep
-`lv_icon.vi` benchmark remains owned by the canonical host lane.
+`lv_icon.vi` benchmark remains owned by the canonical host lane. The Linux
+liveness requirements in `VHS-REQ-409` through `VHS-REQ-412` are now closed,
+and the current deep-host retained result is a truthful partial failure summary
+rather than an indefinite stall: pair `1/138` timed out after Linux stderr
+reported `libniDotNETCoreInterop.so` missing, so the retained result remains
+characterization-only instead of baseline-comparable.
 
 The generated `.cache/` evidence is local and regenerated. The committed source
 of truth for implemented-versus-partial research work is the documentation stack
@@ -413,10 +435,29 @@ The canonical real-history harness is `HARNESS-VHS-001`, backed by
 - scenario decision-record generation via `npm run harness:decision:record`
 
 The explicit deep-history benchmark harness is `HARNESS-VHS-002` for
-`resource/plugins/lv_icon.vi`. The canonical host owns that benchmark lane,
-while GitHub-hosted experiments default to `HARNESS-VHS-001`.
+`resource/plugins/lv_icon.vi`. Sergio's canonical Windows host remains the UX
+and human-review surface for that target, the Windows benchmark image is the
+repeatable deep benchmark baseline, and GitHub-hosted Linux experiments default
+to `HARNESS-VHS-001`.
 
 See [Harness Definitions](./docs/product/harnesses.md).
+
+## Bounded Repo Support
+
+The governed repo family is currently bounded to:
+
+- `ni/labview-icon-editor`
+- `ni/actor-framework`
+- same-name GitHub forks of those upstream repos
+- governed retained local fixture clones of those same upstream repos
+
+That bounded family does not mean every governed surface is equally broad.
+
+- Core compare and dashboard surfaces stay inside the bounded repo family.
+- Unsupported repos fail closed in the live VI History UI instead of looking
+  equivalent to governed repos.
+- Decision-record, deep-benchmark, and maintainer host-review lanes remain
+  narrower and are still governed separately from generic family membership.
 
 ## License
 

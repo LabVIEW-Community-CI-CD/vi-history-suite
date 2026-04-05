@@ -953,6 +953,75 @@ describe('createOpenViHistoryCommand', () => {
     expect(panel?.webview.html).toContain('Documentation:</strong> Unavailable in this build');
   });
 
+  it('warns and blocks review surfaces when the loaded repo is outside the governed repo family', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'other-repo',
+        repositoryRoot: '/workspace/other-repo',
+        repositoryUrl: 'https://github.com/example/other-repo.git',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        repositorySupport: {
+          repositoryUrl: 'https://github.com/example/other-repo.git',
+          normalizedRepositoryUrl: 'https://github.com/example/other-repo.git',
+          tier: 'unsupported',
+          supportLabel: 'Unsupported outside governed repo family',
+          supportGuidance:
+            'This GitHub repository is outside the governed vi-history-suite repo family. Compare, dashboard, decision-record, benchmark, and host-review actions are blocked here.',
+          allowCoreReviewActions: false,
+          allowDecisionRecordActions: false,
+          allowBenchmarkStatus: false,
+          allowHumanReviewSubmission: false
+        },
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Unsupported repo newest',
+            previousHash: '1111111122222222'
+          },
+          {
+            hash: '1111111122222222',
+            authorDate: '2026-04-01T00:00:00Z',
+            authorName: 'B User',
+            subject: 'Unsupported repo oldest'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined
+    );
+
+    await command(targetUri as never);
+
+    expect(showWarningMessageMock).toHaveBeenCalledWith(
+      'This GitHub repository is outside the governed vi-history-suite repo family. Compare, dashboard, decision-record, benchmark, and host-review actions are blocked here.'
+    );
+    const panel = createWebviewPanelMock.mock.results[0]?.value as MockPanel | undefined;
+    expect(panel?.webview.html).toContain('Unsupported outside governed repo family');
+    expect(panel?.webview.html).toContain(
+      'Compare generation:</strong> Blocked outside the governed repo family'
+    );
+    expect(panel?.webview.html).toContain(
+      'Dashboard:</strong> Blocked outside the governed repo family'
+    );
+    expect(panel?.webview.html).toContain(
+      'Decision record:</strong> Blocked outside the governed repo family'
+    );
+    expect(panel?.webview.html).toContain('data-testid="history-action-dashboard" disabled');
+    expect(panel?.webview.html).toContain('data-testid="history-action-decision-record" disabled');
+  });
+
   it('fails closed with build-capability guidance when stale panel commands target unsupported optional surfaces', async () => {
     const targetUri = createMockUri('/workspace/eligible.vi');
     const tracker = new HistoryPanelTracker();

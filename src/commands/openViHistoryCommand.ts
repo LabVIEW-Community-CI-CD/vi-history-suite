@@ -103,16 +103,35 @@ export function createOpenViHistoryCommand(
     const loadedModel = await historyService.load(targetUri);
     const isComparisonReportCapableVi =
       loadedModel.signature === 'LVIN' || loadedModel.signature === 'LVCC';
+    const repositorySupport = loadedModel.repositorySupport;
+    const coreReviewActionsAllowed =
+      repositorySupport?.allowCoreReviewActions ?? true;
+    const decisionRecordActionsAllowed =
+      repositorySupport?.allowDecisionRecordActions ?? true;
+    const benchmarkStatusAllowed =
+      repositorySupport?.allowBenchmarkStatus ?? true;
+    const humanReviewSubmissionAllowed =
+      repositorySupport?.allowHumanReviewSubmission ?? true;
     const surfaceCapabilities = {
       comparisonGenerationAvailable:
-        isComparisonReportCapableVi && comparisonReportAction !== undefined,
+        coreReviewActionsAllowed &&
+        isComparisonReportCapableVi &&
+        comparisonReportAction !== undefined,
       retainedComparisonOpenAvailable:
-        isComparisonReportCapableVi && openRetainedComparisonReportAction !== undefined,
-      dashboardAvailable: multiReportDashboardAction !== undefined,
-      decisionRecordAvailable: reviewDecisionRecordAction !== undefined,
+        coreReviewActionsAllowed &&
+        isComparisonReportCapableVi &&
+        openRetainedComparisonReportAction !== undefined,
+      dashboardAvailable:
+        coreReviewActionsAllowed && multiReportDashboardAction !== undefined,
+      decisionRecordAvailable:
+        decisionRecordActionsAllowed &&
+        reviewDecisionRecordAction !== undefined,
       documentationAvailable: openDocumentationAction !== undefined,
-      benchmarkStatusAvailable: openBenchmarkStatusAction !== undefined,
-      humanReviewSubmissionAvailable: humanReviewSubmissionAction !== undefined
+      benchmarkStatusAvailable:
+        benchmarkStatusAllowed && openBenchmarkStatusAction !== undefined,
+      humanReviewSubmissionAvailable:
+        humanReviewSubmissionAllowed &&
+        humanReviewSubmissionAction !== undefined
     };
     const model = hasRetainedComparisonReport
       ? {
@@ -132,9 +151,12 @@ export function createOpenViHistoryCommand(
           surfaceCapabilities
         }
       : {
-          ...loadedModel,
-          surfaceCapabilities
-        };
+        ...loadedModel,
+        surfaceCapabilities
+      };
+    if (repositorySupport?.tier === 'unsupported') {
+      void vscode.window.showWarningMessage(repositorySupport.supportGuidance);
+    }
     const renderedHtml = renderHistoryPanelHtml(model);
     const panel = vscode.window.createWebviewPanel(
       'viHistorySuite.history',

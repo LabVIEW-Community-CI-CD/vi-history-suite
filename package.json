@@ -150,6 +150,7 @@
     "review:latest:json": "node scripts/printLatestHumanReviewSubmission.js --json",
     "benchmark:github:linux:canonical": "npm run compile && node out/cli/runGitHubLinuxDashboardBenchmark.js --harness-id HARNESS-VHS-001",
     "benchmark:github:linux:lv-icon": "npm run compile && node out/cli/runGitHubLinuxDashboardBenchmark.js --harness-id HARNESS-VHS-002",
+    "benchmark:github:windows:lv-icon": "npm run compile && node out/cli/runGitHubWindowsDashboardBenchmark.js --harness-id HARNESS-VHS-002",
     "benchmark:github:latest": "node scripts/printLatestGitHubLinuxBenchmark.js",
     "benchmark:github:latest:json": "node scripts/printLatestGitHubLinuxBenchmark.js --json",
     "docs:workbench:build": "docker build -f docker/docs-authoring/Dockerfile -t vi-history-suite-docs-authoring:local .",

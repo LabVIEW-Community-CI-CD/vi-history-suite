@@ -236,9 +236,24 @@ describe('renderHistoryPanelHtml', () => {
     const reviewPacket = renderHistoryReviewPacketText({
       repositoryName: 'labview-icon-editor',
       repositoryRoot: '/tmp/labview-icon-editor',
+      repositoryUrl: 'https://github.com/ni/labview-icon-editor.git',
       relativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
       signature: 'LVIN',
       eligible: true,
+      repositorySupport: {
+        repositoryUrl: 'https://github.com/ni/labview-icon-editor.git',
+        normalizedRepositoryUrl: 'https://github.com/ni/labview-icon-editor.git',
+        tier: 'governed-upstream',
+        familyId: 'labview-icon-editor',
+        familyDisplayName: 'NI LabVIEW Icon Editor',
+        supportLabel: 'Governed upstream: NI LabVIEW Icon Editor',
+        supportGuidance:
+          'This upstream repo is inside the governed family. Core compare and dashboard surfaces remain in scope here, while decision-record, benchmark, and maintainer host-review lanes stay governed separately.',
+        allowCoreReviewActions: true,
+        allowDecisionRecordActions: true,
+        allowBenchmarkStatus: true,
+        allowHumanReviewSubmission: true
+      },
       historyWindow: {
         mode: 'capped',
         configuredMaxEntries: 2,
@@ -267,7 +282,9 @@ describe('renderHistoryPanelHtml', () => {
 
     expect(reviewPacket).toContain('VI History Review Packet');
     expect(reviewPacket).toContain('Repository: labview-icon-editor');
+    expect(reviewPacket).toContain('Origin: https://github.com/ni/labview-icon-editor.git');
     expect(reviewPacket).toContain('Path: Tooling/deployment/VIP_Pre-Install Custom Action.vi');
+    expect(reviewPacket).toContain('Repo support: Governed upstream: NI LabVIEW Icon Editor');
     expect(reviewPacket).toContain('Retained revisions: 2');
     expect(reviewPacket).toContain('History window: capped window truncated to 2/4 commits at the configured ceiling (2)');
     expect(reviewPacket).toContain('Dashboard available: no');
@@ -295,5 +312,107 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('data-testid="history-action-dashboard" disabled');
     expect(reviewPacket).toContain('Newest retained commit: No retained commits');
     expect(reviewPacket).toContain('Oldest retained commit: No retained commits');
+  });
+
+  it('renders repository support details for a governed upstream repo', () => {
+    const html = renderHistoryPanelHtml({
+      repositoryName: 'labview-icon-editor',
+      repositoryRoot: '/tmp/labview-icon-editor',
+      repositoryUrl: 'git@github.com:ni/labview-icon-editor.git',
+      relativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+      signature: 'LVIN',
+      eligible: true,
+      repositorySupport: {
+        repositoryUrl: 'git@github.com:ni/labview-icon-editor.git',
+        normalizedRepositoryUrl: 'https://github.com/ni/labview-icon-editor.git',
+        tier: 'governed-upstream',
+        familyId: 'labview-icon-editor',
+        familyDisplayName: 'NI LabVIEW Icon Editor',
+        supportLabel: 'Governed upstream: NI LabVIEW Icon Editor',
+        supportGuidance:
+          'This upstream repo is inside the governed family. Core compare and dashboard surfaces remain in scope here, while decision-record, benchmark, and maintainer host-review lanes stay governed separately.',
+        allowCoreReviewActions: true,
+        allowDecisionRecordActions: true,
+        allowBenchmarkStatus: true,
+        allowHumanReviewSubmission: true
+      },
+      commits: [
+        {
+          hash: 'abcdef1234567890',
+          authorDate: '2026-04-02T00:00:00Z',
+          authorName: 'A User',
+          subject: 'Improve deployment behavior',
+          previousHash: '1111111122222222'
+        },
+        {
+          hash: '1111111122222222',
+          authorDate: '2026-04-01T00:00:00Z',
+          authorName: 'B User',
+          subject: 'Initial deployment behavior'
+        }
+      ]
+    });
+
+    expect(html).toContain('data-testid="history-meta-origin"');
+    expect(html).toContain('data-testid="history-meta-support"');
+    expect(html).toContain('data-testid="history-repository-support"');
+    expect(html).toContain('Origin:</strong> git@github.com:ni/labview-icon-editor.git');
+    expect(html).toContain('Repo support:</strong> Governed upstream: NI LabVIEW Icon Editor');
+  });
+
+  it('renders a fail-closed unsupported-family state for repos outside the governed family', () => {
+    const html = renderHistoryPanelHtml({
+      repositoryName: 'other-repo',
+      repositoryRoot: '/tmp/other-repo',
+      repositoryUrl: 'https://github.com/example/other-repo.git',
+      relativePath: 'Some.vi',
+      signature: 'LVIN',
+      eligible: true,
+      repositorySupport: {
+        repositoryUrl: 'https://github.com/example/other-repo.git',
+        normalizedRepositoryUrl: 'https://github.com/example/other-repo.git',
+        tier: 'unsupported',
+        supportLabel: 'Unsupported outside governed repo family',
+        supportGuidance:
+          'This GitHub repository is outside the governed vi-history-suite repo family. Compare, dashboard, decision-record, benchmark, and host-review actions are blocked here.',
+        allowCoreReviewActions: false,
+        allowDecisionRecordActions: false,
+        allowBenchmarkStatus: false,
+        allowHumanReviewSubmission: false
+      },
+      surfaceCapabilities: {
+        comparisonGenerationAvailable: false,
+        retainedComparisonOpenAvailable: false,
+        dashboardAvailable: false,
+        decisionRecordAvailable: false,
+        documentationAvailable: true,
+        benchmarkStatusAvailable: false,
+        humanReviewSubmissionAvailable: false
+      },
+      commits: [
+        {
+          hash: 'abcdef1234567890',
+          authorDate: '2026-04-02T00:00:00Z',
+          authorName: 'A User',
+          subject: 'Update unsupported repo',
+          previousHash: '1111111122222222'
+        },
+        {
+          hash: '1111111122222222',
+          authorDate: '2026-04-01T00:00:00Z',
+          authorName: 'B User',
+          subject: 'Initial unsupported repo state'
+        }
+      ]
+    });
+
+    expect(html).toContain('Unsupported outside governed repo family');
+    expect(html).toContain('Compare generation:</strong> Blocked outside the governed repo family');
+    expect(html).toContain('Dashboard:</strong> Blocked outside the governed repo family');
+    expect(html).toContain('Decision record:</strong> Blocked outside the governed repo family');
+    expect(html).toContain('data-testid="history-action-dashboard" disabled');
+    expect(html).toContain('data-testid="history-action-decision-record" disabled');
+    expect(html).toContain('data-testid="history-action-diff" disabled');
+    expect(html).toContain('data-testid="history-action-report" disabled>Generate compare</button>');
   });
 });

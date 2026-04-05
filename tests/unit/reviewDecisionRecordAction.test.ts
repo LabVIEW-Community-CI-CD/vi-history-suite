@@ -57,7 +57,16 @@ vi.mock('vscode', () => ({
 }));
 
 vi.mock('../../src/git/gitCli', () => ({
-  runGit: runGitMock
+  runGit: runGitMock,
+  getRepoRemoteUrl: async (cwd: string, remoteName = 'origin') => {
+    try {
+      const stdout = await runGitMock(['remote', 'get-url', remoteName], cwd, 'utf8');
+      const resolved = String(stdout).trim();
+      return resolved.length > 0 ? resolved : undefined;
+    } catch {
+      return undefined;
+    }
+  }
 }));
 
 import { createReviewDecisionRecordAction } from '../../src/scenarios/reviewDecisionRecordAction';

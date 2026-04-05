@@ -9,10 +9,16 @@ import {
 } from '../harness/harnessDashboardSmoke';
 import { ComparisonRuntimeEngine } from '../reporting/comparisonRuntimeLocator';
 
-const DEFAULT_BENCHMARK_PAIR_TIMEOUT_MS = 120_000;
-const DEFAULT_BENCHMARK_HEARTBEAT_INTERVAL_MS = 15_000;
+const DEFAULT_WINDOWS_BENCHMARK_PAIR_TIMEOUT_MS = 120_000;
+const DEFAULT_WINDOWS_BENCHMARK_HEARTBEAT_INTERVAL_MS = 15_000;
+const DEFAULT_WINDOWS_LABVIEW_EXE_PATH =
+  'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe';
+const DEFAULT_WINDOWS_LABVIEW_CLI_PATH =
+  'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe';
+const DEFAULT_WINDOWS_LVCOMPARE_PATH =
+  'C:\\Program Files\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe';
 
-export interface GitHubLinuxDashboardBenchmarkCliArgs {
+export interface GitHubWindowsDashboardBenchmarkCliArgs {
   harnessId: string;
   dashboardCommitWindow?: number;
   runtimeEngineOverride?: ComparisonRuntimeEngine;
@@ -23,19 +29,18 @@ export interface GitHubLinuxDashboardBenchmarkCliArgs {
   helpRequested: boolean;
 }
 
-export interface GitHubLinuxDashboardBenchmarkSummary {
-  schema: 'vi-history-suite/github-linux-dashboard-benchmark@v1';
-  benchmarkId: 'GITHUB-VHS-LINUX-DASHBOARD-BENCHMARK';
+export interface GitHubWindowsDashboardBenchmarkSummary {
+  schema: 'vi-history-suite/github-windows-dashboard-benchmark@v1';
+  benchmarkId: 'GITHUB-VHS-WINDOWS-DASHBOARD-BENCHMARK';
   harnessId: string;
   repositoryUrl: string;
   targetRelativePath: string;
-  runtimePlatform: 'linux';
+  runtimePlatform: 'win32';
   runtimeImage: string;
   benchmarkImage?: {
     reference?: string;
     digest?: string;
   };
-  headlessDisplayProvider?: string;
   startedAt: string;
   completedAt: string;
   wallClockSeconds: number;
@@ -54,7 +59,9 @@ export interface GitHubLinuxDashboardBenchmarkSummary {
   terminalPairIndex?: number;
   terminalPairFailureReason?: string;
   terminalOutcome: 'completed' | 'runtime-failed' | 'runtime-timed-out';
-  comparabilityState: HarnessDashboardSmokeReport['comparabilityState'];
+  comparabilityState:
+    | 'comparable-to-linux-benchmark-image'
+    | 'characterization-only';
   providerCounts: Record<string, number>;
   etaAccuracy?: {
     measuredPairCount: number;
@@ -81,9 +88,9 @@ export interface GitHubLinuxDashboardBenchmarkSummary {
   };
 }
 
-export interface GitHubLinuxDashboardBenchmarkPairFailureReceipt {
-  schema: 'vi-history-suite/github-linux-dashboard-benchmark-pair-failure@v1';
-  benchmarkId: 'GITHUB-VHS-LINUX-DASHBOARD-BENCHMARK';
+export interface GitHubWindowsDashboardBenchmarkPairFailureReceipt {
+  schema: 'vi-history-suite/github-windows-dashboard-benchmark-pair-failure@v1';
+  benchmarkId: 'GITHUB-VHS-WINDOWS-DASHBOARD-BENCHMARK';
   harnessId: string;
   recordedAt: string;
   targetRelativePath: string;
@@ -120,9 +127,9 @@ export interface GitHubLinuxDashboardBenchmarkPairFailureReceipt {
   };
 }
 
-export interface GitHubLinuxDashboardBenchmarkProgressRecord {
-  schema: 'vi-history-suite/github-linux-dashboard-benchmark-progress@v1';
-  benchmarkId: 'GITHUB-VHS-LINUX-DASHBOARD-BENCHMARK';
+export interface GitHubWindowsDashboardBenchmarkProgressRecord {
+  schema: 'vi-history-suite/github-windows-dashboard-benchmark-progress@v1';
+  benchmarkId: 'GITHUB-VHS-WINDOWS-DASHBOARD-BENCHMARK';
   harnessId: string;
   targetRelativePath: string;
   recordedAt: string;
@@ -130,7 +137,7 @@ export interface GitHubLinuxDashboardBenchmarkProgressRecord {
   message: string;
 }
 
-export interface GitHubLinuxDashboardBenchmarkCliDeps {
+export interface GitHubWindowsDashboardBenchmarkCliDeps {
   repoRoot?: string;
   runner?: (
     harnessId: string,
@@ -148,13 +155,13 @@ export interface GitHubLinuxDashboardBenchmarkCliDeps {
   now?: () => Date;
 }
 
-export function getGitHubLinuxDashboardBenchmarkUsage(): string {
+export function getGitHubWindowsDashboardBenchmarkUsage(): string {
   return [
-    'Usage: runGitHubLinuxDashboardBenchmark [--harness-id <id>] [--dashboard-commit-window <count>] [--engine <labview-cli|lvcompare>] [--labview-cli-path <path>] [--labview-exe-path <path>] [--lvcompare-path <path>] [--strict-rsrc-header] [--help]',
+    'Usage: runGitHubWindowsDashboardBenchmark [--harness-id <id>] [--dashboard-commit-window <count>] [--engine <labview-cli|lvcompare>] [--labview-cli-path <path>] [--labview-exe-path <path>] [--lvcompare-path <path>] [--strict-rsrc-header] [--help]',
     '',
     'Options:',
-    '  --harness-id <id>              Canonical harness id. Defaults to HARNESS-VHS-001 for the GitHub-hosted benchmark lane.',
-    '  --dashboard-commit-window <n>  Limit the retained dashboard window to at least 3 commits. Defaults to 1000 for the hosted benchmark lane.',
+    '  --harness-id <id>              Canonical harness id. Defaults to HARNESS-VHS-002 for the deep Windows benchmark lane.',
+    '  --dashboard-commit-window <n>  Limit the retained dashboard window to at least 3 commits. Defaults to 1000 for the deep Windows benchmark lane.',
     '  --engine <value>               Override the selected report engine for the benchmark.',
     '  --labview-cli-path <path>      Provide an explicit LabVIEWCLI path.',
     '  --labview-exe-path <path>      Provide an explicit LabVIEW executable path.',
@@ -164,10 +171,10 @@ export function getGitHubLinuxDashboardBenchmarkUsage(): string {
   ].join('\n');
 }
 
-export function parseGitHubLinuxDashboardBenchmarkArgs(
+export function parseGitHubWindowsDashboardBenchmarkArgs(
   argv: string[]
-): GitHubLinuxDashboardBenchmarkCliArgs {
-  let harnessId = 'HARNESS-VHS-001';
+): GitHubWindowsDashboardBenchmarkCliArgs {
+  let harnessId = 'HARNESS-VHS-002';
   let dashboardCommitWindow = 1000;
   let runtimeEngineOverride: ComparisonRuntimeEngine | undefined;
   let labviewCliPath: string | undefined;
@@ -182,7 +189,7 @@ export function parseGitHubLinuxDashboardBenchmarkArgs(
       const candidate = argv[index + 1];
       if (!candidate || candidate.startsWith('--')) {
         throw new Error(
-          `Missing value for ${flag}.\n\n${getGitHubLinuxDashboardBenchmarkUsage()}`
+          `Missing value for ${flag}.\n\n${getGitHubWindowsDashboardBenchmarkUsage()}`
         );
       }
 
@@ -199,7 +206,7 @@ export function parseGitHubLinuxDashboardBenchmarkArgs(
       const candidate = Number.parseInt(requireValue('--dashboard-commit-window'), 10);
       if (!Number.isFinite(candidate) || candidate < 3) {
         throw new Error(
-          `Unsupported value for --dashboard-commit-window: ${String(candidate)}\n\n${getGitHubLinuxDashboardBenchmarkUsage()}`
+          `Unsupported value for --dashboard-commit-window: ${String(candidate)}\n\n${getGitHubWindowsDashboardBenchmarkUsage()}`
         );
       }
 
@@ -211,7 +218,7 @@ export function parseGitHubLinuxDashboardBenchmarkArgs(
       const candidate = requireValue('--engine');
       if (candidate !== 'labview-cli' && candidate !== 'lvcompare') {
         throw new Error(
-          `Unsupported value for --engine: ${candidate}\n\n${getGitHubLinuxDashboardBenchmarkUsage()}`
+          `Unsupported value for --engine: ${candidate}\n\n${getGitHubWindowsDashboardBenchmarkUsage()}`
         );
       }
 
@@ -244,7 +251,9 @@ export function parseGitHubLinuxDashboardBenchmarkArgs(
       continue;
     }
 
-    throw new Error(`Unknown argument: ${current}\n\n${getGitHubLinuxDashboardBenchmarkUsage()}`);
+    throw new Error(
+      `Unknown argument: ${current}\n\n${getGitHubWindowsDashboardBenchmarkUsage()}`
+    );
   }
 
   return {
@@ -259,15 +268,15 @@ export function parseGitHubLinuxDashboardBenchmarkArgs(
   };
 }
 
-export async function runGitHubLinuxDashboardBenchmarkCli(
+export async function runGitHubWindowsDashboardBenchmarkCli(
   argv: string[],
-  deps: GitHubLinuxDashboardBenchmarkCliDeps = {}
+  deps: GitHubWindowsDashboardBenchmarkCliDeps = {}
 ): Promise<'pass' | 'help'> {
-  const args = parseGitHubLinuxDashboardBenchmarkArgs(argv);
+  const args = parseGitHubWindowsDashboardBenchmarkArgs(argv);
   const stdout = deps.stdout ?? process.stdout;
 
   if (args.helpRequested) {
-    stdout.write(`${getGitHubLinuxDashboardBenchmarkUsage()}\n`);
+    stdout.write(`${getGitHubWindowsDashboardBenchmarkUsage()}\n`);
     return 'help';
   }
 
@@ -278,7 +287,7 @@ export async function runGitHubLinuxDashboardBenchmarkCli(
     repoRoot,
     '.cache',
     'github-experiments',
-    'linux-dashboard-benchmark',
+    'windows-dashboard-benchmark',
     args.harnessId
   );
   const harnessDefinition = getCanonicalHarnessDefinition(args.harnessId);
@@ -289,17 +298,17 @@ export async function runGitHubLinuxDashboardBenchmarkCli(
   const writeFile = deps.writeFile ?? fs.writeFile;
   const pathExists = deps.pathExists ?? defaultPathExists;
   const runtimePairTimeoutMs = readPositiveIntegerEnv(
-    'VIHS_GITHUB_BENCHMARK_PAIR_TIMEOUT_MS',
-    DEFAULT_BENCHMARK_PAIR_TIMEOUT_MS
+    'VIHS_GITHUB_WINDOWS_BENCHMARK_PAIR_TIMEOUT_MS',
+    DEFAULT_WINDOWS_BENCHMARK_PAIR_TIMEOUT_MS
   );
   const runtimeHeartbeatIntervalMs = readPositiveIntegerEnv(
-    'VIHS_GITHUB_BENCHMARK_HEARTBEAT_INTERVAL_MS',
-    DEFAULT_BENCHMARK_HEARTBEAT_INTERVAL_MS
+    'VIHS_GITHUB_WINDOWS_BENCHMARK_HEARTBEAT_INTERVAL_MS',
+    DEFAULT_WINDOWS_BENCHMARK_HEARTBEAT_INTERVAL_MS
   );
 
   await mkdir(benchmarkRoot, { recursive: true });
   const writeProgress = async (
-    phase: GitHubLinuxDashboardBenchmarkProgressRecord['phase'],
+    phase: GitHubWindowsDashboardBenchmarkProgressRecord['phase'],
     message: string
   ): Promise<void> => {
     stdout.write(`VIHS_PROGRESS: ${message}\n`);
@@ -307,14 +316,14 @@ export async function runGitHubLinuxDashboardBenchmarkCli(
       latestProgressPath,
       `${JSON.stringify(
         {
-          schema: 'vi-history-suite/github-linux-dashboard-benchmark-progress@v1',
-          benchmarkId: 'GITHUB-VHS-LINUX-DASHBOARD-BENCHMARK',
+          schema: 'vi-history-suite/github-windows-dashboard-benchmark-progress@v1',
+          benchmarkId: 'GITHUB-VHS-WINDOWS-DASHBOARD-BENCHMARK',
           harnessId: args.harnessId,
           targetRelativePath: harnessDefinition.targetRelativePath,
           recordedAt: now().toISOString(),
           phase,
           message
-        } satisfies GitHubLinuxDashboardBenchmarkProgressRecord,
+        } satisfies GitHubWindowsDashboardBenchmarkProgressRecord,
         null,
         2
       )}\n`
@@ -323,7 +332,7 @@ export async function runGitHubLinuxDashboardBenchmarkCli(
 
   await writeProgress(
     'starting',
-    `Preparing the Linux benchmark workspace for ${args.harnessId}.`
+    `Preparing the Windows benchmark workspace for ${args.harnessId}.`
   );
 
   let result: Awaited<ReturnType<typeof runHarnessDashboardSmoke>>;
@@ -332,15 +341,24 @@ export async function runGitHubLinuxDashboardBenchmarkCli(
       cloneRoot,
       reportRoot,
       strictRsrcHeader: args.strictRsrcHeader,
-      runtimePlatform: 'linux',
+      runtimePlatform: 'win32',
       runtimeEngineOverride: args.runtimeEngineOverride,
       dashboardCommitWindow: args.dashboardCommitWindow,
       runtimeExecutionTimeoutMs: runtimePairTimeoutMs,
       runtimeHeartbeatIntervalMs,
       runtimeSettings: {
-        labviewCliPath: args.labviewCliPath,
-        labviewExePath: args.labviewExePath,
-        lvComparePath: args.lvComparePath
+        labviewCliPath:
+          args.labviewCliPath ??
+          process.env.VIHS_GITHUB_WINDOWS_BENCHMARK_LABVIEW_CLI_PATH ??
+          DEFAULT_WINDOWS_LABVIEW_CLI_PATH,
+        labviewExePath:
+          args.labviewExePath ??
+          process.env.VIHS_GITHUB_WINDOWS_BENCHMARK_LABVIEW_EXE_PATH ??
+          DEFAULT_WINDOWS_LABVIEW_EXE_PATH,
+        lvComparePath:
+          args.lvComparePath ??
+          process.env.VIHS_GITHUB_WINDOWS_BENCHMARK_LVCOMPARE_PATH ??
+          DEFAULT_WINDOWS_LVCOMPARE_PATH
       },
       reportProgress: async (update) => {
         await writeProgress('running', update.message);
@@ -353,14 +371,14 @@ export async function runGitHubLinuxDashboardBenchmarkCli(
   }
 
   const completedAtDate = now();
-  const summary = buildGitHubLinuxDashboardBenchmarkSummary(result, {
+  const summary = buildGitHubWindowsDashboardBenchmarkSummary(result, {
     startedAt: startedAtDate,
     completedAt: completedAtDate,
     benchmarkRoot,
     runtimeImage:
-      process.env.VIHS_GITHUB_BENCHMARK_RUNTIME_IMAGE ??
-      process.env.COMPAREVI_NI_LINUX_IMAGE ??
-      'nationalinstruments/labview:2026q1-linux'
+      process.env.VIHS_GITHUB_WINDOWS_BENCHMARK_RUNTIME_IMAGE ??
+      process.env.COMPAREVI_NI_WINDOWS_IMAGE ??
+      'nationalinstruments/labview:2026q1-windows'
   });
   const runSummaryPath = path.join(
     benchmarkRoot,
@@ -370,7 +388,7 @@ export async function runGitHubLinuxDashboardBenchmarkCli(
   summary.retainedArtifacts.runSummaryPath = runSummaryPath;
   summary.retainedArtifacts.latestSummaryPath = latestSummaryPath;
   if (summary.completionState === 'failed') {
-    const failureReceipt = await buildGitHubLinuxDashboardBenchmarkPairFailureReceipt(
+    const failureReceipt = await buildGitHubWindowsDashboardBenchmarkPairFailureReceipt(
       summary,
       result.report,
       pathExists,
@@ -390,15 +408,12 @@ export async function runGitHubLinuxDashboardBenchmarkCli(
   }
 
   await writeFile(runSummaryPath, `${JSON.stringify(summary, null, 2)}\n`);
-  await writeFile(
-    latestSummaryPath,
-    `${JSON.stringify(summary, null, 2)}\n`
-  );
+  await writeFile(latestSummaryPath, `${JSON.stringify(summary, null, 2)}\n`);
   if (summary.completionState === 'failed') {
     const failureMessage =
       summary.terminalPairIndex === undefined
-        ? `Linux benchmark failed after processing ${summary.processedPairCount}/${summary.comparePairCount} pair(s).`
-        : `Linux benchmark failed at pair ${summary.terminalPairIndex}/${summary.comparePairCount}: ${summary.terminalPairFailureReason ?? 'runtime-execution-failed'}.`;
+        ? `Windows benchmark failed after processing ${summary.processedPairCount}/${summary.comparePairCount} pair(s).`
+        : `Windows benchmark failed at pair ${summary.terminalPairIndex}/${summary.comparePairCount}: ${summary.terminalPairFailureReason ?? 'runtime-execution-failed'}.`;
     await writeProgress('failed', failureMessage);
     throw new Error(failureMessage);
   }
@@ -408,14 +423,14 @@ export async function runGitHubLinuxDashboardBenchmarkCli(
     `Completed ${summary.comparePairCount} compare pair(s); generated=${summary.generatedReportCount}, blocked=${summary.blockedPairCount}, failed=${summary.failedPairCount}.`
   );
 
-  for (const line of formatGitHubLinuxDashboardBenchmarkSuccess(summary)) {
+  for (const line of formatGitHubWindowsDashboardBenchmarkSuccess(summary)) {
     stdout.write(`${line}\n`);
   }
 
   return 'pass';
 }
 
-export function buildGitHubLinuxDashboardBenchmarkSummary(
+export function buildGitHubWindowsDashboardBenchmarkSummary(
   result: {
     report: HarnessDashboardSmokeReport;
     reportJsonPath: string;
@@ -428,12 +443,9 @@ export function buildGitHubLinuxDashboardBenchmarkSummary(
     benchmarkRoot: string;
     runtimeImage: string;
   }
-): GitHubLinuxDashboardBenchmarkSummary {
+): GitHubWindowsDashboardBenchmarkSummary {
   const totalPairPreparationSeconds = roundSeconds(
-    result.report.pairSummaries.reduce(
-      (sum, pair) => sum + pair.actualPreparationSeconds,
-      0
-    )
+    result.report.pairSummaries.reduce((sum, pair) => sum + pair.actualPreparationSeconds, 0)
   );
   const pairCount = result.report.pairSummaries.length;
   const blockedPairCount = result.report.pairSummaries.filter(
@@ -448,23 +460,25 @@ export function buildGitHubLinuxDashboardBenchmarkSummary(
       pair.reportStatus === 'ready-for-runtime' &&
       pair.runtimeExecutionState !== 'failed'
   ).length;
-  const providerCounts = result.report.pairSummaries.reduce<Record<string, number>>((counts, pair) => {
-    const key = pair.runtimeProvider?.trim() || 'unknown';
-    counts[key] = (counts[key] ?? 0) + 1;
-    return counts;
-  }, {});
+  const providerCounts = result.report.pairSummaries.reduce<Record<string, number>>(
+    (counts, pair) => {
+      const key = pair.runtimeProvider?.trim() || 'unknown';
+      counts[key] = (counts[key] ?? 0) + 1;
+      return counts;
+    },
+    {}
+  );
   const etaAccuracy = result.report.dashboardEtaAccuracyRecord;
-  const benchmarkImageReference = process.env.VIHS_GITHUB_BENCHMARK_IMAGE_REF;
-  const benchmarkImageDigest = process.env.VIHS_GITHUB_BENCHMARK_IMAGE_DIGEST;
-  const headlessDisplayProvider = process.env.VIHS_GITHUB_BENCHMARK_HEADLESS_DISPLAY_PROVIDER;
+  const benchmarkImageReference = process.env.VIHS_GITHUB_WINDOWS_BENCHMARK_IMAGE_REF;
+  const benchmarkImageDigest = process.env.VIHS_GITHUB_WINDOWS_BENCHMARK_IMAGE_DIGEST;
 
   return {
-    schema: 'vi-history-suite/github-linux-dashboard-benchmark@v1',
-    benchmarkId: 'GITHUB-VHS-LINUX-DASHBOARD-BENCHMARK',
+    schema: 'vi-history-suite/github-windows-dashboard-benchmark@v1',
+    benchmarkId: 'GITHUB-VHS-WINDOWS-DASHBOARD-BENCHMARK',
     harnessId: result.report.harnessId,
     repositoryUrl: result.report.repositoryUrl,
     targetRelativePath: result.report.targetRelativePath,
-    runtimePlatform: 'linux',
+    runtimePlatform: 'win32',
     runtimeImage: options.runtimeImage,
     benchmarkImage:
       benchmarkImageReference || benchmarkImageDigest
@@ -473,7 +487,6 @@ export function buildGitHubLinuxDashboardBenchmarkSummary(
             digest: benchmarkImageDigest
           }
         : undefined,
-    headlessDisplayProvider: headlessDisplayProvider?.trim() || undefined,
     startedAt: options.startedAt.toISOString(),
     completedAt: options.completedAt.toISOString(),
     wallClockSeconds: roundSeconds(
@@ -503,7 +516,10 @@ export function buildGitHubLinuxDashboardBenchmarkSummary(
         : result.report.terminalPairFailureReason === 'command-timed-out'
           ? 'runtime-timed-out'
           : 'runtime-failed',
-    comparabilityState: result.report.comparabilityState,
+    comparabilityState:
+      result.report.completionState === 'completed'
+        ? 'comparable-to-linux-benchmark-image'
+        : 'characterization-only',
     providerCounts,
     etaAccuracy: etaAccuracy
       ? {
@@ -535,21 +551,18 @@ export function buildGitHubLinuxDashboardBenchmarkSummary(
   };
 }
 
-export function formatGitHubLinuxDashboardBenchmarkSuccess(
-  summary: GitHubLinuxDashboardBenchmarkSummary
+export function formatGitHubWindowsDashboardBenchmarkSuccess(
+  summary: GitHubWindowsDashboardBenchmarkSummary
 ): string[] {
   const benchmarkImageSummary = summary.benchmarkImage?.reference
     ? `${summary.benchmarkImage.reference}${summary.benchmarkImage.digest ? `@${summary.benchmarkImage.digest}` : ''}`
     : undefined;
 
   return [
-    `GitHub Linux dashboard benchmark completed for ${summary.harnessId}`,
+    `GitHub Windows dashboard benchmark completed for ${summary.harnessId}`,
     `Target: ${summary.targetRelativePath}`,
     `Runtime image: ${summary.runtimeImage}`,
     benchmarkImageSummary ? `Benchmark image: ${benchmarkImageSummary}` : undefined,
-    summary.headlessDisplayProvider
-      ? `Headless display: ${summary.headlessDisplayProvider}`
-      : undefined,
     `Wall clock: ${summary.wallClockSeconds}s`,
     `Pair preparation total: ${summary.totalPairPreparationSeconds}s`,
     `Pair preparation mean/max: ${summary.meanPairPreparationSeconds}s / ${summary.maxPairPreparationSeconds}s`,
@@ -577,12 +590,12 @@ function roundSeconds(value: number): number {
   return Math.round(value * 1000) / 1000;
 }
 
-async function buildGitHubLinuxDashboardBenchmarkPairFailureReceipt(
-  summary: GitHubLinuxDashboardBenchmarkSummary,
+async function buildGitHubWindowsDashboardBenchmarkPairFailureReceipt(
+  summary: GitHubWindowsDashboardBenchmarkSummary,
   report: HarnessDashboardSmokeReport,
   pathExists: (filePath: string) => Promise<boolean>,
   recordedAt: Date
-): Promise<GitHubLinuxDashboardBenchmarkPairFailureReceipt | undefined> {
+): Promise<GitHubWindowsDashboardBenchmarkPairFailureReceipt | undefined> {
   if (summary.completionState !== 'failed' || summary.terminalPairIndex === undefined) {
     return undefined;
   }
@@ -595,8 +608,8 @@ async function buildGitHubLinuxDashboardBenchmarkPairFailureReceipt(
   }
 
   return {
-    schema: 'vi-history-suite/github-linux-dashboard-benchmark-pair-failure@v1',
-    benchmarkId: 'GITHUB-VHS-LINUX-DASHBOARD-BENCHMARK',
+    schema: 'vi-history-suite/github-windows-dashboard-benchmark-pair-failure@v1',
+    benchmarkId: 'GITHUB-VHS-WINDOWS-DASHBOARD-BENCHMARK',
     harnessId: summary.harnessId,
     recordedAt: recordedAt.toISOString(),
     targetRelativePath: summary.targetRelativePath,
@@ -657,13 +670,13 @@ function readPositiveIntegerEnv(name: string, fallback: number): number {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-export async function runGitHubLinuxDashboardBenchmarkCliMain(
+export async function runGitHubWindowsDashboardBenchmarkCliMain(
   argv: string[] = process.argv.slice(2),
-  deps: GitHubLinuxDashboardBenchmarkCliDeps = {},
+  deps: GitHubWindowsDashboardBenchmarkCliDeps = {},
   stderr: Pick<NodeJS.WriteStream, 'write'> = process.stderr
 ): Promise<number> {
   try {
-    await runGitHubLinuxDashboardBenchmarkCli(argv, deps);
+    await runGitHubWindowsDashboardBenchmarkCli(argv, deps);
     return 0;
   } catch (error) {
     stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
@@ -671,7 +684,7 @@ export async function runGitHubLinuxDashboardBenchmarkCliMain(
   }
 }
 
-export function applyGitHubLinuxDashboardBenchmarkCliExitCode(
+export function applyGitHubWindowsDashboardBenchmarkCliExitCode(
   exitCode: number,
   processLike: Pick<NodeJS.Process, 'exitCode'> = process
 ): number {
@@ -679,11 +692,11 @@ export function applyGitHubLinuxDashboardBenchmarkCliExitCode(
   return exitCode;
 }
 
-export function maybeRunGitHubLinuxDashboardBenchmarkCliAsMain(
+export function maybeRunGitHubWindowsDashboardBenchmarkCliAsMain(
   argv: string[] = process.argv.slice(2),
   mainModule: NodeModule | undefined = require.main,
   currentModule: NodeModule = module,
-  deps: GitHubLinuxDashboardBenchmarkCliDeps = {},
+  deps: GitHubWindowsDashboardBenchmarkCliDeps = {},
   processLike: Pick<NodeJS.Process, 'exitCode'> = process,
   stderr: Pick<NodeJS.WriteStream, 'write'> = process.stderr
 ): boolean {
@@ -691,10 +704,10 @@ export function maybeRunGitHubLinuxDashboardBenchmarkCliAsMain(
     return false;
   }
 
-  void runGitHubLinuxDashboardBenchmarkCliMain(argv, deps, stderr).then((exitCode) => {
-    applyGitHubLinuxDashboardBenchmarkCliExitCode(exitCode, processLike);
+  void runGitHubWindowsDashboardBenchmarkCliMain(argv, deps, stderr).then((exitCode) => {
+    applyGitHubWindowsDashboardBenchmarkCliExitCode(exitCode, processLike);
   });
   return true;
 }
 
-maybeRunGitHubLinuxDashboardBenchmarkCliAsMain();
+maybeRunGitHubWindowsDashboardBenchmarkCliAsMain();

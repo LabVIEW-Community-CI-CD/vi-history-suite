@@ -4,6 +4,8 @@ FROM ${BASE_IMAGE}
 ARG BASE_IMAGE
 ARG NODE_MAJOR=24
 
+ENV LV_RTE_HEADLESS=1
+
 LABEL org.opencontainers.image.title="vi-history-suite-github-linux-dashboard-benchmark"
 LABEL org.opencontainers.image.description="GitHub-hosted Linux dashboard benchmark image for vi-history-suite"
 LABEL io.vihs.base-image="${BASE_IMAGE}"

@@ -51,10 +51,11 @@ The repo keeps this authority split:
 9. Sergio's canonical Windows 11 host shall expose an in-IDE benchmark-status
    surface that reads the retained Windows baseline plus the retained host
    Linux benchmark launch/log/summary state, mirrors active host Linux
-   benchmark progress into a VS Code status-bar indicator, defaults each host
-   run to the current published benchmark image tag unless explicitly
-   overridden, and can launch or stop the host Linux benchmark without
-   requiring detached shell-only observation.
+   benchmark progress into a VS Code status-bar indicator and the same live VS
+   Code progress surface used by the Windows lane, including pair-preparation
+   progress messages, defaults each host run to the current published benchmark
+   image tag unless explicitly overridden, and can launch or stop the host
+   Linux benchmark without requiring detached shell-only observation.
 10. Benchmark outputs from the GitHub experiment lane are retained diagnostic
    evidence only. They do not replace GitLab authority or Windows installed-user
    proof.
@@ -67,6 +68,10 @@ The repo keeps this authority split:
     both lanes are using the same published benchmark-image contract, and the
     comparison is truthful about whether it is using the hosted canonical
     harness or the host-owned deep-history harness.
+13. The Linux benchmark lane shall enforce a governed per-pair execution
+    budget, emit heartbeat progress while the runtime is active, retain a
+    machine-readable per-pair failure receipt when the runtime times out or
+    fails, and write a terminal latest summary even for partial or failed runs.
 
 ## Consequences
 
@@ -86,10 +91,12 @@ Positive:
   artifacts such as `.vscode-test` from that staged workspace, defaults to the
   current published benchmark image tag rather than inheriting the last launch
   receipt image by accident, filters raw `npm warn` noise out of the
-  front-facing progress surface, fails closed when a stale launch receipt
-  remains but no live host Linux benchmark container exists, and keeps active
-  benchmark progress visible through a status-bar indicator instead of only a
-  panel refresh
+  front-facing progress surface, surfaces live pair-preparation progress in the
+  same VS Code progress channel used by the Windows lane instead of only in
+  retained receipts, fails closed when a stale launch receipt remains but no
+  live host Linux benchmark container exists, and keeps active benchmark
+  progress visible through a status-bar indicator instead of only a panel
+  refresh
 - future sessions can tell authority, experiment, and public distribution
   surfaces apart deterministically
 
@@ -104,6 +111,10 @@ Tradeoffs:
   experiment image instead of only the pinned NI base image
 - the canonical-host extension now owns one more maintainer-only control
   surface that must stay hidden from noncanonical installs
+- the liveness contract is now implemented, so deep-host Linux runs fail
+  truthfully instead of stalling indefinitely; however, the deep lane remains
+  characterization-only until the Linux runtime dependency gap is closed well
+  enough to produce comparable completed runs
 
 ## Evidence
 

@@ -102,6 +102,8 @@ describe('comparisonReportExecutionPlan', () => {
       commandPlan: {
         executable: 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
         args: [
+          '-LogToConsole',
+          'TRUE',
           '-OperationName',
           'CreateComparisonReport',
           '-VI1',
@@ -147,6 +149,8 @@ describe('comparisonReportExecutionPlan', () => {
       commandPlan: {
         executable: 'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
         args: [
+          '-LogToConsole',
+          'TRUE',
           '-OperationName',
           'CreateComparisonReport',
           '-VI1',
@@ -159,6 +163,57 @@ describe('comparisonReportExecutionPlan', () => {
           '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
           '-c',
           '-o'
+        ]
+      }
+    });
+  });
+
+  it('adds -LabVIEWPath and -Headless for Linux LabVIEWCLI execution', () => {
+    const record = createBaseRecord();
+    record.runtimeSelection.platform = 'linux';
+    record.runtimeSelection.preferBitness = 'auto';
+    record.runtimeSelection.labviewExe = {
+      kind: 'labview-exe',
+      path: '/usr/local/natinst/LabVIEW-2026-64/labview',
+      source: 'scan',
+      exists: true,
+      bitness: 'x64'
+    };
+    record.runtimeSelection.labviewCli = {
+      kind: 'labview-cli',
+      path: '/usr/local/bin/LabVIEWCLI',
+      source: 'scan',
+      exists: true,
+      bitness: 'x64'
+    };
+
+    const result = buildComparisonReportExecutionPlan(record);
+
+    expect(result).toEqual({
+      outcome: 'ready',
+      provider: 'host-native',
+      engine: 'labview-cli',
+      commandPlan: {
+        executable: '/usr/local/bin/LabVIEWCLI',
+        args: [
+          '-LogToConsole',
+          'TRUE',
+          '-OperationName',
+          'CreateComparisonReport',
+          '-VI1',
+          '/workspace/.storage/reports/repoid123456/fileid123456/staging/left-111111112222-foo.vi',
+          '-VI2',
+          '/workspace/.storage/reports/repoid123456/fileid123456/staging/right-abcdef123456-foo.vi',
+          '-ReportType',
+          'html',
+          '-ReportPath',
+          '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
+          '-LabVIEWPath',
+          '/usr/local/natinst/LabVIEW-2026-64/labview',
+          '-c',
+          '-o',
+          '-Headless',
+          'true'
         ]
       }
     });

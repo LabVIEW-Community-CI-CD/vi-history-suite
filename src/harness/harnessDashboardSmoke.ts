@@ -22,6 +22,7 @@ import {
 } from '../dashboard/multiReportDashboard';
 import {
   executeHarnessComparisonReportForCommit,
+  applyRuntimeEngineOverride,
   HarnessReportSmokeDeps,
   HarnessReportSmokeOptions
 } from './harnessReportSmoke';
@@ -33,25 +34,35 @@ import {
 } from '../services/viHistoryModel';
 import { getRepoHead } from '../git/gitCli';
 import { getCanonicalHarnessDefinition } from './canonicalHarnesses';
+import { locateComparisonRuntime } from '../reporting/comparisonRuntimeLocator';
 
 export interface HarnessDashboardSmokeOptions extends HarnessReportSmokeOptions {
   dashboardCommitWindow?: number;
   reportProgress?: (update: { message: string; increment?: number }) => void | Promise<void>;
+  runtimeExecutionTimeoutMs?: number;
+  runtimeHeartbeatIntervalMs?: number;
 }
 
 export interface HarnessDashboardSmokePairSummary {
   pairId?: string;
+  pairIndex: number;
   selectedHash: string;
   baseHash: string;
   reportStatus: 'ready-for-runtime' | 'blocked-preflight' | 'blocked-runtime';
   runtimeExecutionState: 'not-run' | 'not-available' | 'succeeded' | 'failed';
   runtimeProvider?: string;
   runtimeEngine?: string;
+  runtimeFailureReason?: string;
+  runtimeDiagnosticReason?: string;
   generatedReportExists: boolean;
   packetFilePath: string;
   reportFilePath: string;
   metadataFilePath: string;
   sourceRecordFilePath?: string;
+  runtimeStdoutPath?: string;
+  runtimeStderrPath?: string;
+  runtimeDiagnosticLogPath?: string;
+  runtimeProcessObservationPath?: string;
   actualPreparationSeconds: number;
   estimatedPreparationSeconds?: number;
   absoluteEtaErrorSeconds?: number;
@@ -81,6 +92,11 @@ export interface HarnessDashboardSmokeReport {
   dashboardProviderSummaries: MultiReportDashboardRecord['summary']['providerSummaries'];
   dashboardEtaAccuracyFilePath?: string;
   dashboardEtaAccuracyRecord?: MultiReportDashboardEtaAccuracyRecord;
+  completionState: 'completed' | 'failed';
+  processedPairCount: number;
+  terminalPairIndex?: number;
+  terminalPairFailureReason?: string;
+  comparabilityState: 'comparable-to-windows-baseline' | 'characterization-only';
   pairSummaries: HarnessDashboardSmokePairSummary[];
 }
 
@@ -133,6 +149,16 @@ export async function runHarnessDashboardSmoke(
   let etaEligiblePairCount = 0;
   const etaAccuracySamples: MultiReportDashboardEtaAccuracyRecord['samples'] = [];
   const nowMs = deps.nowMs ?? Date.now;
+  const benchmarkRuntimeSelection = applyRuntimeEngineOverride(
+    await (deps.locateComparisonRuntime ?? locateComparisonRuntime)(
+      options.runtimePlatform ?? resolveCurrentRuntimePlatform(),
+      options.runtimeSettings ?? {}
+    ),
+    options.runtimeEngineOverride
+  );
+  let completionState: HarnessDashboardSmokeReport['completionState'] = 'completed';
+  let terminalPairIndex: number | undefined;
+  let terminalPairFailureReason: string | undefined;
 
   await options.reportProgress?.({
     message: `Loaded ${dashboardModel.commits.length} retained commit(s) and ${pairCommits.length} compare pair(s) for ${definition.targetRelativePath}.`
@@ -154,6 +180,17 @@ export async function runHarnessDashboardSmoke(
               estimatedRemainingSeconds
             )} left: executing LabVIEW comparison-report runtime.`
     });
+    const heartbeatStop = startBenchmarkPairHeartbeat({
+      pairIndex: index + 1,
+      pairCount: pairCommits.length,
+      runtimeProvider: benchmarkRuntimeSelection.provider,
+      runtimeEngine: benchmarkRuntimeSelection.engine,
+      startedMs: pairStartMs,
+      estimatedRemainingSeconds,
+      intervalMs: options.runtimeHeartbeatIntervalMs,
+      nowMs,
+      reportProgress: options.reportProgress
+    });
     const execution = await (
       deps.executeHarnessComparisonReportForCommit ?? executeHarnessComparisonReportForCommit
     )(
@@ -173,7 +210,9 @@ export async function runHarnessDashboardSmoke(
           deps.archiveComparisonReportSource ?? archiveComparisonReportSource
       },
       true
-    );
+    ).finally(() => {
+      heartbeatStop();
+    });
     const pairDurationMs = Math.max(0, nowMs() - pairStartMs);
     const etaEligible = isDashboardPairEtaEligible(execution.record.runtimeExecution.reportExists);
     if (etaEligible) {
@@ -211,12 +250,15 @@ export async function runHarnessDashboardSmoke(
     });
     pairSummaries.push({
       pairId: execution.archivedSourceRecord?.archivePlan.pairId,
+      pairIndex: index + 1,
       selectedHash: execution.record.selectedHash,
       baseHash: execution.record.baseHash,
       reportStatus: execution.record.reportStatus,
       runtimeExecutionState: execution.record.runtimeExecutionState,
       runtimeProvider: execution.record.runtimeSelection.provider,
       runtimeEngine: execution.record.runtimeSelection.engine,
+      runtimeFailureReason: execution.record.runtimeExecution.failureReason,
+      runtimeDiagnosticReason: execution.record.runtimeExecution.diagnosticReason,
       generatedReportExists: execution.record.runtimeExecution.reportExists,
       packetFilePath:
         execution.archivedSourceRecord?.archivePlan.packetFilePath ?? execution.packetFilePath,
@@ -225,12 +267,30 @@ export async function runHarnessDashboardSmoke(
       metadataFilePath:
         execution.archivedSourceRecord?.archivePlan.metadataFilePath ?? execution.metadataFilePath,
       sourceRecordFilePath: execution.archivedSourceRecord?.archivePlan.sourceRecordFilePath,
+      runtimeStdoutPath: execution.record.runtimeExecution.stdoutFilePath,
+      runtimeStderrPath: execution.record.runtimeExecution.stderrFilePath,
+      runtimeDiagnosticLogPath: execution.record.runtimeExecution.diagnosticLogArtifactPath,
+      runtimeProcessObservationPath:
+        execution.record.runtimeExecution.processObservationArtifactPath,
       actualPreparationSeconds,
       estimatedPreparationSeconds:
         estimatedPairSeconds === undefined ? undefined : roundSeconds(estimatedPairSeconds),
       absoluteEtaErrorSeconds,
       signedEtaErrorSeconds
     });
+
+    if (execution.record.runtimeExecutionState === 'failed') {
+      completionState = 'failed';
+      terminalPairIndex = index + 1;
+      terminalPairFailureReason =
+        execution.record.runtimeExecution.failureReason ?? 'runtime-execution-failed';
+      await options.reportProgress?.({
+        message: `Stopping Linux benchmark at pair ${index + 1}/${pairCommits.length}: ${
+          execution.record.runtimeExecution.failureReason ?? 'runtime-execution-failed'
+        }.`
+      });
+      break;
+    }
   }
   const etaAccuracyRecord = buildDashboardPairEtaAccuracyRecord(
     pairSummaries.length,
@@ -312,6 +372,15 @@ export async function runHarnessDashboardSmoke(
     dashboardProviderSummaries: dashboard.record.summary.providerSummaries,
     dashboardEtaAccuracyFilePath,
     dashboardEtaAccuracyRecord: etaAccuracyRecordWithContext,
+    completionState,
+    processedPairCount: pairSummaries.length,
+    terminalPairIndex,
+    terminalPairFailureReason,
+    comparabilityState:
+      completionState === 'completed' &&
+      pairSummaries.length === pairCommits.length
+        ? 'comparable-to-windows-baseline'
+        : 'characterization-only',
     pairSummaries
   };
 
@@ -328,7 +397,10 @@ export async function runHarnessDashboardSmoke(
   );
   await (deps.writeFile ?? fs.writeFile)(reportHtmlPath, renderHarnessDashboardSmokeHtml(report));
   await options.reportProgress?.({
-    message: 'Host Linux benchmark dashboard complete.'
+    message:
+      completionState === 'completed'
+        ? 'Host Linux benchmark dashboard complete.'
+        : 'Host Linux benchmark retained a partial failed summary.'
   });
 
   return { report, reportJsonPath, reportMarkdownPath, reportHtmlPath };
@@ -362,6 +434,11 @@ export function renderHarnessDashboardSmokeMarkdown(report: HarnessDashboardSmok
 - Dashboard detail items: ${report.dashboardDetailItemCount}
 - Dashboard ETA accuracy: ${formatHarnessDashboardEtaAccuracySummary(report.dashboardEtaAccuracyRecord)}
 - Dashboard ETA accuracy file: ${report.dashboardEtaAccuracyFilePath ?? 'none'}
+- Completion state: ${report.completionState}
+- Processed pair count: ${report.processedPairCount}
+- Terminal pair index: ${report.terminalPairIndex ?? 'none'}
+- Terminal pair failure: ${report.terminalPairFailureReason ?? 'none'}
+- Comparability: ${report.comparabilityState}
 - Dashboard HTML: ${report.dashboardFilePath}
 - Dashboard JSON: ${report.dashboardJsonFilePath}
 - Provider summaries: ${report.dashboardProviderSummaries.map((summary) => `${summary.label}=${summary.pairCount}`).join(' | ') || 'none'}
@@ -428,6 +505,15 @@ export function renderHarnessDashboardSmokeHtml(report: HarnessDashboardSmokeRep
       <div><strong>Dashboard ETA accuracy file:</strong> ${escapeHtml(
         report.dashboardEtaAccuracyFilePath ?? 'none'
       )}</div>
+      <div><strong>Completion state:</strong> ${escapeHtml(report.completionState)}</div>
+      <div><strong>Processed pair count:</strong> ${report.processedPairCount}</div>
+      <div><strong>Terminal pair index:</strong> ${escapeHtml(
+        String(report.terminalPairIndex ?? 'none')
+      )}</div>
+      <div><strong>Terminal pair failure:</strong> ${escapeHtml(
+        report.terminalPairFailureReason ?? 'none'
+      )}</div>
+      <div><strong>Comparability:</strong> ${escapeHtml(report.comparabilityState)}</div>
       <div><strong>Dashboard HTML:</strong> ${escapeHtml(report.dashboardFilePath)}</div>
       <div><strong>Dashboard JSON:</strong> ${escapeHtml(report.dashboardJsonFilePath)}</div>
       <div><strong>Provider summaries:</strong> ${escapeHtml(
@@ -501,6 +587,16 @@ function roundSeconds(value: number): number {
   return Math.round(value * 1000) / 1000;
 }
 
+function resolveCurrentRuntimePlatform(): 'win32' | 'linux' | 'darwin' {
+  if (process.platform === 'win32') {
+    return 'win32';
+  }
+  if (process.platform === 'darwin') {
+    return 'darwin';
+  }
+  return 'linux';
+}
+
 function formatDurationSeconds(value: number): string {
   if (value >= 3600) {
     return `${roundSeconds(value / 3600)}h`;
@@ -526,4 +622,49 @@ function describePreparedPairOutcome(
     return 'failed retained pair evidence';
   }
   return 'retained pair evidence without a generated comparison report';
+}
+
+function startBenchmarkPairHeartbeat(options: {
+  pairIndex: number;
+  pairCount: number;
+  runtimeProvider?: string;
+  runtimeEngine?: string;
+  startedMs: number;
+  estimatedRemainingSeconds?: number;
+  intervalMs?: number;
+  nowMs: () => number;
+  reportProgress?: (update: { message: string; increment?: number }) => void | Promise<void>;
+}): () => void {
+  if (!options.reportProgress) {
+    return () => undefined;
+  }
+
+  const intervalMs =
+    typeof options.intervalMs === 'number' && options.intervalMs > 0
+      ? options.intervalMs
+      : 15_000;
+  const handle = setInterval(() => {
+    const elapsedSeconds = roundSeconds(
+      Math.max(0, options.nowMs() - options.startedMs) / 1000
+    );
+    const providerSummary = [
+      options.runtimeProvider ?? 'unknown-provider',
+      options.runtimeEngine ?? 'unknown-engine'
+    ].join(' / ');
+    const estimatedLeft =
+      options.estimatedRemainingSeconds === undefined
+        ? undefined
+        : `; est. ${formatDurationSeconds(options.estimatedRemainingSeconds)} left`;
+    void options.reportProgress?.({
+      message:
+        `Preparing dashboard pair ${options.pairIndex}/${options.pairCount}${estimatedLeft ?? ''}: ` +
+        `executing LabVIEW comparison-report runtime via ${providerSummary}; elapsed ${formatDurationSeconds(
+          elapsedSeconds
+        )}.`
+    });
+  }, intervalMs);
+
+  return () => {
+    clearInterval(handle);
+  };
 }

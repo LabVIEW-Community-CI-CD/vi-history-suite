@@ -230,6 +230,8 @@ export function renderBenchmarkStatusPanelHtml(
   const hostLinuxStateSummary =
     hostLinux.state === 'completed'
       ? 'Completed retained host Linux benchmark'
+      : hostLinux.state === 'failed'
+        ? 'Failed retained host Linux benchmark'
       : hostLinux.state === 'running'
         ? 'Host Linux benchmark is still running'
         : hostLinux.state === 'stalled'

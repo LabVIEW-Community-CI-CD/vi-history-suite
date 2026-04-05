@@ -202,4 +202,121 @@ describe('benchmark status surfaces', () => {
       'stale host Linux launch receipt exists, but no live host Linux benchmark container is present'
     );
   });
+
+  it('loads a fresh failed host Linux summary instead of pretending the run is still active', async () => {
+    const root = await makeTempDir();
+    const authorityRepoRoot = path.join(root, 'vi-history-suite');
+    const latestSummaryPath = path.join(
+      authorityRepoRoot,
+      '.cache',
+      'github-experiments',
+      'linux-dashboard-benchmark',
+      'HARNESS-VHS-002',
+      'latest-summary.json'
+    );
+    const latestProgressPath = path.join(
+      authorityRepoRoot,
+      '.cache',
+      'github-experiments',
+      'linux-dashboard-benchmark',
+      'HARNESS-VHS-002',
+      'latest-progress.json'
+    );
+    const logPath = path.join(
+      authorityRepoRoot,
+      '.cache',
+      'host-linux-dashboard-benchmark',
+      'run-20260405-021139.log'
+    );
+
+    await fs.mkdir(path.dirname(latestSummaryPath), { recursive: true });
+    await fs.mkdir(path.dirname(logPath), { recursive: true });
+    await fs.writeFile(
+      path.join(authorityRepoRoot, '.cache', 'host-linux-dashboard-benchmark', 'latest-launch.json'),
+      JSON.stringify({
+        startedAt: '2026-04-05T02:09:26.314Z',
+        pid: 23456,
+        logPath,
+        image:
+          'ghcr.io/svelderrainruiz/vi-history-suite-source-experiments/linux-dashboard-benchmark:main',
+        sourceCommit: '1285294'
+      })
+    );
+    await fs.writeFile(
+      latestSummaryPath,
+      JSON.stringify({
+        schema: 'vi-history-suite/github-linux-dashboard-benchmark@v1',
+        benchmarkId: 'GITHUB-VHS-LINUX-DASHBOARD-BENCHMARK',
+        harnessId: 'HARNESS-VHS-002',
+        repositoryUrl: 'https://github.com/ni/labview-icon-editor.git',
+        targetRelativePath: 'resource/plugins/lv_icon.vi',
+        runtimePlatform: 'linux',
+        runtimeImage: 'nationalinstruments/labview:2026q1-linux',
+        benchmarkImage: {
+          reference:
+            'ghcr.io/svelderrainruiz/vi-history-suite-source-experiments/linux-dashboard-benchmark:main',
+          digest: ''
+        },
+        headlessDisplayProvider: 'xvfb-run',
+        startedAt: '2026-04-05T02:09:26.314Z',
+        completedAt: '2026-04-05T02:11:39.478Z',
+        wallClockSeconds: 133.164,
+        dashboardCommitWindow: 139,
+        comparePairCount: 138,
+        generatedReportCount: 0,
+        blockedPairCount: 0,
+        failedPairCount: 1,
+        noGeneratedReportPairCount: 0,
+        totalPairPreparationSeconds: 125.484,
+        meanPairPreparationSeconds: 125.484,
+        maxPairPreparationSeconds: 125.484,
+        dashboardWindowCompletenessState: 'incomplete-missing-archives',
+        completionState: 'failed',
+        processedPairCount: 1,
+        terminalPairIndex: 1,
+        terminalPairFailureReason: 'command-timed-out',
+        terminalOutcome: 'runtime-timed-out',
+        comparabilityState: 'characterization-only',
+        providerCounts: {
+          'host-native': 1
+        },
+        etaAccuracy: {
+          measuredPairCount: 0,
+          preparedPairCount: 1,
+          etaEligiblePairCount: 0
+        },
+        retainedArtifacts: {
+          smokeJsonPath: '/workspace/.cache/harness-reports/HARNESS-VHS-002/dashboard-smoke.json',
+          smokeMarkdownPath: '/workspace/.cache/harness-reports/HARNESS-VHS-002/dashboard-smoke.md',
+          smokeHtmlPath: '/workspace/.cache/harness-reports/HARNESS-VHS-002/dashboard-smoke.html',
+          latestSummaryPath: '/workspace/.cache/github-experiments/linux-dashboard-benchmark/HARNESS-VHS-002/latest-summary.json',
+          runSummaryPath: '/workspace/.cache/github-experiments/linux-dashboard-benchmark/HARNESS-VHS-002/2026-04-05-021139478.json',
+          pairFailureReceiptPath: '/workspace/.cache/github-experiments/linux-dashboard-benchmark/HARNESS-VHS-002/pair-failure-pair-0001.json'
+        }
+      })
+    );
+    await fs.writeFile(
+      latestProgressPath,
+      JSON.stringify({
+        schema: 'vi-history-suite/github-linux-dashboard-benchmark-progress@v1',
+        benchmarkId: 'GITHUB-VHS-LINUX-DASHBOARD-BENCHMARK',
+        harnessId: 'HARNESS-VHS-002',
+        targetRelativePath: 'resource/plugins/lv_icon.vi',
+        recordedAt: '2026-04-05T02:11:39.493Z',
+        phase: 'failed',
+        message: 'Linux benchmark failed at pair 1/138: command-timed-out.'
+      })
+    );
+    await fs.writeFile(logPath, 'VIHS_PROGRESS: Linux benchmark failed at pair 1/138: command-timed-out.\n');
+
+    const snapshot = await loadBenchmarkStatusSnapshot(authorityRepoRoot, undefined, {
+      now: () => new Date('2026-04-05T02:12:00.000Z'),
+      resolveContainerState: async () => 'missing'
+    });
+
+    expect(snapshot.hostLinux.state).toBe('failed');
+    expect(snapshot.hostLinux.latestSummary?.completionState).toBe('failed');
+    expect(snapshot.hostLinux.statusSummary).toContain('pair 1/138');
+    expect(snapshot.hostLinux.statusSummary).toContain('command-timed-out');
+  });
 });

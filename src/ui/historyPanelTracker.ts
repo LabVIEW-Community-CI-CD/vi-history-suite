@@ -117,7 +117,7 @@ export interface HistoryPanelActionSummary {
   benchmarkHostLaunchReceiptPath?: string;
   benchmarkHostLatestSummaryPath?: string;
   benchmarkHostLogPath?: string;
-  benchmarkHostState?: 'missing' | 'running' | 'stalled' | 'completed';
+  benchmarkHostState?: 'missing' | 'running' | 'stalled' | 'completed' | 'failed';
   humanReviewSubmissionFilePath?: string;
   humanReviewLatestManifestPath?: string;
   humanReviewCanonicalMachineFilePath?: string;

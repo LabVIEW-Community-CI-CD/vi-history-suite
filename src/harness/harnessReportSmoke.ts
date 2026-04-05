@@ -39,6 +39,7 @@ export interface HarnessReportSmokeOptions {
   runtimeSettings?: ComparisonRuntimeSettings;
   runtimeEngineOverride?: ComparisonRuntimeEngine;
   windowsInteropRoot?: string;
+  runtimeExecutionTimeoutMs?: number;
 }
 
 export interface HarnessReportSmokeReport {
@@ -280,6 +281,8 @@ export async function executeHarnessComparisonReportForCommit(
       record: packet.record,
       repositoryRoot: cloneDirectory,
       interopWorkspaceRoot
+    }, {
+      commandTimeoutMs: options.runtimeExecutionTimeoutMs
     });
   }
 

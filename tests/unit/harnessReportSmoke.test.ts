@@ -747,13 +747,18 @@ describe('runHarnessReportSmoke', () => {
       }
     );
 
-    expect(executeComparisonReport).toHaveBeenCalledWith({
-      record: expect.objectContaining({
-        reportStatus: 'ready-for-runtime'
-      }),
-      repositoryRoot: '/tmp/harnesses/ni-labview-icon-editor',
-      interopWorkspaceRoot: '/mnt/c/Users/sveld/AppData/Local/Temp/vi-history-suite-runtime'
-    });
+    expect(executeComparisonReport).toHaveBeenCalledWith(
+      {
+        record: expect.objectContaining({
+          reportStatus: 'ready-for-runtime'
+        }),
+        repositoryRoot: '/tmp/harnesses/ni-labview-icon-editor',
+        interopWorkspaceRoot: '/mnt/c/Users/sveld/AppData/Local/Temp/vi-history-suite-runtime'
+      },
+      {
+        commandTimeoutMs: undefined
+      }
+    );
   });
 
   it('forwards a requested runtime-engine override into packet persistence via the effective runtime selection', async () => {
@@ -1108,7 +1113,10 @@ describe('runHarnessReportSmoke', () => {
       expect.objectContaining({
         repositoryRoot: '/tmp/harnesses/ni-labview-icon-editor',
         interopWorkspaceRoot: '/mnt/c/reports/HARNESS-VHS-001/windows-interop'
-      })
+      }),
+      {
+        commandTimeoutMs: undefined
+      }
     );
   });
 
@@ -1317,7 +1325,10 @@ describe('runHarnessReportSmoke', () => {
       expect.objectContaining({
         repositoryRoot: '/tmp/harnesses/ni-labview-icon-editor',
         interopWorkspaceRoot: undefined
-      })
+      }),
+      {
+        commandTimeoutMs: undefined
+      }
     );
   });
 
@@ -1522,7 +1533,10 @@ describe('runHarnessReportSmoke', () => {
       expect.objectContaining({
         repositoryRoot: '/tmp/harnesses/ni-labview-icon-editor',
         interopWorkspaceRoot: undefined
-      })
+      }),
+      {
+        commandTimeoutMs: undefined
+      }
     );
   });
 

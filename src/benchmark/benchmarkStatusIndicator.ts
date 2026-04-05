@@ -1,5 +1,5 @@
 export interface HostLinuxBenchmarkIndicatorInput {
-  state: 'missing' | 'running' | 'stalled' | 'completed';
+  state: 'missing' | 'running' | 'stalled' | 'completed' | 'failed';
   latestProgressMessage?: string;
   latestLogLine?: string;
   statusSummary: string;

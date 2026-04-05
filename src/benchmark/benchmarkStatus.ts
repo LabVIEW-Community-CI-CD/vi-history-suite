@@ -71,7 +71,7 @@ export interface BenchmarkStatusWindowsBaselineSummary {
 }
 
 export interface BenchmarkStatusHostLinuxSummary {
-  state: 'missing' | 'running' | 'stalled' | 'completed';
+  state: 'missing' | 'running' | 'stalled' | 'completed' | 'failed';
   benchmarkWorkspaceRoot?: string;
   launchReceiptPath?: string;
   latestSummaryPath?: string;
@@ -256,7 +256,8 @@ async function loadHostLinuxSummary(
 
   if (hasFreshSummary && latestSummary) {
     return {
-      state: 'completed',
+      state:
+        latestSummary.completionState === 'failed' ? 'failed' : 'completed',
       benchmarkWorkspaceRoot,
       launchReceiptPath,
       latestSummaryPath,
@@ -272,7 +273,13 @@ async function loadHostLinuxSummary(
       latestLogLine,
       materializedMetadataCount,
       statusSummary:
-        'Completed. The latest retained Linux benchmark summary is newer than the current host launch receipt.'
+        latestSummary.completionState === 'failed'
+          ? `Failed. The latest retained Linux benchmark summary stopped at pair ${String(
+              latestSummary.terminalPairIndex ?? 'unknown'
+            )}/${latestSummary.comparePairCount} with ${
+              latestSummary.terminalPairFailureReason ?? 'runtime-execution-failed'
+            }.`
+          : 'Completed. The latest retained Linux benchmark summary is newer than the current host launch receipt.'
     };
   }
 

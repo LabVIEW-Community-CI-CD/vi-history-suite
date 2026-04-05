@@ -75,9 +75,11 @@ describe('host Linux benchmark workspace staging filter', () => {
         'npm warn deprecated glob@11.1.0: old versions are unsupported',
         'VIHS_PROGRESS: Installing benchmark workspace dependencies.',
         'npm warn deprecated something-else',
-        'VIHS_PROGRESS: Starting host Linux lv_icon benchmark.'
+        'VIHS_PROGRESS: Preparing dashboard pair 7/137; est. 74m 17s left: Executing LabVIEW comparison runtime.'
       ])
-    ).toBe('Starting host Linux lv_icon benchmark.');
+    ).toBe(
+      'Preparing dashboard pair 7/137; est. 74m 17s left: Executing LabVIEW comparison runtime.'
+    );
     expect(
       selectLatestProgressLine([
         'npm warn deprecated glob@11.1.0: old versions are unsupported',

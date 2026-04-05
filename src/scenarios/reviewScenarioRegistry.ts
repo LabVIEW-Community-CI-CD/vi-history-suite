@@ -1,3 +1,5 @@
+import { normalizeGitHubRepositoryUrl } from '../support/repositorySupportPolicy';
+
 export type ReviewScenarioMaturity = 'draft' | 'active' | 'certified';
 
 export interface ReviewScenarioDefinition {
@@ -78,10 +80,13 @@ export function getDefaultReviewScenarioForRepository(
   repositoryUrl: string,
   targetRelativePath: string
 ): ReviewScenarioDefinition | undefined {
+  const normalizedRepositoryUrl =
+    normalizeGitHubRepositoryUrl(repositoryUrl) ?? repositoryUrl;
   const scenario = REVIEW_SCENARIOS.find(
     (candidate) =>
       candidate.maturity === 'active' &&
-      candidate.repositoryUrl === repositoryUrl &&
+      (normalizeGitHubRepositoryUrl(candidate.repositoryUrl) ?? candidate.repositoryUrl) ===
+        normalizedRepositoryUrl &&
       candidate.targetRelativePath === targetRelativePath
   );
   return scenario ? { ...scenario } : undefined;
@@ -101,7 +106,8 @@ export function validateReviewScenarioEvidence(
 
   if (
     evidence.repositoryUrl !== undefined &&
-    scenario.repositoryUrl !== evidence.repositoryUrl
+    (normalizeGitHubRepositoryUrl(scenario.repositoryUrl) ?? scenario.repositoryUrl) !==
+      (normalizeGitHubRepositoryUrl(evidence.repositoryUrl) ?? evidence.repositoryUrl)
   ) {
     mismatches.push(
       `Scenario ${scenario.id} requires repository ${scenario.repositoryUrl}, got ${evidence.repositoryUrl}.`

@@ -1,0 +1,324 @@
+import { describe, expect, it, vi } from 'vitest';
+
+import {
+  applyGitHubWindowsDashboardBenchmarkCliExitCode,
+  buildGitHubWindowsDashboardBenchmarkSummary,
+  formatGitHubWindowsDashboardBenchmarkSuccess,
+  getGitHubWindowsDashboardBenchmarkUsage,
+  maybeRunGitHubWindowsDashboardBenchmarkCliAsMain,
+  parseGitHubWindowsDashboardBenchmarkArgs,
+  runGitHubWindowsDashboardBenchmarkCli,
+  runGitHubWindowsDashboardBenchmarkCliMain
+} from '../../src/cli/runGitHubWindowsDashboardBenchmark';
+
+const WINDOWS_LABVIEW_EXE_PATH =
+  'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe';
+const WINDOWS_LVCOMPARE_PATH =
+  'C:\\Program Files\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe';
+
+describe('runGitHubWindowsDashboardBenchmarkCli', () => {
+  it('parses deterministic benchmark args with a deep Windows default', () => {
+    expect(parseGitHubWindowsDashboardBenchmarkArgs([])).toEqual({
+      harnessId: 'HARNESS-VHS-002',
+      dashboardCommitWindow: 1000,
+      runtimeEngineOverride: undefined,
+      labviewCliPath: undefined,
+      labviewExePath: undefined,
+      lvComparePath: undefined,
+      strictRsrcHeader: false,
+      helpRequested: false
+    });
+
+    expect(
+      parseGitHubWindowsDashboardBenchmarkArgs([
+        '--harness-id',
+        'HARNESS-VHS-999',
+        '--dashboard-commit-window',
+        '139',
+        '--engine',
+        'lvcompare',
+        '--labview-exe-path',
+        WINDOWS_LABVIEW_EXE_PATH,
+        '--lvcompare-path',
+        WINDOWS_LVCOMPARE_PATH,
+        '--strict-rsrc-header'
+      ])
+    ).toEqual({
+      harnessId: 'HARNESS-VHS-999',
+      dashboardCommitWindow: 139,
+      runtimeEngineOverride: 'lvcompare',
+      labviewCliPath: undefined,
+      labviewExePath: WINDOWS_LABVIEW_EXE_PATH,
+      lvComparePath: WINDOWS_LVCOMPARE_PATH,
+      strictRsrcHeader: true,
+      helpRequested: false
+    });
+
+    expect(() =>
+      parseGitHubWindowsDashboardBenchmarkArgs(['--dashboard-commit-window', '2'])
+    ).toThrow(/Unsupported value for --dashboard-commit-window/);
+    expect(() => parseGitHubWindowsDashboardBenchmarkArgs(['--engine', 'weird'])).toThrow(
+      /Unsupported value for --engine/
+    );
+    expect(getGitHubWindowsDashboardBenchmarkUsage()).toContain(
+      'Defaults to HARNESS-VHS-002'
+    );
+  });
+
+  it('writes a retained Windows benchmark summary from the dashboard smoke result', async () => {
+    const writes: string[] = [];
+    const mkdir = vi.fn().mockResolvedValue(undefined);
+    const writeFile = vi.fn().mockResolvedValue(undefined);
+    const runner = vi.fn().mockImplementation(async (_harnessId, options) => {
+      await options.reportProgress?.({
+        message:
+          'Preparing dashboard pair 7/138; est. 64m 17s left: executing LabVIEW comparison-report runtime.'
+      });
+      return {
+        report: {
+          harnessId: 'HARNESS-VHS-002',
+          repositoryUrl: 'https://github.com/ni/labview-icon-editor.git',
+          cloneDirectory: 'C:\\tmp\\harness',
+          targetRelativePath: 'resource/plugins/lv_icon.vi',
+          head: 'abcdef1234567890',
+          generatedAt: '2026-04-05T03:00:00.000Z',
+          eligible: true,
+          signature: 'LVIN',
+          dashboardCommitWindow: 139,
+          comparePairCount: 138,
+          dashboardFilePath: 'C:\\tmp\\dashboard.html',
+          dashboardJsonFilePath: 'C:\\tmp\\dashboard.json',
+          dashboardWindowCompletenessState: 'complete',
+          dashboardArchivedPairCount: 138,
+          dashboardMissingPairCount: 0,
+          dashboardGeneratedReportCount: 136,
+          dashboardMetadataPairCount: 136,
+          dashboardOverviewImageCount: 272,
+          dashboardDetailItemCount: 544,
+          dashboardProviderSummaries: [],
+          completionState: 'completed',
+          processedPairCount: 138,
+          terminalPairIndex: undefined,
+          terminalPairFailureReason: undefined,
+          comparabilityState: 'comparable-to-windows-baseline',
+          dashboardEtaAccuracyFilePath: 'C:\\tmp\\dashboard-pair-eta-accuracy.json',
+          dashboardEtaAccuracyRecord: {
+            recordedAt: '2026-04-05T03:00:00.000Z',
+            stage: 'pair-preparation',
+            preparedPairCount: 138,
+            etaEligiblePairCount: 136,
+            measuredPairCount: 135,
+            unmeasuredPairCount: 3,
+            excludedPairCount: 2,
+            meanAbsoluteErrorSeconds: 4.2,
+            maxAbsoluteErrorSeconds: 19.3,
+            meanSignedErrorSeconds: 0.8,
+            meanAbsolutePercentageError: 8.9,
+            samples: []
+          },
+          pairSummaries: [
+            {
+              pairIndex: 1,
+              selectedHash: 'aaaa',
+              baseHash: 'bbbb',
+              reportStatus: 'ready-for-runtime',
+              runtimeExecutionState: 'succeeded',
+              runtimeProvider: 'host-native',
+              runtimeEngine: 'labview-cli',
+              generatedReportExists: true,
+              packetFilePath: 'C:\\tmp\\packet-1.json',
+              reportFilePath: 'C:\\tmp\\report-1.html',
+              metadataFilePath: 'C:\\tmp\\metadata-1.json',
+              actualPreparationSeconds: 10
+            },
+            {
+              pairIndex: 2,
+              selectedHash: 'cccc',
+              baseHash: 'dddd',
+              reportStatus: 'blocked-runtime',
+              runtimeExecutionState: 'not-available',
+              runtimeProvider: 'host-native',
+              runtimeEngine: 'labview-cli',
+              generatedReportExists: false,
+              packetFilePath: 'C:\\tmp\\packet-2.json',
+              reportFilePath: 'C:\\tmp\\report-2.html',
+              metadataFilePath: 'C:\\tmp\\metadata-2.json',
+              actualPreparationSeconds: 3
+            },
+            {
+              pairIndex: 3,
+              selectedHash: 'eeee',
+              baseHash: 'ffff',
+              reportStatus: 'ready-for-runtime',
+              runtimeExecutionState: 'failed',
+              runtimeProvider: 'host-native',
+              runtimeEngine: 'labview-cli',
+              runtimeFailureReason: 'command-exited-nonzero',
+              generatedReportExists: false,
+              packetFilePath: 'C:\\tmp\\packet-3.json',
+              reportFilePath: 'C:\\tmp\\report-3.html',
+              metadataFilePath: 'C:\\tmp\\metadata-3.json',
+              runtimeStdoutPath: 'C:\\tmp\\runtime-stdout-3.txt',
+              runtimeStderrPath: 'C:\\tmp\\runtime-stderr-3.txt',
+              runtimeDiagnosticLogPath: 'C:\\tmp\\runtime-diagnostic-3.txt',
+              runtimeProcessObservationPath: 'C:\\tmp\\runtime-process-observation-3.json',
+              actualPreparationSeconds: 7
+            }
+          ]
+        },
+        reportJsonPath: 'C:\\tmp\\reports\\HARNESS-VHS-002\\dashboard-smoke.json',
+        reportMarkdownPath: 'C:\\tmp\\reports\\HARNESS-VHS-002\\dashboard-smoke.md',
+        reportHtmlPath: 'C:\\tmp\\reports\\HARNESS-VHS-002\\dashboard-smoke.html'
+      };
+    });
+
+    await expect(
+      runGitHubWindowsDashboardBenchmarkCli([], {
+        repoRoot: '/tmp/vi-history-suite',
+        runner,
+        mkdir,
+        writeFile,
+        now: (() => {
+          const values = [
+            new Date('2026-04-05T03:00:00.000Z'),
+            new Date('2026-04-05T04:10:00.000Z')
+          ];
+          return () => values.shift() ?? new Date('2026-04-05T04:10:00.000Z');
+        })(),
+        stdout: {
+          write(text: string) {
+            writes.push(text);
+          }
+        }
+      })
+    ).resolves.toBe('pass');
+
+    expect(runner).toHaveBeenCalledWith(
+      'HARNESS-VHS-002',
+      expect.objectContaining({
+        runtimePlatform: 'win32',
+        dashboardCommitWindow: 1000,
+        runtimeSettings: {
+          labviewCliPath:
+            'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+          labviewExePath:
+            'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+          lvComparePath:
+            'C:\\Program Files\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe'
+        }
+      })
+    );
+    expect(mkdir).toHaveBeenCalledWith(
+      '/tmp/vi-history-suite/.cache/github-experiments/windows-dashboard-benchmark/HARNESS-VHS-002',
+      { recursive: true }
+    );
+    expect(writeFile.mock.calls[0]?.[0]).toContain('latest-progress.json');
+    expect(writeFile.mock.calls.at(-1)?.[1]).toContain('"phase": "completed"');
+    expect(writes.join('')).toContain(
+      'VIHS_PROGRESS: Preparing the Windows benchmark workspace for HARNESS-VHS-002.'
+    );
+    expect(writes.join('')).toContain(
+      'GitHub Windows dashboard benchmark completed for HARNESS-VHS-002'
+    );
+    expect(writes.join('')).toContain('Completion: completed (comparable-to-linux-benchmark-image)');
+  });
+
+  it('surfaces help and exit wiring deterministically', async () => {
+    const stdoutWrites: string[] = [];
+    const stderrWrites: string[] = [];
+    const processLike = { exitCode: 0 };
+
+    await expect(
+      runGitHubWindowsDashboardBenchmarkCli(['--help'], {
+        stdout: { write(text: string) { stdoutWrites.push(text); } }
+      })
+    ).resolves.toBe('help');
+
+    expect(
+      maybeRunGitHubWindowsDashboardBenchmarkCliAsMain(
+        ['--help'],
+        module,
+        module,
+        {
+          stdout: { write(text: string) { stdoutWrites.push(text); } }
+        },
+        processLike,
+        { write(text: string) { stderrWrites.push(text); } }
+      )
+    ).toBe(true);
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(stdoutWrites.join('')).toContain('Usage: runGitHubWindowsDashboardBenchmark');
+    expect(applyGitHubWindowsDashboardBenchmarkCliExitCode(7, processLike)).toBe(7);
+    expect(processLike.exitCode).toBe(7);
+    expect(stderrWrites).toEqual([]);
+    expect(
+      formatGitHubWindowsDashboardBenchmarkSuccess(
+        buildGitHubWindowsDashboardBenchmarkSummary(
+          {
+            report: {
+              harnessId: 'HARNESS-VHS-002',
+              repositoryUrl: 'https://github.com/ni/labview-icon-editor.git',
+              cloneDirectory: 'C:\\tmp\\harness',
+              targetRelativePath: 'resource/plugins/lv_icon.vi',
+              head: 'head',
+              generatedAt: '2026-04-05T03:00:00.000Z',
+              eligible: true,
+              signature: 'LVIN',
+              dashboardCommitWindow: 139,
+              comparePairCount: 1,
+              dashboardFilePath: 'a',
+              dashboardJsonFilePath: 'b',
+              dashboardWindowCompletenessState: 'complete',
+              dashboardArchivedPairCount: 1,
+              dashboardMissingPairCount: 0,
+              dashboardGeneratedReportCount: 1,
+              dashboardMetadataPairCount: 1,
+              dashboardOverviewImageCount: 2,
+              dashboardDetailItemCount: 4,
+              dashboardProviderSummaries: [],
+              completionState: 'completed',
+              processedPairCount: 1,
+              comparabilityState: 'comparable-to-windows-baseline',
+              pairSummaries: [
+                {
+                  pairIndex: 1,
+                  selectedHash: 'a',
+                  baseHash: 'b',
+                  reportStatus: 'ready-for-runtime',
+                  runtimeExecutionState: 'succeeded',
+                  runtimeProvider: 'host-native',
+                  runtimeEngine: 'labview-cli',
+                  generatedReportExists: true,
+                  packetFilePath: 'a',
+                  reportFilePath: 'b',
+                  metadataFilePath: 'c',
+                  actualPreparationSeconds: 1
+                }
+              ]
+            },
+            reportJsonPath: 'a',
+            reportMarkdownPath: 'b',
+            reportHtmlPath: 'c'
+          },
+          {
+            startedAt: new Date('2026-04-05T03:00:00.000Z'),
+            completedAt: new Date('2026-04-05T03:00:05.000Z'),
+            benchmarkRoot: 'C:\\tmp',
+            runtimeImage: 'nationalinstruments/labview:2026q1-windows'
+          }
+        )
+      ).join('\n')
+    ).toContain('Runtime image: nationalinstruments/labview:2026q1-windows');
+
+    await expect(
+      runGitHubWindowsDashboardBenchmarkCliMain(
+        ['--dashboard-commit-window', '2'],
+        {},
+        { write(text: string) { stderrWrites.push(text); } }
+      )
+    ).resolves.toBe(1);
+    expect(stderrWrites.join('')).toContain('Unsupported value for --dashboard-commit-window');
+  });
+});

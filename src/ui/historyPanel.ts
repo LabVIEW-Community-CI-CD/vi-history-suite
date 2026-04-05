@@ -1,11 +1,13 @@
 import {
   ViHistoryCommit,
+  ViHistoryRepositorySupport,
   ViHistorySurfaceCapabilities,
   ViHistoryViewModel
 } from '../services/viHistoryModel';
 
 export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
   const capabilities = model.surfaceCapabilities ?? {};
+  const support = model.repositorySupport;
   const showBenchmarkStatus = capabilities.benchmarkStatusAvailable === true;
   const showHumanReviewSubmission = capabilities.humanReviewSubmissionAvailable !== false;
   const newestCommit = model.commits[0];
@@ -26,11 +28,11 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
     capabilities.decisionRecordAvailable !== false && model.commits.length >= 3
       ? '<button data-testid="history-action-decision-record" data-command="createDecisionRecord">Create decision record</button>'
       : '<button data-testid="history-action-decision-record" disabled>Create decision record</button>';
-  const capabilitySummary = renderCapabilitySummary(capabilities, model.commits.length);
-  const benchmarkStatusCapabilityHtml = showBenchmarkStatus
+  const capabilitySummary = renderCapabilitySummary(model);
+  const benchmarkStatusCapabilityHtml = capabilitySummary.benchmarkStatus
     ? `<div data-testid="history-capability-benchmark-status"><strong>Benchmark status:</strong> ${capabilitySummary.benchmarkStatus}</div>`
     : '';
-  const humanReviewCapabilityHtml = showHumanReviewSubmission
+  const humanReviewCapabilityHtml = capabilitySummary.humanReviewSubmission
     ? `<div data-testid="history-capability-human-review"><strong>Host review submission:</strong> ${capabilitySummary.humanReviewSubmission}</div>`
     : '';
   const reviewGuidanceBenchmarkStep = showBenchmarkStatus
@@ -41,6 +43,9 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
     : '';
   const reviewSubmissionHtml = showHumanReviewSubmission
     ? renderHumanReviewSubmissionSection()
+    : '';
+  const repositorySupportHtml = support
+    ? renderRepositorySupportSection(support)
     : '';
   const rows = model.commits
     .map((commit: ViHistoryCommit, index: number) => {
@@ -220,9 +225,12 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
     <div class="meta" data-testid="history-meta">
       <div data-testid="history-meta-repository"><strong>Repository:</strong> ${escapeHtml(model.repositoryName)}</div>
       <div data-testid="history-meta-root"><strong>Root:</strong> ${escapeHtml(model.repositoryRoot)}</div>
+      <div data-testid="history-meta-origin"><strong>Origin:</strong> ${escapeHtml(model.repositoryUrl ?? 'Unavailable')}</div>
       <div data-testid="history-meta-path"><strong>Path:</strong> ${escapeHtml(model.relativePath)}</div>
       <div data-testid="history-meta-surface"><strong>Surface:</strong> VI History</div>
+      <div data-testid="history-meta-support"><strong>Repo support:</strong> ${escapeHtml(support?.supportLabel ?? 'Not classified in this build')}</div>
     </div>
+    ${repositorySupportHtml}
     <div class="packet" data-testid="history-surface-capabilities">
       <div data-testid="history-capability-comparison"><strong>Compare generation:</strong> ${capabilitySummary.comparisonGeneration}</div>
       <div data-testid="history-capability-open-compare"><strong>Open compare:</strong> ${capabilitySummary.openCompare}</div>
@@ -355,7 +363,9 @@ export function renderHistoryReviewPacketText(model: ViHistoryViewModel): string
     'VI History Review Packet',
     `Repository: ${model.repositoryName}`,
     `Root: ${model.repositoryRoot}`,
+    `Origin: ${model.repositoryUrl ?? 'Unavailable'}`,
     `Path: ${model.relativePath}`,
+    `Repo support: ${model.repositorySupport?.supportLabel ?? 'Not classified in this build'}`,
     `Signature: ${model.signature}`,
     `Eligibility: ${model.eligible ? 'Eligible' : 'Not eligible'}`,
     `Retained revisions: ${model.commits.length}`,
@@ -413,8 +423,7 @@ function renderHistoryWindowSummary(model: ViHistoryViewModel): string {
 }
 
 function renderCapabilitySummary(
-  capabilities: ViHistorySurfaceCapabilities,
-  commitCount: number
+  model: ViHistoryViewModel
 ): {
   comparisonGeneration: string;
   openCompare: string;
@@ -424,23 +433,40 @@ function renderCapabilitySummary(
   benchmarkStatus?: string;
   humanReviewSubmission?: string;
 } {
+  const capabilities = model.surfaceCapabilities ?? {};
+  const support = model.repositorySupport;
+  const commitCount = model.commits.length;
+  const coreReviewBlocked = support?.allowCoreReviewActions === false;
+  const decisionRecordBlocked = support?.allowDecisionRecordActions === false;
+  const benchmarkBlocked = support?.allowBenchmarkStatus === false;
+  const humanReviewBlocked = support?.allowHumanReviewSubmission === false;
   return {
     comparisonGeneration:
-      capabilities.comparisonGenerationAvailable === false
+      coreReviewBlocked
+        ? 'Blocked outside the governed repo family'
+      : capabilities.comparisonGenerationAvailable === false
         ? 'Unavailable in this build'
         : 'Available for retained pairs that have a base revision',
     openCompare:
-      capabilities.retainedComparisonOpenAvailable === false
+      coreReviewBlocked
+        ? 'Blocked outside the governed repo family'
+      : capabilities.retainedComparisonOpenAvailable === false
         ? 'Unavailable in this build'
         : 'Available once retained pair evidence exists',
     dashboard:
-      capabilities.dashboardAvailable === false
+      coreReviewBlocked
+        ? 'Blocked outside the governed repo family'
+      : capabilities.dashboardAvailable === false
         ? 'Unavailable in this build'
         : commitCount >= 3
           ? 'Available for this retained review window'
           : 'Available when the retained review window reaches at least three commits',
     decisionRecord:
-      capabilities.decisionRecordAvailable === false
+      decisionRecordBlocked
+        ? support?.tier === 'unsupported'
+          ? 'Blocked outside the governed repo family'
+          : 'Not yet governed for this repo family'
+      : capabilities.decisionRecordAvailable === false
         ? 'Unavailable in this build'
         : commitCount >= 3
           ? 'Available for this retained review window'
@@ -451,13 +477,32 @@ function renderCapabilitySummary(
         : 'Available in this build',
     benchmarkStatus:
       capabilities.benchmarkStatusAvailable === false
-        ? undefined
+        ? benchmarkBlocked
+          ? support?.tier === 'unsupported'
+            ? 'Blocked outside the governed repo family'
+            : 'Not yet governed for this repo family'
+          : undefined
         : "Available only on Sergio Velderrain's canonical Windows 11 host machine",
     humanReviewSubmission:
       capabilities.humanReviewSubmissionAvailable === false
-        ? undefined
+        ? humanReviewBlocked
+          ? support?.tier === 'unsupported'
+            ? 'Blocked outside the governed repo family'
+            : 'Not yet governed for this repo family'
+          : undefined
         : "Available only on Sergio Velderrain's canonical Windows 11 host machine"
   };
+}
+
+function renderRepositorySupportSection(
+  support: ViHistoryRepositorySupport
+): string {
+  return `
+    <div class="limitations" data-testid="history-repository-support">
+      <strong>Repo support:</strong> ${escapeHtml(support.supportLabel)}<br />
+      ${escapeHtml(support.supportGuidance)}
+    </div>
+  `;
 }
 
 function renderHumanReviewSubmissionSection(): string {

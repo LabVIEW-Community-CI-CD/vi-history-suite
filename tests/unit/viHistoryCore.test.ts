@@ -59,6 +59,7 @@ describe('viHistoryModel', () => {
   it('builds an eligible history view model from a real temporary Git repo', async () => {
     const repoRoot = await createTempGitRepo();
     const targetPath = path.join(repoRoot, 'nested', 'sample.weird');
+    await runGit(['remote', 'add', 'origin', 'git@github.com:ni/labview-icon-editor.git'], repoRoot);
 
     await writeViFile(targetPath, 'first');
     await commitAll(repoRoot, 'Add initial VI');
@@ -87,6 +88,11 @@ describe('viHistoryModel', () => {
       totalCommitCount: 2,
       truncated: false,
       decision: 'capped-full-history'
+    });
+    expect(viewModel.repositoryUrl).toBe('git@github.com:ni/labview-icon-editor.git');
+    expect(viewModel.repositorySupport).toMatchObject({
+      tier: 'governed-upstream',
+      familyId: 'labview-icon-editor'
     });
   });
 
@@ -128,6 +134,7 @@ describe('viHistoryModel', () => {
   it('loads the full available history by default and omits previousHash on the oldest commit', async () => {
     const repoRoot = await createTempGitRepo();
     const targetPath = path.join(repoRoot, 'nested', 'default-history.weird');
+    await runGit(['remote', 'add', 'origin', 'https://github.com/example/other.vi-history.git'], repoRoot);
 
     await writeViFile(targetPath, 'first');
     await commitAll(repoRoot, 'Add initial VI');
@@ -156,6 +163,10 @@ describe('viHistoryModel', () => {
       totalCommitCount: 3,
       truncated: false,
       decision: 'auto-full-history'
+    });
+    expect(viewModel.repositorySupport).toMatchObject({
+      tier: 'unsupported',
+      allowCoreReviewActions: false
     });
   });
 

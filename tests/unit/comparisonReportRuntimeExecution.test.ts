@@ -634,6 +634,8 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(runCommand).toHaveBeenCalledWith({
       executable: '/mnt/c/Program Files/National Instruments/Shared/LabVIEW CLI/LabVIEWCLI.exe',
       args: [
+        '-LogToConsole',
+        'TRUE',
         '-OperationName',
         'CreateComparisonReport',
         '-VI1',
@@ -1393,6 +1395,12 @@ describe('comparisonReportRuntimeExecution', () => {
     ).toBeUndefined();
   });
 
+  it('treats native Linux diagnostic-log paths as host-readable when running inside the same container', () => {
+    expect(resolveHostReadableDiagnosticPath('/tmp/lvtemporary_123.log', 'linux')).toBe(
+      '/tmp/lvtemporary_123.log'
+    );
+  });
+
   it('fails closed for unmapped or non-normalizable diagnostic-path inputs', () => {
     expect(resolveMappedRuntimeDiagnosticPath('C:\\temp\\lvtemporary_123.log')).toBeUndefined();
     expect(
@@ -1806,7 +1814,9 @@ describe('comparisonReportRuntimeExecution', () => {
       stdout: 'raw',
       stderr: ''
     });
-    expect(runComparisonCommandPlanImpl).toHaveBeenCalledWith(commandPlan);
+    expect(runComparisonCommandPlanImpl).toHaveBeenCalledWith(commandPlan, {
+      timeoutMs: undefined
+    });
     expect(runComparisonCommandPlanWithObservationImpl).not.toHaveBeenCalled();
 
     const observedRunCommand = buildDefaultRunCommand({
@@ -1827,7 +1837,8 @@ describe('comparisonReportRuntimeExecution', () => {
       hostPlatform: 'linux',
       runtimePlatform: 'win32',
       observeWindowsProcesses,
-      engine: 'labview-cli'
+      engine: 'labview-cli',
+      timeoutMs: undefined
     });
   });
 
@@ -2415,6 +2426,53 @@ describe('comparisonReportRuntimeExecution', () => {
     });
   });
 
+  it('returns a timed-out raw command result when execFile exceeds the governed timeout budget', async () => {
+    const execFileImpl = vi.fn(
+      (
+        _file: string,
+        _args: readonly string[] | undefined,
+        _options:
+          | {
+              encoding: BufferEncoding;
+              maxBuffer: number;
+              windowsHide: boolean;
+              timeout?: number;
+              killSignal?: string;
+            }
+          | undefined,
+        callback:
+          | ((error: Error | null, stdout: string | Buffer, stderr: string | Buffer) => void)
+          | undefined
+      ) => {
+        const error = Object.assign(new Error('timed out'), {
+          killed: true,
+          signal: 'SIGKILL'
+        });
+        callback?.(error, 'stdout', 'stderr');
+      }
+    );
+
+    await expect(
+      runComparisonCommandPlan(
+        {
+          executable: 'tool',
+          args: []
+        },
+        {
+          execFileImpl: execFileImpl as never,
+          timeoutMs: 1234
+        }
+      )
+    ).resolves.toMatchObject({
+      exitCode: 124,
+      signal: 'SIGKILL',
+      stdout: 'stdout',
+      stderr: 'stderr',
+      timedOut: true,
+      timeoutMs: 1234
+    });
+  });
+
   it('captures process observations at the LabVIEW CLI banner and again at process exit', async () => {
     const bannerObservation = {
       capturedAt: '2026-04-03T00:00:01.000Z',
@@ -2480,12 +2538,13 @@ describe('comparisonReportRuntimeExecution', () => {
           observeWindowsProcesses
         }
       )
-    ).resolves.toEqual({
+    ).resolves.toMatchObject({
       exitCode: 1,
       signal: undefined,
       stdout:
         'LabVIEWCLI started logging in file:  C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log\r\n',
       stderr: '',
+      timedOut: false,
       processObservation: bannerObservation,
       exitProcessObservation: exitObservation
     });
@@ -2569,13 +2628,14 @@ describe('comparisonReportRuntimeExecution', () => {
           observeWindowsProcesses
         }
       )
-    ).resolves.toEqual({
+    ).resolves.toMatchObject({
       exitCode: 1,
       signal: undefined,
       stdout:
         'LabVIEWCLI started logging in file:  C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log\r\n' +
         'LabVIEWCLI started logging in file:  C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log\r\n',
       stderr: '',
+      timedOut: false,
       processObservation: bannerObservation,
       exitProcessObservation: exitObservation
     });
@@ -2644,11 +2704,12 @@ describe('comparisonReportRuntimeExecution', () => {
           observeWindowsProcesses
         }
       )
-    ).resolves.toEqual({
+    ).resolves.toMatchObject({
       exitCode: 0,
       signal: undefined,
       stdout: '',
       stderr: '',
+      timedOut: false,
       processObservation: spawnObservation,
       exitProcessObservation: exitObservation
     });
@@ -2699,11 +2760,12 @@ describe('comparisonReportRuntimeExecution', () => {
           observeWindowsProcesses
         }
       )
-    ).resolves.toEqual({
+    ).resolves.toMatchObject({
       exitCode: 0,
       signal: undefined,
       stdout: 'non-banner stdout\r\n',
       stderr: '',
+      timedOut: false,
       processObservation: undefined,
       exitProcessObservation: undefined
     });
@@ -2875,6 +2937,57 @@ describe('comparisonReportRuntimeExecution', () => {
         }
       )
     ).rejects.toThrow('exit-observation-failed');
+  });
+
+  it('returns a timed-out observed command result when the governed timeout budget is exceeded', async () => {
+    vi.useFakeTimers();
+    try {
+      const spawnImpl = vi.fn(() => {
+        const child = new EventEmitter() as EventEmitter & {
+          stdout: EventEmitter & { setEncoding: (encoding: string) => void };
+          stderr: EventEmitter & { setEncoding: (encoding: string) => void };
+          kill: (signal?: string) => boolean;
+        };
+        child.stdout = Object.assign(new EventEmitter(), {
+          setEncoding: (_encoding: string) => undefined
+        });
+        child.stderr = Object.assign(new EventEmitter(), {
+          setEncoding: (_encoding: string) => undefined
+        });
+        child.kill = vi.fn((signal?: string) => {
+          queueMicrotask(() => {
+            child.emit('close', null, signal ?? 'SIGKILL');
+          });
+          return true;
+        });
+        return child as never;
+      });
+
+      const promise = runComparisonCommandPlanWithObservation(
+        {
+          executable: '/usr/local/bin/LVCompare',
+          args: ['left.vi', 'right.vi']
+        },
+        {
+          spawnImpl: spawnImpl as never,
+          hostPlatform: 'linux',
+          runtimePlatform: 'linux',
+          engine: 'lvcompare',
+          timeoutMs: 1500
+        }
+      );
+
+      await vi.advanceTimersByTimeAsync(1500);
+
+      await expect(promise).resolves.toMatchObject({
+        exitCode: 124,
+        signal: 'SIGKILL',
+        timedOut: true,
+        timeoutMs: 1500
+      });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('fails with a container-command-build reason when a Windows container run has no supported PowerShell host', async () => {

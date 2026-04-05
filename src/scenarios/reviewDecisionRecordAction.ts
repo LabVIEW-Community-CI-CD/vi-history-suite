@@ -2,7 +2,7 @@ import * as os from 'node:os';
 import * as vscode from 'vscode';
 
 import { buildAndPersistMultiReportDashboard } from '../dashboard/multiReportDashboard';
-import { runGit } from '../git/gitCli';
+import { getRepoRemoteUrl } from '../git/gitCli';
 import { ViHistoryViewModel } from '../services/viHistoryModel';
 import {
   buildDecisionRecordMissingOrBlockedFacts,
@@ -461,11 +461,5 @@ async function persistLastReviewerName(
 }
 
 async function defaultReadRepoRemoteUrl(repositoryRoot: string): Promise<string | undefined> {
-  try {
-    const stdout = await runGit(['remote', 'get-url', 'origin'], repositoryRoot, 'utf8');
-    const resolved = String(stdout).trim();
-    return resolved.length > 0 ? resolved : undefined;
-  } catch {
-    return undefined;
-  }
+  return getRepoRemoteUrl(repositoryRoot);
 }

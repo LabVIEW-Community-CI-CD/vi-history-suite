@@ -51,9 +51,12 @@ export interface LabviewCliComparisonReportPlanOptions {
   leftViPath: string;
   rightViPath: string;
   reportFilePath: string;
+  labviewPath?: string;
   reportFormat?: ComparisonReportFormat;
   overwrite?: boolean;
   createOutputDirectory?: boolean;
+  headless?: boolean;
+  logToConsole?: boolean;
   description?: string;
 }
 
@@ -143,6 +146,8 @@ export function buildLabviewCliCreateComparisonReportPlan(
   options: LabviewCliComparisonReportPlanOptions
 ): ComparisonCommandPlan {
   const args = [
+    '-LogToConsole',
+    options.logToConsole ?? true ? 'TRUE' : 'FALSE',
     '-OperationName',
     'CreateComparisonReport',
     '-VI1',
@@ -155,6 +160,10 @@ export function buildLabviewCliCreateComparisonReportPlan(
     requireNonEmpty(options.reportFilePath, 'reportFilePath')
   ];
 
+  if (options.labviewPath?.trim()) {
+    args.push('-LabVIEWPath', options.labviewPath.trim());
+  }
+
   if (options.description?.trim()) {
     args.push('-description', options.description.trim());
   }
@@ -165,6 +174,10 @@ export function buildLabviewCliCreateComparisonReportPlan(
 
   if (options.overwrite ?? true) {
     args.push('-o');
+  }
+
+  if (options.headless ?? false) {
+    args.push('-Headless', 'true');
   }
 
   return {

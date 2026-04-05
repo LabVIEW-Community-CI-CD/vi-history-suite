@@ -88,6 +88,8 @@ describe('comparisonReportPlan', () => {
     expect(plan).toEqual({
       executable: 'LabVIEWCLI',
       args: [
+        '-LogToConsole',
+        'TRUE',
         '-OperationName',
         'CreateComparisonReport',
         '-VI1',
@@ -153,6 +155,17 @@ describe('comparisonReportPlan', () => {
     expect(plan.args).toContain('focused review window');
     expect(plan.args).not.toContain('-c');
     expect(plan.args).not.toContain('-o');
+  });
+
+  it('can opt out of LogToConsole when a caller must suppress CLI echo', () => {
+    const plan = buildLabviewCliCreateComparisonReportPlan({
+      leftViPath: '/tmp/left-foo.vi',
+      rightViPath: '/tmp/right-foo.vi',
+      reportFilePath: '/tmp/report.html',
+      logToConsole: false
+    });
+
+    expect(plan.args.slice(0, 2)).toEqual(['-LogToConsole', 'FALSE']);
   });
 
   it('builds the interactive LVCompare fallback command plan with optional lvpath', () => {

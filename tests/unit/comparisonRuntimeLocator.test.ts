@@ -276,6 +276,37 @@ describe('comparisonRuntimeLocator', () => {
     ]);
   });
 
+  it('prefers Linux LabVIEWCLI from the NI prebuilt container scan roots before falling back to LVCompare', async () => {
+    const result = await locateComparisonRuntime(
+      'linux',
+      {},
+      {
+        pathExists: vi.fn(async (filePath: string) =>
+          [
+            '/usr/local/natinst/LabVIEW-2026-64/labview',
+            '/usr/local/bin/LabVIEWCLI',
+            '/usr/local/bin/LVCompare'
+          ].includes(filePath)
+        )
+      }
+    );
+
+    expect(result.provider).toBe('host-native');
+    expect(result.engine).toBe('labview-cli');
+    expect(result.labviewExe?.path).toBe('/usr/local/natinst/LabVIEW-2026-64/labview');
+    expect(result.labviewCli?.path).toBe('/usr/local/bin/LabVIEWCLI');
+    expect(result.lvCompare?.path).toBe('/usr/local/bin/LVCompare');
+    expect(result.notes).not.toContain('LabVIEWCLI was not located; falling back to LVCompare.');
+    expect(result.providerDecisions).toEqual([
+      {
+        provider: 'host-native',
+        outcome: 'selected',
+        reason: 'host-native-labview-cli-selected',
+        detail: 'Host-native LabVIEW 2026 and LabVIEWCLI were available for comparison-report execution.'
+      }
+    ]);
+  });
+
   it('retains Windows registry probe plans and parses registry-discovered LabVIEW executables', async () => {
     expect(buildWindowsRegistryQueryPlans()).toEqual([
       {
@@ -343,6 +374,10 @@ HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\National Instruments\\LabVIEW
         expect.objectContaining({
           kind: 'labview-exe',
           path: '/usr/local/natinst/LabVIEW-2026Q1-64/labview'
+        }),
+        expect.objectContaining({
+          kind: 'labview-cli',
+          path: '/usr/local/bin/LabVIEWCLI'
         }),
         expect.objectContaining({
           kind: 'lvcompare',
