@@ -33,6 +33,12 @@ describe('github windows benchmark workflow', () => {
 
     expect(dockerfile).toContain('ARG BASE_IMAGE=nationalinstruments/labview:2026q1-windows');
     expect(dockerfile).toContain('io.vihs.runtime-plane="github-windows-dashboard-benchmark"');
+    expect(dockerfile).toContain(
+      'SHELL ["C:\\\\Windows\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe"'
+    );
+    expect(dockerfile).toContain(
+      'CMD ["C:\\\\Windows\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe"'
+    );
     expect(dockerfile).toContain('nodejs.org/dist/v');
     expect(dockerfile).toContain('MinGit-');
     expect(dockerfile).toContain('COPY package.json package-lock.json tsconfig.json ./');

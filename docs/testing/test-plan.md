@@ -983,8 +983,11 @@
 - `TEST-UNIT-266`: verify the Windows benchmark-image workflow, Dockerfile,
   and runner script pin `nationalinstruments/labview:2026q1-windows`, publish
   a dedicated GHCR Windows benchmark image, target the deep
-  `HARNESS-VHS-002` lane, and truthfully mark hosted Windows benchmark
-  execution as not-yet-governed
+  `HARNESS-VHS-002` lane, truthfully mark hosted Windows benchmark
+  execution as not-yet-governed, keep the benchmark workspace dependencies out
+  of the live container-start path, and use the explicit full-path Windows
+  PowerShell runtime entrypoint instead of ambient PATH resolution for the
+  image shell/default command
 - `TEST-UNIT-267`: verify Linux comparison-report runtime-diagnostic capture
   treats native container paths such as `/tmp/lvtemporary_*.log` as
   host-readable from within the active benchmark container and retains the
