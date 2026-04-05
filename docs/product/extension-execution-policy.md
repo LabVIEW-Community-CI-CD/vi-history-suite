@@ -59,15 +59,19 @@ policy:
   warning that reuses the retained provider, rejected-provider reasons,
   execution mode, acquisition state, and next-action truth instead of leaving
   those hard stops implicit in progress logs or packets only
+- the history panel now also mirrors governed compare-runtime progress while
+  comparison generation is in flight, including runtime-selection,
+  Windows-image acquisition, and runtime-execution stages, instead of staying
+  idle until the action completes
 - benchmark-proof and exact-pair diagnosis entrypoints now fail closed on
   contaminated or contradictory runtime-override bundles
 - canonical effective execution-request validation is now partially
   implemented through selected Windows host-runtime facts, explicit Windows
   Docker capability validation, and a governed Windows image-acquisition step
-  with visible progress plus retained history-panel and compare-warning
-  surfaces; fuller front-facing provider/acquisition transparency beyond the
-  current progress, warning, history-panel, runtime-doctor, and retained-
-  packet surfaces remains queued
+  with visible progress plus retained history-panel, live panel-progress, and
+  compare-warning surfaces; fuller front-facing provider/acquisition
+  transparency beyond the current progress, warning, history-panel,
+  runtime-doctor, and retained-packet surfaces remains queued
 
 So current runtime behavior is no longer implicit at the execution-mode
 boundary, but the broader execution policy is still only partially
@@ -132,7 +136,7 @@ facts in that boundary:
 
 The remaining queued work is fuller front-facing provider/acquisition
 transparency after the landed host-fact, Docker-capability, image-acquisition,
-history-panel summary, and compare-warning slices.
+history-panel summary, live panel-progress, and compare-warning slices.
 
 This is the canonical validation boundary for the installed extension. If the
 request is non-canonical, the product must fail closed before runtime work

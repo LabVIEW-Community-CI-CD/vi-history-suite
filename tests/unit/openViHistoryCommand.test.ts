@@ -2481,6 +2481,111 @@ describe('createOpenViHistoryCommand', () => {
     });
   });
 
+  it('posts live compare-runtime progress into the history panel while comparison generation is running', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    const comparisonReportAction = vi.fn().mockImplementation(async ({ reportProgress }) => {
+      reportProgress?.({
+        message: 'Selecting comparison-report runtime.',
+        increment: 20
+      });
+      reportProgress?.({
+        message: 'Acquiring governed Windows image ghcr.io/example/windows-dashboard-benchmark:main.',
+        increment: 10
+      });
+      reportProgress?.({
+        message: 'Pulling governed Windows image: layer 1/4',
+        increment: 1
+      });
+      reportProgress?.({
+        message: 'Executing LabVIEW comparison-report runtime.',
+        increment: 20
+      });
+      return {
+        outcome: 'opened-comparison-report',
+        reportStatus: 'ready-for-runtime',
+        runtimeExecutionState: 'succeeded'
+      };
+    });
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Newest revision',
+            previousHash: '1111111122222222'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      comparisonReportAction
+    );
+
+    await command(targetUri as never);
+    await tracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReport',
+      hash: 'abcdef1234567890'
+    });
+
+    const panel = createWebviewPanelMock.mock.results[0]?.value as MockPanel | undefined;
+    expect(panel?.webview.postMessage).toHaveBeenNthCalledWith(1, {
+      type: 'comparisonRuntimeProgress',
+      status: 'running',
+      summary:
+        'Generate compare for abcdef12 vs 11111111 in progress. Selecting comparison-report runtime.',
+      nextAction:
+        'Next action: wait for comparison report generation to finish or cancel from the VS Code progress notification if you need to stop this run.'
+    });
+    expect(panel?.webview.postMessage).toHaveBeenNthCalledWith(2, {
+      type: 'comparisonRuntimeProgress',
+      status: 'acquiring',
+      summary:
+        'Generate compare for abcdef12 vs 11111111 in progress. Acquiring governed Windows image ghcr.io/example/windows-dashboard-benchmark:main.',
+      nextAction:
+        'Next action: wait for comparison report generation to finish or cancel from the VS Code progress notification if you need to stop this run.'
+    });
+    expect(panel?.webview.postMessage).toHaveBeenNthCalledWith(3, {
+      type: 'comparisonRuntimeProgress',
+      status: 'acquiring',
+      summary:
+        'Generate compare for abcdef12 vs 11111111 in progress. Pulling governed Windows image: layer 1/4.',
+      nextAction:
+        'Next action: wait for comparison report generation to finish or cancel from the VS Code progress notification if you need to stop this run.'
+    });
+    expect(panel?.webview.postMessage).toHaveBeenNthCalledWith(4, {
+      type: 'comparisonRuntimeProgress',
+      status: 'running',
+      summary:
+        'Generate compare for abcdef12 vs 11111111 in progress. Executing LabVIEW comparison-report runtime.',
+      nextAction:
+        'Next action: wait for comparison report generation to finish or cancel from the VS Code progress notification if you need to stop this run.'
+    });
+    expect(panel?.webview.postMessage).toHaveBeenNthCalledWith(5, {
+      type: 'comparisonRuntimeResult',
+      status: 'succeeded',
+      summary:
+        'Generate compare for abcdef12 vs 11111111. Provider: none. Execution mode: auto. Report status: ready-for-runtime. Runtime state: succeeded.',
+      nextAction:
+        'Next action: open the retained comparison packet for the full governed runtime summary.'
+    });
+  });
+
   it('updates the live history panel from generate to refresh state after retained comparison evidence is created', async () => {
     const targetUri = createMockUri('/workspace/eligible.vi');
     const tracker = new HistoryPanelTracker();

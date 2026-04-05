@@ -61,6 +61,9 @@ acquisition-failure hard stops explicitly</li>
 <li>the history panel now also retains the latest compare-runtime summary with
 selected provider, rejected-provider reasons, execution mode, acquisition
 state, and next action</li>
+<li>the history panel now also mirrors live governed compare-runtime progress
+while comparison generation is selecting a runtime, acquiring the Windows
+image, or executing the LabVIEW runtime</li>
 <li>blocked or failed compare actions now also emit one concise mode-aware
 warning using that same retained runtime truth</li>
 </ul>
@@ -92,6 +95,9 @@ was already present locally</p>
 </li>
 <li><p>the current comparison-report path now surfaces visible pull progress when
 Windows container execution still requires the governed Windows image</p>
+</li>
+<li><p>the current history-panel compare-runtime block now mirrors those governed
+runtime/acquisition stages while the action is still running</p>
 </li>
 <li><p>fuller front-facing provider/acquisition transparency beyond the current
 progress, compare-warning, history-panel, runtime-doctor, and retained-

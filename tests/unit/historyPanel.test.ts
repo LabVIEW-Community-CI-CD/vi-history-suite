@@ -146,6 +146,7 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain(
       'No compare action from this panel has retained provider or acquisition truth yet.'
     );
+    expect(html).toContain("message.type === 'comparisonRuntimeProgress'");
     expect(html).toContain("message.type === 'comparisonRuntimeResult'");
   });
 

@@ -294,7 +294,10 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
           return;
         }
 
-        if (message.type === 'comparisonRuntimeResult') {
+        if (
+          message.type === 'comparisonRuntimeResult' ||
+          message.type === 'comparisonRuntimeProgress'
+        ) {
           const container = document.getElementById('compare-runtime-status');
           const summary = document.getElementById('compare-runtime-summary');
           const nextAction = document.getElementById('compare-runtime-next-action');

@@ -309,7 +309,18 @@ export function createOpenViHistoryCommand(
             action({
               model,
               selectedHash: hash,
-              reportProgress,
+              reportProgress: async (update) => {
+                reportProgress(update);
+                const runtimeProgressUpdate = buildComparisonRuntimeProgressPanelUpdate(
+                  actionCommand,
+                  hash,
+                  model,
+                  update
+                );
+                if (runtimeProgressUpdate) {
+                  void panel.webview.postMessage(runtimeProgressUpdate);
+                }
+              },
               cancellationToken
             })
         );
@@ -891,6 +902,12 @@ function buildComparisonRuntimePanelUpdate(
   result: ComparisonReportActionResult
 ):
   | {
+      type: 'comparisonRuntimeProgress';
+      status: 'running' | 'acquiring';
+      summary: string;
+      nextAction: string;
+    }
+  | {
       type: 'comparisonRuntimeResult';
       status: 'idle' | 'blocked' | 'failed' | 'succeeded' | 'cancelled';
       summary: string;
@@ -954,6 +971,39 @@ function buildComparisonRuntimePanelUpdate(
     nextAction:
       deriveComparisonRuntimeNextAction(result.runtimeDoctorSummaryLines) ??
       'Next action: open the retained comparison packet for the full governed runtime summary.'
+  };
+}
+
+function buildComparisonRuntimeProgressPanelUpdate(
+  actionCommand: string,
+  selectedHash: string,
+  model: Awaited<ReturnType<ViHistoryService['load']>>,
+  update: { message: string; increment?: number }
+):
+  | {
+      type: 'comparisonRuntimeProgress';
+      status: 'running' | 'acquiring';
+      summary: string;
+      nextAction: string;
+    }
+  | undefined {
+  const status = deriveComparisonRuntimeProgressStatus(update.message);
+  if (!status) {
+    return undefined;
+  }
+
+  const selectedCommit = model.commits.find((commit) => commit.hash === selectedHash);
+  const pairLabel = selectedCommit?.previousHash
+    ? `${selectedHash.slice(0, 8)} vs ${selectedCommit.previousHash.slice(0, 8)}`
+    : selectedHash.slice(0, 8);
+  const commandLabel =
+    actionCommand === 'diffPrevious' ? 'Open compare' : 'Generate compare';
+  return {
+    type: 'comparisonRuntimeProgress',
+    status,
+    summary: `${commandLabel} for ${pairLabel} in progress. ${stripTerminalPunctuation(update.message)}.`,
+    nextAction:
+      'Next action: wait for comparison report generation to finish or cancel from the VS Code progress notification if you need to stop this run.'
   };
 }
 
@@ -1048,6 +1098,29 @@ function deriveComparisonRuntimePanelStatus(
   return 'idle';
 }
 
+function deriveComparisonRuntimeProgressStatus(
+  message: string
+): 'running' | 'acquiring' | undefined {
+  if (
+    message.startsWith('Acquiring governed Windows image ') ||
+    message.startsWith('Pulling governed Windows image:') ||
+    message.startsWith('Governed Windows image ready:')
+  ) {
+    return 'acquiring';
+  }
+
+  if (
+    message === 'Selecting comparison-report runtime.' ||
+    message === 'Persisting governed comparison-report packet.' ||
+    message === 'Executing LabVIEW comparison-report runtime.' ||
+    message === 'Archiving comparison-report evidence.'
+  ) {
+    return 'running';
+  }
+
+  return undefined;
+}
+
 function deriveComparisonRuntimeNextAction(
   summaryLines: string[] | undefined
 ): string | undefined {
@@ -1092,6 +1165,10 @@ function deriveWindowsContainerAcquisitionStateFromDoctorSummary(
 
   const match = toolFactsLine.match(/ContainerAcquisitionState=([^;]+)/);
   return match?.[1];
+}
+
+function stripTerminalPunctuation(value: string): string {
+  return value.replace(/[.!?]+$/u, '');
 }
 
 function deriveRejectedProviderSummaryFromDoctorSummary(

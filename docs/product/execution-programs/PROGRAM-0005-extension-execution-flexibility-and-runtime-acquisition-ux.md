@@ -2,7 +2,7 @@
 
 ## Status
 
-Queued follow-on post-release program with six repo-side execution-policy slices
+Queued follow-on post-release program with seven repo-side execution-policy slices
 already landed.
 
 Activation is intentionally deferred until:
@@ -11,7 +11,7 @@ Activation is intentionally deferred until:
 - the queue promotes `TRANCHE-013` from `queued` to `active`
 - the remaining broader front-facing provider/acquisition transparency work
   moves beyond the landed selector, Docker-capability, acquisition-progress,
-  history-panel latest-runtime-summary, and compare-warning slices
+  history-panel latest-runtime-summary, live panel-progress, and compare-warning slices
 
 ## Purpose
 
@@ -107,7 +107,7 @@ Every slice shall preserve:
 
 ## Landed Selector Slices
 
-The repo already retains six bounded implementation slices under this program:
+The repo already retains seven bounded implementation slices under this program:
 
 - a first-class `viHistorySuite.executionMode` setting with `auto`,
   `host-only`, and `docker-only`
@@ -153,6 +153,15 @@ The repo already retains six bounded implementation slices under this program:
     and next action
   - users no longer need to infer truthful hard stops only from progress
     notifications or after-the-fact packet inspection
+- a seventh slice now mirrors governed compare-runtime progress in the history
+  panel while compare generation is still running:
+  - compare actions now post live in-flight panel updates for governed
+    runtime-selection, Windows-image acquisition, and runtime-execution
+    stages using the same bounded progress messages already retained by the
+    comparison-report action
+  - the in-panel compare-runtime block no longer stays idle until completion
+    when the action is actively selecting a provider, pulling an image, or
+    executing the LabVIEW runtime
 
 ## First Implementation Slice
 
@@ -168,7 +177,8 @@ That slice should:
 - make Windows container-capability truth explicit before image acquisition
 - stop short of claiming full implementation until the installed extension
   lands fuller front-facing provider transparency end to end beyond the now-
-  landed visible acquisition, in-panel summary, and compare-warning slices
+  landed visible acquisition, in-panel summary, live panel-progress, and
+  compare-warning slices
 
 ## Success Condition
 
