@@ -265,6 +265,7 @@ function buildComparablePrefixBenchmarkPacket(repoRoot, options = {}) {
           terminalPairFailureReason: windowsBenchmarkImage.summary.terminalPairFailureReason,
           terminalPairDiagnosticReason:
             windowsBenchmarkImage.summary.terminalPairDiagnosticReason ??
+            windowsBenchmarkImage.pairFailureReceipt?.runtimeDiagnosticReason ??
             windowsBenchmarkImage.validatedPrefix.firstInvalidReason
         }
       }
@@ -338,11 +339,22 @@ function loadWindowsBenchmarkImageSurface(repoRoot) {
   const dashboardJsonPath = normalizeArtifactPath(latest.dashboardSmoke.dashboardJsonFilePath, {
     windowsWorkspaceRoot
   });
+  const pairFailureReceiptPath = latest.summary.retainedArtifacts?.pairFailureReceiptPath
+    ? normalizeArtifactPath(latest.summary.retainedArtifacts.pairFailureReceiptPath, {
+        windowsWorkspaceRoot
+      })
+    : undefined;
+  const pairFailureReceipt =
+    pairFailureReceiptPath && fs.existsSync(pairFailureReceiptPath)
+      ? readJson(pairFailureReceiptPath)
+      : undefined;
 
   return {
     ...latest,
     dashboardJsonPath,
     windowsWorkspaceRoot,
+    pairFailureReceiptPath,
+    pairFailureReceipt,
     validatedPrefix: validateDashboardPrefix(dashboardJsonPath, {
       windowsWorkspaceRoot
     })

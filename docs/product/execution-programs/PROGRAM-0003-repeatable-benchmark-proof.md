@@ -79,7 +79,11 @@ first-launch `LabVIEWCLI` invocation. The latest retained local proof now
 reaches pair `129/134` before retaining a connected-session `Error 66 / Call
 By Reference` seam, and the runtime now attempts one governed
 `LabVIEWCLI CloseLabVIEW -Headless` session reset plus one retry for that
-seam before terminal failure is retained.
+seam before terminal failure is retained. The bounded comparable-prefix packet
+and Windows benchmark summary now retain that seam explicitly as
+`labview-cli-call-by-reference`, and the older retained canonical-host
+Windows-container proof for pair `129` shows the same connected-session
+diagnosis.
 
 Current retained Linux blocker before activation:
 

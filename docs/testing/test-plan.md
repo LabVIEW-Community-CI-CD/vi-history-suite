@@ -1066,6 +1066,11 @@
   `CloseLabVIEW -Headless` session reset, retries the pair once, and appends
   the recovery notes to the retained runtime diagnostics before the final
   outcome is written
+- `TEST-UNIT-285`: verify failed Windows benchmark summaries retain the
+  terminal diagnostic reason, and comparable-prefix packet generation falls
+  back to the retained Windows pair-failure receipt so the bounded pair `129`
+  blocker is rendered as `labview-cli-call-by-reference` instead of a generic
+  `runtime-failed`
 - `TEST-DOC-035`: review README, current-state, and ADR-0016 and confirm the
   canonical-host benchmark status surface is documented as the maintainer-facing
   in-IDE visibility and launch surface for the host Linux benchmark lane,
@@ -1150,6 +1155,11 @@
   pair `129/134` connected-session `Error 66 / Call By Reference` seam plus
   one governed `CloseLabVIEW -Headless` recovery attempt and one retry before
   terminal failure is retained
+- `TEST-DOC-049`: review current-state, PROGRAM-0003, ISSUE-0408, and the
+  comparable-prefix benchmark packet and confirm the bounded Windows pair
+  `129` blocker is documented explicitly as
+  `labview-cli-call-by-reference`, including receipt-backed retention when
+  older benchmark summaries predate terminal diagnostic-reason support
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed authority repo, private experiment mirror, wiki, and
   assurance-skill repos with authority roles, expected remotes, and primary

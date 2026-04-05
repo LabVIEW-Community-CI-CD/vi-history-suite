@@ -321,4 +321,73 @@ describe('runGitHubWindowsDashboardBenchmarkCli', () => {
     ).resolves.toBe(1);
     expect(stderrWrites.join('')).toContain('Unsupported value for --dashboard-commit-window');
   });
+
+  it('retains the terminal Windows diagnostic reason in failed summaries', () => {
+    const summary = buildGitHubWindowsDashboardBenchmarkSummary(
+      {
+        report: {
+          harnessId: 'HARNESS-VHS-002',
+          repositoryUrl: 'https://github.com/ni/labview-icon-editor.git',
+          cloneDirectory: 'C:\\tmp\\harness',
+          targetRelativePath: 'resource/plugins/lv_icon.vi',
+          head: 'head',
+          generatedAt: '2026-04-05T03:00:00.000Z',
+          eligible: true,
+          signature: 'LVIN',
+          dashboardCommitWindow: 129,
+          comparePairCount: 128,
+          dashboardFilePath: 'a',
+          dashboardJsonFilePath: 'b',
+          dashboardWindowCompletenessState: 'incomplete-missing-archives',
+          dashboardArchivedPairCount: 129,
+          dashboardMissingPairCount: 0,
+          dashboardGeneratedReportCount: 128,
+          dashboardMetadataPairCount: 128,
+          dashboardOverviewImageCount: 2,
+          dashboardDetailItemCount: 4,
+          dashboardProviderSummaries: [],
+          completionState: 'failed',
+          processedPairCount: 129,
+          terminalPairIndex: 129,
+          terminalPairFailureReason: 'command-exited-nonzero',
+          comparabilityState: 'characterization-only',
+          pairSummaries: [
+            {
+              pairIndex: 129,
+              selectedHash: '3408654e680200d7787c17cc0b443a97fcdfb360',
+              baseHash: '6dd65df674287c9705959a7e9aca6b02e8445d40',
+              reportStatus: 'ready-for-runtime',
+              runtimeExecutionState: 'failed',
+              runtimeProvider: 'host-native',
+              runtimeEngine: 'labview-cli',
+              runtimeFailureReason: 'command-exited-nonzero',
+              runtimeDiagnosticReason: 'labview-cli-call-by-reference',
+              runtimeDiagnosticNotes: [
+                'Attempted Windows headless session reset via LabVIEWCLI CloseLabVIEW after call-by-reference diagnosis, then retried the pair once.'
+              ],
+              generatedReportExists: false,
+              packetFilePath: 'a',
+              reportFilePath: 'b',
+              metadataFilePath: 'c',
+              actualPreparationSeconds: 1
+            }
+          ]
+        },
+        reportJsonPath: 'a',
+        reportMarkdownPath: 'b',
+        reportHtmlPath: 'c'
+      },
+      {
+        startedAt: new Date('2026-04-05T03:00:00.000Z'),
+        completedAt: new Date('2026-04-05T03:00:05.000Z'),
+        benchmarkRoot: 'C:\\tmp',
+        runtimeImage: 'nationalinstruments/labview:2026q1-windows'
+      }
+    );
+
+    expect(summary.terminalPairDiagnosticReason).toBe('labview-cli-call-by-reference');
+    expect(summary.terminalPairDiagnosticNotes).toEqual([
+      'Attempted Windows headless session reset via LabVIEWCLI CloseLabVIEW after call-by-reference diagnosis, then retried the pair once.'
+    ]);
+  });
 });

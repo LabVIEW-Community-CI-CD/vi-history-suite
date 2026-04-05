@@ -1,7 +1,7 @@
 {
   "schema": "vi-history-suite/comparable-prefix-benchmark-packet@v1",
   "benchmarkId": "HARNESS-VHS-002-comparable-prefix",
-  "generatedAt": "2026-04-05T16:15:03.524Z",
+  "generatedAt": "2026-04-05T16:25:37.420Z",
   "harnessId": "HARNESS-VHS-002",
   "targetRelativePath": "resource/plugins/lv_icon.vi",
   "proofState": "bounded-prefix-comparable",
@@ -83,7 +83,7 @@
         "generatedReportCount": 128,
         "terminalPairIndex": 129,
         "terminalPairFailureReason": "command-exited-nonzero",
-        "terminalPairDiagnosticReason": "runtime-failed"
+        "terminalPairDiagnosticReason": "labview-cli-call-by-reference"
       }
     }
   },

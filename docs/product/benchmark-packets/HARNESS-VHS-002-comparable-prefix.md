@@ -1,6 +1,6 @@
 # HARNESS-VHS-002 Comparable Prefix Benchmark Packet
 
-- Generated at: 2026-04-05T16:15:03.524Z
+- Generated at: 2026-04-05T16:25:37.420Z
 - Proof state: bounded-prefix-comparable
 - Target: resource/plugins/lv_icon.vi
 - Full window: 139 commits / 138 pairs
@@ -30,7 +30,7 @@
 - Image ref: ghcr.io/svelderrainruiz/vi-history-suite-source-experiments/windows-dashboard-benchmark:sha-b679b8761f09df3f39d1a2d35addad2aaf0654b9
 - Validated comparable pairs: 128
 - Prefix runtime total: 464798 ms
-- Full-window blocker: pair 129 / 138 :: command-exited-nonzero (runtime-failed)
+- Full-window blocker: pair 129 / 138 :: command-exited-nonzero (labview-cli-call-by-reference)
 
 ## Comparison
 

@@ -209,7 +209,7 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
           fullWindowBlocker: {
             terminalPairIndex: 129,
             terminalPairFailureReason: 'command-exited-nonzero',
-            terminalPairDiagnosticReason: 'runtime-failed'
+            terminalPairDiagnosticReason: 'labview-cli-call-by-reference'
           }
         }
       },
@@ -223,6 +223,7 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
     expect(markdown).toContain('Comparable Prefix Benchmark Packet');
     expect(markdown).toContain('129 commits / 128 pairs');
     expect(markdown).toContain('linux-headless-recursive-load');
+    expect(markdown).toContain('labview-cli-call-by-reference');
     expect(markdown).toContain('bounded-blocked');
   });
 });

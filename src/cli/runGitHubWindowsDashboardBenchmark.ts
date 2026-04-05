@@ -58,6 +58,8 @@ export interface GitHubWindowsDashboardBenchmarkSummary {
   processedPairCount: number;
   terminalPairIndex?: number;
   terminalPairFailureReason?: string;
+  terminalPairDiagnosticReason?: string;
+  terminalPairDiagnosticNotes?: string[];
   terminalOutcome: 'completed' | 'runtime-failed' | 'runtime-timed-out';
   comparabilityState:
     | 'comparable-to-linux-benchmark-image'
@@ -413,7 +415,7 @@ export async function runGitHubWindowsDashboardBenchmarkCli(
     const failureMessage =
       summary.terminalPairIndex === undefined
         ? `Windows benchmark failed after processing ${summary.processedPairCount}/${summary.comparePairCount} pair(s).`
-        : `Windows benchmark failed at pair ${summary.terminalPairIndex}/${summary.comparePairCount}: ${summary.terminalPairFailureReason ?? 'runtime-execution-failed'}.`;
+        : `Windows benchmark failed at pair ${summary.terminalPairIndex}/${summary.comparePairCount}: ${summary.terminalPairFailureReason ?? 'runtime-execution-failed'}${summary.terminalPairDiagnosticReason ? ` (${summary.terminalPairDiagnosticReason})` : ''}.`;
     await writeProgress('failed', failureMessage);
     throw new Error(failureMessage);
   }
@@ -471,6 +473,12 @@ export function buildGitHubWindowsDashboardBenchmarkSummary(
   const etaAccuracy = result.report.dashboardEtaAccuracyRecord;
   const benchmarkImageReference = process.env.VIHS_GITHUB_WINDOWS_BENCHMARK_IMAGE_REF;
   const benchmarkImageDigest = process.env.VIHS_GITHUB_WINDOWS_BENCHMARK_IMAGE_DIGEST;
+  const terminalPair =
+    result.report.terminalPairIndex === undefined
+      ? undefined
+      : result.report.pairSummaries.find(
+          (pair) => pair.pairIndex === result.report.terminalPairIndex
+        );
 
   return {
     schema: 'vi-history-suite/github-windows-dashboard-benchmark@v1',
@@ -510,6 +518,8 @@ export function buildGitHubWindowsDashboardBenchmarkSummary(
     processedPairCount: result.report.processedPairCount,
     terminalPairIndex: result.report.terminalPairIndex,
     terminalPairFailureReason: result.report.terminalPairFailureReason,
+    terminalPairDiagnosticReason: terminalPair?.runtimeDiagnosticReason,
+    terminalPairDiagnosticNotes: terminalPair?.runtimeDiagnosticNotes,
     terminalOutcome:
       result.report.completionState !== 'failed'
         ? 'completed'

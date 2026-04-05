@@ -52,8 +52,12 @@ Current retained benchmark truth before activation:
   `C:\Users\sveld\AppData\Local\VI History Suite\windows-benchmark-image-proof`
 - the latest local Windows benchmark-image proof now reaches pair `129/134`
   before failing truthfully with `command-exited-nonzero`; the retained
+  summary and bounded comparable-prefix packet now retain
+  `terminalPairDiagnosticReason=labview-cli-call-by-reference`, the retained
   diagnostic log shows the image established a LabVIEW connection and then hit
-  `Error 66 / Call By Reference`
+  `Error 66 / Call By Reference`, and the older retained canonical-host
+  Windows-container proof for pair `129` shows the same connected-session
+  diagnosis
 - the active Windows image hardening now restores the governed Windows
   `-LabVIEWPath`, forces `LV_RTE_HEADLESS=1`, hardens `LabVIEWCLI.ini`
   startup timeouts, prelaunches headless LabVIEW before benchmark execution
