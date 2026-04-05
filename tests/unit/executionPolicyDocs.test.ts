@@ -4,7 +4,8 @@ import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const repoRoot = path.resolve(__dirname, '..', '..');
-const wikiRoot = path.resolve(repoRoot, '..', 'vi-history-suite.wiki');
+const wikiRoot =
+  process.env.VIHS_WIKI_REPO_ROOT ?? path.resolve(repoRoot, '..', 'vi-history-suite.wiki');
 
 function readText(relativePath: string): string {
   return fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
@@ -12,6 +13,16 @@ function readText(relativePath: string): string {
 
 function readJson<T>(relativePath: string): T {
   return JSON.parse(readText(relativePath)) as T;
+}
+
+function readWikiText(fileName: string): string {
+  const candidate = path.join(wikiRoot, fileName);
+  if (!fs.existsSync(candidate)) {
+    throw new Error(
+      `Missing wiki file ${candidate}. Set VIHS_WIKI_REPO_ROOT or materialize the sibling vi-history-suite.wiki checkout before running docs tests.`
+    );
+  }
+  return fs.readFileSync(candidate, 'utf8');
 }
 
 describe('execution-policy control plane', () => {
@@ -74,11 +85,8 @@ describe('execution-policy control plane', () => {
     );
     const coverage = readText('docs/product/wiki-coverage-matrix.json');
     const publicationLedger = readText('docs/product/wiki-publication-ledger.json');
-    const userWorkflow = fs.readFileSync(path.join(wikiRoot, 'User-Workflow.md'), 'utf8');
-    const requirementsWiki = fs.readFileSync(
-      path.join(wikiRoot, 'Requirements-And-Verification.md'),
-      'utf8'
-    );
+    const userWorkflow = readWikiText('User-Workflow.md');
+    const requirementsWiki = readWikiText('Requirements-And-Verification.md');
 
     expect(manifest.contributes?.configuration?.properties).not.toHaveProperty(
       'viHistorySuite.executionMode'

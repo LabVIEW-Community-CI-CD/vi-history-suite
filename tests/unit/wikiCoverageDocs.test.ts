@@ -4,7 +4,8 @@ import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const repoRoot = path.resolve(__dirname, '..', '..');
-const wikiRoot = path.resolve(repoRoot, '..', 'vi-history-suite.wiki');
+const wikiRoot =
+  process.env.VIHS_WIKI_REPO_ROOT ?? path.resolve(repoRoot, '..', 'vi-history-suite.wiki');
 
 type CoverageMatrix = {
   acceptedAggregationRules: Array<{ id: string }>;
@@ -35,6 +36,16 @@ function readJson<T>(relativePath: string): T {
   return JSON.parse(readText(relativePath)) as T;
 }
 
+function requireWikiRoot(): string {
+  if (!fs.existsSync(wikiRoot)) {
+    throw new Error(
+      `Missing wiki root ${wikiRoot}. Set VIHS_WIKI_REPO_ROOT or materialize the sibling vi-history-suite.wiki checkout before running docs tests.`
+    );
+  }
+
+  return wikiRoot;
+}
+
 function listAdrPaths(): string[] {
   return fs
     .readdirSync(path.join(repoRoot, 'docs', 'architecture', 'adr'))
@@ -45,7 +56,7 @@ function listAdrPaths(): string[] {
 
 function listPublishedWikiFiles(): string[] {
   return fs
-    .readdirSync(wikiRoot)
+    .readdirSync(requireWikiRoot())
     .filter((fileName) => fileName.endsWith('.md') && fileName !== '_sidebar.md')
     .sort();
 }
@@ -100,7 +111,7 @@ describe('wiki coverage invariant', () => {
       expect(entry.wikiFiles.length).toBeGreaterThan(0);
 
       for (const wikiFile of entry.wikiFiles) {
-        expect(fs.existsSync(path.join(wikiRoot, wikiFile))).toBe(true);
+        expect(fs.existsSync(path.join(requireWikiRoot(), wikiFile))).toBe(true);
       }
     }
 

@@ -168,6 +168,18 @@ The documentation-package gate is:
 2. run the governed documentation-alignment unit suite
 3. run link checking over `README.md` and `docs/**/*.md`
 
+When the gate needs to assert zero-gap wiki coverage against the live published
+wiki set, the canonical wiki root is:
+
+- `VIHS_WIKI_REPO_ROOT` when explicitly set
+- otherwise the sibling checkout at `../vi-history-suite.wiki`
+
+In GitLab CI, `docs_control_plane_check` first clones
+`${CI_PROJECT_PATH}.wiki.git` into `../vi-history-suite.wiki`, exports
+`VIHS_WIKI_REPO_ROOT`, and then runs `npm run docs:gate:core` so the same
+coverage invariant is enforced in CI without relying on an implicit runner-side
+checkout.
+
 The bundled user-doc surface is refreshed separately from the gate:
 
 - `npm run docs:bundle`
