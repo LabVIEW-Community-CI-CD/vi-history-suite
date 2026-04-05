@@ -1,0 +1,73 @@
+{
+  "schema": "vi-history-suite/comparable-prefix-benchmark-packet@v1",
+  "benchmarkId": "HARNESS-VHS-002-comparable-prefix",
+  "generatedAt": "2026-04-05T07:13:39.803Z",
+  "harnessId": "HARNESS-VHS-002",
+  "targetRelativePath": "resource/plugins/lv_icon.vi",
+  "proofState": "bounded-prefix-comparable",
+  "fullWindow": {
+    "dashboardCommitWindow": 139,
+    "comparePairCount": 138
+  },
+  "comparablePrefix": {
+    "dashboardCommitWindow": 135,
+    "comparePairCount": 134,
+    "lastComparablePairId": "2a28a2b984d9"
+  },
+  "surfaces": {
+    "windowsHost": {
+      "state": "available",
+      "latestRunPath": "/mnt/c/Users/sveld/AppData/Roaming/Code/User/workspaceStorage/0bca0972b9105eae5fae72858e3399d0/svelderrainruiz.vi-history-suite/dashboards/latest-dashboard-run.json",
+      "dashboardJsonPath": "/mnt/c/Users/sveld/AppData/Roaming/Code/User/workspaceStorage/0bca0972b9105eae5fae72858e3399d0/svelderrainruiz.vi-history-suite/dashboards/96d52f06697b/2ce533d51193/242c931b6588/dashboard.json",
+      "recordedAt": "2026-04-04T21:02:02.018Z",
+      "providerSummaries": [
+        {
+          "label": "windows-container / labview-cli / auto / win32",
+          "pairCount": 138
+        }
+      ],
+      "representedPairCount": 138,
+      "comparablePrefixRuntimeTotalMs": 4432457
+    },
+    "linuxHost": {
+      "state": "bounded-blocked",
+      "latestSummaryPath": "/mnt/c/Users/sveld/AppData/Local/VI History Suite/host-linux-dashboard-benchmark/workspace-stage/current/.cache/github-experiments/linux-dashboard-benchmark/HARNESS-VHS-002/latest-summary.json",
+      "dashboardSmokePath": "/mnt/c/Users/sveld/AppData/Local/VI History Suite/host-linux-dashboard-benchmark/workspace-stage/current/.cache/harness-reports/HARNESS-VHS-002/dashboard-smoke.json",
+      "dashboardJsonPath": "/mnt/c/Users/sveld/AppData/Local/VI History Suite/host-linux-dashboard-benchmark/workspace-stage/current/.cache/harness-reports/HARNESS-VHS-002/workspace-storage/dashboards/5ae492b4571b/4053fc0e2e30/242c931b6588/dashboard.json",
+      "providerCounts": {
+        "host-native / labview-cli / auto / linux": 134
+      },
+      "representedPairCount": 138,
+      "comparablePrefixRuntimeTotalMs": 489440,
+      "fullWindowBlocker": {
+        "completionState": "failed",
+        "comparabilityState": "characterization-only",
+        "processedPairCount": 135,
+        "generatedReportCount": 134,
+        "terminalPairIndex": 135,
+        "terminalPairFailureReason": "command-exited-nonzero",
+        "terminalPairDiagnosticReason": "linux-headless-recursive-load",
+        "terminalPairDiagnosticNotes": [
+          "Retained Linux headless status reported a recursive LEIF load while opening /<resource>/dialog/GSW/GSW.lvlibp/1abvi3w/resource/dialog/GSW/GSW_MainPanel.vi."
+        ]
+      }
+    },
+    "windowsBenchmarkImage": {
+      "state": "pending-proof",
+      "imageRef": "ghcr.io/svelderrainruiz/vi-history-suite-source-experiments/windows-dashboard-benchmark:main"
+    }
+  },
+  "comparison": {
+    "lastComparablePairId": "2a28a2b984d9",
+    "linuxVsWindowsRuntimeRatio": 0.11042182699121503,
+    "windowsVsLinuxSpeedupFactor": 9.056180532853874,
+    "deltaRuntimeMs": 3943017
+  },
+  "retainedArtifacts": {
+    "windowsHostLatestRunPath": "/mnt/c/Users/sveld/AppData/Roaming/Code/User/workspaceStorage/0bca0972b9105eae5fae72858e3399d0/svelderrainruiz.vi-history-suite/dashboards/latest-dashboard-run.json",
+    "windowsHostDashboardJsonPath": "/mnt/c/Users/sveld/AppData/Roaming/Code/User/workspaceStorage/0bca0972b9105eae5fae72858e3399d0/svelderrainruiz.vi-history-suite/dashboards/96d52f06697b/2ce533d51193/242c931b6588/dashboard.json",
+    "linuxHostLatestSummaryPath": "/mnt/c/Users/sveld/AppData/Local/VI History Suite/host-linux-dashboard-benchmark/workspace-stage/current/.cache/github-experiments/linux-dashboard-benchmark/HARNESS-VHS-002/latest-summary.json",
+    "linuxHostDashboardSmokePath": "/mnt/c/Users/sveld/AppData/Local/VI History Suite/host-linux-dashboard-benchmark/workspace-stage/current/.cache/harness-reports/HARNESS-VHS-002/dashboard-smoke.json",
+    "linuxHostDashboardJsonPath": "/mnt/c/Users/sveld/AppData/Local/VI History Suite/host-linux-dashboard-benchmark/workspace-stage/current/.cache/harness-reports/HARNESS-VHS-002/workspace-storage/dashboards/5ae492b4571b/4053fc0e2e30/242c931b6588/dashboard.json"
+  }
+}

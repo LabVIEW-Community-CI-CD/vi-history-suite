@@ -190,7 +190,7 @@ describe('post-release control-plane coherence', () => {
       title: 'Repeatable Windows and Linux benchmark proof',
       status: 'queued',
       source: 'author direction',
-      summary: expect.stringContaining('deep `HARNESS-VHS-002` benchmark truth'),
+      summary: expect.stringContaining('accepted cross-OS timing scope'),
       issues: ['ISSUE-0408']
     });
     expect(queue).toContainEqual({
@@ -209,15 +209,21 @@ describe('post-release control-plane coherence', () => {
     expect(currentState).toContain(
       'benchmark truth is now explicitly separate from `PROGRAM-0002` acceptance truth'
     );
+    expect(currentState).toContain(
+      'docs/product/benchmark-packets/HARNESS-VHS-002-comparable-prefix.json'
+    );
 
     expect(benchmarkProgram).toContain('`resource/plugins/lv_icon.vi` target');
     expect(benchmarkProgram).toContain('the deep Linux `HARNESS-VHS-002` benchmark completes `138/138`');
+    expect(benchmarkProgram).toContain('the retained comparable-prefix packet remains the accepted cross-OS');
     expect(benchmarkProgram).toContain('Windows host baseline');
     expect(benchmarkProgram).toContain('Windows benchmark-image baseline');
     expect(benchmarkProgram).toContain('Linux benchmark-image result');
 
     expect(benchmarkIssue).toContain('Queued follow-on post-release issue.');
     expect(benchmarkIssue).toContain('the deep Linux host benchmark now fails truthfully late at pair `135/138`');
+    expect(benchmarkIssue).toContain('a governed comparable-prefix packet now retains the accepted cross-OS');
+    expect(benchmarkIssue).toContain('`135`-commit / `134`-pair timing scope');
     expect(benchmarkIssue).toContain('windows-dashboard-benchmark:main');
 
     expect(sustainmentProgram).toContain('release cadence, benchmark refresh cadence, operator surfaces');

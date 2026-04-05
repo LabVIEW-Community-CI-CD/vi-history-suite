@@ -1031,6 +1031,11 @@
 - `TEST-UNIT-278`: verify failed Linux benchmark summaries and the host
   benchmark-status surface retain and surface the terminal diagnostic reason
   alongside the terminal failure reason
+- `TEST-UNIT-279`: verify the comparable-prefix benchmark packet generator
+  discovers the latest retained Windows host dashboard run plus the latest
+  retained host Linux deep benchmark summary, derives the accepted comparable
+  pair count, requires the same last comparable pair id on both dashboards,
+  and writes tracked JSON and Markdown packet artifacts
 - `TEST-DOC-035`: review README, current-state, and ADR-0016 and confirm the
   canonical-host benchmark status surface is documented as the maintainer-facing
   in-IDE visibility and launch surface for the host Linux benchmark lane,
@@ -1084,6 +1089,11 @@
   artifacts and terminal diagnostic reasons are governed explicitly, and that
   the lane remains characterization-only until a truthful comparative result
   exists
+- `TEST-DOC-044`: review README, current-state, harnesses, PROGRAM-0003,
+  ISSUE-0408, and ADR-0020 and confirm the accepted cross-OS benchmark truth
+  is the retained `135`-commit / `134`-pair comparable-prefix packet, while
+  the full Linux `138`-pair window and the Windows benchmark-image proof both
+  remain explicit open control-plane facts
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed authority repo, private experiment mirror, wiki, and
   assurance-skill repos with authority roles, expected remotes, and primary

@@ -182,7 +182,7 @@ function collectSearchRoots(repoRoot) {
   roots.add(path.join(repoRoot, '.cache', 'harness-reports'));
   roots.add(path.join(repoRoot, '.vscode-test', 'user-data', 'User', 'workspaceStorage'));
 
-  let discoveredHomeWorkspaceStorage = false;
+  let hasCurrentHomeWindowsWorkspaceRoot = false;
   const home = os.homedir();
   if (home) {
     const homeCandidates = [
@@ -192,18 +192,20 @@ function collectSearchRoots(repoRoot) {
     for (const candidate of homeCandidates) {
       if (fs.existsSync(candidate)) {
         roots.add(candidate);
-        discoveredHomeWorkspaceStorage = true;
+        if (candidate.includes(`${path.sep}AppData${path.sep}Roaming${path.sep}Code${path.sep}User${path.sep}workspaceStorage`)) {
+          hasCurrentHomeWindowsWorkspaceRoot = true;
+        }
       }
     }
   }
 
   const windowsUsersRoot = path.join(path.sep, 'mnt', 'c', 'Users');
-  if (!discoveredHomeWorkspaceStorage && fs.existsSync(windowsUsersRoot)) {
-    for (const entry of safeReadDir(windowsUsersRoot)) {
+  if (!hasCurrentHomeWindowsWorkspaceRoot && fs.existsSync(windowsUsersRoot)) {
+    for (const userName of collectLikelyWindowsUserNames()) {
       roots.add(
         path.join(
           windowsUsersRoot,
-          entry,
+          userName,
           'AppData',
           'Roaming',
           'Code',
@@ -212,9 +214,61 @@ function collectSearchRoots(repoRoot) {
         )
       );
     }
+    if (process.env.VIHS_SCAN_ALL_WINDOWS_USERS === '1') {
+      for (const entry of safeReadDir(windowsUsersRoot)) {
+        roots.add(
+          path.join(
+            windowsUsersRoot,
+            entry,
+            'AppData',
+            'Roaming',
+            'Code',
+            'User',
+            'workspaceStorage'
+          )
+        );
+      }
+    }
   }
 
   return [...roots].filter((root) => fs.existsSync(root));
+}
+
+function collectLikelyWindowsUserNames() {
+  const names = new Set();
+  addUserName(names, process.env.USERNAME);
+  addUserName(names, process.env.USER);
+  addUserName(names, safeUserInfoName());
+
+  const home = os.homedir();
+  if (home) {
+    const normalizedHome = home.replace(/\\/g, '/');
+    const windowsHomePrefix = '/mnt/c/Users/';
+    if (normalizedHome.startsWith(windowsHomePrefix)) {
+      addUserName(names, normalizedHome.slice(windowsHomePrefix.length).split('/')[0]);
+    }
+  }
+
+  return [...names];
+}
+
+function addUserName(target, value) {
+  if (!value) {
+    return;
+  }
+  const trimmed = String(value).trim();
+  if (!trimmed) {
+    return;
+  }
+  target.add(trimmed);
+}
+
+function safeUserInfoName() {
+  try {
+    return os.userInfo().username;
+  } catch {
+    return undefined;
+  }
 }
 
 function compareCandidates(left, right) {
@@ -231,6 +285,9 @@ function getDiscoveryPriority(filePath) {
   if (filePath.includes(`${path.sep}.cache${path.sep}harness-reports${path.sep}`)) {
     return 1;
   }
+  if (isCurrentHomeWorkspaceArtifactPath(filePath)) {
+    return 3;
+  }
   return 2;
 }
 
@@ -240,6 +297,18 @@ function isRepoVscodeTestPath(filePath) {
 
 function isHostWorkspaceArtifactPath(filePath) {
   return getDiscoveryPriority(filePath) >= 2;
+}
+
+function isCurrentHomeWorkspaceArtifactPath(filePath) {
+  const home = os.homedir();
+  if (!home) {
+    return false;
+  }
+  const candidates = [
+    path.join(home, '.config', 'Code', 'User', 'workspaceStorage'),
+    path.join(home, 'AppData', 'Roaming', 'Code', 'User', 'workspaceStorage')
+  ];
+  return candidates.some((candidate) => filePath.startsWith(candidate + path.sep));
 }
 
 function findFilesNamed(root, filename) {
@@ -373,6 +442,7 @@ module.exports = {
   findLatestDashboardRun,
   formatLatestDashboardRun,
   getDiscoveryPriority,
+  isCurrentHomeWorkspaceArtifactPath,
   isRepoVscodeTestPath,
   isHostWorkspaceArtifactPath,
   parseArgs

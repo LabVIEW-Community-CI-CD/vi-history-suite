@@ -57,7 +57,8 @@ control-plane claim.
 
 ## Workstreams
 
-1. close the late Linux `135/138` failure and complete the deep Linux run
+1. retain the late Linux `135/138` blocker truth and promote the accepted
+   cross-OS comparable prefix
 2. prove the published Windows benchmark image locally on the canonical host
 3. produce the governed comparative benchmark packet and normalize it into the
    control plane
@@ -71,6 +72,9 @@ Current retained Linux blocker before activation:
   `linux-headless-recursive-load`
 - retrying the same pair after timeout degrades into `-350000` connection
   failure rather than recovering the session
+- a governed comparable-prefix packet now retains the accepted cross-OS
+  `135`-commit / `134`-pair scope in
+  `docs/product/benchmark-packets/HARNESS-VHS-002-comparable-prefix.json`
 
 ## Queue Mapping
 
@@ -81,12 +85,16 @@ Current retained Linux blocker before activation:
 
 ### Gate A: Linux Deep Benchmark Completion
 
-- the deep Linux `HARNESS-VHS-002` benchmark completes `138/138`
+- either:
+  - the deep Linux `HARNESS-VHS-002` benchmark completes `138/138`
+  - or the retained comparable-prefix packet remains the accepted cross-OS
+    benchmark scope with an explicit full-window blocker rationale
 - Linux retains terminal summary, pair receipts, and native diagnostics
 - Linux retains supplemental headless artifacts and terminal diagnostic
   reasons when a pair fails or times out
-- Linux is either promoted to comparable benchmark truth or explicitly retained
-  as a bounded exception with a standards-grade rationale
+- the accepted comparable scope is explicit:
+  - full window when Linux completes
+  - bounded prefix when the retained NI Linux blocker remains open
 
 ### Gate B: Windows Benchmark-Image Proof
 
@@ -129,6 +137,7 @@ Start with [ISSUE-0408 Repeatable Benchmark Proof](../issues/ISSUE-0408-repeatab
 That slice should:
 
 - finish the late Linux failure diagnosis with retained evidence
+- retain and normalize the bounded `135`-commit / `134`-pair comparable prefix
 - prove the published Windows benchmark image locally
 - stop short of claiming final comparability until both image lanes retain
   truthful terminal summaries
@@ -136,7 +145,7 @@ That slice should:
 ## Success Condition
 
 This program is complete when `vi-history-suite` can point to one governed
-comparative benchmark packet for the deep `lv_icon.vi` target, with retained
-evidence from the Windows host, Windows benchmark image, and Linux benchmark
-image, and with the comparability outcome normalized into the repo control
-plane.
+comparative benchmark packet for the accepted `lv_icon.vi` timing scope, with
+retained evidence from the Windows host, Windows benchmark image, and Linux
+benchmark image, and with the comparability outcome normalized into the repo
+control plane.

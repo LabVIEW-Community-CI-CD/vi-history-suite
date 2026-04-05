@@ -28,6 +28,9 @@ Current retained benchmark truth before activation:
   under either `LabVIEWCLI` or `LVCompare`
 - retrying the pair after timeout degrades into `-350000` connection failure
   instead of recovering the headless session
+- a governed comparable-prefix packet now retains the accepted cross-OS
+  `135`-commit / `134`-pair timing scope in
+  `docs/product/benchmark-packets/HARNESS-VHS-002-comparable-prefix.json`
 - the authority repo now retains per-pair failure receipts, terminal partial
   summaries, native Linux diagnostic logs, supplemental headless artifacts, a
   surfaced terminal diagnostic reason, and stale-report guards for that lane
@@ -61,8 +64,9 @@ Current retained benchmark truth before activation:
 
 ## Acceptance Criteria
 
-- Linux completes the deep `138/138` benchmark truthfully or exits with an
-  explicitly governed bounded exception
+- Linux either completes the deep `138/138` benchmark truthfully or the repo
+  retains the accepted bounded `135`-commit / `134`-pair comparable prefix
+  plus the explicit full-window blocker rationale
 - the published Windows benchmark image is proven locally on the canonical host
 - one comparative benchmark packet exists with explicit comparability outcome
 - `current-state`, `README`, queue docs, and benchmark docs reflect the result
@@ -78,6 +82,7 @@ Current retained benchmark truth before activation:
 
 - consume the retained Linux pair `135/138` failure evidence
 - preserve the Linux headless-runtime blocker as governed benchmark truth
+- retain and normalize the accepted `135`-commit / `134`-pair comparable prefix
 - finish the host-runnable Windows benchmark-image proof
 - stop short of claiming full comparability until both image lanes have
   truthful terminal summaries

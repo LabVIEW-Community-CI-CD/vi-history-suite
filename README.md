@@ -276,11 +276,15 @@ Committed and governed today:
   as `LVStatus.txt` and current `labview_*_headless_*_cur.txt` files into
   governed report storage, and surfaces retained terminal diagnostic reasons in
   the host benchmark-status panel; the latest deep-host `lv_icon.vi` run still
-  remains characterization-only because pair `135/138` reproduced a retained
-  Linux headless runtime seam (`linux-headless-recursive-load`) under
-  `LabVIEWCLI`, while bounded fresh-session repros showed the same pair times
-  out under `LVCompare` and degrades into `-350000` connection failure on
-  retry
+  retains a full-window Linux blocker at pair `135/138` because that pair
+  reproduced a retained Linux headless runtime seam
+  (`linux-headless-recursive-load`) under `LabVIEWCLI`, while bounded
+  fresh-session repros showed the same pair times out under `LVCompare` and
+  degrades into `-350000` connection failure on retry; the accepted cross-OS
+  timing truth is now the retained comparable-prefix packet in
+  `docs/product/benchmark-packets/HARNESS-VHS-002-comparable-prefix.json`,
+  which captures the first `135` commits / `134` pairs on both Windows host
+  and Linux host surfaces
 
 ## Active Work
 
@@ -451,11 +455,11 @@ reasoning instead of stalling indefinitely or collapsing into a generic
 container exit.
 
 The generated `.cache/` evidence is local and regenerated. The committed source
-still treats the latest deep-host Linux result as characterization-only because
-the retained run reached pair `135/138` before failing with
-`command-exited-nonzero`; native Linux NI diagnostic logs are now retained, and
-stale reused HTML reports are now discarded instead of being misattributed to
-the wrong pair.
+now retains the accepted cross-OS comparable timing scope in
+`docs/product/benchmark-packets/HARNESS-VHS-002-comparable-prefix.json`, while
+the full Linux deep window remains an explicit retained blocker because the
+latest official NI Linux truth still failed at pair `135/138` with
+`command-exited-nonzero (linux-headless-recursive-load)`.
 
 The generated `.cache/` evidence is local and regenerated. The committed source
 of truth for implemented-versus-partial research work is the documentation stack

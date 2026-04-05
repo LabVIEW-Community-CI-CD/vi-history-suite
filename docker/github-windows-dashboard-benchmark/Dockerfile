@@ -30,4 +30,18 @@ ENV PATH="C:\\tools\\node;C:\\tools\\git\\cmd;C:\\tools\\git\\mingw64\\bin;${PAT
 
 WORKDIR C:/workspace
 
+COPY package.json package-lock.json tsconfig.json ./
+COPY src ./src
+COPY docker/github-windows-dashboard-benchmark ./docker/github-windows-dashboard-benchmark
+
+RUN npm ci; `
+    if ($LASTEXITCODE -ne 0) { `
+      throw 'Failed to install the prebuilt Windows benchmark workspace dependencies.' `
+    }; `
+    npm run compile; `
+    if ($LASTEXITCODE -ne 0) { `
+      throw 'Failed to compile the prebuilt Windows benchmark workspace.' `
+    }; `
+    New-Item -ItemType Directory -Path C:\workspace\.cache -Force | Out-Null
+
 CMD ["powershell", "-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "Start-Sleep -Seconds 3600"]

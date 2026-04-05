@@ -35,9 +35,17 @@ describe('github windows benchmark workflow', () => {
     expect(dockerfile).toContain('io.vihs.runtime-plane="github-windows-dashboard-benchmark"');
     expect(dockerfile).toContain('nodejs.org/dist/v');
     expect(dockerfile).toContain('MinGit-');
+    expect(dockerfile).toContain('COPY package.json package-lock.json tsconfig.json ./');
+    expect(dockerfile).toContain('COPY src ./src');
+    expect(dockerfile).toContain('npm ci');
+    expect(dockerfile).toContain('npm run compile');
 
     expect(runScript).toContain('VIHS_GITHUB_WINDOWS_BENCHMARK_HARNESS_ID');
     expect(runScript).toContain('HARNESS-VHS-002');
     expect(runScript).toContain('runGitHubWindowsDashboardBenchmark.js');
+    expect(runScript).toContain('Using prebuilt Windows benchmark workspace image.');
+    expect(runScript).toContain('Prebuilt Windows benchmark CLI is missing');
+    expect(runScript).not.toContain("Write-Host 'VIHS_PROGRESS: Installing benchmark workspace dependencies.'");
+    expect(runScript).not.toContain('npm ci');
   });
 });

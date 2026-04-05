@@ -105,6 +105,19 @@
   Windows 11 host UX lane, the Windows benchmark image, and the Linux
   benchmark-image lane rather than the default GitHub-hosted workflow target
 
+### Governed Comparable Prefix
+
+- accepted cross-OS comparable window: the first `135` commits / `134` pairs
+- retained comparable-prefix packet:
+  - `docs/product/benchmark-packets/HARNESS-VHS-002-comparable-prefix.json`
+  - `docs/product/benchmark-packets/HARNESS-VHS-002-comparable-prefix.md`
+- current retained last comparable pair id: `2a28a2b984d9`
+- current retained Linux full-window blocker:
+  `pair 135 / 138 :: command-exited-nonzero (linux-headless-recursive-load)`
+- the full 139-commit / 138-pair window remains the deep Windows benchmark
+  target; the bounded comparable prefix is the governed cross-OS timing scope
+  until the latest official NI Linux runtime truth changes
+
 ### Host-Owned Deep Benchmark Path
 
 - local explicit deep benchmark command from the authority repo:
