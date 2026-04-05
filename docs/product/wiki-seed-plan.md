@@ -32,9 +32,13 @@ Do not draft or refresh wiki pages until:
   `docs/product/wiki-publication-ledger.md`
 - **Documentation Workbench**: published on `2026-04-04`; see
   `docs/product/wiki-publication-ledger.md`
-- **Next page**: `Program Repo Jump`
+- **Program Repo Jump**: published on `2026-04-04`; see
+  `docs/product/wiki-publication-ledger.md`
+- **Documentation Coherence Ledger**: published on `2026-04-04`; see
+  `docs/product/wiki-publication-ledger.md`
+- **Next page**: `Current State`
   - retain publication prep under
-    `.cache/wiki-workbench/publication-prep/program-repo-jump/`
+    `.cache/wiki-workbench/publication-prep/current-state/`
 
 ## Page Order
 
@@ -104,6 +108,23 @@ Do not draft or refresh wiki pages until:
    - Secondary authority:
      - `docs/documentation-workbench.md`
      - `docs/product/current-state.md`
+
+9. **Documentation Coherence Ledger**
+   - Primary authority:
+     - `docs/product/documentation-coherence-ledger.md`
+   - Secondary authority:
+     - `docs/documentation-workbench.md`
+     - `docs/product/current-state.md`
+     - `docs/product/wiki-authority-map.md`
+
+10. **Current State**
+   - Primary authority:
+     - `docs/product/current-state.md`
+   - Secondary authority:
+     - `README.md`
+     - `docs/product/SHIP-0001-releasable-vi-history-suite.md`
+     - `docs/product/development-queue.json`
+     - `docs/product/blocker-ledger.json`
 
 ## Drafting Rules
 

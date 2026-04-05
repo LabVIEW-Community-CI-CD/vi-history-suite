@@ -112,18 +112,49 @@
         "docs/product/program-repo-jump.md",
         "docs/product/wiki-publication-ledger.md"
       ]
+    },
+    {
+      "id": "program-repo-jump",
+      "title": "Program Repo Jump",
+      "wikiPath": "Program-Repo-Jump",
+      "wikiFileName": "Program-Repo-Jump.md",
+      "status": "published",
+      "publishedDate": "2026-04-04",
+      "wikiCommit": "b16a5d3",
+      "primaryAuthority": [
+        "docs/product/program-repo-jump.md",
+        "docs/product/program-repo-jump-map.json",
+        "docs/documentation-workbench.md",
+        "docs/product/current-state.md"
+      ]
+    },
+    {
+      "id": "documentation-coherence-ledger",
+      "title": "Documentation Coherence Ledger",
+      "wikiPath": "Documentation-Coherence-Ledger",
+      "wikiFileName": "Documentation-Coherence-Ledger.md",
+      "status": "published",
+      "publishedDate": "2026-04-04",
+      "wikiCommit": "b205d10",
+      "primaryAuthority": [
+        "docs/product/documentation-coherence-ledger.md",
+        "docs/documentation-workbench.md",
+        "docs/product/current-state.md",
+        "docs/product/wiki-authority-map.md"
+      ]
     }
   ],
   "nextPage": {
-    "id": "program-repo-jump",
-    "title": "Program Repo Jump",
+    "id": "current-state",
+    "title": "Current State",
     "primaryAuthority": [
-      "docs/product/program-repo-jump.md",
-      "docs/product/program-repo-jump-map.json"
+      "docs/product/current-state.md"
     ],
     "secondaryAuthority": [
-      "docs/documentation-workbench.md",
-      "docs/product/current-state.md"
+      "README.md",
+      "docs/product/SHIP-0001-releasable-vi-history-suite.md",
+      "docs/product/development-queue.json",
+      "docs/product/blocker-ledger.json"
     ]
   }
 }

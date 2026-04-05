@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-05T04:52:25.376Z",
+  "generatedAt": "2026-04-05T04:57:27.765Z",
   "sourceLedgerPath": "docs/product/wiki-publication-ledger.json",
   "sourceWikiRepoPath": "../vi-history-suite.wiki",
   "defaultPageId": "overview",
@@ -66,6 +66,24 @@
       "htmlFileName": "documentation-workbench.html",
       "publishedDate": "2026-04-04",
       "wikiCommit": "4afbea1"
+    },
+    {
+      "id": "program-repo-jump",
+      "title": "Program Repo Jump",
+      "wikiPath": "Program-Repo-Jump",
+      "wikiFileName": "Program-Repo-Jump.md",
+      "htmlFileName": "program-repo-jump.html",
+      "publishedDate": "2026-04-04",
+      "wikiCommit": "b16a5d3"
+    },
+    {
+      "id": "documentation-coherence-ledger",
+      "title": "Documentation Coherence Ledger",
+      "wikiPath": "Documentation-Coherence-Ledger",
+      "wikiFileName": "Documentation-Coherence-Ledger.md",
+      "htmlFileName": "documentation-coherence-ledger.html",
+      "publishedDate": "2026-04-04",
+      "wikiCommit": "b205d10"
     }
   ]
 }

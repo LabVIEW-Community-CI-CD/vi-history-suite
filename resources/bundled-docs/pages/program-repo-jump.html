@@ -1,0 +1,99 @@
+<h1>Program Repo Jump</h1>
+<p>This page is derived from governed repository documentation, not from source
+code or prior chat state. The current authority surfaces for this page are:</p>
+<ul>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/program-repo-jump.md"><code>docs/product/program-repo-jump.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/program-repo-jump-map.json"><code>docs/product/program-repo-jump-map.json</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/documentation-workbench.md"><code>docs/documentation-workbench.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/current-state.md"><code>docs/product/current-state.md</code></a></li>
+</ul>
+<h2>Purpose</h2>
+<p>The program repo jump surface exists so future sessions can move between the
+governed CompareVI repos on this machine without depending on chat memory or ad
+hoc shell history.</p>
+<p>The current governed constellation is:</p>
+<ul>
+<li><code>vi-history-suite</code></li>
+<li><code>vi-history-suite-source-experiments</code></li>
+<li><code>vi-history-suite.wiki</code></li>
+<li><code>repo-standards-review</code></li>
+</ul>
+<h2>Authority Roles</h2>
+<p>Each repo has a specific role:</p>
+<ul>
+<li><code>vi-history-suite</code>: product authority and ship-control repo</li>
+<li><code>vi-history-suite-source-experiments</code>: private GitHub experiment mirror for
+non-authoritative benchmark iteration</li>
+<li><code>vi-history-suite.wiki</code>: derived reader surface</li>
+<li><code>repo-standards-review</code>: companion assurance skill and standards-review
+surface</li>
+</ul>
+<p>If those repos disagree, the documentation package in <code>vi-history-suite</code>
+remains the authority of record until the others are aligned.</p>
+<h2>Governed Map</h2>
+<p>The machine-readable source of truth is:</p>
+<ul>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/program-repo-jump-map.json"><code>docs/product/program-repo-jump-map.json</code></a></li>
+</ul>
+<p>That map retains:</p>
+<ul>
+<li>governed repo ids</li>
+<li>authority roles</li>
+<li>expected remotes</li>
+<li>local path-resolution strategy</li>
+<li>primary entrypoints for each repo</li>
+</ul>
+<p>This is the map consumed by the wiki workbench, so wiki staging and bundle sync
+use the same governed constellation rather than hardcoded sibling guesses.</p>
+<h2>Local CLI</h2>
+<p>The local CLI from <code>vi-history-suite</code> gives a deterministic repo summary:</p>
+<pre><code class="language-bash">npm run program:repos
+</code></pre>
+<p>Useful variants:</p>
+<pre><code class="language-bash">npm run program:repos -- --repo repo-standards-review
+npm run program:repos -- --format json
+</code></pre>
+<p>The governed wiki workbench uses the same cross-repo model:</p>
+<pre><code class="language-bash">npm run wiki:workbench:doctor
+</code></pre>
+<h2>Companion Skill Entry</h2>
+<p>From the companion assurance skill, the reciprocal resolver is:</p>
+<pre><code class="language-bash">python3 scripts/repo_jump.py /home/sveld/code/standards/vi-history-suite --format text
+</code></pre>
+<p>That keeps the cross-repo navigation model anchored in this repo instead of
+duplicating a second hardcoded constellation.</p>
+<h2>Update Rule</h2>
+<p>When the local CompareVI repo constellation changes, these surfaces should move
+together:</p>
+<ul>
+<li><code>docs/product/program-repo-jump-map.json</code></li>
+<li><code>docs/product/program-repo-jump.md</code></li>
+<li><code>docs/product/current-state.md</code></li>
+<li><code>README.md</code></li>
+<li><code>docs/information-item-map.md</code></li>
+<li><code>docs/documentation-workbench.md</code></li>
+<li><code>docs/architecture/overview.md</code></li>
+<li>companion <code>repo-standards-review</code> jump tooling</li>
+</ul>
+<h2>Boundary</h2>
+<p>This is a navigation and documentation-orientation surface.</p>
+<p>It is not:</p>
+<ul>
+<li>a runtime-proof lane</li>
+<li>a release-authority replacement</li>
+<li>a benchmark-authority replacement</li>
+</ul>
+<p>The governed boundary remains:</p>
+<ul>
+<li>GitLab <code>vi-history-suite</code>: authority</li>
+<li>private GitHub <code>vi-history-suite-source-experiments</code>: experiment mirror only</li>
+<li>GitLab <code>vi-history-suite.wiki</code>: derived reader surface</li>
+</ul>
+<h2>Read Next</h2>
+<ul>
+<li><a href="#" data-page-id="documentation-workbench">Documentation Workbench</a></li>
+<li><a href="#" data-page-id="documentation-coherence-ledger">Documentation Coherence Ledger</a></li>
+<li><a href="#" data-page-id="architecture">Architecture</a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/program-repo-jump.md">Program Repo Jump (Authority Doc)</a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/current-state.md">Current State</a></li>
+</ul>
