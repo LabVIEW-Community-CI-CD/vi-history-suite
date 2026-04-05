@@ -71,6 +71,13 @@ canonical Windows 11 machine</li>
 <li><code>ISSUE-0407</code>: Public Facade Release Kit And Host-Machine Acceptance</li>
 <li><code>PROGRAM-0002</code>: Public Facade Release Kit And Host-Machine Acceptance</li>
 </ul>
+<p>The queued follow-on tranches and programs are now explicit:</p>
+<ul>
+<li><code>TRANCHE-011</code>: Repeatable Windows And Linux Benchmark Proof</li>
+<li><code>PROGRAM-0003</code>: Repeatable Benchmark Proof</li>
+<li><code>TRANCHE-012</code>: Post-Release Sustainment And Release Cadence</li>
+<li><code>PROGRAM-0004</code>: Post-Release Sustainment And Release Cadence</li>
+</ul>
 <p>Important truth about that tranche:</p>
 <ul>
 <li>GitLab remains the private authority repo and release-control surface</li>
@@ -79,16 +86,21 @@ canonical Windows 11 machine</li>
 <li>Docker is no longer part of the default public setup path</li>
 <li>the Windows 11 host-machine automated acceptance flow already succeeds</li>
 <li>the remaining human UX gate is Sergio Velderrain&#39;s manual right-click pass</li>
+<li>benchmark proof is now a separate queued program, not part of the active
+public-closeout exit gate</li>
 </ul>
 <h2>Benchmark And Proof State</h2>
 <p>The product now has separate proof surfaces instead of one blended lane:</p>
 <ul>
 <li>canonical Windows host for installed-user and human-review truth</li>
 <li>Linux benchmark lane for characterization and performance comparison</li>
-<li>scaffolded Windows benchmark-image lane for repeatable deep benchmarking</li>
+<li>published Windows benchmark-image lane for repeatable deep benchmarking</li>
 </ul>
 <p>The deep Linux benchmark still remains characterization-only because the latest
 retained run failed late rather than completing the full window.</p>
+<p>The Windows benchmark-image lane is now published and pullable, but local host
+proof for that lane still belongs to the queued benchmark-proof program rather
+than the active public-facade closeout program.</p>
 <h2>Documentation State</h2>
 <p>The docs package now includes:</p>
 <ul>

@@ -151,7 +151,7 @@
       "wikiFileName": "Current-State.md",
       "status": "published",
       "publishedDate": "2026-04-04",
-      "wikiCommit": "4e5d3f4",
+      "wikiCommit": "9119cdb",
       "primaryAuthority": [
         "docs/product/current-state.md",
         "README.md",
@@ -184,7 +184,7 @@
       "wikiFileName": "Development-Queue.md",
       "status": "published",
       "publishedDate": "2026-04-04",
-      "wikiCommit": "7dae371",
+      "wikiCommit": "9119cdb",
       "primaryAuthority": [
         "docs/product/development-queue.json",
         "docs/product/current-state.md",

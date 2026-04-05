@@ -311,16 +311,23 @@ The current active tranche is:
 
 - `TRANCHE-010`: public facade release kit and host-machine acceptance
 - active issue: `ISSUE-0407`
+- queued follow-on tranches:
+  - `TRANCHE-011`: repeatable Windows and Linux benchmark proof
+  - `TRANCHE-012`: post-release sustainment and release cadence
 
-Issue-ready execution program:
+Issue-ready execution programs:
 
 - [PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
+- [PROGRAM-0003: Repeatable Benchmark Proof](./docs/product/execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md)
+- [PROGRAM-0004: Post-Release Sustainment And Release Cadence](./docs/product/execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)
 
 See:
 
 - [Current State](./docs/product/current-state.md)
 - [Development Queue](./docs/product/development-queue.json)
 - [PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
+- [PROGRAM-0003: Repeatable Benchmark Proof](./docs/product/execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md)
+- [PROGRAM-0004: Post-Release Sustainment And Release Cadence](./docs/product/execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)
 - [SHIP-0001: Releasable VI History Suite](./docs/product/SHIP-0001-releasable-vi-history-suite.md)
 - [Release Readiness Matrix](./docs/product/release-readiness-matrix.json)
 - [Blocker Ledger](./docs/product/blocker-ledger.json)

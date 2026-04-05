@@ -68,15 +68,17 @@ automation and human evidence are captured.
   replaces VM replay as the preferred automation surface
 - the current first slice of that lane is a scaffolded container
   public-release-kit smoke recipe and GitHub workflow
-- the authority repo now mirrors a GitHub Linux benchmark lane into the
-  private GitHub experiment repo for non-authoritative experiments, with the
-  hosted workflow defaulting to `HARNESS-VHS-001` /
-  `Tooling/deployment/VIP_Pre-Install Custom Action.vi` while the canonical
-  host retains ownership of the deep `HARNESS-VHS-002` /
-  `resource/plugins/lv_icon.vi` benchmark
-- that GitHub experiment lane now publishes a dedicated headless Linux
-  benchmark/source-experiment image so benchmark runs can reuse the derived
-  container by digest
+
+### Queued Benchmark Follow-On Truth
+
+- repeatable benchmark proof now belongs to
+  [PROGRAM-0003](./PROGRAM-0003-repeatable-benchmark-proof.md),
+  [ISSUE-0408](../issues/ISSUE-0408-repeatable-benchmark-proof.md), and
+  `TRANCHE-011`
+- the authority repo already mirrors a GitHub Linux benchmark lane into the
+  private GitHub experiment repo, and the Windows benchmark image is already
+  published, but those benchmark lanes no longer define this program's exit
+  gates
 
 ### Supplemental Feedback Truth
 
@@ -185,8 +187,8 @@ Current first slice:
 4. Windows 11 host-machine PowerShell + VS Code CLI acceptance harness
 5. retained installed-user evidence pack and human-check worksheet
 6. future container-image automation lane
-7. private GitHub Linux benchmark experiment lane with a cheaper hosted
-   canonical harness and a host-owned deep `lv_icon.vi` benchmark
+7. explicit boundary documentation that hands benchmark proof to the queued
+   `PROGRAM-0003` / `ISSUE-0408` / `TRANCHE-011` lane
 
 ## Planned Deliverables
 
@@ -200,9 +202,8 @@ Current first slice:
   manifest
 - a scaffolded container public-release-kit smoke recipe and workflow in the
   public facade repo
-- a private GitHub-hosted Linux benchmark workflow plus derived benchmark
-  container recipe that defaults to `HARNESS-VHS-001` while retaining
-  `HARNESS-VHS-002` as the explicit deep-history lane
+- control-plane truth that benchmark proof is queued under
+  `PROGRAM-0003` / `ISSUE-0408` / `TRANCHE-011` rather than closed here
 
 ## Non-Goals
 
@@ -211,6 +212,7 @@ Current first slice:
 - reintroducing NSIS into the active public toolchain
 - making Docker a default public prerequisite
 - replacing the human gate with CLI-only proof
+- closing benchmark proof or benchmark-image comparability inside this program
 - treating public GitHub issues as gate-closing acceptance
 - Marketplace publication in this program's first slice
 
@@ -280,13 +282,9 @@ The public facade repo now retains:
 - a successful public release-kit publication run `23985908613` on public head
   `9ebee6c` that refreshed the public setup checksum asset after the container
   smoke scaffold landed
-- the authority repo now mirrors the GitHub Linux benchmark workflow, CLI,
-  harness, and container recipe into the private GitHub experiment repo, with
-  hosted runs defaulting to `HARNESS-VHS-001` while the canonical host owns
-  the deep `HARNESS-VHS-002` benchmark
-- that GitHub experiment lane now publishes a dedicated benchmark/source-experiment
-  image and runs Linux `LVCompare` benchmarks headlessly through the derived
-  container
+- adjacent benchmark scaffolding already exists in the authority repo and the
+  private GitHub experiment mirror, but benchmark proof ownership now sits
+  with `PROGRAM-0003` / `ISSUE-0408` / `TRANCHE-011`
 - a local direct-release Windows smoke that now succeeds against the public
   setup manifest, exact VSIX, and pinned fixture bundle
 - a scaffolded container public-release-kit smoke recipe and workflow at
@@ -321,4 +319,8 @@ The approved trust boundary remains:
   execution truth
 - a future published container image is the preferred reproducible automation
   follow-on
+- queued benchmark proof now belongs to `PROGRAM-0003` / `ISSUE-0408` /
+  `TRANCHE-011`
+- queued sustainment now belongs to `PROGRAM-0004` / `ISSUE-0409` /
+  `TRANCHE-012`
 - public GitHub issues remain supplemental field feedback

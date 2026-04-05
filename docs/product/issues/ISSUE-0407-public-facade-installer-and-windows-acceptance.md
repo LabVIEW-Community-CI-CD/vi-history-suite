@@ -49,21 +49,19 @@ Current landed scaffold state:
   prerequisite
 - the local container public-release-kit smoke now passes against the live
   `v0.2.0` GitHub release assets
-- the authority repo now mirrors a GitHub Linux benchmark lane into the
-  private `vi-history-suite-source-experiments` repo with hosted runs
-  defaulting to `HARNESS-VHS-001` /
-  `Tooling/deployment/VIP_Pre-Install Custom Action.vi`, while the canonical
-  host retains ownership of the deep `HARNESS-VHS-002` /
-  `resource/plugins/lv_icon.vi` benchmark and GitLab remains the authority
-  source repo and release-control surface
-- that GitHub experiment lane now publishes a dedicated headless Linux
-  benchmark/source-experiment image so benchmark runs can reuse the derived
-  container by digest
 - the host-machine automated acceptance lane now succeeds with a retained
   acceptance record at
   `C:\Users\sveld\AppData\Local\VI History Suite\acceptance\host-machine\acceptance-record.json`
 - only the manual human UX proof gate remains open, and Sergio Velderrain is
   the sole named maintainer gate owner for that host-machine click pass
+- the authority repo still mirrors a GitHub Linux benchmark lane into the
+  private `vi-history-suite-source-experiments` repo, but that mirror is now
+  documented as benchmark only and belongs to the queued benchmark-proof lane
+- the private GitHub experiment mirror is documented as benchmark only and not
+  as product authority
+- repeatable benchmark proof now has explicit queued ownership under
+  `PROGRAM-0003` / `ISSUE-0408` / `TRANCHE-011`, while sustainment is queued
+  under `PROGRAM-0004` / `ISSUE-0409` / `TRANCHE-012`
 
 ## Scope
 
@@ -77,7 +75,8 @@ Current landed scaffold state:
   Studio Code CLI
 - retained manual right-click acceptance worksheet for the human UX gate
 - future container-image automation lane planning
-- private GitHub Linux benchmark experimentation implementation and iteration
+- control-plane boundary updates that keep queued benchmark-proof ownership
+  explicit
 
 ## Non-Goals
 
@@ -89,6 +88,7 @@ Current landed scaffold state:
 - shipping Docker in the default public setup path
 - replacing the Windows 11 host-machine proof lane with public-issue feedback
 - replacing the human right-click gate with CLI-only proof
+- closing deep benchmark proof lanes or comparative benchmark packets here
 - Marketplace publication in the first slice
 
 ## Dependencies
@@ -119,10 +119,9 @@ Current landed scaffold state:
   prerequisite
 - the canonical fixture repo and VI are retained in a pinned provisioning
   manifest
-- the prepared GitHub Linux benchmark lane is documented as non-authoritative,
-  the private GitHub experiment mirror is documented as benchmark only, and the
-  published Linux benchmark image remains experiment evidence rather than
-  product distribution
+- queued benchmark proof and sustainment ownership are explicit so this issue
+  closes on the public-release lane rather than silently owning later benchmark
+  work
 
 ## Required Evidence
 
