@@ -13,6 +13,8 @@ import {
 
 const WINDOWS_LABVIEW_EXE_PATH =
   'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe';
+const WINDOWS_LABVIEW_CLI_PATH =
+  'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe';
 const WINDOWS_LVCOMPARE_PATH =
   'C:\\Program Files\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe';
 
@@ -60,9 +62,41 @@ describe('runGitHubWindowsDashboardBenchmarkCli', () => {
     expect(() => parseGitHubWindowsDashboardBenchmarkArgs(['--engine', 'weird'])).toThrow(
       /Unsupported value for --engine/
     );
+    expect(() =>
+      parseGitHubWindowsDashboardBenchmarkArgs([
+        '--labview-exe-path',
+        WINDOWS_LABVIEW_EXE_PATH
+      ])
+    ).toThrow(/Canonical runtime overrides require --engine/);
     expect(getGitHubWindowsDashboardBenchmarkUsage()).toContain(
       'Defaults to HARNESS-VHS-002'
     );
+  });
+
+  it('fails closed on missing explicit runtime paths on the canonical Windows host', async () => {
+    const runner = vi.fn();
+
+    await expect(
+      runGitHubWindowsDashboardBenchmarkCli(
+        [
+          '--engine',
+          'labview-cli',
+          '--labview-cli-path',
+          WINDOWS_LABVIEW_CLI_PATH,
+          '--labview-exe-path',
+          WINDOWS_LABVIEW_EXE_PATH
+        ],
+        {
+          hostPlatform: 'win32',
+          pathExists: (vi.fn(async (candidatePath: string) =>
+            candidatePath !== WINDOWS_LABVIEW_CLI_PATH
+          ) as never),
+          runner
+        }
+      )
+    ).rejects.toThrow(/--labview-cli-path does not exist on the canonical Windows host/);
+
+    expect(runner).not.toHaveBeenCalled();
   });
 
   it('writes a retained Windows benchmark summary from the dashboard smoke result', async () => {

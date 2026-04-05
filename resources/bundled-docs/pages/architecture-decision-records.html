@@ -33,7 +33,13 @@ see the current decision set and follow back to the governing records.</p>
 <li><code>ADR-0019</code>: Governed Wiki Workbench System</li>
 <li><code>ADR-0020</code>: Bounded Cross-OS Benchmark Prefix For HARNESS-VHS-002</li>
 <li><code>ADR-0021</code>: Canonical Exact-Pair Diagnosis Arguments</li>
+<li><code>ADR-0022</code>: Canonical Experiment Admission Control For PROGRAM-0003</li>
 </ul>
+<p><code>ADR-0021</code> now stays focused on exact-pair diagnosis arguments. <code>ADR-0022</code>
+lifts the wider PROGRAM-0003 admission-control boundary into its own decision,
+so dashboard-smoke, decision-record, exact-pair smoke, and Windows/Linux
+benchmark CLIs share one canonical runtime-override validation layer while the
+clean-host Windows proof boundary remains explicit too.</p>
 <h2>Decision Themes</h2>
 <p>The current ADR set clusters into a few major themes:</p>
 <ul>

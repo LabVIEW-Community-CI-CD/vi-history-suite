@@ -1,6 +1,10 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
+import {
+  validateCanonicalRuntimeOverrideArgs,
+  validateCanonicalRuntimeOverrideExecutionSurface
+} from './canonicalRuntimeOverrideValidation';
 import { getCanonicalHarnessDefinition } from '../harness/canonicalHarnesses';
 import {
   HarnessDashboardSmokeOptions,
@@ -154,6 +158,7 @@ export interface GitHubWindowsDashboardBenchmarkCliDeps {
   mkdir?: typeof fs.mkdir;
   writeFile?: typeof fs.writeFile;
   pathExists?: (filePath: string) => Promise<boolean>;
+  hostPlatform?: NodeJS.Platform;
   now?: () => Date;
 }
 
@@ -258,7 +263,7 @@ export function parseGitHubWindowsDashboardBenchmarkArgs(
     );
   }
 
-  return {
+  const parsedArgs = {
     harnessId,
     dashboardCommitWindow,
     runtimeEngineOverride,
@@ -268,6 +273,17 @@ export function parseGitHubWindowsDashboardBenchmarkArgs(
     strictRsrcHeader,
     helpRequested
   };
+  validateCanonicalRuntimeOverrideArgs(
+    {
+      runtimePlatform: 'win32',
+      runtimeEngineOverride,
+      labviewCliPath,
+      labviewExePath,
+      lvComparePath
+    },
+    getGitHubWindowsDashboardBenchmarkUsage()
+  );
+  return parsedArgs;
 }
 
 export async function runGitHubWindowsDashboardBenchmarkCli(
@@ -281,6 +297,21 @@ export async function runGitHubWindowsDashboardBenchmarkCli(
     stdout.write(`${getGitHubWindowsDashboardBenchmarkUsage()}\n`);
     return 'help';
   }
+
+  await validateCanonicalRuntimeOverrideExecutionSurface(
+    {
+      runtimePlatform: 'win32',
+      runtimeEngineOverride: args.runtimeEngineOverride,
+      labviewCliPath: args.labviewCliPath,
+      labviewExePath: args.labviewExePath,
+      lvComparePath: args.lvComparePath
+    },
+    getGitHubWindowsDashboardBenchmarkUsage(),
+    {
+      pathExists: deps.pathExists ?? defaultPathExists,
+      hostPlatform: deps.hostPlatform ?? process.platform
+    }
+  );
 
   const repoRoot = deps.repoRoot ?? path.resolve(__dirname, '..', '..');
   const cloneRoot = path.resolve(repoRoot, '.cache', 'harnesses');

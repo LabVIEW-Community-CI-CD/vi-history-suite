@@ -58,6 +58,9 @@ describe('runGitHubLinuxDashboardBenchmarkCli', () => {
     expect(() => parseGitHubLinuxDashboardBenchmarkArgs(['--engine', 'weird'])).toThrow(
       /Unsupported value for --engine/
     );
+    expect(() =>
+      parseGitHubLinuxDashboardBenchmarkArgs(['--labview-exe-path', LINUX_LABVIEW_EXE_PATH])
+    ).toThrow(/Canonical runtime overrides require --engine/);
     expect(() => parseGitHubLinuxDashboardBenchmarkArgs(['--labview-exe-path'])).toThrow(
       /Missing value for --labview-exe-path/
     );

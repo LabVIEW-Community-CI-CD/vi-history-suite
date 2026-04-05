@@ -116,12 +116,31 @@ benchmark boundaries.</p>
 <code>Program Files</code> / <code>Program Files (x86)</code> runtime paths</li>
 <li>wrong engine/path combinations fail closed before the harness runs</li>
 </ul>
+<p>That admission control is no longer exact-pair-only:</p>
+<ul>
+<li>dashboard-smoke, decision-record, exact-pair smoke, and the Windows/Linux
+benchmark CLIs now share the same canonical runtime-override validation
+layer before retained evidence is generated</li>
+</ul>
 <p>The current operator-facing authority for that contract is:</p>
 <ul>
 <li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/canonical-exact-pair-diagnosis.md"><code>docs/product/canonical-exact-pair-diagnosis.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/architecture/adr/ADR-0022-canonical-experiment-admission-control.md"><code>docs/architecture/adr/ADR-0022-canonical-experiment-admission-control.md</code></a></li>
+</ul>
+<p>That canonical contract now also includes Windows host hygiene:</p>
+<ul>
+<li>explicit Windows runtime override paths must exist before a targeted rerun
+starts on the canonical host</li>
+<li>canonical Windows host-native reruns fail closed when stale <code>LabVIEW.exe</code>,
+<code>LabVIEWCLI.exe</code>, or <code>LVCompare.exe</code> sessions are already open</li>
+<li>canonical Windows host-native reruns fail closed when the selected
+<code>LabVIEW.ini</code>-derived VI Server TCP port already has a listener before launch</li>
+<li>on the current canonical machine, only the x86 <code>LabVIEWCLI.exe</code> path exists,
+so host-native x64 <code>labview-cli</code> exact-pair reruns are non-canonical unless
+a real x64 CLI install exists</li>
 </ul>
 <p>Ambient environment changes such as <code>LV_RTE_HEADLESS=1</code> can still support
-bounded characterization work, but they do not replace the canonical argument
+bounded characterization work, but they do not replace the canonical admission
 contract.</p>
 <h2>Read Next</h2>
 <ul>

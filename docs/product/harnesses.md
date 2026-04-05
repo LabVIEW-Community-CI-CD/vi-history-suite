@@ -43,11 +43,22 @@
 - exact-pair diagnosis extension:
   - operator-facing canonical argument guidance is retained in
     `docs/product/canonical-exact-pair-diagnosis.md`
-  - canonical exact-pair diagnosis now fails closed on non-canonical runtime
-    argument bundles: `--selected-hash` / `--base-hash` must form a full
-    40-character selected/base pair, explicit runtime override paths require
-    matching `--platform` and `--engine`, and Windows bitness overrides must
-    not contradict explicit `Program Files` / `Program Files (x86)` paths
+  - `PROGRAM-0003` entrypoints that accept runtime overrides now share one
+    canonical admission layer before retained evidence can be generated:
+    dashboard-smoke, decision-record, exact-pair smoke, and the Windows/Linux
+    benchmark CLIs all reject contradictory engine/path bundles instead of
+    letting one looser CLI contaminate benchmark truth
+  - canonical exact-pair diagnosis still adds its own selected/base pair rule:
+    `--selected-hash` / `--base-hash` must form a full 40-character
+    selected/base pair
+  - on the canonical Windows host, those explicit runtime paths must exist,
+    and host-native exact-pair diagnosis now blocks before launch when stale
+    `LabVIEW.exe` / `LabVIEWCLI.exe` / `LVCompare.exe` sessions or a
+    preexisting listener on the selected `LabVIEW.ini`-derived VI Server port
+    would contaminate the rerun
+  - on the current canonical machine, only the x86 `LabVIEWCLI.exe` path
+    exists locally, so host-native x64 `labview-cli` reruns remain
+    non-canonical unless a real x64 CLI install exists
   - when `--selected-hash` / `--base-hash` targets a governed blocker pair and
     the runtime exercises `CloseLabVIEW -Headless`, the derived smoke
     JSON/Markdown/HTML surfaces retain the recovery executable, args, exit

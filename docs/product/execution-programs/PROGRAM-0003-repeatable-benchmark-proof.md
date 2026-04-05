@@ -139,6 +139,22 @@ evidence, `VHS-REQ-449` now governs canonical diagnosis arguments:
 incomplete engine/path override bundles, wrong executable basenames, and
 Windows bitness/path contradictions before a targeted rerun can start.
 
+`VHS-REQ-450` now governs the canonical Windows host runtime surface too:
+explicit Windows runtime override paths must exist before the rerun starts,
+and host-native Windows comparison execution now fails closed when preflight
+detects stale `LabVIEW.exe` / `LabVIEWCLI.exe` / `LVCompare.exe` sessions or
+a preexisting listener on the selected `LabVIEW.ini`-derived VI Server port.
+That same proof tightening also makes the current host capability explicit:
+only the x86 `LabVIEWCLI.exe` path exists locally on the canonical machine, so
+host-native x64 `labview-cli` exact-pair reruns are non-canonical until a real
+x64 CLI install exists.
+
+`VHS-REQ-451` lifts canonical runtime-override validation into a shared
+PROGRAM-0003 admission layer rather than keeping it trapped inside
+`runHarnessReportSmoke` alone. Dashboard-smoke, decision-record, exact-pair
+smoke, and the Windows/Linux benchmark CLIs now reject contradictory
+engine/path bundles before they can generate retained evidence.
+
 Current retained Linux blocker before activation:
 
 - pair `135/138` is reproducibly failing under the Linux image lane

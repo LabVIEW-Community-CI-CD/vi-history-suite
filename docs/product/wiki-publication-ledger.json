@@ -53,12 +53,13 @@
       "wikiFileName": "Comparison-Reports-And-Dashboard-Review.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "5e386f3",
+      "wikiCommit": "5125ace",
       "primaryAuthority": [
         "docs/requirements/srs.md",
         "docs/product/ni-comparison-report-metadata-inventory.md",
         "docs/product/current-state.md",
         "docs/product/canonical-exact-pair-diagnosis.md",
+        "docs/architecture/adr/ADR-0022-canonical-experiment-admission-control.md",
         "docs/testing/test-plan.md",
         "docs/research/authoritative/research-alignment.md"
       ]
@@ -97,7 +98,8 @@
         "docs/architecture/adr/ADR-0013-authority-first-wiki-seeding.md",
         "docs/architecture/adr/ADR-0014-cross-repo-navigation-control-plane.md",
         "docs/architecture/adr/ADR-0020-bounded-cross-os-benchmark-prefix-for-harness-vhs-002.md",
-        "docs/architecture/adr/ADR-0021-canonical-exact-pair-diagnosis-arguments.md"
+        "docs/architecture/adr/ADR-0021-canonical-exact-pair-diagnosis-arguments.md",
+        "docs/architecture/adr/ADR-0022-canonical-experiment-admission-control.md"
       ]
     },
     {
@@ -153,8 +155,8 @@
       "wikiPath": "Current-State",
       "wikiFileName": "Current-State.md",
       "status": "published",
-      "publishedDate": "2026-04-04",
-      "wikiCommit": "9119cdb",
+      "publishedDate": "2026-04-05",
+      "wikiCommit": "5125ace",
       "primaryAuthority": [
         "docs/product/current-state.md",
         "README.md",
@@ -232,7 +234,7 @@
       "wikiFileName": "Architecture-Decision-Records.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "5e386f3",
+      "wikiCommit": "5125ace",
       "primaryAuthority": [
         "docs/architecture/overview.md",
         "docs/architecture/adr/ADR-0001-vscode-typescript-baseline.md",
@@ -255,7 +257,8 @@
         "docs/architecture/adr/ADR-0018-windows-benchmark-image-lane.md",
         "docs/architecture/adr/ADR-0019-governed-wiki-workbench-system.md",
         "docs/architecture/adr/ADR-0020-bounded-cross-os-benchmark-prefix-for-harness-vhs-002.md",
-        "docs/architecture/adr/ADR-0021-canonical-exact-pair-diagnosis-arguments.md"
+        "docs/architecture/adr/ADR-0021-canonical-exact-pair-diagnosis-arguments.md",
+        "docs/architecture/adr/ADR-0022-canonical-experiment-admission-control.md"
       ]
     }
   ],

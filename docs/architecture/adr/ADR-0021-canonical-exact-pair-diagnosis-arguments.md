@@ -13,7 +13,6 @@ Those reruns have become sensitive to operator-supplied runtime arguments:
 
 - Windows exact-pair proof can be affected by multiple installed LabVIEW
   versions
-- native Windows proof can be affected by non-default VI Server TCP ports
 - explicit runtime overrides can accidentally mix engines, executable paths,
   and bitness
 - partial selected/base hashes can target the right selected revision while
@@ -43,11 +42,15 @@ Adopt canonical fail-closed argument validation for exact-pair
 4. Windows bitness overrides shall not contradict explicit runtime paths:
    - `Program Files (x86)` implies `x86`
    - `Program Files` implies `x64`
-5. Explicit executable paths shall be validated against their governed
+5. Explicit Windows executable paths shall be validated against their governed
    executable basenames before the harness runs.
 6. The documentation package shall keep a dedicated operator-facing canonical
    diagnosis reference so future sessions do not have to reconstruct the valid
    bundles from tests or source alone.
+
+The wider PROGRAM-0003 admission-control boundary, including shared runtime
+override validation across sibling CLIs and Windows host-surface contamination
+preflight, is governed separately by `ADR-0022`.
 
 ## Consequences
 

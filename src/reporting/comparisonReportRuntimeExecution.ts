@@ -44,6 +44,10 @@ export interface ComparisonReportRuntimeExecutionDeps {
   observeWindowsProcesses?: (
     options: ObserveWindowsProcessesOptions
   ) => Promise<RuntimeProcessObservation | undefined>;
+  observeWindowsTcpListeners?: (
+    options: ObserveWindowsTcpListenersOptions
+  ) => Promise<WindowsTcpListenerObservation[]>;
+  enforceWindowsHostPreflight?: boolean;
   commandTimeoutMs?: number;
 }
 
@@ -88,12 +92,19 @@ export interface RuntimeProcessObservation {
   capturedAt: string;
   hostPlatform: NodeJS.Platform;
   runtimePlatform: string;
-  trigger: 'cli-log-banner' | 'process-spawn' | 'process-exit';
+  trigger: 'preflight' | 'cli-log-banner' | 'process-spawn' | 'process-exit';
   observedProcesses: RuntimeObservedProcess[];
   observedProcessNames: string[];
   labviewProcessObserved: boolean;
   labviewCliProcessObserved: boolean;
   lvcompareProcessObserved: boolean;
+}
+
+export interface WindowsTcpListenerObservation {
+  localAddress: string;
+  localPort: number;
+  pid: number;
+  processName?: string;
 }
 
 export interface WindowsLabviewTcpSettings {
@@ -108,9 +119,19 @@ export interface ObserveWindowsProcessesOptions {
   trigger: RuntimeProcessObservation['trigger'];
 }
 
+export interface ObserveWindowsTcpListenersOptions {
+  hostPlatform: NodeJS.Platform;
+  runtimePlatform: string;
+  localPorts: number[];
+}
+
 export interface ObserveWindowsProcessesDeps {
   execFileImpl?: typeof execFile;
   nowIso?: () => string;
+}
+
+export interface ObserveWindowsTcpListenersDeps {
+  execFileImpl?: typeof execFile;
 }
 
 export interface RunComparisonCommandPlanWithObservationDeps {
@@ -138,7 +159,11 @@ export async function executeComparisonReport(
   const readFile = deps.readFile ?? fs.readFile;
   const pathExists = deps.pathExists ?? pathExistsForReport;
   const processPlatform = deps.processPlatform ?? process.platform;
+  const enforceWindowsHostPreflight =
+    deps.enforceWindowsHostPreflight ?? process.platform === 'win32';
   const observeWindowsProcesses = deps.observeWindowsProcesses ?? observeWindowsRuntimeProcesses;
+  const observeWindowsTcpListenersFn =
+    deps.observeWindowsTcpListeners ?? observeWindowsTcpListeners;
   const runCommand =
     deps.runCommand ??
     buildDefaultRunCommand({
@@ -187,6 +212,9 @@ export async function executeComparisonReport(
         nowIso,
         nowMs,
         processPlatform,
+        enforceWindowsHostPreflight,
+        observeWindowsProcesses,
+        observeWindowsTcpListeners: observeWindowsTcpListenersFn,
         commandTimeoutMs: deps.commandTimeoutMs
       }
     );
@@ -256,6 +284,13 @@ async function runHostNativeExecution(
     nowIso: () => string;
     nowMs: () => number;
     processPlatform: NodeJS.Platform;
+    enforceWindowsHostPreflight: boolean;
+    observeWindowsProcesses: (
+      options: ObserveWindowsProcessesOptions
+    ) => Promise<RuntimeProcessObservation | undefined>;
+    observeWindowsTcpListeners: (
+      options: ObserveWindowsTcpListenersOptions
+    ) => Promise<WindowsTcpListenerObservation[]>;
     commandTimeoutMs?: number;
   }
 ): Promise<ComparisonReportRuntimeExecution> {
@@ -343,6 +378,24 @@ async function runHostNativeExecution(
       )
     }
   };
+  const windowsHostSurfacePreflight = await preflightWindowsHostRuntimeSurface(
+    record,
+    effectiveExecutionContext.commandPlan,
+    windowsLabviewTcpSettings,
+    {
+      enforceWindowsHostPreflight: deps.enforceWindowsHostPreflight,
+      processPlatform: deps.processPlatform,
+      observeWindowsProcesses: deps.observeWindowsProcesses,
+      observeWindowsTcpListeners: deps.observeWindowsTcpListeners,
+      writeFile: deps.writeFile,
+      mkdir: deps.mkdir,
+      unlinkFile: deps.unlinkFile,
+      pathExists: deps.pathExists
+    }
+  );
+  if (windowsHostSurfacePreflight) {
+    return windowsHostSurfacePreflight.blockedExecution;
+  }
 
   const executeAttempt = async (): Promise<ComparisonReportRuntimeExecution> => {
     await clearStaleExecutedReportArtifacts(record, effectiveExecutionContext, {
@@ -597,6 +650,47 @@ async function persistRuntimeProcessObservation(
   };
 }
 
+async function persistRuntimePreflightObservation(
+  record: ComparisonReportPacketRecord,
+  options: {
+    processObservation?: RuntimeProcessObservation;
+    listenerObservations: WindowsTcpListenerObservation[];
+    writeFile: typeof fs.writeFile;
+    mkdir: typeof fs.mkdir;
+    unlinkFile: typeof fs.unlink;
+    pathExists: (filePath: string) => Promise<boolean>;
+  }
+): Promise<string | undefined> {
+  if (!options.processObservation && options.listenerObservations.length === 0) {
+    if (await options.pathExists(record.artifactPlan.runtimeProcessObservationFilePath)) {
+      try {
+        await options.unlinkFile(record.artifactPlan.runtimeProcessObservationFilePath);
+      } catch {
+        // Preserve deterministic execution results even if stale cleanup fails.
+      }
+    }
+    return undefined;
+  }
+
+  await options.mkdir(path.dirname(record.artifactPlan.runtimeProcessObservationFilePath), {
+    recursive: true
+  });
+  await options.writeFile(
+    record.artifactPlan.runtimeProcessObservationFilePath,
+    JSON.stringify(
+      {
+        preflightSnapshot: options.processObservation,
+        preflightTcpListeners: options.listenerObservations
+      },
+      null,
+      2
+    ),
+    'utf8'
+  );
+
+  return record.artifactPlan.runtimeProcessObservationFilePath;
+}
+
 interface CapturedRuntimeDiagnostics {
   reason?: string;
   notes: string[];
@@ -647,6 +741,17 @@ export async function resolveWindowsLabviewTcpSettings(
     return { notes: [] };
   }
 
+  return resolveWindowsLabviewTcpSettingsForLabviewPath(labviewPath, {
+    readFile: deps.readFile
+  });
+}
+
+export async function resolveWindowsLabviewTcpSettingsForLabviewPath(
+  labviewPath: string,
+  deps: {
+    readFile: typeof fs.readFile;
+  }
+): Promise<WindowsLabviewTcpSettings> {
   const labviewIniPath = path.win32.join(path.win32.dirname(labviewPath), 'LabVIEW.ini');
   let iniText: string;
   try {
@@ -701,6 +806,128 @@ export function appendLabviewCliPortNumberArg(
   }
 
   return [...args, '-PortNumber', String(labviewTcpPort)];
+}
+
+async function preflightWindowsHostRuntimeSurface(
+  record: ComparisonReportPacketRecord,
+  commandPlan: ComparisonCommandPlan,
+  windowsLabviewTcpSettings: WindowsLabviewTcpSettings,
+  deps: {
+    enforceWindowsHostPreflight: boolean;
+    processPlatform: NodeJS.Platform;
+    observeWindowsProcesses: (
+      options: ObserveWindowsProcessesOptions
+    ) => Promise<RuntimeProcessObservation | undefined>;
+    observeWindowsTcpListeners: (
+      options: ObserveWindowsTcpListenersOptions
+    ) => Promise<WindowsTcpListenerObservation[]>;
+    writeFile: typeof fs.writeFile;
+    mkdir: typeof fs.mkdir;
+    unlinkFile: typeof fs.unlink;
+    pathExists: (filePath: string) => Promise<boolean>;
+  }
+): Promise<
+  | {
+      blockedExecution: ComparisonReportRuntimeExecution;
+    }
+  | undefined
+> {
+  if (
+    !deps.enforceWindowsHostPreflight ||
+    record.runtimeSelection.platform !== 'win32' ||
+    record.runtimeSelection.provider !== 'host-native'
+  ) {
+    return undefined;
+  }
+
+  const processObservation = await deps.observeWindowsProcesses({
+    hostPlatform: deps.processPlatform,
+    runtimePlatform: record.runtimeSelection.platform,
+    trigger: 'preflight'
+  });
+  const listenerObservations = await deps.observeWindowsTcpListeners({
+    hostPlatform: deps.processPlatform,
+    runtimePlatform: record.runtimeSelection.platform,
+    localPorts:
+      Number.isInteger(windowsLabviewTcpSettings.labviewTcpPort) &&
+      (windowsLabviewTcpSettings.labviewTcpPort ?? 0) > 0
+        ? [windowsLabviewTcpSettings.labviewTcpPort as number]
+        : []
+  });
+
+  const diagnosticNotes = mergeDiagnosticNotes(
+    windowsLabviewTcpSettings.notes,
+    processObservation?.observedProcesses.length
+      ? [
+          `Windows host preflight observed existing runtime processes before launch: ${describeObservedRuntimeProcesses(
+            processObservation.observedProcesses
+          )}.`
+        ]
+      : [],
+    listenerObservations.length
+      ? [
+          `Windows host preflight observed an existing TCP listener on the governed VI Server port before launch: ${describeObservedWindowsTcpListeners(
+            listenerObservations
+          )}.`
+        ]
+      : []
+  );
+
+  if (diagnosticNotes.length === windowsLabviewTcpSettings.notes.length) {
+    return undefined;
+  }
+
+  const processObservationArtifactPath = await persistRuntimePreflightObservation(record, {
+    processObservation,
+    listenerObservations,
+    writeFile: deps.writeFile,
+    mkdir: deps.mkdir,
+    unlinkFile: deps.unlinkFile,
+    pathExists: deps.pathExists
+  });
+
+  return {
+    blockedExecution: {
+      state: 'not-available',
+      attempted: false,
+      reportExists: false,
+      blockedReason: 'windows-host-runtime-surface-contaminated',
+      diagnosticNotes,
+      labviewIniPath: windowsLabviewTcpSettings.labviewIniPath,
+      labviewTcpPort: windowsLabviewTcpSettings.labviewTcpPort,
+      executable: commandPlan.executable,
+      args: commandPlan.args,
+      stdoutFilePath: record.artifactPlan.runtimeStdoutFilePath,
+      stderrFilePath: record.artifactPlan.runtimeStderrFilePath,
+      processObservationArtifactPath,
+      processObservationCapturedAt: processObservation?.capturedAt,
+      processObservationTrigger: processObservation?.trigger,
+      observedProcessNames: processObservation?.observedProcessNames,
+      labviewProcessObserved: processObservation?.labviewProcessObserved,
+      labviewCliProcessObserved: processObservation?.labviewCliProcessObserved,
+      lvcompareProcessObserved: processObservation?.lvcompareProcessObserved
+    }
+  };
+}
+
+function describeObservedRuntimeProcesses(processes: RuntimeObservedProcess[]): string {
+  const descriptions = [...new Map(
+    processes.map((processInfo) => [
+      `${processInfo.imageName}:${String(processInfo.pid)}`,
+      `${processInfo.imageName} (pid ${String(processInfo.pid)})`
+    ])
+  ).values()];
+  return descriptions.join(' | ');
+}
+
+function describeObservedWindowsTcpListeners(listeners: WindowsTcpListenerObservation[]): string {
+  return listeners
+    .map((listener) =>
+      `${listener.processName ?? `pid ${String(listener.pid)}`} listening on ${listener.localAddress}:${String(
+        listener.localPort
+      )}`
+    )
+    .join(' | ');
 }
 
 async function captureRuntimeDiagnostics(
@@ -2198,6 +2425,113 @@ export async function observeWindowsRuntimeProcesses(
       isExactObservedRuntimeProcessName(processInfo.imageName, 'LVCompare.exe')
     )
   };
+}
+
+export async function observeWindowsTcpListeners(
+  options: ObserveWindowsTcpListenersOptions,
+  deps: ObserveWindowsTcpListenersDeps = {}
+): Promise<WindowsTcpListenerObservation[]> {
+  if (options.runtimePlatform !== 'win32' || options.localPorts.length === 0) {
+    return [];
+  }
+
+  const localPorts = [...new Set(options.localPorts.filter((port) => Number.isInteger(port) && port > 0))];
+  if (localPorts.length === 0) {
+    return [];
+  }
+
+  const netstatExecutable = resolveWindowsSystem32Executable(options.hostPlatform, 'netstat.exe');
+  const tasklistExecutable = resolveWindowsSystem32Executable(options.hostPlatform, 'tasklist.exe');
+  const execFileImpl = deps.execFileImpl ?? execFile;
+
+  const netstatStdout = await new Promise<string>((resolve, reject) => {
+    execFileImpl(
+      netstatExecutable,
+      ['-nao', '-p', 'TCP'],
+      {
+        encoding: 'utf8',
+        maxBuffer: 16 * 1024 * 1024,
+        windowsHide: true
+      },
+      (error, capturedStdout) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve(String(capturedStdout ?? ''));
+      }
+    );
+  });
+
+  const listeners = parseWindowsNetstatListeners(netstatStdout).filter((listener) =>
+    localPorts.includes(listener.localPort)
+  );
+  if (listeners.length === 0) {
+    return [];
+  }
+
+  const tasklistStdout = await new Promise<string>((resolve, reject) => {
+    execFileImpl(
+      tasklistExecutable,
+      ['/FO', 'CSV', '/NH'],
+      {
+        encoding: 'utf8',
+        maxBuffer: 16 * 1024 * 1024,
+        windowsHide: true
+      },
+      (error, capturedStdout) => {
+        if (error) {
+          reject(error);
+          return;
+        }
+
+        resolve(String(capturedStdout ?? ''));
+      }
+    );
+  });
+
+  const processNamesByPid = new Map<number, string>();
+  for (const processInfo of parseWindowsTasklistCsv(tasklistStdout)) {
+    processNamesByPid.set(processInfo.pid, processInfo.imageName);
+  }
+
+  return listeners.map((listener) => ({
+    ...listener,
+    processName: processNamesByPid.get(listener.pid)
+  }));
+}
+
+function resolveWindowsSystem32Executable(hostPlatform: NodeJS.Platform, filename: string): string {
+  return hostPlatform === 'win32'
+    ? path.win32.join(process.env.SYSTEMROOT ?? 'C:\\Windows', 'System32', filename)
+    : `/mnt/c/Windows/System32/${filename}`;
+}
+
+function parseWindowsNetstatListeners(stdout: string): WindowsTcpListenerObservation[] {
+  return stdout
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+    .map((line) => {
+      const match = line.match(/^TCP\s+(\S+):(\d+)\s+\S+\s+LISTENING\s+(\d+)$/i);
+      if (!match) {
+        return undefined;
+      }
+
+      const localPort = Number.parseInt(match[2], 10);
+      const pid = Number.parseInt(match[3], 10);
+      if (!Number.isInteger(localPort) || !Number.isInteger(pid)) {
+        return undefined;
+      }
+
+      return {
+        localAddress: match[1],
+        localPort,
+        pid
+      } satisfies WindowsTcpListenerObservation;
+    })
+    .filter((listener): listener is WindowsTcpListenerObservation => Boolean(listener));
 }
 
 export function runComparisonCommandPlanWithObservation(

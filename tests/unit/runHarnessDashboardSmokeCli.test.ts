@@ -42,7 +42,7 @@ describe('runHarnessDashboardSmokeCli', () => {
         '--engine',
         'lvcompare',
         '--prefer-bitness',
-        'x64',
+        'x86',
         '--labview-exe-path',
         WINDOWS_LABVIEW_EXE_PATH,
         '--lvcompare-path',
@@ -56,7 +56,7 @@ describe('runHarnessDashboardSmokeCli', () => {
       helpRequested: false,
       runtimePlatform: 'win32',
       runtimeEngineOverride: 'lvcompare',
-      preferBitness: 'x64',
+      preferBitness: 'x86',
       labviewCliPath: undefined,
       labviewExePath: WINDOWS_LABVIEW_EXE_PATH,
       lvComparePath: WINDOWS_LVCOMPARE_PATH,
@@ -84,6 +84,14 @@ describe('runHarnessDashboardSmokeCli', () => {
     expect(() => parseHarnessDashboardSmokeArgs(['--lvcompare-path'])).toThrow(
       /Missing value for --lvcompare-path/
     );
+    expect(() =>
+      parseHarnessDashboardSmokeArgs([
+        '--platform',
+        'win32',
+        '--labview-exe-path',
+        WINDOWS_LABVIEW_EXE_PATH
+      ])
+    ).toThrow(/Canonical runtime overrides require --engine/);
     expect(getHarnessDashboardSmokeUsage()).toContain('--dashboard-commit-window');
   });
 
@@ -139,14 +147,14 @@ describe('runHarnessDashboardSmokeCli', () => {
         [
           '--platform',
           'win32',
+          '--engine',
+          'labview-cli',
           '--dashboard-commit-window',
           '4',
           '--labview-cli-path',
           WINDOWS_LABVIEW_CLI_PATH,
           '--labview-exe-path',
-          WINDOWS_LABVIEW_EXE_PATH,
-          '--lvcompare-path',
-          WINDOWS_LVCOMPARE_PATH
+          WINDOWS_LABVIEW_EXE_PATH
         ],
         {
           repoRoot: '/tmp/vi-history-suite',
@@ -165,19 +173,47 @@ describe('runHarnessDashboardSmokeCli', () => {
       reportRoot: '/tmp/vi-history-suite/.cache/harness-reports',
       strictRsrcHeader: false,
       runtimePlatform: 'win32',
-      runtimeEngineOverride: undefined,
+      runtimeEngineOverride: 'labview-cli',
       dashboardCommitWindow: 4,
       runtimeSettings: {
         preferBitness: undefined,
         labviewCliPath: WINDOWS_LABVIEW_CLI_PATH,
         labviewExePath: WINDOWS_LABVIEW_EXE_PATH,
-        lvComparePath: WINDOWS_LVCOMPARE_PATH
+        lvComparePath: undefined
       }
     });
     expect(writes.join('')).toContain('Harness dashboard smoke completed for HARNESS-VHS-001');
     expect(writes.join('')).toContain('Dashboard completeness: complete');
     expect(writes.join('')).toContain('Dashboard metadata pairs: 2');
     expect(writes.join('')).toContain('Dashboard ETA accuracy: measured=1/2');
+  });
+
+  it('fails closed on missing explicit runtime paths on the canonical Windows host', async () => {
+    const runner = vi.fn();
+
+    await expect(
+      runHarnessDashboardSmokeCli(
+        [
+          '--platform',
+          'win32',
+          '--engine',
+          'labview-cli',
+          '--labview-cli-path',
+          'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+          '--labview-exe-path',
+          WINDOWS_LABVIEW_EXE_PATH
+        ],
+        {
+          hostPlatform: 'win32',
+          pathExists: (vi.fn(async (candidatePath: string) =>
+            candidatePath !== 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
+          ) as never),
+          runner
+        }
+      )
+    ).rejects.toThrow(/--labview-cli-path does not exist on the canonical Windows host/);
+
+    expect(runner).not.toHaveBeenCalled();
   });
 
   it('supports help, exit codes, and main-module execution', async () => {

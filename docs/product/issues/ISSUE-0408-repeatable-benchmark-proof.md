@@ -112,6 +112,19 @@ Current retained benchmark truth before activation:
   incomplete selected/base hash bundles, incomplete engine/path overrides,
   wrong executable basenames, and Windows bitness/path contradictions are
   rejected before they can contaminate retained benchmark blocker evidence
+- `VHS-REQ-450` now governs canonical Windows host proof hygiene too: explicit
+  Windows runtime override paths must exist before a targeted rerun starts,
+  host-native Windows comparison execution now blocks before launch when stale
+  `LabVIEW.exe` / `LabVIEWCLI.exe` / `LVCompare.exe` sessions or a
+  preexisting listener on the selected `LabVIEW.ini`-derived VI Server port
+  would contaminate the rerun, and the current canonical machine is now
+  documented as exposing only the x86 `LabVIEWCLI.exe` path locally even
+  though both x86 and x64 `LabVIEW.exe` / `LVCompare.exe` paths exist
+- `VHS-REQ-451` now governs shared PROGRAM-0003 admission control: the
+  dashboard-smoke, decision-record, exact-pair smoke, and Windows/Linux
+  benchmark CLIs now share one canonical runtime-override validation layer, so
+  contradictory explicit engine/path bundles are rejected before they can
+  contaminate retained benchmark blocker evidence
 - local host-runnable proof for the Windows benchmark image is still open
 
 ## Scope

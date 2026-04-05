@@ -96,6 +96,14 @@ function deriveRuntimeDoctorNextAction(options: {
   }
 
   if (options.reportStatus === 'blocked-runtime' || options.runtimeExecution.state === 'not-available') {
+    if (
+      options.runtimeSelection.platform === 'win32' &&
+      (options.runtimeExecution.blockedReason ?? options.runtimeSelection.blockedReason) ===
+        'windows-host-runtime-surface-contaminated'
+    ) {
+      return 'Next action: close existing LabVIEW/LabVIEWCLI/LVCompare sessions, clear the governed VI Server listener on the selected port, and rerun comparison report generation from a clean Windows host surface.';
+    }
+
     return `Next action: make the selected runtime provider available or adjust runtime settings, then rerun comparison report generation.`;
   }
 

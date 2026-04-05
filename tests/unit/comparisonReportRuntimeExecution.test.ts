@@ -270,6 +270,118 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(result.record.runtimeExecution.reportExists).toBe(true);
   });
 
+  it('fails closed before launch when the canonical Windows host already has LabVIEW runtime processes open', async () => {
+    const runCommand = vi.fn();
+
+    const result = await executeComparisonReport(
+      {
+        record: createReadyRecord(),
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        pathExists: vi.fn().mockResolvedValue(false),
+        runCommand: runCommand as never,
+        nowIso: vi.fn().mockReturnValue('2026-04-02T01:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32',
+        enforceWindowsHostPreflight: true,
+        observeWindowsProcesses: vi.fn().mockResolvedValue({
+          capturedAt: '2026-04-02T01:00:00.000Z',
+          hostPlatform: 'win32',
+          runtimePlatform: 'win32',
+          trigger: 'preflight',
+          observedProcesses: [
+            {
+              imageName: 'LabVIEW.exe',
+              pid: 4242
+            }
+          ],
+          observedProcessNames: ['LabVIEW.exe'],
+          labviewProcessObserved: true,
+          labviewCliProcessObserved: false,
+          lvcompareProcessObserved: false
+        }),
+        observeWindowsTcpListeners: vi.fn().mockResolvedValue([])
+      }
+    );
+
+    expect(runCommand).not.toHaveBeenCalled();
+    expect(result.record.runtimeExecutionState).toBe('not-available');
+    expect(result.record.runtimeExecution.blockedReason).toBe(
+      'windows-host-runtime-surface-contaminated'
+    );
+    expect(result.record.runtimeExecution.processObservationTrigger).toBe('preflight');
+    expect(result.record.runtimeExecution.observedProcessNames).toEqual(['LabVIEW.exe']);
+    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+      'Windows host preflight observed existing runtime processes before launch: LabVIEW.exe (pid 4242).'
+    );
+  });
+
+  it('fails closed before launch when the governed Windows VI Server port is already listening', async () => {
+    const runCommand = vi.fn();
+
+    const result = await executeComparisonReport(
+      {
+        record: createReadyRecord(),
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        readFile: vi
+          .fn()
+          .mockResolvedValue('server.tcp.enabled=true\nserver.tcp.port=3364\n') as never,
+        pathExists: vi.fn().mockResolvedValue(false),
+        runCommand: runCommand as never,
+        nowIso: vi.fn().mockReturnValue('2026-04-02T01:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32',
+        enforceWindowsHostPreflight: true,
+        observeWindowsProcesses: vi.fn().mockResolvedValue({
+          capturedAt: '2026-04-02T01:00:00.000Z',
+          hostPlatform: 'win32',
+          runtimePlatform: 'win32',
+          trigger: 'preflight',
+          observedProcesses: [],
+          observedProcessNames: [],
+          labviewProcessObserved: false,
+          labviewCliProcessObserved: false,
+          lvcompareProcessObserved: false
+        }),
+        observeWindowsTcpListeners: vi.fn().mockResolvedValue([
+          {
+            localAddress: '0.0.0.0',
+            localPort: 3364,
+            pid: 5151,
+            processName: 'LabVIEW.exe'
+          }
+        ])
+      }
+    );
+
+    expect(runCommand).not.toHaveBeenCalled();
+    expect(result.record.runtimeExecutionState).toBe('not-available');
+    expect(result.record.runtimeExecution.blockedReason).toBe(
+      'windows-host-runtime-surface-contaminated'
+    );
+    expect(result.record.runtimeExecution.labviewTcpPort).toBe(3364);
+    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+      'Windows host preflight observed an existing TCP listener on the governed VI Server port before launch: LabVIEW.exe listening on 0.0.0.0:3364.'
+    );
+  });
+
   it('discards a nonzero-exit report when the generated html does not reference the current staged revisions', async () => {
     const removePath = vi.fn().mockResolvedValue(undefined);
 

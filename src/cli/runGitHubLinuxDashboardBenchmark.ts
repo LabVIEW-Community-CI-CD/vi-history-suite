@@ -1,6 +1,10 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
+import {
+  validateCanonicalRuntimeOverrideArgs,
+  validateCanonicalRuntimeOverrideExecutionSurface
+} from './canonicalRuntimeOverrideValidation';
 import { getCanonicalHarnessDefinition } from '../harness/canonicalHarnesses';
 import {
   HarnessDashboardSmokeOptions,
@@ -148,6 +152,7 @@ export interface GitHubLinuxDashboardBenchmarkCliDeps {
   mkdir?: typeof fs.mkdir;
   writeFile?: typeof fs.writeFile;
   pathExists?: (filePath: string) => Promise<boolean>;
+  hostPlatform?: NodeJS.Platform;
   now?: () => Date;
 }
 
@@ -250,7 +255,7 @@ export function parseGitHubLinuxDashboardBenchmarkArgs(
     throw new Error(`Unknown argument: ${current}\n\n${getGitHubLinuxDashboardBenchmarkUsage()}`);
   }
 
-  return {
+  const parsedArgs = {
     harnessId,
     dashboardCommitWindow,
     runtimeEngineOverride,
@@ -260,6 +265,17 @@ export function parseGitHubLinuxDashboardBenchmarkArgs(
     strictRsrcHeader,
     helpRequested
   };
+  validateCanonicalRuntimeOverrideArgs(
+    {
+      runtimePlatform: 'linux',
+      runtimeEngineOverride,
+      labviewCliPath,
+      labviewExePath,
+      lvComparePath
+    },
+    getGitHubLinuxDashboardBenchmarkUsage()
+  );
+  return parsedArgs;
 }
 
 export async function runGitHubLinuxDashboardBenchmarkCli(
@@ -273,6 +289,21 @@ export async function runGitHubLinuxDashboardBenchmarkCli(
     stdout.write(`${getGitHubLinuxDashboardBenchmarkUsage()}\n`);
     return 'help';
   }
+
+  await validateCanonicalRuntimeOverrideExecutionSurface(
+    {
+      runtimePlatform: 'linux',
+      runtimeEngineOverride: args.runtimeEngineOverride,
+      labviewCliPath: args.labviewCliPath,
+      labviewExePath: args.labviewExePath,
+      lvComparePath: args.lvComparePath
+    },
+    getGitHubLinuxDashboardBenchmarkUsage(),
+    {
+      pathExists: deps.pathExists ?? defaultPathExists,
+      hostPlatform: deps.hostPlatform ?? process.platform
+    }
+  );
 
   const repoRoot = deps.repoRoot ?? path.resolve(__dirname, '..', '..');
   const cloneRoot = path.resolve(repoRoot, '.cache', 'harnesses');

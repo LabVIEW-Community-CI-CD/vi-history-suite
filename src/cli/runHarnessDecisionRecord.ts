@@ -1,6 +1,11 @@
 import * as path from 'node:path';
 
 import {
+  defaultCliPathExists,
+  validateCanonicalRuntimeOverrideArgs,
+  validateCanonicalRuntimeOverrideExecutionSurface
+} from './canonicalRuntimeOverrideValidation';
+import {
   HarnessDecisionRecordOptions,
   HarnessDecisionRecordReport,
   runHarnessDecisionRecord
@@ -40,6 +45,8 @@ export interface HarnessDecisionRecordCliDeps {
     reportJsonPath: string;
     reportMarkdownPath: string;
   }>;
+  pathExists?: (candidatePath: string) => Promise<boolean>;
+  hostPlatform?: NodeJS.Platform;
   stdout?: { write(text: string): void };
 }
 
@@ -234,7 +241,7 @@ export function parseHarnessDecisionRecordArgs(argv: string[]): HarnessDecisionR
     throw new Error(`Unknown argument: ${current}\n\n${getHarnessDecisionRecordUsage()}`);
   }
 
-  return {
+  const parsedArgs = {
     harnessId,
     scenarioId,
     strictRsrcHeader,
@@ -255,6 +262,8 @@ export function parseHarnessDecisionRecordArgs(argv: string[]): HarnessDecisionR
     additionalManualLabVIEWInspectionRequired,
     issuesOrBacklogItemsCreated
   };
+  validateCanonicalRuntimeOverrideArgs(parsedArgs, getHarnessDecisionRecordUsage());
+  return parsedArgs;
 }
 
 export async function runHarnessDecisionRecordCli(
@@ -274,6 +283,11 @@ export async function runHarnessDecisionRecordCli(
       `Missing required reviewer, review-question, outcome, confidence, or decision-rationale.\n\n${getHarnessDecisionRecordUsage()}`
     );
   }
+
+  await validateCanonicalRuntimeOverrideExecutionSurface(args, getHarnessDecisionRecordUsage(), {
+    pathExists: deps.pathExists ?? defaultCliPathExists,
+    hostPlatform: deps.hostPlatform ?? process.platform
+  });
 
   const repoRoot = deps.repoRoot ?? path.resolve(__dirname, '..', '..');
   const cloneRoot = path.resolve(repoRoot, '.cache', 'harnesses');

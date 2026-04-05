@@ -1104,6 +1104,14 @@
   diagnosis argument bundles, including partial selected/base hashes,
   incomplete engine/path bundles, Windows bitness/path contradictions, and
   wrong executable basenames for explicit runtime override paths
+- `TEST-UNIT-294`: verify canonical Windows exact-pair proof fails closed when
+  explicit runtime override paths are missing on the canonical host, when
+  stale `LabVIEW.exe` / `LabVIEWCLI.exe` / `LVCompare.exe` processes are
+  already running, or when the selected `LabVIEW.ini`-derived VI Server port
+  already has a listener before launch
+- `TEST-UNIT-295`: verify the shared PROGRAM-0003 CLI admission layer rejects
+  contradictory explicit runtime override bundles across exact-pair smoke,
+  dashboard smoke, decision-record, and Windows/Linux benchmark entrypoints
 - `TEST-DOC-035`: review README, current-state, and ADR-0016 and confirm the
   canonical-host benchmark status surface is documented as the maintainer-facing
   in-IDE visibility and launch surface for the host Linux benchmark lane,
@@ -1232,6 +1240,17 @@
   documented as fail-closed on incomplete selected/base hashes, incomplete
   engine/path bundles, or contradictory Windows bitness/runtime override
   paths, rather than allowing ambiguous experiment launches to proceed
+- `TEST-DOC-058`: review current-state, harnesses, canonical exact-pair
+  diagnosis guidance, PROGRAM-0003, ISSUE-0408, and ADR-0021 and confirm the
+  canonical Windows proof surface is documented as requiring existing explicit
+  runtime paths plus a clean host runtime surface before launch, including no
+  stale LabVIEW-related processes and no preexisting listener on the selected
+  `LabVIEW.ini` VI Server port
+- `TEST-DOC-059`: review current-state, harnesses, canonical exact-pair
+  diagnosis guidance, PROGRAM-0003, ISSUE-0408, and ADR-0022 and confirm the
+  PROGRAM-0003 runtime-override admission contract is documented as shared
+  across dashboard-smoke, decision-record, exact-pair smoke, and the
+  Windows/Linux benchmark CLIs rather than living in one diagnosis entrypoint
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed authority repo, private experiment mirror, wiki, and
   assurance-skill repos with authority roles, expected remotes, and primary

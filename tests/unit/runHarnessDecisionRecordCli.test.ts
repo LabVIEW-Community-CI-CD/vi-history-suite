@@ -37,9 +37,7 @@ describe('runHarnessDecisionRecordCli', () => {
         '--engine',
         'lvcompare',
         '--prefer-bitness',
-        'x64',
-        '--labview-cli-path',
-        WINDOWS_LABVIEW_CLI_PATH,
+        'x86',
         '--labview-exe-path',
         WINDOWS_LABVIEW_EXE_PATH,
         '--lvcompare-path',
@@ -62,8 +60,8 @@ describe('runHarnessDecisionRecordCli', () => {
       decisionRationale: 'Rationale',
       runtimePlatform: 'win32',
       runtimeEngineOverride: 'lvcompare',
-      preferBitness: 'x64',
-      labviewCliPath: WINDOWS_LABVIEW_CLI_PATH,
+      preferBitness: 'x86',
+      labviewCliPath: undefined,
       labviewExePath: WINDOWS_LABVIEW_EXE_PATH,
       lvComparePath: WINDOWS_LVCOMPARE_PATH,
       dashboardCommitWindow: 4,
@@ -96,6 +94,14 @@ describe('runHarnessDecisionRecordCli', () => {
     expect(() => parseHarnessDecisionRecordArgs(['--dashboard-commit-window', '2'])).toThrow(
       'Unsupported value for --dashboard-commit-window: 2'
     );
+    expect(() =>
+      parseHarnessDecisionRecordArgs([
+        '--platform',
+        'win32',
+        '--labview-exe-path',
+        WINDOWS_LABVIEW_EXE_PATH
+      ])
+    ).toThrow('Canonical runtime overrides require --engine.');
     expect(() => parseHarnessDecisionRecordArgs(['--unknown'])).toThrow('Unknown argument: --unknown');
   });
 
@@ -176,8 +182,6 @@ describe('runHarnessDecisionRecordCli', () => {
           WINDOWS_LABVIEW_CLI_PATH,
           '--labview-exe-path',
           WINDOWS_LABVIEW_EXE_PATH,
-          '--lvcompare-path',
-          WINDOWS_LVCOMPARE_PATH,
           '--dashboard-commit-window',
           '5',
           '--additional-report-generation-required',
@@ -213,7 +217,7 @@ describe('runHarnessDecisionRecordCli', () => {
         preferBitness: 'auto',
         labviewCliPath: WINDOWS_LABVIEW_CLI_PATH,
         labviewExePath: WINDOWS_LABVIEW_EXE_PATH,
-        lvComparePath: WINDOWS_LVCOMPARE_PATH
+        lvComparePath: undefined
       }
     });
     expect(stdout.write).toHaveBeenCalledWith('Harness decision record completed for HARNESS-VHS-001\n');

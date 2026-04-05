@@ -277,6 +277,40 @@ describe('runHarnessReportSmokeCli', () => {
     expect(writes.join('')).toContain('Runtime execution: not-available');
   });
 
+  it('fails closed on missing explicit runtime paths on the canonical Windows host', async () => {
+    const runner = vi.fn();
+
+    await expect(
+      runHarnessReportSmokeCli(
+        [
+          '--platform',
+          'win32',
+          '--engine',
+          'labview-cli',
+          '--selected-hash',
+          FULL_SELECTED_HASH,
+          '--base-hash',
+          FULL_BASE_HASH,
+          '--prefer-bitness',
+          'x64',
+          '--labview-cli-path',
+          'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+          '--labview-exe-path',
+          WINDOWS_X64_LABVIEW_EXE_PATH
+        ],
+        {
+          hostPlatform: 'win32',
+          pathExists: (vi.fn(async (candidatePath: string) =>
+            candidatePath !== 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
+          ) as never),
+          runner
+        }
+      )
+    ).rejects.toThrow(/--labview-cli-path does not exist on the canonical Windows host/);
+
+    expect(runner).not.toHaveBeenCalled();
+  });
+
   it('supports help and process-style exit codes', async () => {
     const writes: string[] = [];
     const stderrWrites: string[] = [];

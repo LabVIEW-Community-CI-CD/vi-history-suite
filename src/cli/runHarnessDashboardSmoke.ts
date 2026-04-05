@@ -1,6 +1,11 @@
 import * as path from 'node:path';
 
 import {
+  defaultCliPathExists,
+  validateCanonicalRuntimeOverrideArgs,
+  validateCanonicalRuntimeOverrideExecutionSurface
+} from './canonicalRuntimeOverrideValidation';
+import {
   HarnessDashboardSmokeOptions,
   HarnessDashboardSmokeReport,
   runHarnessDashboardSmoke
@@ -31,6 +36,8 @@ export interface HarnessDashboardSmokeCliDeps {
     reportMarkdownPath: string;
     reportHtmlPath: string;
   }>;
+  pathExists?: (candidatePath: string) => Promise<boolean>;
+  hostPlatform?: NodeJS.Platform;
   stdout?: { write(text: string): void };
 }
 
@@ -152,7 +159,7 @@ export function parseHarnessDashboardSmokeArgs(argv: string[]): HarnessDashboard
     throw new Error(`Unknown argument: ${current}\n\n${getHarnessDashboardSmokeUsage()}`);
   }
 
-  return {
+  const parsedArgs = {
     harnessId,
     strictRsrcHeader,
     helpRequested,
@@ -164,6 +171,8 @@ export function parseHarnessDashboardSmokeArgs(argv: string[]): HarnessDashboard
     lvComparePath,
     dashboardCommitWindow
   };
+  validateCanonicalRuntimeOverrideArgs(parsedArgs, getHarnessDashboardSmokeUsage());
+  return parsedArgs;
 }
 
 export async function runHarnessDashboardSmokeCli(
@@ -177,6 +186,11 @@ export async function runHarnessDashboardSmokeCli(
     stdout.write(`${getHarnessDashboardSmokeUsage()}\n`);
     return 'help';
   }
+
+  await validateCanonicalRuntimeOverrideExecutionSurface(args, getHarnessDashboardSmokeUsage(), {
+    pathExists: deps.pathExists ?? defaultCliPathExists,
+    hostPlatform: deps.hostPlatform ?? process.platform
+  });
 
   const repoRoot = deps.repoRoot ?? path.resolve(__dirname, '..', '..');
   const cloneRoot = path.resolve(repoRoot, '.cache', 'harnesses');
