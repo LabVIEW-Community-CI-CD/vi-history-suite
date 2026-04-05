@@ -1280,10 +1280,12 @@
   effective runtime override bundle after CLI/env/default synthesis, reject
   non-canonical env-derived explicit Windows bundles, and keep default Windows
   benchmark runtime settings undefined when no explicit override is requested
-- `TEST-UNIT-299`: verify the execution-flexibility control-plane package stays
-  aligned across README, current-state, extension-execution-policy, ADR-0025,
-  queue/program/issue docs, debt ledger, and published reader surfaces while
-  the manifest still lacks a first-class `viHistorySuite.executionMode`
+- `TEST-UNIT-299`: verify the installed extension exposes a first-class
+  `viHistorySuite.executionMode` setting, runtime selection honors `auto` /
+  `host-only` / `docker-only` without silent provider fallback, and the
+  execution-flexibility control-plane package stays aligned across README,
+  current-state, extension-execution-policy, ADR-0025, queue/program/issue
+  docs, debt ledger, and published reader surfaces
 - `TEST-DOC-064`: review current-state, PROGRAM-0003, ISSUE-0408, canonical
   exact-pair diagnosis guidance, ADR-0024, and the debt ledger and confirm the
   repo documents effective runtime override bundle validation rather than a raw
@@ -1302,7 +1304,7 @@
   canonical effective execution-request validation, Windows container-capability
   hard stops, the Windows `auto` / `host-only` / `docker-only` decision
   matrix, and the open execution-policy debt item aligned across authority docs
-  while the manifest still lacks a first-class `viHistorySuite.executionMode`
+  after the manifest exposes a first-class `viHistorySuite.executionMode`
 - `TEST-UNIT-301`: verify the Windows benchmark summary fails closed when any
   retained pair is `runtimeExecutionState=not-available`, retains the blocked
   reason as terminal benchmark truth, snapshots immutable per-run

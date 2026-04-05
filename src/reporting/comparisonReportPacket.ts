@@ -225,6 +225,7 @@ export function renderComparisonReportPacketHtml(record: ComparisonReportPacketR
     ${runtimeDoctorMarkup}
     <h2>Runtime selection</h2>
     <div class="grid" data-testid="comparison-report-runtime-selection">
+      <div><strong>Execution mode:</strong> ${escapeHtml(runtimeSelection.executionMode ?? 'auto')}</div>
       <div><strong>Provider:</strong> ${escapeHtml(runtimeSelection.provider)}</div>
       <div><strong>Engine:</strong> ${escapeHtml(runtimeSelection.engine ?? 'none')}</div>
       <div><strong>Blocked reason:</strong> ${escapeHtml(runtimeSelection.blockedReason ?? 'none')}</div>

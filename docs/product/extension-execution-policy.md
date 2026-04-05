@@ -13,6 +13,7 @@ behavior from scattered runtime code, benchmark scripts, or prior chat.
 
 The current installed extension already exposes these runtime-related settings:
 
+- `viHistorySuite.executionMode`
 - `viHistorySuite.labviewCliPath`
 - `viHistorySuite.lvComparePath`
 - `viHistorySuite.labviewExePath`
@@ -22,22 +23,30 @@ The current installed extension already exposes these runtime-related settings:
 Current implemented provider truth remains narrower than the future execution
 policy:
 
+- the installed extension now exposes a first-class
+  `viHistorySuite.executionMode` setting with `auto`, `host-only`, and
+  `docker-only`
 - host-native execution remains the active path for bounded Windows x86 and
   other compatible local runtime surfaces
 - Windows 64-bit container isolation exists as a governed provider boundary and
   current preferred x64 execution posture when the isolated provider is
   available
+- runtime selection now treats `host-only` and `docker-only` as explicit
+  provider boundaries and fails closed instead of silently falling back across
+  host-native and Docker-backed providers
 - benchmark-proof and exact-pair diagnosis entrypoints now fail closed on
   contaminated or contradictory runtime-override bundles
-- the installed extension does not yet expose a first-class `viHistorySuite.executionMode` setting
+- canonical effective execution-request validation, conflict-aware host-session
+  detection, Windows container-capability hard stops, image-acquisition
+  progress, and front-facing acquisition transparency remain queued
 
-So current runtime behavior is partially governed, but not yet transparent
-enough for a user who wants to choose host-only or Docker-only operation
-deliberately.
+So current runtime behavior is no longer implicit at the execution-mode
+boundary, but the broader execution policy is still only partially
+implemented.
 
-## Future Execution-Mode Contract
+## Broader Execution-Mode Contract
 
-The queued product contract introduces a first-class execution mode:
+The broader queued product contract retains a first-class execution mode:
 
 - `auto`
 - `host-only`

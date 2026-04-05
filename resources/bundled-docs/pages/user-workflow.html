@@ -23,35 +23,57 @@ detection and have at least two modifying commits.</p>
 <li><code>VI History: Open Documentation</code></li>
 </ul>
 <h2>Execution Policy</h2>
-<p>The current authority package now makes the future execution-mode contract
-explicit even though it is not implemented in the manifest yet.</p>
-<p>The queued policy is:</p>
+<p>The current authority package now makes the broader execution-mode contract
+explicit, and the installed extension already exposes the first execution-mode
+slice in the manifest and runtime selector.</p>
+<p>The current installed setting is:</p>
+<ul>
+<li><code>viHistorySuite.executionMode</code></li>
+</ul>
+<p>with these governed values:</p>
 <ul>
 <li><code>auto</code> / <code>host-only</code> / <code>docker-only</code></li>
 </ul>
-<p>That contract is meant to make host-versus-Docker behavior transparent instead
-of leaving it implicit in bitness preferences or ambient runtime discovery.</p>
-<p>When that tranche lands:</p>
+<p>The currently implemented slice now makes host-versus-Docker behavior explicit
+at the provider-selection boundary instead of leaving it implicit in bitness
+preferences or ambient runtime discovery.</p>
+<p>Current implemented truth:</p>
 <ul>
-<li>the extension first resolves one canonical effective execution request from
-the selected mode, host-runtime facts, and Docker capability facts</li>
-<li>compatible host LabVIEW 2026 Q1 x86 or x64 execution remains valid when the
-selected mode permits host-native launch and the host surface is clean</li>
-<li>in <code>auto</code>, a clean compatible host stays host-native and does not acquire
-Docker just because Docker happens to be installed</li>
-<li>if a conflicting host LabVIEW 2026 session or governed VI Server collision
-would contaminate host execution, <code>auto</code> requires Docker isolation instead</li>
-<li>the governed host conflict is tied to the selected <code>LabVIEW.ini</code> and its
-derived VI Server port, not to one assumed default port</li>
-<li>if Docker is required and unavailable, or if Docker is not Windows-container-
+<li>the manifest exposes <code>auto</code>, <code>host-only</code>, and <code>docker-only</code></li>
+<li><code>host-only</code> rejects Docker instead of silently falling back to it</li>
+<li><code>docker-only</code> rejects host-native execution instead of silently falling back
+to it</li>
+</ul>
+<p>The remaining queued contract is:</p>
+<ul>
+<li><p>the extension first resolves one canonical effective execution request from
+the selected mode, host-runtime facts, and Docker capability facts</p>
+</li>
+<li><p>compatible host LabVIEW 2026 Q1 x86 or x64 execution remains valid when the
+selected mode permits host-native launch and the host surface is clean</p>
+</li>
+<li><p>in <code>auto</code>, a clean compatible host stays host-native and does not acquire
+Docker just because Docker happens to be installed</p>
+</li>
+<li><p>if a conflicting host LabVIEW 2026 session or governed VI Server collision
+would contaminate host execution, <code>auto</code> requires Docker isolation instead</p>
+</li>
+<li><p>the governed host conflict is tied to the selected <code>LabVIEW.ini</code> and its
+derived VI Server port, not to one assumed default port</p>
+</li>
+<li><p>if Docker is required and unavailable, or if Docker is not Windows-container-
 capable on Windows, the extension hard-stops with actionable guidance to
-close the conflicting LabVIEW session or install, enable, or switch Docker</li>
-<li>if Docker execution is selected and the image is missing locally, the
+close the conflicting LabVIEW session or install, enable, or switch Docker</p>
+</li>
+<li><p>if Docker execution is selected and the image is missing locally, the
 extension surfaces visible pull progress; on Windows that means pulling the
-governed Windows image</li>
-<li>host-only hard stops tell the user to close LabVIEW, resolve the governed
-port conflict, correct the selected host runtime, or change execution mode</li>
-<li>no selected mode is allowed to silently fall back to a different provider</li>
+governed Windows image</p>
+</li>
+<li><p>host-only hard stops tell the user to close LabVIEW, resolve the governed
+port conflict, correct the selected host runtime, or change execution mode</p>
+</li>
+<li><p>no selected mode is allowed to silently fall back to a different provider</p>
+</li>
 </ul>
 <h2>Primary Review Flow</h2>
 <ol>

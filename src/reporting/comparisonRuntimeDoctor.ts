@@ -23,10 +23,12 @@ export function buildComparisonRuntimeDoctorSummaryFromFacts(options: {
   const lines: string[] = [];
   const selection = options.runtimeSelection;
   const execution = options.runtimeExecution;
+  const executionMode = selection.executionMode ?? 'auto';
 
   lines.push(
     `Selected provider=${selection.provider}; engine=${selection.engine ?? 'none'}; platform=${selection.platform}; preferBitness=${selection.preferBitness}.`
   );
+  lines.push(`Selected execution mode=${executionMode}.`);
 
   if (selection.providerDecisions?.length) {
     lines.push(
@@ -91,6 +93,10 @@ function deriveRuntimeDoctorNextAction(options: {
   runtimeSelection: ComparisonReportPacketRecord['runtimeSelection'];
   runtimeExecution: ComparisonReportRuntimeExecution;
 }): string {
+  const executionMode = options.runtimeSelection.executionMode ?? 'auto';
+  const blockedReason =
+    options.runtimeExecution.blockedReason ?? options.runtimeSelection.blockedReason;
+
   if (options.reportStatus === 'blocked-preflight') {
     return `Next action: resolve the preflight block (${options.preflightBlockedReason ?? 'preflight-not-ready'}) and rerun comparison report generation.`;
   }
@@ -98,10 +104,32 @@ function deriveRuntimeDoctorNextAction(options: {
   if (options.reportStatus === 'blocked-runtime' || options.runtimeExecution.state === 'not-available') {
     if (
       options.runtimeSelection.platform === 'win32' &&
-      (options.runtimeExecution.blockedReason ?? options.runtimeSelection.blockedReason) ===
-        'windows-host-runtime-surface-contaminated'
+      blockedReason === 'windows-host-runtime-surface-contaminated'
     ) {
+      if (executionMode === 'host-only') {
+        return 'Next action: close existing LabVIEW/LabVIEWCLI/LVCompare sessions, clear the governed VI Server listener on the selected port, or change execution mode, then rerun comparison report generation.';
+      }
       return 'Next action: close existing LabVIEW/LabVIEWCLI/LVCompare sessions, clear the governed VI Server listener on the selected port, and rerun comparison report generation from a clean Windows host surface.';
+    }
+
+    if (blockedReason === 'docker-only-provider-not-supported-on-platform') {
+      return 'Next action: change execution mode to auto or host-only on this platform, then rerun comparison report generation.';
+    }
+
+    if (blockedReason === 'docker-only-requires-windows-x64-provider') {
+      return 'Next action: change preferBitness to auto or x64, or change execution mode, then rerun comparison report generation.';
+    }
+
+    if (blockedReason === 'docker-only-provider-unavailable') {
+      return 'Next action: install, enable, or switch Docker to Windows-container mode, or change execution mode, then rerun comparison report generation.';
+    }
+
+    if (executionMode === 'host-only') {
+      return 'Next action: make the selected host-native runtime available, resolve host conflicts, or change execution mode, then rerun comparison report generation.';
+    }
+
+    if (executionMode === 'docker-only') {
+      return 'Next action: make the Docker provider available or change execution mode, then rerun comparison report generation.';
     }
 
     return `Next action: make the selected runtime provider available or adjust runtime settings, then rerun comparison report generation.`;

@@ -1219,6 +1219,10 @@ export function readComparisonRuntimeSettings(
   )
 ): ComparisonRuntimeSettings {
   return {
+    executionMode: configuration.get<'auto' | 'host-only' | 'docker-only'>(
+      'executionMode',
+      'auto'
+    ),
     labviewCliPath: configuration.get<string>('labviewCliPath', ''),
     lvComparePath: configuration.get<string>('lvComparePath', ''),
     labviewExePath: configuration.get<string>('labviewExePath', ''),

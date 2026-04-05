@@ -84,6 +84,7 @@ describe('extension manifest research alignment', () => {
       description:
         'VI History disables background indexing and external LabVIEW comparison-tool execution in untrusted workspaces.',
       restrictedConfigurations: [
+        'viHistorySuite.executionMode',
         'viHistorySuite.labviewCliPath',
         'viHistorySuite.lvComparePath',
         'viHistorySuite.labviewExePath',
@@ -92,6 +93,9 @@ describe('extension manifest research alignment', () => {
       ]
     });
 
+    expect(manifest.contributes?.configuration?.properties).toHaveProperty(
+      'viHistorySuite.executionMode'
+    );
     expect(manifest.contributes?.configuration?.properties).toHaveProperty(
       'viHistorySuite.labviewCliPath'
     );

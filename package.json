@@ -18,6 +18,7 @@
       "supported": "limited",
       "description": "VI History disables background indexing and external LabVIEW comparison-tool execution in untrusted workspaces.",
       "restrictedConfigurations": [
+        "viHistorySuite.executionMode",
         "viHistorySuite.labviewCliPath",
         "viHistorySuite.lvComparePath",
         "viHistorySuite.labviewExePath",
@@ -98,6 +99,16 @@
           "minimum": 2,
           "maximum": 5000,
           "description": "Explicit retained-commit ceiling when historyWindowMode is capped."
+        },
+        "viHistorySuite.executionMode": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "host-only",
+            "docker-only"
+          ],
+          "default": "auto",
+          "description": "Controls whether VI History chooses report-generation runtime providers automatically, stays host-native only, or requires Docker-only execution."
         },
         "viHistorySuite.lvComparePath": {
           "type": "string",

@@ -2,12 +2,15 @@
 
 ## Status
 
-Queued follow-on post-release program.
+Queued follow-on post-release program with a first repo-side execution-mode
+slice already landed.
 
 Activation is intentionally deferred until:
 
 - `PROGRAM-0003` closes the benchmark-proof packet under `TRANCHE-011`
 - the queue promotes `TRANCHE-013` from `queued` to `active`
+- the remaining canonical validation, host-conflict, and acquisition UX work
+  moves beyond the initial manifest/selection slice
 
 ## Purpose
 
@@ -107,13 +110,15 @@ Start with [ISSUE-0410 Extension Execution Flexibility And Runtime Acquisition U
 
 That slice should:
 
-- land the execution-policy control plane
+- land the execution-policy control plane and the first-class execution-mode
+  setting
 - retire the current ambiguity around whether Docker is optional, required, or
-  forbidden for a given user workflow
+  forbidden for a given user workflow at the provider-selection boundary
 - make canonical execution-request validation explicit before implementation
 - make Windows container-capability truth explicit before image acquisition
 - stop short of claiming full implementation until the installed extension
-  actually exposes the execution mode and acquisition UX
+  lands canonical validation, conflict-aware provider selection, and
+  acquisition UX end to end
 
 ## Success Condition
 

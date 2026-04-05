@@ -8,7 +8,8 @@ progress, and transparent provider feedback.
 
 ## Status
 
-Queued follow-on post-release issue.
+Queued follow-on post-release issue with a first repo-side execution-mode
+slice already landed.
 
 Activation depends on:
 
@@ -64,7 +65,9 @@ Activation depends on:
 
 ## First Active Slice
 
-- retain the execution-mode policy in the control plane
+- retain the execution-mode policy in the control plane and land the
+  first-class execution-mode setting plus no-silent-fallback provider
+  selection
 - retain canonical execution-request validation in the control plane
 - make the Docker-required hard-stop and acquisition-progress UX explicit
 - make Windows container-capability hard stops explicit

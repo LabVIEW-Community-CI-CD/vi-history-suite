@@ -3250,6 +3250,7 @@ describe('comparisonReportAction', () => {
     getConfigurationMock.mockReturnValue({
       get: <T>(key: string, defaultValue: T) => {
         const values: Record<string, unknown> = {
+          executionMode: 'host-only',
           labviewCliPath: 'C:\\Tools\\LabVIEWCLI.exe',
           lvComparePath: 'C:\\Tools\\LVCompare.exe',
           labviewExePath: 'C:\\Tools\\LabVIEW.exe',
@@ -3261,6 +3262,7 @@ describe('comparisonReportAction', () => {
     });
 
     expect(readComparisonRuntimeSettings()).toEqual({
+      executionMode: 'host-only',
       labviewCliPath: 'C:\\Tools\\LabVIEWCLI.exe',
       lvComparePath: 'C:\\Tools\\LVCompare.exe',
       labviewExePath: 'C:\\Tools\\LabVIEW.exe',

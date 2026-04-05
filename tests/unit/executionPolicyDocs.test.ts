@@ -53,7 +53,7 @@ describe('execution-policy control plane', () => {
     expect(debtLedgerJson).toContain('"retirementCommit": "2f4ced0"');
   });
 
-  it('keeps the queued extension execution-flexibility contract aligned across authority and reader surfaces', () => {
+  it('keeps the partially implemented extension execution-flexibility contract aligned across authority and reader surfaces', () => {
     const manifest = readJson<{
       contributes?: { configuration?: { properties?: Record<string, unknown> } };
     }>('package.json');
@@ -88,7 +88,7 @@ describe('execution-policy control plane', () => {
     const userWorkflow = readWikiText('User-Workflow.md');
     const requirementsWiki = readWikiText('Requirements-And-Verification.md');
 
-    expect(manifest.contributes?.configuration?.properties).not.toHaveProperty(
+    expect(manifest.contributes?.configuration?.properties).toHaveProperty(
       'viHistorySuite.executionMode'
     );
     expect(readme).toContain('PROGRAM-0005');
@@ -96,13 +96,15 @@ describe('execution-policy control plane', () => {
     expect(readme).toContain('canonical execution-request');
     expect(currentState).toContain('`TRANCHE-013`: Extension execution flexibility and runtime acquisition UX');
     expect(currentState).toContain('`PROGRAM-0005`: Extension execution flexibility and runtime acquisition UX');
+    expect(currentState).toContain('`package.json` exposes `viHistorySuite.executionMode`');
     expect(currentState).toContain('canonical effective execution-request validation');
     expect(currentState).toContain('Windows container-capability truth');
     expect(queue).toContain('"id": "TRANCHE-013"');
     expect(policy).toContain('`auto`');
     expect(policy).toContain('`host-only`');
     expect(policy).toContain('`docker-only`');
-    expect(policy).toContain('does not yet expose a first-class `viHistorySuite.executionMode`');
+    expect(policy).toContain('now exposes a first-class');
+    expect(policy).toContain('fails closed instead of silently falling back');
     expect(policy).toContain('## Canonical Effective Execution Request');
     expect(policy).toContain('selected `LabVIEW.ini` surface');
     expect(policy).toContain('Windows Mode Matrix');

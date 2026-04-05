@@ -203,7 +203,8 @@ Queued follow-on tranches:
   - `PROGRAM-0005`: Extension execution flexibility and runtime acquisition UX
   - queued issue: [ISSUE-0410 Extension Execution Flexibility And Runtime Acquisition UX](./issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md)
   - queued execution program: [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
-  - this tranche owns the future transparent `auto` / `host-only` / `docker-only` execution-mode contract, canonical effective execution-request validation, Docker-required hard stops when a conflicting host LabVIEW 2026 session or governed VI Server collision would contaminate host execution, Windows container-capability truth, Windows image-acquisition progress, and user-facing provider transparency without silent host/Docker fallback
+  - the first repo-side slice is now landed: `package.json` exposes `viHistorySuite.executionMode`, runtime selection retains `executionMode` as explicit provider truth, and `host-only` / `docker-only` now fail closed instead of silently substituting the other provider class
+  - this tranche still owns the remaining canonical effective execution-request validation, Docker-required hard stops when a conflicting host LabVIEW 2026 session or governed VI Server collision would contaminate host execution, Windows container-capability truth, Windows image-acquisition progress, and fully front-facing provider transparency
 
 Current active and queued post-release programs:
 

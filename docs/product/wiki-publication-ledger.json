@@ -38,7 +38,7 @@
       "wikiFileName": "User-Workflow.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "2a24eea",
+      "wikiCommit": "f82f46c",
       "primaryAuthority": [
         "docs/requirements/srs.md",
         "docs/product/extension-execution-policy.md",
@@ -88,7 +88,7 @@
       "wikiFileName": "Architecture.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "2a24eea",
+      "wikiCommit": "f82f46c",
       "primaryAuthority": [
         "docs/architecture/overview.md",
         "docs/requirements/srs.md",
@@ -164,7 +164,7 @@
       "wikiFileName": "Current-State.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "2a24eea",
+      "wikiCommit": "f82f46c",
       "primaryAuthority": [
         "docs/product/current-state.md",
         "docs/product/extension-execution-policy.md",
@@ -199,7 +199,7 @@
       "wikiFileName": "Development-Queue.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "2a24eea",
+      "wikiCommit": "f82f46c",
       "primaryAuthority": [
         "docs/product/development-queue.json",
         "docs/product/current-state.md",

@@ -17,8 +17,8 @@ governed instead of informal.</p>
 <li>the test plan states how those proofs are exercised and reviewed</li>
 </ul>
 <p>The requirements package now also retains an explicit execution-mode contract
-for future installed-extension runtime choice, so host-versus-Docker behavior
-does not remain only an implementation detail.</p>
+for installed-extension runtime choice, so host-versus-Docker behavior does
+not remain only an implementation detail.</p>
 <h2>SRS</h2>
 <p>The Software Requirements Specification is the main normative requirement
 surface.</p>
@@ -26,8 +26,9 @@ surface.</p>
 <ul>
 <li>command and review-surface behavior</li>
 <li>runtime-provider and benchmark behavior</li>
-<li>the queued extension execution-mode contract for <code>auto</code>, <code>host-only</code>, and
-<code>docker-only</code></li>
+<li>the execution-mode contract for <code>auto</code>, <code>host-only</code>, and <code>docker-only</code>,
+including the already-implemented first manifest/selector slice plus the
+remaining queued validation and acquisition work</li>
 <li>documentation-package and wiki-workbench behavior</li>
 <li>bounded repo-family support</li>
 <li>release, setup, and control-plane rules</li>
@@ -67,21 +68,32 @@ what kinds of evidence are expected for each part of the product.</p>
 </ul>
 <p>The product now also carries wiki and packaged-doc requirements in the same
 governed requirements system rather than treating documentation as informal.</p>
-<p>That same system now governs the queued execution-mode contract too, including:</p>
+<p>That same system now governs the partially implemented execution-mode contract
+too, including:</p>
 <ul>
-<li>when the extension must validate one canonical effective execution request
-before provider selection or Docker acquisition starts</li>
-<li>when <code>auto</code> must stay host-native because the selected host surface is clean</li>
-<li>when Docker becomes a hard requirement because an open host LabVIEW session
-would contaminate host execution</li>
-<li>when the selected <code>LabVIEW.ini</code> and derived VI Server TCP port define the
-host conflict boundary</li>
-<li>when the extension must tell the user to close LabVIEW or install Docker</li>
-<li>when Windows must tell the user to start Docker or switch to Windows
-containers before a governed Windows image can run</li>
-<li>when Windows must surface visible progress while pulling the governed Windows
-image</li>
-<li>the no-silent-fallback rule between <code>host-only</code>, <code>docker-only</code>, and <code>auto</code></li>
+<li><p>the installed setting surface for <code>auto</code>, <code>host-only</code>, and <code>docker-only</code></p>
+</li>
+<li><p>the no-silent-fallback rule between <code>host-only</code>, <code>docker-only</code>, and <code>auto</code></p>
+</li>
+<li><p>when the extension must still validate one canonical effective execution request
+before provider selection or Docker acquisition starts</p>
+</li>
+<li><p>when <code>auto</code> must stay host-native because the selected host surface is clean</p>
+</li>
+<li><p>when Docker becomes a hard requirement because an open host LabVIEW session
+would contaminate host execution</p>
+</li>
+<li><p>when the selected <code>LabVIEW.ini</code> and derived VI Server TCP port define the
+host conflict boundary</p>
+</li>
+<li><p>when the extension must tell the user to close LabVIEW or install Docker</p>
+</li>
+<li><p>when Windows must tell the user to start Docker or switch to Windows
+containers before a governed Windows image can run</p>
+</li>
+<li><p>when Windows must surface visible progress while pulling the governed Windows
+image</p>
+</li>
 </ul>
 <h2>Why It Matters</h2>
 <p>This is one of the main differences between a useful engineering wiki and a

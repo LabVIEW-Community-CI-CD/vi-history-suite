@@ -42,6 +42,7 @@ describe('comparisonRuntimeDoctor', () => {
 
     expect(lines).toEqual([
       'Selected provider=unavailable; engine=none; platform=win32; preferBitness=x64.',
+      'Selected execution mode=auto.',
       'Provider decision: rejected windows-container because Windows container image nationalinstruments/labview:2026q1-windows was not available to the current host.',
       'Provider decision: rejected host-native because A supported LabVIEW 2026 executable was located, but neither LabVIEWCLI nor LVCompare was located for host-native comparison-report execution.',
       'Selection notes: Configured LabVIEW CLI path was missing.',
@@ -55,6 +56,7 @@ describe('comparisonRuntimeDoctor', () => {
       reportStatus: 'ready-for-runtime',
       runtimeSelection: {
         platform: 'win32',
+        executionMode: 'host-only',
         preferBitness: 'x86',
         provider: 'host-native',
         engine: 'labview-cli',
@@ -107,6 +109,7 @@ describe('comparisonRuntimeDoctor', () => {
     expect(lines).toContain(
       'Selected provider=host-native; engine=labview-cli; platform=win32; preferBitness=x86.'
     );
+    expect(lines).toContain('Selected execution mode=host-only.');
     expect(lines).toContain(
       'Selected runtime tools: LabVIEW=C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe | LabVIEWCLI=C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe.'
     );
@@ -137,6 +140,7 @@ describe('comparisonRuntimeDoctor', () => {
       reportStatus: 'ready-for-runtime',
       runtimeSelection: {
         platform: 'win32',
+        executionMode: 'docker-only',
         preferBitness: 'auto',
         provider: 'windows-container',
         engine: 'labview-cli',
@@ -172,6 +176,7 @@ describe('comparisonRuntimeDoctor', () => {
     expect(lines).toContain(
       'Selected provider=windows-container; engine=labview-cli; platform=win32; preferBitness=auto.'
     );
+    expect(lines).toContain('Selected execution mode=docker-only.');
     expect(lines).toContain(
       'Selected runtime tools: ContainerImage=nationalinstruments/labview:2026q1-windows.'
     );
@@ -183,6 +188,50 @@ describe('comparisonRuntimeDoctor', () => {
     );
     expect(lines.at(-1)).toBe(
       'Next action: review the retained LabVIEW comparison report and use the concentrated dashboard metadata surfaces for multi-commit analysis.'
+    );
+  });
+
+  it('uses mode-aware next action guidance for docker-only blocks', () => {
+    const lines = buildComparisonRuntimeDoctorSummaryFromFacts({
+      reportStatus: 'blocked-runtime',
+      runtimeSelection: {
+        platform: 'win32',
+        executionMode: 'docker-only',
+        preferBitness: 'x64',
+        provider: 'unavailable',
+        blockedReason: 'docker-only-provider-unavailable',
+        providerDecisions: [
+          {
+            provider: 'windows-container',
+            outcome: 'rejected',
+            reason: 'docker-only-provider-unavailable',
+            detail:
+              'Docker-only execution was requested, but Windows container image nationalinstruments/labview:2026q1-windows was not available to the current host.'
+          },
+          {
+            provider: 'host-native',
+            outcome: 'rejected',
+            reason: 'execution-mode-docker-only-disallows-host-native',
+            detail:
+              'Host-native execution was not selected because docker-only execution was requested.'
+          }
+        ],
+        notes: [],
+        registryQueryPlans: [],
+        candidates: []
+      },
+      runtimeExecution: {
+        state: 'not-available',
+        attempted: false,
+        reportExists: false,
+        blockedReason: 'docker-only-provider-unavailable',
+        diagnosticNotes: []
+      }
+    });
+
+    expect(lines).toContain('Selected execution mode=docker-only.');
+    expect(lines.at(-1)).toBe(
+      'Next action: install, enable, or switch Docker to Windows-container mode, or change execution mode, then rerun comparison report generation.'
     );
   });
 });

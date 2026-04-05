@@ -123,11 +123,17 @@ bundle after CLI, environment, and entrypoint-default synthesis instead of
 validating only a narrower raw-CLI shape</li>
 </ul>
 <h2>Queued Execution Flexibility State</h2>
-<p>The repo now also carries a separate queued user-facing execution-policy lane.</p>
-<p>That control plane says:</p>
+<p>The repo now also carries a separate user-facing execution-policy lane whose
+first slice has landed.</p>
+<p>Current implemented truth:</p>
 <ul>
-<li>future installed-extension execution should be explicit as <code>auto</code>,
-<code>host-only</code>, or <code>docker-only</code></li>
+<li>the installed extension now exposes <code>viHistorySuite.executionMode</code></li>
+<li><code>auto</code>, <code>host-only</code>, and <code>docker-only</code> are explicit runtime-selector truths</li>
+<li><code>host-only</code> and <code>docker-only</code> now fail closed instead of silently
+substituting the other provider class</li>
+</ul>
+<p>The remaining queued control plane says:</p>
+<ul>
 <li>provider choice should start from one canonical effective execution request,
 not from scattered settings or ambient runtime guesses</li>
 <li>compatible host LabVIEW 2026 Q1 x86 or x64 execution remains valid when the

@@ -189,12 +189,12 @@
     },
     {
       "id": "DEBT-0006",
-      "title": "Extension execution mode, canonical request validation, and Docker acquisition UX remain implicit",
+      "title": "Canonical execution-request validation and Docker acquisition UX remain implicit",
       "debtClass": "control-plane",
       "status": "open",
       "severity": "high",
       "contaminationRisk": "high",
-      "summary": "The installed extension still lacks a first-class execution-mode contract plus canonical effective execution-request validation for `auto`, `host-only`, and `docker-only`, so conflict-driven Docker requirements, host-session hard stops, Windows container-capability checks, Windows image pulls, and provider transparency remain only partially inferable from narrower runtime/provider surfaces.",
+      "summary": "The installed extension now exposes a first-class `auto` / `host-only` / `docker-only` execution-mode setting and rejects silent provider fallback at runtime selection, but canonical effective execution-request validation, conflict-driven `auto` behavior, Windows container-capability checks, Windows image pulls, and full provider/acquisition transparency remain only partially inferable from narrower runtime/provider surfaces.",
       "owner": {
         "trancheId": "TRANCHE-013",
         "issueId": "ISSUE-0410",
@@ -217,7 +217,7 @@
         "docs/requirements/srs.md"
       ],
       "discoveredContext": "Post-release execution-flexibility and contamination-safe runtime UX planning",
-      "nextGate": "Land the first-class execution-mode setting, canonical effective execution-request validation, conflict-aware host-vs-Docker provider selection, Windows container-capability hard stops, visible image-pull progress, and runtime doctor/history-panel transparency without silent fallback.",
+      "nextGate": "Land canonical effective execution-request validation, conflict-aware host-vs-Docker `auto` behavior, Windows container-capability hard stops, visible image-pull progress, and runtime doctor/history-panel transparency.",
       "exitCriteria": "The installed extension exposes `auto`, `host-only`, and `docker-only`; validates one canonical effective execution request before host launch or Docker acquisition; fails closed with mode-aware guidance when the selected provider cannot run truthfully; treats Windows Docker daemon and container-mode capability as explicit prerequisites; and shows chosen provider, rejected providers, acquisition state, and next action in front-facing UX.",
       "retirementCommit": null,
       "acceptedExceptionRationale": null
