@@ -1014,6 +1014,10 @@
   published-image wiki workbench lane, including published-image local command
   surfaces, the `wiki_workbench_prepare_published` CI job, and retained
   `wiki-workbench-evidence/` artifact paths
+- `TEST-UNIT-275`: verify the published-image local docs-workbench runner
+  resolves GitLab registry credentials from supported environment variables and
+  formats a stable fail-closed registry-access explanation when the published
+  image cannot be pulled locally
 - `TEST-DOC-035`: review README, current-state, and ADR-0016 and confirm the
   canonical-host benchmark status surface is documented as the maintainer-facing
   in-IDE visibility and launch surface for the host Linux benchmark lane,

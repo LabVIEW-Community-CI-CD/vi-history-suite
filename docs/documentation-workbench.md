@@ -105,6 +105,17 @@ npm run docs:workbench:gitlab:wiki:prepare
 npm run docs:workbench:gitlab:wiki:sync-bundled-docs
 ```
 
+When the published image lives under `registry.gitlab.com`, the local
+published-image commands first look for GitLab registry credentials in:
+
+- `VIHS_GITLAB_REGISTRY_USER` and `VIHS_GITLAB_REGISTRY_TOKEN`
+- `GITLAB_REGISTRY_USER` and `GITLAB_REGISTRY_TOKEN`
+- `GITLAB_TOKEN` as an `oauth2` token
+
+If none of those are present and the machine is not already authenticated to
+the GitLab registry, the workbench fails closed with an explicit registry
+access diagnosis instead of surfacing raw Docker `access forbidden` noise.
+
 The retained workbench outputs are:
 
 - `.cache/wiki-workbench/latest-workbench.json`
@@ -171,6 +182,11 @@ GitLab CI publishes the docs-authoring image to the project container registry:
 
 The pipeline also retains `docs-workbench-evidence/docs-workbench-manifest.json`
 so future sessions can see which image references were published.
+
+The local published-image commands deliberately keep the same contract. They
+either pull the published image after resolving supported GitLab registry
+credentials or stop with a stable message that the local registry credential is
+missing or insufficient.
 
 The commit-aligned wiki-preparation lane is:
 
