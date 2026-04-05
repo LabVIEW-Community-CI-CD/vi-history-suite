@@ -115,7 +115,7 @@
     "title": "Extension execution flexibility and runtime acquisition UX",
     "status": "queued",
     "source": "author direction",
-    "summary": "After benchmark proof lands, add a transparent installed-extension execution policy that separates `auto`, `host-only`, and `docker-only`, supports compatible host LabVIEW 2026 Q1 x86 or x64 execution when clean, forces Docker isolation when an already-open host LabVIEW 2026 session or governed VI Server collision would contaminate host execution, fails closed with actionable guidance when Docker is required but unavailable, surfaces visible image-pull progress, and on Windows pulls the governed Windows image without silent host/Docker fallback.",
+    "summary": "After benchmark proof lands, add a transparent installed-extension execution policy that separates `auto`, `host-only`, and `docker-only`, validates one canonical effective execution request before provider work starts, supports compatible host LabVIEW 2026 Q1 x86 or x64 execution when clean, forces Docker isolation when an already-open host LabVIEW 2026 session or governed VI Server collision would contaminate host execution, fails closed with actionable guidance when Docker is required but unavailable or not Windows-container-capable, surfaces visible image-pull progress, and on Windows pulls the governed Windows image without silent host/Docker fallback.",
     "issues": [
       "ISSUE-0410"
     ]

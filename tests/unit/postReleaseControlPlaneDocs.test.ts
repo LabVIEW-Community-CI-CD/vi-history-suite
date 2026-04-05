@@ -57,7 +57,8 @@ describe('post-release control-plane coherence', () => {
     expect(readme).toContain('- active issue: `ISSUE-0407`');
     expect(readme).toContain('- `TRANCHE-011`: repeatable Windows and Linux benchmark proof');
     expect(readme).toContain('- `TRANCHE-012`: post-release sustainment and release cadence');
-    expect(readme).toContain('- `TRANCHE-013`: extension execution flexibility and runtime acquisition UX');
+    expect(readme).toContain('- `TRANCHE-013`: extension execution flexibility');
+    expect(readme).toContain('canonical execution-request');
     expect(readme).toContain('private GitHub experiment repo');
     expect(readme).toContain(
       '[PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)'

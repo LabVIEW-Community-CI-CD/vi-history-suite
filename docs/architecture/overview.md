@@ -113,7 +113,9 @@
   separate from extension runtime proof lanes
 - extension execution policy is now governed separately from bitness
   preference, with future `auto` / `host-only` / `docker-only` mode behavior
-  documented in a dedicated product policy and ADR package
+  documented in a dedicated product policy and ADR package, alongside one
+  canonical effective execution-request validation boundary before provider
+  selection or Docker acquisition begins
 - published wiki pages now also drive a version-matched bundled user-doc
   surface that can be opened from the installed extension without repo access
 - cross-repo navigation is governed from the main repo docs package and
@@ -173,3 +175,5 @@
   Canonical effective runtime-override validation
 - [ADR-0025](./adr/ADR-0025-transparent-extension-execution-flexibility-and-runtime-acquisition-ux.md):
   Transparent extension execution flexibility and runtime acquisition UX
+- [ADR-0026](./adr/ADR-0026-canonical-extension-execution-request-validation.md):
+  Canonical extension execution-request validation

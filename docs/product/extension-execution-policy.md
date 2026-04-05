@@ -54,6 +54,40 @@ LabVIEW 2026 Q1 x86 or x64 host surfaces. The execution-mode policy decides
 whether host-native execution is allowed at all; bitness and explicit runtime
 paths then refine which compatible host surface is selected.
 
+## Canonical Effective Execution Request
+
+Future provider selection shall not reason from one setting at a time.
+
+Before execution starts, the extension shall resolve one effective execution
+request from:
+
+- `executionMode`
+- `preferBitness`
+- explicit host runtime path settings such as `labviewCliPath`,
+  `labviewExePath`, and `lvComparePath`
+- the configured Windows container image
+- detected host-runtime facts:
+  - compatible LabVIEW 2026 Q1 x86/x64 presence
+  - already-open LabVIEW host sessions
+  - the selected `LabVIEW.ini` surface
+  - the selected `LabVIEW.ini`-derived VI Server TCP port
+- detected Docker capability facts:
+  - Docker installation
+  - daemon availability
+  - Windows container capability on Windows hosts
+  - image presence or absence
+
+The extension shall validate that effective execution request before:
+
+- provider selection
+- Docker acquisition
+- host-native launch
+- any user-facing claim that a provider is runnable
+
+This is the canonical validation boundary for the future installed extension.
+If the request is non-canonical, the product must fail closed before runtime
+work starts.
+
 ### Auto
 
 `auto` is the default transparent mode.
@@ -66,6 +100,8 @@ Its rule is:
   governed VI Server collision would contaminate host execution
 - on Windows, if Docker isolation is selected and the image is missing, show
   visible pull progress while acquiring the governed Windows image
+- on Windows, do not select or acquire Docker when the compatible host runtime
+  surface is already clean and conflict-free
 
 ### Host-Only
 
@@ -99,11 +135,37 @@ Important host-runtime contamination factors include:
   launch surface
 - a governed VI Server port that is already occupied
 
+Important Windows Docker capability factors include:
+
+- Docker is installed but the daemon is not running
+- Docker is available only in Linux-container mode when the governed Windows
+  image is required
+- the configured image reference is invalid or not pullable
+
+### Windows Mode Matrix
+
+| Mode | Canonical condition | Required outcome |
+| --- | --- | --- |
+| `auto` | Clean compatible host LabVIEW 2026 Q1 surface, no conflicting open session, no governed port collision | Use host-native execution and do not acquire Docker. |
+| `auto` | Conflicting open LabVIEW 2026 host session or governed VI Server collision, and Windows-capable Docker is available | Use Docker isolation. If the governed Windows image is missing, acquire it with visible progress. |
+| `auto` | Same host conflict, but Docker is unavailable or not Windows-capable | Hard stop with guidance to close LabVIEW or install/enable/switch Docker. |
+| `host-only` | Clean compatible host LabVIEW 2026 Q1 surface | Use host-native execution only. |
+| `host-only` | Host surface is contaminated, incompatible, or contradictory | Hard stop. Tell the user to close LabVIEW, resolve the governed port conflict, correct the selected host runtime, or change execution mode. |
+| `docker-only` | Windows-capable Docker is available | Use Docker only. If the image is missing, acquire it with visible progress. |
+| `docker-only` | Docker is unavailable, stopped, or not in Windows-container mode | Hard stop. Tell the user to install/enable/switch Docker or change execution mode. |
+
 When those conditions force Docker isolation but Docker is unavailable, the
 required user-facing outcome is a hard stop with actionable guidance:
 
 - close the conflicting LabVIEW session
 - or install/enable Docker
+
+The guidance must remain mode-aware:
+
+- `auto`: close LabVIEW or install/enable/switch Docker
+- `host-only`: close LabVIEW, resolve the selected host-runtime conflict, or
+  change execution mode
+- `docker-only`: install/enable/switch Docker or change execution mode
 
 The extension is not allowed to silently continue through a contaminated host
 surface or silently choose a different provider than the selected execution
@@ -113,6 +175,15 @@ mode permits.
 
 When Docker execution is selected and the required image is not available
 locally, the extension shall surface acquisition progress to the user.
+
+That progress contract must be explicit enough to show:
+
+- which image is being considered
+- whether the image is already present locally
+- when the image is being pulled
+- when the pull completes
+- when the pull fails
+- what the next user action is if acquisition cannot complete
 
 The platform rule is explicit:
 
@@ -129,8 +200,19 @@ Future execution UX shall surface these facts directly:
 - selected execution mode
 - chosen provider
 - rejected provider(s) and why they were rejected
+- selected host-runtime facts when host-native execution is in play
+- selected Docker-capability facts when Docker execution is in play
 - acquisition outcome
 - next action
+
+The future state model is:
+
+- `selected`
+- `rejected`
+- `acquiring`
+- `hard-stop`
+- `launching`
+- `completed`
 
 This transparency belongs in:
 
@@ -147,6 +229,9 @@ The current broader product work is split intentionally:
 - extension execution flexibility and runtime acquisition UX are queued under
   `PROGRAM-0005` / `ISSUE-0410` / `TRANCHE-013`
 
+Canonical validation of the effective execution request for this future work is
+governed by `ADR-0026`.
+
 Open debt for this policy is tracked in `docs/product/debt-ledger.json`.
 
 ## Read Next
@@ -156,3 +241,4 @@ Open debt for this policy is tracked in `docs/product/debt-ledger.json`.
 - [PROGRAM-0005](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
 - [ISSUE-0410](./issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md)
 - [ADR-0025](../architecture/adr/ADR-0025-transparent-extension-execution-flexibility-and-runtime-acquisition-ux.md)
+- [ADR-0026](../architecture/adr/ADR-0026-canonical-extension-execution-request-validation.md)

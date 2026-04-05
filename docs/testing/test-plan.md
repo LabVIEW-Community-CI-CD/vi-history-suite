@@ -1297,6 +1297,21 @@
   and Architecture-Decision-Records pages and confirm the execution-policy
   package and queued `PROGRAM-0005` control plane are represented on the
   published reader surfaces
+- `TEST-UNIT-300`: verify the execution-policy control-plane package keeps
+  canonical effective execution-request validation, Windows container-capability
+  hard stops, the Windows `auto` / `host-only` / `docker-only` decision
+  matrix, and the open execution-policy debt item aligned across authority docs
+  while the manifest still lacks a first-class `viHistorySuite.executionMode`
+- `TEST-DOC-067`: review extension-execution-policy, ADR-0025, ADR-0026,
+  PROGRAM-0005, ISSUE-0410, current-state, and the debt ledger and confirm the
+  queued package makes canonical execution-request validation, selected
+  `LabVIEW.ini` / port truth, Windows container-capability hard stops, and
+  mode-aware guidance explicit
+- `TEST-DOC-068`: review User-Workflow, Requirements-And-Verification,
+  Current-State, Architecture, Architecture-Decision-Records, Development-Queue,
+  Debt-Retirement-Contract, and Debt-Ledger pages and confirm the published
+  reader surfaces represent ADR-0026 plus the stronger execution-policy
+  scenario matrix rather than only the earlier high-level mode contract
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed authority repo, private experiment mirror, wiki, and
   assurance-skill repos with authority roles, expected remotes, and primary

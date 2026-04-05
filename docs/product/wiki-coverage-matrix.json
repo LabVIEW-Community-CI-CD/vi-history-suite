@@ -608,6 +608,17 @@
         "Architecture.md",
         "Architecture-Decision-Records.md"
       ]
+    },
+    {
+      "sourcePath": "docs/architecture/adr/ADR-0026-canonical-extension-execution-request-validation.md",
+      "itemType": "adr",
+      "aggregationRuleId": "adr-set-aggregate",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Architecture.md",
+        "Architecture-Decision-Records.md"
+      ]
     }
   ]
 }

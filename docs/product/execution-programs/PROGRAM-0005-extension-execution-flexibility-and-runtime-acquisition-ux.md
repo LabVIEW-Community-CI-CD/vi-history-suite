@@ -35,12 +35,15 @@ and the extension will:
 ## Workstreams
 
 1. execution-mode setting and manifest/trust-boundary contract
-2. conflict-aware provider selection for host sessions, multiple versions, and
+2. canonical effective execution-request validation across settings, selected
+   host-runtime facts, and Docker capability facts before provider work starts
+3. conflict-aware provider selection for host sessions, multiple versions, and
    governed VI Server ports, including already-open LabVIEW 2026 sessions that
    require Docker isolation in `auto`
-3. Docker acquisition progress and platform-specific image selection
-4. runtime-doctor, history-panel, and progress-surface transparency
-5. documentation and bundled-user-doc normalization of the execution policy
+4. Docker acquisition progress, Windows container-capability checks, and
+   platform-specific image selection
+5. runtime-doctor, history-panel, and progress-surface transparency
+6. documentation and bundled-user-doc normalization of the execution policy
 
 ## Queue Mapping
 
@@ -56,18 +59,24 @@ and the extension will:
 - compatible host LabVIEW 2026 Q1 x86 and x64 execution remain available when
   the selected mode allows host-native launch and the governed host surface is
   conflict-free
+- provider selection validates one canonical effective execution request before
+  any host launch or Docker acquisition begins
 
 ### Gate B: Conflict Truth
 
 - host-runtime contamination rules are explicit and enforced
 - conflicting host LabVIEW sessions and governed VI Server collisions fail
   closed instead of contaminating later evidence
+- the selected host-runtime surface derives the governed `LabVIEW.ini` path and
+  TCP port explicitly instead of assuming one default port
 
 ### Gate C: Acquisition UX
 
 - Docker-required execution surfaces visible pull/acquisition progress
 - Windows hosts pull the governed Windows image when Docker execution is
   selected there
+- Windows Docker-required execution also fails closed when Docker is installed
+  but not capable of Windows-container execution
 
 ### Gate D: Transparent Feedback
 
@@ -87,6 +96,7 @@ This program exists to remove ambiguity, not to add silent fallback behavior.
 Every slice shall preserve:
 
 - no silent provider substitution
+- no provider launch or Docker pull from a non-canonical effective request
 - no contaminated host-runtime launches treated as product truth
 - explicit user-facing next-step guidance
 - platform-appropriate acquisition behavior
@@ -100,6 +110,8 @@ That slice should:
 - land the execution-policy control plane
 - retire the current ambiguity around whether Docker is optional, required, or
   forbidden for a given user workflow
+- make canonical execution-request validation explicit before implementation
+- make Windows container-capability truth explicit before image acquisition
 - stop short of claiming full implementation until the installed extension
   actually exposes the execution mode and acquisition UX
 

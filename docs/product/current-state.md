@@ -201,7 +201,7 @@ Queued follow-on tranches:
   - `PROGRAM-0005`: Extension execution flexibility and runtime acquisition UX
   - queued issue: [ISSUE-0410 Extension Execution Flexibility And Runtime Acquisition UX](./issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md)
   - queued execution program: [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
-  - this tranche owns the future transparent `auto` / `host-only` / `docker-only` execution-mode contract, Docker-required hard stops when a conflicting host LabVIEW 2026 session or governed VI Server collision would contaminate host execution, Windows image-acquisition progress, and user-facing provider transparency without silent host/Docker fallback
+  - this tranche owns the future transparent `auto` / `host-only` / `docker-only` execution-mode contract, canonical effective execution-request validation, Docker-required hard stops when a conflicting host LabVIEW 2026 session or governed VI Server collision would contaminate host execution, Windows container-capability truth, Windows image-acquisition progress, and user-facing provider transparency without silent host/Docker fallback
 
 Current active and queued post-release programs:
 

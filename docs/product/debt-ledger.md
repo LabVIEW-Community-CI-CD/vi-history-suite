@@ -23,7 +23,7 @@ The governing contract and taxonomy are:
 | `DEBT-0003` | open | `benchmark` | high | high | `TRANCHE-011` / `ISSUE-0408` / `PROGRAM-0003` | expand the comparable prefix beyond pair `128` or close `PROGRAM-0003` on the bounded comparable-prefix packet |
 | `DEBT-0004` | open | `runtime` | high | high | `TRANCHE-011` / `ISSUE-0408` / `PROGRAM-0003` | complete Linux `138/138` truthfully or close the full-window blocker explicitly on the bounded comparable-prefix control plane |
 | `DEBT-0005` | retired | `control-plane` | high | high | `TRANCHE-011` / `ISSUE-0408` / `PROGRAM-0003` | retired by `2f4ced0` |
-| `DEBT-0006` | open | `control-plane` | high | high | `TRANCHE-013` / `ISSUE-0410` / `PROGRAM-0005` | land the first-class execution-mode contract, conflict-aware hard stops, visible Docker pull progress, and transparent provider feedback without silent fallback |
+| `DEBT-0006` | open | `control-plane` | high | high | `TRANCHE-013` / `ISSUE-0410` / `PROGRAM-0005` | land the first-class execution-mode contract, canonical execution-request validation, Windows container-capability hard stops, visible Docker pull progress, and transparent provider feedback without silent fallback |
 
 ## Notes
 
@@ -40,7 +40,9 @@ The governing contract and taxonomy are:
   CLI/env/default synthesis could materialize an explicit effective runtime
   bundle after a narrower raw-CLI validation pass had already succeeded.
 - `DEBT-0006` is the active execution-policy ambiguity around host-only,
-  Docker-only, and auto conflict/acquisition behavior for installed users.
+  Docker-only, and auto conflict/acquisition behavior for installed users,
+  including canonical execution-request validation and Windows
+  container-capability truth.
 
 ## Operational Rule
 

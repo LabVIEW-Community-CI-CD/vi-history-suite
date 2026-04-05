@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-05T20:18:51.640Z",
+  "generatedAt": "2026-04-05T20:32:14.975Z",
   "sourceLedgerPath": "docs/product/wiki-publication-ledger.json",
   "sourceWikiRepoPath": "../vi-history-suite.wiki",
   "defaultPageId": "overview",
@@ -29,7 +29,7 @@
       "wikiFileName": "User-Workflow.md",
       "htmlFileName": "user-workflow.html",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "fb4b5d3"
+      "wikiCommit": "2a24eea"
     },
     {
       "id": "comparison-reports-and-dashboard-review",
@@ -56,7 +56,7 @@
       "wikiFileName": "Architecture.md",
       "htmlFileName": "architecture.html",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "fb4b5d3"
+      "wikiCommit": "2a24eea"
     },
     {
       "id": "documentation-workbench",
@@ -92,7 +92,7 @@
       "wikiFileName": "Current-State.md",
       "htmlFileName": "current-state.html",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "fb4b5d3"
+      "wikiCommit": "2a24eea"
     },
     {
       "id": "wiki-authority-map",
@@ -110,7 +110,7 @@
       "wikiFileName": "Development-Queue.md",
       "htmlFileName": "development-queue.html",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "fb4b5d3"
+      "wikiCommit": "2a24eea"
     },
     {
       "id": "blocker-ledger",
@@ -128,7 +128,7 @@
       "wikiFileName": "Requirements-And-Verification.md",
       "htmlFileName": "requirements-and-verification.html",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "fb4b5d3"
+      "wikiCommit": "2a24eea"
     },
     {
       "id": "architecture-decision-records",
@@ -137,7 +137,7 @@
       "wikiFileName": "Architecture-Decision-Records.md",
       "htmlFileName": "architecture-decision-records.html",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "fb4b5d3"
+      "wikiCommit": "2a24eea"
     },
     {
       "id": "debt-retirement-contract",
@@ -146,7 +146,7 @@
       "wikiFileName": "Debt-Retirement-Contract.md",
       "htmlFileName": "debt-retirement-contract.html",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "dec1861"
+      "wikiCommit": "2a24eea"
     },
     {
       "id": "debt-ledger",
@@ -155,7 +155,7 @@
       "wikiFileName": "Debt-Ledger.md",
       "htmlFileName": "debt-ledger.html",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "dec1861"
+      "wikiCommit": "2a24eea"
     }
   ]
 }

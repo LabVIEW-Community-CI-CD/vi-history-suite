@@ -189,12 +189,12 @@
     },
     {
       "id": "DEBT-0006",
-      "title": "Extension execution mode and Docker acquisition UX remain implicit",
+      "title": "Extension execution mode, canonical request validation, and Docker acquisition UX remain implicit",
       "debtClass": "control-plane",
       "status": "open",
       "severity": "high",
       "contaminationRisk": "high",
-      "summary": "The installed extension still lacks a first-class execution-mode contract for `auto`, `host-only`, and `docker-only`, so conflict-driven Docker requirements, host-session hard stops, Windows image pulls, and provider transparency remain only partially inferable from narrower runtime/provider surfaces.",
+      "summary": "The installed extension still lacks a first-class execution-mode contract plus canonical effective execution-request validation for `auto`, `host-only`, and `docker-only`, so conflict-driven Docker requirements, host-session hard stops, Windows container-capability checks, Windows image pulls, and provider transparency remain only partially inferable from narrower runtime/provider surfaces.",
       "owner": {
         "trancheId": "TRANCHE-013",
         "issueId": "ISSUE-0410",
@@ -207,7 +207,8 @@
         "docs/product/current-state.md",
         "docs/product/execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md",
         "docs/product/issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md",
-        "docs/architecture/adr/ADR-0025-transparent-extension-execution-flexibility-and-runtime-acquisition-ux.md"
+        "docs/architecture/adr/ADR-0025-transparent-extension-execution-flexibility-and-runtime-acquisition-ux.md",
+        "docs/architecture/adr/ADR-0026-canonical-extension-execution-request-validation.md"
       ],
       "repoEvidence": [
         "README.md",
@@ -216,8 +217,8 @@
         "docs/requirements/srs.md"
       ],
       "discoveredContext": "Post-release execution-flexibility and contamination-safe runtime UX planning",
-      "nextGate": "Land the first-class execution-mode setting, conflict-aware host-vs-Docker provider selection, Docker-required hard stops, visible image-pull progress, and runtime doctor/history-panel transparency without silent fallback.",
-      "exitCriteria": "The installed extension exposes `auto`, `host-only`, and `docker-only`; Docker-required runs fail closed with actionable guidance when unavailable; Windows Docker acquisition surfaces progress while pulling the governed Windows image; and front-facing UX shows chosen provider, rejected providers, acquisition outcome, and next action.",
+      "nextGate": "Land the first-class execution-mode setting, canonical effective execution-request validation, conflict-aware host-vs-Docker provider selection, Windows container-capability hard stops, visible image-pull progress, and runtime doctor/history-panel transparency without silent fallback.",
+      "exitCriteria": "The installed extension exposes `auto`, `host-only`, and `docker-only`; validates one canonical effective execution request before host launch or Docker acquisition; fails closed with mode-aware guidance when the selected provider cannot run truthfully; treats Windows Docker daemon and container-mode capability as explicit prerequisites; and shows chosen provider, rejected providers, acquisition state, and next action in front-facing UX.",
       "retirementCommit": null,
       "acceptedExceptionRationale": null
     }

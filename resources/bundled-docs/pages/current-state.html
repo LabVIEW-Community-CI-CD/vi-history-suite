@@ -128,13 +128,20 @@ validating only a narrower raw-CLI shape</li>
 <ul>
 <li>future installed-extension execution should be explicit as <code>auto</code>,
 <code>host-only</code>, or <code>docker-only</code></li>
+<li>provider choice should start from one canonical effective execution request,
+not from scattered settings or ambient runtime guesses</li>
 <li>compatible host LabVIEW 2026 Q1 x86 or x64 execution remains valid when the
 selected mode permits host-native launch and the host surface is clean</li>
+<li><code>auto</code> should stay host-native on a clean host instead of acquiring Docker
+by habit</li>
 <li>if an already-open host LabVIEW 2026 session or governed VI Server collision
 would contaminate host execution, <code>auto</code> requires Docker instead of silently
 continuing on the host</li>
-<li>if Docker is required and unavailable, the product contract is a hard stop
-telling the user to close LabVIEW or install and enable Docker</li>
+<li>host conflict truth is tied to the selected <code>LabVIEW.ini</code> and derived VI
+Server TCP port</li>
+<li>if Docker is required and unavailable, or not Windows-container-capable on a
+Windows host, the product contract is a hard stop telling the user to close
+LabVIEW or install, enable, or switch Docker</li>
 <li>if Docker execution is selected and the image is missing, the user should
 see visible pull progress; on Windows that means the governed Windows image</li>
 <li>the current open debt item for that ambiguity is retained in the authority

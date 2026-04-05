@@ -351,7 +351,8 @@ The current active tranche is:
 - queued follow-on tranches:
   - `TRANCHE-011`: repeatable Windows and Linux benchmark proof
   - `TRANCHE-012`: post-release sustainment and release cadence
-  - `TRANCHE-013`: extension execution flexibility and runtime acquisition UX
+  - `TRANCHE-013`: extension execution flexibility, canonical execution-request
+    validation, and runtime acquisition UX
 
 Issue-ready execution programs:
 

@@ -65,6 +65,8 @@ Adopt a transparent extension execution-flexibility contract.
 10. `ADR-0006` is superseded as the primary extension-user execution-policy
    decision. Its narrower x64-container preference now becomes historical
    context inside this broader mode-based contract.
+11. Canonical validation of the effective execution request for this future
+    policy is governed separately by `ADR-0026`.
 
 ## Rationale
 

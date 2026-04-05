@@ -37,6 +37,7 @@ see the current decision set and follow back to the governing records.</p>
 <li><code>ADR-0023</code>: Governed Debt Retirement Contract</li>
 <li><code>ADR-0024</code>: Canonical Effective Runtime Override Validation</li>
 <li><code>ADR-0025</code>: Transparent Extension Execution Flexibility And Runtime Acquisition UX</li>
+<li><code>ADR-0026</code>: Canonical Extension Execution-Request Validation</li>
 </ul>
 <p><code>ADR-0021</code> now stays focused on exact-pair diagnosis arguments. <code>ADR-0022</code>
 lifts the wider PROGRAM-0003 admission-control boundary into its own decision,
@@ -56,6 +57,11 @@ container-isolation preference in <code>ADR-0006</code>. The primary extension-u
 execution-policy record is now the transparent <code>auto</code> / <code>host-only</code> /
 <code>docker-only</code> contract with conflict-driven Docker hard stops, Windows
 image-pull progress, and no silent provider fallback.</p>
+<p><code>ADR-0026</code> adds the next boundary: the extension must validate one canonical
+effective execution request before it chooses host-native execution, starts a
+Docker pull, or claims a provider is runnable. That decision makes selected
+<code>LabVIEW.ini</code> / VI Server port truth plus Windows container capability part of
+the governed execution-policy package rather than future implementation detail.</p>
 <h2>Decision Themes</h2>
 <p>The current ADR set clusters into a few major themes:</p>
 <ul>

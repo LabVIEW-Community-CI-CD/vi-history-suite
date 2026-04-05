@@ -33,16 +33,24 @@ explicit even though it is not implemented in the manifest yet.</p>
 of leaving it implicit in bitness preferences or ambient runtime discovery.</p>
 <p>When that tranche lands:</p>
 <ul>
+<li>the extension first resolves one canonical effective execution request from
+the selected mode, host-runtime facts, and Docker capability facts</li>
 <li>compatible host LabVIEW 2026 Q1 x86 or x64 execution remains valid when the
 selected mode permits host-native launch and the host surface is clean</li>
+<li>in <code>auto</code>, a clean compatible host stays host-native and does not acquire
+Docker just because Docker happens to be installed</li>
 <li>if a conflicting host LabVIEW 2026 session or governed VI Server collision
 would contaminate host execution, <code>auto</code> requires Docker isolation instead</li>
-<li>if Docker is required and unavailable, the extension hard-stops with
-actionable guidance to close the conflicting LabVIEW session or install and
-enable Docker</li>
+<li>the governed host conflict is tied to the selected <code>LabVIEW.ini</code> and its
+derived VI Server port, not to one assumed default port</li>
+<li>if Docker is required and unavailable, or if Docker is not Windows-container-
+capable on Windows, the extension hard-stops with actionable guidance to
+close the conflicting LabVIEW session or install, enable, or switch Docker</li>
 <li>if Docker execution is selected and the image is missing locally, the
 extension surfaces visible pull progress; on Windows that means pulling the
 governed Windows image</li>
+<li>host-only hard stops tell the user to close LabVIEW, resolve the governed
+port conflict, correct the selected host runtime, or change execution mode</li>
 <li>no selected mode is allowed to silently fall back to a different provider</li>
 </ul>
 <h2>Primary Review Flow</h2>

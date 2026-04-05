@@ -38,7 +38,7 @@
       "wikiFileName": "User-Workflow.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "fb4b5d3",
+      "wikiCommit": "2a24eea",
       "primaryAuthority": [
         "docs/requirements/srs.md",
         "docs/product/extension-execution-policy.md",
@@ -88,7 +88,7 @@
       "wikiFileName": "Architecture.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "fb4b5d3",
+      "wikiCommit": "2a24eea",
       "primaryAuthority": [
         "docs/architecture/overview.md",
         "docs/requirements/srs.md",
@@ -104,7 +104,8 @@
         "docs/architecture/adr/ADR-0022-canonical-experiment-admission-control.md",
         "docs/architecture/adr/ADR-0023-governed-debt-retirement-contract.md",
         "docs/architecture/adr/ADR-0024-canonical-effective-runtime-override-validation.md",
-        "docs/architecture/adr/ADR-0025-transparent-extension-execution-flexibility-and-runtime-acquisition-ux.md"
+        "docs/architecture/adr/ADR-0025-transparent-extension-execution-flexibility-and-runtime-acquisition-ux.md",
+        "docs/architecture/adr/ADR-0026-canonical-extension-execution-request-validation.md"
       ]
     },
     {
@@ -163,7 +164,7 @@
       "wikiFileName": "Current-State.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "fb4b5d3",
+      "wikiCommit": "2a24eea",
       "primaryAuthority": [
         "docs/product/current-state.md",
         "docs/product/extension-execution-policy.md",
@@ -198,7 +199,7 @@
       "wikiFileName": "Development-Queue.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "fb4b5d3",
+      "wikiCommit": "2a24eea",
       "primaryAuthority": [
         "docs/product/development-queue.json",
         "docs/product/current-state.md",
@@ -228,7 +229,7 @@
       "wikiFileName": "Requirements-And-Verification.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "fb4b5d3",
+      "wikiCommit": "2a24eea",
       "primaryAuthority": [
         "docs/requirements/srs.md",
         "docs/requirements/rtm.csv",
@@ -244,7 +245,7 @@
       "wikiFileName": "Architecture-Decision-Records.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "fb4b5d3",
+      "wikiCommit": "2a24eea",
       "primaryAuthority": [
         "docs/architecture/overview.md",
         "docs/product/extension-execution-policy.md",
@@ -272,7 +273,8 @@
         "docs/architecture/adr/ADR-0022-canonical-experiment-admission-control.md",
         "docs/architecture/adr/ADR-0023-governed-debt-retirement-contract.md",
         "docs/architecture/adr/ADR-0024-canonical-effective-runtime-override-validation.md",
-        "docs/architecture/adr/ADR-0025-transparent-extension-execution-flexibility-and-runtime-acquisition-ux.md"
+        "docs/architecture/adr/ADR-0025-transparent-extension-execution-flexibility-and-runtime-acquisition-ux.md",
+        "docs/architecture/adr/ADR-0026-canonical-extension-execution-request-validation.md"
       ]
     },
     {
@@ -282,7 +284,7 @@
       "wikiFileName": "Debt-Retirement-Contract.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "dec1861",
+      "wikiCommit": "2a24eea",
       "primaryAuthority": [
         "docs/product/debt-retirement-contract.md",
         "docs/product/debt-taxonomy.md",
@@ -299,14 +301,17 @@
       "wikiFileName": "Debt-Ledger.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "dec1861",
+      "wikiCommit": "2a24eea",
       "primaryAuthority": [
         "docs/product/debt-ledger.md",
         "docs/product/debt-ledger.json",
         "docs/product/debt-retirement-contract.md",
         "docs/product/current-state.md",
         "docs/product/execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md",
-        "docs/product/issues/ISSUE-0408-repeatable-benchmark-proof.md"
+        "docs/product/issues/ISSUE-0408-repeatable-benchmark-proof.md",
+        "docs/product/extension-execution-policy.md",
+        "docs/product/execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md",
+        "docs/product/issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md"
       ]
     }
   ],
