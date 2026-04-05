@@ -198,21 +198,22 @@ describe('comparisonRuntimeDoctor', () => {
         platform: 'win32',
         executionMode: 'docker-only',
         preferBitness: 'x64',
-        provider: 'unavailable',
+        provider: 'windows-container',
         windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
         windowsContainerDockerCliAvailable: true,
         windowsContainerDaemonReachable: true,
         windowsContainerHostMode: 'windows',
         windowsContainerCapabilityAvailable: true,
         windowsContainerImageAvailable: false,
-        blockedReason: 'docker-only-provider-unavailable',
+        windowsContainerAcquisitionState: 'failed',
+        blockedReason: 'windows-container-image-acquisition-failed',
         providerDecisions: [
           {
             provider: 'windows-container',
-            outcome: 'rejected',
-            reason: 'docker-only-provider-unavailable',
+            outcome: 'selected',
+            reason: 'execution-mode-docker-only-selected-windows-container',
             detail:
-              'Docker-only execution was requested, but Windows container image nationalinstruments/labview:2026q1-windows was not available to the current host.'
+              'Docker daemon was reachable in windows-container mode, and governed Windows container image nationalinstruments/labview:2026q1-windows will be acquired before launch for docker-only execution.'
           },
           {
             provider: 'host-native',
@@ -230,32 +231,34 @@ describe('comparisonRuntimeDoctor', () => {
         state: 'not-available',
         attempted: false,
         reportExists: false,
-        blockedReason: 'docker-only-provider-unavailable',
+        acquisitionState: 'failed',
+        blockedReason: 'windows-container-image-acquisition-failed',
         diagnosticNotes: []
       }
     });
 
     expect(lines).toContain('Selected execution mode=docker-only.');
     expect(lines.at(-1)).toBe(
-      'Next action: pull the governed Windows container image or change execution mode, then rerun comparison report generation.'
+      'Next action: repair Docker connectivity or image registry access, then pull the governed Windows container image and rerun comparison report generation.'
     );
   });
 
-  it('surfaces host runtime facts and auto-mode next action when the windows host surface is contaminated', () => {
+  it('surfaces host runtime facts and acquisition-failure guidance when auto mode selected Docker from a contaminated windows host surface', () => {
     const lines = buildComparisonRuntimeDoctorSummaryFromFacts({
       reportStatus: 'blocked-runtime',
       runtimeSelection: {
         platform: 'win32',
         executionMode: 'auto',
         preferBitness: 'x64',
-        provider: 'unavailable',
-        blockedReason: 'windows-host-runtime-surface-contaminated',
+        provider: 'windows-container',
+        blockedReason: 'windows-container-image-acquisition-failed',
         windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
         windowsContainerDockerCliAvailable: true,
         windowsContainerDaemonReachable: true,
         windowsContainerHostMode: 'windows',
         windowsContainerCapabilityAvailable: true,
         windowsContainerImageAvailable: false,
+        windowsContainerAcquisitionState: 'failed',
         hostLabviewIniPath:
           'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.ini',
         hostLabviewTcpPort: 3363,
@@ -263,10 +266,10 @@ describe('comparisonRuntimeDoctor', () => {
         providerDecisions: [
           {
             provider: 'windows-container',
-            outcome: 'rejected',
-            reason: 'auto-required-docker-because-host-runtime-conflict-but-provider-unavailable',
+            outcome: 'selected',
+            reason: 'auto-required-docker-because-host-runtime-conflict',
             detail:
-              'Validated Windows host runtime facts required Docker, but governed Windows container image nationalinstruments/labview:2026q1-windows was not present locally on the current host.'
+              'Docker daemon was reachable in windows-container mode, and governed Windows container image nationalinstruments/labview:2026q1-windows will be acquired before launch, so isolated execution was selected because the validated Windows host runtime surface was contaminated.'
           },
           {
             provider: 'host-native',
@@ -286,20 +289,21 @@ describe('comparisonRuntimeDoctor', () => {
         state: 'not-available',
         attempted: false,
         reportExists: false,
-        blockedReason: 'windows-host-runtime-surface-contaminated',
+        acquisitionState: 'failed',
+        blockedReason: 'windows-container-image-acquisition-failed',
         diagnosticNotes: []
       }
     });
 
     expect(lines).toContain('Selected execution mode=auto.');
     expect(lines).toContain(
-      'Selected runtime tools: ContainerImage=nationalinstruments/labview:2026q1-windows | DockerCliAvailable=yes | DockerDaemonReachable=yes | ContainerHostMode=windows | WindowsContainerCapability=yes | ContainerImagePresent=no | HostLabVIEW.ini=C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.ini | HostVITcpPort=3363 | HostConflictDetected=yes.'
+      'Selected runtime tools: ContainerImage=nationalinstruments/labview:2026q1-windows | DockerCliAvailable=yes | DockerDaemonReachable=yes | ContainerHostMode=windows | WindowsContainerCapability=yes | ContainerImagePresent=no | ContainerAcquisitionState=failed | HostLabVIEW.ini=C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.ini | HostVITcpPort=3363 | HostConflictDetected=yes.'
     );
     expect(lines).toContain(
-      'Runtime blocked reason: windows-host-runtime-surface-contaminated.'
+      'Runtime blocked reason: windows-container-image-acquisition-failed.'
     );
     expect(lines.at(-1)).toBe(
-      'Next action: close existing LabVIEW/LabVIEWCLI/LVCompare sessions, clear the governed VI Server listener on the selected port, or pull the governed Windows container image, then rerun comparison report generation.'
+      'Next action: repair Docker connectivity or image registry access, then pull the governed Windows container image and rerun comparison report generation.'
     );
   });
 });

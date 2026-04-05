@@ -1,5 +1,5 @@
 import * as fs from 'node:fs/promises';
-import { execFile } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import { promisify } from 'node:util';
 import {
   observeWindowsRuntimeProcesses,
@@ -23,6 +23,11 @@ export type RuntimeCandidateSource = 'configured' | 'scan' | 'registry';
 export type RuntimeCandidateKind = 'labview-exe' | 'labview-cli' | 'lvcompare';
 export type RuntimeSelectableProvider = Exclude<ComparisonRuntimeProvider, 'unavailable'>;
 export type WindowsContainerHostMode = 'windows' | 'linux' | 'unknown';
+export type WindowsContainerAcquisitionState =
+  | 'not-required'
+  | 'required'
+  | 'acquired'
+  | 'failed';
 
 export interface ComparisonRuntimeSettings {
   executionMode?: RuntimeExecutionMode;
@@ -73,6 +78,7 @@ export interface ComparisonRuntimeSelection {
   windowsContainerCapabilityAvailable?: boolean;
   windowsContainerHostMode?: WindowsContainerHostMode;
   windowsContainerImageAvailable?: boolean;
+  windowsContainerAcquisitionState?: WindowsContainerAcquisitionState;
   blockedReason?: string;
   providerDecisions?: RuntimeProviderDecision[];
   notes: string[];
@@ -113,6 +119,7 @@ interface BuildProviderDecisionsOptions {
   windowsContainerCapabilityAvailable?: boolean;
   windowsContainerHostMode?: WindowsContainerHostMode;
   windowsContainerImageAvailable?: boolean;
+  windowsContainerAcquisitionState?: WindowsContainerAcquisitionState;
   hostRuntimeConflictDetected?: boolean;
   selectedProvider?: RuntimeSelectableProvider;
   selectedEngine?: ComparisonRuntimeEngine;
@@ -149,6 +156,12 @@ export interface WindowsContainerProviderFacts {
   windowsContainerCapabilityAvailable: boolean;
   windowsContainerHostMode?: WindowsContainerHostMode;
   imageAvailable: boolean;
+  notes: string[];
+}
+
+export interface AcquireWindowsContainerImageResult {
+  image: string;
+  acquisitionState: Extract<WindowsContainerAcquisitionState, 'acquired' | 'failed'>;
   notes: string[];
 }
 
@@ -383,18 +396,30 @@ export async function locateComparisonRuntime(
             await deps.queryWindowsContainerImage(windowsContainerImage, hostPlatform)
           )
         : await queryWindowsContainerProviderFacts(windowsContainerImage, hostPlatform);
-    windowsContainerAvailable =
-      windowsContainerFacts.windowsContainerCapabilityAvailable &&
-      windowsContainerFacts.imageAvailable;
+    windowsContainerAvailable = windowsContainerFacts.windowsContainerCapabilityAvailable;
     windowsContainerEvaluated = true;
     return windowsContainerAvailable;
   };
-  const buildWindowsContainerDecisionFacts = () => ({
+  const buildWindowsContainerDecisionFacts = (): Pick<
+    BuildProviderDecisionsOptions,
+    | 'windowsContainerDockerCliAvailable'
+    | 'windowsContainerDaemonReachable'
+    | 'windowsContainerCapabilityAvailable'
+    | 'windowsContainerHostMode'
+    | 'windowsContainerImageAvailable'
+    | 'windowsContainerAcquisitionState'
+  > => ({
     windowsContainerDockerCliAvailable: windowsContainerFacts?.dockerCliAvailable,
     windowsContainerDaemonReachable: windowsContainerFacts?.dockerDaemonReachable,
     windowsContainerCapabilityAvailable: windowsContainerFacts?.windowsContainerCapabilityAvailable,
     windowsContainerHostMode: windowsContainerFacts?.windowsContainerHostMode,
-    windowsContainerImageAvailable: windowsContainerFacts?.imageAvailable
+    windowsContainerImageAvailable: windowsContainerFacts?.imageAvailable,
+    windowsContainerAcquisitionState:
+      windowsContainerFacts?.windowsContainerCapabilityAvailable === true
+        ? windowsContainerFacts.imageAvailable
+          ? 'not-required'
+          : 'required'
+        : undefined
   });
   const buildWindowsContainerSelectionFactsForReturn = () =>
     buildWindowsContainerSelectionFacts(windowsContainerFacts);
@@ -1074,6 +1099,7 @@ function buildWindowsContainerSelectionFacts(
     | 'windowsContainerCapabilityAvailable'
     | 'windowsContainerHostMode'
     | 'windowsContainerImageAvailable'
+    | 'windowsContainerAcquisitionState'
   >
 > {
   if (!facts) {
@@ -1085,7 +1111,12 @@ function buildWindowsContainerSelectionFacts(
     windowsContainerDaemonReachable: facts.dockerDaemonReachable,
     windowsContainerCapabilityAvailable: facts.windowsContainerCapabilityAvailable,
     windowsContainerHostMode: facts.windowsContainerHostMode,
-    windowsContainerImageAvailable: facts.imageAvailable
+    windowsContainerImageAvailable: facts.imageAvailable,
+    windowsContainerAcquisitionState: facts.windowsContainerCapabilityAvailable
+      ? facts.imageAvailable
+        ? 'not-required'
+        : 'required'
+      : undefined
   };
 }
 
@@ -1147,6 +1178,7 @@ function describeSelectedWindowsContainerProvider(options: {
   windowsContainerCapabilityAvailable?: boolean;
   windowsContainerHostMode?: WindowsContainerHostMode;
   imageAvailable?: boolean;
+  acquisitionState?: 'not-required' | 'required' | 'acquired' | 'failed';
   selectionReason?:
     | 'preferred-isolation'
     | 'host-runtime-conflict'
@@ -1159,6 +1191,11 @@ function describeSelectedWindowsContainerProvider(options: {
     options.windowsContainerCapabilityAvailable === true &&
     options.imageAvailable === true
       ? `Docker daemon was reachable in ${options.windowsContainerHostMode ?? 'windows'}-container mode with governed Windows container image ${options.windowsContainerImage} present locally`
+      : options.dockerCliAvailable === true &&
+          options.dockerDaemonReachable === true &&
+          options.windowsContainerCapabilityAvailable === true &&
+          options.imageAvailable === false
+        ? `Docker daemon was reachable in ${options.windowsContainerHostMode ?? 'windows'}-container mode, and governed Windows container image ${options.windowsContainerImage} will be acquired before launch`
       : `Governed Windows container image ${options.windowsContainerImage} was selected`;
 
   if (options.executionMode === 'docker-only') {
@@ -1209,6 +1246,7 @@ function buildProviderDecisions(
           windowsContainerCapabilityAvailable: options.windowsContainerCapabilityAvailable,
           windowsContainerHostMode: options.windowsContainerHostMode,
           imageAvailable: options.windowsContainerImageAvailable,
+          acquisitionState: options.windowsContainerAcquisitionState,
           selectionReason:
             options.hostRuntimeConflictDetected
               ? 'host-runtime-conflict'
@@ -1681,6 +1719,107 @@ export async function queryWindowsContainerProviderFacts(
   }
 }
 
+export async function acquireWindowsContainerImage(
+  image: string,
+  hostPlatform: NodeJS.Platform,
+  options: {
+    reportProgress?: (update: { message: string; increment?: number }) => void | Promise<void>;
+    spawnImpl?: typeof spawn;
+  } = {}
+): Promise<AcquireWindowsContainerImageResult> {
+  const spawnImpl = options.spawnImpl ?? spawn;
+  const { file, args } = resolveWindowsDockerSpawnCommand(hostPlatform, ['pull', image]);
+
+  return new Promise<AcquireWindowsContainerImageResult>((resolve) => {
+    const child = spawnImpl(file, args, {
+      windowsHide: true
+    });
+
+    let stdoutBuffer = '';
+    let stderrBuffer = '';
+    const notes: string[] = [];
+    const seenLines = new Set<string>();
+    let progressBudget = 0;
+    let spawnError: unknown;
+
+    const flushLines = async (buffer: 'stdout' | 'stderr'): Promise<void> => {
+      const sourceBuffer = buffer === 'stdout' ? stdoutBuffer : stderrBuffer;
+      const segments = sourceBuffer.split(/\r?\n/u);
+      const remainder = segments.pop() ?? '';
+      if (buffer === 'stdout') {
+        stdoutBuffer = remainder;
+      } else {
+        stderrBuffer = remainder;
+      }
+
+      for (const rawLine of segments) {
+        const line = rawLine.trim();
+        if (!line || seenLines.has(`${buffer}:${line}`)) {
+          continue;
+        }
+        seenLines.add(`${buffer}:${line}`);
+        notes.push(line);
+        const increment = progressBudget < 15 ? 1 : undefined;
+        if (increment) {
+          progressBudget += increment;
+        }
+        await options.reportProgress?.({
+          message: `Pulling governed Windows image: ${line}`,
+          increment
+        });
+      }
+    };
+
+    child.stdout?.setEncoding('utf8');
+    child.stdout?.on('data', (chunk: string) => {
+      stdoutBuffer += chunk;
+      void flushLines('stdout');
+    });
+
+    child.stderr?.setEncoding('utf8');
+    child.stderr?.on('data', (chunk: string) => {
+      stderrBuffer += chunk;
+      void flushLines('stderr');
+    });
+
+    child.on('error', (error) => {
+      spawnError = error;
+    });
+
+    child.on('close', async (exitCode) => {
+      await flushLines('stdout');
+      await flushLines('stderr');
+
+      if (exitCode === 0) {
+        await options.reportProgress?.({
+          message: `Governed Windows image ready: ${image}`,
+          increment: 5
+        });
+        resolve({
+          image,
+          acquisitionState: 'acquired',
+          notes:
+            notes.length > 0
+              ? notes
+              : [`Governed Windows image ${image} was acquired for Windows container execution.`]
+        });
+        return;
+      }
+
+      const errorNote =
+        spawnError instanceof Error
+          ? `Docker image acquisition failed before pull could start: ${spawnError.message}`
+          : notes.at(-1) ??
+            `Docker image acquisition failed with exit code ${String(exitCode ?? 'unknown')}.`;
+      resolve({
+        image,
+        acquisitionState: 'failed',
+        notes: [...notes, errorNote]
+      });
+    });
+  });
+}
+
 async function runWindowsDockerCommand(
   hostPlatform: NodeJS.Platform,
   dockerArgs: readonly string[],
@@ -1699,6 +1838,23 @@ async function runWindowsDockerCommand(
   }
 
   return execFileRunner('/mnt/c/Windows/System32/cmd.exe', ['/c', 'docker', ...dockerArgs], options);
+}
+
+function resolveWindowsDockerSpawnCommand(
+  hostPlatform: NodeJS.Platform,
+  dockerArgs: readonly string[]
+): { file: string; args: string[] } {
+  if (hostPlatform === 'win32') {
+    return {
+      file: 'docker',
+      args: [...dockerArgs]
+    };
+  }
+
+  return {
+    file: '/mnt/c/Windows/System32/cmd.exe',
+    args: ['/c', 'docker', ...dockerArgs]
+  };
 }
 
 function isMissingWindowsDockerCommand(error: unknown): boolean {

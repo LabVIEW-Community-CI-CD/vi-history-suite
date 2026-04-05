@@ -124,7 +124,7 @@ validating only a narrower raw-CLI shape</li>
 </ul>
 <h2>Queued Execution Flexibility State</h2>
 <p>The repo now also carries a separate user-facing execution-policy lane whose
-first slice has landed.</p>
+four bounded implementation slices have already landed.</p>
 <p>Current implemented truth:</p>
 <ul>
 <li>the installed extension now exposes <code>viHistorySuite.executionMode</code></li>
@@ -139,9 +139,14 @@ choice</li>
 <li>Windows Docker-capability truth is now explicit too: the selector validates
 Docker CLI availability, daemon reachability, active container mode, and
 governed image presence before the Windows provider is selected or rejected</li>
+<li>when Windows container execution is selected and the governed image is
+missing, comparison-report generation now surfaces governed image-pull
+progress before packet persistence and runtime launch</li>
 <li>contaminated Windows host-runtime surfaces now route to Docker when the
 governed provider is available and hard-stop when Docker is required but not
 available</li>
+<li>retained runtime-doctor and packet surfaces now carry acquisition state and
+acquisition-failure hard stops explicitly</li>
 </ul>
 <p>The remaining queued control plane says:</p>
 <ul>
@@ -162,8 +167,11 @@ LabVIEW or install, enable, or switch Docker</li>
 <li>when Docker is evaluated on Windows, the retained runtime-doctor and packet
 surfaces now expose those Docker capability facts instead of collapsing them
 into one image-availability guess</li>
-<li>if Docker execution is selected and the image is missing, the user should
-see visible pull progress; on Windows that means the governed Windows image</li>
+<li>the current comparison-report path now shows visible pull progress when
+Windows container execution still requires the governed Windows image</li>
+<li>fuller front-facing provider/acquisition transparency beyond the current
+progress, runtime-doctor, and retained-packet surfaces remains the open
+<code>PROGRAM-0005</code> remainder</li>
 <li>the current open debt item for that ambiguity is retained in the authority
 debt ledger rather than left implicit</li>
 </ul>

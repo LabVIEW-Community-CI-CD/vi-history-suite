@@ -223,6 +223,73 @@ describe('comparisonReportPacket', () => {
     expect(writes.get(result.packetFilePath)).toContain('Runtime execution:</strong> not-available');
   });
 
+  it('persists a blocked-runtime packet when windows image acquisition fails after provider selection', async () => {
+    const writes = new Map<string, string>();
+
+    const result = await persistComparisonReportPacket(
+      {
+        storageRoot: '/workspace/.storage',
+        repositoryRoot: '/workspace/repo',
+        relativePath: 'foo.vi',
+        reportType: 'diff',
+        selectedHash: 'abcdef1234567890',
+        baseHash: '1111111122222222',
+        preflight: {
+          normalizedRelativePath: 'foo.vi',
+          ready: true,
+          left: {
+            revisionId: '1111111122222222',
+            blobSpecifier: '1111111122222222:foo.vi',
+            signature: 'LVIN',
+            isVi: true
+          },
+          right: {
+            revisionId: 'abcdef1234567890',
+            blobSpecifier: 'abcdef1234567890:foo.vi',
+            signature: 'LVCC',
+            isVi: true
+          }
+        },
+        runtimeSelection: {
+          platform: 'win32',
+          executionMode: 'auto',
+          preferBitness: 'x64',
+          provider: 'windows-container',
+          engine: 'labview-cli',
+          windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
+          windowsContainerImageAvailable: false,
+          windowsContainerAcquisitionState: 'failed',
+          blockedReason: 'windows-container-image-acquisition-failed',
+          notes: ['Governed Windows image acquisition failed before Windows container launch.'],
+          registryQueryPlans: [],
+          candidates: []
+        }
+      },
+      {
+        now: () => '2026-04-03T00:00:00.000Z',
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn(async (filePath: string, contents: string) => {
+          writes.set(filePath, contents);
+        }) as never
+      }
+    );
+
+    expect(result.record.reportStatus).toBe('blocked-runtime');
+    expect(result.record.runtimeExecutionState).toBe('not-available');
+    expect(result.record.runtimeExecution.acquisitionState).toBe('failed');
+    expect(writes.get(result.metadataFilePath)).toContain(
+      '"blockedReason": "windows-container-image-acquisition-failed"'
+    );
+    expect(writes.get(result.packetFilePath)).toContain(
+      'No LabVIEW-generated comparison report has been executed because the governed Windows container image could not be acquired before runtime launch.'
+    );
+    expect(writes.get(result.packetFilePath)).toContain('Provider:</strong> windows-container');
+    expect(writes.get(result.packetFilePath)).toContain(
+      'Windows container acquisition state:</strong> failed'
+    );
+    expect(writes.get(result.packetFilePath)).toContain('Acquisition state:</strong> failed');
+  });
+
   it('uses the default clock when no explicit timestamp provider is injected', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-04-04T05:06:07.000Z'));

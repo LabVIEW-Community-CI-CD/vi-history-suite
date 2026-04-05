@@ -45,15 +45,20 @@ policy:
 - when Windows Docker-backed execution is evaluated, the selector now validates
   Docker CLI availability, daemon reachability, active container mode, and
   governed image presence before selecting or rejecting the Windows provider
-- runtime doctor and retained comparison-report packet surfaces now carry those
-  Windows container-capability facts explicitly instead of collapsing them into
-  one image-availability assumption
+- when Windows container execution is selected and the governed image is
+  missing locally, comparison-report generation now surfaces visible governed
+  image-pull progress before packet persistence and runtime launch
+- runtime doctor and retained comparison-report packet surfaces now carry both
+  the Windows container-capability facts and retained acquisition state
+  explicitly instead of collapsing them into one image-availability assumption
 - benchmark-proof and exact-pair diagnosis entrypoints now fail closed on
   contaminated or contradictory runtime-override bundles
 - canonical effective execution-request validation is now partially
-  implemented through selected Windows host-runtime facts plus explicit Windows
-  Docker capability validation, but visible image-acquisition progress and
-  fuller front-facing acquisition transparency remain queued
+  implemented through selected Windows host-runtime facts, explicit Windows
+  Docker capability validation, and a governed Windows image-acquisition step
+  with visible progress; fuller front-facing provider/acquisition transparency
+  beyond the current progress, runtime-doctor, and retained-packet surfaces
+  remains queued
 
 So current runtime behavior is no longer implicit at the execution-mode
 boundary, but the broader execution policy is still only partially
@@ -116,9 +121,9 @@ facts in that boundary:
 - existing LabVIEW-related host processes
 - existing listener on the governed VI Server port
 
-The remaining queued work is visible acquisition-state UX plus fuller
-front-facing provider/acquisition transparency after the landed Docker
-capability slice.
+The remaining queued work is fuller front-facing provider/acquisition
+transparency after the landed host-fact, Docker-capability, and
+image-acquisition slices.
 
 This is the canonical validation boundary for the installed extension. If the
 request is non-canonical, the product must fail closed before runtime work
@@ -232,9 +237,14 @@ Acquisition progress is part of the product contract, not a hidden background
 detail, because image pulls are long-running and otherwise look like a frozen
 review action.
 
+The currently landed acquisition slice now satisfies that contract for the
+comparison-report action path on Windows: when Windows container execution is
+selected and the governed image is missing, the user sees pull progress,
+completion, or acquisition failure before runtime launch continues.
+
 ## Transparency Contract
 
-Future execution UX shall surface these facts directly:
+Execution UX shall surface these facts directly:
 
 - selected execution mode
 - chosen provider
@@ -244,22 +254,32 @@ Future execution UX shall surface these facts directly:
 - acquisition outcome
 - next action
 
-The currently landed Docker-capability slice already retains these facts when
+The currently landed execution-policy slices now retain these facts when
 Windows Docker evaluation is in play:
 
+- selected execution mode
+- chosen provider plus rejected provider reasons
 - whether Docker CLI was available
 - whether the Docker daemon was reachable
 - which container mode was active
 - whether the governed image was already present locally
+- whether the governed image still required acquisition or had already been
+  acquired
+- what the next user action is when acquisition or Windows Docker capability
+  blocks runtime truth
 
-The future state model is:
+The retained state model is now:
 
 - `selected`
 - `rejected`
-- `acquiring`
 - `hard-stop`
-- `launching`
-- `completed`
+- `required`
+- `acquired`
+- `failed`
+
+The remaining queued work is broader propagation of those facts into fuller
+front-facing extension UX beyond the current progress notifications,
+runtime-doctor lines, and retained comparison-report packet.
 
 This transparency belongs in:
 

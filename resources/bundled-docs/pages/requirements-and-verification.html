@@ -27,8 +27,9 @@ surface.</p>
 <li>command and review-surface behavior</li>
 <li>runtime-provider and benchmark behavior</li>
 <li>the execution-mode contract for <code>auto</code>, <code>host-only</code>, and <code>docker-only</code>,
-including the already-implemented first manifest/selector slice plus the
-remaining queued validation and acquisition work</li>
+including the already-landed execution-mode, host-fact, Docker-capability,
+and Windows acquisition-progress slices plus the remaining front-facing
+transparency work</li>
 <li>documentation-package and wiki-workbench behavior</li>
 <li>bounded repo-family support</li>
 <li>release, setup, and control-plane rules</li>
@@ -79,7 +80,7 @@ is clean</li>
 current host conflict boundary</li>
 <li>when a contaminated Windows host surface now routes to Docker or hard-stops
 instead of silently continuing on the host</li>
-<li>when the extension must still validate one canonical effective execution request
+<li>when the extension now validates one canonical effective execution request
 before provider selection or Docker acquisition starts</li>
 <li>when Docker becomes a hard requirement because an open host LabVIEW session
 would contaminate host execution</li>
@@ -89,8 +90,9 @@ before the Windows provider is selected or rejected</li>
 <li>when the extension must tell the user to close LabVIEW or install Docker</li>
 <li>when Windows must tell the user to start Docker or switch to Windows
 containers before a governed Windows image can run</li>
-<li>when Windows must surface visible progress while pulling the governed Windows
-image</li>
+<li>when Windows now surfaces visible progress while pulling the governed
+Windows image and retains acquisition state in the comparison-report packet
+and runtime-doctor surfaces</li>
 </ul>
 <h2>Why It Matters</h2>
 <p>This is one of the main differences between a useful engineering wiki and a

@@ -61,6 +61,9 @@ export function buildComparisonRuntimeDoctorSummaryFromFacts(options: {
     typeof selection.windowsContainerImageAvailable === 'boolean'
       ? `ContainerImagePresent=${selection.windowsContainerImageAvailable ? 'yes' : 'no'}`
       : undefined,
+    selection.windowsContainerAcquisitionState
+      ? `ContainerAcquisitionState=${selection.windowsContainerAcquisitionState}`
+      : undefined,
     selection.hostLabviewIniPath ? `HostLabVIEW.ini=${selection.hostLabviewIniPath}` : undefined,
     Number.isInteger(selection.hostLabviewTcpPort)
       ? `HostVITcpPort=${String(selection.hostLabviewTcpPort)}`
@@ -146,6 +149,10 @@ function deriveRuntimeDoctorNextAction(options: {
       return `Next action: ${deriveWindowsContainerRecoveryAction(options.runtimeSelection)} or change execution mode, then rerun comparison report generation.`;
     }
 
+    if (blockedReason === 'windows-container-image-acquisition-failed') {
+      return `Next action: ${deriveWindowsContainerRecoveryAction(options.runtimeSelection)} and rerun comparison report generation.`;
+    }
+
     if (executionMode === 'host-only') {
       return 'Next action: make the selected host-native runtime available, resolve host conflicts, or change execution mode, then rerun comparison report generation.';
     }
@@ -179,6 +186,7 @@ function deriveWindowsContainerRecoveryAction(
     windowsContainerCapabilityAvailable?: boolean;
     windowsContainerHostMode?: string;
     windowsContainerImageAvailable?: boolean;
+    windowsContainerAcquisitionState?: string;
   }
 ): string {
   if (selection.windowsContainerDockerCliAvailable === false) {
@@ -198,6 +206,10 @@ function deriveWindowsContainerRecoveryAction(
   }
 
   if (selection.windowsContainerImageAvailable === false) {
+    if (selection.windowsContainerAcquisitionState === 'failed') {
+      return 'repair Docker connectivity or image registry access, then pull the governed Windows container image';
+    }
+
     return 'pull the governed Windows container image';
   }
 

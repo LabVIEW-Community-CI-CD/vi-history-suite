@@ -65,6 +65,7 @@ vi.mock('vscode', () => ({
 
 import {
   createComparisonReportAction,
+  createEnsureComparisonReportEvidenceAction,
   createOpenRetainedComparisonReportAction,
   readComparisonRuntimeSettings,
   resolveRuntimePlatform
@@ -1296,6 +1297,310 @@ describe('comparisonReportAction', () => {
       { message: 'Archiving comparison-report evidence.', increment: 5 },
       { message: 'Opening retained comparison-report view.', increment: 5 }
     ]);
+  });
+
+  it('acquires the governed windows image before packet persistence when the selected provider requires it', async () => {
+    const progressUpdates: Array<{ message: string; increment?: number }> = [];
+    const acquireImage = vi.fn().mockResolvedValue({
+      image: 'nationalinstruments/labview:2026q1-windows',
+      acquisitionState: 'acquired',
+      notes: ['Pulled governed image layers.']
+    });
+    const persistComparisonReport = vi.fn().mockResolvedValue({
+      record: {
+        reportTitle: 'VI Comparison Report: foo.vi',
+        reportStatus: 'ready-for-runtime',
+        runtimeExecutionState: 'not-run',
+        runtimeExecution: {
+          state: 'not-run',
+          attempted: false,
+          reportExists: false,
+          acquisitionState: 'acquired'
+        },
+        runtimeSelection: {
+          platform: 'win32',
+          executionMode: 'auto',
+          preferBitness: 'x64',
+          provider: 'windows-container',
+          engine: 'labview-cli',
+          windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
+          windowsContainerImageAvailable: true,
+          windowsContainerAcquisitionState: 'acquired',
+          notes: ['Governed Windows image nationalinstruments/labview:2026q1-windows was acquired before Windows container launch.'],
+          registryQueryPlans: [],
+          candidates: []
+        },
+        artifactPlan: {
+          repoId: 'repoid123456',
+          normalizedRelativePath: 'foo.vi',
+          reportDirectory: '/workspace/.storage/reports/repoid123456/fileid123456',
+          packetFilename: 'report-packet.html',
+          reportFilename: 'diff-report-foo.vi.html'
+        }
+      },
+      packetFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-packet.html',
+      reportFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
+      metadataFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-metadata.json'
+    });
+    const executeComparisonReport = vi.fn().mockResolvedValue({
+      record: {
+        reportTitle: 'VI Comparison Report: foo.vi',
+        reportStatus: 'ready-for-runtime',
+        runtimeExecutionState: 'succeeded',
+        runtimeExecution: {
+          state: 'succeeded',
+          attempted: true,
+          reportExists: true,
+          acquisitionState: 'acquired'
+        },
+        runtimeSelection: {
+          platform: 'win32',
+          executionMode: 'auto',
+          preferBitness: 'x64',
+          provider: 'windows-container',
+          engine: 'labview-cli',
+          windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
+          windowsContainerImageAvailable: true,
+          windowsContainerAcquisitionState: 'acquired',
+          notes: [],
+          registryQueryPlans: [],
+          candidates: []
+        },
+        artifactPlan: {
+          repoId: 'repoid123456',
+          normalizedRelativePath: 'foo.vi',
+          reportDirectory: '/workspace/.storage/reports/repoid123456/fileid123456',
+          packetFilename: 'report-packet.html',
+          reportFilename: 'diff-report-foo.vi.html'
+        }
+      },
+      packetFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-packet.html',
+      reportFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
+      metadataFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-metadata.json'
+    });
+    const action = createEnsureComparisonReportEvidenceAction(
+      {
+        storageUri: createMockUri('/workspace/.storage')
+      } as never,
+      {
+        preflightComparisonReport: vi.fn().mockResolvedValue({
+          normalizedRelativePath: 'foo.vi',
+          ready: true,
+          left: {
+            revisionId: '1111111122222222',
+            blobSpecifier: '1111111122222222:foo.vi',
+            signature: 'LVIN',
+            isVi: true
+          },
+          right: {
+            revisionId: 'abcdef1234567890',
+            blobSpecifier: 'abcdef1234567890:foo.vi',
+            signature: 'LVCC',
+            isVi: true
+          }
+        }),
+        locateRuntime: vi.fn().mockResolvedValue({
+          platform: 'win32',
+          executionMode: 'auto',
+          preferBitness: 'x64',
+          provider: 'windows-container',
+          engine: 'labview-cli',
+          windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
+          windowsContainerImageAvailable: false,
+          windowsContainerAcquisitionState: 'required',
+          notes: [],
+          registryQueryPlans: [],
+          candidates: []
+        }),
+        acquireWindowsContainerImage: acquireImage as never,
+        persistComparisonReport: persistComparisonReport as never,
+        executeComparisonReport: executeComparisonReport as never
+      }
+    );
+
+    await expect(
+      action({
+        model: {
+          repositoryName: 'repo',
+          repositoryRoot: '/workspace/repo',
+          relativePath: 'foo.vi',
+          signature: 'LVIN',
+          eligible: true,
+          commits: [
+            {
+              hash: 'abcdef1234567890',
+              authorDate: '2026-04-02T00:00:00Z',
+              authorName: 'A User',
+              subject: 'Update VI',
+              previousHash: '1111111122222222'
+            }
+          ]
+        },
+        selectedHash: 'abcdef1234567890',
+        reportProgress: (update) => {
+          progressUpdates.push(update);
+        }
+      })
+    ).resolves.toMatchObject({
+      outcome: 'retained-comparison-report-evidence',
+      reportStatus: 'ready-for-runtime',
+      runtimeExecutionState: 'succeeded'
+    });
+
+    expect(acquireImage).toHaveBeenCalledWith(
+      'nationalinstruments/labview:2026q1-windows',
+      process.platform,
+      expect.objectContaining({
+        reportProgress: expect.any(Function)
+      })
+    );
+    expect(persistComparisonReport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        runtimeSelection: expect.objectContaining({
+          provider: 'windows-container',
+          windowsContainerImageAvailable: true,
+          windowsContainerAcquisitionState: 'acquired'
+        })
+      })
+    );
+    expect(executeComparisonReport).toHaveBeenCalled();
+    expect(progressUpdates).toEqual([
+      { message: 'Resolving retained revision pair.', increment: 10 },
+      { message: 'Validating retained VI revisions.', increment: 20 },
+      { message: 'Selecting comparison-report runtime.', increment: 20 },
+      {
+        message:
+          'Acquiring governed Windows image nationalinstruments/labview:2026q1-windows.',
+        increment: 10
+      },
+      { message: 'Persisting governed comparison-report packet.', increment: 20 },
+      { message: 'Executing LabVIEW comparison-report runtime.', increment: 20 }
+    ]);
+  });
+
+  it('retains a blocked-runtime packet and skips execution when governed windows image acquisition fails', async () => {
+    const acquireImage = vi.fn().mockResolvedValue({
+      image: 'nationalinstruments/labview:2026q1-windows',
+      acquisitionState: 'failed',
+      notes: ['denied: registry access failed']
+    });
+    const persistComparisonReport = vi.fn().mockResolvedValue({
+      record: {
+        reportTitle: 'VI Comparison Report: foo.vi',
+        reportStatus: 'blocked-runtime',
+        runtimeExecutionState: 'not-available',
+        runtimeExecution: {
+          state: 'not-available',
+          attempted: false,
+          reportExists: false,
+          acquisitionState: 'failed',
+          blockedReason: 'windows-container-image-acquisition-failed'
+        },
+        runtimeSelection: {
+          platform: 'win32',
+          executionMode: 'auto',
+          preferBitness: 'x64',
+          provider: 'windows-container',
+          engine: 'labview-cli',
+          windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
+          windowsContainerImageAvailable: false,
+          windowsContainerAcquisitionState: 'failed',
+          blockedReason: 'windows-container-image-acquisition-failed',
+          notes: ['Governed Windows image nationalinstruments/labview:2026q1-windows could not be acquired before Windows container launch.'],
+          registryQueryPlans: [],
+          candidates: []
+        },
+        artifactPlan: {
+          repoId: 'repoid123456',
+          normalizedRelativePath: 'foo.vi',
+          reportDirectory: '/workspace/.storage/reports/repoid123456/fileid123456',
+          packetFilename: 'report-packet.html',
+          reportFilename: 'diff-report-foo.vi.html'
+        }
+      },
+      packetFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-packet.html',
+      reportFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
+      metadataFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-metadata.json'
+    });
+    const executeComparisonReport = vi.fn();
+    const action = createEnsureComparisonReportEvidenceAction(
+      {
+        storageUri: createMockUri('/workspace/.storage')
+      } as never,
+      {
+        preflightComparisonReport: vi.fn().mockResolvedValue({
+          normalizedRelativePath: 'foo.vi',
+          ready: true,
+          left: {
+            revisionId: '1111111122222222',
+            blobSpecifier: '1111111122222222:foo.vi',
+            signature: 'LVIN',
+            isVi: true
+          },
+          right: {
+            revisionId: 'abcdef1234567890',
+            blobSpecifier: 'abcdef1234567890:foo.vi',
+            signature: 'LVCC',
+            isVi: true
+          }
+        }),
+        locateRuntime: vi.fn().mockResolvedValue({
+          platform: 'win32',
+          executionMode: 'auto',
+          preferBitness: 'x64',
+          provider: 'windows-container',
+          engine: 'labview-cli',
+          windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
+          windowsContainerImageAvailable: false,
+          windowsContainerAcquisitionState: 'required',
+          notes: [],
+          registryQueryPlans: [],
+          candidates: []
+        }),
+        acquireWindowsContainerImage: acquireImage as never,
+        persistComparisonReport: persistComparisonReport as never,
+        executeComparisonReport: executeComparisonReport as never
+      }
+    );
+
+    await expect(
+      action({
+        model: {
+          repositoryName: 'repo',
+          repositoryRoot: '/workspace/repo',
+          relativePath: 'foo.vi',
+          signature: 'LVIN',
+          eligible: true,
+          commits: [
+            {
+              hash: 'abcdef1234567890',
+              authorDate: '2026-04-02T00:00:00Z',
+              authorName: 'A User',
+              subject: 'Update VI',
+              previousHash: '1111111122222222'
+            }
+          ]
+        },
+        selectedHash: 'abcdef1234567890'
+      })
+    ).resolves.toMatchObject({
+      outcome: 'retained-comparison-report-evidence',
+      reportStatus: 'blocked-runtime',
+      runtimeExecutionState: 'not-available',
+      blockedReason: 'windows-container-image-acquisition-failed'
+    });
+
+    expect(persistComparisonReport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        runtimeSelection: expect.objectContaining({
+          provider: 'windows-container',
+          windowsContainerImageAvailable: false,
+          windowsContainerAcquisitionState: 'failed',
+          blockedReason: 'windows-container-image-acquisition-failed'
+        })
+      })
+    );
+    expect(executeComparisonReport).not.toHaveBeenCalled();
   });
 
   it('opens the current comparison view but retains unavailable archive state when governed archive persistence fails', async () => {

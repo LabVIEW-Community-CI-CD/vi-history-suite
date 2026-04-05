@@ -1292,13 +1292,13 @@
   CLI-only rule, including the removal of hidden explicit Windows defaults
 - `TEST-DOC-065`: review README, current-state, extension-execution-policy,
   ADR-0025, PROGRAM-0005, ISSUE-0410, and the debt ledger and confirm the
-  queued `auto` / `host-only` / `docker-only` contract, Docker-required hard
+  current `auto` / `host-only` / `docker-only` contract, Docker-required hard
   stops, visible Windows image-pull progress, no-silent-fallback rule, and
   user-facing provider transparency are all explicit
 - `TEST-DOC-066`: review the wiki coverage matrix, publication ledger,
   User-Workflow, Requirements-And-Verification, Current-State, Architecture,
   and Architecture-Decision-Records pages and confirm the execution-policy
-  package and queued `PROGRAM-0005` control plane are represented on the
+  package and current `PROGRAM-0005` control plane are represented on the
   published reader surfaces
 - `TEST-UNIT-300`: verify the execution-policy control-plane package keeps
   canonical effective execution-request validation, Windows container-capability
@@ -1313,9 +1313,9 @@
   proof within one proof root
 - `TEST-DOC-067`: review extension-execution-policy, ADR-0025, ADR-0026,
   PROGRAM-0005, ISSUE-0410, current-state, and the debt ledger and confirm the
-  queued package makes canonical execution-request validation, selected
-  `LabVIEW.ini` / port truth, Windows container-capability hard stops, and
-  mode-aware guidance explicit
+  current package makes canonical execution-request validation, selected
+  `LabVIEW.ini` / port truth, Windows container-capability hard stops,
+  visible Windows acquisition-state truth, and mode-aware guidance explicit
 - `TEST-DOC-068`: review User-Workflow, Requirements-And-Verification,
   Current-State, Architecture, Architecture-Decision-Records, Development-Queue,
   Debt-Retirement-Contract, and Debt-Ledger pages and confirm the published

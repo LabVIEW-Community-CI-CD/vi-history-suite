@@ -2,15 +2,16 @@
 
 ## Status
 
-Queued follow-on post-release program with three repo-side selector slices
+Queued follow-on post-release program with four repo-side execution-policy slices
 already landed.
 
 Activation is intentionally deferred until:
 
 - `PROGRAM-0003` closes the benchmark-proof packet under `TRANCHE-011`
 - the queue promotes `TRANCHE-013` from `queued` to `active`
-- the remaining canonical validation, host-conflict, and acquisition UX work
-  moves beyond the landed selector slices
+- the remaining broader front-facing provider/acquisition transparency work
+  moves beyond the landed selector, Docker-capability, and acquisition-progress
+  slices
 
 ## Purpose
 
@@ -106,7 +107,7 @@ Every slice shall preserve:
 
 ## Landed Selector Slices
 
-The repo already retains three bounded implementation slices under this program:
+The repo already retains four bounded implementation slices under this program:
 
 - a first-class `viHistorySuite.executionMode` setting with `auto`,
   `host-only`, and `docker-only`
@@ -130,6 +131,14 @@ The repo already retains three bounded implementation slices under this program:
   - governed image presence
 - runtime-doctor and retained packet surfaces now carry those Docker
   capability facts explicitly when Windows Docker evaluation is in play
+- a fourth slice now makes governed Windows image acquisition explicit on the
+  comparison-report action path:
+  - Windows container selections with a missing governed image now enter a
+    governed acquisition step before packet persistence and runtime launch
+  - the long-running progress surface now shows governed Windows image-pull
+    progress instead of leaving that work implicit inside Docker startup
+  - retained runtime doctor and packet surfaces now carry acquisition state as
+    governed truth, and acquisition failure now blocks runtime truthfully
 
 ## First Implementation Slice
 
@@ -144,8 +153,8 @@ That slice should:
 - make canonical execution-request validation explicit before implementation
 - make Windows container-capability truth explicit before image acquisition
 - stop short of claiming full implementation until the installed extension
-  lands visible acquisition UX and fuller front-facing provider transparency
-  end to end
+  lands fuller front-facing provider transparency end to end beyond the now-
+  landed visible acquisition UX slice
 
 ## Success Condition
 

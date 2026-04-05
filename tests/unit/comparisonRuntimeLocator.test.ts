@@ -418,18 +418,19 @@ describe('comparisonRuntimeLocator', () => {
     );
 
     expect(result.executionMode).toBe('docker-only');
-    expect(result.provider).toBe('unavailable');
-    expect(result.blockedReason).toBe('docker-only-provider-unavailable');
+    expect(result.provider).toBe('windows-container');
+    expect(result.windowsContainerImageAvailable).toBe(false);
+    expect(result.windowsContainerAcquisitionState).toBe('required');
     expect(result.notes).toContain(
-      'Docker-only execution was requested, but governed Windows container image nationalinstruments/labview:2026q1-windows was not present locally on the current host.'
+      'Docker daemon was reachable in windows-container mode, and governed Windows container image nationalinstruments/labview:2026q1-windows will be acquired before launch for docker-only execution.'
     );
     expect(result.providerDecisions).toEqual([
       {
         provider: 'windows-container',
-        outcome: 'rejected',
-        reason: 'docker-only-provider-unavailable',
+        outcome: 'selected',
+        reason: 'execution-mode-docker-only-selected-windows-container',
         detail:
-          'Docker-only execution was requested, but governed Windows container image nationalinstruments/labview:2026q1-windows was not present locally on the current host.'
+          'Docker daemon was reachable in windows-container mode, and governed Windows container image nationalinstruments/labview:2026q1-windows will be acquired before launch for docker-only execution.'
       },
       {
         provider: 'host-native',
@@ -849,22 +850,23 @@ HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\National Instruments\\LabVIEW
       }
     );
 
-    expect(result.provider).toBe('unavailable');
-    expect(result.blockedReason).toBe('windows-host-runtime-surface-contaminated');
+    expect(result.provider).toBe('windows-container');
+    expect(result.windowsContainerImageAvailable).toBe(false);
+    expect(result.windowsContainerAcquisitionState).toBe('required');
     expect(result.providerDecisions).toEqual([
       {
         provider: 'windows-container',
-        outcome: 'rejected',
-        reason: 'auto-required-docker-because-host-runtime-conflict-but-provider-unavailable',
+        outcome: 'selected',
+        reason: 'auto-required-docker-because-host-runtime-conflict',
         detail:
-          'Validated Windows host runtime facts required Docker, but governed Windows container image nationalinstruments/labview:2026q1-windows was not present locally on the current host.'
+          'Docker daemon was reachable in windows-container mode, and governed Windows container image nationalinstruments/labview:2026q1-windows will be acquired before launch, so isolated execution was selected because the validated Windows host runtime surface was contaminated.'
       },
       {
         provider: 'host-native',
         outcome: 'rejected',
         reason: 'host-native-runtime-surface-contaminated',
         detail:
-          'Validated Windows host runtime facts showed existing LabVIEW-related process or governed VI Server port activity, so host-native execution was not selected.'
+          'Host-native execution was not selected because the validated Windows host runtime surface was contaminated by existing LabVIEW-related activity.'
       }
     ]);
   });

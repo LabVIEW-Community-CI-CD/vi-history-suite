@@ -9,6 +9,7 @@ import {
   ComparisonReportArchivePlan
 } from '../dashboard/comparisonReportArchive';
 import {
+  acquireWindowsContainerImage,
   ComparisonRuntimeSettings,
   locateComparisonRuntime,
   RuntimePlatform
@@ -79,6 +80,7 @@ export interface ComparisonReportActionDeps {
   uriFile?: typeof vscode.Uri.file;
   joinPath?: typeof vscode.Uri.joinPath;
   locateRuntime?: typeof locateComparisonRuntime;
+  acquireWindowsContainerImage?: typeof acquireWindowsContainerImage;
   executeComparisonReport?: typeof executeComparisonReport;
   readFile?: typeof fs.readFile;
   pathExists?: (targetPath: string) => Promise<boolean>;
@@ -328,7 +330,7 @@ async function ensureComparisonReportEvidence(
     message: 'Selecting comparison-report runtime.',
     increment: 20
   });
-  const runtimeSelection = await (deps.locateRuntime ?? locateComparisonRuntime)(
+  let runtimeSelection = await (deps.locateRuntime ?? locateComparisonRuntime)(
     resolveRuntimePlatform(process.platform),
     (deps.getRuntimeSettings ?? readComparisonRuntimeSettings)()
   );
@@ -337,6 +339,31 @@ async function ensureComparisonReportEvidence(
       outcome: 'cancelled',
       cancellationStage: 'after-runtime-selection'
     };
+  }
+
+  if (
+    runtimeSelection.provider === 'windows-container' &&
+    runtimeSelection.windowsContainerAcquisitionState === 'required' &&
+    runtimeSelection.windowsContainerImage
+  ) {
+    await request.reportProgress?.({
+      message: `Acquiring governed Windows image ${runtimeSelection.windowsContainerImage}.`,
+      increment: 10
+    });
+
+    const acquisition = await (
+      deps.acquireWindowsContainerImage ?? acquireWindowsContainerImage
+    )(runtimeSelection.windowsContainerImage, process.platform, {
+      reportProgress: request.reportProgress
+    });
+
+    runtimeSelection = applyWindowsContainerAcquisitionResult(runtimeSelection, acquisition);
+    if (request.cancellationToken?.isCancellationRequested) {
+      return {
+        outcome: 'cancelled',
+        cancellationStage: 'after-runtime-acquisition'
+      };
+    }
   }
 
   await request.reportProgress?.({
@@ -401,6 +428,36 @@ async function ensureComparisonReportEvidence(
       retainedArchiveAvailable,
       archiveFailureReason
     })
+  };
+}
+
+function applyWindowsContainerAcquisitionResult(
+  runtimeSelection: Awaited<ReturnType<typeof locateComparisonRuntime>>,
+  acquisition: Awaited<ReturnType<typeof acquireWindowsContainerImage>>
+): Awaited<ReturnType<typeof locateComparisonRuntime>> {
+  if (acquisition.acquisitionState === 'acquired') {
+    return {
+      ...runtimeSelection,
+      windowsContainerImageAvailable: true,
+      windowsContainerAcquisitionState: 'acquired',
+      notes: [
+        ...runtimeSelection.notes,
+        `Governed Windows image ${acquisition.image} was acquired before Windows container launch.`,
+        ...acquisition.notes
+      ]
+    };
+  }
+
+  return {
+    ...runtimeSelection,
+    blockedReason: 'windows-container-image-acquisition-failed',
+    windowsContainerImageAvailable: false,
+    windowsContainerAcquisitionState: 'failed',
+    notes: [
+      ...runtimeSelection.notes,
+      `Governed Windows image ${acquisition.image} could not be acquired before Windows container launch.`,
+      ...acquisition.notes
+    ]
   };
 }
 

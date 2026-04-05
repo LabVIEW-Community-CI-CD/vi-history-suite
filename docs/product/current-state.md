@@ -203,11 +203,11 @@ Queued follow-on tranches:
   - `PROGRAM-0005`: Extension execution flexibility and runtime acquisition UX
   - queued issue: [ISSUE-0410 Extension Execution Flexibility And Runtime Acquisition UX](./issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md)
   - queued execution program: [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
-  - three repo-side selector slices are now landed: `package.json` exposes `viHistorySuite.executionMode`, runtime selection retains `executionMode` as explicit provider truth, `host-only` / `docker-only` fail closed instead of silently substituting the other provider class, and Windows `auto` now stays host-native on a clean validated host while routing contaminated host surfaces through Docker only when the governed provider is actually needed
+  - four repo-side execution-policy slices are now landed: `package.json` exposes `viHistorySuite.executionMode`, canonical effective execution-request validation now governs provider choice, runtime selection retains `executionMode` as explicit provider truth, `host-only` / `docker-only` fail closed instead of silently substituting the other provider class, Windows `auto` now stays host-native on a clean validated host while routing contaminated host surfaces through Docker only when the governed provider is actually needed, and Windows container selections now acquire the governed image with visible progress before packet persistence and runtime launch when the image is missing locally
   - the installed selector now derives the selected Windows `LabVIEW.ini` surface, governed VI Server TCP port, and observed host-runtime conflict facts before final host-vs-Docker provider choice
   - Windows container-capability truth is now explicit too: when Docker-backed Windows execution is evaluated, the selector validates Docker CLI availability, daemon reachability, active container mode, and governed image presence before selecting or rejecting the Windows provider
-  - the retained runtime doctor / packet surfaces now carry those host and Docker capability facts explicitly
-  - this tranche still owns the remaining canonical effective execution-request validation beyond the landed host-and-Docker-fact slices, visible Windows image-acquisition progress, and fuller front-facing provider/acquisition transparency
+  - the retained runtime doctor / packet surfaces now carry those host facts, Docker capability facts, and Windows image-acquisition state explicitly, while the long-running comparison action now surfaces governed Windows image-pull progress in the front-facing progress channel
+  - this tranche still owns the remaining fuller front-facing provider/acquisition transparency beyond the landed host-fact, Docker-capability, and image-acquisition slices
 
 Current active and queued post-release programs:
 

@@ -22,6 +22,7 @@ export interface ComparisonReportRuntimeExecution {
   state: ComparisonReportRuntimeExecutionState;
   attempted: boolean;
   reportExists: boolean;
+  acquisitionState?: 'not-required' | 'required' | 'acquired' | 'failed';
   doctorSummaryLines?: string[];
   blockedReason?: string;
   failureReason?: string;
@@ -130,7 +131,9 @@ export async function persistComparisonReportPacket(
     runtimeSelection: options.runtimeSelection,
     runtimeExecution: buildInitialRuntimeExecution(options.preflight, options.runtimeSelection, artifactPlan),
     runtimeExecutionState:
-      options.preflight.ready && options.runtimeSelection.provider === 'unavailable'
+      options.preflight.ready &&
+      (options.runtimeSelection.provider === 'unavailable' ||
+        options.runtimeSelection.blockedReason === 'windows-container-image-acquisition-failed')
         ? 'not-available'
         : 'not-run'
   };
@@ -264,6 +267,9 @@ export function renderComparisonReportPacketHtml(record: ComparisonReportPacketR
             ? 'yes'
             : 'no'
       )}</div>
+      <div><strong>Windows container acquisition state:</strong> ${escapeHtml(
+        runtimeSelection.windowsContainerAcquisitionState ?? 'none'
+      )}</div>
       <div><strong>Host LabVIEW.ini:</strong> ${escapeHtml(runtimeSelection.hostLabviewIniPath ?? 'none')}</div>
       <div><strong>Host VI Server port:</strong> ${escapeHtml(
         runtimeSelection.hostLabviewTcpPort === undefined
@@ -286,6 +292,9 @@ export function renderComparisonReportPacketHtml(record: ComparisonReportPacketR
     <div class="grid" data-testid="comparison-report-runtime-execution">
       <div><strong>Attempted:</strong> ${runtimeExecution.attempted ? 'yes' : 'no'}</div>
       <div><strong>Report exists:</strong> ${runtimeExecution.reportExists ? 'yes' : 'no'}</div>
+      <div><strong>Acquisition state:</strong> ${escapeHtml(
+        runtimeExecution.acquisitionState ?? 'none'
+      )}</div>
       <div><strong>Failure reason:</strong> ${escapeHtml(runtimeExecution.failureReason ?? 'none')}</div>
       <div><strong>Blocked reason:</strong> ${escapeHtml(runtimeExecution.blockedReason ?? 'none')}</div>
       <div><strong>Executable:</strong> ${escapeHtml(runtimeExecution.executable ?? 'none')}</div>
@@ -415,6 +424,24 @@ function buildInitialRuntimeExecution(
       state: 'not-available',
       attempted: false,
       reportExists: false,
+      acquisitionState: runtimeSelection.windowsContainerAcquisitionState,
+      blockedReason: runtimeSelection.blockedReason,
+      stdoutFilePath: artifactPlan.runtimeStdoutFilePath,
+      stderrFilePath: artifactPlan.runtimeStderrFilePath,
+      diagnosticLogArtifactPath: artifactPlan.runtimeDiagnosticLogFilePath,
+      diagnosticNotes: []
+    };
+  }
+
+  if (
+    preflight.ready &&
+    runtimeSelection.blockedReason === 'windows-container-image-acquisition-failed'
+  ) {
+    return {
+      state: 'not-available',
+      attempted: false,
+      reportExists: false,
+      acquisitionState: runtimeSelection.windowsContainerAcquisitionState,
       blockedReason: runtimeSelection.blockedReason,
       stdoutFilePath: artifactPlan.runtimeStdoutFilePath,
       stderrFilePath: artifactPlan.runtimeStderrFilePath,
@@ -427,6 +454,7 @@ function buildInitialRuntimeExecution(
     state: 'not-run',
     attempted: false,
     reportExists: false,
+    acquisitionState: runtimeSelection.windowsContainerAcquisitionState,
     stdoutFilePath: artifactPlan.runtimeStdoutFilePath,
     stderrFilePath: artifactPlan.runtimeStderrFilePath,
     diagnosticLogArtifactPath: artifactPlan.runtimeDiagnosticLogFilePath,
@@ -436,6 +464,10 @@ function buildInitialRuntimeExecution(
 
 function renderRuntimeNote(record: ComparisonReportPacketRecord): string {
   if (record.runtimeExecutionState === 'not-available') {
+    if (record.runtimeExecution.blockedReason === 'windows-container-image-acquisition-failed') {
+      return 'No LabVIEW-generated comparison report has been executed because the governed Windows container image could not be acquired before runtime launch.';
+    }
+
     return 'No LabVIEW-generated comparison report has been executed because the governed runtime selection is currently unavailable for this workspace and platform.';
   }
 
@@ -475,6 +507,10 @@ function deriveReportStatus(
   }
 
   if (runtimeSelection.provider === 'unavailable') {
+    return 'blocked-runtime';
+  }
+
+  if (runtimeSelection.blockedReason === 'windows-container-image-acquisition-failed') {
     return 'blocked-runtime';
   }
 

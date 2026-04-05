@@ -53,6 +53,11 @@ unavailable</li>
 <li>when Windows Docker evaluation is in play, the selector now validates Docker
 CLI availability, daemon reachability, active container mode, and governed
 image presence before the Windows provider is selected or rejected</li>
+<li>when Windows container execution is selected and the governed image is
+missing, comparison-report generation now surfaces visible governed
+image-pull progress before packet persistence and runtime launch</li>
+<li>retained runtime-doctor and packet surfaces now carry acquisition state and
+acquisition-failure hard stops explicitly</li>
 </ul>
 <p>The remaining queued contract is:</p>
 <ul>
@@ -80,9 +85,12 @@ surfaces now show whether Docker CLI was available, whether the daemon was
 reachable, which container mode was active, and whether the governed image
 was already present locally</p>
 </li>
-<li><p>if Docker execution is selected and the image is missing locally, the
-extension surfaces visible pull progress; on Windows that means pulling the
-governed Windows image</p>
+<li><p>the current comparison-report path now surfaces visible pull progress when
+Windows container execution still requires the governed Windows image</p>
+</li>
+<li><p>fuller front-facing provider/acquisition transparency beyond the current
+progress, runtime-doctor, and retained-packet surfaces remains open under
+<code>PROGRAM-0005</code></p>
 </li>
 <li><p>host-only hard stops tell the user to close LabVIEW, resolve the governed
 port conflict, correct the selected host runtime, or change execution mode</p>
@@ -168,9 +176,9 @@ opened panel later reaches a trust-gated action</li>
 <p>Long-running comparison and dashboard actions execute with bounded progress and
 cancellation support. Cancellation is intended to preserve already retained
 evidence instead of discarding it silently.</p>
-<p>That same transparency rule now also governs the queued execution-mode work:
-future provider selection and Docker acquisition progress are expected to be
-visible in front-facing UX rather than discoverable only from shell output.</p>
+<p>That same transparency rule now governs the current execution-mode work:
+provider selection, acquisition state, and governed Windows image-pull progress
+are no longer meant to be discoverable only from shell output.</p>
 <h2>Bundled Documentation</h2>
 <p>The extension packages a version-matched bundled documentation surface so
 reviewers do not need repo access just to read guidance.</p>
