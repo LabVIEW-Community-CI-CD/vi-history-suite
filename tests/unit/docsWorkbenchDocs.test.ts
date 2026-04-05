@@ -1,4 +1,6 @@
+import { spawnSync } from 'node:child_process';
 import * as fs from 'node:fs';
+import * as os from 'node:os';
 import * as path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
@@ -112,6 +114,31 @@ describe('documentation-package workbench', () => {
     ]);
   });
 
+  it('lets the docs-authoring entrypoint resolve the repo root from CI_PROJECT_DIR', () => {
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'vihs-docs-entrypoint-'));
+    const workspaceRoot = path.join(tempRoot, 'ci-project');
+    const entrypointPath = path.join(repoRoot, 'docker', 'docs-authoring', 'entrypoint.sh');
+
+    fs.mkdirSync(path.join(workspaceRoot, 'node_modules'), { recursive: true });
+    fs.writeFileSync(path.join(workspaceRoot, 'package.json'), '{}\n', 'utf8');
+
+    const result = spawnSync('bash', [entrypointPath, 'bash', '-lc', 'pwd'], {
+      cwd: tempRoot,
+      env: {
+        ...process.env,
+        CI_PROJECT_DIR: workspaceRoot
+      },
+      encoding: 'utf8'
+    });
+
+    try {
+      expect(result.status).toBe(0);
+      expect(result.stdout.trim()).toBe(workspaceRoot);
+    } finally {
+      fs.rmSync(tempRoot, { recursive: true, force: true });
+    }
+  });
+
   it('keeps the Dockerfile, package scripts, docs, and GitLab publish lane aligned', () => {
     const manifest = readManifest();
     const dockerfile = readText('docker/docs-authoring/Dockerfile');
@@ -180,6 +207,8 @@ describe('documentation-package workbench', () => {
     expect(dockerfile).toContain('CMD ["npm", "run", "docs:gate"]');
     expect(entrypoint).toContain('if [[ ! -d node_modules ]]; then');
     expect(entrypoint).toContain('npm ci');
+    expect(entrypoint).toContain('CI_PROJECT_DIR');
+    expect(entrypoint).toContain('VIHS_DOCS_WORKSPACE');
     expect(dockerHelper).toContain("const localDocsImage = 'vi-history-suite-docs-authoring:local'");
     expect(dockerHelper).toContain("const publishedDocsImage =");
     expect(dockerHelper).toContain('VIHS_DOCS_WORKBENCH_IMAGE');
@@ -205,6 +234,7 @@ describe('documentation-package workbench', () => {
     expect(workbenchDoc).toContain('registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main');
     expect(workbenchDoc).toContain('wiki_workbench_prepare_published');
     expect(workbenchDoc).toContain('VIHS_WIKI_REPO_ROOT');
+    expect(workbenchDoc).toContain('CI_PROJECT_DIR');
     expect(workbenchDoc).toContain('docs_control_plane_check');
     expect(workbenchDoc).toContain('${CI_PROJECT_PATH}.wiki.git');
     expect(workbenchDoc).toContain('docs-workbench-evidence/docs-workbench-manifest.json');

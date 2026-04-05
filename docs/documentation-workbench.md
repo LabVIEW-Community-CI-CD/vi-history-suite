@@ -61,8 +61,10 @@ The default container command is:
 npm run docs:gate
 ```
 
-The workbench entrypoint honors `VIHS_DOCS_WORKSPACE`, so future cross-repo
-wiki iteration is not locked to `/workspace`.
+The workbench entrypoint honors `VIHS_DOCS_WORKSPACE`, falls back to
+`CI_PROJECT_DIR` in GitLab CI when that directory contains the repo package,
+and only then falls back to `/workspace`, so future cross-repo wiki iteration
+is not locked to one mount path.
 
 When invoked from this canonical WSL environment through the package scripts,
 the Docker-first workbench commands prefer `docker.exe --context desktop-linux`
@@ -217,6 +219,10 @@ The local published-image commands deliberately keep the same contract. They
 either pull the published image after resolving supported GitLab registry
 credentials or stop with a stable message that the local registry credential is
 missing or insufficient.
+
+The published docs-authoring image also self-resolves the repo root when GitLab
+starts the job under `${CI_PROJECT_DIR}` instead of `/workspace`, so the
+published-image package lane does not depend on an implicit mount path.
 
 The commit-aligned wiki-preparation lane is:
 
