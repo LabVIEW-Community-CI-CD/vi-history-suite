@@ -135,6 +135,15 @@ describe('documentation-package workbench', () => {
     expect(manifest.scripts?.['docs:workbench:shell']).toBe(
       'node scripts/runDocsWorkbenchDocker.js shell'
     );
+    expect(manifest.scripts?.['docs:workbench:gitlab:pull']).toBe(
+      'node scripts/runDocsWorkbenchDocker.js pull --image-source published'
+    );
+    expect(manifest.scripts?.['docs:workbench:gitlab:gate']).toBe(
+      'node scripts/runDocsWorkbenchDocker.js gate --image-source published --pull'
+    );
+    expect(manifest.scripts?.['docs:workbench:gitlab:shell']).toBe(
+      'node scripts/runDocsWorkbenchDocker.js shell --image-source published --pull'
+    );
     expect(manifest.scripts?.['wiki:workbench:doctor']).toContain('runWikiWorkbench.js doctor');
     expect(manifest.scripts?.['wiki:workbench:plan']).toContain('runWikiWorkbench.js plan-pages');
     expect(manifest.scripts?.['wiki:workbench:prepare']).toContain(
@@ -149,6 +158,18 @@ describe('documentation-package workbench', () => {
     expect(manifest.scripts?.['docs:workbench:wiki:prepare']).toBe(
       'node scripts/runDocsWorkbenchDocker.js wiki-prepare'
     );
+    expect(manifest.scripts?.['docs:workbench:gitlab:wiki:doctor']).toBe(
+      'node scripts/runDocsWorkbenchDocker.js wiki-doctor --image-source published --pull'
+    );
+    expect(manifest.scripts?.['docs:workbench:gitlab:wiki:plan']).toBe(
+      'node scripts/runDocsWorkbenchDocker.js wiki-plan --image-source published --pull'
+    );
+    expect(manifest.scripts?.['docs:workbench:gitlab:wiki:prepare']).toBe(
+      'node scripts/runDocsWorkbenchDocker.js wiki-prepare --image-source published --pull'
+    );
+    expect(manifest.scripts?.['docs:workbench:gitlab:wiki:sync-bundled-docs']).toBe(
+      'node scripts/runDocsWorkbenchDocker.js wiki-sync-bundled-docs --image-source published --pull'
+    );
     expect(manifest.scripts?.['program:repos']).toContain('runProgramRepoJump.js');
 
     expect(dockerfile).toContain('FROM node:24-bookworm');
@@ -156,7 +177,9 @@ describe('documentation-package workbench', () => {
     expect(dockerfile).toContain('CMD ["npm", "run", "docs:gate"]');
     expect(entrypoint).toContain('if [[ ! -d node_modules ]]; then');
     expect(entrypoint).toContain('npm ci');
-    expect(dockerHelper).toContain("const docsImage = 'vi-history-suite-docs-authoring:local'");
+    expect(dockerHelper).toContain("const localDocsImage = 'vi-history-suite-docs-authoring:local'");
+    expect(dockerHelper).toContain("const publishedDocsImage =");
+    expect(dockerHelper).toContain('VIHS_DOCS_WORKBENCH_IMAGE');
     expect(dockerHelper).toContain("command: 'docker.exe'");
     expect(dockerHelper).toContain("'--context', 'desktop-linux'");
     expect(dockerHelper).toContain("path.join(repoRoot, 'docker', 'docs-authoring', 'Dockerfile')");
@@ -170,10 +193,14 @@ describe('documentation-package workbench', () => {
     expect(workbenchDoc).toContain('npm run wiki:workbench:sync-bundled-docs');
     expect(workbenchDoc).toContain('npm run docs:workbench:wiki:doctor');
     expect(workbenchDoc).toContain('npm run docs:workbench:wiki:prepare');
+    expect(workbenchDoc).toContain('npm run docs:workbench:gitlab:wiki:prepare');
     expect(workbenchDoc).toContain('npm run docs:bundle');
     expect(workbenchDoc).toContain('.cache/wiki-workbench/latest-workbench.json');
     expect(workbenchDoc).toContain('.cache/wiki-workbench/publication-prep/');
+    expect(workbenchDoc).toContain('wiki-workbench-evidence/wiki-workbench-manifest.json');
+    expect(workbenchDoc).toContain('wiki-workbench-evidence/iteration-report.md');
     expect(workbenchDoc).toContain('registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main');
+    expect(workbenchDoc).toContain('wiki_workbench_prepare_published');
     expect(workbenchDoc).toContain('docs-workbench-evidence/docs-workbench-manifest.json');
     expect(workbenchDoc).toContain('docs/product/wiki-publication-ledger.md');
     expect(workbenchDoc).toContain('docs/product/wiki-publication-ledger.json');
@@ -206,8 +233,12 @@ describe('documentation-package workbench', () => {
     expect(gitlabCi).toContain('docs_control_plane_check:');
     expect(gitlabCi).toContain('npm run docs:gate:core');
     expect(gitlabCi).toContain('publish_docs_authoring_image:');
+    expect(gitlabCi).toContain('wiki_workbench_prepare_published:');
     expect(gitlabCi).toContain('/kaniko/executor');
     expect(gitlabCi).toContain("path.join('docs-workbench-evidence', 'docs-workbench-manifest.json')");
     expect(gitlabCi).toContain('${CI_REGISTRY_IMAGE}/docs-authoring:main');
+    expect(gitlabCi).toContain('${CI_REGISTRY_IMAGE}/docs-authoring:sha-${CI_COMMIT_SHORT_SHA}');
+    expect(gitlabCi).toContain('wiki-workbench-evidence/wiki-workbench-manifest.json');
+    expect(gitlabCi).toContain('iteration-report.md');
   });
 });

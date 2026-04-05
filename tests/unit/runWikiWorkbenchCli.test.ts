@@ -10,6 +10,8 @@ import {
   planWikiPages,
   readWikiPublicationLedger,
   resolveWikiWorkbenchTopology,
+  stageWikiWorkbenchPage,
+  prepareWikiWorkbenchPublication,
   validateWikiWorkbenchLedger
 } from '../../src/tooling/wikiWorkbench';
 import { runWikiWorkbenchCli } from '../../src/cli/runWikiWorkbench';
@@ -293,6 +295,81 @@ describe('wiki workbench cli', () => {
         code: 'missing-wiki-page',
         severity: 'error'
       })
+    );
+  });
+
+  it('falls back to writable recovery roots when stale retained page directories are not writable', async () => {
+    const { repoRoot, wikiRoot } = await createWikiWorkbenchFixture();
+    const topology = resolveWikiWorkbenchTopology(repoRoot, undefined, {
+      getGitRemote: (candidate) => {
+        if (candidate === repoRoot) {
+          return 'https://gitlab.com/svelderrainruiz/vi-history-suite.git';
+        }
+
+        if (candidate === wikiRoot) {
+          return 'https://gitlab.com/svelderrainruiz/vi-history-suite.wiki.git';
+        }
+
+        return undefined;
+      }
+    });
+    const ledger = await readWikiPublicationLedger(topology.ledgerJsonPath);
+    const fixedNow = new Date('2026-04-04T22:15:00.000Z');
+    const preferredStageDirectory = path.join(topology.stagingRoot, 'documentation-workbench');
+    const preferredPrepDirectory = path.join(topology.publicationPrepRoot, 'documentation-workbench');
+
+    const { receipt: stageReceipt } = await stageWikiWorkbenchPage(topology, ledger, 'documentation-workbench', {
+      now: () => fixedNow,
+      rm: async (target, options) => {
+        if (target === preferredStageDirectory) {
+          const error = new Error('permission denied');
+          (error as Error & { code?: string }).code = 'EACCES';
+          throw error;
+        }
+
+        return fs.rm(target, options);
+      }
+    });
+
+    expect(stageReceipt.stageDirectory).toBe(
+      path.join(topology.workbenchRoot, 'staging-runs', 'documentation-workbench-20260404T221500Z')
+    );
+    expect(await fs.readFile(stageReceipt.draftFilePath, 'utf8')).toContain('# Documentation Workbench');
+
+    const { receiptPath } = await prepareWikiWorkbenchPublication(
+      topology,
+      ledger,
+      'documentation-workbench',
+      {
+        now: () => fixedNow,
+        rm: async (target, options) => {
+          if (target === preferredStageDirectory) {
+            const error = new Error('permission denied');
+            (error as Error & { code?: string }).code = 'EACCES';
+            throw error;
+          }
+
+          return fs.rm(target, options);
+        },
+        mkdir: async (target, options) => {
+          if (target === preferredPrepDirectory) {
+            const error = new Error('permission denied');
+            (error as Error & { code?: string }).code = 'EACCES';
+            throw error;
+          }
+
+          return fs.mkdir(target, options);
+        }
+      }
+    );
+
+    expect(receiptPath).toBe(
+      path.join(
+        topology.workbenchRoot,
+        'publication-prep-runs',
+        'documentation-workbench-20260404T221500Z',
+        'publication-prep.json'
+      )
     );
   });
 });

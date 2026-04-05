@@ -246,6 +246,7 @@ describe('ship-control direction system', () => {
     expect(workbenchDoc).toContain('npm run wiki:workbench:doctor');
     expect(workbenchDoc).toContain('npm run wiki:workbench:prepare');
     expect(workbenchDoc).toContain('npm run docs:workbench:wiki:prepare');
+    expect(workbenchDoc).toContain('npm run docs:workbench:gitlab:wiki:prepare');
     expect(workbenchDoc).toContain('docs/product/documentation-coherence-ledger.md');
     expect(workbenchDoc).toContain('docs/product/wiki-seed-plan.md');
     expect(workbenchDoc).toContain('docs/product/wiki-publication-ledger.md');
@@ -254,6 +255,8 @@ describe('ship-control direction system', () => {
     expect(workbenchDoc).toContain('docs/product/program-repo-jump.md');
     expect(workbenchDoc).toContain('.cache/wiki-workbench/latest-workbench.json');
     expect(workbenchDoc).toContain('.cache/wiki-workbench/publication-prep/');
+    expect(workbenchDoc).toContain('wiki_workbench_prepare_published');
+    expect(workbenchDoc).toContain('wiki-workbench-evidence/wiki-workbench-manifest.json');
 
     expect(coherenceLedger).toContain('# Documentation Coherence Ledger');
     expect(coherenceLedger).toContain('run-docs-gate.js --skip-links');
@@ -311,9 +314,12 @@ describe('ship-control direction system', () => {
     expect(gitlabCi).toContain('docs_control_plane_check:');
     expect(gitlabCi).toContain('npm run docs:gate:core');
     expect(gitlabCi).toContain('publish_docs_authoring_image:');
+    expect(gitlabCi).toContain('wiki_workbench_prepare_published:');
     expect(gitlabCi).toContain('--dockerfile "${CI_PROJECT_DIR}/docker/docs-authoring/Dockerfile"');
     expect(gitlabCi).toContain('${CI_REGISTRY_IMAGE}/docs-authoring:main');
+    expect(gitlabCi).toContain('${CI_REGISTRY_IMAGE}/docs-authoring:sha-${CI_COMMIT_SHORT_SHA}');
     expect(gitlabCi).toContain("path.join('docs-workbench-evidence', 'docs-workbench-manifest.json')");
+    expect(gitlabCi).toContain('wiki-workbench-evidence/');
     expect(gitlabCi).toContain('package_extension_preview:');
     expect(gitlabCi).toContain('stage: package');
     expect(gitlabCi).toContain('PACKAGE_VERSION=$(node -p "require(\'./package.json\').version")');

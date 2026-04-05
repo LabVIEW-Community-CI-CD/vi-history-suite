@@ -5,7 +5,10 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const repoRoot = path.resolve(path.dirname(fs.realpathSync.native(__filename)), '..');
-const docsImage = 'vi-history-suite-docs-authoring:local';
+const localDocsImage = 'vi-history-suite-docs-authoring:local';
+const publishedDocsImage =
+  process.env.VIHS_DOCS_WORKBENCH_IMAGE ||
+  'registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main';
 
 function isWsl() {
   return process.platform === 'linux' && Boolean(process.env.WSL_DISTRO_NAME);
@@ -13,17 +16,94 @@ function isWsl() {
 
 function getUsage() {
   return [
-    'Usage: node scripts/runDocsWorkbenchDocker.js <command>',
+    'Usage: node scripts/runDocsWorkbenchDocker.js <command> [--image-source local|published] [--image <ref>] [--pull]',
     '',
     'Commands:',
     '  build',
+    '  pull',
     '  gate',
     '  shell',
     '  wiki-doctor',
     '  wiki-plan',
     '  wiki-prepare',
-    '  wiki-sync-bundled-docs'
+    '  wiki-sync-bundled-docs',
+    '',
+    'Options:',
+    '  --image-source <local|published>  Choose the local image or the published GitLab image.',
+    '  --image <ref>                     Override the image reference explicitly.',
+    '  --pull                           Pull the selected image before running the command.'
   ].join('\n');
+}
+
+function parseArgs(argv) {
+  let mode;
+  let imageSource = 'local';
+  let imageOverride;
+  let pull = false;
+
+  for (let index = 0; index < argv.length; index += 1) {
+    const current = argv[index];
+    const requireValue = (flag) => {
+      const candidate = argv[index + 1];
+      if (!candidate || candidate.startsWith('--')) {
+        throw new Error(`Missing value for ${flag}.\n\n${getUsage()}`);
+      }
+      index += 1;
+      return candidate;
+    };
+
+    if (current === '--help' || current === '-h') {
+      return {
+        helpRequested: true,
+        mode: undefined,
+        imageSource,
+        imageOverride,
+        pull
+      };
+    }
+
+    if (current === '--image-source') {
+      const candidate = requireValue('--image-source');
+      if (candidate !== 'local' && candidate !== 'published') {
+        throw new Error(`Unsupported --image-source value: ${candidate}\n\n${getUsage()}`);
+      }
+      imageSource = candidate;
+      continue;
+    }
+
+    if (current === '--image') {
+      imageOverride = requireValue('--image');
+      continue;
+    }
+
+    if (current === '--pull') {
+      pull = true;
+      continue;
+    }
+
+    if (!current.startsWith('--') && mode === undefined) {
+      mode = current;
+      continue;
+    }
+
+    throw new Error(`Unknown argument: ${current}\n\n${getUsage()}`);
+  }
+
+  return {
+    helpRequested: false,
+    mode,
+    imageSource,
+    imageOverride,
+    pull
+  };
+}
+
+function resolveDocsImage(options) {
+  if (options.imageOverride) {
+    return options.imageOverride;
+  }
+
+  return options.imageSource === 'published' ? publishedDocsImage : localDocsImage;
 }
 
 function resolveDockerCommand() {
@@ -58,7 +138,7 @@ function translatePathForDocker(hostPath, dockerCommand) {
   }).trim();
 }
 
-function buildDockerArgs(mode, dockerCommand) {
+function buildDockerArgs(mode, dockerCommand, docsImage) {
   const dockerfilePath = translatePathForDocker(
     path.join(repoRoot, 'docker', 'docs-authoring', 'Dockerfile'),
     dockerCommand
@@ -68,7 +148,14 @@ function buildDockerArgs(mode, dockerCommand) {
   const repoBaseName = path.basename(repoRoot);
 
   if (mode === 'build') {
+    if (docsImage !== localDocsImage) {
+      throw new Error('The build command only supports the local docs-authoring image.');
+    }
     return ['build', '-f', dockerfilePath, '-t', docsImage, repoRootPath];
+  }
+
+  if (mode === 'pull') {
+    return ['pull', docsImage];
   }
 
   if (mode === 'gate') {
@@ -108,19 +195,44 @@ function buildDockerArgs(mode, dockerCommand) {
 }
 
 function main(argv = process.argv.slice(2)) {
-  const mode = argv[0];
-  if (!mode || mode === '--help' || mode === '-h') {
+  const parsedArgs = parseArgs(argv);
+  if (parsedArgs.helpRequested || !parsedArgs.mode) {
     process.stdout.write(`${getUsage()}\n`);
     return 0;
   }
 
   const docker = resolveDockerCommand();
-  const args = [...docker.extraArgs, ...buildDockerArgs(mode, docker.command)];
-  const result = spawnSync(docker.command, args, {
-    cwd: repoRoot,
-    stdio: 'inherit',
-    shell: false
-  });
+  const docsImage = resolveDocsImage(parsedArgs);
+
+  if (parsedArgs.pull && parsedArgs.mode !== 'pull') {
+    const pullResult = spawnSync(
+      docker.command,
+      [...docker.extraArgs, ...buildDockerArgs('pull', docker.command, docsImage)],
+      {
+        cwd: repoRoot,
+        stdio: 'inherit',
+        shell: false
+      }
+    );
+
+    if (pullResult.error) {
+      throw pullResult.error;
+    }
+
+    if (typeof pullResult.status === 'number' && pullResult.status !== 0) {
+      return pullResult.status;
+    }
+  }
+
+  const result = spawnSync(
+    docker.command,
+    [...docker.extraArgs, ...buildDockerArgs(parsedArgs.mode, docker.command, docsImage)],
+    {
+      cwd: repoRoot,
+      stdio: 'inherit',
+      shell: false
+    }
+  );
 
   if (result.error) {
     throw result.error;

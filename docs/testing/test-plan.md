@@ -1007,6 +1007,13 @@
 - `TEST-UNIT-272`: verify the package manifest and docs gate expose local and
   Docker-first wiki-workbench command surfaces for doctor, plan, prepare, and
   bundled-doc sync
+- `TEST-UNIT-273`: verify the wiki workbench recovers from an unwritable stale
+  page staging or publication-prep directory by retaining the page under a
+  writable timestamped recovery path while preserving truthful receipt paths
+- `TEST-UNIT-274`: verify the package/docs/GitLab surfaces expose the
+  published-image wiki workbench lane, including published-image local command
+  surfaces, the `wiki_workbench_prepare_published` CI job, and retained
+  `wiki-workbench-evidence/` artifact paths
 - `TEST-DOC-035`: review README, current-state, and ADR-0016 and confirm the
   canonical-host benchmark status surface is documented as the maintainer-facing
   in-IDE visibility and launch surface for the host Linux benchmark lane,

@@ -101,6 +101,56 @@ publish_docs_authoring_image:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
     - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
 
+wiki_workbench_prepare_published:
+  stage: package
+  image: ${CI_REGISTRY_IMAGE}/docs-authoring:sha-${CI_COMMIT_SHORT_SHA}
+  needs:
+    - publish_docs_authoring_image
+  script:
+    - mkdir -p wiki-workbench-evidence
+    - git clone "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.wiki.git" ../vi-history-suite.wiki
+    - npm run wiki:workbench:doctor -- --format json > wiki-workbench-evidence/doctor.json
+    - npm run wiki:workbench:plan -- --format json > wiki-workbench-evidence/plan.json
+    - npm run wiki:workbench:prepare -- --format json > wiki-workbench-evidence/prepare.json
+    - cp .cache/wiki-workbench/latest-workbench.json wiki-workbench-evidence/wiki-workbench-manifest.json
+    - cp -R .cache/wiki-workbench/staging wiki-workbench-evidence/staging
+    - cp -R .cache/wiki-workbench/publication-prep wiki-workbench-evidence/publication-prep
+    - |
+      node - <<'NODE'
+      const fs = require('node:fs');
+      const path = require('node:path');
+
+      const doctor = JSON.parse(fs.readFileSync(path.join('wiki-workbench-evidence', 'doctor.json'), 'utf8'));
+      const plan = JSON.parse(fs.readFileSync(path.join('wiki-workbench-evidence', 'plan.json'), 'utf8'));
+      const prepare = JSON.parse(fs.readFileSync(path.join('wiki-workbench-evidence', 'prepare.json'), 'utf8'));
+      const workbench = JSON.parse(fs.readFileSync(path.join('wiki-workbench-evidence', 'wiki-workbench-manifest.json'), 'utf8'));
+
+      const report = [
+        '# Wiki Workbench Iteration Report',
+        '',
+        `- Image: ${process.env.CI_REGISTRY_IMAGE}/docs-authoring:sha-${process.env.CI_COMMIT_SHORT_SHA || ''}`,
+        `- Authority repo: ${workbench.authorityRepo?.localPath || ''}`,
+        `- Wiki repo: ${workbench.wikiRepo?.localPath || ''}`,
+        `- Planned pages: ${(plan.pages || []).length}`,
+        `- Prepared page: ${prepare.page?.id || ''}`,
+        `- Publication mode: ${prepare.publicationMode || ''}`,
+        `- Ledger update required: ${String(prepare.ledgerUpdateRequired)}`,
+        `- Doctor issues: ${(doctor.issues || []).length}`
+      ].join('\n');
+
+      fs.writeFileSync(
+        path.join('wiki-workbench-evidence', 'iteration-report.md'),
+        `${report}\n`
+      );
+      NODE
+  artifacts:
+    when: always
+    expire_in: never
+    paths:
+      - wiki-workbench-evidence/
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+
 test_extension:
   stage: test
   image: node:24

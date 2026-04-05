@@ -184,6 +184,15 @@ export interface WikiWorkbenchRunnerDeps extends ResolveWikiWorkbenchTopologyDep
   }) => void;
 }
 
+interface RetainedDirectoryOptions {
+  preferredDirectory: string;
+  recoveryRoot: string;
+  pageId: string;
+  mkdir: typeof fs.mkdir;
+  rm: typeof fs.rm;
+  now: () => Date;
+}
+
 export function getWikiWorkbenchUsage(): string {
   return [
     'Usage: runWikiWorkbench <command> [--page-id <id>] [--format text|json] [--repo-root <path>] [--workbench-root <path>] [--help]',
@@ -597,12 +606,18 @@ export async function stageWikiWorkbenchPage(
   const rm = deps.rm ?? fs.rm;
   const now = deps.now ?? (() => new Date());
   const page = resolveWikiWorkbenchPage(topology, ledger, pageId);
-  const stageDirectory = path.join(topology.stagingRoot, page.id);
+  const stageDirectory = await prepareRetainedDirectory({
+    preferredDirectory: path.join(topology.stagingRoot, page.id),
+    recoveryRoot: path.join(topology.workbenchRoot, 'staging-runs'),
+    pageId: page.id,
+    mkdir,
+    rm,
+    now
+  });
   const authorityRoot = path.join(stageDirectory, 'authority');
   const wikiCurrentRoot = path.join(stageDirectory, 'wiki-current');
   const draftFilePath = path.join(stageDirectory, 'wiki-draft.md');
 
-  await rm(stageDirectory, { recursive: true, force: true });
   await mkdir(authorityRoot, { recursive: true });
   await mkdir(wikiCurrentRoot, { recursive: true });
 
@@ -645,6 +660,10 @@ export async function stageWikiWorkbenchPage(
 }
 
 function buildWikiDraftTemplate(page: WikiWorkbenchPagePlan): string {
+  if (page.id === 'documentation-workbench') {
+    return buildDocumentationWorkbenchDraft(page);
+  }
+
   return [
     `# ${page.title}`,
     '',
@@ -659,6 +678,105 @@ function buildWikiDraftTemplate(page: WikiWorkbenchPagePlan): string {
     '## Draft',
     '',
     '<!-- Replace this section with wiki-ready prose derived from the authority docs above. -->',
+    ''
+  ].join('\n');
+}
+
+function buildDocumentationWorkbenchDraft(page: WikiWorkbenchPagePlan): string {
+  const authorityLinks = page.primaryAuthority.map((authorityPath) =>
+    `- [\`${authorityPath}\`](https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/${authorityPath})`
+  );
+  const secondaryLinks = page.secondaryAuthority.map((authorityPath) =>
+    `- [\`${authorityPath}\`](https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/${authorityPath})`
+  );
+
+  return [
+    `# ${page.title}`,
+    '',
+    'This page is derived from governed repository documentation, not from source',
+    'code or prior chat state. The current authority surfaces for this page are:',
+    '',
+    ...authorityLinks,
+    ...(secondaryLinks.length > 0
+      ? ['', 'Secondary authority supporting this draft:', ...secondaryLinks]
+      : []),
+    '',
+    '## Purpose',
+    '',
+    '`vi-history-suite` treats documentation-package work as a governed product',
+    'surface. The documentation workbench exists to iterate on requirements,',
+    'ADRs, release-readiness docs, ship-control docs, and authority-driven wiki',
+    'preparation from one repeatable environment.',
+    '',
+    '## Operating Model',
+    '',
+    '- `vi-history-suite` remains the authority repo',
+    '- `vi-history-suite.wiki` remains a derived reader surface',
+    '- the workbench resolves authority repo, wiki repo, and companion repo',
+    '  topology from the governed repo-jump map',
+    '- the workbench retains stage bundles, publication-prep receipts, and',
+    '  latest-workbench manifests instead of depending on chat memory',
+    '',
+    '## Workbench Surfaces',
+    '',
+    'Current governed commands include:',
+    '',
+    '- `npm run wiki:workbench:doctor`',
+    '- `npm run wiki:workbench:plan`',
+    '- `npm run wiki:workbench:prepare`',
+    '- `npm run wiki:workbench:sync-bundled-docs`',
+    '- `npm run docs:workbench:wiki:doctor`',
+    '- `npm run docs:workbench:wiki:prepare`',
+    '- `npm run docs:workbench:gitlab:wiki:prepare`',
+    '',
+    '## Published Image And GitLab Lane',
+    '',
+    'GitLab publishes the docs-authoring image as:',
+    '',
+    '- `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`',
+    '- `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:sha-<commit>`',
+    '- `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:vX.Y.Z` on governed tags',
+    '',
+    'Local Docker iteration is useful, but the stronger automation surface is',
+    'the exact commit-published `docs-authoring:sha-<commit>` image inside',
+    'GitLab after the image publish job completes. That lane retains',
+    '`wiki-workbench-evidence/` with the resolved topology, staged draft,',
+    'publication-prep receipt, and a machine-readable manifest that links the',
+    'evidence back to the selected page and image reference.',
+    '',
+    '## Retained Evidence',
+    '',
+    'Current retained workbench outputs include:',
+    '',
+    '- `.cache/wiki-workbench/latest-workbench.json`',
+    '- `.cache/wiki-workbench/staging/<page-id>/`',
+    '- `.cache/wiki-workbench/publication-prep/<page-id>/publication-prep.json`',
+    '- `wiki-workbench-evidence/wiki-workbench-manifest.json` from the GitLab',
+    '  published-image lane',
+    '- `wiki-workbench-evidence/iteration-report.md` with the staged page',
+    '  outcome, correspondences, and next recommendation',
+    '',
+    'If a stale retained page directory is unwritable, the workbench rotates',
+    'to a writable recovery run path instead of failing solely on old cache',
+    'ownership:',
+    '',
+    '- `.cache/wiki-workbench/staging-runs/<page-id>-<timestamp>/`',
+    '- `.cache/wiki-workbench/publication-prep-runs/<page-id>-<timestamp>/`',
+    '',
+    '## Boundary',
+    '',
+    'This workbench is for documentation-package and wiki-authority work. It is',
+    'not the NI runtime proof lane, not the benchmark lane, and not the end-user',
+    'VSIX install surface. It is also not a place to invent new product truth;',
+    'if a wiki page needs a claim that is absent from governed authority docs,',
+    'the main repo docs must be strengthened first.',
+    '',
+    '## Read Next',
+    '',
+    '- [Program Repo Jump](https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/program-repo-jump.md)',
+    '- [Wiki Authority Map](https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/wiki-authority-map.md)',
+    '- [Documentation Coherence Ledger](https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/documentation-coherence-ledger.md)',
+    '- [Wiki Seed Plan](https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/wiki-seed-plan.md)',
     ''
   ].join('\n');
 }
@@ -695,7 +813,13 @@ export async function prepareWikiWorkbenchPublication(
     deps
   );
 
-  const prepDirectory = path.join(topology.publicationPrepRoot, page.id);
+  const prepDirectory = await ensureRetainedDirectory({
+    preferredDirectory: path.join(topology.publicationPrepRoot, page.id),
+    recoveryRoot: path.join(topology.workbenchRoot, 'publication-prep-runs'),
+    pageId: page.id,
+    mkdir,
+    now: deps.now ?? (() => new Date())
+  });
   await mkdir(prepDirectory, { recursive: true });
   const receipt: WikiWorkbenchPublicationPrepReceipt = {
     schema: 'vi-history-suite/wiki-workbench-publication-prep@v1',
@@ -715,6 +839,64 @@ export async function prepareWikiWorkbenchPublication(
   const receiptPath = path.join(prepDirectory, 'publication-prep.json');
   await writeFile(receiptPath, JSON.stringify(receipt, null, 2), 'utf8');
   return { receiptPath, receipt };
+}
+
+async function prepareRetainedDirectory({
+  preferredDirectory,
+  recoveryRoot,
+  pageId,
+  mkdir,
+  rm,
+  now
+}: RetainedDirectoryOptions): Promise<string> {
+  try {
+    await rm(preferredDirectory, { recursive: true, force: true });
+    await mkdir(preferredDirectory, { recursive: true });
+    return preferredDirectory;
+  } catch (error) {
+    if (!isPermissionRecoveryError(error)) {
+      throw error;
+    }
+  }
+
+  const fallbackDirectory = path.join(recoveryRoot, `${pageId}-${buildWorkbenchRunId(now())}`);
+  await rm(fallbackDirectory, { recursive: true, force: true });
+  await mkdir(fallbackDirectory, { recursive: true });
+  return fallbackDirectory;
+}
+
+async function ensureRetainedDirectory({
+  preferredDirectory,
+  recoveryRoot,
+  pageId,
+  mkdir,
+  now
+}: Omit<RetainedDirectoryOptions, 'rm'>): Promise<string> {
+  try {
+    await mkdir(preferredDirectory, { recursive: true });
+    return preferredDirectory;
+  } catch (error) {
+    if (!isPermissionRecoveryError(error)) {
+      throw error;
+    }
+  }
+
+  const fallbackDirectory = path.join(recoveryRoot, `${pageId}-${buildWorkbenchRunId(now())}`);
+  await mkdir(fallbackDirectory, { recursive: true });
+  return fallbackDirectory;
+}
+
+function buildWorkbenchRunId(now: Date): string {
+  return now.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+}
+
+function isPermissionRecoveryError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+
+  const code = 'code' in error ? error.code : undefined;
+  return code === 'EACCES' || code === 'EPERM';
 }
 
 export function formatWikiWorkbenchDoctor(

@@ -173,6 +173,15 @@ describe('extension manifest research alignment', () => {
     expect(manifest.scripts?.['docs:workbench:shell']).toBe(
       'node scripts/runDocsWorkbenchDocker.js shell'
     );
+    expect(manifest.scripts?.['docs:workbench:gitlab:pull']).toBe(
+      'node scripts/runDocsWorkbenchDocker.js pull --image-source published'
+    );
+    expect(manifest.scripts?.['docs:workbench:gitlab:gate']).toBe(
+      'node scripts/runDocsWorkbenchDocker.js gate --image-source published --pull'
+    );
+    expect(manifest.scripts?.['docs:workbench:gitlab:shell']).toBe(
+      'node scripts/runDocsWorkbenchDocker.js shell --image-source published --pull'
+    );
     expect(manifest.scripts?.['docs:workbench:wiki:doctor']).toBe(
       'node scripts/runDocsWorkbenchDocker.js wiki-doctor'
     );
@@ -184,6 +193,18 @@ describe('extension manifest research alignment', () => {
     );
     expect(manifest.scripts?.['docs:workbench:wiki:sync-bundled-docs']).toBe(
       'node scripts/runDocsWorkbenchDocker.js wiki-sync-bundled-docs'
+    );
+    expect(manifest.scripts?.['docs:workbench:gitlab:wiki:doctor']).toBe(
+      'node scripts/runDocsWorkbenchDocker.js wiki-doctor --image-source published --pull'
+    );
+    expect(manifest.scripts?.['docs:workbench:gitlab:wiki:plan']).toBe(
+      'node scripts/runDocsWorkbenchDocker.js wiki-plan --image-source published --pull'
+    );
+    expect(manifest.scripts?.['docs:workbench:gitlab:wiki:prepare']).toBe(
+      'node scripts/runDocsWorkbenchDocker.js wiki-prepare --image-source published --pull'
+    );
+    expect(manifest.scripts?.['docs:workbench:gitlab:wiki:sync-bundled-docs']).toBe(
+      'node scripts/runDocsWorkbenchDocker.js wiki-sync-bundled-docs --image-source published --pull'
     );
     expect(manifest.scripts?.['design:gate:assert-complete']).toBe(
       'npm run compile && node out/cli/runVerifyDesignGateCompletion.js'

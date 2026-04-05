@@ -93,11 +93,32 @@ npm run docs:workbench:wiki:prepare
 npm run docs:workbench:wiki:sync-bundled-docs
 ```
 
+Published-image local equivalents:
+
+```bash
+npm run docs:workbench:gitlab:pull
+npm run docs:workbench:gitlab:gate
+npm run docs:workbench:gitlab:shell
+npm run docs:workbench:gitlab:wiki:doctor
+npm run docs:workbench:gitlab:wiki:plan
+npm run docs:workbench:gitlab:wiki:prepare
+npm run docs:workbench:gitlab:wiki:sync-bundled-docs
+```
+
 The retained workbench outputs are:
 
 - `.cache/wiki-workbench/latest-workbench.json`
 - `.cache/wiki-workbench/staging/<page-id>/`
 - `.cache/wiki-workbench/publication-prep/<page-id>/publication-prep.json`
+- `wiki-workbench-evidence/wiki-workbench-manifest.json` from the published-image GitLab lane
+- `wiki-workbench-evidence/iteration-report.md` from the same lane
+
+If a stale retained page directory is unwritable on the current machine, the
+workbench rotates that page into a writable recovery path instead of failing on
+old cache ownership alone:
+
+- `.cache/wiki-workbench/staging-runs/<page-id>-<timestamp>/`
+- `.cache/wiki-workbench/publication-prep-runs/<page-id>-<timestamp>/`
 
 The intended flow is:
 
@@ -112,6 +133,9 @@ The intended flow is:
 The workbench is fail-closed for page staging, publication prep, and bundle
 sync. If the sibling wiki repo, control files, ledger targets, or authority
 docs are wrong, those commands stop instead of staging weak publication input.
+If the only problem is an unwritable stale retained page directory, the
+workbench self-heals by using a writable recovery run path and records the
+actual retained location in the stage or publication-prep receipt.
 
 ## Documentation Gate
 
@@ -147,6 +171,15 @@ GitLab CI publishes the docs-authoring image to the project container registry:
 
 The pipeline also retains `docs-workbench-evidence/docs-workbench-manifest.json`
 so future sessions can see which image references were published.
+
+The commit-aligned wiki-preparation lane is:
+
+- `wiki_workbench_prepare_published`
+
+That job runs inside `${CI_REGISTRY_IMAGE}/docs-authoring:sha-${CI_COMMIT_SHORT_SHA}`,
+clones the sibling wiki repo, runs doctor/plan/prepare from the published
+image, and retains `wiki-workbench-evidence/` as the authoritative CI-side wiki
+iteration pack.
 
 ## Scope Boundary
 
