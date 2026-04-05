@@ -71,7 +71,10 @@ The repo keeps this authority split:
 13. The Linux benchmark lane shall enforce a governed per-pair execution
     budget, emit heartbeat progress while the runtime is active, retain a
     machine-readable per-pair failure receipt when the runtime times out or
-    fails, and write a terminal latest summary even for partial or failed runs.
+    fails, write a terminal latest summary even for partial or failed runs,
+    retain native Linux NI CLI diagnostic logs under governed report storage,
+    and discard reused working-report HTML as stale output when it does not
+    reference the current staged revisions.
 
 ## Consequences
 
@@ -114,7 +117,9 @@ Tradeoffs:
 - the liveness contract is now implemented, so deep-host Linux runs fail
   truthfully instead of stalling indefinitely; however, the deep lane remains
   characterization-only until the Linux runtime dependency gap is closed well
-  enough to produce comparable completed runs
+  enough to produce comparable completed runs, and the runtime executor now
+  guards against stale report reuse after late nonzero-exit failures so the
+  retained pair evidence stays attributable to the correct revisions
 
 ## Evidence
 

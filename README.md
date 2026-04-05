@@ -20,7 +20,8 @@ contains:
   now times out deterministically, retains per-pair failure receipts, emits
   heartbeat progress while runtime execution is active, and writes terminal
   partial summaries instead of hanging indefinitely, while deep-host results
-  remain characterization-only until the Linux runtime dependency gap closes
+  remain characterization-only until the Linux lane completes the full
+  benchmark window without late runtime failure
 - retained design-gate guidance for the next development tranche
 
 ## Start Here
@@ -255,9 +256,11 @@ Committed and governed today:
   surface; the deep Linux lane now enforces per-pair runtime timeouts, writes
   machine-readable per-pair failure receipts, emits heartbeat progress during
   runtime execution, and retains terminal partial summaries for failed runs,
-  but the latest deep-host `lv_icon.vi` run remains characterization-only
-  because pair `1/138` timed out after Linux stderr reported a missing
-  `libniDotNETCoreInterop.so` dependency
+  retains native Linux NI diagnostic logs under governed report storage, and
+  discards stale reused report HTML when a nonzero-exit pair leaves the
+  previous pair's output behind; the latest deep-host `lv_icon.vi` run still
+  remains characterization-only because it failed late at pair `135/138` with
+  `command-exited-nonzero`
 
 ## Active Work
 
@@ -415,10 +418,15 @@ private GitHub experiment mirror and falls back to cached downloads under
 expected to resolve the cheaper canonical harness by default; the deep
 `lv_icon.vi` benchmark remains owned by the canonical host lane. The Linux
 liveness requirements in `VHS-REQ-409` through `VHS-REQ-412` are now closed,
-and the current deep-host retained result is a truthful partial failure summary
-rather than an indefinite stall: pair `1/138` timed out after Linux stderr
-reported `libniDotNETCoreInterop.so` missing, so the retained result remains
-characterization-only instead of baseline-comparable.
+and the current deep-host retained result is still characterization-only, but
+it now fails truthfully late in the window instead of stalling indefinitely.
+
+The generated `.cache/` evidence is local and regenerated. The committed source
+still treats the latest deep-host Linux result as characterization-only because
+the retained run reached pair `135/138` before failing with
+`command-exited-nonzero`; native Linux NI diagnostic logs are now retained, and
+stale reused HTML reports are now discarded instead of being misattributed to
+the wrong pair.
 
 The generated `.cache/` evidence is local and regenerated. The committed source
 of truth for implemented-versus-partial research work is the documentation stack
