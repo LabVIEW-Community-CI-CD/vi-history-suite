@@ -15,24 +15,28 @@ When future sessions create or refresh wiki pages, use this order:
 3. [blocker-ledger.json](./blocker-ledger.json)
 4. [development-queue.json](./development-queue.json)
 5. [current-state.md](./current-state.md)
-6. [srs.md](../requirements/srs.md)
-7. [rtm.csv](../requirements/rtm.csv)
-8. [test-plan.md](../testing/test-plan.md)
-9. [documentation-coherence-ledger.md](./documentation-coherence-ledger.md)
-10. [wiki-seed-plan.md](./wiki-seed-plan.md)
-11. [wiki-publication-ledger.md](./wiki-publication-ledger.md)
-12. [wiki-publication-ledger.json](./wiki-publication-ledger.json)
-13. [overview.md](../architecture/overview.md)
-14. `docs/architecture/adr/`
-15. [README.md](../../README.md)
-16. [Documentation Package Workbench](../documentation-workbench.md)
-17. [program-repo-jump.md](./program-repo-jump.md)
-18. [program-repo-jump-map.json](./program-repo-jump-map.json)
-19. [release-procedure.md](../release-procedure.md)
-20. [information-item-map.md](../information-item-map.md)
-21. [cm-plan.md](../cm/cm-plan.md)
-22. [research-alignment.md](../research/authoritative/research-alignment.md)
-23. [research-implementation-index.json](../research/authoritative/research-implementation-index.json)
+6. [debt-retirement-contract.md](./debt-retirement-contract.md)
+7. [debt-taxonomy.md](./debt-taxonomy.md)
+8. [debt-ledger.md](./debt-ledger.md)
+9. [debt-ledger.json](./debt-ledger.json)
+10. [srs.md](../requirements/srs.md)
+11. [rtm.csv](../requirements/rtm.csv)
+12. [test-plan.md](../testing/test-plan.md)
+13. [documentation-coherence-ledger.md](./documentation-coherence-ledger.md)
+14. [wiki-seed-plan.md](./wiki-seed-plan.md)
+15. [wiki-publication-ledger.md](./wiki-publication-ledger.md)
+16. [wiki-publication-ledger.json](./wiki-publication-ledger.json)
+17. [overview.md](../architecture/overview.md)
+18. `docs/architecture/adr/`
+19. [README.md](../../README.md)
+20. [Documentation Package Workbench](../documentation-workbench.md)
+21. [program-repo-jump.md](./program-repo-jump.md)
+22. [program-repo-jump-map.json](./program-repo-jump-map.json)
+23. [release-procedure.md](../release-procedure.md)
+24. [information-item-map.md](../information-item-map.md)
+25. [cm-plan.md](../cm/cm-plan.md)
+26. [research-alignment.md](../research/authoritative/research-alignment.md)
+27. [research-implementation-index.json](../research/authoritative/research-implementation-index.json)
 
 If two documents disagree, the higher document in this list wins until the
 lower document is corrected.
@@ -62,6 +66,8 @@ Do not create or refresh wiki pages until these are true:
   the same implemented product truth without unresolved contradiction
 - the documentation-package workbench has been updated when the wiki-relevant
   docs stack changed materially
+- debt-retirement surfaces are updated when the same tranche discovers,
+  retires, or explicitly defers meaningful technical or documentation debt
 - `npm run wiki:workbench:doctor` or `npm run docs:workbench:wiki:doctor`
   reports no `error` issues against the current authority/wiki topology
 - the documentation coherence ledger records no unresolved internal
@@ -110,6 +116,9 @@ That requires:
 - user workflow: README, current state, SRS
 - architecture: architecture overview plus ADRs
 - documentation-package iteration: `docs/documentation-workbench.md`
+- debt retirement contract and active debt picture:
+  `docs/product/debt-retirement-contract.md`,
+  `docs/product/debt-ledger.json`
 - cross-repo orientation: `docs/product/program-repo-jump.md`
 - documentation coherence: `docs/product/documentation-coherence-ledger.md`
 - incremental wiki page order: `docs/product/wiki-seed-plan.md`

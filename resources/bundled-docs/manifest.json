@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-05T19:14:56.368Z",
+  "generatedAt": "2026-04-05T19:32:07.704Z",
   "sourceLedgerPath": "docs/product/wiki-publication-ledger.json",
   "sourceWikiRepoPath": "../vi-history-suite.wiki",
   "defaultPageId": "overview",
@@ -10,8 +10,8 @@
       "wikiPath": "home",
       "wikiFileName": "home.md",
       "htmlFileName": "overview.html",
-      "publishedDate": "2026-04-03",
-      "wikiCommit": "3aa0c49"
+      "publishedDate": "2026-04-05",
+      "wikiCommit": "dec1861"
     },
     {
       "id": "install-and-release",
@@ -56,7 +56,7 @@
       "wikiFileName": "Architecture.md",
       "htmlFileName": "architecture.html",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "5e386f3"
+      "wikiCommit": "546f2d2"
     },
     {
       "id": "documentation-workbench",
@@ -64,8 +64,8 @@
       "wikiPath": "Documentation-Workbench",
       "wikiFileName": "Documentation-Workbench.md",
       "htmlFileName": "documentation-workbench.html",
-      "publishedDate": "2026-04-04",
-      "wikiCommit": "4e5d3f4"
+      "publishedDate": "2026-04-05",
+      "wikiCommit": "546f2d2"
     },
     {
       "id": "program-repo-jump",
@@ -92,7 +92,7 @@
       "wikiFileName": "Current-State.md",
       "htmlFileName": "current-state.html",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "5f2fdfa"
+      "wikiCommit": "dec1861"
     },
     {
       "id": "wiki-authority-map",
@@ -100,8 +100,8 @@
       "wikiPath": "Wiki-Authority-Map",
       "wikiFileName": "Wiki-Authority-Map.md",
       "htmlFileName": "wiki-authority-map.html",
-      "publishedDate": "2026-04-04",
-      "wikiCommit": "4e5d3f4"
+      "publishedDate": "2026-04-05",
+      "wikiCommit": "546f2d2"
     },
     {
       "id": "development-queue",
@@ -137,7 +137,25 @@
       "wikiFileName": "Architecture-Decision-Records.md",
       "htmlFileName": "architecture-decision-records.html",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "5f2fdfa"
+      "wikiCommit": "dec1861"
+    },
+    {
+      "id": "debt-retirement-contract",
+      "title": "Debt Retirement Contract",
+      "wikiPath": "Debt-Retirement-Contract",
+      "wikiFileName": "Debt-Retirement-Contract.md",
+      "htmlFileName": "debt-retirement-contract.html",
+      "publishedDate": "2026-04-05",
+      "wikiCommit": "dec1861"
+    },
+    {
+      "id": "debt-ledger",
+      "title": "Debt Ledger",
+      "wikiPath": "Debt-Ledger",
+      "wikiFileName": "Debt-Ledger.md",
+      "htmlFileName": "debt-ledger.html",
+      "publishedDate": "2026-04-05",
+      "wikiCommit": "dec1861"
     }
   ]
 }

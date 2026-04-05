@@ -28,12 +28,16 @@ Read these in order:
 12. [wiki-publication-ledger.json](./wiki-publication-ledger.json)
 13. [wiki-coverage-matrix.md](./wiki-coverage-matrix.md)
 14. [wiki-coverage-matrix.json](./wiki-coverage-matrix.json)
-15. [Documentation Package Workbench](../documentation-workbench.md)
-16. [program-repo-jump.md](./program-repo-jump.md)
-17. [PROGRAM-0001: Next Product Layer](./execution-programs/PROGRAM-0001-next-product-layer.md)
-18. [PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
-19. [PROGRAM-0003: Repeatable Benchmark Proof](./execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md)
-20. [PROGRAM-0004: Post-Release Sustainment And Release Cadence](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)
+15. [debt-retirement-contract.md](./debt-retirement-contract.md)
+16. [debt-taxonomy.md](./debt-taxonomy.md)
+17. [debt-ledger.md](./debt-ledger.md)
+18. [debt-ledger.json](./debt-ledger.json)
+19. [Documentation Package Workbench](../documentation-workbench.md)
+20. [program-repo-jump.md](./program-repo-jump.md)
+21. [PROGRAM-0001: Next Product Layer](./execution-programs/PROGRAM-0001-next-product-layer.md)
+22. [PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
+23. [PROGRAM-0003: Repeatable Benchmark Proof](./execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md)
+24. [PROGRAM-0004: Post-Release Sustainment And Release Cadence](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)
 
 ## Authority Stack
 
@@ -63,13 +67,17 @@ Current control-plane surfaces:
 12. [wiki-publication-ledger.json](./wiki-publication-ledger.json)
 13. [wiki-coverage-matrix.md](./wiki-coverage-matrix.md)
 14. [wiki-coverage-matrix.json](./wiki-coverage-matrix.json)
-15. [Documentation Package Workbench](../documentation-workbench.md)
-16. [program-repo-jump.md](./program-repo-jump.md)
-17. [PROGRAM-0001: Next Product Layer](./execution-programs/PROGRAM-0001-next-product-layer.md)
-18. [PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
-19. [PROGRAM-0003: Repeatable Benchmark Proof](./execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md)
-20. [PROGRAM-0004: Post-Release Sustainment And Release Cadence](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)
-21. [Fast VS Code Loop](../dev-fast-loop.md)
+15. [debt-retirement-contract.md](./debt-retirement-contract.md)
+16. [debt-taxonomy.md](./debt-taxonomy.md)
+17. [debt-ledger.md](./debt-ledger.md)
+18. [debt-ledger.json](./debt-ledger.json)
+19. [Documentation Package Workbench](../documentation-workbench.md)
+20. [program-repo-jump.md](./program-repo-jump.md)
+21. [PROGRAM-0001: Next Product Layer](./execution-programs/PROGRAM-0001-next-product-layer.md)
+22. [PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
+23. [PROGRAM-0003: Repeatable Benchmark Proof](./execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md)
+24. [PROGRAM-0004: Post-Release Sustainment And Release Cadence](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)
+25. [Fast VS Code Loop](../dev-fast-loop.md)
 
 ## Committed Capability State
 
@@ -93,6 +101,7 @@ Current control-plane surfaces:
 | Ship-control system and SemVer release target | implemented and active with retained immutable `v0.2.0` release evidence through GitLab release `v0.2.0`, tag pipeline `2428809456`, kept release job `13779604462`, and a governed wiki-authority map that constrains future wiki generation to repo docs instead of source or chat memory | `docs/product/SHIP-0001-releasable-vi-history-suite.md`; `docs/product/release-readiness-matrix.json`; `docs/product/blocker-ledger.json`; `docs/product/wiki-authority-map.md`; `docs/release-procedure.md`; `.gitlab-ci.yml`; `tests/unit/shipControlDocs.test.ts`; `VHS-REQ-313..323` | `TRANCHE-009` |
 | Documentation-package workbench image and docs gate | implemented and active with a repo-published docs-authoring image, local, Docker-first, and published-image-local wiki-workbench commands, a repo-native docs gate, a commit-aligned `wiki_workbench_prepare_published` GitLab lane that runs from `${CI_REGISTRY_IMAGE}/docs-authoring:sha-${CI_COMMIT_SHORT_SHA}` and retains `wiki-workbench-evidence/`, supported GitLab-registry environment-variable auth for local published-image pulls plus explicit fail-closed registry-access diagnostics when the published image is not locally pullable, automated SRS/RTM/test-plan coherence checks, automated active post-release tranche/issue/program coherence checks plus open Gate C-D truth checks, research-control-plane regression checks for the live history-window/dashboard surfaces, a retained documentation coherence ledger, a wiki seed plan, Markdown and JSON wiki publication ledgers, a generated packaged docs bundle, and a governed wiki workbench that resolves authority/wiki topology from the repo-jump map, stages page-authority bundles, retains `.cache/wiki-workbench/latest-workbench.json`, writes publication-prep receipts under `.cache/wiki-workbench/publication-prep/`, and self-heals onto writable `staging-runs/` or `publication-prep-runs/` paths when stale retained page directories are unwritable | `docker/docs-authoring/Dockerfile`; `docker/docs-authoring/entrypoint.sh`; `scripts/run-docs-gate.js`; `scripts/syncBundledDocs.js`; `scripts/runDocsWorkbenchDocker.js`; `src/tooling/wikiWorkbench.ts`; `src/cli/runWikiWorkbench.ts`; `docs/documentation-workbench.md`; `docs/product/documentation-coherence-ledger.md`; `docs/product/wiki-seed-plan.md`; `docs/product/wiki-publication-ledger.md`; `docs/product/wiki-publication-ledger.json`; `resources/bundled-docs/manifest.json`; `.gitlab-ci.yml`; `tests/unit/docsWorkbenchDocs.test.ts`; `tests/unit/packageManifest.test.ts`; `tests/unit/requirementsDocs.test.ts`; `tests/unit/postReleaseControlPlaneDocs.test.ts`; `tests/unit/runWikiWorkbenchCli.test.ts`; `tests/unit/runDocsWorkbenchDocker.test.ts`; `VHS-REQ-350..360`; `VHS-REQ-367..370`; `VHS-REQ-391`; `VHS-REQ-418..426` | `TRANCHE-009` |
 | Wiki completion invariant for requirements and standards surfaces | implemented and active with a machine-readable wiki coverage matrix, an accepted ADR aggregation rule, a zero-gap publication contract, and docs-gate enforcement that fails when an in-scope authority doc or ADR is uncovered, unpublished, or missing from the publication ledger | `docs/product/wiki-coverage-matrix.md`; `docs/product/wiki-coverage-matrix.json`; `tests/unit/wikiCoverageDocs.test.ts`; `VHS-REQ-427..430` | sustain |
+| Debt-retirement contract for technical and documentation debt | implemented and active with a no-silent-debt rule, governed taxonomy, machine-readable debt ledger, and docs-gate enforcement that fails when debt items are unbounded, malformed, or absent from the authority package | `docs/product/debt-retirement-contract.md`; `docs/product/debt-taxonomy.md`; `docs/product/debt-ledger.md`; `docs/product/debt-ledger.json`; `tests/unit/debtLedgerDocs.test.ts`; `VHS-REQ-453..456` | sustain |
 | Bundled version-matched user documentation | implemented and active with a machine-readable wiki publication ledger, generated packaged HTML fragments under `resources/bundled-docs/`, a command-palette documentation command, and a local documentation panel that keeps users inside VS Code instead of requiring repo access | `docs/product/wiki-publication-ledger.json`; `scripts/syncBundledDocs.js`; `resources/bundled-docs/manifest.json`; `src/docs/bundledDocumentation.ts`; `src/docs/bundledDocumentationAction.ts`; `src/extension.ts`; `tests/unit/bundledDocumentation.test.ts`; `tests/integration/suite/extensionHost.test.ts`; `VHS-REQ-367..370` | sustain |
 | Cross-repo navigation control plane | implemented and active with a governed repo-constellation map, a local repo-jump CLI, and mirrored skill-side resolver entrypoints for `vi-history-suite`, `vi-history-suite-source-experiments`, `vi-history-suite.wiki`, and `repo-standards-review` | `docs/product/program-repo-jump-map.json`; `docs/product/program-repo-jump.md`; `src/tooling/programRepoJump.ts`; `src/cli/runProgramRepoJump.ts`; `tests/unit/runProgramRepoJumpCli.test.ts`; `VHS-REQ-364..366`; `VHS-REQ-401` | `TRANCHE-009` |
 | Fast local VS Code development-host loop | implemented and active with reusable fixture-workspace prep, explicit workspace override, direct or staged extension-host launch, explicit Linux/Windows integration-host selection, Linux runtime preflight, and a least-privilege root-owned Linux bootstrap command | `src/tooling/devHostLoop.ts`; `src/cli/runDevHost.ts`; `src/tooling/integrationHostRuntime.ts`; `docs/dev-fast-loop.md`; `package.json`; `tests/unit/runDevHostCli.test.ts`; `tests/unit/integrationHostRuntime.test.ts`; `tests/unit/packageManifest.test.ts`; `VHS-REQ-338..339`; `VHS-REQ-344..346`; `docs/architecture/adr/ADR-0010-dual-host-extension-proof-and-linux-bootstrap.md` | sustain |
@@ -217,6 +226,10 @@ The active-queue source of truth is:
 - [PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
 - [PROGRAM-0003: Repeatable Benchmark Proof](./execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md)
 - [PROGRAM-0004: Post-Release Sustainment And Release Cadence](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)
+- [debt-retirement-contract.md](./debt-retirement-contract.md)
+- [debt-taxonomy.md](./debt-taxonomy.md)
+- [debt-ledger.md](./debt-ledger.md)
+- [debt-ledger.json](./debt-ledger.json)
 - [wiki-authority-map.md](./wiki-authority-map.md)
 - [documentation-coherence-ledger.md](./documentation-coherence-ledger.md)
 - [wiki-seed-plan.md](./wiki-seed-plan.md)
@@ -233,6 +246,12 @@ count threshold. The wiki remains finished only while every in-scope
 requirements-and-standards source stays `complete` and `published` in
 `docs/product/wiki-coverage-matrix.json` and the publication ledger keeps
 `nextPage = null`.
+
+The current debt stop rule is no silent debt. Work remains unfinished whenever
+a meaningful technical or documentation debt item is known locally but is not
+either retired, recorded as open in `docs/product/debt-ledger.json`, or
+recorded there as an accepted bounded exception under
+`docs/product/debt-retirement-contract.md`.
 
 The landed ship-record source of truth is:
 

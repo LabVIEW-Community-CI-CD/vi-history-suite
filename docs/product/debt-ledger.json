@@ -1,0 +1,157 @@
+{
+  "generatedFor": "vi-history-suite",
+  "contractStatus": "active",
+  "lastReviewedDate": "2026-04-05",
+  "statuses": [
+    "open",
+    "retired",
+    "accepted-exception"
+  ],
+  "debtClasses": [
+    "technical",
+    "documentation",
+    "control-plane",
+    "evidence",
+    "runtime",
+    "benchmark",
+    "release"
+  ],
+  "severities": [
+    "low",
+    "medium",
+    "high"
+  ],
+  "contaminationRiskLevels": [
+    "low",
+    "medium",
+    "high"
+  ],
+  "items": [
+    {
+      "id": "DEBT-0001",
+      "title": "Canonical exact-pair diagnosis previously admitted ambiguous benchmark bundles",
+      "debtClass": "control-plane",
+      "status": "retired",
+      "severity": "high",
+      "contaminationRisk": "high",
+      "summary": "Exact-pair benchmark diagnosis used to admit incomplete selected/base hash bundles and contradictory runtime overrides, which could let non-canonical experiments look like product behavior.",
+      "owner": {
+        "trancheId": "TRANCHE-011",
+        "issueId": "ISSUE-0408",
+        "programId": "PROGRAM-0003",
+        "programPath": "docs/product/execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md",
+        "issuePath": "docs/product/issues/ISSUE-0408-repeatable-benchmark-proof.md"
+      },
+      "authoritativeSources": [
+        "docs/architecture/adr/ADR-0021-canonical-exact-pair-diagnosis-arguments.md",
+        "docs/product/canonical-exact-pair-diagnosis.md",
+        "docs/product/current-state.md"
+      ],
+      "repoEvidence": [
+        "docs/product/execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md",
+        "docs/product/issues/ISSUE-0408-repeatable-benchmark-proof.md",
+        "tests/unit/runHarnessReportSmokeCli.test.ts"
+      ],
+      "discoveredContext": "PROGRAM-0003 exact-pair Windows diagnosis hardening",
+      "nextGate": null,
+      "exitCriteria": "Exact-pair diagnosis fails closed on incomplete selected/base pairs and contradictory runtime override bundles before any retained evidence is generated.",
+      "retirementCommit": "3dab8fda2f1a924b22f3d1614df6c3c070377844",
+      "acceptedExceptionRationale": null
+    },
+    {
+      "id": "DEBT-0002",
+      "title": "Explicit Windows runtime bundles previously allowed mixed x86/x64 contamination",
+      "debtClass": "benchmark",
+      "status": "retired",
+      "severity": "high",
+      "contaminationRisk": "high",
+      "summary": "PROGRAM-0003 entrypoints could accept explicit Windows runtime override bundles that mixed x86 and x64 surfaces when `--prefer-bitness` was omitted, weakening future benchmark and diagnosis truth.",
+      "owner": {
+        "trancheId": "TRANCHE-011",
+        "issueId": "ISSUE-0408",
+        "programId": "PROGRAM-0003",
+        "programPath": "docs/product/execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md",
+        "issuePath": "docs/product/issues/ISSUE-0408-repeatable-benchmark-proof.md"
+      },
+      "authoritativeSources": [
+        "docs/architecture/adr/ADR-0022-canonical-experiment-admission-control.md",
+        "docs/product/canonical-exact-pair-diagnosis.md",
+        "docs/product/current-state.md"
+      ],
+      "repoEvidence": [
+        "tests/unit/canonicalRuntimeOverrideValidation.test.ts",
+        "tests/unit/runGitHubWindowsDashboardBenchmarkCli.test.ts",
+        "docs/product/execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md"
+      ],
+      "discoveredContext": "PROGRAM-0003 shared admission-control hardening",
+      "nextGate": null,
+      "exitCriteria": "Shared runtime-override validation rejects mixed x86/x64 explicit Windows bundles even when `--prefer-bitness` is omitted.",
+      "retirementCommit": "44891ebe541ad8f9d1da1c3990aafeb947a049bc",
+      "acceptedExceptionRationale": null
+    },
+    {
+      "id": "DEBT-0003",
+      "title": "Windows pair-129 benchmark proof remains bounded by a Call By Reference seam",
+      "debtClass": "benchmark",
+      "status": "open",
+      "severity": "high",
+      "contaminationRisk": "high",
+      "summary": "The accepted cross-OS comparable prefix remains bounded at `129` commits / `128` pairs because both governed Windows surfaces lose truthful comparability at pair `129` around the retained `labview-cli-call-by-reference` seam.",
+      "owner": {
+        "trancheId": "TRANCHE-011",
+        "issueId": "ISSUE-0408",
+        "programId": "PROGRAM-0003",
+        "programPath": "docs/product/execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md",
+        "issuePath": "docs/product/issues/ISSUE-0408-repeatable-benchmark-proof.md"
+      },
+      "authoritativeSources": [
+        "docs/product/benchmark-packets/HARNESS-VHS-002-comparable-prefix.json",
+        "docs/product/execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md",
+        "docs/product/issues/ISSUE-0408-repeatable-benchmark-proof.md",
+        "docs/product/current-state.md"
+      ],
+      "repoEvidence": [
+        "docs/product/benchmark-packets/HARNESS-VHS-002-comparable-prefix.md",
+        "docs/product/harnesses.md",
+        "docs/architecture/adr/ADR-0020-bounded-cross-os-benchmark-prefix-for-harness-vhs-002.md"
+      ],
+      "discoveredContext": "PROGRAM-0003 comparable-prefix proof and exact-pair Windows diagnosis",
+      "nextGate": "Either retire the pair-129 Windows seam with governed evidence that expands the accepted comparable prefix or close PROGRAM-0003 with the bounded comparable-prefix packet as final benchmark truth.",
+      "exitCriteria": "The comparable benchmark packet either expands beyond pair `128` with truthful Windows evidence or explicitly closes the program on the retained bounded prefix without ambiguity.",
+      "retirementCommit": null,
+      "acceptedExceptionRationale": null
+    },
+    {
+      "id": "DEBT-0004",
+      "title": "Linux deep benchmark full-window proof remains bounded by pair 135 recursive-load failure",
+      "debtClass": "runtime",
+      "status": "open",
+      "severity": "high",
+      "contaminationRisk": "high",
+      "summary": "The Linux deep `HARNESS-VHS-002` window still fails late at pair `135/138` with retained diagnostic reason `linux-headless-recursive-load`, so the full window is not yet comparable benchmark truth.",
+      "owner": {
+        "trancheId": "TRANCHE-011",
+        "issueId": "ISSUE-0408",
+        "programId": "PROGRAM-0003",
+        "programPath": "docs/product/execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md",
+        "issuePath": "docs/product/issues/ISSUE-0408-repeatable-benchmark-proof.md"
+      },
+      "authoritativeSources": [
+        "docs/product/execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md",
+        "docs/product/issues/ISSUE-0408-repeatable-benchmark-proof.md",
+        "docs/product/current-state.md",
+        "docs/product/benchmark-packets/HARNESS-VHS-002-comparable-prefix.json"
+      ],
+      "repoEvidence": [
+        "docs/product/harnesses.md",
+        "docs/architecture/adr/ADR-0020-bounded-cross-os-benchmark-prefix-for-harness-vhs-002.md",
+        "docs/requirements/srs.md"
+      ],
+      "discoveredContext": "PROGRAM-0003 Linux full-window benchmark proof",
+      "nextGate": "Either complete Linux `138/138` truthfully with the governed deep benchmark lane or keep the full-window blocker explicit while the bounded comparable prefix remains the accepted cross-OS timing scope.",
+      "exitCriteria": "Linux full-window proof either completes truthfully or the repo closes PROGRAM-0003 with the bounded full-window blocker explicitly normalized into the benchmark packet and control plane.",
+      "retirementCommit": null,
+      "acceptedExceptionRationale": null
+    }
+  ]
+}

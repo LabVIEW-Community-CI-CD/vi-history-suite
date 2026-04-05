@@ -42,10 +42,14 @@ If you are new to the repo, read these in order:
 12. [Wiki Publication Ledger JSON](./docs/product/wiki-publication-ledger.json)
 13. [Wiki Coverage Matrix](./docs/product/wiki-coverage-matrix.md)
 14. [Wiki Coverage Matrix JSON](./docs/product/wiki-coverage-matrix.json)
-15. [Documentation Package Workbench](./docs/documentation-workbench.md)
-16. [Program Repo Jump](./docs/product/program-repo-jump.md)
-17. [PROGRAM-0001: Next Product Layer](./docs/product/execution-programs/PROGRAM-0001-next-product-layer.md)
-18. [PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
+15. [Debt Retirement Contract](./docs/product/debt-retirement-contract.md)
+16. [Debt Taxonomy](./docs/product/debt-taxonomy.md)
+17. [Debt Ledger](./docs/product/debt-ledger.md)
+18. [Debt Ledger JSON](./docs/product/debt-ledger.json)
+19. [Documentation Package Workbench](./docs/documentation-workbench.md)
+20. [Program Repo Jump](./docs/product/program-repo-jump.md)
+21. [PROGRAM-0001: Next Product Layer](./docs/product/execution-programs/PROGRAM-0001-next-product-layer.md)
+22. [PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
 
 For machine-friendly repo orientation, start with:
 
@@ -92,6 +96,10 @@ Use these repo-native control-plane entrypoints instead:
 - [Wiki Publication Ledger JSON](./docs/product/wiki-publication-ledger.json)
 - [Wiki Coverage Matrix](./docs/product/wiki-coverage-matrix.md)
 - [Wiki Coverage Matrix JSON](./docs/product/wiki-coverage-matrix.json)
+- [Debt Retirement Contract](./docs/product/debt-retirement-contract.md)
+- [Debt Taxonomy](./docs/product/debt-taxonomy.md)
+- [Debt Ledger](./docs/product/debt-ledger.md)
+- [Debt Ledger JSON](./docs/product/debt-ledger.json)
 - [Documentation Package Workbench](./docs/documentation-workbench.md)
 - [Program Repo Jump](./docs/product/program-repo-jump.md)
 - [Review Scenarios](./docs/product/review-scenarios.md)
@@ -211,6 +219,11 @@ Committed and governed today:
   tranche is only considered finished when every in-scope control,
   requirements, verification, and ADR source is represented on published wiki
   pages
+- a governed debt-retirement contract retained in
+  `docs/product/debt-retirement-contract.md`, `docs/product/debt-taxonomy.md`,
+  and `docs/product/debt-ledger.{md,json}` so technical and documentation debt
+  cannot remain implicit across future sessions, with retired debt, open debt,
+  and accepted exceptions all bound to explicit owner programs and next gates
 - a governed cross-repo jump surface that resolves the product repo, wiki repo,
   and companion `repo-standards-review` skill repo from one local map and one
   CLI entrypoint

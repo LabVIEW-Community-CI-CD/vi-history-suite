@@ -8,7 +8,7 @@ system for iterating on the documentation package of `vi-history-suite`:
 - ship target and release-readiness docs
 - requirements, RTM, and test plan
 - ADRs and architecture overview
-- current-state, wiki-authority, and release procedure surfaces
+- current-state, debt-retirement, wiki-authority, and release procedure surfaces
 - authority-driven wiki staging and publication-prep receipts
 
 This workbench is for documentation-package iteration only. It is not the NI
@@ -222,6 +222,10 @@ Use this workbench when the change is primarily about:
 
 Primary repo surfaces for that work include:
 
+- `docs/product/debt-retirement-contract.md`
+- `docs/product/debt-taxonomy.md`
+- `docs/product/debt-ledger.md`
+- `docs/product/debt-ledger.json`
 - `docs/product/documentation-coherence-ledger.md`
 - `docs/product/wiki-seed-plan.md`
 - `docs/product/wiki-publication-ledger.md`
@@ -254,4 +258,7 @@ When a wiki page is actually published, update
 `docs/product/wiki-publication-ledger.json`, and the packaged bundle via
 `npm run wiki:workbench:sync-bundled-docs` or `npm run docs:bundle` in the
 same documentation tranche so publication state and the version-matched
-bundled-doc surface stay governed inside the main repo.
+bundled-doc surface stay governed inside the main repo. When the same tranche
+retires, defers, or newly discovers meaningful technical/documentation debt,
+update the debt contract surfaces in the same documentation tranche instead of
+leaving that carryover implicit.

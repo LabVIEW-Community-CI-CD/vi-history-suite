@@ -48,6 +48,10 @@ Do not draft or refresh wiki pages until:
   `docs/product/wiki-publication-ledger.md`
 - **Architecture Decision Records**: published on `2026-04-04`; see
   `docs/product/wiki-publication-ledger.md`
+- **Debt Retirement Contract**: published on `2026-04-05`; see
+  `docs/product/wiki-publication-ledger.md`
+- **Debt Ledger**: published on `2026-04-05`; see
+  `docs/product/wiki-publication-ledger.md`
 - **Next page**: none
   - the stop rule is now the zero-gap completion invariant in
     `docs/product/wiki-coverage-matrix.json`, not a soft “good progress”
@@ -178,6 +182,23 @@ Do not draft or refresh wiki pages until:
    - Secondary authority:
      - `docs/product/current-state.md`
 
+16. **Debt Retirement Contract**
+   - Primary authority:
+     - `docs/product/debt-retirement-contract.md`
+     - `docs/product/debt-taxonomy.md`
+   - Secondary authority:
+     - `docs/product/debt-ledger.md`
+     - `docs/product/debt-ledger.json`
+     - `docs/product/current-state.md`
+
+17. **Debt Ledger**
+   - Primary authority:
+     - `docs/product/debt-ledger.md`
+     - `docs/product/debt-ledger.json`
+   - Secondary authority:
+     - `docs/product/debt-retirement-contract.md`
+     - `docs/product/current-state.md`
+
 ## Drafting Rules
 
 - Draft only the page currently being seeded; do not widen multiple pages in
@@ -188,6 +209,9 @@ Do not draft or refresh wiki pages until:
 - Treat the wiki as finished only when `docs/product/wiki-coverage-matrix.json`
   is zero-gap and `docs/product/wiki-publication-ledger.json` retains no
   `nextPage` target.
+- If a tranche changes the current debt picture, publish the debt wiki pages in
+  the same tranche instead of leaving technical/documentation debt discoverable
+  only from authority Markdown or JSON.
 - Every substantive product claim should cite a repo-relative governed doc
   path.
 - If a fact exists only in `src/` or `tests/`, stop and promote it into the

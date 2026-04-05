@@ -65,6 +65,7 @@ describe('documentation-package workbench', () => {
           'run',
           'tests/unit/bundledDocumentation.test.ts',
           'tests/unit/postReleaseControlPlaneDocs.test.ts',
+          'tests/unit/debtLedgerDocs.test.ts',
           'tests/unit/requirementsDocs.test.ts',
           'tests/unit/packageManifest.test.ts',
           'tests/unit/shipControlDocs.test.ts',
@@ -106,7 +107,7 @@ describe('documentation-package workbench', () => {
     expect(result).toBe('pass');
     expect(spawned).toEqual([
       'npm run compile',
-      'npx vitest run tests/unit/bundledDocumentation.test.ts tests/unit/postReleaseControlPlaneDocs.test.ts tests/unit/requirementsDocs.test.ts tests/unit/packageManifest.test.ts tests/unit/shipControlDocs.test.ts tests/unit/docsWorkbenchDocs.test.ts tests/unit/wikiCoverageDocs.test.ts tests/unit/runWikiWorkbenchCli.test.ts'
+      'npx vitest run tests/unit/bundledDocumentation.test.ts tests/unit/postReleaseControlPlaneDocs.test.ts tests/unit/debtLedgerDocs.test.ts tests/unit/requirementsDocs.test.ts tests/unit/packageManifest.test.ts tests/unit/shipControlDocs.test.ts tests/unit/docsWorkbenchDocs.test.ts tests/unit/wikiCoverageDocs.test.ts tests/unit/runWikiWorkbenchCli.test.ts'
     ]);
   });
 
@@ -207,6 +208,10 @@ describe('documentation-package workbench', () => {
     expect(workbenchDoc).toContain('docs/product/wiki-publication-ledger.json');
     expect(workbenchDoc).toContain('docs/product/wiki-coverage-matrix.md');
     expect(workbenchDoc).toContain('docs/product/wiki-coverage-matrix.json');
+    expect(workbenchDoc).toContain('docs/product/debt-retirement-contract.md');
+    expect(workbenchDoc).toContain('docs/product/debt-taxonomy.md');
+    expect(workbenchDoc).toContain('docs/product/debt-ledger.md');
+    expect(workbenchDoc).toContain('docs/product/debt-ledger.json');
     expect(workbenchDoc).toContain('resources/bundled-docs/manifest.json');
     expect(workbenchDoc).toContain('npm run program:repos');
     expect(workbenchDoc).toContain('scripts/repo_jump.py /home/sveld/code/standards/vi-history-suite');
@@ -225,12 +230,16 @@ describe('documentation-package workbench', () => {
     expect(programRepoJumpMap).toContain('"kind": "codex-skill"');
 
     expect(wikiPublicationLedger).toContain('# Wiki Publication Ledger');
-    expect(wikiPublicationLedger).toContain('| Overview | `home` | published | `2026-04-03` | `3aa0c49` |');
+    expect(wikiPublicationLedger).toContain('| Overview | `home` | published | `2026-04-05` | `dec1861` |');
     expect(wikiPublicationLedger).toContain('docs/product/SHIP-0001-releasable-vi-history-suite.md');
     expect(wikiPublicationLedger).toContain('docs/product/current-state.md');
     expect(wikiPublicationLedger).toContain('docs/product/release-readiness-matrix.json');
+    expect(wikiPublicationLedger).toContain('| Debt Retirement Contract | `Debt-Retirement-Contract` | published | `2026-04-05` | `dec1861` |');
+    expect(wikiPublicationLedger).toContain('| Debt Ledger | `Debt-Ledger` | published | `2026-04-05` | `dec1861` |');
     expect(wikiPublicationLedgerJson).toContain('"id": "overview"');
     expect(wikiPublicationLedgerJson).toContain('"wikiFileName": "home.md"');
+    expect(wikiPublicationLedgerJson).toContain('"id": "debt-retirement-contract"');
+    expect(wikiPublicationLedgerJson).toContain('"id": "debt-ledger"');
     expect(wikiPublicationLedgerJson).toContain('"nextPage"');
 
     expect(gitlabCi).toContain('docs_control_plane_check:');

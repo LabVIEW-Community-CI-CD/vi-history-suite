@@ -19,6 +19,9 @@ This program separates benchmark truth from public-release acceptance truth so
 the remaining Sergio-owned host-machine UX gate can close without silently
 owning all later benchmark work.
 
+Open and retired benchmark-proof debt for this program is governed separately
+through `docs/product/debt-ledger.json` under the debt-retirement contract.
+
 ## North Star
 
 One governed comparative benchmark packet proves the same deep-history target

@@ -22,6 +22,10 @@
 | Ship target | `docs/product/SHIP-0001-releasable-vi-history-suite.md` | sole author | release target, stop rule, landed-ship state, or definition of done changes | ship target matches the landed release objective and closed ship record |
 | Release readiness matrix | `docs/product/release-readiness-matrix.json` | sole author | ship criterion state, evidence, blocker, or next action changes | readiness matrix matches the closed ship record and blocker ledger |
 | Blocker ledger | `docs/product/blocker-ledger.json` | sole author | ship blocker state or resolution path changes | blocker ledger matches the release readiness matrix and closed ship record |
+| Debt retirement contract | `docs/product/debt-retirement-contract.md` | sole author | the no-silent-debt rule, disposition model, or required debt fields change | future sessions can discover the debt-governance contract without relying on chat memory |
+| Debt taxonomy | `docs/product/debt-taxonomy.md` | sole author | allowed debt classes, statuses, or severity/contamination semantics change | future sessions classify debt consistently across technical, documentation, benchmark, and control-plane surfaces |
+| Debt ledger | `docs/product/debt-ledger.md` | sole author | open, retired, or accepted debt items change | human readers can discover the current governed debt picture without parsing JSON |
+| Machine-readable debt ledger | `docs/product/debt-ledger.json` | sole author | debt ownership, status, exit criteria, or retirement commits change | current, past, and future debt items remain machine-checkable and cannot stay implicit |
 | Wiki authority map | `docs/product/wiki-authority-map.md` | sole author | the governed documentation stack or wiki-generation preconditions change | future wiki work can be derived from docs without falling back to source or chat memory |
 | Documentation coherence ledger | `docs/product/documentation-coherence-ledger.md` | sole author | documentation-package contradictions are resolved or a fresh coherence pass is completed | the latest docs gate and standards-review pass are reflected with resolved contradictions and residual risks |
 | Wiki seed plan | `docs/product/wiki-seed-plan.md` | sole author | wiki page order, source authority, or drafting rules change | future wiki pages can be drafted incrementally from governed docs without falling back to source |
@@ -50,4 +54,5 @@
 - Local runtime and design-gate evidence under `.cache/` is regenerated evidence,
   not the committed source of truth for repo meaning.
 - Future readers should start with `README.md`, `docs/product/current-state.md`,
-  and `docs/research/authoritative/research-implementation-index.json`.
+  `docs/product/debt-retirement-contract.md`, and
+  `docs/research/authoritative/research-implementation-index.json`.

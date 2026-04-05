@@ -9,6 +9,9 @@ repeatable benchmark-proof packet for the deep `HARNESS-VHS-002` /
 This issue exists so benchmark truth has its own bounded closure path instead
 of remaining mixed into the public-release acceptance program.
 
+The current governed debt items for this issue are tracked in
+`docs/product/debt-ledger.json` under the debt-retirement contract.
+
 ## Status
 
 Queued follow-on post-release issue.

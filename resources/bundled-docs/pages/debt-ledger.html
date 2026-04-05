@@ -1,0 +1,85 @@
+<h1>Debt Ledger</h1>
+<p>This page is derived from governed repository documentation, not from source
+code or prior chat state. The current authority surfaces for this page are:</p>
+<ul>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/debt-ledger.md"><code>docs/product/debt-ledger.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/debt-ledger.json"><code>docs/product/debt-ledger.json</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/debt-retirement-contract.md"><code>docs/product/debt-retirement-contract.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/current-state.md"><code>docs/product/current-state.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md"><code>docs/product/execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/issues/ISSUE-0408-repeatable-benchmark-proof.md"><code>docs/product/issues/ISSUE-0408-repeatable-benchmark-proof.md</code></a></li>
+</ul>
+<h2>Purpose</h2>
+<p>The debt ledger is the reader-facing view of the machine-readable debt package.</p>
+<p>It answers one question quickly:</p>
+<ul>
+<li>what known debt is retired, still open, or explicitly accepted right now</li>
+</ul>
+<h2>Current Ledger</h2>
+<table>
+<thead>
+<tr>
+<th>Debt Id</th>
+<th>Status</th>
+<th>Class</th>
+<th>Owner</th>
+<th>Current Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>DEBT-0001</code></td>
+<td>retired</td>
+<td><code>control-plane</code></td>
+<td><code>TRANCHE-011</code> / <code>ISSUE-0408</code> / <code>PROGRAM-0003</code></td>
+<td>exact-pair diagnosis no longer admits ambiguous selected/base or runtime override bundles</td>
+</tr>
+<tr>
+<td><code>DEBT-0002</code></td>
+<td>retired</td>
+<td><code>benchmark</code></td>
+<td><code>TRANCHE-011</code> / <code>ISSUE-0408</code> / <code>PROGRAM-0003</code></td>
+<td>explicit Windows runtime bundles no longer admit mixed x86/x64 path contamination</td>
+</tr>
+<tr>
+<td><code>DEBT-0003</code></td>
+<td>open</td>
+<td><code>benchmark</code></td>
+<td><code>TRANCHE-011</code> / <code>ISSUE-0408</code> / <code>PROGRAM-0003</code></td>
+<td>Windows pair <code>129</code> remains the first invalid comparable benchmark surface</td>
+</tr>
+<tr>
+<td><code>DEBT-0004</code></td>
+<td>open</td>
+<td><code>runtime</code></td>
+<td><code>TRANCHE-011</code> / <code>ISSUE-0408</code> / <code>PROGRAM-0003</code></td>
+<td>Linux full-window proof still fails late at pair <code>135/138</code> with <code>linux-headless-recursive-load</code></td>
+</tr>
+</tbody></table>
+<h2>What The Open Items Mean</h2>
+<p>The current open debt is bounded, not hidden:</p>
+<ul>
+<li>Windows pair <code>129</code> remains the comparable-prefix ceiling for the accepted
+cross-OS benchmark packet.</li>
+<li>Linux pair <code>135/138</code> remains the late full-window blocker for the deep
+<code>HARNESS-VHS-002</code> benchmark lane.</li>
+</ul>
+<p>That means the repo is not pretending the benchmark is fully clean. It is
+retaining the blockers as explicit open debt with one owner program.</p>
+<h2>Why The Retired Items Matter</h2>
+<p>The retired items are not trivia. They are the proof that the debt contract is
+meant to preserve:</p>
+<ul>
+<li>exact-pair diagnosis ambiguity was retired as governed repo truth</li>
+<li>mixed Windows x86/x64 runtime-bundle contamination was retired as governed
+repo truth</li>
+</ul>
+<p>Those fixes no longer have to live only in chat chronology.</p>
+<h2>Read Next</h2>
+<ul>
+<li><a href="#" data-page-id="debt-retirement-contract">Debt Retirement Contract</a></li>
+<li><a href="#" data-page-id="current-state">Current State</a></li>
+<li><a href="#" data-page-id="requirements-and-verification">Requirements And Verification</a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/debt-ledger.md">Debt Ledger (Authority Doc)</a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/debt-ledger.json">Debt Ledger JSON</a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md">PROGRAM-0003</a></li>
+</ul>

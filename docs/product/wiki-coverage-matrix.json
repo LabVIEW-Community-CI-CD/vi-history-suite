@@ -114,6 +114,46 @@
       ]
     },
     {
+      "sourcePath": "docs/product/debt-retirement-contract.md",
+      "itemType": "debt-retirement-contract",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Debt-Retirement-Contract.md",
+        "Current-State.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/product/debt-taxonomy.md",
+      "itemType": "debt-taxonomy",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Debt-Retirement-Contract.md",
+        "Debt-Ledger.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/product/debt-ledger.md",
+      "itemType": "debt-ledger",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Debt-Ledger.md",
+        "Current-State.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/product/debt-ledger.json",
+      "itemType": "debt-ledger-json",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Debt-Ledger.md",
+        "Debt-Retirement-Contract.md"
+      ]
+    },
+    {
       "sourcePath": "docs/product/canonical-exact-pair-diagnosis.md",
       "itemType": "exact-pair-diagnosis-control",
       "representationStatus": "complete",
@@ -514,6 +554,17 @@
     },
     {
       "sourcePath": "docs/architecture/adr/ADR-0022-canonical-experiment-admission-control.md",
+      "itemType": "adr",
+      "aggregationRuleId": "adr-set-aggregate",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Architecture.md",
+        "Architecture-Decision-Records.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/architecture/adr/ADR-0023-governed-debt-retirement-contract.md",
       "itemType": "adr",
       "aggregationRuleId": "adr-set-aggregate",
       "representationStatus": "complete",

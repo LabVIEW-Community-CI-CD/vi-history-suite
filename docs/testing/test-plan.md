@@ -1115,6 +1115,11 @@
 - `TEST-UNIT-296`: verify canonical Windows explicit runtime override bundles
   reject mixed x86/x64 path combinations even when `--prefer-bitness` is
   omitted, while coherent explicit bundles still pass admission control
+- `TEST-UNIT-297`: verify the debt-retirement contract package remains
+  machine-checkable: the contract/taxonomy/ledger docs stay discoverable in
+  the authority control plane, and the machine-readable debt ledger keeps
+  well-formed retired/open items with explicit owner, evidence, next-gate,
+  exit-criteria, and retirement-commit semantics
 - `TEST-DOC-035`: review README, current-state, and ADR-0016 and confirm the
   canonical-host benchmark status surface is documented as the maintainer-facing
   in-IDE visibility and launch surface for the host Linux benchmark lane,
@@ -1258,6 +1263,18 @@
   diagnosis guidance, PROGRAM-0003, ISSUE-0408, and ADR-0022 and confirm
   explicit Windows runtime override bundles are documented as invalid when
   they mix x86 and x64 paths, even when `--prefer-bitness` is omitted
+- `TEST-DOC-061`: review README, current-state, documentation workbench,
+  wiki-authority map, debt-retirement contract, debt taxonomy, and ADR-0023
+  and confirm the repo documents one no-silent-debt contract instead of
+  leaving technical/documentation debt governance implicit
+- `TEST-DOC-062`: review the debt ledger Markdown/JSON pair and confirm the
+  current debt picture retains both retired and open debt items with explicit
+  owner tranche/issue/program mapping, authoritative sources, repo evidence,
+  next gate, exit criteria, and retirement commit where applicable
+- `TEST-DOC-063`: review the wiki coverage matrix, wiki publication ledger,
+  debt wiki pages, and bundled-doc manifest and confirm the published reader
+  surfaces represent the debt-retirement contract and debt ledger rather than
+  hiding those control-plane surfaces in authority docs only
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed authority repo, private experiment mirror, wiki, and
   assurance-skill repos with authority roles, expected remotes, and primary

@@ -7,8 +7,8 @@
       "wikiPath": "home",
       "wikiFileName": "home.md",
       "status": "published",
-      "publishedDate": "2026-04-03",
-      "wikiCommit": "3aa0c49",
+      "publishedDate": "2026-04-05",
+      "wikiCommit": "dec1861",
       "primaryAuthority": [
         "docs/product/SHIP-0001-releasable-vi-history-suite.md",
         "docs/product/current-state.md",
@@ -87,7 +87,7 @@
       "wikiFileName": "Architecture.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "5e386f3",
+      "wikiCommit": "546f2d2",
       "primaryAuthority": [
         "docs/architecture/overview.md",
         "docs/requirements/srs.md",
@@ -99,7 +99,8 @@
         "docs/architecture/adr/ADR-0014-cross-repo-navigation-control-plane.md",
         "docs/architecture/adr/ADR-0020-bounded-cross-os-benchmark-prefix-for-harness-vhs-002.md",
         "docs/architecture/adr/ADR-0021-canonical-exact-pair-diagnosis-arguments.md",
-        "docs/architecture/adr/ADR-0022-canonical-experiment-admission-control.md"
+        "docs/architecture/adr/ADR-0022-canonical-experiment-admission-control.md",
+        "docs/architecture/adr/ADR-0023-governed-debt-retirement-contract.md"
       ]
     },
     {
@@ -108,11 +109,13 @@
       "wikiPath": "Documentation-Workbench",
       "wikiFileName": "Documentation-Workbench.md",
       "status": "published",
-      "publishedDate": "2026-04-04",
-      "wikiCommit": "4e5d3f4",
+      "publishedDate": "2026-04-05",
+      "wikiCommit": "546f2d2",
       "primaryAuthority": [
         "docs/documentation-workbench.md",
         "docs/product/documentation-coherence-ledger.md",
+        "docs/product/debt-retirement-contract.md",
+        "docs/product/debt-ledger.json",
         "docs/product/wiki-authority-map.md",
         "docs/product/program-repo-jump.md",
         "docs/product/wiki-publication-ledger.md",
@@ -156,7 +159,7 @@
       "wikiFileName": "Current-State.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "5f2fdfa",
+      "wikiCommit": "dec1861",
       "primaryAuthority": [
         "docs/product/current-state.md",
         "README.md",
@@ -172,11 +175,12 @@
       "wikiPath": "Wiki-Authority-Map",
       "wikiFileName": "Wiki-Authority-Map.md",
       "status": "published",
-      "publishedDate": "2026-04-04",
-      "wikiCommit": "4e5d3f4",
+      "publishedDate": "2026-04-05",
+      "wikiCommit": "546f2d2",
       "primaryAuthority": [
         "docs/product/wiki-authority-map.md",
         "docs/documentation-workbench.md",
+        "docs/product/debt-retirement-contract.md",
         "docs/product/wiki-seed-plan.md",
         "docs/product/current-state.md",
         "docs/product/wiki-coverage-matrix.md"
@@ -234,7 +238,7 @@
       "wikiFileName": "Architecture-Decision-Records.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "5f2fdfa",
+      "wikiCommit": "dec1861",
       "primaryAuthority": [
         "docs/architecture/overview.md",
         "docs/architecture/adr/ADR-0001-vscode-typescript-baseline.md",
@@ -258,7 +262,42 @@
         "docs/architecture/adr/ADR-0019-governed-wiki-workbench-system.md",
         "docs/architecture/adr/ADR-0020-bounded-cross-os-benchmark-prefix-for-harness-vhs-002.md",
         "docs/architecture/adr/ADR-0021-canonical-exact-pair-diagnosis-arguments.md",
-        "docs/architecture/adr/ADR-0022-canonical-experiment-admission-control.md"
+        "docs/architecture/adr/ADR-0022-canonical-experiment-admission-control.md",
+        "docs/architecture/adr/ADR-0023-governed-debt-retirement-contract.md"
+      ]
+    },
+    {
+      "id": "debt-retirement-contract",
+      "title": "Debt Retirement Contract",
+      "wikiPath": "Debt-Retirement-Contract",
+      "wikiFileName": "Debt-Retirement-Contract.md",
+      "status": "published",
+      "publishedDate": "2026-04-05",
+      "wikiCommit": "dec1861",
+      "primaryAuthority": [
+        "docs/product/debt-retirement-contract.md",
+        "docs/product/debt-taxonomy.md",
+        "docs/product/debt-ledger.md",
+        "docs/product/debt-ledger.json",
+        "docs/product/current-state.md",
+        "docs/architecture/adr/ADR-0023-governed-debt-retirement-contract.md"
+      ]
+    },
+    {
+      "id": "debt-ledger",
+      "title": "Debt Ledger",
+      "wikiPath": "Debt-Ledger",
+      "wikiFileName": "Debt-Ledger.md",
+      "status": "published",
+      "publishedDate": "2026-04-05",
+      "wikiCommit": "dec1861",
+      "primaryAuthority": [
+        "docs/product/debt-ledger.md",
+        "docs/product/debt-ledger.json",
+        "docs/product/debt-retirement-contract.md",
+        "docs/product/current-state.md",
+        "docs/product/execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md",
+        "docs/product/issues/ISSUE-0408-repeatable-benchmark-proof.md"
       ]
     }
   ],
