@@ -11,6 +11,9 @@ export interface HarnessReportSmokeCliArgs {
   harnessId: string;
   strictRsrcHeader: boolean;
   helpRequested: boolean;
+  selectedHash?: string;
+  baseHash?: string;
+  runtimeExecutionTimeoutMs?: number;
   runtimePlatform?: RuntimePlatform;
   runtimeEngineOverride?: ComparisonRuntimeEngine;
   preferBitness?: 'auto' | 'x86' | 'x64';
@@ -35,11 +38,14 @@ export interface HarnessReportSmokeCliDeps {
 
 export function getHarnessReportSmokeUsage(): string {
   return [
-    'Usage: runHarnessReportSmoke [--harness-id <id>] [--strict-rsrc-header] [--platform <win32|linux|darwin>] [--engine <labview-cli|lvcompare>] [--prefer-bitness <auto|x86|x64>] [--labview-cli-path <path>] [--labview-exe-path <path>] [--lvcompare-path <path>] [--help]',
+    'Usage: runHarnessReportSmoke [--harness-id <id>] [--strict-rsrc-header] [--selected-hash <hash>] [--base-hash <hash>] [--runtime-timeout-ms <ms>] [--platform <win32|linux|darwin>] [--engine <labview-cli|lvcompare>] [--prefer-bitness <auto|x86|x64>] [--labview-cli-path <path>] [--labview-exe-path <path>] [--lvcompare-path <path>] [--help]',
     '',
     'Options:',
     '  --harness-id <id>         Select the canonical harness to run.',
     '  --strict-rsrc-header      Require RSRC header validation during VI detection.',
+    '  --selected-hash <hash>    Target a specific selected revision instead of the default first compare pair.',
+    '  --base-hash <hash>        Assert the targeted selected revision uses this base revision.',
+    '  --runtime-timeout-ms <ms> Bound runtime execution for targeted or default report-smoke diagnosis.',
     '  --platform <value>        Override runtime detection platform for report-tool selection.',
     '  --engine <value>          Override the selected report engine for the smoke run.',
     '  --prefer-bitness <value>  Set runtime bitness preference for report-tool selection.',
@@ -54,6 +60,9 @@ export function parseHarnessReportSmokeArgs(argv: string[]): HarnessReportSmokeC
   let harnessId = 'HARNESS-VHS-001';
   let strictRsrcHeader = false;
   let helpRequested = false;
+  let selectedHash: string | undefined;
+  let baseHash: string | undefined;
+  let runtimeExecutionTimeoutMs: number | undefined;
   let runtimePlatform: RuntimePlatform | undefined;
   let runtimeEngineOverride: ComparisonRuntimeEngine | undefined;
   let preferBitness: 'auto' | 'x86' | 'x64' | undefined;
@@ -81,6 +90,28 @@ export function parseHarnessReportSmokeArgs(argv: string[]): HarnessReportSmokeC
 
     if (current === '--strict-rsrc-header') {
       strictRsrcHeader = true;
+      continue;
+    }
+
+    if (current === '--selected-hash') {
+      selectedHash = requireValue('--selected-hash');
+      continue;
+    }
+
+    if (current === '--base-hash') {
+      baseHash = requireValue('--base-hash');
+      continue;
+    }
+
+    if (current === '--runtime-timeout-ms') {
+      const candidate = Number.parseInt(requireValue('--runtime-timeout-ms'), 10);
+      if (!Number.isFinite(candidate) || candidate < 1) {
+        throw new Error(
+          `Unsupported value for --runtime-timeout-ms: ${String(candidate)}\n\n${getHarnessReportSmokeUsage()}`
+        );
+      }
+
+      runtimeExecutionTimeoutMs = candidate;
       continue;
     }
 
@@ -137,10 +168,17 @@ export function parseHarnessReportSmokeArgs(argv: string[]): HarnessReportSmokeC
     throw new Error(`Unknown argument: ${current}\n\n${getHarnessReportSmokeUsage()}`);
   }
 
+  if (baseHash && !selectedHash) {
+    throw new Error(`--base-hash requires --selected-hash.\n\n${getHarnessReportSmokeUsage()}`);
+  }
+
   return {
     harnessId,
     strictRsrcHeader,
     helpRequested,
+    selectedHash,
+    baseHash,
+    runtimeExecutionTimeoutMs,
     runtimePlatform,
     runtimeEngineOverride,
     preferBitness,
@@ -169,10 +207,13 @@ export async function runHarnessReportSmokeCli(
   const result = await (deps.runner ?? runHarnessReportSmoke)(args.harnessId, {
     cloneRoot,
     reportRoot,
-      strictRsrcHeader: args.strictRsrcHeader,
-      runtimePlatform: args.runtimePlatform,
-      runtimeEngineOverride: args.runtimeEngineOverride,
-      runtimeSettings: {
+    strictRsrcHeader: args.strictRsrcHeader,
+    selectedHash: args.selectedHash,
+    baseHash: args.baseHash,
+    runtimeExecutionTimeoutMs: args.runtimeExecutionTimeoutMs,
+    runtimePlatform: args.runtimePlatform,
+    runtimeEngineOverride: args.runtimeEngineOverride,
+    runtimeSettings: {
       preferBitness: args.preferBitness,
       labviewCliPath: args.labviewCliPath,
       labviewExePath: args.labviewExePath,

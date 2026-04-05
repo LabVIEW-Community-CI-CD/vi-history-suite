@@ -205,13 +205,21 @@ describe('runHarnessReportSmoke', () => {
     previousHash: '1111111122222222'
   } as const;
 
+  const targetedCompareCommit = {
+    hash: 'fedcba0987654321',
+    authorDate: '2026-04-01T00:00:00Z',
+    authorName: 'A User',
+    subject: 'Targeted update VI',
+    previousHash: 'abcdef1234567890'
+  } as const;
+
   const canonicalHistoryModel = {
     repositoryName: 'ni/labview-icon-editor',
     repositoryRoot: '/tmp/harness',
     relativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
     signature: 'LVIN' as const,
     eligible: true,
-    commits: [canonicalCompareCommit]
+    commits: [targetedCompareCommit, canonicalCompareCommit]
   };
 
   const readyPreflight = {
@@ -547,6 +555,86 @@ describe('runHarnessReportSmoke', () => {
     expect(writes.get(result.reportJsonPath)).toContain('"reportStatus": "ready-for-runtime"');
     expect(writes.get(result.reportMarkdownPath)).toContain('Runtime execution: succeeded');
     expect(writes.get(result.reportHtmlPath)).toContain('Harness Comparison Report Smoke');
+  });
+
+  it('targets an exact selected/base pair when requested', async () => {
+    const preflightComparisonReportRevisions = vi.fn().mockResolvedValue(readyPreflight);
+
+    await runHarnessReportSmoke(
+      'HARNESS-VHS-001',
+      {
+        cloneRoot: '/tmp/harnesses',
+        reportRoot: '/tmp/reports',
+        selectedHash: 'abcdef1234567890',
+        baseHash: '1111111122222222',
+        runtimePlatform: 'win32'
+      },
+      {
+        ensureHarnessClone: vi.fn().mockResolvedValue('/tmp/harnesses/ni-labview-icon-editor') as never,
+        getRepoHead: vi.fn().mockResolvedValue('fedcba0987654321') as never,
+        loadViHistoryViewModelFromFsPath: vi.fn().mockResolvedValue(canonicalHistoryModel) as never,
+        evaluateViEligibilityForFsPath: vi.fn().mockResolvedValue({
+          eligible: true,
+          signature: 'LVIN'
+        }) as never,
+        preflightComparisonReportRevisions: preflightComparisonReportRevisions as never,
+        locateComparisonRuntime: vi.fn().mockResolvedValue(hostNativeRuntimeSelection) as never,
+        persistComparisonReportPacket: vi.fn().mockResolvedValue(
+          createPersistPacketResult({
+            reportStatus: 'ready-for-runtime',
+            selectedHash: 'abcdef1234567890',
+            baseHash: '1111111122222222'
+          })
+        ) as never,
+        executeComparisonReport: vi.fn().mockResolvedValue({
+          ...createPersistPacketResult({
+            reportStatus: 'ready-for-runtime',
+            selectedHash: 'abcdef1234567890',
+            baseHash: '1111111122222222',
+            runtimeExecutionState: 'succeeded',
+            runtimeExecution: {
+              state: 'succeeded',
+              attempted: true,
+              reportExists: true
+            }
+          })
+        }) as never,
+        archiveComparisonReportSource: vi.fn().mockResolvedValue(undefined) as never,
+        pathExists: vi.fn().mockRejectedValue(new Error('missing')) as never
+      }
+    );
+
+    expect(preflightComparisonReportRevisions).toHaveBeenCalledWith({
+      repoRoot: '/tmp/harnesses/ni-labview-icon-editor',
+      relativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+      leftRevisionId: '1111111122222222',
+      rightRevisionId: 'abcdef1234567890'
+    });
+  });
+
+  it('fails fast when a targeted base hash does not match the selected revision history', async () => {
+    await expect(
+      runHarnessReportSmoke(
+        'HARNESS-VHS-001',
+        {
+          cloneRoot: '/tmp/harnesses',
+          reportRoot: '/tmp/reports',
+          selectedHash: 'abcdef1234567890',
+          baseHash: 'not-the-real-base'
+        },
+        {
+          ensureHarnessClone: vi.fn().mockResolvedValue('/tmp/harnesses/ni-labview-icon-editor') as never,
+          getRepoHead: vi.fn().mockResolvedValue('fedcba0987654321') as never,
+          loadViHistoryViewModelFromFsPath: vi.fn().mockResolvedValue(canonicalHistoryModel) as never,
+          evaluateViEligibilityForFsPath: vi.fn().mockResolvedValue({
+            eligible: true,
+            signature: 'LVIN'
+          }) as never
+        }
+      )
+    ).rejects.toThrow(
+      'Selected compare commit abcdef1234567890 does not retain base not-the-real-base; actual base was 1111111122222222.'
+    );
   });
 
   it('forwards an explicit Windows interop root for win32 report execution from a non-Windows host', async () => {

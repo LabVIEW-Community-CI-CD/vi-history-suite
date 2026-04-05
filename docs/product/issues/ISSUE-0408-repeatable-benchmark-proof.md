@@ -70,6 +70,11 @@ Current retained benchmark truth before activation:
   proves there is no clean immediate fallback there either: the published
   image times out on pair `1/129`, retains a failed partial summary under
   `windows-benchmark-image-proof-lvcompare`, and remains characterization-only
+- the governed harness report-smoke diagnosis surface now also accepts an
+  exact selected/base pair plus explicit runtime timeout, and the targeted
+  exact-pair Windows `lvcompare` rerun on `6dd65df -> 3408654` times out
+  after `120000ms` under `windows-benchmark-image-pair129-lvcompare`, so the
+  pair-129 ceiling is not recoverable through a simple Windows engine swap
 - local host-runnable proof for the Windows benchmark image is still open
 
 ## Scope

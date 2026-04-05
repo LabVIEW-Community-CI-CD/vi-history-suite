@@ -35,6 +35,8 @@ export interface HarnessReportSmokeOptions {
   reportRoot: string;
   strictRsrcHeader?: boolean;
   historyLimit?: number;
+  selectedHash?: string;
+  baseHash?: string;
   runtimePlatform?: RuntimePlatform;
   runtimeSettings?: ComparisonRuntimeSettings;
   runtimeEngineOverride?: ComparisonRuntimeEngine;
@@ -143,7 +145,7 @@ export async function runHarnessReportSmoke(
     (deps.loadViHistoryViewModelFromFsPath ?? loadViHistoryViewModelFromFsPath)(targetAbsolutePath, {
       repoRoot: cloneDirectory,
       strictRsrcHeader: options.strictRsrcHeader ?? false,
-      historyLimit: options.historyLimit ?? 50
+      historyLimit: options.historyLimit ?? (options.selectedHash ? 1000 : 50)
     }),
     (deps.evaluateViEligibilityForFsPath ?? evaluateViEligibilityForFsPath)(targetAbsolutePath, {
       repoRoot: cloneDirectory,
@@ -151,7 +153,7 @@ export async function runHarnessReportSmoke(
     })
   ]);
 
-  const compareCommit = model.commits.find((commit) => commit.previousHash);
+  const compareCommit = resolveCompareCommit(model, options);
   const outputDirectory = path.join(options.reportRoot, definition.id);
   await (deps.mkdir ?? fs.mkdir)(outputDirectory, { recursive: true });
 
@@ -195,6 +197,33 @@ export async function runHarnessReportSmoke(
   await (deps.writeFile ?? fs.writeFile)(reportHtmlPath, renderHarnessReportSmokeHtml(report));
 
   return { report, reportJsonPath, reportMarkdownPath, reportHtmlPath };
+}
+
+function resolveCompareCommit(
+  model: ViHistoryViewModel,
+  options: HarnessReportSmokeOptions
+): ViHistoryViewModel['commits'][number] | undefined {
+  if (!options.selectedHash) {
+    return model.commits.find((commit) => commit.previousHash);
+  }
+
+  const compareCommit = model.commits.find(
+    (commit) => commit.hash === options.selectedHash && Boolean(commit.previousHash)
+  );
+
+  if (!compareCommit) {
+    throw new Error(
+      `Selected compare commit ${options.selectedHash} was not found in the retained VI history model.`
+    );
+  }
+
+  if (options.baseHash && compareCommit.previousHash !== options.baseHash) {
+    throw new Error(
+      `Selected compare commit ${options.selectedHash} does not retain base ${options.baseHash}; actual base was ${compareCommit.previousHash}.`
+    );
+  }
+
+  return compareCommit;
 }
 
 async function buildHarnessReportExecutionReport(

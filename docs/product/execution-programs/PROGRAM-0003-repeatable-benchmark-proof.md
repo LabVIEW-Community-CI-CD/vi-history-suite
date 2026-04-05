@@ -90,7 +90,12 @@ receipt contract, and shared dashboard-smoke progress now labels Windows
 reruns as Windows rather than Linux. A fresh governed `lvcompare` rerun on
 the published Windows image times out immediately at pair `1/129`, so
 `lvcompare` is not currently a viable Windows workaround for the pair-129
-`labview-cli-call-by-reference` seam.
+`labview-cli-call-by-reference` seam. The governed harness report-smoke
+surface now also accepts an exact selected/base hash pair plus explicit
+runtime timeout, and the targeted exact-pair `lvcompare` rerun on
+`6dd65df -> 3408654` likewise times out after `120000ms`, which strengthens
+the conclusion that Windows pair `129` is not recoverable through a simple
+engine swap.
 
 Current retained Linux blocker before activation:
 

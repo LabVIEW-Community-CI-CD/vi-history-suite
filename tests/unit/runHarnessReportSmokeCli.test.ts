@@ -23,6 +23,9 @@ describe('runHarnessReportSmokeCli', () => {
       harnessId: 'HARNESS-VHS-001',
       strictRsrcHeader: false,
       helpRequested: false,
+      selectedHash: undefined,
+      baseHash: undefined,
+      runtimeExecutionTimeoutMs: undefined,
       runtimePlatform: undefined,
       runtimeEngineOverride: undefined,
       preferBitness: undefined,
@@ -36,6 +39,12 @@ describe('runHarnessReportSmokeCli', () => {
         '--harness-id',
         'HARNESS-VHS-001',
         '--strict-rsrc-header',
+        '--selected-hash',
+        'abcdef1234567890',
+        '--base-hash',
+        '1111111122222222',
+        '--runtime-timeout-ms',
+        '120000',
         '--platform',
         'win32',
         '--engine',
@@ -53,6 +62,9 @@ describe('runHarnessReportSmokeCli', () => {
       harnessId: 'HARNESS-VHS-001',
       strictRsrcHeader: true,
       helpRequested: false,
+      selectedHash: 'abcdef1234567890',
+      baseHash: '1111111122222222',
+      runtimeExecutionTimeoutMs: 120000,
       runtimePlatform: 'win32',
       runtimeEngineOverride: 'lvcompare',
       preferBitness: 'x86',
@@ -65,6 +77,9 @@ describe('runHarnessReportSmokeCli', () => {
       harnessId: 'HARNESS-VHS-001',
       strictRsrcHeader: false,
       helpRequested: true,
+      selectedHash: undefined,
+      baseHash: undefined,
+      runtimeExecutionTimeoutMs: undefined,
       runtimePlatform: undefined,
       runtimeEngineOverride: undefined,
       preferBitness: undefined,
@@ -82,9 +97,16 @@ describe('runHarnessReportSmokeCli', () => {
     expect(() => parseHarnessReportSmokeArgs(['--prefer-bitness', 'bad'])).toThrow(
       /Unsupported value for --prefer-bitness/
     );
+    expect(() => parseHarnessReportSmokeArgs(['--runtime-timeout-ms', '0'])).toThrow(
+      /Unsupported value for --runtime-timeout-ms/
+    );
+    expect(() => parseHarnessReportSmokeArgs(['--base-hash', '1111'])).toThrow(
+      /--base-hash requires --selected-hash/
+    );
     expect(() => parseHarnessReportSmokeArgs(['--labview-cli-path'])).toThrow(
       /Missing value for --labview-cli-path/
     );
+    expect(getHarnessReportSmokeUsage()).toContain('--selected-hash');
     expect(getHarnessReportSmokeUsage()).toContain('--labview-cli-path');
   });
 
@@ -121,6 +143,12 @@ describe('runHarnessReportSmokeCli', () => {
           'win32',
           '--engine',
           'lvcompare',
+          '--selected-hash',
+          'abcdef1234567890',
+          '--base-hash',
+          '1111111122222222',
+          '--runtime-timeout-ms',
+          '120000',
           '--prefer-bitness',
           'x64',
           '--labview-cli-path',
@@ -142,6 +170,9 @@ describe('runHarnessReportSmokeCli', () => {
       cloneRoot: '/tmp/vi-history-suite/.cache/harnesses',
       reportRoot: '/tmp/vi-history-suite/.cache/harness-reports',
       strictRsrcHeader: false,
+      selectedHash: 'abcdef1234567890',
+      baseHash: '1111111122222222',
+      runtimeExecutionTimeoutMs: 120000,
       runtimePlatform: 'win32',
       runtimeEngineOverride: 'lvcompare',
       runtimeSettings: {
