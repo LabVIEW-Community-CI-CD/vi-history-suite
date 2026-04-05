@@ -49,7 +49,7 @@ Current retained benchmark truth before activation:
   handling for those mounted clones, defaults `HARNESS-VHS-002` to the
   retained `129`-commit comparable prefix unless overridden, accepts a
   targeted `--engine <labview-cli|lvcompare>` override for diagnosis reruns,
-  and writes
+  labels Windows diagnosis progress as Windows rather than Linux, and writes
   launch/log/summary receipts under
   `C:\Users\sveld\AppData\Local\VI History Suite\windows-benchmark-image-proof`
 - the latest local Windows benchmark-image proof now reaches pair `129/134`
@@ -66,6 +66,10 @@ Current retained benchmark truth before activation:
   in line with NI's documented Windows-container guidance, and now attempts
   one governed `LabVIEWCLI CloseLabVIEW -Headless` session reset plus one
   retry for that connected-session `Call By Reference` seam
+- a fresh governed Windows diagnosis rerun with `--engine lvcompare` now
+  proves there is no clean immediate fallback there either: the published
+  image times out on pair `1/129`, retains a failed partial summary under
+  `windows-benchmark-image-proof-lvcompare`, and remains characterization-only
 - local host-runnable proof for the Windows benchmark image is still open
 
 ## Scope

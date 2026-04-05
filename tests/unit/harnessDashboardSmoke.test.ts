@@ -112,6 +112,7 @@ describe('harness dashboard smoke renderers', () => {
 describe('runHarnessDashboardSmoke', () => {
   it('retains a factual dashboard smoke artifact set for the canonical harness', async () => {
     const writes = new Map<string, string>();
+    const progressMessages: string[] = [];
 
     let currentNowMs = Date.parse('2026-04-03T00:00:00.000Z');
     const result = await runHarnessDashboardSmoke(
@@ -120,7 +121,10 @@ describe('runHarnessDashboardSmoke', () => {
         cloneRoot: '/tmp/harnesses',
         reportRoot: '/tmp/reports',
         runtimePlatform: 'win32',
-        dashboardCommitWindow: 3
+        dashboardCommitWindow: 3,
+        reportProgress: async (update) => {
+          progressMessages.push(update.message);
+        }
       },
       {
         ensureHarnessClone: vi.fn().mockResolvedValue('/tmp/harnesses/ni-labview-icon-editor') as never,
@@ -324,6 +328,10 @@ describe('runHarnessDashboardSmoke', () => {
     expect(writes.get(result.reportHtmlPath)).toContain(
       'Dashboard ETA accuracy:</strong> not-yet-measurable (1 eta-eligible pair(s), 1 excluded)'
     );
+    expect(progressMessages).toContain(
+      'Stopping Windows benchmark at pair 2/2: runtime-execution-failed.'
+    );
+    expect(progressMessages).toContain('Windows benchmark retained a partial failed summary.');
   });
 
   it('stamps dashboard smoke output with the default ISO clock when no now override is supplied', async () => {

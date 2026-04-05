@@ -1075,6 +1075,9 @@
   proof runner accepts `--engine <labview-cli|lvcompare>`, injects that
   override into the container env, and still retains the same proof-root
   launch/log/summary contract
+- `TEST-UNIT-287`: verify shared dashboard-smoke progress messages label a
+  failed Windows rerun as `Windows benchmark ...` rather than `Linux
+  benchmark ...` while retaining the same partial-failure summary flow
 - `TEST-DOC-035`: review README, current-state, and ADR-0016 and confirm the
   canonical-host benchmark status surface is documented as the maintainer-facing
   in-IDE visibility and launch surface for the host Linux benchmark lane,
@@ -1169,6 +1172,10 @@
   documented as accepting a targeted `--engine` override for diagnosis reruns
   while preserving the comparable-prefix default and the same proof-root
   receipt contract
+- `TEST-DOC-051`: review current-state, PROGRAM-0003, and ISSUE-0408 and
+  confirm the targeted Windows `lvcompare` diagnosis rerun is documented as a
+  Windows proof surface that times out at pair `1/129`, rather than being
+  represented as a Linux benchmark event or as a viable Windows fallback
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed authority repo, private experiment mirror, wiki, and
   assurance-skill repos with authority roles, expected remotes, and primary

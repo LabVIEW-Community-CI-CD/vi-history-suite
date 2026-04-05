@@ -41,6 +41,7 @@ export interface HarnessDashboardSmokeOptions extends HarnessReportSmokeOptions 
   reportProgress?: (update: { message: string; increment?: number }) => void | Promise<void>;
   runtimeExecutionTimeoutMs?: number;
   runtimeHeartbeatIntervalMs?: number;
+  progressLabel?: string;
 }
 
 export interface HarnessDashboardSmokePairSummary {
@@ -146,6 +147,13 @@ export async function runHarnessDashboardSmoke(
     commits: model.commits.slice(0, historyLimit)
   };
   const pairCommits = dashboardModel.commits.filter((commit) => Boolean(commit.previousHash));
+  const progressLabel =
+    options.progressLabel ??
+    (options.runtimePlatform === 'win32'
+      ? 'Windows benchmark'
+      : options.runtimePlatform === 'linux'
+        ? 'Linux benchmark'
+        : 'Benchmark');
   const pairSummaries: HarnessDashboardSmokePairSummary[] = [];
   const completedPairDurationsMs: number[] = [];
   let etaEligiblePairCount = 0;
@@ -290,7 +298,7 @@ export async function runHarnessDashboardSmoke(
       terminalPairFailureReason =
         execution.record.runtimeExecution.failureReason ?? 'runtime-execution-failed';
       await options.reportProgress?.({
-        message: `Stopping Linux benchmark at pair ${index + 1}/${pairCommits.length}: ${
+        message: `Stopping ${progressLabel} at pair ${index + 1}/${pairCommits.length}: ${
           execution.record.runtimeExecution.failureReason ?? 'runtime-execution-failed'
         }.`
       });
@@ -404,8 +412,8 @@ export async function runHarnessDashboardSmoke(
   await options.reportProgress?.({
     message:
       completionState === 'completed'
-        ? 'Host Linux benchmark dashboard complete.'
-        : 'Host Linux benchmark retained a partial failed summary.'
+        ? `${progressLabel} dashboard complete.`
+        : `${progressLabel} retained a partial failed summary.`
   });
 
   return { report, reportJsonPath, reportMarkdownPath, reportHtmlPath };

@@ -86,7 +86,11 @@ Windows-container proof for pair `129` shows the same connected-session
 diagnosis. The governed canonical-host proof runner now also accepts a
 targeted `--engine <labview-cli|lvcompare>` override for diagnosis reruns
 while preserving the comparable-prefix default and the same proof-root
-receipt contract.
+receipt contract, and shared dashboard-smoke progress now labels Windows
+reruns as Windows rather than Linux. A fresh governed `lvcompare` rerun on
+the published Windows image times out immediately at pair `1/129`, so
+`lvcompare` is not currently a viable Windows workaround for the pair-129
+`labview-cli-call-by-reference` seam.
 
 Current retained Linux blocker before activation:
 
