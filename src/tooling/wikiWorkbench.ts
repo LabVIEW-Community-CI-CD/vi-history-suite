@@ -336,6 +336,10 @@ function buildRepoSurface(
   getGitRemote: ((repoPath: string) => string | undefined) | undefined
 ): RepoSurface {
   const actualRemote = getGitRemote?.(repo.localPathResolved) ?? defaultGitRemote(repo.localPathResolved);
+  const normalizedActualRemote = actualRemote ? normalizeRemoteForComparison(actualRemote) : undefined;
+  const normalizedExpectedRemote = repo.expectedRemote
+    ? normalizeRemoteForComparison(repo.expectedRemote)
+    : undefined;
   return {
     id: repo.id,
     role: repo.role,
@@ -344,9 +348,9 @@ function buildRepoSurface(
     expectedRemote: repo.expectedRemote,
     actualRemote,
     remoteMatchesExpected:
-      actualRemote === undefined || repo.expectedRemote === undefined
+      normalizedActualRemote === undefined || normalizedExpectedRemote === undefined
         ? undefined
-        : actualRemote === repo.expectedRemote
+        : normalizedActualRemote === normalizedExpectedRemote
   };
 }
 
@@ -359,6 +363,22 @@ function defaultGitRemote(repoPath: string): string | undefined {
   } catch {
     return undefined;
   }
+}
+
+function normalizeRemoteForComparison(remote: string): string {
+  const trimmed = remote.trim();
+  if (trimmed.startsWith('https://') || trimmed.startsWith('http://')) {
+    try {
+      const parsed = new URL(trimmed);
+      parsed.username = '';
+      parsed.password = '';
+      return parsed.toString().replace(/\/$/, '');
+    } catch {
+      return trimmed;
+    }
+  }
+
+  return trimmed;
 }
 
 function expectResolvedRepo(
@@ -394,7 +414,7 @@ export function buildWikiWorkbenchIssues(
       });
     }
 
-    if (repo.expectedRemote && repo.actualRemote && repo.expectedRemote !== repo.actualRemote) {
+    if (repo.remoteMatchesExpected === false && repo.expectedRemote && repo.actualRemote) {
       issues.push({
         severity: 'error',
         code: 'remote-mismatch',

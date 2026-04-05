@@ -175,6 +175,29 @@ describe('wiki workbench cli', () => {
     });
   });
 
+  it('accepts CI-authenticated GitLab HTTPS remotes as canonical repo matches', async () => {
+    const { repoRoot, wikiRoot } = await createWikiWorkbenchFixture();
+    const topology = resolveWikiWorkbenchTopology(repoRoot, undefined, {
+      getGitRemote: (candidate) => {
+        if (candidate === repoRoot) {
+          return 'https://gitlab-ci-token:masked@gitlab.com/svelderrainruiz/vi-history-suite.git';
+        }
+
+        if (candidate === wikiRoot) {
+          return 'https://gitlab-ci-token:masked@gitlab.com/svelderrainruiz/vi-history-suite.wiki.git';
+        }
+
+        return undefined;
+      }
+    });
+    const ledger = await readWikiPublicationLedger(topology.ledgerJsonPath);
+    const issues = await validateWikiWorkbenchLedger(topology, ledger);
+
+    expect(topology.authorityRepo.remoteMatchesExpected).toBe(true);
+    expect(topology.wikiRepo.remoteMatchesExpected).toBe(true);
+    expect(issues).toEqual([]);
+  });
+
   it('stages a next page, prepares publication, and invokes bundle sync with resolved paths', async () => {
     const { repoRoot, wikiRoot } = await createWikiWorkbenchFixture();
     const stdout: string[] = [];

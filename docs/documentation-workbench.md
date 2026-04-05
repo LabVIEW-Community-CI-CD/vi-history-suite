@@ -161,6 +161,9 @@ docs are wrong, those commands stop instead of staging weak publication input.
 If the only problem is an unwritable stale retained page directory, the
 workbench self-heals by using a writable recovery run path and records the
 actual retained location in the stage or publication-prep receipt.
+GitLab CI-authenticated HTTPS remotes are normalized before expected-remote
+comparison, so the published-image lane stays strict about repo identity
+without rejecting the runner's injected `gitlab-ci-token` credential form.
 
 ## Documentation Gate
 
