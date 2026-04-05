@@ -254,6 +254,9 @@ Committed and governed today:
   the tracked comparable-prefix commit window while the Linux full window
   remains blocked, and writes launch/log/summary receipts under
   `C:\Users\sveld\AppData\Local\VI History Suite\windows-benchmark-image-proof`,
+  now snapshots immutable per-run `dashboard-smoke` artifacts beside each
+  timestamped Windows benchmark summary so future packet derivation can prefer
+  the latest eligible proof instead of trusting only mutable `latest-*` files,
   while hosted Windows benchmark execution remains explicitly not-yet-governed
 - a retained documentation coherence ledger and wiki seed plan so future wiki
   work starts from governed docs instead of source or chat memory
@@ -514,6 +517,12 @@ executable. The latest retained proof now reaches pair `129/134` before
 retaining a connected-session `Error 66 / Call By Reference` seam, and the
 runtime now attempts one governed `LabVIEWCLI CloseLabVIEW -Headless` session
 reset plus one retry for that seam before terminal failure is retained.
+A newer contaminated rerun on the canonical host also exposed a separate
+false-green seam: stale host-side LabVIEW state could leave every prepared pair at
+`runtimeExecutionState=not-available` while the retained summary still looked
+completed. The Windows benchmark summary now fails closed on that condition,
+surfaces the retained blocked reason, and leaves the comparable-prefix packet
+on the last eligible proof instead of treating contamination as benchmark success.
 
 The generated `.cache/` evidence is local and regenerated. The committed source
 of truth for implemented-versus-partial research work is the documentation stack

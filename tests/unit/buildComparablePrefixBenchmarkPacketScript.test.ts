@@ -12,6 +12,18 @@ const comparablePacket = require(path.resolve(
   'scripts',
   'buildComparablePrefixBenchmarkPacket.js'
 )) as {
+  buildComparablePrefixBenchmarkPacket: (repoRoot: string, options?: { prefixPairCount?: number }) => {
+    comparablePrefix: { comparePairCount: number; lastComparablePairId: string };
+    surfaces: {
+      windowsBenchmarkImage: {
+        validatedComparablePairCount: number;
+        firstInvalidPairIndex?: number;
+        firstInvalidPairId?: string;
+        firstInvalidReason?: string;
+        comparablePrefixRuntimeTotalMs: number;
+      };
+    };
+  };
   summarizeDashboardPrefix: (
     dashboardJsonPath: string,
     comparablePairCount: number,
@@ -108,6 +120,45 @@ const comparablePacket = require(path.resolve(
       deltaRuntimeMs: number;
     };
   }) => string;
+  isEligibleWindowsBenchmarkImageSurface: (
+    summary: { terminalPairFailureReason?: string; notAvailablePairCount?: number },
+    dashboardSmoke: { pairSummaries?: Array<{ runtimeExecutionState?: string }> }
+  ) => boolean;
+  findLatestHostWindowsBenchmarkImageProof: (repoRoot: string) =>
+    | {
+        summaryPath: string;
+        dashboardSmokePath: string;
+        dashboardJsonPath?: string;
+        validatedPrefix?: {
+          validatedPairCount: number;
+          firstInvalidPairIndex?: number;
+          firstInvalidPairId?: string;
+          firstInvalidReason?: string;
+        };
+        prefixSummary?: {
+          representedPairCount: number;
+          comparablePairCount: number;
+          runtimeTotalMs: number;
+          providerCounts: Record<string, number>;
+          lastPairId: string;
+        };
+        dashboardSmoke?: { dashboardJsonFilePath?: string };
+        summary: { completedAt?: string; terminalPairDiagnosticReason?: string };
+      }
+    | undefined;
+  formatFullWindowOutcome: (
+    outcome:
+      | {
+          completionState?: string;
+          comparabilityState?: string;
+          processedPairCount?: number;
+          terminalPairIndex?: number;
+          terminalPairFailureReason?: string;
+          terminalPairDiagnosticReason?: string;
+        }
+      | undefined,
+    comparePairCount: number
+  ) => string;
 };
 
 describe('buildComparablePrefixBenchmarkPacket script', () => {
@@ -377,5 +428,228 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
     expect(markdown).toContain(
       'lvcompare: 6dd65df67428 -> 3408654e6802 :: command-timed-out'
     );
+  });
+
+  it('rejects contaminated Windows benchmark-image summaries for packet selection', () => {
+    expect(
+      comparablePacket.isEligibleWindowsBenchmarkImageSurface(
+        {
+          completionState: 'failed',
+          terminalPairFailureReason: 'windows-host-runtime-surface-contaminated',
+          notAvailablePairCount: 128
+        },
+        {
+          pairSummaries: [{ runtimeExecutionState: 'not-available' }]
+        }
+      )
+    ).toBe(false);
+
+    expect(
+      comparablePacket.isEligibleWindowsBenchmarkImageSurface(
+        {
+          completionState: 'failed',
+          terminalPairFailureReason: 'command-exited-nonzero',
+          notAvailablePairCount: 0
+        },
+        {
+          pairSummaries: [{ runtimeExecutionState: 'succeeded' }]
+        }
+      )
+    ).toBe(true);
+  });
+
+  it('prefers the latest eligible timestamped Windows benchmark-image run within one proof root', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-win-proof-root-'));
+    const benchmarkRoot = path.join(
+      tempRoot,
+      '.cache',
+      'windows-benchmark-image-proof',
+      'cache',
+      'github-experiments',
+      'windows-dashboard-benchmark',
+      'HARNESS-VHS-002'
+    );
+
+    await fs.mkdir(benchmarkRoot, { recursive: true });
+    await fs.writeFile(
+      path.join(benchmarkRoot, '2026-04-05-010000000.json'),
+      JSON.stringify({
+        benchmarkId: 'GITHUB-VHS-WINDOWS-DASHBOARD-BENCHMARK',
+        completedAt: '2026-04-05T01:00:00.000Z',
+        retainedArtifacts: {
+          runSmokeJsonPath: path.join(benchmarkRoot, '2026-04-05-010000000-dashboard-smoke.json')
+        }
+      }),
+      'utf8'
+    );
+    await fs.writeFile(
+      path.join(benchmarkRoot, '2026-04-05-010000000-dashboard-smoke.json'),
+      JSON.stringify({
+        pairSummaries: [{ runtimeExecutionState: 'succeeded' }]
+      }),
+      'utf8'
+    );
+    await fs.writeFile(
+      path.join(benchmarkRoot, '2026-04-05-020000000.json'),
+      JSON.stringify({
+        benchmarkId: 'GITHUB-VHS-WINDOWS-DASHBOARD-BENCHMARK',
+        completedAt: '2026-04-05T02:00:00.000Z',
+        notAvailablePairCount: 1,
+        terminalPairFailureReason: 'windows-host-runtime-surface-contaminated',
+        retainedArtifacts: {
+          runSmokeJsonPath: path.join(benchmarkRoot, '2026-04-05-020000000-dashboard-smoke.json')
+        }
+      }),
+      'utf8'
+    );
+    await fs.writeFile(
+      path.join(benchmarkRoot, '2026-04-05-020000000-dashboard-smoke.json'),
+      JSON.stringify({
+        pairSummaries: [{ runtimeExecutionState: 'not-available' }]
+      }),
+      'utf8'
+    );
+
+    const selected = comparablePacket.findLatestHostWindowsBenchmarkImageProof(tempRoot);
+
+    expect(selected?.summaryPath).toBe(
+      path.join(benchmarkRoot, '2026-04-05-010000000.json')
+    );
+    expect(selected?.dashboardSmokePath).toBe(
+      path.join(benchmarkRoot, '2026-04-05-010000000-dashboard-smoke.json')
+    );
+  });
+
+  it('falls back to the retained comparable-prefix packet when the latest live Windows proof root is contaminated', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-win-proof-packet-fallback-'));
+    const benchmarkRoot = path.join(
+      tempRoot,
+      '.cache',
+      'windows-benchmark-image-proof',
+      'cache',
+      'github-experiments',
+      'windows-dashboard-benchmark',
+      'HARNESS-VHS-002'
+    );
+    const retainedDashboardJsonPath = path.join(
+      tempRoot,
+      'retained-windows-benchmark-image-dashboard.json'
+    );
+    const retainedPacketPath = path.join(
+      tempRoot,
+      'docs',
+      'product',
+      'benchmark-packets',
+      'HARNESS-VHS-002-comparable-prefix.json'
+    );
+
+    await fs.mkdir(benchmarkRoot, { recursive: true });
+    await fs.mkdir(path.dirname(retainedPacketPath), { recursive: true });
+    await fs.writeFile(
+      path.join(benchmarkRoot, '2026-04-05-020000000.json'),
+      JSON.stringify({
+        benchmarkId: 'GITHUB-VHS-WINDOWS-DASHBOARD-BENCHMARK',
+        completedAt: '2026-04-05T02:00:00.000Z',
+        notAvailablePairCount: 1,
+        terminalPairFailureReason: 'windows-host-runtime-surface-contaminated',
+        retainedArtifacts: {
+          runSmokeJsonPath: path.join(benchmarkRoot, '2026-04-05-020000000-dashboard-smoke.json')
+        }
+      }),
+      'utf8'
+    );
+    await fs.writeFile(
+      path.join(benchmarkRoot, '2026-04-05-020000000-dashboard-smoke.json'),
+      JSON.stringify({
+        pairSummaries: [{ runtimeExecutionState: 'not-available' }]
+      }),
+      'utf8'
+    );
+    await fs.writeFile(
+      retainedDashboardJsonPath,
+      JSON.stringify({
+        entries: [],
+        summary: { representedPairCount: 128 }
+      }),
+      'utf8'
+    );
+    await fs.writeFile(
+      retainedPacketPath,
+      JSON.stringify({
+        generatedAt: '2026-04-05T01:00:00.000Z',
+        comparison: {
+          lastComparablePairId: '87792a7b6545'
+        },
+        surfaces: {
+          windowsBenchmarkImage: {
+            latestSummaryPath: '/retained/summary.json',
+            dashboardSmokePath: '/retained/dashboard-smoke.json',
+            dashboardJsonPath: retainedDashboardJsonPath,
+            imageRef: 'ghcr.io/example/windows-dashboard-benchmark:sha-old',
+            imageDigest: 'sha256:old',
+            validatedComparablePairCount: 128,
+            firstInvalidPairIndex: 129,
+            firstInvalidPairId: '3da72eea60aa',
+            firstInvalidReason: 'runtime-failed',
+            providerCounts: {
+              'host-native / labview-cli / auto / win32': 128
+            },
+            representedPairCount: 134,
+            comparablePrefixRuntimeTotalMs: 464798,
+            fullWindowBlocker: {
+              completionState: 'failed',
+              comparabilityState: 'characterization-only',
+              processedPairCount: 129,
+              generatedReportCount: 128,
+              terminalPairIndex: 129,
+              terminalPairFailureReason: 'command-exited-nonzero',
+              terminalPairDiagnosticReason: 'labview-cli-call-by-reference'
+            }
+          }
+        },
+        retainedArtifacts: {
+          windowsBenchmarkImageLatestSummaryPath: '/retained/summary.json',
+          windowsBenchmarkImageDashboardSmokePath: '/retained/dashboard-smoke.json'
+        }
+      }),
+      'utf8'
+    );
+
+    const selected = comparablePacket.findLatestHostWindowsBenchmarkImageProof(tempRoot);
+
+    expect(selected?.summaryPath).toBe('/retained/summary.json');
+    expect(selected?.dashboardSmoke?.dashboardJsonFilePath).toBe(retainedDashboardJsonPath);
+    expect(selected?.dashboardJsonPath).toBe(retainedDashboardJsonPath);
+    expect(selected?.validatedPrefix).toEqual({
+      validatedPairCount: 128,
+      firstInvalidPairIndex: 129,
+      firstInvalidPairId: '3da72eea60aa',
+      firstInvalidReason: 'runtime-failed'
+    });
+    expect(selected?.prefixSummary).toEqual({
+      representedPairCount: 134,
+      comparablePairCount: 128,
+      runtimeTotalMs: 464798,
+      providerCounts: {
+        'host-native / labview-cli / auto / win32': 128
+      },
+      lastPairId: '87792a7b6545'
+    });
+    expect(selected?.summary?.terminalPairDiagnosticReason).toBe(
+      'labview-cli-call-by-reference'
+    );
+  });
+
+  it('formats completed full-window outcomes without inventing a blocker pair', () => {
+    expect(
+      comparablePacket.formatFullWindowOutcome(
+        {
+          completionState: 'completed',
+          comparabilityState: 'comparable-to-linux-benchmark-image',
+          processedPairCount: 128
+        },
+        128
+      )
+    ).toBe('completed (comparable-to-linux-benchmark-image) after 128 / 128 pairs');
   });
 });

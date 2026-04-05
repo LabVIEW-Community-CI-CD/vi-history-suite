@@ -53,6 +53,7 @@ export interface HarnessDashboardSmokePairSummary {
   runtimeExecutionState: 'not-run' | 'not-available' | 'succeeded' | 'failed';
   runtimeProvider?: string;
   runtimeEngine?: string;
+  runtimeBlockedReason?: string;
   runtimeFailureReason?: string;
   runtimeDiagnosticReason?: string;
   runtimeDiagnosticNotes?: string[];
@@ -267,6 +268,7 @@ export async function runHarnessDashboardSmoke(
       runtimeExecutionState: execution.record.runtimeExecutionState,
       runtimeProvider: execution.record.runtimeSelection.provider,
       runtimeEngine: execution.record.runtimeSelection.engine,
+      runtimeBlockedReason: execution.record.runtimeExecution.blockedReason,
       runtimeFailureReason: execution.record.runtimeExecution.failureReason,
       runtimeDiagnosticReason: execution.record.runtimeExecution.diagnosticReason,
       runtimeDiagnosticNotes: execution.record.runtimeExecution.diagnosticNotes,
@@ -391,7 +393,8 @@ export async function runHarnessDashboardSmoke(
     terminalPairFailureReason,
     comparabilityState:
       completionState === 'completed' &&
-      pairSummaries.length === pairCommits.length
+      pairSummaries.length === pairCommits.length &&
+      pairSummaries.every((pair) => pair.runtimeExecutionState === 'succeeded')
         ? 'comparable-to-windows-baseline'
         : 'characterization-only',
     pairSummaries
@@ -628,7 +631,11 @@ function describePreparedPairOutcome(
   if (generatedReportExists) {
     return 'generated retained comparison metadata';
   }
-  if (reportStatus === 'blocked-preflight' || reportStatus === 'blocked-runtime') {
+  if (
+    reportStatus === 'blocked-preflight' ||
+    reportStatus === 'blocked-runtime' ||
+    runtimeExecutionState === 'not-available'
+  ) {
     return 'blocked retained pair evidence';
   }
   if (runtimeExecutionState === 'failed') {

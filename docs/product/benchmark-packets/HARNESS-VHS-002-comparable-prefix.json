@@ -1,7 +1,7 @@
 {
   "schema": "vi-history-suite/comparable-prefix-benchmark-packet@v1",
   "benchmarkId": "HARNESS-VHS-002-comparable-prefix",
-  "generatedAt": "2026-04-05T18:06:09.448Z",
+  "generatedAt": "2026-04-05T21:50:14.318Z",
   "harnessId": "HARNESS-VHS-002",
   "targetRelativePath": "resource/plugins/lv_icon.vi",
   "proofState": "bounded-prefix-comparable",

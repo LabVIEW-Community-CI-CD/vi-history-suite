@@ -438,4 +438,121 @@ describe('runHarnessDashboardSmoke', () => {
       vi.useRealTimers();
     }
   });
+
+  it('treats not-available pair runtime as blocked evidence and keeps the dashboard characterization-only', async () => {
+    const progressMessages: string[] = [];
+
+    const result = await runHarnessDashboardSmoke(
+      'HARNESS-VHS-001',
+      {
+        cloneRoot: '/tmp/harnesses',
+        reportRoot: '/tmp/reports',
+        runtimePlatform: 'win32',
+        dashboardCommitWindow: 3,
+        reportProgress: async (update) => {
+          progressMessages.push(update.message);
+        }
+      },
+      {
+        ensureHarnessClone: vi.fn().mockResolvedValue('/tmp/harnesses/ni-labview-icon-editor') as never,
+        getRepoHead: vi.fn().mockResolvedValue('abcdef1234567890') as never,
+        loadViHistoryViewModelFromFsPath: vi.fn().mockResolvedValue({
+          repositoryName: 'ni-labview-icon-editor',
+          repositoryRoot: '/tmp/harnesses/ni-labview-icon-editor',
+          relativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+          signature: 'LVIN',
+          eligible: true,
+          commits: [
+            {
+              hash: '3333333344444444',
+              authorDate: '2026-04-03T00:00:00Z',
+              authorName: 'A User',
+              subject: 'Newest',
+              previousHash: '1111111122222222'
+            },
+            {
+              hash: '1111111122222222',
+              authorDate: '2026-04-02T00:00:00Z',
+              authorName: 'B User',
+              subject: 'Middle',
+              previousHash: 'aaaaaaaa55555555'
+            },
+            {
+              hash: 'aaaaaaaa55555555',
+              authorDate: '2026-04-01T00:00:00Z',
+              authorName: 'C User',
+              subject: 'Oldest'
+            }
+          ]
+        }) as never,
+        evaluateViEligibilityForFsPath: vi.fn().mockResolvedValue({
+          eligible: true,
+          signature: 'LVIN'
+        }) as never,
+        executeHarnessComparisonReportForCommit: vi.fn().mockResolvedValue({
+          record: {
+            selectedHash: '3333333344444444',
+            baseHash: '1111111122222222',
+            reportStatus: 'ready-for-runtime',
+            runtimeExecutionState: 'not-available',
+            runtimeSelection: {
+              provider: 'host-native',
+              engine: 'labview-cli'
+            },
+            runtimeExecution: {
+              reportExists: false,
+              blockedReason: 'windows-host-runtime-surface-contaminated'
+            }
+          },
+          packetFilePath: '/tmp/report-packet-a.html',
+          reportFilePath: '/tmp/diff-report-a.html',
+          metadataFilePath: '/tmp/report-metadata-a.json',
+          archivedSourceRecord: {
+            archivePlan: {
+              sourceRecordFilePath: '/tmp/source-record-a.json'
+            }
+          }
+        }) as never,
+        buildDashboard: vi.fn().mockResolvedValue({
+          record: {
+            artifactPlan: {
+              dashboardDirectory:
+                '/tmp/reports/HARNESS-VHS-001/workspace-storage/dashboards/repo/file/window'
+            },
+            summary: {
+              representedPairCount: 2,
+              windowCompletenessState: 'complete',
+              archivedPairCount: 1,
+              missingPairCount: 1,
+              missingPairIds: ['pair-b'],
+              generatedReportCount: 0,
+              reportMetadataPairCount: 0,
+              failedPairCount: 0,
+              failedPairIds: [],
+              blockedPairCount: 1,
+              blockedPairIds: ['pair-a'],
+              overviewImageCount: 0,
+              detailItemCount: 0,
+              providerSummaries: [{ label: 'host-native / labview-cli / auto / win32', pairCount: 1 }]
+            }
+          },
+          jsonFilePath: '/tmp/reports/HARNESS-VHS-001/workspace-storage/dashboards/repo/file/window/dashboard.json',
+          htmlFilePath: '/tmp/reports/HARNESS-VHS-001/workspace-storage/dashboards/repo/file/window/dashboard.html'
+        }) as never,
+        mkdir: vi.fn().mockResolvedValue(undefined) as never,
+        writeFile: vi.fn().mockResolvedValue(undefined) as never
+      }
+    );
+
+    expect(result.report.completionState).toBe('completed');
+    expect(result.report.comparabilityState).toBe('characterization-only');
+    expect(result.report.pairSummaries[0]).toMatchObject({
+      runtimeExecutionState: 'not-available',
+      runtimeBlockedReason: 'windows-host-runtime-surface-contaminated'
+    });
+    expect(progressMessages).toContain(
+      'Prepared dashboard pair 1/2: blocked retained pair evidence.'
+    );
+    expect(progressMessages).toContain('Windows benchmark dashboard complete.');
+  });
 });

@@ -1,6 +1,6 @@
 # HARNESS-VHS-002 Comparable Prefix Benchmark Packet
 
-- Generated at: 2026-04-05T18:06:09.448Z
+- Generated at: 2026-04-05T21:50:14.318Z
 - Proof state: bounded-prefix-comparable
 - Target: resource/plugins/lv_icon.vi
 - Full window: 139 commits / 138 pairs
@@ -20,7 +20,7 @@
 - Dashboard JSON: /mnt/c/Users/sveld/AppData/Local/VI History Suite/host-linux-dashboard-benchmark/workspace-stage/current/.cache/harness-reports/HARNESS-VHS-002/workspace-storage/dashboards/5ae492b4571b/4053fc0e2e30/242c931b6588/dashboard.json
 - Validated comparable pairs: 134
 - Prefix runtime total: 442451 ms
-- Full-window blocker: pair 135 / 138 :: command-exited-nonzero (linux-headless-recursive-load)
+- Full-window outcome: pair 135 / 138 :: command-exited-nonzero (linux-headless-recursive-load)
 
 ## Windows Benchmark Image
 
@@ -30,7 +30,7 @@
 - Image ref: ghcr.io/svelderrainruiz/vi-history-suite-source-experiments/windows-dashboard-benchmark:sha-b679b8761f09df3f39d1a2d35addad2aaf0654b9
 - Validated comparable pairs: 128
 - Prefix runtime total: 464798 ms
-- Full-window blocker: pair 129 / 138 :: command-exited-nonzero (labview-cli-call-by-reference)
+- Full-window outcome: pair 129 / 138 :: command-exited-nonzero (labview-cli-call-by-reference)
 
 ## Windows Exact-Pair Diagnosis
 

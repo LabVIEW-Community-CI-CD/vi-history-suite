@@ -47,6 +47,7 @@ export interface GitHubWindowsDashboardBenchmarkSummary {
   generatedReportCount: number;
   blockedPairCount: number;
   failedPairCount: number;
+  notAvailablePairCount: number;
   noGeneratedReportPairCount: number;
   totalPairPreparationSeconds: number;
   meanPairPreparationSeconds: number;
@@ -84,6 +85,9 @@ export interface GitHubWindowsDashboardBenchmarkSummary {
     smokeHtmlPath: string;
     latestSummaryPath: string;
     runSummaryPath: string;
+    runSmokeJsonPath?: string;
+    runSmokeMarkdownPath?: string;
+    runSmokeHtmlPath?: string;
     pairFailureReceiptPath?: string;
   };
 }
@@ -102,6 +106,7 @@ export interface GitHubWindowsDashboardBenchmarkPairFailureReceipt {
   runtimeExecutionState: HarnessDashboardSmokeReport['pairSummaries'][number]['runtimeExecutionState'];
   runtimeProvider?: string;
   runtimeEngine?: string;
+  runtimeBlockedReason?: string;
   runtimeFailureReason?: string;
   runtimeDiagnosticReason?: string;
   runtimeImage: string;
@@ -151,6 +156,7 @@ export interface GitHubWindowsDashboardBenchmarkCliDeps {
   stdout?: { write(text: string): void };
   mkdir?: typeof fs.mkdir;
   writeFile?: typeof fs.writeFile;
+  copyFile?: typeof fs.copyFile;
   pathExists?: (filePath: string) => Promise<boolean>;
   hostPlatform?: NodeJS.Platform;
   now?: () => Date;
@@ -335,6 +341,7 @@ export async function runGitHubWindowsDashboardBenchmarkCli(
   const latestProgressPath = path.join(benchmarkRoot, 'latest-progress.json');
   const mkdir = deps.mkdir ?? fs.mkdir;
   const writeFile = deps.writeFile ?? fs.writeFile;
+  const copyFile = deps.copyFile ?? fs.copyFile;
   const pathExists = deps.pathExists ?? defaultPathExists;
   const runtimePairTimeoutMs = readPositiveIntegerEnv(
     'VIHS_GITHUB_WINDOWS_BENCHMARK_PAIR_TIMEOUT_MS',
@@ -415,8 +422,24 @@ export async function runGitHubWindowsDashboardBenchmarkCli(
     `${summary.completedAt.replaceAll(':', '').replaceAll('.', '').replace('T', '-').replace('Z', '')}.json`
   );
   const latestSummaryPath = path.join(benchmarkRoot, 'latest-summary.json');
+  const runSmokeArtifactBasePath = runSummaryPath.replace(/\.json$/u, '');
+  const runSmokeJsonPath = `${runSmokeArtifactBasePath}-dashboard-smoke.json`;
+  const runSmokeMarkdownPath = `${runSmokeArtifactBasePath}-dashboard-smoke.md`;
+  const runSmokeHtmlPath = `${runSmokeArtifactBasePath}-dashboard-smoke.html`;
   summary.retainedArtifacts.runSummaryPath = runSummaryPath;
   summary.retainedArtifacts.latestSummaryPath = latestSummaryPath;
+  if (await pathExists(result.reportJsonPath)) {
+    await copyFile(result.reportJsonPath, runSmokeJsonPath);
+    summary.retainedArtifacts.runSmokeJsonPath = runSmokeJsonPath;
+  }
+  if (await pathExists(result.reportMarkdownPath)) {
+    await copyFile(result.reportMarkdownPath, runSmokeMarkdownPath);
+    summary.retainedArtifacts.runSmokeMarkdownPath = runSmokeMarkdownPath;
+  }
+  if (await pathExists(result.reportHtmlPath)) {
+    await copyFile(result.reportHtmlPath, runSmokeHtmlPath);
+    summary.retainedArtifacts.runSmokeHtmlPath = runSmokeHtmlPath;
+  }
   if (summary.completionState === 'failed') {
     const failureReceipt = await buildGitHubWindowsDashboardBenchmarkPairFailureReceipt(
       summary,
@@ -478,17 +501,24 @@ export function buildGitHubWindowsDashboardBenchmarkSummary(
     result.report.pairSummaries.reduce((sum, pair) => sum + pair.actualPreparationSeconds, 0)
   );
   const pairCount = result.report.pairSummaries.length;
-  const blockedPairCount = result.report.pairSummaries.filter(
-    (pair) => pair.reportStatus === 'blocked-preflight' || pair.reportStatus === 'blocked-runtime'
-  ).length;
+  const blockedPairs = result.report.pairSummaries.filter(
+    (pair) =>
+      pair.reportStatus === 'blocked-preflight' ||
+      pair.reportStatus === 'blocked-runtime' ||
+      pair.runtimeExecutionState === 'not-available'
+  );
+  const blockedPairCount = blockedPairs.length;
   const failedPairCount = result.report.pairSummaries.filter(
     (pair) => pair.runtimeExecutionState === 'failed'
+  ).length;
+  const notAvailablePairCount = result.report.pairSummaries.filter(
+    (pair) => pair.runtimeExecutionState === 'not-available'
   ).length;
   const noGeneratedReportPairCount = result.report.pairSummaries.filter(
     (pair) =>
       !pair.generatedReportExists &&
       pair.reportStatus === 'ready-for-runtime' &&
-      pair.runtimeExecutionState !== 'failed'
+      pair.runtimeExecutionState === 'succeeded'
   ).length;
   const providerCounts = result.report.pairSummaries.reduce<Record<string, number>>(
     (counts, pair) => {
@@ -507,6 +537,16 @@ export function buildGitHubWindowsDashboardBenchmarkSummary(
       : result.report.pairSummaries.find(
           (pair) => pair.pairIndex === result.report.terminalPairIndex
         );
+  const firstNotAvailablePair = result.report.pairSummaries.find(
+    (pair) => pair.runtimeExecutionState === 'not-available'
+  );
+  const summaryCompletionState =
+    result.report.completionState === 'failed' || firstNotAvailablePair ? 'failed' : 'completed';
+  const summaryTerminalPair = terminalPair ?? firstNotAvailablePair;
+  const summaryTerminalPairFailureReason =
+    result.report.terminalPairFailureReason ??
+    summaryTerminalPair?.runtimeFailureReason ??
+    summaryTerminalPair?.runtimeBlockedReason;
 
   return {
     schema: 'vi-history-suite/github-windows-dashboard-benchmark@v1',
@@ -533,6 +573,7 @@ export function buildGitHubWindowsDashboardBenchmarkSummary(
     generatedReportCount: result.report.dashboardGeneratedReportCount,
     blockedPairCount,
     failedPairCount,
+    notAvailablePairCount,
     noGeneratedReportPairCount,
     totalPairPreparationSeconds,
     meanPairPreparationSeconds: roundSeconds(
@@ -542,20 +583,20 @@ export function buildGitHubWindowsDashboardBenchmarkSummary(
       Math.max(0, ...result.report.pairSummaries.map((pair) => pair.actualPreparationSeconds))
     ),
     dashboardWindowCompletenessState: result.report.dashboardWindowCompletenessState,
-    completionState: result.report.completionState,
+    completionState: summaryCompletionState,
     processedPairCount: result.report.processedPairCount,
-    terminalPairIndex: result.report.terminalPairIndex,
-    terminalPairFailureReason: result.report.terminalPairFailureReason,
-    terminalPairDiagnosticReason: terminalPair?.runtimeDiagnosticReason,
-    terminalPairDiagnosticNotes: terminalPair?.runtimeDiagnosticNotes,
+    terminalPairIndex: result.report.terminalPairIndex ?? firstNotAvailablePair?.pairIndex,
+    terminalPairFailureReason: summaryTerminalPairFailureReason,
+    terminalPairDiagnosticReason: summaryTerminalPair?.runtimeDiagnosticReason,
+    terminalPairDiagnosticNotes: summaryTerminalPair?.runtimeDiagnosticNotes,
     terminalOutcome:
-      result.report.completionState !== 'failed'
+      summaryCompletionState !== 'failed'
         ? 'completed'
-        : result.report.terminalPairFailureReason === 'command-timed-out'
+        : summaryTerminalPairFailureReason === 'command-timed-out'
           ? 'runtime-timed-out'
           : 'runtime-failed',
     comparabilityState:
-      result.report.completionState === 'completed'
+      summaryCompletionState === 'completed'
         ? 'comparable-to-linux-benchmark-image'
         : 'characterization-only',
     providerCounts,
@@ -605,7 +646,7 @@ export function formatGitHubWindowsDashboardBenchmarkSuccess(
     `Pair preparation total: ${summary.totalPairPreparationSeconds}s`,
     `Pair preparation mean/max: ${summary.meanPairPreparationSeconds}s / ${summary.maxPairPreparationSeconds}s`,
     `Completion: ${summary.completionState} (${summary.comparabilityState})`,
-    `Pair outcomes: generated=${summary.generatedReportCount} blocked=${summary.blockedPairCount} failed=${summary.failedPairCount} no-generated=${summary.noGeneratedReportPairCount}`,
+    `Pair outcomes: generated=${summary.generatedReportCount} blocked=${summary.blockedPairCount} failed=${summary.failedPairCount} not-available=${summary.notAvailablePairCount} no-generated=${summary.noGeneratedReportPairCount}`,
     `Providers: ${formatProviderCounts(summary.providerCounts)}`,
     `Smoke JSON: ${summary.retainedArtifacts.smokeJsonPath}`,
     `Benchmark summary: ${summary.retainedArtifacts.latestSummaryPath}`
@@ -659,6 +700,7 @@ async function buildGitHubWindowsDashboardBenchmarkPairFailureReceipt(
     runtimeExecutionState: pair.runtimeExecutionState,
     runtimeProvider: pair.runtimeProvider,
     runtimeEngine: pair.runtimeEngine,
+    runtimeBlockedReason: pair.runtimeBlockedReason,
     runtimeFailureReason: pair.runtimeFailureReason,
     runtimeDiagnosticReason: pair.runtimeDiagnosticReason,
     runtimeImage: summary.runtimeImage,

@@ -42,6 +42,12 @@ const HOST_WINDOWS_SUMMARY_RELATIVE_PATH = path.join(
   TARGET_HARNESS_ID,
   'latest-summary.json'
 );
+const HOST_WINDOWS_SUMMARY_DIRECTORY_RELATIVE_PATH = path.join(
+  'cache',
+  'github-experiments',
+  'windows-dashboard-benchmark',
+  TARGET_HARNESS_ID
+);
 const HOST_WINDOWS_SMOKE_RELATIVE_PATH = path.join(
   'cache',
   'harness-reports',
@@ -174,13 +180,12 @@ function buildComparablePrefixBenchmarkPacket(repoRoot, options = {}) {
   const linuxPrefix = summarizeDashboardPrefix(linuxHost.dashboardJsonPath, comparablePairCount, {
     linuxWorkspaceRoot: linuxHost.workspaceRoot
   });
-  const windowsBenchmarkImagePrefix = summarizeDashboardPrefix(
-    windowsBenchmarkImage.dashboardJsonPath,
-    comparablePairCount,
-    {
-      windowsWorkspaceRoot: windowsBenchmarkImage.windowsWorkspaceRoot
-    }
-  );
+  const windowsBenchmarkImagePrefix =
+    windowsBenchmarkImage.prefixSummary?.comparablePairCount === comparablePairCount
+      ? windowsBenchmarkImage.prefixSummary
+      : summarizeDashboardPrefix(windowsBenchmarkImage.dashboardJsonPath, comparablePairCount, {
+          windowsWorkspaceRoot: windowsBenchmarkImage.windowsWorkspaceRoot
+        });
 
   if (
     windowsPrefix.lastPairId !== linuxPrefix.lastPairId ||
@@ -361,9 +366,12 @@ function loadWindowsBenchmarkImageSurface(repoRoot) {
     throw new Error('No retained Windows benchmark-image proof summary was discovered.');
   }
   const windowsWorkspaceRoot = latest.workspaceRoot;
-  const dashboardJsonPath = normalizeArtifactPath(latest.dashboardSmoke.dashboardJsonFilePath, {
-    windowsWorkspaceRoot
-  });
+  const dashboardJsonPath =
+    typeof latest.dashboardJsonPath === 'string'
+      ? latest.dashboardJsonPath
+      : normalizeArtifactPath(latest.dashboardSmoke.dashboardJsonFilePath, {
+          windowsWorkspaceRoot
+        });
   const pairFailureReceiptPath = latest.summary.retainedArtifacts?.pairFailureReceiptPath
     ? normalizeArtifactPath(latest.summary.retainedArtifacts.pairFailureReceiptPath, {
         windowsWorkspaceRoot
@@ -380,9 +388,12 @@ function loadWindowsBenchmarkImageSurface(repoRoot) {
     windowsWorkspaceRoot,
     pairFailureReceiptPath,
     pairFailureReceipt,
-    validatedPrefix: validateDashboardPrefix(dashboardJsonPath, {
-      windowsWorkspaceRoot
-    })
+    validatedPrefix:
+      latest.validatedPrefix ??
+      validateDashboardPrefix(dashboardJsonPath, {
+        windowsWorkspaceRoot
+      }),
+    prefixSummary: latest.prefixSummary
   };
 }
 
@@ -432,14 +443,43 @@ function findLatestHostLinuxBenchmark(repoRoot) {
 function findLatestHostWindowsBenchmarkImageProof(repoRoot) {
   const candidates = [];
   for (const root of collectHostWindowsBenchmarkRoots(repoRoot)) {
-    const summaryPath = path.join(root, HOST_WINDOWS_SUMMARY_RELATIVE_PATH);
-    const dashboardSmokePath = path.join(root, HOST_WINDOWS_SMOKE_RELATIVE_PATH);
-    if (!fs.existsSync(summaryPath) || !fs.existsSync(dashboardSmokePath)) {
+    for (const candidate of collectWindowsBenchmarkImageProofCandidates(root)) {
+      candidates.push(candidate);
+    }
+  }
+
+  if (candidates.length === 0) {
+    return loadRetainedWindowsBenchmarkImageProofFallback(repoRoot);
+  }
+  candidates.sort((left, right) => right.sortTimestamp - left.sortTimestamp);
+  const eligibleCandidate = candidates.find((candidate) =>
+    isEligibleWindowsBenchmarkImageSurface(candidate.summary, candidate.dashboardSmoke)
+  );
+  if (eligibleCandidate) {
+    return eligibleCandidate;
+  }
+
+  return loadRetainedWindowsBenchmarkImageProofFallback(repoRoot) ?? candidates[0];
+}
+
+function collectWindowsBenchmarkImageProofCandidates(root) {
+  const candidates = [];
+  const summaryDirectoryPath = path.join(root, HOST_WINDOWS_SUMMARY_DIRECTORY_RELATIVE_PATH);
+  const latestSummaryPath = path.join(root, HOST_WINDOWS_SUMMARY_RELATIVE_PATH);
+  const latestDashboardSmokePath = path.join(root, HOST_WINDOWS_SMOKE_RELATIVE_PATH);
+
+  for (const summaryPath of collectWindowsBenchmarkSummaryPaths(
+    summaryDirectoryPath,
+    latestSummaryPath
+  )) {
+    const summary = tryReadJson(summaryPath);
+    if (!isWindowsBenchmarkSummaryRecord(summary)) {
       continue;
     }
-    const summary = tryReadJson(summaryPath);
+    const dashboardSmokePath =
+      resolveWindowsBenchmarkImageRunSmokePath(summary, root) ?? latestDashboardSmokePath;
     const dashboardSmoke = tryReadJson(dashboardSmokePath);
-    if (!summary || !dashboardSmoke) {
+    if (!dashboardSmoke) {
       continue;
     }
     const sortTimestamp = parseTimestamp(summary.completedAt ?? summary.startedAt, summaryPath);
@@ -453,11 +493,114 @@ function findLatestHostWindowsBenchmarkImageProof(repoRoot) {
     });
   }
 
-  if (candidates.length === 0) {
+  return candidates;
+}
+
+function collectWindowsBenchmarkSummaryPaths(summaryDirectoryPath, latestSummaryPath) {
+  const timestampedPaths = safeReadDir(summaryDirectoryPath)
+    .filter((entry) => entry.endsWith('.json'))
+    .filter((entry) => entry !== 'latest-summary.json')
+    .filter((entry) => entry !== 'latest-progress.json')
+    .filter((entry) => entry !== 'pending-run-summary.json')
+    .filter((entry) => !entry.startsWith('pair-failure-pair-'))
+    .map((entry) => path.join(summaryDirectoryPath, entry))
+    .filter((entryPath) => fs.existsSync(entryPath));
+
+  if (timestampedPaths.length > 0) {
+    return timestampedPaths;
+  }
+
+  return fs.existsSync(latestSummaryPath) ? [latestSummaryPath] : [];
+}
+
+function isWindowsBenchmarkSummaryRecord(summary) {
+  return (
+    summary &&
+    summary.benchmarkId === 'GITHUB-VHS-WINDOWS-DASHBOARD-BENCHMARK' &&
+    typeof summary.completedAt === 'string' &&
+    summary.retainedArtifacts &&
+    typeof summary.retainedArtifacts === 'object'
+  );
+}
+
+function resolveWindowsBenchmarkImageRunSmokePath(summary, windowsWorkspaceRoot) {
+  const candidatePaths = [
+    summary.retainedArtifacts?.runSmokeJsonPath,
+    summary.retainedArtifacts?.smokeJsonPath
+  ].filter((value) => typeof value === 'string' && value.length > 0);
+
+  for (const candidatePath of candidatePaths) {
+    const normalizedPath = normalizeArtifactPath(candidatePath, { windowsWorkspaceRoot });
+    if (fs.existsSync(normalizedPath)) {
+      return normalizedPath;
+    }
+  }
+
+  return undefined;
+}
+
+function loadRetainedWindowsBenchmarkImageProofFallback(repoRoot) {
+  const packetPath = path.join(repoRoot, DEFAULT_JSON_OUTPUT_RELATIVE_PATH);
+  const packet = tryReadJson(packetPath);
+  const surface = packet?.surfaces?.windowsBenchmarkImage;
+  if (!surface || typeof surface.dashboardJsonPath !== 'string') {
     return undefined;
   }
-  candidates.sort((left, right) => right.sortTimestamp - left.sortTimestamp);
-  return candidates[0];
+  if (!fs.existsSync(surface.dashboardJsonPath)) {
+    return undefined;
+  }
+
+  return {
+    workspaceRoot: path.join(repoRoot, '.cache', 'windows-benchmark-image-proof'),
+    summaryPath:
+      surface.latestSummaryPath ??
+      packet?.retainedArtifacts?.windowsBenchmarkImageLatestSummaryPath ??
+      packetPath,
+    dashboardSmokePath:
+      surface.dashboardSmokePath ??
+      packet?.retainedArtifacts?.windowsBenchmarkImageDashboardSmokePath ??
+      packetPath,
+    summary: {
+      completedAt: packet?.generatedAt,
+      completionState: surface.fullWindowBlocker?.completionState,
+      comparabilityState: surface.fullWindowBlocker?.comparabilityState,
+      processedPairCount: surface.fullWindowBlocker?.processedPairCount,
+      generatedReportCount: surface.fullWindowBlocker?.generatedReportCount,
+      terminalPairIndex: surface.fullWindowBlocker?.terminalPairIndex,
+      terminalPairFailureReason: surface.fullWindowBlocker?.terminalPairFailureReason,
+      terminalPairDiagnosticReason: surface.fullWindowBlocker?.terminalPairDiagnosticReason,
+      benchmarkImage: {
+        reference: surface.imageRef,
+        digest: surface.imageDigest
+      }
+    },
+    dashboardSmoke: {
+      dashboardJsonFilePath: surface.dashboardJsonPath,
+      pairSummaries: Array.from(
+        { length: Number(surface.validatedComparablePairCount) || 0 },
+        () => ({ runtimeExecutionState: 'succeeded' })
+      )
+    },
+    dashboardJsonPath: surface.dashboardJsonPath,
+    validatedPrefix: {
+      validatedPairCount: Number(surface.validatedComparablePairCount) || 0,
+      firstInvalidPairIndex: surface.firstInvalidPairIndex,
+      firstInvalidPairId: surface.firstInvalidPairId,
+      firstInvalidReason: surface.firstInvalidReason
+    },
+    prefixSummary: {
+      representedPairCount:
+        Number(surface.representedPairCount) || Number(surface.validatedComparablePairCount) || 0,
+      comparablePairCount: Number(surface.validatedComparablePairCount) || 0,
+      runtimeTotalMs: Number(surface.comparablePrefixRuntimeTotalMs) || 0,
+      providerCounts:
+        surface.providerCounts && typeof surface.providerCounts === 'object'
+          ? surface.providerCounts
+          : {},
+      lastPairId: packet?.comparison?.lastComparablePairId
+    },
+    sortTimestamp: parseTimestamp(packet?.generatedAt, packetPath)
+  };
 }
 
 function findLatestHostWindowsExactPairDiagnosis(repoRoot, engine) {
@@ -720,6 +863,22 @@ function normalizeArtifactPath(filePath, options = {}) {
   return normalized;
 }
 
+function isEligibleWindowsBenchmarkImageSurface(summary, dashboardSmoke) {
+  if (summary?.terminalPairFailureReason === 'windows-host-runtime-surface-contaminated') {
+    return false;
+  }
+  if (
+    Number.isFinite(summary?.notAvailablePairCount) &&
+    Number(summary.notAvailablePairCount) > 0
+  ) {
+    return false;
+  }
+  const pairSummaries = Array.isArray(dashboardSmoke?.pairSummaries)
+    ? dashboardSmoke.pairSummaries
+    : [];
+  return !pairSummaries.some((pair) => pair?.runtimeExecutionState === 'not-available');
+}
+
 function writeComparablePrefixBenchmarkPacket(packet, options) {
   fs.mkdirSync(path.dirname(options.jsonOutputPath), { recursive: true });
   fs.writeFileSync(options.jsonOutputPath, `${JSON.stringify(packet, null, 2)}\n`, 'utf8');
@@ -755,7 +914,7 @@ function renderComparablePrefixBenchmarkPacketMarkdown(packet) {
     `- Dashboard JSON: ${packet.surfaces.linuxHost.dashboardJsonPath}`,
     `- Validated comparable pairs: ${packet.surfaces.linuxHost.validatedComparablePairCount}`,
     `- Prefix runtime total: ${packet.surfaces.linuxHost.comparablePrefixRuntimeTotalMs} ms`,
-    `- Full-window blocker: pair ${packet.surfaces.linuxHost.fullWindowBlocker.terminalPairIndex} / ${packet.fullWindow.comparePairCount} :: ${packet.surfaces.linuxHost.fullWindowBlocker.terminalPairFailureReason} (${packet.surfaces.linuxHost.fullWindowBlocker.terminalPairDiagnosticReason})`,
+    `- Full-window outcome: ${formatFullWindowOutcome(packet.surfaces.linuxHost.fullWindowBlocker, packet.fullWindow.comparePairCount)}`,
     '',
     '## Windows Benchmark Image',
     '',
@@ -765,7 +924,7 @@ function renderComparablePrefixBenchmarkPacketMarkdown(packet) {
     `- Image ref: ${packet.surfaces.windowsBenchmarkImage.imageRef}`,
     `- Validated comparable pairs: ${packet.surfaces.windowsBenchmarkImage.validatedComparablePairCount}`,
     `- Prefix runtime total: ${packet.surfaces.windowsBenchmarkImage.comparablePrefixRuntimeTotalMs} ms`,
-    `- Full-window blocker: pair ${packet.surfaces.windowsBenchmarkImage.fullWindowBlocker.terminalPairIndex} / ${packet.fullWindow.comparePairCount} :: ${packet.surfaces.windowsBenchmarkImage.fullWindowBlocker.terminalPairFailureReason} (${packet.surfaces.windowsBenchmarkImage.fullWindowBlocker.terminalPairDiagnosticReason})`,
+    `- Full-window outcome: ${formatFullWindowOutcome(packet.surfaces.windowsBenchmarkImage.fullWindowBlocker, packet.fullWindow.comparePairCount)}`,
     ...(exactPairDiagnostics.length > 0
       ? [
           '',
@@ -806,9 +965,10 @@ function formatComparablePrefixBenchmarkPacket(packet) {
     `- linuxHostRuntimeMs: ${packet.surfaces.linuxHost.comparablePrefixRuntimeTotalMs}`,
     `- linuxVsWindowsRatio: ${formatOptionalNumber(packet.comparison.linuxVsWindowsRuntimeRatio)}`,
     `- windowsVsLinuxSpeedupFactor: ${formatOptionalNumber(packet.comparison.windowsVsLinuxSpeedupFactor)}`,
-    `- linuxFullWindowBlocker: pair ${packet.surfaces.linuxHost.fullWindowBlocker.terminalPairIndex} / ${packet.fullWindow.comparePairCount} :: ${packet.surfaces.linuxHost.fullWindowBlocker.terminalPairFailureReason} (${packet.surfaces.linuxHost.fullWindowBlocker.terminalPairDiagnosticReason})`,
+    `- linuxFullWindowOutcome: ${formatFullWindowOutcome(packet.surfaces.linuxHost.fullWindowBlocker, packet.fullWindow.comparePairCount)}`,
     `- windowsBenchmarkImage: ${packet.surfaces.windowsBenchmarkImage.state}`,
     `- windowsBenchmarkImageRuntimeMs: ${packet.surfaces.windowsBenchmarkImage.comparablePrefixRuntimeTotalMs}`,
+    `- windowsBenchmarkImageFullWindowOutcome: ${formatFullWindowOutcome(packet.surfaces.windowsBenchmarkImage.fullWindowBlocker, packet.fullWindow.comparePairCount)}`,
     ...(exactPairDiagnostics.length > 0
       ? [
           `- windowsExactPairDiagnostics: ${exactPairDiagnostics
@@ -824,6 +984,16 @@ function formatComparablePrefixBenchmarkPacket(packet) {
 
 function formatOptionalNumber(value) {
   return typeof value === 'number' ? value.toFixed(4) : 'n/a';
+}
+
+function formatFullWindowOutcome(outcome, comparePairCount) {
+  if (!outcome) {
+    return 'none';
+  }
+  if (Number.isInteger(outcome.terminalPairIndex)) {
+    return `pair ${String(outcome.terminalPairIndex)} / ${String(comparePairCount)} :: ${String(outcome.terminalPairFailureReason ?? 'unknown')} (${String(outcome.terminalPairDiagnosticReason ?? 'none')})`;
+  }
+  return `${String(outcome.completionState ?? 'unknown')} (${String(outcome.comparabilityState ?? 'unknown')}) after ${String(outcome.processedPairCount ?? 'unknown')} / ${String(comparePairCount)} pairs`;
 }
 
 function formatHashPair(baseHash, selectedHash) {
@@ -873,6 +1043,8 @@ module.exports = {
   findLatestHostLinuxBenchmark,
   findLatestHostWindowsBenchmarkImageProof,
   formatComparablePrefixBenchmarkPacket,
+  formatFullWindowOutcome,
+  isEligibleWindowsBenchmarkImageSurface,
   normalizeArtifactPath,
   parseArgs,
   readWindowsExactPairDiagnosis,

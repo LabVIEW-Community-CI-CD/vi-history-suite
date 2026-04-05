@@ -115,6 +115,8 @@ describe('runGitHubWindowsDashboardBenchmarkCli', () => {
     const writes: string[] = [];
     const mkdir = vi.fn().mockResolvedValue(undefined);
     const writeFile = vi.fn().mockResolvedValue(undefined);
+    const copyFile = vi.fn().mockResolvedValue(undefined);
+    const pathExists = vi.fn().mockResolvedValue(true);
     const runner = vi.fn().mockImplementation(async (_harnessId, options) => {
       await options.reportProgress?.({
         message:
@@ -181,8 +183,8 @@ describe('runGitHubWindowsDashboardBenchmarkCli', () => {
               pairIndex: 2,
               selectedHash: 'cccc',
               baseHash: 'dddd',
-              reportStatus: 'blocked-runtime',
-              runtimeExecutionState: 'not-available',
+              reportStatus: 'ready-for-runtime',
+              runtimeExecutionState: 'succeeded',
               runtimeProvider: 'host-native',
               runtimeEngine: 'labview-cli',
               generatedReportExists: false,
@@ -196,18 +198,13 @@ describe('runGitHubWindowsDashboardBenchmarkCli', () => {
               selectedHash: 'eeee',
               baseHash: 'ffff',
               reportStatus: 'ready-for-runtime',
-              runtimeExecutionState: 'failed',
+              runtimeExecutionState: 'succeeded',
               runtimeProvider: 'host-native',
               runtimeEngine: 'labview-cli',
-              runtimeFailureReason: 'command-exited-nonzero',
-              generatedReportExists: false,
+              generatedReportExists: true,
               packetFilePath: 'C:\\tmp\\packet-3.json',
               reportFilePath: 'C:\\tmp\\report-3.html',
               metadataFilePath: 'C:\\tmp\\metadata-3.json',
-              runtimeStdoutPath: 'C:\\tmp\\runtime-stdout-3.txt',
-              runtimeStderrPath: 'C:\\tmp\\runtime-stderr-3.txt',
-              runtimeDiagnosticLogPath: 'C:\\tmp\\runtime-diagnostic-3.txt',
-              runtimeProcessObservationPath: 'C:\\tmp\\runtime-process-observation-3.json',
               actualPreparationSeconds: 7
             }
           ]
@@ -224,6 +221,8 @@ describe('runGitHubWindowsDashboardBenchmarkCli', () => {
         runner,
         mkdir,
         writeFile,
+        copyFile,
+        pathExists,
         now: (() => {
           const values = [
             new Date('2026-04-05T03:00:00.000Z'),
@@ -257,6 +256,10 @@ describe('runGitHubWindowsDashboardBenchmarkCli', () => {
     );
     expect(writeFile.mock.calls[0]?.[0]).toContain('latest-progress.json');
     expect(writeFile.mock.calls.at(-1)?.[1]).toContain('"phase": "completed"');
+    expect(copyFile).toHaveBeenCalledWith(
+      'C:\\tmp\\reports\\HARNESS-VHS-002\\dashboard-smoke.json',
+      expect.stringContaining('dashboard-smoke.json')
+    );
     expect(writes.join('')).toContain(
       'VIHS_PROGRESS: Preparing the Windows benchmark workspace for HARNESS-VHS-002.'
     );
@@ -264,6 +267,113 @@ describe('runGitHubWindowsDashboardBenchmarkCli', () => {
       'GitHub Windows dashboard benchmark completed for HARNESS-VHS-002'
     );
     expect(writes.join('')).toContain('Completion: completed (comparable-to-linux-benchmark-image)');
+    expect(writes.join('')).toContain(
+      'Pair outcomes: generated=136 blocked=0 failed=0 not-available=0 no-generated=1'
+    );
+  });
+
+  it('fails closed when the retained Windows benchmark surface is contaminated before runtime launch', async () => {
+    const writes: string[] = [];
+    const writeFile = vi.fn().mockResolvedValue(undefined);
+    const copyFile = vi.fn().mockResolvedValue(undefined);
+    const runner = vi.fn().mockResolvedValue({
+      report: {
+        harnessId: 'HARNESS-VHS-002',
+        repositoryUrl: 'https://github.com/ni/labview-icon-editor.git',
+        cloneDirectory: 'C:\\tmp\\harness',
+        targetRelativePath: 'resource/plugins/lv_icon.vi',
+        head: 'abcdef1234567890',
+        generatedAt: '2026-04-05T03:00:00.000Z',
+        eligible: true,
+        signature: 'LVIN',
+        dashboardCommitWindow: 129,
+        comparePairCount: 128,
+        dashboardFilePath: 'C:\\tmp\\dashboard.html',
+        dashboardJsonFilePath: 'C:\\tmp\\dashboard.json',
+        dashboardWindowCompletenessState: 'complete',
+        dashboardArchivedPairCount: 128,
+        dashboardMissingPairCount: 0,
+        dashboardGeneratedReportCount: 0,
+        dashboardMetadataPairCount: 0,
+        dashboardOverviewImageCount: 0,
+        dashboardDetailItemCount: 0,
+        dashboardProviderSummaries: [],
+        completionState: 'completed',
+        processedPairCount: 128,
+        terminalPairIndex: undefined,
+        terminalPairFailureReason: undefined,
+        comparabilityState: 'characterization-only',
+        pairSummaries: [
+          {
+            pairIndex: 1,
+            selectedHash: 'aaaa',
+            baseHash: 'bbbb',
+            reportStatus: 'ready-for-runtime',
+            runtimeExecutionState: 'not-available',
+            runtimeProvider: 'host-native',
+            runtimeEngine: 'labview-cli',
+            runtimeBlockedReason: 'windows-host-runtime-surface-contaminated',
+            runtimeDiagnosticNotes: [
+              'Windows host preflight observed existing runtime processes before launch: LabVIEW.exe (pid 3288).',
+              'Windows host preflight observed an existing TCP listener on the governed VI Server port before launch: LabVIEW.exe listening on 0.0.0.0:3363.'
+            ],
+            generatedReportExists: false,
+            packetFilePath: 'C:\\tmp\\packet-1.json',
+            reportFilePath: 'C:\\tmp\\report-1.html',
+            metadataFilePath: 'C:\\tmp\\metadata-1.json',
+            actualPreparationSeconds: 1
+          }
+        ]
+      },
+      reportJsonPath: 'C:\\tmp\\reports\\HARNESS-VHS-002\\dashboard-smoke.json',
+      reportMarkdownPath: 'C:\\tmp\\reports\\HARNESS-VHS-002\\dashboard-smoke.md',
+      reportHtmlPath: 'C:\\tmp\\reports\\HARNESS-VHS-002\\dashboard-smoke.html'
+    });
+
+    await expect(
+      runGitHubWindowsDashboardBenchmarkCli([], {
+        repoRoot: '/tmp/vi-history-suite',
+        runner,
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile,
+        copyFile,
+        pathExists: vi.fn().mockResolvedValue(true),
+        now: (() => {
+          const values = [
+            new Date('2026-04-05T03:00:00.000Z'),
+            new Date('2026-04-05T03:00:05.000Z')
+          ];
+          return () => values.shift() ?? new Date('2026-04-05T03:00:05.000Z');
+        })(),
+        stdout: {
+          write(text: string) {
+            writes.push(text);
+          }
+        }
+      })
+    ).rejects.toThrow(
+      /Windows benchmark failed at pair 1\/128: windows-host-runtime-surface-contaminated/
+    );
+
+    const retainedSummary = writeFile.mock.calls
+      .find((call) => String(call[0]).endsWith('latest-summary.json'))?.[1];
+    const retainedFailureReceipt = writeFile.mock.calls
+      .map((call) => String(call[1]))
+      .find((contents) => contents.includes('"schema": "vi-history-suite/github-windows-dashboard-benchmark-pair-failure@v1"'));
+
+    expect(String(retainedSummary)).toContain('"completionState": "failed"');
+    expect(String(retainedSummary)).toContain('"blockedPairCount": 1');
+    expect(String(retainedSummary)).toContain('"notAvailablePairCount": 1');
+    expect(String(retainedSummary)).toContain(
+      '"terminalPairFailureReason": "windows-host-runtime-surface-contaminated"'
+    );
+    expect(String(retainedSummary)).toContain('"comparabilityState": "characterization-only"');
+    expect(retainedFailureReceipt).toContain('"runtimeBlockedReason": "windows-host-runtime-surface-contaminated"');
+    expect(copyFile).toHaveBeenCalledWith(
+      'C:\\tmp\\reports\\HARNESS-VHS-002\\dashboard-smoke.json',
+      expect.stringContaining('dashboard-smoke.json')
+    );
+    expect(writeFile.mock.calls.at(-1)?.[1]).toContain('"phase": "failed"');
   });
 
   it('fails closed when env-derived explicit Windows runtime overrides bypass the CLI surface', async () => {

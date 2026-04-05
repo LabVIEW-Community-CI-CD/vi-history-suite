@@ -1303,6 +1303,12 @@
   hard stops, the Windows `auto` / `host-only` / `docker-only` decision
   matrix, and the open execution-policy debt item aligned across authority docs
   while the manifest still lacks a first-class `viHistorySuite.executionMode`
+- `TEST-UNIT-301`: verify the Windows benchmark summary fails closed when any
+  retained pair is `runtimeExecutionState=not-available`, retains the blocked
+  reason as terminal benchmark truth, snapshots immutable per-run
+  `dashboard-smoke` artifacts beside the timestamped summary, and lets
+  comparable-prefix packet selection prefer the latest eligible timestamped
+  proof within one proof root
 - `TEST-DOC-067`: review extension-execution-policy, ADR-0025, ADR-0026,
   PROGRAM-0005, ISSUE-0410, current-state, and the debt ledger and confirm the
   queued package makes canonical execution-request validation, selected
@@ -1313,6 +1319,11 @@
   Debt-Retirement-Contract, and Debt-Ledger pages and confirm the published
   reader surfaces represent ADR-0026 plus the stronger execution-policy
   scenario matrix rather than only the earlier high-level mode contract
+- `TEST-DOC-069`: review README, current-state, harnesses, PROGRAM-0003, and
+  ISSUE-0408 and confirm contaminated Windows benchmark-image reruns are
+  documented as fail-closed `not-available` benchmark truth with immutable
+  per-run `dashboard-smoke` snapshots rather than as completed comparable
+  proof
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed authority repo, private experiment mirror, wiki, and
   assurance-skill repos with authority roles, expected remotes, and primary

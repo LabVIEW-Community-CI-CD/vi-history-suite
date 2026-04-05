@@ -149,6 +149,11 @@
   receipts for both supported engines on that boundary:
   `labview-cli => command-exited-nonzero (labview-cli-call-by-reference)` and
   `lvcompare => command-timed-out`
+- future Windows benchmark-image reruns now fail closed when any prepared pair
+  is retained as `runtimeExecutionState=not-available`, and the benchmark CLI
+  snapshots immutable per-run `dashboard-smoke` artifacts beside each
+  timestamped summary so comparable-prefix packet derivation can ignore later
+  contaminated reruns instead of trusting only mutable latest files
 - current retained Linux full-window blocker:
   `pair 135 / 138 :: command-exited-nonzero (linux-headless-recursive-load)`
 - the full 139-commit / 138-pair window remains the deep Windows benchmark

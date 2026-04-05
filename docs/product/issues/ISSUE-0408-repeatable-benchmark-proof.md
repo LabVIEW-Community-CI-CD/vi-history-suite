@@ -137,6 +137,18 @@ Current retained benchmark truth before activation:
   arguments, environment variables, and entrypoint-local defaults are resolved,
   and the Windows benchmark CLI no longer injects hidden explicit Windows
   executable defaults when no explicit override was requested
+- `VHS-REQ-476` now governs contaminated Windows benchmark-image reruns too:
+  a fresh canonical-host proof attempt that started with stale non-headless
+  host `LabVIEW.exe` plus a preexisting governed VI Server listener exposed a
+  false-green seam where every prepared pair remained
+  `runtimeExecutionState=not-available` even though the retained summary still
+  looked completed; the Windows benchmark summary now fails closed on any
+  retained `not-available` pair, surfaces the blocked reason such as
+  `windows-host-runtime-surface-contaminated`, marks the run
+  `characterization-only`, snapshots immutable per-run `dashboard-smoke`
+  artifacts beside the timestamped run summary, and keeps future
+  comparable-prefix packet derivation on the latest eligible proof instead of
+  trusting only mutable `latest-summary.json` and `dashboard-smoke.json`
 - local host-runnable proof for the Windows benchmark image is still open
 
 ## Scope
