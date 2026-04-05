@@ -1316,8 +1316,8 @@
   current package makes canonical execution-request validation, selected
   `LabVIEW.ini` / port truth, Windows container-capability hard stops,
   visible Windows acquisition-state truth, the in-panel latest compare-runtime
-  summary, the concise compare blocked/failure warning surface, and mode-aware
-  guidance explicit
+  summary, rejected-provider visibility on the panel/warning path, the concise
+  compare blocked/failure warning surface, and mode-aware guidance explicit
 - `TEST-DOC-068`: review User-Workflow, Requirements-And-Verification,
   Current-State, Architecture, Architecture-Decision-Records, Development-Queue,
   Debt-Retirement-Contract, and Debt-Ledger pages and confirm the published

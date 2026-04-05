@@ -2240,6 +2240,7 @@ describe('createOpenViHistoryCommand', () => {
       runtimeDoctorSummaryLines: [
         'Selected provider=windows-container; engine=labview-cli; platform=win32; preferBitness=x64.',
         'Selected execution mode=auto.',
+        'Provider decision: rejected host-native because existing LabVIEW-related processes or a listener on governed VI Server port 3364 already exist.',
         'Tool facts: WindowsContainerCapability=available; ContainerAcquisitionState=failed',
         'Next action: repair Docker connectivity or image registry access, then pull the governed Windows container image and rerun comparison report generation.'
       ],
@@ -2286,13 +2287,13 @@ describe('createOpenViHistoryCommand', () => {
 
     const panel = createWebviewPanelMock.mock.results[0]?.value as MockPanel | undefined;
     expect(showWarningMessageMock).toHaveBeenCalledWith(
-      'Generate compare blocked. Provider: windows-container. Execution mode: auto. Windows image acquisition: failed. Blocked reason: windows-container-image-acquisition-failed. Next action: repair Docker connectivity or image registry access, then pull the governed Windows container image and rerun comparison report generation.'
+      'Generate compare blocked. Provider: windows-container. Execution mode: auto. Windows image acquisition: failed. Rejected providers: host-native because existing LabVIEW-related processes or a listener on governed VI Server port 3364 already exist. Blocked reason: windows-container-image-acquisition-failed. Next action: repair Docker connectivity or image registry access, then pull the governed Windows container image and rerun comparison report generation.'
     );
     expect(panel?.webview.postMessage).toHaveBeenCalledWith({
       type: 'comparisonRuntimeResult',
       status: 'blocked',
       summary:
-        'Generate compare for abcdef12 vs 11111111. Provider: windows-container. Execution mode: auto. Report status: blocked-runtime. Runtime state: not-available. Windows image acquisition: failed. Blocked reason: windows-container-image-acquisition-failed.',
+        'Generate compare for abcdef12 vs 11111111. Provider: windows-container. Execution mode: auto. Report status: blocked-runtime. Runtime state: not-available. Windows image acquisition: failed. Rejected providers: host-native because existing LabVIEW-related processes or a listener on governed VI Server port 3364 already exist. Blocked reason: windows-container-image-acquisition-failed.',
       nextAction:
         'Next action: repair Docker connectivity or image registry access, then pull the governed Windows container image and rerun comparison report generation.'
     });

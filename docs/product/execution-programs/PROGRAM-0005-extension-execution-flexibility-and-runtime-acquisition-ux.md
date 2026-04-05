@@ -140,16 +140,17 @@ The repo already retains six bounded implementation slices under this program:
   - retained runtime doctor and packet surfaces now carry acquisition state as
     governed truth, and acquisition failure now blocks runtime truthfully
 - a fifth slice now retains that runtime truth in the history panel itself:
-  - compare actions now post the latest selected provider, execution mode,
-    acquisition state, blocked/failure reason, and next action back into the
-    history panel after the action completes
+  - compare actions now post the latest selected provider, rejected-provider
+    reasons, execution mode, acquisition state, blocked/failure reason, and
+    next action back into the history panel after the action completes
   - users no longer need to leave the panel for the retained packet just to
     recover the latest compare-runtime provider/acquisition decision
 - a sixth slice now surfaces that same truth through the transient notification
   channel when compare execution blocks or fails:
   - compare actions now emit one concise mode-aware warning for blocked or
-    failed runtime states using the retained provider, execution mode,
-    acquisition state, diagnostic/failure reason, and next action
+    failed runtime states using the retained provider, rejected-provider
+    reasons, execution mode, acquisition state, diagnostic/failure reason,
+    and next action
   - users no longer need to infer truthful hard stops only from progress
     notifications or after-the-fact packet inspection
 

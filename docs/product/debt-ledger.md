@@ -51,9 +51,9 @@ The governing contract and taxonomy are:
   Windows provider is selected or rejected; governed Windows image acquisition
   now runs with visible progress and retained acquisition state, and the
   history panel now retains the latest compare-runtime provider/acquisition
-  summary in-panel, and blocked or failed compare actions now emit one concise
-  mode-aware warning, but fuller front-facing provider transparency still
-  remains open.
+  summary plus rejected-provider reasons in-panel, and blocked or failed
+  compare actions now emit one concise mode-aware warning, but fuller
+  front-facing provider transparency still remains open.
 
 ## Operational Rule
 

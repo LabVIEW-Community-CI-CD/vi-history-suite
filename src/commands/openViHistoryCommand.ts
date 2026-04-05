@@ -920,6 +920,9 @@ function buildComparisonRuntimePanelUpdate(
   const acquisitionState = deriveWindowsContainerAcquisitionStateFromDoctorSummary(
     result.runtimeDoctorSummaryLines
   );
+  const rejectedProviderSummary = deriveRejectedProviderSummaryFromDoctorSummary(
+    result.runtimeDoctorSummaryLines
+  );
   const segments = [
     `${commandLabel} for ${pairLabel}.`,
     `Provider: ${runtimeProvider ?? 'none'}.`,
@@ -930,6 +933,9 @@ function buildComparisonRuntimePanelUpdate(
 
   if (acquisitionState) {
     segments.push(`Windows image acquisition: ${acquisitionState}.`);
+  }
+  if (rejectedProviderSummary) {
+    segments.push(`Rejected providers: ${rejectedProviderSummary}.`);
   }
   if (result.blockedReason) {
     segments.push(`Blocked reason: ${result.blockedReason}.`);
@@ -975,6 +981,9 @@ function buildComparisonRuntimeWarningMessage(
   const acquisitionState = deriveWindowsContainerAcquisitionStateFromDoctorSummary(
     result.runtimeDoctorSummaryLines
   );
+  const rejectedProviderSummary = deriveRejectedProviderSummaryFromDoctorSummary(
+    result.runtimeDoctorSummaryLines
+  );
   const segments = [
     status === 'blocked'
       ? `${commandLabel} blocked.`
@@ -989,6 +998,9 @@ function buildComparisonRuntimeWarningMessage(
   }
   if (acquisitionState) {
     segments.push(`Windows image acquisition: ${acquisitionState}.`);
+  }
+  if (rejectedProviderSummary) {
+    segments.push(`Rejected providers: ${rejectedProviderSummary}.`);
   }
   if (result.blockedReason) {
     segments.push(`Blocked reason: ${result.blockedReason}.`);
@@ -1080,4 +1092,27 @@ function deriveWindowsContainerAcquisitionStateFromDoctorSummary(
 
   const match = toolFactsLine.match(/ContainerAcquisitionState=([^;]+)/);
   return match?.[1];
+}
+
+function deriveRejectedProviderSummaryFromDoctorSummary(
+  summaryLines: string[] | undefined
+): string | undefined {
+  const rejectedProviderDetails = summaryLines
+    ?.filter((line) => line.startsWith('Provider decision: rejected '))
+    .map((line) => {
+      const match = line.match(/^Provider decision: rejected ([^ ]+) because (.+)\.$/);
+      if (!match) {
+        return undefined;
+      }
+
+      const [, provider, reason] = match;
+      return `${provider} because ${reason}`;
+    })
+    .filter((value): value is string => Boolean(value));
+
+  if (!rejectedProviderDetails?.length) {
+    return undefined;
+  }
+
+  return rejectedProviderDetails.join(' | ');
 }

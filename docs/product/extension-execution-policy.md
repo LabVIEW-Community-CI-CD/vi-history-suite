@@ -52,12 +52,13 @@ policy:
   the Windows container-capability facts and retained acquisition state
   explicitly instead of collapsing them into one image-availability assumption
 - the history panel now retains the latest compare-runtime summary in-panel so
-  users can see the chosen provider, execution mode, acquisition state, and
-  next action without leaving the panel for a retained packet
+  users can see the chosen provider, rejected-provider reasons, execution
+  mode, acquisition state, and next action without leaving the panel for a
+  retained packet
 - blocked or failed compare actions now also emit one concise mode-aware
-  warning that reuses the retained provider, execution mode, acquisition
-  state, and next-action truth instead of leaving those hard stops implicit in
-  progress logs or packets only
+  warning that reuses the retained provider, rejected-provider reasons,
+  execution mode, acquisition state, and next-action truth instead of leaving
+  those hard stops implicit in progress logs or packets only
 - benchmark-proof and exact-pair diagnosis entrypoints now fail closed on
   contaminated or contradictory runtime-override bundles
 - canonical effective execution-request validation is now partially

@@ -81,11 +81,11 @@ The repo-side selector slices already landed and are no longer queued intent:
 - retained runtime doctor and packet surfaces now carry acquisition state and
   acquisition-failure hard stops as governed truth
 - the history panel now also retains the latest compare-runtime summary with
-  selected provider, execution mode, acquisition state, and next action after
-  compare actions complete
+  selected provider, rejected-provider reasons, execution mode, acquisition
+  state, and next action after compare actions complete
 - blocked or failed compare actions now also emit one concise mode-aware
-  warning with the retained provider, execution mode, acquisition state,
-  reason, and next action
+  warning with the retained provider, rejected-provider reasons, execution
+  mode, acquisition state, reason, and next action
 
 ## Required Evidence
 
