@@ -243,6 +243,11 @@ describe('comparisonReportRuntimeExecution', () => {
           .mockResolvedValueOnce(Buffer.from('right')),
         mkdir: vi.fn().mockResolvedValue(undefined),
         writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        readFile: vi
+          .fn()
+          .mockResolvedValue(
+            '<html>left-111111112222-foo.vi right-abcdef123456-foo.vi</html>'
+          ) as never,
         pathExists: vi.fn().mockResolvedValue(true),
         runCommand: vi.fn().mockResolvedValue({
           exitCode: 2,
@@ -260,6 +265,62 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(result.record.runtimeExecution.failureReason).toBe('command-exited-nonzero');
     expect(result.record.runtimeExecution.exitCode).toBe(2);
     expect(result.record.runtimeExecution.reportExists).toBe(true);
+  });
+
+  it('discards a nonzero-exit report when the generated html does not reference the current staged revisions', async () => {
+    const removePath = vi.fn().mockResolvedValue(undefined);
+
+    const result = await executeComparisonReport(
+      {
+        record: createReadyRecord(),
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        readFile: vi
+          .fn()
+          .mockResolvedValue(
+            '<html>left-abcdef123456-foo.vi right-deadbeefcafe-foo.vi</html>'
+          ) as never,
+        pathExists: vi.fn().mockResolvedValue(true),
+        removePath: removePath as never,
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 1,
+          stdout: '',
+          stderr: 'tool failed'
+        }),
+        nowIso: vi.fn().mockReturnValue('2026-04-02T01:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValueOnce(1000).mockReturnValueOnce(1005),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32'
+      }
+    );
+
+    expect(result.record.runtimeExecutionState).toBe('failed');
+    expect(result.record.runtimeExecution.failureReason).toBe('command-exited-nonzero');
+    expect(result.record.runtimeExecution.reportExists).toBe(false);
+    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+      'Generated comparison report did not reference the current staged revisions (left-111111112222-foo.vi, right-abcdef123456-foo.vi) and was discarded as stale output.'
+    );
+    expect(removePath).toHaveBeenCalledWith(
+      '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
+      expect.objectContaining({
+        recursive: true,
+        force: true
+      })
+    );
+    expect(removePath).toHaveBeenCalledWith(
+      '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi_files',
+      expect.objectContaining({
+        recursive: true,
+        force: true
+      })
+    );
   });
 
   it('classifies a log-only nonzero LabVIEW CLI failure when no report is generated', async () => {

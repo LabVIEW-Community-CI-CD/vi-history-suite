@@ -990,6 +990,10 @@
   host-readable from within the active benchmark container and retains the
   copied diagnostic artifact instead of defaulting to
   `runtime-diagnostic-log-unreadable`
+- `TEST-UNIT-268`: verify comparison-report runtime execution clears reused
+  working report outputs before each pair and discards a nonzero-exit HTML
+  report when the file contents do not reference the current staged left/right
+  revision filenames
 - `TEST-DOC-035`: review README, current-state, and ADR-0016 and confirm the
   canonical-host benchmark status surface is documented as the maintainer-facing
   in-IDE visibility and launch surface for the host Linux benchmark lane,

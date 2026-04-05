@@ -31,6 +31,7 @@ export interface ComparisonReportRuntimeExecutionDeps {
   writeFile?: typeof fs.writeFile;
   copyFile?: typeof fs.copyFile;
   copyDirectory?: typeof fs.cp;
+  removePath?: typeof fs.rm;
   unlinkFile?: typeof fs.unlink;
   readFile?: typeof fs.readFile;
   pathExists?: (filePath: string) => Promise<boolean>;
@@ -125,6 +126,7 @@ export async function executeComparisonReport(
   const writeFile = deps.writeFile ?? fs.writeFile;
   const copyFile = deps.copyFile ?? fs.copyFile;
   const copyDirectory = deps.copyDirectory ?? fs.cp;
+  const removePath = deps.removePath ?? fs.rm;
   const unlinkFile = deps.unlinkFile ?? fs.unlink;
   const readFile = deps.readFile ?? fs.readFile;
   const pathExists = deps.pathExists ?? pathExistsForReport;
@@ -169,6 +171,7 @@ export async function executeComparisonReport(
         writeFile,
         copyFile,
         copyDirectory,
+        removePath,
         unlinkFile,
         readFile,
         pathExists,
@@ -236,6 +239,7 @@ async function runHostNativeExecution(
     writeFile: typeof fs.writeFile;
     copyFile: typeof fs.copyFile;
     copyDirectory: typeof fs.cp;
+    removePath: typeof fs.rm;
     unlinkFile: typeof fs.unlink;
     readFile: typeof fs.readFile;
     pathExists: (filePath: string) => Promise<boolean>;
@@ -312,6 +316,10 @@ async function runHostNativeExecution(
     };
   }
 
+  await clearStaleExecutedReportArtifacts(record, executionContext, {
+    removePath: deps.removePath
+  });
+
   const startedAt = deps.nowIso();
   const startedMs = deps.nowMs();
 
@@ -339,16 +347,22 @@ async function runHostNativeExecution(
         record.runtimeSelection.labviewExe?.path,
       diagnosticPathMapping: executionContext.diagnosticPathMapping
     });
-    const reportExists = await finalizeExecutedReport(
+    const finalizedReport = await finalizeExecutedReport(
       record,
       executionContext,
+      {
+        validateIdentity: commandResult.timedOut || commandResult.exitCode !== 0
+      },
       {
         pathExists: deps.pathExists,
         copyFile: deps.copyFile,
         copyDirectory: deps.copyDirectory,
+        removePath: deps.removePath,
+        readFile: deps.readFile,
         mkdir: deps.mkdir
       }
     );
+    const reportExists = finalizedReport.reportExists;
     const succeeded = !commandResult.timedOut && commandResult.exitCode === 0 && reportExists;
     const failureClassification = commandResult.timedOut
       ? {
@@ -371,6 +385,7 @@ async function runHostNativeExecution(
     const diagnosticNotes = mergeDiagnosticNotes(
       buildProcessObservationNotes(processObservation),
       diagnostics.notes,
+      finalizedReport.validationNotes,
       failureClassification.notes
     );
 
@@ -654,20 +669,49 @@ async function prepareExecutionContext(
 async function finalizeExecutedReport(
   record: ComparisonReportPacketRecord,
   executionContext: PreparedExecutionContext,
+  options: {
+    validateIdentity: boolean;
+  },
   deps: {
     pathExists: (filePath: string) => Promise<boolean>;
     copyFile: typeof fs.copyFile;
     copyDirectory: typeof fs.cp;
+    removePath: typeof fs.rm;
+    readFile: typeof fs.readFile;
     mkdir: typeof fs.mkdir;
   }
-): Promise<boolean> {
+): Promise<{
+  reportExists: boolean;
+  validationNotes: string[];
+}> {
   const executedReportExists = await deps.pathExists(executionContext.reportFilePath);
   if (!executedReportExists) {
-    return false;
+    return {
+      reportExists: false,
+      validationNotes: []
+    };
+  }
+
+  if (options.validateIdentity) {
+    const validationNotes = await validateExecutedReportIdentity(record, executionContext.reportFilePath, {
+      readFile: deps.readFile
+    });
+    if (validationNotes.length > 0) {
+      await clearStaleExecutedReportArtifacts(record, executionContext, {
+        removePath: deps.removePath
+      });
+      return {
+        reportExists: false,
+        validationNotes
+      };
+    }
   }
 
   if (executionContext.reportFilePath === record.artifactPlan.reportFilePath) {
-    return true;
+    return {
+      reportExists: true,
+      validationNotes: []
+    };
   }
 
   await deps.mkdir(path.dirname(record.artifactPlan.reportFilePath), { recursive: true });
@@ -677,7 +721,66 @@ async function finalizeExecutedReport(
     copyDirectory: deps.copyDirectory,
     mkdir: deps.mkdir
   });
-  return true;
+  return {
+    reportExists: true,
+    validationNotes: []
+  };
+}
+
+async function clearStaleExecutedReportArtifacts(
+  record: ComparisonReportPacketRecord,
+  executionContext: PreparedExecutionContext,
+  deps: {
+    removePath: typeof fs.rm;
+  }
+): Promise<void> {
+  const reportPaths = new Set([
+    executionContext.reportFilePath,
+    record.artifactPlan.reportFilePath
+  ]);
+
+  for (const reportFilePath of reportPaths) {
+    for (const targetPath of [reportFilePath, buildReportAssetsDirectoryPath(reportFilePath)]) {
+      try {
+        await deps.removePath(targetPath, {
+          recursive: true,
+          force: true
+        });
+      } catch {
+        // Fail closed on the subsequent existence checks even if stale cleanup cannot complete.
+      }
+    }
+  }
+}
+
+async function validateExecutedReportIdentity(
+  record: ComparisonReportPacketRecord,
+  reportFilePath: string,
+  deps: {
+    readFile: typeof fs.readFile;
+  }
+): Promise<string[]> {
+  let reportText: string;
+  try {
+    reportText = await deps.readFile(reportFilePath, 'utf8');
+  } catch {
+    return [
+      'Generated comparison report could not be read back for staged-file validation and was discarded.'
+    ];
+  }
+
+  const expectedFilenames = [
+    record.stagedRevisionPlan.leftFilename,
+    record.stagedRevisionPlan.rightFilename
+  ];
+  const missingFilenames = expectedFilenames.filter((filename) => !reportText.includes(filename));
+  if (missingFilenames.length === 0) {
+    return [];
+  }
+
+  return [
+    `Generated comparison report did not reference the current staged revisions (${expectedFilenames.join(', ')}) and was discarded as stale output.`
+  ];
 }
 
 interface WindowsInteropLayout {
