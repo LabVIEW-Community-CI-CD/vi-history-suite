@@ -157,6 +157,8 @@ test_extension:
   stage: test
   image: node:24
   script:
+    - git clone "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.wiki.git" ../vi-history-suite.wiki
+    - export VIHS_WIKI_REPO_ROOT="${CI_PROJECT_DIR}/../vi-history-suite.wiki"
     - npm ci
     - npm run compile
     - npm run test
@@ -230,6 +232,8 @@ release_extension:
   needs:
     - test_extension
   script:
+    - git clone "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.wiki.git" ../vi-history-suite.wiki
+    - export VIHS_WIKI_REPO_ROOT="${CI_PROJECT_DIR}/../vi-history-suite.wiki"
     - npm ci
     - PACKAGE_VERSION=$(node -p "require('./package.json').version")
     - |

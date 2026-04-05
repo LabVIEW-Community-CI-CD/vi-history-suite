@@ -250,6 +250,9 @@ describe('documentation-package workbench', () => {
     expect(gitlabCi).toContain('${CI_PROJECT_PATH}.wiki.git');
     expect(gitlabCi).toContain('VIHS_WIKI_REPO_ROOT="${CI_PROJECT_DIR}/../vi-history-suite.wiki"');
     expect(gitlabCi).toContain('npm run docs:gate:core');
+    expect(gitlabCi).toContain('test_extension:');
+    expect(gitlabCi).toContain('release_extension:');
+    expect(gitlabCi).toContain('npm run test');
     expect(gitlabCi).toContain('publish_docs_authoring_image:');
     expect(gitlabCi).toContain('wiki_workbench_prepare_published:');
     expect(gitlabCi).toContain('/kaniko/executor');

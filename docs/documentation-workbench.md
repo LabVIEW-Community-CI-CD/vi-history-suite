@@ -174,11 +174,17 @@ wiki set, the canonical wiki root is:
 - `VIHS_WIKI_REPO_ROOT` when explicitly set
 - otherwise the sibling checkout at `../vi-history-suite.wiki`
 
-In GitLab CI, `docs_control_plane_check` first clones
-`${CI_PROJECT_PATH}.wiki.git` into `../vi-history-suite.wiki`, exports
-`VIHS_WIKI_REPO_ROOT`, and then runs `npm run docs:gate:core` so the same
-coverage invariant is enforced in CI without relying on an implicit runner-side
-checkout.
+In GitLab CI, every job that evaluates the live wiki-backed documentation
+invariants first clones `${CI_PROJECT_PATH}.wiki.git` into
+`../vi-history-suite.wiki`, exports `VIHS_WIKI_REPO_ROOT`, and then runs its
+gate:
+
+- `docs_control_plane_check` before `npm run docs:gate:core`
+- `test_extension` before `npm run test`
+- `release_extension` before the tag-gated `npm run test`
+
+That keeps the same coverage invariant enforced in CI without relying on an
+implicit runner-side checkout.
 
 The bundled user-doc surface is refreshed separately from the gate:
 
