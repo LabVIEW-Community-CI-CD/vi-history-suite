@@ -52,12 +52,13 @@
       "wikiPath": "Comparison-Reports-And-Dashboard-Review",
       "wikiFileName": "Comparison-Reports-And-Dashboard-Review.md",
       "status": "published",
-      "publishedDate": "2026-04-03",
-      "wikiCommit": "9b32d5a",
+      "publishedDate": "2026-04-05",
+      "wikiCommit": "5e386f3",
       "primaryAuthority": [
         "docs/requirements/srs.md",
         "docs/product/ni-comparison-report-metadata-inventory.md",
         "docs/product/current-state.md",
+        "docs/product/canonical-exact-pair-diagnosis.md",
         "docs/testing/test-plan.md",
         "docs/research/authoritative/research-alignment.md"
       ]
@@ -84,8 +85,8 @@
       "wikiPath": "Architecture",
       "wikiFileName": "Architecture.md",
       "status": "published",
-      "publishedDate": "2026-04-03",
-      "wikiCommit": "d3d4be6",
+      "publishedDate": "2026-04-05",
+      "wikiCommit": "5e386f3",
       "primaryAuthority": [
         "docs/architecture/overview.md",
         "docs/requirements/srs.md",
@@ -94,7 +95,9 @@
         "docs/architecture/adr/ADR-0010-dual-host-extension-proof-and-linux-bootstrap.md",
         "docs/architecture/adr/ADR-0012-documentation-package-workbench-image.md",
         "docs/architecture/adr/ADR-0013-authority-first-wiki-seeding.md",
-        "docs/architecture/adr/ADR-0014-cross-repo-navigation-control-plane.md"
+        "docs/architecture/adr/ADR-0014-cross-repo-navigation-control-plane.md",
+        "docs/architecture/adr/ADR-0020-bounded-cross-os-benchmark-prefix-for-harness-vhs-002.md",
+        "docs/architecture/adr/ADR-0021-canonical-exact-pair-diagnosis-arguments.md"
       ]
     },
     {
@@ -228,8 +231,8 @@
       "wikiPath": "Architecture-Decision-Records",
       "wikiFileName": "Architecture-Decision-Records.md",
       "status": "published",
-      "publishedDate": "2026-04-04",
-      "wikiCommit": "3e80690",
+      "publishedDate": "2026-04-05",
+      "wikiCommit": "5e386f3",
       "primaryAuthority": [
         "docs/architecture/overview.md",
         "docs/architecture/adr/ADR-0001-vscode-typescript-baseline.md",
@@ -250,7 +253,9 @@
         "docs/architecture/adr/ADR-0016-gitlab-authority-and-github-linux-experiment-lane.md",
         "docs/architecture/adr/ADR-0017-bounded-repo-family-support.md",
         "docs/architecture/adr/ADR-0018-windows-benchmark-image-lane.md",
-        "docs/architecture/adr/ADR-0019-governed-wiki-workbench-system.md"
+        "docs/architecture/adr/ADR-0019-governed-wiki-workbench-system.md",
+        "docs/architecture/adr/ADR-0020-bounded-cross-os-benchmark-prefix-for-harness-vhs-002.md",
+        "docs/architecture/adr/ADR-0021-canonical-exact-pair-diagnosis-arguments.md"
       ]
     }
   ],

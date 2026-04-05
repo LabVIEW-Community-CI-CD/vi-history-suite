@@ -127,6 +127,17 @@ selected `LabVIEW.ini` path and explicit VI Server TCP port
 still times out after `120000ms` while only `LabVIEWCLI.exe` is observed. So
 port drift is now a governed narrowed seam, but it is not sufficient by itself
 to solve the Windows host blocker.
+One more canonical host-native rerun under `LV_RTE_HEADLESS=1` now retains
+`-Headless true` in the governed `runtimeArgs`, but it still times out after
+`120000ms` while only `LabVIEWCLI.exe` is observed and `LabVIEW.exe` never
+appears. So explicit headless mode narrows the native-host Windows seam
+further, but it still does not convert the host x86 proof into the connected
+image-like failure shape.
+To keep future exact-pair experiments from contaminating retained blocker
+evidence, `VHS-REQ-449` now governs canonical diagnosis arguments:
+`runHarnessReportSmoke` rejects incomplete selected/base hash bundles,
+incomplete engine/path override bundles, wrong executable basenames, and
+Windows bitness/path contradictions before a targeted rerun can start.
 
 Current retained Linux blocker before activation:
 

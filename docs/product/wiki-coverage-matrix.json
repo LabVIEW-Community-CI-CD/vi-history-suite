@@ -114,6 +114,16 @@
       ]
     },
     {
+      "sourcePath": "docs/product/canonical-exact-pair-diagnosis.md",
+      "itemType": "exact-pair-diagnosis-control",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Comparison-Reports-And-Dashboard-Review.md",
+        "Current-State.md"
+      ]
+    },
+    {
       "sourcePath": "docs/product/documentation-coherence-ledger.md",
       "itemType": "documentation-coherence-ledger",
       "representationStatus": "complete",
@@ -482,6 +492,17 @@
     },
     {
       "sourcePath": "docs/architecture/adr/ADR-0020-bounded-cross-os-benchmark-prefix-for-harness-vhs-002.md",
+      "itemType": "adr",
+      "aggregationRuleId": "adr-set-aggregate",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Architecture.md",
+        "Architecture-Decision-Records.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/architecture/adr/ADR-0021-canonical-exact-pair-diagnosis-arguments.md",
       "itemType": "adr",
       "aggregationRuleId": "adr-set-aggregate",
       "representationStatus": "complete",

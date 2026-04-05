@@ -16,6 +16,10 @@ const WINDOWS_LABVIEW_EXE_PATH =
   'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe';
 const WINDOWS_LVCOMPARE_PATH =
   'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe';
+const WINDOWS_X64_LABVIEW_EXE_PATH =
+  'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe';
+const FULL_SELECTED_HASH = 'abcdef1234567890abcdef1234567890abcdef12';
+const FULL_BASE_HASH = '1111111122222222333333334444444455555555';
 
 describe('runHarnessReportSmokeCli', () => {
   it('parses deterministic runtime override flags and help', () => {
@@ -40,37 +44,35 @@ describe('runHarnessReportSmokeCli', () => {
         'HARNESS-VHS-001',
         '--strict-rsrc-header',
         '--selected-hash',
-        'abcdef1234567890',
+        FULL_SELECTED_HASH,
         '--base-hash',
-        '1111111122222222',
+        FULL_BASE_HASH,
         '--runtime-timeout-ms',
         '120000',
         '--platform',
         'win32',
         '--engine',
-        'lvcompare',
+        'labview-cli',
         '--prefer-bitness',
         'x86',
         '--labview-cli-path',
         WINDOWS_LABVIEW_CLI_PATH,
         '--labview-exe-path',
-        WINDOWS_LABVIEW_EXE_PATH,
-        '--lvcompare-path',
-        WINDOWS_LVCOMPARE_PATH
+        WINDOWS_LABVIEW_EXE_PATH
       ])
     ).toEqual({
       harnessId: 'HARNESS-VHS-001',
       strictRsrcHeader: true,
       helpRequested: false,
-      selectedHash: 'abcdef1234567890',
-      baseHash: '1111111122222222',
+      selectedHash: FULL_SELECTED_HASH,
+      baseHash: FULL_BASE_HASH,
       runtimeExecutionTimeoutMs: 120000,
       runtimePlatform: 'win32',
-      runtimeEngineOverride: 'lvcompare',
+      runtimeEngineOverride: 'labview-cli',
       preferBitness: 'x86',
       labviewCliPath: WINDOWS_LABVIEW_CLI_PATH,
       labviewExePath: WINDOWS_LABVIEW_EXE_PATH,
-      lvComparePath: WINDOWS_LVCOMPARE_PATH
+      lvComparePath: undefined
     });
 
     expect(parseHarnessReportSmokeArgs(['--help'])).toEqual({
@@ -103,11 +105,97 @@ describe('runHarnessReportSmokeCli', () => {
     expect(() => parseHarnessReportSmokeArgs(['--base-hash', '1111'])).toThrow(
       /--base-hash requires --selected-hash/
     );
+    expect(() => parseHarnessReportSmokeArgs(['--selected-hash', '1111'])).toThrow(
+      /--selected-hash must be a full 40-character git hash/
+    );
+    expect(
+      () =>
+        parseHarnessReportSmokeArgs([
+          '--selected-hash',
+          FULL_SELECTED_HASH
+        ])
+    ).toThrow(/--selected-hash requires --base-hash/);
+    expect(
+      () =>
+        parseHarnessReportSmokeArgs([
+          '--platform',
+          'linux',
+          '--prefer-bitness',
+          'x86'
+        ])
+    ).toThrow(/--prefer-bitness is only supported with --platform win32/);
+    expect(
+      () =>
+        parseHarnessReportSmokeArgs([
+          '--labview-cli-path',
+          WINDOWS_LABVIEW_CLI_PATH
+        ])
+    ).toThrow(/Canonical runtime overrides require --platform/);
+    expect(
+      () =>
+        parseHarnessReportSmokeArgs([
+          '--platform',
+          'win32',
+          '--labview-cli-path',
+          WINDOWS_LABVIEW_CLI_PATH
+        ])
+    ).toThrow(/Canonical runtime overrides require --engine/);
+    expect(
+      () =>
+        parseHarnessReportSmokeArgs([
+          '--platform',
+          'win32',
+          '--engine',
+          'labview-cli',
+          '--labview-cli-path',
+          WINDOWS_LABVIEW_CLI_PATH
+        ])
+    ).toThrow(/require both --labview-cli-path and --labview-exe-path/);
+    expect(
+      () =>
+        parseHarnessReportSmokeArgs([
+          '--platform',
+          'win32',
+          '--engine',
+          'lvcompare',
+          '--labview-cli-path',
+          WINDOWS_LABVIEW_CLI_PATH
+        ])
+    ).toThrow(/does not allow --labview-cli-path/);
+    expect(
+      () =>
+        parseHarnessReportSmokeArgs([
+          '--platform',
+          'win32',
+          '--engine',
+          'labview-cli',
+          '--prefer-bitness',
+          'x86',
+          '--labview-cli-path',
+          WINDOWS_LABVIEW_CLI_PATH,
+          '--labview-exe-path',
+          WINDOWS_X64_LABVIEW_EXE_PATH
+        ])
+    ).toThrow(/does not match --prefer-bitness x86/);
+    expect(
+      () =>
+        parseHarnessReportSmokeArgs([
+          '--platform',
+          'win32',
+          '--engine',
+          'labview-cli',
+          '--labview-cli-path',
+          'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.txt',
+          '--labview-exe-path',
+          WINDOWS_LABVIEW_EXE_PATH
+        ])
+    ).toThrow(/must point to LabVIEWCLI.exe/);
     expect(() => parseHarnessReportSmokeArgs(['--labview-cli-path'])).toThrow(
       /Missing value for --labview-cli-path/
     );
     expect(getHarnessReportSmokeUsage()).toContain('--selected-hash');
     expect(getHarnessReportSmokeUsage()).toContain('--labview-cli-path');
+    expect(getHarnessReportSmokeUsage()).toContain('Canonical diagnosis rules:');
   });
 
   it('prints the deterministic report-smoke success summary and forwards runtime overrides', async () => {
@@ -142,17 +230,19 @@ describe('runHarnessReportSmokeCli', () => {
           '--platform',
           'win32',
           '--engine',
-          'lvcompare',
+          'labview-cli',
           '--selected-hash',
-          'abcdef1234567890',
+          FULL_SELECTED_HASH,
           '--base-hash',
-          '1111111122222222',
+          FULL_BASE_HASH,
           '--runtime-timeout-ms',
           '120000',
           '--prefer-bitness',
-          'x64',
+          'x86',
           '--labview-cli-path',
-          WINDOWS_LABVIEW_CLI_PATH
+          WINDOWS_LABVIEW_CLI_PATH,
+          '--labview-exe-path',
+          WINDOWS_LABVIEW_EXE_PATH
         ],
         {
           repoRoot: '/tmp/vi-history-suite',
@@ -170,15 +260,15 @@ describe('runHarnessReportSmokeCli', () => {
       cloneRoot: '/tmp/vi-history-suite/.cache/harnesses',
       reportRoot: '/tmp/vi-history-suite/.cache/harness-reports',
       strictRsrcHeader: false,
-      selectedHash: 'abcdef1234567890',
-      baseHash: '1111111122222222',
+      selectedHash: FULL_SELECTED_HASH,
+      baseHash: FULL_BASE_HASH,
       runtimeExecutionTimeoutMs: 120000,
       runtimePlatform: 'win32',
-      runtimeEngineOverride: 'lvcompare',
+      runtimeEngineOverride: 'labview-cli',
       runtimeSettings: {
-        preferBitness: 'x64',
+        preferBitness: 'x86',
         labviewCliPath: WINDOWS_LABVIEW_CLI_PATH,
-        labviewExePath: undefined,
+        labviewExePath: WINDOWS_LABVIEW_EXE_PATH,
         lvComparePath: undefined
       }
     });

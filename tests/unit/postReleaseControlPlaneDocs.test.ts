@@ -175,10 +175,14 @@ describe('post-release control-plane coherence', () => {
     const queue = readJson<QueueEntry[]>('docs/product/development-queue.json');
     const currentState = readText('docs/product/current-state.md');
     const harnesses = readText('docs/product/harnesses.md');
+    const canonicalDiagnosis = readText('docs/product/canonical-exact-pair-diagnosis.md');
     const benchmarkProgram = readText(
       'docs/product/execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md'
     );
     const benchmarkIssue = readText('docs/product/issues/ISSUE-0408-repeatable-benchmark-proof.md');
+    const benchmarkAdr = readText(
+      'docs/architecture/adr/ADR-0021-canonical-exact-pair-diagnosis-arguments.md'
+    );
     const sustainmentProgram = readText(
       'docs/product/execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md'
     );
@@ -216,11 +220,15 @@ describe('post-release control-plane coherence', () => {
     expect(currentState).toContain('headless-session-reset-stdout.txt');
     expect(currentState).toContain('headlessSessionResetExitCode=1');
     expect(currentState).toContain('`VHS-REQ-448` is now implemented');
+    expect(currentState).toContain('`VHS-REQ-449` is now implemented');
     expect(currentState).toContain('retains the `-350000` connection-failure diagnosis before retry');
     expect(currentState).toContain('forcing a truly host-native exact-pair rerun with `--prefer-bitness x86`');
     expect(currentState).toContain('observed `LabVIEWCLI.exe` without `LabVIEW.exe`');
     expect(currentState).toContain('runtimeLabviewTcpPort=3364');
     expect(currentState).toContain('`LabVIEW.ini`');
+    expect(currentState).toContain('`LV_RTE_HEADLESS=1`');
+    expect(currentState).toContain('`-Headless true`');
+    expect(currentState).toContain('rejects non-canonical selected/base hash bundles');
 
     expect(benchmarkProgram).toContain('`resource/plugins/lv_icon.vi` target');
     expect(benchmarkProgram).toContain('the deep Linux `HARNESS-VHS-002` benchmark completes `138/138`');
@@ -237,6 +245,10 @@ describe('post-release control-plane coherence', () => {
     expect(benchmarkProgram).toContain('LabVIEWCLI.exe` without `LabVIEW.exe`');
     expect(benchmarkProgram).toContain('runtimeLabviewTcpPort=3364');
     expect(benchmarkProgram).toContain('`-PortNumber 3364`');
+    expect(benchmarkProgram).toContain('`LV_RTE_HEADLESS=1`');
+    expect(benchmarkProgram).toContain('`-Headless true`');
+    expect(benchmarkProgram).toContain('`VHS-REQ-449`');
+    expect(benchmarkProgram).toContain('rejects incomplete selected/base hash bundles');
 
     expect(benchmarkIssue).toContain('Queued follow-on post-release issue.');
     expect(benchmarkIssue).toContain('the deep Linux host benchmark now fails truthfully late at pair `135/138`');
@@ -253,10 +265,28 @@ describe('post-release control-plane coherence', () => {
     expect(benchmarkIssue).toContain('observed `LabVIEWCLI.exe` without `LabVIEW.exe`');
     expect(benchmarkIssue).toContain('runtimeLabviewTcpPort=3364');
     expect(benchmarkIssue).toContain('`-PortNumber 3364`');
+    expect(benchmarkIssue).toContain('`LV_RTE_HEADLESS=1`');
+    expect(benchmarkIssue).toContain('`-Headless true`');
+    expect(benchmarkIssue).toContain('`VHS-REQ-449`');
+    expect(benchmarkIssue).toContain('rejected before they can contaminate retained benchmark blocker evidence');
 
     expect(harnesses).toContain('comparison-report-smoke.json');
     expect(harnesses).toContain('recovery executable, args, exit');
     expect(harnesses).toContain('selected `LabVIEW.ini` path plus explicit VI');
+    expect(harnesses).toContain('fails closed on non-canonical runtime');
+    expect(harnesses).toContain('40-character selected/base pair');
+    expect(harnesses).toContain('canonical-exact-pair-diagnosis.md');
+
+    expect(canonicalDiagnosis).toContain('# Canonical Exact-Pair Diagnosis');
+    expect(canonicalDiagnosis).toContain('Windows Host-Native `labview-cli` Exact Pair');
+    expect(canonicalDiagnosis).toContain('Windows Host-Native `lvcompare` Exact Pair');
+    expect(canonicalDiagnosis).toContain('`--selected-hash` and `--base-hash` must be supplied together');
+    expect(canonicalDiagnosis).toContain('Ambient environment changes such as `LV_RTE_HEADLESS=1`');
+    expect(canonicalDiagnosis).toContain('not a substitute for canonical argument validation');
+
+    expect(benchmarkAdr).toContain('# ADR-0021: Canonical Exact-Pair Diagnosis Arguments');
+    expect(benchmarkAdr).toContain('fail-closed argument validation for exact-pair');
+    expect(benchmarkAdr).toContain('documentation package shall keep a dedicated operator-facing canonical');
 
     expect(sustainmentProgram).toContain('release cadence, benchmark refresh cadence, operator surfaces');
     expect(sustainmentIssue).toContain('Queued follow-on post-release issue.');

@@ -1100,6 +1100,10 @@
   `CreateComparisonReport` and `CloseLabVIEW` command lines, and surfaces the
   retained `LabVIEW.ini` path plus TCP port through the packet, smoke JSON,
   and exact-pair comparable-prefix diagnostics
+- `TEST-UNIT-293`: verify `runHarnessReportSmoke` rejects non-canonical exact-pair
+  diagnosis argument bundles, including partial selected/base hashes,
+  incomplete engine/path bundles, Windows bitness/path contradictions, and
+  wrong executable basenames for explicit runtime override paths
 - `TEST-DOC-035`: review README, current-state, and ADR-0016 and confirm the
   canonical-host benchmark status surface is documented as the maintainer-facing
   in-IDE visibility and launch surface for the host Linux benchmark lane,
@@ -1223,6 +1227,11 @@
   that the fresh host-native x86 rerun still times out with only
   `LabVIEWCLI.exe` observed even after passing `-PortNumber 3364`, so port
   drift is represented as a narrowed seam rather than as the full explanation
+- `TEST-DOC-057`: review current-state, harnesses, PROGRAM-0003, ISSUE-0408,
+  and ADR-0021 and confirm canonical exact-pair diagnosis arguments are
+  documented as fail-closed on incomplete selected/base hashes, incomplete
+  engine/path bundles, or contradictory Windows bitness/runtime override
+  paths, rather than allowing ambiguous experiment launches to proceed
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed authority repo, private experiment mirror, wiki, and
   assurance-skill repos with authority roles, expected remotes, and primary

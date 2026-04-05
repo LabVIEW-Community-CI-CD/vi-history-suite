@@ -60,6 +60,7 @@ const expectedCoreSourcePaths = [
   'docs/product/blocker-ledger.json',
   'docs/product/development-queue.json',
   'docs/product/current-state.md',
+  'docs/product/canonical-exact-pair-diagnosis.md',
   'docs/product/documentation-coherence-ledger.md',
   'docs/product/wiki-authority-map.md',
   'docs/product/wiki-seed-plan.md',

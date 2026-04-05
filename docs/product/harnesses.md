@@ -41,6 +41,13 @@
 - purpose: retain a factual report-generation smoke packet for the latest
   comparable revision pair of the canonical VI history target
 - exact-pair diagnosis extension:
+  - operator-facing canonical argument guidance is retained in
+    `docs/product/canonical-exact-pair-diagnosis.md`
+  - canonical exact-pair diagnosis now fails closed on non-canonical runtime
+    argument bundles: `--selected-hash` / `--base-hash` must form a full
+    40-character selected/base pair, explicit runtime override paths require
+    matching `--platform` and `--engine`, and Windows bitness overrides must
+    not contradict explicit `Program Files` / `Program Files (x86)` paths
   - when `--selected-hash` / `--base-hash` targets a governed blocker pair and
     the runtime exercises `CloseLabVIEW -Headless`, the derived smoke
     JSON/Markdown/HTML surfaces retain the recovery executable, args, exit

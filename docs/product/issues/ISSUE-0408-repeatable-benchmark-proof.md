@@ -103,6 +103,15 @@ Current retained benchmark truth before activation:
   yet it still times out after `120000ms` while observing only
   `LabVIEWCLI.exe`, so explicit port derivation narrowed the seam but did not
   close the Windows host blocker
+- one more canonical host-native rerun under `LV_RTE_HEADLESS=1` now also
+  retains `-Headless true` in the governed runtime args, but it still times
+  out after `120000ms` while only `LabVIEWCLI.exe` is observed and
+  `LabVIEW.exe` never appears, so explicit headless mode is not the missing
+  native-host Windows ingredient either
+- `VHS-REQ-449` now governs canonical exact-pair diagnosis arguments, so
+  incomplete selected/base hash bundles, incomplete engine/path overrides,
+  wrong executable basenames, and Windows bitness/path contradictions are
+  rejected before they can contaminate retained benchmark blocker evidence
 - local host-runnable proof for the Windows benchmark image is still open
 
 ## Scope

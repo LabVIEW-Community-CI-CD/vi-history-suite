@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-05T05:58:30.417Z",
+  "generatedAt": "2026-04-05T18:28:33.988Z",
   "sourceLedgerPath": "docs/product/wiki-publication-ledger.json",
   "sourceWikiRepoPath": "../vi-history-suite.wiki",
   "defaultPageId": "overview",
@@ -37,8 +37,8 @@
       "wikiPath": "Comparison-Reports-And-Dashboard-Review",
       "wikiFileName": "Comparison-Reports-And-Dashboard-Review.md",
       "htmlFileName": "comparison-reports-and-dashboard-review.html",
-      "publishedDate": "2026-04-03",
-      "wikiCommit": "9b32d5a"
+      "publishedDate": "2026-04-05",
+      "wikiCommit": "5e386f3"
     },
     {
       "id": "review-scenarios-and-decision-records",
@@ -55,8 +55,8 @@
       "wikiPath": "Architecture",
       "wikiFileName": "Architecture.md",
       "htmlFileName": "architecture.html",
-      "publishedDate": "2026-04-03",
-      "wikiCommit": "d3d4be6"
+      "publishedDate": "2026-04-05",
+      "wikiCommit": "5e386f3"
     },
     {
       "id": "documentation-workbench",
@@ -136,8 +136,8 @@
       "wikiPath": "Architecture-Decision-Records",
       "wikiFileName": "Architecture-Decision-Records.md",
       "htmlFileName": "architecture-decision-records.html",
-      "publishedDate": "2026-04-04",
-      "wikiCommit": "3e80690"
+      "publishedDate": "2026-04-05",
+      "wikiCommit": "5e386f3"
     }
   ]
 }
