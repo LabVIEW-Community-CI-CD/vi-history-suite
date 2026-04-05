@@ -5,6 +5,7 @@ import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
+import { ComparisonCommandPlan } from '../../src/reporting/comparisonReportPlan';
 import {
   buildDefaultRunCommand,
   buildWindowsContainerCommandPlan,
@@ -459,6 +460,287 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(copyFile).toHaveBeenCalledWith(
       '/tmp/LVStatus.txt',
       '/workspace/.storage/reports/repoid123456/fileid123456/headless-diagnostics/LVStatus.txt'
+    );
+  });
+
+  it('retries a Linux recursive-load failure once after CloseLabVIEW session reset', async () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.platform = 'linux';
+    record.runtimeSelection.preferBitness = 'x64';
+    record.runtimeSelection.labviewExe = {
+      kind: 'labview-exe',
+      path: '/usr/local/natinst/LabVIEW-2026-64/labview',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+    record.runtimeSelection.labviewCli = {
+      kind: 'labview-cli',
+      path: '/usr/local/bin/LabVIEWCLI',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+
+    let recoveryAttempted = false;
+    const runCommand = vi.fn(async (plan: ComparisonCommandPlan) => {
+      if (plan.args.includes('CloseLabVIEW')) {
+        recoveryAttempted = true;
+        return {
+          exitCode: 0,
+          stdout: '',
+          stderr: ''
+        };
+      }
+
+      if (!recoveryAttempted) {
+        return {
+          exitCode: 1,
+          stdout: 'LabVIEWCLI started logging in file:  /tmp/lvtemporary_999.log\n',
+          stderr: 'Error code : 66'
+        };
+      }
+
+      return {
+        exitCode: 0,
+        stdout: '',
+        stderr: ''
+      };
+    });
+
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        readFile: vi.fn(async (filePath: string) => {
+          if (filePath === '/tmp/lvtemporary_999.log') {
+            return 'Using LabVIEW: "/usr/local/natinst/LabVIEW-2026-64/labview"\nLabVIEW launched successfully.\n';
+          }
+
+          if (filePath === '/tmp/LVStatus.txt') {
+            return 'Recursive load during LEIF load! loading /<resource>/dialog/GSW/GSW.lvlibp/1abvi3w/resource/dialog/GSW/GSW_MainPanel.vi';
+          }
+
+          return '';
+        }) as never,
+        readdir: vi
+          .fn()
+          .mockImplementation(async () =>
+            recoveryAttempted ? [] : ['LVStatus.txt', 'labview_26.1f0_headless_root_cur.txt']
+          ) as never,
+        pathExists: vi.fn(async (filePath: string) => {
+          if (filePath === '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html') {
+            return recoveryAttempted;
+          }
+
+          if (filePath === '/tmp/lvtemporary_999.log') {
+            return !recoveryAttempted;
+          }
+
+          if (
+            filePath === '/tmp/LVStatus.txt' ||
+            filePath === '/tmp/labview_26.1f0_headless_root_cur.txt'
+          ) {
+            return !recoveryAttempted;
+          }
+
+          return false;
+        }),
+        runCommand: runCommand as never,
+        nowIso: vi
+          .fn()
+          .mockReturnValueOnce('2026-04-02T01:00:00.000Z')
+          .mockReturnValueOnce('2026-04-02T01:00:03.000Z')
+          .mockReturnValueOnce('2026-04-02T01:00:04.000Z')
+          .mockReturnValueOnce('2026-04-02T01:00:06.000Z'),
+        nowMs: vi
+          .fn()
+          .mockReturnValueOnce(1000)
+          .mockReturnValueOnce(4000)
+          .mockReturnValueOnce(4500)
+          .mockReturnValueOnce(4500)
+          .mockReturnValueOnce(6000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'linux'
+      }
+    );
+
+    expect(runCommand).toHaveBeenCalledTimes(3);
+    expect(runCommand.mock.calls[1]?.[0]).toEqual({
+      executable: '/usr/local/bin/LabVIEWCLI',
+      args: [
+        '-LogToConsole',
+        'TRUE',
+        '-OperationName',
+        'CloseLabVIEW',
+        '-LabVIEWPath',
+        '/usr/local/natinst/LabVIEW-2026-64/labview',
+        '-Headless',
+        'true'
+      ]
+    });
+    expect(result.record.runtimeExecutionState).toBe('succeeded');
+    expect(result.record.runtimeExecution.reportExists).toBe(true);
+    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+      'Attempted Linux headless session reset via LabVIEWCLI CloseLabVIEW after recursive-load diagnosis, then retried the pair once.'
+    );
+    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+      'Linux headless session reset via LabVIEWCLI CloseLabVIEW succeeded in 0ms before retry.'
+    );
+  });
+
+  it('retries a Windows headless call-by-reference failure once after CloseLabVIEW session reset', async () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.platform = 'win32';
+    record.runtimeSelection.preferBitness = 'x64';
+    record.runtimeSelection.labviewExe = {
+      kind: 'labview-exe',
+      path: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+    record.runtimeSelection.labviewCli = {
+      kind: 'labview-cli',
+      path: 'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+
+    let recoveryAttempted = false;
+    const runCommand = vi.fn(async (plan: ComparisonCommandPlan) => {
+      if (plan.args.includes('CloseLabVIEW')) {
+        recoveryAttempted = true;
+        return {
+          exitCode: 0,
+          stdout: '',
+          stderr: ''
+        };
+      }
+
+      if (!recoveryAttempted) {
+        return {
+          exitCode: 1,
+          stdout:
+            'LabVIEWCLI started logging in file: C:\\Users\\ContainerAdministrator\\AppData\\Local\\Temp\\lvtemporary_999.log\n',
+          stderr:
+            'Error code : 66\r\nError message : Call By Reference in RunExecuteOperationVI.vi->RunOperationCore.vi->RunOperation.vi->RunOperation.vi.ProxyCaller\r\nAn error occurred while running the LabVIEW CLI.\r\n'
+        };
+      }
+
+      return {
+        exitCode: 0,
+        stdout: '',
+        stderr: ''
+      };
+    });
+
+    const previousHeadless = process.env.LV_RTE_HEADLESS;
+    process.env.LV_RTE_HEADLESS = '1';
+
+    let result;
+    try {
+      result = await executeComparisonReport(
+        {
+          record,
+          repositoryRoot: 'C:\\workspace\\repo'
+        },
+        {
+          readRevisionBlob: vi
+            .fn()
+            .mockResolvedValueOnce(Buffer.from('left'))
+            .mockResolvedValueOnce(Buffer.from('right')),
+          mkdir: vi.fn().mockResolvedValue(undefined),
+          writeFile: vi.fn().mockResolvedValue(undefined) as never,
+          copyFile: vi.fn().mockResolvedValue(undefined) as never,
+          removePath: vi.fn().mockResolvedValue(undefined) as never,
+          readFile: vi.fn(async (filePath: string) => {
+            if (filePath === 'C:\\Users\\ContainerAdministrator\\AppData\\Local\\Temp\\lvtemporary_999.log') {
+              return [
+                'Using LabVIEW: "C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe"',
+                'Connection established with LabVIEW at port number 3363.',
+                'Error code : 66',
+                'Error message : Call By Reference in RunExecuteOperationVI.vi->RunOperationCore.vi->RunOperation.vi->RunOperation.vi.ProxyCaller',
+                'An error occurred while running the LabVIEW CLI.'
+              ].join('\n');
+            }
+
+            return '';
+          }) as never,
+          readdir: vi.fn().mockResolvedValue([]) as never,
+          pathExists: vi.fn(async (filePath: string) => {
+            if (filePath === record.artifactPlan.reportFilePath) {
+              return recoveryAttempted;
+            }
+
+            if (
+              filePath ===
+              'C:\\Users\\ContainerAdministrator\\AppData\\Local\\Temp\\lvtemporary_999.log'
+            ) {
+              return !recoveryAttempted;
+            }
+
+            return false;
+          }),
+          runCommand: runCommand as never,
+          nowIso: vi
+            .fn()
+            .mockReturnValueOnce('2026-04-05T15:30:08.000Z')
+            .mockReturnValueOnce('2026-04-05T15:30:43.000Z')
+            .mockReturnValueOnce('2026-04-05T15:30:44.000Z')
+            .mockReturnValueOnce('2026-04-05T15:30:46.000Z'),
+          nowMs: vi
+            .fn()
+            .mockReturnValueOnce(1000)
+            .mockReturnValueOnce(36000)
+            .mockReturnValueOnce(36500)
+            .mockReturnValueOnce(36500)
+            .mockReturnValueOnce(38500),
+          writePacketRecord: vi.fn().mockResolvedValue(undefined),
+          processPlatform: 'win32'
+        }
+      );
+    } finally {
+      if (previousHeadless === undefined) {
+        delete process.env.LV_RTE_HEADLESS;
+      } else {
+        process.env.LV_RTE_HEADLESS = previousHeadless;
+      }
+    }
+
+    expect(runCommand).toHaveBeenCalledTimes(3);
+    expect(runCommand.mock.calls[1]?.[0]).toEqual({
+      executable: 'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+      args: [
+        '-LogToConsole',
+        'TRUE',
+        '-OperationName',
+        'CloseLabVIEW',
+        '-LabVIEWPath',
+        'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+        '-Headless',
+        'true'
+      ]
+    });
+    expect(result).toBeDefined();
+    expect(result.record.runtimeExecutionState).toBe('succeeded');
+    expect(result.record.runtimeExecution.reportExists).toBe(true);
+    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+      'Attempted Windows headless session reset via LabVIEWCLI CloseLabVIEW after call-by-reference diagnosis, then retried the pair once.'
+    );
+    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+      'Windows headless session reset via LabVIEWCLI CloseLabVIEW succeeded in 0ms before retry.'
     );
   });
 

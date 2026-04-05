@@ -280,14 +280,15 @@ Committed and governed today:
   discards stale reused report HTML when a nonzero-exit pair leaves the
   previous pair's output behind, now also copies Linux headless artifacts such
   as `LVStatus.txt` and current `labview_*_headless_*_cur.txt` files into
-  governed report storage, and surfaces retained terminal diagnostic reasons in
-  the host benchmark-status panel; the latest deep-host `lv_icon.vi` run still
-  retains a full-window Linux blocker at pair `135/138` because that pair
-  reproduced a retained Linux headless runtime seam
-  (`linux-headless-recursive-load`) under `LabVIEWCLI`, while bounded
-  fresh-session repros showed the same pair times out under `LVCompare` and
-  degrades into `-350000` connection failure on retry; the accepted cross-OS
-  timing truth is now the retained comparable-prefix packet in
+  governed report storage, surfaces retained terminal diagnostic reasons in
+  the host benchmark-status panel, and now attempts one governed
+  `LabVIEWCLI CloseLabVIEW -Headless` session reset plus one retry when a pair
+  retains `linux-headless-recursive-load`; the latest deep-host `lv_icon.vi`
+  run still retains a full-window Linux blocker at pair `135/138` because the
+  accepted benchmark truth has not widened beyond the last retained rerun,
+  while bounded fresh-session repros showed the same pair times out under
+  `LVCompare` and degrades into `-350000` connection failure on retry; the
+  accepted cross-OS timing truth is now the retained comparable-prefix packet in
   `docs/product/benchmark-packets/HARNESS-VHS-002-comparable-prefix.json`,
   which captures the first `135` commits / `134` pairs on both Windows host
   and Linux host surfaces
@@ -484,7 +485,10 @@ The published image now also forces `LV_RTE_HEADLESS=1`, hardens
 `LabVIEWCLI.ini` startup timeouts, prelaunches headless LabVIEW before the
 benchmark CLI starts, and the Windows `labview-cli` execution plan now retains
 the governed `-LabVIEWPath` instead of silently dropping the selected LabVIEW
-executable.
+executable. The latest retained proof now reaches pair `129/134` before
+retaining a connected-session `Error 66 / Call By Reference` seam, and the
+runtime now attempts one governed `LabVIEWCLI CloseLabVIEW -Headless` session
+reset plus one retry for that seam before terminal failure is retained.
 
 The generated `.cache/` evidence is local and regenerated. The committed source
 of truth for implemented-versus-partial research work is the documentation stack

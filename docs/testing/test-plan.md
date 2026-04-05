@@ -1057,6 +1057,15 @@
   governed `-LabVIEWPath` on host-native and Windows-container selections, and
   appends `-Headless true` when the Windows benchmark-image lane enables
   `LV_RTE_HEADLESS=1` or the provider is `windows-container`
+- `TEST-UNIT-283`: verify a Linux `labview-cli` recursive-load diagnosis
+  triggers one governed `CloseLabVIEW -Headless` session reset, retries the
+  pair once, and appends the recovery notes to the retained runtime
+  diagnostics before the final outcome is written
+- `TEST-UNIT-284`: verify a Windows headless `labview-cli` connected-session
+  `Error 66 / Call By Reference` diagnosis triggers one governed
+  `CloseLabVIEW -Headless` session reset, retries the pair once, and appends
+  the recovery notes to the retained runtime diagnostics before the final
+  outcome is written
 - `TEST-DOC-035`: review README, current-state, and ADR-0016 and confirm the
   canonical-host benchmark status surface is documented as the maintainer-facing
   in-IDE visibility and launch surface for the host Linux benchmark lane,
@@ -1129,6 +1138,17 @@
   governed `-LabVIEWPath`, forcing `LV_RTE_HEADLESS=1`, hardening
   `LabVIEWCLI.ini` startup timeouts, and prelaunching headless LabVIEW before
   benchmark execution so NI's documented `-350000` startup seam is mitigated
+- `TEST-DOC-047`: review README, current-state, PROGRAM-0003, and ISSUE-0408
+  and confirm the Linux benchmark lane documents one governed
+  `CloseLabVIEW -Headless` recovery attempt plus one retry for retained
+  `linux-headless-recursive-load` failures, while keeping the accepted
+  comparable-prefix timing scope unchanged until a fresh full-window rerun
+  proves a broader result
+- `TEST-DOC-048`: review README, current-state, PROGRAM-0003, and ISSUE-0408
+  and confirm the Windows benchmark-image lane documents the latest retained
+  pair `129/134` connected-session `Error 66 / Call By Reference` seam plus
+  one governed `CloseLabVIEW -Headless` recovery attempt and one retry before
+  terminal failure is retained
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed authority repo, private experiment mirror, wiki, and
   assurance-skill repos with authority roles, expected remotes, and primary

@@ -319,164 +319,191 @@ async function runHostNativeExecution(
     };
   }
 
-  await clearStaleExecutedReportArtifacts(record, executionContext, {
-    removePath: deps.removePath
-  });
-
-  const startedAt = deps.nowIso();
-  const startedMs = deps.nowMs();
-
-  try {
-    const commandResult = await deps.runCommand(executionContext.commandPlan);
-    const completedAt = deps.nowIso();
-    const durationMs = Math.max(0, deps.nowMs() - startedMs);
-    await deps.writeFile(record.artifactPlan.runtimeStdoutFilePath, commandResult.stdout, 'utf8');
-    await deps.writeFile(record.artifactPlan.runtimeStderrFilePath, commandResult.stderr, 'utf8');
-    const processObservation = await persistRuntimeProcessObservation(record, commandResult, {
-      writeFile: deps.writeFile,
-      mkdir: deps.mkdir,
-      unlinkFile: deps.unlinkFile,
-      pathExists: deps.pathExists
+  const executeAttempt = async (): Promise<ComparisonReportRuntimeExecution> => {
+    await clearStaleExecutedReportArtifacts(record, executionContext, {
+      removePath: deps.removePath
     });
-    const diagnostics = await captureRuntimeDiagnostics(record, commandResult.stdout, {
-      pathExists: deps.pathExists,
-      copyFile: deps.copyFile,
-      unlinkFile: deps.unlinkFile,
-      readFile: deps.readFile,
-      readdir: deps.readdir,
-      mkdir: deps.mkdir,
-      removePath: deps.removePath,
-      processPlatform: deps.processPlatform,
-      expectedLabviewPath:
-        extractCommandOptionValue(executionContext.commandPlan.args, '-LabVIEWPath') ??
-        record.runtimeSelection.labviewExe?.path,
-      diagnosticPathMapping: executionContext.diagnosticPathMapping
-    });
-    const finalizedReport = await finalizeExecutedReport(
-      record,
-      executionContext,
-      {
-        validateIdentity: commandResult.timedOut || commandResult.exitCode !== 0
-      },
-      {
+
+    const startedAt = deps.nowIso();
+    const startedMs = deps.nowMs();
+
+    try {
+      const commandResult = await deps.runCommand(executionContext.commandPlan);
+      const completedAt = deps.nowIso();
+      const durationMs = Math.max(0, deps.nowMs() - startedMs);
+      await deps.writeFile(record.artifactPlan.runtimeStdoutFilePath, commandResult.stdout, 'utf8');
+      await deps.writeFile(record.artifactPlan.runtimeStderrFilePath, commandResult.stderr, 'utf8');
+      const processObservation = await persistRuntimeProcessObservation(record, commandResult, {
+        writeFile: deps.writeFile,
+        mkdir: deps.mkdir,
+        unlinkFile: deps.unlinkFile,
+        pathExists: deps.pathExists
+      });
+      const diagnostics = await captureRuntimeDiagnostics(record, commandResult.stdout, {
         pathExists: deps.pathExists,
         copyFile: deps.copyFile,
-        copyDirectory: deps.copyDirectory,
-        removePath: deps.removePath,
+        unlinkFile: deps.unlinkFile,
         readFile: deps.readFile,
-        mkdir: deps.mkdir
-      }
-    );
-    const reportExists = finalizedReport.reportExists;
-    const succeeded = !commandResult.timedOut && commandResult.exitCode === 0 && reportExists;
-    const failureClassification = commandResult.timedOut
-      ? {
-          reason: 'command-timed-out',
-          notes: [
-            `Comparison-report runtime timed out after ${String(
-              commandResult.timeoutMs ?? deps.commandTimeoutMs ?? 'the governed'
-            )}ms.`
-          ]
+        readdir: deps.readdir,
+        mkdir: deps.mkdir,
+        removePath: deps.removePath,
+        processPlatform: deps.processPlatform,
+        expectedLabviewPath:
+          extractCommandOptionValue(executionContext.commandPlan.args, '-LabVIEWPath') ??
+          record.runtimeSelection.labviewExe?.path,
+        diagnosticPathMapping: executionContext.diagnosticPathMapping
+      });
+      const finalizedReport = await finalizeExecutedReport(
+        record,
+        executionContext,
+        {
+          validateIdentity: commandResult.timedOut || commandResult.exitCode !== 0
+        },
+        {
+          pathExists: deps.pathExists,
+          copyFile: deps.copyFile,
+          copyDirectory: deps.copyDirectory,
+          removePath: deps.removePath,
+          readFile: deps.readFile,
+          mkdir: deps.mkdir
         }
-      : classifyRuntimeFailure({
-          engine: record.runtimeSelection.engine,
-          exitCode: commandResult.exitCode,
-          reportExists,
-          stdout: commandResult.stdout,
-          stderr: commandResult.stderr,
-          processObservation: processObservation?.bannerSnapshot,
-          exitProcessObservation: processObservation?.exitSnapshot
-        });
-    const diagnosticNotes = mergeDiagnosticNotes(
-      buildProcessObservationNotes(processObservation),
-      diagnostics.notes,
-      finalizedReport.validationNotes,
-      failureClassification.notes
+      );
+      const reportExists = finalizedReport.reportExists;
+      const succeeded = !commandResult.timedOut && commandResult.exitCode === 0 && reportExists;
+      const failureClassification = commandResult.timedOut
+        ? {
+            reason: 'command-timed-out',
+            notes: [
+              `Comparison-report runtime timed out after ${String(
+                commandResult.timeoutMs ?? deps.commandTimeoutMs ?? 'the governed'
+              )}ms.`
+            ]
+          }
+        : classifyRuntimeFailure({
+            engine: record.runtimeSelection.engine,
+            exitCode: commandResult.exitCode,
+            reportExists,
+            stdout: commandResult.stdout,
+            stderr: commandResult.stderr,
+            processObservation: processObservation?.bannerSnapshot,
+            exitProcessObservation: processObservation?.exitSnapshot
+          });
+      const diagnosticNotes = mergeDiagnosticNotes(
+        buildProcessObservationNotes(processObservation),
+        diagnostics.notes,
+        finalizedReport.validationNotes,
+        failureClassification.notes
+      );
+
+      return {
+        state: succeeded ? 'succeeded' : 'failed',
+        attempted: true,
+        reportExists,
+        failureReason: succeeded ? undefined : failureClassification.reason,
+        diagnosticReason: diagnostics.reason,
+        diagnosticNotes,
+        diagnosticLogSourcePath: diagnostics.sourcePath,
+        diagnosticLogArtifactPath: diagnostics.artifactPath,
+        headlessDiagnosticArtifactPaths: diagnostics.headlessArtifactPaths,
+        executable: executionContext.commandPlan.executable,
+        args: executionContext.commandPlan.args,
+        startedAt,
+        completedAt,
+        durationMs,
+        exitCode: commandResult.exitCode,
+        signal: commandResult.signal,
+        stdoutFilePath: record.artifactPlan.runtimeStdoutFilePath,
+        stderrFilePath: record.artifactPlan.runtimeStderrFilePath,
+        processObservationArtifactPath: processObservation?.artifactPath,
+        processObservationCapturedAt:
+          processObservation?.bannerSnapshot?.capturedAt ?? processObservation?.exitSnapshot?.capturedAt,
+        processObservationTrigger:
+          processObservation?.bannerSnapshot?.trigger ?? processObservation?.exitSnapshot?.trigger,
+        observedProcessNames:
+          processObservation?.bannerSnapshot?.observedProcessNames ??
+          processObservation?.exitSnapshot?.observedProcessNames,
+        labviewProcessObserved:
+          processObservation?.bannerSnapshot?.labviewProcessObserved ??
+          processObservation?.exitSnapshot?.labviewProcessObserved,
+        labviewCliProcessObserved:
+          processObservation?.bannerSnapshot?.labviewCliProcessObserved ??
+          processObservation?.exitSnapshot?.labviewCliProcessObserved,
+        lvcompareProcessObserved:
+          processObservation?.bannerSnapshot?.lvcompareProcessObserved ??
+          processObservation?.exitSnapshot?.lvcompareProcessObserved,
+        exitProcessObservationCapturedAt: processObservation?.exitSnapshot?.capturedAt,
+        exitProcessObservationTrigger: processObservation?.exitSnapshot?.trigger,
+        exitObservedProcessNames: processObservation?.exitSnapshot?.observedProcessNames,
+        labviewProcessObservedAtExit: processObservation?.exitSnapshot?.labviewProcessObserved,
+        labviewCliProcessObservedAtExit: processObservation?.exitSnapshot?.labviewCliProcessObserved,
+        lvcompareProcessObservedAtExit: processObservation?.exitSnapshot?.lvcompareProcessObserved
+      };
+    } catch (error) {
+      const completedAt = deps.nowIso();
+      const durationMs = Math.max(0, deps.nowMs() - startedMs);
+      const processError = normalizeComparisonProcessError(error);
+      await deps.writeFile(record.artifactPlan.runtimeStdoutFilePath, processError.stdout, 'utf8');
+      await deps.writeFile(record.artifactPlan.runtimeStderrFilePath, processError.stderr, 'utf8');
+      const diagnostics = await captureRuntimeDiagnostics(record, processError.stdout, {
+        pathExists: deps.pathExists,
+        copyFile: deps.copyFile,
+        unlinkFile: deps.unlinkFile,
+        readFile: deps.readFile,
+        readdir: deps.readdir,
+        mkdir: deps.mkdir,
+        removePath: deps.removePath,
+        processPlatform: deps.processPlatform,
+        expectedLabviewPath:
+          extractCommandOptionValue(executionContext.commandPlan.args, '-LabVIEWPath') ??
+          record.runtimeSelection.labviewExe?.path
+      });
+
+      return {
+        state: 'failed',
+        attempted: true,
+        reportExists: false,
+        failureReason: 'command-spawn-failed',
+        diagnosticReason: diagnostics.reason,
+        diagnosticNotes: diagnostics.notes,
+        diagnosticLogSourcePath: diagnostics.sourcePath,
+        diagnosticLogArtifactPath: diagnostics.artifactPath,
+        headlessDiagnosticArtifactPaths: diagnostics.headlessArtifactPaths,
+        executable: executionContext.commandPlan.executable,
+        args: executionContext.commandPlan.args,
+        startedAt,
+        completedAt,
+        durationMs,
+        signal: processError.signal,
+        stdoutFilePath: record.artifactPlan.runtimeStdoutFilePath,
+        stderrFilePath: record.artifactPlan.runtimeStderrFilePath
+      };
+    }
+  };
+
+  const initialResult = await executeAttempt();
+  if (shouldAttemptLinuxHeadlessRecovery(record, initialResult)) {
+    const recovery = await attemptLabviewCliHeadlessSessionReset('Linux', record, deps);
+    const retriedResult = await executeAttempt();
+    return buildRecoveredExecutionResult(
+      initialResult,
+      recovery,
+      retriedResult,
+      LINUX_HEADLESS_RECOVERY_NOTE
     );
-
-    return {
-      state: succeeded ? 'succeeded' : 'failed',
-      attempted: true,
-      reportExists,
-      failureReason: succeeded ? undefined : failureClassification.reason,
-      diagnosticReason: diagnostics.reason,
-      diagnosticNotes,
-      diagnosticLogSourcePath: diagnostics.sourcePath,
-      diagnosticLogArtifactPath: diagnostics.artifactPath,
-      headlessDiagnosticArtifactPaths: diagnostics.headlessArtifactPaths,
-      executable: executionContext.commandPlan.executable,
-      args: executionContext.commandPlan.args,
-      startedAt,
-      completedAt,
-      durationMs,
-      exitCode: commandResult.exitCode,
-      signal: commandResult.signal,
-      stdoutFilePath: record.artifactPlan.runtimeStdoutFilePath,
-      stderrFilePath: record.artifactPlan.runtimeStderrFilePath,
-      processObservationArtifactPath: processObservation?.artifactPath,
-      processObservationCapturedAt:
-        processObservation?.bannerSnapshot?.capturedAt ?? processObservation?.exitSnapshot?.capturedAt,
-      processObservationTrigger:
-        processObservation?.bannerSnapshot?.trigger ?? processObservation?.exitSnapshot?.trigger,
-      observedProcessNames:
-        processObservation?.bannerSnapshot?.observedProcessNames ??
-        processObservation?.exitSnapshot?.observedProcessNames,
-      labviewProcessObserved:
-        processObservation?.bannerSnapshot?.labviewProcessObserved ??
-        processObservation?.exitSnapshot?.labviewProcessObserved,
-      labviewCliProcessObserved:
-        processObservation?.bannerSnapshot?.labviewCliProcessObserved ??
-        processObservation?.exitSnapshot?.labviewCliProcessObserved,
-      lvcompareProcessObserved:
-        processObservation?.bannerSnapshot?.lvcompareProcessObserved ??
-        processObservation?.exitSnapshot?.lvcompareProcessObserved,
-      exitProcessObservationCapturedAt: processObservation?.exitSnapshot?.capturedAt,
-      exitProcessObservationTrigger: processObservation?.exitSnapshot?.trigger,
-      exitObservedProcessNames: processObservation?.exitSnapshot?.observedProcessNames,
-      labviewProcessObservedAtExit: processObservation?.exitSnapshot?.labviewProcessObserved,
-      labviewCliProcessObservedAtExit: processObservation?.exitSnapshot?.labviewCliProcessObserved,
-      lvcompareProcessObservedAtExit: processObservation?.exitSnapshot?.lvcompareProcessObserved
-    };
-  } catch (error) {
-    const completedAt = deps.nowIso();
-    const durationMs = Math.max(0, deps.nowMs() - startedMs);
-    const processError = normalizeComparisonProcessError(error);
-    await deps.writeFile(record.artifactPlan.runtimeStdoutFilePath, processError.stdout, 'utf8');
-    await deps.writeFile(record.artifactPlan.runtimeStderrFilePath, processError.stderr, 'utf8');
-    const diagnostics = await captureRuntimeDiagnostics(record, processError.stdout, {
-      pathExists: deps.pathExists,
-      copyFile: deps.copyFile,
-      unlinkFile: deps.unlinkFile,
-      readFile: deps.readFile,
-      readdir: deps.readdir,
-      mkdir: deps.mkdir,
-      removePath: deps.removePath,
-      processPlatform: deps.processPlatform,
-      expectedLabviewPath:
-        extractCommandOptionValue(executionContext.commandPlan.args, '-LabVIEWPath') ??
-        record.runtimeSelection.labviewExe?.path
-    });
-
-    return {
-      state: 'failed',
-      attempted: true,
-      reportExists: false,
-      failureReason: 'command-spawn-failed',
-      diagnosticReason: diagnostics.reason,
-      diagnosticNotes: diagnostics.notes,
-      diagnosticLogSourcePath: diagnostics.sourcePath,
-      diagnosticLogArtifactPath: diagnostics.artifactPath,
-      headlessDiagnosticArtifactPaths: diagnostics.headlessArtifactPaths,
-      executable: executionContext.commandPlan.executable,
-      args: executionContext.commandPlan.args,
-      startedAt,
-      completedAt,
-      durationMs,
-      signal: processError.signal,
-      stdoutFilePath: record.artifactPlan.runtimeStdoutFilePath,
-      stderrFilePath: record.artifactPlan.runtimeStderrFilePath
-    };
   }
+
+  if (shouldAttemptWindowsHeadlessRecovery(record, initialResult)) {
+    const recovery = await attemptLabviewCliHeadlessSessionReset('Windows', record, deps);
+    const retriedResult = await executeAttempt();
+    return buildRecoveredExecutionResult(
+      initialResult,
+      recovery,
+      retriedResult,
+      WINDOWS_HEADLESS_RECOVERY_NOTE
+    );
+  }
+
+  return initialResult;
 }
 
 async function persistRuntimeProcessObservation(
@@ -550,6 +577,10 @@ const WINDOWS_CONTAINER_AFTER_LAUNCH_TIMEOUT_SECONDS = 180;
 const WINDOWS_CONTAINER_PRELAUNCH_WAIT_SECONDS = 8;
 const WINDOWS_CONTAINER_STARTUP_RETRY_COUNT = 1;
 const WINDOWS_CONTAINER_RETRY_DELAY_SECONDS = 8;
+const LINUX_HEADLESS_RECOVERY_NOTE =
+  'Attempted Linux headless session reset via LabVIEWCLI CloseLabVIEW after recursive-load diagnosis, then retried the pair once.';
+const WINDOWS_HEADLESS_RECOVERY_NOTE =
+  'Attempted Windows headless session reset via LabVIEWCLI CloseLabVIEW after call-by-reference diagnosis, then retried the pair once.';
 
 async function captureRuntimeDiagnostics(
   record: ComparisonReportPacketRecord,
@@ -628,6 +659,129 @@ async function captureRuntimeDiagnostics(
     sourcePath: diagnosticLogSourcePath,
     artifactPath: record.artifactPlan.runtimeDiagnosticLogFilePath,
     headlessArtifactPaths: headlessDiagnostics.artifactPaths
+  };
+}
+
+function shouldAttemptLinuxHeadlessRecovery(
+  record: ComparisonReportPacketRecord,
+  execution: ComparisonReportRuntimeExecution
+): boolean {
+  return (
+    record.runtimeSelection.platform === 'linux' &&
+    record.runtimeSelection.engine === 'labview-cli' &&
+    execution.state === 'failed' &&
+    execution.diagnosticReason === 'linux-headless-recursive-load'
+  );
+}
+
+function shouldAttemptWindowsHeadlessRecovery(
+  record: ComparisonReportPacketRecord,
+  execution: ComparisonReportRuntimeExecution
+): boolean {
+  return (
+    record.runtimeSelection.platform === 'win32' &&
+    record.runtimeSelection.engine === 'labview-cli' &&
+    execution.state === 'failed' &&
+    execution.diagnosticReason === 'labview-cli-call-by-reference' &&
+    isHeadlessLabviewCliExecution(execution.args)
+  );
+}
+
+function isHeadlessLabviewCliExecution(args: string[] | undefined): boolean {
+  if (!args || args.length === 0) {
+    return false;
+  }
+
+  const headlessIndex = args.findIndex((argument) => argument.toLowerCase() === '-headless');
+  if (headlessIndex < 0) {
+    return false;
+  }
+
+  return args[headlessIndex + 1]?.toLowerCase() === 'true';
+}
+
+async function attemptLabviewCliHeadlessSessionReset(
+  platformLabel: 'Linux' | 'Windows',
+  record: ComparisonReportPacketRecord,
+  deps: {
+    runCommand: (commandPlan: ComparisonCommandPlan) => Promise<RunCommandResult>;
+    nowMs: () => number;
+  }
+): Promise<{ notes: string[]; durationMs: number }> {
+  const startedMs = deps.nowMs();
+  const closeCommandPlan = buildLabviewCliCloseLabviewCommandPlan(
+    record.runtimeSelection.labviewCli?.path ?? 'LabVIEWCLI',
+    record.runtimeSelection.labviewExe?.path
+  );
+
+  try {
+    const result = await deps.runCommand(closeCommandPlan);
+    const durationMs = Math.max(0, deps.nowMs() - startedMs);
+    if (result.exitCode === 0) {
+      return {
+        notes: [
+          `${platformLabel} headless session reset via LabVIEWCLI CloseLabVIEW succeeded in ${String(
+            durationMs
+          )}ms before retry.`
+        ],
+        durationMs
+      };
+    }
+
+    return {
+      notes: [
+        `${platformLabel} headless session reset via LabVIEWCLI CloseLabVIEW exited with code ${String(
+          result.exitCode
+        )} before retry.`
+      ],
+      durationMs
+    };
+  } catch (error) {
+    const durationMs = Math.max(0, deps.nowMs() - startedMs);
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      notes: [
+        `${platformLabel} headless session reset via LabVIEWCLI CloseLabVIEW failed before retry: ${message}.`
+      ],
+      durationMs
+    };
+  }
+}
+
+function buildRecoveredExecutionResult(
+  initialResult: ComparisonReportRuntimeExecution,
+  recovery: { notes: string[]; durationMs: number },
+  retriedResult: ComparisonReportRuntimeExecution,
+  recoveryNote: string
+): ComparisonReportRuntimeExecution {
+  return {
+    ...retriedResult,
+    startedAt: initialResult.startedAt ?? retriedResult.startedAt,
+    durationMs:
+      (initialResult.durationMs ?? 0) +
+      recovery.durationMs +
+      (retriedResult.durationMs ?? 0),
+    diagnosticNotes: mergeDiagnosticNotes(
+      retriedResult.diagnosticNotes,
+      [recoveryNote],
+      recovery.notes
+    )
+  };
+}
+
+function buildLabviewCliCloseLabviewCommandPlan(
+  executable: string,
+  labviewPath?: string
+): ComparisonCommandPlan {
+  const args = ['-LogToConsole', 'TRUE', '-OperationName', 'CloseLabVIEW'];
+  if (labviewPath?.trim()) {
+    args.push('-LabVIEWPath', labviewPath.trim());
+  }
+  args.push('-Headless', 'true');
+
+  return {
+    executable,
+    args
   };
 }
 
@@ -1565,6 +1719,20 @@ export function classifyLabviewCliDiagnosticText(
     );
     return {
       reason: 'labview-path-ignored-last-used-default',
+      notes: appendLaunchConfirmationNote(notes, launchSucceeded)
+    };
+  }
+
+  if (
+    /Connection established with LabVIEW at port number \d+\./i.test(diagnosticText) &&
+    /Error code\s*:\s*66\b/i.test(diagnosticText) &&
+    /Call By Reference/i.test(diagnosticText)
+  ) {
+    notes.push(
+      'LabVIEW CLI established a VI Server connection before failing with Error 66 / Call By Reference.'
+    );
+    return {
+      reason: 'labview-cli-call-by-reference',
       notes: appendLaunchConfirmationNote(notes, launchSucceeded)
     };
   }

@@ -75,7 +75,11 @@ Windows-image hardening also restores the governed Windows `-LabVIEWPath`,
 forces `LV_RTE_HEADLESS=1`, hardens `LabVIEWCLI.ini` startup timeouts, and
 prelaunches headless LabVIEW before benchmark execution so the published image
 tracks NI's documented Windows-container startup posture instead of a bare
-first-launch `LabVIEWCLI` invocation.
+first-launch `LabVIEWCLI` invocation. The latest retained local proof now
+reaches pair `129/134` before retaining a connected-session `Error 66 / Call
+By Reference` seam, and the runtime now attempts one governed
+`LabVIEWCLI CloseLabVIEW -Headless` session reset plus one retry for that
+seam before terminal failure is retained.
 
 Current retained Linux blocker before activation:
 
@@ -84,7 +88,11 @@ Current retained Linux blocker before activation:
   either `LabVIEWCLI` or `LVCompare`
 - the retained Linux temp-surface evidence now classifies the blocker as
   `linux-headless-recursive-load`
-- retrying the same pair after timeout degrades into `-350000` connection
+- the runtime now attempts one governed `LabVIEWCLI CloseLabVIEW -Headless`
+  session reset plus one retry after that recursive-load diagnosis, but the
+  latest retained full-window benchmark result still predates that recovery
+  posture
+- older retry experiments after timeout degraded into `-350000` connection
   failure rather than recovering the session
 - a governed comparable-prefix packet now retains the accepted cross-OS
   `135`-commit / `134`-pair scope in

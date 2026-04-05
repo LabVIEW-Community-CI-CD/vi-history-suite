@@ -26,8 +26,12 @@ Current retained benchmark truth before activation:
   `terminalPairDiagnosticReason=linux-headless-recursive-load`
 - bounded fresh Linux container repros show the same pair does not complete
   under either `LabVIEWCLI` or `LVCompare`
-- retrying the pair after timeout degrades into `-350000` connection failure
-  instead of recovering the headless session
+- the runtime now attempts one governed `LabVIEWCLI CloseLabVIEW -Headless`
+  session reset plus one retry when that recursive-load diagnosis is retained,
+  but the latest full-window benchmark summary still predates that recovery
+  posture
+- older retry experiments after timeout degraded into `-350000` connection
+  failure instead of recovering the headless session
 - a governed comparable-prefix packet now retains the accepted cross-OS
   `135`-commit / `134`-pair timing scope in
   `docs/product/benchmark-packets/HARNESS-VHS-002-comparable-prefix.json`
@@ -46,15 +50,16 @@ Current retained benchmark truth before activation:
   retained `135`-commit comparable prefix unless overridden, and writes
   launch/log/summary receipts under
   `C:\Users\sveld\AppData\Local\VI History Suite\windows-benchmark-image-proof`
-- the latest local Windows benchmark-image proof now fails truthfully at pair
-  `1/134` with `labview-cli-connection-failed`, and the retained diagnostic
-  log shows the governed Windows `LabVIEWCLI` plan had omitted `-LabVIEWPath`
-  while the first headless LabVIEW launch inside the image failed to establish
-  the initial VI Server connection
+- the latest local Windows benchmark-image proof now reaches pair `129/134`
+  before failing truthfully with `command-exited-nonzero`; the retained
+  diagnostic log shows the image established a LabVIEW connection and then hit
+  `Error 66 / Call By Reference`
 - the active Windows image hardening now restores the governed Windows
   `-LabVIEWPath`, forces `LV_RTE_HEADLESS=1`, hardens `LabVIEWCLI.ini`
-  startup timeouts, and prelaunches headless LabVIEW before benchmark
-  execution in line with NI's documented Windows-container guidance
+  startup timeouts, prelaunches headless LabVIEW before benchmark execution
+  in line with NI's documented Windows-container guidance, and now attempts
+  one governed `LabVIEWCLI CloseLabVIEW -Headless` session reset plus one
+  retry for that connected-session `Call By Reference` seam
 - local host-runnable proof for the Windows benchmark image is still open
 
 ## Scope
