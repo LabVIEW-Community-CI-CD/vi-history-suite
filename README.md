@@ -272,9 +272,15 @@ Committed and governed today:
   runtime execution, and retains terminal partial summaries for failed runs,
   retains native Linux NI diagnostic logs under governed report storage, and
   discards stale reused report HTML when a nonzero-exit pair leaves the
-  previous pair's output behind; the latest deep-host `lv_icon.vi` run still
-  remains characterization-only because it failed late at pair `135/138` with
-  `command-exited-nonzero`
+  previous pair's output behind, now also copies Linux headless artifacts such
+  as `LVStatus.txt` and current `labview_*_headless_*_cur.txt` files into
+  governed report storage, and surfaces retained terminal diagnostic reasons in
+  the host benchmark-status panel; the latest deep-host `lv_icon.vi` run still
+  remains characterization-only because pair `135/138` reproduced a retained
+  Linux headless runtime seam (`linux-headless-recursive-load`) under
+  `LabVIEWCLI`, while bounded fresh-session repros showed the same pair times
+  out under `LVCompare` and degrades into `-350000` connection failure on
+  retry
 
 ## Active Work
 
@@ -440,7 +446,9 @@ expected to resolve the cheaper canonical harness by default; the deep
 `lv_icon.vi` benchmark remains owned by the canonical host lane. The Linux
 liveness requirements in `VHS-REQ-409` through `VHS-REQ-412` are now closed,
 and the current deep-host retained result is still characterization-only, but
-it now fails truthfully late in the window instead of stalling indefinitely.
+it now fails truthfully late in the window with retained headless diagnostic
+reasoning instead of stalling indefinitely or collapsing into a generic
+container exit.
 
 The generated `.cache/` evidence is local and regenerated. The committed source
 still treats the latest deep-host Linux result as characterization-only because

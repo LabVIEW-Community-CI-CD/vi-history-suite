@@ -62,6 +62,16 @@ control-plane claim.
 3. produce the governed comparative benchmark packet and normalize it into the
    control plane
 
+Current retained Linux blocker before activation:
+
+- pair `135/138` is reproducibly failing under the Linux image lane
+- fresh Linux container repros now show the same pair does not complete under
+  either `LabVIEWCLI` or `LVCompare`
+- the retained Linux temp-surface evidence now classifies the blocker as
+  `linux-headless-recursive-load`
+- retrying the same pair after timeout degrades into `-350000` connection
+  failure rather than recovering the session
+
 ## Queue Mapping
 
 - `TRANCHE-011`
@@ -73,6 +83,8 @@ control-plane claim.
 
 - the deep Linux `HARNESS-VHS-002` benchmark completes `138/138`
 - Linux retains terminal summary, pair receipts, and native diagnostics
+- Linux retains supplemental headless artifacts and terminal diagnostic
+  reasons when a pair fails or times out
 - Linux is either promoted to comparable benchmark truth or explicitly retained
   as a bounded exception with a standards-grade rationale
 

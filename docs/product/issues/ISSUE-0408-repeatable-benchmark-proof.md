@@ -22,9 +22,15 @@ Current retained benchmark truth before activation:
 
 - the deep Linux host benchmark now fails truthfully late at pair `135/138`
   with `command-exited-nonzero`
+- the retained Linux summary now records
+  `terminalPairDiagnosticReason=linux-headless-recursive-load`
+- bounded fresh Linux container repros show the same pair does not complete
+  under either `LabVIEWCLI` or `LVCompare`
+- retrying the pair after timeout degrades into `-350000` connection failure
+  instead of recovering the headless session
 - the authority repo now retains per-pair failure receipts, terminal partial
-  summaries, native Linux diagnostic logs, and stale-report guards for that
-  lane
+  summaries, native Linux diagnostic logs, supplemental headless artifacts, a
+  surfaced terminal diagnostic reason, and stale-report guards for that lane
 - the Windows benchmark image is now published and pullable at
   `ghcr.io/svelderrainruiz/vi-history-suite-source-experiments/windows-dashboard-benchmark:main`
   after successful publication runs `23993316899`, `23993748337`, and
@@ -71,6 +77,7 @@ Current retained benchmark truth before activation:
 ## First Active Slice
 
 - consume the retained Linux pair `135/138` failure evidence
+- preserve the Linux headless-runtime blocker as governed benchmark truth
 - finish the host-runnable Windows benchmark-image proof
 - stop short of claiming full comparability until both image lanes have
   truthful terminal summaries

@@ -417,6 +417,9 @@ export function renderBenchmarkStatusPanelHtml(
         <div><strong>Failed pairs:</strong> ${escapeHtml(
           formatOptionalNumber(hostLinux.latestSummary?.failedPairCount)
         )}</div>
+        <div><strong>Terminal diagnostic:</strong> ${escapeHtml(
+          hostLinux.latestSummary?.terminalPairDiagnosticReason ?? 'not retained'
+        )}</div>
         <div><strong>Blocked pairs:</strong> ${escapeHtml(
           formatOptionalNumber(hostLinux.latestSummary?.blockedPairCount)
         )}</div>

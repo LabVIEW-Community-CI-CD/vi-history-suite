@@ -53,6 +53,8 @@ export interface GitHubLinuxDashboardBenchmarkSummary {
   processedPairCount: number;
   terminalPairIndex?: number;
   terminalPairFailureReason?: string;
+  terminalPairDiagnosticReason?: string;
+  terminalPairDiagnosticNotes?: string[];
   terminalOutcome: 'completed' | 'runtime-failed' | 'runtime-timed-out';
   comparabilityState: HarnessDashboardSmokeReport['comparabilityState'];
   providerCounts: Record<string, number>;
@@ -97,6 +99,7 @@ export interface GitHubLinuxDashboardBenchmarkPairFailureReceipt {
   runtimeEngine?: string;
   runtimeFailureReason?: string;
   runtimeDiagnosticReason?: string;
+  runtimeDiagnosticNotes?: string[];
   runtimeImage: string;
   benchmarkImage?: {
     reference?: string;
@@ -398,7 +401,11 @@ export async function runGitHubLinuxDashboardBenchmarkCli(
     const failureMessage =
       summary.terminalPairIndex === undefined
         ? `Linux benchmark failed after processing ${summary.processedPairCount}/${summary.comparePairCount} pair(s).`
-        : `Linux benchmark failed at pair ${summary.terminalPairIndex}/${summary.comparePairCount}: ${summary.terminalPairFailureReason ?? 'runtime-execution-failed'}.`;
+        : `Linux benchmark failed at pair ${summary.terminalPairIndex}/${summary.comparePairCount}: ${summary.terminalPairFailureReason ?? 'runtime-execution-failed'}${
+            summary.terminalPairDiagnosticReason
+              ? ` (${summary.terminalPairDiagnosticReason})`
+              : ''
+          }.`;
     await writeProgress('failed', failureMessage);
     throw new Error(failureMessage);
   }
@@ -454,6 +461,12 @@ export function buildGitHubLinuxDashboardBenchmarkSummary(
     return counts;
   }, {});
   const etaAccuracy = result.report.dashboardEtaAccuracyRecord;
+  const terminalPair =
+    result.report.terminalPairIndex === undefined
+      ? undefined
+      : result.report.pairSummaries.find(
+          (pair) => pair.pairIndex === result.report.terminalPairIndex
+        );
   const benchmarkImageReference = process.env.VIHS_GITHUB_BENCHMARK_IMAGE_REF;
   const benchmarkImageDigest = process.env.VIHS_GITHUB_BENCHMARK_IMAGE_DIGEST;
   const headlessDisplayProvider = process.env.VIHS_GITHUB_BENCHMARK_HEADLESS_DISPLAY_PROVIDER;
@@ -497,6 +510,8 @@ export function buildGitHubLinuxDashboardBenchmarkSummary(
     processedPairCount: result.report.processedPairCount,
     terminalPairIndex: result.report.terminalPairIndex,
     terminalPairFailureReason: result.report.terminalPairFailureReason,
+    terminalPairDiagnosticReason: terminalPair?.runtimeDiagnosticReason,
+    terminalPairDiagnosticNotes: terminalPair?.runtimeDiagnosticNotes,
     terminalOutcome:
       result.report.completionState !== 'failed'
         ? 'completed'
@@ -610,6 +625,7 @@ async function buildGitHubLinuxDashboardBenchmarkPairFailureReceipt(
     runtimeEngine: pair.runtimeEngine,
     runtimeFailureReason: pair.runtimeFailureReason,
     runtimeDiagnosticReason: pair.runtimeDiagnosticReason,
+    runtimeDiagnosticNotes: pair.runtimeDiagnosticNotes,
     runtimeImage: summary.runtimeImage,
     benchmarkImage: summary.benchmarkImage,
     artifacts: {

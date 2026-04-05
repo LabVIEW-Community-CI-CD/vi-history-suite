@@ -1023,6 +1023,14 @@
   remains `complete` and `published`, that the live wiki page set matches the
   publication ledger, and that the publication ledger retains no `nextPage`
   target while the wiki is considered finished
+- `TEST-UNIT-277`: verify Linux comparison-report runtime execution retains
+  supplemental headless artifacts such as `LVStatus.txt` and current
+  `labview_*_headless_*_cur.txt` logs under governed report storage and
+  classifies retained `Recursive load during LEIF load!` markers as
+  `linux-headless-recursive-load`
+- `TEST-UNIT-278`: verify failed Linux benchmark summaries and the host
+  benchmark-status surface retain and surface the terminal diagnostic reason
+  alongside the terminal failure reason
 - `TEST-DOC-035`: review README, current-state, and ADR-0016 and confirm the
   canonical-host benchmark status surface is documented as the maintainer-facing
   in-IDE visibility and launch surface for the host Linux benchmark lane,
@@ -1070,6 +1078,12 @@
   invariant rather than “good progress,” that every in-scope requirements-and-
   standards source plus every ADR is covered by the matrix, and that the
   accepted ADR aggregation rule is documented explicitly
+- `TEST-DOC-043`: review README, current-state, PROGRAM-0003, and ISSUE-0408
+  and confirm the active Linux benchmark blocker is documented as a retained
+  headless-runtime seam on pair `135/138`, that supplemental headless
+  artifacts and terminal diagnostic reasons are governed explicitly, and that
+  the lane remains characterization-only until a truthful comparative result
+  exists
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed authority repo, private experiment mirror, wiki, and
   assurance-skill repos with authority roles, expected remotes, and primary

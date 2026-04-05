@@ -34,6 +34,7 @@ export interface ComparisonReportRuntimeExecutionDeps {
   removePath?: typeof fs.rm;
   unlinkFile?: typeof fs.unlink;
   readFile?: typeof fs.readFile;
+  readdir?: typeof fs.readdir;
   pathExists?: (filePath: string) => Promise<boolean>;
   runCommand?: (commandPlan: ComparisonCommandPlan) => Promise<RunCommandResult>;
   nowIso?: () => string;
@@ -174,6 +175,7 @@ export async function executeComparisonReport(
         removePath,
         unlinkFile,
         readFile,
+        readdir: deps.readdir ?? fs.readdir,
         pathExists,
         runCommand,
         nowIso,
@@ -242,6 +244,7 @@ async function runHostNativeExecution(
     removePath: typeof fs.rm;
     unlinkFile: typeof fs.unlink;
     readFile: typeof fs.readFile;
+    readdir: typeof fs.readdir;
     pathExists: (filePath: string) => Promise<boolean>;
     runCommand: (commandPlan: ComparisonCommandPlan) => Promise<RunCommandResult>;
     nowIso: () => string;
@@ -340,7 +343,9 @@ async function runHostNativeExecution(
       copyFile: deps.copyFile,
       unlinkFile: deps.unlinkFile,
       readFile: deps.readFile,
+      readdir: deps.readdir,
       mkdir: deps.mkdir,
+      removePath: deps.removePath,
       processPlatform: deps.processPlatform,
       expectedLabviewPath:
         extractCommandOptionValue(executionContext.commandPlan.args, '-LabVIEWPath') ??
@@ -398,6 +403,7 @@ async function runHostNativeExecution(
       diagnosticNotes,
       diagnosticLogSourcePath: diagnostics.sourcePath,
       diagnosticLogArtifactPath: diagnostics.artifactPath,
+      headlessDiagnosticArtifactPaths: diagnostics.headlessArtifactPaths,
       executable: executionContext.commandPlan.executable,
       args: executionContext.commandPlan.args,
       startedAt,
@@ -442,7 +448,9 @@ async function runHostNativeExecution(
       copyFile: deps.copyFile,
       unlinkFile: deps.unlinkFile,
       readFile: deps.readFile,
+      readdir: deps.readdir,
       mkdir: deps.mkdir,
+      removePath: deps.removePath,
       processPlatform: deps.processPlatform,
       expectedLabviewPath:
         extractCommandOptionValue(executionContext.commandPlan.args, '-LabVIEWPath') ??
@@ -458,6 +466,7 @@ async function runHostNativeExecution(
       diagnosticNotes: diagnostics.notes,
       diagnosticLogSourcePath: diagnostics.sourcePath,
       diagnosticLogArtifactPath: diagnostics.artifactPath,
+      headlessDiagnosticArtifactPaths: diagnostics.headlessArtifactPaths,
       executable: executionContext.commandPlan.executable,
       args: executionContext.commandPlan.args,
       startedAt,
@@ -526,6 +535,7 @@ interface CapturedRuntimeDiagnostics {
   notes: string[];
   sourcePath?: string;
   artifactPath?: string;
+  headlessArtifactPaths?: string[];
 }
 
 interface RuntimeDiagnosticPathMapping {
@@ -549,7 +559,9 @@ async function captureRuntimeDiagnostics(
     copyFile: typeof fs.copyFile;
     unlinkFile: typeof fs.unlink;
     readFile: typeof fs.readFile;
+    readdir?: typeof fs.readdir;
     mkdir: typeof fs.mkdir;
+    removePath?: typeof fs.rm;
     processPlatform: NodeJS.Platform;
     expectedLabviewPath?: string;
     diagnosticPathMapping?: RuntimeDiagnosticPathMapping;
@@ -567,11 +579,23 @@ async function captureRuntimeDiagnostics(
     }
   };
 
+  const headlessDiagnostics = await captureLinuxHeadlessDiagnostics(record, {
+    pathExists: deps.pathExists,
+    copyFile: deps.copyFile,
+    readFile: deps.readFile,
+    readdir: deps.readdir ?? fs.readdir,
+    mkdir: deps.mkdir,
+    removePath: deps.removePath ?? fs.rm,
+    processPlatform: deps.processPlatform
+  });
+
   const diagnosticLogSourcePath = parseLabviewCliDiagnosticLogPath(stdout);
   if (!diagnosticLogSourcePath) {
     await clearStaleArtifactIfPresent();
     return {
-      notes: []
+      reason: headlessDiagnostics.reason,
+      notes: headlessDiagnostics.notes,
+      headlessArtifactPaths: headlessDiagnostics.artifactPaths
     };
   }
 
@@ -583,9 +607,13 @@ async function captureRuntimeDiagnostics(
   if (!hostReadablePath || !(await deps.pathExists(hostReadablePath))) {
     await clearStaleArtifactIfPresent();
     return {
-      notes: ['LabVIEW CLI reported a diagnostic log path, but the log file was not readable from the active host.'],
+      notes: mergeDiagnosticNotes(
+        ['LabVIEW CLI reported a diagnostic log path, but the log file was not readable from the active host.'],
+        headlessDiagnostics.notes
+      ),
       sourcePath: diagnosticLogSourcePath,
-      reason: 'runtime-diagnostic-log-unreadable'
+      reason: headlessDiagnostics.reason ?? 'runtime-diagnostic-log-unreadable',
+      headlessArtifactPaths: headlessDiagnostics.artifactPaths
     };
   }
 
@@ -595,10 +623,110 @@ async function captureRuntimeDiagnostics(
   const classification = classifyLabviewCliDiagnosticText(diagnosticText, deps.expectedLabviewPath);
 
   return {
-    reason: classification.reason,
-    notes: classification.notes,
+    reason: headlessDiagnostics.reason ?? classification.reason,
+    notes: mergeDiagnosticNotes(classification.notes, headlessDiagnostics.notes),
     sourcePath: diagnosticLogSourcePath,
-    artifactPath: record.artifactPlan.runtimeDiagnosticLogFilePath
+    artifactPath: record.artifactPlan.runtimeDiagnosticLogFilePath,
+    headlessArtifactPaths: headlessDiagnostics.artifactPaths
+  };
+}
+
+async function captureLinuxHeadlessDiagnostics(
+  record: ComparisonReportPacketRecord,
+  deps: {
+    pathExists: (filePath: string) => Promise<boolean>;
+    copyFile: typeof fs.copyFile;
+    readFile: typeof fs.readFile;
+    readdir: typeof fs.readdir;
+    mkdir: typeof fs.mkdir;
+    removePath: typeof fs.rm;
+    processPlatform: NodeJS.Platform;
+  }
+): Promise<{
+  reason?: string;
+  notes: string[];
+  artifactPaths: string[];
+}> {
+  if (deps.processPlatform !== 'linux' || record.runtimeSelection.platform !== 'linux') {
+    return {
+      notes: [],
+      artifactPaths: []
+    };
+  }
+
+  const sourceRoot = '/tmp';
+  const artifactRoot = path.join(record.artifactPlan.reportDirectory, 'headless-diagnostics');
+  try {
+    await deps.removePath(artifactRoot, {
+      recursive: true,
+      force: true
+    });
+  } catch {
+    // Preserve deterministic execution results even if stale cleanup fails.
+  }
+
+  let entryNames: string[] = [];
+  try {
+    entryNames = (await deps.readdir(sourceRoot)) as unknown as string[];
+  } catch {
+    return {
+      notes: [],
+      artifactPaths: []
+    };
+  }
+
+  const selectedNames = entryNames
+    .filter(
+      (name) =>
+        name === 'LVStatus.txt' ||
+        /^(labview|lvrt)_.+_headless_.+_cur\.txt$/i.test(name)
+    )
+    .sort((left, right) => left.localeCompare(right));
+
+  if (selectedNames.length === 0) {
+    return {
+      notes: [],
+      artifactPaths: []
+    };
+  }
+
+  const artifactPaths: string[] = [];
+  const notes: string[] = [];
+  let reason: string | undefined;
+
+  await deps.mkdir(artifactRoot, { recursive: true });
+  for (const name of selectedNames) {
+    const sourcePath = path.posix.join(sourceRoot, name);
+    if (!(await deps.pathExists(sourcePath))) {
+      continue;
+    }
+
+    const artifactPath = path.join(artifactRoot, name);
+    await deps.copyFile(sourcePath, artifactPath);
+    artifactPaths.push(artifactPath);
+
+    let diagnosticText = '';
+    try {
+      diagnosticText = await deps.readFile(sourcePath, 'utf8');
+    } catch {
+      continue;
+    }
+
+    if (/Recursive load during LEIF load!/i.test(diagnosticText)) {
+      reason = reason ?? 'linux-headless-recursive-load';
+      const mainPanelMatch = diagnosticText.match(/loading ([^\r\n]+GSW_MainPanel\.vi)/i);
+      notes.push(
+        mainPanelMatch
+          ? `Retained Linux headless status reported a recursive LEIF load while opening ${mainPanelMatch[1]}.`
+          : 'Retained Linux headless status reported a recursive LEIF load.'
+      );
+    }
+  }
+
+  return {
+    reason,
+    notes,
+    artifactPaths
   };
 }
 
@@ -1529,6 +1657,15 @@ function classifyRuntimeFailure(options: {
   }
 
   if (options.exitCode !== 0) {
+    if (options.engine === 'labview-cli' && /Error code\s*:\s*-350000\b/i.test(options.stderr)) {
+      return {
+        reason: 'labview-cli-connection-failed',
+        notes: [
+          'LabVIEW CLI launched or reused a headless LabVIEW session but failed to establish the required VI Server connection.'
+        ]
+      };
+    }
+
     return {
       reason: 'command-exited-nonzero',
       notes: []

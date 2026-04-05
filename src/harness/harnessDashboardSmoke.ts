@@ -54,6 +54,7 @@ export interface HarnessDashboardSmokePairSummary {
   runtimeEngine?: string;
   runtimeFailureReason?: string;
   runtimeDiagnosticReason?: string;
+  runtimeDiagnosticNotes?: string[];
   generatedReportExists: boolean;
   packetFilePath: string;
   reportFilePath: string;
@@ -62,6 +63,7 @@ export interface HarnessDashboardSmokePairSummary {
   runtimeStdoutPath?: string;
   runtimeStderrPath?: string;
   runtimeDiagnosticLogPath?: string;
+  runtimeHeadlessDiagnosticArtifactPaths?: string[];
   runtimeProcessObservationPath?: string;
   actualPreparationSeconds: number;
   estimatedPreparationSeconds?: number;
@@ -259,6 +261,7 @@ export async function runHarnessDashboardSmoke(
       runtimeEngine: execution.record.runtimeSelection.engine,
       runtimeFailureReason: execution.record.runtimeExecution.failureReason,
       runtimeDiagnosticReason: execution.record.runtimeExecution.diagnosticReason,
+      runtimeDiagnosticNotes: execution.record.runtimeExecution.diagnosticNotes,
       generatedReportExists: execution.record.runtimeExecution.reportExists,
       packetFilePath:
         execution.archivedSourceRecord?.archivePlan.packetFilePath ?? execution.packetFilePath,
@@ -270,6 +273,8 @@ export async function runHarnessDashboardSmoke(
       runtimeStdoutPath: execution.record.runtimeExecution.stdoutFilePath,
       runtimeStderrPath: execution.record.runtimeExecution.stderrFilePath,
       runtimeDiagnosticLogPath: execution.record.runtimeExecution.diagnosticLogArtifactPath,
+      runtimeHeadlessDiagnosticArtifactPaths:
+        execution.record.runtimeExecution.headlessDiagnosticArtifactPaths,
       runtimeProcessObservationPath:
         execution.record.runtimeExecution.processObservationArtifactPath,
       actualPreparationSeconds,

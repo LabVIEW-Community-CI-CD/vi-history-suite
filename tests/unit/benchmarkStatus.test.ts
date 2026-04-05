@@ -275,6 +275,7 @@ describe('benchmark status surfaces', () => {
         processedPairCount: 1,
         terminalPairIndex: 1,
         terminalPairFailureReason: 'command-timed-out',
+        terminalPairDiagnosticReason: 'linux-headless-recursive-load',
         terminalOutcome: 'runtime-timed-out',
         comparabilityState: 'characterization-only',
         providerCounts: {
@@ -318,5 +319,6 @@ describe('benchmark status surfaces', () => {
     expect(snapshot.hostLinux.latestSummary?.completionState).toBe('failed');
     expect(snapshot.hostLinux.statusSummary).toContain('pair 1/138');
     expect(snapshot.hostLinux.statusSummary).toContain('command-timed-out');
+    expect(snapshot.hostLinux.statusSummary).toContain('linux-headless-recursive-load');
   });
 });

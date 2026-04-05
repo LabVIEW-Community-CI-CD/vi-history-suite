@@ -29,6 +29,7 @@ export interface ComparisonReportRuntimeExecution {
   diagnosticNotes?: string[];
   diagnosticLogSourcePath?: string;
   diagnosticLogArtifactPath?: string;
+  headlessDiagnosticArtifactPaths?: string[];
   executable?: string;
   args?: string[];
   startedAt?: string;
@@ -247,6 +248,9 @@ export function renderComparisonReportPacketHtml(record: ComparisonReportPacketR
       <div><strong>Stderr artifact:</strong> ${escapeHtml(runtimeExecution.stderrFilePath ?? 'none')}</div>
       <div><strong>Process observation artifact:</strong> ${escapeHtml(
         runtimeExecution.processObservationArtifactPath ?? 'none'
+      )}</div>
+      <div><strong>Headless diagnostic artifacts:</strong> ${escapeHtml(
+        runtimeExecution.headlessDiagnosticArtifactPaths?.join(' | ') ?? 'none'
       )}</div>
       <div><strong>Process observation captured at:</strong> ${escapeHtml(
         runtimeExecution.processObservationCapturedAt ?? 'none'

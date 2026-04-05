@@ -278,6 +278,10 @@ async function loadHostLinuxSummary(
               latestSummary.terminalPairIndex ?? 'unknown'
             )}/${latestSummary.comparePairCount} with ${
               latestSummary.terminalPairFailureReason ?? 'runtime-execution-failed'
+            }${
+              latestSummary.terminalPairDiagnosticReason
+                ? ` (${latestSummary.terminalPairDiagnosticReason})`
+                : ''
             }.`
           : 'Completed. The latest retained Linux benchmark summary is newer than the current host launch receipt.'
     };
