@@ -199,14 +199,14 @@ describe('runHarnessDashboardSmokeCli', () => {
           '--engine',
           'labview-cli',
           '--labview-cli-path',
-          'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+          WINDOWS_LABVIEW_CLI_PATH,
           '--labview-exe-path',
           WINDOWS_LABVIEW_EXE_PATH
         ],
         {
           hostPlatform: 'win32',
           pathExists: (vi.fn(async (candidatePath: string) =>
-            candidatePath !== 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
+            candidatePath !== WINDOWS_LABVIEW_CLI_PATH
           ) as never),
           runner
         }

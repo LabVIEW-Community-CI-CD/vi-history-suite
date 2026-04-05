@@ -40,6 +40,8 @@ Adopt canonical experiment admission control for `PROGRAM-0003`.
    - explicit override paths require matching platform and engine selectors
    - engine-specific path sets must remain complete and non-conflicting
    - Windows bitness overrides must not contradict explicit runtime paths
+   - explicit Windows runtime paths must not mix x86 and x64 surfaces even
+     when `--prefer-bitness` is omitted
    - explicit Windows executable paths must match governed executable basenames
 3. Exact-pair selected/base hash validation remains a local rule of
    `runHarnessReportSmoke` and stays governed by `ADR-0021`.
@@ -73,6 +75,8 @@ Adopt canonical experiment admission control for `PROGRAM-0003`.
 
 - more CLI entrypoints now reject ambiguous manual overrides that used to be
   tolerated
+- mixed x86/x64 explicit Windows bundles are now classified as experiment
+  contamination instead of being allowed to retain misleading blocker evidence
 - operators must keep explicit runtime overrides coherent across more surfaces
 - documentation upkeep expands because the admission-control boundary is now a
   first-class product contract

@@ -169,6 +169,19 @@ describe('runHarnessReportSmokeCli', () => {
           'win32',
           '--engine',
           'labview-cli',
+          '--labview-cli-path',
+          WINDOWS_LABVIEW_CLI_PATH,
+          '--labview-exe-path',
+          WINDOWS_X64_LABVIEW_EXE_PATH
+        ])
+    ).toThrow(/must form one coherent bitness bundle/);
+    expect(
+      () =>
+        parseHarnessReportSmokeArgs([
+          '--platform',
+          'win32',
+          '--engine',
+          'labview-cli',
           '--prefer-bitness',
           'x86',
           '--labview-cli-path',

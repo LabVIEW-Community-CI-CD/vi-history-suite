@@ -56,6 +56,9 @@
     `LabVIEW.exe` / `LabVIEWCLI.exe` / `LVCompare.exe` sessions or a
     preexisting listener on the selected `LabVIEW.ini`-derived VI Server port
     would contaminate the rerun
+  - explicit Windows runtime override paths must also remain one coherent x86
+    or x64 bundle even when `--prefer-bitness` is omitted, so a mixed x86 CLI
+    plus x64 LabVIEW launch cannot be retained as canonical evidence
   - on the current canonical machine, only the x86 `LabVIEWCLI.exe` path
     exists locally, so host-native x64 `labview-cli` reruns remain
     non-canonical unless a real x64 CLI install exists

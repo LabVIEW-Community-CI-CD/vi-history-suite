@@ -1112,6 +1112,9 @@
 - `TEST-UNIT-295`: verify the shared PROGRAM-0003 CLI admission layer rejects
   contradictory explicit runtime override bundles across exact-pair smoke,
   dashboard smoke, decision-record, and Windows/Linux benchmark entrypoints
+- `TEST-UNIT-296`: verify canonical Windows explicit runtime override bundles
+  reject mixed x86/x64 path combinations even when `--prefer-bitness` is
+  omitted, while coherent explicit bundles still pass admission control
 - `TEST-DOC-035`: review README, current-state, and ADR-0016 and confirm the
   canonical-host benchmark status surface is documented as the maintainer-facing
   in-IDE visibility and launch surface for the host Linux benchmark lane,
@@ -1251,6 +1254,10 @@
   PROGRAM-0003 runtime-override admission contract is documented as shared
   across dashboard-smoke, decision-record, exact-pair smoke, and the
   Windows/Linux benchmark CLIs rather than living in one diagnosis entrypoint
+- `TEST-DOC-060`: review current-state, harnesses, canonical exact-pair
+  diagnosis guidance, PROGRAM-0003, ISSUE-0408, and ADR-0022 and confirm
+  explicit Windows runtime override bundles are documented as invalid when
+  they mix x86 and x64 paths, even when `--prefer-bitness` is omitted
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed authority repo, private experiment mirror, wiki, and
   assurance-skill repos with authority roles, expected remotes, and primary

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-05T19:03:04.089Z",
+  "generatedAt": "2026-04-05T19:14:56.368Z",
   "sourceLedgerPath": "docs/product/wiki-publication-ledger.json",
   "sourceWikiRepoPath": "../vi-history-suite.wiki",
   "defaultPageId": "overview",
@@ -38,7 +38,7 @@
       "wikiFileName": "Comparison-Reports-And-Dashboard-Review.md",
       "htmlFileName": "comparison-reports-and-dashboard-review.html",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "5125ace"
+      "wikiCommit": "5f2fdfa"
     },
     {
       "id": "review-scenarios-and-decision-records",
@@ -92,7 +92,7 @@
       "wikiFileName": "Current-State.md",
       "htmlFileName": "current-state.html",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "5125ace"
+      "wikiCommit": "5f2fdfa"
     },
     {
       "id": "wiki-authority-map",
@@ -137,7 +137,7 @@
       "wikiFileName": "Architecture-Decision-Records.md",
       "htmlFileName": "architecture-decision-records.html",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "5125ace"
+      "wikiCommit": "5f2fdfa"
     }
   ]
 }

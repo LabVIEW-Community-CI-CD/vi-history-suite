@@ -53,7 +53,7 @@
       "wikiFileName": "Comparison-Reports-And-Dashboard-Review.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "5125ace",
+      "wikiCommit": "5f2fdfa",
       "primaryAuthority": [
         "docs/requirements/srs.md",
         "docs/product/ni-comparison-report-metadata-inventory.md",
@@ -156,7 +156,7 @@
       "wikiFileName": "Current-State.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "5125ace",
+      "wikiCommit": "5f2fdfa",
       "primaryAuthority": [
         "docs/product/current-state.md",
         "README.md",
@@ -234,7 +234,7 @@
       "wikiFileName": "Architecture-Decision-Records.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "5125ace",
+      "wikiCommit": "5f2fdfa",
       "primaryAuthority": [
         "docs/architecture/overview.md",
         "docs/architecture/adr/ADR-0001-vscode-typescript-baseline.md",

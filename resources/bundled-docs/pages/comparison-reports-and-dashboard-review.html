@@ -114,6 +114,8 @@ benchmark boundaries.</p>
 <li>explicit runtime override paths require matching <code>--platform</code> and <code>--engine</code></li>
 <li>Windows <code>--prefer-bitness</code> must not contradict explicit
 <code>Program Files</code> / <code>Program Files (x86)</code> runtime paths</li>
+<li>explicit Windows runtime override bundles must not mix x86 and x64 paths
+even when <code>--prefer-bitness</code> is omitted</li>
 <li>wrong engine/path combinations fail closed before the harness runs</li>
 </ul>
 <p>That admission control is no longer exact-pair-only:</p>

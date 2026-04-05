@@ -125,6 +125,10 @@ Current retained benchmark truth before activation:
   benchmark CLIs now share one canonical runtime-override validation layer, so
   contradictory explicit engine/path bundles are rejected before they can
   contaminate retained benchmark blocker evidence
+- `VHS-REQ-452` now governs canonical Windows bundle coherence too: explicit
+  Windows runtime override bundles that mix x86 and x64 paths are rejected
+  even when `--prefer-bitness` is omitted, so a manual x86 `LabVIEWCLI.exe`
+  plus x64 `LabVIEW.exe` launch cannot be retained as benchmark truth
 - local host-runnable proof for the Windows benchmark image is still open
 
 ## Scope

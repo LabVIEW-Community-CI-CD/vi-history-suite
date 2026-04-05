@@ -155,6 +155,12 @@ PROGRAM-0003 admission layer rather than keeping it trapped inside
 smoke, and the Windows/Linux benchmark CLIs now reject contradictory
 engine/path bundles before they can generate retained evidence.
 
+`VHS-REQ-452` tightens that shared admission layer further on Windows: even
+when an operator omits `--prefer-bitness`, explicit runtime override paths must
+still resolve to one coherent x86 or x64 bundle. Mixed x86/x64 manual bundles
+are now treated as experiment contamination instead of being allowed to retain
+misleading blocker evidence.
+
 Current retained Linux blocker before activation:
 
 - pair `135/138` is reproducibly failing under the Linux image lane

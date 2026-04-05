@@ -13,6 +13,8 @@ import {
 
 const WINDOWS_LABVIEW_EXE_PATH =
   'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe';
+const WINDOWS_X86_LABVIEW_EXE_PATH =
+  'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe';
 const WINDOWS_LABVIEW_CLI_PATH =
   'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe';
 const WINDOWS_LVCOMPARE_PATH =
@@ -68,6 +70,16 @@ describe('runGitHubWindowsDashboardBenchmarkCli', () => {
         WINDOWS_LABVIEW_EXE_PATH
       ])
     ).toThrow(/Canonical runtime overrides require --engine/);
+    expect(() =>
+      parseGitHubWindowsDashboardBenchmarkArgs([
+        '--engine',
+        'labview-cli',
+        '--labview-cli-path',
+        WINDOWS_LABVIEW_CLI_PATH,
+        '--labview-exe-path',
+        WINDOWS_LABVIEW_EXE_PATH
+      ])
+    ).toThrow(/must form one coherent bitness bundle/);
     expect(getGitHubWindowsDashboardBenchmarkUsage()).toContain(
       'Defaults to HARNESS-VHS-002'
     );
@@ -84,7 +96,7 @@ describe('runGitHubWindowsDashboardBenchmarkCli', () => {
           '--labview-cli-path',
           WINDOWS_LABVIEW_CLI_PATH,
           '--labview-exe-path',
-          WINDOWS_LABVIEW_EXE_PATH
+          WINDOWS_X86_LABVIEW_EXE_PATH
         ],
         {
           hostPlatform: 'win32',

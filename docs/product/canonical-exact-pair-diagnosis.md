@@ -77,6 +77,8 @@ Use when diagnosing the same exact retained pair under Windows `LVCompare`.
   - `LVCompare.exe`
 - On the canonical Windows host, explicit runtime override paths must exist
   before the harness runs.
+- Explicit Windows runtime override paths must resolve to one coherent x86 or
+  x64 bundle even when `--prefer-bitness` is omitted.
 - Windows `--prefer-bitness` must not contradict explicit
   `Program Files` / `Program Files (x86)` runtime paths.
 - Canonical Windows host-native diagnosis requires a clean host runtime
