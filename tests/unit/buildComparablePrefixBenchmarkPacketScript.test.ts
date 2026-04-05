@@ -27,6 +27,21 @@ const comparablePacket = require(path.resolve(
     filePath: string,
     options?: { linuxWorkspaceRoot?: string; windowsWorkspaceRoot?: string }
   ) => string;
+  readWindowsExactPairDiagnosis: (
+    reportPath: string,
+    proofRootPath: string
+  ) => {
+    engine: string;
+    proofRootPath: string;
+    reportPath: string;
+    selectedHash?: string;
+    baseHash?: string;
+    runtimeExecutionState?: string;
+    runtimeFailureReason?: string;
+    runtimeDiagnosticReason?: string;
+    runtimeExecutable?: string;
+    runtimeNotes: string[];
+  };
   renderComparablePrefixBenchmarkPacketMarkdown: (packet: {
     generatedAt: string;
     proofState: string;
@@ -67,6 +82,15 @@ const comparablePacket = require(path.resolve(
           terminalPairFailureReason: string;
           terminalPairDiagnosticReason: string;
         };
+        exactPairDiagnostics?: Array<{
+          engine: string;
+          proofRootPath: string;
+          reportPath: string;
+          selectedHash?: string;
+          baseHash?: string;
+          runtimeFailureReason?: string;
+          runtimeDiagnosticReason?: string;
+        }>;
       };
     };
     comparison: {
@@ -166,6 +190,49 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
     );
   });
 
+  it('reads a retained Windows exact-pair diagnosis report', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-exact-pair-'));
+    const reportPath = path.join(
+      tempRoot,
+      'cache',
+      'harness-reports',
+      'HARNESS-VHS-002',
+      'comparison-report-smoke.json'
+    );
+
+    await fs.mkdir(path.dirname(reportPath), { recursive: true });
+    await fs.writeFile(
+      reportPath,
+      JSON.stringify({
+        runtimeEngine: 'labview-cli',
+        selectedHash: '3408654e680200d7787c17cc0b443a97fcdfb360',
+        baseHash: '6dd65df674287c9705959a7e9aca6b02e8445d40',
+        runtimeExecutionState: 'failed',
+        runtimeFailureReason: 'command-exited-nonzero',
+        runtimeDiagnosticReason: 'labview-cli-call-by-reference',
+        runtimeExecutable:
+          'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+        runtimeNotes: ['Attempted Windows headless session reset via LabVIEWCLI CloseLabVIEW.']
+      }),
+      'utf8'
+    );
+
+    const summary = comparablePacket.readWindowsExactPairDiagnosis(reportPath, tempRoot);
+    expect(summary).toEqual({
+      engine: 'labview-cli',
+      proofRootPath: tempRoot,
+      reportPath,
+      selectedHash: '3408654e680200d7787c17cc0b443a97fcdfb360',
+      baseHash: '6dd65df674287c9705959a7e9aca6b02e8445d40',
+      runtimeExecutionState: 'failed',
+      runtimeFailureReason: 'command-exited-nonzero',
+      runtimeDiagnosticReason: 'labview-cli-call-by-reference',
+      runtimeExecutable:
+        'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+      runtimeNotes: ['Attempted Windows headless session reset via LabVIEWCLI CloseLabVIEW.']
+    });
+  });
+
   it('renders a concise comparable-prefix markdown packet', () => {
     const markdown = comparablePacket.renderComparablePrefixBenchmarkPacketMarkdown({
       generatedAt: '2026-04-05T07:30:00.000Z',
@@ -210,7 +277,26 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
             terminalPairIndex: 129,
             terminalPairFailureReason: 'command-exited-nonzero',
             terminalPairDiagnosticReason: 'labview-cli-call-by-reference'
-          }
+          },
+          exactPairDiagnostics: [
+            {
+              engine: 'labview-cli',
+              proofRootPath: '/tmp/windows-benchmark-image-pair129-labviewcli',
+              reportPath: '/tmp/windows-benchmark-image-pair129-labviewcli/comparison-report-smoke.json',
+              baseHash: '6dd65df674287c9705959a7e9aca6b02e8445d40',
+              selectedHash: '3408654e680200d7787c17cc0b443a97fcdfb360',
+              runtimeFailureReason: 'command-exited-nonzero',
+              runtimeDiagnosticReason: 'labview-cli-call-by-reference'
+            },
+            {
+              engine: 'lvcompare',
+              proofRootPath: '/tmp/windows-benchmark-image-pair129-lvcompare',
+              reportPath: '/tmp/windows-benchmark-image-pair129-lvcompare/comparison-report-smoke.json',
+              baseHash: '6dd65df674287c9705959a7e9aca6b02e8445d40',
+              selectedHash: '3408654e680200d7787c17cc0b443a97fcdfb360',
+              runtimeFailureReason: 'command-timed-out'
+            }
+          ]
         }
       },
       comparison: {
@@ -225,5 +311,12 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
     expect(markdown).toContain('linux-headless-recursive-load');
     expect(markdown).toContain('labview-cli-call-by-reference');
     expect(markdown).toContain('bounded-blocked');
+    expect(markdown).toContain('## Windows Exact-Pair Diagnosis');
+    expect(markdown).toContain(
+      'labview-cli: 6dd65df67428 -> 3408654e6802 :: command-exited-nonzero (labview-cli-call-by-reference)'
+    );
+    expect(markdown).toContain(
+      'lvcompare: 6dd65df67428 -> 3408654e6802 :: command-timed-out'
+    );
   });
 });

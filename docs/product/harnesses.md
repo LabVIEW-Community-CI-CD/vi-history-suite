@@ -112,6 +112,12 @@
   - `docs/product/benchmark-packets/HARNESS-VHS-002-comparable-prefix.json`
   - `docs/product/benchmark-packets/HARNESS-VHS-002-comparable-prefix.md`
 - current retained last comparable pair id: `87792a7b6545`
+- current retained Windows exact blocker pair:
+  `6dd65df674287c9705959a7e9aca6b02e8445d40 -> 3408654e680200d7787c17cc0b443a97fcdfb360`
+- the comparable-prefix packet now retains exact-pair Windows diagnosis
+  receipts for both supported engines on that boundary:
+  `labview-cli => command-exited-nonzero (labview-cli-call-by-reference)` and
+  `lvcompare => command-timed-out`
 - current retained Linux full-window blocker:
   `pair 135 / 138 :: command-exited-nonzero (linux-headless-recursive-load)`
 - the full 139-commit / 138-pair window remains the deep Windows benchmark

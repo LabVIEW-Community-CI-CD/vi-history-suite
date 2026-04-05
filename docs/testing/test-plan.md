@@ -1082,6 +1082,10 @@
   `--selected-hash` / `--base-hash` pair with `--runtime-timeout-ms`,
   forwards those bounds into the runner, and rejects mismatched targeted
   bases instead of drifting to another compare pair
+- `TEST-UNIT-289`: verify the comparable-prefix benchmark packet loader and
+  markdown renderer retain governed Windows exact-pair diagnosis receipts for
+  both `labview-cli` and `lvcompare`, including the `6dd65df -> 3408654`
+  selected/base hashes, proof-root paths, and bounded failure outcomes
 - `TEST-DOC-035`: review README, current-state, and ADR-0016 and confirm the
   canonical-host benchmark status surface is documented as the maintainer-facing
   in-IDE visibility and launch surface for the host Linux benchmark lane,
@@ -1184,6 +1188,11 @@
   confirm the exact pair `6dd65df -> 3408654` Windows `lvcompare` diagnosis
   rerun is documented as a bounded `120000ms` timeout, not as a comparable
   fallback or an open-ended hang
+- `TEST-DOC-053`: review current-state, harnesses, PROGRAM-0003, ISSUE-0408,
+  and the comparable-prefix packet and confirm the exact Windows blocker pair
+  `6dd65df -> 3408654` is documented as failing under both `labview-cli` and
+  `lvcompare`, with the packet retaining both exact-pair diagnosis receipts
+  instead of only the bounded pair index
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed authority repo, private experiment mirror, wiki, and
   assurance-skill repos with authority roles, expected remotes, and primary

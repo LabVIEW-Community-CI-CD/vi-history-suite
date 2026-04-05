@@ -75,6 +75,13 @@ Current retained benchmark truth before activation:
   exact-pair Windows `lvcompare` rerun on `6dd65df -> 3408654` times out
   after `120000ms` under `windows-benchmark-image-pair129-lvcompare`, so the
   pair-129 ceiling is not recoverable through a simple Windows engine swap
+- the same exact blocker pair `6dd65df -> 3408654` is now retained under both
+  supported Windows engines: `windows-benchmark-image-pair129-labviewcli`
+  records `command-exited-nonzero (labview-cli-call-by-reference)` after a
+  connected-session retry attempt, `windows-benchmark-image-pair129-lvcompare`
+  records `command-timed-out` after the bounded `120000ms` budget, and the
+  comparable-prefix packet now carries both exact-pair receipts so future
+  sessions do not have to rediscover them from AppData
 - local host-runnable proof for the Windows benchmark image is still open
 
 ## Scope

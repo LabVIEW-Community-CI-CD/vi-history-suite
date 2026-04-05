@@ -219,12 +219,15 @@ describe('post-release control-plane coherence', () => {
     expect(benchmarkProgram).toContain('Windows host baseline');
     expect(benchmarkProgram).toContain('Windows benchmark-image baseline');
     expect(benchmarkProgram).toContain('Linux benchmark-image result');
+    expect(benchmarkProgram).toContain('The same exact blocker pair `6dd65df -> 3408654`');
 
     expect(benchmarkIssue).toContain('Queued follow-on post-release issue.');
     expect(benchmarkIssue).toContain('the deep Linux host benchmark now fails truthfully late at pair `135/138`');
     expect(benchmarkIssue).toContain('a governed comparable-prefix packet now retains the accepted cross-OS');
     expect(benchmarkIssue).toContain('`129`-commit / `128`-pair timing scope');
     expect(benchmarkIssue).toContain('windows-dashboard-benchmark:main');
+    expect(benchmarkIssue).toContain('the same exact blocker pair `6dd65df -> 3408654`');
+    expect(benchmarkIssue).toContain('windows-benchmark-image-pair129-labviewcli');
 
     expect(sustainmentProgram).toContain('release cadence, benchmark refresh cadence, operator surfaces');
     expect(sustainmentIssue).toContain('Queued follow-on post-release issue.');

@@ -48,6 +48,26 @@ const HOST_WINDOWS_SMOKE_RELATIVE_PATH = path.join(
   TARGET_HARNESS_ID,
   'dashboard-smoke.json'
 );
+const HOST_WINDOWS_EXACT_PAIR_SMOKE_RELATIVE_PATH = path.join(
+  'cache',
+  'harness-reports',
+  TARGET_HARNESS_ID,
+  'comparison-report-smoke.json'
+);
+const HOST_WINDOWS_EXACT_PAIR_ROOTS_BY_ENGINE = {
+  'labview-cli': path.join(
+    'AppData',
+    'Local',
+    'VI History Suite',
+    'windows-benchmark-image-pair129-labviewcli'
+  ),
+  lvcompare: path.join(
+    'AppData',
+    'Local',
+    'VI History Suite',
+    'windows-benchmark-image-pair129-lvcompare'
+  )
+};
 const DEFAULT_JSON_OUTPUT_RELATIVE_PATH = path.join(
   'docs',
   'product',
@@ -125,6 +145,7 @@ function buildComparablePrefixBenchmarkPacket(repoRoot, options = {}) {
   const windowsHost = loadWindowsHostSurface(repoRoot);
   const linuxHost = loadLinuxHostSurface(repoRoot);
   const windowsBenchmarkImage = loadWindowsBenchmarkImageSurface(repoRoot);
+  const windowsExactPairDiagnostics = loadWindowsExactPairDiagnostics(repoRoot);
   const maxComparablePairCount = Math.min(
     windowsHost.validatedPrefix.validatedPairCount,
     linuxHost.validatedPrefix.validatedPairCount,
@@ -267,7 +288,8 @@ function buildComparablePrefixBenchmarkPacket(repoRoot, options = {}) {
             windowsBenchmarkImage.summary.terminalPairDiagnosticReason ??
             windowsBenchmarkImage.pairFailureReceipt?.runtimeDiagnosticReason ??
             windowsBenchmarkImage.validatedPrefix.firstInvalidReason
-        }
+        },
+        exactPairDiagnostics: windowsExactPairDiagnostics
       }
     },
     comparison: {
@@ -284,7 +306,10 @@ function buildComparablePrefixBenchmarkPacket(repoRoot, options = {}) {
       linuxHostDashboardJsonPath: linuxHost.dashboardJsonPath,
       windowsBenchmarkImageLatestSummaryPath: windowsBenchmarkImage.summaryPath,
       windowsBenchmarkImageDashboardSmokePath: windowsBenchmarkImage.dashboardSmokePath,
-      windowsBenchmarkImageDashboardJsonPath: windowsBenchmarkImage.dashboardJsonPath
+      windowsBenchmarkImageDashboardJsonPath: windowsBenchmarkImage.dashboardJsonPath,
+      windowsBenchmarkImageExactPairDiagnosticPaths: windowsExactPairDiagnostics.map(
+        (diagnostic) => diagnostic.reportPath
+      )
     }
   };
 }
@@ -361,6 +386,18 @@ function loadWindowsBenchmarkImageSurface(repoRoot) {
   };
 }
 
+function loadWindowsExactPairDiagnostics(repoRoot) {
+  const diagnostics = [];
+  for (const engine of ['labview-cli', 'lvcompare']) {
+    const latest = findLatestHostWindowsExactPairDiagnosis(repoRoot, engine);
+    if (!latest) {
+      continue;
+    }
+    diagnostics.push(readWindowsExactPairDiagnosis(latest.reportPath, latest.proofRootPath));
+  }
+  return diagnostics;
+}
+
 function findLatestHostLinuxBenchmark(repoRoot) {
   const candidates = [];
   for (const root of collectHostLinuxBenchmarkRoots(repoRoot)) {
@@ -423,6 +460,32 @@ function findLatestHostWindowsBenchmarkImageProof(repoRoot) {
   return candidates[0];
 }
 
+function findLatestHostWindowsExactPairDiagnosis(repoRoot, engine) {
+  const candidates = [];
+  for (const root of collectHostWindowsExactPairDiagnosisRoots(repoRoot, engine)) {
+    const reportPath = path.join(root, HOST_WINDOWS_EXACT_PAIR_SMOKE_RELATIVE_PATH);
+    if (!fs.existsSync(reportPath)) {
+      continue;
+    }
+    const report = tryReadJson(reportPath);
+    if (!report) {
+      continue;
+    }
+    const sortTimestamp = parseTimestamp(report.generatedAt, reportPath);
+    candidates.push({
+      proofRootPath: root,
+      reportPath,
+      sortTimestamp
+    });
+  }
+
+  if (candidates.length === 0) {
+    return undefined;
+  }
+  candidates.sort((left, right) => right.sortTimestamp - left.sortTimestamp);
+  return candidates[0];
+}
+
 function collectHostLinuxBenchmarkRoots(repoRoot) {
   const roots = new Set();
   const home = os.homedir();
@@ -468,6 +531,46 @@ function collectHostWindowsBenchmarkRoots(repoRoot) {
 
   roots.add(path.join(repoRoot, '.cache', 'windows-benchmark-image-proof'));
   return [...roots].filter((root) => fs.existsSync(root));
+}
+
+function collectHostWindowsExactPairDiagnosisRoots(repoRoot, engine) {
+  const rootSuffix = HOST_WINDOWS_EXACT_PAIR_ROOTS_BY_ENGINE[engine];
+  if (!rootSuffix) {
+    throw new Error(`Unsupported Windows exact-pair diagnosis engine: ${String(engine)}`);
+  }
+
+  const roots = new Set();
+  const home = os.homedir();
+
+  if (home) {
+    roots.add(path.join(home, rootSuffix));
+  }
+
+  const windowsUsersRoot = path.join(path.sep, 'mnt', 'c', 'Users');
+  if (fs.existsSync(windowsUsersRoot)) {
+    for (const entry of safeReadDir(windowsUsersRoot)) {
+      roots.add(path.join(windowsUsersRoot, entry, rootSuffix));
+    }
+  }
+
+  roots.add(path.join(repoRoot, '.cache', path.basename(rootSuffix)));
+  return [...roots].filter((root) => fs.existsSync(root));
+}
+
+function readWindowsExactPairDiagnosis(reportPath, proofRootPath) {
+  const report = readJson(reportPath);
+  return {
+    engine: report.runtimeEngine ?? 'unknown',
+    proofRootPath,
+    reportPath,
+    selectedHash: report.selectedHash,
+    baseHash: report.baseHash,
+    runtimeExecutionState: report.runtimeExecutionState,
+    runtimeFailureReason: report.runtimeFailureReason,
+    runtimeDiagnosticReason: report.runtimeDiagnosticReason,
+    runtimeExecutable: report.runtimeExecutable,
+    runtimeNotes: report.runtimeNotes ?? []
+  };
 }
 
 function summarizeDashboardPrefix(dashboardJsonPath, comparablePairCount, options = {}) {
@@ -621,6 +724,7 @@ function writeComparablePrefixBenchmarkPacket(packet, options) {
 }
 
 function renderComparablePrefixBenchmarkPacketMarkdown(packet) {
+  const exactPairDiagnostics = packet.surfaces.windowsBenchmarkImage.exactPairDiagnostics ?? [];
   return [
     '# HARNESS-VHS-002 Comparable Prefix Benchmark Packet',
     '',
@@ -655,6 +759,18 @@ function renderComparablePrefixBenchmarkPacketMarkdown(packet) {
     `- Validated comparable pairs: ${packet.surfaces.windowsBenchmarkImage.validatedComparablePairCount}`,
     `- Prefix runtime total: ${packet.surfaces.windowsBenchmarkImage.comparablePrefixRuntimeTotalMs} ms`,
     `- Full-window blocker: pair ${packet.surfaces.windowsBenchmarkImage.fullWindowBlocker.terminalPairIndex} / ${packet.fullWindow.comparePairCount} :: ${packet.surfaces.windowsBenchmarkImage.fullWindowBlocker.terminalPairFailureReason} (${packet.surfaces.windowsBenchmarkImage.fullWindowBlocker.terminalPairDiagnosticReason})`,
+    ...(exactPairDiagnostics.length > 0
+      ? [
+          '',
+          '## Windows Exact-Pair Diagnosis',
+          '',
+          ...exactPairDiagnostics.flatMap((diagnostic) => [
+            `- ${diagnostic.engine}: ${formatHashPair(diagnostic.baseHash, diagnostic.selectedHash)} :: ${diagnostic.runtimeFailureReason}${diagnostic.runtimeDiagnosticReason ? ` (${diagnostic.runtimeDiagnosticReason})` : ''}`,
+            `- ${diagnostic.engine} proof root: ${diagnostic.proofRootPath}`,
+            `- ${diagnostic.engine} report: ${diagnostic.reportPath}`
+          ])
+        ]
+      : []),
     '',
     '## Comparison',
     '',
@@ -666,6 +782,7 @@ function renderComparablePrefixBenchmarkPacketMarkdown(packet) {
 }
 
 function formatComparablePrefixBenchmarkPacket(packet) {
+  const exactPairDiagnostics = packet.surfaces.windowsBenchmarkImage.exactPairDiagnostics ?? [];
   return [
     'Comparable Prefix Benchmark Packet',
     `- proofState: ${packet.proofState}`,
@@ -679,12 +796,33 @@ function formatComparablePrefixBenchmarkPacket(packet) {
     `- windowsVsLinuxSpeedupFactor: ${formatOptionalNumber(packet.comparison.windowsVsLinuxSpeedupFactor)}`,
     `- linuxFullWindowBlocker: pair ${packet.surfaces.linuxHost.fullWindowBlocker.terminalPairIndex} / ${packet.fullWindow.comparePairCount} :: ${packet.surfaces.linuxHost.fullWindowBlocker.terminalPairFailureReason} (${packet.surfaces.linuxHost.fullWindowBlocker.terminalPairDiagnosticReason})`,
     `- windowsBenchmarkImage: ${packet.surfaces.windowsBenchmarkImage.state}`,
-    `- windowsBenchmarkImageRuntimeMs: ${packet.surfaces.windowsBenchmarkImage.comparablePrefixRuntimeTotalMs}`
+    `- windowsBenchmarkImageRuntimeMs: ${packet.surfaces.windowsBenchmarkImage.comparablePrefixRuntimeTotalMs}`,
+    ...(exactPairDiagnostics.length > 0
+      ? [
+          `- windowsExactPairDiagnostics: ${exactPairDiagnostics
+            .map(
+              (diagnostic) =>
+                `${diagnostic.engine}=${diagnostic.runtimeFailureReason}${diagnostic.runtimeDiagnosticReason ? ` (${diagnostic.runtimeDiagnosticReason})` : ''}`
+            )
+            .join('; ')}`
+        ]
+      : [])
   ].join('\n') + '\n';
 }
 
 function formatOptionalNumber(value) {
   return typeof value === 'number' ? value.toFixed(4) : 'n/a';
+}
+
+function formatHashPair(baseHash, selectedHash) {
+  return `${abbreviateHash(baseHash)} -> ${abbreviateHash(selectedHash)}`;
+}
+
+function abbreviateHash(hash) {
+  if (typeof hash !== 'string' || hash.length === 0) {
+    return 'unknown';
+  }
+  return hash.slice(0, 12);
 }
 
 function readJson(filePath) {
@@ -725,6 +863,7 @@ module.exports = {
   formatComparablePrefixBenchmarkPacket,
   normalizeArtifactPath,
   parseArgs,
+  readWindowsExactPairDiagnosis,
   renderComparablePrefixBenchmarkPacketMarkdown,
   summarizeDashboardPrefix,
   validateDashboardPrefix,

@@ -1,7 +1,7 @@
 {
   "schema": "vi-history-suite/comparable-prefix-benchmark-packet@v1",
   "benchmarkId": "HARNESS-VHS-002-comparable-prefix",
-  "generatedAt": "2026-04-05T16:25:37.420Z",
+  "generatedAt": "2026-04-05T17:15:54.456Z",
   "harnessId": "HARNESS-VHS-002",
   "targetRelativePath": "resource/plugins/lv_icon.vi",
   "proofState": "bounded-prefix-comparable",
@@ -84,7 +84,49 @@
         "terminalPairIndex": 129,
         "terminalPairFailureReason": "command-exited-nonzero",
         "terminalPairDiagnosticReason": "labview-cli-call-by-reference"
-      }
+      },
+      "exactPairDiagnostics": [
+        {
+          "engine": "labview-cli",
+          "proofRootPath": "/mnt/c/Users/sveld/AppData/Local/VI History Suite/windows-benchmark-image-pair129-labviewcli",
+          "reportPath": "/mnt/c/Users/sveld/AppData/Local/VI History Suite/windows-benchmark-image-pair129-labviewcli/cache/harness-reports/HARNESS-VHS-002/comparison-report-smoke.json",
+          "selectedHash": "3408654e680200d7787c17cc0b443a97fcdfb360",
+          "baseHash": "6dd65df674287c9705959a7e9aca6b02e8445d40",
+          "runtimeExecutionState": "failed",
+          "runtimeFailureReason": "command-exited-nonzero",
+          "runtimeDiagnosticReason": "labview-cli-call-by-reference",
+          "runtimeExecutable": "C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe",
+          "runtimeNotes": [
+            "Windows container provider image nationalinstruments/labview:2026q1-windows was not available; falling back to host-native runtime discovery.",
+            "At the retained cli-log-banner snapshot (2026-04-05T17:08:46.444Z), observed LabVIEW-related processes: LabVIEW.exe, LabVIEWCLI.exe.",
+            "At the retained cli-log-banner snapshot, LVCompare.exe was not observed.",
+            "At the retained process-exit snapshot (2026-04-05T17:09:20.044Z), observed LabVIEW-related processes: none.",
+            "At the retained process-exit snapshot, LVCompare.exe was not observed.",
+            "LabVIEW CLI established a VI Server connection before failing with Error 66 / Call By Reference.",
+            "The retained LabVIEW CLI diagnostic log did not report successful LabVIEW launch before exit.",
+            "Attempted Windows headless session reset via LabVIEWCLI CloseLabVIEW after call-by-reference diagnosis, then retried the pair once.",
+            "Windows headless session reset via LabVIEWCLI CloseLabVIEW exited with code 1 before retry."
+          ]
+        },
+        {
+          "engine": "lvcompare",
+          "proofRootPath": "/mnt/c/Users/sveld/AppData/Local/VI History Suite/windows-benchmark-image-pair129-lvcompare",
+          "reportPath": "/mnt/c/Users/sveld/AppData/Local/VI History Suite/windows-benchmark-image-pair129-lvcompare/cache/harness-reports/HARNESS-VHS-002/comparison-report-smoke.json",
+          "selectedHash": "3408654e680200d7787c17cc0b443a97fcdfb360",
+          "baseHash": "6dd65df674287c9705959a7e9aca6b02e8445d40",
+          "runtimeExecutionState": "failed",
+          "runtimeFailureReason": "command-timed-out",
+          "runtimeExecutable": "C:\\Program Files\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe",
+          "runtimeNotes": [
+            "Windows container provider image nationalinstruments/labview:2026q1-windows was not available; falling back to host-native runtime discovery.",
+            "Requested runtime engine override: lvcompare.",
+            "At the retained process-spawn snapshot (2026-04-05T17:01:30.005Z), observed LabVIEW-related processes: LabVIEW.exe, LVCompare.exe.",
+            "At the retained process-exit snapshot (2026-04-05T17:03:29.987Z), observed LabVIEW-related processes: LabVIEW.exe.",
+            "At the retained process-exit snapshot, LVCompare.exe was not observed.",
+            "Comparison-report runtime timed out after 120000ms."
+          ]
+        }
+      ]
     }
   },
   "comparison": {
@@ -101,6 +143,10 @@
     "linuxHostDashboardJsonPath": "/mnt/c/Users/sveld/AppData/Local/VI History Suite/host-linux-dashboard-benchmark/workspace-stage/current/.cache/harness-reports/HARNESS-VHS-002/workspace-storage/dashboards/5ae492b4571b/4053fc0e2e30/242c931b6588/dashboard.json",
     "windowsBenchmarkImageLatestSummaryPath": "/mnt/c/Users/sveld/AppData/Local/VI History Suite/windows-benchmark-image-proof/cache/github-experiments/windows-dashboard-benchmark/HARNESS-VHS-002/latest-summary.json",
     "windowsBenchmarkImageDashboardSmokePath": "/mnt/c/Users/sveld/AppData/Local/VI History Suite/windows-benchmark-image-proof/cache/harness-reports/HARNESS-VHS-002/dashboard-smoke.json",
-    "windowsBenchmarkImageDashboardJsonPath": "/mnt/c/Users/sveld/AppData/Local/VI History Suite/windows-benchmark-image-proof/cache/harness-reports/HARNESS-VHS-002/workspace-storage/dashboards/a1fa155b16ea/0ded7fc226bb/5f642f6f0eef/dashboard.json"
+    "windowsBenchmarkImageDashboardJsonPath": "/mnt/c/Users/sveld/AppData/Local/VI History Suite/windows-benchmark-image-proof/cache/harness-reports/HARNESS-VHS-002/workspace-storage/dashboards/a1fa155b16ea/0ded7fc226bb/5f642f6f0eef/dashboard.json",
+    "windowsBenchmarkImageExactPairDiagnosticPaths": [
+      "/mnt/c/Users/sveld/AppData/Local/VI History Suite/windows-benchmark-image-pair129-labviewcli/cache/harness-reports/HARNESS-VHS-002/comparison-report-smoke.json",
+      "/mnt/c/Users/sveld/AppData/Local/VI History Suite/windows-benchmark-image-pair129-lvcompare/cache/harness-reports/HARNESS-VHS-002/comparison-report-smoke.json"
+    ]
   }
 }

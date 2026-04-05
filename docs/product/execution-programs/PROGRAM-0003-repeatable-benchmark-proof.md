@@ -95,7 +95,13 @@ surface now also accepts an exact selected/base hash pair plus explicit
 runtime timeout, and the targeted exact-pair `lvcompare` rerun on
 `6dd65df -> 3408654` likewise times out after `120000ms`, which strengthens
 the conclusion that Windows pair `129` is not recoverable through a simple
-engine swap.
+engine swap. The same exact blocker pair `6dd65df -> 3408654` is now retained
+under both supported Windows engines: `windows-benchmark-image-pair129-labviewcli`
+records `command-exited-nonzero (labview-cli-call-by-reference)` after a
+connected-session retry attempt, `windows-benchmark-image-pair129-lvcompare`
+records `command-timed-out` after the bounded `120000ms` runtime budget, and
+the comparable-prefix packet now retains both exact-pair receipts alongside
+the accepted `129`-commit / `128`-pair timing scope.
 
 Current retained Linux blocker before activation:
 
