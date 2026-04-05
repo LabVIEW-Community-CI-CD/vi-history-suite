@@ -237,6 +237,8 @@ describe('documentation-package workbench', () => {
     expect(workbenchDoc).toContain('CI_PROJECT_DIR');
     expect(workbenchDoc).toContain('docs_control_plane_check');
     expect(workbenchDoc).toContain('${CI_PROJECT_PATH}.wiki.git');
+    expect(workbenchDoc).toContain('no-op completion receipt');
+    expect(workbenchDoc).toContain('nextPage = null');
     expect(workbenchDoc).toContain('docs-workbench-evidence/docs-workbench-manifest.json');
     expect(workbenchDoc).toContain('docs/product/wiki-publication-ledger.md');
     expect(workbenchDoc).toContain('docs/product/wiki-publication-ledger.json');
@@ -291,5 +293,8 @@ describe('documentation-package workbench', () => {
     expect(gitlabCi).toContain('${CI_REGISTRY_IMAGE}/docs-authoring:sha-${CI_COMMIT_SHORT_SHA}');
     expect(gitlabCi).toContain('wiki-workbench-evidence/wiki-workbench-manifest.json');
     expect(gitlabCi).toContain('iteration-report.md');
+    expect(gitlabCi).toContain('if [ -d .cache/wiki-workbench/staging ]');
+    expect(gitlabCi).toContain('Completion state: ${prepare.completionState ||');
+    expect(gitlabCi).toContain('Prepare note: ${prepare.message ||');
   });
 });

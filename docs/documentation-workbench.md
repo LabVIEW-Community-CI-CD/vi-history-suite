@@ -149,6 +149,9 @@ The intended flow is:
 2. run `plan` to see published pages plus the current next-page target
 3. run `prepare` to materialize a page-authority bundle, current wiki copy
    when present, a draft wiki file, and a publication-prep receipt
+   - if `docs/product/wiki-publication-ledger.json` already retains
+     `nextPage = null`, `prepare` now retains a governed no-op completion
+     receipt instead of failing on the already-finished wiki state
 4. run `sync-bundled-docs` only after the staged wiki state and publication
    ledger are ready
 5. treat the tranche as finished only when
@@ -234,7 +237,9 @@ The commit-aligned wiki-preparation lane is:
 That job runs inside `${CI_REGISTRY_IMAGE}/docs-authoring:sha-${CI_COMMIT_SHORT_SHA}`,
 clones the sibling wiki repo, runs doctor/plan/prepare from the published
 image, and retains `wiki-workbench-evidence/` as the authoritative CI-side wiki
-iteration pack.
+iteration pack. When the publication ledger already retains `nextPage = null`,
+the prepare step records a no-op completion receipt and the lane stays green
+without inventing a fake staged page.
 
 ## Scope Boundary
 

@@ -113,15 +113,17 @@ export interface WikiWorkbenchStageReceipt {
 export interface WikiWorkbenchPublicationPrepReceipt {
   schema: 'vi-history-suite/wiki-workbench-publication-prep@v1';
   recordedAt: string;
-  page: WikiWorkbenchPagePlan;
-  stageReceiptPath: string;
-  stageDirectory: string;
-  draftFilePath: string;
-  targetWikiFilePath: string;
-  currentWikiExists: boolean;
-  publicationMode: 'new-page' | 'refresh-existing-page';
+  page?: WikiWorkbenchPagePlan;
+  stageReceiptPath?: string;
+  stageDirectory?: string;
+  draftFilePath?: string;
+  targetWikiFilePath?: string;
+  currentWikiExists?: boolean;
+  publicationMode: 'new-page' | 'refresh-existing-page' | 'no-op-complete';
   ledgerUpdateRequired: boolean;
-  bundledDocsCommand: string;
+  bundledDocsCommand?: string;
+  completionState: 'prepared' | 'already-complete';
+  message: string;
 }
 
 export interface WikiWorkbenchManifest {
@@ -825,6 +827,33 @@ export async function prepareWikiWorkbenchPublication(
 ): Promise<{ receiptPath: string; receipt: WikiWorkbenchPublicationPrepReceipt }> {
   const mkdir = deps.mkdir ?? fs.mkdir;
   const writeFile = deps.writeFile ?? fs.writeFile;
+  const now = deps.now ?? (() => new Date());
+
+  if (!pageId && !ledger.nextPage) {
+    const prepDirectory = await ensureRetainedDirectory({
+      preferredDirectory: path.join(topology.publicationPrepRoot, 'complete'),
+      recoveryRoot: path.join(topology.workbenchRoot, 'publication-prep-runs'),
+      pageId: 'complete',
+      mkdir,
+      now
+    });
+    await mkdir(prepDirectory, { recursive: true });
+
+    const receipt: WikiWorkbenchPublicationPrepReceipt = {
+      schema: 'vi-history-suite/wiki-workbench-publication-prep@v1',
+      recordedAt: now().toISOString(),
+      publicationMode: 'no-op-complete',
+      ledgerUpdateRequired: false,
+      completionState: 'already-complete',
+      message:
+        'The publication ledger has no nextPage target, so wiki workbench preparation is already complete.'
+    };
+
+    const receiptPath = path.join(prepDirectory, 'publication-prep.json');
+    await writeFile(receiptPath, JSON.stringify(receipt, null, 2), 'utf8');
+    return { receiptPath, receipt };
+  }
+
   const page = resolveWikiWorkbenchPage(topology, ledger, pageId);
   const { receiptPath: stageReceiptPath, receipt: stageReceipt } = await stageWikiWorkbenchPage(
     topology,
@@ -838,12 +867,12 @@ export async function prepareWikiWorkbenchPublication(
     recoveryRoot: path.join(topology.workbenchRoot, 'publication-prep-runs'),
     pageId: page.id,
     mkdir,
-    now: deps.now ?? (() => new Date())
+    now
   });
   await mkdir(prepDirectory, { recursive: true });
   const receipt: WikiWorkbenchPublicationPrepReceipt = {
     schema: 'vi-history-suite/wiki-workbench-publication-prep@v1',
-    recordedAt: (deps.now ?? (() => new Date()))().toISOString(),
+    recordedAt: now().toISOString(),
     page,
     stageReceiptPath,
     stageDirectory: stageReceipt.stageDirectory,
@@ -852,8 +881,9 @@ export async function prepareWikiWorkbenchPublication(
     currentWikiExists: Boolean(stageReceipt.currentWikiCopyPath),
     publicationMode: stageReceipt.currentWikiCopyPath ? 'refresh-existing-page' : 'new-page',
     ledgerUpdateRequired: page.status !== 'published',
-    bundledDocsCommand:
-      'node scripts/syncBundledDocs.js'
+    bundledDocsCommand: 'node scripts/syncBundledDocs.js',
+    completionState: 'prepared',
+    message: `Prepared wiki publication evidence for ${page.id}.`
   };
 
   const receiptPath = path.join(prepDirectory, 'publication-prep.json');

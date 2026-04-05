@@ -1018,7 +1018,8 @@
 - `TEST-UNIT-274`: verify the package/docs/GitLab surfaces expose the
   published-image wiki workbench lane, including published-image local command
   surfaces, the `wiki_workbench_prepare_published` CI job, and retained
-  `wiki-workbench-evidence/` artifact paths
+  `wiki-workbench-evidence/` artifact paths, including the no-op completion
+  receipt path when the publication ledger already retains `nextPage = null`
 - `TEST-UNIT-275`: verify the published-image local docs-workbench runner
   resolves GitLab registry credentials from supported environment variables and
   formats a stable fail-closed registry-access explanation when the published

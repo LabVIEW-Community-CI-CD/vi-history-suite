@@ -276,9 +276,9 @@ describe('wiki workbench cli', () => {
       'documentation-workbench',
       'publication-prep.json'
     );
-    expect(JSON.parse(await fs.readFile(prepReceiptPath, 'utf8')).page.id).toBe(
-      'documentation-workbench'
-    );
+    const prepReceipt = JSON.parse(await fs.readFile(prepReceiptPath, 'utf8'));
+    expect(prepReceipt.page.id).toBe('documentation-workbench');
+    expect(prepReceipt.completionState).toBe('prepared');
 
     await runWikiWorkbenchCli(['sync-bundled-docs'], {
       repoRoot,
@@ -304,6 +304,51 @@ describe('wiki workbench cli', () => {
       ledgerPath: path.join(repoRoot, 'docs', 'product', 'wiki-publication-ledger.json'),
       bundleRoot: path.join(repoRoot, 'resources', 'bundled-docs')
     });
+  });
+
+  it('retains a no-op completion receipt when the wiki ledger has no next page', async () => {
+    const { repoRoot, wikiRoot } = await createWikiWorkbenchFixture();
+    const ledgerPath = path.join(repoRoot, 'docs', 'product', 'wiki-publication-ledger.json');
+    const ledger = JSON.parse(await fs.readFile(ledgerPath, 'utf8')) as {
+      generatedFor: string;
+      pages: Array<unknown>;
+      nextPage?: unknown;
+    };
+    delete ledger.nextPage;
+    await fs.writeFile(ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`, 'utf8');
+
+    await runWikiWorkbenchCli(['prepare-publication'], {
+      repoRoot,
+      getGitRemote: (candidate) => {
+        if (candidate === repoRoot) {
+          return 'https://gitlab.com/svelderrainruiz/vi-history-suite.git';
+        }
+
+        if (candidate === wikiRoot) {
+          return 'https://gitlab.com/svelderrainruiz/vi-history-suite.wiki.git';
+        }
+
+        return undefined;
+      }
+    });
+
+    const prepReceiptPath = path.join(
+      repoRoot,
+      '.cache',
+      'wiki-workbench',
+      'publication-prep',
+      'complete',
+      'publication-prep.json'
+    );
+    const prepReceipt = JSON.parse(await fs.readFile(prepReceiptPath, 'utf8'));
+
+    expect(prepReceipt).toMatchObject({
+      publicationMode: 'no-op-complete',
+      ledgerUpdateRequired: false,
+      completionState: 'already-complete'
+    });
+    expect(prepReceipt.message).toContain('no nextPage target');
+    expect(prepReceipt.page).toBeUndefined();
   });
 
   it('fails closed when a published wiki file is missing', async () => {

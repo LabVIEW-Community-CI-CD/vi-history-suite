@@ -115,8 +115,9 @@ wiki_workbench_prepare_published:
     - npm run wiki:workbench:plan -- --format json > wiki-workbench-evidence/plan.json
     - npm run wiki:workbench:prepare -- --format json > wiki-workbench-evidence/prepare.json
     - cp .cache/wiki-workbench/latest-workbench.json wiki-workbench-evidence/wiki-workbench-manifest.json
-    - cp -R .cache/wiki-workbench/staging wiki-workbench-evidence/staging
-    - cp -R .cache/wiki-workbench/publication-prep wiki-workbench-evidence/publication-prep
+    - mkdir -p wiki-workbench-evidence/staging wiki-workbench-evidence/publication-prep
+    - if [ -d .cache/wiki-workbench/staging ]; then cp -R .cache/wiki-workbench/staging/. wiki-workbench-evidence/staging/; fi
+    - if [ -d .cache/wiki-workbench/publication-prep ]; then cp -R .cache/wiki-workbench/publication-prep/. wiki-workbench-evidence/publication-prep/; fi
     - |
       node - <<'NODE'
       const fs = require('node:fs');
@@ -136,8 +137,10 @@ wiki_workbench_prepare_published:
         `- Planned pages: ${(plan.pages || []).length}`,
         `- Prepared page: ${prepare.page?.id || ''}`,
         `- Publication mode: ${prepare.publicationMode || ''}`,
+        `- Completion state: ${prepare.completionState || ''}`,
         `- Ledger update required: ${String(prepare.ledgerUpdateRequired)}`,
-        `- Doctor issues: ${(doctor.issues || []).length}`
+        `- Doctor issues: ${(doctor.issues || []).length}`,
+        `- Prepare note: ${prepare.message || ''}`
       ].join('\n');
 
       fs.writeFileSync(
