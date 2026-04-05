@@ -1,6 +1,15 @@
 import * as fs from 'node:fs/promises';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
+import {
+  observeWindowsRuntimeProcesses,
+  observeWindowsTcpListeners,
+  ObserveWindowsProcessesOptions,
+  ObserveWindowsTcpListenersOptions,
+  resolveWindowsLabviewTcpSettingsForLabviewPath,
+  RuntimeProcessObservation,
+  WindowsTcpListenerObservation
+} from './comparisonReportRuntimeExecution';
 
 const execFileAsync = promisify(execFile);
 
@@ -55,6 +64,9 @@ export interface ComparisonRuntimeSelection {
   labviewExe?: RuntimeToolCandidate;
   labviewCli?: RuntimeToolCandidate;
   lvCompare?: RuntimeToolCandidate;
+  hostLabviewIniPath?: string;
+  hostLabviewTcpPort?: number;
+  hostRuntimeConflictDetected?: boolean;
   blockedReason?: string;
   providerDecisions?: RuntimeProviderDecision[];
   notes: string[];
@@ -64,11 +76,18 @@ export interface ComparisonRuntimeSelection {
 
 export interface ComparisonRuntimeLocatorDeps {
   pathExists?: (filePath: string) => Promise<boolean>;
+  readFile?: typeof fs.readFile;
   queryWindowsRegistry?: (plan: WindowsRegistryQueryPlan) => Promise<string>;
   queryWindowsContainerImage?: (
     image: string,
     hostPlatform: NodeJS.Platform
   ) => Promise<boolean>;
+  observeWindowsProcesses?: (
+    options: ObserveWindowsProcessesOptions
+  ) => Promise<RuntimeProcessObservation | undefined>;
+  observeWindowsTcpListeners?: (
+    options: ObserveWindowsTcpListenersOptions
+  ) => Promise<WindowsTcpListenerObservation[]>;
   hostPlatform?: NodeJS.Platform;
 }
 
@@ -78,6 +97,8 @@ interface BuildProviderDecisionsOptions {
   preferBitness: RuntimeBitnessPreference;
   windowsContainerImage: string;
   windowsContainerAvailable: boolean;
+  windowsContainerEvaluated?: boolean;
+  hostRuntimeConflictDetected?: boolean;
   selectedProvider?: RuntimeSelectableProvider;
   selectedEngine?: ComparisonRuntimeEngine;
   blockedReason?: string;
@@ -97,6 +118,13 @@ const WINDOWS_CONTAINER_LABVIEW_CLI =
   'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe';
 const WINDOWS_CONTAINER_LVCOMPARE =
   'C:\\Program Files\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe';
+
+interface WindowsHostRuntimeSurfaceFacts {
+  hostLabviewIniPath?: string;
+  hostLabviewTcpPort?: number;
+  hostRuntimeConflictDetected?: boolean;
+  notes: string[];
+}
 
 export function buildWindowsRegistryQueryPlans(): WindowsRegistryQueryPlan[] {
   return [
@@ -307,17 +335,27 @@ export async function locateComparisonRuntime(
     ...scannedCandidates
   ]);
 
-  const windowsContainerAvailable =
-    platform === 'win32' &&
-    executionMode !== 'host-only' &&
-    preferBitness !== 'x86'
-      ? await (deps.queryWindowsContainerImage ?? queryWindowsContainerImageAvailability)(
-          windowsContainerImage,
-          hostPlatform
-        )
-      : false;
+  let windowsContainerAvailable = false;
+  let windowsContainerEvaluated = false;
+  const ensureWindowsContainerAvailability = async (): Promise<boolean> => {
+    if (
+      windowsContainerEvaluated ||
+      platform !== 'win32' ||
+      executionMode === 'host-only' ||
+      preferBitness === 'x86'
+    ) {
+      return windowsContainerAvailable;
+    }
+
+    windowsContainerAvailable = await (
+      deps.queryWindowsContainerImage ?? queryWindowsContainerImageAvailability
+    )(windowsContainerImage, hostPlatform);
+    windowsContainerEvaluated = true;
+    return windowsContainerAvailable;
+  };
 
   if (executionMode === 'docker-only') {
+    windowsContainerAvailable = await ensureWindowsContainerAvailability();
     if (platform !== 'win32') {
       return {
         platform,
@@ -331,6 +369,7 @@ export async function locateComparisonRuntime(
           preferBitness,
           windowsContainerImage,
           windowsContainerAvailable,
+          windowsContainerEvaluated,
           blockedReason: 'docker-only-provider-not-supported-on-platform'
         }),
         notes: [
@@ -354,6 +393,7 @@ export async function locateComparisonRuntime(
           preferBitness,
           windowsContainerImage,
           windowsContainerAvailable,
+          windowsContainerEvaluated,
           blockedReason: 'docker-only-requires-windows-x64-provider'
         }),
         notes: [
@@ -377,6 +417,7 @@ export async function locateComparisonRuntime(
           preferBitness,
           windowsContainerImage,
           windowsContainerAvailable,
+          windowsContainerEvaluated,
           blockedReason: 'docker-only-provider-unavailable'
         }),
         notes: [
@@ -398,6 +439,7 @@ export async function locateComparisonRuntime(
         preferBitness,
         windowsContainerImage,
         windowsContainerAvailable,
+        windowsContainerEvaluated,
         selectedProvider: 'windows-container',
         selectedEngine: 'labview-cli'
       }),
@@ -431,63 +473,79 @@ export async function locateComparisonRuntime(
     };
   }
 
-  if (windowsContainerAvailable) {
-    return {
-      platform,
-      executionMode,
-      preferBitness,
-      provider: 'windows-container',
-      providerDecisions: buildProviderDecisions({
-        platform,
-        executionMode,
-        preferBitness,
-        windowsContainerImage,
-        windowsContainerAvailable,
-        selectedProvider: 'windows-container',
-        selectedEngine: 'labview-cli'
-      }),
-      windowsContainerImage,
-      engine: 'labview-cli',
-      labviewExe: {
-        kind: 'labview-exe',
-        path: WINDOWS_CONTAINER_LABVIEW_EXE,
-        source: 'scan',
-        exists: true,
-        bitness: 'x64'
-      },
-      labviewCli: {
-        kind: 'labview-cli',
-        path: WINDOWS_CONTAINER_LABVIEW_CLI,
-        source: 'scan',
-        exists: true,
-        bitness: 'x86'
-      },
-      lvCompare: {
-        kind: 'lvcompare',
-        path: WINDOWS_CONTAINER_LVCOMPARE,
-        source: 'scan',
-        exists: true
-      },
-      notes: [
-        `Using isolated Windows container provider image ${windowsContainerImage} for 64-bit comparison-report execution.`
-      ],
-      registryQueryPlans,
-      candidates
-    };
-  }
-
-  if (platform === 'win32' && executionMode === 'auto' && preferBitness !== 'x86') {
-    notes.push(
-      `Windows container provider image ${windowsContainerImage} was not available; falling back to host-native runtime discovery.`
-    );
-  }
-
   const labviewCandidates = candidates.filter(
     (candidate) => candidate.kind === 'labview-exe' && candidate.exists
   );
   const labviewExe = selectPreferredLabviewCandidate(labviewCandidates, preferBitness, platform);
+  const hostRuntimeSurfaceFacts =
+    platform === 'win32' && labviewExe
+      ? await observeWindowsHostRuntimeSurfaceFacts(labviewExe.path, {
+          hostPlatform,
+          readFile: deps.readFile ?? fs.readFile,
+          observeWindowsProcesses: deps.observeWindowsProcesses ?? observeWindowsRuntimeProcesses,
+          observeWindowsTcpListeners:
+            deps.observeWindowsTcpListeners ?? observeWindowsTcpListeners
+        })
+      : undefined;
+  if (hostRuntimeSurfaceFacts) {
+    notes.push(...hostRuntimeSurfaceFacts.notes);
+  }
 
   if (!labviewExe) {
+    if (platform === 'win32' && executionMode === 'auto' && preferBitness !== 'x86') {
+      windowsContainerAvailable = await ensureWindowsContainerAvailability();
+      if (windowsContainerAvailable) {
+        return {
+          platform,
+          executionMode,
+          preferBitness,
+          provider: 'windows-container',
+          providerDecisions: buildProviderDecisions({
+            platform,
+            executionMode,
+            preferBitness,
+            windowsContainerImage,
+            windowsContainerAvailable,
+            windowsContainerEvaluated,
+            selectedProvider: 'windows-container',
+            selectedEngine: 'labview-cli',
+            labviewExeFound: false
+          }),
+          windowsContainerImage,
+          engine: 'labview-cli',
+          labviewExe: {
+            kind: 'labview-exe',
+            path: WINDOWS_CONTAINER_LABVIEW_EXE,
+            source: 'scan',
+            exists: true,
+            bitness: 'x64'
+          },
+          labviewCli: {
+            kind: 'labview-cli',
+            path: WINDOWS_CONTAINER_LABVIEW_CLI,
+            source: 'scan',
+            exists: true,
+            bitness: 'x86'
+          },
+          lvCompare: {
+            kind: 'lvcompare',
+            path: WINDOWS_CONTAINER_LVCOMPARE,
+            source: 'scan',
+            exists: true
+          },
+          notes: [
+            `No compatible host-native LabVIEW 2026 runtime was located; using governed Windows container provider image ${windowsContainerImage}.`
+          ],
+          registryQueryPlans,
+          candidates
+        };
+      }
+
+      notes.push(
+        `Windows container provider image ${windowsContainerImage} was not available; no compatible host-native LabVIEW 2026 runtime was located.`
+      );
+    }
+
     return {
       platform,
       executionMode,
@@ -500,6 +558,7 @@ export async function locateComparisonRuntime(
         preferBitness,
         windowsContainerImage,
         windowsContainerAvailable,
+        windowsContainerEvaluated,
         blockedReason: 'labview-exe-not-found',
         labviewExeFound: false
       }),
@@ -518,6 +577,176 @@ export async function locateComparisonRuntime(
   const lvCompare =
     candidates.find((candidate) => candidate.kind === 'lvcompare' && candidate.exists) ??
     undefined;
+  const hostLabviewIniPath = hostRuntimeSurfaceFacts?.hostLabviewIniPath;
+  const hostLabviewTcpPort = hostRuntimeSurfaceFacts?.hostLabviewTcpPort;
+  const hostRuntimeConflictDetected = hostRuntimeSurfaceFacts?.hostRuntimeConflictDetected;
+
+  if (platform === 'win32' && hostRuntimeConflictDetected) {
+    if (executionMode === 'auto' && preferBitness !== 'x86') {
+      windowsContainerAvailable = await ensureWindowsContainerAvailability();
+      if (windowsContainerAvailable) {
+        return {
+          platform,
+          executionMode,
+          preferBitness,
+          provider: 'windows-container',
+          providerDecisions: buildProviderDecisions({
+            platform,
+            executionMode,
+            preferBitness,
+            windowsContainerImage,
+            windowsContainerAvailable,
+            windowsContainerEvaluated,
+            hostRuntimeConflictDetected,
+            selectedProvider: 'windows-container',
+            selectedEngine: 'labview-cli',
+            labviewExeFound: true,
+            labviewCliFound: Boolean(labviewCli),
+            lvCompareFound: Boolean(lvCompare)
+          }),
+          windowsContainerImage,
+          engine: 'labview-cli',
+          labviewExe: {
+            kind: 'labview-exe',
+            path: WINDOWS_CONTAINER_LABVIEW_EXE,
+            source: 'scan',
+            exists: true,
+            bitness: 'x64'
+          },
+          labviewCli: {
+            kind: 'labview-cli',
+            path: WINDOWS_CONTAINER_LABVIEW_CLI,
+            source: 'scan',
+            exists: true,
+            bitness: 'x86'
+          },
+          lvCompare: {
+            kind: 'lvcompare',
+            path: WINDOWS_CONTAINER_LVCOMPARE,
+            source: 'scan',
+            exists: true
+          },
+          hostLabviewIniPath,
+          hostLabviewTcpPort,
+          hostRuntimeConflictDetected,
+          notes: [
+            ...notes,
+            `Validated Windows host runtime surface was contaminated; using governed Windows container provider image ${windowsContainerImage} instead of host-native execution.`
+          ],
+          registryQueryPlans,
+          candidates
+        };
+      }
+
+      notes.push(
+        `Validated Windows host runtime surface was contaminated and required Docker, but Windows container image ${windowsContainerImage} was not available to the current host.`
+      );
+    } else if (executionMode === 'host-only') {
+      notes.push(
+        'Host-only execution cannot proceed because the validated Windows host runtime surface is contaminated by existing LabVIEW-related activity.'
+      );
+    } else if (preferBitness === 'x86') {
+      notes.push(
+        'Windows x86 execution remains host-native, so the validated contaminated host runtime surface must be cleared before comparison-report execution can proceed.'
+      );
+    }
+
+    return {
+      platform,
+      executionMode,
+      preferBitness,
+      provider: 'unavailable',
+      blockedReason: 'windows-host-runtime-surface-contaminated',
+      providerDecisions: buildProviderDecisions({
+        platform,
+        executionMode,
+        preferBitness,
+        windowsContainerImage,
+        windowsContainerAvailable,
+        windowsContainerEvaluated,
+        hostRuntimeConflictDetected,
+        blockedReason: 'windows-host-runtime-surface-contaminated',
+        labviewExeFound: true,
+        labviewCliFound: Boolean(labviewCli),
+        lvCompareFound: Boolean(lvCompare)
+      }),
+      labviewExe,
+      labviewCli,
+      lvCompare,
+      hostLabviewIniPath,
+      hostLabviewTcpPort,
+      hostRuntimeConflictDetected,
+      notes,
+      registryQueryPlans,
+      candidates
+    };
+  }
+
+  if (
+    platform === 'win32' &&
+    executionMode === 'auto' &&
+    preferBitness !== 'x86' &&
+    !labviewCli &&
+    !lvCompare
+  ) {
+    windowsContainerAvailable = await ensureWindowsContainerAvailability();
+    if (windowsContainerAvailable) {
+      return {
+        platform,
+        executionMode,
+        preferBitness,
+        provider: 'windows-container',
+        providerDecisions: buildProviderDecisions({
+          platform,
+          executionMode,
+          preferBitness,
+          windowsContainerImage,
+          windowsContainerAvailable,
+          windowsContainerEvaluated,
+          selectedProvider: 'windows-container',
+          selectedEngine: 'labview-cli',
+          labviewExeFound: true,
+          labviewCliFound: false,
+          lvCompareFound: false
+        }),
+        windowsContainerImage,
+        engine: 'labview-cli',
+        labviewExe: {
+          kind: 'labview-exe',
+          path: WINDOWS_CONTAINER_LABVIEW_EXE,
+          source: 'scan',
+          exists: true,
+          bitness: 'x64'
+        },
+        labviewCli: {
+          kind: 'labview-cli',
+          path: WINDOWS_CONTAINER_LABVIEW_CLI,
+          source: 'scan',
+          exists: true,
+          bitness: 'x86'
+        },
+        lvCompare: {
+          kind: 'lvcompare',
+          path: WINDOWS_CONTAINER_LVCOMPARE,
+          source: 'scan',
+          exists: true
+        },
+        hostLabviewIniPath,
+        hostLabviewTcpPort,
+        hostRuntimeConflictDetected,
+        notes: [
+          ...notes,
+          `Host-native LabVIEW 2026 was available, but no host comparison tool was located; using governed Windows container provider image ${windowsContainerImage}.`
+        ],
+        registryQueryPlans,
+        candidates
+      };
+    }
+
+    notes.push(
+      `Windows container provider image ${windowsContainerImage} was not available; falling back to host-native runtime discovery.`
+    );
+  }
 
   if (labviewCli) {
     return {
@@ -531,6 +760,8 @@ export async function locateComparisonRuntime(
         preferBitness,
         windowsContainerImage,
         windowsContainerAvailable,
+        windowsContainerEvaluated,
+        hostRuntimeConflictDetected,
         selectedProvider: 'host-native',
         selectedEngine: 'labview-cli',
         labviewExeFound: true,
@@ -541,6 +772,9 @@ export async function locateComparisonRuntime(
       labviewExe,
       labviewCli,
       lvCompare,
+      hostLabviewIniPath,
+      hostLabviewTcpPort,
+      hostRuntimeConflictDetected,
       notes,
       registryQueryPlans,
       candidates
@@ -560,6 +794,8 @@ export async function locateComparisonRuntime(
         preferBitness,
         windowsContainerImage,
         windowsContainerAvailable,
+        windowsContainerEvaluated,
+        hostRuntimeConflictDetected,
         selectedProvider: 'host-native',
         selectedEngine: 'lvcompare',
         labviewExeFound: true,
@@ -569,6 +805,9 @@ export async function locateComparisonRuntime(
       engine: 'lvcompare',
       labviewExe,
       lvCompare,
+      hostLabviewIniPath,
+      hostLabviewTcpPort,
+      hostRuntimeConflictDetected,
       notes,
       registryQueryPlans,
       candidates
@@ -597,6 +836,8 @@ export async function locateComparisonRuntime(
       preferBitness,
       windowsContainerImage,
       windowsContainerAvailable,
+      windowsContainerEvaluated,
+      hostRuntimeConflictDetected,
       blockedReason: 'comparison-tool-not-found',
       labviewExeFound: true,
       labviewCliFound: false,
@@ -606,6 +847,85 @@ export async function locateComparisonRuntime(
     notes,
     registryQueryPlans,
     candidates
+  };
+}
+
+async function observeWindowsHostRuntimeSurfaceFacts(
+  labviewPath: string,
+  deps: {
+    hostPlatform: NodeJS.Platform;
+    readFile: typeof fs.readFile;
+    observeWindowsProcesses: (
+      options: ObserveWindowsProcessesOptions
+    ) => Promise<RuntimeProcessObservation | undefined>;
+    observeWindowsTcpListeners: (
+      options: ObserveWindowsTcpListenersOptions
+    ) => Promise<WindowsTcpListenerObservation[]>;
+  }
+): Promise<WindowsHostRuntimeSurfaceFacts> {
+  const tcpSettings = await resolveWindowsLabviewTcpSettingsForLabviewPath(labviewPath, {
+    readFile: deps.readFile,
+    processPlatform: deps.hostPlatform
+  });
+  let processObservation: RuntimeProcessObservation | undefined;
+  let listenerObservations: WindowsTcpListenerObservation[] = [];
+  const notes = [...tcpSettings.notes];
+
+  try {
+    processObservation = await deps.observeWindowsProcesses({
+      hostPlatform: deps.hostPlatform,
+      runtimePlatform: 'win32',
+      trigger: 'preflight'
+    });
+  } catch (error) {
+    notes.push(
+      `Windows host runtime-process observation failed during canonical execution-request validation: ${String(error)}.`
+    );
+  }
+
+  try {
+    listenerObservations = await deps.observeWindowsTcpListeners({
+      hostPlatform: deps.hostPlatform,
+      runtimePlatform: 'win32',
+      localPorts:
+        Number.isInteger(tcpSettings.labviewTcpPort) && (tcpSettings.labviewTcpPort ?? 0) > 0
+          ? [tcpSettings.labviewTcpPort as number]
+          : []
+    });
+  } catch (error) {
+    notes.push(
+      `Windows governed VI Server listener observation failed during canonical execution-request validation: ${String(error)}.`
+    );
+  }
+
+  const hostRuntimeConflictDetected =
+    Boolean(processObservation?.observedProcesses.length) || listenerObservations.length > 0;
+
+  if (processObservation?.observedProcessNames.length) {
+    notes.push(
+      `Validated Windows host runtime surface observed existing runtime processes before provider selection: ${processObservation.observedProcessNames.join(' | ')}.`
+    );
+  }
+
+  if (listenerObservations.length > 0) {
+    notes.push(
+      `Validated Windows host runtime surface observed an existing TCP listener on the governed VI Server port before provider selection: ${describeWindowsTcpListeners(listenerObservations)}.`
+    );
+  }
+
+  if (!hostRuntimeConflictDetected) {
+    notes.push(
+      Number.isInteger(tcpSettings.labviewTcpPort)
+        ? `Validated Windows host runtime surface before provider selection; no existing LabVIEW-related processes or governed listener were detected on VI Server port ${String(tcpSettings.labviewTcpPort)}.`
+        : 'Validated Windows host runtime surface before provider selection; no existing LabVIEW-related processes were detected.'
+    );
+  }
+
+  return {
+    hostLabviewIniPath: tcpSettings.labviewIniPath,
+    hostLabviewTcpPort: tcpSettings.labviewTcpPort,
+    hostRuntimeConflictDetected,
+    notes
   };
 }
 
@@ -622,11 +942,23 @@ function buildProviderDecisions(
       reason:
         options.executionMode === 'docker-only'
           ? 'execution-mode-docker-only-selected-windows-container'
-          : 'windows-container-preferred-and-available',
+          : options.hostRuntimeConflictDetected
+            ? 'auto-required-docker-because-host-runtime-conflict'
+            : options.labviewExeFound === false
+              ? 'windows-container-selected-host-runtime-unavailable'
+              : options.labviewCliFound === false && options.lvCompareFound === false
+                ? 'windows-container-selected-because-host-comparison-tool-missing'
+                : 'windows-container-preferred-and-available',
       detail:
         options.executionMode === 'docker-only'
           ? `Docker-only execution was requested and Windows container image ${options.windowsContainerImage} was available for the governed provider.`
-          : `Windows container image ${options.windowsContainerImage} is available and Windows 64-bit comparison-report execution prefers isolation.`
+          : options.hostRuntimeConflictDetected
+            ? `Validated Windows host runtime facts required Docker, and Windows container image ${options.windowsContainerImage} was available for isolated execution.`
+            : options.labviewExeFound === false
+              ? `No compatible host-native LabVIEW 2026 runtime was located, so Windows container image ${options.windowsContainerImage} was selected.`
+              : options.labviewCliFound === false && options.lvCompareFound === false
+                ? `Host-native LabVIEW 2026 was located, but no host comparison tool was available, so Windows container image ${options.windowsContainerImage} was selected.`
+                : `Windows container image ${options.windowsContainerImage} is available and Windows 64-bit comparison-report execution prefers isolation.`
     });
     decisions.push({
       provider: 'host-native',
@@ -634,11 +966,15 @@ function buildProviderDecisions(
       reason:
         options.executionMode === 'docker-only'
           ? 'execution-mode-docker-only-disallows-host-native'
-          : 'windows-container-preferred-over-host-native',
+          : options.hostRuntimeConflictDetected
+            ? 'host-native-runtime-surface-contaminated'
+            : deriveHostNativeRejectedReason(options),
       detail:
         options.executionMode === 'docker-only'
           ? 'Host-native execution was not selected because docker-only execution was requested.'
-          : 'Host-native Windows 64-bit execution was not selected because isolated Windows container execution is preferred when available.'
+          : options.hostRuntimeConflictDetected
+            ? 'Host-native execution was not selected because the validated Windows host runtime surface was contaminated by existing LabVIEW-related activity.'
+            : deriveHostNativeRejectedDetail(options)
     });
     return decisions;
   }
@@ -678,6 +1014,25 @@ function buildProviderDecisions(
               detail:
                 'Windows x86 comparison-report execution stays host-native, so the Windows container provider was not selected for this lane.'
             }
+          : options.executionMode === 'auto' &&
+              options.selectedProvider === 'host-native' &&
+              options.windowsContainerEvaluated === false
+            ? {
+                provider: 'windows-container',
+                outcome: 'rejected',
+                reason: 'auto-clean-host-did-not-require-docker',
+                detail:
+                  'Docker was not selected because the validated Windows host runtime surface was clean for host-native execution.'
+              }
+            : options.executionMode === 'auto' &&
+                options.blockedReason === 'windows-host-runtime-surface-contaminated' &&
+                options.windowsContainerEvaluated
+              ? {
+                  provider: 'windows-container',
+                  outcome: 'rejected',
+                  reason: 'auto-required-docker-because-host-runtime-conflict-but-provider-unavailable',
+                  detail: `Validated Windows host runtime facts required Docker, but Windows container image ${options.windowsContainerImage} was not available to the current host.`
+                }
           : {
               provider: 'windows-container',
               outcome: 'rejected',
@@ -695,6 +1050,13 @@ function buildProviderDecisions(
       reason:
         options.executionMode === 'host-only'
           ? 'execution-mode-host-only-selected-host-native'
+          : options.executionMode === 'auto' &&
+              options.platform === 'win32' &&
+              options.preferBitness !== 'x86' &&
+              options.windowsContainerEvaluated === false
+            ? options.selectedEngine === 'lvcompare'
+              ? 'auto-selected-clean-host-native-lvcompare-fallback'
+              : 'auto-selected-clean-host-native'
           : options.selectedEngine === 'lvcompare'
             ? 'host-native-lvcompare-fallback-selected'
             : 'host-native-labview-cli-selected',
@@ -703,6 +1065,13 @@ function buildProviderDecisions(
           ? options.selectedEngine === 'lvcompare'
             ? 'Host-only execution was requested and host-native LabVIEW 2026 plus LVCompare were available.'
             : 'Host-only execution was requested and host-native LabVIEW 2026 plus LabVIEWCLI were available.'
+          : options.executionMode === 'auto' &&
+              options.platform === 'win32' &&
+              options.preferBitness !== 'x86' &&
+              options.windowsContainerEvaluated === false
+            ? options.selectedEngine === 'lvcompare'
+              ? 'Auto execution selected host-native LabVIEW 2026 plus LVCompare because the validated Windows host runtime surface was clean and LabVIEWCLI was not located.'
+              : 'Auto execution selected host-native LabVIEW 2026 plus LabVIEWCLI because the validated Windows host runtime surface was clean.'
           : options.selectedEngine === 'lvcompare'
             ? 'Host-native LabVIEW 2026 and LVCompare were available, while LabVIEWCLI was not located.'
             : options.preferBitness === 'x86'
@@ -725,6 +1094,9 @@ function deriveHostNativeRejectedReason(options: BuildProviderDecisionsOptions):
   if (options.executionMode === 'docker-only') {
     return 'execution-mode-docker-only-disallows-host-native';
   }
+  if (options.blockedReason === 'windows-host-runtime-surface-contaminated') {
+    return 'host-native-runtime-surface-contaminated';
+  }
   if (options.blockedReason === 'labview-2026q1-unsupported-on-macos') {
     return 'host-native-unsupported-on-macos';
   }
@@ -741,6 +1113,9 @@ function deriveHostNativeRejectedDetail(options: BuildProviderDecisionsOptions):
   if (options.executionMode === 'docker-only') {
     return 'Host-native execution was not selected because docker-only execution was requested.';
   }
+  if (options.blockedReason === 'windows-host-runtime-surface-contaminated') {
+    return 'Validated Windows host runtime facts showed existing LabVIEW-related process or governed VI Server port activity, so host-native execution was not selected.';
+  }
   if (options.blockedReason === 'labview-2026q1-unsupported-on-macos') {
     return 'LabVIEW 2026 Q1 comparison-report execution is unsupported on macOS.';
   }
@@ -751,6 +1126,15 @@ function deriveHostNativeRejectedDetail(options: BuildProviderDecisionsOptions):
     return 'No supported LabVIEW 2026 executable was located for host-native comparison-report execution.';
   }
   return 'A supported LabVIEW 2026 executable was located, but neither LabVIEWCLI nor LVCompare was located for host-native comparison-report execution.';
+}
+
+function describeWindowsTcpListeners(listeners: WindowsTcpListenerObservation[]): string {
+  return listeners
+    .map((listener) => {
+      const processName = listener.processName?.trim() || 'unknown-process';
+      return `${listener.localAddress}:${String(listener.localPort)} pid=${String(listener.pid)} process=${processName}`;
+    })
+    .join(' | ');
 }
 
 function resolveWindowsContainerImage(rawImage: string | undefined): string {

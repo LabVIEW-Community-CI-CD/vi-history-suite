@@ -189,12 +189,12 @@
     },
     {
       "id": "DEBT-0006",
-      "title": "Canonical execution-request validation and Docker acquisition UX remain implicit",
+      "title": "Canonical execution-request validation and Docker acquisition UX remain partially implemented",
       "debtClass": "control-plane",
       "status": "open",
       "severity": "high",
       "contaminationRisk": "high",
-      "summary": "The installed extension now exposes a first-class `auto` / `host-only` / `docker-only` execution-mode setting and rejects silent provider fallback at runtime selection, but canonical effective execution-request validation, conflict-driven `auto` behavior, Windows container-capability checks, Windows image pulls, and full provider/acquisition transparency remain only partially inferable from narrower runtime/provider surfaces.",
+      "summary": "The installed extension now exposes a first-class `auto` / `host-only` / `docker-only` execution-mode setting, rejects silent provider fallback, and uses selected Windows host-runtime facts such as `LabVIEW.ini`, the derived governed VI Server TCP port, and observed host activity to keep `auto` host-first on clean surfaces and Docker-required on contaminated ones. Canonical effective execution-request validation remains only partially implemented because explicit Docker daemon / Windows container-capability validation, visible Windows image-pull progress, and fuller front-facing provider and acquisition transparency remain open.",
       "owner": {
         "trancheId": "TRANCHE-013",
         "issueId": "ISSUE-0410",
@@ -213,12 +213,17 @@
       "repoEvidence": [
         "README.md",
         "docs/product/development-queue.json",
+        "src/reporting/comparisonRuntimeLocator.ts",
+        "src/reporting/comparisonRuntimeDoctor.ts",
+        "src/reporting/comparisonReportPacket.ts",
+        "tests/unit/comparisonRuntimeLocator.test.ts",
+        "tests/unit/comparisonRuntimeDoctor.test.ts",
         "tests/unit/executionPolicyDocs.test.ts",
         "docs/requirements/srs.md"
       ],
       "discoveredContext": "Post-release execution-flexibility and contamination-safe runtime UX planning",
-      "nextGate": "Land canonical effective execution-request validation, conflict-aware host-vs-Docker `auto` behavior, Windows container-capability hard stops, visible image-pull progress, and runtime doctor/history-panel transparency.",
-      "exitCriteria": "The installed extension exposes `auto`, `host-only`, and `docker-only`; validates one canonical effective execution request before host launch or Docker acquisition; fails closed with mode-aware guidance when the selected provider cannot run truthfully; treats Windows Docker daemon and container-mode capability as explicit prerequisites; and shows chosen provider, rejected providers, acquisition state, and next action in front-facing UX.",
+      "nextGate": "Finish canonical effective execution-request validation through explicit Docker daemon and Windows container-capability validation, visible image-pull progress, and fuller front-facing provider/acquisition transparency after the landed Windows conflict-aware selector slices.",
+      "exitCriteria": "The installed extension exposes `auto`, `host-only`, and `docker-only`; validates one canonical effective execution request before host launch or Docker acquisition; fails closed with mode-aware guidance when the selected provider cannot run truthfully; treats Windows Docker daemon and container-mode capability as explicit prerequisites; shows chosen provider, rejected providers, acquisition state, and next action in front-facing UX; and surfaces visible Docker acquisition progress when the governed image must be pulled.",
       "retirementCommit": null,
       "acceptedExceptionRationale": null
     }

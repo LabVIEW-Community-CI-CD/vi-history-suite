@@ -45,7 +45,14 @@ export function buildComparisonRuntimeDoctorSummaryFromFacts(options: {
     selection.labviewExe?.path ? `LabVIEW=${selection.labviewExe.path}` : undefined,
     selection.labviewCli?.path ? `LabVIEWCLI=${selection.labviewCli.path}` : undefined,
     selection.lvCompare?.path ? `LVCompare=${selection.lvCompare.path}` : undefined,
-    selection.windowsContainerImage ? `ContainerImage=${selection.windowsContainerImage}` : undefined
+    selection.windowsContainerImage ? `ContainerImage=${selection.windowsContainerImage}` : undefined,
+    selection.hostLabviewIniPath ? `HostLabVIEW.ini=${selection.hostLabviewIniPath}` : undefined,
+    Number.isInteger(selection.hostLabviewTcpPort)
+      ? `HostVITcpPort=${String(selection.hostLabviewTcpPort)}`
+      : undefined,
+    typeof selection.hostRuntimeConflictDetected === 'boolean'
+      ? `HostConflictDetected=${selection.hostRuntimeConflictDetected ? 'yes' : 'no'}`
+      : undefined
   ].filter((value): value is string => Boolean(value));
   if (toolFacts.length > 0) {
     lines.push(`Selected runtime tools: ${toolFacts.join(' | ')}.`);
@@ -109,7 +116,7 @@ function deriveRuntimeDoctorNextAction(options: {
       if (executionMode === 'host-only') {
         return 'Next action: close existing LabVIEW/LabVIEWCLI/LVCompare sessions, clear the governed VI Server listener on the selected port, or change execution mode, then rerun comparison report generation.';
       }
-      return 'Next action: close existing LabVIEW/LabVIEWCLI/LVCompare sessions, clear the governed VI Server listener on the selected port, and rerun comparison report generation from a clean Windows host surface.';
+      return 'Next action: close existing LabVIEW/LabVIEWCLI/LVCompare sessions, clear the governed VI Server listener on the selected port, or make the Windows container provider available, then rerun comparison report generation.';
     }
 
     if (blockedReason === 'docker-only-provider-not-supported-on-platform') {

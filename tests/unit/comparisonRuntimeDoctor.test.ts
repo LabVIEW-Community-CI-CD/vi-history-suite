@@ -234,4 +234,60 @@ describe('comparisonRuntimeDoctor', () => {
       'Next action: install, enable, or switch Docker to Windows-container mode, or change execution mode, then rerun comparison report generation.'
     );
   });
+
+  it('surfaces host runtime facts and auto-mode next action when the windows host surface is contaminated', () => {
+    const lines = buildComparisonRuntimeDoctorSummaryFromFacts({
+      reportStatus: 'blocked-runtime',
+      runtimeSelection: {
+        platform: 'win32',
+        executionMode: 'auto',
+        preferBitness: 'x64',
+        provider: 'unavailable',
+        blockedReason: 'windows-host-runtime-surface-contaminated',
+        hostLabviewIniPath:
+          'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.ini',
+        hostLabviewTcpPort: 3363,
+        hostRuntimeConflictDetected: true,
+        providerDecisions: [
+          {
+            provider: 'windows-container',
+            outcome: 'rejected',
+            reason: 'auto-required-docker-because-host-runtime-conflict-but-provider-unavailable',
+            detail:
+              'Validated Windows host runtime facts required Docker, but Windows container image nationalinstruments/labview:2026q1-windows was not available to the current host.'
+          },
+          {
+            provider: 'host-native',
+            outcome: 'rejected',
+            reason: 'host-native-runtime-surface-contaminated',
+            detail:
+              'Validated Windows host runtime facts showed existing LabVIEW-related process or governed VI Server port activity, so host-native execution was not selected.'
+          }
+        ],
+        notes: [
+          'Validated Windows host runtime surface observed existing runtime processes before provider selection: LabVIEW.exe.'
+        ],
+        registryQueryPlans: [],
+        candidates: []
+      },
+      runtimeExecution: {
+        state: 'not-available',
+        attempted: false,
+        reportExists: false,
+        blockedReason: 'windows-host-runtime-surface-contaminated',
+        diagnosticNotes: []
+      }
+    });
+
+    expect(lines).toContain('Selected execution mode=auto.');
+    expect(lines).toContain(
+      'Selected runtime tools: HostLabVIEW.ini=C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.ini | HostVITcpPort=3363 | HostConflictDetected=yes.'
+    );
+    expect(lines).toContain(
+      'Runtime blocked reason: windows-host-runtime-surface-contaminated.'
+    );
+    expect(lines.at(-1)).toBe(
+      'Next action: close existing LabVIEW/LabVIEWCLI/LVCompare sessions, clear the governed VI Server listener on the selected port, or make the Windows container provider available, then rerun comparison report generation.'
+    );
+  });
 });

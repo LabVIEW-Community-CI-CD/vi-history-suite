@@ -10,8 +10,55 @@ import {
   runWindowsRegistryQuery
 } from '../../src/reporting/comparisonRuntimeLocator';
 
+function buildCleanWindowsHostDeps() {
+  return {
+    hostPlatform: 'win32' as const,
+    readFile: vi.fn().mockResolvedValue('server.tcp.enabled=True\nserver.tcp.port=3363\n') as never,
+    observeWindowsProcesses: vi.fn().mockResolvedValue({
+      capturedAt: '2026-04-05T00:00:00.000Z',
+      hostPlatform: 'win32',
+      runtimePlatform: 'win32',
+      trigger: 'preflight',
+      observedProcesses: [],
+      observedProcessNames: [],
+      labviewProcessObserved: false,
+      labviewCliProcessObserved: false,
+      lvcompareProcessObserved: false
+    }),
+    observeWindowsTcpListeners: vi.fn().mockResolvedValue([])
+  };
+}
+
+function buildConflictedWindowsHostDeps() {
+  return {
+    hostPlatform: 'win32' as const,
+    readFile: vi.fn().mockResolvedValue('server.tcp.enabled=True\nserver.tcp.port=3363\n') as never,
+    observeWindowsProcesses: vi.fn().mockResolvedValue({
+      capturedAt: '2026-04-05T00:00:00.000Z',
+      hostPlatform: 'win32',
+      runtimePlatform: 'win32',
+      trigger: 'preflight',
+      observedProcesses: [
+        {
+          imageName: 'LabVIEW.exe',
+          pid: 1234,
+          sessionName: 'Console',
+          sessionNumber: 1,
+          memUsage: '100,000 K'
+        }
+      ],
+      observedProcessNames: ['LabVIEW.exe'],
+      labviewProcessObserved: true,
+      labviewCliProcessObserved: false,
+      lvcompareProcessObserved: false
+    }),
+    observeWindowsTcpListeners: vi.fn().mockResolvedValue([])
+  };
+}
+
 describe('comparisonRuntimeLocator', () => {
   it('adds the missing labviewCliPath manifest contract through runtime settings usage', async () => {
+    const cleanHost = buildCleanWindowsHostDeps();
     const result = await locateComparisonRuntime(
       'win32',
       {
@@ -26,7 +73,8 @@ describe('comparisonRuntimeLocator', () => {
             'C:\\Tools\\LabVIEWCLI.exe',
             'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe'
           ].includes(filePath)
-        )
+        ),
+        ...cleanHost
       }
     );
 
@@ -61,6 +109,7 @@ describe('comparisonRuntimeLocator', () => {
   });
 
   it('uses documented Windows scan roots and falls back to LVCompare when LabVIEWCLI is unavailable', async () => {
+    const cleanHost = buildCleanWindowsHostDeps();
     const result = await locateComparisonRuntime(
       'win32',
       {
@@ -74,7 +123,8 @@ describe('comparisonRuntimeLocator', () => {
             'C:\\Program Files\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe'
           ].includes(filePath)
         ),
-        queryWindowsRegistry: vi.fn().mockResolvedValue('')
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        ...cleanHost
       }
     );
 
@@ -88,21 +138,22 @@ describe('comparisonRuntimeLocator', () => {
       {
         provider: 'windows-container',
         outcome: 'rejected',
-        reason: 'windows-container-image-unavailable',
+        reason: 'auto-clean-host-did-not-require-docker',
         detail:
-          'Windows container image nationalinstruments/labview:2026q1-windows was not available to the current host.'
+          'Docker was not selected because the validated Windows host runtime surface was clean for host-native execution.'
       },
       {
         provider: 'host-native',
         outcome: 'selected',
-        reason: 'host-native-lvcompare-fallback-selected',
+        reason: 'auto-selected-clean-host-native-lvcompare-fallback',
         detail:
-          'Host-native LabVIEW 2026 and LVCompare were available, while LabVIEWCLI was not located.'
+          'Auto execution selected host-native LabVIEW 2026 plus LVCompare because the validated Windows host runtime surface was clean and LabVIEWCLI was not located.'
       }
     ]);
   });
 
   it('defaults Windows auto bitness to x86 when both host installs are available', async () => {
+    const cleanHost = buildCleanWindowsHostDeps();
     const result = await locateComparisonRuntime(
       'win32',
       {
@@ -117,7 +168,8 @@ describe('comparisonRuntimeLocator', () => {
             'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
           ].includes(filePath)
         ),
-        queryWindowsRegistry: vi.fn().mockResolvedValue('')
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        ...cleanHost
       }
     );
 
@@ -127,21 +179,22 @@ describe('comparisonRuntimeLocator', () => {
       {
         provider: 'windows-container',
         outcome: 'rejected',
-        reason: 'windows-container-image-unavailable',
+        reason: 'auto-clean-host-did-not-require-docker',
         detail:
-          'Windows container image nationalinstruments/labview:2026q1-windows was not available to the current host.'
+          'Docker was not selected because the validated Windows host runtime surface was clean for host-native execution.'
       },
       {
         provider: 'host-native',
         outcome: 'selected',
-        reason: 'host-native-labview-cli-selected',
+        reason: 'auto-selected-clean-host-native',
         detail:
-          'Host-native LabVIEW 2026 and LabVIEWCLI were available for comparison-report execution.'
+          'Auto execution selected host-native LabVIEW 2026 plus LabVIEWCLI because the validated Windows host runtime surface was clean.'
       }
     ]);
   });
 
   it('honors an explicit x86 preference when both Windows bitnesses are available', async () => {
+    const cleanHost = buildCleanWindowsHostDeps();
     const result = await locateComparisonRuntime(
       'win32',
       {
@@ -156,7 +209,8 @@ describe('comparisonRuntimeLocator', () => {
             'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
           ].includes(filePath)
         ),
-        queryWindowsRegistry: vi.fn().mockResolvedValue('')
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        ...cleanHost
       }
     );
 
@@ -180,7 +234,7 @@ describe('comparisonRuntimeLocator', () => {
     ]);
   });
 
-  it('prefers the isolated windows container provider for auto or x64 report execution when the image is available', async () => {
+  it('uses the windows container provider when no compatible host-native runtime is available and the image is available', async () => {
     const result = await locateComparisonRuntime(
       'win32',
       {
@@ -203,21 +257,68 @@ describe('comparisonRuntimeLocator', () => {
     expect(result.labviewCli?.path).toBe(
       'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
     );
-    expect(result.notes[0]).toContain('isolated Windows container provider image');
+    expect(result.notes[0]).toContain(
+      'No compatible host-native LabVIEW 2026 runtime was located'
+    );
     expect(result.providerDecisions).toEqual([
       {
         provider: 'windows-container',
         outcome: 'selected',
-        reason: 'windows-container-preferred-and-available',
+        reason: 'windows-container-selected-host-runtime-unavailable',
         detail:
-          'Windows container image nationalinstruments/labview:2026q1-windows is available and Windows 64-bit comparison-report execution prefers isolation.'
+          'No compatible host-native LabVIEW 2026 runtime was located, so Windows container image nationalinstruments/labview:2026q1-windows was selected.'
       },
       {
         provider: 'host-native',
         outcome: 'rejected',
-        reason: 'windows-container-preferred-over-host-native',
+        reason: 'host-native-labview-exe-not-found',
         detail:
-          'Host-native Windows 64-bit execution was not selected because isolated Windows container execution is preferred when available.'
+          'No supported LabVIEW 2026 executable was located for host-native comparison-report execution.'
+      }
+    ]);
+  });
+
+  it('prefers clean host-native execution in auto mode even when the windows container image is available', async () => {
+    const cleanHost = buildCleanWindowsHostDeps();
+    const result = await locateComparisonRuntime(
+      'win32',
+      {
+        preferBitness: 'x64'
+      },
+      {
+        queryWindowsContainerImage: vi.fn().mockResolvedValue(true),
+        pathExists: vi.fn(async (filePath: string) =>
+          [
+            'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
+            'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
+          ].includes(filePath)
+        ),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        ...cleanHost
+      }
+    );
+
+    expect(result.provider).toBe('host-native');
+    expect(result.engine).toBe('labview-cli');
+    expect(result.hostLabviewIniPath).toBe(
+      'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.ini'
+    );
+    expect(result.hostLabviewTcpPort).toBe(3363);
+    expect(result.hostRuntimeConflictDetected).toBe(false);
+    expect(result.providerDecisions).toEqual([
+      {
+        provider: 'windows-container',
+        outcome: 'rejected',
+        reason: 'auto-clean-host-did-not-require-docker',
+        detail:
+          'Docker was not selected because the validated Windows host runtime surface was clean for host-native execution.'
+      },
+      {
+        provider: 'host-native',
+        outcome: 'selected',
+        reason: 'auto-selected-clean-host-native',
+        detail:
+          'Auto execution selected host-native LabVIEW 2026 plus LabVIEWCLI because the validated Windows host runtime surface was clean.'
       }
     ]);
   });
@@ -232,6 +333,7 @@ describe('comparisonRuntimeLocator', () => {
   });
 
   it('honors host-only mode by selecting host-native execution even when the windows container image is available', async () => {
+    const cleanHost = buildCleanWindowsHostDeps();
     const result = await locateComparisonRuntime(
       'win32',
       {
@@ -246,7 +348,8 @@ describe('comparisonRuntimeLocator', () => {
             'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
           ].includes(filePath)
         ),
-        queryWindowsRegistry: vi.fn().mockResolvedValue('')
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        ...cleanHost
       }
     );
 
@@ -272,6 +375,7 @@ describe('comparisonRuntimeLocator', () => {
   });
 
   it('fails closed for docker-only mode when the windows container image is unavailable even if host-native runtime exists', async () => {
+    const cleanHost = buildCleanWindowsHostDeps();
     const result = await locateComparisonRuntime(
       'win32',
       {
@@ -286,7 +390,8 @@ describe('comparisonRuntimeLocator', () => {
             'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
           ].includes(filePath)
         ),
-        queryWindowsRegistry: vi.fn().mockResolvedValue('')
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        ...cleanHost
       }
     );
 
@@ -585,6 +690,7 @@ HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\National Instruments\\LabVIEW
   });
 
   it('ignores failed registry probes and can fall back to the first configured LabVIEW path when bitness is unknown', async () => {
+    const cleanHost = buildCleanWindowsHostDeps();
     const result = await locateComparisonRuntime(
       'win32',
       {
@@ -600,13 +706,136 @@ HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\National Instruments\\LabVIEW
             'D:\\NI\\LabVIEW\\LabVIEW.exe'
           ].includes(filePath)
         ),
-        queryWindowsRegistry: vi.fn().mockRejectedValue(new Error('registry unavailable'))
+        queryWindowsRegistry: vi.fn().mockRejectedValue(new Error('registry unavailable')),
+        ...cleanHost
       }
     );
 
     expect(result.engine).toBe('labview-cli');
     expect(result.labviewExe?.path).toBe('D:\\NI\\LabVIEW\\LabVIEW.exe');
     expect(result.labviewExe?.bitness).toBeUndefined();
+  });
+
+  it('switches auto mode to docker when the validated windows host runtime surface is contaminated', async () => {
+    const conflictedHost = buildConflictedWindowsHostDeps();
+    const result = await locateComparisonRuntime(
+      'win32',
+      {
+        preferBitness: 'x64'
+      },
+      {
+        queryWindowsContainerImage: vi.fn().mockResolvedValue(true),
+        pathExists: vi.fn(async (filePath: string) =>
+          [
+            'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
+            'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
+          ].includes(filePath)
+        ),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        ...conflictedHost
+      }
+    );
+
+    expect(result.provider).toBe('windows-container');
+    expect(result.engine).toBe('labview-cli');
+    expect(result.hostLabviewTcpPort).toBe(3363);
+    expect(result.hostRuntimeConflictDetected).toBe(true);
+    expect(result.providerDecisions).toEqual([
+      {
+        provider: 'windows-container',
+        outcome: 'selected',
+        reason: 'auto-required-docker-because-host-runtime-conflict',
+        detail:
+          'Validated Windows host runtime facts required Docker, and Windows container image nationalinstruments/labview:2026q1-windows was available for isolated execution.'
+      },
+      {
+        provider: 'host-native',
+        outcome: 'rejected',
+        reason: 'host-native-runtime-surface-contaminated',
+        detail:
+          'Host-native execution was not selected because the validated Windows host runtime surface was contaminated by existing LabVIEW-related activity.'
+      }
+    ]);
+  });
+
+  it('fails closed in auto mode when the windows host runtime surface is contaminated and docker is unavailable', async () => {
+    const conflictedHost = buildConflictedWindowsHostDeps();
+    const result = await locateComparisonRuntime(
+      'win32',
+      {
+        preferBitness: 'x64'
+      },
+      {
+        queryWindowsContainerImage: vi.fn().mockResolvedValue(false),
+        pathExists: vi.fn(async (filePath: string) =>
+          [
+            'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
+            'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
+          ].includes(filePath)
+        ),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        ...conflictedHost
+      }
+    );
+
+    expect(result.provider).toBe('unavailable');
+    expect(result.blockedReason).toBe('windows-host-runtime-surface-contaminated');
+    expect(result.providerDecisions).toEqual([
+      {
+        provider: 'windows-container',
+        outcome: 'rejected',
+        reason: 'auto-required-docker-because-host-runtime-conflict-but-provider-unavailable',
+        detail:
+          'Validated Windows host runtime facts required Docker, but Windows container image nationalinstruments/labview:2026q1-windows was not available to the current host.'
+      },
+      {
+        provider: 'host-native',
+        outcome: 'rejected',
+        reason: 'host-native-runtime-surface-contaminated',
+        detail:
+          'Validated Windows host runtime facts showed existing LabVIEW-related process or governed VI Server port activity, so host-native execution was not selected.'
+      }
+    ]);
+  });
+
+  it('fails closed in host-only mode when the windows host runtime surface is contaminated', async () => {
+    const conflictedHost = buildConflictedWindowsHostDeps();
+    const result = await locateComparisonRuntime(
+      'win32',
+      {
+        executionMode: 'host-only',
+        preferBitness: 'x64'
+      },
+      {
+        queryWindowsContainerImage: vi.fn().mockResolvedValue(true),
+        pathExists: vi.fn(async (filePath: string) =>
+          [
+            'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
+            'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
+          ].includes(filePath)
+        ),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        ...conflictedHost
+      }
+    );
+
+    expect(result.provider).toBe('unavailable');
+    expect(result.blockedReason).toBe('windows-host-runtime-surface-contaminated');
+    expect(result.providerDecisions).toEqual([
+      {
+        provider: 'windows-container',
+        outcome: 'rejected',
+        reason: 'execution-mode-host-only-disallows-docker',
+        detail: 'Windows container execution was not selected because host-only execution was requested.'
+      },
+      {
+        provider: 'host-native',
+        outcome: 'rejected',
+        reason: 'host-native-runtime-surface-contaminated',
+        detail:
+          'Validated Windows host runtime facts showed existing LabVIEW-related process or governed VI Server port activity, so host-native execution was not selected.'
+      }
+    ]);
   });
 
   it('uses the default filesystem access path when no path-exists dependency is injected', async () => {

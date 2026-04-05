@@ -71,29 +71,23 @@ governed requirements system rather than treating documentation as informal.</p>
 <p>That same system now governs the partially implemented execution-mode contract
 too, including:</p>
 <ul>
-<li><p>the installed setting surface for <code>auto</code>, <code>host-only</code>, and <code>docker-only</code></p>
-</li>
-<li><p>the no-silent-fallback rule between <code>host-only</code>, <code>docker-only</code>, and <code>auto</code></p>
-</li>
-<li><p>when the extension must still validate one canonical effective execution request
-before provider selection or Docker acquisition starts</p>
-</li>
-<li><p>when <code>auto</code> must stay host-native because the selected host surface is clean</p>
-</li>
-<li><p>when Docker becomes a hard requirement because an open host LabVIEW session
-would contaminate host execution</p>
-</li>
-<li><p>when the selected <code>LabVIEW.ini</code> and derived VI Server TCP port define the
-host conflict boundary</p>
-</li>
-<li><p>when the extension must tell the user to close LabVIEW or install Docker</p>
-</li>
-<li><p>when Windows must tell the user to start Docker or switch to Windows
-containers before a governed Windows image can run</p>
-</li>
-<li><p>when Windows must surface visible progress while pulling the governed Windows
-image</p>
-</li>
+<li>the installed setting surface for <code>auto</code>, <code>host-only</code>, and <code>docker-only</code></li>
+<li>the no-silent-fallback rule between <code>host-only</code>, <code>docker-only</code>, and <code>auto</code></li>
+<li>when Windows <code>auto</code> must stay host-native because the selected host surface
+is clean</li>
+<li>when the selected <code>LabVIEW.ini</code> and derived VI Server TCP port define the
+current host conflict boundary</li>
+<li>when a contaminated Windows host surface now routes to Docker or hard-stops
+instead of silently continuing on the host</li>
+<li>when the extension must still validate one canonical effective execution request
+before provider selection or Docker acquisition starts</li>
+<li>when Docker becomes a hard requirement because an open host LabVIEW session
+would contaminate host execution</li>
+<li>when the extension must tell the user to close LabVIEW or install Docker</li>
+<li>when Windows must tell the user to start Docker or switch to Windows
+containers before a governed Windows image can run</li>
+<li>when Windows must surface visible progress while pulling the governed Windows
+image</li>
 </ul>
 <h2>Why It Matters</h2>
 <p>This is one of the main differences between a useful engineering wiki and a

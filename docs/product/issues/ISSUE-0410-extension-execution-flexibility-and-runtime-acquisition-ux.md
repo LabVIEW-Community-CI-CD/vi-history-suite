@@ -8,8 +8,8 @@ progress, and transparent provider feedback.
 
 ## Status
 
-Queued follow-on post-release issue with a first repo-side execution-mode
-slice already landed.
+Queued follow-on post-release issue with two repo-side selector slices already
+landed.
 
 Activation depends on:
 
@@ -55,6 +55,23 @@ Activation depends on:
   Windows-container-capable
 - user-facing runtime feedback is transparent enough that provider choice does
   not require shell logs to understand
+
+## Landed So Far
+
+The repo-side selector slices already landed and are no longer queued intent:
+
+- `viHistorySuite.executionMode` exists in the installed manifest
+- `host-only` and `docker-only` fail closed instead of silently substituting a
+  different provider
+- Windows `auto` now prefers clean compatible host-native execution
+- Windows host conflict truth is now derived from the selected `LabVIEW.ini`
+  surface, the governed VI Server TCP port, and observed host-runtime
+  activity before final provider selection
+- contaminated Windows host surfaces now route to Docker when the governed
+  provider is available and hard-stop otherwise
+- runtime doctor and retained packet surfaces now carry execution mode, host
+  `LabVIEW.ini`, derived TCP port, host-conflict truth, rejected providers,
+  and next action
 
 ## Required Evidence
 

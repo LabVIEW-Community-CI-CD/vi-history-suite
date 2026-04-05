@@ -131,6 +131,14 @@ first slice has landed.</p>
 <li><code>auto</code>, <code>host-only</code>, and <code>docker-only</code> are explicit runtime-selector truths</li>
 <li><code>host-only</code> and <code>docker-only</code> now fail closed instead of silently
 substituting the other provider class</li>
+<li>on Windows, <code>auto</code> now stays host-native on a clean validated host instead
+of selecting Docker just because a governed image exists</li>
+<li>the selector now derives the selected <code>LabVIEW.ini</code>, governed VI Server TCP
+port, and observed host-runtime conflict facts before final Windows provider
+choice</li>
+<li>contaminated Windows host-runtime surfaces now route to Docker when the
+governed provider is available and hard-stop when Docker is required but not
+available</li>
 </ul>
 <p>The remaining queued control plane says:</p>
 <ul>

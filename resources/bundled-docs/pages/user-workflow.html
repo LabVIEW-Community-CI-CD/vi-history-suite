@@ -43,6 +43,13 @@ preferences or ambient runtime discovery.</p>
 <li><code>host-only</code> rejects Docker instead of silently falling back to it</li>
 <li><code>docker-only</code> rejects host-native execution instead of silently falling back
 to it</li>
+<li>on Windows, <code>auto</code> now stays host-native when the selected compatible host
+runtime surface is clean instead of using Docker by habit</li>
+<li>the installed selector now derives the selected <code>LabVIEW.ini</code> and governed
+VI Server port from the selected host runtime before final provider choice</li>
+<li>on Windows, contaminated host-runtime surfaces now route to Docker when the
+governed provider is available and hard-stop when that Docker escape path is
+unavailable</li>
 </ul>
 <p>The remaining queued contract is:</p>
 <ul>

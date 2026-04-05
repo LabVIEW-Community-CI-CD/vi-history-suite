@@ -23,7 +23,7 @@ The governing contract and taxonomy are:
 | `DEBT-0003` | open | `benchmark` | high | high | `TRANCHE-011` / `ISSUE-0408` / `PROGRAM-0003` | expand the comparable prefix beyond pair `128` or close `PROGRAM-0003` on the bounded comparable-prefix packet |
 | `DEBT-0004` | open | `runtime` | high | high | `TRANCHE-011` / `ISSUE-0408` / `PROGRAM-0003` | complete Linux `138/138` truthfully or close the full-window blocker explicitly on the bounded comparable-prefix control plane |
 | `DEBT-0005` | retired | `control-plane` | high | high | `TRANCHE-011` / `ISSUE-0408` / `PROGRAM-0003` | retired by `2f4ced0` |
-| `DEBT-0006` | open | `control-plane` | high | high | `TRANCHE-013` / `ISSUE-0410` / `PROGRAM-0005` | land canonical execution-request validation, conflict-aware `auto` behavior, Windows container-capability hard stops, visible Docker pull progress, and fully front-facing provider/acquisition transparency |
+| `DEBT-0006` | open | `control-plane` | high | high | `TRANCHE-013` / `ISSUE-0410` / `PROGRAM-0005` | finish Docker daemon / Windows-container capability validation, visible Docker pull progress, and fuller front-facing provider/acquisition transparency after the landed conflict-aware selector slices |
 
 ## Notes
 
@@ -41,12 +41,13 @@ The governing contract and taxonomy are:
 - `DEBT-0005` captures the now-retired admission-control gap where
   CLI/env/default synthesis could materialize an explicit effective runtime
   bundle after a narrower raw-CLI validation pass had already succeeded.
-- `DEBT-0006` is the active remaining execution-policy ambiguity after the
-  first execution-mode slice landed: the installed extension now exposes
-  `auto` / `host-only` / `docker-only` and rejects silent provider fallback at
-  runtime selection, but canonical execution-request validation, conflict-aware
-  auto behavior, Windows container-capability truth, and acquisition progress
-  remain open.
+- `DEBT-0006` is the active remaining execution-policy debt after two selector
+  slices landed: the installed extension now exposes `auto` / `host-only` /
+  `docker-only`, rejects silent provider fallback, and makes Windows `auto`
+  conflict-aware through selected `LabVIEW.ini` / VI Server port facts, but
+  Docker daemon and Windows-container capability validation, visible
+  acquisition progress, and fuller front-facing provider transparency remain
+  open.
 
 ## Operational Rule
 

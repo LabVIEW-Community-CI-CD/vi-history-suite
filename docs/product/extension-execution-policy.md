@@ -28,17 +28,26 @@ policy:
   `docker-only`
 - host-native execution remains the active path for bounded Windows x86 and
   other compatible local runtime surfaces
-- Windows 64-bit container isolation exists as a governed provider boundary and
-  current preferred x64 execution posture when the isolated provider is
-  available
 - runtime selection now treats `host-only` and `docker-only` as explicit
   provider boundaries and fails closed instead of silently falling back across
   host-native and Docker-backed providers
+- on Windows, `auto` now prefers clean compatible host-native execution
+  instead of selecting Docker just because a governed Windows image happens to
+  exist
+- the installed selector now derives the selected `LabVIEW.ini` surface and
+  governed VI Server TCP port from the selected host runtime before final
+  Windows provider choice
+- on Windows, `auto` now routes contaminated host-runtime surfaces to the
+  governed Windows container provider when it is available and hard-stops when
+  that Docker-backed escape path is unavailable
+- `host-only` now fails closed on contaminated Windows host-runtime surfaces
+  instead of leaving that ambient conflict implicit
 - benchmark-proof and exact-pair diagnosis entrypoints now fail closed on
   contaminated or contradictory runtime-override bundles
-- canonical effective execution-request validation, conflict-aware host-session
-  detection, Windows container-capability hard stops, image-acquisition
-  progress, and front-facing acquisition transparency remain queued
+- canonical effective execution-request validation is now partially
+  implemented through selected Windows host-runtime facts, but explicit Docker
+  daemon and Windows-container-capability validation, image-acquisition
+  progress, and fuller front-facing acquisition transparency remain queued
 
 So current runtime behavior is no longer implicit at the execution-mode
 boundary, but the broader execution policy is still only partially
@@ -65,7 +74,7 @@ paths then refine which compatible host surface is selected.
 
 ## Canonical Effective Execution Request
 
-Future provider selection shall not reason from one setting at a time.
+Provider selection shall not reason from one setting at a time.
 
 Before execution starts, the extension shall resolve one effective execution
 request from:
@@ -93,9 +102,20 @@ The extension shall validate that effective execution request before:
 - host-native launch
 - any user-facing claim that a provider is runnable
 
-This is the canonical validation boundary for the future installed extension.
-If the request is non-canonical, the product must fail closed before runtime
-work starts.
+The currently implemented slice already uses selected Windows host-runtime
+facts in that boundary:
+
+- selected `LabVIEW.ini`
+- derived governed VI Server TCP port
+- existing LabVIEW-related host processes
+- existing listener on the governed VI Server port
+
+The remaining queued work is explicit Docker daemon and Windows-container
+capability validation plus visible acquisition-state UX.
+
+This is the canonical validation boundary for the installed extension. If the
+request is non-canonical, the product must fail closed before runtime work
+starts.
 
 ### Auto
 

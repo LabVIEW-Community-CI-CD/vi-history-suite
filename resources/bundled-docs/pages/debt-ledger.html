@@ -64,9 +64,11 @@ cross-OS benchmark packet.</li>
 <code>HARNESS-VHS-002</code> benchmark lane.</li>
 <li>execution-policy debt remains open after the first slice landed: the
 installed extension now exposes explicit <code>auto</code> / <code>host-only</code> /
-<code>docker-only</code> behavior and rejects silent provider fallback, but canonical
-execution-request validation, <code>auto</code> conflict behavior, Windows
-container-capability hard stops, and acquisition progress still remain open.</li>
+<code>docker-only</code> behavior, rejects silent provider fallback, and already keeps
+Windows <code>auto</code> host-first on a clean validated host while routing
+contaminated host surfaces through Docker or a hard stop, but Docker daemon
+and Windows-container capability validation, visible acquisition progress,
+and fuller front-facing provider transparency still remain open.</li>
 </ul>
 <p>That means the repo is not pretending the benchmark is fully clean. It is
 retaining the blockers and queued execution-policy ambiguity as explicit open

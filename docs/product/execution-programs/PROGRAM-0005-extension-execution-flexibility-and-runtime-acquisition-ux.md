@@ -2,15 +2,15 @@
 
 ## Status
 
-Queued follow-on post-release program with a first repo-side execution-mode
-slice already landed.
+Queued follow-on post-release program with two repo-side selector slices
+already landed.
 
 Activation is intentionally deferred until:
 
 - `PROGRAM-0003` closes the benchmark-proof packet under `TRANCHE-011`
 - the queue promotes `TRANCHE-013` from `queued` to `active`
 - the remaining canonical validation, host-conflict, and acquisition UX work
-  moves beyond the initial manifest/selection slice
+  moves beyond the landed selector slices
 
 ## Purpose
 
@@ -104,6 +104,25 @@ Every slice shall preserve:
 - explicit user-facing next-step guidance
 - platform-appropriate acquisition behavior
 
+## Landed Selector Slices
+
+The repo already retains two bounded implementation slices under this program:
+
+- a first-class `viHistorySuite.executionMode` setting with `auto`,
+  `host-only`, and `docker-only`
+- no-silent-fallback provider selection for `host-only` and `docker-only`
+- conflict-aware Windows `auto` selection that now:
+  - prefers clean host-native execution
+  - derives the selected `LabVIEW.ini` path and governed VI Server TCP port
+  - detects existing LabVIEW-related host activity before final provider
+    choice
+  - routes contaminated Windows host surfaces to Docker when the governed
+    provider is available
+  - hard-stops when Docker is required but unavailable
+- runtime-doctor and retained packet visibility for execution mode, selected
+  host `LabVIEW.ini`, derived TCP port, host-conflict truth, rejected
+  providers, and next action
+
 ## First Implementation Slice
 
 Start with [ISSUE-0410 Extension Execution Flexibility And Runtime Acquisition UX](../issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md).
@@ -117,8 +136,8 @@ That slice should:
 - make canonical execution-request validation explicit before implementation
 - make Windows container-capability truth explicit before image acquisition
 - stop short of claiming full implementation until the installed extension
-  lands canonical validation, conflict-aware provider selection, and
-  acquisition UX end to end
+  lands Docker capability validation, acquisition UX, and fuller front-facing
+  provider transparency end to end
 
 ## Success Condition
 

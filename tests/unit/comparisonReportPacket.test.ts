@@ -126,6 +126,10 @@ describe('comparisonReportPacket', () => {
           preferBitness: 'x64',
           provider: 'host-native',
           engine: 'labview-cli',
+          hostLabviewIniPath:
+            'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.ini',
+          hostLabviewTcpPort: 3363,
+          hostRuntimeConflictDetected: false,
           labviewExe: {
             kind: 'labview-exe',
             path: 'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
@@ -159,6 +163,9 @@ describe('comparisonReportPacket', () => {
     expect(writes.has(result.reportFilePath)).toBe(false);
     expect(writes.get(result.packetFilePath)).toContain('Ready for runtime:</strong> yes');
     expect(writes.get(result.packetFilePath)).toContain('data-testid="comparison-report-generated-report-missing"');
+    expect(writes.get(result.packetFilePath)).toContain('Host LabVIEW.ini:</strong> C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.ini');
+    expect(writes.get(result.packetFilePath)).toContain('Host VI Server port:</strong> 3363');
+    expect(writes.get(result.packetFilePath)).toContain('Host conflict detected:</strong> no');
   });
 
   it('persists a blocked-runtime packet when preflight clears but no runtime provider is available', async () => {
