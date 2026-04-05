@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-cd /workspace
+workspace_root="${VIHS_DOCS_WORKSPACE:-/workspace}"
+
+cd "$workspace_root"
 
 if [[ ! -f package.json ]]; then
-  echo "Documentation workbench expected a repo-mounted package.json under /workspace." >&2
+  echo "Documentation workbench expected a repo-mounted package.json under ${workspace_root}." >&2
   exit 1
 fi
 

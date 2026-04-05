@@ -35,6 +35,19 @@ Open an interactive shell in the workbench:
 npm run docs:workbench:shell
 ```
 
+For future wiki work that needs the sibling `vi-history-suite.wiki` checkout to
+remain visible inside the same container, mount the parent directory and point
+the entrypoint at the repo root you want to operate on:
+
+```bash
+docker run --rm -it \
+  -v "$(dirname "$PWD")":/repo-parent \
+  -e VIHS_DOCS_WORKSPACE=/repo-parent/vi-history-suite \
+  -w /repo-parent/vi-history-suite \
+  vi-history-suite-docs-authoring:local \
+  bash
+```
+
 Refresh the packaged bundled user docs from the current published wiki set:
 
 ```bash
@@ -46,6 +59,9 @@ The default container command is:
 ```bash
 npm run docs:gate
 ```
+
+The workbench entrypoint honors `VIHS_DOCS_WORKSPACE`, so future cross-repo
+wiki iteration is not locked to `/workspace`.
 
 ## Documentation Gate
 
