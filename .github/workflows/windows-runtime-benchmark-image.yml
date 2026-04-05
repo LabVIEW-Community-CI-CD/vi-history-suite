@@ -101,17 +101,34 @@ jobs:
           $imageRef = '${{ steps.meta.outputs.image_ref }}'
           $shaTag = "sha-$env:GITHUB_SHA"
           $imageResolution = 'reused-existing-sha-tag'
-          try {
-            docker pull "$imageRef`:$shaTag" | Out-Null
-          } catch {
+          docker pull "$imageRef`:$shaTag" | Out-Null
+          if ($LASTEXITCODE -ne 0) {
             $imageResolution = 'built-and-pushed'
             docker pull $env:NI_WINDOWS_IMAGE | Out-Null
+            if ($LASTEXITCODE -ne 0) {
+              throw "Failed to pull base runtime image $env:NI_WINDOWS_IMAGE."
+            }
             docker build --build-arg "BASE_IMAGE=$env:NI_WINDOWS_IMAGE" -f docker/github-windows-dashboard-benchmark/Dockerfile -t $env:LOCAL_BENCHMARK_IMAGE .
+            if ($LASTEXITCODE -ne 0) {
+              throw 'Failed to build the Windows benchmark image.'
+            }
             docker tag $env:LOCAL_BENCHMARK_IMAGE "$imageRef`:$shaTag"
+            if ($LASTEXITCODE -ne 0) {
+              throw "Failed to tag benchmark image as $imageRef`:$shaTag."
+            }
             docker push "$imageRef`:$shaTag" | Out-Null
+            if ($LASTEXITCODE -ne 0) {
+              throw "Failed to push benchmark image tag $imageRef`:$shaTag."
+            }
             if ($env:GITHUB_REF_NAME -eq 'main') {
               docker tag $env:LOCAL_BENCHMARK_IMAGE "$imageRef`:main"
+              if ($LASTEXITCODE -ne 0) {
+                throw "Failed to tag benchmark image as $imageRef`:main."
+              }
               docker push "$imageRef`:main" | Out-Null
+              if ($LASTEXITCODE -ne 0) {
+                throw "Failed to push benchmark image tag $imageRef`:main."
+              }
             }
           }
           $repoDigest = docker image inspect "$imageRef`:$shaTag" --format '{{index .RepoDigests 0}}'

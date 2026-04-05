@@ -28,6 +28,8 @@ describe('github windows benchmark workflow', () => {
     expect(workflow).toContain('resource/plugins/lv_icon.vi');
     expect(workflow).toContain('"hostedBenchmarkRun": "not-yet-governed"');
     expect(workflow).toContain('windows-runtime-benchmark-image');
+    expect(workflow).toContain('if ($LASTEXITCODE -ne 0) {');
+    expect(workflow).toContain("throw 'Failed to build the Windows benchmark image.'");
 
     expect(dockerfile).toContain('ARG BASE_IMAGE=nationalinstruments/labview:2026q1-windows');
     expect(dockerfile).toContain('io.vihs.runtime-plane="github-windows-dashboard-benchmark"');
