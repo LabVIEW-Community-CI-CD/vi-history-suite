@@ -74,6 +74,8 @@ runtime components.</p>
 <li>docs-authoring workbench image for governed documentation-package iteration</li>
 <li>authority-first wiki seeding from requirements, ADRs, RTM, current-state, and
 ship-control docs</li>
+<li>governed wiki workbench CLI and retained publication-prep receipts for
+derived wiki widening</li>
 <li>cross-repo navigation control plane tying together:<ul>
 <li><code>vi-history-suite</code></li>
 <li><code>vi-history-suite.wiki</code></li>
@@ -83,6 +85,16 @@ ship-control docs</li>
 </ul>
 <p>That means future documentation and wiki work is expected to start from the
 repo docs stack, not from source spelunking.</p>
+<p>The current wiki lane is intentionally evidence-bearing:</p>
+<ul>
+<li>the main repo remains the authority of record</li>
+<li>the wiki remains a derived reader surface</li>
+<li>publication state stays tied to the wiki publication ledger</li>
+<li>local and Docker-first workbench commands prepare pages before publication</li>
+<li>stale retained page directories are recovered into explicit writable
+<code>staging-runs/</code> or <code>publication-prep-runs/</code> paths instead of silently
+bypassing the governed workbench</li>
+</ul>
 <h2>Key ADRs</h2>
 <p>The current accepted ADR set includes:</p>
 <ul>
@@ -93,6 +105,7 @@ repo docs stack, not from source spelunking.</p>
 <li><code>ADR-0012</code>: documentation-package workbench image</li>
 <li><code>ADR-0013</code>: authority-first wiki seeding</li>
 <li><code>ADR-0014</code>: cross-repo navigation control plane</li>
+<li><code>ADR-0019</code>: governed wiki workbench system</li>
 </ul>
 <p>The full accepted set is listed in the governed architecture overview.</p>
 <h2>Current Tradeoffs</h2>
@@ -109,6 +122,7 @@ cancellation, and trust-aware UX layer</li>
 <h2>Read Next</h2>
 <ul>
 <li><a href="#" data-page-id="comparison-reports-and-dashboard-review">Comparison Reports And Dashboard Review</a></li>
+<li><a href="#" data-page-id="documentation-workbench">Documentation Workbench</a></li>
 <li><a href="#" data-page-id="install-and-release">Install And Release</a></li>
 <li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/architecture/overview.md">Current Architecture Overview</a></li>
 <li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/wiki-authority-map.md">Wiki Authority Map</a></li>
