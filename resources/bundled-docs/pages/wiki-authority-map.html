@@ -1,0 +1,103 @@
+<h1>Wiki Authority Map</h1>
+<p>This page is derived from governed repository documentation, not from source
+code or prior chat state. The current authority surfaces for this page are:</p>
+<ul>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/wiki-authority-map.md"><code>docs/product/wiki-authority-map.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/documentation-workbench.md"><code>docs/documentation-workbench.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/wiki-seed-plan.md"><code>docs/product/wiki-seed-plan.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/current-state.md"><code>docs/product/current-state.md</code></a></li>
+</ul>
+<h2>Purpose</h2>
+<p>The wiki authority map defines how wiki content for <code>vi-history-suite</code> is
+supposed to be created and refreshed.</p>
+<p>Its job is to keep the wiki derived from governed documentation instead of from
+source-code spelunking, shell output, or prior chat memory.</p>
+<h2>Authority Order</h2>
+<p>When wiki pages are created or refreshed, the current authority order begins
+with the strongest product-control surfaces:</p>
+<ol>
+<li><code>SHIP-0001</code></li>
+<li>release-readiness matrix</li>
+<li>blocker ledger</li>
+<li>development queue</li>
+<li>current state</li>
+<li>SRS</li>
+<li>RTM</li>
+<li>test plan</li>
+<li>documentation coherence ledger</li>
+<li>wiki seed plan</li>
+<li>wiki publication ledger</li>
+<li>wiki publication ledger JSON</li>
+<li>architecture overview</li>
+<li>active ADRs</li>
+<li>README</li>
+<li>research alignment</li>
+<li>research implementation index</li>
+</ol>
+<p>If two sources disagree, the higher source wins until the lower one is
+corrected.</p>
+<h2>Excluded Inputs</h2>
+<p>The wiki authority model explicitly excludes these as primary truth sources:</p>
+<ul>
+<li><code>src/</code></li>
+<li><code>tests/</code></li>
+<li>transient shell output</li>
+<li>prior chat messages</li>
+</ul>
+<p>Those surfaces can help locate evidence, but the claim still has to be verified
+back against the governed docs package.</p>
+<h2>Readiness Gate</h2>
+<p>Before widening or refreshing a wiki page, these things should already be true:</p>
+<ul>
+<li>the latest retained design gate is passing</li>
+<li>the current-state and ship-control surfaces agree</li>
+<li>requirements, tests, architecture, and control-plane docs do not have an
+unresolved contradiction</li>
+<li>the documentation workbench is current enough for the wiki change</li>
+<li>the wiki workbench doctor reports no error-level topology or ledger issue</li>
+<li>the publication ledger is updated when a page is truly published</li>
+<li>the bundled docs are refreshed when the published wiki set changes</li>
+</ul>
+<p>This is what keeps the wiki from becoming a second uncontrolled authority.</p>
+<h2>Incremental Workflow</h2>
+<p>The current governed flow is:</p>
+<ol>
+<li>read the authority order from top to bottom</li>
+<li>use the wiki workbench to resolve the published set and next page</li>
+<li>draft only the bounded page currently being widened</li>
+<li>prefer requirement and ADR wording over implementation inference</li>
+<li>cite governed repo-relative docs for substantive claims</li>
+<li>promote any source-only fact into the docs package first</li>
+<li>retain a page-authority bundle and publication-prep receipt before
+publication</li>
+<li>refresh the packaged bundled docs after the published wiki set changes</li>
+</ol>
+<h2>High-Value Inputs</h2>
+<p>The current high-value wiki inputs are:</p>
+<ul>
+<li>install and release surfaces</li>
+<li>user workflow surfaces</li>
+<li>architecture and ADRs</li>
+<li>documentation workbench guidance</li>
+<li>program repo jump and cross-repo orientation</li>
+<li>documentation coherence ledger</li>
+<li>wiki seed plan and publication ledger</li>
+<li>proof and verification surfaces such as RTM and test plan</li>
+</ul>
+<h2>Why It Matters</h2>
+<p>The wiki authority map is one of the main controls that keeps the wiki useful
+instead of merely convenient.</p>
+<p>It makes three boundaries explicit:</p>
+<ul>
+<li>the main repo docs are the authority of record</li>
+<li>the wiki is a derived reader surface</li>
+<li>publication is only one step in a broader governed documentation system</li>
+</ul>
+<h2>Read Next</h2>
+<ul>
+<li><a href="#" data-page-id="documentation-workbench">Documentation Workbench</a></li>
+<li><a href="#" data-page-id="documentation-coherence-ledger">Documentation Coherence Ledger</a></li>
+<li><a href="#" data-page-id="current-state">Current State</a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/wiki-authority-map.md">Wiki Authority Map (Authority Doc)</a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/wiki-seed-plan.md">Wiki Seed Plan</a></li>
+</ul>

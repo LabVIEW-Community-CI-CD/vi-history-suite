@@ -36,9 +36,15 @@ Do not draft or refresh wiki pages until:
   `docs/product/wiki-publication-ledger.md`
 - **Documentation Coherence Ledger**: published on `2026-04-04`; see
   `docs/product/wiki-publication-ledger.md`
-- **Next page**: `Current State`
+- **Current State**: published on `2026-04-04`; see
+  `docs/product/wiki-publication-ledger.md`
+- **Wiki Authority Map**: published on `2026-04-04`; see
+  `docs/product/wiki-publication-ledger.md`
+- **Development Queue**: published on `2026-04-04`; see
+  `docs/product/wiki-publication-ledger.md`
+- **Next page**: `Blocker Ledger`
   - retain publication prep under
-    `.cache/wiki-workbench/publication-prep/current-state/`
+    `.cache/wiki-workbench/publication-prep/blocker-ledger/`
 
 ## Page Order
 
@@ -125,6 +131,30 @@ Do not draft or refresh wiki pages until:
      - `docs/product/SHIP-0001-releasable-vi-history-suite.md`
      - `docs/product/development-queue.json`
      - `docs/product/blocker-ledger.json`
+
+11. **Wiki Authority Map**
+   - Primary authority:
+     - `docs/product/wiki-authority-map.md`
+   - Secondary authority:
+     - `docs/documentation-workbench.md`
+     - `docs/product/wiki-seed-plan.md`
+     - `docs/product/current-state.md`
+
+12. **Development Queue**
+   - Primary authority:
+     - `docs/product/development-queue.json`
+   - Secondary authority:
+     - `docs/product/current-state.md`
+     - `docs/product/SHIP-0001-releasable-vi-history-suite.md`
+     - `docs/product/blocker-ledger.json`
+
+13. **Blocker Ledger**
+   - Primary authority:
+     - `docs/product/blocker-ledger.json`
+   - Secondary authority:
+     - `docs/product/current-state.md`
+     - `docs/product/SHIP-0001-releasable-vi-history-suite.md`
+     - `docs/product/development-queue.json`
 
 ## Drafting Rules
 

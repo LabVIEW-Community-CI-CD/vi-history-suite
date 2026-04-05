@@ -26,6 +26,9 @@ The machine-readable companion surface for this ledger is:
 | Documentation Workbench | `Documentation-Workbench` | published | `2026-04-04` | `4afbea1` | `docs/documentation-workbench.md`; `docs/product/documentation-coherence-ledger.md`; `docs/product/wiki-authority-map.md`; `docs/product/program-repo-jump.md`; `docs/product/wiki-publication-ledger.md` |
 | Program Repo Jump | `Program-Repo-Jump` | published | `2026-04-04` | `b16a5d3` | `docs/product/program-repo-jump.md`; `docs/product/program-repo-jump-map.json`; `docs/documentation-workbench.md`; `docs/product/current-state.md` |
 | Documentation Coherence Ledger | `Documentation-Coherence-Ledger` | published | `2026-04-04` | `b205d10` | `docs/product/documentation-coherence-ledger.md`; `docs/documentation-workbench.md`; `docs/product/current-state.md`; `docs/product/wiki-authority-map.md` |
+| Current State | `Current-State` | published | `2026-04-04` | `42856e9` | `docs/product/current-state.md`; `README.md`; `docs/product/SHIP-0001-releasable-vi-history-suite.md`; `docs/product/development-queue.json`; `docs/product/blocker-ledger.json` |
+| Wiki Authority Map | `Wiki-Authority-Map` | published | `2026-04-04` | `eea464f` | `docs/product/wiki-authority-map.md`; `docs/documentation-workbench.md`; `docs/product/wiki-seed-plan.md`; `docs/product/current-state.md` |
+| Development Queue | `Development-Queue` | published | `2026-04-04` | `7dae371` | `docs/product/development-queue.json`; `docs/product/current-state.md`; `docs/product/SHIP-0001-releasable-vi-history-suite.md`; `docs/product/blocker-ledger.json` |
 
 ## Publication Rules
 
@@ -43,11 +46,10 @@ The machine-readable companion surface for this ledger is:
 
 The next incremental page, once the documentation package is ready, is:
 
-1. **Current State**
+1. **Blocker Ledger**
    - primary authority:
-     - `docs/product/current-state.md`
+     - `docs/product/blocker-ledger.json`
    - secondary authority:
-     - `README.md`
+     - `docs/product/current-state.md`
      - `docs/product/SHIP-0001-releasable-vi-history-suite.md`
      - `docs/product/development-queue.json`
-     - `docs/product/blocker-ledger.json`

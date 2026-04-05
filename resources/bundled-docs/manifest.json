@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-05T04:57:27.765Z",
+  "generatedAt": "2026-04-05T05:04:46.287Z",
   "sourceLedgerPath": "docs/product/wiki-publication-ledger.json",
   "sourceWikiRepoPath": "../vi-history-suite.wiki",
   "defaultPageId": "overview",
@@ -84,6 +84,33 @@
       "htmlFileName": "documentation-coherence-ledger.html",
       "publishedDate": "2026-04-04",
       "wikiCommit": "b205d10"
+    },
+    {
+      "id": "current-state",
+      "title": "Current State",
+      "wikiPath": "Current-State",
+      "wikiFileName": "Current-State.md",
+      "htmlFileName": "current-state.html",
+      "publishedDate": "2026-04-04",
+      "wikiCommit": "42856e9"
+    },
+    {
+      "id": "wiki-authority-map",
+      "title": "Wiki Authority Map",
+      "wikiPath": "Wiki-Authority-Map",
+      "wikiFileName": "Wiki-Authority-Map.md",
+      "htmlFileName": "wiki-authority-map.html",
+      "publishedDate": "2026-04-04",
+      "wikiCommit": "eea464f"
+    },
+    {
+      "id": "development-queue",
+      "title": "Development Queue",
+      "wikiPath": "Development-Queue",
+      "wikiFileName": "Development-Queue.md",
+      "htmlFileName": "development-queue.html",
+      "publishedDate": "2026-04-04",
+      "wikiCommit": "7dae371"
     }
   ]
 }

@@ -1,0 +1,67 @@
+<h1>Development Queue</h1>
+<p>This page is derived from governed repository documentation, not from source
+code or prior chat state. The current authority surfaces for this page are:</p>
+<ul>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/development-queue.json"><code>docs/product/development-queue.json</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/current-state.md"><code>docs/product/current-state.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/SHIP-0001-releasable-vi-history-suite.md"><code>docs/product/SHIP-0001-releasable-vi-history-suite.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/blocker-ledger.json"><code>docs/product/blocker-ledger.json</code></a></li>
+</ul>
+<h2>Purpose</h2>
+<p>The development queue is the retained ordered list of implementation tranches
+for <code>vi-history-suite</code>.</p>
+<p>Its job is to keep one explicit answer to a simple question: what is active
+now, what is already done, and what is only queued.</p>
+<h2>Queue Shape</h2>
+<p>The current queue includes:</p>
+<ul>
+<li>completed tranches for report planning, runtime selection, live execution,
+Windows containerization, dashboard review, decision records, runtime-doctor
+UX, and SemVer releaseability</li>
+<li>one queued tranche for further progress-surface uplift</li>
+<li>one active post-release tranche for the public facade release kit and
+host-machine acceptance work</li>
+</ul>
+<p>The key current status is:</p>
+<ul>
+<li>active: <code>TRANCHE-010</code></li>
+<li>queued: <code>TRANCHE-004</code></li>
+<li>earlier tranches: done</li>
+</ul>
+<h2>Active Tranche</h2>
+<p>The current active tranche is:</p>
+<ul>
+<li><code>TRANCHE-010</code>: Public Facade Release Kit And Host-Machine Acceptance</li>
+</ul>
+<p>That tranche keeps the authority boundary explicit:</p>
+<ul>
+<li>GitLab source repo remains authority</li>
+<li>public GitHub facade remains release/setup/support only</li>
+<li>private GitHub experiment repo remains non-authoritative benchmark evidence</li>
+<li>Docker is not part of the default public setup path</li>
+<li>the Windows 11 host machine remains the current human UX gate</li>
+</ul>
+<h2>Why The Queue Matters</h2>
+<p>The queue is not just a roadmap. It is part of the control plane.</p>
+<p>It keeps:</p>
+<ul>
+<li>one active tranche at a time</li>
+<li>landed work distinguishable from merely planned work</li>
+<li>issue linkage explicit when a tranche is tied to a formal issue</li>
+<li>post-release work separate from the already-closed ship target</li>
+</ul>
+<p>That is what prevents the repo from collapsing back into open-ended iteration.</p>
+<h2>Relationship To Ship Control</h2>
+<p><code>SHIP-0001</code> is already closed for the first immutable <code>v0.2.0</code> release.</p>
+<p>So the development queue is now the main surface for active post-release work,
+while the landed ship record remains historical release evidence.</p>
+<p>The blocker ledger stays relevant as retained ship history, but it is not the
+current driver for every active tranche.</p>
+<h2>Read Next</h2>
+<ul>
+<li><a href="#" data-page-id="current-state">Current State</a></li>
+<li><a href="#" data-page-id="documentation-coherence-ledger">Documentation Coherence Ledger</a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/development-queue.json">Development Queue (Authority JSON)</a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/SHIP-0001-releasable-vi-history-suite.md">SHIP-0001</a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/blocker-ledger.json">Blocker Ledger</a></li>
+</ul>

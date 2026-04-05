@@ -142,19 +142,64 @@
         "docs/product/current-state.md",
         "docs/product/wiki-authority-map.md"
       ]
+    },
+    {
+      "id": "current-state",
+      "title": "Current State",
+      "wikiPath": "Current-State",
+      "wikiFileName": "Current-State.md",
+      "status": "published",
+      "publishedDate": "2026-04-04",
+      "wikiCommit": "42856e9",
+      "primaryAuthority": [
+        "docs/product/current-state.md",
+        "README.md",
+        "docs/product/SHIP-0001-releasable-vi-history-suite.md",
+        "docs/product/development-queue.json",
+        "docs/product/blocker-ledger.json"
+      ]
+    },
+    {
+      "id": "wiki-authority-map",
+      "title": "Wiki Authority Map",
+      "wikiPath": "Wiki-Authority-Map",
+      "wikiFileName": "Wiki-Authority-Map.md",
+      "status": "published",
+      "publishedDate": "2026-04-04",
+      "wikiCommit": "eea464f",
+      "primaryAuthority": [
+        "docs/product/wiki-authority-map.md",
+        "docs/documentation-workbench.md",
+        "docs/product/wiki-seed-plan.md",
+        "docs/product/current-state.md"
+      ]
+    },
+    {
+      "id": "development-queue",
+      "title": "Development Queue",
+      "wikiPath": "Development-Queue",
+      "wikiFileName": "Development-Queue.md",
+      "status": "published",
+      "publishedDate": "2026-04-04",
+      "wikiCommit": "7dae371",
+      "primaryAuthority": [
+        "docs/product/development-queue.json",
+        "docs/product/current-state.md",
+        "docs/product/SHIP-0001-releasable-vi-history-suite.md",
+        "docs/product/blocker-ledger.json"
+      ]
     }
   ],
   "nextPage": {
-    "id": "current-state",
-    "title": "Current State",
+    "id": "blocker-ledger",
+    "title": "Blocker Ledger",
     "primaryAuthority": [
-      "docs/product/current-state.md"
+      "docs/product/blocker-ledger.json"
     ],
     "secondaryAuthority": [
-      "README.md",
+      "docs/product/current-state.md",
       "docs/product/SHIP-0001-releasable-vi-history-suite.md",
-      "docs/product/development-queue.json",
-      "docs/product/blocker-ledger.json"
+      "docs/product/development-queue.json"
     ]
   }
 }
