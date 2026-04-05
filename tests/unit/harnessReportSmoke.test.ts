@@ -31,8 +31,15 @@ describe('harness report smoke renderers', () => {
     runtimeDiagnosticReason: 'labview-path-ignored-last-used-default',
     runtimeDiagnosticLogSourcePath: 'C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log',
     runtimeDiagnosticLogPath: '/tmp/runtime-diagnostic-log.txt',
+    runtimeLabviewIniPath: 'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.ini',
+    runtimeLabviewTcpPort: 3364,
     runtimeExecutable: 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
     runtimeArgs: ['-OperationName', 'CreateComparisonReport', '-LabVIEWPath', 'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'],
+    headlessSessionResetExecutable: 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+    headlessSessionResetArgs: ['-LogToConsole', 'TRUE', '-OperationName', 'CloseLabVIEW', '-LabVIEWPath', 'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe', '-Headless', 'true'],
+    headlessSessionResetExitCode: 1,
+    headlessSessionResetStdoutPath: '/tmp/headless-session-reset-stdout.txt',
+    headlessSessionResetStderrPath: '/tmp/headless-session-reset-stderr.txt',
     runtimeStdoutPath: '/tmp/runtime-stdout.txt',
     runtimeStderrPath: '/tmp/runtime-stderr.txt',
     runtimeProcessObservationPath: '/tmp/runtime-process-observation.json',
@@ -63,8 +70,17 @@ describe('harness report smoke renderers', () => {
     expect(markdown).toContain('Runtime diagnostic reason: labview-path-ignored-last-used-default');
     expect(markdown).toContain('Runtime diagnostic log source: C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log');
     expect(markdown).toContain('Runtime diagnostic log: /tmp/runtime-diagnostic-log.txt');
+    expect(markdown).toContain(
+      'Selected LabVIEW.ini path: C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.ini'
+    );
+    expect(markdown).toContain('Selected LabVIEW TCP port: 3364');
     expect(markdown).toContain('Runtime executable: C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe');
     expect(markdown).toContain('Runtime args: -OperationName CreateComparisonReport -LabVIEWPath C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe');
+    expect(markdown).toContain('Headless session reset executable: C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe');
+    expect(markdown).toContain('Headless session reset args: -LogToConsole TRUE -OperationName CloseLabVIEW -LabVIEWPath C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe -Headless true');
+    expect(markdown).toContain('Headless session reset exit code: 1');
+    expect(markdown).toContain('Headless session reset stdout artifact: /tmp/headless-session-reset-stdout.txt');
+    expect(markdown).toContain('Headless session reset stderr artifact: /tmp/headless-session-reset-stderr.txt');
     expect(markdown).toContain('Runtime stdout artifact: /tmp/runtime-stdout.txt');
     expect(markdown).toContain('Runtime stderr artifact: /tmp/runtime-stderr.txt');
     expect(markdown).toContain('Runtime process observation artifact: /tmp/runtime-process-observation.json');
@@ -93,8 +109,17 @@ describe('harness report smoke renderers', () => {
     expect(html).toContain('labview-path-ignored-last-used-default');
     expect(html).toContain('Runtime diagnostic log source:</strong> C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log');
     expect(html).toContain('/tmp/runtime-diagnostic-log.txt');
+    expect(html).toContain(
+      'Selected LabVIEW.ini path:</strong> C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.ini'
+    );
+    expect(html).toContain('Selected LabVIEW TCP port:</strong> 3364');
     expect(html).toContain('Runtime executable:</strong> C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe');
     expect(html).toContain('Runtime args:</strong> -OperationName CreateComparisonReport -LabVIEWPath C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe');
+    expect(html).toContain('Headless session reset executable:</strong> C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe');
+    expect(html).toContain('Headless session reset args:</strong> -LogToConsole TRUE -OperationName CloseLabVIEW -LabVIEWPath C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe -Headless true');
+    expect(html).toContain('Headless session reset exit code:</strong> 1');
+    expect(html).toContain('/tmp/headless-session-reset-stdout.txt');
+    expect(html).toContain('/tmp/headless-session-reset-stderr.txt');
     expect(html).toContain('/tmp/runtime-stdout.txt');
     expect(html).toContain('/tmp/runtime-stderr.txt');
     expect(html).toContain('/tmp/runtime-process-observation.json');
@@ -499,8 +524,26 @@ describe('runHarnessReportSmoke', () => {
               reportExists: true,
               diagnosticLogSourcePath: 'C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log',
               diagnosticLogArtifactPath: '/tmp/runtime-diagnostic-log.txt',
+              labviewIniPath:
+                'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.ini',
+              labviewTcpPort: 3364,
               executable: 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
               args: ['-OperationName', 'CreateComparisonReport', '-LabVIEWPath', 'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'],
+              headlessSessionResetExecutable:
+                'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+              headlessSessionResetArgs: [
+                '-LogToConsole',
+                'TRUE',
+                '-OperationName',
+                'CloseLabVIEW',
+                '-LabVIEWPath',
+                'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+                '-Headless',
+                'true'
+              ],
+              headlessSessionResetExitCode: 1,
+              headlessSessionResetStdoutFilePath: '/tmp/headless-session-reset-stdout.txt',
+              headlessSessionResetStderrFilePath: '/tmp/headless-session-reset-stderr.txt',
               processObservationArtifactPath: '/tmp/runtime-process-observation.json',
               processObservationCapturedAt: '2026-04-03T00:00:01.000Z',
               processObservationTrigger: 'cli-log-banner',
@@ -534,8 +577,32 @@ describe('runHarnessReportSmoke', () => {
     expect(result.report.runtimeEngine).toBe('labview-cli');
     expect(result.report.runtimeDiagnosticLogSourcePath).toBe('C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log');
     expect(result.report.runtimeDiagnosticLogPath).toBe('/tmp/runtime-diagnostic-log.txt');
+    expect(result.report.runtimeLabviewIniPath).toBe(
+      'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.ini'
+    );
+    expect(result.report.runtimeLabviewTcpPort).toBe(3364);
     expect(result.report.runtimeExecutable).toBe('C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe');
     expect(result.report.runtimeArgs).toEqual(['-OperationName', 'CreateComparisonReport', '-LabVIEWPath', 'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe']);
+    expect(result.report.headlessSessionResetExecutable).toBe(
+      'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
+    );
+    expect(result.report.headlessSessionResetArgs).toEqual([
+      '-LogToConsole',
+      'TRUE',
+      '-OperationName',
+      'CloseLabVIEW',
+      '-LabVIEWPath',
+      'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+      '-Headless',
+      'true'
+    ]);
+    expect(result.report.headlessSessionResetExitCode).toBe(1);
+    expect(result.report.headlessSessionResetStdoutPath).toBe(
+      '/tmp/headless-session-reset-stdout.txt'
+    );
+    expect(result.report.headlessSessionResetStderrPath).toBe(
+      '/tmp/headless-session-reset-stderr.txt'
+    );
     expect(result.report.runtimeProcessObservationPath).toBe('/tmp/runtime-process-observation.json');
     expect(result.report.runtimeProcessObservationCapturedAt).toBe('2026-04-03T00:00:01.000Z');
     expect(result.report.runtimeProcessObservationTrigger).toBe('cli-log-banner');

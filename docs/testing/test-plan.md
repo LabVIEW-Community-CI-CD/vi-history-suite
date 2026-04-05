@@ -1090,6 +1090,16 @@
   `headless-session-reset-stdout.txt`, `headless-session-reset-stderr.txt`,
   the recovery exit code, and the governed `CloseLabVIEW` command facts on the
   resulting runtime execution record
+- `TEST-UNIT-291`: verify exact selected/base harness report-smoke diagnosis
+  surfaces retain the governed headless recovery executable, args, exit code,
+  and stdout/stderr artifact paths in `comparison-report-smoke.json` / `.md` /
+  `.html`, and that the comparable-prefix packet markdown surfaces those facts
+  for the retained Windows blocker-pair diagnosis
+- `TEST-UNIT-292`: verify native Windows `labview-cli` execution derives the
+  selected `LabVIEW.ini` TCP port, appends `-PortNumber` to the governed
+  `CreateComparisonReport` and `CloseLabVIEW` command lines, and surfaces the
+  retained `LabVIEW.ini` path plus TCP port through the packet, smoke JSON,
+  and exact-pair comparable-prefix diagnostics
 - `TEST-DOC-035`: review README, current-state, and ADR-0016 and confirm the
   canonical-host benchmark status surface is documented as the maintainer-facing
   in-IDE visibility and launch surface for the host Linux benchmark lane,
@@ -1201,6 +1211,18 @@
   confirm the governed `CloseLabVIEW -Headless` recovery posture is documented
   as retaining dedicated reset stdout/stderr artifacts and exit-code facts in
   the comparison-report packet, not only free-form retry notes
+- `TEST-DOC-055`: review current-state, harnesses, PROGRAM-0003, ISSUE-0408,
+  and the comparable-prefix packet and confirm the exact Windows blocker-pair
+  diagnosis now documents the derived `comparison-report-smoke` surfaces plus
+  packet-rendered recovery exit code and reset artifact paths, including the
+  failed Windows `CloseLabVIEW -Headless` reset that retained `-350000`
+  connection-failure stderr before the retry
+- `TEST-DOC-056`: review current-state, harnesses, PROGRAM-0003, and
+  ISSUE-0408 and confirm native Windows exact-pair diagnosis now documents the
+  retained `LabVIEW.ini` path and explicit VI Server TCP port derivation, and
+  that the fresh host-native x86 rerun still times out with only
+  `LabVIEWCLI.exe` observed even after passing `-PortNumber 3364`, so port
+  drift is represented as a narrowed seam rather than as the full explanation
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed authority repo, private experiment mirror, wiki, and
   assurance-skill repos with authority roles, expected remotes, and primary

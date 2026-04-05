@@ -29,6 +29,8 @@ export interface ComparisonReportRuntimeExecution {
   diagnosticNotes?: string[];
   diagnosticLogSourcePath?: string;
   diagnosticLogArtifactPath?: string;
+  labviewIniPath?: string;
+  labviewTcpPort?: number;
   headlessDiagnosticArtifactPaths?: string[];
   headlessSessionResetExecutable?: string;
   headlessSessionResetArgs?: string[];
@@ -256,6 +258,14 @@ export function renderComparisonReportPacketHtml(record: ComparisonReportPacketR
       )}</div>
       <div><strong>Headless diagnostic artifacts:</strong> ${escapeHtml(
         runtimeExecution.headlessDiagnosticArtifactPaths?.join(' | ') ?? 'none'
+      )}</div>
+      <div><strong>Selected LabVIEW.ini path:</strong> ${escapeHtml(
+        runtimeExecution.labviewIniPath ?? 'none'
+      )}</div>
+      <div><strong>Selected LabVIEW TCP port:</strong> ${escapeHtml(
+        runtimeExecution.labviewTcpPort === undefined
+          ? 'none'
+          : String(runtimeExecution.labviewTcpPort)
       )}</div>
       <div><strong>Headless session reset executable:</strong> ${escapeHtml(
         runtimeExecution.headlessSessionResetExecutable ?? 'none'

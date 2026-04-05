@@ -174,6 +174,7 @@ describe('post-release control-plane coherence', () => {
   it('keeps the queued benchmark-proof and sustainment follow-ons explicit and separate from the active public-facade closeout', () => {
     const queue = readJson<QueueEntry[]>('docs/product/development-queue.json');
     const currentState = readText('docs/product/current-state.md');
+    const harnesses = readText('docs/product/harnesses.md');
     const benchmarkProgram = readText(
       'docs/product/execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md'
     );
@@ -213,6 +214,13 @@ describe('post-release control-plane coherence', () => {
       'docs/product/benchmark-packets/HARNESS-VHS-002-comparable-prefix.json'
     );
     expect(currentState).toContain('headless-session-reset-stdout.txt');
+    expect(currentState).toContain('headlessSessionResetExitCode=1');
+    expect(currentState).toContain('`VHS-REQ-448` is now implemented');
+    expect(currentState).toContain('retains the `-350000` connection-failure diagnosis before retry');
+    expect(currentState).toContain('forcing a truly host-native exact-pair rerun with `--prefer-bitness x86`');
+    expect(currentState).toContain('observed `LabVIEWCLI.exe` without `LabVIEW.exe`');
+    expect(currentState).toContain('runtimeLabviewTcpPort=3364');
+    expect(currentState).toContain('`LabVIEW.ini`');
 
     expect(benchmarkProgram).toContain('`resource/plugins/lv_icon.vi` target');
     expect(benchmarkProgram).toContain('the deep Linux `HARNESS-VHS-002` benchmark completes `138/138`');
@@ -222,6 +230,13 @@ describe('post-release control-plane coherence', () => {
     expect(benchmarkProgram).toContain('Linux benchmark-image result');
     expect(benchmarkProgram).toContain('The same exact blocker pair `6dd65df -> 3408654`');
     expect(benchmarkProgram).toContain('headless-session-reset-stdout.txt');
+    expect(benchmarkProgram).toContain('comparison-report-smoke.json');
+    expect(benchmarkProgram).toContain('headlessSessionResetExitCode=1');
+    expect(benchmarkProgram).toContain('-350000');
+    expect(benchmarkProgram).toContain('true host-native rerun with `--prefer-bitness x86`');
+    expect(benchmarkProgram).toContain('LabVIEWCLI.exe` without `LabVIEW.exe`');
+    expect(benchmarkProgram).toContain('runtimeLabviewTcpPort=3364');
+    expect(benchmarkProgram).toContain('`-PortNumber 3364`');
 
     expect(benchmarkIssue).toContain('Queued follow-on post-release issue.');
     expect(benchmarkIssue).toContain('the deep Linux host benchmark now fails truthfully late at pair `135/138`');
@@ -231,6 +246,17 @@ describe('post-release control-plane coherence', () => {
     expect(benchmarkIssue).toContain('the same exact blocker pair `6dd65df -> 3408654`');
     expect(benchmarkIssue).toContain('windows-benchmark-image-pair129-labviewcli');
     expect(benchmarkIssue).toContain('headless-session-reset-stderr.txt');
+    expect(benchmarkIssue).toContain('comparison-report-smoke.json');
+    expect(benchmarkIssue).toContain('failed reset itself exited');
+    expect(benchmarkIssue).toContain('`-350000` connection-failure stderr');
+    expect(benchmarkIssue).toContain('true host-native rerun with `--prefer-bitness x86`');
+    expect(benchmarkIssue).toContain('observed `LabVIEWCLI.exe` without `LabVIEW.exe`');
+    expect(benchmarkIssue).toContain('runtimeLabviewTcpPort=3364');
+    expect(benchmarkIssue).toContain('`-PortNumber 3364`');
+
+    expect(harnesses).toContain('comparison-report-smoke.json');
+    expect(harnesses).toContain('recovery executable, args, exit');
+    expect(harnesses).toContain('selected `LabVIEW.ini` path plus explicit VI');
 
     expect(sustainmentProgram).toContain('release cadence, benchmark refresh cadence, operator surfaces');
     expect(sustainmentIssue).toContain('Queued follow-on post-release issue.');

@@ -107,6 +107,26 @@ invokes the governed `CloseLabVIEW -Headless` reset path, the packet keeps the
 reset command, exit code, and dedicated `headless-session-reset-stdout.txt` /
 `headless-session-reset-stderr.txt` artifacts rather than reducing that step
 to free-form notes alone.
+That exact-pair Windows `labview-cli` diagnosis is now visible without opening
+raw hashed metadata: the derived `comparison-report-smoke.json` / `.md` /
+`.html` surfaces retain `headlessSessionResetExitCode=1`, the reset
+stdout/stderr artifact paths, and the comparable-prefix packet renders those
+same recovery facts, including the retained `-350000` connection-failure stderr
+from the failed `CloseLabVIEW -Headless` reset before the retry.
+After clearing a stale non-headless host `LabVIEW.exe` session and forcing a
+true host-native rerun with `--prefer-bitness x86`, the same exact pair failed
+differently as a host-native `command-timed-out` run that observed
+`LabVIEWCLI.exe` without `LabVIEW.exe` and retained only the x86 LabVIEW path
+in the CLI log. That means stale host state mattered, but it was not the whole
+story: native-host Windows proof remains sensitive to multiple installed
+LabVIEW versions and VI Server session state in a way the image proof is not.
+With `VHS-REQ-448`, that same native-host x86 exact-pair rerun now retains the
+selected `LabVIEW.ini` path and explicit VI Server TCP port
+(`runtimeLabviewIniPath=C:\Program Files (x86)\National Instruments\LabVIEW 2026\LabVIEW.ini`,
+`runtimeLabviewTcpPort=3364`) and passes `-PortNumber 3364` explicitly, yet it
+still times out after `120000ms` while only `LabVIEWCLI.exe` is observed. So
+port drift is now a governed narrowed seam, but it is not sufficient by itself
+to solve the Windows host blocker.
 
 Current retained Linux blocker before activation:
 

@@ -39,7 +39,14 @@ const comparablePacket = require(path.resolve(
     runtimeExecutionState?: string;
     runtimeFailureReason?: string;
     runtimeDiagnosticReason?: string;
+    runtimeLabviewIniPath?: string;
+    runtimeLabviewTcpPort?: number;
     runtimeExecutable?: string;
+    headlessSessionResetExecutable?: string;
+    headlessSessionResetArgs: string[];
+    headlessSessionResetExitCode?: number;
+    headlessSessionResetStdoutPath?: string;
+    headlessSessionResetStderrPath?: string;
     runtimeNotes: string[];
   };
   renderComparablePrefixBenchmarkPacketMarkdown: (packet: {
@@ -90,6 +97,8 @@ const comparablePacket = require(path.resolve(
           baseHash?: string;
           runtimeFailureReason?: string;
           runtimeDiagnosticReason?: string;
+          runtimeLabviewIniPath?: string;
+          runtimeLabviewTcpPort?: number;
         }>;
       };
     };
@@ -210,8 +219,26 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
         runtimeExecutionState: 'failed',
         runtimeFailureReason: 'command-exited-nonzero',
         runtimeDiagnosticReason: 'labview-cli-call-by-reference',
+        runtimeLabviewIniPath:
+          'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.ini',
+        runtimeLabviewTcpPort: 3363,
         runtimeExecutable:
           'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+        headlessSessionResetExecutable:
+          'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+        headlessSessionResetArgs: [
+          '-LogToConsole',
+          'TRUE',
+          '-OperationName',
+          'CloseLabVIEW',
+          '-LabVIEWPath',
+          'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+          '-Headless',
+          'true'
+        ],
+        headlessSessionResetExitCode: 1,
+        headlessSessionResetStdoutPath: 'C:\\workspace\\.cache\\headless-session-reset-stdout.txt',
+        headlessSessionResetStderrPath: 'C:\\workspace\\.cache\\headless-session-reset-stderr.txt',
         runtimeNotes: ['Attempted Windows headless session reset via LabVIEWCLI CloseLabVIEW.']
       }),
       'utf8'
@@ -227,8 +254,26 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
       runtimeExecutionState: 'failed',
       runtimeFailureReason: 'command-exited-nonzero',
       runtimeDiagnosticReason: 'labview-cli-call-by-reference',
+      runtimeLabviewIniPath:
+        'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.ini',
+      runtimeLabviewTcpPort: 3363,
       runtimeExecutable:
         'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+      headlessSessionResetExecutable:
+        'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+      headlessSessionResetArgs: [
+        '-LogToConsole',
+        'TRUE',
+        '-OperationName',
+        'CloseLabVIEW',
+        '-LabVIEWPath',
+        'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+        '-Headless',
+        'true'
+      ],
+      headlessSessionResetExitCode: 1,
+      headlessSessionResetStdoutPath: 'C:\\workspace\\.cache\\headless-session-reset-stdout.txt',
+      headlessSessionResetStderrPath: 'C:\\workspace\\.cache\\headless-session-reset-stderr.txt',
       runtimeNotes: ['Attempted Windows headless session reset via LabVIEWCLI CloseLabVIEW.']
     });
   });
@@ -286,7 +331,13 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
               baseHash: '6dd65df674287c9705959a7e9aca6b02e8445d40',
               selectedHash: '3408654e680200d7787c17cc0b443a97fcdfb360',
               runtimeFailureReason: 'command-exited-nonzero',
-              runtimeDiagnosticReason: 'labview-cli-call-by-reference'
+              runtimeDiagnosticReason: 'labview-cli-call-by-reference',
+              runtimeLabviewIniPath:
+                'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.ini',
+              runtimeLabviewTcpPort: 3363,
+              headlessSessionResetExitCode: 1,
+              headlessSessionResetStdoutPath: '/tmp/windows-benchmark-image-pair129-labviewcli/headless-session-reset-stdout.txt',
+              headlessSessionResetStderrPath: '/tmp/windows-benchmark-image-pair129-labviewcli/headless-session-reset-stderr.txt'
             },
             {
               engine: 'lvcompare',
@@ -314,6 +365,14 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
     expect(markdown).toContain('## Windows Exact-Pair Diagnosis');
     expect(markdown).toContain(
       'labview-cli: 6dd65df67428 -> 3408654e6802 :: command-exited-nonzero (labview-cli-call-by-reference)'
+    );
+    expect(markdown).toContain(
+      'labview-cli selected LabVIEW.ini: C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.ini'
+    );
+    expect(markdown).toContain('labview-cli selected LabVIEW TCP port: 3363');
+    expect(markdown).toContain('labview-cli recovery exit code: 1');
+    expect(markdown).toContain(
+      'labview-cli recovery stderr: /tmp/windows-benchmark-image-pair129-labviewcli/headless-session-reset-stderr.txt'
     );
     expect(markdown).toContain(
       'lvcompare: 6dd65df67428 -> 3408654e6802 :: command-timed-out'

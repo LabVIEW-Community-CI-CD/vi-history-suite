@@ -14,6 +14,7 @@ import {
   buildWindowsContainerLabviewCliScript,
   defaultNowIso,
   defaultNowMs,
+  appendLabviewCliPortNumberArg,
   executeComparisonReport,
   extractCommandOptionValue,
   normalizeWindowsInteropExecutable,
@@ -26,6 +27,7 @@ import {
   prepareWindowsContainerExecutionContext,
   resolveHostReadableDiagnosticPath,
   resolveMappedRuntimeDiagnosticPath,
+  resolveWindowsLabviewTcpSettings,
   rewriteLabviewCliArgsForContainerWorkspace,
   rewriteLvcompareArgsForContainerWorkspace,
   requiresWindowsInterop,
@@ -736,6 +738,8 @@ describe('comparisonReportRuntimeExecution', () => {
         'CloseLabVIEW',
         '-LabVIEWPath',
         'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+        '-PortNumber',
+        '3363',
         '-Headless',
         'true'
       ]
@@ -1079,6 +1083,7 @@ describe('comparisonReportRuntimeExecution', () => {
       '/workspace/.storage/reports/repoid123456/fileid123456/runtime-diagnostic-log.txt'
     );
     expect(result.record.runtimeExecution.diagnosticNotes).toEqual([
+      'Derived VI Server TCP port 3363 from C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.ini and passed it explicitly to LabVIEW CLI.',
       'LabVIEW CLI ignored the explicit -LabVIEWPath selection and used a different last-used LabVIEW instead: C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe.',
       'Intended explicit LabVIEW path: C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe.',
       'LabVIEW CLI exited nonzero without stderr and without generating a report; stdout only advertised the diagnostic log path.'
@@ -3549,5 +3554,107 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(defaultNowMs()).toBeTypeOf('number');
 
     await fs.rm(tempRoot, { recursive: true, force: true });
+  });
+
+  it('derives the governed VI Server TCP port from the selected Windows LabVIEW.ini', async () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.labviewExe = {
+      kind: 'labview-exe',
+      path: 'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+      source: 'configured',
+      exists: true,
+      bitness: 'x86'
+    };
+
+    await expect(
+      resolveWindowsLabviewTcpSettings(
+        record,
+        {
+          executable: 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+          args: [
+            '-OperationName',
+            'CreateComparisonReport',
+            '-LabVIEWPath',
+            'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+          ]
+        },
+        {
+          processPlatform: 'win32',
+          readFile: vi
+            .fn()
+            .mockResolvedValue('server.tcp.port=3364\nserver.tcp.enabled=true\n') as never
+        }
+      )
+    ).resolves.toEqual({
+      labviewIniPath: 'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.ini',
+      labviewTcpPort: 3364,
+      notes: [
+        'Derived VI Server TCP port 3364 from C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.ini and passed it explicitly to LabVIEW CLI.'
+      ]
+    });
+  });
+
+  it('falls back to the governed default Windows VI Server port when LabVIEW.ini omits an explicit port', async () => {
+    await expect(
+      resolveWindowsLabviewTcpSettings(
+        createReadyRecord(),
+        {
+          executable: 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+          args: [
+            '-OperationName',
+            'CreateComparisonReport',
+            '-LabVIEWPath',
+            'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+          ]
+        },
+        {
+          processPlatform: 'win32',
+          readFile: vi.fn().mockResolvedValue('server.tcp.enabled=True\n') as never
+        }
+      )
+    ).resolves.toEqual({
+      labviewIniPath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.ini',
+      labviewTcpPort: 3363,
+      notes: [
+        'Derived VI Server TCP port 3363 from C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.ini and passed it explicitly to LabVIEW CLI.'
+      ]
+    });
+  });
+
+  it('appends or rewrites -PortNumber on LabVIEW CLI command args deterministically', () => {
+    expect(
+      appendLabviewCliPortNumberArg(
+        ['-OperationName', 'CreateComparisonReport', '-LabVIEWPath', 'C:\\LabVIEW.exe'],
+        3364
+      )
+    ).toEqual([
+      '-OperationName',
+      'CreateComparisonReport',
+      '-LabVIEWPath',
+      'C:\\LabVIEW.exe',
+      '-PortNumber',
+      '3364'
+    ]);
+
+    expect(
+      appendLabviewCliPortNumberArg(
+        [
+          '-OperationName',
+          'CreateComparisonReport',
+          '-PortNumber',
+          '3363',
+          '-LabVIEWPath',
+          'C:\\LabVIEW.exe'
+        ],
+        3364
+      )
+    ).toEqual([
+      '-OperationName',
+      'CreateComparisonReport',
+      '-PortNumber',
+      '3364',
+      '-LabVIEWPath',
+      'C:\\LabVIEW.exe'
+    ]);
   });
 });

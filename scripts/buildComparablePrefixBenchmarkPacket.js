@@ -568,7 +568,14 @@ function readWindowsExactPairDiagnosis(reportPath, proofRootPath) {
     runtimeExecutionState: report.runtimeExecutionState,
     runtimeFailureReason: report.runtimeFailureReason,
     runtimeDiagnosticReason: report.runtimeDiagnosticReason,
+    runtimeLabviewIniPath: report.runtimeLabviewIniPath,
+    runtimeLabviewTcpPort: report.runtimeLabviewTcpPort,
     runtimeExecutable: report.runtimeExecutable,
+    headlessSessionResetExecutable: report.headlessSessionResetExecutable,
+    headlessSessionResetArgs: report.headlessSessionResetArgs ?? [],
+    headlessSessionResetExitCode: report.headlessSessionResetExitCode,
+    headlessSessionResetStdoutPath: report.headlessSessionResetStdoutPath,
+    headlessSessionResetStderrPath: report.headlessSessionResetStderrPath,
     runtimeNotes: report.runtimeNotes ?? []
   };
 }
@@ -767,7 +774,12 @@ function renderComparablePrefixBenchmarkPacketMarkdown(packet) {
           ...exactPairDiagnostics.flatMap((diagnostic) => [
             `- ${diagnostic.engine}: ${formatHashPair(diagnostic.baseHash, diagnostic.selectedHash)} :: ${diagnostic.runtimeFailureReason}${diagnostic.runtimeDiagnosticReason ? ` (${diagnostic.runtimeDiagnosticReason})` : ''}`,
             `- ${diagnostic.engine} proof root: ${diagnostic.proofRootPath}`,
-            `- ${diagnostic.engine} report: ${diagnostic.reportPath}`
+            `- ${diagnostic.engine} report: ${diagnostic.reportPath}`,
+            `- ${diagnostic.engine} selected LabVIEW.ini: ${diagnostic.runtimeLabviewIniPath ?? 'none'}`,
+            `- ${diagnostic.engine} selected LabVIEW TCP port: ${diagnostic.runtimeLabviewTcpPort === undefined ? 'none' : String(diagnostic.runtimeLabviewTcpPort)}`,
+            `- ${diagnostic.engine} recovery exit code: ${diagnostic.headlessSessionResetExitCode === undefined ? 'none' : String(diagnostic.headlessSessionResetExitCode)}`,
+            `- ${diagnostic.engine} recovery stdout: ${diagnostic.headlessSessionResetStdoutPath ?? 'none'}`,
+            `- ${diagnostic.engine} recovery stderr: ${diagnostic.headlessSessionResetStderrPath ?? 'none'}`
           ])
         ]
       : []),

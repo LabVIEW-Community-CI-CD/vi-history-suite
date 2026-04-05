@@ -106,6 +106,19 @@ describe('comparisonReportPlan', () => {
     });
   });
 
+  it('adds an explicit -PortNumber when a governed VI Server port is provided', () => {
+    const plan = buildLabviewCliCreateComparisonReportPlan({
+      leftViPath: '/tmp/left-foo.vi',
+      rightViPath: '/tmp/right-foo.vi',
+      reportFilePath: '/tmp/report.html',
+      labviewPath: 'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+      portNumber: 3364
+    });
+
+    expect(plan.args).toContain('-PortNumber');
+    expect(plan.args).toContain('3364');
+  });
+
   it('maps every governed report format to the exact LabVIEW CLI report-type token', () => {
     expect(
       buildLabviewCliCreateComparisonReportPlan({

@@ -1,6 +1,6 @@
 # HARNESS-VHS-002 Comparable Prefix Benchmark Packet
 
-- Generated at: 2026-04-05T17:15:54.456Z
+- Generated at: 2026-04-05T18:06:09.448Z
 - Proof state: bounded-prefix-comparable
 - Target: resource/plugins/lv_icon.vi
 - Full window: 139 commits / 138 pairs
@@ -37,9 +37,19 @@
 - labview-cli: 6dd65df67428 -> 3408654e6802 :: command-exited-nonzero (labview-cli-call-by-reference)
 - labview-cli proof root: /mnt/c/Users/sveld/AppData/Local/VI History Suite/windows-benchmark-image-pair129-labviewcli
 - labview-cli report: /mnt/c/Users/sveld/AppData/Local/VI History Suite/windows-benchmark-image-pair129-labviewcli/cache/harness-reports/HARNESS-VHS-002/comparison-report-smoke.json
+- labview-cli selected LabVIEW.ini: none
+- labview-cli selected LabVIEW TCP port: none
+- labview-cli recovery exit code: 1
+- labview-cli recovery stdout: C:\workspace\.cache\harness-reports\HARNESS-VHS-002\workspace-storage\reports\a1fa155b16ea\0ded7fc226bb\headless-session-reset-stdout.txt
+- labview-cli recovery stderr: C:\workspace\.cache\harness-reports\HARNESS-VHS-002\workspace-storage\reports\a1fa155b16ea\0ded7fc226bb\headless-session-reset-stderr.txt
 - lvcompare: 6dd65df67428 -> 3408654e6802 :: command-timed-out
 - lvcompare proof root: /mnt/c/Users/sveld/AppData/Local/VI History Suite/windows-benchmark-image-pair129-lvcompare
 - lvcompare report: /mnt/c/Users/sveld/AppData/Local/VI History Suite/windows-benchmark-image-pair129-lvcompare/cache/harness-reports/HARNESS-VHS-002/comparison-report-smoke.json
+- lvcompare selected LabVIEW.ini: none
+- lvcompare selected LabVIEW TCP port: none
+- lvcompare recovery exit code: none
+- lvcompare recovery stdout: none
+- lvcompare recovery stderr: none
 
 ## Comparison
 

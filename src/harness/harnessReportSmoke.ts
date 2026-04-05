@@ -74,8 +74,15 @@ export interface HarnessReportSmokeReport {
   runtimeDiagnosticReason?: string;
   runtimeDiagnosticLogSourcePath?: string;
   runtimeDiagnosticLogPath?: string;
+  runtimeLabviewIniPath?: string;
+  runtimeLabviewTcpPort?: number;
   runtimeExecutable?: string;
   runtimeArgs?: string[];
+  headlessSessionResetExecutable?: string;
+  headlessSessionResetArgs?: string[];
+  headlessSessionResetExitCode?: number;
+  headlessSessionResetStdoutPath?: string;
+  headlessSessionResetStderrPath?: string;
   runtimeStdoutPath?: string;
   runtimeStderrPath?: string;
   runtimeProcessObservationPath?: string;
@@ -412,8 +419,15 @@ function buildHarnessReportSmokeReport(options: {
     runtimeDiagnosticReason: record.runtimeExecution.diagnosticReason,
     runtimeDiagnosticLogSourcePath: record.runtimeExecution.diagnosticLogSourcePath,
     runtimeDiagnosticLogPath: record.runtimeExecution.diagnosticLogArtifactPath,
+    runtimeLabviewIniPath: record.runtimeExecution.labviewIniPath,
+    runtimeLabviewTcpPort: record.runtimeExecution.labviewTcpPort,
     runtimeExecutable: record.runtimeExecution.executable,
     runtimeArgs: record.runtimeExecution.args,
+    headlessSessionResetExecutable: record.runtimeExecution.headlessSessionResetExecutable,
+    headlessSessionResetArgs: record.runtimeExecution.headlessSessionResetArgs,
+    headlessSessionResetExitCode: record.runtimeExecution.headlessSessionResetExitCode,
+    headlessSessionResetStdoutPath: record.runtimeExecution.headlessSessionResetStdoutFilePath,
+    headlessSessionResetStderrPath: record.runtimeExecution.headlessSessionResetStderrFilePath,
     runtimeStdoutPath: record.runtimeExecution.stdoutFilePath,
     runtimeStderrPath: record.runtimeExecution.stderrFilePath,
     runtimeProcessObservationPath: record.runtimeExecution.processObservationArtifactPath,
@@ -464,8 +478,15 @@ export function renderHarnessReportSmokeMarkdown(report: HarnessReportSmokeRepor
 - Runtime diagnostic reason: ${report.runtimeDiagnosticReason ?? 'none'}
 - Runtime diagnostic log source: ${report.runtimeDiagnosticLogSourcePath ?? 'none'}
 - Runtime diagnostic log: ${report.runtimeDiagnosticLogPath ?? 'none'}
+- Selected LabVIEW.ini path: ${report.runtimeLabviewIniPath ?? 'none'}
+- Selected LabVIEW TCP port: ${report.runtimeLabviewTcpPort === undefined ? 'none' : String(report.runtimeLabviewTcpPort)}
 - Runtime executable: ${report.runtimeExecutable ?? 'none'}
 - Runtime args: ${report.runtimeArgs?.join(' ') ?? 'none'}
+- Headless session reset executable: ${report.headlessSessionResetExecutable ?? 'none'}
+- Headless session reset args: ${report.headlessSessionResetArgs?.join(' ') ?? 'none'}
+- Headless session reset exit code: ${report.headlessSessionResetExitCode === undefined ? 'none' : String(report.headlessSessionResetExitCode)}
+- Headless session reset stdout artifact: ${report.headlessSessionResetStdoutPath ?? 'none'}
+- Headless session reset stderr artifact: ${report.headlessSessionResetStderrPath ?? 'none'}
 - Runtime stdout artifact: ${report.runtimeStdoutPath ?? 'none'}
 - Runtime stderr artifact: ${report.runtimeStderrPath ?? 'none'}
 - Runtime process observation artifact: ${report.runtimeProcessObservationPath ?? 'none'}
@@ -525,8 +546,31 @@ export function renderHarnessReportSmokeHtml(report: HarnessReportSmokeReport): 
         report.runtimeDiagnosticLogSourcePath ?? 'none'
       )}</div>
       <div><strong>Runtime diagnostic log:</strong> ${escapeHtml(report.runtimeDiagnosticLogPath ?? 'none')}</div>
+      <div><strong>Selected LabVIEW.ini path:</strong> ${escapeHtml(
+        report.runtimeLabviewIniPath ?? 'none'
+      )}</div>
+      <div><strong>Selected LabVIEW TCP port:</strong> ${escapeHtml(
+        report.runtimeLabviewTcpPort === undefined ? 'none' : String(report.runtimeLabviewTcpPort)
+      )}</div>
       <div><strong>Runtime executable:</strong> ${escapeHtml(report.runtimeExecutable ?? 'none')}</div>
       <div><strong>Runtime args:</strong> ${escapeHtml(report.runtimeArgs?.join(' ') ?? 'none')}</div>
+      <div><strong>Headless session reset executable:</strong> ${escapeHtml(
+        report.headlessSessionResetExecutable ?? 'none'
+      )}</div>
+      <div><strong>Headless session reset args:</strong> ${escapeHtml(
+        report.headlessSessionResetArgs?.join(' ') ?? 'none'
+      )}</div>
+      <div><strong>Headless session reset exit code:</strong> ${escapeHtml(
+        report.headlessSessionResetExitCode === undefined
+          ? 'none'
+          : String(report.headlessSessionResetExitCode)
+      )}</div>
+      <div><strong>Headless session reset stdout artifact:</strong> ${escapeHtml(
+        report.headlessSessionResetStdoutPath ?? 'none'
+      )}</div>
+      <div><strong>Headless session reset stderr artifact:</strong> ${escapeHtml(
+        report.headlessSessionResetStderrPath ?? 'none'
+      )}</div>
       <div><strong>Runtime stdout artifact:</strong> ${escapeHtml(report.runtimeStdoutPath ?? 'none')}</div>
       <div><strong>Runtime stderr artifact:</strong> ${escapeHtml(report.runtimeStderrPath ?? 'none')}</div>
       <div><strong>Runtime process observation artifact:</strong> ${escapeHtml(

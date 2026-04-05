@@ -40,6 +40,16 @@
   - `node out/cli/runHarnessReportSmoke.js --harness-id HARNESS-VHS-001 --engine lvcompare`
 - purpose: retain a factual report-generation smoke packet for the latest
   comparable revision pair of the canonical VI history target
+- exact-pair diagnosis extension:
+  - when `--selected-hash` / `--base-hash` targets a governed blocker pair and
+    the runtime exercises `CloseLabVIEW -Headless`, the derived smoke
+    JSON/Markdown/HTML surfaces retain the recovery executable, args, exit
+    code, and dedicated stdout/stderr artifact paths so exact-pair diagnosis
+    does not depend on reopening hashed packet metadata alone
+  - for native Windows `labview-cli` diagnosis, those same derived smoke
+    surfaces now retain the selected `LabVIEW.ini` path plus explicit VI
+    Server TCP port so multiple installed LabVIEW versions and port drift are
+    visible on the primary proof surface
 - retained outputs:
   - `.cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.json`
   - `.cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.md`

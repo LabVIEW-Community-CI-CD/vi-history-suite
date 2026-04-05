@@ -96,6 +96,12 @@ export interface RuntimeProcessObservation {
   lvcompareProcessObserved: boolean;
 }
 
+export interface WindowsLabviewTcpSettings {
+  labviewIniPath?: string;
+  labviewTcpPort?: number;
+  notes: string[];
+}
+
 export interface ObserveWindowsProcessesOptions {
   hostPlatform: NodeJS.Platform;
   runtimePlatform: string;
@@ -319,8 +325,27 @@ async function runHostNativeExecution(
     };
   }
 
+  const windowsLabviewTcpSettings = await resolveWindowsLabviewTcpSettings(
+    record,
+    executionContext.commandPlan,
+    {
+      readFile: deps.readFile,
+      processPlatform: deps.processPlatform
+    }
+  );
+  const effectiveExecutionContext: PreparedExecutionContext = {
+    ...executionContext,
+    commandPlan: {
+      executable: executionContext.commandPlan.executable,
+      args: appendLabviewCliPortNumberArg(
+        executionContext.commandPlan.args,
+        windowsLabviewTcpSettings.labviewTcpPort
+      )
+    }
+  };
+
   const executeAttempt = async (): Promise<ComparisonReportRuntimeExecution> => {
-    await clearStaleExecutedReportArtifacts(record, executionContext, {
+    await clearStaleExecutedReportArtifacts(record, effectiveExecutionContext, {
       removePath: deps.removePath
     });
 
@@ -328,7 +353,7 @@ async function runHostNativeExecution(
     const startedMs = deps.nowMs();
 
     try {
-      const commandResult = await deps.runCommand(executionContext.commandPlan);
+      const commandResult = await deps.runCommand(effectiveExecutionContext.commandPlan);
       const completedAt = deps.nowIso();
       const durationMs = Math.max(0, deps.nowMs() - startedMs);
       await deps.writeFile(record.artifactPlan.runtimeStdoutFilePath, commandResult.stdout, 'utf8');
@@ -349,13 +374,13 @@ async function runHostNativeExecution(
         removePath: deps.removePath,
         processPlatform: deps.processPlatform,
         expectedLabviewPath:
-          extractCommandOptionValue(executionContext.commandPlan.args, '-LabVIEWPath') ??
+          extractCommandOptionValue(effectiveExecutionContext.commandPlan.args, '-LabVIEWPath') ??
           record.runtimeSelection.labviewExe?.path,
         diagnosticPathMapping: executionContext.diagnosticPathMapping
       });
       const finalizedReport = await finalizeExecutedReport(
         record,
-        executionContext,
+        effectiveExecutionContext,
         {
           validateIdentity: commandResult.timedOut || commandResult.exitCode !== 0
         },
@@ -390,6 +415,7 @@ async function runHostNativeExecution(
           });
       const diagnosticNotes = mergeDiagnosticNotes(
         buildProcessObservationNotes(processObservation),
+        windowsLabviewTcpSettings.notes,
         diagnostics.notes,
         finalizedReport.validationNotes,
         failureClassification.notes
@@ -404,9 +430,11 @@ async function runHostNativeExecution(
         diagnosticNotes,
         diagnosticLogSourcePath: diagnostics.sourcePath,
         diagnosticLogArtifactPath: diagnostics.artifactPath,
+        labviewIniPath: windowsLabviewTcpSettings.labviewIniPath,
+        labviewTcpPort: windowsLabviewTcpSettings.labviewTcpPort,
         headlessDiagnosticArtifactPaths: diagnostics.headlessArtifactPaths,
-        executable: executionContext.commandPlan.executable,
-        args: executionContext.commandPlan.args,
+        executable: effectiveExecutionContext.commandPlan.executable,
+        args: effectiveExecutionContext.commandPlan.args,
         startedAt,
         completedAt,
         durationMs,
@@ -454,7 +482,7 @@ async function runHostNativeExecution(
         removePath: deps.removePath,
         processPlatform: deps.processPlatform,
         expectedLabviewPath:
-          extractCommandOptionValue(executionContext.commandPlan.args, '-LabVIEWPath') ??
+          extractCommandOptionValue(effectiveExecutionContext.commandPlan.args, '-LabVIEWPath') ??
           record.runtimeSelection.labviewExe?.path
       });
 
@@ -464,12 +492,14 @@ async function runHostNativeExecution(
         reportExists: false,
         failureReason: 'command-spawn-failed',
         diagnosticReason: diagnostics.reason,
-        diagnosticNotes: diagnostics.notes,
+        diagnosticNotes: mergeDiagnosticNotes(windowsLabviewTcpSettings.notes, diagnostics.notes),
         diagnosticLogSourcePath: diagnostics.sourcePath,
         diagnosticLogArtifactPath: diagnostics.artifactPath,
+        labviewIniPath: windowsLabviewTcpSettings.labviewIniPath,
+        labviewTcpPort: windowsLabviewTcpSettings.labviewTcpPort,
         headlessDiagnosticArtifactPaths: diagnostics.headlessArtifactPaths,
-        executable: executionContext.commandPlan.executable,
-        args: executionContext.commandPlan.args,
+        executable: effectiveExecutionContext.commandPlan.executable,
+        args: effectiveExecutionContext.commandPlan.args,
         startedAt,
         completedAt,
         durationMs,
@@ -482,7 +512,12 @@ async function runHostNativeExecution(
 
   const initialResult = await executeAttempt();
   if (shouldAttemptLinuxHeadlessRecovery(record, initialResult)) {
-    const recovery = await attemptLabviewCliHeadlessSessionReset('Linux', record, deps);
+    const recovery = await attemptLabviewCliHeadlessSessionReset(
+      'Linux',
+      record,
+      deps,
+      windowsLabviewTcpSettings.labviewTcpPort
+    );
     const retriedResult = await executeAttempt();
     return buildRecoveredExecutionResult(
       initialResult,
@@ -493,7 +528,12 @@ async function runHostNativeExecution(
   }
 
   if (shouldAttemptWindowsHeadlessRecovery(record, initialResult)) {
-    const recovery = await attemptLabviewCliHeadlessSessionReset('Windows', record, deps);
+    const recovery = await attemptLabviewCliHeadlessSessionReset(
+      'Windows',
+      record,
+      deps,
+      windowsLabviewTcpSettings.labviewTcpPort
+    );
     const retriedResult = await executeAttempt();
     return buildRecoveredExecutionResult(
       initialResult,
@@ -583,6 +623,85 @@ const WINDOWS_HEADLESS_RECOVERY_NOTE =
   'Attempted Windows headless session reset via LabVIEWCLI CloseLabVIEW after call-by-reference diagnosis, then retried the pair once.';
 const HEADLESS_SESSION_RESET_STDOUT_FILENAME = 'headless-session-reset-stdout.txt';
 const HEADLESS_SESSION_RESET_STDERR_FILENAME = 'headless-session-reset-stderr.txt';
+const DEFAULT_WINDOWS_LABVIEW_TCP_PORT = 3363;
+
+export async function resolveWindowsLabviewTcpSettings(
+  record: ComparisonReportPacketRecord,
+  commandPlan: ComparisonCommandPlan,
+  deps: {
+    readFile: typeof fs.readFile;
+    processPlatform: NodeJS.Platform;
+  }
+): Promise<WindowsLabviewTcpSettings> {
+  if (
+    deps.processPlatform !== 'win32' ||
+    record.runtimeSelection.platform !== 'win32' ||
+    record.runtimeSelection.engine !== 'labview-cli' ||
+    record.runtimeSelection.provider !== 'host-native'
+  ) {
+    return { notes: [] };
+  }
+
+  const labviewPath = extractCommandOptionValue(commandPlan.args, '-LabVIEWPath')?.trim();
+  if (!labviewPath) {
+    return { notes: [] };
+  }
+
+  const labviewIniPath = path.win32.join(path.win32.dirname(labviewPath), 'LabVIEW.ini');
+  let iniText: string;
+  try {
+    iniText = await deps.readFile(labviewIniPath, 'utf8');
+  } catch {
+    return {
+      labviewIniPath,
+      notes: [
+        `Selected LabVIEW.ini was not readable at ${labviewIniPath}, so VI Server port derivation remained implicit.`
+      ]
+    };
+  }
+
+  const enabledMatch = iniText.match(/^\s*server\.tcp\.enabled\s*=\s*(true|false)\s*$/im);
+  const portMatch = iniText.match(/^\s*server\.tcp\.port\s*=\s*(\d+)\s*$/im);
+  const tcpEnabled = enabledMatch ? enabledMatch[1].toLowerCase() === 'true' : true;
+  if (!tcpEnabled) {
+    return {
+      labviewIniPath,
+      notes: [
+        `Selected LabVIEW.ini at ${labviewIniPath} disables VI Server TCP, so no explicit -PortNumber was derived.`
+      ]
+    };
+  }
+
+  const labviewTcpPort = portMatch
+    ? Number.parseInt(portMatch[1], 10)
+    : DEFAULT_WINDOWS_LABVIEW_TCP_PORT;
+
+  return {
+    labviewIniPath,
+    labviewTcpPort,
+    notes: [
+      `Derived VI Server TCP port ${String(labviewTcpPort)} from ${labviewIniPath} and passed it explicitly to LabVIEW CLI.`
+    ]
+  };
+}
+
+export function appendLabviewCliPortNumberArg(
+  args: string[],
+  labviewTcpPort: number | undefined
+): string[] {
+  if (!Number.isInteger(labviewTcpPort) || (labviewTcpPort ?? 0) <= 0) {
+    return [...args];
+  }
+
+  const existingPortIndex = args.findIndex((argument) => argument.toLowerCase() === '-portnumber');
+  if (existingPortIndex >= 0) {
+    const updated = [...args];
+    updated[existingPortIndex + 1] = String(labviewTcpPort);
+    return updated;
+  }
+
+  return [...args, '-PortNumber', String(labviewTcpPort)];
+}
 
 async function captureRuntimeDiagnostics(
   record: ComparisonReportPacketRecord,
@@ -710,7 +829,8 @@ async function attemptLabviewCliHeadlessSessionReset(
     nowMs: () => number;
     mkdir: typeof fs.mkdir;
     writeFile: typeof fs.writeFile;
-  }
+  },
+  labviewTcpPort?: number
 ): Promise<{
   notes: string[];
   durationMs: number;
@@ -723,7 +843,8 @@ async function attemptLabviewCliHeadlessSessionReset(
   const startedMs = deps.nowMs();
   const closeCommandPlan = buildLabviewCliCloseLabviewCommandPlan(
     record.runtimeSelection.labviewCli?.path ?? 'LabVIEWCLI',
-    record.runtimeSelection.labviewExe?.path
+    record.runtimeSelection.labviewExe?.path,
+    labviewTcpPort
   );
   const stdoutFilePath = path.join(
     record.artifactPlan.reportDirectory,
@@ -821,11 +942,15 @@ function buildRecoveredExecutionResult(
 
 function buildLabviewCliCloseLabviewCommandPlan(
   executable: string,
-  labviewPath?: string
+  labviewPath?: string,
+  labviewTcpPort?: number
 ): ComparisonCommandPlan {
   const args = ['-LogToConsole', 'TRUE', '-OperationName', 'CloseLabVIEW'];
   if (labviewPath?.trim()) {
     args.push('-LabVIEWPath', labviewPath.trim());
+  }
+  if (Number.isInteger(labviewTcpPort) && (labviewTcpPort ?? 0) > 0) {
+    args.push('-PortNumber', String(labviewTcpPort));
   }
   args.push('-Headless', 'true');
 

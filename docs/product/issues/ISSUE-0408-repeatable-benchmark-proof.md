@@ -87,6 +87,22 @@ Current retained benchmark truth before activation:
   `headless-session-reset-stderr.txt` artifacts plus the reset exit code in
   the comparison-report packet, so the next Linux or Windows blocker rerun can
   inspect the reset attempt itself instead of only a retry note
+- the exact Windows blocker-pair `comparison-report-smoke.json` / `.md` /
+  `.html` surfaces now retain those same recovery facts too, and the retained
+  Windows `labview-cli` exact-pair rerun proves the failed reset itself exited
+  `1` with `-350000` connection-failure stderr before the retry
+- after clearing a stale non-headless host `LabVIEW.exe` session and forcing a
+  true host-native rerun with `--prefer-bitness x86`, the same exact pair
+  failed differently as `provider=host-native` plus `command-timed-out`,
+  observed `LabVIEWCLI.exe` without `LabVIEW.exe`, and retained only the x86
+  LabVIEW path in the CLI log, so native-host Windows proof remains sensitive
+  to multiple installed LabVIEW versions and VI Server session state
+- with `VHS-REQ-448`, that same host-native x86 rerun now retains
+  `runtimeLabviewIniPath=C:\Program Files (x86)\National Instruments\LabVIEW 2026\LabVIEW.ini`
+  plus `runtimeLabviewTcpPort=3364` and passes `-PortNumber 3364` explicitly,
+  yet it still times out after `120000ms` while observing only
+  `LabVIEWCLI.exe`, so explicit port derivation narrowed the seam but did not
+  close the Windows host blocker
 - local host-runnable proof for the Windows benchmark image is still open
 
 ## Scope

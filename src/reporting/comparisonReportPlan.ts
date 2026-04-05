@@ -52,6 +52,7 @@ export interface LabviewCliComparisonReportPlanOptions {
   rightViPath: string;
   reportFilePath: string;
   labviewPath?: string;
+  portNumber?: number;
   reportFormat?: ComparisonReportFormat;
   overwrite?: boolean;
   createOutputDirectory?: boolean;
@@ -162,6 +163,10 @@ export function buildLabviewCliCreateComparisonReportPlan(
 
   if (options.labviewPath?.trim()) {
     args.push('-LabVIEWPath', options.labviewPath.trim());
+  }
+
+  if (Number.isInteger(options.portNumber) && (options.portNumber ?? 0) > 0) {
+    args.push('-PortNumber', String(options.portNumber));
   }
 
   if (options.description?.trim()) {
