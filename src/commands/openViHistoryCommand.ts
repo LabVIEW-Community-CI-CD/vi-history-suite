@@ -347,6 +347,13 @@ export function createOpenViHistoryCommand(
             'Retained VI Comparison evidence for this pair is stale or invalid. Use Refresh compare to rebuild retained evidence for it.'
           );
         }
+        const runtimeWarningMessage = buildComparisonRuntimeWarningMessage(
+          actionCommand,
+          result
+        );
+        if (runtimeWarningMessage) {
+          void vscode.window.showWarningMessage(runtimeWarningMessage);
+        }
 
         if (
           actionCommand === 'generateComparisonReport' &&
@@ -942,6 +949,65 @@ function buildComparisonRuntimePanelUpdate(
       deriveComparisonRuntimeNextAction(result.runtimeDoctorSummaryLines) ??
       'Next action: open the retained comparison packet for the full governed runtime summary.'
   };
+}
+
+function buildComparisonRuntimeWarningMessage(
+  actionCommand: string,
+  result: ComparisonReportActionResult
+): string | undefined {
+  if (!result.runtimeDoctorSummaryLines?.length) {
+    return undefined;
+  }
+
+  const status = deriveComparisonRuntimePanelStatus(result);
+  if (status !== 'blocked' && status !== 'failed') {
+    return undefined;
+  }
+
+  const commandLabel =
+    actionCommand === 'diffPrevious' ? 'Open compare' : 'Generate compare';
+  const runtimeProvider = deriveRuntimeProviderFromDoctorSummary(
+    result.runtimeDoctorSummaryLines
+  );
+  const executionMode = deriveRuntimeExecutionModeFromDoctorSummary(
+    result.runtimeDoctorSummaryLines
+  );
+  const acquisitionState = deriveWindowsContainerAcquisitionStateFromDoctorSummary(
+    result.runtimeDoctorSummaryLines
+  );
+  const segments = [
+    status === 'blocked'
+      ? `${commandLabel} blocked.`
+      : `${commandLabel} runtime failed.`
+  ];
+
+  if (runtimeProvider) {
+    segments.push(`Provider: ${runtimeProvider}.`);
+  }
+  if (executionMode) {
+    segments.push(`Execution mode: ${executionMode}.`);
+  }
+  if (acquisitionState) {
+    segments.push(`Windows image acquisition: ${acquisitionState}.`);
+  }
+  if (result.blockedReason) {
+    segments.push(`Blocked reason: ${result.blockedReason}.`);
+  }
+  if (result.runtimeFailureReason) {
+    segments.push(`Failure reason: ${result.runtimeFailureReason}.`);
+  }
+  if (result.runtimeDiagnosticReason) {
+    segments.push(`Diagnostic reason: ${result.runtimeDiagnosticReason}.`);
+  }
+
+  const nextAction = deriveComparisonRuntimeNextAction(
+    result.runtimeDoctorSummaryLines
+  );
+  if (nextAction) {
+    segments.push(nextAction);
+  }
+
+  return segments.join(' ');
 }
 
 function deriveComparisonRuntimePanelStatus(

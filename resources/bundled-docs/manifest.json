@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-05T23:38:00.866Z",
+  "generatedAt": "2026-04-05T23:46:03.799Z",
   "sourceLedgerPath": "docs/product/wiki-publication-ledger.json",
   "sourceWikiRepoPath": "../vi-history-suite.wiki",
   "defaultPageId": "overview",
@@ -29,7 +29,7 @@
       "wikiFileName": "User-Workflow.md",
       "htmlFileName": "user-workflow.html",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "847775a"
+      "wikiCommit": "5be92d7"
     },
     {
       "id": "comparison-reports-and-dashboard-review",
@@ -92,7 +92,7 @@
       "wikiFileName": "Current-State.md",
       "htmlFileName": "current-state.html",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "847775a"
+      "wikiCommit": "5be92d7"
     },
     {
       "id": "wiki-authority-map",
@@ -110,7 +110,7 @@
       "wikiFileName": "Development-Queue.md",
       "htmlFileName": "development-queue.html",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "847775a"
+      "wikiCommit": "5be92d7"
     },
     {
       "id": "blocker-ledger",
@@ -128,7 +128,7 @@
       "wikiFileName": "Requirements-And-Verification.md",
       "htmlFileName": "requirements-and-verification.html",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "847775a"
+      "wikiCommit": "5be92d7"
     },
     {
       "id": "architecture-decision-records",
@@ -155,7 +155,7 @@
       "wikiFileName": "Debt-Ledger.md",
       "htmlFileName": "debt-ledger.html",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "847775a"
+      "wikiCommit": "5be92d7"
     }
   ]
 }

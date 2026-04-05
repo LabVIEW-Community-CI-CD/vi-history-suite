@@ -194,7 +194,7 @@
       "status": "open",
       "severity": "high",
       "contaminationRisk": "high",
-      "summary": "The installed extension now exposes a first-class `auto` / `host-only` / `docker-only` execution-mode setting, rejects silent provider fallback, uses selected Windows host-runtime facts such as `LabVIEW.ini`, the derived governed VI Server TCP port, and observed host activity to keep `auto` host-first on clean surfaces and Docker-required on contaminated ones, retains canonical effective execution-request validation as part of provider choice, validates explicit Windows container-capability facts such as Docker CLI availability, daemon reachability, active container mode, and governed image presence before the Windows provider is selected or rejected, acquires the governed Windows image with visible progress plus retained acquisition-state truth on the comparison-report path, and now retains the latest compare-runtime provider/acquisition summary in the history panel itself. The remaining open debt is fuller front-facing provider/acquisition transparency beyond the current progress, history-panel, runtime-doctor, and retained-packet surfaces.",
+      "summary": "The installed extension now exposes a first-class `auto` / `host-only` / `docker-only` execution-mode setting, rejects silent provider fallback, uses selected Windows host-runtime facts such as `LabVIEW.ini`, the derived governed VI Server TCP port, and observed host activity to keep `auto` host-first on clean surfaces and Docker-required on contaminated ones, retains canonical effective execution-request validation as part of provider choice, validates explicit Windows container-capability facts such as Docker CLI availability, daemon reachability, active container mode, and governed image presence before the Windows provider is selected or rejected, acquires the governed Windows image with visible progress plus retained acquisition-state truth on the comparison-report path, retains the latest compare-runtime provider/acquisition summary in the history panel itself, and now emits one concise mode-aware warning when compare execution blocks or fails. The remaining open debt is fuller front-facing provider/acquisition transparency beyond the current progress, warning, history-panel, runtime-doctor, and retained-packet surfaces.",
       "owner": {
         "trancheId": "TRANCHE-013",
         "issueId": "ISSUE-0410",
@@ -214,6 +214,7 @@
         "README.md",
         "docs/product/development-queue.json",
         "src/reporting/comparisonReportAction.ts",
+        "src/commands/openViHistoryCommand.ts",
         "src/reporting/comparisonRuntimeLocator.ts",
         "src/reporting/comparisonRuntimeDoctor.ts",
         "src/reporting/comparisonReportPacket.ts",
@@ -221,12 +222,13 @@
         "tests/unit/comparisonRuntimeLocator.test.ts",
         "tests/unit/comparisonRuntimeDoctor.test.ts",
         "tests/unit/comparisonReportPacket.test.ts",
+        "tests/unit/openViHistoryCommand.test.ts",
         "tests/unit/executionPolicyDocs.test.ts",
         "docs/requirements/srs.md"
       ],
       "discoveredContext": "Post-release execution-flexibility and contamination-safe runtime UX planning",
-      "nextGate": "Propagate the already-landed provider, capability, and acquisition-state truth into fuller front-facing extension UX beyond the current comparison-report progress, history-panel, runtime-doctor, and retained-packet surfaces.",
-      "exitCriteria": "The installed extension exposes `auto`, `host-only`, and `docker-only`; canonical effective execution-request validation governs host launch or Docker acquisition; fails closed with mode-aware guidance when the selected provider cannot run truthfully; treats Windows Docker CLI availability, daemon reachability, container-mode capability, and governed image presence as explicit prerequisites; shows chosen provider, rejected providers, acquisition state, and next action in front-facing UX; and surfaces visible Docker acquisition progress when the governed image must be pulled.",
+      "nextGate": "Propagate the already-landed provider, capability, acquisition-state, and compare-warning truth into fuller front-facing extension UX beyond the current comparison-report progress, warning, history-panel, runtime-doctor, and retained-packet surfaces.",
+      "exitCriteria": "The installed extension exposes `auto`, `host-only`, and `docker-only`; canonical effective execution-request validation governs host launch or Docker acquisition; fails closed with mode-aware guidance when the selected provider cannot run truthfully; treats Windows Docker CLI availability, daemon reachability, container-mode capability, and governed image presence as explicit prerequisites; shows chosen provider, rejected providers, acquisition state, reason, and next action in front-facing UX; emits concise blocked/failure compare warnings from the same retained runtime truth; and surfaces visible Docker acquisition progress when the governed image must be pulled.",
       "retirementCommit": null,
       "acceptedExceptionRationale": null
     }

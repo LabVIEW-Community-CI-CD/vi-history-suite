@@ -2118,6 +2118,11 @@ describe('createOpenViHistoryCommand', () => {
       runtimeExecutionState: 'failed',
       runtimeFailureReason: 'command-exited-nonzero',
       runtimeDiagnosticReason: 'labview-path-ignored-last-used-default',
+      runtimeDoctorSummaryLines: [
+        'Selected provider=host-native; engine=labview-cli; platform=win32; preferBitness=x86.',
+        'Selected execution mode=auto.',
+        'Next action: close the conflicting LabVIEW 2026 session or correct the selected host LabVIEW path before rerunning comparison report generation.'
+      ],
       runtimeDiagnosticNotes: [
         'LabVIEW CLI ignored the explicit -LabVIEWPath selection and used the last-used LabVIEW instead: C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe.'
       ],
@@ -2182,6 +2187,9 @@ describe('createOpenViHistoryCommand', () => {
       hash: 'abcdef1234567890'
     });
 
+    expect(showWarningMessageMock).toHaveBeenCalledWith(
+      'Generate compare runtime failed. Provider: host-native. Execution mode: auto. Failure reason: command-exited-nonzero. Diagnostic reason: labview-path-ignored-last-used-default. Next action: close the conflicting LabVIEW 2026 session or correct the selected host LabVIEW path before rerunning comparison report generation.'
+    );
     expect(tracker.getLastActionSummary()).toEqual({
       command: 'generateComparisonReport',
       hash: 'abcdef1234567890',
@@ -2277,6 +2285,9 @@ describe('createOpenViHistoryCommand', () => {
     });
 
     const panel = createWebviewPanelMock.mock.results[0]?.value as MockPanel | undefined;
+    expect(showWarningMessageMock).toHaveBeenCalledWith(
+      'Generate compare blocked. Provider: windows-container. Execution mode: auto. Windows image acquisition: failed. Blocked reason: windows-container-image-acquisition-failed. Next action: repair Docker connectivity or image registry access, then pull the governed Windows container image and rerun comparison report generation.'
+    );
     expect(panel?.webview.postMessage).toHaveBeenCalledWith({
       type: 'comparisonRuntimeResult',
       status: 'blocked',

@@ -23,7 +23,7 @@ The governing contract and taxonomy are:
 | `DEBT-0003` | open | `benchmark` | high | high | `TRANCHE-011` / `ISSUE-0408` / `PROGRAM-0003` | expand the comparable prefix beyond pair `128` or close `PROGRAM-0003` on the bounded comparable-prefix packet |
 | `DEBT-0004` | open | `runtime` | high | high | `TRANCHE-011` / `ISSUE-0408` / `PROGRAM-0003` | complete Linux `138/138` truthfully or close the full-window blocker explicitly on the bounded comparable-prefix control plane |
 | `DEBT-0005` | retired | `control-plane` | high | high | `TRANCHE-011` / `ISSUE-0408` / `PROGRAM-0003` | retired by `2f4ced0` |
-| `DEBT-0006` | open | `control-plane` | high | high | `TRANCHE-013` / `ISSUE-0410` / `PROGRAM-0005` | finish fuller front-facing provider/acquisition transparency after the landed host-fact, Docker-capability, and governed image-acquisition slices |
+| `DEBT-0006` | open | `control-plane` | high | high | `TRANCHE-013` / `ISSUE-0410` / `PROGRAM-0005` | finish fuller front-facing provider/acquisition transparency after the landed host-fact, Docker-capability, governed image-acquisition, history-panel summary, and compare-warning slices |
 
 ## Notes
 
@@ -41,7 +41,7 @@ The governing contract and taxonomy are:
 - `DEBT-0005` captures the now-retired admission-control gap where
   CLI/env/default synthesis could materialize an explicit effective runtime
   bundle after a narrower raw-CLI validation pass had already succeeded.
-- `DEBT-0006` is the active remaining execution-policy debt after five
+- `DEBT-0006` is the active remaining execution-policy debt after six
   execution-policy slices landed: the installed extension now exposes `auto` /
   `host-only` / `docker-only`, rejects silent provider fallback, retains
   canonical effective execution-request validation as part of provider choice,
@@ -51,7 +51,8 @@ The governing contract and taxonomy are:
   Windows provider is selected or rejected; governed Windows image acquisition
   now runs with visible progress and retained acquisition state, and the
   history panel now retains the latest compare-runtime provider/acquisition
-  summary in-panel, but fuller front-facing provider transparency still
+  summary in-panel, and blocked or failed compare actions now emit one concise
+  mode-aware warning, but fuller front-facing provider transparency still
   remains open.
 
 ## Operational Rule
