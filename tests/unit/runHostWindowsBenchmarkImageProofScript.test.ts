@@ -19,6 +19,7 @@ const hostWindowsProof = require(path.resolve(
     proofRootLinux: string;
     dockerContext: string;
     dashboardCommitWindow?: number;
+    runtimeEngineOverride?: string;
     pull: boolean;
     helpRequested: boolean;
   };
@@ -40,6 +41,7 @@ const hostWindowsProof = require(path.resolve(
     imageDigest?: string;
     harnessId: string;
     dashboardCommitWindow?: number;
+    runtimeEngineOverride?: string;
     cacheRootWindows: string;
   }) => string[];
   getHarnessCloneDirectoryName: (harnessId: string) => string | undefined;
@@ -129,6 +131,13 @@ describe('runHostWindowsBenchmarkImageProof script', () => {
     expect(parsed.pull).toBe(false);
   });
 
+  it('accepts an explicit engine override from CLI args', () => {
+    const parsed = hostWindowsProof.parseArgs(['--engine', 'lvcompare', '--no-pull']);
+
+    expect(parsed.runtimeEngineOverride).toBe('lvcompare');
+    expect(parsed.pull).toBe(false);
+  });
+
   it('injects the retained dashboard commit window into the Windows container env', () => {
     const args = hostWindowsProof.buildDockerRunArgs({
       dockerContext: 'desktop-windows',
@@ -137,6 +146,7 @@ describe('runHostWindowsBenchmarkImageProof script', () => {
       imageDigest: 'sha256:abc',
       harnessId: 'HARNESS-VHS-002',
       dashboardCommitWindow: 135,
+      runtimeEngineOverride: 'lvcompare',
       cacheRootWindows:
         'C:\\Users\\sveld\\AppData\\Local\\VI History Suite\\windows-benchmark-image-proof\\cache'
     });
@@ -144,6 +154,7 @@ describe('runHostWindowsBenchmarkImageProof script', () => {
     expect(args).toContain(
       'VIHS_GITHUB_WINDOWS_BENCHMARK_DASHBOARD_COMMIT_WINDOW=135'
     );
+    expect(args).toContain('VIHS_GITHUB_WINDOWS_BENCHMARK_ENGINE=lvcompare');
     expect(args).toContain(
       'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe'
     );

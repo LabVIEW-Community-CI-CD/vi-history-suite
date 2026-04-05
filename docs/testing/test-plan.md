@@ -1071,6 +1071,10 @@
   back to the retained Windows pair-failure receipt so the bounded pair `129`
   blocker is rendered as `labview-cli-call-by-reference` instead of a generic
   `runtime-failed`
+- `TEST-UNIT-286`: verify the governed canonical-host Windows benchmark-image
+  proof runner accepts `--engine <labview-cli|lvcompare>`, injects that
+  override into the container env, and still retains the same proof-root
+  launch/log/summary contract
 - `TEST-DOC-035`: review README, current-state, and ADR-0016 and confirm the
   canonical-host benchmark status surface is documented as the maintainer-facing
   in-IDE visibility and launch surface for the host Linux benchmark lane,
@@ -1160,6 +1164,11 @@
   `129` blocker is documented explicitly as
   `labview-cli-call-by-reference`, including receipt-backed retention when
   older benchmark summaries predate terminal diagnostic-reason support
+- `TEST-DOC-050`: review current-state, PROGRAM-0003, and ISSUE-0408 and
+  confirm the governed canonical-host Windows benchmark-image proof runner is
+  documented as accepting a targeted `--engine` override for diagnosis reruns
+  while preserving the comparable-prefix default and the same proof-root
+  receipt contract
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed authority repo, private experiment mirror, wiki, and
   assurance-skill repos with authority roles, expected remotes, and primary

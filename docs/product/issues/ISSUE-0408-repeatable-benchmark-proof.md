@@ -47,7 +47,9 @@ Current retained benchmark truth before activation:
   GHCR tag, pre-seeds the mounted harness cache from the governed local
   `ni-labview-icon-editor` clone when available, normalizes Git safe-directory
   handling for those mounted clones, defaults `HARNESS-VHS-002` to the
-  retained `129`-commit comparable prefix unless overridden, and writes
+  retained `129`-commit comparable prefix unless overridden, accepts a
+  targeted `--engine <labview-cli|lvcompare>` override for diagnosis reruns,
+  and writes
   launch/log/summary receipts under
   `C:\Users\sveld\AppData\Local\VI History Suite\windows-benchmark-image-proof`
 - the latest local Windows benchmark-image proof now reaches pair `129/134`

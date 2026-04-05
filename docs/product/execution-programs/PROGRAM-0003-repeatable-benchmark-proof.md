@@ -83,7 +83,10 @@ seam before terminal failure is retained. The bounded comparable-prefix packet
 and Windows benchmark summary now retain that seam explicitly as
 `labview-cli-call-by-reference`, and the older retained canonical-host
 Windows-container proof for pair `129` shows the same connected-session
-diagnosis.
+diagnosis. The governed canonical-host proof runner now also accepts a
+targeted `--engine <labview-cli|lvcompare>` override for diagnosis reruns
+while preserving the comparable-prefix default and the same proof-root
+receipt contract.
 
 Current retained Linux blocker before activation:
 
