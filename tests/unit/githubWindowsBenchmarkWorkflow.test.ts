@@ -36,6 +36,7 @@ describe('github windows benchmark workflow', () => {
     expect(dockerfile).toContain(
       'SHELL ["C:\\\\Windows\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe"'
     );
+    expect(dockerfile).toContain('ENV LV_RTE_HEADLESS=1');
     expect(dockerfile).toContain(
       'CMD ["C:\\\\Windows\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe"'
     );
@@ -53,6 +54,10 @@ describe('github windows benchmark workflow', () => {
     expect(runScript).toContain('Prebuilt Windows benchmark CLI is missing');
     expect(runScript).toContain("git config --global --add safe.directory C:/workspace");
     expect(runScript).toContain("C:\\workspace\\.cache\\harnesses");
+    expect(runScript).toContain("Set-IniToken -Path $cliIni -Key 'OpenAppReferenceTimeoutInSecond' -Value '180'");
+    expect(runScript).toContain("Set-IniToken -Path $cliIni -Key 'AfterLaunchOpenAppReferenceTimeoutInSecond' -Value '180'");
+    expect(runScript).toContain("$env:LV_RTE_HEADLESS = '1'");
+    expect(runScript).toContain("Start-Process -FilePath $labviewExePath -ArgumentList '--headless'");
     expect(runScript).not.toContain("Write-Host 'VIHS_PROGRESS: Installing benchmark workspace dependencies.'");
     expect(runScript).not.toContain('npm ci');
   });

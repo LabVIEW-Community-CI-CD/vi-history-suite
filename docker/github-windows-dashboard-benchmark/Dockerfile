@@ -27,6 +27,7 @@ RUN $ErrorActionPreference = 'Stop'; `
     Remove-Item $gitZip -Force
 
 ENV PATH="C:\\tools\\node;C:\\tools\\git\\cmd;C:\\tools\\git\\mingw64\\bin;${PATH}"
+ENV LV_RTE_HEADLESS=1
 
 WORKDIR C:/workspace
 

@@ -1810,7 +1810,7 @@ export async function observeWindowsRuntimeProcesses(
   }
 
   const executable = options.hostPlatform === 'win32'
-    ? 'tasklist'
+    ? path.win32.join(process.env.SYSTEMROOT ?? 'C:\\Windows', 'System32', 'tasklist.exe')
     : '/mnt/c/Windows/System32/tasklist.exe';
 
   const stdout = await new Promise<string>((resolve, reject) => {

@@ -1,7 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
 import { buildComparisonReportExecutionPlan } from '../../src/reporting/comparisonReportExecutionPlan';
 import { ComparisonReportPacketRecord } from '../../src/reporting/comparisonReportPacket';
+
+const originalLvRteHeadless = process.env.LV_RTE_HEADLESS;
 
 function createBaseRecord(): ComparisonReportPacketRecord {
   return {
@@ -92,6 +94,15 @@ function createBaseRecord(): ComparisonReportPacketRecord {
 }
 
 describe('comparisonReportExecutionPlan', () => {
+  afterEach(() => {
+    if (originalLvRteHeadless === undefined) {
+      delete process.env.LV_RTE_HEADLESS;
+      return;
+    }
+
+    process.env.LV_RTE_HEADLESS = originalLvRteHeadless;
+  });
+
   it('builds a LabVIEW CLI execution plan from a ready host-native runtime selection', () => {
     const result = buildComparisonReportExecutionPlan(createBaseRecord());
 
@@ -114,6 +125,8 @@ describe('comparisonReportExecutionPlan', () => {
           'html',
           '-ReportPath',
           '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
+          '-LabVIEWPath',
+          'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
           '-c',
           '-o'
         ]
@@ -161,8 +174,47 @@ describe('comparisonReportExecutionPlan', () => {
           'html',
           '-ReportPath',
           '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
+          '-LabVIEWPath',
+          'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
           '-c',
-          '-o'
+          '-o',
+          '-Headless',
+          'true'
+        ]
+      }
+    });
+  });
+
+  it('adds -Headless for native Windows LabVIEWCLI execution when LV_RTE_HEADLESS is enabled', () => {
+    process.env.LV_RTE_HEADLESS = '1';
+
+    const result = buildComparisonReportExecutionPlan(createBaseRecord());
+
+    expect(result).toEqual({
+      outcome: 'ready',
+      provider: 'host-native',
+      engine: 'labview-cli',
+      commandPlan: {
+        executable: 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+        args: [
+          '-LogToConsole',
+          'TRUE',
+          '-OperationName',
+          'CreateComparisonReport',
+          '-VI1',
+          '/workspace/.storage/reports/repoid123456/fileid123456/staging/left-111111112222-foo.vi',
+          '-VI2',
+          '/workspace/.storage/reports/repoid123456/fileid123456/staging/right-abcdef123456-foo.vi',
+          '-ReportType',
+          'html',
+          '-ReportPath',
+          '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
+          '-LabVIEWPath',
+          'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
+          '-c',
+          '-o',
+          '-Headless',
+          'true'
         ]
       }
     });

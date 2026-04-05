@@ -27,6 +27,7 @@ const CONTAINER_RUNNER_SCRIPT =
   'C:\\workspace\\docker\\github-windows-dashboard-benchmark\\run-benchmark.ps1';
 const CONTAINER_BOOTSTRAP_COMMAND = [
   '& {',
+  "$env:PATH = 'C:\\Windows\\System32;' + $env:PATH;",
   `$harnessRoot = '${CONTAINER_HARNESS_CACHE_ROOT}';`,
   'if (Test-Path -LiteralPath $harnessRoot) {',
   "Get-ChildItem -LiteralPath $harnessRoot -Directory | ForEach-Object { git config --global --add safe.directory ($_.FullName -replace '\\\\','/') | Out-Null }",

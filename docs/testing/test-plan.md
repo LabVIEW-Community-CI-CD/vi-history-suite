@@ -1049,6 +1049,14 @@
   safe-directory handling for those seeded mounted clones before invoking the
   image entrypoint, translates governed WSL proof roots to Windows mount
   paths, and fails closed on unsupported non-`/mnt/<drive>/...` proof roots
+- `TEST-UNIT-281`: verify Windows runtime-process observation resolves
+  `tasklist.exe` through the explicit `C:\Windows\System32` path on native
+  Windows hosts instead of ambient PATH lookup, so process-observation capture
+  remains available inside the Windows benchmark-image environment
+- `TEST-UNIT-282`: verify the Windows `labview-cli` execution plan retains the
+  governed `-LabVIEWPath` on host-native and Windows-container selections, and
+  appends `-Headless true` when the Windows benchmark-image lane enables
+  `LV_RTE_HEADLESS=1` or the provider is `windows-container`
 - `TEST-DOC-035`: review README, current-state, and ADR-0016 and confirm the
   canonical-host benchmark status surface is documented as the maintainer-facing
   in-IDE visibility and launch surface for the host Linux benchmark lane,
@@ -1116,6 +1124,11 @@
   available, and that it retains `latest-launch.json`, `run-*.log`, and the
   mounted `latest-summary.json` under
   `C:\Users\sveld\AppData\Local\VI History Suite\windows-benchmark-image-proof`
+- `TEST-DOC-046`: review README, current-state, PROGRAM-0003, and ISSUE-0408
+  and confirm the Windows benchmark-image lane is documented as passing the
+  governed `-LabVIEWPath`, forcing `LV_RTE_HEADLESS=1`, hardening
+  `LabVIEWCLI.ini` startup timeouts, and prelaunching headless LabVIEW before
+  benchmark execution so NI's documented `-350000` startup seam is mitigated
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed authority repo, private experiment mirror, wiki, and
   assurance-skill repos with authority roles, expected remotes, and primary

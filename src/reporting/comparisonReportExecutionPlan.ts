@@ -43,6 +43,11 @@ export function buildComparisonReportExecutionPlan(
   if (record.runtimeSelection.engine === 'labview-cli') {
     const labviewCliPath = record.runtimeSelection.labviewCli?.path?.trim();
     const labviewExePath = record.runtimeSelection.labviewExe?.path?.trim();
+    const headlessRequested =
+      record.runtimeSelection.platform === 'linux' ||
+      record.runtimeSelection.provider === 'windows-container' ||
+      (record.runtimeSelection.platform === 'win32' &&
+        process.env.LV_RTE_HEADLESS === '1');
     if (!labviewCliPath) {
       return {
         outcome: 'blocked',
@@ -54,11 +59,11 @@ export function buildComparisonReportExecutionPlan(
       leftViPath: record.stagedRevisionPlan.leftFilePath,
       rightViPath: record.stagedRevisionPlan.rightFilePath,
       reportFilePath: record.artifactPlan.reportFilePath,
-      labviewPath: record.runtimeSelection.platform === 'win32' ? undefined : labviewExePath,
+      labviewPath: labviewExePath,
       reportFormat: 'HTML',
       overwrite: true,
       createOutputDirectory: true,
-      headless: record.runtimeSelection.platform === 'linux'
+      headless: headlessRequested
     });
 
     return {

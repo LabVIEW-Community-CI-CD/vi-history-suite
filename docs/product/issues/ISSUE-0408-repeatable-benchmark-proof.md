@@ -46,6 +46,15 @@ Current retained benchmark truth before activation:
   retained `135`-commit comparable prefix unless overridden, and writes
   launch/log/summary receipts under
   `C:\Users\sveld\AppData\Local\VI History Suite\windows-benchmark-image-proof`
+- the latest local Windows benchmark-image proof now fails truthfully at pair
+  `1/134` with `labview-cli-connection-failed`, and the retained diagnostic
+  log shows the governed Windows `LabVIEWCLI` plan had omitted `-LabVIEWPath`
+  while the first headless LabVIEW launch inside the image failed to establish
+  the initial VI Server connection
+- the active Windows image hardening now restores the governed Windows
+  `-LabVIEWPath`, forces `LV_RTE_HEADLESS=1`, hardens `LabVIEWCLI.ini`
+  startup timeouts, and prelaunches headless LabVIEW before benchmark
+  execution in line with NI's documented Windows-container guidance
 - local host-runnable proof for the Windows benchmark image is still open
 
 ## Scope

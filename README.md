@@ -480,6 +480,11 @@ available on this host, normalizes Git safe-directory handling for those
 mounted clones before invoking the image entrypoint, and writes
 `latest-launch.json`, `run-*.log`, and the mounted `latest-summary.json` under
 `C:\Users\sveld\AppData\Local\VI History Suite\windows-benchmark-image-proof`.
+The published image now also forces `LV_RTE_HEADLESS=1`, hardens
+`LabVIEWCLI.ini` startup timeouts, prelaunches headless LabVIEW before the
+benchmark CLI starts, and the Windows `labview-cli` execution plan now retains
+the governed `-LabVIEWPath` instead of silently dropping the selected LabVIEW
+executable.
 
 The generated `.cache/` evidence is local and regenerated. The committed source
 of truth for implemented-versus-partial research work is the documentation stack

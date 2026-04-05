@@ -149,6 +149,7 @@ describe('runHostWindowsBenchmarkImageProof script', () => {
     );
     expect(args).toContain('-Command');
     expect(args.join(' ')).toContain('C:\\workspace\\.cache\\harnesses');
+    expect(args.join(' ')).toContain("C:\\Windows\\System32;' + $env:PATH");
     expect(args.join(' ')).toContain(
       'C:\\workspace\\docker\\github-windows-dashboard-benchmark\\run-benchmark.ps1'
     );

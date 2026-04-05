@@ -844,6 +844,8 @@ describe('comparisonReportRuntimeExecution', () => {
         'html',
         '-ReportPath',
         'C:\\Users\\sveld\\AppData\\Local\\Temp\\vi-history-suite-runtime\\reports\\repoid123456\\fileid123456\\diff-report-foo.vi.html',
+        '-LabVIEWPath',
+        'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
         '-c',
         '-o'
       ]
@@ -2393,7 +2395,7 @@ describe('comparisonReportRuntimeExecution', () => {
           | ((error: Error | null, stdout: string | Buffer, stderr: string | Buffer) => void)
           | undefined
       ) => {
-        expect(file).toBe('tasklist');
+        expect(file).toBe('C:\\Windows\\System32\\tasklist.exe');
         callback?.(new Error('tasklist-failed'), '', '');
       }
     );
