@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+  resolveCanonicalRuntimeOverrideArgs,
   validateCanonicalRuntimeOverrideArgs,
   validateCanonicalRuntimeOverrideExecutionSurface
 } from '../../src/cli/canonicalRuntimeOverrideValidation';
@@ -72,5 +73,29 @@ describe('canonicalRuntimeOverrideValidation', () => {
         }
       )
     ).rejects.toThrow(/does not exist on the canonical Windows host/);
+  });
+
+  it('resolves the effective runtime override bundle before validation', () => {
+    expect(
+      resolveCanonicalRuntimeOverrideArgs(
+        {
+          runtimePlatform: 'win32',
+          runtimeEngineOverride: 'labview-cli',
+          labviewCliPath: '   ',
+          labviewExePath: undefined
+        },
+        {
+          labviewCliPath: WINDOWS_X86_LABVIEW_CLI_PATH,
+          labviewExePath: WINDOWS_X86_LABVIEW_EXE_PATH
+        }
+      )
+    ).toEqual({
+      runtimePlatform: 'win32',
+      runtimeEngineOverride: 'labview-cli',
+      preferBitness: undefined,
+      labviewCliPath: WINDOWS_X86_LABVIEW_CLI_PATH,
+      labviewExePath: WINDOWS_X86_LABVIEW_EXE_PATH,
+      lvComparePath: undefined
+    });
   });
 });

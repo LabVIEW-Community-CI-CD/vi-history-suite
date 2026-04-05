@@ -17,82 +17,105 @@ export interface CanonicalRuntimeOverrideExecutionSurfaceDeps {
   pathExists: (candidatePath: string) => Promise<boolean>;
 }
 
+export function resolveCanonicalRuntimeOverrideArgs(
+  ...sources: CanonicalRuntimeOverrideArgs[]
+): CanonicalRuntimeOverrideArgs {
+  return {
+    runtimePlatform: resolveFirstDefined(sources.map((source) => source.runtimePlatform)),
+    runtimeEngineOverride: resolveFirstDefined(
+      sources.map((source) => source.runtimeEngineOverride)
+    ),
+    preferBitness: resolveFirstDefined(sources.map((source) => source.preferBitness)),
+    labviewCliPath: resolveFirstNonEmptyString(sources.map((source) => source.labviewCliPath)),
+    labviewExePath: resolveFirstNonEmptyString(sources.map((source) => source.labviewExePath)),
+    lvComparePath: resolveFirstNonEmptyString(sources.map((source) => source.lvComparePath))
+  };
+}
+
 export function validateCanonicalRuntimeOverrideArgs(
   args: CanonicalRuntimeOverrideArgs,
   usageText: string
 ): void {
+  const normalizedArgs = resolveCanonicalRuntimeOverrideArgs(args);
   const explicitRuntimeOverrideRequested = Boolean(
-    args.labviewCliPath || args.labviewExePath || args.lvComparePath || args.preferBitness
+    normalizedArgs.labviewCliPath ||
+      normalizedArgs.labviewExePath ||
+      normalizedArgs.lvComparePath ||
+      normalizedArgs.preferBitness
   );
 
-  if (args.preferBitness && args.runtimePlatform && args.runtimePlatform !== 'win32') {
+  if (
+    normalizedArgs.preferBitness &&
+    normalizedArgs.runtimePlatform &&
+    normalizedArgs.runtimePlatform !== 'win32'
+  ) {
     throw new Error(`--prefer-bitness is only supported with --platform win32.\n\n${usageText}`);
   }
 
-  if (explicitRuntimeOverrideRequested && !args.runtimePlatform) {
+  if (explicitRuntimeOverrideRequested && !normalizedArgs.runtimePlatform) {
     throw new Error(`Canonical runtime overrides require --platform.\n\n${usageText}`);
   }
 
-  if (explicitRuntimeOverrideRequested && !args.runtimeEngineOverride) {
+  if (explicitRuntimeOverrideRequested && !normalizedArgs.runtimeEngineOverride) {
     throw new Error(`Canonical runtime overrides require --engine.\n\n${usageText}`);
   }
 
-  if (args.runtimeEngineOverride === 'labview-cli') {
-    if (args.lvComparePath) {
+  if (normalizedArgs.runtimeEngineOverride === 'labview-cli') {
+    if (normalizedArgs.lvComparePath) {
       throw new Error(`--engine labview-cli does not allow --lvcompare-path.\n\n${usageText}`);
     }
 
-    if (Boolean(args.labviewCliPath) !== Boolean(args.labviewExePath)) {
+    if (Boolean(normalizedArgs.labviewCliPath) !== Boolean(normalizedArgs.labviewExePath)) {
       throw new Error(
         `Canonical labview-cli overrides require both --labview-cli-path and --labview-exe-path.\n\n${usageText}`
       );
     }
 
     validateExecutableBasename(
-      args.runtimePlatform,
-      args.labviewCliPath,
+      normalizedArgs.runtimePlatform,
+      normalizedArgs.labviewCliPath,
       '--labview-cli-path',
       'LabVIEWCLI.exe',
       usageText
     );
     validateExecutableBasename(
-      args.runtimePlatform,
-      args.labviewExePath,
+      normalizedArgs.runtimePlatform,
+      normalizedArgs.labviewExePath,
       '--labview-exe-path',
       'LabVIEW.exe',
       usageText
     );
   }
 
-  if (args.runtimeEngineOverride === 'lvcompare') {
-    if (args.labviewCliPath) {
+  if (normalizedArgs.runtimeEngineOverride === 'lvcompare') {
+    if (normalizedArgs.labviewCliPath) {
       throw new Error(`--engine lvcompare does not allow --labview-cli-path.\n\n${usageText}`);
     }
 
-    if (Boolean(args.lvComparePath) !== Boolean(args.labviewExePath)) {
+    if (Boolean(normalizedArgs.lvComparePath) !== Boolean(normalizedArgs.labviewExePath)) {
       throw new Error(
         `Canonical lvcompare overrides require both --lvcompare-path and --labview-exe-path.\n\n${usageText}`
       );
     }
 
     validateExecutableBasename(
-      args.runtimePlatform,
-      args.lvComparePath,
+      normalizedArgs.runtimePlatform,
+      normalizedArgs.lvComparePath,
       '--lvcompare-path',
       'LVCompare.exe',
       usageText
     );
     validateExecutableBasename(
-      args.runtimePlatform,
-      args.labviewExePath,
+      normalizedArgs.runtimePlatform,
+      normalizedArgs.labviewExePath,
       '--labview-exe-path',
       'LabVIEW.exe',
       usageText
     );
   }
 
-  validateWindowsBitnessConsistency(args, usageText);
-  validateWindowsExplicitBundleConsistency(args, usageText);
+  validateWindowsBitnessConsistency(normalizedArgs, usageText);
+  validateWindowsExplicitBundleConsistency(normalizedArgs, usageText);
 }
 
 export async function validateCanonicalRuntimeOverrideExecutionSurface(
@@ -100,14 +123,15 @@ export async function validateCanonicalRuntimeOverrideExecutionSurface(
   usageText: string,
   deps: CanonicalRuntimeOverrideExecutionSurfaceDeps
 ): Promise<void> {
-  if (deps.hostPlatform !== 'win32' || args.runtimePlatform !== 'win32') {
+  const normalizedArgs = resolveCanonicalRuntimeOverrideArgs(args);
+  if (deps.hostPlatform !== 'win32' || normalizedArgs.runtimePlatform !== 'win32') {
     return;
   }
 
   for (const [flag, candidatePath] of [
-    ['--labview-cli-path', args.labviewCliPath],
-    ['--labview-exe-path', args.labviewExePath],
-    ['--lvcompare-path', args.lvComparePath]
+    ['--labview-cli-path', normalizedArgs.labviewCliPath],
+    ['--labview-exe-path', normalizedArgs.labviewExePath],
+    ['--lvcompare-path', normalizedArgs.lvComparePath]
   ] as const) {
     if (!candidatePath) {
       continue;
@@ -128,6 +152,21 @@ export async function defaultCliPathExists(candidatePath: string): Promise<boole
   } catch {
     return false;
   }
+}
+
+function resolveFirstDefined<T>(values: Array<T | undefined>): T | undefined {
+  return values.find((value) => value !== undefined);
+}
+
+function resolveFirstNonEmptyString(values: Array<string | undefined>): string | undefined {
+  for (const value of values) {
+    const trimmed = value?.trim();
+    if (trimmed) {
+      return trimmed;
+    }
+  }
+
+  return undefined;
 }
 
 function validateExecutableBasename(

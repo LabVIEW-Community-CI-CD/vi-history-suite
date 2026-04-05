@@ -245,12 +245,9 @@ describe('runGitHubWindowsDashboardBenchmarkCli', () => {
         runtimePlatform: 'win32',
         dashboardCommitWindow: 1000,
         runtimeSettings: {
-          labviewCliPath:
-            'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
-          labviewExePath:
-            'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
-          lvComparePath:
-            'C:\\Program Files\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe'
+          labviewCliPath: undefined,
+          labviewExePath: undefined,
+          lvComparePath: undefined
         }
       })
     );
@@ -267,6 +264,37 @@ describe('runGitHubWindowsDashboardBenchmarkCli', () => {
       'GitHub Windows dashboard benchmark completed for HARNESS-VHS-002'
     );
     expect(writes.join('')).toContain('Completion: completed (comparable-to-linux-benchmark-image)');
+  });
+
+  it('fails closed when env-derived explicit Windows runtime overrides bypass the CLI surface', async () => {
+    const originalCliPath = process.env.VIHS_GITHUB_WINDOWS_BENCHMARK_LABVIEW_CLI_PATH;
+    const originalExePath = process.env.VIHS_GITHUB_WINDOWS_BENCHMARK_LABVIEW_EXE_PATH;
+    const runner = vi.fn();
+
+    process.env.VIHS_GITHUB_WINDOWS_BENCHMARK_LABVIEW_CLI_PATH = WINDOWS_LABVIEW_CLI_PATH;
+    process.env.VIHS_GITHUB_WINDOWS_BENCHMARK_LABVIEW_EXE_PATH = WINDOWS_LABVIEW_EXE_PATH;
+
+    try {
+      await expect(
+        runGitHubWindowsDashboardBenchmarkCli([], {
+          runner
+        })
+      ).rejects.toThrow(/Canonical runtime overrides require --engine/);
+    } finally {
+      if (originalCliPath === undefined) {
+        delete process.env.VIHS_GITHUB_WINDOWS_BENCHMARK_LABVIEW_CLI_PATH;
+      } else {
+        process.env.VIHS_GITHUB_WINDOWS_BENCHMARK_LABVIEW_CLI_PATH = originalCliPath;
+      }
+
+      if (originalExePath === undefined) {
+        delete process.env.VIHS_GITHUB_WINDOWS_BENCHMARK_LABVIEW_EXE_PATH;
+      } else {
+        process.env.VIHS_GITHUB_WINDOWS_BENCHMARK_LABVIEW_EXE_PATH = originalExePath;
+      }
+    }
+
+    expect(runner).not.toHaveBeenCalled();
   });
 
   it('surfaces help and exit wiring deterministically', async () => {

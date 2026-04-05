@@ -2,6 +2,7 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
 import {
+  resolveCanonicalRuntimeOverrideArgs,
   validateCanonicalRuntimeOverrideArgs,
   validateCanonicalRuntimeOverrideExecutionSurface
 } from './canonicalRuntimeOverrideValidation';
@@ -15,13 +16,6 @@ import { ComparisonRuntimeEngine } from '../reporting/comparisonRuntimeLocator';
 
 const DEFAULT_WINDOWS_BENCHMARK_PAIR_TIMEOUT_MS = 120_000;
 const DEFAULT_WINDOWS_BENCHMARK_HEARTBEAT_INTERVAL_MS = 15_000;
-const DEFAULT_WINDOWS_LABVIEW_EXE_PATH =
-  'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe';
-const DEFAULT_WINDOWS_LABVIEW_CLI_PATH =
-  'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe';
-const DEFAULT_WINDOWS_LVCOMPARE_PATH =
-  'C:\\Program Files\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe';
-
 export interface GitHubWindowsDashboardBenchmarkCliArgs {
   harnessId: string;
   dashboardCommitWindow?: number;
@@ -298,7 +292,7 @@ export async function runGitHubWindowsDashboardBenchmarkCli(
     return 'help';
   }
 
-  await validateCanonicalRuntimeOverrideExecutionSurface(
+  const effectiveRuntimeOverrides = resolveCanonicalRuntimeOverrideArgs(
     {
       runtimePlatform: 'win32',
       runtimeEngineOverride: args.runtimeEngineOverride,
@@ -306,6 +300,18 @@ export async function runGitHubWindowsDashboardBenchmarkCli(
       labviewExePath: args.labviewExePath,
       lvComparePath: args.lvComparePath
     },
+    {
+      labviewCliPath: process.env.VIHS_GITHUB_WINDOWS_BENCHMARK_LABVIEW_CLI_PATH,
+      labviewExePath: process.env.VIHS_GITHUB_WINDOWS_BENCHMARK_LABVIEW_EXE_PATH,
+      lvComparePath: process.env.VIHS_GITHUB_WINDOWS_BENCHMARK_LVCOMPARE_PATH
+    }
+  );
+  validateCanonicalRuntimeOverrideArgs(
+    effectiveRuntimeOverrides,
+    getGitHubWindowsDashboardBenchmarkUsage()
+  );
+  await validateCanonicalRuntimeOverrideExecutionSurface(
+    effectiveRuntimeOverrides,
     getGitHubWindowsDashboardBenchmarkUsage(),
     {
       pathExists: deps.pathExists ?? defaultPathExists,
@@ -380,18 +386,9 @@ export async function runGitHubWindowsDashboardBenchmarkCli(
       runtimeExecutionTimeoutMs: runtimePairTimeoutMs,
       runtimeHeartbeatIntervalMs,
       runtimeSettings: {
-        labviewCliPath:
-          args.labviewCliPath ??
-          process.env.VIHS_GITHUB_WINDOWS_BENCHMARK_LABVIEW_CLI_PATH ??
-          DEFAULT_WINDOWS_LABVIEW_CLI_PATH,
-        labviewExePath:
-          args.labviewExePath ??
-          process.env.VIHS_GITHUB_WINDOWS_BENCHMARK_LABVIEW_EXE_PATH ??
-          DEFAULT_WINDOWS_LABVIEW_EXE_PATH,
-        lvComparePath:
-          args.lvComparePath ??
-          process.env.VIHS_GITHUB_WINDOWS_BENCHMARK_LVCOMPARE_PATH ??
-          DEFAULT_WINDOWS_LVCOMPARE_PATH
+        labviewCliPath: effectiveRuntimeOverrides.labviewCliPath,
+        labviewExePath: effectiveRuntimeOverrides.labviewExePath,
+        lvComparePath: effectiveRuntimeOverrides.lvComparePath
       },
       reportProgress: async (update) => {
         await writeProgress('running', update.message);

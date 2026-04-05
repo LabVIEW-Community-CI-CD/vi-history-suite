@@ -2,6 +2,7 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
 import {
+  resolveCanonicalRuntimeOverrideArgs,
   validateCanonicalRuntimeOverrideArgs,
   validateCanonicalRuntimeOverrideExecutionSurface
 } from './canonicalRuntimeOverrideValidation';
@@ -290,14 +291,19 @@ export async function runGitHubLinuxDashboardBenchmarkCli(
     return 'help';
   }
 
+  const effectiveRuntimeOverrides = resolveCanonicalRuntimeOverrideArgs({
+    runtimePlatform: 'linux',
+    runtimeEngineOverride: args.runtimeEngineOverride,
+    labviewCliPath: args.labviewCliPath,
+    labviewExePath: args.labviewExePath,
+    lvComparePath: args.lvComparePath
+  });
+  validateCanonicalRuntimeOverrideArgs(
+    effectiveRuntimeOverrides,
+    getGitHubLinuxDashboardBenchmarkUsage()
+  );
   await validateCanonicalRuntimeOverrideExecutionSurface(
-    {
-      runtimePlatform: 'linux',
-      runtimeEngineOverride: args.runtimeEngineOverride,
-      labviewCliPath: args.labviewCliPath,
-      labviewExePath: args.labviewExePath,
-      lvComparePath: args.lvComparePath
-    },
+    effectiveRuntimeOverrides,
     getGitHubLinuxDashboardBenchmarkUsage(),
     {
       pathExists: deps.pathExists ?? defaultPathExists,
@@ -372,9 +378,9 @@ export async function runGitHubLinuxDashboardBenchmarkCli(
       runtimeExecutionTimeoutMs: runtimePairTimeoutMs,
       runtimeHeartbeatIntervalMs,
       runtimeSettings: {
-        labviewCliPath: args.labviewCliPath,
-        labviewExePath: args.labviewExePath,
-        lvComparePath: args.lvComparePath
+        labviewCliPath: effectiveRuntimeOverrides.labviewCliPath,
+        labviewExePath: effectiveRuntimeOverrides.labviewExePath,
+        lvComparePath: effectiveRuntimeOverrides.lvComparePath
       },
       reportProgress: async (update) => {
         await writeProgress('running', update.message);
