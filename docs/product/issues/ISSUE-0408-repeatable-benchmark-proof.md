@@ -85,6 +85,15 @@ Current retained benchmark truth before activation:
   records `command-timed-out` after the bounded `120000ms` budget, and the
   comparable-prefix packet now carries both exact-pair receipts so future
   sessions do not have to rediscover them from AppData
+- a fresh governed repo-local exact-pair rerun now retains that same
+  Windows-image surface explicitly: the authority repo `.cache`
+  `comparison-report-smoke.json` now carries
+  `runtimeLabviewIniPath=C:\Program Files (x86)\National Instruments\Shared\LabVIEW CLI\LabVIEWCLI.ini`
+  plus `runtimeLabviewTcpPort=3363`, and a direct probe of
+  `nationalinstruments/labview:2026q1-windows` confirms that image exposes
+  only x86 `LabVIEWCLI.exe` plus x64 `LabVIEW.exe`, which strengthens the
+  pair-129 ceiling from a generic Windows-call-by-reference symptom into a
+  governed mixed-surface Windows image seam
 - the governed `CloseLabVIEW -Headless` recovery posture now also retains
   dedicated `headless-session-reset-stdout.txt` and
   `headless-session-reset-stderr.txt` artifacts plus the reset exit code in

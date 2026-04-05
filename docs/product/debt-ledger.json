@@ -96,7 +96,7 @@
       "status": "open",
       "severity": "high",
       "contaminationRisk": "high",
-      "summary": "The accepted cross-OS comparable prefix remains bounded at `129` commits / `128` pairs because both governed Windows surfaces lose truthful comparability at pair `129` around the retained `labview-cli-call-by-reference` seam.",
+      "summary": "The accepted cross-OS comparable prefix remains bounded at `129` commits / `128` pairs because both governed Windows surfaces lose truthful comparability at pair `129` around the retained `labview-cli-call-by-reference` seam, and the latest governed repo-local rerun plus direct image probe now show that the published Windows image exposes only x86 `LabVIEWCLI.exe` alongside x64 `LabVIEW.exe` at that boundary.",
       "owner": {
         "trancheId": "TRANCHE-011",
         "issueId": "ISSUE-0408",

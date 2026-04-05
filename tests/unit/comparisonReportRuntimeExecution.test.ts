@@ -1631,7 +1631,7 @@ describe('comparisonReportRuntimeExecution', () => {
         runCommand: vi.fn().mockResolvedValue({
           exitCode: 0,
           stdout:
-            'LabVIEWCLI started logging in file:  C:\\vi-history-suite\\container-temp\\lvtemporary_123.log\r\nUsing LabVIEW: "C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe"\r\nConnection established with LabVIEW at port number 3363.\r\nCreateComparisonReport operation succeeded.\r\n',
+            'LabVIEWCLI started logging in file:  C:\\vi-history-suite\\container-temp\\lvtemporary_123.log\r\nUsing LabVIEW: "C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe"\r\nConnection established with LabVIEW at port number 3363.\r\n[vi-history-suite-container-meta]retryAttempts=1;prelaunchAttempted=1;iniPath=C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.ini;connectedPort=3363;openTimeout=180;afterLaunchTimeout=180\r\nCreateComparisonReport operation succeeded.\r\n',
           stderr: ''
         }),
         nowIso: vi
@@ -1654,6 +1654,101 @@ describe('comparisonReportRuntimeExecution', () => {
     );
     expect(result.record.runtimeExecution.diagnosticLogArtifactPath).toBe(
       '/workspace/.storage/reports/repoid123456/fileid123456/runtime-diagnostic-log.txt'
+    );
+    expect(result.record.runtimeExecution.labviewIniPath).toBe(
+      'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.ini'
+    );
+    expect(result.record.runtimeExecution.labviewTcpPort).toBe(3363);
+    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+      'Windows container runtime retained CLI ini path C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.ini.'
+    );
+    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+      'Windows container LabVIEW CLI connected to VI Server port 3363.'
+    );
+  });
+
+  it('retains container-selected CLI ini path and connected VI Server port on failed windows-container execution', async () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.provider = 'windows-container';
+    record.runtimeSelection.windowsContainerImage = 'nationalinstruments/labview:2026q1-windows';
+    record.runtimeSelection.labviewExe = {
+      kind: 'labview-exe',
+      path: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+      source: 'scan',
+      exists: true,
+      bitness: 'x64'
+    };
+    record.runtimeSelection.labviewCli = {
+      kind: 'labview-cli',
+      path: 'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+      source: 'scan',
+      exists: true,
+      bitness: 'x86'
+    };
+
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo',
+        interopWorkspaceRoot: '/mnt/c/Users/sveld/AppData/Local/Temp/vi-history-suite-runtime'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        readFile: vi
+          .fn()
+          .mockResolvedValue(
+            [
+              'Using LabVIEW: "C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe"',
+              'Connection established with LabVIEW at port number 3363.',
+              'Error code : 66',
+              'Error message : Call By Reference in RunExecuteOperationVI.vi->RunOperationCore.vi->RunOperation.vi->RunOperation.vi.ProxyCaller',
+              'An error occurred while running the LabVIEW CLI.'
+            ].join('\n')
+          ) as never,
+        pathExists: vi.fn(async (filePath: string) =>
+          filePath ===
+          '/mnt/c/Users/sveld/AppData/Local/Temp/vi-history-suite-runtime/reports/repoid123456/fileid123456/container-temp/lvtemporary_129.log'
+        ),
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 1,
+          stdout:
+            'LabVIEWCLI started logging in file:  C:\\vi-history-suite\\container-temp\\lvtemporary_129.log\r\nUsing LabVIEW: "C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe"\r\nConnection established with LabVIEW at port number 3363.\r\n[vi-history-suite-container-meta]retryAttempts=1;prelaunchAttempted=1;iniPath=C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.ini;connectedPort=3363;openTimeout=180;afterLaunchTimeout=180\r\n',
+          stderr:
+            'LabVIEWCLI.exe : Error code : 66\r\nCall By Reference in RunExecuteOperationVI.vi->RunOperationCore.vi->RunOperation.vi->RunOperation.vi.ProxyCaller\r\n'
+        }),
+        nowIso: vi
+          .fn()
+          .mockReturnValueOnce('2026-04-05T21:57:09.000Z')
+          .mockReturnValueOnce('2026-04-05T21:57:19.000Z'),
+        nowMs: vi.fn().mockReturnValueOnce(1000).mockReturnValueOnce(11000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'linux'
+      }
+    );
+
+    expect(result.record.runtimeExecutionState).toBe('failed');
+    expect(result.record.runtimeExecution.reportExists).toBe(false);
+    expect(result.record.runtimeExecution.diagnosticReason).toBe('labview-cli-call-by-reference');
+    expect(result.record.runtimeExecution.labviewIniPath).toBe(
+      'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.ini'
+    );
+    expect(result.record.runtimeExecution.labviewTcpPort).toBe(3363);
+    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+      'Windows container runtime retained CLI ini path C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.ini.'
+    );
+    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+      'Windows container LabVIEW CLI connected to VI Server port 3363.'
+    );
+    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+      'Windows container startup hardening retained retryAttempts=1, prelaunchAttempted=yes, OpenAppReferenceTimeoutInSecond=180, AfterLaunchOpenAppReferenceTimeoutInSecond=180.'
     );
   });
 
@@ -2067,6 +2162,13 @@ describe('comparisonReportRuntimeExecution', () => {
     ).toContain(
       "$labviewPath = 'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe'"
     );
+    expect(
+      buildWindowsContainerLabviewCliScript(
+        'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+        ['-OperationName', 'CreateComparisonReport'],
+        'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe'
+      )
+    ).toContain('connectedPort={3}');
   });
 
   it('fails closed when the Windows-container command planner lacks a governed engine or rewritten args', () => {
@@ -3731,6 +3833,42 @@ describe('comparisonReportRuntimeExecution', () => {
         'Derived VI Server TCP port 3363 from C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.ini and passed it explicitly to LabVIEW CLI.'
       ]
     });
+  });
+
+  it('derives the governed Windows VI Server TCP port during WSL-driven host-native runs', async () => {
+    const readFile = vi
+      .fn()
+      .mockResolvedValue('server.tcp.port=3364\nserver.tcp.enabled=true\n') as never;
+
+    await expect(
+      resolveWindowsLabviewTcpSettings(
+        createReadyRecord(),
+        {
+          executable: '/mnt/c/Program Files (x86)/National Instruments/Shared/LabVIEW CLI/LabVIEWCLI.exe',
+          args: [
+            '-OperationName',
+            'CreateComparisonReport',
+            '-LabVIEWPath',
+            'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+          ]
+        },
+        {
+          processPlatform: 'linux',
+          readFile
+        }
+      )
+    ).resolves.toEqual({
+      labviewIniPath: 'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.ini',
+      labviewTcpPort: 3364,
+      notes: [
+        'Derived VI Server TCP port 3364 from C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.ini and passed it explicitly to LabVIEW CLI.'
+      ]
+    });
+
+    expect(readFile).toHaveBeenCalledWith(
+      '/mnt/c/Program Files (x86)/National Instruments/LabVIEW 2026/LabVIEW.ini',
+      'utf8'
+    );
   });
 
   it('appends or rewrites -PortNumber on LabVIEW CLI command args deterministically', () => {

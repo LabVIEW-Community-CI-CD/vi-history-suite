@@ -113,6 +113,12 @@ export interface WindowsLabviewTcpSettings {
   notes: string[];
 }
 
+interface WindowsContainerRuntimeFacts {
+  labviewIniPath?: string;
+  labviewTcpPort?: number;
+  notes: string[];
+}
+
 export interface ObserveWindowsProcessesOptions {
   hostPlatform: NodeJS.Platform;
   runtimePlatform: string;
@@ -411,6 +417,12 @@ async function runHostNativeExecution(
       const durationMs = Math.max(0, deps.nowMs() - startedMs);
       await deps.writeFile(record.artifactPlan.runtimeStdoutFilePath, commandResult.stdout, 'utf8');
       await deps.writeFile(record.artifactPlan.runtimeStderrFilePath, commandResult.stderr, 'utf8');
+      const windowsContainerRuntimeFacts =
+        record.runtimeSelection.provider === 'windows-container'
+          ? parseWindowsContainerRuntimeFacts(commandResult.stdout)
+          : {
+              notes: []
+            };
       const processObservation = await persistRuntimeProcessObservation(record, commandResult, {
         writeFile: deps.writeFile,
         mkdir: deps.mkdir,
@@ -466,9 +478,14 @@ async function runHostNativeExecution(
             processObservation: processObservation?.bannerSnapshot,
             exitProcessObservation: processObservation?.exitSnapshot
           });
+      const retainedLabviewIniPath =
+        windowsContainerRuntimeFacts.labviewIniPath ?? windowsLabviewTcpSettings.labviewIniPath;
+      const retainedLabviewTcpPort =
+        windowsContainerRuntimeFacts.labviewTcpPort ?? windowsLabviewTcpSettings.labviewTcpPort;
       const diagnosticNotes = mergeDiagnosticNotes(
         buildProcessObservationNotes(processObservation),
         windowsLabviewTcpSettings.notes,
+        windowsContainerRuntimeFacts.notes,
         diagnostics.notes,
         finalizedReport.validationNotes,
         failureClassification.notes
@@ -483,8 +500,8 @@ async function runHostNativeExecution(
         diagnosticNotes,
         diagnosticLogSourcePath: diagnostics.sourcePath,
         diagnosticLogArtifactPath: diagnostics.artifactPath,
-        labviewIniPath: windowsLabviewTcpSettings.labviewIniPath,
-        labviewTcpPort: windowsLabviewTcpSettings.labviewTcpPort,
+        labviewIniPath: retainedLabviewIniPath,
+        labviewTcpPort: retainedLabviewTcpPort,
         headlessDiagnosticArtifactPaths: diagnostics.headlessArtifactPaths,
         executable: effectiveExecutionContext.commandPlan.executable,
         args: effectiveExecutionContext.commandPlan.args,
@@ -585,7 +602,7 @@ async function runHostNativeExecution(
       'Windows',
       record,
       deps,
-      windowsLabviewTcpSettings.labviewTcpPort
+      initialResult.labviewTcpPort ?? windowsLabviewTcpSettings.labviewTcpPort
     );
     const retriedResult = await executeAttempt();
     return buildRecoveredExecutionResult(
@@ -728,7 +745,6 @@ export async function resolveWindowsLabviewTcpSettings(
   }
 ): Promise<WindowsLabviewTcpSettings> {
   if (
-    deps.processPlatform !== 'win32' ||
     record.runtimeSelection.platform !== 'win32' ||
     record.runtimeSelection.engine !== 'labview-cli' ||
     record.runtimeSelection.provider !== 'host-native'
@@ -742,7 +758,8 @@ export async function resolveWindowsLabviewTcpSettings(
   }
 
   return resolveWindowsLabviewTcpSettingsForLabviewPath(labviewPath, {
-    readFile: deps.readFile
+    readFile: deps.readFile,
+    processPlatform: deps.processPlatform
   });
 }
 
@@ -750,12 +767,16 @@ export async function resolveWindowsLabviewTcpSettingsForLabviewPath(
   labviewPath: string,
   deps: {
     readFile: typeof fs.readFile;
+    processPlatform?: NodeJS.Platform;
   }
 ): Promise<WindowsLabviewTcpSettings> {
   const labviewIniPath = path.win32.join(path.win32.dirname(labviewPath), 'LabVIEW.ini');
+  const hostReadableLabviewIniPath =
+    resolveHostReadableWindowsPath(labviewIniPath, deps.processPlatform ?? process.platform) ??
+    labviewIniPath;
   let iniText: string;
   try {
-    iniText = await deps.readFile(labviewIniPath, 'utf8');
+    iniText = await deps.readFile(hostReadableLabviewIniPath, 'utf8');
   } catch {
     return {
       labviewIniPath,
@@ -1872,6 +1893,7 @@ export function buildWindowsContainerLabviewCliScript(
     '$attempt = 0',
     '$maxAttempts = [Math]::Max(1, 1 + ' + WINDOWS_CONTAINER_STARTUP_RETRY_COUNT + ')',
     '$lastExit = 1',
+    "$lastOutputText = ''",
     'while ($attempt -lt $maxAttempts) {',
     '  $attempt++',
     "  $previousErrorActionPreference = $ErrorActionPreference",
@@ -1883,16 +1905,20 @@ export function buildWindowsContainerLabviewCliScript(
     '    $ErrorActionPreference = $previousErrorActionPreference',
     '  }',
     '  $output | ForEach-Object { if (-not [string]::IsNullOrWhiteSpace([string]$_)) { Write-Output $_ } }',
+    "  $lastOutputText = @($output | ForEach-Object { [string]$_ }) -join [Environment]::NewLine",
     '  if ($lastExit -eq 0) { break }',
-    "  $text = @($output | ForEach-Object { [string]$_ }) -join [Environment]::NewLine",
-    "  $isStartupConnectivity = ($lastExit -in @(-350000, -350051) -or $text -match '-350000' -or $text -match '-350051' -or $text -match '(?i)failed to establish a connection with LabVIEW')",
+    "  $isStartupConnectivity = ($lastExit -in @(-350000, -350051) -or $lastOutputText -match '-350000' -or $lastOutputText -match '-350051' -or $lastOutputText -match '(?i)failed to establish a connection with LabVIEW')",
     '  if ($isStartupConnectivity -and $attempt -lt $maxAttempts) {',
     `    Start-Sleep -Seconds ${WINDOWS_CONTAINER_RETRY_DELAY_SECONDS}`,
     '    continue',
     '  }',
     '  break',
     '}',
-    `Write-Output ('[vi-history-suite-container-meta]retryAttempts={0};prelaunchAttempted={1};iniPath={2};openTimeout=${WINDOWS_CONTAINER_OPEN_APP_TIMEOUT_SECONDS};afterLaunchTimeout=${WINDOWS_CONTAINER_AFTER_LAUNCH_TIMEOUT_SECONDS}' -f $attempt, ($(if ($prelaunchAttempted) { 1 } else { 0 })), $cliIni)`,
+    "$connectedPort = ''",
+    "if ($lastOutputText -match 'Connection established with LabVIEW at port number ([0-9]+)\\.') {",
+    '  $connectedPort = $Matches[1]',
+    '}',
+    `Write-Output ('[vi-history-suite-container-meta]retryAttempts={0};prelaunchAttempted={1};iniPath={2};connectedPort={3};openTimeout=${WINDOWS_CONTAINER_OPEN_APP_TIMEOUT_SECONDS};afterLaunchTimeout=${WINDOWS_CONTAINER_AFTER_LAUNCH_TIMEOUT_SECONDS}' -f $attempt, ($(if ($prelaunchAttempted) { 1 } else { 0 })), $cliIni, $connectedPort)`,
     'exit $lastExit'
   ].join('\n');
 }
@@ -2018,9 +2044,132 @@ export function normalizeWindowsInteropExecutable(filePath: string): string | un
   return `/mnt/${driveLetter.toLowerCase()}/${normalizedTail}`;
 }
 
+function resolveHostReadableWindowsPath(
+  filePath: string,
+  processPlatform: NodeJS.Platform = process.platform
+): string | undefined {
+  const trimmed = filePath.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  if (processPlatform === 'win32') {
+    return trimmed.replaceAll('/', '\\');
+  }
+
+  if (trimmed.startsWith('/')) {
+    return trimmed;
+  }
+
+  return normalizeWindowsInteropExecutable(trimmed);
+}
+
 export function parseLabviewCliDiagnosticLogPath(stdout: string): string | undefined {
   const match = stdout.match(/LabVIEWCLI started logging in file:\s*([^\r\n]+)/m);
   return match?.[1]?.trim();
+}
+
+function parseWindowsContainerRuntimeFacts(stdout: string): WindowsContainerRuntimeFacts {
+  const notes: string[] = [];
+  const metadata = parseWindowsContainerRuntimeMetadata(stdout);
+  const labviewIniPath = normalizeOptionalRuntimeText(metadata.iniPath);
+  const labviewTcpPort =
+    parsePositiveInteger(metadata.connectedPort) ?? parseLabviewCliConnectedPort(stdout);
+  const retryAttempts = parsePositiveInteger(metadata.retryAttempts);
+  const openTimeoutSeconds = parsePositiveInteger(metadata.openTimeout);
+  const afterLaunchTimeoutSeconds = parsePositiveInteger(metadata.afterLaunchTimeout);
+  const prelaunchAttempted =
+    metadata.prelaunchAttempted === '1'
+      ? 'yes'
+      : metadata.prelaunchAttempted === '0'
+        ? 'no'
+        : undefined;
+
+  if (labviewIniPath) {
+    notes.push(`Windows container runtime retained CLI ini path ${labviewIniPath}.`);
+  }
+
+  if (labviewTcpPort !== undefined) {
+    notes.push(`Windows container LabVIEW CLI connected to VI Server port ${String(labviewTcpPort)}.`);
+  }
+
+  if (
+    retryAttempts !== undefined ||
+    prelaunchAttempted !== undefined ||
+    openTimeoutSeconds !== undefined ||
+    afterLaunchTimeoutSeconds !== undefined
+  ) {
+    const hardeningFacts: string[] = [];
+    if (retryAttempts !== undefined) {
+      hardeningFacts.push(`retryAttempts=${String(retryAttempts)}`);
+    }
+    if (prelaunchAttempted !== undefined) {
+      hardeningFacts.push(`prelaunchAttempted=${prelaunchAttempted}`);
+    }
+    if (openTimeoutSeconds !== undefined) {
+      hardeningFacts.push(`OpenAppReferenceTimeoutInSecond=${String(openTimeoutSeconds)}`);
+    }
+    if (afterLaunchTimeoutSeconds !== undefined) {
+      hardeningFacts.push(
+        `AfterLaunchOpenAppReferenceTimeoutInSecond=${String(afterLaunchTimeoutSeconds)}`
+      );
+    }
+    notes.push(`Windows container startup hardening retained ${hardeningFacts.join(', ')}.`);
+  }
+
+  return {
+    labviewIniPath,
+    labviewTcpPort,
+    notes
+  };
+}
+
+function parseWindowsContainerRuntimeMetadata(stdout: string): Record<string, string> {
+  const match = stdout.match(/\[vi-history-suite-container-meta\]([^\r\n]+)/i);
+  if (!match) {
+    return {};
+  }
+
+  const metadata: Record<string, string> = {};
+  for (const segment of match[1].split(';')) {
+    const separatorIndex = segment.indexOf('=');
+    if (separatorIndex <= 0) {
+      continue;
+    }
+
+    const key = segment.slice(0, separatorIndex).trim();
+    const value = segment.slice(separatorIndex + 1).trim();
+    if (!key) {
+      continue;
+    }
+
+    metadata[key] = value;
+  }
+
+  return metadata;
+}
+
+function parseLabviewCliConnectedPort(stdout: string): number | undefined {
+  const match = stdout.match(/Connection established with LabVIEW at port number ([0-9]+)\./i);
+  return parsePositiveInteger(match?.[1]);
+}
+
+function normalizeOptionalRuntimeText(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  if (!trimmed || /^none$/i.test(trimmed) || /^null$/i.test(trimmed)) {
+    return undefined;
+  }
+
+  return trimmed;
+}
+
+function parsePositiveInteger(value: string | undefined): number | undefined {
+  if (!value?.trim()) {
+    return undefined;
+  }
+
+  const parsed = Number.parseInt(value, 10);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : undefined;
 }
 
 export function resolveHostReadableDiagnosticPath(

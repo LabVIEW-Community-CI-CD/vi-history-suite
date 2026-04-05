@@ -33,7 +33,9 @@ The governing contract and taxonomy are:
 - `DEBT-0002` captures the now-retired contamination seam where explicit
   Windows runtime paths could mix x86 and x64 surfaces when
   `--prefer-bitness` was omitted.
-- `DEBT-0003` is the active Windows pair-129 benchmark-proof ceiling.
+- `DEBT-0003` is the active Windows pair-129 benchmark-proof ceiling, now
+  strengthened by governed evidence that the published Windows image exposes
+  only x86 `LabVIEWCLI.exe` alongside x64 `LabVIEW.exe` at the blocking seam.
 - `DEBT-0004` is the active Linux pair-135 full-window benchmark-proof
   ceiling.
 - `DEBT-0005` captures the now-retired admission-control gap where

@@ -105,6 +105,16 @@ connected-session retry attempt, `windows-benchmark-image-pair129-lvcompare`
 records `command-timed-out` after the bounded `120000ms` runtime budget, and
 the comparable-prefix packet now retains both exact-pair receipts alongside
 the accepted `129`-commit / `128`-pair timing scope.
+The latest governed repo-local exact-pair rerun now retains that same
+Windows-image surface explicitly too: the authority repo `.cache`
+`comparison-report-smoke.json` now carries
+`runtimeLabviewIniPath=C:\Program Files (x86)\National Instruments\Shared\LabVIEW CLI\LabVIEWCLI.ini`
+plus `runtimeLabviewTcpPort=3363`, and a direct probe of
+`nationalinstruments/labview:2026q1-windows` shows that image exposes only the
+x86 `LabVIEWCLI.exe` path and only the x64 `LabVIEW.exe` path. So the active
+pair-129 ceiling is now governed as a connected-session mixed-surface Windows
+image seam, not just a missing retained argument or stale host contamination
+artifact.
 Recovery attempts are also now retained more truthfully: when Linux or Windows
 invokes the governed `CloseLabVIEW -Headless` reset path, the packet keeps the
 reset command, exit code, and dedicated `headless-session-reset-stdout.txt` /
