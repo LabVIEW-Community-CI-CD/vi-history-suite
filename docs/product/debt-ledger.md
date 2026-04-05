@@ -41,7 +41,7 @@ The governing contract and taxonomy are:
 - `DEBT-0005` captures the now-retired admission-control gap where
   CLI/env/default synthesis could materialize an explicit effective runtime
   bundle after a narrower raw-CLI validation pass had already succeeded.
-- `DEBT-0006` is the active remaining execution-policy debt after four
+- `DEBT-0006` is the active remaining execution-policy debt after five
   execution-policy slices landed: the installed extension now exposes `auto` /
   `host-only` / `docker-only`, rejects silent provider fallback, retains
   canonical effective execution-request validation as part of provider choice,
@@ -49,8 +49,10 @@ The governing contract and taxonomy are:
   VI Server port facts, and now validates Docker CLI availability, daemon
   reachability, active container mode, and governed image presence before the
   Windows provider is selected or rejected; governed Windows image acquisition
-  now runs with visible progress and retained acquisition state, but fuller
-  front-facing provider transparency still remains open.
+  now runs with visible progress and retained acquisition state, and the
+  history panel now retains the latest compare-runtime provider/acquisition
+  summary in-panel, but fuller front-facing provider transparency still
+  remains open.
 
 ## Operational Rule
 

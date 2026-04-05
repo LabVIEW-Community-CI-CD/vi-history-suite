@@ -313,6 +313,12 @@ export function createOpenViHistoryCommand(
               cancellationToken
             })
         );
+        const runtimePanelUpdate = buildComparisonRuntimePanelUpdate(
+          actionCommand,
+          hash,
+          model,
+          result
+        );
 
         if (result.outcome === 'cancelled') {
           void vscode.window.showInformationMessage(cancelledMessage);
@@ -361,6 +367,9 @@ export function createOpenViHistoryCommand(
         }
 
         recordComparisonResult(actionCommand, hash, result);
+        if (runtimePanelUpdate) {
+          void panel.webview.postMessage(runtimePanelUpdate);
+        }
       };
 
       if (command === 'copyReviewPacket') {
@@ -866,4 +875,143 @@ async function runProgressWrappedAction<Result>(
         progress.report(update);
       }, cancellationToken)
   );
+}
+
+function buildComparisonRuntimePanelUpdate(
+  actionCommand: string,
+  selectedHash: string,
+  model: Awaited<ReturnType<ViHistoryService['load']>>,
+  result: ComparisonReportActionResult
+):
+  | {
+      type: 'comparisonRuntimeResult';
+      status: 'idle' | 'blocked' | 'failed' | 'succeeded' | 'cancelled';
+      summary: string;
+      nextAction: string;
+    }
+  | undefined {
+  if (
+    result.reportStatus === undefined &&
+    result.runtimeExecutionState === undefined &&
+    result.runtimeDoctorSummaryLines === undefined
+  ) {
+    return undefined;
+  }
+
+  const selectedCommit = model.commits.find((commit) => commit.hash === selectedHash);
+  const pairLabel = selectedCommit?.previousHash
+    ? `${selectedHash.slice(0, 8)} vs ${selectedCommit.previousHash.slice(0, 8)}`
+    : selectedHash.slice(0, 8);
+  const commandLabel =
+    actionCommand === 'diffPrevious' ? 'Open compare' : 'Generate compare';
+  const runtimeProvider = deriveRuntimeProviderFromDoctorSummary(
+    result.runtimeDoctorSummaryLines
+  );
+  const executionMode = deriveRuntimeExecutionModeFromDoctorSummary(
+    result.runtimeDoctorSummaryLines
+  );
+  const acquisitionState = deriveWindowsContainerAcquisitionStateFromDoctorSummary(
+    result.runtimeDoctorSummaryLines
+  );
+  const segments = [
+    `${commandLabel} for ${pairLabel}.`,
+    `Provider: ${runtimeProvider ?? 'none'}.`,
+    `Execution mode: ${executionMode ?? 'auto'}.`,
+    `Report status: ${result.reportStatus ?? 'none'}.`,
+    `Runtime state: ${result.runtimeExecutionState ?? 'none'}.`
+  ];
+
+  if (acquisitionState) {
+    segments.push(`Windows image acquisition: ${acquisitionState}.`);
+  }
+  if (result.blockedReason) {
+    segments.push(`Blocked reason: ${result.blockedReason}.`);
+  }
+  if (result.runtimeFailureReason) {
+    segments.push(`Failure reason: ${result.runtimeFailureReason}.`);
+  }
+  if (result.runtimeDiagnosticReason) {
+    segments.push(`Diagnostic reason: ${result.runtimeDiagnosticReason}.`);
+  }
+
+  return {
+    type: 'comparisonRuntimeResult',
+    status: deriveComparisonRuntimePanelStatus(result),
+    summary: segments.join(' '),
+    nextAction:
+      deriveComparisonRuntimeNextAction(result.runtimeDoctorSummaryLines) ??
+      'Next action: open the retained comparison packet for the full governed runtime summary.'
+  };
+}
+
+function deriveComparisonRuntimePanelStatus(
+  result: ComparisonReportActionResult
+): 'idle' | 'blocked' | 'failed' | 'succeeded' | 'cancelled' {
+  if (result.outcome === 'cancelled') {
+    return 'cancelled';
+  }
+
+  if (
+    result.reportStatus === 'blocked-preflight' ||
+    result.reportStatus === 'blocked-runtime' ||
+    result.runtimeExecutionState === 'not-available'
+  ) {
+    return 'blocked';
+  }
+
+  if (result.runtimeExecutionState === 'failed') {
+    return 'failed';
+  }
+
+  if (result.runtimeExecutionState === 'succeeded') {
+    return 'succeeded';
+  }
+
+  return 'idle';
+}
+
+function deriveComparisonRuntimeNextAction(
+  summaryLines: string[] | undefined
+): string | undefined {
+  return summaryLines?.find((line) => line.startsWith('Next action:'));
+}
+
+function deriveRuntimeProviderFromDoctorSummary(
+  summaryLines: string[] | undefined
+): string | undefined {
+  const selectedProviderLine = summaryLines?.find((line) =>
+    line.startsWith('Selected provider=')
+  );
+  if (!selectedProviderLine) {
+    return undefined;
+  }
+
+  const match = selectedProviderLine.match(/^Selected provider=([^;]+);/);
+  return match?.[1];
+}
+
+function deriveRuntimeExecutionModeFromDoctorSummary(
+  summaryLines: string[] | undefined
+): string | undefined {
+  const executionModeLine = summaryLines?.find((line) =>
+    line.startsWith('Selected execution mode=')
+  );
+  if (!executionModeLine) {
+    return undefined;
+  }
+
+  const match = executionModeLine.match(/^Selected execution mode=([^.;]+)[.;]?$/);
+  return match?.[1];
+}
+
+function deriveWindowsContainerAcquisitionStateFromDoctorSummary(
+  summaryLines: string[] | undefined
+): string | undefined {
+  const toolFactsLine = summaryLines?.find((line) => line.startsWith('Tool facts:'));
+  if (!toolFactsLine) {
+    return undefined;
+  }
+
+  const match = toolFactsLine.match(/ContainerAcquisitionState=([^;]+)/);
+  return match?.[1];
 }

@@ -2,7 +2,7 @@
 
 ## Status
 
-Queued follow-on post-release program with four repo-side execution-policy slices
+Queued follow-on post-release program with five repo-side execution-policy slices
 already landed.
 
 Activation is intentionally deferred until:
@@ -10,8 +10,8 @@ Activation is intentionally deferred until:
 - `PROGRAM-0003` closes the benchmark-proof packet under `TRANCHE-011`
 - the queue promotes `TRANCHE-013` from `queued` to `active`
 - the remaining broader front-facing provider/acquisition transparency work
-  moves beyond the landed selector, Docker-capability, and acquisition-progress
-  slices
+  moves beyond the landed selector, Docker-capability, acquisition-progress,
+  and history-panel latest-runtime-summary slices
 
 ## Purpose
 
@@ -107,7 +107,7 @@ Every slice shall preserve:
 
 ## Landed Selector Slices
 
-The repo already retains four bounded implementation slices under this program:
+The repo already retains five bounded implementation slices under this program:
 
 - a first-class `viHistorySuite.executionMode` setting with `auto`,
   `host-only`, and `docker-only`
@@ -139,6 +139,12 @@ The repo already retains four bounded implementation slices under this program:
     progress instead of leaving that work implicit inside Docker startup
   - retained runtime doctor and packet surfaces now carry acquisition state as
     governed truth, and acquisition failure now blocks runtime truthfully
+- a fifth slice now retains that runtime truth in the history panel itself:
+  - compare actions now post the latest selected provider, execution mode,
+    acquisition state, blocked/failure reason, and next action back into the
+    history panel after the action completes
+  - users no longer need to leave the panel for the retained packet just to
+    recover the latest compare-runtime provider/acquisition decision
 
 ## First Implementation Slice
 
@@ -154,7 +160,7 @@ That slice should:
 - make Windows container-capability truth explicit before image acquisition
 - stop short of claiming full implementation until the installed extension
   lands fuller front-facing provider transparency end to end beyond the now-
-  landed visible acquisition UX slice
+  landed visible acquisition and in-panel summary slices
 
 ## Success Condition
 

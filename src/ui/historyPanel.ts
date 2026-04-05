@@ -215,6 +215,11 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
       ${dashboardButton}
       ${decisionRecordButton}
     </div>
+    <div class="status" data-testid="history-compare-runtime-status" id="compare-runtime-status" data-state="idle" role="status" aria-live="polite">
+      <strong>Latest compare runtime:</strong><br />
+      <span data-testid="history-compare-runtime-summary" id="compare-runtime-summary">No compare action from this panel has retained provider or acquisition truth yet.</span><br />
+      <span data-testid="history-compare-runtime-next-action" id="compare-runtime-next-action">Next action: use Generate compare or Open compare to surface the selected provider and any acquisition state here.</span>
+    </div>
     <div class="packet" data-testid="history-review-packet">
       <div data-testid="history-chronology-order"><strong>Order:</strong> Newest commit first</div>
       <div data-testid="history-retained-span"><strong>Retained revisions:</strong> ${model.commits.length}</div>
@@ -285,7 +290,27 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
       const vscode = acquireVsCodeApi();
       window.addEventListener('message', (event) => {
         const message = event.data;
-        if (!message || message.type !== 'humanReviewSubmissionResult') {
+        if (!message) {
+          return;
+        }
+
+        if (message.type === 'comparisonRuntimeResult') {
+          const container = document.getElementById('compare-runtime-status');
+          const summary = document.getElementById('compare-runtime-summary');
+          const nextAction = document.getElementById('compare-runtime-next-action');
+          if (container instanceof HTMLElement && typeof message.status === 'string') {
+            container.dataset.state = message.status;
+          }
+          if (summary instanceof HTMLElement && typeof message.summary === 'string') {
+            summary.textContent = message.summary;
+          }
+          if (nextAction instanceof HTMLElement && typeof message.nextAction === 'string') {
+            nextAction.textContent = message.nextAction;
+          }
+          return;
+        }
+
+        if (message.type !== 'humanReviewSubmissionResult') {
           return;
         }
 

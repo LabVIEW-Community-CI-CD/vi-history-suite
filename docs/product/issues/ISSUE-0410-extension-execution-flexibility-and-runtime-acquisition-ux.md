@@ -8,7 +8,7 @@ progress, and transparent provider feedback.
 
 ## Status
 
-Queued follow-on post-release issue with four repo-side execution-policy slices already
+Queued follow-on post-release issue with five repo-side execution-policy slices already
 landed.
 
 Activation depends on:
@@ -80,6 +80,9 @@ The repo-side selector slices already landed and are no longer queued intent:
   Windows container provider still requires image acquisition
 - retained runtime doctor and packet surfaces now carry acquisition state and
   acquisition-failure hard stops as governed truth
+- the history panel now also retains the latest compare-runtime summary with
+  selected provider, execution mode, acquisition state, and next action after
+  compare actions complete
 
 ## Required Evidence
 
@@ -96,6 +99,7 @@ The repo-side selector slices already landed and are no longer queued intent:
 - retain canonical execution-request validation in the control plane
 - make the Docker-required hard-stop and acquisition-progress UX explicit
 - make Windows container-capability hard stops explicit
-- continue from the landed Docker-capability and acquisition-progress slices
-  into fuller front-facing provider/acquisition transparency
+- continue from the landed Docker-capability, acquisition-progress, and
+  in-panel latest-runtime-summary slices into fuller front-facing
+  provider/acquisition transparency
 - keep the policy separate from current benchmark-proof and sustainment work

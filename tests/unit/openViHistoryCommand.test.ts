@@ -2221,6 +2221,72 @@ describe('createOpenViHistoryCommand', () => {
     });
   });
 
+  it('posts the latest compare provider and acquisition summary back into the history panel', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    const comparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'retained-comparison-report-evidence',
+      reportStatus: 'blocked-runtime',
+      runtimeExecutionState: 'not-available',
+      blockedReason: 'windows-container-image-acquisition-failed',
+      runtimeDoctorSummaryLines: [
+        'Selected provider=windows-container; engine=labview-cli; platform=win32; preferBitness=x64.',
+        'Selected execution mode=auto.',
+        'Tool facts: WindowsContainerCapability=available; ContainerAcquisitionState=failed',
+        'Next action: repair Docker connectivity or image registry access, then pull the governed Windows container image and rerun comparison report generation.'
+      ],
+      packetFilePath: '/workspace/.storage/reports/repo/file/report-packet.html',
+      reportFilePath: '/workspace/.storage/reports/repo/file/diff-report-eligible.vi.html',
+      metadataFilePath: '/workspace/.storage/reports/repo/file/report-metadata.json',
+      title: 'VI Comparison Report: eligible.vi'
+    });
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Update VI',
+            previousHash: '1111111122222222'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      comparisonReportAction
+    );
+
+    await command(targetUri as never);
+    await tracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReport',
+      hash: 'abcdef1234567890'
+    });
+
+    const panel = createWebviewPanelMock.mock.results[0]?.value as MockPanel | undefined;
+    expect(panel?.webview.postMessage).toHaveBeenCalledWith({
+      type: 'comparisonRuntimeResult',
+      status: 'blocked',
+      summary:
+        'Generate compare for abcdef12 vs 11111111. Provider: windows-container. Execution mode: auto. Report status: blocked-runtime. Runtime state: not-available. Windows image acquisition: failed. Blocked reason: windows-container-image-acquisition-failed.',
+      nextAction:
+        'Next action: repair Docker connectivity or image registry access, then pull the governed Windows container image and rerun comparison report generation.'
+    });
+  });
+
   it('surfaces stable warnings when panel actions are blocked by workspace trust after the panel is already open', async () => {
     const targetUri = createMockUri('/workspace/eligible.vi');
     const tracker = new HistoryPanelTracker();

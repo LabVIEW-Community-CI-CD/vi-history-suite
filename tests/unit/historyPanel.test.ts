@@ -59,6 +59,9 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('Copy hash');
     expect(html).toContain('Copy review packet');
     expect(html).toContain('data-testid="history-status"');
+    expect(html).toContain('data-testid="history-compare-runtime-status"');
+    expect(html).toContain('data-testid="history-compare-runtime-summary"');
+    expect(html).toContain('data-testid="history-compare-runtime-next-action"');
     expect(html).toContain('data-testid="history-review-packet"');
     expect(html).toContain('data-testid="history-status-history-window"');
     expect(html).toContain('data-testid="history-review-window"');
@@ -140,6 +143,10 @@ describe('renderHistoryPanelHtml', () => {
       'Pass + High: the click flow behaved as expected and no meaningful doubt remains.'
     );
     expect(html).toContain('No host review has been submitted from this panel yet.');
+    expect(html).toContain(
+      'No compare action from this panel has retained provider or acquisition truth yet.'
+    );
+    expect(html).toContain("message.type === 'comparisonRuntimeResult'");
   });
 
   it('renders refresh-state pair actions when retained comparison evidence already exists', () => {

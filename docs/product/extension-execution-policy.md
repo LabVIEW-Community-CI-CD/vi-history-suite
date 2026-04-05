@@ -51,13 +51,17 @@ policy:
 - runtime doctor and retained comparison-report packet surfaces now carry both
   the Windows container-capability facts and retained acquisition state
   explicitly instead of collapsing them into one image-availability assumption
+- the history panel now retains the latest compare-runtime summary in-panel so
+  users can see the chosen provider, execution mode, acquisition state, and
+  next action without leaving the panel for a retained packet
 - benchmark-proof and exact-pair diagnosis entrypoints now fail closed on
   contaminated or contradictory runtime-override bundles
 - canonical effective execution-request validation is now partially
   implemented through selected Windows host-runtime facts, explicit Windows
   Docker capability validation, and a governed Windows image-acquisition step
-  with visible progress; fuller front-facing provider/acquisition transparency
-  beyond the current progress, runtime-doctor, and retained-packet surfaces
+  with visible progress plus a retained history-panel compare-runtime summary;
+  fuller front-facing provider/acquisition transparency beyond the current
+  progress, history-panel, runtime-doctor, and retained-packet surfaces
   remains queued
 
 So current runtime behavior is no longer implicit at the execution-mode
@@ -122,8 +126,8 @@ facts in that boundary:
 - existing listener on the governed VI Server port
 
 The remaining queued work is fuller front-facing provider/acquisition
-transparency after the landed host-fact, Docker-capability, and
-image-acquisition slices.
+transparency after the landed host-fact, Docker-capability, image-acquisition,
+and history-panel summary slices.
 
 This is the canonical validation boundary for the installed extension. If the
 request is non-canonical, the product must fail closed before runtime work
