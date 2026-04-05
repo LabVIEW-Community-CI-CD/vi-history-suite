@@ -106,7 +106,8 @@
       "docs/product/documentation-coherence-ledger.md"
     ],
     "secondaryAuthority": [
-      "docs/product/wiki-authority-map.md"
+      "docs/product/wiki-authority-map.md",
+      "docs/product/program-repo-jump.md"
     ]
   }
 }

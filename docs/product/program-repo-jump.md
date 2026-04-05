@@ -14,6 +14,10 @@ This surface exists so future sessions can move between product truth,
 published-reader truth, and standards-assurance truth without depending on chat
 memory or ad hoc shell history.
 
+The governed wiki workbench also consumes this map so wiki staging and bundle
+sync resolve the same authority/wiki constellation instead of hardcoded sibling
+paths.
+
 ## Authority Roles
 
 - `vi-history-suite`: product authority and ship-control repo
@@ -64,6 +68,12 @@ Emit JSON for tooling or future automation:
 
 ```bash
 npm run program:repos -- --format json
+```
+
+The wiki-authoring system uses the same governed constellation:
+
+```bash
+npm run wiki:workbench:doctor
 ```
 
 ## Companion Skill Entry

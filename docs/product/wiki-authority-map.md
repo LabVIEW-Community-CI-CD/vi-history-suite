@@ -56,6 +56,8 @@ Do not create or refresh wiki pages until these are true:
   the same implemented product truth without unresolved contradiction
 - the documentation-package workbench has been updated when the wiki-relevant
   docs stack changed materially
+- `npm run wiki:workbench:doctor` or `npm run docs:workbench:wiki:doctor`
+  reports no `error` issues against the current authority/wiki topology
 - the documentation coherence ledger records no unresolved internal
   contradiction across the audited authority surfaces
 - the wiki publication ledger is updated when a page is actually pushed to the
@@ -66,13 +68,19 @@ Do not create or refresh wiki pages until these are true:
 ## Incremental Wiki Workflow
 
 1. Read the authority order from top to bottom.
-2. Draft or update only the wiki page sections touched by the latest completed
+2. Run `npm run wiki:workbench:plan` or
+   `npm run docs:workbench:wiki:plan` to resolve the current published page set
+   and next-page target from the governed ledger.
+3. Draft or update only the wiki page sections touched by the latest completed
    tranche.
-3. Prefer requirement and ADR wording over inferred implementation detail.
-4. Cite repo-relative doc paths for every substantive product claim.
-5. If a needed fact exists only in source or tests, stop and first promote that
+4. Prefer requirement and ADR wording over inferred implementation detail.
+5. Cite repo-relative doc paths for every substantive product claim.
+6. If a needed fact exists only in source or tests, stop and first promote that
    fact into the governed docs stack.
-6. When substantial documentation-package edits are needed, use the documented
+7. Use `npm run wiki:workbench:prepare` or
+   `npm run docs:workbench:wiki:prepare` to retain the page-authority bundle
+   and publication-prep receipt before any real wiki publication step.
+8. When substantial documentation-package edits are needed, use the documented
    workbench in [../documentation-workbench.md](../documentation-workbench.md)
    before widening into wiki drafting.
 

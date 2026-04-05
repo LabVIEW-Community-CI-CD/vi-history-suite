@@ -13,6 +13,8 @@ Do not draft or refresh wiki pages until:
 - `docs/product/documentation-coherence-ledger.md` records no unresolved
   internal contradiction across the authority stack
 - the latest retained design gate is `pass`
+- `npm run wiki:workbench:doctor` or `npm run docs:workbench:wiki:doctor`
+  reports no error-level topology or ledger issues
 
 ## Publication Status
 
@@ -29,6 +31,8 @@ Do not draft or refresh wiki pages until:
 - **Architecture**: published on `2026-04-03`; see
   `docs/product/wiki-publication-ledger.md`
 - **Next page**: `Documentation Workbench`
+  - retain publication prep under
+    `.cache/wiki-workbench/publication-prep/documentation-workbench/`
 
 ## Page Order
 
@@ -88,12 +92,16 @@ Do not draft or refresh wiki pages until:
      - `docs/product/documentation-coherence-ledger.md`
    - Secondary authority:
      - `docs/product/wiki-authority-map.md`
+     - `docs/product/program-repo-jump.md`
      - `docs/product/SHIP-0001-releasable-vi-history-suite.md`
 
 ## Drafting Rules
 
 - Draft only the page currently being seeded; do not widen multiple pages in
   one pass without first updating the coherence ledger.
+- Retain a governed staging bundle and publication-prep receipt through
+  `npm run wiki:workbench:prepare` or `npm run docs:workbench:wiki:prepare`
+  before treating a page as ready for publication.
 - Every substantive product claim should cite a repo-relative governed doc
   path.
 - If a fact exists only in `src/` or `tests/`, stop and promote it into the

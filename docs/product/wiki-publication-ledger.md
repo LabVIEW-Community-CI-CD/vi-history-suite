@@ -30,6 +30,9 @@ The machine-readable companion surface for this ledger is:
   repository.
 - Every published page shall be recorded here with its wiki path, publication
   date, wiki commit, and primary authority docs.
+- Future publication prep shall use the governed wiki workbench so the repo
+  retains a page-authority bundle and publication-prep receipt before a wiki
+  page is pushed.
 - Published wiki pages remain derived surfaces. If a wiki page and the repo
   docs disagree, the repo docs win until the wiki is corrected.
 
@@ -43,3 +46,4 @@ The next incremental page, once the documentation package is ready, is:
      - `docs/product/documentation-coherence-ledger.md`
    - secondary authority:
      - `docs/product/wiki-authority-map.md`
+     - `docs/product/program-repo-jump.md`

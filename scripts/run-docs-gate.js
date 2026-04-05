@@ -61,7 +61,8 @@ function createDocsGateSteps(options = {}) {
         'tests/unit/requirementsDocs.test.ts',
         'tests/unit/packageManifest.test.ts',
         'tests/unit/shipControlDocs.test.ts',
-        'tests/unit/docsWorkbenchDocs.test.ts'
+        'tests/unit/docsWorkbenchDocs.test.ts',
+        'tests/unit/runWikiWorkbenchCli.test.ts'
       ]
     }
   ];

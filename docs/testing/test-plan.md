@@ -994,6 +994,19 @@
   working report outputs before each pair and discards a nonzero-exit HTML
   report when the file contents do not reference the current staged left/right
   revision filenames
+- `TEST-UNIT-269`: verify the wiki workbench resolves topology from the
+  governed repo-jump map, validates remotes/control files, and retains a stable
+  `latest-workbench.json` manifest for doctor/discovery flows
+- `TEST-UNIT-270`: verify wiki workbench stage/prep/sync commands fail closed
+  on missing sibling wiki repos, control files, remotes, or authority docs
+  instead of staging weak publication input
+- `TEST-UNIT-271`: verify wiki workbench page staging and publication prep
+  retain authority-doc copies, a current wiki copy when present, a draft wiki
+  file, and a machine-readable publication-prep receipt under
+  `.cache/wiki-workbench/`
+- `TEST-UNIT-272`: verify the package manifest and docs gate expose local and
+  Docker-first wiki-workbench command surfaces for doctor, plan, prepare, and
+  bundled-doc sync
 - `TEST-DOC-035`: review README, current-state, and ADR-0016 and confirm the
   canonical-host benchmark status surface is documented as the maintainer-facing
   in-IDE visibility and launch surface for the host Linux benchmark lane,
@@ -1029,6 +1042,12 @@
   `HARNESS-VHS-002` baseline distinct from Sergio's canonical Windows host UX
   lane, and that hosted Windows benchmark execution remains explicitly
   not-yet-governed
+- `TEST-DOC-041`: review README, current-state, documentation-workbench,
+  wiki-authority, wiki-seed-plan, program-repo-jump, and ADR-0019 and confirm
+  the repo documents a governed wiki workbench that resolves authority/wiki
+  topology from the repo-jump map, retains `.cache/wiki-workbench/` manifests
+  and publication-prep receipts, fails closed on ledger/topology drift, and
+  exposes both local and Docker-first wiki command surfaces
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed authority repo, private experiment mirror, wiki, and
   assurance-skill repos with authority roles, expected remotes, and primary

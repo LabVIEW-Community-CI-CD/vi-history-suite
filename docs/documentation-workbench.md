@@ -2,13 +2,14 @@
 
 ## Purpose
 
-Provide one repo-published container image for iterating on the governed
-documentation package of `vi-history-suite`:
+Provide one repo-published container image and one governed wiki-authoring
+system for iterating on the documentation package of `vi-history-suite`:
 
 - ship target and release-readiness docs
 - requirements, RTM, and test plan
 - ADRs and architecture overview
 - current-state, wiki-authority, and release procedure surfaces
+- authority-driven wiki staging and publication-prep receipts
 
 This workbench is for documentation-package iteration only. It is not the NI
 runtime-proof lane and it is not itself the extension-user VSIX install
@@ -62,6 +63,55 @@ npm run docs:gate
 
 The workbench entrypoint honors `VIHS_DOCS_WORKSPACE`, so future cross-repo
 wiki iteration is not locked to `/workspace`.
+
+When invoked from this canonical WSL environment through the package scripts,
+the Docker-first workbench commands prefer `docker.exe --context desktop-linux`
+instead of the broken Linux `docker` client so the workbench remains usable on
+this machine.
+
+## Wiki Workbench
+
+The workbench now includes a governed wiki-authoring system that resolves the
+authority repo, sibling wiki repo, and publication ledger from the local
+program repo-jump map instead of from ad hoc shell assumptions.
+
+Local commands:
+
+```bash
+npm run wiki:workbench:doctor
+npm run wiki:workbench:plan
+npm run wiki:workbench:prepare
+npm run wiki:workbench:sync-bundled-docs
+```
+
+Docker-first equivalents:
+
+```bash
+npm run docs:workbench:wiki:doctor
+npm run docs:workbench:wiki:plan
+npm run docs:workbench:wiki:prepare
+npm run docs:workbench:wiki:sync-bundled-docs
+```
+
+The retained workbench outputs are:
+
+- `.cache/wiki-workbench/latest-workbench.json`
+- `.cache/wiki-workbench/staging/<page-id>/`
+- `.cache/wiki-workbench/publication-prep/<page-id>/publication-prep.json`
+
+The intended flow is:
+
+1. run `doctor` to validate topology, remotes, ledger, and authority-doc
+   readiness
+2. run `plan` to see published pages plus the current next-page target
+3. run `prepare` to materialize a page-authority bundle, current wiki copy
+   when present, a draft wiki file, and a publication-prep receipt
+4. run `sync-bundled-docs` only after the staged wiki state and publication
+   ledger are ready
+
+The workbench is fail-closed for page staging, publication prep, and bundle
+sync. If the sibling wiki repo, control files, ledger targets, or authority
+docs are wrong, those commands stop instead of staging weak publication input.
 
 ## Documentation Gate
 
@@ -118,6 +168,7 @@ Primary repo surfaces for that work include:
 - `resources/bundled-docs/manifest.json`
 - `docs/product/wiki-authority-map.md`
 - `docs/product/program-repo-jump.md`
+- `.cache/wiki-workbench/latest-workbench.json`
 
 Use the governed local repo-jump surface when the work spans this repo, the
 wiki repo, and the companion assurance-skill repo:
@@ -138,6 +189,6 @@ Those remain separate product-proof lanes.
 When a wiki page is actually published, update
 `docs/product/wiki-publication-ledger.md`,
 `docs/product/wiki-publication-ledger.json`, and the packaged bundle via
-`npm run docs:bundle` in the same documentation tranche so publication state
-and the version-matched bundled-doc surface stay governed inside the main
-repo.
+`npm run wiki:workbench:sync-bundled-docs` or `npm run docs:bundle` in the
+same documentation tranche so publication state and the version-matched
+bundled-doc surface stay governed inside the main repo.

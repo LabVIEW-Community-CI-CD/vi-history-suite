@@ -68,7 +68,8 @@ describe('documentation-package workbench', () => {
           'tests/unit/requirementsDocs.test.ts',
           'tests/unit/packageManifest.test.ts',
           'tests/unit/shipControlDocs.test.ts',
-          'tests/unit/docsWorkbenchDocs.test.ts'
+          'tests/unit/docsWorkbenchDocs.test.ts',
+          'tests/unit/runWikiWorkbenchCli.test.ts'
         ]
       },
       {
@@ -104,7 +105,7 @@ describe('documentation-package workbench', () => {
     expect(result).toBe('pass');
     expect(spawned).toEqual([
       'npm run compile',
-      'npx vitest run tests/unit/bundledDocumentation.test.ts tests/unit/postReleaseControlPlaneDocs.test.ts tests/unit/requirementsDocs.test.ts tests/unit/packageManifest.test.ts tests/unit/shipControlDocs.test.ts tests/unit/docsWorkbenchDocs.test.ts'
+      'npx vitest run tests/unit/bundledDocumentation.test.ts tests/unit/postReleaseControlPlaneDocs.test.ts tests/unit/requirementsDocs.test.ts tests/unit/packageManifest.test.ts tests/unit/shipControlDocs.test.ts tests/unit/docsWorkbenchDocs.test.ts tests/unit/runWikiWorkbenchCli.test.ts'
     ]);
   });
 
@@ -112,6 +113,7 @@ describe('documentation-package workbench', () => {
     const manifest = readManifest();
     const dockerfile = readText('docker/docs-authoring/Dockerfile');
     const entrypoint = readText('docker/docs-authoring/entrypoint.sh');
+    const dockerHelper = readText('scripts/runDocsWorkbenchDocker.js');
     const workbenchDoc = readText('docs/documentation-workbench.md');
     const programRepoJump = readText('docs/product/program-repo-jump.md');
     const programRepoJumpMap = readText('docs/product/program-repo-jump-map.json');
@@ -124,14 +126,28 @@ describe('documentation-package workbench', () => {
     expect(manifest.scripts?.['docs:gate:core']).toBe(
       'node scripts/run-docs-gate.js --skip-links'
     );
-    expect(manifest.scripts?.['docs:workbench:build']).toContain(
-      'docker/docs-authoring/Dockerfile'
+    expect(manifest.scripts?.['docs:workbench:build']).toBe(
+      'node scripts/runDocsWorkbenchDocker.js build'
     );
-    expect(manifest.scripts?.['docs:workbench:gate']).toContain(
-      'vi-history-suite-docs-authoring:local npm run docs:gate'
+    expect(manifest.scripts?.['docs:workbench:gate']).toBe(
+      'node scripts/runDocsWorkbenchDocker.js gate'
     );
-    expect(manifest.scripts?.['docs:workbench:shell']).toContain(
-      'vi-history-suite-docs-authoring:local bash'
+    expect(manifest.scripts?.['docs:workbench:shell']).toBe(
+      'node scripts/runDocsWorkbenchDocker.js shell'
+    );
+    expect(manifest.scripts?.['wiki:workbench:doctor']).toContain('runWikiWorkbench.js doctor');
+    expect(manifest.scripts?.['wiki:workbench:plan']).toContain('runWikiWorkbench.js plan-pages');
+    expect(manifest.scripts?.['wiki:workbench:prepare']).toContain(
+      'runWikiWorkbench.js prepare-publication'
+    );
+    expect(manifest.scripts?.['wiki:workbench:sync-bundled-docs']).toContain(
+      'runWikiWorkbench.js sync-bundled-docs'
+    );
+    expect(manifest.scripts?.['docs:workbench:wiki:doctor']).toBe(
+      'node scripts/runDocsWorkbenchDocker.js wiki-doctor'
+    );
+    expect(manifest.scripts?.['docs:workbench:wiki:prepare']).toBe(
+      'node scripts/runDocsWorkbenchDocker.js wiki-prepare'
     );
     expect(manifest.scripts?.['program:repos']).toContain('runProgramRepoJump.js');
 
@@ -140,11 +156,23 @@ describe('documentation-package workbench', () => {
     expect(dockerfile).toContain('CMD ["npm", "run", "docs:gate"]');
     expect(entrypoint).toContain('if [[ ! -d node_modules ]]; then');
     expect(entrypoint).toContain('npm ci');
+    expect(dockerHelper).toContain("const docsImage = 'vi-history-suite-docs-authoring:local'");
+    expect(dockerHelper).toContain("command: 'docker.exe'");
+    expect(dockerHelper).toContain("'--context', 'desktop-linux'");
+    expect(dockerHelper).toContain("path.join(repoRoot, 'docker', 'docs-authoring', 'Dockerfile')");
 
     expect(workbenchDoc).toContain('npm run docs:workbench:build');
     expect(workbenchDoc).toContain('npm run docs:workbench:gate');
     expect(workbenchDoc).toContain('npm run docs:workbench:shell');
+    expect(workbenchDoc).toContain('npm run wiki:workbench:doctor');
+    expect(workbenchDoc).toContain('npm run wiki:workbench:plan');
+    expect(workbenchDoc).toContain('npm run wiki:workbench:prepare');
+    expect(workbenchDoc).toContain('npm run wiki:workbench:sync-bundled-docs');
+    expect(workbenchDoc).toContain('npm run docs:workbench:wiki:doctor');
+    expect(workbenchDoc).toContain('npm run docs:workbench:wiki:prepare');
     expect(workbenchDoc).toContain('npm run docs:bundle');
+    expect(workbenchDoc).toContain('.cache/wiki-workbench/latest-workbench.json');
+    expect(workbenchDoc).toContain('.cache/wiki-workbench/publication-prep/');
     expect(workbenchDoc).toContain('registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main');
     expect(workbenchDoc).toContain('docs-workbench-evidence/docs-workbench-manifest.json');
     expect(workbenchDoc).toContain('docs/product/wiki-publication-ledger.md');
@@ -156,6 +184,7 @@ describe('documentation-package workbench', () => {
     expect(programRepoJump).toContain('# Program Repo Jump');
     expect(programRepoJump).toContain('docs/product/program-repo-jump-map.json');
     expect(programRepoJump).toContain('npm run program:repos');
+    expect(programRepoJump).toContain('npm run wiki:workbench:doctor');
     expect(programRepoJump).toContain(
       'scripts/repo_jump.py /home/sveld/code/standards/vi-history-suite --format text'
     );

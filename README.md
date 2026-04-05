@@ -197,6 +197,11 @@ Committed and governed today:
 - a published docs-authoring workbench image plus a repo-native docs gate for
   iterating on requirements, ADRs, release-readiness docs, and future
   wiki-source material in a governed environment
+- a governed wiki workbench that resolves the authority repo and sibling wiki
+  repo from the cross-repo map, stages page-authority bundles, retains
+  `latest-workbench.json` and publication-prep receipts under
+  `.cache/wiki-workbench/`, and supports both local and Docker-first wiki
+  iteration commands
 - a governed cross-repo jump surface that resolves the product repo, wiki repo,
   and companion `repo-standards-review` skill repo from one local map and one
   CLI entrypoint

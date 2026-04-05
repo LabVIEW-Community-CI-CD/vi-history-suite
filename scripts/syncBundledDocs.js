@@ -3,10 +3,20 @@
 const fs = require('node:fs/promises');
 const path = require('node:path');
 
-const repoRoot = path.resolve(path.dirname(require('node:fs').realpathSync.native(__filename)), '..');
-const wikiRepoRoot = path.resolve(repoRoot, '..', 'vi-history-suite.wiki');
-const ledgerPath = path.join(repoRoot, 'docs', 'product', 'wiki-publication-ledger.json');
-const bundleRoot = path.join(repoRoot, 'resources', 'bundled-docs');
+const defaultRepoRoot = path.resolve(
+  path.dirname(require('node:fs').realpathSync.native(__filename)),
+  '..'
+);
+const repoRoot = path.resolve(process.env.VIHS_REPO_ROOT ?? defaultRepoRoot);
+const wikiRepoRoot = path.resolve(
+  process.env.VIHS_WIKI_REPO_ROOT ?? path.resolve(repoRoot, '..', 'vi-history-suite.wiki')
+);
+const ledgerPath = path.resolve(
+  process.env.VIHS_LEDGER_PATH ?? path.join(repoRoot, 'docs', 'product', 'wiki-publication-ledger.json')
+);
+const bundleRoot = path.resolve(
+  process.env.VIHS_BUNDLE_ROOT ?? path.join(repoRoot, 'resources', 'bundled-docs')
+);
 const bundlePagesRoot = path.join(bundleRoot, 'pages');
 
 function escapeAttribute(value) {

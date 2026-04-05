@@ -170,6 +170,7 @@ describe('ship-control direction system', () => {
     const adr0014 = readText('docs/architecture/adr/ADR-0014-cross-repo-navigation-control-plane.md');
     const adr0015 = readText('docs/architecture/adr/ADR-0015-version-matched-bundled-user-documentation.md');
     const adr0016 = readText('docs/architecture/adr/ADR-0016-gitlab-authority-and-github-linux-experiment-lane.md');
+    const adr0019 = readText('docs/architecture/adr/ADR-0019-governed-wiki-workbench-system.md');
 
     expect(readme).toContain('[SHIP-0001: Releasable VI History Suite](./docs/product/SHIP-0001-releasable-vi-history-suite.md)');
     expect(readme).toContain('[Release Readiness Matrix](./docs/product/release-readiness-matrix.json)');
@@ -242,12 +243,17 @@ describe('ship-control direction system', () => {
     expect(workbenchDoc).toContain('registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main');
     expect(workbenchDoc).toContain('npm run docs:bundle');
     expect(workbenchDoc).toContain('npm run docs:workbench:gate');
+    expect(workbenchDoc).toContain('npm run wiki:workbench:doctor');
+    expect(workbenchDoc).toContain('npm run wiki:workbench:prepare');
+    expect(workbenchDoc).toContain('npm run docs:workbench:wiki:prepare');
     expect(workbenchDoc).toContain('docs/product/documentation-coherence-ledger.md');
     expect(workbenchDoc).toContain('docs/product/wiki-seed-plan.md');
     expect(workbenchDoc).toContain('docs/product/wiki-publication-ledger.md');
     expect(workbenchDoc).toContain('docs/product/wiki-publication-ledger.json');
     expect(workbenchDoc).toContain('resources/bundled-docs/manifest.json');
     expect(workbenchDoc).toContain('docs/product/program-repo-jump.md');
+    expect(workbenchDoc).toContain('.cache/wiki-workbench/latest-workbench.json');
+    expect(workbenchDoc).toContain('.cache/wiki-workbench/publication-prep/');
 
     expect(coherenceLedger).toContain('# Documentation Coherence Ledger');
     expect(coherenceLedger).toContain('run-docs-gate.js --skip-links');
@@ -260,10 +266,12 @@ describe('ship-control direction system', () => {
     expect(coherenceLedger).toContain('docs/product/program-repo-jump.md');
     expect(coherenceLedger).toContain('planned fourth experiment mirror');
     expect(coherenceLedger).toContain('DOC-012');
+    expect(coherenceLedger).toContain('DOC-013');
 
     expect(wikiSeedPlan).toContain('# Wiki Seed Plan');
     expect(wikiSeedPlan).toContain('docs/product/documentation-coherence-ledger.md');
     expect(wikiSeedPlan).toContain('docs/product/wiki-publication-ledger.md');
+    expect(wikiSeedPlan).toContain('npm run wiki:workbench:prepare');
     expect(wikiSeedPlan).toContain('src/');
 
     expect(wikiPublicationLedger).toContain('# Wiki Publication Ledger');
@@ -274,6 +282,7 @@ describe('ship-control direction system', () => {
     expect(wikiAuthorityMap).toContain('[documentation-coherence-ledger.md](./documentation-coherence-ledger.md)');
     expect(wikiAuthorityMap).toContain('[wiki-seed-plan.md](./wiki-seed-plan.md)');
     expect(wikiAuthorityMap).toContain('[wiki-publication-ledger.md](./wiki-publication-ledger.md)');
+    expect(wikiAuthorityMap).toContain('npm run docs:workbench:wiki:prepare');
     expect(wikiAuthorityMap).toContain('docs/product/program-repo-jump.md');
 
     expect(architectureOverview).toContain('[ADR-0012](./adr/ADR-0012-documentation-package-workbench-image.md)');
@@ -281,13 +290,16 @@ describe('ship-control direction system', () => {
     expect(architectureOverview).toContain('[ADR-0014](./adr/ADR-0014-cross-repo-navigation-control-plane.md)');
     expect(architectureOverview).toContain('[ADR-0015](./adr/ADR-0015-version-matched-bundled-user-documentation.md)');
     expect(architectureOverview).toContain('[ADR-0016](./adr/ADR-0016-gitlab-authority-and-github-linux-experiment-lane.md)');
+    expect(architectureOverview).toContain('[ADR-0019](./adr/ADR-0019-governed-wiki-workbench-system.md)');
     expect(programRepoJump).toContain('# Program Repo Jump');
     expect(programRepoJump).toContain('private GitHub experiment mirror');
+    expect(programRepoJump).toContain('npm run wiki:workbench:doctor');
     expect(adr0012).toContain('# ADR-0012: Documentation-Package Workbench Image');
     expect(adr0013).toContain('# ADR-0013: Authority-First Wiki Seeding');
     expect(adr0014).toContain('# ADR-0014: Cross-Repo Navigation Control Plane');
     expect(adr0015).toContain('# ADR-0015: Version-Matched Bundled User Documentation');
     expect(adr0016).toContain('# ADR-0016: GitLab Authority And GitHub Linux Experiment Lane');
+    expect(adr0019).toContain('# ADR-0019: Governed Wiki Workbench System');
   });
 
   it('configures the GitLab release lane plus docs-package workbench publish lane', () => {

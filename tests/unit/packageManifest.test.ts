@@ -111,6 +111,24 @@ describe('extension manifest research alignment', () => {
     expect(manifest.scripts?.['program:repos']).toBe(
       'npm run compile && node out/cli/runProgramRepoJump.js'
     );
+    expect(manifest.scripts?.['wiki:workbench']).toBe(
+      'npm run compile && node out/cli/runWikiWorkbench.js'
+    );
+    expect(manifest.scripts?.['wiki:workbench:doctor']).toBe(
+      'npm run compile && node out/cli/runWikiWorkbench.js doctor'
+    );
+    expect(manifest.scripts?.['wiki:workbench:discover']).toBe(
+      'npm run compile && node out/cli/runWikiWorkbench.js discover'
+    );
+    expect(manifest.scripts?.['wiki:workbench:plan']).toBe(
+      'npm run compile && node out/cli/runWikiWorkbench.js plan-pages'
+    );
+    expect(manifest.scripts?.['wiki:workbench:prepare']).toBe(
+      'npm run compile && node out/cli/runWikiWorkbench.js prepare-publication'
+    );
+    expect(manifest.scripts?.['wiki:workbench:sync-bundled-docs']).toBe(
+      'npm run compile && node out/cli/runWikiWorkbench.js sync-bundled-docs'
+    );
     expect(manifest.scripts?.['docs:bundle']).toBe('node scripts/syncBundledDocs.js');
     expect(manifest.scripts?.['docs:gate']).toBe('node scripts/run-docs-gate.js');
     expect(manifest.scripts?.['docs:gate:core']).toBe(
@@ -146,14 +164,26 @@ describe('extension manifest research alignment', () => {
     expect(manifest.scripts?.['benchmark:github:latest:json']).toBe(
       'node scripts/printLatestGitHubLinuxBenchmark.js --json'
     );
-    expect(manifest.scripts?.['docs:workbench:build']).toContain(
-      'docker/docs-authoring/Dockerfile'
+    expect(manifest.scripts?.['docs:workbench:build']).toBe(
+      'node scripts/runDocsWorkbenchDocker.js build'
     );
-    expect(manifest.scripts?.['docs:workbench:gate']).toContain(
-      'vi-history-suite-docs-authoring:local npm run docs:gate'
+    expect(manifest.scripts?.['docs:workbench:gate']).toBe(
+      'node scripts/runDocsWorkbenchDocker.js gate'
     );
-    expect(manifest.scripts?.['docs:workbench:shell']).toContain(
-      'vi-history-suite-docs-authoring:local bash'
+    expect(manifest.scripts?.['docs:workbench:shell']).toBe(
+      'node scripts/runDocsWorkbenchDocker.js shell'
+    );
+    expect(manifest.scripts?.['docs:workbench:wiki:doctor']).toBe(
+      'node scripts/runDocsWorkbenchDocker.js wiki-doctor'
+    );
+    expect(manifest.scripts?.['docs:workbench:wiki:plan']).toBe(
+      'node scripts/runDocsWorkbenchDocker.js wiki-plan'
+    );
+    expect(manifest.scripts?.['docs:workbench:wiki:prepare']).toBe(
+      'node scripts/runDocsWorkbenchDocker.js wiki-prepare'
+    );
+    expect(manifest.scripts?.['docs:workbench:wiki:sync-bundled-docs']).toBe(
+      'node scripts/runDocsWorkbenchDocker.js wiki-sync-bundled-docs'
     );
     expect(manifest.scripts?.['design:gate:assert-complete']).toBe(
       'npm run compile && node out/cli/runVerifyDesignGateCompletion.js'
