@@ -233,6 +233,37 @@ export function renderComparisonReportPacketHtml(record: ComparisonReportPacketR
       <div><strong>LabVIEW path:</strong> ${escapeHtml(runtimeSelection.labviewExe?.path ?? 'none')}</div>
       <div><strong>LabVIEWCLI path:</strong> ${escapeHtml(runtimeSelection.labviewCli?.path ?? 'none')}</div>
       <div><strong>LVCompare path:</strong> ${escapeHtml(runtimeSelection.lvCompare?.path ?? 'none')}</div>
+      <div><strong>Docker CLI available:</strong> ${escapeHtml(
+        runtimeSelection.windowsContainerDockerCliAvailable === undefined
+          ? 'none'
+          : runtimeSelection.windowsContainerDockerCliAvailable
+            ? 'yes'
+            : 'no'
+      )}</div>
+      <div><strong>Docker daemon reachable:</strong> ${escapeHtml(
+        runtimeSelection.windowsContainerDaemonReachable === undefined
+          ? 'none'
+          : runtimeSelection.windowsContainerDaemonReachable
+            ? 'yes'
+            : 'no'
+      )}</div>
+      <div><strong>Windows container host mode:</strong> ${escapeHtml(
+        runtimeSelection.windowsContainerHostMode ?? 'none'
+      )}</div>
+      <div><strong>Windows container capability:</strong> ${escapeHtml(
+        runtimeSelection.windowsContainerCapabilityAvailable === undefined
+          ? 'none'
+          : runtimeSelection.windowsContainerCapabilityAvailable
+            ? 'yes'
+            : 'no'
+      )}</div>
+      <div><strong>Windows container image present:</strong> ${escapeHtml(
+        runtimeSelection.windowsContainerImageAvailable === undefined
+          ? 'none'
+          : runtimeSelection.windowsContainerImageAvailable
+            ? 'yes'
+            : 'no'
+      )}</div>
       <div><strong>Host LabVIEW.ini:</strong> ${escapeHtml(runtimeSelection.hostLabviewIniPath ?? 'none')}</div>
       <div><strong>Host VI Server port:</strong> ${escapeHtml(
         runtimeSelection.hostLabviewTcpPort === undefined

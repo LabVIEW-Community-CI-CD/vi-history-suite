@@ -199,6 +199,12 @@ describe('comparisonRuntimeDoctor', () => {
         executionMode: 'docker-only',
         preferBitness: 'x64',
         provider: 'unavailable',
+        windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
+        windowsContainerDockerCliAvailable: true,
+        windowsContainerDaemonReachable: true,
+        windowsContainerHostMode: 'windows',
+        windowsContainerCapabilityAvailable: true,
+        windowsContainerImageAvailable: false,
         blockedReason: 'docker-only-provider-unavailable',
         providerDecisions: [
           {
@@ -231,7 +237,7 @@ describe('comparisonRuntimeDoctor', () => {
 
     expect(lines).toContain('Selected execution mode=docker-only.');
     expect(lines.at(-1)).toBe(
-      'Next action: install, enable, or switch Docker to Windows-container mode, or change execution mode, then rerun comparison report generation.'
+      'Next action: pull the governed Windows container image or change execution mode, then rerun comparison report generation.'
     );
   });
 
@@ -244,6 +250,12 @@ describe('comparisonRuntimeDoctor', () => {
         preferBitness: 'x64',
         provider: 'unavailable',
         blockedReason: 'windows-host-runtime-surface-contaminated',
+        windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
+        windowsContainerDockerCliAvailable: true,
+        windowsContainerDaemonReachable: true,
+        windowsContainerHostMode: 'windows',
+        windowsContainerCapabilityAvailable: true,
+        windowsContainerImageAvailable: false,
         hostLabviewIniPath:
           'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.ini',
         hostLabviewTcpPort: 3363,
@@ -254,7 +266,7 @@ describe('comparisonRuntimeDoctor', () => {
             outcome: 'rejected',
             reason: 'auto-required-docker-because-host-runtime-conflict-but-provider-unavailable',
             detail:
-              'Validated Windows host runtime facts required Docker, but Windows container image nationalinstruments/labview:2026q1-windows was not available to the current host.'
+              'Validated Windows host runtime facts required Docker, but governed Windows container image nationalinstruments/labview:2026q1-windows was not present locally on the current host.'
           },
           {
             provider: 'host-native',
@@ -281,13 +293,13 @@ describe('comparisonRuntimeDoctor', () => {
 
     expect(lines).toContain('Selected execution mode=auto.');
     expect(lines).toContain(
-      'Selected runtime tools: HostLabVIEW.ini=C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.ini | HostVITcpPort=3363 | HostConflictDetected=yes.'
+      'Selected runtime tools: ContainerImage=nationalinstruments/labview:2026q1-windows | DockerCliAvailable=yes | DockerDaemonReachable=yes | ContainerHostMode=windows | WindowsContainerCapability=yes | ContainerImagePresent=no | HostLabVIEW.ini=C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.ini | HostVITcpPort=3363 | HostConflictDetected=yes.'
     );
     expect(lines).toContain(
       'Runtime blocked reason: windows-host-runtime-surface-contaminated.'
     );
     expect(lines.at(-1)).toBe(
-      'Next action: close existing LabVIEW/LabVIEWCLI/LVCompare sessions, clear the governed VI Server listener on the selected port, or make the Windows container provider available, then rerun comparison report generation.'
+      'Next action: close existing LabVIEW/LabVIEWCLI/LVCompare sessions, clear the governed VI Server listener on the selected port, or pull the governed Windows container image, then rerun comparison report generation.'
     );
   });
 });

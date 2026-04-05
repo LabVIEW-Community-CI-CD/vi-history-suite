@@ -8,6 +8,9 @@ code or prior chat state. The current authority surfaces for this page are:</p>
 <li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/current-state.md"><code>docs/product/current-state.md</code></a></li>
 <li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md"><code>docs/product/execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md</code></a></li>
 <li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/issues/ISSUE-0408-repeatable-benchmark-proof.md"><code>docs/product/issues/ISSUE-0408-repeatable-benchmark-proof.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/extension-execution-policy.md"><code>docs/product/extension-execution-policy.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md"><code>docs/product/execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md"><code>docs/product/issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md</code></a></li>
 </ul>
 <h2>Purpose</h2>
 <p>The debt ledger is the reader-facing view of the machine-readable debt package.</p>
@@ -66,9 +69,11 @@ cross-OS benchmark packet.</li>
 installed extension now exposes explicit <code>auto</code> / <code>host-only</code> /
 <code>docker-only</code> behavior, rejects silent provider fallback, and already keeps
 Windows <code>auto</code> host-first on a clean validated host while routing
-contaminated host surfaces through Docker or a hard stop, but Docker daemon
-and Windows-container capability validation, visible acquisition progress,
-and fuller front-facing provider transparency still remain open.</li>
+contaminated host surfaces through Docker or a hard stop. The current open
+remainder is narrower now: Docker CLI availability, daemon reachability,
+active container mode, and governed image presence are explicit selector
+facts, but visible acquisition progress and fuller front-facing provider
+transparency still remain open.</li>
 </ul>
 <p>That means the repo is not pretending the benchmark is fully clean. It is
 retaining the blockers and queued execution-policy ambiguity as explicit open

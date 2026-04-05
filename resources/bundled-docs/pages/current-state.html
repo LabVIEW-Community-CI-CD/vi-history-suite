@@ -136,6 +136,9 @@ of selecting Docker just because a governed image exists</li>
 <li>the selector now derives the selected <code>LabVIEW.ini</code>, governed VI Server TCP
 port, and observed host-runtime conflict facts before final Windows provider
 choice</li>
+<li>Windows Docker-capability truth is now explicit too: the selector validates
+Docker CLI availability, daemon reachability, active container mode, and
+governed image presence before the Windows provider is selected or rejected</li>
 <li>contaminated Windows host-runtime surfaces now route to Docker when the
 governed provider is available and hard-stop when Docker is required but not
 available</li>
@@ -156,6 +159,9 @@ Server TCP port</li>
 <li>if Docker is required and unavailable, or not Windows-container-capable on a
 Windows host, the product contract is a hard stop telling the user to close
 LabVIEW or install, enable, or switch Docker</li>
+<li>when Docker is evaluated on Windows, the retained runtime-doctor and packet
+surfaces now expose those Docker capability facts instead of collapsing them
+into one image-availability guess</li>
 <li>if Docker execution is selected and the image is missing, the user should
 see visible pull progress; on Windows that means the governed Windows image</li>
 <li>the current open debt item for that ambiguity is retained in the authority

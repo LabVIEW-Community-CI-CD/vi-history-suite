@@ -50,6 +50,9 @@ VI Server port from the selected host runtime before final provider choice</li>
 <li>on Windows, contaminated host-runtime surfaces now route to Docker when the
 governed provider is available and hard-stop when that Docker escape path is
 unavailable</li>
+<li>when Windows Docker evaluation is in play, the selector now validates Docker
+CLI availability, daemon reachability, active container mode, and governed
+image presence before the Windows provider is selected or rejected</li>
 </ul>
 <p>The remaining queued contract is:</p>
 <ul>
@@ -71,6 +74,11 @@ derived VI Server port, not to one assumed default port</p>
 <li><p>if Docker is required and unavailable, or if Docker is not Windows-container-
 capable on Windows, the extension hard-stops with actionable guidance to
 close the conflicting LabVIEW session or install, enable, or switch Docker</p>
+</li>
+<li><p>when Docker is evaluated on Windows, the retained runtime-doctor and packet
+surfaces now show whether Docker CLI was available, whether the daemon was
+reachable, which container mode was active, and whether the governed image
+was already present locally</p>
 </li>
 <li><p>if Docker execution is selected and the image is missing locally, the
 extension surfaces visible pull progress; on Windows that means pulling the

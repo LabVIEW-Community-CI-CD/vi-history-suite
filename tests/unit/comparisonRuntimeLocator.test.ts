@@ -6,9 +6,11 @@ import {
   locateComparisonRuntime,
   parseWindowsRegistryLabviewCandidates,
   pathExistsWithFsAccess,
+  queryWindowsContainerProviderFacts,
   queryWindowsContainerImageAvailability,
   runWindowsRegistryQuery
 } from '../../src/reporting/comparisonRuntimeLocator';
+import type { WindowsContainerProviderFacts } from '../../src/reporting/comparisonRuntimeLocator';
 
 function buildCleanWindowsHostDeps() {
   return {
@@ -53,6 +55,22 @@ function buildConflictedWindowsHostDeps() {
       lvcompareProcessObserved: false
     }),
     observeWindowsTcpListeners: vi.fn().mockResolvedValue([])
+  };
+}
+
+function buildWindowsContainerFacts(
+  overrides: Partial<WindowsContainerProviderFacts> = {}
+): WindowsContainerProviderFacts {
+  return {
+    image: 'nationalinstruments/labview:2026q1-windows',
+    hostPlatform: 'win32',
+    dockerCliAvailable: true,
+    dockerDaemonReachable: true,
+    windowsContainerCapabilityAvailable: true,
+    windowsContainerHostMode: 'windows',
+    imageAvailable: true,
+    notes: ['Docker daemon is reachable in Windows-container mode and governed image is present locally.'],
+    ...overrides
   };
 }
 
@@ -241,7 +259,9 @@ describe('comparisonRuntimeLocator', () => {
         preferBitness: 'auto'
       },
       {
-        queryWindowsContainerImage: vi.fn().mockResolvedValue(true),
+        queryWindowsContainerProviderFacts: vi
+          .fn()
+          .mockResolvedValue(buildWindowsContainerFacts()),
         pathExists: vi.fn().mockResolvedValue(false),
         queryWindowsRegistry: vi.fn().mockResolvedValue('')
       }
@@ -266,7 +286,7 @@ describe('comparisonRuntimeLocator', () => {
         outcome: 'selected',
         reason: 'windows-container-selected-host-runtime-unavailable',
         detail:
-          'No compatible host-native LabVIEW 2026 runtime was located, so Windows container image nationalinstruments/labview:2026q1-windows was selected.'
+          'Docker daemon was reachable in windows-container mode with governed Windows container image nationalinstruments/labview:2026q1-windows present locally, so isolated execution was selected because no compatible host-native LabVIEW 2026 runtime was located.'
       },
       {
         provider: 'host-native',
@@ -383,7 +403,9 @@ describe('comparisonRuntimeLocator', () => {
         preferBitness: 'x64'
       },
       {
-        queryWindowsContainerImage: vi.fn().mockResolvedValue(false),
+        queryWindowsContainerProviderFacts: vi
+          .fn()
+          .mockResolvedValue(buildWindowsContainerFacts({ imageAvailable: false })),
         pathExists: vi.fn(async (filePath: string) =>
           [
             'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
@@ -399,7 +421,7 @@ describe('comparisonRuntimeLocator', () => {
     expect(result.provider).toBe('unavailable');
     expect(result.blockedReason).toBe('docker-only-provider-unavailable');
     expect(result.notes).toContain(
-      'Docker-only execution was requested, but Windows container image nationalinstruments/labview:2026q1-windows was not available to the current host.'
+      'Docker-only execution was requested, but governed Windows container image nationalinstruments/labview:2026q1-windows was not present locally on the current host.'
     );
     expect(result.providerDecisions).toEqual([
       {
@@ -407,7 +429,7 @@ describe('comparisonRuntimeLocator', () => {
         outcome: 'rejected',
         reason: 'docker-only-provider-unavailable',
         detail:
-          'Docker-only execution was requested, but Windows container image nationalinstruments/labview:2026q1-windows was not available to the current host.'
+          'Docker-only execution was requested, but governed Windows container image nationalinstruments/labview:2026q1-windows was not present locally on the current host.'
       },
       {
         provider: 'host-native',
@@ -689,6 +711,51 @@ HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\National Instruments\\LabVIEW
     ).resolves.toBe(false);
   });
 
+  it('derives canonical Windows container provider facts before selecting Docker', async () => {
+    const runner = vi
+      .fn()
+      .mockResolvedValueOnce({ stdout: 'windows\n' })
+      .mockResolvedValueOnce({ stdout: '[]' });
+
+    await expect(
+      queryWindowsContainerProviderFacts(
+        'nationalinstruments/labview:2026q1-windows',
+        'win32',
+        runner
+      )
+    ).resolves.toEqual({
+      image: 'nationalinstruments/labview:2026q1-windows',
+      hostPlatform: 'win32',
+      dockerCliAvailable: true,
+      dockerDaemonReachable: true,
+      windowsContainerCapabilityAvailable: true,
+      windowsContainerHostMode: 'windows',
+      imageAvailable: true,
+      notes: [
+        'Docker daemon is reachable in Windows-container mode and governed image nationalinstruments/labview:2026q1-windows is present locally.'
+      ]
+    });
+
+    expect(runner.mock.calls).toEqual([
+      [
+        'docker',
+        ['info', '--format', '{{.OSType}}'],
+        {
+          windowsHide: true,
+          maxBuffer: 1024 * 1024
+        }
+      ],
+      [
+        'docker',
+        ['image', 'inspect', 'nationalinstruments/labview:2026q1-windows'],
+        {
+          windowsHide: true,
+          maxBuffer: 1024 * 1024
+        }
+      ]
+    ]);
+  });
+
   it('ignores failed registry probes and can fall back to the first configured LabVIEW path when bitness is unknown', async () => {
     const cleanHost = buildCleanWindowsHostDeps();
     const result = await locateComparisonRuntime(
@@ -724,7 +791,9 @@ HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\National Instruments\\LabVIEW
         preferBitness: 'x64'
       },
       {
-        queryWindowsContainerImage: vi.fn().mockResolvedValue(true),
+        queryWindowsContainerProviderFacts: vi
+          .fn()
+          .mockResolvedValue(buildWindowsContainerFacts()),
         pathExists: vi.fn(async (filePath: string) =>
           [
             'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
@@ -746,7 +815,7 @@ HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\National Instruments\\LabVIEW
         outcome: 'selected',
         reason: 'auto-required-docker-because-host-runtime-conflict',
         detail:
-          'Validated Windows host runtime facts required Docker, and Windows container image nationalinstruments/labview:2026q1-windows was available for isolated execution.'
+          'Docker daemon was reachable in windows-container mode with governed Windows container image nationalinstruments/labview:2026q1-windows present locally, so isolated execution was selected because the validated Windows host runtime surface was contaminated.'
       },
       {
         provider: 'host-native',
@@ -766,7 +835,9 @@ HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\National Instruments\\LabVIEW
         preferBitness: 'x64'
       },
       {
-        queryWindowsContainerImage: vi.fn().mockResolvedValue(false),
+        queryWindowsContainerProviderFacts: vi
+          .fn()
+          .mockResolvedValue(buildWindowsContainerFacts({ imageAvailable: false })),
         pathExists: vi.fn(async (filePath: string) =>
           [
             'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
@@ -786,7 +857,7 @@ HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\National Instruments\\LabVIEW
         outcome: 'rejected',
         reason: 'auto-required-docker-because-host-runtime-conflict-but-provider-unavailable',
         detail:
-          'Validated Windows host runtime facts required Docker, but Windows container image nationalinstruments/labview:2026q1-windows was not available to the current host.'
+          'Validated Windows host runtime facts required Docker, but governed Windows container image nationalinstruments/labview:2026q1-windows was not present locally on the current host.'
       },
       {
         provider: 'host-native',

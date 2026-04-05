@@ -22,6 +22,7 @@ export type ComparisonRuntimeProvider = 'host-native' | 'windows-container' | 'u
 export type RuntimeCandidateSource = 'configured' | 'scan' | 'registry';
 export type RuntimeCandidateKind = 'labview-exe' | 'labview-cli' | 'lvcompare';
 export type RuntimeSelectableProvider = Exclude<ComparisonRuntimeProvider, 'unavailable'>;
+export type WindowsContainerHostMode = 'windows' | 'linux' | 'unknown';
 
 export interface ComparisonRuntimeSettings {
   executionMode?: RuntimeExecutionMode;
@@ -67,6 +68,11 @@ export interface ComparisonRuntimeSelection {
   hostLabviewIniPath?: string;
   hostLabviewTcpPort?: number;
   hostRuntimeConflictDetected?: boolean;
+  windowsContainerDockerCliAvailable?: boolean;
+  windowsContainerDaemonReachable?: boolean;
+  windowsContainerCapabilityAvailable?: boolean;
+  windowsContainerHostMode?: WindowsContainerHostMode;
+  windowsContainerImageAvailable?: boolean;
   blockedReason?: string;
   providerDecisions?: RuntimeProviderDecision[];
   notes: string[];
@@ -82,6 +88,10 @@ export interface ComparisonRuntimeLocatorDeps {
     image: string,
     hostPlatform: NodeJS.Platform
   ) => Promise<boolean>;
+  queryWindowsContainerProviderFacts?: (
+    image: string,
+    hostPlatform: NodeJS.Platform
+  ) => Promise<WindowsContainerProviderFacts>;
   observeWindowsProcesses?: (
     options: ObserveWindowsProcessesOptions
   ) => Promise<RuntimeProcessObservation | undefined>;
@@ -98,6 +108,11 @@ interface BuildProviderDecisionsOptions {
   windowsContainerImage: string;
   windowsContainerAvailable: boolean;
   windowsContainerEvaluated?: boolean;
+  windowsContainerDockerCliAvailable?: boolean;
+  windowsContainerDaemonReachable?: boolean;
+  windowsContainerCapabilityAvailable?: boolean;
+  windowsContainerHostMode?: WindowsContainerHostMode;
+  windowsContainerImageAvailable?: boolean;
   hostRuntimeConflictDetected?: boolean;
   selectedProvider?: RuntimeSelectableProvider;
   selectedEngine?: ComparisonRuntimeEngine;
@@ -123,6 +138,17 @@ interface WindowsHostRuntimeSurfaceFacts {
   hostLabviewIniPath?: string;
   hostLabviewTcpPort?: number;
   hostRuntimeConflictDetected?: boolean;
+  notes: string[];
+}
+
+export interface WindowsContainerProviderFacts {
+  image: string;
+  hostPlatform: NodeJS.Platform;
+  dockerCliAvailable: boolean;
+  dockerDaemonReachable: boolean;
+  windowsContainerCapabilityAvailable: boolean;
+  windowsContainerHostMode?: WindowsContainerHostMode;
+  imageAvailable: boolean;
   notes: string[];
 }
 
@@ -337,6 +363,7 @@ export async function locateComparisonRuntime(
 
   let windowsContainerAvailable = false;
   let windowsContainerEvaluated = false;
+  let windowsContainerFacts: WindowsContainerProviderFacts | undefined;
   const ensureWindowsContainerAvailability = async (): Promise<boolean> => {
     if (
       windowsContainerEvaluated ||
@@ -347,12 +374,30 @@ export async function locateComparisonRuntime(
       return windowsContainerAvailable;
     }
 
-    windowsContainerAvailable = await (
-      deps.queryWindowsContainerImage ?? queryWindowsContainerImageAvailability
-    )(windowsContainerImage, hostPlatform);
+    windowsContainerFacts = deps.queryWindowsContainerProviderFacts
+      ? await deps.queryWindowsContainerProviderFacts(windowsContainerImage, hostPlatform)
+      : deps.queryWindowsContainerImage
+        ? buildLegacyWindowsContainerProviderFacts(
+            windowsContainerImage,
+            hostPlatform,
+            await deps.queryWindowsContainerImage(windowsContainerImage, hostPlatform)
+          )
+        : await queryWindowsContainerProviderFacts(windowsContainerImage, hostPlatform);
+    windowsContainerAvailable =
+      windowsContainerFacts.windowsContainerCapabilityAvailable &&
+      windowsContainerFacts.imageAvailable;
     windowsContainerEvaluated = true;
     return windowsContainerAvailable;
   };
+  const buildWindowsContainerDecisionFacts = () => ({
+    windowsContainerDockerCliAvailable: windowsContainerFacts?.dockerCliAvailable,
+    windowsContainerDaemonReachable: windowsContainerFacts?.dockerDaemonReachable,
+    windowsContainerCapabilityAvailable: windowsContainerFacts?.windowsContainerCapabilityAvailable,
+    windowsContainerHostMode: windowsContainerFacts?.windowsContainerHostMode,
+    windowsContainerImageAvailable: windowsContainerFacts?.imageAvailable
+  });
+  const buildWindowsContainerSelectionFactsForReturn = () =>
+    buildWindowsContainerSelectionFacts(windowsContainerFacts);
 
   if (executionMode === 'docker-only') {
     windowsContainerAvailable = await ensureWindowsContainerAvailability();
@@ -370,6 +415,7 @@ export async function locateComparisonRuntime(
           windowsContainerImage,
           windowsContainerAvailable,
           windowsContainerEvaluated,
+          ...buildWindowsContainerDecisionFacts(),
           blockedReason: 'docker-only-provider-not-supported-on-platform'
         }),
         notes: [
@@ -394,6 +440,7 @@ export async function locateComparisonRuntime(
           windowsContainerImage,
           windowsContainerAvailable,
           windowsContainerEvaluated,
+          ...buildWindowsContainerDecisionFacts(),
           blockedReason: 'docker-only-requires-windows-x64-provider'
         }),
         notes: [
@@ -418,10 +465,20 @@ export async function locateComparisonRuntime(
           windowsContainerImage,
           windowsContainerAvailable,
           windowsContainerEvaluated,
+          ...buildWindowsContainerDecisionFacts(),
           blockedReason: 'docker-only-provider-unavailable'
         }),
+        ...buildWindowsContainerSelectionFactsForReturn(),
         notes: [
-          `Docker-only execution was requested, but Windows container image ${windowsContainerImage} was not available to the current host.`
+          `Docker-only execution was requested, but ${describeUnavailableWindowsContainerProvider({
+            windowsContainerImage,
+            dockerCliAvailable: windowsContainerFacts?.dockerCliAvailable,
+            dockerDaemonReachable: windowsContainerFacts?.dockerDaemonReachable,
+            windowsContainerCapabilityAvailable:
+              windowsContainerFacts?.windowsContainerCapabilityAvailable,
+            windowsContainerHostMode: windowsContainerFacts?.windowsContainerHostMode,
+            imageAvailable: windowsContainerFacts?.imageAvailable
+          })}`
         ],
         registryQueryPlans,
         candidates
@@ -440,9 +497,11 @@ export async function locateComparisonRuntime(
         windowsContainerImage,
         windowsContainerAvailable,
         windowsContainerEvaluated,
+        ...buildWindowsContainerDecisionFacts(),
         selectedProvider: 'windows-container',
         selectedEngine: 'labview-cli'
       }),
+      ...buildWindowsContainerSelectionFactsForReturn(),
       windowsContainerImage,
       engine: 'labview-cli',
       labviewExe: {
@@ -466,7 +525,16 @@ export async function locateComparisonRuntime(
         exists: true
       },
       notes: [
-        `Docker-only execution requested; using governed Windows container provider image ${windowsContainerImage}.`
+        describeSelectedWindowsContainerProvider({
+          executionMode,
+          windowsContainerImage,
+          dockerCliAvailable: windowsContainerFacts?.dockerCliAvailable,
+          dockerDaemonReachable: windowsContainerFacts?.dockerDaemonReachable,
+          windowsContainerCapabilityAvailable:
+            windowsContainerFacts?.windowsContainerCapabilityAvailable,
+          windowsContainerHostMode: windowsContainerFacts?.windowsContainerHostMode,
+          imageAvailable: windowsContainerFacts?.imageAvailable
+        })
       ],
       registryQueryPlans,
       candidates
@@ -500,18 +568,20 @@ export async function locateComparisonRuntime(
           executionMode,
           preferBitness,
           provider: 'windows-container',
-          providerDecisions: buildProviderDecisions({
-            platform,
-            executionMode,
-            preferBitness,
-            windowsContainerImage,
-            windowsContainerAvailable,
-            windowsContainerEvaluated,
-            selectedProvider: 'windows-container',
-            selectedEngine: 'labview-cli',
-            labviewExeFound: false
-          }),
+        providerDecisions: buildProviderDecisions({
+          platform,
+          executionMode,
+          preferBitness,
           windowsContainerImage,
+          windowsContainerAvailable,
+          windowsContainerEvaluated,
+          ...buildWindowsContainerDecisionFacts(),
+          selectedProvider: 'windows-container',
+          selectedEngine: 'labview-cli',
+          labviewExeFound: false
+        }),
+        ...buildWindowsContainerSelectionFactsForReturn(),
+        windowsContainerImage,
           engine: 'labview-cli',
           labviewExe: {
             kind: 'labview-exe',
@@ -533,18 +603,36 @@ export async function locateComparisonRuntime(
             source: 'scan',
             exists: true
           },
-          notes: [
-            `No compatible host-native LabVIEW 2026 runtime was located; using governed Windows container provider image ${windowsContainerImage}.`
-          ],
-          registryQueryPlans,
-          candidates
-        };
-      }
-
-      notes.push(
-        `Windows container provider image ${windowsContainerImage} was not available; no compatible host-native LabVIEW 2026 runtime was located.`
-      );
+        notes: [
+          `No compatible host-native LabVIEW 2026 runtime was located; ${describeSelectedWindowsContainerProvider({
+            executionMode,
+            windowsContainerImage,
+            dockerCliAvailable: windowsContainerFacts?.dockerCliAvailable,
+            dockerDaemonReachable: windowsContainerFacts?.dockerDaemonReachable,
+            windowsContainerCapabilityAvailable:
+              windowsContainerFacts?.windowsContainerCapabilityAvailable,
+            windowsContainerHostMode: windowsContainerFacts?.windowsContainerHostMode,
+            imageAvailable: windowsContainerFacts?.imageAvailable,
+            selectionReason: 'host-runtime-unavailable'
+          })}`
+        ],
+        registryQueryPlans,
+        candidates
+      };
     }
+
+    notes.push(
+      `No compatible host-native LabVIEW 2026 runtime was located, and ${describeUnavailableWindowsContainerProvider({
+        windowsContainerImage,
+        dockerCliAvailable: windowsContainerFacts?.dockerCliAvailable,
+        dockerDaemonReachable: windowsContainerFacts?.dockerDaemonReachable,
+        windowsContainerCapabilityAvailable:
+          windowsContainerFacts?.windowsContainerCapabilityAvailable,
+        windowsContainerHostMode: windowsContainerFacts?.windowsContainerHostMode,
+        imageAvailable: windowsContainerFacts?.imageAvailable
+      })}`
+    );
+  }
 
     return {
       platform,
@@ -559,9 +647,11 @@ export async function locateComparisonRuntime(
         windowsContainerImage,
         windowsContainerAvailable,
         windowsContainerEvaluated,
+        ...buildWindowsContainerDecisionFacts(),
         blockedReason: 'labview-exe-not-found',
         labviewExeFound: false
       }),
+      ...buildWindowsContainerSelectionFactsForReturn(),
       notes: [
         'No supported LabVIEW 2026 runtime was located for report generation.',
         'Install LabVIEW 2026 Q1 or configure viHistorySuite.labviewExePath to an explicit LabVIEW 2026 executable.'
@@ -597,6 +687,7 @@ export async function locateComparisonRuntime(
             windowsContainerImage,
             windowsContainerAvailable,
             windowsContainerEvaluated,
+            ...buildWindowsContainerDecisionFacts(),
             hostRuntimeConflictDetected,
             selectedProvider: 'windows-container',
             selectedEngine: 'labview-cli',
@@ -604,6 +695,7 @@ export async function locateComparisonRuntime(
             labviewCliFound: Boolean(labviewCli),
             lvCompareFound: Boolean(lvCompare)
           }),
+          ...buildWindowsContainerSelectionFactsForReturn(),
           windowsContainerImage,
           engine: 'labview-cli',
           labviewExe: {
@@ -631,7 +723,17 @@ export async function locateComparisonRuntime(
           hostRuntimeConflictDetected,
           notes: [
             ...notes,
-            `Validated Windows host runtime surface was contaminated; using governed Windows container provider image ${windowsContainerImage} instead of host-native execution.`
+            describeSelectedWindowsContainerProvider({
+              executionMode,
+              windowsContainerImage,
+              dockerCliAvailable: windowsContainerFacts?.dockerCliAvailable,
+              dockerDaemonReachable: windowsContainerFacts?.dockerDaemonReachable,
+              windowsContainerCapabilityAvailable:
+                windowsContainerFacts?.windowsContainerCapabilityAvailable,
+              windowsContainerHostMode: windowsContainerFacts?.windowsContainerHostMode,
+              imageAvailable: windowsContainerFacts?.imageAvailable,
+              selectionReason: 'host-runtime-conflict'
+            })
           ],
           registryQueryPlans,
           candidates
@@ -639,7 +741,15 @@ export async function locateComparisonRuntime(
       }
 
       notes.push(
-        `Validated Windows host runtime surface was contaminated and required Docker, but Windows container image ${windowsContainerImage} was not available to the current host.`
+        `Validated Windows host runtime surface required Docker, but ${describeUnavailableWindowsContainerProvider({
+          windowsContainerImage,
+          dockerCliAvailable: windowsContainerFacts?.dockerCliAvailable,
+          dockerDaemonReachable: windowsContainerFacts?.dockerDaemonReachable,
+          windowsContainerCapabilityAvailable:
+            windowsContainerFacts?.windowsContainerCapabilityAvailable,
+          windowsContainerHostMode: windowsContainerFacts?.windowsContainerHostMode,
+          imageAvailable: windowsContainerFacts?.imageAvailable
+        })}`
       );
     } else if (executionMode === 'host-only') {
       notes.push(
@@ -664,12 +774,14 @@ export async function locateComparisonRuntime(
         windowsContainerImage,
         windowsContainerAvailable,
         windowsContainerEvaluated,
+        ...buildWindowsContainerDecisionFacts(),
         hostRuntimeConflictDetected,
         blockedReason: 'windows-host-runtime-surface-contaminated',
         labviewExeFound: true,
         labviewCliFound: Boolean(labviewCli),
         lvCompareFound: Boolean(lvCompare)
       }),
+      ...buildWindowsContainerSelectionFactsForReturn(),
       labviewExe,
       labviewCli,
       lvCompare,
@@ -703,12 +815,14 @@ export async function locateComparisonRuntime(
           windowsContainerImage,
           windowsContainerAvailable,
           windowsContainerEvaluated,
+          ...buildWindowsContainerDecisionFacts(),
           selectedProvider: 'windows-container',
           selectedEngine: 'labview-cli',
           labviewExeFound: true,
           labviewCliFound: false,
           lvCompareFound: false
         }),
+        ...buildWindowsContainerSelectionFactsForReturn(),
         windowsContainerImage,
         engine: 'labview-cli',
         labviewExe: {
@@ -736,7 +850,17 @@ export async function locateComparisonRuntime(
         hostRuntimeConflictDetected,
         notes: [
           ...notes,
-          `Host-native LabVIEW 2026 was available, but no host comparison tool was located; using governed Windows container provider image ${windowsContainerImage}.`
+          `Host-native LabVIEW 2026 was available, but no host comparison tool was located; ${describeSelectedWindowsContainerProvider({
+            executionMode,
+            windowsContainerImage,
+            dockerCliAvailable: windowsContainerFacts?.dockerCliAvailable,
+            dockerDaemonReachable: windowsContainerFacts?.dockerDaemonReachable,
+            windowsContainerCapabilityAvailable:
+              windowsContainerFacts?.windowsContainerCapabilityAvailable,
+            windowsContainerHostMode: windowsContainerFacts?.windowsContainerHostMode,
+            imageAvailable: windowsContainerFacts?.imageAvailable,
+            selectionReason: 'host-comparison-tool-missing'
+          })}`
         ],
         registryQueryPlans,
         candidates
@@ -744,7 +868,15 @@ export async function locateComparisonRuntime(
     }
 
     notes.push(
-      `Windows container provider image ${windowsContainerImage} was not available; falling back to host-native runtime discovery.`
+      `Windows container provider was not available because ${describeUnavailableWindowsContainerProvider({
+        windowsContainerImage,
+        dockerCliAvailable: windowsContainerFacts?.dockerCliAvailable,
+        dockerDaemonReachable: windowsContainerFacts?.dockerDaemonReachable,
+        windowsContainerCapabilityAvailable:
+          windowsContainerFacts?.windowsContainerCapabilityAvailable,
+        windowsContainerHostMode: windowsContainerFacts?.windowsContainerHostMode,
+        imageAvailable: windowsContainerFacts?.imageAvailable
+      })}`
     );
   }
 
@@ -761,6 +893,7 @@ export async function locateComparisonRuntime(
         windowsContainerImage,
         windowsContainerAvailable,
         windowsContainerEvaluated,
+        ...buildWindowsContainerDecisionFacts(),
         hostRuntimeConflictDetected,
         selectedProvider: 'host-native',
         selectedEngine: 'labview-cli',
@@ -795,6 +928,7 @@ export async function locateComparisonRuntime(
         windowsContainerImage,
         windowsContainerAvailable,
         windowsContainerEvaluated,
+        ...buildWindowsContainerDecisionFacts(),
         hostRuntimeConflictDetected,
         selectedProvider: 'host-native',
         selectedEngine: 'lvcompare',
@@ -837,6 +971,7 @@ export async function locateComparisonRuntime(
       windowsContainerImage,
       windowsContainerAvailable,
       windowsContainerEvaluated,
+      ...buildWindowsContainerDecisionFacts(),
       hostRuntimeConflictDetected,
       blockedReason: 'comparison-tool-not-found',
       labviewExeFound: true,
@@ -929,6 +1064,122 @@ async function observeWindowsHostRuntimeSurfaceFacts(
   };
 }
 
+function buildWindowsContainerSelectionFacts(
+  facts: WindowsContainerProviderFacts | undefined
+): Partial<
+  Pick<
+    ComparisonRuntimeSelection,
+    | 'windowsContainerDockerCliAvailable'
+    | 'windowsContainerDaemonReachable'
+    | 'windowsContainerCapabilityAvailable'
+    | 'windowsContainerHostMode'
+    | 'windowsContainerImageAvailable'
+  >
+> {
+  if (!facts) {
+    return {};
+  }
+
+  return {
+    windowsContainerDockerCliAvailable: facts.dockerCliAvailable,
+    windowsContainerDaemonReachable: facts.dockerDaemonReachable,
+    windowsContainerCapabilityAvailable: facts.windowsContainerCapabilityAvailable,
+    windowsContainerHostMode: facts.windowsContainerHostMode,
+    windowsContainerImageAvailable: facts.imageAvailable
+  };
+}
+
+function buildLegacyWindowsContainerProviderFacts(
+  image: string,
+  hostPlatform: NodeJS.Platform,
+  imageAvailable: boolean
+): WindowsContainerProviderFacts {
+  return {
+    image,
+    hostPlatform,
+    dockerCliAvailable: imageAvailable,
+    dockerDaemonReachable: imageAvailable,
+    windowsContainerCapabilityAvailable: imageAvailable,
+    windowsContainerHostMode: imageAvailable ? 'windows' : undefined,
+    imageAvailable,
+    notes: imageAvailable
+      ? [`Governed Windows container image ${image} was available through the legacy image-inspect probe.`]
+      : [`Legacy Windows container image probe did not find governed image ${image} on the current host.`]
+  };
+}
+
+function describeUnavailableWindowsContainerProvider(options: {
+  windowsContainerImage: string;
+  dockerCliAvailable?: boolean;
+  dockerDaemonReachable?: boolean;
+  windowsContainerCapabilityAvailable?: boolean;
+  windowsContainerHostMode?: WindowsContainerHostMode;
+  imageAvailable?: boolean;
+}): string {
+  if (options.dockerCliAvailable === false) {
+    return `Docker CLI was not available on the current host, so governed Windows container image ${options.windowsContainerImage} could not be used.`;
+  }
+
+  if (options.dockerDaemonReachable === false) {
+    return `Docker CLI was present, but the Docker daemon was not reachable, so governed Windows container image ${options.windowsContainerImage} could not be used.`;
+  }
+
+  if (options.windowsContainerCapabilityAvailable === false) {
+    if (options.windowsContainerHostMode === 'linux') {
+      return `Docker daemon was reachable, but it was running in Linux-container mode, so governed Windows container image ${options.windowsContainerImage} could not be used.`;
+    }
+
+    return `Docker daemon was reachable, but Windows container capability was not available, so governed Windows container image ${options.windowsContainerImage} could not be used.`;
+  }
+
+  if (options.imageAvailable === false) {
+    return `governed Windows container image ${options.windowsContainerImage} was not present locally on the current host.`;
+  }
+
+  return `governed Windows container image ${options.windowsContainerImage} was not available to the current host.`;
+}
+
+function describeSelectedWindowsContainerProvider(options: {
+  executionMode: RuntimeExecutionMode;
+  windowsContainerImage: string;
+  dockerCliAvailable?: boolean;
+  dockerDaemonReachable?: boolean;
+  windowsContainerCapabilityAvailable?: boolean;
+  windowsContainerHostMode?: WindowsContainerHostMode;
+  imageAvailable?: boolean;
+  selectionReason?:
+    | 'preferred-isolation'
+    | 'host-runtime-conflict'
+    | 'host-runtime-unavailable'
+    | 'host-comparison-tool-missing';
+}): string {
+  const capabilitySummary =
+    options.dockerCliAvailable === true &&
+    options.dockerDaemonReachable === true &&
+    options.windowsContainerCapabilityAvailable === true &&
+    options.imageAvailable === true
+      ? `Docker daemon was reachable in ${options.windowsContainerHostMode ?? 'windows'}-container mode with governed Windows container image ${options.windowsContainerImage} present locally`
+      : `Governed Windows container image ${options.windowsContainerImage} was selected`;
+
+  if (options.executionMode === 'docker-only') {
+    return `${capabilitySummary} for docker-only execution.`;
+  }
+
+  if (options.selectionReason === 'host-runtime-conflict') {
+    return `${capabilitySummary}, so isolated execution was selected because the validated Windows host runtime surface was contaminated.`;
+  }
+
+  if (options.selectionReason === 'host-runtime-unavailable') {
+    return `${capabilitySummary}, so isolated execution was selected because no compatible host-native LabVIEW 2026 runtime was located.`;
+  }
+
+  if (options.selectionReason === 'host-comparison-tool-missing') {
+    return `${capabilitySummary}, so isolated execution was selected because no host comparison tool was available.`;
+  }
+
+  return `${capabilitySummary}, so Windows 64-bit comparison-report execution selected isolated provider execution.`;
+}
+
 function buildProviderDecisions(
   options: BuildProviderDecisionsOptions
 ): RuntimeProviderDecision[] {
@@ -950,15 +1201,23 @@ function buildProviderDecisions(
                 ? 'windows-container-selected-because-host-comparison-tool-missing'
                 : 'windows-container-preferred-and-available',
       detail:
-        options.executionMode === 'docker-only'
-          ? `Docker-only execution was requested and Windows container image ${options.windowsContainerImage} was available for the governed provider.`
-          : options.hostRuntimeConflictDetected
-            ? `Validated Windows host runtime facts required Docker, and Windows container image ${options.windowsContainerImage} was available for isolated execution.`
-            : options.labviewExeFound === false
-              ? `No compatible host-native LabVIEW 2026 runtime was located, so Windows container image ${options.windowsContainerImage} was selected.`
-              : options.labviewCliFound === false && options.lvCompareFound === false
-                ? `Host-native LabVIEW 2026 was located, but no host comparison tool was available, so Windows container image ${options.windowsContainerImage} was selected.`
-                : `Windows container image ${options.windowsContainerImage} is available and Windows 64-bit comparison-report execution prefers isolation.`
+        describeSelectedWindowsContainerProvider({
+          executionMode: options.executionMode,
+          windowsContainerImage: options.windowsContainerImage,
+          dockerCliAvailable: options.windowsContainerDockerCliAvailable,
+          dockerDaemonReachable: options.windowsContainerDaemonReachable,
+          windowsContainerCapabilityAvailable: options.windowsContainerCapabilityAvailable,
+          windowsContainerHostMode: options.windowsContainerHostMode,
+          imageAvailable: options.windowsContainerImageAvailable,
+          selectionReason:
+            options.hostRuntimeConflictDetected
+              ? 'host-runtime-conflict'
+              : options.labviewExeFound === false
+                ? 'host-runtime-unavailable'
+                : options.labviewCliFound === false && options.lvCompareFound === false
+                  ? 'host-comparison-tool-missing'
+                  : 'preferred-isolation'
+        })
     });
     decisions.push({
       provider: 'host-native',
@@ -1001,7 +1260,14 @@ function buildProviderDecisions(
               provider: 'windows-container',
               outcome: 'rejected',
               reason: 'docker-only-provider-unavailable',
-              detail: `Docker-only execution was requested, but Windows container image ${options.windowsContainerImage} was not available to the current host.`
+              detail: `Docker-only execution was requested, but ${describeUnavailableWindowsContainerProvider({
+                windowsContainerImage: options.windowsContainerImage,
+                dockerCliAvailable: options.windowsContainerDockerCliAvailable,
+                dockerDaemonReachable: options.windowsContainerDaemonReachable,
+                windowsContainerCapabilityAvailable: options.windowsContainerCapabilityAvailable,
+                windowsContainerHostMode: options.windowsContainerHostMode,
+                imageAvailable: options.windowsContainerImageAvailable
+              })}`
             }
       );
     } else {
@@ -1031,13 +1297,28 @@ function buildProviderDecisions(
                   provider: 'windows-container',
                   outcome: 'rejected',
                   reason: 'auto-required-docker-because-host-runtime-conflict-but-provider-unavailable',
-                  detail: `Validated Windows host runtime facts required Docker, but Windows container image ${options.windowsContainerImage} was not available to the current host.`
+                  detail: `Validated Windows host runtime facts required Docker, but ${describeUnavailableWindowsContainerProvider({
+                    windowsContainerImage: options.windowsContainerImage,
+                    dockerCliAvailable: options.windowsContainerDockerCliAvailable,
+                    dockerDaemonReachable: options.windowsContainerDaemonReachable,
+                    windowsContainerCapabilityAvailable:
+                      options.windowsContainerCapabilityAvailable,
+                    windowsContainerHostMode: options.windowsContainerHostMode,
+                    imageAvailable: options.windowsContainerImageAvailable
+                  })}`
                 }
           : {
               provider: 'windows-container',
               outcome: 'rejected',
               reason: 'windows-container-image-unavailable',
-              detail: `Windows container image ${options.windowsContainerImage} was not available to the current host.`
+              detail: describeUnavailableWindowsContainerProvider({
+                windowsContainerImage: options.windowsContainerImage,
+                dockerCliAvailable: options.windowsContainerDockerCliAvailable,
+                dockerDaemonReachable: options.windowsContainerDaemonReachable,
+                windowsContainerCapabilityAvailable: options.windowsContainerCapabilityAvailable,
+                windowsContainerHostMode: options.windowsContainerHostMode,
+                imageAvailable: options.windowsContainerImageAvailable
+              })
             }
       );
     }
@@ -1318,12 +1599,118 @@ export async function queryWindowsContainerImageAvailability(
   }
 
   try {
-    await execFileRunner('/mnt/c/Windows/System32/cmd.exe', ['/c', 'docker', 'image', 'inspect', image], {
-      windowsHide: true,
-      maxBuffer: 1024 * 1024
-    });
+    await runWindowsDockerCommand(hostPlatform, ['image', 'inspect', image], execFileRunner);
     return true;
   } catch {
     return false;
   }
+}
+
+export async function queryWindowsContainerProviderFacts(
+  image: string,
+  hostPlatform: NodeJS.Platform,
+  execFileRunner: (
+    file: string,
+    args: readonly string[],
+    options: { windowsHide: boolean; maxBuffer: number }
+  ) => Promise<{ stdout: string; stderr?: string }>
+    = execFileAsync
+): Promise<WindowsContainerProviderFacts> {
+  const facts: WindowsContainerProviderFacts = {
+    image,
+    hostPlatform,
+    dockerCliAvailable: false,
+    dockerDaemonReachable: false,
+    windowsContainerCapabilityAvailable: false,
+    imageAvailable: false,
+    notes: []
+  };
+
+  try {
+    const info = await runWindowsDockerCommand(
+      hostPlatform,
+      ['info', '--format', '{{.OSType}}'],
+      execFileRunner
+    );
+    facts.dockerCliAvailable = true;
+    facts.dockerDaemonReachable = true;
+    const dockerMode = info.stdout.trim().toLowerCase();
+    if (dockerMode === 'windows' || dockerMode === 'linux') {
+      facts.windowsContainerHostMode = dockerMode;
+    } else {
+      facts.windowsContainerHostMode = 'unknown';
+    }
+    facts.windowsContainerCapabilityAvailable = facts.windowsContainerHostMode === 'windows';
+
+    if (!facts.windowsContainerCapabilityAvailable) {
+      facts.notes.push(
+        facts.windowsContainerHostMode === 'linux'
+          ? 'Docker daemon is reachable, but it is running in Linux-container mode instead of Windows-container mode.'
+          : 'Docker daemon is reachable, but the active container mode could not be confirmed as Windows-container mode.'
+      );
+      return facts;
+    }
+
+    try {
+      await runWindowsDockerCommand(hostPlatform, ['image', 'inspect', image], execFileRunner);
+      facts.imageAvailable = true;
+      facts.notes.push(
+        `Docker daemon is reachable in Windows-container mode and governed image ${image} is present locally.`
+      );
+    } catch {
+      facts.imageAvailable = false;
+      facts.notes.push(
+        `Docker daemon is reachable in Windows-container mode, but governed image ${image} is not present locally.`
+      );
+    }
+
+    return facts;
+  } catch (error) {
+    if (isMissingWindowsDockerCommand(error)) {
+      facts.notes.push(
+        'Docker CLI is not available on the current host for governed Windows container execution.'
+      );
+      return facts;
+    }
+
+    facts.dockerCliAvailable = true;
+    facts.notes.push(
+      'Docker CLI is present, but the Docker daemon was not reachable for governed Windows container validation.'
+    );
+    return facts;
+  }
+}
+
+async function runWindowsDockerCommand(
+  hostPlatform: NodeJS.Platform,
+  dockerArgs: readonly string[],
+  execFileRunner: (
+    file: string,
+    args: readonly string[],
+    options: { windowsHide: boolean; maxBuffer: number }
+  ) => Promise<{ stdout: string; stderr?: string }>
+): Promise<{ stdout: string; stderr?: string }> {
+  const options = {
+    windowsHide: true,
+    maxBuffer: 1024 * 1024
+  };
+  if (hostPlatform === 'win32') {
+    return execFileRunner('docker', dockerArgs, options);
+  }
+
+  return execFileRunner('/mnt/c/Windows/System32/cmd.exe', ['/c', 'docker', ...dockerArgs], options);
+}
+
+function isMissingWindowsDockerCommand(error: unknown): boolean {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+
+  const code = 'code' in error ? error.code : undefined;
+  const message = 'message' in error ? error.message : undefined;
+  return (
+    code === 'ENOENT' ||
+    (typeof message === 'string' &&
+      (message.includes('ENOENT') || message.includes('not found') || message.includes('spawn docker')))
+  );
 }

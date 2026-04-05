@@ -8,7 +8,7 @@ progress, and transparent provider feedback.
 
 ## Status
 
-Queued follow-on post-release issue with two repo-side selector slices already
+Queued follow-on post-release issue with three repo-side selector slices already
 landed.
 
 Activation depends on:
@@ -72,6 +72,9 @@ The repo-side selector slices already landed and are no longer queued intent:
 - runtime doctor and retained packet surfaces now carry execution mode, host
   `LabVIEW.ini`, derived TCP port, host-conflict truth, rejected providers,
   and next action
+- Windows Docker evaluation now also retains explicit capability facts for
+  Docker CLI availability, daemon reachability, active container mode, and
+  governed image presence before the Windows provider is selected or rejected
 
 ## Required Evidence
 
@@ -88,4 +91,6 @@ The repo-side selector slices already landed and are no longer queued intent:
 - retain canonical execution-request validation in the control plane
 - make the Docker-required hard-stop and acquisition-progress UX explicit
 - make Windows container-capability hard stops explicit
+- continue from the landed Docker-capability slice into visible pull progress
+  and fuller front-facing provider/acquisition transparency
 - keep the policy separate from current benchmark-proof and sustainment work

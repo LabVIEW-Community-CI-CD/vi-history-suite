@@ -82,6 +82,10 @@ extension execution policy.
   chosen request shape is explicit
 - provider-selection UX can distinguish clean host execution, Docker-required
   execution, and hard-stop states without ambiguity
+- the current implementation can retain specific Windows Docker capability
+  facts such as CLI availability, daemon reachability, active container mode,
+  and governed image presence instead of reducing Docker truth to one image
+  check
 
 ### Negative
 
@@ -89,6 +93,19 @@ extension execution policy.
   documentation upkeep
 - future implementation will need to model Docker capability and selected host
   runtime facts more explicitly than today
+
+## Current Implementation Note
+
+The current repo now lands this contract in bounded slices rather than leaving
+it as queued intent only:
+
+- the selector already derives the selected `LabVIEW.ini` surface and governed
+  VI Server TCP port before final Windows provider choice
+- the selector now also validates Docker CLI availability, daemon
+  reachability, active container mode, and governed image presence before the
+  Windows Docker provider is selected or rejected
+- visible image-pull progress and fuller front-facing acquisition-state UX
+  remain open follow-on work under `PROGRAM-0005`
 
 ## Implementation Surface
 

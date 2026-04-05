@@ -83,6 +83,9 @@ instead of silently continuing on the host</li>
 before provider selection or Docker acquisition starts</li>
 <li>when Docker becomes a hard requirement because an open host LabVIEW session
 would contaminate host execution</li>
+<li>when Windows Docker evaluation must distinguish Docker CLI availability,
+daemon reachability, active container mode, and governed image presence
+before the Windows provider is selected or rejected</li>
 <li>when the extension must tell the user to close LabVIEW or install Docker</li>
 <li>when Windows must tell the user to start Docker or switch to Windows
 containers before a governed Windows image can run</li>

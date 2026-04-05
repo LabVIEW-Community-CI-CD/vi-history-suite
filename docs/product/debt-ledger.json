@@ -194,7 +194,7 @@
       "status": "open",
       "severity": "high",
       "contaminationRisk": "high",
-      "summary": "The installed extension now exposes a first-class `auto` / `host-only` / `docker-only` execution-mode setting, rejects silent provider fallback, and uses selected Windows host-runtime facts such as `LabVIEW.ini`, the derived governed VI Server TCP port, and observed host activity to keep `auto` host-first on clean surfaces and Docker-required on contaminated ones. Canonical effective execution-request validation remains only partially implemented because explicit Docker daemon / Windows container-capability validation, visible Windows image-pull progress, and fuller front-facing provider and acquisition transparency remain open.",
+      "summary": "The installed extension now exposes a first-class `auto` / `host-only` / `docker-only` execution-mode setting, rejects silent provider fallback, uses selected Windows host-runtime facts such as `LabVIEW.ini`, the derived governed VI Server TCP port, and observed host activity to keep `auto` host-first on clean surfaces and Docker-required on contaminated ones, and now validates explicit Windows container-capability facts such as Docker CLI availability, daemon reachability, active container mode, and governed image presence before the Windows provider is selected or rejected. Canonical effective execution-request validation remains only partially implemented because visible Windows image-pull progress and fuller front-facing provider and acquisition transparency remain open.",
       "owner": {
         "trancheId": "TRANCHE-013",
         "issueId": "ISSUE-0410",
@@ -222,8 +222,8 @@
         "docs/requirements/srs.md"
       ],
       "discoveredContext": "Post-release execution-flexibility and contamination-safe runtime UX planning",
-      "nextGate": "Finish canonical effective execution-request validation through explicit Docker daemon and Windows container-capability validation, visible image-pull progress, and fuller front-facing provider/acquisition transparency after the landed Windows conflict-aware selector slices.",
-      "exitCriteria": "The installed extension exposes `auto`, `host-only`, and `docker-only`; validates one canonical effective execution request before host launch or Docker acquisition; fails closed with mode-aware guidance when the selected provider cannot run truthfully; treats Windows Docker daemon and container-mode capability as explicit prerequisites; shows chosen provider, rejected providers, acquisition state, and next action in front-facing UX; and surfaces visible Docker acquisition progress when the governed image must be pulled.",
+      "nextGate": "Finish canonical effective execution-request validation through visible image-pull progress and fuller front-facing provider/acquisition transparency after the landed Windows host-fact and Docker-capability selector slices.",
+      "exitCriteria": "The installed extension exposes `auto`, `host-only`, and `docker-only`; validates one canonical effective execution request before host launch or Docker acquisition; fails closed with mode-aware guidance when the selected provider cannot run truthfully; treats Windows Docker CLI availability, daemon reachability, container-mode capability, and governed image presence as explicit prerequisites; shows chosen provider, rejected providers, acquisition state, and next action in front-facing UX; and surfaces visible Docker acquisition progress when the governed image must be pulled.",
       "retirementCommit": null,
       "acceptedExceptionRationale": null
     }

@@ -2,7 +2,7 @@
 
 ## Status
 
-Queued follow-on post-release program with two repo-side selector slices
+Queued follow-on post-release program with three repo-side selector slices
 already landed.
 
 Activation is intentionally deferred until:
@@ -106,7 +106,7 @@ Every slice shall preserve:
 
 ## Landed Selector Slices
 
-The repo already retains two bounded implementation slices under this program:
+The repo already retains three bounded implementation slices under this program:
 
 - a first-class `viHistorySuite.executionMode` setting with `auto`,
   `host-only`, and `docker-only`
@@ -122,6 +122,14 @@ The repo already retains two bounded implementation slices under this program:
 - runtime-doctor and retained packet visibility for execution mode, selected
   host `LabVIEW.ini`, derived TCP port, host-conflict truth, rejected
   providers, and next action
+- a third selector slice now validates Windows Docker capability before the
+  Docker provider is selected or rejected by retaining:
+  - Docker CLI availability
+  - Docker daemon reachability
+  - active container mode
+  - governed image presence
+- runtime-doctor and retained packet surfaces now carry those Docker
+  capability facts explicitly when Windows Docker evaluation is in play
 
 ## First Implementation Slice
 
@@ -136,8 +144,8 @@ That slice should:
 - make canonical execution-request validation explicit before implementation
 - make Windows container-capability truth explicit before image acquisition
 - stop short of claiming full implementation until the installed extension
-  lands Docker capability validation, acquisition UX, and fuller front-facing
-  provider transparency end to end
+  lands visible acquisition UX and fuller front-facing provider transparency
+  end to end
 
 ## Success Condition
 

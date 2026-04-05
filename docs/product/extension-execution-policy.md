@@ -42,12 +42,18 @@ policy:
   that Docker-backed escape path is unavailable
 - `host-only` now fails closed on contaminated Windows host-runtime surfaces
   instead of leaving that ambient conflict implicit
+- when Windows Docker-backed execution is evaluated, the selector now validates
+  Docker CLI availability, daemon reachability, active container mode, and
+  governed image presence before selecting or rejecting the Windows provider
+- runtime doctor and retained comparison-report packet surfaces now carry those
+  Windows container-capability facts explicitly instead of collapsing them into
+  one image-availability assumption
 - benchmark-proof and exact-pair diagnosis entrypoints now fail closed on
   contaminated or contradictory runtime-override bundles
 - canonical effective execution-request validation is now partially
-  implemented through selected Windows host-runtime facts, but explicit Docker
-  daemon and Windows-container-capability validation, image-acquisition
-  progress, and fuller front-facing acquisition transparency remain queued
+  implemented through selected Windows host-runtime facts plus explicit Windows
+  Docker capability validation, but visible image-acquisition progress and
+  fuller front-facing acquisition transparency remain queued
 
 So current runtime behavior is no longer implicit at the execution-mode
 boundary, but the broader execution policy is still only partially
@@ -110,8 +116,9 @@ facts in that boundary:
 - existing LabVIEW-related host processes
 - existing listener on the governed VI Server port
 
-The remaining queued work is explicit Docker daemon and Windows-container
-capability validation plus visible acquisition-state UX.
+The remaining queued work is visible acquisition-state UX plus fuller
+front-facing provider/acquisition transparency after the landed Docker
+capability slice.
 
 This is the canonical validation boundary for the installed extension. If the
 request is non-canonical, the product must fail closed before runtime work
@@ -166,9 +173,12 @@ Important host-runtime contamination factors include:
 
 Important Windows Docker capability factors include:
 
-- Docker is installed but the daemon is not running
+- Docker CLI is missing from the current host surface
+- Docker is installed but the daemon is not running or reachable
 - Docker is available only in Linux-container mode when the governed Windows
   image is required
+- the governed image is not present locally when a Windows Docker run is
+  selected
 - the configured image reference is invalid or not pullable
 
 ### Windows Mode Matrix
@@ -233,6 +243,14 @@ Future execution UX shall surface these facts directly:
 - selected Docker-capability facts when Docker execution is in play
 - acquisition outcome
 - next action
+
+The currently landed Docker-capability slice already retains these facts when
+Windows Docker evaluation is in play:
+
+- whether Docker CLI was available
+- whether the Docker daemon was reachable
+- which container mode was active
+- whether the governed image was already present locally
 
 The future state model is:
 
