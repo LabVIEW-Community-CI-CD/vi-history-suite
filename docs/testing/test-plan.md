@@ -1039,6 +1039,11 @@
   retained host Linux deep benchmark summary, derives the accepted comparable
   pair count, requires the same last comparable pair id on both dashboards,
   and writes tracked JSON and Markdown packet artifacts
+- `TEST-UNIT-280`: verify the canonical-host Windows benchmark-image proof
+  runner derives the default `HARNESS-VHS-002` dashboard commit window from
+  the tracked comparable-prefix packet, injects that bounded window into the
+  container env, translates governed WSL proof roots to Windows mount paths,
+  and fails closed on unsupported non-`/mnt/<drive>/...` proof roots
 - `TEST-DOC-035`: review README, current-state, and ADR-0016 and confirm the
   canonical-host benchmark status surface is documented as the maintainer-facing
   in-IDE visibility and launch surface for the host Linux benchmark lane,
@@ -1097,6 +1102,13 @@
   is the retained `135`-commit / `134`-pair comparable-prefix packet, while
   the full Linux `138`-pair window and the Windows benchmark-image proof both
   remain explicit open control-plane facts
+- `TEST-DOC-045`: review README, current-state, PROGRAM-0003, and ISSUE-0408
+  and confirm the repo documents `scripts/runHostWindowsBenchmarkImageProof.js`
+  as the governed canonical-host Windows benchmark-image proof surface, that
+  it defaults `HARNESS-VHS-002` to the retained comparable-prefix window until
+  the full Linux window becomes comparable, and that it retains
+  `latest-launch.json`, `run-*.log`, and the mounted `latest-summary.json`
+  under `C:\Users\sveld\AppData\Local\VI History Suite\windows-benchmark-image-proof`
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed authority repo, private experiment mirror, wiki, and
   assurance-skill repos with authority roles, expected remotes, and primary

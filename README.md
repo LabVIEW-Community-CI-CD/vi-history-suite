@@ -227,9 +227,13 @@ Committed and governed today:
 - a scaffolded Windows benchmark-image lane that pins
   `nationalinstruments/labview:2026q1-windows`, retains deep
   `HARNESS-VHS-002` benchmark summaries under
-  `.cache/github-experiments/windows-dashboard-benchmark/`, and keeps hosted
-  Windows benchmark execution explicitly not-yet-governed until runner proof
-  exists
+  `.cache/github-experiments/windows-dashboard-benchmark/`, retains a canonical
+  host proof runner at `scripts/runHostWindowsBenchmarkImageProof.js` that
+  pulls the published GHCR image, defaults deep host proof to the tracked
+  comparable-prefix commit window while the Linux full window remains blocked,
+  and writes launch/log/summary receipts under
+  `C:\Users\sveld\AppData\Local\VI History Suite\windows-benchmark-image-proof`,
+  while hosted Windows benchmark execution remains explicitly not-yet-governed
 - a retained documentation coherence ledger and wiki seed plan so future wiki
   work starts from governed docs instead of source or chat memory
 - a retained wiki publication ledger so actual published wiki pages are tracked
@@ -460,6 +464,17 @@ now retains the accepted cross-OS comparable timing scope in
 the full Linux deep window remains an explicit retained blocker because the
 latest official NI Linux truth still failed at pair `135/138` with
 `command-exited-nonzero (linux-headless-recursive-load)`.
+
+Host-runnable Windows benchmark image proof:
+
+- `node scripts/runHostWindowsBenchmarkImageProof.js`
+
+The runner pulls the published Windows benchmark image, defaults
+`HARNESS-VHS-002` to the retained comparable-prefix dashboard window from
+`docs/product/benchmark-packets/HARNESS-VHS-002-comparable-prefix.json` unless
+you override `--dashboard-commit-window`, and writes `latest-launch.json`,
+`run-*.log`, and the mounted `latest-summary.json` under
+`C:\Users\sveld\AppData\Local\VI History Suite\windows-benchmark-image-proof`.
 
 The generated `.cache/` evidence is local and regenerated. The committed source
 of truth for implemented-versus-partial research work is the documentation stack

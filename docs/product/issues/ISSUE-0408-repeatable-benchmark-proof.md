@@ -38,6 +38,11 @@ Current retained benchmark truth before activation:
   `ghcr.io/svelderrainruiz/vi-history-suite-source-experiments/windows-dashboard-benchmark:main`
   after successful publication runs `23993316899`, `23993748337`, and
   `23994505706`
+- the authority repo now retains `scripts/runHostWindowsBenchmarkImageProof.js`
+  as the canonical-host proof surface for that image; it pulls the published
+  GHCR tag, defaults `HARNESS-VHS-002` to the retained `135`-commit comparable
+  prefix unless overridden, and writes launch/log/summary receipts under
+  `C:\Users\sveld\AppData\Local\VI History Suite\windows-benchmark-image-proof`
 - local host-runnable proof for the Windows benchmark image is still open
 
 ## Scope

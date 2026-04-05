@@ -63,6 +63,12 @@ control-plane claim.
 3. produce the governed comparative benchmark packet and normalize it into the
    control plane
 
+The repo-side proof entrypoint for workstream 2 is
+`scripts/runHostWindowsBenchmarkImageProof.js`. Until the full Linux deep
+window becomes comparable, that runner defaults the Windows image proof to the
+retained `HARNESS-VHS-002` comparable-prefix packet rather than silently
+claiming the blocked full window.
+
 Current retained Linux blocker before activation:
 
 - pair `135/138` is reproducibly failing under the Linux image lane
@@ -100,6 +106,10 @@ Current retained Linux blocker before activation:
 
 - the published Windows benchmark image is pullable by contract
 - the image runs locally on the canonical Windows host with Windows containers
+- the host proof is launched through the governed runner at
+  `scripts/runHostWindowsBenchmarkImageProof.js`, which retains launch/log
+  receipts and the mounted benchmark summary under the canonical AppData proof
+  root
 - one retained deep `HARNESS-VHS-002` summary exists from the image lane
 
 ### Gate C: Comparative Benchmark Packet
