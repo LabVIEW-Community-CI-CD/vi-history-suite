@@ -4,6 +4,14 @@ Set-Location -LiteralPath 'C:\workspace'
 
 git config --global --add safe.directory C:/workspace | Out-Null
 
+$harnessCacheRoot = 'C:\workspace\.cache\harnesses'
+if (Test-Path -LiteralPath $harnessCacheRoot) {
+  Get-ChildItem -LiteralPath $harnessCacheRoot -Directory | ForEach-Object {
+    $safeDirectory = $_.FullName.Replace('\', '/')
+    git config --global --add safe.directory $safeDirectory | Out-Null
+  }
+}
+
 function Get-EnvOrDefault {
   param(
     [string]$Name,

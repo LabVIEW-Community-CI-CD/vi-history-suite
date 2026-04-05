@@ -67,7 +67,10 @@ The repo-side proof entrypoint for workstream 2 is
 `scripts/runHostWindowsBenchmarkImageProof.js`. Until the full Linux deep
 window becomes comparable, that runner defaults the Windows image proof to the
 retained `HARNESS-VHS-002` comparable-prefix packet rather than silently
-claiming the blocked full window.
+claiming the blocked full window, and it pre-seeds the mounted harness cache
+from the governed local `ni-labview-icon-editor` clone when that clone is
+available on the canonical host while normalizing Git safe-directory handling
+for those mounted clones before the image entrypoint runs.
 
 Current retained Linux blocker before activation:
 

@@ -229,9 +229,11 @@ Committed and governed today:
   `HARNESS-VHS-002` benchmark summaries under
   `.cache/github-experiments/windows-dashboard-benchmark/`, retains a canonical
   host proof runner at `scripts/runHostWindowsBenchmarkImageProof.js` that
-  pulls the published GHCR image, defaults deep host proof to the tracked
-  comparable-prefix commit window while the Linux full window remains blocked,
-  and writes launch/log/summary receipts under
+  pulls the published GHCR image, pre-seeds the mounted harness cache from the
+  governed local `ni-labview-icon-editor` clone when available, normalizes Git
+  safe-directory handling for those mounted clones, defaults deep host proof to
+  the tracked comparable-prefix commit window while the Linux full window
+  remains blocked, and writes launch/log/summary receipts under
   `C:\Users\sveld\AppData\Local\VI History Suite\windows-benchmark-image-proof`,
   while hosted Windows benchmark execution remains explicitly not-yet-governed
 - a retained documentation coherence ledger and wiki seed plan so future wiki
@@ -472,8 +474,11 @@ Host-runnable Windows benchmark image proof:
 The runner pulls the published Windows benchmark image, defaults
 `HARNESS-VHS-002` to the retained comparable-prefix dashboard window from
 `docs/product/benchmark-packets/HARNESS-VHS-002-comparable-prefix.json` unless
-you override `--dashboard-commit-window`, and writes `latest-launch.json`,
-`run-*.log`, and the mounted `latest-summary.json` under
+you override `--dashboard-commit-window`, pre-seeds the mounted harness cache
+from the governed local `ni-labview-icon-editor` clone when that clone is
+available on this host, normalizes Git safe-directory handling for those
+mounted clones before invoking the image entrypoint, and writes
+`latest-launch.json`, `run-*.log`, and the mounted `latest-summary.json` under
 `C:\Users\sveld\AppData\Local\VI History Suite\windows-benchmark-image-proof`.
 
 The generated `.cache/` evidence is local and regenerated. The committed source

@@ -51,6 +51,8 @@ describe('github windows benchmark workflow', () => {
     expect(runScript).toContain('runGitHubWindowsDashboardBenchmark.js');
     expect(runScript).toContain('Using prebuilt Windows benchmark workspace image.');
     expect(runScript).toContain('Prebuilt Windows benchmark CLI is missing');
+    expect(runScript).toContain("git config --global --add safe.directory C:/workspace");
+    expect(runScript).toContain("C:\\workspace\\.cache\\harnesses");
     expect(runScript).not.toContain("Write-Host 'VIHS_PROGRESS: Installing benchmark workspace dependencies.'");
     expect(runScript).not.toContain('npm ci');
   });

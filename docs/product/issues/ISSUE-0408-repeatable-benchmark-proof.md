@@ -40,8 +40,11 @@ Current retained benchmark truth before activation:
   `23994505706`
 - the authority repo now retains `scripts/runHostWindowsBenchmarkImageProof.js`
   as the canonical-host proof surface for that image; it pulls the published
-  GHCR tag, defaults `HARNESS-VHS-002` to the retained `135`-commit comparable
-  prefix unless overridden, and writes launch/log/summary receipts under
+  GHCR tag, pre-seeds the mounted harness cache from the governed local
+  `ni-labview-icon-editor` clone when available, normalizes Git safe-directory
+  handling for those mounted clones, defaults `HARNESS-VHS-002` to the
+  retained `135`-commit comparable prefix unless overridden, and writes
+  launch/log/summary receipts under
   `C:\Users\sveld\AppData\Local\VI History Suite\windows-benchmark-image-proof`
 - local host-runnable proof for the Windows benchmark image is still open
 

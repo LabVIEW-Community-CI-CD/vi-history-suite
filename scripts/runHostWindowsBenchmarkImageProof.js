@@ -20,10 +20,34 @@ const COMPARABLE_PREFIX_PACKET_RELATIVE = path.join(
   'HARNESS-VHS-002-comparable-prefix.json'
 );
 const CONTAINER_CACHE_ROOT = 'C:\\workspace\\.cache';
+const CONTAINER_HARNESS_CACHE_ROOT = 'C:\\workspace\\.cache\\harnesses';
 const CONTAINER_POWERSHELL =
   'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe';
 const CONTAINER_RUNNER_SCRIPT =
   'C:\\workspace\\docker\\github-windows-dashboard-benchmark\\run-benchmark.ps1';
+const CONTAINER_BOOTSTRAP_COMMAND = [
+  '& {',
+  `$harnessRoot = '${CONTAINER_HARNESS_CACHE_ROOT}';`,
+  'if (Test-Path -LiteralPath $harnessRoot) {',
+  "Get-ChildItem -LiteralPath $harnessRoot -Directory | ForEach-Object { git config --global --add safe.directory ($_.FullName -replace '\\\\','/') | Out-Null }",
+  '}',
+  `& '${CONTAINER_RUNNER_SCRIPT}'`,
+  '}'
+].join(' ');
+const LOCAL_HARNESS_SOURCE_CANDIDATES = {
+  'HARNESS-VHS-001': [
+    '/mnt/c/dev/ni-labview-icon-editor',
+    '/mnt/c/Users/sveld/AppData/Local/VI History Suite/acceptance/host-machine/setup/install-root/fixtures-workspace/labview-icon-editor'
+  ],
+  'HARNESS-VHS-002': [
+    '/mnt/c/dev/ni-labview-icon-editor',
+    '/mnt/c/Users/sveld/AppData/Local/VI History Suite/acceptance/host-machine/setup/install-root/fixtures-workspace/labview-icon-editor'
+  ]
+};
+const HARNESS_CLONE_DIRECTORY_BY_ID = {
+  'HARNESS-VHS-001': 'ni-labview-icon-editor',
+  'HARNESS-VHS-002': 'ni-labview-icon-editor'
+};
 
 async function main() {
   const options = parseArgs(process.argv.slice(2));
@@ -39,6 +63,7 @@ async function main() {
   );
   const dashboardCommitWindow = resolveDashboardCommitWindow(options);
   await fsp.mkdir(proofPaths.cacheRootLinux, { recursive: true });
+  const seededHarnessSource = await ensureSeededHarnessClone(options.harnessId, proofPaths);
 
   if (options.pull) {
     runDockerCommand(
@@ -58,11 +83,14 @@ async function main() {
         imageDigest,
         harnessId: options.harnessId,
         dashboardCommitWindow,
+        seededHarnessSource,
         dockerContext: options.dockerContext,
         proofRootLinux: options.proofRootLinux,
         proofRootWindows: proofPaths.proofRootWindows,
         cacheRootLinux: proofPaths.cacheRootLinux,
         cacheRootWindows: proofPaths.cacheRootWindows,
+        harnessCloneRootLinux: proofPaths.harnessCloneRootLinux,
+        harnessClonePathLinux: proofPaths.harnessClonePathLinux,
         summaryPathLinux: proofPaths.summaryPathLinux,
         logPathLinux: proofPaths.logPathLinux
       },
@@ -98,6 +126,7 @@ async function main() {
         imageRef: options.imageRef,
         imageDigest,
         dashboardCommitWindow,
+        seededHarnessSource,
         summaryPathLinux: proofPaths.summaryPathLinux,
         logPathLinux: proofPaths.logPathLinux,
         launchReceiptPathLinux: proofPaths.launchReceiptPathLinux
@@ -197,6 +226,8 @@ function buildHostWindowsBenchmarkPaths(proofRootLinux, harnessId, now = () => n
   const proofRootWindows = toWindowsPathFromWsl(proofRootLinux);
   const cacheRootLinux = path.join(proofRootLinux, 'cache');
   const cacheRootWindows = `${proofRootWindows}\\cache`;
+  const harnessCloneRootLinux = path.join(cacheRootLinux, 'harnesses');
+  const cloneDirectoryName = getHarnessCloneDirectoryName(harnessId);
   const benchmarkRootLinux = path.join(
     cacheRootLinux,
     'github-experiments',
@@ -208,6 +239,10 @@ function buildHostWindowsBenchmarkPaths(proofRootLinux, harnessId, now = () => n
     proofRootWindows,
     cacheRootLinux,
     cacheRootWindows,
+    harnessCloneRootLinux,
+    harnessClonePathLinux: cloneDirectoryName
+      ? path.join(harnessCloneRootLinux, cloneDirectoryName)
+      : undefined,
     benchmarkRootLinux,
     summaryPathLinux: path.join(benchmarkRootLinux, 'latest-summary.json'),
     launchReceiptPathLinux: path.join(proofRootLinux, 'latest-launch.json'),
@@ -256,10 +291,55 @@ function buildDockerRunArgs(options) {
     '-NoProfile',
     '-ExecutionPolicy',
     'Bypass',
-    '-File',
-    CONTAINER_RUNNER_SCRIPT
+    '-Command',
+    CONTAINER_BOOTSTRAP_COMMAND
   );
   return args;
+}
+
+function getHarnessCloneDirectoryName(harnessId) {
+  return HARNESS_CLONE_DIRECTORY_BY_ID[harnessId];
+}
+
+function getLocalHarnessSourceCandidates(harnessId) {
+  return [...(LOCAL_HARNESS_SOURCE_CANDIDATES[harnessId] ?? [])];
+}
+
+function resolveLocalHarnessSeedSource(harnessId, deps = {}) {
+  const existsSync = deps.existsSync ?? fs.existsSync;
+  return getLocalHarnessSourceCandidates(harnessId).find((candidate) =>
+    existsSync(path.join(candidate, '.git'))
+  );
+}
+
+async function ensureSeededHarnessClone(harnessId, proofPaths) {
+  const harnessClonePathLinux = proofPaths.harnessClonePathLinux;
+  if (!harnessClonePathLinux) {
+    return undefined;
+  }
+
+  try {
+    const stats = await fsp.stat(path.join(harnessClonePathLinux, '.git'));
+    if (stats.isDirectory()) {
+      return 'existing-mounted-cache';
+    }
+  } catch {
+    // Seed from a governed local clone if one is available.
+  }
+
+  const seedSource = resolveLocalHarnessSeedSource(harnessId);
+  if (!seedSource) {
+    return undefined;
+  }
+
+  await fsp.mkdir(proofPaths.harnessCloneRootLinux, { recursive: true });
+  await fsp.rm(harnessClonePathLinux, { recursive: true, force: true });
+  runHostGitCommand(
+    ['clone', '--local', '--no-hardlinks', seedSource, harnessClonePathLinux],
+    proofPaths.proofRootLinux,
+    `Failed to seed the mounted harness cache from ${seedSource}.`
+  );
+  return seedSource;
 }
 
 function resolveDashboardCommitWindow(options, deps = {}) {
@@ -340,6 +420,17 @@ function runDockerCommand(args, cwd, failureMessage) {
   }
 }
 
+function runHostGitCommand(args, cwd, failureMessage) {
+  const result = spawnSync('git', args, {
+    cwd,
+    encoding: 'utf8',
+    stdio: 'inherit'
+  });
+  if (result.status !== 0) {
+    throw new Error(failureMessage);
+  }
+}
+
 async function runDockerStreaming(args, logPathLinux) {
   await fsp.mkdir(path.dirname(logPathLinux), { recursive: true });
   const logStream = fs.createWriteStream(logPathLinux, { flags: 'a' });
@@ -383,6 +474,10 @@ module.exports = {
   buildHostWindowsBenchmarkPaths,
   toWindowsPathFromWsl,
   buildDockerRunArgs,
+  getHarnessCloneDirectoryName,
+  getLocalHarnessSourceCandidates,
+  resolveLocalHarnessSeedSource,
+  ensureSeededHarnessClone,
   resolveDashboardCommitWindow,
   readComparablePrefixDashboardCommitWindow,
   inspectImageDigest

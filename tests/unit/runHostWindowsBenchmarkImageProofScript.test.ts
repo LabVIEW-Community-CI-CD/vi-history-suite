@@ -42,6 +42,14 @@ const hostWindowsProof = require(path.resolve(
     dashboardCommitWindow?: number;
     cacheRootWindows: string;
   }) => string[];
+  getHarnessCloneDirectoryName: (harnessId: string) => string | undefined;
+  getLocalHarnessSourceCandidates: (harnessId: string) => string[];
+  resolveLocalHarnessSeedSource: (
+    harnessId: string,
+    deps?: {
+      existsSync?: (filePath: string) => boolean;
+    }
+  ) => string | undefined;
   resolveDashboardCommitWindow: (
     options: {
       dashboardCommitWindow?: number;
@@ -139,9 +147,30 @@ describe('runHostWindowsBenchmarkImageProof script', () => {
     expect(args).toContain(
       'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe'
     );
-    expect(args).toContain(
+    expect(args).toContain('-Command');
+    expect(args.join(' ')).toContain('C:\\workspace\\.cache\\harnesses');
+    expect(args.join(' ')).toContain(
       'C:\\workspace\\docker\\github-windows-dashboard-benchmark\\run-benchmark.ps1'
     );
+  });
+
+  it('prefers the governed working clone as the mounted harness seed source', () => {
+    expect(hostWindowsProof.getHarnessCloneDirectoryName('HARNESS-VHS-002')).toBe(
+      'ni-labview-icon-editor'
+    );
+    expect(hostWindowsProof.getLocalHarnessSourceCandidates('HARNESS-VHS-002')).toEqual([
+      '/mnt/c/dev/ni-labview-icon-editor',
+      '/mnt/c/Users/sveld/AppData/Local/VI History Suite/acceptance/host-machine/setup/install-root/fixtures-workspace/labview-icon-editor'
+    ]);
+
+    const resolved = hostWindowsProof.resolveLocalHarnessSeedSource('HARNESS-VHS-002', {
+      existsSync: (filePath) =>
+        filePath === '/mnt/c/dev/ni-labview-icon-editor/.git' ||
+        filePath ===
+          '/mnt/c/Users/sveld/AppData/Local/VI History Suite/acceptance/host-machine/setup/install-root/fixtures-workspace/labview-icon-editor/.git'
+    });
+
+    expect(resolved).toBe('/mnt/c/dev/ni-labview-icon-editor');
   });
 
   it('builds deterministic proof paths and rejects unsupported Linux roots', () => {
@@ -157,6 +186,8 @@ describe('runHostWindowsBenchmarkImageProof script', () => {
     expect(proofPaths.cacheRootWindows).toBe(
       'C:\\Users\\sveld\\AppData\\Local\\VI History Suite\\windows-benchmark-image-proof\\cache'
     );
+    expect(proofPaths.harnessCloneRootLinux).toContain('/cache/harnesses');
+    expect(proofPaths.harnessClonePathLinux).toContain('/cache/harnesses/ni-labview-icon-editor');
     expect(proofPaths.summaryPathLinux).toContain(
       '/cache/github-experiments/windows-dashboard-benchmark/HARNESS-VHS-002/latest-summary.json'
     );

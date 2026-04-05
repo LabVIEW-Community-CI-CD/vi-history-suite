@@ -985,9 +985,11 @@
   a dedicated GHCR Windows benchmark image, target the deep
   `HARNESS-VHS-002` lane, truthfully mark hosted Windows benchmark
   execution as not-yet-governed, keep the benchmark workspace dependencies out
-  of the live container-start path, and use the explicit full-path Windows
+  of the live container-start path, use the explicit full-path Windows
   PowerShell runtime entrypoint instead of ambient PATH resolution for the
-  image shell/default command
+  image shell/default command, and register mounted harness clones under
+  `C:\workspace\.cache\harnesses` as Git safe directories before benchmark
+  execution
 - `TEST-UNIT-267`: verify Linux comparison-report runtime-diagnostic capture
   treats native container paths such as `/tmp/lvtemporary_*.log` as
   host-readable from within the active benchmark container and retains the
@@ -1042,8 +1044,11 @@
 - `TEST-UNIT-280`: verify the canonical-host Windows benchmark-image proof
   runner derives the default `HARNESS-VHS-002` dashboard commit window from
   the tracked comparable-prefix packet, injects that bounded window into the
-  container env, translates governed WSL proof roots to Windows mount paths,
-  and fails closed on unsupported non-`/mnt/<drive>/...` proof roots
+  container env, prefers the governed local `ni-labview-icon-editor` working
+  clone as the mounted harness seed source when available, normalizes Git
+  safe-directory handling for those seeded mounted clones before invoking the
+  image entrypoint, translates governed WSL proof roots to Windows mount
+  paths, and fails closed on unsupported non-`/mnt/<drive>/...` proof roots
 - `TEST-DOC-035`: review README, current-state, and ADR-0016 and confirm the
   canonical-host benchmark status surface is documented as the maintainer-facing
   in-IDE visibility and launch surface for the host Linux benchmark lane,
@@ -1106,9 +1111,11 @@
   and confirm the repo documents `scripts/runHostWindowsBenchmarkImageProof.js`
   as the governed canonical-host Windows benchmark-image proof surface, that
   it defaults `HARNESS-VHS-002` to the retained comparable-prefix window until
-  the full Linux window becomes comparable, and that it retains
-  `latest-launch.json`, `run-*.log`, and the mounted `latest-summary.json`
-  under `C:\Users\sveld\AppData\Local\VI History Suite\windows-benchmark-image-proof`
+  the full Linux window becomes comparable, that it pre-seeds the mounted
+  harness cache from the governed local `ni-labview-icon-editor` clone when
+  available, and that it retains `latest-launch.json`, `run-*.log`, and the
+  mounted `latest-summary.json` under
+  `C:\Users\sveld\AppData\Local\VI History Suite\windows-benchmark-image-proof`
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed authority repo, private experiment mirror, wiki, and
   assurance-skill repos with authority roles, expected remotes, and primary
