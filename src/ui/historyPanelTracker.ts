@@ -71,6 +71,9 @@ export interface HistoryPanelActionSummary {
   runtimeExecutionState?: 'not-run' | 'not-available' | 'succeeded' | 'failed';
   blockedReason?: string;
   runtimeFailureReason?: string;
+  comparisonRuntimePanelStatus?: 'idle' | 'blocked' | 'failed' | 'succeeded' | 'cancelled';
+  comparisonRuntimePanelSummary?: string;
+  comparisonRuntimePanelNextAction?: string;
   runtimeDiagnosticReason?: string;
   runtimeDiagnosticNotes?: string[];
   runtimeDiagnosticLogSourcePath?: string;

@@ -8,7 +8,7 @@ progress, and transparent provider feedback.
 
 ## Status
 
-Queued follow-on post-release issue with eight repo-side execution-policy slices already
+Queued follow-on post-release issue with nine repo-side execution-policy slices already
 landed.
 
 Activation depends on:
@@ -107,6 +107,6 @@ The repo-side selector slices already landed and are no longer queued intent:
 - make Windows container-capability hard stops explicit
 - continue from the landed Docker-capability, acquisition-progress,
   in-panel latest-runtime-summary, live panel-progress, compare-warning, and
-  compare-success slices into fuller front-facing provider/acquisition
-  transparency
+  compare-success slices plus panel-reopen persistence into fuller
+  front-facing provider/acquisition transparency
 - keep the policy separate from current benchmark-proof and sustainment work

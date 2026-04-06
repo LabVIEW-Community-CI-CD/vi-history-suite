@@ -2198,6 +2198,12 @@ describe('createOpenViHistoryCommand', () => {
       runtimeExecutionState: 'failed',
       blockedReason: undefined,
       runtimeFailureReason: 'command-exited-nonzero',
+      comparisonRuntimePanelStatus: 'failed',
+      comparisonRuntimePanelSummary:
+        'Generate compare for abcdef12 vs 11111111. Provider: host-native. Execution mode: auto. Report status: ready-for-runtime. Runtime state: failed. Failure reason: command-exited-nonzero. Diagnostic reason: labview-path-ignored-last-used-default.',
+      comparisonRuntimePanelNextAction:
+        'Next action: close the conflicting LabVIEW 2026 session or correct the selected host LabVIEW path before rerunning comparison report generation.',
+      cancellationStage: undefined,
       runtimeDiagnosticReason: 'labview-path-ignored-last-used-default',
       runtimeDiagnosticNotes: [
         'LabVIEW CLI ignored the explicit -LabVIEWPath selection and used the last-used LabVIEW instead: C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe.'
@@ -2222,9 +2228,11 @@ describe('createOpenViHistoryCommand', () => {
       runtimeLabviewProcessObservedAtExit: false,
       runtimeLabviewCliProcessObservedAtExit: false,
       runtimeLvcompareProcessObservedAtExit: false,
+      packetFilePath: undefined,
       reportFilePath: '/workspace/.storage/reports/repo/file/diff-report-eligible.vi.html',
       metadataFilePath: '/workspace/.storage/reports/repo/file/report-metadata.json',
       reportWebviewUri: 'webview:/report',
+      generatedReportExists: undefined,
       title: 'VI Comparison Report: eligible.vi'
     });
   });
@@ -2639,6 +2647,67 @@ describe('createOpenViHistoryCommand', () => {
 
     expect(showInformationMessageMock).toHaveBeenCalledWith(
       'Generate compare completed. Provider: windows-container. Execution mode: auto. Windows image acquisition: acquired. Rejected providers: host-native because existing LabVIEW-related processes or a listener on governed VI Server port 3364 already exist.'
+    );
+  });
+
+  it('reopens the history panel with the last retained compare runtime truth already visible', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    const comparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'opened-comparison-report',
+      reportStatus: 'ready-for-runtime',
+      runtimeExecutionState: 'succeeded',
+      runtimeDoctorSummaryLines: [
+        'Selected provider=windows-container; engine=labview-cli; platform=win32; preferBitness=x64.',
+        'Selected execution mode=auto.',
+        'Tool facts: WindowsContainerCapability=available; ContainerAcquisitionState=acquired',
+        'Next action: open the retained comparison packet for the full governed runtime summary.'
+      ]
+    });
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Newest revision',
+            previousHash: '1111111122222222'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      comparisonReportAction
+    );
+
+    await command(targetUri as never);
+    await tracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReport',
+      hash: 'abcdef1234567890'
+    });
+    await command(targetUri as never);
+
+    const reopenedPanel = createWebviewPanelMock.mock.results[1]?.value as MockPanel | undefined;
+    expect(reopenedPanel?.webview.html).toContain('data-state="succeeded"');
+    expect(reopenedPanel?.webview.html).toContain(
+      'Generate compare for abcdef12 vs 11111111. Provider: windows-container. Execution mode: auto. Report status: ready-for-runtime. Runtime state: succeeded. Windows image acquisition: acquired.'
+    );
+    expect(reopenedPanel?.webview.html).toContain(
+      'Next action: open the retained comparison packet for the full governed runtime summary.'
     );
   });
 

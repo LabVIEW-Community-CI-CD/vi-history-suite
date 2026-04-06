@@ -182,6 +182,49 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('data-testid="history-action-decision-record" disabled');
   });
 
+  it('renders the last retained compare runtime truth when the panel is reopened', () => {
+    const html = renderHistoryPanelHtml({
+      repositoryName: 'labview-icon-editor',
+      repositoryRoot: '/tmp/labview-icon-editor',
+      relativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+      signature: 'LVIN',
+      eligible: true,
+      commits: [
+        {
+          hash: 'abcdef1234567890',
+          authorDate: '2026-04-02T00:00:00Z',
+          authorName: 'A User',
+          subject: 'Improve deployment behavior',
+          previousHash: '1111111122222222',
+          retainedComparisonEvidenceAvailable: true
+        },
+        {
+          hash: '1111111122222222',
+          authorDate: '2026-04-01T00:00:00Z',
+          authorName: 'B User',
+          subject: 'Initial deployment behavior'
+        }
+      ]
+    }, {
+      command: 'generateComparisonReport',
+      hash: 'abcdef1234567890',
+      outcome: 'opened-comparison-report',
+      comparisonRuntimePanelStatus: 'succeeded',
+      comparisonRuntimePanelSummary:
+        'Generate compare for abcdef12 vs 11111111. Provider: windows-container. Execution mode: auto. Report status: ready-for-runtime. Runtime state: succeeded. Windows image acquisition: acquired.',
+      comparisonRuntimePanelNextAction:
+        'Next action: open the retained comparison packet for the full governed runtime summary.'
+    });
+
+    expect(html).toContain('data-state="succeeded"');
+    expect(html).toContain(
+      'Generate compare for abcdef12 vs 11111111. Provider: windows-container. Execution mode: auto. Report status: ready-for-runtime. Runtime state: succeeded. Windows image acquisition: acquired.'
+    );
+    expect(html).toContain(
+      'Next action: open the retained comparison packet for the full governed runtime summary.'
+    );
+  });
+
   it('renders capability-truthful disabled actions when optional surfaces are unavailable in this build', () => {
     const html = renderHistoryPanelHtml({
       repositoryName: 'labview-icon-editor',

@@ -4,8 +4,12 @@ import {
   ViHistorySurfaceCapabilities,
   ViHistoryViewModel
 } from '../services/viHistoryModel';
+import { HistoryPanelActionSummary } from './historyPanelTracker';
 
-export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
+export function renderHistoryPanelHtml(
+  model: ViHistoryViewModel,
+  lastActionSummary?: HistoryPanelActionSummary
+): string {
   const capabilities = model.surfaceCapabilities ?? {};
   const support = model.repositorySupport;
   const showBenchmarkStatus = capabilities.benchmarkStatusAvailable === true;
@@ -13,6 +17,7 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
   const newestCommit = model.commits[0];
   const oldestCommit = model.commits[model.commits.length - 1];
   const historyWindowSummary = renderHistoryWindowSummary(model);
+  const latestCompareRuntime = deriveInitialCompareRuntimeStatus(lastActionSummary);
   const dashboardButton =
     capabilities.dashboardAvailable !== false && model.commits.length >= 3
       ? '<button data-testid="history-action-dashboard" data-command="openDashboard">Open dashboard</button>'
@@ -215,10 +220,10 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
       ${dashboardButton}
       ${decisionRecordButton}
     </div>
-    <div class="status" data-testid="history-compare-runtime-status" id="compare-runtime-status" data-state="idle" role="status" aria-live="polite">
+    <div class="status" data-testid="history-compare-runtime-status" id="compare-runtime-status" data-state="${escapeHtml(latestCompareRuntime.status)}" role="status" aria-live="polite">
       <strong>Latest compare runtime:</strong><br />
-      <span data-testid="history-compare-runtime-summary" id="compare-runtime-summary">No compare action from this panel has retained provider or acquisition truth yet.</span><br />
-      <span data-testid="history-compare-runtime-next-action" id="compare-runtime-next-action">Next action: use Generate compare or Open compare to surface the selected provider and any acquisition state here.</span>
+      <span data-testid="history-compare-runtime-summary" id="compare-runtime-summary">${escapeHtml(latestCompareRuntime.summary)}</span><br />
+      <span data-testid="history-compare-runtime-next-action" id="compare-runtime-next-action">${escapeHtml(latestCompareRuntime.nextAction)}</span>
     </div>
     <div class="packet" data-testid="history-review-packet">
       <div data-testid="history-chronology-order"><strong>Order:</strong> Newest commit first</div>
@@ -374,6 +379,32 @@ export function renderHistoryPanelHtml(model: ViHistoryViewModel): string {
     </script>
   </body>
 </html>`;
+}
+
+function deriveInitialCompareRuntimeStatus(
+  lastActionSummary?: HistoryPanelActionSummary
+): {
+  status: 'idle' | 'blocked' | 'failed' | 'succeeded' | 'cancelled';
+  summary: string;
+  nextAction: string;
+} {
+  if (
+    lastActionSummary?.comparisonRuntimePanelSummary &&
+    lastActionSummary.comparisonRuntimePanelNextAction
+  ) {
+    return {
+      status: lastActionSummary.comparisonRuntimePanelStatus ?? 'idle',
+      summary: lastActionSummary.comparisonRuntimePanelSummary,
+      nextAction: lastActionSummary.comparisonRuntimePanelNextAction
+    };
+  }
+
+  return {
+    status: 'idle',
+    summary: 'No compare action from this panel has retained provider or acquisition truth yet.',
+    nextAction:
+      'Next action: use Generate compare or Open compare to surface the selected provider and any acquisition state here.'
+  };
 }
 
 export function renderHistoryReviewPacketText(model: ViHistoryViewModel): string {

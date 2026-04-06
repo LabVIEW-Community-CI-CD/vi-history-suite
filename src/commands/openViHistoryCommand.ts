@@ -157,7 +157,10 @@ export function createOpenViHistoryCommand(
     if (repositorySupport?.tier === 'unsupported') {
       void vscode.window.showWarningMessage(repositorySupport.supportGuidance);
     }
-    const renderedHtml = renderHistoryPanelHtml(model);
+    const renderedHtml = renderHistoryPanelHtml(
+      model,
+      panelTracker?.getLastActionSummary()
+    );
     const panel = vscode.window.createWebviewPanel(
       'viHistorySuite.history',
       `VI History: ${path.basename(targetUri.fsPath)}`,
@@ -174,7 +177,15 @@ export function createOpenViHistoryCommand(
       const recordComparisonResult = (
         actionCommand: string,
         hashValue: string,
-        result: ComparisonReportActionResult
+        result: ComparisonReportActionResult,
+        runtimePanelUpdate:
+          | {
+              type: 'comparisonRuntimeResult';
+              status: 'idle' | 'blocked' | 'failed' | 'succeeded' | 'cancelled';
+              summary: string;
+              nextAction: string;
+            }
+          | undefined
       ): void => {
         const actionSummary: Parameters<HistoryPanelTracker['recordAction']>[0] = {
           command: actionCommand,
@@ -192,6 +203,12 @@ export function createOpenViHistoryCommand(
           generatedReportExists: result.generatedReportExists,
           title: result.title
         };
+        if (runtimePanelUpdate && result.runtimeDoctorSummaryLines?.length) {
+          actionSummary.comparisonRuntimePanelStatus = runtimePanelUpdate.status;
+          actionSummary.comparisonRuntimePanelSummary = runtimePanelUpdate.summary;
+          actionSummary.comparisonRuntimePanelNextAction =
+            runtimePanelUpdate.nextAction;
+        }
         if (result.retainedArchiveAvailable !== undefined) {
           actionSummary.retainedArchiveAvailable = result.retainedArchiveAvailable;
         }
@@ -386,12 +403,15 @@ export function createOpenViHistoryCommand(
             const selectedCommit = model.commits.find((commit) => commit.hash === hash);
             if (selectedCommit?.previousHash) {
               selectedCommit.retainedComparisonEvidenceAvailable = true;
-              panel.webview.html = renderHistoryPanelHtml(model);
+              panel.webview.html = renderHistoryPanelHtml(
+                model,
+                panelTracker?.getLastActionSummary()
+              );
             }
           }
         }
 
-        recordComparisonResult(actionCommand, hash, result);
+        recordComparisonResult(actionCommand, hash, result, runtimePanelUpdate);
         if (runtimePanelUpdate) {
           void panel.webview.postMessage(runtimePanelUpdate);
         }
@@ -908,12 +928,6 @@ function buildComparisonRuntimePanelUpdate(
   model: Awaited<ReturnType<ViHistoryService['load']>>,
   result: ComparisonReportActionResult
 ):
-  | {
-      type: 'comparisonRuntimeProgress';
-      status: 'running' | 'acquiring';
-      summary: string;
-      nextAction: string;
-    }
   | {
       type: 'comparisonRuntimeResult';
       status: 'idle' | 'blocked' | 'failed' | 'succeeded' | 'cancelled';

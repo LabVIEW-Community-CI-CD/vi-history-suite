@@ -69,10 +69,10 @@ policy:
   implemented through selected Windows host-runtime facts, explicit Windows
   Docker capability validation, and a governed Windows image-acquisition step
   with visible progress plus retained history-panel, live panel-progress,
-  compare-warning, and compare-success surfaces; fuller front-facing
-  provider/acquisition transparency beyond the current progress, warning,
-  success-summary, history-panel, runtime-doctor, and retained-packet
-  surfaces remains queued
+  compare-warning, compare-success, and panel-reopen persistence surfaces;
+  fuller front-facing provider/acquisition transparency beyond the current
+  progress, warning, success-summary, reopen-persisted history-panel,
+  runtime-doctor, and retained-packet surfaces remains queued
 
 So current runtime behavior is no longer implicit at the execution-mode
 boundary, but the broader execution policy is still only partially
@@ -138,7 +138,7 @@ facts in that boundary:
 The remaining queued work is fuller front-facing provider/acquisition
 transparency after the landed host-fact, Docker-capability, image-acquisition,
 history-panel summary, live panel-progress, compare-warning, and
-compare-success slices.
+compare-success slices plus panel-reopen persistence.
 
 This is the canonical validation boundary for the installed extension. If the
 request is non-canonical, the product must fail closed before runtime work
@@ -303,6 +303,11 @@ This transparency belongs in:
 - history-panel action feedback
 - progress notifications for long-running acquisition or execution work
 - concise compare completion and failure notifications
+
+The currently landed history-panel slice now also seeds the compare-runtime
+block from the last retained tracker-backed compare result when the user
+reopens VI History, instead of resetting that block to idle every time the
+panel is recreated.
 
 ## Queue Ownership
 
