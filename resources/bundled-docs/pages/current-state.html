@@ -7,6 +7,8 @@ code or prior chat state. The current authority surfaces for this page are:</p>
 <li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/SHIP-0001-releasable-vi-history-suite.md"><code>docs/product/SHIP-0001-releasable-vi-history-suite.md</code></a></li>
 <li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/development-queue.json"><code>docs/product/development-queue.json</code></a></li>
 <li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/blocker-ledger.json"><code>docs/product/blocker-ledger.json</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/post-release-sustainment-rules.md"><code>docs/product/post-release-sustainment-rules.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/post-release-sustainment-rules.json"><code>docs/product/post-release-sustainment-rules.json</code></a></li>
 </ul>
 <h2>Purpose</h2>
 <p>The current-state surface is the committed entrypoint for human readers and
@@ -75,6 +77,11 @@ canonical Windows 11 machine</li>
 <li><code>ISSUE-0409</code>: Post-Release Sustainment And Release Cadence</li>
 <li><code>PROGRAM-0004</code>: Post-Release Sustainment And Release Cadence</li>
 </ul>
+<p>The active sustainment operating rules now live in:</p>
+<ul>
+<li><code>docs/product/post-release-sustainment-rules.md</code></li>
+<li><code>docs/product/post-release-sustainment-rules.json</code></li>
+</ul>
 <p>The closed and follow-on tranches and programs are now explicit:</p>
 <ul>
 <li><code>TRANCHE-011</code>: Repeatable Windows And Linux Benchmark Proof</li>
@@ -94,6 +101,10 @@ canonical Windows 11 machine</li>
 public-closeout exit gate</li>
 <li>execution-policy work is now closed on transparent provider/acquisition
 truth, and sustainment is the active driver-seat post-release lane</li>
+<li>release sustainment is now event-driven repo truth rather than a vague
+maintenance label</li>
+<li>benchmark sustainment is now explicit bounded truth with retained refresh,
+non-trigger, and reopen rules</li>
 </ul>
 <h2>Benchmark And Proof State</h2>
 <p>The product now has separate proof surfaces instead of one blended lane:</p>
@@ -195,6 +206,26 @@ providers, reason, diagnostic reason, and next action remain visible as
 separate governed in-panel facts</li>
 <li>reopened panels now preserve that same structured compare-runtime detail set
 through tracker-backed state reuse</li>
+<li>execution-policy bypass is no longer allowed; compare execution must still
+pass canonical execution-request validation and governed provider hard stops</li>
+</ul>
+<h2>Sustainment Operating Rules</h2>
+<p>The current sustainment lane now has one explicit operating contract instead of
+only a queue title.</p>
+<p>That contract is:</p>
+<ul>
+<li>event-driven release refresh, not calendar-driven release churn</li>
+<li>bounded benchmark refresh tied to governed benchmark-contract changes</li>
+<li>explicit benchmark non-triggers so unrelated UI/docs work does not silently
+reopen proof</li>
+<li>explicit benchmark reopen triggers, including that out-of-scope alternative
+Windows x86 provisioning does not reopen the current contract until it
+becomes part of the governed Windows image</li>
+<li>required authority, wiki, bundled-doc, and gate refresh steps whenever
+sustainment truth changes</li>
+</ul>
+<p>This keeps <code>PROGRAM-0004</code> active without turning it into unbounded tail work.</p>
+<ul>
 <li><code>DEBT-0006</code> is now retired, so the driver-seat post-release lane moves from
 execution-policy closeout to sustainment while <code>TRANCHE-010</code> remains open
 only on Sergio Velderrain&#39;s manual host gate</li>

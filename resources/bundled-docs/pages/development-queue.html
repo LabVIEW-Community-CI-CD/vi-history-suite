@@ -6,6 +6,8 @@ code or prior chat state. The current authority surfaces for this page are:</p>
 <li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/current-state.md"><code>docs/product/current-state.md</code></a></li>
 <li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/SHIP-0001-releasable-vi-history-suite.md"><code>docs/product/SHIP-0001-releasable-vi-history-suite.md</code></a></li>
 <li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/blocker-ledger.json"><code>docs/product/blocker-ledger.json</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/post-release-sustainment-rules.md"><code>docs/product/post-release-sustainment-rules.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/post-release-sustainment-rules.json"><code>docs/product/post-release-sustainment-rules.json</code></a></li>
 </ul>
 <h2>Purpose</h2>
 <p>The development queue is the retained ordered list of implementation tranches
@@ -52,6 +54,9 @@ acquisition UX, now closed on transparent provider/acquisition truth</li>
 <li>execution-policy closeout is now closed under done <code>TRANCHE-013</code></li>
 <li>sustainment is now the active driver-seat post-release lane under
 <code>TRANCHE-012</code></li>
+<li>the first sustainment slice now retains explicit release-refresh,
+benchmark-refresh, and operator-upkeep rules in
+<code>docs/product/post-release-sustainment-rules.{md,json}</code></li>
 </ul>
 <h2>Closed And Follow-Ons</h2>
 <p>The governed benchmark closure and post-release follow-ons are:</p>
@@ -87,6 +92,14 @@ installed-extension execution policy too: that work no longer stays open by
 implication once its closeout slice lands, and future host-vs-Docker UX
 changes would need a new explicit program instead of being buried inside
 generic sustainment language.</p>
+<p>The sustainment rules also keep the active queue honest:</p>
+<ul>
+<li><code>PROGRAM-0002</code> is still open, but only on Sergio Velderrain&#39;s human gate</li>
+<li><code>PROGRAM-0004</code> can run in parallel without pretending the public-facade
+closeout is finished</li>
+<li>release and benchmark refreshes now have explicit triggers instead of being
+reopened ad hoc</li>
+</ul>
 <h2>Why The Queue Matters</h2>
 <p>The queue is not just a roadmap. It is part of the control plane.</p>
 <p>It keeps:</p>

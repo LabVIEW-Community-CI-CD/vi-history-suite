@@ -75,6 +75,9 @@ Current implemented provider truth now satisfies the governed execution policy:
   retained history-panel and runtime-doctor truth, concise compare-success and
   compare-failure notifications, panel-reopen persistence, and structured
   history-panel compare-runtime detail rendering
+- execution-policy bypass is not allowed: no hidden flag, local experiment
+  switch, or alternate compare path may skip canonical execution-request
+  validation, mode boundaries, or governed provider hard stops
 
 So current runtime behavior is no longer implicit at the execution-mode
 boundary, and the broader execution policy is now closed as implemented
@@ -145,6 +148,10 @@ surface.
 This is the canonical validation boundary for the installed extension. If the
 request is non-canonical, the product must fail closed before runtime work
 starts.
+
+There is no execution-policy bypass path. Future work may widen the governed
+request, but it may not introduce a hidden or optional route that skips this
+validation boundary.
 
 ### Auto
 

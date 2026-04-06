@@ -26,6 +26,11 @@ not owned by this sustainment program. That work is now closed under
 new explicit program instead of being hidden inside generic maintenance
 language.
 
+This sustainment lane also runs in parallel with the still-open human gate in
+`PROGRAM-0002`. `PROGRAM-0002` remains open only on Sergio Velderrain's manual
+Windows 11 right-click acceptance gate; sustainment does not rewrite or
+pretend that closeout is already complete.
+
 ## North Star
 
 `vi-history-suite` remains a governed released product with:
@@ -85,10 +90,19 @@ Every slice must preserve:
 
 Continue with [ISSUE-0409 Post-Release Sustainment And Release Cadence](../issues/ISSUE-0409-post-release-sustainment-and-release-cadence.md).
 
-That slice should:
+The first sustainment slice is now retained in:
+
+- [post-release-sustainment-rules.md](../post-release-sustainment-rules.md)
+- [post-release-sustainment-rules.json](../post-release-sustainment-rules.json)
+
+That retained slice now:
 
 - retain the sustainment operating model in the control plane
 - define the first benchmark-refresh and release-refresh rules
+- define benchmark non-trigger and reopen rules for the accepted current
+  contract
+- define the required authority/wiki/bundled-doc refresh steps for future
+  sustainment slices
 - stop short of claiming new product-layer expansion
 
 ## Success Condition

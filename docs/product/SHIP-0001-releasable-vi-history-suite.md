@@ -102,12 +102,14 @@ These files are the authoritative retained ship-record surfaces:
 2. [blocker-ledger.json](./blocker-ledger.json)
 3. [development-queue.json](./development-queue.json)
 4. [current-state.md](./current-state.md)
-5. [release-procedure.md](../release-procedure.md)
-6. [documentation-workbench.md](../documentation-workbench.md)
-7. [documentation-coherence-ledger.md](./documentation-coherence-ledger.md)
-8. [wiki-seed-plan.md](./wiki-seed-plan.md)
-9. [wiki-publication-ledger.md](./wiki-publication-ledger.md)
-10. [wiki-publication-ledger.json](./wiki-publication-ledger.json)
+5. [post-release-sustainment-rules.md](./post-release-sustainment-rules.md)
+6. [post-release-sustainment-rules.json](./post-release-sustainment-rules.json)
+7. [release-procedure.md](../release-procedure.md)
+8. [documentation-workbench.md](../documentation-workbench.md)
+9. [documentation-coherence-ledger.md](./documentation-coherence-ledger.md)
+10. [wiki-seed-plan.md](./wiki-seed-plan.md)
+11. [wiki-publication-ledger.md](./wiki-publication-ledger.md)
+12. [wiki-publication-ledger.json](./wiki-publication-ledger.json)
 
 ## Queue Rule
 

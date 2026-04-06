@@ -1343,12 +1343,29 @@
   governed image contract, and the comparable-prefix packet consumes that
   summary so future sessions can tell whether the current image contract
   exposes a coherent same-bitness `labview-cli` bundle
+- `TEST-UNIT-303`: verify the active post-release sustainment-rules package
+  keeps the Markdown and JSON sustainment contract aligned with
+  `TRANCHE-012` / `ISSUE-0409` / `PROGRAM-0004`, preserves explicit
+  event-driven release-refresh rules, preserves explicit benchmark
+  refresh/non-trigger/reopen rules for the accepted current contract, and
+  preserves the required authority/wiki/bundled-doc upkeep steps plus the
+  no-execution-policy-bypass rule
 - `TEST-DOC-070`: review current-state, harnesses, PROGRAM-0003, ISSUE-0408,
   and the comparable-prefix packet and confirm the repo documents the current
   Windows pair-129 ceiling as an accepted current-contract exception backed by
   retained runtime-surface proof, while keeping slower NI Package Manager plus
   ISO x86 provisioning explicitly out of scope for the current governed image
   contract
+- `TEST-DOC-071`: review README, current-state, SHIP-0001, PROGRAM-0004,
+  ISSUE-0409, and the post-release sustainment-rules package and confirm the
+  active sustainment lane now retains one explicit release-refresh,
+  benchmark-refresh, operator-upkeep, and reopen-boundary contract while
+  `PROGRAM-0002` remains open only on the human gate and execution-policy
+  bypass remains explicitly prohibited
+- `TEST-DOC-072`: review Install-And-Release, Development-Queue, Current-State,
+  Requirements-And-Verification, the wiki coverage/publication ledgers, and
+  bundled docs and confirm the sustainment-rules package is represented on the
+  published reader surfaces rather than remaining authority-only chronology
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed authority repo, private experiment mirror, wiki, and
   assurance-skill repos with authority roles, expected remotes, and primary

@@ -6,6 +6,8 @@ code. The current authority surfaces for this page are:</p>
 <li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/release-readiness-matrix.json"><code>docs/product/release-readiness-matrix.json</code></a></li>
 <li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/README.md"><code>README.md</code></a></li>
 <li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/blocker-ledger.json"><code>docs/product/blocker-ledger.json</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/post-release-sustainment-rules.md"><code>docs/product/post-release-sustainment-rules.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/post-release-sustainment-rules.json"><code>docs/product/post-release-sustainment-rules.json</code></a></li>
 </ul>
 <h2>Current Release Target</h2>
 <ul>
@@ -26,6 +28,19 @@ code. The current authority surfaces for this page are:</p>
 <p>The preview VSIX is the current install surface for extension-user testing.
 The tagged release artifact is the current governed exact-version install
 surface.</p>
+<h2>Sustainment Release Cadence</h2>
+<p>The active post-release lane now treats release refresh as event-driven repo
+truth, not as a standing calendar promise.</p>
+<p>That means release surfaces are refreshed when:</p>
+<ul>
+<li><code>package.json</code> version changes</li>
+<li>SemVer tag or release-manifest contract changes</li>
+<li>public release-kit assets or setup/support guidance must follow the exact
+released VSIX</li>
+<li>the release procedure or docs-workbench publication contract changes</li>
+</ul>
+<p>It does not reopen release refresh just because benchmark-only diagnosis or
+unrelated docs notes changed.</p>
 <h2>Release Procedure Summary</h2>
 <p>The current governed release flow is:</p>
 <ol>

@@ -114,6 +114,30 @@
       ]
     },
     {
+      "sourcePath": "docs/product/post-release-sustainment-rules.md",
+      "itemType": "post-release-sustainment-rules",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Install-And-Release.md",
+        "Current-State.md",
+        "Development-Queue.md",
+        "Requirements-And-Verification.md"
+      ]
+    },
+    {
+      "sourcePath": "docs/product/post-release-sustainment-rules.json",
+      "itemType": "post-release-sustainment-rules-json",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Install-And-Release.md",
+        "Current-State.md",
+        "Development-Queue.md",
+        "Requirements-And-Verification.md"
+      ]
+    },
+    {
       "sourcePath": "docs/product/extension-execution-policy.md",
       "itemType": "extension-execution-policy",
       "representationStatus": "complete",

@@ -22,13 +22,15 @@
       "wikiPath": "Install-And-Release",
       "wikiFileName": "Install-And-Release.md",
       "status": "published",
-      "publishedDate": "2026-04-03",
-      "wikiCommit": "3aa0c49",
+      "publishedDate": "2026-04-05",
+      "wikiCommit": "0fdb25d",
       "primaryAuthority": [
         "docs/release-procedure.md",
         "docs/product/release-readiness-matrix.json",
         "README.md",
-        "docs/product/blocker-ledger.json"
+        "docs/product/blocker-ledger.json",
+        "docs/product/post-release-sustainment-rules.md",
+        "docs/product/post-release-sustainment-rules.json"
       ]
     },
     {
@@ -164,9 +166,11 @@
       "wikiFileName": "Current-State.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "4bdb01b",
+      "wikiCommit": "0fdb25d",
       "primaryAuthority": [
         "docs/product/current-state.md",
+        "docs/product/post-release-sustainment-rules.md",
+        "docs/product/post-release-sustainment-rules.json",
         "docs/product/extension-execution-policy.md",
         "README.md",
         "docs/product/SHIP-0001-releasable-vi-history-suite.md",
@@ -199,9 +203,11 @@
       "wikiFileName": "Development-Queue.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "4bdb01b",
+      "wikiCommit": "0fdb25d",
       "primaryAuthority": [
         "docs/product/development-queue.json",
+        "docs/product/post-release-sustainment-rules.md",
+        "docs/product/post-release-sustainment-rules.json",
         "docs/product/current-state.md",
         "docs/product/SHIP-0001-releasable-vi-history-suite.md",
         "docs/product/blocker-ledger.json"
@@ -229,13 +235,15 @@
       "wikiFileName": "Requirements-And-Verification.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "4bdb01b",
+      "wikiCommit": "0fdb25d",
       "primaryAuthority": [
         "docs/requirements/srs.md",
         "docs/requirements/rtm.csv",
         "docs/testing/test-plan.md",
         "docs/product/current-state.md",
-        "docs/product/extension-execution-policy.md"
+        "docs/product/extension-execution-policy.md",
+        "docs/product/post-release-sustainment-rules.md",
+        "docs/product/post-release-sustainment-rules.json"
       ]
     },
     {

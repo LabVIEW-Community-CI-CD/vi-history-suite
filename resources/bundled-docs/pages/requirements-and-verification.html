@@ -6,6 +6,8 @@ code or prior chat state. The current authority surfaces for this page are:</p>
 <li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/requirements/rtm.csv"><code>docs/requirements/rtm.csv</code></a></li>
 <li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/testing/test-plan.md"><code>docs/testing/test-plan.md</code></a></li>
 <li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/current-state.md"><code>docs/product/current-state.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/post-release-sustainment-rules.md"><code>docs/product/post-release-sustainment-rules.md</code></a></li>
+<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/post-release-sustainment-rules.json"><code>docs/product/post-release-sustainment-rules.json</code></a></li>
 </ul>
 <h2>Purpose</h2>
 <p>This page explains how <code>vi-history-suite</code> keeps requirements and verification
@@ -19,6 +21,9 @@ governed instead of informal.</p>
 <p>The requirements package now also retains an explicit execution-mode contract
 for installed-extension runtime choice, so host-versus-Docker behavior does
 not remain only an implementation detail.</p>
+<p>The same package now also retains an explicit sustainment contract for the
+active post-release lane, so release cadence and benchmark refresh rules do
+not remain only queue prose.</p>
 <h2>SRS</h2>
 <p>The Software Requirements Specification is the main normative requirement
 surface.</p>
@@ -111,6 +116,12 @@ contract</li>
 future sessions can tell the difference between the current governed image
 contract and out-of-scope alternative provisioning such as slower
 NI Package Manager plus ISO x86 setup</li>
+<li>the post-release sustainment-rules package now governs event-driven release
+refresh, bounded benchmark refresh/non-trigger/reopen rules, and required
+authority/wiki/bundled-doc upkeep under <code>PROGRAM-0004</code></li>
+<li>execution-policy bypass is explicitly prohibited, so canonical
+execution-request validation and governed provider hard stops remain part of
+the requirements contract instead of optional implementation detail</li>
 </ul>
 <h2>Why It Matters</h2>
 <p>This is one of the main differences between a useful engineering wiki and a

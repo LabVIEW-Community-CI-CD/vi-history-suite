@@ -128,7 +128,9 @@ describe('execution-policy control plane', () => {
     expect(policy).toContain('install/enable Docker');
     expect(policy).toContain('on Windows, pull the governed Windows image');
     expect(policy).toContain('structured compare-runtime detail rows');
+    expect(policy).toContain('execution-policy bypass is not allowed');
     expect(srs).toContain('VHS-REQ-467');
+    expect(srs).toContain('VHS-REQ-482');
     expect(srs).toContain('VHS-REQ-475');
     expect(srs).toContain('structured history-panel compare-runtime detail rows');
     expect(rtm).toContain('VHS-REQ-470');
@@ -141,12 +143,14 @@ describe('execution-policy control plane', () => {
     expect(program).toContain('`host-only`');
     expect(program).toContain('`docker-only`');
     expect(program).toContain('canonical effective execution-request validation');
+    expect(program).toContain('no execution-policy bypass');
     expect(program).toContain('Windows container-capability checks');
     expect(program).toContain('Closed on the retained transparent execution-policy contract.');
     expect(program).toContain('structured compare-runtime detail rows');
     expect(issue).toContain('visible Docker image-pull progress');
     expect(issue).toContain('actionable user guidance');
     expect(issue).toContain('canonical effective execution-request validation');
+    expect(issue).toContain('no execution-policy bypass path');
     expect(issue).toContain('Windows-container mode');
     expect(issue).toContain('Closed post-release issue');
     expect(issue).toContain('structured compare-runtime detail rows');

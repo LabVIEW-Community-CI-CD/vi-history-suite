@@ -1,0 +1,99 @@
+{
+  "trancheId": "TRANCHE-012",
+  "issueId": "ISSUE-0409",
+  "programId": "PROGRAM-0004",
+  "status": "active",
+  "parallelOpenCloseout": {
+    "trancheId": "TRANCHE-010",
+    "issueId": "ISSUE-0407",
+    "programId": "PROGRAM-0002",
+    "state": "open-on-human-gate"
+  },
+  "releaseCadence": {
+    "model": "event-driven",
+    "maintainedSurfaces": [
+      "preview-evidence/vi-history-suite-<version>.vsix",
+      "preview-evidence/preview-manifest.json",
+      "release-evidence/vi-history-suite-<version>.vsix",
+      "release-evidence/release-manifest.json",
+      "release-evidence/release-record.md",
+      "docs-workbench-evidence/docs-workbench-manifest.json",
+      "public-facade release-kit assets and setup/support guidance"
+    ],
+    "refreshTriggers": [
+      "package.json version change",
+      "SemVer tag or release-manifest contract change",
+      "public release-kit asset or setup/support change tied to the exact released VSIX",
+      "release-procedure, ship-control, or docs-workbench publication contract change"
+    ],
+    "explicitNonTriggers": [
+      "benchmark-only diagnosis that does not affect a shipped release surface",
+      "local characterization-only evidence changes without a governed release claim",
+      "unrelated docs or feature notes that do not affect install or release truth"
+    ]
+  },
+  "benchmarkRefreshCadence": {
+    "model": "event-driven-bounded",
+    "acceptedComparablePrefix": {
+      "commitCount": 129,
+      "pairCount": 128
+    },
+    "acceptedCurrentContractBoundaries": [
+      {
+        "surface": "windows-benchmark-image",
+        "firstInvalidPair": 129,
+        "characterization": "mixed-bitness-call-by-reference-seam"
+      },
+      {
+        "surface": "linux-benchmark-image",
+        "firstInvalidPair": "135/138",
+        "characterization": "linux-headless-recursive-load / labview-cli-connection-failed after one CloseLabVIEW recovery attempt"
+      }
+    ],
+    "refreshTriggers": [
+      "benchmark harness logic, packet derivation, or benchmark consumer tooling changes",
+      "comparison-report runtime execution changes that can affect HARNESS-VHS-002 truth",
+      "governed Windows benchmark image contract change",
+      "governed Linux runtime or benchmark-image contract change",
+      "a release or public claim would otherwise imply changed benchmark truth"
+    ],
+    "explicitNonTriggers": [
+      "UI-only or docs-only work that does not alter benchmark surfaces",
+      "public release-kit changes that do not alter benchmark contracts",
+      "out-of-scope alternative Windows x86 provisioning that is not part of the current governed image contract"
+    ],
+    "reopenTriggers": [
+      "the current governed Windows benchmark image contract gains same-bitness x86 provisioning",
+      "the governed NI Linux runtime or benchmark-image contract changes enough to justify a new full-window proof attempt",
+      "another in-scope benchmark provider becomes accepted authority truth"
+    ]
+  },
+  "operatorSurfaceSustainment": {
+    "requiredAuthorityUpdates": [
+      "docs/product/development-queue.json",
+      "docs/product/current-state.md",
+      "docs/product/post-release-sustainment-rules.md",
+      "docs/product/post-release-sustainment-rules.json",
+      "docs/product/execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md",
+      "docs/product/issues/ISSUE-0409-post-release-sustainment-and-release-cadence.md",
+      "docs/product/SHIP-0001-releasable-vi-history-suite.md"
+    ],
+    "requiredVerification": [
+      "focused tests",
+      "npm run docs:bundle",
+      "npm run docs:gate:core",
+      "npm run design:gate",
+      "npm run design:gate:assert-complete"
+    ],
+    "requiredDerivedUpdatesWhenReaderFacingTruthChanges": [
+      "docs/product/wiki-coverage-matrix.json",
+      "docs/product/wiki-publication-ledger.json",
+      "published wiki pages",
+      "resources/bundled-docs/manifest.json"
+    ],
+    "prohibitedBypasses": [
+      "execution-policy bypass that skips canonical execution-request validation",
+      "execution-policy bypass that skips governed provider hard stops"
+    ]
+  }
+}

@@ -105,7 +105,7 @@
     "title": "Post-release sustainment and release cadence",
     "status": "active",
     "source": "author direction",
-    "summary": "With benchmark proof now closed on bounded truth and the installed execution-policy contract now closed on transparent provider/acquisition truth, sustain the public release kit, benchmark refresh cadence, operator surfaces, SemVer discipline, and post-release control-plane upkeep without reopening the public-facade closeout, benchmark-proof, or execution-policy programs.",
+    "summary": "With benchmark proof now closed on bounded truth and the installed execution-policy contract now closed on transparent provider/acquisition truth, sustain the public release kit, benchmark refresh cadence, operator surfaces, SemVer discipline, and post-release control-plane upkeep without reopening the public-facade closeout, benchmark-proof, or execution-policy programs. The first sustainment slice now retains explicit event-driven release-refresh rules, bounded benchmark-refresh and reopen rules, and required authority/wiki/bundled-doc upkeep in `docs/product/post-release-sustainment-rules.{md,json}`.",
     "issues": [
       "ISSUE-0409"
     ]

@@ -24,6 +24,7 @@ Closure facts:
   is selected and the governed host surface is clean
 - canonical effective execution-request validation across settings, selected
   host-runtime facts, and Docker capability facts before provider work starts
+- no execution-policy bypass path around that canonical validation boundary
 - host-runtime conflict detection for already-open LabVIEW sessions and
   governed VI Server collisions
 - Windows Docker-capability checks, including daemon availability and

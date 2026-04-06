@@ -40,6 +40,7 @@ describe('post-release control-plane coherence', () => {
     const sustainmentProgram = readText(
       'docs/product/execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md'
     );
+    const sustainmentRules = readText('docs/product/post-release-sustainment-rules.md');
 
     const activeTranches = queue.filter((entry) => entry.status === 'active');
 
@@ -80,6 +81,9 @@ describe('post-release control-plane coherence', () => {
     expect(readme).toContain(
       '[PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./docs/product/execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)'
     );
+    expect(readme).toContain(
+      '[Post-Release Sustainment Rules](./docs/product/post-release-sustainment-rules.md)'
+    );
 
     expect(currentState).toContain('- `TRANCHE-010`: Public facade release kit and host-machine acceptance');
     expect(currentState).toContain(
@@ -96,6 +100,9 @@ describe('post-release control-plane coherence', () => {
     );
     expect(currentState).toContain(
       '- active execution program: [PROGRAM-0004: Post-Release Sustainment And Release Cadence](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)'
+    );
+    expect(currentState).toContain(
+      '- active operating rules: [post-release-sustainment-rules.md](./post-release-sustainment-rules.md) and [post-release-sustainment-rules.json](./post-release-sustainment-rules.json)'
     );
     expect(currentState).toContain(
       '- closed execution program: [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)'
@@ -115,6 +122,7 @@ describe('post-release control-plane coherence', () => {
     expect(ship).toContain(
       '- current driver-seat post-release execution program: [PROGRAM-0004 Post-Release Sustainment And Release Cadence](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)'
     );
+    expect(ship).toContain('[post-release-sustainment-rules.md](./post-release-sustainment-rules.md)');
     expect(ship).toContain('`TRANCHE-011` / [ISSUE-0408 Repeatable Benchmark Proof]');
     expect(ship).toContain('`TRANCHE-013` / [ISSUE-0410 Extension Execution Flexibility And Runtime Acquisition UX]');
 
@@ -137,6 +145,11 @@ describe('post-release control-plane coherence', () => {
     );
     expect(sustainmentProgram).toContain('- `TRANCHE-012`');
     expect(sustainmentProgram).toContain('Continue with [ISSUE-0409');
+    expect(sustainmentProgram).toContain(
+      '[post-release-sustainment-rules.md](../post-release-sustainment-rules.md)'
+    );
+    expect(sustainmentRules).toContain('TRANCHE-012');
+    expect(sustainmentRules).toContain('PROGRAM-0002');
 
     expect(issue).toContain('# ISSUE-0407: Public Facade Release Kit And Host-Machine Acceptance');
     expect(issue).toContain('## Status');
@@ -223,6 +236,7 @@ describe('post-release control-plane coherence', () => {
     const sustainmentIssue = readText(
       'docs/product/issues/ISSUE-0409-post-release-sustainment-and-release-cadence.md'
     );
+    const sustainmentRules = readText('docs/product/post-release-sustainment-rules.md');
 
     expect(queue).toContainEqual({
       id: 'TRANCHE-011',
@@ -412,6 +426,7 @@ describe('post-release control-plane coherence', () => {
     expect(admissionAdr).toContain('already-running `LabVIEW.exe`, `LabVIEWCLI.exe`, or `LVCompare.exe`');
 
     expect(sustainmentProgram).toContain('release cadence, benchmark refresh cadence, operator surfaces');
+    expect(sustainmentProgram).toContain('PROGRAM-0002');
     expect(sustainmentIssue).toContain('Active post-release issue.');
     expect(sustainmentIssue).toContain(
       '- `PROGRAM-0003` is now closed on the benchmark-proof packet under'
@@ -420,6 +435,8 @@ describe('post-release control-plane coherence', () => {
       '- `PROGRAM-0005` is now closed on the retained execution-policy contract under'
     );
     expect(sustainmentIssue).toContain('benchmark refresh cadence');
+    expect(sustainmentIssue).toContain('docs/product/post-release-sustainment-rules.md');
+    expect(sustainmentRules).toContain('execution-policy bypass');
   });
 
   it('keeps the GitLab authority, existing GitHub experiment mirror, and public facade boundary explicit', () => {

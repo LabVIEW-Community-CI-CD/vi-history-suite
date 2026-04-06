@@ -36,7 +36,8 @@ Activation is now satisfied:
 
 ## Dependencies
 
-- completed `PROGRAM-0002`
+- active `PROGRAM-0002` remains open only on Sergio Velderrain's human
+  Windows 11 right-click gate and is not reopened by this sustainment issue
 - completed `PROGRAM-0003`
 - completed `PROGRAM-0005`
 - truthful current-state and queue surfaces
@@ -51,6 +52,7 @@ Activation is now satisfied:
 ## Required Evidence
 
 - updated queue and program docs
+- retained sustainment rules in Markdown and JSON form
 - sustained release and benchmark refresh rules
 - green docs and design gates after the sustainment control-plane update
 
@@ -58,4 +60,6 @@ Activation is now satisfied:
 
 - retain the sustainment operating model in the queue and current-state docs
 - define the first maintained release-refresh and benchmark-refresh rules
+- retain those rules explicitly in `docs/product/post-release-sustainment-rules.md`
+  and `docs/product/post-release-sustainment-rules.json`
 - stop short of opening a new feature-layer program

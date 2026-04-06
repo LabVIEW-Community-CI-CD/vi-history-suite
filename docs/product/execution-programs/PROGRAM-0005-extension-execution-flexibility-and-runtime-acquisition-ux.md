@@ -102,6 +102,8 @@ Every slice shall preserve:
 
 - no silent provider substitution
 - no provider launch or Docker pull from a non-canonical effective request
+- no execution-policy bypass around canonical validation or provider hard-stop
+  boundaries
 - no contaminated host-runtime launches treated as product truth
 - explicit user-facing next-step guidance
 - platform-appropriate acquisition behavior

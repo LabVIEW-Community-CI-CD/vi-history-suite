@@ -46,11 +46,13 @@ If you are new to the repo, read these in order:
 16. [Debt Taxonomy](./docs/product/debt-taxonomy.md)
 17. [Debt Ledger](./docs/product/debt-ledger.md)
 18. [Debt Ledger JSON](./docs/product/debt-ledger.json)
-19. [Extension Execution Policy](./docs/product/extension-execution-policy.md)
-20. [Documentation Package Workbench](./docs/documentation-workbench.md)
-21. [Program Repo Jump](./docs/product/program-repo-jump.md)
-22. [PROGRAM-0001: Next Product Layer](./docs/product/execution-programs/PROGRAM-0001-next-product-layer.md)
-23. [PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
+19. [Post-Release Sustainment Rules](./docs/product/post-release-sustainment-rules.md)
+20. [Post-Release Sustainment Rules JSON](./docs/product/post-release-sustainment-rules.json)
+21. [Extension Execution Policy](./docs/product/extension-execution-policy.md)
+22. [Documentation Package Workbench](./docs/documentation-workbench.md)
+23. [Program Repo Jump](./docs/product/program-repo-jump.md)
+24. [PROGRAM-0001: Next Product Layer](./docs/product/execution-programs/PROGRAM-0001-next-product-layer.md)
+25. [PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
 
 For machine-friendly repo orientation, start with:
 
@@ -101,6 +103,8 @@ Use these repo-native control-plane entrypoints instead:
 - [Debt Taxonomy](./docs/product/debt-taxonomy.md)
 - [Debt Ledger](./docs/product/debt-ledger.md)
 - [Debt Ledger JSON](./docs/product/debt-ledger.json)
+- [Post-Release Sustainment Rules](./docs/product/post-release-sustainment-rules.md)
+- [Post-Release Sustainment Rules JSON](./docs/product/post-release-sustainment-rules.json)
 - [Extension Execution Policy](./docs/product/extension-execution-policy.md)
 - [Documentation Package Workbench](./docs/documentation-workbench.md)
 - [Program Repo Jump](./docs/product/program-repo-jump.md)
@@ -352,6 +356,8 @@ The current active tranches are:
 - `TRANCHE-010`: public facade release kit and host-machine acceptance
 - active issue: `ISSUE-0407`
 - `TRANCHE-012`: post-release sustainment and release cadence
+- active sustainment rules:
+  `docs/product/post-release-sustainment-rules.md`
 - closed follow-on tranches:
   - `TRANCHE-011`: repeatable Windows and Linux benchmark proof
   - `TRANCHE-013`: extension execution flexibility, canonical execution-request
@@ -373,6 +379,8 @@ See:
 - [PROGRAM-0003: Repeatable Benchmark Proof](./docs/product/execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md)
 - [PROGRAM-0004: Post-Release Sustainment And Release Cadence](./docs/product/execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)
 - [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./docs/product/execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
+- [Post-Release Sustainment Rules](./docs/product/post-release-sustainment-rules.md)
+- [Post-Release Sustainment Rules JSON](./docs/product/post-release-sustainment-rules.json)
 - [Extension Execution Policy](./docs/product/extension-execution-policy.md)
 - [SHIP-0001: Releasable VI History Suite](./docs/product/SHIP-0001-releasable-vi-history-suite.md)
 - [Release Readiness Matrix](./docs/product/release-readiness-matrix.json)
