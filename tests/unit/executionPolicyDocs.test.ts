@@ -119,13 +119,15 @@ describe('execution-policy control plane', () => {
     expect(policy).toContain('## Canonical Effective Execution Request');
     expect(policy).toContain('selected `LabVIEW.ini` surface');
     expect(policy).toContain('Windows Mode Matrix');
-    expect(policy).toContain('do not select or acquire Docker');
+    expect(policy).toContain('if Docker Desktop is installed, use the governed Windows');
+    expect(policy).toContain('hard-stop instead of falling back to');
+    expect(policy).toContain('if Docker Desktop is not installed, use host-native execution');
     expect(policy).toContain('install/enable/switch Docker');
     expect(policy).toContain('whether the image is already present locally');
     expect(policy).toContain('`selected`');
     expect(policy).toContain('`hard-stop`');
     expect(policy).toContain('close the conflicting LabVIEW session');
-    expect(policy).toContain('install/enable Docker');
+    expect(policy).toContain('install, start, enable, repair, or switch Docker Desktop');
     expect(policy).toContain('on Windows, pull the governed Windows image');
     expect(policy).toContain('structured compare-runtime detail rows');
     expect(policy).toContain('execution-policy bypass is not allowed');
@@ -173,6 +175,7 @@ describe('execution-policy control plane', () => {
     expect(publicationLedger).toContain('"wikiFileName": "User-Workflow.md"');
     expect(userWorkflow).toContain('`auto` / `host-only` / `docker-only`');
     expect(userWorkflow).toContain('structured');
+    expect(userWorkflow).toContain('Docker Desktop is installed');
     expect(requirementsWiki).toContain('execution-mode contract');
   });
 });

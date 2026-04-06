@@ -25,20 +25,24 @@ Current implemented provider truth now satisfies the governed execution policy:
 - the installed extension now exposes a first-class
   `viHistorySuite.executionMode` setting with `auto`, `host-only`, and
   `docker-only`
-- host-native execution remains the active path for bounded Windows x86 and
-  other compatible local runtime surfaces
+- host-native execution remains available for compatible non-Windows surfaces,
+  for explicit `host-only` requests, and on Windows when Docker Desktop is not
+  installed
 - runtime selection now treats `host-only` and `docker-only` as explicit
   provider boundaries and fails closed instead of silently falling back across
   host-native and Docker-backed providers
-- on Windows, `auto` now prefers clean compatible host-native execution
-  instead of selecting Docker just because a governed Windows image happens to
-  exist
-- the installed selector now derives the selected `LabVIEW.ini` surface and
-  governed VI Server TCP port from the selected host runtime before final
-  Windows provider choice
-- on Windows, `auto` now routes contaminated host-runtime surfaces to the
-  governed Windows container provider when it is available and hard-stops when
-  that Docker-backed escape path is unavailable
+- on Windows, `auto` now uses the governed Windows container provider whenever
+  Docker Desktop is installed instead of silently preferring host-native
+  execution
+- on Windows, `auto` now evaluates host-native execution only when Docker
+  Desktop is not installed
+- when host-native execution is still in play, the installed selector derives
+  the selected `LabVIEW.ini` surface and governed VI Server TCP port from the
+  selected host runtime before final host-native launch
+- on Windows, `auto` now hard-stops when Docker Desktop is installed but the
+  governed Windows container provider is unavailable, and it also hard-stops
+  when Docker Desktop is not installed yet the selected host-runtime surface
+  is contaminated or contradictory
 - `host-only` now fails closed on contaminated Windows host-runtime surfaces
   instead of leaving that ambient conflict implicit
 - when Windows Docker-backed execution is evaluated, the selector now validates
@@ -100,7 +104,8 @@ Execution mode is distinct from:
 Host-native execution remains valid in the future contract for compatible
 LabVIEW 2026 Q1 x86 or x64 host surfaces. The execution-mode policy decides
 whether host-native execution is allowed at all; bitness and explicit runtime
-paths then refine which compatible host surface is selected.
+paths then refine which compatible host surface is selected. On Windows,
+`auto` uses that host-native path only when Docker Desktop is not installed.
 
 ## Canonical Effective Execution Request
 
@@ -140,6 +145,12 @@ facts in that boundary:
 - existing LabVIEW-related host processes
 - existing listener on the governed VI Server port
 
+Those selected host-runtime facts now govern host-native Windows execution when
+host-native execution is actually in play. When Docker Desktop is installed on
+Windows, canonical validation first decides whether the governed Windows
+container provider is runnable and does not silently bypass that Docker-first
+boundary.
+
 That front-facing provider/acquisition transparency debt is now retired: the
 history panel renders separate compare-runtime detail rows and preserves them
 through panel reopen instead of collapsing everything back to one summary-only
@@ -159,14 +170,19 @@ validation boundary.
 
 Its rule is:
 
-- use host-native execution when the governed host runtime surface is
-  compatible and conflict-free
-- require Docker isolation when a conflicting LabVIEW 2026 host session or
-  governed VI Server collision would contaminate host execution
+- on Windows, if Docker Desktop is installed, use the governed Windows
+  container provider
+- on Windows, if Docker Desktop is installed but the governed Windows
+  container provider is unavailable, hard-stop instead of falling back to
+  host-native execution
+- on Windows, if Docker Desktop is not installed, use host-native execution
+  only when the governed host runtime surface is compatible and conflict-free
+- on Windows, if Docker Desktop is not installed and a conflicting LabVIEW
+  2026 host session, governed VI Server collision, or contradictory host
+  runtime surface would contaminate host execution, hard-stop with guidance to
+  close LabVIEW or install Docker Desktop
 - on Windows, if Docker isolation is selected and the image is missing, show
   visible pull progress while acquiring the governed Windows image
-- on Windows, do not select or acquire Docker when the compatible host runtime
-  surface is already clean and conflict-free
 
 ### Host-Only
 
@@ -194,8 +210,8 @@ Important host-runtime contamination factors include:
 
 - an already-open non-headless LabVIEW 2026 session on the host
 - an already-open LabVIEW 2026 session on the host when the selected execution
-  mode is `auto` and host-native reuse would contaminate the governed launch
-  surface
+  mode still permits host-native reuse and that reuse would contaminate the
+  governed launch surface
 - multiple installed LabVIEW versions whose ambient state could influence the
   launch surface
 - a governed VI Server port that is already occupied
@@ -214,23 +230,27 @@ Important Windows Docker capability factors include:
 
 | Mode | Canonical condition | Required outcome |
 | --- | --- | --- |
-| `auto` | Clean compatible host LabVIEW 2026 Q1 surface, no conflicting open session, no governed port collision | Use host-native execution and do not acquire Docker. |
-| `auto` | Conflicting open LabVIEW 2026 host session or governed VI Server collision, and Windows-capable Docker is available | Use Docker isolation. If the governed Windows image is missing, acquire it with visible progress. |
-| `auto` | Same host conflict, but Docker is unavailable or not Windows-capable | Hard stop with guidance to close LabVIEW or install/enable/switch Docker. |
+| `auto` | Docker Desktop is installed and the governed Windows container provider is usable | Use Docker isolation. If the governed Windows image is missing, acquire it with visible progress. |
+| `auto` | Docker Desktop is installed, but the governed Windows container provider is unavailable, the daemon is down, or Docker is not in Windows-container mode | Hard stop with guidance to start, enable, repair, or switch Docker Desktop. Do not fall back to host-native execution. |
+| `auto` | Docker Desktop is not installed, and the host LabVIEW 2026 Q1 surface is clean, compatible, and conflict-free | Use host-native execution. |
+| `auto` | Docker Desktop is not installed, and the host surface is contaminated, incompatible, or contradictory | Hard stop with guidance to close LabVIEW, resolve the governed host conflict, or install Docker Desktop. |
 | `host-only` | Clean compatible host LabVIEW 2026 Q1 surface | Use host-native execution only. |
 | `host-only` | Host surface is contaminated, incompatible, or contradictory | Hard stop. Tell the user to close LabVIEW, resolve the governed port conflict, correct the selected host runtime, or change execution mode. |
 | `docker-only` | Windows-capable Docker is available | Use Docker only. If the image is missing, acquire it with visible progress. |
 | `docker-only` | Docker is unavailable, stopped, or not in Windows-container mode | Hard stop. Tell the user to install/enable/switch Docker or change execution mode. |
 
-When those conditions force Docker isolation but Docker is unavailable, the
-required user-facing outcome is a hard stop with actionable guidance:
+When those conditions force a hard stop, the required user-facing outcome is
+actionable guidance:
 
 - close the conflicting LabVIEW session
-- or install/enable Docker
+- resolve the governed host-runtime conflict
+- install, start, enable, repair, or switch Docker Desktop as needed
 
 The guidance must remain mode-aware:
 
-- `auto`: close LabVIEW or install/enable/switch Docker
+- `auto`: if Docker Desktop is installed, repair/start/switch Docker Desktop;
+  otherwise close LabVIEW, resolve the host conflict, or install Docker
+  Desktop
 - `host-only`: close LabVIEW, resolve the selected host-runtime conflict, or
   change execution mode
 - `docker-only`: install/enable/switch Docker or change execution mode

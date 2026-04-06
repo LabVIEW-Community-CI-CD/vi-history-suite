@@ -379,12 +379,7 @@ export async function locateComparisonRuntime(
   let windowsContainerEvaluated = false;
   let windowsContainerFacts: WindowsContainerProviderFacts | undefined;
   const ensureWindowsContainerAvailability = async (): Promise<boolean> => {
-    if (
-      windowsContainerEvaluated ||
-      platform !== 'win32' ||
-      executionMode === 'host-only' ||
-      preferBitness === 'x86'
-    ) {
+    if (windowsContainerEvaluated || platform !== 'win32' || executionMode === 'host-only') {
       return windowsContainerAvailable;
     }
 
@@ -424,6 +419,101 @@ export async function locateComparisonRuntime(
   });
   const buildWindowsContainerSelectionFactsForReturn = () =>
     buildWindowsContainerSelectionFacts(windowsContainerFacts);
+
+  if (platform === 'win32' && executionMode === 'auto') {
+    windowsContainerAvailable = await ensureWindowsContainerAvailability();
+    if (windowsContainerFacts?.dockerCliAvailable === true) {
+      if (windowsContainerFacts.windowsContainerCapabilityAvailable) {
+        return {
+          platform,
+          executionMode,
+          preferBitness,
+          provider: 'windows-container',
+          providerDecisions: buildProviderDecisions({
+            platform,
+            executionMode,
+            preferBitness,
+            windowsContainerImage,
+            windowsContainerAvailable,
+            windowsContainerEvaluated,
+            ...buildWindowsContainerDecisionFacts(),
+            selectedProvider: 'windows-container',
+            selectedEngine: 'labview-cli'
+          }),
+          ...buildWindowsContainerSelectionFactsForReturn(),
+          windowsContainerImage,
+          engine: 'labview-cli',
+          labviewExe: {
+            kind: 'labview-exe',
+            path: WINDOWS_CONTAINER_LABVIEW_EXE,
+            source: 'scan',
+            exists: true,
+            bitness: 'x64'
+          },
+          labviewCli: {
+            kind: 'labview-cli',
+            path: WINDOWS_CONTAINER_LABVIEW_CLI,
+            source: 'scan',
+            exists: true,
+            bitness: 'x86'
+          },
+          lvCompare: {
+            kind: 'lvcompare',
+            path: WINDOWS_CONTAINER_LVCOMPARE,
+            source: 'scan',
+            exists: true
+          },
+          notes: [
+            describeSelectedWindowsContainerProvider({
+              executionMode,
+              windowsContainerImage,
+              dockerCliAvailable: windowsContainerFacts?.dockerCliAvailable,
+              dockerDaemonReachable: windowsContainerFacts?.dockerDaemonReachable,
+              windowsContainerCapabilityAvailable:
+                windowsContainerFacts?.windowsContainerCapabilityAvailable,
+              windowsContainerHostMode: windowsContainerFacts?.windowsContainerHostMode,
+              imageAvailable: windowsContainerFacts?.imageAvailable,
+              selectionReason: 'docker-installed'
+            })
+          ],
+          registryQueryPlans,
+          candidates
+        };
+      }
+
+      return {
+        platform,
+        executionMode,
+        preferBitness,
+        provider: 'unavailable',
+        blockedReason: 'auto-docker-installed-provider-unavailable',
+        providerDecisions: buildProviderDecisions({
+          platform,
+          executionMode,
+          preferBitness,
+          windowsContainerImage,
+          windowsContainerAvailable,
+          windowsContainerEvaluated,
+          ...buildWindowsContainerDecisionFacts(),
+          blockedReason: 'auto-docker-installed-provider-unavailable'
+        }),
+        ...buildWindowsContainerSelectionFactsForReturn(),
+        notes: [
+          `Docker Desktop was detected on Windows, so governed auto execution requires the Windows container provider, but ${describeUnavailableWindowsContainerProvider({
+            windowsContainerImage,
+            dockerCliAvailable: windowsContainerFacts?.dockerCliAvailable,
+            dockerDaemonReachable: windowsContainerFacts?.dockerDaemonReachable,
+            windowsContainerCapabilityAvailable:
+              windowsContainerFacts?.windowsContainerCapabilityAvailable,
+            windowsContainerHostMode: windowsContainerFacts?.windowsContainerHostMode,
+            imageAvailable: windowsContainerFacts?.imageAvailable
+          })}`
+        ],
+        registryQueryPlans,
+        candidates
+      };
+    }
+  }
 
   if (executionMode === 'docker-only') {
     windowsContainerAvailable = await ensureWindowsContainerAvailability();
@@ -1181,6 +1271,7 @@ function describeSelectedWindowsContainerProvider(options: {
   imageAvailable?: boolean;
   acquisitionState?: 'not-required' | 'required' | 'acquired' | 'failed';
   selectionReason?:
+    | 'docker-installed'
     | 'preferred-isolation'
     | 'host-runtime-conflict'
     | 'host-runtime-unavailable'
@@ -1203,6 +1294,10 @@ function describeSelectedWindowsContainerProvider(options: {
     return `${capabilitySummary} for docker-only execution.`;
   }
 
+  if (options.selectionReason === 'docker-installed') {
+    return `${capabilitySummary}, so isolated execution was selected because Docker Desktop is installed and governed Windows auto execution uses the Windows container provider.`;
+  }
+
   if (options.selectionReason === 'host-runtime-conflict') {
     return `${capabilitySummary}, so isolated execution was selected because the validated Windows host runtime surface was contaminated.`;
   }
@@ -1223,6 +1318,16 @@ function buildProviderDecisions(
 ): RuntimeProviderDecision[] {
   const decisions: RuntimeProviderDecision[] = [];
   const containerRelevant = options.platform === 'win32';
+  const windowsAutoDockerInstalled =
+    options.platform === 'win32' &&
+    options.executionMode === 'auto' &&
+    options.windowsContainerEvaluated === true &&
+    options.windowsContainerDockerCliAvailable === true;
+  const windowsAutoDockerMissing =
+    options.platform === 'win32' &&
+    options.executionMode === 'auto' &&
+    options.windowsContainerEvaluated === true &&
+    options.windowsContainerDockerCliAvailable === false;
 
   if (options.selectedProvider === 'windows-container') {
     decisions.push({
@@ -1231,6 +1336,8 @@ function buildProviderDecisions(
       reason:
         options.executionMode === 'docker-only'
           ? 'execution-mode-docker-only-selected-windows-container'
+          : windowsAutoDockerInstalled && !options.hostRuntimeConflictDetected
+            ? 'auto-selected-windows-container-because-docker-installed'
           : options.hostRuntimeConflictDetected
             ? 'auto-required-docker-because-host-runtime-conflict'
             : options.labviewExeFound === false
@@ -1249,7 +1356,9 @@ function buildProviderDecisions(
           imageAvailable: options.windowsContainerImageAvailable,
           acquisitionState: options.windowsContainerAcquisitionState,
           selectionReason:
-            options.hostRuntimeConflictDetected
+            windowsAutoDockerInstalled && !options.hostRuntimeConflictDetected
+              ? 'docker-installed'
+              : options.hostRuntimeConflictDetected
               ? 'host-runtime-conflict'
               : options.labviewExeFound === false
                 ? 'host-runtime-unavailable'
@@ -1264,12 +1373,16 @@ function buildProviderDecisions(
       reason:
         options.executionMode === 'docker-only'
           ? 'execution-mode-docker-only-disallows-host-native'
+          : windowsAutoDockerInstalled
+            ? 'auto-docker-installed-disallows-host-native'
           : options.hostRuntimeConflictDetected
             ? 'host-native-runtime-surface-contaminated'
             : deriveHostNativeRejectedReason(options),
       detail:
         options.executionMode === 'docker-only'
           ? 'Host-native execution was not selected because docker-only execution was requested.'
+          : windowsAutoDockerInstalled
+            ? 'Host-native execution was not selected because Docker Desktop is installed and governed Windows auto execution uses the Windows container provider.'
           : options.hostRuntimeConflictDetected
             ? 'Host-native execution was not selected because the validated Windows host runtime surface was contaminated by existing LabVIEW-related activity.'
             : deriveHostNativeRejectedDetail(options)
@@ -1311,7 +1424,31 @@ function buildProviderDecisions(
       );
     } else {
       decisions.push(
-        options.preferBitness === 'x86'
+        windowsAutoDockerMissing
+          ? {
+              provider: 'windows-container',
+              outcome: 'rejected',
+              reason: 'auto-docker-not-installed',
+              detail:
+                'Windows container execution was not selected because Docker Desktop was not detected on this Windows host.'
+            }
+          : options.executionMode === 'auto' &&
+              options.blockedReason === 'auto-docker-installed-provider-unavailable'
+            ? {
+                provider: 'windows-container',
+                outcome: 'rejected',
+                reason: 'auto-docker-installed-provider-unavailable',
+                detail: `Docker Desktop was detected on Windows, but ${describeUnavailableWindowsContainerProvider({
+                  windowsContainerImage: options.windowsContainerImage,
+                  dockerCliAvailable: options.windowsContainerDockerCliAvailable,
+                  dockerDaemonReachable: options.windowsContainerDaemonReachable,
+                  windowsContainerCapabilityAvailable:
+                    options.windowsContainerCapabilityAvailable,
+                  windowsContainerHostMode: options.windowsContainerHostMode,
+                  imageAvailable: options.windowsContainerImageAvailable
+                })}`
+              }
+          : options.preferBitness === 'x86'
           ? {
               provider: 'windows-container',
               outcome: 'rejected',
@@ -1319,16 +1456,6 @@ function buildProviderDecisions(
               detail:
                 'Windows x86 comparison-report execution stays host-native, so the Windows container provider was not selected for this lane.'
             }
-          : options.executionMode === 'auto' &&
-              options.selectedProvider === 'host-native' &&
-              options.windowsContainerEvaluated === false
-            ? {
-                provider: 'windows-container',
-                outcome: 'rejected',
-                reason: 'auto-clean-host-did-not-require-docker',
-                detail:
-                  'Docker was not selected because the validated Windows host runtime surface was clean for host-native execution.'
-              }
             : options.executionMode === 'auto' &&
                 options.blockedReason === 'windows-host-runtime-surface-contaminated' &&
                 options.windowsContainerEvaluated
@@ -1370,13 +1497,10 @@ function buildProviderDecisions(
       reason:
         options.executionMode === 'host-only'
           ? 'execution-mode-host-only-selected-host-native'
-          : options.executionMode === 'auto' &&
-              options.platform === 'win32' &&
-              options.preferBitness !== 'x86' &&
-              options.windowsContainerEvaluated === false
+          : windowsAutoDockerMissing
             ? options.selectedEngine === 'lvcompare'
-              ? 'auto-selected-clean-host-native-lvcompare-fallback'
-              : 'auto-selected-clean-host-native'
+              ? 'auto-selected-host-native-because-docker-not-installed-lvcompare-fallback'
+              : 'auto-selected-host-native-because-docker-not-installed'
           : options.selectedEngine === 'lvcompare'
             ? 'host-native-lvcompare-fallback-selected'
             : 'host-native-labview-cli-selected',
@@ -1385,13 +1509,10 @@ function buildProviderDecisions(
           ? options.selectedEngine === 'lvcompare'
             ? 'Host-only execution was requested and host-native LabVIEW 2026 plus LVCompare were available.'
             : 'Host-only execution was requested and host-native LabVIEW 2026 plus LabVIEWCLI were available.'
-          : options.executionMode === 'auto' &&
-              options.platform === 'win32' &&
-              options.preferBitness !== 'x86' &&
-              options.windowsContainerEvaluated === false
+          : windowsAutoDockerMissing
             ? options.selectedEngine === 'lvcompare'
-              ? 'Auto execution selected host-native LabVIEW 2026 plus LVCompare because the validated Windows host runtime surface was clean and LabVIEWCLI was not located.'
-              : 'Auto execution selected host-native LabVIEW 2026 plus LabVIEWCLI because the validated Windows host runtime surface was clean.'
+              ? 'Auto execution selected host-native LabVIEW 2026 plus LVCompare because Docker Desktop was not detected on Windows and LabVIEWCLI was not located.'
+              : 'Auto execution selected host-native LabVIEW 2026 plus LabVIEWCLI because Docker Desktop was not detected on Windows.'
           : options.selectedEngine === 'lvcompare'
             ? 'Host-native LabVIEW 2026 and LVCompare were available, while LabVIEWCLI was not located.'
             : options.preferBitness === 'x86'
@@ -1414,6 +1535,9 @@ function deriveHostNativeRejectedReason(options: BuildProviderDecisionsOptions):
   if (options.executionMode === 'docker-only') {
     return 'execution-mode-docker-only-disallows-host-native';
   }
+  if (options.blockedReason === 'auto-docker-installed-provider-unavailable') {
+    return 'auto-docker-installed-disallows-host-native';
+  }
   if (options.blockedReason === 'windows-host-runtime-surface-contaminated') {
     return 'host-native-runtime-surface-contaminated';
   }
@@ -1432,6 +1556,9 @@ function deriveHostNativeRejectedReason(options: BuildProviderDecisionsOptions):
 function deriveHostNativeRejectedDetail(options: BuildProviderDecisionsOptions): string {
   if (options.executionMode === 'docker-only') {
     return 'Host-native execution was not selected because docker-only execution was requested.';
+  }
+  if (options.blockedReason === 'auto-docker-installed-provider-unavailable') {
+    return 'Host-native execution was not selected because Docker Desktop is installed and governed Windows auto execution uses the Windows container provider.';
   }
   if (options.blockedReason === 'windows-host-runtime-surface-contaminated') {
     return 'Validated Windows host runtime facts showed existing LabVIEW-related process or governed VI Server port activity, so host-native execution was not selected.';

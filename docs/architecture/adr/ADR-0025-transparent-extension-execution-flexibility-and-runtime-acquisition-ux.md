@@ -39,14 +39,15 @@ Adopt a transparent extension execution-flexibility contract.
    - explicit `labviewCliPath`, `labviewExePath`, and `lvComparePath`
    - `windowsContainerImage`
 3. In `auto` mode on Windows, the extension shall:
-   - use host-native execution only when the host runtime surface is compatible
-     and conflict-free
-   - require Docker isolation when a conflicting LabVIEW 2026 host session or
-     governed VI Server collision would contaminate host execution
-4. If Docker is required by the selected mode or by `auto`-mode conflict
-   detection and Docker is unavailable, the extension shall fail closed with an
-   actionable user-facing message that tells the user to either close the
-   conflicting LabVIEW session or install/enable Docker.
+   - use the governed Windows container provider whenever Docker Desktop is
+     installed
+   - use host-native execution only when Docker Desktop is not installed and
+     the host runtime surface is compatible and conflict-free
+4. If Docker is required by the selected mode, by Windows `auto` because
+   Docker Desktop is installed, or because the Docker-first Windows provider
+   must replace a contaminated host surface, and Docker is unavailable, the
+   extension shall fail closed with an actionable user-facing message instead
+   of silently falling back to host-native execution.
 5. If Docker execution is selected and the required image is not available
    locally, the extension shall acquire the platform-appropriate image through
    a visible progress surface. On Windows, this means the governed Windows
@@ -54,8 +55,8 @@ Adopt a transparent extension execution-flexibility contract.
 6. `host-only` shall never silently fall back to Docker.
 7. `docker-only` shall never silently fall back to host-native execution.
 8. Compatible host LabVIEW 2026 Q1 x86 and x64 execution remain valid under
-   the future policy when the selected mode permits host-native launch and the
-   governed host runtime surface is clean.
+   the future policy when the selected mode permits host-native launch, Docker
+   Desktop is not installed, and the governed host runtime surface is clean.
 9. Runtime doctor and front-facing execution feedback shall surface:
    - selected execution mode
    - chosen provider
@@ -72,9 +73,10 @@ Adopt a transparent extension execution-flexibility contract.
 
 - Users need to understand how the extension will execute, not infer it from
   bitness or provider side effects.
-- Docker should be optional when the host runtime is clean and the user wants
-  host-native execution, but it should become a truthful hard requirement when
-  the host runtime is already contaminated by an open session.
+- On Windows, Docker Desktop installation is itself part of the execution
+  contract: if it is installed, `auto` should use the governed Windows
+  container provider rather than spending user time rediscovering whether a
+  host-native launch might also work.
 - Visible image-acquisition progress is part of the usability contract, not
   only an implementation detail.
 - A dedicated ADR prevents the product from drifting between “prefer container”

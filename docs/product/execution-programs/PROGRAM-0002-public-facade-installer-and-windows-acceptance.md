@@ -19,6 +19,18 @@ private GitLab engineering control plane.
 
 The primary public surface is now a release kit, not an installer product.
 
+## Current Gate Truth
+
+- Gate D remains open
+- the latest retained human review on April 6, 2026 is still authoritative
+  historical evidence: `Open Dashboard` stalled on
+  `Tooling/deployment/VIP_Post-Install Custom Action.vi`
+- that retained failure was captured before the Windows Docker-first `auto`
+  execution rule was installed locally
+- the next gate-closing proof must rerun the manual right-click path on the
+  updated installed bundle where Windows `auto` uses the governed Windows
+  container provider whenever Docker Desktop is installed
+
 ## Trigger
 
 This program starts only after all of these are true:

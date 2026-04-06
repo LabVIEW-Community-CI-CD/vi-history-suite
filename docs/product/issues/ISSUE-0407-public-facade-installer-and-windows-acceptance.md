@@ -64,9 +64,11 @@ Current landed scaffold state:
 - the authority repo now carries a repo-side fix for the governed
   retained-window seam: `Open dashboard` seeds governed retained dashboard
   evidence from governed proof caches into the active workspace archive
-  contract before any local pair refresh, but the current Gate D blocker is
-  now the broader host-native dashboard cold-start path on a canonical VI that
-  is not already covered by governed retained dashboard evidence
+  contract before any local pair refresh
+- that retained failed review remains authoritative historical evidence, but it
+  predates the updated Windows Docker-first `auto` rule; the next Gate D rerun
+  must therefore execute on the updated installed bundle before this issue can
+  claim a changed host-machine truth
 - the authority repo still mirrors a GitHub Linux benchmark lane into the
   private `vi-history-suite-source-experiments` repo, but that mirror is now
   documented as benchmark only and belongs to the queued benchmark-proof lane

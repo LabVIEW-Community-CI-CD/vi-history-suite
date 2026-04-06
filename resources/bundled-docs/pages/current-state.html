@@ -105,11 +105,9 @@ synced clone</li>
 <li>the latest retained Gate D review still failed on April 6, 2026 because
 <code>Open Dashboard</code> for <code>Tooling/deployment/VIP_Post-Install Custom Action.vi</code>
 appeared stalled at pair <code>1/23</code></li>
-<li>the repo-side retained-evidence seeding fix is now landed for governed
-chronology windows that already exist in governed proof caches, but the
-broader host-native dashboard cold-start path still needs retirement on
-canonical VI windows that are not already covered by retained dashboard
-evidence</li>
+<li>that retained failed review is still authoritative historical evidence, but
+it predates the updated Docker-first Windows <code>auto</code> rule; Gate D therefore
+needs a rerun on the updated installed bundle before product truth changes</li>
 <li>benchmark proof is now a closed bounded program, not part of the active
 public-closeout exit gate</li>
 <li>execution-policy work is now closed on transparent provider/acquisition
@@ -191,11 +189,12 @@ driver-seat ambiguity.</p>
 <li><code>auto</code>, <code>host-only</code>, and <code>docker-only</code> are explicit runtime-selector truths</li>
 <li><code>host-only</code> and <code>docker-only</code> now fail closed instead of silently
 substituting the other provider class</li>
-<li>on Windows, <code>auto</code> now stays host-native on a clean validated host instead
-of selecting Docker just because a governed image exists</li>
+<li>on Windows, <code>auto</code> now uses the governed Windows container provider whenever
+Docker Desktop is installed and only considers host-native execution when
+Docker Desktop is not installed</li>
 <li>the selector now derives the selected <code>LabVIEW.ini</code>, governed VI Server TCP
-port, and observed host-runtime conflict facts before final Windows provider
-choice</li>
+port, and observed host-runtime conflict facts when host-native execution is
+in play</li>
 <li>Windows Docker-capability truth is now explicit too: the selector validates
 Docker CLI availability, daemon reachability, active container mode, and
 governed image presence before the Windows provider is selected or rejected</li>

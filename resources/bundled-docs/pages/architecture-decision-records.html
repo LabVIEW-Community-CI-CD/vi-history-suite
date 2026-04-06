@@ -55,8 +55,8 @@ environment variables, and entrypoint-local defaults have all been resolved.</p>
 <p><code>ADR-0025</code> then widens the user-facing operating model beyond the older
 container-isolation preference in <code>ADR-0006</code>. The primary extension-user
 execution-policy record is now the transparent <code>auto</code> / <code>host-only</code> /
-<code>docker-only</code> contract with conflict-driven Docker hard stops, Windows
-image-pull progress, and no silent provider fallback.</p>
+<code>docker-only</code> contract with Docker-first Windows <code>auto</code>, conflict-driven hard
+stops, Windows image-pull progress, and no silent provider fallback.</p>
 <p><code>ADR-0026</code> adds the next boundary: the extension must validate one canonical
 effective execution request before it chooses host-native execution, starts a
 Docker pull, or claims a provider is runnable. That decision makes selected

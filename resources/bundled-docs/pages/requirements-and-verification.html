@@ -81,16 +81,19 @@ governed requirements system rather than treating documentation as informal.</p>
 <ul>
 <li>the installed setting surface for <code>auto</code>, <code>host-only</code>, and <code>docker-only</code></li>
 <li>the no-silent-fallback rule between <code>host-only</code>, <code>docker-only</code>, and <code>auto</code></li>
-<li>when Windows <code>auto</code> must stay host-native because the selected host surface
-is clean</li>
+<li>when Windows <code>auto</code> must use the governed Windows container provider because
+Docker Desktop is installed</li>
+<li>when Windows <code>auto</code> may still use host-native execution because Docker
+Desktop is not installed and the selected host surface is clean</li>
 <li>when the selected <code>LabVIEW.ini</code> and derived VI Server TCP port define the
 current host conflict boundary</li>
-<li>when a contaminated Windows host surface now routes to Docker or hard-stops
-instead of silently continuing on the host</li>
+<li>when a contaminated Windows host surface now hard-stops instead of silently
+continuing on the host when Docker Desktop is absent</li>
 <li>when the extension now validates one canonical effective execution request
 before provider selection or Docker acquisition starts</li>
-<li>when Docker becomes a hard requirement because an open host LabVIEW session
-would contaminate host execution</li>
+<li>when Docker becomes a hard requirement because Docker Desktop is installed or
+because an open host LabVIEW session would contaminate the only remaining
+host-native path</li>
 <li>when Windows Docker evaluation must distinguish Docker CLI availability,
 daemon reachability, active container mode, and governed image presence
 before the Windows provider is selected or rejected</li>

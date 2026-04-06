@@ -65,12 +65,17 @@ The repo-side selector slices already landed and are no longer queued intent:
 - `viHistorySuite.executionMode` exists in the installed manifest
 - `host-only` and `docker-only` fail closed instead of silently substituting a
   different provider
-- Windows `auto` now prefers clean compatible host-native execution
+- Windows `auto` now uses the governed Windows container provider whenever
+  Docker Desktop is installed and only considers host-native execution when
+  Docker Desktop is not installed
 - Windows host conflict truth is now derived from the selected `LabVIEW.ini`
   surface, the governed VI Server TCP port, and observed host-runtime
-  activity before final provider selection
-- contaminated Windows host surfaces now route to Docker when the governed
-  provider is available and hard-stop otherwise
+  activity whenever host-native execution is still in play
+- Windows `auto` now hard-stops instead of silently falling back when Docker
+  Desktop is installed but the governed Windows container provider is
+  unavailable
+- when Docker Desktop is not installed, contaminated Windows host surfaces now
+  hard-stop instead of silently continuing on the host
 - runtime doctor and retained packet surfaces now carry execution mode, host
   `LabVIEW.ini`, derived TCP port, host-conflict truth, rejected providers,
   and next action

@@ -1299,9 +1299,11 @@
   CLI-only rule, including the removal of hidden explicit Windows defaults
 - `TEST-DOC-065`: review README, current-state, extension-execution-policy,
   ADR-0025, PROGRAM-0005, ISSUE-0410, and the debt ledger and confirm the
-  current `auto` / `host-only` / `docker-only` contract, Docker-required hard
-  stops, visible Windows image-pull progress, no-silent-fallback rule, and
-  user-facing provider transparency are all explicit
+  current `auto` / `host-only` / `docker-only` contract, the Docker-first
+  Windows `auto` rule when Docker Desktop is installed, the Docker-absent
+  host-native fallback rule, Docker-required hard stops, visible Windows
+  image-pull progress, no-silent-fallback rule, and user-facing provider
+  transparency are all explicit
 - `TEST-DOC-066`: review the wiki coverage matrix, publication ledger,
   User-Workflow, Requirements-And-Verification, Current-State, Architecture,
   and Architecture-Decision-Records pages and confirm the execution-policy
@@ -1309,9 +1311,9 @@
   published reader surfaces
 - `TEST-UNIT-300`: verify the execution-policy control-plane package keeps
   canonical effective execution-request validation, Windows container-capability
-  hard stops, the Windows `auto` / `host-only` / `docker-only` decision
-  matrix, and the open execution-policy debt item aligned across authority docs
-  after the manifest exposes a first-class `viHistorySuite.executionMode`
+  hard stops, the Docker-first Windows `auto` decision matrix, and the closed
+  execution-policy debt item aligned across authority docs after the manifest
+  exposes a first-class `viHistorySuite.executionMode`
 - `TEST-UNIT-301`: verify the Windows benchmark summary fails closed when any
   retained pair is `runtimeExecutionState=not-available`, retains the blocked
   reason as terminal benchmark truth, snapshots immutable per-run
@@ -1321,18 +1323,20 @@
 - `TEST-DOC-067`: review extension-execution-policy, ADR-0025, ADR-0026,
   PROGRAM-0005, ISSUE-0410, current-state, and the debt ledger and confirm the
   current package makes canonical execution-request validation, selected
-  `LabVIEW.ini` / port truth, Windows container-capability hard stops,
-  visible Windows acquisition-state truth, live in-panel compare-runtime
-  progress, the in-panel latest compare-runtime summary, rejected-provider
-  visibility on the panel/warning path, the concise compare blocked/failure
-  warning surface, the concise compare success surface, structured
-  history-panel compare-runtime detail rendering, reopened-panel
-  compare-runtime persistence, and mode-aware guidance explicit
+  `LabVIEW.ini` / port truth when host-native execution is in play, the
+  Docker-first Windows `auto` rule when Docker Desktop is installed, Windows
+  container-capability hard stops, visible Windows acquisition-state truth,
+  live in-panel compare-runtime progress, the in-panel latest compare-runtime
+  summary, rejected-provider visibility on the panel/warning path, the concise
+  compare blocked/failure warning surface, the concise compare success
+  surface, structured history-panel compare-runtime detail rendering,
+  reopened-panel compare-runtime persistence, and mode-aware guidance explicit
 - `TEST-DOC-068`: review User-Workflow, Requirements-And-Verification,
   Current-State, Architecture, Architecture-Decision-Records, Development-Queue,
   Debt-Retirement-Contract, and Debt-Ledger pages and confirm the published
-  reader surfaces represent ADR-0026 plus the stronger execution-policy
-  scenario matrix rather than only the earlier high-level mode contract
+  reader surfaces represent ADR-0026 plus the stronger Docker-first Windows
+  execution-policy scenario matrix rather than only the earlier high-level
+  mode contract
 - `TEST-DOC-069`: review README, current-state, harnesses, PROGRAM-0003, and
   ISSUE-0408 and confirm contaminated Windows benchmark-image reruns are
   documented as fail-closed `not-available` benchmark truth with immutable

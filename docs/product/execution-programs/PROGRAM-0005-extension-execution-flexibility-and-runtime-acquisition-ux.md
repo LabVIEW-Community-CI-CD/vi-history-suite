@@ -30,8 +30,11 @@ An extension user can choose one governed execution mode for report generation:
 
 and the extension will:
 
+- on Windows, use the governed Windows container provider whenever Docker
+  Desktop is installed
 - allow compatible host LabVIEW 2026 Q1 x86 or x64 execution when the selected
-  mode permits host-native launch and the host runtime surface is clean
+  mode permits host-native launch and Docker Desktop is not installed or the
+  user explicitly chooses `host-only`
 - explain which provider it selected
 - fail closed when the selected mode cannot run truthfully
 - surface Docker acquisition progress when image pull is required
@@ -62,8 +65,8 @@ and the extension will:
 - a first-class execution-mode setting exists
 - `auto`, `host-only`, and `docker-only` are explicit product truths
 - compatible host LabVIEW 2026 Q1 x86 and x64 execution remain available when
-  the selected mode allows host-native launch and the governed host surface is
-  conflict-free
+  the selected mode allows host-native launch and Docker Desktop is not
+  installed or `host-only` is selected
 - provider selection validates one canonical effective execution request before
   any host launch or Docker acquisition begins
 
@@ -116,13 +119,15 @@ The repo now retains ten bounded implementation slices under this program:
   `host-only`, and `docker-only`
 - no-silent-fallback provider selection for `host-only` and `docker-only`
 - conflict-aware Windows `auto` selection that now:
-  - prefers clean host-native execution
+  - selects the governed Windows container provider whenever Docker Desktop is
+    installed
   - derives the selected `LabVIEW.ini` path and governed VI Server TCP port
-  - detects existing LabVIEW-related host activity before final provider
-    choice
-  - routes contaminated Windows host surfaces to Docker when the governed
-    provider is available
-  - hard-stops when Docker is required but unavailable
+    when host-native execution is actually in play
+  - detects existing LabVIEW-related host activity before host-native launch
+  - permits Windows host-native execution only when Docker Desktop is not
+    installed and the governed host surface is clean
+  - hard-stops instead of silently falling back when Docker Desktop is
+    installed but the governed Windows container provider is unavailable
 - runtime-doctor and retained packet visibility for execution mode, selected
   host `LabVIEW.ini`, derived TCP port, host-conflict truth, rejected
   providers, and next action

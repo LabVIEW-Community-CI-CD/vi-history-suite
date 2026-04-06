@@ -149,6 +149,10 @@ function deriveRuntimeDoctorNextAction(options: {
       return `Next action: ${deriveWindowsContainerRecoveryAction(options.runtimeSelection)} or change execution mode, then rerun comparison report generation.`;
     }
 
+    if (blockedReason === 'auto-docker-installed-provider-unavailable') {
+      return `Next action: ${deriveWindowsContainerRecoveryAction(options.runtimeSelection)}; Windows auto execution will not fall back to host-native while Docker Desktop is installed, then rerun comparison report generation.`;
+    }
+
     if (blockedReason === 'windows-container-image-acquisition-failed') {
       return `Next action: ${deriveWindowsContainerRecoveryAction(options.runtimeSelection)} and rerun comparison report generation.`;
     }

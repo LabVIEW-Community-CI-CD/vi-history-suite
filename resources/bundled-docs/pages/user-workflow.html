@@ -43,13 +43,16 @@ preferences or ambient runtime discovery.</p>
 <li><code>host-only</code> rejects Docker instead of silently falling back to it</li>
 <li><code>docker-only</code> rejects host-native execution instead of silently falling back
 to it</li>
-<li>on Windows, <code>auto</code> now stays host-native when the selected compatible host
-runtime surface is clean instead of using Docker by habit</li>
+<li>on Windows, <code>auto</code> now uses the governed Windows container provider whenever
+Docker Desktop is installed</li>
+<li>on Windows, <code>auto</code> only considers host-native execution when Docker Desktop
+is not installed</li>
 <li>the installed selector now derives the selected <code>LabVIEW.ini</code> and governed
-VI Server port from the selected host runtime before final provider choice</li>
-<li>on Windows, contaminated host-runtime surfaces now route to Docker when the
-governed provider is available and hard-stop when that Docker escape path is
-unavailable</li>
+VI Server port when host-native execution is in play</li>
+<li>on Windows, if Docker Desktop is installed but the governed Windows provider
+is unavailable, <code>auto</code> hard-stops instead of falling back to host-native</li>
+<li>on Windows, when Docker Desktop is not installed, contaminated host-runtime
+surfaces now hard-stop instead of silently continuing on the host</li>
 <li>when Windows Docker evaluation is in play, the selector now validates Docker
 CLI availability, daemon reachability, active container mode, and governed
 image presence before the Windows provider is selected or rejected</li>
@@ -77,13 +80,15 @@ separate governed in-panel facts</li>
 the selected mode, host-runtime facts, and Docker capability facts</p>
 </li>
 <li><p>compatible host LabVIEW 2026 Q1 x86 or x64 execution remains valid when the
-selected mode permits host-native launch and the host surface is clean</p>
+selected mode permits host-native launch, Docker Desktop is not installed,
+and the host surface is clean</p>
 </li>
-<li><p>in <code>auto</code>, a clean compatible host stays host-native and does not acquire
-Docker just because Docker happens to be installed</p>
+<li><p>in <code>auto</code>, Docker Desktop installation makes the governed Windows container
+provider the default Windows execution path</p>
 </li>
-<li><p>if a conflicting host LabVIEW 2026 session or governed VI Server collision
-would contaminate host execution, <code>auto</code> requires Docker isolation instead</p>
+<li><p>if Docker Desktop is not installed and a conflicting host LabVIEW 2026
+session or governed VI Server collision would contaminate host execution,
+<code>auto</code> hard-stops instead of pretending the host surface is safe</p>
 </li>
 <li><p>the governed host conflict is tied to the selected <code>LabVIEW.ini</code> and its
 derived VI Server port, not to one assumed default port</p>

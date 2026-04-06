@@ -49,9 +49,11 @@ extension execution policy.
    - Docker capability facts, including daemon availability and Windows container capability on Windows hosts
 3. Provider selection and image acquisition shall validate that effective
    request rather than only raw settings in isolation.
-4. `auto` mode shall prefer clean compatible host-native execution and shall
-   only require Docker when the validated host surface is contaminated or
-   incompatible.
+4. On Windows, `auto` mode shall use the governed Windows container provider
+   whenever Docker Desktop is installed and shall consider host-native
+   execution only when Docker Desktop is not installed; in that Docker-absent
+   case, host-native execution shall still require a validated clean,
+   compatible host surface.
 5. `host-only` and `docker-only` shall fail closed when the validated effective
    request cannot run truthfully; they shall not silently substitute the other
    provider.
@@ -99,13 +101,16 @@ extension execution policy.
 The current repo now lands this contract in bounded slices rather than leaving
 it as queued intent only:
 
-- the selector already derives the selected `LabVIEW.ini` surface and governed
-  VI Server TCP port before final Windows provider choice
+- when host-native execution is in play, the selector derives the selected
+  `LabVIEW.ini` surface and governed VI Server TCP port before final Windows
+  host-native launch
+- on Windows, the selector now evaluates the Docker-first `auto` rule before
+  allowing host-native execution
 - the selector now also validates Docker CLI availability, daemon
   reachability, active container mode, and governed image presence before the
   Windows Docker provider is selected or rejected
-- visible image-pull progress and fuller front-facing acquisition-state UX
-  remain open follow-on work under `PROGRAM-0005`
+- visible image-pull progress and front-facing acquisition-state UX are now
+  landed as part of the closed `PROGRAM-0005` package
 
 ## Implementation Surface
 

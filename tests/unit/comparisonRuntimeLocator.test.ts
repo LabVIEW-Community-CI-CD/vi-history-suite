@@ -134,7 +134,9 @@ describe('comparisonRuntimeLocator', () => {
         preferBitness: 'x64'
       },
       {
-        queryWindowsContainerImage: vi.fn().mockResolvedValue(false),
+        queryWindowsContainerProviderFacts: vi
+          .fn()
+          .mockResolvedValue(buildWindowsContainerFacts({ dockerCliAvailable: false })),
         pathExists: vi.fn(async (filePath: string) =>
           [
             'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
@@ -156,16 +158,16 @@ describe('comparisonRuntimeLocator', () => {
       {
         provider: 'windows-container',
         outcome: 'rejected',
-        reason: 'auto-clean-host-did-not-require-docker',
+        reason: 'auto-docker-not-installed',
         detail:
-          'Docker was not selected because the validated Windows host runtime surface was clean for host-native execution.'
+          'Windows container execution was not selected because Docker Desktop was not detected on this Windows host.'
       },
       {
         provider: 'host-native',
         outcome: 'selected',
-        reason: 'auto-selected-clean-host-native-lvcompare-fallback',
+        reason: 'auto-selected-host-native-because-docker-not-installed-lvcompare-fallback',
         detail:
-          'Auto execution selected host-native LabVIEW 2026 plus LVCompare because the validated Windows host runtime surface was clean and LabVIEWCLI was not located.'
+          'Auto execution selected host-native LabVIEW 2026 plus LVCompare because Docker Desktop was not detected on Windows and LabVIEWCLI was not located.'
       }
     ]);
   });
@@ -178,7 +180,9 @@ describe('comparisonRuntimeLocator', () => {
         preferBitness: 'auto'
       },
       {
-        queryWindowsContainerImage: vi.fn().mockResolvedValue(false),
+        queryWindowsContainerProviderFacts: vi
+          .fn()
+          .mockResolvedValue(buildWindowsContainerFacts({ dockerCliAvailable: false })),
         pathExists: vi.fn(async (filePath: string) =>
           [
             'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
@@ -197,16 +201,16 @@ describe('comparisonRuntimeLocator', () => {
       {
         provider: 'windows-container',
         outcome: 'rejected',
-        reason: 'auto-clean-host-did-not-require-docker',
+        reason: 'auto-docker-not-installed',
         detail:
-          'Docker was not selected because the validated Windows host runtime surface was clean for host-native execution.'
+          'Windows container execution was not selected because Docker Desktop was not detected on this Windows host.'
       },
       {
         provider: 'host-native',
         outcome: 'selected',
-        reason: 'auto-selected-clean-host-native',
+        reason: 'auto-selected-host-native-because-docker-not-installed',
         detail:
-          'Auto execution selected host-native LabVIEW 2026 plus LabVIEWCLI because the validated Windows host runtime surface was clean.'
+          'Auto execution selected host-native LabVIEW 2026 plus LabVIEWCLI because Docker Desktop was not detected on Windows.'
       }
     ]);
   });
@@ -238,16 +242,16 @@ describe('comparisonRuntimeLocator', () => {
       {
         provider: 'windows-container',
         outcome: 'rejected',
-        reason: 'windows-x86-reference-lane-stays-host-native',
+        reason: 'auto-docker-not-installed',
         detail:
-          'Windows x86 comparison-report execution stays host-native, so the Windows container provider was not selected for this lane.'
+          'Windows container execution was not selected because Docker Desktop was not detected on this Windows host.'
       },
       {
         provider: 'host-native',
         outcome: 'selected',
-        reason: 'host-native-labview-cli-selected',
+        reason: 'auto-selected-host-native-because-docker-not-installed',
         detail:
-          'Host-native LabVIEW 2026 and LabVIEWCLI were available, and the Windows x86 lane prefers host-native execution.'
+          'Auto execution selected host-native LabVIEW 2026 plus LabVIEWCLI because Docker Desktop was not detected on Windows.'
       }
     ]);
   });
@@ -278,27 +282,27 @@ describe('comparisonRuntimeLocator', () => {
       'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
     );
     expect(result.notes[0]).toContain(
-      'No compatible host-native LabVIEW 2026 runtime was located'
+      'Docker Desktop is installed and governed Windows auto execution uses the Windows container provider'
     );
     expect(result.providerDecisions).toEqual([
       {
         provider: 'windows-container',
         outcome: 'selected',
-        reason: 'windows-container-selected-host-runtime-unavailable',
+        reason: 'auto-selected-windows-container-because-docker-installed',
         detail:
-          'Docker daemon was reachable in windows-container mode with governed Windows container image nationalinstruments/labview:2026q1-windows present locally, so isolated execution was selected because no compatible host-native LabVIEW 2026 runtime was located.'
+          'Docker daemon was reachable in windows-container mode with governed Windows container image nationalinstruments/labview:2026q1-windows present locally, so isolated execution was selected because Docker Desktop is installed and governed Windows auto execution uses the Windows container provider.'
       },
       {
         provider: 'host-native',
         outcome: 'rejected',
-        reason: 'host-native-labview-exe-not-found',
+        reason: 'auto-docker-installed-disallows-host-native',
         detail:
-          'No supported LabVIEW 2026 executable was located for host-native comparison-report execution.'
+          'Host-native execution was not selected because Docker Desktop is installed and governed Windows auto execution uses the Windows container provider.'
       }
     ]);
   });
 
-  it('prefers clean host-native execution in auto mode even when the windows container image is available', async () => {
+  it('selects the windows container provider in auto mode when Docker Desktop is installed', async () => {
     const cleanHost = buildCleanWindowsHostDeps();
     const result = await locateComparisonRuntime(
       'win32',
@@ -306,7 +310,9 @@ describe('comparisonRuntimeLocator', () => {
         preferBitness: 'x64'
       },
       {
-        queryWindowsContainerImage: vi.fn().mockResolvedValue(true),
+        queryWindowsContainerProviderFacts: vi
+          .fn()
+          .mockResolvedValue(buildWindowsContainerFacts()),
         pathExists: vi.fn(async (filePath: string) =>
           [
             'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
@@ -318,27 +324,26 @@ describe('comparisonRuntimeLocator', () => {
       }
     );
 
-    expect(result.provider).toBe('host-native');
+    expect(result.provider).toBe('windows-container');
     expect(result.engine).toBe('labview-cli');
-    expect(result.hostLabviewIniPath).toBe(
-      'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.ini'
-    );
-    expect(result.hostLabviewTcpPort).toBe(3363);
-    expect(result.hostRuntimeConflictDetected).toBe(false);
+    expect(result.windowsContainerImage).toBe('nationalinstruments/labview:2026q1-windows');
+    expect(result.hostLabviewIniPath).toBeUndefined();
+    expect(result.hostLabviewTcpPort).toBeUndefined();
+    expect(result.hostRuntimeConflictDetected).toBeUndefined();
     expect(result.providerDecisions).toEqual([
       {
         provider: 'windows-container',
-        outcome: 'rejected',
-        reason: 'auto-clean-host-did-not-require-docker',
+        outcome: 'selected',
+        reason: 'auto-selected-windows-container-because-docker-installed',
         detail:
-          'Docker was not selected because the validated Windows host runtime surface was clean for host-native execution.'
+          'Docker daemon was reachable in windows-container mode with governed Windows container image nationalinstruments/labview:2026q1-windows present locally, so isolated execution was selected because Docker Desktop is installed and governed Windows auto execution uses the Windows container provider.'
       },
       {
         provider: 'host-native',
-        outcome: 'selected',
-        reason: 'auto-selected-clean-host-native',
+        outcome: 'rejected',
+        reason: 'auto-docker-installed-disallows-host-native',
         detail:
-          'Auto execution selected host-native LabVIEW 2026 plus LabVIEWCLI because the validated Windows host runtime surface was clean.'
+          'Host-native execution was not selected because Docker Desktop is installed and governed Windows auto execution uses the Windows container provider.'
       }
     ]);
   });
@@ -808,22 +813,72 @@ HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\National Instruments\\LabVIEW
 
     expect(result.provider).toBe('windows-container');
     expect(result.engine).toBe('labview-cli');
-    expect(result.hostLabviewTcpPort).toBe(3363);
-    expect(result.hostRuntimeConflictDetected).toBe(true);
+    expect(result.hostLabviewTcpPort).toBeUndefined();
+    expect(result.hostRuntimeConflictDetected).toBeUndefined();
     expect(result.providerDecisions).toEqual([
       {
         provider: 'windows-container',
         outcome: 'selected',
-        reason: 'auto-required-docker-because-host-runtime-conflict',
+        reason: 'auto-selected-windows-container-because-docker-installed',
         detail:
-          'Docker daemon was reachable in windows-container mode with governed Windows container image nationalinstruments/labview:2026q1-windows present locally, so isolated execution was selected because the validated Windows host runtime surface was contaminated.'
+          'Docker daemon was reachable in windows-container mode with governed Windows container image nationalinstruments/labview:2026q1-windows present locally, so isolated execution was selected because Docker Desktop is installed and governed Windows auto execution uses the Windows container provider.'
       },
       {
         provider: 'host-native',
         outcome: 'rejected',
-        reason: 'host-native-runtime-surface-contaminated',
+        reason: 'auto-docker-installed-disallows-host-native',
         detail:
-          'Host-native execution was not selected because the validated Windows host runtime surface was contaminated by existing LabVIEW-related activity.'
+          'Host-native execution was not selected because Docker Desktop is installed and governed Windows auto execution uses the Windows container provider.'
+      }
+    ]);
+  });
+
+  it('fails closed in auto mode when Docker Desktop is installed but governed Windows container execution is unavailable', async () => {
+    const cleanHost = buildCleanWindowsHostDeps();
+    const result = await locateComparisonRuntime(
+      'win32',
+      {
+        preferBitness: 'x64'
+      },
+      {
+        queryWindowsContainerProviderFacts: vi
+          .fn()
+          .mockResolvedValue(
+            buildWindowsContainerFacts({
+              dockerCliAvailable: true,
+              dockerDaemonReachable: false,
+              windowsContainerCapabilityAvailable: false,
+              windowsContainerHostMode: undefined,
+              imageAvailable: false
+            })
+          ),
+        pathExists: vi.fn(async (filePath: string) =>
+          [
+            'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
+            'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
+          ].includes(filePath)
+        ),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        ...cleanHost
+      }
+    );
+
+    expect(result.provider).toBe('unavailable');
+    expect(result.blockedReason).toBe('auto-docker-installed-provider-unavailable');
+    expect(result.providerDecisions).toEqual([
+      {
+        provider: 'windows-container',
+        outcome: 'rejected',
+        reason: 'auto-docker-installed-provider-unavailable',
+        detail:
+          'Docker Desktop was detected on Windows, but Docker CLI was present, but the Docker daemon was not reachable, so governed Windows container image nationalinstruments/labview:2026q1-windows could not be used.'
+      },
+      {
+        provider: 'host-native',
+        outcome: 'rejected',
+        reason: 'auto-docker-installed-disallows-host-native',
+        detail:
+          'Host-native execution was not selected because Docker Desktop is installed and governed Windows auto execution uses the Windows container provider.'
       }
     ]);
   });
@@ -838,7 +893,15 @@ HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\National Instruments\\LabVIEW
       {
         queryWindowsContainerProviderFacts: vi
           .fn()
-          .mockResolvedValue(buildWindowsContainerFacts({ imageAvailable: false })),
+          .mockResolvedValue(
+            buildWindowsContainerFacts({
+              dockerCliAvailable: false,
+              dockerDaemonReachable: false,
+              windowsContainerCapabilityAvailable: false,
+              windowsContainerHostMode: undefined,
+              imageAvailable: false
+            })
+          ),
         pathExists: vi.fn(async (filePath: string) =>
           [
             'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
@@ -850,23 +913,22 @@ HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\National Instruments\\LabVIEW
       }
     );
 
-    expect(result.provider).toBe('windows-container');
-    expect(result.windowsContainerImageAvailable).toBe(false);
-    expect(result.windowsContainerAcquisitionState).toBe('required');
+    expect(result.provider).toBe('unavailable');
+    expect(result.blockedReason).toBe('windows-host-runtime-surface-contaminated');
     expect(result.providerDecisions).toEqual([
       {
         provider: 'windows-container',
-        outcome: 'selected',
-        reason: 'auto-required-docker-because-host-runtime-conflict',
+        outcome: 'rejected',
+        reason: 'auto-docker-not-installed',
         detail:
-          'Docker daemon was reachable in windows-container mode, and governed Windows container image nationalinstruments/labview:2026q1-windows will be acquired before launch, so isolated execution was selected because the validated Windows host runtime surface was contaminated.'
+          'Windows container execution was not selected because Docker Desktop was not detected on this Windows host.'
       },
       {
         provider: 'host-native',
         outcome: 'rejected',
         reason: 'host-native-runtime-surface-contaminated',
         detail:
-          'Host-native execution was not selected because the validated Windows host runtime surface was contaminated by existing LabVIEW-related activity.'
+          'Validated Windows host runtime facts showed existing LabVIEW-related process or governed VI Server port activity, so host-native execution was not selected.'
       }
     ]);
   });

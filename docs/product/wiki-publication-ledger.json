@@ -40,7 +40,7 @@
       "wikiFileName": "User-Workflow.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "7060ff0",
+      "wikiCommit": "156d88a",
       "primaryAuthority": [
         "docs/requirements/srs.md",
         "docs/product/extension-execution-policy.md",
@@ -166,7 +166,7 @@
       "wikiFileName": "Current-State.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "044b043",
+      "wikiCommit": "156d88a",
       "primaryAuthority": [
         "docs/product/current-state.md",
         "docs/product/post-release-sustainment-rules.md",
@@ -235,7 +235,7 @@
       "wikiFileName": "Requirements-And-Verification.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "7060ff0",
+      "wikiCommit": "156d88a",
       "primaryAuthority": [
         "docs/requirements/srs.md",
         "docs/requirements/rtm.csv",
@@ -253,7 +253,7 @@
       "wikiFileName": "Architecture-Decision-Records.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "2a24eea",
+      "wikiCommit": "156d88a",
       "primaryAuthority": [
         "docs/architecture/overview.md",
         "docs/product/extension-execution-policy.md",

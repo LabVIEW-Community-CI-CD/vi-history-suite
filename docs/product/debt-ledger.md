@@ -49,8 +49,9 @@ The governing contract and taxonomy are:
 - `DEBT-0006` is now retired: the installed extension now exposes `auto` /
   `host-only` / `docker-only`, rejects silent provider fallback, retains
   canonical effective execution-request validation as part of provider choice,
-  makes Windows `auto` conflict-aware through selected `LabVIEW.ini` /
-  VI Server port facts, and now validates Docker CLI availability, daemon
+  uses a Docker-first Windows `auto` rule whenever Docker Desktop is installed,
+  evaluates selected `LabVIEW.ini` / VI Server port facts when host-native
+  execution is in play, and now validates Docker CLI availability, daemon
   reachability, active container mode, and governed image presence before the
   Windows provider is selected or rejected; governed Windows image acquisition
   now runs with visible progress and retained acquisition state, and the
