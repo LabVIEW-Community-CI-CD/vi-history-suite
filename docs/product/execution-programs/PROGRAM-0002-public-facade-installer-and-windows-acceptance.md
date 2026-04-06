@@ -22,17 +22,20 @@ The primary public surface is now a release kit, not an installer product.
 ## Current Gate Truth
 
 - Gate D remains open
-- the latest retained human review on April 6, 2026 is still authoritative
-  historical evidence: on the updated installed bundle,
-  `Tooling/deployment/VIP_Post-Uninstall Custom Action.vi` now surfaces a
-  failed Gate D review package instead of the earlier runtime stall alone
-- the cumulative retained failed-review package remains historical evidence,
-  but the older row-button and dashboard-specific findings are now superseded
-  by the simplified shipped scope: extension users now use checkbox selection
-  only, need only two retained commits to use VI History, and do not use
-  extension-user dashboard or decision-record controls
-- the latest retained review note still records that the installed
-  documentation was too weak for extension users
+- the latest retained human review on April 6, 2026 is now a partial pass on
+  the updated installed bundle: the repo-agnostic two-commit review surface at
+  `c:\dev\labview-icon-editor` for
+  `vi.lib/LabVIEW Icon API/API_Rectangle Dimension.ctl` recorded
+  `passed-human-review` with `confidence=high` and the note
+  `Checkboxes flow works as expected so far.`
+- that retained pass narrows the open Gate D risk materially because it
+  re-proves the simplified checkbox-selected compare flow on a real installed
+  extension surface outside the older canonical review-family assumptions
+- the cumulative retained failed-review package remains historical evidence of
+  already-retired defects, but the older row-button and dashboard-specific
+  findings are now superseded by the simplified shipped scope: extension users
+  now use checkbox selection only, need only two retained commits to use VI
+  History, and do not use extension-user dashboard or decision-record controls
 - the authority repo now carries repo-side fixes for that simplified blocker
   package: the checkbox-only compare surface, the two-row overview-image
   layout, Review Note draft persistence across tab switches, and a concise
@@ -42,8 +45,9 @@ The primary public surface is now a release kit, not an installer product.
   rule, and the absence of a separate extension-user dashboard or
   decision-record step
 - Gate D therefore remains open only until the updated installed bundle is
-  rerun on the canonical host-machine review path and proves that the
-  cumulative repo-side blocker retirement also holds in the installed product
+  rerun on the deterministic public-release fixture workspace and canonical VI
+  path and proves that the cumulative repo-side blocker retirement also holds
+  on that exact acceptance target
 
 ## Trigger
 
@@ -270,12 +274,16 @@ Current first slice:
 - the manual right-click proof runs from that same deterministic local fixture
   workspace instead of a OneDrive-backed synced root
 - first-use friction is retained as evidence, not just remembered in chat
-- the latest retained host review at `2026-04-06T06:58:46.822Z` is
-  `failed-human-review` with `confidence=high`, recording that
-  `Tooling/deployment/VIP_Post-Uninstall Custom Action.vi` still left the
-  installed documentation too weak for extension users
-- the retained failed-review set remains cumulative historical evidence on
-  that same canonical VI, but the row-button and dashboard-specific findings
+- the latest retained host review at `2026-04-06T19:53:21.713Z` is
+  `passed-human-review` with `confidence=high`, recording that
+  `Checkboxes flow works as expected so far.` on
+  `c:\dev\labview-icon-editor` / `vi.lib/LabVIEW Icon API/API_Rectangle Dimension.ctl`
+- that retained pass narrows the open Gate D risk materially, but it is not
+  yet the canonical closure proof because the retained public-release
+  acceptance target is still the deterministic fixture workspace and canonical
+  VI path
+- the retained failed-review set remains cumulative historical evidence of
+  already-retired defects, but the row-button and dashboard-specific findings
   are now superseded by the simplified checkbox-only shipped scope
 - the authority repo now carries repo-side retirement for that simplified
   Gate D package: checkbox-only compare selection on any retained two-commit
@@ -285,7 +293,8 @@ Current first slice:
   omits private GitLab plus SRS/RTM authority-link exposure while explaining
   the repo-agnostic checkbox-selected two-commit workflow clearly
 - Gate D therefore remains open only on a fresh installed-bundle rerun of the
-  manual right-click path rather than on an unimplemented repo-side blocker set
+  deterministic fixture-workspace canonical-VI path rather than on an
+  unimplemented repo-side blocker set
 
 ### Gate E: Public Support Surface
 
@@ -343,11 +352,11 @@ The public facade repo now retains:
 - the remaining manual gate is bounded to the deterministic local fixture
   workspace rather than a OneDrive-backed synced clone
 - the latest retained host-review artifact now exists at
-  `c:\Users\sveld\AppData\Roaming\Code\User\workspaceStorage\f879cf82f4d59a4767f92a99a94e47f8\svelderrainruiz.vi-history-suite\human-reviews\latest-human-review-submission.json`,
-  and its newest manual proof result is still a failed Gate D review because
-  the corrected retained note now records explicit front-facing UX issues on
-  `Tooling/deployment/VIP_Post-Install Custom Action.vi` rather than the older
-  pair-`1/23` stall
+  `c:\Users\sveld\AppData\Roaming\Code\User\workspaceStorage\0bca0972b9105eae5fae72858e3399d0\svelderrainruiz.vi-history-suite\human-reviews\latest-human-review-submission.json`,
+  and its newest manual proof result is now a passed repo-agnostic checkbox
+  flow on `c:\dev\labview-icon-editor` /
+  `vi.lib/LabVIEW Icon API/API_Rectangle Dimension.ctl` rather than a new
+  canonical-fixture closure proof
 - the authority repo now carries repo-side retirement for the additive Gate D
   blocker package: per-pair `Open compare` enablement after dashboard
   completion, grouped overview-image rows with `Block Diagram Overview` before
@@ -355,7 +364,8 @@ The public facade repo now retains:
   submission, and a concise curated installed-user documentation bundle that
   omits private GitLab plus SRS/RTM authority-link exposure
 - the next required proof is therefore a fresh manual rerun on the updated
-  installed bundle from the deterministic local fixture workspace
+  installed bundle from the deterministic local fixture workspace on the
+  canonical VI path
 
 The program still intentionally holds these gates open:
 

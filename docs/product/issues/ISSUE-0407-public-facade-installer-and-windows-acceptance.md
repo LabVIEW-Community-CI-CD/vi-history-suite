@@ -56,16 +56,21 @@ Current landed scaffold state:
   the sole named maintainer gate owner for that host-machine click pass
 - that remaining manual host-machine gate is bounded to the deterministic
   local fixture workspace rather than a OneDrive-backed synced clone
-- the latest retained host review at `2026-04-06T06:58:46.822Z` is
-  `failed-human-review` with `confidence=high`, because the newest retained
-  note on the updated installed bundle says the installed documentation is
-  still too weak for extension users on
-  `Tooling/deployment/VIP_Post-Uninstall Custom Action.vi`
-- the retained failed-review set remains cumulative historical evidence, but
-  the older row-button and dashboard-specific findings are now superseded by
-  the simplified shipped scope: extension users now use checkbox selection
-  only, need only two retained commits to use VI History, and do not use
-  extension-user dashboard or decision-record controls
+- the latest retained host review at `2026-04-06T19:53:21.713Z` is
+  `passed-human-review` with `confidence=high`, because the newest retained
+  note on the updated installed bundle says `Checkboxes flow works as expected
+  so far.` on the repo-agnostic two-commit review surface
+  `c:\dev\labview-icon-editor` / `vi.lib/LabVIEW Icon API/API_Rectangle Dimension.ctl`
+- that retained pass materially narrows the remaining human-gate risk because
+  it re-proves the simplified checkbox-selected compare workflow on a real
+  installed extension surface outside the older canonical review-family
+  assumptions
+- the retained failed-review set remains cumulative historical evidence of
+  already-retired repo-side defects, but the older row-button and
+  dashboard-specific findings are now superseded by the simplified shipped
+  scope: extension users now use checkbox selection only, need only two
+  retained commits to use VI History, and do not use extension-user dashboard
+  or decision-record controls
 - the authority repo now also carries repo-side retirement for the remaining
   simplified blocker set: overview images are grouped into caption rows with
   `Block Diagram Overview` before `Front Panel Overview`, unsubmitted Review
@@ -76,8 +81,10 @@ Current landed scaffold state:
   workflow, the oldest-row-as-base rule, and the absence of a separate
   extension-user dashboard or decision-record step
 - this issue therefore remains open only until a fresh manual rerun on the
-  updated installed bundle proves that the installed product matches those
-  repo-side retirements
+  deterministic public-release fixture workspace and canonical VI path proves
+  that the installed product matches those repo-side retirements on the exact
+  acceptance target, rather than only on the newer repo-agnostic checkbox-flow
+  surface
 - the authority repo still mirrors a GitHub Linux benchmark lane into the
   private `vi-history-suite-source-experiments` repo, but that mirror is now
   documented as benchmark only and belongs to the queued benchmark-proof lane
