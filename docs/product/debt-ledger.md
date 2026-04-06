@@ -23,7 +23,7 @@ The governing contract and taxonomy are:
 | `DEBT-0003` | open | `benchmark` | high | high | `TRANCHE-011` / `ISSUE-0408` / `PROGRAM-0003` | expand the comparable prefix beyond pair `128` or close `PROGRAM-0003` on the bounded comparable-prefix packet |
 | `DEBT-0004` | open | `runtime` | high | high | `TRANCHE-011` / `ISSUE-0408` / `PROGRAM-0003` | complete Linux `138/138` truthfully or close the full-window blocker explicitly on the bounded comparable-prefix control plane |
 | `DEBT-0005` | retired | `control-plane` | high | high | `TRANCHE-011` / `ISSUE-0408` / `PROGRAM-0003` | retired by `2f4ced0` |
-| `DEBT-0006` | open | `control-plane` | high | high | `TRANCHE-013` / `ISSUE-0410` / `PROGRAM-0005` | finish fuller front-facing provider/acquisition transparency after the landed host-fact, Docker-capability, governed image-acquisition, history-panel summary, live panel-progress, and compare-warning slices |
+| `DEBT-0006` | open | `control-plane` | high | high | `TRANCHE-013` / `ISSUE-0410` / `PROGRAM-0005` | finish fuller front-facing provider/acquisition transparency after the landed host-fact, Docker-capability, governed image-acquisition, history-panel summary, live panel-progress, compare-warning, and compare-success slices |
 
 ## Notes
 

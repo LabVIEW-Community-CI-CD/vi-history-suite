@@ -2,7 +2,7 @@
 
 ## Status
 
-Queued follow-on post-release program with seven repo-side execution-policy slices
+Queued follow-on post-release program with eight repo-side execution-policy slices
 already landed.
 
 Activation is intentionally deferred until:
@@ -11,7 +11,8 @@ Activation is intentionally deferred until:
 - the queue promotes `TRANCHE-013` from `queued` to `active`
 - the remaining broader front-facing provider/acquisition transparency work
   moves beyond the landed selector, Docker-capability, acquisition-progress,
-  history-panel latest-runtime-summary, live panel-progress, and compare-warning slices
+  history-panel latest-runtime-summary, live panel-progress, compare-warning,
+  and compare-success slices
 
 ## Purpose
 
@@ -177,8 +178,8 @@ That slice should:
 - make Windows container-capability truth explicit before image acquisition
 - stop short of claiming full implementation until the installed extension
   lands fuller front-facing provider transparency end to end beyond the now-
-  landed visible acquisition, in-panel summary, live panel-progress, and
-  compare-warning slices
+  landed visible acquisition, in-panel summary, live panel-progress,
+  compare-warning, and compare-success slices
 
 ## Success Condition
 

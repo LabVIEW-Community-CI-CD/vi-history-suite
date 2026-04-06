@@ -365,6 +365,13 @@ export function createOpenViHistoryCommand(
         if (runtimeWarningMessage) {
           void vscode.window.showWarningMessage(runtimeWarningMessage);
         }
+        const runtimeInformationMessage = buildComparisonRuntimeInformationMessage(
+          actionCommand,
+          result
+        );
+        if (runtimeInformationMessage) {
+          void vscode.window.showInformationMessage(runtimeInformationMessage);
+        }
 
         if (
           actionCommand === 'generateComparisonReport' &&
@@ -1067,6 +1074,55 @@ function buildComparisonRuntimeWarningMessage(
   );
   if (nextAction) {
     segments.push(nextAction);
+  }
+
+  return segments.join(' ');
+}
+
+function buildComparisonRuntimeInformationMessage(
+  actionCommand: string,
+  result: ComparisonReportActionResult
+): string | undefined {
+  if (!result.runtimeDoctorSummaryLines?.length) {
+    return undefined;
+  }
+
+  if (result.retainedArchiveAvailable === false) {
+    return undefined;
+  }
+
+  const status = deriveComparisonRuntimePanelStatus(result);
+  if (status !== 'succeeded') {
+    return undefined;
+  }
+
+  const commandLabel =
+    actionCommand === 'diffPrevious' ? 'Open compare' : 'Generate compare';
+  const runtimeProvider = deriveRuntimeProviderFromDoctorSummary(
+    result.runtimeDoctorSummaryLines
+  );
+  const executionMode = deriveRuntimeExecutionModeFromDoctorSummary(
+    result.runtimeDoctorSummaryLines
+  );
+  const acquisitionState = deriveWindowsContainerAcquisitionStateFromDoctorSummary(
+    result.runtimeDoctorSummaryLines
+  );
+  const rejectedProviderSummary = deriveRejectedProviderSummaryFromDoctorSummary(
+    result.runtimeDoctorSummaryLines
+  );
+  const segments = [`${commandLabel} completed.`];
+
+  if (runtimeProvider) {
+    segments.push(`Provider: ${runtimeProvider}.`);
+  }
+  if (executionMode) {
+    segments.push(`Execution mode: ${executionMode}.`);
+  }
+  if (acquisitionState) {
+    segments.push(`Windows image acquisition: ${acquisitionState}.`);
+  }
+  if (rejectedProviderSummary) {
+    segments.push(`Rejected providers: ${rejectedProviderSummary}.`);
   }
 
   return segments.join(' ');

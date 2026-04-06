@@ -68,10 +68,11 @@ policy:
 - canonical effective execution-request validation is now partially
   implemented through selected Windows host-runtime facts, explicit Windows
   Docker capability validation, and a governed Windows image-acquisition step
-  with visible progress plus retained history-panel, live panel-progress, and
-  compare-warning surfaces; fuller front-facing provider/acquisition
-  transparency beyond the current progress, warning, history-panel,
-  runtime-doctor, and retained-packet surfaces remains queued
+  with visible progress plus retained history-panel, live panel-progress,
+  compare-warning, and compare-success surfaces; fuller front-facing
+  provider/acquisition transparency beyond the current progress, warning,
+  success-summary, history-panel, runtime-doctor, and retained-packet
+  surfaces remains queued
 
 So current runtime behavior is no longer implicit at the execution-mode
 boundary, but the broader execution policy is still only partially
@@ -136,7 +137,8 @@ facts in that boundary:
 
 The remaining queued work is fuller front-facing provider/acquisition
 transparency after the landed host-fact, Docker-capability, image-acquisition,
-history-panel summary, live panel-progress, and compare-warning slices.
+history-panel summary, live panel-progress, compare-warning, and
+compare-success slices.
 
 This is the canonical validation boundary for the installed extension. If the
 request is non-canonical, the product must fail closed before runtime work
@@ -292,13 +294,15 @@ The retained state model is now:
 
 The remaining queued work is broader propagation of those facts into fuller
 front-facing extension UX beyond the current progress notifications,
-runtime-doctor lines, and retained comparison-report packet.
+concise compare completion/failure notifications, runtime-doctor lines, and
+retained comparison-report packet.
 
 This transparency belongs in:
 
 - runtime doctor
 - history-panel action feedback
 - progress notifications for long-running acquisition or execution work
+- concise compare completion and failure notifications
 
 ## Queue Ownership
 

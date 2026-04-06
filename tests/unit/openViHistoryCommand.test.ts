@@ -2586,6 +2586,62 @@ describe('createOpenViHistoryCommand', () => {
     });
   });
 
+  it('surfaces one concise success message from retained compare runtime truth', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    const comparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'opened-comparison-report',
+      reportStatus: 'ready-for-runtime',
+      runtimeExecutionState: 'succeeded',
+      runtimeDoctorSummaryLines: [
+        'Selected provider=windows-container; engine=labview-cli; platform=win32; preferBitness=x64.',
+        'Selected execution mode=auto.',
+        'Provider decision: rejected host-native because existing LabVIEW-related processes or a listener on governed VI Server port 3364 already exist.',
+        'Tool facts: WindowsContainerCapability=available; ContainerAcquisitionState=acquired',
+        'Next action: open the retained comparison packet for the full governed runtime summary.'
+      ]
+    });
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Newest revision',
+            previousHash: '1111111122222222'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      comparisonReportAction
+    );
+
+    await command(targetUri as never);
+    await tracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReport',
+      hash: 'abcdef1234567890'
+    });
+
+    expect(showInformationMessageMock).toHaveBeenCalledWith(
+      'Generate compare completed. Provider: windows-container. Execution mode: auto. Windows image acquisition: acquired. Rejected providers: host-native because existing LabVIEW-related processes or a listener on governed VI Server port 3364 already exist.'
+    );
+  });
+
   it('updates the live history panel from generate to refresh state after retained comparison evidence is created', async () => {
     const targetUri = createMockUri('/workspace/eligible.vi');
     const tracker = new HistoryPanelTracker();
