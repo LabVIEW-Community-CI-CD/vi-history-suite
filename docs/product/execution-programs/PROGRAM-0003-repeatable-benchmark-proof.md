@@ -105,6 +105,13 @@ connected-session retry attempt, `windows-benchmark-image-pair129-lvcompare`
 records `command-timed-out` after the bounded `120000ms` runtime budget, and
 the comparable-prefix packet now retains both exact-pair receipts alongside
 the accepted `129`-commit / `128`-pair timing scope.
+Those exact-pair receipts are no longer admitted by proof-root naming alone:
+the packet now searches both the live and archived `.prev-*` smoke receipts
+under each exact-pair root, selects the latest receipt that still proves the
+governed Windows benchmark-image surface through retained `C:\workspace\.cache`
+clone/artifact paths and, when available, `C:\Users\ContainerAdministrator\...`
+diagnostic-log sources, and records rejected latest reruns separately if they
+no longer prove that surface.
 The latest governed repo-local exact-pair rerun now retains that same
 Windows-image surface explicitly too: the authority repo `.cache`
 `comparison-report-smoke.json` now carries

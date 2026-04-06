@@ -1,6 +1,6 @@
 # HARNESS-VHS-002 Comparable Prefix Benchmark Packet
 
-- Generated at: 2026-04-05T21:50:14.318Z
+- Generated at: 2026-04-06T00:32:27.033Z
 - Proof state: bounded-prefix-comparable
 - Target: resource/plugins/lv_icon.vi
 - Full window: 139 commits / 138 pairs
@@ -31,12 +31,14 @@
 - Validated comparable pairs: 128
 - Prefix runtime total: 464798 ms
 - Full-window outcome: pair 129 / 138 :: command-exited-nonzero (labview-cli-call-by-reference)
+- Exact-pair diagnosis state: available
 
 ## Windows Exact-Pair Diagnosis
 
 - labview-cli: 6dd65df67428 -> 3408654e6802 :: command-exited-nonzero (labview-cli-call-by-reference)
 - labview-cli proof root: /mnt/c/Users/sveld/AppData/Local/VI History Suite/windows-benchmark-image-pair129-labviewcli
 - labview-cli report: /mnt/c/Users/sveld/AppData/Local/VI History Suite/windows-benchmark-image-pair129-labviewcli/cache/harness-reports/HARNESS-VHS-002/comparison-report-smoke.json
+- labview-cli execution surface: windows-benchmark-image [cloneDirectory, packetFilePath, reportFilePath, metadataFilePath, containerDiagnosticLogSourcePath]
 - labview-cli selected LabVIEW.ini: none
 - labview-cli selected LabVIEW TCP port: none
 - labview-cli recovery exit code: 1
@@ -45,6 +47,7 @@
 - lvcompare: 6dd65df67428 -> 3408654e6802 :: command-timed-out
 - lvcompare proof root: /mnt/c/Users/sveld/AppData/Local/VI History Suite/windows-benchmark-image-pair129-lvcompare
 - lvcompare report: /mnt/c/Users/sveld/AppData/Local/VI History Suite/windows-benchmark-image-pair129-lvcompare/cache/harness-reports/HARNESS-VHS-002/comparison-report-smoke.json
+- lvcompare execution surface: windows-benchmark-image [cloneDirectory, packetFilePath, reportFilePath, metadataFilePath]
 - lvcompare selected LabVIEW.ini: none
 - lvcompare selected LabVIEW TCP port: none
 - lvcompare recovery exit code: none

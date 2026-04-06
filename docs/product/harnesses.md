@@ -71,6 +71,11 @@
     surfaces now retain the selected `LabVIEW.ini` path plus explicit VI
     Server TCP port so multiple installed LabVIEW versions and port drift are
     visible on the primary proof surface
+  - when those exact selected/base receipts are reused as Windows
+    benchmark-image blocker proof, the comparable-prefix packet now admits
+    them by retained container-context markers such as `C:\workspace\.cache`
+    clone/artifact paths and, when available, `ContainerAdministrator`
+    diagnostic-log sources rather than by proof-root naming alone
 - retained outputs:
   - `.cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.json`
   - `.cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.md`

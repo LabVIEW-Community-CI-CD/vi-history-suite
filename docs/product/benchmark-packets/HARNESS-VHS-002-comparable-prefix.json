@@ -1,7 +1,7 @@
 {
   "schema": "vi-history-suite/comparable-prefix-benchmark-packet@v1",
   "benchmarkId": "HARNESS-VHS-002-comparable-prefix",
-  "generatedAt": "2026-04-05T21:50:14.318Z",
+  "generatedAt": "2026-04-06T00:32:27.033Z",
   "harnessId": "HARNESS-VHS-002",
   "targetRelativePath": "resource/plugins/lv_icon.vi",
   "proofState": "bounded-prefix-comparable",
@@ -85,13 +85,16 @@
         "terminalPairFailureReason": "command-exited-nonzero",
         "terminalPairDiagnosticReason": "labview-cli-call-by-reference"
       },
+      "exactPairDiagnosticsState": "available",
       "exactPairDiagnostics": [
         {
           "engine": "labview-cli",
           "proofRootPath": "/mnt/c/Users/sveld/AppData/Local/VI History Suite/windows-benchmark-image-pair129-labviewcli",
           "reportPath": "/mnt/c/Users/sveld/AppData/Local/VI History Suite/windows-benchmark-image-pair129-labviewcli/cache/harness-reports/HARNESS-VHS-002/comparison-report-smoke.json",
+          "generatedAt": "2026-04-05T17:38:27.680Z",
           "selectedHash": "3408654e680200d7787c17cc0b443a97fcdfb360",
           "baseHash": "6dd65df674287c9705959a7e9aca6b02e8445d40",
+          "runtimeProvider": "host-native",
           "runtimeExecutionState": "failed",
           "runtimeFailureReason": "command-exited-nonzero",
           "runtimeDiagnosticReason": "labview-cli-call-by-reference",
@@ -110,6 +113,14 @@
           "headlessSessionResetExitCode": 1,
           "headlessSessionResetStdoutPath": "C:\\workspace\\.cache\\harness-reports\\HARNESS-VHS-002\\workspace-storage\\reports\\a1fa155b16ea\\0ded7fc226bb\\headless-session-reset-stdout.txt",
           "headlessSessionResetStderrPath": "C:\\workspace\\.cache\\harness-reports\\HARNESS-VHS-002\\workspace-storage\\reports\\a1fa155b16ea\\0ded7fc226bb\\headless-session-reset-stderr.txt",
+          "executionSurfaceContext": "windows-benchmark-image",
+          "executionSurfaceMarkers": [
+            "cloneDirectory",
+            "packetFilePath",
+            "reportFilePath",
+            "metadataFilePath",
+            "containerDiagnosticLogSourcePath"
+          ],
           "runtimeNotes": [
             "Windows container provider image nationalinstruments/labview:2026q1-windows was not available; falling back to host-native runtime discovery.",
             "At the retained cli-log-banner snapshot (2026-04-05T17:37:56.427Z), observed LabVIEW-related processes: LabVIEW.exe, LabVIEWCLI.exe.",
@@ -126,12 +137,21 @@
           "engine": "lvcompare",
           "proofRootPath": "/mnt/c/Users/sveld/AppData/Local/VI History Suite/windows-benchmark-image-pair129-lvcompare",
           "reportPath": "/mnt/c/Users/sveld/AppData/Local/VI History Suite/windows-benchmark-image-pair129-lvcompare/cache/harness-reports/HARNESS-VHS-002/comparison-report-smoke.json",
+          "generatedAt": "2026-04-05T17:03:29.997Z",
           "selectedHash": "3408654e680200d7787c17cc0b443a97fcdfb360",
           "baseHash": "6dd65df674287c9705959a7e9aca6b02e8445d40",
+          "runtimeProvider": "host-native",
           "runtimeExecutionState": "failed",
           "runtimeFailureReason": "command-timed-out",
           "runtimeExecutable": "C:\\Program Files\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe",
           "headlessSessionResetArgs": [],
+          "executionSurfaceContext": "windows-benchmark-image",
+          "executionSurfaceMarkers": [
+            "cloneDirectory",
+            "packetFilePath",
+            "reportFilePath",
+            "metadataFilePath"
+          ],
           "runtimeNotes": [
             "Windows container provider image nationalinstruments/labview:2026q1-windows was not available; falling back to host-native runtime discovery.",
             "Requested runtime engine override: lvcompare.",
@@ -141,7 +161,8 @@
             "Comparison-report runtime timed out after 120000ms."
           ]
         }
-      ]
+      ],
+      "rejectedExactPairDiagnostics": []
     }
   },
   "comparison": {
@@ -162,6 +183,7 @@
     "windowsBenchmarkImageExactPairDiagnosticPaths": [
       "/mnt/c/Users/sveld/AppData/Local/VI History Suite/windows-benchmark-image-pair129-labviewcli/cache/harness-reports/HARNESS-VHS-002/comparison-report-smoke.json",
       "/mnt/c/Users/sveld/AppData/Local/VI History Suite/windows-benchmark-image-pair129-lvcompare/cache/harness-reports/HARNESS-VHS-002/comparison-report-smoke.json"
-    ]
+    ],
+    "windowsBenchmarkImageRejectedExactPairDiagnosticPaths": []
   }
 }

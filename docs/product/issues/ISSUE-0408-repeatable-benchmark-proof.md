@@ -85,6 +85,14 @@ Current retained benchmark truth before activation:
   records `command-timed-out` after the bounded `120000ms` budget, and the
   comparable-prefix packet now carries both exact-pair receipts so future
   sessions do not have to rediscover them from AppData
+- those exact-pair receipts are now admitted by retained execution-surface
+  truth rather than proof-root naming alone: the packet searches the live and
+  archived `.prev-*` smoke receipts under each exact-pair root, selects the
+  latest receipt that still proves the governed Windows benchmark-image
+  surface through retained `C:\workspace\.cache` clone/artifact paths and,
+  when available, `C:\Users\ContainerAdministrator\...` diagnostic-log
+  sources, and records rejected latest reruns separately if they no longer
+  prove that surface
 - a fresh governed repo-local exact-pair rerun now retains that same
   Windows-image surface explicitly: the authority repo `.cache`
   `comparison-report-smoke.json` now carries

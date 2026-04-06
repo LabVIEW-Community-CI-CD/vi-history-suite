@@ -1227,7 +1227,10 @@
   and the comparable-prefix packet and confirm the exact Windows blocker pair
   `6dd65df -> 3408654` is documented as failing under both `labview-cli` and
   `lvcompare`, with the packet retaining both exact-pair diagnosis receipts
-  instead of only the bounded pair index
+  only when their smoke reports still prove the Windows benchmark-image
+  execution surface through retained container-context markers such as
+  `C:\workspace\.cache` proof paths and, when available,
+  `ContainerAdministrator` diagnostic-log sources
 - `TEST-DOC-054`: review current-state, PROGRAM-0003, and ISSUE-0408 and
   confirm the governed `CloseLabVIEW -Headless` recovery posture is documented
   as retaining dedicated reset stdout/stderr artifacts and exit-code facts in

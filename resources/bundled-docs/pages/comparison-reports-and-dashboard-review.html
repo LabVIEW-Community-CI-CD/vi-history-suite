@@ -141,6 +141,19 @@ starts on the canonical host</li>
 so host-native x64 <code>labview-cli</code> exact-pair reruns are non-canonical unless
 a real x64 CLI install exists</li>
 </ul>
+<p>The packet admission rule for exact-pair benchmark-image proof is now
+fail-closed too:</p>
+<ul>
+<li>the comparable-prefix packet searches the live and archived <code>.prev-*</code>
+exact-pair smoke receipts under each proof root</li>
+<li>it admits only the latest receipt that still proves the governed Windows
+benchmark-image surface through retained container-context markers such as
+<code>C:\workspace\.cache</code> clone or artifact paths and, when available,
+<code>C:\Users\ContainerAdministrator\...</code> diagnostic-log sources</li>
+<li>if a newer rerun under the same proof root no longer proves that surface,
+the packet records it as a rejected contaminated rerun instead of promoting
+it to benchmark-image truth</li>
+</ul>
 <p>Ambient environment changes such as <code>LV_RTE_HEADLESS=1</code> can still support
 bounded characterization work, but they do not replace the canonical admission
 contract.</p>

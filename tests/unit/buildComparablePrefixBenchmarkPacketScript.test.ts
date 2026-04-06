@@ -46,8 +46,10 @@ const comparablePacket = require(path.resolve(
     engine: string;
     proofRootPath: string;
     reportPath: string;
+    generatedAt?: string;
     selectedHash?: string;
     baseHash?: string;
+    runtimeProvider?: string;
     runtimeExecutionState?: string;
     runtimeFailureReason?: string;
     runtimeDiagnosticReason?: string;
@@ -59,8 +61,30 @@ const comparablePacket = require(path.resolve(
     headlessSessionResetExitCode?: number;
     headlessSessionResetStdoutPath?: string;
     headlessSessionResetStderrPath?: string;
+    executionSurfaceContext: string;
+    executionSurfaceMarkers: string[];
     runtimeNotes: string[];
   };
+  deriveWindowsExactPairDiagnosisContext: (report: Record<string, unknown>) => {
+    context: string;
+    markers: string[];
+  };
+  isEligibleWindowsExactPairDiagnosisReport: (report: Record<string, unknown>) => boolean;
+  selectHostWindowsExactPairDiagnosis: (
+    repoRoot: string,
+    engine: string
+  ) =>
+    | {
+        exactPairDiagnosis?: {
+          reportPath: string;
+          executionSurfaceContext: string;
+        };
+        rejectedExactPairDiagnosis?: {
+          reportPath: string;
+          rejectionReason: string;
+        };
+      }
+    | undefined;
   renderComparablePrefixBenchmarkPacketMarkdown: (packet: {
     generatedAt: string;
     proofState: string;
@@ -96,6 +120,7 @@ const comparablePacket = require(path.resolve(
         imageRef: string;
         validatedComparablePairCount: number;
         comparablePrefixRuntimeTotalMs: number;
+        exactPairDiagnosticsState?: string;
         fullWindowBlocker: {
           terminalPairIndex: number;
           terminalPairFailureReason: string;
@@ -111,6 +136,15 @@ const comparablePacket = require(path.resolve(
           runtimeDiagnosticReason?: string;
           runtimeLabviewIniPath?: string;
           runtimeLabviewTcpPort?: number;
+          executionSurfaceContext?: string;
+          executionSurfaceMarkers?: string[];
+        }>;
+        rejectedExactPairDiagnostics?: Array<{
+          engine: string;
+          reportPath: string;
+          rejectionReason?: string;
+          executionSurfaceContext?: string;
+          executionSurfaceMarkers?: string[];
         }>;
       };
     };
@@ -264,12 +298,23 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
     await fs.writeFile(
       reportPath,
       JSON.stringify({
+        generatedAt: '2026-04-05T17:38:27.680Z',
+        cloneDirectory: 'C:\\workspace\\.cache\\harnesses\\ni-labview-icon-editor',
+        packetFilePath:
+          'C:\\workspace\\.cache\\harness-reports\\HARNESS-VHS-002\\workspace-storage\\reports\\a1fa155b16ea\\0ded7fc226bb\\report-packet.html',
+        reportFilePath:
+          'C:\\workspace\\.cache\\harness-reports\\HARNESS-VHS-002\\workspace-storage\\reports\\a1fa155b16ea\\0ded7fc226bb\\diff-report-lv_icon.vi.html',
+        metadataFilePath:
+          'C:\\workspace\\.cache\\harness-reports\\HARNESS-VHS-002\\workspace-storage\\reports\\a1fa155b16ea\\0ded7fc226bb\\report-metadata.json',
         runtimeEngine: 'labview-cli',
+        runtimeProvider: 'host-native',
         selectedHash: '3408654e680200d7787c17cc0b443a97fcdfb360',
         baseHash: '6dd65df674287c9705959a7e9aca6b02e8445d40',
         runtimeExecutionState: 'failed',
         runtimeFailureReason: 'command-exited-nonzero',
         runtimeDiagnosticReason: 'labview-cli-call-by-reference',
+        runtimeDiagnosticLogSourcePath:
+          'C:\\Users\\ContainerAdministrator\\AppData\\Local\\Temp\\lvtemporary_69132.log',
         runtimeLabviewIniPath:
           'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.ini',
         runtimeLabviewTcpPort: 3363,
@@ -300,8 +345,10 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
       engine: 'labview-cli',
       proofRootPath: tempRoot,
       reportPath,
+      generatedAt: '2026-04-05T17:38:27.680Z',
       selectedHash: '3408654e680200d7787c17cc0b443a97fcdfb360',
       baseHash: '6dd65df674287c9705959a7e9aca6b02e8445d40',
+      runtimeProvider: 'host-native',
       runtimeExecutionState: 'failed',
       runtimeFailureReason: 'command-exited-nonzero',
       runtimeDiagnosticReason: 'labview-cli-call-by-reference',
@@ -325,8 +372,88 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
       headlessSessionResetExitCode: 1,
       headlessSessionResetStdoutPath: 'C:\\workspace\\.cache\\headless-session-reset-stdout.txt',
       headlessSessionResetStderrPath: 'C:\\workspace\\.cache\\headless-session-reset-stderr.txt',
+      executionSurfaceContext: 'windows-benchmark-image',
+      executionSurfaceMarkers: [
+        'cloneDirectory',
+        'packetFilePath',
+        'reportFilePath',
+        'metadataFilePath',
+        'containerDiagnosticLogSourcePath'
+      ],
       runtimeNotes: ['Attempted Windows headless session reset via LabVIEWCLI CloseLabVIEW.']
     });
+  });
+
+  it('prefers the latest eligible exact-pair snapshot and retains a newer rejected rerun', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-exact-pair-select-'));
+    const proofRoot = path.join(tempRoot, '.cache', 'windows-benchmark-image-pair129-labviewcli');
+    const latestRejectedReportPath = path.join(
+      proofRoot,
+      'cache',
+      'harness-reports',
+      'HARNESS-VHS-002',
+      'comparison-report-smoke.json'
+    );
+    const olderEligibleReportPath = path.join(
+      proofRoot,
+      'cache',
+      'harness-reports',
+      'HARNESS-VHS-002.prev-20260405T173526Z',
+      'comparison-report-smoke.json'
+    );
+
+    await fs.mkdir(path.dirname(latestRejectedReportPath), { recursive: true });
+    await fs.mkdir(path.dirname(olderEligibleReportPath), { recursive: true });
+    await fs.writeFile(
+      latestRejectedReportPath,
+      JSON.stringify({
+        generatedAt: '2026-04-05T20:00:00.000Z',
+        runtimeEngine: 'labview-cli',
+        runtimeProvider: 'host-native',
+        selectedHash: '3408654e680200d7787c17cc0b443a97fcdfb360',
+        baseHash: '6dd65df674287c9705959a7e9aca6b02e8445d40',
+        cloneDirectory: 'C:\\Users\\sveld\\AppData\\Local\\VI History Suite\\pair129\\clone',
+        packetFilePath: 'C:\\Users\\sveld\\AppData\\Local\\VI History Suite\\pair129\\report-packet.html',
+        reportFilePath: 'C:\\Users\\sveld\\AppData\\Local\\VI History Suite\\pair129\\report.html',
+        metadataFilePath:
+          'C:\\Users\\sveld\\AppData\\Local\\VI History Suite\\pair129\\report-metadata.json'
+      }),
+      'utf8'
+    );
+    await fs.writeFile(
+      olderEligibleReportPath,
+      JSON.stringify({
+        generatedAt: '2026-04-05T19:30:00.000Z',
+        runtimeEngine: 'labview-cli',
+        runtimeProvider: 'host-native',
+        selectedHash: '3408654e680200d7787c17cc0b443a97fcdfb360',
+        baseHash: '6dd65df674287c9705959a7e9aca6b02e8445d40',
+        cloneDirectory: 'C:\\workspace\\.cache\\harnesses\\ni-labview-icon-editor',
+        packetFilePath:
+          'C:\\workspace\\.cache\\harness-reports\\HARNESS-VHS-002\\workspace-storage\\reports\\a1fa155b16ea\\0ded7fc226bb\\report-packet.html',
+        reportFilePath:
+          'C:\\workspace\\.cache\\harness-reports\\HARNESS-VHS-002\\workspace-storage\\reports\\a1fa155b16ea\\0ded7fc226bb\\diff-report-lv_icon.vi.html',
+        metadataFilePath:
+          'C:\\workspace\\.cache\\harness-reports\\HARNESS-VHS-002\\workspace-storage\\reports\\a1fa155b16ea\\0ded7fc226bb\\report-metadata.json',
+        runtimeDiagnosticLogSourcePath:
+          'C:\\Users\\ContainerAdministrator\\AppData\\Local\\Temp\\lvtemporary_69132.log'
+      }),
+      'utf8'
+    );
+
+    const selection = comparablePacket.selectHostWindowsExactPairDiagnosis(
+      tempRoot,
+      'labview-cli'
+    );
+
+    expect(selection?.exactPairDiagnosis?.reportPath).toBe(olderEligibleReportPath);
+    expect(selection?.exactPairDiagnosis?.executionSurfaceContext).toBe(
+      'windows-benchmark-image'
+    );
+    expect(selection?.rejectedExactPairDiagnosis?.reportPath).toBe(latestRejectedReportPath);
+    expect(selection?.rejectedExactPairDiagnosis?.rejectionReason).toBe(
+      'missing-windows-benchmark-image-surface-markers'
+    );
   });
 
   it('renders a concise comparable-prefix markdown packet', () => {
@@ -369,6 +496,7 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
             'ghcr.io/svelderrainruiz/vi-history-suite-source-experiments/windows-dashboard-benchmark:sha-b679b8761f09df3f39d1a2d35addad2aaf0654b9',
           validatedComparablePairCount: 128,
           comparablePrefixRuntimeTotalMs: 623664,
+          exactPairDiagnosticsState: 'available',
           fullWindowBlocker: {
             terminalPairIndex: 129,
             terminalPairFailureReason: 'command-exited-nonzero',
@@ -386,6 +514,14 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
               runtimeLabviewIniPath:
                 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.ini',
               runtimeLabviewTcpPort: 3363,
+              executionSurfaceContext: 'windows-benchmark-image',
+              executionSurfaceMarkers: [
+                'cloneDirectory',
+                'packetFilePath',
+                'reportFilePath',
+                'metadataFilePath',
+                'containerDiagnosticLogSourcePath'
+              ],
               headlessSessionResetExitCode: 1,
               headlessSessionResetStdoutPath: '/tmp/windows-benchmark-image-pair129-labviewcli/headless-session-reset-stdout.txt',
               headlessSessionResetStderrPath: '/tmp/windows-benchmark-image-pair129-labviewcli/headless-session-reset-stderr.txt'
@@ -396,9 +532,17 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
               reportPath: '/tmp/windows-benchmark-image-pair129-lvcompare/comparison-report-smoke.json',
               baseHash: '6dd65df674287c9705959a7e9aca6b02e8445d40',
               selectedHash: '3408654e680200d7787c17cc0b443a97fcdfb360',
-              runtimeFailureReason: 'command-timed-out'
+              runtimeFailureReason: 'command-timed-out',
+              executionSurfaceContext: 'windows-benchmark-image',
+              executionSurfaceMarkers: [
+                'cloneDirectory',
+                'packetFilePath',
+                'reportFilePath',
+                'metadataFilePath'
+              ]
             }
-          ]
+          ],
+          rejectedExactPairDiagnostics: []
         }
       },
       comparison: {
@@ -413,9 +557,13 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
     expect(markdown).toContain('linux-headless-recursive-load');
     expect(markdown).toContain('labview-cli-call-by-reference');
     expect(markdown).toContain('bounded-blocked');
+    expect(markdown).toContain('Exact-pair diagnosis state: available');
     expect(markdown).toContain('## Windows Exact-Pair Diagnosis');
     expect(markdown).toContain(
       'labview-cli: 6dd65df67428 -> 3408654e6802 :: command-exited-nonzero (labview-cli-call-by-reference)'
+    );
+    expect(markdown).toContain(
+      'labview-cli execution surface: windows-benchmark-image [cloneDirectory, packetFilePath, reportFilePath, metadataFilePath, containerDiagnosticLogSourcePath]'
     );
     expect(markdown).toContain(
       'labview-cli selected LabVIEW.ini: C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.ini'
