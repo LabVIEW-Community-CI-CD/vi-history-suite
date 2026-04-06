@@ -126,11 +126,17 @@ Windows-image surface explicitly too: the authority repo `.cache`
 `comparison-report-smoke.json` now carries
 `runtimeLabviewIniPath=C:\Program Files (x86)\National Instruments\Shared\LabVIEW CLI\LabVIEWCLI.ini`
 plus `runtimeLabviewTcpPort=3363`, and a direct probe of
-`nationalinstruments/labview:2026q1-windows` shows that image exposes only the
-x86 `LabVIEWCLI.exe` path and only the x64 `LabVIEW.exe` path. So the active
-pair-129 ceiling is now governed as a connected-session mixed-surface Windows
-image seam, not just a missing retained argument or stale host contamination
-artifact.
+`nationalinstruments/labview:2026q1-windows` shows that image exposes x64
+`LabVIEW.exe`, x86 `LabVIEWCLI.exe`, x64 `LVCompare.exe`, and no coherent
+same-bitness `labview-cli` bundle. The governed host proof runner now also
+retains that image-contract summary as `latest-runtime-surface.json` under the
+Windows benchmark-image proof root. So the active pair-129 ceiling is now
+governed as a connected-session mixed-surface Windows image seam, not just a
+missing retained argument or stale host contamination artifact.
+That does not mean Windows x86 in containers is universally impossible.
+Out-of-scope alternative provisioning may exist through slower NI Package
+Manager plus ISO installation, but that is a different contract and does not
+reopen the accepted ceiling for the current governed image recipe.
 Recovery attempts are also now retained more truthfully: when Linux or Windows
 invokes the governed `CloseLabVIEW -Headless` reset path, the packet keeps the
 reset command, exit code, and dedicated `headless-session-reset-stdout.txt` /
@@ -252,9 +258,11 @@ Current retained Linux blocker before activation:
 - the image runs locally on the canonical Windows host with Windows containers
 - the host proof is launched through the governed runner at
   `scripts/runHostWindowsBenchmarkImageProof.js`, which retains launch/log
-  receipts and the mounted benchmark summary under the canonical AppData proof
-  root
+  receipts, the mounted benchmark summary, and the current-contract
+  `latest-runtime-surface.json` under the canonical AppData proof root
 - one retained deep `HARNESS-VHS-002` summary exists from the image lane
+- the retained runtime-surface summary proves whether the current governed
+  image contract exposes a coherent same-bitness `labview-cli` bundle
 
 ### Gate C: Comparative Benchmark Packet
 
@@ -292,7 +300,8 @@ That slice should:
 
 - finish the late Linux failure diagnosis with retained evidence
 - retain and normalize the bounded `129`-commit / `128`-pair comparable prefix
-- prove the published Windows benchmark image locally
+- hold the published Windows benchmark image as an accepted bounded current-contract
+  ceiling at pair `129` unless the governed image contract itself changes
 - stop short of claiming final comparability until both image lanes retain
   truthful terminal summaries
 

@@ -1337,6 +1337,17 @@
   documented as fail-closed `not-available` benchmark truth with immutable
   per-run `dashboard-smoke` snapshots rather than as completed comparable
   proof
+- `TEST-UNIT-302`: verify the canonical-host Windows benchmark-image proof
+  runner retains a machine-readable runtime-surface summary for the current
+  governed image contract, and the comparable-prefix packet consumes that
+  summary so future sessions can tell whether the current image contract
+  exposes a coherent same-bitness `labview-cli` bundle
+- `TEST-DOC-070`: review current-state, harnesses, PROGRAM-0003, ISSUE-0408,
+  and the comparable-prefix packet and confirm the repo documents the current
+  Windows pair-129 ceiling as an accepted current-contract exception backed by
+  retained runtime-surface proof, while keeping slower NI Package Manager plus
+  ISO x86 provisioning explicitly out of scope for the current governed image
+  contract
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed authority repo, private experiment mirror, wiki, and
   assurance-skill repos with authority roles, expected remotes, and primary

@@ -161,11 +161,20 @@
   receipts for both supported engines on that boundary:
   `labview-cli => command-exited-nonzero (labview-cli-call-by-reference)` and
   `lvcompare => command-timed-out`
+- the canonical-host Windows benchmark-image proof root now also retains a
+  machine-readable `latest-runtime-surface.json` summary for the current
+  governed image contract; today that summary proves x64 `LabVIEW.exe`, x86
+  `LabVIEWCLI.exe`, x64 `LVCompare.exe`, and no coherent same-bitness
+  `labview-cli` bundle, so the pair-129 Windows ceiling is an accepted
+  current-contract exception rather than an open ambiguous blocker
 - future Windows benchmark-image reruns now fail closed when any prepared pair
   is retained as `runtimeExecutionState=not-available`, and the benchmark CLI
   snapshots immutable per-run `dashboard-smoke` artifacts beside each
   timestamped summary so comparable-prefix packet derivation can ignore later
   contaminated reruns instead of trusting only mutable latest files
+- out-of-scope alternative Windows x86 provisioning may exist through slower
+  NI Package Manager plus ISO installation, but that is a different benchmark
+  image contract and does not change the current accepted comparable prefix
 - current retained Linux full-window blocker:
   `pair 135 / 138 :: command-exited-nonzero (linux-headless-recursive-load)`
 - the full 139-commit / 138-pair window remains the deep Windows benchmark

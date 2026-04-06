@@ -97,6 +97,19 @@ containers before a governed Windows image can run</li>
 Windows image and retains acquisition state in the comparison-report packet
 and runtime-doctor surfaces</li>
 </ul>
+<p>The requirements package now also governs the accepted Windows benchmark-image
+ceiling for the current contract:</p>
+<ul>
+<li>the canonical-host proof runner retains a machine-readable
+<code>latest-runtime-surface.json</code> summary for the current governed Windows image
+contract</li>
+<li>that summary carries observed x86/x64 <code>LabVIEW.exe</code>, <code>LabVIEWCLI.exe</code>, and
+<code>LVCompare.exe</code> paths plus same-bitness <code>labview-cli</code> bundle availability</li>
+<li>the comparable-prefix packet reuses that retained runtime-surface truth so
+future sessions can tell the difference between the current governed image
+contract and out-of-scope alternative provisioning such as slower
+NI Package Manager plus ISO x86 setup</li>
+</ul>
 <h2>Why It Matters</h2>
 <p>This is one of the main differences between a useful engineering wiki and a
 shallow summary surface.</p>

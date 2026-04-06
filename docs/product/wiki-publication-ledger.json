@@ -54,7 +54,7 @@
       "wikiFileName": "Comparison-Reports-And-Dashboard-Review.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "e816613",
+      "wikiCommit": "0949de3",
       "primaryAuthority": [
         "docs/requirements/srs.md",
         "docs/product/ni-comparison-report-metadata-inventory.md",
@@ -164,7 +164,7 @@
       "wikiFileName": "Current-State.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "e816613",
+      "wikiCommit": "0949de3",
       "primaryAuthority": [
         "docs/product/current-state.md",
         "docs/product/extension-execution-policy.md",
@@ -229,7 +229,7 @@
       "wikiFileName": "Requirements-And-Verification.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "0f6f045",
+      "wikiCommit": "0949de3",
       "primaryAuthority": [
         "docs/requirements/srs.md",
         "docs/requirements/rtm.csv",
@@ -301,7 +301,7 @@
       "wikiFileName": "Debt-Ledger.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "0f6f045",
+      "wikiCommit": "0949de3",
       "primaryAuthority": [
         "docs/product/debt-ledger.md",
         "docs/product/debt-ledger.json",

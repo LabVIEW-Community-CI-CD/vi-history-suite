@@ -21,6 +21,12 @@ const comparablePacket = require(path.resolve(
         firstInvalidPairId?: string;
         firstInvalidReason?: string;
         comparablePrefixRuntimeTotalMs: number;
+        runtimeSurface?: {
+          state: string;
+          latestPath?: string;
+          assessment?: string;
+          labviewCliBundleAvailability?: { x64: boolean; x86: boolean };
+        };
       };
     };
   };
@@ -162,6 +168,15 @@ const comparablePacket = require(path.resolve(
           mixedBitnessObserved: boolean;
           supportingEngines: string[];
         };
+        runtimeSurface?: {
+          state: string;
+          latestPath?: string;
+          scopeBoundary?: string;
+          assessment?: string;
+          labviewCliBundleAvailability?: { x64: boolean; x86: boolean };
+          lvcompareBundleAvailability?: { x64: boolean; x86: boolean };
+          scopeNotes?: string[];
+        };
         fullWindowBlocker: {
           terminalPairIndex: number;
           terminalPairFailureReason: string;
@@ -223,6 +238,11 @@ const comparablePacket = require(path.resolve(
         };
         dashboardSmoke?: { dashboardJsonFilePath?: string };
         summary: { completedAt?: string; terminalPairDiagnosticReason?: string };
+        runtimeSurfacePath?: string;
+        runtimeSurface?: {
+          scopeBoundary: string;
+          assessment: string;
+        };
       }
     | undefined;
   formatFullWindowOutcome: (
@@ -603,6 +623,23 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
           validatedComparablePairCount: 128,
           comparablePrefixRuntimeTotalMs: 623664,
           exactPairDiagnosticsState: 'available',
+          runtimeSurface: {
+            state: 'available',
+            latestPath: '/tmp/windows-image-runtime-surface.json',
+            scopeBoundary: 'current-governed-benchmark-image-contract',
+            assessment: 'mixed-bitness-only-labview-cli-surface',
+            labviewCliBundleAvailability: {
+              x64: false,
+              x86: false
+            },
+            lvcompareBundleAvailability: {
+              x64: true,
+              x86: false
+            },
+            scopeNotes: [
+              'Out-of-scope alternative Windows x86 provisioning may exist through slower NI Package Manager plus ISO installation, but that is not part of the current governed Windows benchmark image contract.'
+            ]
+          },
           blockerCharacterization: {
             state: 'exact-pair-characterized',
             classification: 'mixed-bitness-call-by-reference-seam',
@@ -687,6 +724,10 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
     expect(markdown).toContain('labview-cli-call-by-reference');
     expect(markdown).toContain('bounded-blocked');
     expect(markdown).toContain('Exact-pair diagnosis state: available');
+    expect(markdown).toContain('Runtime surface assessment: mixed-bitness-only-labview-cli-surface');
+    expect(markdown).toContain('Runtime surface LabVIEWCLI bundles: x64=no, x86=no');
+    expect(markdown).toContain('Runtime surface LVCompare bundles: x64=yes, x86=no');
+    expect(markdown).toContain('current governed Windows benchmark image contract');
     expect(markdown).toContain('Blocker characterization: mixed-bitness-call-by-reference-seam');
     expect(markdown).toContain('Blocker mixed bitness observed: yes');
     expect(markdown).toContain('## Windows Exact-Pair Diagnosis');
@@ -793,6 +834,19 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
       }),
       'utf8'
     );
+    await fs.writeFile(
+      path.join(benchmarkRoot, 'runtime-surface-20260405-010000.json'),
+      JSON.stringify({
+        scopeBoundary: 'current-governed-benchmark-image-contract',
+        assessment: 'mixed-bitness-only-labview-cli-surface',
+        observedPaths: {},
+        labviewCliBundleAvailability: {
+          x64: false,
+          x86: false
+        }
+      }),
+      'utf8'
+    );
 
     const selected = comparablePacket.findLatestHostWindowsBenchmarkImageProof(tempRoot);
 
@@ -801,6 +855,12 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
     );
     expect(selected?.dashboardSmokePath).toBe(
       path.join(benchmarkRoot, '2026-04-05-010000000-dashboard-smoke.json')
+    );
+    expect(selected?.runtimeSurfacePath).toBe(
+      path.join(benchmarkRoot, 'runtime-surface-20260405-010000.json')
+    );
+    expect(selected?.runtimeSurface?.assessment).toBe(
+      'mixed-bitness-only-labview-cli-surface'
     );
   });
 
@@ -880,6 +940,15 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
             },
             representedPairCount: 134,
             comparablePrefixRuntimeTotalMs: 464798,
+            runtimeSurface: {
+              scopeBoundary: 'current-governed-benchmark-image-contract',
+              assessment: 'mixed-bitness-only-labview-cli-surface',
+              observedPaths: {},
+              labviewCliBundleAvailability: {
+                x64: false,
+                x86: false
+              }
+            },
             fullWindowBlocker: {
               completionState: 'failed',
               comparabilityState: 'characterization-only',
@@ -893,7 +962,8 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
         },
         retainedArtifacts: {
           windowsBenchmarkImageLatestSummaryPath: '/retained/summary.json',
-          windowsBenchmarkImageDashboardSmokePath: '/retained/dashboard-smoke.json'
+          windowsBenchmarkImageDashboardSmokePath: '/retained/dashboard-smoke.json',
+          windowsBenchmarkImageRuntimeSurfacePath: '/retained/runtime-surface.json'
         }
       }),
       'utf8'
@@ -921,6 +991,10 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
     });
     expect(selected?.summary?.terminalPairDiagnosticReason).toBe(
       'labview-cli-call-by-reference'
+    );
+    expect(selected?.runtimeSurfacePath).toBe('/retained/runtime-surface.json');
+    expect(selected?.runtimeSurface?.assessment).toBe(
+      'mixed-bitness-only-labview-cli-surface'
     );
   });
 

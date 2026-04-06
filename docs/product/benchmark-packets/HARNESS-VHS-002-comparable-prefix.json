@@ -1,7 +1,7 @@
 {
   "schema": "vi-history-suite/comparable-prefix-benchmark-packet@v1",
   "benchmarkId": "HARNESS-VHS-002-comparable-prefix",
-  "generatedAt": "2026-04-06T00:49:06.079Z",
+  "generatedAt": "2026-04-06T01:17:30.264Z",
   "harnessId": "HARNESS-VHS-002",
   "targetRelativePath": "resource/plugins/lv_icon.vi",
   "proofState": "bounded-prefix-comparable",
@@ -184,6 +184,9 @@
           "labview-cli=command-exited-nonzero (labview-cli-call-by-reference)",
           "lvcompare=command-timed-out"
         ]
+      },
+      "runtimeSurface": {
+        "state": "missing"
       }
     }
   },

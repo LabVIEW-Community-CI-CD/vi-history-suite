@@ -48,6 +48,13 @@ const HOST_WINDOWS_SUMMARY_DIRECTORY_RELATIVE_PATH = path.join(
   'windows-dashboard-benchmark',
   TARGET_HARNESS_ID
 );
+const HOST_WINDOWS_RUNTIME_SURFACE_RELATIVE_PATH = path.join(
+  'cache',
+  'github-experiments',
+  'windows-dashboard-benchmark',
+  TARGET_HARNESS_ID,
+  'latest-runtime-surface.json'
+);
 const HOST_WINDOWS_SMOKE_RELATIVE_PATH = path.join(
   'cache',
   'harness-reports',
@@ -303,7 +310,23 @@ function buildComparablePrefixBenchmarkPacket(repoRoot, options = {}) {
         exactPairDiagnosticsState: windowsExactPairSurface.state,
         exactPairDiagnostics: windowsExactPairDiagnostics,
         rejectedExactPairDiagnostics: rejectedWindowsExactPairDiagnostics,
-        blockerCharacterization: windowsBenchmarkImageBlockerCharacterization
+        blockerCharacterization: windowsBenchmarkImageBlockerCharacterization,
+        runtimeSurface: windowsBenchmarkImage.runtimeSurface
+          ? {
+              state: 'available',
+              latestPath: windowsBenchmarkImage.runtimeSurfacePath,
+              scopeBoundary: windowsBenchmarkImage.runtimeSurface.scopeBoundary,
+              assessment: windowsBenchmarkImage.runtimeSurface.assessment,
+              labviewCliBundleAvailability:
+                windowsBenchmarkImage.runtimeSurface.labviewCliBundleAvailability,
+              lvcompareBundleAvailability:
+                windowsBenchmarkImage.runtimeSurface.lvcompareBundleAvailability,
+              observedPaths: windowsBenchmarkImage.runtimeSurface.observedPaths,
+              scopeNotes: windowsBenchmarkImage.runtimeSurface.scopeNotes ?? []
+            }
+          : {
+              state: 'missing'
+            }
       }
     },
     comparison: {
@@ -321,6 +344,7 @@ function buildComparablePrefixBenchmarkPacket(repoRoot, options = {}) {
       windowsBenchmarkImageLatestSummaryPath: windowsBenchmarkImage.summaryPath,
       windowsBenchmarkImageDashboardSmokePath: windowsBenchmarkImage.dashboardSmokePath,
       windowsBenchmarkImageDashboardJsonPath: windowsBenchmarkImage.dashboardJsonPath,
+      windowsBenchmarkImageRuntimeSurfacePath: windowsBenchmarkImage.runtimeSurfacePath,
       windowsBenchmarkImageExactPairDiagnosticPaths: windowsExactPairDiagnostics.map(
         (diagnostic) => diagnostic.reportPath
       ),
@@ -392,6 +416,9 @@ function loadWindowsBenchmarkImageSurface(repoRoot) {
     pairFailureReceiptPath && fs.existsSync(pairFailureReceiptPath)
       ? readJson(pairFailureReceiptPath)
       : undefined;
+  const runtimeSurfaceSelection = selectLatestWindowsBenchmarkImageRuntimeSurface(
+    latest.workspaceRoot
+  );
 
   return {
     ...latest,
@@ -399,6 +426,8 @@ function loadWindowsBenchmarkImageSurface(repoRoot) {
     windowsWorkspaceRoot,
     pairFailureReceiptPath,
     pairFailureReceipt,
+    runtimeSurfacePath: runtimeSurfaceSelection?.path,
+    runtimeSurface: runtimeSurfaceSelection?.surface,
     validatedPrefix:
       latest.validatedPrefix ??
       validateDashboardPrefix(dashboardJsonPath, {
@@ -555,11 +584,45 @@ function findLatestHostWindowsBenchmarkImageProof(repoRoot) {
   return loadRetainedWindowsBenchmarkImageProofFallback(repoRoot) ?? candidates[0];
 }
 
+function selectLatestWindowsBenchmarkImageRuntimeSurface(windowsWorkspaceRoot) {
+  const runtimeSurfaceDirectoryPath = path.join(
+    windowsWorkspaceRoot,
+    path.dirname(HOST_WINDOWS_RUNTIME_SURFACE_RELATIVE_PATH)
+  );
+  const latestRuntimeSurfacePath = path.join(
+    windowsWorkspaceRoot,
+    HOST_WINDOWS_RUNTIME_SURFACE_RELATIVE_PATH
+  );
+  const timestampedPaths = safeReadDir(runtimeSurfaceDirectoryPath)
+    .filter((entry) => entry.startsWith('runtime-surface-') && entry.endsWith('.json'))
+    .map((entry) => path.join(runtimeSurfaceDirectoryPath, entry))
+    .filter((entryPath) => fs.existsSync(entryPath));
+  const candidatePaths = timestampedPaths.length > 0 ? timestampedPaths : [];
+  if (fs.existsSync(latestRuntimeSurfacePath)) {
+    candidatePaths.push(latestRuntimeSurfacePath);
+  }
+  const uniqueCandidatePaths = [...new Set(candidatePaths)];
+  const candidates = uniqueCandidatePaths
+    .map((candidatePath) => ({
+      path: candidatePath,
+      surface: tryReadJson(candidatePath),
+      sortTimestamp: parseTimestamp(undefined, candidatePath)
+    }))
+    .filter((candidate) => isWindowsBenchmarkImageRuntimeSurfaceRecord(candidate.surface));
+
+  if (candidates.length === 0) {
+    return undefined;
+  }
+  candidates.sort((left, right) => right.sortTimestamp - left.sortTimestamp);
+  return candidates[0];
+}
+
 function collectWindowsBenchmarkImageProofCandidates(root) {
   const candidates = [];
   const summaryDirectoryPath = path.join(root, HOST_WINDOWS_SUMMARY_DIRECTORY_RELATIVE_PATH);
   const latestSummaryPath = path.join(root, HOST_WINDOWS_SUMMARY_RELATIVE_PATH);
   const latestDashboardSmokePath = path.join(root, HOST_WINDOWS_SMOKE_RELATIVE_PATH);
+  const runtimeSurfaceSelection = selectLatestWindowsBenchmarkImageRuntimeSurface(root);
 
   for (const summaryPath of collectWindowsBenchmarkSummaryPaths(
     summaryDirectoryPath,
@@ -582,6 +645,8 @@ function collectWindowsBenchmarkImageProofCandidates(root) {
       dashboardSmokePath,
       summary,
       dashboardSmoke,
+      runtimeSurfacePath: runtimeSurfaceSelection?.path,
+      runtimeSurface: runtimeSurfaceSelection?.surface,
       sortTimestamp
     });
   }
@@ -616,6 +681,18 @@ function isWindowsBenchmarkSummaryRecord(summary) {
   );
 }
 
+function isWindowsBenchmarkImageRuntimeSurfaceRecord(surface) {
+  return (
+    surface &&
+    surface.scopeBoundary === 'current-governed-benchmark-image-contract' &&
+    surface.observedPaths &&
+    typeof surface.observedPaths === 'object' &&
+    surface.labviewCliBundleAvailability &&
+    typeof surface.labviewCliBundleAvailability === 'object' &&
+    typeof surface.assessment === 'string'
+  );
+}
+
 function resolveWindowsBenchmarkImageRunSmokePath(summary, windowsWorkspaceRoot) {
   const candidatePaths = [
     summary.retainedArtifacts?.runSmokeJsonPath,
@@ -642,6 +719,17 @@ function loadRetainedWindowsBenchmarkImageProofFallback(repoRoot) {
   if (!fs.existsSync(surface.dashboardJsonPath)) {
     return undefined;
   }
+  const runtimeSurfacePath =
+    (typeof surface.runtimeSurface?.latestPath === 'string'
+      ? surface.runtimeSurface.latestPath
+      : undefined) ??
+    packet?.retainedArtifacts?.windowsBenchmarkImageRuntimeSurfacePath;
+  const runtimeSurface =
+    runtimeSurfacePath && fs.existsSync(runtimeSurfacePath)
+      ? tryReadJson(runtimeSurfacePath)
+      : isWindowsBenchmarkImageRuntimeSurfaceRecord(surface.runtimeSurface)
+        ? surface.runtimeSurface
+        : undefined;
 
   return {
     workspaceRoot: path.join(repoRoot, '.cache', 'windows-benchmark-image-proof'),
@@ -675,6 +763,8 @@ function loadRetainedWindowsBenchmarkImageProofFallback(repoRoot) {
       )
     },
     dashboardJsonPath: surface.dashboardJsonPath,
+    runtimeSurfacePath,
+    runtimeSurface,
     validatedPrefix: {
       validatedPairCount: Number(surface.validatedComparablePairCount) || 0,
       firstInvalidPairIndex: surface.firstInvalidPairIndex,
@@ -1131,6 +1221,7 @@ function renderComparablePrefixBenchmarkPacketMarkdown(packet) {
     packet.surfaces.windowsBenchmarkImage.rejectedExactPairDiagnostics ?? [];
   const blockerCharacterization =
     packet.surfaces.windowsBenchmarkImage.blockerCharacterization;
+  const runtimeSurface = packet.surfaces.windowsBenchmarkImage.runtimeSurface;
   return [
     '# HARNESS-VHS-002 Comparable Prefix Benchmark Packet',
     '',
@@ -1166,6 +1257,18 @@ function renderComparablePrefixBenchmarkPacketMarkdown(packet) {
     `- Prefix runtime total: ${packet.surfaces.windowsBenchmarkImage.comparablePrefixRuntimeTotalMs} ms`,
     `- Full-window outcome: ${formatFullWindowOutcome(packet.surfaces.windowsBenchmarkImage.fullWindowBlocker, packet.fullWindow.comparePairCount)}`,
     `- Exact-pair diagnosis state: ${packet.surfaces.windowsBenchmarkImage.exactPairDiagnosticsState ?? (exactPairDiagnostics.length > 0 ? 'available' : rejectedExactPairDiagnostics.length > 0 ? 'contaminated' : 'missing')}`,
+    ...(runtimeSurface?.state === 'available'
+      ? [
+          `- Runtime surface path: ${runtimeSurface.latestPath}`,
+          `- Runtime surface scope boundary: ${runtimeSurface.scopeBoundary}`,
+          `- Runtime surface assessment: ${runtimeSurface.assessment}`,
+          `- Runtime surface LabVIEWCLI bundles: x64=${runtimeSurface.labviewCliBundleAvailability?.x64 ? 'yes' : 'no'}, x86=${runtimeSurface.labviewCliBundleAvailability?.x86 ? 'yes' : 'no'}`,
+          `- Runtime surface LVCompare bundles: x64=${runtimeSurface.lvcompareBundleAvailability?.x64 ? 'yes' : 'no'}, x86=${runtimeSurface.lvcompareBundleAvailability?.x86 ? 'yes' : 'no'}`,
+          ...(Array.isArray(runtimeSurface.scopeNotes)
+            ? runtimeSurface.scopeNotes.map((note) => `- Runtime surface note: ${note}`)
+            : [])
+        ]
+      : ['- Runtime surface: missing']),
     ...(blockerCharacterization
       ? [
           `- Blocker characterization: ${blockerCharacterization.classification}`,
@@ -1220,6 +1323,7 @@ function formatComparablePrefixBenchmarkPacket(packet) {
     packet.surfaces.windowsBenchmarkImage.rejectedExactPairDiagnostics ?? [];
   const blockerCharacterization =
     packet.surfaces.windowsBenchmarkImage.blockerCharacterization;
+  const runtimeSurface = packet.surfaces.windowsBenchmarkImage.runtimeSurface;
   return [
     'Comparable Prefix Benchmark Packet',
     `- proofState: ${packet.proofState}`,
@@ -1236,6 +1340,12 @@ function formatComparablePrefixBenchmarkPacket(packet) {
     `- windowsBenchmarkImageRuntimeMs: ${packet.surfaces.windowsBenchmarkImage.comparablePrefixRuntimeTotalMs}`,
     `- windowsBenchmarkImageFullWindowOutcome: ${formatFullWindowOutcome(packet.surfaces.windowsBenchmarkImage.fullWindowBlocker, packet.fullWindow.comparePairCount)}`,
     `- windowsExactPairDiagnosisState: ${packet.surfaces.windowsBenchmarkImage.exactPairDiagnosticsState ?? (exactPairDiagnostics.length > 0 ? 'available' : rejectedExactPairDiagnostics.length > 0 ? 'contaminated' : 'missing')}`,
+    ...(runtimeSurface?.state === 'available'
+      ? [
+          `- windowsRuntimeSurfaceAssessment: ${runtimeSurface.assessment}`,
+          `- windowsRuntimeSurfaceLabviewCliBundles: x64=${runtimeSurface.labviewCliBundleAvailability?.x64 ? 'yes' : 'no'}, x86=${runtimeSurface.labviewCliBundleAvailability?.x86 ? 'yes' : 'no'}`
+        ]
+      : []),
     ...(blockerCharacterization
       ? [
           `- windowsBlockerCharacterization: ${blockerCharacterization.classification}`,

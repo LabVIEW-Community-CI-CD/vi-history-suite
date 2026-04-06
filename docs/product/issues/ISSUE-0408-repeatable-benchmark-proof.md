@@ -107,10 +107,13 @@ Current retained benchmark truth before activation:
   `comparison-report-smoke.json` now carries
   `runtimeLabviewIniPath=C:\Program Files (x86)\National Instruments\Shared\LabVIEW CLI\LabVIEWCLI.ini`
   plus `runtimeLabviewTcpPort=3363`, and a direct probe of
-  `nationalinstruments/labview:2026q1-windows` confirms that image exposes
-  only x86 `LabVIEWCLI.exe` plus x64 `LabVIEW.exe`, which strengthens the
-  pair-129 ceiling from a generic Windows-call-by-reference symptom into a
-  governed mixed-surface Windows image seam
+  `nationalinstruments/labview:2026q1-windows` plus the retained
+  `latest-runtime-surface.json` summary now confirm that the current governed
+  image contract exposes x64 `LabVIEW.exe`, x86 `LabVIEWCLI.exe`, x64
+  `LVCompare.exe`, and no coherent same-bitness `labview-cli` bundle, which
+  strengthens the pair-129 ceiling from a generic Windows-call-by-reference
+  symptom into an accepted bounded exception for the current governed image
+  contract
 - the governed `CloseLabVIEW -Headless` recovery posture now also retains
   dedicated `headless-session-reset-stdout.txt` and
   `headless-session-reset-stderr.txt` artifacts plus the reset exit code in
@@ -175,7 +178,9 @@ Current retained benchmark truth before activation:
   artifacts beside the timestamped run summary, and keeps future
   comparable-prefix packet derivation on the latest eligible proof instead of
   trusting only mutable `latest-summary.json` and `dashboard-smoke.json`
-- local host-runnable proof for the Windows benchmark image is still open
+- out-of-scope alternative Windows x86 provisioning may exist through slower
+  NI Package Manager plus ISO installation, but that is a different contract
+  and does not reopen the accepted current-contract pair-129 ceiling
 
 ## Scope
 
@@ -212,6 +217,7 @@ Current retained benchmark truth before activation:
 
 - retained Linux terminal summary and diagnostics
 - retained Windows benchmark-image terminal summary
+- retained Windows benchmark-image runtime-surface summary
 - retained comparative benchmark packet
 - updated control-plane docs and design-gate pass
 
@@ -220,6 +226,7 @@ Current retained benchmark truth before activation:
 - consume the retained Linux pair `135/138` failure evidence
 - preserve the Linux headless-runtime blocker as governed benchmark truth
 - retain and normalize the accepted `129`-commit / `128`-pair comparable prefix
-- finish the host-runnable Windows benchmark-image proof
+- hold the current governed Windows benchmark image contract at its accepted
+  pair-129 ceiling unless the contract itself changes
 - stop short of claiming full comparability until both image lanes have
   truthful terminal summaries

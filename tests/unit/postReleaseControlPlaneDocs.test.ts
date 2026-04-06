@@ -253,6 +253,7 @@ describe('post-release control-plane coherence', () => {
     expect(currentState).toContain('`VHS-REQ-451` is now implemented');
     expect(currentState).toContain('`VHS-REQ-452` is now implemented');
     expect(currentState).toContain('`VHS-REQ-476` is now implemented');
+    expect(currentState).toContain('`VHS-REQ-477` is now implemented');
     expect(currentState).toContain('retains the `-350000` connection-failure diagnosis before retry');
     expect(currentState).toContain('forcing a truly host-native exact-pair rerun with `--prefer-bitness x86`');
     expect(currentState).toContain('observed `LabVIEWCLI.exe` without `LabVIEW.exe`');
@@ -266,6 +267,9 @@ describe('post-release control-plane coherence', () => {
     expect(currentState).toContain('rejects non-canonical selected/base hash bundles');
     expect(currentState).toContain('windows-host-runtime-surface-contaminated');
     expect(currentState).toContain('only `C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe` exists locally');
+    expect(currentState).toContain('latest-runtime-surface.json');
+    expect(currentState).toContain('no coherent same-bitness `labview-cli` bundle');
+    expect(currentState).toContain('out-of-scope alternative Windows x86 provisioning');
 
     expect(benchmarkProgram).toContain('`resource/plugins/lv_icon.vi` target');
     expect(benchmarkProgram).toContain('the deep Linux `HARNESS-VHS-002` benchmark completes `138/138`');
@@ -289,6 +293,9 @@ describe('post-release control-plane coherence', () => {
     expect(benchmarkProgram).toContain('`VHS-REQ-451`');
     expect(benchmarkProgram).toContain('`VHS-REQ-452`');
     expect(benchmarkProgram).toContain('`VHS-REQ-476`');
+    expect(benchmarkProgram).toContain('latest-runtime-surface.json');
+    expect(benchmarkProgram).toContain('same-bitness `labview-cli` bundle');
+    expect(benchmarkProgram).toContain('Out-of-scope alternative provisioning');
     expect(benchmarkProgram).toContain('runtimeExecutionState=not-available');
     expect(benchmarkProgram).toContain('immutable per-run `dashboard-smoke`');
     expect(benchmarkProgram).toContain('latest eligible proof');
@@ -320,6 +327,9 @@ describe('post-release control-plane coherence', () => {
     expect(benchmarkIssue).toContain('`VHS-REQ-451`');
     expect(benchmarkIssue).toContain('`VHS-REQ-452`');
     expect(benchmarkIssue).toContain('`VHS-REQ-476`');
+    expect(benchmarkIssue).toContain('latest-runtime-surface.json');
+    expect(benchmarkIssue).toContain('accepted bounded exception for the current governed image');
+    expect(benchmarkIssue).toContain('NI Package Manager plus ISO installation');
     expect(benchmarkIssue).toContain('runtimeExecutionState=not-available');
     expect(benchmarkIssue).toContain('immutable per-run `dashboard-smoke`');
     expect(benchmarkIssue).toContain('latest eligible proof');
@@ -340,6 +350,9 @@ describe('post-release control-plane coherence', () => {
     expect(harnesses).toContain('must also remain one coherent x86');
     expect(harnesses).toContain('immutable per-run `dashboard-smoke` artifacts');
     expect(harnesses).toContain('runtimeExecutionState=not-available');
+    expect(harnesses).toContain('latest-runtime-surface.json');
+    expect(harnesses).toContain('current-contract exception');
+    expect(harnesses).toContain('NI Package Manager plus ISO installation');
 
     expect(canonicalDiagnosis).toContain('# Canonical Exact-Pair Diagnosis');
     expect(canonicalDiagnosis).toContain('Windows Host-Native `labview-cli` Exact Pair');

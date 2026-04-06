@@ -91,12 +91,12 @@
     },
     {
       "id": "DEBT-0003",
-      "title": "Windows pair-129 benchmark proof remains bounded by a Call By Reference seam",
+      "title": "Windows pair-129 benchmark ceiling is an accepted bounded exception for the current governed image contract",
       "debtClass": "benchmark",
-      "status": "open",
+      "status": "accepted-exception",
       "severity": "high",
       "contaminationRisk": "high",
-      "summary": "The accepted cross-OS comparable prefix remains bounded at `129` commits / `128` pairs because both governed Windows surfaces lose truthful comparability at pair `129` around the retained `labview-cli-call-by-reference` seam, and the latest governed repo-local rerun plus direct image probe now show that the published Windows image exposes only x86 `LabVIEWCLI.exe` alongside x64 `LabVIEW.exe` at that boundary.",
+      "summary": "The accepted cross-OS comparable prefix remains bounded at `129` commits / `128` pairs because the current governed Windows benchmark image contract exposes only a mixed-bitness `labview-cli` surface at pair `129`: x86 `LabVIEWCLI.exe` exists beside x64 `LabVIEW.exe`, no coherent same-bitness `labview-cli` bundle is present in the current image contract, and the exact-pair blocker is retained as `mixed-bitness-call-by-reference-seam`. Out-of-scope alternative provisioning may install x86 LabVIEW through slower NI Package Manager plus ISO steps, but that is a different contract and does not reopen the accepted bounded ceiling here.",
       "owner": {
         "trancheId": "TRANCHE-011",
         "issueId": "ISSUE-0408",
@@ -116,10 +116,10 @@
         "docs/architecture/adr/ADR-0020-bounded-cross-os-benchmark-prefix-for-harness-vhs-002.md"
       ],
       "discoveredContext": "PROGRAM-0003 comparable-prefix proof and exact-pair Windows diagnosis",
-      "nextGate": "Either retire the pair-129 Windows seam with governed evidence that expands the accepted comparable prefix or close PROGRAM-0003 with the bounded comparable-prefix packet as final benchmark truth.",
-      "exitCriteria": "The comparable benchmark packet either expands beyond pair `128` with truthful Windows evidence or explicitly closes the program on the retained bounded prefix without ambiguity.",
+      "nextGate": "Reopen this exception only if the governed Windows benchmark image contract changes to provide a coherent same-bitness `labview-cli` bundle or another in-scope Windows benchmark provider becomes the accepted authority surface.",
+      "exitCriteria": "Keep the accepted pair-129 ceiling explicit until the governed Windows benchmark image contract itself changes; do not treat out-of-scope alternative provisioning as current benchmark truth.",
       "retirementCommit": null,
-      "acceptedExceptionRationale": null
+      "acceptedExceptionRationale": "The current governed Windows benchmark image contract is now machine-readably retained as a mixed-bitness-only `labview-cli` surface, so pair `129` is no longer an unresolved open benchmark debt inside that contract. Reopening it would require an approved contract change, not another rerun against the same image recipe."
     },
     {
       "id": "DEBT-0004",

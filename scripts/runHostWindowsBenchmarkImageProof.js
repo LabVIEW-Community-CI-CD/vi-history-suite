@@ -25,6 +25,18 @@ const CONTAINER_POWERSHELL =
   'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe';
 const CONTAINER_RUNNER_SCRIPT =
   'C:\\workspace\\docker\\github-windows-dashboard-benchmark\\run-benchmark.ps1';
+const CONTAINER_WINDOWS_RUNTIME_PATHS = {
+  labviewExeX64: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+  labviewExeX86: 'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+  labviewCliX64:
+    'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+  labviewCliX86:
+    'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+  lvcompareX64:
+    'C:\\Program Files\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe',
+  lvcompareX86:
+    'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe'
+};
 const CONTAINER_BOOTSTRAP_COMMAND = [
   '& {',
   "$env:PATH = 'C:\\Windows\\System32;' + $env:PATH;",
@@ -75,6 +87,12 @@ async function main() {
   }
 
   const imageDigest = inspectImageDigest(options.imageRef, options.dockerContext);
+  const runtimeSurface = inspectWindowsBenchmarkImageRuntimeSurface(
+    options.imageRef,
+    options.dockerContext,
+    { imageDigest }
+  );
+  await writeWindowsBenchmarkImageRuntimeSurface(runtimeSurface, proofPaths);
   await fsp.writeFile(
     proofPaths.launchReceiptPathLinux,
     `${JSON.stringify(
@@ -93,6 +111,9 @@ async function main() {
         cacheRootWindows: proofPaths.cacheRootWindows,
         harnessCloneRootLinux: proofPaths.harnessCloneRootLinux,
         harnessClonePathLinux: proofPaths.harnessClonePathLinux,
+        latestRuntimeSurfacePathLinux: proofPaths.latestRuntimeSurfacePathLinux,
+        timestampedRuntimeSurfacePathLinux: proofPaths.timestampedRuntimeSurfacePathLinux,
+        runtimeSurfaceAssessment: runtimeSurface.assessment,
         summaryPathLinux: proofPaths.summaryPathLinux,
         logPathLinux: proofPaths.logPathLinux
       },
@@ -100,6 +121,24 @@ async function main() {
       2
     )}\n`
   );
+
+  if (options.inspectRuntimeSurfaceOnly) {
+    process.stdout.write(
+      `${JSON.stringify(
+        {
+          imageRef: options.imageRef,
+          imageDigest,
+          runtimeSurface,
+          latestRuntimeSurfacePathLinux: proofPaths.latestRuntimeSurfacePathLinux,
+          timestampedRuntimeSurfacePathLinux: proofPaths.timestampedRuntimeSurfacePathLinux,
+          launchReceiptPathLinux: proofPaths.launchReceiptPathLinux
+        },
+        null,
+        2
+      )}\n`
+    );
+    return;
+  }
 
   const runArgs = buildDockerRunArgs({
     dockerContext: options.dockerContext,
@@ -131,6 +170,9 @@ async function main() {
         dashboardCommitWindow,
         runtimeEngineOverride: options.runtimeEngineOverride,
         seededHarnessSource,
+        runtimeSurfaceAssessment: runtimeSurface.assessment,
+        latestRuntimeSurfacePathLinux: proofPaths.latestRuntimeSurfacePathLinux,
+        timestampedRuntimeSurfacePathLinux: proofPaths.timestampedRuntimeSurfacePathLinux,
         summaryPathLinux: proofPaths.summaryPathLinux,
         logPathLinux: proofPaths.logPathLinux,
         launchReceiptPathLinux: proofPaths.launchReceiptPathLinux
@@ -143,7 +185,7 @@ async function main() {
 
 function getUsage() {
   return [
-    'Usage: node scripts/runHostWindowsBenchmarkImageProof.js [--image <ref>] [--harness-id <id>] [--dashboard-commit-window <count>] [--engine <labview-cli|lvcompare>] [--proof-root <linux-path>] [--docker-context <name>] [--no-pull]',
+    'Usage: node scripts/runHostWindowsBenchmarkImageProof.js [--image <ref>] [--harness-id <id>] [--dashboard-commit-window <count>] [--engine <labview-cli|lvcompare>] [--proof-root <linux-path>] [--docker-context <name>] [--inspect-runtime-surface-only] [--no-pull]',
     '',
     'Options:',
     '  --image <ref>            Override the Windows benchmark image reference.',
@@ -152,6 +194,7 @@ function getUsage() {
     '  --engine <value>        Override the selected report engine for targeted proof reruns.',
     `  --proof-root <path>     Linux-visible proof root. Defaults to ${DEFAULT_PROOF_ROOT_LINUX}.`,
     `  --docker-context <name> Docker context for Windows containers. Defaults to ${DEFAULT_DOCKER_CONTEXT}.`,
+    '  --inspect-runtime-surface-only Retain the current governed Windows-image runtime surface without launching the benchmark.',
     '  --no-pull               Skip docker pull before launch.',
     '  --help                  Print this help and exit.'
   ].join('\n');
@@ -166,6 +209,7 @@ function parseArgs(argv) {
     'VIHS_WINDOWS_BENCHMARK_DASHBOARD_COMMIT_WINDOW'
   );
   let runtimeEngineOverride;
+  let inspectRuntimeSurfaceOnly = false;
   let pull = true;
   let helpRequested = false;
 
@@ -212,6 +256,10 @@ function parseArgs(argv) {
       runtimeEngineOverride = candidate;
       continue;
     }
+    if (current === '--inspect-runtime-surface-only') {
+      inspectRuntimeSurfaceOnly = true;
+      continue;
+    }
     if (current === '--no-pull') {
       pull = false;
       continue;
@@ -231,6 +279,7 @@ function parseArgs(argv) {
     dockerContext,
     dashboardCommitWindow,
     runtimeEngineOverride,
+    inspectRuntimeSurfaceOnly,
     pull,
     helpRequested,
     now: () => new Date()
@@ -260,6 +309,11 @@ function buildHostWindowsBenchmarkPaths(proofRootLinux, harnessId, now = () => n
       : undefined,
     benchmarkRootLinux,
     summaryPathLinux: path.join(benchmarkRootLinux, 'latest-summary.json'),
+    latestRuntimeSurfacePathLinux: path.join(benchmarkRootLinux, 'latest-runtime-surface.json'),
+    timestampedRuntimeSurfacePathLinux: path.join(
+      benchmarkRootLinux,
+      `runtime-surface-${buildRunId(now())}.json`
+    ),
     launchReceiptPathLinux: path.join(proofRootLinux, 'latest-launch.json'),
     logPathLinux: path.join(proofRootLinux, `run-${buildRunId(now())}.log`)
   };
@@ -427,6 +481,112 @@ function inspectImageDigest(imageRef, dockerContext) {
   return repoDigest.split('@', 2)[1];
 }
 
+function inspectWindowsBenchmarkImageRuntimeSurface(
+  imageRef,
+  dockerContext,
+  options = {},
+  deps = {}
+) {
+  const spawnSyncImpl = deps.spawnSync ?? spawnSync;
+  const script = buildWindowsBenchmarkImageRuntimeSurfaceInspectionScript(imageRef, options);
+  const result = spawnSyncImpl(
+    'docker.exe',
+    [
+      '--context',
+      dockerContext,
+      'run',
+      '--rm',
+      imageRef,
+      CONTAINER_POWERSHELL,
+      '-NoLogo',
+      '-NoProfile',
+      '-ExecutionPolicy',
+      'Bypass',
+      '-Command',
+      script
+    ],
+    {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe']
+    }
+  );
+
+  if (result.status !== 0) {
+    throw new Error(
+      `Failed to inspect the Windows benchmark image runtime surface.${result.stderr ? ` ${result.stderr.trim()}` : ''}`
+    );
+  }
+
+  try {
+    return JSON.parse((result.stdout || '').trim());
+  } catch (error) {
+    throw new Error(
+      `The Windows benchmark image runtime surface inspection did not return valid JSON: ${error instanceof Error ? error.message : String(error)}.`
+    );
+  }
+}
+
+function buildWindowsBenchmarkImageRuntimeSurfaceInspectionScript(imageRef, options = {}) {
+  const escapedImageRef = escapePowerShellLiteral(imageRef);
+  const escapedImageDigest = escapePowerShellLiteral(options.imageDigest ?? '');
+  const pathAssignments = Object.entries(CONTAINER_WINDOWS_RUNTIME_PATHS)
+    .map(([key, value]) => `  ${key} = '${escapePowerShellLiteral(value)}'`)
+    .join(';\n');
+
+  return [
+    '$paths = [ordered]@{',
+    pathAssignments,
+    '};',
+    '$observedPaths = [ordered]@{};',
+    'foreach ($entry in $paths.GetEnumerator()) {',
+    '  $observedPaths[$entry.Key] = [ordered]@{',
+    '    path = $entry.Value;',
+    '    exists = [bool](Test-Path -LiteralPath $entry.Value)',
+    '  }',
+    '}',
+    '$labviewCliBundleAvailability = [ordered]@{',
+    '  x64 = [bool]($observedPaths.labviewExeX64.exists -and $observedPaths.labviewCliX64.exists);',
+    '  x86 = [bool]($observedPaths.labviewExeX86.exists -and $observedPaths.labviewCliX86.exists)',
+    '};',
+    '$lvcompareBundleAvailability = [ordered]@{',
+    '  x64 = [bool]($observedPaths.labviewExeX64.exists -and $observedPaths.lvcompareX64.exists);',
+    '  x86 = [bool]($observedPaths.labviewExeX86.exists -and $observedPaths.lvcompareX86.exists)',
+    '};',
+    '$assessment = if ($labviewCliBundleAvailability.x64 -or $labviewCliBundleAvailability.x86) {',
+    "  'same-bitness-labview-cli-bundle-available'",
+    '} elseif ($observedPaths.labviewCliX86.exists -and $observedPaths.labviewExeX64.exists) {',
+    "  'mixed-bitness-only-labview-cli-surface'",
+    '} elseif ($observedPaths.labviewCliX86.exists -or $observedPaths.labviewExeX64.exists -or $observedPaths.lvcompareX64.exists) {',
+    "  'partial-runtime-surface'",
+    '} else {',
+    "  'runtime-surface-missing'",
+    '};',
+    '$surface = [ordered]@{',
+    "  generatedAt = (Get-Date).ToString('o');",
+    `  imageRef = '${escapedImageRef}';`,
+    `  imageDigest = '${escapedImageDigest}';`,
+    "  scopeBoundary = 'current-governed-benchmark-image-contract';",
+    '  observedPaths = $observedPaths;',
+    '  labviewCliBundleAvailability = $labviewCliBundleAvailability;',
+    '  lvcompareBundleAvailability = $lvcompareBundleAvailability;',
+    '  assessment = $assessment;',
+    "  scopeNotes = @('Out-of-scope alternative Windows x86 provisioning may exist through slower NI Package Manager plus ISO installation, but that is not part of the current governed Windows benchmark image contract.')",
+    '};',
+    '$surface | ConvertTo-Json -Depth 6 -Compress'
+  ].join('\n');
+}
+
+async function writeWindowsBenchmarkImageRuntimeSurface(runtimeSurface, proofPaths) {
+  const serialized = `${JSON.stringify(runtimeSurface, null, 2)}\n`;
+  await fsp.mkdir(path.dirname(proofPaths.latestRuntimeSurfacePathLinux), { recursive: true });
+  await fsp.writeFile(proofPaths.latestRuntimeSurfacePathLinux, serialized);
+  await fsp.writeFile(proofPaths.timestampedRuntimeSurfacePathLinux, serialized);
+}
+
+function escapePowerShellLiteral(value) {
+  return String(value).replace(/'/g, "''");
+}
+
 function runDockerCommand(args, cwd, failureMessage) {
   const result = spawnSync('docker.exe', args, {
     cwd,
@@ -498,5 +658,7 @@ module.exports = {
   ensureSeededHarnessClone,
   resolveDashboardCommitWindow,
   readComparablePrefixDashboardCommitWindow,
-  inspectImageDigest
+  inspectImageDigest,
+  inspectWindowsBenchmarkImageRuntimeSurface,
+  buildWindowsBenchmarkImageRuntimeSurfaceInspectionScript
 };

@@ -1,6 +1,6 @@
 # HARNESS-VHS-002 Comparable Prefix Benchmark Packet
 
-- Generated at: 2026-04-06T00:49:06.079Z
+- Generated at: 2026-04-06T01:17:30.264Z
 - Proof state: bounded-prefix-comparable
 - Target: resource/plugins/lv_icon.vi
 - Full window: 139 commits / 138 pairs
@@ -32,6 +32,7 @@
 - Prefix runtime total: 464798 ms
 - Full-window outcome: pair 129 / 138 :: command-exited-nonzero (labview-cli-call-by-reference)
 - Exact-pair diagnosis state: available
+- Runtime surface: missing
 - Blocker characterization: mixed-bitness-call-by-reference-seam
 - Blocker characterization state: exact-pair-characterized
 - Blocker selected/base: 6dd65df67428 -> 3408654e6802

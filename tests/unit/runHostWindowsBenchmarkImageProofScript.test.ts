@@ -20,6 +20,7 @@ const hostWindowsProof = require(path.resolve(
     dockerContext: string;
     dashboardCommitWindow?: number;
     runtimeEngineOverride?: string;
+    inspectRuntimeSurfaceOnly: boolean;
     pull: boolean;
     helpRequested: boolean;
   };
@@ -31,6 +32,8 @@ const hostWindowsProof = require(path.resolve(
     proofRootWindows: string;
     cacheRootWindows: string;
     summaryPathLinux: string;
+    latestRuntimeSurfacePathLinux: string;
+    timestampedRuntimeSurfacePathLinux: string;
     launchReceiptPathLinux: string;
     logPathLinux: string;
   };
@@ -71,6 +74,24 @@ const hostWindowsProof = require(path.resolve(
       readFileSync?: (filePath: string, encoding: string) => string;
     }
   ) => number | undefined;
+  inspectWindowsBenchmarkImageRuntimeSurface: (
+    imageRef: string,
+    dockerContext: string,
+    options?: { imageDigest?: string },
+    deps?: {
+      spawnSync?: (
+        command: string,
+        args: string[],
+        options: { encoding: string; stdio: string[] }
+      ) => { status: number; stdout?: string; stderr?: string };
+    }
+  ) => {
+    scopeBoundary: string;
+    assessment: string;
+    labviewCliBundleAvailability: { x64: boolean; x86: boolean };
+    lvcompareBundleAvailability: { x64: boolean; x86: boolean };
+    observedPaths: Record<string, { path: string; exists: boolean }>;
+  };
 };
 
 const originalCommitWindowEnv = process.env.VIHS_WINDOWS_BENCHMARK_DASHBOARD_COMMIT_WINDOW;
@@ -132,9 +153,15 @@ describe('runHostWindowsBenchmarkImageProof script', () => {
   });
 
   it('accepts an explicit engine override from CLI args', () => {
-    const parsed = hostWindowsProof.parseArgs(['--engine', 'lvcompare', '--no-pull']);
+    const parsed = hostWindowsProof.parseArgs([
+      '--engine',
+      'lvcompare',
+      '--inspect-runtime-surface-only',
+      '--no-pull'
+    ]);
 
     expect(parsed.runtimeEngineOverride).toBe('lvcompare');
+    expect(parsed.inspectRuntimeSurfaceOnly).toBe(true);
     expect(parsed.pull).toBe(false);
   });
 
@@ -203,11 +230,65 @@ describe('runHostWindowsBenchmarkImageProof script', () => {
     expect(proofPaths.summaryPathLinux).toContain(
       '/cache/github-experiments/windows-dashboard-benchmark/HARNESS-VHS-002/latest-summary.json'
     );
+    expect(proofPaths.latestRuntimeSurfacePathLinux).toContain(
+      '/cache/github-experiments/windows-dashboard-benchmark/HARNESS-VHS-002/latest-runtime-surface.json'
+    );
+    expect(proofPaths.timestampedRuntimeSurfacePathLinux).toContain(
+      '/cache/github-experiments/windows-dashboard-benchmark/HARNESS-VHS-002/runtime-surface-20260405-080000.json'
+    );
     expect(proofPaths.launchReceiptPathLinux).toContain('/latest-launch.json');
     expect(proofPaths.logPathLinux).toContain('/run-20260405-080000.log');
 
     expect(() => hostWindowsProof.toWindowsPathFromWsl('/home/sveld/not-on-a-drive')).toThrow(
       'Use a /mnt/<drive>/... proof root.'
     );
+  });
+
+  it('inspects the current Windows benchmark-image runtime surface deterministically', () => {
+    const surface = hostWindowsProof.inspectWindowsBenchmarkImageRuntimeSurface(
+      'ghcr.io/example/windows-dashboard-benchmark:main',
+      'desktop-windows',
+      { imageDigest: 'sha256:abc' },
+      {
+        spawnSync: () => ({
+          status: 0,
+          stdout: JSON.stringify({
+            scopeBoundary: 'current-governed-benchmark-image-contract',
+            assessment: 'mixed-bitness-only-labview-cli-surface',
+            labviewCliBundleAvailability: {
+              x64: false,
+              x86: false
+            },
+            lvcompareBundleAvailability: {
+              x64: true,
+              x86: false
+            },
+            observedPaths: {
+              labviewExeX64: {
+                path: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+                exists: true
+              },
+              labviewCliX86: {
+                path: 'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+                exists: true
+              }
+            }
+          })
+        })
+      }
+    );
+
+    expect(surface.scopeBoundary).toBe('current-governed-benchmark-image-contract');
+    expect(surface.assessment).toBe('mixed-bitness-only-labview-cli-surface');
+    expect(surface.labviewCliBundleAvailability).toEqual({
+      x64: false,
+      x86: false
+    });
+    expect(surface.lvcompareBundleAvailability).toEqual({
+      x64: true,
+      x86: false
+    });
+    expect(surface.observedPaths.labviewExeX64.exists).toBe(true);
+    expect(surface.observedPaths.labviewCliX86.exists).toBe(true);
   });
 });
