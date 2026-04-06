@@ -158,13 +158,15 @@ Current active tranche:
   - packaging-only npm tooling is now kept out of the default `npm ci` surface used by compile/test/benchmark lanes, and the guarded package path invokes its pinned package manager tooling only on demand
   - automated Windows 11 host-machine proof now succeeds through the direct-release setup lane with retained records at `C:\Users\sveld\AppData\Local\VI History Suite\acceptance\host-machine\setup\setup-record.json` and `C:\Users\sveld\AppData\Local\VI History Suite\acceptance\host-machine\acceptance-record.json`
   - Gate D remains open pending a clean manual right-click acceptance pass by Sergio Velderrain on the current Windows 11 host machine
-  - the latest retained host review at `2026-04-06T06:13:09.879Z` is `failed-human-review` with `confidence=high`: from the deterministic local fixture workspace on the updated installed bundle, the retained review note for `Tooling/deployment/VIP_Post-Install Custom Action.vi` says, `The documentation is not coherent to what an extension user would need to see, or care about.`
+  - the latest retained host review at `2026-04-06T06:18:09.177Z` is `failed-human-review` with `confidence=high`: from the deterministic local fixture workspace on the updated installed bundle, the retained review note for `Tooling/deployment/VIP_Post-Install Custom Action.vi` says, `Open compare under the Actions column is not enabled after the Open dashboard has completed.`
   - the Gate D blocker set is cumulative across the retained failed reviews on that same canonical VI after the runtime stall was retired:
     `2026-04-06T06:09:14.016Z` adds dashboard/review UX debt (`"Open compare"` should be shown for every pair, overview images should render in two rows with block diagram first and front panel below, and switching tabs should not discard an unsubmitted Review Note),
     `2026-04-06T06:10:46.758Z` adds that extension users should not be sent to private GitLab links from VI History documentation,
     `2026-04-06T06:11:59.791Z` adds that SRS and RTM are trade-secret engineering surfaces and should not be exposed in extension-user documentation,
-    and `2026-04-06T06:13:09.879Z` adds the broader documentation-coherence finding
-  - Gate D now remains open on that additive extension-user documentation and dashboard UX debt for the installed extension experience
+    `2026-04-06T06:13:09.879Z` adds the broader documentation-coherence finding,
+    and `2026-04-06T06:18:09.177Z` adds that the history Actions column still failed to enable `Open compare` after `Open dashboard` completed
+  - the authority repo now carries a repo-side fix for that latest `Open dashboard` -> `Open compare` stale-action seam: after dashboard completion, the history panel now recomputes retained pair evidence availability and rerenders the Actions column from current retained truth
+  - Gate D now remains open on the full additive extension-user documentation and dashboard UX debt package until Sergio reruns the updated installed bundle
 
 Post-release tranches:
 

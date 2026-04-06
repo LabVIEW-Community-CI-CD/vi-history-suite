@@ -32,9 +32,13 @@ The primary public surface is now a release kit, not an installer product.
   persistence across tab switches, no private GitLab links in extension-user
   docs, no exposed SRS/RTM trade-secret surfaces in extension-user docs, and
   broader documentation coherence with what an extension user actually needs
-  to see or care about
-- the latest retained review note now adds: `The documentation is not coherent
-  to what an extension user would need to see, or care about.`
+  to see or care about, plus the latest retained report that `Open compare`
+  remained disabled in the Actions column after `Open dashboard` completed
+- the latest retained review note now adds: `Open compare under the Actions
+  column is not enabled after the Open dashboard has completed.`
+- the authority repo now carries a repo-side fix for that stale Actions-column
+  seam, but Gate D stays open until the updated installed bundle is rerun on
+  the canonical host-machine review path
 - the next gate-closing proof must retire that cumulative dashboard/documentation
   blocker set and then rerun the manual right-click path on the same updated
   installed bundle
@@ -264,16 +268,19 @@ Current first slice:
 - the manual right-click proof runs from that same deterministic local fixture
   workspace instead of a OneDrive-backed synced root
 - first-use friction is retained as evidence, not just remembered in chat
-- the latest retained host review at `2026-04-06T06:09:14.016Z` is
-  `failed-human-review` with `confidence=high`, recording that the updated
-  installed bundle now gets past the older pair-`1/23` runtime stall and
-  instead exposes three explicit UX findings on
-  `Tooling/deployment/VIP_Post-Install Custom Action.vi`:
-  `"Open compare"` should appear for every pair, overview images should render
-  in two rows with the block diagram row first and the front-panel row below,
-  and switching tabs currently discards an unsubmitted Review Note
-- Gate D therefore remains open on those front-facing dashboard/review UX
-  findings rather than on the older runtime-stall seam
+- the latest retained host review at `2026-04-06T06:18:09.177Z` is
+  `failed-human-review` with `confidence=high`, recording that
+  `Tooling/deployment/VIP_Post-Install Custom Action.vi` still left
+  `Open compare` disabled in the history Actions column after `Open dashboard`
+  completed
+- the retained failed-review set is cumulative on that same canonical VI:
+  the earlier retained reviews still hold the two-row overview image layout,
+  Review Note persistence, private GitLab link exposure, SRS/RTM exposure, and
+  broader extension-user documentation-coherence findings open too
+- the authority repo now carries a repo-side fix for that stale
+  `Open dashboard` -> `Open compare` Actions-column seam
+- Gate D therefore remains open on the cumulative dashboard/documentation
+  blocker set rather than on the older runtime-stall seam
 
 ### Gate E: Public Support Surface
 

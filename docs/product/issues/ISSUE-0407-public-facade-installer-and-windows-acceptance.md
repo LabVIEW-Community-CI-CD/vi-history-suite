@@ -56,21 +56,26 @@ Current landed scaffold state:
   the sole named maintainer gate owner for that host-machine click pass
 - that remaining manual host-machine gate is bounded to the deterministic
   local fixture workspace rather than a OneDrive-backed synced clone
-- the latest retained host review at `2026-04-06T06:13:09.879Z` is
+- the latest retained host review at `2026-04-06T06:18:09.177Z` is
   `failed-human-review` with `confidence=high`, because the newest retained
-  note on the updated installed bundle now says the user-facing documentation
-  on `Tooling/deployment/VIP_Post-Install Custom Action.vi` is not coherent to
-  what an extension user would need to see or care about
+  note on the updated installed bundle now says `Open compare` is still not
+  enabled in the history Actions column after `Open dashboard` completed for
+  `Tooling/deployment/VIP_Post-Install Custom Action.vi`
 - the retained failed-review set is cumulative on that same canonical VI:
   `2026-04-06T06:09:14.016Z` recorded dashboard/review UX debt (`"Open compare"`
   for every pair, two-row overview image layout, and Review Note persistence),
   `2026-04-06T06:10:46.758Z` recorded private GitLab links in extension-user
-  documentation, and `2026-04-06T06:11:59.791Z` recorded that SRS and RTM
-  should not be exposed to extension users
+  documentation, `2026-04-06T06:11:59.791Z` recorded that SRS and RTM should
+  not be exposed to extension users, and `2026-04-06T06:13:09.879Z` recorded
+  broader documentation coherence debt
 - the authority repo now carries a repo-side fix for the governed
   retained-window seam: `Open dashboard` seeds governed retained dashboard
   evidence from governed proof caches into the active workspace archive
   contract before any local pair refresh
+- the authority repo now also carries a repo-side fix for the stale Actions
+  seam: after `Open dashboard` completes, the history panel recomputes
+  retained pair evidence availability and rerenders the Actions column so
+  newly retained pairs can truthfully enable `Open compare`
 - that newest installed-bundle rerun is now the active Gate D truth, so this
   issue remains open on cumulative extension-user documentation coherence and
   dashboard UX debt rather than the earlier runtime-stall seam alone

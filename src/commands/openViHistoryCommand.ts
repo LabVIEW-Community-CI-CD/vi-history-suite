@@ -30,6 +30,7 @@ import {
   HistoryPanelMessage,
   HistoryPanelTracker
 } from '../ui/historyPanelTracker';
+import { ViHistoryViewModel } from '../services/viHistoryModel';
 
 interface ComparisonRuntimePanelDetail {
   label: string;
@@ -138,27 +139,13 @@ export function createOpenViHistoryCommand(
         humanReviewSubmissionAllowed &&
         humanReviewSubmissionAction !== undefined
     };
-    const model = hasRetainedComparisonReport
-      ? {
-          ...loadedModel,
-          commits: await Promise.all(
-            loadedModel.commits.map(async (commit) => ({
-              ...commit,
-              retainedComparisonEvidenceAvailable: commit.previousHash
-                ? await hasRetainedComparisonReport({
-                    model: loadedModel,
-                    selectedHash: commit.hash,
-                    baseHash: commit.previousHash
-                  })
-                : false
-            }))
-          ),
-          surfaceCapabilities
-        }
-      : {
+    let model = await hydrateRetainedComparisonEvidenceAvailability(
+      {
         ...loadedModel,
         surfaceCapabilities
-      };
+      },
+      hasRetainedComparisonReport
+    );
     if (repositorySupport?.tier === 'unsupported') {
       void vscode.window.showWarningMessage(repositorySupport.supportGuidance);
     }
@@ -586,6 +573,16 @@ export function createOpenViHistoryCommand(
           cancellationStage: result.cancellationStage,
           title: result.title
         });
+        if (result.outcome === 'opened-review-dashboard') {
+          model = await hydrateRetainedComparisonEvidenceAvailability(
+            model,
+            hasRetainedComparisonReport
+          );
+          panel.webview.html = renderHistoryPanelHtml(
+            model,
+            panelTracker?.getLastActionSummary()
+          );
+        }
         return;
       }
 
@@ -931,6 +928,39 @@ export function createOpenViHistoryCommand(
     };
     panelTracker?.record(panel, targetUri, model, renderedHtml, handleMessage);
     panel.webview.onDidReceiveMessage(handleMessage);
+  };
+}
+
+async function hydrateRetainedComparisonEvidenceAvailability(
+  model: ViHistoryViewModel,
+  hasRetainedComparisonReport:
+    | ((
+        request: {
+          model: Awaited<ReturnType<ViHistoryService['load']>>;
+          selectedHash: string;
+          baseHash: string;
+        }
+      ) => Promise<boolean>)
+    | undefined
+): Promise<ViHistoryViewModel> {
+  if (!hasRetainedComparisonReport) {
+    return model;
+  }
+
+  return {
+    ...model,
+    commits: await Promise.all(
+      model.commits.map(async (commit) => ({
+        ...commit,
+        retainedComparisonEvidenceAvailable: commit.previousHash
+          ? await hasRetainedComparisonReport({
+              model,
+              selectedHash: commit.hash,
+              baseHash: commit.previousHash
+            })
+          : false
+      }))
+    )
   };
 }
 

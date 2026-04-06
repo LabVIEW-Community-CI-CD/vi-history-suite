@@ -182,17 +182,18 @@ describe('post-release control-plane coherence', () => {
       '- Gate D remains open pending a clean manual right-click acceptance pass by Sergio Velderrain on the current Windows 11 host machine'
     );
     expect(currentState).toContain(
-      '- the latest retained host review at `2026-04-06T06:13:09.879Z` is `failed-human-review` with `confidence=high`'
+      '- the latest retained host review at `2026-04-06T06:18:09.177Z` is `failed-human-review` with `confidence=high`'
     );
     expect(currentState).toContain('`Tooling/deployment/VIP_Post-Install Custom Action.vi`');
     expect(currentState).toContain(
-      '`The documentation is not coherent to what an extension user would need to see, or care about.`'
+      '`Open compare under the Actions column is not enabled after the Open dashboard has completed.`'
     );
     expect(currentState).toContain('the Gate D blocker set is cumulative');
     expect(currentState).toContain('`2026-04-06T06:09:14.016Z` adds dashboard/review UX debt');
     expect(currentState).toContain('private GitLab links');
     expect(currentState).toContain('SRS and RTM are trade-secret');
-    expect(currentState).toContain('dashboard UX debt');
+    expect(currentState).toContain('`2026-04-06T06:18:09.177Z` adds that the history Actions column still failed to enable `Open compare`');
+    expect(currentState).toContain('repo-side fix for that latest `Open dashboard` -> `Open compare` stale-action seam');
     expect(currentState).toContain(
       '- the manual right-click review pass remains the human UX gate, and Sergio Velderrain is the sole named maintainer gate owner for that host-machine click pass'
     );
@@ -225,6 +226,7 @@ describe('post-release control-plane coherence', () => {
     expect(issue).toContain('private GitLab links in extension-user');
     expect(issue).toContain('SRS and RTM');
     expect(issue).toContain('`"Open compare"`');
+    expect(issue).toContain('after `Open dashboard` completes');
     expect(issue).toContain('- the GitHub workflow is documented as the active public release-kit');
     expect(issue).toContain('- the Windows 11 host-machine acceptance lane is documented as the');
     expect(issue).toContain('The public facade is for release, setup, and support only.');

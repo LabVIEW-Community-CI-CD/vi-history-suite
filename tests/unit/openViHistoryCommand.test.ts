@@ -2690,6 +2690,84 @@ describe('createOpenViHistoryCommand', () => {
     });
   });
 
+  it('reenables Open compare in the history Actions column for all retained pairs after dashboard completion', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    let dashboardPrepared = false;
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Newest revision',
+            previousHash: '1111111122222222'
+          },
+          {
+            hash: '1111111122222222',
+            authorDate: '2026-04-01T00:00:00Z',
+            authorName: 'B User',
+            subject: 'Middle revision',
+            previousHash: '3333333344444444'
+          },
+          {
+            hash: '3333333344444444',
+            authorDate: '2026-03-31T00:00:00Z',
+            authorName: 'C User',
+            subject: 'Initial revision'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+    const dashboardAction = vi.fn().mockImplementation(async () => {
+      dashboardPrepared = true;
+      return {
+        outcome: 'opened-review-dashboard',
+        dashboardFilePath: '/workspace/.storage/dashboards/repo/file/dashboard.html',
+        dashboardJsonFilePath: '/workspace/.storage/dashboards/repo/file/dashboard.json',
+        dashboardPairCount: 2,
+        dashboardArchivedPairCount: 2,
+        dashboardMissingPairCount: 0
+      };
+    });
+    const retainedAvailability = vi.fn().mockImplementation(async () => dashboardPrepared);
+    const openRetainedComparisonReportAction = vi.fn();
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      undefined,
+      dashboardAction as never,
+      openRetainedComparisonReportAction as never,
+      retainedAvailability as never
+    );
+
+    await command(targetUri as never);
+
+    const panel = createWebviewPanelMock.mock.results[0]?.value as MockPanel | undefined;
+    expect(panel?.webview.html.match(/data-command="diffPrevious"/g)?.length ?? 0).toBe(0);
+    expect(panel?.webview.html.match(/data-testid="history-action-diff" disabled/g)?.length ?? 0).toBe(3);
+
+    await tracker.dispatchLastPanelMessage({
+      command: 'openDashboard'
+    });
+
+    expect(retainedAvailability).toHaveBeenCalledTimes(4);
+    expect(panel?.webview.html.match(/data-command="diffPrevious"/g)?.length ?? 0).toBe(2);
+    expect(panel?.webview.html.match(/data-testid="history-action-diff" disabled/g)?.length ?? 0).toBe(1);
+  });
+
   it('posts live compare-runtime progress into the history panel while comparison generation is running', async () => {
     const targetUri = createMockUri('/workspace/eligible.vi');
     const tracker = new HistoryPanelTracker();
