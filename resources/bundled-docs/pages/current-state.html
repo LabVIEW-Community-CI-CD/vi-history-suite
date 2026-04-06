@@ -102,12 +102,17 @@ boundary</li>
 <li>the remaining human UX gate is Sergio Velderrain&#39;s manual right-click pass
 from the deterministic local fixture workspace rather than a OneDrive-backed
 synced clone</li>
-<li>the latest retained Gate D review still failed on April 6, 2026 because
-<code>Open Dashboard</code> for <code>Tooling/deployment/VIP_Post-Install Custom Action.vi</code>
-appeared stalled at pair <code>1/23</code></li>
-<li>that retained failed review is still authoritative historical evidence, but
-it predates the updated Docker-first Windows <code>auto</code> rule; Gate D therefore
-needs a rerun on the updated installed bundle before product truth changes</li>
+<li>the latest retained Gate D review still failed on April 6, 2026 for
+<code>Tooling/deployment/VIP_Post-Install Custom Action.vi</code>, and the blocker set
+is cumulative rather than only the newest note</li>
+<li>the retained failed reviews now add up to this open Gate D package:
+<code>&quot;Open compare&quot;</code> should be shown for every pair, overview images should
+render in two rows with block diagram first and front panel below, switching
+tabs should not discard an unsubmitted Review Note, extension users should
+not be sent to private GitLab links from bundled VI History documentation,
+SRS and RTM should not be exposed to extension users, and the overall
+documentation is still not coherent to what an extension user would need to
+see or care about</li>
 <li>benchmark proof is now a closed bounded program, not part of the active
 public-closeout exit gate</li>
 <li>execution-policy work is now closed on transparent provider/acquisition

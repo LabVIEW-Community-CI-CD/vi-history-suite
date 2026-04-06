@@ -56,19 +56,24 @@ Current landed scaffold state:
   the sole named maintainer gate owner for that host-machine click pass
 - that remaining manual host-machine gate is bounded to the deterministic
   local fixture workspace rather than a OneDrive-backed synced clone
-- the latest retained host review at `2026-04-06T04:46:38.532Z` is
-  `failed-human-review` with `confidence=high`, because `Open Dashboard` for
-  `Tooling/deployment/VIP_Post-Install Custom Action.vi` stalled on
-  `Preparing dashboard pair 1/23: Still working; first pair calibrates ETA;
-  elapsed 1m 46s. Last step: Executing LabVIEW comparison-report runtime.`
+- the latest retained host review at `2026-04-06T06:13:09.879Z` is
+  `failed-human-review` with `confidence=high`, because the newest retained
+  note on the updated installed bundle now says the user-facing documentation
+  on `Tooling/deployment/VIP_Post-Install Custom Action.vi` is not coherent to
+  what an extension user would need to see or care about
+- the retained failed-review set is cumulative on that same canonical VI:
+  `2026-04-06T06:09:14.016Z` recorded dashboard/review UX debt (`"Open compare"`
+  for every pair, two-row overview image layout, and Review Note persistence),
+  `2026-04-06T06:10:46.758Z` recorded private GitLab links in extension-user
+  documentation, and `2026-04-06T06:11:59.791Z` recorded that SRS and RTM
+  should not be exposed to extension users
 - the authority repo now carries a repo-side fix for the governed
   retained-window seam: `Open dashboard` seeds governed retained dashboard
   evidence from governed proof caches into the active workspace archive
   contract before any local pair refresh
-- that retained failed review remains authoritative historical evidence, but it
-  predates the updated Windows Docker-first `auto` rule; the next Gate D rerun
-  must therefore execute on the updated installed bundle before this issue can
-  claim a changed host-machine truth
+- that newest installed-bundle rerun is now the active Gate D truth, so this
+  issue remains open on cumulative extension-user documentation coherence and
+  dashboard UX debt rather than the earlier runtime-stall seam alone
 - the authority repo still mirrors a GitHub Linux benchmark lane into the
   private `vi-history-suite-source-experiments` repo, but that mirror is now
   documented as benchmark only and belongs to the queued benchmark-proof lane

@@ -23,13 +23,21 @@ The primary public surface is now a release kit, not an installer product.
 
 - Gate D remains open
 - the latest retained human review on April 6, 2026 is still authoritative
-  historical evidence: `Open Dashboard` stalled on
-  `Tooling/deployment/VIP_Post-Install Custom Action.vi`
-- that retained failure was captured before the Windows Docker-first `auto`
-  execution rule was installed locally
-- the next gate-closing proof must rerun the manual right-click path on the
-  updated installed bundle where Windows `auto` uses the governed Windows
-  container provider whenever Docker Desktop is installed
+  historical evidence: on the updated installed bundle,
+  `Tooling/deployment/VIP_Post-Install Custom Action.vi` now surfaces a
+  remaining cumulative extension-user documentation and dashboard UX blocker
+  set instead of the earlier runtime stall alone
+- the cumulative retained failed-review package now includes:
+  `"Open compare"` on every pair, two-row overview image layout, Review Note
+  persistence across tab switches, no private GitLab links in extension-user
+  docs, no exposed SRS/RTM trade-secret surfaces in extension-user docs, and
+  broader documentation coherence with what an extension user actually needs
+  to see or care about
+- the latest retained review note now adds: `The documentation is not coherent
+  to what an extension user would need to see, or care about.`
+- the next gate-closing proof must retire that cumulative dashboard/documentation
+  blocker set and then rerun the manual right-click path on the same updated
+  installed bundle
 
 ## Trigger
 
@@ -256,17 +264,16 @@ Current first slice:
 - the manual right-click proof runs from that same deterministic local fixture
   workspace instead of a OneDrive-backed synced root
 - first-use friction is retained as evidence, not just remembered in chat
-- the latest retained host review at `2026-04-06T04:46:38.532Z` is
-  `failed-human-review` with `confidence=high`, recording that `Open Dashboard`
-  for `Tooling/deployment/VIP_Post-Install Custom Action.vi` stalled on
-  `Preparing dashboard pair 1/23: Still working; first pair calibrates ETA;
-  elapsed 1m 46s. Last step: Executing LabVIEW comparison-report runtime.`
-- the repo-side retained-evidence seeding fix is landed and locally validated,
-  but it only closes the front-facing seam when the governed chronology window
-  is already covered by governed retained dashboard evidence; Gate D remains
-  open because the broader host-native dashboard cold-start seam is still
-  reproducible on a different canonical VI whose current 24-commit / 23-pair
-  review window is not yet covered by retained dashboard proof
+- the latest retained host review at `2026-04-06T06:09:14.016Z` is
+  `failed-human-review` with `confidence=high`, recording that the updated
+  installed bundle now gets past the older pair-`1/23` runtime stall and
+  instead exposes three explicit UX findings on
+  `Tooling/deployment/VIP_Post-Install Custom Action.vi`:
+  `"Open compare"` should appear for every pair, overview images should render
+  in two rows with the block diagram row first and the front-panel row below,
+  and switching tabs currently discards an unsubmitted Review Note
+- Gate D therefore remains open on those front-facing dashboard/review UX
+  findings rather than on the older runtime-stall seam
 
 ### Gate E: Public Support Surface
 
@@ -326,13 +333,13 @@ The public facade repo now retains:
 - the latest retained host-review artifact now exists at
   `c:\Users\sveld\AppData\Roaming\Code\User\workspaceStorage\f879cf82f4d59a4767f92a99a94e47f8\svelderrainruiz.vi-history-suite\human-reviews\latest-human-review-submission.json`,
   and its newest manual proof result is still a failed Gate D review because
-  `Open Dashboard` for `Tooling/deployment/VIP_Post-Install Custom Action.vi`
-  stalled at pair `1/23`
-- the authority repo now also carries the repo-side dashboard fix for the
-  governed retained-window seam: governed retained dashboard evidence is seeded
-  into the active workspace archive contract before any local pair refresh is
-  attempted, but the next required proof is now broader host-native dashboard
-  diagnosis on the updated installed bundle rather than another blind rerun
+  the corrected retained note now records explicit front-facing UX issues on
+  `Tooling/deployment/VIP_Post-Install Custom Action.vi` rather than the older
+  pair-`1/23` stall
+- the updated installed bundle has therefore changed the current Gate D truth:
+  the next required proof is UI retirement for the missing per-pair
+  `"Open compare"` action, the overview-image layout, and Review Note
+  persistence, followed by another manual rerun
 
 The program still intentionally holds these gates open:
 
