@@ -70,12 +70,20 @@ describe('documentation-package workbench', () => {
           'tests/unit/debtLedgerDocs.test.ts',
           'tests/unit/executionPolicyDocs.test.ts',
           'tests/unit/requirementsDocs.test.ts',
-          'tests/unit/packageManifest.test.ts',
-          'tests/unit/shipControlDocs.test.ts',
-          'tests/unit/docsWorkbenchDocs.test.ts',
-          'tests/unit/wikiCoverageDocs.test.ts',
-          'tests/unit/runWikiWorkbenchCli.test.ts'
-        ]
+        'tests/unit/packageManifest.test.ts',
+        'tests/unit/shipControlDocs.test.ts',
+        'tests/unit/docsWorkbenchDocs.test.ts',
+        'tests/unit/docsContinuousIntegration.test.ts',
+        'tests/unit/syncBundledDocsScript.test.ts',
+        'tests/unit/wikiCoverageDocs.test.ts',
+        'tests/unit/runWikiWorkbenchCli.test.ts'
+      ]
+      },
+      {
+        id: 'bundle-check',
+        title: 'Check bundled documentation drift',
+        command: 'node',
+        args: ['scripts/syncBundledDocs.js', '--check']
       },
       {
         id: 'links',
@@ -87,7 +95,8 @@ describe('documentation-package workbench', () => {
 
     expect(docsGate.createDocsGateSteps({ skipLinks: true }).map((step) => step.id)).toEqual([
       'compile',
-      'docs-tests'
+      'docs-tests',
+      'bundle-check'
     ]);
   });
 
@@ -110,7 +119,8 @@ describe('documentation-package workbench', () => {
     expect(result).toBe('pass');
     expect(spawned).toEqual([
       'npm run compile',
-      'npx vitest run tests/unit/bundledDocumentation.test.ts tests/unit/postReleaseControlPlaneDocs.test.ts tests/unit/debtLedgerDocs.test.ts tests/unit/executionPolicyDocs.test.ts tests/unit/requirementsDocs.test.ts tests/unit/packageManifest.test.ts tests/unit/shipControlDocs.test.ts tests/unit/docsWorkbenchDocs.test.ts tests/unit/wikiCoverageDocs.test.ts tests/unit/runWikiWorkbenchCli.test.ts'
+      'npx vitest run tests/unit/bundledDocumentation.test.ts tests/unit/postReleaseControlPlaneDocs.test.ts tests/unit/debtLedgerDocs.test.ts tests/unit/executionPolicyDocs.test.ts tests/unit/requirementsDocs.test.ts tests/unit/packageManifest.test.ts tests/unit/shipControlDocs.test.ts tests/unit/docsWorkbenchDocs.test.ts tests/unit/docsContinuousIntegration.test.ts tests/unit/syncBundledDocsScript.test.ts tests/unit/wikiCoverageDocs.test.ts tests/unit/runWikiWorkbenchCli.test.ts',
+      'node scripts/syncBundledDocs.js --check'
     ]);
   });
 
@@ -155,6 +165,15 @@ describe('documentation-package workbench', () => {
     expect(manifest.scripts?.['docs:gate']).toBe('node scripts/run-docs-gate.js');
     expect(manifest.scripts?.['docs:gate:core']).toBe(
       'node scripts/run-docs-gate.js --skip-links'
+    );
+    expect(manifest.scripts?.['docs:ci']).toBe(
+      'node scripts/run-docs-continuous-integration.js'
+    );
+    expect(manifest.scripts?.['docs:ci:core']).toBe(
+      'node scripts/run-docs-continuous-integration.js --skip-links'
+    );
+    expect(manifest.scripts?.['package']).toBe(
+      'npm run compile && npm run docs:bundle && npm run package:audit && node scripts/runPinnedVsce.js package'
     );
     expect(manifest.scripts?.['docs:workbench:build']).toBe(
       'node scripts/runDocsWorkbenchDocker.js build'
@@ -219,6 +238,8 @@ describe('documentation-package workbench', () => {
     expect(workbenchDoc).toContain('npm run docs:workbench:build');
     expect(workbenchDoc).toContain('npm run docs:workbench:gate');
     expect(workbenchDoc).toContain('npm run docs:workbench:shell');
+    expect(workbenchDoc).toContain('npm run docs:ci');
+    expect(workbenchDoc).toContain('npm run docs:ci:core');
     expect(workbenchDoc).toContain('npm run wiki:workbench:doctor');
     expect(workbenchDoc).toContain('npm run wiki:workbench:plan');
     expect(workbenchDoc).toContain('npm run wiki:workbench:prepare');
@@ -227,6 +248,7 @@ describe('documentation-package workbench', () => {
     expect(workbenchDoc).toContain('npm run docs:workbench:wiki:prepare');
     expect(workbenchDoc).toContain('npm run docs:workbench:gitlab:wiki:prepare');
     expect(workbenchDoc).toContain('npm run docs:bundle');
+    expect(workbenchDoc).toContain('npm run package');
     expect(workbenchDoc).toContain('.cache/wiki-workbench/latest-workbench.json');
     expect(workbenchDoc).toContain('.cache/wiki-workbench/publication-prep/');
     expect(workbenchDoc).toContain('wiki-workbench-evidence/wiki-workbench-manifest.json');
@@ -235,11 +257,16 @@ describe('documentation-package workbench', () => {
     expect(workbenchDoc).toContain('wiki_workbench_prepare_published');
     expect(workbenchDoc).toContain('VIHS_WIKI_REPO_ROOT');
     expect(workbenchDoc).toContain('CI_PROJECT_DIR');
-    expect(workbenchDoc).toContain('docs_control_plane_check');
+    expect(workbenchDoc).toContain('docs_continuous_integration');
     expect(workbenchDoc).toContain('${CI_PROJECT_PATH}.wiki.git');
     expect(workbenchDoc).toContain('no-op completion receipt');
     expect(workbenchDoc).toContain('nextPage = null');
+    expect(workbenchDoc).toContain(
+      'stale bundled installed-user docs are therefore unshippable through the'
+    );
     expect(workbenchDoc).toContain('docs-workbench-evidence/docs-workbench-manifest.json');
+    expect(workbenchDoc).toContain('docs-integration-evidence/docs-integration-report.json');
+    expect(workbenchDoc).toContain('docs-integration-evidence/docs-integration-report.md');
     expect(workbenchDoc).toContain('docs/product/wiki-publication-ledger.md');
     expect(workbenchDoc).toContain('docs/product/wiki-publication-ledger.json');
     expect(workbenchDoc).toContain('docs/product/wiki-coverage-matrix.md');
@@ -278,10 +305,11 @@ describe('documentation-package workbench', () => {
     expect(wikiPublicationLedgerJson).toContain('"id": "debt-ledger"');
     expect(wikiPublicationLedgerJson).toContain('"nextPage"');
 
-    expect(gitlabCi).toContain('docs_control_plane_check:');
+    expect(gitlabCi).toContain('docs_continuous_integration:');
     expect(gitlabCi).toContain('${CI_PROJECT_PATH}.wiki.git');
     expect(gitlabCi).toContain('VIHS_WIKI_REPO_ROOT="${CI_PROJECT_DIR}/../vi-history-suite.wiki"');
-    expect(gitlabCi).toContain('npm run docs:gate:core');
+    expect(gitlabCi).toContain('node scripts/run-docs-continuous-integration.js --skip-links --evidence-dir docs-integration-evidence');
+    expect(gitlabCi).toContain('docs-integration-evidence/');
     expect(gitlabCi).toContain('test_extension:');
     expect(gitlabCi).toContain('release_extension:');
     expect(gitlabCi).toContain('npm run test');

@@ -746,8 +746,8 @@
   `Dashboard ETA accuracy:` summary line for retained, not-yet-measurable, and
   not-retained cases
 - `TEST-UNIT-214`: prove the documentation-package gate exposes a stable
-  compile -> docs-tests -> links plan and that `--skip-links` removes only the
-  link-check step
+  compile -> docs-tests -> bundled-doc-drift -> links plan and that
+  `--skip-links` removes only the link-check step
 - `TEST-UNIT-215`: prove the docs-authoring Dockerfile, entrypoint,
   package-manifest scripts, workbench documentation, and GitLab publish lane
   remain aligned as one governed documentation-package surface
@@ -1381,6 +1381,12 @@
 - `TEST-UNIT-310`: verify concentrated dashboard overview images render in
   grouped rows and order `Block Diagram Overview` ahead of
   `Front Panel Overview` when both exist for one pair
+- `TEST-UNIT-311`: verify the documentation continuous-integration runner
+  exposes a stable docs-gate-plus-wiki-health step plan, injects bundle-drift
+  reporting into the bundled-doc check, and retains the dedicated
+  `docs_continuous_integration` evidence contract rather than only a boolean
+  gate, while the governed `npm run package` path refreshes bundled installed-user
+  docs before VSIX packaging
 - `TEST-DOC-074`: review current-state, SRS, and RTM and confirm the
   dashboard contract now states that host-native Windows pair refresh is
   explicitly headless and that long-running pair refresh emits keepalive
@@ -1395,6 +1401,13 @@
   images with block-diagram-first ordering, and a curated bundled installed-user
   guide with no private GitLab or SRS/RTM exposure, while the human gate still
   remains open pending a rerun on the updated installed bundle
+- `TEST-DOC-077`: review documentation-workbench, current-state, SRS, and RTM
+  and confirm the documentation continuous-integration contract now retains
+  docs-integration evidence, bundle-drift checks, wiki doctor/plan facts, and
+  explicit installed-user execution-policy truth checks for Docker-first
+  Windows `auto`, no silent fallback, Docker-required hard stops, and
+  front-facing provider/progress guidance, while the governed package path
+  refreshes bundled installed-user docs before VSIX creation
 - `TEST-DOC-070`: review current-state, harnesses, PROGRAM-0003, ISSUE-0408,
   and the comparable-prefix packet and confirm the repo documents the current
   Windows pair-129 ceiling as an accepted current-contract exception backed by

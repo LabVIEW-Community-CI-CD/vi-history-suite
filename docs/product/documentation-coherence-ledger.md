@@ -33,9 +33,9 @@ source inference or chat memory.
 
 ## Latest Coherence Pass
 
-- Date: `2026-04-04`
+- Date: `2026-04-05`
 - Repo docs gate:
-  - command: `node scripts/run-docs-gate.js --skip-links`
+  - command: `node scripts/run-docs-continuous-integration.js --skip-links`
   - result: `pass`
 - Repo design gate:
   - command: `npm run design:gate`
@@ -63,15 +63,17 @@ source inference or chat memory.
 | DOC-008 | research control plane | the research alignment matrix and implementation index still described an older, narrower history-panel and dashboard surface after adaptive history-window and latest-dashboard-run work landed | updated `research-alignment.md` and `research-implementation-index.json` so they now reflect the live history-window packet, `latest-dashboard-run.json`, and current dashboard/history evidence set |
 | DOC-009 | recurrence prevention | the repo had no automated docs-gate check that would fail when SRS/RTM/test-plan parity or the key research-facing dashboard/history traces drifted again | added `tests/unit/requirementsDocs.test.ts` to the repo-native docs gate and current-state surface so future drift fails closed in CI and local docs iteration |
 | DOC-010 | post-release control plane | the active post-release tranche, issue, and execution program were documented across queue, ship, README, current-state, `PROGRAM-0002`, and `ISSUE-0407`, but there was no dedicated docs-gate check to fail when those identities or the open Gate C-D truth drifted | added `tests/unit/postReleaseControlPlaneDocs.test.ts`, wired it into the docs gate, and reflected that gate in the current-state/docs-package control plane |
+| DOC-014 | installed-user docs CI and packaging freshness | the repo could prove authority-doc coherence yet still risk shipping stale bundled installed-user HTML or underemphasizing the Docker-first Windows execution truth that matters most to extension users | added a retained docs continuous-integration lane with installed-user truth checks, made `syncBundledDocs.js` deterministic on unchanged content, and wired `npm run package` to rerun `npm run docs:bundle` so stale bundled docs cannot ship through the governed package path |
 
 ## Current Internal Status
 
 - No unresolved contradiction is currently retained across the audited
   authority surfaces above.
-- The repo-native docs gate now enforces SRS/RTM parity, RTM/test-plan parity,
-  the key research-facing history-panel/dashboard trace surfaces, and active
-  post-release control-plane coherence for `TRANCHE-010` / `ISSUE-0407` /
-  `PROGRAM-0002`.
+- The repo-native docs gate plus retained docs continuous-integration lane now
+  enforce SRS/RTM parity, RTM/test-plan parity, bundled-doc drift detection,
+  installed-user execution-policy truth checks, the key research-facing
+  history-panel/dashboard trace surfaces, and active post-release control-plane
+  coherence for `TRANCHE-010` / `ISSUE-0407` / `PROGRAM-0002`.
 - The cross-repo jump surface now distinguishes authority repo, private GitHub
   experiment mirror, public facade, wiki repo, and assurance skill without
   confusing the experiment mirror with authority or public distribution.
@@ -101,11 +103,14 @@ source inference or chat memory.
 2. Treat `tests/unit/requirementsDocs.test.ts` as the first stop when
    requirements, RTM, test-plan, or research-control-plane edits fail the docs
    gate, and widen that test rather than relying on ad hoc manual audits.
-3. Treat `tests/unit/postReleaseControlPlaneDocs.test.ts` as the first stop
+3. Treat `npm run docs:ci` as the retained closeout surface for documentation
+   tranches, and keep the installed-user truth checks focused on the
+   Windows Docker-first execution rule before widening secondary doc detail.
+4. Treat `tests/unit/postReleaseControlPlaneDocs.test.ts` as the first stop
    when post-release queue, ship, program, or issue docs drift, and widen that
    test instead of relying on manual control-plane reconciliation.
-4. Keep the `repo-standards-review` jump resolver and docs-workbench discovery
+5. Keep the `repo-standards-review` jump resolver and docs-workbench discovery
    surfaces aligned with `docs/product/program-repo-jump-map.json`.
-5. Continue wiki drafting in the incremental order retained in
+6. Continue wiki drafting in the incremental order retained in
    `wiki-seed-plan.md`, with each publication recorded in
    `docs/product/wiki-publication-ledger.md`.

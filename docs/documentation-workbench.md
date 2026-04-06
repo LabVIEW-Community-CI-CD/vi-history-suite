@@ -56,6 +56,18 @@ subset of the published wiki set:
 npm run docs:bundle
 ```
 
+Run the retained documentation continuous-integration lane locally:
+
+```bash
+npm run docs:ci
+```
+
+Run the same lane without the `lychee` link-check dependency:
+
+```bash
+npm run docs:ci:core
+```
+
 The default container command is:
 
 ```bash
@@ -175,7 +187,27 @@ The documentation-package gate is:
 
 1. compile current TypeScript surfaces
 2. run the governed documentation-alignment unit suite
-3. run link checking over `README.md` and `docs/**/*.md`
+3. fail closed on bundled-doc drift against the governed wiki-derived bundle
+4. run link checking over `README.md` and `docs/**/*.md`
+
+The retained documentation continuous-integration lane builds on that gate and
+adds first-class evidence for future sessions:
+
+- `npm run docs:ci`
+- `npm run docs:ci:core`
+- retained local evidence under `.cache/docs-integration/latest/`
+  - `.cache/docs-integration/latest/docs-integration-report.json`
+  - `.cache/docs-integration/latest/docs-integration-report.md`
+- retained CI evidence under `docs-integration-evidence/`
+- explicit installed-user truth checks for:
+  - Docker-first Windows `auto` behavior when Docker Desktop is installed
+  - no silent provider fallback
+  - hard stops when Docker is required but unusable
+  - front-facing provider/progress visibility in the bundled installed-user guide
+- explicit package-path freshness:
+  - `npm run package` reruns `npm run docs:bundle` before `vsce package`
+  - stale bundled installed-user docs are therefore unshippable through the
+    governed packaging path
 
 When the gate needs to assert zero-gap wiki coverage against the live published
 wiki set, the canonical wiki root is:
@@ -188,16 +220,19 @@ invariants first clones `${CI_PROJECT_PATH}.wiki.git` into
 `../vi-history-suite.wiki`, exports `VIHS_WIKI_REPO_ROOT`, and then runs its
 gate:
 
-- `docs_control_plane_check` before `npm run docs:gate:core`
+- `docs_continuous_integration` before the wider test/package lanes, retaining
+  `docs-integration-evidence/docs-integration-report.json` and
+  `docs-integration-evidence/docs-integration-report.md`
 - `test_extension` before `npm run test`
 - `release_extension` before the tag-gated `npm run test`
 
 That keeps the same coverage invariant enforced in CI without relying on an
 implicit runner-side checkout.
 
-The bundled user-doc surface is refreshed separately from the gate:
+The bundled user-doc surface is refreshed explicitly and through packaging:
 
 - `npm run docs:bundle`
+- `npm run package`
 - output:
   - `resources/bundled-docs/manifest.json`
   - `resources/bundled-docs/pages/*.html`
@@ -207,6 +242,11 @@ mirror of every published wiki/control-plane page. The bundle now keeps only
 the extension-user pages, trims them to developer-relevant installed-user
 sections, and strips private GitLab plus standards/control-plane authority-link
 sections before packaging the HTML shipped inside the VSIX.
+
+`npm run docs:bundle` is the direct authoring path when you want to inspect the
+installed guide locally during docs iteration. `npm run package` reruns the
+same refresh before the VSIX is created so package and release jobs cannot ship
+stale bundled docs from repo state alone.
 
 Run it directly on the host only when the required tooling is available:
 
@@ -227,6 +267,14 @@ GitLab CI publishes the docs-authoring image to the project container registry:
 
 The pipeline also retains `docs-workbench-evidence/docs-workbench-manifest.json`
 so future sessions can see which image references were published.
+
+The same pipeline now retains documentation continuous-integration evidence:
+
+- `docs-integration-evidence/docs-integration-report.json`
+- `docs-integration-evidence/docs-integration-report.md`
+- `docs-integration-evidence/bundled-docs-check.json`
+- `docs-integration-evidence/wiki-doctor.json`
+- `docs-integration-evidence/wiki-plan.json`
 
 The local published-image commands deliberately keep the same contract. They
 either pull the published image after resolving supported GitLab registry

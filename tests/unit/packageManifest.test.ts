@@ -138,6 +138,12 @@ describe('extension manifest research alignment', () => {
     expect(manifest.scripts?.['docs:gate:core']).toBe(
       'node scripts/run-docs-gate.js --skip-links'
     );
+    expect(manifest.scripts?.['docs:ci']).toBe(
+      'node scripts/run-docs-continuous-integration.js'
+    );
+    expect(manifest.scripts?.['docs:ci:core']).toBe(
+      'node scripts/run-docs-continuous-integration.js --skip-links'
+    );
     expect(manifest.scripts?.['dashboard:latest']).toBe(
       'node scripts/printLatestDashboardRun.js'
     );
@@ -223,7 +229,7 @@ describe('extension manifest research alignment', () => {
       'node scripts/auditPackagedRuntimeSurface.js'
     );
     expect(manifest.scripts?.['package']).toBe(
-      'npm run compile && npm run package:audit && node scripts/runPinnedVsce.js package'
+      'npm run compile && npm run docs:bundle && npm run package:audit && node scripts/runPinnedVsce.js package'
     );
     expect(manifest.scripts?.['preview:refresh']).toContain('preview-evidence');
     expect(manifest.scripts?.['preview:refresh']).toContain('/mnt/c/Users/sveld/Downloads');

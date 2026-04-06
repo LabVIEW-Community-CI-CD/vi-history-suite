@@ -14,6 +14,12 @@ detection and have at least two modifying commits.</p>
 <li><code>VI History: Open Documentation</code></li>
 </ul>
 <h2>Execution Policy</h2>
+<p>Start with this Windows rule:</p>
+<ul>
+<li>if Docker Desktop is installed on Windows, <code>auto</code> uses the governed Windows container</li>
+<li>if Docker Desktop is not installed, <code>auto</code> may use a clean host-native LabVIEW 2026 Q1 surface</li>
+<li>if Docker is installed but unusable, <code>auto</code> stops and tells you to fix Docker instead of probing the host</li>
+</ul>
 <p>Use <code>viHistorySuite.executionMode</code> to choose how comparisons run:</p>
 <ul>
 <li><code>auto</code>: on Windows, use the governed Windows container whenever Docker Desktop is installed; otherwise use a clean host-native LabVIEW 2026 Q1 surface</li>
@@ -97,6 +103,7 @@ facts.</p>
 </ul>
 <h2>Bundled Documentation</h2>
 <p>The extension packages a version-matched installed-user guide so you can read workflow guidance without leaving VS Code.</p>
+<p>The packaged guide is intentionally concise: it keeps the extension-user workflow, execution-policy, dashboard, compare, and decision-record rules that a developer needs while omitting private GitLab plus standards/control-plane material.</p>
 <p>Open it from:</p>
 <ul>
 <li>the Command Palette via <code>VI History: Open Documentation</code></li>

@@ -159,6 +159,8 @@
     "docs:bundle": "node scripts/syncBundledDocs.js",
     "docs:gate": "node scripts/run-docs-gate.js",
     "docs:gate:core": "node scripts/run-docs-gate.js --skip-links",
+    "docs:ci": "node scripts/run-docs-continuous-integration.js",
+    "docs:ci:core": "node scripts/run-docs-continuous-integration.js --skip-links",
     "dashboard:latest": "node scripts/printLatestDashboardRun.js",
     "dashboard:latest:json": "node scripts/printLatestDashboardRun.js --json",
     "dashboard:latest:host": "node scripts/printLatestDashboardRun.js --host-only",
@@ -200,7 +202,7 @@
     "test:integration:windows": "VI_HISTORY_SUITE_INTEGRATION_HOST=windows npm run test:integration",
     "test:watch": "vitest",
     "package:audit": "node scripts/auditPackagedRuntimeSurface.js",
-    "package": "npm run compile && npm run package:audit && node scripts/runPinnedVsce.js package"
+    "package": "npm run compile && npm run docs:bundle && npm run package:audit && node scripts/runPinnedVsce.js package"
   },
   "devDependencies": {
     "@types/node": "^24.6.0",

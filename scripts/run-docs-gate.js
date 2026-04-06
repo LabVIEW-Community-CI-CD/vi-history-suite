@@ -64,9 +64,17 @@ function createDocsGateSteps(options = {}) {
         'tests/unit/packageManifest.test.ts',
         'tests/unit/shipControlDocs.test.ts',
         'tests/unit/docsWorkbenchDocs.test.ts',
+        'tests/unit/docsContinuousIntegration.test.ts',
+        'tests/unit/syncBundledDocsScript.test.ts',
         'tests/unit/wikiCoverageDocs.test.ts',
         'tests/unit/runWikiWorkbenchCli.test.ts'
       ]
+    },
+    {
+      id: 'bundle-check',
+      title: 'Check bundled documentation drift',
+      command: 'node',
+      args: ['scripts/syncBundledDocs.js', '--check']
     }
   ];
 

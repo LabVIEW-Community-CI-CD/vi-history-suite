@@ -241,9 +241,17 @@ describe('ship-control direction system', () => {
     expect(releaseProcedure).toContain('docs/product/wiki-publication-ledger.json');
     expect(releaseProcedure).toContain('resources/bundled-docs/manifest.json');
     expect(releaseProcedure).toContain('npm run design:gate:assert-complete');
+    expect(releaseProcedure).toContain('npm run docs:bundle');
+    expect(releaseProcedure).toContain('npm run package');
+    expect(releaseProcedure).toContain(
+      'Stale bundled installed-user docs are therefore unshippable through the'
+    );
 
     expect(workbenchDoc).toContain('registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main');
     expect(workbenchDoc).toContain('npm run docs:bundle');
+    expect(workbenchDoc).toContain('npm run docs:ci');
+    expect(workbenchDoc).toContain('npm run docs:ci:core');
+    expect(workbenchDoc).toContain('npm run package');
     expect(workbenchDoc).toContain('npm run docs:workbench:gate');
     expect(workbenchDoc).toContain('npm run wiki:workbench:doctor');
     expect(workbenchDoc).toContain('npm run wiki:workbench:prepare');
@@ -256,12 +264,14 @@ describe('ship-control direction system', () => {
     expect(workbenchDoc).toContain('resources/bundled-docs/manifest.json');
     expect(workbenchDoc).toContain('docs/product/program-repo-jump.md');
     expect(workbenchDoc).toContain('.cache/wiki-workbench/latest-workbench.json');
+    expect(workbenchDoc).toContain('.cache/docs-integration/latest/docs-integration-report.json');
     expect(workbenchDoc).toContain('.cache/wiki-workbench/publication-prep/');
     expect(workbenchDoc).toContain('wiki_workbench_prepare_published');
     expect(workbenchDoc).toContain('wiki-workbench-evidence/wiki-workbench-manifest.json');
+    expect(workbenchDoc).toContain('docs-integration-evidence/docs-integration-report.json');
 
     expect(coherenceLedger).toContain('# Documentation Coherence Ledger');
-    expect(coherenceLedger).toContain('run-docs-gate.js --skip-links');
+    expect(coherenceLedger).toContain('run-docs-continuous-integration.js --skip-links');
     expect(coherenceLedger).toContain('run_assurance.py /home/sveld/code/standards/vi-history-suite --profile release-gate');
     expect(coherenceLedger).toContain('DOC-001');
     expect(coherenceLedger).toContain('DOC-004');
@@ -317,8 +327,9 @@ describe('ship-control direction system', () => {
     const currentState = readText('docs/product/current-state.md');
     const releaseProcedure = readText('docs/release-procedure.md');
 
-    expect(gitlabCi).toContain('docs_control_plane_check:');
-    expect(gitlabCi).toContain('npm run docs:gate:core');
+    expect(gitlabCi).toContain('docs_continuous_integration:');
+    expect(gitlabCi).toContain('node scripts/run-docs-continuous-integration.js --skip-links --evidence-dir docs-integration-evidence');
+    expect(gitlabCi).toContain('docs-integration-evidence/');
     expect(gitlabCi).toContain('publish_docs_authoring_image:');
     expect(gitlabCi).toContain('wiki_workbench_prepare_published:');
     expect(gitlabCi).toContain('--dockerfile "${CI_PROJECT_DIR}/docker/docs-authoring/Dockerfile"');

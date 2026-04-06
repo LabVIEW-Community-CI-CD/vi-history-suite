@@ -49,6 +49,14 @@ describe('bundled documentation', () => {
     expect(loaded?.pageBodyHtml).toContain('<h2>Execution Policy</h2>');
     expect(loaded?.pageBodyHtml).toContain('<h2>Primary Review Flow</h2>');
     expect(loaded?.pageBodyHtml).toContain('<h2>Comparison Report Flow</h2>');
+    expect(loaded?.pageBodyHtml).toContain('if Docker Desktop is installed on Windows');
+    expect(loaded?.pageBodyHtml).toContain('uses the governed Windows container');
+    expect(loaded?.pageBodyHtml).toContain('if Docker is installed but unusable');
+    expect(loaded?.pageBodyHtml).toContain('fix Docker instead of probing the host');
+    expect(loaded?.pageBodyHtml).toContain('use the governed Windows container whenever Docker Desktop is installed');
+    expect(loaded?.pageBodyHtml).toContain('no mode silently falls back to a different provider');
+    expect(loaded?.pageBodyHtml).toContain('if Docker is required but unavailable, the extension stops and tells you what to fix');
+    expect(loaded?.pageBodyHtml).toContain('compare progress, provider choice, and Windows image acquisition state stay visible');
     expect(loaded?.pageBodyHtml).not.toContain('Read Next');
     expect(loaded?.pageBodyHtml).not.toContain('data-external-href=');
     expect(loaded?.pageBodyHtml).not.toContain('https://gitlab.com/');
@@ -59,6 +67,7 @@ describe('bundled documentation', () => {
     expect(loaded?.pageBodyHtml).not.toContain('Software Requirements Specification');
     expect(loaded?.pageBodyHtml).not.toContain('Current State');
     expect(loaded?.pageBodyHtml).toContain('every row except the oldest revision has a base revision and can become compareable');
+    expect(loaded?.pageBodyHtml).toContain('The packaged guide is intentionally concise');
     expect(loaded?.pageBodyHtml).toContain('the first time through, start with <code>Generate compare</code> on the row you want to inspect');
     expect(loaded?.pageBodyHtml).toContain('the same row becomes a retained-review row with <code>Open compare</code> and <code>Refresh compare</code>');
     expect(loaded?.pageBodyHtml).toContain('the oldest retained revision has no base revision, so compare actions stay unavailable there by design');

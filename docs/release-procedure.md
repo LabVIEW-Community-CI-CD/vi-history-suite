@@ -31,12 +31,15 @@
      `.cache/design-gate/assurance-skill/repo-standards-review/` before
      executing standards assurance.
 2. Ensure `package.json` matches the release tag version exactly.
-3. If the published wiki set changed in the release tranche, refresh bundled
-   user docs with `npm run docs:bundle` before packaging.
+3. If the release tranche changed bundled-doc inputs, run `npm run docs:bundle`
+   locally so the packaged installed-user guide can be inspected before CI
+   packages the VSIX.
 4. Run compile, test, coverage generation, and VSIX packaging through GitLab
    CI.
-   - The guarded `npm run package` path now runs compile plus
-     `npm run package:audit` before `vsce package`.
+   - The guarded `npm run package` path now runs compile,
+     `npm run docs:bundle`, `npm run package:audit`, and then `vsce package`.
+     Stale bundled installed-user docs are therefore unshippable through the
+     governed packaging path.
    - Packaging-only npm tooling is intentionally excluded from the default
      repo `npm ci` surface and is invoked only on demand through the pinned
      `scripts/runPinnedVsce.js` helper when packaging is requested.
@@ -64,6 +67,8 @@
 - `release-evidence/release-record.md`
 - `release-evidence/release-manifest.json`
 - `docs-workbench-evidence/docs-workbench-manifest.json`
+- `docs-integration-evidence/docs-integration-report.json`
+- `docs-integration-evidence/docs-integration-report.md`
 - `resources/bundled-docs/manifest.json`
 - `.cache/design-gate/assurance-skill/repo-standards-review/`
 

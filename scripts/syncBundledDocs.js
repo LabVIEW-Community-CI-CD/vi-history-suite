@@ -1,23 +1,84 @@
 #!/usr/bin/env node
 
+const fsSync = require('node:fs');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 
 const defaultRepoRoot = path.resolve(
-  path.dirname(require('node:fs').realpathSync.native(__filename)),
+  path.dirname(fsSync.realpathSync.native(__filename)),
   '..'
 );
-const repoRoot = path.resolve(process.env.VIHS_REPO_ROOT ?? defaultRepoRoot);
-const wikiRepoRoot = path.resolve(
-  process.env.VIHS_WIKI_REPO_ROOT ?? path.resolve(repoRoot, '..', 'vi-history-suite.wiki')
-);
-const ledgerPath = path.resolve(
-  process.env.VIHS_LEDGER_PATH ?? path.join(repoRoot, 'docs', 'product', 'wiki-publication-ledger.json')
-);
-const bundleRoot = path.resolve(
-  process.env.VIHS_BUNDLE_ROOT ?? path.join(repoRoot, 'resources', 'bundled-docs')
-);
-const bundlePagesRoot = path.join(bundleRoot, 'pages');
+
+function resolveBundledDocsPaths(env = process.env) {
+  const repoRoot = path.resolve(env.VIHS_REPO_ROOT ?? defaultRepoRoot);
+  const wikiRepoRoot = path.resolve(
+    env.VIHS_WIKI_REPO_ROOT ?? path.resolve(repoRoot, '..', 'vi-history-suite.wiki')
+  );
+  const ledgerPath = path.resolve(
+    env.VIHS_LEDGER_PATH ?? path.join(repoRoot, 'docs', 'product', 'wiki-publication-ledger.json')
+  );
+  const bundleRoot = path.resolve(
+    env.VIHS_BUNDLE_ROOT ?? path.join(repoRoot, 'resources', 'bundled-docs')
+  );
+
+  return {
+    repoRoot,
+    wikiRepoRoot,
+    ledgerPath,
+    bundleRoot,
+    bundlePagesRoot: path.join(bundleRoot, 'pages')
+  };
+}
+
+function getBundledDocsUsage() {
+  return [
+    'Usage: node scripts/syncBundledDocs.js [--check] [--report <path>] [--help]',
+    '',
+    'Refresh or verify the curated bundled installed-user documentation pack.',
+    '',
+    'Options:',
+    '  --check          Fail closed when resources/bundled-docs drift from the governed wiki-derived bundle.',
+    '  --report <path>  Write a machine-readable report for refresh or check mode.',
+    '  --help           Print this help text.'
+  ].join('\n');
+}
+
+function parseBundledDocsArgs(argv) {
+  const parsed = {
+    check: false,
+    helpRequested: false,
+    reportPath: undefined
+  };
+
+  for (let index = 0; index < argv.length; index += 1) {
+    const argument = argv[index];
+
+    if (argument === '--help' || argument === '-h') {
+      parsed.helpRequested = true;
+      continue;
+    }
+
+    if (argument === '--check') {
+      parsed.check = true;
+      continue;
+    }
+
+    if (argument === '--report') {
+      const value = argv[index + 1];
+      if (!value) {
+        throw new Error('Missing value for --report');
+      }
+      parsed.reportPath = path.resolve(value);
+      index += 1;
+      continue;
+    }
+
+    throw new Error(`Unknown argument: ${argument}`);
+  }
+
+  return parsed;
+}
+
 const bundledExtensionUserPageIds = [
   'overview',
   'install-and-release',
@@ -25,6 +86,7 @@ const bundledExtensionUserPageIds = [
   'comparison-reports-and-dashboard-review',
   'review-scenarios-and-decision-records'
 ];
+
 const bundledPageConfigs = {
   overview: {
     introReplacement:
@@ -79,6 +141,12 @@ const bundledPageConfigs = {
     ],
     replacements: {
       'Execution Policy': [
+        'Start with this Windows rule:',
+        '',
+        '- if Docker Desktop is installed on Windows, `auto` uses the governed Windows container',
+        '- if Docker Desktop is not installed, `auto` may use a clean host-native LabVIEW 2026 Q1 surface',
+        '- if Docker is installed but unusable, `auto` stops and tells you to fix Docker instead of probing the host',
+        '',
         'Use `viHistorySuite.executionMode` to choose how comparisons run:',
         '',
         '- `auto`: on Windows, use the governed Windows container whenever Docker Desktop is installed; otherwise use a clean host-native LabVIEW 2026 Q1 surface',
@@ -156,6 +224,8 @@ const bundledPageConfigs = {
       ].join('\n'),
       'Bundled Documentation': [
         'The extension packages a version-matched installed-user guide so you can read workflow guidance without leaving VS Code.',
+        '',
+        'The packaged guide is intentionally concise: it keeps the extension-user workflow, execution-policy, dashboard, compare, and decision-record rules that a developer needs while omitting private GitLab plus standards/control-plane material.',
         '',
         'Open it from:',
         '',
@@ -274,7 +344,7 @@ function escapeAttribute(value) {
     .replaceAll('>', '&gt;');
 }
 
-async function readPublicationLedger() {
+async function readPublicationLedger(ledgerPath) {
   const raw = await fs.readFile(ledgerPath, 'utf8');
   return JSON.parse(raw);
 }
@@ -420,9 +490,10 @@ async function renderPublishedPage(marked, pageId, markdownPath, pagesByWikiTarg
   return rewriteAnchors(html, pagesByWikiTarget);
 }
 
-async function writeBundledDocs() {
-  const { marked } = await import('marked');
-  const ledger = await readPublicationLedger();
+async function buildBundledDocsOutput(paths, deps = {}) {
+  const markedModule = deps.markedModule ?? (await import('marked'));
+  const { marked } = markedModule;
+  const ledger = await readPublicationLedger(paths.ledgerPath);
   const publishedPages = bundledExtensionUserPageIds
     .map((pageId) =>
       ledger.pages.find((page) => page.id === pageId && page.status === 'published')
@@ -435,11 +506,8 @@ async function writeBundledDocs() {
     pagesByWikiTarget.set(page.wikiFileName, page);
   }
 
-  await fs.rm(bundleRoot, { recursive: true, force: true });
-  await fs.mkdir(bundlePagesRoot, { recursive: true });
-
   const manifest = {
-    generatedAt: new Date().toISOString(),
+    generatedAt: (deps.now ?? (() => new Date().toISOString()))(),
     sourceLedgerPath: 'docs/product/wiki-publication-ledger.json',
     sourceWikiRepoPath: '../vi-history-suite.wiki',
     bundleAudience: 'extension-users',
@@ -447,8 +515,10 @@ async function writeBundledDocs() {
     pages: []
   };
 
+  const files = new Map();
+
   for (const page of publishedPages) {
-    const markdownPath = path.join(wikiRepoRoot, page.wikiFileName);
+    const markdownPath = path.join(paths.wikiRepoRoot, page.wikiFileName);
     const pageFileName = `${page.id}.html`;
     const renderedHtml = await renderPublishedPage(
       marked,
@@ -457,7 +527,7 @@ async function writeBundledDocs() {
       pagesByWikiTarget
     );
 
-    await fs.writeFile(path.join(bundlePagesRoot, pageFileName), renderedHtml, 'utf8');
+    files.set(path.posix.join('pages', pageFileName), renderedHtml);
 
     manifest.pages.push({
       id: page.id,
@@ -470,19 +540,232 @@ async function writeBundledDocs() {
     });
   }
 
-  await fs.writeFile(
-    path.join(bundleRoot, 'manifest.json'),
-    JSON.stringify(manifest, null, 2),
-    'utf8'
+  files.set('manifest.json', `${JSON.stringify(manifest, null, 2)}\n`);
+
+  return {
+    manifest,
+    files
+  };
+}
+
+function normalizeBundleFileForComparison(relativePath, content) {
+  if (relativePath === 'manifest.json') {
+    const parsed = JSON.parse(content);
+    parsed.generatedAt = '__IGNORED__';
+    return JSON.stringify(parsed, null, 2);
+  }
+
+  return content;
+}
+
+function compareBundledDocsFiles(expectedFiles, actualFiles) {
+  const changedFiles = [];
+  const relativePaths = [...new Set([...expectedFiles.keys(), ...actualFiles.keys()])].sort();
+
+  for (const relativePath of relativePaths) {
+    const expected = expectedFiles.get(relativePath);
+    const actual = actualFiles.get(relativePath);
+
+    if (expected === undefined) {
+      changedFiles.push({
+        path: relativePath,
+        reason: 'unexpected-file'
+      });
+      continue;
+    }
+
+    if (actual === undefined) {
+      changedFiles.push({
+        path: relativePath,
+        reason: 'missing-file'
+      });
+      continue;
+    }
+
+    if (
+      normalizeBundleFileForComparison(relativePath, expected) !==
+      normalizeBundleFileForComparison(relativePath, actual)
+    ) {
+      changedFiles.push({
+        path: relativePath,
+        reason: 'content-mismatch'
+      });
+    }
+  }
+
+  return changedFiles;
+}
+
+async function readBundledDocsFromDisk(bundleRoot) {
+  const files = new Map();
+
+  async function walk(currentRoot) {
+    let entries;
+    try {
+      entries = await fs.readdir(currentRoot, { withFileTypes: true });
+    } catch (error) {
+      if (error && typeof error === 'object' && error.code === 'ENOENT') {
+        return;
+      }
+      throw error;
+    }
+
+    for (const entry of entries) {
+      const absolutePath = path.join(currentRoot, entry.name);
+      if (entry.isDirectory()) {
+        await walk(absolutePath);
+        continue;
+      }
+
+      const relativePath = path
+        .relative(bundleRoot, absolutePath)
+        .split(path.sep)
+        .join(path.posix.sep);
+      files.set(relativePath, await fs.readFile(absolutePath, 'utf8'));
+    }
+  }
+
+  await walk(bundleRoot);
+  return files;
+}
+
+async function writeReport(reportPath, report) {
+  await fs.mkdir(path.dirname(reportPath), { recursive: true });
+  await fs.writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
+}
+
+async function writeBundledDocs(paths, deps = {}) {
+  const output = await buildBundledDocsOutput(paths, deps);
+  const actualFiles = await readBundledDocsFromDisk(paths.bundleRoot);
+  const changedFiles = compareBundledDocsFiles(output.files, actualFiles);
+
+  if (changedFiles.length === 0) {
+    return {
+      schema: 'vi-history-suite/bundled-docs-sync@v1',
+      recordedAt: output.manifest.generatedAt,
+      status: 'unchanged',
+      bundleRoot: paths.bundleRoot,
+      wikiRepoRoot: paths.wikiRepoRoot,
+      ledgerPath: paths.ledgerPath,
+      pageCount: output.manifest.pages.length,
+      bundleAudience: output.manifest.bundleAudience
+    };
+  }
+
+  await fs.rm(paths.bundleRoot, { recursive: true, force: true });
+  await fs.mkdir(paths.bundlePagesRoot, { recursive: true });
+
+  for (const [relativePath, content] of output.files.entries()) {
+    const targetPath = path.join(paths.bundleRoot, relativePath);
+    await fs.mkdir(path.dirname(targetPath), { recursive: true });
+    await fs.writeFile(targetPath, content, 'utf8');
+  }
+
+  return {
+    schema: 'vi-history-suite/bundled-docs-sync@v1',
+    recordedAt: output.manifest.generatedAt,
+    status: 'written',
+    bundleRoot: paths.bundleRoot,
+    wikiRepoRoot: paths.wikiRepoRoot,
+    ledgerPath: paths.ledgerPath,
+    pageCount: output.manifest.pages.length,
+    bundleAudience: output.manifest.bundleAudience
+  };
+}
+
+async function checkBundledDocs(paths, deps = {}) {
+  const output = await buildBundledDocsOutput(paths, deps);
+  const actualFiles = await readBundledDocsFromDisk(paths.bundleRoot);
+  const changedFiles = compareBundledDocsFiles(output.files, actualFiles);
+  const report = {
+    schema: 'vi-history-suite/bundled-docs-check@v1',
+    checkedAt: (deps.now ?? (() => new Date().toISOString()))(),
+    status: changedFiles.length === 0 ? 'match' : 'drift',
+    bundleRoot: paths.bundleRoot,
+    wikiRepoRoot: paths.wikiRepoRoot,
+    ledgerPath: paths.ledgerPath,
+    pageCount: output.manifest.pages.length,
+    bundleAudience: output.manifest.bundleAudience,
+    changedFiles
+  };
+
+  if (deps.reportPath) {
+    await writeReport(deps.reportPath, report);
+  }
+
+  if (changedFiles.length > 0) {
+    const changedList = changedFiles.map((entry) => `${entry.path} (${entry.reason})`).join(', ');
+    throw new Error(
+      `Bundled documentation drift detected. Run \`npm run docs:bundle\` and commit the refreshed bundle. Changed files: ${changedList}`
+    );
+  }
+
+  return report;
+}
+
+async function runBundledDocsSync(argv = process.argv.slice(2), deps = {}) {
+  const parsed = parseBundledDocsArgs(argv);
+  const stdout = deps.stdout ?? process.stdout;
+
+  if (parsed.helpRequested) {
+    stdout.write(`${getBundledDocsUsage()}\n`);
+    return 'help';
+  }
+
+  const paths = deps.paths ?? resolveBundledDocsPaths(deps.env ?? process.env);
+
+  if (parsed.check) {
+    await checkBundledDocs(paths, {
+      now: deps.now,
+      markedModule: deps.markedModule,
+      reportPath: parsed.reportPath
+    });
+    stdout.write('Bundled documentation is in sync.\n');
+    return 'match';
+  }
+
+  const report = await writeBundledDocs(paths, {
+    now: deps.now,
+    markedModule: deps.markedModule
+  });
+
+  if (parsed.reportPath) {
+    await writeReport(parsed.reportPath, report);
+  }
+
+  stdout.write(
+    report.status === 'unchanged'
+      ? 'Bundled documentation already in sync.\n'
+      : 'Bundled documentation refreshed.\n'
   );
+  return report.status;
 }
 
-async function main() {
-  await writeBundledDocs();
-  process.stdout.write('Bundled documentation refreshed.\n');
+async function main(argv = process.argv.slice(2), deps = {}, stderr = process.stderr) {
+  try {
+    await runBundledDocsSync(argv, deps);
+    return 0;
+  } catch (error) {
+    stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
+    return 1;
+  }
 }
 
-main().catch((error) => {
-  process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
-  process.exitCode = 1;
-});
+if (require.main === module) {
+  main().then((code) => {
+    process.exitCode = code;
+  });
+}
+
+module.exports = {
+  buildBundledDocsOutput,
+  checkBundledDocs,
+  compareBundledDocsFiles,
+  getBundledDocsUsage,
+  main,
+  normalizeBundleFileForComparison,
+  parseBundledDocsArgs,
+  resolveBundledDocsPaths,
+  runBundledDocsSync,
+  writeBundledDocs
+};
