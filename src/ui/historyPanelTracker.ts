@@ -57,6 +57,7 @@ export interface HistoryPanelActionSummary {
     | 'missing-bundled-documentation'
     | 'unknown-documentation-page'
     | 'submitted-human-review'
+    | 'failed-human-review-submission'
     | 'invalid-human-review-submission'
     | 'missing-human-review-storage'
     | 'canonical-machine-mismatch'

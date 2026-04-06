@@ -80,6 +80,52 @@ describe('humanReviewSubmission', () => {
     expect(canonicalMachine.fingerprint.fingerprintId).toBe(machineFingerprint.fingerprintId);
   });
 
+  it('creates the canonical-host storage root before writing the canonical machine record', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-human-review-'));
+    const workspaceStorageRoot = path.join(tempRoot, 'workspace-storage');
+    const canonicalHostStorageRoot = path.join(tempRoot, 'global-storage');
+    tempRoots.push(tempRoot);
+
+    const machineFingerprint = {
+      ...buildExpectedCanonicalHostMachineFingerprint(),
+      machineId: 'author-designated-canonical-host',
+      vscodeVersion: '1.100.0'
+    };
+    const result = await persistHumanReviewSubmission(
+      workspaceStorageRoot,
+      {
+        source: 'history-panel',
+        model: buildModel(),
+        reviewerName: 'Sergio Velderrain',
+        outcome: 'needs-more-review',
+        confidence: 'medium',
+        note: 'Separate canonical host storage should still persist deterministically.',
+        machineFingerprint,
+        canonicalHostStorageRoot
+      }
+    );
+
+    expect(result.outcome).toBe('submitted-human-review');
+    if (result.outcome !== 'submitted-human-review') {
+      return;
+    }
+
+    expect(result.artifactPlan.latestSubmissionFilePath).toBe(
+      path.join(
+        workspaceStorageRoot,
+        'human-reviews',
+        LATEST_HUMAN_REVIEW_SUBMISSION_FILENAME
+      )
+    );
+    expect(result.artifactPlan.canonicalHostMachineFilePath).toBe(
+      path.join(canonicalHostStorageRoot, 'human-reviews', CANONICAL_HOST_MACHINE_FILENAME)
+    );
+    const canonicalMachine = JSON.parse(
+      await fs.readFile(result.artifactPlan.canonicalHostMachineFilePath, 'utf8')
+    );
+    expect(canonicalMachine.fingerprint.fingerprintId).toBe(machineFingerprint.fingerprintId);
+  });
+
   it('keeps the canonical machine fingerprint stable across VS Code version changes on the same host', () => {
     const first = buildHostMachineFingerprint({
       machineId: 'machine-1',

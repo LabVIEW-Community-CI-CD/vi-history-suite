@@ -227,6 +227,9 @@ export async function persistHumanReviewSubmission(
 
   await mkdir(artifactPlan.submissionDirectory, { recursive: true });
   await mkdir(path.dirname(artifactPlan.latestSubmissionFilePath), { recursive: true });
+  await mkdir(path.dirname(artifactPlan.canonicalHostMachineFilePath), {
+    recursive: true
+  });
 
   const canonicalHostMachine = await readCanonicalHostMachineRecord(
     artifactPlan.canonicalHostMachineFilePath,

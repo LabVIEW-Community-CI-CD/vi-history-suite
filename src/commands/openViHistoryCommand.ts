@@ -689,13 +689,30 @@ export function createOpenViHistoryCommand(
           return;
         }
 
-        const result = await humanReviewSubmissionAction({
-          model,
-          source: 'history-panel',
-          draftOutcome: message.reviewOutcome,
-          draftConfidence: message.reviewConfidence,
-          draftNote: message.reviewNote
-        });
+        let result;
+        try {
+          result = await humanReviewSubmissionAction({
+            model,
+            source: 'history-panel',
+            draftOutcome: message.reviewOutcome,
+            draftConfidence: message.reviewConfidence,
+            draftNote: message.reviewNote
+          });
+        } catch {
+          const humanReviewSubmissionStatusMessage =
+            'Host review submission failed before the retained artifact could be written. Retry after confirming the workspace is local and deterministic.';
+          void vscode.window.showErrorMessage(humanReviewSubmissionStatusMessage);
+          void panel.webview.postMessage({
+            type: 'humanReviewSubmissionResult',
+            status: 'blocked',
+            message: humanReviewSubmissionStatusMessage
+          });
+          panelTracker?.recordAction({
+            command,
+            outcome: 'failed-human-review-submission'
+          });
+          return;
+        }
         let humanReviewSubmissionStatusMessage =
           'Host review submission did not complete.';
         if (result.outcome === 'submitted-human-review') {

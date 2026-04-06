@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
+  showErrorMessageMock,
   showWarningMessageMock,
   showInformationMessageMock,
   clipboardWriteTextMock,
@@ -10,6 +11,7 @@ const {
   workspaceState,
   windowState
 } = vi.hoisted(() => ({
+  showErrorMessageMock: vi.fn(),
   showWarningMessageMock: vi.fn(),
   showInformationMessageMock: vi.fn(),
   clipboardWriteTextMock: vi.fn(),
@@ -65,6 +67,7 @@ vi.mock('vscode', () => ({
     get activeTextEditor() {
       return windowState.activeTextEditor;
     },
+    showErrorMessage: showErrorMessageMock,
     showWarningMessage: showWarningMessageMock,
     showInformationMessage: showInformationMessageMock,
     createWebviewPanel: createWebviewPanelMock,
@@ -94,6 +97,7 @@ describe('createOpenViHistoryCommand', () => {
   beforeEach(() => {
     workspaceState.isTrusted = true;
     windowState.activeTextEditor = undefined;
+    showErrorMessageMock.mockReset();
     showWarningMessageMock.mockReset();
     showInformationMessageMock.mockReset();
     clipboardWriteTextMock.mockReset();
@@ -440,6 +444,78 @@ describe('createOpenViHistoryCommand', () => {
       humanReviewCanonicalMachineFingerprintId: undefined,
       humanReviewValidationMessage:
         'Blocked: host-machine review submission requires the deterministic local fixture workspace, not a OneDrive-backed repository-root (C:\\Users\\sveld\\OneDrive\\fixtures\\labview-icon-editor).'
+    });
+  });
+
+  it('fails closed when host-review submission throws before a retained artifact is written', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Update VI',
+            previousHash: '1111111122222222'
+          },
+          {
+            hash: '1111111122222222',
+            authorDate: '2026-04-01T00:00:00Z',
+            authorName: 'B User',
+            subject: 'Older VI'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+    const submitHumanReviewAction = vi
+      .fn()
+      .mockRejectedValue(new Error('ENOENT: no such file or directory'));
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      submitHumanReviewAction as never
+    );
+
+    await command(targetUri as never);
+    await tracker.dispatchLastPanelMessage({
+      command: 'submitHumanReview',
+      reviewOutcome: 'needs-more-review',
+      reviewConfidence: 'medium',
+      reviewNote: 'This is a test of the Host-machine review submission.'
+    });
+    const panel = createWebviewPanelMock.mock.results[0]?.value as MockPanel | undefined;
+
+    expect(showErrorMessageMock).toHaveBeenCalledWith(
+      'Host review submission failed before the retained artifact could be written. Retry after confirming the workspace is local and deterministic.'
+    );
+    expect(panel?.webview.postMessage).toHaveBeenCalledWith({
+      type: 'humanReviewSubmissionResult',
+      status: 'blocked',
+      message:
+        'Host review submission failed before the retained artifact could be written. Retry after confirming the workspace is local and deterministic.'
+    });
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'submitHumanReview',
+      outcome: 'failed-human-review-submission'
     });
   });
 
