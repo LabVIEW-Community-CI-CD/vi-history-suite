@@ -28,6 +28,15 @@ code. The current authority surfaces for this page are:</p>
 <p>The preview VSIX is the current install surface for extension-user testing.
 The tagged release artifact is the current governed exact-version install
 surface.</p>
+<p>The still-open Windows 11 human closeout gate is narrower than those package
+surfaces:</p>
+<ul>
+<li>Sergio Velderrain remains the sole named maintainer gate owner</li>
+<li>the manual right-click pass must run from the deterministic local fixture
+workspace rather than a OneDrive-backed synced clone</li>
+<li>the governed Windows benchmark-image helper surfaces respect the active
+PowerShell execution policy instead of using <code>ExecutionPolicy Bypass</code></li>
+</ul>
 <h2>Sustainment Release Cadence</h2>
 <p>The active post-release lane now treats release refresh as event-driven repo
 truth, not as a standing calendar promise.</p>

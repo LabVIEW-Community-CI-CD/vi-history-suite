@@ -236,11 +236,13 @@ Current first slice:
   release kit
 - Visual Studio Code CLI can verify the installed extension version
 - the proof machine can open the pinned proof workspace deterministically from
-  the bundled Git fixture
+  the bundled Git fixture on a local non-OneDrive path
 
 ### Gate D: Human UX Gate
 
 - Sergio Velderrain can complete the real right-click flow on the canonical VI
+- the manual right-click proof runs from that same deterministic local fixture
+  workspace instead of a OneDrive-backed synced root
 - first-use friction is retained as evidence, not just remembered in chat
 
 ### Gate E: Public Support Surface
@@ -296,6 +298,8 @@ The public facade repo now retains:
   `C:\Users\sveld\AppData\Local\VI History Suite\acceptance\host-machine\acceptance-record.json`
 - Sergio Velderrain remains the sole named maintainer gate owner for the
   pending host-machine manual right-click pass
+- the remaining manual gate is bounded to the deterministic local fixture
+  workspace rather than a OneDrive-backed synced clone
 
 The program still intentionally holds these gates open:
 

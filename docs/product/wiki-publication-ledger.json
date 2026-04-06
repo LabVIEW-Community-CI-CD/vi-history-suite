@@ -23,7 +23,7 @@
       "wikiFileName": "Install-And-Release.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "0fdb25d",
+      "wikiCommit": "0b5b84e",
       "primaryAuthority": [
         "docs/release-procedure.md",
         "docs/product/release-readiness-matrix.json",
@@ -166,7 +166,7 @@
       "wikiFileName": "Current-State.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "0fdb25d",
+      "wikiCommit": "0b5b84e",
       "primaryAuthority": [
         "docs/product/current-state.md",
         "docs/product/post-release-sustainment-rules.md",
@@ -203,7 +203,7 @@
       "wikiFileName": "Development-Queue.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "0fdb25d",
+      "wikiCommit": "0b5b84e",
       "primaryAuthority": [
         "docs/product/development-queue.json",
         "docs/product/post-release-sustainment-rules.md",

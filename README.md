@@ -12,6 +12,7 @@ contains:
 - concentrated multi-report dashboard packets and extension dashboard action
 - governed review-scenario registry and separate human decision-record artifacts
 - deterministic in-IDE host-review submission with canonical-machine binding
+  plus a non-OneDrive workspace boundary
 - canonical real-history harnesses and smoke lanes
 - a private GitHub Linux benchmark lane, mirrored into the private GitHub experiment repo, that defaults hosted runs to the shallower canonical harness while the canonical Windows host owns the deep `lv_icon.vi` benchmark
 - a canonical-host in-IDE benchmark-status surface so Linux benchmark progress
@@ -177,8 +178,9 @@ Committed and governed today:
 - stable `latest-human-review-submission.json` retention at the
   workspace-storage human-review root plus an extension-global canonical
   host-machine fingerprint, so Sergio's maintainer click-pass submission stays
-  hidden from other installs, reports submit success or blockage explicitly in
-  the panel, and can be consumed deterministically without shell notes
+  hidden from other installs, rejects OneDrive-backed review targets before
+  submission, reports submit success or blockage explicitly in the panel, and
+  can be consumed deterministically without shell notes
 - a canonical-host `Open benchmark status` action in the history panel so the
   retained Windows `lv_icon.vi` baseline, retained host Linux launch/log/summary
   state, explicit run/stop benchmark controls, and live pair-preparation

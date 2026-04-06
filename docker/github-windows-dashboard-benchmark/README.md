@@ -13,7 +13,7 @@ Current intent:
 The first governed entrypoint is:
 
 ```powershell
-powershell -NoLogo -NoProfile -ExecutionPolicy Bypass -File docker/github-windows-dashboard-benchmark/run-benchmark.ps1
+C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -NoLogo -NoProfile -File docker/github-windows-dashboard-benchmark/run-benchmark.ps1
 ```
 
 The benchmark itself is executed through:

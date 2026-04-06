@@ -360,6 +360,89 @@ describe('createOpenViHistoryCommand', () => {
     });
   });
 
+  it('blocks host-review submission when the review surface is OneDrive-backed', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Update VI',
+            previousHash: '1111111122222222'
+          },
+          {
+            hash: '1111111122222222',
+            authorDate: '2026-04-01T00:00:00Z',
+            authorName: 'B User',
+            subject: 'Older VI'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+    const submitHumanReviewAction = vi.fn().mockResolvedValue({
+      outcome: 'nondeterministic-review-surface',
+      validationMessage:
+        'Blocked: host-machine review submission requires the deterministic local fixture workspace, not a OneDrive-backed repository-root (C:\\Users\\sveld\\OneDrive\\fixtures\\labview-icon-editor).',
+      blockedSurface: 'repository-root',
+      blockedPath: 'C:\\Users\\sveld\\OneDrive\\fixtures\\labview-icon-editor'
+    });
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      submitHumanReviewAction as never
+    );
+
+    await command(targetUri as never);
+    await tracker.dispatchLastPanelMessage({
+      command: 'submitHumanReview',
+      reviewOutcome: 'passed-human-review',
+      reviewConfidence: 'high',
+      reviewNote: 'The manual right-click flow behaved as expected.'
+    });
+    const panel = createWebviewPanelMock.mock.results[0]?.value as MockPanel | undefined;
+
+    expect(showWarningMessageMock).toHaveBeenCalledWith(
+      'Blocked: host-machine review submission requires the deterministic local fixture workspace, not a OneDrive-backed repository-root (C:\\Users\\sveld\\OneDrive\\fixtures\\labview-icon-editor).'
+    );
+    expect(panel?.webview.postMessage).toHaveBeenCalledWith({
+      type: 'humanReviewSubmissionResult',
+      status: 'blocked',
+      message:
+        'Blocked: host-machine review submission requires the deterministic local fixture workspace, not a OneDrive-backed repository-root (C:\\Users\\sveld\\OneDrive\\fixtures\\labview-icon-editor).'
+    });
+    expect(tracker.getLastActionSummary()).toEqual({
+      command: 'submitHumanReview',
+      outcome: 'nondeterministic-human-review-surface',
+      humanReviewSubmissionFilePath: undefined,
+      humanReviewLatestManifestPath: undefined,
+      humanReviewCanonicalMachineFilePath: undefined,
+      humanReviewMachineFingerprintId: undefined,
+      humanReviewCanonicalMachineFingerprintId: undefined,
+      humanReviewValidationMessage:
+        'Blocked: host-machine review submission requires the deterministic local fixture workspace, not a OneDrive-backed repository-root (C:\\Users\\sveld\\OneDrive\\fixtures\\labview-icon-editor).'
+    });
+  });
+
   it('routes benchmark-status requests through the retained history-panel message path', async () => {
     const targetUri = createMockUri('/workspace/eligible.vi');
     const tracker = new HistoryPanelTracker();

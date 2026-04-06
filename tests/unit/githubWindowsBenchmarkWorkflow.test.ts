@@ -36,6 +36,8 @@ describe('github windows benchmark workflow', () => {
     expect(dockerfile).toContain(
       'SHELL ["C:\\\\Windows\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe"'
     );
+    expect(dockerfile).not.toContain('-ExecutionPolicy');
+    expect(dockerfile).not.toContain('Bypass');
     expect(dockerfile).toContain('ENV LV_RTE_HEADLESS=1');
     expect(dockerfile).toContain(
       'CMD ["C:\\\\Windows\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe"'

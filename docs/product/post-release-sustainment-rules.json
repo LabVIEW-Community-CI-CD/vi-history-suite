@@ -93,7 +93,8 @@
     ],
     "prohibitedBypasses": [
       "execution-policy bypass that skips canonical execution-request validation",
-      "execution-policy bypass that skips governed provider hard stops"
+      "execution-policy bypass that skips governed provider hard stops",
+      "PowerShell ExecutionPolicy Bypass on governed benchmark-image or host-proof helper surfaces"
     ]
   }
 }

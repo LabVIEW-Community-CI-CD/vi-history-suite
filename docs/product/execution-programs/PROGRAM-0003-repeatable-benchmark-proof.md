@@ -81,7 +81,9 @@ retained `HARNESS-VHS-002` comparable-prefix packet rather than silently
 claiming the blocked full window, and it pre-seeds the mounted harness cache
 from the governed local `ni-labview-icon-editor` clone when that clone is
 available on the canonical host while normalizing Git safe-directory handling
-for those mounted clones before the image entrypoint runs. The active
+for those mounted clones before the image entrypoint runs and respecting the
+active PowerShell execution policy instead of using `ExecutionPolicy Bypass`.
+The active
 Windows-image hardening also restores the governed Windows `-LabVIEWPath`,
 forces `LV_RTE_HEADLESS=1`, hardens `LabVIEWCLI.ini` startup timeouts, and
 prelaunches headless LabVIEW before benchmark execution so the published image

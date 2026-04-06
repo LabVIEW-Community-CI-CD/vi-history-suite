@@ -59,7 +59,8 @@ unclosed first-release scramble.</p>
 <li>separate human decision records</li>
 <li>bundled version-matched user documentation inside the extension</li>
 <li>deterministic maintainer host-review submission on Sergio Velderrain&#39;s
-canonical Windows 11 machine</li>
+canonical Windows 11 machine with a fail-closed non-OneDrive workspace
+boundary</li>
 <li>bounded repo-family support for <code>ni/labview-icon-editor</code>,
 <code>ni/actor-framework</code>, and their governed forks</li>
 <li>governed documentation and wiki-authoring workbench surfaces</li>
@@ -96,7 +97,9 @@ canonical Windows 11 machine</li>
 <li>the private GitHub experiment repo is benchmark evidence only</li>
 <li>Docker is no longer part of the default public setup path</li>
 <li>the Windows 11 host-machine automated acceptance flow already succeeds</li>
-<li>the remaining human UX gate is Sergio Velderrain&#39;s manual right-click pass</li>
+<li>the remaining human UX gate is Sergio Velderrain&#39;s manual right-click pass
+from the deterministic local fixture workspace rather than a OneDrive-backed
+synced clone</li>
 <li>benchmark proof is now a closed bounded program, not part of the active
 public-closeout exit gate</li>
 <li>execution-policy work is now closed on transparent provider/acquisition
@@ -105,6 +108,8 @@ truth, and sustainment is the active driver-seat post-release lane</li>
 maintenance label</li>
 <li>benchmark sustainment is now explicit bounded truth with retained refresh,
 non-trigger, and reopen rules</li>
+<li>governed Windows benchmark-image helper surfaces now respect the active
+PowerShell execution policy instead of using <code>ExecutionPolicy Bypass</code></li>
 </ul>
 <h2>Benchmark And Proof State</h2>
 <p>The product now has separate proof surfaces instead of one blended lane:</p>

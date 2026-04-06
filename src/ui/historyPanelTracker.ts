@@ -60,6 +60,7 @@ export interface HistoryPanelActionSummary {
     | 'invalid-human-review-submission'
     | 'missing-human-review-storage'
     | 'canonical-machine-mismatch'
+    | 'nondeterministic-human-review-surface'
     | 'unsupported-command';
   openedUri?: string;
   leftUri?: string;

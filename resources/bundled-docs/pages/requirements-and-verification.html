@@ -122,6 +122,12 @@ authority/wiki/bundled-doc upkeep under <code>PROGRAM-0004</code></li>
 <li>execution-policy bypass is explicitly prohibited, so canonical
 execution-request validation and governed provider hard stops remain part of
 the requirements contract instead of optional implementation detail</li>
+<li>the maintainer-only host-review submission flow now also rejects
+OneDrive-backed review targets so the still-open Windows 11 human gate stays
+on the deterministic local fixture workspace</li>
+<li>the governed Windows benchmark-image Docker and canonical-host proof-runner
+surfaces now respect the active PowerShell execution policy instead of using
+<code>ExecutionPolicy Bypass</code></li>
 </ul>
 <h2>Why It Matters</h2>
 <p>This is one of the main differences between a useful engineering wiki and a

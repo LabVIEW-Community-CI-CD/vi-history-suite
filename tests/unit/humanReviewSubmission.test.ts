@@ -8,6 +8,7 @@ import {
   buildHostMachineFingerprint,
   buildExpectedCanonicalHostMachineFingerprint,
   CANONICAL_HOST_MACHINE_FILENAME,
+  isOneDriveBackedPath,
   LATEST_HUMAN_REVIEW_SUBMISSION_FILENAME,
   persistHumanReviewSubmission
 } from '../../src/review/humanReviewSubmission';
@@ -192,6 +193,57 @@ describe('humanReviewSubmission', () => {
     await expect(
       fs.access(path.join(mismatch.artifactPlan.submissionDirectory, 'human-review-submission.json'))
     ).rejects.toThrow();
+  });
+
+  it('fails closed when the review target repository root is OneDrive-backed', async () => {
+    const workspaceStorageRoot = await fs.mkdtemp(
+      path.join(os.tmpdir(), 'vihs-human-review-')
+    );
+    tempRoots.push(workspaceStorageRoot);
+
+    const machineFingerprint = {
+      ...buildExpectedCanonicalHostMachineFingerprint(),
+      machineId: 'author-designated-canonical-host',
+      vscodeVersion: '1.100.0'
+    };
+    const result = await persistHumanReviewSubmission(workspaceStorageRoot, {
+      source: 'history-panel',
+      model: {
+        ...buildModel(),
+        repositoryRoot: 'C:\\Users\\sveld\\OneDrive\\fixtures\\labview-icon-editor'
+      },
+      reviewerName: 'Sergio Velderrain',
+      outcome: 'passed-human-review',
+      confidence: 'high',
+      note: 'This should fail because the workspace is OneDrive-backed.',
+      machineFingerprint
+    });
+
+    expect(result.outcome).toBe('nondeterministic-review-surface');
+    if (result.outcome !== 'nondeterministic-review-surface') {
+      return;
+    }
+    expect(result.blockedSurface).toBe('repository-root');
+    expect(result.blockedPath).toContain('OneDrive');
+    await expect(
+      fs.access(
+        path.join(
+          workspaceStorageRoot,
+          'human-reviews',
+          LATEST_HUMAN_REVIEW_SUBMISSION_FILENAME
+        )
+      )
+    ).rejects.toThrow();
+  });
+
+  it('detects OneDrive-backed paths across Windows and WSL path shapes', () => {
+    expect(isOneDriveBackedPath('C:\\Users\\sveld\\OneDrive\\fixture')).toBe(true);
+    expect(
+      isOneDriveBackedPath('/mnt/c/Users/sveld/OneDrive - Company/fixture')
+    ).toBe(true);
+    expect(isOneDriveBackedPath('C:\\Users\\sveld\\AppData\\Local\\fixture')).toBe(
+      false
+    );
   });
 });
 

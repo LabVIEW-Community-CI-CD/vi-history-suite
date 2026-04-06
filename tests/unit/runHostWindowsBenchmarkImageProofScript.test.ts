@@ -185,6 +185,8 @@ describe('runHostWindowsBenchmarkImageProof script', () => {
     expect(args).toContain(
       'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe'
     );
+    expect(args).not.toContain('-ExecutionPolicy');
+    expect(args).not.toContain('Bypass');
     expect(args).toContain('-Command');
     expect(args.join(' ')).toContain('C:\\workspace\\.cache\\harnesses');
     expect(args.join(' ')).toContain("C:\\Windows\\System32;' + $env:PATH");
@@ -245,39 +247,48 @@ describe('runHostWindowsBenchmarkImageProof script', () => {
   });
 
   it('inspects the current Windows benchmark-image runtime surface deterministically', () => {
+    const captured: { command?: string; args?: string[] } = {};
     const surface = hostWindowsProof.inspectWindowsBenchmarkImageRuntimeSurface(
       'ghcr.io/example/windows-dashboard-benchmark:main',
       'desktop-windows',
       { imageDigest: 'sha256:abc' },
       {
-        spawnSync: () => ({
-          status: 0,
-          stdout: JSON.stringify({
-            scopeBoundary: 'current-governed-benchmark-image-contract',
-            assessment: 'mixed-bitness-only-labview-cli-surface',
-            labviewCliBundleAvailability: {
-              x64: false,
-              x86: false
-            },
-            lvcompareBundleAvailability: {
-              x64: true,
-              x86: false
-            },
-            observedPaths: {
-              labviewExeX64: {
-                path: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
-                exists: true
+        spawnSync: (command, args) => {
+          captured.command = command;
+          captured.args = args;
+          return {
+            status: 0,
+            stdout: JSON.stringify({
+              scopeBoundary: 'current-governed-benchmark-image-contract',
+              assessment: 'mixed-bitness-only-labview-cli-surface',
+              labviewCliBundleAvailability: {
+                x64: false,
+                x86: false
               },
-              labviewCliX86: {
-                path: 'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
-                exists: true
+              lvcompareBundleAvailability: {
+                x64: true,
+                x86: false
+              },
+              observedPaths: {
+                labviewExeX64: {
+                  path: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+                  exists: true
+                },
+                labviewCliX86: {
+                  path: 'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+                  exists: true
+                }
               }
-            }
-          })
-        })
+            })
+          };
+        }
       }
     );
 
+    expect(captured.command).toBe('docker.exe');
+    expect(captured.args).toBeDefined();
+    expect(captured.args).not.toContain('-ExecutionPolicy');
+    expect(captured.args).not.toContain('Bypass');
     expect(surface.scopeBoundary).toBe('current-governed-benchmark-image-contract');
     expect(surface.assessment).toBe('mixed-bitness-only-labview-cli-surface');
     expect(surface.labviewCliBundleAvailability).toEqual({

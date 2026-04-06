@@ -1350,6 +1350,13 @@
   refresh/non-trigger/reopen rules for the accepted current contract, and
   preserves the required authority/wiki/bundled-doc upkeep steps plus the
   no-execution-policy-bypass rule
+- `TEST-UNIT-304`: verify host-review submission fails closed when the review
+  target is OneDrive-backed, writes no retained review artifact in that case,
+  and gives mode-appropriate guidance to rerun from the deterministic local
+  fixture workspace or another non-synced local path
+- `TEST-UNIT-305`: verify the governed Windows benchmark-image Dockerfile and
+  canonical-host proof runner no longer include `ExecutionPolicy Bypass` while
+  still using the explicit full-path Windows PowerShell runtime surface
 - `TEST-DOC-070`: review current-state, harnesses, PROGRAM-0003, ISSUE-0408,
   and the comparable-prefix packet and confirm the repo documents the current
   Windows pair-129 ceiling as an accepted current-contract exception backed by
@@ -1366,6 +1373,12 @@
   Requirements-And-Verification, the wiki coverage/publication ledgers, and
   bundled docs and confirm the sustainment-rules package is represented on the
   published reader surfaces rather than remaining authority-only chronology
+- `TEST-DOC-073`: review README, current-state, PROGRAM-0002, ISSUE-0407,
+  PROGRAM-0003, ISSUE-0408, and the sustainment-rules package and confirm the
+  host-machine human gate now requires a deterministic local non-OneDrive
+  workspace while the governed Windows benchmark-image helper surfaces respect
+  the active PowerShell execution policy instead of using
+  `ExecutionPolicy Bypass`
 - `TEST-DOC-028`: review the cross-repo jump map and confirm it records the
   governed authority repo, private experiment mirror, wiki, and
   assurance-skill repos with authority roles, expected remotes, and primary

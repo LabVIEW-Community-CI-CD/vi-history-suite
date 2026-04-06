@@ -138,7 +138,7 @@ describe('renderHistoryPanelHtml', () => {
       'Create decision record</code> when decision-record support is available in this build and you want to retain a separate human review outcome'
     );
     expect(html).toContain(
-      'Submit host review</code> after the manual right-click pass on the canonical Windows 11 host machine'
+      'Submit host review</code> after the manual right-click pass on the canonical Windows 11 host machine from the deterministic local fixture workspace, not a OneDrive-backed path'
     );
     expect(html).toContain(
       'Pass + High: the click flow behaved as expected and no meaningful doubt remains.'

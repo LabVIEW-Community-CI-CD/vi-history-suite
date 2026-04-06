@@ -126,12 +126,16 @@ describe('post-release sustainment rules package', () => {
     expect(rules.operatorSurfaceSustainment.prohibitedBypasses).toContain(
       'execution-policy bypass that skips canonical execution-request validation'
     );
+    expect(rules.operatorSurfaceSustainment.prohibitedBypasses).toContain(
+      'PowerShell ExecutionPolicy Bypass on governed benchmark-image or host-proof helper surfaces'
+    );
 
     expect(rulesDoc).toContain('## Release Refresh Rules');
     expect(rulesDoc).toContain('## Benchmark Refresh Rules');
     expect(rulesDoc).toContain('## Operator And Documentation Upkeep Rules');
     expect(rulesDoc).toContain('PROGRAM-0002');
     expect(rulesDoc).toContain('execution-policy bypass');
+    expect(rulesDoc).toContain('ExecutionPolicy Bypass');
 
     expect(readme).toContain(
       '[Post-Release Sustainment Rules](./docs/product/post-release-sustainment-rules.md)'

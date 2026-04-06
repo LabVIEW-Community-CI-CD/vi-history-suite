@@ -55,11 +55,12 @@ Current retained benchmark truth at closure:
   as the canonical-host proof surface for that image; it pulls the published
   GHCR tag, pre-seeds the mounted harness cache from the governed local
   `ni-labview-icon-editor` clone when available, normalizes Git safe-directory
-  handling for those mounted clones, defaults `HARNESS-VHS-002` to the
-  retained `129`-commit comparable prefix unless overridden, accepts a
-  targeted `--engine <labview-cli|lvcompare>` override for diagnosis reruns,
-  labels Windows diagnosis progress as Windows rather than Linux, and writes
-  launch/log/summary receipts under
+  handling for those mounted clones, respects the active PowerShell execution
+  policy instead of using `ExecutionPolicy Bypass`, defaults
+  `HARNESS-VHS-002` to the retained `129`-commit comparable prefix unless
+  overridden, accepts a targeted `--engine <labview-cli|lvcompare>` override
+  for diagnosis reruns, labels Windows diagnosis progress as Windows rather
+  than Linux, and writes launch/log/summary receipts under
   `C:\Users\sveld\AppData\Local\VI History Suite\windows-benchmark-image-proof`
 - the latest local Windows benchmark-image proof now reaches pair `129/134`
   before failing truthfully with `command-exited-nonzero`; the retained

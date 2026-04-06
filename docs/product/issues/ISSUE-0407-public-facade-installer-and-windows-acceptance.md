@@ -54,6 +54,8 @@ Current landed scaffold state:
   `C:\Users\sveld\AppData\Local\VI History Suite\acceptance\host-machine\acceptance-record.json`
 - only the manual human UX proof gate remains open, and Sergio Velderrain is
   the sole named maintainer gate owner for that host-machine click pass
+- that remaining manual host-machine gate is bounded to the deterministic
+  local fixture workspace rather than a OneDrive-backed synced clone
 - the authority repo still mirrors a GitHub Linux benchmark lane into the
   private `vi-history-suite-source-experiments` repo, but that mirror is now
   documented as benchmark only and belongs to the queued benchmark-proof lane
@@ -111,8 +113,9 @@ Current landed scaffold state:
   commit history
 - the Windows 11 host-machine acceptance lane is documented as the
   installed-user proof surface, includes Visual Studio Code CLI verification
-  plus an explicit manual right-click human gate, and no longer depends on a
-  fresh VM as the primary replay surface
+  plus an explicit manual right-click human gate from a deterministic local
+  non-OneDrive fixture workspace, and no longer depends on a fresh VM as the
+  primary replay surface
 - Sergio Velderrain is documented as the sole named maintainer gate owner for
   the host-machine click UX pass
 - Docker is documented as optional future provider work, not a default public

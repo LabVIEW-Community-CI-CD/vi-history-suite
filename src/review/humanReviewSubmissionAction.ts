@@ -30,13 +30,16 @@ export interface HumanReviewSubmissionActionResult {
     | 'workspace-untrusted'
     | 'missing-storage-uri'
     | 'invalid-human-review-submission'
-    | 'canonical-machine-mismatch';
+    | 'canonical-machine-mismatch'
+    | 'nondeterministic-review-surface';
   validationMessage?: string;
   submissionFilePath?: string;
   latestSubmissionFilePath?: string;
   canonicalHostMachineFilePath?: string;
   machineFingerprintId?: string;
   canonicalMachineFingerprintId?: string;
+  blockedPath?: string;
+  blockedSurface?: string;
 }
 
 export interface HumanReviewSubmissionActionDeps {
@@ -162,6 +165,16 @@ export function createHumanReviewSubmissionAction(
         canonicalHostMachineFilePath: result.canonicalHostMachineFilePath,
         machineFingerprintId: result.actualFingerprint.fingerprintId,
         canonicalMachineFingerprintId: result.expectedFingerprint.fingerprintId
+      };
+    }
+
+    if (result.outcome === 'nondeterministic-review-surface') {
+      return {
+        outcome: 'nondeterministic-review-surface',
+        blockedPath: result.blockedPath,
+        blockedSurface: result.blockedSurface,
+        validationMessage:
+          `Blocked: host-machine review submission requires the deterministic local fixture workspace, not a OneDrive-backed ${result.blockedSurface} (${result.blockedPath}).`
       };
     }
 

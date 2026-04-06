@@ -125,9 +125,22 @@ export interface PersistHumanReviewSubmissionMismatch {
   actualFingerprint: HostMachineFingerprint;
 }
 
+export type NonDeterministicReviewSurface =
+  | 'repository-root'
+  | 'workspace-storage-root'
+  | 'canonical-host-storage-root'
+  | 'latest-dashboard-run-root';
+
+export interface PersistHumanReviewSubmissionNonDeterministicSurface {
+  outcome: 'nondeterministic-review-surface';
+  blockedSurface: NonDeterministicReviewSurface;
+  blockedPath: string;
+}
+
 export type PersistHumanReviewSubmissionResult =
   | PersistHumanReviewSubmissionSuccess
-  | PersistHumanReviewSubmissionMismatch;
+  | PersistHumanReviewSubmissionMismatch
+  | PersistHumanReviewSubmissionNonDeterministicSurface;
 
 export function buildHostMachineFingerprint(options: {
   machineId: string;
@@ -197,6 +210,20 @@ export async function persistHumanReviewSubmission(
     input.reviewerName,
     recordedAt
   );
+
+  const nonDeterministicSurface = findNonDeterministicReviewSurface({
+    repositoryRoot: input.model.repositoryRoot,
+    workspaceStorageRoot,
+    canonicalHostStorageRoot,
+    latestDashboardRunRepositoryRoot: input.latestDashboardRun?.repositoryRoot
+  });
+  if (nonDeterministicSurface) {
+    return {
+      outcome: 'nondeterministic-review-surface',
+      blockedSurface: nonDeterministicSurface.surface,
+      blockedPath: nonDeterministicSurface.filePath
+    };
+  }
 
   await mkdir(artifactPlan.submissionDirectory, { recursive: true });
   await mkdir(path.dirname(artifactPlan.latestSubmissionFilePath), { recursive: true });
@@ -367,4 +394,62 @@ function defaultNow(): string {
 
 function createDeterministicId(value: string): string {
   return createHash('sha256').update(value).digest('hex').slice(0, 12);
+}
+
+export function isOneDriveBackedPath(filePath: string | undefined): boolean {
+  if (!filePath) {
+    return false;
+  }
+  const normalizedSegments = filePath
+    .replace(/\\/g, '/')
+    .split('/')
+    .map((segment) => segment.trim().toLowerCase())
+    .filter((segment) => segment.length > 0);
+
+  return normalizedSegments.some((segment) => /^onedrive(?:$|[ -])/.test(segment));
+}
+
+function findNonDeterministicReviewSurface(options: {
+  repositoryRoot: string;
+  workspaceStorageRoot: string;
+  canonicalHostStorageRoot: string;
+  latestDashboardRunRepositoryRoot?: string;
+}):
+  | {
+      surface: NonDeterministicReviewSurface;
+      filePath: string;
+    }
+  | undefined {
+  const candidates: Array<{
+    surface: NonDeterministicReviewSurface;
+    filePath: string | undefined;
+  }> = [
+    {
+      surface: 'repository-root',
+      filePath: options.repositoryRoot
+    },
+    {
+      surface: 'workspace-storage-root',
+      filePath: options.workspaceStorageRoot
+    },
+    {
+      surface: 'canonical-host-storage-root',
+      filePath: options.canonicalHostStorageRoot
+    },
+    {
+      surface: 'latest-dashboard-run-root',
+      filePath: options.latestDashboardRunRepositoryRoot
+    }
+  ];
+
+  for (const candidate of candidates) {
+    if (candidate.filePath && isOneDriveBackedPath(candidate.filePath)) {
+      return {
+        surface: candidate.surface,
+        filePath: candidate.filePath
+      };
+    }
+  }
+
+  return undefined;
 }

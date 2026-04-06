@@ -49,7 +49,7 @@ export function renderHistoryPanelHtml(
     ? '<li data-testid="history-guidance-step">Use <code>Open benchmark status</code> on the canonical Windows 11 host when you need the retained Windows baseline plus the live or completed Linux benchmark state inside VS Code instead of background processes or shell logs.</li>'
     : '';
   const reviewGuidanceHumanReviewStep = showHumanReviewSubmission
-    ? '<li data-testid="history-guidance-step">Use <code>Submit host review</code> after the manual right-click pass on the canonical Windows 11 host machine so the result is retained to a stable latest-review manifest future sessions can consume automatically.</li>'
+    ? '<li data-testid="history-guidance-step">Use <code>Submit host review</code> after the manual right-click pass on the canonical Windows 11 host machine from the deterministic local fixture workspace, not a OneDrive-backed path, so the result is retained to a stable latest-review manifest future sessions can consume automatically.</li>'
     : '';
   const reviewSubmissionHtml = showHumanReviewSubmission
     ? renderHumanReviewSubmissionSection()

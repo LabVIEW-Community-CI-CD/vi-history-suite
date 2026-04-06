@@ -361,8 +361,6 @@ function buildDockerRunArgs(options) {
     CONTAINER_POWERSHELL,
     '-NoLogo',
     '-NoProfile',
-    '-ExecutionPolicy',
-    'Bypass',
     '-Command',
     CONTAINER_BOOTSTRAP_COMMAND
   );
@@ -500,8 +498,6 @@ function inspectWindowsBenchmarkImageRuntimeSurface(
       CONTAINER_POWERSHELL,
       '-NoLogo',
       '-NoProfile',
-      '-ExecutionPolicy',
-      'Bypass',
       '-Command',
       script
     ],

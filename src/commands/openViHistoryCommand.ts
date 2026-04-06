@@ -722,6 +722,11 @@ export function createOpenViHistoryCommand(
           void vscode.window.showWarningMessage(
             'This review submission was blocked because the current machine fingerprint does not match the canonical Windows 11 review host.'
           );
+        } else if (result.outcome === 'nondeterministic-review-surface') {
+          humanReviewSubmissionStatusMessage =
+            result.validationMessage ??
+            'Blocked: host-machine review submission requires the deterministic local fixture workspace instead of a OneDrive-backed path.';
+          void vscode.window.showWarningMessage(humanReviewSubmissionStatusMessage);
         } else if (result.validationMessage) {
           humanReviewSubmissionStatusMessage = result.validationMessage;
           void vscode.window.showInformationMessage(result.validationMessage);
@@ -748,6 +753,8 @@ export function createOpenViHistoryCommand(
                 ? 'missing-human-review-storage'
               : result.outcome === 'canonical-machine-mismatch'
                 ? 'canonical-machine-mismatch'
+                : result.outcome === 'nondeterministic-review-surface'
+                  ? 'nondeterministic-human-review-surface'
                 : 'invalid-human-review-submission',
           humanReviewSubmissionFilePath: result.submissionFilePath,
           humanReviewLatestManifestPath: result.latestSubmissionFilePath,

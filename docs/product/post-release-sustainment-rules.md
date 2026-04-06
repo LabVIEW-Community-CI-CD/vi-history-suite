@@ -118,6 +118,8 @@ Sustainment may not:
 - silently reopen closed benchmark or execution-policy programs
 - introduce an execution-policy bypass that skips canonical execution-request
   validation or governed provider hard stops
+- introduce PowerShell `ExecutionPolicy Bypass` on governed benchmark-image or
+  host-proof helper surfaces
 - treat characterization receipts as new governed product truth without
   control-plane normalization
 

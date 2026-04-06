@@ -135,6 +135,7 @@ describe('post-release control-plane coherence', () => {
     expect(benchmarkProgram).toContain('Closed on bounded post-release benchmark truth.');
     expect(benchmarkProgram).toContain('- `TRANCHE-011` is now done');
     expect(benchmarkProgram).toContain('reopen this program only if the governed Windows');
+    expect(benchmarkProgram).toContain('ExecutionPolicy Bypass');
 
     expect(sustainmentProgram).toContain('Active post-release program.');
     expect(sustainmentProgram).toContain(
@@ -186,6 +187,7 @@ describe('post-release control-plane coherence', () => {
     expect(currentState).toContain(
       '- the public acceptance surface now includes a dedicated host-machine human-gate closeout script with structured checklist retention in the acceptance record'
     );
+    expect(currentState).toContain('fail-closed non-OneDrive workspace boundary');
 
     expect(program).toContain('The program still intentionally holds these gates open:');
     expect(program).toContain('- Gate D human right-click proof');
@@ -199,11 +201,14 @@ describe('post-release control-plane coherence', () => {
       '- Sergio Velderrain is the sole named maintainer authorized to close the'
     );
     expect(program).toContain('- a dedicated `Invoke-Windows11HumanGate.ps1` closeout script plus structured');
+    expect(program).toContain('local non-OneDrive path');
+    expect(program).toContain('OneDrive-backed synced root');
 
     expect(issue).toContain('- the host-machine automated acceptance lane now succeeds with a retained');
     expect(issue).toContain(
       '- only the manual human UX proof gate remains open, and Sergio Velderrain is'
     );
+    expect(issue).toContain('OneDrive-backed synced clone');
     expect(issue).toContain('- the GitHub workflow is documented as the active public release-kit');
     expect(issue).toContain('- the Windows 11 host-machine acceptance lane is documented as the');
     expect(issue).toContain('The public facade is for release, setup, and support only.');
@@ -437,6 +442,7 @@ describe('post-release control-plane coherence', () => {
     expect(sustainmentIssue).toContain('benchmark refresh cadence');
     expect(sustainmentIssue).toContain('docs/product/post-release-sustainment-rules.md');
     expect(sustainmentRules).toContain('execution-policy bypass');
+    expect(sustainmentRules).toContain('ExecutionPolicy Bypass');
   });
 
   it('keeps the GitLab authority, existing GitHub experiment mirror, and public facade boundary explicit', () => {

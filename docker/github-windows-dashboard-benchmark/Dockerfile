@@ -2,7 +2,7 @@
 ARG BASE_IMAGE=nationalinstruments/labview:2026q1-windows
 FROM ${BASE_IMAGE}
 
-SHELL ["C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe", "-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command"]
+SHELL ["C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe", "-NoLogo", "-NoProfile", "-Command"]
 
 ARG BASE_IMAGE
 ARG NODE_VERSION=24.10.0
@@ -45,4 +45,4 @@ RUN npm ci; `
     }; `
     New-Item -ItemType Directory -Path C:\workspace\.cache -Force | Out-Null
 
-CMD ["C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe", "-NoLogo", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "Start-Sleep -Seconds 3600"]
+CMD ["C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe", "-NoLogo", "-NoProfile", "-Command", "Start-Sleep -Seconds 3600"]
