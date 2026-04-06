@@ -9,7 +9,7 @@ instead of assumed UI ideas.
 ## Evidence Source
 
 - canonical smoke command:
-  - `node out/cli/runHarnessReportSmoke.js --harness-id HARNESS-VHS-001 --platform win32 --prefer-bitness auto`
+  - `node out/cli/runHarnessReportSmoke.js --harness-id HARNESS-VHS-001 --platform win32 --bitness x64`
 - generated report artifact:
   - `.cache/harness-reports/HARNESS-VHS-001/workspace-storage/reports/7f077e37eff8/3fadb8e7b4e3/diff-report-VIP_Pre-Install Custom Action.vi.html`
 

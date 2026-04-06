@@ -82,7 +82,7 @@ describe('comparisonRuntimeLocator', () => {
       {
         labviewCliPath: 'C:\\Tools\\LabVIEWCLI.exe',
         labviewExePath: 'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
-        preferBitness: 'x64'
+        bitness: 'x64'
       },
       {
         queryWindowsContainerImage: vi.fn().mockResolvedValue(false),
@@ -131,7 +131,7 @@ describe('comparisonRuntimeLocator', () => {
     const result = await locateComparisonRuntime(
       'win32',
       {
-        preferBitness: 'x64'
+        bitness: 'x64'
       },
       {
         queryWindowsContainerProviderFacts: vi
@@ -172,12 +172,12 @@ describe('comparisonRuntimeLocator', () => {
     ]);
   });
 
-  it('defaults Windows auto bitness to x86 when both host installs are available', async () => {
+  it('defaults Windows bitness to x64 when both host installs are available', async () => {
     const cleanHost = buildCleanWindowsHostDeps();
     const result = await locateComparisonRuntime(
       'win32',
       {
-        preferBitness: 'auto'
+        bitness: 'x64'
       },
       {
         queryWindowsContainerProviderFacts: vi
@@ -196,7 +196,7 @@ describe('comparisonRuntimeLocator', () => {
     );
 
     expect(result.engine).toBe('labview-cli');
-    expect(result.labviewExe?.bitness).toBe('x86');
+    expect(result.labviewExe?.bitness).toBe('x64');
     expect(result.providerDecisions).toEqual([
       {
         provider: 'windows-container',
@@ -220,7 +220,7 @@ describe('comparisonRuntimeLocator', () => {
     const result = await locateComparisonRuntime(
       'win32',
       {
-        preferBitness: 'x86'
+        bitness: 'x86'
       },
       {
         queryWindowsContainerImage: vi.fn().mockResolvedValue(false),
@@ -260,7 +260,7 @@ describe('comparisonRuntimeLocator', () => {
     const result = await locateComparisonRuntime(
       'win32',
       {
-        preferBitness: 'auto'
+        bitness: 'x64'
       },
       {
         queryWindowsContainerProviderFacts: vi
@@ -307,7 +307,7 @@ describe('comparisonRuntimeLocator', () => {
     const result = await locateComparisonRuntime(
       'win32',
       {
-        preferBitness: 'x64'
+        bitness: 'x64'
       },
       {
         queryWindowsContainerProviderFacts: vi
@@ -363,7 +363,7 @@ describe('comparisonRuntimeLocator', () => {
       'win32',
       {
         executionMode: 'host-only',
-        preferBitness: 'x64'
+        bitness: 'x64'
       },
       {
         queryWindowsContainerImage: vi.fn().mockResolvedValue(true),
@@ -405,7 +405,7 @@ describe('comparisonRuntimeLocator', () => {
       'win32',
       {
         executionMode: 'docker-only',
-        preferBitness: 'x64'
+        bitness: 'x64'
       },
       {
         queryWindowsContainerProviderFacts: vi
@@ -452,7 +452,7 @@ describe('comparisonRuntimeLocator', () => {
       'win32',
       {
         executionMode: 'docker-only',
-        preferBitness: 'x86'
+        bitness: 'x86'
       },
       {
         queryWindowsContainerImage: vi.fn().mockResolvedValue(false),
@@ -769,7 +769,7 @@ HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\National Instruments\\LabVIEW
       {
         labviewCliPath: 'D:\\NI\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
         labviewExePath: 'D:\\NI\\LabVIEW\\LabVIEW.exe',
-        preferBitness: 'x64'
+        bitness: 'x64'
       },
       {
         queryWindowsContainerImage: vi.fn().mockResolvedValue(false),
@@ -794,7 +794,7 @@ HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\National Instruments\\LabVIEW
     const result = await locateComparisonRuntime(
       'win32',
       {
-        preferBitness: 'x64'
+        bitness: 'x64'
       },
       {
         queryWindowsContainerProviderFacts: vi
@@ -838,7 +838,7 @@ HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\National Instruments\\LabVIEW
     const result = await locateComparisonRuntime(
       'win32',
       {
-        preferBitness: 'x64'
+        bitness: 'x64'
       },
       {
         queryWindowsContainerProviderFacts: vi
@@ -888,7 +888,7 @@ HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\National Instruments\\LabVIEW
     const result = await locateComparisonRuntime(
       'win32',
       {
-        preferBitness: 'x64'
+        bitness: 'x64'
       },
       {
         queryWindowsContainerProviderFacts: vi
@@ -939,7 +939,7 @@ HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\National Instruments\\LabVIEW
       'win32',
       {
         executionMode: 'host-only',
-        preferBitness: 'x64'
+        bitness: 'x64'
       },
       {
         queryWindowsContainerImage: vi.fn().mockResolvedValue(true),

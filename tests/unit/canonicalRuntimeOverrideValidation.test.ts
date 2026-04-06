@@ -17,7 +17,7 @@ const WINDOWS_X64_LVCOMPARE_PATH =
   'C:\\Program Files\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe';
 
 describe('canonicalRuntimeOverrideValidation', () => {
-  it('rejects mixed Windows bitness bundles even when prefer-bitness is omitted', () => {
+  it('rejects mixed Windows bitness bundles even when bitness is omitted', () => {
     expect(() =>
       validateCanonicalRuntimeOverrideArgs(
         {
@@ -43,7 +43,7 @@ describe('canonicalRuntimeOverrideValidation', () => {
     ).toThrow(/must form one coherent bitness bundle/);
   });
 
-  it('accepts coherent Windows bundles without an explicit prefer-bitness override', () => {
+  it('accepts coherent Windows bundles without an explicit bitness override', () => {
     expect(() =>
       validateCanonicalRuntimeOverrideArgs(
         {
@@ -92,7 +92,7 @@ describe('canonicalRuntimeOverrideValidation', () => {
     ).toEqual({
       runtimePlatform: 'win32',
       runtimeEngineOverride: 'labview-cli',
-      preferBitness: undefined,
+      bitness: undefined,
       labviewCliPath: WINDOWS_X86_LABVIEW_CLI_PATH,
       labviewExePath: WINDOWS_X86_LABVIEW_EXE_PATH,
       lvComparePath: undefined

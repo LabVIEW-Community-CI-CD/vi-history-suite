@@ -25,7 +25,7 @@ export interface HarnessDecisionRecordCliArgs {
   decisionRationale?: string;
   runtimePlatform?: RuntimePlatform;
   runtimeEngineOverride?: ComparisonRuntimeEngine;
-  preferBitness?: 'auto' | 'x86' | 'x64';
+  bitness?: 'x86' | 'x64';
   labviewCliPath?: string;
   labviewExePath?: string;
   lvComparePath?: string;
@@ -52,7 +52,7 @@ export interface HarnessDecisionRecordCliDeps {
 
 export function getHarnessDecisionRecordUsage(): string {
   return [
-    'Usage: runHarnessDecisionRecord [--harness-id <id>] [--scenario-id <id>] --reviewer <name> --review-question <text> --outcome <approved|rejected|needs-more-review> --confidence <low|medium|high> --decision-rationale <text> [--strict-rsrc-header] [--platform <win32|linux|darwin>] [--engine <labview-cli|lvcompare>] [--prefer-bitness <auto|x86|x64>] [--labview-cli-path <path>] [--labview-exe-path <path>] [--lvcompare-path <path>] [--dashboard-commit-window <count>] [--additional-report-generation-required] [--additional-manual-labview-inspection-required] [--issue <text>] [--help]',
+    'Usage: runHarnessDecisionRecord [--harness-id <id>] [--scenario-id <id>] --reviewer <name> --review-question <text> --outcome <approved|rejected|needs-more-review> --confidence <low|medium|high> --decision-rationale <text> [--strict-rsrc-header] [--platform <win32|linux|darwin>] [--engine <labview-cli|lvcompare>] [--bitness <x86|x64>] [--labview-cli-path <path>] [--labview-exe-path <path>] [--lvcompare-path <path>] [--dashboard-commit-window <count>] [--additional-report-generation-required] [--additional-manual-labview-inspection-required] [--issue <text>] [--help]',
     '',
     'Options:',
     '  --harness-id <id>                                Select the canonical harness to run.',
@@ -65,7 +65,7 @@ export function getHarnessDecisionRecordUsage(): string {
     '  --strict-rsrc-header                             Require RSRC header validation during VI detection.',
     '  --platform <value>                               Override runtime detection platform for report-tool selection.',
     '  --engine <value>                                 Override the selected report engine.',
-    '  --prefer-bitness <value>                         Set runtime bitness preference for report-tool selection.',
+    '  --bitness <value>                         Set explicit runtime bitness for report-tool selection.',
     '  --labview-cli-path <path>                        Provide an explicit LabVIEWCLI path for report-tool selection.',
     '  --labview-exe-path <path>                        Provide an explicit LabVIEW executable path for report-tool selection.',
     '  --lvcompare-path <path>                          Provide an explicit LVCompare path for report-tool selection.',
@@ -89,7 +89,7 @@ export function parseHarnessDecisionRecordArgs(argv: string[]): HarnessDecisionR
   let decisionRationale: string | undefined;
   let runtimePlatform: RuntimePlatform | undefined;
   let runtimeEngineOverride: ComparisonRuntimeEngine | undefined;
-  let preferBitness: 'auto' | 'x86' | 'x64' | undefined;
+  let bitness: 'x86' | 'x64' | undefined;
   let labviewCliPath: string | undefined;
   let labviewExePath: string | undefined;
   let lvComparePath: string | undefined;
@@ -181,13 +181,13 @@ export function parseHarnessDecisionRecordArgs(argv: string[]): HarnessDecisionR
       continue;
     }
 
-    if (current === '--prefer-bitness') {
-      const candidate = requireValue('--prefer-bitness');
-      if (candidate !== 'auto' && candidate !== 'x86' && candidate !== 'x64') {
-        throw new Error(`Unsupported value for --prefer-bitness: ${candidate}\n\n${getHarnessDecisionRecordUsage()}`);
+    if (current === '--bitness') {
+      const candidate = requireValue('--bitness');
+      if (candidate !== 'x86' && candidate !== 'x64') {
+        throw new Error(`Unsupported value for --bitness: ${candidate}\n\n${getHarnessDecisionRecordUsage()}`);
       }
 
-      preferBitness = candidate;
+      bitness = candidate;
       continue;
     }
 
@@ -253,7 +253,7 @@ export function parseHarnessDecisionRecordArgs(argv: string[]): HarnessDecisionR
     decisionRationale,
     runtimePlatform,
     runtimeEngineOverride,
-    preferBitness,
+    bitness,
     labviewCliPath,
     labviewExePath,
     lvComparePath,
@@ -309,7 +309,7 @@ export async function runHarnessDecisionRecordCli(
     additionalManualLabVIEWInspectionRequired: args.additionalManualLabVIEWInspectionRequired,
     issuesOrBacklogItemsCreated: args.issuesOrBacklogItemsCreated,
     runtimeSettings: {
-      preferBitness: args.preferBitness,
+      bitness: args.bitness,
       labviewCliPath: args.labviewCliPath,
       labviewExePath: args.labviewExePath,
       lvComparePath: args.lvComparePath

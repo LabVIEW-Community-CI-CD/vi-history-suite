@@ -29,7 +29,7 @@ export interface MultiReportDashboardLatestRunExperimentRecord {
     historyWindowMode: 'auto' | 'capped';
     maxHistoryEntries: number;
     effectiveHistoryEntryCeiling: number;
-    preferBitness?: string;
+    bitness?: string;
     windowsContainerImage?: string;
     labviewCliPathConfigured: boolean;
     labviewExePathConfigured: boolean;

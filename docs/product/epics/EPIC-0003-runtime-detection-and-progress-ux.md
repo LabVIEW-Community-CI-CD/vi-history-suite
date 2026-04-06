@@ -12,7 +12,7 @@ authoritative research:
 
 ## Scope
 
-- `labviewCliPath`, `lvComparePath`, `labviewExePath`, `preferBitness`
+- `labviewCliPath`, `lvComparePath`, `labviewExePath`, `bitness`
 - Windows discovery heuristics and retained detection facts
 - macOS/Linux discovery heuristics and platform constraint facts
 - notification progress with percent, processed/total, and ETA

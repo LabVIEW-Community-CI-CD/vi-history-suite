@@ -8,7 +8,7 @@ describe('comparisonRuntimeDoctor', () => {
       reportStatus: 'blocked-runtime',
       runtimeSelection: {
         platform: 'win32',
-        preferBitness: 'x64',
+        bitness: 'x64',
         provider: 'unavailable',
         blockedReason: 'comparison-tool-not-found',
         providerDecisions: [
@@ -41,7 +41,7 @@ describe('comparisonRuntimeDoctor', () => {
     });
 
     expect(lines).toEqual([
-      'Selected provider=unavailable; engine=none; platform=win32; preferBitness=x64.',
+      'Selected provider=unavailable; engine=none; platform=win32; bitness=x64.',
       'Selected execution mode=auto.',
       'Provider decision: rejected windows-container because Windows container image nationalinstruments/labview:2026q1-windows was not available to the current host.',
       'Provider decision: rejected host-native because A supported LabVIEW 2026 executable was located, but neither LabVIEWCLI nor LVCompare was located for host-native comparison-report execution.',
@@ -57,7 +57,7 @@ describe('comparisonRuntimeDoctor', () => {
       runtimeSelection: {
         platform: 'win32',
         executionMode: 'host-only',
-        preferBitness: 'x86',
+        bitness: 'x86',
         provider: 'host-native',
         engine: 'labview-cli',
         labviewExe: {
@@ -107,7 +107,7 @@ describe('comparisonRuntimeDoctor', () => {
     });
 
     expect(lines).toContain(
-      'Selected provider=host-native; engine=labview-cli; platform=win32; preferBitness=x86.'
+      'Selected provider=host-native; engine=labview-cli; platform=win32; bitness=x86.'
     );
     expect(lines).toContain('Selected execution mode=host-only.');
     expect(lines).toContain(
@@ -141,7 +141,7 @@ describe('comparisonRuntimeDoctor', () => {
       runtimeSelection: {
         platform: 'win32',
         executionMode: 'docker-only',
-        preferBitness: 'auto',
+        bitness: 'x64',
         provider: 'windows-container',
         engine: 'labview-cli',
         windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
@@ -174,7 +174,7 @@ describe('comparisonRuntimeDoctor', () => {
     });
 
     expect(lines).toContain(
-      'Selected provider=windows-container; engine=labview-cli; platform=win32; preferBitness=auto.'
+      'Selected provider=windows-container; engine=labview-cli; platform=win32; bitness=x64.'
     );
     expect(lines).toContain('Selected execution mode=docker-only.');
     expect(lines).toContain(
@@ -197,7 +197,7 @@ describe('comparisonRuntimeDoctor', () => {
       runtimeSelection: {
         platform: 'win32',
         executionMode: 'docker-only',
-        preferBitness: 'x64',
+        bitness: 'x64',
         provider: 'windows-container',
         windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
         windowsContainerDockerCliAvailable: true,
@@ -249,7 +249,7 @@ describe('comparisonRuntimeDoctor', () => {
       runtimeSelection: {
         platform: 'win32',
         executionMode: 'auto',
-        preferBitness: 'x64',
+        bitness: 'x64',
         provider: 'windows-container',
         blockedReason: 'windows-container-image-acquisition-failed',
         windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',

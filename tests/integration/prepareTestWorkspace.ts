@@ -52,7 +52,7 @@ export async function prepareIntegrationWorkspace(
           '.vihs-missing-tools',
           'LabVIEWCLI.exe'
         ),
-        'viHistorySuite.preferBitness': 'x86'
+        'viHistorySuite.bitness': 'x86'
       },
       null,
       2

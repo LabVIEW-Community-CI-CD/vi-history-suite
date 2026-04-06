@@ -159,7 +159,7 @@ stdout/stderr artifact paths, and the comparable-prefix packet renders those
 same recovery facts, including the retained `-350000` connection-failure stderr
 from the failed `CloseLabVIEW -Headless` reset before the retry.
 After clearing a stale non-headless host `LabVIEW.exe` session and forcing a
-true host-native rerun with `--prefer-bitness x86`, the same exact pair failed
+true host-native rerun with `--bitness x86`, the same exact pair failed
 differently as a host-native `command-timed-out` run that observed
 `LabVIEWCLI.exe` without `LabVIEW.exe` and retained only the x86 LabVIEW path
 in the CLI log. That means stale host state mattered, but it was not the whole
@@ -201,7 +201,7 @@ smoke, and the Windows/Linux benchmark CLIs now reject contradictory
 engine/path bundles before they can generate retained evidence.
 
 `VHS-REQ-452` tightens that shared admission layer further on Windows: even
-when an operator omits `--prefer-bitness`, explicit runtime override paths must
+when an operator omits `--bitness`, explicit runtime override paths must
 still resolve to one coherent x86 or x64 bundle. Mixed x86/x64 manual bundles
 are now treated as experiment contamination instead of being allowed to retain
 misleading blocker evidence.

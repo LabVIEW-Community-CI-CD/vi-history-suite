@@ -61,7 +61,7 @@ function createBaseRecord(): ComparisonReportPacketRecord {
     },
     runtimeSelection: {
       platform: 'win32',
-      preferBitness: 'x86',
+      bitness: 'x86',
       provider: 'host-native',
       engine: 'labview-cli',
       labviewExe: {
@@ -259,7 +259,7 @@ describe('comparisonReportExecutionPlan', () => {
   it('adds -LabVIEWPath and -Headless for Linux LabVIEWCLI execution', () => {
     const record = createBaseRecord();
     record.runtimeSelection.platform = 'linux';
-    record.runtimeSelection.preferBitness = 'auto';
+    record.runtimeSelection.bitness = 'x64';
     record.runtimeSelection.labviewExe = {
       kind: 'labview-exe',
       path: '/usr/local/natinst/LabVIEW-2026-64/labview',

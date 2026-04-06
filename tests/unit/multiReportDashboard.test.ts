@@ -1125,7 +1125,7 @@ async function createArchivedPacket(
     runtimeSelection: {
       provider: 'host-native',
       platform: 'win32',
-      preferBitness: 'x86',
+      bitness: 'x86',
       engine: 'labview-cli',
       notes: []
     },

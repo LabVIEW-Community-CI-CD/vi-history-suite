@@ -17,7 +17,7 @@ The current installed extension already exposes these runtime-related settings:
 - `viHistorySuite.labviewCliPath`
 - `viHistorySuite.lvComparePath`
 - `viHistorySuite.labviewExePath`
-- `viHistorySuite.preferBitness`
+- `viHistorySuite.bitness`
 - `viHistorySuite.windowsContainerImage`
 
 Current implemented provider truth now satisfies the governed execution policy:
@@ -97,7 +97,7 @@ The broader queued product contract retains a first-class execution mode:
 
 Execution mode is distinct from:
 
-- preferred bitness
+- bitness
 - explicit tool-path overrides
 - the configured Windows container image
 
@@ -115,7 +115,7 @@ Before execution starts, the extension shall resolve one effective execution
 request from:
 
 - `executionMode`
-- `preferBitness`
+- `bitness`
 - explicit host runtime path settings such as `labviewCliPath`,
   `labviewExePath`, and `lvComparePath`
 - the configured Windows container image

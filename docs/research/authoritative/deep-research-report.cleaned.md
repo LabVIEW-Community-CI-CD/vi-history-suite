@@ -46,7 +46,7 @@ The key deltas to reach the exact user spec:
   - Verification of blob magic bytes for both revisions before invoking the compare tool.
   - Storage strategy (`context.storageUri` recommended) and secure webview linking (via `asWebviewUri` and `localResourceRoots`).
 - **LabVIEW 2026 Q1 32/64 adaptation**: repo has settings placeholders but no robust runtime detection. Must implement:
-  - Windows registry / install‑path probing and “preferBitness” logic.
+  - Windows registry / install‑path probing and “bitness” logic.
   - Cross‑platform fallbacks (macOS, Linux) acknowledging current NI platform constraints (e.g., macOS Community Edition notes and differing support timelines).
 - **Progress UX**: notification progress exists; request also wants a **progress bar design** with percent/items/ETA and surfaced through:
   - `window.withProgress` updates (increment/message)
@@ -769,7 +769,7 @@ Proposed selection logic:
 1) **User configuration wins**
    - Setting: `labviewViHistory.lvComparePath` (absolute path to LVCompare or LabVIEWCLI, depending on your chosen tool).
    - Setting: `labviewViHistory.labviewExePath` (absolute path to LabVIEW.exe).
-   - Setting: `labviewViHistory.preferBitness` = `auto | x86 | x64`.
+   - Setting: `labviewViHistory.bitness` = `x86 | x64`.
 
 2) **Auto-discovery (Windows)**
    - Probe common LVCompare paths (examples commonly used in NI guidance and industry how-tos include `C:\Program Files (x86)\National Instruments\Shared\LabVIEW Compare\LVCompare.exe`, and sometimes non‑x86 depending on installation). See NI integration guidance that explicitly references the x86 path for 32-bit.
@@ -878,7 +878,7 @@ Acceptance: report generation produces correctly named HTML and is viewable.
 
 **Milestone: LabVIEW 2026 Q1 bitness detection + configuration (10–18 hours)**
 Deliverables:
-- Settings: preferBitness, lvComparePath, labviewExePath, labviewCliPath
+- Settings: bitness, lvComparePath, labviewExePath, labviewCliPath
 - Runtime detection:
   - Windows registry + install scanning heuristics
   - macOS/Linux scanning with platform notes

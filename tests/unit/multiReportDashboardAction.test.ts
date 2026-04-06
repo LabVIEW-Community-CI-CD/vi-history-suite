@@ -1049,7 +1049,7 @@ describe('multiReportDashboardAction', () => {
           historyWindowMode: 'auto',
           maxHistoryEntries: 100,
           effectiveHistoryEntryCeiling: 1000,
-          preferBitness: 'auto',
+          bitness: 'x64',
           windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
           labviewCliPathConfigured: false,
           labviewExePathConfigured: false,
@@ -1660,7 +1660,7 @@ describe('multiReportDashboardAction', () => {
             runtimeProvider: 'windows-container',
             runtimeEngine: 'labview-cli',
             runtimePlatform: 'win32',
-            runtimePreferBitness: 'x64',
+            runtimeBitness: 'x64',
             runtimeProviderLabel: 'windows-container / labview-cli / x64 / win32'
           }
         ]

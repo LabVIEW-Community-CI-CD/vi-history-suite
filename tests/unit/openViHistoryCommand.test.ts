@@ -2278,7 +2278,7 @@ describe('createOpenViHistoryCommand', () => {
       runtimeFailureReason: 'command-exited-nonzero',
       runtimeDiagnosticReason: 'labview-path-ignored-last-used-default',
       runtimeDoctorSummaryLines: [
-        'Selected provider=host-native; engine=labview-cli; platform=win32; preferBitness=x86.',
+        'Selected provider=host-native; engine=labview-cli; platform=win32; bitness=x86.',
         'Selected execution mode=auto.',
         'Next action: close the conflicting LabVIEW 2026 session or correct the selected host LabVIEW path before rerunning comparison report generation.'
       ],
@@ -2416,7 +2416,7 @@ describe('createOpenViHistoryCommand', () => {
       runtimeExecutionState: 'not-available',
       blockedReason: 'windows-container-image-acquisition-failed',
       runtimeDoctorSummaryLines: [
-        'Selected provider=windows-container; engine=labview-cli; platform=win32; preferBitness=x64.',
+        'Selected provider=windows-container; engine=labview-cli; platform=win32; bitness=x64.',
         'Selected execution mode=auto.',
         'Provider decision: rejected host-native because existing LabVIEW-related processes or a listener on governed VI Server port 3364 already exist.',
         'Tool facts: WindowsContainerCapability=available; ContainerAcquisitionState=failed',
@@ -2903,7 +2903,7 @@ describe('createOpenViHistoryCommand', () => {
       reportStatus: 'ready-for-runtime',
       runtimeExecutionState: 'succeeded',
       runtimeDoctorSummaryLines: [
-        'Selected provider=windows-container; engine=labview-cli; platform=win32; preferBitness=x64.',
+        'Selected provider=windows-container; engine=labview-cli; platform=win32; bitness=x64.',
         'Selected execution mode=auto.',
         'Provider decision: rejected host-native because existing LabVIEW-related processes or a listener on governed VI Server port 3364 already exist.',
         'Tool facts: WindowsContainerCapability=available; ContainerAcquisitionState=acquired',
@@ -2959,7 +2959,7 @@ describe('createOpenViHistoryCommand', () => {
       reportStatus: 'ready-for-runtime',
       runtimeExecutionState: 'succeeded',
       runtimeDoctorSummaryLines: [
-        'Selected provider=windows-container; engine=labview-cli; platform=win32; preferBitness=x64.',
+        'Selected provider=windows-container; engine=labview-cli; platform=win32; bitness=x64.',
         'Selected execution mode=auto.',
         'Tool facts: WindowsContainerCapability=available; ContainerAcquisitionState=acquired',
         'Next action: open the retained comparison packet for the full governed runtime summary.'

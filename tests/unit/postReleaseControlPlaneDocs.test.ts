@@ -347,7 +347,7 @@ describe('post-release control-plane coherence', () => {
     expect(currentState).toContain('`VHS-REQ-476` is now implemented');
     expect(currentState).toContain('`VHS-REQ-477` is now implemented');
     expect(currentState).toContain('retains the `-350000` connection-failure diagnosis before retry');
-    expect(currentState).toContain('forcing a truly host-native exact-pair rerun with `--prefer-bitness x86`');
+    expect(currentState).toContain('forcing a truly host-native exact-pair rerun with `--bitness x86`');
     expect(currentState).toContain('observed `LabVIEWCLI.exe` without `LabVIEW.exe`');
     expect(currentState).toContain('runtimeLabviewTcpPort=3364');
     expect(currentState).toContain('`LabVIEW.ini`');
@@ -374,7 +374,7 @@ describe('post-release control-plane coherence', () => {
     expect(benchmarkProgram).toContain('comparison-report-smoke.json');
     expect(benchmarkProgram).toContain('headlessSessionResetExitCode=1');
     expect(benchmarkProgram).toContain('-350000');
-    expect(benchmarkProgram).toContain('true host-native rerun with `--prefer-bitness x86`');
+    expect(benchmarkProgram).toContain('true host-native rerun with `--bitness x86`');
     expect(benchmarkProgram).toContain('LabVIEWCLI.exe` without `LabVIEW.exe`');
     expect(benchmarkProgram).toContain('runtimeLabviewTcpPort=3364');
     expect(benchmarkProgram).toContain('`-PortNumber 3364`');
@@ -408,7 +408,7 @@ describe('post-release control-plane coherence', () => {
     expect(benchmarkIssue).toContain('comparison-report-smoke.json');
     expect(benchmarkIssue).toContain('failed reset itself exited');
     expect(benchmarkIssue).toContain('`-350000` connection-failure stderr');
-    expect(benchmarkIssue).toContain('true host-native rerun with `--prefer-bitness x86`');
+    expect(benchmarkIssue).toContain('true host-native rerun with `--bitness x86`');
     expect(benchmarkIssue).toContain('observed `LabVIEWCLI.exe` without `LabVIEW.exe`');
     expect(benchmarkIssue).toContain('runtimeLabviewTcpPort=3364');
     expect(benchmarkIssue).toContain('`-PortNumber 3364`');

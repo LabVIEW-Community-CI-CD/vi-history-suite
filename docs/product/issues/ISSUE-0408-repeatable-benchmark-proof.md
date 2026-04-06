@@ -131,7 +131,7 @@ Current retained benchmark truth at closure:
   Windows `labview-cli` exact-pair rerun proves the failed reset itself exited
   `1` with `-350000` connection-failure stderr before the retry
 - after clearing a stale non-headless host `LabVIEW.exe` session and forcing a
-  true host-native rerun with `--prefer-bitness x86`, the same exact pair
+  true host-native rerun with `--bitness x86`, the same exact pair
   failed differently as `provider=host-native` plus `command-timed-out`,
   observed `LabVIEWCLI.exe` without `LabVIEW.exe`, and retained only the x86
   LabVIEW path in the CLI log, so native-host Windows proof remains sensitive
@@ -166,7 +166,7 @@ Current retained benchmark truth at closure:
   contaminate retained benchmark blocker evidence
 - `VHS-REQ-452` now governs canonical Windows bundle coherence too: explicit
   Windows runtime override bundles that mix x86 and x64 paths are rejected
-  even when `--prefer-bitness` is omitted, so a manual x86 `LabVIEWCLI.exe`
+  even when `--bitness` is omitted, so a manual x86 `LabVIEWCLI.exe`
   plus x64 `LabVIEW.exe` launch cannot be retained as benchmark truth
 - `VHS-REQ-457..458` now govern the effective runtime override bundle too:
   benchmark-proof entrypoints validate the effective runtime bundle after CLI

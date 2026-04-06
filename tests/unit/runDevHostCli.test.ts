@@ -311,7 +311,7 @@ describe('runDevHostCli', () => {
     };
 
     expect(eligibleBytes.subarray(8, 12).toString('ascii')).toBe('LVIN');
-    expect(settings['viHistorySuite.preferBitness']).toBe('x86');
+    expect(settings['viHistorySuite.bitness']).toBe('x86');
     expect(persistedMetadata.workspacePath).toBe(workspaceRoot);
     expect(persistedMetadata.eligibleRelativePath).toBe('fixtures/eligible-dev-loop.vi');
     expect(gitCalls.map((call) => call.args.join(' '))).toEqual([

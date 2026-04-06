@@ -232,7 +232,7 @@ export function renderComparisonReportPacketHtml(record: ComparisonReportPacketR
       <div><strong>Provider:</strong> ${escapeHtml(runtimeSelection.provider)}</div>
       <div><strong>Engine:</strong> ${escapeHtml(runtimeSelection.engine ?? 'none')}</div>
       <div><strong>Blocked reason:</strong> ${escapeHtml(runtimeSelection.blockedReason ?? 'none')}</div>
-      <div><strong>Preferred bitness:</strong> ${escapeHtml(runtimeSelection.preferBitness)}</div>
+      <div><strong>Bitness:</strong> ${escapeHtml(runtimeSelection.bitness)}</div>
       <div><strong>LabVIEW path:</strong> ${escapeHtml(runtimeSelection.labviewExe?.path ?? 'none')}</div>
       <div><strong>LabVIEWCLI path:</strong> ${escapeHtml(runtimeSelection.labviewCli?.path ?? 'none')}</div>
       <div><strong>LVCompare path:</strong> ${escapeHtml(runtimeSelection.lvCompare?.path ?? 'none')}</div>

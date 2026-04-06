@@ -32,7 +32,8 @@ describe('runHarnessReportSmokeCli', () => {
       runtimeExecutionTimeoutMs: undefined,
       runtimePlatform: undefined,
       runtimeEngineOverride: undefined,
-      preferBitness: undefined,
+      executionMode: undefined,
+      bitness: undefined,
       labviewCliPath: undefined,
       labviewExePath: undefined,
       lvComparePath: undefined
@@ -53,7 +54,9 @@ describe('runHarnessReportSmokeCli', () => {
         'win32',
         '--engine',
         'labview-cli',
-        '--prefer-bitness',
+        '--execution-mode',
+        'host-only',
+        '--bitness',
         'x86',
         '--labview-cli-path',
         WINDOWS_LABVIEW_CLI_PATH,
@@ -69,7 +72,8 @@ describe('runHarnessReportSmokeCli', () => {
       runtimeExecutionTimeoutMs: 120000,
       runtimePlatform: 'win32',
       runtimeEngineOverride: 'labview-cli',
-      preferBitness: 'x86',
+      executionMode: 'host-only',
+      bitness: 'x86',
       labviewCliPath: WINDOWS_LABVIEW_CLI_PATH,
       labviewExePath: WINDOWS_LABVIEW_EXE_PATH,
       lvComparePath: undefined
@@ -84,7 +88,8 @@ describe('runHarnessReportSmokeCli', () => {
       runtimeExecutionTimeoutMs: undefined,
       runtimePlatform: undefined,
       runtimeEngineOverride: undefined,
-      preferBitness: undefined,
+      executionMode: undefined,
+      bitness: undefined,
       labviewCliPath: undefined,
       labviewExePath: undefined,
       lvComparePath: undefined
@@ -96,8 +101,11 @@ describe('runHarnessReportSmokeCli', () => {
     expect(() => parseHarnessReportSmokeArgs(['--engine', 'weird'])).toThrow(
       /Unsupported value for --engine/
     );
-    expect(() => parseHarnessReportSmokeArgs(['--prefer-bitness', 'bad'])).toThrow(
-      /Unsupported value for --prefer-bitness/
+    expect(() => parseHarnessReportSmokeArgs(['--execution-mode', 'weird'])).toThrow(
+      /Unsupported value for --execution-mode/
+    );
+    expect(() => parseHarnessReportSmokeArgs(['--bitness', 'bad'])).toThrow(
+      /Unsupported value for --bitness/
     );
     expect(() => parseHarnessReportSmokeArgs(['--runtime-timeout-ms', '0'])).toThrow(
       /Unsupported value for --runtime-timeout-ms/
@@ -120,10 +128,17 @@ describe('runHarnessReportSmokeCli', () => {
         parseHarnessReportSmokeArgs([
           '--platform',
           'linux',
-          '--prefer-bitness',
+          '--bitness',
           'x86'
         ])
-    ).toThrow(/--prefer-bitness is only supported with --platform win32/);
+    ).toThrow(/--bitness is only supported with --platform win32/);
+    expect(
+      () =>
+        parseHarnessReportSmokeArgs([
+          '--execution-mode',
+          'host-only'
+        ])
+    ).toThrow(/Canonical runtime overrides require --platform/);
     expect(
       () =>
         parseHarnessReportSmokeArgs([
@@ -182,14 +197,14 @@ describe('runHarnessReportSmokeCli', () => {
           'win32',
           '--engine',
           'labview-cli',
-          '--prefer-bitness',
+          '--bitness',
           'x86',
           '--labview-cli-path',
           WINDOWS_LABVIEW_CLI_PATH,
           '--labview-exe-path',
           WINDOWS_X64_LABVIEW_EXE_PATH
         ])
-    ).toThrow(/does not match --prefer-bitness x86/);
+    ).toThrow(/does not match --bitness x86/);
     expect(
       () =>
         parseHarnessReportSmokeArgs([
@@ -207,6 +222,7 @@ describe('runHarnessReportSmokeCli', () => {
       /Missing value for --labview-cli-path/
     );
     expect(getHarnessReportSmokeUsage()).toContain('--selected-hash');
+    expect(getHarnessReportSmokeUsage()).toContain('--execution-mode');
     expect(getHarnessReportSmokeUsage()).toContain('--labview-cli-path');
     expect(getHarnessReportSmokeUsage()).toContain('Canonical diagnosis rules:');
   });
@@ -250,7 +266,9 @@ describe('runHarnessReportSmokeCli', () => {
           FULL_BASE_HASH,
           '--runtime-timeout-ms',
           '120000',
-          '--prefer-bitness',
+          '--execution-mode',
+          'host-only',
+          '--bitness',
           'x86',
           '--labview-cli-path',
           WINDOWS_LABVIEW_CLI_PATH,
@@ -279,7 +297,8 @@ describe('runHarnessReportSmokeCli', () => {
       runtimePlatform: 'win32',
       runtimeEngineOverride: 'labview-cli',
       runtimeSettings: {
-        preferBitness: 'x86',
+        executionMode: 'host-only',
+        bitness: 'x86',
         labviewCliPath: WINDOWS_LABVIEW_CLI_PATH,
         labviewExePath: WINDOWS_LABVIEW_EXE_PATH,
         lvComparePath: undefined
@@ -304,7 +323,7 @@ describe('runHarnessReportSmokeCli', () => {
           FULL_SELECTED_HASH,
           '--base-hash',
           FULL_BASE_HASH,
-          '--prefer-bitness',
+          '--bitness',
           'x64',
           '--labview-cli-path',
           'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',

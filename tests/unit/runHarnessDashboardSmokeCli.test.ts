@@ -25,7 +25,7 @@ describe('runHarnessDashboardSmokeCli', () => {
       helpRequested: false,
       runtimePlatform: undefined,
       runtimeEngineOverride: undefined,
-      preferBitness: undefined,
+      bitness: undefined,
       labviewCliPath: undefined,
       labviewExePath: undefined,
       lvComparePath: undefined,
@@ -41,7 +41,7 @@ describe('runHarnessDashboardSmokeCli', () => {
         'win32',
         '--engine',
         'lvcompare',
-        '--prefer-bitness',
+        '--bitness',
         'x86',
         '--labview-exe-path',
         WINDOWS_LABVIEW_EXE_PATH,
@@ -56,7 +56,7 @@ describe('runHarnessDashboardSmokeCli', () => {
       helpRequested: false,
       runtimePlatform: 'win32',
       runtimeEngineOverride: 'lvcompare',
-      preferBitness: 'x86',
+      bitness: 'x86',
       labviewCliPath: undefined,
       labviewExePath: WINDOWS_LABVIEW_EXE_PATH,
       lvComparePath: WINDOWS_LVCOMPARE_PATH,
@@ -72,8 +72,8 @@ describe('runHarnessDashboardSmokeCli', () => {
     expect(() => parseHarnessDashboardSmokeArgs(['--engine', 'weird'])).toThrow(
       /Unsupported value for --engine/
     );
-    expect(() => parseHarnessDashboardSmokeArgs(['--prefer-bitness', 'bad'])).toThrow(
-      /Unsupported value for --prefer-bitness/
+    expect(() => parseHarnessDashboardSmokeArgs(['--bitness', 'bad'])).toThrow(
+      /Unsupported value for --bitness/
     );
     expect(() => parseHarnessDashboardSmokeArgs(['--labview-cli-path'])).toThrow(
       /Missing value for --labview-cli-path/
@@ -176,7 +176,7 @@ describe('runHarnessDashboardSmokeCli', () => {
       runtimeEngineOverride: 'labview-cli',
       dashboardCommitWindow: 4,
       runtimeSettings: {
-        preferBitness: undefined,
+        bitness: undefined,
         labviewCliPath: WINDOWS_LABVIEW_CLI_PATH,
         labviewExePath: WINDOWS_LABVIEW_EXE_PATH,
         lvComparePath: undefined

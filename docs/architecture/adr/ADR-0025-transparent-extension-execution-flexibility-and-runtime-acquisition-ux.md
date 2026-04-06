@@ -15,7 +15,7 @@ the current product and docs still leave important usability gaps:
 
 - some users want host-only execution and do not want Docker
 - some users want Docker isolation and do not want silent host fallback
-- `preferBitness` does not express whether Docker is allowed, required, or
+- `bitness` does not express whether Docker is allowed, required, or
   forbidden
 - already-open non-headless LabVIEW sessions, multiple installed LabVIEW
   versions, and non-default VI Server ports can contaminate host execution
@@ -35,7 +35,7 @@ Adopt a transparent extension execution-flexibility contract.
    - `host-only`
    - `docker-only`
 2. Execution mode shall be separate from:
-   - `preferBitness`
+   - `bitness`
    - explicit `labviewCliPath`, `labviewExePath`, and `lvComparePath`
    - `windowsContainerImage`
 3. In `auto` mode on Windows, the extension shall:

@@ -42,7 +42,7 @@ describe('comparisonReportPacket', () => {
         },
         runtimeSelection: {
           platform: 'win32',
-          preferBitness: 'x86',
+          bitness: 'x86',
           provider: 'host-native',
           engine: 'labview-cli',
           labviewExe: {
@@ -123,7 +123,7 @@ describe('comparisonReportPacket', () => {
         },
         runtimeSelection: {
           platform: 'win32',
-          preferBitness: 'x64',
+          bitness: 'x64',
           provider: 'host-native',
           engine: 'labview-cli',
           hostLabviewIniPath:
@@ -197,7 +197,7 @@ describe('comparisonReportPacket', () => {
         },
         runtimeSelection: {
           platform: 'linux',
-          preferBitness: 'auto',
+          bitness: 'x64',
           provider: 'unavailable',
           blockedReason: 'comparison-tool-not-found',
           notes: ['Linux report generation remains best-effort.'],
@@ -253,7 +253,7 @@ describe('comparisonReportPacket', () => {
         runtimeSelection: {
           platform: 'win32',
           executionMode: 'auto',
-          preferBitness: 'x64',
+          bitness: 'x64',
           provider: 'windows-container',
           engine: 'labview-cli',
           windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
@@ -320,7 +320,7 @@ describe('comparisonReportPacket', () => {
         },
         runtimeSelection: {
           platform: 'linux',
-          preferBitness: 'auto',
+          bitness: 'x64',
           provider: 'host-native',
           engine: 'lvcompare',
           lvCompare: {
@@ -407,7 +407,7 @@ describe('comparisonReportPacket', () => {
         attempted: true,
         reportExists: false,
         doctorSummaryLines: [
-          'Selected provider=host-native; engine=labview-cli; platform=win32; preferBitness=x86.',
+          'Selected provider=host-native; engine=labview-cli; platform=win32; bitness=x86.',
           'Provider decision: rejected windows-container because Windows x86 comparison-report execution stays host-native, so the Windows container provider was not selected for this lane.',
           'Next action: use the retained runtime notes, stdout/stderr artifacts, and diagnostic log to correct the runtime environment, then rerun comparison report generation.'
         ],
@@ -426,7 +426,7 @@ describe('comparisonReportPacket', () => {
     expect(html).toContain('Diagnostic reason:</strong> labview-path-ignored-last-used-default');
     expect(html).toContain('runtime-diagnostic-log.txt');
     expect(html).toContain('data-testid="comparison-report-runtime-doctor"');
-    expect(html).toContain('Selected provider=host-native; engine=labview-cli; platform=win32; preferBitness=x86.');
+    expect(html).toContain('Selected provider=host-native; engine=labview-cli; platform=win32; bitness=x86.');
     expect(html).toContain(
       'Provider decision: rejected windows-container because Windows x86 comparison-report execution stays host-native, so the Windows container provider was not selected for this lane.'
     );
@@ -522,7 +522,7 @@ async function createReadyPacketRecord(): Promise<ComparisonReportPacketRecord> 
       },
       runtimeSelection: {
         platform: 'win32',
-        preferBitness: 'x64',
+        bitness: 'x64',
         provider: 'host-native',
         engine: 'labview-cli',
         labviewExe: {

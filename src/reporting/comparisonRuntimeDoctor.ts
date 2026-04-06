@@ -26,7 +26,7 @@ export function buildComparisonRuntimeDoctorSummaryFromFacts(options: {
   const executionMode = selection.executionMode ?? 'auto';
 
   lines.push(
-    `Selected provider=${selection.provider}; engine=${selection.engine ?? 'none'}; platform=${selection.platform}; preferBitness=${selection.preferBitness}.`
+    `Selected provider=${selection.provider}; engine=${selection.engine ?? 'none'}; platform=${selection.platform}; bitness=${selection.bitness}.`
   );
   lines.push(`Selected execution mode=${executionMode}.`);
 
@@ -142,7 +142,7 @@ function deriveRuntimeDoctorNextAction(options: {
     }
 
     if (blockedReason === 'docker-only-requires-windows-x64-provider') {
-      return 'Next action: change preferBitness to auto or x64, or change execution mode, then rerun comparison report generation.';
+      return 'Next action: change bitness to x64 or change execution mode, then rerun comparison report generation.';
     }
 
     if (blockedReason === 'docker-only-provider-unavailable') {

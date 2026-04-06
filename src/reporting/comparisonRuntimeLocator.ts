@@ -14,7 +14,6 @@ import {
 const execFileAsync = promisify(execFile);
 
 export type RuntimePlatform = 'win32' | 'linux' | 'darwin';
-export type RuntimeBitnessPreference = 'auto' | 'x86' | 'x64';
 export type RuntimeBitness = 'x86' | 'x64';
 export type RuntimeExecutionMode = 'auto' | 'host-only' | 'docker-only';
 export type ComparisonRuntimeEngine = 'labview-cli' | 'lvcompare';
@@ -34,7 +33,7 @@ export interface ComparisonRuntimeSettings {
   labviewCliPath?: string;
   lvComparePath?: string;
   labviewExePath?: string;
-  preferBitness?: RuntimeBitnessPreference;
+  bitness?: RuntimeBitness;
   windowsContainerImage?: string;
 }
 
@@ -64,7 +63,7 @@ export interface ComparisonRuntimeSelection {
   platform: RuntimePlatform;
   executionMode?: RuntimeExecutionMode;
   headlessRequested?: boolean;
-  preferBitness: RuntimeBitnessPreference;
+  bitness: RuntimeBitness;
   provider: ComparisonRuntimeProvider;
   engine?: ComparisonRuntimeEngine;
   windowsContainerImage?: string;
@@ -111,7 +110,7 @@ export interface ComparisonRuntimeLocatorDeps {
 interface BuildProviderDecisionsOptions {
   platform: RuntimePlatform;
   executionMode: RuntimeExecutionMode;
-  preferBitness: RuntimeBitnessPreference;
+  bitness: RuntimeBitness;
   windowsContainerImage: string;
   windowsContainerAvailable: boolean;
   windowsContainerEvaluated?: boolean;
@@ -302,7 +301,7 @@ export async function locateComparisonRuntime(
   deps: ComparisonRuntimeLocatorDeps = {}
 ): Promise<ComparisonRuntimeSelection> {
   const executionMode = settings.executionMode ?? 'auto';
-  const preferBitness = settings.preferBitness ?? 'auto';
+  const bitness = settings.bitness ?? 'x64';
   const notes: string[] = [];
   const registryQueryPlans = platform === 'win32' ? buildWindowsRegistryQueryPlans() : [];
   const pathExists = deps.pathExists ?? defaultPathExists;
@@ -313,13 +312,13 @@ export async function locateComparisonRuntime(
     return {
       platform,
       executionMode,
-      preferBitness,
+      bitness,
       provider: 'unavailable',
       blockedReason: 'labview-2026q1-unsupported-on-macos',
       providerDecisions: buildProviderDecisions({
         platform,
         executionMode,
-        preferBitness,
+        bitness,
         windowsContainerImage,
         windowsContainerAvailable: false,
         blockedReason: 'labview-2026q1-unsupported-on-macos'
@@ -341,13 +340,13 @@ export async function locateComparisonRuntime(
     return {
       platform,
       executionMode,
-      preferBitness,
+      bitness,
       provider: 'unavailable',
       blockedReason: `configured-${configuredFailure.kind}-path-missing`,
       providerDecisions: buildProviderDecisions({
         platform,
         executionMode,
-        preferBitness,
+        bitness,
         windowsContainerImage,
         windowsContainerAvailable: false,
         blockedReason: `configured-${configuredFailure.kind}-path-missing`,
@@ -427,12 +426,12 @@ export async function locateComparisonRuntime(
         return {
           platform,
           executionMode,
-          preferBitness,
+          bitness,
           provider: 'windows-container',
           providerDecisions: buildProviderDecisions({
             platform,
             executionMode,
-            preferBitness,
+            bitness,
             windowsContainerImage,
             windowsContainerAvailable,
             windowsContainerEvaluated,
@@ -484,13 +483,13 @@ export async function locateComparisonRuntime(
       return {
         platform,
         executionMode,
-        preferBitness,
+        bitness,
         provider: 'unavailable',
         blockedReason: 'auto-docker-installed-provider-unavailable',
         providerDecisions: buildProviderDecisions({
           platform,
           executionMode,
-          preferBitness,
+          bitness,
           windowsContainerImage,
           windowsContainerAvailable,
           windowsContainerEvaluated,
@@ -521,13 +520,13 @@ export async function locateComparisonRuntime(
       return {
         platform,
         executionMode,
-        preferBitness,
+        bitness,
         provider: 'unavailable',
         blockedReason: 'docker-only-provider-not-supported-on-platform',
         providerDecisions: buildProviderDecisions({
           platform,
           executionMode,
-          preferBitness,
+          bitness,
           windowsContainerImage,
           windowsContainerAvailable,
           windowsContainerEvaluated,
@@ -542,17 +541,17 @@ export async function locateComparisonRuntime(
       };
     }
 
-    if (preferBitness === 'x86') {
+    if (bitness === 'x86') {
       return {
         platform,
         executionMode,
-        preferBitness,
+        bitness,
         provider: 'unavailable',
         blockedReason: 'docker-only-requires-windows-x64-provider',
         providerDecisions: buildProviderDecisions({
           platform,
           executionMode,
-          preferBitness,
+          bitness,
           windowsContainerImage,
           windowsContainerAvailable,
           windowsContainerEvaluated,
@@ -571,13 +570,13 @@ export async function locateComparisonRuntime(
       return {
         platform,
         executionMode,
-        preferBitness,
+        bitness,
         provider: 'unavailable',
         blockedReason: 'docker-only-provider-unavailable',
         providerDecisions: buildProviderDecisions({
           platform,
           executionMode,
-          preferBitness,
+          bitness,
           windowsContainerImage,
           windowsContainerAvailable,
           windowsContainerEvaluated,
@@ -604,12 +603,12 @@ export async function locateComparisonRuntime(
     return {
       platform,
       executionMode,
-      preferBitness,
+      bitness,
       provider: 'windows-container',
       providerDecisions: buildProviderDecisions({
         platform,
         executionMode,
-        preferBitness,
+        bitness,
         windowsContainerImage,
         windowsContainerAvailable,
         windowsContainerEvaluated,
@@ -660,7 +659,7 @@ export async function locateComparisonRuntime(
   const labviewCandidates = candidates.filter(
     (candidate) => candidate.kind === 'labview-exe' && candidate.exists
   );
-  const labviewExe = selectPreferredLabviewCandidate(labviewCandidates, preferBitness, platform);
+  const labviewExe = selectPreferredLabviewCandidate(labviewCandidates, bitness, platform);
   const hostRuntimeSurfaceFacts =
     platform === 'win32' && labviewExe
       ? await observeWindowsHostRuntimeSurfaceFacts(labviewExe.path, {
@@ -676,18 +675,18 @@ export async function locateComparisonRuntime(
   }
 
   if (!labviewExe) {
-    if (platform === 'win32' && executionMode === 'auto' && preferBitness !== 'x86') {
+    if (platform === 'win32' && executionMode === 'auto' && bitness === 'x64') {
       windowsContainerAvailable = await ensureWindowsContainerAvailability();
       if (windowsContainerAvailable) {
         return {
           platform,
           executionMode,
-          preferBitness,
+          bitness,
           provider: 'windows-container',
         providerDecisions: buildProviderDecisions({
           platform,
           executionMode,
-          preferBitness,
+          bitness,
           windowsContainerImage,
           windowsContainerAvailable,
           windowsContainerEvaluated,
@@ -753,13 +752,13 @@ export async function locateComparisonRuntime(
     return {
       platform,
       executionMode,
-      preferBitness,
+      bitness,
       provider: 'unavailable',
       blockedReason: 'labview-exe-not-found',
       providerDecisions: buildProviderDecisions({
         platform,
         executionMode,
-        preferBitness,
+        bitness,
         windowsContainerImage,
         windowsContainerAvailable,
         windowsContainerEvaluated,
@@ -788,18 +787,18 @@ export async function locateComparisonRuntime(
   const hostRuntimeConflictDetected = hostRuntimeSurfaceFacts?.hostRuntimeConflictDetected;
 
   if (platform === 'win32' && hostRuntimeConflictDetected) {
-    if (executionMode === 'auto' && preferBitness !== 'x86') {
+    if (executionMode === 'auto' && bitness === 'x64') {
       windowsContainerAvailable = await ensureWindowsContainerAvailability();
       if (windowsContainerAvailable) {
         return {
           platform,
           executionMode,
-          preferBitness,
+          bitness,
           provider: 'windows-container',
           providerDecisions: buildProviderDecisions({
             platform,
             executionMode,
-            preferBitness,
+            bitness,
             windowsContainerImage,
             windowsContainerAvailable,
             windowsContainerEvaluated,
@@ -871,7 +870,7 @@ export async function locateComparisonRuntime(
       notes.push(
         'Host-only execution cannot proceed because the validated Windows host runtime surface is contaminated by existing LabVIEW-related activity.'
       );
-    } else if (preferBitness === 'x86') {
+    } else if (bitness === 'x86') {
       notes.push(
         'Windows x86 execution remains host-native, so the validated contaminated host runtime surface must be cleared before comparison-report execution can proceed.'
       );
@@ -880,13 +879,13 @@ export async function locateComparisonRuntime(
     return {
       platform,
       executionMode,
-      preferBitness,
+      bitness,
       provider: 'unavailable',
       blockedReason: 'windows-host-runtime-surface-contaminated',
       providerDecisions: buildProviderDecisions({
         platform,
         executionMode,
-        preferBitness,
+        bitness,
         windowsContainerImage,
         windowsContainerAvailable,
         windowsContainerEvaluated,
@@ -913,7 +912,7 @@ export async function locateComparisonRuntime(
   if (
     platform === 'win32' &&
     executionMode === 'auto' &&
-    preferBitness !== 'x86' &&
+    bitness === 'x64' &&
     !labviewCli &&
     !lvCompare
   ) {
@@ -922,12 +921,12 @@ export async function locateComparisonRuntime(
       return {
         platform,
         executionMode,
-        preferBitness,
+        bitness,
         provider: 'windows-container',
         providerDecisions: buildProviderDecisions({
           platform,
           executionMode,
-          preferBitness,
+          bitness,
           windowsContainerImage,
           windowsContainerAvailable,
           windowsContainerEvaluated,
@@ -1000,12 +999,12 @@ export async function locateComparisonRuntime(
     return {
       platform,
       executionMode,
-      preferBitness,
+      bitness,
       provider: 'host-native',
       providerDecisions: buildProviderDecisions({
         platform,
         executionMode,
-        preferBitness,
+        bitness,
         windowsContainerImage,
         windowsContainerAvailable,
         windowsContainerEvaluated,
@@ -1035,12 +1034,12 @@ export async function locateComparisonRuntime(
     return {
       platform,
       executionMode,
-      preferBitness,
+      bitness,
       provider: 'host-native',
       providerDecisions: buildProviderDecisions({
         platform,
         executionMode,
-        preferBitness,
+        bitness,
         windowsContainerImage,
         windowsContainerAvailable,
         windowsContainerEvaluated,
@@ -1077,13 +1076,13 @@ export async function locateComparisonRuntime(
   return {
     platform,
     executionMode,
-    preferBitness,
+    bitness,
     provider: 'unavailable',
     blockedReason: 'comparison-tool-not-found',
     providerDecisions: buildProviderDecisions({
       platform,
       executionMode,
-      preferBitness,
+      bitness,
       windowsContainerImage,
       windowsContainerAvailable,
       windowsContainerEvaluated,
@@ -1448,7 +1447,7 @@ function buildProviderDecisions(
                   imageAvailable: options.windowsContainerImageAvailable
                 })}`
               }
-          : options.preferBitness === 'x86'
+          : options.bitness === 'x86'
           ? {
               provider: 'windows-container',
               outcome: 'rejected',
@@ -1515,7 +1514,7 @@ function buildProviderDecisions(
               : 'Auto execution selected host-native LabVIEW 2026 plus LabVIEWCLI because Docker Desktop was not detected on Windows.'
           : options.selectedEngine === 'lvcompare'
             ? 'Host-native LabVIEW 2026 and LVCompare were available, while LabVIEWCLI was not located.'
-            : options.preferBitness === 'x86'
+            : options.bitness === 'x86'
               ? 'Host-native LabVIEW 2026 and LabVIEWCLI were available, and the Windows x86 lane prefers host-native execution.'
               : 'Host-native LabVIEW 2026 and LabVIEWCLI were available for comparison-report execution.'
     });
@@ -1657,17 +1656,10 @@ async function resolveScanCandidates(
 
 function selectPreferredLabviewCandidate(
   candidates: RuntimeToolCandidate[],
-  preferBitness: RuntimeBitnessPreference,
+  bitness: RuntimeBitness,
   platform: RuntimePlatform
 ): RuntimeToolCandidate | undefined {
-  const priorities =
-    preferBitness === 'x64'
-      ? ['x64', 'x86']
-      : preferBitness === 'x86'
-        ? ['x86', 'x64']
-        : platform === 'win32'
-          ? ['x86', 'x64']
-          : ['x64', 'x86'];
+  const priorities = bitness === 'x64' ? ['x64', 'x86'] : ['x86', 'x64'];
 
   for (const priority of priorities) {
     const selected = candidates.find((candidate) => candidate.bitness === priority);

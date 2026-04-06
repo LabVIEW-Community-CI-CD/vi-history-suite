@@ -97,7 +97,7 @@ function createReadyRecord(): ComparisonReportPacketRecord {
     },
     runtimeSelection: {
       platform: 'win32',
-      preferBitness: 'x86',
+      bitness: 'x86',
       provider: 'host-native',
       engine: 'labview-cli',
       labviewExe: {
@@ -526,7 +526,7 @@ describe('comparisonReportRuntimeExecution', () => {
   it('captures Linux headless artifacts and classifies recursive-load failures specifically', async () => {
     const record = createReadyRecord();
     record.runtimeSelection.platform = 'linux';
-    record.runtimeSelection.preferBitness = 'x64';
+    record.runtimeSelection.bitness = 'x64';
     record.runtimeSelection.labviewExe = {
       kind: 'labview-exe',
       path: '/usr/local/natinst/LabVIEW-2026-64/labview',
@@ -620,7 +620,7 @@ describe('comparisonReportRuntimeExecution', () => {
   it('retries a Linux recursive-load failure once after CloseLabVIEW session reset', async () => {
     const record = createReadyRecord();
     record.runtimeSelection.platform = 'linux';
-    record.runtimeSelection.preferBitness = 'x64';
+    record.runtimeSelection.bitness = 'x64';
     record.runtimeSelection.labviewExe = {
       kind: 'labview-exe',
       path: '/usr/local/natinst/LabVIEW-2026-64/labview',
@@ -763,7 +763,7 @@ describe('comparisonReportRuntimeExecution', () => {
   it('retries a Windows headless call-by-reference failure once after CloseLabVIEW session reset', async () => {
     const record = createReadyRecord();
     record.runtimeSelection.platform = 'win32';
-    record.runtimeSelection.preferBitness = 'x64';
+    record.runtimeSelection.bitness = 'x64';
     record.runtimeSelection.labviewExe = {
       kind: 'labview-exe',
       path: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
@@ -917,7 +917,7 @@ describe('comparisonReportRuntimeExecution', () => {
   it('classifies LabVIEW CLI connection failures specifically when stderr reports error -350000', async () => {
     const record = createReadyRecord();
     record.runtimeSelection.platform = 'linux';
-    record.runtimeSelection.preferBitness = 'x64';
+    record.runtimeSelection.bitness = 'x64';
 
     const result = await executeComparisonReport(
       {
@@ -3931,7 +3931,7 @@ describe('comparisonReportRuntimeExecution', () => {
       'windows-container-command-build-failed'
     );
     expect(result.record.runtimeExecution.doctorSummaryLines).toContain(
-      'Selected provider=windows-container; engine=labview-cli; platform=win32; preferBitness=x86.'
+      'Selected provider=windows-container; engine=labview-cli; platform=win32; bitness=x86.'
     );
   });
 

@@ -21,7 +21,8 @@ export interface HarnessReportSmokeCliArgs {
   runtimeExecutionTimeoutMs?: number;
   runtimePlatform?: RuntimePlatform;
   runtimeEngineOverride?: ComparisonRuntimeEngine;
-  preferBitness?: 'auto' | 'x86' | 'x64';
+  executionMode?: 'auto' | 'host-only' | 'docker-only';
+  bitness?: 'x86' | 'x64';
   labviewCliPath?: string;
   labviewExePath?: string;
   lvComparePath?: string;
@@ -45,7 +46,7 @@ export interface HarnessReportSmokeCliDeps {
 
 export function getHarnessReportSmokeUsage(): string {
   return [
-    'Usage: runHarnessReportSmoke [--harness-id <id>] [--strict-rsrc-header] [--selected-hash <hash>] [--base-hash <hash>] [--runtime-timeout-ms <ms>] [--platform <win32|linux|darwin>] [--engine <labview-cli|lvcompare>] [--prefer-bitness <auto|x86|x64>] [--labview-cli-path <path>] [--labview-exe-path <path>] [--lvcompare-path <path>] [--help]',
+    'Usage: runHarnessReportSmoke [--harness-id <id>] [--strict-rsrc-header] [--selected-hash <hash>] [--base-hash <hash>] [--runtime-timeout-ms <ms>] [--platform <win32|linux|darwin>] [--engine <labview-cli|lvcompare>] [--execution-mode <auto|host-only|docker-only>] [--bitness <x86|x64>] [--labview-cli-path <path>] [--labview-exe-path <path>] [--lvcompare-path <path>] [--help]',
     '',
     'Options:',
     '  --harness-id <id>         Select the canonical harness to run.',
@@ -55,7 +56,8 @@ export function getHarnessReportSmokeUsage(): string {
     '  --runtime-timeout-ms <ms> Bound runtime execution for targeted or default report-smoke diagnosis.',
     '  --platform <value>        Override runtime detection platform for report-tool selection.',
     '  --engine <value>          Override the selected report engine for the smoke run.',
-    '  --prefer-bitness <value>  Set runtime bitness preference for report-tool selection.',
+    '  --execution-mode <value>  Override provider selection with auto, host-only, or docker-only.',
+    '  --bitness <value>  Set explicit runtime bitness for report-tool selection.',
     '  --labview-cli-path <path> Provide an explicit LabVIEWCLI path for report-tool selection.',
     '  --labview-exe-path <path> Provide an explicit LabVIEW executable path for report-tool selection.',
     '  --lvcompare-path <path>   Provide an explicit LVCompare path for report-tool selection.',
@@ -77,7 +79,8 @@ export function parseHarnessReportSmokeArgs(argv: string[]): HarnessReportSmokeC
   let runtimeExecutionTimeoutMs: number | undefined;
   let runtimePlatform: RuntimePlatform | undefined;
   let runtimeEngineOverride: ComparisonRuntimeEngine | undefined;
-  let preferBitness: 'auto' | 'x86' | 'x64' | undefined;
+  let executionMode: 'auto' | 'host-only' | 'docker-only' | undefined;
+  let bitness: 'x86' | 'x64' | undefined;
   let labviewCliPath: string | undefined;
   let labviewExePath: string | undefined;
   let lvComparePath: string | undefined;
@@ -147,13 +150,25 @@ export function parseHarnessReportSmokeArgs(argv: string[]): HarnessReportSmokeC
       continue;
     }
 
-    if (current === '--prefer-bitness') {
-      const candidate = requireValue('--prefer-bitness');
-      if (candidate !== 'auto' && candidate !== 'x86' && candidate !== 'x64') {
-        throw new Error(`Unsupported value for --prefer-bitness: ${candidate}\n\n${getHarnessReportSmokeUsage()}`);
+    if (current === '--execution-mode') {
+      const candidate = requireValue('--execution-mode');
+      if (candidate !== 'auto' && candidate !== 'host-only' && candidate !== 'docker-only') {
+        throw new Error(
+          `Unsupported value for --execution-mode: ${candidate}\n\n${getHarnessReportSmokeUsage()}`
+        );
       }
 
-      preferBitness = candidate;
+      executionMode = candidate;
+      continue;
+    }
+
+    if (current === '--bitness') {
+      const candidate = requireValue('--bitness');
+      if (candidate !== 'x86' && candidate !== 'x64') {
+        throw new Error(`Unsupported value for --bitness: ${candidate}\n\n${getHarnessReportSmokeUsage()}`);
+      }
+
+      bitness = candidate;
       continue;
     }
 
@@ -193,7 +208,8 @@ export function parseHarnessReportSmokeArgs(argv: string[]): HarnessReportSmokeC
     runtimeExecutionTimeoutMs,
     runtimePlatform,
     runtimeEngineOverride,
-    preferBitness,
+    executionMode,
+    bitness,
     labviewCliPath,
     labviewExePath,
     lvComparePath
@@ -234,7 +250,8 @@ export async function runHarnessReportSmokeCli(
     runtimePlatform: args.runtimePlatform,
     runtimeEngineOverride: args.runtimeEngineOverride,
     runtimeSettings: {
-      preferBitness: args.preferBitness,
+      executionMode: args.executionMode,
+      bitness: args.bitness,
       labviewCliPath: args.labviewCliPath,
       labviewExePath: args.labviewExePath,
       lvComparePath: args.lvComparePath

@@ -89,7 +89,7 @@ describe('extension manifest research alignment', () => {
         'viHistorySuite.lvComparePath',
         'viHistorySuite.labviewExePath',
         'viHistorySuite.windowsContainerImage',
-        'viHistorySuite.preferBitness'
+        'viHistorySuite.bitness'
       ]
     });
 

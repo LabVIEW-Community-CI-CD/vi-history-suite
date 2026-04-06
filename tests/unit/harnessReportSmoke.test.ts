@@ -163,7 +163,7 @@ describe('harness report smoke renderers', () => {
   it('applies governed runtime-engine overrides deterministically', () => {
     const runtimeSelection = {
       platform: 'win32' as const,
-      preferBitness: 'x86' as const,
+      bitness: 'x86' as const,
       provider: 'host-native' as const,
       engine: 'labview-cli' as const,
       labviewExe: { kind: 'labview-exe' as const, path: 'C:\\LabVIEW.exe', source: 'configured' as const, exists: true, bitness: 'x86' as const },
@@ -282,7 +282,7 @@ describe('runHarnessReportSmoke', () => {
 
   const hostNativeRuntimeSelection = {
     platform: 'win32' as const,
-    preferBitness: 'x86' as const,
+    bitness: 'x86' as const,
     provider: 'host-native' as const,
     engine: 'labview-cli' as const,
     notes: [],
@@ -359,7 +359,7 @@ describe('runHarnessReportSmoke', () => {
         reportRoot: '/tmp/reports',
         runtimePlatform: 'win32',
         runtimeSettings: {
-          preferBitness: 'x86',
+          bitness: 'x86',
           labviewCliPath: 'C:\\LabVIEWCLI.exe',
           labviewExePath: 'C:\\LabVIEW.exe'
         }
@@ -405,7 +405,7 @@ describe('runHarnessReportSmoke', () => {
         }) as never,
         locateComparisonRuntime: vi.fn().mockResolvedValue({
           platform: 'win32',
-          preferBitness: 'x86',
+          bitness: 'x86',
           provider: 'host-native',
           engine: 'labview-cli',
           notes: [],
@@ -460,7 +460,7 @@ describe('runHarnessReportSmoke', () => {
             },
             runtimeSelection: {
               platform: 'win32',
-              preferBitness: 'x86',
+              bitness: 'x86',
               provider: 'host-native',
               engine: 'labview-cli',
               notes: [],
@@ -526,7 +526,7 @@ describe('runHarnessReportSmoke', () => {
             },
             runtimeSelection: {
               platform: 'win32',
-              preferBitness: 'x86',
+              bitness: 'x86',
               provider: 'host-native',
               engine: 'labview-cli',
               notes: [],
@@ -693,7 +693,7 @@ describe('runHarnessReportSmoke', () => {
         }) as never,
         locateComparisonRuntime: vi.fn().mockResolvedValue({
           platform: 'win32',
-          preferBitness: 'x86',
+          bitness: 'x86',
           provider: 'host-native',
           engine: 'labview-cli',
           notes: [],
@@ -879,7 +879,7 @@ describe('runHarnessReportSmoke', () => {
         },
         runtimeSelection: {
           platform: 'win32',
-          preferBitness: 'x86',
+          bitness: 'x86',
           provider: 'host-native',
           engine: 'labview-cli',
           notes: [],
@@ -948,7 +948,7 @@ describe('runHarnessReportSmoke', () => {
         }) as never,
         locateComparisonRuntime: vi.fn().mockResolvedValue({
           platform: 'win32',
-          preferBitness: 'x86',
+          bitness: 'x86',
           provider: 'host-native',
           engine: 'labview-cli',
           notes: [],
@@ -1003,7 +1003,7 @@ describe('runHarnessReportSmoke', () => {
             },
             runtimeSelection: {
               platform: 'win32',
-              preferBitness: 'x86',
+              bitness: 'x86',
               provider: 'host-native',
               engine: 'labview-cli',
               notes: [],
@@ -1091,7 +1091,7 @@ describe('runHarnessReportSmoke', () => {
         },
         runtimeSelection: {
           platform: 'win32',
-          preferBitness: 'x86',
+          bitness: 'x86',
           provider: 'host-native',
           engine: 'lvcompare',
           labviewExe: { kind: 'labview-exe', path: 'C:\\LabVIEW.exe', source: 'configured', exists: true, bitness: 'x86' },
@@ -1162,7 +1162,7 @@ describe('runHarnessReportSmoke', () => {
         }) as never,
         locateComparisonRuntime: vi.fn().mockResolvedValue({
           platform: 'win32',
-          preferBitness: 'x86',
+          bitness: 'x86',
           provider: 'host-native',
           engine: 'labview-cli',
           labviewExe: { kind: 'labview-exe', path: 'C:\\LabVIEW.exe', source: 'configured', exists: true, bitness: 'x86' },
@@ -1238,7 +1238,7 @@ describe('runHarnessReportSmoke', () => {
         },
         runtimeSelection: {
           platform: 'win32',
-          preferBitness: 'x86',
+          bitness: 'x86',
           provider: 'host-native',
           engine: 'labview-cli',
           notes: [],
@@ -1306,7 +1306,7 @@ describe('runHarnessReportSmoke', () => {
         }) as never,
         locateComparisonRuntime: vi.fn().mockResolvedValue({
           platform: 'win32',
-          preferBitness: 'x86',
+          bitness: 'x86',
           provider: 'host-native',
           engine: 'labview-cli',
           notes: [],
@@ -1361,7 +1361,7 @@ describe('runHarnessReportSmoke', () => {
             },
             runtimeSelection: {
               platform: 'win32',
-              preferBitness: 'x86',
+              bitness: 'x86',
               provider: 'host-native',
               engine: 'labview-cli',
               notes: [],
@@ -1450,7 +1450,7 @@ describe('runHarnessReportSmoke', () => {
         },
         runtimeSelection: {
           platform: 'win32',
-          preferBitness: 'x86',
+          bitness: 'x86',
           provider: 'host-native',
           engine: 'labview-cli',
           notes: [],
@@ -1518,7 +1518,7 @@ describe('runHarnessReportSmoke', () => {
         }) as never,
         locateComparisonRuntime: vi.fn().mockResolvedValue({
           platform: 'win32',
-          preferBitness: 'x86',
+          bitness: 'x86',
           provider: 'host-native',
           engine: 'labview-cli',
           notes: [],
@@ -1573,7 +1573,7 @@ describe('runHarnessReportSmoke', () => {
             },
             runtimeSelection: {
               platform: 'win32',
-              preferBitness: 'x86',
+              bitness: 'x86',
               provider: 'host-native',
               engine: 'labview-cli',
               notes: [],
@@ -1662,7 +1662,7 @@ describe('runHarnessReportSmoke', () => {
         },
         runtimeSelection: {
           platform: 'linux',
-          preferBitness: 'auto',
+          bitness: 'x64',
           provider: 'host-native',
           engine: 'labview-cli',
           notes: [],
@@ -1730,7 +1730,7 @@ describe('runHarnessReportSmoke', () => {
         }) as never,
         locateComparisonRuntime: vi.fn().mockResolvedValue({
           platform: 'linux',
-          preferBitness: 'auto',
+          bitness: 'x64',
           provider: 'host-native',
           engine: 'labview-cli',
           notes: [],
@@ -1785,7 +1785,7 @@ describe('runHarnessReportSmoke', () => {
             },
             runtimeSelection: {
               platform: 'linux',
-              preferBitness: 'auto',
+              bitness: 'x64',
               provider: 'host-native',
               engine: 'labview-cli',
               notes: [],
@@ -1875,7 +1875,7 @@ describe('runHarnessReportSmoke', () => {
   it('uses the current platform when no runtime override is supplied and retains blocked-runtime facts', async () => {
     const locateComparisonRuntime = vi.fn().mockResolvedValue({
       platform: process.platform,
-      preferBitness: 'auto',
+      bitness: 'x64',
       provider: 'unavailable',
       blockedReason: 'comparison-tool-not-found',
       notes: ['Tool not installed on this host.'],
@@ -1977,7 +1977,7 @@ describe('runHarnessReportSmoke', () => {
             },
             runtimeSelection: {
               platform: process.platform === 'win32' || process.platform === 'darwin' ? process.platform : 'linux',
-              preferBitness: 'auto',
+              bitness: 'x64',
               provider: 'unavailable',
               blockedReason: 'comparison-tool-not-found',
               notes: ['Tool not installed on this host.'],

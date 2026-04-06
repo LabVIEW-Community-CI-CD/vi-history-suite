@@ -23,7 +23,7 @@
         "viHistorySuite.lvComparePath",
         "viHistorySuite.labviewExePath",
         "viHistorySuite.windowsContainerImage",
-        "viHistorySuite.preferBitness"
+        "viHistorySuite.bitness"
       ]
     }
   },
@@ -130,15 +130,14 @@
           "default": "nationalinstruments/labview:2026q1-windows",
           "description": "Preferred Windows LabVIEW container image for isolated 64-bit comparison-report execution."
         },
-        "viHistorySuite.preferBitness": {
+        "viHistorySuite.bitness": {
           "type": "string",
           "enum": [
-            "auto",
             "x86",
             "x64"
           ],
-          "default": "auto",
-          "description": "Preferred LabVIEW bitness when both x86 and x64 are installed."
+          "default": "x64",
+          "description": "Explicit LabVIEW bitness for report-generation runtime selection."
         }
       }
     }

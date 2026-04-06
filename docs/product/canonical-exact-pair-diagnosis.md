@@ -34,7 +34,7 @@ Use when diagnosing an exact retained Windows blocker pair under host-native
 - `--base-hash <40-char hash>`
 - `--platform win32`
 - `--engine labview-cli`
-- `--prefer-bitness x86|x64`
+- `--bitness x86|x64`
 - `--labview-cli-path <...\\LabVIEWCLI.exe>`
 - `--labview-exe-path <...\\LabVIEW.exe>`
 
@@ -55,7 +55,7 @@ Use when diagnosing the same exact retained pair under Windows `LVCompare`.
 - `--base-hash <40-char hash>`
 - `--platform win32`
 - `--engine lvcompare`
-- `--prefer-bitness x86|x64`
+- `--bitness x86|x64`
 - `--lvcompare-path <...\\LVCompare.exe>`
 - `--labview-exe-path <...\\LabVIEW.exe>`
 
@@ -70,7 +70,7 @@ Use when diagnosing the same exact retained pair under Windows `LVCompare`.
     validated as one effective runtime bundle before execution begins
   - the same admission layer now governs dashboard-smoke, decision-record,
     and Windows/Linux benchmark CLI entrypoints too
-- `--prefer-bitness` is only valid with `--platform win32`.
+- `--bitness` is only valid with `--platform win32`.
 - `--engine labview-cli` does not allow `--lvcompare-path`.
 - `--engine lvcompare` does not allow `--labview-cli-path`.
 - Partial engine/path bundles are rejected.
@@ -81,8 +81,8 @@ Use when diagnosing the same exact retained pair under Windows `LVCompare`.
 - On the canonical Windows host, explicit runtime override paths must exist
   before the harness runs.
 - Explicit Windows runtime override paths must resolve to one coherent x86 or
-  x64 bundle even when `--prefer-bitness` is omitted.
-- Windows `--prefer-bitness` must not contradict explicit
+  x64 bundle even when `--bitness` is omitted.
+- Windows `--bitness` must not contradict explicit
   `Program Files` / `Program Files (x86)` runtime paths.
 - Canonical Windows host-native diagnosis requires a clean host runtime
   surface before launch:

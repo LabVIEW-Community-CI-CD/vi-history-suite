@@ -13,7 +13,7 @@ Provider selection can still become non-canonical if the extension chooses a
 runtime from a partially validated blend of:
 
 - `executionMode`
-- `preferBitness`
+- `bitness`
 - explicit host runtime path settings
 - configured container image
 - detected host-runtime facts
@@ -41,7 +41,7 @@ extension execution policy.
    selection starts.
 2. That effective request shall include:
    - selected execution mode
-   - preferred bitness
+   - bitness
    - explicit host runtime path settings
    - configured container-image reference
    - selected host-runtime facts, including the governing `LabVIEW.ini`

@@ -996,7 +996,7 @@ describe('comparisonReportAction', () => {
   it('opens a secure webview panel for a persisted comparison report packet', async () => {
     const locateRuntime = vi.fn().mockResolvedValue({
       platform: 'win32',
-      preferBitness: 'x86',
+      bitness: 'x86',
       provider: 'host-native',
       engine: 'labview-cli',
       labviewExe: {
@@ -1046,7 +1046,7 @@ describe('comparisonReportAction', () => {
         },
         runtimeSelection: {
           platform: 'win32',
-          preferBitness: 'x86',
+          bitness: 'x86',
           provider: 'host-native',
           notes: [],
           registryQueryPlans: [],
@@ -1091,7 +1091,7 @@ describe('comparisonReportAction', () => {
         }),
         locateRuntime,
         getRuntimeSettings: () => ({
-          preferBitness: 'x86'
+          bitness: 'x86'
         }),
         persistComparisonReport,
         archiveComparisonReportSource
@@ -1135,7 +1135,7 @@ describe('comparisonReportAction', () => {
       title: 'VI Comparison Report: foo.vi'
     });
     expect(locateRuntime).toHaveBeenCalledWith('linux', {
-      preferBitness: 'x86'
+      bitness: 'x86'
     });
     expect(persistComparisonReport).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -1187,7 +1187,7 @@ describe('comparisonReportAction', () => {
         }),
         locateRuntime: vi.fn().mockResolvedValue({
           platform: 'win32',
-          preferBitness: 'x86',
+          bitness: 'x86',
           provider: 'host-native',
           engine: 'labview-cli',
           notes: [],
@@ -1206,7 +1206,7 @@ describe('comparisonReportAction', () => {
             },
             runtimeSelection: {
               platform: 'win32',
-              preferBitness: 'x86',
+              bitness: 'x86',
               provider: 'host-native',
               engine: 'labview-cli',
               notes: [],
@@ -1238,7 +1238,7 @@ describe('comparisonReportAction', () => {
             },
             runtimeSelection: {
               platform: 'win32',
-              preferBitness: 'x86',
+              bitness: 'x86',
               provider: 'host-native',
               engine: 'labview-cli',
               notes: [],
@@ -1320,7 +1320,7 @@ describe('comparisonReportAction', () => {
         runtimeSelection: {
           platform: 'win32',
           executionMode: 'auto',
-          preferBitness: 'x64',
+          bitness: 'x64',
           provider: 'windows-container',
           engine: 'labview-cli',
           windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
@@ -1356,7 +1356,7 @@ describe('comparisonReportAction', () => {
         runtimeSelection: {
           platform: 'win32',
           executionMode: 'auto',
-          preferBitness: 'x64',
+          bitness: 'x64',
           provider: 'windows-container',
           engine: 'labview-cli',
           windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
@@ -1402,7 +1402,7 @@ describe('comparisonReportAction', () => {
         locateRuntime: vi.fn().mockResolvedValue({
           platform: 'win32',
           executionMode: 'auto',
-          preferBitness: 'x64',
+          bitness: 'x64',
           provider: 'windows-container',
           engine: 'labview-cli',
           windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
@@ -1499,7 +1499,7 @@ describe('comparisonReportAction', () => {
         runtimeSelection: {
           platform: 'win32',
           executionMode: 'auto',
-          preferBitness: 'x64',
+          bitness: 'x64',
           provider: 'windows-container',
           engine: 'labview-cli',
           windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
@@ -1547,7 +1547,7 @@ describe('comparisonReportAction', () => {
         locateRuntime: vi.fn().mockResolvedValue({
           platform: 'win32',
           executionMode: 'auto',
-          preferBitness: 'x64',
+          bitness: 'x64',
           provider: 'windows-container',
           engine: 'labview-cli',
           windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
@@ -1633,7 +1633,7 @@ describe('comparisonReportAction', () => {
         },
         runtimeSelection: {
           platform: 'win32',
-          preferBitness: 'x86',
+          bitness: 'x86',
           provider: 'host-native',
           notes: [],
           registryQueryPlans: [],
@@ -1677,7 +1677,7 @@ describe('comparisonReportAction', () => {
         }),
         locateRuntime: vi.fn().mockResolvedValue({
           platform: 'linux',
-          preferBitness: 'x86',
+          bitness: 'x86',
           provider: 'host-native',
           engine: 'labview-cli',
           notes: [],
@@ -1685,7 +1685,7 @@ describe('comparisonReportAction', () => {
           candidates: []
         }),
         getRuntimeSettings: () => ({
-          preferBitness: 'x86'
+          bitness: 'x86'
         }),
         persistComparisonReport,
         archiveComparisonReportSource: vi.fn().mockRejectedValue(new Error('archive failed'))
@@ -1758,7 +1758,7 @@ describe('comparisonReportAction', () => {
         }),
         locateRuntime: vi.fn().mockResolvedValue({
           platform: 'win32',
-          preferBitness: 'x64',
+          bitness: 'x64',
           provider: 'windows-container',
           engine: 'labview-cli',
           notes: [],
@@ -1777,7 +1777,7 @@ describe('comparisonReportAction', () => {
             },
             runtimeSelection: {
               platform: 'win32',
-              preferBitness: 'x64',
+              bitness: 'x64',
               provider: 'windows-container',
               engine: 'labview-cli',
               notes: [],
@@ -1809,7 +1809,7 @@ describe('comparisonReportAction', () => {
             },
             runtimeSelection: {
               platform: 'win32',
-              preferBitness: 'x64',
+              bitness: 'x64',
               provider: 'windows-container',
               engine: 'labview-cli',
               notes: [],
@@ -1909,7 +1909,7 @@ describe('comparisonReportAction', () => {
           },
           runtimeSelection: {
             platform: 'win32',
-            preferBitness: 'x86',
+            bitness: 'x86',
             provider: 'host-native',
             engine: 'labview-cli',
             notes: [],
@@ -1951,7 +1951,7 @@ describe('comparisonReportAction', () => {
         }),
         locateRuntime: vi.fn().mockResolvedValue({
           platform: 'win32',
-          preferBitness: 'x86',
+          bitness: 'x86',
           provider: 'host-native',
           engine: 'labview-cli',
           notes: [],
@@ -2029,7 +2029,7 @@ describe('comparisonReportAction', () => {
         }),
         locateRuntime: vi.fn().mockResolvedValue({
           platform: 'win32',
-          preferBitness: 'x86',
+          bitness: 'x86',
           provider: 'host-native',
           engine: 'labview-cli',
           notes: [],
@@ -2065,7 +2065,7 @@ describe('comparisonReportAction', () => {
             },
             runtimeSelection: {
               platform: 'win32',
-              preferBitness: 'x86',
+              bitness: 'x86',
               provider: 'host-native',
               engine: 'labview-cli',
               notes: [],
@@ -2250,7 +2250,7 @@ describe('comparisonReportAction', () => {
       token.isCancellationRequested = true;
       return {
         platform: 'win32',
-        preferBitness: 'x86',
+        bitness: 'x86',
         provider: 'host-native',
         engine: 'labview-cli',
         notes: [],
@@ -2342,7 +2342,7 @@ describe('comparisonReportAction', () => {
         }),
         locateRuntime: vi.fn().mockResolvedValue({
           platform: 'linux',
-          preferBitness: 'auto',
+          bitness: 'x64',
           provider: 'unavailable',
           blockedReason: 'comparison-tool-not-found',
           notes: ['Linux report generation remains best-effort.'],
@@ -2350,7 +2350,7 @@ describe('comparisonReportAction', () => {
           candidates: []
         }),
         getRuntimeSettings: () => ({
-          preferBitness: 'auto'
+          bitness: 'x64'
         }),
         persistComparisonReport: vi.fn().mockResolvedValue({
           record: {
@@ -2365,7 +2365,7 @@ describe('comparisonReportAction', () => {
             },
             runtimeSelection: {
               platform: 'linux',
-              preferBitness: 'auto',
+              bitness: 'x64',
               provider: 'unavailable',
               blockedReason: 'comparison-tool-not-found',
               notes: ['Linux report generation remains best-effort.'],
@@ -2470,7 +2470,7 @@ describe('comparisonReportAction', () => {
         }),
         locateRuntime: vi.fn().mockResolvedValue({
           platform: 'linux',
-          preferBitness: 'auto',
+          bitness: 'x64',
           provider: 'unavailable',
           blockedReason: 'comparison-tool-not-found',
           notes: ['Linux report generation remains best-effort.'],
@@ -2478,7 +2478,7 @@ describe('comparisonReportAction', () => {
           candidates: []
         }),
         getRuntimeSettings: () => ({
-          preferBitness: 'auto'
+          bitness: 'x64'
         }),
         persistComparisonReport: vi.fn().mockResolvedValue({
           record: {
@@ -2509,7 +2509,7 @@ describe('comparisonReportAction', () => {
             },
             runtimeSelection: {
               platform: 'linux',
-              preferBitness: 'auto',
+              bitness: 'x64',
               provider: 'unavailable',
               blockedReason: 'comparison-tool-not-found',
               notes: ['Linux report generation remains best-effort.'],
@@ -2608,7 +2608,7 @@ describe('comparisonReportAction', () => {
           },
           runtimeSelection: {
             platform: 'win32',
-            preferBitness: 'x86',
+            bitness: 'x86',
             provider: 'host-native',
             engine: 'labview-cli',
             notes: [],
@@ -2654,7 +2654,7 @@ describe('comparisonReportAction', () => {
         }),
         locateRuntime: vi.fn().mockResolvedValue({
           platform: 'win32',
-          preferBitness: 'x86',
+          bitness: 'x86',
           provider: 'host-native',
           engine: 'labview-cli',
           notes: [],
@@ -2689,7 +2689,7 @@ describe('comparisonReportAction', () => {
             },
             runtimeSelection: {
               platform: 'win32',
-              preferBitness: 'x86',
+              bitness: 'x86',
               provider: 'host-native',
               engine: 'labview-cli',
               notes: [],
@@ -2766,7 +2766,7 @@ describe('comparisonReportAction', () => {
         },
         runtimeSelection: {
           platform: 'win32',
-          preferBitness: 'x86',
+          bitness: 'x86',
           provider: 'host-native',
           engine: 'labview-cli',
           notes: [],
@@ -2807,7 +2807,7 @@ describe('comparisonReportAction', () => {
         }),
         locateRuntime: vi.fn().mockResolvedValue({
           platform: 'win32',
-          preferBitness: 'x86',
+          bitness: 'x86',
           provider: 'host-native',
           engine: 'labview-cli',
           labviewExe: {
@@ -2840,7 +2840,7 @@ describe('comparisonReportAction', () => {
             },
             runtimeSelection: {
               platform: 'win32',
-              preferBitness: 'x86',
+              bitness: 'x86',
               provider: 'host-native',
               engine: 'labview-cli',
               notes: [],
@@ -2929,7 +2929,7 @@ describe('comparisonReportAction', () => {
         },
         runtimeSelection: {
           platform: 'win32',
-          preferBitness: 'x86',
+          bitness: 'x86',
           provider: 'host-native',
           engine: 'labview-cli',
           notes: [],
@@ -2969,7 +2969,7 @@ describe('comparisonReportAction', () => {
         }),
         locateRuntime: vi.fn().mockResolvedValue({
           platform: 'win32',
-          preferBitness: 'x86',
+          bitness: 'x86',
           provider: 'host-native',
           engine: 'labview-cli',
           notes: [],
@@ -2988,7 +2988,7 @@ describe('comparisonReportAction', () => {
             },
             runtimeSelection: {
               platform: 'win32',
-              preferBitness: 'x86',
+              bitness: 'x86',
               provider: 'host-native',
               engine: 'labview-cli',
               notes: [],
@@ -3049,7 +3049,7 @@ describe('comparisonReportAction', () => {
           attempted: true,
           reportExists: false,
           doctorSummaryLines: [
-            'Selected provider=host-native; engine=labview-cli; platform=win32; preferBitness=x86.',
+            'Selected provider=host-native; engine=labview-cli; platform=win32; bitness=x86.',
             'Provider decision: rejected windows-container because Windows x86 comparison-report execution stays host-native, so the Windows container provider was not selected for this lane.',
             'Next action: use the retained runtime notes, stdout/stderr artifacts, and diagnostic log to correct the runtime environment, then rerun comparison report generation.'
           ],
@@ -3081,7 +3081,7 @@ describe('comparisonReportAction', () => {
         },
         runtimeSelection: {
           platform: 'win32',
-          preferBitness: 'x86',
+          bitness: 'x86',
           provider: 'host-native',
           engine: 'labview-cli',
           notes: [],
@@ -3121,7 +3121,7 @@ describe('comparisonReportAction', () => {
         }),
         locateRuntime: vi.fn().mockResolvedValue({
           platform: 'win32',
-          preferBitness: 'x86',
+          bitness: 'x86',
           provider: 'host-native',
           engine: 'labview-cli',
           notes: [],
@@ -3140,7 +3140,7 @@ describe('comparisonReportAction', () => {
             },
             runtimeSelection: {
               platform: 'win32',
-              preferBitness: 'x86',
+              bitness: 'x86',
               provider: 'host-native',
               engine: 'labview-cli',
               notes: [],
@@ -3196,7 +3196,7 @@ describe('comparisonReportAction', () => {
       runtimeDiagnosticLogArtifactPath:
         '/workspace/.storage/reports/repoid123456/fileid123456/runtime-diagnostic-log.txt',
       runtimeDoctorSummaryLines: [
-        'Selected provider=host-native; engine=labview-cli; platform=win32; preferBitness=x86.',
+        'Selected provider=host-native; engine=labview-cli; platform=win32; bitness=x86.',
         'Provider decision: rejected windows-container because Windows x86 comparison-report execution stays host-native, so the Windows container provider was not selected for this lane.',
         'Next action: use the retained runtime notes, stdout/stderr artifacts, and diagnostic log to correct the runtime environment, then rerun comparison report generation.'
       ],
@@ -3232,7 +3232,7 @@ describe('comparisonReportAction', () => {
     expect(panel.webview.html).toContain('labview-path-ignored-last-used-default');
     expect(panel.webview.html).toContain('command-exited-nonzero');
     expect(panel.webview.html).toContain('data-testid="comparison-report-panel-runtime-doctor"');
-    expect(panel.webview.html).toContain('Selected provider=host-native; engine=labview-cli; platform=win32; preferBitness=x86.');
+    expect(panel.webview.html).toContain('Selected provider=host-native; engine=labview-cli; platform=win32; bitness=x86.');
     expect(panel.webview.html).toContain(
       'Provider decision: rejected windows-container because Windows x86 comparison-report execution stays host-native, so the Windows container provider was not selected for this lane.'
     );
@@ -3278,7 +3278,7 @@ describe('comparisonReportAction', () => {
         },
         runtimeSelection: {
           platform: 'win32',
-          preferBitness: 'auto',
+          bitness: 'x64',
           provider: 'host-native',
           engine: 'labview-cli',
           notes: [],
@@ -3318,7 +3318,7 @@ describe('comparisonReportAction', () => {
         }),
         locateRuntime: vi.fn().mockResolvedValue({
           platform: 'win32',
-          preferBitness: 'auto',
+          bitness: 'x64',
           provider: 'host-native',
           engine: 'labview-cli',
           notes: [],
@@ -3337,7 +3337,7 @@ describe('comparisonReportAction', () => {
             },
             runtimeSelection: {
               platform: 'win32',
-              preferBitness: 'auto',
+              bitness: 'x64',
               provider: 'host-native',
               engine: 'labview-cli',
               notes: [],
@@ -3441,7 +3441,7 @@ describe('comparisonReportAction', () => {
         },
         runtimeSelection: {
           platform: 'win32',
-          preferBitness: 'x86',
+          bitness: 'x86',
           provider: 'host-native',
           engine: 'labview-cli',
           notes: [],
@@ -3481,7 +3481,7 @@ describe('comparisonReportAction', () => {
         }),
         locateRuntime: vi.fn().mockResolvedValue({
           platform: 'win32',
-          preferBitness: 'x86',
+          bitness: 'x86',
           provider: 'host-native',
           engine: 'labview-cli',
           notes: [],
@@ -3500,7 +3500,7 @@ describe('comparisonReportAction', () => {
             },
             runtimeSelection: {
               platform: 'win32',
-              preferBitness: 'x86',
+              bitness: 'x86',
               provider: 'host-native',
               engine: 'labview-cli',
               notes: [],
@@ -3571,7 +3571,7 @@ describe('comparisonReportAction', () => {
         },
         runtimeSelection: {
           platform: 'win32',
-          preferBitness: 'x86',
+          bitness: 'x86',
           provider: 'host-native',
           engine: 'labview-cli',
           notes: [],
@@ -3611,7 +3611,7 @@ describe('comparisonReportAction', () => {
         }),
         locateRuntime: vi.fn().mockResolvedValue({
           platform: 'win32',
-          preferBitness: 'x86',
+          bitness: 'x86',
           provider: 'host-native',
           engine: 'labview-cli',
           notes: [],
@@ -3630,7 +3630,7 @@ describe('comparisonReportAction', () => {
             },
             runtimeSelection: {
               platform: 'win32',
-              preferBitness: 'x86',
+              bitness: 'x86',
               provider: 'host-native',
               engine: 'labview-cli',
               notes: [],
@@ -3688,7 +3688,7 @@ describe('comparisonReportAction', () => {
           lvComparePath: 'C:\\Tools\\LVCompare.exe',
           labviewExePath: 'C:\\Tools\\LabVIEW.exe',
           windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
-          preferBitness: 'x64'
+          bitness: 'x64'
         };
         return (values[key] as T | undefined) ?? defaultValue;
       }
@@ -3700,7 +3700,7 @@ describe('comparisonReportAction', () => {
       lvComparePath: 'C:\\Tools\\LVCompare.exe',
       labviewExePath: 'C:\\Tools\\LabVIEW.exe',
       windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
-      preferBitness: 'x64'
+      bitness: 'x64'
     });
     expect(resolveRuntimePlatform('freebsd' as NodeJS.Platform)).toBe('linux');
   });

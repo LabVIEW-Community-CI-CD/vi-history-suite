@@ -32,7 +32,7 @@ The governing contract and taxonomy are:
   override bundles.
 - `DEBT-0002` captures the now-retired contamination seam where explicit
   Windows runtime paths could mix x86 and x64 surfaces when
-  `--prefer-bitness` was omitted.
+  `--bitness` was omitted.
 - `DEBT-0003` is now an accepted bounded exception: the current governed
   Windows benchmark image contract retains a mixed-bitness-only `labview-cli`
   surface at pair `129`, with x86 `LabVIEWCLI.exe`, x64 `LabVIEW.exe`, and no

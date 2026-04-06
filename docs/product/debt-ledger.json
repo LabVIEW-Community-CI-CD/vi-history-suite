@@ -65,7 +65,7 @@
       "status": "retired",
       "severity": "high",
       "contaminationRisk": "high",
-      "summary": "PROGRAM-0003 entrypoints could accept explicit Windows runtime override bundles that mixed x86 and x64 surfaces when `--prefer-bitness` was omitted, weakening future benchmark and diagnosis truth.",
+      "summary": "PROGRAM-0003 entrypoints could accept explicit Windows runtime override bundles that mixed x86 and x64 surfaces when `--bitness` was omitted, weakening future benchmark and diagnosis truth.",
       "owner": {
         "trancheId": "TRANCHE-011",
         "issueId": "ISSUE-0408",
@@ -85,7 +85,7 @@
       ],
       "discoveredContext": "PROGRAM-0003 shared admission-control hardening",
       "nextGate": null,
-      "exitCriteria": "Shared runtime-override validation rejects mixed x86/x64 explicit Windows bundles even when `--prefer-bitness` is omitted.",
+      "exitCriteria": "Shared runtime-override validation rejects mixed x86/x64 explicit Windows bundles even when `--bitness` is omitted.",
       "retirementCommit": "44891ebe541ad8f9d1da1c3990aafeb947a049bc",
       "acceptedExceptionRationale": null
     },

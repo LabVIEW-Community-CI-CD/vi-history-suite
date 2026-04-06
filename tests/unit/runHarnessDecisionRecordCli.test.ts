@@ -36,7 +36,7 @@ describe('runHarnessDecisionRecordCli', () => {
         'win32',
         '--engine',
         'lvcompare',
-        '--prefer-bitness',
+        '--bitness',
         'x86',
         '--labview-exe-path',
         WINDOWS_LABVIEW_EXE_PATH,
@@ -60,7 +60,7 @@ describe('runHarnessDecisionRecordCli', () => {
       decisionRationale: 'Rationale',
       runtimePlatform: 'win32',
       runtimeEngineOverride: 'lvcompare',
-      preferBitness: 'x86',
+      bitness: 'x86',
       labviewCliPath: undefined,
       labviewExePath: WINDOWS_LABVIEW_EXE_PATH,
       lvComparePath: WINDOWS_LVCOMPARE_PATH,
@@ -78,7 +78,7 @@ describe('runHarnessDecisionRecordCli', () => {
     );
   });
 
-  it('fails closed on unsupported confidence, platform, engine, prefer-bitness, dashboard window, and unknown args', () => {
+  it('fails closed on unsupported confidence, platform, engine, bitness, dashboard window, and unknown args', () => {
     expect(() => parseHarnessDecisionRecordArgs(['--confidence', 'certain'])).toThrow(
       'Unsupported value for --confidence: certain'
     );
@@ -88,8 +88,8 @@ describe('runHarnessDecisionRecordCli', () => {
     expect(() => parseHarnessDecisionRecordArgs(['--engine', 'compare'])).toThrow(
       'Unsupported value for --engine: compare'
     );
-    expect(() => parseHarnessDecisionRecordArgs(['--prefer-bitness', 'x128'])).toThrow(
-      'Unsupported value for --prefer-bitness: x128'
+    expect(() => parseHarnessDecisionRecordArgs(['--bitness', 'x128'])).toThrow(
+      'Unsupported value for --bitness: x128'
     );
     expect(() => parseHarnessDecisionRecordArgs(['--dashboard-commit-window', '2'])).toThrow(
       'Unsupported value for --dashboard-commit-window: 2'
@@ -176,8 +176,8 @@ describe('runHarnessDecisionRecordCli', () => {
           'win32',
           '--engine',
           'labview-cli',
-          '--prefer-bitness',
-          'auto',
+          '--bitness',
+          'x86',
           '--labview-cli-path',
           WINDOWS_LABVIEW_CLI_PATH,
           '--labview-exe-path',
@@ -214,7 +214,7 @@ describe('runHarnessDecisionRecordCli', () => {
       additionalManualLabVIEWInspectionRequired: true,
       issuesOrBacklogItemsCreated: ['ISSUE-1000'],
       runtimeSettings: {
-        preferBitness: 'auto',
+        bitness: 'x86',
         labviewCliPath: WINDOWS_LABVIEW_CLI_PATH,
         labviewExePath: WINDOWS_LABVIEW_EXE_PATH,
         lvComparePath: undefined

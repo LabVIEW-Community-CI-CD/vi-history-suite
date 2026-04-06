@@ -41,7 +41,7 @@ Adopt canonical experiment admission control for `PROGRAM-0003`.
    - engine-specific path sets must remain complete and non-conflicting
    - Windows bitness overrides must not contradict explicit runtime paths
    - explicit Windows runtime paths must not mix x86 and x64 surfaces even
-     when `--prefer-bitness` is omitted
+     when `--bitness` is omitted
    - explicit Windows executable paths must match governed executable basenames
 3. Exact-pair selected/base hash validation remains a local rule of
    `runHarnessReportSmoke` and stays governed by `ADR-0021`.

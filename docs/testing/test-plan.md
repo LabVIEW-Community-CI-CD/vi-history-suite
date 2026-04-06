@@ -647,7 +647,7 @@
 - `TEST-UNIT-191`: prove the harness decision-record CLI parses reviewer and
   outcome fields, prints help, and formats retained decision/dashboard paths
 - `TEST-SMOKE-001`: run `npm run harness:dashboard:smoke -- --platform win32
-  --prefer-bitness auto --dashboard-commit-window 3` and retain
+  --bitness x64 --dashboard-commit-window 3` and retain
   `dashboard-smoke.json`, `dashboard-smoke.md`, and `dashboard-smoke.html`
   under `.cache/harness-reports/HARNESS-VHS-001/`
 - `TEST-DOC-014`: review the queue, epic, ADR, and current-state surfaces to
@@ -1114,7 +1114,7 @@
   contradictory explicit runtime override bundles across exact-pair smoke,
   dashboard smoke, decision-record, and Windows/Linux benchmark entrypoints
 - `TEST-UNIT-296`: verify canonical Windows explicit runtime override bundles
-  reject mixed x86/x64 path combinations even when `--prefer-bitness` is
+  reject mixed x86/x64 path combinations even when `--bitness` is
   omitted, while coherent explicit bundles still pass admission control
 - `TEST-UNIT-297`: verify the debt-retirement contract package remains
   machine-checkable: the contract/taxonomy/ledger docs stay discoverable in
@@ -1270,7 +1270,7 @@
 - `TEST-DOC-060`: review current-state, harnesses, canonical exact-pair
   diagnosis guidance, PROGRAM-0003, ISSUE-0408, and ADR-0022 and confirm
   explicit Windows runtime override bundles are documented as invalid when
-  they mix x86 and x64 paths, even when `--prefer-bitness` is omitted
+  they mix x86 and x64 paths, even when `--bitness` is omitted
 - `TEST-DOC-061`: review README, current-state, documentation workbench,
   wiki-authority map, debt-retirement contract, debt taxonomy, and ADR-0023
   and confirm the repo documents one no-silent-debt contract instead of

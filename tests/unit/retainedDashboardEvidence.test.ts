@@ -110,7 +110,7 @@ describe('retainedDashboardEvidence', () => {
       runtimeSelection: {
         platform: 'linux',
         executionMode: 'auto',
-        preferBitness: 'auto',
+        bitness: 'x64',
         provider: 'host-native',
         engine: 'labview-cli',
         notes: [],

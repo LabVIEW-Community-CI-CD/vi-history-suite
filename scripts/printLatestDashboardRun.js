@@ -415,7 +415,7 @@ function formatLatestDashboardRun(latest) {
   }
   if (record.experiment?.configuration) {
     lines.push(
-      `- config: strictRsrcHeader=${record.experiment.configuration.strictRsrcHeader} historyWindowMode=${record.experiment.configuration.historyWindowMode} maxHistoryEntries=${record.experiment.configuration.maxHistoryEntries} effectiveHistoryEntryCeiling=${record.experiment.configuration.effectiveHistoryEntryCeiling} preferBitness=${record.experiment.configuration.preferBitness ?? 'unknown'} containerImage=${record.experiment.configuration.windowsContainerImage ?? 'unknown'} labviewCliPathConfigured=${record.experiment.configuration.labviewCliPathConfigured} labviewExePathConfigured=${record.experiment.configuration.labviewExePathConfigured} lvComparePathConfigured=${record.experiment.configuration.lvComparePathConfigured}`
+      `- config: strictRsrcHeader=${record.experiment.configuration.strictRsrcHeader} historyWindowMode=${record.experiment.configuration.historyWindowMode} maxHistoryEntries=${record.experiment.configuration.maxHistoryEntries} effectiveHistoryEntryCeiling=${record.experiment.configuration.effectiveHistoryEntryCeiling} bitness=${record.experiment.configuration.bitness ?? 'unknown'} containerImage=${record.experiment.configuration.windowsContainerImage ?? 'unknown'} labviewCliPathConfigured=${record.experiment.configuration.labviewCliPathConfigured} labviewExePathConfigured=${record.experiment.configuration.labviewExePathConfigured} lvComparePathConfigured=${record.experiment.configuration.lvComparePathConfigured}`
     );
   }
   if (record.experiment?.progress) {

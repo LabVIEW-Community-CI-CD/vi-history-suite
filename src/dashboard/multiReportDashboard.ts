@@ -117,7 +117,7 @@ export interface MultiReportDashboardEntry {
   runtimeProvider?: string;
   runtimeEngine?: string;
   runtimePlatform?: string;
-  runtimePreferBitness?: string;
+  runtimeBitness?: string;
   runtimeProviderLabel?: string;
   pairEvidenceState: MultiReportDashboardEntryEvidenceState;
   generatedReportExists: boolean;
@@ -581,9 +581,7 @@ export function renderMultiReportDashboardHtml(
           <div><strong>Provider:</strong> ${escapeHtml(entry.runtimeProvider ?? 'none')}</div>
           <div><strong>Engine:</strong> ${escapeHtml(entry.runtimeEngine ?? 'none')}</div>
           <div><strong>Platform:</strong> ${escapeHtml(entry.runtimePlatform ?? 'none')}</div>
-          <div><strong>Preferred bitness:</strong> ${escapeHtml(
-            entry.runtimePreferBitness ?? 'none'
-          )}</div>
+          <div><strong>Bitness:</strong> ${escapeHtml(entry.runtimeBitness ?? 'none')}</div>
           <div><strong>Provider label:</strong> ${escapeHtml(
             entry.runtimeProviderLabel ?? 'none'
           )}</div>
@@ -1071,7 +1069,7 @@ async function buildDashboardEntry(
     runtimeProvider: sourceRecord.packetRecord.runtimeSelection.provider,
     runtimeEngine: sourceRecord.packetRecord.runtimeSelection.engine,
     runtimePlatform: sourceRecord.packetRecord.runtimeSelection.platform,
-    runtimePreferBitness: sourceRecord.packetRecord.runtimeSelection.preferBitness,
+    runtimeBitness: sourceRecord.packetRecord.runtimeSelection.bitness,
     runtimeProviderLabel: buildProviderLabel(sourceRecord.packetRecord),
     pairEvidenceState: derivePairEvidenceState(sourceRecord, generatedReportExists),
     generatedReportExists,
@@ -1342,7 +1340,7 @@ function buildProviderLabel(record: ArchivedComparisonReportSourceRecord['packet
   return [
     selection.provider,
     selection.engine ?? 'none',
-    selection.preferBitness,
+    selection.bitness,
     selection.platform
   ].join(' / ');
 }

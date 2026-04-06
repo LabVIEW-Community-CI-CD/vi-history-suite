@@ -1,12 +1,17 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
-import { ComparisonRuntimeEngine, RuntimePlatform } from '../reporting/comparisonRuntimeLocator';
+import {
+  ComparisonRuntimeEngine,
+  RuntimeExecutionMode,
+  RuntimePlatform
+} from '../reporting/comparisonRuntimeLocator';
 
 export interface CanonicalRuntimeOverrideArgs {
   runtimePlatform?: RuntimePlatform;
   runtimeEngineOverride?: ComparisonRuntimeEngine;
-  preferBitness?: 'auto' | 'x86' | 'x64';
+  executionMode?: RuntimeExecutionMode;
+  bitness?: 'x86' | 'x64';
   labviewCliPath?: string;
   labviewExePath?: string;
   lvComparePath?: string;
@@ -25,7 +30,8 @@ export function resolveCanonicalRuntimeOverrideArgs(
     runtimeEngineOverride: resolveFirstDefined(
       sources.map((source) => source.runtimeEngineOverride)
     ),
-    preferBitness: resolveFirstDefined(sources.map((source) => source.preferBitness)),
+    executionMode: resolveFirstDefined(sources.map((source) => source.executionMode)),
+    bitness: resolveFirstDefined(sources.map((source) => source.bitness)),
     labviewCliPath: resolveFirstNonEmptyString(sources.map((source) => source.labviewCliPath)),
     labviewExePath: resolveFirstNonEmptyString(sources.map((source) => source.labviewExePath)),
     lvComparePath: resolveFirstNonEmptyString(sources.map((source) => source.lvComparePath))
@@ -38,18 +44,19 @@ export function validateCanonicalRuntimeOverrideArgs(
 ): void {
   const normalizedArgs = resolveCanonicalRuntimeOverrideArgs(args);
   const explicitRuntimeOverrideRequested = Boolean(
+    normalizedArgs.executionMode ||
     normalizedArgs.labviewCliPath ||
       normalizedArgs.labviewExePath ||
       normalizedArgs.lvComparePath ||
-      normalizedArgs.preferBitness
+      normalizedArgs.bitness
   );
 
   if (
-    normalizedArgs.preferBitness &&
+    normalizedArgs.bitness &&
     normalizedArgs.runtimePlatform &&
     normalizedArgs.runtimePlatform !== 'win32'
   ) {
-    throw new Error(`--prefer-bitness is only supported with --platform win32.\n\n${usageText}`);
+    throw new Error(`--bitness is only supported with --platform win32.\n\n${usageText}`);
   }
 
   if (explicitRuntimeOverrideRequested && !normalizedArgs.runtimePlatform) {
@@ -192,7 +199,7 @@ function validateWindowsBitnessConsistency(
   args: CanonicalRuntimeOverrideArgs,
   usageText: string
 ): void {
-  if (args.runtimePlatform !== 'win32' || !args.preferBitness || args.preferBitness === 'auto') {
+  if (args.runtimePlatform !== 'win32' || !args.bitness) {
     return;
   }
 
@@ -206,9 +213,9 @@ function validateWindowsBitnessConsistency(
     }
 
     const inferredBitness = inferWindowsPathBitness(candidatePath);
-    if (inferredBitness && inferredBitness !== args.preferBitness) {
+    if (inferredBitness && inferredBitness !== args.bitness) {
       throw new Error(
-        `${flag} does not match --prefer-bitness ${args.preferBitness}; inferred ${inferredBitness} from ${candidatePath}.\n\n${usageText}`
+        `${flag} does not match --bitness ${args.bitness}; inferred ${inferredBitness} from ${candidatePath}.\n\n${usageText}`
       );
     }
   }

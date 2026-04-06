@@ -101,7 +101,7 @@ describe('archiveComparisonReportSource', () => {
       runtimeSelection: {
         provider: 'host-native',
         platform: 'win32',
-        preferBitness: 'x86',
+        bitness: 'x86',
         engine: 'labview-cli',
         notes: []
       },
@@ -206,7 +206,7 @@ describe('archiveComparisonReportSource', () => {
       runtimeSelection: {
         provider: 'host-native',
         platform: 'win32',
-        preferBitness: 'x86',
+        bitness: 'x86',
         engine: 'labview-cli',
         notes: []
       },
@@ -282,7 +282,7 @@ describe('archiveComparisonReportSource', () => {
         runtimeSelection: {
           provider: 'host-native',
           platform: 'win32',
-          preferBitness: 'x86',
+          bitness: 'x86',
           engine: 'labview-cli',
           notes: []
         },
@@ -378,7 +378,7 @@ describe('archiveComparisonReportSource', () => {
       runtimeSelection: {
         provider: 'host-native',
         platform: 'win32',
-        preferBitness: 'x86',
+        bitness: 'x86',
         engine: 'labview-cli',
         notes: []
       },

@@ -746,7 +746,7 @@ function buildDashboardLatestRunExperimentRecord(options: {
       historyWindowMode: options.historyWindowMode,
       maxHistoryEntries: options.configuredMaxHistoryEntries,
       effectiveHistoryEntryCeiling: options.effectiveHistoryEntryCeiling,
-      preferBitness: options.runtimeSettings.preferBitness,
+      bitness: options.runtimeSettings.bitness,
       windowsContainerImage: options.runtimeSettings.windowsContainerImage,
       labviewCliPathConfigured: Boolean(options.runtimeSettings.labviewCliPath?.trim()),
       labviewExePathConfigured: Boolean(options.runtimeSettings.labviewExePath?.trim()),
@@ -800,7 +800,7 @@ function safeReadComparisonRuntimeSettings(): ReturnType<typeof readComparisonRu
       labviewCliPath: '',
       lvComparePath: '',
       labviewExePath: '',
-      preferBitness: 'auto',
+      bitness: 'x64',
       windowsContainerImage: 'nationalinstruments/labview:2026q1-windows'
     };
   }
