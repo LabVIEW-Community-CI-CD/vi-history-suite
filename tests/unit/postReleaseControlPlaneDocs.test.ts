@@ -182,23 +182,26 @@ describe('post-release control-plane coherence', () => {
       '- Gate D remains open pending a clean manual right-click acceptance pass by Sergio Velderrain on the current Windows 11 host machine'
     );
     expect(currentState).toContain(
-      '- the latest retained host review at `2026-04-06T19:53:21.713Z` is `passed-human-review` with `confidence=high`'
+      '- the latest retained host review at `2026-04-06T20:09:15.443Z` is `failed-human-review` with `confidence=high`'
     );
-    expect(currentState).toContain('`Checkboxes flow works as expected so far.`');
+    expect(currentState).toContain('embedded compare information currently follows dark mode');
+    expect(currentState).toContain('commit/date/author/subject');
+    expect(currentState).toContain('`resource/plugins/lv_icon.vi`');
+    expect(currentState).toContain('checkbox flow works as expected');
     expect(currentState).toContain('`c:\\dev\\labview-icon-editor`');
-    expect(currentState).toContain('`vi.lib/LabVIEW Icon API/API_Rectangle Dimension.ctl`');
-    expect(currentState).toContain('narrows the open Gate D risk materially');
-    expect(currentState).toContain('row-button and dashboard-specific findings are now superseded');
+    expect(currentState).toContain('same-day retained host review at `2026-04-06T19:53:21.713Z` still remains positive');
+    expect(currentState).toContain('row-button and dashboard-specific findings are superseded');
     expect(currentState).toContain('extension users now use checkbox selection only');
     expect(currentState).toContain('need only two retained commits to use VI History');
     expect(currentState).toContain('do not use extension-user dashboard or decision-record controls');
-    expect(currentState).toContain('repo-side retirement for that simplified blocker package before the canonical rerun');
+    expect(currentState).toContain('repo-side retirement for that simplified blocker package before the next canonical rerun');
     expect(currentState).toContain('overview images are grouped into caption rows with `Block Diagram Overview` before `Front Panel Overview`');
     expect(currentState).toContain('unsubmitted Review Note draft state persists across tab switches until a successful submission clears it');
     expect(currentState).toContain('bundled installed-user docs now strip private GitLab plus SRS/RTM authority-link exposure');
     expect(currentState).toContain('repo-agnostic checkbox-selected two-commit workflow');
     expect(currentState).toContain('absence of a separate extension-user dashboard or decision-record step');
-    expect(currentState).toContain('Gate D now remains open only on a fresh manual rerun of the deterministic public-release fixture workspace and canonical VI path');
+    expect(currentState).toContain('Gate D is now narrowed to the canonical comparison-report presentation seam on `resource/plugins/lv_icon.vi`');
+    expect(currentState).toContain('must emphasize commit/date/author/subject instead of runtime diagnostics');
     expect(currentState).toContain(
       '- the manual right-click review pass remains the human UX gate, and Sergio Velderrain is the sole named maintainer gate owner for that host-machine click pass'
     );
@@ -221,10 +224,15 @@ describe('post-release control-plane coherence', () => {
     expect(program).toContain('- a dedicated `Invoke-Windows11HumanGate.ps1` closeout script plus structured');
     expect(program).toContain('local non-OneDrive path');
     expect(program).toContain('OneDrive-backed synced root');
-    expect(program).toContain('latest retained human review on April 6, 2026 is now a partial pass');
-    expect(program).toContain('`Checkboxes flow works as expected so far.`');
-    expect(program).toContain('older row-button and dashboard-specific');
-    expect(program).toContain('findings are now superseded');
+    expect(program).toContain('canonical-target');
+    expect(program).toContain('`failed-human-review` with');
+    expect(program).toContain('`resource/plugins/lv_icon.vi`');
+    expect(program).toContain('follows dark mode against the white comparison-report');
+    expect(program).toContain('commit/date/author/subject');
+    expect(program).toContain('checkbox-selected compare');
+    expect(program).toContain('works as expected on a real installed');
+    expect(program).toContain('row-button and dashboard-specific');
+    expect(program).toContain('superseded by the simplified shipped scope');
     expect(program).toContain('checkbox selection');
     expect(program).toContain('two retained commits to use VI');
     expect(program).toContain('two-row overview-image');
@@ -232,18 +240,22 @@ describe('post-release control-plane coherence', () => {
     expect(program).toContain('concise');
     expect(program).toContain('curated installed-user documentation bundle');
     expect(program).toContain('repo-agnostic checkbox-selected two-commit workflow');
-    expect(program).toContain('absence of a separate extension-user dashboard or');
-    expect(program).toContain('Gate D therefore remains open only until the updated installed bundle is');
-    expect(program).toContain('deterministic public-release fixture workspace and canonical VI');
+    expect(program).toContain('absence of a separate extension-user dashboard');
+    expect(program).toContain('Gate D therefore remains open only until the updated installed bundle retires');
+    expect(program).toContain('canonical comparison-report presentation seam');
 
     expect(issue).toContain('- the host-machine automated acceptance lane now succeeds with a retained');
     expect(issue).toContain(
       '- only the manual human UX proof gate remains open, and Sergio Velderrain is'
     );
     expect(issue).toContain('OneDrive-backed synced clone');
-    expect(issue).toContain('`passed-human-review` with `confidence=high`');
-    expect(issue).toContain('`Checkboxes flow works as expected');
-    expect(issue).toContain('repo-agnostic two-commit review surface');
+    expect(issue).toContain('`failed-human-review` with `confidence=high`');
+    expect(issue).toContain('checkbox-selected compare flow works as expected');
+    expect(issue).toContain('repo-agnostic');
+    expect(issue).toContain('checkbox-selected two-commit');
+    expect(issue).toContain('`resource/plugins/lv_icon.vi`');
+    expect(issue).toContain('follows dark mode against the white');
+    expect(issue).toContain('commit/date/author/subject facts');
     expect(issue).toContain('older row-button and');
     expect(issue).toContain('dashboard-specific findings are now superseded');
     expect(issue).toContain('checkbox selection');
@@ -253,13 +265,15 @@ describe('post-release control-plane coherence', () => {
     expect(issue).toContain('simplified blocker set: overview images are grouped');
     expect(issue).toContain('Block Diagram Overview');
     expect(issue).toContain('unsubmitted Review');
-    expect(issue).toContain('Note draft state persists across tab switches until successful submission');
+    expect(issue).toContain('Note draft state persists across tab switches');
     expect(issue).toContain('concise curated extension-user');
-    expect(issue).toContain('guide that omits private GitLab plus SRS/RTM authority-link exposure');
+    expect(issue).toContain('omits private GitLab plus SRS/RTM authority-link exposure');
     expect(issue).toContain('repo-agnostic checkbox-selected two-commit');
     expect(issue).toContain('remains open only until a fresh manual rerun');
     expect(issue).toContain('deterministic public-release fixture workspace and canonical VI');
-    expect(issue).toContain('rather than only on the newer repo-agnostic checkbox-flow');
+    expect(issue).toContain('canonical comparison-report');
+    expect(issue).toContain('presentation seam on the exact acceptance target');
+    expect(issue).toContain('newer repo-agnostic checkbox-flow surface');
     expect(issue).toContain('- the GitHub workflow is documented as the active public release-kit');
     expect(issue).toContain('- the Windows 11 host-machine acceptance lane is documented as the');
     expect(issue).toContain('The public facade is for release, setup, and support only.');

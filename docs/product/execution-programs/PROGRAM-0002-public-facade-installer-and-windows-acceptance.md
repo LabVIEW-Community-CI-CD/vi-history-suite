@@ -22,19 +22,23 @@ The primary public surface is now a release kit, not an installer product.
 ## Current Gate Truth
 
 - Gate D remains open
-- the latest retained human review on April 6, 2026 is now a partial pass on
-  the updated installed bundle: the repo-agnostic two-commit review surface at
-  `c:\dev\labview-icon-editor` for
-  `vi.lib/LabVIEW Icon API/API_Rectangle Dimension.ctl` recorded
-  `passed-human-review` with `confidence=high` and the note
-  `Checkboxes flow works as expected so far.`
-- that retained pass narrows the open Gate D risk materially because it
-  re-proves the simplified checkbox-selected compare flow on a real installed
-  extension surface outside the older canonical review-family assumptions
+- the latest retained human review on April 6, 2026 is now a canonical-target
+  failure on the updated installed bundle: the deterministic public-release
+  fixture workspace target `c:\dev\labview-icon-editor` /
+  `resource/plugins/lv_icon.vi` recorded `failed-human-review` with
+  `confidence=high`
+- the retained note on that canonical target says the embedded compare-info
+  block currently follows dark mode against the white comparison-report
+  background and should stop foregrounding runtime-status/runtime-diagnostic
+  facts in favor of commit/date/author/subject facts
+- an earlier same-day retained host review at `2026-04-06T19:53:21.713Z`
+  remains positive supporting evidence that the simplified repo-agnostic
+  checkbox-selected compare flow works as expected on a real installed
+  extension surface
 - the cumulative retained failed-review package remains historical evidence of
   already-retired defects, but the older row-button and dashboard-specific
-  findings are now superseded by the simplified shipped scope: extension users
-  now use checkbox selection only, need only two retained commits to use VI
+  findings are superseded by the simplified shipped scope: extension users now
+  use checkbox selection only, need only two retained commits to use VI
   History, and do not use extension-user dashboard or decision-record controls
 - the authority repo now carries repo-side fixes for that simplified blocker
   package: the checkbox-only compare surface, the two-row overview-image
@@ -44,10 +48,9 @@ The primary public surface is now a release kit, not an installer product.
   repo-agnostic checkbox-selected two-commit workflow, the oldest-row-as-base
   rule, and the absence of a separate extension-user dashboard or
   decision-record step
-- Gate D therefore remains open only until the updated installed bundle is
-  rerun on the deterministic public-release fixture workspace and canonical VI
-  path and proves that the cumulative repo-side blocker retirement also holds
-  on that exact acceptance target
+- Gate D therefore remains open only until the updated installed bundle retires
+  that canonical comparison-report presentation seam and a fresh deterministic
+  public-release fixture rerun proves the exact acceptance target cleanly
 
 ## Trigger
 
@@ -274,17 +277,18 @@ Current first slice:
 - the manual right-click proof runs from that same deterministic local fixture
   workspace instead of a OneDrive-backed synced root
 - first-use friction is retained as evidence, not just remembered in chat
-- the latest retained host review at `2026-04-06T19:53:21.713Z` is
-  `passed-human-review` with `confidence=high`, recording that
-  `Checkboxes flow works as expected so far.` on
-  `c:\dev\labview-icon-editor` / `vi.lib/LabVIEW Icon API/API_Rectangle Dimension.ctl`
-- that retained pass narrows the open Gate D risk materially, but it is not
-  yet the canonical closure proof because the retained public-release
-  acceptance target is still the deterministic fixture workspace and canonical
-  VI path
+- the latest retained host review at `2026-04-06T20:09:15.443Z` is
+  `failed-human-review` with `confidence=high`, recording that
+  `c:\dev\labview-icon-editor` / `resource/plugins/lv_icon.vi` still renders
+  the embedded compare-info block with a dark-mode mismatch against the white
+  report background and still foregrounds runtime-status/runtime-diagnostic
+  facts where commit/date/author/subject facts should lead
+- the earlier same-day retained host pass at `2026-04-06T19:53:21.713Z`
+  remains supporting evidence that the simplified checkbox-selected compare
+  flow itself works as expected on an installed surface
 - the retained failed-review set remains cumulative historical evidence of
   already-retired defects, but the row-button and dashboard-specific findings
-  are now superseded by the simplified checkbox-only shipped scope
+  are superseded by the simplified checkbox-only shipped scope
 - the authority repo now carries repo-side retirement for that simplified
   Gate D package: checkbox-only compare selection on any retained two-commit
   window, grouped overview-image rows with `Block Diagram Overview` before
@@ -292,9 +296,9 @@ Current first slice:
   submission, and a concise curated installed-user documentation bundle that
   omits private GitLab plus SRS/RTM authority-link exposure while explaining
   the repo-agnostic checkbox-selected two-commit workflow clearly
-- Gate D therefore remains open only on a fresh installed-bundle rerun of the
-  deterministic fixture-workspace canonical-VI path rather than on an
-  unimplemented repo-side blocker set
+- Gate D is therefore now narrowed to one canonical comparison-report
+  presentation seam on the deterministic fixture-workspace canonical-VI path
+  rather than to an unimplemented compare-selection blocker set
 
 ### Gate E: Public Support Surface
 
@@ -353,10 +357,10 @@ The public facade repo now retains:
   workspace rather than a OneDrive-backed synced clone
 - the latest retained host-review artifact now exists at
   `c:\Users\sveld\AppData\Roaming\Code\User\workspaceStorage\0bca0972b9105eae5fae72858e3399d0\svelderrainruiz.vi-history-suite\human-reviews\latest-human-review-submission.json`,
-  and its newest manual proof result is now a passed repo-agnostic checkbox
-  flow on `c:\dev\labview-icon-editor` /
-  `vi.lib/LabVIEW Icon API/API_Rectangle Dimension.ctl` rather than a new
-  canonical-fixture closure proof
+  and its newest manual proof result is now a failed canonical-fixture review
+  on `c:\dev\labview-icon-editor` / `resource/plugins/lv_icon.vi`, while the
+  earlier same-day repo-agnostic checkbox-flow pass remains separate retained
+  supporting evidence rather than the newest closure candidate
 - the authority repo now carries repo-side retirement for the additive Gate D
   blocker package: per-pair `Open compare` enablement after dashboard
   completion, grouped overview-image rows with `Block Diagram Overview` before
@@ -365,7 +369,7 @@ The public facade repo now retains:
   omits private GitLab plus SRS/RTM authority-link exposure
 - the next required proof is therefore a fresh manual rerun on the updated
   installed bundle from the deterministic local fixture workspace on the
-  canonical VI path
+  canonical VI path after the compare-report presentation seam is retired
 
 The program still intentionally holds these gates open:
 

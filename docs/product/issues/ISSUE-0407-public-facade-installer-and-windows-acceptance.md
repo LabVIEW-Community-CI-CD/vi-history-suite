@@ -56,15 +56,17 @@ Current landed scaffold state:
   the sole named maintainer gate owner for that host-machine click pass
 - that remaining manual host-machine gate is bounded to the deterministic
   local fixture workspace rather than a OneDrive-backed synced clone
-- the latest retained host review at `2026-04-06T19:53:21.713Z` is
-  `passed-human-review` with `confidence=high`, because the newest retained
-  note on the updated installed bundle says `Checkboxes flow works as expected
-  so far.` on the repo-agnostic two-commit review surface
-  `c:\dev\labview-icon-editor` / `vi.lib/LabVIEW Icon API/API_Rectangle Dimension.ctl`
-- that retained pass materially narrows the remaining human-gate risk because
-  it re-proves the simplified checkbox-selected compare workflow on a real
-  installed extension surface outside the older canonical review-family
-  assumptions
+- the latest retained host review at `2026-04-06T20:09:15.443Z` is
+  `failed-human-review` with `confidence=high`, because the newest retained
+  note on the deterministic public-release fixture target
+  `c:\dev\labview-icon-editor` / `resource/plugins/lv_icon.vi` says the
+  embedded compare-info block currently follows dark mode against the white
+  report background and should stop foregrounding runtime-status/runtime-
+  diagnostic facts in favor of commit/date/author/subject facts
+- an earlier same-day retained host review at `2026-04-06T19:53:21.713Z`
+  remains positive supporting evidence that the simplified repo-agnostic
+  checkbox-selected compare flow works as expected on a real installed
+  extension surface
 - the retained failed-review set remains cumulative historical evidence of
   already-retired repo-side defects, but the older row-button and
   dashboard-specific findings are now superseded by the simplified shipped
@@ -82,9 +84,9 @@ Current landed scaffold state:
   extension-user dashboard or decision-record step
 - this issue therefore remains open only until a fresh manual rerun on the
   deterministic public-release fixture workspace and canonical VI path proves
-  that the installed product matches those repo-side retirements on the exact
-  acceptance target, rather than only on the newer repo-agnostic checkbox-flow
-  surface
+  that the installed product retires that canonical comparison-report
+  presentation seam on the exact acceptance target, rather than only on the
+  newer repo-agnostic checkbox-flow surface
 - the authority repo still mirrors a GitHub Linux benchmark lane into the
   private `vi-history-suite-source-experiments` repo, but that mirror is now
   documented as benchmark only and belongs to the queued benchmark-proof lane
