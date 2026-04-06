@@ -197,7 +197,7 @@ describe('post-release control-plane coherence', () => {
     expect(currentState).toContain('repo-side fixes for the remaining additive blocker set before the next rerun');
     expect(currentState).toContain('overview images are grouped into caption rows with `Block Diagram Overview` before `Front Panel Overview`');
     expect(currentState).toContain('unsubmitted Review Note draft state persists across tab switches until a successful submission clears it');
-    expect(currentState).toContain('bundled installed-user docs are now a curated extension-user guide that strips private GitLab plus SRS/RTM authority-link exposure');
+    expect(currentState).toContain('bundled installed-user docs are now a concise curated extension-user guide that strips private GitLab plus SRS/RTM authority-link exposure');
     expect(currentState).toContain('Gate D now remains open only on the next manual rerun of the updated installed bundle');
     expect(currentState).toContain(
       '- the manual right-click review pass remains the human UX gate, and Sergio Velderrain is the sole named maintainer gate owner for that host-machine click pass'
