@@ -964,6 +964,11 @@
   generation automatically for the exact newer-selected and older-base pair,
   and that a retained window of only two commits is enough to use the primary
   extension-user compare flow
+- `TEST-UNIT-318`: verify generated-report and retained-packet compare views
+  now lead with a white-background comparison-context block that surfaces the
+  selected/base commit hash, date, author, and subject facts, while runtime
+  diagnostics and process-observation details stay on retained runtime-evidence
+  surfaces instead of being embedded in that compare header
 - `TEST-UNIT-261`: verify the host and hosted Linux benchmark runners enforce
   a governed per-pair runtime execution budget and retain an explicit
   timeout/stall terminal outcome instead of hanging the whole benchmark
@@ -1521,6 +1526,14 @@
   compare flow is checkbox-only, works with a two-commit retained window, keeps
   the oldest retained row selectable as the older/base side of the pair, and
   does not reintroduce dashboard or decision-record as extension-user steps
+- `TEST-DOC-083`: review current-state, PROGRAM-0002, ISSUE-0407, SRS, RTM,
+  the test plan, and the bundled comparison-report guidance and confirm the
+  canonical compare-presentation retirement is landed repo-side: embedded
+  compare views now lead with white-background selected/base commit context,
+  commit/date/author/subject facts are foregrounded ahead of diagnostics, and
+  runtime-diagnostic/process-observation detail remains retained on packet or
+  runtime evidence surfaces while Gate D stays open only for the deterministic
+  canonical rerun
 - `TEST-DOC-070`: review current-state, harnesses, PROGRAM-0003, ISSUE-0408,
   and the comparable-prefix packet and confirm the repo documents the current
   Windows pair-129 ceiling as an accepted current-contract exception backed by

@@ -62,6 +62,13 @@ export interface ComparisonReportRuntimeExecution {
   lvcompareProcessObservedAtExit?: boolean;
 }
 
+export interface ComparisonReportRevisionMetadata {
+  hash: string;
+  authorDate?: string;
+  authorName?: string;
+  subject?: string;
+}
+
 export interface PersistComparisonReportPacketOptions {
   storageRoot: string;
   repositoryRoot: string;
@@ -69,6 +76,8 @@ export interface PersistComparisonReportPacketOptions {
   reportType: ComparisonReportType;
   selectedHash: string;
   baseHash: string;
+  selectedRevision?: ComparisonReportRevisionMetadata;
+  baseRevision?: ComparisonReportRevisionMetadata;
   preflight: ComparisonReportPreflightResult;
   runtimeSelection: ComparisonRuntimeSelection;
 }
@@ -80,6 +89,8 @@ export interface ComparisonReportPacketRecord {
   reportType: ComparisonReportType;
   selectedHash: string;
   baseHash: string;
+  selectedRevision?: ComparisonReportRevisionMetadata;
+  baseRevision?: ComparisonReportRevisionMetadata;
   artifactPlan: ComparisonArtifactPlan;
   stagedRevisionPlan: StagedRevisionPlan;
   preflight: ComparisonReportPreflightResult;
@@ -125,6 +136,8 @@ export async function persistComparisonReportPacket(
     reportType: options.reportType,
     selectedHash: options.selectedHash,
     baseHash: options.baseHash,
+    selectedRevision: options.selectedRevision,
+    baseRevision: options.baseRevision,
     artifactPlan,
     stagedRevisionPlan,
     preflight: options.preflight,
@@ -169,6 +182,7 @@ export function renderComparisonReportPacketHtml(record: ComparisonReportPacketR
   const runtimeSelection = record.runtimeSelection;
   const runtimeExecution = record.runtimeExecution;
   const runtimeNote = renderRuntimeNote(record);
+  const comparisonContextMarkup = renderComparisonContextSection(record);
   const runtimeDoctorMarkup =
     runtimeExecution.doctorSummaryLines && runtimeExecution.doctorSummaryLines.length > 0
       ? `<div class="note" data-testid="comparison-report-runtime-doctor">
@@ -197,6 +211,11 @@ export function renderComparisonReportPacketHtml(record: ComparisonReportPacketR
     <title>${escapeHtml(record.reportTitle)}</title>
     <style>
       body { font-family: sans-serif; margin: 24px; }
+      .context { margin-bottom: 16px; padding: 16px; border: 1px solid #888; background: #fff; color: #111; }
+      .context-grid { display: grid; grid-template-columns: repeat(2, minmax(260px, 1fr)); gap: 12px 16px; margin-top: 12px; }
+      .context-card { border: 1px solid #d0d0d0; padding: 12px; background: #fafafa; }
+      .context-card div { margin-top: 6px; }
+      .muted { color: #555; }
       .status { margin-bottom: 16px; padding: 12px; border: 1px solid #888; }
       .grid { display: grid; grid-template-columns: repeat(2, minmax(260px, 1fr)); gap: 8px 16px; margin-bottom: 16px; }
       .note { margin-bottom: 16px; padding: 12px; border-left: 4px solid #0a84ff; }
@@ -206,6 +225,7 @@ export function renderComparisonReportPacketHtml(record: ComparisonReportPacketR
   </head>
   <body>
     <h1 data-testid="comparison-report-title">${escapeHtml(record.reportTitle)}</h1>
+    ${comparisonContextMarkup}
     <div class="status" data-testid="comparison-report-status">
       <strong>Status:</strong> ${escapeHtml(record.reportStatus)}<br />
       <strong>Runtime execution:</strong> ${escapeHtml(record.runtimeExecutionState)}<br />
@@ -480,6 +500,48 @@ function renderRuntimeNote(record: ComparisonReportPacketRecord): string {
   }
 
   return 'No LabVIEW-generated comparison report has been executed yet. This retained packet captures the governed preflight, runtime selection, and artifact plan for the selected revision pair.';
+}
+
+function renderComparisonContextSection(record: ComparisonReportPacketRecord): string {
+  return `<div class="context" data-testid="comparison-report-context">
+      <strong>Comparison context</strong>
+      <div><strong>Relative path:</strong> ${escapeHtml(record.artifactPlan.normalizedRelativePath)}</div>
+      <div class="context-grid">
+        ${renderRevisionContextCard(
+          'Selected revision',
+          record.selectedHash,
+          record.selectedRevision,
+          'comparison-report-context-selected'
+        )}
+        ${renderRevisionContextCard(
+          'Base revision',
+          record.baseHash,
+          record.baseRevision,
+          'comparison-report-context-base'
+        )}
+      </div>
+    </div>`;
+}
+
+function renderRevisionContextCard(
+  label: string,
+  hash: string,
+  revision: ComparisonReportRevisionMetadata | undefined,
+  testId: string
+): string {
+  return `<div class="context-card" data-testid="${testId}">
+      <strong>${escapeHtml(label)}</strong>
+      <div><code>${escapeHtml(revision?.hash ?? hash)}</code></div>
+      <div><strong>Date:</strong> ${renderRevisionMetadataValue(revision?.authorDate)}</div>
+      <div><strong>Author:</strong> ${renderRevisionMetadataValue(revision?.authorName)}</div>
+      <div><strong>Subject:</strong> ${renderRevisionMetadataValue(revision?.subject)}</div>
+    </div>`;
+}
+
+function renderRevisionMetadataValue(value: string | undefined): string {
+  return value && value.length > 0
+    ? escapeHtml(value)
+    : '<span class="muted">not retained</span>';
 }
 
 function renderCommand(runtimeExecution: ComparisonReportRuntimeExecution): string {

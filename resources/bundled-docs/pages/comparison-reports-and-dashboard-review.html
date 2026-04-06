@@ -8,8 +8,11 @@
 <li>retained packet and metadata persistence</li>
 <li>rendering of retained comparison evidence inside the extension</li>
 </ul>
+<p>The embedded compare view now leads with a white <code>Comparison context</code> block that foregrounds selected/base commit hash, date, author, and subject facts.
+Runtime-diagnostic and process-observation detail remain retained for diagnosis, but they do not lead the embedded compare view.</p>
 <h2>Runtime Doctor</h2>
 <p>The comparison-report subsystem also retains a compact runtime summary so you do not need raw logs first.</p>
+<p>That retained summary stays on packet/runtime evidence surfaces instead of replacing the commit-first compare header.</p>
 <p>That runtime summary includes:</p>
 <ul>
 <li>selected provider</li>

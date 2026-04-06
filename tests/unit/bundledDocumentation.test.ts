@@ -73,6 +73,9 @@ describe('bundled documentation', () => {
     expect(loaded?.pageBodyHtml).toContain('select the second retained revision to generate a comparison report automatically for that exact pair');
     expect(loaded?.pageBodyHtml).toContain('the oldest retained revision is still selectable as the older/base side of a checkbox-selected pair');
     expect(loaded?.pageBodyHtml).toContain('there is no separate dashboard or decision-record step in the extension-user compare flow');
+    expect(loaded?.pageBodyHtml).toContain('white <code>Comparison context</code> block');
+    expect(loaded?.pageBodyHtml).toContain('selected/base commit hash, date, author, and subject facts');
+    expect(loaded?.pageBodyHtml).toContain('Runtime diagnostics remain retained');
 
     const rendered = renderBundledDocumentationPanelHtml({
       extensionVersion: '0.2.0',
@@ -95,6 +98,9 @@ describe('bundled documentation', () => {
       'comparison-reports-and-dashboard-review'
     );
     expect(comparisonLoaded?.pageBodyHtml).toContain('the primary compare path is selecting two retained revisions with the checkbox column');
+    expect(comparisonLoaded?.pageBodyHtml).toContain('white <code>Comparison context</code> block');
+    expect(comparisonLoaded?.pageBodyHtml).toContain('selected/base commit hash, date, author, and subject facts');
+    expect(comparisonLoaded?.pageBodyHtml).toContain('do not lead the embedded compare view');
     expect(comparisonLoaded?.pageBodyHtml).not.toContain('Observed NI Metadata');
     expect(comparisonLoaded?.pageBodyHtml).not.toContain('Exact-Pair Diagnosis');
     expect(comparisonLoaded?.pageBodyHtml).not.toContain('Proof Surfaces');

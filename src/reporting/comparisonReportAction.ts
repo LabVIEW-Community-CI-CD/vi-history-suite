@@ -15,7 +15,10 @@ import {
   RuntimePlatform
 } from './comparisonRuntimeLocator';
 import { ViHistoryViewModel } from '../services/viHistoryModel';
-import { persistComparisonReportPacket } from './comparisonReportPacket';
+import {
+  ComparisonReportRevisionMetadata,
+  persistComparisonReportPacket
+} from './comparisonReportPacket';
 import { executeComparisonReport } from './comparisonReportRuntimeExecution';
 import { preflightComparisonReportRevisions } from './comparisonReportPreflight';
 
@@ -381,6 +384,16 @@ async function ensureComparisonReportEvidence(
     reportType: 'diff',
     selectedHash: selectedCommit.hash,
     baseHash,
+    selectedRevision: {
+      hash: selectedCommit.hash,
+      authorDate: selectedCommit.authorDate,
+      authorName: selectedCommit.authorName,
+      subject: selectedCommit.subject
+    },
+    baseRevision: toRevisionMetadata(
+      request.model.commits.find((commit) => commit.hash === baseHash),
+      baseHash
+    ),
     preflight,
     runtimeSelection: {
       ...runtimeSelection,
@@ -610,6 +623,11 @@ async function openPersistedComparisonReportPanel(
   const reportWebviewUri = panel.webview.asWebviewUri(reportFileUri).toString();
   const panelHtmlOptions = {
     title: options.record.reportTitle,
+    relativePath: options.record.artifactPlan.normalizedRelativePath,
+    selectedHash: options.record.selectedHash,
+    baseHash: options.record.baseHash,
+    selectedRevision: options.record.selectedRevision,
+    baseRevision: options.record.baseRevision,
     reportStatus: options.record.reportStatus,
     runtimeExecutionState: options.record.runtimeExecutionState,
     blockedReason:
@@ -801,6 +819,11 @@ async function defaultPathExists(targetPath: string): Promise<boolean> {
 
 export function renderComparisonReportPanelHtml(options: {
   title: string;
+  relativePath?: string;
+  selectedHash?: string;
+  baseHash?: string;
+  selectedRevision?: ComparisonReportRevisionMetadata;
+  baseRevision?: ComparisonReportRevisionMetadata;
   reportWebviewUri: string;
   reportStatus: 'ready-for-runtime' | 'blocked-preflight' | 'blocked-runtime';
   runtimeExecutionState: 'not-run' | 'not-available' | 'succeeded' | 'failed';
@@ -833,7 +856,7 @@ export function renderComparisonReportPanelHtml(options: {
 }): string {
   const safeTitle = escapeHtml(options.title);
   const safeUri = escapeHtml(options.reportWebviewUri);
-  const statusMarkup = renderComparisonReportPanelStatusMarkup(options);
+  const contextMarkup = renderComparisonReportPanelContextMarkup(options);
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -843,12 +866,16 @@ export function renderComparisonReportPanelHtml(options: {
     <title>${safeTitle}</title>
     <style>
       body { font-family: var(--vscode-font-family); margin: 0; padding: 16px; background: var(--vscode-editor-background); color: var(--vscode-foreground); }
-      .status { margin-bottom: 12px; }
+      .vihs-compare-context { margin-bottom: 12px; padding: 16px; border: 1px solid #d0d0d0; background: white; color: #111; }
+      .vihs-compare-context-grid { display: grid; grid-template-columns: repeat(2, minmax(240px, 1fr)); gap: 12px 16px; margin-top: 12px; }
+      .vihs-compare-context-card { border: 1px solid #d0d0d0; padding: 12px; background: #fafafa; }
+      .vihs-compare-context-card div { margin-top: 6px; }
+      .vihs-compare-context-muted { color: #555; }
       iframe { width: 100%; height: 80vh; border: 1px solid var(--vscode-panel-border); background: white; }
     </style>
   </head>
   <body>
-    ${statusMarkup}
+    ${contextMarkup}
     <iframe data-testid="comparison-report-panel-frame" src="${safeUri}" title="${safeTitle}"></iframe>
   </body>
 </html>`;
@@ -856,6 +883,11 @@ export function renderComparisonReportPanelHtml(options: {
 
 async function renderGeneratedComparisonReportPanelHtml(options: {
   title: string;
+  relativePath?: string;
+  selectedHash?: string;
+  baseHash?: string;
+  selectedRevision?: ComparisonReportRevisionMetadata;
+  baseRevision?: ComparisonReportRevisionMetadata;
   reportFilePath: string;
   reportDirectoryWebviewUri: string;
   reportStatus: 'ready-for-runtime' | 'blocked-preflight' | 'blocked-runtime';
@@ -899,30 +931,35 @@ async function renderGeneratedComparisonReportPanelHtml(options: {
     csp
   )}" /><base href="${escapeHtml(options.reportDirectoryWebviewUri)}" /><style>
       body { margin: 0; background: white; }
-      .vihs-runtime-status { font-family: var(--vscode-font-family); margin: 0; padding: 16px; background: var(--vscode-editor-background); color: var(--vscode-foreground); border-bottom: 1px solid var(--vscode-panel-border); }
-      .vihs-runtime-status ul { margin: 4px 0 0 18px; }
+      .vihs-compare-context { font-family: var(--vscode-font-family); margin: 0; padding: 16px; background: white; color: #111; border-bottom: 1px solid #d0d0d0; }
+      .vihs-compare-context-grid { display: grid; grid-template-columns: repeat(2, minmax(240px, 1fr)); gap: 12px 16px; margin-top: 12px; }
+      .vihs-compare-context-card { border: 1px solid #d0d0d0; padding: 12px; background: #fafafa; }
+      .vihs-compare-context-card div { margin-top: 6px; }
+      .vihs-compare-context-muted { color: #555; }
     </style>`;
   const withHead = /<head\b[^>]*>/i.test(originalReportHtml)
     ? originalReportHtml.replace(/<head\b[^>]*>/i, (match) => `${match}${headInjection}`)
     : `<!DOCTYPE html><html><head><meta charset="UTF-8" />${headInjection}<title>${escapeHtml(
         options.title
       )}</title></head><body>${originalReportHtml}</body></html>`;
-  const statusMarkup = renderComparisonReportPanelStatusMarkup(options).replace(
-    'class="status"',
-    'class="status vihs-runtime-status"'
-  );
+  const contextMarkup = renderComparisonReportPanelContextMarkup(options);
 
   if (/<body\b[^>]*>/i.test(withHead)) {
-    return withHead.replace(/<body\b([^>]*)>/i, `<body$1>${statusMarkup}`);
+    return withHead.replace(/<body\b([^>]*)>/i, `<body$1>${contextMarkup}`);
   }
 
   return `<!DOCTYPE html><html><head><meta charset="UTF-8" />${headInjection}<title>${escapeHtml(
     options.title
-  )}</title></head><body>${statusMarkup}${withHead}</body></html>`;
+  )}</title></head><body>${contextMarkup}${withHead}</body></html>`;
 }
 
 async function renderPersistedComparisonReportPacketPanelHtml(options: {
   title: string;
+  relativePath?: string;
+  selectedHash?: string;
+  baseHash?: string;
+  selectedRevision?: ComparisonReportRevisionMetadata;
+  baseRevision?: ComparisonReportRevisionMetadata;
   packetFilePath: string;
   packetDirectoryWebviewUri: string;
   reportWebviewUri: string;
@@ -969,205 +1006,77 @@ async function renderPersistedComparisonReportPacketPanelHtml(options: {
       csp
     )}" /><base href="${escapeHtml(options.packetDirectoryWebviewUri)}" /><style>
       body { margin: 0; background: white; }
-      .vihs-runtime-status { font-family: var(--vscode-font-family); margin: 0; padding: 16px; background: var(--vscode-editor-background); color: var(--vscode-foreground); border-bottom: 1px solid var(--vscode-panel-border); }
-      .vihs-runtime-status ul { margin: 4px 0 0 18px; }
+      .vihs-compare-context { font-family: var(--vscode-font-family); margin: 0; padding: 16px; background: white; color: #111; border-bottom: 1px solid #d0d0d0; }
+      .vihs-compare-context-grid { display: grid; grid-template-columns: repeat(2, minmax(240px, 1fr)); gap: 12px 16px; margin-top: 12px; }
+      .vihs-compare-context-card { border: 1px solid #d0d0d0; padding: 12px; background: #fafafa; }
+      .vihs-compare-context-card div { margin-top: 6px; }
+      .vihs-compare-context-muted { color: #555; }
     </style>`;
     const withHead = /<head\b[^>]*>/i.test(originalPacketHtml)
       ? originalPacketHtml.replace(/<head\b[^>]*>/i, (match) => `${match}${headInjection}`)
       : `<!DOCTYPE html><html><head><meta charset="UTF-8" />${headInjection}<title>${escapeHtml(
           options.title
         )}</title></head><body>${originalPacketHtml}</body></html>`;
-    const statusMarkup = renderComparisonReportPanelStatusMarkup(options).replace(
-      'class="status"',
-      'class="status vihs-runtime-status"'
-    );
+    const contextMarkup = renderComparisonReportPanelContextMarkup(options);
 
     if (/<body\b[^>]*>/i.test(withHead)) {
-      return withHead.replace(/<body\b([^>]*)>/i, `<body$1>${statusMarkup}`);
+      return withHead.replace(/<body\b([^>]*)>/i, `<body$1>${contextMarkup}`);
     }
 
     return `<!DOCTYPE html><html><head><meta charset="UTF-8" />${headInjection}<title>${escapeHtml(
       options.title
-    )}</title></head><body>${statusMarkup}${withHead}</body></html>`;
+    )}</title></head><body>${contextMarkup}${withHead}</body></html>`;
   } catch {
     return renderComparisonReportPanelHtml(options);
   }
 }
 
-function renderComparisonReportPanelStatusMarkup(options: {
-  reportStatus: 'ready-for-runtime' | 'blocked-preflight' | 'blocked-runtime';
-  runtimeExecutionState: 'not-run' | 'not-available' | 'succeeded' | 'failed';
-  blockedReason?: string;
-  runtimeFailureReason?: string;
-  runtimeDiagnosticReason?: string;
-  runtimeDiagnosticNotes?: string[];
-  runtimeDiagnosticLogSourcePath?: string;
-  runtimeDoctorSummaryLines?: string[];
-  runtimeProcessObservationArtifactPath?: string;
-  runtimeExecutable?: string;
-  runtimeArgs?: string[];
-  runtimeProcessObservationCapturedAt?: string;
-  runtimeProcessObservationTrigger?: string;
-  runtimeObservedProcessNames?: string[];
-  runtimeLabviewProcessObserved?: boolean;
-  runtimeLabviewCliProcessObserved?: boolean;
-  runtimeLvcompareProcessObserved?: boolean;
-  runtimeExitProcessObservationCapturedAt?: string;
-  runtimeExitProcessObservationTrigger?: string;
-  runtimeExitObservedProcessNames?: string[];
-  runtimeLabviewProcessObservedAtExit?: boolean;
-  runtimeLabviewCliProcessObservedAtExit?: boolean;
-  runtimeLvcompareProcessObservedAtExit?: boolean;
-  generatedReportExists: boolean;
-  retainedArchiveAvailable: boolean;
-  archiveFailureReason?: ComparisonReportActionResult['archiveFailureReason'];
-  displayedEvidenceKind: 'generated-report' | 'packet';
+function renderComparisonReportPanelContextMarkup(options: {
+  relativePath?: string;
+  selectedHash?: string;
+  baseHash?: string;
+  selectedRevision?: ComparisonReportRevisionMetadata;
+  baseRevision?: ComparisonReportRevisionMetadata;
 }): string {
-  const displayedEvidenceMarkup = `<div><strong>Displayed evidence:</strong> ${escapeHtml(
-    options.displayedEvidenceKind === 'generated-report'
-      ? 'generated LabVIEW comparison report'
-      : options.generatedReportExists
-        ? 'retained packet fallback'
-        : 'retained packet'
-  )}</div>`;
-  const retainedArchiveAvailableMarkup = `<div><strong>Retained archive available:</strong> ${options.retainedArchiveAvailable ? 'yes' : 'no'}</div>`;
-  const retainedArchiveStatusMarkup = options.archiveFailureReason
-    ? `<div><strong>Retained archive status:</strong> ${escapeHtml(
-        options.archiveFailureReason === 'retained-archive-write-failed'
-          ? 'archive write failed'
-          : 'archive persistence unavailable'
-      )}</div>`
-    : '';
-  const blockedReasonMarkup = options.blockedReason
-    ? `<div><strong>Blocked reason:</strong> ${escapeHtml(options.blockedReason)}</div>`
-    : '';
-  const failureReasonMarkup = options.runtimeFailureReason
-    ? `<div><strong>Runtime failure reason:</strong> ${escapeHtml(options.runtimeFailureReason)}</div>`
-    : '';
-  const diagnosticReasonMarkup = options.runtimeDiagnosticReason
-    ? `<div><strong>Runtime diagnostic:</strong> ${escapeHtml(options.runtimeDiagnosticReason)}</div>`
-    : '';
-  const diagnosticLogSourceMarkup = options.runtimeDiagnosticLogSourcePath
-    ? `<div><strong>Runtime diagnostic log source:</strong> ${escapeHtml(
-        options.runtimeDiagnosticLogSourcePath
-      )}</div>`
-    : '';
-  const diagnosticNotesMarkup =
-    options.runtimeDiagnosticNotes && options.runtimeDiagnosticNotes.length > 0
-      ? `<div><strong>Runtime notes:</strong><ul>${options.runtimeDiagnosticNotes
-          .map((note) => `<li>${escapeHtml(note)}</li>`)
-          .join('')}</ul></div>`
-      : '';
-  const runtimeDoctorMarkup =
-    options.runtimeDoctorSummaryLines && options.runtimeDoctorSummaryLines.length > 0
-      ? `<div data-testid="comparison-report-panel-runtime-doctor"><strong>Runtime doctor:</strong><ul>${options.runtimeDoctorSummaryLines
-          .map((line) => `<li>${escapeHtml(line)}</li>`)
-          .join('')}</ul></div>`
-      : '';
-  const processObservationMarkup = options.runtimeProcessObservationArtifactPath
-    ? `<div><strong>Process observation artifact:</strong> ${escapeHtml(
-        options.runtimeProcessObservationArtifactPath
-      )}</div>`
-    : '';
-  const runtimeExecutableMarkup = options.runtimeExecutable
-    ? `<div><strong>Runtime executable:</strong> ${escapeHtml(options.runtimeExecutable)}</div>`
-    : '';
-  const runtimeArgsMarkup =
-    options.runtimeArgs && options.runtimeArgs.length > 0
-      ? `<div><strong>Runtime args:</strong> ${escapeHtml(options.runtimeArgs.join(' '))}</div>`
-      : '';
-  const processObservationCapturedAtMarkup = options.runtimeProcessObservationCapturedAt
-    ? `<div><strong>Process observation captured at:</strong> ${escapeHtml(
-        options.runtimeProcessObservationCapturedAt
-      )}</div>`
-    : '';
-  const processObservationTriggerMarkup = options.runtimeProcessObservationTrigger
-    ? `<div><strong>Process observation trigger:</strong> ${escapeHtml(
-        options.runtimeProcessObservationTrigger
-      )}</div>`
-    : '';
-  const observedProcessNamesMarkup =
-    options.runtimeObservedProcessNames !== undefined
-      ? `<div><strong>Observed process names:</strong> ${escapeHtml(
-          options.runtimeObservedProcessNames.length > 0
-            ? options.runtimeObservedProcessNames.join(' | ')
-            : 'none'
-        )}</div>`
-      : '';
-  const observedLabviewMarkup = renderOptionalYesNoLine(
-    'Observed LabVIEW.exe',
-    options.runtimeLabviewProcessObserved
-  );
-  const observedLabviewCliMarkup = renderOptionalYesNoLine(
-    'Observed LabVIEWCLI.exe',
-    options.runtimeLabviewCliProcessObserved
-  );
-  const observedLvcompareMarkup = renderOptionalYesNoLine(
-    'Observed LVCompare.exe',
-    options.runtimeLvcompareProcessObserved
-  );
-  const exitProcessObservationCapturedAtMarkup = options.runtimeExitProcessObservationCapturedAt
-    ? `<div><strong>Exit process observation captured at:</strong> ${escapeHtml(
-        options.runtimeExitProcessObservationCapturedAt
-      )}</div>`
-    : '';
-  const exitProcessObservationTriggerMarkup = options.runtimeExitProcessObservationTrigger
-    ? `<div><strong>Exit process observation trigger:</strong> ${escapeHtml(
-        options.runtimeExitProcessObservationTrigger
-      )}</div>`
-    : '';
-  const exitObservedProcessNamesMarkup =
-    options.runtimeExitObservedProcessNames !== undefined
-      ? `<div><strong>Exit observed process names:</strong> ${escapeHtml(
-          options.runtimeExitObservedProcessNames.length > 0
-            ? options.runtimeExitObservedProcessNames.join(' | ')
-            : 'none'
-        )}</div>`
-      : '';
-  const observedLabviewAtExitMarkup = renderOptionalYesNoLine(
-    'Observed LabVIEW.exe at exit',
-    options.runtimeLabviewProcessObservedAtExit
-  );
-  const observedLabviewCliAtExitMarkup = renderOptionalYesNoLine(
-    'Observed LabVIEWCLI.exe at exit',
-    options.runtimeLabviewCliProcessObservedAtExit
-  );
-  const observedLvcompareAtExitMarkup = renderOptionalYesNoLine(
-    'Observed LVCompare.exe at exit',
-    options.runtimeLvcompareProcessObservedAtExit
-  );
-
-  return `<div class="status" data-testid="comparison-report-panel-status">
-      <strong>Status:</strong> ${escapeHtml(options.reportStatus)}
-      <br />
-      <strong>Runtime execution:</strong> ${escapeHtml(options.runtimeExecutionState)}
-      <br />
-      <strong>Generated report exists:</strong> ${options.generatedReportExists ? 'yes' : 'no'}
-      ${displayedEvidenceMarkup}
-      ${retainedArchiveAvailableMarkup}
-      ${retainedArchiveStatusMarkup}
-      ${blockedReasonMarkup}
-      ${failureReasonMarkup}
-      ${diagnosticReasonMarkup}
-      ${diagnosticLogSourceMarkup}
-      ${runtimeDoctorMarkup}
-      ${diagnosticNotesMarkup}
-      ${runtimeExecutableMarkup}
-      ${runtimeArgsMarkup}
-      ${processObservationMarkup}
-      ${processObservationCapturedAtMarkup}
-      ${processObservationTriggerMarkup}
-      ${observedProcessNamesMarkup}
-      ${observedLabviewMarkup}
-      ${observedLabviewCliMarkup}
-      ${observedLvcompareMarkup}
-      ${exitProcessObservationCapturedAtMarkup}
-      ${exitProcessObservationTriggerMarkup}
-      ${exitObservedProcessNamesMarkup}
-      ${observedLabviewAtExitMarkup}
-      ${observedLabviewCliAtExitMarkup}
-      ${observedLvcompareAtExitMarkup}
+  return `<div class="vihs-compare-context" data-testid="comparison-report-panel-context">
+      <strong>Comparison context</strong>
+      <div><strong>Relative path:</strong> ${renderPanelRevisionMetadataValue(options.relativePath)}</div>
+      <div class="vihs-compare-context-grid">
+        ${renderComparisonReportPanelRevisionCard(
+          'Selected revision',
+          options.selectedHash,
+          options.selectedRevision,
+          'comparison-report-panel-context-selected'
+        )}
+        ${renderComparisonReportPanelRevisionCard(
+          'Base revision',
+          options.baseHash,
+          options.baseRevision,
+          'comparison-report-panel-context-base'
+        )}
+      </div>
     </div>`;
+}
+
+function renderComparisonReportPanelRevisionCard(
+  label: string,
+  hash: string | undefined,
+  revision: ComparisonReportRevisionMetadata | undefined,
+  testId: string
+): string {
+  return `<div class="vihs-compare-context-card" data-testid="${testId}">
+      <strong>${escapeHtml(label)}</strong>
+      <div><code>${escapeHtml(revision?.hash ?? hash ?? 'not retained')}</code></div>
+      <div><strong>Date:</strong> ${renderPanelRevisionMetadataValue(revision?.authorDate)}</div>
+      <div><strong>Author:</strong> ${renderPanelRevisionMetadataValue(revision?.authorName)}</div>
+      <div><strong>Subject:</strong> ${renderPanelRevisionMetadataValue(revision?.subject)}</div>
+    </div>`;
+}
+
+function renderPanelRevisionMetadataValue(value: string | undefined): string {
+  return value && value.length > 0
+    ? escapeHtml(value)
+    : '<span class="vihs-compare-context-muted">not retained</span>';
 }
 
 function ensureTrailingSlash(value: string): string {
@@ -1183,12 +1092,22 @@ function escapeHtml(value: string): string {
     .replaceAll("'", '&#39;');
 }
 
-function renderOptionalYesNoLine(label: string, value: boolean | undefined): string {
-  if (value === undefined) {
-    return '';
+function toRevisionMetadata(
+  commit: Pick<ViHistoryViewModel['commits'][number], 'hash' | 'authorDate' | 'authorName' | 'subject'> | undefined,
+  fallbackHash: string
+): ComparisonReportRevisionMetadata {
+  if (!commit) {
+    return {
+      hash: fallbackHash
+    };
   }
 
-  return `<div><strong>${escapeHtml(label)}:</strong> ${value ? 'yes' : 'no'}</div>`;
+  return {
+    hash: commit.hash,
+    authorDate: commit.authorDate,
+    authorName: commit.authorName,
+    subject: commit.subject
+  };
 }
 
 function isValidArchivedComparisonReportSourceRecord(

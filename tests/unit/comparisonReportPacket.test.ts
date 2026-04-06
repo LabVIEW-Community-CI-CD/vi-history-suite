@@ -23,6 +23,18 @@ describe('comparisonReportPacket', () => {
         reportType: 'diff',
         selectedHash: 'abcdef1234567890',
         baseHash: '1111111122222222',
+        selectedRevision: {
+          hash: 'abcdef1234567890',
+          authorDate: '2026-04-02T00:00:00.000Z',
+          authorName: 'A User',
+          subject: 'Blocked preflight update'
+        },
+        baseRevision: {
+          hash: '1111111122222222',
+          authorDate: '2026-04-01T00:00:00.000Z',
+          authorName: 'B User',
+          subject: 'Base revision'
+        },
         preflight: {
           normalizedRelativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
           ready: false,
@@ -90,6 +102,9 @@ describe('comparisonReportPacket', () => {
     expect(writes.get(result.metadataFilePath)).toContain('"reportStatus": "blocked-preflight"');
     expect(writes.has(result.reportFilePath)).toBe(false);
     expect(writes.get(result.packetFilePath)).toContain('No LabVIEW-generated comparison report has been executed yet.');
+    expect(writes.get(result.packetFilePath)).toContain('data-testid="comparison-report-context"');
+    expect(writes.get(result.packetFilePath)).toContain('Blocked preflight update');
+    expect(writes.get(result.packetFilePath)).toContain('Base revision');
     expect(writes.get(result.packetFilePath)).toContain('right-blob-not-vi');
     expect(writes.get(result.packetFilePath)).toContain('data-testid="comparison-report-runtime-selection"');
   });

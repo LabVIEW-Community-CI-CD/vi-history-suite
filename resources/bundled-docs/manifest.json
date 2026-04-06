@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-06T19:36:33.412Z",
+  "generatedAt": "2026-04-06T20:41:55.695Z",
   "sourceLedgerPath": "docs/product/wiki-publication-ledger.json",
   "sourceWikiRepoPath": "../vi-history-suite.wiki",
   "bundleAudience": "extension-users",
@@ -30,7 +30,7 @@
       "wikiFileName": "User-Workflow.md",
       "htmlFileName": "user-workflow.html",
       "publishedDate": "2026-04-06",
-      "wikiCommit": "c80fde9"
+      "wikiCommit": "25f6eaf"
     },
     {
       "id": "comparison-reports-and-dashboard-review",
@@ -38,8 +38,8 @@
       "wikiPath": "Comparison-Reports-And-Dashboard-Review",
       "wikiFileName": "Comparison-Reports-And-Dashboard-Review.md",
       "htmlFileName": "comparison-reports-and-dashboard-review.html",
-      "publishedDate": "2026-04-05",
-      "wikiCommit": "7060ff0"
+      "publishedDate": "2026-04-06",
+      "wikiCommit": "25f6eaf"
     }
   ]
 }

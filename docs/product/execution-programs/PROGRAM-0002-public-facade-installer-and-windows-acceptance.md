@@ -47,10 +47,13 @@ The primary public surface is now a release kit, not an installer product.
   SRS/RTM authority-link exposure while explicitly explaining the
   repo-agnostic checkbox-selected two-commit workflow, the oldest-row-as-base
   rule, and the absence of a separate extension-user dashboard or
-  decision-record step
-- Gate D therefore remains open only until the updated installed bundle retires
-  that canonical comparison-report presentation seam and a fresh deterministic
-  public-release fixture rerun proves the exact acceptance target cleanly
+  decision-record step; the repo now also renders embedded compare views with
+  a white-background `Comparison context` block that foregrounds
+  selected/base commit hash, date, author, and subject while keeping runtime
+  diagnostics on retained packet/runtime evidence surfaces
+- Gate D therefore remains open only until a fresh deterministic public-release
+  fixture rerun proves that installed comparison-report presentation fix on
+  the exact acceptance target cleanly
 
 ## Trigger
 
@@ -295,10 +298,14 @@ Current first slice:
   `Front Panel Overview`, Review Note draft persistence until successful
   submission, and a concise curated installed-user documentation bundle that
   omits private GitLab plus SRS/RTM authority-link exposure while explaining
-  the repo-agnostic checkbox-selected two-commit workflow clearly
-- Gate D is therefore now narrowed to one canonical comparison-report
-  presentation seam on the deterministic fixture-workspace canonical-VI path
-  rather than to an unimplemented compare-selection blocker set
+  the repo-agnostic checkbox-selected two-commit workflow clearly; embedded
+  compare views now also lead with a white-background `Comparison context`
+  block that foregrounds selected/base commit hash, date, author, and
+  subject while keeping runtime diagnostics on retained packet/runtime
+  evidence surfaces
+- Gate D is therefore now narrowed to one deterministic canonical rerun on the
+  fixture-workspace canonical-VI path rather than to an unimplemented
+  compare-selection blocker set
 
 ### Gate E: Public Support Surface
 

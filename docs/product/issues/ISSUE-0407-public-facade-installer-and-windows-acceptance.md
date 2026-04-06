@@ -81,12 +81,15 @@ Current landed scaffold state:
   guide that omits private GitLab plus SRS/RTM authority-link exposure while
   explicitly explaining the repo-agnostic checkbox-selected two-commit
   workflow, the oldest-row-as-base rule, and the absence of a separate
-  extension-user dashboard or decision-record step
+  extension-user dashboard or decision-record step; embedded compare views now
+  also lead with a white-background `Comparison context` block that
+  foregrounds selected/base commit hash, date, author, and subject while
+  keeping runtime diagnostics on retained packet/runtime evidence surfaces
 - this issue therefore remains open only until a fresh manual rerun on the
   deterministic public-release fixture workspace and canonical VI path proves
-  that the installed product retires that canonical comparison-report
-  presentation seam on the exact acceptance target, rather than only on the
-  newer repo-agnostic checkbox-flow surface
+  that the installed product retires the last retained compare-presentation
+  finding on the exact acceptance target, rather than only on the newer
+  repo-agnostic checkbox-flow surface
 - the authority repo still mirrors a GitHub Linux benchmark lane into the
   private `vi-history-suite-source-experiments` repo, but that mirror is now
   documented as benchmark only and belongs to the queued benchmark-proof lane

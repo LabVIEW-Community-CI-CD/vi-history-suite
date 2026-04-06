@@ -176,6 +176,9 @@ const bundledPageConfigs = {
         '- the generated NI comparison report when one exists',
         '- a compact runtime summary with provider and next action',
         '',
+        'The embedded compare view now leads with a white `Comparison context` block that foregrounds selected/base commit hash, date, author, and subject facts before any deeper runtime evidence.',
+        'Runtime diagnostics remain retained, but they stay on packet/runtime evidence surfaces instead of leading the embedded compare view.',
+        '',
         'Checkbox-selected pair behavior is explicit:',
         '',
         '- select any first retained revision with the checkbox column',
@@ -244,10 +247,15 @@ const bundledPageConfigs = {
         '- revision-pair preflight for eligible VI revisions',
         '- runtime selection',
         '- retained packet and metadata persistence',
-        '- rendering of retained comparison evidence inside the extension'
+        '- rendering of retained comparison evidence inside the extension',
+        '',
+        'The embedded compare view now leads with a white `Comparison context` block that foregrounds selected/base commit hash, date, author, and subject facts.',
+        'Runtime-diagnostic and process-observation detail remain retained for diagnosis, but they do not lead the embedded compare view.'
       ].join('\n'),
       'Runtime Doctor': [
         'The comparison-report subsystem also retains a compact runtime summary so you do not need raw logs first.',
+        '',
+        'That retained summary stays on packet/runtime evidence surfaces instead of replacing the commit-first compare header.',
         '',
         'That runtime summary includes:',
         '',

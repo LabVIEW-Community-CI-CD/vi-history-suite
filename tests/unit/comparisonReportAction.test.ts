@@ -853,7 +853,8 @@ describe('comparisonReportAction', () => {
 
     const panel = createWebviewPanelMock.mock.results.at(-1)?.value as MockPanel;
     expect(panel.webview.html).toContain('Bodyless retained packet body');
-    expect(panel.webview.html).toContain('Retained archive available:</strong> yes');
+    expect(panel.webview.html).toContain('data-testid="comparison-report-panel-context"');
+    expect(panel.webview.html).toContain('Relative path:</strong> foo.vi');
     expect(panel.webview.html).not.toContain('data-testid="comparison-report-panel-frame"');
   });
 
@@ -1730,8 +1731,8 @@ describe('comparisonReportAction', () => {
       title: 'VI Comparison Report: foo.vi'
     });
     const panel = createWebviewPanelMock.mock.results.at(-1)?.value as MockPanel;
-    expect(panel.webview.html).toContain('Retained archive available:</strong> no');
-    expect(panel.webview.html).toContain('Retained archive status:</strong> archive write failed');
+    expect(panel.webview.html).toContain('data-testid="comparison-report-panel-context"');
+    expect(panel.webview.html).toContain('data-testid="comparison-report-panel-frame"');
   });
 
   it('opens the generated NI report directly in the live panel when one was retained', async () => {
@@ -1769,6 +1770,20 @@ describe('comparisonReportAction', () => {
           record: {
             reportTitle: 'VI Comparison Report: foo.vi',
             reportStatus: 'ready-for-runtime',
+            selectedHash: 'abcdef1234567890',
+            baseHash: '1111111122222222',
+            selectedRevision: {
+              hash: 'abcdef1234567890',
+              authorDate: '2026-04-02T00:00:00Z',
+              authorName: 'A User',
+              subject: 'Update VI'
+            },
+            baseRevision: {
+              hash: '1111111122222222',
+              authorDate: '2026-04-01T00:00:00Z',
+              authorName: 'B User',
+              subject: 'Initial VI'
+            },
             runtimeExecutionState: 'not-run',
             runtimeExecution: {
               state: 'not-run',
@@ -1801,6 +1816,20 @@ describe('comparisonReportAction', () => {
           record: {
             reportTitle: 'VI Comparison Report: foo.vi',
             reportStatus: 'ready-for-runtime',
+            selectedHash: 'abcdef1234567890',
+            baseHash: '1111111122222222',
+            selectedRevision: {
+              hash: 'abcdef1234567890',
+              authorDate: '2026-04-02T00:00:00Z',
+              authorName: 'A User',
+              subject: 'Update VI'
+            },
+            baseRevision: {
+              hash: '1111111122222222',
+              authorDate: '2026-04-01T00:00:00Z',
+              authorName: 'B User',
+              subject: 'Initial VI'
+            },
             runtimeExecutionState: 'succeeded',
             runtimeExecution: {
               state: 'succeeded',
@@ -1869,6 +1898,12 @@ describe('comparisonReportAction', () => {
     expect(panel.webview.html).toContain(
       '<base href="webview:/webview/workspace/.storage/reports/repoid123456/fileid123456/" />'
     );
+    expect(panel.webview.html).toContain('data-testid="comparison-report-panel-context"');
+    expect(panel.webview.html).toContain('Relative path:</strong> foo.vi');
+    expect(panel.webview.html).toContain('Author:</strong> A User');
+    expect(panel.webview.html).toContain('Subject:</strong> Update VI');
+    expect(panel.webview.html).toContain('Author:</strong> B User');
+    expect(panel.webview.html).toContain('Subject:</strong> Initial VI');
     expect(panel.webview.html).toContain(
       '<img src="diff-report-foo.vi_files/fp_1.png" />'
     );
@@ -2432,11 +2467,7 @@ describe('comparisonReportAction', () => {
     expect(panel.webview.html).toContain(
       '<base href="webview:/webview/workspace/.storage/reports/repoid123456/fileid123456/" />'
     );
-    expect(panel.webview.html).toContain('Displayed evidence:</strong> retained packet');
-    expect(panel.webview.html).toContain('Retained archive available:</strong> no');
-    expect(panel.webview.html).toContain(
-      'Retained archive status:</strong> archive persistence unavailable'
-    );
+    expect(panel.webview.html).toContain('data-testid="comparison-report-panel-context"');
     expect(panel.webview.html).not.toContain('data-testid="comparison-report-panel-frame"');
   });
 
@@ -3038,7 +3069,7 @@ describe('comparisonReportAction', () => {
     );
   });
 
-  it('surfaces runtime diagnostics in the action result and rendered comparison-report panel', async () => {
+  it('surfaces runtime diagnostics in the action result without embedding them in the compare header', async () => {
     const executeComparisonReport = vi.fn().mockResolvedValue({
       record: {
         reportTitle: 'VI Comparison Report: foo.vi',
@@ -3229,31 +3260,12 @@ describe('comparisonReportAction', () => {
     });
 
     const panel = createWebviewPanelMock.mock.results.at(-1)?.value as MockPanel;
-    expect(panel.webview.html).toContain('labview-path-ignored-last-used-default');
-    expect(panel.webview.html).toContain('command-exited-nonzero');
-    expect(panel.webview.html).toContain('data-testid="comparison-report-panel-runtime-doctor"');
-    expect(panel.webview.html).toContain('Selected provider=host-native; engine=labview-cli; platform=win32; bitness=x86.');
-    expect(panel.webview.html).toContain(
-      'Provider decision: rejected windows-container because Windows x86 comparison-report execution stays host-native, so the Windows container provider was not selected for this lane.'
-    );
-    expect(panel.webview.html).toContain('Runtime diagnostic log source:</strong> C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log');
-    expect(panel.webview.html).toContain('Runtime executable:</strong> C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe');
-    expect(panel.webview.html).toContain('Runtime args:</strong> -OperationName CreateComparisonReport -LabVIEWPath C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe');
-    expect(panel.webview.html).toContain('Generated report exists:</strong> no');
-    expect(panel.webview.html).toContain('Displayed evidence:</strong> retained packet');
-    expect(panel.webview.html).toContain('runtime-process-observation.json');
-    expect(panel.webview.html).toContain('Process observation captured at:</strong> 2026-04-03T00:00:01.000Z');
-    expect(panel.webview.html).toContain('Process observation trigger:</strong> cli-log-banner');
-    expect(panel.webview.html).toContain('LabVIEWCLI.exe | LabVIEW.exe');
-    expect(panel.webview.html).toContain('Observed LabVIEW.exe:</strong> yes');
-    expect(panel.webview.html).toContain('Observed LabVIEWCLI.exe:</strong> yes');
-    expect(panel.webview.html).toContain('Observed LVCompare.exe:</strong> no');
-    expect(panel.webview.html).toContain('Exit process observation captured at:</strong> 2026-04-03T00:00:02.000Z');
-    expect(panel.webview.html).toContain('Exit process observation trigger:</strong> process-exit');
-    expect(panel.webview.html).toContain('Exit observed process names:</strong> none');
-    expect(panel.webview.html).toContain('Observed LabVIEW.exe at exit:</strong> no');
-    expect(panel.webview.html).toContain('Observed LabVIEWCLI.exe at exit:</strong> no');
-    expect(panel.webview.html).toContain('Observed LVCompare.exe at exit:</strong> no');
+    expect(panel.webview.html).toContain('data-testid="comparison-report-panel-context"');
+    expect(panel.webview.html).not.toContain('labview-path-ignored-last-used-default');
+    expect(panel.webview.html).not.toContain('command-exited-nonzero');
+    expect(panel.webview.html).not.toContain('Runtime diagnostic log source:</strong>');
+    expect(panel.webview.html).not.toContain('Runtime executable:</strong>');
+    expect(panel.webview.html).not.toContain('Runtime args:</strong>');
   });
 
   it('falls back to the retained packet when a generated NI report file cannot be read', async () => {
@@ -3409,8 +3421,7 @@ describe('comparisonReportAction', () => {
       'utf8'
     );
     expect(panel.webview.html).toContain('Packet fallback body');
-    expect(panel.webview.html).toContain('Generated report exists:</strong> yes');
-    expect(panel.webview.html).toContain('Displayed evidence:</strong> retained packet fallback');
+    expect(panel.webview.html).toContain('data-testid="comparison-report-panel-context"');
   });
 
   it('preserves explicit empty observed-process arrays on the action result and panel', async () => {
@@ -3545,8 +3556,9 @@ describe('comparisonReportAction', () => {
     expect(result.runtimeExitObservedProcessNames).toEqual([]);
 
     const panel = createWebviewPanelMock.mock.results.at(-1)?.value as MockPanel;
-    expect(panel.webview.html).toContain('Observed process names:</strong> none');
-    expect(panel.webview.html).toContain('Exit observed process names:</strong> none');
+    expect(panel.webview.html).toContain('data-testid="comparison-report-panel-context"');
+    expect(panel.webview.html).not.toContain('Observed process names:</strong>');
+    expect(panel.webview.html).not.toContain('Exit observed process names:</strong>');
   });
 
   it('renders retained non-empty exit observed process names on the comparison-report panel', async () => {
@@ -3674,9 +3686,8 @@ describe('comparisonReportAction', () => {
     expect(result.runtimeExitObservedProcessNames).toEqual(['LabVIEWCLI.exe', 'LVCompare.exe']);
 
     const panel = createWebviewPanelMock.mock.results.at(-1)?.value as MockPanel;
-    expect(panel.webview.html).toContain(
-      'Exit observed process names:</strong> LabVIEWCLI.exe | LVCompare.exe'
-    );
+    expect(panel.webview.html).toContain('data-testid="comparison-report-panel-context"');
+    expect(panel.webview.html).not.toContain('Exit observed process names:</strong>');
   });
 
   it('reads runtime settings from the workspace configuration and normalizes unknown runtime platforms', () => {
