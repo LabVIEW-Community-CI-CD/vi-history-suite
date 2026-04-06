@@ -216,24 +216,27 @@ installed LabVIEWCLI operations from
 `C:\Program Files (x86)\National Instruments\Shared\LabVIEW CLI\Operations`,
 exercise the LabVIEW 2026 x86 and x64 host surfaces separately, retain
 pre-run and post-run contamination truth on every case, use the
-`aphill93/linuxContainerDemo` `demo` branch only for the
-`PrintToSingleFileHtml` additional operation plus approved sample fixtures,
+local canonical `labview-ci-cd/actions/VICompareTooling` tree for the
+`PrintToSingleFileHtml` additional operation while still allowing approved
+sample fixtures for the fixture-backed operations,
 and keep `CreateComparisonReport` gated until those simpler host operations
 have been exercised first.
 Fresh canonical-host evidence on `2026-04-06` now narrows that follow-on lane
-further. Direct `LabVIEW.exe --headless` cold-start succeeds on both the x64
-and x86 LabVIEW 2026 host surfaces, so the host itself is not blocked from
-entering headless mode. The active seam is now the next attach step. A cold
-`LabVIEWCLI MassCompile -Help` against the x64 surface retains readable CLI
-help text and then fails with an explicit observation-window expiry while
-leaving the governed host surface clean. A warm x64 headless prelaunch then
-lets the same x86 `LabVIEWCLI.exe` connect on port `3363` and complete both
-`MassCompile -Help` and `CloseLabVIEW -Headless`. But the same warm-prelaunch
-shape still stalls on the x86 LabVIEW 2026 surface after only the initial CLI
-banner. So the stale `linux-headless-recursive-load` wording is now known to
-be too broad: the active canonical-host seam is cold CLI attach on both
-bitness surfaces plus a remaining x86 warm-attach stall, not a Linux-only
-story.
+further. The governed host-operation matrix now runs `LabVIEWCLI` through the
+retained foreground PowerShell path instead of the older background sidecar
+wrapper, and the corrected warm-headless x86/x64 ledger proves that
+`ExecuteBuildSpec`, `MassCompile`, `RunVI`, `RunVIAnalyzer`, and
+`PrintToSingleFileHtml` succeed cleanly on both admitted LabVIEW 2026 host
+surfaces. `CloseLabVIEW -Headless` succeeds on x64 too, but the same x86
+`CloseLabVIEW -Headless` case still leaves both `LabVIEW.exe` and
+`LabVIEWCLI.exe` hot until diagnostic cleanup. `RunUnitTests` on both x86 and
+x64 connects to the governed VI Server port and then exits `1` with `-350053`
+missing/bad operation files. So the stale `linux-headless-recursive-load`
+wording is now known to be too broad: the active canonical-host seam is the
+x86 `CloseLabVIEW` session-close path plus the cross-bitness `RunUnitTests`
+operation-admission failure, with `CreateComparisonReport` still correctly
+gated behind those remaining prerequisites rather than a broad Linux-only or
+generic host-attach story.
 
 `ADR-0024` plus `VHS-REQ-457..458` now tighten that PROGRAM-0003 admission
 layer one step further: governed proof subcommands validate the effective runtime bundle

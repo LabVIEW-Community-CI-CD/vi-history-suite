@@ -198,22 +198,25 @@ Current retained benchmark truth at closure:
   inventories the installed Windows LabVIEWCLI operations from
   `C:\Program Files (x86)\National Instruments\Shared\LabVIEW CLI\Operations`,
   exercises the LabVIEW 2026 x86 and x64 host surfaces separately, retains
-  pre-run and post-run contamination truth for every case, uses the
-  `aphill93/linuxContainerDemo` `demo` branch only for the
-  `PrintToSingleFileHtml` additional operation plus approved sample fixtures,
+  pre-run and post-run contamination truth for every case, uses the local
+  canonical `labview-ci-cd/actions/VICompareTooling` tree for the
+  `PrintToSingleFileHtml` additional operation while still allowing approved
+  sample fixtures for the fixture-backed operations,
   and keeps `CreateComparisonReport` gated until the simpler host operations
   are exercised first
 - that follow-on host lane now also retains a materially narrower seam than
-  the old Linux-only wording implied: direct `LabVIEW.exe --headless`
-  cold-start succeeds on both the x64 and x86 LabVIEW 2026 host surfaces,
-  a cold x64 `MassCompile -Help` retains readable help text and then fails
-  with an explicit observation-window expiry while leaving the governed host
-  surface clean, a warm x64 headless prelaunch lets x86 `LabVIEWCLI.exe`
-  connect on port `3363` and complete both `MassCompile -Help` and
-  `CloseLabVIEW -Headless`, and the remaining warm x86 `MassCompile -Help`
-  case still stalls after only the initial CLI banner; so the retained
-  canonical-host blocker is now bounded as a cold CLI attach seam on both
-  bitness surfaces plus a remaining x86 warm-attach stall
+  the old Linux-only wording implied: the host-operation matrix now uses the
+  retained foreground PowerShell `LabVIEWCLI` path instead of the older
+  background sidecar wrapper, the fresh warm-headless x86/x64 ledger proves
+  `ExecuteBuildSpec`, `MassCompile`, `RunVI`, `RunVIAnalyzer`, and
+  `PrintToSingleFileHtml` succeed cleanly on both admitted LabVIEW 2026 host
+  surfaces, x64 `CloseLabVIEW -Headless` now succeeds too, x86
+  `CloseLabVIEW -Headless` still leaves both `LabVIEW.exe` and
+  `LabVIEWCLI.exe` hot until diagnostic cleanup, and `RunUnitTests` on both
+  bitness surfaces exits `1` with `-350053` missing/bad operation files; so
+  the retained canonical-host blocker is now bounded as an x86
+  `CloseLabVIEW` session-close seam plus a cross-bitness `RunUnitTests`
+  operation-admission failure rather than a broad cold/warm attach stall
 
 ## Scope
 

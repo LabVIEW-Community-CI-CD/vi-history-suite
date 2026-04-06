@@ -2,7 +2,8 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   cleanupWindowsHostRuntimeSurface,
-  inspectWindowsHostRuntimeSurface
+  inspectWindowsHostRuntimeSurface,
+  launchWindowsHeadlessLabview
 } from '../../src/cli/windowsHostRuntimeSurface';
 
 describe('windowsHostRuntimeSurface', () => {
@@ -50,5 +51,18 @@ describe('windowsHostRuntimeSurface', () => {
         execFileImpl: execFileImpl as never
       })
     ).rejects.toThrow('cleanup failed');
+  });
+
+  it('launches headless LabVIEW and retains the process id', async () => {
+    const execFileImpl = vi.fn((_file, _args, callback) => {
+      callback(null, '{"Id":54860}', '');
+      return {} as never;
+    });
+
+    await expect(
+      launchWindowsHeadlessLabview('C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe', {
+        execFileImpl: execFileImpl as never
+      })
+    ).resolves.toBe(54860);
   });
 });

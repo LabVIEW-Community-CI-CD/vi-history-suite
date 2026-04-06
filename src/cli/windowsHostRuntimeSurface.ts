@@ -58,6 +58,33 @@ export async function cleanupWindowsHostRuntimeSurface(
   );
 }
 
+export async function launchWindowsHeadlessLabview(
+  labviewExePath: string,
+  deps: WindowsHostRuntimeSurfaceDeps = {}
+): Promise<number> {
+  const execFileImpl = deps.execFileImpl ?? execFile;
+  const stdout = await execWindowsPowershellCommand(
+    [
+      `$labviewExePath = '${escapePowershellSingleQuotedString(labviewExePath)}'`,
+      `$proc = Start-Process -FilePath $labviewExePath -ArgumentList @('--headless') -PassThru -WindowStyle Hidden`,
+      '[ordered]@{ Id = $proc.Id } | ConvertTo-Json -Compress'
+    ].join('; '),
+    execFileImpl
+  );
+
+  const trimmed = stdout.trim();
+  if (!trimmed) {
+    throw new Error('Windows headless LabVIEW launch did not retain a process id.');
+  }
+
+  const parsed = JSON.parse(trimmed) as { Id?: number };
+  if (typeof parsed.Id !== 'number' || parsed.Id <= 0) {
+    throw new Error('Windows headless LabVIEW launch retained an invalid process id.');
+  }
+
+  return parsed.Id;
+}
+
 async function execWindowsPowershellCommand(
   command: string,
   execFileImpl: typeof execFile
@@ -107,6 +134,10 @@ function parseWindowsHostRuntimeProcesses(stdout: string): WindowsHostRuntimePro
     pid: record.pid,
     path: record.path
   }));
+}
+
+function escapePowershellSingleQuotedString(value: string): string {
+  return value.replaceAll("'", "''");
 }
 
 function defaultNowIso(): string {

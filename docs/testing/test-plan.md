@@ -1398,7 +1398,9 @@
   inventories installed LabVIEWCLI operations, writes JSON plus Markdown
   evidence under `.cache/governed-proof/windows-host-operation-matrix/`,
   keeps `CreateComparisonReport` gated, and surfaces post-run contamination as
-  a failed case even when cleanup later succeeds
+  a failed case even when cleanup later succeeds, while the host CLI execution
+  path itself uses the retained foreground PowerShell runner instead of the
+  earlier background sidecar wrapper
 - `TEST-UNIT-315`: verify the shared Windows host runtime-surface helper
   parses observed `LabVIEW.exe` / `LabVIEWCLI.exe` / `LVCompare.exe` process
   facts deterministically and fails closed when cleanup PowerShell returns an
@@ -1406,7 +1408,8 @@
 - `TEST-SMOKE-003`: inventory the installed LabVIEWCLI operation set from
   `C:\Program Files (x86)\National Instruments\Shared\LabVIEW CLI\Operations`,
   add the repo-supplied `PrintToSingleFileHtml` additional operation from the
-  `aphill93/linuxContainerDemo` `demo` branch, and retain one governed
+  canonical local `labview-ci-cd/actions/VICompareTooling` source when
+  present, fail closed when that source is absent, and retain one governed
   LabVIEW 2026 host operation matrix that separates x86 and x64 `LabVIEW.exe`
   surfaces, distinguishes cold CLI attach from warm headless-prelaunched
   LabVIEW attach, and retains that session-state split before any new
@@ -1450,13 +1453,13 @@
   toolkit is present, otherwise retain a blocked prerequisite outcome and clean
   contamination state
 - `TEST-SMOKE-016`: prove the repo-supplied `PrintToSingleFileHtml` additional
-  operation on the LabVIEW 2026 x86 host surface using the
-  `linuxContainerDemo` `demo` branch `VICompareTooling/PrintToSingleFileHtml`
-  payload and retain contamination outcome before and after the run
+  operation on the LabVIEW 2026 x86 host surface using the local canonical
+  `labview-ci-cd/actions/VICompareTooling/PrintToSingleFileHtml` payload and
+  retain contamination outcome before and after the run
 - `TEST-SMOKE-017`: prove the repo-supplied `PrintToSingleFileHtml` additional
-  operation on the LabVIEW 2026 x64 host surface using the
-  `linuxContainerDemo` `demo` branch `VICompareTooling/PrintToSingleFileHtml`
-  payload and retain contamination outcome before and after the run
+  operation on the LabVIEW 2026 x64 host surface using the local canonical
+  `labview-ci-cd/actions/VICompareTooling/PrintToSingleFileHtml` payload and
+  retain contamination outcome before and after the run
 - `TEST-SMOKE-018`: prove `CreateComparisonReport` on the LabVIEW 2026 x86
   host surface only after `TEST-SMOKE-004..017` are complete and the host
   surface remains clean before the run
@@ -1506,7 +1509,9 @@
   and the test plan and confirm the governed host-matrix receipts now retain
   readable stdout/stderr plus an explicit observation-window-expired note when
   LabVIEWCLI prints startup/help output but does not self-exit within the
-  bounded diagnostic window
+  bounded diagnostic window, while the governed host runner now uses the
+  retained foreground PowerShell execution path instead of the older
+  background sidecar wrapper
 - `TEST-DOC-070`: review current-state, harnesses, PROGRAM-0003, ISSUE-0408,
   and the comparable-prefix packet and confirm the repo documents the current
   Windows pair-129 ceiling as an accepted current-contract exception backed by

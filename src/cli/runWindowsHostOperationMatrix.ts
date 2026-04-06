@@ -1,11 +1,16 @@
-import { execFile } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
 import { maybeRejectGovernedProofLegacyEntrypointAsMain } from './governedProofLegacyEntrypoint';
 import {
+  appendLabviewCliPortNumberArg,
+  resolveWindowsLabviewTcpSettingsForLabviewPath
+} from '../reporting/comparisonReportRuntimeExecution';
+import {
   cleanupWindowsHostRuntimeSurface,
   inspectWindowsHostRuntimeSurface,
+  launchWindowsHeadlessLabview,
   WindowsHostRuntimeSurfaceSnapshot
 } from './windowsHostRuntimeSurface';
 import { toWindowsPath } from '../tooling/devHostLoop';
@@ -17,7 +22,6 @@ const DEFAULT_WINDOWS_LABVIEW_2026_X86_PATH =
 const DEFAULT_WINDOWS_LABVIEW_2026_X64_PATH =
   'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe';
 const WINDOWS_HOST_MATRIX_OBSERVATION_WINDOW_MS = 15000;
-const WINDOWS_HOST_MATRIX_OBSERVATION_POLL_INTERVAL_MS = 250;
 const REQUIRED_INSTALLED_OPERATIONS = [
   'CloseLabVIEW',
   'CreateComparisonReport',
@@ -30,18 +34,21 @@ const REQUIRED_INSTALLED_OPERATIONS = [
 const REPO_SUPPLIED_ADDITIONAL_OPERATIONS = ['PrintToSingleFileHtml'] as const;
 
 export type WindowsHostOperationMatrixBitness = 'x86' | 'x64';
+export type WindowsHostOperationMatrixSessionState = 'cold' | 'warm-headless';
 export type WindowsHostOperationMatrixOperation =
   | (typeof REQUIRED_INSTALLED_OPERATIONS)[number]
   | (typeof REPO_SUPPLIED_ADDITIONAL_OPERATIONS)[number];
 
 type MatrixSelectionOperation = WindowsHostOperationMatrixOperation | 'all';
 type MatrixSelectionBitness = WindowsHostOperationMatrixBitness | 'all';
+type MatrixSelectionSessionState = WindowsHostOperationMatrixSessionState | 'all';
 type MatrixExecutionMode = 'help' | 'run' | 'gated';
 
 export interface WindowsHostOperationMatrixCliArgs {
   helpRequested: boolean;
   operation: MatrixSelectionOperation;
   bitness: MatrixSelectionBitness;
+  sessionState: MatrixSelectionSessionState;
   labviewCliPath: string;
   x86LabviewExePath: string;
   x64LabviewExePath: string;
@@ -51,6 +58,7 @@ export interface WindowsHostOperationMatrixCliArgs {
 export interface WindowsHostOperationMatrixCase {
   operation: WindowsHostOperationMatrixOperation;
   bitness: WindowsHostOperationMatrixBitness;
+  sessionState: WindowsHostOperationMatrixSessionState;
   labviewExePath: string;
   executionMode: MatrixExecutionMode;
   blockedReason?: string;
@@ -60,7 +68,11 @@ export interface WindowsHostOperationMatrixCase {
 export interface WindowsHostOperationMatrixCaseResult {
   operation: WindowsHostOperationMatrixOperation;
   bitness: WindowsHostOperationMatrixBitness;
+  sessionState: WindowsHostOperationMatrixSessionState;
   labviewExePath: string;
+  labviewIniPath?: string;
+  labviewTcpPort?: number;
+  tcpSettingsNotes?: string[];
   executionMode: MatrixExecutionMode;
   status: 'succeeded' | 'failed' | 'blocked' | 'gated';
   blockedReason?: string;
@@ -71,6 +83,7 @@ export interface WindowsHostOperationMatrixCaseResult {
   preRunObservation: WindowsHostRuntimeSurfaceSnapshot;
   preRunCleanupApplied: boolean;
   postPreRunCleanupObservation?: WindowsHostRuntimeSurfaceSnapshot;
+  sessionPreparationObservation?: WindowsHostRuntimeSurfaceSnapshot;
   postRunObservation?: WindowsHostRuntimeSurfaceSnapshot;
   postRunCleanupApplied: boolean;
   postRunCleanupObservation?: WindowsHostRuntimeSurfaceSnapshot;
@@ -94,10 +107,13 @@ export interface WindowsHostOperationMatrixCliDeps {
   repoRoot?: string;
   mkdir?: typeof fs.mkdir;
   writeFile?: typeof fs.writeFile;
+  readFile?: typeof fs.readFile;
+  pathExists?: (filePath: string) => Promise<boolean>;
   nowIso?: () => string;
   stdout?: { write(text: string): void };
   inspectRuntimeSurface?: () => Promise<WindowsHostRuntimeSurfaceSnapshot>;
   cleanupRuntimeSurface?: () => Promise<void>;
+  launchHeadlessLabview?: (labviewExePath: string) => Promise<number>;
   listInstalledOperations?: (operationsDirectory: string) => Promise<string[]>;
   runLabviewCliCommand?: (
     cliPath: string,
@@ -105,24 +121,18 @@ export interface WindowsHostOperationMatrixCliDeps {
   ) => Promise<{ exitCode: number; stdout: string; stderr: string }>;
 }
 
-interface WindowsBackgroundCommandLaunch {
-  wrapperPid: number;
-  stdoutPath: string;
-  stderrPath: string;
-  exitCodePath: string;
-}
-
 export function getWindowsHostOperationMatrixUsage(): string {
   return [
-    'Usage: runWindowsHostOperationMatrix [--operation <name|all>] [--bitness <x86|x64|all>] [--labview-cli-path <path>] [--x86-labview-exe-path <path>] [--x64-labview-exe-path <path>] [--additional-operation-directory <path>] [--help]',
+    'Usage: runWindowsHostOperationMatrix [--operation <name|all>] [--bitness <x86|x64|all>] [--session-state <cold|warm-headless|all>] [--labview-cli-path <path>] [--x86-labview-exe-path <path>] [--x64-labview-exe-path <path>] [--additional-operation-directory <path>] [--help]',
     '',
     'Defaults:',
     '  --operation all',
     '  --bitness all',
+    '  --session-state cold',
     `  --labview-cli-path ${DEFAULT_WINDOWS_LABVIEW_CLI_PATH}`,
     `  --x86-labview-exe-path ${DEFAULT_WINDOWS_LABVIEW_2026_X86_PATH}`,
     `  --x64-labview-exe-path ${DEFAULT_WINDOWS_LABVIEW_2026_X64_PATH}`,
-    '  --additional-operation-directory ../linuxContainerDemo/VICompareTooling',
+    '  --additional-operation-directory ../labview-ci-cd/actions/VICompareTooling',
     '',
     'Governed matrix rules:',
     '  - LabVIEW 2026 host surfaces only',
@@ -140,10 +150,17 @@ export function parseWindowsHostOperationMatrixArgs(
   let helpRequested = false;
   let operation: MatrixSelectionOperation = 'all';
   let bitness: MatrixSelectionBitness = 'all';
+  let sessionState: MatrixSelectionSessionState = 'cold';
   let labviewCliPath = DEFAULT_WINDOWS_LABVIEW_CLI_PATH;
   let x86LabviewExePath = DEFAULT_WINDOWS_LABVIEW_2026_X86_PATH;
   let x64LabviewExePath = DEFAULT_WINDOWS_LABVIEW_2026_X64_PATH;
-  let additionalOperationDirectory = path.resolve(repoRoot, '..', 'linuxContainerDemo', 'VICompareTooling');
+  let additionalOperationDirectory = path.resolve(
+    repoRoot,
+    '..',
+    'labview-ci-cd',
+    'actions',
+    'VICompareTooling'
+  );
 
   const supportedOperations = new Set<MatrixSelectionOperation>([
     'all',
@@ -193,6 +210,18 @@ export function parseWindowsHostOperationMatrixArgs(
       continue;
     }
 
+    if (current === '--session-state') {
+      const candidate = requireValue('--session-state') as MatrixSelectionSessionState;
+      if (candidate !== 'all' && candidate !== 'cold' && candidate !== 'warm-headless') {
+        throw new Error(
+          `Unsupported value for --session-state: ${candidate}\n\n${getWindowsHostOperationMatrixUsage()}`
+        );
+      }
+
+      sessionState = candidate;
+      continue;
+    }
+
     if (current === '--labview-cli-path') {
       labviewCliPath = requireValue('--labview-cli-path');
       continue;
@@ -220,6 +249,7 @@ export function parseWindowsHostOperationMatrixArgs(
     helpRequested,
     operation,
     bitness,
+    sessionState,
     labviewCliPath,
     x86LabviewExePath,
     x64LabviewExePath,
@@ -235,77 +265,86 @@ export function buildWindowsHostOperationMatrixCases(
       ? [...REQUIRED_INSTALLED_OPERATIONS, ...REPO_SUPPLIED_ADDITIONAL_OPERATIONS]
       : [args.operation];
   const bitnesses = args.bitness === 'all' ? (['x86', 'x64'] as const) : [args.bitness];
+  const sessionStates =
+    args.sessionState === 'all' ? (['cold', 'warm-headless'] as const) : [args.sessionState];
   const additionalOperationDirectoryWindowsPath = toWindowsPath(args.additionalOperationDirectory);
 
-  return bitnesses.flatMap((bitness) =>
-    operations.map<WindowsHostOperationMatrixCase>((operation) => {
-      const labviewExePath =
-        bitness === 'x86' ? args.x86LabviewExePath.trim() : args.x64LabviewExePath.trim();
+  return sessionStates.flatMap((sessionState) =>
+    bitnesses.flatMap((bitness) =>
+      operations.map<WindowsHostOperationMatrixCase>((operation) => {
+        const labviewExePath =
+          bitness === 'x86' ? args.x86LabviewExePath.trim() : args.x64LabviewExePath.trim();
 
-      if (!labviewExePath) {
-        return {
-          operation,
-          bitness,
-          labviewExePath,
-          executionMode: 'gated',
-          blockedReason: `missing-labview-${bitness}-path`
-        };
-      }
-
-      if (operation === 'CreateComparisonReport') {
-        return {
-          operation,
-          bitness,
-          labviewExePath,
-          executionMode: 'gated',
-          blockedReason: 'createcomparisonreport-deferred-until-prerequisite-operations-complete'
-        };
-      }
-
-      if (operation === 'CloseLabVIEW') {
-        return {
-          operation,
-          bitness,
-          labviewExePath,
-          executionMode: 'run',
-          args: [
-            '-LogToConsole',
-            'TRUE',
-            '-OperationName',
+        if (!labviewExePath) {
+          return {
             operation,
-            '-LabVIEWPath',
+            bitness,
+            sessionState,
             labviewExePath,
-            '-Headless'
-          ]
-        };
-      }
+            executionMode: 'gated',
+            blockedReason: `missing-labview-${bitness}-path`
+          };
+        }
 
-      if (operation === 'PrintToSingleFileHtml') {
+        if (operation === 'CreateComparisonReport') {
+          return {
+            operation,
+            bitness,
+            sessionState,
+            labviewExePath,
+            executionMode: 'gated',
+            blockedReason: 'createcomparisonreport-deferred-until-prerequisite-operations-complete'
+          };
+        }
+
+        if (operation === 'CloseLabVIEW') {
+          return {
+            operation,
+            bitness,
+            sessionState,
+            labviewExePath,
+            executionMode: 'run',
+            args: [
+              '-LogToConsole',
+              'TRUE',
+              '-OperationName',
+              operation,
+              '-LabVIEWPath',
+              labviewExePath,
+              '-Headless'
+            ]
+          };
+        }
+
+        if (operation === 'PrintToSingleFileHtml') {
+          return {
+            operation,
+            bitness,
+            sessionState,
+            labviewExePath,
+            executionMode: 'help',
+            args: [
+              '-OperationName',
+              operation,
+              '-AdditionalOperationDirectory',
+              additionalOperationDirectoryWindowsPath,
+              '-LabVIEWPath',
+              labviewExePath,
+              '-Help'
+            ]
+          };
+        }
+
         return {
           operation,
           bitness,
+          sessionState,
           labviewExePath,
           executionMode: 'help',
-          args: [
-            '-OperationName',
-            operation,
-            '-AdditionalOperationDirectory',
-            additionalOperationDirectoryWindowsPath,
-            '-LabVIEWPath',
-            labviewExePath,
-            '-Help'
-          ]
+          args: ['-OperationName', operation, '-LabVIEWPath', labviewExePath, '-Help']
         };
-      }
-
-      return {
-        operation,
-        bitness,
-        labviewExePath,
-        executionMode: 'help',
-        args: ['-OperationName', operation, '-LabVIEWPath', labviewExePath, '-Help']
-      };
-    })
+      })
+    )
   );
 }
 
@@ -324,9 +363,22 @@ export async function runWindowsHostOperationMatrixCli(
 
   const mkdir = deps.mkdir ?? fs.mkdir;
   const writeFile = deps.writeFile ?? fs.writeFile;
+  const readFile = deps.readFile ?? fs.readFile;
+  const pathExists =
+    deps.pathExists ??
+    (async (filePath: string) => {
+      try {
+        await fs.access(filePath);
+        return true;
+      } catch {
+        return false;
+      }
+    });
   const nowIso = deps.nowIso ?? (() => new Date().toISOString());
   const inspectRuntimeSurface = deps.inspectRuntimeSurface ?? (() => inspectWindowsHostRuntimeSurface());
   const cleanupRuntimeSurface = deps.cleanupRuntimeSurface ?? (() => cleanupWindowsHostRuntimeSurface());
+  const launchHeadlessLabview =
+    deps.launchHeadlessLabview ?? ((labviewExePath: string) => launchWindowsHeadlessLabview(labviewExePath));
   const listInstalledOperations =
     deps.listInstalledOperations ?? defaultListInstalledLabviewCliOperations;
   const runLabviewCliCommand = deps.runLabviewCliCommand ?? defaultRunLabviewCliCommand;
@@ -336,6 +388,7 @@ export async function runWindowsHostOperationMatrixCli(
   await mkdir(reportRoot, { recursive: true });
 
   const installedOperationsDirectory = deriveWindowsLabviewCliOperationsDirectory(args.labviewCliPath);
+  const additionalOperationDirectoryExists = await pathExists(args.additionalOperationDirectory);
   const installedOperationsDiscovered = await listInstalledOperations(installedOperationsDirectory);
   const missingInstalledOperations = REQUIRED_INSTALLED_OPERATIONS.filter(
     (operation) => !installedOperationsDiscovered.includes(operation)
@@ -343,13 +396,21 @@ export async function runWindowsHostOperationMatrixCli(
 
   const results: WindowsHostOperationMatrixCaseResult[] = [];
   for (const testCase of buildWindowsHostOperationMatrixCases(args)) {
-    const caseId = `${testCase.operation}-${testCase.bitness}`;
+    const caseId = `${testCase.operation}-${testCase.bitness}-${testCase.sessionState}`;
     const stdoutFilePath = path.join(reportRoot, `${caseId}.stdout.txt`);
     const stderrFilePath = path.join(reportRoot, `${caseId}.stderr.txt`);
     const preRunObservation = await inspectRuntimeSurface();
     let preRunCleanupApplied = false;
     let postPreRunCleanupObservation: WindowsHostRuntimeSurfaceSnapshot | undefined;
+    let sessionPreparationObservation: WindowsHostRuntimeSurfaceSnapshot | undefined;
     let postRunCleanupApplied = false;
+    const tcpSettings = await resolveWindowsLabviewTcpSettingsForLabviewPath(testCase.labviewExePath, {
+      readFile,
+      processPlatform: process.platform
+    });
+    const commandArgs = testCase.args
+      ? appendLabviewCliPortNumberArg(testCase.args, tcpSettings.labviewTcpPort)
+      : undefined;
 
     if (preRunObservation.processes.length > 0) {
       await cleanupRuntimeSurface();
@@ -359,7 +420,11 @@ export async function runWindowsHostOperationMatrixCli(
         results.push({
           operation: testCase.operation,
           bitness: testCase.bitness,
+          sessionState: testCase.sessionState,
           labviewExePath: testCase.labviewExePath,
+          labviewIniPath: tcpSettings.labviewIniPath,
+          labviewTcpPort: tcpSettings.labviewTcpPort,
+          tcpSettingsNotes: tcpSettings.notes,
           executionMode: testCase.executionMode,
           status: 'blocked',
           blockedReason: 'pre-run-runtime-surface-contaminated',
@@ -376,19 +441,74 @@ export async function runWindowsHostOperationMatrixCli(
       results.push({
         operation: testCase.operation,
         bitness: testCase.bitness,
+        sessionState: testCase.sessionState,
         labviewExePath: testCase.labviewExePath,
+        labviewIniPath: tcpSettings.labviewIniPath,
+        labviewTcpPort: tcpSettings.labviewTcpPort,
+        tcpSettingsNotes: tcpSettings.notes,
         executionMode: testCase.executionMode,
         status: 'gated',
         blockedReason: testCase.blockedReason,
         preRunObservation,
         preRunCleanupApplied,
         postPreRunCleanupObservation,
+        sessionPreparationObservation,
         postRunCleanupApplied
       });
       continue;
     }
 
-    const commandResult = await runLabviewCliCommand(args.labviewCliPath, testCase.args);
+    if (testCase.operation === 'PrintToSingleFileHtml' && !additionalOperationDirectoryExists) {
+      results.push({
+        operation: testCase.operation,
+        bitness: testCase.bitness,
+        sessionState: testCase.sessionState,
+        labviewExePath: testCase.labviewExePath,
+        labviewIniPath: tcpSettings.labviewIniPath,
+        labviewTcpPort: tcpSettings.labviewTcpPort,
+        tcpSettingsNotes: [
+          ...tcpSettings.notes,
+          `Additional operation directory was not present at ${args.additionalOperationDirectory}.`
+        ],
+        executionMode: testCase.executionMode,
+        status: 'blocked',
+        blockedReason: 'missing-additional-operation-directory',
+        preRunObservation,
+        preRunCleanupApplied,
+        postPreRunCleanupObservation,
+        sessionPreparationObservation,
+        postRunCleanupApplied
+      });
+      continue;
+    }
+
+    if (testCase.sessionState === 'warm-headless') {
+      await launchHeadlessLabview(testCase.labviewExePath);
+      sessionPreparationObservation = await inspectRuntimeSurface();
+      if (!isExpectedWarmHeadlessPreparationSurface(sessionPreparationObservation, testCase.labviewExePath)) {
+        results.push({
+          operation: testCase.operation,
+          bitness: testCase.bitness,
+          sessionState: testCase.sessionState,
+          labviewExePath: testCase.labviewExePath,
+          labviewIniPath: tcpSettings.labviewIniPath,
+          labviewTcpPort: tcpSettings.labviewTcpPort,
+          tcpSettingsNotes: tcpSettings.notes,
+          executionMode: testCase.executionMode,
+          status: 'blocked',
+          blockedReason: 'warm-headless-prelaunch-did-not-retain-governed-labview-surface',
+          preRunObservation,
+          preRunCleanupApplied,
+          postPreRunCleanupObservation,
+          sessionPreparationObservation,
+          postRunCleanupApplied
+        });
+        await cleanupRuntimeSurface();
+        continue;
+      }
+    }
+
+    const commandResult = await runLabviewCliCommand(args.labviewCliPath, commandArgs ?? testCase.args);
     await writeFile(stdoutFilePath, commandResult.stdout, 'utf8');
     await writeFile(stderrFilePath, commandResult.stderr, 'utf8');
 
@@ -397,7 +517,15 @@ export async function runWindowsHostOperationMatrixCli(
     let status: WindowsHostOperationMatrixCaseResult['status'] =
       commandResult.exitCode === 0 ? 'succeeded' : 'failed';
     let blockedReason: string | undefined = undefined;
-    if (postRunObservation.processes.length > 0) {
+    if (testCase.sessionState === 'warm-headless' && isExpectedWarmHeadlessPreparationSurface(postRunObservation, testCase.labviewExePath)) {
+      await cleanupRuntimeSurface();
+      postRunCleanupApplied = true;
+      postRunCleanupObservation = await inspectRuntimeSurface();
+      if (postRunCleanupObservation.processes.length > 0) {
+        status = 'failed';
+        blockedReason = 'post-run-runtime-surface-contaminated';
+      }
+    } else if (postRunObservation.processes.length > 0) {
       await cleanupRuntimeSurface();
       postRunCleanupApplied = true;
       postRunCleanupObservation = await inspectRuntimeSurface();
@@ -408,17 +536,22 @@ export async function runWindowsHostOperationMatrixCli(
     results.push({
       operation: testCase.operation,
       bitness: testCase.bitness,
+      sessionState: testCase.sessionState,
       labviewExePath: testCase.labviewExePath,
+      labviewIniPath: tcpSettings.labviewIniPath,
+      labviewTcpPort: tcpSettings.labviewTcpPort,
+      tcpSettingsNotes: tcpSettings.notes,
       executionMode: testCase.executionMode,
       status,
       blockedReason,
       exitCode: commandResult.exitCode,
       stdoutFilePath,
       stderrFilePath,
-      commandArgs: testCase.args,
+      commandArgs,
       preRunObservation,
       preRunCleanupApplied,
       postPreRunCleanupObservation,
+      sessionPreparationObservation,
       postRunObservation,
       postRunCleanupApplied,
       postRunCleanupObservation
@@ -511,50 +644,7 @@ async function defaultRunLabviewCliCommand(
   cliPath: string,
   args: string[]
 ): Promise<{ exitCode: number; stdout: string; stderr: string }> {
-  const launch = await launchWindowsBackgroundLabviewCliCommand(cliPath, args);
-  const completion = await observeWindowsBackgroundCommandCompletion(launch);
-  const stdout = await readWindowsTextFile(launch.stdoutPath);
-  const stderr = await readWindowsTextFile(launch.stderrPath);
-
-  if (!completion.completed) {
-    try {
-      await defaultExecWindowsPowershell(
-        [
-          `$wrapperPid = ${launch.wrapperPid}`,
-          'if ($null -ne (Get-Process -Id $wrapperPid -ErrorAction SilentlyContinue)) {',
-          '  Stop-Process -Id $wrapperPid -Force -ErrorAction SilentlyContinue',
-          '}',
-          'exit 0'
-        ].join('; ')
-      );
-    } catch {
-      // Preserve the observed failure even if the wrapper is already gone.
-    }
-  }
-
-  try {
-    await defaultExecWindowsPowershell(
-      [
-        `Remove-Item -Force -ErrorAction SilentlyContinue '${escapePowershellSingleQuotedString(launch.exitCodePath)}'`,
-        'exit 0'
-      ].join('; ')
-    );
-  } catch {
-    // Exit-code sidecar cleanup is best-effort; it must not hide the retained case result.
-  }
-
-  return {
-    exitCode: completion.completed ? completion.exitCode : -1,
-    stdout,
-    stderr: completion.completed
-      ? stderr
-      : [
-          stderr.trim(),
-          `Windows host operation matrix observation window expired after ${WINDOWS_HOST_MATRIX_OBSERVATION_WINDOW_MS} ms.`
-        ]
-          .filter(Boolean)
-          .join('\n')
-  };
+  return runWindowsForegroundLabviewCliCommand(cliPath, args);
 }
 
 async function defaultExecWindowsPowershell(command: string): Promise<string> {
@@ -574,105 +664,103 @@ function escapePowershellSingleQuotedString(value: string): string {
   return value.replaceAll("'", "''");
 }
 
-async function launchWindowsBackgroundLabviewCliCommand(
+export async function runWindowsForegroundLabviewCliCommand(
   cliPath: string,
-  args: string[]
-): Promise<WindowsBackgroundCommandLaunch> {
+  args: string[],
+  deps: {
+    spawnImpl?: typeof spawn;
+    terminateProcessTree?: (pid: number) => Promise<void>;
+    observationWindowMs?: number;
+  } = {}
+): Promise<{ exitCode: number; stdout: string; stderr: string }> {
+  const spawnImpl = deps.spawnImpl ?? spawn;
+  const terminateProcessTree = deps.terminateProcessTree ?? terminateWindowsProcessTree;
+  const observationWindowMs =
+    deps.observationWindowMs ?? WINDOWS_HOST_MATRIX_OBSERVATION_WINDOW_MS;
   const argumentLiteral = args.map((argument) => `'${escapePowershellSingleQuotedString(argument)}'`).join(', ');
   const command = [
-    '$stdoutPath = [System.IO.Path]::GetTempFileName()',
-    '$stderrPath = [System.IO.Path]::GetTempFileName()',
-    '$exitCodePath = [System.IO.Path]::GetTempFileName()',
-    'Remove-Item -Force -ErrorAction SilentlyContinue $exitCodePath',
     `$argList = @(${argumentLiteral})`,
-    `$inner = "& '${escapePowershellSingleQuotedString(cliPath)}' @argList 1> '$stdoutPath' 2> '$stderrPath'; Set-Content -Path '$exitCodePath' -Value $LASTEXITCODE"`,
-    `$proc = Start-Process -FilePath 'powershell.exe' -ArgumentList @('-NoProfile','-Command',$inner) -PassThru -WindowStyle Hidden`,
-    '[ordered]@{ wrapperPid = $proc.Id; stdoutPath = $stdoutPath; stderrPath = $stderrPath; exitCodePath = $exitCodePath } | ConvertTo-Json -Compress'
+    `& '${escapePowershellSingleQuotedString(cliPath)}' @argList`
   ].join('; ');
-  const stdout = await defaultExecWindowsPowershell(command);
-  const trimmed = stdout.trim();
-  if (!trimmed) {
-    throw new Error('Windows host operation matrix command did not retain a launch payload.');
-  }
 
-  const payload = JSON.parse(trimmed) as Partial<WindowsBackgroundCommandLaunch>;
-  if (
-    typeof payload.wrapperPid !== 'number' ||
-    !payload.stdoutPath ||
-    !payload.stderrPath ||
-    !payload.exitCodePath
-  ) {
-    throw new Error('Windows host operation matrix launch payload was incomplete.');
-  }
+  return new Promise((resolve, reject) => {
+    const child = spawnImpl('powershell.exe', ['-NoProfile', '-Command', command], {
+      stdio: ['ignore', 'pipe', 'pipe']
+    });
+    let stdout = '';
+    let stderr = '';
+    let settled = false;
 
-  return {
-    wrapperPid: payload.wrapperPid,
-    stdoutPath: payload.stdoutPath,
-    stderrPath: payload.stderrPath,
-    exitCodePath: payload.exitCodePath
-  };
+    const finalize = (result: { exitCode: number; stdout: string; stderr: string }) => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      clearTimeout(timer);
+      resolve(result);
+    };
+
+    child.stdout?.on('data', (chunk) => {
+      stdout += chunk.toString();
+    });
+    child.stderr?.on('data', (chunk) => {
+      stderr += chunk.toString();
+    });
+
+    child.on('error', (error) => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      clearTimeout(timer);
+      reject(error);
+    });
+
+    child.on('close', (code) => {
+      finalize({
+        exitCode: typeof code === 'number' ? code : -1,
+        stdout,
+        stderr
+      });
+    });
+
+    const timer = setTimeout(() => {
+      void (async () => {
+        if (typeof child.pid === 'number' && child.pid > 0) {
+          try {
+            await terminateProcessTree(child.pid);
+          } catch {
+            // Preserve the observed timeout even if process termination races with normal exit.
+          }
+        }
+
+        finalize({
+          exitCode: -1,
+          stdout,
+          stderr: [
+            stderr.trim(),
+            `Windows host operation matrix observation window expired after ${observationWindowMs} ms.`
+          ]
+            .filter(Boolean)
+            .join('\n')
+        });
+      })();
+    }, observationWindowMs);
+  });
 }
 
-async function observeWindowsBackgroundCommandCompletion(
-  launch: WindowsBackgroundCommandLaunch
-): Promise<{ completed: boolean; exitCode: number }> {
-  const deadline = Date.now() + WINDOWS_HOST_MATRIX_OBSERVATION_WINDOW_MS;
-  while (Date.now() < deadline) {
-    const stdout = await defaultExecWindowsPowershell(
-      [
-        `$wrapperPid = ${launch.wrapperPid}`,
-        `$exitCodePath = '${escapePowershellSingleQuotedString(launch.exitCodePath)}'`,
-        '$running = $null -ne (Get-Process -Id $wrapperPid -ErrorAction SilentlyContinue)',
-        '$exitCodeReady = Test-Path $exitCodePath',
-        '[ordered]@{ running = $running; exitCodeReady = $exitCodeReady } | ConvertTo-Json -Compress'
-      ].join('; ')
-    );
-    const status = JSON.parse(stdout.trim()) as { running?: boolean; exitCodeReady?: boolean };
-    if (status.exitCodeReady) {
-      const exitCodeText = await readWindowsTextFile(launch.exitCodePath);
-      const trimmed = exitCodeText.trim();
-      return {
-        completed: true,
-        exitCode: trimmed ? Number(trimmed) : 0
-      };
-    }
-
-    if (!status.running) {
-      break;
-    }
-
-    await sleep(WINDOWS_HOST_MATRIX_OBSERVATION_POLL_INTERVAL_MS);
-  }
-
-  return {
-    completed: false,
-    exitCode: -1
-  };
-}
-
-async function readWindowsTextFile(filePath: string): Promise<string> {
-  const stdout = await defaultExecWindowsPowershell(
+async function terminateWindowsProcessTree(pid: number): Promise<void> {
+  await defaultExecWindowsPowershell(
     [
-      `$path = '${escapePowershellSingleQuotedString(filePath)}'`,
-      'if (-not (Test-Path $path)) { "" } else {',
-      '  $bytes = [System.IO.File]::ReadAllBytes($path)',
-      '  if ($bytes.Length -ge 2 -and $bytes[0] -eq 255 -and $bytes[1] -eq 254) {',
-      '    [System.Text.Encoding]::Unicode.GetString($bytes, 2, $bytes.Length - 2)',
-      '  } elseif ($bytes.Length -ge 3 -and $bytes[0] -eq 239 -and $bytes[1] -eq 187 -and $bytes[2] -eq 191) {',
-      '    [System.Text.Encoding]::UTF8.GetString($bytes, 3, $bytes.Length - 3)',
-      '  } else {',
-      '    [System.Text.Encoding]::UTF8.GetString($bytes)',
-      '  }',
-      '}'
+      `$targetPid = ${pid}`,
+      'if ($null -ne (Get-Process -Id $targetPid -ErrorAction SilentlyContinue)) {',
+      '  cmd.exe /c "taskkill /PID $targetPid /T /F >NUL 2>NUL" | Out-Null',
+      '}',
+      'exit 0'
     ].join('; ')
   );
-  return stdout;
-}
-
-async function sleep(milliseconds: number): Promise<void> {
-  await new Promise((resolve) => {
-    setTimeout(resolve, milliseconds);
-  });
 }
 
 function renderWindowsHostOperationMatrixMarkdown(report: WindowsHostOperationMatrixReport): string {
@@ -688,8 +776,8 @@ function renderWindowsHostOperationMatrixMarkdown(report: WindowsHostOperationMa
     `Missing required installed operations: ${report.missingInstalledOperations.join(', ') || 'none'}`,
     `Additional operations required: ${report.additionalOperationsRequired.join(', ') || 'none'}`,
     '',
-    '| Operation | Bitness | Mode | Status | Detail |',
-    '| --- | --- | --- | --- | --- |'
+    '| Operation | Bitness | Session State | Mode | Status | Detail |',
+    '| --- | --- | --- | --- | --- | --- |'
   ];
 
   for (const result of report.results) {
@@ -699,7 +787,7 @@ function renderWindowsHostOperationMatrixMarkdown(report: WindowsHostOperationMa
       (result.postRunCleanupApplied ? 'post-run cleanup applied' : '') ||
       'ok';
     lines.push(
-      `| ${result.operation} | ${result.bitness} | ${result.executionMode} | ${result.status} | ${detail} |`
+      `| ${result.operation} | ${result.bitness} | ${result.sessionState} | ${result.executionMode} | ${result.status} | ${detail} |`
     );
   }
 
@@ -707,3 +795,19 @@ function renderWindowsHostOperationMatrixMarkdown(report: WindowsHostOperationMa
 }
 
 maybeRunWindowsHostOperationMatrixCliAsMain();
+
+function isExpectedWarmHeadlessPreparationSurface(
+  observation: WindowsHostRuntimeSurfaceSnapshot,
+  labviewExePath: string
+): boolean {
+  return (
+    observation.processes.length > 0 &&
+    observation.processes.every(
+      (process) => process.processName === 'LabVIEW' && normalizeWindowsPath(process.path) === normalizeWindowsPath(labviewExePath)
+    )
+  );
+}
+
+function normalizeWindowsPath(value: string | undefined): string | undefined {
+  return value?.replaceAll('/', '\\').trim().toLowerCase();
+}
