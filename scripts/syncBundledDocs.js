@@ -101,7 +101,40 @@ const bundledPageConfigs = {
         '- the generated NI comparison report when one exists',
         '- a compact runtime summary with provider and next action',
         '',
+        'Pair-row behavior after generation is explicit:',
+        '',
+        '- use `Generate compare` when a row has a base revision but no retained pair evidence yet',
+        '- after retained evidence exists for that same row, `Open compare` opens the retained pair report and `Refresh compare` reruns it',
+        '- if a row still shows `Generate compare`, that pair does not yet have retained evidence to open',
+        '- the oldest row has no base revision, so compare actions remain unavailable there by design',
+        '',
         'If you cancel before the comparison view opens, the action stays cancelled instead of opening a late result.'
+      ].join('\n'),
+      'Primary Review Flow': [
+        '1. Right-click an eligible VI and choose `VI History`.',
+        '2. Review the history panel facts:',
+        '   - repository name',
+        '   - relative path',
+        '   - VI signature',
+        '   - retained commit chronology',
+        '3. Use the row actions that match the current evidence state.',
+        '',
+        'The current action model is:',
+        '',
+        '- `Open at commit`: open the selected retained revision',
+        '- `Copy hash`: copy the retained commit hash',
+        '- `Open docs`: open the bundled user documentation that ships with the installed extension version',
+        '- `Generate compare`: create retained pair comparison evidence for a row that has a base revision but no retained pair evidence yet',
+        '- `Open compare`: open retained pair comparison evidence for that row when it already exists',
+        '- `Refresh compare`: rerun comparison generation for a row whose retained pair evidence already exists',
+        '- `Diff prev`: open retained comparison evidence for content-detected VIs when that evidence exists; otherwise the extension fails closed and directs the reviewer to `Generate compare`',
+        '',
+        'Practical row rule:',
+        '',
+        '- every row except the oldest revision has a base revision and can become compareable',
+        '- the first time through, start with `Generate compare` on the row you want to inspect',
+        '- after generation finishes for that row, the same row becomes a retained-review row with `Open compare` and `Refresh compare`',
+        '- the oldest retained revision has no base revision, so compare actions stay unavailable there by design'
       ].join('\n'),
       'Dashboard Flow': [
         'When a VI has at least three retained commits, the history panel exposes `Open dashboard`.',
@@ -110,7 +143,9 @@ const bundledPageConfigs = {
         '',
         '- reuses retained pair evidence when the current commit window is already covered',
         '- generates only the missing or stale pairs when more evidence is needed',
-        '- concentrates the review window into one dashboard before you drill into individual pairs with `Open compare`'
+        '- concentrates the review window into one dashboard before you drill into individual pairs with `Open compare`',
+        '',
+        'After `Open dashboard` completes, return to the history rows and use `Open compare` on any pair row that now has retained evidence. If a row still only shows `Generate compare`, that pair still needs retained evidence first.'
       ].join('\n'),
       'Trust, Progress, And Cancellation': [
         'The workflow is trust-gated and progress-aware.',
@@ -159,6 +194,15 @@ const bundledPageConfigs = {
         '- blocked or failure reason when present',
         '- one bounded next action'
       ].join('\n'),
+      'Retained Pair Review': [
+        'At the history-panel level, pair review is intentionally stateful.',
+        '',
+        '- use `Generate compare` for the first pass on a row that has a base revision but no retained pair evidence yet',
+        '- when that same row has retained evidence, `Open compare` opens it and `Refresh compare` reruns it',
+        '- if a row still shows `Generate compare`, that pair is not yet ready to open',
+        '- the oldest retained revision has no base revision, so pair-compare actions remain unavailable there by design',
+        '- `Diff prev` uses retained comparison evidence for governed VI review instead of falling back to VS Code text diff on binary VI content'
+      ].join('\n'),
       'Dashboard Review': [
         'The multi-report dashboard is the concentration surface for one VI across at least three commits.',
         '',
@@ -166,7 +210,9 @@ const bundledPageConfigs = {
         '',
         '- concentrates retained comparison metadata across the commit window',
         '- reuses retained evidence before generating new pairs when the window is already covered',
-        '- keeps the underlying pair evidence available when you want to drill down with `Open compare`'
+        '- keeps the underlying pair evidence available when you want to drill down with `Open compare`',
+        '',
+        'If the dashboard generated or reused missing pair evidence, return to the matching history-panel rows: rows with retained pair evidence can expose `Open compare`, while rows that still only show `Generate compare` still need pair evidence first.'
       ].join('\n'),
       'Progress, Cancellation, And Trust': [
         'Report and dashboard work are long-running enough that the extension treats them as explicit progress surfaces.',

@@ -21,14 +21,12 @@
 <h2>Retained Pair Review</h2>
 <p>At the history-panel level, pair review is intentionally stateful.</p>
 <ul>
-<li><code>Generate compare</code> creates retained pair evidence when it does not exist yet</li>
-<li><code>Refresh compare</code> reruns pair evidence generation for an already retained pair</li>
-<li><code>Open compare</code> opens retained pair evidence when it already exists</li>
-<li><code>Diff prev</code> uses retained comparison evidence for governed VI review instead
-of falling back to VS Code’s unsupported text diff on binary VI content</li>
+<li>use <code>Generate compare</code> for the first pass on a row that has a base revision but no retained pair evidence yet</li>
+<li>when that same row has retained evidence, <code>Open compare</code> opens it and <code>Refresh compare</code> reruns it</li>
+<li>if a row still shows <code>Generate compare</code>, that pair is not yet ready to open</li>
+<li>the oldest retained revision has no base revision, so pair-compare actions remain unavailable there by design</li>
+<li><code>Diff prev</code> uses retained comparison evidence for governed VI review instead of falling back to VS Code text diff on binary VI content</li>
 </ul>
-<p>If retained pair evidence is missing, the extension fails closed and directs the
-reviewer to generate that evidence first.</p>
 <h2>Dashboard Review</h2>
 <p>The multi-report dashboard is the concentration surface for one VI across at least three commits.</p>
 <p>The dashboard currently:</p>
@@ -37,6 +35,7 @@ reviewer to generate that evidence first.</p>
 <li>reuses retained evidence before generating new pairs when the window is already covered</li>
 <li>keeps the underlying pair evidence available when you want to drill down with <code>Open compare</code></li>
 </ul>
+<p>If the dashboard generated or reused missing pair evidence, return to the matching history-panel rows: rows with retained pair evidence can expose <code>Open compare</code>, while rows that still only show <code>Generate compare</code> still need pair evidence first.</p>
 <h2>Progress, Cancellation, And Trust</h2>
 <p>Report and dashboard work are long-running enough that the extension treats them as explicit progress surfaces.</p>
 <p>Current behavior includes:</p>

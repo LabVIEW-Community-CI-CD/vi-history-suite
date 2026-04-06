@@ -182,22 +182,24 @@ describe('post-release control-plane coherence', () => {
       '- Gate D remains open pending a clean manual right-click acceptance pass by Sergio Velderrain on the current Windows 11 host machine'
     );
     expect(currentState).toContain(
-      '- the latest retained host review at `2026-04-06T06:18:09.177Z` is `failed-human-review` with `confidence=high`'
+      '- the latest retained host review at `2026-04-06T06:58:46.822Z` is `failed-human-review` with `confidence=high`'
     );
-    expect(currentState).toContain('`Tooling/deployment/VIP_Post-Install Custom Action.vi`');
+    expect(currentState).toContain('`Tooling/deployment/VIP_Post-Uninstall Custom Action.vi`');
     expect(currentState).toContain(
-      '`Open compare under the Actions column is not enabled after the Open dashboard has completed.`'
+      '`Documentation is highly mediocre, it mentions nothing about the open compare buttons on the pairs, as well as many other misses you had.`'
     );
     expect(currentState).toContain('the Gate D blocker set is cumulative');
     expect(currentState).toContain('`2026-04-06T06:09:14.016Z` adds dashboard/review UX debt');
     expect(currentState).toContain('private GitLab links');
     expect(currentState).toContain('SRS and RTM are trade-secret');
     expect(currentState).toContain('`2026-04-06T06:18:09.177Z` adds that the history Actions column still failed to enable `Open compare`');
+    expect(currentState).toContain('`2026-04-06T06:58:46.822Z` adds that the concise installed-user guide still failed to explain pair-level `Open compare` buttons');
     expect(currentState).toContain('repo-side fix for that latest `Open dashboard` -> `Open compare` stale-action seam');
     expect(currentState).toContain('repo-side fixes for the remaining additive blocker set before the next rerun');
     expect(currentState).toContain('overview images are grouped into caption rows with `Block Diagram Overview` before `Front Panel Overview`');
     expect(currentState).toContain('unsubmitted Review Note draft state persists across tab switches until a successful submission clears it');
     expect(currentState).toContain('bundled installed-user docs are now a concise curated extension-user guide that strips private GitLab plus SRS/RTM authority-link exposure');
+    expect(currentState).toContain('explicitly explains pair-row `Generate compare` / `Open compare` / `Refresh compare` transitions');
     expect(currentState).toContain('Gate D now remains open only on the next manual rerun of the updated installed bundle');
     expect(currentState).toContain(
       '- the manual right-click review pass remains the human UX gate, and Sergio Velderrain is the sole named maintainer gate owner for that host-machine click pass'
@@ -225,7 +227,9 @@ describe('post-release control-plane coherence', () => {
     expect(program).toContain('blocker package: the stale Actions-column seam');
     expect(program).toContain('two-row overview-image');
     expect(program).toContain('Review Note draft persistence across tab switches');
+    expect(program).toContain('concise');
     expect(program).toContain('curated installed-user documentation bundle');
+    expect(program).toContain('pair-row');
     expect(program).toContain('Gate D therefore remains open only on a fresh installed-bundle rerun');
 
     expect(issue).toContain('- the host-machine automated acceptance lane now succeeds with a retained');
@@ -238,6 +242,8 @@ describe('post-release control-plane coherence', () => {
     expect(issue).toContain('SRS and RTM');
     expect(issue).toContain('`"Open compare"`');
     expect(issue).toContain('after `Open dashboard` completes');
+    expect(issue).toContain('highly mediocre');
+    expect(issue).toContain('does not explain the `Open compare` buttons on the');
     expect(issue).toContain('repo-side retirement for the remaining');
     expect(issue).toContain('additive blocker set: overview images are grouped');
     expect(issue).toContain('Block Diagram Overview');
@@ -245,6 +251,7 @@ describe('post-release control-plane coherence', () => {
     expect(issue).toContain('Note draft state persists across tab switches until successful submission');
     expect(issue).toContain('concise curated extension-user');
     expect(issue).toContain('guide that omits private GitLab plus SRS/RTM authority-link exposure');
+    expect(issue).toContain('pair-row compare-button transitions');
     expect(issue).toContain('remains open only until a fresh manual rerun');
     expect(issue).toContain('updated installed bundle proves that the installed product matches those');
     expect(issue).toContain('- the GitHub workflow is documented as the active public release-kit');

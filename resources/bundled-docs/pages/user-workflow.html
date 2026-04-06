@@ -42,15 +42,18 @@ detection and have at least two modifying commits.</p>
 <ul>
 <li><code>Open at commit</code>: open the selected retained revision</li>
 <li><code>Copy hash</code>: copy the retained commit hash</li>
-<li><code>Open docs</code>: open the bundled user documentation that ships with the
-installed extension version</li>
-<li><code>Generate compare</code>: create retained pair comparison evidence when it does not
-already exist</li>
-<li><code>Refresh compare</code>: rerun comparison generation for a retained pair</li>
-<li><code>Open compare</code>: open retained pair comparison evidence when it already exists</li>
-<li><code>Diff prev</code>: open retained pair comparison evidence for content-detected VIs
-when that evidence exists; otherwise the extension fails closed and directs
-the reviewer to <code>Generate compare</code></li>
+<li><code>Open docs</code>: open the bundled user documentation that ships with the installed extension version</li>
+<li><code>Generate compare</code>: create retained pair comparison evidence for a row that has a base revision but no retained pair evidence yet</li>
+<li><code>Open compare</code>: open retained pair comparison evidence for that row when it already exists</li>
+<li><code>Refresh compare</code>: rerun comparison generation for a row whose retained pair evidence already exists</li>
+<li><code>Diff prev</code>: open retained comparison evidence for content-detected VIs when that evidence exists; otherwise the extension fails closed and directs the reviewer to <code>Generate compare</code></li>
+</ul>
+<p>Practical row rule:</p>
+<ul>
+<li>every row except the oldest revision has a base revision and can become compareable</li>
+<li>the first time through, start with <code>Generate compare</code> on the row you want to inspect</li>
+<li>after generation finishes for that row, the same row becomes a retained-review row with <code>Open compare</code> and <code>Refresh compare</code></li>
+<li>the oldest retained revision has no base revision, so compare actions stay unavailable there by design</li>
 </ul>
 <h2>Comparison Report Flow</h2>
 <p>Comparison-report generation and opening are treated as review actions inside the extension, not ad hoc shell commands.</p>
@@ -61,6 +64,13 @@ the reviewer to <code>Generate compare</code></li>
 <li>the generated NI comparison report when one exists</li>
 <li>a compact runtime summary with provider and next action</li>
 </ul>
+<p>Pair-row behavior after generation is explicit:</p>
+<ul>
+<li>use <code>Generate compare</code> when a row has a base revision but no retained pair evidence yet</li>
+<li>after retained evidence exists for that same row, <code>Open compare</code> opens the retained pair report and <code>Refresh compare</code> reruns it</li>
+<li>if a row still shows <code>Generate compare</code>, that pair does not yet have retained evidence to open</li>
+<li>the oldest row has no base revision, so compare actions remain unavailable there by design</li>
+</ul>
 <p>If you cancel before the comparison view opens, the action stays cancelled instead of opening a late result.</p>
 <h2>Dashboard Flow</h2>
 <p>When a VI has at least three retained commits, the history panel exposes <code>Open dashboard</code>.</p>
@@ -70,6 +80,7 @@ the reviewer to <code>Generate compare</code></li>
 <li>generates only the missing or stale pairs when more evidence is needed</li>
 <li>concentrates the review window into one dashboard before you drill into individual pairs with <code>Open compare</code></li>
 </ul>
+<p>After <code>Open dashboard</code> completes, return to the history rows and use <code>Open compare</code> on any pair row that now has retained evidence. If a row still only shows <code>Generate compare</code>, that pair still needs retained evidence first.</p>
 <h2>Decision Record Flow</h2>
 <p>When a retained review window has at least three commits, the history panel also
 exposes <code>Create decision record</code>.</p>

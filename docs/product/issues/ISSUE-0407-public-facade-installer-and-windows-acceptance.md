@@ -56,19 +56,19 @@ Current landed scaffold state:
   the sole named maintainer gate owner for that host-machine click pass
 - that remaining manual host-machine gate is bounded to the deterministic
   local fixture workspace rather than a OneDrive-backed synced clone
-- the latest retained host review at `2026-04-06T06:18:09.177Z` is
+- the latest retained host review at `2026-04-06T06:58:46.822Z` is
   `failed-human-review` with `confidence=high`, because the newest retained
-  note on the updated installed bundle now says `Open compare` is still not
-  enabled in the history Actions column after `Open dashboard` completed for
-  `Tooling/deployment/VIP_Post-Install Custom Action.vi`
-- the retained failed-review set is cumulative historical evidence on that
-  same canonical VI:
+  note on the updated installed bundle now says the installed documentation is
+  still highly mediocre and does not explain the `Open compare` buttons on the
+  pairs clearly enough for `Tooling/deployment/VIP_Post-Uninstall Custom Action.vi`
+- the retained failed-review set is cumulative historical evidence:
   `2026-04-06T06:09:14.016Z` recorded dashboard/review UX debt (`"Open compare"`
   for every pair, two-row overview image layout, and Review Note persistence),
   `2026-04-06T06:10:46.758Z` recorded private GitLab links in extension-user
   documentation, `2026-04-06T06:11:59.791Z` recorded that SRS and RTM should
-  not be exposed to extension users, and `2026-04-06T06:13:09.879Z` recorded
-  broader documentation coherence debt
+  not be exposed to extension users, `2026-04-06T06:13:09.879Z` recorded
+  broader documentation coherence debt, and `2026-04-06T06:18:09.177Z`
+  recorded that `Open compare` still failed to enable after `Open dashboard`
 - the authority repo now carries a repo-side fix for the governed
   retained-window seam: `Open dashboard` seeds governed retained dashboard
   evidence from governed proof caches into the active workspace archive
@@ -82,7 +82,9 @@ Current landed scaffold state:
   `Block Diagram Overview` before `Front Panel Overview`, unsubmitted Review
   Note draft state persists across tab switches until successful submission,
   and the bundled installed-user docs are now a concise curated extension-user
-  guide that omits private GitLab plus SRS/RTM authority-link exposure
+  guide that omits private GitLab plus SRS/RTM authority-link exposure while
+  explicitly explaining pair-row compare-button transitions, dashboard
+  drill-down into pair rows, and the oldest-row no-base rule
 - this issue therefore remains open only until a fresh manual rerun on the
   updated installed bundle proves that the installed product matches those
   repo-side retirements

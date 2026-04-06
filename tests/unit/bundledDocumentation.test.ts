@@ -58,6 +58,11 @@ describe('bundled documentation', () => {
     expect(loaded?.pageBodyHtml).not.toContain('VI Server');
     expect(loaded?.pageBodyHtml).not.toContain('Software Requirements Specification');
     expect(loaded?.pageBodyHtml).not.toContain('Current State');
+    expect(loaded?.pageBodyHtml).toContain('every row except the oldest revision has a base revision and can become compareable');
+    expect(loaded?.pageBodyHtml).toContain('the first time through, start with <code>Generate compare</code> on the row you want to inspect');
+    expect(loaded?.pageBodyHtml).toContain('the same row becomes a retained-review row with <code>Open compare</code> and <code>Refresh compare</code>');
+    expect(loaded?.pageBodyHtml).toContain('the oldest retained revision has no base revision, so compare actions stay unavailable there by design');
+    expect(loaded?.pageBodyHtml).toContain('If a row still only shows <code>Generate compare</code>, that pair still needs retained evidence first.');
 
     const rendered = renderBundledDocumentationPanelHtml({
       extensionVersion: '0.2.0',
@@ -85,6 +90,8 @@ describe('bundled documentation', () => {
     expect(comparisonLoaded?.pageBodyHtml).not.toContain('Proof Surfaces');
     expect(comparisonLoaded?.pageBodyHtml).not.toContain('pair-129');
     expect(comparisonLoaded?.pageBodyHtml).not.toContain('HARNESS-VHS');
+    expect(comparisonLoaded?.pageBodyHtml).toContain('rows with retained pair evidence can expose <code>Open compare</code>');
+    expect(comparisonLoaded?.pageBodyHtml).toContain('rows that still only show <code>Generate compare</code> still need pair evidence first');
 
     const decisionLoaded = await loadBundledDocumentationPage(
       extensionUri as never,
