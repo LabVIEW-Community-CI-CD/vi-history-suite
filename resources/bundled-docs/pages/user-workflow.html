@@ -162,8 +162,14 @@ cancellation.</p>
 <p>The dashboard is the concentrated review surface for one VI across adjacent
 retained pairs. The current governed dashboard flow:</p>
 <ul>
+<li>checks governed retained dashboard evidence first on supported repo-family
+review surfaces</li>
+<li>seeds matching retained adjacent-pair evidence into the active workspace
+archive contract when governed proof caches already carry the same chronology
+window</li>
 <li>prepares the commit window</li>
-<li>backfills missing or stale adjacent-pair evidence when needed</li>
+<li>backfills missing or stale adjacent-pair evidence only when the retained set
+still lacks the needed adjacent pairs</li>
 <li>concentrates retained NI comparison-report metadata across the window</li>
 <li>finalizes retained dashboard assets</li>
 <li>opens the dashboard view</li>

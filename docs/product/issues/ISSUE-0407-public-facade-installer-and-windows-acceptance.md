@@ -61,6 +61,11 @@ Current landed scaffold state:
   stalled on `Preparing dashboard pair 1/138: Still working; first pair
   calibrates ETA; elapsed 0m 31s. Last step: Executing LabVIEW
   comparison-report runtime.`
+- the authority repo now carries a repo-side fix for that seam: `Open
+  dashboard` seeds governed retained dashboard evidence from governed proof
+  caches into the active workspace archive contract before any local pair
+  refresh, so the next Gate D action is a rerun on the updated installed
+  bundle rather than more unguided diagnosis
 - the authority repo still mirrors a GitHub Linux benchmark lane into the
   private `vi-history-suite-source-experiments` repo, but that mirror is now
   documented as benchmark only and belongs to the queued benchmark-proof lane

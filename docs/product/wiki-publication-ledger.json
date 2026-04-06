@@ -40,7 +40,7 @@
       "wikiFileName": "User-Workflow.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "4bdb01b",
+      "wikiCommit": "7060ff0",
       "primaryAuthority": [
         "docs/requirements/srs.md",
         "docs/product/extension-execution-policy.md",
@@ -55,8 +55,8 @@
       "wikiPath": "Comparison-Reports-And-Dashboard-Review",
       "wikiFileName": "Comparison-Reports-And-Dashboard-Review.md",
       "status": "published",
-      "publishedDate": "2026-04-06",
-      "wikiCommit": "7506f74",
+      "publishedDate": "2026-04-05",
+      "wikiCommit": "7060ff0",
       "primaryAuthority": [
         "docs/requirements/srs.md",
         "docs/product/ni-comparison-report-metadata-inventory.md",
@@ -166,7 +166,7 @@
       "wikiFileName": "Current-State.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "0b5b84e",
+      "wikiCommit": "7060ff0",
       "primaryAuthority": [
         "docs/product/current-state.md",
         "docs/product/post-release-sustainment-rules.md",
@@ -235,7 +235,7 @@
       "wikiFileName": "Requirements-And-Verification.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "0fdb25d",
+      "wikiCommit": "7060ff0",
       "primaryAuthority": [
         "docs/requirements/srs.md",
         "docs/requirements/rtm.csv",

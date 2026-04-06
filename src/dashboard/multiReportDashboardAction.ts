@@ -27,6 +27,11 @@ import {
   MultiReportDashboardPreparationSummary,
   renderMultiReportDashboardHtml
 } from './multiReportDashboard';
+import {
+  seedRetainedDashboardEvidence,
+  SeedRetainedDashboardEvidenceDeps,
+  SeedRetainedDashboardEvidenceResult
+} from './retainedDashboardEvidence';
 import { getFileHistoryCount } from '../git/gitCli';
 import { ComparisonReportActionResult } from '../reporting/comparisonReportAction';
 import { readComparisonRuntimeSettings } from '../reporting/comparisonReportAction';
@@ -77,6 +82,10 @@ export interface MultiReportDashboardActionDeps {
     cancellationToken?: vscode.CancellationToken;
   }) => Promise<ComparisonReportActionResult>;
   readArchivedComparisonReportSourceRecord?: typeof readArchivedComparisonReportSourceRecordFromSelection;
+  seedRetainedDashboardEvidence?: (
+    storageRoot: string,
+    model: ViHistoryViewModel
+  ) => Promise<SeedRetainedDashboardEvidenceResult>;
   pathExists?: (targetPath: string) => Promise<boolean>;
   readFile?: typeof fs.readFile;
   writeFile?: typeof fs.writeFile;
@@ -133,6 +142,14 @@ export function createMultiReportDashboardAction(
     }
 
     const buildDashboard = deps.buildDashboard ?? buildAndPersistMultiReportDashboard;
+    const seedRetainedDashboardEvidenceAction =
+      deps.seedRetainedDashboardEvidence ??
+      ((storageRoot: string, model: ViHistoryViewModel) =>
+        seedRetainedDashboardEvidence(storageRoot, model, {
+          readFile,
+          writeFile,
+          pathExists
+        } satisfies SeedRetainedDashboardEvidenceDeps));
     const ensureComparisonReportEvidence = deps.ensureComparisonReportEvidence;
     const pathExists = deps.pathExists ?? defaultPathExists;
     const readFile = deps.readFile ?? fs.readFile;
@@ -153,6 +170,7 @@ export function createMultiReportDashboardAction(
     const runtimeSettings =
       deps.getRuntimeSettings?.() ?? safeReadComparisonRuntimeSettings();
     const modelHistoryWindow = request.model.historyWindow;
+    const shouldAttemptRetainedSeed = Boolean(request.model.repositorySupport?.familyId);
     let totalCommitCount: number | undefined = modelHistoryWindow?.totalCommitCount;
     const fileHistoryCountProbe = deps.getFileHistoryCount;
     if (totalCommitCount === undefined && fileHistoryCountProbe) {
@@ -164,6 +182,45 @@ export function createMultiReportDashboardAction(
       } catch {
         totalCommitCount = undefined;
       }
+    }
+    let seededEvidence: SeedRetainedDashboardEvidenceResult = {
+      importedPairCount: 0,
+      importedGeneratedPairCount: 0,
+      importedFailedPairCount: 0,
+      importedBlockedPairCount: 0,
+      candidateCount: 0
+    };
+    if (shouldAttemptRetainedSeed) {
+      await reportProgress({
+        message: 'Checking governed retained dashboard evidence.'
+      });
+      seededEvidence = await seedRetainedDashboardEvidenceAction(
+        storageUri.fsPath,
+        request.model
+      );
+    }
+    if (seededEvidence.importedPairCount > 0) {
+      const seededOutcomeParts: string[] = [];
+      if (seededEvidence.importedGeneratedPairCount > 0) {
+        seededOutcomeParts.push(
+          `${seededEvidence.importedGeneratedPairCount} generated`
+        );
+      }
+      if (seededEvidence.importedFailedPairCount > 0) {
+        seededOutcomeParts.push(
+          `${seededEvidence.importedFailedPairCount} failed`
+        );
+      }
+      if (seededEvidence.importedBlockedPairCount > 0) {
+        seededOutcomeParts.push(
+          `${seededEvidence.importedBlockedPairCount} blocked`
+        );
+      }
+      await reportProgress({
+        message:
+          `Seeded ${seededEvidence.importedPairCount} dashboard pair(s) from governed retained evidence` +
+          `${seededOutcomeParts.length > 0 ? ` (${seededOutcomeParts.join(', ')})` : ''}.`
+      });
     }
     const pairEvidenceScanStartMs = now();
     const pairsNeedingEvidence = await collectDashboardPairsNeedingEvidence(
@@ -180,8 +237,12 @@ export function createMultiReportDashboardAction(
       DEFAULT_DASHBOARD_PAIR_CONCENTRATION_INCREMENT_TOTAL;
     let etaAccuracyRecord: MultiReportDashboardEtaAccuracyRecord | undefined;
     let preparationSummary: MultiReportDashboardPreparationSummary = {
-      mode: 'retained-evidence-complete',
+      mode:
+        seededEvidence.importedPairCount > 0
+          ? 'seeded-retained-before-build'
+          : 'retained-evidence-complete',
       pairsNeedingEvidenceCount: pairsNeedingEvidence.length,
+      seededImportedPairCount: seededEvidence.importedPairCount,
       preparedPairCount: 0,
       preparedGeneratedReportCount: 0,
       preparedBlockedPairCount: 0,
@@ -189,7 +250,19 @@ export function createMultiReportDashboardAction(
       preparedNoGeneratedReportCount: 0,
       preparedMissingRetainedArchiveCount: 0
     };
-    if (pairsNeedingEvidence.length === 0) {
+    if (seededEvidence.importedPairCount > 0) {
+      if (pairsNeedingEvidence.length === 0) {
+        await reportProgress({
+          message:
+            'Concentrating governed retained dashboard evidence only; no local pair refresh is needed.'
+        });
+      } else {
+        await reportProgress({
+          message:
+            `Concentrating governed retained dashboard evidence only; ${pairsNeedingEvidence.length} pair(s) remain missing in the retained set and will stay explicit in the dashboard.`
+        });
+      }
+    } else if (pairsNeedingEvidence.length === 0) {
       await reportProgress({
         message:
           'All adjacent retained pairs already have retained comparison evidence. Concentrating retained dashboard metadata only.'
@@ -214,7 +287,11 @@ export function createMultiReportDashboardAction(
       });
     }
     const evidencePreparationStartMs = now();
-    if (pairsNeedingEvidence.length > 0 && ensureComparisonReportEvidence) {
+    if (
+      seededEvidence.importedPairCount === 0 &&
+      pairsNeedingEvidence.length > 0 &&
+      ensureComparisonReportEvidence
+    ) {
       preparationSummary = {
         mode: 'backfilled-before-build',
         pairsNeedingEvidenceCount: pairsNeedingEvidence.length,

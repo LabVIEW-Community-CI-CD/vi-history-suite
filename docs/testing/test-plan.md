@@ -1361,10 +1361,18 @@
   refresh on host-native Windows and emits periodic keepalive progress with
   elapsed time plus the latest retained pair step while a refresh remains
   in flight
+- `TEST-UNIT-307`: verify `Open dashboard` can seed matching governed retained
+  pair evidence from governed proof manifests into the active workspace archive
+  contract and then concentrate that retained set without launching local pair
+  refresh
 - `TEST-DOC-074`: review current-state, SRS, and RTM and confirm the
   dashboard contract now states that host-native Windows pair refresh is
   explicitly headless and that long-running pair refresh emits keepalive
   progress instead of looking stalled at the current pair boundary
+- `TEST-DOC-075`: review current-state, PROGRAM-0002, ISSUE-0407, SRS, and
+  RTM and confirm the host-review dashboard contract now says governed retained
+  dashboard evidence is seeded before any local refresh, while Gate D remains
+  open until the updated installed bundle is rerun by Sergio Velderrain
 - `TEST-DOC-070`: review current-state, harnesses, PROGRAM-0003, ISSUE-0408,
   and the comparable-prefix packet and confirm the repo documents the current
   Windows pair-129 ceiling as an accepted current-contract exception backed by

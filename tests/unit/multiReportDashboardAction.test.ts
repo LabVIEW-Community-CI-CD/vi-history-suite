@@ -139,6 +139,173 @@ describe('multiReportDashboardAction', () => {
     });
   });
 
+  it('concentrates seeded retained evidence without launching local pair refresh', async () => {
+    const ensureComparisonReportEvidence = vi.fn();
+    const buildDashboard = vi.fn().mockResolvedValue({
+      record: {
+        generatedAt: '2026-04-06T04:20:00.000Z',
+        repositoryName: 'ni-labview-icon-editor',
+        repositoryRoot: 'C:\\dev\\ni-labview-icon-editor',
+        relativePath: 'resource/plugins/lv_icon.vi',
+        signature: 'LVIN',
+        artifactPlan: {
+          repoId: 'repoid123456',
+          fileId: 'fileid123456',
+          windowId: 'windowid12345',
+          dashboardDirectory: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345',
+          jsonFilePath:
+            '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.json',
+          htmlFilePath:
+            '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.html',
+          assetsDirectory:
+            '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/assets'
+        },
+        commitWindow: {
+          commitCount: 139,
+          pairCount: 138,
+          newestHash: 'abcdef1234567890',
+          oldestHash: '3333333344444444'
+        },
+        summary: {
+          representedPairCount: 138,
+          windowCompletenessState: 'incomplete-missing-archives',
+          archivedPairCount: 135,
+          missingPairCount: 3,
+          missingPairIds: ['pair-136', 'pair-137', 'pair-138'],
+          generatedReportCount: 134,
+          reportMetadataPairCount: 134,
+          failedPairCount: 1,
+          failedPairIds: ['pair-135'],
+          blockedPairCount: 0,
+          blockedPairIds: [],
+          overviewSectionCount: 0,
+          overviewImageCount: 536,
+          includedAttributeCount: 0,
+          detailSectionCount: 0,
+          detailItemCount: 2142,
+          pairWithOverviewImageCount: 0,
+          pairWithDetailCount: 0,
+          providerSummaries: [
+            {
+              label: 'host-native / labview-cli / auto / linux',
+              pairCount: 135
+            }
+          ],
+          overviewCaptionSummaries: [],
+          includedAttributeSummaries: [],
+          detailHeadingSummaries: [],
+          evidenceStateSummaries: []
+        },
+        entries: []
+      },
+      jsonFilePath:
+        '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.json',
+      htmlFilePath:
+        '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.html'
+    });
+    const seedRetainedEvidence = vi.fn().mockResolvedValue({
+      importedPairCount: 135,
+      importedGeneratedPairCount: 134,
+      importedFailedPairCount: 1,
+      importedBlockedPairCount: 0,
+      candidateCount: 1
+    });
+    const pathExists = vi.fn(async (targetPath: string) =>
+      targetPath.endsWith('dashboard.json') ||
+      targetPath.endsWith('dashboard.html') ||
+      targetPath.endsWith('report-history/repo/file/pairs/pair-1/source-record.json')
+    );
+    const writeFile = vi.fn().mockResolvedValue(undefined);
+    const progressUpdates: Array<{ message: string; increment?: number }> = [];
+    const action = createMultiReportDashboardAction(
+      {
+        storageUri: createMockUri('/workspace/.storage')
+      } as never,
+      {
+        seedRetainedDashboardEvidence: seedRetainedEvidence,
+        ensureComparisonReportEvidence,
+        buildDashboard,
+        pathExists,
+        writeFile
+      }
+    );
+
+    await expect(
+      action({
+        model: {
+          repositoryName: 'ni-labview-icon-editor',
+          repositoryRoot: 'C:\\dev\\ni-labview-icon-editor',
+          repositoryUrl: 'https://github.com/ni/labview-icon-editor.git',
+          relativePath: 'resource/plugins/lv_icon.vi',
+          signature: 'LVIN',
+          eligible: true,
+          commits: [
+            {
+              hash: 'abcdef1234567890',
+              authorDate: '2026-04-06T00:00:00Z',
+              authorName: 'A User',
+              subject: 'Newest revision',
+              previousHash: '1111111122222222'
+            },
+            {
+              hash: '1111111122222222',
+              authorDate: '2026-04-05T00:00:00Z',
+              authorName: 'B User',
+              subject: 'Middle revision',
+              previousHash: '3333333344444444'
+            },
+            {
+              hash: '3333333344444444',
+              authorDate: '2026-04-04T00:00:00Z',
+              authorName: 'C User',
+              subject: 'Initial revision'
+            }
+          ],
+          repositorySupport: {
+            repositoryUrl: 'https://github.com/ni/labview-icon-editor.git',
+            normalizedRepositoryUrl: 'https://github.com/ni/labview-icon-editor.git',
+            tier: 'governed-upstream',
+            familyId: 'labview-icon-editor',
+            familyDisplayName: 'NI LabVIEW Icon Editor',
+            supportLabel: 'Governed upstream: NI LabVIEW Icon Editor',
+            supportGuidance: 'Guided.',
+            allowCoreReviewActions: true,
+            allowDecisionRecordActions: true,
+            allowBenchmarkStatus: true,
+            allowHumanReviewSubmission: true
+          }
+        },
+        reportProgress: async (update) => {
+          progressUpdates.push(update);
+        }
+      })
+    ).resolves.toMatchObject({
+      outcome: 'opened-review-dashboard',
+      dashboardArchivedPairCount: 135,
+      dashboardMissingPairCount: 3
+    });
+
+    expect(seedRetainedEvidence).toHaveBeenCalledWith(
+      '/workspace/.storage',
+      expect.objectContaining({
+        repositoryRoot: 'C:\\dev\\ni-labview-icon-editor',
+        relativePath: 'resource/plugins/lv_icon.vi'
+      })
+    );
+    expect(ensureComparisonReportEvidence).not.toHaveBeenCalled();
+    expect(progressUpdates.some((update) => update.message.includes('Seeded 135 dashboard pair(s)'))).toBe(true);
+    expect(
+      progressUpdates.some((update) =>
+        update.message.includes('Concentrating governed retained dashboard evidence only')
+      )
+    ).toBe(true);
+    expect(writeFile).toHaveBeenCalledWith(
+      '/workspace/.storage/dashboards/latest-dashboard-run.json',
+      expect.stringContaining('"mode": "seeded-retained-before-build"'),
+      'utf8'
+    );
+  });
+
   it('fails closed when dashboard generation is requested from an untrusted workspace', async () => {
     workspaceState.isTrusted = false;
     const buildDashboard = vi.fn();

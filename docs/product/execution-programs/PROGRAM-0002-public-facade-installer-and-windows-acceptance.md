@@ -249,6 +249,12 @@ Current first slice:
   stalled on `Preparing dashboard pair 1/138: Still working; first pair
   calibrates ETA; elapsed 0m 31s. Last step: Executing LabVIEW
   comparison-report runtime.`
+- a repo-side fix for that seam is landed and locally validated before Gate D
+  can be re-run: `Open dashboard` now checks governed retained dashboard
+  evidence first, seeds matching archived pairs from governed proof caches into
+  the active workspace archive contract, and concentrates that retained window
+  without local pair refresh when the governed retained set already covers the
+  current chronology window
 
 ### Gate E: Public Support Surface
 
@@ -309,6 +315,10 @@ The public facade repo now retains:
   `c:\Users\sveld\AppData\Roaming\Code\User\workspaceStorage\f879cf82f4d59a4767f92a99a94e47f8\svelderrainruiz.vi-history-suite\human-reviews\latest-human-review-submission.json`,
   and its newest manual proof result is still a failed Gate D review because
   the dashboard stalled at pair `1/138`
+- the authority repo now also carries the repo-side dashboard fix for that
+  seam: governed retained dashboard evidence is seeded into the active
+  workspace archive contract before any local pair refresh is attempted, and a
+  clean Gate D rerun on the updated installed bundle is the next required proof
 
 The program still intentionally holds these gates open:
 

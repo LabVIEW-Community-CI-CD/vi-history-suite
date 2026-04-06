@@ -194,9 +194,11 @@ export interface BuildMultiReportDashboardResult {
 export interface MultiReportDashboardPreparationSummary {
   mode:
     | 'retained-evidence-complete'
+    | 'seeded-retained-before-build'
     | 'backfilled-before-build'
     | 'backfill-unavailable';
   pairsNeedingEvidenceCount: number;
+  seededImportedPairCount?: number;
   preparedPairCount: number;
   preparedGeneratedReportCount: number;
   preparedBlockedPairCount: number;
@@ -1380,6 +1382,17 @@ function renderPreparationSummary(
       summary.preparedNoGeneratedReportCount > 0 ||
       summary.preparedMissingRetainedArchiveCount > 0;
     return `${baseSummary} Refresh outcomes: ${outcomeParts.join(', ')}.${needsFollowUpGuidance ? ' Review the pair ledger or Open compare for runtime doctor details.' : ''}`;
+  }
+
+  if (summary.mode === 'seeded-retained-before-build') {
+    const seededCount = summary.seededImportedPairCount ?? 0;
+    const baseSummary =
+      `${seededCount} adjacent pair(s) were seeded from governed retained evidence before this dashboard was concentrated.`;
+    if (summary.pairsNeedingEvidenceCount <= 0) {
+      return `${baseSummary} No additional local pair refresh was needed from Open dashboard.`;
+    }
+
+    return `${baseSummary} ${summary.pairsNeedingEvidenceCount} adjacent pair(s) remain missing in the retained evidence set, and Open dashboard did not attempt a local pair refresh during this review.`;
   }
 
   return `${summary.pairsNeedingEvidenceCount} adjacent pair(s) still lacked retained comparison evidence, and this build could not refresh them from Open dashboard. This dashboard concentrates the currently retained archive set only.`;
