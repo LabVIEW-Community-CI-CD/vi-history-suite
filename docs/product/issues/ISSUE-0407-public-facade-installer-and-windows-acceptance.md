@@ -56,16 +56,17 @@ Current landed scaffold state:
   the sole named maintainer gate owner for that host-machine click pass
 - that remaining manual host-machine gate is bounded to the deterministic
   local fixture workspace rather than a OneDrive-backed synced clone
-- the latest retained host review at `2026-04-06T03:54:26.667Z` is
-  `failed-human-review` with `confidence=high`, because `Open Dashboard`
-  stalled on `Preparing dashboard pair 1/138: Still working; first pair
-  calibrates ETA; elapsed 0m 31s. Last step: Executing LabVIEW
-  comparison-report runtime.`
-- the authority repo now carries a repo-side fix for that seam: `Open
-  dashboard` seeds governed retained dashboard evidence from governed proof
-  caches into the active workspace archive contract before any local pair
-  refresh, so the next Gate D action is a rerun on the updated installed
-  bundle rather than more unguided diagnosis
+- the latest retained host review at `2026-04-06T04:46:38.532Z` is
+  `failed-human-review` with `confidence=high`, because `Open Dashboard` for
+  `Tooling/deployment/VIP_Post-Install Custom Action.vi` stalled on
+  `Preparing dashboard pair 1/23: Still working; first pair calibrates ETA;
+  elapsed 1m 46s. Last step: Executing LabVIEW comparison-report runtime.`
+- the authority repo now carries a repo-side fix for the governed
+  retained-window seam: `Open dashboard` seeds governed retained dashboard
+  evidence from governed proof caches into the active workspace archive
+  contract before any local pair refresh, but the current Gate D blocker is
+  now the broader host-native dashboard cold-start path on a canonical VI that
+  is not already covered by governed retained dashboard evidence
 - the authority repo still mirrors a GitHub Linux benchmark lane into the
   private `vi-history-suite-source-experiments` repo, but that mirror is now
   documented as benchmark only and belongs to the queued benchmark-proof lane

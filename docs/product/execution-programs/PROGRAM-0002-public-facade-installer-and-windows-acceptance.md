@@ -244,17 +244,17 @@ Current first slice:
 - the manual right-click proof runs from that same deterministic local fixture
   workspace instead of a OneDrive-backed synced root
 - first-use friction is retained as evidence, not just remembered in chat
-- the latest retained host review at `2026-04-06T03:54:26.667Z` is
+- the latest retained host review at `2026-04-06T04:46:38.532Z` is
   `failed-human-review` with `confidence=high`, recording that `Open Dashboard`
-  stalled on `Preparing dashboard pair 1/138: Still working; first pair
-  calibrates ETA; elapsed 0m 31s. Last step: Executing LabVIEW
-  comparison-report runtime.`
-- a repo-side fix for that seam is landed and locally validated before Gate D
-  can be re-run: `Open dashboard` now checks governed retained dashboard
-  evidence first, seeds matching archived pairs from governed proof caches into
-  the active workspace archive contract, and concentrates that retained window
-  without local pair refresh when the governed retained set already covers the
-  current chronology window
+  for `Tooling/deployment/VIP_Post-Install Custom Action.vi` stalled on
+  `Preparing dashboard pair 1/23: Still working; first pair calibrates ETA;
+  elapsed 1m 46s. Last step: Executing LabVIEW comparison-report runtime.`
+- the repo-side retained-evidence seeding fix is landed and locally validated,
+  but it only closes the front-facing seam when the governed chronology window
+  is already covered by governed retained dashboard evidence; Gate D remains
+  open because the broader host-native dashboard cold-start seam is still
+  reproducible on a different canonical VI whose current 24-commit / 23-pair
+  review window is not yet covered by retained dashboard proof
 
 ### Gate E: Public Support Surface
 
@@ -314,11 +314,13 @@ The public facade repo now retains:
 - the latest retained host-review artifact now exists at
   `c:\Users\sveld\AppData\Roaming\Code\User\workspaceStorage\f879cf82f4d59a4767f92a99a94e47f8\svelderrainruiz.vi-history-suite\human-reviews\latest-human-review-submission.json`,
   and its newest manual proof result is still a failed Gate D review because
-  the dashboard stalled at pair `1/138`
-- the authority repo now also carries the repo-side dashboard fix for that
-  seam: governed retained dashboard evidence is seeded into the active
-  workspace archive contract before any local pair refresh is attempted, and a
-  clean Gate D rerun on the updated installed bundle is the next required proof
+  `Open Dashboard` for `Tooling/deployment/VIP_Post-Install Custom Action.vi`
+  stalled at pair `1/23`
+- the authority repo now also carries the repo-side dashboard fix for the
+  governed retained-window seam: governed retained dashboard evidence is seeded
+  into the active workspace archive contract before any local pair refresh is
+  attempted, but the next required proof is now broader host-native dashboard
+  diagnosis on the updated installed bundle rather than another blind rerun
 
 The program still intentionally holds these gates open:
 

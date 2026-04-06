@@ -103,12 +103,13 @@ boundary</li>
 from the deterministic local fixture workspace rather than a OneDrive-backed
 synced clone</li>
 <li>the latest retained Gate D review still failed on April 6, 2026 because
-<code>Open Dashboard</code> appeared stalled at pair <code>1/138</code></li>
-<li>the repo-side fix is now landed: on governed repo-family review surfaces,
-<code>Open dashboard</code> first seeds matching retained dashboard evidence from
-governed proof caches into the active workspace archive contract and only
-falls back to local pair refresh when the retained set still lacks the
-current chronology window</li>
+<code>Open Dashboard</code> for <code>Tooling/deployment/VIP_Post-Install Custom Action.vi</code>
+appeared stalled at pair <code>1/23</code></li>
+<li>the repo-side retained-evidence seeding fix is now landed for governed
+chronology windows that already exist in governed proof caches, but the
+broader host-native dashboard cold-start path still needs retirement on
+canonical VI windows that are not already covered by retained dashboard
+evidence</li>
 <li>benchmark proof is now a closed bounded program, not part of the active
 public-closeout exit gate</li>
 <li>execution-policy work is now closed on transparent provider/acquisition
