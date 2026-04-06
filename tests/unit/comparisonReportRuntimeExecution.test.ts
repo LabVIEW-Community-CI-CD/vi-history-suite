@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { ExecFileException } from 'node:child_process';
 import { EventEmitter } from 'node:events';
 import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
@@ -268,6 +269,45 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(result.record.runtimeExecution.failureReason).toBe('command-exited-nonzero');
     expect(result.record.runtimeExecution.exitCode).toBe(2);
     expect(result.record.runtimeExecution.reportExists).toBe(true);
+  });
+
+  it('retains a command-cancelled failure when runtime execution is cancelled before completion', async () => {
+    const result = await executeComparisonReport(
+      {
+        record: createReadyRecord(),
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        readFile: vi.fn().mockRejectedValue(new Error('missing-ini')) as never,
+        pathExists: vi.fn().mockResolvedValue(false),
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 130,
+          signal: 'SIGKILL',
+          stdout: '',
+          stderr: 'comparison-command cancelled by user\n',
+          cancelled: true
+        }),
+        nowIso: vi.fn().mockReturnValue('2026-04-02T01:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValueOnce(1000).mockReturnValueOnce(1003),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32',
+        enforceWindowsHostPreflight: false
+      }
+    );
+
+    expect(result.record.runtimeExecutionState).toBe('failed');
+    expect(result.record.runtimeExecution.failureReason).toBe('command-cancelled');
+    expect(result.record.runtimeExecution.signal).toBe('SIGKILL');
+    expect(result.record.runtimeExecution.reportExists).toBe(false);
+    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+      'Comparison-report runtime was cancelled before completion.'
+    );
   });
 
   it('fails closed before launch when the canonical Windows host already has LabVIEW runtime processes open', async () => {
@@ -2529,9 +2569,14 @@ describe('comparisonReportRuntimeExecution', () => {
       stdout: 'raw',
       stderr: ''
     });
-    expect(runComparisonCommandPlanImpl).toHaveBeenCalledWith(commandPlan, {
-      timeoutMs: undefined
-    });
+    expect(runComparisonCommandPlanImpl).toHaveBeenCalledWith(
+      commandPlan,
+      expect.objectContaining({
+        hostPlatform: 'linux',
+        timeoutMs: undefined,
+        cancellationToken: undefined
+      })
+    );
     expect(runComparisonCommandPlanWithObservationImpl).not.toHaveBeenCalled();
 
     const observedRunCommand = buildDefaultRunCommand({
@@ -2548,13 +2593,17 @@ describe('comparisonReportRuntimeExecution', () => {
       stdout: 'observed',
       stderr: ''
     });
-    expect(runComparisonCommandPlanWithObservationImpl).toHaveBeenCalledWith(commandPlan, {
-      hostPlatform: 'linux',
-      runtimePlatform: 'win32',
-      observeWindowsProcesses,
-      engine: 'labview-cli',
-      timeoutMs: undefined
-    });
+    expect(runComparisonCommandPlanWithObservationImpl).toHaveBeenCalledWith(
+      commandPlan,
+      expect.objectContaining({
+        hostPlatform: 'linux',
+        runtimePlatform: 'win32',
+        observeWindowsProcesses,
+        engine: 'labview-cli',
+        timeoutMs: undefined,
+        cancellationToken: undefined
+      })
+    );
   });
 
   it('retains separate host and normalized Windows temp roots for windows-container execution context', async () => {
@@ -3703,6 +3752,153 @@ describe('comparisonReportRuntimeExecution', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('returns a cancelled observed command result and terminates the Windows process tree when cancellation is requested', async () => {
+    const cancellationListeners: Array<() => void> = [];
+    const cancellationToken = {
+      isCancellationRequested: false,
+      onCancellationRequested: (listener: () => void) => {
+        cancellationListeners.push(listener);
+        return {
+          dispose: () => undefined
+        };
+      }
+    };
+    const terminateProcessTree = vi.fn().mockResolvedValue(undefined);
+    const spawnImpl = vi.fn(() => {
+      const child = new EventEmitter() as EventEmitter & {
+        pid: number;
+        stdout: EventEmitter & { setEncoding: (encoding: string) => void };
+        stderr: EventEmitter & { setEncoding: (encoding: string) => void };
+        kill: (signal?: string) => boolean;
+      };
+      child.pid = 44152;
+      child.stdout = Object.assign(new EventEmitter(), {
+        setEncoding: (_encoding: string) => undefined
+      });
+      child.stderr = Object.assign(new EventEmitter(), {
+        setEncoding: (_encoding: string) => undefined
+      });
+      child.kill = vi.fn((signal?: string) => {
+        queueMicrotask(() => {
+          child.emit('close', null, signal ?? 'SIGKILL');
+        });
+        return true;
+      });
+      return child as never;
+    });
+
+    const promise = runComparisonCommandPlanWithObservation(
+      {
+        executable: 'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+        args: ['-OperationName', 'CreateComparisonReport']
+      },
+      {
+        spawnImpl: spawnImpl as never,
+        hostPlatform: 'win32',
+        runtimePlatform: 'win32',
+        engine: 'labview-cli',
+        cancellationToken: cancellationToken as never,
+        terminateProcessTree
+      }
+    );
+
+    cancellationListeners[0]?.();
+
+    await expect(promise).resolves.toMatchObject({
+      exitCode: 130,
+      signal: 'SIGKILL',
+      cancelled: true
+    });
+    expect(terminateProcessTree).toHaveBeenCalledWith(44152, 'win32');
+  });
+
+  it('returns a cancelled raw command result and terminates the Windows process tree when cancellation is requested', async () => {
+    const cancellationListeners: Array<() => void> = [];
+    const cancellationToken = {
+      isCancellationRequested: false,
+      onCancellationRequested: (listener: () => void) => {
+        cancellationListeners.push(listener);
+        return {
+          dispose: () => undefined
+        };
+      }
+    };
+    const terminateProcessTree = vi.fn().mockResolvedValue(undefined);
+    let callback:
+      | ((
+          error: ExecFileException | null,
+          stdout?: string | Buffer,
+          stderr?: string | Buffer
+        ) => void)
+      | undefined;
+    const child = new EventEmitter() as EventEmitter & {
+      pid: number;
+      kill: (signal?: string) => boolean;
+    };
+    child.pid = 55231;
+    child.kill = vi.fn((signal?: string) => {
+      queueMicrotask(() => {
+        callback?.(
+          Object.assign(new Error('cancelled'), {
+            killed: true,
+            signal: signal ?? 'SIGKILL',
+            stdout: '',
+            stderr: '',
+            code: null
+          }) as ExecFileException,
+          '',
+          ''
+        );
+      });
+      return true;
+    });
+    const execFileImpl = vi.fn(
+      (
+        _file: string,
+        _args: readonly string[] | undefined,
+        _options:
+          | ({
+              encoding?: BufferEncoding | 'buffer';
+              maxBuffer?: number;
+              windowsHide?: boolean;
+              timeout?: number;
+              killSignal?: string;
+            } & Record<string, unknown>)
+          | undefined,
+        handler: (
+          error: ExecFileException | null,
+          stdout?: string | Buffer,
+          stderr?: string | Buffer
+        ) => void
+      ) => {
+        callback = handler;
+        return child as never;
+      }
+    );
+
+    const promise = runComparisonCommandPlan(
+      {
+        executable: 'docker',
+        args: ['run', '--rm', 'nationalinstruments/labview:2026q1-windows']
+      },
+      {
+        execFileImpl: execFileImpl as never,
+        hostPlatform: 'win32',
+        cancellationToken: cancellationToken as never,
+        terminateProcessTree
+      }
+    );
+
+    cancellationListeners[0]?.();
+
+    await expect(promise).resolves.toMatchObject({
+      exitCode: 130,
+      signal: 'SIGKILL',
+      cancelled: true
+    });
+    expect(terminateProcessTree).toHaveBeenCalledWith(55231, 'win32');
   });
 
   it('fails with a container-command-build reason when a Windows container run has no supported PowerShell host', async () => {

@@ -16,6 +16,7 @@ export interface ExecuteComparisonReportOptions {
   record: ComparisonReportPacketRecord;
   repositoryRoot: string;
   interopWorkspaceRoot?: string;
+  cancellationToken?: ComparisonRuntimeCancellationToken;
 }
 
 export interface ExecuteComparisonReportResult {
@@ -51,12 +52,22 @@ export interface ComparisonReportRuntimeExecutionDeps {
   commandTimeoutMs?: number;
 }
 
+export interface ComparisonRuntimeCancellationToken {
+  isCancellationRequested: boolean;
+  onCancellationRequested?: (
+    listener: () => unknown,
+    thisArgs?: unknown,
+    disposables?: { dispose(): unknown }[]
+  ) => { dispose(): unknown } | undefined;
+}
+
 export interface BuildDefaultRunCommandOptions {
   provider: 'host-native' | 'windows-container' | undefined;
   processPlatform: NodeJS.Platform;
   runtimePlatform: ComparisonReportPacketRecord['runtimeSelection']['platform'];
   engine: ComparisonReportPacketRecord['runtimeSelection']['engine'];
   timeoutMs?: number;
+  cancellationToken?: ComparisonRuntimeCancellationToken;
   observeWindowsProcesses?: (
     options: ObserveWindowsProcessesOptions
   ) => Promise<RuntimeProcessObservation | undefined>;
@@ -70,6 +81,7 @@ export interface RunCommandResult {
   stdout: string;
   stderr: string;
   timedOut?: boolean;
+  cancelled?: boolean;
   timeoutMs?: number;
   processObservation?: RuntimeProcessObservation;
   exitProcessObservation?: RuntimeProcessObservation;
@@ -78,6 +90,9 @@ export interface RunCommandResult {
 export interface RunComparisonCommandPlanDeps {
   execFileImpl?: typeof execFile;
   timeoutMs?: number;
+  hostPlatform?: NodeJS.Platform;
+  cancellationToken?: ComparisonRuntimeCancellationToken;
+  terminateProcessTree?: (pid: number, hostPlatform: NodeJS.Platform) => Promise<void>;
 }
 
 export interface RuntimeObservedProcess {
@@ -149,6 +164,8 @@ export interface RunComparisonCommandPlanWithObservationDeps {
   runtimePlatform?: string;
   engine?: 'labview-cli' | 'lvcompare';
   timeoutMs?: number;
+  cancellationToken?: ComparisonRuntimeCancellationToken;
+  terminateProcessTree?: (pid: number, hostPlatform: NodeJS.Platform) => Promise<void>;
 }
 
 export async function executeComparisonReport(
@@ -178,7 +195,8 @@ export async function executeComparisonReport(
       runtimePlatform: options.record.runtimeSelection.platform,
       observeWindowsProcesses,
       engine: options.record.runtimeSelection.engine,
-      timeoutMs: deps.commandTimeoutMs
+      timeoutMs: deps.commandTimeoutMs,
+      cancellationToken: options.cancellationToken
     });
   const nowIso = deps.nowIso ?? defaultNowIso;
   const nowMs = deps.nowMs ?? defaultNowMs;
@@ -259,15 +277,51 @@ export function buildDefaultRunCommand(
   return (commandPlan: ComparisonCommandPlan) =>
     options.provider === 'windows-container'
       ? runWithoutObservation(commandPlan, {
-          timeoutMs: options.timeoutMs
+          timeoutMs: options.timeoutMs,
+          hostPlatform: options.processPlatform,
+          cancellationToken: options.cancellationToken
         })
       : runWithObservation(commandPlan, {
           hostPlatform: options.processPlatform,
           runtimePlatform: options.runtimePlatform,
           observeWindowsProcesses,
           engine: options.engine,
-          timeoutMs: options.timeoutMs
+          timeoutMs: options.timeoutMs,
+          cancellationToken: options.cancellationToken
         });
+}
+
+function subscribeToCancellation(
+  cancellationToken: ComparisonRuntimeCancellationToken | undefined,
+  listener: () => void
+): () => void {
+  if (!cancellationToken?.onCancellationRequested) {
+    return () => undefined;
+  }
+
+  const disposable = cancellationToken.onCancellationRequested(listener);
+  return () => {
+    disposable?.dispose?.();
+  };
+}
+
+async function terminateWindowsProcessTree(
+  pid: number,
+  _hostPlatform?: NodeJS.Platform
+): Promise<void> {
+  await new Promise<void>((resolve) => {
+    execFile('taskkill', ['/PID', String(pid), '/T', '/F'], { windowsHide: true }, () => {
+      resolve();
+    });
+  });
+}
+
+function appendCancellationMessage(stderr: string): string {
+  if (/comparison-command cancelled by user/iu.test(stderr)) {
+    return stderr;
+  }
+
+  return `${stderr}comparison-command cancelled by user\n`;
 }
 
 async function runHostNativeExecution(
@@ -459,8 +513,17 @@ async function runHostNativeExecution(
         }
       );
       const reportExists = finalizedReport.reportExists;
-      const succeeded = !commandResult.timedOut && commandResult.exitCode === 0 && reportExists;
-      const failureClassification = commandResult.timedOut
+      const succeeded =
+        !commandResult.timedOut &&
+        !commandResult.cancelled &&
+        commandResult.exitCode === 0 &&
+        reportExists;
+      const failureClassification = commandResult.cancelled
+        ? {
+            reason: 'command-cancelled',
+            notes: ['Comparison-report runtime was cancelled before completion.']
+          }
+        : commandResult.timedOut
         ? {
             reason: 'command-timed-out',
             notes: [
@@ -2688,6 +2751,7 @@ export function runComparisonCommandPlanWithObservation(
   deps: RunComparisonCommandPlanWithObservationDeps = {}
 ): Promise<RunCommandResult> {
   return new Promise((resolve, reject) => {
+    const hostPlatform = deps.hostPlatform ?? process.platform;
     const child = (deps.spawnImpl ?? spawn)(commandPlan.executable, commandPlan.args, {
       windowsHide: true,
       shell: false
@@ -2701,22 +2765,51 @@ export function runComparisonCommandPlanWithObservation(
     let observationError: unknown;
     let observationStarted = false;
     let timedOut = false;
+    let cancelled = false;
+    let terminationRequested = false;
     const timeoutMs =
       typeof deps.timeoutMs === 'number' && deps.timeoutMs > 0
         ? deps.timeoutMs
         : undefined;
+    const requestTermination = (reason: 'timeout' | 'cancelled') => {
+      if (terminationRequested) {
+        return;
+      }
+
+      terminationRequested = true;
+      if (reason === 'cancelled') {
+        cancelled = true;
+        stderr = appendCancellationMessage(stderr);
+      } else {
+        timedOut = true;
+        stderr += `comparison-command timed out after ${String(timeoutMs)}ms\n`;
+      }
+
+      if (hostPlatform === 'win32' && typeof child.pid === 'number' && child.pid > 0) {
+        void (deps.terminateProcessTree ?? terminateWindowsProcessTree)(child.pid, hostPlatform).catch(
+          () => undefined
+        );
+      }
+      try {
+        child.kill('SIGKILL');
+      } catch {
+        // Preserve fail-closed timeout and cancellation behavior even if the local kill throws.
+      }
+    };
+    const disposeCancellationSubscription = subscribeToCancellation(
+      deps.cancellationToken,
+      () => requestTermination('cancelled')
+    );
     const timeoutHandle =
       timeoutMs === undefined
         ? undefined
         : setTimeout(() => {
-            timedOut = true;
-            stderr += `comparison-command timed out after ${String(timeoutMs)}ms\n`;
-            try {
-              child.kill('SIGKILL');
-            } catch {
-              // Preserve fail-closed timeout behavior even if the local kill call throws.
-            }
+            requestTermination('timeout');
           }, timeoutMs);
+
+    if (deps.cancellationToken?.isCancellationRequested) {
+      requestTermination('cancelled');
+    }
 
     const startObservation = (trigger: RuntimeProcessObservation['trigger']) => {
       if (observationStarted) {
@@ -2765,12 +2858,14 @@ export function runComparisonCommandPlanWithObservation(
       if (timeoutHandle) {
         clearTimeout(timeoutHandle);
       }
+      disposeCancellationSubscription();
       reject(error);
     });
     child.on('close', async (exitCode, signal) => {
       if (timeoutHandle) {
         clearTimeout(timeoutHandle);
       }
+      disposeCancellationSubscription();
 
       if (observationPromise) {
         await observationPromise;
@@ -2801,17 +2896,25 @@ export function runComparisonCommandPlanWithObservation(
         return;
       }
 
-      if (!timedOut && typeof exitCode !== 'number') {
+      if (!timedOut && !cancelled && typeof exitCode !== 'number') {
         reject(new Error('comparison-command-closed-without-exit-code'));
         return;
       }
 
       resolve({
-        exitCode: typeof exitCode === 'number' ? exitCode : 124,
+        exitCode:
+          typeof exitCode === 'number'
+            ? exitCode
+            : timedOut
+              ? 124
+              : cancelled
+                ? 130
+                : 124,
         signal: signal ?? undefined,
         stdout,
         stderr,
         timedOut,
+        cancelled,
         timeoutMs,
         processObservation,
         exitProcessObservation
@@ -2832,7 +2935,11 @@ export function runComparisonCommandPlan(
   deps: RunComparisonCommandPlanDeps = {}
 ): Promise<RunCommandResult> {
   return new Promise((resolve, reject) => {
-    (deps.execFileImpl ?? execFile)(
+    const hostPlatform = deps.hostPlatform ?? process.platform;
+    let cancelled = false;
+    let terminationRequested = false;
+    let disposeCancellationSubscription: () => void = () => undefined;
+    const child = (deps.execFileImpl ?? execFile)(
       commandPlan.executable,
       commandPlan.args,
       {
@@ -2843,7 +2950,18 @@ export function runComparisonCommandPlan(
         killSignal: 'SIGKILL'
       },
       (error, stdout, stderr) => {
+        disposeCancellationSubscription();
         if (!error) {
+          if (cancelled) {
+            resolve({
+              exitCode: 130,
+              signal: 'SIGKILL',
+              stdout: stdout ?? '',
+              stderr: appendCancellationMessage(stderr ?? ''),
+              cancelled: true
+            });
+            return;
+          }
           resolve({
             exitCode: 0,
             stdout: stdout ?? '',
@@ -2864,6 +2982,17 @@ export function runComparisonCommandPlan(
           Boolean(deps.timeoutMs) &&
           execError.killed === true &&
           (execError.signal === 'SIGKILL' || /timed out/i.test(execError.message ?? ''));
+
+        if (cancelled && !timedOut) {
+          resolve({
+            exitCode: 130,
+            signal: execError.signal ?? 'SIGKILL',
+            stdout: String(stdout ?? execError.stdout ?? ''),
+            stderr: appendCancellationMessage(String(stderr ?? execError.stderr ?? '')),
+            cancelled: true
+          });
+          return;
+        }
 
         if (timedOut) {
           resolve({
@@ -2891,6 +3020,28 @@ export function runComparisonCommandPlan(
         reject(error);
       }
     );
+    const requestTermination = () => {
+      if (terminationRequested) {
+        return;
+      }
+
+      terminationRequested = true;
+      cancelled = true;
+      if (hostPlatform === 'win32' && typeof child.pid === 'number' && child.pid > 0) {
+        void (deps.terminateProcessTree ?? terminateWindowsProcessTree)(child.pid, hostPlatform).catch(
+          () => undefined
+        );
+      }
+      try {
+        child.kill('SIGKILL');
+      } catch {
+        // Preserve fail-closed cancellation behavior even if the local kill throws.
+      }
+    };
+    disposeCancellationSubscription = subscribeToCancellation(deps.cancellationToken, requestTermination);
+    if (deps.cancellationToken?.isCancellationRequested) {
+      requestTermination();
+    }
   });
 }
 

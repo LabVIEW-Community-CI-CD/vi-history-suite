@@ -395,7 +395,8 @@ async function ensureComparisonReportEvidence(
     });
     packet = await (deps.executeComparisonReport ?? executeComparisonReport)({
       record: packet.record,
-      repositoryRoot: request.model.repositoryRoot
+      repositoryRoot: request.model.repositoryRoot,
+      cancellationToken: request.cancellationToken
     });
     if (request.cancellationToken?.isCancellationRequested) {
       return buildCancelledComparisonReportResult('after-runtime-execution', packet);
