@@ -69,6 +69,8 @@ export interface HarnessReportSmokeReport {
     | 'not-applicable';
   runtimeProvider?: ComparisonRuntimeSelection['provider'];
   runtimeEngine?: ComparisonRuntimeSelection['engine'];
+  executionSurfaceContext?: 'windows-benchmark-image' | 'unverified-execution-surface';
+  executionSurfaceMarkers?: string[];
   runtimeBlockedReason?: string;
   runtimeFailureReason?: string;
   runtimeDiagnosticReason?: string;
@@ -394,6 +396,13 @@ function buildHarnessReportSmokeReport(options: {
   generatedAt: string;
 }): HarnessReportSmokeReport {
   const record = options.packetRecord;
+  const executionSurface = deriveHarnessReportExecutionSurface({
+    cloneDirectory: options.cloneDirectory,
+    packetFilePath: options.packetFilePath,
+    reportFilePath: options.reportFilePath,
+    metadataFilePath: options.metadataFilePath,
+    runtimeDiagnosticLogSourcePath: record.runtimeExecution.diagnosticLogSourcePath
+  });
 
   return {
     harnessId: options.definition.id,
@@ -411,6 +420,9 @@ function buildHarnessReportSmokeReport(options: {
     runtimeExecutionState: record.runtimeExecutionState,
     runtimeProvider: record.runtimeSelection.provider,
     runtimeEngine: record.runtimeSelection.engine,
+    executionSurfaceContext: executionSurface.context,
+    executionSurfaceMarkers:
+      executionSurface.markers.length > 0 ? executionSurface.markers : undefined,
     runtimeBlockedReason:
       record.reportStatus === 'blocked-runtime'
         ? record.runtimeSelection.blockedReason
@@ -473,6 +485,8 @@ export function renderHarnessReportSmokeMarkdown(report: HarnessReportSmokeRepor
 - Runtime execution: ${report.runtimeExecutionState}
 - Runtime provider: ${report.runtimeProvider ?? 'none'}
 - Runtime engine: ${report.runtimeEngine ?? 'none'}
+- Execution surface context: ${report.executionSurfaceContext ?? 'none'}
+- Execution surface markers: ${report.executionSurfaceMarkers?.join(' | ') || 'none'}
 - Runtime blocked reason: ${report.runtimeBlockedReason ?? 'none'}
 - Runtime failure reason: ${report.runtimeFailureReason ?? 'none'}
 - Runtime diagnostic reason: ${report.runtimeDiagnosticReason ?? 'none'}
@@ -539,6 +553,12 @@ export function renderHarnessReportSmokeHtml(report: HarnessReportSmokeReport): 
       <div><strong>Runtime execution:</strong> ${escapeHtml(report.runtimeExecutionState)}</div>
       <div><strong>Runtime provider:</strong> ${escapeHtml(report.runtimeProvider ?? 'none')}</div>
       <div><strong>Runtime engine:</strong> ${escapeHtml(report.runtimeEngine ?? 'none')}</div>
+      <div><strong>Execution surface context:</strong> ${escapeHtml(
+        report.executionSurfaceContext ?? 'none'
+      )}</div>
+      <div><strong>Execution surface markers:</strong> ${escapeHtml(
+        report.executionSurfaceMarkers?.join(' | ') || 'none'
+      )}</div>
       <div><strong>Runtime blocked reason:</strong> ${escapeHtml(report.runtimeBlockedReason ?? 'none')}</div>
       <div><strong>Runtime failure reason:</strong> ${escapeHtml(report.runtimeFailureReason ?? 'none')}</div>
       <div><strong>Runtime diagnostic reason:</strong> ${escapeHtml(report.runtimeDiagnosticReason ?? 'none')}</div>
@@ -640,6 +660,60 @@ function renderOptionalYesNo(value: boolean | undefined): string {
   }
 
   return value ? 'yes' : 'no';
+}
+
+function deriveHarnessReportExecutionSurface(options: {
+  cloneDirectory: string;
+  packetFilePath?: string;
+  reportFilePath?: string;
+  metadataFilePath?: string;
+  runtimeDiagnosticLogSourcePath?: string;
+}): {
+  context?: 'windows-benchmark-image' | 'unverified-execution-surface';
+  markers: string[];
+} {
+  const markers: string[] = [];
+  if (isWindowsBenchmarkWorkspacePath(options.cloneDirectory)) {
+    markers.push('cloneDirectory');
+  }
+  if (isWindowsBenchmarkWorkspacePath(options.packetFilePath)) {
+    markers.push('packetFilePath');
+  }
+  if (isWindowsBenchmarkWorkspacePath(options.reportFilePath)) {
+    markers.push('reportFilePath');
+  }
+  if (isWindowsBenchmarkWorkspacePath(options.metadataFilePath)) {
+    markers.push('metadataFilePath');
+  }
+  if (isWindowsContainerUserPath(options.runtimeDiagnosticLogSourcePath)) {
+    markers.push('containerDiagnosticLogSourcePath');
+  }
+  if (markers.length === 0) {
+    return { markers: [] };
+  }
+  return {
+    context: markers.length >= 3 ? 'windows-benchmark-image' : 'unverified-execution-surface',
+    markers
+  };
+}
+
+function isWindowsBenchmarkWorkspacePath(candidatePath: string | undefined): boolean {
+  const normalized = normalizePortablePath(candidatePath);
+  return (
+    normalized.startsWith('c:/workspace/.cache/') || normalized.startsWith('c:/workspace/')
+  );
+}
+
+function isWindowsContainerUserPath(candidatePath: string | undefined): boolean {
+  const normalized = normalizePortablePath(candidatePath);
+  return (
+    normalized.startsWith('c:/users/containeradministrator/') ||
+    normalized.startsWith('c:/users/containeruser/')
+  );
+}
+
+function normalizePortablePath(candidatePath: string | undefined): string {
+  return typeof candidatePath === 'string' ? candidatePath.replaceAll('\\', '/').toLowerCase() : '';
 }
 
 function defaultNow(): string {

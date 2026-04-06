@@ -112,6 +112,10 @@ governed Windows benchmark-image surface through retained `C:\workspace\.cache`
 clone/artifact paths and, when available, `C:\Users\ContainerAdministrator\...`
 diagnostic-log sources, and records rejected latest reruns separately if they
 no longer prove that surface.
+Those retained `comparison-report-smoke` receipts now also persist
+`executionSurfaceContext` plus `executionSurfaceMarkers` when those retained
+markers prove that governed surface, so later packet refresh no longer depends
+only on path inference.
 The latest governed repo-local exact-pair rerun now retains that same
 Windows-image surface explicitly too: the authority repo `.cache`
 `comparison-report-smoke.json` now carries

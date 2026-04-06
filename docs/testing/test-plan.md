@@ -1224,11 +1224,12 @@
   rerun is documented as a bounded `120000ms` timeout, not as a comparable
   fallback or an open-ended hang
 - `TEST-DOC-053`: review current-state, harnesses, PROGRAM-0003, ISSUE-0408,
-  and the comparable-prefix packet and confirm the exact Windows blocker pair
-  `6dd65df -> 3408654` is documented as failing under both `labview-cli` and
-  `lvcompare`, with the packet retaining both exact-pair diagnosis receipts
-  only when their smoke reports still prove the Windows benchmark-image
-  execution surface through retained container-context markers such as
+  `comparison-report-smoke`, and the comparable-prefix packet and confirm the
+  exact Windows blocker pair `6dd65df -> 3408654` is documented as failing
+  under both `labview-cli` and `lvcompare`, with the packet retaining both
+  exact-pair diagnosis receipts only when their smoke reports still prove the
+  Windows benchmark-image execution surface through explicit
+  execution-surface context or retained container-context markers such as
   `C:\workspace\.cache` proof paths and, when available,
   `ContainerAdministrator` diagnostic-log sources
 - `TEST-DOC-054`: review current-state, PROGRAM-0003, and ISSUE-0408 and

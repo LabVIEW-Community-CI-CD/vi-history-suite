@@ -54,7 +54,7 @@
       "wikiFileName": "Comparison-Reports-And-Dashboard-Review.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "fc6e9c3",
+      "wikiCommit": "542b506",
       "primaryAuthority": [
         "docs/requirements/srs.md",
         "docs/product/ni-comparison-report-metadata-inventory.md",
@@ -164,7 +164,7 @@
       "wikiFileName": "Current-State.md",
       "status": "published",
       "publishedDate": "2026-04-05",
-      "wikiCommit": "fc6e9c3",
+      "wikiCommit": "542b506",
       "primaryAuthority": [
         "docs/product/current-state.md",
         "docs/product/extension-execution-policy.md",

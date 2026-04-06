@@ -779,6 +779,21 @@ function isEligibleWindowsExactPairDiagnosisReport(report) {
 }
 
 function deriveWindowsExactPairDiagnosisContext(report) {
+  const explicitContext = report?.executionSurfaceContext;
+  const explicitMarkers = Array.isArray(report?.executionSurfaceMarkers)
+    ? report.executionSurfaceMarkers.filter((marker) => typeof marker === 'string')
+    : [];
+  if (
+    (explicitContext === 'windows-benchmark-image' ||
+      explicitContext === 'unverified-execution-surface') &&
+    explicitMarkers.length > 0
+  ) {
+    return {
+      context: explicitContext,
+      markers: explicitMarkers
+    };
+  }
+
   const markers = [];
   if (isWindowsBenchmarkWorkspacePath(report?.cloneDirectory)) {
     markers.push('cloneDirectory');

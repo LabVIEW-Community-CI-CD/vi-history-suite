@@ -384,6 +384,18 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
     });
   });
 
+  it('prefers explicit execution-surface fields when retained on the smoke receipt', () => {
+    expect(
+      comparablePacket.deriveWindowsExactPairDiagnosisContext({
+        executionSurfaceContext: 'windows-benchmark-image',
+        executionSurfaceMarkers: ['cloneDirectory', 'packetFilePath']
+      })
+    ).toEqual({
+      context: 'windows-benchmark-image',
+      markers: ['cloneDirectory', 'packetFilePath']
+    });
+  });
+
   it('prefers the latest eligible exact-pair snapshot and retains a newer rejected rerun', async () => {
     const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-exact-pair-select-'));
     const proofRoot = path.join(tempRoot, '.cache', 'windows-benchmark-image-pair129-labviewcli');

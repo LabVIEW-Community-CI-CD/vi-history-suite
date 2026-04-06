@@ -76,6 +76,9 @@
     them by retained container-context markers such as `C:\workspace\.cache`
     clone/artifact paths and, when available, `ContainerAdministrator`
     diagnostic-log sources rather than by proof-root naming alone
+  - those retained `comparison-report-smoke` receipts now also persist
+    `executionSurfaceContext` plus `executionSurfaceMarkers` when those
+    retained markers prove the governed Windows benchmark-image surface
 - retained outputs:
   - `.cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.json`
   - `.cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.md`

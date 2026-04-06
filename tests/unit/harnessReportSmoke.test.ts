@@ -26,6 +26,14 @@ describe('harness report smoke renderers', () => {
     runtimeExecutionState: 'succeeded' as const,
     runtimeProvider: 'host-native' as const,
     runtimeEngine: 'labview-cli' as const,
+    executionSurfaceContext: 'windows-benchmark-image' as const,
+    executionSurfaceMarkers: [
+      'cloneDirectory',
+      'packetFilePath',
+      'reportFilePath',
+      'metadataFilePath',
+      'containerDiagnosticLogSourcePath'
+    ],
     runtimeBlockedReason: undefined,
     runtimeFailureReason: undefined,
     runtimeDiagnosticReason: 'labview-path-ignored-last-used-default',
@@ -68,6 +76,10 @@ describe('harness report smoke renderers', () => {
     expect(markdown).toContain('Harness Comparison Report Smoke');
     expect(markdown).toContain('Runtime execution: succeeded');
     expect(markdown).toContain('Runtime diagnostic reason: labview-path-ignored-last-used-default');
+    expect(markdown).toContain('Execution surface context: windows-benchmark-image');
+    expect(markdown).toContain(
+      'Execution surface markers: cloneDirectory | packetFilePath | reportFilePath | metadataFilePath | containerDiagnosticLogSourcePath'
+    );
     expect(markdown).toContain('Runtime diagnostic log source: C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log');
     expect(markdown).toContain('Runtime diagnostic log: /tmp/runtime-diagnostic-log.txt');
     expect(markdown).toContain(
@@ -107,6 +119,10 @@ describe('harness report smoke renderers', () => {
     expect(html).toContain('Harness Comparison Report Smoke');
     expect(html).toContain('labview-cli');
     expect(html).toContain('labview-path-ignored-last-used-default');
+    expect(html).toContain('Execution surface context:</strong> windows-benchmark-image');
+    expect(html).toContain(
+      'Execution surface markers:</strong> cloneDirectory | packetFilePath | reportFilePath | metadataFilePath | containerDiagnosticLogSourcePath'
+    );
     expect(html).toContain('Runtime diagnostic log source:</strong> C:\\Users\\sveld\\AppData\\Local\\Temp\\lvtemporary_123.log');
     expect(html).toContain('/tmp/runtime-diagnostic-log.txt');
     expect(html).toContain(
@@ -622,6 +638,116 @@ describe('runHarnessReportSmoke', () => {
     expect(writes.get(result.reportJsonPath)).toContain('"reportStatus": "ready-for-runtime"');
     expect(writes.get(result.reportMarkdownPath)).toContain('Runtime execution: succeeded');
     expect(writes.get(result.reportHtmlPath)).toContain('Harness Comparison Report Smoke');
+  });
+
+  it('retains explicit benchmark-image execution-surface markers when the smoke receipt proves container context', async () => {
+    const writes = new Map<string, string>();
+
+    const result = await runHarnessReportSmoke(
+      'HARNESS-VHS-001',
+      {
+        cloneRoot: 'C:\\workspace\\.cache\\harnesses',
+        reportRoot: 'C:\\workspace\\.cache\\harness-reports',
+        runtimePlatform: 'win32'
+      },
+      {
+        ensureHarnessClone: vi
+          .fn()
+          .mockResolvedValue('C:\\workspace\\.cache\\harnesses\\ni-labview-icon-editor') as never,
+        getRepoHead: vi.fn().mockResolvedValue('abcdef1234567890') as never,
+        loadViHistoryViewModelFromFsPath: vi.fn().mockResolvedValue({
+          repositoryName: 'ni-labview-icon-editor',
+          repositoryRoot: 'C:\\workspace\\.cache\\harnesses\\ni-labview-icon-editor',
+          relativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+          signature: 'LVIN',
+          eligible: true,
+          commits: [
+            {
+              hash: 'abcdef1234567890',
+              authorDate: '2026-04-02T00:00:00Z',
+              authorName: 'A User',
+              subject: 'Update VI',
+              previousHash: '1111111122222222'
+            }
+          ]
+        }) as never,
+        evaluateViEligibilityForFsPath: vi.fn().mockResolvedValue({
+          eligible: true,
+          signature: 'LVIN'
+        }) as never,
+        preflightComparisonReportRevisions: vi.fn().mockResolvedValue({
+          normalizedRelativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+          ready: true,
+          left: {
+            revisionId: '1111111122222222',
+            blobSpecifier: '1111111122222222:Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+            signature: 'LVIN',
+            isVi: true
+          },
+          right: {
+            revisionId: 'abcdef1234567890',
+            blobSpecifier: 'abcdef1234567890:Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+            signature: 'LVIN',
+            isVi: true
+          }
+        }) as never,
+        locateComparisonRuntime: vi.fn().mockResolvedValue({
+          platform: 'win32',
+          preferBitness: 'x86',
+          provider: 'host-native',
+          engine: 'labview-cli',
+          notes: [],
+          registryQueryPlans: [],
+          candidates: []
+        }) as never,
+        persistComparisonReportPacket: vi.fn().mockResolvedValue(
+          createPersistPacketResult({
+            reportStatus: 'ready-for-runtime',
+            runtimeExecutionState: 'not-run',
+            runtimeExecution: {
+              state: 'not-run',
+              attempted: false,
+              reportExists: false
+            }
+          })
+        ) as never,
+        executeComparisonReport: vi.fn().mockResolvedValue({
+          ...createPersistPacketResult({
+            reportStatus: 'ready-for-runtime',
+            runtimeExecutionState: 'failed',
+            runtimeExecution: {
+              state: 'failed',
+              attempted: true,
+              reportExists: false,
+              diagnosticLogSourcePath:
+                'C:\\Users\\ContainerAdministrator\\AppData\\Local\\Temp\\lvtemporary_69132.log'
+            }
+          }),
+          packetFilePath:
+            'C:\\workspace\\.cache\\harness-reports\\HARNESS-VHS-001\\workspace-storage\\reports\\repoid123456\\fileid123456\\report-packet.html',
+          reportFilePath:
+            'C:\\workspace\\.cache\\harness-reports\\HARNESS-VHS-001\\workspace-storage\\reports\\repoid123456\\fileid123456\\diff-report-VIP_Pre-Install Custom Action.vi.html',
+          metadataFilePath:
+            'C:\\workspace\\.cache\\harness-reports\\HARNESS-VHS-001\\workspace-storage\\reports\\repoid123456\\fileid123456\\report-metadata.json'
+        }) as never,
+        mkdir: vi.fn().mockResolvedValue(undefined) as never,
+        writeFile: vi.fn(async (filePath: string, contents: string) => {
+          writes.set(filePath, contents);
+        }) as never
+      }
+    );
+
+    expect(result.report.executionSurfaceContext).toBe('windows-benchmark-image');
+    expect(result.report.executionSurfaceMarkers).toEqual([
+      'cloneDirectory',
+      'packetFilePath',
+      'reportFilePath',
+      'metadataFilePath',
+      'containerDiagnosticLogSourcePath'
+    ]);
+    expect(writes.get(result.reportJsonPath)).toContain(
+      '"executionSurfaceContext": "windows-benchmark-image"'
+    );
   });
 
   it('targets an exact selected/base pair when requested', async () => {

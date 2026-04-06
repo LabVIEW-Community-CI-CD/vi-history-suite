@@ -93,6 +93,10 @@ Current retained benchmark truth before activation:
   when available, `C:\Users\ContainerAdministrator\...` diagnostic-log
   sources, and records rejected latest reruns separately if they no longer
   prove that surface
+- those same exact-pair `comparison-report-smoke` receipts now also retain
+  `executionSurfaceContext` plus `executionSurfaceMarkers` when those retained
+  markers prove the governed Windows benchmark-image surface, so later packet
+  refresh no longer depends only on path archaeology
 - a fresh governed repo-local exact-pair rerun now retains that same
   Windows-image surface explicitly: the authority repo `.cache`
   `comparison-report-smoke.json` now carries
