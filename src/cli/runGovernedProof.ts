@@ -22,6 +22,10 @@ import {
   HarnessDecisionRecordCliDeps,
   runHarnessDecisionRecordCli
 } from './runHarnessDecisionRecord';
+import {
+  runWindowsHostOperationMatrixCli,
+  WindowsHostOperationMatrixCliDeps
+} from './runWindowsHostOperationMatrix';
 
 export type GovernedProofSubcommand =
   | 'smoke'
@@ -29,7 +33,8 @@ export type GovernedProofSubcommand =
   | 'dashboard-smoke'
   | 'benchmark-linux'
   | 'benchmark-windows'
-  | 'decision-record';
+  | 'decision-record'
+  | 'host-operation-matrix';
 
 export interface GovernedProofCommand {
   subcommand: GovernedProofSubcommand;
@@ -43,6 +48,7 @@ export interface GovernedProofCliDeps {
   benchmarkLinuxDeps?: GitHubLinuxDashboardBenchmarkCliDeps;
   benchmarkWindowsDeps?: GitHubWindowsDashboardBenchmarkCliDeps;
   decisionRecordDeps?: HarnessDecisionRecordCliDeps;
+  hostOperationMatrixDeps?: WindowsHostOperationMatrixCliDeps;
   stdout?: { write(text: string): void };
 }
 
@@ -52,7 +58,8 @@ const SUBCOMMANDS: GovernedProofSubcommand[] = [
   'dashboard-smoke',
   'benchmark-linux',
   'benchmark-windows',
-  'decision-record'
+  'decision-record',
+  'host-operation-matrix'
 ];
 
 export function getGovernedProofUsage(): string {
@@ -66,6 +73,7 @@ export function getGovernedProofUsage(): string {
     '  benchmark-linux    Governed Linux dashboard benchmark lane.',
     '  benchmark-windows  Governed Windows dashboard benchmark lane.',
     '  decision-record    Retained harness decision record.',
+    '  host-operation-matrix Governed Windows LabVIEW 2026 host operation matrix.',
     '',
     'Canonical proof rules:',
     '  - one public proof entrypoint: runGovernedProof',
@@ -114,6 +122,8 @@ export async function runGovernedProofCli(
       return runGitHubWindowsDashboardBenchmarkCli(parsed.args, deps.benchmarkWindowsDeps);
     case 'decision-record':
       return runHarnessDecisionRecordCli(parsed.args, deps.decisionRecordDeps);
+    case 'host-operation-matrix':
+      return runWindowsHostOperationMatrixCli(parsed.args, deps.hostOperationMatrixDeps);
   }
 }
 

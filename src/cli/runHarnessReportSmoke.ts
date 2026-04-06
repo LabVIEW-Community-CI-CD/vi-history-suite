@@ -12,6 +12,9 @@ import {
   runHarnessReportSmoke
 } from '../harness/harnessReportSmoke';
 import { RuntimePlatform } from '../reporting/comparisonRuntimeLocator';
+import {
+  cleanupWindowsHostRuntimeSurface as cleanupWindowsHostRuntimeSurfaceShared
+} from './windowsHostRuntimeSurface';
 
 export interface HarnessReportSmokeCliArgs {
   harnessId: string;
@@ -41,6 +44,9 @@ export interface HarnessReportSmokeCliDeps {
   pathExists?: (candidatePath: string) => Promise<boolean>;
   hostPlatform?: NodeJS.Platform;
   stdout?: { write(text: string): void };
+  cleanupWindowsHostRuntimeSurface?: (
+    context: Pick<HarnessReportSmokeCliArgs, 'runtimePlatform' | 'executionMode'>
+  ) => Promise<void>;
 }
 
 export function getHarnessReportSmokeUsage(): string {
@@ -214,31 +220,55 @@ export async function runHarnessReportSmokeCli(
     hostPlatform: deps.hostPlatform ?? process.platform
   });
 
+  await maybeCleanupHarnessReportSmokeWindowsRuntimeSurface(args, deps);
+
   const repoRoot = deps.repoRoot ?? path.resolve(__dirname, '..', '..');
   const cloneRoot = path.resolve(repoRoot, '.cache', 'harnesses');
   const reportRoot = path.resolve(repoRoot, '.cache', 'harness-reports');
 
-  const result = await (deps.runner ?? runHarnessReportSmoke)(args.harnessId, {
-    cloneRoot,
-    reportRoot,
-    strictRsrcHeader: args.strictRsrcHeader,
-    selectedHash: args.selectedHash,
-    baseHash: args.baseHash,
-    runtimeExecutionTimeoutMs: args.runtimeExecutionTimeoutMs,
-    runtimePlatform: args.runtimePlatform,
-    runtimeSettings: {
-      executionMode: args.executionMode,
-      bitness: args.bitness,
-      labviewCliPath: args.labviewCliPath,
-      labviewExePath: args.labviewExePath
-    }
-  });
+  let result: Awaited<ReturnType<NonNullable<HarnessReportSmokeCliDeps['runner']>>>;
+  try {
+    result = await (deps.runner ?? runHarnessReportSmoke)(args.harnessId, {
+      cloneRoot,
+      reportRoot,
+      strictRsrcHeader: args.strictRsrcHeader,
+      selectedHash: args.selectedHash,
+      baseHash: args.baseHash,
+      runtimeExecutionTimeoutMs: args.runtimeExecutionTimeoutMs,
+      runtimePlatform: args.runtimePlatform,
+      runtimeSettings: {
+        executionMode: args.executionMode,
+        bitness: args.bitness,
+        labviewCliPath: args.labviewCliPath,
+        labviewExePath: args.labviewExePath
+      }
+    });
+  } finally {
+    await maybeCleanupHarnessReportSmokeWindowsRuntimeSurface(args, deps);
+  }
 
   for (const line of formatHarnessReportSmokeSuccess(result, args.harnessId)) {
     stdout.write(`${line}\n`);
   }
 
   return 'pass';
+}
+
+async function maybeCleanupHarnessReportSmokeWindowsRuntimeSurface(
+  args: Pick<HarnessReportSmokeCliArgs, 'runtimePlatform' | 'executionMode'>,
+  deps: HarnessReportSmokeCliDeps
+): Promise<void> {
+  if (args.runtimePlatform !== 'win32' || args.executionMode === 'docker-only') {
+    return;
+  }
+
+  await (deps.cleanupWindowsHostRuntimeSurface ?? cleanupWindowsHostRuntimeSurface)(args);
+}
+
+export async function cleanupWindowsHostRuntimeSurface(
+  _context: Pick<HarnessReportSmokeCliArgs, 'runtimePlatform' | 'executionMode'>
+): Promise<void> {
+  return cleanupWindowsHostRuntimeSurfaceShared();
 }
 
 export function formatHarnessReportSmokeSuccess(

@@ -352,13 +352,15 @@ describe('post-release control-plane coherence', () => {
     expect(currentState).toContain('runtimeLabviewTcpPort=3364');
     expect(currentState).toContain('`LabVIEW.ini`');
     expect(currentState).toContain('`LV_RTE_HEADLESS=1`');
-    expect(currentState).toContain('`-Headless true`');
+    expect(currentState).toContain('bare `-Headless`');
     expect(currentState).toContain('runtimeExecutionState=not-available');
     expect(currentState).toContain('immutable per-run `dashboard-smoke` artifacts');
     expect(currentState).toContain('latest eligible proof');
     expect(currentState).toContain('rejects non-canonical selected/base hash bundles');
     expect(currentState).toContain('windows-host-runtime-surface-contaminated');
     expect(currentState).toContain('only `C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe` exists locally');
+    expect(currentState).toContain('`runGovernedProof host-operation-matrix`');
+    expect(currentState).toContain('canonical x86 `LabVIEWCLI.exe` plus x64 `LabVIEW.exe` bundle is admitted');
     expect(currentState).toContain('latest-runtime-surface.json');
     expect(currentState).toContain('no coherent same-bitness `labview-cli` bundle');
     expect(currentState).toContain('out-of-scope alternative Windows x86 provisioning');
@@ -380,7 +382,7 @@ describe('post-release control-plane coherence', () => {
     expect(benchmarkProgram).toContain('runtimeLabviewTcpPort=3364');
     expect(benchmarkProgram).toContain('`-PortNumber 3364`');
     expect(benchmarkProgram).toContain('`LV_RTE_HEADLESS=1`');
-    expect(benchmarkProgram).toContain('`-Headless true`');
+    expect(benchmarkProgram).toContain('bare `-Headless`');
     expect(benchmarkProgram).toContain('`VHS-REQ-449`');
     expect(benchmarkProgram).toContain('`VHS-REQ-450`');
     expect(benchmarkProgram).toContain('`VHS-REQ-451`');
@@ -395,6 +397,9 @@ describe('post-release control-plane coherence', () => {
     expect(benchmarkProgram).toContain('rejects incomplete selected/base hash bundles');
     expect(benchmarkProgram).toContain('stale `LabVIEW.exe` / `LabVIEWCLI.exe` / `LVCompare.exe` sessions');
     expect(benchmarkProgram).toContain('only the x86 `LabVIEWCLI.exe` path exists locally');
+    expect(benchmarkProgram).toContain('`runGovernedProof');
+    expect(benchmarkProgram).toContain('host-operation-matrix');
+    expect(benchmarkProgram).toContain('canonical x86 `LabVIEWCLI.exe` plus x64');
     expect(benchmarkProgram).toContain('The one public `runGovernedProof`');
     expect(benchmarkProgram).toContain('`dashboard-smoke`, `decision-record`, `report-smoke`');
     expect(benchmarkProgram).toContain('`benchmark-linux`, and `benchmark-windows`');
@@ -417,7 +422,7 @@ describe('post-release control-plane coherence', () => {
     expect(benchmarkIssue).toContain('runtimeLabviewTcpPort=3364');
     expect(benchmarkIssue).toContain('`-PortNumber 3364`');
     expect(benchmarkIssue).toContain('`LV_RTE_HEADLESS=1`');
-    expect(benchmarkIssue).toContain('`-Headless true`');
+    expect(benchmarkIssue).toContain('bare `-Headless`');
     expect(benchmarkIssue).toContain('`VHS-REQ-449`');
     expect(benchmarkIssue).toContain('`VHS-REQ-450`');
     expect(benchmarkIssue).toContain('`VHS-REQ-451`');
@@ -436,6 +441,8 @@ describe('post-release control-plane coherence', () => {
     expect(benchmarkIssue).toContain('subcommands now share one canonical');
     expect(benchmarkIssue).toContain('runtime-override validation layer');
     expect(benchmarkIssue).toContain('governed `CloseLabVIEW -Headless` recovery attempt exited `1`');
+    expect(benchmarkIssue).toContain('`runGovernedProof host-operation-matrix`');
+    expect(benchmarkIssue).toContain('canonical x86 `LabVIEWCLI.exe`');
 
     expect(harnesses).toContain('comparison-report-smoke.json');
     expect(harnesses).toContain('recovery executable, args, exit');
@@ -447,7 +454,8 @@ describe('post-release control-plane coherence', () => {
     expect(harnesses).toContain('`benchmark-linux`, and `benchmark-windows`');
     expect(harnesses).toContain('host-native exact-pair diagnosis now blocks before launch when stale');
     expect(harnesses).toContain('preexisting listener on the selected `LabVIEW.ini`-derived VI Server port');
-    expect(harnesses).toContain('must also remain one coherent x86');
+    expect(harnesses).toContain('fail closed only when they');
+    expect(harnesses).toContain('canonical x86');
     expect(harnesses).toContain('immutable per-run `dashboard-smoke` artifacts');
     expect(harnesses).toContain('runtimeExecutionState=not-available');
     expect(harnesses).toContain('latest-runtime-surface.json');

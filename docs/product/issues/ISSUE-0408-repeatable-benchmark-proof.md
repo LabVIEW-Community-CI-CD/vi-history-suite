@@ -145,7 +145,7 @@ Current retained benchmark truth at closure:
   `LabVIEWCLI.exe`, so explicit port derivation narrowed the seam but did not
   close the Windows host blocker
 - one more canonical host-native rerun under `LV_RTE_HEADLESS=1` now also
-  retains `-Headless true` in the governed runtime args, but it still times
+  retains bare `-Headless` in the governed runtime args, but it still times
   out after `120000ms` while only `LabVIEWCLI.exe` is observed and
   `LabVIEW.exe` never appears, so explicit headless mode is not the missing
   native-host Windows ingredient either
@@ -169,9 +169,10 @@ Current retained benchmark truth at closure:
   runtime-override validation layer, so contradictory explicit runtime bundles
   are rejected before they can contaminate retained benchmark blocker evidence
 - `VHS-REQ-452` now governs canonical Windows bundle coherence too: explicit
-  Windows runtime override bundles that mix x86 and x64 paths are rejected
-  even when `--bitness` is omitted, so a manual x86 `LabVIEWCLI.exe`
-  plus x64 `LabVIEW.exe` launch cannot be retained as benchmark truth
+  Windows runtime override bundles now fail closed only when they contradict
+  the selected runtime bitness, while the canonical x86 `LabVIEWCLI.exe`
+  plus x64 `LabVIEW.exe` bundle is admitted when that x64 LabVIEW 2026
+  surface is the selected governed host runtime
 - `VHS-REQ-457..458` now govern the effective runtime override bundle too:
   governed proof subcommands validate the effective runtime bundle after CLI
   arguments, environment variables, and subcommand-local defaults are
@@ -192,6 +193,27 @@ Current retained benchmark truth at closure:
 - out-of-scope alternative Windows x86 provisioning may exist through slower
   NI Package Manager plus ISO installation, but that is a different contract
   and does not reopen the accepted current-contract pair-129 ceiling
+- while refreshed benchmark images republish, the active follow-on proof move
+  is now retained explicitly too: `runGovernedProof host-operation-matrix`
+  inventories the installed Windows LabVIEWCLI operations from
+  `C:\Program Files (x86)\National Instruments\Shared\LabVIEW CLI\Operations`,
+  exercises the LabVIEW 2026 x86 and x64 host surfaces separately, retains
+  pre-run and post-run contamination truth for every case, uses the
+  `aphill93/linuxContainerDemo` `demo` branch only for the
+  `PrintToSingleFileHtml` additional operation plus approved sample fixtures,
+  and keeps `CreateComparisonReport` gated until the simpler host operations
+  are exercised first
+- that follow-on host lane now also retains a materially narrower seam than
+  the old Linux-only wording implied: direct `LabVIEW.exe --headless`
+  cold-start succeeds on both the x64 and x86 LabVIEW 2026 host surfaces,
+  a cold x64 `MassCompile -Help` retains readable help text and then fails
+  with an explicit observation-window expiry while leaving the governed host
+  surface clean, a warm x64 headless prelaunch lets x86 `LabVIEWCLI.exe`
+  connect on port `3363` and complete both `MassCompile -Help` and
+  `CloseLabVIEW -Headless`, and the remaining warm x86 `MassCompile -Help`
+  case still stalls after only the initial CLI banner; so the retained
+  canonical-host blocker is now bounded as a cold CLI attach seam on both
+  bitness surfaces plus a remaining x86 warm-attach stall
 
 ## Scope
 

@@ -17,6 +17,12 @@ describe('runGovernedProofCli', () => {
       subcommand: 'smoke',
       args: ['--harness-id', 'HARNESS-VHS-001']
     });
+    expect(
+      parseGovernedProofCommand(['host-operation-matrix', '--operation', 'CloseLabVIEW'])
+    ).toEqual({
+      subcommand: 'host-operation-matrix',
+      args: ['--operation', 'CloseLabVIEW']
+    });
     expect(() => parseGovernedProofCommand(['lvcompare'])).toThrow(
       /Unknown governed proof subcommand/
     );
@@ -27,6 +33,7 @@ describe('runGovernedProofCli', () => {
     expect(getGovernedProofUsage()).toContain(
       'no public LVCompare engine or path override surface'
     );
+    expect(getGovernedProofUsage()).toContain('host-operation-matrix');
   });
 
   it('prints help without dispatching subcommands', async () => {
@@ -43,15 +50,20 @@ describe('runGovernedProofCli', () => {
     const reportSmokeDeps = {
       stdout: { write: vi.fn() }
     };
+    const hostOperationMatrixDeps = {
+      stdout: { write: vi.fn() }
+    };
 
     await expect(
-      runGovernedProofCli(['smoke', '--help'], {
+      runGovernedProofCli(['host-operation-matrix', '--help'], {
         smokeDeps,
-        reportSmokeDeps
+        reportSmokeDeps,
+        hostOperationMatrixDeps
       })
     ).resolves.toBe('help');
 
-    expect(smokeDeps.stdout.write).toHaveBeenCalled();
+    expect(hostOperationMatrixDeps.stdout.write).toHaveBeenCalled();
+    expect(smokeDeps.stdout.write).not.toHaveBeenCalled();
     expect(reportSmokeDeps.stdout.write).not.toHaveBeenCalled();
   });
 

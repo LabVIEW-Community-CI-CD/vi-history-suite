@@ -4,7 +4,8 @@ export type GovernedProofLegacySubcommand =
   | 'dashboard-smoke'
   | 'benchmark-linux'
   | 'benchmark-windows'
-  | 'decision-record';
+  | 'decision-record'
+  | 'host-operation-matrix';
 
 export function getGovernedProofLegacyEntrypointError(
   subcommand: GovernedProofLegacySubcommand

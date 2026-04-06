@@ -45,8 +45,9 @@ Current canonical-host fact:
   `LabVIEWCLI.exe` install path
 - x64 `LabVIEW.exe` and `LVCompare.exe` exist locally, but an x64
   host-native `LabVIEWCLI.exe` path is not currently installed
-- host-native x64 `labview-cli` exact-pair reruns are therefore non-canonical
-  on this machine unless a real x64 `LabVIEWCLI.exe` install exists
+- the governed host bundle is therefore the canonical x86 `LabVIEWCLI.exe`
+  plus the selected x86 or x64 LabVIEW 2026 runtime surface rather than a
+  same-bitness CLI requirement
 
 ### Windows Docker-Only Exact Pair
 

@@ -44,6 +44,14 @@
   - `LabVIEWCLI CreateComparisonReport` is the canonical public report engine
   - any retained `LVCompare` evidence remains internal parity/diagnosis
     evidence, not a public operator override surface
+  - `host-operation-matrix` is the governed Windows LabVIEW 2026 host
+    operation-inventory and contamination-proof subcommand used before
+    widening back into `CreateComparisonReport`
+  - that host-operation matrix now distinguishes cold CLI attach from warm
+    headless-prelaunched LabVIEW attach, retains readable stdout/stderr plus
+    explicit observation-window-expired notes for non-self-exiting cases, and
+    therefore carries host attach seams as governed evidence instead of
+    collapsing them back into the stale Linux-only blocker label
 - exact-pair diagnosis extension:
   - operator-facing canonical argument guidance is retained in
     `docs/product/canonical-exact-pair-diagnosis.md`
@@ -60,12 +68,13 @@
     `LabVIEW.exe` / `LabVIEWCLI.exe` / `LVCompare.exe` sessions or a
     preexisting listener on the selected `LabVIEW.ini`-derived VI Server port
     would contaminate the rerun
-  - explicit Windows runtime override paths must also remain one coherent x86
-    or x64 bundle even when `--bitness` is omitted, so a mixed x86 CLI
-    plus x64 LabVIEW launch cannot be retained as canonical evidence
+  - explicit Windows runtime override paths now fail closed only when they
+    contradict the selected runtime bitness, while the canonical x86
+    `LabVIEWCLI.exe` plus x64 `LabVIEW.exe` bundle remains admitted for
+    governed host x64 proof
   - on the current canonical machine, only the x86 `LabVIEWCLI.exe` path
-    exists locally, so host-native x64 `labview-cli` reruns remain
-    non-canonical unless a real x64 CLI install exists
+    exists locally, so the governed host bundle is the canonical x86 CLI plus
+    the selected x86 or x64 LabVIEW 2026 runtime surface
   - when `--selected-hash` / `--base-hash` targets a governed blocker pair and
     the runtime exercises `CloseLabVIEW -Headless`, the derived smoke
     JSON/Markdown/HTML surfaces retain the recovery executable, args, exit

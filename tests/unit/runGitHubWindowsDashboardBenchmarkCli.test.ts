@@ -66,7 +66,7 @@ describe('runGitHubWindowsDashboardBenchmarkCli', () => {
         '--labview-exe-path',
         WINDOWS_LABVIEW_EXE_PATH
       ])
-    ).toThrow(/must form one coherent bitness bundle/);
+    ).not.toThrow();
     expect(getGitHubWindowsDashboardBenchmarkUsage()).toContain(
       'Defaults to HARNESS-VHS-002'
     );
@@ -360,10 +360,46 @@ describe('runGitHubWindowsDashboardBenchmarkCli', () => {
     expect(writeFile.mock.calls.at(-1)?.[1]).toContain('"phase": "failed"');
   });
 
-  it('fails closed when env-derived explicit Windows runtime overrides bypass the CLI surface', async () => {
+  it('accepts env-derived canonical Windows overrides and forwards them to the runner', async () => {
     const originalCliPath = process.env.VIHS_GITHUB_WINDOWS_BENCHMARK_LABVIEW_CLI_PATH;
     const originalExePath = process.env.VIHS_GITHUB_WINDOWS_BENCHMARK_LABVIEW_EXE_PATH;
-    const runner = vi.fn();
+    const runner = vi.fn().mockResolvedValue({
+      report: {
+        harnessId: 'HARNESS-VHS-002',
+        repositoryUrl: 'https://github.com/ni/labview-icon-editor.git',
+        cloneDirectory: 'C:\\tmp\\harness',
+        targetRelativePath: 'resource/plugins/lv_icon.vi',
+        head: 'abcdef1234567890',
+        generatedAt: '2026-04-05T03:00:00.000Z',
+        eligible: true,
+        signature: 'LVIN',
+        dashboardCommitWindow: 139,
+        comparePairCount: 138,
+        dashboardFilePath: 'C:\\tmp\\dashboard.html',
+        dashboardJsonFilePath: 'C:\\tmp\\dashboard.json',
+        dashboardWindowCompletenessState: 'partial',
+        dashboardArchivedPairCount: 0,
+        dashboardMissingPairCount: 138,
+        dashboardGeneratedReportCount: 0,
+        dashboardMetadataPairCount: 0,
+        dashboardOverviewImageCount: 0,
+        dashboardDetailItemCount: 0,
+        dashboardProviderSummaries: [],
+        completionState: 'failed',
+        processedPairCount: 0,
+        terminalPairIndex: 1,
+        terminalPairFailureReason: 'comparison-tool-not-found',
+        comparabilityState: 'characterization-only',
+        pairSummaries: []
+      },
+      reportJsonPath: 'C:\\tmp\\reports\\HARNESS-VHS-002\\dashboard-smoke.json',
+      reportMarkdownPath: 'C:\\tmp\\reports\\HARNESS-VHS-002\\dashboard-smoke.md',
+      reportHtmlPath: 'C:\\tmp\\reports\\HARNESS-VHS-002\\dashboard-smoke.html'
+    });
+    const mkdir = vi.fn().mockResolvedValue(undefined);
+    const writeFile = vi.fn().mockResolvedValue(undefined);
+    const copyFile = vi.fn().mockResolvedValue(undefined);
+    const pathExists = vi.fn().mockResolvedValue(true);
 
     process.env.VIHS_GITHUB_WINDOWS_BENCHMARK_LABVIEW_CLI_PATH = WINDOWS_LABVIEW_CLI_PATH;
     process.env.VIHS_GITHUB_WINDOWS_BENCHMARK_LABVIEW_EXE_PATH = WINDOWS_LABVIEW_EXE_PATH;
@@ -371,9 +407,15 @@ describe('runGitHubWindowsDashboardBenchmarkCli', () => {
     try {
       await expect(
         runGitHubWindowsDashboardBenchmarkCli([], {
-          runner
+          runner,
+          mkdir,
+          writeFile,
+          copyFile,
+          pathExists,
+          now: () => new Date('2026-04-05T04:10:00.000Z'),
+          stdout: { write() {} }
         })
-      ).rejects.toThrow(/must form one coherent bitness bundle/);
+      ).rejects.toThrow(/Windows benchmark failed at pair 1\/138: comparison-tool-not-found/);
     } finally {
       if (originalCliPath === undefined) {
         delete process.env.VIHS_GITHUB_WINDOWS_BENCHMARK_LABVIEW_CLI_PATH;
@@ -388,7 +430,15 @@ describe('runGitHubWindowsDashboardBenchmarkCli', () => {
       }
     }
 
-    expect(runner).not.toHaveBeenCalled();
+    expect(runner).toHaveBeenCalledWith(
+      'HARNESS-VHS-002',
+      expect.objectContaining({
+        runtimeSettings: expect.objectContaining({
+          labviewCliPath: WINDOWS_LABVIEW_CLI_PATH,
+          labviewExePath: WINDOWS_LABVIEW_EXE_PATH
+        })
+      })
+    );
   });
 
   it('surfaces help and exit wiring deterministically while rejecting direct legacy main execution', async () => {

@@ -77,7 +77,6 @@ export function validateCanonicalRuntimeOverrideArgs(
   );
 
   validateWindowsBitnessConsistency(normalizedArgs, usageText);
-  validateWindowsExplicitBundleConsistency(normalizedArgs, usageText);
 }
 
 export async function validateCanonicalRuntimeOverrideExecutionSurface(
@@ -153,71 +152,16 @@ function validateWindowsBitnessConsistency(
   args: CanonicalRuntimeOverrideArgs,
   usageText: string
 ): void {
-  if (args.runtimePlatform !== 'win32' || !args.bitness) {
+  if (args.runtimePlatform !== 'win32' || !args.bitness || !args.labviewExePath) {
     return;
   }
 
-  for (const [flag, candidatePath] of [
-    ['--labview-cli-path', args.labviewCliPath],
-    ['--labview-exe-path', args.labviewExePath]
-  ] as const) {
-    if (!candidatePath) {
-      continue;
-    }
-
-    const inferredBitness = inferWindowsPathBitness(candidatePath);
-    if (inferredBitness && inferredBitness !== args.bitness) {
-      throw new Error(
-        `${flag} does not match --bitness ${args.bitness}; inferred ${inferredBitness} from ${candidatePath}.\n\n${usageText}`
-      );
-    }
-  }
-}
-
-function validateWindowsExplicitBundleConsistency(
-  args: CanonicalRuntimeOverrideArgs,
-  usageText: string
-): void {
-  if (args.runtimePlatform !== 'win32') {
-    return;
-  }
-
-  const inferredPaths = (
-    [
-      ['--labview-cli-path', args.labviewCliPath],
-      ['--labview-exe-path', args.labviewExePath]
-    ] as const
-  )
-    .map(([flag, candidatePath]) => ({
-      flag,
-      candidatePath,
-      inferredBitness: candidatePath ? inferWindowsPathBitness(candidatePath) : undefined
-    }))
-    .filter(
-      (
-        entry
-      ): entry is {
-        flag: '--labview-cli-path' | '--labview-exe-path';
-        candidatePath: string;
-        inferredBitness: 'x86' | 'x64';
-      } => Boolean(entry.candidatePath && entry.inferredBitness)
+  const inferredBitness = inferWindowsPathBitness(args.labviewExePath);
+  if (inferredBitness && inferredBitness !== args.bitness) {
+    throw new Error(
+      `--labview-exe-path does not match --bitness ${args.bitness}; inferred ${inferredBitness} from ${args.labviewExePath}.\n\n${usageText}`
     );
-
-  if (inferredPaths.length < 2) {
-    return;
   }
-
-  const baseline = inferredPaths[0];
-  const contradiction = inferredPaths.find(
-    (entry) => entry.inferredBitness !== baseline.inferredBitness
-  );
-  if (!contradiction) {
-    return;
-  }
-
-  throw new Error(
-    `Canonical Windows runtime override paths must form one coherent bitness bundle; ${baseline.flag} inferred ${baseline.inferredBitness} from ${baseline.candidatePath}, while ${contradiction.flag} inferred ${contradiction.inferredBitness} from ${contradiction.candidatePath}.\n\n${usageText}`
-  );
 }
 
 function inferWindowsPathBitness(candidatePath: string): 'x86' | 'x64' | undefined {

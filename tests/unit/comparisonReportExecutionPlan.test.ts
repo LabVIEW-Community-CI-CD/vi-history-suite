@@ -178,8 +178,7 @@ describe('comparisonReportExecutionPlan', () => {
           'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
           '-c',
           '-o',
-          '-Headless',
-          'true'
+          '-Headless'
         ]
       }
     });
@@ -213,8 +212,7 @@ describe('comparisonReportExecutionPlan', () => {
           'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
           '-c',
           '-o',
-          '-Headless',
-          'true'
+          '-Headless'
         ]
       }
     });
@@ -249,8 +247,7 @@ describe('comparisonReportExecutionPlan', () => {
           'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
           '-c',
           '-o',
-          '-Headless',
-          'true'
+          '-Headless'
         ]
       }
     });
@@ -300,8 +297,7 @@ describe('comparisonReportExecutionPlan', () => {
           '/usr/local/natinst/LabVIEW-2026-64/labview',
           '-c',
           '-o',
-          '-Headless',
-          'true'
+          '-Headless'
         ]
       }
     });

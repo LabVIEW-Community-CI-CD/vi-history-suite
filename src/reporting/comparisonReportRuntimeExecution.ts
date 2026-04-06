@@ -1125,11 +1125,7 @@ function isHeadlessLabviewCliExecution(args: string[] | undefined): boolean {
   }
 
   const headlessIndex = args.findIndex((argument) => argument.toLowerCase() === '-headless');
-  if (headlessIndex < 0) {
-    return false;
-  }
-
-  return args[headlessIndex + 1]?.toLowerCase() === 'true';
+  return headlessIndex >= 0;
 }
 
 async function attemptLabviewCliHeadlessSessionReset(
@@ -1263,7 +1259,7 @@ function buildLabviewCliCloseLabviewCommandPlan(
   if (Number.isInteger(labviewTcpPort) && (labviewTcpPort ?? 0) > 0) {
     args.push('-PortNumber', String(labviewTcpPort));
   }
-  args.push('-Headless', 'true');
+  args.push('-Headless');
 
   return {
     executable,
@@ -1897,7 +1893,7 @@ export function rewriteLabviewCliArgsForContainerWorkspace(
   if (options.labviewPath?.trim()) {
     rewritten.push('-LabVIEWPath', options.labviewPath.trim());
   }
-  rewritten.push('-Headless', 'true');
+  rewritten.push('-Headless');
 
   return rewritten.length > 0 ? rewritten : undefined;
 }

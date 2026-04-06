@@ -61,12 +61,17 @@ describe('governed proof documentation contract', () => {
     ];
 
     expect(readme).toContain('npm run proof:run -- report-smoke');
+    expect(readme).toContain('npm run proof:run -- host-operation-matrix');
     expect(harnesses).toContain('npm run proof:run -- report-smoke');
+    expect(harnesses).toContain('host-operation-matrix');
     expect(exactPair).toContain('runGovernedProof report-smoke');
     expect(srs).toContain('one public governed proof entrypoint');
     expect(srs).toContain('LabVIEWCLI CreateComparisonReport');
+    expect(srs).toContain('host-operation-matrix');
     expect(rtm).toContain('runGovernedProof');
+    expect(rtm).toContain('host-operation-matrix');
     expect(testPlan).toContain('one public governed proof entrypoint');
+    expect(testPlan).toContain('TEST-UNIT-313');
     expect(workbench).toContain('docs:ci');
     expect(alignment).toContain('runGovernedProof');
     expect(alignment).toContain('CreateComparisonReport');
@@ -76,6 +81,7 @@ describe('governed proof documentation contract', () => {
     expect(inventory).toContain('npm run proof:run -- report-smoke');
     expect(currentState).toContain('`runGovernedProof benchmark-linux`');
     expect(currentState).toContain('`runGovernedProof benchmark-windows`');
+    expect(currentState).toContain('`runGovernedProof host-operation-matrix`');
 
     for (const document of normativeDocs) {
       for (const staleToken of stalePublicTokens) {

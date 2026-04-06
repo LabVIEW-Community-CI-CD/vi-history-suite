@@ -15,7 +15,7 @@ const WINDOWS_X64_LABVIEW_EXE_PATH =
   'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe';
 
 describe('canonicalRuntimeOverrideValidation', () => {
-  it('rejects mixed Windows bitness bundles even when bitness is omitted', () => {
+  it('accepts the canonical Windows x86-cli plus x64-LabVIEW bundle when bitness is omitted', () => {
     expect(() =>
       validateCanonicalRuntimeOverrideArgs(
         {
@@ -25,10 +25,10 @@ describe('canonicalRuntimeOverrideValidation', () => {
         },
         USAGE
       )
-    ).toThrow(/must form one coherent bitness bundle/);
+    ).not.toThrow();
   });
 
-  it('accepts coherent Windows bundles without an explicit bitness override', () => {
+  it('accepts the canonical Windows x86 bundle without an explicit bitness override', () => {
     expect(() =>
       validateCanonicalRuntimeOverrideArgs(
         {
@@ -39,6 +39,34 @@ describe('canonicalRuntimeOverrideValidation', () => {
         USAGE
       )
     ).not.toThrow();
+  });
+
+  it('accepts an explicit x64 runtime bitness when the LabVIEW executable is x64 and the CLI stays x86', () => {
+    expect(() =>
+      validateCanonicalRuntimeOverrideArgs(
+        {
+          runtimePlatform: 'win32',
+          bitness: 'x64',
+          labviewCliPath: WINDOWS_X86_LABVIEW_CLI_PATH,
+          labviewExePath: WINDOWS_X64_LABVIEW_EXE_PATH
+        },
+        USAGE
+      )
+    ).not.toThrow();
+  });
+
+  it('rejects an explicit runtime bitness that contradicts the selected LabVIEW executable', () => {
+    expect(() =>
+      validateCanonicalRuntimeOverrideArgs(
+        {
+          runtimePlatform: 'win32',
+          bitness: 'x86',
+          labviewCliPath: WINDOWS_X86_LABVIEW_CLI_PATH,
+          labviewExePath: WINDOWS_X64_LABVIEW_EXE_PATH
+        },
+        USAGE
+      )
+    ).toThrow(/--labview-exe-path does not match --bitness x86/);
   });
 
   it('fails closed on missing explicit Windows runtime paths on the canonical host', async () => {

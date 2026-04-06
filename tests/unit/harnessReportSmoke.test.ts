@@ -44,7 +44,7 @@ describe('harness report smoke renderers', () => {
     runtimeExecutable: 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
     runtimeArgs: ['-OperationName', 'CreateComparisonReport', '-LabVIEWPath', 'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'],
     headlessSessionResetExecutable: 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
-    headlessSessionResetArgs: ['-LogToConsole', 'TRUE', '-OperationName', 'CloseLabVIEW', '-LabVIEWPath', 'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe', '-Headless', 'true'],
+    headlessSessionResetArgs: ['-LogToConsole', 'TRUE', '-OperationName', 'CloseLabVIEW', '-LabVIEWPath', 'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe', '-Headless'],
     headlessSessionResetExitCode: 1,
     headlessSessionResetStdoutPath: '/tmp/headless-session-reset-stdout.txt',
     headlessSessionResetStderrPath: '/tmp/headless-session-reset-stderr.txt',
@@ -89,7 +89,7 @@ describe('harness report smoke renderers', () => {
     expect(markdown).toContain('Runtime executable: C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe');
     expect(markdown).toContain('Runtime args: -OperationName CreateComparisonReport -LabVIEWPath C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe');
     expect(markdown).toContain('Headless session reset executable: C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe');
-    expect(markdown).toContain('Headless session reset args: -LogToConsole TRUE -OperationName CloseLabVIEW -LabVIEWPath C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe -Headless true');
+    expect(markdown).toContain('Headless session reset args: -LogToConsole TRUE -OperationName CloseLabVIEW -LabVIEWPath C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe -Headless');
     expect(markdown).toContain('Headless session reset exit code: 1');
     expect(markdown).toContain('Headless session reset stdout artifact: /tmp/headless-session-reset-stdout.txt');
     expect(markdown).toContain('Headless session reset stderr artifact: /tmp/headless-session-reset-stderr.txt');
@@ -132,7 +132,7 @@ describe('harness report smoke renderers', () => {
     expect(html).toContain('Runtime executable:</strong> C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe');
     expect(html).toContain('Runtime args:</strong> -OperationName CreateComparisonReport -LabVIEWPath C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe');
     expect(html).toContain('Headless session reset executable:</strong> C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe');
-    expect(html).toContain('Headless session reset args:</strong> -LogToConsole TRUE -OperationName CloseLabVIEW -LabVIEWPath C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe -Headless true');
+    expect(html).toContain('Headless session reset args:</strong> -LogToConsole TRUE -OperationName CloseLabVIEW -LabVIEWPath C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe -Headless');
     expect(html).toContain('Headless session reset exit code:</strong> 1');
     expect(html).toContain('/tmp/headless-session-reset-stdout.txt');
     expect(html).toContain('/tmp/headless-session-reset-stderr.txt');

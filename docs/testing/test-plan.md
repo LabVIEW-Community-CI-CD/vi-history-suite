@@ -487,7 +487,7 @@
   failure instead of throwing
 - `TEST-UNIT-138`: prove the Windows-container LabVIEW CLI arg rewrite ignores
   caller `-LabVIEWPath` and `-Headless`, drops `-c`, preserves other supported
-  args, and appends governed `-LabVIEWPath` plus `-Headless true`
+  args, and appends governed `-LabVIEWPath` plus bare `-Headless`
 - `TEST-UNIT-139`: prove the Windows-container LVCompare arg rewrite fails
   closed without a full staged pair and otherwise preserves additional
   comparison flags while rewriting the staged pair and governed `-lvpath`
@@ -1055,7 +1055,7 @@
   remains available inside the Windows benchmark-image environment
 - `TEST-UNIT-282`: verify the Windows `labview-cli` execution plan retains the
   governed `-LabVIEWPath` on host-native and Windows-container selections, and
-  appends `-Headless true` when the Windows benchmark-image lane enables
+  appends bare `-Headless` when the Windows benchmark-image lane enables
   `LV_RTE_HEADLESS=1` or the provider is `windows-container`
 - `TEST-UNIT-283`: verify a Linux `labview-cli` recursive-load diagnosis
   triggers one governed `CloseLabVIEW -Headless` session reset, retries the
@@ -1114,8 +1114,9 @@
   contradictory explicit runtime override bundles across exact-pair smoke,
   dashboard smoke, decision-record, and Windows/Linux benchmark entrypoints
 - `TEST-UNIT-296`: verify canonical Windows explicit runtime override bundles
-  reject mixed x86/x64 path combinations even when `--bitness` is
-  omitted, while coherent explicit bundles still pass admission control
+  reject Windows path bundles only when they contradict the selected runtime
+  bitness, while the canonical x86 `LabVIEWCLI.exe` plus x64 `LabVIEW.exe`
+  bundle still passes admission control for governed host x64 proof
 - `TEST-UNIT-297`: verify the debt-retirement contract package remains
   machine-checkable: the contract/taxonomy/ledger docs stay discoverable in
   the authority control plane, and the machine-readable debt ledger keeps
@@ -1386,6 +1387,82 @@
   `docs_continuous_integration` evidence contract rather than only a boolean
   gate, while the governed `npm run package` path refreshes bundled installed-user
   docs before VSIX packaging
+- `TEST-UNIT-312`: verify the governed Windows host proof cleanup hook inspects
+  and clears pre-run and post-run `LabVIEW.exe`, `LabVIEWCLI.exe`, and
+  `LVCompare.exe` contamination, and fails closed when the host surface cannot
+  be returned to a clean state
+- `TEST-UNIT-313`: verify `runGovernedProof` exposes the governed
+  `host-operation-matrix` subcommand, prints that subcommand in usage, and
+  dispatches only that handler when selected
+- `TEST-UNIT-314`: verify the governed Windows host operation-matrix runner
+  inventories installed LabVIEWCLI operations, writes JSON plus Markdown
+  evidence under `.cache/governed-proof/windows-host-operation-matrix/`,
+  keeps `CreateComparisonReport` gated, and surfaces post-run contamination as
+  a failed case even when cleanup later succeeds
+- `TEST-UNIT-315`: verify the shared Windows host runtime-surface helper
+  parses observed `LabVIEW.exe` / `LabVIEWCLI.exe` / `LVCompare.exe` process
+  facts deterministically and fails closed when cleanup PowerShell returns an
+  error
+- `TEST-SMOKE-003`: inventory the installed LabVIEWCLI operation set from
+  `C:\Program Files (x86)\National Instruments\Shared\LabVIEW CLI\Operations`,
+  add the repo-supplied `PrintToSingleFileHtml` additional operation from the
+  `aphill93/linuxContainerDemo` `demo` branch, and retain one governed
+  LabVIEW 2026 host operation matrix that separates x86 and x64 `LabVIEW.exe`
+  surfaces, distinguishes cold CLI attach from warm headless-prelaunched
+  LabVIEW attach, and retains that session-state split before any new
+  `CreateComparisonReport` diagnosis is attempted
+- `TEST-SMOKE-004`: prove `CloseLabVIEW` on the LabVIEW 2026 x86 host surface,
+  including operation discovery/help behavior and clean post-run contamination
+  state
+- `TEST-SMOKE-005`: prove `CloseLabVIEW` on the LabVIEW 2026 x64 host surface,
+  including operation discovery/help behavior and clean post-run contamination
+  state
+- `TEST-SMOKE-006`: prove `ExecuteBuildSpec` on the LabVIEW 2026 x86 host
+  surface, at minimum through operation discovery/help and contamination
+  outcome, before any compare-report claim is widened
+- `TEST-SMOKE-007`: prove `ExecuteBuildSpec` on the LabVIEW 2026 x64 host
+  surface, at minimum through operation discovery/help and contamination
+  outcome, before any compare-report claim is widened
+- `TEST-SMOKE-008`: prove `MassCompile` on the LabVIEW 2026 x86 host surface
+  using a governed sample directory, retaining contamination outcome before and
+  after the run
+- `TEST-SMOKE-009`: prove `MassCompile` on the LabVIEW 2026 x64 host surface
+  using a governed sample directory, retaining contamination outcome before and
+  after the run
+- `TEST-SMOKE-010`: prove `RunUnitTests` on the LabVIEW 2026 x86 host surface,
+  at minimum through operation discovery/help and contamination outcome, and
+  widen to fixture-backed execution only when a governed unit-test asset is
+  available
+- `TEST-SMOKE-011`: prove `RunUnitTests` on the LabVIEW 2026 x64 host surface,
+  at minimum through operation discovery/help and contamination outcome, and
+  widen to fixture-backed execution only when a governed unit-test asset is
+  available
+- `TEST-SMOKE-012`: prove `RunVI` on the LabVIEW 2026 x86 host surface with a
+  governed sample VI and retained contamination outcome
+- `TEST-SMOKE-013`: prove `RunVI` on the LabVIEW 2026 x64 host surface with a
+  governed sample VI and retained contamination outcome
+- `TEST-SMOKE-014`: prove `RunVIAnalyzer` on the LabVIEW 2026 x86 host surface
+  using the governed `linuxContainerDemo/Test-VIs/*.viancfg` fixture when the
+  toolkit is present, otherwise retain a blocked prerequisite outcome and clean
+  contamination state
+- `TEST-SMOKE-015`: prove `RunVIAnalyzer` on the LabVIEW 2026 x64 host surface
+  using the governed `linuxContainerDemo/Test-VIs/*.viancfg` fixture when the
+  toolkit is present, otherwise retain a blocked prerequisite outcome and clean
+  contamination state
+- `TEST-SMOKE-016`: prove the repo-supplied `PrintToSingleFileHtml` additional
+  operation on the LabVIEW 2026 x86 host surface using the
+  `linuxContainerDemo` `demo` branch `VICompareTooling/PrintToSingleFileHtml`
+  payload and retain contamination outcome before and after the run
+- `TEST-SMOKE-017`: prove the repo-supplied `PrintToSingleFileHtml` additional
+  operation on the LabVIEW 2026 x64 host surface using the
+  `linuxContainerDemo` `demo` branch `VICompareTooling/PrintToSingleFileHtml`
+  payload and retain contamination outcome before and after the run
+- `TEST-SMOKE-018`: prove `CreateComparisonReport` on the LabVIEW 2026 x86
+  host surface only after `TEST-SMOKE-004..017` are complete and the host
+  surface remains clean before the run
+- `TEST-SMOKE-019`: prove `CreateComparisonReport` on the LabVIEW 2026 x64
+  host surface only after `TEST-SMOKE-004..017` are complete and the host
+  surface remains clean before the run
 - `TEST-DOC-074`: review current-state, SRS, and RTM and confirm the
   dashboard contract now states that host-native Windows pair refresh is
   explicitly headless and that long-running pair refresh emits keepalive
@@ -1407,6 +1484,29 @@
   Windows `auto`, no silent fallback, Docker-required hard stops, and
   front-facing provider/progress guidance, while the governed package path
   refreshes bundled installed-user docs before VSIX creation
+- `TEST-DOC-078`: review current-state, PROGRAM-0003, ISSUE-0408, SRS, RTM,
+  and the test plan and confirm the repo now retains a LabVIEW 2026-only
+  Windows host operation matrix across x86 and x64 `LabVIEW.exe` surfaces,
+  enumerates the installed LabVIEWCLI operations plus the repo-supplied
+  `PrintToSingleFileHtml` additional operation from the
+  `aphill93/linuxContainerDemo` `demo` branch, and keeps
+  `CreateComparisonReport` gated until the other operation cases are completed
+- `TEST-DOC-079`: review current-state, PROGRAM-0003, ISSUE-0408, SRS, RTM,
+  and the test plan and confirm the governed host matrix now requires pre-run
+  and post-run contamination inspection for `LabVIEW.exe`, `LabVIEWCLI.exe`,
+  and `LVCompare.exe`, and treats leftover hot runtime state from even
+  operation-help probes as diagnostic evidence rather than silent repair
+- `TEST-DOC-080`: review current-state, PROGRAM-0003, ISSUE-0408, SRS, RTM,
+  and the test plan and confirm the governed host matrix now distinguishes
+  cold CLI attach from warm headless-prelaunched LabVIEW attach, and that the
+  retained PROGRAM-0003 host proof now narrows the stale
+  `linux-headless-recursive-load` label into an explicit host cold-attach /
+  warm-attach seam instead of leaving it Linux-only by default
+- `TEST-DOC-081`: review current-state, PROGRAM-0003, ISSUE-0408, SRS, RTM,
+  and the test plan and confirm the governed host-matrix receipts now retain
+  readable stdout/stderr plus an explicit observation-window-expired note when
+  LabVIEWCLI prints startup/help output but does not self-exit within the
+  bounded diagnostic window
 - `TEST-DOC-070`: review current-state, harnesses, PROGRAM-0003, ISSUE-0408,
   and the comparable-prefix packet and confirm the repo documents the current
   Windows pair-129 ceiling as an accepted current-contract exception backed by

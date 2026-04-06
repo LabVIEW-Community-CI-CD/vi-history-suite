@@ -173,7 +173,7 @@ still times out after `120000ms` while only `LabVIEWCLI.exe` is observed. So
 port drift is now a governed narrowed seam, but it is not sufficient by itself
 to solve the Windows host blocker.
 One more canonical host-native rerun under `LV_RTE_HEADLESS=1` now retains
-`-Headless true` in the governed `runtimeArgs`, but it still times out after
+bare `-Headless` in the governed `runtimeArgs`, but it still times out after
 `120000ms` while only `LabVIEWCLI.exe` is observed and `LabVIEW.exe` never
 appears. So explicit headless mode narrows the native-host Windows seam
 further, but it still does not convert the host x86 proof into the connected
@@ -191,9 +191,10 @@ and host-native Windows comparison execution now fails closed when preflight
 detects stale `LabVIEW.exe` / `LabVIEWCLI.exe` / `LVCompare.exe` sessions or
 a preexisting listener on the selected `LabVIEW.ini`-derived VI Server port.
 That same proof tightening also makes the current host capability explicit:
-only the x86 `LabVIEWCLI.exe` path exists locally on the canonical machine, so
-host-native x64 `labview-cli` exact-pair reruns are non-canonical until a real
-x64 CLI install exists.
+only the x86 `LabVIEWCLI.exe` path exists locally on the canonical machine,
+while both x86 and x64 LabVIEW 2026 runtime paths exist. The governed host
+bundle is therefore the canonical x86 CLI plus the selected x86 or x64
+`LabVIEW.exe` surface rather than a same-bitness CLI requirement.
 
 `VHS-REQ-451` lifts canonical runtime-override validation into a shared
 PROGRAM-0003 admission layer rather than keeping it trapped inside
@@ -202,11 +203,37 @@ surface and its `dashboard-smoke`, `decision-record`, `report-smoke`,
 `benchmark-linux`, and `benchmark-windows` subcommands now reject
 contradictory runtime bundles before they can generate retained evidence.
 
-`VHS-REQ-452` tightens that shared admission layer further on Windows: even
-when an operator omits `--bitness`, explicit runtime override paths must
-still resolve to one coherent x86 or x64 bundle. Mixed x86/x64 manual bundles
-are now treated as experiment contamination instead of being allowed to retain
-misleading blocker evidence.
+`VHS-REQ-452` tightens that shared admission layer further on Windows:
+explicit runtime override paths now fail closed only when they contradict the
+selected runtime bitness. The canonical x86 `LabVIEWCLI.exe` plus x64
+`LabVIEW.exe` bundle is admitted when that x64 LabVIEW 2026 surface is the
+selected governed host runtime.
+
+While refreshed benchmark images republish, the next governed PROGRAM-0003
+move is now explicit too: run the retained `runGovernedProof
+host-operation-matrix` lane against the canonical Windows host, inventory the
+installed LabVIEWCLI operations from
+`C:\Program Files (x86)\National Instruments\Shared\LabVIEW CLI\Operations`,
+exercise the LabVIEW 2026 x86 and x64 host surfaces separately, retain
+pre-run and post-run contamination truth on every case, use the
+`aphill93/linuxContainerDemo` `demo` branch only for the
+`PrintToSingleFileHtml` additional operation plus approved sample fixtures,
+and keep `CreateComparisonReport` gated until those simpler host operations
+have been exercised first.
+Fresh canonical-host evidence on `2026-04-06` now narrows that follow-on lane
+further. Direct `LabVIEW.exe --headless` cold-start succeeds on both the x64
+and x86 LabVIEW 2026 host surfaces, so the host itself is not blocked from
+entering headless mode. The active seam is now the next attach step. A cold
+`LabVIEWCLI MassCompile -Help` against the x64 surface retains readable CLI
+help text and then fails with an explicit observation-window expiry while
+leaving the governed host surface clean. A warm x64 headless prelaunch then
+lets the same x86 `LabVIEWCLI.exe` connect on port `3363` and complete both
+`MassCompile -Help` and `CloseLabVIEW -Headless`. But the same warm-prelaunch
+shape still stalls on the x86 LabVIEW 2026 surface after only the initial CLI
+banner. So the stale `linux-headless-recursive-load` wording is now known to
+be too broad: the active canonical-host seam is cold CLI attach on both
+bitness surfaces plus a remaining x86 warm-attach stall, not a Linux-only
+story.
 
 `ADR-0024` plus `VHS-REQ-457..458` now tighten that PROGRAM-0003 admission
 layer one step further: governed proof subcommands validate the effective runtime bundle

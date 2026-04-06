@@ -739,8 +739,7 @@ describe('comparisonReportRuntimeExecution', () => {
         'CloseLabVIEW',
         '-LabVIEWPath',
         '/usr/local/natinst/LabVIEW-2026-64/labview',
-        '-Headless',
-        'true'
+        '-Headless'
       ]
     });
     expect(result.record.runtimeExecutionState).toBe('succeeded');
@@ -892,8 +891,7 @@ describe('comparisonReportRuntimeExecution', () => {
         'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
         '-PortNumber',
         '3363',
-        '-Headless',
-        'true'
+        '-Headless'
       ]
     });
     expect(result).toBeDefined();
@@ -1521,7 +1519,7 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(innerCommand).toContain("Start-Process -FilePath $labviewPath -ArgumentList '--headless'");
     expect(innerCommand).toContain("Set-IniToken -Path $cliIni -Key 'OpenAppReferenceTimeoutInSecond' -Value '180'");
     expect(innerCommand).toContain("Set-IniToken -Path $cliIni -Key 'AfterLaunchOpenAppReferenceTimeoutInSecond' -Value '180'");
-    expect(innerCommand).toContain("'-Headless', 'true'");
+    expect(innerCommand).toContain("'-Headless'");
     expect(innerCommand).toContain("'-o'");
     expect(mkdir).toHaveBeenCalledWith(
       '/mnt/c/Users/sveld/AppData/Local/Temp/vi-history-suite-runtime/reports/repoid123456/fileid123456/container-temp',
@@ -2168,7 +2166,7 @@ describe('comparisonReportRuntimeExecution', () => {
   it('ignores blank command-option values when extracting governed runtime overrides', () => {
     expect(
       extractCommandOptionValue(
-        ['-OperationName', 'CreateComparisonReport', '-LabVIEWPath', '   ', '-Headless', 'true'],
+        ['-OperationName', 'CreateComparisonReport', '-LabVIEWPath', '   ', '-Headless'],
         '-LabVIEWPath'
       )
     ).toBeUndefined();
@@ -2791,8 +2789,7 @@ describe('comparisonReportRuntimeExecution', () => {
       'hello',
       '-LabVIEWPath',
       'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
-      '-Headless',
-      'true'
+      '-Headless'
     ]);
   });
 

@@ -182,7 +182,7 @@ export function buildLabviewCliCreateComparisonReportPlan(
   }
 
   if (options.headless ?? false) {
-    args.push('-Headless', 'true');
+    args.push('-Headless');
   }
 
   return {

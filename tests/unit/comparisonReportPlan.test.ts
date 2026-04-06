@@ -106,6 +106,18 @@ describe('comparisonReportPlan', () => {
     });
   });
 
+  it('encodes canonical headless mode as a bare LabVIEWCLI switch', () => {
+    const plan = buildLabviewCliCreateComparisonReportPlan({
+      leftViPath: '/tmp/left-foo.vi',
+      rightViPath: '/tmp/right-foo.vi',
+      reportFilePath: '/tmp/report.html',
+      headless: true
+    });
+
+    expect(plan.args).toContain('-Headless');
+    expect(plan.args).not.toContain('true');
+  });
+
   it('adds an explicit -PortNumber when a governed VI Server port is provided', () => {
     const plan = buildLabviewCliCreateComparisonReportPlan({
       leftViPath: '/tmp/left-foo.vi',

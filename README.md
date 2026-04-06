@@ -443,6 +443,7 @@ Primary commands:
 - `npm run proof:run -- report-smoke`
 - `npm run proof:run -- dashboard-smoke`
 - `npm run proof:run -- decision-record`
+- `npm run proof:run -- host-operation-matrix --operation CloseLabVIEW --bitness x64`
 - `npm run proof:run -- benchmark-linux --harness-id HARNESS-VHS-001`
 - `npm run proof:run -- benchmark-linux --harness-id HARNESS-VHS-002`
 - `npm run proof:run -- benchmark-windows --harness-id HARNESS-VHS-002`

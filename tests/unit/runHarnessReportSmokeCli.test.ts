@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   applyHarnessReportSmokeCliExitCode,
+  cleanupWindowsHostRuntimeSurface,
   formatHarnessReportSmokeSuccess,
   getHarnessReportSmokeUsage,
   maybeRunHarnessReportSmokeCliAsMain,
@@ -152,7 +153,7 @@ describe('runHarnessReportSmokeCli', () => {
           '--labview-exe-path',
           WINDOWS_X64_LABVIEW_EXE_PATH
         ])
-    ).toThrow(/must form one coherent bitness bundle/);
+    ).not.toThrow();
     expect(
       () =>
         parseHarnessReportSmokeArgs([
@@ -188,6 +189,7 @@ describe('runHarnessReportSmokeCli', () => {
 
   it('prints the deterministic report-smoke success summary and forwards runtime overrides', async () => {
     const writes: string[] = [];
+    const cleanupWindowsHostRuntimeSurface = vi.fn().mockResolvedValue(undefined);
     const runner = vi.fn().mockResolvedValue({
       report: {
         harnessId: 'HARNESS-VHS-001',
@@ -235,6 +237,7 @@ describe('runHarnessReportSmokeCli', () => {
         {
           repoRoot: '/tmp/vi-history-suite',
           runner,
+          cleanupWindowsHostRuntimeSurface,
           stdout: {
             write(text: string) {
               writes.push(text);
@@ -259,9 +262,105 @@ describe('runHarnessReportSmokeCli', () => {
         labviewExePath: WINDOWS_LABVIEW_EXE_PATH
       }
     });
+    expect(cleanupWindowsHostRuntimeSurface).toHaveBeenCalledTimes(2);
+    expect(cleanupWindowsHostRuntimeSurface).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        runtimePlatform: 'win32',
+        executionMode: 'host-only'
+      })
+    );
+    expect(cleanupWindowsHostRuntimeSurface).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        runtimePlatform: 'win32',
+        executionMode: 'host-only'
+      })
+    );
     expect(writes.join('')).toContain('Harness report smoke completed for HARNESS-VHS-001');
     expect(writes.join('')).toContain('Report status: blocked-runtime');
     expect(writes.join('')).toContain('Runtime execution: not-available');
+  });
+
+  it('still performs post-run Windows host cleanup when the governed runner fails', async () => {
+    const cleanupWindowsHostRuntimeSurface = vi.fn().mockResolvedValue(undefined);
+    const runner = vi.fn().mockRejectedValue(new Error('runner failed'));
+
+    await expect(
+      runHarnessReportSmokeCli(
+        [
+          '--platform',
+          'win32',
+          '--execution-mode',
+          'host-only',
+          '--selected-hash',
+          FULL_SELECTED_HASH,
+          '--base-hash',
+          FULL_BASE_HASH,
+          '--labview-cli-path',
+          WINDOWS_LABVIEW_CLI_PATH,
+          '--labview-exe-path',
+          WINDOWS_X64_LABVIEW_EXE_PATH
+        ],
+        {
+          repoRoot: '/tmp/vi-history-suite',
+          runner,
+          cleanupWindowsHostRuntimeSurface
+        }
+      )
+    ).rejects.toThrow('runner failed');
+
+    expect(cleanupWindowsHostRuntimeSurface).toHaveBeenCalledTimes(2);
+  });
+
+  it('skips Windows host cleanup for docker-only proof runs', async () => {
+    const cleanupWindowsHostRuntimeSurface = vi.fn().mockResolvedValue(undefined);
+    const runner = vi.fn().mockResolvedValue({
+      report: {
+        harnessId: 'HARNESS-VHS-001',
+        repositoryUrl: 'https://github.com/ni/labview-icon-editor',
+        cloneDirectory: '/tmp/harness',
+        targetRelativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
+        head: 'abcdef1234567890',
+        generatedAt: '2026-04-03T00:00:00.000Z',
+        selectedHash: 'abcdef1234567890',
+        baseHash: '1111111122222222',
+        comparePairAvailable: true,
+        eligible: true,
+        signature: 'LVIN',
+        reportStatus: 'blocked-runtime',
+        runtimeExecutionState: 'not-available',
+        runtimeProvider: 'unavailable',
+        runtimeBlockedReason: 'comparison-tool-not-found',
+        generatedReportExists: false
+      },
+      reportJsonPath: '/tmp/reports/HARNESS-VHS-001/comparison-report-smoke.json',
+      reportMarkdownPath: '/tmp/reports/HARNESS-VHS-001/comparison-report-smoke.md',
+      reportHtmlPath: '/tmp/reports/HARNESS-VHS-001/comparison-report-smoke.html'
+    });
+
+    await expect(
+      runHarnessReportSmokeCli(
+        [
+          '--platform',
+          'win32',
+          '--execution-mode',
+          'docker-only',
+          '--selected-hash',
+          FULL_SELECTED_HASH,
+          '--base-hash',
+          FULL_BASE_HASH
+        ],
+        {
+          repoRoot: '/tmp/vi-history-suite',
+          runner,
+          cleanupWindowsHostRuntimeSurface,
+          stdout: { write() {} }
+        }
+      )
+    ).resolves.toBe('pass');
+
+    expect(cleanupWindowsHostRuntimeSurface).not.toHaveBeenCalled();
   });
 
   it('fails closed on missing explicit runtime paths on the canonical Windows host', async () => {
@@ -327,6 +426,39 @@ describe('runHarnessReportSmokeCli', () => {
       )
     ).resolves.toBe(1);
     expect(stderrWrites).toEqual([expect.stringContaining('Unknown argument: --unknown-flag')]);
+  });
+
+  it('fails closed when Windows host runtime cleanup fails before proof execution', async () => {
+    const cleanupWindowsHostRuntimeSurface = vi
+      .fn()
+      .mockRejectedValue(new Error('cleanup failed'));
+    const runner = vi.fn();
+
+    await expect(
+      runHarnessReportSmokeCli(
+        [
+          '--platform',
+          'win32',
+          '--execution-mode',
+          'host-only',
+          '--selected-hash',
+          FULL_SELECTED_HASH,
+          '--base-hash',
+          FULL_BASE_HASH,
+          '--labview-cli-path',
+          WINDOWS_LABVIEW_CLI_PATH,
+          '--labview-exe-path',
+          WINDOWS_X64_LABVIEW_EXE_PATH
+        ],
+        {
+          repoRoot: '/tmp/vi-history-suite',
+          runner,
+          cleanupWindowsHostRuntimeSurface
+        }
+      )
+    ).rejects.toThrow('cleanup failed');
+
+    expect(runner).not.toHaveBeenCalled();
   });
 
   it('formats the report-smoke success output in a stable order', () => {

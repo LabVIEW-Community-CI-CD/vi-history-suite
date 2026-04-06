@@ -78,8 +78,9 @@ Adopt canonical experiment admission control for `PROGRAM-0003`.
 
 - more governed proof subcommands now reject ambiguous manual overrides that
   used to be tolerated
-- mixed x86/x64 explicit Windows bundles are now classified as experiment
-  contamination instead of being allowed to retain misleading blocker evidence
+- explicit Windows bundles that contradict the selected runtime bitness are
+  now classified as experiment contamination instead of being allowed to
+  retain misleading blocker evidence
 - operators must keep explicit runtime overrides coherent across more surfaces
 - documentation upkeep expands because the admission-control boundary is now a
   first-class product contract
