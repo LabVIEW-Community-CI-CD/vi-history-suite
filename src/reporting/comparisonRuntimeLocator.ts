@@ -63,6 +63,7 @@ export interface RuntimeProviderDecision {
 export interface ComparisonRuntimeSelection {
   platform: RuntimePlatform;
   executionMode?: RuntimeExecutionMode;
+  headlessRequested?: boolean;
   preferBitness: RuntimeBitnessPreference;
   provider: ComparisonRuntimeProvider;
   engine?: ComparisonRuntimeEngine;

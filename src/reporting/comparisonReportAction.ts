@@ -22,6 +22,7 @@ import { preflightComparisonReportRevisions } from './comparisonReportPreflight'
 export interface ComparisonReportActionRequest {
   model: ViHistoryViewModel;
   selectedHash: string;
+  headlessRequested?: boolean;
   reportProgress?: (update: { message: string; increment?: number }) => void | Promise<void>;
   cancellationToken?: vscode.CancellationToken;
 }
@@ -378,7 +379,10 @@ async function ensureComparisonReportEvidence(
     selectedHash: selectedCommit.hash,
     baseHash: selectedCommit.previousHash,
     preflight,
-    runtimeSelection
+    runtimeSelection: {
+      ...runtimeSelection,
+      headlessRequested: request.headlessRequested || runtimeSelection.headlessRequested
+    }
   });
   if (request.cancellationToken?.isCancellationRequested) {
     return buildCancelledComparisonReportResult('after-packet-persist', packet);

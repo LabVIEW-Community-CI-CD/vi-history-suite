@@ -9,6 +9,7 @@ import {
   buildPairEtaAccuracySample,
   DASHBOARD_PAIR_ETA_ACCURACY_FILENAME,
   deriveEstimatedPairSeconds,
+  formatEstimatedDuration,
   isDashboardPairEtaEligible,
   MultiReportDashboardEtaAccuracyRecord,
   MultiReportDashboardEtaAccuracySample
@@ -71,6 +72,7 @@ export interface MultiReportDashboardActionDeps {
   ensureComparisonReportEvidence?: (request: {
     model: ViHistoryViewModel;
     selectedHash: string;
+    headlessRequested?: boolean;
     reportProgress?: (update: { message: string; increment?: number }) => void | Promise<void>;
     cancellationToken?: vscode.CancellationToken;
   }) => Promise<ComparisonReportActionResult>;
@@ -103,6 +105,7 @@ const DEFAULT_DASHBOARD_PAIR_CONCENTRATION_INCREMENT_TOTAL = 70;
 const DASHBOARD_ASSET_INCREMENT_TOTAL = 10;
 const DASHBOARD_OPEN_INCREMENT = 15;
 const EXPECTED_COMPARISON_EVIDENCE_INCREMENT_TOTAL = 95;
+const DASHBOARD_PAIR_KEEPALIVE_INTERVAL_MS = 15000;
 export function createMultiReportDashboardAction(
   context: vscode.ExtensionContext,
   deps: MultiReportDashboardActionDeps = {},
@@ -246,10 +249,12 @@ export function createMultiReportDashboardAction(
           pairsNeedingEvidence.length,
           completedPairDurationsMs
         );
+        let lastPairStepMessage = 'Preparing retained comparison evidence.';
         const scaledPairProgress = async (update: {
           message: string;
           increment?: number;
         }): Promise<void> => {
+          lastPairStepMessage = update.message;
           const scaledIncrement =
             typeof update.increment === 'number' && update.increment > 0
               ? Math.min(
@@ -265,12 +270,31 @@ export function createMultiReportDashboardAction(
           });
         };
 
-        const result = await ensureComparisonReportEvidence({
-          model: request.model,
-          selectedHash: pair.selectedHash,
-          reportProgress: scaledPairProgress,
-          cancellationToken: request.cancellationToken
-        });
+        const keepaliveTimer = setInterval(() => {
+          const elapsedMs = Math.max(0, now() - pairStartMs);
+          void reportProgress({
+            message: buildDashboardPairKeepaliveMessage(
+              pairPrefix,
+              completedPairDurationsMs.length === 0,
+              lastPairStepMessage,
+              elapsedMs
+            )
+          });
+        }, DASHBOARD_PAIR_KEEPALIVE_INTERVAL_MS);
+        keepaliveTimer.unref?.();
+
+        let result: ComparisonReportActionResult;
+        try {
+          result = await ensureComparisonReportEvidence({
+            model: request.model,
+            selectedHash: pair.selectedHash,
+            headlessRequested: true,
+            reportProgress: scaledPairProgress,
+            cancellationToken: request.cancellationToken
+          });
+        } finally {
+          clearInterval(keepaliveTimer);
+        }
         if (result.outcome === 'cancelled') {
           return {
             outcome: 'cancelled',
@@ -1053,6 +1077,20 @@ function escapeHtml(value: string): string {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
+}
+
+function buildDashboardPairKeepaliveMessage(
+  pairPrefix: string,
+  etaCalibrationPending: boolean,
+  lastPairStepMessage: string,
+  elapsedMs: number
+): string {
+  const elapsedSeconds = Math.max(1, Math.ceil(elapsedMs / 1000));
+  const normalizedStep = lastPairStepMessage.trim().replace(/\.$/, '');
+  const calibrationNote = etaCalibrationPending ? 'first pair calibrates ETA; ' : '';
+  return `${pairPrefix}Still working; ${calibrationNote}elapsed ${formatEstimatedDuration(
+    elapsedSeconds
+  )}. Last step: ${normalizedStep}.`;
 }
 
 async function defaultPathExists(targetPath: string): Promise<boolean> {

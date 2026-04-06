@@ -46,6 +46,7 @@ export function buildComparisonReportExecutionPlan(
     const headlessRequested =
       record.runtimeSelection.platform === 'linux' ||
       record.runtimeSelection.provider === 'windows-container' ||
+      record.runtimeSelection.headlessRequested === true ||
       (record.runtimeSelection.platform === 'win32' &&
         process.env.LV_RTE_HEADLESS === '1');
     if (!labviewCliPath) {

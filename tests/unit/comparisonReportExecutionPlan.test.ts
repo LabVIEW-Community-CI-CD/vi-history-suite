@@ -220,6 +220,42 @@ describe('comparisonReportExecutionPlan', () => {
     });
   });
 
+  it('adds -Headless for native Windows LabVIEWCLI execution when the retained runtime request requires headless mode', () => {
+    const record = createBaseRecord();
+    record.runtimeSelection.headlessRequested = true;
+
+    const result = buildComparisonReportExecutionPlan(record);
+
+    expect(result).toEqual({
+      outcome: 'ready',
+      provider: 'host-native',
+      engine: 'labview-cli',
+      commandPlan: {
+        executable: 'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+        args: [
+          '-LogToConsole',
+          'TRUE',
+          '-OperationName',
+          'CreateComparisonReport',
+          '-VI1',
+          '/workspace/.storage/reports/repoid123456/fileid123456/staging/left-111111112222-foo.vi',
+          '-VI2',
+          '/workspace/.storage/reports/repoid123456/fileid123456/staging/right-abcdef123456-foo.vi',
+          '-ReportType',
+          'html',
+          '-ReportPath',
+          '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
+          '-LabVIEWPath',
+          'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
+          '-c',
+          '-o',
+          '-Headless',
+          'true'
+        ]
+      }
+    });
+  });
+
   it('adds -LabVIEWPath and -Headless for Linux LabVIEWCLI execution', () => {
     const record = createBaseRecord();
     record.runtimeSelection.platform = 'linux';

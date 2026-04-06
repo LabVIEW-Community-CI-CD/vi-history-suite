@@ -1357,6 +1357,14 @@
 - `TEST-UNIT-305`: verify the governed Windows benchmark-image Dockerfile and
   canonical-host proof runner no longer include `ExecutionPolicy Bypass` while
   still using the explicit full-path Windows PowerShell runtime surface
+- `TEST-UNIT-306`: verify `Open dashboard` requests headless retained pair
+  refresh on host-native Windows and emits periodic keepalive progress with
+  elapsed time plus the latest retained pair step while a refresh remains
+  in flight
+- `TEST-DOC-074`: review current-state, SRS, and RTM and confirm the
+  dashboard contract now states that host-native Windows pair refresh is
+  explicitly headless and that long-running pair refresh emits keepalive
+  progress instead of looking stalled at the current pair boundary
 - `TEST-DOC-070`: review current-state, harnesses, PROGRAM-0003, ISSUE-0408,
   and the comparable-prefix packet and confirm the repo documents the current
   Windows pair-129 ceiling as an accepted current-contract exception backed by
