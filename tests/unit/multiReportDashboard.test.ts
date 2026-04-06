@@ -554,6 +554,139 @@ describe('buildAndPersistMultiReportDashboard', () => {
     );
   });
 
+  it('renders overview images in grouped rows with Block Diagram before Front Panel', () => {
+    const html = renderMultiReportDashboardHtml({
+      generatedAt: '2026-04-03T05:06:07.000Z',
+      repositoryName: 'repo',
+      repositoryRoot: '/workspace/repo',
+      relativePath: 'foo.vi',
+      signature: 'LVIN',
+      artifactPlan: {
+        repoId: 'repoid123456',
+        fileId: 'fileid123456',
+        windowId: 'windowid12345',
+        dashboardDirectory: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345',
+        jsonFilePath: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.json',
+        htmlFilePath: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/dashboard.html',
+        assetsDirectory: '/workspace/.storage/dashboards/repoid123456/fileid123456/windowid12345/assets'
+      },
+      commitWindow: {
+        commitCount: 3,
+        pairCount: 1,
+        newestHash: 'abcdef1234567890',
+        oldestHash: '1111111122222222'
+      },
+      summary: {
+        representedPairCount: 1,
+        windowCompletenessState: 'complete',
+        archivedPairCount: 1,
+        missingPairCount: 0,
+        missingPairIds: [],
+        generatedReportCount: 1,
+        reportMetadataPairCount: 1,
+        failedPairCount: 0,
+        failedPairIds: [],
+        blockedPairCount: 0,
+        blockedPairIds: [],
+        overviewSectionCount: 2,
+        overviewImageCount: 2,
+        includedAttributeCount: 1,
+        detailSectionCount: 1,
+        detailItemCount: 1,
+        pairWithOverviewImageCount: 1,
+        pairWithDetailCount: 1,
+        providerSummaries: [],
+        overviewCaptionSummaries: [],
+        includedAttributeSummaries: [],
+        detailHeadingSummaries: [],
+        evidenceStateSummaries: []
+      },
+      entries: [
+        {
+          pairId: 'pair-1',
+          selectedHash: 'abcdef1234567890',
+          baseHash: '1111111122222222',
+          selectedAuthorDate: '2026-04-03T00:00:00Z',
+          selectedAuthorName: 'A User',
+          selectedSubject: 'Newest revision',
+          baseAuthorDate: '2026-04-02T00:00:00Z',
+          baseAuthorName: 'B User',
+          baseSubject: 'Base revision',
+          archiveStatus: 'archived',
+          archivePlan: {
+            repoId: 'repoid123456',
+            fileId: 'fileid123456',
+            pairId: 'pair-1',
+            archiveDirectory: '/workspace/archive',
+            packetDirectory: '/workspace/archive/packet',
+            packetFilePath: '/workspace/archive/packet/comparison-report-packet.json',
+            metadataFilePath: '/workspace/archive/packet/report-metadata.json',
+            reportFilePath: '/workspace/archive/packet/report.html',
+            assetsDirectory: '/workspace/archive/packet/assets',
+            sourceRecordFilePath: '/workspace/archive/packet/source-record.json'
+          },
+          pairEvidenceState: 'archived-generated-report',
+          generatedReportExists: true,
+          parsedReport: {
+            reportTitle: 'LabVIEW VI Comparison Report',
+            generationTime: '2026-04-03T05:06:07.000Z',
+            firstViPath: 'Base.vi',
+            secondViPath: 'Head.vi',
+            overviewSections: [
+              {
+                caption: 'Front Panel Overview',
+                images: [
+                  {
+                    position: 0,
+                    sourceRelativePath: 'fp.png',
+                    sourceFilePath: '/workspace/source/fp.png'
+                  }
+                ]
+              },
+              {
+                caption: 'Block Diagram Overview',
+                images: [
+                  {
+                    position: 0,
+                    sourceRelativePath: 'bd.png',
+                    sourceFilePath: '/workspace/source/bd.png'
+                  }
+                ]
+              }
+            ],
+            includedAttributes: [{ label: 'Block Diagram', included: true }],
+            detailSections: [{ heading: 'Detailed Information', items: ['Changed'] }],
+            overviewImageCount: 2,
+            detailItemCount: 1
+          },
+          dashboardImageAssets: [
+            {
+              caption: 'Front Panel Overview',
+              position: 0,
+              sourceFilePath: '/workspace/source/fp.png',
+              dashboardRelativePath: 'assets/pair-1/fp.png'
+            },
+            {
+              caption: 'Block Diagram Overview',
+              position: 0,
+              sourceFilePath: '/workspace/source/bd.png',
+              dashboardRelativePath: 'assets/pair-1/bd.png'
+            }
+          ],
+          artifactLinks: [],
+          overviewImageCount: 2,
+          detailItemCount: 1,
+          evidenceCount: 1
+        }
+      ]
+    });
+
+    expect(html).toContain('data-testid="dashboard-entry-overview-image-row"');
+    expect(html.indexOf('Block Diagram Overview</h4>')).toBeLessThan(
+      html.indexOf('Front Panel Overview</h4>')
+    );
+  });
+
   it('removes stale copied dashboard assets before rebuilding from retained archives', async () => {
     const storageRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-dashboard-refresh-'));
     tempRoots.push(storageRoot);

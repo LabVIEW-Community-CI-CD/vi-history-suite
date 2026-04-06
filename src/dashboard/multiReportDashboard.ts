@@ -497,23 +497,36 @@ export function renderMultiReportDashboardHtml(
             .join('')}</ul>`
         : '<div class="note" data-testid="dashboard-entry-overview-metadata">No retained overview image metadata is currently available for this pair.</div>';
       const overviewImagesHtml = entry.dashboardImageAssets.length
-        ? `<div class="image-grid" data-testid="dashboard-entry-overview-images">${entry.dashboardImageAssets
-            .map((image) => {
-              const absolutePath = path.join(
-                record.artifactPlan.dashboardDirectory,
-                image.dashboardRelativePath
-              );
-              const imageSource = options.assetUriResolver
-                ? options.assetUriResolver(absolutePath, image.dashboardRelativePath)
-                : image.dashboardRelativePath;
-              return `<figure class="overview-image">
-                <img src="${escapeHtml(imageSource)}" alt="${escapeHtml(
-                  `${image.caption} image ${image.position + 1}`
-                )}" />
-                <figcaption>${escapeHtml(image.caption)} · image ${escapeHtml(
-                  String(image.position + 1)
-                )}</figcaption>
-              </figure>`;
+        ? `<div class="overview-image-rows" data-testid="dashboard-entry-overview-images">${groupOverviewImageAssets(
+            entry.dashboardImageAssets
+          )
+            .map((group) => {
+              const groupImagesHtml = group.images
+                .map((image) => {
+                  const absolutePath = path.join(
+                    record.artifactPlan.dashboardDirectory,
+                    image.dashboardRelativePath
+                  );
+                  const imageSource = options.assetUriResolver
+                    ? options.assetUriResolver(absolutePath, image.dashboardRelativePath)
+                    : image.dashboardRelativePath;
+                  return `<figure class="overview-image image-card">
+                    <img src="${escapeHtml(imageSource)}" alt="${escapeHtml(
+                      `${image.caption} image ${image.position + 1}`
+                    )}" />
+                    <figcaption>${escapeHtml(image.caption)} · image ${escapeHtml(
+                      String(image.position + 1)
+                    )}</figcaption>
+                  </figure>`;
+                })
+                .join('');
+
+              return `<section class="overview-image-row" data-testid="dashboard-entry-overview-image-row" data-caption="${escapeHtml(
+                group.caption
+              )}">
+                <h4 class="overview-image-row-heading">${escapeHtml(group.caption)}</h4>
+                <div class="image-grid">${groupImagesHtml}</div>
+              </section>`;
             })
             .join('')}</div>`
         : '<div class="note" data-testid="dashboard-entry-overview-images">No retained overview images are currently concentrated for this pair.</div>';
@@ -623,6 +636,17 @@ export function renderMultiReportDashboardHtml(
         justify-content: space-between;
         gap: 16px;
         align-items: baseline;
+      }
+      .overview-image-rows {
+        display: grid;
+        gap: 16px;
+      }
+      .overview-image-row {
+        display: grid;
+        gap: 10px;
+      }
+      .overview-image-row-heading {
+        margin: 0;
       }
       .image-grid {
         display: grid;
@@ -836,6 +860,64 @@ function formatOverviewCaptionLedger(parsed: ParsedNiComparisonReport): string {
   return parsed.overviewSections
     .map((section) => `${section.caption} (${section.images.length} image(s))`)
     .join('; ');
+}
+
+function groupOverviewImageAssets(
+  assets: readonly MultiReportDashboardImageAsset[]
+): Array<{
+  caption: string;
+  images: MultiReportDashboardImageAsset[];
+}> {
+  const groups = new Map<
+    string,
+    {
+      caption: string;
+      originalOrder: number;
+      images: MultiReportDashboardImageAsset[];
+    }
+  >();
+
+  for (const [index, asset] of assets.entries()) {
+    const existing = groups.get(asset.caption);
+    if (existing) {
+      existing.images.push(asset);
+      continue;
+    }
+
+    groups.set(asset.caption, {
+      caption: asset.caption,
+      originalOrder: index,
+      images: [asset]
+    });
+  }
+
+  return [...groups.values()]
+    .sort((left, right) => {
+      const priorityDifference =
+        deriveOverviewCaptionPriority(left.caption) - deriveOverviewCaptionPriority(right.caption);
+      if (priorityDifference !== 0) {
+        return priorityDifference;
+      }
+
+      return left.originalOrder - right.originalOrder;
+    })
+    .map((group) => ({
+      caption: group.caption,
+      images: group.images.sort((left, right) => left.position - right.position)
+    }));
+}
+
+function deriveOverviewCaptionPriority(caption: string): number {
+  const normalized = caption.trim().toLowerCase();
+  if (normalized === 'block diagram overview') {
+    return 0;
+  }
+
+  if (normalized === 'front panel overview') {
+    return 1;
+  }
+
+  return 2;
 }
 
 function formatAttributeLedger(parsed: ParsedNiComparisonReport, included: boolean): string {

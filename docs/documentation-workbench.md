@@ -49,7 +49,8 @@ docker run --rm -it \
   bash
 ```
 
-Refresh the packaged bundled user docs from the current published wiki set:
+Refresh the packaged bundled user docs from the current curated extension-user
+subset of the published wiki set:
 
 ```bash
 npm run docs:bundle
@@ -200,6 +201,12 @@ The bundled user-doc surface is refreshed separately from the gate:
 - output:
   - `resources/bundled-docs/manifest.json`
   - `resources/bundled-docs/pages/*.html`
+
+That packaged bundle is intentionally a curated installed-user guide, not a
+mirror of every published wiki/control-plane page. The bundle now keeps only
+the extension-user pages, trims them to developer-relevant installed-user
+sections, and strips private GitLab plus standards/control-plane authority-link
+sections before packaging the HTML shipped inside the VSIX.
 
 Run it directly on the host only when the required tooling is available:
 

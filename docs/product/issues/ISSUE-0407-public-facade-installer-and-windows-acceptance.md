@@ -61,7 +61,8 @@ Current landed scaffold state:
   note on the updated installed bundle now says `Open compare` is still not
   enabled in the history Actions column after `Open dashboard` completed for
   `Tooling/deployment/VIP_Post-Install Custom Action.vi`
-- the retained failed-review set is cumulative on that same canonical VI:
+- the retained failed-review set is cumulative historical evidence on that
+  same canonical VI:
   `2026-04-06T06:09:14.016Z` recorded dashboard/review UX debt (`"Open compare"`
   for every pair, two-row overview image layout, and Review Note persistence),
   `2026-04-06T06:10:46.758Z` recorded private GitLab links in extension-user
@@ -76,9 +77,15 @@ Current landed scaffold state:
   seam: after `Open dashboard` completes, the history panel recomputes
   retained pair evidence availability and rerenders the Actions column so
   newly retained pairs can truthfully enable `Open compare`
-- that newest installed-bundle rerun is now the active Gate D truth, so this
-  issue remains open on cumulative extension-user documentation coherence and
-  dashboard UX debt rather than the earlier runtime-stall seam alone
+- the authority repo now also carries repo-side retirement for the remaining
+  additive blocker set: overview images are grouped into caption rows with
+  `Block Diagram Overview` before `Front Panel Overview`, unsubmitted Review
+  Note draft state persists across tab switches until successful submission,
+  and the bundled installed-user docs are now a concise curated extension-user
+  guide that omits private GitLab plus SRS/RTM authority-link exposure
+- this issue therefore remains open only until a fresh manual rerun on the
+  updated installed bundle proves that the installed product matches those
+  repo-side retirements
 - the authority repo still mirrors a GitHub Linux benchmark lane into the
   private `vi-history-suite-source-experiments` repo, but that mirror is now
   documented as benchmark only and belongs to the queued benchmark-proof lane

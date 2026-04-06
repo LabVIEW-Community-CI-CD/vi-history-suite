@@ -1,43 +1,12 @@
 <h1>Review Scenarios And Decision Records</h1>
-<p>This page is derived from governed repository documentation, not from source
-code. The current authority surfaces for this page are:</p>
-<ul>
-<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/review-scenarios.md"><code>docs/product/review-scenarios.md</code></a></li>
-<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/decision-record-template.md"><code>docs/product/decision-record-template.md</code></a></li>
-<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/requirements/srs.md"><code>docs/requirements/srs.md</code></a></li>
-<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/testing/test-plan.md"><code>docs/testing/test-plan.md</code></a></li>
-<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/current-state.md"><code>docs/product/current-state.md</code></a></li>
-</ul>
 <h2>Purpose</h2>
-<p><code>vi-history-suite</code> treats the multi-report dashboard as a decision-support
-surface, not as an automated decision-maker.</p>
-<p>The review-scenario and decision-record layer exists so a human reviewer can:</p>
+<p><code>vi-history-suite</code> treats the multi-report dashboard as decision support, not as an automated decision-maker.</p>
+<p>This layer exists so a human reviewer can:</p>
 <ul>
-<li>apply a bounded review scenario to one VI across multiple commits</li>
+<li>apply a bounded review workflow to one VI across multiple commits</li>
 <li>use retained dashboard evidence as the basis for judgment</li>
 <li>persist a separate human decision record without mutating machine evidence</li>
 </ul>
-<h2>Scenario Model</h2>
-<p>The repo currently defines scenario maturity explicitly:</p>
-<ul>
-<li><code>draft</code>: modeled but not yet exercised by a governed harness or packet</li>
-<li><code>active</code>: queued or partially implemented with a named harness and packet</li>
-<li><code>certified</code>: supported by governed evidence and ready for routine human use</li>
-</ul>
-<h2>Canonical Active Scenario</h2>
-<p>The currently active canonical scenario is:</p>
-<ul>
-<li><code>SCENARIO-VHS-001</code></li>
-<li>maturity: <code>active</code></li>
-<li>harness: <code>HARNESS-VHS-001</code></li>
-<li>repository: <code>ni/labview-icon-editor</code></li>
-<li>VI target: <code>Tooling/deployment/VIP_Pre-Install Custom Action.vi</code></li>
-<li>minimum commit window: <code>3</code></li>
-<li>minimum comparison pairs: <code>2</code></li>
-</ul>
-<p>Its decision goal is to help a human reviewer make a bounded decision about one
-VI after multiple modifications using concentrated comparison-report evidence,
-instead of relying on a single pairwise report or a raw commit list.</p>
 <h2>Human Decision Boundary</h2>
 <p>The dashboard may improve human review decisions, but it does not decide VI
 correctness automatically.</p>
@@ -49,52 +18,21 @@ correctness automatically.</p>
 </ul>
 <h2>Decision Record Contract</h2>
 <p>Decision records are intentionally separate from dashboard packets.</p>
-<p>The governed decision-record template currently retains:</p>
+<p>A retained decision record keeps:</p>
 <ul>
-<li>scenario metadata</li>
-<li>harness and repository identity</li>
-<li>VI path</li>
-<li>commit-window bounds</li>
-<li>comparison-pair coverage</li>
+<li>scenario and repository context</li>
+<li>VI path and commit-window bounds</li>
 <li>dashboard packet path</li>
-<li>reviewer identity</li>
-<li>review question</li>
-<li>evidence used</li>
-<li>reviewer outcome</li>
-<li>reviewer confidence</li>
-<li>rationale</li>
-<li>follow-up actions</li>
+<li>reviewer outcome and confidence</li>
+<li>rationale and follow-up actions</li>
 </ul>
-<p>This separation keeps machine-retained evidence and human judgment from being
-collapsed into one artifact.</p>
+<p>This separation keeps machine-retained evidence and human judgment from being collapsed into one artifact.</p>
 <h2>Extension Flow</h2>
-<p>The extension currently exposes <code>Create decision record</code> when the retained VI
-review window is large enough.</p>
-<p>The current governed flow:</p>
+<p>The extension exposes <code>Create decision record</code> when the retained review window is large enough.</p>
+<p>The current flow:</p>
 <ul>
 <li>requires at least three commits in the retained window</li>
-<li>derives the active scenario from repository URL plus VI path</li>
-<li>fails closed when trust, storage, repository URL, scenario match, or scenario
-contract requirements are not satisfied</li>
+<li>uses the active review context from the current VI and history window</li>
 <li>persists separate <code>decision-record.json</code> and <code>decision-record.md</code> artifacts</li>
-<li>opens the retained Markdown decision record without mutating the dashboard
-packet</li>
-</ul>
-<h2>Future Scenario Direction</h2>
-<p>The next modeled scenario direction is:</p>
-<ul>
-<li><code>SCENARIO-VHS-002</code></li>
-<li>maturity: <code>draft</code></li>
-<li>focus: high-volume open-source VI review where one VI has many retained
-modifications and the dashboard must reduce reviewer wear from too many
-individual pairwise reports</li>
-</ul>
-<p>That future path is intended to keep the review surface bounded while making
-larger commit windows more manageable for expert LabVIEW users.</p>
-<h2>Read Next</h2>
-<ul>
-<li><a href="#" data-page-id="comparison-reports-and-dashboard-review">Comparison Reports And Dashboard Review</a></li>
-<li><a href="#" data-page-id="user-workflow">User Workflow</a></li>
-<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/current-state.md">Current State</a></li>
-<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/review-scenarios.md">Review Scenarios</a></li>
+<li>opens the retained Markdown decision record without mutating the dashboard packet</li>
 </ul>

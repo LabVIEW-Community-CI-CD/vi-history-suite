@@ -25,9 +25,8 @@ The primary public surface is now a release kit, not an installer product.
 - the latest retained human review on April 6, 2026 is still authoritative
   historical evidence: on the updated installed bundle,
   `Tooling/deployment/VIP_Post-Install Custom Action.vi` now surfaces a
-  remaining cumulative extension-user documentation and dashboard UX blocker
-  set instead of the earlier runtime stall alone
-- the cumulative retained failed-review package now includes:
+  failed Gate D review package instead of the earlier runtime stall alone
+- the cumulative retained failed-review package historically included:
   `"Open compare"` on every pair, two-row overview image layout, Review Note
   persistence across tab switches, no private GitLab links in extension-user
   docs, no exposed SRS/RTM trade-secret surfaces in extension-user docs, and
@@ -36,12 +35,14 @@ The primary public surface is now a release kit, not an installer product.
   remained disabled in the Actions column after `Open dashboard` completed
 - the latest retained review note now adds: `Open compare under the Actions
   column is not enabled after the Open dashboard has completed.`
-- the authority repo now carries a repo-side fix for that stale Actions-column
-  seam, but Gate D stays open until the updated installed bundle is rerun on
-  the canonical host-machine review path
-- the next gate-closing proof must retire that cumulative dashboard/documentation
-  blocker set and then rerun the manual right-click path on the same updated
-  installed bundle
+- the authority repo now carries repo-side fixes for that full cumulative
+  blocker package: the stale Actions-column seam, the two-row overview-image
+  layout, Review Note draft persistence across tab switches, and a curated
+  installed-user documentation bundle that strips private GitLab plus
+  SRS/RTM authority-link exposure
+- Gate D therefore remains open only until the updated installed bundle is
+  rerun on the canonical host-machine review path and proves that the
+  cumulative repo-side blocker retirement also holds in the installed product
 
 ## Trigger
 
@@ -273,14 +274,13 @@ Current first slice:
   `Tooling/deployment/VIP_Post-Install Custom Action.vi` still left
   `Open compare` disabled in the history Actions column after `Open dashboard`
   completed
-- the retained failed-review set is cumulative on that same canonical VI:
-  the earlier retained reviews still hold the two-row overview image layout,
-  Review Note persistence, private GitLab link exposure, SRS/RTM exposure, and
-  broader extension-user documentation-coherence findings open too
-- the authority repo now carries a repo-side fix for that stale
-  `Open dashboard` -> `Open compare` Actions-column seam
-- Gate D therefore remains open on the cumulative dashboard/documentation
-  blocker set rather than on the older runtime-stall seam
+- the retained failed-review set remains cumulative historical evidence on
+  that same canonical VI, but the authority repo now carries repo-side fixes
+  for the stale `Open dashboard` -> `Open compare` seam, the two-row overview
+  layout, Review Note draft persistence, and the concise curated installed-user
+  docs contract
+- Gate D therefore remains open only on a fresh installed-bundle rerun of the
+  manual right-click path rather than on an unimplemented repo-side blocker set
 
 ### Gate E: Public Support Surface
 
@@ -343,10 +343,14 @@ The public facade repo now retains:
   the corrected retained note now records explicit front-facing UX issues on
   `Tooling/deployment/VIP_Post-Install Custom Action.vi` rather than the older
   pair-`1/23` stall
-- the updated installed bundle has therefore changed the current Gate D truth:
-  the next required proof is UI retirement for the missing per-pair
-  `"Open compare"` action, the overview-image layout, and Review Note
-  persistence, followed by another manual rerun
+- the authority repo now carries repo-side retirement for the additive Gate D
+  blocker package: per-pair `Open compare` enablement after dashboard
+  completion, grouped overview-image rows with `Block Diagram Overview` before
+  `Front Panel Overview`, Review Note draft persistence until successful
+  submission, and a concise curated installed-user documentation bundle that
+  omits private GitLab plus SRS/RTM authority-link exposure
+- the next required proof is therefore a fresh manual rerun on the updated
+  installed bundle from the deterministic local fixture workspace
 
 The program still intentionally holds these gates open:
 

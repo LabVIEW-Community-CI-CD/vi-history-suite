@@ -1,7 +1,8 @@
 {
-  "generatedAt": "2026-04-06T06:25:08.102Z",
+  "generatedAt": "2026-04-06T06:49:05.444Z",
   "sourceLedgerPath": "docs/product/wiki-publication-ledger.json",
   "sourceWikiRepoPath": "../vi-history-suite.wiki",
+  "bundleAudience": "extension-users",
   "defaultPageId": "overview",
   "pages": [
     {
@@ -48,114 +49,6 @@
       "htmlFileName": "review-scenarios-and-decision-records.html",
       "publishedDate": "2026-04-03",
       "wikiCommit": "5c1d3ef"
-    },
-    {
-      "id": "architecture",
-      "title": "Architecture",
-      "wikiPath": "Architecture",
-      "wikiFileName": "Architecture.md",
-      "htmlFileName": "architecture.html",
-      "publishedDate": "2026-04-05",
-      "wikiCommit": "f82f46c"
-    },
-    {
-      "id": "documentation-workbench",
-      "title": "Documentation Workbench",
-      "wikiPath": "Documentation-Workbench",
-      "wikiFileName": "Documentation-Workbench.md",
-      "htmlFileName": "documentation-workbench.html",
-      "publishedDate": "2026-04-05",
-      "wikiCommit": "546f2d2"
-    },
-    {
-      "id": "program-repo-jump",
-      "title": "Program Repo Jump",
-      "wikiPath": "Program-Repo-Jump",
-      "wikiFileName": "Program-Repo-Jump.md",
-      "htmlFileName": "program-repo-jump.html",
-      "publishedDate": "2026-04-04",
-      "wikiCommit": "b16a5d3"
-    },
-    {
-      "id": "documentation-coherence-ledger",
-      "title": "Documentation Coherence Ledger",
-      "wikiPath": "Documentation-Coherence-Ledger",
-      "wikiFileName": "Documentation-Coherence-Ledger.md",
-      "htmlFileName": "documentation-coherence-ledger.html",
-      "publishedDate": "2026-04-04",
-      "wikiCommit": "b205d10"
-    },
-    {
-      "id": "current-state",
-      "title": "Current State",
-      "wikiPath": "Current-State",
-      "wikiFileName": "Current-State.md",
-      "htmlFileName": "current-state.html",
-      "publishedDate": "2026-04-05",
-      "wikiCommit": "059e55d"
-    },
-    {
-      "id": "wiki-authority-map",
-      "title": "Wiki Authority Map",
-      "wikiPath": "Wiki-Authority-Map",
-      "wikiFileName": "Wiki-Authority-Map.md",
-      "htmlFileName": "wiki-authority-map.html",
-      "publishedDate": "2026-04-05",
-      "wikiCommit": "546f2d2"
-    },
-    {
-      "id": "development-queue",
-      "title": "Development Queue",
-      "wikiPath": "Development-Queue",
-      "wikiFileName": "Development-Queue.md",
-      "htmlFileName": "development-queue.html",
-      "publishedDate": "2026-04-05",
-      "wikiCommit": "0b5b84e"
-    },
-    {
-      "id": "blocker-ledger",
-      "title": "Blocker Ledger",
-      "wikiPath": "Blocker-Ledger",
-      "wikiFileName": "Blocker-Ledger.md",
-      "htmlFileName": "blocker-ledger.html",
-      "publishedDate": "2026-04-04",
-      "wikiCommit": "3e80690"
-    },
-    {
-      "id": "requirements-and-verification",
-      "title": "Requirements And Verification",
-      "wikiPath": "Requirements-And-Verification",
-      "wikiFileName": "Requirements-And-Verification.md",
-      "htmlFileName": "requirements-and-verification.html",
-      "publishedDate": "2026-04-05",
-      "wikiCommit": "156d88a"
-    },
-    {
-      "id": "architecture-decision-records",
-      "title": "Architecture Decision Records",
-      "wikiPath": "Architecture-Decision-Records",
-      "wikiFileName": "Architecture-Decision-Records.md",
-      "htmlFileName": "architecture-decision-records.html",
-      "publishedDate": "2026-04-05",
-      "wikiCommit": "156d88a"
-    },
-    {
-      "id": "debt-retirement-contract",
-      "title": "Debt Retirement Contract",
-      "wikiPath": "Debt-Retirement-Contract",
-      "wikiFileName": "Debt-Retirement-Contract.md",
-      "htmlFileName": "debt-retirement-contract.html",
-      "publishedDate": "2026-04-05",
-      "wikiCommit": "2a24eea"
-    },
-    {
-      "id": "debt-ledger",
-      "title": "Debt Ledger",
-      "wikiPath": "Debt-Ledger",
-      "wikiFileName": "Debt-Ledger.md",
-      "htmlFileName": "debt-ledger.html",
-      "publishedDate": "2026-04-05",
-      "wikiCommit": "4bdb01b"
     }
   ]
 }

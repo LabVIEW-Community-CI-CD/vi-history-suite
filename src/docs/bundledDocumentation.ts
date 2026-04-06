@@ -16,6 +16,7 @@ export interface BundledDocumentationManifest {
   generatedAt: string;
   sourceLedgerPath: string;
   sourceWikiRepoPath: string;
+  bundleAudience?: string;
   defaultPageId: string;
   pages: BundledDocumentationPage[];
 }

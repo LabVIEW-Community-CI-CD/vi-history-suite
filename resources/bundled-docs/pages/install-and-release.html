@@ -1,14 +1,4 @@
 <h1>Install And Release</h1>
-<p>This page is derived from governed repository documentation, not from source
-code. The current authority surfaces for this page are:</p>
-<ul>
-<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/release-procedure.md"><code>docs/release-procedure.md</code></a></li>
-<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/release-readiness-matrix.json"><code>docs/product/release-readiness-matrix.json</code></a></li>
-<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/README.md"><code>README.md</code></a></li>
-<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/blocker-ledger.json"><code>docs/product/blocker-ledger.json</code></a></li>
-<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/post-release-sustainment-rules.md"><code>docs/product/post-release-sustainment-rules.md</code></a></li>
-<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/post-release-sustainment-rules.json"><code>docs/product/post-release-sustainment-rules.json</code></a></li>
-</ul>
 <h2>Current Release Target</h2>
 <ul>
 <li>Target release: <code>v0.2.0</code></li>
@@ -17,74 +7,20 @@ code. The current authority surfaces for this page are:</p>
 <li>Target release manifest: <code>release-evidence/release-manifest.json</code></li>
 </ul>
 <h2>Install Surfaces</h2>
-<p>Current install and packaging paths are:</p>
+<p>Use one of these installed-user surfaces:</p>
 <ul>
 <li>preview VSIX artifact from the latest successful <code>main</code> pipeline</li>
 <li>local package output via <code>npm run package</code></li>
-<li>governed tagged release artifact under <code>release-evidence/</code></li>
-<li>packaged bundled user docs surfaced through
-<code>VI History: Open Documentation</code> and the history-panel <code>Open docs</code> action</li>
+<li>tagged release VSIX for exact-version installs</li>
+<li>packaged bundled docs through <code>VI History: Open Documentation</code> or the history-panel <code>Open docs</code> action</li>
 </ul>
-<p>The preview VSIX is the current install surface for extension-user testing.
-The tagged release artifact is the current governed exact-version install
-surface.</p>
-<p>The still-open Windows 11 human closeout gate is narrower than those package
-surfaces:</p>
-<ul>
-<li>Sergio Velderrain remains the sole named maintainer gate owner</li>
-<li>the manual right-click pass must run from the deterministic local fixture
-workspace rather than a OneDrive-backed synced clone</li>
-<li>the governed Windows benchmark-image helper surfaces respect the active
-PowerShell execution policy instead of using <code>ExecutionPolicy Bypass</code></li>
-</ul>
-<h2>Sustainment Release Cadence</h2>
-<p>The active post-release lane now treats release refresh as event-driven repo
-truth, not as a standing calendar promise.</p>
-<p>That means release surfaces are refreshed when:</p>
-<ul>
-<li><code>package.json</code> version changes</li>
-<li>SemVer tag or release-manifest contract changes</li>
-<li>public release-kit assets or setup/support guidance must follow the exact
-released VSIX</li>
-<li>the release procedure or docs-workbench publication contract changes</li>
-</ul>
-<p>It does not reopen release refresh just because benchmark-only diagnosis or
-unrelated docs notes changed.</p>
+<p>After installing or updating the VSIX, reload VS Code before running the review flow.</p>
 <h2>Release Procedure Summary</h2>
-<p>The current governed release flow is:</p>
+<p>Use the preview VSIX for iteration or the tagged release VSIX when you need the exact released build.</p>
+<p>Quick verification flow:</p>
 <ol>
-<li>keep <code>main</code> in a governed baseline state</li>
-<li>ensure <code>package.json</code> matches the <code>vX.Y.Z</code> tag exactly</li>
-<li>let GitLab CI run compile, tests, coverage, and VSIX packaging</li>
-<li>retain release evidence under <code>release-evidence/</code></li>
-<li>review the release record and machine-readable manifest before downstream
-distribution</li>
+<li>install the selected VSIX</li>
+<li>reload VS Code</li>
+<li>open <code>VI History</code> on an eligible VI inside a trusted Git workspace</li>
+<li>use <code>Open docs</code> if you need the version-matched installed guide</li>
 </ol>
-<h2>Retained Evidence</h2>
-<p>The governed release lane is expected to retain:</p>
-<ul>
-<li><code>preview-evidence/vi-history-suite-&lt;version&gt;.vsix</code></li>
-<li><code>preview-evidence/preview-manifest.json</code></li>
-<li><code>release-evidence/vi-history-suite-&lt;version&gt;.vsix</code></li>
-<li><code>release-evidence/vi-history-suite-&lt;version&gt;.vsix.sha256</code></li>
-<li><code>release-evidence/release-record.md</code></li>
-<li><code>release-evidence/release-manifest.json</code></li>
-<li><code>docs-workbench-evidence/docs-workbench-manifest.json</code></li>
-<li>packaged bundled-doc metadata under <code>resources/bundled-docs/manifest.json</code></li>
-</ul>
-<h2>Release Status</h2>
-<p>The first governed exact-version release is now retained:</p>
-<ul>
-<li>GitLab release: <code>v0.2.0</code></li>
-<li>tag pipeline: <code>2428809456</code></li>
-<li>kept release job: <code>13779604462</code></li>
-<li>retained VSIX artifact: <code>release-evidence/vi-history-suite-0.2.0.vsix</code></li>
-<li>retained manifest: <code>release-evidence/release-manifest.json</code></li>
-</ul>
-<h2>Read Next</h2>
-<ul>
-<li><a href="#" data-page-id="overview">Home</a></li>
-<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/README.md">Repository README</a></li>
-<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/release-procedure.md">Release Procedure</a></li>
-<li><a href="#" data-external-href="https://gitlab.com/svelderrainruiz/vi-history-suite/-/blob/main/docs/product/release-readiness-matrix.json">Release Readiness Matrix</a></li>
-</ul>

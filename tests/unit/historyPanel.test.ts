@@ -147,6 +147,11 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain(
       'No compare action from this panel has retained provider or acquisition truth yet.'
     );
+    expect(html).toContain('let panelState = vscode.getState() ?? {};');
+    expect(html).toContain('hostReviewDraft');
+    expect(html).toContain('persistHostReviewDraft');
+    expect(html).toContain('clearHostReviewDraft');
+    expect(html).toContain("message.status === 'success'");
     expect(html).toContain("message.type === 'comparisonRuntimeProgress'");
     expect(html).toContain("message.type === 'comparisonRuntimeResult'");
   });

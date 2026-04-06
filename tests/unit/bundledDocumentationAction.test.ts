@@ -161,17 +161,18 @@ describe('bundledDocumentationAction', () => {
           pages: []
         },
         page: {
-          id: 'architecture',
-          title: 'Architecture',
-          wikiPath: 'Architecture',
-          wikiFileName: 'Architecture.md',
-          htmlFileName: 'architecture.html',
+          id: 'comparison-reports-and-dashboard-review',
+          title: 'Comparison Reports And Dashboard Review',
+          wikiPath: 'Comparison-Reports-And-Dashboard-Review',
+          wikiFileName: 'Comparison-Reports-And-Dashboard-Review.md',
+          htmlFileName: 'comparison-reports-and-dashboard-review.html',
           publishedDate: '2026-04-03',
           wikiCommit: 'd3d4be6'
         },
         manifestFilePath: '/workspace/ext/resources/bundled-docs/manifest.json',
-        pageFilePath: '/workspace/ext/resources/bundled-docs/pages/architecture.html',
-        pageBodyHtml: '<h1>Architecture</h1>'
+        pageFilePath:
+          '/workspace/ext/resources/bundled-docs/pages/comparison-reports-and-dashboard-review.html',
+        pageBodyHtml: '<h1>Comparison Reports And Dashboard Review</h1>'
       })
       .mockResolvedValueOnce({
         manifest: {
@@ -225,15 +226,15 @@ describe('bundledDocumentationAction', () => {
 
     await panel.__dispatchMessage({
       command: 'openPage',
-      pageId: 'architecture'
+      pageId: 'comparison-reports-and-dashboard-review'
     });
 
     expect(panel.reveal).toHaveBeenCalledTimes(1);
-    expect(panel.webview.html).toContain('data-page-title="Architecture"');
+    expect(panel.webview.html).toContain('data-page-title="Comparison Reports And Dashboard Review"');
     expect(tracker.getDocumentationOpenCount()).toBe(2);
     expect(tracker.getLastOpenedDocumentationPanel()).toMatchObject({
-      pageId: 'architecture',
-      pageTitle: 'Architecture'
+      pageId: 'comparison-reports-and-dashboard-review',
+      pageTitle: 'Comparison Reports And Dashboard Review'
     });
 
     await panel.__dispatchMessage({

@@ -1369,6 +1369,18 @@
   pair evidence from governed proof manifests into the active workspace archive
   contract and then concentrate that retained set without launching local pair
   refresh
+- `TEST-UNIT-308`: verify the history-panel host-review draft persists the
+  selected outcome, confidence, and Review Note across tab switches or webview
+  rerenders and clears that retained draft only after a successful host-review
+  submission result
+- `TEST-UNIT-309`: verify bundled installed-user docs are a curated
+  extension-user subset of the published wiki set, strip authority-link
+  preambles plus private GitLab and SRS/RTM references from the shipped HTML,
+  keep only developer-relevant installed-user sections, and keep navigation
+  only across the bundled page set
+- `TEST-UNIT-310`: verify concentrated dashboard overview images render in
+  grouped rows and order `Block Diagram Overview` ahead of
+  `Front Panel Overview` when both exist for one pair
 - `TEST-DOC-074`: review current-state, SRS, and RTM and confirm the
   dashboard contract now states that host-native Windows pair refresh is
   explicitly headless and that long-running pair refresh emits keepalive
@@ -1377,6 +1389,12 @@
   RTM and confirm the host-review dashboard contract now says governed retained
   dashboard evidence is seeded before any local refresh, while Gate D remains
   open until the updated installed bundle is rerun by Sergio Velderrain
+- `TEST-DOC-076`: review current-state, PROGRAM-0002, ISSUE-0407,
+  documentation-workbench, SRS, and RTM and confirm the remaining Gate D
+  repo-owned fixes now include Review Note draft persistence, two-row overview
+  images with block-diagram-first ordering, and a curated bundled installed-user
+  guide with no private GitLab or SRS/RTM exposure, while the human gate still
+  remains open pending a rerun on the updated installed bundle
 - `TEST-DOC-070`: review current-state, harnesses, PROGRAM-0003, ISSUE-0408,
   and the comparable-prefix packet and confirm the repo documents the current
   Windows pair-129 ceiling as an accepted current-contract exception backed by

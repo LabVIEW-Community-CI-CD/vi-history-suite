@@ -299,6 +299,55 @@ export function renderHistoryPanelHtml(
     </table>
     <script>
       const vscode = acquireVsCodeApi();
+      let panelState = vscode.getState() ?? {};
+      function readHostReviewDraft() {
+        const draft = panelState.hostReviewDraft;
+        if (!draft || typeof draft !== 'object') {
+          return {};
+        }
+
+        return draft;
+      }
+      function persistHostReviewDraft() {
+        const outcome = document.getElementById('host-review-outcome');
+        const confidence = document.getElementById('host-review-confidence');
+        const note = document.getElementById('host-review-note');
+        panelState = {
+          ...panelState,
+          hostReviewDraft: {
+            outcome: outcome instanceof HTMLSelectElement ? outcome.value : '',
+            confidence: confidence instanceof HTMLSelectElement ? confidence.value : '',
+            note: note instanceof HTMLTextAreaElement ? note.value : ''
+          }
+        };
+        vscode.setState(panelState);
+      }
+      function clearHostReviewDraft() {
+        panelState = {
+          ...panelState,
+          hostReviewDraft: undefined
+        };
+        vscode.setState(panelState);
+      }
+      function restoreHostReviewDraft() {
+        const draft = readHostReviewDraft();
+        const outcome = document.getElementById('host-review-outcome');
+        const confidence = document.getElementById('host-review-confidence');
+        const note = document.getElementById('host-review-note');
+
+        if (outcome instanceof HTMLSelectElement && typeof draft.outcome === 'string') {
+          outcome.value = draft.outcome;
+        }
+        if (confidence instanceof HTMLSelectElement && typeof draft.confidence === 'string') {
+          confidence.value = draft.confidence;
+        }
+        if (note instanceof HTMLTextAreaElement && typeof draft.note === 'string') {
+          note.value = draft.note;
+        }
+      }
+
+      restoreHostReviewDraft();
+
       window.addEventListener('message', (event) => {
         const message = event.data;
         if (!message) {
@@ -361,6 +410,47 @@ export function renderHistoryPanelHtml(
         if (submitButton instanceof HTMLButtonElement) {
           submitButton.disabled = false;
         }
+        if (message.status === 'success') {
+          const outcome = document.getElementById('host-review-outcome');
+          const confidence = document.getElementById('host-review-confidence');
+          const note = document.getElementById('host-review-note');
+          if (outcome instanceof HTMLSelectElement) {
+            outcome.value = '';
+          }
+          if (confidence instanceof HTMLSelectElement) {
+            confidence.value = '';
+          }
+          if (note instanceof HTMLTextAreaElement) {
+            note.value = '';
+          }
+          clearHostReviewDraft();
+        }
+      });
+      document.addEventListener('input', (event) => {
+        const target = event.target;
+        if (
+          !(target instanceof HTMLTextAreaElement) ||
+          target.id !== 'host-review-note'
+        ) {
+          return;
+        }
+
+        persistHostReviewDraft();
+      });
+      document.addEventListener('change', (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) {
+          return;
+        }
+
+        if (
+          target.id !== 'host-review-outcome' &&
+          target.id !== 'host-review-confidence'
+        ) {
+          return;
+        }
+
+        persistHostReviewDraft();
       });
       document.addEventListener('click', (event) => {
         const target = event.target;
