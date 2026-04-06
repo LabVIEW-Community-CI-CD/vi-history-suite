@@ -103,6 +103,11 @@ export interface WindowsHostOperationMatrixReport {
   results: WindowsHostOperationMatrixCaseResult[];
 }
 
+interface WindowsHostOperationMatrixTrancheGateState {
+  gateX86OnPriorX64: boolean;
+  x64TrancheFailed: boolean;
+}
+
 export interface WindowsHostOperationMatrixCliDeps {
   repoRoot?: string;
   mkdir?: typeof fs.mkdir;
@@ -264,7 +269,7 @@ export function buildWindowsHostOperationMatrixCases(
     args.operation === 'all'
       ? [...REQUIRED_INSTALLED_OPERATIONS, ...REPO_SUPPLIED_ADDITIONAL_OPERATIONS]
       : [args.operation];
-  const bitnesses = args.bitness === 'all' ? (['x86', 'x64'] as const) : [args.bitness];
+  const bitnesses = args.bitness === 'all' ? (['x64', 'x86'] as const) : [args.bitness];
   const sessionStates =
     args.sessionState === 'all' ? (['cold', 'warm-headless'] as const) : [args.sessionState];
   const additionalOperationDirectoryWindowsPath = toWindowsPath(args.additionalOperationDirectory);
@@ -395,6 +400,10 @@ export async function runWindowsHostOperationMatrixCli(
   );
 
   const results: WindowsHostOperationMatrixCaseResult[] = [];
+  const trancheGateState: WindowsHostOperationMatrixTrancheGateState = {
+    gateX86OnPriorX64: args.bitness === 'all',
+    x64TrancheFailed: false
+  };
   for (const testCase of buildWindowsHostOperationMatrixCases(args)) {
     const caseId = `${testCase.operation}-${testCase.bitness}-${testCase.sessionState}`;
     const stdoutFilePath = path.join(reportRoot, `${caseId}.stdout.txt`);
@@ -411,6 +420,30 @@ export async function runWindowsHostOperationMatrixCli(
     const commandArgs = testCase.args
       ? appendLabviewCliPortNumberArg(testCase.args, tcpSettings.labviewTcpPort)
       : undefined;
+
+    if (shouldGateX86CaseBehindX64Tranche(testCase, trancheGateState)) {
+      results.push({
+        operation: testCase.operation,
+        bitness: testCase.bitness,
+        sessionState: testCase.sessionState,
+        labviewExePath: testCase.labviewExePath,
+        labviewIniPath: tcpSettings.labviewIniPath,
+        labviewTcpPort: tcpSettings.labviewTcpPort,
+        tcpSettingsNotes: [
+          ...tcpSettings.notes,
+          'The x86 tranche stays gated until the earlier x64 tranche completes cleanly in the same governed matrix run.'
+        ],
+        executionMode: testCase.executionMode,
+        status: 'gated',
+        blockedReason: 'x64-tranche-did-not-complete-cleanly',
+        preRunObservation,
+        preRunCleanupApplied,
+        postPreRunCleanupObservation,
+        sessionPreparationObservation,
+        postRunCleanupApplied
+      });
+      continue;
+    }
 
     if (preRunObservation.processes.length > 0) {
       await cleanupRuntimeSurface();
@@ -433,6 +466,7 @@ export async function runWindowsHostOperationMatrixCli(
           postPreRunCleanupObservation,
           postRunCleanupApplied
         });
+        updateTrancheGateState(testCase, 'blocked', trancheGateState);
         continue;
       }
     }
@@ -455,6 +489,7 @@ export async function runWindowsHostOperationMatrixCli(
         sessionPreparationObservation,
         postRunCleanupApplied
       });
+      updateTrancheGateState(testCase, 'gated', trancheGateState);
       continue;
     }
 
@@ -479,6 +514,7 @@ export async function runWindowsHostOperationMatrixCli(
         sessionPreparationObservation,
         postRunCleanupApplied
       });
+      updateTrancheGateState(testCase, 'blocked', trancheGateState);
       continue;
     }
 
@@ -504,6 +540,7 @@ export async function runWindowsHostOperationMatrixCli(
           postRunCleanupApplied
         });
         await cleanupRuntimeSurface();
+        updateTrancheGateState(testCase, 'blocked', trancheGateState);
         continue;
       }
     }
@@ -556,6 +593,7 @@ export async function runWindowsHostOperationMatrixCli(
       postRunCleanupApplied,
       postRunCleanupObservation
     });
+    updateTrancheGateState(testCase, status, trancheGateState);
   }
 
   const report: WindowsHostOperationMatrixReport = {
@@ -810,4 +848,25 @@ function isExpectedWarmHeadlessPreparationSurface(
 
 function normalizeWindowsPath(value: string | undefined): string | undefined {
   return value?.replaceAll('/', '\\').trim().toLowerCase();
+}
+
+function shouldGateX86CaseBehindX64Tranche(
+  testCase: WindowsHostOperationMatrixCase,
+  gateState: WindowsHostOperationMatrixTrancheGateState
+): boolean {
+  return gateState.gateX86OnPriorX64 && testCase.bitness === 'x86' && gateState.x64TrancheFailed;
+}
+
+function updateTrancheGateState(
+  testCase: WindowsHostOperationMatrixCase,
+  status: WindowsHostOperationMatrixCaseResult['status'],
+  gateState: WindowsHostOperationMatrixTrancheGateState
+): void {
+  if (!gateState.gateX86OnPriorX64 || testCase.bitness !== 'x64') {
+    return;
+  }
+
+  if (status !== 'succeeded') {
+    gateState.x64TrancheFailed = true;
+  }
 }

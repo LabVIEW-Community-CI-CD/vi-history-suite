@@ -165,8 +165,8 @@ describe('viHistoryModel', () => {
       decision: 'auto-full-history'
     });
     expect(viewModel.repositorySupport).toMatchObject({
-      tier: 'unsupported',
-      allowCoreReviewActions: false
+      tier: 'generic-repository',
+      allowCoreReviewActions: true
     });
   });
 

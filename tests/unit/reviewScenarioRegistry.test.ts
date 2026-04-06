@@ -30,6 +30,21 @@ describe('reviewScenarioRegistry', () => {
     });
   });
 
+  it('falls back to a repo-agnostic active scenario when no canonical scenario matches', () => {
+    expect(
+      getDefaultReviewScenarioForRepository(
+        'https://github.com/example/other.git',
+        'Other.vi'
+      )
+    ).toMatchObject({
+      id: 'SCENARIO-VHS-ANY',
+      repositoryUrl: 'https://github.com/example/other.git',
+      targetRelativePath: 'Other.vi',
+      minimumCommitWindow: 3,
+      minimumComparisonPairs: 2
+    });
+  });
+
   it('validates scenario evidence against the canonical harness contract', () => {
     const scenario = getReviewScenarioDefinition('SCENARIO-VHS-001');
     expect(

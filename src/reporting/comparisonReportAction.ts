@@ -22,6 +22,7 @@ import { preflightComparisonReportRevisions } from './comparisonReportPreflight'
 export interface ComparisonReportActionRequest {
   model: ViHistoryViewModel;
   selectedHash: string;
+  baseHash?: string;
   headlessRequested?: boolean;
   reportProgress?: (update: { message: string; increment?: number }) => void | Promise<void>;
   cancellationToken?: vscode.CancellationToken;
@@ -158,7 +159,8 @@ export function createOpenRetainedComparisonReportAction(
       return { outcome: 'missing-selected-commit' };
     }
 
-    if (!selectedCommit.previousHash) {
+    const baseHash = request.baseHash ?? selectedCommit.previousHash;
+    if (!baseHash) {
       return { outcome: 'missing-previous-hash' };
     }
 
@@ -179,7 +181,7 @@ export function createOpenRetainedComparisonReportAction(
       relativePath: request.model.relativePath,
       reportType: 'diff',
       selectedHash: selectedCommit.hash,
-      baseHash: selectedCommit.previousHash
+      baseHash
     });
     const pathExists = deps.pathExists ?? defaultPathExists;
     if (!(await pathExists(archivePlan.sourceRecordFilePath))) {
@@ -192,7 +194,7 @@ export function createOpenRetainedComparisonReportAction(
       storageRoot: context.storageUri.fsPath,
       expectedArchivePlan: archivePlan,
       selectedHash: selectedCommit.hash,
-      baseHash: selectedCommit.previousHash,
+      baseHash,
       pathExists,
       readFile: deps.readFile ?? fs.readFile
     });
@@ -295,7 +297,8 @@ async function ensureComparisonReportEvidence(
     return { outcome: 'missing-selected-commit' };
   }
 
-  if (!selectedCommit.previousHash) {
+  const baseHash = request.baseHash ?? selectedCommit.previousHash;
+  if (!baseHash) {
     return { outcome: 'missing-previous-hash' };
   }
 
@@ -317,7 +320,7 @@ async function ensureComparisonReportEvidence(
   const preflight = await (deps.preflightComparisonReport ?? preflightComparisonReportRevisions)({
     repoRoot: request.model.repositoryRoot,
     relativePath: request.model.relativePath,
-    leftRevisionId: selectedCommit.previousHash,
+    leftRevisionId: baseHash,
     rightRevisionId: selectedCommit.hash
   });
   if (request.cancellationToken?.isCancellationRequested) {
@@ -377,7 +380,7 @@ async function ensureComparisonReportEvidence(
     relativePath: request.model.relativePath,
     reportType: 'diff',
     selectedHash: selectedCommit.hash,
-    baseHash: selectedCommit.previousHash,
+    baseHash,
     preflight,
     runtimeSelection: {
       ...runtimeSelection,

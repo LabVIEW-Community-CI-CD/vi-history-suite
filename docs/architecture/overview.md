@@ -158,7 +158,7 @@
 - [ADR-0016](./adr/ADR-0016-gitlab-authority-and-github-linux-experiment-lane.md):
   GitLab authority with a GitHub Linux experiment lane
 - [ADR-0017](./adr/ADR-0017-bounded-repo-family-support.md):
-  Bounded repo-family support
+  Repo-agnostic support with separate governance depth
 - [ADR-0018](./adr/ADR-0018-windows-benchmark-image-lane.md):
   Windows benchmark image lane
 - [ADR-0019](./adr/ADR-0019-governed-wiki-workbench-system.md):

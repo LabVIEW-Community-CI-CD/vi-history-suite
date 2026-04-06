@@ -27,8 +27,7 @@ describe('bundled documentation', () => {
       'overview',
       'install-and-release',
       'user-workflow',
-      'comparison-reports-and-dashboard-review',
-      'review-scenarios-and-decision-records'
+      'comparison-reports-and-dashboard-review'
     ]);
     expect(manifest.pages.map((page) => page.id)).not.toContain('requirements-and-verification');
     expect(manifest.pages.map((page) => page.id)).not.toContain('architecture');
@@ -47,6 +46,7 @@ describe('bundled documentation', () => {
     expect(loaded).toBeDefined();
     expect(loaded?.page.title).toBe('User Workflow');
     expect(loaded?.pageBodyHtml).toContain('<h2>Execution Policy</h2>');
+    expect(loaded?.pageBodyHtml).toContain('<h2>Repository Support</h2>');
     expect(loaded?.pageBodyHtml).toContain('<h2>Primary Review Flow</h2>');
     expect(loaded?.pageBodyHtml).toContain('<h2>Comparison Report Flow</h2>');
     expect(loaded?.pageBodyHtml).toContain('if Docker Desktop is installed on Windows');
@@ -66,12 +66,13 @@ describe('bundled documentation', () => {
     expect(loaded?.pageBodyHtml).not.toContain('VI Server');
     expect(loaded?.pageBodyHtml).not.toContain('Software Requirements Specification');
     expect(loaded?.pageBodyHtml).not.toContain('Current State');
-    expect(loaded?.pageBodyHtml).toContain('every row except the oldest revision has a base revision and can become compareable');
+    expect(loaded?.pageBodyHtml).toContain('VI History is available on any trusted Git repository that contains eligible LabVIEW VIs');
+    expect(loaded?.pageBodyHtml).toContain('the checkbox-selected compare workflow is repo-agnostic');
     expect(loaded?.pageBodyHtml).toContain('The packaged guide is intentionally concise');
-    expect(loaded?.pageBodyHtml).toContain('the first time through, start with <code>Generate compare</code> on the row you want to inspect');
-    expect(loaded?.pageBodyHtml).toContain('the same row becomes a retained-review row with <code>Open compare</code> and <code>Refresh compare</code>');
-    expect(loaded?.pageBodyHtml).toContain('the oldest retained revision has no base revision, so compare actions stay unavailable there by design');
-    expect(loaded?.pageBodyHtml).toContain('If a row still only shows <code>Generate compare</code>, that pair still needs retained evidence first.');
+    expect(loaded?.pageBodyHtml).toContain('the primary and only extension-user compare control');
+    expect(loaded?.pageBodyHtml).toContain('select the second retained revision to generate a comparison report automatically for that exact pair');
+    expect(loaded?.pageBodyHtml).toContain('the oldest retained revision is still selectable as the older/base side of a checkbox-selected pair');
+    expect(loaded?.pageBodyHtml).toContain('there is no separate dashboard or decision-record step in the extension-user compare flow');
 
     const rendered = renderBundledDocumentationPanelHtml({
       extensionVersion: '0.2.0',
@@ -93,25 +94,14 @@ describe('bundled documentation', () => {
       extensionUri as never,
       'comparison-reports-and-dashboard-review'
     );
-    expect(comparisonLoaded?.pageBodyHtml).toContain('<h2>Dashboard Review</h2>');
+    expect(comparisonLoaded?.pageBodyHtml).toContain('the primary compare path is selecting two retained revisions with the checkbox column');
     expect(comparisonLoaded?.pageBodyHtml).not.toContain('Observed NI Metadata');
     expect(comparisonLoaded?.pageBodyHtml).not.toContain('Exact-Pair Diagnosis');
     expect(comparisonLoaded?.pageBodyHtml).not.toContain('Proof Surfaces');
     expect(comparisonLoaded?.pageBodyHtml).not.toContain('pair-129');
     expect(comparisonLoaded?.pageBodyHtml).not.toContain('HARNESS-VHS');
-    expect(comparisonLoaded?.pageBodyHtml).toContain('rows with retained pair evidence can expose <code>Open compare</code>');
-    expect(comparisonLoaded?.pageBodyHtml).toContain('rows that still only show <code>Generate compare</code> still need pair evidence first');
-
-    const decisionLoaded = await loadBundledDocumentationPage(
-      extensionUri as never,
-      'review-scenarios-and-decision-records'
-    );
-    expect(decisionLoaded?.pageBodyHtml).toContain('<h2>Decision Record Contract</h2>');
-    expect(decisionLoaded?.pageBodyHtml).not.toContain('Scenario Model');
-    expect(decisionLoaded?.pageBodyHtml).not.toContain('Canonical Active Scenario');
-    expect(decisionLoaded?.pageBodyHtml).not.toContain('Future Scenario Direction');
-    expect(decisionLoaded?.pageBodyHtml).not.toContain('SCENARIO-VHS');
-    expect(decisionLoaded?.pageBodyHtml).not.toContain('HARNESS-VHS');
+    expect(comparisonLoaded?.pageBodyHtml).toContain('there is no separate compare button on commit rows for extension users');
+    expect(comparisonLoaded?.pageBodyHtml).not.toContain('<h2>Dashboard Review</h2>');
 
     const overviewLoaded = await loadBundledDocumentationPage(extensionUri as never, 'overview');
     expect(overviewLoaded?.pageBodyHtml).toContain('<h2>Product Promise</h2>');

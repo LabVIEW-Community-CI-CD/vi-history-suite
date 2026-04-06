@@ -197,10 +197,10 @@
 - `TEST-UNIT-058`: validate the design gate retains an explicit unavailable
   reason when the governed development queue cannot yield an active or queued
   tranche
-- `TEST-UNIT-059`: validate the VI History panel exposes stateful retained-pair
-  actions so rows without retained evidence show `Generate compare`, rows with
-  retained evidence show `Refresh compare`, and `Open compare` is enabled only
-  when retained pair evidence exists
+- `TEST-UNIT-059`: validate the VI History panel exposes a checkbox on every
+  retained commit row, keeps compare generation/opening controls off the
+  extension-user row-action surface, and routes compare generation through the
+  second checkbox selection
 - `TEST-UNIT-060`: validate the comparison-report action fails closed when
   workspace-scoped storage is unavailable and the command surfaces the stable
   warning
@@ -378,9 +378,10 @@
 - `TEST-UNIT-104`: prove the dedicated dashboard action fails closed on missing
   storage or insufficient commit windows and opens the concentrated dashboard
   panel otherwise
-- `TEST-UNIT-105`: prove the history panel and command layer expose and handle
-  the `Open dashboard` action only for commit windows with at least three
-  retained commits
+- `TEST-UNIT-105`: prove the history panel omits `Open dashboard` from the
+  extension-user surface even when the retained window is large enough, while
+  the underlying command layer can still fail closed on stale dashboard
+  messages
 - `TEST-DOC-011`: review the repo entrypoints and research-control-plane docs
   for the correct current dashboard implementation maturity and pair-archive
   direction
@@ -698,8 +699,8 @@
   evidence for content-detected VI items when retained pair evidence exists,
   instead of invoking VS Code text diff on binary content
 - `TEST-UNIT-200`: prove `diffPrevious` fails closed with
-  `missing-retained-comparison-report` and a stable `Generate compare` hint
-  when retained pair evidence is absent
+  `missing-retained-comparison-report` and a stable checkbox-flow hint when
+  retained pair evidence is absent
 - `TEST-UNIT-201`: prove the concentrated dashboard retains compared-path and
   detail-item whole-window concentration summaries derived from retained NI
   comparison-report metadata
@@ -728,9 +729,10 @@
   retain chronology-aware `pair N` or `pairs N, M` references for retained NI
   metadata patterns so the reviewer can locate where each pattern appears in
   the adjacent-pair window
-- `TEST-UNIT-209`: prove the extension-facing decision-record flow exposes a
-  first-class history-panel action, fails closed on missing scenario/storage
-  conditions, and persists separate decision-record artifacts on success
+- `TEST-UNIT-209`: prove the extension-user history panel omits any `Create
+  decision record` control while the retained decision-record backend continues
+  to fail closed on missing scenario/storage conditions and persists separate
+  decision-record artifacts when invoked through governed non-panel paths
 - `TEST-UNIT-210`: prove the integration-host runtime tooling supports
   explicit `auto|windows|linux` host selection and fails closed with actionable
   bootstrap guidance when Linux VS Code runtime libraries are missing
@@ -824,8 +826,8 @@
   dashboard, decision-record, and documentation actions when the current build
   does not wire those surfaces
 - `TEST-UNIT-228`: verify the history panel renders a stable installed
-  action-surface availability packet for compare generation, retained compare
-  opening, dashboard review, decision records, and documentation
+  action-surface availability packet for pair selection, retained compare
+  opening, documentation, and any wired maintainer-only optional surfaces
 - `TEST-UNIT-229`: verify the dashboard action reports whether the current
   refresh is retained-complete, backfilling missing pair evidence, or
   concentrating retained archives only because pair refresh is unavailable, and
@@ -848,8 +850,8 @@
 - `TEST-UNIT-234`: verify retained compare reopening fails closed with
   `invalid-retained-comparison-report` when the archived source record is
   corrupt, mismatched to the governed storage contract, or no longer points to
-  a usable retained packet, and that `Diff prev` surfaces stable `Refresh
-  compare` guidance instead of raw archive errors
+  a usable retained packet, and that `Diff prev` surfaces stable checkbox-flow
+  rebuild guidance instead of raw archive errors
 - `TEST-UNIT-235`: verify the design gate resolves a mounted-Windows
   `run_assurance.py` candidate into a repo-local mirror under
   `.cache/design-gate/assurance-skill/repo-standards-review/` before running
@@ -950,15 +952,18 @@
 - `TEST-UNIT-258`: verify the root manifest excludes packaging-only npm
   tooling from default `npm ci`, while the guarded package path still invokes
   the pinned `vsce` package on demand through the dedicated helper script
-- `TEST-UNIT-259`: verify the bounded repo-family support policy normalizes
-  canonical GitHub remotes across HTTPS and SSH forms, recognizes
-  `ni/labview-icon-editor`, `ni/actor-framework`, and same-name GitHub forks,
-  keeps other repos unsupported, and preserves canonical scenario matching
-  across normalized upstream remote forms
+- `TEST-UNIT-259`: verify the repo-support policy normalizes canonical GitHub
+  remotes across HTTPS and SSH forms, recognizes the deeper governed evidence
+  family, classifies arbitrary trusted repos as generic repositories, and
+  preserves canonical scenario matching across normalized upstream remote forms
 - `TEST-UNIT-260`: verify the VI History panel and open command surface the
-  repo-support classification, keep chronology/docs visible, and fail closed on
-  unsupported repos by blocking compare, dashboard, decision-record,
-  benchmark, and maintainer host-review actions
+  repo-support classification, keep chronology/docs visible, and keep the
+  checkbox-selected compare flow available on generic repositories while making
+  deeper benchmark and maintainer host-review governance explicit
+- `TEST-UNIT-317`: verify the second checkbox selection triggers compare
+  generation automatically for the exact newer-selected and older-base pair,
+  and that a retained window of only two commits is enough to use the primary
+  extension-user compare flow
 - `TEST-UNIT-261`: verify the host and hosted Linux benchmark runners enforce
   a governed per-pair runtime execution budget and retain an explicit
   timeout/stall terminal outcome instead of hanging the whole benchmark
@@ -1141,11 +1146,9 @@
   hosted workflow stays on the shallower canonical harness and the canonical
   host retains ownership of the deep `lv_icon.vi` benchmark
 - `TEST-DOC-038`: review README, current-state, and ADR-0017 and confirm the
-  product is documented as bounded to `ni/labview-icon-editor`,
-  `ni/actor-framework`, same-name GitHub forks, and governed retained local
-  fixture clones of those upstreams, that unsupported repos fail closed in the
-  live UI, and that scenario, benchmark, and host-review lanes remain narrower
-  than generic repo-family membership
+  product is documented as repo-agnostic for the checkbox-selected compare
+  workflow, while the deeper benchmark, scenario, and host-review lanes remain
+  separately governed
 - `TEST-DOC-039`: review README, current-state, and ADR-0016 and confirm the
   Linux benchmark lane is documented as enforcing bounded per-pair runtime
   timeouts, per-pair failure receipts, runtime heartbeat progress, and terminal
@@ -1489,11 +1492,12 @@
   refreshes bundled installed-user docs before VSIX creation
 - `TEST-DOC-078`: review current-state, PROGRAM-0003, ISSUE-0408, SRS, RTM,
   and the test plan and confirm the repo now retains a LabVIEW 2026-only
-  Windows host operation matrix across x86 and x64 `LabVIEW.exe` surfaces,
-  enumerates the installed LabVIEWCLI operations plus the repo-supplied
-  `PrintToSingleFileHtml` additional operation from the
-  `aphill93/linuxContainerDemo` `demo` branch, and keeps
-  `CreateComparisonReport` gated until the other operation cases are completed
+  Windows host operation matrix that runs the x64 tranche first and gates the
+  x86 tranche until x64 completes cleanly, enumerates the installed
+  LabVIEWCLI operations plus the repo-supplied `PrintToSingleFileHtml`
+  additional operation from the `aphill93/linuxContainerDemo` `demo` branch,
+  and keeps `CreateComparisonReport` gated until the other operation cases are
+  completed
 - `TEST-DOC-079`: review current-state, PROGRAM-0003, ISSUE-0408, SRS, RTM,
   and the test plan and confirm the governed host matrix now requires pre-run
   and post-run contamination inspection for `LabVIEW.exe`, `LabVIEWCLI.exe`,
@@ -1512,6 +1516,11 @@
   bounded diagnostic window, while the governed host runner now uses the
   retained foreground PowerShell execution path instead of the older
   background sidecar wrapper
+- `TEST-DOC-082`: review README, current-state, SRS, RTM, the test plan, and
+  the bundled installed-user workflow and confirm the shipped extension-user
+  compare flow is checkbox-only, works with a two-commit retained window, keeps
+  the oldest retained row selectable as the older/base side of the pair, and
+  does not reintroduce dashboard or decision-record as extension-user steps
 - `TEST-DOC-070`: review current-state, harnesses, PROGRAM-0003, ISSUE-0408,
   and the comparable-prefix packet and confirm the repo documents the current
   Windows pair-129 ceiling as an accepted current-contract exception backed by

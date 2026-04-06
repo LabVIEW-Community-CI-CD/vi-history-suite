@@ -58,33 +58,23 @@ Current landed scaffold state:
   local fixture workspace rather than a OneDrive-backed synced clone
 - the latest retained host review at `2026-04-06T06:58:46.822Z` is
   `failed-human-review` with `confidence=high`, because the newest retained
-  note on the updated installed bundle now says the installed documentation is
-  still highly mediocre and does not explain the `Open compare` buttons on the
-  pairs clearly enough for `Tooling/deployment/VIP_Post-Uninstall Custom Action.vi`
-- the retained failed-review set is cumulative historical evidence:
-  `2026-04-06T06:09:14.016Z` recorded dashboard/review UX debt (`"Open compare"`
-  for every pair, two-row overview image layout, and Review Note persistence),
-  `2026-04-06T06:10:46.758Z` recorded private GitLab links in extension-user
-  documentation, `2026-04-06T06:11:59.791Z` recorded that SRS and RTM should
-  not be exposed to extension users, `2026-04-06T06:13:09.879Z` recorded
-  broader documentation coherence debt, and `2026-04-06T06:18:09.177Z`
-  recorded that `Open compare` still failed to enable after `Open dashboard`
-- the authority repo now carries a repo-side fix for the governed
-  retained-window seam: `Open dashboard` seeds governed retained dashboard
-  evidence from governed proof caches into the active workspace archive
-  contract before any local pair refresh
-- the authority repo now also carries a repo-side fix for the stale Actions
-  seam: after `Open dashboard` completes, the history panel recomputes
-  retained pair evidence availability and rerenders the Actions column so
-  newly retained pairs can truthfully enable `Open compare`
+  note on the updated installed bundle says the installed documentation is
+  still too weak for extension users on
+  `Tooling/deployment/VIP_Post-Uninstall Custom Action.vi`
+- the retained failed-review set remains cumulative historical evidence, but
+  the older row-button and dashboard-specific findings are now superseded by
+  the simplified shipped scope: extension users now use checkbox selection
+  only, need only two retained commits to use VI History, and do not use
+  extension-user dashboard or decision-record controls
 - the authority repo now also carries repo-side retirement for the remaining
-  additive blocker set: overview images are grouped into caption rows with
+  simplified blocker set: overview images are grouped into caption rows with
   `Block Diagram Overview` before `Front Panel Overview`, unsubmitted Review
   Note draft state persists across tab switches until successful submission,
   and the bundled installed-user docs are now a concise curated extension-user
   guide that omits private GitLab plus SRS/RTM authority-link exposure while
-  explicitly explaining pair-row compare-button transitions, dashboard
-  drill-down into pair rows, and the oldest-row no-base rule
+  explicitly explaining the repo-agnostic checkbox-selected two-commit
+  workflow, the oldest-row-as-base rule, and the absence of a separate
+  extension-user dashboard or decision-record step
 - this issue therefore remains open only until a fresh manual rerun on the
   updated installed bundle proves that the installed product matches those
   repo-side retirements

@@ -126,9 +126,9 @@ Committed and governed today:
 - content-based VI detection using `LVIN` and `LVCC` bytes at offset `8`
 - command visibility through both `explorer/context` and `editor/title/context`
 - trust-gated and Git-backed eligibility indexing
-- review-oriented history panel with `Open at commit`, stateful retained-pair
-  actions (`Generate compare`, `Refresh compare`, `Open compare`), and
-  `Copy hash`, `Open docs`, plus `Open dashboard` for retained three-plus-commit windows
+- review-oriented history panel with `Open at commit`, `Copy hash`, `Open docs`,
+  and a checkbox-driven two-commit compare workflow that triggers on the
+  second selection
 - comparison-report preflight, staging, packet storage, and packet webview
 - LabVIEW 2026 Q1 runtime detection plus reliable Windows 64-bit isolated
   container report execution on the canonical harness
@@ -199,15 +199,17 @@ Committed and governed today:
 - real extension-host dashboard proof for dashboard-open, dashboard-refresh,
   and governed artifact-open behavior
 - canonical scenario registry and separate decision-record generation for the
-  canonical dashboard evidence flow plus extension-facing `Create decision
-  record` UX for three-plus-commit retained review windows
+  canonical dashboard evidence flow as governed backend/proof surfaces rather
+  than part of the shipped extension-user checkbox workflow
 - decision-record cancellation that now stops cleanly after dashboard build,
   before decision-record persistence, and before Markdown open while preserving
   already-built dashboard or decision-record artifacts
-- compare generation that now preserves the current comparison view while
-  keeping `Generate compare` truthful whenever governed retained archive
-  persistence was unavailable or failed, plus retained-open validation that now
-  fails closed on malformed render-critical archived packet payloads
+- checkbox-selected compare generation that now preserves the current
+  comparison view whenever governed retained archive persistence was
+  unavailable or failed, keeps the shipped extension-user workflow on a
+  two-commit window with no dashboard or decision-record step, and validates
+  retained reopening truthfully when archived packet payloads are malformed or
+  render-critical
 - retained design gate that chooses the next tranche from committed evidence
 - retained design gate that refreshes `latest-report.{json,md}` after each
   successful stage so a stuck assurance tail does not leave stale tranche
@@ -575,22 +577,33 @@ to `HARNESS-VHS-001`. Public proof entry is still one surface:
 
 See [Harness Definitions](./docs/product/harnesses.md).
 
-## Bounded Repo Support
+## Repo-Agnostic Support
 
-The governed repo family is currently bounded to:
+VI History is available in any trusted Git repository that contains eligible
+LabVIEW VIs.
+
+The core checkbox-selected compare workflow is repo-agnostic.
+
+Canonical governed evidence is still deepest on:
 
 - `ni/labview-icon-editor`
 - `ni/actor-framework`
 - same-name GitHub forks of those upstream repos
 - governed retained local fixture clones of those same upstream repos
 
-That bounded family does not mean every governed surface is equally broad.
+Repo-agnostic support does not mean every governed surface is equally deep.
 
-- Core compare and dashboard surfaces stay inside the bounded repo family.
-- Unsupported repos fail closed in the live VI History UI instead of looking
-  equivalent to governed repos.
-- Decision-record, deep-benchmark, and maintainer host-review lanes remain
-  narrower and are still governed separately from generic family membership.
+- chronology, compare, dashboard, decision-record, and bundled-doc surfaces
+  stay available beyond the canonical evidence family when the current build
+  wires those surfaces in
+- the panel classifies canonical governed-evidence-family surfaces separately
+  from generic repositories so the deeper benchmark, scenario, and maintainer
+  host-review evidence is still visible instead of implied everywhere
+- when no repo-specific review scenario exists, decision-record generation
+  falls back to the generic active `SCENARIO-VHS-ANY` scenario instead of
+  failing closed solely because the repo is different
+- benchmark ownership and maintainer host-review evidence remain separately
+  governed and are still deepest on the canonical evidence-family surfaces
 
 ## License
 

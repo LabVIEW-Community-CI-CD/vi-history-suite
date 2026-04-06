@@ -57,6 +57,38 @@ The human reviewer remains responsible for:
 - interpreting binary or visual evidence
 - deciding whether additional manual inspection is needed
 
+## SCENARIO-VHS-ANY: Repo-Agnostic VI Review
+
+- Maturity: `active`
+- Harness: `HARNESS-VHS-001`
+- Repository: any trusted Git repository opened in the extension
+- VI target: the currently selected eligible VI
+- Commit-window minimum: `3`
+- Comparison-pair minimum: `2`
+
+### Decision Goal
+
+Keep decision-record generation available on arbitrary repositories even when no
+repo-specific scenario has been modeled yet.
+
+### Required Inputs
+
+- one eligible VI
+- at least three commits in scope
+- at least two retained revisions that can form comparison evidence
+
+### Required Outputs
+
+- one bounded Markdown and JSON decision record
+- explicit identification that the generic scenario fallback was used
+- explicit retained-evidence or missing-evidence facts for the selected VI
+
+### Human Decision Boundary
+
+This generic scenario keeps the extension usable on arbitrary repositories, but
+it does not widen canonical benchmark, scenario-certification, or maintainer
+host-review governance automatically.
+
 ## Expected Future Scenarios
 
 - `SCENARIO-VHS-002`: high-volume open-source VI review where one VI has many

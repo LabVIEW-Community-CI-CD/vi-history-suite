@@ -26,25 +26,21 @@ The primary public surface is now a release kit, not an installer product.
   historical evidence: on the updated installed bundle,
   `Tooling/deployment/VIP_Post-Uninstall Custom Action.vi` now surfaces a
   failed Gate D review package instead of the earlier runtime stall alone
-- the cumulative retained failed-review package historically included:
-  `"Open compare"` on every pair, two-row overview image layout, Review Note
-  persistence across tab switches, no private GitLab links in extension-user
-  docs, no exposed SRS/RTM trade-secret surfaces in extension-user docs, and
-  broader documentation coherence with what an extension user actually needs
-  to see or care about, plus the later retained report that `Open compare`
-  remained disabled in the Actions column after `Open dashboard` completed and
-  the newest retained report that the installed documentation still failed to
-  explain those pair buttons clearly enough
-- the latest retained review note now adds: `Documentation is highly mediocre,
-  it mentions nothing about the open compare buttons on the pairs, as well as
-  many other misses you had.`
-- the authority repo now carries repo-side fixes for that full cumulative
-  blocker package: the stale Actions-column seam, the two-row overview-image
+- the cumulative retained failed-review package remains historical evidence,
+  but the older row-button and dashboard-specific findings are now superseded
+  by the simplified shipped scope: extension users now use checkbox selection
+  only, need only two retained commits to use VI History, and do not use
+  extension-user dashboard or decision-record controls
+- the latest retained review note still records that the installed
+  documentation was too weak for extension users
+- the authority repo now carries repo-side fixes for that simplified blocker
+  package: the checkbox-only compare surface, the two-row overview-image
   layout, Review Note draft persistence across tab switches, and a concise
   curated installed-user documentation bundle that strips private GitLab plus
-  SRS/RTM authority-link exposure while explicitly explaining pair-row
-  `Generate compare` / `Open compare` / `Refresh compare` transitions,
-  dashboard drill-down, and the oldest-row no-base rule
+  SRS/RTM authority-link exposure while explicitly explaining the
+  repo-agnostic checkbox-selected two-commit workflow, the oldest-row-as-base
+  rule, and the absence of a separate extension-user dashboard or
+  decision-record step
 - Gate D therefore remains open only until the updated installed bundle is
   rerun on the canonical host-machine review path and proves that the
   cumulative repo-side blocker retirement also holds in the installed product
@@ -277,16 +273,17 @@ Current first slice:
 - the latest retained host review at `2026-04-06T06:58:46.822Z` is
   `failed-human-review` with `confidence=high`, recording that
   `Tooling/deployment/VIP_Post-Uninstall Custom Action.vi` still left the
-  installed documentation too weak for extension users because it did not
-  explain the pair-level `Open compare` buttons and surrounding first-use
-  review workflow clearly enough
+  installed documentation too weak for extension users
 - the retained failed-review set remains cumulative historical evidence on
-  that same canonical VI, but the authority repo now carries repo-side fixes
-  for the stale `Open dashboard` -> `Open compare` seam, the two-row overview
-  layout, Review Note draft persistence, and the concise curated installed-user
-  docs contract including explicit pair-row `Generate compare` / `Open compare`
-  / `Refresh compare` transitions, the oldest-row no-base rule, and dashboard
-  drill-down back into pair rows
+  that same canonical VI, but the row-button and dashboard-specific findings
+  are now superseded by the simplified checkbox-only shipped scope
+- the authority repo now carries repo-side retirement for that simplified
+  Gate D package: checkbox-only compare selection on any retained two-commit
+  window, grouped overview-image rows with `Block Diagram Overview` before
+  `Front Panel Overview`, Review Note draft persistence until successful
+  submission, and a concise curated installed-user documentation bundle that
+  omits private GitLab plus SRS/RTM authority-link exposure while explaining
+  the repo-agnostic checkbox-selected two-commit workflow clearly
 - Gate D therefore remains open only on a fresh installed-bundle rerun of the
   manual right-click path rather than on an unimplemented repo-side blocker set
 

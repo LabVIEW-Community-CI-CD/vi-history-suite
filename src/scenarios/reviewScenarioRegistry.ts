@@ -89,7 +89,24 @@ export function getDefaultReviewScenarioForRepository(
         normalizedRepositoryUrl &&
       candidate.targetRelativePath === targetRelativePath
   );
-  return scenario ? { ...scenario } : undefined;
+  if (scenario) {
+    return { ...scenario };
+  }
+
+  return {
+    id: 'SCENARIO-VHS-ANY',
+    title: 'Repo-Agnostic VI Review',
+    maturity: 'active',
+    harnessId: 'HARNESS-VHS-001',
+    repositoryUrl: normalizedRepositoryUrl,
+    targetRelativePath,
+    minimumCommitWindow: 3,
+    minimumComparisonPairs: 2,
+    decisionGoal:
+      'Help a human reviewer make a bounded decision about one VI using retained comparison evidence on any repository the extension is opened against.',
+    humanDecisionBoundary:
+      'The extension may concentrate evidence for any repository, but the reviewer remains responsible for deciding whether the retained evidence is sufficient for acceptance.'
+  };
 }
 
 export function validateReviewScenarioEvidence(

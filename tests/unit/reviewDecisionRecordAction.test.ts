@@ -478,7 +478,7 @@ describe('reviewDecisionRecordAction', () => {
     );
   });
 
-  it('fails closed when no active review scenario matches the repository and VI', async () => {
+  it('creates a repo-agnostic decision record when no canonical review scenario matches the repository and VI', async () => {
     const buildDashboard = vi.fn().mockResolvedValue({
       record: {
         repositoryName: 'other-repo',
@@ -531,6 +531,21 @@ describe('reviewDecisionRecordAction', () => {
       jsonFilePath: '/workspace/.storage/dashboards/repo-id/file-id/window-id/dashboard.json',
       htmlFilePath: '/workspace/.storage/dashboards/repo-id/file-id/window-id/dashboard.html'
     });
+    const persistDecisionRecord = vi.fn().mockResolvedValue({
+      artifactPlan: {
+        scenarioId: 'SCENARIO-VHS-ANY',
+        decisionId: 'decision-id',
+        decisionDirectory:
+          '/workspace/.storage/decision-records/repo-id/file-id/window-id/SCENARIO-VHS-ANY/decision-id',
+        jsonFilePath:
+          '/workspace/.storage/decision-records/repo-id/file-id/window-id/SCENARIO-VHS-ANY/decision-id/decision-record.json',
+        markdownFilePath:
+          '/workspace/.storage/decision-records/repo-id/file-id/window-id/SCENARIO-VHS-ANY/decision-id/decision-record.md'
+      },
+      record: {
+        generatedAt: '2026-04-03T16:00:00.000Z'
+      }
+    });
     const action = createReviewDecisionRecordAction(
       {
         storageUri: {
@@ -540,6 +555,7 @@ describe('reviewDecisionRecordAction', () => {
       } as never,
       {
         buildDashboard,
+        persistDecisionRecord,
         readRepoRemoteUrl: vi.fn().mockResolvedValue('https://github.com/example/other.git'),
         automationInputs: {
           reviewer: 'Reviewer',
@@ -584,11 +600,27 @@ describe('reviewDecisionRecordAction', () => {
     });
 
     expect(result).toEqual({
-      outcome: 'missing-review-scenario',
+      outcome: 'created-decision-record',
+      scenarioId: 'SCENARIO-VHS-ANY',
       dashboardFilePath: '/workspace/.storage/dashboards/repo-id/file-id/window-id/dashboard.html',
-      dashboardJsonFilePath: '/workspace/.storage/dashboards/repo-id/file-id/window-id/dashboard.json'
+      dashboardJsonFilePath: '/workspace/.storage/dashboards/repo-id/file-id/window-id/dashboard.json',
+      decisionRecordJsonPath:
+        '/workspace/.storage/decision-records/repo-id/file-id/window-id/SCENARIO-VHS-ANY/decision-id/decision-record.json',
+      decisionRecordMarkdownPath:
+        '/workspace/.storage/decision-records/repo-id/file-id/window-id/SCENARIO-VHS-ANY/decision-id/decision-record.md',
+      title: 'Review Decision Record: Other.vi'
     });
-    expect(executeCommandMock).not.toHaveBeenCalled();
+    expect(persistDecisionRecord).toHaveBeenCalledWith(
+      '/workspace/.storage',
+      expect.objectContaining({
+        scenario: expect.objectContaining({
+          id: 'SCENARIO-VHS-ANY',
+          repositoryUrl: 'https://github.com/example/other.git',
+          targetRelativePath: 'Other.vi'
+        })
+      }),
+      expect.anything()
+    );
   });
 
   it('fails closed on preconditions before prompting or building dashboard evidence', async () => {

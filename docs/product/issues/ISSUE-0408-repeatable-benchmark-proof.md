@@ -197,8 +197,9 @@ Current retained benchmark truth at closure:
   is now retained explicitly too: `runGovernedProof host-operation-matrix`
   inventories the installed Windows LabVIEWCLI operations from
   `C:\Program Files (x86)\National Instruments\Shared\LabVIEW CLI\Operations`,
-  exercises the LabVIEW 2026 x86 and x64 host surfaces separately, retains
-  pre-run and post-run contamination truth for every case, uses the local
+  runs the LabVIEW 2026 x64 tranche first and gates the x86 tranche until the
+  x64 tranche completes cleanly in the same governed run, retains pre-run and
+  post-run contamination truth for every case, uses the local
   canonical `labview-ci-cd/actions/VICompareTooling` tree for the
   `PrintToSingleFileHtml` additional operation while still allowing approved
   sample fixtures for the fixture-backed operations,
@@ -207,7 +208,7 @@ Current retained benchmark truth at closure:
 - that follow-on host lane now also retains a materially narrower seam than
   the old Linux-only wording implied: the host-operation matrix now uses the
   retained foreground PowerShell `LabVIEWCLI` path instead of the older
-  background sidecar wrapper, the fresh warm-headless x86/x64 ledger proves
+  background sidecar wrapper, the fresh warm-headless x64-then-x86 ledger proves
   `ExecuteBuildSpec`, `MassCompile`, `RunVI`, `RunVIAnalyzer`, and
   `PrintToSingleFileHtml` succeed cleanly on both admitted LabVIEW 2026 host
   surfaces, x64 `CloseLabVIEW -Headless` now succeeds too, x86

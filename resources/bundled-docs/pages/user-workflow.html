@@ -32,6 +32,14 @@ detection and have at least two modifying commits.</p>
 <li>if Docker is required but unavailable, the extension stops and tells you what to fix</li>
 <li>compare progress, provider choice, and Windows image acquisition state stay visible in the history panel while the action runs</li>
 </ul>
+<h2>Repository Support</h2>
+<p>VI History is available on any trusted Git repository that contains eligible LabVIEW VIs.</p>
+<p>Current scope:</p>
+<ul>
+<li>the checkbox-selected compare workflow is repo-agnostic</li>
+<li>canonical benchmark and maintainer-only host-review evidence are still governed separately</li>
+<li>you do not need to be on <code>ni/labview-icon-editor</code> or <code>ni/actor-framework</code> to use the core two-commit compare flow</li>
+</ul>
 <h2>Primary Review Flow</h2>
 <ol>
 <li>Right-click an eligible VI and choose <code>VI History</code>.</li>
@@ -42,24 +50,21 @@ detection and have at least two modifying commits.</p>
 <li>retained commit chronology</li>
 </ul>
 </li>
-<li>Use the row actions that match the current evidence state.</li>
+<li>Use the checkbox column to choose the exact two retained revisions you want to compare.</li>
 </ol>
 <p>The current action model is:</p>
 <ul>
+<li><code>Checkboxes</code>: the primary and only extension-user compare control; selecting the second retained revision triggers the comparison automatically</li>
 <li><code>Open at commit</code>: open the selected retained revision</li>
 <li><code>Copy hash</code>: copy the retained commit hash</li>
 <li><code>Open docs</code>: open the bundled user documentation that ships with the installed extension version</li>
-<li><code>Generate compare</code>: create retained pair comparison evidence for a row that has a base revision but no retained pair evidence yet</li>
-<li><code>Open compare</code>: open retained pair comparison evidence for that row when it already exists</li>
-<li><code>Refresh compare</code>: rerun comparison generation for a row whose retained pair evidence already exists</li>
-<li><code>Diff prev</code>: open retained comparison evidence for content-detected VIs when that evidence exists; otherwise the extension fails closed and directs the reviewer to <code>Generate compare</code></li>
+<li><code>Diff prev</code>: for content-detected VIs, retained comparison evidence still opens through governed comparison routing instead of plain text diff</li>
 </ul>
-<p>Practical row rule:</p>
+<p>Practical selection rule:</p>
 <ul>
-<li>every row except the oldest revision has a base revision and can become compareable</li>
-<li>the first time through, start with <code>Generate compare</code> on the row you want to inspect</li>
-<li>after generation finishes for that row, the same row becomes a retained-review row with <code>Open compare</code> and <code>Refresh compare</code></li>
-<li>the oldest retained revision has no base revision, so compare actions stay unavailable there by design</li>
+<li>any retained window with at least two commits is enough to use VI History</li>
+<li>the adjacent-pair text in a row is chronology context only; the two checked revisions define the exact compare pair</li>
+<li>there is no separate dashboard or decision-record step in the extension-user compare flow</li>
 </ul>
 <h2>Comparison Report Flow</h2>
 <p>Comparison-report generation and opening are treated as review actions inside the extension, not ad hoc shell commands.</p>
@@ -70,40 +75,25 @@ detection and have at least two modifying commits.</p>
 <li>the generated NI comparison report when one exists</li>
 <li>a compact runtime summary with provider and next action</li>
 </ul>
-<p>Pair-row behavior after generation is explicit:</p>
+<p>Checkbox-selected pair behavior is explicit:</p>
 <ul>
-<li>use <code>Generate compare</code> when a row has a base revision but no retained pair evidence yet</li>
-<li>after retained evidence exists for that same row, <code>Open compare</code> opens the retained pair report and <code>Refresh compare</code> reruns it</li>
-<li>if a row still shows <code>Generate compare</code>, that pair does not yet have retained evidence to open</li>
-<li>the oldest row has no base revision, so compare actions remain unavailable there by design</li>
+<li>select any first retained revision with the checkbox column</li>
+<li>select the second retained revision to generate a comparison report automatically for that exact pair</li>
+<li>the newer selected revision becomes <code>selected</code> and the older selected revision becomes <code>base</code></li>
+<li>the oldest retained revision is still selectable as the older/base side of a checkbox-selected pair</li>
 </ul>
 <p>If you cancel before the comparison view opens, the action stays cancelled instead of opening a late result.</p>
-<h2>Dashboard Flow</h2>
-<p>When a VI has at least three retained commits, the history panel exposes <code>Open dashboard</code>.</p>
-<p>The dashboard flow now:</p>
-<ul>
-<li>reuses retained pair evidence when the current commit window is already covered</li>
-<li>generates only the missing or stale pairs when more evidence is needed</li>
-<li>concentrates the review window into one dashboard before you drill into individual pairs with <code>Open compare</code></li>
-</ul>
-<p>After <code>Open dashboard</code> completes, return to the history rows and use <code>Open compare</code> on any pair row that now has retained evidence. If a row still only shows <code>Generate compare</code>, that pair still needs retained evidence first.</p>
-<h2>Decision Record Flow</h2>
-<p>When a retained review window has at least three commits, the history panel also
-exposes <code>Create decision record</code>.</p>
-<p>That action creates separate human-review artifacts from retained dashboard
-evidence. The decision record is intentionally separate from the dashboard and
-comparison-report evidence so human judgment does not overwrite machine-retained
-facts.</p>
 <h2>Trust, Progress, And Cancellation</h2>
-<p>The workflow is trust-gated and progress-aware.</p>
+<p>The checkbox-selected compare workflow is trust-gated and progress-aware.</p>
 <ul>
-<li>compare and dashboard actions fail closed in untrusted workspaces</li>
+<li>compare actions fail closed in untrusted workspaces</li>
 <li>long-running actions show bounded progress in the extension</li>
 <li>cancellation preserves already retained evidence where possible instead of silently discarding it</li>
+<li>the extension does not wait for a separate third-step dashboard or decision-record action after the second checkbox selection</li>
 </ul>
 <h2>Bundled Documentation</h2>
 <p>The extension packages a version-matched installed-user guide so you can read workflow guidance without leaving VS Code.</p>
-<p>The packaged guide is intentionally concise: it keeps the extension-user workflow, execution-policy, dashboard, compare, and decision-record rules that a developer needs while omitting private GitLab plus standards/control-plane material.</p>
+<p>The packaged guide is intentionally concise: it keeps the extension-user workflow, execution-policy, and compare rules that a developer needs while omitting private GitLab plus standards/control-plane material.</p>
 <p>Open it from:</p>
 <ul>
 <li>the Command Palette via <code>VI History: Open Documentation</code></li>

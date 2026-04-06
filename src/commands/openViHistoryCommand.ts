@@ -45,6 +45,7 @@ export function createOpenViHistoryCommand(
   comparisonReportAction?: (request: {
     model: Awaited<ReturnType<ViHistoryService['load']>>;
     selectedHash: string;
+    baseHash?: string;
     reportProgress?: (update: { message: string; increment?: number }) => void | Promise<void>;
     cancellationToken?: vscode.CancellationToken;
   }) => Promise<ComparisonReportActionResult>,
@@ -56,6 +57,7 @@ export function createOpenViHistoryCommand(
   openRetainedComparisonReportAction?: (request: {
     model: Awaited<ReturnType<ViHistoryService['load']>>;
     selectedHash: string;
+    baseHash?: string;
     reportProgress?: (update: { message: string; increment?: number }) => void | Promise<void>;
     cancellationToken?: vscode.CancellationToken;
   }) => Promise<ComparisonReportActionResult>,
@@ -166,9 +168,15 @@ export function createOpenViHistoryCommand(
     const handleMessage = async (message: HistoryPanelMessage) => {
       const command = String(message.command ?? '');
       const hash = String(message.hash ?? '');
+      const selectedHashes = Array.isArray(message.selectedHashes)
+        ? message.selectedHashes
+            .map((value) => String(value).trim())
+            .filter((value) => value.length > 0)
+        : [];
       const recordComparisonResult = (
         actionCommand: string,
         hashValue: string,
+        baseHashValue: string | undefined,
         result: ComparisonReportActionResult,
         runtimePanelUpdate:
           | {
@@ -183,6 +191,7 @@ export function createOpenViHistoryCommand(
         const actionSummary: Parameters<HistoryPanelTracker['recordAction']>[0] = {
           command: actionCommand,
           hash: hashValue,
+          baseHash: baseHashValue,
           outcome: result.outcome,
           reportStatus: result.reportStatus,
           runtimeExecutionState: result.runtimeExecutionState,
@@ -284,19 +293,26 @@ export function createOpenViHistoryCommand(
         panelTracker?.recordAction(actionSummary);
       };
 
-      const runComparisonReportCommand = async (
-        actionCommand: string,
-        title: string,
-        cancelledMessage: string,
+        const runComparisonReportCommand = async (
+          actionCommand: string,
+          title: string,
+          cancelledMessage: string,
         action:
           | ((request: {
-              model: Awaited<ReturnType<ViHistoryService['load']>>;
-              selectedHash: string;
-              reportProgress?: (update: { message: string; increment?: number }) => void | Promise<void>;
-              cancellationToken?: vscode.CancellationToken;
-            }) => Promise<ComparisonReportActionResult>)
-          | undefined
+            model: Awaited<ReturnType<ViHistoryService['load']>>;
+            selectedHash: string;
+            baseHash?: string;
+            reportProgress?: (update: { message: string; increment?: number }) => void | Promise<void>;
+            cancellationToken?: vscode.CancellationToken;
+          }) => Promise<ComparisonReportActionResult>)
+          | undefined,
+          explicitPair?: {
+            selectedHash: string;
+            baseHash?: string;
+          }
       ): Promise<void> => {
+        const selectedHash = explicitPair?.selectedHash ?? hash;
+        const baseHash = explicitPair?.baseHash;
         if (!action) {
           if (actionCommand === 'generateComparisonReport') {
             void vscode.window.showInformationMessage(
@@ -320,12 +336,14 @@ export function createOpenViHistoryCommand(
           (reportProgress, cancellationToken) =>
             action({
               model,
-              selectedHash: hash,
+              selectedHash,
+              baseHash,
               reportProgress: async (update) => {
                 reportProgress(update);
                 const runtimeProgressUpdate = buildComparisonRuntimeProgressPanelUpdate(
                   actionCommand,
-                  hash,
+                  selectedHash,
+                  baseHash,
                   model,
                   update
                 );
@@ -338,7 +356,8 @@ export function createOpenViHistoryCommand(
         );
         const runtimePanelUpdate = buildComparisonRuntimePanelUpdate(
           actionCommand,
-          hash,
+          selectedHash,
+          baseHash,
           model,
           result
         );
@@ -363,11 +382,11 @@ export function createOpenViHistoryCommand(
           );
         } else if (result.outcome === 'missing-retained-comparison-report') {
           void vscode.window.showInformationMessage(
-            'No retained VI Comparison Report exists for this pair yet. Use Generate compare to create retained evidence for it.'
+            'No retained VI Comparison Report exists for this pair yet. Use the commit checkboxes to generate retained evidence for it.'
           );
         } else if (result.outcome === 'invalid-retained-comparison-report') {
           void vscode.window.showInformationMessage(
-            'Retained VI Comparison evidence for this pair is stale or invalid. Use Refresh compare to rebuild retained evidence for it.'
+            'Retained VI Comparison evidence for this pair is stale or invalid. Use the commit checkboxes to rebuild retained evidence for it.'
           );
         }
         const runtimeWarningMessage = buildComparisonRuntimeWarningMessage(
@@ -392,11 +411,11 @@ export function createOpenViHistoryCommand(
         ) {
           if (result.retainedArchiveAvailable === false) {
             void vscode.window.showInformationMessage(
-              'VI Comparison Report opened, but retained pair evidence was not archived for later reuse. Use Refresh compare to rebuild retained evidence for this pair if Open compare remains unavailable.'
+              'VI Comparison Report opened, but retained pair evidence was not archived for later reuse. Use the commit checkboxes to rebuild retained evidence for this pair if it is not yet reviewable.'
             );
           } else {
-            const selectedCommit = model.commits.find((commit) => commit.hash === hash);
-            if (selectedCommit?.previousHash) {
+            const selectedCommit = model.commits.find((commit) => commit.hash === selectedHash);
+            if (selectedCommit && (!baseHash || selectedCommit.previousHash === baseHash)) {
               selectedCommit.retainedComparisonEvidenceAvailable = true;
               panel.webview.html = renderHistoryPanelHtml(
                 model,
@@ -406,7 +425,13 @@ export function createOpenViHistoryCommand(
           }
         }
 
-        recordComparisonResult(actionCommand, hash, result, runtimePanelUpdate);
+        recordComparisonResult(
+          actionCommand,
+          selectedHash,
+          baseHash,
+          result,
+          runtimePanelUpdate
+        );
         if (runtimePanelUpdate) {
           void panel.webview.postMessage(runtimePanelUpdate);
         }
@@ -781,6 +806,29 @@ export function createOpenViHistoryCommand(
         return;
       }
 
+      if (command === 'generateComparisonReportFromSelection') {
+        const explicitPair = resolveExplicitComparisonPair(model, selectedHashes);
+        if (!explicitPair) {
+          void vscode.window.showInformationMessage(
+            'Select two distinct retained revisions to generate a comparison report.'
+          );
+          panelTracker?.recordAction({
+            command,
+            outcome: 'ignored-missing-hash'
+          });
+          return;
+        }
+
+        await runComparisonReportCommand(
+          command,
+          'Generating VI Comparison Report',
+          'VI History comparison report generation was cancelled. Retained comparison-report artifacts, if any, were preserved.',
+          comparisonReportAction,
+          explicitPair
+        );
+        return;
+      }
+
       if (!hash) {
         panelTracker?.recordAction({
           command,
@@ -987,6 +1035,7 @@ async function runProgressWrappedAction<Result>(
 function buildComparisonRuntimePanelUpdate(
   actionCommand: string,
   selectedHash: string,
+  baseHash: string | undefined,
   model: Awaited<ReturnType<ViHistoryService['load']>>,
   result: ComparisonReportActionResult
 ):
@@ -1007,11 +1056,11 @@ function buildComparisonRuntimePanelUpdate(
   }
 
   const selectedCommit = model.commits.find((commit) => commit.hash === selectedHash);
-  const pairLabel = selectedCommit?.previousHash
-    ? `${selectedHash.slice(0, 8)} vs ${selectedCommit.previousHash.slice(0, 8)}`
+  const effectiveBaseHash = baseHash ?? selectedCommit?.previousHash;
+  const pairLabel = effectiveBaseHash
+    ? `${selectedHash.slice(0, 8)} vs ${effectiveBaseHash.slice(0, 8)}`
     : selectedHash.slice(0, 8);
-  const commandLabel =
-    actionCommand === 'diffPrevious' ? 'Open compare' : 'Generate compare';
+  const commandLabel = deriveComparisonCommandLabel(actionCommand);
   const runtimeProvider = deriveRuntimeProviderFromDoctorSummary(
     result.runtimeDoctorSummaryLines
   );
@@ -1070,6 +1119,7 @@ function buildComparisonRuntimePanelUpdate(
 function buildComparisonRuntimeProgressPanelUpdate(
   actionCommand: string,
   selectedHash: string,
+  baseHash: string | undefined,
   model: Awaited<ReturnType<ViHistoryService['load']>>,
   update: { message: string; increment?: number }
 ):
@@ -1087,11 +1137,11 @@ function buildComparisonRuntimeProgressPanelUpdate(
   }
 
   const selectedCommit = model.commits.find((commit) => commit.hash === selectedHash);
-  const pairLabel = selectedCommit?.previousHash
-    ? `${selectedHash.slice(0, 8)} vs ${selectedCommit.previousHash.slice(0, 8)}`
+  const effectiveBaseHash = baseHash ?? selectedCommit?.previousHash;
+  const pairLabel = effectiveBaseHash
+    ? `${selectedHash.slice(0, 8)} vs ${effectiveBaseHash.slice(0, 8)}`
     : selectedHash.slice(0, 8);
-  const commandLabel =
-    actionCommand === 'diffPrevious' ? 'Open compare' : 'Generate compare';
+  const commandLabel = deriveComparisonCommandLabel(actionCommand);
   return {
     type: 'comparisonRuntimeProgress',
     status,
@@ -1115,8 +1165,7 @@ function buildComparisonRuntimeWarningMessage(
     return undefined;
   }
 
-  const commandLabel =
-    actionCommand === 'diffPrevious' ? 'Open compare' : 'Generate compare';
+  const commandLabel = deriveComparisonCommandLabel(actionCommand);
   const runtimeProvider = deriveRuntimeProviderFromDoctorSummary(
     result.runtimeDoctorSummaryLines
   );
@@ -1184,8 +1233,7 @@ function buildComparisonRuntimeInformationMessage(
     return undefined;
   }
 
-  const commandLabel =
-    actionCommand === 'diffPrevious' ? 'Open compare' : 'Generate compare';
+  const commandLabel = deriveComparisonCommandLabel(actionCommand);
   const runtimeProvider = deriveRuntimeProviderFromDoctorSummary(
     result.runtimeDoctorSummaryLines
   );
@@ -1263,6 +1311,43 @@ function deriveComparisonRuntimeProgressStatus(
   }
 
   return undefined;
+}
+
+function deriveComparisonCommandLabel(actionCommand: string): string {
+  if (actionCommand === 'diffPrevious') {
+    return 'Open compare';
+  }
+  if (actionCommand === 'generateComparisonReportFromSelection') {
+    return 'Selected compare';
+  }
+  return 'Generate compare';
+}
+
+function resolveExplicitComparisonPair(
+  model: ViHistoryViewModel,
+  selectedHashes: string[]
+): { selectedHash: string; baseHash: string } | undefined {
+  const uniqueHashes = [...new Set(selectedHashes)];
+  if (uniqueHashes.length !== 2) {
+    return undefined;
+  }
+
+  const rankedCommits = uniqueHashes
+    .map((candidateHash) => ({
+      hash: candidateHash,
+      index: model.commits.findIndex((commit) => commit.hash === candidateHash)
+    }))
+    .filter((candidate) => candidate.index >= 0)
+    .sort((left, right) => left.index - right.index);
+
+  if (rankedCommits.length !== 2) {
+    return undefined;
+  }
+
+  return {
+    selectedHash: rankedCommits[0].hash,
+    baseHash: rankedCommits[1].hash
+  };
 }
 
 function deriveComparisonRuntimeNextAction(

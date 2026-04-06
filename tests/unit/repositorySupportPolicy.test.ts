@@ -18,7 +18,7 @@ describe('repositorySupportPolicy', () => {
     ).toBe('https://github.com/ni/actor-framework.git');
   });
 
-  it('classifies governed upstreams, governed-family forks, and unsupported repos', () => {
+  it('classifies governed upstreams, governed-family forks, and generic repos as supported', () => {
     expect(
       classifyRepositorySupportPolicy('https://github.com/ni/labview-icon-editor.git')
     ).toMatchObject({
@@ -36,9 +36,9 @@ describe('repositorySupportPolicy', () => {
       tier: 'governed-fork',
       familyId: 'labview-icon-editor',
       allowCoreReviewActions: true,
-      allowDecisionRecordActions: false,
-      allowBenchmarkStatus: false,
-      allowHumanReviewSubmission: false
+      allowDecisionRecordActions: true,
+      allowBenchmarkStatus: true,
+      allowHumanReviewSubmission: true
     });
 
     expect(
@@ -47,19 +47,19 @@ describe('repositorySupportPolicy', () => {
       tier: 'governed-upstream',
       familyId: 'actor-framework',
       allowCoreReviewActions: true,
-      allowDecisionRecordActions: false,
-      allowBenchmarkStatus: false,
-      allowHumanReviewSubmission: false
+      allowDecisionRecordActions: true,
+      allowBenchmarkStatus: true,
+      allowHumanReviewSubmission: true
     });
 
     expect(
       classifyRepositorySupportPolicy('https://github.com/example/something-else.git')
     ).toMatchObject({
-      tier: 'unsupported',
-      allowCoreReviewActions: false,
-      allowDecisionRecordActions: false,
-      allowBenchmarkStatus: false,
-      allowHumanReviewSubmission: false
+      tier: 'generic-repository',
+      allowCoreReviewActions: true,
+      allowDecisionRecordActions: true,
+      allowBenchmarkStatus: true,
+      allowHumanReviewSubmission: true
     });
   });
 
@@ -86,19 +86,19 @@ describe('repositorySupportPolicy', () => {
       familyId: 'actor-framework',
       supportLabel: 'Governed local fixture: NI Actor Framework',
       allowCoreReviewActions: true,
-      allowDecisionRecordActions: false,
-      allowBenchmarkStatus: false,
-      allowHumanReviewSubmission: false
+      allowDecisionRecordActions: true,
+      allowBenchmarkStatus: true,
+      allowHumanReviewSubmission: true
     });
 
     expect(
       classifyRepositorySupportPolicy('/tmp/something-else.bundle', 'something-else')
     ).toMatchObject({
-      tier: 'unsupported',
-      allowCoreReviewActions: false,
-      allowDecisionRecordActions: false,
-      allowBenchmarkStatus: false,
-      allowHumanReviewSubmission: false
+      tier: 'generic-repository',
+      allowCoreReviewActions: true,
+      allowDecisionRecordActions: true,
+      allowBenchmarkStatus: true,
+      allowHumanReviewSubmission: true
     });
   });
 });

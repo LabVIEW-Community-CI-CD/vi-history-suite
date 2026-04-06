@@ -47,12 +47,8 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('labview-icon-editor');
     expect(html).toContain('Improve deployment behavior');
     expect(html).toContain('Open@commit');
-    expect(html).toContain('Open compare');
-    expect(html).toContain('Generate compare');
-    expect(html).toContain('Open dashboard');
     expect(html).toContain('Open docs');
     expect(html).toContain('Open benchmark status');
-    expect(html).toContain('Create decision record');
     expect(html).toContain('Submit host review');
     expect(html).toContain('Select outcome');
     expect(html).toContain('Select confidence');
@@ -60,6 +56,8 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('Copy review packet');
     expect(html).toContain('data-testid="history-status"');
     expect(html).toContain('data-testid="history-compare-runtime-status"');
+    expect(html).toContain('data-testid="history-compare-selection-status"');
+    expect(html).toContain('data-testid="history-compare-selection-summary"');
     expect(html).toContain('data-testid="history-compare-runtime-summary"');
     expect(html).toContain('data-testid="history-compare-runtime-next-action"');
     expect(html).toContain('data-testid="history-compare-runtime-details"');
@@ -82,22 +80,18 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('data-testid="history-surface-capabilities"');
     expect(html).toContain('data-testid="history-capability-comparison"');
     expect(html).toContain('data-testid="history-capability-open-compare"');
-    expect(html).toContain('data-testid="history-capability-dashboard"');
-    expect(html).toContain('data-testid="history-capability-decision-record"');
     expect(html).toContain('data-testid="history-capability-documentation"');
     expect(html).toContain('data-testid="history-capability-benchmark-status"');
     expect(html).toContain('data-testid="history-capability-human-review"');
     expect(html).toContain('data-testid="history-row"');
+    expect(html).toContain('data-testid="history-commit-select"');
+    expect(html).toContain('data-testid="history-commit-select-cell"');
     expect(html).toContain('data-testid="history-compare-base"');
     expect(html).toContain('data-testid="history-compare-pair"');
     expect(html).toContain('data-testid="history-action-open"');
-    expect(html).toContain('data-testid="history-action-diff"');
-    expect(html).toContain('data-testid="history-action-report"');
     expect(html).toContain('data-testid="history-action-copy"');
-    expect(html).toContain('data-testid="history-action-dashboard"');
     expect(html).toContain('data-testid="history-action-documentation"');
     expect(html).toContain('data-testid="history-action-benchmark-status"');
-    expect(html).toContain('data-testid="history-action-decision-record"');
     expect(html).toContain('data-testid="history-action-submit-human-review"');
     expect(html).toContain('data-testid="history-human-review-submit"');
     expect(html).toContain('data-testid="history-human-review-outcome-field"');
@@ -111,11 +105,9 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('Confidence and scope:');
     expect(html).toContain('Local Git history, tracked-file status, and content-detected VI signature checks.');
     expect(html).toContain('Direct local evidence for chronology, path provenance, retained hashes, and retained compare pairing.');
-    expect(html).toContain('Repository/path facts, retained commit chronology, selected-versus-base pairing, compare-pair summaries, and dashboard availability.');
-    expect(html).toContain('Compare generation:</strong> Available for retained pairs that have a base revision');
-    expect(html).toContain('Open compare:</strong> Available once retained pair evidence exists');
-    expect(html).toContain('Dashboard:</strong> Available when the retained review window reaches at least three commits');
-    expect(html).toContain('Decision record:</strong> Available when the retained review window reaches at least three commits');
+    expect(html).toContain('Repository/path facts, retained commit chronology, checkbox-selected compare pairing, and retained compare-pair summaries.');
+    expect(html).toContain('Pair selection:</strong> Available for any retained review window with at least two commits; the second checkbox selection generates the explicit selected/base pair');
+    expect(html).toContain('Retained pair review:</strong> Retained comparison evidence opens automatically through the checkbox-selected compare flow when available; no separate compare button is exposed on commit rows');
     expect(html).toContain('Documentation:</strong> Available in this build');
     expect(html).toContain(
       "Benchmark status:</strong> Available only on Sergio Velderrain's canonical Windows 11 host machine"
@@ -125,17 +117,12 @@ describe('renderHistoryPanelHtml', () => {
     );
     expect(html).toContain('Needs external comparison tooling:');
     expect(html).toContain('Binary semantic differences, visual or cosmetic change detection, and LabVIEW comparison-report output.');
-    expect(html).toContain('Selected:</strong> <code>abcdef12</code>');
-    expect(html).toContain('vs base:</strong> <code>11111111</code>');
-    expect(html).toContain('Open compare</code> action targets once retained pair evidence exists and retained compare opening is available in this build.');
-    expect(html).toContain('Generate compare</code> when a pair has no retained evidence yet');
-    expect(html).toContain('Refresh compare</code> when you want to update already-retained evidence');
+    expect(html).toContain('Adjacent:</strong> <code>abcdef12</code>');
+    expect(html).toContain('vs prior:</strong> <code>11111111</code>');
+    expect(html).toContain('Checkbox selection defines the exact selected/base pair. The adjacent-pair text in each row is chronology context only');
     expect(html).toContain('Open docs</code> to open the bundled user documentation');
     expect(html).toContain(
       'Open benchmark status</code> on the canonical Windows 11 host when you need the retained Windows baseline plus the live or completed Linux benchmark state inside VS Code'
-    );
-    expect(html).toContain(
-      'Create decision record</code> when decision-record support is available in this build and you want to retain a separate human review outcome'
     );
     expect(html).toContain(
       'Submit host review</code> after the manual right-click pass on the canonical Windows 11 host machine from the deterministic local fixture workspace, not a OneDrive-backed path'
@@ -147,6 +134,13 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain(
       'No compare action from this panel has retained provider or acquisition truth yet.'
     );
+    expect(html).toContain(
+      'Select any two retained revisions. The second checkbox selection will generate a comparison report automatically for that exact pair, using the newer commit as selected and the older commit as base.'
+    );
+    expect(html).toContain("command: 'generateComparisonReportFromSelection'");
+    expect(html).toContain('handleCommitSelectionChange');
+    expect(html).toContain('Select one more retained revision to generate a comparison report for the chosen pair.');
+    expect(html).toContain('Generating compare for the selected retained pair...');
     expect(html).toContain('let panelState = vscode.getState() ?? {};');
     expect(html).toContain('hostReviewDraft');
     expect(html).toContain('persistHostReviewDraft');
@@ -156,7 +150,7 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain("message.type === 'comparisonRuntimeResult'");
   });
 
-  it('renders refresh-state pair actions when retained comparison evidence already exists', () => {
+  it('keeps compare row buttons off the extension-user surface even when retained comparison evidence already exists', () => {
     const html = renderHistoryPanelHtml({
       repositoryName: 'labview-icon-editor',
       repositoryRoot: '/tmp/labview-icon-editor',
@@ -181,11 +175,10 @@ describe('renderHistoryPanelHtml', () => {
       ]
     });
 
-    expect(html).toContain('Open compare');
-    expect(html).toContain('Refresh compare');
-    expect(html).toContain('data-command="generateComparisonReport" data-hash="abcdef1234567890">Refresh compare</button>');
-    expect(html).toContain('data-testid="history-action-report" disabled>Generate compare</button>');
-    expect(html).toContain('data-testid="history-action-decision-record" disabled');
+    expect(html).not.toContain('data-testid="history-action-diff"');
+    expect(html).not.toContain('data-testid="history-action-report"');
+    expect(html).not.toContain('data-testid="history-action-dashboard"');
+    expect(html).not.toContain('data-testid="history-action-decision-record"');
   });
 
   it('renders the last retained compare runtime truth when the panel is reopened', () => {
@@ -298,14 +291,12 @@ describe('renderHistoryPanelHtml', () => {
     });
 
     expect(html).toContain('data-testid="history-action-documentation" disabled');
-    expect(html).toContain('data-testid="history-action-dashboard" disabled');
-    expect(html).toContain('data-testid="history-action-decision-record" disabled');
-    expect(html).toContain('data-testid="history-action-diff" disabled');
-    expect(html).toContain('data-testid="history-action-report" disabled>Refresh compare</button>');
-    expect(html).toContain('Compare generation:</strong> Unavailable in this build');
-    expect(html).toContain('Open compare:</strong> Unavailable in this build');
-    expect(html).toContain('Dashboard:</strong> Unavailable in this build');
-    expect(html).toContain('Decision record:</strong> Unavailable in this build');
+    expect(html).not.toContain('data-testid="history-action-dashboard"');
+    expect(html).not.toContain('data-testid="history-action-decision-record"');
+    expect(html).not.toContain('data-testid="history-action-diff"');
+    expect(html).not.toContain('data-testid="history-action-report"');
+    expect(html).toContain('Pair selection:</strong> Unavailable in this build');
+    expect(html).toContain('Retained pair review:</strong> Retained comparison opening is unavailable in this build');
     expect(html).toContain('Documentation:</strong> Unavailable in this build');
     expect(html).not.toContain('data-testid="history-capability-benchmark-status"');
     expect(html).not.toContain('data-testid="history-capability-human-review"');
@@ -369,9 +360,8 @@ describe('renderHistoryPanelHtml', () => {
     expect(reviewPacket).toContain('Repo support: Governed upstream: NI LabVIEW Icon Editor');
     expect(reviewPacket).toContain('Retained revisions: 2');
     expect(reviewPacket).toContain('History window: capped window truncated to 2/4 commits at the configured ceiling (2)');
-    expect(reviewPacket).toContain('Dashboard available: no');
+    expect(reviewPacket).toContain('Included here: chronology, path provenance, retained hashes, checkbox-selected compare pairing, and retained compare pairs.');
     expect(reviewPacket).toContain('Confidence and scope:');
-    expect(reviewPacket).toContain('Included here: chronology, path provenance, retained hashes, compare pairs, and dashboard availability.');
     expect(reviewPacket).toContain('Needs external comparison tooling: binary semantic differences, visual or cosmetic change detection, and LabVIEW comparison-report output.');
     expect(reviewPacket).toContain('- abcdef12 vs 11111111 :: Improve deployment behavior');
     expect(reviewPacket).toContain('- 11111111 :: oldest retained revision :: Initial deployment behavior');
@@ -391,7 +381,7 @@ describe('renderHistoryPanelHtml', () => {
     const reviewPacket = renderHistoryReviewPacketText(model);
 
     expect(html).toContain('No retained commits');
-    expect(html).toContain('data-testid="history-action-dashboard" disabled');
+    expect(html).not.toContain('data-testid="history-action-dashboard"');
     expect(reviewPacket).toContain('Newest retained commit: No retained commits');
     expect(reviewPacket).toContain('Oldest retained commit: No retained commits');
   });
@@ -442,7 +432,7 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('Repo support:</strong> Governed upstream: NI LabVIEW Icon Editor');
   });
 
-  it('renders a fail-closed unsupported-family state for repos outside the governed family', () => {
+  it('renders repo-agnostic support for repos outside the canonical governed family', () => {
     const html = renderHistoryPanelHtml({
       repositoryName: 'other-repo',
       repositoryRoot: '/tmp/other-repo',
@@ -453,23 +443,23 @@ describe('renderHistoryPanelHtml', () => {
       repositorySupport: {
         repositoryUrl: 'https://github.com/example/other-repo.git',
         normalizedRepositoryUrl: 'https://github.com/example/other-repo.git',
-        tier: 'unsupported',
-        supportLabel: 'Unsupported outside governed repo family',
+        tier: 'generic-repository',
+        supportLabel: 'Repo-agnostic support',
         supportGuidance:
-          'This GitHub repository is outside the governed vi-history-suite repo family. Compare, dashboard, decision-record, benchmark, and host-review actions are blocked here.',
-        allowCoreReviewActions: false,
-        allowDecisionRecordActions: false,
-        allowBenchmarkStatus: false,
-        allowHumanReviewSubmission: false
+          'VI History is available for this repository. Canonical benchmark, scenario, and maintainer host-review evidence remain separately governed and may be narrower than the current repo.',
+        allowCoreReviewActions: true,
+        allowDecisionRecordActions: true,
+        allowBenchmarkStatus: true,
+        allowHumanReviewSubmission: true
       },
       surfaceCapabilities: {
-        comparisonGenerationAvailable: false,
-        retainedComparisonOpenAvailable: false,
-        dashboardAvailable: false,
-        decisionRecordAvailable: false,
+        comparisonGenerationAvailable: true,
+        retainedComparisonOpenAvailable: true,
+        dashboardAvailable: true,
+        decisionRecordAvailable: true,
         documentationAvailable: true,
-        benchmarkStatusAvailable: false,
-        humanReviewSubmissionAvailable: false
+        benchmarkStatusAvailable: true,
+        humanReviewSubmissionAvailable: true
       },
       commits: [
         {
@@ -488,13 +478,11 @@ describe('renderHistoryPanelHtml', () => {
       ]
     });
 
-    expect(html).toContain('Unsupported outside governed repo family');
-    expect(html).toContain('Compare generation:</strong> Blocked outside the governed repo family');
-    expect(html).toContain('Dashboard:</strong> Blocked outside the governed repo family');
-    expect(html).toContain('Decision record:</strong> Blocked outside the governed repo family');
-    expect(html).toContain('data-testid="history-action-dashboard" disabled');
-    expect(html).toContain('data-testid="history-action-decision-record" disabled');
-    expect(html).toContain('data-testid="history-action-diff" disabled');
-    expect(html).toContain('data-testid="history-action-report" disabled>Generate compare</button>');
+    expect(html).toContain('Repo-agnostic support');
+    expect(html).toContain('Pair selection:</strong> Available for any retained review window with at least two commits; the second checkbox selection generates the explicit selected/base pair');
+    expect(html).not.toContain('data-testid="history-action-dashboard"');
+    expect(html).not.toContain('data-testid="history-action-decision-record"');
+    expect(html).toContain('data-testid="history-action-open"');
+    expect(html).not.toContain('data-testid="history-action-report"');
   });
 });

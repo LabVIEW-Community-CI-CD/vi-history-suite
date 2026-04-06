@@ -1,6 +1,7 @@
 export type RepositorySupportTier =
   | 'governed-upstream'
   | 'governed-fork'
+  | 'generic-repository'
   | 'unsupported';
 
 export type RepositorySupportFamilyId = 'labview-icon-editor' | 'actor-framework';
@@ -52,6 +53,9 @@ interface LocalRepositoryCoordinates {
   normalizedRepositoryUrl?: string;
 }
 
+const GENERIC_SUPPORT_GUIDANCE =
+  'VI History is available for this repository. Canonical benchmark, scenario, and maintainer host-review evidence remain separately governed and may be narrower than the current repo.';
+
 export function normalizeGitHubRepositoryUrl(
   repositoryUrl: string | undefined
 ): string | undefined {
@@ -75,32 +79,23 @@ export function classifyRepositorySupportPolicy(
     if (family && localCoordinates) {
       return buildGovernedLocalFixturePolicy(repositoryUrl, localCoordinates, family);
     }
+    if (localCoordinates) {
+      return buildGenericRepositoryPolicy(repositoryUrl, localCoordinates.normalizedRepositoryUrl);
+    }
     return {
       repositoryUrl,
-      tier: 'unsupported',
-      supportLabel: 'Unsupported outside governed repo family',
-      supportGuidance:
-        'VI History is currently bounded to ni/labview-icon-editor, ni/actor-framework, and same-name GitHub forks. Compare, dashboard, decision-record, benchmark, and host-review actions are blocked here.',
-      allowCoreReviewActions: false,
-      allowDecisionRecordActions: false,
-      allowBenchmarkStatus: false,
-      allowHumanReviewSubmission: false
+      tier: 'generic-repository',
+      supportLabel: 'Repo-agnostic support',
+      supportGuidance: GENERIC_SUPPORT_GUIDANCE,
+      allowCoreReviewActions: true,
+      allowDecisionRecordActions: true,
+      allowBenchmarkStatus: true,
+      allowHumanReviewSubmission: true
     };
   }
 
   if (!family) {
-    return {
-      repositoryUrl,
-      normalizedRepositoryUrl: coordinates.normalizedUrl,
-      tier: 'unsupported',
-      supportLabel: 'Unsupported outside governed repo family',
-      supportGuidance:
-        'This GitHub repository is outside the governed vi-history-suite repo family. Compare, dashboard, decision-record, benchmark, and host-review actions are blocked here.',
-      allowCoreReviewActions: false,
-      allowDecisionRecordActions: false,
-      allowBenchmarkStatus: false,
-      allowHumanReviewSubmission: false
-    };
+    return buildGenericRepositoryPolicy(repositoryUrl, coordinates.normalizedUrl);
   }
 
   if (coordinates.owner === family.canonicalOwner) {
@@ -113,12 +108,12 @@ export function classifyRepositorySupportPolicy(
       supportLabel: `Governed upstream: ${family.displayName}`,
       supportGuidance:
         family.id === 'labview-icon-editor'
-          ? 'This upstream repo is inside the governed family. Core compare and dashboard surfaces remain in scope here, while decision-record, benchmark, and maintainer host-review lanes stay governed separately.'
-          : 'This upstream repo is inside the governed family. Core compare and dashboard surfaces remain in scope here, but decision-record, benchmark, and maintainer host-review lanes are not yet governed for this repo family.',
+          ? 'This upstream repo is part of the canonical governed evidence family. VI History remains available here and the canonical benchmark, scenario, and maintainer-host-review evidence are deepest on this repo.'
+          : 'This upstream repo is part of the canonical governed evidence family. VI History remains available here while benchmark, scenario, and maintainer-host-review evidence remain separately governed.',
       allowCoreReviewActions: true,
-      allowDecisionRecordActions: family.id === 'labview-icon-editor',
-      allowBenchmarkStatus: family.id === 'labview-icon-editor',
-      allowHumanReviewSubmission: family.id === 'labview-icon-editor'
+      allowDecisionRecordActions: true,
+      allowBenchmarkStatus: true,
+      allowHumanReviewSubmission: true
     };
   }
 
@@ -130,11 +125,11 @@ export function classifyRepositorySupportPolicy(
     familyDisplayName: family.displayName,
     supportLabel: `Governed-family fork: ${family.displayName}`,
     supportGuidance:
-      'This same-name GitHub fork stays inside the bounded repo family for core compare and dashboard use, but decision-record, benchmark, and maintainer host-review lanes remain governed only for the upstream repos until separately modeled.',
+      'This same-name GitHub fork stays close to the canonical governed evidence family. VI History remains available here, while canonical benchmark and human-gate evidence still remain separately governed.',
     allowCoreReviewActions: true,
-    allowDecisionRecordActions: false,
-    allowBenchmarkStatus: false,
-    allowHumanReviewSubmission: false
+    allowDecisionRecordActions: true,
+    allowBenchmarkStatus: true,
+    allowHumanReviewSubmission: true
   };
 }
 
@@ -152,12 +147,29 @@ function buildGovernedLocalFixturePolicy(
     supportLabel: `Governed local fixture: ${family.displayName}`,
     supportGuidance:
       family.id === 'labview-icon-editor'
-        ? 'This retained local fixture clone is inside the governed family. Core compare and dashboard surfaces remain in scope here, while decision-record, benchmark, and maintainer host-review lanes stay governed separately.'
-        : 'This retained local fixture clone is inside the governed family. Core compare and dashboard surfaces remain in scope here, but decision-record, benchmark, and maintainer host-review lanes are not yet governed for this repo family.',
+        ? 'This retained local fixture clone stays aligned with the canonical governed evidence family. VI History remains available here and the deepest benchmark and human-gate evidence still sits on this governed surface.'
+        : 'This retained local fixture clone stays aligned with the canonical governed evidence family. VI History remains available here while benchmark, scenario, and maintainer-host-review evidence remain separately governed.',
     allowCoreReviewActions: true,
-    allowDecisionRecordActions: family.id === 'labview-icon-editor',
-    allowBenchmarkStatus: family.id === 'labview-icon-editor',
-    allowHumanReviewSubmission: family.id === 'labview-icon-editor'
+    allowDecisionRecordActions: true,
+    allowBenchmarkStatus: true,
+    allowHumanReviewSubmission: true
+  };
+}
+
+function buildGenericRepositoryPolicy(
+  repositoryUrl: string | undefined,
+  normalizedRepositoryUrl?: string
+): RepositorySupportPolicy {
+  return {
+    repositoryUrl,
+    normalizedRepositoryUrl,
+    tier: 'generic-repository',
+    supportLabel: 'Repo-agnostic support',
+    supportGuidance: GENERIC_SUPPORT_GUIDANCE,
+    allowCoreReviewActions: true,
+    allowDecisionRecordActions: true,
+    allowBenchmarkStatus: true,
+    allowHumanReviewSubmission: true
   };
 }
 
@@ -220,14 +232,6 @@ function parseLocalRepositoryCoordinates(
     trimmedUrl.startsWith('\\\\') ||
     trimmedUrl.startsWith('file://');
   if (!localLike) {
-    return undefined;
-  }
-
-  const localBundleLike =
-    normalizedRepositoryName.endsWith('-icon-editor') ||
-    normalizedRepositoryName.endsWith('actor-framework');
-
-  if (!localBundleLike) {
     return undefined;
   }
 

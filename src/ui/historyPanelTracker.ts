@@ -5,6 +5,7 @@ import { ViHistoryViewModel } from '../services/viHistoryModel';
 export interface HistoryPanelMessage {
   command?: string;
   hash?: string;
+  selectedHashes?: string[];
   pageId?: string;
   reviewOutcome?: string;
   reviewConfidence?: string;
@@ -27,6 +28,7 @@ export interface DocumentationPanelMessage {
 export interface HistoryPanelActionSummary {
   command: string;
   hash?: string;
+  baseHash?: string;
   outcome:
     | 'copied-hash'
     | 'copied-review-packet'

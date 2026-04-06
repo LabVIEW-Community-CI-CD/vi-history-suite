@@ -214,7 +214,8 @@ move is now explicit too: run the retained `runGovernedProof
 host-operation-matrix` lane against the canonical Windows host, inventory the
 installed LabVIEWCLI operations from
 `C:\Program Files (x86)\National Instruments\Shared\LabVIEW CLI\Operations`,
-exercise the LabVIEW 2026 x86 and x64 host surfaces separately, retain
+exercise the LabVIEW 2026 x64 host tranche first and gate the x86 tranche
+until that x64 tranche completes cleanly in the same governed run, retain
 pre-run and post-run contamination truth on every case, use the
 local canonical `labview-ci-cd/actions/VICompareTooling` tree for the
 `PrintToSingleFileHtml` additional operation while still allowing approved
@@ -224,7 +225,7 @@ have been exercised first.
 Fresh canonical-host evidence on `2026-04-06` now narrows that follow-on lane
 further. The governed host-operation matrix now runs `LabVIEWCLI` through the
 retained foreground PowerShell path instead of the older background sidecar
-wrapper, and the corrected warm-headless x86/x64 ledger proves that
+wrapper, and the corrected warm-headless x64-then-x86 ledger proves that
 `ExecuteBuildSpec`, `MassCompile`, `RunVI`, `RunVIAnalyzer`, and
 `PrintToSingleFileHtml` succeed cleanly on both admitted LabVIEW 2026 host
 surfaces. `CloseLabVIEW -Headless` succeeds on x64 too, but the same x86

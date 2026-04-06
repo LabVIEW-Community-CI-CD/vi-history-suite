@@ -123,6 +123,14 @@ describe('runWindowsHostOperationMatrixCli', () => {
     expect(cases.find((entry) => entry.operation === 'PrintToSingleFileHtml')).toMatchObject({
       executionMode: 'help'
     });
+
+    const allCases = buildWindowsHostOperationMatrixCases({
+      ...parsed,
+      operation: 'CloseLabVIEW',
+      bitness: 'all',
+      sessionState: 'cold'
+    });
+    expect(allCases.map((entry) => entry.bitness)).toEqual(['x64', 'x86']);
   });
 
   it('runs one governed host operation case and retains JSON/Markdown evidence', async () => {
@@ -391,6 +399,64 @@ describe('runWindowsHostOperationMatrixCli', () => {
     expect(writeFile).toHaveBeenCalledWith(
       '/tmp/vi-history-suite/.cache/governed-proof/windows-host-operation-matrix/latest-run.json',
       expect.stringContaining('"labviewTcpPort": 3364'),
+      'utf8'
+    );
+  });
+
+  it('gates the x86 tranche behind a successful earlier x64 tranche when bitness all is requested', async () => {
+    const writeFile = vi.fn().mockResolvedValue(undefined);
+    const runLabviewCliCommand = vi
+      .fn()
+      .mockResolvedValueOnce({
+        exitCode: 1,
+        stdout: 'x64 failed',
+        stderr: 'boom'
+      });
+    const inspectRuntimeSurface = vi.fn().mockResolvedValue({
+      capturedAt: '2026-04-06T12:00:00.000Z',
+      processes: [],
+      processNames: []
+    });
+    const readFile = vi
+      .fn()
+      .mockResolvedValueOnce('server.tcp.enabled=true\n')
+      .mockResolvedValueOnce('server.tcp.port=3364\nserver.tcp.enabled=true\n');
+
+    await expect(
+      runWindowsHostOperationMatrixCli(
+        ['--operation', 'CloseLabVIEW', '--bitness', 'all'],
+        {
+          repoRoot: '/tmp/vi-history-suite',
+          mkdir: vi.fn().mockResolvedValue(undefined),
+          writeFile,
+          readFile: readFile as never,
+          pathExists: vi.fn().mockResolvedValue(true),
+          nowIso: () => '2026-04-06T12:00:00.000Z',
+          stdout: { write() {} },
+          inspectRuntimeSurface,
+          cleanupRuntimeSurface: vi.fn().mockResolvedValue(undefined),
+          listInstalledOperations: vi.fn().mockResolvedValue([
+            'CloseLabVIEW',
+            'CreateComparisonReport',
+            'ExecuteBuildSpec',
+            'MassCompile',
+            'RunUnitTests',
+            'RunVI',
+            'RunVIAnalyzer'
+          ]),
+          runLabviewCliCommand
+        }
+      )
+    ).resolves.toBe('pass');
+
+    expect(runLabviewCliCommand).toHaveBeenCalledTimes(1);
+    expect(runLabviewCliCommand).toHaveBeenCalledWith(
+      'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+      expect.arrayContaining(['-OperationName', 'CloseLabVIEW', '-LabVIEWPath', 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'])
+    );
+    expect(writeFile).toHaveBeenCalledWith(
+      '/tmp/vi-history-suite/.cache/governed-proof/windows-host-operation-matrix/latest-run.json',
+      expect.stringContaining('"blockedReason": "x64-tranche-did-not-complete-cleanly"'),
       'utf8'
     );
   });

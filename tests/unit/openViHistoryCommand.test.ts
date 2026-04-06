@@ -912,6 +912,86 @@ describe('createOpenViHistoryCommand', () => {
     expect(showInformationMessageMock).not.toHaveBeenCalled();
   });
 
+  it('routes two-checkbox commit selection through canonical selected/base compare generation order', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    const comparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'opened-comparison-report',
+      reportStatus: 'ready-for-runtime',
+      runtimeExecutionState: 'succeeded',
+      reportFilePath: '/workspace/.storage/reports/repo/file/diff-report-eligible.vi.html',
+      metadataFilePath: '/workspace/.storage/reports/repo/file/report-metadata.json',
+      reportWebviewUri: 'webview:/report',
+      title: 'VI Comparison Report: eligible.vi'
+    });
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Newest revision',
+            previousHash: '1111111122222222'
+          },
+          {
+            hash: '1111111122222222',
+            authorDate: '2026-04-01T00:00:00Z',
+            authorName: 'B User',
+            subject: 'Middle revision',
+            previousHash: '3333333344444444'
+          },
+          {
+            hash: '3333333344444444',
+            authorDate: '2026-03-31T00:00:00Z',
+            authorName: 'C User',
+            subject: 'Oldest revision'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      comparisonReportAction
+    );
+
+    await command(targetUri as never);
+    await tracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReportFromSelection',
+      selectedHashes: ['1111111122222222', 'abcdef1234567890']
+    });
+
+    expect(comparisonReportAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        selectedHash: 'abcdef1234567890',
+        baseHash: '1111111122222222',
+        reportProgress: expect.any(Function)
+      })
+    );
+    expect(tracker.getLastActionSummary()).toEqual(
+      expect.objectContaining({
+        command: 'generateComparisonReportFromSelection',
+        hash: 'abcdef1234567890',
+        baseHash: '1111111122222222',
+        outcome: 'opened-comparison-report',
+        reportStatus: 'ready-for-runtime',
+        runtimeExecutionState: 'succeeded'
+      })
+    );
+  });
+
   it('falls back to the bundled overview page when a stale documentation page id is requested', async () => {
     const targetUri = createMockUri('/workspace/eligible.vi');
     const tracker = new HistoryPanelTracker();
@@ -1103,16 +1183,14 @@ describe('createOpenViHistoryCommand', () => {
 
     const panel = createWebviewPanelMock.mock.results[0]?.value as MockPanel | undefined;
     expect(panel?.webview.html).toContain('data-testid="history-action-documentation" disabled');
-    expect(panel?.webview.html).toContain('data-testid="history-action-dashboard" disabled');
-    expect(panel?.webview.html).toContain('data-testid="history-action-decision-record" disabled');
-    expect(panel?.webview.html).toContain('data-testid="history-action-diff" disabled');
-    expect(panel?.webview.html).toContain('data-testid="history-action-report" disabled>Refresh compare</button>');
-    expect(panel?.webview.html).toContain('Dashboard:</strong> Unavailable in this build');
-    expect(panel?.webview.html).toContain('Decision record:</strong> Unavailable in this build');
+    expect(panel?.webview.html).not.toContain('data-testid="history-action-dashboard"');
+    expect(panel?.webview.html).not.toContain('data-testid="history-action-decision-record"');
+    expect(panel?.webview.html).not.toContain('data-testid="history-action-diff"');
+    expect(panel?.webview.html).not.toContain('data-testid="history-action-report"');
     expect(panel?.webview.html).toContain('Documentation:</strong> Unavailable in this build');
   });
 
-  it('warns and blocks review surfaces when the loaded repo is outside the governed repo family', async () => {
+  it('keeps review surfaces available when the loaded repo is outside the canonical governed family', async () => {
     const targetUri = createMockUri('/workspace/eligible.vi');
     const historyService = {
       load: vi.fn().mockResolvedValue({
@@ -1125,14 +1203,14 @@ describe('createOpenViHistoryCommand', () => {
         repositorySupport: {
           repositoryUrl: 'https://github.com/example/other-repo.git',
           normalizedRepositoryUrl: 'https://github.com/example/other-repo.git',
-          tier: 'unsupported',
-          supportLabel: 'Unsupported outside governed repo family',
+          tier: 'generic-repository',
+          supportLabel: 'Repo-agnostic support',
           supportGuidance:
-            'This GitHub repository is outside the governed vi-history-suite repo family. Compare, dashboard, decision-record, benchmark, and host-review actions are blocked here.',
-          allowCoreReviewActions: false,
-          allowDecisionRecordActions: false,
-          allowBenchmarkStatus: false,
-          allowHumanReviewSubmission: false
+            'VI History is available for this repository. Canonical benchmark, scenario, and maintainer host-review evidence remain separately governed and may be narrower than the current repo.',
+          allowCoreReviewActions: true,
+          allowDecisionRecordActions: true,
+          allowBenchmarkStatus: true,
+          allowHumanReviewSubmission: true
         },
         commits: [
           {
@@ -1163,22 +1241,14 @@ describe('createOpenViHistoryCommand', () => {
 
     await command(targetUri as never);
 
-    expect(showWarningMessageMock).toHaveBeenCalledWith(
-      'This GitHub repository is outside the governed vi-history-suite repo family. Compare, dashboard, decision-record, benchmark, and host-review actions are blocked here.'
-    );
+    expect(showWarningMessageMock).not.toHaveBeenCalled();
     const panel = createWebviewPanelMock.mock.results[0]?.value as MockPanel | undefined;
-    expect(panel?.webview.html).toContain('Unsupported outside governed repo family');
+    expect(panel?.webview.html).toContain('Repo-agnostic support');
     expect(panel?.webview.html).toContain(
-      'Compare generation:</strong> Blocked outside the governed repo family'
+      'Pair selection:</strong> Unavailable in this build'
     );
-    expect(panel?.webview.html).toContain(
-      'Dashboard:</strong> Blocked outside the governed repo family'
-    );
-    expect(panel?.webview.html).toContain(
-      'Decision record:</strong> Blocked outside the governed repo family'
-    );
-    expect(panel?.webview.html).toContain('data-testid="history-action-dashboard" disabled');
-    expect(panel?.webview.html).toContain('data-testid="history-action-decision-record" disabled');
+    expect(panel?.webview.html).not.toContain('data-testid="history-action-dashboard"');
+    expect(panel?.webview.html).not.toContain('data-testid="history-action-decision-record"');
   });
 
   it('fails closed with build-capability guidance when stale panel commands target unsupported optional surfaces', async () => {
@@ -1416,7 +1486,7 @@ describe('createOpenViHistoryCommand', () => {
     });
 
     expect(showInformationMessageMock).toHaveBeenCalledWith(
-      'No retained VI Comparison Report exists for this pair yet. Use Generate compare to create retained evidence for it.'
+      'No retained VI Comparison Report exists for this pair yet. Use the commit checkboxes to generate retained evidence for it.'
     );
     expect(tracker.getLastActionSummary()).toEqual({
       command: 'diffPrevious',
@@ -1481,7 +1551,7 @@ describe('createOpenViHistoryCommand', () => {
     });
 
     expect(showInformationMessageMock).toHaveBeenCalledWith(
-      'Retained VI Comparison evidence for this pair is stale or invalid. Use Refresh compare to rebuild retained evidence for it.'
+      'Retained VI Comparison evidence for this pair is stale or invalid. Use the commit checkboxes to rebuild retained evidence for it.'
     );
     expect(tracker.getLastActionSummary()).toEqual({
       command: 'diffPrevious',
@@ -2690,7 +2760,7 @@ describe('createOpenViHistoryCommand', () => {
     });
   });
 
-  it('reenables Open compare in the history Actions column for all retained pairs after dashboard completion', async () => {
+  it('keeps compare row buttons off the history panel even after dashboard completion', async () => {
     const targetUri = createMockUri('/workspace/eligible.vi');
     const tracker = new HistoryPanelTracker();
     let dashboardPrepared = false;
@@ -2756,16 +2826,18 @@ describe('createOpenViHistoryCommand', () => {
     await command(targetUri as never);
 
     const panel = createWebviewPanelMock.mock.results[0]?.value as MockPanel | undefined;
-    expect(panel?.webview.html.match(/data-command="diffPrevious"/g)?.length ?? 0).toBe(0);
-    expect(panel?.webview.html.match(/data-testid="history-action-diff" disabled/g)?.length ?? 0).toBe(3);
+    expect(panel?.webview.html).not.toContain('data-command="diffPrevious"');
+    expect(panel?.webview.html).not.toContain('data-testid="history-action-diff"');
+    expect(panel?.webview.html).not.toContain('data-testid="history-action-report"');
 
     await tracker.dispatchLastPanelMessage({
       command: 'openDashboard'
     });
 
     expect(retainedAvailability).toHaveBeenCalledTimes(4);
-    expect(panel?.webview.html.match(/data-command="diffPrevious"/g)?.length ?? 0).toBe(2);
-    expect(panel?.webview.html.match(/data-testid="history-action-diff" disabled/g)?.length ?? 0).toBe(1);
+    expect(panel?.webview.html).not.toContain('data-command="diffPrevious"');
+    expect(panel?.webview.html).not.toContain('data-testid="history-action-diff"');
+    expect(panel?.webview.html).not.toContain('data-testid="history-action-report"');
   });
 
   it('posts live compare-runtime progress into the history panel while comparison generation is running', async () => {
@@ -3064,16 +3136,16 @@ describe('createOpenViHistoryCommand', () => {
     await command(targetUri as never);
 
     const panel = createWebviewPanelMock.mock.results[0]?.value as MockPanel | undefined;
-    expect(panel?.webview.html).toContain('Generate compare');
-    expect(panel?.webview.html).toContain('data-testid="history-action-diff" disabled');
+    expect(panel?.webview.html).not.toContain('data-testid="history-action-diff"');
+    expect(panel?.webview.html).not.toContain('data-testid="history-action-report"');
 
     await tracker.dispatchLastPanelMessage({
       command: 'generateComparisonReport',
       hash: 'abcdef1234567890'
     });
 
-    expect(panel?.webview.html).toContain('Refresh compare');
-    expect(panel?.webview.html).toContain('data-command="diffPrevious"');
+    expect(panel?.webview.html).not.toContain('data-testid="history-action-diff"');
+    expect(panel?.webview.html).not.toContain('data-testid="history-action-report"');
   });
 
   it('keeps the live history panel in generate state when compare opens without retained archive evidence', async () => {
@@ -3131,7 +3203,7 @@ describe('createOpenViHistoryCommand', () => {
     await command(targetUri as never);
 
     const panel = createWebviewPanelMock.mock.results[0]?.value as MockPanel | undefined;
-    expect(panel?.webview.html).toContain('Generate compare');
+    expect(panel?.webview.html).not.toContain('data-testid="history-action-report"');
 
     await tracker.dispatchLastPanelMessage({
       command: 'generateComparisonReport',
@@ -3139,10 +3211,10 @@ describe('createOpenViHistoryCommand', () => {
     });
 
     expect(showInformationMessageMock).toHaveBeenCalledWith(
-      'VI Comparison Report opened, but retained pair evidence was not archived for later reuse. Use Refresh compare to rebuild retained evidence for this pair if Open compare remains unavailable.'
+      'VI Comparison Report opened, but retained pair evidence was not archived for later reuse. Use the commit checkboxes to rebuild retained evidence for this pair if it is not yet reviewable.'
     );
-    expect(panel?.webview.html).toContain('Generate compare');
-    expect(panel?.webview.html).toContain('data-testid="history-action-diff" disabled');
+    expect(panel?.webview.html).not.toContain('data-testid="history-action-report"');
+    expect(panel?.webview.html).not.toContain('data-testid="history-action-diff"');
     expect(tracker.getLastActionSummary()).toEqual({
       command: 'generateComparisonReport',
       hash: 'abcdef1234567890',

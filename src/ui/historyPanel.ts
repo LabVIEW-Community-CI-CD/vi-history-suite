@@ -23,10 +23,10 @@ export function renderHistoryPanelHtml(
   const oldestCommit = model.commits[model.commits.length - 1];
   const historyWindowSummary = renderHistoryWindowSummary(model);
   const latestCompareRuntime = deriveInitialCompareRuntimeStatus(lastActionSummary);
-  const dashboardButton =
-    capabilities.dashboardAvailable !== false && model.commits.length >= 3
-      ? '<button data-testid="history-action-dashboard" data-command="openDashboard">Open dashboard</button>'
-      : '<button data-testid="history-action-dashboard" disabled>Open dashboard</button>';
+  const comparisonSelectionEnabled = capabilities.comparisonGenerationAvailable !== false;
+  const comparisonSelectionStatus = comparisonSelectionEnabled
+    ? 'Select any two retained revisions. The second checkbox selection will generate a comparison report automatically for that exact pair, using the newer commit as selected and the older commit as base.'
+    : 'Two-commit selection is unavailable in this build.';
   const documentationButton =
     capabilities.documentationAvailable !== false
       ? '<button data-testid="history-action-documentation" data-command="openDocumentation" data-page-id="user-workflow">Open docs</button>'
@@ -34,10 +34,6 @@ export function renderHistoryPanelHtml(
   const benchmarkStatusButton = showBenchmarkStatus
     ? '<button data-testid="history-action-benchmark-status" data-command="openBenchmarkStatus">Open benchmark status</button>'
     : '';
-  const decisionRecordButton =
-    capabilities.decisionRecordAvailable !== false && model.commits.length >= 3
-      ? '<button data-testid="history-action-decision-record" data-command="createDecisionRecord">Create decision record</button>'
-      : '<button data-testid="history-action-decision-record" disabled>Create decision record</button>';
   const capabilitySummary = renderCapabilitySummary(model);
   const benchmarkStatusCapabilityHtml = capabilitySummary.benchmarkStatus
     ? `<div data-testid="history-capability-benchmark-status"><strong>Benchmark status:</strong> ${capabilitySummary.benchmarkStatus}</div>`
@@ -59,27 +55,16 @@ export function renderHistoryPanelHtml(
     : '';
   const rows = model.commits
     .map((commit: ViHistoryCommit, index: number) => {
-      const hasRetainedComparisonEvidence = commit.retainedComparisonEvidenceAvailable === true;
-      const diffButton =
-        commit.previousHash &&
-        hasRetainedComparisonEvidence &&
-        capabilities.retainedComparisonOpenAvailable !== false
-        ? `<button data-testid="history-action-diff" data-command="diffPrevious" data-hash="${escapeHtml(commit.hash)}">Open compare</button>`
-        : '<button data-testid="history-action-diff" disabled>Open compare</button>';
-      const reportActionLabel = hasRetainedComparisonEvidence
-        ? 'Refresh compare'
-        : 'Generate compare';
-      const reportButton =
-        commit.previousHash &&
-        capabilities.comparisonGenerationAvailable !== false
-        ? `<button data-testid="history-action-report" data-command="generateComparisonReport" data-hash="${escapeHtml(commit.hash)}">${reportActionLabel}</button>`
-        : `<button data-testid="history-action-report" disabled>${reportActionLabel}</button>`;
+      const selectCheckbox = `<input data-testid="history-commit-select" type="checkbox" data-hash="${escapeHtml(commit.hash)}" ${
+        comparisonSelectionEnabled ? '' : 'disabled'
+      } />`;
       const compareBase = commit.previousHash
-        ? `<div data-testid="history-compare-pair"><strong>Selected:</strong> <code>${escapeHtml(commit.hash.slice(0, 8))}</code> <strong>vs base:</strong> <code>${escapeHtml(commit.previousHash.slice(0, 8))}</code></div>`
-        : 'Oldest retained revision';
+        ? `<div data-testid="history-compare-pair"><strong>Adjacent:</strong> <code>${escapeHtml(commit.hash.slice(0, 8))}</code> <strong>vs prior:</strong> <code>${escapeHtml(commit.previousHash.slice(0, 8))}</code></div>`
+        : 'Oldest retained revision (selectable as the older/base side of a checkbox-selected pair)';
 
       return `
         <tr data-testid="history-row" data-commit-index="${index}">
+          <td data-testid="history-commit-select-cell">${selectCheckbox}</td>
           <td data-testid="history-commit-hash"><code>${escapeHtml(commit.hash.slice(0, 8))}</code></td>
           <td data-testid="history-commit-date">${escapeHtml(commit.authorDate)}</td>
           <td data-testid="history-commit-author">${escapeHtml(commit.authorName)}</td>
@@ -87,8 +72,6 @@ export function renderHistoryPanelHtml(
           <td data-testid="history-compare-base">${compareBase}</td>
           <td data-testid="history-commit-actions">
             <button data-testid="history-action-open" data-command="openCommit" data-hash="${escapeHtml(commit.hash)}">Open@commit</button>
-            ${diffButton}
-            ${reportButton}
             <button data-testid="history-action-copy" data-command="copyHash" data-hash="${escapeHtml(commit.hash)}">Copy hash</button>
           </td>
         </tr>
@@ -222,14 +205,16 @@ export function renderHistoryPanelHtml(
       <button data-testid="history-action-copy-review-packet" data-command="copyReviewPacket">Copy review packet</button>
       ${documentationButton}
       ${benchmarkStatusButton}
-      ${dashboardButton}
-      ${decisionRecordButton}
     </div>
     <div class="status" data-testid="history-compare-runtime-status" id="compare-runtime-status" data-state="${escapeHtml(latestCompareRuntime.status)}" role="status" aria-live="polite">
       <strong>Latest compare runtime:</strong><br />
       <span data-testid="history-compare-runtime-summary" id="compare-runtime-summary">${escapeHtml(latestCompareRuntime.summary)}</span><br />
       <span data-testid="history-compare-runtime-next-action" id="compare-runtime-next-action">${escapeHtml(latestCompareRuntime.nextAction)}</span>
       <div data-testid="history-compare-runtime-details" id="compare-runtime-details">${renderCompareRuntimeDetails(latestCompareRuntime.details)}</div>
+    </div>
+    <div class="status" data-testid="history-compare-selection-status" id="compare-selection-status" role="status" aria-live="polite">
+      <strong>Primary compare workflow:</strong><br />
+      <span data-testid="history-compare-selection-summary" id="compare-selection-summary">${escapeHtml(comparisonSelectionStatus)}</span>
     </div>
     <div class="packet" data-testid="history-review-packet">
       <div data-testid="history-chronology-order"><strong>Order:</strong> Newest commit first</div>
@@ -248,10 +233,8 @@ export function renderHistoryPanelHtml(
     </div>
     ${repositorySupportHtml}
     <div class="packet" data-testid="history-surface-capabilities">
-      <div data-testid="history-capability-comparison"><strong>Compare generation:</strong> ${capabilitySummary.comparisonGeneration}</div>
-      <div data-testid="history-capability-open-compare"><strong>Open compare:</strong> ${capabilitySummary.openCompare}</div>
-      <div data-testid="history-capability-dashboard"><strong>Dashboard:</strong> ${capabilitySummary.dashboard}</div>
-      <div data-testid="history-capability-decision-record"><strong>Decision record:</strong> ${capabilitySummary.decisionRecord}</div>
+      <div data-testid="history-capability-comparison"><strong>Pair selection:</strong> ${capabilitySummary.comparisonGeneration}</div>
+      <div data-testid="history-capability-open-compare"><strong>Retained pair review:</strong> ${capabilitySummary.openCompare}</div>
       <div data-testid="history-capability-documentation"><strong>Documentation:</strong> ${capabilitySummary.documentation}</div>
       ${benchmarkStatusCapabilityHtml}
       ${humanReviewCapabilityHtml}
@@ -263,13 +246,11 @@ export function renderHistoryPanelHtml(
       <strong>Reviewer guidance:</strong>
       <ol>
         <li data-testid="history-guidance-step">Use the newest/oldest packet to confirm the retained review window before acting on a specific revision.</li>
-        <li data-testid="history-guidance-step">Use the compare pair in each row to see exactly which retained base revision an <code>Open compare</code> action targets once retained pair evidence exists and retained compare opening is available in this build.</li>
+        <li data-testid="history-guidance-step">Use the commit checkboxes as the primary compare workflow. Select any first retained revision, then select the second retained revision to generate the comparison report automatically for that pair.</li>
+        <li data-testid="history-guidance-step">Checkbox selection defines the exact selected/base pair. The adjacent-pair text in each row is chronology context only and does not limit which two retained revisions you can compare.</li>
         <li data-testid="history-guidance-step">Use <code>Open docs</code> to open the bundled user documentation that ships with this installed extension version instead of leaving VS Code for repo-hosted docs.</li>
         ${reviewGuidanceBenchmarkStep}
-        <li data-testid="history-guidance-step">Use <code>Open dashboard</code> when the retained window has at least three commits, dashboard review is available in this build, and you want concentrated comparison-report evidence in one place.</li>
-        <li data-testid="history-guidance-step">Use <code>Create decision record</code> when decision-record support is available in this build and you want to retain a separate human review outcome from the current VI review evidence without mutating the machine-generated dashboard packet.</li>
         ${reviewGuidanceHumanReviewStep}
-        <li data-testid="history-guidance-step">Use <code>Generate compare</code> when a pair has no retained evidence yet, and <code>Refresh compare</code> when you want to update already-retained evidence for that pair, but only when comparison generation is available in this build.</li>
       </ol>
     </div>
     <div class="confidence" data-testid="history-confidence-scope">
@@ -277,7 +258,7 @@ export function renderHistoryPanelHtml(
       <div class="confidence-grid">
         <div data-testid="history-confidence-basis"><strong>Basis:</strong> Local Git history, tracked-file status, and content-detected VI signature checks.</div>
         <div data-testid="history-confidence-rating"><strong>Confidence:</strong> Direct local evidence for chronology, path provenance, retained hashes, and retained compare pairing.</div>
-        <div data-testid="history-scope-included"><strong>Included here:</strong> Repository/path facts, retained commit chronology, selected-versus-base pairing, compare-pair summaries, and dashboard availability.</div>
+        <div data-testid="history-scope-included"><strong>Included here:</strong> Repository/path facts, retained commit chronology, checkbox-selected compare pairing, and retained compare-pair summaries.</div>
         <div data-testid="history-scope-excluded"><strong>Needs external comparison tooling:</strong> Binary semantic differences, visual or cosmetic change detection, and LabVIEW comparison-report output.</div>
       </div>
     </div>
@@ -285,11 +266,12 @@ export function renderHistoryPanelHtml(
     <table data-testid="history-table">
       <thead>
         <tr>
+          <th>Select</th>
           <th>Commit</th>
           <th>Date</th>
           <th>Author</th>
           <th>Subject</th>
-          <th>Compare base</th>
+          <th>Adjacent pair</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -328,6 +310,50 @@ export function renderHistoryPanelHtml(
           hostReviewDraft: undefined
         };
         vscode.setState(panelState);
+      }
+      function getCommitSelectionInputs() {
+        return Array.from(document.querySelectorAll('[data-testid="history-commit-select"]')).filter(
+          (candidate) => candidate instanceof HTMLInputElement
+        );
+      }
+      function updateCommitSelectionStatus(message) {
+        const status = document.getElementById('compare-selection-summary');
+        if (status instanceof HTMLElement) {
+          status.textContent = message;
+        }
+      }
+      function clearCommitSelection() {
+        for (const candidate of getCommitSelectionInputs()) {
+          if (candidate instanceof HTMLInputElement) {
+            candidate.checked = false;
+          }
+        }
+      }
+      function handleCommitSelectionChange(target) {
+        if (!(target instanceof HTMLInputElement) || target.dataset.hash === undefined) {
+          return;
+        }
+
+        const checked = getCommitSelectionInputs().filter((candidate) => candidate.checked);
+        if (checked.length === 0) {
+          updateCommitSelectionStatus(${JSON.stringify(comparisonSelectionStatus)});
+          return;
+        }
+        if (checked.length === 1) {
+          updateCommitSelectionStatus('Select one more retained revision to generate a comparison report for the chosen pair.');
+          return;
+        }
+
+        const selectedHashes = checked
+          .map((candidate) => candidate.dataset.hash ?? '')
+          .filter((value) => value.length > 0)
+          .slice(0, 2);
+        updateCommitSelectionStatus('Generating compare for the selected retained pair...');
+        clearCommitSelection();
+        vscode.postMessage({
+          command: 'generateComparisonReportFromSelection',
+          selectedHashes
+        });
       }
       function restoreHostReviewDraft() {
         const draft = readHostReviewDraft();
@@ -444,6 +470,15 @@ export function renderHistoryPanelHtml(
         }
 
         if (
+          target instanceof HTMLInputElement &&
+          target.dataset.hash !== undefined &&
+          target.type === 'checkbox'
+        ) {
+          handleCommitSelectionChange(target);
+          return;
+        }
+
+        if (
           target.id !== 'host-review-outcome' &&
           target.id !== 'host-review-confidence'
         ) {
@@ -523,7 +558,7 @@ function deriveInitialCompareRuntimeStatus(
     status: 'idle',
     summary: 'No compare action from this panel has retained provider or acquisition truth yet.',
     nextAction:
-      'Next action: use Generate compare or Open compare to surface the selected provider and any acquisition state here.',
+      'Next action: use the commit checkboxes to generate a comparison report and surface the selected provider and any acquisition state here.',
     details: []
   };
 }
@@ -550,12 +585,11 @@ export function renderHistoryReviewPacketText(model: ViHistoryViewModel): string
     `Eligibility: ${model.eligible ? 'Eligible' : 'Not eligible'}`,
     `Retained revisions: ${model.commits.length}`,
     `History window: ${renderHistoryWindowSummary(model)}`,
-    `Dashboard available: ${model.commits.length >= 3 ? 'yes' : 'no'}`,
     `Newest retained commit: ${renderCommitSummary(newestCommit)}`,
     `Oldest retained commit: ${renderCommitSummary(oldestCommit)}`,
     'Confidence and scope:',
     '- Basis: local Git history, tracked-file status, and content-detected VI signature checks.',
-    '- Included here: chronology, path provenance, retained hashes, compare pairs, and dashboard availability.',
+    '- Included here: chronology, path provenance, retained hashes, checkbox-selected compare pairing, and retained compare pairs.',
     '- Needs external comparison tooling: binary semantic differences, visual or cosmetic change detection, and LabVIEW comparison-report output.',
     'Retained compare pairs:',
     comparePairs
@@ -622,50 +656,28 @@ function renderCapabilitySummary(
 ): {
   comparisonGeneration: string;
   openCompare: string;
-  dashboard: string;
-  decisionRecord: string;
   documentation: string;
   benchmarkStatus?: string;
   humanReviewSubmission?: string;
 } {
   const capabilities = model.surfaceCapabilities ?? {};
   const support = model.repositorySupport;
-  const commitCount = model.commits.length;
   const coreReviewBlocked = support?.allowCoreReviewActions === false;
-  const decisionRecordBlocked = support?.allowDecisionRecordActions === false;
   const benchmarkBlocked = support?.allowBenchmarkStatus === false;
   const humanReviewBlocked = support?.allowHumanReviewSubmission === false;
   return {
     comparisonGeneration:
       coreReviewBlocked
-        ? 'Blocked outside the governed repo family'
+        ? 'Blocked by the current repository support policy'
       : capabilities.comparisonGenerationAvailable === false
         ? 'Unavailable in this build'
-        : 'Available for retained pairs that have a base revision',
+        : 'Available for any retained review window with at least two commits; the second checkbox selection generates the explicit selected/base pair',
     openCompare:
       coreReviewBlocked
-        ? 'Blocked outside the governed repo family'
+        ? 'Blocked by the current repository support policy'
       : capabilities.retainedComparisonOpenAvailable === false
-        ? 'Unavailable in this build'
-        : 'Available once retained pair evidence exists',
-    dashboard:
-      coreReviewBlocked
-        ? 'Blocked outside the governed repo family'
-      : capabilities.dashboardAvailable === false
-        ? 'Unavailable in this build'
-        : commitCount >= 3
-          ? 'Available for this retained review window'
-          : 'Available when the retained review window reaches at least three commits',
-    decisionRecord:
-      decisionRecordBlocked
-        ? support?.tier === 'unsupported'
-          ? 'Blocked outside the governed repo family'
-          : 'Not yet governed for this repo family'
-      : capabilities.decisionRecordAvailable === false
-        ? 'Unavailable in this build'
-        : commitCount >= 3
-          ? 'Available for this retained review window'
-          : 'Available when the retained review window reaches at least three commits',
+        ? 'Retained comparison opening is unavailable in this build'
+        : 'Retained comparison evidence opens automatically through the checkbox-selected compare flow when available; no separate compare button is exposed on commit rows',
     documentation:
       capabilities.documentationAvailable === false
         ? 'Unavailable in this build'
