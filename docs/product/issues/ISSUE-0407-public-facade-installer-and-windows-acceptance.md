@@ -56,6 +56,11 @@ Current landed scaffold state:
   the sole named maintainer gate owner for that host-machine click pass
 - that remaining manual host-machine gate is bounded to the deterministic
   local fixture workspace rather than a OneDrive-backed synced clone
+- the latest retained host review at `2026-04-06T03:54:26.667Z` is
+  `failed-human-review` with `confidence=high`, because `Open Dashboard`
+  stalled on `Preparing dashboard pair 1/138: Still working; first pair
+  calibrates ETA; elapsed 0m 31s. Last step: Executing LabVIEW
+  comparison-report runtime.`
 - the authority repo still mirrors a GitHub Linux benchmark lane into the
   private `vi-history-suite-source-experiments` repo, but that mirror is now
   documented as benchmark only and belongs to the queued benchmark-proof lane

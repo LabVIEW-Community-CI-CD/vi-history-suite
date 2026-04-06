@@ -244,6 +244,11 @@ Current first slice:
 - the manual right-click proof runs from that same deterministic local fixture
   workspace instead of a OneDrive-backed synced root
 - first-use friction is retained as evidence, not just remembered in chat
+- the latest retained host review at `2026-04-06T03:54:26.667Z` is
+  `failed-human-review` with `confidence=high`, recording that `Open Dashboard`
+  stalled on `Preparing dashboard pair 1/138: Still working; first pair
+  calibrates ETA; elapsed 0m 31s. Last step: Executing LabVIEW
+  comparison-report runtime.`
 
 ### Gate E: Public Support Surface
 
@@ -300,6 +305,10 @@ The public facade repo now retains:
   pending host-machine manual right-click pass
 - the remaining manual gate is bounded to the deterministic local fixture
   workspace rather than a OneDrive-backed synced clone
+- the latest retained host-review artifact now exists at
+  `c:\Users\sveld\AppData\Roaming\Code\User\workspaceStorage\f879cf82f4d59a4767f92a99a94e47f8\svelderrainruiz.vi-history-suite\human-reviews\latest-human-review-submission.json`,
+  and its newest manual proof result is still a failed Gate D review because
+  the dashboard stalled at pair `1/138`
 
 The program still intentionally holds these gates open:
 

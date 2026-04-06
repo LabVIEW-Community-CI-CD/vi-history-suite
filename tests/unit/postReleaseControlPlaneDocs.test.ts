@@ -179,7 +179,10 @@ describe('post-release control-plane coherence', () => {
       '- a scaffolded container public-release-kit smoke recipe and workflow now exist in the public repo'
     );
     expect(currentState).toContain(
-      '- Gate D remains open pending the manual right-click acceptance pass by Sergio Velderrain on the current Windows 11 host machine'
+      '- Gate D remains open pending a clean manual right-click acceptance pass by Sergio Velderrain on the current Windows 11 host machine'
+    );
+    expect(currentState).toContain(
+      '- the latest retained host review at `2026-04-06T03:54:26.667Z` is `failed-human-review` with `confidence=high`'
     );
     expect(currentState).toContain(
       '- the manual right-click review pass remains the human UX gate, and Sergio Velderrain is the sole named maintainer gate owner for that host-machine click pass'

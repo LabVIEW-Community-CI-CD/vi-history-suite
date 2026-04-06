@@ -157,7 +157,8 @@ Current active tranche:
   - the authority repo now guards its local and CI VSIX packaging path with `npm run package:audit`, and that audit fails closed if runtime `node_modules` or transient/test artifacts such as `.cache` or `.vscode-test` would leak into the shipped surface
   - packaging-only npm tooling is now kept out of the default `npm ci` surface used by compile/test/benchmark lanes, and the guarded package path invokes its pinned package manager tooling only on demand
   - automated Windows 11 host-machine proof now succeeds through the direct-release setup lane with retained records at `C:\Users\sveld\AppData\Local\VI History Suite\acceptance\host-machine\setup\setup-record.json` and `C:\Users\sveld\AppData\Local\VI History Suite\acceptance\host-machine\acceptance-record.json`
-  - Gate D remains open pending the manual right-click acceptance pass by Sergio Velderrain on the current Windows 11 host machine
+  - Gate D remains open pending a clean manual right-click acceptance pass by Sergio Velderrain on the current Windows 11 host machine
+  - the latest retained host review at `2026-04-06T03:54:26.667Z` is `failed-human-review` with `confidence=high`: from the deterministic local fixture workspace, `Open Dashboard` stalled on `Preparing dashboard pair 1/138: Still working; first pair calibrates ETA; elapsed 0m 31s. Last step: Executing LabVIEW comparison-report runtime.`, so the human UX gate remains explicitly open for that front-facing stall seam rather than for generic host-review uncertainty
 
 Post-release tranches:
 
