@@ -1,0 +1,49 @@
+name: Public Facade Linux Smoke
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/public-facade-linux-smoke.yml'
+      - '.devcontainer/**'
+      - '.vscode/**'
+      - 'README.md'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'scripts/runPublicFacadeLinuxSmoke.js'
+      - 'tests/integration/**'
+      - 'tests/unit/publicFacadeLinuxSmoke.test.ts'
+      - 'src/**'
+
+permissions:
+  contents: read
+
+jobs:
+  public-facade-linux-smoke:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify Docker Linux engine
+        run: docker info --format '{{.OSType}}'
+
+      - name: Run public facade Linux smoke
+        run: npm run public:smoke:linux -- --evidence-dir artifacts/public-facade-linux-smoke
+
+      - name: Upload smoke evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-facade-linux-smoke
+          path: artifacts/public-facade-linux-smoke/**
+          if-no-files-found: warn

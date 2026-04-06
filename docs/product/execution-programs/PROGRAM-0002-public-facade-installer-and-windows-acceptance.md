@@ -2,58 +2,55 @@
 
 ## Status
 
-Active post-release program.
+Reopened post-release program for the next exact-version line.
 
-Trigger satisfied by the retained immutable `v0.2.0` release:
+Reopen facts:
 
-- retained release: `v0.2.0`
-- retained pipeline: `2428809456`
-- retained release job: `13779604462`
-- current queue tranche: `TRANCHE-010`
+- retained release `v0.2.0` and the retained canonical Windows host pass at
+  `2026-04-06T20:48:13.412Z` remain historical evidence for the earlier public
+  bundle
+- the installed extension contract is now breaking-change material at `1.0.0`
+- the public front face now includes a public GitHub user wiki in addition to
+  the public facade repo
+- Gate D must be rerun on the Docker-only installed bundle before this program
+  can close again
 
 ## Purpose
 
 Define the governed post-release program for turning `vi-history-suite` into a
-publicly setup-capable, publicly supportable product without exposing the
-private GitLab engineering control plane.
+publicly setup-capable, publicly supportable Docker-only product without
+exposing the private GitLab engineering control plane.
 
-The primary public surface is now a release kit, not an installer product.
+The primary public surface is the public GitHub facade plus its user-facing
+documentation surfaces, not the private engineering repo.
 
 ## Current Gate Truth
 
-- Gate D remains open
-- the latest retained human review on April 6, 2026 is now a canonical-target
-  failure on the updated installed bundle: the deterministic public-release
-  fixture workspace target `c:\dev\labview-icon-editor` /
-  `resource/plugins/lv_icon.vi` recorded `failed-human-review` with
-  `confidence=high`
-- the retained note on that canonical target says the embedded compare-info
-  block currently follows dark mode against the white comparison-report
-  background and should stop foregrounding runtime-status/runtime-diagnostic
-  facts in favor of commit/date/author/subject facts
-- an earlier same-day retained host review at `2026-04-06T19:53:21.713Z`
-  remains positive supporting evidence that the simplified repo-agnostic
-  checkbox-selected compare flow works as expected on a real installed
-  extension surface
-- the cumulative retained failed-review package remains historical evidence of
-  already-retired defects, but the older row-button and dashboard-specific
-  findings are superseded by the simplified shipped scope: extension users now
-  use checkbox selection only, need only two retained commits to use VI
-  History, and do not use extension-user dashboard or decision-record controls
-- the authority repo now carries repo-side fixes for that simplified blocker
-  package: the checkbox-only compare surface, the two-row overview-image
-  layout, Review Note draft persistence across tab switches, and a concise
-  curated installed-user documentation bundle that strips private GitLab plus
-  SRS/RTM authority-link exposure while explicitly explaining the
-  repo-agnostic checkbox-selected two-commit workflow, the oldest-row-as-base
-  rule, and the absence of a separate extension-user dashboard or
-  decision-record step; the repo now also renders embedded compare views with
-  a white-background `Comparison context` block that foregrounds
-  selected/base commit hash, date, author, and subject while keeping runtime
-  diagnostics on retained packet/runtime evidence surfaces
-- Gate D therefore remains open only until a fresh deterministic public-release
-  fixture rerun proves that installed comparison-report presentation fix on
-  the exact acceptance target cleanly
+This program is reopened and not yet reclosed.
+
+Current truth:
+
+- the old canonical Windows host pass remains valid historical evidence for the
+  earlier public bundle only
+- the installed extension compare workflow is now Docker-only and x64-only
+- the public GitHub facade repo is the extension-user front face
+- the public GitHub wiki now exists at
+  `https://github.com/svelderrainruiz/vi-history-suite.wiki.git`, but it is
+  only bootstrapped and is not yet the complete public user-doc surface
+- the internal GitLab wiki remains the maintainer-facing reader surface for the
+  private control plane
+- public GitHub wiki publication is tracked separately from the internal
+  GitLab maintainer wiki
+- `docs:ci:public` and `docs:ci:internal` now split the public-user and
+  internal-authority docs surfaces while `docs:ci` remains the umbrella lane
+- the public smoke surface is `.github/workflows/public-facade-linux-smoke.yml`
+  plus `npm run public:smoke:linux`
+- the next Gate D rerun must exercise the deterministic public-release fixture
+  workspace on the Docker-only installed bundle
+- the planned cold-start acceptance case is explicit now: when Gate D is
+  reached, switch Docker Desktop to the Linux engine, remove the stored
+  governed Linux image, let the extension cold-pull that Linux image, and
+  prove comparison generation on the canonical fixture target
 
 ## Trigger
 
@@ -65,16 +62,17 @@ This program starts only after all of these are true:
 - the public GitHub facade repo is ready to consume that immutable release
 - the current Windows 11 host machine is available for installed-user proof
 
-That trigger is satisfied.
+That trigger was satisfied for the earlier closeout. The reopened `1.0.0`
+closeout is now queued behind the active `PROGRAM-0005` contract-normalization
+work.
 
 ## North Star
 
-A user downloads the public release kit from the public facade repo, runs the
-public setup adapter on the current Windows 11 host machine, installs the exact
-released `vi-history-suite` build, materializes the pinned
-`ni/labview-icon-editor` workspace with commit history, and successfully
-exercises the real right-click review flow for the canonical VI while retained
-automation and human evidence are captured.
+A user downloads the public release kit from the public GitHub facade, installs
+the exact released Docker-only bundle, opens the pinned
+`ni/labview-icon-editor` fixture workspace with commit history, and proves the
+real compare flow on the canonical VI while the public user docs, bundled docs,
+and retained acceptance evidence all agree.
 
 ## Authority And Trust Boundary
 
@@ -83,27 +81,33 @@ automation and human evidence are captured.
 - private GitLab release for `vi-history-suite`
 - exact released VSIX artifact
 - retained release evidence and manifest
+- private GitLab source repo and control-plane docs
+- internal GitLab wiki for maintainer-facing derived reading
 
 ### Public Distribution Truth
 
 - public GitHub facade repo:
   `https://github.com/svelderrainruiz/vi-history-suite`
+- public GitHub wiki repo:
+  `https://github.com/svelderrainruiz/vi-history-suite.wiki.git`
 - public GitHub release assets
 - public setup manifest, setup adapters, fixture bundle, checksums, release
-  notes, install guidance, and support guidance
+  notes, install guidance, support guidance, and public extension-user wiki
+  pages
 
 ### Execution Truth
 
 - current Windows 11 host machine
 - Visual Studio Code CLI for install, verification, and workspace launch
-- real human manual right-click review pass for the final UX gate
+- Docker Desktop plus the current Docker daemon engine
+- real human manual compare-review pass for the final UX gate
 
 ### Future Reproducibility Truth
 
 - a future published container image that mirrors the public setup contract and
   replaces VM replay as the preferred automation surface
-- the current first slice of that lane is a scaffolded container
-  public-release-kit smoke recipe and GitHub workflow
+- the current first slice of that lane is the public-facade Linux smoke lane
+  through `.github/workflows/public-facade-linux-smoke.yml`
 
 ### Queued Benchmark Follow-On Truth
 
@@ -123,15 +127,19 @@ automation and human evidence are captured.
 ### Explicit Boundaries
 
 - the GitHub facade repo is not the private engineering source of truth
+- the public GitHub wiki is not the internal GitLab wiki
 - the private GitHub experiment mirror is not the public facade repo
 - GitLab remains the authority source repo and release-control surface
+- the internal GitLab wiki remains maintainer-facing and may retain benchmark,
+  requirements, and control-plane material that is intentionally absent from
+  the public GitHub wiki
 - GitHub experiment results are benchmark evidence only; they do not close
   product truth or release truth
 - private requirements, design gates, and retained engineering evidence do not
-  get published on the public facade repo
+  get published on the public facade repo or the public GitHub wiki
 - the GitHub workflow is the active public release-kit publication surface
 - NSIS is removed from the active public toolchain
-- Docker is not part of the default public setup path
+- Docker is now part of the default installed extension setup path
 - Visual Studio Code CLI proves install/verify/open surfaces, but does not
   replace the human right-click gate
 - Sergio Velderrain is the sole named maintainer authorized to close the
@@ -176,7 +184,8 @@ Version 1 assumptions:
 - the active proof target is the current Windows 11 host machine
 - Visual Studio Code and Git may be installed by the Windows adapter when they
   are missing
-- Docker is not required in the default public setup path
+- Docker is a required installed-extension dependency for comparison
+  generation
 
 ### Lane 4: Automated Host-Machine Proof
 
@@ -202,18 +211,17 @@ that CLI cannot close:
 - panel behavior
 - first-use friction
 
-### Lane 6: Future Container Automation
+### Lane 6: Public Docker Smoke
 
-Replace VM replay with a future published container image that mirrors the
-public setup contract and provides reproducible automation without making
-container runtime a default end-user prerequisite.
+Use the public-facade Linux smoke lane as the first-class public Docker proof
+surface for the GitHub front face.
 
 Current first slice:
 
-- scaffold `docker/public-release-kit-smoke/`
-- scaffold `.github/workflows/container-public-release-kit-smoke.yml`
-- verify live release-kit assets, fixture materialization, and canonical VI
-  presence inside a Linux container smoke lane
+- `.github/workflows/public-facade-linux-smoke.yml` with `workflow_dispatch`
+- local `npm run public:smoke:linux`
+- Linux-engine cold-pull compare characterization for the Docker-only
+  installed-extension contract
 
 ## Workstreams
 
@@ -236,8 +244,7 @@ Current first slice:
 - a Windows 11 host-machine acceptance checklist plus a dedicated human-gate closeout script for the manual right-click gate
 - a future container-image automation recipe that mirrors the public setup
   manifest
-- a scaffolded container public-release-kit smoke recipe and workflow in the
-  public facade repo
+- a real public-facade Linux smoke workflow plus local `npm run public:smoke:linux`
 - control-plane truth that benchmark proof is queued under
   `PROGRAM-0003` / `ISSUE-0408` / `TRANCHE-011` rather than closed here
 
@@ -246,7 +253,7 @@ Current first slice:
 - exposing the private GitLab source repositories publicly
 - claiming the public facade repo is the engineering source of truth
 - reintroducing NSIS into the active public toolchain
-- making Docker a default public prerequisite
+- removing Docker from the installed extension contract
 - replacing the human gate with CLI-only proof
 - closing benchmark proof or benchmark-image comparability inside this program
 - treating public GitHub issues as gate-closing acceptance
@@ -276,36 +283,21 @@ Current first slice:
 
 ### Gate D: Human UX Gate
 
-- Sergio Velderrain can complete the real right-click flow on the canonical VI
-- the manual right-click proof runs from that same deterministic local fixture
+- Sergio Velderrain remains the sole named maintainer gate owner for the
+  canonical VI acceptance pass
+- the manual right-click proof must run from the deterministic local fixture
   workspace instead of a OneDrive-backed synced root
-- first-use friction is retained as evidence, not just remembered in chat
-- the latest retained host review at `2026-04-06T20:09:15.443Z` is
-  `failed-human-review` with `confidence=high`, recording that
-  `c:\dev\labview-icon-editor` / `resource/plugins/lv_icon.vi` still renders
-  the embedded compare-info block with a dark-mode mismatch against the white
-  report background and still foregrounds runtime-status/runtime-diagnostic
-  facts where commit/date/author/subject facts should lead
+- first-use friction remains retained evidence, not remembered chat context
 - the earlier same-day retained host pass at `2026-04-06T19:53:21.713Z`
   remains supporting evidence that the simplified checkbox-selected compare
   flow itself works as expected on an installed surface
-- the retained failed-review set remains cumulative historical evidence of
-  already-retired defects, but the row-button and dashboard-specific findings
-  are superseded by the simplified checkbox-only shipped scope
-- the authority repo now carries repo-side retirement for that simplified
-  Gate D package: checkbox-only compare selection on any retained two-commit
-  window, grouped overview-image rows with `Block Diagram Overview` before
-  `Front Panel Overview`, Review Note draft persistence until successful
-  submission, and a concise curated installed-user documentation bundle that
-  omits private GitLab plus SRS/RTM authority-link exposure while explaining
-  the repo-agnostic checkbox-selected two-commit workflow clearly; embedded
-  compare views now also lead with a white-background `Comparison context`
-  block that foregrounds selected/base commit hash, date, author, and
-  subject while keeping runtime diagnostics on retained packet/runtime
-  evidence surfaces
-- Gate D is therefore now narrowed to one deterministic canonical rerun on the
-  fixture-workspace canonical-VI path rather than to an unimplemented
-  compare-selection blocker set
+- the latest retained canonical review remains a failure on
+  `c:\dev\labview-icon-editor` / `resource/plugins/lv_icon.vi`, so the
+  canonical public Gate D surface is not yet closed
+- the remaining human-facing blocker is now narrowed to the Docker-only public
+  acceptance contract: Linux-engine cold-pull compare plus canonical compare
+  presentation acceptance on the deterministic fixture workspace
+- Gate D remains open
 
 ### Gate E: Public Support Surface
 
@@ -351,11 +343,9 @@ The public facade repo now retains:
   with `PROGRAM-0003` / `ISSUE-0408` / `TRANCHE-011`
 - a local direct-release Windows smoke that now succeeds against the public
   setup manifest, exact VSIX, and pinned fixture bundle
-- a scaffolded container public-release-kit smoke recipe and workflow at
-  `docker/public-release-kit-smoke/` and
-  `.github/workflows/container-public-release-kit-smoke.yml`
-- a local container public-release-kit smoke that now passes against the live
-  `v0.2.0` GitHub release assets
+- a public-facade Linux smoke workflow at
+  `.github/workflows/public-facade-linux-smoke.yml`
+- a local `npm run public:smoke:linux` public Docker smoke lane
 - a retained automated host-machine proof record at
   `C:\Users\sveld\AppData\Local\VI History Suite\acceptance\host-machine\acceptance-record.json`
 - Sergio Velderrain remains the sole named maintainer gate owner for the
@@ -380,11 +370,13 @@ The public facade repo now retains:
 
 The program still intentionally holds these gates open:
 
-- Gate D human right-click proof
+- Gate D Docker-only Linux-engine cold-pull compare proof
+- Gate D human right-click proof on the canonical VI after that cold pull
 
 ## Approval Outcome
 
-This program was approved and is now active through `TRANCHE-010`.
+This program was previously approved through `TRANCHE-010` for the earlier
+public bundle. It is reopened for the `1.0.0` Docker-only public contract.
 
 The approved trust boundary remains:
 
@@ -395,7 +387,8 @@ The approved trust boundary remains:
   authority and the public facade repo
 - the GitHub workflow remains the release-kit publication surface
 - NSIS is removed from the public toolchain
-- Docker is not part of the default public setup path
+- Docker is now part of the default public setup path for comparison
+  generation
 - the current Windows 11 host machine plus human right-click gate remain
   execution truth
 - a future published container image is the preferred reproducible automation

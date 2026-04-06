@@ -82,24 +82,30 @@ describe('extension manifest research alignment', () => {
     expect(manifest.capabilities?.untrustedWorkspaces).toEqual({
       supported: 'limited',
       description:
-        'VI History disables background indexing and external LabVIEW comparison-tool execution in untrusted workspaces.',
+        'VI History disables background indexing and governed Docker comparison-report execution in untrusted workspaces.',
       restrictedConfigurations: [
-        'viHistorySuite.executionMode',
-        'viHistorySuite.labviewCliPath',
-        'viHistorySuite.labviewExePath',
         'viHistorySuite.windowsContainerImage',
-        'viHistorySuite.bitness'
+        'viHistorySuite.linuxContainerImage'
       ]
     });
 
     expect(manifest.contributes?.configuration?.properties).toHaveProperty(
+      'viHistorySuite.windowsContainerImage'
+    );
+    expect(manifest.contributes?.configuration?.properties).toHaveProperty(
+      'viHistorySuite.linuxContainerImage'
+    );
+    expect(manifest.contributes?.configuration?.properties).not.toHaveProperty(
       'viHistorySuite.executionMode'
     );
-    expect(manifest.contributes?.configuration?.properties).toHaveProperty(
+    expect(manifest.contributes?.configuration?.properties).not.toHaveProperty(
       'viHistorySuite.labviewCliPath'
     );
-    expect(manifest.contributes?.configuration?.properties).toHaveProperty(
-      'viHistorySuite.windowsContainerImage'
+    expect(manifest.contributes?.configuration?.properties).not.toHaveProperty(
+      'viHistorySuite.labviewExePath'
+    );
+    expect(manifest.contributes?.configuration?.properties).not.toHaveProperty(
+      'viHistorySuite.bitness'
     );
   });
 
@@ -142,6 +148,21 @@ describe('extension manifest research alignment', () => {
     );
     expect(manifest.scripts?.['docs:ci:core']).toBe(
       'node scripts/run-docs-continuous-integration.js --skip-links'
+    );
+    expect(manifest.scripts?.['docs:ci:public']).toBe(
+      'node scripts/run-docs-continuous-integration.js --surface public'
+    );
+    expect(manifest.scripts?.['docs:ci:public:core']).toBe(
+      'node scripts/run-docs-continuous-integration.js --surface public --skip-links'
+    );
+    expect(manifest.scripts?.['docs:ci:internal']).toBe(
+      'node scripts/run-docs-continuous-integration.js --surface internal'
+    );
+    expect(manifest.scripts?.['docs:ci:internal:core']).toBe(
+      'node scripts/run-docs-continuous-integration.js --surface internal --skip-links'
+    );
+    expect(manifest.scripts?.['public:smoke:linux']).toBe(
+      'npm run compile && node scripts/runPublicFacadeLinuxSmoke.js'
     );
     expect(manifest.scripts?.['dashboard:latest']).toBe(
       'node scripts/printLatestDashboardRun.js'
@@ -211,6 +232,9 @@ describe('extension manifest research alignment', () => {
     );
     expect(manifest.scripts?.['design:gate:assert-complete']).toBe(
       'npm run compile && node out/cli/runVerifyDesignGateCompletion.js'
+    );
+    expect(manifest.scripts?.['test:design-contract']).toBe(
+      'npm exec -- vitest run tests/unit/packageManifest.test.ts tests/unit/comparisonRuntimeLocator.test.ts tests/unit/runGovernedProofCli.test.ts tests/unit/governedLegacyProofEntrypoints.test.ts tests/unit/governedProofDocs.test.ts tests/unit/githubLinuxBenchmarkWorkflow.test.ts tests/unit/githubWindowsBenchmarkWorkflow.test.ts tests/unit/designGate.test.ts tests/unit/designGateRunner.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicFacadeLinuxSmoke.test.ts'
     );
     expect(manifest.scripts?.['proof:run']).toBe(
       'npm run compile && node out/cli/runGovernedProof.js'

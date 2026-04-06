@@ -14,8 +14,7 @@ Activation is now satisfied:
 
 - `PROGRAM-0003` is now closed on the benchmark-proof packet under
   `TRANCHE-011`
-- `PROGRAM-0005` is now closed on the retained execution-policy contract under
-  `TRANCHE-013`
+- `PROGRAM-0005` is active again under `TRANCHE-013`
 - `TRANCHE-012` is now the active queue tranche
 
 ## Scope
@@ -25,21 +24,19 @@ Activation is now satisfied:
 - benchmark refresh cadence and image contract upkeep
 - operator-surface and documentation-workbench sustainment
 - post-release control-plane maintenance
-- not the now-closed extension execution-flexibility feature layer, which was
-  retired under `PROGRAM-0005` / `ISSUE-0410`
+- not the active extension execution-contract program under `PROGRAM-0005`
+- not the reopened public-closeout rerun under `PROGRAM-0002`
 
 ## Non-Goals
 
-- reopening the first public-release closeout program
 - reopening benchmark proof once it is governed as complete
 - unbounded feature growth without a new explicit program
 
 ## Dependencies
 
-- active `PROGRAM-0002` remains open only on Sergio Velderrain's human
-  Windows 11 right-click gate and is not reopened by this sustainment issue
 - completed `PROGRAM-0003`
-- completed `PROGRAM-0005`
+- active `PROGRAM-0005`
+- reopened `PROGRAM-0002`
 - truthful current-state and queue surfaces
 
 ## Acceptance Criteria
@@ -62,4 +59,5 @@ Activation is now satisfied:
 - define the first maintained release-refresh and benchmark-refresh rules
 - retain those rules explicitly in `docs/product/post-release-sustainment-rules.md`
   and `docs/product/post-release-sustainment-rules.json`
-- stop short of opening a new feature-layer program
+- stop short of absorbing the active `PROGRAM-0005` or reopened `PROGRAM-0002`
+  work into generic sustainment language

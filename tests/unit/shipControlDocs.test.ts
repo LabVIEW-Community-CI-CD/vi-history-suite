@@ -79,7 +79,7 @@ describe('ship-control direction system', () => {
 
     expect(activeTranches).toHaveLength(2);
     expect(activeTranches.map((entry) => entry.id)).toEqual(
-      expect.arrayContaining(['TRANCHE-010', 'TRANCHE-012'])
+      expect.arrayContaining(['TRANCHE-012', 'TRANCHE-013'])
     );
   });
 
@@ -93,7 +93,7 @@ describe('ship-control direction system', () => {
     expect(matrix.activeIssueId).toBe('ISSUE-0406');
     expect(matrix.activeTrancheId).toBe('TRANCHE-009');
     expect(matrix.currentPackageVersion).toBe('0.2.0');
-    expect(pkg.version).toBe('0.3.0');
+    expect(pkg.version).toBe('1.0.0');
     expect(matrix.releaseTarget).toBe('v0.2.0');
     expect(matrix.targetVsixArtifact).toBe('vi-history-suite-0.2.0.vsix');
     expect(matrix.targetReleaseManifest).toBe('release-evidence/release-manifest.json');
@@ -193,9 +193,10 @@ describe('ship-control direction system', () => {
     expect(readme).toContain('- `SHIP-0001`: releasable `v0.2.0` VSIX product');
     expect(readme).toContain('- landed ship tranche: `TRANCHE-009`');
     expect(readme).toContain('- retained release artifact: `vi-history-suite-0.2.0.vsix`');
-    expect(readme).toContain('- current development baseline: `0.3.0`');
-    expect(readme).toContain('- next exact-version line: `v0.3.0`');
+    expect(readme).toContain('- current development baseline: `1.0.0`');
+    expect(readme).toContain('- next exact-version line: `v1.0.0`');
     expect(readme).toContain('- current changelog: [CHANGELOG.md](./CHANGELOG.md)');
+    expect(readme).toContain('- reopened queued closeout:');
     expect(readme).toContain('- `TRANCHE-010`: public facade release kit and host-machine acceptance');
     expect(readme).toContain('private GitHub experiment repo');
 
@@ -212,10 +213,11 @@ describe('ship-control direction system', () => {
     expect(currentState).toContain('- `SHIP-0001`: releasable `v0.2.0` VSIX product');
     expect(currentState).toContain('- landed ship tranche: `TRANCHE-009`');
     expect(currentState).toContain('- retained release artifact: `vi-history-suite-0.2.0.vsix`');
-    expect(currentState).toContain('- current development baseline: `0.3.0`');
-    expect(currentState).toContain('- next exact-version line: `v0.3.0`');
+    expect(currentState).toContain('- current development baseline: `1.0.0`');
+    expect(currentState).toContain('- next exact-version line: `v1.0.0`');
     expect(currentState).toContain('- current changelog: [CHANGELOG.md](../../CHANGELOG.md)');
-    expect(currentState).toContain('- `TRANCHE-010`: Public facade release kit and host-machine acceptance');
+    expect(currentState).toContain('- reopened queued closeout:');
+    expect(currentState).toContain('`TRANCHE-010` / [ISSUE-0407 Public Facade Release Kit And Host-Machine Acceptance]');
     expect(currentState).toContain('[PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)');
     expect(currentState).toContain('`vi-history-suite-source-experiments`');
 
@@ -237,14 +239,14 @@ describe('ship-control direction system', () => {
 
     expect(programDoc).toContain('[SHIP-0001: Releasable VI History Suite](../SHIP-0001-releasable-vi-history-suite.md)');
     expect(programDoc).toContain('ship-control surfaces');
-    expect(programDoc2).toContain('Active post-release program.');
-    expect(programDoc2).toContain('retained immutable `v0.2.0` release');
+    expect(programDoc2).toContain('Reopened post-release program for the next exact-version line.');
+    expect(programDoc2).toContain('retained release `v0.2.0`');
 
     expect(releaseProcedure).toContain('[SHIP-0001](./product/SHIP-0001-releasable-vi-history-suite.md)');
     expect(releaseProcedure).toContain('[release readiness matrix](./product/release-readiness-matrix.json)');
     expect(releaseProcedure).toContain('vi-history-suite-0.2.0.vsix');
     expect(releaseProcedure).toContain('release-evidence/release-manifest.json');
-    expect(releaseProcedure).toContain('current development baseline is `0.3.0`');
+    expect(releaseProcedure).toContain('current development baseline is `1.0.0`');
     expect(releaseProcedure).toContain('next exact-version line');
     expect(releaseProcedure).toContain('[CHANGELOG.md](../CHANGELOG.md)');
     expect(releaseProcedure).toContain('docs/product/documentation-coherence-ledger.md');
@@ -259,14 +261,14 @@ describe('ship-control direction system', () => {
       'Stale bundled installed-user docs are therefore unshippable through the'
     );
     expect(bundledInstallPage).toContain('Retained exact release: <code>v0.2.0</code>');
-    expect(bundledInstallPage).toContain('Current development baseline: <code>0.3.0</code>');
-    expect(bundledInstallPage).toContain('Next exact-version line: <code>v0.3.0</code>');
+    expect(bundledInstallPage).toContain('Current development baseline: <code>1.0.0</code>');
+    expect(bundledInstallPage).toContain('Next exact-version line: <code>v1.0.0</code>');
     expect(bundledInstallPage).toContain(
       'Preview install surface: latest successful <code>main</code> pipeline preview VSIX artifact'
     );
     expect(bundledInstallPage).toContain('Retained release artifact: <code>vi-history-suite-0.2.0.vsix</code>');
     expect(bundledInstallPage).not.toContain('Target release: <code>v0.2.0</code>');
-    expect(changelog).toContain('## [0.3.0] - Unreleased');
+    expect(changelog).toContain('## [1.0.0] - Unreleased');
     expect(changelog).toContain('The first retained exact-version release remains `v0.2.0`');
     expect(changelog).toContain('## [0.2.0] - 2026-04-03');
     expect(cmPlan).toContain('# Configuration Management Plan');
@@ -354,7 +356,11 @@ describe('ship-control direction system', () => {
     const releaseProcedure = readText('docs/release-procedure.md');
 
     expect(gitlabCi).toContain('docs_continuous_integration:');
+    expect(gitlabCi).toContain('docs_public_continuous_integration:');
+    expect(gitlabCi).toContain('docs_internal_continuous_integration:');
     expect(gitlabCi).toContain('node scripts/run-docs-continuous-integration.js --skip-links --evidence-dir docs-integration-evidence');
+    expect(gitlabCi).toContain('node scripts/run-docs-continuous-integration.js --surface public --skip-links --evidence-dir docs-integration-evidence/public');
+    expect(gitlabCi).toContain('node scripts/run-docs-continuous-integration.js --surface internal --skip-links --evidence-dir docs-integration-evidence/internal');
     expect(gitlabCi).toContain('docs-integration-evidence/');
     expect(gitlabCi).toContain('publish_docs_authoring_image:');
     expect(gitlabCi).toContain('wiki_workbench_prepare_published:');

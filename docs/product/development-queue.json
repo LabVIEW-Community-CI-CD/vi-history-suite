@@ -83,9 +83,9 @@
   {
     "id": "TRANCHE-010",
     "title": "Public facade release kit and host-machine acceptance",
-    "status": "active",
+    "status": "queued",
     "source": "author direction",
-    "summary": "After the first immutable SemVer VSIX release exists, finish the public GitHub facade repo as the public release-kit, setup, and support surface without publishing private requirements. The active lane publishes the exact VSIX, a public setup manifest, Windows and Linux setup adapters, checksums, and a pinned `ni/labview-icon-editor` fixture bundle with commit history. The default proof surface is the current Windows 11 host machine using setup adapters plus Visual Studio Code CLI automation and the Sergio-owned manual right-click human gate. NSIS has been removed from the public toolchain, Docker is not part of the default public setup path, a scaffolded container public-release-kit smoke lane now exists, and benchmark proof plus long-tail sustainment are now governed as queued follow-on tranches instead of part of the active closeout lane.",
+    "summary": "Reopened for the `1.0.0` Docker-only public contract. The earlier retained canonical Windows host pass remains historical evidence for the older public bundle, but the public front face now needs a new closeout that proves the Docker-only installed extension, the GitHub user-facing release/docs surfaces, and a deterministic Linux-engine cold-pull compare on the canonical fixture workspace before Gate D can close again.",
     "issues": [
       "ISSUE-0407"
     ]
@@ -105,7 +105,7 @@
     "title": "Post-release sustainment and release cadence",
     "status": "active",
     "source": "author direction",
-    "summary": "With benchmark proof now closed on bounded truth and the installed execution-policy contract now closed on transparent provider/acquisition truth, sustain the public release kit, benchmark refresh cadence, operator surfaces, SemVer discipline, and post-release control-plane upkeep without reopening the public-facade closeout, benchmark-proof, or execution-policy programs. The first sustainment slice now retains explicit event-driven release-refresh rules, bounded benchmark-refresh and reopen rules, and required authority/wiki/bundled-doc upkeep in `docs/product/post-release-sustainment-rules.{md,json}`.",
+    "summary": "Sustain the public release kit, benchmark refresh cadence, operator surfaces, SemVer discipline, and post-release control-plane upkeep as event-driven repo truth, while keeping sustainment separate from the reopened `PROGRAM-0002` public closeout and the active `PROGRAM-0005` Docker-only installed-contract work.",
     "issues": [
       "ISSUE-0409"
     ]
@@ -113,9 +113,9 @@
   {
     "id": "TRANCHE-013",
     "title": "Extension execution flexibility and runtime acquisition UX",
-    "status": "done",
+    "status": "active",
     "source": "author direction",
-    "summary": "Closed on the transparent installed-extension execution contract: `auto`, `host-only`, and `docker-only` are governed product truth; one canonical effective execution request is validated before provider work starts; Windows host-vs-Docker choice is conflict-aware; Windows container-capability hard stops and visible governed image-pull progress are explicit; compare success/failure/progress feedback is mode-aware; reopened history panels persist compare-runtime truth; and structured compare-runtime detail rows now retire the last open front-facing provider/acquisition transparency debt.",
+    "summary": "Reopened on the `1.0.0` Docker-only installed-extension contract: the extension shall depend on Docker for comparison generation, shall stop exposing host-native execution-mode and host-path knobs to extension users, shall select the governed Windows or Linux image from the current Docker daemon engine, shall fail closed instead of probing host LabVIEW, and shall align the public GitHub front face plus public-user and internal-authority docs surfaces to that contract.",
     "issues": [
       "ISSUE-0410"
     ]

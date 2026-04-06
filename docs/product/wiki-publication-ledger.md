@@ -2,12 +2,12 @@
 
 ## Purpose
 
-Retain the actual publication state of the `vi-history-suite` wiki so future
-wiki work can be traced back to governed documentation sources and explicit
-publication commits.
+Retain the actual publication state of the internal GitLab maintainer wiki so
+future wiki work can be traced back to governed documentation sources and
+explicit publication commits.
 
-The wiki is a derived reader surface. The repository documentation package
-remains the authority of record.
+The internal GitLab maintainer wiki is a derived reader surface. The
+repository documentation package remains the authority of record.
 
 The machine-readable companion surface for this ledger is:
 

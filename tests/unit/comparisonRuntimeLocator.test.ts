@@ -164,7 +164,7 @@ describe('comparisonRuntimeLocator', () => {
         outcome: 'rejected',
         reason: 'auto-docker-not-installed',
         detail:
-          'Windows container execution was not selected because Docker Desktop was not detected on this Windows host.'
+          'Docker container execution was not selected because Docker Desktop was not detected on this Windows host.'
       },
       {
         provider: 'host-native',
@@ -207,7 +207,7 @@ describe('comparisonRuntimeLocator', () => {
         outcome: 'rejected',
         reason: 'auto-docker-not-installed',
         detail:
-          'Windows container execution was not selected because Docker Desktop was not detected on this Windows host.'
+          'Docker container execution was not selected because Docker Desktop was not detected on this Windows host.'
       },
       {
         provider: 'host-native',
@@ -248,7 +248,7 @@ describe('comparisonRuntimeLocator', () => {
         outcome: 'rejected',
         reason: 'auto-docker-not-installed',
         detail:
-          'Windows container execution was not selected because Docker Desktop was not detected on this Windows host.'
+          'Docker container execution was not selected because Docker Desktop was not detected on this Windows host.'
       },
       {
         provider: 'host-native',
@@ -286,7 +286,7 @@ describe('comparisonRuntimeLocator', () => {
       'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
     );
     expect(result.notes[0]).toContain(
-      'Docker Desktop is installed and governed Windows auto execution uses the Windows container provider'
+      'Docker Desktop is installed and governed auto execution uses the current Docker engine provider'
     );
     expect(result.providerDecisions).toEqual([
       {
@@ -294,14 +294,14 @@ describe('comparisonRuntimeLocator', () => {
         outcome: 'selected',
         reason: 'auto-selected-windows-container-because-docker-installed',
         detail:
-          'Docker daemon was reachable in windows-container mode with governed Windows container image nationalinstruments/labview:2026q1-windows present locally, so isolated execution was selected because Docker Desktop is installed and governed Windows auto execution uses the Windows container provider.'
+          'Docker daemon was reachable in windows-container mode with governed Windows container image nationalinstruments/labview:2026q1-windows present locally, so isolated execution was selected because Docker Desktop is installed and governed auto execution uses the current Docker engine provider.'
       },
       {
         provider: 'host-native',
         outcome: 'rejected',
         reason: 'auto-docker-installed-disallows-host-native',
         detail:
-          'Host-native execution was not selected because Docker Desktop is installed and governed Windows auto execution uses the Windows container provider.'
+          'Host-native execution was not selected because Docker Desktop is installed and governed auto execution uses the current Docker engine provider.'
       }
     ]);
   });
@@ -340,14 +340,14 @@ describe('comparisonRuntimeLocator', () => {
         outcome: 'selected',
         reason: 'auto-selected-windows-container-because-docker-installed',
         detail:
-          'Docker daemon was reachable in windows-container mode with governed Windows container image nationalinstruments/labview:2026q1-windows present locally, so isolated execution was selected because Docker Desktop is installed and governed Windows auto execution uses the Windows container provider.'
+          'Docker daemon was reachable in windows-container mode with governed Windows container image nationalinstruments/labview:2026q1-windows present locally, so isolated execution was selected because Docker Desktop is installed and governed auto execution uses the current Docker engine provider.'
       },
       {
         provider: 'host-native',
         outcome: 'rejected',
         reason: 'auto-docker-installed-disallows-host-native',
         detail:
-          'Host-native execution was not selected because Docker Desktop is installed and governed Windows auto execution uses the Windows container provider.'
+          'Host-native execution was not selected because Docker Desktop is installed and governed auto execution uses the current Docker engine provider.'
       }
     ]);
   });
@@ -391,7 +391,7 @@ describe('comparisonRuntimeLocator', () => {
         outcome: 'rejected',
         reason: 'execution-mode-host-only-disallows-docker',
         detail:
-          'Windows container execution was not selected because host-only execution was requested.'
+          'Docker container execution was not selected because host-only execution was requested.'
       },
       {
         provider: 'host-native',
@@ -469,7 +469,7 @@ describe('comparisonRuntimeLocator', () => {
     expect(result.provider).toBe('unavailable');
     expect(result.blockedReason).toBe('docker-only-requires-windows-x64-provider');
     expect(result.notes).toContain(
-      'Docker-only execution currently requires the governed Windows 64-bit container provider; Windows x86 execution remains host-native.'
+      'Docker-only execution currently requires the governed 64-bit container provider.'
     );
     expect(result.providerDecisions).toEqual([
       {
@@ -477,7 +477,59 @@ describe('comparisonRuntimeLocator', () => {
         outcome: 'rejected',
         reason: 'docker-only-windows-x64-provider-required',
         detail:
-          'Docker-only execution currently requires the governed Windows 64-bit container provider; Windows x86 execution remains host-native.'
+          'Docker-only execution currently requires the governed 64-bit container provider.'
+      },
+      {
+        provider: 'host-native',
+        outcome: 'rejected',
+        reason: 'execution-mode-docker-only-disallows-host-native',
+        detail:
+          'Host-native execution was not selected because docker-only execution was requested.'
+      }
+    ]);
+  });
+
+  it('selects the governed linux container provider for docker-only execution on Linux hosts', async () => {
+    const result = await locateComparisonRuntime(
+      'linux',
+      {
+        executionMode: 'docker-only',
+        bitness: 'x64'
+      },
+      {
+        queryWindowsContainerProviderFacts: vi.fn().mockResolvedValue(
+          buildWindowsContainerFacts({
+            image: 'nationalinstruments/labview:2026q1-linux',
+            provider: 'linux-container',
+            runtimePlatform: 'linux',
+            hostPlatform: 'linux',
+            windowsContainerHostMode: 'linux',
+            imageAvailable: false
+          })
+        ),
+        pathExists: vi.fn().mockResolvedValue(false)
+      }
+    );
+
+    expect(result.executionMode).toBe('docker-only');
+    expect(result.provider).toBe('linux-container');
+    expect(result.containerRuntimePlatform).toBe('linux');
+    expect(result.containerImage).toBe('nationalinstruments/labview:2026q1-linux');
+    expect(result.containerImageAvailable).toBe(false);
+    expect(result.containerAcquisitionState).toBe('required');
+    expect(result.labviewExe?.path).toBe('/usr/local/natinst/LabVIEW-2026-64/labview');
+    expect(result.labviewCli?.path).toBe('/usr/local/bin/LabVIEWCLI');
+    expect(result.lvCompare?.path).toBe('/usr/local/bin/LVCompare');
+    expect(result.notes).toContain(
+      'Docker daemon was reachable in linux-container mode, and governed Linux container image nationalinstruments/labview:2026q1-linux will be acquired before launch for docker-only execution.'
+    );
+    expect(result.providerDecisions).toEqual([
+      {
+        provider: 'linux-container',
+        outcome: 'selected',
+        reason: 'execution-mode-docker-only-selected-linux-container',
+        detail:
+          'Docker daemon was reachable in linux-container mode, and governed Linux container image nationalinstruments/labview:2026q1-linux will be acquired before launch for docker-only execution.'
       },
       {
         provider: 'host-native',
@@ -696,8 +748,8 @@ HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\National Instruments\\LabVIEW
       )
     ).resolves.toBe(true);
     expect(linuxRunner).toHaveBeenCalledWith(
-      '/mnt/c/Windows/System32/cmd.exe',
-      ['/c', 'docker', 'image', 'inspect', 'nationalinstruments/labview:2026q1-windows'],
+      'docker',
+      ['image', 'inspect', 'nationalinstruments/labview:2026q1-windows'],
       {
         windowsHide: true,
         maxBuffer: 1024 * 1024
@@ -735,6 +787,8 @@ HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\National Instruments\\LabVIEW
       )
     ).resolves.toEqual({
       image: 'nationalinstruments/labview:2026q1-windows',
+      provider: 'windows-container',
+      runtimePlatform: 'win32',
       hostPlatform: 'win32',
       dockerCliAvailable: true,
       dockerDaemonReachable: true,
@@ -825,14 +879,14 @@ HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\National Instruments\\LabVIEW
         outcome: 'selected',
         reason: 'auto-selected-windows-container-because-docker-installed',
         detail:
-          'Docker daemon was reachable in windows-container mode with governed Windows container image nationalinstruments/labview:2026q1-windows present locally, so isolated execution was selected because Docker Desktop is installed and governed Windows auto execution uses the Windows container provider.'
+          'Docker daemon was reachable in windows-container mode with governed Windows container image nationalinstruments/labview:2026q1-windows present locally, so isolated execution was selected because Docker Desktop is installed and governed auto execution uses the current Docker engine provider.'
       },
       {
         provider: 'host-native',
         outcome: 'rejected',
         reason: 'auto-docker-installed-disallows-host-native',
         detail:
-          'Host-native execution was not selected because Docker Desktop is installed and governed Windows auto execution uses the Windows container provider.'
+          'Host-native execution was not selected because Docker Desktop is installed and governed auto execution uses the current Docker engine provider.'
       }
     ]);
   });
@@ -882,7 +936,7 @@ HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\National Instruments\\LabVIEW
         outcome: 'rejected',
         reason: 'auto-docker-installed-disallows-host-native',
         detail:
-          'Host-native execution was not selected because Docker Desktop is installed and governed Windows auto execution uses the Windows container provider.'
+          'Host-native execution was not selected because Docker Desktop is installed and governed auto execution uses the current Docker engine provider.'
       }
     ]);
   });
@@ -925,7 +979,7 @@ HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\National Instruments\\LabVIEW
         outcome: 'rejected',
         reason: 'auto-docker-not-installed',
         detail:
-          'Windows container execution was not selected because Docker Desktop was not detected on this Windows host.'
+          'Docker container execution was not selected because Docker Desktop was not detected on this Windows host.'
       },
       {
         provider: 'host-native',
@@ -965,7 +1019,7 @@ HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\National Instruments\\LabVIEW
         provider: 'windows-container',
         outcome: 'rejected',
         reason: 'execution-mode-host-only-disallows-docker',
-        detail: 'Windows container execution was not selected because host-only execution was requested.'
+        detail: 'Docker container execution was not selected because host-only execution was requested.'
       },
       {
         provider: 'host-native',

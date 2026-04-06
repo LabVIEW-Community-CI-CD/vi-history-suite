@@ -7,10 +7,16 @@ import { ComparisonReportPacketRecord } from './comparisonReportPacket';
 
 export interface ComparisonReportExecutionPlan {
   outcome: 'ready' | 'blocked';
-  provider?: 'host-native' | 'windows-container';
+  provider?: 'host-native' | 'windows-container' | 'linux-container';
   engine?: 'labview-cli' | 'lvcompare';
   blockedReason?: string;
   commandPlan?: ComparisonCommandPlan;
+}
+
+function resolveEffectiveRuntimePlatform(
+  record: ComparisonReportPacketRecord
+): ComparisonReportPacketRecord['runtimeSelection']['platform'] {
+  return record.runtimeSelection.containerRuntimePlatform ?? record.runtimeSelection.platform;
 }
 
 export function buildComparisonReportExecutionPlan(
@@ -32,7 +38,8 @@ export function buildComparisonReportExecutionPlan(
 
   if (
     record.runtimeSelection.provider !== 'host-native' &&
-    record.runtimeSelection.provider !== 'windows-container'
+    record.runtimeSelection.provider !== 'windows-container' &&
+    record.runtimeSelection.provider !== 'linux-container'
   ) {
     return {
       outcome: 'blocked',
@@ -43,11 +50,13 @@ export function buildComparisonReportExecutionPlan(
   if (record.runtimeSelection.engine === 'labview-cli') {
     const labviewCliPath = record.runtimeSelection.labviewCli?.path?.trim();
     const labviewExePath = record.runtimeSelection.labviewExe?.path?.trim();
+    const effectiveRuntimePlatform = resolveEffectiveRuntimePlatform(record);
     const headlessRequested =
-      record.runtimeSelection.platform === 'linux' ||
+      effectiveRuntimePlatform === 'linux' ||
       record.runtimeSelection.provider === 'windows-container' ||
+      record.runtimeSelection.provider === 'linux-container' ||
       record.runtimeSelection.headlessRequested === true ||
-      (record.runtimeSelection.platform === 'win32' &&
+      (effectiveRuntimePlatform === 'win32' &&
         process.env.LV_RTE_HEADLESS === '1');
     if (!labviewCliPath) {
       return {

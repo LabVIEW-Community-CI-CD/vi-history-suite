@@ -1471,7 +1471,7 @@ describe('comparisonReportAction', () => {
       { message: 'Selecting comparison-report runtime.', increment: 20 },
       {
         message:
-          'Acquiring governed Windows image nationalinstruments/labview:2026q1-windows.',
+          'Acquiring governed container image nationalinstruments/labview:2026q1-windows.',
         increment: 10
       },
       { message: 'Persisting governed comparison-report packet.', increment: 20 },
@@ -1495,7 +1495,7 @@ describe('comparisonReportAction', () => {
           attempted: false,
           reportExists: false,
           acquisitionState: 'failed',
-          blockedReason: 'windows-container-image-acquisition-failed'
+          blockedReason: 'container-image-acquisition-failed'
         },
         runtimeSelection: {
           platform: 'win32',
@@ -1503,11 +1503,14 @@ describe('comparisonReportAction', () => {
           bitness: 'x64',
           provider: 'windows-container',
           engine: 'labview-cli',
+          containerImage: 'nationalinstruments/labview:2026q1-windows',
+          containerImageAvailable: false,
+          containerAcquisitionState: 'failed',
           windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
           windowsContainerImageAvailable: false,
           windowsContainerAcquisitionState: 'failed',
-          blockedReason: 'windows-container-image-acquisition-failed',
-          notes: ['Governed Windows image nationalinstruments/labview:2026q1-windows could not be acquired before Windows container launch.'],
+          blockedReason: 'container-image-acquisition-failed',
+          notes: ['Governed container image nationalinstruments/labview:2026q1-windows could not be acquired before container launch.'],
           registryQueryPlans: [],
           candidates: []
         },
@@ -1588,16 +1591,18 @@ describe('comparisonReportAction', () => {
       outcome: 'retained-comparison-report-evidence',
       reportStatus: 'blocked-runtime',
       runtimeExecutionState: 'not-available',
-      blockedReason: 'windows-container-image-acquisition-failed'
+      blockedReason: 'container-image-acquisition-failed'
     });
 
     expect(persistComparisonReport).toHaveBeenCalledWith(
       expect.objectContaining({
         runtimeSelection: expect.objectContaining({
           provider: 'windows-container',
+          containerImageAvailable: false,
+          containerAcquisitionState: 'failed',
           windowsContainerImageAvailable: false,
           windowsContainerAcquisitionState: 'failed',
-          blockedReason: 'windows-container-image-acquisition-failed'
+          blockedReason: 'container-image-acquisition-failed'
         })
       })
     );
@@ -3694,21 +3699,20 @@ describe('comparisonReportAction', () => {
     getConfigurationMock.mockReturnValue({
       get: <T>(key: string, defaultValue: T) => {
         const values: Record<string, unknown> = {
+          windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
           executionMode: 'host-only',
           labviewCliPath: 'C:\\Tools\\LabVIEWCLI.exe',
           labviewExePath: 'C:\\Tools\\LabVIEW.exe',
-          windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
-          bitness: 'x64'
+          bitness: 'x86'
         };
         return (values[key] as T | undefined) ?? defaultValue;
       }
     });
 
     expect(readComparisonRuntimeSettings()).toEqual({
-      executionMode: 'host-only',
-      labviewCliPath: 'C:\\Tools\\LabVIEWCLI.exe',
-      labviewExePath: 'C:\\Tools\\LabVIEW.exe',
+      executionMode: 'docker-only',
       windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
+      linuxContainerImage: 'nationalinstruments/labview:2026q1-linux',
       bitness: 'x64'
     });
     expect(resolveRuntimePlatform('freebsd' as NodeJS.Platform)).toBe('linux');

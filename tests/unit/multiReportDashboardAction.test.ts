@@ -1049,10 +1049,9 @@ describe('multiReportDashboardAction', () => {
           historyWindowMode: 'auto',
           maxHistoryEntries: 100,
           effectiveHistoryEntryCeiling: 1000,
+          executionMode: 'docker-only',
           bitness: 'x64',
-          windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
-          labviewCliPathConfigured: false,
-          labviewExePathConfigured: false
+          windowsContainerImage: 'nationalinstruments/labview:2026q1-windows'
         },
         historyWindow: {
           loadedCommitCount: 3,

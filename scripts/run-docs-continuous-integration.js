@@ -8,14 +8,33 @@ const { spawnSync } = require('node:child_process');
 const { createDocsGateSteps } = require('./run-docs-gate.js');
 
 const repoRoot = path.resolve(path.dirname(fs.realpathSync.native(__filename)), '..');
+const PUBLIC_DOCS_TEST_FILES = [
+  'tests/unit/bundledDocumentation.test.ts',
+  'tests/unit/packageManifest.test.ts',
+  'tests/unit/publicSurfaceBoundaryDocs.test.ts'
+];
+const INTERNAL_DOCS_TEST_FILES = [
+  'tests/unit/postReleaseControlPlaneDocs.test.ts',
+  'tests/unit/debtLedgerDocs.test.ts',
+  'tests/unit/executionPolicyDocs.test.ts',
+  'tests/unit/governedProofDocs.test.ts',
+  'tests/unit/requirementsDocs.test.ts',
+  'tests/unit/shipControlDocs.test.ts',
+  'tests/unit/docsWorkbenchDocs.test.ts',
+  'tests/unit/docsContinuousIntegration.test.ts',
+  'tests/unit/syncBundledDocsScript.test.ts',
+  'tests/unit/wikiCoverageDocs.test.ts',
+  'tests/unit/runWikiWorkbenchCli.test.ts'
+];
 
 function getDocsContinuousIntegrationUsage() {
   return [
-    'Usage: node scripts/run-docs-continuous-integration.js [--skip-links] [--evidence-dir <path>] [--help]',
+    'Usage: node scripts/run-docs-continuous-integration.js [--surface <all|public|internal>] [--skip-links] [--evidence-dir <path>] [--help]',
     '',
     'Run the documentation continuous-integration lane and retain evidence.',
     '',
     'Options:',
+    '  --surface SCOPE     Run all, public-user, or internal-authority docs CI surfaces.',
     '  --skip-links         Skip the lychee link-check step.',
     '  --evidence-dir PATH  Retain JSON/Markdown/log evidence at PATH.',
     '  --help               Print this help text.'
@@ -25,6 +44,7 @@ function getDocsContinuousIntegrationUsage() {
 function parseDocsContinuousIntegrationArgs(argv) {
   const parsed = {
     helpRequested: false,
+    surface: 'all',
     skipLinks: false,
     evidenceDir: undefined
   };
@@ -39,6 +59,19 @@ function parseDocsContinuousIntegrationArgs(argv) {
 
     if (argument === '--skip-links') {
       parsed.skipLinks = true;
+      continue;
+    }
+
+    if (argument === '--surface') {
+      const value = argv[index + 1];
+      if (!value) {
+        throw new Error('Missing value for --surface');
+      }
+      if (!['all', 'public', 'internal'].includes(value)) {
+        throw new Error(`Unsupported --surface value: ${value}`);
+      }
+      parsed.surface = value;
+      index += 1;
       continue;
     }
 
@@ -59,45 +92,88 @@ function parseDocsContinuousIntegrationArgs(argv) {
 }
 
 function createDocsContinuousIntegrationSteps(options = {}) {
-  const evidenceDir =
-    options.evidenceDir ?? path.join(repoRoot, '.cache', 'docs-integration', 'latest');
+  const surface = options.surface ?? 'all';
+  const defaultEvidenceSubdir =
+    surface === 'public'
+      ? path.join('.cache', 'docs-integration', 'public', 'latest')
+      : surface === 'internal'
+        ? path.join('.cache', 'docs-integration', 'internal', 'latest')
+        : path.join('.cache', 'docs-integration', 'latest');
+  const evidenceDir = options.evidenceDir ?? path.join(repoRoot, defaultEvidenceSubdir);
   const bundleReportPath = path.join(evidenceDir, 'bundled-docs-check.json');
-  const docsGateSteps = createDocsGateSteps({ skipLinks: options.skipLinks }).map((step) => {
-    if (step.id === 'bundle-check') {
-      return {
-        ...step,
-        args: [...step.args, '--report', bundleReportPath],
+  const steps = [
+    {
+      id: 'compile',
+      title: 'Compile TypeScript surfaces',
+      command: 'npm',
+      args: ['run', 'compile'],
+      stdoutFileName: 'compile.stdout.log',
+      stderrFileName: 'compile.stderr.log'
+    }
+  ];
+
+  if (surface === 'all' || surface === 'public') {
+    steps.push(
+      {
+        id: 'public-docs-tests',
+        title: 'Run public-user documentation alignment tests',
+        command: 'npx',
+        args: ['vitest', 'run', ...PUBLIC_DOCS_TEST_FILES],
+        stdoutFileName: 'public-docs-tests.stdout.log',
+        stderrFileName: 'public-docs-tests.stderr.log'
+      },
+      {
+        id: 'bundle-check',
+        title: 'Check bundled documentation drift',
+        command: 'node',
+        args: ['scripts/syncBundledDocs.js', '--check', '--report', bundleReportPath],
         stdoutFileName: 'bundle-check.stdout.log',
         stderrFileName: 'bundle-check.stderr.log'
-      };
+      }
+    );
+
+    if (!options.skipLinks) {
+      steps.push({
+        id: 'links',
+        title: 'Check README and docs links',
+        command: 'lychee',
+        args: ['--verbose', '--no-progress', '--include-fragments', 'README.md', 'docs/**/*.md'],
+        stdoutFileName: 'links.stdout.log',
+        stderrFileName: 'links.stderr.log'
+      });
     }
+  }
 
-    return {
-      ...step,
-      stdoutFileName: `${step.id}.stdout.log`,
-      stderrFileName: `${step.id}.stderr.log`
-    };
-  });
-
-  return [
-    ...docsGateSteps,
-    {
+  if (surface === 'all' || surface === 'internal') {
+    steps.push(
+      {
+        id: 'internal-docs-tests',
+        title: 'Run internal-authority documentation alignment tests',
+        command: 'npx',
+        args: ['vitest', 'run', ...INTERNAL_DOCS_TEST_FILES],
+        stdoutFileName: 'internal-docs-tests.stdout.log',
+        stderrFileName: 'internal-docs-tests.stderr.log'
+      },
+      {
       id: 'wiki-doctor',
       title: 'Run wiki workbench doctor',
       command: 'node',
       args: ['out/cli/runWikiWorkbench.js', 'doctor', '--format', 'json'],
       stdoutFileName: 'wiki-doctor.json',
       stderrFileName: 'wiki-doctor.stderr.log'
-    },
-    {
+      },
+      {
       id: 'wiki-plan',
       title: 'Run wiki workbench page plan',
       command: 'node',
       args: ['out/cli/runWikiWorkbench.js', 'plan-pages', '--format', 'json'],
       stdoutFileName: 'wiki-plan.json',
       stderrFileName: 'wiki-plan.stderr.log'
-    }
-  ];
+      }
+    );
+  }
+
+  return steps;
 }
 
 function writeStdStream(stream, text) {
@@ -200,8 +276,11 @@ function buildDocsContinuousIntegrationReport(options) {
   const coverageMatrix = readJsonIfPresent(
     path.join(options.repoRoot, 'docs', 'product', 'wiki-coverage-matrix.json')
   );
-  const publicationLedger = readJsonIfPresent(
+  const internalPublicationLedger = readJsonIfPresent(
     path.join(options.repoRoot, 'docs', 'product', 'wiki-publication-ledger.json')
+  );
+  const publicPublicationLedger = readJsonIfPresent(
+    path.join(options.repoRoot, 'docs', 'product', 'public-github-wiki-publication-ledger.json')
   );
   const bundledManifest = readJsonIfPresent(
     path.join(options.repoRoot, 'resources', 'bundled-docs', 'manifest.json')
@@ -215,6 +294,7 @@ function buildDocsContinuousIntegrationReport(options) {
     schema: 'vi-history-suite/docs-continuous-integration@v1',
     recordedAt: options.recordedAt,
     status: options.status,
+    surface: options.surface,
     repoRoot: options.repoRoot,
     wikiRoot:
       options.env.VIHS_WIKI_REPO_ROOT ??
@@ -233,8 +313,11 @@ function buildDocsContinuousIntegrationReport(options) {
     coverageSourceCount: Array.isArray(coverageMatrix?.coverage)
       ? coverageMatrix.coverage.length
       : null,
-    publishedWikiPageCount: Array.isArray(publicationLedger?.pages)
-      ? publicationLedger.pages.filter((page) => page.status === 'published').length
+    internalPublishedWikiPageCount: Array.isArray(internalPublicationLedger?.pages)
+      ? internalPublicationLedger.pages.filter((page) => page.status === 'published').length
+      : null,
+    publicPublishedWikiPageCount: Array.isArray(publicPublicationLedger?.pages)
+      ? publicPublicationLedger.pages.filter((page) => page.status === 'published').length
       : null,
     bundledPageCount: Array.isArray(bundledManifest?.pages) ? bundledManifest.pages.length : null,
     installedUserTruths
@@ -247,6 +330,7 @@ function buildDocsContinuousIntegrationMarkdown(report) {
     '',
     `- Status: ${report.status}`,
     `- Recorded at: ${report.recordedAt}`,
+    `- Surface: ${report.surface}`,
     `- Repo root: ${report.repoRoot}`,
     `- Wiki root: ${report.wikiRoot}`,
     `- Skip links: ${String(report.skipLinks)}`,
@@ -254,6 +338,8 @@ function buildDocsContinuousIntegrationMarkdown(report) {
     `- Wiki doctor issues: ${String(report.wikiDoctorIssueCount ?? 'not-retained')}`,
     `- Planned wiki pages: ${String(report.wikiPlanPageCount ?? 'not-retained')}`,
     `- Next wiki page: ${report.wikiNextPageId ?? 'none'}`,
+    `- Internal published wiki pages: ${String(report.internalPublishedWikiPageCount ?? 'not-retained')}`,
+    `- Public published wiki pages: ${String(report.publicPublishedWikiPageCount ?? 'not-retained')}`,
     `- Bundled pages: ${String(report.bundledPageCount ?? 'not-retained')}`,
     '',
     '## Installed-User Truth Checks',
@@ -346,6 +432,7 @@ async function runDocsContinuousIntegration(argv = process.argv.slice(2), deps =
     repoRoot: deps.cwd ?? repoRoot,
     evidenceDir,
     skipLinks: parsed.skipLinks,
+    surface: parsed.surface,
     steps: stepResults,
     failure,
     env: deps.env ?? process.env
@@ -382,6 +469,8 @@ module.exports = {
   buildDocsContinuousIntegrationMarkdown,
   buildDocsContinuousIntegrationReport,
   createDocsContinuousIntegrationSteps,
+  INTERNAL_DOCS_TEST_FILES,
+  PUBLIC_DOCS_TEST_FILES,
   getDocsContinuousIntegrationUsage,
   main,
   parseDocsContinuousIntegrationArgs,

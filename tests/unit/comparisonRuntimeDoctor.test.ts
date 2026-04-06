@@ -251,7 +251,7 @@ describe('comparisonRuntimeDoctor', () => {
         executionMode: 'auto',
         bitness: 'x64',
         provider: 'windows-container',
-        blockedReason: 'windows-container-image-acquisition-failed',
+        blockedReason: 'container-image-acquisition-failed',
         windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
         windowsContainerDockerCliAvailable: true,
         windowsContainerDaemonReachable: true,
@@ -290,17 +290,17 @@ describe('comparisonRuntimeDoctor', () => {
         attempted: false,
         reportExists: false,
         acquisitionState: 'failed',
-        blockedReason: 'windows-container-image-acquisition-failed',
+        blockedReason: 'container-image-acquisition-failed',
         diagnosticNotes: []
       }
     });
 
     expect(lines).toContain('Selected execution mode=auto.');
     expect(lines).toContain(
-      'Selected runtime tools: ContainerImage=nationalinstruments/labview:2026q1-windows | DockerCliAvailable=yes | DockerDaemonReachable=yes | ContainerHostMode=windows | WindowsContainerCapability=yes | ContainerImagePresent=no | ContainerAcquisitionState=failed | HostLabVIEW.ini=C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.ini | HostVITcpPort=3363 | HostConflictDetected=yes.'
+      'Selected runtime tools: ContainerImage=nationalinstruments/labview:2026q1-windows | DockerCliAvailable=yes | DockerDaemonReachable=yes | ContainerHostMode=windows | ContainerCapability=yes | ContainerImagePresent=no | ContainerAcquisitionState=failed | HostLabVIEW.ini=C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.ini | HostVITcpPort=3363 | HostConflictDetected=yes.'
     );
     expect(lines).toContain(
-      'Runtime blocked reason: windows-container-image-acquisition-failed.'
+      'Runtime blocked reason: container-image-acquisition-failed.'
     );
     expect(lines.at(-1)).toBe(
       'Next action: repair Docker connectivity or image registry access, then pull the governed Windows container image and rerun comparison report generation.'

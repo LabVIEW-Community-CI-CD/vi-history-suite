@@ -11,6 +11,7 @@ const docsContinuousIntegration = require(path.resolve(
   'run-docs-continuous-integration.js'
 )) as {
   createDocsContinuousIntegrationSteps: (options?: {
+    surface?: 'all' | 'public' | 'internal';
     skipLinks?: boolean;
     evidenceDir?: string;
   }) => Array<{
@@ -23,6 +24,7 @@ const docsContinuousIntegration = require(path.resolve(
   getDocsContinuousIntegrationUsage: () => string;
   parseDocsContinuousIntegrationArgs: (argv: string[]) => {
     helpRequested: boolean;
+    surface: 'all' | 'public' | 'internal';
     skipLinks: boolean;
     evidenceDir?: string;
   };
@@ -32,50 +34,82 @@ describe('documentation continuous integration runner', () => {
   it('parses stable args and documents the evidence-dir option', () => {
     expect(docsContinuousIntegration.parseDocsContinuousIntegrationArgs([])).toEqual({
       helpRequested: false,
+      surface: 'all',
       skipLinks: false,
       evidenceDir: undefined
     });
     expect(
       docsContinuousIntegration.parseDocsContinuousIntegrationArgs([
+        '--surface',
+        'public',
         '--skip-links',
         '--evidence-dir',
         'artifacts/docs'
       ])
     ).toEqual({
       helpRequested: false,
+      surface: 'public',
       skipLinks: true,
       evidenceDir: path.resolve('artifacts/docs')
     });
+    expect(() =>
+      docsContinuousIntegration.parseDocsContinuousIntegrationArgs(['--surface', 'weird'])
+    ).toThrow(/Unsupported --surface value/);
     expect(() =>
       docsContinuousIntegration.parseDocsContinuousIntegrationArgs(['--evidence-dir'])
     ).toThrow(/Missing value/);
     expect(docsContinuousIntegration.getDocsContinuousIntegrationUsage()).toContain(
       '--evidence-dir'
     );
+    expect(docsContinuousIntegration.getDocsContinuousIntegrationUsage()).toContain('--surface');
   });
 
-  it('retains a deterministic step plan that proves bundle drift and wiki health', () => {
+  it('retains deterministic public, internal, and umbrella step plans', () => {
     const evidenceDir = path.resolve('/tmp/vihs-docs-ci');
-    const steps = docsContinuousIntegration.createDocsContinuousIntegrationSteps({
+    const allSteps = docsContinuousIntegration.createDocsContinuousIntegrationSteps({
       skipLinks: true,
       evidenceDir
     });
+    const publicSteps = docsContinuousIntegration.createDocsContinuousIntegrationSteps({
+      surface: 'public',
+      evidenceDir
+    });
+    const internalSteps = docsContinuousIntegration.createDocsContinuousIntegrationSteps({
+      surface: 'internal',
+      evidenceDir
+    });
 
-    expect(steps.map((step) => step.id)).toEqual([
+    expect(allSteps.map((step) => step.id)).toEqual([
       'compile',
-      'docs-tests',
+      'public-docs-tests',
       'bundle-check',
+      'internal-docs-tests',
       'wiki-doctor',
       'wiki-plan'
     ]);
-    expect(steps.find((step) => step.id === 'compile')).toMatchObject({
+    expect(publicSteps.map((step) => step.id)).toEqual([
+      'compile',
+      'public-docs-tests',
+      'bundle-check',
+      'links'
+    ]);
+    expect(internalSteps.map((step) => step.id)).toEqual([
+      'compile',
+      'internal-docs-tests',
+      'wiki-doctor',
+      'wiki-plan'
+    ]);
+    expect(allSteps.find((step) => step.id === 'compile')).toMatchObject({
       command: 'npm',
       args: ['run', 'compile']
     });
-    expect(steps.find((step) => step.id === 'docs-tests')).toMatchObject({
+    expect(allSteps.find((step) => step.id === 'public-docs-tests')).toMatchObject({
       command: 'npx'
     });
-    expect(steps.find((step) => step.id === 'bundle-check')).toMatchObject({
+    expect(allSteps.find((step) => step.id === 'internal-docs-tests')).toMatchObject({
+      command: 'npx'
+    });
+    expect(allSteps.find((step) => step.id === 'bundle-check')).toMatchObject({
       command: 'node',
       args: [
         'scripts/syncBundledDocs.js',
@@ -84,15 +118,19 @@ describe('documentation continuous integration runner', () => {
         path.join(evidenceDir, 'bundled-docs-check.json')
       ]
     });
-    expect(steps.find((step) => step.id === 'wiki-doctor')).toMatchObject({
+    expect(allSteps.find((step) => step.id === 'wiki-doctor')).toMatchObject({
       command: 'node',
       args: ['out/cli/runWikiWorkbench.js', 'doctor', '--format', 'json'],
       stdoutFileName: 'wiki-doctor.json'
     });
-    expect(steps.find((step) => step.id === 'wiki-plan')).toMatchObject({
+    expect(allSteps.find((step) => step.id === 'wiki-plan')).toMatchObject({
       command: 'node',
       args: ['out/cli/runWikiWorkbench.js', 'plan-pages', '--format', 'json'],
       stdoutFileName: 'wiki-plan.json'
+    });
+    expect(publicSteps.find((step) => step.id === 'links')).toMatchObject({
+      command: 'lychee',
+      args: ['--verbose', '--no-progress', '--include-fragments', 'README.md', 'docs/**/*.md']
     });
   });
 });

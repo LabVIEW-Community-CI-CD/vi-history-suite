@@ -746,10 +746,10 @@ function buildDashboardLatestRunExperimentRecord(options: {
       historyWindowMode: options.historyWindowMode,
       maxHistoryEntries: options.configuredMaxHistoryEntries,
       effectiveHistoryEntryCeiling: options.effectiveHistoryEntryCeiling,
-      bitness: options.runtimeSettings.bitness,
+      executionMode: 'docker-only',
+      bitness: 'x64',
       windowsContainerImage: options.runtimeSettings.windowsContainerImage,
-      labviewCliPathConfigured: Boolean(options.runtimeSettings.labviewCliPath?.trim()),
-      labviewExePathConfigured: Boolean(options.runtimeSettings.labviewExePath?.trim())
+      linuxContainerImage: options.runtimeSettings.linuxContainerImage
     },
     historyWindow: {
       loadedCommitCount: options.loadedCommitCount,
@@ -796,10 +796,10 @@ function safeReadComparisonRuntimeSettings(): ReturnType<typeof readComparisonRu
     return readComparisonRuntimeSettings();
   } catch {
     return {
-      labviewCliPath: '',
-      labviewExePath: '',
+      executionMode: 'docker-only',
       bitness: 'x64',
-      windowsContainerImage: 'nationalinstruments/labview:2026q1-windows'
+      windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
+      linuxContainerImage: 'nationalinstruments/labview:2026q1-linux'
     };
   }
 }

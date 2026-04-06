@@ -2,13 +2,17 @@
   "name": "vi-history-suite",
   "displayName": "VI History Suite",
   "description": "VS Code extension for content-detected LabVIEW VI history review in Git repositories.",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "publisher": "svelderrainruiz",
   "license": "SEE LICENSE IN LICENSE",
   "private": true,
   "repository": {
     "type": "git",
-    "url": "https://gitlab.com/svelderrainruiz/vi-history-suite.git"
+    "url": "https://github.com/svelderrainruiz/vi-history-suite.git"
+  },
+  "homepage": "https://github.com/svelderrainruiz/vi-history-suite",
+  "bugs": {
+    "url": "https://github.com/svelderrainruiz/vi-history-suite/issues"
   },
   "engines": {
     "vscode": "^1.90.0"
@@ -16,13 +20,10 @@
   "capabilities": {
     "untrustedWorkspaces": {
       "supported": "limited",
-      "description": "VI History disables background indexing and external LabVIEW comparison-tool execution in untrusted workspaces.",
+      "description": "VI History disables background indexing and governed Docker comparison-report execution in untrusted workspaces.",
       "restrictedConfigurations": [
-        "viHistorySuite.executionMode",
-        "viHistorySuite.labviewCliPath",
-        "viHistorySuite.labviewExePath",
         "viHistorySuite.windowsContainerImage",
-        "viHistorySuite.bitness"
+        "viHistorySuite.linuxContainerImage"
       ]
     }
   },
@@ -99,39 +100,15 @@
           "maximum": 5000,
           "description": "Explicit retained-commit ceiling when historyWindowMode is capped."
         },
-        "viHistorySuite.executionMode": {
-          "type": "string",
-          "enum": [
-            "auto",
-            "host-only",
-            "docker-only"
-          ],
-          "default": "auto",
-          "description": "Controls whether VI History chooses report-generation runtime providers automatically, stays host-native only, or requires Docker-only execution."
-        },
-        "viHistorySuite.labviewCliPath": {
-          "type": "string",
-          "default": "",
-          "description": "Optional explicit path to LabVIEWCLI."
-        },
-        "viHistorySuite.labviewExePath": {
-          "type": "string",
-          "default": "",
-          "description": "Optional explicit path to the preferred LabVIEW executable."
-        },
         "viHistorySuite.windowsContainerImage": {
           "type": "string",
           "default": "nationalinstruments/labview:2026q1-windows",
-          "description": "Preferred Windows LabVIEW container image for isolated 64-bit comparison-report execution."
+          "description": "Required governed Windows-engine LabVIEW container image for Docker-only comparison-report execution when Docker runs in Windows-container mode."
         },
-        "viHistorySuite.bitness": {
+        "viHistorySuite.linuxContainerImage": {
           "type": "string",
-          "enum": [
-            "x86",
-            "x64"
-          ],
-          "default": "x64",
-          "description": "Explicit LabVIEW bitness for report-generation runtime selection."
+          "default": "nationalinstruments/labview:2026q1-linux",
+          "description": "Required governed Linux-engine LabVIEW container image for Docker-only comparison-report execution when Docker runs in Linux-container mode."
         }
       }
     }
@@ -154,6 +131,11 @@
     "docs:gate:core": "node scripts/run-docs-gate.js --skip-links",
     "docs:ci": "node scripts/run-docs-continuous-integration.js",
     "docs:ci:core": "node scripts/run-docs-continuous-integration.js --skip-links",
+    "docs:ci:public": "node scripts/run-docs-continuous-integration.js --surface public",
+    "docs:ci:public:core": "node scripts/run-docs-continuous-integration.js --surface public --skip-links",
+    "docs:ci:internal": "node scripts/run-docs-continuous-integration.js --surface internal",
+    "docs:ci:internal:core": "node scripts/run-docs-continuous-integration.js --surface internal --skip-links",
+    "public:smoke:linux": "npm run compile && node scripts/runPublicFacadeLinuxSmoke.js",
     "dashboard:latest": "node scripts/printLatestDashboardRun.js",
     "dashboard:latest:json": "node scripts/printLatestDashboardRun.js --json",
     "dashboard:latest:host": "node scripts/printLatestDashboardRun.js --host-only",
@@ -180,7 +162,7 @@
     "design:gate": "npm run compile && node out/cli/runDesignGate.js",
     "design:gate:assert-complete": "npm run compile && node out/cli/runVerifyDesignGateCompletion.js",
     "proof:run": "npm run compile && node out/cli/runGovernedProof.js",
-    "test:design-contract": "npm exec -- vitest run tests/unit/packageManifest.test.ts tests/unit/comparisonRuntimeLocator.test.ts tests/unit/runGovernedProofCli.test.ts tests/unit/governedLegacyProofEntrypoints.test.ts tests/unit/governedProofDocs.test.ts tests/unit/githubLinuxBenchmarkWorkflow.test.ts tests/unit/githubWindowsBenchmarkWorkflow.test.ts tests/unit/designGate.test.ts tests/unit/designGateRunner.test.ts",
+    "test:design-contract": "npm exec -- vitest run tests/unit/packageManifest.test.ts tests/unit/comparisonRuntimeLocator.test.ts tests/unit/runGovernedProofCli.test.ts tests/unit/governedLegacyProofEntrypoints.test.ts tests/unit/governedProofDocs.test.ts tests/unit/githubLinuxBenchmarkWorkflow.test.ts tests/unit/githubWindowsBenchmarkWorkflow.test.ts tests/unit/designGate.test.ts tests/unit/designGateRunner.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicFacadeLinuxSmoke.test.ts",
     "pretest": "npm run compile",
     "preview:refresh": "npm run package && node -e \"const fs=require('node:fs'); const p=require('./package.json'); const name=p.name+'-'+p.version+'.vsix'; fs.copyFileSync(name, 'preview-evidence/'+name); fs.copyFileSync(name, '/mnt/c/Users/sveld/Downloads/'+name); console.log('Refreshed '+name);\"",
     "test": "vitest run --coverage",

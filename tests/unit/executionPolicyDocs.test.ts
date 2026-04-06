@@ -53,7 +53,7 @@ describe('execution-policy control plane', () => {
     expect(debtLedgerJson).toContain('"retirementCommit": "2f4ced0"');
   });
 
-  it('keeps the closed execution-policy package aligned across authority and reader surfaces', () => {
+  it('keeps the active Docker-only execution-policy package aligned across authority and reader surfaces', () => {
     const manifest = readJson<{
       contributes?: { configuration?: { properties?: Record<string, unknown> } };
     }>('package.json');
@@ -88,13 +88,20 @@ describe('execution-policy control plane', () => {
     const userWorkflow = readWikiText('User-Workflow.md');
     const requirementsWiki = readWikiText('Requirements-And-Verification.md');
 
-    expect(manifest.contributes?.configuration?.properties).toHaveProperty(
+    expect(manifest.contributes?.configuration?.properties).not.toHaveProperty(
       'viHistorySuite.executionMode'
+    );
+    expect(manifest.contributes?.configuration?.properties).toHaveProperty(
+      'viHistorySuite.windowsContainerImage'
+    );
+    expect(manifest.contributes?.configuration?.properties).toHaveProperty(
+      'viHistorySuite.linuxContainerImage'
     );
     expect(readme).toContain('PROGRAM-0005');
     expect(readme).toContain('TRANCHE-013');
     expect(readme).toContain('TRANCHE-012');
-    expect(readme).toContain('canonical execution-request');
+    expect(readme).toContain('Docker-only');
+    expect(readme).toContain('public GitHub facade');
     expect(currentState).toContain('`TRANCHE-013`: Extension execution flexibility and runtime acquisition UX');
     expect(currentState).toContain('`TRANCHE-012`: Post-release sustainment and release cadence');
     expect(currentState).toContain(
@@ -103,79 +110,69 @@ describe('execution-policy control plane', () => {
     expect(currentState).toContain(
       '[PROGRAM-0004: Post-Release Sustainment And Release Cadence](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)'
     );
-    expect(currentState).toContain('`package.json` exposes `viHistorySuite.executionMode`');
-    expect(currentState).toContain('canonical effective execution-request validation');
-    expect(currentState).toContain('Windows container-capability truth');
-    expect(currentState).toContain('structured compare-runtime detail rows');
+    expect(currentState).toContain('the installed extension now depends on Docker for compare generation');
+    expect(currentState).toContain('selected provider, current Docker engine, selected image, acquisition state, and next action');
+    expect(currentState).toContain('public GitHub facade repo is the public release-kit/setup/support surface');
+    expect(currentState).toContain('public GitHub user wiki now exists');
     expect(queue).toContain('"id": "TRANCHE-013"');
-    expect(queue).toContain('"status": "done"');
+    expect(queue).toContain('"status": "active"');
     expect(queue).toContain('"id": "TRANCHE-012"');
     expect(queue).toContain('"status": "active"');
-    expect(policy).toContain('`auto`');
-    expect(policy).toContain('`host-only`');
-    expect(policy).toContain('`docker-only`');
-    expect(policy).toContain('now exposes a first-class');
-    expect(policy).toContain('fails closed instead of silently falling back');
-    expect(policy).toContain('## Canonical Effective Execution Request');
-    expect(policy).toContain('selected `LabVIEW.ini` surface');
-    expect(policy).toContain('Windows Mode Matrix');
-    expect(policy).toContain('if Docker Desktop is installed, use the governed Windows');
-    expect(policy).toContain('hard-stop instead of falling back to');
-    expect(policy).toContain('if Docker Desktop is not installed, use host-native execution');
-    expect(policy).toContain('install/enable/switch Docker');
-    expect(policy).toContain('whether the image is already present locally');
-    expect(policy).toContain('`selected`');
-    expect(policy).toContain('`hard-stop`');
-    expect(policy).toContain('close the conflicting LabVIEW session');
-    expect(policy).toContain('install, start, enable, repair, or switch Docker Desktop');
-    expect(policy).toContain('on Windows, pull the governed Windows image');
-    expect(policy).toContain('structured compare-runtime detail rows');
+    expect(policy).not.toContain('`auto`');
+    expect(policy).not.toContain('`host-only`');
+    expect(policy).toContain('comparison generation is Docker-only in the installed extension');
+    expect(policy).toContain('viHistorySuite.windowsContainerImage');
+    expect(policy).toContain('viHistorySuite.linuxContainerImage');
+    expect(policy).toContain('There is no installed host-fallback path in this contract.');
+    expect(policy).toContain('Windows Engine Matrix');
+    expect(policy).toContain('Docker daemon `OSType=windows` selects the governed Windows container image');
+    expect(policy).toContain('Docker daemon `OSType=linux` selects the governed Linux container image');
+    expect(policy).toContain('selected provider, current Docker engine mode, selected image, acquisition');
     expect(policy).toContain('execution-policy bypass is not allowed');
-    expect(srs).toContain('VHS-REQ-467');
+    expect(srs).toContain('VHS-REQ-459');
+    expect(srs).toContain('VHS-REQ-470');
     expect(srs).toContain('VHS-REQ-482');
     expect(srs).toContain('VHS-REQ-475');
-    expect(srs).toContain('structured history-panel compare-runtime detail rows');
+    expect(srs).toContain('Docker-only');
     expect(rtm).toContain('VHS-REQ-470');
-    expect(rtm).toContain('closed PROGRAM-0005 execution-policy package');
+    expect(rtm).toContain('current Docker daemon engine');
+    expect(rtm).toContain('Docker-only');
     expect(rtm).toContain('ADR-0026-canonical-extension-execution-request-validation.md');
     expect(testPlan).toContain('TEST-UNIT-300');
     expect(testPlan).toContain('TEST-DOC-068');
-    expect(testPlan).toContain('structured');
-    expect(program).toContain('`auto`');
-    expect(program).toContain('`host-only`');
-    expect(program).toContain('`docker-only`');
-    expect(program).toContain('canonical effective execution-request validation');
-    expect(program).toContain('no execution-policy bypass');
-    expect(program).toContain('Windows container-capability checks');
-    expect(program).toContain('Closed on the retained transparent execution-policy contract.');
-    expect(program).toContain('structured compare-runtime detail rows');
-    expect(issue).toContain('visible Docker image-pull progress');
-    expect(issue).toContain('actionable user guidance');
-    expect(issue).toContain('canonical effective execution-request validation');
-    expect(issue).toContain('no execution-policy bypass path');
-    expect(issue).toContain('Windows-container mode');
-    expect(issue).toContain('Closed post-release issue');
-    expect(issue).toContain('structured compare-runtime detail rows');
+    expect(testPlan).toContain('Docker-only');
+    expect(program).toContain('Active post-release program.');
+    expect(program).toContain('the installed extension now depends on Docker for comparison generation');
+    expect(program).toContain('gets the governed Windows image when Docker is in Windows-engine mode');
+    expect(program).toContain('gets the governed Linux image when Docker is in Linux-engine mode');
+    expect(program).toContain('authority, bundled-doc, internal wiki, and public GitHub user-surface');
+    expect(program).toContain('Gate D: Public/Internal Surface Split');
+    expect(issue).toContain('Active post-release issue.');
+    expect(issue).toContain('Docker-only comparison contract');
+    expect(issue).toContain('canonical Docker-only request validation');
+    expect(issue).toContain('public GitHub front face');
     expect(sustainmentProgram).toContain('Active post-release program.');
-    expect(sustainmentProgram).toContain('`PROGRAM-0005` is closed');
+    expect(sustainmentProgram).toContain('That work remains explicit under active `PROGRAM-0005`');
     expect(adr0006).toContain('superseded by ADR-0025');
-    expect(adr0025).toContain('`auto`');
-    expect(adr0025).toContain('`host-only`');
-    expect(adr0025).toContain('`docker-only`');
-    expect(adr0026).toContain('effective execution request');
-    expect(adr0026).toContain('Windows container capability');
-    expect(adr0026).toContain('selected `LabVIEW.ini`');
+    expect(adr0025).toContain('Docker-Only Installed Extension Execution');
+    expect(adr0025).toContain('executionMode');
+    expect(adr0025).toContain('some Windows users can run only Linux containers');
+    expect(adr0025).toContain('the current Docker daemon engine');
+    expect(adr0026).toContain('Canonical Docker-Only Installed Execution-Request Validation');
+    expect(adr0026).toContain('current Docker daemon engine');
+    expect(adr0026).toContain('There is no installed-execution bypass path');
     expect(debtLedger).toContain('"id": "DEBT-0006"');
     expect(debtLedger).toContain('"programId": "PROGRAM-0005"');
     expect(debtLedger).toContain('"status": "retired"');
-    expect(debtLedger).toContain('canonical effective execution-request validation');
-    expect(debtLedger).toContain('Windows container-capability');
-    expect(debtLedger).toContain('structured history-panel compare-runtime detail rows');
+    expect(debtLedger).toContain('Docker-only');
+    expect(debtLedger).toContain('current Docker daemon engine on Windows');
     expect(coverage).toContain('"sourcePath": "docs/product/extension-execution-policy.md"');
+    expect(coverage).toContain('ADR-0027-public-github-facade-and-user-wiki-vs-internal-gitlab-control-plane.md');
     expect(publicationLedger).toContain('"wikiFileName": "User-Workflow.md"');
-    expect(userWorkflow).toContain('`auto` / `host-only` / `docker-only`');
-    expect(userWorkflow).toContain('structured');
-    expect(userWorkflow).toContain('Docker Desktop is installed');
-    expect(requirementsWiki).toContain('execution-mode contract');
+    expect(userWorkflow).toContain('The installed extension now uses one Docker-only compare contract.');
+    expect(userWorkflow).toContain('on Windows, the current Docker daemon engine selects the governed Windows');
+    expect(userWorkflow).toContain('white `Comparison context` block');
+    expect(requirementsWiki).toContain('Docker-only execution contract');
+    expect(requirementsWiki).toContain('the installed extension no longer exposes `executionMode`');
   });
 });

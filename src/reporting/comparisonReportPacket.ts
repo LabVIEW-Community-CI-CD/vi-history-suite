@@ -146,7 +146,8 @@ export async function persistComparisonReportPacket(
     runtimeExecutionState:
       options.preflight.ready &&
       (options.runtimeSelection.provider === 'unavailable' ||
-        options.runtimeSelection.blockedReason === 'windows-container-image-acquisition-failed')
+        options.runtimeSelection.blockedReason === 'windows-container-image-acquisition-failed' ||
+        options.runtimeSelection.blockedReason === 'container-image-acquisition-failed')
         ? 'not-available'
         : 'not-run'
   };
@@ -257,38 +258,42 @@ export function renderComparisonReportPacketHtml(record: ComparisonReportPacketR
       <div><strong>LabVIEWCLI path:</strong> ${escapeHtml(runtimeSelection.labviewCli?.path ?? 'none')}</div>
       <div><strong>LVCompare path:</strong> ${escapeHtml(runtimeSelection.lvCompare?.path ?? 'none')}</div>
       <div><strong>Docker CLI available:</strong> ${escapeHtml(
-        runtimeSelection.windowsContainerDockerCliAvailable === undefined
+        runtimeSelection.dockerCliAvailable === undefined
           ? 'none'
-          : runtimeSelection.windowsContainerDockerCliAvailable
+          : runtimeSelection.dockerCliAvailable
             ? 'yes'
             : 'no'
       )}</div>
       <div><strong>Docker daemon reachable:</strong> ${escapeHtml(
-        runtimeSelection.windowsContainerDaemonReachable === undefined
+        runtimeSelection.dockerDaemonReachable === undefined
           ? 'none'
-          : runtimeSelection.windowsContainerDaemonReachable
+          : runtimeSelection.dockerDaemonReachable
             ? 'yes'
             : 'no'
       )}</div>
-      <div><strong>Windows container host mode:</strong> ${escapeHtml(
-        runtimeSelection.windowsContainerHostMode ?? 'none'
+      <div><strong>Container host mode:</strong> ${escapeHtml(
+        runtimeSelection.containerHostMode ?? 'none'
       )}</div>
-      <div><strong>Windows container capability:</strong> ${escapeHtml(
-        runtimeSelection.windowsContainerCapabilityAvailable === undefined
+      <div><strong>Container capability:</strong> ${escapeHtml(
+        runtimeSelection.containerCapabilityAvailable === undefined
           ? 'none'
-          : runtimeSelection.windowsContainerCapabilityAvailable
+          : runtimeSelection.containerCapabilityAvailable
             ? 'yes'
             : 'no'
       )}</div>
-      <div><strong>Windows container image present:</strong> ${escapeHtml(
-        runtimeSelection.windowsContainerImageAvailable === undefined
+      <div><strong>Container image:</strong> ${escapeHtml(runtimeSelection.containerImage ?? 'none')}</div>
+      <div><strong>Container image present:</strong> ${escapeHtml(
+        runtimeSelection.containerImageAvailable === undefined
           ? 'none'
-          : runtimeSelection.windowsContainerImageAvailable
+          : runtimeSelection.containerImageAvailable
             ? 'yes'
             : 'no'
       )}</div>
-      <div><strong>Windows container acquisition state:</strong> ${escapeHtml(
-        runtimeSelection.windowsContainerAcquisitionState ?? 'none'
+      <div><strong>Container acquisition state:</strong> ${escapeHtml(
+        runtimeSelection.containerAcquisitionState ?? 'none'
+      )}</div>
+      <div><strong>Runtime platform:</strong> ${escapeHtml(
+        runtimeSelection.containerRuntimePlatform ?? runtimeSelection.platform
       )}</div>
       <div><strong>Host LabVIEW.ini:</strong> ${escapeHtml(runtimeSelection.hostLabviewIniPath ?? 'none')}</div>
       <div><strong>Host VI Server port:</strong> ${escapeHtml(
@@ -444,7 +449,8 @@ function buildInitialRuntimeExecution(
       state: 'not-available',
       attempted: false,
       reportExists: false,
-      acquisitionState: runtimeSelection.windowsContainerAcquisitionState,
+      acquisitionState:
+        runtimeSelection.containerAcquisitionState ?? runtimeSelection.windowsContainerAcquisitionState,
       blockedReason: runtimeSelection.blockedReason,
       stdoutFilePath: artifactPlan.runtimeStdoutFilePath,
       stderrFilePath: artifactPlan.runtimeStderrFilePath,
@@ -455,13 +461,15 @@ function buildInitialRuntimeExecution(
 
   if (
     preflight.ready &&
-    runtimeSelection.blockedReason === 'windows-container-image-acquisition-failed'
+    (runtimeSelection.blockedReason === 'container-image-acquisition-failed' ||
+      runtimeSelection.blockedReason === 'windows-container-image-acquisition-failed')
   ) {
     return {
       state: 'not-available',
       attempted: false,
       reportExists: false,
-      acquisitionState: runtimeSelection.windowsContainerAcquisitionState,
+      acquisitionState:
+        runtimeSelection.containerAcquisitionState ?? runtimeSelection.windowsContainerAcquisitionState,
       blockedReason: runtimeSelection.blockedReason,
       stdoutFilePath: artifactPlan.runtimeStdoutFilePath,
       stderrFilePath: artifactPlan.runtimeStderrFilePath,
@@ -474,7 +482,8 @@ function buildInitialRuntimeExecution(
     state: 'not-run',
     attempted: false,
     reportExists: false,
-    acquisitionState: runtimeSelection.windowsContainerAcquisitionState,
+    acquisitionState:
+      runtimeSelection.containerAcquisitionState ?? runtimeSelection.windowsContainerAcquisitionState,
     stdoutFilePath: artifactPlan.runtimeStdoutFilePath,
     stderrFilePath: artifactPlan.runtimeStderrFilePath,
     diagnosticLogArtifactPath: artifactPlan.runtimeDiagnosticLogFilePath,
@@ -484,8 +493,11 @@ function buildInitialRuntimeExecution(
 
 function renderRuntimeNote(record: ComparisonReportPacketRecord): string {
   if (record.runtimeExecutionState === 'not-available') {
-    if (record.runtimeExecution.blockedReason === 'windows-container-image-acquisition-failed') {
-      return 'No LabVIEW-generated comparison report has been executed because the governed Windows container image could not be acquired before runtime launch.';
+    if (
+      record.runtimeExecution.blockedReason === 'container-image-acquisition-failed' ||
+      record.runtimeExecution.blockedReason === 'windows-container-image-acquisition-failed'
+    ) {
+      return 'No LabVIEW-generated comparison report has been executed because the governed container image could not be acquired before runtime launch.';
     }
 
     return 'No LabVIEW-generated comparison report has been executed because the governed runtime selection is currently unavailable for this workspace and platform.';
@@ -572,7 +584,10 @@ function deriveReportStatus(
     return 'blocked-runtime';
   }
 
-  if (runtimeSelection.blockedReason === 'windows-container-image-acquisition-failed') {
+  if (
+    runtimeSelection.blockedReason === 'container-image-acquisition-failed' ||
+    runtimeSelection.blockedReason === 'windows-container-image-acquisition-failed'
+  ) {
     return 'blocked-runtime';
   }
 

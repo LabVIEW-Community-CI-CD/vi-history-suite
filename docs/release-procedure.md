@@ -11,8 +11,8 @@
 - The first retained exact-version release is `v0.2.0`, with retained artifact
   `vi-history-suite-0.2.0.vsix` and manifest
   `release-evidence/release-manifest.json`.
-- The current development baseline is `0.3.0`, so the next exact-version line
-  is `v0.3.0` unless `package.json` changes again before tagging.
+- The current development baseline is `1.0.0`, so the next exact-version line
+  is `v1.0.0` unless `package.json` changes again before tagging.
 - The release tag shall match both `package.json` and the top unreleased
   heading in [CHANGELOG.md](../CHANGELOG.md).
 - The repo also publishes a separate docs-authoring workbench image for
@@ -39,7 +39,12 @@
 3. If the release tranche changed bundled-doc inputs, run `npm run docs:bundle`
    locally so the packaged installed-user guide can be inspected before CI
    packages the VSIX.
-4. Run compile, test, coverage generation, and VSIX packaging through GitLab
+4. Run both split documentation CI surfaces before release normalization:
+   - `npm run docs:ci:public:core`
+   - `npm run docs:ci:internal:core`
+   - `npm run docs:ci:core` may still be used as the retained umbrella lane
+     when one combined local report is more convenient.
+5. Run compile, test, coverage generation, and VSIX packaging through GitLab
    CI.
    - The guarded `npm run package` path now runs compile,
      `npm run docs:bundle`, `npm run package:audit`, and then `vsce package`.
@@ -51,15 +56,19 @@
    - Packaging must fail closed if the packaged surface includes runtime
      `node_modules` or transient/test artifacts such as `.cache` or
      `.vscode-test`.
-5. Retain release evidence under `release-evidence/`.
-6. Review the generated release record and release manifest before any
+6. Retain release evidence under `release-evidence/`.
+7. Review the generated release record and release manifest before any
    downstream distribution step.
-7. Ensure the release artifact includes the exact versioned VSIX intended for
+8. Ensure the release artifact includes the exact versioned VSIX intended for
    installation and sharing.
-8. Ensure the retained release manifest names the tag, package version, commit,
+9. Ensure the retained release manifest names the tag, package version, commit,
    VSIX filename, and retained evidence paths.
-9. Ensure the packaged extension still contains the bundled user-doc surface
+10. Ensure the packaged extension still contains the bundled user-doc surface
    under `resources/bundled-docs/`.
+11. When the public Docker product contract changes materially, rerun the
+    public-facade Linux smoke lane through:
+    - local `npm run public:smoke:linux`
+    - GitHub `workflow_dispatch` on `.github/workflows/public-facade-linux-smoke.yml`
 
 ## Retained Evidence
 
@@ -74,6 +83,8 @@
 - `docs-workbench-evidence/docs-workbench-manifest.json`
 - `docs-integration-evidence/docs-integration-report.json`
 - `docs-integration-evidence/docs-integration-report.md`
+- `docs-integration-evidence/public/`
+- `docs-integration-evidence/internal/`
 - `resources/bundled-docs/manifest.json`
 - `.cache/design-gate/assurance-skill/repo-standards-review/`
 
@@ -84,10 +95,14 @@
   thing as the governed SemVer release artifact.
 - The docs-authoring workbench image is a supporting documentation-package
   surface, not the end-user extension artifact.
+- The release gate now expects split public-user and internal-authority docs
+  CI surfaces in addition to the retained umbrella docs CI lane.
+- The public Docker product surface is additionally characterized by the
+  public-facade Linux smoke lane for Linux-engine cold-pull behavior.
 - The GitLab release lane is configured to build the governed versioned VSIX
   artifact and release manifest.
 - The first governed `v0.2.0` release evidence set is now retained through
   GitLab release `v0.2.0`, tag pipeline `2428809456`, and kept release job
   `13779604462`.
-- The active development line is now `0.3.0`, tracked in `CHANGELOG.md`, and
+- The active development line is now `1.0.0`, tracked in `CHANGELOG.md`, and
   should not rewrite the retained `v0.2.0` release evidence.

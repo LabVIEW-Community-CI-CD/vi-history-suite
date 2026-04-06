@@ -13,11 +13,13 @@ scattered across queue summaries, ship history, and benchmark notes.
 - tranche: `TRANCHE-012`
 - issue: `ISSUE-0409`
 - execution program: `PROGRAM-0004`
-- parallel post-release closeout still open: `TRANCHE-010` / `PROGRAM-0002`
-  on Sergio Velderrain's manual Windows 11 right-click gate
+- parallel public-closeout lane: `TRANCHE-010` / `PROGRAM-0002` is reopened on
+  the `1.0.0` Docker-only public contract
 
-The sustainment lane operates in parallel with that remaining human gate. It
-does not reopen `PROGRAM-0002`, `PROGRAM-0003`, or `PROGRAM-0005`.
+The sustainment lane now owns the only active post-release driver seat. It does
+not absorb `PROGRAM-0002`, `PROGRAM-0003`, or `PROGRAM-0005` into generic
+maintenance language; those programs remain explicit when they reopen or stay
+active.
 
 ## Release Refresh Rules
 

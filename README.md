@@ -3,6 +3,35 @@
 `vi-history-suite` is a governed TypeScript-first Visual Studio Code extension
 for developer-facing review of LabVIEW VI history in Git repositories.
 
+## Public Devcontainer And Codespaces
+
+The public GitHub facade is expected to support evaluation inside Codespaces or
+a local devcontainer.
+
+- The installed extension path is Docker-only and x64-only.
+- A Linux-hosted development session uses the governed Linux container image.
+- A Windows-hosted development session uses the governed Windows or Linux
+  container image that matches the current Docker daemon engine.
+- Missing governed images are pulled on first use instead of falling back to
+  host LabVIEW.
+- No host LabVIEW installation is required for the installed extension path.
+
+The repo now ships:
+
+- [.devcontainer/devcontainer.json](./.devcontainer/devcontainer.json) for a
+  Docker-capable devcontainer/Codespaces setup
+- [.vscode/launch.json](./.vscode/launch.json) for `F5` extension-host runs
+- [.vscode/tasks.json](./.vscode/tasks.json) for compile and design-contract
+  loops
+- [.vscode/extensions.json](./.vscode/extensions.json) for the recommended
+  extension-development toolchain
+
+The public Docker product smoke lane is:
+
+```bash
+npm run public:smoke:linux
+```
+
 It is no longer just an initial command-and-panel baseline. The repo now
 contains:
 
@@ -235,10 +264,10 @@ Committed and governed today:
   and `docs/product/debt-ledger.{md,json}` so technical and documentation debt
   cannot remain implicit across future sessions, with retired debt, open debt,
   and accepted exceptions all bound to explicit owner programs and next gates
-- a governed extension-execution-policy package that queues transparent
-  `auto` / `host-only` / `docker-only` execution, Docker-required hard stops,
-  and Windows image-acquisition UX as explicit product truth instead of future
-  chat-only guidance
+- a governed extension-execution-policy package that now constrains installed
+  comparison generation to Docker-only x64 execution, selects the governed
+  Windows or Linux image from the current Docker daemon engine, and fails
+  closed instead of probing host LabVIEW
 - a governed cross-repo jump surface that resolves the product repo, wiki repo,
   and companion `repo-standards-review` skill repo from one local map and one
   CLI entrypoint
@@ -342,8 +371,8 @@ Latest landed ship target:
 - retained exact-version release: `v0.2.0`
 - retained release artifact: `vi-history-suite-0.2.0.vsix`
 - target release manifest: `release-evidence/release-manifest.json`
-- current development baseline: `0.3.0`
-- next exact-version line: `v0.3.0`
+- current development baseline: `1.0.0`
+- next exact-version line: `v1.0.0`
 - current changelog: [CHANGELOG.md](./CHANGELOG.md)
 - docs-authoring image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
 - retained release evidence: GitLab release `v0.2.0`, tag pipeline `2428809456`,
@@ -368,16 +397,30 @@ Current install paths are:
 
 The current active tranches are:
 
-- `TRANCHE-010`: public facade release kit and host-machine acceptance
-- active issue: `ISSUE-0407`
+- `TRANCHE-013`: extension execution contract simplification and Docker-only
+  runtime UX
 - `TRANCHE-012`: post-release sustainment and release cadence
 - active sustainment rules:
   `docs/product/post-release-sustainment-rules.md`
-- closed follow-on tranches:
+- reopened queued closeout:
+  - `TRANCHE-010`: public facade release kit and host-machine acceptance, now reopened for the `1.0.0` Docker-only public contract and Linux-engine cold-pull Gate D rerun
+- closed follow-on tranche:
   - `TRANCHE-011`: repeatable Windows and Linux benchmark proof
-  - `TRANCHE-013`: extension execution flexibility, canonical execution-request
-    validation, and runtime acquisition UX, now closed on transparent provider
-    and acquisition truth
+
+Current runtime direction for installed extension users:
+
+- comparison generation is Docker-only in the extension
+- the installed extension no longer exposes host-native runtime-selection knobs
+- on Windows, compare execution uses the governed Windows image when Docker is
+  in Windows-container mode and the governed Linux image when Docker is in
+  Linux-container mode
+- if Docker is unavailable or the current engine cannot satisfy the governed
+  request, the extension fails closed instead of probing the host
+- the public extension-user front face is now
+  `https://github.com/svelderrainruiz/vi-history-suite`, while the private
+  GitLab repo remains the engineering authority and release-control surface
+- the internal GitLab wiki remains maintainer-facing, and the public GitHub
+  wiki is now the public extension-user wiki surface
 
 Issue-ready execution programs:
 

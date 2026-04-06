@@ -6,6 +6,11 @@ Define how future wiki content for `vi-history-suite` shall be generated from
 governed repository documentation instead of from source-code spelunking or
 chat memory.
 
+This authority map governs the internal GitLab maintainer wiki.
+
+The public GitHub user wiki is governed separately by
+[public-github-wiki-authority-map.md](./public-github-wiki-authority-map.md).
+
 ## Authority Order
 
 When future sessions create or refresh wiki pages, use this order:

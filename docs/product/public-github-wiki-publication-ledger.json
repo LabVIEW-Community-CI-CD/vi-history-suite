@@ -1,0 +1,63 @@
+{
+  "generatedFor": "vi-history-suite",
+  "publicationSurface": "public-github-user-wiki",
+  "pages": [
+    {
+      "id": "home",
+      "title": "Home",
+      "wikiPath": "Home",
+      "wikiFileName": "Home.md",
+      "status": "published",
+      "publishedDate": "2026-04-06",
+      "wikiCommit": "17ac8ac",
+      "primaryAuthority": [
+        "README.md",
+        "docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md",
+        "docs/release-procedure.md"
+      ]
+    },
+    {
+      "id": "user-workflow",
+      "title": "User Workflow",
+      "wikiPath": "User-Workflow",
+      "wikiFileName": "User-Workflow.md",
+      "status": "published",
+      "publishedDate": "2026-04-06",
+      "wikiCommit": "17ac8ac",
+      "primaryAuthority": [
+        "README.md",
+        "docs/product/extension-execution-policy.md",
+        "docs/product/current-state.md"
+      ]
+    },
+    {
+      "id": "install-and-release",
+      "title": "Install And Release",
+      "wikiPath": "Install-And-Release",
+      "wikiFileName": "Install-And-Release.md",
+      "status": "published",
+      "publishedDate": "2026-04-06",
+      "wikiCommit": "17ac8ac",
+      "primaryAuthority": [
+        "README.md",
+        "docs/release-procedure.md",
+        "CHANGELOG.md"
+      ]
+    },
+    {
+      "id": "current-state",
+      "title": "Current State",
+      "wikiPath": "Current-State",
+      "wikiFileName": "Current-State.md",
+      "status": "published",
+      "publishedDate": "2026-04-06",
+      "wikiCommit": "17ac8ac",
+      "primaryAuthority": [
+        "README.md",
+        "docs/product/current-state.md",
+        "docs/product/extension-execution-policy.md"
+      ]
+    }
+  ],
+  "nextPage": null
+}

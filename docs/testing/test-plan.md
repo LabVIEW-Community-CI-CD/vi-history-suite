@@ -1295,33 +1295,33 @@
   effective runtime override bundle after CLI/env/default synthesis, reject
   non-canonical env-derived explicit Windows bundles, and keep default Windows
   benchmark runtime settings undefined when no explicit override is requested
-- `TEST-UNIT-299`: verify the installed extension exposes a first-class
-  `viHistorySuite.executionMode` setting, runtime selection honors `auto` /
-  `host-only` / `docker-only` without silent provider fallback, and the
-  execution-flexibility control-plane package stays aligned across README,
-  current-state, extension-execution-policy, ADR-0025, queue/program/issue
-  docs, debt ledger, and published reader surfaces
+- `TEST-UNIT-299`: verify the installed extension exposes only
+  `viHistorySuite.windowsContainerImage` and
+  `viHistorySuite.linuxContainerImage`, does not expose `executionMode` or
+  installed host-runtime knobs, and keeps the Docker-only execution-policy
+  package aligned across README, current-state, extension-execution-policy,
+  ADR-0025, queue/program/issue docs, debt ledger, and published reader
+  surfaces
 - `TEST-DOC-064`: review current-state, PROGRAM-0003, ISSUE-0408, canonical
   exact-pair diagnosis guidance, ADR-0024, and the debt ledger and confirm the
   repo documents effective runtime override bundle validation rather than a raw
   CLI-only rule, including the removal of hidden explicit Windows defaults
 - `TEST-DOC-065`: review README, current-state, extension-execution-policy,
   ADR-0025, PROGRAM-0005, ISSUE-0410, and the debt ledger and confirm the
-  current `auto` / `host-only` / `docker-only` contract, the Docker-first
-  Windows `auto` rule when Docker Desktop is installed, the Docker-absent
-  host-native fallback rule, Docker-required hard stops, visible Windows
-  image-pull progress, no-silent-fallback rule, and user-facing provider
-  transparency are all explicit
+  current Docker-only installed contract, engine-aware Windows/Linux image
+  selection, no-host-fallback rule, Docker-required hard stops, visible image-
+  pull progress, and user-facing provider/acquisition transparency are all
+  explicit
 - `TEST-DOC-066`: review the wiki coverage matrix, publication ledger,
   User-Workflow, Requirements-And-Verification, Current-State, Architecture,
   and Architecture-Decision-Records pages and confirm the execution-policy
   package and current `PROGRAM-0005` control plane are represented on the
   published reader surfaces
 - `TEST-UNIT-300`: verify the execution-policy control-plane package keeps
-  canonical effective execution-request validation, Windows container-capability
-  hard stops, the Docker-first Windows `auto` decision matrix, and the closed
-  execution-policy debt item aligned across authority docs after the manifest
-  exposes a first-class `viHistorySuite.executionMode`
+  canonical Docker-only execution-request validation, engine-aware Windows/Linux
+  image selection, Docker hard stops, and the retired execution-policy debt
+  item aligned across authority docs after the manifest removes
+  `viHistorySuite.executionMode`
 - `TEST-UNIT-301`: verify the Windows benchmark summary fails closed when any
   retained pair is `runtimeExecutionState=not-available`, retains the blocked
   reason as terminal benchmark truth, snapshots immutable per-run
@@ -1330,21 +1330,19 @@
   proof within one proof root
 - `TEST-DOC-067`: review extension-execution-policy, ADR-0025, ADR-0026,
   PROGRAM-0005, ISSUE-0410, current-state, and the debt ledger and confirm the
-  current package makes canonical execution-request validation, selected
-  `LabVIEW.ini` / port truth when host-native execution is in play, the
-  Docker-first Windows `auto` rule when Docker Desktop is installed, Windows
-  container-capability hard stops, visible Windows acquisition-state truth,
-  live in-panel compare-runtime progress, the in-panel latest compare-runtime
-  summary, rejected-provider visibility on the panel/warning path, the concise
-  compare blocked/failure warning surface, the concise compare success
-  surface, structured history-panel compare-runtime detail rendering,
-  reopened-panel compare-runtime persistence, and mode-aware guidance explicit
+  current package makes canonical Docker-only request validation, engine-aware
+  Windows/Linux image selection, Docker hard stops, visible acquisition-state
+  truth, live in-panel compare-runtime progress, the in-panel latest compare-
+  runtime summary, the concise compare blocked/failure warning surface, the
+  concise compare success surface, structured history-panel compare-runtime
+  detail rendering, reopened-panel compare-runtime persistence, and Docker-
+  corrective guidance explicit
 - `TEST-DOC-068`: review User-Workflow, Requirements-And-Verification,
   Current-State, Architecture, Architecture-Decision-Records, Development-Queue,
   Debt-Retirement-Contract, and Debt-Ledger pages and confirm the published
-  reader surfaces represent ADR-0026 plus the stronger Docker-first Windows
-  execution-policy scenario matrix rather than only the earlier high-level
-  mode contract
+  reader surfaces represent ADR-0026 plus the current Docker-only installed
+  contract, engine-aware Windows/Linux image selection, and the public/internal
+  audience split instead of the older mode-based story
 - `TEST-DOC-069`: review README, current-state, harnesses, PROGRAM-0003, and
   ISSUE-0408 and confirm contaminated Windows benchmark-image reruns are
   documented as fail-closed `not-available` benchmark truth with immutable
@@ -1390,11 +1388,13 @@
   grouped rows and order `Block Diagram Overview` ahead of
   `Front Panel Overview` when both exist for one pair
 - `TEST-UNIT-311`: verify the documentation continuous-integration runner
-  exposes a stable docs-gate-plus-wiki-health step plan, injects bundle-drift
-  reporting into the bundled-doc check, and retains the dedicated
-  `docs_continuous_integration` evidence contract rather than only a boolean
-  gate, while the governed `npm run package` path refreshes bundled installed-user
-  docs before VSIX packaging
+  exposes stable umbrella, public-user, and internal-authority step plans,
+  injects bundle-drift reporting into the bundled-doc check, retains the
+  dedicated `docs_continuous_integration`,
+  `docs_public_continuous_integration`, and
+  `docs_internal_continuous_integration` evidence contracts rather than only a
+  boolean gate, and proves the governed `npm run package` path refreshes
+  bundled installed-user docs before VSIX packaging
 - `TEST-UNIT-312`: verify the governed Windows host proof cleanup hook inspects
   and clears pre-run and post-run `LabVIEW.exe`, `LabVIEWCLI.exe`, and
   `LVCompare.exe` contamination, and fails closed when the host surface cannot

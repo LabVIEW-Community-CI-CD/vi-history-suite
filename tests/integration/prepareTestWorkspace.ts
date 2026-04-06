@@ -47,12 +47,8 @@ export async function prepareIntegrationWorkspace(
     path.join(workspacePath, '.vscode', 'settings.json'),
     JSON.stringify(
       {
-        'viHistorySuite.labviewCliPath': path.join(
-          workspacePath,
-          '.vihs-missing-tools',
-          'LabVIEWCLI.exe'
-        ),
-        'viHistorySuite.bitness': 'x86'
+        'viHistorySuite.windowsContainerImage': 'nationalinstruments/labview:2026q1-windows',
+        'viHistorySuite.linuxContainerImage': 'nationalinstruments/labview:2026q1-linux'
       },
       null,
       2

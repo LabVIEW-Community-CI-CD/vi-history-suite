@@ -139,23 +139,17 @@ const bundledPageConfigs = {
     ],
     replacements: {
       'Execution Policy': [
-        'Start with this Windows rule:',
-        '',
-        '- if Docker Desktop is installed on Windows, `auto` uses the governed Windows container',
-        '- if Docker Desktop is not installed, `auto` may use a clean host-native LabVIEW 2026 Q1 surface',
-        '- if Docker is installed but unusable, `auto` stops and tells you to fix Docker instead of probing the host',
-        '',
-        'Use `viHistorySuite.executionMode` to choose how comparisons run:',
-        '',
-        '- `auto`: on Windows, use the governed Windows container whenever Docker Desktop is installed; otherwise use a clean host-native LabVIEW 2026 Q1 surface',
-        '- `host-only`: require host-native execution and fail closed if the host surface is not safe',
-        '- `docker-only`: require Docker execution and fail closed if Docker cannot satisfy the request',
+        'Comparison generation is Docker-only in the installed extension.',
         '',
         'Current installed rules:',
         '',
-        '- no mode silently falls back to a different provider',
-        '- if Docker is required but unavailable, the extension stops and tells you what to fix',
-        '- compare progress, provider choice, and Windows image acquisition state stay visible in the history panel while the action runs'
+        '- the extension no longer exposes `viHistorySuite.executionMode`, host-runtime path overrides, or a user-facing bitness selector',
+        '- compare execution is constrained to governed x64 container surfaces',
+        '- on Windows, the current Docker daemon engine selects the governed Windows image when `OSType=windows` and the governed Linux image when `OSType=linux`',
+        '- on Linux hosts, the governed Linux image is the installed compare surface',
+        '- if the selected governed image is missing, the extension shows image-pull progress before runtime launch',
+        '- if Docker CLI is missing, the daemon is unreachable, or the current engine cannot satisfy the governed request, the extension hard-stops and does not probe host LabVIEW',
+        '- compare progress, selected provider, current engine, selected image, acquisition state, and next action stay visible in the history panel while the action runs'
       ].join('\n'),
       'Repository Support': [
         'VI History is available on any trusted Git repository that contains eligible LabVIEW VIs.',

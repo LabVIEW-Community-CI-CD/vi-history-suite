@@ -271,11 +271,14 @@ describe('comparisonReportPacket', () => {
           bitness: 'x64',
           provider: 'windows-container',
           engine: 'labview-cli',
+          containerImage: 'nationalinstruments/labview:2026q1-windows',
+          containerImageAvailable: false,
+          containerAcquisitionState: 'failed',
           windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
           windowsContainerImageAvailable: false,
           windowsContainerAcquisitionState: 'failed',
-          blockedReason: 'windows-container-image-acquisition-failed',
-          notes: ['Governed Windows image acquisition failed before Windows container launch.'],
+          blockedReason: 'container-image-acquisition-failed',
+          notes: ['Governed container image acquisition failed before container launch.'],
           registryQueryPlans: [],
           candidates: []
         }
@@ -293,14 +296,14 @@ describe('comparisonReportPacket', () => {
     expect(result.record.runtimeExecutionState).toBe('not-available');
     expect(result.record.runtimeExecution.acquisitionState).toBe('failed');
     expect(writes.get(result.metadataFilePath)).toContain(
-      '"blockedReason": "windows-container-image-acquisition-failed"'
+      '"blockedReason": "container-image-acquisition-failed"'
     );
     expect(writes.get(result.packetFilePath)).toContain(
-      'No LabVIEW-generated comparison report has been executed because the governed Windows container image could not be acquired before runtime launch.'
+      'No LabVIEW-generated comparison report has been executed because the governed container image could not be acquired before runtime launch.'
     );
     expect(writes.get(result.packetFilePath)).toContain('Provider:</strong> windows-container');
     expect(writes.get(result.packetFilePath)).toContain(
-      'Windows container acquisition state:</strong> failed'
+      'Container acquisition state:</strong> failed'
     );
     expect(writes.get(result.packetFilePath)).toContain('Acquisition state:</strong> failed');
   });

@@ -1,0 +1,26 @@
+{
+  "name": "vi-history-suite",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/git:1": {}
+  },
+  "overrideCommand": false,
+  "remoteUser": "node",
+  "postCreateCommand": "npm ci",
+  "postStartCommand": "npm run compile",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "typescript.tsdk": "node_modules/typescript/lib",
+        "terminal.integrated.defaultProfile.linux": "bash"
+      },
+      "extensions": [
+        "ms-vscode.extension-test-runner",
+        "vitest.explorer",
+        "dbaeumer.vscode-eslint",
+        "github.vscode-github-actions"
+      ]
+    }
+  }
+}

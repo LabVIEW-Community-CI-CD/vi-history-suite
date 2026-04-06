@@ -67,6 +67,7 @@ describe('documentation-package workbench', () => {
           'run',
           'tests/unit/bundledDocumentation.test.ts',
           'tests/unit/postReleaseControlPlaneDocs.test.ts',
+          'tests/unit/publicSurfaceBoundaryDocs.test.ts',
           'tests/unit/debtLedgerDocs.test.ts',
           'tests/unit/executionPolicyDocs.test.ts',
           'tests/unit/governedProofDocs.test.ts',
@@ -120,7 +121,7 @@ describe('documentation-package workbench', () => {
     expect(result).toBe('pass');
     expect(spawned).toEqual([
       'npm run compile',
-      'npx vitest run tests/unit/bundledDocumentation.test.ts tests/unit/postReleaseControlPlaneDocs.test.ts tests/unit/debtLedgerDocs.test.ts tests/unit/executionPolicyDocs.test.ts tests/unit/governedProofDocs.test.ts tests/unit/requirementsDocs.test.ts tests/unit/packageManifest.test.ts tests/unit/shipControlDocs.test.ts tests/unit/docsWorkbenchDocs.test.ts tests/unit/docsContinuousIntegration.test.ts tests/unit/syncBundledDocsScript.test.ts tests/unit/wikiCoverageDocs.test.ts tests/unit/runWikiWorkbenchCli.test.ts',
+      'npx vitest run tests/unit/bundledDocumentation.test.ts tests/unit/postReleaseControlPlaneDocs.test.ts tests/unit/publicSurfaceBoundaryDocs.test.ts tests/unit/debtLedgerDocs.test.ts tests/unit/executionPolicyDocs.test.ts tests/unit/governedProofDocs.test.ts tests/unit/requirementsDocs.test.ts tests/unit/packageManifest.test.ts tests/unit/shipControlDocs.test.ts tests/unit/docsWorkbenchDocs.test.ts tests/unit/docsContinuousIntegration.test.ts tests/unit/syncBundledDocsScript.test.ts tests/unit/wikiCoverageDocs.test.ts tests/unit/runWikiWorkbenchCli.test.ts',
       'node scripts/syncBundledDocs.js --check'
     ]);
   });
@@ -172,6 +173,21 @@ describe('documentation-package workbench', () => {
     );
     expect(manifest.scripts?.['docs:ci:core']).toBe(
       'node scripts/run-docs-continuous-integration.js --skip-links'
+    );
+    expect(manifest.scripts?.['docs:ci:public']).toBe(
+      'node scripts/run-docs-continuous-integration.js --surface public'
+    );
+    expect(manifest.scripts?.['docs:ci:public:core']).toBe(
+      'node scripts/run-docs-continuous-integration.js --surface public --skip-links'
+    );
+    expect(manifest.scripts?.['docs:ci:internal']).toBe(
+      'node scripts/run-docs-continuous-integration.js --surface internal'
+    );
+    expect(manifest.scripts?.['docs:ci:internal:core']).toBe(
+      'node scripts/run-docs-continuous-integration.js --surface internal --skip-links'
+    );
+    expect(manifest.scripts?.['public:smoke:linux']).toBe(
+      'npm run compile && node scripts/runPublicFacadeLinuxSmoke.js'
     );
     expect(manifest.scripts?.['package']).toBe(
       'npm run compile && npm run docs:bundle && npm run package:audit && node scripts/runPinnedVsce.js package'
@@ -241,6 +257,10 @@ describe('documentation-package workbench', () => {
     expect(workbenchDoc).toContain('npm run docs:workbench:shell');
     expect(workbenchDoc).toContain('npm run docs:ci');
     expect(workbenchDoc).toContain('npm run docs:ci:core');
+    expect(workbenchDoc).toContain('npm run docs:ci:public');
+    expect(workbenchDoc).toContain('npm run docs:ci:public:core');
+    expect(workbenchDoc).toContain('npm run docs:ci:internal');
+    expect(workbenchDoc).toContain('npm run docs:ci:internal:core');
     expect(workbenchDoc).toContain('npm run wiki:workbench:doctor');
     expect(workbenchDoc).toContain('npm run wiki:workbench:plan');
     expect(workbenchDoc).toContain('npm run wiki:workbench:prepare');
@@ -259,6 +279,8 @@ describe('documentation-package workbench', () => {
     expect(workbenchDoc).toContain('VIHS_WIKI_REPO_ROOT');
     expect(workbenchDoc).toContain('CI_PROJECT_DIR');
     expect(workbenchDoc).toContain('docs_continuous_integration');
+    expect(workbenchDoc).toContain('docs_public_continuous_integration');
+    expect(workbenchDoc).toContain('docs_internal_continuous_integration');
     expect(workbenchDoc).toContain('${CI_PROJECT_PATH}.wiki.git');
     expect(workbenchDoc).toContain('no-op completion receipt');
     expect(workbenchDoc).toContain('nextPage = null');
@@ -307,9 +329,13 @@ describe('documentation-package workbench', () => {
     expect(wikiPublicationLedgerJson).toContain('"nextPage"');
 
     expect(gitlabCi).toContain('docs_continuous_integration:');
+    expect(gitlabCi).toContain('docs_public_continuous_integration:');
+    expect(gitlabCi).toContain('docs_internal_continuous_integration:');
     expect(gitlabCi).toContain('${CI_PROJECT_PATH}.wiki.git');
     expect(gitlabCi).toContain('VIHS_WIKI_REPO_ROOT="${CI_PROJECT_DIR}/../vi-history-suite.wiki"');
     expect(gitlabCi).toContain('node scripts/run-docs-continuous-integration.js --skip-links --evidence-dir docs-integration-evidence');
+    expect(gitlabCi).toContain('node scripts/run-docs-continuous-integration.js --surface public --skip-links --evidence-dir docs-integration-evidence/public');
+    expect(gitlabCi).toContain('node scripts/run-docs-continuous-integration.js --surface internal --skip-links --evidence-dir docs-integration-evidence/internal');
     expect(gitlabCi).toContain('docs-integration-evidence/');
     expect(gitlabCi).toContain('test_extension:');
     expect(gitlabCi).toContain('package_extension_preview:');

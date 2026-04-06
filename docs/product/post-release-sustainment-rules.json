@@ -7,7 +7,7 @@
     "trancheId": "TRANCHE-010",
     "issueId": "ISSUE-0407",
     "programId": "PROGRAM-0002",
-    "state": "open-on-human-gate"
+    "state": "reopened-on-docker-only-public-contract"
   },
   "releaseCadence": {
     "model": "event-driven",

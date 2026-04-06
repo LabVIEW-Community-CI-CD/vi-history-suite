@@ -1082,7 +1082,7 @@ function buildComparisonRuntimePanelUpdate(
   ];
 
   if (acquisitionState) {
-    segments.push(`Windows image acquisition: ${acquisitionState}.`);
+    segments.push(`Container image acquisition: ${acquisitionState}.`);
   }
   if (rejectedProviderSummary) {
     segments.push(`Rejected providers: ${rejectedProviderSummary}.`);
@@ -1191,7 +1191,7 @@ function buildComparisonRuntimeWarningMessage(
     segments.push(`Execution mode: ${executionMode}.`);
   }
   if (acquisitionState) {
-    segments.push(`Windows image acquisition: ${acquisitionState}.`);
+    segments.push(`Container image acquisition: ${acquisitionState}.`);
   }
   if (rejectedProviderSummary) {
     segments.push(`Rejected providers: ${rejectedProviderSummary}.`);
@@ -1255,7 +1255,7 @@ function buildComparisonRuntimeInformationMessage(
     segments.push(`Execution mode: ${executionMode}.`);
   }
   if (acquisitionState) {
-    segments.push(`Windows image acquisition: ${acquisitionState}.`);
+    segments.push(`Container image acquisition: ${acquisitionState}.`);
   }
   if (rejectedProviderSummary) {
     segments.push(`Rejected providers: ${rejectedProviderSummary}.`);
@@ -1294,9 +1294,9 @@ function deriveComparisonRuntimeProgressStatus(
   message: string
 ): 'running' | 'acquiring' | undefined {
   if (
-    message.startsWith('Acquiring governed Windows image ') ||
-    message.startsWith('Pulling governed Windows image:') ||
-    message.startsWith('Governed Windows image ready:')
+    message.startsWith('Acquiring governed container image ') ||
+    message.startsWith('Pulling governed container image:') ||
+    message.startsWith('Governed container image ready:')
   ) {
     return 'acquiring';
   }
@@ -1451,7 +1451,7 @@ function buildComparisonRuntimePanelDetails(
 
   if (acquisitionState) {
     details.push({
-      label: 'Windows image acquisition',
+      label: 'Container image acquisition',
       value: acquisitionState
     });
   }

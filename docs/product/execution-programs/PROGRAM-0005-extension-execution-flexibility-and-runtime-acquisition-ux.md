@@ -2,56 +2,42 @@
 
 ## Status
 
-Closed on the retained transparent execution-policy contract.
+Active post-release program.
 
-Closure facts:
+Reopen facts:
 
-- `PROGRAM-0003` is closed on bounded benchmark truth under `TRANCHE-011`
-- `TRANCHE-013` is now done
-- the structured history-panel compare-runtime detail slice has retired the
-  remaining broader front-facing provider/acquisition transparency debt
-- `TRANCHE-012` / `PROGRAM-0004` now own the active driver-seat post-release
-  lane while `TRANCHE-010` / `PROGRAM-0002` remain open only on Sergio's human
-  acceptance gate
+- `TRANCHE-013` is active on the breaking `1.0.0` installed-extension contract
+- the installed extension now depends on Docker for comparison generation
+- the old flexible installed-mode story is no longer valid repo truth
+- `PROGRAM-0002` now needs a later Docker-only public acceptance rerun before
+  the public closeout can be reclosed
 
 ## Purpose
 
-Implement a transparent user-facing execution contract for the installed
-extension so runtime behavior is explicit, configurable, and contamination-safe
-instead of being inferred from bitness preferences or ambient Docker state.
+Implement the Docker-only installed execution contract, the current
+Docker-engine image-selection rules, and the public/internal documentation
+split needed for that contract to be supportable.
 
 ## North Star
 
-An extension user can choose one governed execution mode for report generation:
+An installed extension user:
 
-- `auto`
-- `host-only`
-- `docker-only`
-
-and the extension will:
-
-- on Windows, use the governed Windows container provider whenever Docker
-  Desktop is installed
-- allow compatible host LabVIEW 2026 Q1 x86 or x64 execution when the selected
-  mode permits host-native launch and Docker Desktop is not installed or the
-  user explicitly chooses `host-only`
-- explain which provider it selected
-- fail closed when the selected mode cannot run truthfully
-- surface Docker acquisition progress when image pull is required
-- never silently substitute host-native and Docker behavior
+- uses one compare workflow with no provider-mode choice
+- relies on Docker for comparison generation
+- gets the governed Windows image when Docker is in Windows-engine mode
+- gets the governed Linux image when Docker is in Linux-engine mode
+- sees visible image-acquisition and next-action truth
+- never has the extension probe or compete with host LabVIEW as fallback
 
 ## Workstreams
 
-1. execution-mode setting and manifest/trust-boundary contract
-2. canonical effective execution-request validation across settings, selected
-   host-runtime facts, and Docker capability facts before provider work starts
-3. conflict-aware provider selection for host sessions, multiple versions, and
-   governed VI Server ports, including already-open LabVIEW 2026 sessions that
-   require Docker isolation in `auto`
-4. Docker acquisition progress, Windows container-capability checks, and
-   platform-specific image selection
-5. runtime-doctor, history-panel, and progress-surface transparency
-6. documentation and bundled-user-doc normalization of the execution policy
+1. installed manifest and package metadata contract
+2. canonical Docker-only execution-request validation
+3. engine-aware Windows/Linux image selection and acquisition UX
+4. front-facing runtime truth in the panel, notifications, and packets
+5. authority, bundled-doc, internal wiki, and public GitHub user-surface
+   normalization
+6. handoff to `PROGRAM-0002` for the next Gate D acceptance rerun
 
 ## Queue Mapping
 
@@ -60,153 +46,53 @@ and the extension will:
 
 ## Exit Gates
 
-### Gate A: Execution Mode Contract
+### Gate A: Installed Contract
 
-- a first-class execution-mode setting exists
-- `auto`, `host-only`, and `docker-only` are explicit product truths
-- compatible host LabVIEW 2026 Q1 x86 and x64 execution remain available when
-  the selected mode allows host-native launch and Docker Desktop is not
-  installed or `host-only` is selected
-- provider selection validates one canonical effective execution request before
-  any host launch or Docker acquisition begins
+- the installed extension exposes Docker-only compare generation
+- installed users no longer receive host-runtime mode or path knobs
+- installed compare execution constrains to x64 container surfaces
 
-### Gate B: Conflict Truth
+### Gate B: Canonical Request
 
-- host-runtime contamination rules are explicit and enforced
-- conflicting host LabVIEW sessions and governed VI Server collisions fail
-  closed instead of contaminating later evidence
-- the selected host-runtime surface derives the governed `LabVIEW.ini` path and
-  TCP port explicitly instead of assuming one default port
+- provider selection validates one canonical Docker-only installed request
+- on Windows, the current Docker daemon engine selects the governed Windows or
+  governed Linux image truthfully
+- the installed extension does not probe host LabVIEW as fallback
 
-### Gate C: Acquisition UX
+### Gate C: Acquisition And Runtime Feedback
 
-- Docker-required execution surfaces visible pull/acquisition progress
-- Windows hosts pull the governed Windows image when Docker execution is
-  selected there
-- Windows Docker-required execution also fails closed when Docker is installed
-  but not capable of Windows-container execution
+- missing governed images are acquired with visible progress
+- the history panel, notifications, and retained packet surfaces expose the
+  selected provider, current engine, selected image, acquisition outcome, and
+  next action
 
-### Gate D: Transparent Feedback
+### Gate D: Public/Internal Surface Split
 
-- runtime doctor and front-facing action/progress surfaces expose execution
-  mode, selected provider, rejected providers, acquisition outcome, and next
-  action
+- package metadata points extension users at the public GitHub facade
+- the private GitLab repo and internal GitLab wiki remain maintainer/control-
+  plane surfaces
+- bundled docs and public GitHub user docs remain aligned to the installed
+  Docker-only contract
 
-### Gate E: Control-Plane Normalization
+### Gate E: Public Acceptance Handoff
 
-- README, current-state, requirements, RTM, test plan, wiki, and bundled docs
-  describe the same execution policy without contradiction
+- the repo retains one explicit handoff into `PROGRAM-0002` for the next
+  deterministic Gate D rerun on the Docker-only public bundle, including the
+  planned Linux-engine cold-pull acceptance case
 
 ## Delivery Rules
 
-This program exists to remove ambiguity, not to add silent fallback behavior.
-
 Every slice shall preserve:
 
-- no silent provider substitution
-- no provider launch or Docker pull from a non-canonical effective request
-- no execution-policy bypass around canonical validation or provider hard-stop
-  boundaries
-- no contaminated host-runtime launches treated as product truth
-- explicit user-facing next-step guidance
-- platform-appropriate acquisition behavior
-
-## Landed Selector Slices
-
-The repo now retains ten bounded implementation slices under this program:
-
-- a first-class `viHistorySuite.executionMode` setting with `auto`,
-  `host-only`, and `docker-only`
-- no-silent-fallback provider selection for `host-only` and `docker-only`
-- conflict-aware Windows `auto` selection that now:
-  - selects the governed Windows container provider whenever Docker Desktop is
-    installed
-  - derives the selected `LabVIEW.ini` path and governed VI Server TCP port
-    when host-native execution is actually in play
-  - detects existing LabVIEW-related host activity before host-native launch
-  - permits Windows host-native execution only when Docker Desktop is not
-    installed and the governed host surface is clean
-  - hard-stops instead of silently falling back when Docker Desktop is
-    installed but the governed Windows container provider is unavailable
-- runtime-doctor and retained packet visibility for execution mode, selected
-  host `LabVIEW.ini`, derived TCP port, host-conflict truth, rejected
-  providers, and next action
-- a third selector slice now validates Windows Docker capability before the
-  Docker provider is selected or rejected by retaining:
-  - Docker CLI availability
-  - Docker daemon reachability
-  - active container mode
-  - governed image presence
-- runtime-doctor and retained packet surfaces now carry those Docker
-  capability facts explicitly when Windows Docker evaluation is in play
-- a fourth slice now makes governed Windows image acquisition explicit on the
-  comparison-report action path:
-  - Windows container selections with a missing governed image now enter a
-    governed acquisition step before packet persistence and runtime launch
-  - the long-running progress surface now shows governed Windows image-pull
-    progress instead of leaving that work implicit inside Docker startup
-  - retained runtime doctor and packet surfaces now carry acquisition state as
-    governed truth, and acquisition failure now blocks runtime truthfully
-- a fifth slice now retains that runtime truth in the history panel itself:
-  - compare actions now post the latest selected provider, rejected-provider
-    reasons, execution mode, acquisition state, blocked/failure reason, and
-    next action back into the history panel after the action completes
-  - users no longer need to leave the panel for the retained packet just to
-    recover the latest compare-runtime provider/acquisition decision
-- a sixth slice now surfaces that same truth through the transient notification
-  channel when compare execution blocks or fails:
-  - compare actions now emit one concise mode-aware warning for blocked or
-    failed runtime states using the retained provider, rejected-provider
-    reasons, execution mode, acquisition state, diagnostic/failure reason,
-    and next action
-  - users no longer need to infer truthful hard stops only from progress
-    notifications or after-the-fact packet inspection
-- a seventh slice now mirrors governed compare-runtime progress in the history
-  panel while compare generation is still running:
-  - compare actions now post live in-flight panel updates for governed
-    runtime-selection, Windows-image acquisition, and runtime-execution
-    stages using the same bounded progress messages already retained by the
-    comparison-report action
-  - the in-panel compare-runtime block no longer stays idle until completion
-    when the action is actively selecting a provider, pulling an image, or
-    executing the LabVIEW runtime
-- an eighth slice now surfaces that same truth through the transient
-  notification channel when compare execution succeeds:
-  - compare actions now emit one concise success-path provider/acquisition
-    summary using the retained provider, rejected-provider reasons, execution
-    mode, acquisition state, and next action
-- a ninth slice now preserves that compare-runtime truth across panel reopen:
-  - reopening VI History now seeds the compare-runtime block from the last
-    retained tracker-backed compare result instead of resetting the panel to
-    idle
-- a tenth slice now renders structured compare-runtime detail rows inside the
-  history panel itself:
-  - provider, execution mode, report/runtime status, acquisition state,
-    rejected providers, reason, diagnostic reason, and next action now render
-    as separate governed in-panel facts when those fields exist
-  - that same structured detail set now persists through tracker-backed panel
-    reopen instead of collapsing back to one summary-only sentence
-
-## First Implementation Slice
-
-Start with [ISSUE-0410 Extension Execution Flexibility And Runtime Acquisition UX](../issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md).
-
-That slice should:
-
-- land the execution-policy control plane and the first-class execution-mode
-  setting
-- retire the current ambiguity around whether Docker is optional, required, or
-  forbidden for a given user workflow at the provider-selection boundary
-- make canonical execution-request validation explicit before implementation
-- make Windows container-capability truth explicit before image acquisition
-- stop short of claiming full implementation until the installed extension
-  lands fuller front-facing provider transparency end to end beyond the now-
-  landed visible acquisition, in-panel summary, live panel-progress,
-  compare-warning, compare-success, and panel-reopen persistence slices
+- no installed host fallback
+- no execution-policy bypass around canonical Docker-only validation
+- no silent Windows-versus-Linux image substitution beyond the current Docker
+  daemon engine
+- no public/internal documentation audience collapse
 
 ## Success Condition
 
 This program is complete when the installed extension can execute comparison
-work through a transparent `auto` / `host-only` / `docker-only` contract with
-truthful hard stops, visible acquisition progress, structured front-facing
-runtime diagnosis, and no reliance on shell archaeology.
+work through one Docker-only x64 contract with engine-aware image selection,
+visible acquisition truth, coherent public/internal docs, and no reliance on
+host LabVIEW as part of the extension-user workflow.

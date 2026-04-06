@@ -14,23 +14,16 @@ detection and have at least two modifying commits.</p>
 <li><code>VI History: Open Documentation</code></li>
 </ul>
 <h2>Execution Policy</h2>
-<p>Start with this Windows rule:</p>
-<ul>
-<li>if Docker Desktop is installed on Windows, <code>auto</code> uses the governed Windows container</li>
-<li>if Docker Desktop is not installed, <code>auto</code> may use a clean host-native LabVIEW 2026 Q1 surface</li>
-<li>if Docker is installed but unusable, <code>auto</code> stops and tells you to fix Docker instead of probing the host</li>
-</ul>
-<p>Use <code>viHistorySuite.executionMode</code> to choose how comparisons run:</p>
-<ul>
-<li><code>auto</code>: on Windows, use the governed Windows container whenever Docker Desktop is installed; otherwise use a clean host-native LabVIEW 2026 Q1 surface</li>
-<li><code>host-only</code>: require host-native execution and fail closed if the host surface is not safe</li>
-<li><code>docker-only</code>: require Docker execution and fail closed if Docker cannot satisfy the request</li>
-</ul>
+<p>Comparison generation is Docker-only in the installed extension.</p>
 <p>Current installed rules:</p>
 <ul>
-<li>no mode silently falls back to a different provider</li>
-<li>if Docker is required but unavailable, the extension stops and tells you what to fix</li>
-<li>compare progress, provider choice, and Windows image acquisition state stay visible in the history panel while the action runs</li>
+<li>the extension no longer exposes <code>viHistorySuite.executionMode</code>, host-runtime path overrides, or a user-facing bitness selector</li>
+<li>compare execution is constrained to governed x64 container surfaces</li>
+<li>on Windows, the current Docker daemon engine selects the governed Windows image when <code>OSType=windows</code> and the governed Linux image when <code>OSType=linux</code></li>
+<li>on Linux hosts, the governed Linux image is the installed compare surface</li>
+<li>if the selected governed image is missing, the extension shows image-pull progress before runtime launch</li>
+<li>if Docker CLI is missing, the daemon is unreachable, or the current engine cannot satisfy the governed request, the extension hard-stops and does not probe host LabVIEW</li>
+<li>compare progress, selected provider, current engine, selected image, acquisition state, and next action stay visible in the history panel while the action runs</li>
 </ul>
 <h2>Repository Support</h2>
 <p>VI History is available on any trusted Git repository that contains eligible LabVIEW VIs.</p>

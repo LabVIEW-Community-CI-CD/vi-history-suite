@@ -62,7 +62,7 @@ export interface ComparisonRuntimeCancellationToken {
 }
 
 export interface BuildDefaultRunCommandOptions {
-  provider: 'host-native' | 'windows-container' | undefined;
+  provider: 'host-native' | 'windows-container' | 'linux-container' | undefined;
   processPlatform: NodeJS.Platform;
   runtimePlatform: ComparisonReportPacketRecord['runtimeSelection']['platform'];
   engine: ComparisonReportPacketRecord['runtimeSelection']['engine'];
@@ -192,7 +192,7 @@ export async function executeComparisonReport(
     buildDefaultRunCommand({
       provider: plan.provider,
       processPlatform,
-      runtimePlatform: options.record.runtimeSelection.platform,
+      runtimePlatform: resolveEffectiveRuntimePlatform(options.record.runtimeSelection),
       observeWindowsProcesses,
       engine: options.record.runtimeSelection.engine,
       timeoutMs: deps.commandTimeoutMs,
@@ -275,7 +275,7 @@ export function buildDefaultRunCommand(
     runComparisonCommandPlanWithObservation;
 
   return (commandPlan: ComparisonCommandPlan) =>
-    options.provider === 'windows-container'
+    options.provider === 'windows-container' || options.provider === 'linux-container'
       ? runWithoutObservation(commandPlan, {
           timeoutMs: options.timeoutMs,
           hostPlatform: options.processPlatform,
@@ -786,6 +786,8 @@ interface RuntimeDiagnosticPathMapping {
 
 const WINDOWS_CONTAINER_WORKSPACE_ROOT = 'C:\\vi-history-suite';
 const WINDOWS_CONTAINER_TEMP_ROOT = `${WINDOWS_CONTAINER_WORKSPACE_ROOT}\\container-temp`;
+const LINUX_CONTAINER_WORKSPACE_ROOT = '/workspace';
+const LINUX_CONTAINER_TEMP_ROOT = `${LINUX_CONTAINER_WORKSPACE_ROOT}/container-temp`;
 const WINDOWS_CONTAINER_OPEN_APP_TIMEOUT_SECONDS = 180;
 const WINDOWS_CONTAINER_AFTER_LAUNCH_TIMEOUT_SECONDS = 180;
 const WINDOWS_CONTAINER_PRELAUNCH_WAIT_SECONDS = 8;
@@ -798,6 +800,12 @@ const WINDOWS_HEADLESS_RECOVERY_NOTE =
 const HEADLESS_SESSION_RESET_STDOUT_FILENAME = 'headless-session-reset-stdout.txt';
 const HEADLESS_SESSION_RESET_STDERR_FILENAME = 'headless-session-reset-stderr.txt';
 const DEFAULT_WINDOWS_LABVIEW_TCP_PORT = 3363;
+
+function resolveEffectiveRuntimePlatform(
+  selection: ComparisonReportPacketRecord['runtimeSelection']
+): ComparisonReportPacketRecord['runtimeSelection']['platform'] {
+  return selection.containerRuntimePlatform ?? selection.platform;
+}
 
 export async function resolveWindowsLabviewTcpSettings(
   record: ComparisonReportPacketRecord,
@@ -1049,7 +1057,8 @@ async function captureRuntimeDiagnostics(
     readdir: deps.readdir ?? fs.readdir,
     mkdir: deps.mkdir,
     removePath: deps.removePath ?? fs.rm,
-    processPlatform: deps.processPlatform
+    processPlatform: deps.processPlatform,
+    diagnosticPathMapping: deps.diagnosticPathMapping
   });
 
   const diagnosticLogSourcePath = parseLabviewCliDiagnosticLogPath(stdout);
@@ -1099,7 +1108,7 @@ function shouldAttemptLinuxHeadlessRecovery(
   execution: ComparisonReportRuntimeExecution
 ): boolean {
   return (
-    record.runtimeSelection.platform === 'linux' &&
+    resolveEffectiveRuntimePlatform(record.runtimeSelection) === 'linux' &&
     record.runtimeSelection.engine === 'labview-cli' &&
     execution.state === 'failed' &&
     execution.diagnosticReason === 'linux-headless-recursive-load'
@@ -1277,20 +1286,25 @@ async function captureLinuxHeadlessDiagnostics(
     mkdir: typeof fs.mkdir;
     removePath: typeof fs.rm;
     processPlatform: NodeJS.Platform;
+    diagnosticPathMapping?: RuntimeDiagnosticPathMapping;
   }
 ): Promise<{
   reason?: string;
   notes: string[];
   artifactPaths: string[];
 }> {
-  if (deps.processPlatform !== 'linux' || record.runtimeSelection.platform !== 'linux') {
+  const effectiveRuntimePlatform = resolveEffectiveRuntimePlatform(record.runtimeSelection);
+  if (effectiveRuntimePlatform !== 'linux') {
     return {
       notes: [],
       artifactPaths: []
     };
   }
 
-  const sourceRoot = '/tmp';
+  const sourceRoot =
+    deps.processPlatform === 'linux'
+      ? '/tmp'
+      : deps.diagnosticPathMapping?.hostRoot ?? path.join(record.artifactPlan.reportDirectory, 'container-temp');
   const artifactRoot = path.join(record.artifactPlan.reportDirectory, 'headless-diagnostics');
   try {
     await deps.removePath(artifactRoot, {
@@ -1390,7 +1404,11 @@ async function prepareExecutionContext(
     return prepareWindowsContainerExecutionContext(record, commandPlan, interopWorkspaceRoot, deps);
   }
 
-  if (!requiresWindowsInterop(record.runtimeSelection.platform, deps.processPlatform)) {
+  if (record.runtimeSelection.provider === 'linux-container') {
+    return prepareLinuxContainerExecutionContext(record, commandPlan, interopWorkspaceRoot, deps);
+  }
+
+  if (!requiresWindowsInterop(resolveEffectiveRuntimePlatform(record.runtimeSelection), deps.processPlatform)) {
     return {
       outcome: 'ready',
       commandPlan,
@@ -1693,13 +1711,13 @@ export async function prepareWindowsContainerExecutionContext(
     rightBlob: Buffer;
   }
 ): Promise<PreparedExecutionContext> {
-  const containerImage = record.runtimeSelection.windowsContainerImage?.trim();
+  const containerImage = record.runtimeSelection.containerImage?.trim();
   if (!containerImage) {
     return {
       outcome: 'blocked',
       commandPlan,
       reportFilePath: record.artifactPlan.reportFilePath,
-      failureReason: 'windows-container-image-unavailable'
+      failureReason: 'container-image-unavailable'
     };
   }
 
@@ -1729,7 +1747,12 @@ export async function prepareWindowsContainerExecutionContext(
     };
   }
 
-  const hostReportDirectory = normalizeWindowsInteropPath(hostLayout.reportDirectory);
+  const hostReportDirectory = requiresWindowsInterop(
+    resolveEffectiveRuntimePlatform(record.runtimeSelection),
+    deps.processPlatform
+  )
+    ? normalizeWindowsInteropPath(hostLayout.reportDirectory)
+    : hostLayout.reportDirectory;
   if (!hostReportDirectory) {
     return {
       outcome: 'blocked',
@@ -1755,7 +1778,7 @@ export async function prepareWindowsContainerExecutionContext(
       outcome: 'blocked',
       commandPlan,
       reportFilePath: record.artifactPlan.reportFilePath,
-      failureReason: 'windows-container-command-build-failed'
+      failureReason: 'container-command-build-failed'
     };
   }
 
@@ -1765,6 +1788,99 @@ export async function prepareWindowsContainerExecutionContext(
     reportFilePath: hostLayout.reportFilePath,
     diagnosticPathMapping: {
       runtimeRoot: WINDOWS_CONTAINER_TEMP_ROOT,
+      hostRoot: hostTempDirectory
+    }
+  };
+}
+
+export async function prepareLinuxContainerExecutionContext(
+  record: ComparisonReportPacketRecord,
+  commandPlan: ComparisonCommandPlan,
+  interopWorkspaceRoot: string | undefined,
+  deps: {
+    mkdir: typeof fs.mkdir;
+    writeFile: typeof fs.writeFile;
+    processPlatform: NodeJS.Platform;
+    leftBlob: Buffer;
+    rightBlob: Buffer;
+  }
+): Promise<PreparedExecutionContext> {
+  const containerImage = record.runtimeSelection.containerImage?.trim();
+  if (!containerImage) {
+    return {
+      outcome: 'blocked',
+      commandPlan,
+      reportFilePath: record.artifactPlan.reportFilePath,
+      failureReason: 'container-image-unavailable'
+    };
+  }
+
+  let hostLayout: WindowsInteropLayout;
+  if (requiresWindowsInterop(resolveEffectiveRuntimePlatform(record.runtimeSelection), deps.processPlatform)) {
+    if (!interopWorkspaceRoot?.trim()) {
+      return {
+        outcome: 'blocked',
+        commandPlan,
+        reportFilePath: record.artifactPlan.reportFilePath,
+        failureReason: 'windows-interop-root-unavailable'
+      };
+    }
+
+    hostLayout = buildWindowsInteropLayout(record, interopWorkspaceRoot);
+    await deps.mkdir(hostLayout.reportDirectory, { recursive: true });
+    await deps.mkdir(hostLayout.stagingDirectory, { recursive: true });
+    await deps.writeFile(hostLayout.leftFilePath, deps.leftBlob);
+    await deps.writeFile(hostLayout.rightFilePath, deps.rightBlob);
+  } else {
+    hostLayout = {
+      reportDirectory: record.artifactPlan.reportDirectory,
+      stagingDirectory: record.artifactPlan.stagingDirectory,
+      leftFilePath: record.stagedRevisionPlan.leftFilePath,
+      rightFilePath: record.stagedRevisionPlan.rightFilePath,
+      reportFilePath: record.artifactPlan.reportFilePath
+    };
+  }
+
+  const hostReportDirectory = requiresWindowsInterop(
+    resolveEffectiveRuntimePlatform(record.runtimeSelection),
+    deps.processPlatform
+  )
+    ? normalizeWindowsInteropPath(hostLayout.reportDirectory)
+    : hostLayout.reportDirectory;
+  if (!hostReportDirectory) {
+    return {
+      outcome: 'blocked',
+      commandPlan,
+      reportFilePath: record.artifactPlan.reportFilePath,
+      failureReason: 'windows-path-normalization-failed'
+    };
+  }
+
+  const hostTempDirectory = path.join(hostLayout.reportDirectory, 'container-temp');
+  await deps.mkdir(hostTempDirectory, { recursive: true });
+
+  const containerCommandPlan = buildLinuxContainerCommandPlan(record, commandPlan, {
+    hostReportDirectory,
+    hostTempDirectory,
+    containerWorkspaceRoot: LINUX_CONTAINER_WORKSPACE_ROOT,
+    containerImage,
+    processPlatform: deps.processPlatform
+  });
+  if (!containerCommandPlan) {
+    return {
+      outcome: 'blocked',
+      commandPlan,
+      reportFilePath: record.artifactPlan.reportFilePath,
+      failureReason: 'container-command-build-failed'
+    };
+  }
+
+  return {
+    outcome: 'ready',
+    commandPlan: containerCommandPlan,
+    reportFilePath: hostLayout.reportFilePath,
+    diagnosticPathMapping: {
+      runtimeRoot: LINUX_CONTAINER_TEMP_ROOT,
       hostRoot: hostTempDirectory
     }
   };
@@ -1782,11 +1898,6 @@ export function buildWindowsContainerCommandPlan(
   }
 ): ComparisonCommandPlan | undefined {
   if (!record.runtimeSelection.engine) {
-    return undefined;
-  }
-
-  const hostExecutable = resolveWindowsPowerShellHostExecutable(options.processPlatform);
-  if (!hostExecutable) {
     return undefined;
   }
 
@@ -1821,6 +1932,10 @@ export function buildWindowsContainerCommandPlan(
       : encodeWindowsPowerShellScript(
           buildWindowsContainerDirectCommandScript(commandPlan.executable, containerArgs)
         );
+  const hostExecutable = resolveWindowsPowerShellHostExecutable(options.processPlatform);
+  if (!hostExecutable) {
+    return undefined;
+  }
   const script = [
     "$ErrorActionPreference = 'Stop'",
     "$ProgressPreference = 'SilentlyContinue'",
@@ -1829,6 +1944,91 @@ export function buildWindowsContainerCommandPlan(
     )} -e TEMP=${quotePowerShellLiteral(WINDOWS_CONTAINER_TEMP_ROOT)} -e TMP=${quotePowerShellLiteral(
       WINDOWS_CONTAINER_TEMP_ROOT
     )} ${quotePowerShellLiteral(options.containerImage)} powershell -NoProfile -EncodedCommand ${encodedContainerCommand}`,
+    'exit $LASTEXITCODE'
+  ].join('; ');
+
+  return {
+    executable: hostExecutable,
+    args: ['-NoProfile', '-EncodedCommand', encodeWindowsPowerShellScript(script)]
+  };
+}
+
+export function buildLinuxContainerCommandPlan(
+  record: ComparisonReportPacketRecord,
+  commandPlan: ComparisonCommandPlan,
+  options: {
+    hostReportDirectory: string;
+    hostTempDirectory: string;
+    containerWorkspaceRoot: string;
+    containerImage: string;
+    processPlatform: NodeJS.Platform;
+  }
+): ComparisonCommandPlan | undefined {
+  if (!record.runtimeSelection.engine) {
+    return undefined;
+  }
+
+  const containerArgs =
+    record.runtimeSelection.engine === 'labview-cli'
+      ? rewriteLabviewCliArgsForLinuxContainerWorkspace(commandPlan.args, {
+          containerWorkspaceRoot: options.containerWorkspaceRoot,
+          leftFilename: record.stagedRevisionPlan.leftFilename,
+          rightFilename: record.stagedRevisionPlan.rightFilename,
+          reportFilename: record.artifactPlan.reportFilename,
+          labviewPath: record.runtimeSelection.labviewExe?.path
+        })
+      : rewriteLvcompareArgsForLinuxContainerWorkspace(commandPlan.args, {
+          containerWorkspaceRoot: options.containerWorkspaceRoot,
+          leftFilename: record.stagedRevisionPlan.leftFilename,
+          rightFilename: record.stagedRevisionPlan.rightFilename,
+          labviewPath: record.runtimeSelection.labviewExe?.path
+        });
+  if (!containerArgs) {
+    return undefined;
+  }
+
+  const containerScript =
+    record.runtimeSelection.engine === 'labview-cli'
+      ? buildLinuxContainerLabviewCliScript(commandPlan.executable, containerArgs)
+      : buildLinuxContainerDirectCommandScript(commandPlan.executable, containerArgs);
+
+  if (options.processPlatform === 'linux' || options.processPlatform === 'darwin') {
+    return {
+      executable: 'docker',
+      args: [
+        'run',
+        '--rm',
+        '-v',
+        `${options.hostReportDirectory}:${options.containerWorkspaceRoot}`,
+        '-e',
+        `TEMP=${LINUX_CONTAINER_TEMP_ROOT}`,
+        '-e',
+        `TMP=${LINUX_CONTAINER_TEMP_ROOT}`,
+        '-e',
+        `TMPDIR=${LINUX_CONTAINER_TEMP_ROOT}`,
+        options.containerImage,
+        'bash',
+        '-lc',
+        containerScript
+      ]
+    };
+  }
+
+  const hostExecutable = resolveWindowsPowerShellHostExecutable(options.processPlatform);
+  if (!hostExecutable) {
+    return undefined;
+  }
+
+  const script = [
+    "$ErrorActionPreference = 'Stop'",
+    "$ProgressPreference = 'SilentlyContinue'",
+    `docker run --rm -v ${quotePowerShellLiteral(
+      `${options.hostReportDirectory}:${options.containerWorkspaceRoot}`
+    )} -e TEMP=${quotePowerShellLiteral(LINUX_CONTAINER_TEMP_ROOT)} -e TMP=${quotePowerShellLiteral(
+      LINUX_CONTAINER_TEMP_ROOT
+    )} -e TMPDIR=${quotePowerShellLiteral(LINUX_CONTAINER_TEMP_ROOT)} ${quotePowerShellLiteral(
+      options.containerImage
+    )} bash -lc ${quotePowerShellLiteral(containerScript)}`,
     'exit $LASTEXITCODE'
   ].join('; ');
 
@@ -1898,8 +2098,70 @@ export function rewriteLabviewCliArgsForContainerWorkspace(
   return rewritten.length > 0 ? rewritten : undefined;
 }
 
+export function rewriteLabviewCliArgsForLinuxContainerWorkspace(
+  args: string[],
+  options: {
+    containerWorkspaceRoot: string;
+    leftFilename: string;
+    rightFilename: string;
+    reportFilename: string;
+    labviewPath?: string;
+  }
+): string[] | undefined {
+  const rewritten: string[] = [];
+
+  for (let index = 0; index < args.length; index += 1) {
+    const current = args[index];
+    if (current === '-VI1' || current === '-vi1') {
+      rewritten.push(current, `${options.containerWorkspaceRoot}/staging/${options.leftFilename}`);
+      index += 1;
+      continue;
+    }
+
+    if (current === '-VI2' || current === '-vi2') {
+      rewritten.push(current, `${options.containerWorkspaceRoot}/staging/${options.rightFilename}`);
+      index += 1;
+      continue;
+    }
+
+    if (current === '-ReportPath' || current === '-reportPath') {
+      rewritten.push(current, `${options.containerWorkspaceRoot}/${options.reportFilename}`);
+      index += 1;
+      continue;
+    }
+
+    if (current === '-LabVIEWPath') {
+      index += 1;
+      continue;
+    }
+
+    if (current === '-Headless') {
+      const next = args[index + 1];
+      if (next && !next.startsWith('-')) {
+        index += 1;
+      }
+      continue;
+    }
+
+    if (current === '-c') {
+      continue;
+    }
+
+    rewritten.push(current);
+  }
+
+  rewritten.push('-LabVIEWPath', '/usr/local/natinst/LabVIEW-2026-64/labview');
+  rewritten.push('-Headless');
+
+  return rewritten.length > 0 ? rewritten : undefined;
+}
+
 function buildWindowsPowerShellArrayLiteral(values: string[]): string {
   return `@(${values.map((value) => quotePowerShellLiteral(value)).join(', ')})`;
+}
+
+function buildBashArrayLiteral(values: string[]): string {
+  return `(${values.map((value) => quoteBashLiteral(value)).join(' ')})`;
 }
 
 export function buildWindowsContainerLabviewCliScript(
@@ -2000,6 +2262,34 @@ function buildWindowsContainerDirectCommandScript(executable: string, args: stri
   ].join('\n');
 }
 
+function buildLinuxContainerLabviewCliScript(executable: string, args: string[]): string {
+  return [
+    'set -euo pipefail',
+    `mkdir -p ${quoteBashLiteral(LINUX_CONTAINER_TEMP_ROOT)} /tmp/natinst`,
+    `printf '1\\n' > ${quoteBashLiteral('/tmp/natinst/LVContainer.txt')}`,
+    `export TEMP=${quoteBashLiteral(LINUX_CONTAINER_TEMP_ROOT)}`,
+    `export TMP=${quoteBashLiteral(LINUX_CONTAINER_TEMP_ROOT)}`,
+    `export TMPDIR=${quoteBashLiteral(LINUX_CONTAINER_TEMP_ROOT)}`,
+    `cli_path=${quoteBashLiteral(executable)}`,
+    `args=${buildBashArrayLiteral(args)}`,
+    '"$cli_path" "${args[@]}"'
+  ].join('\n');
+}
+
+function buildLinuxContainerDirectCommandScript(executable: string, args: string[]): string {
+  return [
+    'set -euo pipefail',
+    `mkdir -p ${quoteBashLiteral(LINUX_CONTAINER_TEMP_ROOT)} /tmp/natinst`,
+    `printf '1\\n' > ${quoteBashLiteral('/tmp/natinst/LVContainer.txt')}`,
+    `export TEMP=${quoteBashLiteral(LINUX_CONTAINER_TEMP_ROOT)}`,
+    `export TMP=${quoteBashLiteral(LINUX_CONTAINER_TEMP_ROOT)}`,
+    `export TMPDIR=${quoteBashLiteral(LINUX_CONTAINER_TEMP_ROOT)}`,
+    `target=${quoteBashLiteral(executable)}`,
+    `args=${buildBashArrayLiteral(args)}`,
+    '"$target" "${args[@]}"'
+  ].join('\n');
+}
+
 export function rewriteLvcompareArgsForContainerWorkspace(
   args: string[],
   options: {
@@ -2022,6 +2312,38 @@ export function rewriteLvcompareArgsForContainerWorkspace(
     const current = args[index];
     if (current === '-lvpath') {
       rewritten.push(current, options.labviewPath ?? args[index + 1] ?? '');
+      index += 1;
+      continue;
+    }
+
+    rewritten.push(current);
+  }
+
+  return rewritten;
+}
+
+export function rewriteLvcompareArgsForLinuxContainerWorkspace(
+  args: string[],
+  options: {
+    containerWorkspaceRoot: string;
+    leftFilename: string;
+    rightFilename: string;
+    labviewPath?: string;
+  }
+): string[] | undefined {
+  if (args.length < 2) {
+    return undefined;
+  }
+
+  const rewritten = [
+    `${options.containerWorkspaceRoot}/staging/${options.leftFilename}`,
+    `${options.containerWorkspaceRoot}/staging/${options.rightFilename}`
+  ];
+
+  for (let index = 2; index < args.length; index += 1) {
+    const current = args[index];
+    if (current === '-lvpath') {
+      rewritten.push(current, '/usr/local/natinst/LabVIEW-2026-64/labview');
       index += 1;
       continue;
     }
@@ -2561,6 +2883,10 @@ function encodeWindowsPowerShellScript(script: string): string {
 
 function quotePowerShellLiteral(value: string): string {
   return `'${value.replace(/'/g, "''")}'`;
+}
+
+function quoteBashLiteral(value: string): string {
+  return `'${value.replace(/'/g, `'\"'\"'`)}'`;
 }
 
 export function requiresWindowsInterop(

@@ -45,24 +45,26 @@ export function buildComparisonRuntimeDoctorSummaryFromFacts(options: {
     selection.labviewExe?.path ? `LabVIEW=${selection.labviewExe.path}` : undefined,
     selection.labviewCli?.path ? `LabVIEWCLI=${selection.labviewCli.path}` : undefined,
     selection.lvCompare?.path ? `LVCompare=${selection.lvCompare.path}` : undefined,
-    selection.windowsContainerImage ? `ContainerImage=${selection.windowsContainerImage}` : undefined,
-    typeof selection.windowsContainerDockerCliAvailable === 'boolean'
-      ? `DockerCliAvailable=${selection.windowsContainerDockerCliAvailable ? 'yes' : 'no'}`
+    (selection.containerImage ?? selection.windowsContainerImage)
+      ? `ContainerImage=${selection.containerImage ?? selection.windowsContainerImage}`
       : undefined,
-    typeof selection.windowsContainerDaemonReachable === 'boolean'
-      ? `DockerDaemonReachable=${selection.windowsContainerDaemonReachable ? 'yes' : 'no'}`
+    typeof (selection.dockerCliAvailable ?? selection.windowsContainerDockerCliAvailable) === 'boolean'
+      ? `DockerCliAvailable=${(selection.dockerCliAvailable ?? selection.windowsContainerDockerCliAvailable) ? 'yes' : 'no'}`
       : undefined,
-    selection.windowsContainerHostMode
-      ? `ContainerHostMode=${selection.windowsContainerHostMode}`
+    typeof (selection.dockerDaemonReachable ?? selection.windowsContainerDaemonReachable) === 'boolean'
+      ? `DockerDaemonReachable=${(selection.dockerDaemonReachable ?? selection.windowsContainerDaemonReachable) ? 'yes' : 'no'}`
       : undefined,
-    typeof selection.windowsContainerCapabilityAvailable === 'boolean'
-      ? `WindowsContainerCapability=${selection.windowsContainerCapabilityAvailable ? 'yes' : 'no'}`
+    (selection.containerHostMode ?? selection.windowsContainerHostMode)
+      ? `ContainerHostMode=${selection.containerHostMode ?? selection.windowsContainerHostMode}`
       : undefined,
-    typeof selection.windowsContainerImageAvailable === 'boolean'
-      ? `ContainerImagePresent=${selection.windowsContainerImageAvailable ? 'yes' : 'no'}`
+    typeof (selection.containerCapabilityAvailable ?? selection.windowsContainerCapabilityAvailable) === 'boolean'
+      ? `ContainerCapability=${(selection.containerCapabilityAvailable ?? selection.windowsContainerCapabilityAvailable) ? 'yes' : 'no'}`
       : undefined,
-    selection.windowsContainerAcquisitionState
-      ? `ContainerAcquisitionState=${selection.windowsContainerAcquisitionState}`
+    typeof (selection.containerImageAvailable ?? selection.windowsContainerImageAvailable) === 'boolean'
+      ? `ContainerImagePresent=${(selection.containerImageAvailable ?? selection.windowsContainerImageAvailable) ? 'yes' : 'no'}`
+      : undefined,
+    (selection.containerAcquisitionState ?? selection.windowsContainerAcquisitionState)
+      ? `ContainerAcquisitionState=${selection.containerAcquisitionState ?? selection.windowsContainerAcquisitionState}`
       : undefined,
     selection.hostLabviewIniPath ? `HostLabVIEW.ini=${selection.hostLabviewIniPath}` : undefined,
     Number.isInteger(selection.hostLabviewTcpPort)
@@ -134,7 +136,7 @@ function deriveRuntimeDoctorNextAction(options: {
       if (executionMode === 'host-only') {
         return 'Next action: close existing LabVIEW/LabVIEWCLI/LVCompare sessions, clear the governed VI Server listener on the selected port, or change execution mode, then rerun comparison report generation.';
       }
-      return `Next action: close existing LabVIEW/LabVIEWCLI/LVCompare sessions, clear the governed VI Server listener on the selected port, or ${deriveWindowsContainerRecoveryAction(options.runtimeSelection)}, then rerun comparison report generation.`;
+      return `Next action: close existing LabVIEW/LabVIEWCLI/LVCompare sessions, clear the governed VI Server listener on the selected port, or ${deriveContainerRecoveryAction(options.runtimeSelection)}, then rerun comparison report generation.`;
     }
 
     if (blockedReason === 'docker-only-provider-not-supported-on-platform') {
@@ -142,19 +144,22 @@ function deriveRuntimeDoctorNextAction(options: {
     }
 
     if (blockedReason === 'docker-only-requires-windows-x64-provider') {
-      return 'Next action: change bitness to x64 or change execution mode, then rerun comparison report generation.';
+      return 'Next action: use the governed 64-bit container lane or change execution mode, then rerun comparison report generation.';
     }
 
     if (blockedReason === 'docker-only-provider-unavailable') {
-      return `Next action: ${deriveWindowsContainerRecoveryAction(options.runtimeSelection)} or change execution mode, then rerun comparison report generation.`;
+      return `Next action: ${deriveContainerRecoveryAction(options.runtimeSelection)} or change execution mode, then rerun comparison report generation.`;
     }
 
     if (blockedReason === 'auto-docker-installed-provider-unavailable') {
-      return `Next action: ${deriveWindowsContainerRecoveryAction(options.runtimeSelection)}; Windows auto execution will not fall back to host-native while Docker Desktop is installed, then rerun comparison report generation.`;
+      return `Next action: ${deriveContainerRecoveryAction(options.runtimeSelection)}; Windows auto execution will not fall back to host-native while Docker Desktop is installed, then rerun comparison report generation.`;
     }
 
-    if (blockedReason === 'windows-container-image-acquisition-failed') {
-      return `Next action: ${deriveWindowsContainerRecoveryAction(options.runtimeSelection)} and rerun comparison report generation.`;
+    if (
+      blockedReason === 'container-image-acquisition-failed' ||
+      blockedReason === 'windows-container-image-acquisition-failed'
+    ) {
+      return `Next action: ${deriveContainerRecoveryAction(options.runtimeSelection)} and rerun comparison report generation.`;
     }
 
     if (executionMode === 'host-only') {
@@ -162,7 +167,7 @@ function deriveRuntimeDoctorNextAction(options: {
     }
 
     if (executionMode === 'docker-only') {
-      return `Next action: ${deriveWindowsContainerRecoveryAction(options.runtimeSelection)} or change execution mode, then rerun comparison report generation.`;
+      return `Next action: ${deriveContainerRecoveryAction(options.runtimeSelection)} and rerun comparison report generation.`;
     }
 
     return `Next action: make the selected runtime provider available or adjust runtime settings, then rerun comparison report generation.`;
@@ -183,8 +188,16 @@ function stripTerminalPunctuation(value: string): string {
   return value.replace(/[.!?]+$/u, '');
 }
 
-function deriveWindowsContainerRecoveryAction(
+function deriveContainerRecoveryAction(
   selection: {
+    platform?: string;
+    containerImage?: string;
+    dockerCliAvailable?: boolean;
+    dockerDaemonReachable?: boolean;
+    containerCapabilityAvailable?: boolean;
+    containerHostMode?: string;
+    containerImageAvailable?: boolean;
+    containerAcquisitionState?: string;
     windowsContainerDockerCliAvailable?: boolean;
     windowsContainerDaemonReachable?: boolean;
     windowsContainerCapabilityAvailable?: boolean;
@@ -193,29 +206,45 @@ function deriveWindowsContainerRecoveryAction(
     windowsContainerAcquisitionState?: string;
   }
 ): string {
-  if (selection.windowsContainerDockerCliAvailable === false) {
-    return 'install or enable Docker Desktop for governed Windows container execution';
+  const dockerCliAvailable =
+    selection.dockerCliAvailable ?? selection.windowsContainerDockerCliAvailable;
+  const dockerDaemonReachable =
+    selection.dockerDaemonReachable ?? selection.windowsContainerDaemonReachable;
+  const containerCapabilityAvailable =
+    selection.containerCapabilityAvailable ?? selection.windowsContainerCapabilityAvailable;
+  const containerHostMode = selection.containerHostMode ?? selection.windowsContainerHostMode;
+  const containerImageAvailable =
+    selection.containerImageAvailable ?? selection.windowsContainerImageAvailable;
+  const containerAcquisitionState =
+    selection.containerAcquisitionState ?? selection.windowsContainerAcquisitionState;
+  const containerImageLabel =
+    containerHostMode === 'linux'
+      ? 'the governed Linux container image'
+      : containerHostMode === 'windows'
+        ? 'the governed Windows container image'
+        : 'the governed container image';
+  const containerImageSuffix = selection.containerImage ? ` ${selection.containerImage}` : '';
+  const dockerProductLabel = selection.platform === 'win32' ? 'Docker Desktop' : 'Docker';
+
+  if (dockerCliAvailable === false) {
+    return `install or enable ${dockerProductLabel} for governed container execution`;
   }
 
-  if (selection.windowsContainerDaemonReachable === false) {
+  if (dockerDaemonReachable === false) {
     return 'start or reconnect the Docker daemon';
   }
 
-  if (selection.windowsContainerCapabilityAvailable === false) {
-    if (selection.windowsContainerHostMode === 'linux') {
-      return 'switch Docker to Windows-container mode';
-    }
-
-    return 'enable Windows-container capability in Docker';
+  if (containerCapabilityAvailable === false) {
+    return 'switch Docker to a supported Linux or Windows container engine';
   }
 
-  if (selection.windowsContainerImageAvailable === false) {
-    if (selection.windowsContainerAcquisitionState === 'failed') {
-      return 'repair Docker connectivity or image registry access, then pull the governed Windows container image';
+  if (containerImageAvailable === false) {
+    if (containerAcquisitionState === 'failed') {
+      return `repair Docker connectivity or image registry access, then pull ${containerImageLabel}${containerImageSuffix}`;
     }
 
-    return 'pull the governed Windows container image';
+    return `pull ${containerImageLabel}${containerImageSuffix}`;
   }
 
-  return 'install, enable, or switch Docker to Windows-container mode';
+  return 'install, enable, or switch Docker to a supported governed container engine';
 }

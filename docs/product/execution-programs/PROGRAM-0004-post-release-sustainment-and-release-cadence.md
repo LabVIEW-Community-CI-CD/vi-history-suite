@@ -7,8 +7,7 @@ Active post-release program.
 Activation is now satisfied:
 
 - `PROGRAM-0003` is closed on the benchmark-proof packet under `TRANCHE-011`
-- `PROGRAM-0005` is closed on the retained execution-policy contract under
-  `TRANCHE-013`
+- `PROGRAM-0005` is active again on the breaking `1.0.0` Docker-only contract
 - the queue has promoted `TRANCHE-012` to `active`
 
 ## Purpose
@@ -20,16 +19,9 @@ This program keeps `vi-history-suite` from falling back into ad hoc tail work
 by giving release cadence, benchmark refresh cadence, operator surfaces, and
 control-plane upkeep an explicit home.
 
-Feature-layer extension execution flexibility and runtime-acquisition UX are
-not owned by this sustainment program. That work is now closed under
-`PROGRAM-0005`, and any future execution-policy expansion must reopen under a
-new explicit program instead of being hidden inside generic maintenance
-language.
-
-This sustainment lane also runs in parallel with the still-open human gate in
-`PROGRAM-0002`. `PROGRAM-0002` remains open only on Sergio Velderrain's manual
-Windows 11 right-click acceptance gate; sustainment does not rewrite or
-pretend that closeout is already complete.
+Feature-layer execution-policy work is not owned by this sustainment program.
+That work remains explicit under active `PROGRAM-0005`, and the public-closeout
+rerun remains explicit under reopened `PROGRAM-0002`.
 
 ## North Star
 
@@ -108,6 +100,7 @@ That retained slice now:
 ## Success Condition
 
 This program is complete when `vi-history-suite` has a stable post-benchmark
-and post-execution-policy operating model for releases, benchmark refresh, and
-documentation/operator upkeep, with no ambiguity about where ongoing
-maintenance work belongs.
+operating model for releases, benchmark refresh, and documentation/operator
+upkeep, with no ambiguity about where ongoing maintenance work belongs while
+reopened public-closeout or execution-policy work remains explicitly outside
+the sustainment bucket.

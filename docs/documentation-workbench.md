@@ -68,6 +68,20 @@ Run the same lane without the `lychee` link-check dependency:
 npm run docs:ci:core
 ```
 
+Run only the public-user docs surface:
+
+```bash
+npm run docs:ci:public
+npm run docs:ci:public:core
+```
+
+Run only the internal-authority docs surface:
+
+```bash
+npm run docs:ci:internal
+npm run docs:ci:internal:core
+```
+
 The default container command is:
 
 ```bash
@@ -195,9 +209,15 @@ adds first-class evidence for future sessions:
 
 - `npm run docs:ci`
 - `npm run docs:ci:core`
+- `npm run docs:ci:public`
+- `npm run docs:ci:public:core`
+- `npm run docs:ci:internal`
+- `npm run docs:ci:internal:core`
 - retained local evidence under `.cache/docs-integration/latest/`
   - `.cache/docs-integration/latest/docs-integration-report.json`
   - `.cache/docs-integration/latest/docs-integration-report.md`
+- retained public-only local evidence under `.cache/docs-integration/public/latest/`
+- retained internal-only local evidence under `.cache/docs-integration/internal/latest/`
 - retained CI evidence under `docs-integration-evidence/`
 - explicit installed-user truth checks for:
   - Docker-first Windows `auto` behavior when Docker Desktop is installed
@@ -223,6 +243,10 @@ gate:
 - `docs_continuous_integration` before the wider test/package lanes, retaining
   `docs-integration-evidence/docs-integration-report.json` and
   `docs-integration-evidence/docs-integration-report.md`
+- `docs_public_continuous_integration` for the public-user bundle, README, and
+  public-boundary surfaces, retaining `docs-integration-evidence/public/`
+- `docs_internal_continuous_integration` for the internal-authority wiki and
+  control-plane surfaces, retaining `docs-integration-evidence/internal/`
 - `test_extension` before `npm run test`
 - `package_extension_preview` before the preview `npm run package` path, so
   the governed bundled-doc refresh can read the live published wiki root

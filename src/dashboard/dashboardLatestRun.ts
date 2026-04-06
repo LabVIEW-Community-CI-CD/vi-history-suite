@@ -29,10 +29,10 @@ export interface MultiReportDashboardLatestRunExperimentRecord {
     historyWindowMode: 'auto' | 'capped';
     maxHistoryEntries: number;
     effectiveHistoryEntryCeiling: number;
-    bitness?: string;
+    executionMode: 'docker-only';
+    bitness: 'x64';
     windowsContainerImage?: string;
-    labviewCliPathConfigured: boolean;
-    labviewExePathConfigured: boolean;
+    linuxContainerImage?: string;
   };
   historyWindow: {
     loadedCommitCount: number;

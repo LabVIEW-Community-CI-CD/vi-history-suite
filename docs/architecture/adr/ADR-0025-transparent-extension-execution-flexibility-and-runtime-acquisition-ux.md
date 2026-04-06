@@ -1,4 +1,4 @@
-# ADR-0025: Transparent Extension Execution Flexibility And Runtime Acquisition UX
+# ADR-0025: Docker-Only Installed Extension Execution And Engine-Aware Container Acquisition
 
 ## Status
 
@@ -6,101 +6,92 @@ Accepted
 
 ## Context
 
-The current architecture already preserves host-native and Windows-container
-provider boundaries, but the user-facing operating model is still too narrow.
+The earlier execution-flexibility direction solved one problem but created a
+broader product one: installed extension users still had to reason about
+host-native versus Docker behavior, ambient LabVIEW state, and multiple mode
+knobs even though the main goal is simply "pick two commits and generate a VI
+comparison report."
 
-`ADR-0006` captured one real concern correctly: Windows 64-bit report
-execution should not collide with an already-open host LabVIEW session. But
-the current product and docs still leave important usability gaps:
+That is now the wrong contract for the installed extension.
 
-- some users want host-only execution and do not want Docker
-- some users want Docker isolation and do not want silent host fallback
-- `bitness` does not express whether Docker is allowed, required, or
-  forbidden
-- already-open non-headless LabVIEW sessions, multiple installed LabVIEW
-  versions, and non-default VI Server ports can contaminate host execution
-- Docker acquisition is not yet governed as a visible user-facing progress
-  surface
+The product direction has changed materially:
 
-Without a stronger contract, future sessions can keep patching provider choice
-without ever making the extension's execution behavior transparent to the user.
+- Docker is now a dependency of the installed extension compare workflow
+- installed users should not need host-runtime path settings or provider-mode
+  choices
+- installed compare generation should not compete with an already-open host
+  LabVIEW session
+- some Windows users can run only Linux containers, while others can run
+  Windows containers, so the current Docker daemon engine must decide which
+  governed image is selected
+- host-native proof and diagnosis still matter, but they belong on governed
+  maintainer proof surfaces rather than in the installed extension contract
 
 ## Decision
 
-Adopt a transparent extension execution-flexibility contract.
+Adopt a Docker-only installed extension execution contract.
 
-1. The extension execution policy shall be governed by an explicit execution
-   mode with these values:
-   - `auto`
-   - `host-only`
-   - `docker-only`
-2. Execution mode shall be separate from:
-   - `bitness`
-   - explicit `labviewCliPath` and `labviewExePath`
-   - `windowsContainerImage`
-3. In `auto` mode on Windows, the extension shall:
-   - use the governed Windows container provider whenever Docker Desktop is
-     installed
-   - use host-native execution only when Docker Desktop is not installed and
-     the host runtime surface is compatible and conflict-free
-4. If Docker is required by the selected mode, by Windows `auto` because
-   Docker Desktop is installed, or because the Docker-first Windows provider
-   must replace a contaminated host surface, and Docker is unavailable, the
-   extension shall fail closed with an actionable user-facing message instead
-   of silently falling back to host-native execution.
-5. If Docker execution is selected and the required image is not available
-   locally, the extension shall acquire the platform-appropriate image through
-   a visible progress surface. On Windows, this means the governed Windows
-   image.
-6. `host-only` shall never silently fall back to Docker.
-7. `docker-only` shall never silently fall back to host-native execution.
-8. Compatible host LabVIEW 2026 Q1 x86 and x64 execution remain valid under
-   the future policy when the selected mode permits host-native launch, Docker
-   Desktop is not installed, and the governed host runtime surface is clean.
-9. Runtime doctor and front-facing execution feedback shall surface:
-   - selected execution mode
-   - chosen provider
-   - rejected-provider reasons
+1. The installed extension shall depend on Docker for comparison generation.
+2. The installed extension shall no longer expose:
+   - `executionMode`
+   - host-native runtime path overrides
+   - a user-facing bitness selector
+3. Installed comparison generation shall constrain to x64 container execution.
+4. On Windows, the extension shall select its governed container provider from
+   the current Docker daemon engine:
+   - `windows` engine selects the governed Windows image
+   - `linux` engine selects the governed Linux image
+5. If Docker CLI is missing, the daemon is unreachable, or the current engine
+   cannot satisfy the governed request, the installed extension shall fail
+   closed and shall not probe host LabVIEW as fallback.
+6. If the selected governed image is absent locally, the extension shall
+   acquire that exact image through a visible progress surface before runtime
+   launch.
+7. Runtime doctor and front-facing execution feedback shall surface:
+   - selected provider
+   - current Docker daemon engine
+   - selected governed image
    - acquisition outcome
    - next action
-10. `ADR-0006` is superseded as the primary extension-user execution-policy
-   decision. Its narrower x64-container preference now becomes historical
-   context inside this broader mode-based contract.
-11. Canonical validation of the effective execution request for this future
-    policy is governed separately by `ADR-0026`.
+8. Host-native LabVIEW remains a governed maintainer proof surface only. It is
+   not part of the installed extension compare contract.
+9. `ADR-0006` remains historical context for why isolation matters, but this
+   ADR supersedes it as the primary installed extension execution-policy
+   decision.
+10. Canonical validation of the installed request for this Docker-only policy
+    is governed by `ADR-0026`.
 
 ## Rationale
 
-- Users need to understand how the extension will execute, not infer it from
-  bitness or provider side effects.
-- On Windows, Docker Desktop installation is itself part of the execution
-  contract: if it is installed, `auto` should use the governed Windows
-  container provider rather than spending user time rediscovering whether a
-  host-native launch might also work.
-- Visible image-acquisition progress is part of the usability contract, not
-  only an implementation detail.
-- A dedicated ADR prevents the product from drifting between “prefer container”
-  and “transparent execution mode” without a durable record of the difference.
+- Installed users care about deterministic compare generation, not provider
+  mode management.
+- Removing host-native selection from the installed extension stops ambient
+  host LabVIEW sessions from competing with the extension workflow.
+- The current Docker daemon engine is real product truth on Windows because it
+  determines which governed image can actually run on that machine.
+- Visible image acquisition is part of the usability contract, not a hidden
+  implementation detail.
+- Separating installed extension policy from maintainer proof surfaces keeps
+  host diagnosis available without forcing that complexity onto extension users.
 
 ## Consequences
 
 ### Positive
 
-- host-versus-Docker behavior becomes user-legible instead of implied
-- future implementation work has one bounded contract for provider selection,
-  acquisition UX, and hard stops
-- existing contamination concerns such as open LabVIEW sessions, multiple
-  installed versions, and governed VI Server ports are tied into one coherent
-  execution policy
-- future sessions can improve runtime doctor and progress UX without rewriting
-  the product intent
+- installed compare behavior becomes simpler and more deterministic
+- the extension stops competing with ambient host LabVIEW sessions
+- Windows users can still run the product under either Docker engine as long as
+  the governed matching image can be acquired
+- user-facing docs can focus on the compare workflow rather than provider-mode
+  decision trees
 
 ### Negative
 
-- the architecture grows beyond a simple x64-container preference rule
-- the extension will need more explicit settings and progress/reporting surfaces
-- documentation upkeep expands because current behavior, queued behavior, and
-  user-facing next steps must stay aligned
+- Docker becomes a hard dependency of the installed extension workflow
+- the product must maintain both governed Windows and governed Linux images for
+  installed-user execution
+- public and internal docs must now stay aligned around a stronger audience
+  split
 
 ## Implementation Surface
 
@@ -109,6 +100,7 @@ Adopt a transparent extension execution-flexibility contract.
 - `docs/product/current-state.md`
 - `docs/product/execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md`
 - `docs/product/issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md`
+- `docs/architecture/adr/ADR-0027-public-github-facade-and-user-wiki-vs-internal-gitlab-control-plane.md`
 - `docs/product/debt-ledger.json`
 - `docs/product/debt-ledger.md`
 - `docs/architecture/overview.md`

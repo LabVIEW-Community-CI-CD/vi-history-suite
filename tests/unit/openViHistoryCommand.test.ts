@@ -2535,13 +2535,13 @@ describe('createOpenViHistoryCommand', () => {
 
     const panel = createWebviewPanelMock.mock.results[0]?.value as MockPanel | undefined;
     expect(showWarningMessageMock).toHaveBeenCalledWith(
-      'Generate compare blocked. Provider: windows-container. Execution mode: auto. Windows image acquisition: failed. Rejected providers: host-native because existing LabVIEW-related processes or a listener on governed VI Server port 3364 already exist. Blocked reason: windows-container-image-acquisition-failed. Next action: repair Docker connectivity or image registry access, then pull the governed Windows container image and rerun comparison report generation.'
+      'Generate compare blocked. Provider: windows-container. Execution mode: auto. Container image acquisition: failed. Rejected providers: host-native because existing LabVIEW-related processes or a listener on governed VI Server port 3364 already exist. Blocked reason: windows-container-image-acquisition-failed. Next action: repair Docker connectivity or image registry access, then pull the governed Windows container image and rerun comparison report generation.'
     );
     expect(panel?.webview.postMessage).toHaveBeenCalledWith({
       type: 'comparisonRuntimeResult',
       status: 'blocked',
       summary:
-        'Generate compare for abcdef12 vs 11111111. Provider: windows-container. Execution mode: auto. Report status: blocked-runtime. Runtime state: not-available. Windows image acquisition: failed. Rejected providers: host-native because existing LabVIEW-related processes or a listener on governed VI Server port 3364 already exist. Blocked reason: windows-container-image-acquisition-failed.',
+        'Generate compare for abcdef12 vs 11111111. Provider: windows-container. Execution mode: auto. Report status: blocked-runtime. Runtime state: not-available. Container image acquisition: failed. Rejected providers: host-native because existing LabVIEW-related processes or a listener on governed VI Server port 3364 already exist. Blocked reason: windows-container-image-acquisition-failed.',
       nextAction:
         'Next action: repair Docker connectivity or image registry access, then pull the governed Windows container image and rerun comparison report generation.',
       details: [
@@ -2562,7 +2562,7 @@ describe('createOpenViHistoryCommand', () => {
           value: 'not-available'
         },
         {
-          label: 'Windows image acquisition',
+          label: 'Container image acquisition',
           value: 'failed'
         },
         {
@@ -2849,11 +2849,11 @@ describe('createOpenViHistoryCommand', () => {
         increment: 20
       });
       reportProgress?.({
-        message: 'Acquiring governed Windows image ghcr.io/example/windows-dashboard-benchmark:main.',
+        message: 'Acquiring governed container image ghcr.io/example/windows-dashboard-benchmark:main.',
         increment: 10
       });
       reportProgress?.({
-        message: 'Pulling governed Windows image: layer 1/4',
+        message: 'Pulling governed container image: layer 1/4',
         increment: 1
       });
       reportProgress?.({
@@ -2916,7 +2916,7 @@ describe('createOpenViHistoryCommand', () => {
       type: 'comparisonRuntimeProgress',
       status: 'acquiring',
       summary:
-        'Generate compare for abcdef12 vs 11111111 in progress. Acquiring governed Windows image ghcr.io/example/windows-dashboard-benchmark:main.',
+        'Generate compare for abcdef12 vs 11111111 in progress. Acquiring governed container image ghcr.io/example/windows-dashboard-benchmark:main.',
       nextAction:
         'Next action: wait for comparison report generation to finish or cancel from the VS Code progress notification if you need to stop this run.',
       details: []
@@ -2925,7 +2925,7 @@ describe('createOpenViHistoryCommand', () => {
       type: 'comparisonRuntimeProgress',
       status: 'acquiring',
       summary:
-        'Generate compare for abcdef12 vs 11111111 in progress. Pulling governed Windows image: layer 1/4.',
+        'Generate compare for abcdef12 vs 11111111 in progress. Pulling governed container image: layer 1/4.',
       nextAction:
         'Next action: wait for comparison report generation to finish or cancel from the VS Code progress notification if you need to stop this run.',
       details: []
@@ -3019,7 +3019,7 @@ describe('createOpenViHistoryCommand', () => {
     });
 
     expect(showInformationMessageMock).toHaveBeenCalledWith(
-      'Generate compare completed. Provider: windows-container. Execution mode: auto. Windows image acquisition: acquired. Rejected providers: host-native because existing LabVIEW-related processes or a listener on governed VI Server port 3364 already exist.'
+      'Generate compare completed. Provider: windows-container. Execution mode: auto. Container image acquisition: acquired. Rejected providers: host-native because existing LabVIEW-related processes or a listener on governed VI Server port 3364 already exist.'
     );
   });
 
@@ -3077,7 +3077,7 @@ describe('createOpenViHistoryCommand', () => {
     const reopenedPanel = createWebviewPanelMock.mock.results[1]?.value as MockPanel | undefined;
     expect(reopenedPanel?.webview.html).toContain('data-state="succeeded"');
     expect(reopenedPanel?.webview.html).toContain(
-      'Generate compare for abcdef12 vs 11111111. Provider: windows-container. Execution mode: auto. Report status: ready-for-runtime. Runtime state: succeeded. Windows image acquisition: acquired.'
+      'Generate compare for abcdef12 vs 11111111. Provider: windows-container. Execution mode: auto. Report status: ready-for-runtime. Runtime state: succeeded. Container image acquisition: acquired.'
     );
     expect(reopenedPanel?.webview.html).toContain(
       'Next action: open the retained comparison packet for the full governed runtime summary.'

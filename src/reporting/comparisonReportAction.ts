@@ -348,19 +348,22 @@ async function ensureComparisonReportEvidence(
     };
   }
 
+  const containerImage = runtimeSelection.containerImage ?? runtimeSelection.windowsContainerImage;
   if (
-    runtimeSelection.provider === 'windows-container' &&
-    runtimeSelection.windowsContainerAcquisitionState === 'required' &&
-    runtimeSelection.windowsContainerImage
+    runtimeSelection.provider !== 'host-native' &&
+    runtimeSelection.provider !== 'unavailable' &&
+    (runtimeSelection.containerAcquisitionState ?? runtimeSelection.windowsContainerAcquisitionState) ===
+      'required' &&
+    containerImage
   ) {
     await request.reportProgress?.({
-      message: `Acquiring governed Windows image ${runtimeSelection.windowsContainerImage}.`,
+      message: `Acquiring governed container image ${containerImage}.`,
       increment: 10
     });
 
     const acquisition = await (
       deps.acquireWindowsContainerImage ?? acquireWindowsContainerImage
-    )(runtimeSelection.windowsContainerImage, process.platform, {
+    )(containerImage, process.platform, {
       reportProgress: request.reportProgress
     });
 
@@ -459,11 +462,15 @@ function applyWindowsContainerAcquisitionResult(
   if (acquisition.acquisitionState === 'acquired') {
     return {
       ...runtimeSelection,
+      containerImage: acquisition.image,
+      containerImageAvailable: true,
+      containerAcquisitionState: 'acquired',
+      windowsContainerImage: acquisition.image,
       windowsContainerImageAvailable: true,
       windowsContainerAcquisitionState: 'acquired',
       notes: [
         ...runtimeSelection.notes,
-        `Governed Windows image ${acquisition.image} was acquired before Windows container launch.`,
+        `Governed container image ${acquisition.image} was acquired before container launch.`,
         ...acquisition.notes
       ]
     };
@@ -471,12 +478,16 @@ function applyWindowsContainerAcquisitionResult(
 
   return {
     ...runtimeSelection,
-    blockedReason: 'windows-container-image-acquisition-failed',
+    blockedReason: 'container-image-acquisition-failed',
+    containerImage: acquisition.image,
+    containerImageAvailable: false,
+    containerAcquisitionState: 'failed',
+    windowsContainerImage: acquisition.image,
     windowsContainerImageAvailable: false,
     windowsContainerAcquisitionState: 'failed',
     notes: [
       ...runtimeSelection.notes,
-      `Governed Windows image ${acquisition.image} could not be acquired before Windows container launch.`,
+      `Governed container image ${acquisition.image} could not be acquired before container launch.`,
       ...acquisition.notes
     ]
   };
@@ -1203,16 +1214,15 @@ export function readComparisonRuntimeSettings(
   )
 ): ComparisonRuntimeSettings {
   return {
-    executionMode: configuration.get<'auto' | 'host-only' | 'docker-only'>(
-      'executionMode',
-      'auto'
-    ),
-    labviewCliPath: configuration.get<string>('labviewCliPath', ''),
-    labviewExePath: configuration.get<string>('labviewExePath', ''),
-    bitness: configuration.get<'x86' | 'x64'>('bitness', 'x64'),
+    executionMode: 'docker-only',
+    bitness: 'x64',
     windowsContainerImage: configuration.get<string>(
       'windowsContainerImage',
       'nationalinstruments/labview:2026q1-windows'
+    ),
+    linuxContainerImage: configuration.get<string>(
+      'linuxContainerImage',
+      'nationalinstruments/labview:2026q1-linux'
     )
   };
 }

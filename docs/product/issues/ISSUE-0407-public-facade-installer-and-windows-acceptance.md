@@ -12,13 +12,17 @@ and design-control documents remain private.
 
 ## Status
 
-Active post-release issue.
+Reopened post-release issue for the next exact-version line.
 
-Activation evidence:
+Reopen evidence:
 
-- immutable retained release: `v0.2.0`
-- retained pipeline: `2428809456`
-- retained release job: `13779604462`
+- immutable retained release `v0.2.0` and the retained canonical host pass at
+  `2026-04-06T20:48:13.412Z` remain historical evidence only
+- the installed extension contract is now breaking-change material at `1.0.0`
+- the public GitHub user-wiki surface now exists and needs to stay aligned with
+  the public release-kit and bundled docs
+- Gate D must be rerun on the Docker-only public bundle before this issue can
+  close again
 
 Current landed scaffold state:
 
@@ -43,53 +47,28 @@ Current landed scaffold state:
   repo from GitLab release job `13779604462`
 - a local direct-release Windows smoke now succeeds against the public setup
   manifest, the exact VSIX, and the pinned fixture bundle
-- `docker/public-release-kit-smoke/` plus
-  `.github/workflows/container-public-release-kit-smoke.yml` now scaffold the
-  future container automation lane without making Docker a default public
-  prerequisite
-- the local container public-release-kit smoke now passes against the live
-  `v0.2.0` GitHub release assets
+- `.github/workflows/public-facade-linux-smoke.yml` plus local
+  `npm run public:smoke:linux` now define the public Docker smoke lane
 - the host-machine automated acceptance lane now succeeds with a retained
   acceptance record at
   `C:\Users\sveld\AppData\Local\VI History Suite\acceptance\host-machine\acceptance-record.json`
-- only the manual human UX proof gate remains open, and Sergio Velderrain is
-  the sole named maintainer gate owner for that host-machine click pass
-- that remaining manual host-machine gate is bounded to the deterministic
+- Sergio Velderrain remains the sole named maintainer gate owner for the
+  canonical host-machine click proof surface
+- the canonical host-machine gate is bounded to the deterministic
   local fixture workspace rather than a OneDrive-backed synced clone
-- the latest retained host review at `2026-04-06T20:09:15.443Z` is
-  `failed-human-review` with `confidence=high`, because the newest retained
-  note on the deterministic public-release fixture target
-  `c:\dev\labview-icon-editor` / `resource/plugins/lv_icon.vi` says the
-  embedded compare-info block currently follows dark mode against the white
-  report background and should stop foregrounding runtime-status/runtime-
-  diagnostic facts in favor of commit/date/author/subject facts
-- an earlier same-day retained host review at `2026-04-06T19:53:21.713Z`
-  remains positive supporting evidence that the simplified repo-agnostic
-  checkbox-selected compare flow works as expected on a real installed
-  extension surface
-- the retained failed-review set remains cumulative historical evidence of
-  already-retired repo-side defects, but the older row-button and
-  dashboard-specific findings are now superseded by the simplified shipped
-  scope: extension users now use checkbox selection only, need only two
-  retained commits to use VI History, and do not use extension-user dashboard
-  or decision-record controls
-- the authority repo now also carries repo-side retirement for the remaining
-  simplified blocker set: overview images are grouped into caption rows with
-  `Block Diagram Overview` before `Front Panel Overview`, unsubmitted Review
-  Note draft state persists across tab switches until successful submission,
-  and the bundled installed-user docs are now a concise curated extension-user
-  guide that omits private GitLab plus SRS/RTM authority-link exposure while
-  explicitly explaining the repo-agnostic checkbox-selected two-commit
-  workflow, the oldest-row-as-base rule, and the absence of a separate
-  extension-user dashboard or decision-record step; embedded compare views now
-  also lead with a white-background `Comparison context` block that
-  foregrounds selected/base commit hash, date, author, and subject while
-  keeping runtime diagnostics on retained packet/runtime evidence surfaces
-- this issue therefore remains open only until a fresh manual rerun on the
-  deterministic public-release fixture workspace and canonical VI path proves
-  that the installed product retires the last retained compare-presentation
-  finding on the exact acceptance target, rather than only on the newer
-  repo-agnostic checkbox-flow surface
+- the old retained host reviews remain useful historical evidence for the
+  checkbox flow and compare presentation, but they no longer close the current
+  public contract by themselves
+- the public GitHub wiki now exists at
+  `https://github.com/svelderrainruiz/vi-history-suite.wiki.git`
+- public GitHub wiki publication is tracked separately from the internal
+  GitLab maintainer wiki
+- `docs:ci:public` and `docs:ci:internal` now split the public-user and
+  internal-authority docs surfaces while `docs:ci` remains the umbrella lane
+- the public Docker smoke surface is `.github/workflows/public-facade-linux-smoke.yml`
+  plus `npm run public:smoke:linux`
+- the next acceptance run must prove the Docker-only installed bundle rather
+  than the earlier host-tolerant contract
 - the authority repo still mirrors a GitHub Linux benchmark lane into the
   private `vi-history-suite-source-experiments` repo, but that mirror is now
   documented as benchmark only and belongs to the queued benchmark-proof lane
@@ -121,7 +100,7 @@ Current landed scaffold state:
 - treating the private GitHub experiment mirror as authority or as the public
   facade repo
 - reintroducing NSIS into the active public toolchain
-- shipping Docker in the default public setup path
+- avoiding Docker in the default installed extension setup path
 - replacing the Windows 11 host-machine proof lane with public-issue feedback
 - replacing the human right-click gate with CLI-only proof
 - closing deep benchmark proof lanes or comparative benchmark packets here
@@ -152,8 +131,7 @@ Current landed scaffold state:
   primary replay surface
 - Sergio Velderrain is documented as the sole named maintainer gate owner for
   the host-machine click UX pass
-- Docker is documented as optional future provider work, not a default public
-  prerequisite
+- Docker is documented as a required installed-extension dependency
 - the canonical fixture repo and VI are retained in a pinned provisioning
   manifest
 - queued benchmark proof and sustainment ownership are explicit so this issue
@@ -163,20 +141,21 @@ Current landed scaffold state:
 ## Required Evidence
 
 - public facade repo scaffolding committed and published
-- public GitHub release `v0.2.0` contains the exact VSIX plus the public
-  release-kit assets
-- retained host-machine acceptance evidence proves automated setup and workspace
-  launch from the public release kit
+- public GitHub release surfaces aligned to the next exact-version line
+- public GitHub user-wiki and bundled installed-user docs aligned to the same
+  public contract
+- retained host-machine acceptance evidence proves the Docker-only installed
+  workflow from the public release kit
+- Gate D includes the deterministic Linux-engine cold-pull compare case on the
+  canonical fixture workspace
 - control-plane docs updated in the private source-of-truth repo
 - design-gate pass after private-doc updates
 
 ## First Active Slice
 
-- activate `TRANCHE-010` and `PROGRAM-0002` in the private repo control plane
-- ingest the exact immutable `v0.2.0` release contract into the public facade repo
-- pin the canonical `ni/labview-icon-editor` fixture, bundle strategy, and
-  selected VI path
-- align public install, support, acceptance, and release-kit surfaces to
-  current truth
-- stop short of claiming installed-user proof closure until the manual human
-  UX gate runs
+- reopen `TRANCHE-010` and `PROGRAM-0002` in the private repo control plane
+- align the public facade repo, public GitHub wiki, and bundled installed-user
+  docs to the Docker-only installed contract
+- keep the canonical `ni/labview-icon-editor` fixture and selected VI path as
+  the deterministic acceptance surface
+- stop short of claiming closure until the new Docker-only Gate D pass runs
