@@ -8,13 +8,15 @@ control-plane stability.
 
 ## Status
 
-Queued follow-on post-release issue.
+Active post-release issue.
 
-Activation depends on:
+Activation is now satisfied:
 
 - `PROGRAM-0003` is now closed on the benchmark-proof packet under
   `TRANCHE-011`
-- `TRANCHE-012` becoming the active queue tranche
+- `PROGRAM-0005` is now closed on the retained execution-policy contract under
+  `TRANCHE-013`
+- `TRANCHE-012` is now the active queue tranche
 
 ## Scope
 
@@ -23,8 +25,8 @@ Activation depends on:
 - benchmark refresh cadence and image contract upkeep
 - operator-surface and documentation-workbench sustainment
 - post-release control-plane maintenance
-- not the queued extension execution-flexibility feature layer, which belongs
-  to `PROGRAM-0005` / `ISSUE-0410`
+- not the now-closed extension execution-flexibility feature layer, which was
+  retired under `PROGRAM-0005` / `ISSUE-0410`
 
 ## Non-Goals
 
@@ -36,6 +38,7 @@ Activation depends on:
 
 - completed `PROGRAM-0002`
 - completed `PROGRAM-0003`
+- completed `PROGRAM-0005`
 - truthful current-state and queue surfaces
 
 ## Acceptance Criteria

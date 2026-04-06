@@ -20,8 +20,7 @@ The current installed extension already exposes these runtime-related settings:
 - `viHistorySuite.preferBitness`
 - `viHistorySuite.windowsContainerImage`
 
-Current implemented provider truth remains narrower than the future execution
-policy:
+Current implemented provider truth now satisfies the governed execution policy:
 
 - the installed extension now exposes a first-class
   `viHistorySuite.executionMode` setting with `auto`, `host-only`, and
@@ -63,20 +62,23 @@ policy:
   comparison generation is in flight, including runtime-selection,
   Windows-image acquisition, and runtime-execution stages, instead of staying
   idle until the action completes
+- the history panel now also renders structured compare-runtime detail rows so
+  users can see provider, execution mode, report/runtime status, acquisition
+  state, rejected providers, reason, diagnostic reason, and next action as
+  separate governed facts instead of inferring them from one compressed
+  sentence
 - benchmark-proof and exact-pair diagnosis entrypoints now fail closed on
   contaminated or contradictory runtime-override bundles
-- canonical effective execution-request validation is now partially
-  implemented through selected Windows host-runtime facts, explicit Windows
-  Docker capability validation, and a governed Windows image-acquisition step
-  with visible progress plus retained history-panel, live panel-progress,
-  compare-warning, compare-success, and panel-reopen persistence surfaces;
-  fuller front-facing provider/acquisition transparency beyond the current
-  progress, warning, success-summary, reopen-persisted history-panel,
-  runtime-doctor, and retained-packet surfaces remains queued
+- canonical effective execution-request validation is now implemented through
+  selected Windows host-runtime facts, explicit Windows Docker capability
+  validation, a governed Windows image-acquisition step with visible progress,
+  retained history-panel and runtime-doctor truth, concise compare-success and
+  compare-failure notifications, panel-reopen persistence, and structured
+  history-panel compare-runtime detail rendering
 
 So current runtime behavior is no longer implicit at the execution-mode
-boundary, but the broader execution policy is still only partially
-implemented.
+boundary, and the broader execution policy is now closed as implemented
+product truth.
 
 ## Broader Execution-Mode Contract
 
@@ -135,10 +137,10 @@ facts in that boundary:
 - existing LabVIEW-related host processes
 - existing listener on the governed VI Server port
 
-The remaining queued work is fuller front-facing provider/acquisition
-transparency after the landed host-fact, Docker-capability, image-acquisition,
-history-panel summary, live panel-progress, compare-warning, and
-compare-success slices plus panel-reopen persistence.
+That front-facing provider/acquisition transparency debt is now retired: the
+history panel renders separate compare-runtime detail rows and preserves them
+through panel reopen instead of collapsing everything back to one summary-only
+surface.
 
 This is the canonical validation boundary for the installed extension. If the
 request is non-canonical, the product must fail closed before runtime work
@@ -292,11 +294,6 @@ The retained state model is now:
 - `acquired`
 - `failed`
 
-The remaining queued work is broader propagation of those facts into fuller
-front-facing extension UX beyond the current progress notifications,
-concise compare completion/failure notifications, runtime-doctor lines, and
-retained comparison-report packet.
-
 This transparency belongs in:
 
 - runtime doctor
@@ -309,24 +306,30 @@ block from the last retained tracker-backed compare result when the user
 reopens VI History, instead of resetting that block to idle every time the
 panel is recreated.
 
+The closeout slice now also renders those retained facts as separate
+history-panel detail rows, so front-facing execution and acquisition truth is
+no longer limited to one status sentence plus transient notifications.
+
 ## Queue Ownership
 
 The current broader product work is split intentionally:
 
 - benchmark proof stays in `PROGRAM-0003`
-- sustainment stays in `PROGRAM-0004`
-- extension execution flexibility and runtime acquisition UX are queued under
-  `PROGRAM-0005` / `ISSUE-0410` / `TRANCHE-013`
+- sustainment is now the active driver-seat lane under `PROGRAM-0004` /
+  `ISSUE-0409` / `TRANCHE-012`
+- extension execution flexibility and runtime acquisition UX are now closed
+  under `PROGRAM-0005` / `ISSUE-0410` / `TRANCHE-013`
 
 Canonical validation of the effective execution request for this future work is
 governed by `ADR-0026`.
 
-Open debt for this policy is tracked in `docs/product/debt-ledger.json`.
+`DEBT-0006` is now retired in `docs/product/debt-ledger.json`.
 
 ## Read Next
 
 - [Current State](./current-state.md)
 - [Development Queue](./development-queue.json)
+- [PROGRAM-0004](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)
 - [PROGRAM-0005](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
 - [ISSUE-0410](./issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md)
 - [ADR-0025](../architecture/adr/ADR-0025-transparent-extension-execution-flexibility-and-runtime-acquisition-ux.md)

@@ -1325,7 +1325,8 @@
   visible Windows acquisition-state truth, live in-panel compare-runtime
   progress, the in-panel latest compare-runtime summary, rejected-provider
   visibility on the panel/warning path, the concise compare blocked/failure
-  warning surface, the concise compare success surface, reopened-panel
+  warning surface, the concise compare success surface, structured
+  history-panel compare-runtime detail rendering, reopened-panel
   compare-runtime persistence, and mode-aware guidance explicit
 - `TEST-DOC-068`: review User-Workflow, Requirements-And-Verification,
   Current-State, Architecture, Architecture-Decision-Records, Development-Queue,

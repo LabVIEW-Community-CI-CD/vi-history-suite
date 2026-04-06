@@ -79,7 +79,7 @@ describe('ship-control direction system', () => {
 
     expect(activeTranches).toHaveLength(2);
     expect(activeTranches.map((entry) => entry.id)).toEqual(
-      expect.arrayContaining(['TRANCHE-010', 'TRANCHE-013'])
+      expect.arrayContaining(['TRANCHE-010', 'TRANCHE-012'])
     );
   });
 

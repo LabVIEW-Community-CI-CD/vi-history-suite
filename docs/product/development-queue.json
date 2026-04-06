@@ -103,9 +103,9 @@
   {
     "id": "TRANCHE-012",
     "title": "Post-release sustainment and release cadence",
-    "status": "queued",
+    "status": "active",
     "source": "author direction",
-    "summary": "After benchmark proof lands, sustain the public release kit, benchmark refresh cadence, operator surfaces, SemVer discipline, and post-release control-plane upkeep without reopening the public-facade closeout or benchmark-proof programs. Feature-layer extension execution flexibility and runtime-acquisition UX belong to the separately queued `TRANCHE-013` / `PROGRAM-0005` lane, not sustainment by implication.",
+    "summary": "With benchmark proof now closed on bounded truth and the installed execution-policy contract now closed on transparent provider/acquisition truth, sustain the public release kit, benchmark refresh cadence, operator surfaces, SemVer discipline, and post-release control-plane upkeep without reopening the public-facade closeout, benchmark-proof, or execution-policy programs.",
     "issues": [
       "ISSUE-0409"
     ]
@@ -113,9 +113,9 @@
   {
     "id": "TRANCHE-013",
     "title": "Extension execution flexibility and runtime acquisition UX",
-    "status": "active",
+    "status": "done",
     "source": "author direction",
-    "summary": "With benchmark proof now closed on bounded truth, continue the transparent installed-extension execution policy that separates `auto`, `host-only`, and `docker-only`, validates one canonical effective execution request before provider work starts, supports compatible host LabVIEW 2026 Q1 x86 or x64 execution when clean, forces Docker isolation when an already-open host LabVIEW 2026 session or governed VI Server collision would contaminate host execution, fails closed with actionable guidance when Docker is required but unavailable or not Windows-container-capable, surfaces visible image-pull progress, and on Windows pulls the governed Windows image without silent host/Docker fallback while finishing the remaining fuller front-facing provider/acquisition transparency.",
+    "summary": "Closed on the transparent installed-extension execution contract: `auto`, `host-only`, and `docker-only` are governed product truth; one canonical effective execution request is validated before provider work starts; Windows host-vs-Docker choice is conflict-aware; Windows container-capability hard stops and visible governed image-pull progress are explicit; compare success/failure/progress feedback is mode-aware; reopened history panels persist compare-runtime truth; and structured compare-runtime detail rows now retire the last open front-facing provider/acquisition transparency debt.",
     "issues": [
       "ISSUE-0410"
     ]

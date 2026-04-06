@@ -6,6 +6,11 @@ import {
 } from '../services/viHistoryModel';
 import { HistoryPanelActionSummary } from './historyPanelTracker';
 
+interface CompareRuntimeDetailItem {
+  label: string;
+  value: string;
+}
+
 export function renderHistoryPanelHtml(
   model: ViHistoryViewModel,
   lastActionSummary?: HistoryPanelActionSummary
@@ -224,6 +229,7 @@ export function renderHistoryPanelHtml(
       <strong>Latest compare runtime:</strong><br />
       <span data-testid="history-compare-runtime-summary" id="compare-runtime-summary">${escapeHtml(latestCompareRuntime.summary)}</span><br />
       <span data-testid="history-compare-runtime-next-action" id="compare-runtime-next-action">${escapeHtml(latestCompareRuntime.nextAction)}</span>
+      <div data-testid="history-compare-runtime-details" id="compare-runtime-details">${renderCompareRuntimeDetails(latestCompareRuntime.details)}</div>
     </div>
     <div class="packet" data-testid="history-review-packet">
       <div data-testid="history-chronology-order"><strong>Order:</strong> Newest commit first</div>
@@ -306,6 +312,7 @@ export function renderHistoryPanelHtml(
           const container = document.getElementById('compare-runtime-status');
           const summary = document.getElementById('compare-runtime-summary');
           const nextAction = document.getElementById('compare-runtime-next-action');
+          const details = document.getElementById('compare-runtime-details');
           if (container instanceof HTMLElement && typeof message.status === 'string') {
             container.dataset.state = message.status;
           }
@@ -314,6 +321,27 @@ export function renderHistoryPanelHtml(
           }
           if (nextAction instanceof HTMLElement && typeof message.nextAction === 'string') {
             nextAction.textContent = message.nextAction;
+          }
+          if (details instanceof HTMLElement) {
+            details.replaceChildren();
+            if (Array.isArray(message.details)) {
+              for (const detail of message.details) {
+                if (
+                  !detail ||
+                  typeof detail.label !== 'string' ||
+                  typeof detail.value !== 'string'
+                ) {
+                  continue;
+                }
+
+                const line = document.createElement('div');
+                line.setAttribute('data-testid', 'history-compare-runtime-detail');
+                const label = document.createElement('strong');
+                label.textContent = detail.label + ':';
+                line.append(label, document.createTextNode(' ' + detail.value));
+                details.append(line);
+              }
+            }
           }
           return;
         }
@@ -387,6 +415,7 @@ function deriveInitialCompareRuntimeStatus(
   status: 'idle' | 'blocked' | 'failed' | 'succeeded' | 'cancelled';
   summary: string;
   nextAction: string;
+  details: CompareRuntimeDetailItem[];
 } {
   if (
     lastActionSummary?.comparisonRuntimePanelSummary &&
@@ -395,7 +424,8 @@ function deriveInitialCompareRuntimeStatus(
     return {
       status: lastActionSummary.comparisonRuntimePanelStatus ?? 'idle',
       summary: lastActionSummary.comparisonRuntimePanelSummary,
-      nextAction: lastActionSummary.comparisonRuntimePanelNextAction
+      nextAction: lastActionSummary.comparisonRuntimePanelNextAction,
+      details: lastActionSummary.comparisonRuntimePanelDetails ?? []
     };
   }
 
@@ -403,7 +433,8 @@ function deriveInitialCompareRuntimeStatus(
     status: 'idle',
     summary: 'No compare action from this panel has retained provider or acquisition truth yet.',
     nextAction:
-      'Next action: use Generate compare or Open compare to surface the selected provider and any acquisition state here.'
+      'Next action: use Generate compare or Open compare to surface the selected provider and any acquisition state here.',
+    details: []
   };
 }
 
@@ -448,6 +479,21 @@ function escapeHtml(value: string): string {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
+}
+
+function renderCompareRuntimeDetails(
+  details: CompareRuntimeDetailItem[]
+): string {
+  if (details.length === 0) {
+    return '';
+  }
+
+  return details
+    .map(
+      (detail) =>
+        `<div data-testid="history-compare-runtime-detail"><strong>${escapeHtml(detail.label)}:</strong> ${escapeHtml(detail.value)}</div>`
+    )
+    .join('');
 }
 
 function renderCommitSummary(commit: ViHistoryCommit | undefined): string {

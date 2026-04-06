@@ -53,7 +53,7 @@ describe('execution-policy control plane', () => {
     expect(debtLedgerJson).toContain('"retirementCommit": "2f4ced0"');
   });
 
-  it('keeps the partially implemented extension execution-flexibility contract aligned across authority and reader surfaces', () => {
+  it('keeps the closed execution-policy package aligned across authority and reader surfaces', () => {
     const manifest = readJson<{
       contributes?: { configuration?: { properties?: Record<string, unknown> } };
     }>('package.json');
@@ -93,15 +93,24 @@ describe('execution-policy control plane', () => {
     );
     expect(readme).toContain('PROGRAM-0005');
     expect(readme).toContain('TRANCHE-013');
+    expect(readme).toContain('TRANCHE-012');
     expect(readme).toContain('canonical execution-request');
     expect(currentState).toContain('`TRANCHE-013`: Extension execution flexibility and runtime acquisition UX');
+    expect(currentState).toContain('`TRANCHE-012`: Post-release sustainment and release cadence');
     expect(currentState).toContain(
       '[PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)'
+    );
+    expect(currentState).toContain(
+      '[PROGRAM-0004: Post-Release Sustainment And Release Cadence](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)'
     );
     expect(currentState).toContain('`package.json` exposes `viHistorySuite.executionMode`');
     expect(currentState).toContain('canonical effective execution-request validation');
     expect(currentState).toContain('Windows container-capability truth');
+    expect(currentState).toContain('structured compare-runtime detail rows');
     expect(queue).toContain('"id": "TRANCHE-013"');
+    expect(queue).toContain('"status": "done"');
+    expect(queue).toContain('"id": "TRANCHE-012"');
+    expect(queue).toContain('"status": "active"');
     expect(policy).toContain('`auto`');
     expect(policy).toContain('`host-only`');
     expect(policy).toContain('`docker-only`');
@@ -118,22 +127,31 @@ describe('execution-policy control plane', () => {
     expect(policy).toContain('close the conflicting LabVIEW session');
     expect(policy).toContain('install/enable Docker');
     expect(policy).toContain('on Windows, pull the governed Windows image');
+    expect(policy).toContain('structured compare-runtime detail rows');
     expect(srs).toContain('VHS-REQ-467');
     expect(srs).toContain('VHS-REQ-475');
+    expect(srs).toContain('structured history-panel compare-runtime detail rows');
     expect(rtm).toContain('VHS-REQ-470');
+    expect(rtm).toContain('closed PROGRAM-0005 execution-policy package');
     expect(rtm).toContain('ADR-0026-canonical-extension-execution-request-validation.md');
     expect(testPlan).toContain('TEST-UNIT-300');
     expect(testPlan).toContain('TEST-DOC-068');
+    expect(testPlan).toContain('structured');
     expect(program).toContain('`auto`');
     expect(program).toContain('`host-only`');
     expect(program).toContain('`docker-only`');
     expect(program).toContain('canonical effective execution-request validation');
     expect(program).toContain('Windows container-capability checks');
+    expect(program).toContain('Closed on the retained transparent execution-policy contract.');
+    expect(program).toContain('structured compare-runtime detail rows');
     expect(issue).toContain('visible Docker image-pull progress');
     expect(issue).toContain('actionable user guidance');
     expect(issue).toContain('canonical effective execution-request validation');
     expect(issue).toContain('Windows-container mode');
-    expect(sustainmentProgram).toContain('PROGRAM-0005');
+    expect(issue).toContain('Closed post-release issue');
+    expect(issue).toContain('structured compare-runtime detail rows');
+    expect(sustainmentProgram).toContain('Active post-release program.');
+    expect(sustainmentProgram).toContain('`PROGRAM-0005` is closed');
     expect(adr0006).toContain('superseded by ADR-0025');
     expect(adr0025).toContain('`auto`');
     expect(adr0025).toContain('`host-only`');
@@ -143,11 +161,14 @@ describe('execution-policy control plane', () => {
     expect(adr0026).toContain('selected `LabVIEW.ini`');
     expect(debtLedger).toContain('"id": "DEBT-0006"');
     expect(debtLedger).toContain('"programId": "PROGRAM-0005"');
+    expect(debtLedger).toContain('"status": "retired"');
     expect(debtLedger).toContain('canonical effective execution-request validation');
     expect(debtLedger).toContain('Windows container-capability');
+    expect(debtLedger).toContain('structured history-panel compare-runtime detail rows');
     expect(coverage).toContain('"sourcePath": "docs/product/extension-execution-policy.md"');
     expect(publicationLedger).toContain('"wikiFileName": "User-Workflow.md"');
     expect(userWorkflow).toContain('`auto` / `host-only` / `docker-only`');
+    expect(userWorkflow).toContain('structured');
     expect(requirementsWiki).toContain('execution-mode contract');
   });
 });

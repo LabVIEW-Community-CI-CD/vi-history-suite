@@ -30,9 +30,9 @@ surface.</p>
 including the already-landed execution-mode, host-fact, Docker-capability,
 Windows acquisition-progress slice, live history-panel compare-runtime
 progress slice, history-panel latest compare-runtime summary slice,
-reopened-panel compare-runtime persistence, and concise compare
-success/failure notification slices plus the remaining front-facing
-transparency work</li>
+structured history-panel compare-runtime detail slice, reopened-panel
+compare-runtime persistence, and concise compare success/failure
+notification slices</li>
 <li>documentation-package and wiki-workbench behavior</li>
 <li>bounded repo-family support</li>
 <li>release, setup, and control-plane rules</li>
@@ -72,8 +72,7 @@ what kinds of evidence are expected for each part of the product.</p>
 </ul>
 <p>The product now also carries wiki and packaged-doc requirements in the same
 governed requirements system rather than treating documentation as informal.</p>
-<p>That same system now governs the partially implemented execution-mode contract
-too, including:</p>
+<p>That same system now governs the closed execution-mode contract too, including:</p>
 <ul>
 <li>the installed setting surface for <code>auto</code>, <code>host-only</code>, and <code>docker-only</code></li>
 <li>the no-silent-fallback rule between <code>host-only</code>, <code>docker-only</code>, and <code>auto</code></li>
@@ -96,6 +95,9 @@ containers before a governed Windows image can run</li>
 <li>when Windows now surfaces visible progress while pulling the governed
 Windows image and retains acquisition state in the comparison-report packet
 and runtime-doctor surfaces</li>
+<li>when the history panel now renders structured compare-runtime detail rows so
+front-facing provider/acquisition truth is no longer compressed into one
+summary line</li>
 </ul>
 <p>The requirements package now also governs the accepted Windows benchmark-image
 ceiling for the current contract:</p>

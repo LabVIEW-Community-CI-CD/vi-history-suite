@@ -53,12 +53,12 @@ describe('post-release control-plane coherence', () => {
       issues: ['ISSUE-0407']
     });
     expect(activeTranches).toContainEqual({
-      id: 'TRANCHE-013',
-      title: 'Extension execution flexibility and runtime acquisition UX',
+      id: 'TRANCHE-012',
+      title: 'Post-release sustainment and release cadence',
       status: 'active',
       source: 'author direction',
-      summary: expect.stringContaining('transparent installed-extension execution policy'),
-      issues: ['ISSUE-0410']
+      summary: expect.stringContaining('benchmark refresh cadence'),
+      issues: ['ISSUE-0409']
     });
 
     expect(readme).toContain('- `TRANCHE-010`: public facade release kit and host-machine acceptance');
@@ -95,10 +95,10 @@ describe('post-release control-plane coherence', () => {
       '- closed execution program: [PROGRAM-0003: Repeatable Benchmark Proof](./execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md)'
     );
     expect(currentState).toContain(
-      '- queued execution program: [PROGRAM-0004: Post-Release Sustainment And Release Cadence](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)'
+      '- active execution program: [PROGRAM-0004: Post-Release Sustainment And Release Cadence](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)'
     );
     expect(currentState).toContain(
-      '- active execution program: [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)'
+      '- closed execution program: [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)'
     );
 
     expect(ship).toContain('- current repo-active tranche: `TRANCHE-010`');
@@ -108,15 +108,15 @@ describe('post-release control-plane coherence', () => {
     expect(ship).toContain(
       '- current repo-active execution program: [PROGRAM-0002 Public Facade Release Kit And Host-Machine Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)'
     );
-    expect(ship).toContain('- current driver-seat post-release tranche: `TRANCHE-013`');
+    expect(ship).toContain('- current driver-seat post-release tranche: `TRANCHE-012`');
     expect(ship).toContain(
-      '- current driver-seat post-release issue: [ISSUE-0410 Extension Execution Flexibility And Runtime Acquisition UX](./issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md)'
+      '- current driver-seat post-release issue: [ISSUE-0409 Post-Release Sustainment And Release Cadence](./issues/ISSUE-0409-post-release-sustainment-and-release-cadence.md)'
     );
     expect(ship).toContain(
-      '- current driver-seat post-release execution program: [PROGRAM-0005 Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)'
+      '- current driver-seat post-release execution program: [PROGRAM-0004 Post-Release Sustainment And Release Cadence](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)'
     );
     expect(ship).toContain('`TRANCHE-011` / [ISSUE-0408 Repeatable Benchmark Proof]');
-    expect(ship).toContain('`TRANCHE-012` / [ISSUE-0409 Post-Release Sustainment And Release Cadence]');
+    expect(ship).toContain('`TRANCHE-013` / [ISSUE-0410 Extension Execution Flexibility And Runtime Acquisition UX]');
 
     expect(program).toContain('Active post-release program.');
     expect(program).toContain('- current queue tranche: `TRANCHE-010`');
@@ -128,12 +128,15 @@ describe('post-release control-plane coherence', () => {
     expect(benchmarkProgram).toContain('- `TRANCHE-011` is now done');
     expect(benchmarkProgram).toContain('reopen this program only if the governed Windows');
 
-    expect(sustainmentProgram).toContain('Queued follow-on post-release program.');
+    expect(sustainmentProgram).toContain('Active post-release program.');
     expect(sustainmentProgram).toContain(
       '- `PROGRAM-0003` is closed on the benchmark-proof packet under `TRANCHE-011`'
     );
+    expect(sustainmentProgram).toContain(
+      '- `PROGRAM-0005` is closed on the retained execution-policy contract under'
+    );
     expect(sustainmentProgram).toContain('- `TRANCHE-012`');
-    expect(sustainmentProgram).toContain('`PROGRAM-0005`');
+    expect(sustainmentProgram).toContain('Continue with [ISSUE-0409');
 
     expect(issue).toContain('# ISSUE-0407: Public Facade Release Kit And Host-Machine Acceptance');
     expect(issue).toContain('## Status');
@@ -198,7 +201,7 @@ describe('post-release control-plane coherence', () => {
     expect(issue).toContain('- `acceptance/windows11/` now contains a PowerShell acceptance harness,');
   });
 
-  it('keeps the closed benchmark-proof lane and the queued sustainment follow-on explicit and separate from the active public-facade closeout', () => {
+  it('keeps the closed benchmark-proof lane, active sustainment lane, and closed execution-policy lane explicit and separate from the active public-facade closeout', () => {
     const queue = readJson<QueueEntry[]>('docs/product/development-queue.json');
     const readme = readText('README.md');
     const currentState = readText('docs/product/current-state.md');
@@ -232,7 +235,7 @@ describe('post-release control-plane coherence', () => {
     expect(queue).toContainEqual({
       id: 'TRANCHE-012',
       title: 'Post-release sustainment and release cadence',
-      status: 'queued',
+      status: 'active',
       source: 'author direction',
       summary: expect.stringContaining('benchmark refresh cadence'),
       issues: ['ISSUE-0409']
@@ -240,9 +243,9 @@ describe('post-release control-plane coherence', () => {
     expect(queue).toContainEqual({
       id: 'TRANCHE-013',
       title: 'Extension execution flexibility and runtime acquisition UX',
-      status: 'active',
+      status: 'done',
       source: 'author direction',
-      summary: expect.stringContaining('transparent installed-extension execution policy'),
+      summary: expect.stringContaining('structured compare-runtime detail rows'),
       issues: ['ISSUE-0410']
     });
 
@@ -262,7 +265,10 @@ describe('post-release control-plane coherence', () => {
       '- closed execution program: [PROGRAM-0003: Repeatable Benchmark Proof](./execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md)'
     );
     expect(currentState).toContain(
-      '- active execution program: [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)'
+      '- closed execution program: [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)'
+    );
+    expect(currentState).toContain(
+      '- active execution program: [PROGRAM-0004: Post-Release Sustainment And Release Cadence](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)'
     );
     expect(currentState).toContain(
       'docs/product/benchmark-packets/HARNESS-VHS-002-comparable-prefix.json'
@@ -406,9 +412,12 @@ describe('post-release control-plane coherence', () => {
     expect(admissionAdr).toContain('already-running `LabVIEW.exe`, `LabVIEWCLI.exe`, or `LVCompare.exe`');
 
     expect(sustainmentProgram).toContain('release cadence, benchmark refresh cadence, operator surfaces');
-    expect(sustainmentIssue).toContain('Queued follow-on post-release issue.');
+    expect(sustainmentIssue).toContain('Active post-release issue.');
     expect(sustainmentIssue).toContain(
       '- `PROGRAM-0003` is now closed on the benchmark-proof packet under'
+    );
+    expect(sustainmentIssue).toContain(
+      '- `PROGRAM-0005` is now closed on the retained execution-policy contract under'
     );
     expect(sustainmentIssue).toContain('benchmark refresh cadence');
   });

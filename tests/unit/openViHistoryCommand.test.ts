@@ -2203,6 +2203,17 @@ describe('createOpenViHistoryCommand', () => {
         'Generate compare for abcdef12 vs 11111111. Provider: host-native. Execution mode: auto. Report status: ready-for-runtime. Runtime state: failed. Failure reason: command-exited-nonzero. Diagnostic reason: labview-path-ignored-last-used-default.',
       comparisonRuntimePanelNextAction:
         'Next action: close the conflicting LabVIEW 2026 session or correct the selected host LabVIEW path before rerunning comparison report generation.',
+      comparisonRuntimePanelDetails: [
+        { label: 'Provider', value: 'host-native' },
+        { label: 'Execution mode', value: 'auto' },
+        { label: 'Report status', value: 'ready-for-runtime' },
+        { label: 'Runtime state', value: 'failed' },
+        { label: 'Failure reason', value: 'command-exited-nonzero' },
+        {
+          label: 'Diagnostic reason',
+          value: 'labview-path-ignored-last-used-default'
+        }
+      ],
       cancellationStage: undefined,
       runtimeDiagnosticReason: 'labview-path-ignored-last-used-default',
       runtimeDiagnosticNotes: [
@@ -2303,7 +2314,38 @@ describe('createOpenViHistoryCommand', () => {
       summary:
         'Generate compare for abcdef12 vs 11111111. Provider: windows-container. Execution mode: auto. Report status: blocked-runtime. Runtime state: not-available. Windows image acquisition: failed. Rejected providers: host-native because existing LabVIEW-related processes or a listener on governed VI Server port 3364 already exist. Blocked reason: windows-container-image-acquisition-failed.',
       nextAction:
-        'Next action: repair Docker connectivity or image registry access, then pull the governed Windows container image and rerun comparison report generation.'
+        'Next action: repair Docker connectivity or image registry access, then pull the governed Windows container image and rerun comparison report generation.',
+      details: [
+        {
+          label: 'Provider',
+          value: 'windows-container'
+        },
+        {
+          label: 'Execution mode',
+          value: 'auto'
+        },
+        {
+          label: 'Report status',
+          value: 'blocked-runtime'
+        },
+        {
+          label: 'Runtime state',
+          value: 'not-available'
+        },
+        {
+          label: 'Windows image acquisition',
+          value: 'failed'
+        },
+        {
+          label: 'Rejected providers',
+          value:
+            'host-native because existing LabVIEW-related processes or a listener on governed VI Server port 3364 already exist'
+        },
+        {
+          label: 'Blocked reason',
+          value: 'windows-container-image-acquisition-failed'
+        }
+      ]
     });
   });
 
@@ -2558,7 +2600,8 @@ describe('createOpenViHistoryCommand', () => {
       summary:
         'Generate compare for abcdef12 vs 11111111 in progress. Selecting comparison-report runtime.',
       nextAction:
-        'Next action: wait for comparison report generation to finish or cancel from the VS Code progress notification if you need to stop this run.'
+        'Next action: wait for comparison report generation to finish or cancel from the VS Code progress notification if you need to stop this run.',
+      details: []
     });
     expect(panel?.webview.postMessage).toHaveBeenNthCalledWith(2, {
       type: 'comparisonRuntimeProgress',
@@ -2566,7 +2609,8 @@ describe('createOpenViHistoryCommand', () => {
       summary:
         'Generate compare for abcdef12 vs 11111111 in progress. Acquiring governed Windows image ghcr.io/example/windows-dashboard-benchmark:main.',
       nextAction:
-        'Next action: wait for comparison report generation to finish or cancel from the VS Code progress notification if you need to stop this run.'
+        'Next action: wait for comparison report generation to finish or cancel from the VS Code progress notification if you need to stop this run.',
+      details: []
     });
     expect(panel?.webview.postMessage).toHaveBeenNthCalledWith(3, {
       type: 'comparisonRuntimeProgress',
@@ -2574,7 +2618,8 @@ describe('createOpenViHistoryCommand', () => {
       summary:
         'Generate compare for abcdef12 vs 11111111 in progress. Pulling governed Windows image: layer 1/4.',
       nextAction:
-        'Next action: wait for comparison report generation to finish or cancel from the VS Code progress notification if you need to stop this run.'
+        'Next action: wait for comparison report generation to finish or cancel from the VS Code progress notification if you need to stop this run.',
+      details: []
     });
     expect(panel?.webview.postMessage).toHaveBeenNthCalledWith(4, {
       type: 'comparisonRuntimeProgress',
@@ -2582,7 +2627,8 @@ describe('createOpenViHistoryCommand', () => {
       summary:
         'Generate compare for abcdef12 vs 11111111 in progress. Executing LabVIEW comparison-report runtime.',
       nextAction:
-        'Next action: wait for comparison report generation to finish or cancel from the VS Code progress notification if you need to stop this run.'
+        'Next action: wait for comparison report generation to finish or cancel from the VS Code progress notification if you need to stop this run.',
+      details: []
     });
     expect(panel?.webview.postMessage).toHaveBeenNthCalledWith(5, {
       type: 'comparisonRuntimeResult',
@@ -2590,7 +2636,25 @@ describe('createOpenViHistoryCommand', () => {
       summary:
         'Generate compare for abcdef12 vs 11111111. Provider: none. Execution mode: auto. Report status: ready-for-runtime. Runtime state: succeeded.',
       nextAction:
-        'Next action: open the retained comparison packet for the full governed runtime summary.'
+        'Next action: open the retained comparison packet for the full governed runtime summary.',
+      details: [
+        {
+          label: 'Provider',
+          value: 'none'
+        },
+        {
+          label: 'Execution mode',
+          value: 'auto'
+        },
+        {
+          label: 'Report status',
+          value: 'ready-for-runtime'
+        },
+        {
+          label: 'Runtime state',
+          value: 'succeeded'
+        }
+      ]
     });
   });
 

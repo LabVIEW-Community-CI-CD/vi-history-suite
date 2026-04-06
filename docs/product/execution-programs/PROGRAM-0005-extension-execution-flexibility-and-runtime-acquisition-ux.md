@@ -2,17 +2,17 @@
 
 ## Status
 
-Active post-release program with nine repo-side execution-policy slices already
-landed.
+Closed on the retained transparent execution-policy contract.
 
-Activation dependencies are now satisfied:
+Closure facts:
 
 - `PROGRAM-0003` is closed on bounded benchmark truth under `TRANCHE-011`
-- `TRANCHE-013` is now the active driver-seat implementation lane
-- the remaining broader front-facing provider/acquisition transparency work now
-  proceeds beyond the landed selector, Docker-capability, acquisition-progress,
-  history-panel latest-runtime-summary, live panel-progress, compare-warning,
-  compare-success, and panel-reopen persistence slices
+- `TRANCHE-013` is now done
+- the structured history-panel compare-runtime detail slice has retired the
+  remaining broader front-facing provider/acquisition transparency debt
+- `TRANCHE-012` / `PROGRAM-0004` now own the active driver-seat post-release
+  lane while `TRANCHE-010` / `PROGRAM-0002` remain open only on Sergio's human
+  acceptance gate
 
 ## Purpose
 
@@ -108,7 +108,7 @@ Every slice shall preserve:
 
 ## Landed Selector Slices
 
-The repo already retains seven bounded implementation slices under this program:
+The repo now retains ten bounded implementation slices under this program:
 
 - a first-class `viHistorySuite.executionMode` setting with `auto`,
   `host-only`, and `docker-only`
@@ -163,6 +163,22 @@ The repo already retains seven bounded implementation slices under this program:
   - the in-panel compare-runtime block no longer stays idle until completion
     when the action is actively selecting a provider, pulling an image, or
     executing the LabVIEW runtime
+- an eighth slice now surfaces that same truth through the transient
+  notification channel when compare execution succeeds:
+  - compare actions now emit one concise success-path provider/acquisition
+    summary using the retained provider, rejected-provider reasons, execution
+    mode, acquisition state, and next action
+- a ninth slice now preserves that compare-runtime truth across panel reopen:
+  - reopening VI History now seeds the compare-runtime block from the last
+    retained tracker-backed compare result instead of resetting the panel to
+    idle
+- a tenth slice now renders structured compare-runtime detail rows inside the
+  history panel itself:
+  - provider, execution mode, report/runtime status, acquisition state,
+    rejected providers, reason, diagnostic reason, and next action now render
+    as separate governed in-panel facts when those fields exist
+  - that same structured detail set now persists through tracker-backed panel
+    reopen instead of collapsing back to one summary-only sentence
 
 ## First Implementation Slice
 
@@ -185,5 +201,5 @@ That slice should:
 
 This program is complete when the installed extension can execute comparison
 work through a transparent `auto` / `host-only` / `docker-only` contract with
-truthful hard stops, visible acquisition progress, and user-facing runtime
-diagnosis that does not rely on shell archaeology.
+truthful hard stops, visible acquisition progress, structured front-facing
+runtime diagnosis, and no reliance on shell archaeology.

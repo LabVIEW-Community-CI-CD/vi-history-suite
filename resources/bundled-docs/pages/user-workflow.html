@@ -66,8 +66,12 @@ while comparison generation is selecting a runtime, acquiring the Windows
 image, or executing the LabVIEW runtime</li>
 <li>blocked or failed compare actions now also emit one concise mode-aware
 warning using that same retained runtime truth</li>
+<li>the history panel now also renders structured compare-runtime detail rows so
+provider, execution mode, report/runtime status, acquisition state, rejected
+providers, reason, diagnostic reason, and next action remain visible as
+separate governed in-panel facts</li>
 </ul>
-<p>The remaining queued contract is:</p>
+<p>The closed contract now also makes these rules explicit:</p>
 <ul>
 <li><p>the extension first resolves one canonical effective execution request from
 the selected mode, host-runtime facts, and Docker capability facts</p>
@@ -102,10 +106,9 @@ runtime/acquisition stages while the action is still running</p>
 <li><p>reopening VI History now seeds that compare-runtime block from the last
 retained tracker-backed compare result instead of resetting it to idle</p>
 </li>
-<li><p>fuller front-facing provider/acquisition transparency beyond the current
-progress, compare-warning, compare-success, reopened history-panel,
-runtime-doctor, and retained-packet surfaces remains open under
-<code>PROGRAM-0005</code></p>
+<li><p>that former front-facing provider/acquisition transparency debt is now
+retired because the history panel renders those compare-runtime facts as
+separate detail rows and preserves them through panel reopen</p>
 </li>
 <li><p>host-only hard stops tell the user to close LabVIEW, resolve the governed
 port conflict, correct the selected host runtime, or change execution mode</p>

@@ -8,12 +8,14 @@ progress, and transparent provider feedback.
 
 ## Status
 
-Active post-release issue with nine repo-side execution-policy slices already landed.
+Closed post-release issue with ten repo-side execution-policy slices landed.
 
-Activation dependencies are now satisfied:
+Closure facts:
 
 - `PROGRAM-0003` is closed on bounded benchmark truth
-- `TRANCHE-013` is the active queue tranche
+- `TRANCHE-013` is now done
+- `DEBT-0006` is retired
+- `TRANCHE-012` is now the active driver-seat follow-on tranche
 
 ## Scope
 
@@ -88,6 +90,12 @@ The repo-side selector slices already landed and are no longer queued intent:
 - the history panel now also mirrors live governed compare-runtime progress
   while the compare action is selecting a runtime, acquiring the Windows
   image, or executing the LabVIEW runtime
+- the history panel now also renders structured compare-runtime detail rows so
+  provider, execution mode, report/runtime status, acquisition state, rejected
+  providers, reason, and diagnostic reason remain visible as separate in-panel
+  facts instead of only one retained summary line
+- reopened history panels now preserve that same structured compare-runtime
+  detail set through tracker-backed state reuse
 
 ## Required Evidence
 
@@ -104,8 +112,7 @@ The repo-side selector slices already landed and are no longer queued intent:
 - retain canonical execution-request validation in the control plane
 - make the Docker-required hard-stop and acquisition-progress UX explicit
 - make Windows container-capability hard stops explicit
-- continue from the landed Docker-capability, acquisition-progress,
-  in-panel latest-runtime-summary, live panel-progress, compare-warning, and
-  compare-success slices plus panel-reopen persistence into fuller
-  front-facing provider/acquisition transparency
+- the final closeout slice now lands structured history-panel compare-runtime
+  details and retires the last open front-facing provider/acquisition
+  transparency debt
 - keep the policy separate from current benchmark-proof and sustainment work

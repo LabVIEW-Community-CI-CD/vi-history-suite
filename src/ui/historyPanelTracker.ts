@@ -74,6 +74,10 @@ export interface HistoryPanelActionSummary {
   comparisonRuntimePanelStatus?: 'idle' | 'blocked' | 'failed' | 'succeeded' | 'cancelled';
   comparisonRuntimePanelSummary?: string;
   comparisonRuntimePanelNextAction?: string;
+  comparisonRuntimePanelDetails?: Array<{
+    label: string;
+    value: string;
+  }>;
   runtimeDiagnosticReason?: string;
   runtimeDiagnosticNotes?: string[];
   runtimeDiagnosticLogSourcePath?: string;

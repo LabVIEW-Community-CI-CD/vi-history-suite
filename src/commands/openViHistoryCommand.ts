@@ -31,6 +31,11 @@ import {
   HistoryPanelTracker
 } from '../ui/historyPanelTracker';
 
+interface ComparisonRuntimePanelDetail {
+  label: string;
+  value: string;
+}
+
 export function createOpenViHistoryCommand(
   historyService: ViHistoryService,
   eligibilityIndexer: ViEligibilityIndexer,
@@ -184,6 +189,7 @@ export function createOpenViHistoryCommand(
               status: 'idle' | 'blocked' | 'failed' | 'succeeded' | 'cancelled';
               summary: string;
               nextAction: string;
+              details: ComparisonRuntimePanelDetail[];
             }
           | undefined
       ): void => {
@@ -208,6 +214,8 @@ export function createOpenViHistoryCommand(
           actionSummary.comparisonRuntimePanelSummary = runtimePanelUpdate.summary;
           actionSummary.comparisonRuntimePanelNextAction =
             runtimePanelUpdate.nextAction;
+          actionSummary.comparisonRuntimePanelDetails =
+            runtimePanelUpdate.details;
         }
         if (result.retainedArchiveAvailable !== undefined) {
           actionSummary.retainedArchiveAvailable = result.retainedArchiveAvailable;
@@ -933,6 +941,7 @@ function buildComparisonRuntimePanelUpdate(
       status: 'idle' | 'blocked' | 'failed' | 'succeeded' | 'cancelled';
       summary: string;
       nextAction: string;
+      details: ComparisonRuntimePanelDetail[];
     }
   | undefined {
   if (
@@ -985,13 +994,22 @@ function buildComparisonRuntimePanelUpdate(
     segments.push(`Diagnostic reason: ${result.runtimeDiagnosticReason}.`);
   }
 
+  const details = buildComparisonRuntimePanelDetails(
+    result,
+    runtimeProvider,
+    executionMode,
+    acquisitionState,
+    rejectedProviderSummary
+  );
+
   return {
     type: 'comparisonRuntimeResult',
     status: deriveComparisonRuntimePanelStatus(result),
     summary: segments.join(' '),
     nextAction:
       deriveComparisonRuntimeNextAction(result.runtimeDoctorSummaryLines) ??
-      'Next action: open the retained comparison packet for the full governed runtime summary.'
+      'Next action: open the retained comparison packet for the full governed runtime summary.',
+    details
   };
 }
 
@@ -1006,6 +1024,7 @@ function buildComparisonRuntimeProgressPanelUpdate(
       status: 'running' | 'acquiring';
       summary: string;
       nextAction: string;
+      details: ComparisonRuntimePanelDetail[];
     }
   | undefined {
   const status = deriveComparisonRuntimeProgressStatus(update.message);
@@ -1024,7 +1043,8 @@ function buildComparisonRuntimeProgressPanelUpdate(
     status,
     summary: `${commandLabel} for ${pairLabel} in progress. ${stripTerminalPunctuation(update.message)}.`,
     nextAction:
-      'Next action: wait for comparison report generation to finish or cancel from the VS Code progress notification if you need to stop this run.'
+      'Next action: wait for comparison report generation to finish or cancel from the VS Code progress notification if you need to stop this run.',
+    details: []
   };
 }
 
@@ -1262,4 +1282,68 @@ function deriveRejectedProviderSummaryFromDoctorSummary(
   }
 
   return rejectedProviderDetails.join(' | ');
+}
+
+function buildComparisonRuntimePanelDetails(
+  result: ComparisonReportActionResult,
+  runtimeProvider: string | undefined,
+  executionMode: string | undefined,
+  acquisitionState: string | undefined,
+  rejectedProviderSummary: string | undefined
+): ComparisonRuntimePanelDetail[] {
+  const details: ComparisonRuntimePanelDetail[] = [
+    {
+      label: 'Provider',
+      value: runtimeProvider ?? 'none'
+    },
+    {
+      label: 'Execution mode',
+      value: executionMode ?? 'auto'
+    },
+    {
+      label: 'Report status',
+      value: result.reportStatus ?? 'none'
+    },
+    {
+      label: 'Runtime state',
+      value: result.runtimeExecutionState ?? 'none'
+    }
+  ];
+
+  if (acquisitionState) {
+    details.push({
+      label: 'Windows image acquisition',
+      value: acquisitionState
+    });
+  }
+
+  if (rejectedProviderSummary) {
+    details.push({
+      label: 'Rejected providers',
+      value: rejectedProviderSummary
+    });
+  }
+
+  if (result.blockedReason) {
+    details.push({
+      label: 'Blocked reason',
+      value: result.blockedReason
+    });
+  }
+
+  if (result.runtimeFailureReason) {
+    details.push({
+      label: 'Failure reason',
+      value: result.runtimeFailureReason
+    });
+  }
+
+  if (result.runtimeDiagnosticReason) {
+    details.push({
+      label: 'Diagnostic reason',
+      value: result.runtimeDiagnosticReason
+    });
+  }
+
+  return details;
 }

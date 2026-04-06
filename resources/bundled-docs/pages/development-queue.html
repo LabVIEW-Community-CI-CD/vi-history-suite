@@ -22,27 +22,24 @@ UX, and SemVer releaseability</li>
 <li>one active post-release tranche for the public facade release kit and
 host-machine acceptance work</li>
 <li>one closed benchmark-proof tranche with accepted bounded cross-OS truth</li>
-<li>one queued follow-on tranche for post-release sustainment and release cadence</li>
-<li>one active follow-on tranche for extension execution flexibility and runtime
-acquisition UX, whose latest landed slices now retain compare provider and
-acquisition truth back into the history panel itself, emit one concise
-mode-aware warning when compare execution blocks or fails, and surface
-governed Windows image acquisition progress</li>
+<li>one active follow-on tranche for post-release sustainment and release cadence</li>
+<li>one closed follow-on tranche for extension execution flexibility and runtime
+acquisition UX, now closed on transparent provider/acquisition truth</li>
 </ul>
 <p>The key current status is:</p>
 <ul>
 <li>active: <code>TRANCHE-010</code></li>
-<li>active: <code>TRANCHE-013</code></li>
+<li>active: <code>TRANCHE-012</code></li>
 <li>queued: <code>TRANCHE-004</code></li>
 <li>done: <code>TRANCHE-011</code></li>
-<li>queued: <code>TRANCHE-012</code></li>
+<li>done: <code>TRANCHE-013</code></li>
 <li>earlier tranches: done</li>
 </ul>
 <h2>Active Tranches</h2>
 <p>The current active tranches are:</p>
 <ul>
 <li><code>TRANCHE-010</code>: Public Facade Release Kit And Host-Machine Acceptance</li>
-<li><code>TRANCHE-013</code>: Extension Execution Flexibility And Runtime Acquisition UX</li>
+<li><code>TRANCHE-012</code>: Post-Release Sustainment And Release Cadence</li>
 </ul>
 <p>Those tranches keep the authority boundary explicit:</p>
 <ul>
@@ -52,7 +49,9 @@ governed Windows image acquisition progress</li>
 <li>Docker is not part of the default public setup path</li>
 <li>the Windows 11 host machine remains the current human UX gate</li>
 <li>benchmark proof is now closed on bounded truth under done <code>TRANCHE-011</code></li>
-<li>feature-layer execution-policy work now continues under active <code>TRANCHE-013</code></li>
+<li>execution-policy closeout is now closed under done <code>TRANCHE-013</code></li>
+<li>sustainment is now the active driver-seat post-release lane under
+<code>TRANCHE-012</code></li>
 </ul>
 <h2>Closed And Follow-Ons</h2>
 <p>The governed benchmark closure and post-release follow-ons are:</p>
@@ -71,22 +70,23 @@ governed <code>CloseLabVIEW -Headless</code> recovery attempt exited <code>1</co
 <li><code>TRANCHE-012</code>: Post-Release Sustainment And Release Cadence<ul>
 <li><code>ISSUE-0409</code></li>
 <li><code>PROGRAM-0004</code></li>
+<li>status: active</li>
 </ul>
 </li>
 <li><code>TRANCHE-013</code>: Extension Execution Flexibility And Runtime Acquisition UX<ul>
 <li><code>ISSUE-0410</code></li>
 <li><code>PROGRAM-0005</code></li>
-<li>status: active</li>
+<li>status: done</li>
 </ul>
 </li>
 </ul>
 <p>This matters because benchmark truth and long-tail sustainment now have their
 own explicit homes instead of remaining silently attached to the active
 public-facade closeout tranche. The same separation now applies to future
-installed-extension execution policy too, so host-vs-Docker UX does not get
-buried inside generic sustainment language, and neither does canonical
-execution-request validation for that policy even as active <code>PROGRAM-0005</code>
-execution-policy slices continue landing ahead of full tranche closeout.</p>
+installed-extension execution policy too: that work no longer stays open by
+implication once its closeout slice lands, and future host-vs-Docker UX
+changes would need a new explicit program instead of being buried inside
+generic sustainment language.</p>
 <h2>Why The Queue Matters</h2>
 <p>The queue is not just a roadmap. It is part of the control plane.</p>
 <p>It keeps:</p>

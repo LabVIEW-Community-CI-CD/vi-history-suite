@@ -66,21 +66,21 @@ canonical Windows 11 machine</li>
 <p>The current active post-release tranches are:</p>
 <ul>
 <li><code>TRANCHE-010</code>: Public Facade Release Kit And Host-Machine Acceptance</li>
-<li><code>TRANCHE-013</code>: Extension Execution Flexibility And Runtime Acquisition UX</li>
+<li><code>TRANCHE-012</code>: Post-Release Sustainment And Release Cadence</li>
 </ul>
 <p>The current active issues and programs are:</p>
 <ul>
 <li><code>ISSUE-0407</code>: Public Facade Release Kit And Host-Machine Acceptance</li>
 <li><code>PROGRAM-0002</code>: Public Facade Release Kit And Host-Machine Acceptance</li>
-<li><code>ISSUE-0410</code>: Extension Execution Flexibility And Runtime Acquisition UX</li>
-<li><code>PROGRAM-0005</code>: Extension Execution Flexibility And Runtime Acquisition UX</li>
+<li><code>ISSUE-0409</code>: Post-Release Sustainment And Release Cadence</li>
+<li><code>PROGRAM-0004</code>: Post-Release Sustainment And Release Cadence</li>
 </ul>
 <p>The closed and follow-on tranches and programs are now explicit:</p>
 <ul>
 <li><code>TRANCHE-011</code>: Repeatable Windows And Linux Benchmark Proof</li>
 <li><code>PROGRAM-0003</code>: Repeatable Benchmark Proof</li>
-<li><code>TRANCHE-012</code>: Post-Release Sustainment And Release Cadence</li>
-<li><code>PROGRAM-0004</code>: Post-Release Sustainment And Release Cadence</li>
+<li><code>TRANCHE-013</code>: Extension Execution Flexibility And Runtime Acquisition UX</li>
+<li><code>PROGRAM-0005</code>: Extension Execution Flexibility And Runtime Acquisition UX</li>
 </ul>
 <p>Important truth about those active tranches:</p>
 <ul>
@@ -92,7 +92,8 @@ canonical Windows 11 machine</li>
 <li>the remaining human UX gate is Sergio Velderrain&#39;s manual right-click pass</li>
 <li>benchmark proof is now a closed bounded program, not part of the active
 public-closeout exit gate</li>
-<li>execution-policy work is the active feature-layer post-release lane</li>
+<li>execution-policy work is now closed on transparent provider/acquisition
+truth, and sustainment is the active driver-seat post-release lane</li>
 </ul>
 <h2>Benchmark And Proof State</h2>
 <p>The product now has separate proof surfaces instead of one blended lane:</p>
@@ -154,9 +155,10 @@ x64 CLI install exists</li>
 bundle after CLI, environment, and entrypoint-default synthesis instead of
 validating only a narrower raw-CLI shape</li>
 </ul>
-<h2>Active Execution Flexibility State</h2>
-<p>The repo now carries a separate user-facing execution-policy lane that is the
-current active driver-seat post-release program.</p>
+<h2>Closed Execution Flexibility State</h2>
+<p>The repo now carries a separate user-facing execution-policy lane that is
+closed as retained product truth rather than still being treated as an active
+driver-seat ambiguity.</p>
 <p>Current implemented truth:</p>
 <ul>
 <li>the installed extension now exposes <code>viHistorySuite.executionMode</code></li>
@@ -187,38 +189,15 @@ while comparison generation is selecting a runtime, acquiring the Windows
 image, or executing the LabVIEW runtime</li>
 <li>blocked or failed compare actions now also emit one concise mode-aware
 warning using that same retained runtime truth</li>
-</ul>
-<p>The remaining queued control plane says:</p>
-<ul>
-<li>provider choice should start from one canonical effective execution request,
-not from scattered settings or ambient runtime guesses</li>
-<li>compatible host LabVIEW 2026 Q1 x86 or x64 execution remains valid when the
-selected mode permits host-native launch and the host surface is clean</li>
-<li><code>auto</code> should stay host-native on a clean host instead of acquiring Docker
-by habit</li>
-<li>if an already-open host LabVIEW 2026 session or governed VI Server collision
-would contaminate host execution, <code>auto</code> requires Docker instead of silently
-continuing on the host</li>
-<li>host conflict truth is tied to the selected <code>LabVIEW.ini</code> and derived VI
-Server TCP port</li>
-<li>if Docker is required and unavailable, or not Windows-container-capable on a
-Windows host, the product contract is a hard stop telling the user to close
-LabVIEW or install, enable, or switch Docker</li>
-<li>when Docker is evaluated on Windows, the retained runtime-doctor and packet
-surfaces now expose those Docker capability facts instead of collapsing them
-into one image-availability guess</li>
-<li>the current comparison-report path now shows visible pull progress when
-Windows container execution still requires the governed Windows image</li>
-<li>the current history-panel compare-runtime block now mirrors those governed
-runtime/acquisition stages while the action is still running</li>
-<li>reopening VI History now seeds that compare-runtime block from the last
-retained tracker-backed compare result instead of resetting it to idle</li>
-<li>fuller front-facing provider/acquisition transparency beyond the current
-progress, compare-warning, compare-success, reopened history-panel,
-runtime-doctor, and retained-packet surfaces remains the open
-<code>PROGRAM-0005</code> remainder</li>
-<li>the current open debt item for that ambiguity is retained in the authority
-debt ledger rather than left implicit</li>
+<li>the history panel now also renders structured compare-runtime detail rows so
+provider, execution mode, report/runtime status, acquisition state, rejected
+providers, reason, diagnostic reason, and next action remain visible as
+separate governed in-panel facts</li>
+<li>reopened panels now preserve that same structured compare-runtime detail set
+through tracker-backed state reuse</li>
+<li><code>DEBT-0006</code> is now retired, so the driver-seat post-release lane moves from
+execution-policy closeout to sustainment while <code>TRANCHE-010</code> remains open
+only on Sergio Velderrain&#39;s manual host gate</li>
 </ul>
 <h2>Documentation State</h2>
 <p>The docs package now includes:</p>

@@ -2,12 +2,14 @@
 
 ## Status
 
-Queued follow-on post-release program.
+Active post-release program.
 
-Activation is intentionally deferred until:
+Activation is now satisfied:
 
 - `PROGRAM-0003` is closed on the benchmark-proof packet under `TRANCHE-011`
-- the queue promotes `TRANCHE-012` from `queued` to `active`
+- `PROGRAM-0005` is closed on the retained execution-policy contract under
+  `TRANCHE-013`
+- the queue has promoted `TRANCHE-012` to `active`
 
 ## Purpose
 
@@ -19,9 +21,10 @@ by giving release cadence, benchmark refresh cadence, operator surfaces, and
 control-plane upkeep an explicit home.
 
 Feature-layer extension execution flexibility and runtime-acquisition UX are
-not owned by this sustainment program. They are queued separately under
-`PROGRAM-0005` so the repo does not hide user-facing execution-policy work
-inside generic maintenance language.
+not owned by this sustainment program. That work is now closed under
+`PROGRAM-0005`, and any future execution-policy expansion must reopen under a
+new explicit program instead of being hidden inside generic maintenance
+language.
 
 ## North Star
 
@@ -80,7 +83,7 @@ Every slice must preserve:
 
 ## First Implementation Slice
 
-Start with [ISSUE-0409 Post-Release Sustainment And Release Cadence](../issues/ISSUE-0409-post-release-sustainment-and-release-cadence.md).
+Continue with [ISSUE-0409 Post-Release Sustainment And Release Cadence](../issues/ISSUE-0409-post-release-sustainment-and-release-cadence.md).
 
 That slice should:
 
@@ -91,5 +94,6 @@ That slice should:
 ## Success Condition
 
 This program is complete when `vi-history-suite` has a stable post-benchmark
-operating model for releases, benchmark refresh, and documentation/operator
-upkeep, with no ambiguity about where ongoing maintenance work belongs.
+and post-execution-policy operating model for releases, benchmark refresh, and
+documentation/operator upkeep, with no ambiguity about where ongoing
+maintenance work belongs.

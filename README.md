@@ -351,11 +351,12 @@ The current active tranches are:
 
 - `TRANCHE-010`: public facade release kit and host-machine acceptance
 - active issue: `ISSUE-0407`
-- `TRANCHE-013`: extension execution flexibility, canonical execution-request
-  validation, and runtime acquisition UX
-- closed and queued follow-on tranches:
+- `TRANCHE-012`: post-release sustainment and release cadence
+- closed follow-on tranches:
   - `TRANCHE-011`: repeatable Windows and Linux benchmark proof
-  - `TRANCHE-012`: post-release sustainment and release cadence
+  - `TRANCHE-013`: extension execution flexibility, canonical execution-request
+    validation, and runtime acquisition UX, now closed on transparent provider
+    and acquisition truth
 
 Issue-ready execution programs:
 

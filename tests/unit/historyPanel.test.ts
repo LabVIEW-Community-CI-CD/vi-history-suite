@@ -62,6 +62,7 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('data-testid="history-compare-runtime-status"');
     expect(html).toContain('data-testid="history-compare-runtime-summary"');
     expect(html).toContain('data-testid="history-compare-runtime-next-action"');
+    expect(html).toContain('data-testid="history-compare-runtime-details"');
     expect(html).toContain('data-testid="history-review-packet"');
     expect(html).toContain('data-testid="history-status-history-window"');
     expect(html).toContain('data-testid="history-review-window"');
@@ -213,7 +214,29 @@ describe('renderHistoryPanelHtml', () => {
       comparisonRuntimePanelSummary:
         'Generate compare for abcdef12 vs 11111111. Provider: windows-container. Execution mode: auto. Report status: ready-for-runtime. Runtime state: succeeded. Windows image acquisition: acquired.',
       comparisonRuntimePanelNextAction:
-        'Next action: open the retained comparison packet for the full governed runtime summary.'
+        'Next action: open the retained comparison packet for the full governed runtime summary.',
+      comparisonRuntimePanelDetails: [
+        {
+          label: 'Provider',
+          value: 'windows-container'
+        },
+        {
+          label: 'Execution mode',
+          value: 'auto'
+        },
+        {
+          label: 'Report status',
+          value: 'ready-for-runtime'
+        },
+        {
+          label: 'Runtime state',
+          value: 'succeeded'
+        },
+        {
+          label: 'Windows image acquisition',
+          value: 'acquired'
+        }
+      ]
     });
 
     expect(html).toContain('data-state="succeeded"');
@@ -223,6 +246,9 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain(
       'Next action: open the retained comparison packet for the full governed runtime summary.'
     );
+    expect(html).toContain('<strong>Provider:</strong> windows-container');
+    expect(html).toContain('<strong>Execution mode:</strong> auto');
+    expect(html).toContain('<strong>Windows image acquisition:</strong> acquired');
   });
 
   it('renders capability-truthful disabled actions when optional surfaces are unavailable in this build', () => {
