@@ -14,25 +14,31 @@ The current governed debt items for this issue are tracked in
 
 ## Status
 
-Queued follow-on post-release issue.
+Closed on bounded post-release benchmark truth.
 
-Activation depends on:
+Closure basis:
 
-- `PROGRAM-0002` closing Gate D under `TRANCHE-010`
-- `TRANCHE-011` becoming the active queue tranche
+- `TRANCHE-011` is now done on the accepted `129`-commit / `128`-pair
+  comparable-prefix packet
+- the current governed Windows benchmark-image contract remains bounded at pair
+  `129` as an accepted current-contract exception
+- a fresh governed canonical-host Linux rerun on `2026-04-06` still failed at
+  pair `135/138` as
+  `labview-cli-connection-failed (linux-headless-recursive-load)` after one
+  governed `CloseLabVIEW -Headless` recovery attempt exited `1`
 
-Current retained benchmark truth before activation:
+Current retained benchmark truth at closure:
 
 - the deep Linux host benchmark now fails truthfully late at pair `135/138`
-  with `command-exited-nonzero`
+  with `labview-cli-connection-failed`
 - the retained Linux summary now records
   `terminalPairDiagnosticReason=linux-headless-recursive-load`
 - bounded fresh Linux container repros show the same pair does not complete
   under either `LabVIEWCLI` or `LVCompare`
 - the runtime now attempts one governed `LabVIEWCLI CloseLabVIEW -Headless`
   session reset plus one retry when that recursive-load diagnosis is retained,
-  but the latest full-window benchmark summary still predates that recovery
-  posture
+  and the latest full-window benchmark summary now proves that recovery attempt
+  still exited `1` before the retry
 - older retry experiments after timeout degraded into `-350000` connection
   failure instead of recovering the headless session
 - a governed comparable-prefix packet now retains the accepted cross-OS
@@ -221,7 +227,7 @@ Current retained benchmark truth before activation:
 - retained comparative benchmark packet
 - updated control-plane docs and design-gate pass
 
-## First Active Slice
+## Final Closure Slice
 
 - consume the retained Linux pair `135/138` failure evidence
 - preserve the Linux headless-runtime blocker as governed benchmark truth
@@ -229,4 +235,5 @@ Current retained benchmark truth before activation:
 - hold the current governed Windows benchmark image contract at its accepted
   pair-129 ceiling unless the contract itself changes
 - stop short of claiming full comparability until both image lanes have
-  truthful terminal summaries
+  truthful terminal summaries, and close the issue once the bounded Linux
+  blocker is explicit instead of implied

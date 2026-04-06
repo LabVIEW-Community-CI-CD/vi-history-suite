@@ -59,7 +59,7 @@ Current landed scaffold state:
   documented as benchmark only and belongs to the queued benchmark-proof lane
 - the private GitHub experiment mirror is documented as benchmark only and not
   as product authority
-- repeatable benchmark proof now has explicit queued ownership under
+- repeatable benchmark proof now has explicit closed ownership under
   `PROGRAM-0003` / `ISSUE-0408` / `TRANCHE-011`, while sustainment is queued
   under `PROGRAM-0004` / `ISSUE-0409` / `TRANCHE-012`
 

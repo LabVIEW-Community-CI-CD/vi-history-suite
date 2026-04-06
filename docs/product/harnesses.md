@@ -176,7 +176,7 @@
   NI Package Manager plus ISO installation, but that is a different benchmark
   image contract and does not change the current accepted comparable prefix
 - current retained Linux full-window blocker:
-  `pair 135 / 138 :: command-exited-nonzero (linux-headless-recursive-load)`
+  `pair 135 / 138 :: labview-cli-connection-failed (linux-headless-recursive-load)`
 - the full 139-commit / 138-pair window remains the deep Windows benchmark
   target; the bounded comparable prefix is the governed cross-OS timing scope
   until the latest official NI Linux runtime truth changes

@@ -21,7 +21,7 @@ The governing contract and taxonomy are:
 | `DEBT-0001` | retired | `control-plane` | high | high | `TRANCHE-011` / `ISSUE-0408` / `PROGRAM-0003` | retired by `3dab8fda2f1a924b22f3d1614df6c3c070377844` |
 | `DEBT-0002` | retired | `benchmark` | high | high | `TRANCHE-011` / `ISSUE-0408` / `PROGRAM-0003` | retired by `44891ebe541ad8f9d1da1c3990aafeb947a049bc` |
 | `DEBT-0003` | accepted-exception | `benchmark` | high | high | `TRANCHE-011` / `ISSUE-0408` / `PROGRAM-0003` | reopen only if the governed Windows benchmark image contract changes to provide a coherent same-bitness `labview-cli` bundle |
-| `DEBT-0004` | open | `runtime` | high | high | `TRANCHE-011` / `ISSUE-0408` / `PROGRAM-0003` | complete Linux `138/138` truthfully or close the full-window blocker explicitly on the bounded comparable-prefix control plane |
+| `DEBT-0004` | accepted-exception | `runtime` | high | high | `TRANCHE-011` / `ISSUE-0408` / `PROGRAM-0003` | reopen only if the governed NI Linux runtime/benchmark-image contract changes or another in-scope Linux benchmark provider becomes the accepted authority surface |
 | `DEBT-0005` | retired | `control-plane` | high | high | `TRANCHE-011` / `ISSUE-0408` / `PROGRAM-0003` | retired by `2f4ced0` |
 | `DEBT-0006` | open | `control-plane` | high | high | `TRANCHE-013` / `ISSUE-0410` / `PROGRAM-0005` | finish fuller front-facing provider/acquisition transparency after the landed host-fact, Docker-capability, governed image-acquisition, history-panel summary, live panel-progress, compare-warning, compare-success, and panel-reopen persistence slices |
 
@@ -38,8 +38,11 @@ The governing contract and taxonomy are:
   surface at pair `129`, with x86 `LabVIEWCLI.exe`, x64 `LabVIEW.exe`, and no
   coherent same-bitness `labview-cli` bundle in scope for the current image
   recipe.
-- `DEBT-0004` is the active Linux pair-135 full-window benchmark-proof
-  ceiling.
+- `DEBT-0004` is now an accepted bounded exception: a fresh governed
+  canonical-host rerun on April 6, 2026 still failed at pair `135/138` as
+  `labview-cli-connection-failed (linux-headless-recursive-load)` after one
+  governed `CloseLabVIEW -Headless` reset exited `1`, so the current Linux
+  contract remains bounded at that late full-window seam.
 - `DEBT-0005` captures the now-retired admission-control gap where
   CLI/env/default synthesis could materialize an explicit effective runtime
   bundle after a narrower raw-CLI validation pass had already succeeded.

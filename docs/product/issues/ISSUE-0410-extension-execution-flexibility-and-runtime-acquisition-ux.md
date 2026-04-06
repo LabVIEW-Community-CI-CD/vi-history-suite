@@ -8,13 +8,12 @@ progress, and transparent provider feedback.
 
 ## Status
 
-Queued follow-on post-release issue with nine repo-side execution-policy slices already
-landed.
+Active post-release issue with nine repo-side execution-policy slices already landed.
 
-Activation depends on:
+Activation dependencies are now satisfied:
 
-- `PROGRAM-0003` closing the benchmark-proof packet
-- `TRANCHE-013` becoming the active queue tranche
+- `PROGRAM-0003` is closed on bounded benchmark truth
+- `TRANCHE-013` is the active queue tranche
 
 ## Scope
 

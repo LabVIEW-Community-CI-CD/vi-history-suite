@@ -95,7 +95,9 @@ describe('execution-policy control plane', () => {
     expect(readme).toContain('TRANCHE-013');
     expect(readme).toContain('canonical execution-request');
     expect(currentState).toContain('`TRANCHE-013`: Extension execution flexibility and runtime acquisition UX');
-    expect(currentState).toContain('`PROGRAM-0005`: Extension execution flexibility and runtime acquisition UX');
+    expect(currentState).toContain(
+      '[PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)'
+    );
     expect(currentState).toContain('`package.json` exposes `viHistorySuite.executionMode`');
     expect(currentState).toContain('canonical effective execution-request validation');
     expect(currentState).toContain('Windows container-capability truth');

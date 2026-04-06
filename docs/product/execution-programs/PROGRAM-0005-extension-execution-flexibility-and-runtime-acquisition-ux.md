@@ -2,15 +2,15 @@
 
 ## Status
 
-Queued follow-on post-release program with nine repo-side execution-policy slices
-already landed.
+Active post-release program with nine repo-side execution-policy slices already
+landed.
 
-Activation is intentionally deferred until:
+Activation dependencies are now satisfied:
 
-- `PROGRAM-0003` closes the benchmark-proof packet under `TRANCHE-011`
-- the queue promotes `TRANCHE-013` from `queued` to `active`
-- the remaining broader front-facing provider/acquisition transparency work
-  moves beyond the landed selector, Docker-capability, acquisition-progress,
+- `PROGRAM-0003` is closed on bounded benchmark truth under `TRANCHE-011`
+- `TRANCHE-013` is now the active driver-seat implementation lane
+- the remaining broader front-facing provider/acquisition transparency work now
+  proceeds beyond the landed selector, Docker-capability, acquisition-progress,
   history-panel latest-runtime-summary, live panel-progress, compare-warning,
   compare-success, and panel-reopen persistence slices
 

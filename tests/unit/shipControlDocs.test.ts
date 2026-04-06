@@ -73,12 +73,14 @@ describe('ship-control direction system', () => {
     expect(shipDoc).toContain('- `TRANCHE-009`');
   });
 
-  it('keeps exactly one active tranche in the development queue and advances it after ship closure without rewriting the landed ship record', () => {
+  it('keeps the ship-facing tranche active while allowing a separate driver-seat post-release tranche after ship closure', () => {
     const queue = readJson<QueueEntry[]>('docs/product/development-queue.json');
     const activeTranches = queue.filter((entry) => entry.status === 'active');
 
-    expect(activeTranches).toHaveLength(1);
-    expect(activeTranches[0]?.id).toBe('TRANCHE-010');
+    expect(activeTranches).toHaveLength(2);
+    expect(activeTranches.map((entry) => entry.id)).toEqual(
+      expect.arrayContaining(['TRANCHE-010', 'TRANCHE-013'])
+    );
   });
 
   it('retains a machine-readable readiness matrix with unique criteria and consistent blocker wiring', () => {

@@ -6,7 +6,7 @@ Queued follow-on post-release program.
 
 Activation is intentionally deferred until:
 
-- `PROGRAM-0003` closes the benchmark-proof packet under `TRANCHE-011`
+- `PROGRAM-0003` is closed on the benchmark-proof packet under `TRANCHE-011`
 - the queue promotes `TRANCHE-012` from `queued` to `active`
 
 ## Purpose

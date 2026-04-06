@@ -1,6 +1,6 @@
 # HARNESS-VHS-002 Comparable Prefix Benchmark Packet
 
-- Generated at: 2026-04-06T01:17:30.264Z
+- Generated at: 2026-04-06T01:43:18.681Z
 - Proof state: bounded-prefix-comparable
 - Target: resource/plugins/lv_icon.vi
 - Full window: 139 commits / 138 pairs
@@ -19,8 +19,8 @@
 - Latest summary: /mnt/c/Users/sveld/AppData/Local/VI History Suite/host-linux-dashboard-benchmark/workspace-stage/current/.cache/github-experiments/linux-dashboard-benchmark/HARNESS-VHS-002/latest-summary.json
 - Dashboard JSON: /mnt/c/Users/sveld/AppData/Local/VI History Suite/host-linux-dashboard-benchmark/workspace-stage/current/.cache/harness-reports/HARNESS-VHS-002/workspace-storage/dashboards/5ae492b4571b/4053fc0e2e30/242c931b6588/dashboard.json
 - Validated comparable pairs: 134
-- Prefix runtime total: 442451 ms
-- Full-window outcome: pair 135 / 138 :: command-exited-nonzero (linux-headless-recursive-load)
+- Prefix runtime total: 413224 ms
+- Full-window outcome: pair 135 / 138 :: labview-cli-connection-failed (linux-headless-recursive-load)
 
 ## Windows Benchmark Image
 
@@ -72,6 +72,6 @@
 
 ## Comparison
 
-- Linux / Windows runtime ratio: 0.1051
-- Windows / Linux speedup factor: 9.5173
-- Runtime delta: 3768468 ms
+- Linux / Windows runtime ratio: 0.0981
+- Windows / Linux speedup factor: 10.1904
+- Runtime delta: 3797695 ms

@@ -1,7 +1,7 @@
 {
   "schema": "vi-history-suite/comparable-prefix-benchmark-packet@v1",
   "benchmarkId": "HARNESS-VHS-002-comparable-prefix",
-  "generatedAt": "2026-04-06T01:17:30.264Z",
+  "generatedAt": "2026-04-06T01:43:18.681Z",
   "harnessId": "HARNESS-VHS-002",
   "targetRelativePath": "resource/plugins/lv_icon.vi",
   "proofState": "bounded-prefix-comparable",
@@ -46,17 +46,21 @@
         "host-native / labview-cli / auto / linux": 128
       },
       "representedPairCount": 138,
-      "comparablePrefixRuntimeTotalMs": 442451,
+      "comparablePrefixRuntimeTotalMs": 413224,
       "fullWindowBlocker": {
         "completionState": "failed",
         "comparabilityState": "characterization-only",
         "processedPairCount": 135,
         "generatedReportCount": 134,
         "terminalPairIndex": 135,
-        "terminalPairFailureReason": "command-exited-nonzero",
+        "terminalPairFailureReason": "labview-cli-connection-failed",
         "terminalPairDiagnosticReason": "linux-headless-recursive-load",
         "terminalPairDiagnosticNotes": [
-          "Retained Linux headless status reported a recursive LEIF load while opening /<resource>/dialog/GSW/GSW.lvlibp/1abvi3w/resource/dialog/GSW/GSW_MainPanel.vi."
+          "LabVIEW CLI reported that LabVIEW launched successfully before the operation failed.",
+          "Retained Linux headless status reported a recursive LEIF load while opening /<resource>/dialog/GSW/GSW.lvlibp/1abvi3w/resource/dialog/GSW/GSW_MainPanel.vi.",
+          "LabVIEW CLI launched or reused a headless LabVIEW session but failed to establish the required VI Server connection.",
+          "Attempted Linux headless session reset via LabVIEWCLI CloseLabVIEW after recursive-load diagnosis, then retried the pair once.",
+          "Linux headless session reset via LabVIEWCLI CloseLabVIEW exited with code 1 before retry."
         ]
       }
     },
@@ -192,9 +196,9 @@
   },
   "comparison": {
     "lastComparablePairId": "87792a7b6545",
-    "linuxVsWindowsRuntimeRatio": 0.1050723131933908,
-    "windowsVsLinuxSpeedupFactor": 9.517255018069797,
-    "deltaRuntimeMs": 3768468
+    "linuxVsWindowsRuntimeRatio": 0.09813154800650405,
+    "windowsVsLinuxSpeedupFactor": 10.19040278396221,
+    "deltaRuntimeMs": 3797695
   },
   "retainedArtifacts": {
     "windowsHostLatestRunPath": "/mnt/c/Users/sveld/AppData/Roaming/Code/User/workspaceStorage/0bca0972b9105eae5fae72858e3399d0/svelderrainruiz.vi-history-suite/dashboards/latest-dashboard-run.json",

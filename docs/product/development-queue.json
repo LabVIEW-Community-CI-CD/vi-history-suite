@@ -93,9 +93,9 @@
   {
     "id": "TRANCHE-011",
     "title": "Repeatable Windows and Linux benchmark proof",
-    "status": "queued",
+    "status": "done",
     "source": "author direction",
-    "summary": "After `PROGRAM-0002` closes Gate D, prove repeatable `HARNESS-VHS-002` benchmark truth across the canonical Windows host baseline, the published Windows benchmark image, and the Linux benchmark image. The tranche now treats the retained `129`-commit / `128`-pair comparable-prefix packet as the accepted cross-OS timing scope because both governed Windows surfaces lose truthful comparability at pair `129` while the latest official NI Linux full window remains blocked later at pair `135/138`; it closes when the Windows image lane is normalized into the comparative benchmark packet and the bounded Linux blocker remains explicit.",
+    "summary": "Retain repeatable `HARNESS-VHS-002` benchmark truth across the canonical Windows host baseline, the published Windows benchmark image, and the Linux benchmark image as one governed comparative packet. This tranche is now closed on the accepted `129`-commit / `128`-pair comparable-prefix packet: both governed Windows surfaces remain bounded at pair `129`, and a fresh governed canonical-host Linux rerun on April 6, 2026 still failed late at pair `135/138` as `labview-cli-connection-failed (linux-headless-recursive-load)` after one governed `CloseLabVIEW -Headless` recovery attempt exited `1`, so the bounded Linux full-window blocker is explicit accepted truth rather than an implied open question.",
     "issues": [
       "ISSUE-0408"
     ]
@@ -113,9 +113,9 @@
   {
     "id": "TRANCHE-013",
     "title": "Extension execution flexibility and runtime acquisition UX",
-    "status": "queued",
+    "status": "active",
     "source": "author direction",
-    "summary": "After benchmark proof lands, add a transparent installed-extension execution policy that separates `auto`, `host-only`, and `docker-only`, validates one canonical effective execution request before provider work starts, supports compatible host LabVIEW 2026 Q1 x86 or x64 execution when clean, forces Docker isolation when an already-open host LabVIEW 2026 session or governed VI Server collision would contaminate host execution, fails closed with actionable guidance when Docker is required but unavailable or not Windows-container-capable, surfaces visible image-pull progress, and on Windows pulls the governed Windows image without silent host/Docker fallback.",
+    "summary": "With benchmark proof now closed on bounded truth, continue the transparent installed-extension execution policy that separates `auto`, `host-only`, and `docker-only`, validates one canonical effective execution request before provider work starts, supports compatible host LabVIEW 2026 Q1 x86 or x64 execution when clean, forces Docker isolation when an already-open host LabVIEW 2026 session or governed VI Server collision would contaminate host execution, fails closed with actionable guidance when Docker is required but unavailable or not Windows-container-capable, surfaces visible image-pull progress, and on Windows pulls the governed Windows image without silent host/Docker fallback while finishing the remaining fuller front-facing provider/acquisition transparency.",
     "issues": [
       "ISSUE-0410"
     ]

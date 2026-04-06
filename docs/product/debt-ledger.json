@@ -1,7 +1,7 @@
 {
   "generatedFor": "vi-history-suite",
   "contractStatus": "active",
-  "lastReviewedDate": "2026-04-05",
+  "lastReviewedDate": "2026-04-06",
   "statuses": [
     "open",
     "retired",
@@ -123,12 +123,12 @@
     },
     {
       "id": "DEBT-0004",
-      "title": "Linux deep benchmark full-window proof remains bounded by pair 135 recursive-load failure",
+      "title": "Linux pair-135 full-window benchmark ceiling is an accepted bounded exception for the current governed Linux contract",
       "debtClass": "runtime",
-      "status": "open",
+      "status": "accepted-exception",
       "severity": "high",
       "contaminationRisk": "high",
-      "summary": "The Linux deep `HARNESS-VHS-002` window still fails late at pair `135/138` with retained diagnostic reason `linux-headless-recursive-load`, so the full window is not yet comparable benchmark truth.",
+      "summary": "The Linux deep `HARNESS-VHS-002` window remains bounded at pair `135/138`. A fresh governed canonical-host rerun on 2026-04-06 still failed there as `labview-cli-connection-failed` with retained diagnostic reason `linux-headless-recursive-load`, and the governed `CloseLabVIEW -Headless` recovery attempt exited `1` before retry. The accepted cross-OS benchmark truth therefore remains the retained `129`-commit / `128`-pair comparable-prefix packet rather than the full Linux window.",
       "owner": {
         "trancheId": "TRANCHE-011",
         "issueId": "ISSUE-0408",
@@ -148,10 +148,10 @@
         "docs/requirements/srs.md"
       ],
       "discoveredContext": "PROGRAM-0003 Linux full-window benchmark proof",
-      "nextGate": "Either complete Linux `138/138` truthfully with the governed deep benchmark lane or keep the full-window blocker explicit while the bounded comparable prefix remains the accepted cross-OS timing scope.",
-      "exitCriteria": "Linux full-window proof either completes truthfully or the repo closes PROGRAM-0003 with the bounded full-window blocker explicitly normalized into the benchmark packet and control plane.",
+      "nextGate": "Reopen this exception only if the governed NI Linux runtime/benchmark-image contract changes enough to justify a new full-window proof attempt, or another in-scope Linux benchmark provider becomes the accepted authority surface.",
+      "exitCriteria": "Keep the pair-135 full-window ceiling explicit while the retained `129`-commit / `128`-pair comparable-prefix packet remains the accepted cross-OS timing scope; do not treat repeated reruns against the same current Linux contract as unresolved open debt.",
       "retirementCommit": null,
-      "acceptedExceptionRationale": null
+      "acceptedExceptionRationale": "The current governed Linux full-window blocker is now freshly retained under the canonical-host/AppData rerun path with the current recovery posture. Because the same contract still fails at pair `135/138` after one governed `CloseLabVIEW -Headless` reset and retry, keeping PROGRAM-0003 notionally open would blur bounded benchmark truth with vendor/runtime churn. Reopening requires a contract change or a new accepted Linux provider, not another rerun against the same current contract."
     },
     {
       "id": "DEBT-0005",

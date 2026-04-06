@@ -347,15 +347,15 @@ Current install paths are:
 - documentation-package workbench image:
   `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
 
-The current active tranche is:
+The current active tranches are:
 
 - `TRANCHE-010`: public facade release kit and host-machine acceptance
 - active issue: `ISSUE-0407`
-- queued follow-on tranches:
+- `TRANCHE-013`: extension execution flexibility, canonical execution-request
+  validation, and runtime acquisition UX
+- closed and queued follow-on tranches:
   - `TRANCHE-011`: repeatable Windows and Linux benchmark proof
   - `TRANCHE-012`: post-release sustainment and release cadence
-  - `TRANCHE-013`: extension execution flexibility, canonical execution-request
-    validation, and runtime acquisition UX
 
 Issue-ready execution programs:
 
@@ -494,7 +494,7 @@ now retains the accepted cross-OS comparable timing scope in
 `docs/product/benchmark-packets/HARNESS-VHS-002-comparable-prefix.json`, while
 the full Linux deep window remains an explicit retained blocker because the
 latest official NI Linux truth still failed at pair `135/138` with
-`command-exited-nonzero (linux-headless-recursive-load)`.
+`labview-cli-connection-failed (linux-headless-recursive-load)`.
 
 Host-runnable Windows benchmark image proof:
 

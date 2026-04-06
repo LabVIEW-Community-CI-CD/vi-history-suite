@@ -2,12 +2,20 @@
 
 ## Status
 
-Queued follow-on post-release program.
+Closed on bounded post-release benchmark truth.
 
-Activation is intentionally deferred until:
+Closure is intentionally explicit:
 
-- `PROGRAM-0002` closes Gate D under `TRANCHE-010`
-- the queue promotes `TRANCHE-011` from `queued` to `active`
+- the accepted cross-OS comparable prefix remains `129` commits / `128` pairs
+- the current governed Windows benchmark-image contract remains bounded at pair
+  `129` as an accepted current-contract exception
+- a fresh governed canonical-host Linux rerun on `2026-04-06` still failed at
+  pair `135/138` as
+  `labview-cli-connection-failed (linux-headless-recursive-load)` after one
+  governed `CloseLabVIEW -Headless` recovery attempt exited `1`
+- `TRANCHE-011` is now done; reopen this program only if the governed Windows
+  or Linux benchmark contracts change enough to justify a new benchmark-proof
+  closure decision
 
 ## Purpose
 
@@ -215,19 +223,21 @@ artifacts beside the timestamped run summary, and keeps future
 comparable-prefix packet derivation on the latest eligible proof instead of
 trusting only mutable `latest-summary.json` and `dashboard-smoke.json`.
 
-Current retained Linux blocker before activation:
+Current retained Linux full-window blocker at closure:
 
-- pair `135/138` is reproducibly failing under the Linux image lane
-- fresh Linux container repros now show the same pair does not complete under
-  either `LabVIEWCLI` or `LVCompare`
-- the retained Linux temp-surface evidence now classifies the blocker as
-  `linux-headless-recursive-load`
-- the runtime now attempts one governed `LabVIEWCLI CloseLabVIEW -Headless`
-  session reset plus one retry after that recursive-load diagnosis, but the
-  latest retained full-window benchmark result still predates that recovery
-  posture
-- older retry experiments after timeout degraded into `-350000` connection
-  failure rather than recovering the session
+- a fresh governed canonical-host rerun on `2026-04-06` still failed at pair
+  `135/138` under the proper host/AppData path
+- the retained Linux summary now records
+  `terminalPairFailureReason=labview-cli-connection-failed`
+- the retained Linux summary and pair-failure receipt still classify the late
+  blocker as `linux-headless-recursive-load`
+- the retained diagnostic notes now also state that LabVIEW CLI launched or
+  reused a headless LabVIEW session before the required VI Server connection
+  failed
+- one governed `LabVIEWCLI CloseLabVIEW -Headless` session reset was attempted
+  and exited `1` before the retry
+- bounded fresh Linux container repros and prior manual pair-135 diagnostics
+  still support the same late full-window blocker
 - a governed comparable-prefix packet now retains the accepted cross-OS
   `129`-commit / `128`-pair scope in
   `docs/product/benchmark-packets/HARNESS-VHS-002-comparable-prefix.json`

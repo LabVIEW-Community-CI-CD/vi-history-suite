@@ -15,10 +15,12 @@ Closed and landed for the first immutable SemVer release:
 - current repo-active tranche: `TRANCHE-010`
 - current repo-active issue: [ISSUE-0407 Public Facade Release Kit And Host-Machine Acceptance](./issues/ISSUE-0407-public-facade-installer-and-windows-acceptance.md)
 - current repo-active execution program: [PROGRAM-0002 Public Facade Release Kit And Host-Machine Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
-- queued governed post-release follow-ons:
+- current driver-seat post-release tranche: `TRANCHE-013`
+- current driver-seat post-release issue: [ISSUE-0410 Extension Execution Flexibility And Runtime Acquisition UX](./issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md)
+- current driver-seat post-release execution program: [PROGRAM-0005 Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
+- closed and queued governed post-release follow-ons:
   - `TRANCHE-011` / [ISSUE-0408 Repeatable Benchmark Proof](./issues/ISSUE-0408-repeatable-benchmark-proof.md) / [PROGRAM-0003 Repeatable Benchmark Proof](./execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md)
   - `TRANCHE-012` / [ISSUE-0409 Post-Release Sustainment And Release Cadence](./issues/ISSUE-0409-post-release-sustainment-and-release-cadence.md) / [PROGRAM-0004 Post-Release Sustainment And Release Cadence](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)
-  - `TRANCHE-013` / [ISSUE-0410 Extension Execution Flexibility And Runtime Acquisition UX](./issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md) / [PROGRAM-0005 Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
 
 ## Release Target
 
@@ -109,12 +111,13 @@ These files are the authoritative retained ship-record surfaces:
 
 ## Queue Rule
 
-`development-queue.json` shall have exactly one `active` tranche at a time.
-Everything else is `queued`, `done`, or sustain work described outside the
-active implementation lane. While a ship target is still open, that active
-tranche must match the active ship record. After ship closure, the queue may
-advance to one governed post-release tranche while this ship record remains
-closed historical evidence.
+While a ship target is still open, `development-queue.json` shall have exactly
+one `active` tranche and that tranche must match the active ship record. After
+ship closure, the queue may retain the human-gated public-closeout tranche as
+the repo-active surface while also promoting one separate driver-seat
+post-release tranche for deterministic implementation work. Everything else
+remains `queued`, `done`, or sustain work described outside those explicit
+active lanes.
 
 ## Evidence Rule
 

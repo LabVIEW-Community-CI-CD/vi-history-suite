@@ -105,8 +105,10 @@ dashboard concentration:</p>
 <p>Those proof surfaces exist so future sessions can verify the review flow from
 retained evidence instead of from chat memory.</p>
 <h2>Exact-Pair Diagnosis</h2>
-<p><code>PROGRAM-0003</code> now depends on exact-pair diagnosis reruns for the first invalid
-benchmark boundaries.</p>
+<p><code>PROGRAM-0003</code> is now closed on bounded benchmark truth, and exact-pair
+diagnosis reruns remain the governed proof surface that explains the accepted
+Windows pair-129 ceiling instead of leaving it as an ambiguous benchmark
+blocker.</p>
 <p>Those reruns are governed, not ad hoc. The canonical rules now include:</p>
 <ul>
 <li><code>--selected-hash</code> and <code>--base-hash</code> must be supplied together</li>
@@ -171,6 +173,16 @@ it to benchmark-image truth</li>
 <p>Ambient environment changes such as <code>LV_RTE_HEADLESS=1</code> can still support
 bounded characterization work, but they do not replace the canonical admission
 contract.</p>
+<p>The retained full benchmark packet is bounded too:</p>
+<ul>
+<li>the accepted cross-OS comparable packet remains <code>129</code> commits / <code>128</code> pairs</li>
+<li>Windows pair <code>129</code> is the accepted current-contract ceiling</li>
+<li>a fresh governed canonical-host Linux rerun on April 6, 2026 still failed
+late at pair <code>135/138</code> as <code>labview-cli-connection-failed (linux-headless-recursive-load)</code> after one governed
+<code>CloseLabVIEW -Headless</code> reset exited <code>1</code></li>
+<li>that Linux full-window seam is now explicit accepted exception truth under
+the current governed Linux contract, not an implied still-open proof target</li>
+</ul>
 <h2>Read Next</h2>
 <ul>
 <li><a href="#" data-page-id="user-workflow">User Workflow</a></li>

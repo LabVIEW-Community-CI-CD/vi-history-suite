@@ -12,7 +12,8 @@ Queued follow-on post-release issue.
 
 Activation depends on:
 
-- `PROGRAM-0003` closing the benchmark-proof packet
+- `PROGRAM-0003` is now closed on the benchmark-proof packet under
+  `TRANCHE-011`
 - `TRANCHE-012` becoming the active queue tranche
 
 ## Scope

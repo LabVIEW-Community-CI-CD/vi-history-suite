@@ -63,25 +63,26 @@ canonical Windows 11 machine</li>
 <li>governed documentation and wiki-authoring workbench surfaces</li>
 </ul>
 <h2>Active Queue</h2>
-<p>The current active post-release tranche is:</p>
+<p>The current active post-release tranches are:</p>
 <ul>
 <li><code>TRANCHE-010</code>: Public Facade Release Kit And Host-Machine Acceptance</li>
+<li><code>TRANCHE-013</code>: Extension Execution Flexibility And Runtime Acquisition UX</li>
 </ul>
-<p>The current active issue and program are:</p>
+<p>The current active issues and programs are:</p>
 <ul>
 <li><code>ISSUE-0407</code>: Public Facade Release Kit And Host-Machine Acceptance</li>
 <li><code>PROGRAM-0002</code>: Public Facade Release Kit And Host-Machine Acceptance</li>
+<li><code>ISSUE-0410</code>: Extension Execution Flexibility And Runtime Acquisition UX</li>
+<li><code>PROGRAM-0005</code>: Extension Execution Flexibility And Runtime Acquisition UX</li>
 </ul>
-<p>The queued follow-on tranches and programs are now explicit:</p>
+<p>The closed and follow-on tranches and programs are now explicit:</p>
 <ul>
 <li><code>TRANCHE-011</code>: Repeatable Windows And Linux Benchmark Proof</li>
 <li><code>PROGRAM-0003</code>: Repeatable Benchmark Proof</li>
 <li><code>TRANCHE-012</code>: Post-Release Sustainment And Release Cadence</li>
 <li><code>PROGRAM-0004</code>: Post-Release Sustainment And Release Cadence</li>
-<li><code>TRANCHE-013</code>: Extension Execution Flexibility And Runtime Acquisition UX</li>
-<li><code>PROGRAM-0005</code>: Extension Execution Flexibility And Runtime Acquisition UX</li>
 </ul>
-<p>Important truth about that tranche:</p>
+<p>Important truth about those active tranches:</p>
 <ul>
 <li>GitLab remains the private authority repo and release-control surface</li>
 <li>the public GitHub repo is the public release-kit/setup/support surface</li>
@@ -89,8 +90,9 @@ canonical Windows 11 machine</li>
 <li>Docker is no longer part of the default public setup path</li>
 <li>the Windows 11 host-machine automated acceptance flow already succeeds</li>
 <li>the remaining human UX gate is Sergio Velderrain&#39;s manual right-click pass</li>
-<li>benchmark proof is now a separate queued program, not part of the active
+<li>benchmark proof is now a closed bounded program, not part of the active
 public-closeout exit gate</li>
+<li>execution-policy work is the active feature-layer post-release lane</li>
 </ul>
 <h2>Benchmark And Proof State</h2>
 <p>The product now has separate proof surfaces instead of one blended lane:</p>
@@ -99,8 +101,13 @@ public-closeout exit gate</li>
 <li>Linux benchmark lane for characterization and performance comparison</li>
 <li>published Windows benchmark-image lane for repeatable deep benchmarking</li>
 </ul>
-<p>The deep Linux benchmark still remains characterization-only because the latest
-retained run failed late rather than completing the full window.</p>
+<p>The benchmark-proof program is now closed on bounded truth rather than kept
+implicitly open.</p>
+<p>The accepted cross-OS comparable packet remains <code>129</code> commits / <code>128</code> pairs.</p>
+<p>The deep Linux benchmark still remains characterization-only because a fresh
+governed canonical-host rerun on April 6, 2026 still failed late at pair
+<code>135/138</code> as <code>labview-cli-connection-failed (linux-headless-recursive-load)</code> after one governed
+<code>CloseLabVIEW -Headless</code> recovery attempt exited <code>1</code>.</p>
 <p>The Windows benchmark-image lane is now published and pullable, and the
 retained local host proof now closes pair <code>129</code> as an accepted current-contract
 ceiling rather than an open ambiguous Windows blocker.</p>
@@ -133,6 +140,8 @@ and no coherent same-bitness <code>labview-cli</code> bundle</li>
 <li>out-of-scope alternative Windows x86 provisioning may exist through slower
 NI Package Manager plus ISO installation, but that is a different contract
 and does not reopen the accepted current-contract ceiling</li>
+<li>the Linux pair-135 ceiling is now also explicit retained truth rather than a
+silently open benchmark target under the current governed Linux contract</li>
 <li>explicit Windows runtime override bundles must stay one coherent x86 or x64
 surface even when <code>--prefer-bitness</code> is omitted</li>
 <li>canonical Windows host-native reruns fail closed when stale LabVIEW-related
@@ -145,9 +154,9 @@ x64 CLI install exists</li>
 bundle after CLI, environment, and entrypoint-default synthesis instead of
 validating only a narrower raw-CLI shape</li>
 </ul>
-<h2>Queued Execution Flexibility State</h2>
-<p>The repo now also carries a separate user-facing execution-policy lane whose
-four bounded implementation slices have already landed.</p>
+<h2>Active Execution Flexibility State</h2>
+<p>The repo now carries a separate user-facing execution-policy lane that is the
+current active driver-seat post-release program.</p>
 <p>Current implemented truth:</p>
 <ul>
 <li>the installed extension now exposes <code>viHistorySuite.executionMode</code></li>

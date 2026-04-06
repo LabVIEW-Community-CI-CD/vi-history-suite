@@ -52,19 +52,36 @@ code or prior chat state. The current authority surfaces for this page are:</p>
 </tr>
 <tr>
 <td><code>DEBT-0004</code></td>
-<td>open</td>
+<td>accepted-exception</td>
 <td><code>runtime</code></td>
 <td><code>TRANCHE-011</code> / <code>ISSUE-0408</code> / <code>PROGRAM-0003</code></td>
-<td>Linux full-window proof still fails late at pair <code>135/138</code> with <code>linux-headless-recursive-load</code></td>
+<td>Linux pair <code>135</code> is the accepted current-contract full-window ceiling after a fresh canonical-host rerun still failed there as <code>labview-cli-connection-failed (linux-headless-recursive-load)</code></td>
+</tr>
+<tr>
+<td><code>DEBT-0005</code></td>
+<td>retired</td>
+<td><code>control-plane</code></td>
+<td><code>TRANCHE-011</code> / <code>ISSUE-0408</code> / <code>PROGRAM-0003</code></td>
+<td>benchmark-proof entrypoints now validate the effective runtime bundle after CLI, environment, and default synthesis</td>
+</tr>
+<tr>
+<td><code>DEBT-0006</code></td>
+<td>open</td>
+<td><code>control-plane</code></td>
+<td><code>TRANCHE-013</code> / <code>ISSUE-0410</code> / <code>PROGRAM-0005</code></td>
+<td>fuller front-facing provider and acquisition transparency still remains open after the landed execution-policy slices</td>
 </tr>
 </tbody></table>
-<h2>What The Open Items Mean</h2>
+<h2>What The Current Items Mean</h2>
 <p>The current debt is bounded, not hidden:</p>
 <ul>
 <li>Windows pair <code>129</code> is now an accepted current-contract exception for the
 accepted cross-OS benchmark packet, not an open ambiguous blocker.</li>
-<li>Linux pair <code>135/138</code> remains the late full-window blocker for the deep
-<code>HARNESS-VHS-002</code> benchmark lane.</li>
+<li>Linux pair <code>135/138</code> is now also an accepted current-contract exception:
+a fresh governed canonical-host rerun on April 6, 2026 still failed there as
+<code>labview-cli-connection-failed (linux-headless-recursive-load)</code> after one
+governed <code>CloseLabVIEW -Headless</code> reset exited <code>1</code>, so the current Linux
+contract stays bounded there instead of remaining an implied open question.</li>
 <li>execution-policy debt remains open after the first slice landed: the
 installed extension now exposes explicit <code>auto</code> / <code>host-only</code> /
 <code>docker-only</code> behavior, rejects silent provider fallback, and already keeps
@@ -83,8 +100,9 @@ tracker-backed compare-runtime truth, but fuller front-facing provider
 transparency still remains open.</li>
 </ul>
 <p>That means the repo is not pretending the benchmark is fully clean. It is
-retaining the accepted Windows ceiling, the open Linux blocker, and the queued
-execution-policy ambiguity as explicit governed debt with one owner program.</p>
+retaining the accepted Windows ceiling, the accepted Linux full-window
+exception, and the open execution-policy ambiguity as explicit governed debt
+with one owner program.</p>
 <h2>Why The Retired Items Matter</h2>
 <p>The retired items are not trivia. They are the proof that the debt contract is
 meant to preserve:</p>
