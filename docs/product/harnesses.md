@@ -79,6 +79,10 @@
   - those retained `comparison-report-smoke` receipts now also persist
     `executionSurfaceContext` plus `executionSurfaceMarkers` when those
     retained markers prove the governed Windows benchmark-image surface
+  - the comparable-prefix packet now also derives a blocker characterization
+    from those retained exact-pair receipts, including the observed
+    `LabVIEWCLI.exe` and reset-target `LabVIEW.exe` bitness split when the
+    retained Windows ceiling is the mixed-bitness call-by-reference seam
 - retained outputs:
   - `.cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.json`
   - `.cache/harness-reports/HARNESS-VHS-001/comparison-report-smoke.md`

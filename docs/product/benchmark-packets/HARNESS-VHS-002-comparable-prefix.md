@@ -1,6 +1,6 @@
 # HARNESS-VHS-002 Comparable Prefix Benchmark Packet
 
-- Generated at: 2026-04-06T00:43:16.576Z
+- Generated at: 2026-04-06T00:49:06.079Z
 - Proof state: bounded-prefix-comparable
 - Target: resource/plugins/lv_icon.vi
 - Full window: 139 commits / 138 pairs
@@ -32,6 +32,13 @@
 - Prefix runtime total: 464798 ms
 - Full-window outcome: pair 129 / 138 :: command-exited-nonzero (labview-cli-call-by-reference)
 - Exact-pair diagnosis state: available
+- Blocker characterization: mixed-bitness-call-by-reference-seam
+- Blocker characterization state: exact-pair-characterized
+- Blocker selected/base: 6dd65df67428 -> 3408654e6802
+- Blocker mixed bitness observed: yes
+- Blocker runtime executable bitness: x86
+- Blocker headless-reset LabVIEW path: C:\Program Files\National Instruments\LabVIEW 2026\LabVIEW.exe
+- Blocker headless-reset LabVIEW bitness: x64
 
 ## Windows Exact-Pair Diagnosis
 
@@ -41,6 +48,10 @@
 - labview-cli execution surface: windows-benchmark-image [cloneDirectory, packetFilePath, reportFilePath, metadataFilePath, containerDiagnosticLogSourcePath]
 - labview-cli selected LabVIEW.ini: none
 - labview-cli selected LabVIEW TCP port: none
+- labview-cli runtime executable bitness: x86
+- labview-cli headless-reset LabVIEW path: C:\Program Files\National Instruments\LabVIEW 2026\LabVIEW.exe
+- labview-cli headless-reset LabVIEW bitness: x64
+- labview-cli mixed bitness observed: yes
 - labview-cli recovery exit code: 1
 - labview-cli recovery stdout: C:\workspace\.cache\harness-reports\HARNESS-VHS-002\workspace-storage\reports\a1fa155b16ea\0ded7fc226bb\headless-session-reset-stdout.txt
 - labview-cli recovery stderr: C:\workspace\.cache\harness-reports\HARNESS-VHS-002\workspace-storage\reports\a1fa155b16ea\0ded7fc226bb\headless-session-reset-stderr.txt
@@ -50,6 +61,10 @@
 - lvcompare execution surface: windows-benchmark-image [cloneDirectory, packetFilePath, reportFilePath, metadataFilePath]
 - lvcompare selected LabVIEW.ini: none
 - lvcompare selected LabVIEW TCP port: none
+- lvcompare runtime executable bitness: x64
+- lvcompare headless-reset LabVIEW path: none
+- lvcompare headless-reset LabVIEW bitness: unknown
+- lvcompare mixed bitness observed: no
 - lvcompare recovery exit code: none
 - lvcompare recovery stdout: none
 - lvcompare recovery stderr: none

@@ -1,7 +1,7 @@
 {
   "schema": "vi-history-suite/comparable-prefix-benchmark-packet@v1",
   "benchmarkId": "HARNESS-VHS-002-comparable-prefix",
-  "generatedAt": "2026-04-06T00:43:16.576Z",
+  "generatedAt": "2026-04-06T00:49:06.079Z",
   "harnessId": "HARNESS-VHS-002",
   "targetRelativePath": "resource/plugins/lv_icon.vi",
   "proofState": "bounded-prefix-comparable",
@@ -99,6 +99,7 @@
           "runtimeFailureReason": "command-exited-nonzero",
           "runtimeDiagnosticReason": "labview-cli-call-by-reference",
           "runtimeExecutable": "C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe",
+          "runtimeExecutableBitness": "x86",
           "headlessSessionResetExecutable": "C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe",
           "headlessSessionResetArgs": [
             "-LogToConsole",
@@ -110,6 +111,9 @@
             "-Headless",
             "true"
           ],
+          "headlessSessionResetLabviewPath": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe",
+          "headlessSessionResetLabviewBitness": "x64",
+          "mixedBitnessObserved": true,
           "headlessSessionResetExitCode": 1,
           "headlessSessionResetStdoutPath": "C:\\workspace\\.cache\\harness-reports\\HARNESS-VHS-002\\workspace-storage\\reports\\a1fa155b16ea\\0ded7fc226bb\\headless-session-reset-stdout.txt",
           "headlessSessionResetStderrPath": "C:\\workspace\\.cache\\harness-reports\\HARNESS-VHS-002\\workspace-storage\\reports\\a1fa155b16ea\\0ded7fc226bb\\headless-session-reset-stderr.txt",
@@ -144,7 +148,10 @@
           "runtimeExecutionState": "failed",
           "runtimeFailureReason": "command-timed-out",
           "runtimeExecutable": "C:\\Program Files\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe",
+          "runtimeExecutableBitness": "x64",
           "headlessSessionResetArgs": [],
+          "headlessSessionResetLabviewBitness": "unknown",
+          "mixedBitnessObserved": false,
           "executionSurfaceContext": "windows-benchmark-image",
           "executionSurfaceMarkers": [
             "cloneDirectory",
@@ -162,7 +169,22 @@
           ]
         }
       ],
-      "rejectedExactPairDiagnostics": []
+      "rejectedExactPairDiagnostics": [],
+      "blockerCharacterization": {
+        "state": "exact-pair-characterized",
+        "classification": "mixed-bitness-call-by-reference-seam",
+        "baseHash": "6dd65df674287c9705959a7e9aca6b02e8445d40",
+        "selectedHash": "3408654e680200d7787c17cc0b443a97fcdfb360",
+        "executionSurfaceContext": "windows-benchmark-image",
+        "runtimeExecutableBitness": "x86",
+        "headlessSessionResetLabviewPath": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe",
+        "headlessSessionResetLabviewBitness": "x64",
+        "mixedBitnessObserved": true,
+        "supportingEngines": [
+          "labview-cli=command-exited-nonzero (labview-cli-call-by-reference)",
+          "lvcompare=command-timed-out"
+        ]
+      }
     }
   },
   "comparison": {

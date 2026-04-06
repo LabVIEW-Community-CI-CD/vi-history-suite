@@ -1231,7 +1231,10 @@
   Windows benchmark-image execution surface through explicit
   execution-surface context or retained container-context markers such as
   `C:\workspace\.cache` proof paths and, when available,
-  `ContainerAdministrator` diagnostic-log sources
+  `ContainerAdministrator` diagnostic-log sources, and with the packet
+  characterizing the retained Windows ceiling explicitly when the exact-pair
+  evidence proves the mixed-bitness `x86 LabVIEWCLI.exe` versus `x64`
+  `LabVIEW.exe` call-by-reference seam
 - `TEST-DOC-054`: review current-state, PROGRAM-0003, and ISSUE-0408 and
   confirm the governed `CloseLabVIEW -Headless` recovery posture is documented
   as retaining dedicated reset stdout/stderr artifacts and exit-code facts in

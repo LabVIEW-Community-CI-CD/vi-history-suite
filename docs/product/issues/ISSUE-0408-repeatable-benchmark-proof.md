@@ -97,6 +97,11 @@ Current retained benchmark truth before activation:
   `executionSurfaceContext` plus `executionSurfaceMarkers` when those retained
   markers prove the governed Windows benchmark-image surface, so later packet
   refresh no longer depends only on path archaeology
+- the comparable-prefix packet now also derives an explicit blocker
+  characterization from those same exact-pair receipts, so the retained
+  Windows ceiling is carried as `mixed-bitness-call-by-reference-seam` when
+  the `labview-cli` receipt proves x86 `LabVIEWCLI.exe` against the x64
+  headless-reset `LabVIEW.exe` target
 - a fresh governed repo-local exact-pair rerun now retains that same
   Windows-image surface explicitly: the authority repo `.cache`
   `comparison-report-smoke.json` now carries

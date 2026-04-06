@@ -56,8 +56,12 @@ const comparablePacket = require(path.resolve(
     runtimeLabviewIniPath?: string;
     runtimeLabviewTcpPort?: number;
     runtimeExecutable?: string;
+    runtimeExecutableBitness?: string;
     headlessSessionResetExecutable?: string;
     headlessSessionResetArgs: string[];
+    headlessSessionResetLabviewPath?: string;
+    headlessSessionResetLabviewBitness?: string;
+    mixedBitnessObserved?: boolean;
     headlessSessionResetExitCode?: number;
     headlessSessionResetStdoutPath?: string;
     headlessSessionResetStderrPath?: string;
@@ -69,6 +73,31 @@ const comparablePacket = require(path.resolve(
     context: string;
     markers: string[];
   };
+  deriveWindowsBenchmarkImageBlockerCharacterization: (
+    exactPairDiagnostics: Array<{
+      engine: string;
+      baseHash?: string;
+      selectedHash?: string;
+      runtimeFailureReason?: string;
+      runtimeDiagnosticReason?: string;
+      executionSurfaceContext?: string;
+      runtimeExecutableBitness?: string;
+      headlessSessionResetLabviewPath?: string;
+      headlessSessionResetLabviewBitness?: string;
+      mixedBitnessObserved?: boolean;
+    }>
+  ) => {
+    state: string;
+    classification: string;
+    baseHash?: string;
+    selectedHash?: string;
+    executionSurfaceContext?: string;
+    runtimeExecutableBitness?: string;
+    headlessSessionResetLabviewPath?: string;
+    headlessSessionResetLabviewBitness?: string;
+    mixedBitnessObserved: boolean;
+    supportingEngines: string[];
+  } | undefined;
   isEligibleWindowsExactPairDiagnosisReport: (report: Record<string, unknown>) => boolean;
   selectHostWindowsExactPairDiagnosis: (
     repoRoot: string,
@@ -121,6 +150,18 @@ const comparablePacket = require(path.resolve(
         validatedComparablePairCount: number;
         comparablePrefixRuntimeTotalMs: number;
         exactPairDiagnosticsState?: string;
+        blockerCharacterization?: {
+          state: string;
+          classification: string;
+          baseHash?: string;
+          selectedHash?: string;
+          executionSurfaceContext?: string;
+          runtimeExecutableBitness?: string;
+          headlessSessionResetLabviewPath?: string;
+          headlessSessionResetLabviewBitness?: string;
+          mixedBitnessObserved: boolean;
+          supportingEngines: string[];
+        };
         fullWindowBlocker: {
           terminalPairIndex: number;
           terminalPairFailureReason: string;
@@ -136,6 +177,10 @@ const comparablePacket = require(path.resolve(
           runtimeDiagnosticReason?: string;
           runtimeLabviewIniPath?: string;
           runtimeLabviewTcpPort?: number;
+          runtimeExecutableBitness?: string;
+          headlessSessionResetLabviewPath?: string;
+          headlessSessionResetLabviewBitness?: string;
+          mixedBitnessObserved?: boolean;
           executionSurfaceContext?: string;
           executionSurfaceMarkers?: string[];
         }>;
@@ -357,6 +402,7 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
       runtimeLabviewTcpPort: 3363,
       runtimeExecutable:
         'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+      runtimeExecutableBitness: 'x86',
       headlessSessionResetExecutable:
         'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
       headlessSessionResetArgs: [
@@ -369,6 +415,10 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
         '-Headless',
         'true'
       ],
+      headlessSessionResetLabviewPath:
+        'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+      headlessSessionResetLabviewBitness: 'x64',
+      mixedBitnessObserved: true,
       headlessSessionResetExitCode: 1,
       headlessSessionResetStdoutPath: 'C:\\workspace\\.cache\\headless-session-reset-stdout.txt',
       headlessSessionResetStderrPath: 'C:\\workspace\\.cache\\headless-session-reset-stderr.txt',
@@ -393,6 +443,50 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
     ).toEqual({
       context: 'windows-benchmark-image',
       markers: ['cloneDirectory', 'packetFilePath']
+    });
+  });
+
+  it('characterizes the Windows benchmark-image blocker from exact-pair evidence', () => {
+    expect(
+      comparablePacket.deriveWindowsBenchmarkImageBlockerCharacterization([
+        {
+          engine: 'labview-cli',
+          baseHash: '6dd65df674287c9705959a7e9aca6b02e8445d40',
+          selectedHash: '3408654e680200d7787c17cc0b443a97fcdfb360',
+          runtimeFailureReason: 'command-exited-nonzero',
+          runtimeDiagnosticReason: 'labview-cli-call-by-reference',
+          executionSurfaceContext: 'windows-benchmark-image',
+          runtimeExecutableBitness: 'x86',
+          headlessSessionResetLabviewPath:
+            'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+          headlessSessionResetLabviewBitness: 'x64',
+          mixedBitnessObserved: true
+        },
+        {
+          engine: 'lvcompare',
+          baseHash: '6dd65df674287c9705959a7e9aca6b02e8445d40',
+          selectedHash: '3408654e680200d7787c17cc0b443a97fcdfb360',
+          runtimeFailureReason: 'command-timed-out',
+          executionSurfaceContext: 'windows-benchmark-image',
+          runtimeExecutableBitness: 'x64',
+          mixedBitnessObserved: false
+        }
+      ])
+    ).toEqual({
+      state: 'exact-pair-characterized',
+      classification: 'mixed-bitness-call-by-reference-seam',
+      baseHash: '6dd65df674287c9705959a7e9aca6b02e8445d40',
+      selectedHash: '3408654e680200d7787c17cc0b443a97fcdfb360',
+      executionSurfaceContext: 'windows-benchmark-image',
+      runtimeExecutableBitness: 'x86',
+      headlessSessionResetLabviewPath:
+        'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+      headlessSessionResetLabviewBitness: 'x64',
+      mixedBitnessObserved: true,
+      supportingEngines: [
+        'labview-cli=command-exited-nonzero (labview-cli-call-by-reference)',
+        'lvcompare=command-timed-out'
+      ]
     });
   });
 
@@ -509,6 +603,22 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
           validatedComparablePairCount: 128,
           comparablePrefixRuntimeTotalMs: 623664,
           exactPairDiagnosticsState: 'available',
+          blockerCharacterization: {
+            state: 'exact-pair-characterized',
+            classification: 'mixed-bitness-call-by-reference-seam',
+            baseHash: '6dd65df674287c9705959a7e9aca6b02e8445d40',
+            selectedHash: '3408654e680200d7787c17cc0b443a97fcdfb360',
+            executionSurfaceContext: 'windows-benchmark-image',
+            runtimeExecutableBitness: 'x86',
+            headlessSessionResetLabviewPath:
+              'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+            headlessSessionResetLabviewBitness: 'x64',
+            mixedBitnessObserved: true,
+            supportingEngines: [
+              'labview-cli=command-exited-nonzero (labview-cli-call-by-reference)',
+              'lvcompare=command-timed-out'
+            ]
+          },
           fullWindowBlocker: {
             terminalPairIndex: 129,
             terminalPairFailureReason: 'command-exited-nonzero',
@@ -526,6 +636,11 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
               runtimeLabviewIniPath:
                 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.ini',
               runtimeLabviewTcpPort: 3363,
+              runtimeExecutableBitness: 'x86',
+              headlessSessionResetLabviewPath:
+                'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+              headlessSessionResetLabviewBitness: 'x64',
+              mixedBitnessObserved: true,
               executionSurfaceContext: 'windows-benchmark-image',
               executionSurfaceMarkers: [
                 'cloneDirectory',
@@ -545,6 +660,8 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
               baseHash: '6dd65df674287c9705959a7e9aca6b02e8445d40',
               selectedHash: '3408654e680200d7787c17cc0b443a97fcdfb360',
               runtimeFailureReason: 'command-timed-out',
+              runtimeExecutableBitness: 'x64',
+              mixedBitnessObserved: false,
               executionSurfaceContext: 'windows-benchmark-image',
               executionSurfaceMarkers: [
                 'cloneDirectory',
@@ -570,6 +687,8 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
     expect(markdown).toContain('labview-cli-call-by-reference');
     expect(markdown).toContain('bounded-blocked');
     expect(markdown).toContain('Exact-pair diagnosis state: available');
+    expect(markdown).toContain('Blocker characterization: mixed-bitness-call-by-reference-seam');
+    expect(markdown).toContain('Blocker mixed bitness observed: yes');
     expect(markdown).toContain('## Windows Exact-Pair Diagnosis');
     expect(markdown).toContain(
       'labview-cli: 6dd65df67428 -> 3408654e6802 :: command-exited-nonzero (labview-cli-call-by-reference)'
@@ -581,6 +700,11 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
       'labview-cli selected LabVIEW.ini: C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.ini'
     );
     expect(markdown).toContain('labview-cli selected LabVIEW TCP port: 3363');
+    expect(markdown).toContain('labview-cli runtime executable bitness: x86');
+    expect(markdown).toContain(
+      'labview-cli headless-reset LabVIEW bitness: x64'
+    );
+    expect(markdown).toContain('labview-cli mixed bitness observed: yes');
     expect(markdown).toContain('labview-cli recovery exit code: 1');
     expect(markdown).toContain(
       'labview-cli recovery stderr: /tmp/windows-benchmark-image-pair129-labviewcli/headless-session-reset-stderr.txt'

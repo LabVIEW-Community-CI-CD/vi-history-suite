@@ -122,6 +122,10 @@ rejected contamination instead of being mislabeled as benchmark-image proof</li>
 markers prove the governed Windows benchmark-image surface, and the
 comparable-prefix packet now prefers those explicit retained fields while
 still falling back to path-derived admission for older receipts</li>
+<li>the comparable-prefix packet now also retains an explicit Windows blocker
+characterization for that same exact pair, carrying the retained ceiling as
+<code>mixed-bitness-call-by-reference-seam</code> when the <code>labview-cli</code> receipt proves
+x86 <code>LabVIEWCLI.exe</code> against the x64 headless-reset <code>LabVIEW.exe</code> target</li>
 <li>explicit Windows runtime override bundles must stay one coherent x86 or x64
 surface even when <code>--prefer-bitness</code> is omitted</li>
 <li>canonical Windows host-native reruns fail closed when stale LabVIEW-related

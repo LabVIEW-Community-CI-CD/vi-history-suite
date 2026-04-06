@@ -116,6 +116,11 @@ Those retained `comparison-report-smoke` receipts now also persist
 `executionSurfaceContext` plus `executionSurfaceMarkers` when those retained
 markers prove that governed surface, so later packet refresh no longer depends
 only on path inference.
+The comparable-prefix packet now also derives an explicit blocker
+characterization from those same exact-pair receipts, so the current Windows
+ceiling is retained as `mixed-bitness-call-by-reference-seam` when the
+`labview-cli` exact-pair evidence proves x86 `LabVIEWCLI.exe` against the x64
+headless-reset `LabVIEW.exe` target.
 The latest governed repo-local exact-pair rerun now retains that same
 Windows-image surface explicitly too: the authority repo `.cache`
 `comparison-report-smoke.json` now carries

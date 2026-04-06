@@ -156,6 +156,8 @@ function buildComparablePrefixBenchmarkPacket(repoRoot, options = {}) {
   const windowsExactPairDiagnostics = windowsExactPairSurface.exactPairDiagnostics;
   const rejectedWindowsExactPairDiagnostics =
     windowsExactPairSurface.rejectedExactPairDiagnostics;
+  const windowsBenchmarkImageBlockerCharacterization =
+    deriveWindowsBenchmarkImageBlockerCharacterization(windowsExactPairDiagnostics);
   const maxComparablePairCount = Math.min(
     windowsHost.validatedPrefix.validatedPairCount,
     linuxHost.validatedPrefix.validatedPairCount,
@@ -300,7 +302,8 @@ function buildComparablePrefixBenchmarkPacket(repoRoot, options = {}) {
         },
         exactPairDiagnosticsState: windowsExactPairSurface.state,
         exactPairDiagnostics: windowsExactPairDiagnostics,
-        rejectedExactPairDiagnostics: rejectedWindowsExactPairDiagnostics
+        rejectedExactPairDiagnostics: rejectedWindowsExactPairDiagnostics,
+        blockerCharacterization: windowsBenchmarkImageBlockerCharacterization
       }
     },
     comparison: {
@@ -850,6 +853,13 @@ function normalizePortablePath(candidatePath) {
 function readWindowsExactPairDiagnosis(reportPath, proofRootPath) {
   const report = readJson(reportPath);
   const executionSurface = deriveWindowsExactPairDiagnosisContext(report);
+  const headlessSessionResetLabviewPath = extractCliArgValue(
+    report.headlessSessionResetArgs,
+    '-LabVIEWPath'
+  );
+  const runtimeExecutableBitness = deriveWindowsPathBitness(report.runtimeExecutable);
+  const headlessSessionResetLabviewBitness =
+    deriveWindowsPathBitness(headlessSessionResetLabviewPath);
   return {
     engine: report.runtimeEngine ?? 'unknown',
     proofRootPath,
@@ -864,8 +874,15 @@ function readWindowsExactPairDiagnosis(reportPath, proofRootPath) {
     runtimeLabviewIniPath: report.runtimeLabviewIniPath,
     runtimeLabviewTcpPort: report.runtimeLabviewTcpPort,
     runtimeExecutable: report.runtimeExecutable,
+    runtimeExecutableBitness,
     headlessSessionResetExecutable: report.headlessSessionResetExecutable,
     headlessSessionResetArgs: report.headlessSessionResetArgs ?? [],
+    headlessSessionResetLabviewPath,
+    headlessSessionResetLabviewBitness,
+    mixedBitnessObserved:
+      runtimeExecutableBitness !== 'unknown' &&
+      headlessSessionResetLabviewBitness !== 'unknown' &&
+      runtimeExecutableBitness !== headlessSessionResetLabviewBitness,
     headlessSessionResetExitCode: report.headlessSessionResetExitCode,
     headlessSessionResetStdoutPath: report.headlessSessionResetStdoutPath,
     headlessSessionResetStderrPath: report.headlessSessionResetStderrPath,
@@ -880,6 +897,66 @@ function readRejectedWindowsExactPairDiagnosis(reportPath, proofRootPath) {
     ...readWindowsExactPairDiagnosis(reportPath, proofRootPath),
     rejectionReason: deriveWindowsExactPairDiagnosisRejectionReason(readJson(reportPath))
   };
+}
+
+function deriveWindowsBenchmarkImageBlockerCharacterization(exactPairDiagnostics) {
+  if (!Array.isArray(exactPairDiagnostics) || exactPairDiagnostics.length === 0) {
+    return undefined;
+  }
+  const labviewCli = exactPairDiagnostics.find((diagnostic) => diagnostic.engine === 'labview-cli');
+  const primary = labviewCli ?? exactPairDiagnostics[0];
+  const supportingEngines = exactPairDiagnostics.map(
+    (diagnostic) =>
+      `${diagnostic.engine}=${diagnostic.runtimeFailureReason}${diagnostic.runtimeDiagnosticReason ? ` (${diagnostic.runtimeDiagnosticReason})` : ''}`
+  );
+  let classification = 'exact-pair-runtime-seam';
+  if (
+    labviewCli?.runtimeDiagnosticReason === 'labview-cli-call-by-reference' &&
+    labviewCli?.mixedBitnessObserved
+  ) {
+    classification = 'mixed-bitness-call-by-reference-seam';
+  } else if (labviewCli?.runtimeDiagnosticReason === 'labview-cli-call-by-reference') {
+    classification = 'call-by-reference-seam';
+  }
+  return {
+    state: 'exact-pair-characterized',
+    classification,
+    baseHash: primary?.baseHash,
+    selectedHash: primary?.selectedHash,
+    executionSurfaceContext: primary?.executionSurfaceContext,
+    runtimeExecutableBitness: labviewCli?.runtimeExecutableBitness ?? 'unknown',
+    headlessSessionResetLabviewPath: labviewCli?.headlessSessionResetLabviewPath,
+    headlessSessionResetLabviewBitness:
+      labviewCli?.headlessSessionResetLabviewBitness ?? 'unknown',
+    mixedBitnessObserved: Boolean(labviewCli?.mixedBitnessObserved),
+    supportingEngines
+  };
+}
+
+function extractCliArgValue(args, flag) {
+  if (!Array.isArray(args)) {
+    return undefined;
+  }
+  for (let index = 0; index < args.length - 1; index += 1) {
+    if (args[index] === flag) {
+      return args[index + 1];
+    }
+  }
+  return undefined;
+}
+
+function deriveWindowsPathBitness(candidatePath) {
+  const normalized = normalizePortablePath(candidatePath);
+  if (!normalized) {
+    return 'unknown';
+  }
+  if (normalized.includes('/program files (x86)/')) {
+    return 'x86';
+  }
+  if (normalized.includes('/program files/')) {
+    return 'x64';
+  }
+  return 'unknown';
 }
 
 function summarizeDashboardPrefix(dashboardJsonPath, comparablePairCount, options = {}) {
@@ -1052,6 +1129,8 @@ function renderComparablePrefixBenchmarkPacketMarkdown(packet) {
   const exactPairDiagnostics = packet.surfaces.windowsBenchmarkImage.exactPairDiagnostics ?? [];
   const rejectedExactPairDiagnostics =
     packet.surfaces.windowsBenchmarkImage.rejectedExactPairDiagnostics ?? [];
+  const blockerCharacterization =
+    packet.surfaces.windowsBenchmarkImage.blockerCharacterization;
   return [
     '# HARNESS-VHS-002 Comparable Prefix Benchmark Packet',
     '',
@@ -1087,6 +1166,17 @@ function renderComparablePrefixBenchmarkPacketMarkdown(packet) {
     `- Prefix runtime total: ${packet.surfaces.windowsBenchmarkImage.comparablePrefixRuntimeTotalMs} ms`,
     `- Full-window outcome: ${formatFullWindowOutcome(packet.surfaces.windowsBenchmarkImage.fullWindowBlocker, packet.fullWindow.comparePairCount)}`,
     `- Exact-pair diagnosis state: ${packet.surfaces.windowsBenchmarkImage.exactPairDiagnosticsState ?? (exactPairDiagnostics.length > 0 ? 'available' : rejectedExactPairDiagnostics.length > 0 ? 'contaminated' : 'missing')}`,
+    ...(blockerCharacterization
+      ? [
+          `- Blocker characterization: ${blockerCharacterization.classification}`,
+          `- Blocker characterization state: ${blockerCharacterization.state}`,
+          `- Blocker selected/base: ${formatHashPair(blockerCharacterization.baseHash, blockerCharacterization.selectedHash)}`,
+          `- Blocker mixed bitness observed: ${blockerCharacterization.mixedBitnessObserved ? 'yes' : 'no'}`,
+          `- Blocker runtime executable bitness: ${blockerCharacterization.runtimeExecutableBitness}`,
+          `- Blocker headless-reset LabVIEW path: ${blockerCharacterization.headlessSessionResetLabviewPath ?? 'none'}`,
+          `- Blocker headless-reset LabVIEW bitness: ${blockerCharacterization.headlessSessionResetLabviewBitness}`
+        ]
+      : []),
     ...(exactPairDiagnostics.length > 0 || rejectedExactPairDiagnostics.length > 0
       ? [
           '',
@@ -1099,6 +1189,10 @@ function renderComparablePrefixBenchmarkPacketMarkdown(packet) {
             `- ${diagnostic.engine} execution surface: ${diagnostic.executionSurfaceContext} [${diagnostic.executionSurfaceMarkers.join(', ')}]`,
             `- ${diagnostic.engine} selected LabVIEW.ini: ${diagnostic.runtimeLabviewIniPath ?? 'none'}`,
             `- ${diagnostic.engine} selected LabVIEW TCP port: ${diagnostic.runtimeLabviewTcpPort === undefined ? 'none' : String(diagnostic.runtimeLabviewTcpPort)}`,
+            `- ${diagnostic.engine} runtime executable bitness: ${diagnostic.runtimeExecutableBitness ?? 'unknown'}`,
+            `- ${diagnostic.engine} headless-reset LabVIEW path: ${diagnostic.headlessSessionResetLabviewPath ?? 'none'}`,
+            `- ${diagnostic.engine} headless-reset LabVIEW bitness: ${diagnostic.headlessSessionResetLabviewBitness ?? 'unknown'}`,
+            `- ${diagnostic.engine} mixed bitness observed: ${diagnostic.mixedBitnessObserved ? 'yes' : 'no'}`,
             `- ${diagnostic.engine} recovery exit code: ${diagnostic.headlessSessionResetExitCode === undefined ? 'none' : String(diagnostic.headlessSessionResetExitCode)}`,
             `- ${diagnostic.engine} recovery stdout: ${diagnostic.headlessSessionResetStdoutPath ?? 'none'}`,
             `- ${diagnostic.engine} recovery stderr: ${diagnostic.headlessSessionResetStderrPath ?? 'none'}`
@@ -1124,6 +1218,8 @@ function formatComparablePrefixBenchmarkPacket(packet) {
   const exactPairDiagnostics = packet.surfaces.windowsBenchmarkImage.exactPairDiagnostics ?? [];
   const rejectedExactPairDiagnostics =
     packet.surfaces.windowsBenchmarkImage.rejectedExactPairDiagnostics ?? [];
+  const blockerCharacterization =
+    packet.surfaces.windowsBenchmarkImage.blockerCharacterization;
   return [
     'Comparable Prefix Benchmark Packet',
     `- proofState: ${packet.proofState}`,
@@ -1140,6 +1236,12 @@ function formatComparablePrefixBenchmarkPacket(packet) {
     `- windowsBenchmarkImageRuntimeMs: ${packet.surfaces.windowsBenchmarkImage.comparablePrefixRuntimeTotalMs}`,
     `- windowsBenchmarkImageFullWindowOutcome: ${formatFullWindowOutcome(packet.surfaces.windowsBenchmarkImage.fullWindowBlocker, packet.fullWindow.comparePairCount)}`,
     `- windowsExactPairDiagnosisState: ${packet.surfaces.windowsBenchmarkImage.exactPairDiagnosticsState ?? (exactPairDiagnostics.length > 0 ? 'available' : rejectedExactPairDiagnostics.length > 0 ? 'contaminated' : 'missing')}`,
+    ...(blockerCharacterization
+      ? [
+          `- windowsBlockerCharacterization: ${blockerCharacterization.classification}`,
+          `- windowsBlockerMixedBitnessObserved: ${blockerCharacterization.mixedBitnessObserved ? 'yes' : 'no'}`
+        ]
+      : []),
     ...(exactPairDiagnostics.length > 0
       ? [
           `- windowsExactPairDiagnostics: ${exactPairDiagnostics
@@ -1215,10 +1317,12 @@ function safeReadDir(root) {
   }
 }
 
-module.exports = {
+  module.exports = {
   PACKET_SCHEMA,
   buildComparablePrefixBenchmarkPacket,
+  deriveWindowsBenchmarkImageBlockerCharacterization,
   deriveWindowsExactPairDiagnosisContext,
+  deriveWindowsPathBitness,
   findLatestHostLinuxBenchmark,
   findLatestHostWindowsBenchmarkImageProof,
   formatComparablePrefixBenchmarkPacket,
