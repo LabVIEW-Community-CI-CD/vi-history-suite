@@ -126,7 +126,7 @@ describe('comparisonRuntimeLocator', () => {
     expect(result.notes[0]).toContain('Configured labview-cli path does not exist');
   });
 
-  it('uses documented Windows scan roots and falls back to LVCompare when LabVIEWCLI is unavailable', async () => {
+  it('fails closed on Windows when only LVCompare is present and canonical LabVIEWCLI is unavailable', async () => {
     const cleanHost = buildCleanWindowsHostDeps();
     const result = await locateComparisonRuntime(
       'win32',
@@ -148,12 +148,16 @@ describe('comparisonRuntimeLocator', () => {
       }
     );
 
-    expect(result.engine).toBe('lvcompare');
+    expect(result.provider).toBe('unavailable');
+    expect(result.engine).toBeUndefined();
+    expect(result.blockedReason).toBe('canonical-labview-cli-not-found');
     expect(result.labviewExe?.bitness).toBe('x64');
     expect(result.lvCompare?.path).toBe(
       'C:\\Program Files\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe'
     );
-    expect(result.notes).toContain('LabVIEWCLI was not located; falling back to LVCompare.');
+    expect(result.notes).toContain(
+      'Canonical CreateComparisonReport execution requires LabVIEWCLI. LabVIEWCLI was not located, and LVCompare remains an internal parity-only surface rather than a public runtime-selection target.'
+    );
     expect(result.providerDecisions).toEqual([
       {
         provider: 'windows-container',
@@ -164,10 +168,10 @@ describe('comparisonRuntimeLocator', () => {
       },
       {
         provider: 'host-native',
-        outcome: 'selected',
-        reason: 'auto-selected-host-native-because-docker-not-installed-lvcompare-fallback',
+        outcome: 'rejected',
+        reason: 'host-native-comparison-tool-not-found',
         detail:
-          'Auto execution selected host-native LabVIEW 2026 plus LVCompare because Docker Desktop was not detected on Windows and LabVIEWCLI was not located.'
+          'A supported LabVIEW 2026 executable was located, but canonical CreateComparisonReport execution could not proceed because LabVIEWCLI was not located.'
       }
     ]);
   });
@@ -519,7 +523,7 @@ describe('comparisonRuntimeLocator', () => {
       'Linux report generation remains best-effort; configure viHistorySuite.labviewCliPath when LabVIEW CLI is installed outside documented scan roots.'
     );
     expect(result.notes).toContain(
-      'Configure viHistorySuite.labviewCliPath or viHistorySuite.lvComparePath to an installed comparison tool when the documented scan roots do not contain one.'
+      'Configure viHistorySuite.labviewCliPath to an installed LabVIEWCLI when the documented scan roots do not contain one.'
     );
     expect(result.providerDecisions).toEqual([
       {
@@ -527,12 +531,12 @@ describe('comparisonRuntimeLocator', () => {
         outcome: 'rejected',
         reason: 'host-native-comparison-tool-not-found',
         detail:
-          'A supported LabVIEW 2026 executable was located, but neither LabVIEWCLI nor LVCompare was located for host-native comparison-report execution.'
+          'A supported LabVIEW 2026 executable was located, but canonical CreateComparisonReport execution could not proceed because LabVIEWCLI was not located.'
       }
     ]);
   });
 
-  it('prefers Linux LabVIEWCLI from the NI prebuilt container scan roots before falling back to LVCompare', async () => {
+  it('prefers Linux LabVIEWCLI from the NI prebuilt container scan roots', async () => {
     const result = await locateComparisonRuntime(
       'linux',
       {},
@@ -552,7 +556,7 @@ describe('comparisonRuntimeLocator', () => {
     expect(result.labviewExe?.path).toBe('/usr/local/natinst/LabVIEW-2026-64/labview');
     expect(result.labviewCli?.path).toBe('/usr/local/bin/LabVIEWCLI');
     expect(result.lvCompare?.path).toBe('/usr/local/bin/LVCompare');
-    expect(result.notes).not.toContain('LabVIEWCLI was not located; falling back to LVCompare.');
+    expect(result.notes).not.toContain('falling back to LVCompare');
     expect(result.providerDecisions).toEqual([
       {
         provider: 'host-native',
@@ -976,12 +980,12 @@ HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\National Instruments\\LabVIEW
   it('uses the default filesystem access path when no path-exists dependency is injected', async () => {
     const result = await locateComparisonRuntime('linux', {
       labviewExePath: __filename,
-      lvComparePath: __filename
+      labviewCliPath: __filename
     });
 
-    expect(result.engine).toBe('lvcompare');
+    expect(result.engine).toBe('labview-cli');
     expect(result.provider).toBe('host-native');
     expect(result.labviewExe?.path).toBe(__filename);
-    expect(result.lvCompare?.path).toBe(__filename);
+    expect(result.labviewCli?.path).toBe(__filename);
   });
 });

@@ -102,7 +102,6 @@ async function main() {
         imageDigest,
         harnessId: options.harnessId,
         dashboardCommitWindow,
-        runtimeEngineOverride: options.runtimeEngineOverride,
         seededHarnessSource,
         dockerContext: options.dockerContext,
         proofRootLinux: options.proofRootLinux,
@@ -146,7 +145,6 @@ async function main() {
     imageDigest,
     harnessId: options.harnessId,
     dashboardCommitWindow,
-    runtimeEngineOverride: options.runtimeEngineOverride,
     cacheRootWindows: proofPaths.cacheRootWindows
   });
   const containerExitCode = await runDockerStreaming(runArgs, proofPaths.logPathLinux);
@@ -168,7 +166,6 @@ async function main() {
         imageRef: options.imageRef,
         imageDigest,
         dashboardCommitWindow,
-        runtimeEngineOverride: options.runtimeEngineOverride,
         seededHarnessSource,
         runtimeSurfaceAssessment: runtimeSurface.assessment,
         latestRuntimeSurfacePathLinux: proofPaths.latestRuntimeSurfacePathLinux,
@@ -185,13 +182,12 @@ async function main() {
 
 function getUsage() {
   return [
-    'Usage: node scripts/runHostWindowsBenchmarkImageProof.js [--image <ref>] [--harness-id <id>] [--dashboard-commit-window <count>] [--engine <labview-cli|lvcompare>] [--proof-root <linux-path>] [--docker-context <name>] [--inspect-runtime-surface-only] [--no-pull]',
+    'Usage: node scripts/runHostWindowsBenchmarkImageProof.js [--image <ref>] [--harness-id <id>] [--dashboard-commit-window <count>] [--proof-root <linux-path>] [--docker-context <name>] [--inspect-runtime-surface-only] [--no-pull]',
     '',
     'Options:',
     '  --image <ref>            Override the Windows benchmark image reference.',
     `  --harness-id <id>       Harness id to execute. Defaults to ${DEFAULT_HARNESS_ID}.`,
     '  --dashboard-commit-window <count> Override the retained dashboard commit window; defaults to the tracked comparable-prefix packet for HARNESS-VHS-002 when available.',
-    '  --engine <value>        Override the selected report engine for targeted proof reruns.',
     `  --proof-root <path>     Linux-visible proof root. Defaults to ${DEFAULT_PROOF_ROOT_LINUX}.`,
     `  --docker-context <name> Docker context for Windows containers. Defaults to ${DEFAULT_DOCKER_CONTEXT}.`,
     '  --inspect-runtime-surface-only Retain the current governed Windows-image runtime surface without launching the benchmark.',
@@ -208,7 +204,6 @@ function parseArgs(argv) {
   let dashboardCommitWindow = readPositiveIntegerEnv(
     'VIHS_WINDOWS_BENCHMARK_DASHBOARD_COMMIT_WINDOW'
   );
-  let runtimeEngineOverride;
   let inspectRuntimeSurfaceOnly = false;
   let pull = true;
   let helpRequested = false;
@@ -248,14 +243,6 @@ function parseArgs(argv) {
       dashboardCommitWindow = candidate;
       continue;
     }
-    if (current === '--engine') {
-      const candidate = requireValue('--engine');
-      if (candidate !== 'labview-cli' && candidate !== 'lvcompare') {
-        throw new Error(`Unsupported value for --engine: ${candidate}.\n\n${getUsage()}`);
-      }
-      runtimeEngineOverride = candidate;
-      continue;
-    }
     if (current === '--inspect-runtime-surface-only') {
       inspectRuntimeSurfaceOnly = true;
       continue;
@@ -278,7 +265,6 @@ function parseArgs(argv) {
     proofRootLinux: path.resolve(proofRootLinux),
     dockerContext,
     dashboardCommitWindow,
-    runtimeEngineOverride,
     inspectRuntimeSurfaceOnly,
     pull,
     helpRequested,
@@ -352,9 +338,6 @@ function buildDockerRunArgs(options) {
       '-e',
       `VIHS_GITHUB_WINDOWS_BENCHMARK_DASHBOARD_COMMIT_WINDOW=${options.dashboardCommitWindow}`
     );
-  }
-  if (options.runtimeEngineOverride) {
-    args.push('-e', `VIHS_GITHUB_WINDOWS_BENCHMARK_ENGINE=${options.runtimeEngineOverride}`);
   }
   args.push(
     options.imageRef,

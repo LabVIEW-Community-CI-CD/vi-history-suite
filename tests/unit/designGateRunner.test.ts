@@ -103,9 +103,11 @@ describe('designGateRunner', () => {
     });
 
     expect(calls).toEqual([
+      'design-contract',
       'unit-and-coverage',
       'extension-host-integration',
       'canonical-harness-smoke',
+      'documentation-continuous-integration',
       'standards-assurance'
     ]);
     expect(report.status).toBe('pass');
@@ -115,8 +117,8 @@ describe('designGateRunner', () => {
     expect(report.coverageFocus?.[0]?.relativePath).toBe('src/cli/runDesignGate.ts');
     const markdownWrites = writes.get('/tmp/vi-history-suite/.cache/design-gate/latest-report.md') ?? [];
     const jsonWrites = writes.get('/tmp/vi-history-suite/.cache/design-gate/latest-report.json') ?? [];
-    expect(markdownWrites.length).toBe(4);
-    expect(jsonWrites.length).toBe(4);
+    expect(markdownWrites.length).toBe(6);
+    expect(jsonWrites.length).toBe(6);
     expect(markdownWrites.some((contents) => contents.includes('## Coverage Focus'))).toBe(true);
     expect(
       markdownWrites.some((contents) =>
@@ -166,7 +168,7 @@ describe('designGateRunner', () => {
       }
     });
 
-    expect(calls).toEqual(['unit-and-coverage', 'extension-host-integration']);
+    expect(calls).toEqual(['design-contract', 'unit-and-coverage', 'extension-host-integration']);
     expect(report.status).toBe('fail');
     expect(report.completionState).toBe('complete');
     expect(report.nextFocus).toBe('src/commands/openViHistoryCommand.ts (0.0% lines)');

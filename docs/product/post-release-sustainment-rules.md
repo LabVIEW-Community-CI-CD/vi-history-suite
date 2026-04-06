@@ -33,6 +33,7 @@ The maintained release surfaces are:
 Refresh the release package when any of these change:
 
 - `package.json` version
+- `CHANGELOG.md` head entry for the current development line
 - SemVer tag intent or release-manifest shape
 - public release-kit assets or setup/support guidance that must follow the
   exact released VSIX
@@ -91,6 +92,7 @@ When sustainment-affecting truth changes, update these surfaces together:
 - `current-state.md`
 - active sustainment program and issue docs
 - `SHIP-0001` only where it points to the active driver-seat post-release lane
+- `CHANGELOG.md` when the active development line or retained release history changes
 - SRS, RTM, and test plan when normative behavior changes
 - wiki coverage/publication ledgers when reader-facing authority changes
 - published wiki pages that represent the changed authority docs

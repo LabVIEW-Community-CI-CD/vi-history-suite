@@ -3685,7 +3685,6 @@ describe('comparisonReportAction', () => {
         const values: Record<string, unknown> = {
           executionMode: 'host-only',
           labviewCliPath: 'C:\\Tools\\LabVIEWCLI.exe',
-          lvComparePath: 'C:\\Tools\\LVCompare.exe',
           labviewExePath: 'C:\\Tools\\LabVIEW.exe',
           windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
           bitness: 'x64'
@@ -3697,7 +3696,6 @@ describe('comparisonReportAction', () => {
     expect(readComparisonRuntimeSettings()).toEqual({
       executionMode: 'host-only',
       labviewCliPath: 'C:\\Tools\\LabVIEWCLI.exe',
-      lvComparePath: 'C:\\Tools\\LVCompare.exe',
       labviewExePath: 'C:\\Tools\\LabVIEW.exe',
       windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
       bitness: 'x64'

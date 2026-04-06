@@ -16,8 +16,9 @@
 ## Decision
 
 - Introduce a pure report-planning subsystem first.
-- Use LabVIEW CLI `CreateComparisonReport` as the primary planned engine and
-  `LVCompare` as the planned interactive fallback.
+- Use LabVIEW CLI `CreateComparisonReport` as the canonical planned engine.
+- Keep any retained `LVCompare` planning logic as internal parity-only support,
+  not as a public engine-selection contract.
 - Keep naming, staging, and storage-layout planning deterministic and
   test-heavy before wiring live runtime execution.
 

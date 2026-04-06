@@ -26,7 +26,7 @@
 
 ### Local Smoke Path
 
-- command: `npm run harness:smoke`
+- command: `npm run proof:run -- smoke --harness-id HARNESS-VHS-001`
 - clone policy: clone on demand into `.cache/harnesses/`
 - retained outputs:
   - `.cache/harness-reports/HARNESS-VHS-001/report.json`
@@ -35,19 +35,23 @@
 
 ### Local Comparison-Report Smoke Path
 
-- command: `npm run harness:report:smoke`
-- parity probe form:
-  - `node out/cli/runHarnessReportSmoke.js --harness-id HARNESS-VHS-001 --engine lvcompare`
+- command: `npm run proof:run -- report-smoke --harness-id HARNESS-VHS-001`
 - purpose: retain a factual report-generation smoke packet for the latest
   comparable revision pair of the canonical VI history target
+- public proof contract:
+  - `runGovernedProof` is the single public proof entrypoint
+  - `report-smoke` is the canonical exact-pair/public smoke subcommand
+  - `LabVIEWCLI CreateComparisonReport` is the canonical public report engine
+  - any retained `LVCompare` evidence remains internal parity/diagnosis
+    evidence, not a public operator override surface
 - exact-pair diagnosis extension:
   - operator-facing canonical argument guidance is retained in
     `docs/product/canonical-exact-pair-diagnosis.md`
-  - `PROGRAM-0003` entrypoints that accept runtime overrides now share one
-    canonical admission layer before retained evidence can be generated:
-    dashboard-smoke, decision-record, exact-pair smoke, and the Windows/Linux
-    benchmark CLIs all reject contradictory engine/path bundles instead of
-    letting one looser CLI contaminate benchmark truth
+  - the public `runGovernedProof` surface and its `PROGRAM-0003` subcommands
+    now share one canonical admission layer before retained evidence can be
+    generated: `dashboard-smoke`, `decision-record`, `report-smoke`,
+    `benchmark-linux`, and `benchmark-windows` all reject contradictory
+    bundles instead of letting one looser path contaminate benchmark truth
   - canonical exact-pair diagnosis still adds its own selected/base pair rule:
     `--selected-hash` / `--base-hash` must form a full 40-character
     selected/base pair
@@ -91,7 +95,7 @@
 ### GitHub-Hosted Linux Benchmark Path
 
 - local command from the authority repo:
-  `npm run benchmark:github:linux:canonical`
+  `npm run proof:run -- benchmark-linux --harness-id HARNESS-VHS-001`
 - GitHub workflow default:
   `.github/workflows/linux-runtime-benchmark-experiment.yml`
 - purpose: keep the GitHub-hosted experiment lane on a shallower canonical
@@ -184,9 +188,9 @@
 ### Host-Owned Deep Benchmark Path
 
 - local explicit deep benchmark command from the authority repo:
-  `npm run benchmark:github:linux:lv-icon`
+  `npm run proof:run -- benchmark-linux --harness-id HARNESS-VHS-002`
 - local explicit deep Windows benchmark command from the authority repo:
-  `npm run benchmark:github:windows:lv-icon`
+  `npm run proof:run -- benchmark-windows --harness-id HARNESS-VHS-002`
 - canonical-host in-IDE path: `Open benchmark status` -> `Run host Linux benchmark`
 - GitHub-hosted workflow default remains `HARNESS-VHS-001`; do not treat
   `HARNESS-VHS-002` as the hosted default

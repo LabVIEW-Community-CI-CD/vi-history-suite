@@ -15,7 +15,6 @@ The current installed extension already exposes these runtime-related settings:
 
 - `viHistorySuite.executionMode`
 - `viHistorySuite.labviewCliPath`
-- `viHistorySuite.lvComparePath`
 - `viHistorySuite.labviewExePath`
 - `viHistorySuite.bitness`
 - `viHistorySuite.windowsContainerImage`
@@ -117,7 +116,7 @@ request from:
 - `executionMode`
 - `bitness`
 - explicit host runtime path settings such as `labviewCliPath`,
-  `labviewExePath`, and `lvComparePath`
+  `labviewExePath`
 - the configured Windows container image
 - detected host-runtime facts:
   - compatible LabVIEW 2026 Q1 x86/x64 presence

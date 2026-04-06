@@ -1052,8 +1052,7 @@ describe('multiReportDashboardAction', () => {
           bitness: 'x64',
           windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
           labviewCliPathConfigured: false,
-          labviewExePathConfigured: false,
-          lvComparePathConfigured: false
+          labviewExePathConfigured: false
         },
         historyWindow: {
           loadedCommitCount: 3,

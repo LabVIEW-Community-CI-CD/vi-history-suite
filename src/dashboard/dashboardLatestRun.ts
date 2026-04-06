@@ -33,7 +33,6 @@ export interface MultiReportDashboardLatestRunExperimentRecord {
     windowsContainerImage?: string;
     labviewCliPathConfigured: boolean;
     labviewExePathConfigured: boolean;
-    lvComparePathConfigured: boolean;
   };
   historyWindow: {
     loadedCommitCount: number;

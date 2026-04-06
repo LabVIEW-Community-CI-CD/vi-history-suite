@@ -81,7 +81,7 @@ if ($cliIni) {
   Set-IniToken -Path $cliIni -Key 'AfterLaunchOpenAppReferenceTimeoutInSecond' -Value '180'
 }
 
-$benchmarkCliPath = 'C:\workspace\out\cli\runGitHubWindowsDashboardBenchmark.js'
+$benchmarkCliPath = 'C:\workspace\out\cli\runGovernedProof.js'
 if (-not (Test-Path -LiteralPath $benchmarkCliPath)) {
   throw "Prebuilt Windows benchmark CLI is missing at $benchmarkCliPath."
 }
@@ -109,13 +109,6 @@ if ($env:VIHS_GITHUB_WINDOWS_BENCHMARK_DASHBOARD_COMMIT_WINDOW) {
   )
 }
 
-if ($env:VIHS_GITHUB_WINDOWS_BENCHMARK_ENGINE) {
-  $args += @(
-    '--engine',
-    $env:VIHS_GITHUB_WINDOWS_BENCHMARK_ENGINE
-  )
-}
-
 if ($env:VIHS_GITHUB_WINDOWS_BENCHMARK_LABVIEW_CLI_PATH) {
   $args += @(
     '--labview-cli-path',
@@ -130,17 +123,10 @@ if ($env:VIHS_GITHUB_WINDOWS_BENCHMARK_LABVIEW_EXE_PATH) {
   )
 }
 
-if ($env:VIHS_GITHUB_WINDOWS_BENCHMARK_LVCOMPARE_PATH) {
-  $args += @(
-    '--lvcompare-path',
-    $env:VIHS_GITHUB_WINDOWS_BENCHMARK_LVCOMPARE_PATH
-  )
-}
-
 if ($env:VIHS_GITHUB_WINDOWS_BENCHMARK_STRICT_RSRC_HEADER -eq 'true') {
   $args += '--strict-rsrc-header'
 }
 
 Write-Host 'VIHS_PROGRESS: Starting GitHub Windows dashboard benchmark.'
-node $benchmarkCliPath @args
+node $benchmarkCliPath benchmark-windows @args
 Assert-LastExitCode 'The prebuilt Windows benchmark CLI exited with a nonzero status.'

@@ -8,10 +8,11 @@ Accepted
 
 `ADR-0022` established one shared runtime-override admission boundary for
 `PROGRAM-0003`, but that decision still left one important ambiguity:
-entrypoints do not always execute from raw CLI args alone.
+the one public governed-proof surface does not always execute from raw CLI
+args alone.
 
-Some benchmark and diagnosis entrypoints can synthesize the effective runtime
-bundle from multiple sources:
+Some governed proof subcommands and internal handlers can synthesize the
+effective runtime bundle from multiple sources:
 
 - raw CLI arguments
 - environment variables
@@ -28,11 +29,12 @@ non-canonical retained evidence look like product behavior.
 
 ## Decision
 
-Adopt canonical effective runtime-override validation for benchmark-proof and
-exact-pair diagnosis entrypoints.
+Adopt canonical effective runtime-override validation for the public
+governed-proof surface and the benchmark-proof or exact-pair handlers behind
+it.
 
 1. Canonical runtime-override admission shall validate the effective runtime bundle after CLI arguments, environment variables, and entrypoint-local defaults have been resolved.
-2. Entry points shall not inject hidden explicit Windows runtime executable defaults into the effective launch bundle when the operator did not request an explicit override.
+2. Governed proof subcommands and their internal handlers shall not inject hidden explicit Windows runtime executable defaults into the effective launch bundle when the operator did not request an explicit override.
 3. If any non-CLI source materializes explicit runtime paths, the resulting
    effective bundle shall still satisfy the same canonical engine, platform,
    bitness, basename, and path-existence rules as a raw CLI-provided bundle.
@@ -54,8 +56,8 @@ exact-pair diagnosis entrypoints.
 
 ### Positive
 
-- canonical benchmark entrypoints now fail closed on the real effective launch
-  bundle
+- the public governed-proof surface now fails closed on the real effective
+  launch bundle
 - env-derived explicit Windows runtime paths cannot bypass admission control
 - benchmark-proof evidence no longer depends on hidden default executable paths
 - the documentation package can distinguish raw exact-pair argument rules from
@@ -65,14 +67,15 @@ exact-pair diagnosis entrypoints.
 
 - operators using environment variables for targeted reruns now need to supply
   a canonical engine/platform shape explicitly
-- benchmark CLIs can reject previously tolerated env/default combinations that
-  were never truly canonical
+- governed proof subcommands can reject previously tolerated env/default
+  combinations that were never truly canonical
 - the control plane grows because effective-bundle validation is now its own
   documented contract
 
 ## Implementation Surface
 
 - `src/cli/canonicalRuntimeOverrideValidation.ts`
+- `src/cli/runGovernedProof.ts`
 - `src/cli/runGitHubWindowsDashboardBenchmark.ts`
 - `src/cli/runGitHubLinuxDashboardBenchmark.ts`
 - `tests/unit/canonicalRuntimeOverrideValidation.test.ts`

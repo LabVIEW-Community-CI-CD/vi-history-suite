@@ -46,7 +46,7 @@ jobs:
             "publishedBenchmarkImage": "${benchmark_image}",
             "dockerfile": "docker/github-windows-dashboard-benchmark/Dockerfile",
             "benchmarkEntrypoint": "docker/github-windows-dashboard-benchmark/run-benchmark.ps1",
-            "benchmarkScript": "npm run benchmark:github:windows:lv-icon",
+            "benchmarkScript": "npm run proof:run -- benchmark-windows --harness-id HARNESS-VHS-002",
             "defaultHarnessId": "HARNESS-VHS-002",
             "defaultTargetRelativePath": "resource/plugins/lv_icon.vi",
             "authorityBoundary": {

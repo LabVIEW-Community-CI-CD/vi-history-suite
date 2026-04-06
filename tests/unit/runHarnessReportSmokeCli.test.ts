@@ -14,8 +14,6 @@ const WINDOWS_LABVIEW_CLI_PATH =
   'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe';
 const WINDOWS_LABVIEW_EXE_PATH =
   'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe';
-const WINDOWS_LVCOMPARE_PATH =
-  'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe';
 const WINDOWS_X64_LABVIEW_EXE_PATH =
   'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe';
 const FULL_SELECTED_HASH = 'abcdef1234567890abcdef1234567890abcdef12';
@@ -31,12 +29,10 @@ describe('runHarnessReportSmokeCli', () => {
       baseHash: undefined,
       runtimeExecutionTimeoutMs: undefined,
       runtimePlatform: undefined,
-      runtimeEngineOverride: undefined,
       executionMode: undefined,
       bitness: undefined,
       labviewCliPath: undefined,
-      labviewExePath: undefined,
-      lvComparePath: undefined
+      labviewExePath: undefined
     });
 
     expect(
@@ -52,8 +48,6 @@ describe('runHarnessReportSmokeCli', () => {
         '120000',
         '--platform',
         'win32',
-        '--engine',
-        'labview-cli',
         '--execution-mode',
         'host-only',
         '--bitness',
@@ -71,12 +65,10 @@ describe('runHarnessReportSmokeCli', () => {
       baseHash: FULL_BASE_HASH,
       runtimeExecutionTimeoutMs: 120000,
       runtimePlatform: 'win32',
-      runtimeEngineOverride: 'labview-cli',
       executionMode: 'host-only',
       bitness: 'x86',
       labviewCliPath: WINDOWS_LABVIEW_CLI_PATH,
-      labviewExePath: WINDOWS_LABVIEW_EXE_PATH,
-      lvComparePath: undefined
+      labviewExePath: WINDOWS_LABVIEW_EXE_PATH
     });
 
     expect(parseHarnessReportSmokeArgs(['--help'])).toEqual({
@@ -87,19 +79,14 @@ describe('runHarnessReportSmokeCli', () => {
       baseHash: undefined,
       runtimeExecutionTimeoutMs: undefined,
       runtimePlatform: undefined,
-      runtimeEngineOverride: undefined,
       executionMode: undefined,
       bitness: undefined,
       labviewCliPath: undefined,
-      labviewExePath: undefined,
-      lvComparePath: undefined
+      labviewExePath: undefined
     });
 
     expect(() => parseHarnessReportSmokeArgs(['--platform', 'weird'])).toThrow(
       /Unsupported value for --platform/
-    );
-    expect(() => parseHarnessReportSmokeArgs(['--engine', 'weird'])).toThrow(
-      /Unsupported value for --engine/
     );
     expect(() => parseHarnessReportSmokeArgs(['--execution-mode', 'weird'])).toThrow(
       /Unsupported value for --execution-mode/
@@ -154,36 +141,12 @@ describe('runHarnessReportSmokeCli', () => {
           '--labview-cli-path',
           WINDOWS_LABVIEW_CLI_PATH
         ])
-    ).toThrow(/Canonical runtime overrides require --engine/);
-    expect(
-      () =>
-        parseHarnessReportSmokeArgs([
-          '--platform',
-          'win32',
-          '--engine',
-          'labview-cli',
-          '--labview-cli-path',
-          WINDOWS_LABVIEW_CLI_PATH
-        ])
     ).toThrow(/require both --labview-cli-path and --labview-exe-path/);
     expect(
       () =>
         parseHarnessReportSmokeArgs([
           '--platform',
           'win32',
-          '--engine',
-          'lvcompare',
-          '--labview-cli-path',
-          WINDOWS_LABVIEW_CLI_PATH
-        ])
-    ).toThrow(/does not allow --labview-cli-path/);
-    expect(
-      () =>
-        parseHarnessReportSmokeArgs([
-          '--platform',
-          'win32',
-          '--engine',
-          'labview-cli',
           '--labview-cli-path',
           WINDOWS_LABVIEW_CLI_PATH,
           '--labview-exe-path',
@@ -195,8 +158,6 @@ describe('runHarnessReportSmokeCli', () => {
         parseHarnessReportSmokeArgs([
           '--platform',
           'win32',
-          '--engine',
-          'labview-cli',
           '--bitness',
           'x86',
           '--labview-cli-path',
@@ -210,8 +171,6 @@ describe('runHarnessReportSmokeCli', () => {
         parseHarnessReportSmokeArgs([
           '--platform',
           'win32',
-          '--engine',
-          'labview-cli',
           '--labview-cli-path',
           'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.txt',
           '--labview-exe-path',
@@ -258,8 +217,6 @@ describe('runHarnessReportSmokeCli', () => {
         [
           '--platform',
           'win32',
-          '--engine',
-          'labview-cli',
           '--selected-hash',
           FULL_SELECTED_HASH,
           '--base-hash',
@@ -295,13 +252,11 @@ describe('runHarnessReportSmokeCli', () => {
       baseHash: FULL_BASE_HASH,
       runtimeExecutionTimeoutMs: 120000,
       runtimePlatform: 'win32',
-      runtimeEngineOverride: 'labview-cli',
       runtimeSettings: {
         executionMode: 'host-only',
         bitness: 'x86',
         labviewCliPath: WINDOWS_LABVIEW_CLI_PATH,
-        labviewExePath: WINDOWS_LABVIEW_EXE_PATH,
-        lvComparePath: undefined
+        labviewExePath: WINDOWS_LABVIEW_EXE_PATH
       }
     });
     expect(writes.join('')).toContain('Harness report smoke completed for HARNESS-VHS-001');
@@ -317,8 +272,6 @@ describe('runHarnessReportSmokeCli', () => {
         [
           '--platform',
           'win32',
-          '--engine',
-          'labview-cli',
           '--selected-hash',
           FULL_SELECTED_HASH,
           '--base-hash',
@@ -415,7 +368,7 @@ describe('runHarnessReportSmokeCli', () => {
     ]);
   });
 
-  it('applies the retained report-smoke exit code and main-module branch', async () => {
+  it('applies the retained report-smoke exit code and rejects direct legacy main execution', () => {
     const processLike: { exitCode?: number } = {};
     expect(applyHarnessReportSmokeCliExitCode(4, processLike)).toBe(4);
     expect(processLike.exitCode).toBe(4);
@@ -439,40 +392,13 @@ describe('runHarnessReportSmokeCli', () => {
         [],
         sharedModule,
         sharedModule,
-        {
-          repoRoot: '/tmp/vi-history-suite',
-          runner: async () => ({
-            report: {
-              harnessId: 'HARNESS-VHS-001',
-              repositoryUrl: 'https://github.com/ni/labview-icon-editor',
-              cloneDirectory: '/tmp/harness',
-              targetRelativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
-              head: 'abcdef1234567890',
-              generatedAt: '2026-04-03T00:00:00.000Z',
-              selectedHash: 'abcdef1234567890',
-              baseHash: '1111111122222222',
-              comparePairAvailable: true,
-              eligible: true,
-              signature: 'LVIN',
-              reportStatus: 'ready-for-runtime',
-              runtimeExecutionState: 'succeeded',
-              runtimeProvider: 'host-native',
-              runtimeEngine: 'labview-cli',
-              generatedReportExists: true
-            },
-            reportJsonPath: '/tmp/reports/HARNESS-VHS-001/comparison-report-smoke.json',
-            reportMarkdownPath: '/tmp/reports/HARNESS-VHS-001/comparison-report-smoke.md',
-            reportHtmlPath: '/tmp/reports/HARNESS-VHS-001/comparison-report-smoke.html'
-          }),
-          stdout: { write() {} }
-        },
+        {},
         processLike,
         stderr
       )
     ).toBe(true);
-
-    await new Promise((resolve) => setImmediate(resolve));
-    expect(processLike.exitCode).toBe(0);
-    expect(stderrWrites).toEqual([]);
+    expect(processLike.exitCode).toBe(1);
+    expect(stderrWrites.join('')).toContain('single public proof entrypoint');
+    expect(stderrWrites.join('')).toContain('npm run proof:run -- report-smoke');
   });
 });

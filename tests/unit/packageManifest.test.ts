@@ -86,7 +86,6 @@ describe('extension manifest research alignment', () => {
       restrictedConfigurations: [
         'viHistorySuite.executionMode',
         'viHistorySuite.labviewCliPath',
-        'viHistorySuite.lvComparePath',
         'viHistorySuite.labviewExePath',
         'viHistorySuite.windowsContainerImage',
         'viHistorySuite.bitness'
@@ -162,12 +161,6 @@ describe('extension manifest research alignment', () => {
     expect(manifest.scripts?.['review:latest:json']).toBe(
       'node scripts/printLatestHumanReviewSubmission.js --json'
     );
-    expect(manifest.scripts?.['benchmark:github:linux:canonical']).toBe(
-      'npm run compile && node out/cli/runGitHubLinuxDashboardBenchmark.js --harness-id HARNESS-VHS-001'
-    );
-    expect(manifest.scripts?.['benchmark:github:linux:lv-icon']).toBe(
-      'npm run compile && node out/cli/runGitHubLinuxDashboardBenchmark.js --harness-id HARNESS-VHS-002'
-    );
     expect(manifest.scripts?.['benchmark:github:latest']).toBe(
       'node scripts/printLatestGitHubLinuxBenchmark.js'
     );
@@ -219,6 +212,9 @@ describe('extension manifest research alignment', () => {
     expect(manifest.scripts?.['design:gate:assert-complete']).toBe(
       'npm run compile && node out/cli/runVerifyDesignGateCompletion.js'
     );
+    expect(manifest.scripts?.['proof:run']).toBe(
+      'npm run compile && node out/cli/runGovernedProof.js'
+    );
     expect(manifest.scripts?.['test:integration:linux']).toBe(
       'VI_HISTORY_SUITE_INTEGRATION_HOST=linux npm run test:integration'
     );
@@ -233,5 +229,12 @@ describe('extension manifest research alignment', () => {
     );
     expect(manifest.scripts?.['preview:refresh']).toContain('preview-evidence');
     expect(manifest.scripts?.['preview:refresh']).toContain('/mnt/c/Users/sveld/Downloads');
+    expect(manifest.scripts).not.toHaveProperty('harness:smoke');
+    expect(manifest.scripts).not.toHaveProperty('harness:report:smoke');
+    expect(manifest.scripts).not.toHaveProperty('harness:dashboard:smoke');
+    expect(manifest.scripts).not.toHaveProperty('harness:decision:record');
+    expect(manifest.scripts).not.toHaveProperty('benchmark:github:linux:canonical');
+    expect(manifest.scripts).not.toHaveProperty('benchmark:github:linux:lv-icon');
+    expect(manifest.scripts).not.toHaveProperty('benchmark:github:windows:lv-icon');
   });
 });

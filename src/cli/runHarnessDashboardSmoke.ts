@@ -5,23 +5,22 @@ import {
   validateCanonicalRuntimeOverrideArgs,
   validateCanonicalRuntimeOverrideExecutionSurface
 } from './canonicalRuntimeOverrideValidation';
+import { maybeRejectGovernedProofLegacyEntrypointAsMain } from './governedProofLegacyEntrypoint';
 import {
   HarnessDashboardSmokeOptions,
   HarnessDashboardSmokeReport,
   runHarnessDashboardSmoke
 } from '../harness/harnessDashboardSmoke';
-import { ComparisonRuntimeEngine, RuntimePlatform } from '../reporting/comparisonRuntimeLocator';
+import { RuntimePlatform } from '../reporting/comparisonRuntimeLocator';
 
 export interface HarnessDashboardSmokeCliArgs {
   harnessId: string;
   strictRsrcHeader: boolean;
   helpRequested: boolean;
   runtimePlatform?: RuntimePlatform;
-  runtimeEngineOverride?: ComparisonRuntimeEngine;
   bitness?: 'x86' | 'x64';
   labviewCliPath?: string;
   labviewExePath?: string;
-  lvComparePath?: string;
   dashboardCommitWindow?: number;
 }
 
@@ -43,17 +42,15 @@ export interface HarnessDashboardSmokeCliDeps {
 
 export function getHarnessDashboardSmokeUsage(): string {
   return [
-    'Usage: runHarnessDashboardSmoke [--harness-id <id>] [--strict-rsrc-header] [--platform <win32|linux|darwin>] [--engine <labview-cli|lvcompare>] [--bitness <x86|x64>] [--labview-cli-path <path>] [--labview-exe-path <path>] [--lvcompare-path <path>] [--dashboard-commit-window <count>] [--help]',
+    'Usage: runHarnessDashboardSmoke [--harness-id <id>] [--strict-rsrc-header] [--platform <win32|linux|darwin>] [--bitness <x86|x64>] [--labview-cli-path <path>] [--labview-exe-path <path>] [--dashboard-commit-window <count>] [--help]',
     '',
     'Options:',
     '  --harness-id <id>              Select the canonical harness to run.',
     '  --strict-rsrc-header           Require RSRC header validation during VI detection.',
     '  --platform <value>             Override runtime detection platform for report-tool selection.',
-    '  --engine <value>               Override the selected report engine for the smoke run.',
     '  --bitness <value>       Set explicit runtime bitness for report-tool selection.',
     '  --labview-cli-path <path>      Provide an explicit LabVIEWCLI path for report-tool selection.',
     '  --labview-exe-path <path>      Provide an explicit LabVIEW executable path for report-tool selection.',
-    '  --lvcompare-path <path>        Provide an explicit LVCompare path for report-tool selection.',
     '  --dashboard-commit-window <n>  Limit the retained dashboard window to at least 3 commits.',
     '  --help                         Print this help and exit without running the harness.'
   ].join('\n');
@@ -64,11 +61,9 @@ export function parseHarnessDashboardSmokeArgs(argv: string[]): HarnessDashboard
   let strictRsrcHeader = false;
   let helpRequested = false;
   let runtimePlatform: RuntimePlatform | undefined;
-  let runtimeEngineOverride: ComparisonRuntimeEngine | undefined;
   let bitness: 'x86' | 'x64' | undefined;
   let labviewCliPath: string | undefined;
   let labviewExePath: string | undefined;
-  let lvComparePath: string | undefined;
   let dashboardCommitWindow: number | undefined;
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -104,16 +99,6 @@ export function parseHarnessDashboardSmokeArgs(argv: string[]): HarnessDashboard
       continue;
     }
 
-    if (current === '--engine') {
-      const candidate = requireValue('--engine');
-      if (candidate !== 'labview-cli' && candidate !== 'lvcompare') {
-        throw new Error(`Unsupported value for --engine: ${candidate}\n\n${getHarnessDashboardSmokeUsage()}`);
-      }
-
-      runtimeEngineOverride = candidate;
-      continue;
-    }
-
     if (current === '--bitness') {
       const candidate = requireValue('--bitness');
       if (candidate !== 'x86' && candidate !== 'x64') {
@@ -131,11 +116,6 @@ export function parseHarnessDashboardSmokeArgs(argv: string[]): HarnessDashboard
 
     if (current === '--labview-exe-path') {
       labviewExePath = requireValue('--labview-exe-path');
-      continue;
-    }
-
-    if (current === '--lvcompare-path') {
-      lvComparePath = requireValue('--lvcompare-path');
       continue;
     }
 
@@ -164,11 +144,9 @@ export function parseHarnessDashboardSmokeArgs(argv: string[]): HarnessDashboard
     strictRsrcHeader,
     helpRequested,
     runtimePlatform,
-    runtimeEngineOverride,
     bitness,
     labviewCliPath,
     labviewExePath,
-    lvComparePath,
     dashboardCommitWindow
   };
   validateCanonicalRuntimeOverrideArgs(parsedArgs, getHarnessDashboardSmokeUsage());
@@ -201,13 +179,11 @@ export async function runHarnessDashboardSmokeCli(
     reportRoot,
     strictRsrcHeader: args.strictRsrcHeader,
     runtimePlatform: args.runtimePlatform,
-    runtimeEngineOverride: args.runtimeEngineOverride,
     dashboardCommitWindow: args.dashboardCommitWindow,
     runtimeSettings: {
       bitness: args.bitness,
       labviewCliPath: args.labviewCliPath,
-      labviewExePath: args.labviewExePath,
-      lvComparePath: args.lvComparePath
+      labviewExePath: args.labviewExePath
     }
   });
 
@@ -284,10 +260,15 @@ export function maybeRunHarnessDashboardSmokeCliAsMain(
     return false;
   }
 
-  void runHarnessDashboardSmokeCliMain(argv, deps, stderr).then((exitCode) => {
-    applyHarnessDashboardSmokeCliExitCode(exitCode, processLike);
-  });
-  return true;
+  void argv;
+  void deps;
+  return maybeRejectGovernedProofLegacyEntrypointAsMain(
+    'dashboard-smoke',
+    mainModule,
+    currentModule,
+    processLike,
+    stderr
+  );
 }
 
 maybeRunHarnessDashboardSmokeCliAsMain();

@@ -5,6 +5,7 @@ import {
   runHarnessSmoke,
   HarnessSmokeReport
 } from '../harness/harnessSmoke';
+import { maybeRejectGovernedProofLegacyEntrypointAsMain } from './governedProofLegacyEntrypoint';
 
 export interface HarnessSmokeCliArgs {
   harnessId: string;
@@ -157,10 +158,15 @@ export function maybeRunHarnessSmokeCliAsMain(
     return false;
   }
 
-  void runHarnessSmokeCliMain(argv, deps, stderr).then((exitCode) => {
-    applyHarnessSmokeCliExitCode(exitCode, processLike);
-  });
-  return true;
+  void argv;
+  void deps;
+  return maybeRejectGovernedProofLegacyEntrypointAsMain(
+    'smoke',
+    mainModule,
+    currentModule,
+    processLike,
+    stderr
+  );
 }
 
 maybeRunHarnessSmokeCliAsMain();

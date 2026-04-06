@@ -12,12 +12,15 @@ authoritative research:
 
 ## Scope
 
-- `labviewCliPath`, `lvComparePath`, `labviewExePath`, `bitness`
+- `executionMode`, `labviewCliPath`, `labviewExePath`, `bitness`,
+  `windowsContainerImage`
 - Windows discovery heuristics and retained detection facts
 - macOS/Linux discovery heuristics and platform constraint facts
 - notification progress with percent, processed/total, and ETA
 - discreet status-bar progress item
 - webview progress surface for long-running report generation
+- explicit provider choice and Docker-first Windows `auto` truth in the
+  extension-user surface
 
 ## Excluded From This Epic
 

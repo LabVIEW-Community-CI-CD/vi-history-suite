@@ -36,7 +36,7 @@ Adopt a transparent extension execution-flexibility contract.
    - `docker-only`
 2. Execution mode shall be separate from:
    - `bitness`
-   - explicit `labviewCliPath`, `labviewExePath`, and `lvComparePath`
+   - explicit `labviewCliPath` and `labviewExePath`
    - `windowsContainerImage`
 3. In `auto` mode on Windows, the extension shall:
    - use the governed Windows container provider whenever Docker Desktop is

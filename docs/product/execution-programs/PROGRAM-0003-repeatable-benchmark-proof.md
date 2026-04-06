@@ -88,7 +88,10 @@ Windows-image hardening also restores the governed Windows `-LabVIEWPath`,
 forces `LV_RTE_HEADLESS=1`, hardens `LabVIEWCLI.ini` startup timeouts, and
 prelaunches headless LabVIEW before benchmark execution so the published image
 tracks NI's documented Windows-container startup posture instead of a bare
-first-launch `LabVIEWCLI` invocation. The latest retained local proof now
+first-launch `LabVIEWCLI` invocation. Public proof execution now stays behind
+`runGovernedProof` with canonical `CreateComparisonReport`; retained
+`LVCompare` evidence remains internal parity-only diagnosis rather than a
+public engine-selection surface. The latest retained local proof now
 reaches pair `129/134` before retaining a connected-session `Error 66 / Call
 By Reference` seam, and the runtime now attempts one governed
 `LabVIEWCLI CloseLabVIEW -Headless` session reset plus one retry for that
@@ -96,23 +99,20 @@ seam before terminal failure is retained. The bounded comparable-prefix packet
 and Windows benchmark summary now retain that seam explicitly as
 `labview-cli-call-by-reference`, and the older retained canonical-host
 Windows-container proof for pair `129` shows the same connected-session
-diagnosis. The governed canonical-host proof runner now also accepts a
-targeted `--engine <labview-cli|lvcompare>` override for diagnosis reruns
-while preserving the comparable-prefix default and the same proof-root
-receipt contract, and shared dashboard-smoke progress now labels Windows
-reruns as Windows rather than Linux. A fresh governed `lvcompare` rerun on
-the published Windows image times out immediately at pair `1/129`, so
-`lvcompare` is not currently a viable Windows workaround for the pair-129
-`labview-cli-call-by-reference` seam. The governed harness report-smoke
-surface now also accepts an exact selected/base hash pair plus explicit
-runtime timeout, and the targeted exact-pair `lvcompare` rerun on
-`6dd65df -> 3408654` likewise times out after `120000ms`, which strengthens
-the conclusion that Windows pair `129` is not recoverable through a simple
-engine swap. The same exact blocker pair `6dd65df -> 3408654` is now retained
-under both supported Windows engines: `windows-benchmark-image-pair129-labviewcli`
-records `command-exited-nonzero (labview-cli-call-by-reference)` after a
-connected-session retry attempt, `windows-benchmark-image-pair129-lvcompare`
-records `command-timed-out` after the bounded `120000ms` runtime budget, and
+diagnosis. Shared dashboard-smoke progress now labels Windows reruns as
+Windows rather than Linux. Retained internal `LVCompare` parity evidence on
+the published Windows image still times out immediately at pair `1/129`, so
+that parity lane is not currently a viable Windows workaround for the pair-129
+`labview-cli-call-by-reference` seam. The governed `runGovernedProof
+report-smoke` surface now also accepts an exact selected/base hash pair plus
+explicit runtime timeout, and the targeted exact-pair internal `LVCompare`
+parity rerun on `6dd65df -> 3408654` likewise times out after `120000ms`,
+which strengthens the conclusion that Windows pair `129` is not recoverable
+through a simple engine swap. The same exact blocker pair
+`6dd65df -> 3408654` is now retained under both supported internal engines:
+`windows-benchmark-image-pair129-labviewcli` records
+`command-exited-nonzero (labview-cli-call-by-reference)`,
+`windows-benchmark-image-pair129-lvcompare` records `command-timed-out`, and
 the comparable-prefix packet now retains both exact-pair receipts alongside
 the accepted `129`-commit / `128`-pair timing scope.
 Those exact-pair receipts are no longer admitted by proof-root naming alone:
@@ -180,9 +180,10 @@ further, but it still does not convert the host x86 proof into the connected
 image-like failure shape.
 To keep future exact-pair experiments from contaminating retained blocker
 evidence, `VHS-REQ-449` now governs canonical diagnosis arguments:
-`runHarnessReportSmoke` rejects incomplete selected/base hash bundles,
-incomplete engine/path override bundles, wrong executable basenames, and
-Windows bitness/path contradictions before a targeted rerun can start.
+`runGovernedProof report-smoke` rejects incomplete selected/base hash bundles,
+incomplete canonical `CreateComparisonReport` override bundles, wrong
+executable basenames, and Windows bitness/path contradictions before a
+targeted rerun can start.
 
 `VHS-REQ-450` now governs the canonical Windows host runtime surface too:
 explicit Windows runtime override paths must exist before the rerun starts,
@@ -196,9 +197,10 @@ x64 CLI install exists.
 
 `VHS-REQ-451` lifts canonical runtime-override validation into a shared
 PROGRAM-0003 admission layer rather than keeping it trapped inside
-`runHarnessReportSmoke` alone. Dashboard-smoke, decision-record, exact-pair
-smoke, and the Windows/Linux benchmark CLIs now reject contradictory
-engine/path bundles before they can generate retained evidence.
+`runGovernedProof report-smoke` alone. The one public `runGovernedProof`
+surface and its `dashboard-smoke`, `decision-record`, `report-smoke`,
+`benchmark-linux`, and `benchmark-windows` subcommands now reject
+contradictory runtime bundles before they can generate retained evidence.
 
 `VHS-REQ-452` tightens that shared admission layer further on Windows: even
 when an operator omits `--bitness`, explicit runtime override paths must
@@ -207,8 +209,8 @@ are now treated as experiment contamination instead of being allowed to retain
 misleading blocker evidence.
 
 `ADR-0024` plus `VHS-REQ-457..458` now tighten that PROGRAM-0003 admission
-layer one step further: benchmark-proof entrypoints validate the effective runtime bundle
-after CLI arguments, environment variables, and entrypoint-local defaults have
+layer one step further: governed proof subcommands validate the effective runtime bundle
+after CLI arguments, environment variables, and subcommand-local defaults have
 been resolved, and the Windows benchmark CLI no longer injects hidden explicit
 Windows executable defaults when no explicit override was requested.
 

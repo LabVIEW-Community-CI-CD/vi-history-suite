@@ -12,6 +12,7 @@
 | Item Type | Current Path | Owner | Trigger | Proving Evidence |
 | --- | --- | --- | --- | --- |
 | Repository entrypoint | `README.md` | sole author | repo orientation or active program meaning changes | README points to authoritative research, current state, and active queue |
+| Changelog | `CHANGELOG.md` | sole author | package baseline, retained release history, or next exact-version line changes | future sessions can recover the active development version and retained release history without reconstructing chat context |
 | Current state | `docs/product/current-state.md` | sole author | active tranche, landed ship state, committed capability state, or reading order changes | current state matches development queue, closed ship control, and research alignment |
 | Product charter | `docs/product/charter.md` | sole author | mission or scope change | charter matches live repo direction |
 | Problem statement | `docs/product/problem-statement.md` | sole author | problem framing changes | statement aligns with current epic |

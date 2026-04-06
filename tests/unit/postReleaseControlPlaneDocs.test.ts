@@ -369,7 +369,8 @@ describe('post-release control-plane coherence', () => {
     expect(benchmarkProgram).toContain('Windows host baseline');
     expect(benchmarkProgram).toContain('Windows benchmark-image baseline');
     expect(benchmarkProgram).toContain('Linux benchmark-image result');
-    expect(benchmarkProgram).toContain('The same exact blocker pair `6dd65df -> 3408654`');
+    expect(benchmarkProgram).toContain('exact blocker pair');
+    expect(benchmarkProgram).toContain('`6dd65df -> 3408654`');
     expect(benchmarkProgram).toContain('headless-session-reset-stdout.txt');
     expect(benchmarkProgram).toContain('comparison-report-smoke.json');
     expect(benchmarkProgram).toContain('headlessSessionResetExitCode=1');
@@ -394,8 +395,11 @@ describe('post-release control-plane coherence', () => {
     expect(benchmarkProgram).toContain('rejects incomplete selected/base hash bundles');
     expect(benchmarkProgram).toContain('stale `LabVIEW.exe` / `LabVIEWCLI.exe` / `LVCompare.exe` sessions');
     expect(benchmarkProgram).toContain('only the x86 `LabVIEWCLI.exe` path exists locally');
-    expect(benchmarkProgram).toContain('Dashboard-smoke, decision-record, exact-pair');
-    expect(benchmarkProgram).toContain('Windows/Linux benchmark CLIs now reject contradictory');
+    expect(benchmarkProgram).toContain('The one public `runGovernedProof`');
+    expect(benchmarkProgram).toContain('`dashboard-smoke`, `decision-record`, `report-smoke`');
+    expect(benchmarkProgram).toContain('`benchmark-linux`, and `benchmark-windows`');
+    expect(benchmarkProgram).toContain('subcommands now reject');
+    expect(benchmarkProgram).toContain('contradictory runtime bundles');
 
     expect(benchmarkIssue).toContain('Closed on bounded post-release benchmark truth.');
     expect(benchmarkIssue).toContain('the deep Linux host benchmark now fails truthfully late at pair `135/138`');
@@ -427,17 +431,20 @@ describe('post-release control-plane coherence', () => {
     expect(benchmarkIssue).toContain('latest eligible proof');
     expect(benchmarkIssue).toContain('rejected before they can contaminate retained benchmark blocker evidence');
     expect(benchmarkIssue).toContain('preexisting listener on the selected `LabVIEW.ini`-derived VI Server port');
-    expect(benchmarkIssue).toContain('dashboard-smoke, decision-record, exact-pair smoke');
-    expect(benchmarkIssue).toContain('now share one canonical runtime-override validation layer');
+    expect(benchmarkIssue).toContain('`dashboard-smoke`,');
+    expect(benchmarkIssue).toContain('`decision-record`, `report-smoke`,');
+    expect(benchmarkIssue).toContain('subcommands now share one canonical');
+    expect(benchmarkIssue).toContain('runtime-override validation layer');
     expect(benchmarkIssue).toContain('governed `CloseLabVIEW -Headless` recovery attempt exited `1`');
 
     expect(harnesses).toContain('comparison-report-smoke.json');
     expect(harnesses).toContain('recovery executable, args, exit');
     expect(harnesses).toContain('selected `LabVIEW.ini` path plus explicit VI');
-    expect(harnesses).toContain('`PROGRAM-0003` entrypoints that accept runtime overrides now share one');
+    expect(harnesses).toContain('the public `runGovernedProof` surface and its `PROGRAM-0003` subcommands');
     expect(harnesses).toContain('must form a full 40-character');
     expect(harnesses).toContain('canonical-exact-pair-diagnosis.md');
-    expect(harnesses).toContain('dashboard-smoke, decision-record, exact-pair smoke, and the Windows/Linux');
+    expect(harnesses).toContain('`dashboard-smoke`, `decision-record`, `report-smoke`,');
+    expect(harnesses).toContain('`benchmark-linux`, and `benchmark-windows`');
     expect(harnesses).toContain('host-native exact-pair diagnosis now blocks before launch when stale');
     expect(harnesses).toContain('preexisting listener on the selected `LabVIEW.ini`-derived VI Server port');
     expect(harnesses).toContain('must also remain one coherent x86');
@@ -448,15 +455,16 @@ describe('post-release control-plane coherence', () => {
     expect(harnesses).toContain('NI Package Manager plus ISO installation');
 
     expect(canonicalDiagnosis).toContain('# Canonical Exact-Pair Diagnosis');
-    expect(canonicalDiagnosis).toContain('Windows Host-Native `labview-cli` Exact Pair');
-    expect(canonicalDiagnosis).toContain('Windows Host-Native `lvcompare` Exact Pair');
+    expect(canonicalDiagnosis).toContain('### Windows Host-Native Exact Pair');
+    expect(canonicalDiagnosis).toContain('### Windows Docker-Only Exact Pair');
     expect(canonicalDiagnosis).toContain('`--selected-hash` and `--base-hash` must be supplied together');
     expect(canonicalDiagnosis).toContain('the current canonical Windows machine exposes only the x86');
     expect(canonicalDiagnosis).toContain('Canonical Windows host-native diagnosis requires a clean host runtime');
     expect(canonicalDiagnosis).toContain('surface before launch');
-    expect(canonicalDiagnosis).toContain('shared runtime-override admission control for `PROGRAM-0003`');
-    expect(canonicalDiagnosis).toContain('dashboard-smoke, decision-record,');
-    expect(canonicalDiagnosis).toContain('Windows/Linux benchmark CLI entrypoints too');
+    expect(canonicalDiagnosis).toContain('Shared `PROGRAM-0003` runtime-override validation still applies here');
+    expect(canonicalDiagnosis).toContain('`dashboard-smoke`, `decision-record`, `report-smoke`,');
+    expect(canonicalDiagnosis).toContain('`benchmark-linux`,');
+    expect(canonicalDiagnosis).toContain('and `benchmark-windows`');
     expect(canonicalDiagnosis).toContain('must resolve to one coherent x86 or');
     expect(canonicalDiagnosis).toContain('Ambient environment changes such as `LV_RTE_HEADLESS=1`');
     expect(canonicalDiagnosis).toContain('not a substitute for canonical experiment');
@@ -468,10 +476,11 @@ describe('post-release control-plane coherence', () => {
     expect(benchmarkAdr).toContain('documentation package shall keep a dedicated operator-facing canonical');
 
     expect(admissionAdr).toContain('# ADR-0022: Canonical Experiment Admission Control For PROGRAM-0003');
-    expect(admissionAdr).toContain('runHarnessDashboardSmoke');
-    expect(admissionAdr).toContain('runHarnessDecisionRecord');
-    expect(admissionAdr).toContain('runGitHubWindowsDashboardBenchmark');
-    expect(admissionAdr).toContain('runGitHubLinuxDashboardBenchmark');
+    expect(admissionAdr).toContain('one public proof entrypoint');
+    expect(admissionAdr).toContain('`dashboard-smoke`');
+    expect(admissionAdr).toContain('`decision-record`');
+    expect(admissionAdr).toContain('`benchmark-windows`');
+    expect(admissionAdr).toContain('`benchmark-linux`');
     expect(admissionAdr).toContain('must not mix x86 and x64 surfaces');
     expect(admissionAdr).toContain('already-running `LabVIEW.exe`, `LabVIEWCLI.exe`, or `LVCompare.exe`');
 

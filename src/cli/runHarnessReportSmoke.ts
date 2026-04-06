@@ -5,12 +5,13 @@ import {
   validateCanonicalRuntimeOverrideArgs,
   validateCanonicalRuntimeOverrideExecutionSurface
 } from './canonicalRuntimeOverrideValidation';
+import { maybeRejectGovernedProofLegacyEntrypointAsMain } from './governedProofLegacyEntrypoint';
 import {
   HarnessReportSmokeOptions,
   HarnessReportSmokeReport,
   runHarnessReportSmoke
 } from '../harness/harnessReportSmoke';
-import { ComparisonRuntimeEngine, RuntimePlatform } from '../reporting/comparisonRuntimeLocator';
+import { RuntimePlatform } from '../reporting/comparisonRuntimeLocator';
 
 export interface HarnessReportSmokeCliArgs {
   harnessId: string;
@@ -20,12 +21,10 @@ export interface HarnessReportSmokeCliArgs {
   baseHash?: string;
   runtimeExecutionTimeoutMs?: number;
   runtimePlatform?: RuntimePlatform;
-  runtimeEngineOverride?: ComparisonRuntimeEngine;
   executionMode?: 'auto' | 'host-only' | 'docker-only';
   bitness?: 'x86' | 'x64';
   labviewCliPath?: string;
   labviewExePath?: string;
-  lvComparePath?: string;
 }
 
 export interface HarnessReportSmokeCliDeps {
@@ -46,7 +45,7 @@ export interface HarnessReportSmokeCliDeps {
 
 export function getHarnessReportSmokeUsage(): string {
   return [
-    'Usage: runHarnessReportSmoke [--harness-id <id>] [--strict-rsrc-header] [--selected-hash <hash>] [--base-hash <hash>] [--runtime-timeout-ms <ms>] [--platform <win32|linux|darwin>] [--engine <labview-cli|lvcompare>] [--execution-mode <auto|host-only|docker-only>] [--bitness <x86|x64>] [--labview-cli-path <path>] [--labview-exe-path <path>] [--lvcompare-path <path>] [--help]',
+    'Usage: runHarnessReportSmoke [--harness-id <id>] [--strict-rsrc-header] [--selected-hash <hash>] [--base-hash <hash>] [--runtime-timeout-ms <ms>] [--platform <win32|linux|darwin>] [--execution-mode <auto|host-only|docker-only>] [--bitness <x86|x64>] [--labview-cli-path <path>] [--labview-exe-path <path>] [--help]',
     '',
     'Options:',
     '  --harness-id <id>         Select the canonical harness to run.',
@@ -55,17 +54,15 @@ export function getHarnessReportSmokeUsage(): string {
     '  --base-hash <hash>        Assert the targeted selected revision uses this base revision.',
     '  --runtime-timeout-ms <ms> Bound runtime execution for targeted or default report-smoke diagnosis.',
     '  --platform <value>        Override runtime detection platform for report-tool selection.',
-    '  --engine <value>          Override the selected report engine for the smoke run.',
     '  --execution-mode <value>  Override provider selection with auto, host-only, or docker-only.',
     '  --bitness <value>  Set explicit runtime bitness for report-tool selection.',
     '  --labview-cli-path <path> Provide an explicit LabVIEWCLI path for report-tool selection.',
     '  --labview-exe-path <path> Provide an explicit LabVIEW executable path for report-tool selection.',
-    '  --lvcompare-path <path>   Provide an explicit LVCompare path for report-tool selection.',
     '  --help                    Print this help and exit without running the harness.',
     '',
     'Canonical diagnosis rules:',
     '  --selected-hash requires --base-hash, and both hashes must be full 40-character git ids.',
-    '  Explicit runtime override paths require matching --platform and --engine selections.',
+    '  Explicit runtime override paths require matching --platform selection and canonical LabVIEWCLI paths.',
     '  Windows bitness overrides must agree with any explicit Program Files / Program Files (x86) runtime paths.'
   ].join('\n');
 }
@@ -78,12 +75,10 @@ export function parseHarnessReportSmokeArgs(argv: string[]): HarnessReportSmokeC
   let baseHash: string | undefined;
   let runtimeExecutionTimeoutMs: number | undefined;
   let runtimePlatform: RuntimePlatform | undefined;
-  let runtimeEngineOverride: ComparisonRuntimeEngine | undefined;
   let executionMode: 'auto' | 'host-only' | 'docker-only' | undefined;
   let bitness: 'x86' | 'x64' | undefined;
   let labviewCliPath: string | undefined;
   let labviewExePath: string | undefined;
-  let lvComparePath: string | undefined;
 
   for (let index = 0; index < argv.length; index += 1) {
     const current = argv[index];
@@ -140,16 +135,6 @@ export function parseHarnessReportSmokeArgs(argv: string[]): HarnessReportSmokeC
       continue;
     }
 
-    if (current === '--engine') {
-      const candidate = requireValue('--engine');
-      if (candidate !== 'labview-cli' && candidate !== 'lvcompare') {
-        throw new Error(`Unsupported value for --engine: ${candidate}\n\n${getHarnessReportSmokeUsage()}`);
-      }
-
-      runtimeEngineOverride = candidate;
-      continue;
-    }
-
     if (current === '--execution-mode') {
       const candidate = requireValue('--execution-mode');
       if (candidate !== 'auto' && candidate !== 'host-only' && candidate !== 'docker-only') {
@@ -182,11 +167,6 @@ export function parseHarnessReportSmokeArgs(argv: string[]): HarnessReportSmokeC
       continue;
     }
 
-    if (current === '--lvcompare-path') {
-      lvComparePath = requireValue('--lvcompare-path');
-      continue;
-    }
-
     if (current === '--help' || current === '-h') {
       helpRequested = true;
       continue;
@@ -207,12 +187,10 @@ export function parseHarnessReportSmokeArgs(argv: string[]): HarnessReportSmokeC
     baseHash,
     runtimeExecutionTimeoutMs,
     runtimePlatform,
-    runtimeEngineOverride,
     executionMode,
     bitness,
     labviewCliPath,
-    labviewExePath,
-    lvComparePath
+    labviewExePath
   };
 
   validateCanonicalHarnessReportSmokeArgs(parsedArgs);
@@ -248,13 +226,11 @@ export async function runHarnessReportSmokeCli(
     baseHash: args.baseHash,
     runtimeExecutionTimeoutMs: args.runtimeExecutionTimeoutMs,
     runtimePlatform: args.runtimePlatform,
-    runtimeEngineOverride: args.runtimeEngineOverride,
     runtimeSettings: {
       executionMode: args.executionMode,
       bitness: args.bitness,
       labviewCliPath: args.labviewCliPath,
-      labviewExePath: args.labviewExePath,
-      lvComparePath: args.lvComparePath
+      labviewExePath: args.labviewExePath
     }
   });
 
@@ -353,10 +329,15 @@ export function maybeRunHarnessReportSmokeCliAsMain(
     return false;
   }
 
-  void runHarnessReportSmokeCliMain(argv, deps, stderr).then((exitCode) => {
-    applyHarnessReportSmokeCliExitCode(exitCode, processLike);
-  });
-  return true;
+  void argv;
+  void deps;
+  return maybeRejectGovernedProofLegacyEntrypointAsMain(
+    'report-smoke',
+    mainModule,
+    currentModule,
+    processLike,
+    stderr
+  );
 }
 
 maybeRunHarnessReportSmokeCliAsMain();

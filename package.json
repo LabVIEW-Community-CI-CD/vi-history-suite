@@ -2,7 +2,7 @@
   "name": "vi-history-suite",
   "displayName": "VI History Suite",
   "description": "VS Code extension for content-detected LabVIEW VI history review in Git repositories.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "svelderrainruiz",
   "license": "SEE LICENSE IN LICENSE",
   "private": true,
@@ -20,7 +20,6 @@
       "restrictedConfigurations": [
         "viHistorySuite.executionMode",
         "viHistorySuite.labviewCliPath",
-        "viHistorySuite.lvComparePath",
         "viHistorySuite.labviewExePath",
         "viHistorySuite.windowsContainerImage",
         "viHistorySuite.bitness"
@@ -110,11 +109,6 @@
           "default": "auto",
           "description": "Controls whether VI History chooses report-generation runtime providers automatically, stays host-native only, or requires Docker-only execution."
         },
-        "viHistorySuite.lvComparePath": {
-          "type": "string",
-          "default": "",
-          "description": "Optional explicit path to LVCompare."
-        },
         "viHistorySuite.labviewCliPath": {
           "type": "string",
           "default": "",
@@ -166,9 +160,6 @@
     "dashboard:latest:host:json": "node scripts/printLatestDashboardRun.js --host-only --json",
     "review:latest": "node scripts/printLatestHumanReviewSubmission.js",
     "review:latest:json": "node scripts/printLatestHumanReviewSubmission.js --json",
-    "benchmark:github:linux:canonical": "npm run compile && node out/cli/runGitHubLinuxDashboardBenchmark.js --harness-id HARNESS-VHS-001",
-    "benchmark:github:linux:lv-icon": "npm run compile && node out/cli/runGitHubLinuxDashboardBenchmark.js --harness-id HARNESS-VHS-002",
-    "benchmark:github:windows:lv-icon": "npm run compile && node out/cli/runGitHubWindowsDashboardBenchmark.js --harness-id HARNESS-VHS-002",
     "benchmark:github:latest": "node scripts/printLatestGitHubLinuxBenchmark.js",
     "benchmark:github:latest:json": "node scripts/printLatestGitHubLinuxBenchmark.js --json",
     "docs:workbench:build": "node scripts/runDocsWorkbenchDocker.js build",
@@ -188,10 +179,8 @@
     "check": "tsc -p . --noEmit",
     "design:gate": "npm run compile && node out/cli/runDesignGate.js",
     "design:gate:assert-complete": "npm run compile && node out/cli/runVerifyDesignGateCompletion.js",
-    "harness:decision:record": "npm run compile && node out/cli/runHarnessDecisionRecord.js --harness-id HARNESS-VHS-001 --reviewer Codex --review-question \"Does the concentrated evidence support bounded review completion?\" --outcome needs-more-review --confidence medium --decision-rationale \"The dashboard is evidence-rich, but the reviewer should still verify whether more manual inspection is needed.\"",
-    "harness:smoke": "npm run compile && node out/cli/runHarnessSmoke.js --harness-id HARNESS-VHS-001",
-    "harness:report:smoke": "npm run compile && node out/cli/runHarnessReportSmoke.js --harness-id HARNESS-VHS-001",
-    "harness:dashboard:smoke": "npm run compile && node out/cli/runHarnessDashboardSmoke.js --harness-id HARNESS-VHS-001",
+    "proof:run": "npm run compile && node out/cli/runGovernedProof.js",
+    "test:design-contract": "npm exec -- vitest run tests/unit/packageManifest.test.ts tests/unit/comparisonRuntimeLocator.test.ts tests/unit/runGovernedProofCli.test.ts tests/unit/governedLegacyProofEntrypoints.test.ts tests/unit/governedProofDocs.test.ts tests/unit/githubLinuxBenchmarkWorkflow.test.ts tests/unit/githubWindowsBenchmarkWorkflow.test.ts tests/unit/designGate.test.ts tests/unit/designGateRunner.test.ts",
     "pretest": "npm run compile",
     "preview:refresh": "npm run package && node -e \"const fs=require('node:fs'); const p=require('./package.json'); const name=p.name+'-'+p.version+'.vsix'; fs.copyFileSync(name, 'preview-evidence/'+name); fs.copyFileSync(name, '/mnt/c/Users/sveld/Downloads/'+name); console.log('Refreshed '+name);\"",
     "test": "vitest run --coverage",

@@ -17,18 +17,14 @@ const WINDOWS_X86_LABVIEW_EXE_PATH =
   'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe';
 const WINDOWS_LABVIEW_CLI_PATH =
   'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe';
-const WINDOWS_LVCOMPARE_PATH =
-  'C:\\Program Files\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe';
 
 describe('runGitHubWindowsDashboardBenchmarkCli', () => {
   it('parses deterministic benchmark args with a deep Windows default', () => {
     expect(parseGitHubWindowsDashboardBenchmarkArgs([])).toEqual({
       harnessId: 'HARNESS-VHS-002',
       dashboardCommitWindow: 1000,
-      runtimeEngineOverride: undefined,
       labviewCliPath: undefined,
       labviewExePath: undefined,
-      lvComparePath: undefined,
       strictRsrcHeader: false,
       helpRequested: false
     });
@@ -39,21 +35,17 @@ describe('runGitHubWindowsDashboardBenchmarkCli', () => {
         'HARNESS-VHS-999',
         '--dashboard-commit-window',
         '139',
-        '--engine',
-        'lvcompare',
+        '--labview-cli-path',
+        WINDOWS_LABVIEW_CLI_PATH,
         '--labview-exe-path',
-        WINDOWS_LABVIEW_EXE_PATH,
-        '--lvcompare-path',
-        WINDOWS_LVCOMPARE_PATH,
+        WINDOWS_X86_LABVIEW_EXE_PATH,
         '--strict-rsrc-header'
       ])
     ).toEqual({
       harnessId: 'HARNESS-VHS-999',
       dashboardCommitWindow: 139,
-      runtimeEngineOverride: 'lvcompare',
-      labviewCliPath: undefined,
-      labviewExePath: WINDOWS_LABVIEW_EXE_PATH,
-      lvComparePath: WINDOWS_LVCOMPARE_PATH,
+      labviewCliPath: WINDOWS_LABVIEW_CLI_PATH,
+      labviewExePath: WINDOWS_X86_LABVIEW_EXE_PATH,
       strictRsrcHeader: true,
       helpRequested: false
     });
@@ -61,19 +53,14 @@ describe('runGitHubWindowsDashboardBenchmarkCli', () => {
     expect(() =>
       parseGitHubWindowsDashboardBenchmarkArgs(['--dashboard-commit-window', '2'])
     ).toThrow(/Unsupported value for --dashboard-commit-window/);
-    expect(() => parseGitHubWindowsDashboardBenchmarkArgs(['--engine', 'weird'])).toThrow(
-      /Unsupported value for --engine/
-    );
     expect(() =>
       parseGitHubWindowsDashboardBenchmarkArgs([
         '--labview-exe-path',
         WINDOWS_LABVIEW_EXE_PATH
       ])
-    ).toThrow(/Canonical runtime overrides require --engine/);
+    ).toThrow(/Canonical CreateComparisonReport overrides require both --labview-cli-path and --labview-exe-path/);
     expect(() =>
       parseGitHubWindowsDashboardBenchmarkArgs([
-        '--engine',
-        'labview-cli',
         '--labview-cli-path',
         WINDOWS_LABVIEW_CLI_PATH,
         '--labview-exe-path',
@@ -91,8 +78,6 @@ describe('runGitHubWindowsDashboardBenchmarkCli', () => {
     await expect(
       runGitHubWindowsDashboardBenchmarkCli(
         [
-          '--engine',
-          'labview-cli',
           '--labview-cli-path',
           WINDOWS_LABVIEW_CLI_PATH,
           '--labview-exe-path',
@@ -245,8 +230,7 @@ describe('runGitHubWindowsDashboardBenchmarkCli', () => {
         dashboardCommitWindow: 1000,
         runtimeSettings: {
           labviewCliPath: undefined,
-          labviewExePath: undefined,
-          lvComparePath: undefined
+          labviewExePath: undefined
         }
       })
     );
@@ -389,7 +373,7 @@ describe('runGitHubWindowsDashboardBenchmarkCli', () => {
         runGitHubWindowsDashboardBenchmarkCli([], {
           runner
         })
-      ).rejects.toThrow(/Canonical runtime overrides require --engine/);
+      ).rejects.toThrow(/must form one coherent bitness bundle/);
     } finally {
       if (originalCliPath === undefined) {
         delete process.env.VIHS_GITHUB_WINDOWS_BENCHMARK_LABVIEW_CLI_PATH;
@@ -407,7 +391,7 @@ describe('runGitHubWindowsDashboardBenchmarkCli', () => {
     expect(runner).not.toHaveBeenCalled();
   });
 
-  it('surfaces help and exit wiring deterministically', async () => {
+  it('surfaces help and exit wiring deterministically while rejecting direct legacy main execution', async () => {
     const stdoutWrites: string[] = [];
     const stderrWrites: string[] = [];
     const processLike = { exitCode: 0 };
@@ -420,23 +404,21 @@ describe('runGitHubWindowsDashboardBenchmarkCli', () => {
 
     expect(
       maybeRunGitHubWindowsDashboardBenchmarkCliAsMain(
-        ['--help'],
+        [],
         module,
         module,
-        {
-          stdout: { write(text: string) { stdoutWrites.push(text); } }
-        },
+        {},
         processLike,
         { write(text: string) { stderrWrites.push(text); } }
       )
     ).toBe(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 0));
-
     expect(stdoutWrites.join('')).toContain('Usage: runGitHubWindowsDashboardBenchmark');
+    expect(processLike.exitCode).toBe(1);
+    expect(stderrWrites.join('')).toContain('single public proof entrypoint');
+    expect(stderrWrites.join('')).toContain('npm run proof:run -- benchmark-windows');
     expect(applyGitHubWindowsDashboardBenchmarkCliExitCode(7, processLike)).toBe(7);
     expect(processLike.exitCode).toBe(7);
-    expect(stderrWrites).toEqual([]);
     expect(
       formatGitHubWindowsDashboardBenchmarkSuccess(
         buildGitHubWindowsDashboardBenchmarkSummary(

@@ -5,12 +5,13 @@ import {
   validateCanonicalRuntimeOverrideArgs,
   validateCanonicalRuntimeOverrideExecutionSurface
 } from './canonicalRuntimeOverrideValidation';
+import { maybeRejectGovernedProofLegacyEntrypointAsMain } from './governedProofLegacyEntrypoint';
 import {
   HarnessDecisionRecordOptions,
   HarnessDecisionRecordReport,
   runHarnessDecisionRecord
 } from '../harness/harnessDecisionRecord';
-import { ComparisonRuntimeEngine, RuntimePlatform } from '../reporting/comparisonRuntimeLocator';
+import { RuntimePlatform } from '../reporting/comparisonRuntimeLocator';
 import { ReviewDecisionConfidence, ReviewDecisionOutcome } from '../scenarios/decisionRecord';
 
 export interface HarnessDecisionRecordCliArgs {
@@ -24,11 +25,9 @@ export interface HarnessDecisionRecordCliArgs {
   confidence?: ReviewDecisionConfidence;
   decisionRationale?: string;
   runtimePlatform?: RuntimePlatform;
-  runtimeEngineOverride?: ComparisonRuntimeEngine;
   bitness?: 'x86' | 'x64';
   labviewCliPath?: string;
   labviewExePath?: string;
-  lvComparePath?: string;
   dashboardCommitWindow?: number;
   additionalReportGenerationRequired: boolean;
   additionalManualLabVIEWInspectionRequired: boolean;
@@ -52,7 +51,7 @@ export interface HarnessDecisionRecordCliDeps {
 
 export function getHarnessDecisionRecordUsage(): string {
   return [
-    'Usage: runHarnessDecisionRecord [--harness-id <id>] [--scenario-id <id>] --reviewer <name> --review-question <text> --outcome <approved|rejected|needs-more-review> --confidence <low|medium|high> --decision-rationale <text> [--strict-rsrc-header] [--platform <win32|linux|darwin>] [--engine <labview-cli|lvcompare>] [--bitness <x86|x64>] [--labview-cli-path <path>] [--labview-exe-path <path>] [--lvcompare-path <path>] [--dashboard-commit-window <count>] [--additional-report-generation-required] [--additional-manual-labview-inspection-required] [--issue <text>] [--help]',
+    'Usage: runHarnessDecisionRecord [--harness-id <id>] [--scenario-id <id>] --reviewer <name> --review-question <text> --outcome <approved|rejected|needs-more-review> --confidence <low|medium|high> --decision-rationale <text> [--strict-rsrc-header] [--platform <win32|linux|darwin>] [--bitness <x86|x64>] [--labview-cli-path <path>] [--labview-exe-path <path>] [--dashboard-commit-window <count>] [--additional-report-generation-required] [--additional-manual-labview-inspection-required] [--issue <text>] [--help]',
     '',
     'Options:',
     '  --harness-id <id>                                Select the canonical harness to run.',
@@ -64,11 +63,9 @@ export function getHarnessDecisionRecordUsage(): string {
     '  --decision-rationale <text>                      Record the human decision rationale.',
     '  --strict-rsrc-header                             Require RSRC header validation during VI detection.',
     '  --platform <value>                               Override runtime detection platform for report-tool selection.',
-    '  --engine <value>                                 Override the selected report engine.',
     '  --bitness <value>                         Set explicit runtime bitness for report-tool selection.',
     '  --labview-cli-path <path>                        Provide an explicit LabVIEWCLI path for report-tool selection.',
     '  --labview-exe-path <path>                        Provide an explicit LabVIEW executable path for report-tool selection.',
-    '  --lvcompare-path <path>                          Provide an explicit LVCompare path for report-tool selection.',
     '  --dashboard-commit-window <n>                    Limit the retained dashboard window to at least 3 commits.',
     '  --additional-report-generation-required          Mark that more comparison-report generation is required.',
     '  --additional-manual-labview-inspection-required  Mark that more manual LabVIEW inspection is required.',
@@ -88,11 +85,9 @@ export function parseHarnessDecisionRecordArgs(argv: string[]): HarnessDecisionR
   let confidence: ReviewDecisionConfidence | undefined;
   let decisionRationale: string | undefined;
   let runtimePlatform: RuntimePlatform | undefined;
-  let runtimeEngineOverride: ComparisonRuntimeEngine | undefined;
   let bitness: 'x86' | 'x64' | undefined;
   let labviewCliPath: string | undefined;
   let labviewExePath: string | undefined;
-  let lvComparePath: string | undefined;
   let dashboardCommitWindow: number | undefined;
   let additionalReportGenerationRequired = false;
   let additionalManualLabVIEWInspectionRequired = false;
@@ -171,16 +166,6 @@ export function parseHarnessDecisionRecordArgs(argv: string[]): HarnessDecisionR
       continue;
     }
 
-    if (current === '--engine') {
-      const candidate = requireValue('--engine');
-      if (candidate !== 'labview-cli' && candidate !== 'lvcompare') {
-        throw new Error(`Unsupported value for --engine: ${candidate}\n\n${getHarnessDecisionRecordUsage()}`);
-      }
-
-      runtimeEngineOverride = candidate;
-      continue;
-    }
-
     if (current === '--bitness') {
       const candidate = requireValue('--bitness');
       if (candidate !== 'x86' && candidate !== 'x64') {
@@ -198,11 +183,6 @@ export function parseHarnessDecisionRecordArgs(argv: string[]): HarnessDecisionR
 
     if (current === '--labview-exe-path') {
       labviewExePath = requireValue('--labview-exe-path');
-      continue;
-    }
-
-    if (current === '--lvcompare-path') {
-      lvComparePath = requireValue('--lvcompare-path');
       continue;
     }
 
@@ -252,11 +232,9 @@ export function parseHarnessDecisionRecordArgs(argv: string[]): HarnessDecisionR
     confidence,
     decisionRationale,
     runtimePlatform,
-    runtimeEngineOverride,
     bitness,
     labviewCliPath,
     labviewExePath,
-    lvComparePath,
     dashboardCommitWindow,
     additionalReportGenerationRequired,
     additionalManualLabVIEWInspectionRequired,
@@ -303,7 +281,6 @@ export async function runHarnessDecisionRecordCli(
     decisionRationale: args.decisionRationale,
     strictRsrcHeader: args.strictRsrcHeader,
     runtimePlatform: args.runtimePlatform,
-    runtimeEngineOverride: args.runtimeEngineOverride,
     dashboardCommitWindow: args.dashboardCommitWindow,
     additionalReportGenerationRequired: args.additionalReportGenerationRequired,
     additionalManualLabVIEWInspectionRequired: args.additionalManualLabVIEWInspectionRequired,
@@ -311,8 +288,7 @@ export async function runHarnessDecisionRecordCli(
     runtimeSettings: {
       bitness: args.bitness,
       labviewCliPath: args.labviewCliPath,
-      labviewExePath: args.labviewExePath,
-      lvComparePath: args.lvComparePath
+      labviewExePath: args.labviewExePath
     }
   });
 
@@ -344,10 +320,21 @@ export function formatHarnessDecisionRecordSuccess(
   ];
 }
 
-if (require.main === module) {
-  runHarnessDecisionRecordCli(process.argv.slice(2)).catch((error: unknown) => {
-    const message = error instanceof Error ? error.message : String(error);
-    process.stderr.write(`${message}\n`);
-    process.exitCode = 1;
-  });
+export function maybeRunHarnessDecisionRecordCliAsMain(
+  argv: string[] = process.argv.slice(2),
+  mainModule: NodeModule | undefined = require.main,
+  currentModule: NodeModule = module,
+  processLike: Pick<NodeJS.Process, 'exitCode'> = process,
+  stderr: Pick<NodeJS.WriteStream, 'write'> = process.stderr
+): boolean {
+  void argv;
+  return maybeRejectGovernedProofLegacyEntrypointAsMain(
+    'decision-record',
+    mainModule,
+    currentModule,
+    processLike,
+    stderr
+  );
 }
+
+maybeRunHarnessDecisionRecordCliAsMain();

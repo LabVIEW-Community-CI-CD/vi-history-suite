@@ -35,6 +35,10 @@ describe('github linux benchmark workflow', () => {
     expect(workflow).toContain('.cache/github-experiments/linux-dashboard-benchmark/**');
     expect(workflow).toContain('linux-runtime-benchmark-image');
     expect(workflow).toContain('if-no-files-found: warn');
+    expect(workflow).toContain(
+      'npm run proof:run -- benchmark-linux --harness-id HARNESS-VHS-001'
+    );
+    expect(workflow).not.toContain('description: Optional runtime engine override');
 
     expect(dockerfile).toContain('ARG BASE_IMAGE=nationalinstruments/labview:2026q1-linux');
     expect(dockerfile).toContain('io.vihs.runtime-plane="github-linux-dashboard-benchmark"');
@@ -44,7 +48,8 @@ describe('github linux benchmark workflow', () => {
 
     expect(runScript).toContain('VIHS_GITHUB_BENCHMARK_HARNESS_ID');
     expect(runScript).toContain('HARNESS-VHS-001');
-    expect(runScript).toContain('runGitHubLinuxDashboardBenchmark.js');
+    expect(runScript).toContain('runGovernedProof.js');
+    expect(runScript).toContain('benchmark-linux');
     expect(runScript).toContain('VIHS_GITHUB_BENCHMARK_HEADLESS_DISPLAY_PROVIDER');
     expect(runScript).toContain('xvfb-run');
   });

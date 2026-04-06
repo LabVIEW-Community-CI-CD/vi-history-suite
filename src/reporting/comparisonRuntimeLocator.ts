@@ -31,7 +31,6 @@ export type WindowsContainerAcquisitionState =
 export interface ComparisonRuntimeSettings {
   executionMode?: RuntimeExecutionMode;
   labviewCliPath?: string;
-  lvComparePath?: string;
   labviewExePath?: string;
   bitness?: RuntimeBitness;
   windowsContainerImage?: string;
@@ -1030,12 +1029,14 @@ export async function locateComparisonRuntime(
   }
 
   if (lvCompare) {
-    notes.push('LabVIEWCLI was not located; falling back to LVCompare.');
+    notes.push(
+      'Canonical CreateComparisonReport execution requires LabVIEWCLI. LabVIEWCLI was not located, and LVCompare remains an internal parity-only surface rather than a public runtime-selection target.'
+    );
     return {
       platform,
       executionMode,
       bitness,
-      provider: 'host-native',
+      provider: 'unavailable',
       providerDecisions: buildProviderDecisions({
         platform,
         executionMode,
@@ -1045,14 +1046,14 @@ export async function locateComparisonRuntime(
         windowsContainerEvaluated,
         ...buildWindowsContainerDecisionFacts(),
         hostRuntimeConflictDetected,
-        selectedProvider: 'host-native',
-        selectedEngine: 'lvcompare',
+        blockedReason: 'canonical-labview-cli-not-found',
         labviewExeFound: true,
         labviewCliFound: false,
         lvCompareFound: true
       }),
-      engine: 'lvcompare',
+      blockedReason: 'canonical-labview-cli-not-found',
       labviewExe,
+      labviewCli,
       lvCompare,
       hostLabviewIniPath,
       hostLabviewTcpPort,
@@ -1070,7 +1071,7 @@ export async function locateComparisonRuntime(
   }
 
   notes.push(
-    'Configure viHistorySuite.labviewCliPath or viHistorySuite.lvComparePath to an installed comparison tool when the documented scan roots do not contain one.'
+    'Configure viHistorySuite.labviewCliPath to an installed LabVIEWCLI when the documented scan roots do not contain one.'
   );
 
   return {
@@ -1497,23 +1498,13 @@ function buildProviderDecisions(
         options.executionMode === 'host-only'
           ? 'execution-mode-host-only-selected-host-native'
           : windowsAutoDockerMissing
-            ? options.selectedEngine === 'lvcompare'
-              ? 'auto-selected-host-native-because-docker-not-installed-lvcompare-fallback'
-              : 'auto-selected-host-native-because-docker-not-installed'
-          : options.selectedEngine === 'lvcompare'
-            ? 'host-native-lvcompare-fallback-selected'
+            ? 'auto-selected-host-native-because-docker-not-installed'
             : 'host-native-labview-cli-selected',
       detail:
         options.executionMode === 'host-only'
-          ? options.selectedEngine === 'lvcompare'
-            ? 'Host-only execution was requested and host-native LabVIEW 2026 plus LVCompare were available.'
-            : 'Host-only execution was requested and host-native LabVIEW 2026 plus LabVIEWCLI were available.'
+          ? 'Host-only execution was requested and host-native LabVIEW 2026 plus LabVIEWCLI were available.'
           : windowsAutoDockerMissing
-            ? options.selectedEngine === 'lvcompare'
-              ? 'Auto execution selected host-native LabVIEW 2026 plus LVCompare because Docker Desktop was not detected on Windows and LabVIEWCLI was not located.'
-              : 'Auto execution selected host-native LabVIEW 2026 plus LabVIEWCLI because Docker Desktop was not detected on Windows.'
-          : options.selectedEngine === 'lvcompare'
-            ? 'Host-native LabVIEW 2026 and LVCompare were available, while LabVIEWCLI was not located.'
+            ? 'Auto execution selected host-native LabVIEW 2026 plus LabVIEWCLI because Docker Desktop was not detected on Windows.'
             : options.bitness === 'x86'
               ? 'Host-native LabVIEW 2026 and LabVIEWCLI were available, and the Windows x86 lane prefers host-native execution.'
               : 'Host-native LabVIEW 2026 and LabVIEWCLI were available for comparison-report execution.'
@@ -1571,7 +1562,7 @@ function deriveHostNativeRejectedDetail(options: BuildProviderDecisionsOptions):
   if (options.blockedReason === 'labview-exe-not-found' || options.labviewExeFound === false) {
     return 'No supported LabVIEW 2026 executable was located for host-native comparison-report execution.';
   }
-  return 'A supported LabVIEW 2026 executable was located, but neither LabVIEWCLI nor LVCompare was located for host-native comparison-report execution.';
+  return 'A supported LabVIEW 2026 executable was located, but canonical CreateComparisonReport execution could not proceed because LabVIEWCLI was not located.';
 }
 
 function describeWindowsTcpListeners(listeners: WindowsTcpListenerObservation[]): string {
@@ -1594,7 +1585,6 @@ async function resolveConfiguredCandidates(
 ): Promise<RuntimeToolCandidate[]> {
   const configured = [
     buildConfiguredCandidate('labview-cli', settings.labviewCliPath),
-    buildConfiguredCandidate('lvcompare', settings.lvComparePath),
     buildConfiguredCandidate('labview-exe', settings.labviewExePath)
   ].filter((candidate): candidate is Omit<RuntimeToolCandidate, 'exists'> => Boolean(candidate));
 

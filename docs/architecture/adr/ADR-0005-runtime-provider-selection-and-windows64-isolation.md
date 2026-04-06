@@ -9,8 +9,10 @@
 - The authoritative research requires LabVIEW 2026 Q1 runtime/tool detection
   with explicit user overrides, documented install-root scanning, and
   best-effort Windows registry probing.
-- The same research makes LabVIEW CLI `CreateComparisonReport` the primary
-  report engine and `LVCompare` the fallback.
+- The authoritative compare-report contract now treats LabVIEW CLI
+  `CreateComparisonReport` as the canonical public compare-report engine.
+- Any retained `LVCompare` evidence is internal parity or diagnosis evidence,
+  not a public operator-selected fallback contract.
 - Author direction adds a new architectural constraint: Windows 64-bit report
   execution should be able to run in an isolated `labview2026q1` Windows
   container so extension users do not collide with an already-open host-native
@@ -26,8 +28,10 @@
   - Windows 64-bit isolated container provider is reserved as the preferred
     future isolation path
 - Keep Windows 32-bit report execution on the host-native path.
-- Continue to prefer LabVIEW CLI as the primary report engine and LVCompare as
-  the fallback when CLI is unavailable.
+- Keep public report generation on canonical `CreateComparisonReport` and fail
+  closed when that governed engine is unavailable on the selected surface.
+- Retain `LVCompare` only as internal parity or diagnosis support, not as a
+  public runtime-selection target.
 - Capture the extension-user Windows 64-bit isolation policy in a dedicated
   follow-on ADR so provider selection and user-isolation intent do not drift.
 

@@ -8,9 +8,13 @@
 - Only release when [SHIP-0001](./product/SHIP-0001-releasable-vi-history-suite.md)
   and the [release readiness matrix](./product/release-readiness-matrix.json)
   do not retain open blockers against the targeted release criterion.
-- The release target for the current ship program is `v0.2.0`, with expected
-  artifact `vi-history-suite-0.2.0.vsix` and manifest
+- The first retained exact-version release is `v0.2.0`, with retained artifact
+  `vi-history-suite-0.2.0.vsix` and manifest
   `release-evidence/release-manifest.json`.
+- The current development baseline is `0.3.0`, so the next exact-version line
+  is `v0.3.0` unless `package.json` changes again before tagging.
+- The release tag shall match both `package.json` and the top unreleased
+  heading in [CHANGELOG.md](../CHANGELOG.md).
 - The repo also publishes a separate docs-authoring workbench image for
   documentation-package iteration:
   `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
@@ -30,7 +34,8 @@
      path, the design gate mirrors it under
      `.cache/design-gate/assurance-skill/repo-standards-review/` before
      executing standards assurance.
-2. Ensure `package.json` matches the release tag version exactly.
+2. Ensure `package.json` and the top unreleased entry in `CHANGELOG.md` match
+   the release tag version exactly.
 3. If the release tranche changed bundled-doc inputs, run `npm run docs:bundle`
    locally so the packaged installed-user guide can be inspected before CI
    packages the VSIX.
@@ -84,3 +89,5 @@
 - The first governed `v0.2.0` release evidence set is now retained through
   GitLab release `v0.2.0`, tag pipeline `2428809456`, and kept release job
   `13779604462`.
+- The active development line is now `0.3.0`, tracked in `CHANGELOG.md`, and
+  should not rewrite the retained `v0.2.0` release evidence.

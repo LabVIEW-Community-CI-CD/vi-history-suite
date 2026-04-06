@@ -14,8 +14,6 @@ const WINDOWS_LABVIEW_CLI_PATH =
   'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe';
 const WINDOWS_LABVIEW_EXE_PATH =
   'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe';
-const WINDOWS_LVCOMPARE_PATH =
-  'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe';
 
 describe('runHarnessDashboardSmokeCli', () => {
   it('parses deterministic dashboard smoke args', () => {
@@ -24,11 +22,9 @@ describe('runHarnessDashboardSmokeCli', () => {
       strictRsrcHeader: false,
       helpRequested: false,
       runtimePlatform: undefined,
-      runtimeEngineOverride: undefined,
       bitness: undefined,
       labviewCliPath: undefined,
       labviewExePath: undefined,
-      lvComparePath: undefined,
       dashboardCommitWindow: undefined
     });
 
@@ -39,14 +35,12 @@ describe('runHarnessDashboardSmokeCli', () => {
         '--strict-rsrc-header',
         '--platform',
         'win32',
-        '--engine',
-        'lvcompare',
         '--bitness',
         'x86',
+        '--labview-cli-path',
+        WINDOWS_LABVIEW_CLI_PATH,
         '--labview-exe-path',
         WINDOWS_LABVIEW_EXE_PATH,
-        '--lvcompare-path',
-        WINDOWS_LVCOMPARE_PATH,
         '--dashboard-commit-window',
         '4'
       ])
@@ -55,11 +49,9 @@ describe('runHarnessDashboardSmokeCli', () => {
       strictRsrcHeader: true,
       helpRequested: false,
       runtimePlatform: 'win32',
-      runtimeEngineOverride: 'lvcompare',
       bitness: 'x86',
-      labviewCliPath: undefined,
+      labviewCliPath: WINDOWS_LABVIEW_CLI_PATH,
       labviewExePath: WINDOWS_LABVIEW_EXE_PATH,
-      lvComparePath: WINDOWS_LVCOMPARE_PATH,
       dashboardCommitWindow: 4
     });
 
@@ -68,9 +60,6 @@ describe('runHarnessDashboardSmokeCli', () => {
     );
     expect(() => parseHarnessDashboardSmokeArgs(['--platform', 'weird'])).toThrow(
       /Unsupported value for --platform/
-    );
-    expect(() => parseHarnessDashboardSmokeArgs(['--engine', 'weird'])).toThrow(
-      /Unsupported value for --engine/
     );
     expect(() => parseHarnessDashboardSmokeArgs(['--bitness', 'bad'])).toThrow(
       /Unsupported value for --bitness/
@@ -81,9 +70,6 @@ describe('runHarnessDashboardSmokeCli', () => {
     expect(() => parseHarnessDashboardSmokeArgs(['--labview-exe-path'])).toThrow(
       /Missing value for --labview-exe-path/
     );
-    expect(() => parseHarnessDashboardSmokeArgs(['--lvcompare-path'])).toThrow(
-      /Missing value for --lvcompare-path/
-    );
     expect(() =>
       parseHarnessDashboardSmokeArgs([
         '--platform',
@@ -91,7 +77,7 @@ describe('runHarnessDashboardSmokeCli', () => {
         '--labview-exe-path',
         WINDOWS_LABVIEW_EXE_PATH
       ])
-    ).toThrow(/Canonical runtime overrides require --engine/);
+    ).toThrow(/Canonical CreateComparisonReport overrides require both --labview-cli-path and --labview-exe-path/);
     expect(getHarnessDashboardSmokeUsage()).toContain('--dashboard-commit-window');
   });
 
@@ -147,8 +133,6 @@ describe('runHarnessDashboardSmokeCli', () => {
         [
           '--platform',
           'win32',
-          '--engine',
-          'labview-cli',
           '--dashboard-commit-window',
           '4',
           '--labview-cli-path',
@@ -173,13 +157,11 @@ describe('runHarnessDashboardSmokeCli', () => {
       reportRoot: '/tmp/vi-history-suite/.cache/harness-reports',
       strictRsrcHeader: false,
       runtimePlatform: 'win32',
-      runtimeEngineOverride: 'labview-cli',
       dashboardCommitWindow: 4,
       runtimeSettings: {
         bitness: undefined,
         labviewCliPath: WINDOWS_LABVIEW_CLI_PATH,
-        labviewExePath: WINDOWS_LABVIEW_EXE_PATH,
-        lvComparePath: undefined
+        labviewExePath: WINDOWS_LABVIEW_EXE_PATH
       }
     });
     expect(writes.join('')).toContain('Harness dashboard smoke completed for HARNESS-VHS-001');
@@ -196,8 +178,6 @@ describe('runHarnessDashboardSmokeCli', () => {
         [
           '--platform',
           'win32',
-          '--engine',
-          'labview-cli',
           '--labview-cli-path',
           WINDOWS_LABVIEW_CLI_PATH,
           '--labview-exe-path',
@@ -216,7 +196,7 @@ describe('runHarnessDashboardSmokeCli', () => {
     expect(runner).not.toHaveBeenCalled();
   });
 
-  it('supports help, exit codes, and main-module execution', async () => {
+  it('supports help, exit codes, and rejects direct legacy main execution', async () => {
     const writes: string[] = [];
     const stderrWrites: string[] = [];
     const processLike: { exitCode?: number } = {};
@@ -243,7 +223,14 @@ describe('runHarnessDashboardSmokeCli', () => {
     const unrelatedMain = {} as NodeModule;
     const unrelatedCurrent = {} as NodeModule;
     expect(
-      maybeRunHarnessDashboardSmokeCliAsMain([], unrelatedMain, unrelatedCurrent, {}, processLike)
+      maybeRunHarnessDashboardSmokeCliAsMain(
+        [],
+        unrelatedMain,
+        unrelatedCurrent,
+        {},
+        processLike,
+        { write(text: string) { stderrWrites.push(text); return true; } }
+      )
     ).toBe(false);
 
     const sharedModule = {} as NodeModule;
@@ -252,46 +239,14 @@ describe('runHarnessDashboardSmokeCli', () => {
         [],
         sharedModule,
         sharedModule,
-        {
-          repoRoot: '/tmp/vi-history-suite',
-          runner: async () => ({
-            report: {
-              harnessId: 'HARNESS-VHS-001',
-              repositoryUrl: 'https://github.com/ni/labview-icon-editor',
-              cloneDirectory: '/tmp/harness',
-              targetRelativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
-              head: 'abcdef1234567890',
-              generatedAt: '2026-04-03T00:00:00.000Z',
-              eligible: true,
-              signature: 'LVIN',
-              dashboardCommitWindow: 3,
-              comparePairCount: 2,
-              dashboardFilePath: '/tmp/dashboard.html',
-              dashboardJsonFilePath: '/tmp/dashboard.json',
-              dashboardWindowCompletenessState: 'complete',
-              dashboardArchivedPairCount: 2,
-              dashboardMissingPairCount: 0,
-              dashboardGeneratedReportCount: 2,
-              dashboardMetadataPairCount: 2,
-              dashboardOverviewImageCount: 4,
-              dashboardDetailItemCount: 8,
-              dashboardProviderSummaries: [],
-              dashboardEtaAccuracyFilePath: undefined,
-              dashboardEtaAccuracyRecord: undefined,
-              pairSummaries: []
-            },
-            reportJsonPath: '/tmp/reports/HARNESS-VHS-001/dashboard-smoke.json',
-            reportMarkdownPath: '/tmp/reports/HARNESS-VHS-001/dashboard-smoke.md',
-            reportHtmlPath: '/tmp/reports/HARNESS-VHS-001/dashboard-smoke.html'
-          }),
-          stdout: { write() {} }
-        },
-        processLike
+        {},
+        processLike,
+        { write(text: string) { stderrWrites.push(text); return true; } }
       )
     ).toBe(true);
-
-    await new Promise((resolve) => setImmediate(resolve));
-    expect(processLike.exitCode).toBe(0);
+    expect(processLike.exitCode).toBe(1);
+    expect(stderrWrites.join('')).toContain('single public proof entrypoint');
+    expect(stderrWrites.join('')).toContain('npm run proof:run -- dashboard-smoke');
   });
 
   it('formats the dashboard smoke success output in a stable order', () => {

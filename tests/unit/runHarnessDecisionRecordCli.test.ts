@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   formatHarnessDecisionRecordSuccess,
   getHarnessDecisionRecordUsage,
+  maybeRunHarnessDecisionRecordCliAsMain,
   parseHarnessDecisionRecordArgs,
   runHarnessDecisionRecordCli
 } from '../../src/cli/runHarnessDecisionRecord';
@@ -11,8 +12,6 @@ const WINDOWS_LABVIEW_CLI_PATH =
   'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe';
 const WINDOWS_LABVIEW_EXE_PATH =
   'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe';
-const WINDOWS_LVCOMPARE_PATH =
-  'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe';
 
 describe('runHarnessDecisionRecordCli', () => {
   it('parses reviewer and outcome arguments', () => {
@@ -34,14 +33,12 @@ describe('runHarnessDecisionRecordCli', () => {
         'Rationale',
         '--platform',
         'win32',
-        '--engine',
-        'lvcompare',
         '--bitness',
         'x86',
+        '--labview-cli-path',
+        WINDOWS_LABVIEW_CLI_PATH,
         '--labview-exe-path',
         WINDOWS_LABVIEW_EXE_PATH,
-        '--lvcompare-path',
-        WINDOWS_LVCOMPARE_PATH,
         '--dashboard-commit-window',
         '4',
         '--strict-rsrc-header',
@@ -59,11 +56,9 @@ describe('runHarnessDecisionRecordCli', () => {
       confidence: 'medium',
       decisionRationale: 'Rationale',
       runtimePlatform: 'win32',
-      runtimeEngineOverride: 'lvcompare',
       bitness: 'x86',
-      labviewCliPath: undefined,
+      labviewCliPath: WINDOWS_LABVIEW_CLI_PATH,
       labviewExePath: WINDOWS_LABVIEW_EXE_PATH,
-      lvComparePath: WINDOWS_LVCOMPARE_PATH,
       dashboardCommitWindow: 4,
       strictRsrcHeader: true,
       additionalReportGenerationRequired: true,
@@ -78,15 +73,12 @@ describe('runHarnessDecisionRecordCli', () => {
     );
   });
 
-  it('fails closed on unsupported confidence, platform, engine, bitness, dashboard window, and unknown args', () => {
+  it('fails closed on unsupported confidence, platform, bitness, dashboard window, and unknown args', () => {
     expect(() => parseHarnessDecisionRecordArgs(['--confidence', 'certain'])).toThrow(
       'Unsupported value for --confidence: certain'
     );
     expect(() => parseHarnessDecisionRecordArgs(['--platform', 'amiga'])).toThrow(
       'Unsupported value for --platform: amiga'
-    );
-    expect(() => parseHarnessDecisionRecordArgs(['--engine', 'compare'])).toThrow(
-      'Unsupported value for --engine: compare'
     );
     expect(() => parseHarnessDecisionRecordArgs(['--bitness', 'x128'])).toThrow(
       'Unsupported value for --bitness: x128'
@@ -101,7 +93,7 @@ describe('runHarnessDecisionRecordCli', () => {
         '--labview-exe-path',
         WINDOWS_LABVIEW_EXE_PATH
       ])
-    ).toThrow('Canonical runtime overrides require --engine.');
+    ).toThrow('Canonical CreateComparisonReport overrides require both --labview-cli-path and --labview-exe-path.');
     expect(() => parseHarnessDecisionRecordArgs(['--unknown'])).toThrow('Unknown argument: --unknown');
   });
 
@@ -114,9 +106,6 @@ describe('runHarnessDecisionRecordCli', () => {
     );
     expect(() => parseHarnessDecisionRecordArgs(['--labview-exe-path'])).toThrow(
       'Missing value for --labview-exe-path.'
-    );
-    expect(() => parseHarnessDecisionRecordArgs(['--lvcompare-path'])).toThrow(
-      'Missing value for --lvcompare-path.'
     );
   });
 
@@ -174,8 +163,6 @@ describe('runHarnessDecisionRecordCli', () => {
           'Rationale',
           '--platform',
           'win32',
-          '--engine',
-          'labview-cli',
           '--bitness',
           'x86',
           '--labview-cli-path',
@@ -208,7 +195,6 @@ describe('runHarnessDecisionRecordCli', () => {
       decisionRationale: 'Rationale',
       strictRsrcHeader: false,
       runtimePlatform: 'win32',
-      runtimeEngineOverride: 'labview-cli',
       dashboardCommitWindow: 5,
       additionalReportGenerationRequired: true,
       additionalManualLabVIEWInspectionRequired: true,
@@ -216,8 +202,7 @@ describe('runHarnessDecisionRecordCli', () => {
       runtimeSettings: {
         bitness: 'x86',
         labviewCliPath: WINDOWS_LABVIEW_CLI_PATH,
-        labviewExePath: WINDOWS_LABVIEW_EXE_PATH,
-        lvComparePath: undefined
+        labviewExePath: WINDOWS_LABVIEW_EXE_PATH
       }
     });
     expect(stdout.write).toHaveBeenCalledWith('Harness decision record completed for HARNESS-VHS-001\n');
@@ -256,5 +241,40 @@ describe('runHarnessDecisionRecordCli', () => {
       'Dashboard JSON: /tmp/dashboard.json',
       'Dashboard HTML: /tmp/dashboard.html'
     ]);
+  });
+
+  it('rejects direct legacy decision-record execution and points callers to runGovernedProof', () => {
+    const processLike: { exitCode?: number } = {};
+    const stderrWrites: string[] = [];
+    const stderr = {
+      write(text: string) {
+        stderrWrites.push(text);
+        return true;
+      }
+    };
+
+    expect(
+      maybeRunHarnessDecisionRecordCliAsMain(
+        [],
+        {} as NodeModule,
+        {} as NodeModule,
+        processLike,
+        stderr
+      )
+    ).toBe(false);
+
+    const sharedModule = {} as NodeModule;
+    expect(
+      maybeRunHarnessDecisionRecordCliAsMain(
+        [],
+        sharedModule,
+        sharedModule,
+        processLike,
+        stderr
+      )
+    ).toBe(true);
+    expect(processLike.exitCode).toBe(1);
+    expect(stderrWrites.join('')).toContain('single public proof entrypoint');
+    expect(stderrWrites.join('')).toContain('npm run proof:run -- decision-record');
   });
 });

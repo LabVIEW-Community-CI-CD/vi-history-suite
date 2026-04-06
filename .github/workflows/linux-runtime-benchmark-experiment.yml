@@ -11,15 +11,6 @@ on:
         description: Optional explicit dashboard commit window
         required: false
         default: ""
-      engine:
-        description: Optional runtime engine override
-        required: false
-        type: choice
-        options:
-          - ""
-          - labview-cli
-          - lvcompare
-        default: ""
       strict_rsrc_header:
         description: Require strict RSRC header validation
         required: false
@@ -69,7 +60,7 @@ jobs:
             "publishedBenchmarkImage": "${benchmark_image}",
             "dockerfile": "docker/github-linux-dashboard-benchmark/Dockerfile",
             "benchmarkEntrypoint": "docker/github-linux-dashboard-benchmark/run-benchmark.sh",
-            "benchmarkScript": "npm run benchmark:github:linux:canonical",
+            "benchmarkScript": "npm run proof:run -- benchmark-linux --harness-id HARNESS-VHS-001",
             "defaultHarnessId": "HARNESS-VHS-001",
             "defaultTargetRelativePath": "Tooling/deployment/VIP_Pre-Install Custom Action.vi",
             "hostOwnedDeepBenchmarkHarnessId": "HARNESS-VHS-002",

@@ -6,13 +6,13 @@ import {
   validateCanonicalRuntimeOverrideArgs,
   validateCanonicalRuntimeOverrideExecutionSurface
 } from './canonicalRuntimeOverrideValidation';
+import { maybeRejectGovernedProofLegacyEntrypointAsMain } from './governedProofLegacyEntrypoint';
 import { getCanonicalHarnessDefinition } from '../harness/canonicalHarnesses';
 import {
   HarnessDashboardSmokeOptions,
   HarnessDashboardSmokeReport,
   runHarnessDashboardSmoke
 } from '../harness/harnessDashboardSmoke';
-import { ComparisonRuntimeEngine } from '../reporting/comparisonRuntimeLocator';
 
 const DEFAULT_BENCHMARK_PAIR_TIMEOUT_MS = 120_000;
 const DEFAULT_BENCHMARK_HEARTBEAT_INTERVAL_MS = 15_000;
@@ -20,10 +20,8 @@ const DEFAULT_BENCHMARK_HEARTBEAT_INTERVAL_MS = 15_000;
 export interface GitHubLinuxDashboardBenchmarkCliArgs {
   harnessId: string;
   dashboardCommitWindow?: number;
-  runtimeEngineOverride?: ComparisonRuntimeEngine;
   labviewCliPath?: string;
   labviewExePath?: string;
-  lvComparePath?: string;
   strictRsrcHeader: boolean;
   helpRequested: boolean;
 }
@@ -159,15 +157,13 @@ export interface GitHubLinuxDashboardBenchmarkCliDeps {
 
 export function getGitHubLinuxDashboardBenchmarkUsage(): string {
   return [
-    'Usage: runGitHubLinuxDashboardBenchmark [--harness-id <id>] [--dashboard-commit-window <count>] [--engine <labview-cli|lvcompare>] [--labview-cli-path <path>] [--labview-exe-path <path>] [--lvcompare-path <path>] [--strict-rsrc-header] [--help]',
+    'Usage: runGitHubLinuxDashboardBenchmark [--harness-id <id>] [--dashboard-commit-window <count>] [--labview-cli-path <path>] [--labview-exe-path <path>] [--strict-rsrc-header] [--help]',
     '',
     'Options:',
     '  --harness-id <id>              Canonical harness id. Defaults to HARNESS-VHS-001 for the GitHub-hosted benchmark lane.',
     '  --dashboard-commit-window <n>  Limit the retained dashboard window to at least 3 commits. Defaults to 1000 for the hosted benchmark lane.',
-    '  --engine <value>               Override the selected report engine for the benchmark.',
     '  --labview-cli-path <path>      Provide an explicit LabVIEWCLI path.',
     '  --labview-exe-path <path>      Provide an explicit LabVIEW executable path.',
-    '  --lvcompare-path <path>        Provide an explicit LVCompare path.',
     '  --strict-rsrc-header           Require RSRC header validation during VI detection.',
     '  --help                         Print this help and exit without running the benchmark.'
   ].join('\n');
@@ -178,10 +174,8 @@ export function parseGitHubLinuxDashboardBenchmarkArgs(
 ): GitHubLinuxDashboardBenchmarkCliArgs {
   let harnessId = 'HARNESS-VHS-001';
   let dashboardCommitWindow = 1000;
-  let runtimeEngineOverride: ComparisonRuntimeEngine | undefined;
   let labviewCliPath: string | undefined;
   let labviewExePath: string | undefined;
-  let lvComparePath: string | undefined;
   let strictRsrcHeader = false;
   let helpRequested = false;
 
@@ -216,18 +210,6 @@ export function parseGitHubLinuxDashboardBenchmarkArgs(
       continue;
     }
 
-    if (current === '--engine') {
-      const candidate = requireValue('--engine');
-      if (candidate !== 'labview-cli' && candidate !== 'lvcompare') {
-        throw new Error(
-          `Unsupported value for --engine: ${candidate}\n\n${getGitHubLinuxDashboardBenchmarkUsage()}`
-        );
-      }
-
-      runtimeEngineOverride = candidate;
-      continue;
-    }
-
     if (current === '--labview-cli-path') {
       labviewCliPath = requireValue('--labview-cli-path');
       continue;
@@ -235,11 +217,6 @@ export function parseGitHubLinuxDashboardBenchmarkArgs(
 
     if (current === '--labview-exe-path') {
       labviewExePath = requireValue('--labview-exe-path');
-      continue;
-    }
-
-    if (current === '--lvcompare-path') {
-      lvComparePath = requireValue('--lvcompare-path');
       continue;
     }
 
@@ -259,20 +236,16 @@ export function parseGitHubLinuxDashboardBenchmarkArgs(
   const parsedArgs = {
     harnessId,
     dashboardCommitWindow,
-    runtimeEngineOverride,
     labviewCliPath,
     labviewExePath,
-    lvComparePath,
     strictRsrcHeader,
     helpRequested
   };
   validateCanonicalRuntimeOverrideArgs(
     {
       runtimePlatform: 'linux',
-      runtimeEngineOverride,
       labviewCliPath,
-      labviewExePath,
-      lvComparePath
+      labviewExePath
     },
     getGitHubLinuxDashboardBenchmarkUsage()
   );
@@ -293,10 +266,8 @@ export async function runGitHubLinuxDashboardBenchmarkCli(
 
   const effectiveRuntimeOverrides = resolveCanonicalRuntimeOverrideArgs({
     runtimePlatform: 'linux',
-    runtimeEngineOverride: args.runtimeEngineOverride,
     labviewCliPath: args.labviewCliPath,
-    labviewExePath: args.labviewExePath,
-    lvComparePath: args.lvComparePath
+    labviewExePath: args.labviewExePath
   });
   validateCanonicalRuntimeOverrideArgs(
     effectiveRuntimeOverrides,
@@ -373,14 +344,12 @@ export async function runGitHubLinuxDashboardBenchmarkCli(
       reportRoot,
       strictRsrcHeader: args.strictRsrcHeader,
       runtimePlatform: 'linux',
-      runtimeEngineOverride: args.runtimeEngineOverride,
       dashboardCommitWindow: args.dashboardCommitWindow,
       runtimeExecutionTimeoutMs: runtimePairTimeoutMs,
       runtimeHeartbeatIntervalMs,
       runtimeSettings: {
         labviewCliPath: effectiveRuntimeOverrides.labviewCliPath,
-        labviewExePath: effectiveRuntimeOverrides.labviewExePath,
-        lvComparePath: effectiveRuntimeOverrides.lvComparePath
+        labviewExePath: effectiveRuntimeOverrides.labviewExePath
       },
       reportProgress: async (update) => {
         await writeProgress('running', update.message);
@@ -744,10 +713,15 @@ export function maybeRunGitHubLinuxDashboardBenchmarkCliAsMain(
     return false;
   }
 
-  void runGitHubLinuxDashboardBenchmarkCliMain(argv, deps, stderr).then((exitCode) => {
-    applyGitHubLinuxDashboardBenchmarkCliExitCode(exitCode, processLike);
-  });
-  return true;
+  void argv;
+  void deps;
+  return maybeRejectGovernedProofLegacyEntrypointAsMain(
+    'benchmark-linux',
+    mainModule,
+    currentModule,
+    processLike,
+    stderr
+  );
 }
 
 maybeRunGitHubLinuxDashboardBenchmarkCliAsMain();

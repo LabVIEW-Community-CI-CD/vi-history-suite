@@ -30,30 +30,31 @@ contains:
 If you are new to the repo, read these in order:
 
 1. [Current State](./docs/product/current-state.md)
-2. [Research Alignment Matrix](./docs/research/authoritative/research-alignment.md)
-3. [Development Queue](./docs/product/development-queue.json)
-4. [Architecture Overview](./docs/architecture/overview.md)
-5. [Software Requirements Specification](./docs/requirements/srs.md)
-6. [SHIP-0001: Releasable VI History Suite](./docs/product/SHIP-0001-releasable-vi-history-suite.md)
-7. [Release Readiness Matrix](./docs/product/release-readiness-matrix.json)
-8. [Wiki Authority Map](./docs/product/wiki-authority-map.md)
-9. [Documentation Coherence Ledger](./docs/product/documentation-coherence-ledger.md)
-10. [Wiki Seed Plan](./docs/product/wiki-seed-plan.md)
-11. [Wiki Publication Ledger](./docs/product/wiki-publication-ledger.md)
-12. [Wiki Publication Ledger JSON](./docs/product/wiki-publication-ledger.json)
-13. [Wiki Coverage Matrix](./docs/product/wiki-coverage-matrix.md)
-14. [Wiki Coverage Matrix JSON](./docs/product/wiki-coverage-matrix.json)
-15. [Debt Retirement Contract](./docs/product/debt-retirement-contract.md)
-16. [Debt Taxonomy](./docs/product/debt-taxonomy.md)
-17. [Debt Ledger](./docs/product/debt-ledger.md)
-18. [Debt Ledger JSON](./docs/product/debt-ledger.json)
-19. [Post-Release Sustainment Rules](./docs/product/post-release-sustainment-rules.md)
-20. [Post-Release Sustainment Rules JSON](./docs/product/post-release-sustainment-rules.json)
-21. [Extension Execution Policy](./docs/product/extension-execution-policy.md)
-22. [Documentation Package Workbench](./docs/documentation-workbench.md)
-23. [Program Repo Jump](./docs/product/program-repo-jump.md)
-24. [PROGRAM-0001: Next Product Layer](./docs/product/execution-programs/PROGRAM-0001-next-product-layer.md)
-25. [PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
+2. [Changelog](./CHANGELOG.md)
+3. [Research Alignment Matrix](./docs/research/authoritative/research-alignment.md)
+4. [Development Queue](./docs/product/development-queue.json)
+5. [Architecture Overview](./docs/architecture/overview.md)
+6. [Software Requirements Specification](./docs/requirements/srs.md)
+7. [SHIP-0001: Releasable VI History Suite](./docs/product/SHIP-0001-releasable-vi-history-suite.md)
+8. [Release Readiness Matrix](./docs/product/release-readiness-matrix.json)
+9. [Wiki Authority Map](./docs/product/wiki-authority-map.md)
+10. [Documentation Coherence Ledger](./docs/product/documentation-coherence-ledger.md)
+11. [Wiki Seed Plan](./docs/product/wiki-seed-plan.md)
+12. [Wiki Publication Ledger](./docs/product/wiki-publication-ledger.md)
+13. [Wiki Publication Ledger JSON](./docs/product/wiki-publication-ledger.json)
+14. [Wiki Coverage Matrix](./docs/product/wiki-coverage-matrix.md)
+15. [Wiki Coverage Matrix JSON](./docs/product/wiki-coverage-matrix.json)
+16. [Debt Retirement Contract](./docs/product/debt-retirement-contract.md)
+17. [Debt Taxonomy](./docs/product/debt-taxonomy.md)
+18. [Debt Ledger](./docs/product/debt-ledger.md)
+19. [Debt Ledger JSON](./docs/product/debt-ledger.json)
+20. [Post-Release Sustainment Rules](./docs/product/post-release-sustainment-rules.md)
+21. [Post-Release Sustainment Rules JSON](./docs/product/post-release-sustainment-rules.json)
+22. [Extension Execution Policy](./docs/product/extension-execution-policy.md)
+23. [Documentation Package Workbench](./docs/documentation-workbench.md)
+24. [Program Repo Jump](./docs/product/program-repo-jump.md)
+25. [PROGRAM-0001: Next Product Layer](./docs/product/execution-programs/PROGRAM-0001-next-product-layer.md)
+26. [PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
 
 For machine-friendly repo orientation, start with:
 
@@ -283,40 +284,47 @@ Committed and governed today:
   latest governed build before the first tagged release is retained
 - explicit Linux and Windows extension-host proof scripts plus a least-privilege
   Linux VS Code bootstrap command for faster autonomous iteration
+- one public proof entrypoint, `npm run proof:run -- <subcommand>`, so public
+  proof execution no longer depends on multiple package scripts or a public
+  engine switch; the canonical report engine is `LabVIEWCLI
+  CreateComparisonReport`, while any `LVCompare` parity evidence remains an
+  internal retained diagnosis surface rather than a public operator contract
 - explicit GitHub Linux benchmark preparation via
-  `npm run benchmark:github:linux:canonical` for the cheaper hosted canonical
-  harness and `npm run benchmark:github:linux:lv-icon` for the explicit deep
-  `lv_icon.vi` lane in the authority repo, mirrored into the private GitHub
-  experiment repo with a published benchmark image and a retained consumer at
-  `npm run benchmark:github:latest`, while the canonical host in-IDE Linux
-  benchmark resolves the canonical `vi-history-suite` authority workspace even
-  when the current VI History target lives in a different repo, stages that
-  authority workspace into a fresh Windows-local benchmark workspace before
-  launch without repo-local transient/test-runtime artifacts such as
-  `.vscode-test`, defaults each host run to the current published benchmark
-  image tag unless an explicit override is configured, filters raw `npm warn`
-  noise out of the front-facing progress channel, fails closed when only a
-  stale launch receipt remains and no live host Linux benchmark container
-  exists, keeps the hosted GitHub lane on the shallower canonical harness, and
-  requires host-versus-GitHub timing comparisons to use the same authority
-  commit pushed to both GitLab authority and the private GitHub experiment
-  mirror while GitLab remains the authority source repo and release-control
-  surface; the deep Linux lane now enforces per-pair runtime timeouts, writes
-  machine-readable per-pair failure receipts, emits heartbeat progress during
-  runtime execution, and retains terminal partial summaries for failed runs,
-  retains native Linux NI diagnostic logs under governed report storage, and
-  discards stale reused report HTML when a nonzero-exit pair leaves the
-  previous pair's output behind, now also copies Linux headless artifacts such
-  as `LVStatus.txt` and current `labview_*_headless_*_cur.txt` files into
-  governed report storage, surfaces retained terminal diagnostic reasons in
-  the host benchmark-status panel, and now attempts one governed
+  `npm run proof:run -- benchmark-linux --harness-id HARNESS-VHS-001` for the
+  cheaper hosted canonical harness and
+  `npm run proof:run -- benchmark-linux --harness-id HARNESS-VHS-002` for the
+  explicit deep `lv_icon.vi` lane in the authority repo, mirrored into the
+  private GitHub experiment repo with a published benchmark image and a
+  retained consumer at `npm run benchmark:github:latest`, while the canonical
+  host in-IDE Linux benchmark resolves the canonical `vi-history-suite`
+  authority workspace even when the current VI History target lives in a
+  different repo, stages that authority workspace into a fresh Windows-local
+  benchmark workspace before launch without repo-local transient/test-runtime
+  artifacts such as `.vscode-test`, defaults each host run to the current
+  published benchmark image tag unless an explicit override is configured,
+  filters raw `npm warn` noise out of the front-facing progress channel, fails
+  closed when only a stale launch receipt remains and no live host Linux
+  benchmark container exists, keeps the hosted GitHub lane on the shallower
+  canonical harness, and requires host-versus-GitHub timing comparisons to use
+  the same authority commit pushed to both GitLab authority and the private
+  GitHub experiment mirror while GitLab remains the authority source repo and
+  release-control surface; the deep Linux lane now enforces per-pair runtime
+  timeouts, writes machine-readable per-pair failure receipts, emits heartbeat
+  progress during runtime execution, and retains terminal partial summaries for
+  failed runs, retains native Linux NI diagnostic logs under governed report
+  storage, and discards stale reused report HTML when a nonzero-exit pair
+  leaves the previous pair's output behind, now also copies Linux headless
+  artifacts such as `LVStatus.txt` and current `labview_*_headless_*_cur.txt`
+  files into governed report storage, surfaces retained terminal diagnostic
+  reasons in the host benchmark-status panel, and now attempts one governed
   `LabVIEWCLI CloseLabVIEW -Headless` session reset plus one retry when a pair
   retains `linux-headless-recursive-load`; the latest deep-host `lv_icon.vi`
   run still retains a full-window Linux blocker at pair `135/138` because the
   accepted benchmark truth has not widened beyond the last retained rerun,
   while bounded fresh-session repros showed the same pair times out under
-  `LVCompare` and degrades into `-350000` connection failure on retry; the
-  accepted cross-OS timing truth is now the retained comparable-prefix packet in
+  internal `LVCompare` parity and degrades into `-350000` connection failure on
+  retry; the accepted cross-OS timing truth is now the retained
+  comparable-prefix packet in
   `docs/product/benchmark-packets/HARNESS-VHS-002-comparable-prefix.json`,
   which captures the first `129` commits / `128` pairs across the governed
   Windows host, Linux host, and Windows benchmark-image surfaces before the
@@ -329,9 +337,12 @@ Latest landed ship target:
 - `SHIP-0001`: releasable `v0.2.0` VSIX product
 - landed ship tranche: `TRANCHE-009`
 - landed ship issue: `ISSUE-0406`
-- current package baseline: `0.2.0`
-- target release artifact: `vi-history-suite-0.2.0.vsix`
+- retained exact-version release: `v0.2.0`
+- retained release artifact: `vi-history-suite-0.2.0.vsix`
 - target release manifest: `release-evidence/release-manifest.json`
+- current development baseline: `0.3.0`
+- next exact-version line: `v0.3.0`
+- current changelog: [CHANGELOG.md](./CHANGELOG.md)
 - docs-authoring image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
 - retained release evidence: GitLab release `v0.2.0`, tag pipeline `2428809456`,
   release job `13779604462`
@@ -416,9 +427,11 @@ Primary commands:
 
 - `npm run design:gate`
   - compile
+  - design-contract
   - unit coverage
   - extension-host integration
   - canonical harness smoke
+  - documentation continuous integration
   - repo-local mirrored standards quick-triage assurance when the available
     skill path resolves under `/mnt`
   - fail-closed timeout on a stalled standards-assurance tail instead of
@@ -426,10 +439,13 @@ Primary commands:
 - `npm run design:gate:assert-complete`
   - verifies the retained latest report is both `pass` and
     `completionState: complete`
-- `npm run harness:smoke`
-- `npm run harness:report:smoke`
-- `npm run harness:dashboard:smoke`
-- `npm run harness:decision:record`
+- `npm run proof:run -- smoke`
+- `npm run proof:run -- report-smoke`
+- `npm run proof:run -- dashboard-smoke`
+- `npm run proof:run -- decision-record`
+- `npm run proof:run -- benchmark-linux --harness-id HARNESS-VHS-001`
+- `npm run proof:run -- benchmark-linux --harness-id HARNESS-VHS-002`
+- `npm run proof:run -- benchmark-windows --harness-id HARNESS-VHS-002`
 - `npm run docs:gate`
 - `npm run docs:workbench:build`
 - `npm run docs:workbench:gate`
@@ -544,16 +560,17 @@ linked above.
 The canonical real-history harness is `HARNESS-VHS-001`, backed by
 `ni/labview-icon-editor`, with:
 
-- history smoke via `npm run harness:smoke`
-- comparison-report smoke via `npm run harness:report:smoke`
-- dashboard smoke via `npm run harness:dashboard:smoke`
-- scenario decision-record generation via `npm run harness:decision:record`
+- history smoke via `npm run proof:run -- smoke`
+- comparison-report smoke via `npm run proof:run -- report-smoke`
+- dashboard smoke via `npm run proof:run -- dashboard-smoke`
+- scenario decision-record generation via `npm run proof:run -- decision-record`
 
 The explicit deep-history benchmark harness is `HARNESS-VHS-002` for
 `resource/plugins/lv_icon.vi`. Sergio's canonical Windows host remains the UX
 and human-review surface for that target, the Windows benchmark image is the
 repeatable deep benchmark baseline, and GitHub-hosted Linux experiments default
-to `HARNESS-VHS-001`.
+to `HARNESS-VHS-001`. Public proof entry is still one surface:
+`npm run proof:run -- <subcommand>`.
 
 See [Harness Definitions](./docs/product/harnesses.md).
 

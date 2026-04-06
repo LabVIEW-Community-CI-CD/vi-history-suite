@@ -7,10 +7,11 @@ first invalid governed benchmark surfaces without contaminating retained
 benchmark evidence.
 
 This document defines the exact-pair-specific admission contract for
-`runHarnessReportSmoke`.
+`runGovernedProof report-smoke`.
 
-The wider shared runtime-override admission control for `PROGRAM-0003`
-entrypoints is governed separately in `ADR-0022`. Exact-pair diagnosis
+The wider shared runtime-override admission control for the public
+governed-proof surface and its `PROGRAM-0003` subcommands is governed
+separately in `ADR-0022`. Exact-pair diagnosis
 inherits that shared layer, inherits the effective runtime bundle validation
 rule from `ADR-0024`, and then adds the selected/base pair contract below.
 
@@ -25,15 +26,15 @@ overrides.
 - no `--base-hash`
 - no explicit runtime path overrides
 
-### Windows Host-Native `labview-cli` Exact Pair
+### Windows Host-Native Exact Pair
 
 Use when diagnosing an exact retained Windows blocker pair under host-native
-`LabVIEWCLI`.
+canonical `CreateComparisonReport` execution.
 
 - `--selected-hash <40-char hash>`
 - `--base-hash <40-char hash>`
 - `--platform win32`
-- `--engine labview-cli`
+- `--execution-mode host-only`
 - `--bitness x86|x64`
 - `--labview-cli-path <...\\LabVIEWCLI.exe>`
 - `--labview-exe-path <...\\LabVIEW.exe>`
@@ -47,17 +48,15 @@ Current canonical-host fact:
 - host-native x64 `labview-cli` exact-pair reruns are therefore non-canonical
   on this machine unless a real x64 `LabVIEWCLI.exe` install exists
 
-### Windows Host-Native `lvcompare` Exact Pair
+### Windows Docker-Only Exact Pair
 
-Use when diagnosing the same exact retained pair under Windows `LVCompare`.
+Use when diagnosing an exact retained Windows pair through the governed
+Windows container provider rather than the host-native surface.
 
 - `--selected-hash <40-char hash>`
 - `--base-hash <40-char hash>`
 - `--platform win32`
-- `--engine lvcompare`
-- `--bitness x86|x64`
-- `--lvcompare-path <...\\LVCompare.exe>`
-- `--labview-exe-path <...\\LabVIEW.exe>`
+- `--execution-mode docker-only`
 
 ## Fail-Closed Rules
 
@@ -65,19 +64,19 @@ Use when diagnosing the same exact retained pair under Windows `LVCompare`.
 - Both hashes must be full 40-character git hashes.
 - Shared `PROGRAM-0003` runtime-override validation still applies here:
   - explicit runtime override paths require matching `--platform` and
-    `--engine`
-  - CLI arguments, environment variables, and entrypoint-local defaults are
+    canonical `CreateComparisonReport` path bundles
+  - CLI arguments, environment variables, and subcommand-local defaults are
     validated as one effective runtime bundle before execution begins
-  - the same admission layer now governs dashboard-smoke, decision-record,
-    and Windows/Linux benchmark CLI entrypoints too
+  - the same admission layer now governs `runGovernedProof` subcommands for
+    `dashboard-smoke`, `decision-record`, `report-smoke`, `benchmark-linux`,
+    and `benchmark-windows`
 - `--bitness` is only valid with `--platform win32`.
-- `--engine labview-cli` does not allow `--lvcompare-path`.
-- `--engine lvcompare` does not allow `--labview-cli-path`.
-- Partial engine/path bundles are rejected.
+- Explicit canonical runtime path bundles require both:
+  - `--labview-cli-path`
+  - `--labview-exe-path`
 - Explicit runtime paths must match their governed executable basenames:
   - `LabVIEWCLI.exe`
   - `LabVIEW.exe`
-  - `LVCompare.exe`
 - On the canonical Windows host, explicit runtime override paths must exist
   before the harness runs.
 - Explicit Windows runtime override paths must resolve to one coherent x86 or
@@ -116,3 +115,14 @@ Until a dedicated explicit CLI/profile surface exists for those environment
 controls, ambient-environment experiments remain characterization evidence that
 must be described explicitly in the control-plane docs when they materially
 change the retained outcome.
+
+## Public Boundary
+
+This document governs one public proof surface only:
+
+- `npm run proof:run -- report-smoke ...`
+
+It does not publish a public engine selector or a public `LVCompare` override.
+Any retained `LVCompare` receipts remain internal parity evidence carried by
+benchmark packets and control-plane docs, not by the public operator CLI
+contract.

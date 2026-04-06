@@ -1286,7 +1286,6 @@ export function readComparisonRuntimeSettings(
       'auto'
     ),
     labviewCliPath: configuration.get<string>('labviewCliPath', ''),
-    lvComparePath: configuration.get<string>('lvComparePath', ''),
     labviewExePath: configuration.get<string>('labviewExePath', ''),
     bitness: configuration.get<'x86' | 'x64'>('bitness', 'x64'),
     windowsContainerImage: configuration.get<string>(

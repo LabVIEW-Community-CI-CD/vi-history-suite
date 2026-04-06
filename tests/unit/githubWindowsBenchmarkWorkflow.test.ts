@@ -23,7 +23,9 @@ describe('github windows benchmark workflow', () => {
     );
     expect(workflow).toContain('docker/github-windows-dashboard-benchmark/Dockerfile');
     expect(workflow).toContain('docker/github-windows-dashboard-benchmark/run-benchmark.ps1');
-    expect(workflow).toContain('npm run benchmark:github:windows:lv-icon');
+    expect(workflow).toContain(
+      'npm run proof:run -- benchmark-windows --harness-id HARNESS-VHS-002'
+    );
     expect(workflow).toContain('HARNESS-VHS-002');
     expect(workflow).toContain('resource/plugins/lv_icon.vi');
     expect(workflow).toContain('"hostedBenchmarkRun": "not-yet-governed"');
@@ -51,7 +53,8 @@ describe('github windows benchmark workflow', () => {
 
     expect(runScript).toContain('VIHS_GITHUB_WINDOWS_BENCHMARK_HARNESS_ID');
     expect(runScript).toContain('HARNESS-VHS-002');
-    expect(runScript).toContain('runGitHubWindowsDashboardBenchmark.js');
+    expect(runScript).toContain('runGovernedProof.js');
+    expect(runScript).toContain('benchmark-windows');
     expect(runScript).toContain('Using prebuilt Windows benchmark workspace image.');
     expect(runScript).toContain('Prebuilt Windows benchmark CLI is missing');
     expect(runScript).toContain("git config --global --add safe.directory C:/workspace");

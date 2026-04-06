@@ -26,7 +26,7 @@ product behavior rather than operator error.
 ## Decision
 
 Adopt canonical fail-closed argument validation for exact-pair
-`runHarnessReportSmoke` diagnosis.
+`runGovernedProof report-smoke` diagnosis.
 
 1. Targeted diagnosis shall require a full selected/base pair:
    - `--selected-hash`
@@ -34,11 +34,11 @@ Adopt canonical fail-closed argument validation for exact-pair
    - both must be full 40-character git hashes
 2. Explicit runtime override paths shall require matching authority selectors:
    - `--platform`
-   - `--engine`
-3. Engine-specific path bundles shall remain coherent:
-   - `--engine labview-cli` does not allow `--lvcompare-path`
-   - `--engine lvcompare` does not allow `--labview-cli-path`
+   - when explicit canonical runtime paths are used, both
+     `--labview-cli-path` and `--labview-exe-path` are required
+3. Canonical `CreateComparisonReport` path bundles shall remain coherent:
    - partial path bundles are rejected
+   - `LabVIEWCLI.exe` and `LabVIEW.exe` basenames must match their flags
 4. Windows bitness overrides shall not contradict explicit runtime paths:
    - `Program Files (x86)` implies `x86`
    - `Program Files` implies `x64`
@@ -73,7 +73,9 @@ preflight, is governed separately by `ADR-0022`.
 ## Implementation Surface
 
 - `src/cli/runHarnessReportSmoke.ts`
+- `src/cli/runGovernedProof.ts`
 - `tests/unit/runHarnessReportSmokeCli.test.ts`
+- `tests/unit/runGovernedProofCli.test.ts`
 - `docs/product/harnesses.md`
 - `docs/product/current-state.md`
 - `docs/product/canonical-exact-pair-diagnosis.md`

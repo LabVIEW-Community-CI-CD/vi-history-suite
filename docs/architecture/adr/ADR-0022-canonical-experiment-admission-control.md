@@ -8,18 +8,20 @@ Accepted
 
 `PROGRAM-0003` no longer depends on one diagnosis surface only.
 
-The benchmark-proof control plane now uses several operator- or automation-
-facing entrypoints that can all influence retained evidence:
+The benchmark-proof control plane now exposes one public proof entrypoint,
+`runGovernedProof`, while several governed proof subcommands and internal
+handlers can still influence retained evidence:
 
-- `runHarnessReportSmoke`
-- `runHarnessDashboardSmoke`
-- `runHarnessDecisionRecord`
-- `runGitHubWindowsDashboardBenchmark`
-- `runGitHubLinuxDashboardBenchmark`
+- `report-smoke`
+- `dashboard-smoke`
+- `decision-record`
+- `benchmark-windows`
+- `benchmark-linux`
 
-`ADR-0021` already tightened exact-pair argument rules, but sibling entrypoints
-could still accept contradictory runtime override bundles even though they feed
-the same retained benchmark and diagnosis surfaces.
+`ADR-0021` already tightened exact-pair argument rules, but sibling
+subcommands and internal handlers could still accept contradictory runtime
+override bundles even though they feed the same retained benchmark and
+diagnosis surfaces.
 
 Separately, the canonical Windows host has proven that stale non-headless
 LabVIEW processes, preexisting governed VI Server listeners, multiple installed
@@ -27,14 +29,15 @@ LabVIEW versions, and nonexistent explicit runtime paths can all contaminate a
 future rerun while still looking like product behavior.
 
 Without a shared admission-control boundary, the retained proof surface changes
-depending on which CLI happened to be used rather than on one governed
-experiment contract.
+depending on which governed proof subcommand or internal handler happened to
+run rather than on one governed experiment contract.
 
 ## Decision
 
 Adopt canonical experiment admission control for `PROGRAM-0003`.
 
-1. All `PROGRAM-0003` entrypoints that accept runtime override arguments shall
+1. The one public governed-proof surface and every internal handler behind its
+   `PROGRAM-0003` subcommands that accepts runtime override arguments shall
    share one canonical validation contract before execution starts.
 2. Shared runtime override validation shall reject contradictory bundles:
    - explicit override paths require matching platform and engine selectors
@@ -44,7 +47,7 @@ Adopt canonical experiment admission control for `PROGRAM-0003`.
      when `--bitness` is omitted
    - explicit Windows executable paths must match governed executable basenames
 3. Exact-pair selected/base hash validation remains a local rule of
-   `runHarnessReportSmoke` and stays governed by `ADR-0021`.
+   `runGovernedProof report-smoke` and stays governed by `ADR-0021`.
 4. On the canonical Windows host, explicit runtime override paths shall exist
    before a targeted rerun starts.
 5. Canonical Windows host-native comparison execution shall still fail closed
@@ -65,7 +68,7 @@ Adopt canonical experiment admission control for `PROGRAM-0003`.
 - retained benchmark evidence is less likely to be poisoned by whichever CLI
   happened to launch it
 - future sessions can reason about one PROGRAM-0003 admission contract instead
-  of reconstructing per-command quirks
+  of reconstructing per-subcommand quirks
 - canonical Windows host reruns fail earlier and more truthfully when the host
   itself is the problem
 - the control plane now distinguishes exact-pair argument rules from wider
@@ -73,8 +76,8 @@ Adopt canonical experiment admission control for `PROGRAM-0003`.
 
 ### Negative
 
-- more CLI entrypoints now reject ambiguous manual overrides that used to be
-  tolerated
+- more governed proof subcommands now reject ambiguous manual overrides that
+  used to be tolerated
 - mixed x86/x64 explicit Windows bundles are now classified as experiment
   contamination instead of being allowed to retain misleading blocker evidence
 - operators must keep explicit runtime overrides coherent across more surfaces
@@ -84,6 +87,7 @@ Adopt canonical experiment admission control for `PROGRAM-0003`.
 ## Implementation Surface
 
 - `src/cli/canonicalRuntimeOverrideValidation.ts`
+- `src/cli/runGovernedProof.ts`
 - `src/cli/runHarnessReportSmoke.ts`
 - `src/cli/runHarnessDashboardSmoke.ts`
 - `src/cli/runHarnessDecisionRecord.ts`

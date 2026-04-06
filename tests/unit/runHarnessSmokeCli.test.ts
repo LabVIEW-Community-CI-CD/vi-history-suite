@@ -198,7 +198,7 @@ describe('runHarnessSmokeCli', () => {
     expect(processLike.exitCode).toBe(9);
   });
 
-  it('runs the harness-smoke script-mode branch only when the current module is the main module', async () => {
+  it('rejects direct legacy harness-smoke execution and points callers to runGovernedProof', () => {
     const processLike: { exitCode?: number } = {};
     const stderrWrites: string[] = [];
     const stderr = {
@@ -221,36 +221,13 @@ describe('runHarnessSmokeCli', () => {
         [],
         sharedModule,
         sharedModule,
-        {
-          repoRoot: '/tmp/vi-history-suite',
-          runner: async () => ({
-            report: {
-              harnessId: 'HARNESS-VHS-001',
-              repositoryUrl: 'https://github.com/ni/labview-icon-editor.git',
-              cloneDirectory: '/tmp/harnesses/ni-labview-icon-editor',
-              targetRelativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
-              head: 'abcdef1234567890',
-              tracked: true,
-              signature: 'LVIN',
-              eligible: true,
-              commitCount: 18,
-              commits: [],
-              generatedAt: '2026-04-02T00:00:00.000Z'
-            },
-            reportJsonPath: '/tmp/reports/HARNESS-VHS-001/report.json',
-            reportMarkdownPath: '/tmp/reports/HARNESS-VHS-001/report.md',
-            reportHtmlPath: '/tmp/reports/HARNESS-VHS-001/report.html'
-          }),
-          stdout: { write() {} }
-        },
+        {},
         processLike,
         stderr
       )
     ).toBe(true);
-
-    await new Promise((resolve) => setImmediate(resolve));
-
-    expect(processLike.exitCode).toBe(0);
-    expect(stderrWrites).toEqual([]);
+    expect(processLike.exitCode).toBe(1);
+    expect(stderrWrites.join('')).toContain('single public proof entrypoint');
+    expect(stderrWrites.join('')).toContain('npm run proof:run -- smoke');
   });
 });

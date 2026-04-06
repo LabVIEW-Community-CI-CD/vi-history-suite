@@ -13,8 +13,6 @@ const WINDOWS_X86_LABVIEW_EXE_PATH =
   'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe';
 const WINDOWS_X64_LABVIEW_EXE_PATH =
   'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe';
-const WINDOWS_X64_LVCOMPARE_PATH =
-  'C:\\Program Files\\National Instruments\\Shared\\LabVIEW Compare\\LVCompare.exe';
 
 describe('canonicalRuntimeOverrideValidation', () => {
   it('rejects mixed Windows bitness bundles even when bitness is omitted', () => {
@@ -22,21 +20,8 @@ describe('canonicalRuntimeOverrideValidation', () => {
       validateCanonicalRuntimeOverrideArgs(
         {
           runtimePlatform: 'win32',
-          runtimeEngineOverride: 'labview-cli',
           labviewCliPath: WINDOWS_X86_LABVIEW_CLI_PATH,
           labviewExePath: WINDOWS_X64_LABVIEW_EXE_PATH
-        },
-        USAGE
-      )
-    ).toThrow(/must form one coherent bitness bundle/);
-
-    expect(() =>
-      validateCanonicalRuntimeOverrideArgs(
-        {
-          runtimePlatform: 'win32',
-          runtimeEngineOverride: 'lvcompare',
-          labviewExePath: WINDOWS_X86_LABVIEW_EXE_PATH,
-          lvComparePath: WINDOWS_X64_LVCOMPARE_PATH
         },
         USAGE
       )
@@ -48,7 +33,6 @@ describe('canonicalRuntimeOverrideValidation', () => {
       validateCanonicalRuntimeOverrideArgs(
         {
           runtimePlatform: 'win32',
-          runtimeEngineOverride: 'labview-cli',
           labviewCliPath: WINDOWS_X86_LABVIEW_CLI_PATH,
           labviewExePath: WINDOWS_X86_LABVIEW_EXE_PATH
         },
@@ -62,7 +46,6 @@ describe('canonicalRuntimeOverrideValidation', () => {
       validateCanonicalRuntimeOverrideExecutionSurface(
         {
           runtimePlatform: 'win32',
-          runtimeEngineOverride: 'labview-cli',
           labviewCliPath: WINDOWS_X86_LABVIEW_CLI_PATH,
           labviewExePath: WINDOWS_X86_LABVIEW_EXE_PATH
         },
@@ -80,7 +63,6 @@ describe('canonicalRuntimeOverrideValidation', () => {
       resolveCanonicalRuntimeOverrideArgs(
         {
           runtimePlatform: 'win32',
-          runtimeEngineOverride: 'labview-cli',
           labviewCliPath: '   ',
           labviewExePath: undefined
         },
@@ -91,11 +73,9 @@ describe('canonicalRuntimeOverrideValidation', () => {
       )
     ).toEqual({
       runtimePlatform: 'win32',
-      runtimeEngineOverride: 'labview-cli',
       bitness: undefined,
       labviewCliPath: WINDOWS_X86_LABVIEW_CLI_PATH,
-      labviewExePath: WINDOWS_X86_LABVIEW_EXE_PATH,
-      lvComparePath: undefined
+      labviewExePath: WINDOWS_X86_LABVIEW_EXE_PATH
     });
   });
 });

@@ -93,7 +93,7 @@ describe('ship-control direction system', () => {
     expect(matrix.activeIssueId).toBe('ISSUE-0406');
     expect(matrix.activeTrancheId).toBe('TRANCHE-009');
     expect(matrix.currentPackageVersion).toBe('0.2.0');
-    expect(matrix.currentPackageVersion).toBe(pkg.version);
+    expect(pkg.version).toBe('0.3.0');
     expect(matrix.releaseTarget).toBe('v0.2.0');
     expect(matrix.targetVsixArtifact).toBe('vi-history-suite-0.2.0.vsix');
     expect(matrix.targetReleaseManifest).toBe('release-evidence/release-manifest.json');
@@ -159,7 +159,10 @@ describe('ship-control direction system', () => {
       'docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md',
     );
     const releaseProcedure = readText('docs/release-procedure.md');
+    const changelog = readText('CHANGELOG.md');
+    const cmPlan = readText('docs/cm/cm-plan.md');
     const workbenchDoc = readText('docs/documentation-workbench.md');
+    const bundledInstallPage = readText('resources/bundled-docs/pages/install-and-release.html');
     const coherenceLedger = readText('docs/product/documentation-coherence-ledger.md');
     const programRepoJump = readText('docs/product/program-repo-jump.md');
     const wikiSeedPlan = readText('docs/product/wiki-seed-plan.md');
@@ -189,8 +192,10 @@ describe('ship-control direction system', () => {
     expect(readme).toContain('npm run design:gate:assert-complete');
     expect(readme).toContain('- `SHIP-0001`: releasable `v0.2.0` VSIX product');
     expect(readme).toContain('- landed ship tranche: `TRANCHE-009`');
-    expect(readme).toContain('- current package baseline: `0.2.0`');
-    expect(readme).toContain('- target release artifact: `vi-history-suite-0.2.0.vsix`');
+    expect(readme).toContain('- retained release artifact: `vi-history-suite-0.2.0.vsix`');
+    expect(readme).toContain('- current development baseline: `0.3.0`');
+    expect(readme).toContain('- next exact-version line: `v0.3.0`');
+    expect(readme).toContain('- current changelog: [CHANGELOG.md](./CHANGELOG.md)');
     expect(readme).toContain('- `TRANCHE-010`: public facade release kit and host-machine acceptance');
     expect(readme).toContain('private GitHub experiment repo');
 
@@ -206,8 +211,10 @@ describe('ship-control direction system', () => {
     expect(currentState).toContain('npm run design:gate:assert-complete');
     expect(currentState).toContain('- `SHIP-0001`: releasable `v0.2.0` VSIX product');
     expect(currentState).toContain('- landed ship tranche: `TRANCHE-009`');
-    expect(currentState).toContain('- current package baseline: `0.2.0`');
-    expect(currentState).toContain('- target release artifact: `vi-history-suite-0.2.0.vsix`');
+    expect(currentState).toContain('- retained release artifact: `vi-history-suite-0.2.0.vsix`');
+    expect(currentState).toContain('- current development baseline: `0.3.0`');
+    expect(currentState).toContain('- next exact-version line: `v0.3.0`');
+    expect(currentState).toContain('- current changelog: [CHANGELOG.md](../../CHANGELOG.md)');
     expect(currentState).toContain('- `TRANCHE-010`: Public facade release kit and host-machine acceptance');
     expect(currentState).toContain('[PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)');
     expect(currentState).toContain('`vi-history-suite-source-experiments`');
@@ -225,6 +232,8 @@ describe('ship-control direction system', () => {
     expect(informationItemMap).toContain('| Program repo jump surface | `docs/product/program-repo-jump.md` |');
     expect(informationItemMap).toContain('`vi-history-suite-source-experiments`');
     expect(informationItemMap).toContain('| Release procedure | `docs/release-procedure.md` |');
+    expect(informationItemMap).toContain('| Changelog | `CHANGELOG.md` |');
+    expect(informationItemMap).toContain('| CM plan | `docs/cm/cm-plan.md` |');
 
     expect(programDoc).toContain('[SHIP-0001: Releasable VI History Suite](../SHIP-0001-releasable-vi-history-suite.md)');
     expect(programDoc).toContain('ship-control surfaces');
@@ -235,6 +244,9 @@ describe('ship-control direction system', () => {
     expect(releaseProcedure).toContain('[release readiness matrix](./product/release-readiness-matrix.json)');
     expect(releaseProcedure).toContain('vi-history-suite-0.2.0.vsix');
     expect(releaseProcedure).toContain('release-evidence/release-manifest.json');
+    expect(releaseProcedure).toContain('current development baseline is `0.3.0`');
+    expect(releaseProcedure).toContain('next exact-version line');
+    expect(releaseProcedure).toContain('[CHANGELOG.md](../CHANGELOG.md)');
     expect(releaseProcedure).toContain('docs/product/documentation-coherence-ledger.md');
     expect(releaseProcedure).toContain('docs/product/wiki-seed-plan.md');
     expect(releaseProcedure).toContain('docs/product/wiki-publication-ledger.md');
@@ -246,6 +258,20 @@ describe('ship-control direction system', () => {
     expect(releaseProcedure).toContain(
       'Stale bundled installed-user docs are therefore unshippable through the'
     );
+    expect(bundledInstallPage).toContain('Retained exact release: <code>v0.2.0</code>');
+    expect(bundledInstallPage).toContain('Current development baseline: <code>0.3.0</code>');
+    expect(bundledInstallPage).toContain('Next exact-version line: <code>v0.3.0</code>');
+    expect(bundledInstallPage).toContain(
+      'Preview install surface: latest successful <code>main</code> pipeline preview VSIX artifact'
+    );
+    expect(bundledInstallPage).toContain('Retained release artifact: <code>vi-history-suite-0.2.0.vsix</code>');
+    expect(bundledInstallPage).not.toContain('Target release: <code>v0.2.0</code>');
+    expect(changelog).toContain('## [0.3.0] - Unreleased');
+    expect(changelog).toContain('The first retained exact-version release remains `v0.2.0`');
+    expect(changelog).toContain('## [0.2.0] - 2026-04-03');
+    expect(cmPlan).toContain('# Configuration Management Plan');
+    expect(cmPlan).toContain('- Scheme: `vX.Y.Z`');
+    expect(cmPlan).toContain('- Release branch rule: not defined yet; release from `main`');
 
     expect(workbenchDoc).toContain('registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main');
     expect(workbenchDoc).toContain('npm run docs:bundle');

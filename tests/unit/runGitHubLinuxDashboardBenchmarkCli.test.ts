@@ -12,17 +12,15 @@ import {
 } from '../../src/cli/runGitHubLinuxDashboardBenchmark';
 
 const LINUX_LABVIEW_EXE_PATH = '/usr/local/natinst/LabVIEW-2026Q1-64/labview';
-const LINUX_LVCOMPARE_PATH = '/usr/local/bin/LVCompare';
+const LINUX_LABVIEW_CLI_PATH = '/usr/local/bin/LabVIEWCLI';
 
 describe('runGitHubLinuxDashboardBenchmarkCli', () => {
   it('parses deterministic benchmark args with a hosted canonical default and high-history window', () => {
     expect(parseGitHubLinuxDashboardBenchmarkArgs([])).toEqual({
       harnessId: 'HARNESS-VHS-001',
       dashboardCommitWindow: 1000,
-      runtimeEngineOverride: undefined,
       labviewCliPath: undefined,
       labviewExePath: undefined,
-      lvComparePath: undefined,
       strictRsrcHeader: false,
       helpRequested: false
     });
@@ -33,21 +31,17 @@ describe('runGitHubLinuxDashboardBenchmarkCli', () => {
         'HARNESS-VHS-999',
         '--dashboard-commit-window',
         '139',
-        '--engine',
-        'lvcompare',
+        '--labview-cli-path',
+        LINUX_LABVIEW_CLI_PATH,
         '--labview-exe-path',
         LINUX_LABVIEW_EXE_PATH,
-        '--lvcompare-path',
-        LINUX_LVCOMPARE_PATH,
         '--strict-rsrc-header'
       ])
     ).toEqual({
       harnessId: 'HARNESS-VHS-999',
       dashboardCommitWindow: 139,
-      runtimeEngineOverride: 'lvcompare',
-      labviewCliPath: undefined,
+      labviewCliPath: LINUX_LABVIEW_CLI_PATH,
       labviewExePath: LINUX_LABVIEW_EXE_PATH,
-      lvComparePath: LINUX_LVCOMPARE_PATH,
       strictRsrcHeader: true,
       helpRequested: false
     });
@@ -55,12 +49,9 @@ describe('runGitHubLinuxDashboardBenchmarkCli', () => {
     expect(() =>
       parseGitHubLinuxDashboardBenchmarkArgs(['--dashboard-commit-window', '2'])
     ).toThrow(/Unsupported value for --dashboard-commit-window/);
-    expect(() => parseGitHubLinuxDashboardBenchmarkArgs(['--engine', 'weird'])).toThrow(
-      /Unsupported value for --engine/
-    );
     expect(() =>
       parseGitHubLinuxDashboardBenchmarkArgs(['--labview-exe-path', LINUX_LABVIEW_EXE_PATH])
-    ).toThrow(/Canonical runtime overrides require --engine/);
+    ).toThrow(/Canonical CreateComparisonReport overrides require both --labview-cli-path and --labview-exe-path/);
     expect(() => parseGitHubLinuxDashboardBenchmarkArgs(['--labview-exe-path'])).toThrow(
       /Missing value for --labview-exe-path/
     );
@@ -219,13 +210,11 @@ describe('runGitHubLinuxDashboardBenchmarkCli', () => {
         reportRoot: '/tmp/vi-history-suite/.cache/harness-reports',
         strictRsrcHeader: false,
         runtimePlatform: 'linux',
-        runtimeEngineOverride: undefined,
         dashboardCommitWindow: 1000,
         reportProgress: expect.any(Function),
         runtimeSettings: {
           labviewCliPath: undefined,
-          labviewExePath: undefined,
-          lvComparePath: undefined
+          labviewExePath: undefined
         }
       })
     );
@@ -356,7 +345,7 @@ describe('runGitHubLinuxDashboardBenchmarkCli', () => {
     );
   });
 
-  it('formats a stable summary packet, help, and main-module execution', async () => {
+  it('formats a stable summary packet, help, and rejects direct legacy main-module execution', async () => {
     const previousImageRef = process.env.VIHS_GITHUB_BENCHMARK_IMAGE_REF;
     const previousImageDigest = process.env.VIHS_GITHUB_BENCHMARK_IMAGE_DIGEST;
     const previousHeadlessProvider = process.env.VIHS_GITHUB_BENCHMARK_HEADLESS_DISPLAY_PROVIDER;
@@ -489,21 +478,25 @@ describe('runGitHubLinuxDashboardBenchmarkCli', () => {
         unrelatedMain,
         unrelatedCurrent,
         {},
-        processLike
+        processLike,
+        { write() { return true; } }
       )
     ).toBe(false);
 
     const sharedModule = {} as NodeModule;
+    const legacyStderrWrites: string[] = [];
     expect(
       maybeRunGitHubLinuxDashboardBenchmarkCliAsMain(
-        ['--help'],
+        [],
         sharedModule,
         sharedModule,
-        {
-          stdout: { write() {} }
-        },
-        processLike
+        {},
+        processLike,
+        { write(text: string) { legacyStderrWrites.push(text); return true; } }
       )
     ).toBe(true);
+    expect(processLike.exitCode).toBe(1);
+    expect(legacyStderrWrites.join('')).toContain('single public proof entrypoint');
+    expect(legacyStderrWrites.join('')).toContain('npm run proof:run -- benchmark-linux');
   });
 });

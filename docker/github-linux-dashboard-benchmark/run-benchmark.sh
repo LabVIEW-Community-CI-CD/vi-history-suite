@@ -23,13 +23,6 @@ if [[ -n "${VIHS_GITHUB_BENCHMARK_DASHBOARD_COMMIT_WINDOW:-}" ]]; then
   )
 fi
 
-if [[ -n "${VIHS_GITHUB_BENCHMARK_ENGINE:-}" ]]; then
-  args+=(
-    --engine
-    "${VIHS_GITHUB_BENCHMARK_ENGINE}"
-  )
-fi
-
 if [[ -n "${VIHS_GITHUB_BENCHMARK_LABVIEW_CLI_PATH:-}" ]]; then
   args+=(
     --labview-cli-path
@@ -44,20 +37,14 @@ if [[ -n "${VIHS_GITHUB_BENCHMARK_LABVIEW_EXE_PATH:-}" ]]; then
   )
 fi
 
-if [[ -n "${VIHS_GITHUB_BENCHMARK_LVCOMPARE_PATH:-}" ]]; then
-  args+=(
-    --lvcompare-path
-    "${VIHS_GITHUB_BENCHMARK_LVCOMPARE_PATH}"
-  )
-fi
-
 if [[ "${VIHS_GITHUB_BENCHMARK_STRICT_RSRC_HEADER:-false}" == "true" ]]; then
   args+=(--strict-rsrc-header)
 fi
 
 benchmark_cmd=(
   node
-  out/cli/runGitHubLinuxDashboardBenchmark.js
+  out/cli/runGovernedProof.js
+  benchmark-linux
   "${args[@]}"
 )
 

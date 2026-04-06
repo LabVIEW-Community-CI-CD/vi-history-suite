@@ -269,15 +269,15 @@
 - `TEST-DOC-010`: review the dashboard direction docs and confirm the dashboard
   is modeled as concentration-first for high-volume open-source review, with
   drill-down preserved to raw packet and raw comparison-report artifacts
-- `TEST-UNIT-096`: validate the canonical comparison-report smoke CLI parses
-  `--engine labview-cli|lvcompare`, rejects unsupported engine values, and
-  forwards the override into the smoke runner
-- `TEST-UNIT-097`: validate the canonical comparison-report smoke runner
-  applies governed runtime-engine overrides and fails closed with explicit
-  blocked reasons when the requested engine is unavailable
-- `TEST-UNIT-098`: validate the canonical comparison-report smoke runner
-  persists the effective runtime engine and explicit override notes into the
-  retained packet path when an engine override is requested
+- `TEST-UNIT-096`: validate the public governed proof CLI parses one
+  subcommand surface, rejects unknown subcommands, and states that
+  `runGovernedProof` is the one public governed proof entrypoint
+- `TEST-UNIT-097`: validate the governed proof usage and runtime-selection
+  contract states canonical `LabVIEWCLI CreateComparisonReport` with no public
+  engine selector or public `LVCompare` override surface
+- `TEST-UNIT-098`: validate the docs and design-control package fails closed
+  when public proof documentation drifts away from the single-entrypoint
+  canonical-engine contract
 - `TEST-UNIT-099`: validate the runtime executor clears stale diagnostic-log
   artifacts on runs without a current diagnostic log and classifies the
   `lvcompare` exit-0/no-report lane with a dedicated failure reason
@@ -646,7 +646,7 @@
   satisfied
 - `TEST-UNIT-191`: prove the harness decision-record CLI parses reviewer and
   outcome fields, prints help, and formats retained decision/dashboard paths
-- `TEST-SMOKE-001`: run `npm run harness:dashboard:smoke -- --platform win32
+- `TEST-SMOKE-001`: run `npm run proof:run -- dashboard-smoke -- --platform win32
   --bitness x64 --dashboard-commit-window 3` and retain
   `dashboard-smoke.json`, `dashboard-smoke.md`, and `dashboard-smoke.html`
   under `.cache/harness-reports/HARNESS-VHS-001/`
@@ -912,11 +912,11 @@
   `review:latest:json` local evidence-consumer scripts
 - `TEST-UNIT-251`: verify `HARNESS-VHS-002` is retained as the canonical
   `lv_icon.vi` high-history benchmark harness against `ni/labview-icon-editor`
-- `TEST-UNIT-252`: verify the GitHub Linux benchmark CLI defaults to
-  `HARNESS-VHS-001`, retains an explicit deep-history
-  `benchmark:github:linux:lv-icon` entrypoint for `HARNESS-VHS-002`, uses a
-  governed nontrivial commit window by default, and writes stable benchmark
-  summaries under `.cache/github-experiments/linux-dashboard-benchmark/`
+- `TEST-UNIT-252`: verify the governed Linux benchmark subcommand defaults to
+  `HARNESS-VHS-001`, keeps `HARNESS-VHS-002` as the explicit deep-history
+  harness, uses a governed nontrivial commit window by default, and writes
+  stable benchmark summaries under
+  `.cache/github-experiments/linux-dashboard-benchmark/`
 - `TEST-UNIT-253`: verify the GitHub Linux benchmark workflow, derived
   benchmark Dockerfile, and runner script pin
   `nationalinstruments/labview:2026q1-linux`, publish a dedicated experiment
@@ -974,9 +974,8 @@
   latest-summary artifact, including partial/failed runs, with processed pair
   counts, terminal pair index, terminal outcome classification, and
   comparability state versus the Windows baseline
-- `TEST-UNIT-265`: verify the Windows benchmark CLI defaults to
-  `HARNESS-VHS-002`, retains the deep `benchmark:github:windows:lv-icon`
-  entrypoint, writes stable summaries under
+- `TEST-UNIT-265`: verify the Windows benchmark subcommand defaults to
+  `HARNESS-VHS-002`, writes stable summaries under
   `.cache/github-experiments/windows-dashboard-benchmark/`, and defaults the
   runtime tool paths to the documented NI Windows image paths unless
   explicitly overridden
@@ -1073,8 +1072,8 @@
   blocker is rendered as `labview-cli-call-by-reference` instead of a generic
   `runtime-failed`
 - `TEST-UNIT-286`: verify the governed canonical-host Windows benchmark-image
-  proof runner accepts `--engine <labview-cli|lvcompare>`, injects that
-  override into the container env, and still retains the same proof-root
+  proof runner stays on the canonical `CreateComparisonReport` contract, does
+  not expose a public engine selector, and still retains the same proof-root
   launch/log/summary contract
 - `TEST-UNIT-287`: verify shared dashboard-smoke progress messages label a
   failed Windows rerun as `Windows benchmark ...` rather than `Linux
@@ -1101,10 +1100,11 @@
   `CreateComparisonReport` and `CloseLabVIEW` command lines, and surfaces the
   retained `LabVIEW.ini` path plus TCP port through the packet, smoke JSON,
   and exact-pair comparable-prefix diagnostics
-- `TEST-UNIT-293`: verify `runHarnessReportSmoke` rejects non-canonical exact-pair
-  diagnosis argument bundles, including partial selected/base hashes,
-  incomplete engine/path bundles, Windows bitness/path contradictions, and
-  wrong executable basenames for explicit runtime override paths
+- `TEST-UNIT-293`: verify `runGovernedProof report-smoke` rejects
+  non-canonical exact-pair diagnosis argument bundles, including partial
+  selected/base hashes, incomplete canonical runtime bundles, Windows
+  bitness/path contradictions, and wrong executable basenames for explicit
+  runtime override paths
 - `TEST-UNIT-294`: verify canonical Windows exact-pair proof fails closed when
   explicit runtime override paths are missing on the canonical host, when
   stale `LabVIEW.exe` / `LabVIEWCLI.exe` / `LVCompare.exe` processes are
@@ -1212,17 +1212,16 @@
   older benchmark summaries predate terminal diagnostic-reason support
 - `TEST-DOC-050`: review current-state, PROGRAM-0003, and ISSUE-0408 and
   confirm the governed canonical-host Windows benchmark-image proof runner is
-  documented as accepting a targeted `--engine` override for diagnosis reruns
-  while preserving the comparable-prefix default and the same proof-root
-  receipt contract
+  documented as staying on canonical `CreateComparisonReport` without a public
+  engine selector while preserving the comparable-prefix default and the same
+  proof-root receipt contract
 - `TEST-DOC-051`: review current-state, PROGRAM-0003, and ISSUE-0408 and
-  confirm the targeted Windows `lvcompare` diagnosis rerun is documented as a
-  Windows proof surface that times out at pair `1/129`, rather than being
-  represented as a Linux benchmark event or as a viable Windows fallback
+  confirm any retained Windows `LVCompare` diagnosis rerun is documented as
+  internal parity evidence only, not as a public proof surface, Linux event,
+  or viable Windows fallback
 - `TEST-DOC-052`: review current-state, PROGRAM-0003, and ISSUE-0408 and
-  confirm the exact pair `6dd65df -> 3408654` Windows `lvcompare` diagnosis
-  rerun is documented as a bounded `120000ms` timeout, not as a comparable
-  fallback or an open-ended hang
+  confirm the governed `runGovernedProof report-smoke` exact selected/base
+  hash surface retains bounded diagnosis outcomes rather than open-ended hangs
 - `TEST-DOC-053`: review current-state, harnesses, PROGRAM-0003, ISSUE-0408,
   `comparison-report-smoke`, and the comparable-prefix packet and confirm the
   exact Windows blocker pair `6dd65df -> 3408654` is documented as failing
@@ -1254,7 +1253,7 @@
 - `TEST-DOC-057`: review current-state, harnesses, PROGRAM-0003, ISSUE-0408,
   and ADR-0021 and confirm canonical exact-pair diagnosis arguments are
   documented as fail-closed on incomplete selected/base hashes, incomplete
-  engine/path bundles, or contradictory Windows bitness/runtime override
+  canonical runtime bundles, or contradictory Windows bitness/runtime override
   paths, rather than allowing ambiguous experiment launches to proceed
 - `TEST-DOC-058`: review current-state, harnesses, canonical exact-pair
   diagnosis guidance, PROGRAM-0003, ISSUE-0408, and ADR-0021 and confirm the
@@ -1283,7 +1282,7 @@
   debt wiki pages, and bundled-doc manifest and confirm the published reader
   surfaces represent the debt-retirement contract and debt ledger rather than
   hiding those control-plane surfaces in authority docs only
-- `TEST-UNIT-298`: verify PROGRAM-0003 benchmark-proof entrypoints validate the
+- `TEST-UNIT-298`: verify PROGRAM-0003 benchmark-proof subcommands validate the
   effective runtime override bundle after CLI/env/default synthesis, reject
   non-canonical env-derived explicit Windows bundles, and keep default Windows
   benchmark runtime settings undefined when no explicit override is requested

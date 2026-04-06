@@ -749,8 +749,7 @@ function buildDashboardLatestRunExperimentRecord(options: {
       bitness: options.runtimeSettings.bitness,
       windowsContainerImage: options.runtimeSettings.windowsContainerImage,
       labviewCliPathConfigured: Boolean(options.runtimeSettings.labviewCliPath?.trim()),
-      labviewExePathConfigured: Boolean(options.runtimeSettings.labviewExePath?.trim()),
-      lvComparePathConfigured: Boolean(options.runtimeSettings.lvComparePath?.trim())
+      labviewExePathConfigured: Boolean(options.runtimeSettings.labviewExePath?.trim())
     },
     historyWindow: {
       loadedCommitCount: options.loadedCommitCount,
@@ -798,7 +797,6 @@ function safeReadComparisonRuntimeSettings(): ReturnType<typeof readComparisonRu
   } catch {
     return {
       labviewCliPath: '',
-      lvComparePath: '',
       labviewExePath: '',
       bitness: 'x64',
       windowsContainerImage: 'nationalinstruments/labview:2026q1-windows'

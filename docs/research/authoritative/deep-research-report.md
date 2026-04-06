@@ -760,6 +760,11 @@ Core correctness tests:
 
 #### Recommended runtime strategy for the extension
 
+Historical note: this research section predates the later governed public
+contract. Current product truth is narrower: one public proof entrypoint,
+canonical `LabVIEWCLI CreateComparisonReport`, and no public `lvComparePath`
+setting.
+
 Assumptions (explicit because NI docs don’t fully specify LVCompare’s bitness-selection semantics):
 - The extension will run on Windows/macOS/Linux, but LVCompare tooling availability and install locations vary by platform and LabVIEW edition (Professional vs Community).
 - The extension must work when user has LabVIEW 2026 Q1 32-bit, 64-bit, or both.
@@ -767,9 +772,10 @@ Assumptions (explicit because NI docs don’t fully specify LVCompare’s bitnes
 Proposed selection logic:
 
 1) **User configuration wins**
-   - Setting: `labviewViHistory.lvComparePath` (absolute path to LVCompare or LabVIEWCLI, depending on your chosen tool).
-   - Setting: `labviewViHistory.labviewExePath` (absolute path to LabVIEW.exe).
-   - Setting: `labviewViHistory.bitness` = `x86 | x64`.
+   - Setting: `viHistorySuite.executionMode` (`auto`, `host-only`, `docker-only`).
+   - Setting: `viHistorySuite.labviewCliPath` (absolute path to `LabVIEWCLI`).
+   - Setting: `viHistorySuite.labviewExePath` (absolute path to `LabVIEW.exe`).
+   - Setting: `viHistorySuite.bitness` = `x86 | x64`.
 
 2) **Auto-discovery (Windows)**
    - Probe common LVCompare paths (examples commonly used in NI guidance and industry how-tos include `C:\Program Files (x86)\National Instruments\Shared\LabVIEW Compare\LVCompare.exe`, and sometimes non‑x86 depending on installation). See NI integration guidance that explicitly references the x86 path for 32-bit.  
@@ -865,20 +871,19 @@ Deliverables:
 - Add `localResourceRoots` and CSP hardened HTML.  
 Acceptance: webview displays history and actions work.
 
-**Milestone: LVCompare/LabVIEWCLI report generation with required naming (12–20 hours)**  
+**Milestone: LabVIEWCLI CreateComparisonReport report generation with required naming (12–20 hours)**  
 Deliverables:
 - Report service:
   - Extract blobs for two commits
   - Verify both blobs are VI via magic bytes (either `Repository.buffer(ref,path)` or `git show`)
-  - Generate HTML report using:
-    - LabVIEWCLI CreateComparisonReport and/or LVCompare
+  - Generate HTML report using canonical `LabVIEWCLI CreateComparisonReport`
   - Write report to `context.storageUri` with name `{type}-report-{fullFilename}.html`.
 - Webview links to generated report via `asWebviewUri`.  
 Acceptance: report generation produces correctly named HTML and is viewable.
 
 **Milestone: LabVIEW 2026 Q1 bitness detection + configuration (10–18 hours)**  
 Deliverables:
-- Settings: bitness, lvComparePath, labviewExePath, labviewCliPath
+- Settings: executionMode, bitness, labviewExePath, labviewCliPath
 - Runtime detection:
   - Windows registry + install scanning heuristics
   - macOS/Linux scanning with platform notes

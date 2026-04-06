@@ -2,19 +2,16 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
 import {
-  ComparisonRuntimeEngine,
   RuntimeExecutionMode,
   RuntimePlatform
 } from '../reporting/comparisonRuntimeLocator';
 
 export interface CanonicalRuntimeOverrideArgs {
   runtimePlatform?: RuntimePlatform;
-  runtimeEngineOverride?: ComparisonRuntimeEngine;
   executionMode?: RuntimeExecutionMode;
   bitness?: 'x86' | 'x64';
   labviewCliPath?: string;
   labviewExePath?: string;
-  lvComparePath?: string;
 }
 
 export interface CanonicalRuntimeOverrideExecutionSurfaceDeps {
@@ -27,14 +24,10 @@ export function resolveCanonicalRuntimeOverrideArgs(
 ): CanonicalRuntimeOverrideArgs {
   return {
     runtimePlatform: resolveFirstDefined(sources.map((source) => source.runtimePlatform)),
-    runtimeEngineOverride: resolveFirstDefined(
-      sources.map((source) => source.runtimeEngineOverride)
-    ),
     executionMode: resolveFirstDefined(sources.map((source) => source.executionMode)),
     bitness: resolveFirstDefined(sources.map((source) => source.bitness)),
     labviewCliPath: resolveFirstNonEmptyString(sources.map((source) => source.labviewCliPath)),
-    labviewExePath: resolveFirstNonEmptyString(sources.map((source) => source.labviewExePath)),
-    lvComparePath: resolveFirstNonEmptyString(sources.map((source) => source.lvComparePath))
+    labviewExePath: resolveFirstNonEmptyString(sources.map((source) => source.labviewExePath))
   };
 }
 
@@ -45,9 +38,8 @@ export function validateCanonicalRuntimeOverrideArgs(
   const normalizedArgs = resolveCanonicalRuntimeOverrideArgs(args);
   const explicitRuntimeOverrideRequested = Boolean(
     normalizedArgs.executionMode ||
-    normalizedArgs.labviewCliPath ||
+      normalizedArgs.labviewCliPath ||
       normalizedArgs.labviewExePath ||
-      normalizedArgs.lvComparePath ||
       normalizedArgs.bitness
   );
 
@@ -63,63 +55,26 @@ export function validateCanonicalRuntimeOverrideArgs(
     throw new Error(`Canonical runtime overrides require --platform.\n\n${usageText}`);
   }
 
-  if (explicitRuntimeOverrideRequested && !normalizedArgs.runtimeEngineOverride) {
-    throw new Error(`Canonical runtime overrides require --engine.\n\n${usageText}`);
-  }
-
-  if (normalizedArgs.runtimeEngineOverride === 'labview-cli') {
-    if (normalizedArgs.lvComparePath) {
-      throw new Error(`--engine labview-cli does not allow --lvcompare-path.\n\n${usageText}`);
-    }
-
-    if (Boolean(normalizedArgs.labviewCliPath) !== Boolean(normalizedArgs.labviewExePath)) {
-      throw new Error(
-        `Canonical labview-cli overrides require both --labview-cli-path and --labview-exe-path.\n\n${usageText}`
-      );
-    }
-
-    validateExecutableBasename(
-      normalizedArgs.runtimePlatform,
-      normalizedArgs.labviewCliPath,
-      '--labview-cli-path',
-      'LabVIEWCLI.exe',
-      usageText
-    );
-    validateExecutableBasename(
-      normalizedArgs.runtimePlatform,
-      normalizedArgs.labviewExePath,
-      '--labview-exe-path',
-      'LabVIEW.exe',
-      usageText
+  if (Boolean(normalizedArgs.labviewCliPath) !== Boolean(normalizedArgs.labviewExePath)) {
+    throw new Error(
+      `Canonical CreateComparisonReport overrides require both --labview-cli-path and --labview-exe-path.\n\n${usageText}`
     );
   }
 
-  if (normalizedArgs.runtimeEngineOverride === 'lvcompare') {
-    if (normalizedArgs.labviewCliPath) {
-      throw new Error(`--engine lvcompare does not allow --labview-cli-path.\n\n${usageText}`);
-    }
-
-    if (Boolean(normalizedArgs.lvComparePath) !== Boolean(normalizedArgs.labviewExePath)) {
-      throw new Error(
-        `Canonical lvcompare overrides require both --lvcompare-path and --labview-exe-path.\n\n${usageText}`
-      );
-    }
-
-    validateExecutableBasename(
-      normalizedArgs.runtimePlatform,
-      normalizedArgs.lvComparePath,
-      '--lvcompare-path',
-      'LVCompare.exe',
-      usageText
-    );
-    validateExecutableBasename(
-      normalizedArgs.runtimePlatform,
-      normalizedArgs.labviewExePath,
-      '--labview-exe-path',
-      'LabVIEW.exe',
-      usageText
-    );
-  }
+  validateExecutableBasename(
+    normalizedArgs.runtimePlatform,
+    normalizedArgs.labviewCliPath,
+    '--labview-cli-path',
+    'LabVIEWCLI.exe',
+    usageText
+  );
+  validateExecutableBasename(
+    normalizedArgs.runtimePlatform,
+    normalizedArgs.labviewExePath,
+    '--labview-exe-path',
+    'LabVIEW.exe',
+    usageText
+  );
 
   validateWindowsBitnessConsistency(normalizedArgs, usageText);
   validateWindowsExplicitBundleConsistency(normalizedArgs, usageText);
@@ -137,8 +92,7 @@ export async function validateCanonicalRuntimeOverrideExecutionSurface(
 
   for (const [flag, candidatePath] of [
     ['--labview-cli-path', normalizedArgs.labviewCliPath],
-    ['--labview-exe-path', normalizedArgs.labviewExePath],
-    ['--lvcompare-path', normalizedArgs.lvComparePath]
+    ['--labview-exe-path', normalizedArgs.labviewExePath]
   ] as const) {
     if (!candidatePath) {
       continue;
@@ -205,8 +159,7 @@ function validateWindowsBitnessConsistency(
 
   for (const [flag, candidatePath] of [
     ['--labview-cli-path', args.labviewCliPath],
-    ['--labview-exe-path', args.labviewExePath],
-    ['--lvcompare-path', args.lvComparePath]
+    ['--labview-exe-path', args.labviewExePath]
   ] as const) {
     if (!candidatePath) {
       continue;
@@ -232,8 +185,7 @@ function validateWindowsExplicitBundleConsistency(
   const inferredPaths = (
     [
       ['--labview-cli-path', args.labviewCliPath],
-      ['--labview-exe-path', args.labviewExePath],
-      ['--lvcompare-path', args.lvComparePath]
+      ['--labview-exe-path', args.labviewExePath]
     ] as const
   )
     .map(([flag, candidatePath]) => ({
@@ -245,7 +197,7 @@ function validateWindowsExplicitBundleConsistency(
       (
         entry
       ): entry is {
-        flag: '--labview-cli-path' | '--labview-exe-path' | '--lvcompare-path';
+        flag: '--labview-cli-path' | '--labview-exe-path';
         candidatePath: string;
         inferredBitness: 'x86' | 'x64';
       } => Boolean(entry.candidatePath && entry.inferredBitness)

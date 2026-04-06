@@ -23,6 +23,12 @@ describe('designGate tooling', () => {
 
     expect(plan).toEqual([
       {
+        id: 'design-contract',
+        title: 'Design contract',
+        command: 'npm',
+        args: ['run', 'test:design-contract']
+      },
+      {
         id: 'unit-and-coverage',
         title: 'Unit tests and coverage',
         command: 'npm',
@@ -38,7 +44,13 @@ describe('designGate tooling', () => {
         id: 'canonical-harness-smoke',
         title: 'Canonical harness smoke',
         command: 'npm',
-        args: ['run', 'harness:smoke']
+        args: ['run', 'proof:run', '--', 'smoke']
+      },
+      {
+        id: 'documentation-continuous-integration',
+        title: 'Documentation continuous integration',
+        command: 'npm',
+        args: ['run', 'docs:ci:core']
       },
       {
         id: 'standards-assurance',

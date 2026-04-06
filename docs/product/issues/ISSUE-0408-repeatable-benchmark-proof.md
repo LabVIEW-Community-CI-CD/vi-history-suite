@@ -58,9 +58,10 @@ Current retained benchmark truth at closure:
   handling for those mounted clones, respects the active PowerShell execution
   policy instead of using `ExecutionPolicy Bypass`, defaults
   `HARNESS-VHS-002` to the retained `129`-commit comparable prefix unless
-  overridden, accepts a targeted `--engine <labview-cli|lvcompare>` override
-  for diagnosis reruns, labels Windows diagnosis progress as Windows rather
-  than Linux, and writes launch/log/summary receipts under
+  overridden, keeps public proof execution on `runGovernedProof` with
+  canonical `CreateComparisonReport`, treats any `LVCompare` evidence as
+  retained internal parity-only diagnosis, labels Windows diagnosis progress
+  as Windows rather than Linux, and writes launch/log/summary receipts under
   `C:\Users\sveld\AppData\Local\VI History Suite\windows-benchmark-image-proof`
 - the latest local Windows benchmark-image proof now reaches pair `129/134`
   before failing truthfully with `command-exited-nonzero`; the retained
@@ -76,15 +77,16 @@ Current retained benchmark truth at closure:
   in line with NI's documented Windows-container guidance, and now attempts
   one governed `LabVIEWCLI CloseLabVIEW -Headless` session reset plus one
   retry for that connected-session `Call By Reference` seam
-- a fresh governed Windows diagnosis rerun with `--engine lvcompare` now
-  proves there is no clean immediate fallback there either: the published
-  image times out on pair `1/129`, retains a failed partial summary under
+- retained internal `LVCompare` parity evidence now proves there is no clean
+  immediate workaround there either: the published image times out on pair
+  `1/129`, retains a failed partial summary under
   `windows-benchmark-image-proof-lvcompare`, and remains characterization-only
 - the governed harness report-smoke diagnosis surface now also accepts an
   exact selected/base pair plus explicit runtime timeout, and the targeted
-  exact-pair Windows `lvcompare` rerun on `6dd65df -> 3408654` times out
-  after `120000ms` under `windows-benchmark-image-pair129-lvcompare`, so the
-  pair-129 ceiling is not recoverable through a simple Windows engine swap
+  exact-pair Windows internal `LVCompare` parity rerun on
+  `6dd65df -> 3408654` times out after `120000ms` under
+  `windows-benchmark-image-pair129-lvcompare`, so the pair-129 ceiling is not
+  recoverable through a simple engine swap
 - the same exact blocker pair `6dd65df -> 3408654` is now retained under both
   supported Windows engines: `windows-benchmark-image-pair129-labviewcli`
   records `command-exited-nonzero (labview-cli-call-by-reference)` after a
@@ -148,9 +150,10 @@ Current retained benchmark truth at closure:
   `LabVIEW.exe` never appears, so explicit headless mode is not the missing
   native-host Windows ingredient either
 - `VHS-REQ-449` now governs canonical exact-pair diagnosis arguments, so
-  incomplete selected/base hash bundles, incomplete engine/path overrides,
-  wrong executable basenames, and Windows bitness/path contradictions are
-  rejected before they can contaminate retained benchmark blocker evidence
+  incomplete selected/base hash bundles, incomplete canonical
+  `CreateComparisonReport` override bundles, wrong executable basenames, and
+  Windows bitness/path contradictions are rejected before they can contaminate
+  retained benchmark blocker evidence
 - `VHS-REQ-450` now governs canonical Windows host proof hygiene too: explicit
   Windows runtime override paths must exist before a targeted rerun starts,
   host-native Windows comparison execution now blocks before launch when stale
@@ -159,20 +162,21 @@ Current retained benchmark truth at closure:
   would contaminate the rerun, and the current canonical machine is now
   documented as exposing only the x86 `LabVIEWCLI.exe` path locally even
   though both x86 and x64 `LabVIEW.exe` / `LVCompare.exe` paths exist
-- `VHS-REQ-451` now governs shared PROGRAM-0003 admission control: the
-  dashboard-smoke, decision-record, exact-pair smoke, and Windows/Linux
-  benchmark CLIs now share one canonical runtime-override validation layer, so
-  contradictory explicit engine/path bundles are rejected before they can
-  contaminate retained benchmark blocker evidence
+- `VHS-REQ-451` now governs shared PROGRAM-0003 admission control: the one
+  public `runGovernedProof` surface and its `dashboard-smoke`,
+  `decision-record`, `report-smoke`, `benchmark-linux`, and
+  `benchmark-windows` subcommands now share one canonical
+  runtime-override validation layer, so contradictory explicit runtime bundles
+  are rejected before they can contaminate retained benchmark blocker evidence
 - `VHS-REQ-452` now governs canonical Windows bundle coherence too: explicit
   Windows runtime override bundles that mix x86 and x64 paths are rejected
   even when `--bitness` is omitted, so a manual x86 `LabVIEWCLI.exe`
   plus x64 `LabVIEW.exe` launch cannot be retained as benchmark truth
 - `VHS-REQ-457..458` now govern the effective runtime override bundle too:
-  benchmark-proof entrypoints validate the effective runtime bundle after CLI
-  arguments, environment variables, and entrypoint-local defaults are resolved,
-  and the Windows benchmark CLI no longer injects hidden explicit Windows
-  executable defaults when no explicit override was requested
+  governed proof subcommands validate the effective runtime bundle after CLI
+  arguments, environment variables, and subcommand-local defaults are
+  resolved, and the Windows benchmark path no longer injects hidden explicit
+  Windows executable defaults when no explicit override was requested
 - `VHS-REQ-476` now governs contaminated Windows benchmark-image reruns too:
   a fresh canonical-host proof attempt that started with stale non-headless
   host `LabVIEW.exe` plus a preexisting governed VI Server listener exposed a
