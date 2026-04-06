@@ -311,6 +311,8 @@ describe('documentation-package workbench', () => {
     expect(gitlabCi).toContain('node scripts/run-docs-continuous-integration.js --skip-links --evidence-dir docs-integration-evidence');
     expect(gitlabCi).toContain('docs-integration-evidence/');
     expect(gitlabCi).toContain('test_extension:');
+    expect(gitlabCi).toContain('package_extension_preview:');
+    expect(gitlabCi).toContain('preview-evidence/vi-history-suite-${PACKAGE_VERSION}.vsix');
     expect(gitlabCi).toContain('release_extension:');
     expect(gitlabCi).toContain('npm run test');
     expect(gitlabCi).toContain('publish_docs_authoring_image:');
@@ -327,5 +329,7 @@ describe('documentation-package workbench', () => {
     expect(gitlabCi).toContain('if [ -d .cache/wiki-workbench/staging ]');
     expect(gitlabCi).toContain('Completion state: ${prepare.completionState ||');
     expect(gitlabCi).toContain('Prepare note: ${prepare.message ||');
+    expect(workbenchDoc).toContain('package_extension_preview');
+    expect(workbenchDoc).toContain('preview `npm run package` path');
   });
 });

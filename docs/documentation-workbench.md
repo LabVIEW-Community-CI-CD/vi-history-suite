@@ -224,6 +224,8 @@ gate:
   `docs-integration-evidence/docs-integration-report.json` and
   `docs-integration-evidence/docs-integration-report.md`
 - `test_extension` before `npm run test`
+- `package_extension_preview` before the preview `npm run package` path, so
+  the governed bundled-doc refresh can read the live published wiki root
 - `release_extension` before the tag-gated `npm run test`
 
 That keeps the same coverage invariant enforced in CI without relying on an

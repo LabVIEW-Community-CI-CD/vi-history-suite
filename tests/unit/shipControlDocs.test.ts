@@ -339,6 +339,7 @@ describe('ship-control direction system', () => {
     expect(gitlabCi).toContain('wiki-workbench-evidence/');
     expect(gitlabCi).toContain('package_extension_preview:');
     expect(gitlabCi).toContain('stage: package');
+    expect(gitlabCi).toContain('export VIHS_WIKI_REPO_ROOT="${CI_PROJECT_DIR}/../vi-history-suite.wiki"');
     expect(gitlabCi).toContain('PACKAGE_VERSION=$(node -p "require(\'./package.json\').version")');
     expect(gitlabCi).toContain('preview-evidence/vi-history-suite-${PACKAGE_VERSION}.vsix');
     expect(gitlabCi).toContain("path.join('preview-evidence', 'preview-manifest.json')");
