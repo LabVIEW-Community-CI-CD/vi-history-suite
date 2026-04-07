@@ -263,11 +263,12 @@ Gate D is now defined against the real public product:
 - the deterministic canonical fixture workspace remains the compare target
 - the governed Linux image must be absent before the rerun so first-use pull is
   exercised truthfully
-- retained preflight preparation at `2026-04-07T00:37:10.340Z` already proves
+- retained preflight preparation at `2026-04-07T01:23:21.955Z` already proves
   the published public source commit `1e24980`, the published public wiki
-  commit `ea06c37`, canonical fixture commit
+  HEAD commit `e28491c`, canonical fixture commit
   `4e442eb0f5a6263e8f8aaa49c322a6b5fd0ea87a`, Docker Linux engine state, and
-  governed Linux image absence before the human compare pass
+  governed Linux image absence before and after preparation ahead of the human
+  compare pass
 - the earlier same-day retained host pass at `2026-04-06T19:53:21.713Z`
   remains supporting evidence that the simplified checkbox-selected compare flow
   itself works as expected on an installed surface
@@ -293,10 +294,11 @@ The public product now retains:
 - authority-side `npm run public:gate-d:preflight` and
   `npm run public:gate-d:prepare-cold-pull` operator surfaces for retained Gate D
   preparation
-- retained Gate D preflight preparation at `2026-04-07T00:37:10.340Z`, proving
-  published public repo commit `1e24980`, public wiki commit `ea06c37`,
+- retained Gate D preflight preparation at `2026-04-07T01:23:21.955Z`, proving
+  published public repo commit `1e24980`, public wiki HEAD commit `e28491c`,
   canonical fixture commit `4e442eb0f5a6263e8f8aaa49c322a6b5fd0ea87a`, Docker
-  Linux engine state, and governed Linux image absence after preparation
+  Linux engine state, and governed Linux image absence before and after
+  preparation
 - public README, `INSTALL.md`, `SUPPORT.md`, and `CONTRIBUTING.md`
 - bundled installed-user docs aligned to the checkbox-selected compare flow and
   Docker-only runtime story

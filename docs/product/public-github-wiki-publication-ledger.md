@@ -10,6 +10,10 @@ The machine-readable companion surface for this ledger is:
 
 - `docs/product/public-github-wiki-publication-ledger.json`
 
+## Published Wiki HEAD
+
+- Current published public GitHub wiki HEAD: `e28491c`
+
 ## Published Pages
 
 | Page | Wiki Path | Status | Published | Wiki Commit | Primary Authority |
@@ -24,6 +28,9 @@ The machine-readable companion surface for this ledger is:
 
 - A public GitHub wiki page is not considered published until it is pushed to
   the public GitHub wiki repository.
+- The companion JSON ledger shall retain `publishedHeadCommit` for the current
+  public GitHub wiki checkout head. Page rows may retain older per-page commits
+  when a later publication changes only part of the wiki.
 - Every published public page shall be recorded here with its wiki path,
   publication date, wiki commit, and primary authority docs.
 - This ledger does not imply anything about the internal GitLab maintainer wiki.

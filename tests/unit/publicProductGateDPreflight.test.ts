@@ -40,6 +40,10 @@ const gateDPreflight = require(path.join(
     allowDirtyPublicWiki: boolean;
     skipPublicWikiCheck: boolean;
   };
+  readPublishedPublicSurfaceCommits: (authorityRepoRoot: string) => {
+    publicRepoCommit: string;
+    publicWikiCommit: string;
+  };
   buildPublicProductGateDPreflightMarkdown: (report: {
     status: string;
     mode: string;
@@ -74,6 +78,37 @@ const gateDPreflight = require(path.join(
 };
 
 describe('public product Gate D preflight', () => {
+  it('reads the explicit published public wiki head commit when page rows span multiple commits', () => {
+    const tempRoot = fs.mkdtempSync(path.join(repoRoot, '.tmp-public-gate-d-ledger-'));
+    const productDocsRoot = path.join(tempRoot, 'docs', 'product');
+
+    fs.mkdirSync(productDocsRoot, { recursive: true });
+    fs.writeFileSync(
+      path.join(productDocsRoot, 'public-github-source-publication-ledger.json'),
+      JSON.stringify({
+        publications: [{ id: 'public-source-product-repo-baseline', repoCommit: 'abc123' }]
+      }),
+      'utf8'
+    );
+    fs.writeFileSync(
+      path.join(productDocsRoot, 'public-github-wiki-publication-ledger.json'),
+      JSON.stringify({
+        publishedHeadCommit: 'fed456',
+        pages: [{ wikiCommit: 'fed456' }, { wikiCommit: 'old111' }]
+      }),
+      'utf8'
+    );
+
+    try {
+      expect(gateDPreflight.readPublishedPublicSurfaceCommits(tempRoot)).toEqual({
+        publicRepoCommit: 'abc123',
+        publicWikiCommit: 'fed456'
+      });
+    } finally {
+      fs.rmSync(tempRoot, { recursive: true, force: true });
+    }
+  });
+
   it('retains a deterministic Gate D preflight runner and preparation mode', () => {
     const packageJson = JSON.parse(readText('package.json')) as {
       scripts?: Record<string, string>;

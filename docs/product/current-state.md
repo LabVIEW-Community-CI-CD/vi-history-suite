@@ -164,11 +164,11 @@ Current active tranche:
   - the next Gate D rerun now belongs to the Docker-only public bundle and is
     planned to include a Linux-engine cold-pull compare on the deterministic
     `c:\dev\labview-icon-editor` fixture workspace
-  - retained preflight preparation at `2026-04-07T00:37:10.340Z` already proves
-    published public repo commit `1e24980`, published public wiki commit
-    `ea06c37`, canonical fixture commit `4e442eb0f5a6263e8f8aaa49c322a6b5fd0ea87a`,
-    Docker Linux engine state, and governed Linux image absence after
-    preparation
+  - retained preflight preparation at `2026-04-07T01:23:21.955Z` already proves
+    published public repo commit `1e24980`, published public wiki HEAD commit
+    `e28491c`, canonical fixture commit `4e442eb0f5a6263e8f8aaa49c322a6b5fd0ea87a`,
+    Docker Linux engine state, and governed Linux image absence before and
+    after preparation
 
 Post-release tranches:
 

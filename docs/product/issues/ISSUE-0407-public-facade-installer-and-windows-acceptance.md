@@ -35,10 +35,11 @@ Current landed state:
 - the authority repo now retains `npm run public:gate-d:preflight` and
   `npm run public:gate-d:prepare-cold-pull` so the Linux-engine cold-pull Gate D
   rerun begins from a retained preflight packet
-- retained Gate D preflight preparation at `2026-04-07T00:37:10.340Z` already
-  proves published public repo commit `1e24980`, public wiki commit `ea06c37`,
-  canonical fixture commit `4e442eb0f5a6263e8f8aaa49c322a6b5fd0ea87a`, Docker
-  Linux engine state, and governed Linux image absence after preparation
+- retained Gate D preflight preparation at `2026-04-07T01:23:21.955Z` already
+  proves published public repo commit `1e24980`, public wiki HEAD commit
+  `e28491c`, canonical fixture commit
+  `4e442eb0f5a6263e8f8aaa49c322a6b5fd0ea87a`, Docker Linux engine state, and
+  governed Linux image absence before and after preparation
 - the public GitHub wiki now exists at
   `https://github.com/svelderrainruiz/vi-history-suite.wiki.git`
 - public GitHub wiki publication is tracked separately from the internal

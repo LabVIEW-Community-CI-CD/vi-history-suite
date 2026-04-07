@@ -89,12 +89,21 @@ function readPublishedPublicSurfaceCommits(authorityRepoRoot) {
     throw new Error('Public GitHub source publication ledger does not retain a published repo commit.');
   }
 
+  const publishedWikiHeadCommit =
+    typeof wikiLedger.publishedHeadCommit === 'string' ? wikiLedger.publishedHeadCommit.trim() : '';
+  if (publishedWikiHeadCommit) {
+    return {
+      publicRepoCommit: sourcePublication.repoCommit,
+      publicWikiCommit: publishedWikiHeadCommit
+    };
+  }
+
   const wikiCommits = Array.from(
     new Set((wikiLedger.pages ?? []).map((entry) => entry.wikiCommit).filter(Boolean))
   );
   if (wikiCommits.length !== 1) {
     throw new Error(
-      `Public GitHub wiki publication ledger expected one published commit, found ${wikiCommits.length}.`
+      'Public GitHub wiki publication ledger must retain publishedHeadCommit when page rows span multiple commits.'
     );
   }
 
@@ -799,6 +808,7 @@ module.exports = {
   createPublicProductGateDPreflightSteps,
   getPublicProductGateDPreflightUsage,
   parsePublicProductGateDPreflightArgs,
+  readPublishedPublicSurfaceCommits,
   buildPublicProductGateDPreflightMarkdown,
   runPublicProductGateDPreflight
 };
