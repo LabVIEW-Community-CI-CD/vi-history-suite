@@ -76,9 +76,9 @@ The optional public tester-fixture helper is:
 npm run public:fixture:icon-editor
 ```
 
-It clones `ni/labview-icon-editor` into `.cache/public-fixtures/labview-icon-editor`
-for public devcontainer/Codespaces evaluation without making that clone a
-default startup dependency.
+It clones `ni/labview-icon-editor` into a repo-sibling `labview-icon-editor`
+folder. In a GitHub Codespace created from this repo, that path is
+`/workspaces/labview-icon-editor`.
 
 For the step-by-step fork-owner walkthrough that ends at
 `resource/plugins/lv_icon.vi`, use the public wiki page:
@@ -108,7 +108,7 @@ npm run package -- --out /tmp/vi-history-suite-public-preview.vsix
 
 ## Current Version Line
 
-- retained exact-version releases: `v0.2.0`, `v1.0.0`
-- current exact released line: `v1.0.0`
-- current package line on `main`: `1.0.1`
-- next exact-version release line on `main`: `v1.0.1`
+- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`
+- current exact released line: `v1.0.2`
+- current published package line on `main`: `1.0.2`
+- public Codespaces evaluation branch: `develop`

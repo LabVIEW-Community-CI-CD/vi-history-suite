@@ -19,6 +19,7 @@ const EXPECTED_TARGET_REMOTE = 'https://github.com/svelderrainruiz/vi-history-su
 
 const PUBLIC_DESIGN_CONTRACT_TESTS = [
   'tests/unit/bootstrapLinuxVsCodeHost.test.ts',
+  'tests/unit/preparePublicTestFixtureScript.test.ts',
   'tests/unit/publicRepoPackageSurface.test.ts',
   'tests/unit/publicDevcontainerSurface.test.ts',
   'tests/unit/publicFacadeLinuxSmoke.test.ts',
@@ -77,6 +78,7 @@ const AUTHORITY_COPY_PATHS = [
   'src',
   'tests/integration',
   'tests/unit/bootstrapLinuxVsCodeHost.test.ts',
+  'tests/unit/preparePublicTestFixtureScript.test.ts',
   'tests/unit/publicDevcontainerSurface.test.ts',
   'tests/unit/publicFacadeLinuxSmoke.test.ts',
   'tests/unit/runLinuxIntegrationHost.test.ts',

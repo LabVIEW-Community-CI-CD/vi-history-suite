@@ -6,8 +6,8 @@ const { spawnSync } = require('node:child_process');
 
 const repoRoot = path.resolve(path.dirname(fs.realpathSync.native(__filename)), '..');
 const DEFAULT_REPO_URL = 'https://github.com/ni/labview-icon-editor.git';
-const DEFAULT_BRANCH = 'main';
-const DEFAULT_TARGET_ROOT = path.join(repoRoot, '.cache', 'public-fixtures', 'labview-icon-editor');
+const DEFAULT_BRANCH = 'develop';
+const DEFAULT_TARGET_ROOT = path.resolve(repoRoot, '..', 'labview-icon-editor');
 
 function getUsage() {
   return [
@@ -109,27 +109,77 @@ function ensureGitClone(targetRoot) {
   }
 }
 
+function isShallowRepository(targetRoot) {
+  return runGit(['rev-parse', '--is-shallow-repository'], targetRoot) === 'true';
+}
+
+function getCurrentBranch(targetRoot) {
+  return runGit(['branch', '--show-current'], targetRoot);
+}
+
+function getNextStepMessage(targetRoot) {
+  return `[public-fixture] Next: in the extension host choose File -> Open Folder... and open ${targetRoot}.\n`;
+}
+
+function writeNextStep(targetRoot, stdout) {
+  stdout.write(getNextStepMessage(targetRoot));
+}
+
 function cloneFixture(options, stdout) {
   fs.mkdirSync(path.dirname(options.targetRoot), { recursive: true });
-  runGit(['clone', '--depth', '1', '--branch', options.branch, options.repoUrl, options.targetRoot]);
+  runGit(['clone', '--branch', options.branch, options.repoUrl, options.targetRoot]);
   const head = runGit(['rev-parse', 'HEAD'], options.targetRoot);
   stdout.write(`[public-fixture] Cloned ${options.repoUrl} to ${options.targetRoot} at ${head}.\n`);
+  writeNextStep(options.targetRoot, stdout);
 }
 
 function reuseFixture(options, stdout) {
   ensureGitClone(options.targetRoot);
   const head = runGit(['rev-parse', 'HEAD'], options.targetRoot);
   stdout.write(`[public-fixture] Using existing fixture at ${options.targetRoot} (${head}).\n`);
+  writeNextStep(options.targetRoot, stdout);
 }
 
 function refreshFixture(options, stdout) {
   ensureGitClone(options.targetRoot);
   ensureCleanWorkingTree(options.targetRoot);
-  runGit(['fetch', '--depth', '1', 'origin', options.branch], options.targetRoot);
-  runGit(['checkout', options.branch], options.targetRoot);
-  runGit(['merge', '--ff-only', 'FETCH_HEAD'], options.targetRoot);
+
+  if (isShallowRepository(options.targetRoot)) {
+    runGit(['fetch', '--unshallow', 'origin', options.branch], options.targetRoot);
+  } else {
+    runGit(['fetch', 'origin', options.branch], options.targetRoot);
+  }
+
+  const currentBranch = getCurrentBranch(options.targetRoot);
+  if (currentBranch === options.branch) {
+    runGit(['merge', '--ff-only', 'FETCH_HEAD'], options.targetRoot);
+  } else {
+    const localBranches = runGit(
+      ['for-each-ref', '--format=%(refname:short)', 'refs/heads'],
+      options.targetRoot
+    )
+      .split('\n')
+      .map((value) => value.trim())
+      .filter(Boolean);
+
+    if (localBranches.includes(options.branch)) {
+      runGit(['checkout', options.branch], options.targetRoot);
+      runGit(['merge', '--ff-only', 'FETCH_HEAD'], options.targetRoot);
+    } else {
+      runGit(['checkout', '-b', options.branch, '--track', `origin/${options.branch}`], options.targetRoot);
+    }
+  }
+
   const head = runGit(['rev-parse', 'HEAD'], options.targetRoot);
-  stdout.write(`[public-fixture] Refreshed ${options.targetRoot} to ${head} from origin/${options.branch}.\n`);
+  stdout.write(
+    `[public-fixture] Normalized ${options.targetRoot} to ${head} from origin/${options.branch}.\n`
+  );
+  writeNextStep(options.targetRoot, stdout);
+}
+
+function needsNormalization(options) {
+  ensureGitClone(options.targetRoot);
+  return getCurrentBranch(options.targetRoot) !== options.branch || isShallowRepository(options.targetRoot);
 }
 
 function main(argv = process.argv.slice(2), deps = {}) {
@@ -146,7 +196,7 @@ function main(argv = process.argv.slice(2), deps = {}) {
     return;
   }
 
-  if (parsed.refresh) {
+  if (parsed.refresh || needsNormalization(parsed)) {
     refreshFixture(parsed, stdout);
     return;
   }
@@ -168,6 +218,7 @@ module.exports = {
   DEFAULT_REPO_URL,
   DEFAULT_TARGET_ROOT,
   getUsage,
+  getNextStepMessage,
   parseArgs,
   main
 };

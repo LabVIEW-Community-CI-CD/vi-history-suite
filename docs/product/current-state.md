@@ -135,9 +135,9 @@ Latest landed ship target:
 - retained release surface: GitLab release `v0.2.0`
 - retained release pipeline: `2428809456`
 - retained release job: `13779604462`
-- current exact released line: `v1.0.0`
-- current package line on `main`: `1.0.1`
-- next exact-version release line on `main`: `v1.0.1`
+- current exact released line: `v1.0.2`
+- current published package line on `main`: `1.0.2`
+- public Codespaces evaluation branch: `develop`
 - current changelog: [CHANGELOG.md](../../CHANGELOG.md)
 - docs-workbench image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
 - remaining blockers: none

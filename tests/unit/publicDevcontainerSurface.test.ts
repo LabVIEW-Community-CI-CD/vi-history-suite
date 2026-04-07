@@ -90,7 +90,7 @@ describe('public devcontainer surface', () => {
     expect(readme).toContain('governed Linux container image');
     expect(readme).toContain('npm run public:host:bootstrap-linux');
     expect(readme).toContain('npm run public:fixture:icon-editor');
-    expect(readme).toContain('.cache/public-fixtures/labview-icon-editor');
+    expect(readme).toContain('repo-sibling `labview-icon-editor`');
     expect(readme).toContain('No host LabVIEW installation is required for the installed extension path.');
   });
 });

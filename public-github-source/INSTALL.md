@@ -63,7 +63,9 @@ If you want a governed public sample repository for that flow, run:
 npm run public:fixture:icon-editor
 ```
 
-This clones `ni/labview-icon-editor` into `.cache/public-fixtures/labview-icon-editor`.
+This clones `ni/labview-icon-editor` into a repo-sibling `labview-icon-editor`
+folder. In a GitHub Codespace created from this repo, that path is
+`/workspaces/labview-icon-editor`.
 
 If you want the full fork-owner walkthrough for the canonical public sample VI,
 use the public wiki page:
@@ -74,6 +76,7 @@ That page is the easiest first path for LabVIEW users because it now spells
 out:
 
 - `Code` -> `Codespaces` -> `New with options`
+- the `develop` branch selection
 - `16-core` machine selection
 - the browser message `Setting up remote connection: Building codespace`
 - the exact `Open Folder...` path for `lv_icon.vi`

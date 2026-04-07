@@ -26,7 +26,7 @@ describe('public repo package surface', () => {
     const contributing = readText('CONTRIBUTING.md');
     const previewWorkflow = readText('.github/workflows/public-facade-package-preview.yml');
 
-    expect(manifest.version).toBe('1.0.1');
+    expect(manifest.version).toBe('1.0.2');
     expect(manifest.files).toEqual([
       'out/**',
       'resources/**',
@@ -44,7 +44,7 @@ describe('public repo package surface', () => {
       'node scripts/preparePublicTestFixture.js'
     );
     expect(manifest.scripts?.['test:design-contract']).toBe(
-      'npm exec -- vitest run tests/unit/bootstrapLinuxVsCodeHost.test.ts tests/unit/publicRepoPackageSurface.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicFacadeLinuxSmoke.test.ts tests/unit/runLinuxIntegrationHost.test.ts tests/unit/linuxContainerRuntimeExecutionSurface.test.ts'
+      'npm exec -- vitest run tests/unit/bootstrapLinuxVsCodeHost.test.ts tests/unit/preparePublicTestFixtureScript.test.ts tests/unit/publicRepoPackageSurface.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicFacadeLinuxSmoke.test.ts tests/unit/runLinuxIntegrationHost.test.ts tests/unit/linuxContainerRuntimeExecutionSurface.test.ts'
     );
     expect(manifest.scripts?.['package']).toBe(
       'npm run compile && npm run package:audit && node scripts/runPinnedVsce.js package'
@@ -61,10 +61,11 @@ describe('public repo package surface', () => {
     expect(readme).toContain('public GitHub repo is the source-facing product surface');
     expect(readme).toContain('npm run public:host:bootstrap-linux');
     expect(readme).toContain('npm run public:fixture:icon-editor');
-    expect(readme).toContain('.cache/public-fixtures/labview-icon-editor');
-    expect(readme).toContain('current exact released line: `v1.0.0`');
-    expect(readme).toContain('current package line on `main`: `1.0.1`');
-    expect(readme).toContain('next exact-version release line on `main`: `v1.0.1`');
+    expect(readme).toContain('repo-sibling `labview-icon-editor`');
+    expect(readme).toContain('/workspaces/labview-icon-editor');
+    expect(readme).toContain('current exact released line: `v1.0.2`');
+    expect(readme).toContain('current published package line on `main`: `1.0.2`');
+    expect(readme).toContain('public Codespaces evaluation branch: `develop`');
     expect(install).toContain('Windows host + Linux engine');
     expect(install).toContain('host LabVIEW');
     expect(install).toContain('npm run public:host:bootstrap-linux');

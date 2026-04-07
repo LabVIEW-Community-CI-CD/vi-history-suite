@@ -46,9 +46,9 @@ The optional public tester-fixture helper is:
 npm run public:fixture:icon-editor
 ```
 
-It clones `ni/labview-icon-editor` into `.cache/public-fixtures/labview-icon-editor`
-for public devcontainer/Codespaces evaluation without turning that clone into a
-mandatory startup side effect.
+It clones `ni/labview-icon-editor` into a repo-sibling `labview-icon-editor`
+folder for public devcontainer/Codespaces evaluation without turning that
+clone into a mandatory startup side effect.
 
 The maintained Gate D operator preflight surfaces are:
 
@@ -396,10 +396,10 @@ Latest landed ship target:
 - `SHIP-0001`: releasable `v0.2.0` VSIX product
 - landed ship tranche: `TRANCHE-009`
 - landed ship issue: `ISSUE-0406`
-- retained exact-version releases: `v0.2.0`, `v1.0.0`
-- current exact released line: `v1.0.0`
-- current package line on `main`: `1.0.1`
-- next exact-version release line on `main`: `v1.0.1`
+- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`
+- current exact released line: `v1.0.2`
+- current published package line on `main`: `1.0.2`
+- public Codespaces evaluation branch: `develop`
 - target release manifest: `release-evidence/release-manifest.json`
 - current changelog: [CHANGELOG.md](./CHANGELOG.md)
 - docs-authoring image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`

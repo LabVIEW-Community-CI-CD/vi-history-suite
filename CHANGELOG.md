@@ -2,14 +2,32 @@
 
 This changelog is the governed version-line summary for `vi-history-suite`.
 
-Retained exact-version releases now include `v0.2.0` and `v1.0.0`.
+Retained exact-version releases now include `v0.2.0`, `v1.0.0`, and `v1.0.1`.
 
-## [1.0.1] - Unreleased
+## [1.0.2] - 2026-04-07
 
 ### Changed
 
-- the current package line on `main` is now `1.0.1`, representing the first
-  post-`v1.0.0` change set, and the next exact release tag is `v1.0.1`
+- the public fork-owner Codespaces path now uses the governed `develop` branch
+  instead of teaching `main`
+- the governed `public:fixture:icon-editor` helper now defaults to upstream
+  `develop`, clones full Git history instead of a shallow single-commit copy,
+  repairs old shallow or wrong-branch clones automatically when they are clean,
+  and stages the sample repo in a visible sibling `labview-icon-editor`
+  folder so `lv_icon.vi` remains eligible for the `VI History` context menu
+- the public fork-owner procedures are now rewritten for LabVIEW-first users:
+  they explicitly call out the `16-core` Codespace machine, the browser build
+  message, the exact open-folder path, and the manual `ni/actor-framework`
+  example path without hidden `.cache` navigation
+- the public Codespaces/devcontainer surface continues to avoid recommending
+  `vitest.explorer`, and the fork-owner guidance now treats any browser-profile
+  Vitest popup as unrelated to the VI History flow instead of implying that the
+  tester must install Vitest
+
+## [1.0.1] - 2026-04-07
+
+### Changed
+
 - the public fork-owner Codespaces procedures now spell out `Code` ->
   `Codespaces` -> `New with options`, the `16-core` machine selection, the
   browser build message, and the exact folder-open path for the canonical

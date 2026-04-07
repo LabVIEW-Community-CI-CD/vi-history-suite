@@ -41,14 +41,14 @@ type SustainmentRules = {
       retainedExactVersionReleases: string[];
       currentExactReleaseLine: string;
       currentMainPackageLine: string;
-      nextExactReleaseLine: string;
+      publicCodespaceBranch: string;
     };
     strictSemverRule: string[];
   };
 };
 
 describe('strict semver discipline', () => {
-  it('keeps main ahead of the current exact release line after release publication', () => {
+  it('keeps the published main line aligned to the current exact release line', () => {
     const pkg = readJson<{ version: string }>('package.json');
     const readme = readText('README.md');
     const currentState = readText('docs/product/current-state.md');
@@ -59,28 +59,33 @@ describe('strict semver discipline', () => {
     const versionLineContract = sustainmentRules.releaseCadence.versionLineContract;
     const exactReleaseLine = versionLineContract.currentExactReleaseLine.replace(/^v/, '');
 
-    expect(versionLineContract.retainedExactVersionReleases).toEqual(['v0.2.0', 'v1.0.0']);
-    expect(pkg.version).toBe('1.0.1');
+    expect(versionLineContract.retainedExactVersionReleases).toEqual([
+      'v0.2.0',
+      'v1.0.0',
+      'v1.0.1',
+      'v1.0.2'
+    ]);
+    expect(pkg.version).toBe('1.0.2');
     expect(pkg.version).toBe(versionLineContract.currentMainPackageLine);
-    expect(`v${pkg.version}`).toBe(versionLineContract.nextExactReleaseLine);
-    expect(compareSemver(pkg.version, exactReleaseLine)).toBeGreaterThan(0);
-    expect(readme).toContain('- current exact released line: `v1.0.0`');
-    expect(readme).toContain('- current package line on `main`: `1.0.1`');
-    expect(readme).toContain('- next exact-version release line on `main`: `v1.0.1`');
-    expect(currentState).toContain('- current exact released line: `v1.0.0`');
-    expect(currentState).toContain('- current package line on `main`: `1.0.1`');
-    expect(currentState).toContain('- next exact-version release line on `main`: `v1.0.1`');
-    expect(releaseProcedure).toContain('The current exact released line is `v1.0.0`.');
-    expect(releaseProcedure).toContain("The current package line on `main` is `1.0.1`.");
-    expect(releaseProcedure).toContain("The next exact-version release line on `main` is `v1.0.1`.");
-    expect(releaseProcedure).toContain('any later repo change on `main` shall');
-    expect(releaseProcedure).toContain(
-      'advance `package.json` and the top `CHANGELOG.md` heading to the next'
-    );
+    expect(versionLineContract.publicCodespaceBranch).toBe('develop');
+    expect(compareSemver(pkg.version, exactReleaseLine)).toBe(0);
+    expect(readme).toContain('- current exact released line: `v1.0.2`');
+    expect(readme).toContain('- current published package line on `main`: `1.0.2`');
+    expect(readme).toContain('- public Codespaces evaluation branch: `develop`');
+    expect(currentState).toContain('- current exact released line: `v1.0.2`');
+    expect(currentState).toContain('- current published package line on `main`: `1.0.2`');
+    expect(currentState).toContain('- public Codespaces evaluation branch: `develop`');
+    expect(releaseProcedure).toContain('The current exact released line is `v1.0.2`.');
+    expect(releaseProcedure).toContain("The current published package line on `main` is `1.0.2`.");
+    expect(releaseProcedure).toContain('`main` shall match that exact release line');
+    expect(releaseProcedure).toContain('A SemVer bump is not complete');
+    expect(releaseProcedure).toContain('Any later repo change intended for publication shall');
+    expect(releaseProcedure).toContain('advance `package.json`');
+    expect(releaseProcedure).toContain('top `CHANGELOG.md` heading to the next SemVer line');
     expect(sustainmentRules.releaseCadence.strictSemverRule).toContain(
-      'future sessions shall treat that advanced line as the real changed main line, not as a generic baseline placeholder'
+      'future sessions shall not treat an unreleased SemVer bump as complete until the matching public tag and public GitHub release are both published'
     );
-    expect(changelog).toContain('## [1.0.1] - Unreleased');
-    expect(changelog).toContain('the current package line on `main` is now `1.0.1`');
+    expect(changelog).toContain('## [1.0.2] - 2026-04-07');
+    expect(changelog).toContain('public fork-owner Codespaces path now uses the governed `develop` branch');
   });
 });

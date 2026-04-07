@@ -41,19 +41,22 @@ Refresh the release package when any of these change:
   exact released VSIX
 - release procedure, ship-control, or docs-workbench publication contract
 
-Current version-line contract after `v1.0.0`:
+Current version-line contract:
 
-- current exact released line: `v1.0.0`
-- current package line on `main`: `1.0.1`
-- next exact-version release line on `main`: `v1.0.1`
+- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`
+- current exact released line: `v1.0.2`
+- current published package line on `main`: `1.0.2`
+- public Codespaces evaluation branch: `develop`
 
 Strict SemVer rule after an exact release:
 
-- once an exact release is published, any further repo change on `main` shall
-  advance `package.json` and the top `CHANGELOG.md` heading to the next
-  SemVer line before the changed state is normalized or published further
-- future sessions shall treat that advanced line as the real changed `main`
-  line, not as a generic baseline placeholder
+- once an exact release is published, the current published package line on
+  `main` shall match that exact release line
+- any further repo change intended for publication shall advance
+  `package.json` and the top `CHANGELOG.md` heading to the next SemVer line
+  before the changed state is normalized or published further
+- future sessions shall not treat an unreleased SemVer bump as complete until
+  the matching public tag and public GitHub release are both published
 - future sessions shall not keep landing post-release changes on the previous
   exact release version number
 
@@ -110,7 +113,7 @@ When sustainment-affecting truth changes, update these surfaces together:
 - `current-state.md`
 - active sustainment program and issue docs
 - `SHIP-0001` only where it points to the active driver-seat post-release lane
-- `CHANGELOG.md` when the current package line on `main` or retained release history changes
+- `CHANGELOG.md` when the current published package line on `main` or retained release history changes
 - SRS, RTM, and test plan when normative behavior changes
 - wiki coverage/publication ledgers when reader-facing authority changes
 - published wiki pages that represent the changed authority docs

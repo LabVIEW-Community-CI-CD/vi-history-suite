@@ -22,7 +22,7 @@ type SustainmentRules = {
       retainedExactVersionReleases: string[];
       currentExactReleaseLine: string;
       currentMainPackageLine: string;
-      nextExactReleaseLine: string;
+      publicCodespaceBranch: string;
     };
     maintainedSurfaces: string[];
     refreshTriggers: string[];
@@ -88,10 +88,10 @@ describe('post-release sustainment rules package', () => {
 
     expect(rules.releaseCadence.model).toBe('event-driven');
     expect(rules.releaseCadence.versionLineContract).toEqual({
-      retainedExactVersionReleases: ['v0.2.0', 'v1.0.0'],
-      currentExactReleaseLine: 'v1.0.0',
-      currentMainPackageLine: '1.0.1',
-      nextExactReleaseLine: 'v1.0.1'
+      retainedExactVersionReleases: ['v0.2.0', 'v1.0.0', 'v1.0.1', 'v1.0.2'],
+      currentExactReleaseLine: 'v1.0.2',
+      currentMainPackageLine: '1.0.2',
+      publicCodespaceBranch: 'develop'
     });
     expect(rules.releaseCadence.maintainedSurfaces).toContain(
       'preview-evidence/vi-history-suite-<version>.vsix'
@@ -105,8 +105,9 @@ describe('post-release sustainment rules package', () => {
     );
     expect(rules.releaseCadence.strictSemverRule).toEqual(
       expect.arrayContaining([
-        'after an exact release is published, any later repo change on main shall advance package.json and the top CHANGELOG.md heading to the next SemVer line before further normalization or publication',
-        'future sessions shall treat that advanced line as the real changed main line, not as a generic baseline placeholder',
+        'after an exact release is published, the current published package line on main shall match that exact release line',
+        'any later repo change intended for publication shall advance package.json and the top CHANGELOG.md heading to the next SemVer line before further normalization or publication',
+        'future sessions shall not treat an unreleased SemVer bump as complete until the matching public tag and public GitHub release are both published',
         'future sessions shall not keep landing post-release changes on the previous exact release version number'
       ])
     );
@@ -151,7 +152,7 @@ describe('post-release sustainment rules package', () => {
     );
 
     expect(rulesDoc).toContain('## Release Refresh Rules');
-    expect(rulesDoc).toContain('Current version-line contract after `v1.0.0`');
+    expect(rulesDoc).toContain('Current version-line contract:');
     expect(rulesDoc).toContain('Strict SemVer rule after an exact release');
     expect(rulesDoc).toContain('## Benchmark Refresh Rules');
     expect(rulesDoc).toContain('## Operator And Documentation Upkeep Rules');

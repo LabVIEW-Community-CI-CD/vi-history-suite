@@ -11,13 +11,16 @@
 - The first retained exact-version release is `v0.2.0`, with retained artifact
   `vi-history-suite-0.2.0.vsix` and manifest
   `release-evidence/release-manifest.json`.
-- The current exact released line is `v1.0.0`.
-- The current package line on `main` is `1.0.1`.
-- The next exact-version release line on `main` is `v1.0.1`.
-- After an exact release is published, any later repo change on `main` shall
-  advance `package.json` and the top `CHANGELOG.md` heading to the next
-  SemVer line before additional publication or release normalization
-  continues.
+- The current exact released line is `v1.0.2`.
+- The current published package line on `main` is `1.0.2`.
+- The public Codespaces evaluation branch is `develop`.
+- After an exact release is published, the current published package line on
+  `main` shall match that exact release line.
+- Any later repo change intended for publication shall advance `package.json`
+  and the top `CHANGELOG.md` heading to the next SemVer line before additional
+  publication or release normalization continues.
+- A SemVer bump is not complete until the matching public tag and public
+  GitHub release are both published.
 - The release tag shall match both `package.json` and the top unreleased
   heading in [CHANGELOG.md](../CHANGELOG.md).
 - The repo also publishes a separate docs-authoring workbench image for
@@ -122,6 +125,6 @@
 - The first governed `v0.2.0` release evidence set is now retained through
   GitLab release `v0.2.0`, tag pipeline `2428809456`, and kept release job
   `13779604462`.
-- The current package line on `main` is `1.0.1`, tracked in `CHANGELOG.md`,
-  and it should not rewrite the retained `v0.2.0` or `v1.0.0` release
-  evidence.
+- The current published package line on `main` is `1.0.2`, tracked in
+  `CHANGELOG.md`, and it should not rewrite the retained `v0.2.0`, `v1.0.0`,
+  or `v1.0.1` release evidence.

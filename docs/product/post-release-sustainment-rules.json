@@ -14,11 +14,13 @@
     "versionLineContract": {
       "retainedExactVersionReleases": [
         "v0.2.0",
-        "v1.0.0"
+        "v1.0.0",
+        "v1.0.1",
+        "v1.0.2"
       ],
-      "currentExactReleaseLine": "v1.0.0",
-      "currentMainPackageLine": "1.0.1",
-      "nextExactReleaseLine": "v1.0.1"
+      "currentExactReleaseLine": "v1.0.2",
+      "currentMainPackageLine": "1.0.2",
+      "publicCodespaceBranch": "develop"
     },
     "maintainedSurfaces": [
       "preview-evidence/vi-history-suite-<version>.vsix",
@@ -36,8 +38,9 @@
       "release-procedure, ship-control, or docs-workbench publication contract change"
     ],
     "strictSemverRule": [
-      "after an exact release is published, any later repo change on main shall advance package.json and the top CHANGELOG.md heading to the next SemVer line before further normalization or publication",
-      "future sessions shall treat that advanced line as the real changed main line, not as a generic baseline placeholder",
+      "after an exact release is published, the current published package line on main shall match that exact release line",
+      "any later repo change intended for publication shall advance package.json and the top CHANGELOG.md heading to the next SemVer line before further normalization or publication",
+      "future sessions shall not treat an unreleased SemVer bump as complete until the matching public tag and public GitHub release are both published",
       "future sessions shall not keep landing post-release changes on the previous exact release version number"
     ],
     "explicitNonTriggers": [

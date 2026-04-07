@@ -85,6 +85,7 @@ describe('public GitHub source promotion', () => {
     expect(plan.authorityCopyPaths).toContain('.github/workflows/public-facade-linux-smoke.yml');
     expect(plan.publicDesignContractTests).toEqual([
       'tests/unit/bootstrapLinuxVsCodeHost.test.ts',
+      'tests/unit/preparePublicTestFixtureScript.test.ts',
       'tests/unit/publicRepoPackageSurface.test.ts',
       'tests/unit/publicDevcontainerSurface.test.ts',
       'tests/unit/publicFacadeLinuxSmoke.test.ts',
@@ -96,7 +97,7 @@ describe('public GitHub source promotion', () => {
   it('renders a narrower public package contract than authority', () => {
     const manifest = promotion.renderPublicPackageManifest();
 
-    expect(manifest.version).toBe('1.0.1');
+    expect(manifest.version).toBe('1.0.2');
     expect(manifest.files).toEqual([
       'out/**',
       'resources/**',
@@ -114,7 +115,7 @@ describe('public GitHub source promotion', () => {
       'node scripts/preparePublicTestFixture.js'
     );
     expect(manifest.scripts['test:design-contract']).toBe(
-      'npm exec -- vitest run tests/unit/bootstrapLinuxVsCodeHost.test.ts tests/unit/publicRepoPackageSurface.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicFacadeLinuxSmoke.test.ts tests/unit/runLinuxIntegrationHost.test.ts tests/unit/linuxContainerRuntimeExecutionSurface.test.ts'
+      'npm exec -- vitest run tests/unit/bootstrapLinuxVsCodeHost.test.ts tests/unit/preparePublicTestFixtureScript.test.ts tests/unit/publicRepoPackageSurface.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicFacadeLinuxSmoke.test.ts tests/unit/runLinuxIntegrationHost.test.ts tests/unit/linuxContainerRuntimeExecutionSurface.test.ts'
     );
     expect(manifest.scripts.package).toBe(
       'npm run compile && npm run package:audit && node scripts/runPinnedVsce.js package'
@@ -151,6 +152,7 @@ describe('public GitHub source promotion', () => {
       expect(expectedFiles).toContain('scripts/preparePublicTestFixture.js');
       expect(expectedFiles).toContain('scripts/runLinuxIntegrationHost.js');
       expect(expectedFiles).toContain('tests/unit/bootstrapLinuxVsCodeHost.test.ts');
+      expect(expectedFiles).toContain('tests/unit/preparePublicTestFixtureScript.test.ts');
       expect(expectedFiles).toContain('tests/unit/publicRepoPackageSurface.test.ts');
       expect(expectedFiles).toContain('tests/unit/runLinuxIntegrationHost.test.ts');
       expect(actualFiles).toContain('package.json');
