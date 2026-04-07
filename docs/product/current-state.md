@@ -158,10 +158,10 @@ Latest landed ship target:
 - remaining blockers: none on the exact public `v1.1.0` line; public `main`
   now publishes `daef8bd`, the public GitHub release `v1.1.0` is live, and
   `develop` now carries the active `v1.2.0` candidate line
-- `v1.2.0` is now `review-ready` on maintained public `develop` candidate head
-  `e8b0925` and maintained public wiki head `63a4208`; exact tagging remains
-  blocked until Sergio completes the next brand-new-fork and brand-new-Codespace
-  acceptance review
+- `v1.2.0` is now back to `review-ready` on refreshed maintained public
+  `develop` candidate head `c9806c3` and maintained public wiki head
+  `b30d356`; exact tagging remains blocked until Sergio completes the next
+  brand-new-fork and brand-new-Codespace acceptance review
 
 Current active tranche:
 
@@ -181,10 +181,13 @@ Current active tranche:
   - Sergio's first dry-run review from a brand new fork and a brand new
     Codespace has now produced findings that must be folded before the exact
     `v1.2.0` tag remains eligible
-  - the maintained public `develop` and public wiki candidate heads are now
-    republished and retained, so the next brand-new-fork review can start on
-    live public surfaces while the exact `v1.2.0` tag remains blocked pending
-    acceptance
+  - a repo-access LLM pre-review then narrowed the remaining issues to one
+    smaller doc-clarification slice on the public README/install/wiki package
+  - that clarification slice is now validated locally through focused
+    authority/public tests plus docs/design gates
+  - the refreshed maintained public `develop` and public wiki heads are now
+    republished and retained, so the next brand-new-fork review can reopen
+    while the exact `v1.2.0` tag remains blocked pending acceptance
 - `TRANCHE-013`: Extension execution flexibility and runtime acquisition UX
 - active issue: [ISSUE-0410 Extension Execution Flexibility And Runtime Acquisition UX](./issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md)
 - active execution program: [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)

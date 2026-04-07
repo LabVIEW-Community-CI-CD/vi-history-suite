@@ -2,12 +2,12 @@
 
 - Version line: `1.2.0`
 - Burned exact release line: `v1.0.2`
-- Recorded at: `2026-04-07T23:00:51Z`
+- Recorded at: `2026-04-07T23:43:38Z`
 - Authority source of truth: GitLab `develop` -> `main`
 - Published public source commit: `daef8bd`
 - Authority `develop` candidate baseline: `8c99163`
-- Public `develop` candidate commit: `e8b0925`
-- Published public wiki head: `63a4208`
+- Public `develop` candidate commit: `c9806c3`
+- Published public wiki head: `b30d356`
 
 ## Branch Model
 
@@ -30,9 +30,10 @@
 - Local public fixture helper: `v1.1.0-published-baseline`
 - Local authority findings fold:
   `published-and-retained-on-maintained-public-candidate-surfaces`
-- Public repo bootstrap: `published-maintained-candidate-with-findings-folded`
+- Public repo bootstrap:
+  `published-maintained-candidate-with-doc-clarification-fold`
 - Public wiki candidate review:
-  `awaiting-brand-new-fork-review-on-published-candidate`
+  `ready-for-next-brand-new-fork-review-on-published-candidate`
 - Review-ready gate:
   `ready-for-brand-new-fork-review`
 - Exact public release: `v1.1.0-published`
@@ -97,10 +98,17 @@
   easiest first-time proof for `ni/labview-icon-editor`.
 - Public `develop` now carries the maintained generic bootstrap candidate with
   Sergio's first findings fold at `e8b0925`, and the maintained public wiki
-  package that carries the same fold is published at `63a4208`.
-- Sergio's first dry-run findings are now folded locally in authority and
-  republished on the maintained public `develop` and public wiki candidate
-  heads, so the next brand-new-fork review can proceed on live public surfaces.
+  package that carried the same fold was published at `63a4208`.
+- A repo-access LLM pre-review reassessed those published candidate surfaces,
+  withdrew false blockers, and left one smaller doc-clarification slice for the
+  public README, install summary, host restriction wording, and compile
+  troubleshooting language.
+- That clarification slice was then republished on maintained public `develop`
+  head `c9806c3` through GitHub PR `#16` and on maintained public wiki head
+  `b30d356`, and it is validated by the focused doc/package proof plus
+  `npm run docs:gate:core` and `npm run design:gate:assert-complete`.
+- The next brand-new-fork review can now reopen against those refreshed
+  maintained public candidate heads.
 - The exact `v1.2.0` tag is intentionally blocked until the maintained public
   wiki procedures are dry-run reviewed and accepted from a brand new fork and
   a brand new Codespace.
@@ -148,6 +156,10 @@
   - Sergio review findings were submitted from a brand new fork and a brand
     new Codespace against the public wiki head `23604e7`, then republished on
     maintained public wiki head `63a4208`
+  - a repo-access LLM pre-review then found one smaller doc-clarification
+    slice; that slice was then republished on maintained public `develop` head
+    `c9806c3` through GitHub PR `#16` and on maintained public wiki head
+    `b30d356`
   - requirement impact: `updated` via `VHS-REQ-516`, `VHS-REQ-517`, and
     `VHS-REQ-518`
   - ADR impact: `updated` via `ADR-0034`
@@ -162,7 +174,7 @@
 ## Remaining Blockers
 
 - One final acceptance review from a brand new fork and a brand new Codespace
-  is still required on the maintained public `develop` candidate head
-  `e8b0925` and maintained public wiki head `63a4208` before exact tagging.
+  is still required on maintained public `develop` candidate head `c9806c3`
+  and maintained public wiki head `b30d356` before exact tagging.
 - `v1.1.0` remains the current exact green line on `main`, while `v1.2.0`
   stays open on `develop`.
