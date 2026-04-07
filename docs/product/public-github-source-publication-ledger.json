@@ -1,7 +1,7 @@
 {
   "generatedFor": "vi-history-suite",
   "publicationSurface": "public-github-source-repo",
-  "publishedHeadCommit": "d787f2d",
+  "publishedHeadCommit": "a1a6b1e",
   "publications": [
     {
       "id": "public-source-product-repo-baseline",
@@ -40,6 +40,19 @@
         "README.md",
         "CHANGELOG.md",
         "docs/product/public-release-candidate.md"
+      ]
+    },
+    {
+      "id": "public-source-fork-owner-codespaces-procedure-refresh",
+      "title": "Public source fork-owner Codespaces procedure refresh",
+      "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
+      "status": "published",
+      "publishedDate": "2026-04-06",
+      "repoCommit": "a1a6b1e",
+      "primaryAuthority": [
+        "README.md",
+        "docs/product/current-state.md",
+        "docs/product/public-github-wiki-publication-ledger.md"
       ]
     }
   ]

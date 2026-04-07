@@ -1,7 +1,7 @@
 {
   "schema": "vi-history-suite/public-release-candidate@v1",
   "versionLine": "1.0.0",
-  "recordedAt": "2026-04-07T04:24:04.780Z",
+  "recordedAt": "2026-04-07T04:41:58.000Z",
   "authorityRepo": {
     "role": "source-of-truth",
     "latestGreenPipelineCommit": "fd876ee",
@@ -10,12 +10,12 @@
   },
   "publishedPublicSource": {
     "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
-    "publishedCommit": "d787f2d",
+    "publishedCommit": "a1a6b1e",
     "status": "published"
   },
   "publishedPublicWiki": {
     "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite.wiki.git",
-    "publishedHeadCommit": "a7e30cd",
+    "publishedHeadCommit": "2ecb847",
     "status": "published"
   },
   "candidateReadiness": {

@@ -10,7 +10,7 @@ The machine-readable companion surface for this ledger is:
 
 - `docs/product/public-github-source-publication-ledger.json`
 
-Current published public GitHub source HEAD: `d787f2d`
+Current published public GitHub source HEAD: `a1a6b1e`
 
 ## Publications
 
@@ -19,6 +19,7 @@ Current published public GitHub source HEAD: `d787f2d`
 | Public source product repo baseline | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-06` | `bf0cb2d` | `README.md`; `docs/architecture/adr/ADR-0028-governed-authority-to-public-source-promotion-system.md`; `docs/product/public-github-source-authority-map.md` |
 | Public source hosted Linux bootstrap refresh | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-07` | `4a8b27b` | `README.md`; `docs/architecture/adr/ADR-0010-dual-host-extension-proof-and-linux-bootstrap.md`; `docs/product/public-release-candidate.md` |
 | Public source v1.0.0 release refresh | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-06` | `d787f2d` | `README.md`; `CHANGELOG.md`; `docs/product/public-release-candidate.md` |
+| Public source fork-owner Codespaces procedure refresh | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-06` | `a1a6b1e` | `README.md`; `docs/product/current-state.md`; `docs/product/public-github-wiki-publication-ledger.md` |
 
 ## Publication Rules
 

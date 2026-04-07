@@ -80,6 +80,15 @@ It clones `ni/labview-icon-editor` into `.cache/public-fixtures/labview-icon-edi
 for public devcontainer/Codespaces evaluation without making that clone a
 default startup dependency.
 
+For the step-by-step fork-owner walkthrough that ends at
+`resource/plugins/lv_icon.vi`, use the public wiki page:
+
+- `https://github.com/svelderrainruiz/vi-history-suite/wiki/Fork-Codespace-Quickstart`
+
+For the separate manual-clone walkthrough for `ni/actor-framework`, use:
+
+- `https://github.com/svelderrainruiz/vi-history-suite/wiki/Manual-Actor-Framework-Clone`
+
 The guarded package path is:
 
 ```bash

@@ -65,6 +65,15 @@ npm run public:fixture:icon-editor
 
 This clones `ni/labview-icon-editor` into `.cache/public-fixtures/labview-icon-editor`.
 
+If you want the full fork-owner walkthrough for the canonical public sample VI,
+use the public wiki page:
+
+- `https://github.com/svelderrainruiz/vi-history-suite/wiki/Fork-Codespace-Quickstart`
+
+If you want the separate manual-clone walkthrough for `ni/actor-framework`, use:
+
+- `https://github.com/svelderrainruiz/vi-history-suite/wiki/Manual-Actor-Framework-Clone`
+
 The public Linux cold-pull smoke lane is:
 
 ```bash

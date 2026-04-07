@@ -1,10 +1,10 @@
 # Public Release Candidate
 
 - Version line: `1.0.0`
-- Recorded at: `2026-04-07T04:24:04.780Z`
+- Recorded at: `2026-04-07T04:41:58.000Z`
 - Authority exact-release pipeline: commit `fd876ee`, pipeline `2433390427`
-- Published public source commit: `d787f2d`
-- Published public wiki head: `a7e30cd`
+- Published public source commit: `a1a6b1e`
+- Published public wiki head: `2ecb847`
 
 ## Readiness
 

@@ -266,10 +266,10 @@ Current active and queued post-release programs:
   - private GitLab source repo remains the authority repo and release-control surface
   - internal GitLab wiki remains the maintainer-facing derived reader surface
   - the private GitHub experiment mirror is a non-authoritative Linux benchmark lane only
-  - public GitHub facade repo is the public source product surface at `https://github.com/svelderrainruiz/vi-history-suite`, published at commit `d787f2d`
-  - public GitHub user wiki now exists at `https://github.com/svelderrainruiz/vi-history-suite.wiki.git` as a public extension-user reader surface, published at commit `a7e30cd`
+  - public GitHub facade repo is the public source product surface at `https://github.com/svelderrainruiz/vi-history-suite`, published at commit `a1a6b1e`
+  - public GitHub user wiki now exists at `https://github.com/svelderrainruiz/vi-history-suite.wiki.git` as a public extension-user reader surface, published at commit `2ecb847`
   - public GitHub source publication is tracked separately from both wiki surfaces in `docs/product/public-github-source-publication-ledger.md` and `docs/product/public-github-source-publication-ledger.json`
-  - published public GitHub wiki pages now include `Home`, `User-Workflow`, `Install-And-Release`, `Comparison-Reports-And-Dashboard-Review`, and `Current-State`
+  - published public GitHub wiki pages now include `Home`, `User-Workflow`, `Install-And-Release`, `Fork-Codespace-Quickstart`, `Manual-Actor-Framework-Clone`, `Comparison-Reports-And-Dashboard-Review`, and `Current-State`
   - the canonical Gate D blocker on `resource/plugins/lv_icon.vi` is now
     retired, and the exact `v1.0.0` public GitHub release is now published at
     `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.0.0`
