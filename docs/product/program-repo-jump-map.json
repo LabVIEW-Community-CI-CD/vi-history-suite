@@ -1,7 +1,7 @@
 {
   "programId": "comparevi",
-  "version": 1,
-  "description": "Governed local navigation map for the VI History Suite authority repo, its private GitHub experiment mirror, its derived wiki repo, and the companion repo-standards-review assurance skill repo.",
+  "version": 2,
+  "description": "Governed local navigation map for the VI History Suite authority repo, its internal and public reader surfaces, its public GitHub source facade, its private GitHub experiment mirror, and the companion repo-standards-review assurance skill repo.",
   "repos": [
     {
       "id": "vi-history-suite",
@@ -36,6 +36,23 @@
       ]
     },
     {
+      "id": "vi-history-suite.public",
+      "displayName": "VI History Suite Public GitHub Source",
+      "role": "public-source-facade",
+      "expectedRemote": "https://github.com/svelderrainruiz/vi-history-suite.git",
+      "localPath": {
+        "kind": "sibling",
+        "relativePath": "../vi-history-suite.public"
+      },
+      "primaryEntrypoints": [
+        "README.md",
+        "INSTALL.md",
+        "SUPPORT.md",
+        ".devcontainer/devcontainer.json",
+        ".github/workflows/public-facade-linux-smoke.yml"
+      ]
+    },
+    {
       "id": "vi-history-suite.wiki",
       "displayName": "VI History Suite Wiki",
       "role": "derived-reader-surface",
@@ -50,6 +67,23 @@
         "User-Workflow.md",
         "Comparison-Reports-And-Dashboard-Review.md",
         "Review-Scenarios-And-Decision-Records.md"
+      ]
+    },
+    {
+      "id": "vi-history-suite.github.wiki",
+      "displayName": "VI History Suite Public GitHub Wiki",
+      "role": "public-user-reader-surface",
+      "expectedRemote": "https://github.com/svelderrainruiz/vi-history-suite.wiki.git",
+      "localPath": {
+        "kind": "sibling",
+        "relativePath": "../vi-history-suite.github.wiki"
+      },
+      "primaryEntrypoints": [
+        "Home.md",
+        "User-Workflow.md",
+        "Install-And-Release.md",
+        "Current-State.md",
+        "_Sidebar.md"
       ]
     },
     {

@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 interface ExtensionManifest {
   activationEvents?: string[];
+  files?: string[];
   dependencies?: Record<string, string>;
   devDependencies?: Record<string, string>;
   extensionDependencies?: string[];
@@ -47,6 +48,13 @@ describe('extension manifest research alignment', () => {
     const manifest = readManifest();
 
     expect(manifest.activationEvents).toContain('onStartupFinished');
+    expect(manifest.files).toEqual([
+      'out/**',
+      'resources/**',
+      'README.md',
+      'CHANGELOG.md',
+      'LICENSE'
+    ]);
     expect(manifest.activationEvents).toContain('onCommand:labviewViHistory.open');
     expect(manifest.activationEvents).toContain('onCommand:labviewViHistory.openDocumentation');
     expect(manifest.extensionDependencies).toContain('vscode.git');
@@ -164,6 +172,12 @@ describe('extension manifest research alignment', () => {
     expect(manifest.scripts?.['public:smoke:linux']).toBe(
       'npm run compile && node scripts/runPublicFacadeLinuxSmoke.js'
     );
+    expect(manifest.scripts?.['public:source:promote']).toBe(
+      'node scripts/promotePublicGithubSource.js'
+    );
+    expect(manifest.scripts?.['public:source:check']).toBe(
+      'node scripts/promotePublicGithubSource.js --check'
+    );
     expect(manifest.scripts?.['dashboard:latest']).toBe(
       'node scripts/printLatestDashboardRun.js'
     );
@@ -234,7 +248,7 @@ describe('extension manifest research alignment', () => {
       'npm run compile && node out/cli/runVerifyDesignGateCompletion.js'
     );
     expect(manifest.scripts?.['test:design-contract']).toBe(
-      'npm exec -- vitest run tests/unit/packageManifest.test.ts tests/unit/comparisonRuntimeLocator.test.ts tests/unit/runGovernedProofCli.test.ts tests/unit/governedLegacyProofEntrypoints.test.ts tests/unit/governedProofDocs.test.ts tests/unit/githubLinuxBenchmarkWorkflow.test.ts tests/unit/githubWindowsBenchmarkWorkflow.test.ts tests/unit/designGate.test.ts tests/unit/designGateRunner.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicFacadeLinuxSmoke.test.ts'
+      'npm exec -- vitest run tests/unit/packageManifest.test.ts tests/unit/comparisonRuntimeLocator.test.ts tests/unit/runGovernedProofCli.test.ts tests/unit/governedLegacyProofEntrypoints.test.ts tests/unit/governedProofDocs.test.ts tests/unit/githubLinuxBenchmarkWorkflow.test.ts tests/unit/githubWindowsBenchmarkWorkflow.test.ts tests/unit/designGate.test.ts tests/unit/designGateRunner.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicFacadeLinuxSmoke.test.ts tests/unit/publicGithubSourcePromotion.test.ts'
     );
     expect(manifest.scripts?.['proof:run']).toBe(
       'npm run compile && node out/cli/runGovernedProof.js'

@@ -233,18 +233,20 @@ Current active and queued post-release programs:
   - private GitLab source repo remains the authority repo and release-control surface
   - internal GitLab wiki remains the maintainer-facing derived reader surface
   - the private GitHub experiment mirror is a non-authoritative Linux benchmark lane only
-  - public GitHub facade repo is the public release-kit/setup/support surface
-  - public GitHub user wiki now exists at `https://github.com/svelderrainruiz/vi-history-suite.wiki.git` as a public extension-user reader surface
+  - public GitHub facade repo is the public source product surface at `https://github.com/svelderrainruiz/vi-history-suite`, published at commit `1e24980`
+  - public GitHub user wiki now exists at `https://github.com/svelderrainruiz/vi-history-suite.wiki.git` as a public extension-user reader surface, published at commit `ea06c37`
+  - public GitHub source publication is tracked separately from both wiki surfaces in `docs/product/public-github-source-publication-ledger.md` and `docs/product/public-github-source-publication-ledger.json`
   - published public GitHub wiki pages now include `Home`, `User-Workflow`, `Install-And-Release`, and `Current-State`
   - public GitHub wiki publication is tracked separately from the internal GitLab maintainer wiki in `docs/product/public-github-wiki-publication-ledger.md` and `docs/product/public-github-wiki-publication-ledger.json`
-  - public GitHub facade repo is not the private GitHub experiment mirror
+  - public GitHub source repo is not the private GitHub experiment mirror
   - the authority VSIX install surface is compile-and-audit guarded and does not permit shipped runtime `node_modules`
-  - the public GitHub facade repo and public GitHub wiki publish release/setup/support and extension-user workflow material only; they do not publish private requirements, benchmark-control detail, or design-gate docs
-  - the GitHub workflow is the active public release-kit publication surface
+  - the public GitHub source repo and public GitHub wiki publish extension-user and public-product material only; they do not publish private requirements, benchmark-control detail, or design-gate docs
+  - public source promotion is now a governed one-way act through `npm run public:source:promote`
+  - the GitHub workflow is the active public product smoke surface, while source publication remains a separate governed promotion act
   - `docs:ci:public` and `docs:ci:internal` now split public-user and internal-authority docs surfaces without removing the retained umbrella `docs:ci` lane
   - NSIS has been removed from the active public toolchain
   - Docker is now part of the default installed extension setup path
-  - the current Windows 11 host machine has already proven the earlier public bundle and remains the deterministic acceptance surface for the next Docker-only Gate D rerun
+  - the current Windows 11 host machine has already proven the earlier public bundle, and the published public GitHub source repo plus the canonical fixture workspace are now the deterministic acceptance surface for the next Docker-only Gate D rerun
   - the public-facade Linux smoke lane now exists through `.github/workflows/public-facade-linux-smoke.yml`, supports `workflow_dispatch`, and uses `npm run public:smoke:linux` as the public Docker-product smoke surface
   - the setup adapters prepare Visual Studio Code and Git when needed, install the exact VSIX, and materialize the local `ni/labview-icon-editor` Git fixture workspace with commit history
   - Visual Studio Code CLI automates install/verify/open surfaces after setup
@@ -279,6 +281,9 @@ The active-queue source of truth is:
 - [release-procedure.md](../release-procedure.md)
 - [Documentation Package Workbench](../documentation-workbench.md)
 - [program-repo-jump.md](./program-repo-jump.md)
+- [public-github-source-authority-map.md](./public-github-source-authority-map.md)
+- [public-github-source-publication-ledger.md](./public-github-source-publication-ledger.md)
+- [public-github-source-publication-ledger.json](./public-github-source-publication-ledger.json)
 
 The current wiki stop rule is the zero-gap coverage matrix, not a soft page
 count threshold. The wiki remains finished only while every in-scope

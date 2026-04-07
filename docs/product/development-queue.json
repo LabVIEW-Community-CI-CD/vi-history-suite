@@ -82,10 +82,10 @@
   },
   {
     "id": "TRANCHE-010",
-    "title": "Public facade release kit and host-machine acceptance",
+    "title": "Public source facade and public-product acceptance",
     "status": "queued",
     "source": "author direction",
-    "summary": "Reopened for the `1.0.0` Docker-only public contract. The earlier retained canonical Windows host pass remains historical evidence for the older public bundle, but the public front face now needs a new closeout that proves the Docker-only installed extension, the GitHub user-facing release/docs surfaces, and a deterministic Linux-engine cold-pull compare on the canonical fixture workspace before Gate D can close again.",
+    "summary": "Reopened for the `1.0.0` Docker-only public contract. The earlier retained canonical Windows host pass remains historical evidence for the older public bundle, but the public front face now needs a new closeout that proves the published GitHub source repo, the public GitHub wiki and bundled docs, and a deterministic Linux-engine cold-pull compare on the canonical fixture workspace before Gate D can close again.",
     "issues": [
       "ISSUE-0407"
     ]

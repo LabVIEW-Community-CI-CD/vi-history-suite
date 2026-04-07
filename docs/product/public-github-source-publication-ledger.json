@@ -1,0 +1,19 @@
+{
+  "generatedFor": "vi-history-suite",
+  "publicationSurface": "public-github-source-repo",
+  "publications": [
+    {
+      "id": "public-source-product-repo-baseline",
+      "title": "Public source product repo baseline",
+      "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
+      "status": "published",
+      "publishedDate": "2026-04-06",
+      "repoCommit": "1e24980",
+      "primaryAuthority": [
+        "README.md",
+        "docs/architecture/adr/ADR-0028-governed-authority-to-public-source-promotion-system.md",
+        "docs/product/public-github-source-authority-map.md"
+      ]
+    }
+  ]
+}

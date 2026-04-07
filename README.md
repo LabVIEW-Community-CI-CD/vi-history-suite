@@ -82,8 +82,11 @@ If you are new to the repo, read these in order:
 22. [Extension Execution Policy](./docs/product/extension-execution-policy.md)
 23. [Documentation Package Workbench](./docs/documentation-workbench.md)
 24. [Program Repo Jump](./docs/product/program-repo-jump.md)
-25. [PROGRAM-0001: Next Product Layer](./docs/product/execution-programs/PROGRAM-0001-next-product-layer.md)
-26. [PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
+25. [Public GitHub Source Authority Map](./docs/product/public-github-source-authority-map.md)
+26. [Public GitHub Source Publication Ledger](./docs/product/public-github-source-publication-ledger.md)
+27. [Public GitHub Source Publication Ledger JSON](./docs/product/public-github-source-publication-ledger.json)
+28. [PROGRAM-0001: Next Product Layer](./docs/product/execution-programs/PROGRAM-0001-next-product-layer.md)
+29. [PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
 
 For machine-friendly repo orientation, start with:
 

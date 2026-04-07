@@ -82,6 +82,20 @@ npm run docs:ci:internal
 npm run docs:ci:internal:core
 ```
 
+Promote the curated public GitHub source facade into the sibling public source
+checkout:
+
+```bash
+npm run public:source:promote
+```
+
+Check the sibling public source checkout for drift against the governed
+promotion output:
+
+```bash
+npm run public:source:check
+```
+
 The default container command is:
 
 ```bash
@@ -101,8 +115,9 @@ this machine.
 ## Wiki Workbench
 
 The workbench now includes a governed wiki-authoring system that resolves the
-authority repo, sibling wiki repo, and publication ledger from the local
-program repo-jump map instead of from ad hoc shell assumptions.
+authority repo, sibling wiki repos, public source facade, and publication
+ledgers from the local program repo-jump map instead of from ad hoc shell
+assumptions.
 
 The wiki is only considered complete when the zero-gap completion contract in:
 

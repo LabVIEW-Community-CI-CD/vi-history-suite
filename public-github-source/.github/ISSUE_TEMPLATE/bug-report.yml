@@ -1,0 +1,56 @@
+name: Bug report
+description: Report a problem in the public VI History Suite product surface
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for public product issues only. Do not include private GitLab control-plane material.
+  - type: input
+    id: extension_version
+    attributes:
+      label: Extension version
+      description: Example `1.0.0` or preview VSIX version
+    validations:
+      required: true
+  - type: dropdown
+    id: host
+    attributes:
+      label: Host and Docker engine
+      options:
+        - Windows host + Linux engine
+        - Windows host + Windows engine
+        - Linux host
+    validations:
+      required: true
+  - type: input
+    id: docker_version
+    attributes:
+      label: Docker version
+      description: Output from `docker version`
+  - type: input
+    id: vscode_version
+    attributes:
+      label: VS Code version
+      description: Output from `code --version`
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Include whether this was a cold image pull or warm image run
+    validations:
+      required: true

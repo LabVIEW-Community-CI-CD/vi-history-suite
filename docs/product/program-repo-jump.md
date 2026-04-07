@@ -7,7 +7,9 @@ program constellation on this machine:
 
 - `vi-history-suite`
 - `vi-history-suite-source-experiments`
+- `vi-history-suite.public`
 - `vi-history-suite.wiki`
+- `vi-history-suite.github.wiki`
 - `repo-standards-review`
 
 This surface exists so future sessions can move between product truth,
@@ -23,7 +25,9 @@ paths.
 - `vi-history-suite`: product authority and ship-control repo
 - `vi-history-suite-source-experiments`: private GitHub experiment mirror for
   non-authoritative Linux benchmark iteration
-- `vi-history-suite.wiki`: derived reader surface
+- `vi-history-suite.public`: curated public GitHub source facade
+- `vi-history-suite.wiki`: internal GitLab maintainer wiki
+- `vi-history-suite.github.wiki`: public GitHub user wiki
 - `repo-standards-review`: companion assurance skill and docs-package audit
   surface
 
@@ -110,4 +114,6 @@ The governed boundary is:
 
 - GitLab `vi-history-suite`: authority
 - private GitHub `vi-history-suite-source-experiments`: experiment mirror only
-- public GitHub facade: public release/setup/support only
+- public GitHub `vi-history-suite`: curated public source product
+- GitLab `vi-history-suite.wiki`: internal maintainer reader surface
+- public GitHub `vi-history-suite.wiki`: public extension-user reader surface

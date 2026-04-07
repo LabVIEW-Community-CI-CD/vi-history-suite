@@ -112,7 +112,7 @@ describe('execution-policy control plane', () => {
     );
     expect(currentState).toContain('the installed extension now depends on Docker for compare generation');
     expect(currentState).toContain('selected provider, current Docker engine, selected image, acquisition state, and next action');
-    expect(currentState).toContain('public GitHub facade repo is the public release-kit/setup/support surface');
+    expect(currentState).toContain('public GitHub facade repo is the public source product surface');
     expect(currentState).toContain('public GitHub user wiki now exists');
     expect(queue).toContain('"id": "TRANCHE-013"');
     expect(queue).toContain('"status": "active"');

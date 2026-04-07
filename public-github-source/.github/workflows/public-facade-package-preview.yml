@@ -1,0 +1,58 @@
+name: Public Facade Package Preview
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.devcontainer/**'
+      - '.github/workflows/public-facade-package-preview.yml'
+      - '.github/workflows/public-facade-linux-smoke.yml'
+      - '.vscode/**'
+      - 'README.md'
+      - 'INSTALL.md'
+      - 'SUPPORT.md'
+      - 'CONTRIBUTING.md'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.json'
+      - 'tsconfig.integration.json'
+      - 'vitest.config.ts'
+      - 'resources/**'
+      - 'scripts/**'
+      - 'src/**'
+      - 'tests/**'
+
+permissions:
+  contents: read
+
+jobs:
+  package-preview:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Compile
+        run: npm run compile
+
+      - name: Run public design-contract tests
+        run: npm run test:design-contract
+
+      - name: Package preview VSIX
+        run: npm run package -- --out artifacts/vi-history-suite-public-preview.vsix
+
+      - name: Upload preview artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vi-history-suite-public-preview
+          path: artifacts/vi-history-suite-public-preview.vsix
+          if-no-files-found: error

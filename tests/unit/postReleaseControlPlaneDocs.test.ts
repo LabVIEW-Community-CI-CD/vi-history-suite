@@ -62,7 +62,7 @@ describe('post-release control-plane coherence', () => {
     expect(currentState).toContain('`TRANCHE-010`');
     expect(currentState).toContain('`TRANCHE-012`');
     expect(currentState).toContain('`TRANCHE-013`');
-    expect(currentState).toContain('public GitHub facade repo is the public release-kit/setup/support surface');
+    expect(currentState).toContain('public GitHub facade repo is the public source product surface');
     expect(currentState).toContain('public GitHub user wiki now exists at');
     expect(currentState).toContain('deterministic acceptance surface for the next Docker-only Gate D rerun');
 

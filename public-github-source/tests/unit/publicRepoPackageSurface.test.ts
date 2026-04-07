@@ -1,0 +1,65 @@
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+
+import { describe, expect, it } from 'vitest';
+
+const repoRoot = path.resolve(__dirname, '..', '..');
+
+function readText(relativePath: string): string {
+  return fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
+}
+
+function readJson<T>(relativePath: string): T {
+  return JSON.parse(readText(relativePath)) as T;
+}
+
+describe('public repo package surface', () => {
+  it('keeps the public repo on the Docker-only public product contract', () => {
+    const manifest = readJson<{
+      scripts?: Record<string, string>;
+      version?: string;
+      files?: string[];
+    }>('package.json');
+    const readme = readText('README.md');
+    const install = readText('INSTALL.md');
+    const support = readText('SUPPORT.md');
+    const contributing = readText('CONTRIBUTING.md');
+    const previewWorkflow = readText('.github/workflows/public-facade-package-preview.yml');
+
+    expect(manifest.version).toBe('1.0.0');
+    expect(manifest.files).toEqual([
+      'out/**',
+      'resources/**',
+      'README.md',
+      'CHANGELOG.md',
+      'LICENSE'
+    ]);
+    expect(manifest.scripts?.['public:smoke:linux']).toBe(
+      'npm run compile && node scripts/runPublicFacadeLinuxSmoke.js'
+    );
+    expect(manifest.scripts?.['test:design-contract']).toBe(
+      'npm exec -- vitest run tests/unit/publicRepoPackageSurface.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicFacadeLinuxSmoke.test.ts tests/unit/linuxContainerRuntimeExecutionSurface.test.ts'
+    );
+    expect(manifest.scripts?.['package']).toBe(
+      'npm run compile && npm run package:audit && node scripts/runPinnedVsce.js package'
+    );
+    expect(manifest.scripts).not.toHaveProperty('docs:ci');
+    expect(manifest.scripts).not.toHaveProperty('docs:workbench:gate');
+    expect(manifest.scripts).not.toHaveProperty('wiki:workbench');
+    expect(manifest.scripts).not.toHaveProperty('program:repos');
+    expect(manifest.scripts).not.toHaveProperty('proof:run');
+    expect(manifest.scripts).not.toHaveProperty('benchmark:github:latest');
+
+    expect(readme).toContain('Docker-only compare execution');
+    expect(readme).toContain('devcontainer or Codespace');
+    expect(readme).toContain('public GitHub repo is the source-facing product surface');
+    expect(install).toContain('Windows host + Linux engine');
+    expect(install).toContain('host LabVIEW');
+    expect(support).toContain('docker info --format');
+    expect(support).toContain('does not use host LabVIEW as an installed-user fallback path');
+    expect(contributing).toContain('source-available and intentionally restrictive');
+    expect(previewWorkflow).toContain('name: Public Facade Package Preview');
+    expect(previewWorkflow).toContain('npm run test:design-contract');
+    expect(previewWorkflow).toContain('npm run package -- --out artifacts/vi-history-suite-public-preview.vsix');
+  });
+});

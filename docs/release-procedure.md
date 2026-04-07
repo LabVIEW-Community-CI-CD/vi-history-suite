@@ -23,6 +23,10 @@
   - `docs/product/wiki-seed-plan.md`
   - `docs/product/wiki-publication-ledger.md`
   - `docs/product/wiki-publication-ledger.json`
+- Public-source publication is tracked separately in:
+  - `docs/product/public-github-source-authority-map.md`
+  - `docs/product/public-github-source-publication-ledger.md`
+  - `docs/product/public-github-source-publication-ledger.json`
 
 ## Steps
 
@@ -69,6 +73,12 @@
     public-facade Linux smoke lane through:
     - local `npm run public:smoke:linux`
     - GitHub `workflow_dispatch` on `.github/workflows/public-facade-linux-smoke.yml`
+12. When the public source facade changes materially, promote the curated
+    public GitHub source repo from authority and record the published commit:
+    - `npm run public:source:promote`
+    - update `docs/product/public-github-source-publication-ledger.{md,json}`
+13. Keep public source publication separate from public GitHub wiki
+    publication; one publication act does not imply the other.
 
 ## Retained Evidence
 

@@ -187,6 +187,9 @@ describe('ship-control direction system', () => {
     expect(readme).toContain('[Wiki Publication Ledger JSON](./docs/product/wiki-publication-ledger.json)');
     expect(readme).toContain('[Documentation Package Workbench](./docs/documentation-workbench.md)');
     expect(readme).toContain('[Program Repo Jump](./docs/product/program-repo-jump.md)');
+    expect(readme).toContain('[Public GitHub Source Authority Map](./docs/product/public-github-source-authority-map.md)');
+    expect(readme).toContain('[Public GitHub Source Publication Ledger](./docs/product/public-github-source-publication-ledger.md)');
+    expect(readme).toContain('[Public GitHub Source Publication Ledger JSON](./docs/product/public-github-source-publication-ledger.json)');
     expect(readme).toContain('[PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)');
     expect(readme).toContain('[Release Procedure](./docs/release-procedure.md)');
     expect(readme).toContain('npm run design:gate:assert-complete');
@@ -232,7 +235,12 @@ describe('ship-control direction system', () => {
     expect(informationItemMap).toContain('| Bundled user documentation pack | `resources/bundled-docs/manifest.json` |');
     expect(informationItemMap).toContain('| Documentation package workbench | `docs/documentation-workbench.md` |');
     expect(informationItemMap).toContain('| Program repo jump surface | `docs/product/program-repo-jump.md` |');
+    expect(informationItemMap).toContain('| Public GitHub source authority map | `docs/product/public-github-source-authority-map.md` |');
+    expect(informationItemMap).toContain('| Public GitHub source publication ledger | `docs/product/public-github-source-publication-ledger.md` |');
+    expect(informationItemMap).toContain('| Machine-readable public GitHub source publication ledger | `docs/product/public-github-source-publication-ledger.json` |');
     expect(informationItemMap).toContain('`vi-history-suite-source-experiments`');
+    expect(informationItemMap).toContain('`vi-history-suite.public`');
+    expect(informationItemMap).toContain('`vi-history-suite.github.wiki`');
     expect(informationItemMap).toContain('| Release procedure | `docs/release-procedure.md` |');
     expect(informationItemMap).toContain('| Changelog | `CHANGELOG.md` |');
     expect(informationItemMap).toContain('| CM plan | `docs/cm/cm-plan.md` |');
@@ -253,6 +261,10 @@ describe('ship-control direction system', () => {
     expect(releaseProcedure).toContain('docs/product/wiki-seed-plan.md');
     expect(releaseProcedure).toContain('docs/product/wiki-publication-ledger.md');
     expect(releaseProcedure).toContain('docs/product/wiki-publication-ledger.json');
+    expect(releaseProcedure).toContain('docs/product/public-github-source-authority-map.md');
+    expect(releaseProcedure).toContain('docs/product/public-github-source-publication-ledger.md');
+    expect(releaseProcedure).toContain('docs/product/public-github-source-publication-ledger.json');
+    expect(releaseProcedure).toContain('npm run public:source:promote');
     expect(releaseProcedure).toContain('resources/bundled-docs/manifest.json');
     expect(releaseProcedure).toContain('npm run design:gate:assert-complete');
     expect(releaseProcedure).toContain('npm run docs:bundle');
@@ -340,6 +352,8 @@ describe('ship-control direction system', () => {
     expect(architectureOverview).toContain('[ADR-0019](./adr/ADR-0019-governed-wiki-workbench-system.md)');
     expect(programRepoJump).toContain('# Program Repo Jump');
     expect(programRepoJump).toContain('private GitHub experiment mirror');
+    expect(programRepoJump).toContain('vi-history-suite.public');
+    expect(programRepoJump).toContain('vi-history-suite.github.wiki');
     expect(programRepoJump).toContain('npm run wiki:workbench:doctor');
     expect(adr0012).toContain('# ADR-0012: Documentation-Package Workbench Image');
     expect(adr0013).toContain('# ADR-0013: Authority-First Wiki Seeding');

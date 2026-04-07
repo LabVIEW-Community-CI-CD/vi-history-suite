@@ -189,6 +189,12 @@ describe('documentation-package workbench', () => {
     expect(manifest.scripts?.['public:smoke:linux']).toBe(
       'npm run compile && node scripts/runPublicFacadeLinuxSmoke.js'
     );
+    expect(manifest.scripts?.['public:source:promote']).toBe(
+      'node scripts/promotePublicGithubSource.js'
+    );
+    expect(manifest.scripts?.['public:source:check']).toBe(
+      'node scripts/promotePublicGithubSource.js --check'
+    );
     expect(manifest.scripts?.['package']).toBe(
       'npm run compile && npm run docs:bundle && npm run package:audit && node scripts/runPinnedVsce.js package'
     );
@@ -261,6 +267,8 @@ describe('documentation-package workbench', () => {
     expect(workbenchDoc).toContain('npm run docs:ci:public:core');
     expect(workbenchDoc).toContain('npm run docs:ci:internal');
     expect(workbenchDoc).toContain('npm run docs:ci:internal:core');
+    expect(workbenchDoc).toContain('npm run public:source:promote');
+    expect(workbenchDoc).toContain('npm run public:source:check');
     expect(workbenchDoc).toContain('npm run wiki:workbench:doctor');
     expect(workbenchDoc).toContain('npm run wiki:workbench:plan');
     expect(workbenchDoc).toContain('npm run wiki:workbench:prepare');
@@ -311,7 +319,9 @@ describe('documentation-package workbench', () => {
     );
     expect(programRepoJumpMap).toContain('"id": "vi-history-suite"');
     expect(programRepoJumpMap).toContain('"id": "vi-history-suite-source-experiments"');
+    expect(programRepoJumpMap).toContain('"id": "vi-history-suite.public"');
     expect(programRepoJumpMap).toContain('"id": "vi-history-suite.wiki"');
+    expect(programRepoJumpMap).toContain('"id": "vi-history-suite.github.wiki"');
     expect(programRepoJumpMap).toContain('"id": "repo-standards-review"');
     expect(programRepoJumpMap).toContain('"kind": "codex-skill"');
 
