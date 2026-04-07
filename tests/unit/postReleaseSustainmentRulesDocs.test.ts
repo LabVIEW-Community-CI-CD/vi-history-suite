@@ -76,7 +76,7 @@ describe('post-release sustainment rules package', () => {
       trancheId: 'TRANCHE-010',
       issueId: 'ISSUE-0407',
       programId: 'PROGRAM-0002',
-      state: 'open-on-human-gate'
+      state: 'reopened-on-docker-only-public-contract'
     });
 
     expect(rules.releaseCadence.model).toBe('event-driven');
@@ -146,7 +146,7 @@ describe('post-release sustainment rules package', () => {
     expect(ship).toContain('[post-release-sustainment-rules.md](./post-release-sustainment-rules.md)');
     expect(program).toContain('[post-release-sustainment-rules.md](../post-release-sustainment-rules.md)');
     expect(issue).toContain('docs/product/post-release-sustainment-rules.md');
-    expect(issue).toContain('PROGRAM-0002` remains open only on Sergio Velderrain');
+    expect(issue).toContain('reopened `PROGRAM-0002`');
 
     expect(informationItemMap).toContain(
       '| Post-release sustainment rules | `docs/product/post-release-sustainment-rules.md` |'

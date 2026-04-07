@@ -1437,7 +1437,7 @@ describe('comparisonReportRuntimeExecution', () => {
     );
 
     expect(result.record.runtimeExecutionState).toBe('failed');
-    expect(result.record.runtimeExecution.failureReason).toBe('windows-container-image-unavailable');
+    expect(result.record.runtimeExecution.failureReason).toBe('container-image-unavailable');
     expect(result.record.runtimeExecution.attempted).toBe(false);
     expect(runCommand).not.toHaveBeenCalled();
   });
@@ -3925,7 +3925,7 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(result.record.runtimeExecutionState).toBe('failed');
     expect(result.record.runtimeExecution.attempted).toBe(false);
     expect(result.record.runtimeExecution.failureReason).toBe(
-      'windows-container-command-build-failed'
+      'container-command-build-failed'
     );
     expect(result.record.runtimeExecution.doctorSummaryLines).toContain(
       'Selected provider=windows-container; engine=labview-cli; platform=win32; bitness=x86.'

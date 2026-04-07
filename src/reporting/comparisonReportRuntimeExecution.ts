@@ -1711,7 +1711,9 @@ export async function prepareWindowsContainerExecutionContext(
     rightBlob: Buffer;
   }
 ): Promise<PreparedExecutionContext> {
-  const containerImage = record.runtimeSelection.containerImage?.trim();
+  const containerImage =
+    record.runtimeSelection.containerImage?.trim() ||
+    record.runtimeSelection.windowsContainerImage?.trim();
   if (!containerImage) {
     return {
       outcome: 'blocked',
@@ -1747,12 +1749,7 @@ export async function prepareWindowsContainerExecutionContext(
     };
   }
 
-  const hostReportDirectory = requiresWindowsInterop(
-    resolveEffectiveRuntimePlatform(record.runtimeSelection),
-    deps.processPlatform
-  )
-    ? normalizeWindowsInteropPath(hostLayout.reportDirectory)
-    : hostLayout.reportDirectory;
+  const hostReportDirectory = normalizeWindowsInteropPath(hostLayout.reportDirectory);
   if (!hostReportDirectory) {
     return {
       outcome: 'blocked',
