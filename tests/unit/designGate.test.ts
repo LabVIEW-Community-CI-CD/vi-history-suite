@@ -23,6 +23,12 @@ describe('designGate tooling', () => {
 
     expect(plan).toEqual([
       {
+        id: 'branch-governance-baseline',
+        title: 'Branch governance baseline',
+        command: 'npm',
+        args: ['run', 'branch:governance:assert']
+      },
+      {
         id: 'design-contract',
         title: 'Design contract',
         command: 'npm',

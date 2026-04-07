@@ -119,5 +119,15 @@
     "issues": [
       "ISSUE-0410"
     ]
+  },
+  {
+    "id": "TRANCHE-014",
+    "title": "Public Codespaces public-repo bootstrap",
+    "status": "active",
+    "source": "author direction",
+    "summary": "Open `1.2.0` as the next minor line by repairing branch-governance admission first, then add one generic Codespaces/bootstrap command for public GitHub and GitLab HTTPS repos while keeping the canonical `ni/labview-icon-editor` helper-backed path separate and holding the exact tag behind human wiki-procedure review.",
+    "issues": [
+      "ISSUE-0411"
+    ]
   }
 ]

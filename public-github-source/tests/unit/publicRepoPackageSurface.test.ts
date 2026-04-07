@@ -26,7 +26,7 @@ describe('public repo package surface', () => {
     const contributing = readText('CONTRIBUTING.md');
     const previewWorkflow = readText('.github/workflows/public-facade-package-preview.yml');
 
-    expect(manifest.version).toBe('1.1.0');
+    expect(manifest.version).toBe('1.2.0');
     expect(manifest.files).toEqual([
       'out/**',
       'resources/**',
@@ -40,11 +40,14 @@ describe('public repo package surface', () => {
     expect(manifest.scripts?.['public:host:bootstrap-linux']).toBe(
       'node scripts/bootstrapLinuxVsCodeHost.js install'
     );
+    expect(manifest.scripts?.['public:repo:clone']).toBe(
+      'node scripts/preparePublicRepoClone.js'
+    );
     expect(manifest.scripts?.['public:fixture:icon-editor']).toBe(
       'node scripts/preparePublicTestFixture.js'
     );
     expect(manifest.scripts?.['test:design-contract']).toBe(
-      'npm exec -- vitest run tests/unit/bootstrapLinuxVsCodeHost.test.ts tests/unit/preparePublicTestFixtureScript.test.ts tests/unit/publicRepoPackageSurface.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicFacadeLinuxSmoke.test.ts tests/unit/runLinuxIntegrationHost.test.ts tests/unit/linuxContainerRuntimeExecutionSurface.test.ts'
+      'npm exec -- vitest run tests/unit/bootstrapLinuxVsCodeHost.test.ts tests/unit/preparePublicRepoCloneScript.test.ts tests/unit/preparePublicTestFixtureScript.test.ts tests/unit/publicRepoPackageSurface.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicFacadeLinuxSmoke.test.ts tests/unit/runLinuxIntegrationHost.test.ts tests/unit/linuxContainerRuntimeExecutionSurface.test.ts'
     );
     expect(manifest.scripts?.['package']).toBe(
       'npm run compile && npm run package:audit && node scripts/runPinnedVsce.js package'
@@ -65,26 +68,33 @@ describe('public repo package surface', () => {
     expect(readme).toContain('16-core');
     expect(readme).toContain('npm run public:host:bootstrap-linux');
     expect(readme).toContain('npm run public:fixture:icon-editor');
+    expect(readme).toContain('npm run public:repo:clone');
     expect(readme).toContain('repo-sibling `labview-icon-editor`');
     expect(readme).toContain('/workspaces/labview-icon-editor');
+    expect(readme).toContain('/workspaces/hse-logger');
+    expect(readme).toContain('/workspaces/SerialPortNuggets');
+    expect(readme).toContain('Clone-Public-Repo-In-Codespace');
+    expect(readme).toContain('remote default branch');
     expect(readme).toContain('public default branch and tracks the latest exact released');
     expect(readme).toContain('GitHub opens this public repo on `main` by default');
     expect(readme).toContain('retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`');
     expect(readme).toContain('burned exact release line: `v1.0.2`');
     expect(readme).toContain('current exact released line: `v1.1.0`');
     expect(readme).toContain('current published package line on `main`: `1.1.0`');
-    expect(readme).toContain('current develop package line on `develop`: `1.1.0`');
-    expect(readme).toContain('no newer exact release candidate line is active on `develop` yet');
-    expect(readme).not.toContain('active exact release candidate line: `v1.1.0`');
-    expect(readme).not.toContain('active release-candidate branch: `release/1.1.0`');
-    expect(readme).not.toContain('active SemVer opening decision: `minor`');
+    expect(readme).toContain('current develop package line on `develop`: `1.2.0`');
+    expect(readme).toContain('active exact release candidate line on `develop`: `v1.2.0`');
+    expect(readme).toContain('no `release/1.2.0` branch is active yet');
     expect(readme).toContain('public GitHub default branch: `main`');
     expect(readme).toContain('public Codespaces evaluation branch: `develop`');
+    expect(readme).toContain('Clone-Public-Repo-In-Codespace');
     expect(readme).toContain('Refresh-Codespace-Repositories');
     expect(install).toContain('Windows host + Linux engine');
     expect(install).toContain('host LabVIEW');
     expect(install).toContain('npm run public:host:bootstrap-linux');
     expect(install).toContain('npm run public:fixture:icon-editor');
+    expect(install).toContain('npm run public:repo:clone');
+    expect(install).toContain('Clone-Public-Repo-In-Codespace');
+    expect(install).toContain('remote default branch automatically');
     expect(install).toContain('Refresh-Codespace-Repositories');
     expect(install).not.toContain('Vitest not found');
     expect(support).toContain('docker info --format');
@@ -92,6 +102,7 @@ describe('public repo package surface', () => {
     expect(contributing).toContain('source-available and intentionally restrictive');
     expect(contributing).toContain('npm run public:host:bootstrap-linux');
     expect(contributing).toContain('npm run public:fixture:icon-editor');
+    expect(contributing).toContain('npm run public:repo:clone');
     expect(previewWorkflow).toContain('name: Public Facade Package Preview');
     expect(previewWorkflow).toContain('  push:');
     expect(previewWorkflow).toContain("      - 'release/**'");
@@ -107,7 +118,7 @@ describe('public repo package surface', () => {
     expect(previewWorkflow).toContain('npm run package -- --out artifacts/vi-history-suite-public-preview.vsix');
     expect(readText('CHANGELOG.md')).toContain('Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,');
     expect(readText('CHANGELOG.md')).toContain('`v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, and `v1.1.0`.');
-    expect(readText('CHANGELOG.md')).toContain('## [1.1.0] - 2026-04-07');
-    expect(readText('CHANGELOG.md')).toContain('`v1.0.6` is now the exact public release line on `main`');
+    expect(readText('CHANGELOG.md')).toContain('## [1.2.0] - 2026-04-07');
+    expect(readText('CHANGELOG.md')).toContain('`v1.1.0` remains the exact public release line on `main`');
   });
 });

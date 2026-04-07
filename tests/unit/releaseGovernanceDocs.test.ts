@@ -31,6 +31,9 @@ describe('release governance package', () => {
     const adr4 = readText(
       'docs/architecture/adr/ADR-0033-hosted-automation-governance-matrix-and-protection-semantics.md'
     );
+    const adr5 = readText(
+      'docs/architecture/adr/ADR-0034-public-codespaces-public-repo-bootstrap-and-default-branch-resolution.md'
+    );
     const hostedGovernance = readText('docs/product/hosted-ci-governance.md');
     const hostedGovernanceJson = readJson<any>('docs/product/hosted-ci-governance.json');
     const srs = readText('docs/requirements/srs.md');
@@ -55,7 +58,7 @@ describe('release governance package', () => {
     );
     expect(rules.releaseCadence.activeOpeningDecision.chosenBump).toBe('minor');
     expect(rules.releaseCadence.activeOpeningDecision.targetDevelopCandidateReleaseLine).toBe(
-      'v1.1.0'
+      'v1.2.0'
     );
     expect(rules.releaseCadence.versionLineContract.publicDefaultBranch).toBe('main');
     expect(rules.operatorSurfaceSustainment.branchModel.model).toBe('gitflow-lite');
@@ -83,6 +86,7 @@ describe('release governance package', () => {
     expect(adr).toContain('`release/*`');
     expect(adr).toContain('`hotfix/*`');
     expect(adr).toContain('`npm run design:gate`');
+    expect(adr).toContain('`npm run branch:governance:assert`');
     expect(adr0).toContain('VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT');
     expect(adr0).toContain('rejecting a dirty target repo');
     expect(adr2).toContain('# ADR-0031: Finding-Driven ADR And Requirement Evolution');
@@ -96,9 +100,15 @@ describe('release governance package', () => {
     expect(adr4).toContain('# ADR-0033: Hosted Automation Governance Matrix And Protection Semantics');
     expect(adr4).toContain('GitLab authority uses protected branches plus');
     expect(adr4).toContain('GitHub benchmark workflows remain governed characterization lanes');
+    expect(adr5).toContain('# ADR-0034: Public Codespaces Public-Repo Bootstrap And Default-Branch Resolution');
+    expect(adr5).toContain('public GitHub or public GitLab repo');
+    expect(adr5).toContain('resolve the remote default branch from remote HEAD');
+    expect(adr5).toContain('block the exact `v1.2.0` tag until the maintained public wiki procedures are');
     expect(hostedGovernance).toContain('# Hosted CI Governance');
-    expect(hostedGovernance).toContain('current `develop` package line: `1.1.0`');
+    expect(hostedGovernance).toContain('current `develop` package line: `1.2.0`');
+    expect(hostedGovernance).toContain('active exact release candidate line on `develop`: `v1.2.0`');
     expect(hostedGovernance).toContain('chosen bump: `minor`');
+    expect(hostedGovernance).toContain('npm run branch:governance:assert');
     expect(hostedGovernanceJson.openingDecision.chosenBump).toBe('minor');
     expect(hostedGovernanceJson.authorityGitLab.mergeGate).toBe(
       'only_allow_merge_if_pipeline_succeeds'
@@ -115,6 +125,11 @@ describe('release governance package', () => {
     expect(srs).toContain('fail closed on branch-model contradictions');
     expect(srs).toContain('VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT');
     expect(srs).toContain('fail closed when the bound target repo is dirty');
+    expect(srs).toContain('VHS-REQ-515');
+    expect(srs).toContain('npm run branch:governance:assert');
+    expect(srs).toContain('generic `npm run public:repo:clone` command');
+    expect(srs).toContain('public `github.com` or `gitlab.com` HTTPS repo URL');
+    expect(srs).toContain('resolve the remote default branch from remote HEAD');
     expect(rtm).toContain('public GitHub `main` remains the default branch and exact release branch');
     expect(rtm).toContain('PR-driven focused admission on `feature/*`');
     expect(rtm).toContain('push plus PR validation for `release/*` and `hotfix/*`');
@@ -124,6 +139,10 @@ describe('release governance package', () => {
     expect(rtm).toContain('Admit authority GitLab preview-package validation');
     expect(rtm).toContain('Fail closed on branch-model contradictions');
     expect(rtm).toContain('Bind the governed public-source promotion/check surface');
+    expect(rtm).toContain('VHS-REQ-515');
+    expect(rtm).toContain('VHS-REQ-516');
+    expect(rtm).toContain('VHS-REQ-517');
+    expect(rtm).toContain('VHS-REQ-518');
     expect(testPlan).toContain('public-default-branch');
     expect(testPlan).toContain('keeps GitHub `main` stable');
     expect(testPlan).toContain('PR-driven feature admission and push validation on `release/*` and');
@@ -136,6 +155,13 @@ describe('release governance package', () => {
     expect(testPlan).toContain('TEST-DOC-090');
     expect(testPlan).toContain('TEST-UNIT-328');
     expect(testPlan).toContain('TEST-DOC-093');
+    expect(testPlan).toContain('TEST-UNIT-329');
+    expect(testPlan).toContain('TEST-UNIT-330');
+    expect(testPlan).toContain('TEST-UNIT-331');
+    expect(testPlan).toContain('TEST-UNIT-332');
+    expect(testPlan).toContain('TEST-DOC-094');
+    expect(testPlan).toContain('TEST-DOC-095');
+    expect(testPlan).toContain('TEST-DOC-096');
     expect(rules.operatorSurfaceSustainment.branchModel.findingAdrDiscipline).toEqual(
       expect.arrayContaining([
         'every governed finding is classified before slice closeout as adr-update-required or no-adr-impact'

@@ -72,6 +72,23 @@ This clones `ni/labview-icon-editor` into a visible sibling folder named
 `labview-icon-editor`. In a GitHub Codespace created from this repo, the exact
 folder path is `/workspaces/labview-icon-editor`.
 
+If you want a generic public GitHub or GitLab repo instead, run:
+
+```bash
+npm run public:repo:clone -- --repo-url https://gitlab.com/hampel-soft/open-source/hse-logger.git
+```
+
+or:
+
+```bash
+npm run public:repo:clone -- --repo-url https://github.com/crossrulz/SerialPortNuggets.git
+```
+
+If you need a specific branch, add `--branch <branch-name>`. If you omit
+`--branch`, the command resolves the remote default branch automatically, so
+the same command works for public repos that use `main`, `master`, or another
+default branch.
+
 If you want the full fork-owner walkthrough for the canonical public sample VI,
 use the public wiki page:
 
@@ -89,10 +106,19 @@ out:
 - the exact `Open Folder...` path for `lv_icon.vi`
 - the exact helper command to clone `ni/labview-icon-editor`
 - that the page is first-time-only, with refresh steps kept separate
+- that the intended dry-run review starts from a brand new fork and a brand
+  new Codespace
 
 For refresh-only steps after the first successful Codespace setup, use:
 
 - `https://github.com/svelderrainruiz/vi-history-suite/wiki/Refresh-Codespace-Repositories`
+
+If you want the separate first-time generic public-repo walkthrough, use:
+
+- `https://github.com/svelderrainruiz/vi-history-suite/wiki/Clone-Public-Repo-In-Codespace`
+
+That page is also first-time-only and assumes a brand new fork plus a brand
+new Codespace.
 
 If you want the separate manual-clone walkthrough for `ni/actor-framework`, use:
 

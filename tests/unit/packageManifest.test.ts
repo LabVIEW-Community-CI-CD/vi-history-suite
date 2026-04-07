@@ -170,8 +170,14 @@ describe('extension manifest research alignment', () => {
     expect(manifest.scripts?.['docs:ci:internal:core']).toBe(
       'node scripts/run-docs-continuous-integration.js --surface internal --skip-links'
     );
+    expect(manifest.scripts?.['branch:governance:assert']).toBe(
+      'node scripts/assertGovernedBranchBaseline.js'
+    );
     expect(manifest.scripts?.['public:smoke:linux']).toBe(
       'npm run compile && node scripts/runPublicFacadeLinuxSmoke.js'
+    );
+    expect(manifest.scripts?.['public:repo:clone']).toBe(
+      'node scripts/preparePublicRepoClone.js'
     );
     expect(manifest.scripts?.['public:gate-d:preflight']).toBe(
       'node scripts/runPublicProductGateDPreflight.js'
@@ -255,7 +261,7 @@ describe('extension manifest research alignment', () => {
       'npm run compile && node out/cli/runVerifyDesignGateCompletion.js'
     );
     expect(manifest.scripts?.['test:design-contract']).toBe(
-      'npm exec -- vitest run tests/unit/packageManifest.test.ts tests/unit/comparisonRuntimeLocator.test.ts tests/unit/runGovernedProofCli.test.ts tests/unit/governedLegacyProofEntrypoints.test.ts tests/unit/governedProofDocs.test.ts tests/unit/githubLinuxBenchmarkWorkflow.test.ts tests/unit/githubWindowsBenchmarkWorkflow.test.ts tests/unit/designGate.test.ts tests/unit/designGateRunner.test.ts tests/unit/preparePublicTestFixtureScript.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicFacadeLinuxSmoke.test.ts tests/unit/publicGithubSourcePromotion.test.ts tests/unit/publicProductGateDPreflight.test.ts'
+      'npm exec -- vitest run tests/unit/packageManifest.test.ts tests/unit/comparisonRuntimeLocator.test.ts tests/unit/runGovernedProofCli.test.ts tests/unit/governedLegacyProofEntrypoints.test.ts tests/unit/governedProofDocs.test.ts tests/unit/githubLinuxBenchmarkWorkflow.test.ts tests/unit/githubWindowsBenchmarkWorkflow.test.ts tests/unit/designGate.test.ts tests/unit/designGateRunner.test.ts tests/unit/preparePublicRepoCloneScript.test.ts tests/unit/preparePublicTestFixtureScript.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicFacadeLinuxSmoke.test.ts tests/unit/publicGithubSourcePromotion.test.ts tests/unit/publicProductGateDPreflight.test.ts'
     );
     expect(manifest.scripts?.['proof:run']).toBe(
       'npm run compile && node out/cli/runGovernedProof.js'

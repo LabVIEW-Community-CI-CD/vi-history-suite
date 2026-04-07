@@ -23,6 +23,16 @@ If you want a governed public sample repository to test against, run:
 npm run public:fixture:icon-editor
 ```
 
+If you want to test against another public GitHub or GitLab repo from the same
+Codespaces/devcontainer session, use:
+
+```bash
+npm run public:repo:clone -- --repo-url https://github.com/crossrulz/SerialPortNuggets.git
+```
+
+Add `--branch <branch-name>` when you want a specific branch. If you omit it,
+the command resolves the repo's remote default branch automatically.
+
 ## Before You Contribute
 
 Do not open pull requests containing code, documentation, or other copyrighted

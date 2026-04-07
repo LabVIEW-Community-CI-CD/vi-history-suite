@@ -59,8 +59,9 @@ Current version-line contract:
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.1.0`
 - current published package line on `main`: `1.1.0`
-- current develop package line on `develop`: `1.1.0`
-- no newer exact release candidate line is active on `develop` yet
+- current develop package line on `develop`: `1.2.0`
+- active exact release candidate line on `develop`: `v1.2.0`
+- no `release/1.2.0` branch is active yet
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
@@ -70,14 +71,15 @@ Current version-line contract:
 Active opening decision for the next line:
 
 - chosen bump: `minor`
-- target exact candidate line: `v1.1.0`
-- rationale: the next line adds one governed hosted branch-protection and CI
-  responsibility capability across authority GitLab, the public GitHub facade,
-  and GitHub experiment lanes without breaking the exact `v1.0.6` public
-  contract
-- rejected `patch`: too small because the slice expands the maintained release
-  operating model, not just a local correction
-- rejected `major`: no exact `v1.0.6` public contract is being broken or
+- target exact candidate line: `v1.2.0`
+- rationale: the next line adds one governed public Codespaces/bootstrap
+  capability for public GitHub and GitLab repos without breaking the exact
+  `v1.1.0` public contract
+- rationale: the same line also hardens branch-governance admission so future
+  feature work cannot reopen candidate work from a stale `develop` baseline
+- rejected `patch`: too small because the slice adds a new governed public
+  workflow instead of only correcting an existing released one
+- rejected `major`: no exact `v1.1.0` public contract is being broken or
   removed
 
 Strict SemVer rule after an exact release:
@@ -182,6 +184,10 @@ Required branch-model and CI posture:
 - protected-branch promotion uses required checks instead of direct operator
   trust
 - `feature/*` lanes target `develop`
+- `npm run branch:governance:assert` shall fail closed before a new candidate
+  line opens when `develop` does not yet contain the exact released `main`
+  baseline, and `npm run design:gate` shall keep that assertion first in the
+  governed gate order
 - `release/*` lanes are cut from `develop`, validate the release candidate, and
   merge to `main` plus back into `develop`
 - `hotfix/*` lanes are cut from `main`, fix one exact release line, and merge

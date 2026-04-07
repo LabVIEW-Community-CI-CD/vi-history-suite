@@ -50,6 +50,16 @@ It clones `ni/labview-icon-editor` into a repo-sibling `labview-icon-editor`
 folder for public devcontainer/Codespaces evaluation without turning that
 clone into a mandatory startup side effect.
 
+The generic public-repo bootstrap surface is:
+
+```bash
+npm run public:repo:clone -- --repo-url https://github.com/crossrulz/SerialPortNuggets.git
+```
+
+It accepts public `github.com` and `gitlab.com` HTTPS repo URLs, honors an
+explicit `--branch` exactly, and otherwise resolves the remote default branch
+before cloning into a visible repo-sibling folder.
+
 The maintained Gate D operator preflight surfaces are:
 
 ```bash
@@ -404,8 +414,9 @@ Latest landed ship target:
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.1.0`
 - current published package line on `main`: `1.1.0`
-- current develop package line on `develop`: `1.1.0`
-- no newer exact release candidate line is active on `develop` yet
+- current develop package line on `develop`: `1.2.0`
+- active exact release candidate line on `develop`: `v1.2.0`
+- no `release/1.2.0` branch is active yet
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
@@ -423,7 +434,7 @@ Latest landed ship target:
   release job `13779604462`
 - remaining release blockers: none on the exact public `v1.1.0` line; public
   `main` now publishes `daef8bd`, the public GitHub release `v1.1.0` is live,
-  and no newer exact release candidate is open yet
+  and `develop` now carries the active `v1.2.0` candidate line
 
 ## Install Surface
 
@@ -443,6 +454,7 @@ Current install paths are:
 
 The current active tranches are:
 
+- `TRANCHE-014`: public Codespaces public-repo bootstrap
 - `TRANCHE-013`: extension execution contract simplification and Docker-only
   runtime UX
 - `TRANCHE-012`: post-release sustainment and release cadence
@@ -475,6 +487,7 @@ Issue-ready execution programs:
 - [PROGRAM-0003: Repeatable Benchmark Proof](./docs/product/execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md)
 - [PROGRAM-0004: Post-Release Sustainment And Release Cadence](./docs/product/execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)
 - [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./docs/product/execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
+- [PROGRAM-0006: Public Codespaces Public-Repo Bootstrap](./docs/product/execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md)
 
 See:
 
@@ -484,6 +497,7 @@ See:
 - [PROGRAM-0003: Repeatable Benchmark Proof](./docs/product/execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md)
 - [PROGRAM-0004: Post-Release Sustainment And Release Cadence](./docs/product/execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)
 - [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./docs/product/execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
+- [PROGRAM-0006: Public Codespaces Public-Repo Bootstrap](./docs/product/execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md)
 - [Post-Release Sustainment Rules](./docs/product/post-release-sustainment-rules.md)
 - [Post-Release Sustainment Rules JSON](./docs/product/post-release-sustainment-rules.json)
 - [Extension Execution Policy](./docs/product/extension-execution-policy.md)

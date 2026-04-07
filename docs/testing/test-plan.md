@@ -1659,6 +1659,21 @@
   `VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT` when no explicit `--target-root` is
   supplied and fails closed on dirty target repos before comparison or write
   treats a stale side checkout as governed public-source drift
+- `TEST-UNIT-329`: verify `assertGovernedBranchBaseline` fails closed when
+  `develop` does not yet contain exact `main`, passes when the branch baseline
+  is correct, and that `npm run design:gate` keeps that branch-baseline check
+  first in the governed gate order
+- `TEST-UNIT-330`: verify `preparePublicRepoClone` parses supported public
+  GitHub and GitLab HTTPS repo URLs without a provider selector, derives a
+  visible repo-sibling target path, and keeps the canonical icon-editor helper
+  path separate
+- `TEST-UNIT-331`: verify the generic public bootstrap command honors an
+  explicit branch, resolves remote default branch truth when the branch is
+  omitted, and fails closed on dirty or mismatched existing clone targets
+- `TEST-UNIT-332`: review the `1.2.0` public bootstrap governance package and
+  prove the canonical helper path remains separate from the generic public-repo
+  path while the exact tag stays blocked on Sergio wiki-procedure review from a
+  brand new fork and a brand new Codespace
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are
@@ -1674,6 +1689,20 @@
   binds the intended local checkout through `--target-root` or
   `VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT` and refuses dirty target repos instead
   of treating stale side-worktree drift as governed publication truth
+- `TEST-DOC-094`: review sustainment, hosted governance, release procedure,
+  current-state, README, SRS, RTM, and the test plan and confirm the repo now
+  retains a fail-closed branch-baseline assertion surface that runs first in
+  `npm run design:gate` before a new candidate line continues
+- `TEST-DOC-095`: review README, current-state, the public release-candidate
+  package, ADR-0034, SRS, RTM, and the test plan and confirm the repo now
+  retains one generic public GitHub/GitLab bootstrap command that resolves the
+  actual remote default branch instead of relying on `main` versus `master`
+  heuristics
+- `TEST-DOC-096`: review README, current-state, ISSUE-0411, PROGRAM-0006, the
+  public release-candidate package, ADR-0034, SRS, RTM, and the test plan and
+  confirm the canonical helper path remains separate from the generic
+  public-repo path while exact `v1.2.0` tagging is blocked on Sergio
+  wiki-procedure review from a brand new fork and a brand new Codespace
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source
