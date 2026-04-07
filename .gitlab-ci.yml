@@ -15,7 +15,10 @@ docs_link_check:
     - lychee --verbose --no-progress --include-fragments README.md docs/**/*.md
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$CI_COMMIT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_BRANCH =~ /^release\/.+$/'
+    - if: '$CI_COMMIT_BRANCH =~ /^hotfix\/.+$/'
     - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
 
 docs_continuous_integration:
@@ -34,7 +37,10 @@ docs_continuous_integration:
       - docs-integration-evidence/
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$CI_COMMIT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_BRANCH =~ /^release\/.+$/'
+    - if: '$CI_COMMIT_BRANCH =~ /^hotfix\/.+$/'
     - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
 
 docs_public_continuous_integration:
@@ -54,7 +60,10 @@ docs_public_continuous_integration:
       - docs-integration-evidence/public/
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$CI_COMMIT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_BRANCH =~ /^release\/.+$/'
+    - if: '$CI_COMMIT_BRANCH =~ /^hotfix\/.+$/'
     - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
 
 docs_internal_continuous_integration:
@@ -72,7 +81,10 @@ docs_internal_continuous_integration:
       - docs-integration-evidence/internal/
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$CI_COMMIT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_BRANCH =~ /^release\/.+$/'
+    - if: '$CI_COMMIT_BRANCH =~ /^hotfix\/.+$/'
     - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
 
 publish_docs_authoring_image:
@@ -235,7 +247,10 @@ test_extension:
         path: coverage/cobertura-coverage.xml
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$CI_COMMIT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_BRANCH =~ /^release\/.+$/'
+    - if: '$CI_COMMIT_BRANCH =~ /^hotfix\/.+$/'
     - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
 
 package_extension_preview:
@@ -278,6 +293,10 @@ package_extension_preview:
       - preview-evidence/
   rules:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_BRANCH =~ /^release\/.+$/'
+    - if: '$CI_COMMIT_BRANCH =~ /^hotfix\/.+$/'
+    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
 
 release_extension:
   stage: release

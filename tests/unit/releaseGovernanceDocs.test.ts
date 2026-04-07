@@ -19,12 +19,20 @@ describe('release governance package', () => {
     const adr = readText(
       'docs/architecture/adr/ADR-0030-semver-decision-framework-and-gitflow-lite-branch-ci-topology.md'
     );
+    const adr0 = readText(
+      'docs/architecture/adr/ADR-0028-governed-authority-to-public-source-promotion-system.md'
+    );
     const adr2 = readText(
       'docs/architecture/adr/ADR-0031-finding-driven-adr-and-requirement-evolution.md'
     );
     const adr3 = readText(
       'docs/architecture/adr/ADR-0032-public-facade-github-workflow-responsibility-matrix.md'
     );
+    const adr4 = readText(
+      'docs/architecture/adr/ADR-0033-hosted-automation-governance-matrix-and-protection-semantics.md'
+    );
+    const hostedGovernance = readText('docs/product/hosted-ci-governance.md');
+    const hostedGovernanceJson = readJson<any>('docs/product/hosted-ci-governance.json');
     const srs = readText('docs/requirements/srs.md');
     const rtm = readText('docs/requirements/rtm.csv');
     const testPlan = readText('docs/testing/test-plan.md');
@@ -44,6 +52,10 @@ describe('release governance package', () => {
     );
     expect(rules.releaseCadence.semverDecisionFramework.patch).toContain(
       'fixes or hardens an existing workflow, release rule, procedure, branch policy, or CI posture without breaking the exact released contract'
+    );
+    expect(rules.releaseCadence.activeOpeningDecision.chosenBump).toBe('minor');
+    expect(rules.releaseCadence.activeOpeningDecision.targetDevelopCandidateReleaseLine).toBe(
+      'v1.1.0'
     );
     expect(rules.releaseCadence.versionLineContract.publicDefaultBranch).toBe('main');
     expect(rules.operatorSurfaceSustainment.branchModel.model).toBe('gitflow-lite');
@@ -71,6 +83,8 @@ describe('release governance package', () => {
     expect(adr).toContain('`release/*`');
     expect(adr).toContain('`hotfix/*`');
     expect(adr).toContain('`npm run design:gate`');
+    expect(adr0).toContain('VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT');
+    expect(adr0).toContain('rejecting a dirty target repo');
     expect(adr2).toContain('# ADR-0031: Finding-Driven ADR And Requirement Evolution');
     expect(adr2).toContain('every governed finding is classified for both requirement impact and ADR');
     expect(adr2).toContain('introduce a new ADR in the same slice');
@@ -79,17 +93,37 @@ describe('release governance package', () => {
     expect(adr3).toContain('Public Facade Linux Smoke');
     expect(adr3).toContain('do not create a `feature/*` push lane');
     expect(adr3).toContain('per-workflow/per-ref concurrency');
+    expect(adr4).toContain('# ADR-0033: Hosted Automation Governance Matrix And Protection Semantics');
+    expect(adr4).toContain('GitLab authority uses protected branches plus');
+    expect(adr4).toContain('GitHub benchmark workflows remain governed characterization lanes');
+    expect(hostedGovernance).toContain('# Hosted CI Governance');
+    expect(hostedGovernance).toContain('current `develop` package line: `1.1.0`');
+    expect(hostedGovernance).toContain('chosen bump: `minor`');
+    expect(hostedGovernanceJson.openingDecision.chosenBump).toBe('minor');
+    expect(hostedGovernanceJson.authorityGitLab.mergeGate).toBe(
+      'only_allow_merge_if_pipeline_succeeds'
+    );
+    expect(hostedGovernanceJson.githubExperiment.requiredForExactRelease).toBe(false);
 
     expect(srs).toContain('public GitHub `main` remains the default branch and exact release branch');
     expect(srs).toContain('PR-driven focused admission on `feature/*`');
     expect(srs).toContain('push plus PR validation for `release/*` and `hotfix/*`');
     expect(srs).toContain('continuously classify current and future governed findings for ADR impact');
     expect(srs).toContain('governed public GitHub workflow matrix');
+    expect(srs).toContain('governed hosted automation matrix');
+    expect(srs).toContain('short-lived `feature/*` work shall rely on merge-request admission');
+    expect(srs).toContain('fail closed on branch-model contradictions');
+    expect(srs).toContain('VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT');
+    expect(srs).toContain('fail closed when the bound target repo is dirty');
     expect(rtm).toContain('public GitHub `main` remains the default branch and exact release branch');
     expect(rtm).toContain('PR-driven focused admission on `feature/*`');
     expect(rtm).toContain('push plus PR validation for `release/*` and `hotfix/*`');
     expect(rtm).toContain('Continuously classify current and future governed findings for ADR impact');
     expect(rtm).toContain('Retain a governed public GitHub workflow matrix');
+    expect(rtm).toContain('Retain one governed hosted automation matrix');
+    expect(rtm).toContain('Admit authority GitLab preview-package validation');
+    expect(rtm).toContain('Fail closed on branch-model contradictions');
+    expect(rtm).toContain('Bind the governed public-source promotion/check surface');
     expect(testPlan).toContain('public-default-branch');
     expect(testPlan).toContain('keeps GitHub `main` stable');
     expect(testPlan).toContain('PR-driven feature admission and push validation on `release/*` and');
@@ -98,6 +132,10 @@ describe('release governance package', () => {
     expect(testPlan).toContain('`no-adr-impact`');
     expect(testPlan).toContain('TEST-UNIT-324');
     expect(testPlan).toContain('TEST-DOC-089');
+    expect(testPlan).toContain('TEST-UNIT-325');
+    expect(testPlan).toContain('TEST-DOC-090');
+    expect(testPlan).toContain('TEST-UNIT-328');
+    expect(testPlan).toContain('TEST-DOC-093');
     expect(rules.operatorSurfaceSustainment.branchModel.findingAdrDiscipline).toEqual(
       expect.arrayContaining([
         'every governed finding is classified before slice closeout as adr-update-required or no-adr-impact'
@@ -114,9 +152,13 @@ describe('release governance package', () => {
     expect(program).toContain('ADR evolution from governed findings');
     expect(program).toContain('explicit SemVer-decision rationale');
     expect(program).toContain('public GitHub workflow responsibility and churn-control governance');
+    expect(program).toContain('hosted GitLab/GitHub protection semantics');
+    expect(program).toContain('public-source promotion target-root hygiene');
     expect(issue).toContain('explicit major/minor/patch decision criteria');
     expect(issue).toContain('continuous refinement of ADR coverage from governed findings');
     expect(issue).toContain('branch-model and lane-specific CI/design-gate governance');
     expect(issue).toContain('workflow responsibility, trigger-boundary, and');
+    expect(issue).toContain('hosted GitLab/GitHub branch-protection and workflow-lane');
+    expect(issue).toContain('stale dirty side checkout');
   });
 });

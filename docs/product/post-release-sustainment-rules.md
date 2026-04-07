@@ -55,17 +55,30 @@ Refresh the release package when any of these change:
 Current version-line contract:
 
 - retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`,
-  `v1.0.3`, `v1.0.4`, `v1.0.5`
+  `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.0.5`
-- current published package line on `main`: `1.0.5`
-- current develop package line on `develop`: `1.0.6`
-- active exact release candidate line on `develop`: `v1.0.6`
+- current exact released line: `v1.0.6`
+- current published package line on `main`: `1.0.6`
+- current develop package line on `develop`: `1.1.0`
+- active exact release candidate line on `develop`: `v1.1.0`
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
 - release branch: `main`
 - next-line branch model: `gitflow-lite`
+
+Active opening decision for the next line:
+
+- chosen bump: `minor`
+- target exact candidate line: `v1.1.0`
+- rationale: the next line adds one governed hosted branch-protection and CI
+  responsibility capability across authority GitLab, the public GitHub facade,
+  and GitHub experiment lanes without breaking the exact `v1.0.6` public
+  contract
+- rejected `patch`: too small because the slice expands the maintained release
+  operating model, not just a local correction
+- rejected `major`: no exact `v1.0.6` public contract is being broken or
+  removed
 
 Strict SemVer rule after an exact release:
 
@@ -153,6 +166,8 @@ When sustainment-affecting truth changes, update these surfaces together:
 - active sustainment program and issue docs
 - `SHIP-0001` only where it points to the active driver-seat post-release lane
 - `CHANGELOG.md` when the current published package line on `main` or retained release history changes
+- `hosted-ci-governance.md` and `hosted-ci-governance.json` when hosted
+  branch-protection or workflow responsibility changes
 - SRS, RTM, and test plan when normative behavior changes
 - wiki coverage/publication ledgers when reader-facing authority changes
 - published wiki pages that represent the changed authority docs
@@ -171,6 +186,9 @@ Required branch-model and CI posture:
   merge to `main` plus back into `develop`
 - `hotfix/*` lanes are cut from `main`, fix one exact release line, and merge
   to `main` plus back into `develop`
+- local public-source promotion/check binds the intended checkout through
+  `--target-root` or `VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT` and fails closed
+  when the target repo is dirty
 - the required checks are:
   - GitLab `docs_continuous_integration`
   - GitLab `docs_public_continuous_integration`
@@ -179,6 +197,19 @@ Required branch-model and CI posture:
   - GitLab `package_extension_preview`
   - GitHub `Public Facade Package Preview / package-preview`
   - GitHub `Public Facade Linux Smoke / public-facade-linux-smoke`
+
+Hosted automation governance is now retained explicitly:
+
+- GitLab authority branch protection relies on protected branches plus
+  `only_allow_merge_if_pipeline_succeeds=true`; it does not have GitHub-style
+  named required checks
+- GitHub public branch protection relies on named required checks
+  `package-preview` and `public-facade-linux-smoke`
+- GitHub benchmark workflows are characterization-only experiment lanes and
+  are not exact-release required checks
+- the authoritative matrix for those distinctions is:
+  - `docs/product/hosted-ci-governance.md`
+  - `docs/product/hosted-ci-governance.json`
 
 Lane-specific CI and gate responsibilities:
 

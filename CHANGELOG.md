@@ -3,26 +3,46 @@
 This changelog is the governed version-line summary for `vi-history-suite`.
 
 Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
-`v1.0.2`, `v1.0.3`, `v1.0.4`, and `v1.0.5`.
+`v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, and `v1.0.6`.
 
 Burned exact-version releases now include `v1.0.2`.
+
+## [1.1.0] - Unreleased
+
+### Changed
+
+- `v1.0.6` remains the exact public release line on `main`, while `develop`
+  now carries the active governed `1.1.0` candidate line for the next release
+- the control plane now retains one explicit hosted branch-protection and CI
+  governance matrix across authority GitLab, the public GitHub facade, and the
+  GitHub experiment workflows instead of leaving those boundaries scattered
+  across YAML and branch-protection settings
+- the authority GitLab package-preview lane is now admitted on `develop`,
+  `main`, `release/*`, `hotfix/*`, and exact tags, while feature work relies
+  on merge-request admission instead of a generic branch-push preview lane
+- the configuration-management and release-control docs now fail closed on the
+  real branch model: `develop` is the integration branch, `main` is the exact
+  release branch, and GitHub's default branch stays `main` while `develop`
+  carries the next candidate
 
 ## [1.0.6] - 2026-04-07
 
 ### Changed
 
-- exact `v1.0.5` on `main` is now merged back into `develop` before the next
-  release line opens, so the integration branch no longer carries stale
-  release-close control-plane truth
-- the active develop candidate line is now `1.0.6` / `v1.0.6` for governance
-  hardening, rather than landing post-release control-plane changes under the
-  exact `v1.0.5` line
-- the sustainment control plane now carries an explicit SemVer-decision
-  framework that forces future sessions to justify `major`, `minor`, or
-  `patch` bumps from governed criteria instead of implicit judgment
-- the branch model now moves from ad hoc `develop`/`main` language toward a
-  governed `gitflow-lite` topology with explicit `feature/*`, `release/*`,
-  and `hotfix/*` lanes plus lane-specific CI and `design:gate` obligations
+- `v1.0.6` is now the exact public release line on `main`, while `develop`
+  remains the public evaluation branch and still carries `1.0.6` until the
+  next exact release candidate opens
+- the public branch model now explicitly keeps GitHub's default branch on
+  `main` for exact released truth while first-time Codespaces and devcontainer
+  evaluation continue to use `develop`
+- the public workflow pair now has an explicit responsibility matrix in which
+  `Public Facade Package Preview` owns compile, design-contract, and preview
+  packaging while `Public Facade Linux Smoke` owns Docker Linux proof, with
+  bounded `develop`/`main`/`release/*`/`hotfix/*` triggers and per-ref
+  concurrency to reduce CI churn
+- the `VI History` panel now fails closed when an in-flight progress or result
+  update races a disposed webview instead of surfacing a disposed-webview
+  exception through the public review flow
 
 ## [1.0.5] - 2026-04-07
 

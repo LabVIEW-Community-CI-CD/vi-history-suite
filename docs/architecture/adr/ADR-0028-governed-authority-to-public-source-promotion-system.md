@@ -24,6 +24,9 @@ side remained weaker than the wiki side:
   source repo
 - there was no deterministic promotion mechanism that could fail closed on
   stale release-kit drift or internal-surface leakage
+- there was no governed rule for binding the intended local public checkout or
+  rejecting a dirty target repo before comparison/write acted on the wrong
+  worktree
 
 That is too weak for a long-lived public product surface.
 
@@ -40,6 +43,9 @@ repo.
    - a public source publication ledger
    - a deterministic promotion script
    - regression tests that fail closed when the curated surface drifts
+   - explicit target-root binding through `--target-root` or
+     `VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT`, with fail-closed rejection when the
+     bound public checkout is dirty
 4. The public source repo shall be shaped around the public product contract:
    - Docker-only installed compare execution
    - x64-only container surfaces
@@ -61,6 +67,8 @@ repo.
   mirror.
 - Deterministic promotion makes it possible to audit what was actually
   published and to rerun the same publication later.
+- Public-source promotion is not deterministic if the tool silently points at
+  the wrong local checkout or writes over a dirty repo.
 - Separate ledgers are required because publishing the public source repo and
   publishing the public wiki are different acts.
 
@@ -70,6 +78,8 @@ repo.
 
 - future sessions can publish the public source repo without rediscovering the
   file boundary
+- future sessions can bind the intended local public checkout explicitly and
+  fail closed before acting on a dirty side worktree
 - the public GitHub source repo can evolve into a real product repo instead of
   a legacy release kit
 - the authority repo can prove what was published publicly and when

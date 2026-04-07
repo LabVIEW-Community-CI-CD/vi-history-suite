@@ -13,7 +13,7 @@
 
 | CI | Type | Owner | Baseline Rule |
 | --- | --- | --- | --- |
-| Source repo | Code | sole author | `main` is the working integration branch |
+| Source repo | Code | sole author | `develop` is the working integration branch and `main` is the exact release branch |
 | Product docs | Document | sole author | versioned with code changes |
 | Authoritative research stack | Document | sole author | updated together with research-alignment and current-state surfaces |
 | Repo entrypoint stack | Document | sole author | `README.md`, `docs/product/current-state.md`, and `docs/research/authoritative/research-implementation-index.json` move together when repo meaning changes |
