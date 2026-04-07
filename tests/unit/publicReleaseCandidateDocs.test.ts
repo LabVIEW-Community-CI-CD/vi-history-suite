@@ -84,8 +84,8 @@ describe('public release candidate control surface', () => {
     expect(currentState).toContain('latest retained human review submission at `2026-04-07T04:06:58.998Z`');
     expect(currentState).toContain('resource\\plugins\\lv_icon.vi');
     expect(currentState).toContain('optional governed tester-fixture helper');
-    expect(currentState).toContain('exact `v1.0.0` public release is cleared on the authority');
-    expect(currentState).toContain('proof surfaces even though the public GitHub release page has not yet been');
+    expect(currentState).toContain('exact `v1.0.0` public GitHub release is now published at');
+    expect(currentState).toContain('https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.0.0');
 
     expect(program).toContain('local public devcontainer now passes on this machine');
     expect(program).toContain('GitHub Codespace `novacula` now passes the hosted public smoke');

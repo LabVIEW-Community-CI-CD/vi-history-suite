@@ -271,9 +271,8 @@ Current active and queued post-release programs:
   - public GitHub source publication is tracked separately from both wiki surfaces in `docs/product/public-github-source-publication-ledger.md` and `docs/product/public-github-source-publication-ledger.json`
   - published public GitHub wiki pages now include `Home`, `User-Workflow`, `Install-And-Release`, `Comparison-Reports-And-Dashboard-Review`, and `Current-State`
   - the canonical Gate D blocker on `resource/plugins/lv_icon.vi` is now
-    retired, so the exact `v1.0.0` public release is cleared on the authority
-    proof surfaces even though the public GitHub release page has not yet been
-    refreshed
+    retired, and the exact `v1.0.0` public GitHub release is now published at
+    `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.0.0`
   - public GitHub wiki publication is tracked separately from the internal GitLab maintainer wiki in `docs/product/public-github-wiki-publication-ledger.md` and `docs/product/public-github-wiki-publication-ledger.json`
   - public GitHub source repo is not the private GitHub experiment mirror
   - the authority VSIX install surface is compile-and-audit guarded and does not permit shipped runtime `node_modules`
