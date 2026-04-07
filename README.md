@@ -400,14 +400,12 @@ Latest landed ship target:
 - `SHIP-0001`: releasable `v0.2.0` VSIX product
 - landed ship tranche: `TRANCHE-009`
 - landed ship issue: `ISSUE-0406`
-- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`
+- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.0.6`
+- current exact released line: `v1.1.0`
 - current published package line on `main`: `1.1.0`
 - current develop package line on `develop`: `1.1.0`
-- active exact release candidate line: `v1.1.0`
-- active release-candidate branch: `release/1.1.0`
-- active SemVer opening decision: `minor`
+- no newer exact release candidate line is active on `develop` yet
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
@@ -423,9 +421,9 @@ Latest landed ship target:
 - docs-authoring image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
 - retained release evidence: GitLab release `v0.2.0`, tag pipeline `2428809456`,
   release job `13779604462`
-- remaining release blockers: exact `v1.1.0` is still pending while
-  `release/1.1.0` promotes into `main` on the public GitHub and authority
-  GitLab surfaces; the exact public `v1.0.6` line remains green
+- remaining release blockers: none on the exact public `v1.1.0` line; public
+  `main` now publishes `daef8bd`, the public GitHub release `v1.1.0` is live,
+  and no newer exact release candidate is open yet
 
 ## Install Surface
 

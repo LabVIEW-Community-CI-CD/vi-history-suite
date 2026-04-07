@@ -11,15 +11,11 @@
 - The first retained exact-version release is `v0.2.0`, with retained artifact
   `vi-history-suite-0.2.0.vsix` and manifest
   `release-evidence/release-manifest.json`.
-- The current exact released line is `v1.0.6`.
+- The current exact released line is `v1.1.0`.
 - The burned exact released line is `v1.0.2`.
 - The current published package line on `main` is `1.1.0`.
 - The current develop package line on `develop` is `1.1.0`.
-- The active exact release candidate line is `v1.1.0`.
-- The active release-candidate branch is `release/1.1.0`.
-- The active SemVer opening decision is `minor` because this tranche adds one
-  governed hosted branch-protection and CI responsibility model without
-  breaking the exact `v1.0.6` public contract.
+- No newer exact release candidate line is active on `develop` yet.
 - The public GitHub default branch is `main` because it carries the latest
   exact released source line.
 - The public Codespaces evaluation branch is `develop`.
@@ -166,8 +162,7 @@
   before the exact authority docs CI failure was discovered.
 - The current published package line on `main` is `1.1.0`, tracked in
   `CHANGELOG.md`, and it should not rewrite the retained `v0.2.0`, `v1.0.0`,
-  `v1.0.1`, burned `v1.0.2`, exact `v1.0.3`, exact `v1.0.4`, or exact
-  `v1.0.5`, or exact `v1.0.6` release
-  evidence.
-- The current develop package line on `develop` is `1.1.0`, and the active
-  exact release candidate line is `v1.1.0` on `release/1.1.0`.
+  `v1.0.1`, burned `v1.0.2`, exact `v1.0.3`, exact `v1.0.4`, exact `v1.0.5`,
+  exact `v1.0.6`, or exact `v1.1.0` release evidence.
+- The current develop package line on `develop` is `1.1.0`, and no newer
+  exact release candidate line is active on `develop` yet.

@@ -38,12 +38,10 @@ The compare surface is Docker-only:
 
 - `main` is the public default branch and tracks the latest exact released
   source line.
-- `develop` is the public evaluation branch for the next governed candidate
-  line.
-- `release/1.1.0` is the active release-candidate branch for exact `v1.1.0`
-  promotion.
-- The current exact released line remains `v1.0.6` until `release/1.1.0` is
-  promoted to `main` and published as exact `v1.1.0`.
+- `develop` remains the public evaluation branch for the next governed
+  candidate line.
+- The current exact released line is `v1.1.0`.
+- No newer exact public release candidate is active yet.
 - If you only want the latest released source or release-facing docs, stay on
   `main`.
 - If you are following the first-time Codespaces or devcontainer evaluation
@@ -72,8 +70,9 @@ The full first-time walkthrough is on the public wiki:
 This repo is expected to work in a Docker-capable devcontainer or Codespace.
 
 GitHub opens this public repo on `main` by default. That is expected because
-`main` is the latest exact released source line. Use `develop` only when you
-are following the public evaluation path for the next governed candidate.
+`main` is the latest exact released source line. Use `develop` when you are
+following the public evaluation path that will lead into the next governed
+candidate line.
 
 ## Public Devcontainer And Codespaces
 
@@ -155,13 +154,11 @@ npm run package -- --out /tmp/vi-history-suite-public-preview.vsix
 
 ## Current Version Line
 
-- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`
+- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.0.6`
+- current exact released line: `v1.1.0`
 - current published package line on `main`: `1.1.0`
 - current develop package line on `develop`: `1.1.0`
-- active exact release candidate line: `v1.1.0`
-- active release-candidate branch: `release/1.1.0`
-- active SemVer opening decision: `minor`
+- no newer exact release candidate line is active on `develop` yet
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
