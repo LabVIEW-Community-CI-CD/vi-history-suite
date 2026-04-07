@@ -3,7 +3,7 @@
 - Version line: `1.0.0`
 - Recorded at: `2026-04-07T02:30:00.000Z`
 - Authority green baseline: commit `6d326c5`, pipeline `2433201421`
-- Published public source commit: `1e24980`
+- Published public source commit: `bf0cb2d`
 - Published public wiki head: `e28491c`
 
 ## Readiness

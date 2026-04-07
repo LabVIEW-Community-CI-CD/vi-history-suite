@@ -14,7 +14,7 @@ The machine-readable companion surface for this ledger is:
 
 | Published Surface | Repo Path | Status | Published | Repo Commit | Primary Authority |
 | --- | --- | --- | --- | --- | --- |
-| Public source product repo baseline | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-06` | `1e24980` | `README.md`; `docs/architecture/adr/ADR-0028-governed-authority-to-public-source-promotion-system.md`; `docs/product/public-github-source-authority-map.md` |
+| Public source product repo baseline | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-06` | `bf0cb2d` | `README.md`; `docs/architecture/adr/ADR-0028-governed-authority-to-public-source-promotion-system.md`; `docs/product/public-github-source-authority-map.md` |
 
 ## Publication Rules
 

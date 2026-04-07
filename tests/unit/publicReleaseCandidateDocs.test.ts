@@ -38,7 +38,7 @@ describe('public release candidate control surface', () => {
       latestGreenPipelineCommit: '6d326c5',
       latestGreenPipelineId: '2433201421'
     });
-    expect(candidate.publishedPublicSource?.publishedCommit).toBe('1e24980');
+    expect(candidate.publishedPublicSource?.publishedCommit).toBe('bf0cb2d');
     expect(candidate.publishedPublicWiki?.publishedHeadCommit).toBe('e28491c');
     expect(candidate.candidateReadiness).toMatchObject({
       authorityBaseline: 'passed',

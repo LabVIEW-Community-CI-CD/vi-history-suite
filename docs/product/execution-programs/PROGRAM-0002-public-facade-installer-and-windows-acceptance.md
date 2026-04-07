@@ -35,7 +35,7 @@ Current truth:
 
 - the old canonical Windows host pass remains valid historical evidence for the
   earlier public bundle only
-- the public GitHub facade repo is published at `1e24980` as the curated public
+- the public GitHub facade repo is published at `bf0cb2d` as the curated public
   source product surface
 - the public GitHub wiki is published at `e28491c` as the public extension-user
   reader surface
@@ -292,8 +292,8 @@ Gate D is now defined against the real public product:
 - the deterministic canonical fixture workspace remains the compare target
 - the governed Linux image must be absent before the rerun so first-use pull is
   exercised truthfully
-- retained preflight preparation at `2026-04-07T01:23:21.955Z` already proves
-  the published public source commit `1e24980`, the published public wiki
+- retained preflight preparation at `2026-04-07T02:38:48.334Z` already proves
+  the published public source commit `bf0cb2d`, the published public wiki
   HEAD commit `e28491c`, canonical fixture commit
   `4e442eb0f5a6263e8f8aaa49c322a6b5fd0ea87a`, Docker Linux engine state, and
   governed Linux image absence before and after preparation ahead of the human
@@ -313,7 +313,7 @@ Gate D is now defined against the real public product:
 
 The public product now retains:
 
-- published public GitHub source repo baseline at commit `1e24980`
+- published public GitHub source repo baseline at commit `bf0cb2d`
 - published public GitHub wiki refresh at commit `e28491c`
 - a public devcontainer/Codespaces surface
 - a public package-preview workflow
@@ -323,8 +323,8 @@ The public product now retains:
 - authority-side `npm run public:gate-d:preflight` and
   `npm run public:gate-d:prepare-cold-pull` operator surfaces for retained Gate D
   preparation
-- retained Gate D preflight preparation at `2026-04-07T01:23:21.955Z`, proving
-  published public repo commit `1e24980`, public wiki HEAD commit `e28491c`,
+- retained Gate D preflight preparation at `2026-04-07T02:38:48.334Z`, proving
+  published public repo commit `bf0cb2d`, public wiki HEAD commit `e28491c`,
   canonical fixture commit `4e442eb0f5a6263e8f8aaa49c322a6b5fd0ea87a`, Docker
   Linux engine state, and governed Linux image absence before and after
   preparation

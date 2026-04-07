@@ -168,8 +168,8 @@ Current active tranche:
   - the next Gate D rerun now belongs to the Docker-only public bundle and is
     planned to include a Linux-engine cold-pull compare on the deterministic
     `c:\dev\labview-icon-editor` fixture workspace
-  - retained preflight preparation at `2026-04-07T01:23:21.955Z` already proves
-    published public repo commit `1e24980`, published public wiki HEAD commit
+  - retained preflight preparation at `2026-04-07T02:38:48.334Z` already proves
+    published public repo commit `bf0cb2d`, published public wiki HEAD commit
     `e28491c`, canonical fixture commit `4e442eb0f5a6263e8f8aaa49c322a6b5fd0ea87a`,
     Docker Linux engine state, and governed Linux image absence before and
     after preparation
@@ -257,7 +257,7 @@ Current active and queued post-release programs:
   - private GitLab source repo remains the authority repo and release-control surface
   - internal GitLab wiki remains the maintainer-facing derived reader surface
   - the private GitHub experiment mirror is a non-authoritative Linux benchmark lane only
-  - public GitHub facade repo is the public source product surface at `https://github.com/svelderrainruiz/vi-history-suite`, published at commit `1e24980`
+  - public GitHub facade repo is the public source product surface at `https://github.com/svelderrainruiz/vi-history-suite`, published at commit `bf0cb2d`
   - public GitHub user wiki now exists at `https://github.com/svelderrainruiz/vi-history-suite.wiki.git` as a public extension-user reader surface, published at commit `e28491c`
   - public GitHub source publication is tracked separately from both wiki surfaces in `docs/product/public-github-source-publication-ledger.md` and `docs/product/public-github-source-publication-ledger.json`
   - published public GitHub wiki pages now include `Home`, `User-Workflow`, `Install-And-Release`, `Comparison-Reports-And-Dashboard-Review`, and `Current-State`
