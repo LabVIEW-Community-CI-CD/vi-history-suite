@@ -32,6 +32,16 @@ The public Docker product smoke lane is:
 npm run public:smoke:linux
 ```
 
+The optional public tester-fixture helper is:
+
+```bash
+npm run public:fixture:icon-editor
+```
+
+It clones `ni/labview-icon-editor` into `.cache/public-fixtures/labview-icon-editor`
+for public devcontainer/Codespaces evaluation without turning that clone into a
+mandatory startup side effect.
+
 The maintained Gate D operator preflight surfaces are:
 
 ```bash

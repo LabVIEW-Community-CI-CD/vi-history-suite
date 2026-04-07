@@ -74,6 +74,22 @@ Current truth:
   rewrites the generated report back to canonical spaced names, and keeps Linux
   `CloseLabVIEW` recovery inside the container wrapper instead of trying to
   spawn a container-internal CLI path on the host
+- the local public devcontainer now passes on this machine from a Windows-hosted
+  public checkout after retiring the repo-owned `.devcontainer/devcontainer.json`
+  `overrideCommand=false` defect that let the base Node image exit before
+  `postCreateCommand` finished
+- the earlier WSL-path mount failure is explicitly classified as a
+  machine-surface mismatch between the broken Linux Docker CLI and Windows
+  `docker.exe`, not as a public-repo defect
+- the public product now carries an optional governed tester-fixture helper,
+  `npm run public:fixture:icon-editor`, which clones
+  `ni/labview-icon-editor` into `.cache/public-fixtures/labview-icon-editor`
+  for devcontainer/Codespaces evaluation without making that clone a default
+  startup dependency
+- the new [Public Release Candidate](../public-release-candidate.md) control
+  surface now retains the current `1.0.0` public-surface snapshot, including
+  the green authority baseline, published public commits, local devcontainer
+  proof, and remaining hosted/Gate D blockers
 
 ## Trigger
 

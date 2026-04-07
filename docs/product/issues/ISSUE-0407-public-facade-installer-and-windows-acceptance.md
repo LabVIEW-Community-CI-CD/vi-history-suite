@@ -51,6 +51,22 @@ Current landed state:
 - the authority repo now carries the unshipped fix for that seam, including
   Linux-container filename aliasing plus canonical-name rewrite on the final
   report copy and container-wrapped Linux `CloseLabVIEW` recovery
+- the local public devcontainer now passes on this machine from a Windows-hosted
+  public checkout after retiring the repo-owned `.devcontainer/devcontainer.json`
+  `overrideCommand=false` defect that let the base Node image exit before
+  `postCreateCommand` finished
+- the earlier WSL-path mount failure is now explicitly classified as a
+  machine-surface mismatch between the broken Linux Docker CLI and Windows
+  `docker.exe`, not as a public-repo devcontainer defect
+- the public product now carries an optional governed tester-fixture helper,
+  `npm run public:fixture:icon-editor`, which clones
+  `ni/labview-icon-editor` into `.cache/public-fixtures/labview-icon-editor`
+  for devcontainer/Codespaces evaluation without making that clone a default
+  startup dependency
+- the new [Public Release Candidate](../public-release-candidate.md) control
+  surface now retains the current `1.0.0` public-surface snapshot, including
+  the green authority baseline, published public commits, local devcontainer
+  proof, and remaining hosted/Gate D blockers
 - the public GitHub wiki now exists at
   `https://github.com/svelderrainruiz/vi-history-suite.wiki.git`
 - public GitHub wiki publication is tracked separately from the internal

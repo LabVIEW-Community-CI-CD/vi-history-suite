@@ -62,6 +62,16 @@ The public Linux cold-pull smoke surface is:
 npm run public:smoke:linux
 ```
 
+The optional public tester-fixture helper is:
+
+```bash
+npm run public:fixture:icon-editor
+```
+
+It clones `ni/labview-icon-editor` into `.cache/public-fixtures/labview-icon-editor`
+for public devcontainer/Codespaces evaluation without making that clone a
+default startup dependency.
+
 The guarded package path is:
 
 ```bash

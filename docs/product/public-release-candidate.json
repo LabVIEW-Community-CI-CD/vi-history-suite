@@ -1,0 +1,79 @@
+{
+  "schema": "vi-history-suite/public-release-candidate@v1",
+  "versionLine": "1.0.0",
+  "recordedAt": "2026-04-07T02:30:00.000Z",
+  "authorityRepo": {
+    "role": "source-of-truth",
+    "latestGreenPipelineCommit": "6d326c5",
+    "latestGreenPipelineId": "2433201421",
+    "status": "green-baseline"
+  },
+  "publishedPublicSource": {
+    "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
+    "publishedCommit": "1e24980",
+    "status": "published"
+  },
+  "publishedPublicWiki": {
+    "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite.wiki.git",
+    "publishedHeadCommit": "e28491c",
+    "status": "published"
+  },
+  "candidateReadiness": {
+    "authorityBaseline": "passed",
+    "localInstalledVsix": "passed",
+    "localPublicDevcontainer": "passed",
+    "localPublicFixtureHelper": "passed",
+    "publicCodespace": "pending",
+    "gateDPublicAcceptance": "pending-human-judgment"
+  },
+  "localProofs": {
+    "linuxContainerPathFix": {
+      "status": "passed",
+      "authorityCommit": "6d326c5",
+      "pipelineId": "2433201421"
+    },
+    "localPublicDevcontainer": {
+      "status": "passed",
+      "hostSurface": "Windows-hosted checkout with Docker Desktop Linux engine",
+      "workspacePath": "C:\\Users\\sveld\\AppData\\Local\\Temp\\vi-history-suite.public-devcontainer-candidate-20260407-0225",
+      "notes": [
+        "The earlier WSL-path failure was a machine-surface mismatch between the broken Linux Docker CLI and Windows docker.exe path translation, not a repo build failure.",
+        "The repo-owned blocker was .devcontainer/devcontainer.json forcing overrideCommand=false against the base Node image, which caused the container to exit before postCreateCommand completed.",
+        "After setting overrideCommand=true, the public devcontainer completed npm ci, npm run compile, and npm run test:design-contract successfully on this machine."
+      ]
+    },
+    "localPublicFixtureHelper": {
+      "status": "passed",
+      "command": "npm run public:fixture:icon-editor",
+      "repoUrl": "https://github.com/ni/labview-icon-editor.git",
+      "targetPath": ".cache/public-fixtures/labview-icon-editor",
+      "fixtureCommit": "29870995362c893a584c088cec4a33cbde051504"
+    }
+  },
+  "testerFixtureStrategy": {
+    "decision": "optional-governed-helper",
+    "defaultCloneOnStartup": false,
+    "command": "npm run public:fixture:icon-editor",
+    "repoUrl": "https://github.com/ni/labview-icon-editor.git",
+    "targetPath": ".cache/public-fixtures/labview-icon-editor",
+    "rationale": [
+      "Public testers need a low-friction sample repository inside devcontainer and Codespaces sessions.",
+      "Cloning ni/labview-icon-editor on every startup would add network cost and side effects to every public development session.",
+      "An opt-in governed helper keeps the tester path easy without making a third-party clone a mandatory startup dependency."
+    ]
+  },
+  "activeBlockers": [
+    {
+      "id": "PUBLIC-CODESPACE-001",
+      "surface": "publicCodespace",
+      "status": "pending",
+      "summary": "The existing GitHub Codespace still needs a truthful hosted proof on the updated public source commit."
+    },
+    {
+      "id": "PUBLIC-GATE-D-001",
+      "surface": "gateDPublicAcceptance",
+      "status": "pending-human-judgment",
+      "summary": "The final Docker Linux cold-pull compare acceptance rerun on the canonical fixture workspace still requires a fresh human review on the updated public bundle."
+    }
+  ]
+}

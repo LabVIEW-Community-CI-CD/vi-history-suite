@@ -51,6 +51,14 @@ Typical path:
 4. Press `F5`.
 5. Exercise the checkbox-selected compare flow.
 
+If you want a governed public sample repository for that flow, run:
+
+```bash
+npm run public:fixture:icon-editor
+```
+
+This clones `ni/labview-icon-editor` into `.cache/public-fixtures/labview-icon-editor`.
+
 The public Linux cold-pull smoke lane is:
 
 ```bash

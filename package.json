@@ -143,6 +143,7 @@
     "docs:ci:internal": "node scripts/run-docs-continuous-integration.js --surface internal",
     "docs:ci:internal:core": "node scripts/run-docs-continuous-integration.js --surface internal --skip-links",
     "public:smoke:linux": "npm run compile && node scripts/runPublicFacadeLinuxSmoke.js",
+    "public:fixture:icon-editor": "node scripts/preparePublicTestFixture.js",
     "public:gate-d:preflight": "node scripts/runPublicProductGateDPreflight.js",
     "public:gate-d:prepare-cold-pull": "node scripts/runPublicProductGateDPreflight.js --prepare-cold-pull",
     "public:source:promote": "node scripts/promotePublicGithubSource.js",

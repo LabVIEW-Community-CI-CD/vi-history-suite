@@ -18,6 +18,7 @@ describe('public devcontainer surface', () => {
     const devcontainer = readJson<{
       name?: string;
       image?: string;
+      overrideCommand?: boolean;
       features?: Record<string, unknown>;
       postCreateCommand?: string;
       postStartCommand?: string;
@@ -39,6 +40,7 @@ describe('public devcontainer surface', () => {
 
     expect(devcontainer.name).toBe('vi-history-suite');
     expect(devcontainer.image).toBe('mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm');
+    expect(devcontainer.overrideCommand).toBe(true);
     expect(devcontainer.features).toHaveProperty('ghcr.io/devcontainers/features/docker-in-docker:2');
     expect(devcontainer.postCreateCommand).toBe('npm ci');
     expect(devcontainer.postStartCommand).toBe('npm run compile');
@@ -79,6 +81,8 @@ describe('public devcontainer surface', () => {
     expect(readme).toContain('a local devcontainer');
     expect(readme).toContain('Linux-hosted development session');
     expect(readme).toContain('governed Linux container image');
+    expect(readme).toContain('npm run public:fixture:icon-editor');
+    expect(readme).toContain('.cache/public-fixtures/labview-icon-editor');
     expect(readme).toContain('No host LabVIEW installation is required for the installed extension path.');
   });
 });

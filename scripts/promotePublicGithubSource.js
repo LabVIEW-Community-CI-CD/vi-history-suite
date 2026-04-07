@@ -67,6 +67,7 @@ const AUTHORITY_COPY_PATHS = [
   'resources/bundled-docs/pages/install-and-release.html',
   'resources/bundled-docs/pages/overview.html',
   'scripts/auditPackagedRuntimeSurface.js',
+  'scripts/preparePublicTestFixture.js',
   'scripts/runPinnedVsce.js',
   'scripts/runPublicFacadeLinuxSmoke.js',
   'src',
@@ -239,6 +240,7 @@ function renderPublicPackageManifest(authorityManifest = readAuthorityPackageMan
     'test:design-contract': `npm exec -- vitest run ${PUBLIC_DESIGN_CONTRACT_TESTS.join(' ')}`,
     test: 'npm run test:design-contract',
     'public:smoke:linux': authorityManifest.scripts['public:smoke:linux'],
+    'public:fixture:icon-editor': authorityManifest.scripts['public:fixture:icon-editor'],
     'package:audit': authorityManifest.scripts['package:audit'],
     package: 'npm run compile && npm run package:audit && node scripts/runPinnedVsce.js package'
   };

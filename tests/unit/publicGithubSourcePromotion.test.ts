@@ -105,6 +105,9 @@ describe('public GitHub source promotion', () => {
     expect(manifest.scripts['public:smoke:linux']).toBe(
       'npm run compile && node scripts/runPublicFacadeLinuxSmoke.js'
     );
+    expect(manifest.scripts['public:fixture:icon-editor']).toBe(
+      'node scripts/preparePublicTestFixture.js'
+    );
     expect(manifest.scripts['test:design-contract']).toBe(
       'npm exec -- vitest run tests/unit/publicRepoPackageSurface.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicFacadeLinuxSmoke.test.ts tests/unit/linuxContainerRuntimeExecutionSurface.test.ts'
     );
@@ -139,6 +142,7 @@ describe('public GitHub source promotion', () => {
       expect(expectedFiles).toContain('CONTRIBUTING.md');
       expect(expectedFiles).toContain('.github/workflows/public-facade-linux-smoke.yml');
       expect(expectedFiles).toContain('.github/workflows/public-facade-package-preview.yml');
+      expect(expectedFiles).toContain('scripts/preparePublicTestFixture.js');
       expect(expectedFiles).toContain('tests/unit/publicRepoPackageSurface.test.ts');
       expect(actualFiles).toContain('package.json');
       expect(fs.existsSync(path.join(actualRoot, 'acceptance'))).toBe(false);

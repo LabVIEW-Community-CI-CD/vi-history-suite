@@ -16,6 +16,12 @@ npm run test:design-contract
 
 Then use `F5` in VS Code to launch the extension host.
 
+If you want a governed public sample repository to test against, run:
+
+```bash
+npm run public:fixture:icon-editor
+```
+
 ## Before You Contribute
 
 Do not open pull requests containing code, documentation, or other copyrighted
