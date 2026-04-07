@@ -400,8 +400,8 @@ Latest landed ship target:
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.0.4`
 - current published package line on `main`: `1.0.4`
-- current develop package line on `develop`: `1.0.4`
-- no newer exact release candidate line is active on `develop` yet
+- current develop package line on `develop`: `1.0.5`
+- active exact release candidate line on `develop`: `v1.0.5`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
 - release branch: `main`
@@ -410,7 +410,7 @@ Latest landed ship target:
 - docs-authoring image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
 - retained release evidence: GitLab release `v0.2.0`, tag pipeline `2428809456`,
   release job `13779604462`
-- remaining release blockers: none
+- remaining release blockers: exact `v1.0.5` promotion is not published yet
 
 ## Install Surface
 

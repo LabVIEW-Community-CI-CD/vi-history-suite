@@ -235,7 +235,7 @@ describe('documentation continuous integration runner', () => {
     const stderrWrites: string[] = [];
     const stepIdByCommand = new Map([
       ['npm run compile', 'compile'],
-      ['npx vitest run tests/unit/bundledDocumentation.test.ts tests/unit/packageManifest.test.ts tests/unit/publicSurfaceBoundaryDocs.test.ts', 'public-docs-tests'],
+      ['npx vitest run tests/unit/bundledDocumentation.test.ts tests/unit/packageManifest.test.ts tests/unit/publicSurfaceBoundaryDocs.test.ts tests/unit/publicForkOwnerProcedureDocs.test.ts', 'public-docs-tests'],
       ['node scripts/syncBundledDocs.js --check --report ' + path.join(repoRoot, '.cache', 'docs-integration', 'public', 'latest', 'bundled-docs-check.json'), 'bundle-check'],
       ['lychee --verbose --no-progress --include-fragments README.md docs/**/*.md', 'links']
     ]);

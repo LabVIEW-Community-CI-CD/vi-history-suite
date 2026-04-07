@@ -1,8 +1,8 @@
 # Public Release Candidate
 
-- Version line: `1.0.4`
+- Version line: `1.0.5`
 - Burned exact release line: `v1.0.2`
-- Recorded at: `2026-04-07T14:29:21.000Z`
+- Recorded at: `2026-04-07T15:05:00.000Z`
 - Authority source of truth: GitLab `develop` -> `main`
 - Published public source commit: `5710d87`
 - Published public wiki head: `3ef5bee`
@@ -22,12 +22,12 @@
 
 ## Readiness
 
-- Authority baseline: `exact-release-normalization-ready`
-- Local installed VSIX: `exact-v1.0.4`
-- Local public devcontainer: `passed`
-- Local public fixture helper: `passed`
-- Public Codespace: `passed`
-- Gate D public acceptance: `passed`
+- Authority baseline: `develop-candidate-open`
+- Local installed VSIX: `pending-v1.0.5`
+- Local public devcontainer: `passed-v1.0.4-baseline`
+- Local public fixture helper: `passed-v1.0.4-baseline`
+- Public Codespace: `passed-v1.0.4-baseline`
+- Gate D public acceptance: `passed-v1.0.4-baseline`
 - Exact public release: `v1.0.4-published`
 
 ## Exact Release
@@ -87,6 +87,8 @@
 
 ## Remaining Blockers
 
-- None on the exact released line. `v1.0.2` is retained as burned,
-  `v1.0.4` is the current exact green line, and no newer `develop` candidate
-  is active yet.
+- `v1.0.5` is now the active `develop` candidate line.
+- Public `develop` still needs the exact released `v1.0.4` truth plus the new
+  first-use procedure hardening before promotion.
+- `v1.0.4` remains the current exact green line until the next exact release is
+  published.

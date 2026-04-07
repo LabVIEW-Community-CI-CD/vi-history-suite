@@ -75,6 +75,7 @@ describe('public docs continuous integration runner', () => {
       expect.arrayContaining([
         'tests/unit/publicDevcontainerSurface.test.ts',
         'tests/unit/publicFacadeLinuxSmoke.test.ts',
+        'tests/unit/publicForkOwnerProcedureDocs.test.ts',
         'tests/unit/publicSurfaceBoundaryDocs.test.ts'
       ])
     );

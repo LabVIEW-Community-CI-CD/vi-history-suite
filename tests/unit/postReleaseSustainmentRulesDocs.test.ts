@@ -102,8 +102,8 @@ describe('post-release sustainment rules package', () => {
       burnedExactVersionReleases: ['v1.0.2'],
       currentExactReleaseLine: 'v1.0.4',
       currentMainPackageLine: '1.0.4',
-      currentDevelopPackageLine: '1.0.4',
-      activeDevelopCandidateReleaseLine: null,
+      currentDevelopPackageLine: '1.0.5',
+      activeDevelopCandidateReleaseLine: 'v1.0.5',
       publicCodespaceBranch: 'develop',
       integrationBranch: 'develop',
       releaseBranch: 'main'

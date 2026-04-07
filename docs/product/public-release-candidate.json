@@ -1,8 +1,8 @@
 {
   "schema": "vi-history-suite/public-release-candidate@v1",
-  "versionLine": "1.0.4",
+  "versionLine": "1.0.5",
   "burnedExactReleaseLine": "v1.0.2",
-  "recordedAt": "2026-04-07T14:29:21.000Z",
+  "recordedAt": "2026-04-07T15:05:00.000Z",
   "authorityRepo": {
     "role": "source-of-truth",
     "integrationBranch": "develop",
@@ -31,12 +31,12 @@
     "status": "published"
   },
   "candidateReadiness": {
-    "authorityBaseline": "exact-release-normalization-ready",
-    "localInstalledVsix": "exact-v1.0.4",
-    "localPublicDevcontainer": "passed",
-    "localPublicFixtureHelper": "passed",
-    "publicCodespace": "passed",
-    "gateDPublicAcceptance": "passed",
+    "authorityBaseline": "develop-candidate-open",
+    "localInstalledVsix": "pending-v1.0.5",
+    "localPublicDevcontainer": "passed-v1.0.4-baseline",
+    "localPublicFixtureHelper": "passed-v1.0.4-baseline",
+    "publicCodespace": "passed-v1.0.4-baseline",
+    "gateDPublicAcceptance": "passed-v1.0.4-baseline",
     "exactPublicRelease": "v1.0.4-published"
   },
   "exactRelease": {
@@ -98,5 +98,18 @@
     "manualAlternativeWikiPage": "Manual-Actor-Framework-Clone",
     "refreshWikiPage": "Refresh-Codespace-Repositories"
   },
-  "activeBlockers": []
+  "activeBlockers": [
+    {
+      "id": "BLOCKER-1.0.5-PUBLIC-DEVELOP-SYNC"
+    },
+    {
+      "id": "BLOCKER-1.0.5-FIRST-USE-PROCEDURE-HARDENING"
+    },
+    {
+      "id": "BLOCKER-1.0.5-EXACT-PUBLIC-RELEASE"
+    },
+    {
+      "id": "BLOCKER-1.0.5-EXACT-AUTHORITY-RELEASE"
+    }
+  ]
 }

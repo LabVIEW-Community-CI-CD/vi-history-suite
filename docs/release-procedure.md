@@ -14,8 +14,8 @@
 - The current exact released line is `v1.0.4`.
 - The burned exact released line is `v1.0.2`.
 - The current published package line on `main` is `1.0.4`.
-- The current develop package line on `develop` is `1.0.4`.
-- No newer exact release candidate line is active on `develop` yet.
+- The current develop package line on `develop` is `1.0.5`.
+- The active exact release candidate line on `develop` is `v1.0.5`.
 - The public Codespaces evaluation branch is `develop`.
 - The integration branch is `develop`.
 - The release branch is `main`.
@@ -149,5 +149,5 @@
 - The current published package line on `main` is `1.0.4`, tracked in
   `CHANGELOG.md`, and it should not rewrite the retained `v0.2.0`, `v1.0.0`,
   `v1.0.1`, burned `v1.0.2`, or exact `v1.0.3` release evidence.
-- The current develop package line on `develop` is `1.0.4`, and no newer
-  exact release candidate line is active on `develop` yet.
+- The current develop package line on `develop` is `1.0.5`, and the active
+  exact release candidate line on `develop` is `v1.0.5`.

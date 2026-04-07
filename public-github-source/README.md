@@ -34,6 +34,24 @@ The compare surface is Docker-only:
 - If Docker is unavailable or the selected image cannot be acquired, the
   extension fails closed instead of probing host LabVIEW.
 
+## Fastest First Fork-Owner Run
+
+If this is your first time using the public fork path, use this order:
+
+1. Fork the repo and clear `Copy the main branch only` so your fork keeps
+   `develop`.
+2. Create a Codespace from `develop` with `Codespace repository configuration`
+   -> `New with options` and choose a `16-core` machine when GitHub offers it.
+3. Wait for the browser message
+   `Setting up remote connection: Building codespace` to finish.
+4. Run `npm run public:fixture:icon-editor`.
+5. Press `F5`, open `/workspaces/labview-icon-editor`, then right-click
+   `resource/plugins/lv_icon.vi` and choose `VI History`.
+
+The full first-time walkthrough is on the public wiki:
+
+- `https://github.com/svelderrainruiz/vi-history-suite/wiki/Fork-Codespace-Quickstart`
+
 ## Public Development Path
 
 This repo is expected to work in a Docker-capable devcontainer or Codespace.
@@ -122,6 +140,6 @@ npm run package -- --out /tmp/vi-history-suite-public-preview.vsix
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.0.4`
 - current published package line on `main`: `1.0.4`
-- current develop package line on `develop`: `1.0.4`
-- active exact release candidate line on `develop`: none yet
+- current develop package line on `develop`: `1.0.5`
+- active exact release candidate line on `develop`: `v1.0.5`
 - public Codespaces evaluation branch: `develop`
