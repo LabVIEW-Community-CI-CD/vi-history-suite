@@ -1,8 +1,8 @@
 # Public Release Candidate
 
 - Version line: `1.0.0`
-- Recorded at: `2026-04-07T04:06:58.998Z`
-- Authority green baseline: commit `6bbdc62`, pipeline `2433349023`
+- Recorded at: `2026-04-07T04:24:04.780Z`
+- Authority exact-release pipeline: commit `fd876ee`, pipeline `2433390427`
 - Published public source commit: `d787f2d`
 - Published public wiki head: `a7e30cd`
 
@@ -14,6 +14,20 @@
 - Local public fixture helper: passed
 - Public Codespace: passed
 - Gate D public acceptance: passed
+- Exact public release: published
+
+## Exact Release
+
+- GitHub release: `v1.0.0`
+- GitHub release URL:
+  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.0.0`
+- GitHub published at: `2026-04-07T04:20:55Z`
+- GitHub asset: `vi-history-suite-1.0.0-public-release.vsix`
+- GitHub asset SHA-256:
+  `396593ef30f04b07e60a3d55a20cd0292afc5341add7cee9260b15cc17bd585e`
+- GitLab tag pipeline: `2433390427`
+- GitLab release job: `13803354854`
+- GitLab release commit: `fd876ee`
 
 ## Local Proof
 
@@ -48,7 +62,8 @@
   Linux image cold pull, and containerized `CreateComparisonReport`
   reachability on the public product surface.
 - The retained hosted smoke still uses the synthetic integration fixture, so it
-  is supporting hosted proof rather than the final semantic Gate D acceptance.
+  remains supporting hosted proof rather than the canonical semantic
+  acceptance surface.
 
 ## Human Review Proof
 
@@ -61,6 +76,6 @@
 
 ## Remaining Blockers
 
-- None. The canonical Docker Linux cold-pull human pass is now retained on
-  `resource/plugins/lv_icon.vi`, so the exact `v1.0.0` public release is
-  cleared on the authority proof surfaces.
+- None. The canonical Docker Linux cold-pull human pass is retained on
+  `resource/plugins/lv_icon.vi`, the GitLab tag pipeline is green, and the
+  exact `v1.0.0` public GitHub release is published.

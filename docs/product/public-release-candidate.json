@@ -1,12 +1,12 @@
 {
   "schema": "vi-history-suite/public-release-candidate@v1",
   "versionLine": "1.0.0",
-  "recordedAt": "2026-04-07T04:06:58.998Z",
+  "recordedAt": "2026-04-07T04:24:04.780Z",
   "authorityRepo": {
     "role": "source-of-truth",
-    "latestGreenPipelineCommit": "6bbdc62",
-    "latestGreenPipelineId": "2433349023",
-    "status": "green-baseline"
+    "latestGreenPipelineCommit": "fd876ee",
+    "latestGreenPipelineId": "2433390427",
+    "status": "exact-release-published"
   },
   "publishedPublicSource": {
     "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
@@ -24,7 +24,18 @@
     "localPublicDevcontainer": "passed",
     "localPublicFixtureHelper": "passed",
     "publicCodespace": "passed",
-    "gateDPublicAcceptance": "passed"
+    "gateDPublicAcceptance": "passed",
+    "exactPublicRelease": "published"
+  },
+  "exactRelease": {
+    "version": "v1.0.0",
+    "gitlabTagPipelineId": "2433390427",
+    "gitlabReleaseJobId": "13803354854",
+    "gitlabReleaseCommit": "fd876ee",
+    "gitHubReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.0.0",
+    "gitHubPublishedAt": "2026-04-07T04:20:55Z",
+    "gitHubAssetName": "vi-history-suite-1.0.0-public-release.vsix",
+    "gitHubAssetSha256": "396593ef30f04b07e60a3d55a20cd0292afc5341add7cee9260b15cc17bd585e"
   },
   "localProofs": {
     "linuxContainerPathFix": {
@@ -62,7 +73,7 @@
       "notes": [
         "The hosted proof runs against the curated public GitHub source repo rather than the authority repo.",
         "The governed Linux host bootstrap now installs both VS Code runtime libraries and the xauth/Xvfb support needed by xvfb-run on Debian-hosted Codespaces surfaces.",
-        "The retained hosted smoke now proves Docker Linux image cold pull plus containerized CreateComparisonReport reachability on the public product surface; semantic compare acceptance on the canonical fixture remains Gate D human judgment."
+        "The retained hosted smoke now proves Docker Linux image cold pull plus containerized CreateComparisonReport reachability on the public product surface; the later canonical human pass closed Gate D on resource/plugins/lv_icon.vi."
       ]
     }
   },

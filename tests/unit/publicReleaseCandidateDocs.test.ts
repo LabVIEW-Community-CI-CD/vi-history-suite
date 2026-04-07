@@ -35,8 +35,8 @@ describe('public release candidate control surface', () => {
 
     expect(candidate.versionLine).toBe('1.0.0');
     expect(candidate.authorityRepo).toMatchObject({
-      latestGreenPipelineCommit: '6bbdc62',
-      latestGreenPipelineId: '2433349023'
+      latestGreenPipelineCommit: 'fd876ee',
+      latestGreenPipelineId: '2433390427'
     });
     expect(candidate.publishedPublicSource?.publishedCommit).toBe('d787f2d');
     expect(candidate.publishedPublicWiki?.publishedHeadCommit).toBe('a7e30cd');
@@ -45,7 +45,8 @@ describe('public release candidate control surface', () => {
       localPublicDevcontainer: 'passed',
       localPublicFixtureHelper: 'passed',
       publicCodespace: 'passed',
-      gateDPublicAcceptance: 'passed'
+      gateDPublicAcceptance: 'passed',
+      exactPublicRelease: 'published'
     });
     expect(candidate.testerFixtureStrategy).toMatchObject({
       command: 'npm run public:fixture:icon-editor',
@@ -53,6 +54,12 @@ describe('public release candidate control surface', () => {
     });
     expect(candidate.activeBlockers).toEqual([]);
     expect(candidate).toMatchObject({
+      exactRelease: {
+        version: 'v1.0.0',
+        gitlabTagPipelineId: '2433390427',
+        gitlabReleaseJobId: '13803354854',
+        gitHubAssetName: 'vi-history-suite-1.0.0-public-release.vsix'
+      },
       hostedProofs: {
         publicCodespace: {
           status: 'passed',
@@ -73,10 +80,13 @@ describe('public release candidate control surface', () => {
     expect(candidateMarkdown).toContain('Local public devcontainer: passed');
     expect(candidateMarkdown).toContain('npm run public:fixture:icon-editor');
     expect(candidateMarkdown).toContain('Public Codespace: passed');
+    expect(candidateMarkdown).toContain('Exact public release: published');
+    expect(candidateMarkdown).toContain('GitHub release: `v1.0.0`');
+    expect(candidateMarkdown).toContain('GitLab tag pipeline: `2433390427`');
     expect(candidateMarkdown).toContain('GitHub Codespace `novacula` now passes the hosted public smoke');
     expect(candidateMarkdown).toContain('resource/plugins/lv_icon.vi');
     expect(candidateMarkdown).toContain('Gate D public acceptance: passed');
-    expect(candidateMarkdown).toContain('None. The canonical Docker Linux cold-pull human pass is now retained');
+    expect(candidateMarkdown).toContain('None. The canonical Docker Linux cold-pull human pass is retained');
 
     expect(currentState).toContain('[Public Release Candidate](./public-release-candidate.md)');
     expect(currentState).toContain('local public devcontainer now passes on this machine');
