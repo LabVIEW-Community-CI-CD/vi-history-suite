@@ -484,6 +484,7 @@ async function runHostNativeExecution(
         pathExists: deps.pathExists
       });
       const diagnostics = await captureRuntimeDiagnostics(record, commandResult.stdout, {
+        stderr: commandResult.stderr,
         pathExists: deps.pathExists,
         copyFile: deps.copyFile,
         unlinkFile: deps.unlinkFile,
@@ -509,6 +510,7 @@ async function runHostNativeExecution(
           copyDirectory: deps.copyDirectory,
           removePath: deps.removePath,
           readFile: deps.readFile,
+          writeFile: deps.writeFile,
           mkdir: deps.mkdir
         }
       );
@@ -606,6 +608,7 @@ async function runHostNativeExecution(
       await deps.writeFile(record.artifactPlan.runtimeStdoutFilePath, processError.stdout, 'utf8');
       await deps.writeFile(record.artifactPlan.runtimeStderrFilePath, processError.stderr, 'utf8');
       const diagnostics = await captureRuntimeDiagnostics(record, processError.stdout, {
+        stderr: processError.stderr,
         pathExists: deps.pathExists,
         copyFile: deps.copyFile,
         unlinkFile: deps.unlinkFile,
@@ -649,6 +652,7 @@ async function runHostNativeExecution(
       'Linux',
       record,
       deps,
+      effectiveExecutionContext,
       windowsLabviewTcpSettings.labviewTcpPort
     );
     const retriedResult = await executeAttempt();
@@ -665,6 +669,7 @@ async function runHostNativeExecution(
       'Windows',
       record,
       deps,
+      effectiveExecutionContext,
       initialResult.labviewTcpPort ?? windowsLabviewTcpSettings.labviewTcpPort
     );
     const retriedResult = await executeAttempt();
@@ -782,6 +787,11 @@ interface CapturedRuntimeDiagnostics {
 interface RuntimeDiagnosticPathMapping {
   runtimeRoot: string;
   hostRoot: string;
+}
+
+interface RuntimeTextReplacement {
+  from: string;
+  to: string;
 }
 
 const WINDOWS_CONTAINER_WORKSPACE_ROOT = 'C:\\vi-history-suite';
@@ -1026,6 +1036,7 @@ async function captureRuntimeDiagnostics(
   record: ComparisonReportPacketRecord,
   stdout: string,
   deps: {
+    stderr: string;
     pathExists: (filePath: string) => Promise<boolean>;
     copyFile: typeof fs.copyFile;
     unlinkFile: typeof fs.unlink;
@@ -1060,13 +1071,14 @@ async function captureRuntimeDiagnostics(
     processPlatform: deps.processPlatform,
     diagnosticPathMapping: deps.diagnosticPathMapping
   });
+  const stderrClassification = classifyLabviewCliDiagnosticText(deps.stderr, deps.expectedLabviewPath);
 
   const diagnosticLogSourcePath = parseLabviewCliDiagnosticLogPath(stdout);
   if (!diagnosticLogSourcePath) {
     await clearStaleArtifactIfPresent();
     return {
-      reason: headlessDiagnostics.reason,
-      notes: headlessDiagnostics.notes,
+      reason: stderrClassification.reason ?? headlessDiagnostics.reason,
+      notes: mergeDiagnosticNotes(stderrClassification.notes, headlessDiagnostics.notes),
       headlessArtifactPaths: headlessDiagnostics.artifactPaths
     };
   }
@@ -1080,11 +1092,15 @@ async function captureRuntimeDiagnostics(
     await clearStaleArtifactIfPresent();
     return {
       notes: mergeDiagnosticNotes(
+        stderrClassification.notes,
         ['LabVIEW CLI reported a diagnostic log path, but the log file was not readable from the active host.'],
         headlessDiagnostics.notes
       ),
       sourcePath: diagnosticLogSourcePath,
-      reason: headlessDiagnostics.reason ?? 'runtime-diagnostic-log-unreadable',
+      reason:
+        stderrClassification.reason ??
+        headlessDiagnostics.reason ??
+        'runtime-diagnostic-log-unreadable',
       headlessArtifactPaths: headlessDiagnostics.artifactPaths
     };
   }
@@ -1095,8 +1111,8 @@ async function captureRuntimeDiagnostics(
   const classification = classifyLabviewCliDiagnosticText(diagnosticText, deps.expectedLabviewPath);
 
   return {
-    reason: headlessDiagnostics.reason ?? classification.reason,
-    notes: mergeDiagnosticNotes(classification.notes, headlessDiagnostics.notes),
+    reason: stderrClassification.reason ?? classification.reason ?? headlessDiagnostics.reason,
+    notes: mergeDiagnosticNotes(stderrClassification.notes, classification.notes, headlessDiagnostics.notes),
     sourcePath: diagnosticLogSourcePath,
     artifactPath: record.artifactPlan.runtimeDiagnosticLogFilePath,
     headlessArtifactPaths: headlessDiagnostics.artifactPaths
@@ -1146,6 +1162,7 @@ async function attemptLabviewCliHeadlessSessionReset(
     mkdir: typeof fs.mkdir;
     writeFile: typeof fs.writeFile;
   },
+  executionContext: PreparedExecutionContext,
   labviewTcpPort?: number
 ): Promise<{
   notes: string[];
@@ -1157,11 +1174,24 @@ async function attemptLabviewCliHeadlessSessionReset(
   stderrFilePath: string;
 }> {
   const startedMs = deps.nowMs();
-  const closeCommandPlan = buildLabviewCliCloseLabviewCommandPlan(
+  const baseCloseCommandPlan = buildLabviewCliCloseLabviewCommandPlan(
     record.runtimeSelection.labviewCli?.path ?? 'LabVIEWCLI',
     record.runtimeSelection.labviewExe?.path,
     labviewTcpPort
   );
+  const linuxContainerImage = record.runtimeSelection.containerImage?.trim();
+  const closeCommandPlan =
+    record.runtimeSelection.provider === 'linux-container' && linuxContainerImage
+      ? buildLinuxContainerCommandPlan(record, baseCloseCommandPlan, {
+          hostReportDirectory: path.dirname(executionContext.reportFilePath),
+          hostTempDirectory:
+            executionContext.diagnosticPathMapping?.hostRoot ??
+            path.join(path.dirname(executionContext.reportFilePath), 'container-temp'),
+          containerWorkspaceRoot: LINUX_CONTAINER_WORKSPACE_ROOT,
+          containerImage: linuxContainerImage,
+          processPlatform: executionContext.reportFilePath.includes('\\') ? 'win32' : 'linux'
+        }) ?? baseCloseCommandPlan
+      : baseCloseCommandPlan;
   const stdoutFilePath = path.join(
     record.artifactPlan.reportDirectory,
     HEADLESS_SESSION_RESET_STDOUT_FILENAME
@@ -1386,6 +1416,8 @@ export interface PreparedExecutionContext {
   reportFilePath: string;
   failureReason?: string;
   diagnosticPathMapping?: RuntimeDiagnosticPathMapping;
+  reportIdentityFilenames?: string[];
+  reportTextReplacements?: RuntimeTextReplacement[];
 }
 
 async function prepareExecutionContext(
@@ -1460,6 +1492,7 @@ async function finalizeExecutedReport(
     copyDirectory: typeof fs.cp;
     removePath: typeof fs.rm;
     readFile: typeof fs.readFile;
+    writeFile: typeof fs.writeFile;
     mkdir: typeof fs.mkdir;
   }
 ): Promise<{
@@ -1476,7 +1509,12 @@ async function finalizeExecutedReport(
 
   if (options.validateIdentity) {
     const validationNotes = await validateExecutedReportIdentity(record, executionContext.reportFilePath, {
-      readFile: deps.readFile
+      readFile: deps.readFile,
+      expectedFilenames:
+        executionContext.reportIdentityFilenames ?? [
+          record.stagedRevisionPlan.leftFilename,
+          record.stagedRevisionPlan.rightFilename
+        ]
     });
     if (validationNotes.length > 0) {
       await clearStaleExecutedReportArtifacts(record, executionContext, {
@@ -1497,7 +1535,20 @@ async function finalizeExecutedReport(
   }
 
   await deps.mkdir(path.dirname(record.artifactPlan.reportFilePath), { recursive: true });
-  await deps.copyFile(executionContext.reportFilePath, record.artifactPlan.reportFilePath);
+  if (executionContext.reportTextReplacements && executionContext.reportTextReplacements.length > 0) {
+    try {
+      const reportText = await deps.readFile(executionContext.reportFilePath, 'utf8');
+      await deps.writeFile(
+        record.artifactPlan.reportFilePath,
+        applyRuntimeTextReplacements(reportText, executionContext.reportTextReplacements),
+        'utf8'
+      );
+    } catch {
+      await deps.copyFile(executionContext.reportFilePath, record.artifactPlan.reportFilePath);
+    }
+  } else {
+    await deps.copyFile(executionContext.reportFilePath, record.artifactPlan.reportFilePath);
+  }
   await copyReportAssetsDirectory(executionContext.reportFilePath, record.artifactPlan.reportFilePath, {
     pathExists: deps.pathExists,
     copyDirectory: deps.copyDirectory,
@@ -1540,6 +1591,7 @@ async function validateExecutedReportIdentity(
   reportFilePath: string,
   deps: {
     readFile: typeof fs.readFile;
+    expectedFilenames: string[];
   }
 ): Promise<string[]> {
   let reportText: string;
@@ -1551,10 +1603,7 @@ async function validateExecutedReportIdentity(
     ];
   }
 
-  const expectedFilenames = [
-    record.stagedRevisionPlan.leftFilename,
-    record.stagedRevisionPlan.rightFilename
-  ];
+  const expectedFilenames = deps.expectedFilenames;
   const missingFilenames = expectedFilenames.filter((filename) => !reportText.includes(filename));
   if (missingFilenames.length === 0) {
     return [];
@@ -1571,6 +1620,19 @@ interface WindowsInteropLayout {
   leftFilePath: string;
   rightFilePath: string;
   reportFilePath: string;
+}
+
+interface LinuxContainerWorkspaceLayout {
+  reportDirectory: string;
+  stagingDirectory: string;
+  leftFilename: string;
+  rightFilename: string;
+  reportFilename: string;
+  leftFilePath: string;
+  rightFilePath: string;
+  reportFilePath: string;
+  reportIdentityFilenames: string[];
+  reportTextReplacements: RuntimeTextReplacement[];
 }
 
 function buildWindowsInteropLayout(
@@ -1591,6 +1653,69 @@ function buildWindowsInteropLayout(
     rightFilePath: path.join(stagingDirectory, record.stagedRevisionPlan.rightFilename),
     reportFilePath: path.join(reportDirectory, record.artifactPlan.reportFilename)
   };
+}
+
+function buildLinuxContainerWorkspaceLayout(
+  record: ComparisonReportPacketRecord,
+  hostLayout: WindowsInteropLayout
+): LinuxContainerWorkspaceLayout {
+  const leftFilename = buildLinuxContainerRuntimeFilenameAlias(record.stagedRevisionPlan.leftFilename);
+  const rightFilename = buildLinuxContainerRuntimeFilenameAlias(record.stagedRevisionPlan.rightFilename);
+  const reportFilename = buildLinuxContainerRuntimeFilenameAlias(record.artifactPlan.reportFilename);
+  const replacements: RuntimeTextReplacement[] = [];
+  const aliasAssetsDirectory = buildReportAssetsDirectoryPath(reportFilename);
+  const canonicalAssetsDirectory = buildReportAssetsDirectoryPath(record.artifactPlan.reportFilename);
+
+  if (leftFilename !== record.stagedRevisionPlan.leftFilename) {
+    replacements.push({
+      from: leftFilename,
+      to: record.stagedRevisionPlan.leftFilename
+    });
+  }
+  if (rightFilename !== record.stagedRevisionPlan.rightFilename) {
+    replacements.push({
+      from: rightFilename,
+      to: record.stagedRevisionPlan.rightFilename
+    });
+  }
+  if (reportFilename !== record.artifactPlan.reportFilename) {
+    replacements.push({
+      from: reportFilename,
+      to: record.artifactPlan.reportFilename
+    });
+  }
+  if (aliasAssetsDirectory !== canonicalAssetsDirectory) {
+    replacements.push({
+      from: aliasAssetsDirectory,
+      to: canonicalAssetsDirectory
+    });
+  }
+
+  return {
+    reportDirectory: hostLayout.reportDirectory,
+    stagingDirectory: hostLayout.stagingDirectory,
+    leftFilename,
+    rightFilename,
+    reportFilename,
+    leftFilePath: path.join(hostLayout.stagingDirectory, leftFilename),
+    rightFilePath: path.join(hostLayout.stagingDirectory, rightFilename),
+    reportFilePath: path.join(hostLayout.reportDirectory, reportFilename),
+    reportIdentityFilenames: [leftFilename, rightFilename],
+    reportTextReplacements: replacements
+  };
+}
+
+function buildLinuxContainerRuntimeFilenameAlias(filename: string): string {
+  return filename.replace(/\s+/g, '_');
+}
+
+function applyRuntimeTextReplacements(
+  reportText: string,
+  replacements: RuntimeTextReplacement[]
+): string {
+  return [...replacements]
+    .sort((left, right) => right.from.length - left.from.length)
+    .reduce((updated, replacement) => updated.split(replacement.from).join(replacement.to), reportText);
 }
 
 export function buildWindowsInteropCommandPlan(
@@ -1855,13 +1980,23 @@ export async function prepareLinuxContainerExecutionContext(
 
   const hostTempDirectory = path.join(hostLayout.reportDirectory, 'container-temp');
   await deps.mkdir(hostTempDirectory, { recursive: true });
+  const workspaceLayout = buildLinuxContainerWorkspaceLayout(record, hostLayout);
+  if (workspaceLayout.leftFilePath !== hostLayout.leftFilePath) {
+    await deps.writeFile(workspaceLayout.leftFilePath, deps.leftBlob);
+  }
+  if (workspaceLayout.rightFilePath !== hostLayout.rightFilePath) {
+    await deps.writeFile(workspaceLayout.rightFilePath, deps.rightBlob);
+  }
 
   const containerCommandPlan = buildLinuxContainerCommandPlan(record, commandPlan, {
     hostReportDirectory,
     hostTempDirectory,
     containerWorkspaceRoot: LINUX_CONTAINER_WORKSPACE_ROOT,
     containerImage,
-    processPlatform: deps.processPlatform
+    processPlatform: deps.processPlatform,
+    leftFilename: workspaceLayout.leftFilename,
+    rightFilename: workspaceLayout.rightFilename,
+    reportFilename: workspaceLayout.reportFilename
   });
   if (!containerCommandPlan) {
     return {
@@ -1875,11 +2010,13 @@ export async function prepareLinuxContainerExecutionContext(
   return {
     outcome: 'ready',
     commandPlan: containerCommandPlan,
-    reportFilePath: hostLayout.reportFilePath,
+    reportFilePath: workspaceLayout.reportFilePath,
     diagnosticPathMapping: {
       runtimeRoot: LINUX_CONTAINER_TEMP_ROOT,
       hostRoot: hostTempDirectory
-    }
+    },
+    reportIdentityFilenames: workspaceLayout.reportIdentityFilenames,
+    reportTextReplacements: workspaceLayout.reportTextReplacements
   };
 }
 
@@ -1959,6 +2096,9 @@ export function buildLinuxContainerCommandPlan(
     containerWorkspaceRoot: string;
     containerImage: string;
     processPlatform: NodeJS.Platform;
+    leftFilename?: string;
+    rightFilename?: string;
+    reportFilename?: string;
   }
 ): ComparisonCommandPlan | undefined {
   if (!record.runtimeSelection.engine) {
@@ -1969,15 +2109,15 @@ export function buildLinuxContainerCommandPlan(
     record.runtimeSelection.engine === 'labview-cli'
       ? rewriteLabviewCliArgsForLinuxContainerWorkspace(commandPlan.args, {
           containerWorkspaceRoot: options.containerWorkspaceRoot,
-          leftFilename: record.stagedRevisionPlan.leftFilename,
-          rightFilename: record.stagedRevisionPlan.rightFilename,
-          reportFilename: record.artifactPlan.reportFilename,
+          leftFilename: options.leftFilename ?? record.stagedRevisionPlan.leftFilename,
+          rightFilename: options.rightFilename ?? record.stagedRevisionPlan.rightFilename,
+          reportFilename: options.reportFilename ?? record.artifactPlan.reportFilename,
           labviewPath: record.runtimeSelection.labviewExe?.path
         })
       : rewriteLvcompareArgsForLinuxContainerWorkspace(commandPlan.args, {
           containerWorkspaceRoot: options.containerWorkspaceRoot,
-          leftFilename: record.stagedRevisionPlan.leftFilename,
-          rightFilename: record.stagedRevisionPlan.rightFilename,
+          leftFilename: options.leftFilename ?? record.stagedRevisionPlan.leftFilename,
+          rightFilename: options.rightFilename ?? record.stagedRevisionPlan.rightFilename,
           labviewPath: record.runtimeSelection.labviewExe?.path
         });
   if (!containerArgs) {
@@ -2615,6 +2755,18 @@ export function classifyLabviewCliDiagnosticText(
 } {
   const notes: string[] = [];
   const launchSucceeded = /LabVIEW launched successfully\./i.test(diagnosticText);
+  const invalidPathLines = diagnosticText.match(/^.*path invalid or does not exist:\s*.+$/gim);
+  if (invalidPathLines && invalidPathLines.length > 0) {
+    notes.push(
+      `LabVIEW CLI rejected one or more supplied paths: ${invalidPathLines
+        .map((line) => line.trim())
+        .join(' | ')}.`
+    );
+    return {
+      reason: 'labview-cli-invalid-vi-path',
+      notes: appendLaunchConfirmationNote(notes, launchSucceeded)
+    };
+  }
   const ignoredLabviewPathMatch = diagnosticText.match(
     /"LabVIEWPath" command line argument is not passed\.\s*Using last used LabVIEW:\s*"([^"]+)"/i
   );

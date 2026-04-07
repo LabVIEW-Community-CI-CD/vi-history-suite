@@ -7,10 +7,14 @@ import {
 } from '../../src/reporting/comparisonReportRuntimeExecution';
 import type { ComparisonReportPacketRecord } from '../../src/reporting/comparisonReportPacket';
 
-function createLinuxContainerReadyRecord(): ComparisonReportPacketRecord {
+function createLinuxContainerReadyRecord(fullFilename = 'foo.vi'): ComparisonReportPacketRecord {
+  const reportFilename = `diff-report-${fullFilename}.html`;
+  const leftFilename = `left-111111112222-${fullFilename}`;
+  const rightFilename = `right-abcdef123456-${fullFilename}`;
+
   return {
     generatedAt: '2026-04-02T00:00:00.000Z',
-    reportTitle: 'VI Comparison Report: foo.vi',
+    reportTitle: `VI Comparison Report: ${fullFilename}`,
     reportStatus: 'ready-for-runtime',
     reportType: 'diff',
     selectedHash: 'abcdef1234567890',
@@ -19,12 +23,12 @@ function createLinuxContainerReadyRecord(): ComparisonReportPacketRecord {
       repoId: 'repoid123456',
       fileId: 'fileid123456',
       reportType: 'diff',
-      fullFilename: 'foo.vi',
-      normalizedRelativePath: 'foo.vi',
+      fullFilename,
+      normalizedRelativePath: fullFilename,
       reportDirectory: '/workspace/.storage/reports/repoid123456/fileid123456',
       stagingDirectory: '/workspace/.storage/reports/repoid123456/fileid123456/staging',
-      reportFilename: 'diff-report-foo.vi.html',
-      reportFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html',
+      reportFilename,
+      reportFilePath: `/workspace/.storage/reports/repoid123456/fileid123456/${reportFilename}`,
       packetFilename: 'report-packet.html',
       packetFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-packet.html',
       metadataFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/report-metadata.json',
@@ -40,23 +44,23 @@ function createLinuxContainerReadyRecord(): ComparisonReportPacketRecord {
       ]
     },
     stagedRevisionPlan: {
-      leftFilename: 'left-111111112222-foo.vi',
-      leftFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/staging/left-111111112222-foo.vi',
-      rightFilename: 'right-abcdef123456-foo.vi',
-      rightFilePath: '/workspace/.storage/reports/repoid123456/fileid123456/staging/right-abcdef123456-foo.vi'
+      leftFilename,
+      leftFilePath: `/workspace/.storage/reports/repoid123456/fileid123456/staging/${leftFilename}`,
+      rightFilename,
+      rightFilePath: `/workspace/.storage/reports/repoid123456/fileid123456/staging/${rightFilename}`
     },
     preflight: {
-      normalizedRelativePath: 'foo.vi',
+      normalizedRelativePath: fullFilename,
       ready: true,
       left: {
         revisionId: '1111111122222222',
-        blobSpecifier: '1111111122222222:foo.vi',
+        blobSpecifier: `1111111122222222:${fullFilename}`,
         signature: 'LVIN',
         isVi: true
       },
       right: {
         revisionId: 'abcdef1234567890',
-        blobSpecifier: 'abcdef1234567890:foo.vi',
+        blobSpecifier: `abcdef1234567890:${fullFilename}`,
         signature: 'LVCC',
         isVi: true
       }
@@ -199,5 +203,65 @@ describe('linux container runtime execution surface', () => {
     });
     expect(plan?.args.at(-1)).toContain("cli_path='/usr/local/bin/LabVIEWCLI'");
     expect(plan?.args.at(-1)).toContain("'/workspace/diff-report-foo.vi.html'");
+  });
+
+  it('aliases spaced filenames before invoking Linux container CreateComparisonReport', async () => {
+    const record = createLinuxContainerReadyRecord('VIP_Pre-Uninstall Custom Action.vi');
+    const writeFile = vi.fn().mockResolvedValue(undefined) as never;
+
+    const result = await prepareLinuxContainerExecutionContext(
+      record,
+      createLinuxContainerCommandPlan(record),
+      undefined,
+      {
+        mkdir: vi.fn().mockResolvedValue(undefined) as never,
+        writeFile,
+        processPlatform: 'linux',
+        leftBlob: Buffer.from('left'),
+        rightBlob: Buffer.from('right')
+      }
+    );
+
+    expect(result.outcome).toBe('ready');
+    expect(result.reportFilePath).toBe(
+      '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-VIP_Pre-Uninstall_Custom_Action.vi.html'
+    );
+    expect(result.reportIdentityFilenames).toEqual([
+      'left-111111112222-VIP_Pre-Uninstall_Custom_Action.vi',
+      'right-abcdef123456-VIP_Pre-Uninstall_Custom_Action.vi'
+    ]);
+    expect(result.reportTextReplacements).toEqual(
+      expect.arrayContaining([
+        {
+          from: 'left-111111112222-VIP_Pre-Uninstall_Custom_Action.vi',
+          to: 'left-111111112222-VIP_Pre-Uninstall Custom Action.vi'
+        },
+        {
+          from: 'right-abcdef123456-VIP_Pre-Uninstall_Custom_Action.vi',
+          to: 'right-abcdef123456-VIP_Pre-Uninstall Custom Action.vi'
+        },
+        {
+          from: 'diff-report-VIP_Pre-Uninstall_Custom_Action.vi.html',
+          to: 'diff-report-VIP_Pre-Uninstall Custom Action.vi.html'
+        }
+      ])
+    );
+    expect(writeFile).toHaveBeenCalledWith(
+      '/workspace/.storage/reports/repoid123456/fileid123456/staging/left-111111112222-VIP_Pre-Uninstall_Custom_Action.vi',
+      Buffer.from('left')
+    );
+    expect(writeFile).toHaveBeenCalledWith(
+      '/workspace/.storage/reports/repoid123456/fileid123456/staging/right-abcdef123456-VIP_Pre-Uninstall_Custom_Action.vi',
+      Buffer.from('right')
+    );
+    expect(result.commandPlan?.args.at(-1)).toContain(
+      "'/workspace/staging/left-111111112222-VIP_Pre-Uninstall_Custom_Action.vi'"
+    );
+    expect(result.commandPlan?.args.at(-1)).toContain(
+      "'/workspace/staging/right-abcdef123456-VIP_Pre-Uninstall_Custom_Action.vi'"
+    );
+    expect(result.commandPlan?.args.at(-1)).toContain(
+      "'/workspace/diff-report-VIP_Pre-Uninstall_Custom_Action.vi.html'"
+    );
   });
 });

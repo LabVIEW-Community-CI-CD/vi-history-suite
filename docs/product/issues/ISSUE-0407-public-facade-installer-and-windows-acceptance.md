@@ -40,6 +40,17 @@ Current landed state:
   `e28491c`, canonical fixture commit
   `4e442eb0f5a6263e8f8aaa49c322a6b5fd0ea87a`, Docker Linux engine state, and
   governed Linux image absence before and after preparation
+- the latest retained Gate D review at `2026-04-07T01:37:37.885Z` is a real
+  failure on `Tooling/deployment/VIP_Pre-Uninstall Custom Action.vi`: the first
+  cold pull completed, then subsequent Linux-container compare attempts failed
+  as `command-exited-nonzero`
+- retained runtime stderr and packet evidence narrowed that failure to a
+  repo-owned Linux `CreateComparisonReport` path seam: the container runtime
+  launched and connected to LabVIEW, then rejected space-containing staged VI
+  paths under `/workspace/staging/...`
+- the authority repo now carries the unshipped fix for that seam, including
+  Linux-container filename aliasing plus canonical-name rewrite on the final
+  report copy and container-wrapped Linux `CloseLabVIEW` recovery
 - the public GitHub wiki now exists at
   `https://github.com/svelderrainruiz/vi-history-suite.wiki.git`
 - public GitHub wiki publication is tracked separately from the internal

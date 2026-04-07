@@ -61,6 +61,19 @@ Current truth:
   reached, switch Docker Desktop to the Linux engine, remove the stored
   governed Linux image, let the extension cold-pull that Linux image, and
   prove comparison generation on the canonical fixture target
+- the latest retained Gate D review at `2026-04-07T01:37:37.885Z` is a real
+  failure on `Tooling/deployment/VIP_Pre-Uninstall Custom Action.vi`: the first
+  governed Linux image cold pull completed truthfully, then later compare runs
+  failed as `command-exited-nonzero`
+- retained packet evidence from that review now narrows the active Gate D seam
+  to Linux-container `CreateComparisonReport` path handling on space-containing
+  staged/report filenames, not to initial image pull or initial container
+  launch
+- the authority repo now carries the unshipped runtime fix for that seam:
+  Linux-container compare execution aliases spaced staged/report filenames,
+  rewrites the generated report back to canonical spaced names, and keeps Linux
+  `CloseLabVIEW` recovery inside the container wrapper instead of trying to
+  spawn a container-internal CLI path on the host
 
 ## Trigger
 
@@ -313,6 +326,8 @@ The program still intentionally holds these gates open:
 - Gate D Linux-engine cold-pull compare proof on the canonical fixture
   workspace
 - Gate D canonical compare-presentation acceptance on the public product
+- Gate D rerun on the newly fixed Linux-container path after the updated VSIX
+  is installed
 
 ## Approval Outcome
 

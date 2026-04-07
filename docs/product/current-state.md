@@ -169,6 +169,20 @@ Current active tranche:
     `e28491c`, canonical fixture commit `4e442eb0f5a6263e8f8aaa49c322a6b5fd0ea87a`,
     Docker Linux engine state, and governed Linux image absence before and
     after preparation
+  - the latest retained human Gate D review at `2026-04-07T01:37:37.885Z` is a
+    real `failed-human-review` on
+    `c:\dev\labview-icon-editor\Tooling\deployment\VIP_Pre-Uninstall Custom Action.vi`;
+    the first cold pull succeeded, but subsequent Linux-container compare runs
+    failed as `command-exited-nonzero`
+  - retained stderr and packet archaeology narrowed that blocker from generic
+    `linux-headless-recursive-load` to a stronger repo-owned cause: Linux
+    `CreateComparisonReport` was launching and connecting successfully, then
+    rejecting space-containing staged VI paths under `/workspace/staging/...`
+  - the authority repo now carries the unshipped fix for that exact public Gate
+    D seam: Linux-container compare execution aliases staged/report filenames
+    without spaces, rewrites the generated HTML back to canonical spaced names,
+    and wraps Linux `CloseLabVIEW` recovery inside the same `docker run`
+    surface instead of trying to spawn `/usr/local/bin/LabVIEWCLI` on the host
 
 Post-release tranches:
 

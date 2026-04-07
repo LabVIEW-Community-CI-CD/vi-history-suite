@@ -759,6 +759,240 @@ describe('comparisonReportRuntimeExecution', () => {
     );
   });
 
+  it('classifies Linux container invalid-path failures before recursive-load diagnostics and skips recovery', async () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.platform = 'linux';
+    record.runtimeSelection.provider = 'linux-container';
+    record.runtimeSelection.containerRuntimePlatform = 'linux';
+    record.runtimeSelection.containerImage = 'nationalinstruments/labview:2026q1-linux';
+    record.runtimeSelection.bitness = 'x64';
+    record.runtimeSelection.labviewExe = {
+      kind: 'labview-exe',
+      path: '/usr/local/natinst/LabVIEW-2026-64/labview',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+    record.runtimeSelection.labviewCli = {
+      kind: 'labview-cli',
+      path: '/usr/local/bin/LabVIEWCLI',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+
+    const runCommand = vi.fn().mockResolvedValue({
+      exitCode: 1,
+      stdout: 'LabVIEWCLI started logging in file:  /tmp/lvtemporary_999.log\n',
+      stderr: [
+        'VI 1 path invalid or does not exist: /workspace/staging/left-fd5059b5fc8a-VIP_Pre-Uninstall',
+        'VI 2 path invalid or does not exist: /workspace/staging/right-7ab13f4723f0-VIP_Pre-Uninstall',
+        'CreateComparisonReport operation failed.'
+      ].join('\n')
+    });
+
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        readFile: vi.fn(async (filePath: string) => {
+          if (filePath === '/tmp/lvtemporary_999.log') {
+            return [
+              'Using LabVIEW: "/usr/local/natinst/LabVIEW-2026-64/labview"',
+              'LabVIEW launched successfully.',
+              'Connection established with LabVIEW at port number 3363.'
+            ].join('\n');
+          }
+          if (filePath === '/tmp/LVStatus.txt') {
+            return 'Recursive load during LEIF load! loading /<resource>/dialog/GSW/GSW.lvlibp/1abvi3w/resource/dialog/GSW/GSW_MainPanel.vi';
+          }
+          return '';
+        }) as never,
+        readdir: vi
+          .fn()
+          .mockResolvedValue(['LVStatus.txt', 'labview_26.1f0_headless_root_cur.txt']) as never,
+        pathExists: vi.fn(async (filePath: string) =>
+          [
+            '/tmp/lvtemporary_999.log',
+            '/tmp/LVStatus.txt',
+            '/tmp/labview_26.1f0_headless_root_cur.txt'
+          ].includes(filePath)
+        ),
+        runCommand: runCommand as never,
+        nowIso: vi
+          .fn()
+          .mockReturnValueOnce('2026-04-07T01:37:00.000Z')
+          .mockReturnValueOnce('2026-04-07T01:37:05.000Z'),
+        nowMs: vi.fn().mockReturnValueOnce(1000).mockReturnValueOnce(6000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'linux'
+      }
+    );
+
+    expect(runCommand).toHaveBeenCalledTimes(1);
+    expect(result.record.runtimeExecutionState).toBe('failed');
+    expect(result.record.runtimeExecution.diagnosticReason).toBe('labview-cli-invalid-vi-path');
+    expect(result.record.runtimeExecution.diagnosticNotes).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('LabVIEW CLI rejected one or more supplied paths'),
+        expect.stringContaining('Retained Linux headless status reported a recursive LEIF load')
+      ])
+    );
+    expect(result.record.runtimeExecution.headlessSessionResetArgs).toBeUndefined();
+  });
+
+  it('wraps Linux CloseLabVIEW recovery inside docker for linux-container runtime', async () => {
+    const record = createReadyRecord();
+    record.runtimeSelection.platform = 'linux';
+    record.runtimeSelection.provider = 'linux-container';
+    record.runtimeSelection.containerRuntimePlatform = 'linux';
+    record.runtimeSelection.containerImage = 'nationalinstruments/labview:2026q1-linux';
+    record.runtimeSelection.bitness = 'x64';
+    record.runtimeSelection.labviewExe = {
+      kind: 'labview-exe',
+      path: '/usr/local/natinst/LabVIEW-2026-64/labview',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+    record.runtimeSelection.labviewCli = {
+      kind: 'labview-cli',
+      path: '/usr/local/bin/LabVIEWCLI',
+      source: 'configured',
+      exists: true,
+      bitness: 'x64'
+    };
+
+    let recoveryAttempted = false;
+    const runCommand = vi.fn(async (plan: ComparisonCommandPlan) => {
+      const script = plan.args.at(-1) ?? '';
+      if (script.includes('CloseLabVIEW')) {
+        recoveryAttempted = true;
+        return {
+          exitCode: 0,
+          stdout: '',
+          stderr: ''
+        };
+      }
+
+      if (!recoveryAttempted) {
+        return {
+          exitCode: 1,
+          stdout: 'LabVIEWCLI started logging in file:  /tmp/lvtemporary_999.log\n',
+          stderr: 'Error code : 66'
+        };
+      }
+
+      return {
+        exitCode: 0,
+        stdout: '',
+        stderr: ''
+      };
+    });
+
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        readFile: vi.fn(async (filePath: string) => {
+          if (filePath === '/tmp/lvtemporary_999.log') {
+            return 'Using LabVIEW: "/usr/local/natinst/LabVIEW-2026-64/labview"\nLabVIEW launched successfully.\n';
+          }
+
+          if (filePath === '/tmp/LVStatus.txt') {
+            return 'Recursive load during LEIF load! loading /<resource>/dialog/GSW/GSW.lvlibp/1abvi3w/resource/dialog/GSW/GSW_MainPanel.vi';
+          }
+
+          return '';
+        }) as never,
+        readdir: vi
+          .fn()
+          .mockImplementation(async () =>
+            recoveryAttempted ? [] : ['LVStatus.txt', 'labview_26.1f0_headless_root_cur.txt']
+          ) as never,
+        pathExists: vi.fn(async (filePath: string) => {
+          if (filePath === '/workspace/.storage/reports/repoid123456/fileid123456/diff-report-foo.vi.html') {
+            return recoveryAttempted;
+          }
+
+          if (filePath === '/tmp/lvtemporary_999.log') {
+            return !recoveryAttempted;
+          }
+
+          if (
+            filePath === '/tmp/LVStatus.txt' ||
+            filePath === '/tmp/labview_26.1f0_headless_root_cur.txt'
+          ) {
+            return !recoveryAttempted;
+          }
+
+          return false;
+        }),
+        runCommand: runCommand as never,
+        nowIso: vi
+          .fn()
+          .mockReturnValueOnce('2026-04-07T01:40:00.000Z')
+          .mockReturnValueOnce('2026-04-07T01:40:03.000Z')
+          .mockReturnValueOnce('2026-04-07T01:40:04.000Z')
+          .mockReturnValueOnce('2026-04-07T01:40:06.000Z'),
+        nowMs: vi
+          .fn()
+          .mockReturnValueOnce(1000)
+          .mockReturnValueOnce(4000)
+          .mockReturnValueOnce(4500)
+          .mockReturnValueOnce(4500)
+          .mockReturnValueOnce(6000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'linux'
+      }
+    );
+
+    expect(runCommand).toHaveBeenCalledTimes(3);
+    expect(runCommand.mock.calls[1]?.[0]).toEqual({
+      executable: 'docker',
+      args: expect.arrayContaining([
+        'run',
+        '--rm',
+        '-v',
+        '/workspace/.storage/reports/repoid123456/fileid123456:/workspace',
+        '-e',
+        'TEMP=/workspace/container-temp',
+        '-e',
+        'TMP=/workspace/container-temp',
+        '-e',
+        'TMPDIR=/workspace/container-temp',
+        'nationalinstruments/labview:2026q1-linux',
+        'bash',
+        '-lc'
+      ])
+    });
+    expect(runCommand.mock.calls[1]?.[0].args.at(-1)).toContain("'CloseLabVIEW'");
+    expect(result.record.runtimeExecutionState).toBe('succeeded');
+    expect(result.record.runtimeExecution.headlessSessionResetArgs).toEqual(
+      expect.arrayContaining(['run', '--rm', 'nationalinstruments/labview:2026q1-linux'])
+    );
+  });
+
   it('retries a Windows headless call-by-reference failure once after CloseLabVIEW session reset', async () => {
     const record = createReadyRecord();
     record.runtimeSelection.platform = 'win32';
