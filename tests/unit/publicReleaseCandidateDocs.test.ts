@@ -26,8 +26,23 @@ describe('public release candidate control surface', () => {
         requiredChecks?: string[];
       };
       publishedPublicSource?: { publishedCommit?: string };
+      publicDevelopCandidate?: {
+        branch?: string;
+        candidateCommit?: string;
+        status?: string;
+        sourcePullRequest?: string;
+      };
       publishedPublicWiki?: { publishedHeadCommit?: string };
       candidateReadiness?: Record<string, string>;
+      findingClassifications?: Array<{
+        id?: string;
+        status?: string;
+        requirementImpact?: string;
+        requirementRefs?: string[];
+        adrImpact?: string;
+        adrRefs?: string[];
+        adrRationale?: string;
+      }>;
       testerFixtureStrategy?: {
         command?: string;
         defaultCloneOnStartup?: boolean;
@@ -40,6 +55,9 @@ describe('public release candidate control surface', () => {
     }>('docs/product/public-release-candidate.json');
     const candidateMarkdown = readText('docs/product/public-release-candidate.md');
     const currentState = readText('docs/product/current-state.md');
+    const srs = readText('docs/requirements/srs.md');
+    const rtm = readText('docs/requirements/rtm.csv');
+    const testPlan = readText('docs/testing/test-plan.md');
     const program = readText(
       'docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md'
     );
@@ -47,7 +65,7 @@ describe('public release candidate control surface', () => {
       'docs/product/issues/ISSUE-0407-public-facade-installer-and-windows-acceptance.md'
     );
 
-    expect(candidate.versionLine).toBe('1.0.5');
+    expect(candidate.versionLine).toBe('1.0.6');
     expect(candidate.burnedExactReleaseLine).toBe('v1.0.2');
     expect(candidate.authorityRepo).toMatchObject({
       role: 'source-of-truth',
@@ -67,14 +85,20 @@ describe('public release candidate control surface', () => {
       ])
     );
     expect(candidate.publishedPublicSource?.publishedCommit).toBe('8d78872');
+    expect(candidate.publicDevelopCandidate).toMatchObject({
+      branch: 'develop',
+      candidateCommit: '975a7f2',
+      status: 'merged-required-checks-green',
+      sourcePullRequest: '#8'
+    });
     expect(candidate.publishedPublicWiki?.publishedHeadCommit).toBe('d184be2');
     expect(candidate.candidateReadiness).toMatchObject({
-      authorityBaseline: 'exact-release-normalization-ready',
+      authorityBaseline: 'v1.0.6-public-workflow-governance-public-develop-green',
       localInstalledVsix: 'exact-v1.0.5',
-      localPublicDevcontainer: 'passed',
-      localPublicFixtureHelper: 'passed',
-      publicCodespace: 'passed',
-      gateDPublicAcceptance: 'passed',
+      localPublicDevcontainer: 'passed-v1.0.5-baseline',
+      localPublicFixtureHelper: 'passed-v1.0.5-baseline',
+      publicCodespace: 'passed-v1.0.5-baseline',
+      gateDPublicAcceptance: 'passed-v1.0.5-baseline',
       exactPublicRelease: 'v1.0.5-published'
     });
     expect(candidate.testerFixtureStrategy).toMatchObject({
@@ -85,6 +109,33 @@ describe('public release candidate control surface', () => {
       manualAlternativeWikiPage: 'Manual-Actor-Framework-Clone',
       refreshWikiPage: 'Refresh-Codespace-Repositories'
     });
+    expect(candidate.findingClassifications).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'FINDING-1.0.6-001-PUBLIC-DEVELOP-REALIGNMENT',
+          status: 'closed',
+          requirementImpact: 'updated',
+          adrImpact: 'updated',
+          adrRefs: ['ADR-0030', 'ADR-0031']
+        }),
+        expect.objectContaining({
+          id: 'FINDING-1.0.6-002-HISTORY-PANEL-DISPOSED-WEBVIEW-PROGRESS-RACE',
+          status: 'closed',
+          requirementImpact: 'updated',
+          requirementRefs: ['VHS-REQ-509'],
+          adrImpact: 'no-impact',
+          adrRationale: expect.stringContaining('existing history-panel command/webview architecture')
+        }),
+        expect.objectContaining({
+          id: 'FINDING-1.0.6-003-PUBLIC-WORKFLOW-GOVERNANCE-GAP',
+          status: 'closed',
+          requirementImpact: 'updated',
+          requirementRefs: ['VHS-REQ-510'],
+          adrImpact: 'updated',
+          adrRefs: ['ADR-0032']
+        })
+      ])
+    );
     expect(candidate.activeBlockers).toEqual([]);
     expect(candidate).toMatchObject({
       exactRelease: {
@@ -109,25 +160,42 @@ describe('public release candidate control surface', () => {
     });
 
     expect(candidateMarkdown).toContain('Public Release Candidate');
-    expect(candidateMarkdown).toContain('Version line: `1.0.5`');
+    expect(candidateMarkdown).toContain('Version line: `1.0.6`');
     expect(candidateMarkdown).toContain('Burned exact release line: `v1.0.2`');
     expect(candidateMarkdown).toContain('Authority source of truth: GitLab `develop` -> `main`');
     expect(candidateMarkdown).toContain('Published public source commit: `8d78872`');
+    expect(candidateMarkdown).toContain('Public `develop` candidate commit: `975a7f2`');
     expect(candidateMarkdown).toContain('Published public wiki head: `d184be2`');
     expect(candidateMarkdown).toContain('Integration branch: `develop`');
     expect(candidateMarkdown).toContain('Release branch: `main`');
     expect(candidateMarkdown).toContain('Local installed VSIX: `exact-v1.0.5`');
-    expect(candidateMarkdown).toContain('Local public devcontainer: `passed`');
+    expect(candidateMarkdown).toContain('Local public devcontainer: `passed-v1.0.5-baseline`');
     expect(candidateMarkdown).toContain('npm run public:fixture:icon-editor');
-    expect(candidateMarkdown).toContain('Public Codespace: `passed`');
+    expect(candidateMarkdown).toContain('Public Codespace: `passed-v1.0.5-baseline`');
     expect(candidateMarkdown).toContain('Exact public release: `v1.0.5-published`');
     expect(candidateMarkdown).toContain('GitHub release: `v1.0.5`');
     expect(candidateMarkdown).toContain('GitHub Codespace `novacula` remains retained hosted public-surface proof.');
+    expect(candidateMarkdown).toContain('## Governed Findings');
+    expect(candidateMarkdown).toContain('FINDING-1.0.6-001-PUBLIC-DEVELOP-REALIGNMENT');
+    expect(candidateMarkdown).toContain('public `develop` merged at `0985f96`');
+    expect(candidateMarkdown).toContain('FINDING-1.0.6-002-HISTORY-PANEL-DISPOSED-WEBVIEW-PROGRESS-RACE');
+    expect(candidateMarkdown).toContain('FINDING-1.0.6-003-PUBLIC-WORKFLOW-GOVERNANCE-GAP');
+    expect(candidateMarkdown).toContain('public `develop` merged at `975a7f2`');
+    expect(candidateMarkdown).toContain('ADR impact: `no-impact`');
+    expect(candidateMarkdown).toContain('existing history-panel');
     expect(candidateMarkdown).toContain('resource/plugins/lv_icon.vi');
-    expect(candidateMarkdown).toContain('Gate D public acceptance: `passed`');
+    expect(candidateMarkdown).toContain('Gate D public acceptance: `passed-v1.0.5-baseline`');
     expect(candidateMarkdown).toContain('Refresh page: `Refresh-Codespace-Repositories`');
-    expect(candidateMarkdown).toContain('None on the exact released line.');
-    expect(candidateMarkdown).toContain('`v1.0.5` is the current exact green line');
+    expect(candidateMarkdown).toContain('branch-model hardening blocker is closed');
+    expect(candidateMarkdown).toContain('disposed-webview progress blocker is also closed');
+    expect(candidateMarkdown).toContain('No active `1.0.6` public-source blockers remain.');
+    expect(candidateMarkdown).toContain('`v1.0.5` remains the current exact green line while `v1.0.6` is the active');
+    expect(srs).toContain('VHS-REQ-509');
+    expect(srs).toContain('fail closed when an in-flight progress or result update races with disposal');
+    expect(rtm).toContain('VHS-REQ-509');
+    expect(rtm).toContain('Fail closed when an in-flight VI History webview progress or result update races with disposal of the panel');
+    expect(testPlan).toContain('TEST-UNIT-323');
+    expect(testPlan).toContain('TEST-DOC-088');
 
     expect(currentState).toContain('[Public Release Candidate](./public-release-candidate.md)');
     expect(currentState).toContain('local public devcontainer now passes on this machine');

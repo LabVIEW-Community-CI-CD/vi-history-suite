@@ -34,12 +34,23 @@ The compare surface is Docker-only:
 - If Docker is unavailable or the selected image cannot be acquired, the
   extension fails closed instead of probing host LabVIEW.
 
+## Branch Use
+
+- `main` is the public default branch and tracks the latest exact released
+  source line.
+- `develop` is the public evaluation branch for the next governed candidate
+  line.
+- If you only want the latest released source or release-facing docs, stay on
+  `main`.
+- If you are following the first-time Codespaces or devcontainer evaluation
+  flow, explicitly choose `develop`.
+
 ## Fastest First Fork-Owner Run
 
 If this is your first time using the public fork path, use this order:
 
 1. Fork the repo and clear `Copy the main branch only` so your fork keeps
-   `develop`.
+   `develop`. Your fork can still keep `main` as its default branch.
 2. Create a Codespace from `develop` with `Codespace repository configuration`
    -> `New with options` and choose a `16-core` machine when GitHub offers it.
 3. Wait for the browser message
@@ -55,6 +66,10 @@ The full first-time walkthrough is on the public wiki:
 ## Public Development Path
 
 This repo is expected to work in a Docker-capable devcontainer or Codespace.
+
+GitHub opens this public repo on `main` by default. That is expected because
+`main` is the latest exact released source line. Use `develop` only when you
+are following the public evaluation path for the next governed candidate.
 
 ## Public Devcontainer And Codespaces
 
@@ -140,6 +155,7 @@ npm run package -- --out /tmp/vi-history-suite-public-preview.vsix
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.0.5`
 - current published package line on `main`: `1.0.5`
-- current develop package line on `develop`: `1.0.5`
-- no newer exact release candidate line is active on `develop` yet
+- current develop package line on `develop`: `1.0.6`
+- active exact release candidate line on `develop`: `v1.0.6`
+- public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`

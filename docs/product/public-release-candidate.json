@@ -1,8 +1,8 @@
 {
   "schema": "vi-history-suite/public-release-candidate@v1",
-  "versionLine": "1.0.5",
+  "versionLine": "1.0.6",
   "burnedExactReleaseLine": "v1.0.2",
-  "recordedAt": "2026-04-07T15:52:05.000Z",
+  "recordedAt": "2026-04-07T17:12:30.000Z",
   "authorityRepo": {
     "role": "source-of-truth",
     "integrationBranch": "develop",
@@ -24,6 +24,12 @@
     "publicationLedgerPath": "docs/product/public-github-source-publication-ledger.json",
     "status": "published"
   },
+  "publicDevelopCandidate": {
+    "branch": "develop",
+    "candidateCommit": "975a7f2",
+    "status": "merged-required-checks-green",
+    "sourcePullRequest": "#8"
+  },
   "publishedPublicWiki": {
     "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite.wiki.git",
     "publishedHeadCommit": "d184be2",
@@ -31,14 +37,43 @@
     "status": "published"
   },
   "candidateReadiness": {
-    "authorityBaseline": "exact-release-normalization-ready",
+    "authorityBaseline": "v1.0.6-public-workflow-governance-public-develop-green",
     "localInstalledVsix": "exact-v1.0.5",
-    "localPublicDevcontainer": "passed",
-    "localPublicFixtureHelper": "passed",
-    "publicCodespace": "passed",
-    "gateDPublicAcceptance": "passed",
+    "localPublicDevcontainer": "passed-v1.0.5-baseline",
+    "localPublicFixtureHelper": "passed-v1.0.5-baseline",
+    "publicCodespace": "passed-v1.0.5-baseline",
+    "gateDPublicAcceptance": "passed-v1.0.5-baseline",
     "exactPublicRelease": "v1.0.5-published"
   },
+  "findingClassifications": [
+    {
+      "id": "FINDING-1.0.6-001-PUBLIC-DEVELOP-REALIGNMENT",
+      "status": "closed",
+      "summary": "Public GitHub develop now carries the governed 1.0.6 branch-model and required-check hardening.",
+      "requirementImpact": "updated",
+      "requirementRefs": ["VHS-REQ-505", "VHS-REQ-506", "VHS-REQ-507", "VHS-REQ-508"],
+      "adrImpact": "updated",
+      "adrRefs": ["ADR-0030", "ADR-0031"]
+    },
+    {
+      "id": "FINDING-1.0.6-002-HISTORY-PANEL-DISPOSED-WEBVIEW-PROGRESS-RACE",
+      "status": "closed",
+      "summary": "The history panel can race a disposed webview while compare progress or result updates are still being posted from an in-flight command.",
+      "requirementImpact": "updated",
+      "requirementRefs": ["VHS-REQ-509"],
+      "adrImpact": "no-impact",
+      "adrRationale": "The fix stays within the existing history-panel command/webview architecture and does not change sustained branch, release, runtime-provider, or product-boundary decisions."
+    },
+    {
+      "id": "FINDING-1.0.6-003-PUBLIC-WORKFLOW-GOVERNANCE-GAP",
+      "status": "closed",
+      "summary": "The public GitHub workflow pair now has explicit owned responsibilities, bounded triggers, and per-ref churn control retained in both the public repo and authority control plane.",
+      "requirementImpact": "updated",
+      "requirementRefs": ["VHS-REQ-510"],
+      "adrImpact": "updated",
+      "adrRefs": ["ADR-0032"]
+    }
+  ],
   "exactRelease": {
     "version": "v1.0.5",
     "gitHubReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.0.5",
@@ -73,7 +108,7 @@
       "proofBaselineCommit": "4a8b27b",
       "notes": [
         "The hosted proof is retained as public-surface evidence rather than canonical human acceptance.",
-        "The later v1.0.5 surface changes are exact-release publication, public wiki publication, and fork-owner procedure hardening on top of that already-passed hosted runtime path."
+        "The exact public baseline remains v1.0.5 while the next governance line opens on develop."
       ]
     }
   },

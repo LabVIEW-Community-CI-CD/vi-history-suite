@@ -6,7 +6,30 @@ on:
     branches:
       - develop
       - main
+      - 'release/**'
+      - 'hotfix/**'
+    paths:
+      - '.devcontainer/**'
+      - '.github/workflows/public-facade-package-preview.yml'
+      - '.github/workflows/public-facade-linux-smoke.yml'
+      - '.vscode/**'
+      - 'README.md'
+      - 'INSTALL.md'
+      - 'SUPPORT.md'
+      - 'CONTRIBUTING.md'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.json'
+      - 'tsconfig.integration.json'
+      - 'vitest.config.ts'
+      - 'resources/**'
+      - 'scripts/**'
+      - 'src/**'
+      - 'tests/**'
   pull_request:
+    branches:
+      - develop
+      - main
     paths:
       - '.devcontainer/**'
       - '.github/workflows/public-facade-package-preview.yml'
@@ -28,6 +51,10 @@ on:
 
 permissions:
   contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   package-preview:

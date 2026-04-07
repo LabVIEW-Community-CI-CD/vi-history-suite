@@ -26,11 +26,13 @@
       ],
       "currentExactReleaseLine": "v1.0.5",
       "currentMainPackageLine": "1.0.5",
-      "currentDevelopPackageLine": "1.0.5",
-      "activeDevelopCandidateReleaseLine": null,
+      "currentDevelopPackageLine": "1.0.6",
+      "activeDevelopCandidateReleaseLine": "v1.0.6",
+      "publicDefaultBranch": "main",
       "publicCodespaceBranch": "develop",
       "integrationBranch": "develop",
-      "releaseBranch": "main"
+      "releaseBranch": "main",
+      "nextLineBranchModel": "gitflow-lite"
     },
     "maintainedSurfaces": [
       "preview-evidence/vi-history-suite-<version>.vsix",
@@ -55,6 +57,24 @@
       "future sessions shall not keep landing post-release changes on the previous exact release version number",
       "future sessions shall not treat a burned exact release as the green release baseline for later publication"
     ],
+    "semverDecisionFramework": {
+      "defaultGovernanceBump": "patch",
+      "major": [
+        "breaks or removes a governed public or maintainer contract on purpose",
+        "changes a default branch, release topology, or install/runtime expectation in a way that invalidates an already-published workflow",
+        "drops support for a previously governed surface"
+      ],
+      "minor": [
+        "adds a new governed capability or supported workflow without breaking the current exact released line",
+        "adds a new maintained surface that future releases are expected to support"
+      ],
+      "patch": [
+        "fixes or hardens an existing workflow, release rule, procedure, branch policy, or CI posture without breaking the exact released contract",
+        "normalizes exact main back into develop before the next candidate line opens",
+        "captures governance-only or documentation-package hardening for an existing product line"
+      ],
+      "decisionRecordingRule": "record the chosen bump rationale in the control plane before further publication or release normalization continues"
+    },
     "explicitNonTriggers": [
       "benchmark-only diagnosis that does not affect a shipped release surface",
       "local characterization-only evidence changes without a governed release claim",
@@ -99,8 +119,21 @@
   },
   "operatorSurfaceSustainment": {
     "branchModel": {
+      "model": "gitflow-lite",
       "integrationBranch": "develop",
       "releaseBranch": "main",
+      "temporaryBranchPrefixes": [
+        "feature/",
+        "release/",
+        "hotfix/"
+      ],
+      "promotionRules": [
+        "public GitHub default branch remains main so readers land on the latest exact released line by default",
+        "feature/* branches target develop",
+        "release/* branches are cut from develop and merge to main plus back into develop",
+        "hotfix/* branches are cut from main and merge to main plus back into develop",
+        "exact SemVer tags are cut from main only after the protected main pipeline succeeds"
+      ],
       "requiredChecks": [
         "docs_continuous_integration",
         "docs_public_continuous_integration",
@@ -109,7 +142,91 @@
         "package_extension_preview",
         "Public Facade Package Preview / package-preview",
         "Public Facade Linux Smoke / public-facade-linux-smoke"
+      ],
+      "laneResponsibilities": {
+        "feature/*": [
+          "focused tests for the changed surface",
+          "affected documentation or design gates before merge to develop"
+        ],
+        "develop": [
+          "required checks",
+          "npm run design:gate",
+          "npm run design:gate:assert-complete for governance or architecture work"
+        ],
+        "release/*": [
+          "required checks",
+          "design gates",
+          "release-readiness normalization",
+          "public-facade proof before merge to main"
+        ],
+        "hotfix/*": [
+          "focused regression checks",
+          "affected documentation or design gates",
+          "exact released-line package audit before merge to main"
+        ],
+        "main": [
+          "protected exact-release branch",
+          "exact SemVer tags only after merged main is green"
+        ]
+      },
+      "findingRequirementDiscipline": [
+        "every governed finding is classified before slice closeout as requirements-update-required or no-requirement-impact",
+        "findings that change public workflow truth, release truth, branch policy, CI posture, runtime boundaries, or user/operator documentation behavior update SRS, RTM, and the test plan in the same slice",
+        "findings with no normative behavior impact retain an explicit no-impact rationale in the control plane instead of silently skipping requirement review"
+      ],
+      "findingAdrDiscipline": [
+        "every governed finding is classified before slice closeout as adr-update-required or no-adr-impact",
+        "findings that change architectural boundaries, public/private product surfaces, release topology, default-branch policy, runtime-provider strategy, required-check posture, or the public GitHub workflow responsibility matrix update an existing ADR or introduce a new ADR in the same slice",
+        "findings with no sustained decision impact retain an explicit no-impact rationale in the control plane instead of silently skipping ADR review"
       ]
+    },
+    "publicWorkflowGovernance": {
+      "model": "two-workflow-public-facade-pair",
+      "workflows": {
+        "packagePreview": {
+          "workflowName": "Public Facade Package Preview",
+          "requiredCheckName": "package-preview",
+          "responsibilities": [
+            "npm run compile",
+            "npm run test:design-contract",
+            "preview VSIX packaging",
+            "preview artifact upload"
+          ],
+          "admittedBranches": [
+            "develop",
+            "main",
+            "release/*",
+            "hotfix/*"
+          ],
+          "pullRequestTargets": [
+            "develop",
+            "main"
+          ],
+          "featurePushLane": "forbidden",
+          "concurrency": "per-workflow-per-ref-cancel-in-progress"
+        },
+        "linuxSmoke": {
+          "workflowName": "Public Facade Linux Smoke",
+          "requiredCheckName": "public-facade-linux-smoke",
+          "responsibilities": [
+            "Docker Linux engine verification",
+            "npm run public:smoke:linux",
+            "smoke evidence upload"
+          ],
+          "admittedBranches": [
+            "develop",
+            "main",
+            "release/*",
+            "hotfix/*"
+          ],
+          "pullRequestTargets": [
+            "develop",
+            "main"
+          ],
+          "featurePushLane": "forbidden",
+          "concurrency": "per-workflow-per-ref-cancel-in-progress"
+        }
+      }
     },
     "requiredAuthorityUpdates": [
       "docs/product/development-queue.json",

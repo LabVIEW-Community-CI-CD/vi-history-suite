@@ -37,6 +37,10 @@ rerun remains explicit under reopened `PROGRAM-0002`.
 1. release cadence, SemVer discipline, and public release-kit upkeep
 2. benchmark refresh cadence and proof-surface maintenance
 3. operator-surface, documentation-workbench, and control-plane sustainment
+4. branch-model and lane-specific CI governance for the line after each exact release
+5. requirements/RTM/test-plan evolution from governed findings
+6. ADR evolution from governed findings
+7. public GitHub workflow responsibility and churn-control governance
 
 ## Queue Mapping
 
@@ -77,6 +81,12 @@ Every slice must preserve:
 - benchmark evidence truth
 - documentation-package coherence
 - operator-surface clarity
+- explicit SemVer-decision rationale
+- explicit branch-lane admission and CI/design-gate posture
+- continuous refinement of the requirement package from governed findings
+- continuous refinement of the ADR package from governed findings
+- explicit public GitHub workflow responsibilities, bounded triggers, and
+  churn-control posture
 
 ## First Implementation Slice
 

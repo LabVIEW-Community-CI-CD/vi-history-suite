@@ -6,7 +6,23 @@ on:
     branches:
       - develop
       - main
+      - 'release/**'
+      - 'hotfix/**'
+    paths:
+      - '.github/workflows/public-facade-linux-smoke.yml'
+      - '.devcontainer/**'
+      - '.vscode/**'
+      - 'README.md'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'scripts/runPublicFacadeLinuxSmoke.js'
+      - 'tests/integration/**'
+      - 'tests/unit/publicFacadeLinuxSmoke.test.ts'
+      - 'src/**'
   pull_request:
+    branches:
+      - develop
+      - main
     paths:
       - '.github/workflows/public-facade-linux-smoke.yml'
       - '.devcontainer/**'
@@ -21,6 +37,10 @@ on:
 
 permissions:
   contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   public-facade-linux-smoke:

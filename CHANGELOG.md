@@ -7,6 +7,23 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.0.6] - 2026-04-07
+
+### Changed
+
+- exact `v1.0.5` on `main` is now merged back into `develop` before the next
+  release line opens, so the integration branch no longer carries stale
+  release-close control-plane truth
+- the active develop candidate line is now `1.0.6` / `v1.0.6` for governance
+  hardening, rather than landing post-release control-plane changes under the
+  exact `v1.0.5` line
+- the sustainment control plane now carries an explicit SemVer-decision
+  framework that forces future sessions to justify `major`, `minor`, or
+  `patch` bumps from governed criteria instead of implicit judgment
+- the branch model now moves from ad hoc `develop`/`main` language toward a
+  governed `gitflow-lite` topology with explicit `feature/*`, `release/*`,
+  and `hotfix/*` lanes plus lane-specific CI and `design:gate` obligations
+
 ## [1.0.5] - 2026-04-07
 
 ### Changed

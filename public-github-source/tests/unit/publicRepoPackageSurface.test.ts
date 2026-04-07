@@ -26,7 +26,7 @@ describe('public repo package surface', () => {
     const contributing = readText('CONTRIBUTING.md');
     const previewWorkflow = readText('.github/workflows/public-facade-package-preview.yml');
 
-    expect(manifest.version).toBe('1.0.5');
+    expect(manifest.version).toBe('1.0.6');
     expect(manifest.files).toEqual([
       'out/**',
       'resources/**',
@@ -67,11 +67,14 @@ describe('public repo package surface', () => {
     expect(readme).toContain('npm run public:fixture:icon-editor');
     expect(readme).toContain('repo-sibling `labview-icon-editor`');
     expect(readme).toContain('/workspaces/labview-icon-editor');
+    expect(readme).toContain('public default branch and tracks the latest exact released');
+    expect(readme).toContain('GitHub opens this public repo on `main` by default');
     expect(readme).toContain('burned exact release line: `v1.0.2`');
     expect(readme).toContain('current exact released line: `v1.0.5`');
     expect(readme).toContain('current published package line on `main`: `1.0.5`');
-    expect(readme).toContain('current develop package line on `develop`: `1.0.5`');
-    expect(readme).toContain('no newer exact release candidate line is active on `develop` yet');
+    expect(readme).toContain('current develop package line on `develop`: `1.0.6`');
+    expect(readme).toContain('active exact release candidate line on `develop`: `v1.0.6`');
+    expect(readme).toContain('public GitHub default branch: `main`');
     expect(readme).toContain('public Codespaces evaluation branch: `develop`');
     expect(readme).toContain('Refresh-Codespace-Repositories');
     expect(install).toContain('Windows host + Linux engine');
@@ -86,6 +89,15 @@ describe('public repo package surface', () => {
     expect(contributing).toContain('npm run public:host:bootstrap-linux');
     expect(contributing).toContain('npm run public:fixture:icon-editor');
     expect(previewWorkflow).toContain('name: Public Facade Package Preview');
+    expect(previewWorkflow).toContain('  push:');
+    expect(previewWorkflow).toContain("      - 'release/**'");
+    expect(previewWorkflow).toContain("      - 'hotfix/**'");
+    expect(previewWorkflow).toContain("      - '.devcontainer/**'");
+    expect(previewWorkflow).toContain("      - 'src/**'");
+    expect(previewWorkflow).toContain('  pull_request:');
+    expect(previewWorkflow).not.toContain('feature/**');
+    expect(previewWorkflow).toContain('concurrency:');
+    expect(previewWorkflow).toContain('cancel-in-progress: true');
     expect(previewWorkflow).toContain('npm run test:design-contract');
     expect(previewWorkflow).toContain('mkdir -p artifacts');
     expect(previewWorkflow).toContain('npm run package -- --out artifacts/vi-history-suite-public-preview.vsix');

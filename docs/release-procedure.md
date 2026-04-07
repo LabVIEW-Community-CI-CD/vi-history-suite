@@ -14,11 +14,15 @@
 - The current exact released line is `v1.0.5`.
 - The burned exact released line is `v1.0.2`.
 - The current published package line on `main` is `1.0.5`.
-- The current develop package line on `develop` is `1.0.5`.
-- No newer exact release candidate line is active on `develop` yet.
+- The current develop package line on `develop` is `1.0.6`.
+- The active exact release candidate line on `develop` is `v1.0.6`.
+- The public GitHub default branch is `main` because it carries the latest
+  exact released source line.
 - The public Codespaces evaluation branch is `develop`.
 - The integration branch is `develop`.
 - The release branch is `main`.
+- The next-line branch model is `gitflow-lite` with temporary
+  `feature/*`, `release/*`, and `hotfix/*` lanes.
 - Protected-branch promotion shall rely on required checks, not operator memory.
 - After an exact release is published, the current published package line on
   `main` shall match that exact release line.
@@ -148,7 +152,8 @@
   before the exact authority docs CI failure was discovered.
 - The current published package line on `main` is `1.0.5`, tracked in
   `CHANGELOG.md`, and it should not rewrite the retained `v0.2.0`, `v1.0.0`,
-  `v1.0.1`, burned `v1.0.2`, exact `v1.0.3`, or exact `v1.0.4` release
+  `v1.0.1`, burned `v1.0.2`, exact `v1.0.3`, exact `v1.0.4`, or exact
+  `v1.0.5` release
   evidence.
-- The current develop package line on `develop` is `1.0.5`, and no newer
-  exact release candidate line is active on `develop` yet.
+- The current develop package line on `develop` is `1.0.6`, and the active
+  exact release candidate line on `develop` is `v1.0.6`.

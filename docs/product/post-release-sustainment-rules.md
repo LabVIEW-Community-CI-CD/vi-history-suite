@@ -27,6 +27,10 @@ The current release branch model is explicit too:
 - `main` is the release branch
 - protected-branch promotion shall use required checks instead of operator
   memory
+- the next sustained topology is `gitflow-lite`, adding explicit
+  `feature/*`, `release/*`, and `hotfix/*` lanes around those long-lived
+  branches instead of treating all post-release work as generic `develop`
+  traffic
 
 ## Release Refresh Rules
 
@@ -55,11 +59,13 @@ Current version-line contract:
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.0.5`
 - current published package line on `main`: `1.0.5`
-- current develop package line on `develop`: `1.0.5`
-- no newer exact release candidate line is active on `develop` yet
+- current develop package line on `develop`: `1.0.6`
+- active exact release candidate line on `develop`: `v1.0.6`
+- public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
 - release branch: `main`
+- next-line branch model: `gitflow-lite`
 
 Strict SemVer rule after an exact release:
 
@@ -77,6 +83,21 @@ Strict SemVer rule after an exact release:
   exact release version number
 - future sessions shall not treat a burned exact release as the green release
   baseline for later publication
+
+Decision framework for choosing `major`, `minor`, or `patch`:
+
+- choose `major` when a governed public or maintainer contract is intentionally
+  broken, removed, or flipped in a way that invalidates an already-published
+  workflow, branch expectation, install path, or runtime surface
+- choose `minor` when a new governed capability or supported workflow is added
+  without breaking the currently exact released line
+- choose `patch` when the change fixes, hardens, clarifies, or governs an
+  existing capability, release rule, procedure, branch policy, or CI posture
+  without changing the current exact released contract
+- default governance-only hardening to `patch` unless the hardening itself
+  changes a governed contract in a breaking or additive way
+- record the chosen bump rationale in the control plane before further
+  publication or release normalization continues
 
 Do not reopen release refresh just because:
 
@@ -141,8 +162,15 @@ Required branch-model and CI posture:
 
 - integration work lands on `develop`
 - release promotion lands on `main`
+- the public GitHub default branch remains `main` so casual readers and fork
+  owners land on the latest exact released line by default
 - protected-branch promotion uses required checks instead of direct operator
   trust
+- `feature/*` lanes target `develop`
+- `release/*` lanes are cut from `develop`, validate the release candidate, and
+  merge to `main` plus back into `develop`
+- `hotfix/*` lanes are cut from `main`, fix one exact release line, and merge
+  to `main` plus back into `develop`
 - the required checks are:
   - GitLab `docs_continuous_integration`
   - GitLab `docs_public_continuous_integration`
@@ -151,6 +179,60 @@ Required branch-model and CI posture:
   - GitLab `package_extension_preview`
   - GitHub `Public Facade Package Preview / package-preview`
   - GitHub `Public Facade Linux Smoke / public-facade-linux-smoke`
+
+Lane-specific CI and gate responsibilities:
+
+- `feature/*`: focused tests plus any affected doc/design gates before merge to
+  `develop`
+- `develop`: required checks plus `npm run design:gate` and
+  `npm run design:gate:assert-complete` for governance or architecture work
+- `release/*`: full required checks, design gates, release-readiness
+  normalization, and public-facade proof before merge to `main`
+- `hotfix/*`: focused regression checks, affected docs/design gates, and the
+  exact released-line package audit before merge to `main`
+- `main`: protected exact-release branch; exact SemVer tags are cut only after
+  merged `main` is green
+
+Public GitHub workflow responsibility matrix:
+
+- `Public Facade Package Preview / package-preview`
+  - owns `npm run compile`
+  - owns `npm run test:design-contract`
+  - owns preview VSIX packaging and preview-artifact upload
+  - admits `workflow_dispatch` plus bounded `push`/`pull_request` changes on
+    `develop`, `main`, `release/*`, and `hotfix/*`
+  - uses per-workflow/per-ref concurrency to cancel stale in-progress runs
+- `Public Facade Linux Smoke / public-facade-linux-smoke`
+  - owns Docker Linux engine verification
+  - owns `npm run public:smoke:linux`
+  - owns retained smoke-evidence upload
+  - admits `workflow_dispatch` plus bounded `push`/`pull_request` changes on
+    `develop`, `main`, `release/*`, and `hotfix/*`
+  - uses per-workflow/per-ref concurrency to cancel stale in-progress runs
+- neither public GitHub workflow uses a `feature/*` push lane
+
+Requirement-evolution discipline:
+
+- every governed finding shall be classified before slice closeout as either
+  `requirements-update-required` or `no-requirement-impact`
+- when a finding changes public workflow truth, release truth, branch policy,
+  CI posture, runtime boundaries, or user/operator documentation behavior, the
+  same slice shall update SRS, RTM, and test-plan coverage
+- when a finding does not change normative behavior, the same slice shall
+  retain an explicit no-impact rationale in the control plane instead of
+  silently skipping requirement review
+
+ADR-evolution discipline:
+
+- every governed finding shall also be classified before slice closeout as
+  either `adr-update-required` or `no-adr-impact`
+- when a finding changes architectural boundaries, public/private product
+  surfaces, release topology, default-branch policy, runtime-provider
+  strategy, required-check posture, or public GitHub workflow responsibility
+  matrix, the same slice shall update an existing ADR or introduce a new ADR
+- when a finding does not change sustained decision truth, the same slice
+  shall retain an explicit no-impact rationale in the control plane instead of
+  silently skipping ADR review
 
 Required closeout checks for any sustainment slice:
 
