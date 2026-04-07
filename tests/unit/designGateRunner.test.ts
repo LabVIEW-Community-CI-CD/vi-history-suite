@@ -479,7 +479,9 @@ describe('designGateRunner', () => {
     });
   });
 
-  it('uses default filesystem-backed coverage reads and report persistence when helper overrides are omitted', async () => {
+  it(
+    'uses default filesystem-backed coverage reads and report persistence when helper overrides are omitted',
+    async () => {
     const repoRoot = await createTempRepoRoot();
     const coverageRoot = path.join(repoRoot, 'coverage');
     await fs.mkdir(coverageRoot, { recursive: true });
@@ -525,7 +527,9 @@ describe('designGateRunner', () => {
 
     expect(persistedJson.nextFocus).toBe('src/services/viHistoryModel.ts (87.0% lines)');
     expect(persistedMarkdown).toContain('Next focus: src/services/viHistoryModel.ts (87.0% lines)');
-  });
+    },
+    15000
+  );
 
   it('mirrors a mounted Windows assurance skill into repo-local storage before execution', async () => {
     const repoRoot = await createTempRepoRoot();

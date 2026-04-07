@@ -3,9 +3,26 @@
 This changelog is the governed version-line summary for `vi-history-suite`.
 
 Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
-`v1.0.2`, `v1.0.3`, and `v1.0.4`.
+`v1.0.2`, `v1.0.3`, `v1.0.4`, and `v1.0.5`.
 
 Burned exact-version releases now include `v1.0.2`.
+
+## [1.0.5] - 2026-04-07
+
+### Changed
+
+- the public release line is now exact `v1.0.5` on `main`, and `develop`
+  remains aligned to `1.0.5` until the next exact release candidate is opened
+- the public fork-owner first-use Codespaces procedure is now tighter for a
+  LabVIEW-first reader: it keeps the `develop` fork requirement, the
+  `Codespaces` `...` -> `New with options` path, the `16-core` machine
+  selection, the browser build message, the top-left three-line menu, the port
+  `6010` forwarding dialog, and the exact `VI History` panel wording, while
+  removing stale Vitest-popup guidance from the first-use flow
+- the first-use quickstart and refresh workflow are now governed by a public
+  docs CI test that reads the published public wiki checkout directly, so the
+  fork-owner procedure can no longer drift silently from the authority/public
+  source contract
 
 ## [1.0.4] - 2026-04-07
 
