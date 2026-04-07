@@ -13,7 +13,7 @@ remain private in GitLab.
 ## Status
 
 Closed on exact public-product acceptance for the Docker-only public line. The
-current exact release line is `v1.0.5`, and `v1.0.2` is retained as burned.
+current exact release line is `v1.0.6`, and `v1.0.2` is retained as burned.
 
 Closeout evidence:
 

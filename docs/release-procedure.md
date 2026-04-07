@@ -11,11 +11,11 @@
 - The first retained exact-version release is `v0.2.0`, with retained artifact
   `vi-history-suite-0.2.0.vsix` and manifest
   `release-evidence/release-manifest.json`.
-- The current exact released line is `v1.0.5`.
+- The current exact released line is `v1.0.6`.
 - The burned exact released line is `v1.0.2`.
-- The current published package line on `main` is `1.0.5`.
+- The current published package line on `main` is `1.0.6`.
 - The current develop package line on `develop` is `1.0.6`.
-- The active exact release candidate line on `develop` is `v1.0.6`.
+- No newer exact release candidate line is active on `develop` yet.
 - The public GitHub default branch is `main` because it carries the latest
   exact released source line.
 - The public Codespaces evaluation branch is `develop`.
@@ -150,10 +150,10 @@
   `13779604462`.
 - `v1.0.2` is retained as a burned release because the immutable tag published
   before the exact authority docs CI failure was discovered.
-- The current published package line on `main` is `1.0.5`, tracked in
+- The current published package line on `main` is `1.0.6`, tracked in
   `CHANGELOG.md`, and it should not rewrite the retained `v0.2.0`, `v1.0.0`,
   `v1.0.1`, burned `v1.0.2`, exact `v1.0.3`, exact `v1.0.4`, or exact
-  `v1.0.5` release
+  `v1.0.5`, or exact `v1.0.6` release
   evidence.
-- The current develop package line on `develop` is `1.0.6`, and the active
-  exact release candidate line on `develop` is `v1.0.6`.
+- The current develop package line on `develop` is `1.0.6`, and no newer
+  exact release candidate line is active on `develop` yet.

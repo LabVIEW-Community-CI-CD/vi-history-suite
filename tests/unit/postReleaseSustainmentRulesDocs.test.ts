@@ -111,12 +111,12 @@ describe('post-release sustainment rules package', () => {
 
     expect(rules.releaseCadence.model).toBe('event-driven');
     expect(rules.releaseCadence.versionLineContract).toEqual({
-      retainedExactVersionReleases: ['v0.2.0', 'v1.0.0', 'v1.0.1', 'v1.0.2', 'v1.0.3', 'v1.0.4', 'v1.0.5'],
+      retainedExactVersionReleases: ['v0.2.0', 'v1.0.0', 'v1.0.1', 'v1.0.2', 'v1.0.3', 'v1.0.4', 'v1.0.5', 'v1.0.6'],
       burnedExactVersionReleases: ['v1.0.2'],
-      currentExactReleaseLine: 'v1.0.5',
-      currentMainPackageLine: '1.0.5',
+      currentExactReleaseLine: 'v1.0.6',
+      currentMainPackageLine: '1.0.6',
       currentDevelopPackageLine: '1.0.6',
-      activeDevelopCandidateReleaseLine: 'v1.0.6',
+      activeDevelopCandidateReleaseLine: null,
       publicDefaultBranch: 'main',
       publicCodespaceBranch: 'develop',
       integrationBranch: 'develop',

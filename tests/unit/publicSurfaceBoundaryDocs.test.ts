@@ -82,13 +82,13 @@ describe('public facade boundary docs', () => {
     expect(publicLedgerJson).toContain('"nextPage": null');
     expect(publicSourceLedger).toContain('Public source product repo baseline');
     expect(publicSourceLedger).toContain('published');
-    expect(publicSourceLedger).toContain('Current published public GitHub source HEAD: `8d78872`');
-    expect(publicSourceLedger).toContain('8d78872');
-    expect(publicSourceLedger).toContain('Public source v1.0.5 exact release');
+    expect(publicSourceLedger).toContain('Current published public GitHub source HEAD: `66bdf73`');
+    expect(publicSourceLedger).toContain('66bdf73');
+    expect(publicSourceLedger).toContain('Public source v1.0.6 exact release');
     expect(publicSourceLedgerJson).toContain('"publicationSurface": "public-github-source-repo"');
-    expect(publicSourceLedgerJson).toContain('"publishedHeadCommit": "8d78872"');
+    expect(publicSourceLedgerJson).toContain('"publishedHeadCommit": "66bdf73"');
     expect(publicSourceLedgerJson).toContain('"status": "published"');
-    expect(publicSourceLedgerJson).toContain('"repoCommit": "8d78872"');
+    expect(publicSourceLedgerJson).toContain('"repoCommit": "66bdf73"');
     expect(program).toContain('workflow_dispatch');
     expect(program).toContain('npm run public:smoke:linux');
     expect(program).toContain('docs:ci:public');

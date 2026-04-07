@@ -55,12 +55,12 @@ Refresh the release package when any of these change:
 Current version-line contract:
 
 - retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`,
-  `v1.0.3`, `v1.0.4`, `v1.0.5`
+  `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.0.5`
-- current published package line on `main`: `1.0.5`
+- current exact released line: `v1.0.6`
+- current published package line on `main`: `1.0.6`
 - current develop package line on `develop`: `1.0.6`
-- active exact release candidate line on `develop`: `v1.0.6`
+- no newer exact release candidate line is active on `develop` yet
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
