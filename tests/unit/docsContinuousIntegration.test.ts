@@ -99,17 +99,21 @@ describe('documentation continuous integration runner', () => {
 
   it('retains deterministic public, internal, and umbrella step plans', () => {
     const evidenceDir = path.resolve('/tmp/vihs-docs-ci');
+    const deterministicEnv: NodeJS.ProcessEnv = {};
     const allSteps = docsContinuousIntegration.createDocsContinuousIntegrationSteps({
       skipLinks: true,
-      evidenceDir
+      evidenceDir,
+      env: deterministicEnv
     });
     const publicSteps = docsContinuousIntegration.createDocsContinuousIntegrationSteps({
       surface: 'public',
-      evidenceDir
+      evidenceDir,
+      env: deterministicEnv
     });
     const internalSteps = docsContinuousIntegration.createDocsContinuousIntegrationSteps({
       surface: 'internal',
-      evidenceDir
+      evidenceDir,
+      env: deterministicEnv
     });
 
     expect(allSteps.map((step) => step.id)).toEqual([
