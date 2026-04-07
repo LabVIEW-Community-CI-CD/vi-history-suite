@@ -38,7 +38,7 @@ describe('public facade boundary docs', () => {
     expect(currentState).toContain('npm run public:source:promote');
     expect(currentState).toContain('public GitHub wiki publication is tracked separately');
     expect(currentState).toContain(
-      'published public GitHub wiki pages now include `Home`, `User-Workflow`, `Install-And-Release`, `Fork-Codespace-Quickstart`, `Manual-Actor-Framework-Clone`, `Comparison-Reports-And-Dashboard-Review`, and `Current-State`'
+      'published public GitHub wiki pages now include `Home`, `User-Workflow`, `Install-And-Release`, `Fork-Codespace-Quickstart`, `Refresh-Codespace-Repositories`, `Manual-Actor-Framework-Clone`, `Comparison-Reports-And-Dashboard-Review`, and `Current-State`'
     );
     expect(currentState).toContain('docs:ci:public');
     expect(currentState).toContain('docs:ci:internal');
@@ -60,33 +60,35 @@ describe('public facade boundary docs', () => {
     expect(internalLedger).toContain('internal GitLab maintainer wiki');
     expect(internalLedgerJson).toContain('"publicationSurface": "internal-gitlab-wiki"');
     expect(publicLedger).toContain('public GitHub user wiki');
-    expect(publicLedger).toContain('Current published public GitHub wiki HEAD: `1fb3a00`');
-    expect(publicLedger).toContain('1fb3a00');
+    expect(publicLedger).toContain('Current published public GitHub wiki HEAD: `3ef5bee`');
+    expect(publicLedger).toContain('3ef5bee');
     expect(publicLedger).toContain('User Workflow');
     expect(publicLedger).toContain('Install And Release');
     expect(publicLedger).toContain('Fork Codespace Quickstart');
     expect(publicLedger).toContain('Manual Actor Framework Clone');
     expect(publicLedger).toContain('Comparison Reports And Dashboard Review');
+    expect(publicLedger).toContain('Refresh Codespace Repositories');
     expect(publicLedger).toContain('Current State');
     expect(publicLedgerJson).toContain('"publicationSurface": "public-github-user-wiki"');
-    expect(publicLedgerJson).toContain('"publishedHeadCommit": "1fb3a00"');
+    expect(publicLedgerJson).toContain('"publishedHeadCommit": "3ef5bee"');
     expect(publicLedgerJson).toContain('"wikiFileName": "Home.md"');
     expect(publicLedgerJson).toContain('"wikiFileName": "User-Workflow.md"');
     expect(publicLedgerJson).toContain('"wikiFileName": "Install-And-Release.md"');
     expect(publicLedgerJson).toContain('"wikiFileName": "Fork-Codespace-Quickstart.md"');
     expect(publicLedgerJson).toContain('"wikiFileName": "Manual-Actor-Framework-Clone.md"');
     expect(publicLedgerJson).toContain('"wikiFileName": "Comparison-Reports-And-Dashboard-Review.md"');
+    expect(publicLedgerJson).toContain('"wikiFileName": "Refresh-Codespace-Repositories.md"');
     expect(publicLedgerJson).toContain('"wikiFileName": "Current-State.md"');
     expect(publicLedgerJson).toContain('"nextPage": null');
     expect(publicSourceLedger).toContain('Public source product repo baseline');
     expect(publicSourceLedger).toContain('published');
-    expect(publicSourceLedger).toContain('Current published public GitHub source HEAD: `4952acc`');
-    expect(publicSourceLedger).toContain('4952acc');
-    expect(publicSourceLedger).toContain('Public source v1.0.3 burned-release recovery');
+    expect(publicSourceLedger).toContain('Current published public GitHub source HEAD: `5710d87`');
+    expect(publicSourceLedger).toContain('5710d87');
+    expect(publicSourceLedger).toContain('Public source v1.0.4 exact release');
     expect(publicSourceLedgerJson).toContain('"publicationSurface": "public-github-source-repo"');
-    expect(publicSourceLedgerJson).toContain('"publishedHeadCommit": "4952acc"');
+    expect(publicSourceLedgerJson).toContain('"publishedHeadCommit": "5710d87"');
     expect(publicSourceLedgerJson).toContain('"status": "published"');
-    expect(publicSourceLedgerJson).toContain('"repoCommit": "4952acc"');
+    expect(publicSourceLedgerJson).toContain('"repoCommit": "5710d87"');
     expect(program).toContain('workflow_dispatch');
     expect(program).toContain('npm run public:smoke:linux');
     expect(program).toContain('docs:ci:public');

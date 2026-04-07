@@ -17,15 +17,16 @@
         "v1.0.0",
         "v1.0.1",
         "v1.0.2",
-        "v1.0.3"
+        "v1.0.3",
+        "v1.0.4"
       ],
       "burnedExactVersionReleases": [
         "v1.0.2"
       ],
-      "currentExactReleaseLine": "v1.0.3",
-      "currentMainPackageLine": "1.0.3",
+      "currentExactReleaseLine": "v1.0.4",
+      "currentMainPackageLine": "1.0.4",
       "currentDevelopPackageLine": "1.0.4",
-      "activeDevelopCandidateReleaseLine": "v1.0.4",
+      "activeDevelopCandidateReleaseLine": null,
       "publicCodespaceBranch": "develop",
       "integrationBranch": "develop",
       "releaseBranch": "main"

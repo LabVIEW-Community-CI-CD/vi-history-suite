@@ -24,7 +24,7 @@ type SustainmentRules = {
       currentExactReleaseLine: string;
       currentMainPackageLine: string;
       currentDevelopPackageLine?: string;
-      activeDevelopCandidateReleaseLine?: string;
+      activeDevelopCandidateReleaseLine?: string | null;
       publicCodespaceBranch: string;
       integrationBranch?: string;
       releaseBranch?: string;
@@ -98,12 +98,12 @@ describe('post-release sustainment rules package', () => {
 
     expect(rules.releaseCadence.model).toBe('event-driven');
     expect(rules.releaseCadence.versionLineContract).toEqual({
-      retainedExactVersionReleases: ['v0.2.0', 'v1.0.0', 'v1.0.1', 'v1.0.2', 'v1.0.3'],
+      retainedExactVersionReleases: ['v0.2.0', 'v1.0.0', 'v1.0.1', 'v1.0.2', 'v1.0.3', 'v1.0.4'],
       burnedExactVersionReleases: ['v1.0.2'],
-      currentExactReleaseLine: 'v1.0.3',
-      currentMainPackageLine: '1.0.3',
+      currentExactReleaseLine: 'v1.0.4',
+      currentMainPackageLine: '1.0.4',
       currentDevelopPackageLine: '1.0.4',
-      activeDevelopCandidateReleaseLine: 'v1.0.4',
+      activeDevelopCandidateReleaseLine: null,
       publicCodespaceBranch: 'develop',
       integrationBranch: 'develop',
       releaseBranch: 'main'

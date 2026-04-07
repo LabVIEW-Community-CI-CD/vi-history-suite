@@ -2,10 +2,10 @@
 
 - Version line: `1.0.4`
 - Burned exact release line: `v1.0.2`
-- Recorded at: `2026-04-07T07:30:00.000Z`
+- Recorded at: `2026-04-07T14:29:21.000Z`
 - Authority source of truth: GitLab `develop` -> `main`
-- Published public source commit: `4952acc`
-- Published public wiki head: `1fb3a00`
+- Published public source commit: `5710d87`
+- Published public wiki head: `3ef5bee`
 
 ## Branch Model
 
@@ -22,22 +22,22 @@
 
 ## Readiness
 
-- Authority baseline: `local-gates-passing`
-- Local installed VSIX: `exact-v1.0.3`
+- Authority baseline: `exact-release-normalization-ready`
+- Local installed VSIX: `exact-v1.0.4`
 - Local public devcontainer: `passed`
 - Local public fixture helper: `passed`
 - Public Codespace: `passed`
 - Gate D public acceptance: `passed`
-- Exact public release: `v1.0.3-published`
+- Exact public release: `v1.0.4-published`
 
 ## Exact Release
 
-- GitHub release: `v1.0.3`
+- GitHub release: `v1.0.4`
 - GitHub release URL:
-  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.0.3`
-- GitHub asset: `vi-history-suite-1.0.3-public-release.vsix`
+  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.0.4`
+- GitHub asset: `vi-history-suite-1.0.4-public-release.vsix`
 - GitHub asset SHA-256:
-  `0e5e5018043807bd3823e0db2918191246f9dd212e598a24144d557af9f50abf`
+  `dd8abc7f5425037a3402913d0748e1d062bf5fd6412ff447c902439199ab54c6`
 
 ## Public Publication
 
@@ -65,9 +65,9 @@
 ## Hosted Proof
 
 - GitHub Codespace `novacula` remains retained hosted public-surface proof.
-- Its hosted runtime proof baseline is commit `4a8b27b`; the later `v1.0.3`
-  delta is the burned-release recovery, branch-model, and fork-owner procedure
-  correction slice.
+- Its hosted runtime proof baseline is commit `4a8b27b`; the later `v1.0.4`
+  delta is the exact-release publication, branch-model hardening, and
+  fork-owner procedure correction slice.
 
 ## Human Review Proof
 
@@ -87,6 +87,6 @@
 
 ## Remaining Blockers
 
-- None on the exact released line. `v1.0.2` is retained as burned, `v1.0.3` is
-  the current exact green line, and `1.0.4` is the active `develop` candidate
-  slice for the next exact public promotion.
+- None on the exact released line. `v1.0.2` is retained as burned,
+  `v1.0.4` is the current exact green line, and no newer `develop` candidate
+  is active yet.

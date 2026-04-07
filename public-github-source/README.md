@@ -118,10 +118,10 @@ npm run package -- --out /tmp/vi-history-suite-public-preview.vsix
 
 ## Current Version Line
 
-- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`
+- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.0.3`
-- current published package line on `main`: `1.0.3`
+- current exact released line: `v1.0.4`
+- current published package line on `main`: `1.0.4`
 - current develop package line on `develop`: `1.0.4`
-- active exact release candidate line on `develop`: `v1.0.4`
+- active exact release candidate line on `develop`: none yet
 - public Codespaces evaluation branch: `develop`
