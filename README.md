@@ -396,12 +396,12 @@ Latest landed ship target:
 - `SHIP-0001`: releasable `v0.2.0` VSIX product
 - landed ship tranche: `TRANCHE-009`
 - landed ship issue: `ISSUE-0406`
-- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`
+- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.0.5`
-- current published package line on `main`: `1.0.5`
+- current exact released line: `v1.0.6`
+- current published package line on `main`: `1.0.6`
 - current develop package line on `develop`: `1.0.6`
-- active exact release candidate line on `develop`: `v1.0.6`
+- no newer exact release candidate line is active on `develop` yet
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
@@ -412,10 +412,9 @@ Latest landed ship target:
 - docs-authoring image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
 - retained release evidence: GitLab release `v0.2.0`, tag pipeline `2428809456`,
   release job `13779604462`
-- remaining release blockers: none on the public `1.0.6` candidate surface;
-  public `develop` now carries the branch-model and disposed-webview hardening
-  at `0985f96` plus the workflow-governance hardening at `975a7f2`; the next
-  gate is authority GitLab promotion of the same `1.0.6` governance slice
+- remaining release blockers: none on the exact public `v1.0.6` line; public
+  `main` now publishes `66bdf73`, and `develop` remains aligned to `1.0.6`
+  until the next exact release candidate opens
 
 ## Install Surface
 

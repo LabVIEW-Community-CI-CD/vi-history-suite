@@ -69,11 +69,12 @@ describe('public repo package surface', () => {
     expect(readme).toContain('/workspaces/labview-icon-editor');
     expect(readme).toContain('public default branch and tracks the latest exact released');
     expect(readme).toContain('GitHub opens this public repo on `main` by default');
+    expect(readme).toContain('retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`');
     expect(readme).toContain('burned exact release line: `v1.0.2`');
-    expect(readme).toContain('current exact released line: `v1.0.5`');
-    expect(readme).toContain('current published package line on `main`: `1.0.5`');
+    expect(readme).toContain('current exact released line: `v1.0.6`');
+    expect(readme).toContain('current published package line on `main`: `1.0.6`');
     expect(readme).toContain('current develop package line on `develop`: `1.0.6`');
-    expect(readme).toContain('active exact release candidate line on `develop`: `v1.0.6`');
+    expect(readme).toContain('no newer exact release candidate line is active on `develop` yet');
     expect(readme).toContain('public GitHub default branch: `main`');
     expect(readme).toContain('public Codespaces evaluation branch: `develop`');
     expect(readme).toContain('Refresh-Codespace-Repositories');
@@ -101,5 +102,9 @@ describe('public repo package surface', () => {
     expect(previewWorkflow).toContain('npm run test:design-contract');
     expect(previewWorkflow).toContain('mkdir -p artifacts');
     expect(previewWorkflow).toContain('npm run package -- --out artifacts/vi-history-suite-public-preview.vsix');
+    expect(readText('CHANGELOG.md')).toContain('Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,');
+    expect(readText('CHANGELOG.md')).toContain('`v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, and `v1.0.6`.');
+    expect(readText('CHANGELOG.md')).toContain('## [1.0.6] - 2026-04-07');
+    expect(readText('CHANGELOG.md')).toContain('`v1.0.6` is now the exact public release line on `main`');
   });
 });
