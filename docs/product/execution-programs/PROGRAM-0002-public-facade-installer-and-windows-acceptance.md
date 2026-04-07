@@ -35,7 +35,7 @@ Current truth:
 
 - the old canonical Windows host pass remains valid historical evidence for the
   earlier public bundle only
-- the public GitHub facade repo is published at `bf0cb2d` as the curated public
+- the public GitHub facade repo is published at `4a8b27b` as the curated public
   source product surface
 - the public GitHub wiki is published at `e28491c` as the public extension-user
   reader surface
@@ -61,6 +61,11 @@ Current truth:
   reached, switch Docker Desktop to the Linux engine, remove the stored
   governed Linux image, let the extension cold-pull that Linux image, and
   prove comparison generation on the canonical fixture target
+- GitHub Codespace `novacula` now passes the hosted public smoke at
+  `2026-04-07T03:39:45.470Z` on the published public source commit `4a8b27b`,
+  proving Debian hosted bootstrap, xauth/Xvfb availability, Docker Linux cold
+  pull, and containerized `CreateComparisonReport` reachability on the public
+  product surface
 - the latest retained Gate D review at `2026-04-07T01:37:37.885Z` is a real
   failure on `Tooling/deployment/VIP_Pre-Uninstall Custom Action.vi`: the first
   governed Linux image cold pull completed truthfully, then later compare runs
@@ -293,7 +298,7 @@ Gate D is now defined against the real public product:
 - the governed Linux image must be absent before the rerun so first-use pull is
   exercised truthfully
 - retained preflight preparation at `2026-04-07T02:38:48.334Z` already proves
-  the published public source commit `bf0cb2d`, the published public wiki
+  the published public source commit `4a8b27b`, the published public wiki
   HEAD commit `e28491c`, canonical fixture commit
   `4e442eb0f5a6263e8f8aaa49c322a6b5fd0ea87a`, Docker Linux engine state, and
   governed Linux image absence before and after preparation ahead of the human
@@ -313,7 +318,7 @@ Gate D is now defined against the real public product:
 
 The public product now retains:
 
-- published public GitHub source repo baseline at commit `bf0cb2d`
+- published public GitHub source repo baseline at commit `4a8b27b`
 - published public GitHub wiki refresh at commit `e28491c`
 - a public devcontainer/Codespaces surface
 - a public package-preview workflow
@@ -324,10 +329,15 @@ The public product now retains:
   `npm run public:gate-d:prepare-cold-pull` operator surfaces for retained Gate D
   preparation
 - retained Gate D preflight preparation at `2026-04-07T02:38:48.334Z`, proving
-  published public repo commit `bf0cb2d`, public wiki HEAD commit `e28491c`,
+  published public repo commit `4a8b27b`, public wiki HEAD commit `e28491c`,
   canonical fixture commit `4e442eb0f5a6263e8f8aaa49c322a6b5fd0ea87a`, Docker
   Linux engine state, and governed Linux image absence before and after
   preparation
+- retained GitHub Codespace `novacula` hosted smoke pass at
+  `2026-04-07T03:39:45.470Z`, proving hosted public design-contract viability,
+  Debian bootstrap, Docker Linux cold pull, and containerized
+  `CreateComparisonReport` reachability on the public surface apart from final
+  Gate D human acceptance
 - public README, `INSTALL.md`, `SUPPORT.md`, and `CONTRIBUTING.md`
 - bundled installed-user docs aligned to the checkbox-selected compare flow and
   Docker-only runtime story

@@ -18,9 +18,11 @@ const DEFAULT_EVIDENCE_DIR = path.join(
 const EXPECTED_TARGET_REMOTE = 'https://github.com/svelderrainruiz/vi-history-suite.git';
 
 const PUBLIC_DESIGN_CONTRACT_TESTS = [
+  'tests/unit/bootstrapLinuxVsCodeHost.test.ts',
   'tests/unit/publicRepoPackageSurface.test.ts',
   'tests/unit/publicDevcontainerSurface.test.ts',
   'tests/unit/publicFacadeLinuxSmoke.test.ts',
+  'tests/unit/runLinuxIntegrationHost.test.ts',
   'tests/unit/linuxContainerRuntimeExecutionSurface.test.ts'
 ];
 
@@ -67,13 +69,17 @@ const AUTHORITY_COPY_PATHS = [
   'resources/bundled-docs/pages/install-and-release.html',
   'resources/bundled-docs/pages/overview.html',
   'scripts/auditPackagedRuntimeSurface.js',
+  'scripts/bootstrapLinuxVsCodeHost.js',
   'scripts/preparePublicTestFixture.js',
   'scripts/runPinnedVsce.js',
   'scripts/runPublicFacadeLinuxSmoke.js',
+  'scripts/runLinuxIntegrationHost.js',
   'src',
   'tests/integration',
+  'tests/unit/bootstrapLinuxVsCodeHost.test.ts',
   'tests/unit/publicDevcontainerSurface.test.ts',
   'tests/unit/publicFacadeLinuxSmoke.test.ts',
+  'tests/unit/runLinuxIntegrationHost.test.ts',
   'tests/unit/linuxContainerRuntimeExecutionSurface.test.ts',
   'tsconfig.integration.json',
   'tsconfig.json',
@@ -237,6 +243,7 @@ function renderPublicPackageManifest(authorityManifest = readAuthorityPackageMan
     'test:integration':
       authorityManifest.scripts['test:integration'],
     'test:integration:linux': authorityManifest.scripts['test:integration:linux'],
+    'public:host:bootstrap-linux': authorityManifest.scripts['public:host:bootstrap-linux'],
     'test:design-contract': `npm exec -- vitest run ${PUBLIC_DESIGN_CONTRACT_TESTS.join(' ')}`,
     test: 'npm run test:design-contract',
     'public:smoke:linux': authorityManifest.scripts['public:smoke:linux'],

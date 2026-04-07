@@ -51,6 +51,12 @@ Typical path:
 4. Press `F5`.
 5. Exercise the checkbox-selected compare flow.
 
+If the Linux VS Code host dependencies need to be refreshed manually, run:
+
+```bash
+npm run public:host:bootstrap-linux
+```
+
 If you want a governed public sample repository for that flow, run:
 
 ```bash

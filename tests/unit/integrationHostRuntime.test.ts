@@ -134,7 +134,9 @@ describe('integrationHostRuntime', () => {
       assertLinuxVsCodeRuntimeReady(runtimeCodePath, {
         execFileSync: vi.fn().mockReturnValue('libnspr4.so => not found\n') as never
       })
-    ).toThrow(new RegExp(VI_HISTORY_SUITE_LINUX_BOOTSTRAP_COMMAND.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+    ).toThrow(
+      new RegExp(VI_HISTORY_SUITE_LINUX_BOOTSTRAP_COMMAND.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    );
   });
 
   it('accepts a Linux runtime when no shared libraries are missing', async () => {

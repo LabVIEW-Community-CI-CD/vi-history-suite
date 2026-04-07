@@ -26,6 +26,14 @@ The repo now ships:
 - [.vscode/extensions.json](./.vscode/extensions.json) for the recommended
   extension-development toolchain
 
+The public devcontainer/Codespaces surface bootstraps the Linux VS Code host
+dependencies automatically during creation. If you need to rerun that bootstrap
+manually, use:
+
+```bash
+npm run public:host:bootstrap-linux
+```
+
 The public Docker product smoke lane is:
 
 ```bash
@@ -537,7 +545,7 @@ VSIX. The dedicated dev host is the default inner loop.
 Linux integration-host bootstrap:
 
 ```bash
-sudo /usr/local/bin/vihs-bootstrap-vscode-linux-host install
+npm run public:host:bootstrap-linux
 ```
 
 Primary generated evidence:

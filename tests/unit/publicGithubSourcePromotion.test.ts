@@ -84,9 +84,11 @@ describe('public GitHub source promotion', () => {
     expect(plan.templateCopyPaths).toContain('.github/workflows/public-facade-package-preview.yml');
     expect(plan.authorityCopyPaths).toContain('.github/workflows/public-facade-linux-smoke.yml');
     expect(plan.publicDesignContractTests).toEqual([
+      'tests/unit/bootstrapLinuxVsCodeHost.test.ts',
       'tests/unit/publicRepoPackageSurface.test.ts',
       'tests/unit/publicDevcontainerSurface.test.ts',
       'tests/unit/publicFacadeLinuxSmoke.test.ts',
+      'tests/unit/runLinuxIntegrationHost.test.ts',
       'tests/unit/linuxContainerRuntimeExecutionSurface.test.ts'
     ]);
   });
@@ -105,11 +107,14 @@ describe('public GitHub source promotion', () => {
     expect(manifest.scripts['public:smoke:linux']).toBe(
       'npm run compile && node scripts/runPublicFacadeLinuxSmoke.js'
     );
+    expect(manifest.scripts['public:host:bootstrap-linux']).toBe(
+      'node scripts/bootstrapLinuxVsCodeHost.js install'
+    );
     expect(manifest.scripts['public:fixture:icon-editor']).toBe(
       'node scripts/preparePublicTestFixture.js'
     );
     expect(manifest.scripts['test:design-contract']).toBe(
-      'npm exec -- vitest run tests/unit/publicRepoPackageSurface.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicFacadeLinuxSmoke.test.ts tests/unit/linuxContainerRuntimeExecutionSurface.test.ts'
+      'npm exec -- vitest run tests/unit/bootstrapLinuxVsCodeHost.test.ts tests/unit/publicRepoPackageSurface.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicFacadeLinuxSmoke.test.ts tests/unit/runLinuxIntegrationHost.test.ts tests/unit/linuxContainerRuntimeExecutionSurface.test.ts'
     );
     expect(manifest.scripts.package).toBe(
       'npm run compile && npm run package:audit && node scripts/runPinnedVsce.js package'
@@ -140,10 +145,14 @@ describe('public GitHub source promotion', () => {
       expect(expectedFiles).toContain('INSTALL.md');
       expect(expectedFiles).toContain('SUPPORT.md');
       expect(expectedFiles).toContain('CONTRIBUTING.md');
+      expect(expectedFiles).toContain('scripts/bootstrapLinuxVsCodeHost.js');
       expect(expectedFiles).toContain('.github/workflows/public-facade-linux-smoke.yml');
       expect(expectedFiles).toContain('.github/workflows/public-facade-package-preview.yml');
       expect(expectedFiles).toContain('scripts/preparePublicTestFixture.js');
+      expect(expectedFiles).toContain('scripts/runLinuxIntegrationHost.js');
+      expect(expectedFiles).toContain('tests/unit/bootstrapLinuxVsCodeHost.test.ts');
       expect(expectedFiles).toContain('tests/unit/publicRepoPackageSurface.test.ts');
+      expect(expectedFiles).toContain('tests/unit/runLinuxIntegrationHost.test.ts');
       expect(actualFiles).toContain('package.json');
       expect(fs.existsSync(path.join(actualRoot, 'acceptance'))).toBe(false);
       expect(fs.existsSync(path.join(actualRoot, 'releases'))).toBe(false);

@@ -1,9 +1,9 @@
 # Public Release Candidate
 
 - Version line: `1.0.0`
-- Recorded at: `2026-04-07T02:30:00.000Z`
-- Authority green baseline: commit `6d326c5`, pipeline `2433201421`
-- Published public source commit: `bf0cb2d`
+- Recorded at: `2026-04-07T03:39:45.470Z`
+- Authority green baseline: commit `11e969c`, pipeline `2433268142`
+- Published public source commit: `4a8b27b`
 - Published public wiki head: `e28491c`
 
 ## Readiness
@@ -12,7 +12,7 @@
 - Local installed VSIX: passed
 - Local public devcontainer: passed
 - Local public fixture helper: passed
-- Public Codespace: pending
+- Public Codespace: passed
 - Gate D public acceptance: pending human judgment
 
 ## Local Proof
@@ -38,8 +38,19 @@
   third-party clone a mandatory startup side effect for every devcontainer or
   Codespace session
 
+## Hosted Proof
+
+- GitHub Codespace `novacula` now passes the hosted public smoke on the
+  published public source commit `4a8b27b`.
+- Retained hosted smoke was recorded at `2026-04-07T03:39:45.470Z` under
+  `.cache/public-codespace/novacula/`.
+- The hosted proof now covers Debian bootstrap, xauth/Xvfb availability, Docker
+  Linux image cold pull, and containerized `CreateComparisonReport`
+  reachability on the public product surface.
+- The retained hosted smoke still uses the synthetic integration fixture, so it
+  is supporting hosted proof rather than the final semantic Gate D acceptance.
+
 ## Remaining Blockers
 
-- Public Codespace proof on the updated public source commit is still pending.
 - Gate D Docker Linux cold-pull acceptance on the canonical fixture workspace
   is still pending fresh human judgment.

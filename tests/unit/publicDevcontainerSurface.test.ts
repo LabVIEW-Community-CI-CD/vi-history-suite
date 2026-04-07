@@ -42,7 +42,10 @@ describe('public devcontainer surface', () => {
     expect(devcontainer.image).toBe('mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm');
     expect(devcontainer.overrideCommand).toBe(true);
     expect(devcontainer.features).toHaveProperty('ghcr.io/devcontainers/features/docker-in-docker:2');
-    expect(devcontainer.postCreateCommand).toBe('npm ci');
+    expect(devcontainer.features).toHaveProperty('ghcr.io/devcontainers/features/sshd:1');
+    expect(devcontainer.postCreateCommand).toBe(
+      'sudo install -m 0755 scripts/bootstrapLinuxVsCodeHost.js /usr/local/bin/vihs-bootstrap-vscode-linux-host && npm run public:host:bootstrap-linux && npm ci'
+    );
     expect(devcontainer.postStartCommand).toBe('npm run compile');
     expect(devcontainer.customizations?.vscode?.extensions).toEqual(
       expect.arrayContaining(['ms-vscode.extension-test-runner', 'vitest.explorer'])
@@ -81,6 +84,7 @@ describe('public devcontainer surface', () => {
     expect(readme).toContain('a local devcontainer');
     expect(readme).toContain('Linux-hosted development session');
     expect(readme).toContain('governed Linux container image');
+    expect(readme).toContain('npm run public:host:bootstrap-linux');
     expect(readme).toContain('npm run public:fixture:icon-editor');
     expect(readme).toContain('.cache/public-fixtures/labview-icon-editor');
     expect(readme).toContain('No host LabVIEW installation is required for the installed extension path.');

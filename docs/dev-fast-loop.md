@@ -34,11 +34,11 @@ every product slice.
 ## Linux Host Bootstrap
 
 If the governed extension-host lane needs to run on the Linux VS Code test host
-instead of the Windows `Code.exe` host, install the Ubuntu runtime libraries
-once:
+instead of the Windows `Code.exe` host, install the Linux VS Code runtime
+libraries and Xvfb once:
 
 ```bash
-sudo /usr/local/bin/vihs-bootstrap-vscode-linux-host install
+npm run public:host:bootstrap-linux
 ```
 
 To force the integration lane onto the Linux host even when Windows VS Code is
@@ -61,11 +61,8 @@ behavior:
 - fall back to the Linux VS Code test host when Windows VS Code is unavailable
   or already busy
 
-You can verify the Linux prerequisite set without reinstalling anything:
-
-```bash
-sudo /usr/local/bin/vihs-bootstrap-vscode-linux-host verify
-```
+The bootstrap command is safe to rerun when the hosted Linux surface needs to be
+refreshed after a base-image or package change.
 
 ## Workspace Modes
 

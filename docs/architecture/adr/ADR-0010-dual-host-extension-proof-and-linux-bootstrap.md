@@ -33,9 +33,9 @@ The repo will keep a dual-host extension proof design:
    `VI_HISTORY_SUITE_INTEGRATION_HOST=auto|windows|linux`.
 3. Linux extension-host use shall fail closed when the downloaded VS Code
    runtime lacks required shared libraries.
-4. The Linux prerequisite installation path shall be a narrow root-owned
+4. The Linux prerequisite installation path shall be a narrow governed repo
    bootstrap command:
-   - `/usr/local/bin/vihs-bootstrap-vscode-linux-host`
+   - `npm run public:host:bootstrap-linux`
 5. Future sessions shall use the bootstrap command or the explicit
    `test:integration:linux` script instead of relying on remembered shell
    steps.

@@ -26,7 +26,7 @@ Reopen evidence:
 
 Current landed state:
 
-- the public GitHub source repo is published at commit `bf0cb2d`
+- the public GitHub source repo is published at commit `4a8b27b`
 - the public GitHub wiki is published at commit `e28491c`
 - `.github/workflows/public-facade-linux-smoke.yml` plus local
   `npm run public:smoke:linux` define the public Docker smoke surface
@@ -36,7 +36,7 @@ Current landed state:
   `npm run public:gate-d:prepare-cold-pull` so the Linux-engine cold-pull Gate D
   rerun begins from a retained preflight packet
 - retained Gate D preflight preparation at `2026-04-07T02:38:48.334Z` already
-  proves published public repo commit `bf0cb2d`, public wiki HEAD commit
+  proves published public repo commit `4a8b27b`, public wiki HEAD commit
   `e28491c`, canonical fixture commit
   `4e442eb0f5a6263e8f8aaa49c322a6b5fd0ea87a`, Docker Linux engine state, and
   governed Linux image absence before and after preparation
@@ -63,6 +63,11 @@ Current landed state:
   `ni/labview-icon-editor` into `.cache/public-fixtures/labview-icon-editor`
   for devcontainer/Codespaces evaluation without making that clone a default
   startup dependency
+- GitHub Codespace `novacula` now passes the hosted public smoke at
+  `2026-04-07T03:39:45.470Z` on published public repo commit `4a8b27b`,
+  proving Debian hosted bootstrap, xauth/Xvfb availability, Docker Linux cold
+  pull, and containerized `CreateComparisonReport` reachability on the public
+  product surface apart from final Gate D human judgment
 - the new [Public Release Candidate](../public-release-candidate.md) control
   surface now retains the current `1.0.0` public-surface snapshot, including
   the green authority baseline, published public commits, local devcontainer

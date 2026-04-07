@@ -260,7 +260,7 @@ describe('extension manifest research alignment', () => {
       'npm run compile && node out/cli/runGovernedProof.js'
     );
     expect(manifest.scripts?.['test:integration:linux']).toBe(
-      'VI_HISTORY_SUITE_INTEGRATION_HOST=linux npm run test:integration'
+      'node scripts/runLinuxIntegrationHost.js'
     );
     expect(manifest.scripts?.['test:integration:windows']).toBe(
       'VI_HISTORY_SUITE_INTEGRATION_HOST=windows npm run test:integration'

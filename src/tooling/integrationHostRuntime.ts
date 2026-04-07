@@ -21,17 +21,54 @@ export interface CollectMissingLinuxSharedLibrariesDeps {
 }
 
 export const VI_HISTORY_SUITE_LINUX_BOOTSTRAP_COMMAND =
-  'sudo /usr/local/bin/vihs-bootstrap-vscode-linux-host install';
+  'npm run public:host:bootstrap-linux';
 
-export const VI_HISTORY_SUITE_LINUX_RUNTIME_PACKAGES = [
-  'libnspr4',
-  'libnss3',
-  'libasound2t64',
-  'libxkbfile1',
-  'libsecret-1-0',
-  'libsoup-3.0-0',
-  'libwebkit2gtk-4.1-0'
-] as const;
+export const VI_HISTORY_SUITE_LINUX_RUNTIME_PACKAGES = {
+  debian: [
+    'libasound2',
+    'libatk1.0-0',
+    'libatk-bridge2.0-0',
+    'libatspi2.0-0',
+    'libdbus-1-3',
+    'libgbm1',
+    'libgtk-3-0',
+    'libnspr4',
+    'libnss3',
+    'libsecret-1-0',
+    'libsoup-3.0-0',
+    'libwebkit2gtk-4.1-0',
+    'libxcomposite1',
+    'libxdamage1',
+    'libxfixes3',
+    'xauth',
+    'libxkbcommon0',
+    'libxkbfile1',
+    'libxrandr2',
+    'xvfb'
+  ],
+  ubuntu: [
+    'libnspr4',
+    'libnss3',
+    'libasound2t64',
+    'libatk1.0-0',
+    'libatk-bridge2.0-0',
+    'libatspi2.0-0',
+    'libdbus-1-3',
+    'libgbm1',
+    'libgtk-3-0',
+    'libsecret-1-0',
+    'libsoup-3.0-0',
+    'libwebkit2gtk-4.1-0',
+    'libxcomposite1',
+    'libxdamage1',
+    'libxfixes3',
+    'xauth',
+    'libxkbcommon0',
+    'libxkbfile1',
+    'libxrandr2',
+    'xvfb'
+  ]
+} as const;
 
 export function normalizeIntegrationHostOverride(
   value: string | undefined
@@ -168,7 +205,8 @@ export function assertLinuxVsCodeRuntimeReady(
     [
       `The Linux VS Code test host is missing native libraries: ${missingLibraries.join(', ')}.`,
       `Run ${VI_HISTORY_SUITE_LINUX_BOOTSTRAP_COMMAND}`,
-      `Expected Ubuntu packages: ${VI_HISTORY_SUITE_LINUX_RUNTIME_PACKAGES.join(', ')}.`
+      `Expected Debian packages: ${VI_HISTORY_SUITE_LINUX_RUNTIME_PACKAGES.debian.join(', ')}.`,
+      `Expected Ubuntu packages: ${VI_HISTORY_SUITE_LINUX_RUNTIME_PACKAGES.ubuntu.join(', ')}.`
     ].join(' ')
   );
 }

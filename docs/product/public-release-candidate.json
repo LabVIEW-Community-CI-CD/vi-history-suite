@@ -1,16 +1,16 @@
 {
   "schema": "vi-history-suite/public-release-candidate@v1",
   "versionLine": "1.0.0",
-  "recordedAt": "2026-04-07T02:30:00.000Z",
+  "recordedAt": "2026-04-07T03:39:45.470Z",
   "authorityRepo": {
     "role": "source-of-truth",
-    "latestGreenPipelineCommit": "6d326c5",
-    "latestGreenPipelineId": "2433201421",
+    "latestGreenPipelineCommit": "11e969c",
+    "latestGreenPipelineId": "2433268142",
     "status": "green-baseline"
   },
   "publishedPublicSource": {
     "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
-    "publishedCommit": "bf0cb2d",
+    "publishedCommit": "4a8b27b",
     "status": "published"
   },
   "publishedPublicWiki": {
@@ -23,7 +23,7 @@
     "localInstalledVsix": "passed",
     "localPublicDevcontainer": "passed",
     "localPublicFixtureHelper": "passed",
-    "publicCodespace": "pending",
+    "publicCodespace": "passed",
     "gateDPublicAcceptance": "pending-human-judgment"
   },
   "localProofs": {
@@ -50,6 +50,22 @@
       "fixtureCommit": "29870995362c893a584c088cec4a33cbde051504"
     }
   },
+  "hostedProofs": {
+    "publicCodespace": {
+      "status": "passed",
+      "codespaceName": "zany-capybara-q76vpvj7v5qcpw5",
+      "displayName": "novacula",
+      "machineName": "largePremiumLinux",
+      "publicRepoCommit": "4a8b27b",
+      "smokeRecordedAt": "2026-04-07T03:39:45.470Z",
+      "artifactDirectory": ".cache/public-codespace/novacula",
+      "notes": [
+        "The hosted proof runs against the curated public GitHub source repo rather than the authority repo.",
+        "The governed Linux host bootstrap now installs both VS Code runtime libraries and the xauth/Xvfb support needed by xvfb-run on Debian-hosted Codespaces surfaces.",
+        "The retained hosted smoke now proves Docker Linux image cold pull plus containerized CreateComparisonReport reachability on the public product surface; semantic compare acceptance on the canonical fixture remains Gate D human judgment."
+      ]
+    }
+  },
   "testerFixtureStrategy": {
     "decision": "optional-governed-helper",
     "defaultCloneOnStartup": false,
@@ -63,12 +79,6 @@
     ]
   },
   "activeBlockers": [
-    {
-      "id": "PUBLIC-CODESPACE-001",
-      "surface": "publicCodespace",
-      "status": "pending",
-      "summary": "The existing GitHub Codespace still needs a truthful hosted proof on the updated public source commit."
-    },
     {
       "id": "PUBLIC-GATE-D-001",
       "surface": "gateDPublicAcceptance",

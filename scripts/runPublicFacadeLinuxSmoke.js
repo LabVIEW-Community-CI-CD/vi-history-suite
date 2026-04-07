@@ -79,6 +79,14 @@ function createPublicFacadeLinuxSmokeSteps(options = {}) {
       stdoutFileName: 'docker-engine.stdout.log',
       stderrFileName: 'docker-engine.stderr.log',
       requiredStdout: 'linux'
+    },
+    {
+      id: 'bootstrap-linux-host',
+      title: 'Bootstrap Linux VS Code host dependencies',
+      command: 'npm',
+      args: ['run', 'public:host:bootstrap-linux'],
+      stdoutFileName: 'bootstrap-linux-host.stdout.log',
+      stderrFileName: 'bootstrap-linux-host.stderr.log'
     }
   ];
 

@@ -59,6 +59,14 @@ describe('public facade linux smoke', () => {
         requiredStdout: 'linux'
       },
       {
+        id: 'bootstrap-linux-host',
+        title: 'Bootstrap Linux VS Code host dependencies',
+        command: 'npm',
+        args: ['run', 'public:host:bootstrap-linux'],
+        stdoutFileName: 'bootstrap-linux-host.stdout.log',
+        stderrFileName: 'bootstrap-linux-host.stderr.log'
+      },
+      {
         id: 'remove-governed-image',
         title: 'Remove governed Linux image to force a cold pull',
         command: 'docker',

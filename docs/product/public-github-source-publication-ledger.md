@@ -10,11 +10,14 @@ The machine-readable companion surface for this ledger is:
 
 - `docs/product/public-github-source-publication-ledger.json`
 
+Current published public GitHub source HEAD: `4a8b27b`
+
 ## Publications
 
 | Published Surface | Repo Path | Status | Published | Repo Commit | Primary Authority |
 | --- | --- | --- | --- | --- | --- |
 | Public source product repo baseline | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-06` | `bf0cb2d` | `README.md`; `docs/architecture/adr/ADR-0028-governed-authority-to-public-source-promotion-system.md`; `docs/product/public-github-source-authority-map.md` |
+| Public source hosted Linux bootstrap refresh | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-07` | `4a8b27b` | `README.md`; `docs/architecture/adr/ADR-0010-dual-host-extension-proof-and-linux-bootstrap.md`; `docs/product/public-release-candidate.md` |
 
 ## Publication Rules
 

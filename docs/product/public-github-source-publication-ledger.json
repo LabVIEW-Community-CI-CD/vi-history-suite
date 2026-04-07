@@ -1,6 +1,7 @@
 {
   "generatedFor": "vi-history-suite",
   "publicationSurface": "public-github-source-repo",
+  "publishedHeadCommit": "4a8b27b",
   "publications": [
     {
       "id": "public-source-product-repo-baseline",
@@ -13,6 +14,19 @@
         "README.md",
         "docs/architecture/adr/ADR-0028-governed-authority-to-public-source-promotion-system.md",
         "docs/product/public-github-source-authority-map.md"
+      ]
+    },
+    {
+      "id": "public-source-hosted-linux-bootstrap-refresh",
+      "title": "Public source hosted Linux bootstrap refresh",
+      "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
+      "status": "published",
+      "publishedDate": "2026-04-07",
+      "repoCommit": "4a8b27b",
+      "primaryAuthority": [
+        "README.md",
+        "docs/architecture/adr/ADR-0010-dual-host-extension-proof-and-linux-bootstrap.md",
+        "docs/product/public-release-candidate.md"
       ]
     }
   ]

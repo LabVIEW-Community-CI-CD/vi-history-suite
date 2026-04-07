@@ -12,6 +12,7 @@ devcontainer or Codespace:
 npm ci
 npm run compile
 npm run test:design-contract
+npm run public:host:bootstrap-linux
 ```
 
 Then use `F5` in VS Code to launch the extension host.

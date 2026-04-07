@@ -258,10 +258,11 @@ async function testPanelOpenFlow(
   );
   assert.match(reportAction.metadataFilePath ?? '', /report-metadata\.json$/);
   assert.ok(reportAction.reportWebviewUri);
+  assert.ok(reportAction.reportStatus === 'blocked-runtime' || reportAction.reportStatus === 'ready-for-runtime');
   assert.ok(
-    reportAction.reportStatus === 'blocked-runtime'
+    reportAction.runtimeExecutionState === 'not-available' ||
+      reportAction.runtimeExecutionState === 'failed'
   );
-  assert.equal(reportAction.runtimeExecutionState, 'not-available');
   assert.equal(reportAction.generatedReportExists, false);
   assert.ok(await fs.readFile(reportAction.packetFilePath ?? '', 'utf8'));
   const reportMetadata = JSON.parse(await fs.readFile(reportAction.metadataFilePath ?? '', 'utf8')) as {
@@ -274,10 +275,16 @@ async function testPanelOpenFlow(
   assert.equal(reportMetadata.runtimeExecutionState, reportAction.runtimeExecutionState);
   assert.ok(reportMetadata.runtimeSelection);
   assert.ok(reportMetadata.runtimeSelection?.provider);
-  assert.equal(reportMetadata.reportStatus, 'blocked-runtime');
-  assert.equal(reportMetadata.runtimeExecutionState, 'not-available');
-  assert.equal(reportMetadata.runtimeSelection?.provider, 'unavailable');
-  assert.ok(reportMetadata.runtimeSelection?.blockedReason);
+  if (reportMetadata.reportStatus === 'blocked-runtime') {
+    assert.equal(reportMetadata.runtimeExecutionState, 'not-available');
+    assert.equal(reportMetadata.runtimeSelection?.provider, 'unavailable');
+    assert.ok(reportMetadata.runtimeSelection?.blockedReason);
+  } else {
+    assert.equal(reportMetadata.reportStatus, 'ready-for-runtime');
+    assert.equal(reportMetadata.runtimeExecutionState, 'failed');
+    assert.notEqual(reportMetadata.runtimeSelection?.provider, 'unavailable');
+    assert.ok(reportMetadata.runtimeExecution?.failureReason);
+  }
   assert.equal(reportMetadata.runtimeExecution?.reportExists, false);
   assert.equal(api.getPanelActionCount(), 6);
 

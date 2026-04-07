@@ -169,10 +169,15 @@ Current active tranche:
     planned to include a Linux-engine cold-pull compare on the deterministic
     `c:\dev\labview-icon-editor` fixture workspace
   - retained preflight preparation at `2026-04-07T02:38:48.334Z` already proves
-    published public repo commit `bf0cb2d`, published public wiki HEAD commit
+    published public repo commit `4a8b27b`, published public wiki HEAD commit
     `e28491c`, canonical fixture commit `4e442eb0f5a6263e8f8aaa49c322a6b5fd0ea87a`,
     Docker Linux engine state, and governed Linux image absence before and
     after preparation
+  - retained hosted public proof on GitHub Codespace `novacula` now passes at
+    `2026-04-07T03:39:45.470Z` on published public repo commit `4a8b27b`,
+    proving public design-contract viability, Debian hosted bootstrap with
+    xauth/Xvfb, Docker Linux cold pull, and containerized
+    `CreateComparisonReport` reachability on the public product surface
   - the latest retained human Gate D review at `2026-04-07T01:37:37.885Z` is a
     real `failed-human-review` on
     `c:\dev\labview-icon-editor\Tooling\deployment\VIP_Pre-Uninstall Custom Action.vi`;
@@ -257,7 +262,7 @@ Current active and queued post-release programs:
   - private GitLab source repo remains the authority repo and release-control surface
   - internal GitLab wiki remains the maintainer-facing derived reader surface
   - the private GitHub experiment mirror is a non-authoritative Linux benchmark lane only
-  - public GitHub facade repo is the public source product surface at `https://github.com/svelderrainruiz/vi-history-suite`, published at commit `bf0cb2d`
+  - public GitHub facade repo is the public source product surface at `https://github.com/svelderrainruiz/vi-history-suite`, published at commit `4a8b27b`
   - public GitHub user wiki now exists at `https://github.com/svelderrainruiz/vi-history-suite.wiki.git` as a public extension-user reader surface, published at commit `e28491c`
   - public GitHub source publication is tracked separately from both wiki surfaces in `docs/product/public-github-source-publication-ledger.md` and `docs/product/public-github-source-publication-ledger.json`
   - published public GitHub wiki pages now include `Home`, `User-Workflow`, `Install-And-Release`, `Comparison-Reports-And-Dashboard-Review`, and `Current-State`
@@ -398,7 +403,7 @@ These are generated locally and are not the committed source of truth:
   - dedicated development host via `npm run dev:host`
   - explicit Linux integration-host proof via `npm run test:integration:linux`
   - explicit Windows integration-host proof via `npm run test:integration:windows`
-  - Linux bootstrap via `sudo /usr/local/bin/vihs-bootstrap-vscode-linux-host install`
+  - Linux bootstrap via `npm run public:host:bootstrap-linux`
 - concentrated review dashboard:
   - `<workspace-storage>/report-history/<repoId>/<fileId>/pairs/<pairId>/source-record.json`
   - `<workspace-storage>/dashboards/<repoId>/<fileId>/<windowId>/dashboard.json`

@@ -35,16 +35,16 @@ describe('public release candidate control surface', () => {
 
     expect(candidate.versionLine).toBe('1.0.0');
     expect(candidate.authorityRepo).toMatchObject({
-      latestGreenPipelineCommit: '6d326c5',
-      latestGreenPipelineId: '2433201421'
+      latestGreenPipelineCommit: '11e969c',
+      latestGreenPipelineId: '2433268142'
     });
-    expect(candidate.publishedPublicSource?.publishedCommit).toBe('bf0cb2d');
+    expect(candidate.publishedPublicSource?.publishedCommit).toBe('4a8b27b');
     expect(candidate.publishedPublicWiki?.publishedHeadCommit).toBe('e28491c');
     expect(candidate.candidateReadiness).toMatchObject({
       authorityBaseline: 'passed',
       localPublicDevcontainer: 'passed',
       localPublicFixtureHelper: 'passed',
-      publicCodespace: 'pending',
+      publicCodespace: 'passed',
       gateDPublicAcceptance: 'pending-human-judgment'
     });
     expect(candidate.testerFixtureStrategy).toMatchObject({
@@ -52,26 +52,37 @@ describe('public release candidate control surface', () => {
       defaultCloneOnStartup: false
     });
     expect(candidate.activeBlockers).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ id: 'PUBLIC-CODESPACE-001' }),
-        expect.objectContaining({ id: 'PUBLIC-GATE-D-001' })
-      ])
+      expect.arrayContaining([expect.objectContaining({ id: 'PUBLIC-GATE-D-001' })])
     );
+    expect(candidate.activeBlockers).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: 'PUBLIC-CODESPACE-001' })])
+    );
+    expect(candidate).toMatchObject({
+      hostedProofs: {
+        publicCodespace: {
+          status: 'passed',
+          displayName: 'novacula',
+          publicRepoCommit: '4a8b27b'
+        }
+      }
+    });
 
     expect(candidateMarkdown).toContain('Public Release Candidate');
     expect(candidateMarkdown).toContain('Local public devcontainer: passed');
     expect(candidateMarkdown).toContain('npm run public:fixture:icon-editor');
-    expect(candidateMarkdown).toContain(
-      'Public Codespace proof on the updated public source commit is still pending.'
-    );
+    expect(candidateMarkdown).toContain('Public Codespace: passed');
+    expect(candidateMarkdown).toContain('GitHub Codespace `novacula` now passes the hosted public smoke');
 
     expect(currentState).toContain('[Public Release Candidate](./public-release-candidate.md)');
     expect(currentState).toContain('local public devcontainer now passes on this machine');
+    expect(currentState).toContain('retained hosted public proof on GitHub Codespace `novacula` now passes');
     expect(currentState).toContain('optional governed tester-fixture helper');
 
     expect(program).toContain('local public devcontainer now passes on this machine');
+    expect(program).toContain('GitHub Codespace `novacula` now passes the hosted public smoke');
     expect(program).toContain('optional governed tester-fixture helper');
     expect(issue).toContain('local public devcontainer now passes on this machine');
+    expect(issue).toContain('GitHub Codespace `novacula` now passes the hosted public smoke');
     expect(issue).toContain('optional governed tester-fixture helper');
   });
 });

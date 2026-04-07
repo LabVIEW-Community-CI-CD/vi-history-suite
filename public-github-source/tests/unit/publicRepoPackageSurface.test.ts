@@ -37,11 +37,14 @@ describe('public repo package surface', () => {
     expect(manifest.scripts?.['public:smoke:linux']).toBe(
       'npm run compile && node scripts/runPublicFacadeLinuxSmoke.js'
     );
+    expect(manifest.scripts?.['public:host:bootstrap-linux']).toBe(
+      'node scripts/bootstrapLinuxVsCodeHost.js install'
+    );
     expect(manifest.scripts?.['public:fixture:icon-editor']).toBe(
       'node scripts/preparePublicTestFixture.js'
     );
     expect(manifest.scripts?.['test:design-contract']).toBe(
-      'npm exec -- vitest run tests/unit/publicRepoPackageSurface.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicFacadeLinuxSmoke.test.ts tests/unit/linuxContainerRuntimeExecutionSurface.test.ts'
+      'npm exec -- vitest run tests/unit/bootstrapLinuxVsCodeHost.test.ts tests/unit/publicRepoPackageSurface.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicFacadeLinuxSmoke.test.ts tests/unit/runLinuxIntegrationHost.test.ts tests/unit/linuxContainerRuntimeExecutionSurface.test.ts'
     );
     expect(manifest.scripts?.['package']).toBe(
       'npm run compile && npm run package:audit && node scripts/runPinnedVsce.js package'
@@ -56,14 +59,17 @@ describe('public repo package surface', () => {
     expect(readme).toContain('Docker-only compare execution');
     expect(readme).toContain('devcontainer or Codespace');
     expect(readme).toContain('public GitHub repo is the source-facing product surface');
+    expect(readme).toContain('npm run public:host:bootstrap-linux');
     expect(readme).toContain('npm run public:fixture:icon-editor');
     expect(readme).toContain('.cache/public-fixtures/labview-icon-editor');
     expect(install).toContain('Windows host + Linux engine');
     expect(install).toContain('host LabVIEW');
+    expect(install).toContain('npm run public:host:bootstrap-linux');
     expect(install).toContain('npm run public:fixture:icon-editor');
     expect(support).toContain('docker info --format');
     expect(support).toContain('does not use host LabVIEW as an installed-user fallback path');
     expect(contributing).toContain('source-available and intentionally restrictive');
+    expect(contributing).toContain('npm run public:host:bootstrap-linux');
     expect(contributing).toContain('npm run public:fixture:icon-editor');
     expect(previewWorkflow).toContain('name: Public Facade Package Preview');
     expect(previewWorkflow).toContain('npm run test:design-contract');

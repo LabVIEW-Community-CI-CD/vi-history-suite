@@ -56,6 +56,14 @@ npm run test:design-contract
 
 Then press `F5` in VS Code to launch the extension host.
 
+The public devcontainer/Codespaces surface bootstraps the Linux VS Code host
+dependencies automatically during creation. If you need to rerun that bootstrap
+manually, use:
+
+```bash
+npm run public:host:bootstrap-linux
+```
+
 The public Linux cold-pull smoke surface is:
 
 ```bash
