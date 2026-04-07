@@ -95,15 +95,19 @@ function resolveDocsContinuousIntegrationSurfacePaths(options = {}) {
   const surface = options.surface ?? 'all';
   const repoRootPath = options.repoRoot ?? repoRoot;
   const env = options.env ?? process.env;
+  const publicWikiRoot =
+    env.VIHS_PUBLIC_GITHUB_WIKI_REPO_ROOT ??
+    (surface === 'public' ? env.VIHS_WIKI_REPO_ROOT : undefined);
+  const internalWikiRoot = env.VIHS_INTERNAL_WIKI_REPO_ROOT;
 
   return {
     wikiRoot:
-      env.VIHS_WIKI_REPO_ROOT
-        ? path.resolve(env.VIHS_WIKI_REPO_ROOT)
+      surface === 'public'
+        ? path.resolve(
+            publicWikiRoot ?? path.resolve(repoRootPath, '..', 'vi-history-suite.github.wiki')
+          )
         : path.resolve(
-            repoRootPath,
-            '..',
-            surface === 'public' ? 'vi-history-suite.github.wiki' : 'vi-history-suite.wiki'
+            internalWikiRoot ?? path.resolve(repoRootPath, '..', 'vi-history-suite.wiki')
           ),
     ledgerPath:
       env.VIHS_LEDGER_PATH
@@ -174,7 +178,7 @@ function createDocsContinuousIntegrationSteps(options = {}) {
         command: 'node',
         args: ['scripts/syncBundledDocs.js', '--check', '--report', bundleReportPath],
         env: {
-          VIHS_WIKI_REPO_ROOT: bundlePaths.wikiRoot,
+          VIHS_PUBLIC_GITHUB_WIKI_REPO_ROOT: bundlePaths.wikiRoot,
           VIHS_LEDGER_PATH: bundlePaths.ledgerPath
         },
         stdoutFileName: 'bundle-check.stdout.log',

@@ -3,9 +3,29 @@
 This changelog is the governed version-line summary for `vi-history-suite`.
 
 Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
-`v1.0.2`, and `v1.0.3`.
+`v1.0.2`, `v1.0.3`, and `v1.0.4`.
 
 Burned exact-version releases now include `v1.0.2`.
+
+## [1.0.4] - 2026-04-07
+
+### Changed
+
+- the public fork-owner Codespaces pages are now rewritten as atomic
+  first-time-only procedures for LabVIEW users: they explicitly call out the
+  fork dialog `Copy the main branch only` checkbox, the Codespaces `...` ->
+  `New with options` path, the `16-core` machine choice, the browser build
+  message, the top-left VS Code menu button, the expected port `6010`
+  forwarding dialog, and the `VI History` panel wording
+- public refresh steps are now split into a separate
+  `Refresh-Codespace-Repositories` page instead of being embedded into the
+  first-time procedures
+- the public release line is now exact `v1.0.4` on `main`, and `develop`
+  remains aligned to `1.0.4` until the next published change advances it again
+- the authority/public wiki-root contract is now split between
+  `VIHS_INTERNAL_WIKI_REPO_ROOT` and
+  `VIHS_PUBLIC_GITHUB_WIKI_REPO_ROOT`, so public wiki overrides can no longer
+  poison internal-authority docs tests or packaging lanes
 
 ## [1.0.3] - 2026-04-07
 

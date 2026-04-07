@@ -12,7 +12,9 @@ const defaultRepoRoot = path.resolve(
 function resolveBundledDocsPaths(env = process.env) {
   const repoRoot = path.resolve(env.VIHS_REPO_ROOT ?? defaultRepoRoot);
   const wikiRepoRoot = path.resolve(
-    env.VIHS_WIKI_REPO_ROOT ?? path.resolve(repoRoot, '..', 'vi-history-suite.github.wiki')
+    env.VIHS_PUBLIC_GITHUB_WIKI_REPO_ROOT ??
+      env.VIHS_WIKI_REPO_ROOT ??
+      path.resolve(repoRoot, '..', 'vi-history-suite.github.wiki')
   );
   const ledgerPath = path.resolve(
     env.VIHS_LEDGER_PATH ??

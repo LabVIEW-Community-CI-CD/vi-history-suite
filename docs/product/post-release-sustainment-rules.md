@@ -51,10 +51,12 @@ Refresh the release package when any of these change:
 Current version-line contract:
 
 - retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`,
-  `v1.0.3`
+  `v1.0.3`, `v1.0.4`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.0.3`
-- current published package line on `main`: `1.0.3`
+- current exact released line: `v1.0.4`
+- current published package line on `main`: `1.0.4`
+- current develop package line on `develop`: `1.0.4`
+- no newer exact release candidate line is active on `develop` yet
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
 - release branch: `main`
@@ -63,6 +65,9 @@ Strict SemVer rule after an exact release:
 
 - once an exact release is published, the current published package line on
   `main` shall match that exact release line
+- when `develop` carries post-release work, the develop package line shall
+  advance to the next exact release candidate before public-facing
+  normalization continues
 - any further repo change intended for publication shall advance
   `package.json` and the top `CHANGELOG.md` heading to the next SemVer line
   before the changed state is normalized or published further

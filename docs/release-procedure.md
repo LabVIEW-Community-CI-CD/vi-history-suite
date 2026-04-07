@@ -11,15 +11,20 @@
 - The first retained exact-version release is `v0.2.0`, with retained artifact
   `vi-history-suite-0.2.0.vsix` and manifest
   `release-evidence/release-manifest.json`.
-- The current exact released line is `v1.0.3`.
+- The current exact released line is `v1.0.4`.
 - The burned exact released line is `v1.0.2`.
-- The current published package line on `main` is `1.0.3`.
+- The current published package line on `main` is `1.0.4`.
+- The current develop package line on `develop` is `1.0.4`.
+- No newer exact release candidate line is active on `develop` yet.
 - The public Codespaces evaluation branch is `develop`.
 - The integration branch is `develop`.
 - The release branch is `main`.
 - Protected-branch promotion shall rely on required checks, not operator memory.
 - After an exact release is published, the current published package line on
   `main` shall match that exact release line.
+- When `develop` carries post-release work, its package line shall advance to
+  the next exact release candidate before public guidance or publication
+  changes land on that branch.
 - Any later repo change intended for publication shall advance `package.json`
   and the top `CHANGELOG.md` heading to the next SemVer line before additional
   publication or release normalization continues.
@@ -141,6 +146,8 @@
   `13779604462`.
 - `v1.0.2` is retained as a burned release because the immutable tag published
   before the exact authority docs CI failure was discovered.
-- The current published package line on `main` is `1.0.3`, tracked in
+- The current published package line on `main` is `1.0.4`, tracked in
   `CHANGELOG.md`, and it should not rewrite the retained `v0.2.0`, `v1.0.0`,
-  `v1.0.1`, or burned `v1.0.2` release evidence.
+  `v1.0.1`, burned `v1.0.2`, or exact `v1.0.3` release evidence.
+- The current develop package line on `develop` is `1.0.4`, and no newer
+  exact release candidate line is active on `develop` yet.

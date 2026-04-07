@@ -244,16 +244,20 @@ adds first-class evidence for future sessions:
   - stale bundled installed-user docs are therefore unshippable through the
     governed packaging path
 
-When the gate needs to assert zero-gap wiki coverage against the live published
-wiki set, the canonical wiki root is:
+When the gate needs to assert zero-gap wiki coverage against live wiki-backed
+surfaces, the canonical roots are:
 
-- `VIHS_WIKI_REPO_ROOT` when explicitly set
-- otherwise the sibling checkout at `../vi-history-suite.wiki`
+- internal authority wiki: `VIHS_INTERNAL_WIKI_REPO_ROOT` when explicitly set,
+  otherwise the sibling checkout at `../vi-history-suite.wiki`
+- public GitHub wiki for bundled/public-user surfaces:
+  `VIHS_PUBLIC_GITHUB_WIKI_REPO_ROOT` when explicitly set, otherwise the
+  sibling checkout at `../vi-history-suite.github.wiki`
 
 In GitLab CI, every job that evaluates the live wiki-backed documentation
 invariants first clones `${CI_PROJECT_PATH}.wiki.git` into
-`../vi-history-suite.wiki`, exports `VIHS_WIKI_REPO_ROOT`, and then runs its
-gate:
+`../vi-history-suite.wiki` for internal-authority surfaces or clones the public
+GitHub wiki into `../vi-history-suite.github.wiki` for public-user surfaces,
+exports the matching wiki-root variable, and then runs its gate:
 
 - `docs_continuous_integration` before the wider test/package lanes, retaining
   `docs-integration-evidence/docs-integration-report.json` and
@@ -268,7 +272,8 @@ gate:
 - `release_extension` before the tag-gated `npm run test`
 
 That keeps the same coverage invariant enforced in CI without relying on an
-implicit runner-side checkout.
+implicit runner-side checkout and prevents the public GitHub wiki root from
+poisoning internal-authority wiki tests.
 
 The bundled user-doc surface is refreshed explicitly and through packaging:
 

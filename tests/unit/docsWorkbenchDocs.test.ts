@@ -284,7 +284,8 @@ describe('documentation-package workbench', () => {
     expect(workbenchDoc).toContain('wiki-workbench-evidence/iteration-report.md');
     expect(workbenchDoc).toContain('registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main');
     expect(workbenchDoc).toContain('wiki_workbench_prepare_published');
-    expect(workbenchDoc).toContain('VIHS_WIKI_REPO_ROOT');
+    expect(workbenchDoc).toContain('VIHS_INTERNAL_WIKI_REPO_ROOT');
+    expect(workbenchDoc).toContain('VIHS_PUBLIC_GITHUB_WIKI_REPO_ROOT');
     expect(workbenchDoc).toContain('CI_PROJECT_DIR');
     expect(workbenchDoc).toContain('docs_continuous_integration');
     expect(workbenchDoc).toContain('docs_public_continuous_integration');
@@ -343,8 +344,12 @@ describe('documentation-package workbench', () => {
     expect(gitlabCi).toContain('docs_internal_continuous_integration:');
     expect(gitlabCi).toContain('${CI_PROJECT_PATH}.wiki.git');
     expect(gitlabCi).toContain('https://github.com/svelderrainruiz/vi-history-suite.wiki.git');
-    expect(gitlabCi).toContain('VIHS_WIKI_REPO_ROOT="${CI_PROJECT_DIR}/../vi-history-suite.wiki"');
-    expect(gitlabCi).toContain('VIHS_WIKI_REPO_ROOT="${CI_PROJECT_DIR}/../vi-history-suite.github.wiki"');
+    expect(gitlabCi).toContain(
+      'VIHS_INTERNAL_WIKI_REPO_ROOT="${CI_PROJECT_DIR}/../vi-history-suite.wiki"'
+    );
+    expect(gitlabCi).toContain(
+      'VIHS_PUBLIC_GITHUB_WIKI_REPO_ROOT="${CI_PROJECT_DIR}/../vi-history-suite.github.wiki"'
+    );
     expect(gitlabCi).toContain('VIHS_LEDGER_PATH="${CI_PROJECT_DIR}/docs/product/public-github-wiki-publication-ledger.json"');
     expect(gitlabCi).toContain('node scripts/run-docs-continuous-integration.js --skip-links --evidence-dir docs-integration-evidence');
     expect(gitlabCi).toContain('node scripts/run-docs-continuous-integration.js --surface public --skip-links --evidence-dir docs-integration-evidence/public');

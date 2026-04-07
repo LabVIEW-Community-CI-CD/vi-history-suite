@@ -155,7 +155,11 @@ describe('documentation continuous integration runner', () => {
         path.join(evidenceDir, 'bundled-docs-check.json')
       ],
       env: {
-        VIHS_WIKI_REPO_ROOT: path.resolve(repoRoot, '..', 'vi-history-suite.github.wiki'),
+        VIHS_PUBLIC_GITHUB_WIKI_REPO_ROOT: path.resolve(
+          repoRoot,
+          '..',
+          'vi-history-suite.github.wiki'
+        ),
         VIHS_LEDGER_PATH: path.join(
           repoRoot,
           'docs',
@@ -166,7 +170,11 @@ describe('documentation continuous integration runner', () => {
     });
     expect(publicSteps.find((step) => step.id === 'bundle-check')).toMatchObject({
       env: {
-        VIHS_WIKI_REPO_ROOT: path.resolve(repoRoot, '..', 'vi-history-suite.github.wiki'),
+        VIHS_PUBLIC_GITHUB_WIKI_REPO_ROOT: path.resolve(
+          repoRoot,
+          '..',
+          'vi-history-suite.github.wiki'
+        ),
         VIHS_LEDGER_PATH: path.join(
           repoRoot,
           'docs',
@@ -193,7 +201,12 @@ describe('documentation continuous integration runner', () => {
       docsContinuousIntegration.resolveDocsContinuousIntegrationSurfacePaths({
         surface: 'public',
         env: {
-          VIHS_WIKI_REPO_ROOT: path.join(repoRoot, '..', 'vi-history-suite.github.wiki', '.'),
+          VIHS_PUBLIC_GITHUB_WIKI_REPO_ROOT: path.join(
+            repoRoot,
+            '..',
+            'vi-history-suite.github.wiki',
+            '.'
+          ),
           VIHS_LEDGER_PATH: path.join(
             repoRoot,
             'docs',

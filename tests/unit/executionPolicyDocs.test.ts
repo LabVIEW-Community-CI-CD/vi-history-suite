@@ -5,7 +5,8 @@ import { describe, expect, it } from 'vitest';
 
 const repoRoot = path.resolve(__dirname, '..', '..');
 const wikiRoot =
-  process.env.VIHS_WIKI_REPO_ROOT ?? path.resolve(repoRoot, '..', 'vi-history-suite.wiki');
+  process.env.VIHS_INTERNAL_WIKI_REPO_ROOT ??
+  path.resolve(repoRoot, '..', 'vi-history-suite.wiki');
 
 function readText(relativePath: string): string {
   return fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
@@ -19,7 +20,7 @@ function readWikiText(fileName: string): string {
   const candidate = path.join(wikiRoot, fileName);
   if (!fs.existsSync(candidate)) {
     throw new Error(
-      `Missing wiki file ${candidate}. Set VIHS_WIKI_REPO_ROOT or materialize the sibling vi-history-suite.wiki checkout before running docs tests.`
+      `Missing wiki file ${candidate}. Set VIHS_INTERNAL_WIKI_REPO_ROOT or materialize the sibling vi-history-suite.wiki checkout before running docs tests.`
     );
   }
   return fs.readFileSync(candidate, 'utf8');
