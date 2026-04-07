@@ -37,7 +37,7 @@ describe('public facade boundary docs', () => {
     expect(currentState).toContain('public GitHub source publication is tracked separately');
     expect(currentState).toContain('npm run public:source:promote');
     expect(currentState).toContain('public GitHub wiki publication is tracked separately');
-    expect(currentState).toContain('published public GitHub wiki pages now include `Home`, `User-Workflow`, `Install-And-Release`, and `Current-State`');
+    expect(currentState).toContain('published public GitHub wiki pages now include `Home`, `User-Workflow`, `Install-And-Release`, `Comparison-Reports-And-Dashboard-Review`, and `Current-State`');
     expect(currentState).toContain('docs:ci:public');
     expect(currentState).toContain('docs:ci:internal');
     expect(currentState).toContain('public-facade Linux smoke lane');
@@ -58,14 +58,16 @@ describe('public facade boundary docs', () => {
     expect(internalLedger).toContain('internal GitLab maintainer wiki');
     expect(internalLedgerJson).toContain('"publicationSurface": "internal-gitlab-wiki"');
     expect(publicLedger).toContain('public GitHub user wiki');
-    expect(publicLedger).toContain('ea06c37');
+    expect(publicLedger).toContain('e28491c');
     expect(publicLedger).toContain('User Workflow');
     expect(publicLedger).toContain('Install And Release');
+    expect(publicLedger).toContain('Comparison Reports And Dashboard Review');
     expect(publicLedger).toContain('Current State');
     expect(publicLedgerJson).toContain('"publicationSurface": "public-github-user-wiki"');
     expect(publicLedgerJson).toContain('"wikiFileName": "Home.md"');
     expect(publicLedgerJson).toContain('"wikiFileName": "User-Workflow.md"');
     expect(publicLedgerJson).toContain('"wikiFileName": "Install-And-Release.md"');
+    expect(publicLedgerJson).toContain('"wikiFileName": "Comparison-Reports-And-Dashboard-Review.md"');
     expect(publicLedgerJson).toContain('"wikiFileName": "Current-State.md"');
     expect(publicLedgerJson).toContain('"nextPage": null');
     expect(publicSourceLedger).toContain('Public source product repo baseline');

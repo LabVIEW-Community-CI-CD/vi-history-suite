@@ -37,7 +37,7 @@ Current truth:
   earlier public bundle only
 - the public GitHub facade repo is published at `1e24980` as the curated public
   source product surface
-- the public GitHub wiki is published at `ea06c37` as the public extension-user
+- the public GitHub wiki is published at `e28491c` as the public extension-user
   reader surface
 - the internal GitLab wiki remains the maintainer-facing derived reader surface
   for the private control plane
@@ -284,7 +284,7 @@ Gate D is now defined against the real public product:
 The public product now retains:
 
 - published public GitHub source repo baseline at commit `1e24980`
-- published public GitHub wiki refresh at commit `ea06c37`
+- published public GitHub wiki refresh at commit `e28491c`
 - a public devcontainer/Codespaces surface
 - a public package-preview workflow
 - a public Linux smoke workflow at

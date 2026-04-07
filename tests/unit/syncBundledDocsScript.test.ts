@@ -15,10 +15,18 @@ const bundledDocsScript = require(path.resolve(
     actualFiles: Map<string, string>
   ) => Array<{ path: string; reason: string }>;
   getBundledDocsUsage: () => string;
+  normalizeRepoRelativePath: (repoRoot: string, targetPath: string) => string;
   parseBundledDocsArgs: (argv: string[]) => {
     check: boolean;
     helpRequested: boolean;
     reportPath?: string;
+  };
+  resolveBundledDocsPaths: (env?: NodeJS.ProcessEnv) => {
+    repoRoot: string;
+    wikiRepoRoot: string;
+    ledgerPath: string;
+    bundleRoot: string;
+    bundlePagesRoot: string;
   };
 };
 
@@ -38,6 +46,15 @@ describe('bundled docs sync script', () => {
     });
     expect(() => bundledDocsScript.parseBundledDocsArgs(['--report'])).toThrow(/Missing value/);
     expect(bundledDocsScript.getBundledDocsUsage()).toContain('--check');
+    expect(bundledDocsScript.normalizeRepoRelativePath('/repo', '/repo/docs/test.md')).toBe(
+      'docs/test.md'
+    );
+    expect(bundledDocsScript.resolveBundledDocsPaths({ VIHS_REPO_ROOT: '/repo' }).wikiRepoRoot).toBe(
+      path.resolve('/repo', '..', 'vi-history-suite.github.wiki')
+    );
+    expect(bundledDocsScript.resolveBundledDocsPaths({ VIHS_REPO_ROOT: '/repo' }).ledgerPath).toBe(
+      path.resolve('/repo', 'docs', 'product', 'public-github-wiki-publication-ledger.json')
+    );
   });
 
   it('ignores manifest generatedAt churn while still failing on real bundle drift', () => {

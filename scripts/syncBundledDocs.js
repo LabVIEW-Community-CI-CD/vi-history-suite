@@ -12,10 +12,11 @@ const defaultRepoRoot = path.resolve(
 function resolveBundledDocsPaths(env = process.env) {
   const repoRoot = path.resolve(env.VIHS_REPO_ROOT ?? defaultRepoRoot);
   const wikiRepoRoot = path.resolve(
-    env.VIHS_WIKI_REPO_ROOT ?? path.resolve(repoRoot, '..', 'vi-history-suite.wiki')
+    env.VIHS_WIKI_REPO_ROOT ?? path.resolve(repoRoot, '..', 'vi-history-suite.github.wiki')
   );
   const ledgerPath = path.resolve(
-    env.VIHS_LEDGER_PATH ?? path.join(repoRoot, 'docs', 'product', 'wiki-publication-ledger.json')
+    env.VIHS_LEDGER_PATH ??
+      path.join(repoRoot, 'docs', 'product', 'public-github-wiki-publication-ledger.json')
   );
   const bundleRoot = path.resolve(
     env.VIHS_BUNDLE_ROOT ?? path.join(repoRoot, 'resources', 'bundled-docs')
@@ -28,6 +29,10 @@ function resolveBundledDocsPaths(env = process.env) {
     bundleRoot,
     bundlePagesRoot: path.join(bundleRoot, 'pages')
   };
+}
+
+function normalizeRepoRelativePath(repoRoot, targetPath) {
+  return path.relative(repoRoot, targetPath).replace(/\\/g, '/');
 }
 
 function getBundledDocsUsage() {
@@ -455,8 +460,8 @@ async function buildBundledDocsOutput(paths, deps = {}) {
 
   const manifest = {
     generatedAt: (deps.now ?? (() => new Date().toISOString()))(),
-    sourceLedgerPath: 'docs/product/wiki-publication-ledger.json',
-    sourceWikiRepoPath: '../vi-history-suite.wiki',
+    sourceLedgerPath: normalizeRepoRelativePath(paths.repoRoot, paths.ledgerPath),
+    sourceWikiRepoPath: normalizeRepoRelativePath(paths.repoRoot, paths.wikiRepoRoot),
     bundleAudience: 'extension-users',
     defaultPageId: 'overview',
     pages: []
@@ -711,6 +716,7 @@ module.exports = {
   getBundledDocsUsage,
   main,
   normalizeBundleFileForComparison,
+  normalizeRepoRelativePath,
   parseBundledDocsArgs,
   resolveBundledDocsPaths,
   runBundledDocsSync,

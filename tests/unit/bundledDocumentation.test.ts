@@ -107,7 +107,9 @@ describe('bundled documentation', () => {
     expect(comparisonLoaded?.pageBodyHtml).not.toContain('<h2>Dashboard Review</h2>');
 
     const overviewLoaded = await loadBundledDocumentationPage(extensionUri as never, 'overview');
-    expect(overviewLoaded?.pageBodyHtml).toContain('<h2>Product Promise</h2>');
+    expect(overviewLoaded?.pageBodyHtml).toContain('<h1>vi-history-suite</h1>');
+    expect(overviewLoaded?.pageBodyHtml).toContain('Visual Studio Code extension for reviewing LabVIEW VI history in Git repositories');
+    expect(overviewLoaded?.pageBodyHtml).toContain('<h2>Install Surfaces</h2>');
     expect(overviewLoaded?.pageBodyHtml).not.toContain('Documentation Workbench');
     expect(overviewLoaded?.pageBodyHtml).not.toContain('Debt Retirement Contract');
   });

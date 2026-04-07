@@ -1,17 +1,12 @@
 <h1>User Workflow</h1>
 <h2>Preconditions</h2>
-<p>The current governed workflow assumes:</p>
+<p>The shipped extension-user workflow assumes:</p>
 <ul>
-<li>the extension is installed from the preview VSIX or a future tagged release</li>
+<li>the extension is installed from a preview VSIX or future tagged release</li>
 <li>the workspace is trusted</li>
-<li>the target file is inside an open Git repository</li>
-<li>the target file is content-detected as a LabVIEW VI</li>
-</ul>
-<p>The extension only surfaces <code>VI History</code> for tracked files that satisfy VI
-detection and have at least two modifying commits.</p>
-<p>The installed extension also exposes a first-class documentation command:</p>
-<ul>
-<li><code>VI History: Open Documentation</code></li>
+<li>the target file is a tracked LabVIEW VI in a Git repository</li>
+<li>at least two commits modify that VI</li>
+<li>Docker is available on the current host</li>
 </ul>
 <h2>Execution Policy</h2>
 <p>Comparison generation is Docker-only in the installed extension.</p>

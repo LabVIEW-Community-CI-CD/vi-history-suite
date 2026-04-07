@@ -272,14 +272,19 @@ describe('ship-control direction system', () => {
     expect(releaseProcedure).toContain(
       'Stale bundled installed-user docs are therefore unshippable through the'
     );
-    expect(bundledInstallPage).toContain('Retained exact release: <code>v0.2.0</code>');
-    expect(bundledInstallPage).toContain('Current development baseline: <code>1.0.0</code>');
-    expect(bundledInstallPage).toContain('Next exact-version line: <code>v1.0.0</code>');
+    expect(bundledInstallPage).toContain('<h2>Install Surfaces</h2>');
     expect(bundledInstallPage).toContain(
-      'Preview install surface: latest successful <code>main</code> pipeline preview VSIX artifact'
+      'preview VSIX artifact from the latest successful <code>main</code> pipeline'
     );
-    expect(bundledInstallPage).toContain('Retained release artifact: <code>vi-history-suite-0.2.0.vsix</code>');
-    expect(bundledInstallPage).not.toContain('Target release: <code>v0.2.0</code>');
+    expect(bundledInstallPage).toContain('local package output via <code>npm run package</code>');
+    expect(bundledInstallPage).toContain('tagged release VSIX for exact-version installs');
+    expect(bundledInstallPage).toContain(
+      'packaged bundled docs through <code>VI History: Open Documentation</code>'
+    );
+    expect(bundledInstallPage).toContain('After installing or updating the VSIX, reload VS Code');
+    expect(bundledInstallPage).toContain('<h2>Release Procedure Summary</h2>');
+    expect(bundledInstallPage).toContain('open <code>VI History</code> on an eligible VI');
+    expect(bundledInstallPage).not.toContain('Retained exact release: <code>v0.2.0</code>');
     expect(changelog).toContain('## [1.0.0] - Unreleased');
     expect(changelog).toContain('The first retained exact-version release remains `v0.2.0`');
     expect(changelog).toContain('## [0.2.0] - 2026-04-03');
@@ -375,6 +380,9 @@ describe('ship-control direction system', () => {
     expect(gitlabCi).toContain('node scripts/run-docs-continuous-integration.js --skip-links --evidence-dir docs-integration-evidence');
     expect(gitlabCi).toContain('node scripts/run-docs-continuous-integration.js --surface public --skip-links --evidence-dir docs-integration-evidence/public');
     expect(gitlabCi).toContain('node scripts/run-docs-continuous-integration.js --surface internal --skip-links --evidence-dir docs-integration-evidence/internal');
+    expect(gitlabCi).toContain('https://github.com/svelderrainruiz/vi-history-suite.wiki.git');
+    expect(gitlabCi).toContain('VIHS_WIKI_REPO_ROOT="${CI_PROJECT_DIR}/../vi-history-suite.github.wiki"');
+    expect(gitlabCi).toContain('VIHS_LEDGER_PATH="${CI_PROJECT_DIR}/docs/product/public-github-wiki-publication-ledger.json"');
     expect(gitlabCi).toContain('docs-integration-evidence/');
     expect(gitlabCi).toContain('publish_docs_authoring_image:');
     expect(gitlabCi).toContain('wiki_workbench_prepare_published:');

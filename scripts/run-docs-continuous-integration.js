@@ -91,6 +91,32 @@ function parseDocsContinuousIntegrationArgs(argv) {
   return parsed;
 }
 
+function resolveDocsContinuousIntegrationSurfacePaths(options = {}) {
+  const surface = options.surface ?? 'all';
+  const repoRootPath = options.repoRoot ?? repoRoot;
+  const env = options.env ?? process.env;
+
+  return {
+    wikiRoot:
+      env.VIHS_WIKI_REPO_ROOT ??
+      path.resolve(
+        repoRootPath,
+        '..',
+        surface === 'public' ? 'vi-history-suite.github.wiki' : 'vi-history-suite.wiki'
+      ),
+    ledgerPath:
+      env.VIHS_LEDGER_PATH ??
+      path.join(
+        repoRootPath,
+        'docs',
+        'product',
+        surface === 'public'
+          ? 'public-github-wiki-publication-ledger.json'
+          : 'wiki-publication-ledger.json'
+      )
+  };
+}
+
 function createDocsContinuousIntegrationSteps(options = {}) {
   const surface = options.surface ?? 'all';
   const defaultEvidenceSubdir =
@@ -101,6 +127,11 @@ function createDocsContinuousIntegrationSteps(options = {}) {
         : path.join('.cache', 'docs-integration', 'latest');
   const evidenceDir = options.evidenceDir ?? path.join(repoRoot, defaultEvidenceSubdir);
   const bundleReportPath = path.join(evidenceDir, 'bundled-docs-check.json');
+  const bundlePaths = resolveDocsContinuousIntegrationSurfacePaths({
+    surface: surface === 'internal' ? 'internal' : 'public',
+    repoRoot: options.repoRoot ?? repoRoot,
+    env: options.env ?? process.env
+  });
   const steps = [
     {
       id: 'compile',
@@ -127,6 +158,10 @@ function createDocsContinuousIntegrationSteps(options = {}) {
         title: 'Check bundled documentation drift',
         command: 'node',
         args: ['scripts/syncBundledDocs.js', '--check', '--report', bundleReportPath],
+        env: {
+          VIHS_WIKI_REPO_ROOT: bundlePaths.wikiRoot,
+          VIHS_LEDGER_PATH: bundlePaths.ledgerPath
+        },
         stdoutFileName: 'bundle-check.stdout.log',
         stderrFileName: 'bundle-check.stderr.log'
       }
@@ -202,7 +237,10 @@ async function writeEvidenceFile(evidenceDir, fileName, content) {
 async function runStep(step, options) {
   const result = (options.spawnSync ?? spawnSync)(step.command, step.args, {
     cwd: options.cwd,
-    env: options.env,
+    env: {
+      ...options.env,
+      ...(step.env ?? {})
+    },
     encoding: 'utf8',
     shell: false,
     maxBuffer: 10 * 1024 * 1024
@@ -273,6 +311,11 @@ function collectInstalledUserTruths(repoRootPath) {
 }
 
 function buildDocsContinuousIntegrationReport(options) {
+  const surfacePaths = resolveDocsContinuousIntegrationSurfacePaths({
+    surface: options.surface,
+    repoRoot: options.repoRoot,
+    env: options.env
+  });
   const coverageMatrix = readJsonIfPresent(
     path.join(options.repoRoot, 'docs', 'product', 'wiki-coverage-matrix.json')
   );
@@ -296,9 +339,8 @@ function buildDocsContinuousIntegrationReport(options) {
     status: options.status,
     surface: options.surface,
     repoRoot: options.repoRoot,
-    wikiRoot:
-      options.env.VIHS_WIKI_REPO_ROOT ??
-      path.resolve(options.repoRoot, '..', 'vi-history-suite.wiki'),
+    wikiRoot: surfacePaths.wikiRoot,
+    ledgerPath: surfacePaths.ledgerPath,
     evidenceDir: options.evidenceDir,
     skipLinks: options.skipLinks,
     steps: options.steps,
@@ -333,6 +375,7 @@ function buildDocsContinuousIntegrationMarkdown(report) {
     `- Surface: ${report.surface}`,
     `- Repo root: ${report.repoRoot}`,
     `- Wiki root: ${report.wikiRoot}`,
+    `- Ledger path: ${report.ledgerPath}`,
     `- Skip links: ${String(report.skipLinks)}`,
     `- Bundle check: ${report.bundleCheck?.status ?? 'not-retained'}`,
     `- Wiki doctor issues: ${String(report.wikiDoctorIssueCount ?? 'not-retained')}`,
@@ -474,6 +517,7 @@ module.exports = {
   getDocsContinuousIntegrationUsage,
   main,
   parseDocsContinuousIntegrationArgs,
+  resolveDocsContinuousIntegrationSurfacePaths,
   runDocsContinuousIntegration,
   writeDocsContinuousIntegrationReport
 };

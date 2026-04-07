@@ -2,6 +2,8 @@ import * as path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+const repoRoot = path.resolve(__dirname, '..', '..');
+
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const docsContinuousIntegration = require(path.resolve(
   __dirname,
@@ -14,10 +16,13 @@ const docsContinuousIntegration = require(path.resolve(
     surface?: 'all' | 'public' | 'internal';
     skipLinks?: boolean;
     evidenceDir?: string;
+    env?: NodeJS.ProcessEnv;
+    repoRoot?: string;
   }) => Array<{
     id: string;
     command: string;
     args: string[];
+    env?: Record<string, string>;
     stdoutFileName?: string;
     stderrFileName?: string;
   }>;
@@ -27,6 +32,14 @@ const docsContinuousIntegration = require(path.resolve(
     surface: 'all' | 'public' | 'internal';
     skipLinks: boolean;
     evidenceDir?: string;
+  };
+  resolveDocsContinuousIntegrationSurfacePaths: (options?: {
+    surface?: 'all' | 'public' | 'internal';
+    env?: NodeJS.ProcessEnv;
+    repoRoot?: string;
+  }) => {
+    wikiRoot: string;
+    ledgerPath: string;
   };
 };
 
@@ -116,7 +129,27 @@ describe('documentation continuous integration runner', () => {
         '--check',
         '--report',
         path.join(evidenceDir, 'bundled-docs-check.json')
-      ]
+      ],
+      env: {
+        VIHS_WIKI_REPO_ROOT: path.resolve(repoRoot, '..', 'vi-history-suite.github.wiki'),
+        VIHS_LEDGER_PATH: path.join(
+          repoRoot,
+          'docs',
+          'product',
+          'public-github-wiki-publication-ledger.json'
+        )
+      }
+    });
+    expect(publicSteps.find((step) => step.id === 'bundle-check')).toMatchObject({
+      env: {
+        VIHS_WIKI_REPO_ROOT: path.resolve(repoRoot, '..', 'vi-history-suite.github.wiki'),
+        VIHS_LEDGER_PATH: path.join(
+          repoRoot,
+          'docs',
+          'product',
+          'public-github-wiki-publication-ledger.json'
+        )
+      }
     });
     expect(allSteps.find((step) => step.id === 'wiki-doctor')).toMatchObject({
       command: 'node',
@@ -131,6 +164,19 @@ describe('documentation continuous integration runner', () => {
     expect(publicSteps.find((step) => step.id === 'links')).toMatchObject({
       command: 'lychee',
       args: ['--verbose', '--no-progress', '--include-fragments', 'README.md', 'docs/**/*.md']
+    });
+    expect(
+      docsContinuousIntegration.resolveDocsContinuousIntegrationSurfacePaths({
+        surface: 'public'
+      })
+    ).toEqual({
+      wikiRoot: path.resolve(repoRoot, '..', 'vi-history-suite.github.wiki'),
+      ledgerPath: path.join(
+        repoRoot,
+        'docs',
+        'product',
+        'public-github-wiki-publication-ledger.json'
+      )
     });
   });
 });

@@ -14,9 +14,10 @@ The machine-readable companion surface for this ledger is:
 
 | Page | Wiki Path | Status | Published | Wiki Commit | Primary Authority |
 | --- | --- | --- | --- | --- | --- |
-| Home | `Home` | published | `2026-04-06` | `ea06c37` | `README.md`; `docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md`; `docs/release-procedure.md` |
+| Overview | `Home` | published | `2026-04-06` | `e28491c` | `README.md`; `docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md`; `docs/release-procedure.md` |
 | User Workflow | `User-Workflow` | published | `2026-04-06` | `ea06c37` | `README.md`; `docs/product/extension-execution-policy.md`; `docs/product/current-state.md` |
 | Install And Release | `Install-And-Release` | published | `2026-04-06` | `ea06c37` | `README.md`; `docs/release-procedure.md`; `CHANGELOG.md` |
+| Comparison Reports And Dashboard Review | `Comparison-Reports-And-Dashboard-Review` | published | `2026-04-06` | `e28491c` | `README.md`; `docs/product/current-state.md`; `docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md`; `docs/product/issues/ISSUE-0407-public-facade-installer-and-windows-acceptance.md` |
 | Current State | `Current-State` | published | `2026-04-06` | `ea06c37` | `README.md`; `docs/product/current-state.md`; `docs/product/extension-execution-policy.md` |
 
 ## Publication Rules
