@@ -241,12 +241,12 @@ package_extension_preview:
     - test_extension
   script:
     - git clone "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.wiki.git" ../vi-history-suite.wiki
-    - export VIHS_WIKI_REPO_ROOT="${CI_PROJECT_DIR}/../vi-history-suite.wiki"
+    - git clone "https://github.com/svelderrainruiz/vi-history-suite.wiki.git" ../vi-history-suite.github.wiki
     - npm ci
     - PACKAGE_VERSION=$(node -p "require('./package.json').version")
     - mkdir -p preview-evidence
     - npm run compile
-    - npm run package -- --out "preview-evidence/vi-history-suite-${PACKAGE_VERSION}.vsix"
+    - VIHS_WIKI_REPO_ROOT="${CI_PROJECT_DIR}/../vi-history-suite.github.wiki" VIHS_LEDGER_PATH="${CI_PROJECT_DIR}/docs/product/public-github-wiki-publication-ledger.json" npm run package -- --out "preview-evidence/vi-history-suite-${PACKAGE_VERSION}.vsix"
     - |
       node - <<'NODE'
       const fs = require('node:fs');
@@ -281,6 +281,7 @@ release_extension:
     - test_extension
   script:
     - git clone "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.wiki.git" ../vi-history-suite.wiki
+    - git clone "https://github.com/svelderrainruiz/vi-history-suite.wiki.git" ../vi-history-suite.github.wiki
     - export VIHS_WIKI_REPO_ROOT="${CI_PROJECT_DIR}/../vi-history-suite.wiki"
     - npm ci
     - PACKAGE_VERSION=$(node -p "require('./package.json').version")
@@ -294,7 +295,7 @@ release_extension:
     - mkdir -p release-evidence
     - cp -R coverage release-evidence/coverage
     - cp coverage/cobertura-coverage.xml release-evidence/coverage.xml
-    - npm run package -- --out "release-evidence/vi-history-suite-${PACKAGE_VERSION}.vsix"
+    - VIHS_WIKI_REPO_ROOT="${CI_PROJECT_DIR}/../vi-history-suite.github.wiki" VIHS_LEDGER_PATH="${CI_PROJECT_DIR}/docs/product/public-github-wiki-publication-ledger.json" npm run package -- --out "release-evidence/vi-history-suite-${PACKAGE_VERSION}.vsix"
     - |
       node - <<'NODE'
       const crypto = require('node:crypto');
