@@ -345,6 +345,8 @@ describe('documentation-package workbench', () => {
     expect(gitlabCi).toContain('docs_internal_continuous_integration:');
     expect(gitlabCi).toContain('${CI_PROJECT_PATH}.wiki.git');
     expect(gitlabCi).toContain('https://github.com/svelderrainruiz/vi-history-suite.wiki.git');
+    expect(gitlabCi).toContain('PUBLIC_GITHUB_WIKI_BRANCH="${VIHS_PUBLIC_GITHUB_WIKI_BRANCH:-${CI_COMMIT_REF_NAME}}"');
+    expect(gitlabCi).toContain('git clone --branch "${PUBLIC_GITHUB_WIKI_BRANCH}" "https://github.com/svelderrainruiz/vi-history-suite.wiki.git" ../vi-history-suite.github.wiki || git clone "https://github.com/svelderrainruiz/vi-history-suite.wiki.git" ../vi-history-suite.github.wiki');
     expect(gitlabCi).toContain(
       'VIHS_INTERNAL_WIKI_REPO_ROOT="${CI_PROJECT_DIR}/../vi-history-suite.wiki"'
     );

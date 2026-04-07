@@ -24,6 +24,9 @@ Burned exact-version releases now include `v1.0.2`.
   docs CI test that reads the published public wiki checkout directly, so the
   fork-owner procedure can no longer drift silently from the authority/public
   source contract
+- public GitHub wiki validation in GitLab CI now clones a matching candidate
+  branch when one exists and falls back to `master` otherwise, so `develop`
+  candidate docs can stay gated without prematurely mutating the published wiki
 
 ## [1.0.4] - 2026-04-07
 
