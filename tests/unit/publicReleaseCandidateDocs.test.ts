@@ -271,7 +271,7 @@ describe('public release candidate control surface', () => {
     expect(currentState).toContain('[Public Release Candidate](./public-release-candidate.md)');
     expect(currentState).toContain('active exact release candidate line on `develop`: `v1.2.0`');
     expect(currentState).toContain('`TRANCHE-014`: Public Codespaces public-repo bootstrap');
-    expect(currentState).toContain('`v1.2.0` is now `review-ready` on maintained public `develop` candidate head');
+    expect(currentState).toContain('`v1.2.0` is now back to `review-ready` on refreshed maintained public');
     expect(currentState).toContain('`c9806c3`');
     expect(currentState).toContain('`b30d356`');
     expect(currentState).toContain('current exact public GitHub release line is `v1.1.0`');
