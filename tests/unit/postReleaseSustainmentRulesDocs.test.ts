@@ -18,8 +18,15 @@ type SustainmentRules = {
   };
   releaseCadence: {
     model: string;
+    versionLineContract: {
+      retainedExactVersionReleases: string[];
+      currentExactReleaseLine: string;
+      currentMainPackageLine: string;
+      nextExactReleaseLine: string;
+    };
     maintainedSurfaces: string[];
     refreshTriggers: string[];
+    strictSemverRule?: string[];
     explicitNonTriggers: string[];
   };
   benchmarkRefreshCadence: {
@@ -80,6 +87,12 @@ describe('post-release sustainment rules package', () => {
     });
 
     expect(rules.releaseCadence.model).toBe('event-driven');
+    expect(rules.releaseCadence.versionLineContract).toEqual({
+      retainedExactVersionReleases: ['v0.2.0', 'v1.0.0'],
+      currentExactReleaseLine: 'v1.0.0',
+      currentMainPackageLine: '1.0.1',
+      nextExactReleaseLine: 'v1.0.1'
+    });
     expect(rules.releaseCadence.maintainedSurfaces).toContain(
       'preview-evidence/vi-history-suite-<version>.vsix'
     );
@@ -89,6 +102,13 @@ describe('post-release sustainment rules package', () => {
     expect(rules.releaseCadence.refreshTriggers).toContain('package.json version change');
     expect(rules.releaseCadence.refreshTriggers).toContain(
       'release-procedure, ship-control, or docs-workbench publication contract change'
+    );
+    expect(rules.releaseCadence.strictSemverRule).toEqual(
+      expect.arrayContaining([
+        'after an exact release is published, any later repo change on main shall advance package.json and the top CHANGELOG.md heading to the next SemVer line before further normalization or publication',
+        'future sessions shall treat that advanced line as the real changed main line, not as a generic baseline placeholder',
+        'future sessions shall not keep landing post-release changes on the previous exact release version number'
+      ])
     );
 
     expect(rules.benchmarkRefreshCadence.model).toBe('event-driven-bounded');
@@ -131,6 +151,8 @@ describe('post-release sustainment rules package', () => {
     );
 
     expect(rulesDoc).toContain('## Release Refresh Rules');
+    expect(rulesDoc).toContain('Current version-line contract after `v1.0.0`');
+    expect(rulesDoc).toContain('Strict SemVer rule after an exact release');
     expect(rulesDoc).toContain('## Benchmark Refresh Rules');
     expect(rulesDoc).toContain('## Operator And Documentation Upkeep Rules');
     expect(rulesDoc).toContain('PROGRAM-0002');

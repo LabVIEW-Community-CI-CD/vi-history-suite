@@ -60,8 +60,8 @@ describe('public facade boundary docs', () => {
     expect(internalLedger).toContain('internal GitLab maintainer wiki');
     expect(internalLedgerJson).toContain('"publicationSurface": "internal-gitlab-wiki"');
     expect(publicLedger).toContain('public GitHub user wiki');
-    expect(publicLedger).toContain('Current published public GitHub wiki HEAD: `2ecb847`');
-    expect(publicLedger).toContain('2ecb847');
+    expect(publicLedger).toContain('Current published public GitHub wiki HEAD: `fe3e11c`');
+    expect(publicLedger).toContain('fe3e11c');
     expect(publicLedger).toContain('User Workflow');
     expect(publicLedger).toContain('Install And Release');
     expect(publicLedger).toContain('Fork Codespace Quickstart');
@@ -69,7 +69,7 @@ describe('public facade boundary docs', () => {
     expect(publicLedger).toContain('Comparison Reports And Dashboard Review');
     expect(publicLedger).toContain('Current State');
     expect(publicLedgerJson).toContain('"publicationSurface": "public-github-user-wiki"');
-    expect(publicLedgerJson).toContain('"publishedHeadCommit": "2ecb847"');
+    expect(publicLedgerJson).toContain('"publishedHeadCommit": "fe3e11c"');
     expect(publicLedgerJson).toContain('"wikiFileName": "Home.md"');
     expect(publicLedgerJson).toContain('"wikiFileName": "User-Workflow.md"');
     expect(publicLedgerJson).toContain('"wikiFileName": "Install-And-Release.md"');
@@ -80,13 +80,13 @@ describe('public facade boundary docs', () => {
     expect(publicLedgerJson).toContain('"nextPage": null');
     expect(publicSourceLedger).toContain('Public source product repo baseline');
     expect(publicSourceLedger).toContain('published');
-    expect(publicSourceLedger).toContain('Current published public GitHub source HEAD: `a1a6b1e`');
-    expect(publicSourceLedger).toContain('a1a6b1e');
-    expect(publicSourceLedger).toContain('Public source fork-owner Codespaces procedure refresh');
+    expect(publicSourceLedger).toContain('Current published public GitHub source HEAD: `85230a3`');
+    expect(publicSourceLedger).toContain('85230a3');
+    expect(publicSourceLedger).toContain('Public source v1.0.1 semver discipline refresh');
     expect(publicSourceLedgerJson).toContain('"publicationSurface": "public-github-source-repo"');
-    expect(publicSourceLedgerJson).toContain('"publishedHeadCommit": "a1a6b1e"');
+    expect(publicSourceLedgerJson).toContain('"publishedHeadCommit": "85230a3"');
     expect(publicSourceLedgerJson).toContain('"status": "published"');
-    expect(publicSourceLedgerJson).toContain('"repoCommit": "a1a6b1e"');
+    expect(publicSourceLedgerJson).toContain('"repoCommit": "85230a3"');
     expect(program).toContain('workflow_dispatch');
     expect(program).toContain('npm run public:smoke:linux');
     expect(program).toContain('docs:ci:public');

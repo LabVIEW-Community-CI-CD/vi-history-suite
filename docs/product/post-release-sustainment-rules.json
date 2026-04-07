@@ -11,6 +11,15 @@
   },
   "releaseCadence": {
     "model": "event-driven",
+    "versionLineContract": {
+      "retainedExactVersionReleases": [
+        "v0.2.0",
+        "v1.0.0"
+      ],
+      "currentExactReleaseLine": "v1.0.0",
+      "currentMainPackageLine": "1.0.1",
+      "nextExactReleaseLine": "v1.0.1"
+    },
     "maintainedSurfaces": [
       "preview-evidence/vi-history-suite-<version>.vsix",
       "preview-evidence/preview-manifest.json",
@@ -25,6 +34,11 @@
       "SemVer tag or release-manifest contract change",
       "public release-kit asset or setup/support change tied to the exact released VSIX",
       "release-procedure, ship-control, or docs-workbench publication contract change"
+    ],
+    "strictSemverRule": [
+      "after an exact release is published, any later repo change on main shall advance package.json and the top CHANGELOG.md heading to the next SemVer line before further normalization or publication",
+      "future sessions shall treat that advanced line as the real changed main line, not as a generic baseline placeholder",
+      "future sessions shall not keep landing post-release changes on the previous exact release version number"
     ],
     "explicitNonTriggers": [
       "benchmark-only diagnosis that does not affect a shipped release surface",

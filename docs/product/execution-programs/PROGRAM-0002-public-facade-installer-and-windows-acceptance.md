@@ -35,9 +35,9 @@ Current truth:
 
 - the old canonical Windows host pass remains valid historical evidence for the
   earlier public bundle only
-- the public GitHub facade repo is published at `a1a6b1e` as the curated public
+- the public GitHub facade repo is published at `85230a3` as the curated public
   source product surface
-- the public GitHub wiki is published at `2ecb847` as the public extension-user
+- the public GitHub wiki is published at `fe3e11c` as the public extension-user
   reader surface
 - the internal GitLab wiki remains the maintainer-facing derived reader surface
   for the private control plane
@@ -326,8 +326,8 @@ Gate D is now defined against the real public product:
 
 The public product now retains:
 
-- published public GitHub source repo baseline at commit `a1a6b1e`
-- published public GitHub wiki refresh at commit `2ecb847`
+- published public GitHub source repo baseline at commit `85230a3`
+- published public GitHub wiki refresh at commit `fe3e11c`
 - a public devcontainer/Codespaces surface
 - a public package-preview workflow
 - a public Linux smoke workflow at

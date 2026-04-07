@@ -397,9 +397,10 @@ Latest landed ship target:
 - landed ship tranche: `TRANCHE-009`
 - landed ship issue: `ISSUE-0406`
 - retained exact-version releases: `v0.2.0`, `v1.0.0`
-- current exact-version line: `v1.0.0`
+- current exact released line: `v1.0.0`
+- current package line on `main`: `1.0.1`
+- next exact-version release line on `main`: `v1.0.1`
 - target release manifest: `release-evidence/release-manifest.json`
-- current development baseline: `1.0.0`
 - current changelog: [CHANGELOG.md](./CHANGELOG.md)
 - docs-authoring image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
 - retained release evidence: GitLab release `v0.2.0`, tag pipeline `2428809456`,

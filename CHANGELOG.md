@@ -4,6 +4,20 @@ This changelog is the governed version-line summary for `vi-history-suite`.
 
 Retained exact-version releases now include `v0.2.0` and `v1.0.0`.
 
+## [1.0.1] - Unreleased
+
+### Changed
+
+- the current package line on `main` is now `1.0.1`, representing the first
+  post-`v1.0.0` change set, and the next exact release tag is `v1.0.1`
+- the public fork-owner Codespaces procedures now spell out `Code` ->
+  `Codespaces` -> `New with options`, the `16-core` machine selection, the
+  browser build message, and the exact folder-open path for the canonical
+  `lv_icon.vi` flow
+- the public Codespaces/devcontainer surface no longer recommends
+  `vitest.explorer`, so fork owners are not prompted to install Vitest for the
+  LabVIEW review workflow
+
 ## [1.0.0] - 2026-04-07
 
 ### Added
@@ -22,11 +36,10 @@ Retained exact-version releases now include `v0.2.0` and `v1.0.0`.
 
 ### Changed
 
-- the active development baseline now advances to `1.0.0` because the
-  installed extension contract is now breaking-change material: extension
-  compare execution depends on Docker, no longer exposes host-vs-Docker mode
-  choice to extension users, and no longer competes with ambient host LabVIEW
-  sessions
+- the repo cut the exact `v1.0.0` line because the installed extension
+  contract is breaking-change material: extension compare execution depends on
+  Docker, no longer exposes host-vs-Docker mode choice to extension users, and
+  no longer competes with ambient host LabVIEW sessions
 - the public proof contract is now canonical `LabVIEWCLI CreateComparisonReport`
   rather than multiple public proof scripts or a public engine selector
 

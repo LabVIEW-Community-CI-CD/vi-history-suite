@@ -135,8 +135,9 @@ Latest landed ship target:
 - retained release surface: GitLab release `v0.2.0`
 - retained release pipeline: `2428809456`
 - retained release job: `13779604462`
-- current development baseline: `1.0.0`
-- current exact-version line: `v1.0.0`
+- current exact released line: `v1.0.0`
+- current package line on `main`: `1.0.1`
+- next exact-version release line on `main`: `v1.0.1`
 - current changelog: [CHANGELOG.md](../../CHANGELOG.md)
 - docs-workbench image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
 - remaining blockers: none
@@ -266,8 +267,8 @@ Current active and queued post-release programs:
   - private GitLab source repo remains the authority repo and release-control surface
   - internal GitLab wiki remains the maintainer-facing derived reader surface
   - the private GitHub experiment mirror is a non-authoritative Linux benchmark lane only
-  - public GitHub facade repo is the public source product surface at `https://github.com/svelderrainruiz/vi-history-suite`, published at commit `a1a6b1e`
-  - public GitHub user wiki now exists at `https://github.com/svelderrainruiz/vi-history-suite.wiki.git` as a public extension-user reader surface, published at commit `2ecb847`
+  - public GitHub facade repo is the public source product surface at `https://github.com/svelderrainruiz/vi-history-suite`, published at commit `85230a3`
+  - public GitHub user wiki now exists at `https://github.com/svelderrainruiz/vi-history-suite.wiki.git` as a public extension-user reader surface, published at commit `fe3e11c`
   - public GitHub source publication is tracked separately from both wiki surfaces in `docs/product/public-github-source-publication-ledger.md` and `docs/product/public-github-source-publication-ledger.json`
   - published public GitHub wiki pages now include `Home`, `User-Workflow`, `Install-And-Release`, `Fork-Codespace-Quickstart`, `Manual-Actor-Framework-Clone`, `Comparison-Reports-And-Dashboard-Review`, and `Current-State`
   - the canonical Gate D blocker on `resource/plugins/lv_icon.vi` is now

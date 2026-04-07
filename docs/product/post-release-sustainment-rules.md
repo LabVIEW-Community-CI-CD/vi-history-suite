@@ -35,11 +35,27 @@ The maintained release surfaces are:
 Refresh the release package when any of these change:
 
 - `package.json` version
-- `CHANGELOG.md` head entry for the current development line
+- `CHANGELOG.md` head entry for the current package line on `main`
 - SemVer tag intent or release-manifest shape
 - public release-kit assets or setup/support guidance that must follow the
   exact released VSIX
 - release procedure, ship-control, or docs-workbench publication contract
+
+Current version-line contract after `v1.0.0`:
+
+- current exact released line: `v1.0.0`
+- current package line on `main`: `1.0.1`
+- next exact-version release line on `main`: `v1.0.1`
+
+Strict SemVer rule after an exact release:
+
+- once an exact release is published, any further repo change on `main` shall
+  advance `package.json` and the top `CHANGELOG.md` heading to the next
+  SemVer line before the changed state is normalized or published further
+- future sessions shall treat that advanced line as the real changed `main`
+  line, not as a generic baseline placeholder
+- future sessions shall not keep landing post-release changes on the previous
+  exact release version number
 
 Do not reopen release refresh just because:
 
@@ -94,7 +110,7 @@ When sustainment-affecting truth changes, update these surfaces together:
 - `current-state.md`
 - active sustainment program and issue docs
 - `SHIP-0001` only where it points to the active driver-seat post-release lane
-- `CHANGELOG.md` when the active development line or retained release history changes
+- `CHANGELOG.md` when the current package line on `main` or retained release history changes
 - SRS, RTM, and test plan when normative behavior changes
 - wiki coverage/publication ledgers when reader-facing authority changes
 - published wiki pages that represent the changed authority docs

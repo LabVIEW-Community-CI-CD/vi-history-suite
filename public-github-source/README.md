@@ -85,6 +85,10 @@ For the step-by-step fork-owner walkthrough that ends at
 
 - `https://github.com/svelderrainruiz/vi-history-suite/wiki/Fork-Codespace-Quickstart`
 
+That page is the easier first fork-owner path because the repo ships a helper
+for `ni/labview-icon-editor` and now includes the exact Codespaces machine
+selection plus browser/open-folder steps.
+
 For the separate manual-clone walkthrough for `ni/actor-framework`, use:
 
 - `https://github.com/svelderrainruiz/vi-history-suite/wiki/Manual-Actor-Framework-Clone`
@@ -105,5 +109,6 @@ npm run package -- --out /tmp/vi-history-suite-public-preview.vsix
 ## Current Version Line
 
 - retained exact-version releases: `v0.2.0`, `v1.0.0`
-- current exact-version line: `v1.0.0`
-- active development baseline: `1.0.0`
+- current exact released line: `v1.0.0`
+- current package line on `main`: `1.0.1`
+- next exact-version release line on `main`: `v1.0.1`

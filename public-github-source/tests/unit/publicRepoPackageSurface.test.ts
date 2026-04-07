@@ -26,7 +26,7 @@ describe('public repo package surface', () => {
     const contributing = readText('CONTRIBUTING.md');
     const previewWorkflow = readText('.github/workflows/public-facade-package-preview.yml');
 
-    expect(manifest.version).toBe('1.0.0');
+    expect(manifest.version).toBe('1.0.1');
     expect(manifest.files).toEqual([
       'out/**',
       'resources/**',
@@ -62,6 +62,9 @@ describe('public repo package surface', () => {
     expect(readme).toContain('npm run public:host:bootstrap-linux');
     expect(readme).toContain('npm run public:fixture:icon-editor');
     expect(readme).toContain('.cache/public-fixtures/labview-icon-editor');
+    expect(readme).toContain('current exact released line: `v1.0.0`');
+    expect(readme).toContain('current package line on `main`: `1.0.1`');
+    expect(readme).toContain('next exact-version release line on `main`: `v1.0.1`');
     expect(install).toContain('Windows host + Linux engine');
     expect(install).toContain('host LabVIEW');
     expect(install).toContain('npm run public:host:bootstrap-linux');

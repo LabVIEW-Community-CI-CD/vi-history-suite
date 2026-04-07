@@ -70,6 +70,14 @@ use the public wiki page:
 
 - `https://github.com/svelderrainruiz/vi-history-suite/wiki/Fork-Codespace-Quickstart`
 
+That page is the easiest first path for LabVIEW users because it now spells
+out:
+
+- `Code` -> `Codespaces` -> `New with options`
+- `16-core` machine selection
+- the browser message `Setting up remote connection: Building codespace`
+- the exact `Open Folder...` path for `lv_icon.vi`
+
 If you want the separate manual-clone walkthrough for `ni/actor-framework`, use:
 
 - `https://github.com/svelderrainruiz/vi-history-suite/wiki/Manual-Actor-Framework-Clone`

@@ -1,7 +1,7 @@
 {
   "generatedFor": "vi-history-suite",
   "publicationSurface": "public-github-source-repo",
-  "publishedHeadCommit": "a1a6b1e",
+  "publishedHeadCommit": "85230a3",
   "publications": [
     {
       "id": "public-source-product-repo-baseline",
@@ -53,6 +53,20 @@
         "README.md",
         "docs/product/current-state.md",
         "docs/product/public-github-wiki-publication-ledger.md"
+      ]
+    },
+    {
+      "id": "public-source-v1-0-1-semver-discipline-refresh",
+      "title": "Public source v1.0.1 semver discipline refresh",
+      "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
+      "status": "published",
+      "publishedDate": "2026-04-06",
+      "repoCommit": "85230a3",
+      "primaryAuthority": [
+        "README.md",
+        "CHANGELOG.md",
+        "docs/product/post-release-sustainment-rules.md",
+        "docs/release-procedure.md"
       ]
     }
   ]

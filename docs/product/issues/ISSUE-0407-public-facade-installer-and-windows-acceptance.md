@@ -26,8 +26,8 @@ Closeout evidence:
 
 Current landed state:
 
-- the public GitHub source repo is published at commit `a1a6b1e`
-- the public GitHub wiki is published at commit `2ecb847`
+- the public GitHub source repo is published at commit `85230a3`
+- the public GitHub wiki is published at commit `fe3e11c`
 - `.github/workflows/public-facade-linux-smoke.yml` plus local
   `npm run public:smoke:linux` define the public Docker smoke surface
 - `.github/workflows/public-facade-package-preview.yml` defines the public

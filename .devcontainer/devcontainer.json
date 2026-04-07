@@ -20,7 +20,6 @@
       },
       "extensions": [
         "ms-vscode.extension-test-runner",
-        "vitest.explorer",
         "dbaeumer.vscode-eslint",
         "github.vscode-github-actions"
       ]

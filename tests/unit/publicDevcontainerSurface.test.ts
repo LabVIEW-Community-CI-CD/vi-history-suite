@@ -48,7 +48,10 @@ describe('public devcontainer surface', () => {
     );
     expect(devcontainer.postStartCommand).toBe('npm run compile');
     expect(devcontainer.customizations?.vscode?.extensions).toEqual(
-      expect.arrayContaining(['ms-vscode.extension-test-runner', 'vitest.explorer'])
+      expect.arrayContaining(['ms-vscode.extension-test-runner', 'dbaeumer.vscode-eslint'])
+    );
+    expect(devcontainer.customizations?.vscode?.extensions).not.toEqual(
+      expect.arrayContaining(['vitest.explorer'])
     );
     expect(devcontainer.customizations?.vscode?.settings).toMatchObject({
       'terminal.integrated.defaultProfile.linux': 'bash'
@@ -75,8 +78,9 @@ describe('public devcontainer surface', () => {
       ])
     );
     expect(extensions.recommendations).toEqual(
-      expect.arrayContaining(['ms-vscode.extension-test-runner', 'vitest.explorer'])
+      expect.arrayContaining(['ms-vscode.extension-test-runner', 'dbaeumer.vscode-eslint'])
     );
+    expect(extensions.recommendations).not.toEqual(expect.arrayContaining(['vitest.explorer']));
 
     expect(readme).toContain('## Public Devcontainer And Codespaces');
     expect(readme).toContain('public GitHub facade');

@@ -1,7 +1,7 @@
 {
   "generatedFor": "vi-history-suite",
   "publicationSurface": "public-github-user-wiki",
-  "publishedHeadCommit": "2ecb847",
+  "publishedHeadCommit": "fe3e11c",
   "pages": [
     {
       "id": "overview",
@@ -10,7 +10,7 @@
       "wikiFileName": "Home.md",
       "status": "published",
       "publishedDate": "2026-04-06",
-      "wikiCommit": "2ecb847",
+      "wikiCommit": "fe3e11c",
       "primaryAuthority": [
         "README.md",
         "docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md",
@@ -38,7 +38,7 @@
       "wikiFileName": "Install-And-Release.md",
       "status": "published",
       "publishedDate": "2026-04-06",
-      "wikiCommit": "2ecb847",
+      "wikiCommit": "fe3e11c",
       "primaryAuthority": [
         "README.md",
         "docs/release-procedure.md",
