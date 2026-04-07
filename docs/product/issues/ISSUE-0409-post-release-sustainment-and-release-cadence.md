@@ -21,6 +21,8 @@ Activation is now satisfied:
 
 - release cadence and SemVer discipline after the first public release-kit
   closeout
+- explicit major/minor/patch decision criteria for post-release work
+- branch-model and lane-specific CI/design-gate governance after each exact release
 - benchmark refresh cadence and image contract upkeep
 - operator-surface and documentation-workbench sustainment
 - post-release control-plane maintenance
@@ -44,6 +46,7 @@ Activation is now satisfied:
 - sustainment operating rules are explicit in the control plane
 - release and benchmark refresh cadence are bounded and discoverable
 - operator/documentation upkeep has a governed maintenance path
+- future release lines carry an explicit SemVer-decision and branch-lane CI model
 - future work does not fall back into unowned tail iteration
 
 ## Required Evidence

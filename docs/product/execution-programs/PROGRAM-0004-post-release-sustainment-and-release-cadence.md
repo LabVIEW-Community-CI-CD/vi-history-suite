@@ -37,6 +37,7 @@ rerun remains explicit under reopened `PROGRAM-0002`.
 1. release cadence, SemVer discipline, and public release-kit upkeep
 2. benchmark refresh cadence and proof-surface maintenance
 3. operator-surface, documentation-workbench, and control-plane sustainment
+4. branch-model and lane-specific CI governance for the line after each exact release
 
 ## Queue Mapping
 
@@ -77,6 +78,8 @@ Every slice must preserve:
 - benchmark evidence truth
 - documentation-package coherence
 - operator-surface clarity
+- explicit SemVer-decision rationale
+- explicit branch-lane admission and CI/design-gate posture
 
 ## First Implementation Slice
 

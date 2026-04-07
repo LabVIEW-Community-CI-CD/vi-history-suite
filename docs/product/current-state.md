@@ -136,16 +136,17 @@ Latest landed ship target:
 - retained release pipeline: `2428809456`
 - retained release job: `13779604462`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.0.4`
-- current published package line on `main`: `1.0.4`
-- current develop package line on `develop`: `1.0.5`
-- active exact release candidate line on `develop`: `v1.0.5`
+- current exact released line: `v1.0.5`
+- current published package line on `main`: `1.0.5`
+- current develop package line on `develop`: `1.0.6`
+- active exact release candidate line on `develop`: `v1.0.6`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
 - release branch: `main`
+- next-line branch model: `gitflow-lite` (`feature/*`, `release/*`, `hotfix/*`)
 - current changelog: [CHANGELOG.md](../../CHANGELOG.md)
 - docs-workbench image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
-- remaining blockers: exact `v1.0.5` develop-candidate promotion and release publication remain open
+- remaining blockers: `v1.0.6` SemVer-decision framework, gitflow-lite branch policy, and lane-specific CI/design-gate admission
 
 Current active tranche:
 
@@ -263,7 +264,7 @@ Current active and queued post-release programs:
   - public GitHub user wiki now exists at `https://github.com/svelderrainruiz/vi-history-suite.wiki.git` as a public extension-user reader surface; the exact published head is retained in `docs/product/public-github-wiki-publication-ledger.md` and `docs/product/public-github-wiki-publication-ledger.json`
   - public GitHub source publication is tracked separately from both wiki surfaces in `docs/product/public-github-source-publication-ledger.md` and `docs/product/public-github-source-publication-ledger.json`
   - published public GitHub wiki pages now include `Home`, `User-Workflow`, `Install-And-Release`, `Fork-Codespace-Quickstart`, `Refresh-Codespace-Repositories`, `Manual-Actor-Framework-Clone`, `Comparison-Reports-And-Dashboard-Review`, and `Current-State`
-  - the canonical Gate D blocker on `resource/plugins/lv_icon.vi` is retired, while `v1.0.2` is now retained as a burned exact release and the current exact public GitHub release line is `v1.0.4`
+  - the canonical Gate D blocker on `resource/plugins/lv_icon.vi` is retired, while `v1.0.2` is now retained as a burned exact release and the current exact public GitHub release line is `v1.0.5`
   - the public branch model is now explicit: `develop` is the integration and
     Codespaces-evaluation branch, and `main` is the release branch
   - protected-branch promotion now depends on required checks instead of direct

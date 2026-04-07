@@ -80,7 +80,7 @@ describe('post-release control-plane coherence', () => {
     expect(issue).toContain('Closed on exact public-product acceptance for the Docker-only public line.');
     expect(issue).toContain('the public GitHub user-wiki surface now exists');
     expect(issue).toContain('Gate D has now passed on the Docker-only public bundle');
-    expect(issue).toContain('current exact release line is `v1.0.4`');
+    expect(issue).toContain('current exact release line is `v1.0.5`');
     expect(issue).toContain('retained Gate D preflight preparation already proves');
     expect(issue).toContain('GitHub Codespace `novacula` now passes the hosted public smoke');
 

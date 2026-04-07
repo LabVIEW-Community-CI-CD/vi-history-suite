@@ -396,21 +396,22 @@ Latest landed ship target:
 - `SHIP-0001`: releasable `v0.2.0` VSIX product
 - landed ship tranche: `TRANCHE-009`
 - landed ship issue: `ISSUE-0406`
-- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`
+- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.0.4`
-- current published package line on `main`: `1.0.4`
-- current develop package line on `develop`: `1.0.5`
-- active exact release candidate line on `develop`: `v1.0.5`
+- current exact released line: `v1.0.5`
+- current published package line on `main`: `1.0.5`
+- current develop package line on `develop`: `1.0.6`
+- active exact release candidate line on `develop`: `v1.0.6`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
 - release branch: `main`
+- next-line branch model: `gitflow-lite` (`feature/*`, `release/*`, `hotfix/*`)
 - target release manifest: `release-evidence/release-manifest.json`
 - current changelog: [CHANGELOG.md](./CHANGELOG.md)
 - docs-authoring image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
 - retained release evidence: GitLab release `v0.2.0`, tag pipeline `2428809456`,
   release job `13779604462`
-- remaining release blockers: exact `v1.0.5` promotion is not published yet
+- remaining release blockers: `v1.0.6` branch-model, SemVer-decision, and lane-CI hardening
 
 ## Install Surface
 

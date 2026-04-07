@@ -1479,6 +1479,11 @@
   preparation flags; exposes `public:gate-d:preflight` and
   `public:gate-d:prepare-cold-pull`; and retains a readable Markdown packet
   shape for the recorded public-product acceptance preflight
+- `TEST-UNIT-320`: verify the next-line governance package keeps the
+  post-release SemVer decision framework, the `gitflow-lite` branch model, the
+  lane-specific CI and `design:gate` posture, and the `v1.0.5` exact /
+  `v1.0.6` develop-candidate state aligned across sustainment rules, README,
+  current-state, release procedure, public-release candidate, and ADR-0030
 - `TEST-DOC-074`: review current-state, SRS, and RTM and confirm the
   dashboard contract now states that host-native Windows pair refresh is
   explicitly headless and that long-running pair refresh emits keepalive
@@ -1498,6 +1503,12 @@
   now retains one preflight packet surface that records published public
   commits, canonical fixture path, Docker Linux engine facts, and governed
   Linux image absence before the human cold-pull rerun begins
+- `TEST-DOC-085`: review README, current-state, release-procedure,
+  PROGRAM-0004, ISSUE-0409, ADR-0030, SRS, RTM, and the test plan and confirm
+  the next-line control plane now retains explicit `major`/`minor`/`patch`
+  choice criteria, a governed `gitflow-lite` branch topology, and lane-specific
+  CI plus `design:gate` obligations for `feature/*`, `develop`, `release/*`,
+  `hotfix/*`, and `main`
 - `TEST-DOC-077`: review documentation-workbench, current-state, SRS, and RTM
   and confirm the documentation continuous-integration contract now retains
   docs-integration evidence, bundle-drift checks, wiki doctor/plan facts, and

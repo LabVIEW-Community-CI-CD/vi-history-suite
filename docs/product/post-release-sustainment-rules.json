@@ -18,18 +18,20 @@
         "v1.0.1",
         "v1.0.2",
         "v1.0.3",
-        "v1.0.4"
+        "v1.0.4",
+        "v1.0.5"
       ],
       "burnedExactVersionReleases": [
         "v1.0.2"
       ],
-      "currentExactReleaseLine": "v1.0.4",
-      "currentMainPackageLine": "1.0.4",
-      "currentDevelopPackageLine": "1.0.5",
-      "activeDevelopCandidateReleaseLine": "v1.0.5",
+      "currentExactReleaseLine": "v1.0.5",
+      "currentMainPackageLine": "1.0.5",
+      "currentDevelopPackageLine": "1.0.6",
+      "activeDevelopCandidateReleaseLine": "v1.0.6",
       "publicCodespaceBranch": "develop",
       "integrationBranch": "develop",
-      "releaseBranch": "main"
+      "releaseBranch": "main",
+      "nextLineBranchModel": "gitflow-lite"
     },
     "maintainedSurfaces": [
       "preview-evidence/vi-history-suite-<version>.vsix",
@@ -54,6 +56,24 @@
       "future sessions shall not keep landing post-release changes on the previous exact release version number",
       "future sessions shall not treat a burned exact release as the green release baseline for later publication"
     ],
+    "semverDecisionFramework": {
+      "defaultGovernanceBump": "patch",
+      "major": [
+        "breaks or removes a governed public or maintainer contract on purpose",
+        "changes a default branch, release topology, or install/runtime expectation in a way that invalidates an already-published workflow",
+        "drops support for a previously governed surface"
+      ],
+      "minor": [
+        "adds a new governed capability or supported workflow without breaking the current exact released line",
+        "adds a new maintained surface that future releases are expected to support"
+      ],
+      "patch": [
+        "fixes or hardens an existing workflow, release rule, procedure, branch policy, or CI posture without breaking the exact released contract",
+        "normalizes exact main back into develop before the next candidate line opens",
+        "captures governance-only or documentation-package hardening for an existing product line"
+      ],
+      "decisionRecordingRule": "record the chosen bump rationale in the control plane before further publication or release normalization continues"
+    },
     "explicitNonTriggers": [
       "benchmark-only diagnosis that does not affect a shipped release surface",
       "local characterization-only evidence changes without a governed release claim",
@@ -98,8 +118,20 @@
   },
   "operatorSurfaceSustainment": {
     "branchModel": {
+      "model": "gitflow-lite",
       "integrationBranch": "develop",
       "releaseBranch": "main",
+      "temporaryBranchPrefixes": [
+        "feature/",
+        "release/",
+        "hotfix/"
+      ],
+      "promotionRules": [
+        "feature/* branches target develop",
+        "release/* branches are cut from develop and merge to main plus back into develop",
+        "hotfix/* branches are cut from main and merge to main plus back into develop",
+        "exact SemVer tags are cut from main only after the protected main pipeline succeeds"
+      ],
       "requiredChecks": [
         "docs_continuous_integration",
         "docs_public_continuous_integration",
@@ -108,7 +140,33 @@
         "package_extension_preview",
         "Public Facade Package Preview / package-preview",
         "Public Facade Linux Smoke / public-facade-linux-smoke"
-      ]
+      ],
+      "laneResponsibilities": {
+        "feature/*": [
+          "focused tests for the changed surface",
+          "affected documentation or design gates before merge to develop"
+        ],
+        "develop": [
+          "required checks",
+          "npm run design:gate",
+          "npm run design:gate:assert-complete for governance or architecture work"
+        ],
+        "release/*": [
+          "required checks",
+          "design gates",
+          "release-readiness normalization",
+          "public-facade proof before merge to main"
+        ],
+        "hotfix/*": [
+          "focused regression checks",
+          "affected documentation or design gates",
+          "exact released-line package audit before merge to main"
+        ],
+        "main": [
+          "protected exact-release branch",
+          "exact SemVer tags only after merged main is green"
+        ]
+      }
     },
     "requiredAuthorityUpdates": [
       "docs/product/development-queue.json",
