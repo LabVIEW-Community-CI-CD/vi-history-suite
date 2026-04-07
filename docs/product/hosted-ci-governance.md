@@ -7,15 +7,17 @@ public GitHub required checks, and GitHub experiment workflows stop being
 raw-YAML-only truth.
 
 This document is the control-plane summary of the active `1.1.0` hardening
-line. The exact public release remains `v1.0.6` on `main`; the next candidate
-line is `v1.1.0` on `develop`.
+line. The exact public release remains `v1.0.6`; `main` and `develop` now
+both carry `1.1.0`, and `release/1.1.0` is the active exact-candidate branch
+for `v1.1.0`.
 
 ## Opening Decision
 
 - current exact release line: `v1.0.6`
-- current `main` package line: `1.0.6`
+- current `main` package line: `1.1.0`
 - current `develop` package line: `1.1.0`
 - active candidate line: `v1.1.0`
+- active release-candidate branch: `release/1.1.0`
 - chosen bump: `minor`
 - rationale: this line adds a governed hosted branch-protection and CI
   responsibility capability across authority GitLab, the public GitHub facade,
@@ -122,4 +124,3 @@ When hosted automation truth changes, update together:
 - `docs/testing/test-plan.md`
 - this hosted governance package
 - affected workflow YAML
-

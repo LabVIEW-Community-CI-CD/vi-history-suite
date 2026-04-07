@@ -3,9 +3,10 @@
   "recordedAt": "2026-04-07",
   "openingDecision": {
     "currentExactReleaseLine": "v1.0.6",
-    "currentMainPackageLine": "1.0.6",
+    "currentMainPackageLine": "1.1.0",
     "currentDevelopPackageLine": "1.1.0",
     "activeDevelopCandidateReleaseLine": "v1.1.0",
+    "activeReleaseCandidateBranch": "release/1.1.0",
     "chosenBump": "minor",
     "rationale": [
       "the next line adds one governed hosted branch-protection and CI responsibility capability across authority GitLab, the public GitHub facade, and GitHub experiment lanes",
@@ -21,6 +22,7 @@
     "publicDefaultBranch": "main",
     "integrationBranch": "develop",
     "releaseBranch": "main",
+    "activeReleaseCandidateBranch": "release/1.1.0",
     "temporaryBranchPrefixes": [
       "feature/",
       "release/",

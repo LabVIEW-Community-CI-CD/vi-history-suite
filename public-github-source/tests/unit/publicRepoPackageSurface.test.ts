@@ -68,14 +68,15 @@ describe('public repo package surface', () => {
     expect(readme).toContain('repo-sibling `labview-icon-editor`');
     expect(readme).toContain('/workspaces/labview-icon-editor');
     expect(readme).toContain('public default branch and tracks the latest exact released');
-    expect(readme).toContain('The current active candidate line on `develop` is `v1.1.0`');
+    expect(readme).toContain('`release/1.1.0` is the active release-candidate branch for exact `v1.1.0`');
     expect(readme).toContain('GitHub opens this public repo on `main` by default');
     expect(readme).toContain('retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`');
     expect(readme).toContain('burned exact release line: `v1.0.2`');
     expect(readme).toContain('current exact released line: `v1.0.6`');
-    expect(readme).toContain('current published package line on `main`: `1.0.6`');
+    expect(readme).toContain('current published package line on `main`: `1.1.0`');
     expect(readme).toContain('current develop package line on `develop`: `1.1.0`');
-    expect(readme).toContain('active exact release candidate line on `develop`: `v1.1.0`');
+    expect(readme).toContain('active exact release candidate line: `v1.1.0`');
+    expect(readme).toContain('active release-candidate branch: `release/1.1.0`');
     expect(readme).toContain('active SemVer opening decision: `minor`');
     expect(readme).toContain('public GitHub default branch: `main`');
     expect(readme).toContain('public Codespaces evaluation branch: `develop`');

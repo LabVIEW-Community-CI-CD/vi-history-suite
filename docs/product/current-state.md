@@ -141,9 +141,10 @@ Latest landed ship target:
 - retained release job: `13779604462`
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.0.6`
-- current published package line on `main`: `1.0.6`
+- current published package line on `main`: `1.1.0`
 - current develop package line on `develop`: `1.1.0`
-- active exact release candidate line on `develop`: `v1.1.0`
+- active exact release candidate line: `v1.1.0`
+- active release-candidate branch: `release/1.1.0`
 - active SemVer opening decision: `minor`
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`

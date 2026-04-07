@@ -26,9 +26,10 @@
         "v1.0.2"
       ],
       "currentExactReleaseLine": "v1.0.6",
-      "currentMainPackageLine": "1.0.6",
+      "currentMainPackageLine": "1.1.0",
       "currentDevelopPackageLine": "1.1.0",
       "activeDevelopCandidateReleaseLine": "v1.1.0",
+      "activeReleaseCandidateBranch": "release/1.1.0",
       "publicDefaultBranch": "main",
       "publicCodespaceBranch": "develop",
       "integrationBranch": "develop",

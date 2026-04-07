@@ -203,9 +203,10 @@ describe('ship-control direction system', () => {
     expect(readme).toContain('- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`');
     expect(readme).toContain('- burned exact release line: `v1.0.2`');
     expect(readme).toContain('- current exact released line: `v1.0.6`');
-    expect(readme).toContain('- current published package line on `main`: `1.0.6`');
+    expect(readme).toContain('- current published package line on `main`: `1.1.0`');
     expect(readme).toContain('- current develop package line on `develop`: `1.1.0`');
-    expect(readme).toContain('- active exact release candidate line on `develop`: `v1.1.0`');
+    expect(readme).toContain('- active exact release candidate line: `v1.1.0`');
+    expect(readme).toContain('- active release-candidate branch: `release/1.1.0`');
     expect(readme).toContain('- active SemVer opening decision: `minor`');
     expect(readme).toContain('- public GitHub default branch: `main`');
     expect(readme).toContain('- public Codespaces evaluation branch: `develop`');
@@ -233,9 +234,10 @@ describe('ship-control direction system', () => {
     expect(currentState).toContain('- retained release artifact: `vi-history-suite-0.2.0.vsix`');
     expect(currentState).toContain('- burned exact release line: `v1.0.2`');
     expect(currentState).toContain('- current exact released line: `v1.0.6`');
-    expect(currentState).toContain('- current published package line on `main`: `1.0.6`');
+    expect(currentState).toContain('- current published package line on `main`: `1.1.0`');
     expect(currentState).toContain('- current develop package line on `develop`: `1.1.0`');
-    expect(currentState).toContain('- active exact release candidate line on `develop`: `v1.1.0`');
+    expect(currentState).toContain('- active exact release candidate line: `v1.1.0`');
+    expect(currentState).toContain('- active release-candidate branch: `release/1.1.0`');
     expect(currentState).toContain('- active SemVer opening decision: `minor`');
     expect(currentState).toContain('- public GitHub default branch: `main`');
     expect(currentState).toContain('- public Codespaces evaluation branch: `develop`');
@@ -283,9 +285,10 @@ describe('ship-control direction system', () => {
     expect(releaseProcedure).toContain('release-evidence/release-manifest.json');
     expect(releaseProcedure).toContain('current exact released line is `v1.0.6`');
     expect(releaseProcedure).toContain('burned exact released line is `v1.0.2`');
-    expect(releaseProcedure).toContain("current published package line on `main` is `1.0.6`");
+    expect(releaseProcedure).toContain("current published package line on `main` is `1.1.0`");
     expect(releaseProcedure).toContain("current develop package line on `develop` is `1.1.0`");
-    expect(releaseProcedure).toContain("active exact release candidate line on `develop` is `v1.1.0`");
+    expect(releaseProcedure).toContain("active exact release candidate line is `v1.1.0`");
+    expect(releaseProcedure).toContain("active release-candidate branch is `release/1.1.0`");
     expect(releaseProcedure).toContain('active SemVer opening decision is `minor`');
     expect(releaseProcedure).toContain('public GitHub default branch is `main`');
     expect(releaseProcedure).toContain('public Codespaces evaluation branch is `develop`');

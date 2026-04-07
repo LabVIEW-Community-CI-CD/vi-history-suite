@@ -120,9 +120,10 @@ describe('post-release sustainment rules package', () => {
       retainedExactVersionReleases: ['v0.2.0', 'v1.0.0', 'v1.0.1', 'v1.0.2', 'v1.0.3', 'v1.0.4', 'v1.0.5', 'v1.0.6'],
       burnedExactVersionReleases: ['v1.0.2'],
       currentExactReleaseLine: 'v1.0.6',
-      currentMainPackageLine: '1.0.6',
+      currentMainPackageLine: '1.1.0',
       currentDevelopPackageLine: '1.1.0',
       activeDevelopCandidateReleaseLine: 'v1.1.0',
+      activeReleaseCandidateBranch: 'release/1.1.0',
       publicDefaultBranch: 'main',
       publicCodespaceBranch: 'develop',
       integrationBranch: 'develop',
@@ -319,7 +320,8 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('## Benchmark Refresh Rules');
     expect(rulesDoc).toContain('## Operator And Documentation Upkeep Rules');
     expect(rulesDoc).toContain('public GitHub default branch: `main`');
-    expect(rulesDoc).toContain('active exact release candidate line on `develop`: `v1.1.0`');
+    expect(rulesDoc).toContain('active exact release candidate line: `v1.1.0`');
+    expect(rulesDoc).toContain('active release-candidate branch: `release/1.1.0`');
     expect(rulesDoc).toContain('chosen bump: `minor`');
     expect(rulesDoc).toContain('develop');
     expect(rulesDoc).toContain('release branch');
