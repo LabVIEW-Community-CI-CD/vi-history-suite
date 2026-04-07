@@ -93,7 +93,7 @@ describe('ship-control direction system', () => {
     expect(matrix.activeIssueId).toBe('ISSUE-0406');
     expect(matrix.activeTrancheId).toBe('TRANCHE-009');
     expect(matrix.currentPackageVersion).toBe('0.2.0');
-    expect(pkg.version).toBe('1.0.4');
+    expect(pkg.version).toBe('1.0.5');
     expect(matrix.releaseTarget).toBe('v0.2.0');
     expect(matrix.targetVsixArtifact).toBe('vi-history-suite-0.2.0.vsix');
     expect(matrix.targetReleaseManifest).toBe('release-evidence/release-manifest.json');
@@ -195,11 +195,11 @@ describe('ship-control direction system', () => {
     expect(readme).toContain('npm run design:gate:assert-complete');
     expect(readme).toContain('- `SHIP-0001`: releasable `v0.2.0` VSIX product');
     expect(readme).toContain('- landed ship tranche: `TRANCHE-009`');
-    expect(readme).toContain('- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`');
+    expect(readme).toContain('- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`');
     expect(readme).toContain('- burned exact release line: `v1.0.2`');
-    expect(readme).toContain('- current exact released line: `v1.0.4`');
-    expect(readme).toContain('- current published package line on `main`: `1.0.4`');
-    expect(readme).toContain('- current develop package line on `develop`: `1.0.4`');
+    expect(readme).toContain('- current exact released line: `v1.0.5`');
+    expect(readme).toContain('- current published package line on `main`: `1.0.5`');
+    expect(readme).toContain('- current develop package line on `develop`: `1.0.5`');
     expect(readme).toContain('- no newer exact release candidate line is active on `develop` yet');
     expect(readme).toContain('- public Codespaces evaluation branch: `develop`');
     expect(readme).toContain('- integration branch: `develop`');
@@ -222,9 +222,9 @@ describe('ship-control direction system', () => {
     expect(currentState).toContain('- landed ship tranche: `TRANCHE-009`');
     expect(currentState).toContain('- retained release artifact: `vi-history-suite-0.2.0.vsix`');
     expect(currentState).toContain('- burned exact release line: `v1.0.2`');
-    expect(currentState).toContain('- current exact released line: `v1.0.4`');
-    expect(currentState).toContain('- current published package line on `main`: `1.0.4`');
-    expect(currentState).toContain('- current develop package line on `develop`: `1.0.4`');
+    expect(currentState).toContain('- current exact released line: `v1.0.5`');
+    expect(currentState).toContain('- current published package line on `main`: `1.0.5`');
+    expect(currentState).toContain('- current develop package line on `develop`: `1.0.5`');
     expect(currentState).toContain('- no newer exact release candidate line is active on `develop` yet');
     expect(currentState).toContain('- public Codespaces evaluation branch: `develop`');
     expect(currentState).toContain('- integration branch: `develop`');
@@ -265,11 +265,11 @@ describe('ship-control direction system', () => {
     expect(releaseProcedure).toContain('[release readiness matrix](./product/release-readiness-matrix.json)');
     expect(releaseProcedure).toContain('vi-history-suite-0.2.0.vsix');
     expect(releaseProcedure).toContain('release-evidence/release-manifest.json');
-    expect(releaseProcedure).toContain('current exact released line is `v1.0.4`');
+    expect(releaseProcedure).toContain('current exact released line is `v1.0.5`');
     expect(releaseProcedure).toContain('burned exact released line is `v1.0.2`');
-    expect(releaseProcedure).toContain("current published package line on `main` is `1.0.4`");
-    expect(releaseProcedure).toContain("current develop package line on `develop` is `1.0.4`");
-    expect(releaseProcedure).toContain('No newer exact release candidate line is active on `develop` yet.');
+    expect(releaseProcedure).toContain("current published package line on `main` is `1.0.5`");
+    expect(releaseProcedure).toContain("current develop package line on `develop` is `1.0.5`");
+    expect(releaseProcedure).toContain("No newer exact release candidate line is active on `develop` yet.");
     expect(releaseProcedure).toContain('public Codespaces evaluation branch is `develop`');
     expect(releaseProcedure).toContain('integration branch is `develop`');
     expect(releaseProcedure).toContain('release branch is `main`');
@@ -306,7 +306,7 @@ describe('ship-control direction system', () => {
     expect(bundledInstallPage).toContain('<h2>Release Procedure Summary</h2>');
     expect(bundledInstallPage).toContain('open <code>VI History</code> on an eligible VI');
     expect(bundledInstallPage).not.toContain('Retained exact release: <code>v0.2.0</code>');
-    expect(changelog).toContain('## [1.0.4] - 2026-04-07');
+    expect(changelog).toContain('## [1.0.5] - 2026-04-07');
     expect(changelog).toContain('## [1.0.3] - 2026-04-07');
     expect(changelog).toContain('## [1.0.2] - 2026-04-07');
     expect(changelog).toContain('## [1.0.1] - 2026-04-07');
@@ -409,6 +409,8 @@ describe('ship-control direction system', () => {
     expect(gitlabCi).toContain('node scripts/run-docs-continuous-integration.js --surface public --skip-links --evidence-dir docs-integration-evidence/public');
     expect(gitlabCi).toContain('node scripts/run-docs-continuous-integration.js --surface internal --skip-links --evidence-dir docs-integration-evidence/internal');
     expect(gitlabCi).toContain('https://github.com/svelderrainruiz/vi-history-suite.wiki.git');
+    expect(gitlabCi).toContain('PUBLIC_GITHUB_WIKI_BRANCH="${VIHS_PUBLIC_GITHUB_WIKI_BRANCH:-${CI_COMMIT_REF_NAME}}"');
+    expect(gitlabCi).toContain('git clone --branch "${PUBLIC_GITHUB_WIKI_BRANCH}" "https://github.com/svelderrainruiz/vi-history-suite.wiki.git" ../vi-history-suite.github.wiki || git clone "https://github.com/svelderrainruiz/vi-history-suite.wiki.git" ../vi-history-suite.github.wiki');
     expect(gitlabCi).toContain(
       'VIHS_PUBLIC_GITHUB_WIKI_REPO_ROOT="${CI_PROJECT_DIR}/../vi-history-suite.github.wiki"'
     );

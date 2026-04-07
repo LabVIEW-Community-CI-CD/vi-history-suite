@@ -26,7 +26,7 @@ describe('public repo package surface', () => {
     const contributing = readText('CONTRIBUTING.md');
     const previewWorkflow = readText('.github/workflows/public-facade-package-preview.yml');
 
-    expect(manifest.version).toBe('1.0.4');
+    expect(manifest.version).toBe('1.0.5');
     expect(manifest.files).toEqual([
       'out/**',
       'resources/**',
@@ -59,15 +59,19 @@ describe('public repo package surface', () => {
     expect(readme).toContain('Docker-only compare execution');
     expect(readme).toContain('devcontainer or Codespace');
     expect(readme).toContain('public GitHub repo is the source-facing product surface');
+    expect(readme).toContain('Fastest First Fork-Owner Run');
+    expect(readme).toContain('Copy the main branch only');
+    expect(readme).toContain('Codespace repository configuration');
+    expect(readme).toContain('16-core');
     expect(readme).toContain('npm run public:host:bootstrap-linux');
     expect(readme).toContain('npm run public:fixture:icon-editor');
     expect(readme).toContain('repo-sibling `labview-icon-editor`');
     expect(readme).toContain('/workspaces/labview-icon-editor');
     expect(readme).toContain('burned exact release line: `v1.0.2`');
-    expect(readme).toContain('current exact released line: `v1.0.4`');
-    expect(readme).toContain('current published package line on `main`: `1.0.4`');
-    expect(readme).toContain('current develop package line on `develop`: `1.0.4`');
-    expect(readme).toContain('active exact release candidate line on `develop`: none yet');
+    expect(readme).toContain('current exact released line: `v1.0.5`');
+    expect(readme).toContain('current published package line on `main`: `1.0.5`');
+    expect(readme).toContain('current develop package line on `develop`: `1.0.5`');
+    expect(readme).toContain('no newer exact release candidate line is active on `develop` yet');
     expect(readme).toContain('public Codespaces evaluation branch: `develop`');
     expect(readme).toContain('Refresh-Codespace-Repositories');
     expect(install).toContain('Windows host + Linux engine');
@@ -75,6 +79,7 @@ describe('public repo package surface', () => {
     expect(install).toContain('npm run public:host:bootstrap-linux');
     expect(install).toContain('npm run public:fixture:icon-editor');
     expect(install).toContain('Refresh-Codespace-Repositories');
+    expect(install).not.toContain('Vitest not found');
     expect(support).toContain('docker info --format');
     expect(support).toContain('does not use host LabVIEW as an installed-user fallback path');
     expect(contributing).toContain('source-available and intentionally restrictive');

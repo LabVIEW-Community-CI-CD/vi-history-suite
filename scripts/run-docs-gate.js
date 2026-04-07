@@ -59,6 +59,7 @@ function createDocsGateSteps(options = {}) {
         'tests/unit/bundledDocumentation.test.ts',
         'tests/unit/postReleaseControlPlaneDocs.test.ts',
         'tests/unit/publicSurfaceBoundaryDocs.test.ts',
+        'tests/unit/publicForkOwnerProcedureDocs.test.ts',
         'tests/unit/debtLedgerDocs.test.ts',
         'tests/unit/executionPolicyDocs.test.ts',
         'tests/unit/governedProofDocs.test.ts',

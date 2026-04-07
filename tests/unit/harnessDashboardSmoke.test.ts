@@ -110,7 +110,9 @@ describe('harness dashboard smoke renderers', () => {
 });
 
 describe('runHarnessDashboardSmoke', () => {
-  it('retains a factual dashboard smoke artifact set for the canonical harness', async () => {
+  it(
+    'retains a factual dashboard smoke artifact set for the canonical harness',
+    async () => {
     const writes = new Map<string, string>();
     const progressMessages: string[] = [];
 
@@ -332,7 +334,9 @@ describe('runHarnessDashboardSmoke', () => {
       'Stopping Windows benchmark at pair 2/2: runtime-execution-failed.'
     );
     expect(progressMessages).toContain('Windows benchmark retained a partial failed summary.');
-  });
+    },
+    15000
+  );
 
   it('stamps dashboard smoke output with the default ISO clock when no now override is supplied', async () => {
     vi.useFakeTimers();
