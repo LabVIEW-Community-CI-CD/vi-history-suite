@@ -23,17 +23,21 @@ describe('public fork-owner procedure docs', () => {
     expect(fs.existsSync(publicWikiRoot)).toBe(true);
 
     const quickstart = readPublicWikiText('Fork-Codespace-Quickstart.md');
+    const generic = readPublicWikiText('Clone-Public-Repo-In-Codespace.md');
     const refresh = readPublicWikiText('Refresh-Codespace-Repositories.md');
     const manual = readPublicWikiText('Manual-Actor-Framework-Clone.md');
     const install = readAuthorityText('public-github-source/INSTALL.md');
     const readme = readAuthorityText('public-github-source/README.md');
     const quickstartCollapsed = collapseWhitespace(quickstart);
+    const genericCollapsed = collapseWhitespace(generic);
     const refreshCollapsed = collapseWhitespace(refresh);
     const manualCollapsed = collapseWhitespace(manual);
     const installCollapsed = collapseWhitespace(install);
     const readmeCollapsed = collapseWhitespace(readme);
 
     expect(quickstartCollapsed).toContain('Use this only for the first successful run from your own fork.');
+    expect(quickstartCollapsed).toContain('brand new fork');
+    expect(quickstartCollapsed).toContain('brand new Codespace');
     expect(quickstartCollapsed).toContain('Copy the main branch only');
     expect(quickstartCollapsed).toContain('Codespace repository configuration');
     expect(quickstartCollapsed).toContain('New with options');
@@ -55,16 +59,47 @@ describe('public fork-owner procedure docs', () => {
       'If you already ran it before and want the latest upstream develop'
     );
 
+    expect(genericCollapsed).toContain(
+      'Use this only for the first successful generic public-repo run from your own fork.'
+    );
+    expect(genericCollapsed).toContain('brand new fork');
+    expect(genericCollapsed).toContain('brand new Codespace');
+    expect(genericCollapsed).toContain('Copy the main branch only');
+    expect(genericCollapsed).toContain('Codespace repository configuration');
+    expect(genericCollapsed).toContain('New with options');
+    expect(genericCollapsed).toContain('branch: `develop`');
+    expect(genericCollapsed).toContain('machine type: `16-core`');
+    expect(genericCollapsed).toContain('Setting up remote connection: Building codespace');
+    expect(genericCollapsed).toContain('npm run public:repo:clone -- --repo-url');
+    expect(genericCollapsed).toContain('https://gitlab.com/hampel-soft/open-source/hse-logger.git');
+    expect(genericCollapsed).toContain('https://github.com/crossrulz/SerialPortNuggets.git');
+    expect(genericCollapsed).toContain('remote default branch');
+    expect(genericCollapsed).toContain('three stacked horizontal lines');
+    expect(genericCollapsed).toContain(
+      'Your application running on port 6010 is available. See all forwarded ports'
+    );
+    expect(genericCollapsed).toContain(
+      'GitHub Codespaces is forwarding the extension development host'
+    );
+    expect(genericCollapsed).toContain('/workspaces/hse-logger');
+    expect(genericCollapsed).toContain('/workspaces/SerialPortNuggets');
+    expect(genericCollapsed).toContain('VI History panel');
+    expect(genericCollapsed).not.toContain('Vitest not found');
+
     expect(refreshCollapsed).toContain(
       'Use this only after you already completed one of the first-time Codespace procedures.'
     );
     expect(refreshCollapsed).toContain('/workspaces/vi-history-suite');
     expect(refreshCollapsed).toContain('Refresh The Helper-Backed Icon Editor Clone');
+    expect(refreshCollapsed).toContain('Refresh A Generic Public Repo Clone');
+    expect(refreshCollapsed).toContain('npm run public:repo:clone -- --repo-url');
     expect(refreshCollapsed).toContain('Refresh The Manual Actor Framework Clone');
 
     expect(manualCollapsed).toContain(
       'Use this only for the first successful manual-clone run from your own fork.'
     );
+    expect(manualCollapsed).toContain('brand new fork');
+    expect(manualCollapsed).toContain('brand new Codespace');
     expect(manualCollapsed).toContain('Copy the main branch only');
     expect(manualCollapsed).toContain('Codespace repository configuration');
     expect(manualCollapsed).toContain('New with options');
@@ -78,8 +113,16 @@ describe('public fork-owner procedure docs', () => {
     expect(manualCollapsed).not.toContain('Vitest not found');
 
     expect(installCollapsed).toContain('Refresh-Codespace-Repositories');
+    expect(installCollapsed).toContain('Clone-Public-Repo-In-Codespace');
+    expect(installCollapsed).toContain('npm run public:repo:clone');
+    expect(installCollapsed).toContain('brand new fork');
+    expect(installCollapsed).toContain('brand new Codespace');
     expect(installCollapsed).toContain('that the page is first-time-only, with refresh steps kept separate');
     expect(installCollapsed).not.toContain('Vitest not found');
+    expect(readmeCollapsed).toContain('Clone-Public-Repo-In-Codespace');
+    expect(readmeCollapsed).toContain('npm run public:repo:clone');
+    expect(readmeCollapsed).toContain('brand new fork');
+    expect(readmeCollapsed).toContain('brand new Codespace');
     expect(readmeCollapsed).toContain('Refresh-Codespace-Repositories');
   });
 });

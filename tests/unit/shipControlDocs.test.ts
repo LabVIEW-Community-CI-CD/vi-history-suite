@@ -77,9 +77,9 @@ describe('ship-control direction system', () => {
     const queue = readJson<QueueEntry[]>('docs/product/development-queue.json');
     const activeTranches = queue.filter((entry) => entry.status === 'active');
 
-    expect(activeTranches).toHaveLength(2);
+    expect(activeTranches).toHaveLength(3);
     expect(activeTranches.map((entry) => entry.id)).toEqual(
-      expect.arrayContaining(['TRANCHE-012', 'TRANCHE-013'])
+      expect.arrayContaining(['TRANCHE-012', 'TRANCHE-013', 'TRANCHE-014'])
     );
   });
 
@@ -93,7 +93,7 @@ describe('ship-control direction system', () => {
     expect(matrix.activeIssueId).toBe('ISSUE-0406');
     expect(matrix.activeTrancheId).toBe('TRANCHE-009');
     expect(matrix.currentPackageVersion).toBe('0.2.0');
-    expect(pkg.version).toBe('1.1.0');
+    expect(pkg.version).toBe('1.2.0');
     expect(matrix.releaseTarget).toBe('v0.2.0');
     expect(matrix.targetVsixArtifact).toBe('vi-history-suite-0.2.0.vsix');
     expect(matrix.targetReleaseManifest).toBe('release-evidence/release-manifest.json');
@@ -204,8 +204,9 @@ describe('ship-control direction system', () => {
     expect(readme).toContain('- burned exact release line: `v1.0.2`');
     expect(readme).toContain('- current exact released line: `v1.1.0`');
     expect(readme).toContain('- current published package line on `main`: `1.1.0`');
-    expect(readme).toContain('- current develop package line on `develop`: `1.1.0`');
-    expect(readme).toContain('- no newer exact release candidate line is active on `develop` yet');
+    expect(readme).toContain('- current develop package line on `develop`: `1.2.0`');
+    expect(readme).toContain('- active exact release candidate line on `develop`: `v1.2.0`');
+    expect(readme).toContain('- no `release/1.2.0` branch is active yet');
     expect(readme).toContain('- public GitHub default branch: `main`');
     expect(readme).toContain('- public Codespaces evaluation branch: `develop`');
     expect(readme).toContain('- integration branch: `develop`');
@@ -213,7 +214,9 @@ describe('ship-control direction system', () => {
     expect(readme).toContain('- next-line branch model: `gitflow-lite` (`feature/*`, `release/*`, `hotfix/*`)');
     expect(readme).toContain('- hosted automation governance matrix: [docs/product/hosted-ci-governance.md]');
     expect(readme).toContain('- current changelog: [CHANGELOG.md](./CHANGELOG.md)');
+    expect(readme).toContain('- `TRANCHE-014`: public Codespaces public-repo bootstrap');
     expect(readme).toContain('- `TRANCHE-010`: public-source facade and public-product acceptance is a closed');
+    expect(readme).toContain('npm run public:repo:clone');
     expect(readme).toContain('private GitHub experiment repo');
 
     expect(currentState).toContain('[SHIP-0001: Releasable VI History Suite](./SHIP-0001-releasable-vi-history-suite.md)');
@@ -233,8 +236,9 @@ describe('ship-control direction system', () => {
     expect(currentState).toContain('- burned exact release line: `v1.0.2`');
     expect(currentState).toContain('- current exact released line: `v1.1.0`');
     expect(currentState).toContain('- current published package line on `main`: `1.1.0`');
-    expect(currentState).toContain('- current develop package line on `develop`: `1.1.0`');
-    expect(currentState).toContain('- no newer exact release candidate line is active on `develop` yet');
+    expect(currentState).toContain('- current develop package line on `develop`: `1.2.0`');
+    expect(currentState).toContain('- active exact release candidate line on `develop`: `v1.2.0`');
+    expect(currentState).toContain('- no `release/1.2.0` branch is active yet');
     expect(currentState).toContain('- public GitHub default branch: `main`');
     expect(currentState).toContain('- public Codespaces evaluation branch: `develop`');
     expect(currentState).toContain('- integration branch: `develop`');
@@ -242,6 +246,7 @@ describe('ship-control direction system', () => {
     expect(currentState).toContain('- next-line branch model: `gitflow-lite` (`feature/*`, `release/*`, `hotfix/*`)');
     expect(currentState).toContain('- hosted automation governance matrix: [hosted-ci-governance.md](./hosted-ci-governance.md)');
     expect(currentState).toContain('- current changelog: [CHANGELOG.md](../../CHANGELOG.md)');
+    expect(currentState).toContain('`TRANCHE-014`');
     expect(currentState).toContain('- closed public-product closeout:');
     expect(currentState).toContain('`TRANCHE-010` / [ISSUE-0407 Public Source Facade And Public-Product Acceptance]');
     expect(currentState).toContain('[PROGRAM-0002: Public Source Facade And Public-Product Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)');
@@ -282,8 +287,9 @@ describe('ship-control direction system', () => {
     expect(releaseProcedure).toContain('current exact released line is `v1.1.0`');
     expect(releaseProcedure).toContain('burned exact released line is `v1.0.2`');
     expect(releaseProcedure).toContain("current published package line on `main` is `1.1.0`");
-    expect(releaseProcedure).toContain("current develop package line on `develop` is `1.1.0`");
-    expect(releaseProcedure).toContain('No newer exact release candidate line is active on `develop` yet.');
+    expect(releaseProcedure).toContain("current develop package line on `develop` is `1.2.0`");
+    expect(releaseProcedure).toContain('active exact release candidate line on `develop` is `v1.2.0`');
+    expect(releaseProcedure).toContain('No `release/1.2.0` branch is active yet.');
     expect(releaseProcedure).toContain('public GitHub default branch is `main`');
     expect(releaseProcedure).toContain('public Codespaces evaluation branch is `develop`');
     expect(releaseProcedure).toContain('integration branch is `develop`');
@@ -303,6 +309,7 @@ describe('ship-control direction system', () => {
     expect(releaseProcedure).toContain('docs/product/public-github-source-publication-ledger.json');
     expect(releaseProcedure).toContain('docs/product/hosted-ci-governance.md');
     expect(releaseProcedure).toContain('docs/product/hosted-ci-governance.json');
+    expect(releaseProcedure).toContain('npm run branch:governance:assert');
     expect(releaseProcedure).toContain('npm run public:source:promote');
     expect(releaseProcedure).toContain('resources/bundled-docs/manifest.json');
     expect(releaseProcedure).toContain('npm run design:gate:assert-complete');
@@ -324,6 +331,7 @@ describe('ship-control direction system', () => {
     expect(bundledInstallPage).toContain('<h2>Release Procedure Summary</h2>');
     expect(bundledInstallPage).toContain('open <code>VI History</code> on an eligible VI');
     expect(bundledInstallPage).not.toContain('Retained exact release: <code>v0.2.0</code>');
+    expect(changelog).toContain('## [1.2.0] - 2026-04-07');
     expect(changelog).toContain('## [1.1.0] - 2026-04-07');
     expect(changelog).toContain('## [1.0.6] - 2026-04-07');
     expect(changelog).toContain('## [1.0.5] - 2026-04-07');

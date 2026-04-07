@@ -41,7 +41,10 @@ The compare surface is Docker-only:
 - `develop` remains the public evaluation branch for the next governed
   candidate line.
 - The current exact released line is `v1.1.0`.
-- No newer exact public release candidate is active yet.
+- The current published package line on `main` is `1.1.0`.
+- The current develop package line on `develop` is `1.2.0`.
+- The active exact public release candidate line on `develop` is `v1.2.0`.
+- No `release/1.2.0` branch is active yet.
 - If you only want the latest released source or release-facing docs, stay on
   `main`.
 - If you are following the first-time Codespaces or devcontainer evaluation
@@ -64,6 +67,9 @@ If this is your first time using the public fork path, use this order:
 The full first-time walkthrough is on the public wiki:
 
 - `https://github.com/svelderrainruiz/vi-history-suite/wiki/Fork-Codespace-Quickstart`
+
+That first-time walkthrough assumes a brand new fork and a brand new
+Codespace.
 
 ## Public Development Path
 
@@ -139,6 +145,43 @@ For refresh-only steps after the first successful Codespace setup, use:
 
 - `https://github.com/svelderrainruiz/vi-history-suite/wiki/Refresh-Codespace-Repositories`
 
+## Generic Public Repo Bootstrap
+
+If you want to evaluate VI History on a public GitHub or GitLab repo other
+than the helper-backed `ni/labview-icon-editor` path, use:
+
+```bash
+npm run public:repo:clone -- --repo-url https://gitlab.com/hampel-soft/open-source/hse-logger.git
+```
+
+```bash
+npm run public:repo:clone -- --repo-url https://github.com/crossrulz/SerialPortNuggets.git
+```
+
+If you want a specific branch instead of the repo's default branch, add
+`--branch <branch-name>`:
+
+```bash
+npm run public:repo:clone -- --repo-url https://github.com/crossrulz/SerialPortNuggets.git --branch <branch-name>
+```
+
+When `--branch` is omitted, the command resolves the remote default branch.
+That means it works whether the public target repo uses `main`, `master`, or a
+different default branch.
+
+The clone target stays visible instead of hidden:
+
+- `hse-logger` becomes `/workspaces/hse-logger`
+- `SerialPortNuggets` becomes `/workspaces/SerialPortNuggets`
+
+For the first-time generic public-repo walkthrough, use:
+
+- `https://github.com/svelderrainruiz/vi-history-suite/wiki/Clone-Public-Repo-In-Codespace`
+
+That page keeps the generic public-repo path separate from the canonical
+helper-backed `lv_icon.vi` quickstart, and it also assumes a brand new fork
+and a brand new Codespace.
+
 The guarded package path is:
 
 ```bash
@@ -158,7 +201,8 @@ npm run package -- --out /tmp/vi-history-suite-public-preview.vsix
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.1.0`
 - current published package line on `main`: `1.1.0`
-- current develop package line on `develop`: `1.1.0`
-- no newer exact release candidate line is active on `develop` yet
+- current develop package line on `develop`: `1.2.0`
+- active exact release candidate line on `develop`: `v1.2.0`
+- no `release/1.2.0` branch is active yet
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`

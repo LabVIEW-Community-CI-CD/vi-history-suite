@@ -1,11 +1,12 @@
 # Public Release Candidate
 
-- Version line: `1.1.0`
+- Version line: `1.2.0`
 - Burned exact release line: `v1.0.2`
-- Recorded at: `2026-04-07T19:33:34Z`
+- Recorded at: `2026-04-07T20:33:02Z`
 - Authority source of truth: GitLab `develop` -> `main`
 - Published public source commit: `daef8bd`
-- Public `develop` candidate commit: `648e399`
+- Authority `develop` candidate baseline: `804ec9d`
+- Public `develop` candidate commit: `not-yet-promoted`
 - Published public wiki head: `d184be2`
 
 ## Branch Model
@@ -25,11 +26,12 @@
 
 - Authority baseline: `v1.1.0-exact-public-release-published`
 - Local exact VSIX build: `exact-v1.1.0-release-built`
-- Local public devcontainer: `passed-v1.0.5-baseline`
-- Local public fixture helper: `passed-v1.0.5-baseline`
-- Public Codespace: `passed-v1.0.5-baseline`
-- Gate D public acceptance: `passed-v1.0.5-baseline`
+- Local public devcontainer: `v1.1.0-published-baseline`
+- Local public fixture helper: `v1.1.0-published-baseline`
+- Public repo bootstrap: `in-progress-1.2.0`
+- Public wiki candidate review: `pending-sergio`
 - Exact public release: `v1.1.0-published`
+- Required review environment: brand new fork plus brand new Codespace
 
 ## Exact Release
 
@@ -53,20 +55,21 @@
 
 - The exact public `v1.1.0` VSIX was rebuilt from merged public `main` commit
   `daef8bd` before GitHub release publication.
-- The local public devcontainer passes on the governed machine surface.
-- The governed public fixture helper now stages `ni/labview-icon-editor` into
-  a visible repo-sibling `labview-icon-editor` folder instead of a hidden cache
-  path.
-- The helper-backed fork-owner path now targets upstream `develop`, which
-  preserves the commit history needed for the `VI History` context action on
-  `resource/plugins/lv_icon.vi`.
-- The public `VI History` action now surfaces immediately on `.vi`, `.ctl`,
-  and `.vit` files instead of waiting for background eligibility indexing.
-- The public package-preview required check now creates `artifacts/` before the
-  VSIX build so upload cannot fail after a successful package step.
-- The current `1.0.6` local hardening slice also retires the disposed-webview
-  progress race in `openViHistoryCommand` so in-flight compare progress cannot
-  throw through the extension host after the panel is gone.
+- The local public devcontainer and helper-backed icon-editor path remain the
+  published `v1.1.0` baseline.
+- Authority `develop` was realigned to exact `main` through GitLab MR `!11`
+  before `1.2.0` feature work continued, so the next feature line now starts
+  from a compliant branch baseline instead of reopening from stale `develop`.
+- The authority candidate line now carries `npm run public:repo:clone`, which
+  accepts public `github.com` and `gitlab.com` HTTPS repo URLs without a
+  provider selector.
+- When `--branch` is omitted, the generic bootstrap resolves the remote
+  default branch; when `--branch` is provided, it is honored exactly.
+- The canonical `npm run public:fixture:icon-editor` helper remains the
+  easiest first-time proof for `ni/labview-icon-editor`.
+- The exact `v1.2.0` tag is intentionally blocked until the maintained public
+  wiki procedures are dry-run reviewed and accepted from a brand new fork and
+  a brand new Codespace.
 
 ## Hosted Proof
 
@@ -85,46 +88,35 @@
 
 ## Tester Fixture Strategy
 
-- Decision: optional governed helper
-- Command: `npm run public:fixture:icon-editor`
-- Target path: `../labview-icon-editor`
-- Codespace target path: `/workspaces/labview-icon-editor`
+- Decision: helper-backed canonical path plus generic public-repo bootstrap
+- Canonical helper command: `npm run public:fixture:icon-editor`
+- Generic bootstrap command:
+  `npm run public:repo:clone -- --repo-url <https-url>`
+- Canonical helper target path: `../labview-icon-editor`
+- Generic bootstrap target path: `../<repo-name>`
+- Codespace target path pattern: `/workspaces/<repo-name>`
 - Manual alternative: `Manual-Actor-Framework-Clone`
 - Refresh page: `Refresh-Codespace-Repositories`
 
 ## Governed Findings
 
-- `FINDING-1.0.6-001-PUBLIC-DEVELOP-REALIGNMENT`
+- `FINDING-1.2.0-001-BRANCH-BASELINE-GOVERNANCE-GAP`
   - status: `closed`
-  - public `develop` merged at `648e399` with required GitHub checks green
-  - requirement impact: `updated` via `VHS-REQ-505`, `VHS-REQ-506`,
-    `VHS-REQ-507`, and `VHS-REQ-508`
-  - ADR impact: `updated` via `ADR-0030` and `ADR-0031`
-- `FINDING-1.0.6-002-HISTORY-PANEL-DISPOSED-WEBVIEW-PROGRESS-RACE`
-  - status: `closed`
-  - requirement impact: `updated` via `VHS-REQ-509`
-  - ADR impact: `no-impact`
-  - retained rationale: the fix stays within the existing history-panel
-    command/webview architecture and does not change sustained branch, release,
-    runtime-provider, or product-boundary decisions
-- `FINDING-1.0.6-003-PUBLIC-WORKFLOW-GOVERNANCE-GAP`
-  - status: `closed`
-  - public `develop` merged at `648e399` with both required GitHub checks
-    green
-  - requirement impact: `updated` via `VHS-REQ-510`
-  - ADR impact: `updated` via `ADR-0032`
-  - retained rationale: the public workflow pair now has first-class
-    requirement/ADR capture plus bounded trigger and churn-control refactoring
+  - authority `develop` realigned at `804ec9d` through GitLab MR `!11`
+  - requirement impact: `updated` via `VHS-REQ-505` and `VHS-REQ-515`
+  - ADR impact: `updated` via `ADR-0030`
+- `FINDING-1.2.0-002-PUBLIC-CODESPACES-PUBLIC-REPO-BOOTSTRAP`
+  - status: `active`
+  - requirement impact: `updated` via `VHS-REQ-516`, `VHS-REQ-517`, and
+    `VHS-REQ-518`
+  - ADR impact: `updated` via `ADR-0034`
 
 ## Remaining Blockers
 
-- The branch-model hardening blocker is closed because public `develop` already
-  merged at `0985f96`.
-- The disposed-webview progress blocker is also closed because the public
-  hardening merge completed on `develop`.
-- The workflow-governance blocker is now also closed because public `develop`
-  merged at `975a7f2` with `package-preview` and
-  `public-facade-linux-smoke` green.
-- No active `1.1.0` public-source blockers remain.
-- `v1.1.0` is now the current exact green line on `main`, and no newer exact
-  release candidate is active on `develop` yet.
+- The generic public GitHub/GitLab bootstrap is not yet promoted onto the
+  public `develop` branch.
+- The maintained public wiki procedures for that generic bootstrap still need
+  Sergio dry-run feedback from a brand new fork and a brand new Codespace
+  before exact tagging.
+- `v1.1.0` remains the current exact green line on `main`, while `v1.2.0`
+  stays open on `develop`.

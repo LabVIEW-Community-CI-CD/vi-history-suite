@@ -47,6 +47,7 @@ Read these in order:
 31. [hosted-ci-governance.json](./hosted-ci-governance.json)
 32. [Extension Execution Policy](./extension-execution-policy.md)
 33. [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
+34. [PROGRAM-0006: Public Codespaces Public-Repo Bootstrap](./execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md)
 
 ## Authority Stack
 
@@ -95,7 +96,8 @@ Current control-plane surfaces:
 31. [hosted-ci-governance.json](./hosted-ci-governance.json)
 32. [Extension Execution Policy](./extension-execution-policy.md)
 33. [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
-34. [Fast VS Code Loop](../dev-fast-loop.md)
+34. [PROGRAM-0006: Public Codespaces Public-Repo Bootstrap](./execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md)
+35. [Fast VS Code Loop](../dev-fast-loop.md)
 
 ## Committed Capability State
 
@@ -142,8 +144,9 @@ Latest landed ship target:
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.1.0`
 - current published package line on `main`: `1.1.0`
-- current develop package line on `develop`: `1.1.0`
-- no newer exact release candidate line is active on `develop` yet
+- current develop package line on `develop`: `1.2.0`
+- active exact release candidate line on `develop`: `v1.2.0`
+- no `release/1.2.0` branch is active yet
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
@@ -154,10 +157,24 @@ Latest landed ship target:
 - docs-workbench image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
 - remaining blockers: none on the exact public `v1.1.0` line; public `main`
   now publishes `daef8bd`, the public GitHub release `v1.1.0` is live, and
-  no newer exact release candidate is active yet
+  `develop` now carries the active `v1.2.0` candidate line
 
 Current active tranche:
 
+- `TRANCHE-014`: Public Codespaces public-repo bootstrap
+- active issue: [ISSUE-0411 Public Codespaces Public-Repo Bootstrap](./issues/ISSUE-0411-public-codespaces-public-repo-bootstrap.md)
+- active execution program: [PROGRAM-0006: Public Codespaces Public-Repo Bootstrap](./execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md)
+  - current first slice:
+  - back-merge exact `v1.1.0` `main` into `develop` before the `1.2.0`
+    candidate line continues
+  - keep the canonical `npm run public:fixture:icon-editor` helper-backed path
+    as the easiest first-time proof for `ni/labview-icon-editor`
+  - add one generic `npm run public:repo:clone` surface for public GitHub and
+    GitLab HTTPS repos with optional explicit branch and remote default-branch
+    resolution when omitted
+  - block the exact `v1.2.0` tag until the maintained public wiki procedures
+    are dry-run reviewed and accepted from a brand new fork and a brand new
+    Codespace
 - `TRANCHE-013`: Extension execution flexibility and runtime acquisition UX
 - active issue: [ISSUE-0410 Extension Execution Flexibility And Runtime Acquisition UX](./issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md)
 - active execution program: [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
@@ -258,6 +275,18 @@ Post-release tranches:
   - the installed extension now depends on Docker for compare generation, no longer exposes host-runtime mode/path knobs to extension users, constrains installed compare execution to x64 container surfaces, and selects the governed Windows or Linux image from the current Docker daemon engine instead of probing host LabVIEW
   - execution-policy bypass remains forbidden: installed compare execution must still pass canonical Docker-only request validation and governed provider hard stops
   - the runtime doctor, history panel, and retained packet surfaces now carry the selected provider, current Docker engine, selected image, acquisition state, and next action as explicit installed-runtime truth
+- `TRANCHE-014`: Public Codespaces public-repo bootstrap
+  - active issue: [ISSUE-0411 Public Codespaces Public-Repo Bootstrap](./issues/ISSUE-0411-public-codespaces-public-repo-bootstrap.md)
+  - active execution program: [PROGRAM-0006: Public Codespaces Public-Repo Bootstrap](./execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md)
+  - `develop` now carries the active `1.2.0` line while exact public `main`
+    remains `v1.1.0`
+  - the first `1.2.0` correction repaired branch-governance admission by
+    realigning exact `main` back into `develop` before feature work continues
+  - the line now adds one generic public-repo bootstrap surface for public
+    GitHub and GitLab HTTPS repos while keeping the canonical icon-editor
+    helper path separate
+  - the exact `v1.2.0` tag is intentionally blocked on a maintained public wiki
+    dry run and Sergio review
 
 Current active and queued post-release programs:
 
@@ -310,6 +339,7 @@ Current active and queued post-release programs:
   - [PROGRAM-0003: Repeatable Benchmark Proof](./execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md)
   - [PROGRAM-0004: Post-Release Sustainment And Release Cadence](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)
   - [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
+  - [PROGRAM-0006: Public Codespaces Public-Repo Bootstrap](./execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md)
 
 The active-queue source of truth is:
 
@@ -318,6 +348,7 @@ The active-queue source of truth is:
 - [PROGRAM-0003: Repeatable Benchmark Proof](./execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md)
 - [PROGRAM-0004: Post-Release Sustainment And Release Cadence](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)
 - [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
+- [PROGRAM-0006: Public Codespaces Public-Repo Bootstrap](./execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md)
 - [extension-execution-policy.md](./extension-execution-policy.md)
 - [debt-retirement-contract.md](./debt-retirement-contract.md)
 - [debt-taxonomy.md](./debt-taxonomy.md)
