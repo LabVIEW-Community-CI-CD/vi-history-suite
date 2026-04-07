@@ -26,6 +26,8 @@ Adopt this next-line governance model:
 
 - keep `main` as the exact release branch
 - keep `develop` as the integration branch
+- keep the public GitHub default branch on `main` so casual readers and fork
+  owners land on the latest exact released line by default
 - add governed temporary lanes:
   - `feature/*`
   - `release/*`

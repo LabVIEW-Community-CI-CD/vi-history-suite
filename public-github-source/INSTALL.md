@@ -44,6 +44,10 @@ first use before compare execution.
 The public repo is intended to support devcontainer/Codespaces evaluation on
 the `develop` branch.
 
+GitHub still opens the public repo on `main` by default. That is expected:
+`main` is the latest exact released line, while `develop` is the explicit
+evaluation branch for the next candidate.
+
 Fast path:
 
 1. Open your fork in a Codespace or devcontainer on `develop`.

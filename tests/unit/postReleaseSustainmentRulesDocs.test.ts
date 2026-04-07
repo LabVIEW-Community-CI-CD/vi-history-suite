@@ -25,6 +25,7 @@ type SustainmentRules = {
       currentMainPackageLine: string;
       currentDevelopPackageLine?: string;
       activeDevelopCandidateReleaseLine?: string | null;
+      publicDefaultBranch?: string;
       publicCodespaceBranch: string;
       integrationBranch?: string;
       releaseBranch?: string;
@@ -116,6 +117,7 @@ describe('post-release sustainment rules package', () => {
       currentMainPackageLine: '1.0.5',
       currentDevelopPackageLine: '1.0.6',
       activeDevelopCandidateReleaseLine: 'v1.0.6',
+      publicDefaultBranch: 'main',
       publicCodespaceBranch: 'develop',
       integrationBranch: 'develop',
       releaseBranch: 'main',
@@ -187,53 +189,85 @@ describe('post-release sustainment rules package', () => {
       'out-of-scope alternative Windows x86 provisioning that is not part of the current governed image contract'
     );
 
-    expect(rules.operatorSurfaceSustainment.branchModel).toEqual({
-      model: 'gitflow-lite',
-      integrationBranch: 'develop',
-      releaseBranch: 'main',
-      temporaryBranchPrefixes: ['feature/', 'release/', 'hotfix/'],
-      promotionRules: [
-        'feature/* branches target develop',
-        'release/* branches are cut from develop and merge to main plus back into develop',
-        'hotfix/* branches are cut from main and merge to main plus back into develop',
-        'exact SemVer tags are cut from main only after the protected main pipeline succeeds'
-      ],
-      requiredChecks: [
-        'docs_continuous_integration',
-        'docs_public_continuous_integration',
-        'docs_internal_continuous_integration',
-        'test_extension',
-        'package_extension_preview',
-        'Public Facade Package Preview / package-preview',
-        'Public Facade Linux Smoke / public-facade-linux-smoke'
-      ],
-      laneResponsibilities: {
-        'feature/*': [
-          'focused tests for the changed surface',
-          'affected documentation or design gates before merge to develop'
+    expect(rules.operatorSurfaceSustainment.branchModel).toEqual(
+      expect.objectContaining({
+        model: 'gitflow-lite',
+        integrationBranch: 'develop',
+        releaseBranch: 'main',
+        temporaryBranchPrefixes: ['feature/', 'release/', 'hotfix/'],
+        promotionRules: [
+          'public GitHub default branch remains main so readers land on the latest exact released line by default',
+          'feature/* branches target develop',
+          'release/* branches are cut from develop and merge to main plus back into develop',
+          'hotfix/* branches are cut from main and merge to main plus back into develop',
+          'exact SemVer tags are cut from main only after the protected main pipeline succeeds'
         ],
-        develop: [
-          'required checks',
-          'npm run design:gate',
-          'npm run design:gate:assert-complete for governance or architecture work'
+        requiredChecks: [
+          'docs_continuous_integration',
+          'docs_public_continuous_integration',
+          'docs_internal_continuous_integration',
+          'test_extension',
+          'package_extension_preview',
+          'Public Facade Package Preview / package-preview',
+          'Public Facade Linux Smoke / public-facade-linux-smoke'
         ],
-        'release/*': [
-          'required checks',
-          'design gates',
-          'release-readiness normalization',
-          'public-facade proof before merge to main'
-        ],
-        'hotfix/*': [
-          'focused regression checks',
-          'affected documentation or design gates',
-          'exact released-line package audit before merge to main'
-        ],
-        main: [
-          'protected exact-release branch',
-          'exact SemVer tags only after merged main is green'
-        ]
-      }
-    });
+        laneResponsibilities: {
+          'feature/*': [
+            'focused tests for the changed surface',
+            'affected documentation or design gates before merge to develop'
+          ],
+          develop: [
+            'required checks',
+            'npm run design:gate',
+            'npm run design:gate:assert-complete for governance or architecture work'
+          ],
+          'release/*': [
+            'required checks',
+            'design gates',
+            'release-readiness normalization',
+            'public-facade proof before merge to main'
+          ],
+          'hotfix/*': [
+            'focused regression checks',
+            'affected documentation or design gates',
+            'exact released-line package audit before merge to main'
+          ],
+          main: [
+            'protected exact-release branch',
+            'exact SemVer tags only after merged main is green'
+          ]
+        }
+      })
+    );
+    expect(rules.operatorSurfaceSustainment.branchModel.findingRequirementDiscipline).toEqual(
+      expect.arrayContaining([
+        'every governed finding is classified before slice closeout as requirements-update-required or no-requirement-impact'
+      ])
+    );
+    expect(rules.operatorSurfaceSustainment.branchModel.findingAdrDiscipline).toEqual(
+      expect.arrayContaining([
+        'every governed finding is classified before slice closeout as adr-update-required or no-adr-impact'
+      ])
+    );
+    expect(rules.operatorSurfaceSustainment.publicWorkflowGovernance).toEqual(
+      expect.objectContaining({
+        model: 'two-workflow-public-facade-pair',
+        workflows: {
+          packagePreview: expect.objectContaining({
+            workflowName: 'Public Facade Package Preview',
+            requiredCheckName: 'package-preview',
+            featurePushLane: 'forbidden',
+            concurrency: 'per-workflow-per-ref-cancel-in-progress'
+          }),
+          linuxSmoke: expect.objectContaining({
+            workflowName: 'Public Facade Linux Smoke',
+            requiredCheckName: 'public-facade-linux-smoke',
+            featurePushLane: 'forbidden',
+            concurrency: 'per-workflow-per-ref-cancel-in-progress'
+          })
+        }
+      })
+    );
     expect(rules.operatorSurfaceSustainment.requiredAuthorityUpdates).toContain(
       'docs/product/post-release-sustainment-rules.md'
     );
@@ -256,11 +290,17 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('Decision framework for choosing `major`, `minor`, or `patch`:');
     expect(rulesDoc).toContain('## Benchmark Refresh Rules');
     expect(rulesDoc).toContain('## Operator And Documentation Upkeep Rules');
+    expect(rulesDoc).toContain('public GitHub default branch: `main`');
     expect(rulesDoc).toContain('develop');
     expect(rulesDoc).toContain('release branch');
     expect(rulesDoc).toContain('required checks');
     expect(rulesDoc).toContain('gitflow-lite');
     expect(rulesDoc).toContain('Lane-specific CI and gate responsibilities:');
+    expect(rulesDoc).toContain('Public GitHub workflow responsibility matrix:');
+    expect(rulesDoc).toContain('preview VSIX packaging and preview-artifact upload');
+    expect(rulesDoc).toContain('Docker Linux engine verification');
+    expect(rulesDoc).toContain('per-workflow/per-ref concurrency');
+    expect(rulesDoc).toContain('neither public GitHub workflow uses a `feature/*` push lane');
     expect(rulesDoc).toContain('feature/*');
     expect(rulesDoc).toContain('hotfix/*');
     expect(rulesDoc).toContain('design:gate');

@@ -1481,9 +1481,26 @@
   shape for the recorded public-product acceptance preflight
 - `TEST-UNIT-320`: verify the next-line governance package keeps the
   post-release SemVer decision framework, the `gitflow-lite` branch model, the
-  lane-specific CI and `design:gate` posture, and the `v1.0.5` exact /
-  `v1.0.6` develop-candidate state aligned across sustainment rules, README,
+  lane-specific CI and `design:gate` posture, the public-default-branch
+  decision that keeps GitHub `main` stable for casual readers while `develop`
+  remains the explicit evaluation branch, and the `v1.0.5` exact / `v1.0.6`
+  develop-candidate state aligned across sustainment rules, README,
   current-state, release procedure, public-release candidate, and ADR-0030
+- `TEST-UNIT-321`: verify the sustainment governance package keeps an explicit
+  finding-to-requirement discipline so governed findings either update SRS,
+  RTM, and the test plan in the same slice or retain an explicit
+  `no-requirement-impact` rationale
+- `TEST-UNIT-322`: verify the sustainment governance package keeps an explicit
+  finding-to-ADR discipline so governed findings either update the ADR package
+  in the same slice or retain an explicit `no-adr-impact` rationale
+- `TEST-UNIT-323`: verify `openViHistoryCommand` fails closed when a
+  comparison-progress or result update races with disposal of the history
+  panel webview, preserving command completion instead of throwing
+  `Webview is disposed`
+- `TEST-UNIT-324`: verify the governed public GitHub workflow package keeps an
+  explicit package-preview versus linux-smoke responsibility matrix, bounded
+  `develop`/`main`/`release/*`/`hotfix/*` push and pull-request admission, no
+  `feature/*` push lane, and per-workflow/per-ref concurrency
 - `TEST-DOC-074`: review current-state, SRS, and RTM and confirm the
   dashboard contract now states that host-native Windows pair refresh is
   explicitly headless and that long-running pair refresh emits keepalive
@@ -1506,9 +1523,30 @@
 - `TEST-DOC-085`: review README, current-state, release-procedure,
   PROGRAM-0004, ISSUE-0409, ADR-0030, SRS, RTM, and the test plan and confirm
   the next-line control plane now retains explicit `major`/`minor`/`patch`
-  choice criteria, a governed `gitflow-lite` branch topology, and lane-specific
-  CI plus `design:gate` obligations for `feature/*`, `develop`, `release/*`,
-  `hotfix/*`, and `main`
+  choice criteria, a governed `gitflow-lite` branch topology, the explicit
+  rule that public GitHub `main` stays the default branch while `develop`
+  remains the evaluation branch, and lane-specific CI plus `design:gate`
+  obligations for `feature/*`, `develop`, `release/*`, `hotfix/*`, and `main`,
+  including PR-driven feature admission and push validation on `release/*` and
+  `hotfix/*`
+- `TEST-DOC-086`: review PROGRAM-0004, ISSUE-0409, sustainment rules, SRS,
+  RTM, and the test plan and confirm the repo now retains a continuous
+  finding-to-requirement discipline that forces governed findings to either
+  update SRS/RTM/test-plan coverage in the same slice or record an explicit
+  `no-requirement-impact` rationale
+- `TEST-DOC-087`: review PROGRAM-0004, ISSUE-0409, sustainment rules, ADR-0031,
+  SRS, RTM, and the test plan and confirm the repo now retains a continuous
+  finding-to-ADR discipline that forces governed findings to either update the
+  ADR package in the same slice or record an explicit `no-adr-impact`
+  rationale
+- `TEST-DOC-088`: review the public release-candidate/control-plane docs, SRS,
+  RTM, and test plan and confirm the disposed-history-panel progress finding is
+  classified for requirement impact and retains an explicit `no-adr-impact`
+  rationale in the same slice
+- `TEST-DOC-089`: review PROGRAM-0004, ISSUE-0409, sustainment rules,
+  ADR-0032, SRS, RTM, and the test plan and confirm the public GitHub workflow
+  pair has explicit owned responsibilities, bounded triggers, and churn
+  control instead of relying on raw YAML alone
 - `TEST-DOC-077`: review documentation-workbench, current-state, SRS, and RTM
   and confirm the documentation continuous-integration contract now retains
   docs-integration evidence, bundle-drift checks, wiki doctor/plan facts, and

@@ -28,6 +28,7 @@
       "currentMainPackageLine": "1.0.5",
       "currentDevelopPackageLine": "1.0.6",
       "activeDevelopCandidateReleaseLine": "v1.0.6",
+      "publicDefaultBranch": "main",
       "publicCodespaceBranch": "develop",
       "integrationBranch": "develop",
       "releaseBranch": "main",
@@ -127,6 +128,7 @@
         "hotfix/"
       ],
       "promotionRules": [
+        "public GitHub default branch remains main so readers land on the latest exact released line by default",
         "feature/* branches target develop",
         "release/* branches are cut from develop and merge to main plus back into develop",
         "hotfix/* branches are cut from main and merge to main plus back into develop",
@@ -166,6 +168,64 @@
           "protected exact-release branch",
           "exact SemVer tags only after merged main is green"
         ]
+      },
+      "findingRequirementDiscipline": [
+        "every governed finding is classified before slice closeout as requirements-update-required or no-requirement-impact",
+        "findings that change public workflow truth, release truth, branch policy, CI posture, runtime boundaries, or user/operator documentation behavior update SRS, RTM, and the test plan in the same slice",
+        "findings with no normative behavior impact retain an explicit no-impact rationale in the control plane instead of silently skipping requirement review"
+      ],
+      "findingAdrDiscipline": [
+        "every governed finding is classified before slice closeout as adr-update-required or no-adr-impact",
+        "findings that change architectural boundaries, public/private product surfaces, release topology, default-branch policy, runtime-provider strategy, required-check posture, or the public GitHub workflow responsibility matrix update an existing ADR or introduce a new ADR in the same slice",
+        "findings with no sustained decision impact retain an explicit no-impact rationale in the control plane instead of silently skipping ADR review"
+      ]
+    },
+    "publicWorkflowGovernance": {
+      "model": "two-workflow-public-facade-pair",
+      "workflows": {
+        "packagePreview": {
+          "workflowName": "Public Facade Package Preview",
+          "requiredCheckName": "package-preview",
+          "responsibilities": [
+            "npm run compile",
+            "npm run test:design-contract",
+            "preview VSIX packaging",
+            "preview artifact upload"
+          ],
+          "admittedBranches": [
+            "develop",
+            "main",
+            "release/*",
+            "hotfix/*"
+          ],
+          "pullRequestTargets": [
+            "develop",
+            "main"
+          ],
+          "featurePushLane": "forbidden",
+          "concurrency": "per-workflow-per-ref-cancel-in-progress"
+        },
+        "linuxSmoke": {
+          "workflowName": "Public Facade Linux Smoke",
+          "requiredCheckName": "public-facade-linux-smoke",
+          "responsibilities": [
+            "Docker Linux engine verification",
+            "npm run public:smoke:linux",
+            "smoke evidence upload"
+          ],
+          "admittedBranches": [
+            "develop",
+            "main",
+            "release/*",
+            "hotfix/*"
+          ],
+          "pullRequestTargets": [
+            "develop",
+            "main"
+          ],
+          "featurePushLane": "forbidden",
+          "concurrency": "per-workflow-per-ref-cancel-in-progress"
+        }
       }
     },
     "requiredAuthorityUpdates": [

@@ -140,13 +140,17 @@ Latest landed ship target:
 - current published package line on `main`: `1.0.5`
 - current develop package line on `develop`: `1.0.6`
 - active exact release candidate line on `develop`: `v1.0.6`
+- public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
 - release branch: `main`
 - next-line branch model: `gitflow-lite` (`feature/*`, `release/*`, `hotfix/*`)
 - current changelog: [CHANGELOG.md](../../CHANGELOG.md)
 - docs-workbench image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
-- remaining blockers: `v1.0.6` SemVer-decision framework, gitflow-lite branch policy, and lane-specific CI/design-gate admission
+- remaining blockers: none on the public `1.0.6` candidate surface; public
+  `develop` now carries the branch-model and disposed-webview hardening at
+  `0985f96` plus the workflow-governance hardening at `975a7f2`; the next
+  gate is authority GitLab promotion of the same `1.0.6` governance slice
 
 Current active tranche:
 
