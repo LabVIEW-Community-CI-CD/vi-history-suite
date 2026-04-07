@@ -2,6 +2,10 @@ name: Public Facade Package Preview
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - develop
+      - main
   pull_request:
     paths:
       - '.devcontainer/**'

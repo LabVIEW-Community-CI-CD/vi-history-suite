@@ -41,15 +41,18 @@ first use before compare execution.
 
 ## Public Development And Evaluation
 
-The public repo is intended to support devcontainer/Codespaces evaluation.
+The public repo is intended to support devcontainer/Codespaces evaluation on
+the `develop` branch.
 
-Typical path:
+Fast path:
 
-1. Open the repo in a devcontainer or Codespace.
-2. Let `npm ci` complete.
-3. Run `npm run compile`.
-4. Press `F5`.
-5. Exercise the checkbox-selected compare flow.
+1. Open your fork in a Codespace or devcontainer on `develop`.
+2. Let browser VS Code finish `Setting up remote connection: Building codespace`.
+3. If a `Vitest not found` popup appears, close it and continue. VI History
+   does not require you to install anything extra for the public fork flow.
+4. Press `F5` to open the extension development host.
+5. Open the target Git repository there and use the checkbox-selected compare
+   flow.
 
 If the Linux VS Code host dependencies need to be refreshed manually, run:
 
@@ -63,9 +66,9 @@ If you want a governed public sample repository for that flow, run:
 npm run public:fixture:icon-editor
 ```
 
-This clones `ni/labview-icon-editor` into a repo-sibling `labview-icon-editor`
-folder. In a GitHub Codespace created from this repo, that path is
-`/workspaces/labview-icon-editor`.
+This clones `ni/labview-icon-editor` into a visible sibling folder named
+`labview-icon-editor`. In a GitHub Codespace created from this repo, the exact
+folder path is `/workspaces/labview-icon-editor`.
 
 If you want the full fork-owner walkthrough for the canonical public sample VI,
 use the public wiki page:
@@ -80,6 +83,8 @@ out:
 - `16-core` machine selection
 - the browser message `Setting up remote connection: Building codespace`
 - the exact `Open Folder...` path for `lv_icon.vi`
+- the exact helper command to clone `ni/labview-icon-editor`
+- what to do if a `Vitest not found` popup appears
 
 If you want the separate manual-clone walkthrough for `ni/actor-framework`, use:
 

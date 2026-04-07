@@ -17,17 +17,24 @@ describe('public release candidate control surface', () => {
   it('retains the current public-release candidate state across control-plane docs', () => {
     const candidate = readJson<{
       versionLine?: string;
+      burnedExactReleaseLine?: string;
       authorityRepo?: {
-        latestObservedMainCommit?: string;
-        latestObservedMainPipelineId?: string;
-        latestObservedMainPipelineStatus?: string;
-        latestGreenPipelineCommit?: string;
-        latestGreenPipelineId?: string;
+        role?: string;
+        integrationBranch?: string;
+        releaseBranch?: string;
+        semverDiscipline?: string;
+        requiredChecks?: string[];
       };
       publishedPublicSource?: { publishedCommit?: string };
       publishedPublicWiki?: { publishedHeadCommit?: string };
       candidateReadiness?: Record<string, string>;
-      testerFixtureStrategy?: { command?: string; defaultCloneOnStartup?: boolean };
+      testerFixtureStrategy?: {
+        command?: string;
+        defaultCloneOnStartup?: boolean;
+        targetPath?: string;
+        codespaceTargetPath?: string;
+        manualAlternativeWikiPage?: string;
+      };
       activeBlockers?: Array<{ id?: string }>;
     }>('docs/product/public-release-candidate.json');
     const candidateMarkdown = readText('docs/product/public-release-candidate.md');
@@ -39,41 +46,55 @@ describe('public release candidate control surface', () => {
       'docs/product/issues/ISSUE-0407-public-facade-installer-and-windows-acceptance.md'
     );
 
-    expect(candidate.versionLine).toBe('1.0.1');
+    expect(candidate.versionLine).toBe('1.0.3');
+    expect(candidate.burnedExactReleaseLine).toBe('v1.0.2');
     expect(candidate.authorityRepo).toMatchObject({
-      latestObservedMainCommit: '5e6bfdc',
-      latestObservedMainPipelineId: '2433459214',
-      latestObservedMainPipelineStatus: 'running',
-      latestGreenPipelineCommit: '94b6a59',
-      latestGreenPipelineId: '2433417351'
+      role: 'source-of-truth',
+      integrationBranch: 'develop',
+      releaseBranch: 'main',
+      semverDiscipline: 'strict-post-release-bumps'
     });
-    expect(candidate.publishedPublicSource?.publishedCommit).toBe('85230a3');
-    expect(candidate.publishedPublicWiki?.publishedHeadCommit).toBe('fe3e11c');
+    expect(candidate.authorityRepo?.requiredChecks).toEqual(
+      expect.arrayContaining([
+        'docs_continuous_integration',
+        'docs_public_continuous_integration',
+        'docs_internal_continuous_integration',
+        'test_extension',
+        'package_extension_preview',
+        'Public Facade Package Preview / package-preview',
+        'Public Facade Linux Smoke / public-facade-linux-smoke'
+      ])
+    );
+    expect(candidate.publishedPublicSource?.publishedCommit).toBe('4251893');
+    expect(candidate.publishedPublicWiki?.publishedHeadCommit).toBe('1fb3a00');
     expect(candidate.candidateReadiness).toMatchObject({
-      authorityBaseline: 'running',
+      authorityBaseline: 'local-gates-passing',
+      localInstalledVsix: 'exact-v1.0.3',
       localPublicDevcontainer: 'passed',
       localPublicFixtureHelper: 'passed',
       publicCodespace: 'passed',
-      gateDPublicAcceptance: 'passed-on-v1.0.0',
-      exactPublicRelease: 'v1.0.0-published'
+      gateDPublicAcceptance: 'passed',
+      exactPublicRelease: 'v1.0.3-published'
     });
     expect(candidate.testerFixtureStrategy).toMatchObject({
       command: 'npm run public:fixture:icon-editor',
-      defaultCloneOnStartup: false
+      defaultCloneOnStartup: false,
+      targetPath: '../labview-icon-editor',
+      codespaceTargetPath: '/workspaces/labview-icon-editor',
+      manualAlternativeWikiPage: 'Manual-Actor-Framework-Clone'
     });
     expect(candidate.activeBlockers).toEqual([]);
     expect(candidate).toMatchObject({
       exactRelease: {
-        version: 'v1.0.0',
-        gitlabTagPipelineId: '2433390427',
-        gitlabReleaseJobId: '13803354854',
-        gitHubAssetName: 'vi-history-suite-1.0.0-public-release.vsix'
+        version: 'v1.0.3',
+        gitHubAssetName: 'vi-history-suite-1.0.3-public-release.vsix',
+        gitHubAssetSha256: 'ce39122ca9a95effe2115b04bad48cdf688c5f9bce9c43b1d763ae1ec6467aa5'
       },
       hostedProofs: {
         publicCodespace: {
           status: 'passed',
           displayName: 'novacula',
-          publicRepoCommit: '4a8b27b'
+          proofBaselineCommit: '4a8b27b'
         }
       },
       humanReviewProofs: {
@@ -86,24 +107,22 @@ describe('public release candidate control surface', () => {
     });
 
     expect(candidateMarkdown).toContain('Public Release Candidate');
-    expect(candidateMarkdown).toContain('Version line: `1.0.1`');
-    expect(candidateMarkdown).toContain('Authority `main` pipeline: commit `5e6bfdc`, pipeline `2433459214`, status `running`');
-    expect(candidateMarkdown).toContain('Latest green authority `main` pipeline: commit `94b6a59`, pipeline `2433417351`');
-    expect(candidateMarkdown).toContain('Published public source commit: `85230a3`');
-    expect(candidateMarkdown).toContain('Published public wiki head: `fe3e11c`');
-    expect(candidateMarkdown).toContain('Current `main` package line: `1.0.1`');
-    expect(candidateMarkdown).toContain('Current exact public release line: `v1.0.0`');
-    expect(candidateMarkdown).toContain('Next exact public release line on `main`: `v1.0.1`');
-    expect(candidateMarkdown).toContain('Local public devcontainer: passed');
+    expect(candidateMarkdown).toContain('Version line: `1.0.3`');
+    expect(candidateMarkdown).toContain('Burned exact release line: `v1.0.2`');
+    expect(candidateMarkdown).toContain('Authority source of truth: GitLab `develop` -> `main`');
+    expect(candidateMarkdown).toContain('Published public source commit: `4251893`');
+    expect(candidateMarkdown).toContain('Published public wiki head: `1fb3a00`');
+    expect(candidateMarkdown).toContain('Integration branch: `develop`');
+    expect(candidateMarkdown).toContain('Release branch: `main`');
+    expect(candidateMarkdown).toContain('Local public devcontainer: `passed`');
     expect(candidateMarkdown).toContain('npm run public:fixture:icon-editor');
-    expect(candidateMarkdown).toContain('Public Codespace: passed');
-    expect(candidateMarkdown).toContain('Exact public release: v1.0.0-published');
-    expect(candidateMarkdown).toContain('GitHub release: `v1.0.0`');
-    expect(candidateMarkdown).toContain('GitLab tag pipeline: `2433390427`');
-    expect(candidateMarkdown).toContain('GitHub Codespace `novacula` now passes the hosted public smoke');
+    expect(candidateMarkdown).toContain('Public Codespace: `passed`');
+    expect(candidateMarkdown).toContain('Exact public release: `v1.0.3-published`');
+    expect(candidateMarkdown).toContain('GitHub release: `v1.0.3`');
+    expect(candidateMarkdown).toContain('GitHub Codespace `novacula` remains retained hosted public-surface proof.');
     expect(candidateMarkdown).toContain('resource/plugins/lv_icon.vi');
-    expect(candidateMarkdown).toContain('Gate D public acceptance: passed-on-v1.0.0');
-    expect(candidateMarkdown).toContain('None. The canonical Docker Linux cold-pull human pass is retained');
+    expect(candidateMarkdown).toContain('Gate D public acceptance: `passed`');
+    expect(candidateMarkdown).toContain('None. `v1.0.2` is retained as burned');
 
     expect(currentState).toContain('[Public Release Candidate](./public-release-candidate.md)');
     expect(currentState).toContain('local public devcontainer now passes on this machine');
@@ -111,8 +130,7 @@ describe('public release candidate control surface', () => {
     expect(currentState).toContain('latest retained human review submission at `2026-04-07T04:06:58.998Z`');
     expect(currentState).toContain('resource\\plugins\\lv_icon.vi');
     expect(currentState).toContain('optional governed tester-fixture helper');
-    expect(currentState).toContain('exact `v1.0.0` public GitHub release is now published at');
-    expect(currentState).toContain('https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.0.0');
+    expect(currentState).toContain('current exact public GitHub release line is `v1.0.3`');
 
     expect(program).toContain('local public devcontainer now passes on this machine');
     expect(program).toContain('GitHub Codespace `novacula` now passes the hosted public smoke');
@@ -125,6 +143,6 @@ describe('public release candidate control surface', () => {
     expect(issue).toContain('resource/plugins/lv_icon.vi');
     expect(issue).toContain('resource/plugins/lv_icon.vi');
     expect(issue).toContain('optional governed tester-fixture helper');
-    expect(issue).toContain('exact `v1.0.0` public release is now cleared');
+    expect(issue).toContain('current exact release line is `v1.0.3`');
   });
 });

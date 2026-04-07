@@ -1,7 +1,7 @@
 {
   "generatedFor": "vi-history-suite",
   "publicationSurface": "public-github-source-repo",
-  "publishedHeadCommit": "85230a3",
+  "publishedHeadCommit": "4251893",
   "publications": [
     {
       "id": "public-source-product-repo-baseline",
@@ -67,6 +67,21 @@
         "CHANGELOG.md",
         "docs/product/post-release-sustainment-rules.md",
         "docs/release-procedure.md"
+      ]
+    },
+    {
+      "id": "public-source-v1-0-3-burned-release-recovery",
+      "title": "Public source v1.0.3 burned-release recovery",
+      "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
+      "status": "published",
+      "publishedDate": "2026-04-07",
+      "repoCommit": "4251893",
+      "primaryAuthority": [
+        "README.md",
+        "CHANGELOG.md",
+        "docs/product/post-release-sustainment-rules.md",
+        "docs/release-procedure.md",
+        "docs/architecture/adr/ADR-0029-develop-integration-main-release-and-required-checks.md"
       ]
     }
   ]

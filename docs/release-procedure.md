@@ -11,9 +11,13 @@
 - The first retained exact-version release is `v0.2.0`, with retained artifact
   `vi-history-suite-0.2.0.vsix` and manifest
   `release-evidence/release-manifest.json`.
-- The current exact released line is `v1.0.2`.
-- The current published package line on `main` is `1.0.2`.
+- The current exact released line is `v1.0.3`.
+- The burned exact released line is `v1.0.2`.
+- The current published package line on `main` is `1.0.3`.
 - The public Codespaces evaluation branch is `develop`.
+- The integration branch is `develop`.
+- The release branch is `main`.
+- Protected-branch promotion shall rely on required checks, not operator memory.
 - After an exact release is published, the current published package line on
   `main` shall match that exact release line.
 - Any later repo change intended for publication shall advance `package.json`
@@ -23,6 +27,8 @@
   GitHub release are both published.
 - The release tag shall match both `package.json` and the top unreleased
   heading in [CHANGELOG.md](../CHANGELOG.md).
+- Tags shall be cut only from a green `main` commit after the required checks
+  on the integration and release branches have already passed.
 - The repo also publishes a separate docs-authoring workbench image for
   documentation-package iteration:
   `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
@@ -38,7 +44,13 @@
 
 ## Steps
 
-1. Ensure `main` is in a governed baseline state.
+1. Ensure branch promotion followed the governed branch model.
+   - Land integration work on `develop`.
+   - Promote release candidates from `develop` into `main`.
+   - Do not tag from `develop`.
+   - Do not rely on direct pushes to a protected release branch as the primary
+     release path.
+2. Ensure `main` is in a governed baseline state.
    - Either wait for `npm run design:gate` to exit `0`, or run
      `npm run design:gate:assert-complete` against the retained latest report
      before claiming the gate is green.
@@ -46,17 +58,19 @@
      path, the design gate mirrors it under
      `.cache/design-gate/assurance-skill/repo-standards-review/` before
      executing standards assurance.
-2. Ensure `package.json` and the top unreleased entry in `CHANGELOG.md` match
+   - Verify the required checks on the protected branch are green before any
+     tag is created.
+3. Ensure `package.json` and the top unreleased entry in `CHANGELOG.md` match
    the release tag version exactly.
-3. If the release tranche changed bundled-doc inputs, run `npm run docs:bundle`
+4. If the release tranche changed bundled-doc inputs, run `npm run docs:bundle`
    locally so the packaged installed-user guide can be inspected before CI
    packages the VSIX.
-4. Run both split documentation CI surfaces before release normalization:
+5. Run both split documentation CI surfaces before release normalization:
    - `npm run docs:ci:public:core`
    - `npm run docs:ci:internal:core`
    - `npm run docs:ci:core` may still be used as the retained umbrella lane
      when one combined local report is more convenient.
-5. Run compile, test, coverage generation, and VSIX packaging through GitLab
+6. Run compile, test, coverage generation, and VSIX packaging through GitLab
    CI.
    - The guarded `npm run package` path now runs compile,
      `npm run docs:bundle`, `npm run package:audit`, and then `vsce package`.
@@ -68,27 +82,27 @@
    - Packaging must fail closed if the packaged surface includes runtime
      `node_modules` or transient/test artifacts such as `.cache` or
      `.vscode-test`.
-6. Retain release evidence under `release-evidence/`.
-7. Review the generated release record and release manifest before any
+7. Retain release evidence under `release-evidence/`.
+8. Review the generated release record and release manifest before any
    downstream distribution step.
-8. Ensure the release artifact includes the exact versioned VSIX intended for
+9. Ensure the release artifact includes the exact versioned VSIX intended for
    installation and sharing.
-9. Ensure the retained release manifest names the tag, package version, commit,
+10. Ensure the retained release manifest names the tag, package version, commit,
    VSIX filename, and retained evidence paths.
-10. Ensure the packaged extension still contains the bundled user-doc surface
+11. Ensure the packaged extension still contains the bundled user-doc surface
    under `resources/bundled-docs/`.
-11. When the public Docker product contract changes materially, rerun the
+12. When the public Docker product contract changes materially, rerun the
     public-facade Linux smoke lane through:
     - local `npm run public:smoke:linux`
     - local `npm run public:gate-d:preflight`
     - local `npm run public:gate-d:prepare-cold-pull` immediately before the
       real cold-pull Gate D rerun
     - GitHub `workflow_dispatch` on `.github/workflows/public-facade-linux-smoke.yml`
-12. When the public source facade changes materially, promote the curated
+13. When the public source facade changes materially, promote the curated
     public GitHub source repo from authority and record the published commit:
     - `npm run public:source:promote`
     - update `docs/product/public-github-source-publication-ledger.{md,json}`
-13. Keep public source publication separate from public GitHub wiki
+14. Keep public source publication separate from public GitHub wiki
     publication; one publication act does not imply the other.
 
 ## Retained Evidence
@@ -125,6 +139,8 @@
 - The first governed `v0.2.0` release evidence set is now retained through
   GitLab release `v0.2.0`, tag pipeline `2428809456`, and kept release job
   `13779604462`.
-- The current published package line on `main` is `1.0.2`, tracked in
+- `v1.0.2` is retained as a burned release because the immutable tag published
+  before the exact authority docs CI failure was discovered.
+- The current published package line on `main` is `1.0.3`, tracked in
   `CHANGELOG.md`, and it should not rewrite the retained `v0.2.0`, `v1.0.0`,
-  or `v1.0.1` release evidence.
+  `v1.0.1`, or burned `v1.0.2` release evidence.

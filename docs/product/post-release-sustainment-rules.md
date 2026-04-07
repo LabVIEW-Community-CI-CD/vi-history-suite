@@ -21,6 +21,13 @@ not absorb `PROGRAM-0002`, `PROGRAM-0003`, or `PROGRAM-0005` into generic
 maintenance language; those programs remain explicit when they reopen or stay
 active.
 
+The current release branch model is explicit too:
+
+- `develop` is the integration branch
+- `main` is the release branch
+- protected-branch promotion shall use required checks instead of operator
+  memory
+
 ## Release Refresh Rules
 
 Release cadence is event-driven, not calendar-driven.
@@ -43,10 +50,14 @@ Refresh the release package when any of these change:
 
 Current version-line contract:
 
-- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`
-- current exact released line: `v1.0.2`
-- current published package line on `main`: `1.0.2`
+- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`,
+  `v1.0.3`
+- burned exact release line: `v1.0.2`
+- current exact released line: `v1.0.3`
+- current published package line on `main`: `1.0.3`
 - public Codespaces evaluation branch: `develop`
+- integration branch: `develop`
+- release branch: `main`
 
 Strict SemVer rule after an exact release:
 
@@ -59,6 +70,8 @@ Strict SemVer rule after an exact release:
   the matching public tag and public GitHub release are both published
 - future sessions shall not keep landing post-release changes on the previous
   exact release version number
+- future sessions shall not treat a burned exact release as the green release
+  baseline for later publication
 
 Do not reopen release refresh just because:
 
@@ -118,6 +131,21 @@ When sustainment-affecting truth changes, update these surfaces together:
 - wiki coverage/publication ledgers when reader-facing authority changes
 - published wiki pages that represent the changed authority docs
 - bundled docs after published wiki pages change
+
+Required branch-model and CI posture:
+
+- integration work lands on `develop`
+- release promotion lands on `main`
+- protected-branch promotion uses required checks instead of direct operator
+  trust
+- the required checks are:
+  - GitLab `docs_continuous_integration`
+  - GitLab `docs_public_continuous_integration`
+  - GitLab `docs_internal_continuous_integration`
+  - GitLab `test_extension`
+  - GitLab `package_extension_preview`
+  - GitHub `Public Facade Package Preview / package-preview`
+  - GitHub `Public Facade Linux Smoke / public-facade-linux-smoke`
 
 Required closeout checks for any sustainment slice:
 

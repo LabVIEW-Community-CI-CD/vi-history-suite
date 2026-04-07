@@ -665,6 +665,17 @@
         "Architecture.md",
         "Architecture-Decision-Records.md"
       ]
+    },
+    {
+      "sourcePath": "docs/architecture/adr/ADR-0029-develop-integration-main-release-and-required-checks.md",
+      "itemType": "adr",
+      "aggregationRuleId": "adr-set-aggregate",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Architecture.md",
+        "Architecture-Decision-Records.md"
+      ]
     }
   ]
 }

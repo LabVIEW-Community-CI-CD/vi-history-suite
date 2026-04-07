@@ -39,9 +39,12 @@ type SustainmentRules = {
   releaseCadence: {
     versionLineContract: {
       retainedExactVersionReleases: string[];
+      burnedExactVersionReleases?: string[];
       currentExactReleaseLine: string;
       currentMainPackageLine: string;
       publicCodespaceBranch: string;
+      integrationBranch?: string;
+      releaseBranch?: string;
     };
     strictSemverRule: string[];
   };
@@ -63,29 +66,46 @@ describe('strict semver discipline', () => {
       'v0.2.0',
       'v1.0.0',
       'v1.0.1',
-      'v1.0.2'
+      'v1.0.2',
+      'v1.0.3'
     ]);
-    expect(pkg.version).toBe('1.0.2');
+    expect(versionLineContract.burnedExactVersionReleases).toEqual(['v1.0.2']);
+    expect(versionLineContract.integrationBranch).toBe('develop');
+    expect(versionLineContract.releaseBranch).toBe('main');
+    expect(pkg.version).toBe('1.0.3');
     expect(pkg.version).toBe(versionLineContract.currentMainPackageLine);
     expect(versionLineContract.publicCodespaceBranch).toBe('develop');
     expect(compareSemver(pkg.version, exactReleaseLine)).toBe(0);
-    expect(readme).toContain('- current exact released line: `v1.0.2`');
-    expect(readme).toContain('- current published package line on `main`: `1.0.2`');
+    expect(readme).toContain('- burned exact release line: `v1.0.2`');
+    expect(readme).toContain('- current exact released line: `v1.0.3`');
+    expect(readme).toContain('- current published package line on `main`: `1.0.3`');
     expect(readme).toContain('- public Codespaces evaluation branch: `develop`');
-    expect(currentState).toContain('- current exact released line: `v1.0.2`');
-    expect(currentState).toContain('- current published package line on `main`: `1.0.2`');
+    expect(readme).toContain('- integration branch: `develop`');
+    expect(readme).toContain('- release branch: `main`');
+    expect(currentState).toContain('- burned exact release line: `v1.0.2`');
+    expect(currentState).toContain('- current exact released line: `v1.0.3`');
+    expect(currentState).toContain('- current published package line on `main`: `1.0.3`');
     expect(currentState).toContain('- public Codespaces evaluation branch: `develop`');
-    expect(releaseProcedure).toContain('The current exact released line is `v1.0.2`.');
-    expect(releaseProcedure).toContain("The current published package line on `main` is `1.0.2`.");
+    expect(currentState).toContain('- integration branch: `develop`');
+    expect(currentState).toContain('- release branch: `main`');
+    expect(releaseProcedure).toContain('The current exact released line is `v1.0.3`.');
+    expect(releaseProcedure).toContain('The burned exact released line is `v1.0.2`.');
+    expect(releaseProcedure).toContain("The current published package line on `main` is `1.0.3`.");
     expect(releaseProcedure).toContain('`main` shall match that exact release line');
     expect(releaseProcedure).toContain('A SemVer bump is not complete');
     expect(releaseProcedure).toContain('Any later repo change intended for publication shall');
     expect(releaseProcedure).toContain('advance `package.json`');
     expect(releaseProcedure).toContain('top `CHANGELOG.md` heading to the next SemVer line');
+    expect(releaseProcedure).toContain('integration branch is `develop`');
+    expect(releaseProcedure).toContain('release branch is `main`');
+    expect(releaseProcedure).toContain('required checks');
     expect(sustainmentRules.releaseCadence.strictSemverRule).toContain(
       'future sessions shall not treat an unreleased SemVer bump as complete until the matching public tag and public GitHub release are both published'
     );
-    expect(changelog).toContain('## [1.0.2] - 2026-04-07');
-    expect(changelog).toContain('public fork-owner Codespaces path now uses the governed `develop` branch');
+    expect(sustainmentRules.releaseCadence.strictSemverRule).toContain(
+      'future sessions shall not treat a burned exact release as the green release baseline for later publication'
+    );
+    expect(changelog).toContain('## [1.0.3] - 2026-04-07');
+    expect(changelog).toContain('Burned exact-version releases now include `v1.0.2`.');
   });
 });

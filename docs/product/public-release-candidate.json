@@ -1,67 +1,66 @@
 {
   "schema": "vi-history-suite/public-release-candidate@v1",
-  "versionLine": "1.0.1",
-  "recordedAt": "2026-04-07T05:16:18.000Z",
+  "versionLine": "1.0.3",
+  "burnedExactReleaseLine": "v1.0.2",
+  "recordedAt": "2026-04-07T06:20:00.000Z",
   "authorityRepo": {
     "role": "source-of-truth",
-    "latestObservedMainCommit": "5e6bfdc",
-    "latestObservedMainPipelineId": "2433459214",
-    "latestObservedMainPipelineStatus": "running",
-    "latestGreenPipelineCommit": "94b6a59",
-    "latestGreenPipelineId": "2433417351",
-    "status": "post-release-main-advanced"
+    "integrationBranch": "develop",
+    "releaseBranch": "main",
+    "requiredChecks": [
+      "docs_continuous_integration",
+      "docs_public_continuous_integration",
+      "docs_internal_continuous_integration",
+      "test_extension",
+      "package_extension_preview",
+      "Public Facade Package Preview / package-preview",
+      "Public Facade Linux Smoke / public-facade-linux-smoke"
+    ],
+    "semverDiscipline": "strict-post-release-bumps"
   },
   "publishedPublicSource": {
     "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
-    "publishedCommit": "85230a3",
+    "publishedCommit": "4251893",
+    "publicationLedgerPath": "docs/product/public-github-source-publication-ledger.json",
     "status": "published"
   },
   "publishedPublicWiki": {
     "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite.wiki.git",
-    "publishedHeadCommit": "fe3e11c",
+    "publishedHeadCommit": "1fb3a00",
+    "publicationLedgerPath": "docs/product/public-github-wiki-publication-ledger.json",
     "status": "published"
   },
   "candidateReadiness": {
-    "authorityBaseline": "running",
-    "localInstalledVsix": "exact-v1.0.0-only",
+    "authorityBaseline": "local-gates-passing",
+    "localInstalledVsix": "exact-v1.0.3",
     "localPublicDevcontainer": "passed",
     "localPublicFixtureHelper": "passed",
     "publicCodespace": "passed",
-    "gateDPublicAcceptance": "passed-on-v1.0.0",
-    "exactPublicRelease": "v1.0.0-published"
+    "gateDPublicAcceptance": "passed",
+    "exactPublicRelease": "v1.0.3-published"
   },
   "exactRelease": {
-    "version": "v1.0.0",
-    "gitlabTagPipelineId": "2433390427",
-    "gitlabReleaseJobId": "13803354854",
-    "gitlabReleaseCommit": "fd876ee",
-    "gitHubReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.0.0",
-    "gitHubPublishedAt": "2026-04-07T04:20:55Z",
-    "gitHubAssetName": "vi-history-suite-1.0.0-public-release.vsix",
-    "gitHubAssetSha256": "396593ef30f04b07e60a3d55a20cd0292afc5341add7cee9260b15cc17bd585e"
+    "version": "v1.0.3",
+    "gitHubReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.0.3",
+    "gitHubAssetName": "vi-history-suite-1.0.3-public-release.vsix",
+    "gitHubAssetSha256": "ce39122ca9a95effe2115b04bad48cdf688c5f9bce9c43b1d763ae1ec6467aa5",
+    "integrationBranch": "develop",
+    "releaseBranch": "main"
   },
   "localProofs": {
-    "linuxContainerPathFix": {
-      "status": "passed",
-      "authorityCommit": "6d326c5",
-      "pipelineId": "2433201421"
-    },
     "localPublicDevcontainer": {
       "status": "passed",
-      "hostSurface": "Windows-hosted checkout with Docker Desktop Linux engine",
-      "workspacePath": "C:\\Users\\sveld\\AppData\\Local\\Temp\\vi-history-suite.public-devcontainer-candidate-20260407-0225",
       "notes": [
-        "The earlier WSL-path failure was a machine-surface mismatch between the broken Linux Docker CLI and Windows docker.exe path translation, not a repo build failure.",
-        "The repo-owned blocker was .devcontainer/devcontainer.json forcing overrideCommand=false against the base Node image, which caused the container to exit before postCreateCommand completed.",
-        "After setting overrideCommand=true, the public devcontainer completed npm ci, npm run compile, and npm run test:design-contract successfully on this machine."
+        "The repo-owned devcontainer blocker was retired by switching the Node base image surface to overrideCommand=true so postCreateCommand can complete.",
+        "The public devcontainer now completes npm ci, npm run compile, and npm run test:design-contract on the governed local machine surface."
       ]
     },
     "localPublicFixtureHelper": {
       "status": "passed",
       "command": "npm run public:fixture:icon-editor",
       "repoUrl": "https://github.com/ni/labview-icon-editor.git",
-      "targetPath": ".cache/public-fixtures/labview-icon-editor",
-      "fixtureCommit": "29870995362c893a584c088cec4a33cbde051504"
+      "targetPath": "../labview-icon-editor",
+      "codespaceTargetPath": "/workspaces/labview-icon-editor"
     }
   },
   "hostedProofs": {
@@ -70,13 +69,10 @@
       "codespaceName": "zany-capybara-q76vpvj7v5qcpw5",
       "displayName": "novacula",
       "machineName": "largePremiumLinux",
-      "publicRepoCommit": "4a8b27b",
-      "smokeRecordedAt": "2026-04-07T03:39:45.470Z",
-      "artifactDirectory": ".cache/public-codespace/novacula",
+      "proofBaselineCommit": "4a8b27b",
       "notes": [
-        "The hosted proof runs against the curated public GitHub source repo rather than the authority repo.",
-        "The governed Linux host bootstrap now installs both VS Code runtime libraries and the xauth/Xvfb support needed by xvfb-run on Debian-hosted Codespaces surfaces.",
-        "The retained hosted smoke now proves Docker Linux image cold pull plus containerized CreateComparisonReport reachability on the public product surface; the later canonical human pass closed Gate D on resource/plugins/lv_icon.vi."
+        "The hosted proof is retained as public-surface evidence rather than canonical human acceptance.",
+        "The later v1.0.3 surface changes are release-governance and fork-owner procedure corrections on top of that already-passed hosted runtime path."
       ]
     }
   },
@@ -88,11 +84,7 @@
       "confidence": "high",
       "repositoryRoot": "c:\\dev\\labview-icon-editor",
       "relativePath": "resource/plugins/lv_icon.vi",
-      "reviewerNote": "Comparison report is as expected.",
-      "notes": [
-        "This is the governed canonical Gate D human pass on the public Docker-only product.",
-        "The retained preflight packet and the retained review submission now close the public-acceptance blocker for the exact v1.0.0 line."
-      ]
+      "reviewerNote": "Comparison report is as expected."
     }
   },
   "testerFixtureStrategy": {
@@ -100,12 +92,9 @@
     "defaultCloneOnStartup": false,
     "command": "npm run public:fixture:icon-editor",
     "repoUrl": "https://github.com/ni/labview-icon-editor.git",
-    "targetPath": ".cache/public-fixtures/labview-icon-editor",
-    "rationale": [
-      "Public testers need a low-friction sample repository inside devcontainer and Codespaces sessions.",
-      "Cloning ni/labview-icon-editor on every startup would add network cost and side effects to every public development session.",
-      "An opt-in governed helper keeps the tester path easy without making a third-party clone a mandatory startup dependency."
-    ]
+    "targetPath": "../labview-icon-editor",
+    "codespaceTargetPath": "/workspaces/labview-icon-editor",
+    "manualAlternativeWikiPage": "Manual-Actor-Framework-Clone"
   },
   "activeBlockers": []
 }

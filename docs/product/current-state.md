@@ -135,9 +135,12 @@ Latest landed ship target:
 - retained release surface: GitLab release `v0.2.0`
 - retained release pipeline: `2428809456`
 - retained release job: `13779604462`
-- current exact released line: `v1.0.2`
-- current published package line on `main`: `1.0.2`
+- burned exact release line: `v1.0.2`
+- current exact released line: `v1.0.3`
+- current published package line on `main`: `1.0.3`
 - public Codespaces evaluation branch: `develop`
+- integration branch: `develop`
+- release branch: `main`
 - current changelog: [CHANGELOG.md](../../CHANGELOG.md)
 - docs-workbench image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
 - remaining blockers: none
@@ -166,37 +169,24 @@ Current active tranche:
   - `TRANCHE-010` / [ISSUE-0407 Public Source Facade And Public-Product Acceptance](./issues/ISSUE-0407-public-facade-installer-and-windows-acceptance.md) / [PROGRAM-0002: Public Source Facade And Public-Product Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
   - the earlier retained canonical host pass at `2026-04-06T20:48:13.412Z`
     remains historical evidence for the older public bundle only
-  - the closing Gate D rerun belonged to the Docker-only public bundle and
-    passed as a Linux-engine cold-pull compare on the deterministic
-    `c:\dev\labview-icon-editor` fixture workspace
-  - retained preflight preparation at `2026-04-07T02:38:48.334Z` already proves
-    published public repo commit `4a8b27b`, published public wiki HEAD commit
-    `e28491c`, canonical fixture commit `4e442eb0f5a6263e8f8aaa49c322a6b5fd0ea87a`,
-    Docker Linux engine state, and governed Linux image absence before and
-    after preparation
-  - retained hosted public proof on GitHub Codespace `novacula` now passes at
-    `2026-04-07T03:39:45.470Z` on published public repo commit `4a8b27b`,
-    proving public design-contract viability, Debian hosted bootstrap with
+  - the Docker-only closing Gate D rerun passed as a Linux-engine cold-pull
+    compare on the deterministic `c:\dev\labview-icon-editor` fixture workspace
+  - retained preflight preparation already proves the canonical fixture commit,
+    Docker Linux engine state, and governed Linux image absence before the
+    human compare pass; the exact retained packet remains under
+    `.cache/public-product-gate-d/latest/`
+  - retained hosted public proof on GitHub Codespace `novacula` now passes and
+    proves public design-contract viability, Debian hosted bootstrap with
     xauth/Xvfb, Docker Linux cold pull, and containerized
     `CreateComparisonReport` reachability on the public product surface
   - the latest retained human review submission at `2026-04-07T04:06:58.998Z`
     is a real `passed-human-review` on
     `c:\dev\labview-icon-editor\resource\plugins\lv_icon.vi` with note
     `Comparison report is as expected.`
-  - the latest retained human Gate D review at `2026-04-07T01:37:37.885Z` is a
-    real `failed-human-review` on
-    `c:\dev\labview-icon-editor\Tooling\deployment\VIP_Pre-Uninstall Custom Action.vi`;
-    the first cold pull succeeded, but subsequent Linux-container compare runs
-    failed as `command-exited-nonzero`
-  - retained stderr and packet archaeology narrowed that blocker from generic
-    `linux-headless-recursive-load` to a stronger repo-owned cause: Linux
-    `CreateComparisonReport` was launching and connecting successfully, then
-    rejecting space-containing staged VI paths under `/workspace/staging/...`
-  - the authority repo now carries the unshipped fix for that exact public Gate
-    D seam: Linux-container compare execution aliases staged/report filenames
-    without spaces, rewrites the generated HTML back to canonical spaced names,
-    and wraps Linux `CloseLabVIEW` recovery inside the same `docker run`
-    surface instead of trying to spawn `/usr/local/bin/LabVIEWCLI` on the host
+  - the earlier same-day failure on
+    `Tooling/deployment/VIP_Pre-Uninstall Custom Action.vi` remains retained as
+    the diagnosis that exposed the Linux-container staged-path seam later
+    retired in the Docker-only public line
 
 Post-release tranches:
 
@@ -267,13 +257,15 @@ Current active and queued post-release programs:
   - private GitLab source repo remains the authority repo and release-control surface
   - internal GitLab wiki remains the maintainer-facing derived reader surface
   - the private GitHub experiment mirror is a non-authoritative Linux benchmark lane only
-  - public GitHub facade repo is the public source product surface at `https://github.com/svelderrainruiz/vi-history-suite`, published at commit `85230a3`
-  - public GitHub user wiki now exists at `https://github.com/svelderrainruiz/vi-history-suite.wiki.git` as a public extension-user reader surface, published at commit `fe3e11c`
+  - public GitHub facade repo is the public source product surface at `https://github.com/svelderrainruiz/vi-history-suite`; the exact published head is retained in `docs/product/public-github-source-publication-ledger.md` and `docs/product/public-github-source-publication-ledger.json`
+  - public GitHub user wiki now exists at `https://github.com/svelderrainruiz/vi-history-suite.wiki.git` as a public extension-user reader surface; the exact published head is retained in `docs/product/public-github-wiki-publication-ledger.md` and `docs/product/public-github-wiki-publication-ledger.json`
   - public GitHub source publication is tracked separately from both wiki surfaces in `docs/product/public-github-source-publication-ledger.md` and `docs/product/public-github-source-publication-ledger.json`
   - published public GitHub wiki pages now include `Home`, `User-Workflow`, `Install-And-Release`, `Fork-Codespace-Quickstart`, `Manual-Actor-Framework-Clone`, `Comparison-Reports-And-Dashboard-Review`, and `Current-State`
-  - the canonical Gate D blocker on `resource/plugins/lv_icon.vi` is now
-    retired, and the exact `v1.0.0` public GitHub release is now published at
-    `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.0.0`
+  - the canonical Gate D blocker on `resource/plugins/lv_icon.vi` is retired, while `v1.0.2` is now retained as a burned exact release and the current exact public GitHub release line is `v1.0.3`
+  - the public branch model is now explicit: `develop` is the integration and
+    Codespaces-evaluation branch, and `main` is the release branch
+  - protected-branch promotion now depends on required checks instead of direct
+    operator memory
   - public GitHub wiki publication is tracked separately from the internal GitLab maintainer wiki in `docs/product/public-github-wiki-publication-ledger.md` and `docs/product/public-github-wiki-publication-ledger.json`
   - public GitHub source repo is not the private GitHub experiment mirror
   - the authority VSIX install surface is compile-and-audit guarded and does not permit shipped runtime `node_modules`
@@ -286,10 +278,14 @@ Current active and queued post-release programs:
   - the current Windows 11 host machine has already proven the earlier public bundle, and the published public GitHub source repo plus the canonical fixture workspace are now the deterministic acceptance surface for the next Docker-only Gate D rerun
   - the public-facade Linux smoke lane now exists through `.github/workflows/public-facade-linux-smoke.yml`, supports `workflow_dispatch`, and uses `npm run public:smoke:linux` as the public Docker-product smoke surface
   - the authority repo now retains `npm run public:gate-d:preflight` and `npm run public:gate-d:prepare-cold-pull` so the next human Gate D rerun can record published public commits, canonical fixture facts, Docker Linux engine state, and governed-image absence before the compare pass starts
-  - the [Public Release Candidate](./public-release-candidate.md) and [public-release-candidate.json](./public-release-candidate.json) now retain the multi-surface `1.0.0` public-release snapshot
+  - the [Public Release Candidate](./public-release-candidate.md) and [public-release-candidate.json](./public-release-candidate.json) now retain the stable multi-surface exact-release snapshot without relying on ephemeral pipeline ids
   - the local public devcontainer now passes on this machine from a Windows-hosted public checkout after retiring the repo-owned `.devcontainer/devcontainer.json` `overrideCommand=false` defect that let the base Node image exit before `postCreateCommand` finished
   - the earlier WSL-path bind-mount failure is explicitly classified as a machine-surface mismatch between the broken Linux Docker CLI and Windows `docker.exe`, not as a public-repo devcontainer defect
-  - the public product now carries an optional governed tester-fixture helper, `npm run public:fixture:icon-editor`, which clones `ni/labview-icon-editor` into `.cache/public-fixtures/labview-icon-editor` for devcontainer/Codespaces evaluation without making that clone a default startup dependency
+  - the public product now carries an optional governed tester-fixture helper,
+    `npm run public:fixture:icon-editor`, which clones
+    `ni/labview-icon-editor` into a visible repo-sibling `labview-icon-editor`
+    folder for devcontainer/Codespaces evaluation without making that clone a
+    default startup dependency
   - the setup adapters prepare Visual Studio Code and Git when needed, install the exact VSIX, and materialize the local `ni/labview-icon-editor` Git fixture workspace with commit history
   - Visual Studio Code CLI automates install/verify/open surfaces after setup
   - the earlier retained manual right-click review pass remains historical evidence only, and Sergio Velderrain remains the sole named maintainer of the canonical host-machine proof surface for the reopened Docker-only Gate D contract

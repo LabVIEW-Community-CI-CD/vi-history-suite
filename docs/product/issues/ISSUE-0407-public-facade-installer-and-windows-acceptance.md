@@ -12,7 +12,8 @@ remain private in GitLab.
 
 ## Status
 
-Closed on exact public-product acceptance for the `1.0.0` Docker-only line.
+Closed on exact public-product acceptance for the Docker-only public line. The
+current exact release line is `v1.0.3`, and `v1.0.2` is retained as burned.
 
 Closeout evidence:
 
@@ -26,20 +27,27 @@ Closeout evidence:
 
 Current landed state:
 
-- the public GitHub source repo is published at commit `85230a3`
-- the public GitHub wiki is published at commit `fe3e11c`
+- the public GitHub source repo publication head is retained in
+  `docs/product/public-github-source-publication-ledger.md` and
+  `docs/product/public-github-source-publication-ledger.json`
+- the public GitHub wiki publication head is retained in
+  `docs/product/public-github-wiki-publication-ledger.md` and
+  `docs/product/public-github-wiki-publication-ledger.json`
 - `.github/workflows/public-facade-linux-smoke.yml` plus local
   `npm run public:smoke:linux` define the public Docker smoke surface
 - `.github/workflows/public-facade-package-preview.yml` defines the public
   package-preview lane
+- the public-source branch model is now explicit: `develop` is the integration
+  branch used for public Codespaces evaluation and `main` is the release branch
+- protected-branch promotion now depends on required checks rather than direct
+  operator memory
 - the authority repo now retains `npm run public:gate-d:preflight` and
   `npm run public:gate-d:prepare-cold-pull` so the Linux-engine cold-pull Gate D
   rerun begins from a retained preflight packet
-- retained Gate D preflight preparation at `2026-04-07T02:38:48.334Z` already
-  proves published public repo commit `4a8b27b`, public wiki HEAD commit
-  `e28491c`, canonical fixture commit
-  `4e442eb0f5a6263e8f8aaa49c322a6b5fd0ea87a`, Docker Linux engine state, and
-  governed Linux image absence before and after preparation
+- retained Gate D preflight preparation already proves canonical fixture state,
+  Docker Linux engine state, and governed Linux image absence before and after
+  preparation; exact public heads remain in the publication ledgers and the
+  retained preflight packet
 - the latest retained Gate D review at `2026-04-07T01:37:37.885Z` is a real
   failure on `Tooling/deployment/VIP_Pre-Uninstall Custom Action.vi`: the first
   cold pull completed, then subsequent Linux-container compare attempts failed
@@ -52,9 +60,9 @@ Current landed state:
   repo-owned Linux `CreateComparisonReport` path seam: the container runtime
   launched and connected to LabVIEW, then rejected space-containing staged VI
   paths under `/workspace/staging/...`
-- the authority repo now carries the unshipped fix for that seam, including
-  Linux-container filename aliasing plus canonical-name rewrite on the final
-  report copy and container-wrapped Linux `CloseLabVIEW` recovery
+- that earlier failure is now retained as the diagnosis that exposed the
+  Linux-container staged-path seam later retired in the current exact release
+  line
 - the local public devcontainer now passes on this machine from a Windows-hosted
   public checkout after retiring the repo-owned `.devcontainer/devcontainer.json`
   `overrideCommand=false` defect that let the base Node image exit before
@@ -64,7 +72,8 @@ Current landed state:
   `docker.exe`, not as a public-repo devcontainer defect
 - the public product now carries an optional governed tester-fixture helper,
   `npm run public:fixture:icon-editor`, which clones
-  `ni/labview-icon-editor` into `.cache/public-fixtures/labview-icon-editor`
+  `ni/labview-icon-editor` into a visible repo-sibling `labview-icon-editor`
+  folder
   for devcontainer/Codespaces evaluation without making that clone a default
   startup dependency
 - GitHub Codespace `novacula` now passes the hosted public smoke at
@@ -73,9 +82,10 @@ Current landed state:
   pull, and containerized `CreateComparisonReport` reachability on the public
   product surface apart from final Gate D human judgment
 - the new [Public Release Candidate](../public-release-candidate.md) control
-  surface now retains the current `1.0.0` public-surface snapshot, including
-  the green authority baseline, published public commits, local devcontainer
-  proof, and the now-passed canonical Gate D human review
+  surface now retains the stable exact-release snapshot, including the current
+  exact release line, the burned `v1.0.2` fact, the published public heads,
+  supporting hosted/local proof, and the retained canonical Gate D human
+  review
 - the public GitHub wiki now exists at
   `https://github.com/svelderrainruiz/vi-history-suite.wiki.git`
 - public GitHub wiki publication is tracked separately from the internal
@@ -86,8 +96,9 @@ Current landed state:
   internal-authority docs surfaces while `docs:ci` remains the umbrella lane
 - the next acceptance run must prove the Docker-only installed bundle from the
   public product surfaces, not from the older release-kit/setup shape
-- the exact `v1.0.0` public release is now cleared on the authority proof
-  surfaces by the canonical pass on `resource/plugins/lv_icon.vi`
+- the canonical `resource/plugins/lv_icon.vi` pass remains the retained human
+  acceptance fact for the Docker-only line, while `v1.0.2` is now retained as a
+  burned exact release because authority docs CI failed after publication
 - repeatable benchmark proof now has explicit closed ownership under
   `PROGRAM-0003` / `ISSUE-0408` / `TRANCHE-011`, while sustainment is queued
   under `PROGRAM-0004` / `ISSUE-0409` / `TRANCHE-012`

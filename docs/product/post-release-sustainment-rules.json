@@ -16,11 +16,17 @@
         "v0.2.0",
         "v1.0.0",
         "v1.0.1",
+        "v1.0.2",
+        "v1.0.3"
+      ],
+      "burnedExactVersionReleases": [
         "v1.0.2"
       ],
-      "currentExactReleaseLine": "v1.0.2",
-      "currentMainPackageLine": "1.0.2",
-      "publicCodespaceBranch": "develop"
+      "currentExactReleaseLine": "v1.0.3",
+      "currentMainPackageLine": "1.0.3",
+      "publicCodespaceBranch": "develop",
+      "integrationBranch": "develop",
+      "releaseBranch": "main"
     },
     "maintainedSurfaces": [
       "preview-evidence/vi-history-suite-<version>.vsix",
@@ -41,7 +47,8 @@
       "after an exact release is published, the current published package line on main shall match that exact release line",
       "any later repo change intended for publication shall advance package.json and the top CHANGELOG.md heading to the next SemVer line before further normalization or publication",
       "future sessions shall not treat an unreleased SemVer bump as complete until the matching public tag and public GitHub release are both published",
-      "future sessions shall not keep landing post-release changes on the previous exact release version number"
+      "future sessions shall not keep landing post-release changes on the previous exact release version number",
+      "future sessions shall not treat a burned exact release as the green release baseline for later publication"
     ],
     "explicitNonTriggers": [
       "benchmark-only diagnosis that does not affect a shipped release surface",
@@ -86,6 +93,19 @@
     ]
   },
   "operatorSurfaceSustainment": {
+    "branchModel": {
+      "integrationBranch": "develop",
+      "releaseBranch": "main",
+      "requiredChecks": [
+        "docs_continuous_integration",
+        "docs_public_continuous_integration",
+        "docs_internal_continuous_integration",
+        "test_extension",
+        "package_extension_preview",
+        "Public Facade Package Preview / package-preview",
+        "Public Facade Linux Smoke / public-facade-linux-smoke"
+      ]
+    },
     "requiredAuthorityUpdates": [
       "docs/product/development-queue.json",
       "docs/product/current-state.md",

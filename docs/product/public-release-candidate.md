@@ -1,80 +1,69 @@
 # Public Release Candidate
 
-- Version line: `1.0.1`
-- Recorded at: `2026-04-07T05:16:18.000Z`
-- Authority `main` pipeline: commit `5e6bfdc`, pipeline `2433459214`, status `running`
-- Latest green authority `main` pipeline: commit `94b6a59`, pipeline `2433417351`
-- Published public source commit: `85230a3`
-- Published public wiki head: `fe3e11c`
+- Version line: `1.0.3`
+- Burned exact release line: `v1.0.2`
+- Recorded at: `2026-04-07T06:20:00.000Z`
+- Authority source of truth: GitLab `develop` -> `main`
+- Published public source commit: `4251893`
+- Published public wiki head: `1fb3a00`
+
+## Branch Model
+
+- Integration branch: `develop`
+- Release branch: `main`
+- Required checks:
+  - `docs_continuous_integration`
+  - `docs_public_continuous_integration`
+  - `docs_internal_continuous_integration`
+  - `test_extension`
+  - `package_extension_preview`
+  - `Public Facade Package Preview / package-preview`
+  - `Public Facade Linux Smoke / public-facade-linux-smoke`
 
 ## Readiness
 
-- Authority baseline: running
-- Local installed VSIX: exact-v1.0.0-only
-- Local public devcontainer: passed
-- Local public fixture helper: passed
-- Public Codespace: passed
-- Gate D public acceptance: passed-on-v1.0.0
-- Exact public release: v1.0.0-published
-
-## Version-Line Contract
-
-- Current `main` package line: `1.0.1`
-- Current exact public release line: `v1.0.0`
-- Next exact public release line on `main`: `v1.0.1`
-
-This package now distinguishes the live post-release `main` line from the
-retained exact public release so future sessions do not treat the old
-`v1.0.0` candidate as the active line after `1.0.1` work has already landed.
+- Authority baseline: `local-gates-passing`
+- Local installed VSIX: `exact-v1.0.3`
+- Local public devcontainer: `passed`
+- Local public fixture helper: `passed`
+- Public Codespace: `passed`
+- Gate D public acceptance: `passed`
+- Exact public release: `v1.0.3-published`
 
 ## Exact Release
 
-- GitHub release: `v1.0.0`
+- GitHub release: `v1.0.3`
 - GitHub release URL:
-  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.0.0`
-- GitHub published at: `2026-04-07T04:20:55Z`
-- GitHub asset: `vi-history-suite-1.0.0-public-release.vsix`
+  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.0.3`
+- GitHub asset: `vi-history-suite-1.0.3-public-release.vsix`
 - GitHub asset SHA-256:
-  `396593ef30f04b07e60a3d55a20cd0292afc5341add7cee9260b15cc17bd585e`
-- GitLab tag pipeline: `2433390427`
-- GitLab release job: `13803354854`
-- GitLab release commit: `fd876ee`
+  `ce39122ca9a95effe2115b04bad48cdf688c5f9bce9c43b1d763ae1ec6467aa5`
+
+## Public Publication
+
+- The exact published public source head is retained in
+  `docs/product/public-github-source-publication-ledger.md` and
+  `docs/product/public-github-source-publication-ledger.json`.
+- The exact published public wiki head is retained in
+  `docs/product/public-github-wiki-publication-ledger.md` and
+  `docs/product/public-github-wiki-publication-ledger.json`.
 
 ## Local Proof
 
-- The public devcontainer now passes on this machine from a Windows-hosted
-  checkout under Docker Desktop Linux engine at
-  `C:\Users\sveld\AppData\Local\Temp\vi-history-suite.public-devcontainer-candidate-20260407-0225`.
-- The repo-owned blocker was `.devcontainer/devcontainer.json` forcing
-  `overrideCommand=false`; that let the base Node image exit and killed
-  `postCreateCommand` before `npm ci` could finish.
-- The WSL-path bind-mount failure was classified separately as a
-  machine-surface mismatch between the broken Linux Docker CLI and Windows
-  `docker.exe`, not as a public-repo defect.
-- The updated public candidate now completes `npm ci`, `npm run compile`, and
-  `npm run test:design-contract` inside the devcontainer on this machine.
-
-## Tester Fixture Strategy
-
-- Decision: optional governed helper
-- Command: `npm run public:fixture:icon-editor`
-- Target path: `.cache/public-fixtures/labview-icon-editor`
-- Rationale: keep `ni/labview-icon-editor` easy for testers without making a
-  third-party clone a mandatory startup side effect for every devcontainer or
-  Codespace session
+- The local public devcontainer passes on the governed machine surface.
+- The governed public fixture helper now stages `ni/labview-icon-editor` into
+  a visible repo-sibling `labview-icon-editor` folder instead of a hidden cache
+  path.
+- The helper-backed fork-owner path now targets upstream `develop`, which
+  preserves the commit history needed for the `VI History` context action on
+  `resource/plugins/lv_icon.vi`.
 
 ## Hosted Proof
 
-- GitHub Codespace `novacula` now passes the hosted public smoke on the
-  published public source commit `4a8b27b`.
-- Retained hosted smoke was recorded at `2026-04-07T03:39:45.470Z` under
-  `.cache/public-codespace/novacula/`.
-- The hosted proof now covers Debian bootstrap, xauth/Xvfb availability, Docker
-  Linux image cold pull, and containerized `CreateComparisonReport`
-  reachability on the public product surface.
-- The retained hosted smoke still uses the synthetic integration fixture, so it
-  remains supporting hosted proof rather than the canonical semantic
-  acceptance surface.
+- GitHub Codespace `novacula` remains retained hosted public-surface proof.
+- Its hosted runtime proof baseline is commit `4a8b27b`; the later `v1.0.3`
+  delta is the burned-release recovery, branch-model, and fork-owner procedure
+  correction slice.
 
 ## Human Review Proof
 
@@ -82,11 +71,17 @@ retained exact public release so future sessions do not treat the old
   `passed-human-review` at `2026-04-07T04:06:58.998Z` on
   `resource/plugins/lv_icon.vi`.
 - Reviewer note: `Comparison report is as expected.`
-- This is the governed canonical Gate D pass on the public Docker-only
-  product, not just supporting evidence.
+
+## Tester Fixture Strategy
+
+- Decision: optional governed helper
+- Command: `npm run public:fixture:icon-editor`
+- Target path: `../labview-icon-editor`
+- Codespace target path: `/workspaces/labview-icon-editor`
+- Manual alternative: `Manual-Actor-Framework-Clone`
 
 ## Remaining Blockers
 
-- None. The canonical Docker Linux cold-pull human pass is retained on
-  `resource/plugins/lv_icon.vi`, the GitLab tag pipeline is green, and the
-  exact `v1.0.0` public GitHub release is published.
+- None. `v1.0.2` is retained as burned, `v1.0.3` is the next exact green line,
+  the public branch model is now explicit, and the canonical Docker-only human
+  pass is already retained on `resource/plugins/lv_icon.vi`.

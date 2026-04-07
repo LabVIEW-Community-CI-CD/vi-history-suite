@@ -396,10 +396,13 @@ Latest landed ship target:
 - `SHIP-0001`: releasable `v0.2.0` VSIX product
 - landed ship tranche: `TRANCHE-009`
 - landed ship issue: `ISSUE-0406`
-- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`
-- current exact released line: `v1.0.2`
-- current published package line on `main`: `1.0.2`
+- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`
+- burned exact release line: `v1.0.2`
+- current exact released line: `v1.0.3`
+- current published package line on `main`: `1.0.3`
 - public Codespaces evaluation branch: `develop`
+- integration branch: `develop`
+- release branch: `main`
 - target release manifest: `release-evidence/release-manifest.json`
 - current changelog: [CHANGELOG.md](./CHANGELOG.md)
 - docs-authoring image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
@@ -428,12 +431,11 @@ The current active tranches are:
 - `TRANCHE-013`: extension execution contract simplification and Docker-only
   runtime UX
 - `TRANCHE-012`: post-release sustainment and release cadence
-- `TRANCHE-010`: public-source facade and public-product acceptance is now a
-  closed release-closeout tranche for the `v1.0.0` Docker-only public contract
+- `TRANCHE-010`: public-source facade and public-product acceptance is a closed
+  release-closeout tranche for the Docker-only public product, with exact
+  release `v1.0.3` and burned release `v1.0.2`
 - active sustainment rules:
   `docs/product/post-release-sustainment-rules.md`
-- reopened queued closeout:
-  - `TRANCHE-010`: public facade release kit and host-machine acceptance, now reopened for the `1.0.0` Docker-only public contract and Linux-engine cold-pull Gate D rerun
 - closed follow-on tranche:
   - `TRANCHE-011`: repeatable Windows and Linux benchmark proof
 

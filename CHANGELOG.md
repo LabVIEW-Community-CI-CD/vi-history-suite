@@ -2,7 +2,27 @@
 
 This changelog is the governed version-line summary for `vi-history-suite`.
 
-Retained exact-version releases now include `v0.2.0`, `v1.0.0`, and `v1.0.1`.
+Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
+`v1.0.2`, and `v1.0.3`.
+
+Burned exact-version releases now include `v1.0.2`.
+
+## [1.0.3] - 2026-04-07
+
+### Changed
+
+- `v1.0.2` is now retained as a burned release because immutable main/tag
+  pipelines failed after publication on stale authority-side package-manifest
+  expectations, so `v1.0.3` is the next exact green line
+- the authority release contract now treats `develop` as the integration branch
+  and `main` as the release branch, instead of relying on direct-to-main
+  operator memory
+- the authority/public control plane now records the public-product branch
+  model, the burned `v1.0.2` line, and the requirement to use CI required
+  checks before protected-branch promotion
+- the stale authority package-manifest contract now admits the governed
+  `tests/unit/preparePublicTestFixtureScript.test.ts` design-contract test so
+  docs CI no longer burns a tagged release on an outdated script inventory
 
 ## [1.0.2] - 2026-04-07
 

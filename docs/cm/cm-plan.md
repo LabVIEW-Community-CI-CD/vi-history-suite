@@ -26,7 +26,11 @@
 
 - Scheme: `vX.Y.Z`
 - Tag trigger: manual semantic release after a governed baseline exists
-- Release branch rule: not defined yet; release from `main`
+- Integration branch: `develop`
+- Release branch: `main`
+- Promotion rule: land integration on `develop`, require green CI, then promote to `main`
+- Tag rule: cut immutable exact-version tags from green `main` only
+- Protected-branch rule: rely on required checks instead of operator memory
 
 ## Change Control
 

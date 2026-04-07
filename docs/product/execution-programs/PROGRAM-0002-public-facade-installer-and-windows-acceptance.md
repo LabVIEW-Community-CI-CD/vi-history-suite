@@ -2,7 +2,8 @@
 
 ## Status
 
-Closed on the `1.0.0` Docker-only public-product acceptance gate.
+Closed on the Docker-only public-product acceptance gate. The current exact
+public line is `v1.0.3`, and `v1.0.2` is retained as burned.
 
 Closeout facts:
 
@@ -35,10 +36,14 @@ Current truth:
 
 - the old canonical Windows host pass remains valid historical evidence for the
   earlier public bundle only
-- the public GitHub facade repo is published at `85230a3` as the curated public
-  source product surface
-- the public GitHub wiki is published at `fe3e11c` as the public extension-user
-  reader surface
+- the public GitHub facade repo is the curated public source product surface,
+  with the exact published head retained in
+  `docs/product/public-github-source-publication-ledger.md` and
+  `docs/product/public-github-source-publication-ledger.json`
+- the public GitHub wiki is the public extension-user reader surface, with the
+  exact published head retained in
+  `docs/product/public-github-wiki-publication-ledger.md` and
+  `docs/product/public-github-wiki-publication-ledger.json`
 - the internal GitLab wiki remains the maintainer-facing derived reader surface
   for the private control plane
 - public GitHub source publication is tracked separately from both wiki
@@ -52,37 +57,24 @@ Current truth:
   plus `npm run public:smoke:linux`
 - the public package-preview publication surface is
   `.github/workflows/public-facade-package-preview.yml`
+- the public-source branch model is now explicit: `develop` is the integration
+  branch used for public Codespaces evaluation and `main` is the release branch
+- the protected-branch posture now depends on required checks instead of direct
+  operator memory
 - the authority repo now retains `npm run public:gate-d:preflight` and
   `npm run public:gate-d:prepare-cold-pull` so the Linux-engine cold-pull Gate D
   rerun starts from a retained preflight packet instead of chat memory
-- the next Gate D rerun must exercise the deterministic public-release fixture
-  workspace through the published public GitHub source repo checkout
-- the planned cold-start acceptance case is explicit now: when Gate D is
-  reached, switch Docker Desktop to the Linux engine, remove the stored
-  governed Linux image, let the extension cold-pull that Linux image, and
-  prove comparison generation on the canonical fixture target
-- GitHub Codespace `novacula` now passes the hosted public smoke at
-  `2026-04-07T03:39:45.470Z` on the published public source commit `4a8b27b`,
-  proving Debian hosted bootstrap, xauth/Xvfb availability, Docker Linux cold
-  pull, and containerized `CreateComparisonReport` reachability on the public
+- GitHub Codespace `novacula` now passes the hosted public smoke, proving
+  Debian hosted bootstrap, xauth/Xvfb availability, Docker Linux cold pull,
+  and containerized `CreateComparisonReport` reachability on the public
   product surface
 - the latest retained human review submission at `2026-04-07T04:06:58.998Z`
   is a real `passed-human-review` on
   `resource/plugins/lv_icon.vi` with note
   `Comparison report is as expected.`
-- the latest retained Gate D review at `2026-04-07T01:37:37.885Z` is a real
-  failure on `Tooling/deployment/VIP_Pre-Uninstall Custom Action.vi`: the first
-  governed Linux image cold pull completed truthfully, then later compare runs
-  failed as `command-exited-nonzero`
-- retained packet evidence from that review now narrows the active Gate D seam
-  to Linux-container `CreateComparisonReport` path handling on space-containing
-  staged/report filenames, not to initial image pull or initial container
-  launch
-- the authority repo now carries the unshipped runtime fix for that seam:
-  Linux-container compare execution aliases spaced staged/report filenames,
-  rewrites the generated report back to canonical spaced names, and keeps Linux
-  `CloseLabVIEW` recovery inside the container wrapper instead of trying to
-  spawn a container-internal CLI path on the host
+- the earlier same-day failure on `Tooling/deployment/VIP_Pre-Uninstall Custom Action.vi`
+  is retained as the diagnosis that exposed the Linux-container staged-path
+  seam later retired in the current exact release line
 - the local public devcontainer now passes on this machine from a Windows-hosted
   public checkout after retiring the repo-owned `.devcontainer/devcontainer.json`
   `overrideCommand=false` defect that let the base Node image exit before
@@ -92,13 +84,14 @@ Current truth:
   `docker.exe`, not as a public-repo defect
 - the public product now carries an optional governed tester-fixture helper,
   `npm run public:fixture:icon-editor`, which clones
-  `ni/labview-icon-editor` into `.cache/public-fixtures/labview-icon-editor`
+  `ni/labview-icon-editor` into a visible repo-sibling `labview-icon-editor` folder
   for devcontainer/Codespaces evaluation without making that clone a default
   startup dependency
 - the new [Public Release Candidate](../public-release-candidate.md) control
-  surface now retains the current `1.0.0` public-surface snapshot, including
-  the green authority baseline, published public commits, local devcontainer
-  proof, and the now-passed canonical Gate D human review
+  surface now retains the stable exact-release snapshot, including the current
+  exact release line, the burned `v1.0.2` fact, the published public heads,
+  supporting hosted/local proof, and the retained canonical Gate D human
+  review
 
 ## Trigger
 
@@ -111,7 +104,7 @@ This program starts only after all of these are true:
   release line
 - the current Windows 11 host machine is available for installed-user proof
 
-That trigger was satisfied for the earlier closeout. The reopened `1.0.0`
+That trigger was satisfied for the earlier closeout. The reopened Docker-only
 closeout is now governed by the public-source facade plus Docker-only product
 contract.
 
@@ -301,12 +294,10 @@ Gate D is now defined against the real public product:
 - the deterministic canonical fixture workspace remains the compare target
 - the governed Linux image must be absent before the rerun so first-use pull is
   exercised truthfully
-- retained preflight preparation at `2026-04-07T02:38:48.334Z` already proves
-  the published public source commit `4a8b27b`, the published public wiki
-  HEAD commit `e28491c`, canonical fixture commit
-  `4e442eb0f5a6263e8f8aaa49c322a6b5fd0ea87a`, Docker Linux engine state, and
-  governed Linux image absence before and after preparation ahead of the human
-  compare pass
+- retained preflight preparation already proves the canonical fixture commit,
+  Docker Linux engine state, and governed Linux image absence before and after
+  preparation ahead of the human compare pass; exact public heads remain in the
+  publication ledgers and the retained preflight packet
 - the earlier same-day retained host pass at `2026-04-06T19:53:21.713Z`
   remains supporting evidence that the simplified checkbox-selected compare flow
   itself works as expected on an installed surface
@@ -326,8 +317,12 @@ Gate D is now defined against the real public product:
 
 The public product now retains:
 
-- published public GitHub source repo baseline at commit `85230a3`
-- published public GitHub wiki refresh at commit `fe3e11c`
+- published public GitHub source repo baseline retained in
+  `docs/product/public-github-source-publication-ledger.md` and
+  `docs/product/public-github-source-publication-ledger.json`
+- published public GitHub wiki refresh retained in
+  `docs/product/public-github-wiki-publication-ledger.md` and
+  `docs/product/public-github-wiki-publication-ledger.json`
 - a public devcontainer/Codespaces surface
 - a public package-preview workflow
 - a public Linux smoke workflow at
@@ -336,16 +331,13 @@ The public product now retains:
 - authority-side `npm run public:gate-d:preflight` and
   `npm run public:gate-d:prepare-cold-pull` operator surfaces for retained Gate D
   preparation
-- retained Gate D preflight preparation at `2026-04-07T02:38:48.334Z`, proving
-  published public repo commit `4a8b27b`, public wiki HEAD commit `e28491c`,
-  canonical fixture commit `4e442eb0f5a6263e8f8aaa49c322a6b5fd0ea87a`, Docker
-  Linux engine state, and governed Linux image absence before and after
-  preparation
-- retained GitHub Codespace `novacula` hosted smoke pass at
-  `2026-04-07T03:39:45.470Z`, proving hosted public design-contract viability,
-  Debian bootstrap, Docker Linux cold pull, and containerized
-  `CreateComparisonReport` reachability on the public surface apart from final
-  Gate D human acceptance
+- retained Gate D preflight preparation under `.cache/public-product-gate-d/latest/`,
+  proving canonical fixture state, Docker Linux engine state, and governed
+  Linux image absence before the closing human compare pass
+- retained GitHub Codespace `novacula` hosted smoke pass, proving hosted public
+  design-contract viability, Debian bootstrap, Docker Linux cold pull, and
+  containerized `CreateComparisonReport` reachability on the public surface
+  apart from final human acceptance
 - public README, `INSTALL.md`, `SUPPORT.md`, and `CONTRIBUTING.md`
 - bundled installed-user docs aligned to the checkbox-selected compare flow and
   Docker-only runtime story
@@ -367,7 +359,8 @@ The program now retains these closed public-acceptance facts:
 ## Approval Outcome
 
 This program was previously approved through `TRANCHE-010` for the earlier
-public bundle. It is now reclosed for the `1.0.0` Docker-only public contract.
+public bundle. It is now reclosed for the Docker-only public contract with
+current exact release `v1.0.3`.
 
 The approved trust boundary remains:
 

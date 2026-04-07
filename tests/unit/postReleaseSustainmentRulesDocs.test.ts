@@ -20,9 +20,12 @@ type SustainmentRules = {
     model: string;
     versionLineContract: {
       retainedExactVersionReleases: string[];
+      burnedExactVersionReleases?: string[];
       currentExactReleaseLine: string;
       currentMainPackageLine: string;
       publicCodespaceBranch: string;
+      integrationBranch?: string;
+      releaseBranch?: string;
     };
     maintainedSurfaces: string[];
     refreshTriggers: string[];
@@ -45,6 +48,11 @@ type SustainmentRules = {
     reopenTriggers: string[];
   };
   operatorSurfaceSustainment: {
+    branchModel?: {
+      integrationBranch?: string;
+      releaseBranch?: string;
+      requiredChecks?: string[];
+    };
     requiredAuthorityUpdates: string[];
     requiredVerification: string[];
     requiredDerivedUpdatesWhenReaderFacingTruthChanges: string[];
@@ -88,10 +96,13 @@ describe('post-release sustainment rules package', () => {
 
     expect(rules.releaseCadence.model).toBe('event-driven');
     expect(rules.releaseCadence.versionLineContract).toEqual({
-      retainedExactVersionReleases: ['v0.2.0', 'v1.0.0', 'v1.0.1', 'v1.0.2'],
-      currentExactReleaseLine: 'v1.0.2',
-      currentMainPackageLine: '1.0.2',
-      publicCodespaceBranch: 'develop'
+      retainedExactVersionReleases: ['v0.2.0', 'v1.0.0', 'v1.0.1', 'v1.0.2', 'v1.0.3'],
+      burnedExactVersionReleases: ['v1.0.2'],
+      currentExactReleaseLine: 'v1.0.3',
+      currentMainPackageLine: '1.0.3',
+      publicCodespaceBranch: 'develop',
+      integrationBranch: 'develop',
+      releaseBranch: 'main'
     });
     expect(rules.releaseCadence.maintainedSurfaces).toContain(
       'preview-evidence/vi-history-suite-<version>.vsix'
@@ -108,7 +119,8 @@ describe('post-release sustainment rules package', () => {
         'after an exact release is published, the current published package line on main shall match that exact release line',
         'any later repo change intended for publication shall advance package.json and the top CHANGELOG.md heading to the next SemVer line before further normalization or publication',
         'future sessions shall not treat an unreleased SemVer bump as complete until the matching public tag and public GitHub release are both published',
-        'future sessions shall not keep landing post-release changes on the previous exact release version number'
+        'future sessions shall not keep landing post-release changes on the previous exact release version number',
+        'future sessions shall not treat a burned exact release as the green release baseline for later publication'
       ])
     );
 
@@ -135,6 +147,19 @@ describe('post-release sustainment rules package', () => {
       'out-of-scope alternative Windows x86 provisioning that is not part of the current governed image contract'
     );
 
+    expect(rules.operatorSurfaceSustainment.branchModel).toEqual({
+      integrationBranch: 'develop',
+      releaseBranch: 'main',
+      requiredChecks: [
+        'docs_continuous_integration',
+        'docs_public_continuous_integration',
+        'docs_internal_continuous_integration',
+        'test_extension',
+        'package_extension_preview',
+        'Public Facade Package Preview / package-preview',
+        'Public Facade Linux Smoke / public-facade-linux-smoke'
+      ]
+    });
     expect(rules.operatorSurfaceSustainment.requiredAuthorityUpdates).toContain(
       'docs/product/post-release-sustainment-rules.md'
     );
@@ -156,6 +181,10 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('Strict SemVer rule after an exact release');
     expect(rulesDoc).toContain('## Benchmark Refresh Rules');
     expect(rulesDoc).toContain('## Operator And Documentation Upkeep Rules');
+    expect(rulesDoc).toContain('develop');
+    expect(rulesDoc).toContain('release branch');
+    expect(rulesDoc).toContain('required checks');
+    expect(rulesDoc).toContain('burned exact release line');
     expect(rulesDoc).toContain('PROGRAM-0002');
     expect(rulesDoc).toContain('execution-policy bypass');
     expect(rulesDoc).toContain('ExecutionPolicy Bypass');

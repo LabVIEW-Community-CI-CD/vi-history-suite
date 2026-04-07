@@ -2,6 +2,10 @@ name: Public Facade Linux Smoke
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - develop
+      - main
   pull_request:
     paths:
       - '.github/workflows/public-facade-linux-smoke.yml'
