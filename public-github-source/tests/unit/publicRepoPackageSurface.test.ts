@@ -66,6 +66,8 @@ describe('public repo package surface', () => {
     expect(readme).toContain('Copy the main branch only');
     expect(readme).toContain('Codespace repository configuration');
     expect(readme).toContain('16-core');
+    expect(readme).toContain('supported first-time machine');
+    expect(readme).toContain('This README keeps only the short summary.');
     expect(readme).toContain('npm run public:host:bootstrap-linux');
     expect(readme).toContain('npm run public:fixture:icon-editor');
     expect(readme).toContain('npm run public:repo:clone');
@@ -73,6 +75,8 @@ describe('public repo package surface', () => {
     expect(readme).toContain('review the changes of a LabVIEW VI between two commits');
     expect(readme).toContain('https://github.com/<owner>/<repo>.git');
     expect(readme).toContain('Paste the repo URL when prompted');
+    expect(readme).toContain('Supported repo URLs are public `https://github.com/...` and');
+    expect(readme).toContain('`https://gitlab.com/...` only.');
     expect(readme).toContain('Hampel Software Engineering');
     expect(readme).toContain('repo-sibling `labview-icon-editor`');
     expect(readme).toContain('/workspaces/labview-icon-editor');
@@ -80,6 +84,7 @@ describe('public repo package surface', () => {
     expect(readme).toContain('/workspaces/SerialPortNuggets');
     expect(readme).toContain('Review-Public-LabVIEW-VI-Changes');
     expect(readme).toContain('remote default branch');
+    expect(readme).toContain('Use the exact path printed by the command');
     expect(readme).toContain('public default branch and tracks the latest exact released');
     expect(readme).toContain('GitHub opens this public repo on `main` by default');
     expect(readme).toContain('retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`');
@@ -100,8 +105,11 @@ describe('public repo package surface', () => {
     expect(install).toContain('npm run public:repo:clone');
     expect(install).toContain('https://github.com/<owner>/<repo>.git');
     expect(install).toContain('Paste the repo URL when prompted');
+    expect(install).toContain('canonical first-time procedures');
+    expect(install).toContain('Supported repo URLs are public `https://github.com/...` and');
     expect(install).toContain('Review-Public-LabVIEW-VI-Changes');
     expect(install).toContain('remote default branch automatically');
+    expect(install).toContain('available fallback treated as best-effort');
     expect(install).toContain('Refresh-Codespace-Repositories');
     expect(install).not.toContain('Manual-Actor-Framework-Clone');
     expect(install).not.toContain('Vitest not found');

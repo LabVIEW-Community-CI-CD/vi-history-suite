@@ -96,13 +96,13 @@ describe('public release candidate control surface', () => {
     expect(candidate.publishedPublicSource?.publishedCommit).toBe('daef8bd');
     expect(candidate.publicDevelopCandidate).toMatchObject({
       branch: 'develop',
-      candidateCommit: 'e8b0925',
-      status: 'published-maintained-candidate-with-findings-folded',
-      sourcePullRequest: '#15'
+      candidateCommit: 'c9806c3',
+      status: 'published-maintained-candidate-with-doc-clarification-fold',
+      sourcePullRequest: '#16'
     });
     expect(candidate.publishedPublicWiki).toMatchObject({
-      publishedHeadCommit: '63a4208',
-      status: 'published-maintained-candidate-with-findings-folded'
+      publishedHeadCommit: 'b30d356',
+      status: 'published-maintained-candidate-with-doc-clarification-fold'
     });
     expect(candidate.candidateReadiness).toMatchObject({
       authorityBaseline: 'v1.1.0-exact-public-release-published',
@@ -110,8 +110,8 @@ describe('public release candidate control surface', () => {
       localPublicDevcontainer: 'v1.1.0-published-baseline',
       localPublicFixtureHelper: 'v1.1.0-published-baseline',
       localAuthorityFindingsFold: 'published-and-retained-on-maintained-public-candidate-surfaces',
-      publicRepoBootstrap: 'published-maintained-candidate-with-findings-folded',
-      publicWikiCandidateReview: 'awaiting-brand-new-fork-review-on-published-candidate',
+      publicRepoBootstrap: 'published-maintained-candidate-with-doc-clarification-fold',
+      publicWikiCandidateReview: 'ready-for-next-brand-new-fork-review-on-published-candidate',
       reviewReady: 'ready-for-brand-new-fork-review',
       requiredReviewEnvironment: 'brand-new-fork-plus-brand-new-codespace',
       exactPublicRelease: 'v1.1.0-published'
@@ -176,7 +176,7 @@ describe('public release candidate control surface', () => {
       ])
     );
     expect(candidate.activeBlockers).toEqual([
-      expect.objectContaining({ id: 'BLOCKER-1.2.0-003-POST-PUBLICATION-WIKI-REVIEW-PENDING' })
+      expect.objectContaining({ id: 'BLOCKER-1.2.0-005-BRAND-NEW-FORK-REVIEW-PENDING' })
     ]);
     expect(candidate).toMatchObject({
       exactRelease: {
@@ -206,8 +206,8 @@ describe('public release candidate control surface', () => {
     expect(candidateMarkdown).toContain('Authority source of truth: GitLab `develop` -> `main`');
     expect(candidateMarkdown).toContain('Published public source commit: `daef8bd`');
     expect(candidateMarkdown).toContain('Authority `develop` candidate baseline: `8c99163`');
-    expect(candidateMarkdown).toContain('Public `develop` candidate commit: `e8b0925`');
-    expect(candidateMarkdown).toContain('Published public wiki head: `63a4208`');
+    expect(candidateMarkdown).toContain('Public `develop` candidate commit: `c9806c3`');
+    expect(candidateMarkdown).toContain('Published public wiki head: `b30d356`');
     expect(candidateMarkdown).toContain('Integration branch: `develop`');
     expect(candidateMarkdown).toContain('Release branch: `main`');
     expect(candidateMarkdown).toContain('Local exact VSIX build: `exact-v1.1.0-release-built`');
@@ -217,9 +217,10 @@ describe('public release candidate control surface', () => {
     expect(candidateMarkdown).toContain('npm run public:repo:clone -- --repo-url <https-url>');
     expect(candidateMarkdown).toContain('Local authority findings fold:');
     expect(candidateMarkdown).toContain('published-and-retained-on-maintained-public-candidate-surfaces');
-    expect(candidateMarkdown).toContain('Public repo bootstrap: `published-maintained-candidate-with-findings-folded`');
+    expect(candidateMarkdown).toContain('Public repo bootstrap:');
+    expect(candidateMarkdown).toContain('published-maintained-candidate-with-doc-clarification-fold');
     expect(candidateMarkdown).toContain('Public wiki candidate review:');
-    expect(candidateMarkdown).toContain('awaiting-brand-new-fork-review-on-published-candidate');
+    expect(candidateMarkdown).toContain('ready-for-next-brand-new-fork-review-on-published-candidate');
     expect(candidateMarkdown).toContain('Review-ready gate:');
     expect(candidateMarkdown).toContain('ready-for-brand-new-fork-review');
     expect(candidateMarkdown).toContain('## Candidate State Machine');
@@ -236,6 +237,8 @@ describe('public release candidate control surface', () => {
     expect(candidateMarkdown).toContain('status: `active`');
     expect(candidateMarkdown).toContain("public `develop` candidate with Sergio's first findings fold was published");
     expect(candidateMarkdown).toContain('at `e8b0925` through GitHub PR `#15`');
+    expect(candidateMarkdown).toContain('`c9806c3` through GitHub PR `#16`');
+    expect(candidateMarkdown).toContain('`b30d356`');
     expect(candidateMarkdown).toContain('FINDING-1.2.0-003-REVIEW-READY-BOUNDARY-GOVERNANCE-GAP');
     expect(candidateMarkdown).toContain('status: `closed`');
     expect(candidateMarkdown).toContain('Refresh page: `Refresh-Codespace-Repositories`');
@@ -268,7 +271,9 @@ describe('public release candidate control surface', () => {
     expect(currentState).toContain('[Public Release Candidate](./public-release-candidate.md)');
     expect(currentState).toContain('active exact release candidate line on `develop`: `v1.2.0`');
     expect(currentState).toContain('`TRANCHE-014`: Public Codespaces public-repo bootstrap');
-    expect(currentState).toContain('`v1.2.0` is now `review-ready` on maintained public `develop` candidate head');
+    expect(currentState).toContain('`v1.2.0` is now back to `review-ready` on refreshed maintained public');
+    expect(currentState).toContain('`c9806c3`');
+    expect(currentState).toContain('`b30d356`');
     expect(currentState).toContain('current exact public GitHub release line is `v1.1.0`');
 
     expect(program).toContain('public GitHub and GitLab repos');

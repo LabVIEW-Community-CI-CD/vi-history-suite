@@ -2,7 +2,7 @@
   "schema": "vi-history-suite/public-release-candidate@v1",
   "versionLine": "1.2.0",
   "burnedExactReleaseLine": "v1.0.2",
-  "recordedAt": "2026-04-07T23:00:51Z",
+  "recordedAt": "2026-04-07T23:43:38Z",
   "authorityRepo": {
     "role": "source-of-truth",
     "integrationBranch": "develop",
@@ -26,15 +26,15 @@
   },
   "publicDevelopCandidate": {
     "branch": "develop",
-    "candidateCommit": "e8b0925",
-    "status": "published-maintained-candidate-with-findings-folded",
-    "sourcePullRequest": "#15"
+    "candidateCommit": "c9806c3",
+    "status": "published-maintained-candidate-with-doc-clarification-fold",
+    "sourcePullRequest": "#16"
   },
   "publishedPublicWiki": {
     "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite.wiki.git",
-    "publishedHeadCommit": "63a4208",
+    "publishedHeadCommit": "b30d356",
     "publicationLedgerPath": "docs/product/public-github-wiki-publication-ledger.json",
-    "status": "published-maintained-candidate-with-findings-folded"
+    "status": "published-maintained-candidate-with-doc-clarification-fold"
   },
   "candidateReadiness": {
     "authorityBaseline": "v1.1.0-exact-public-release-published",
@@ -42,8 +42,8 @@
     "localPublicDevcontainer": "v1.1.0-published-baseline",
     "localPublicFixtureHelper": "v1.1.0-published-baseline",
     "localAuthorityFindingsFold": "published-and-retained-on-maintained-public-candidate-surfaces",
-    "publicRepoBootstrap": "published-maintained-candidate-with-findings-folded",
-    "publicWikiCandidateReview": "awaiting-brand-new-fork-review-on-published-candidate",
+    "publicRepoBootstrap": "published-maintained-candidate-with-doc-clarification-fold",
+    "publicWikiCandidateReview": "ready-for-next-brand-new-fork-review-on-published-candidate",
     "reviewReady": "ready-for-brand-new-fork-review",
     "exactPublicRelease": "v1.1.0-published",
     "requiredReviewEnvironment": "brand-new-fork-plus-brand-new-codespace"
@@ -116,7 +116,7 @@
       "codespaceTargetPath": "/workspaces/labview-icon-editor"
     },
     "publicRepoBootstrap": {
-      "status": "published-maintained-candidate-with-findings-folded",
+      "status": "published-maintained-candidate-with-doc-clarification-fold",
       "command": "npm run public:repo:clone -- --repo-url <https-url>",
       "interactiveCommand": "npm run public:repo:clone",
       "supportedHosts": [
@@ -125,11 +125,12 @@
       ],
       "authorityDevelopBaseline": "8c99163",
       "notes": [
-        "The generic bootstrap is implemented on the authority 1.2.0 line and the maintained public develop candidate that carries Sergio's first findings fold is published at e8b0925 through GitHub PR #15.",
+        "The generic bootstrap is implemented on the authority 1.2.0 line and the maintained public develop candidate that carried Sergio's first findings fold was published at e8b0925 through GitHub PR #15.",
         "In a brand-new Codespace, the no-argument command now prompts for the public repo URL interactively and points users back to the canonical helper-backed sample when they cancel.",
         "When --branch is omitted, the command resolves the remote default branch; when provided, the explicit branch is honored exactly.",
         "Sergio dry-ran the maintained public wiki procedures from a brand new fork and a brand new Codespace and submitted findings that are now folded locally in authority.",
-        "Those findings are now republished on the maintained public develop head e8b0925 and maintained public wiki head 63a4208, so the next brand-new-fork review can proceed on live candidate surfaces."
+        "A repo-access LLM pre-review then withdrew false blockers and left one smaller doc-clarification slice for the public README, install summary, supported-host wording, and compile troubleshooting language.",
+        "That clarification slice was then republished on maintained public develop head c9806c3 through GitHub PR #16 and on maintained public wiki head b30d356."
       ]
     }
   },
@@ -174,7 +175,7 @@
   },
   "activeBlockers": [
     {
-      "id": "BLOCKER-1.2.0-003-POST-PUBLICATION-WIKI-REVIEW-PENDING"
+      "id": "BLOCKER-1.2.0-005-BRAND-NEW-FORK-REVIEW-PENDING"
     }
   ]
 }

@@ -40,11 +40,13 @@ describe('public fork-owner procedure docs', () => {
     expect(quickstartCollapsed).toContain('Use this only for the first successful run from your own fork.');
     expect(quickstartCollapsed).toContain('brand-new fork');
     expect(quickstartCollapsed).toContain('brand-new Codespace');
+    expect(quickstartCollapsed).toContain('fastest first-time path to review `lv_icon.vi`');
     expect(quickstartCollapsed).toContain('Copy the main branch only');
     expect(quickstartCollapsed).toContain('Codespace repository configuration');
     expect(quickstartCollapsed).toContain('New with options');
     expect(quickstartCollapsed).toContain('branch: `develop`');
     expect(quickstartCollapsed).toContain('machine type: `16-core`');
+    expect(quickstartCollapsed).toContain('supported first-time machine');
     expect(quickstartCollapsed).toContain('Setting up remote connection: Building codespace');
     expect(quickstartCollapsed).toContain(
       'Your application running on port 6010 is available. See all forwarded ports'
@@ -57,6 +59,8 @@ describe('public fork-owner procedure docs', () => {
     expect(quickstartCollapsed).toContain('resource/plugins/lv_icon.vi');
     expect(quickstartCollapsed).toContain('VI History panel');
     expect(quickstartCollapsed).toContain('delete that fork and create it again');
+    expect(quickstartCollapsed).toContain('do not repair the fork in place');
+    expect(quickstartCollapsed).toContain('Only if Codespace setup was interrupted');
     expect(quickstartCollapsed).not.toContain('Vitest not found');
     expect(quickstartCollapsed).not.toContain(
       'If you already ran it before and want the latest upstream develop'
@@ -66,15 +70,18 @@ describe('public fork-owner procedure docs', () => {
     expect(referenceCollapsed).toContain('Use this reference manual when you want to review the changes of a LabVIEW VI between two commits');
     expect(referenceCollapsed).toContain('brand-new fork');
     expect(referenceCollapsed).toContain('brand-new Codespace');
+    expect(referenceCollapsed).toContain('canonical first-time reference manual');
     expect(referenceCollapsed).toContain('Copy the main branch only');
     expect(referenceCollapsed).toContain('delete that fork and create it again');
     expect(referenceCollapsed).toContain('Codespace repository configuration');
     expect(referenceCollapsed).toContain('New with options');
     expect(referenceCollapsed).toContain('branch: `develop`');
     expect(referenceCollapsed).toContain('machine type: `16-core`');
+    expect(referenceCollapsed).toContain('supported first-time machine');
     expect(referenceCollapsed).toContain('Setting up remote connection: Building codespace');
     expect(referenceCollapsed).toContain('npm run public:repo:clone');
     expect(referenceCollapsed).toContain('https://github.com/<owner>/<repo>.git');
+    expect(referenceCollapsed).toContain('Only public `https://github.com/...` and `https://gitlab.com/...` repo URLs are supported.');
     expect(referenceCollapsed).toContain('`Esc`');
     expect(referenceCollapsed).toContain('npm run public:fixture:icon-editor');
     expect(referenceCollapsed).toContain('Hampel Software Engineering');
@@ -90,9 +97,11 @@ describe('public fork-owner procedure docs', () => {
     );
     expect(referenceCollapsed).toContain('/workspaces/hse-logger');
     expect(referenceCollapsed).toContain('/workspaces/SerialPortNuggets');
+    expect(referenceCollapsed).toContain('Use the printed path instead of guessing');
     expect(referenceCollapsed).toContain('Examples/Logging with Helper-VIs.vi');
     expect(referenceCollapsed).toContain('ASCII/Terminals/ASCII Command-Response.vi');
     expect(referenceCollapsed).toContain('`VI History` panel');
+    expect(referenceCollapsed).toContain('Only if Codespace setup was interrupted');
     expect(referenceCollapsed).not.toContain('Vitest not found');
     expect(referenceCollapsed).not.toContain('governed procedure');
 
