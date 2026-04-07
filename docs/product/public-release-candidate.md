@@ -2,9 +2,10 @@
 
 - Version line: `1.0.6`
 - Burned exact release line: `v1.0.2`
-- Recorded at: `2026-04-07T16:20:00.000Z`
+- Recorded at: `2026-04-07T17:12:30.000Z`
 - Authority source of truth: GitLab `develop` -> `main`
 - Published public source commit: `8d78872`
+- Public `develop` candidate commit: `975a7f2`
 - Published public wiki head: `d184be2`
 
 ## Branch Model
@@ -22,7 +23,7 @@
 
 ## Readiness
 
-- Authority baseline: `v1.0.6-governance-open`
+- Authority baseline: `v1.0.6-public-workflow-governance-public-develop-green`
 - Local installed VSIX: `exact-v1.0.5`
 - Local public devcontainer: `passed-v1.0.5-baseline`
 - Local public fixture helper: `passed-v1.0.5-baseline`
@@ -61,14 +62,17 @@
   and `.vit` files instead of waiting for background eligibility indexing.
 - The public package-preview required check now creates `artifacts/` before the
   VSIX build so upload cannot fail after a successful package step.
+- The current `1.0.6` local hardening slice also retires the disposed-webview
+  progress race in `openViHistoryCommand` so in-flight compare progress cannot
+  throw through the extension host after the panel is gone.
 
 ## Hosted Proof
 
 - GitHub Codespace `novacula` remains retained hosted public-surface proof.
 - Its hosted runtime proof baseline is commit `4a8b27b`; the later `v1.0.5`
   delta is the exact-release publication, public wiki publication, and
-  fork-owner procedure hardening slice, while `v1.0.6` is now the opened
-  governance line on `develop`.
+  fork-owner procedure hardening slice, while the later `v1.0.6` governance
+  hardening now continues on public `develop`.
 
 ## Human Review Proof
 
@@ -86,10 +90,39 @@
 - Manual alternative: `Manual-Actor-Framework-Clone`
 - Refresh page: `Refresh-Codespace-Repositories`
 
+## Governed Findings
+
+- `FINDING-1.0.6-001-PUBLIC-DEVELOP-REALIGNMENT`
+  - status: `closed`
+  - public `develop` merged at `0985f96` with required GitHub checks green
+  - requirement impact: `updated` via `VHS-REQ-505`, `VHS-REQ-506`,
+    `VHS-REQ-507`, and `VHS-REQ-508`
+  - ADR impact: `updated` via `ADR-0030` and `ADR-0031`
+- `FINDING-1.0.6-002-HISTORY-PANEL-DISPOSED-WEBVIEW-PROGRESS-RACE`
+  - status: `closed`
+  - requirement impact: `updated` via `VHS-REQ-509`
+  - ADR impact: `no-impact`
+  - retained rationale: the fix stays within the existing history-panel
+    command/webview architecture and does not change sustained branch, release,
+    runtime-provider, or product-boundary decisions
+- `FINDING-1.0.6-003-PUBLIC-WORKFLOW-GOVERNANCE-GAP`
+  - status: `closed`
+  - public `develop` merged at `975a7f2` with both required GitHub checks
+    green
+  - requirement impact: `updated` via `VHS-REQ-510`
+  - ADR impact: `updated` via `ADR-0032`
+  - retained rationale: the public workflow pair now has first-class
+    requirement/ADR capture plus bounded trigger and churn-control refactoring
+
 ## Remaining Blockers
 
-- `BLOCKER-1.0.6-SEMVER-DECISION-FRAMEWORK`
-- `BLOCKER-1.0.6-BRANCH-CI-TOPOLOGY`
-- `BLOCKER-1.0.6-PUBLIC-DEVELOP-REALIGNMENT`
+- The branch-model hardening blocker is closed because public `develop` already
+  merged at `0985f96`.
+- The disposed-webview progress blocker is also closed because the public
+  hardening merge completed on `develop`.
+- The workflow-governance blocker is now also closed because public `develop`
+  merged at `975a7f2` with `package-preview` and
+  `public-facade-linux-smoke` green.
+- No active `1.0.6` public-source blockers remain.
 - `v1.0.5` remains the current exact green line while `v1.0.6` is the active
   develop candidate.

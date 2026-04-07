@@ -164,7 +164,32 @@ export function createOpenViHistoryCommand(
       }
     );
 
-    panel.webview.html = renderedHtml;
+    let panelDisposed = false;
+    panel.onDidDispose(() => {
+      panelDisposed = true;
+    });
+    const safeUpdatePanelHtml = (html: string): void => {
+      if (panelDisposed) {
+        return;
+      }
+      try {
+        panel.webview.html = html;
+      } catch {
+        panelDisposed = true;
+      }
+    };
+    const safePostPanelMessage = async (message: unknown): Promise<void> => {
+      if (panelDisposed) {
+        return;
+      }
+      try {
+        await panel.webview.postMessage(message);
+      } catch {
+        panelDisposed = true;
+      }
+    };
+
+    safeUpdatePanelHtml(renderedHtml);
     const handleMessage = async (message: HistoryPanelMessage) => {
       const command = String(message.command ?? '');
       const hash = String(message.hash ?? '');
@@ -348,7 +373,7 @@ export function createOpenViHistoryCommand(
                   update
                 );
                 if (runtimeProgressUpdate) {
-                  void panel.webview.postMessage(runtimeProgressUpdate);
+                  void safePostPanelMessage(runtimeProgressUpdate);
                 }
               },
               cancellationToken
@@ -417,10 +442,10 @@ export function createOpenViHistoryCommand(
             const selectedCommit = model.commits.find((commit) => commit.hash === selectedHash);
             if (selectedCommit && (!baseHash || selectedCommit.previousHash === baseHash)) {
               selectedCommit.retainedComparisonEvidenceAvailable = true;
-              panel.webview.html = renderHistoryPanelHtml(
+              safeUpdatePanelHtml(renderHistoryPanelHtml(
                 model,
                 panelTracker?.getLastActionSummary()
-              );
+              ));
             }
           }
         }
@@ -433,7 +458,7 @@ export function createOpenViHistoryCommand(
           runtimePanelUpdate
         );
         if (runtimePanelUpdate) {
-          void panel.webview.postMessage(runtimePanelUpdate);
+          void safePostPanelMessage(runtimePanelUpdate);
         }
       };
 
@@ -695,7 +720,7 @@ export function createOpenViHistoryCommand(
 
       if (command === 'submitHumanReview') {
         if (!humanReviewSubmissionAction) {
-          void panel.webview.postMessage({
+          void safePostPanelMessage({
             type: 'humanReviewSubmissionResult',
             status: 'blocked',
             message:
@@ -724,7 +749,7 @@ export function createOpenViHistoryCommand(
           const humanReviewSubmissionStatusMessage =
             'Host review submission failed before the retained artifact could be written. Retry after confirming the workspace is local and deterministic.';
           void vscode.window.showErrorMessage(humanReviewSubmissionStatusMessage);
-          void panel.webview.postMessage({
+          void safePostPanelMessage({
             type: 'humanReviewSubmissionResult',
             status: 'blocked',
             message: humanReviewSubmissionStatusMessage
@@ -770,7 +795,7 @@ export function createOpenViHistoryCommand(
           humanReviewSubmissionStatusMessage = result.validationMessage;
           void vscode.window.showInformationMessage(result.validationMessage);
         }
-        void panel.webview.postMessage({
+        void safePostPanelMessage({
           type: 'humanReviewSubmissionResult',
           status:
             result.outcome === 'submitted-human-review'

@@ -23,6 +23,10 @@ Activation is now satisfied:
   closeout
 - explicit major/minor/patch decision criteria for post-release work
 - branch-model and lane-specific CI/design-gate governance after each exact release
+- continuous refinement of SRS, RTM, and test-plan coverage from governed findings
+- continuous refinement of ADR coverage from governed findings
+- explicit public GitHub workflow responsibility, trigger-boundary, and
+  churn-control governance
 - benchmark refresh cadence and image contract upkeep
 - operator-surface and documentation-workbench sustainment
 - post-release control-plane maintenance
@@ -47,12 +51,20 @@ Activation is now satisfied:
 - release and benchmark refresh cadence are bounded and discoverable
 - operator/documentation upkeep has a governed maintenance path
 - future release lines carry an explicit SemVer-decision and branch-lane CI model
+- future governed findings either update the requirement package in the same
+  slice or retain an explicit no-impact rationale
+- future governed findings either update the ADR package in the same slice or
+  retain an explicit no-impact rationale
+- the public GitHub workflow pair retains explicit owned responsibilities,
+  bounded triggers, and churn-control instead of raw-YAML-only truth
 - future work does not fall back into unowned tail iteration
 
 ## Required Evidence
 
 - updated queue and program docs
 - retained sustainment rules in Markdown and JSON form
+- updated SRS/RTM/test-plan coverage or an explicit retained no-impact rationale
+- updated ADR coverage or an explicit retained no-impact rationale
 - sustained release and benchmark refresh rules
 - green docs and design gates after the sustainment control-plane update
 

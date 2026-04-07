@@ -33,6 +33,7 @@ interface MockUri {
 
 interface MockPanel {
   title: string;
+  onDidDispose: (listener: () => void) => { dispose(): void };
   webview: {
     html: string;
     postMessage: ReturnType<typeof vi.fn>;
@@ -50,6 +51,11 @@ function createMockUri(fsPath: string, scheme = 'file'): MockUri {
 function createMockPanel(title: string): MockPanel {
   return {
     title,
+    onDidDispose: () => ({
+      dispose() {
+        // no-op
+      }
+    }),
     webview: {
       html: '',
       postMessage: vi.fn().mockResolvedValue(true),
@@ -2965,6 +2971,71 @@ describe('createOpenViHistoryCommand', () => {
         }
       ]
     });
+  });
+
+  it('ignores disposed-panel progress posting failures during comparison generation', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    const comparisonReportAction = vi.fn().mockImplementation(async ({ reportProgress }) => {
+      await reportProgress?.({
+        message: 'Selecting comparison-report runtime.',
+        increment: 20
+      });
+      return {
+        outcome: 'opened-comparison-report',
+        reportStatus: 'ready-for-runtime',
+        runtimeExecutionState: 'succeeded'
+      };
+    });
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Newest revision',
+            previousHash: '1111111122222222'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      comparisonReportAction
+    );
+
+    await command(targetUri as never);
+
+    const panel = createWebviewPanelMock.mock.results[0]?.value as MockPanel | undefined;
+    panel?.webview.postMessage.mockImplementation(() => {
+      throw new Error('Webview is disposed');
+    });
+
+    await expect(
+      tracker.dispatchLastPanelMessage({
+        command: 'generateComparisonReport',
+        hash: 'abcdef1234567890'
+      })
+    ).resolves.toBeUndefined();
+
+    expect(comparisonReportAction).toHaveBeenCalledTimes(1);
+    expect(showErrorMessageMock).not.toHaveBeenCalled();
+    expect(showWarningMessageMock).not.toHaveBeenCalledWith(
+      expect.stringContaining('Webview is disposed')
+    );
   });
 
   it('surfaces one concise success message from retained compare runtime truth', async () => {

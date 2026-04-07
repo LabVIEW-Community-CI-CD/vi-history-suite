@@ -16,6 +16,8 @@
 - The current published package line on `main` is `1.0.5`.
 - The current develop package line on `develop` is `1.0.6`.
 - The active exact release candidate line on `develop` is `v1.0.6`.
+- The public GitHub default branch is `main` because it carries the latest
+  exact released source line.
 - The public Codespaces evaluation branch is `develop`.
 - The integration branch is `develop`.
 - The release branch is `main`.

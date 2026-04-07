@@ -61,6 +61,7 @@ Current version-line contract:
 - current published package line on `main`: `1.0.5`
 - current develop package line on `develop`: `1.0.6`
 - active exact release candidate line on `develop`: `v1.0.6`
+- public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
 - release branch: `main`
@@ -161,6 +162,8 @@ Required branch-model and CI posture:
 
 - integration work lands on `develop`
 - release promotion lands on `main`
+- the public GitHub default branch remains `main` so casual readers and fork
+  owners land on the latest exact released line by default
 - protected-branch promotion uses required checks instead of direct operator
   trust
 - `feature/*` lanes target `develop`
@@ -189,6 +192,47 @@ Lane-specific CI and gate responsibilities:
   exact released-line package audit before merge to `main`
 - `main`: protected exact-release branch; exact SemVer tags are cut only after
   merged `main` is green
+
+Public GitHub workflow responsibility matrix:
+
+- `Public Facade Package Preview / package-preview`
+  - owns `npm run compile`
+  - owns `npm run test:design-contract`
+  - owns preview VSIX packaging and preview-artifact upload
+  - admits `workflow_dispatch` plus bounded `push`/`pull_request` changes on
+    `develop`, `main`, `release/*`, and `hotfix/*`
+  - uses per-workflow/per-ref concurrency to cancel stale in-progress runs
+- `Public Facade Linux Smoke / public-facade-linux-smoke`
+  - owns Docker Linux engine verification
+  - owns `npm run public:smoke:linux`
+  - owns retained smoke-evidence upload
+  - admits `workflow_dispatch` plus bounded `push`/`pull_request` changes on
+    `develop`, `main`, `release/*`, and `hotfix/*`
+  - uses per-workflow/per-ref concurrency to cancel stale in-progress runs
+- neither public GitHub workflow uses a `feature/*` push lane
+
+Requirement-evolution discipline:
+
+- every governed finding shall be classified before slice closeout as either
+  `requirements-update-required` or `no-requirement-impact`
+- when a finding changes public workflow truth, release truth, branch policy,
+  CI posture, runtime boundaries, or user/operator documentation behavior, the
+  same slice shall update SRS, RTM, and test-plan coverage
+- when a finding does not change normative behavior, the same slice shall
+  retain an explicit no-impact rationale in the control plane instead of
+  silently skipping requirement review
+
+ADR-evolution discipline:
+
+- every governed finding shall also be classified before slice closeout as
+  either `adr-update-required` or `no-adr-impact`
+- when a finding changes architectural boundaries, public/private product
+  surfaces, release topology, default-branch policy, runtime-provider
+  strategy, required-check posture, or public GitHub workflow responsibility
+  matrix, the same slice shall update an existing ADR or introduce a new ADR
+- when a finding does not change sustained decision truth, the same slice
+  shall retain an explicit no-impact rationale in the control plane instead of
+  silently skipping ADR review
 
 Required closeout checks for any sustainment slice:
 
