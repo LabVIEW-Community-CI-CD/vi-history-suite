@@ -55,7 +55,7 @@ describe('post-release control-plane coherence', () => {
       issues: ['ISSUE-0410']
     });
     expect(queue.find((entry) => entry.id === 'TRANCHE-010')).toMatchObject({
-      status: 'queued',
+      status: 'active',
       issues: ['ISSUE-0407']
     });
 
@@ -65,17 +65,20 @@ describe('post-release control-plane coherence', () => {
     expect(currentState).toContain('public GitHub facade repo is the public source product surface');
     expect(currentState).toContain('public GitHub user wiki now exists at');
     expect(currentState).toContain('deterministic acceptance surface for the next Docker-only Gate D rerun');
+    expect(currentState).toContain('retained preflight preparation at `2026-04-07T00:37:10.340Z`');
 
     expect(program).toContain('Reopened post-release program for the next exact-version line.');
     expect(program).toContain('the installed extension compare workflow is now Docker-only and x64-only');
     expect(program).toContain('the public GitHub facade repo is the extension-user front face');
     expect(program).toContain('the public GitHub wiki now exists at');
     expect(program).toContain('the next Gate D rerun must exercise the deterministic public-release fixture');
+    expect(program).toContain('retained preflight preparation at `2026-04-07T00:37:10.340Z` already proves');
 
     expect(issue).toContain('Reopened post-release issue for the next exact-version line.');
     expect(issue).toContain('the public GitHub user-wiki surface now exists');
     expect(issue).toContain('Gate D must be rerun on the Docker-only public bundle');
     expect(issue).toContain('the next acceptance run must prove the Docker-only installed bundle');
+    expect(issue).toContain('retained Gate D preflight preparation at `2026-04-07T00:37:10.340Z` already');
 
     expect(benchmarkProgram).toContain('Closed on bounded post-release benchmark truth.');
     expect(sustainmentProgram).toContain('Active post-release program.');

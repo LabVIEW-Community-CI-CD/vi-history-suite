@@ -32,6 +32,13 @@ The public Docker product smoke lane is:
 npm run public:smoke:linux
 ```
 
+The maintained Gate D operator preflight surfaces are:
+
+```bash
+npm run public:gate-d:preflight
+npm run public:gate-d:prepare-cold-pull
+```
+
 It is no longer just an initial command-and-panel baseline. The repo now
 contains:
 
@@ -495,6 +502,8 @@ Primary commands:
 - `npm run proof:run -- benchmark-linux --harness-id HARNESS-VHS-001`
 - `npm run proof:run -- benchmark-linux --harness-id HARNESS-VHS-002`
 - `npm run proof:run -- benchmark-windows --harness-id HARNESS-VHS-002`
+- `npm run public:gate-d:preflight`
+- `npm run public:gate-d:prepare-cold-pull`
 - `npm run docs:gate`
 - `npm run docs:workbench:build`
 - `npm run docs:workbench:gate`

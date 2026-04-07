@@ -52,6 +52,9 @@ Current truth:
   plus `npm run public:smoke:linux`
 - the public package-preview publication surface is
   `.github/workflows/public-facade-package-preview.yml`
+- the authority repo now retains `npm run public:gate-d:preflight` and
+  `npm run public:gate-d:prepare-cold-pull` so the Linux-engine cold-pull Gate D
+  rerun starts from a retained preflight packet instead of chat memory
 - the next Gate D rerun must exercise the deterministic public-release fixture
   workspace through the published public GitHub source repo checkout
 - the planned cold-start acceptance case is explicit now: when Gate D is
@@ -191,6 +194,9 @@ Gate D is now defined against the real public product:
 - canonical fixture workspace with commit history
 - checkbox-selected two-commit compare flow
 - clean compare presentation on the canonical target
+- retained preflight packet for the published public repo commit, published
+  public wiki commit, canonical fixture workspace, Docker Linux engine, and
+  governed Linux image state before the human compare pass begins
 
 ## Workstreams
 
@@ -211,6 +217,7 @@ Gate D is now defined against the real public product:
   wiki
 - public devcontainer/Codespaces surface
 - public Linux smoke and package-preview workflows
+- retained Gate D preflight evidence under `.cache/public-product-gate-d/latest/`
 - bundled installed-user docs aligned to the public user story
 - retained Gate D acceptance evidence for the public Docker-only product
 
@@ -256,6 +263,11 @@ Gate D is now defined against the real public product:
 - the deterministic canonical fixture workspace remains the compare target
 - the governed Linux image must be absent before the rerun so first-use pull is
   exercised truthfully
+- retained preflight preparation at `2026-04-07T00:37:10.340Z` already proves
+  the published public source commit `1e24980`, the published public wiki
+  commit `ea06c37`, canonical fixture commit
+  `4e442eb0f5a6263e8f8aaa49c322a6b5fd0ea87a`, Docker Linux engine state, and
+  governed Linux image absence before the human compare pass
 - the earlier same-day retained host pass at `2026-04-06T19:53:21.713Z`
   remains supporting evidence that the simplified checkbox-selected compare flow
   itself works as expected on an installed surface
@@ -278,6 +290,13 @@ The public product now retains:
 - a public Linux smoke workflow at
   `.github/workflows/public-facade-linux-smoke.yml`
 - local `npm run public:smoke:linux` and public `npm run package` paths
+- authority-side `npm run public:gate-d:preflight` and
+  `npm run public:gate-d:prepare-cold-pull` operator surfaces for retained Gate D
+  preparation
+- retained Gate D preflight preparation at `2026-04-07T00:37:10.340Z`, proving
+  published public repo commit `1e24980`, public wiki commit `ea06c37`,
+  canonical fixture commit `4e442eb0f5a6263e8f8aaa49c322a6b5fd0ea87a`, Docker
+  Linux engine state, and governed Linux image absence after preparation
 - public README, `INSTALL.md`, `SUPPORT.md`, and `CONTRIBUTING.md`
 - bundled installed-user docs aligned to the checkbox-selected compare flow and
   Docker-only runtime story

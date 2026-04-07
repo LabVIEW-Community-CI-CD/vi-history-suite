@@ -83,7 +83,7 @@
   {
     "id": "TRANCHE-010",
     "title": "Public source facade and public-product acceptance",
-    "status": "queued",
+    "status": "active",
     "source": "author direction",
     "summary": "Reopened for the `1.0.0` Docker-only public contract. The earlier retained canonical Windows host pass remains historical evidence for the older public bundle, but the public front face now needs a new closeout that proves the published GitHub source repo, the public GitHub wiki and bundled docs, and a deterministic Linux-engine cold-pull compare on the canonical fixture workspace before Gate D can close again.",
     "issues": [

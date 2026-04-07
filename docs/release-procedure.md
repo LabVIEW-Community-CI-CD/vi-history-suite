@@ -72,6 +72,9 @@
 11. When the public Docker product contract changes materially, rerun the
     public-facade Linux smoke lane through:
     - local `npm run public:smoke:linux`
+    - local `npm run public:gate-d:preflight`
+    - local `npm run public:gate-d:prepare-cold-pull` immediately before the
+      real cold-pull Gate D rerun
     - GitHub `workflow_dispatch` on `.github/workflows/public-facade-linux-smoke.yml`
 12. When the public source facade changes materially, promote the curated
     public GitHub source repo from authority and record the published commit:

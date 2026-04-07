@@ -1474,6 +1474,11 @@
 - `TEST-SMOKE-019`: prove `CreateComparisonReport` on the LabVIEW 2026 x64
   host surface only after `TEST-SMOKE-004..017` are complete and the host
   surface remains clean before the run
+- `TEST-UNIT-319`: validate the public Gate D preflight operator surface
+  parses explicit public-repo, public-wiki, fixture, image, and cold-pull
+  preparation flags; exposes `public:gate-d:preflight` and
+  `public:gate-d:prepare-cold-pull`; and retains a readable Markdown packet
+  shape for the recorded public-product acceptance preflight
 - `TEST-DOC-074`: review current-state, SRS, and RTM and confirm the
   dashboard contract now states that host-native Windows pair refresh is
   explicitly headless and that long-running pair refresh emits keepalive
@@ -1488,6 +1493,11 @@
   images with block-diagram-first ordering, and a curated bundled installed-user
   guide with no private GitLab or SRS/RTM exposure, while the human gate still
   remains open pending a rerun on the updated installed bundle
+- `TEST-DOC-084`: review README, release-procedure, current-state,
+  PROGRAM-0002, ISSUE-0407, and SRS and confirm the public-product Gate D lane
+  now retains one preflight packet surface that records published public
+  commits, canonical fixture path, Docker Linux engine facts, and governed
+  Linux image absence before the human cold-pull rerun begins
 - `TEST-DOC-077`: review documentation-workbench, current-state, SRS, and RTM
   and confirm the documentation continuous-integration contract now retains
   docs-integration evidence, bundle-drift checks, wiki doctor/plan facts, and

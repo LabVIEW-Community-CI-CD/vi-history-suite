@@ -77,9 +77,9 @@ describe('ship-control direction system', () => {
     const queue = readJson<QueueEntry[]>('docs/product/development-queue.json');
     const activeTranches = queue.filter((entry) => entry.status === 'active');
 
-    expect(activeTranches).toHaveLength(2);
+    expect(activeTranches).toHaveLength(3);
     expect(activeTranches.map((entry) => entry.id)).toEqual(
-      expect.arrayContaining(['TRANCHE-012', 'TRANCHE-013'])
+      expect.arrayContaining(['TRANCHE-010', 'TRANCHE-012', 'TRANCHE-013'])
     );
   });
 
@@ -219,9 +219,9 @@ describe('ship-control direction system', () => {
     expect(currentState).toContain('- current development baseline: `1.0.0`');
     expect(currentState).toContain('- next exact-version line: `v1.0.0`');
     expect(currentState).toContain('- current changelog: [CHANGELOG.md](../../CHANGELOG.md)');
-    expect(currentState).toContain('- reopened queued closeout:');
-    expect(currentState).toContain('`TRANCHE-010` / [ISSUE-0407 Public Facade Release Kit And Host-Machine Acceptance]');
-    expect(currentState).toContain('[PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)');
+    expect(currentState).toContain('- reopened active closeout:');
+    expect(currentState).toContain('`TRANCHE-010` / [ISSUE-0407 Public Source Facade And Public-Product Acceptance]');
+    expect(currentState).toContain('[PROGRAM-0002: Public Source Facade And Public-Product Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)');
     expect(currentState).toContain('`vi-history-suite-source-experiments`');
 
     expect(informationItemMap).toContain('| Ship target | `docs/product/SHIP-0001-releasable-vi-history-suite.md` |');

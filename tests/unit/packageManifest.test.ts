@@ -172,6 +172,12 @@ describe('extension manifest research alignment', () => {
     expect(manifest.scripts?.['public:smoke:linux']).toBe(
       'npm run compile && node scripts/runPublicFacadeLinuxSmoke.js'
     );
+    expect(manifest.scripts?.['public:gate-d:preflight']).toBe(
+      'node scripts/runPublicProductGateDPreflight.js'
+    );
+    expect(manifest.scripts?.['public:gate-d:prepare-cold-pull']).toBe(
+      'node scripts/runPublicProductGateDPreflight.js --prepare-cold-pull'
+    );
     expect(manifest.scripts?.['public:source:promote']).toBe(
       'node scripts/promotePublicGithubSource.js'
     );
@@ -248,7 +254,7 @@ describe('extension manifest research alignment', () => {
       'npm run compile && node out/cli/runVerifyDesignGateCompletion.js'
     );
     expect(manifest.scripts?.['test:design-contract']).toBe(
-      'npm exec -- vitest run tests/unit/packageManifest.test.ts tests/unit/comparisonRuntimeLocator.test.ts tests/unit/runGovernedProofCli.test.ts tests/unit/governedLegacyProofEntrypoints.test.ts tests/unit/governedProofDocs.test.ts tests/unit/githubLinuxBenchmarkWorkflow.test.ts tests/unit/githubWindowsBenchmarkWorkflow.test.ts tests/unit/designGate.test.ts tests/unit/designGateRunner.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicFacadeLinuxSmoke.test.ts tests/unit/publicGithubSourcePromotion.test.ts'
+      'npm exec -- vitest run tests/unit/packageManifest.test.ts tests/unit/comparisonRuntimeLocator.test.ts tests/unit/runGovernedProofCli.test.ts tests/unit/governedLegacyProofEntrypoints.test.ts tests/unit/governedProofDocs.test.ts tests/unit/githubLinuxBenchmarkWorkflow.test.ts tests/unit/githubWindowsBenchmarkWorkflow.test.ts tests/unit/designGate.test.ts tests/unit/designGateRunner.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicFacadeLinuxSmoke.test.ts tests/unit/publicGithubSourcePromotion.test.ts tests/unit/publicProductGateDPreflight.test.ts'
     );
     expect(manifest.scripts?.['proof:run']).toBe(
       'npm run compile && node out/cli/runGovernedProof.js'
