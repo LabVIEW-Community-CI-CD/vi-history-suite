@@ -27,6 +27,10 @@ The current release branch model is explicit too:
 - `main` is the release branch
 - protected-branch promotion shall use required checks instead of operator
   memory
+- the next sustained topology is `gitflow-lite`, adding explicit
+  `feature/*`, `release/*`, and `hotfix/*` lanes around those long-lived
+  branches instead of treating all post-release work as generic `develop`
+  traffic
 
 ## Release Refresh Rules
 
@@ -51,15 +55,16 @@ Refresh the release package when any of these change:
 Current version-line contract:
 
 - retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`,
-  `v1.0.3`, `v1.0.4`
+  `v1.0.3`, `v1.0.4`, `v1.0.5`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.0.4`
-- current published package line on `main`: `1.0.4`
-- current develop package line on `develop`: `1.0.5`
-- active exact release candidate line on `develop`: `v1.0.5`
+- current exact released line: `v1.0.5`
+- current published package line on `main`: `1.0.5`
+- current develop package line on `develop`: `1.0.6`
+- active exact release candidate line on `develop`: `v1.0.6`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
 - release branch: `main`
+- next-line branch model: `gitflow-lite`
 
 Strict SemVer rule after an exact release:
 
@@ -77,6 +82,21 @@ Strict SemVer rule after an exact release:
   exact release version number
 - future sessions shall not treat a burned exact release as the green release
   baseline for later publication
+
+Decision framework for choosing `major`, `minor`, or `patch`:
+
+- choose `major` when a governed public or maintainer contract is intentionally
+  broken, removed, or flipped in a way that invalidates an already-published
+  workflow, branch expectation, install path, or runtime surface
+- choose `minor` when a new governed capability or supported workflow is added
+  without breaking the currently exact released line
+- choose `patch` when the change fixes, hardens, clarifies, or governs an
+  existing capability, release rule, procedure, branch policy, or CI posture
+  without changing the current exact released contract
+- default governance-only hardening to `patch` unless the hardening itself
+  changes a governed contract in a breaking or additive way
+- record the chosen bump rationale in the control plane before further
+  publication or release normalization continues
 
 Do not reopen release refresh just because:
 
@@ -143,6 +163,11 @@ Required branch-model and CI posture:
 - release promotion lands on `main`
 - protected-branch promotion uses required checks instead of direct operator
   trust
+- `feature/*` lanes target `develop`
+- `release/*` lanes are cut from `develop`, validate the release candidate, and
+  merge to `main` plus back into `develop`
+- `hotfix/*` lanes are cut from `main`, fix one exact release line, and merge
+  to `main` plus back into `develop`
 - the required checks are:
   - GitLab `docs_continuous_integration`
   - GitLab `docs_public_continuous_integration`
@@ -151,6 +176,19 @@ Required branch-model and CI posture:
   - GitLab `package_extension_preview`
   - GitHub `Public Facade Package Preview / package-preview`
   - GitHub `Public Facade Linux Smoke / public-facade-linux-smoke`
+
+Lane-specific CI and gate responsibilities:
+
+- `feature/*`: focused tests plus any affected doc/design gates before merge to
+  `develop`
+- `develop`: required checks plus `npm run design:gate` and
+  `npm run design:gate:assert-complete` for governance or architecture work
+- `release/*`: full required checks, design gates, release-readiness
+  normalization, and public-facade proof before merge to `main`
+- `hotfix/*`: focused regression checks, affected docs/design gates, and the
+  exact released-line package audit before merge to `main`
+- `main`: protected exact-release branch; exact SemVer tags are cut only after
+  merged `main` is green
 
 Required closeout checks for any sustainment slice:
 

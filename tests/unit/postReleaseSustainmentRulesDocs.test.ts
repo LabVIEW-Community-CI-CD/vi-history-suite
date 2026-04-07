@@ -28,10 +28,18 @@ type SustainmentRules = {
       publicCodespaceBranch: string;
       integrationBranch?: string;
       releaseBranch?: string;
+      nextLineBranchModel?: string;
     };
     maintainedSurfaces: string[];
     refreshTriggers: string[];
     strictSemverRule?: string[];
+    semverDecisionFramework?: {
+      defaultGovernanceBump?: string;
+      major?: string[];
+      minor?: string[];
+      patch?: string[];
+      decisionRecordingRule?: string;
+    };
     explicitNonTriggers: string[];
   };
   benchmarkRefreshCadence: {
@@ -51,9 +59,13 @@ type SustainmentRules = {
   };
   operatorSurfaceSustainment: {
     branchModel?: {
+      model?: string;
       integrationBranch?: string;
       releaseBranch?: string;
+      temporaryBranchPrefixes?: string[];
+      promotionRules?: string[];
       requiredChecks?: string[];
+      laneResponsibilities?: Record<string, string[]>;
     };
     requiredAuthorityUpdates: string[];
     requiredVerification: string[];
@@ -98,15 +110,16 @@ describe('post-release sustainment rules package', () => {
 
     expect(rules.releaseCadence.model).toBe('event-driven');
     expect(rules.releaseCadence.versionLineContract).toEqual({
-      retainedExactVersionReleases: ['v0.2.0', 'v1.0.0', 'v1.0.1', 'v1.0.2', 'v1.0.3', 'v1.0.4'],
+      retainedExactVersionReleases: ['v0.2.0', 'v1.0.0', 'v1.0.1', 'v1.0.2', 'v1.0.3', 'v1.0.4', 'v1.0.5'],
       burnedExactVersionReleases: ['v1.0.2'],
-      currentExactReleaseLine: 'v1.0.4',
-      currentMainPackageLine: '1.0.4',
-      currentDevelopPackageLine: '1.0.5',
-      activeDevelopCandidateReleaseLine: 'v1.0.5',
+      currentExactReleaseLine: 'v1.0.5',
+      currentMainPackageLine: '1.0.5',
+      currentDevelopPackageLine: '1.0.6',
+      activeDevelopCandidateReleaseLine: 'v1.0.6',
       publicCodespaceBranch: 'develop',
       integrationBranch: 'develop',
-      releaseBranch: 'main'
+      releaseBranch: 'main',
+      nextLineBranchModel: 'gitflow-lite'
     });
     expect(rules.releaseCadence.maintainedSurfaces).toContain(
       'preview-evidence/vi-history-suite-<version>.vsix'
@@ -126,6 +139,28 @@ describe('post-release sustainment rules package', () => {
         'future sessions shall not treat an unreleased SemVer bump as complete until the matching public tag and public GitHub release are both published',
         'future sessions shall not keep landing post-release changes on the previous exact release version number',
         'future sessions shall not treat a burned exact release as the green release baseline for later publication'
+      ])
+    );
+    expect(rules.releaseCadence.semverDecisionFramework).toEqual(
+      expect.objectContaining({
+        defaultGovernanceBump: 'patch',
+        decisionRecordingRule:
+          'record the chosen bump rationale in the control plane before further publication or release normalization continues'
+      })
+    );
+    expect(rules.releaseCadence.semverDecisionFramework?.major).toEqual(
+      expect.arrayContaining([
+        'breaks or removes a governed public or maintainer contract on purpose'
+      ])
+    );
+    expect(rules.releaseCadence.semverDecisionFramework?.minor).toEqual(
+      expect.arrayContaining([
+        'adds a new governed capability or supported workflow without breaking the current exact released line'
+      ])
+    );
+    expect(rules.releaseCadence.semverDecisionFramework?.patch).toEqual(
+      expect.arrayContaining([
+        'fixes or hardens an existing workflow, release rule, procedure, branch policy, or CI posture without breaking the exact released contract'
       ])
     );
 
@@ -153,8 +188,16 @@ describe('post-release sustainment rules package', () => {
     );
 
     expect(rules.operatorSurfaceSustainment.branchModel).toEqual({
+      model: 'gitflow-lite',
       integrationBranch: 'develop',
       releaseBranch: 'main',
+      temporaryBranchPrefixes: ['feature/', 'release/', 'hotfix/'],
+      promotionRules: [
+        'feature/* branches target develop',
+        'release/* branches are cut from develop and merge to main plus back into develop',
+        'hotfix/* branches are cut from main and merge to main plus back into develop',
+        'exact SemVer tags are cut from main only after the protected main pipeline succeeds'
+      ],
       requiredChecks: [
         'docs_continuous_integration',
         'docs_public_continuous_integration',
@@ -163,7 +206,33 @@ describe('post-release sustainment rules package', () => {
         'package_extension_preview',
         'Public Facade Package Preview / package-preview',
         'Public Facade Linux Smoke / public-facade-linux-smoke'
-      ]
+      ],
+      laneResponsibilities: {
+        'feature/*': [
+          'focused tests for the changed surface',
+          'affected documentation or design gates before merge to develop'
+        ],
+        develop: [
+          'required checks',
+          'npm run design:gate',
+          'npm run design:gate:assert-complete for governance or architecture work'
+        ],
+        'release/*': [
+          'required checks',
+          'design gates',
+          'release-readiness normalization',
+          'public-facade proof before merge to main'
+        ],
+        'hotfix/*': [
+          'focused regression checks',
+          'affected documentation or design gates',
+          'exact released-line package audit before merge to main'
+        ],
+        main: [
+          'protected exact-release branch',
+          'exact SemVer tags only after merged main is green'
+        ]
+      }
     });
     expect(rules.operatorSurfaceSustainment.requiredAuthorityUpdates).toContain(
       'docs/product/post-release-sustainment-rules.md'
@@ -184,11 +253,17 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('## Release Refresh Rules');
     expect(rulesDoc).toContain('Current version-line contract:');
     expect(rulesDoc).toContain('Strict SemVer rule after an exact release');
+    expect(rulesDoc).toContain('Decision framework for choosing `major`, `minor`, or `patch`:');
     expect(rulesDoc).toContain('## Benchmark Refresh Rules');
     expect(rulesDoc).toContain('## Operator And Documentation Upkeep Rules');
     expect(rulesDoc).toContain('develop');
     expect(rulesDoc).toContain('release branch');
     expect(rulesDoc).toContain('required checks');
+    expect(rulesDoc).toContain('gitflow-lite');
+    expect(rulesDoc).toContain('Lane-specific CI and gate responsibilities:');
+    expect(rulesDoc).toContain('feature/*');
+    expect(rulesDoc).toContain('hotfix/*');
+    expect(rulesDoc).toContain('design:gate');
     expect(rulesDoc).toContain('burned exact release line');
     expect(rulesDoc).toContain('PROGRAM-0002');
     expect(rulesDoc).toContain('execution-policy bypass');

@@ -3,17 +3,33 @@
 This changelog is the governed version-line summary for `vi-history-suite`.
 
 Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
-`v1.0.2`, `v1.0.3`, and `v1.0.4`.
+`v1.0.2`, `v1.0.3`, `v1.0.4`, and `v1.0.5`.
 
 Burned exact-version releases now include `v1.0.2`.
+
+## [1.0.6] - 2026-04-07
+
+### Changed
+
+- exact `v1.0.5` on `main` is now merged back into `develop` before the next
+  release line opens, so the integration branch no longer carries stale
+  release-close control-plane truth
+- the active develop candidate line is now `1.0.6` / `v1.0.6` for governance
+  hardening, rather than landing post-release control-plane changes under the
+  exact `v1.0.5` line
+- the sustainment control plane now carries an explicit SemVer-decision
+  framework that forces future sessions to justify `major`, `minor`, or
+  `patch` bumps from governed criteria instead of implicit judgment
+- the branch model now moves from ad hoc `develop`/`main` language toward a
+  governed `gitflow-lite` topology with explicit `feature/*`, `release/*`,
+  and `hotfix/*` lanes plus lane-specific CI and `design:gate` obligations
 
 ## [1.0.5] - 2026-04-07
 
 ### Changed
 
-- `develop` is now the explicit public `1.0.5` integration candidate line,
-  while `main` remains aligned to the exact released `v1.0.4` public line
-  until the next exact release is published
+- the public release line is now exact `v1.0.5` on `main`, and `develop`
+  remains aligned to `1.0.5` until the next exact release candidate is opened
 - the public fork-owner first-use Codespaces procedure is now tighter for a
   LabVIEW-first reader: it keeps the `develop` fork requirement, the
   `Codespaces` `...` -> `New with options` path, the `16-core` machine
@@ -24,9 +40,6 @@ Burned exact-version releases now include `v1.0.2`.
   docs CI test that reads the published public wiki checkout directly, so the
   fork-owner procedure can no longer drift silently from the authority/public
   source contract
-- public GitHub wiki validation in GitLab CI now clones a matching candidate
-  branch when one exists and falls back to `master` otherwise, so `develop`
-  candidate docs can stay gated without prematurely mutating the published wiki
 
 ## [1.0.4] - 2026-04-07
 
