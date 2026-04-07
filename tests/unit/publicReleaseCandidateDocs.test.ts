@@ -17,7 +17,13 @@ describe('public release candidate control surface', () => {
   it('retains the current public-release candidate state across control-plane docs', () => {
     const candidate = readJson<{
       versionLine?: string;
-      authorityRepo?: { latestGreenPipelineCommit?: string; latestGreenPipelineId?: string };
+      authorityRepo?: {
+        latestObservedMainCommit?: string;
+        latestObservedMainPipelineId?: string;
+        latestObservedMainPipelineStatus?: string;
+        latestGreenPipelineCommit?: string;
+        latestGreenPipelineId?: string;
+      };
       publishedPublicSource?: { publishedCommit?: string };
       publishedPublicWiki?: { publishedHeadCommit?: string };
       candidateReadiness?: Record<string, string>;
@@ -33,20 +39,23 @@ describe('public release candidate control surface', () => {
       'docs/product/issues/ISSUE-0407-public-facade-installer-and-windows-acceptance.md'
     );
 
-    expect(candidate.versionLine).toBe('1.0.0');
+    expect(candidate.versionLine).toBe('1.0.1');
     expect(candidate.authorityRepo).toMatchObject({
-      latestGreenPipelineCommit: 'fd876ee',
-      latestGreenPipelineId: '2433390427'
+      latestObservedMainCommit: '5e6bfdc',
+      latestObservedMainPipelineId: '2433459214',
+      latestObservedMainPipelineStatus: 'running',
+      latestGreenPipelineCommit: '94b6a59',
+      latestGreenPipelineId: '2433417351'
     });
-    expect(candidate.publishedPublicSource?.publishedCommit).toBe('a1a6b1e');
-    expect(candidate.publishedPublicWiki?.publishedHeadCommit).toBe('2ecb847');
+    expect(candidate.publishedPublicSource?.publishedCommit).toBe('85230a3');
+    expect(candidate.publishedPublicWiki?.publishedHeadCommit).toBe('fe3e11c');
     expect(candidate.candidateReadiness).toMatchObject({
-      authorityBaseline: 'passed',
+      authorityBaseline: 'running',
       localPublicDevcontainer: 'passed',
       localPublicFixtureHelper: 'passed',
       publicCodespace: 'passed',
-      gateDPublicAcceptance: 'passed',
-      exactPublicRelease: 'published'
+      gateDPublicAcceptance: 'passed-on-v1.0.0',
+      exactPublicRelease: 'v1.0.0-published'
     });
     expect(candidate.testerFixtureStrategy).toMatchObject({
       command: 'npm run public:fixture:icon-editor',
@@ -77,15 +86,23 @@ describe('public release candidate control surface', () => {
     });
 
     expect(candidateMarkdown).toContain('Public Release Candidate');
+    expect(candidateMarkdown).toContain('Version line: `1.0.1`');
+    expect(candidateMarkdown).toContain('Authority `main` pipeline: commit `5e6bfdc`, pipeline `2433459214`, status `running`');
+    expect(candidateMarkdown).toContain('Latest green authority `main` pipeline: commit `94b6a59`, pipeline `2433417351`');
+    expect(candidateMarkdown).toContain('Published public source commit: `85230a3`');
+    expect(candidateMarkdown).toContain('Published public wiki head: `fe3e11c`');
+    expect(candidateMarkdown).toContain('Current `main` package line: `1.0.1`');
+    expect(candidateMarkdown).toContain('Current exact public release line: `v1.0.0`');
+    expect(candidateMarkdown).toContain('Next exact public release line on `main`: `v1.0.1`');
     expect(candidateMarkdown).toContain('Local public devcontainer: passed');
     expect(candidateMarkdown).toContain('npm run public:fixture:icon-editor');
     expect(candidateMarkdown).toContain('Public Codespace: passed');
-    expect(candidateMarkdown).toContain('Exact public release: published');
+    expect(candidateMarkdown).toContain('Exact public release: v1.0.0-published');
     expect(candidateMarkdown).toContain('GitHub release: `v1.0.0`');
     expect(candidateMarkdown).toContain('GitLab tag pipeline: `2433390427`');
     expect(candidateMarkdown).toContain('GitHub Codespace `novacula` now passes the hosted public smoke');
     expect(candidateMarkdown).toContain('resource/plugins/lv_icon.vi');
-    expect(candidateMarkdown).toContain('Gate D public acceptance: passed');
+    expect(candidateMarkdown).toContain('Gate D public acceptance: passed-on-v1.0.0');
     expect(candidateMarkdown).toContain('None. The canonical Docker Linux cold-pull human pass is retained');
 
     expect(currentState).toContain('[Public Release Candidate](./public-release-candidate.md)');

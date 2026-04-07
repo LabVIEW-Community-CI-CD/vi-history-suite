@@ -1,20 +1,31 @@
 # Public Release Candidate
 
-- Version line: `1.0.0`
-- Recorded at: `2026-04-07T04:41:58.000Z`
-- Authority exact-release pipeline: commit `fd876ee`, pipeline `2433390427`
-- Published public source commit: `a1a6b1e`
-- Published public wiki head: `2ecb847`
+- Version line: `1.0.1`
+- Recorded at: `2026-04-07T05:16:18.000Z`
+- Authority `main` pipeline: commit `5e6bfdc`, pipeline `2433459214`, status `running`
+- Latest green authority `main` pipeline: commit `94b6a59`, pipeline `2433417351`
+- Published public source commit: `85230a3`
+- Published public wiki head: `fe3e11c`
 
 ## Readiness
 
-- Authority baseline: passed
-- Local installed VSIX: passed
+- Authority baseline: running
+- Local installed VSIX: exact-v1.0.0-only
 - Local public devcontainer: passed
 - Local public fixture helper: passed
 - Public Codespace: passed
-- Gate D public acceptance: passed
-- Exact public release: published
+- Gate D public acceptance: passed-on-v1.0.0
+- Exact public release: v1.0.0-published
+
+## Version-Line Contract
+
+- Current `main` package line: `1.0.1`
+- Current exact public release line: `v1.0.0`
+- Next exact public release line on `main`: `v1.0.1`
+
+This package now distinguishes the live post-release `main` line from the
+retained exact public release so future sessions do not treat the old
+`v1.0.0` candidate as the active line after `1.0.1` work has already landed.
 
 ## Exact Release
 

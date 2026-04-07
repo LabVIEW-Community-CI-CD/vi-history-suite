@@ -1,31 +1,34 @@
 {
   "schema": "vi-history-suite/public-release-candidate@v1",
-  "versionLine": "1.0.0",
-  "recordedAt": "2026-04-07T04:41:58.000Z",
+  "versionLine": "1.0.1",
+  "recordedAt": "2026-04-07T05:16:18.000Z",
   "authorityRepo": {
     "role": "source-of-truth",
-    "latestGreenPipelineCommit": "fd876ee",
-    "latestGreenPipelineId": "2433390427",
-    "status": "exact-release-published"
+    "latestObservedMainCommit": "5e6bfdc",
+    "latestObservedMainPipelineId": "2433459214",
+    "latestObservedMainPipelineStatus": "running",
+    "latestGreenPipelineCommit": "94b6a59",
+    "latestGreenPipelineId": "2433417351",
+    "status": "post-release-main-advanced"
   },
   "publishedPublicSource": {
     "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
-    "publishedCommit": "a1a6b1e",
+    "publishedCommit": "85230a3",
     "status": "published"
   },
   "publishedPublicWiki": {
     "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite.wiki.git",
-    "publishedHeadCommit": "2ecb847",
+    "publishedHeadCommit": "fe3e11c",
     "status": "published"
   },
   "candidateReadiness": {
-    "authorityBaseline": "passed",
-    "localInstalledVsix": "passed",
+    "authorityBaseline": "running",
+    "localInstalledVsix": "exact-v1.0.0-only",
     "localPublicDevcontainer": "passed",
     "localPublicFixtureHelper": "passed",
     "publicCodespace": "passed",
-    "gateDPublicAcceptance": "passed",
-    "exactPublicRelease": "published"
+    "gateDPublicAcceptance": "passed-on-v1.0.0",
+    "exactPublicRelease": "v1.0.0-published"
   },
   "exactRelease": {
     "version": "v1.0.0",
