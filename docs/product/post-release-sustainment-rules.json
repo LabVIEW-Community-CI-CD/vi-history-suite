@@ -27,8 +27,8 @@
       ],
       "currentExactReleaseLine": "v1.0.6",
       "currentMainPackageLine": "1.0.6",
-      "currentDevelopPackageLine": "1.0.6",
-      "activeDevelopCandidateReleaseLine": null,
+      "currentDevelopPackageLine": "1.1.0",
+      "activeDevelopCandidateReleaseLine": "v1.1.0",
       "publicDefaultBranch": "main",
       "publicCodespaceBranch": "develop",
       "integrationBranch": "develop",
@@ -75,6 +75,19 @@
         "captures governance-only or documentation-package hardening for an existing product line"
       ],
       "decisionRecordingRule": "record the chosen bump rationale in the control plane before further publication or release normalization continues"
+    },
+    "activeOpeningDecision": {
+      "recordedAt": "2026-04-07",
+      "chosenBump": "minor",
+      "targetDevelopCandidateReleaseLine": "v1.1.0",
+      "rationale": [
+        "the next line adds one governed hosted branch-protection and CI responsibility capability across authority GitLab, the public GitHub facade, and GitHub experiment lanes",
+        "the exact v1.0.6 public contract remains valid while the next-line operating model becomes more explicit and testable"
+      ],
+      "rejectedAlternatives": {
+        "patch": "rejected because the slice expands the maintained release operating model rather than only correcting one existing line",
+        "major": "rejected because no governed v1.0.6 public contract is intentionally broken or removed"
+      }
     },
     "explicitNonTriggers": [
       "benchmark-only diagnosis that does not affect a shipped release surface",
@@ -133,7 +146,8 @@
         "feature/* branches target develop",
         "release/* branches are cut from develop and merge to main plus back into develop",
         "hotfix/* branches are cut from main and merge to main plus back into develop",
-        "exact SemVer tags are cut from main only after the protected main pipeline succeeds"
+        "exact SemVer tags are cut from main only after the protected main pipeline succeeds",
+        "local public-source promotion/check binds the intended checkout through --target-root or VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT and fails closed when the target repo is dirty"
       ],
       "requiredChecks": [
         "docs_continuous_integration",
@@ -169,6 +183,18 @@
           "protected exact-release branch",
           "exact SemVer tags only after merged main is green"
         ]
+      },
+      "hostedAutomationGovernanceDocs": [
+        "docs/product/hosted-ci-governance.md",
+        "docs/product/hosted-ci-governance.json"
+      ],
+      "publicSourcePromotion": {
+        "defaultTargetRoot": "../vi-history-suite.public",
+        "explicitBindingOptions": [
+          "--target-root",
+          "VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT"
+        ],
+        "dirtyTargetPolicy": "fail-closed-before-compare-or-write"
       },
       "findingRequirementDiscipline": [
         "every governed finding is classified before slice closeout as requirements-update-required or no-requirement-impact",
@@ -229,9 +255,39 @@
         }
       }
     },
+    "hostedAutomationProtectionModel": {
+      "authorityGitLab": {
+        "protectedBranches": [
+          "main",
+          "develop"
+        ],
+        "mergeGate": "only_allow_merge_if_pipeline_succeeds",
+        "namedRequiredChecks": false
+      },
+      "publicGitHub": {
+        "protectedBranches": [
+          "main",
+          "develop"
+        ],
+        "requiredChecks": [
+          "package-preview",
+          "public-facade-linux-smoke"
+        ]
+      },
+      "githubExperiment": {
+        "classification": "characterization-only",
+        "requiredForExactRelease": false,
+        "workflows": [
+          "Linux Runtime Benchmark Experiment",
+          "Windows Runtime Benchmark Image"
+        ]
+      }
+    },
     "requiredAuthorityUpdates": [
       "docs/product/development-queue.json",
       "docs/product/current-state.md",
+      "docs/product/hosted-ci-governance.md",
+      "docs/product/hosted-ci-governance.json",
       "docs/product/post-release-sustainment-rules.md",
       "docs/product/post-release-sustainment-rules.json",
       "docs/product/execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md",

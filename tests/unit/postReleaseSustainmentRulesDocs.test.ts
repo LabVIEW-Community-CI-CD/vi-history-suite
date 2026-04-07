@@ -41,6 +41,12 @@ type SustainmentRules = {
       patch?: string[];
       decisionRecordingRule?: string;
     };
+    activeOpeningDecision?: {
+      chosenBump?: string;
+      targetDevelopCandidateReleaseLine?: string;
+      rationale?: string[];
+      rejectedAlternatives?: Record<string, string>;
+    };
     explicitNonTriggers: string[];
   };
   benchmarkRefreshCadence: {
@@ -115,8 +121,8 @@ describe('post-release sustainment rules package', () => {
       burnedExactVersionReleases: ['v1.0.2'],
       currentExactReleaseLine: 'v1.0.6',
       currentMainPackageLine: '1.0.6',
-      currentDevelopPackageLine: '1.0.6',
-      activeDevelopCandidateReleaseLine: null,
+      currentDevelopPackageLine: '1.1.0',
+      activeDevelopCandidateReleaseLine: 'v1.1.0',
       publicDefaultBranch: 'main',
       publicCodespaceBranch: 'develop',
       integrationBranch: 'develop',
@@ -165,6 +171,17 @@ describe('post-release sustainment rules package', () => {
         'fixes or hardens an existing workflow, release rule, procedure, branch policy, or CI posture without breaking the exact released contract'
       ])
     );
+    expect(rules.releaseCadence.activeOpeningDecision).toEqual(
+      expect.objectContaining({
+        chosenBump: 'minor',
+        targetDevelopCandidateReleaseLine: 'v1.1.0'
+      })
+    );
+    expect(rules.releaseCadence.activeOpeningDecision?.rationale).toEqual(
+      expect.arrayContaining([
+        'the next line adds one governed hosted branch-protection and CI responsibility capability across authority GitLab, the public GitHub facade, and GitHub experiment lanes'
+      ])
+    );
 
     expect(rules.benchmarkRefreshCadence.model).toBe('event-driven-bounded');
     expect(rules.benchmarkRefreshCadence.acceptedComparablePrefix).toEqual({
@@ -189,56 +206,61 @@ describe('post-release sustainment rules package', () => {
       'out-of-scope alternative Windows x86 provisioning that is not part of the current governed image contract'
     );
 
-    expect(rules.operatorSurfaceSustainment.branchModel).toEqual(
-      expect.objectContaining({
-        model: 'gitflow-lite',
-        integrationBranch: 'develop',
-        releaseBranch: 'main',
-        temporaryBranchPrefixes: ['feature/', 'release/', 'hotfix/'],
-        promotionRules: [
-          'public GitHub default branch remains main so readers land on the latest exact released line by default',
-          'feature/* branches target develop',
-          'release/* branches are cut from develop and merge to main plus back into develop',
-          'hotfix/* branches are cut from main and merge to main plus back into develop',
-          'exact SemVer tags are cut from main only after the protected main pipeline succeeds'
-        ],
-        requiredChecks: [
-          'docs_continuous_integration',
-          'docs_public_continuous_integration',
-          'docs_internal_continuous_integration',
-          'test_extension',
-          'package_extension_preview',
-          'Public Facade Package Preview / package-preview',
-          'Public Facade Linux Smoke / public-facade-linux-smoke'
-        ],
-        laneResponsibilities: {
-          'feature/*': [
-            'focused tests for the changed surface',
-            'affected documentation or design gates before merge to develop'
-          ],
-          develop: [
-            'required checks',
-            'npm run design:gate',
-            'npm run design:gate:assert-complete for governance or architecture work'
-          ],
-          'release/*': [
-            'required checks',
-            'design gates',
-            'release-readiness normalization',
-            'public-facade proof before merge to main'
-          ],
-          'hotfix/*': [
-            'focused regression checks',
-            'affected documentation or design gates',
-            'exact released-line package audit before merge to main'
-          ],
-          main: [
-            'protected exact-release branch',
-            'exact SemVer tags only after merged main is green'
-          ]
-        }
-      })
+    expect(rules.operatorSurfaceSustainment.branchModel.model).toBe('gitflow-lite');
+    expect(rules.operatorSurfaceSustainment.branchModel.integrationBranch).toBe('develop');
+    expect(rules.operatorSurfaceSustainment.branchModel.releaseBranch).toBe('main');
+    expect(rules.operatorSurfaceSustainment.branchModel.temporaryBranchPrefixes).toEqual([
+      'feature/',
+      'release/',
+      'hotfix/'
+    ]);
+    expect(rules.operatorSurfaceSustainment.branchModel.promotionRules).toEqual(
+      expect.arrayContaining([
+        'public GitHub default branch remains main so readers land on the latest exact released line by default',
+        'feature/* branches target develop',
+        'release/* branches are cut from develop and merge to main plus back into develop',
+        'hotfix/* branches are cut from main and merge to main plus back into develop',
+        'exact SemVer tags are cut from main only after the protected main pipeline succeeds',
+        'local public-source promotion/check binds the intended checkout through --target-root or VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT and fails closed when the target repo is dirty'
+      ])
     );
+    expect(rules.operatorSurfaceSustainment.branchModel.requiredChecks).toEqual([
+      'docs_continuous_integration',
+      'docs_public_continuous_integration',
+      'docs_internal_continuous_integration',
+      'test_extension',
+      'package_extension_preview',
+      'Public Facade Package Preview / package-preview',
+      'Public Facade Linux Smoke / public-facade-linux-smoke'
+    ]);
+    expect(rules.operatorSurfaceSustainment.branchModel.laneResponsibilities).toEqual({
+      'feature/*': [
+        'focused tests for the changed surface',
+        'affected documentation or design gates before merge to develop'
+      ],
+      develop: [
+        'required checks',
+        'npm run design:gate',
+        'npm run design:gate:assert-complete for governance or architecture work'
+      ],
+      'release/*': [
+        'required checks',
+        'design gates',
+        'release-readiness normalization',
+        'public-facade proof before merge to main'
+      ],
+      'hotfix/*': [
+        'focused regression checks',
+        'affected documentation or design gates',
+        'exact released-line package audit before merge to main'
+      ],
+      main: ['protected exact-release branch', 'exact SemVer tags only after merged main is green']
+    });
+    expect(rules.operatorSurfaceSustainment.branchModel.publicSourcePromotion).toEqual({
+      defaultTargetRoot: '../vi-history-suite.public',
+      explicitBindingOptions: ['--target-root', 'VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT'],
+      dirtyTargetPolicy: 'fail-closed-before-compare-or-write'
+    });
     expect(rules.operatorSurfaceSustainment.branchModel.findingRequirementDiscipline).toEqual(
       expect.arrayContaining([
         'every governed finding is classified before slice closeout as requirements-update-required or no-requirement-impact'
@@ -269,6 +291,12 @@ describe('post-release sustainment rules package', () => {
       })
     );
     expect(rules.operatorSurfaceSustainment.requiredAuthorityUpdates).toContain(
+      'docs/product/hosted-ci-governance.md'
+    );
+    expect(rules.operatorSurfaceSustainment.requiredAuthorityUpdates).toContain(
+      'docs/product/hosted-ci-governance.json'
+    );
+    expect(rules.operatorSurfaceSustainment.requiredAuthorityUpdates).toContain(
       'docs/product/post-release-sustainment-rules.md'
     );
     expect(rules.operatorSurfaceSustainment.requiredDerivedUpdatesWhenReaderFacingTruthChanges).toContain(
@@ -291,10 +319,13 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('## Benchmark Refresh Rules');
     expect(rulesDoc).toContain('## Operator And Documentation Upkeep Rules');
     expect(rulesDoc).toContain('public GitHub default branch: `main`');
+    expect(rulesDoc).toContain('active exact release candidate line on `develop`: `v1.1.0`');
+    expect(rulesDoc).toContain('chosen bump: `minor`');
     expect(rulesDoc).toContain('develop');
     expect(rulesDoc).toContain('release branch');
     expect(rulesDoc).toContain('required checks');
     expect(rulesDoc).toContain('gitflow-lite');
+    expect(rulesDoc).toContain('Hosted automation governance is now retained explicitly:');
     expect(rulesDoc).toContain('Lane-specific CI and gate responsibilities:');
     expect(rulesDoc).toContain('Public GitHub workflow responsibility matrix:');
     expect(rulesDoc).toContain('preview VSIX packaging and preview-artifact upload');

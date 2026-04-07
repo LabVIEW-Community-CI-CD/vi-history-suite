@@ -9,6 +9,7 @@ const { spawnSync } = require('node:child_process');
 const repoRoot = path.resolve(path.dirname(fs.realpathSync.native(__filename)), '..');
 const publicSourceTemplateRoot = path.join(repoRoot, 'public-github-source');
 const DEFAULT_TARGET_ROOT = path.resolve(repoRoot, '..', 'vi-history-suite.public');
+const DEFAULT_TARGET_ROOT_ENV = 'VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT';
 const DEFAULT_EVIDENCE_DIR = path.join(
   repoRoot,
   '.cache',
@@ -105,6 +106,7 @@ function getPublicGithubSourcePromotionUsage() {
     'Usage: node scripts/promotePublicGithubSource.js [--target-root <path>] [--evidence-dir <path>] [--check] [--help]',
     '',
     'Promote the curated public GitHub source facade from GitLab authority into the local public GitHub source checkout.',
+    `When --target-root is omitted, ${DEFAULT_TARGET_ROOT_ENV} is honored before the default sibling checkout path.`,
     '',
     'Options:',
     '  --target-root PATH   Override the target public GitHub source repo root.',
@@ -115,9 +117,10 @@ function getPublicGithubSourcePromotionUsage() {
 }
 
 function parsePublicGithubSourcePromotionArgs(argv) {
+  const envTargetRoot = process.env[DEFAULT_TARGET_ROOT_ENV]?.trim();
   const parsed = {
     helpRequested: false,
-    targetRoot: DEFAULT_TARGET_ROOT,
+    targetRoot: envTargetRoot ? path.resolve(envTargetRoot) : DEFAULT_TARGET_ROOT,
     evidenceDir: DEFAULT_EVIDENCE_DIR,
     check: false
   };
@@ -344,6 +347,26 @@ function readGitRemote(rootPath) {
   return String(result.stdout ?? '').trim() || null;
 }
 
+function readGitStatusPorcelain(rootPath) {
+  if (!fs.existsSync(path.join(rootPath, '.git'))) {
+    return null;
+  }
+
+  const result = spawnSync('git', ['-C', rootPath, 'status', '--short'], {
+    encoding: 'utf8',
+    shell: false
+  });
+
+  if (result.error || result.status !== 0) {
+    return null;
+  }
+
+  return String(result.stdout ?? '')
+    .split('\n')
+    .map((line) => line.trimEnd())
+    .filter((line) => line.trim().length > 0);
+}
+
 function compareFileTrees(expectedRoot, actualRoot) {
   const expectedFiles = listManagedFiles(expectedRoot);
   const actualFiles = listManagedFiles(actualRoot);
@@ -388,6 +411,8 @@ function buildPromotionReport(options) {
     targetRoot: options.targetRoot,
     expectedTargetRemote: EXPECTED_TARGET_REMOTE,
     observedTargetRemote: options.observedTargetRemote,
+    defaultTargetRootEnv: DEFAULT_TARGET_ROOT_ENV,
+    targetRootDirtyEntries: options.targetRootDirtyEntries ?? [],
     managedRootPaths: MANAGED_ROOT_PATHS,
     authorityCopyPaths: AUTHORITY_COPY_PATHS,
     templateCopyPaths: TEMPLATE_COPY_PATHS,
@@ -409,6 +434,7 @@ function buildPromotionMarkdown(report) {
     `- Target root: ${report.targetRoot}`,
     `- Expected target remote: ${report.expectedTargetRemote}`,
     `- Observed target remote: ${report.observedTargetRemote ?? 'none'}`,
+    `- Target root env var: ${report.defaultTargetRootEnv}`,
     '',
     '## Managed Root Paths',
     '',
@@ -439,6 +465,13 @@ function buildPromotionMarkdown(report) {
     lines.push('- none');
   }
 
+  lines.push('', '## Target Root Git Status', '');
+  if (report.targetRootDirtyEntries.length > 0) {
+    lines.push(...report.targetRootDirtyEntries.map((entry) => `- \`${entry}\``));
+  } else {
+    lines.push('- clean or unavailable');
+  }
+
   return `${lines.join('\n')}\n`;
 }
 
@@ -463,6 +496,7 @@ async function runPublicGithubSourcePromotion(argv = process.argv.slice(2), deps
   await ensureEvidenceDir(parsed.evidenceDir);
 
   const observedTargetRemote = readGitRemote(parsed.targetRoot);
+  const targetRootDirtyEntries = readGitStatusPorcelain(parsed.targetRoot) ?? [];
   if (
     observedTargetRemote &&
     observedTargetRemote !== EXPECTED_TARGET_REMOTE &&
@@ -474,7 +508,24 @@ async function runPublicGithubSourcePromotion(argv = process.argv.slice(2), deps
       mode: parsed.check ? 'check' : 'write',
       targetRoot: parsed.targetRoot,
       observedTargetRemote,
+      targetRootDirtyEntries,
       failure: `Target repo remote mismatch: expected ${EXPECTED_TARGET_REMOTE}, got ${observedTargetRemote}`
+    });
+    await writePromotionEvidence(parsed.evidenceDir, report);
+    throw new Error(report.failure);
+  }
+
+  if (targetRootDirtyEntries.length > 0) {
+    const report = buildPromotionReport({
+      recordedAt: new Date().toISOString(),
+      status: 'failed',
+      mode: parsed.check ? 'check' : 'write',
+      targetRoot: parsed.targetRoot,
+      observedTargetRemote,
+      targetRootDirtyEntries,
+      failure:
+        `Target root has uncommitted changes and cannot be used for governed public-source promotion: ${parsed.targetRoot}. ` +
+        `Clean the repo first or bind the intended checkout explicitly with --target-root or ${DEFAULT_TARGET_ROOT_ENV}.`
     });
     await writePromotionEvidence(parsed.evidenceDir, report);
     throw new Error(report.failure);
@@ -494,6 +545,7 @@ async function runPublicGithubSourcePromotion(argv = process.argv.slice(2), deps
           mode,
           targetRoot: parsed.targetRoot,
           observedTargetRemote,
+          targetRootDirtyEntries,
           writtenFiles,
           failure: `Target root does not exist for check mode: ${parsed.targetRoot}`
         });
@@ -508,6 +560,7 @@ async function runPublicGithubSourcePromotion(argv = process.argv.slice(2), deps
         mode,
         targetRoot: parsed.targetRoot,
         observedTargetRemote,
+        targetRootDirtyEntries,
         writtenFiles,
         comparison,
         failure: comparison.clean
@@ -530,6 +583,7 @@ async function runPublicGithubSourcePromotion(argv = process.argv.slice(2), deps
       mode,
       targetRoot: parsed.targetRoot,
       observedTargetRemote,
+      targetRootDirtyEntries,
       writtenFiles,
       comparison,
       failure: comparison.clean
@@ -572,6 +626,7 @@ module.exports = {
   AUTHORITY_COPY_PATHS,
   DEFAULT_EVIDENCE_DIR,
   DEFAULT_TARGET_ROOT,
+  DEFAULT_TARGET_ROOT_ENV,
   EXPECTED_TARGET_REMOTE,
   MANAGED_ROOT_PATHS,
   PUBLIC_DESIGN_CONTRACT_TESTS,
@@ -581,6 +636,7 @@ module.exports = {
   createPublicGithubSourcePromotionPlan,
   getPublicGithubSourcePromotionUsage,
   parsePublicGithubSourcePromotionArgs,
+  readGitStatusPorcelain,
   renderPublicPackageManifest,
   runPublicGithubSourcePromotion,
   writePromotedTree

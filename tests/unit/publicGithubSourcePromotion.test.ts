@@ -1,6 +1,7 @@
 import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import { execFileSync } from 'node:child_process';
 
 import { describe, expect, it } from 'vitest';
 
@@ -26,6 +27,13 @@ const promotion = require(path.resolve(
     evidenceDir: string;
     check: boolean;
   };
+  runPublicGithubSourcePromotion: (
+    argv?: string[],
+    deps?: {
+      stdout?: { write: (value: string) => void };
+      stderr?: { write: (value: string) => void };
+    }
+  ) => Promise<string>;
   renderPublicPackageManifest: () => {
     version: string;
     scripts: Record<string, string>;
@@ -63,6 +71,9 @@ describe('public GitHub source promotion', () => {
     });
     expect(promotion.getPublicGithubSourcePromotionUsage()).toContain('--target-root');
     expect(promotion.getPublicGithubSourcePromotionUsage()).toContain('--check');
+    expect(promotion.getPublicGithubSourcePromotionUsage()).toContain(
+      'VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT'
+    );
 
     expect(plan.expectedTargetRemote).toBe('https://github.com/svelderrainruiz/vi-history-suite.git');
     expect(plan.managedRootPaths).toEqual(
@@ -94,10 +105,51 @@ describe('public GitHub source promotion', () => {
     ]);
   });
 
+  it('honors env-bound target roots and fails closed on dirty target repos', async () => {
+    const originalTargetRoot = process.env.VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT;
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'vihs-public-target-'));
+    const envTargetRoot = path.join(tempRoot, 'env-target');
+    const dirtyTargetRoot = path.join(tempRoot, 'dirty-target');
+    const evidenceDir = path.join(tempRoot, 'evidence');
+
+    try {
+      process.env.VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT = envTargetRoot;
+      expect(promotion.parsePublicGithubSourcePromotionArgs([]).targetRoot).toBe(
+        path.resolve(envTargetRoot)
+      );
+
+      fs.mkdirSync(dirtyTargetRoot, { recursive: true });
+      execFileSync('git', ['-C', dirtyTargetRoot, 'init'], { encoding: 'utf8' });
+      fs.writeFileSync(path.join(dirtyTargetRoot, 'README.md'), 'dirty\n', 'utf8');
+
+      await expect(
+        promotion.runPublicGithubSourcePromotion(
+          ['--check', '--target-root', dirtyTargetRoot, '--evidence-dir', evidenceDir],
+          {
+            stdout: { write: () => {} },
+            stderr: { write: () => {} }
+          }
+        )
+      ).rejects.toThrow('Target root has uncommitted changes');
+
+      const report = JSON.parse(
+        fs.readFileSync(path.join(evidenceDir, 'public-github-source-promotion.json'), 'utf8')
+      ) as { targetRootDirtyEntries?: string[] };
+      expect(report.targetRootDirtyEntries).toEqual(expect.arrayContaining(['?? README.md']));
+    } finally {
+      if (originalTargetRoot === undefined) {
+        delete process.env.VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT;
+      } else {
+        process.env.VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT = originalTargetRoot;
+      }
+      fs.rmSync(tempRoot, { recursive: true, force: true });
+    }
+  });
+
   it('renders a narrower public package contract than authority', () => {
     const manifest = promotion.renderPublicPackageManifest();
 
-    expect(manifest.version).toBe('1.0.6');
+    expect(manifest.version).toBe('1.1.0');
     expect(manifest.files).toEqual([
       'out/**',
       'resources/**',

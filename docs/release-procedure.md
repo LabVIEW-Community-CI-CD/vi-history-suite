@@ -14,8 +14,11 @@
 - The current exact released line is `v1.0.6`.
 - The burned exact released line is `v1.0.2`.
 - The current published package line on `main` is `1.0.6`.
-- The current develop package line on `develop` is `1.0.6`.
-- No newer exact release candidate line is active on `develop` yet.
+- The current develop package line on `develop` is `1.1.0`.
+- The active exact release candidate line on `develop` is `v1.1.0`.
+- The active SemVer opening decision is `minor` because this tranche adds one
+  governed hosted branch-protection and CI responsibility model without
+  breaking the exact `v1.0.6` public contract.
 - The public GitHub default branch is `main` because it carries the latest
   exact released source line.
 - The public Codespaces evaluation branch is `develop`.
@@ -23,6 +26,9 @@
 - The release branch is `main`.
 - The next-line branch model is `gitflow-lite` with temporary
   `feature/*`, `release/*`, and `hotfix/*` lanes.
+- The hosted automation governance matrix is retained in:
+  - `docs/product/hosted-ci-governance.md`
+  - `docs/product/hosted-ci-governance.json`
 - Protected-branch promotion shall rely on required checks, not operator memory.
 - After an exact release is published, the current published package line on
   `main` shall match that exact release line.
@@ -109,7 +115,14 @@
     - GitHub `workflow_dispatch` on `.github/workflows/public-facade-linux-smoke.yml`
 13. When the public source facade changes materially, promote the curated
     public GitHub source repo from authority and record the published commit:
+    - bind the intended local public checkout with `--target-root` or
+      `VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT` whenever the canonical sibling
+      checkout is not the repo you intend to validate or write
+    - `npm run public:source:check`
     - `npm run public:source:promote`
+    - clean the target repo first if the governed check/promotion surface
+      reports dirty-target failure; do not treat dirty side-worktree drift as
+      publishable truth
     - update `docs/product/public-github-source-publication-ledger.{md,json}`
 14. Keep public source publication separate from public GitHub wiki
     publication; one publication act does not imply the other.
@@ -155,5 +168,5 @@
   `v1.0.1`, burned `v1.0.2`, exact `v1.0.3`, exact `v1.0.4`, or exact
   `v1.0.5`, or exact `v1.0.6` release
   evidence.
-- The current develop package line on `develop` is `1.0.6`, and no newer
-  exact release candidate line is active on `develop` yet.
+- The current develop package line on `develop` is `1.1.0`, and the active
+  exact release candidate line on `develop` is `v1.1.0`.

@@ -1641,6 +1641,39 @@
   PROGRAM-0002, ISSUE-0407, and ADR-0016 to confirm GitLab remains authority,
   the private GitHub experiment mirror is non-authoritative, and the public
   GitHub facade remains release/setup/support only
+- `TEST-UNIT-325`: read `hosted-ci-governance.json`, `hosted-ci-governance.md`,
+  ADR-0033, sustainment rules, the GitHub experiment workflow files, and the
+  entrypoint docs and confirm the hosted automation matrix distinguishes
+  GitLab pipeline-success admission, public GitHub named required checks, and
+  characterization-only benchmark workflows
+- `TEST-UNIT-326`: read `.gitlab-ci.yml`, `hosted-ci-governance.json`,
+  sustainment rules, and the entrypoint docs and confirm
+  `package_extension_preview` is admitted on `develop`, `release/*`,
+  `hotfix/*`, `main`, and exact tags while short-lived feature work relies on
+  merge-request admission instead of a generic preview push lane
+- `TEST-UNIT-327`: read `docs/cm/cm-plan.md`, sustainment rules, release
+  procedure, current-state, README, and the hosted automation matrix and
+  confirm they all agree that `develop` is the integration branch and `main`
+  is the exact release branch
+- `TEST-UNIT-328`: verify `promotePublicGithubSource` honors
+  `VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT` when no explicit `--target-root` is
+  supplied and fails closed on dirty target repos before comparison or write
+  treats a stale side checkout as governed public-source drift
+- `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
+  release procedure, and ADR-0033 and confirm the retained hosted automation
+  matrix explains which hosted checks are exact-release gates and which are
+  characterization-only experiment lanes
+- `TEST-DOC-091`: review `.gitlab-ci.yml`, hosted governance, sustainment, and
+  release docs and confirm authority preview packaging now follows the
+  documented branch lanes instead of behaving like a `main`-only lane
+- `TEST-DOC-092`: review the CM plan plus the release-governance docs and
+  confirm the branch model no longer contradicts itself across retained
+  surfaces
+- `TEST-DOC-093`: review ADR-0028, sustainment, current-state, README, and
+  release procedure and confirm the public-source promotion/check surface now
+  binds the intended local checkout through `--target-root` or
+  `VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT` and refuses dirty target repos instead
+  of treating stale side-worktree drift as governed publication truth
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

@@ -40,6 +40,8 @@ The compare surface is Docker-only:
   source line.
 - `develop` is the public evaluation branch for the next governed candidate
   line.
+- The current active candidate line on `develop` is `v1.1.0`, while the exact
+  released line on `main` remains `v1.0.6`.
 - If you only want the latest released source or release-facing docs, stay on
   `main`.
 - If you are following the first-time Codespaces or devcontainer evaluation
@@ -155,7 +157,8 @@ npm run package -- --out /tmp/vi-history-suite-public-preview.vsix
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.0.6`
 - current published package line on `main`: `1.0.6`
-- current develop package line on `develop`: `1.0.6`
-- no newer exact release candidate line is active on `develop` yet
+- current develop package line on `develop`: `1.1.0`
+- active exact release candidate line on `develop`: `v1.1.0`
+- active SemVer opening decision: `minor`
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
