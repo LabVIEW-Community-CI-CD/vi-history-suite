@@ -44,7 +44,7 @@ describe('public Codespaces public-repo bootstrap docs', () => {
     expect(candidate).toContain(
       'Public wiki candidate review:'
     );
-    expect(candidate).toContain('awaiting-brand-new-fork-review-on-published-candidate');
+    expect(candidate).toContain('ready-for-next-brand-new-fork-review-on-published-candidate');
     expect(candidate).toContain('Review-ready gate:');
     expect(candidate).toContain('ready-for-brand-new-fork-review');
     expect(candidate).toContain('Required review environment: brand new fork plus brand new Codespace');
