@@ -1,0 +1,222 @@
+{
+  "schema": "vi-history-suite/hosted-ci-governance@v1",
+  "recordedAt": "2026-04-07",
+  "openingDecision": {
+    "currentExactReleaseLine": "v1.0.6",
+    "currentMainPackageLine": "1.1.0",
+    "currentDevelopPackageLine": "1.1.0",
+    "activeDevelopCandidateReleaseLine": "v1.1.0",
+    "activeReleaseCandidateBranch": "release/1.1.0",
+    "chosenBump": "minor",
+    "rationale": [
+      "the next line adds one governed hosted branch-protection and CI responsibility capability across authority GitLab, the public GitHub facade, and GitHub experiment lanes",
+      "the exact v1.0.6 public contract remains valid while the next-line operating model becomes more explicit and testable"
+    ],
+    "rejectedAlternatives": {
+      "patch": "the slice expands the maintained release operating model rather than only correcting one existing line",
+      "major": "no governed v1.0.6 public contract is intentionally broken or removed"
+    }
+  },
+  "branchModel": {
+    "model": "gitflow-lite",
+    "publicDefaultBranch": "main",
+    "integrationBranch": "develop",
+    "releaseBranch": "main",
+    "activeReleaseCandidateBranch": "release/1.1.0",
+    "temporaryBranchPrefixes": [
+      "feature/",
+      "release/",
+      "hotfix/"
+    ]
+  },
+  "authorityGitLab": {
+    "protectedBranches": [
+      "main",
+      "develop"
+    ],
+    "mergeGate": "only_allow_merge_if_pipeline_succeeds",
+    "namedRequiredChecks": false,
+    "laneAdmission": {
+      "feature/*": {
+        "pushPipelines": false,
+        "mergeRequestPipelines": true
+      },
+      "develop": {
+        "pushPipelines": true,
+        "mergeRequestPipelines": true
+      },
+      "release/*": {
+        "pushPipelines": true,
+        "mergeRequestPipelines": true
+      },
+      "hotfix/*": {
+        "pushPipelines": true,
+        "mergeRequestPipelines": true
+      },
+      "main": {
+        "pushPipelines": true,
+        "mergeRequestPipelines": true
+      },
+      "vX.Y.Z-tags": {
+        "pushPipelines": true,
+        "mergeRequestPipelines": false
+      }
+    },
+    "jobs": {
+      "docs_link_check": {
+        "classification": "required-governance-check",
+        "admittedRefs": [
+          "merge_request_event",
+          "develop",
+          "release/*",
+          "hotfix/*",
+          "main",
+          "vX.Y.Z-tags"
+        ]
+      },
+      "docs_continuous_integration": {
+        "classification": "required-governance-check",
+        "admittedRefs": [
+          "merge_request_event",
+          "develop",
+          "release/*",
+          "hotfix/*",
+          "main",
+          "vX.Y.Z-tags"
+        ]
+      },
+      "docs_public_continuous_integration": {
+        "classification": "required-governance-check",
+        "admittedRefs": [
+          "merge_request_event",
+          "develop",
+          "release/*",
+          "hotfix/*",
+          "main",
+          "vX.Y.Z-tags"
+        ]
+      },
+      "docs_internal_continuous_integration": {
+        "classification": "required-governance-check",
+        "admittedRefs": [
+          "merge_request_event",
+          "develop",
+          "release/*",
+          "hotfix/*",
+          "main",
+          "vX.Y.Z-tags"
+        ]
+      },
+      "test_extension": {
+        "classification": "required-governance-check",
+        "admittedRefs": [
+          "merge_request_event",
+          "develop",
+          "release/*",
+          "hotfix/*",
+          "main",
+          "vX.Y.Z-tags"
+        ]
+      },
+      "package_extension_preview": {
+        "classification": "preview-package-lane",
+        "admittedRefs": [
+          "develop",
+          "release/*",
+          "hotfix/*",
+          "main",
+          "vX.Y.Z-tags"
+        ]
+      },
+      "publish_docs_authoring_image": {
+        "classification": "publication-support",
+        "admittedRefs": [
+          "main",
+          "vX.Y.Z-tags"
+        ]
+      },
+      "wiki_workbench_prepare_published": {
+        "classification": "publication-support",
+        "admittedRefs": [
+          "main"
+        ]
+      },
+      "release_extension": {
+        "classification": "exact-release-only",
+        "admittedRefs": [
+          "vX.Y.Z-tags"
+        ]
+      }
+    },
+    "designGateBoundary": {
+      "localPromotionGate": "npm run design:gate",
+      "assertionSurface": "npm run design:gate:assert-complete",
+      "ciNamedRequiredCheck": false
+    }
+  },
+  "publicGitHub": {
+    "protectedBranches": [
+      "main",
+      "develop"
+    ],
+    "requiredChecks": [
+      "package-preview",
+      "public-facade-linux-smoke"
+    ],
+    "workflows": {
+      "Public Facade Package Preview": {
+        "requiredCheck": "package-preview",
+        "classification": "release-facing-required-check",
+        "admittedBranches": [
+          "develop",
+          "release/*",
+          "hotfix/*",
+          "main"
+        ],
+        "pullRequestTargets": [
+          "develop",
+          "main"
+        ]
+      },
+      "Public Facade Linux Smoke": {
+        "requiredCheck": "public-facade-linux-smoke",
+        "classification": "release-facing-required-check",
+        "admittedBranches": [
+          "develop",
+          "release/*",
+          "hotfix/*",
+          "main"
+        ],
+        "pullRequestTargets": [
+          "develop",
+          "main"
+        ]
+      }
+    }
+  },
+  "githubExperiment": {
+    "classification": "characterization-only",
+    "requiredForExactRelease": false,
+    "admittedBranches": [
+      "main",
+      "experiment/*"
+    ],
+    "workflows": [
+      "Linux Runtime Benchmark Experiment",
+      "Windows Runtime Benchmark Image"
+    ]
+  },
+  "antiDriftSurfaces": [
+    "docs/cm/cm-plan.md",
+    "docs/release-procedure.md",
+    "docs/product/post-release-sustainment-rules.md",
+    "docs/product/post-release-sustainment-rules.json",
+    "docs/product/current-state.md",
+    "README.md",
+    "docs/requirements/srs.md",
+    "docs/requirements/rtm.csv",
+    "docs/testing/test-plan.md",
+    "docs/product/hosted-ci-governance.md",
+    "docs/product/hosted-ci-governance.json"
+  ]
+}

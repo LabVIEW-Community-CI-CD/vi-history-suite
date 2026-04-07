@@ -41,6 +41,8 @@ rerun remains explicit under reopened `PROGRAM-0002`.
 5. requirements/RTM/test-plan evolution from governed findings
 6. ADR evolution from governed findings
 7. public GitHub workflow responsibility and churn-control governance
+8. hosted GitLab/GitHub protection semantics and workflow-lane classification
+9. public-source promotion target-root hygiene for local governed publication
 
 ## Queue Mapping
 
@@ -87,6 +89,11 @@ Every slice must preserve:
 - continuous refinement of the ADR package from governed findings
 - explicit public GitHub workflow responsibilities, bounded triggers, and
   churn-control posture
+- one governed hosted automation matrix that distinguishes GitLab protected
+  pipeline-success admission, GitHub named required checks, and
+  characterization-only experiment workflows
+- one governed public-source target-root rule so local promotion/check binds
+  the intended checkout and fails closed on dirty side worktrees
 
 ## First Implementation Slice
 

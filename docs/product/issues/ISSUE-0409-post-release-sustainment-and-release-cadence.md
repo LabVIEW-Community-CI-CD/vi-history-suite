@@ -27,6 +27,11 @@ Activation is now satisfied:
 - continuous refinement of ADR coverage from governed findings
 - explicit public GitHub workflow responsibility, trigger-boundary, and
   churn-control governance
+- explicit hosted GitLab/GitHub branch-protection and workflow-lane
+  classification so required checks and characterization-only lanes are not
+  conflated
+- explicit public-source target-root governance so local promotion/check does
+  not act on a stale dirty side checkout by mistake
 - benchmark refresh cadence and image contract upkeep
 - operator-surface and documentation-workbench sustainment
 - post-release control-plane maintenance
@@ -57,6 +62,10 @@ Activation is now satisfied:
   retain an explicit no-impact rationale
 - the public GitHub workflow pair retains explicit owned responsibilities,
   bounded triggers, and churn-control instead of raw-YAML-only truth
+- hosted GitLab and GitHub protection semantics are retained explicitly in one
+  governed matrix instead of being inferred from live settings
+- local public-source promotion/check binds the intended checkout explicitly
+  and fails closed on dirty target repos before reporting drift
 - future work does not fall back into unowned tail iteration
 
 ## Required Evidence

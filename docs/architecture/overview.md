@@ -177,3 +177,17 @@
   Transparent extension execution flexibility and runtime acquisition UX
 - [ADR-0026](./adr/ADR-0026-canonical-extension-execution-request-validation.md):
   Canonical extension execution-request validation
+- [ADR-0027](./adr/ADR-0027-public-github-facade-and-user-wiki-vs-internal-gitlab-control-plane.md):
+  Public GitHub facade and user-wiki boundary versus the internal GitLab control plane
+- [ADR-0028](./adr/ADR-0028-governed-authority-to-public-source-promotion-system.md):
+  Governed authority-to-public source promotion system
+- [ADR-0029](./adr/ADR-0029-develop-integration-main-release-and-required-checks.md):
+  `develop` as integration, `main` as release, and required-check discipline
+- [ADR-0030](./adr/ADR-0030-semver-decision-framework-and-gitflow-lite-branch-ci-topology.md):
+  SemVer decision framework and gitflow-lite branch/CI topology
+- [ADR-0031](./adr/ADR-0031-finding-driven-adr-and-requirement-evolution.md):
+  Finding-driven ADR and requirement evolution
+- [ADR-0032](./adr/ADR-0032-public-facade-github-workflow-responsibility-matrix.md):
+  Public facade GitHub workflow responsibility matrix
+- [ADR-0033](./adr/ADR-0033-hosted-automation-governance-matrix-and-protection-semantics.md):
+  Hosted automation governance matrix and protection semantics

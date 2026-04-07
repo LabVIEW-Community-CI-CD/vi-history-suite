@@ -43,8 +43,10 @@ Read these in order:
 27. [PROGRAM-0004: Post-Release Sustainment And Release Cadence](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)
 28. [post-release-sustainment-rules.md](./post-release-sustainment-rules.md)
 29. [post-release-sustainment-rules.json](./post-release-sustainment-rules.json)
-30. [Extension Execution Policy](./extension-execution-policy.md)
-31. [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
+30. [hosted-ci-governance.md](./hosted-ci-governance.md)
+31. [hosted-ci-governance.json](./hosted-ci-governance.json)
+32. [Extension Execution Policy](./extension-execution-policy.md)
+33. [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
 
 ## Authority Stack
 
@@ -89,9 +91,11 @@ Current control-plane surfaces:
 27. [PROGRAM-0004: Post-Release Sustainment And Release Cadence](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)
 28. [post-release-sustainment-rules.md](./post-release-sustainment-rules.md)
 29. [post-release-sustainment-rules.json](./post-release-sustainment-rules.json)
-30. [Extension Execution Policy](./extension-execution-policy.md)
-31. [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
-32. [Fast VS Code Loop](../dev-fast-loop.md)
+30. [hosted-ci-governance.md](./hosted-ci-governance.md)
+31. [hosted-ci-governance.json](./hosted-ci-governance.json)
+32. [Extension Execution Policy](./extension-execution-policy.md)
+33. [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
+34. [Fast VS Code Loop](../dev-fast-loop.md)
 
 ## Committed Capability State
 
@@ -137,19 +141,23 @@ Latest landed ship target:
 - retained release job: `13779604462`
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.0.6`
-- current published package line on `main`: `1.0.6`
-- current develop package line on `develop`: `1.0.6`
-- no newer exact release candidate line is active on `develop` yet
+- current published package line on `main`: `1.1.0`
+- current develop package line on `develop`: `1.1.0`
+- active exact release candidate line: `v1.1.0`
+- active release-candidate branch: `release/1.1.0`
+- active SemVer opening decision: `minor`
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
 - release branch: `main`
 - next-line branch model: `gitflow-lite` (`feature/*`, `release/*`, `hotfix/*`)
+- hosted automation governance matrix: [hosted-ci-governance.md](./hosted-ci-governance.md)
 - current changelog: [CHANGELOG.md](../../CHANGELOG.md)
 - docs-workbench image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
 - remaining blockers: none on the exact public `v1.0.6` line; public `main`
-  now publishes `66bdf73`, and `develop` remains aligned to `1.0.6` until the
-  next exact release candidate opens
+  now publishes `66bdf73`, and `develop` is opened on the governed `1.1.0`
+  candidate line for hosted branch/CI hardening before the next exact release
+  opens
 
 Current active tranche:
 
@@ -277,6 +285,9 @@ Current active and queued post-release programs:
   - the authority VSIX install surface is compile-and-audit guarded and does not permit shipped runtime `node_modules`
   - the public GitHub source repo and public GitHub wiki publish extension-user and public-product material only; they do not publish private requirements, benchmark-control detail, or design-gate docs
   - public source promotion is now a governed one-way act through `npm run public:source:promote`
+  - the local public-source operator surface now binds the intended checkout
+    through `--target-root` or `VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT` and fails
+    closed on dirty target repos before source-drift comparison or write
   - the GitHub workflow is the active public product smoke surface, while source publication remains a separate governed promotion act
   - `docs:ci:public` and `docs:ci:internal` now split public-user and internal-authority docs surfaces without removing the retained umbrella `docs:ci` lane
   - NSIS has been removed from the active public toolchain

@@ -104,12 +104,14 @@ If you are new to the repo, read these in order:
 19. [Debt Ledger JSON](./docs/product/debt-ledger.json)
 20. [Post-Release Sustainment Rules](./docs/product/post-release-sustainment-rules.md)
 21. [Post-Release Sustainment Rules JSON](./docs/product/post-release-sustainment-rules.json)
-22. [Extension Execution Policy](./docs/product/extension-execution-policy.md)
-23. [Documentation Package Workbench](./docs/documentation-workbench.md)
-24. [Program Repo Jump](./docs/product/program-repo-jump.md)
-25. [Public GitHub Source Authority Map](./docs/product/public-github-source-authority-map.md)
-26. [Public GitHub Source Publication Ledger](./docs/product/public-github-source-publication-ledger.md)
-27. [Public GitHub Source Publication Ledger JSON](./docs/product/public-github-source-publication-ledger.json)
+22. [Hosted CI Governance](./docs/product/hosted-ci-governance.md)
+23. [Hosted CI Governance JSON](./docs/product/hosted-ci-governance.json)
+24. [Extension Execution Policy](./docs/product/extension-execution-policy.md)
+25. [Documentation Package Workbench](./docs/documentation-workbench.md)
+26. [Program Repo Jump](./docs/product/program-repo-jump.md)
+27. [Public GitHub Source Authority Map](./docs/product/public-github-source-authority-map.md)
+28. [Public GitHub Source Publication Ledger](./docs/product/public-github-source-publication-ledger.md)
+29. [Public GitHub Source Publication Ledger JSON](./docs/product/public-github-source-publication-ledger.json)
 28. [PROGRAM-0001: Next Product Layer](./docs/product/execution-programs/PROGRAM-0001-next-product-layer.md)
 29. [PROGRAM-0002: Public Facade Release Kit And Host-Machine Acceptance](./docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
 
@@ -164,6 +166,8 @@ Use these repo-native control-plane entrypoints instead:
 - [Debt Ledger JSON](./docs/product/debt-ledger.json)
 - [Post-Release Sustainment Rules](./docs/product/post-release-sustainment-rules.md)
 - [Post-Release Sustainment Rules JSON](./docs/product/post-release-sustainment-rules.json)
+- [Hosted CI Governance](./docs/product/hosted-ci-governance.md)
+- [Hosted CI Governance JSON](./docs/product/hosted-ci-governance.json)
 - [Extension Execution Policy](./docs/product/extension-execution-policy.md)
 - [Documentation Package Workbench](./docs/documentation-workbench.md)
 - [Program Repo Jump](./docs/product/program-repo-jump.md)
@@ -399,22 +403,29 @@ Latest landed ship target:
 - retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.0.6`
-- current published package line on `main`: `1.0.6`
-- current develop package line on `develop`: `1.0.6`
-- no newer exact release candidate line is active on `develop` yet
+- current published package line on `main`: `1.1.0`
+- current develop package line on `develop`: `1.1.0`
+- active exact release candidate line: `v1.1.0`
+- active release-candidate branch: `release/1.1.0`
+- active SemVer opening decision: `minor`
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
 - release branch: `main`
 - next-line branch model: `gitflow-lite` (`feature/*`, `release/*`, `hotfix/*`)
+- hosted automation governance matrix: [docs/product/hosted-ci-governance.md](./docs/product/hosted-ci-governance.md)
+- public-source target-root governance: `npm run public:source:check` /
+  `npm run public:source:promote` bind the intended local checkout through
+  `--target-root` or `VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT` and fail closed on
+  dirty target repos
 - target release manifest: `release-evidence/release-manifest.json`
 - current changelog: [CHANGELOG.md](./CHANGELOG.md)
 - docs-authoring image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
 - retained release evidence: GitLab release `v0.2.0`, tag pipeline `2428809456`,
   release job `13779604462`
-- remaining release blockers: none on the exact public `v1.0.6` line; public
-  `main` now publishes `66bdf73`, and `develop` remains aligned to `1.0.6`
-  until the next exact release candidate opens
+- remaining release blockers: exact `v1.1.0` is still pending while
+  `release/1.1.0` promotes into `main` on the public GitHub and authority
+  GitLab surfaces; the exact public `v1.0.6` line remains green
 
 ## Install Surface
 
