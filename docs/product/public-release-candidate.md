@@ -2,9 +2,9 @@
 
 - Version line: `1.0.3`
 - Burned exact release line: `v1.0.2`
-- Recorded at: `2026-04-07T06:20:00.000Z`
+- Recorded at: `2026-04-07T06:30:06.000Z`
 - Authority source of truth: GitLab `develop` -> `main`
-- Published public source commit: `4251893`
+- Published public source commit: `4952acc`
 - Published public wiki head: `1fb3a00`
 
 ## Branch Model
@@ -37,7 +37,7 @@
   `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.0.3`
 - GitHub asset: `vi-history-suite-1.0.3-public-release.vsix`
 - GitHub asset SHA-256:
-  `ce39122ca9a95effe2115b04bad48cdf688c5f9bce9c43b1d763ae1ec6467aa5`
+  `0e5e5018043807bd3823e0db2918191246f9dd212e598a24144d557af9f50abf`
 
 ## Public Publication
 
@@ -57,6 +57,10 @@
 - The helper-backed fork-owner path now targets upstream `develop`, which
   preserves the commit history needed for the `VI History` context action on
   `resource/plugins/lv_icon.vi`.
+- The public `VI History` action now surfaces immediately on `.vi`, `.ctl`,
+  and `.vit` files instead of waiting for background eligibility indexing.
+- The public package-preview required check now creates `artifacts/` before the
+  VSIX build so upload cannot fail after a successful package step.
 
 ## Hosted Proof
 

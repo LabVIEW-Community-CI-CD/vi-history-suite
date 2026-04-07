@@ -1,7 +1,7 @@
 {
   "generatedFor": "vi-history-suite",
   "publicationSurface": "public-github-source-repo",
-  "publishedHeadCommit": "4251893",
+  "publishedHeadCommit": "4952acc",
   "publications": [
     {
       "id": "public-source-product-repo-baseline",
@@ -75,13 +75,14 @@
       "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
       "status": "published",
       "publishedDate": "2026-04-07",
-      "repoCommit": "4251893",
+      "repoCommit": "4952acc",
       "primaryAuthority": [
         "README.md",
         "CHANGELOG.md",
         "docs/product/post-release-sustainment-rules.md",
         "docs/release-procedure.md",
-        "docs/architecture/adr/ADR-0029-develop-integration-main-release-and-required-checks.md"
+        "docs/architecture/adr/ADR-0029-develop-integration-main-release-and-required-checks.md",
+        "package.json"
       ]
     }
   ]

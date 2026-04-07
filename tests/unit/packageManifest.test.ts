@@ -75,7 +75,8 @@ describe('extension manifest research alignment', () => {
     const expectedMenuEntry = {
       command: 'labviewViHistory.open',
       group: '3_compare',
-      when: 'resourcePath in labviewViHistory.eligiblePaths && isWorkspaceTrusted && gitOpenRepositoryCount >= 1'
+      when:
+        '(resourceExtname == .vi || resourceExtname == .ctl || resourceExtname == .vit) && isWorkspaceTrusted && gitOpenRepositoryCount >= 1'
     };
 
     expect(manifest.contributes?.menus?.['explorer/context']).toContainEqual(expectedMenuEntry);

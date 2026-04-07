@@ -23,6 +23,12 @@ Burned exact-version releases now include `v1.0.2`.
 - the stale authority package-manifest contract now admits the governed
   `tests/unit/preparePublicTestFixtureScript.test.ts` design-contract test so
   docs CI no longer burns a tagged release on an outdated script inventory
+- the public `VI History` explorer/title action now surfaces immediately for
+  `.vi`, `.ctl`, and `.vit` files instead of waiting for background eligibility
+  indexing to finish, while the runtime eligibility check still fails closed
+- the public `Public Facade Package Preview` workflow now creates its
+  `artifacts/` directory before packaging so the required-check upload step
+  cannot fail after a successful VSIX build
 
 ## [1.0.2] - 2026-04-07
 

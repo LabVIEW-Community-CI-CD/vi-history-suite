@@ -10,7 +10,7 @@ The machine-readable companion surface for this ledger is:
 
 - `docs/product/public-github-source-publication-ledger.json`
 
-Current published public GitHub source HEAD: `4251893`
+Current published public GitHub source HEAD: `4952acc`
 
 ## Publications
 
@@ -21,7 +21,7 @@ Current published public GitHub source HEAD: `4251893`
 | Public source v1.0.0 release refresh | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-06` | `d787f2d` | `README.md`; `CHANGELOG.md`; `docs/product/public-release-candidate.md` |
 | Public source fork-owner Codespaces procedure refresh | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-06` | `a1a6b1e` | `README.md`; `docs/product/current-state.md`; `docs/product/public-github-wiki-publication-ledger.md` |
 | Public source v1.0.1 semver discipline refresh | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-06` | `85230a3` | `README.md`; `CHANGELOG.md`; `docs/product/post-release-sustainment-rules.md`; `docs/release-procedure.md` |
-| Public source v1.0.3 burned-release recovery | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-07` | `4251893` | `README.md`; `CHANGELOG.md`; `docs/product/post-release-sustainment-rules.md`; `docs/release-procedure.md`; `docs/architecture/adr/ADR-0029-develop-integration-main-release-and-required-checks.md` |
+| Public source v1.0.3 burned-release recovery | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-07` | `4952acc` | `README.md`; `CHANGELOG.md`; `docs/product/post-release-sustainment-rules.md`; `docs/release-procedure.md`; `docs/architecture/adr/ADR-0029-develop-integration-main-release-and-required-checks.md`; `package.json` |
 
 ## Publication Rules
 

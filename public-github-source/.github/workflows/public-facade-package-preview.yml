@@ -51,6 +51,9 @@ jobs:
       - name: Run public design-contract tests
         run: npm run test:design-contract
 
+      - name: Prepare preview artifact directory
+        run: mkdir -p artifacts
+
       - name: Package preview VSIX
         run: npm run package -- --out artifacts/vi-history-suite-public-preview.vsix
 

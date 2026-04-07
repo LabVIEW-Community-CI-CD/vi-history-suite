@@ -65,7 +65,7 @@ describe('public release candidate control surface', () => {
         'Public Facade Linux Smoke / public-facade-linux-smoke'
       ])
     );
-    expect(candidate.publishedPublicSource?.publishedCommit).toBe('4251893');
+    expect(candidate.publishedPublicSource?.publishedCommit).toBe('4952acc');
     expect(candidate.publishedPublicWiki?.publishedHeadCommit).toBe('1fb3a00');
     expect(candidate.candidateReadiness).toMatchObject({
       authorityBaseline: 'local-gates-passing',
@@ -88,7 +88,7 @@ describe('public release candidate control surface', () => {
       exactRelease: {
         version: 'v1.0.3',
         gitHubAssetName: 'vi-history-suite-1.0.3-public-release.vsix',
-        gitHubAssetSha256: 'ce39122ca9a95effe2115b04bad48cdf688c5f9bce9c43b1d763ae1ec6467aa5'
+        gitHubAssetSha256: '0e5e5018043807bd3823e0db2918191246f9dd212e598a24144d557af9f50abf'
       },
       hostedProofs: {
         publicCodespace: {
@@ -110,7 +110,7 @@ describe('public release candidate control surface', () => {
     expect(candidateMarkdown).toContain('Version line: `1.0.3`');
     expect(candidateMarkdown).toContain('Burned exact release line: `v1.0.2`');
     expect(candidateMarkdown).toContain('Authority source of truth: GitLab `develop` -> `main`');
-    expect(candidateMarkdown).toContain('Published public source commit: `4251893`');
+    expect(candidateMarkdown).toContain('Published public source commit: `4952acc`');
     expect(candidateMarkdown).toContain('Published public wiki head: `1fb3a00`');
     expect(candidateMarkdown).toContain('Integration branch: `develop`');
     expect(candidateMarkdown).toContain('Release branch: `main`');
