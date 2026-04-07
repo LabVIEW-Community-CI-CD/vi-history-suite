@@ -41,6 +41,26 @@ const docsContinuousIntegration = require(path.resolve(
     wikiRoot: string;
     ledgerPath: string;
   };
+  resolveDocsContinuousIntegrationEvidenceDir: (
+    surface: 'all' | 'public' | 'internal',
+    explicitEvidenceDir?: string,
+    repoRoot?: string
+  ) => string;
+  runDocsContinuousIntegration: (
+    argv?: string[],
+    deps?: {
+      cwd?: string;
+      env?: NodeJS.ProcessEnv;
+      now?: () => Date;
+      stdout?: { write: (text: string) => void };
+      stderr?: { write: (text: string) => void };
+      spawnSync?: (
+        command: string,
+        args: string[],
+        options: { cwd: string; env: NodeJS.ProcessEnv }
+      ) => { status: number; stdout?: string; stderr?: string };
+    }
+  ) => Promise<string>;
 };
 
 describe('documentation continuous integration runner', () => {
@@ -167,7 +187,16 @@ describe('documentation continuous integration runner', () => {
     });
     expect(
       docsContinuousIntegration.resolveDocsContinuousIntegrationSurfacePaths({
-        surface: 'public'
+        surface: 'public',
+        env: {
+          VIHS_WIKI_REPO_ROOT: path.join(repoRoot, '..', 'vi-history-suite.github.wiki', '.'),
+          VIHS_LEDGER_PATH: path.join(
+            repoRoot,
+            'docs',
+            'product',
+            'public-github-wiki-publication-ledger.json'
+          )
+        }
       })
     ).toEqual({
       wikiRoot: path.resolve(repoRoot, '..', 'vi-history-suite.github.wiki'),
@@ -178,5 +207,41 @@ describe('documentation continuous integration runner', () => {
         'public-github-wiki-publication-ledger.json'
       )
     });
+    expect(
+      docsContinuousIntegration.resolveDocsContinuousIntegrationEvidenceDir('public', undefined, repoRoot)
+    ).toEqual(path.join(repoRoot, '.cache', 'docs-integration', 'public', 'latest'));
+  });
+
+  it('forwards the parsed surface into the executed step plan', async () => {
+    const executedStepIds: string[] = [];
+    const stdoutWrites: string[] = [];
+    const stderrWrites: string[] = [];
+    const stepIdByCommand = new Map([
+      ['npm run compile', 'compile'],
+      ['npx vitest run tests/unit/bundledDocumentation.test.ts tests/unit/packageManifest.test.ts tests/unit/publicSurfaceBoundaryDocs.test.ts', 'public-docs-tests'],
+      ['node scripts/syncBundledDocs.js --check --report ' + path.join(repoRoot, '.cache', 'docs-integration', 'public', 'latest', 'bundled-docs-check.json'), 'bundle-check'],
+      ['lychee --verbose --no-progress --include-fragments README.md docs/**/*.md', 'links']
+    ]);
+
+    const result = await docsContinuousIntegration.runDocsContinuousIntegration(
+      ['--surface', 'public'],
+      {
+        cwd: repoRoot,
+        env: process.env,
+        now: () => new Date('2026-04-07T01:05:00.000Z'),
+        stdout: { write: (text: string) => stdoutWrites.push(text) },
+        stderr: { write: (text: string) => stderrWrites.push(text) },
+        spawnSync: (command, args) => {
+          const key = [command, ...args].join(' ');
+          executedStepIds.push(stepIdByCommand.get(key) ?? key);
+          return { status: 0, stdout: '', stderr: '' };
+        }
+      }
+    );
+
+    expect(result).toBe('pass');
+    expect(stderrWrites).toEqual([]);
+    expect(stdoutWrites.join('')).toContain('[docs-ci] Documentation continuous integration passed.');
+    expect(executedStepIds).toEqual(['compile', 'public-docs-tests', 'bundle-check', 'links']);
   });
 });

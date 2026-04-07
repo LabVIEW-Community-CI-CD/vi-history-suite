@@ -98,34 +98,49 @@ function resolveDocsContinuousIntegrationSurfacePaths(options = {}) {
 
   return {
     wikiRoot:
-      env.VIHS_WIKI_REPO_ROOT ??
-      path.resolve(
-        repoRootPath,
-        '..',
-        surface === 'public' ? 'vi-history-suite.github.wiki' : 'vi-history-suite.wiki'
-      ),
+      env.VIHS_WIKI_REPO_ROOT
+        ? path.resolve(env.VIHS_WIKI_REPO_ROOT)
+        : path.resolve(
+            repoRootPath,
+            '..',
+            surface === 'public' ? 'vi-history-suite.github.wiki' : 'vi-history-suite.wiki'
+          ),
     ledgerPath:
-      env.VIHS_LEDGER_PATH ??
-      path.join(
-        repoRootPath,
-        'docs',
-        'product',
-        surface === 'public'
-          ? 'public-github-wiki-publication-ledger.json'
-          : 'wiki-publication-ledger.json'
-      )
+      env.VIHS_LEDGER_PATH
+        ? path.resolve(env.VIHS_LEDGER_PATH)
+        : path.join(
+            repoRootPath,
+            'docs',
+            'product',
+            surface === 'public'
+              ? 'public-github-wiki-publication-ledger.json'
+              : 'wiki-publication-ledger.json'
+          )
   };
 }
 
-function createDocsContinuousIntegrationSteps(options = {}) {
-  const surface = options.surface ?? 'all';
-  const defaultEvidenceSubdir =
+function resolveDocsContinuousIntegrationEvidenceDir(surface, explicitEvidenceDir, repoRootPath) {
+  if (explicitEvidenceDir) {
+    return explicitEvidenceDir;
+  }
+
+  return path.join(
+    repoRootPath,
     surface === 'public'
       ? path.join('.cache', 'docs-integration', 'public', 'latest')
       : surface === 'internal'
         ? path.join('.cache', 'docs-integration', 'internal', 'latest')
-        : path.join('.cache', 'docs-integration', 'latest');
-  const evidenceDir = options.evidenceDir ?? path.join(repoRoot, defaultEvidenceSubdir);
+        : path.join('.cache', 'docs-integration', 'latest')
+  );
+}
+
+function createDocsContinuousIntegrationSteps(options = {}) {
+  const surface = options.surface ?? 'all';
+  const evidenceDir = resolveDocsContinuousIntegrationEvidenceDir(
+    surface,
+    options.evidenceDir,
+    options.repoRoot ?? repoRoot
+  );
   const bundleReportPath = path.join(evidenceDir, 'bundled-docs-check.json');
   const bundlePaths = resolveDocsContinuousIntegrationSurfacePaths({
     surface: surface === 'internal' ? 'internal' : 'public',
@@ -427,10 +442,11 @@ async function runDocsContinuousIntegration(argv = process.argv.slice(2), deps =
   }
 
   const evidenceDir =
-    parsed.evidenceDir ?? path.join(repoRoot, '.cache', 'docs-integration', 'latest');
+    resolveDocsContinuousIntegrationEvidenceDir(parsed.surface, parsed.evidenceDir, repoRoot);
   await ensureEvidenceDir(evidenceDir);
 
   const steps = createDocsContinuousIntegrationSteps({
+    surface: parsed.surface,
     skipLinks: parsed.skipLinks,
     evidenceDir
   });
@@ -518,6 +534,7 @@ module.exports = {
   main,
   parseDocsContinuousIntegrationArgs,
   resolveDocsContinuousIntegrationSurfacePaths,
+  resolveDocsContinuousIntegrationEvidenceDir,
   runDocsContinuousIntegration,
   writeDocsContinuousIntegrationReport
 };
