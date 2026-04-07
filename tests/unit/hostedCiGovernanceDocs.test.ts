@@ -30,10 +30,11 @@ describe('hosted ci governance docs', () => {
 
     expect(matrix.openingDecision).toEqual(
       expect.objectContaining({
-        currentExactReleaseLine: 'v1.0.6',
-        currentMainPackageLine: '1.0.6',
+        currentExactReleaseLine: 'v1.1.0',
+        currentMainPackageLine: '1.1.0',
         currentDevelopPackageLine: '1.1.0',
-        activeDevelopCandidateReleaseLine: 'v1.1.0',
+        activeDevelopCandidateReleaseLine: null,
+        activeReleaseCandidateBranch: null,
         chosenBump: 'minor'
       })
     );
@@ -53,7 +54,10 @@ describe('hosted ci governance docs', () => {
       })
     );
 
+    expect(matrixDoc).toContain('current exact release line: `v1.1.0`');
+    expect(matrixDoc).toContain('current `main` package line: `1.1.0`');
     expect(matrixDoc).toContain('current `develop` package line: `1.1.0`');
+    expect(matrixDoc).toContain('no newer exact release candidate line is active yet');
     expect(matrixDoc).toContain('chosen bump: `minor`');
     expect(matrixDoc).toContain('merge gate: `only_allow_merge_if_pipeline_succeeds=true`');
     expect(matrixDoc).toContain('classification: characterization-only experiment automation');

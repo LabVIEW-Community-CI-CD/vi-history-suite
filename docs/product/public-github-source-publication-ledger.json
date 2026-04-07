@@ -1,7 +1,7 @@
 {
   "generatedFor": "vi-history-suite",
   "publicationSurface": "public-github-source-repo",
-  "publishedHeadCommit": "66bdf73",
+  "publishedHeadCommit": "daef8bd",
   "publications": [
     {
       "id": "public-source-product-repo-baseline",
@@ -122,6 +122,21 @@
       "status": "published",
       "publishedDate": "2026-04-07",
       "repoCommit": "66bdf73",
+      "primaryAuthority": [
+        "README.md",
+        "CHANGELOG.md",
+        "docs/product/public-release-candidate.md",
+        "docs/release-procedure.md",
+        "package.json"
+      ]
+    },
+    {
+      "id": "public-source-v1-1-0-exact-release",
+      "title": "Public source v1.1.0 exact release",
+      "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
+      "status": "published",
+      "publishedDate": "2026-04-07",
+      "repoCommit": "daef8bd",
       "primaryAuthority": [
         "README.md",
         "CHANGELOG.md",

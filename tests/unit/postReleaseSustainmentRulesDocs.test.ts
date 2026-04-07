@@ -117,12 +117,13 @@ describe('post-release sustainment rules package', () => {
 
     expect(rules.releaseCadence.model).toBe('event-driven');
     expect(rules.releaseCadence.versionLineContract).toEqual({
-      retainedExactVersionReleases: ['v0.2.0', 'v1.0.0', 'v1.0.1', 'v1.0.2', 'v1.0.3', 'v1.0.4', 'v1.0.5', 'v1.0.6'],
+      retainedExactVersionReleases: ['v0.2.0', 'v1.0.0', 'v1.0.1', 'v1.0.2', 'v1.0.3', 'v1.0.4', 'v1.0.5', 'v1.0.6', 'v1.1.0'],
       burnedExactVersionReleases: ['v1.0.2'],
-      currentExactReleaseLine: 'v1.0.6',
-      currentMainPackageLine: '1.0.6',
+      currentExactReleaseLine: 'v1.1.0',
+      currentMainPackageLine: '1.1.0',
       currentDevelopPackageLine: '1.1.0',
-      activeDevelopCandidateReleaseLine: 'v1.1.0',
+      activeDevelopCandidateReleaseLine: null,
+      activeReleaseCandidateBranch: null,
       publicDefaultBranch: 'main',
       publicCodespaceBranch: 'develop',
       integrationBranch: 'develop',
@@ -319,7 +320,8 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('## Benchmark Refresh Rules');
     expect(rulesDoc).toContain('## Operator And Documentation Upkeep Rules');
     expect(rulesDoc).toContain('public GitHub default branch: `main`');
-    expect(rulesDoc).toContain('active exact release candidate line on `develop`: `v1.1.0`');
+    expect(rulesDoc).toContain('current exact released line: `v1.1.0`');
+    expect(rulesDoc).toContain('no newer exact release candidate line is active on `develop` yet');
     expect(rulesDoc).toContain('chosen bump: `minor`');
     expect(rulesDoc).toContain('develop');
     expect(rulesDoc).toContain('release branch');
