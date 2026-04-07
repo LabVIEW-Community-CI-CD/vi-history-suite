@@ -1,7 +1,7 @@
 {
   "generatedFor": "vi-history-suite",
   "publicationSurface": "public-github-user-wiki",
-  "publishedHeadCommit": "d184be2",
+  "publishedHeadCommit": "63a4208",
   "pages": [
     {
       "id": "overview",
@@ -10,11 +10,11 @@
       "wikiFileName": "Home.md",
       "status": "published",
       "publishedDate": "2026-04-07",
-      "wikiCommit": "3ef5bee",
+      "wikiCommit": "63a4208",
       "primaryAuthority": [
         "README.md",
-        "docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md",
-        "docs/release-procedure.md"
+        "docs/product/current-state.md",
+        "docs/product/execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md"
       ]
     },
     {
@@ -38,11 +38,11 @@
       "wikiFileName": "Install-And-Release.md",
       "status": "published",
       "publishedDate": "2026-04-07",
-      "wikiCommit": "d184be2",
+      "wikiCommit": "63a4208",
       "primaryAuthority": [
         "README.md",
         "docs/release-procedure.md",
-        "CHANGELOG.md"
+        "docs/product/current-state.md"
       ]
     },
     {
@@ -67,11 +67,39 @@
       "wikiFileName": "Fork-Codespace-Quickstart.md",
       "status": "published",
       "publishedDate": "2026-04-07",
-      "wikiCommit": "d184be2",
+      "wikiCommit": "63a4208",
       "primaryAuthority": [
         "README.md",
         "docs/product/current-state.md",
-        "docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md"
+        "docs/product/execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md"
+      ]
+    },
+    {
+      "id": "clone-public-repo-in-codespace",
+      "title": "Clone Public Repo In Codespace",
+      "wikiPath": "Clone-Public-Repo-In-Codespace",
+      "wikiFileName": "Clone-Public-Repo-In-Codespace.md",
+      "status": "published",
+      "publishedDate": "2026-04-07",
+      "wikiCommit": "63a4208",
+      "primaryAuthority": [
+        "README.md",
+        "docs/product/current-state.md",
+        "docs/product/execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md"
+      ]
+    },
+    {
+      "id": "review-public-labview-vi-changes",
+      "title": "Review Public LabVIEW VI Changes",
+      "wikiPath": "Review-Public-LabVIEW-VI-Changes",
+      "wikiFileName": "Review-Public-LabVIEW-VI-Changes.md",
+      "status": "published",
+      "publishedDate": "2026-04-07",
+      "wikiCommit": "63a4208",
+      "primaryAuthority": [
+        "README.md",
+        "docs/product/current-state.md",
+        "docs/product/execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md"
       ]
     },
     {
@@ -80,12 +108,12 @@
       "wikiPath": "Manual-Actor-Framework-Clone",
       "wikiFileName": "Manual-Actor-Framework-Clone.md",
       "status": "published",
-      "publishedDate": "2026-04-06",
-      "wikiCommit": "3ef5bee",
+      "publishedDate": "2026-04-07",
+      "wikiCommit": "63a4208",
       "primaryAuthority": [
         "README.md",
         "docs/product/current-state.md",
-        "docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md"
+        "docs/product/execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md"
       ]
     },
     {
@@ -95,11 +123,11 @@
       "wikiFileName": "Refresh-Codespace-Repositories.md",
       "status": "published",
       "publishedDate": "2026-04-07",
-      "wikiCommit": "3ef5bee",
+      "wikiCommit": "63a4208",
       "primaryAuthority": [
         "README.md",
         "docs/product/current-state.md",
-        "docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md"
+        "docs/product/execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md"
       ]
     },
     {

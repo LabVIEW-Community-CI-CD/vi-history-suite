@@ -137,18 +137,38 @@ for `ni/labview-icon-editor` and now includes:
 - the port `6010` forwarding dialog explanation
 - the exact `Open Folder...` path for `lv_icon.vi`
 
-For the separate manual-clone walkthrough for `ni/actor-framework`, use:
-
-- `https://github.com/svelderrainruiz/vi-history-suite/wiki/Manual-Actor-Framework-Clone`
-
 For refresh-only steps after the first successful Codespace setup, use:
 
 - `https://github.com/svelderrainruiz/vi-history-suite/wiki/Refresh-Codespace-Repositories`
 
-## Generic Public Repo Bootstrap
+## Reference Manual For Any Public Repo
 
-If you want to evaluate VI History on a public GitHub or GitLab repo other
-than the helper-backed `ni/labview-icon-editor` path, use:
+If you want to review the changes of a LabVIEW VI between two commits on a
+public GitHub or public GitLab repo instead of the helper-backed
+`ni/labview-icon-editor` path, use the public wiki reference manual:
+
+- `https://github.com/svelderrainruiz/vi-history-suite/wiki/Review-Public-LabVIEW-VI-Changes`
+
+In a brand-new Codespace, start with the interactive command:
+
+```bash
+npm run public:repo:clone
+```
+
+Paste the repo URL when prompted. If you press `Esc`, the prompt stops and you
+can fall back to the canonical sample helper:
+
+```bash
+npm run public:fixture:icon-editor
+```
+
+If you prefer a non-interactive command, use this template:
+
+```bash
+npm run public:repo:clone -- --repo-url https://github.com/<owner>/<repo>.git
+```
+
+Examples:
 
 ```bash
 npm run public:repo:clone -- --repo-url https://gitlab.com/hampel-soft/open-source/hse-logger.git
@@ -174,13 +194,14 @@ The clone target stays visible instead of hidden:
 - `hse-logger` becomes `/workspaces/hse-logger`
 - `SerialPortNuggets` becomes `/workspaces/SerialPortNuggets`
 
-For the first-time generic public-repo walkthrough, use:
+The reference manual keeps the generic public-repo path separate from the
+canonical helper-backed `lv_icon.vi` quickstart, and it assumes a brand new
+fork and a brand new Codespace. It also includes the documented example VIs:
 
-- `https://github.com/svelderrainruiz/vi-history-suite/wiki/Clone-Public-Repo-In-Codespace`
-
-That page keeps the generic public-repo path separate from the canonical
-helper-backed `lv_icon.vi` quickstart, and it also assumes a brand new fork
-and a brand new Codespace.
+- [Hampel Software Engineering](https://hampel-soft.com/) `hse-logger`:
+  `Examples/Logging with Helper-VIs.vi`
+- `crossrulz/SerialPortNuggets`:
+  `ASCII/Terminals/ASCII Command-Response.vi`
 
 The guarded package path is:
 

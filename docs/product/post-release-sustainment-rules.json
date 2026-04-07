@@ -58,8 +58,22 @@
       "any later repo change intended for publication shall advance package.json and the top CHANGELOG.md heading to the next SemVer line before further normalization or publication",
       "future sessions shall not treat an unreleased SemVer bump as complete until the matching public tag and public GitHub release are both published",
       "future sessions shall not keep landing post-release changes on the previous exact release version number",
-      "future sessions shall not treat a burned exact release as the green release baseline for later publication"
+      "future sessions shall not treat a burned exact release as the green release baseline for later publication",
+      "future sessions shall not treat a candidate line as review-ready until the maintained public develop candidate head and maintained public wiki head are both published and retained in the authority candidate package"
     ],
+    "candidateStateModel": {
+      "orderedStates": [
+        "local-authority-green",
+        "public-develop-published",
+        "public-wiki-published",
+        "review-ready",
+        "review-feedback-received",
+        "review-feedback-folded",
+        "tag-eligible"
+      ],
+      "reviewReadyRule": "local authority-green proof is necessary but not sufficient; review-ready opens only after the maintained public develop candidate head and maintained public wiki head are both live and retained in docs/product/public-release-candidate.{md,json}",
+      "dirtyPublicSurfaceRule": "preserve unrelated dirt, inspect overlapping files, patch only the maintained candidate slice narrowly, and pause only on direct unresolved conflicts instead of stopping publication merely because the worktree is dirty"
+    },
     "semverDecisionFramework": {
       "defaultGovernanceBump": "patch",
       "major": [
@@ -150,7 +164,9 @@
         "release/* branches are cut from develop and merge to main plus back into develop",
         "hotfix/* branches are cut from main and merge to main plus back into develop",
         "exact SemVer tags are cut from main only after the protected main pipeline succeeds",
-        "local public-source promotion/check binds the intended checkout through --target-root or VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT and fails closed when the target repo is dirty"
+        "local public-source promotion/check binds the intended checkout through --target-root or VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT and fails closed when the target repo is dirty",
+        "candidate lines are not review-ready until the maintained public develop candidate head and maintained public wiki head are both published and retained in the authority candidate package",
+        "dirty public-source/wiki worktrees are controlled publication surfaces: preserve unrelated dirt, patch overlapping maintained files narrowly, and pause only on direct unresolved conflicts"
       ],
       "requiredChecks": [
         "docs_continuous_integration",

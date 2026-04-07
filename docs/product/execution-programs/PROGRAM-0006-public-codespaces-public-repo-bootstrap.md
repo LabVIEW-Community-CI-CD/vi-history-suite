@@ -34,7 +34,8 @@ A fork owner can:
 2. generic public GitHub/GitLab bootstrap command
 3. canonical helper-path separation and public-reader docs
 4. requirements, ADR, and design-gate normalization
-5. pre-tag human wiki-procedure review and exact-release promotion
+5. review-ready boundary and controlled public-candidate publication
+6. pre-tag human wiki-procedure review and exact-release promotion
 
 ## Queue Mapping
 
@@ -60,10 +61,17 @@ A fork owner can:
 
 - the canonical icon-editor helper path remains separate from the generic
   bootstrap path
-- README and public wiki procedures explain both paths without conflating them
+- README and the public wiki reference manual explain both paths without
+  conflating them
+- the generic public-repo page is goal-first and reader-facing, not control
+  plane wording exported into the public surface
 
 ### Gate D: Human Procedure Review
 
+- Gate D opens only after the candidate is marked `review-ready`
+- `review-ready` requires the maintained public `develop` candidate head and
+  maintained public wiki head to be published and retained in the authority
+  candidate package
 - Sergio dry-runs the maintained public wiki procedures from a brand new fork
   and a brand new Codespace
 - findings from that dry run are folded before exact tagging
@@ -82,6 +90,9 @@ Every slice shall preserve:
 - no provider selector
 - no silent fallback on dirty or mismatched clones
 - no collapse of the canonical helper path into the generic path
+- no human review gate against unpublished public candidate surfaces
+- no stop-at-the-wrong-boundary behavior just because the public publication
+  worktrees are dirty
 - no exact tag before human wiki-procedure review from a brand new fork and a
   brand new Codespace
 

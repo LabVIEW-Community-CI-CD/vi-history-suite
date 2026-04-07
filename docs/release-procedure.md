@@ -129,6 +129,25 @@
     - update `docs/product/public-github-source-publication-ledger.{md,json}`
 14. Keep public source publication separate from public GitHub wiki
     publication; one publication act does not imply the other.
+15. Mark a candidate `review-ready` only after the maintained public candidate
+    surfaces are actually published.
+    - local authority-green proof is necessary but not sufficient
+    - the maintained public `develop` candidate head must be live
+    - the maintained public wiki head must be live
+    - both published heads must be retained in
+      `docs/product/public-release-candidate.{md,json}`
+    - do not open the next human review gate until that `review-ready` state is
+      recorded
+16. Treat dirty public source/wiki worktrees as governed publication surfaces,
+    not as a generic stopping point.
+    - preserve unrelated dirt
+    - inspect overlapping changes
+    - patch only the maintained candidate files narrowly
+    - pause only when a direct unresolved conflict remains
+    - do not publish blindly, but do not stop publication solely because the
+      worktree is dirty
+17. Keep exact tagging blocked until the post-publication human review gate is
+    accepted on the maintained public candidate surfaces.
 
 ## Retained Evidence
 

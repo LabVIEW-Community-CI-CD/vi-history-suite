@@ -158,6 +158,10 @@ Latest landed ship target:
 - remaining blockers: none on the exact public `v1.1.0` line; public `main`
   now publishes `daef8bd`, the public GitHub release `v1.1.0` is live, and
   `develop` now carries the active `v1.2.0` candidate line
+- `v1.2.0` is now `review-ready` on maintained public `develop` candidate head
+  `e8b0925` and maintained public wiki head `63a4208`; exact tagging remains
+  blocked until Sergio completes the next brand-new-fork and brand-new-Codespace
+  acceptance review
 
 Current active tranche:
 
@@ -172,9 +176,15 @@ Current active tranche:
   - add one generic `npm run public:repo:clone` surface for public GitHub and
     GitLab HTTPS repos with optional explicit branch and remote default-branch
     resolution when omitted
-  - block the exact `v1.2.0` tag until the maintained public wiki procedures
-    are dry-run reviewed and accepted from a brand new fork and a brand new
-    Codespace
+  - keep the maintained public generic path as a standalone reference manual,
+    not a second quickstart
+  - Sergio's first dry-run review from a brand new fork and a brand new
+    Codespace has now produced findings that must be folded before the exact
+    `v1.2.0` tag remains eligible
+  - the maintained public `develop` and public wiki candidate heads are now
+    republished and retained, so the next brand-new-fork review can start on
+    live public surfaces while the exact `v1.2.0` tag remains blocked pending
+    acceptance
 - `TRANCHE-013`: Extension execution flexibility and runtime acquisition UX
 - active issue: [ISSUE-0410 Extension Execution Flexibility And Runtime Acquisition UX](./issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md)
 - active execution program: [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
@@ -285,8 +295,9 @@ Post-release tranches:
   - the line now adds one generic public-repo bootstrap surface for public
     GitHub and GitLab HTTPS repos while keeping the canonical icon-editor
     helper path separate
-  - the exact `v1.2.0` tag is intentionally blocked on a maintained public wiki
-    dry run and Sergio review
+  - the exact `v1.2.0` tag is intentionally blocked until Sergio's documented
+    brand-new-fork and brand-new-Codespace findings are folded and the
+    maintained public wiki/reference-manual package is accepted
 
 Current active and queued post-release programs:
 
@@ -300,7 +311,7 @@ Current active and queued post-release programs:
   - public GitHub facade repo is the public source product surface at `https://github.com/svelderrainruiz/vi-history-suite`; the exact published head is retained in `docs/product/public-github-source-publication-ledger.md` and `docs/product/public-github-source-publication-ledger.json`
   - public GitHub user wiki now exists at `https://github.com/svelderrainruiz/vi-history-suite.wiki.git` as a public extension-user reader surface; the exact published head is retained in `docs/product/public-github-wiki-publication-ledger.md` and `docs/product/public-github-wiki-publication-ledger.json`
   - public GitHub source publication is tracked separately from both wiki surfaces in `docs/product/public-github-source-publication-ledger.md` and `docs/product/public-github-source-publication-ledger.json`
-  - published public GitHub wiki pages now include `Home`, `User-Workflow`, `Install-And-Release`, `Fork-Codespace-Quickstart`, `Refresh-Codespace-Repositories`, `Manual-Actor-Framework-Clone`, `Comparison-Reports-And-Dashboard-Review`, and `Current-State`
+  - published public GitHub wiki pages now include `Home`, `User-Workflow`, `Install-And-Release`, `Fork-Codespace-Quickstart`, `Clone-Public-Repo-In-Codespace`, `Review-Public-LabVIEW-VI-Changes`, `Refresh-Codespace-Repositories`, `Manual-Actor-Framework-Clone`, `Comparison-Reports-And-Dashboard-Review`, and `Current-State`
   - the canonical Gate D blocker on `resource/plugins/lv_icon.vi` is retired, while `v1.0.2` is now retained as a burned exact release and the current exact public GitHub release line is `v1.1.0`
   - the public branch model is now explicit: `develop` is the integration and
     Codespaces-evaluation branch, and `main` is the release branch

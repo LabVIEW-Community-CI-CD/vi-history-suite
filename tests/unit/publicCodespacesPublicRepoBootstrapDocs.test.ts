@@ -26,17 +26,27 @@ describe('public Codespaces public-repo bootstrap docs', () => {
     expect(readme).toContain('npm run public:repo:clone -- --repo-url https://github.com/crossrulz/SerialPortNuggets.git');
     expect(readme).toContain('repo-sibling `labview-icon-editor`');
     expect(readme).toContain('visible repo-sibling folder');
+    expect(readme).toContain('reference manual for reviewing the changes of a LabVIEW VI between two');
+    expect(readme).toContain('a quickstart for the canonical helper-backed `ni/labview-icon-editor` path');
 
     expect(currentState).toContain('`TRANCHE-014`: Public Codespaces public-repo bootstrap');
     expect(currentState).toContain('canonical `npm run public:fixture:icon-editor` helper-backed path');
     expect(currentState).toContain('generic `npm run public:repo:clone` surface');
     expect(currentState).toContain('exact `v1.2.0` tag is intentionally blocked');
 
-    expect(candidate).toContain('Decision: helper-backed canonical path plus generic public-repo bootstrap');
+    expect(candidate).toContain(
+      'Decision: helper-backed canonical path plus generic public-repo reference manual'
+    );
     expect(candidate).toContain('Canonical helper command: `npm run public:fixture:icon-editor`');
+    expect(candidate).toContain('Generic interactive command: `npm run public:repo:clone`');
     expect(candidate).toContain('Generic bootstrap command:');
     expect(candidate).toContain('npm run public:repo:clone -- --repo-url <https-url>');
-    expect(candidate).toContain('Public wiki candidate review: `pending-sergio`');
+    expect(candidate).toContain(
+      'Public wiki candidate review:'
+    );
+    expect(candidate).toContain('awaiting-brand-new-fork-review-on-published-candidate');
+    expect(candidate).toContain('Review-ready gate:');
+    expect(candidate).toContain('ready-for-brand-new-fork-review');
     expect(candidate).toContain('Required review environment: brand new fork plus brand new Codespace');
     expect(candidate).toContain('The exact `v1.2.0` tag is intentionally blocked');
 
@@ -44,7 +54,9 @@ describe('public Codespaces public-repo bootstrap docs', () => {
     expect(issue).toContain('brand new fork');
     expect(issue).toContain('brand new Codespace');
     expect(issue).toContain('exact `v1.2.0` tag is blocked until Sergio accepts');
+    expect(issue).toContain('fail-closed `review-ready` state');
     expect(program).toContain('Gate D: Human Procedure Review');
+    expect(program).toContain('Gate D opens only after the candidate is marked `review-ready`');
     expect(program).toContain('brand new fork');
     expect(program).toContain('brand new Codespace');
     expect(program).toContain('Sergio dry-runs the maintained public wiki procedures');

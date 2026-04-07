@@ -22,23 +22,24 @@ function main(argv = process.argv.slice(2), deps = {}) {
 }
 
 if (require.main === module) {
-  try {
-    main();
-  } catch (error) {
+  void Promise.resolve(main()).catch((error) => {
     process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
     process.exitCode = 1;
-  }
+  });
 }
 
 module.exports = {
   SUPPORTED_PUBLIC_HOSTS: core.SUPPORTED_PUBLIC_HOSTS,
+  canPromptInteractively: core.canPromptInteractively,
   deriveVisibleTargetRoot: core.deriveVisibleTargetRoot,
   getNextStepMessage: (targetRoot) => core.getNextStepMessage(targetRoot, CONFIG.label),
+  getRepoReviewHint: core.getRepoReviewHint,
   getUsage,
   normalizeRepoUrl: core.normalizeRepoUrl,
   parseArgs,
   parseRemoteHeadBranch: core.parseRemoteHeadBranch,
   parseSupportedPublicRepoUrl: core.parseSupportedPublicRepoUrl,
+  promptForRepoUrl: core.promptForRepoUrl,
   resolveEffectiveOptions: (parsed, deps = {}) => core.resolveEffectiveOptions(parsed, CONFIG, deps),
   main
 };

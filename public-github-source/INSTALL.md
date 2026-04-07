@@ -75,10 +75,27 @@ folder path is `/workspaces/labview-icon-editor`.
 If you want a generic public GitHub or GitLab repo instead, run:
 
 ```bash
-npm run public:repo:clone -- --repo-url https://gitlab.com/hampel-soft/open-source/hse-logger.git
+npm run public:repo:clone
 ```
 
-or:
+Paste the repo URL when prompted. If you press `Esc`, the prompt stops and you
+can fall back to the canonical sample helper:
+
+```bash
+npm run public:fixture:icon-editor
+```
+
+If you prefer a non-interactive command, use this template:
+
+```bash
+npm run public:repo:clone -- --repo-url https://github.com/<owner>/<repo>.git
+```
+
+Examples:
+
+```bash
+npm run public:repo:clone -- --repo-url https://gitlab.com/hampel-soft/open-source/hse-logger.git
+```
 
 ```bash
 npm run public:repo:clone -- --repo-url https://github.com/crossrulz/SerialPortNuggets.git
@@ -113,16 +130,14 @@ For refresh-only steps after the first successful Codespace setup, use:
 
 - `https://github.com/svelderrainruiz/vi-history-suite/wiki/Refresh-Codespace-Repositories`
 
-If you want the separate first-time generic public-repo walkthrough, use:
+If you want the reference manual for reviewing the changes of a LabVIEW VI
+between two commits on any public GitHub or GitLab repo, use:
 
-- `https://github.com/svelderrainruiz/vi-history-suite/wiki/Clone-Public-Repo-In-Codespace`
+- `https://github.com/svelderrainruiz/vi-history-suite/wiki/Review-Public-LabVIEW-VI-Changes`
 
-That page is also first-time-only and assumes a brand new fork plus a brand
-new Codespace.
-
-If you want the separate manual-clone walkthrough for `ni/actor-framework`, use:
-
-- `https://github.com/svelderrainruiz/vi-history-suite/wiki/Manual-Actor-Framework-Clone`
+That page is first-time-only, assumes a brand new fork plus a brand new
+Codespace, and includes documented example VIs for both the public GitLab
+`hse-logger` repo and the public GitHub `SerialPortNuggets` repo.
 
 The public Linux cold-pull smoke lane is:
 

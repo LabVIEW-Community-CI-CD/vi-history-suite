@@ -1,5 +1,6 @@
 const fs = require('node:fs');
 const path = require('node:path');
+const readline = require('node:readline');
 const { spawnSync } = require('node:child_process');
 
 const repoRoot = path.resolve(path.dirname(fs.realpathSync.native(__filename)), '..');
@@ -7,6 +8,14 @@ const SUPPORTED_PUBLIC_HOSTS = ['github.com', 'gitlab.com'];
 const DEFAULT_ICON_EDITOR_REPO_URL = 'https://github.com/ni/labview-icon-editor.git';
 const DEFAULT_ICON_EDITOR_BRANCH = 'develop';
 const DEFAULT_ICON_EDITOR_TARGET_ROOT = path.resolve(repoRoot, '..', 'labview-icon-editor');
+const KNOWN_PUBLIC_REPO_REVIEW_HINTS = {
+  'gitlab.com/hampel-soft/open-source/hse-logger': {
+    exampleViPath: 'Examples/Logging with Helper-VIs.vi'
+  },
+  'github.com/crossrulz/serialportnuggets': {
+    exampleViPath: 'ASCII/Terminals/ASCII Command-Response.vi'
+  }
+};
 
 function stripGitSuffix(value) {
   return value.replace(/\.git$/i, '');
@@ -107,11 +116,109 @@ function deriveVisibleTargetRoot(repoUrl, root = repoRoot) {
 }
 
 function getNextStepMessage(targetRoot, label = 'public-repo') {
-  return `[${label}] Next: in the extension host choose File -> Open Folder... and open ${targetRoot}.\n`;
+  return [
+    `[${label}] Next: if the extension development host is not running yet, press F5 in the vi-history-suite window.`,
+    `[${label}] Then in the extension host choose File -> Open Folder... and open ${targetRoot}.`
+  ].join('\n') + '\n';
 }
 
-function writeNextStep(targetRoot, stdout, label) {
+function getRepoReviewHint(repoUrl) {
+  const repoKey = parseRepoComparisonKey(repoUrl);
+  return KNOWN_PUBLIC_REPO_REVIEW_HINTS[repoKey];
+}
+
+function writeNextStep(targetRoot, repoUrl, stdout, label) {
   stdout.write(getNextStepMessage(targetRoot, label));
+  const reviewHint = getRepoReviewHint(repoUrl);
+  if (reviewHint?.exampleViPath) {
+    stdout.write(
+      `[${label}] Example VI to try after the folder opens: ${reviewHint.exampleViPath}.\n`
+    );
+  }
+}
+
+function canPromptInteractively(input, output) {
+  return Boolean(
+    input &&
+      output &&
+      input.isTTY &&
+      output.isTTY &&
+      typeof input.setRawMode === 'function'
+  );
+}
+
+async function promptForRepoUrl(input = process.stdin, output = process.stdout, label = 'public-repo') {
+  if (!canPromptInteractively(input, output)) {
+    return undefined;
+  }
+
+  readline.emitKeypressEvents(input);
+  const previousRawMode = Boolean(input.isRaw);
+  input.setRawMode(true);
+  input.resume();
+
+  output.write(
+    [
+      `[${label}] Paste a public GitHub or GitLab repo URL to review.`,
+      `[${label}] Example format: https://github.com/owner/repo.git`,
+      `[${label}] Press Escape to cancel and return to the canonical helper path.`,
+      `[${label}] Repo URL: `
+    ].join('\n')
+  );
+
+  return await new Promise((resolve, reject) => {
+    let buffer = '';
+
+    const cleanup = () => {
+      input.removeListener('keypress', onKeypress);
+      input.setRawMode(previousRawMode);
+      input.pause();
+    };
+
+    const finish = (value, error) => {
+      cleanup();
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve(value);
+    };
+
+    const onKeypress = (chunk, key = {}) => {
+      if (key.ctrl && key.name === 'c') {
+        output.write('\n');
+        finish(undefined, new Error('Interactive public repo prompt interrupted.'));
+        return;
+      }
+
+      if (key.name === 'escape') {
+        output.write('\n');
+        finish(undefined);
+        return;
+      }
+
+      if (key.name === 'return' || key.name === 'enter') {
+        output.write('\n');
+        finish(buffer.trim() || undefined);
+        return;
+      }
+
+      if (key.name === 'backspace') {
+        if (buffer.length > 0) {
+          buffer = buffer.slice(0, -1);
+          output.write('\b \b');
+        }
+        return;
+      }
+
+      if (typeof chunk === 'string' && chunk.length > 0 && !key.meta) {
+        buffer += chunk;
+        output.write(chunk);
+      }
+    };
+
+    input.on('keypress', onKeypress);
+  });
 }
 
 function parseArgs(argv, defaults = {}) {
@@ -225,6 +332,9 @@ function getUsage(config = {}) {
   lines.push(
     '  - without --target-root: derive a visible repo-sibling folder from the repo name'
   );
+  lines.push(
+    '  - in an interactive terminal, omitting --repo-url opens a prompt so you can paste a public repo URL'
+  );
   return lines.join('\n');
 }
 
@@ -321,7 +431,7 @@ function cloneRepo(options, stdout, label) {
   stdout.write(
     `[${label}] Cloned ${options.repoUrl} to ${options.targetRoot} at ${head} from origin/${options.branch}.\n`
   );
-  writeNextStep(options.targetRoot, stdout, label);
+  writeNextStep(options.targetRoot, options.repoUrl, stdout, label);
 }
 
 function reuseRepo(options, stdout, label) {
@@ -332,7 +442,7 @@ function reuseRepo(options, stdout, label) {
   stdout.write(
     `[${label}] Using clean existing clone at ${options.targetRoot} (${head}) on ${options.branch}.\n`
   );
-  writeNextStep(options.targetRoot, stdout, label);
+  writeNextStep(options.targetRoot, options.repoUrl, stdout, label);
 }
 
 function refreshRepo(options, stdout, label) {
@@ -373,7 +483,7 @@ function refreshRepo(options, stdout, label) {
   stdout.write(
     `[${label}] Normalized ${options.targetRoot} to ${head} from origin/${options.branch}.\n`
   );
-  writeNextStep(options.targetRoot, stdout, label);
+  writeNextStep(options.targetRoot, options.repoUrl, stdout, label);
 }
 
 function needsNormalization(options) {
@@ -383,13 +493,30 @@ function needsNormalization(options) {
   return getCurrentBranch(options.targetRoot) !== options.branch || isShallowRepository(options.targetRoot);
 }
 
-function runPublicRepoClone(argv = process.argv.slice(2), deps = {}, config = {}) {
+async function runPublicRepoClone(argv = process.argv.slice(2), deps = {}, config = {}) {
   const stdout = deps.stdout ?? process.stdout;
+  const stdin = deps.stdin ?? process.stdin;
   const parsed = parseArgs(argv, config);
 
   if (parsed.helpRequested) {
     stdout.write(`${getUsage(config)}\n`);
     return;
+  }
+
+  if (!parsed.repoUrl && !config.defaultRepoUrl) {
+    const promptedRepoUrl = await (deps.promptForRepoUrl ?? promptForRepoUrl)(
+      stdin,
+      stdout,
+      config.label ?? 'public-repo'
+    );
+    if (!promptedRepoUrl) {
+      stdout.write(
+        `[${config.label ?? 'public-repo'}] Cancelled interactive repo prompt. Next: run npm run public:fixture:icon-editor for the canonical labview-icon-editor sample.\n`
+      );
+      return;
+    }
+    parsed.repoUrl = promptedRepoUrl;
+    parsed.repoUrlSpecified = true;
   }
 
   const options = resolveEffectiveOptions(parsed, config, deps);
@@ -413,13 +540,16 @@ module.exports = {
   DEFAULT_ICON_EDITOR_REPO_URL,
   DEFAULT_ICON_EDITOR_TARGET_ROOT,
   SUPPORTED_PUBLIC_HOSTS,
+  canPromptInteractively,
   deriveVisibleTargetRoot,
   getNextStepMessage,
+  getRepoReviewHint,
   getUsage,
   normalizeRepoUrl,
   parseArgs,
   parseRemoteHeadBranch,
   parseSupportedPublicRepoUrl,
+  promptForRepoUrl,
   resolveEffectiveOptions,
   runPublicRepoClone
 };

@@ -53,12 +53,29 @@ clone into a mandatory startup side effect.
 The generic public-repo bootstrap surface is:
 
 ```bash
+npm run public:repo:clone
+```
+
+That no-argument path is the intended first move in a brand-new Codespace. It
+prompts for a public GitHub or GitLab repo URL and falls back to the canonical
+helper-backed sample guidance when the prompt is cancelled.
+
+The non-interactive form is:
+
+```bash
 npm run public:repo:clone -- --repo-url https://github.com/crossrulz/SerialPortNuggets.git
 ```
 
 It accepts public `github.com` and `gitlab.com` HTTPS repo URLs, honors an
 explicit `--branch` exactly, and otherwise resolves the remote default branch
 before cloning into a visible repo-sibling folder.
+
+The public reader surface now keeps two separate Codespaces documents on
+purpose:
+
+- a quickstart for the canonical helper-backed `ni/labview-icon-editor` path
+- a reference manual for reviewing the changes of a LabVIEW VI between two
+  commits on any supported public repo
 
 The maintained Gate D operator preflight surfaces are:
 
@@ -435,6 +452,10 @@ Latest landed ship target:
 - remaining release blockers: none on the exact public `v1.1.0` line; public
   `main` now publishes `daef8bd`, the public GitHub release `v1.1.0` is live,
   and `develop` now carries the active `v1.2.0` candidate line
+- `v1.2.0` is now `review-ready` on maintained public `develop` candidate head
+  `e8b0925` and maintained public wiki head `63a4208`; exact tagging remains
+  blocked until Sergio completes the next brand-new-fork and brand-new-Codespace
+  acceptance review
 
 ## Install Surface
 
