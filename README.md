@@ -396,11 +396,10 @@ Latest landed ship target:
 - `SHIP-0001`: releasable `v0.2.0` VSIX product
 - landed ship tranche: `TRANCHE-009`
 - landed ship issue: `ISSUE-0406`
-- retained exact-version release: `v0.2.0`
-- retained release artifact: `vi-history-suite-0.2.0.vsix`
+- retained exact-version releases: `v0.2.0`, `v1.0.0`
+- current exact-version line: `v1.0.0`
 - target release manifest: `release-evidence/release-manifest.json`
 - current development baseline: `1.0.0`
-- next exact-version line: `v1.0.0`
 - current changelog: [CHANGELOG.md](./CHANGELOG.md)
 - docs-authoring image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
 - retained release evidence: GitLab release `v0.2.0`, tag pipeline `2428809456`,
@@ -428,6 +427,8 @@ The current active tranches are:
 - `TRANCHE-013`: extension execution contract simplification and Docker-only
   runtime UX
 - `TRANCHE-012`: post-release sustainment and release cadence
+- `TRANCHE-010`: public-source facade and public-product acceptance is now a
+  closed release-closeout tranche for the `v1.0.0` Docker-only public contract
 - active sustainment rules:
   `docs/product/post-release-sustainment-rules.md`
 - reopened queued closeout:

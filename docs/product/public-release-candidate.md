@@ -1,10 +1,10 @@
 # Public Release Candidate
 
 - Version line: `1.0.0`
-- Recorded at: `2026-04-07T03:39:45.470Z`
-- Authority green baseline: commit `11e969c`, pipeline `2433268142`
-- Published public source commit: `4a8b27b`
-- Published public wiki head: `e28491c`
+- Recorded at: `2026-04-07T04:06:58.998Z`
+- Authority green baseline: commit `6bbdc62`, pipeline `2433349023`
+- Published public source commit: `d787f2d`
+- Published public wiki head: `a7e30cd`
 
 ## Readiness
 
@@ -13,7 +13,7 @@
 - Local public devcontainer: passed
 - Local public fixture helper: passed
 - Public Codespace: passed
-- Gate D public acceptance: pending human judgment
+- Gate D public acceptance: passed
 
 ## Local Proof
 
@@ -50,7 +50,17 @@
 - The retained hosted smoke still uses the synthetic integration fixture, so it
   is supporting hosted proof rather than the final semantic Gate D acceptance.
 
+## Human Review Proof
+
+- The latest retained human review submission is a real
+  `passed-human-review` at `2026-04-07T04:06:58.998Z` on
+  `resource/plugins/lv_icon.vi`.
+- Reviewer note: `Comparison report is as expected.`
+- This is the governed canonical Gate D pass on the public Docker-only
+  product, not just supporting evidence.
+
 ## Remaining Blockers
 
-- Gate D Docker Linux cold-pull acceptance on the canonical fixture workspace
-  is still pending fresh human judgment.
+- None. The canonical Docker Linux cold-pull human pass is now retained on
+  `resource/plugins/lv_icon.vi`, so the exact `v1.0.0` public release is
+  cleared on the authority proof surfaces.

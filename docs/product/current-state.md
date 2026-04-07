@@ -136,7 +136,7 @@ Latest landed ship target:
 - retained release pipeline: `2428809456`
 - retained release job: `13779604462`
 - current development baseline: `1.0.0`
-- next exact-version line: `v1.0.0`
+- current exact-version line: `v1.0.0`
 - current changelog: [CHANGELOG.md](../../CHANGELOG.md)
 - docs-workbench image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
 - remaining blockers: none
@@ -161,12 +161,12 @@ Current active tranche:
   - keep authority/wiki/bundled-doc/operator surfaces aligned as truth changes
   - do not absorb the active `PROGRAM-0005` or reopened `PROGRAM-0002` work
     into generic sustainment language
-- reopened active closeout:
+- closed public-product closeout:
   - `TRANCHE-010` / [ISSUE-0407 Public Source Facade And Public-Product Acceptance](./issues/ISSUE-0407-public-facade-installer-and-windows-acceptance.md) / [PROGRAM-0002: Public Source Facade And Public-Product Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
   - the earlier retained canonical host pass at `2026-04-06T20:48:13.412Z`
     remains historical evidence for the older public bundle only
-  - the next Gate D rerun now belongs to the Docker-only public bundle and is
-    planned to include a Linux-engine cold-pull compare on the deterministic
+  - the closing Gate D rerun belonged to the Docker-only public bundle and
+    passed as a Linux-engine cold-pull compare on the deterministic
     `c:\dev\labview-icon-editor` fixture workspace
   - retained preflight preparation at `2026-04-07T02:38:48.334Z` already proves
     published public repo commit `4a8b27b`, published public wiki HEAD commit
@@ -178,6 +178,10 @@ Current active tranche:
     proving public design-contract viability, Debian hosted bootstrap with
     xauth/Xvfb, Docker Linux cold pull, and containerized
     `CreateComparisonReport` reachability on the public product surface
+  - the latest retained human review submission at `2026-04-07T04:06:58.998Z`
+    is a real `passed-human-review` on
+    `c:\dev\labview-icon-editor\resource\plugins\lv_icon.vi` with note
+    `Comparison report is as expected.`
   - the latest retained human Gate D review at `2026-04-07T01:37:37.885Z` is a
     real `failed-human-review` on
     `c:\dev\labview-icon-editor\Tooling\deployment\VIP_Pre-Uninstall Custom Action.vi`;
@@ -262,10 +266,14 @@ Current active and queued post-release programs:
   - private GitLab source repo remains the authority repo and release-control surface
   - internal GitLab wiki remains the maintainer-facing derived reader surface
   - the private GitHub experiment mirror is a non-authoritative Linux benchmark lane only
-  - public GitHub facade repo is the public source product surface at `https://github.com/svelderrainruiz/vi-history-suite`, published at commit `4a8b27b`
-  - public GitHub user wiki now exists at `https://github.com/svelderrainruiz/vi-history-suite.wiki.git` as a public extension-user reader surface, published at commit `e28491c`
+  - public GitHub facade repo is the public source product surface at `https://github.com/svelderrainruiz/vi-history-suite`, published at commit `d787f2d`
+  - public GitHub user wiki now exists at `https://github.com/svelderrainruiz/vi-history-suite.wiki.git` as a public extension-user reader surface, published at commit `a7e30cd`
   - public GitHub source publication is tracked separately from both wiki surfaces in `docs/product/public-github-source-publication-ledger.md` and `docs/product/public-github-source-publication-ledger.json`
   - published public GitHub wiki pages now include `Home`, `User-Workflow`, `Install-And-Release`, `Comparison-Reports-And-Dashboard-Review`, and `Current-State`
+  - the canonical Gate D blocker on `resource/plugins/lv_icon.vi` is now
+    retired, so the exact `v1.0.0` public release is cleared on the authority
+    proof surfaces even though the public GitHub release page has not yet been
+    refreshed
   - public GitHub wiki publication is tracked separately from the internal GitLab maintainer wiki in `docs/product/public-github-wiki-publication-ledger.md` and `docs/product/public-github-wiki-publication-ledger.json`
   - public GitHub source repo is not the private GitHub experiment mirror
   - the authority VSIX install surface is compile-and-audit guarded and does not permit shipped runtime `node_modules`

@@ -2,11 +2,9 @@
 
 This changelog is the governed version-line summary for `vi-history-suite`.
 
-The first retained exact-version release remains `v0.2.0`. `package.json` may
-advance ahead of that retained release while the repo builds the next governed
-exact-version line.
+Retained exact-version releases now include `v0.2.0` and `v1.0.0`.
 
-## [1.0.0] - Unreleased
+## [1.0.0] - 2026-04-07
 
 ### Added
 

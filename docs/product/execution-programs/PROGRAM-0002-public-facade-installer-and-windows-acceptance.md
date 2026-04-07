@@ -2,9 +2,9 @@
 
 ## Status
 
-Reopened post-release program for the next exact-version line.
+Closed on the `1.0.0` Docker-only public-product acceptance gate.
 
-Reopen facts:
+Closeout facts:
 
 - retained release `v0.2.0` and the retained canonical Windows host pass at
   `2026-04-06T20:48:13.412Z` remain historical evidence for the earlier public
@@ -13,8 +13,8 @@ Reopen facts:
 - the public GitHub facade repo is the extension-user front face
 - the public GitHub wiki now exists at
   `https://github.com/svelderrainruiz/vi-history-suite.wiki.git`
-- Gate D must be rerun on the Docker-only installed bundle before this program
-  can close again
+- Gate D has now passed on the Docker-only installed bundle for the governed
+  canonical target `resource/plugins/lv_icon.vi`
 
 ## Purpose
 
@@ -29,15 +29,15 @@ release-kit/setup scaffolding shape.
 
 ## Current Gate Truth
 
-This program is reopened and not yet reclosed.
+This program is now closed again.
 
 Current truth:
 
 - the old canonical Windows host pass remains valid historical evidence for the
   earlier public bundle only
-- the public GitHub facade repo is published at `4a8b27b` as the curated public
+- the public GitHub facade repo is published at `d787f2d` as the curated public
   source product surface
-- the public GitHub wiki is published at `e28491c` as the public extension-user
+- the public GitHub wiki is published at `a7e30cd` as the public extension-user
   reader surface
 - the internal GitLab wiki remains the maintainer-facing derived reader surface
   for the private control plane
@@ -66,6 +66,10 @@ Current truth:
   proving Debian hosted bootstrap, xauth/Xvfb availability, Docker Linux cold
   pull, and containerized `CreateComparisonReport` reachability on the public
   product surface
+- the latest retained human review submission at `2026-04-07T04:06:58.998Z`
+  is a real `passed-human-review` on
+  `resource/plugins/lv_icon.vi` with note
+  `Comparison report is as expected.`
 - the latest retained Gate D review at `2026-04-07T01:37:37.885Z` is a real
   failure on `Tooling/deployment/VIP_Pre-Uninstall Custom Action.vi`: the first
   governed Linux image cold pull completed truthfully, then later compare runs
@@ -94,7 +98,7 @@ Current truth:
 - the new [Public Release Candidate](../public-release-candidate.md) control
   surface now retains the current `1.0.0` public-surface snapshot, including
   the green authority baseline, published public commits, local devcontainer
-  proof, and remaining hosted/Gate D blockers
+  proof, and the now-passed canonical Gate D human review
 
 ## Trigger
 
@@ -306,7 +310,11 @@ Gate D is now defined against the real public product:
 - the earlier same-day retained host pass at `2026-04-06T19:53:21.713Z`
   remains supporting evidence that the simplified checkbox-selected compare flow
   itself works as expected on an installed surface
-- Gate D remains open until the cold-pull public-product rerun passes
+- the newer retained VIP_Post-Install pass is also supporting evidence only; it
+  does not close Gate D because the governed canonical target remains
+  `resource/plugins/lv_icon.vi`
+- Gate D is closed by the retained cold-pull public-product rerun on the
+  canonical target `resource/plugins/lv_icon.vi`
 
 ### Gate E: Public Support Surface
 
@@ -318,8 +326,8 @@ Gate D is now defined against the real public product:
 
 The public product now retains:
 
-- published public GitHub source repo baseline at commit `4a8b27b`
-- published public GitHub wiki refresh at commit `e28491c`
+- published public GitHub source repo baseline at commit `d787f2d`
+- published public GitHub wiki refresh at commit `a7e30cd`
 - a public devcontainer/Codespaces surface
 - a public package-preview workflow
 - a public Linux smoke workflow at
@@ -347,18 +355,19 @@ The public product now retains:
 - explicit control-plane truth that benchmark proof ownership sits with
   `PROGRAM-0003` / `ISSUE-0408` / `TRANCHE-011`
 
-The program still intentionally holds these gates open:
+The program now retains these closed public-acceptance facts:
 
-- Gate D Linux-engine cold-pull compare proof on the canonical fixture
+- Gate D Linux-engine cold-pull compare proof passed on the canonical fixture
   workspace
-- Gate D canonical compare-presentation acceptance on the public product
-- Gate D rerun on the newly fixed Linux-container path after the updated VSIX
-  is installed
+- Gate D canonical compare-presentation acceptance passed on the public
+  product
+- the newly fixed Linux-container path is now closed by the retained human
+  pass on `resource/plugins/lv_icon.vi`
 
 ## Approval Outcome
 
 This program was previously approved through `TRANCHE-010` for the earlier
-public bundle. It is reopened for the `1.0.0` Docker-only public contract.
+public bundle. It is now reclosed for the `1.0.0` Docker-only public contract.
 
 The approved trust boundary remains:
 

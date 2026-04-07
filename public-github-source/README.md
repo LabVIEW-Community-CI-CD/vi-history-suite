@@ -95,7 +95,6 @@ npm run package -- --out /tmp/vi-history-suite-public-preview.vsix
 
 ## Current Version Line
 
-- retained exact release: `v0.2.0`
+- retained exact-version releases: `v0.2.0`, `v1.0.0`
+- current exact-version line: `v1.0.0`
 - active development baseline: `1.0.0`
-- this repo is the public source product for the next governed exact-version
-  line

@@ -11,8 +11,9 @@
 - The first retained exact-version release is `v0.2.0`, with retained artifact
   `vi-history-suite-0.2.0.vsix` and manifest
   `release-evidence/release-manifest.json`.
-- The current development baseline is `1.0.0`, so the next exact-version line
-  is `v1.0.0` unless `package.json` changes again before tagging.
+- The current exact-version line is `v1.0.0`. Do not assume a later
+  exact-version line until `package.json` changes again after release
+  normalization.
 - The release tag shall match both `package.json` and the top unreleased
   heading in [CHANGELOG.md](../CHANGELOG.md).
 - The repo also publishes a separate docs-authoring workbench image for
@@ -117,5 +118,6 @@
 - The first governed `v0.2.0` release evidence set is now retained through
   GitLab release `v0.2.0`, tag pipeline `2428809456`, and kept release job
   `13779604462`.
-- The active development line is now `1.0.0`, tracked in `CHANGELOG.md`, and
-  should not rewrite the retained `v0.2.0` release evidence.
+- The active development/package line is now `1.0.0`, tracked in
+  `CHANGELOG.md`, and should not rewrite the retained `v0.2.0` release
+  evidence.

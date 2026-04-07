@@ -77,9 +77,9 @@ describe('ship-control direction system', () => {
     const queue = readJson<QueueEntry[]>('docs/product/development-queue.json');
     const activeTranches = queue.filter((entry) => entry.status === 'active');
 
-    expect(activeTranches).toHaveLength(3);
+    expect(activeTranches).toHaveLength(2);
     expect(activeTranches.map((entry) => entry.id)).toEqual(
-      expect.arrayContaining(['TRANCHE-010', 'TRANCHE-012', 'TRANCHE-013'])
+      expect.arrayContaining(['TRANCHE-012', 'TRANCHE-013'])
     );
   });
 
@@ -195,12 +195,11 @@ describe('ship-control direction system', () => {
     expect(readme).toContain('npm run design:gate:assert-complete');
     expect(readme).toContain('- `SHIP-0001`: releasable `v0.2.0` VSIX product');
     expect(readme).toContain('- landed ship tranche: `TRANCHE-009`');
-    expect(readme).toContain('- retained release artifact: `vi-history-suite-0.2.0.vsix`');
+    expect(readme).toContain('- retained exact-version releases: `v0.2.0`, `v1.0.0`');
+    expect(readme).toContain('- current exact-version line: `v1.0.0`');
     expect(readme).toContain('- current development baseline: `1.0.0`');
-    expect(readme).toContain('- next exact-version line: `v1.0.0`');
     expect(readme).toContain('- current changelog: [CHANGELOG.md](./CHANGELOG.md)');
-    expect(readme).toContain('- reopened queued closeout:');
-    expect(readme).toContain('- `TRANCHE-010`: public facade release kit and host-machine acceptance');
+    expect(readme).toContain('- `TRANCHE-010`: public-source facade and public-product acceptance is now a');
     expect(readme).toContain('private GitHub experiment repo');
 
     expect(currentState).toContain('[SHIP-0001: Releasable VI History Suite](./SHIP-0001-releasable-vi-history-suite.md)');
@@ -217,9 +216,9 @@ describe('ship-control direction system', () => {
     expect(currentState).toContain('- landed ship tranche: `TRANCHE-009`');
     expect(currentState).toContain('- retained release artifact: `vi-history-suite-0.2.0.vsix`');
     expect(currentState).toContain('- current development baseline: `1.0.0`');
-    expect(currentState).toContain('- next exact-version line: `v1.0.0`');
+    expect(currentState).toContain('- current exact-version line: `v1.0.0`');
     expect(currentState).toContain('- current changelog: [CHANGELOG.md](../../CHANGELOG.md)');
-    expect(currentState).toContain('- reopened active closeout:');
+    expect(currentState).toContain('- closed public-product closeout:');
     expect(currentState).toContain('`TRANCHE-010` / [ISSUE-0407 Public Source Facade And Public-Product Acceptance]');
     expect(currentState).toContain('[PROGRAM-0002: Public Source Facade And Public-Product Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)');
     expect(currentState).toContain('`vi-history-suite-source-experiments`');
@@ -247,15 +246,14 @@ describe('ship-control direction system', () => {
 
     expect(programDoc).toContain('[SHIP-0001: Releasable VI History Suite](../SHIP-0001-releasable-vi-history-suite.md)');
     expect(programDoc).toContain('ship-control surfaces');
-    expect(programDoc2).toContain('Reopened post-release program for the next exact-version line.');
+    expect(programDoc2).toContain('Closed on the `1.0.0` Docker-only public-product acceptance gate.');
     expect(programDoc2).toContain('retained release `v0.2.0`');
 
     expect(releaseProcedure).toContain('[SHIP-0001](./product/SHIP-0001-releasable-vi-history-suite.md)');
     expect(releaseProcedure).toContain('[release readiness matrix](./product/release-readiness-matrix.json)');
     expect(releaseProcedure).toContain('vi-history-suite-0.2.0.vsix');
     expect(releaseProcedure).toContain('release-evidence/release-manifest.json');
-    expect(releaseProcedure).toContain('current development baseline is `1.0.0`');
-    expect(releaseProcedure).toContain('next exact-version line');
+    expect(releaseProcedure).toContain('current exact-version line is `v1.0.0`');
     expect(releaseProcedure).toContain('[CHANGELOG.md](../CHANGELOG.md)');
     expect(releaseProcedure).toContain('docs/product/documentation-coherence-ledger.md');
     expect(releaseProcedure).toContain('docs/product/wiki-seed-plan.md');
@@ -285,8 +283,8 @@ describe('ship-control direction system', () => {
     expect(bundledInstallPage).toContain('<h2>Release Procedure Summary</h2>');
     expect(bundledInstallPage).toContain('open <code>VI History</code> on an eligible VI');
     expect(bundledInstallPage).not.toContain('Retained exact release: <code>v0.2.0</code>');
-    expect(changelog).toContain('## [1.0.0] - Unreleased');
-    expect(changelog).toContain('The first retained exact-version release remains `v0.2.0`');
+    expect(changelog).toContain('## [1.0.0] - 2026-04-07');
+    expect(changelog).toContain('Retained exact-version releases now include `v0.2.0` and `v1.0.0`');
     expect(changelog).toContain('## [0.2.0] - 2026-04-03');
     expect(cmPlan).toContain('# Configuration Management Plan');
     expect(cmPlan).toContain('- Scheme: `vX.Y.Z`');

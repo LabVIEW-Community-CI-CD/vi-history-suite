@@ -55,7 +55,7 @@ describe('post-release control-plane coherence', () => {
       issues: ['ISSUE-0410']
     });
     expect(queue.find((entry) => entry.id === 'TRANCHE-010')).toMatchObject({
-      status: 'active',
+      status: 'done',
       issues: ['ISSUE-0407']
     });
 
@@ -64,22 +64,23 @@ describe('post-release control-plane coherence', () => {
     expect(currentState).toContain('`TRANCHE-013`');
     expect(currentState).toContain('public GitHub facade repo is the public source product surface');
     expect(currentState).toContain('public GitHub user wiki now exists at');
-    expect(currentState).toContain('deterministic acceptance surface for the next Docker-only Gate D rerun');
+    expect(currentState).toContain('closed public-product closeout');
     expect(currentState).toContain('retained preflight preparation at `2026-04-07T02:38:48.334Z`');
     expect(currentState).toContain('retained hosted public proof on GitHub Codespace `novacula` now passes');
+    expect(currentState).toContain('Comparison report is as expected.');
 
-    expect(program).toContain('Reopened post-release program for the next exact-version line.');
+    expect(program).toContain('Closed on the `1.0.0` Docker-only public-product acceptance gate.');
     expect(program).toContain('the installed extension compare workflow is now Docker-only and x64-only');
     expect(program).toContain('the public GitHub facade repo is the extension-user front face');
     expect(program).toContain('the public GitHub wiki now exists at');
-    expect(program).toContain('the next Gate D rerun must exercise the deterministic public-release fixture');
+    expect(program).toContain('Gate D is closed by the retained cold-pull public-product rerun');
     expect(program).toContain('retained preflight preparation at `2026-04-07T02:38:48.334Z` already proves');
     expect(program).toContain('GitHub Codespace `novacula` now passes the hosted public smoke');
 
-    expect(issue).toContain('Reopened post-release issue for the next exact-version line.');
+    expect(issue).toContain('Closed on exact public-product acceptance for the `1.0.0` Docker-only line.');
     expect(issue).toContain('the public GitHub user-wiki surface now exists');
-    expect(issue).toContain('Gate D must be rerun on the Docker-only public bundle');
-    expect(issue).toContain('the next acceptance run must prove the Docker-only installed bundle');
+    expect(issue).toContain('Gate D has now passed on the Docker-only public bundle');
+    expect(issue).toContain('the exact `v1.0.0` public release is now cleared');
     expect(issue).toContain('retained Gate D preflight preparation at `2026-04-07T02:38:48.334Z` already');
     expect(issue).toContain('GitHub Codespace `novacula` now passes the hosted public smoke');
 

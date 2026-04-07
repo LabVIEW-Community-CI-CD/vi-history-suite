@@ -12,22 +12,22 @@ remain private in GitLab.
 
 ## Status
 
-Reopened post-release issue for the next exact-version line.
+Closed on exact public-product acceptance for the `1.0.0` Docker-only line.
 
-Reopen evidence:
+Closeout evidence:
 
 - immutable retained release `v0.2.0` and the retained canonical host pass at
   `2026-04-06T20:48:13.412Z` remain historical evidence only
 - the installed extension contract is now breaking-change material at `1.0.0`
 - the public GitHub user-wiki surface now exists and needs to stay aligned with
   the public source repo and bundled docs
-- Gate D must be rerun on the Docker-only public bundle before this issue can
-  close again
+- Gate D has now passed on the Docker-only public bundle for
+  `resource/plugins/lv_icon.vi`
 
 Current landed state:
 
-- the public GitHub source repo is published at commit `4a8b27b`
-- the public GitHub wiki is published at commit `e28491c`
+- the public GitHub source repo is published at commit `d787f2d`
+- the public GitHub wiki is published at commit `a7e30cd`
 - `.github/workflows/public-facade-linux-smoke.yml` plus local
   `npm run public:smoke:linux` define the public Docker smoke surface
 - `.github/workflows/public-facade-package-preview.yml` defines the public
@@ -44,6 +44,10 @@ Current landed state:
   failure on `Tooling/deployment/VIP_Pre-Uninstall Custom Action.vi`: the first
   cold pull completed, then subsequent Linux-container compare attempts failed
   as `command-exited-nonzero`
+- the latest retained human review submission at `2026-04-07T04:06:58.998Z`
+  is a real `passed-human-review` on
+  `resource/plugins/lv_icon.vi` with note
+  `Comparison report is as expected.`
 - retained runtime stderr and packet evidence narrowed that failure to a
   repo-owned Linux `CreateComparisonReport` path seam: the container runtime
   launched and connected to LabVIEW, then rejected space-containing staged VI
@@ -71,7 +75,7 @@ Current landed state:
 - the new [Public Release Candidate](../public-release-candidate.md) control
   surface now retains the current `1.0.0` public-surface snapshot, including
   the green authority baseline, published public commits, local devcontainer
-  proof, and remaining hosted/Gate D blockers
+  proof, and the now-passed canonical Gate D human review
 - the public GitHub wiki now exists at
   `https://github.com/svelderrainruiz/vi-history-suite.wiki.git`
 - public GitHub wiki publication is tracked separately from the internal
@@ -82,6 +86,8 @@ Current landed state:
   internal-authority docs surfaces while `docs:ci` remains the umbrella lane
 - the next acceptance run must prove the Docker-only installed bundle from the
   public product surfaces, not from the older release-kit/setup shape
+- the exact `v1.0.0` public release is now cleared on the authority proof
+  surfaces by the canonical pass on `resource/plugins/lv_icon.vi`
 - repeatable benchmark proof now has explicit closed ownership under
   `PROGRAM-0003` / `ISSUE-0408` / `TRANCHE-011`, while sustainment is queued
   under `PROGRAM-0004` / `ISSUE-0409` / `TRANCHE-012`
@@ -149,4 +155,4 @@ Current landed state:
   installed-user docs to the Docker-only installed contract
 - keep the canonical `ni/labview-icon-editor` fixture and selected VI path as
   the deterministic acceptance surface
-- stop short of claiming closure until the new Docker-only Gate D pass runs
+- retain the new Docker-only Gate D pass as the closure fact for this issue

@@ -1,7 +1,7 @@
 {
   "generatedFor": "vi-history-suite",
   "publicationSurface": "public-github-source-repo",
-  "publishedHeadCommit": "4a8b27b",
+  "publishedHeadCommit": "d787f2d",
   "publications": [
     {
       "id": "public-source-product-repo-baseline",
@@ -26,6 +26,19 @@
       "primaryAuthority": [
         "README.md",
         "docs/architecture/adr/ADR-0010-dual-host-extension-proof-and-linux-bootstrap.md",
+        "docs/product/public-release-candidate.md"
+      ]
+    },
+    {
+      "id": "public-source-v1-0-0-release-refresh",
+      "title": "Public source v1.0.0 release refresh",
+      "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
+      "status": "published",
+      "publishedDate": "2026-04-06",
+      "repoCommit": "d787f2d",
+      "primaryAuthority": [
+        "README.md",
+        "CHANGELOG.md",
         "docs/product/public-release-candidate.md"
       ]
     }

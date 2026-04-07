@@ -35,34 +35,36 @@ describe('public release candidate control surface', () => {
 
     expect(candidate.versionLine).toBe('1.0.0');
     expect(candidate.authorityRepo).toMatchObject({
-      latestGreenPipelineCommit: '11e969c',
-      latestGreenPipelineId: '2433268142'
+      latestGreenPipelineCommit: '6bbdc62',
+      latestGreenPipelineId: '2433349023'
     });
-    expect(candidate.publishedPublicSource?.publishedCommit).toBe('4a8b27b');
-    expect(candidate.publishedPublicWiki?.publishedHeadCommit).toBe('e28491c');
+    expect(candidate.publishedPublicSource?.publishedCommit).toBe('d787f2d');
+    expect(candidate.publishedPublicWiki?.publishedHeadCommit).toBe('a7e30cd');
     expect(candidate.candidateReadiness).toMatchObject({
       authorityBaseline: 'passed',
       localPublicDevcontainer: 'passed',
       localPublicFixtureHelper: 'passed',
       publicCodespace: 'passed',
-      gateDPublicAcceptance: 'pending-human-judgment'
+      gateDPublicAcceptance: 'passed'
     });
     expect(candidate.testerFixtureStrategy).toMatchObject({
       command: 'npm run public:fixture:icon-editor',
       defaultCloneOnStartup: false
     });
-    expect(candidate.activeBlockers).toEqual(
-      expect.arrayContaining([expect.objectContaining({ id: 'PUBLIC-GATE-D-001' })])
-    );
-    expect(candidate.activeBlockers).not.toEqual(
-      expect.arrayContaining([expect.objectContaining({ id: 'PUBLIC-CODESPACE-001' })])
-    );
+    expect(candidate.activeBlockers).toEqual([]);
     expect(candidate).toMatchObject({
       hostedProofs: {
         publicCodespace: {
           status: 'passed',
           displayName: 'novacula',
           publicRepoCommit: '4a8b27b'
+        }
+      },
+      humanReviewProofs: {
+        latestSubmission: {
+          status: 'passed-canonical-gate-d',
+          outcome: 'passed-human-review',
+          relativePath: 'resource/plugins/lv_icon.vi'
         }
       }
     });
@@ -72,17 +74,30 @@ describe('public release candidate control surface', () => {
     expect(candidateMarkdown).toContain('npm run public:fixture:icon-editor');
     expect(candidateMarkdown).toContain('Public Codespace: passed');
     expect(candidateMarkdown).toContain('GitHub Codespace `novacula` now passes the hosted public smoke');
+    expect(candidateMarkdown).toContain('resource/plugins/lv_icon.vi');
+    expect(candidateMarkdown).toContain('Gate D public acceptance: passed');
+    expect(candidateMarkdown).toContain('None. The canonical Docker Linux cold-pull human pass is now retained');
 
     expect(currentState).toContain('[Public Release Candidate](./public-release-candidate.md)');
     expect(currentState).toContain('local public devcontainer now passes on this machine');
     expect(currentState).toContain('retained hosted public proof on GitHub Codespace `novacula` now passes');
+    expect(currentState).toContain('latest retained human review submission at `2026-04-07T04:06:58.998Z`');
+    expect(currentState).toContain('resource\\plugins\\lv_icon.vi');
     expect(currentState).toContain('optional governed tester-fixture helper');
+    expect(currentState).toContain('exact `v1.0.0` public release is cleared on the authority');
+    expect(currentState).toContain('proof surfaces even though the public GitHub release page has not yet been');
 
     expect(program).toContain('local public devcontainer now passes on this machine');
     expect(program).toContain('GitHub Codespace `novacula` now passes the hosted public smoke');
+    expect(program).toContain('resource/plugins/lv_icon.vi');
+    expect(program).toContain('resource/plugins/lv_icon.vi');
     expect(program).toContain('optional governed tester-fixture helper');
+    expect(program).toContain('Gate D is closed');
     expect(issue).toContain('local public devcontainer now passes on this machine');
     expect(issue).toContain('GitHub Codespace `novacula` now passes the hosted public smoke');
+    expect(issue).toContain('resource/plugins/lv_icon.vi');
+    expect(issue).toContain('resource/plugins/lv_icon.vi');
     expect(issue).toContain('optional governed tester-fixture helper');
+    expect(issue).toContain('exact `v1.0.0` public release is now cleared');
   });
 });
