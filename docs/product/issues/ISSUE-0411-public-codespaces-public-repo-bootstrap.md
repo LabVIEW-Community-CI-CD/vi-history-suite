@@ -27,6 +27,8 @@ Activation facts:
 - fail-closed behavior on dirty or mismatched existing clones
 - maintained public wiki procedures for the canonical helper path and the
   generic public-repo path
+- a standalone public reference manual for the generic path instead of a
+  quickstart-style clone page
 - pre-tag human dry-run review of those wiki procedures from a brand new fork
   and a brand new Codespace
 
@@ -55,8 +57,14 @@ Activation facts:
 - the command fails closed on dirty or mismatched existing clones
 - the canonical icon-editor helper path remains separate and easier for a
   first-time proof
+- the candidate control plane exposes a fail-closed `review-ready` state that
+  remains blocked until the maintained public `develop` candidate head and
+  maintained public wiki head are both published and retained
 - the exact `v1.2.0` tag is blocked until Sergio accepts the maintained public
   wiki procedure dry run from a brand new fork and a brand new Codespace
+- governed publication of the maintained public source/wiki surfaces preserves
+  unrelated dirty worktree changes and pauses only on direct unresolved
+  conflicts
 
 ## Required Evidence
 
@@ -64,6 +72,7 @@ Activation facts:
 - updated README, current-state, release-candidate, and public-reader docs
 - updated requirements, RTM, test plan, and ADR package
 - green design and docs gates on the candidate line
+- retained `review-ready` state before the next human dry run opens
 - retained Sergio wiki-procedure review before exact tagging, using a brand new
   fork and a brand new Codespace
 
@@ -73,3 +82,5 @@ Activation facts:
 - add the fail-closed branch-baseline assertion surface
 - add the generic public GitHub/GitLab bootstrap surface
 - retain the exact-tag human wiki-review gate in the control plane
+- retain the review-ready publication boundary and dirty-public-surface
+  handling in the same line

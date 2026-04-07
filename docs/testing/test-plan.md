@@ -1674,6 +1674,15 @@
   prove the canonical helper path remains separate from the generic public-repo
   path while the exact tag stays blocked on Sergio wiki-procedure review from a
   brand new fork and a brand new Codespace
+- `TEST-UNIT-333`: verify the `1.2.0` public release-candidate package retains
+  an explicit ordered state progression from local authority-green through
+  published public source/wiki heads to `review-ready`, and fails closed so
+  local green proof alone does not reopen the brand-new-fork human review gate
+- `TEST-UNIT-334`: verify release governance retains dirty public-source/wiki
+  publication handling that preserves unrelated dirt, patches overlapping
+  candidate files narrowly, and pauses only on direct unresolved conflicts
+  instead of stopping candidate publication merely because the worktree is
+  dirty
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are
@@ -1703,6 +1712,15 @@
   confirm the canonical helper path remains separate from the generic
   public-repo path while exact `v1.2.0` tagging is blocked on Sergio
   wiki-procedure review from a brand new fork and a brand new Codespace
+- `TEST-DOC-097`: review sustainment, release procedure, current-state, the
+  public release-candidate package, ISSUE-0411, PROGRAM-0006, ADR-0035, SRS,
+  RTM, and the test plan and confirm the repo now retains an explicit
+  `review-ready` boundary that requires published public `develop` and public
+  wiki candidate heads before Sergio's next brand-new-fork review starts
+- `TEST-DOC-098`: review sustainment, release procedure, ADR-0035, SRS, RTM,
+  and the test plan and confirm governed public source/wiki publication now
+  treats dirty worktrees as controlled patch targets instead of as a generic
+  reason to stop candidate publication
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

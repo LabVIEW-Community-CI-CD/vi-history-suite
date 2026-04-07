@@ -101,14 +101,13 @@ export function createOpenViHistoryCommand(
       return;
     }
 
-    if (!eligibilityIndexer.isEligible(targetUri)) {
+    const loadedModel = await historyService.load(targetUri);
+    if (!loadedModel.eligible) {
       void vscode.window.showInformationMessage(
         'The selected file is not currently eligible for VI History.'
       );
       return;
     }
-
-    const loadedModel = await historyService.load(targetUri);
     const isComparisonReportCapableVi =
       loadedModel.signature === 'LVIN' || loadedModel.signature === 'LVCC';
     const repositorySupport = loadedModel.repositorySupport;

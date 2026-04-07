@@ -2,7 +2,7 @@
   "schema": "vi-history-suite/public-release-candidate@v1",
   "versionLine": "1.2.0",
   "burnedExactReleaseLine": "v1.0.2",
-  "recordedAt": "2026-04-07T20:33:02Z",
+  "recordedAt": "2026-04-07T23:00:51Z",
   "authorityRepo": {
     "role": "source-of-truth",
     "integrationBranch": "develop",
@@ -26,25 +26,41 @@
   },
   "publicDevelopCandidate": {
     "branch": "develop",
-    "candidateCommit": "not-yet-promoted",
-    "status": "authority-develop-opened-public-promotion-pending",
-    "sourcePullRequest": "!11"
+    "candidateCommit": "e8b0925",
+    "status": "published-maintained-candidate-with-findings-folded",
+    "sourcePullRequest": "#15"
   },
   "publishedPublicWiki": {
     "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite.wiki.git",
-    "publishedHeadCommit": "d184be2",
+    "publishedHeadCommit": "63a4208",
     "publicationLedgerPath": "docs/product/public-github-wiki-publication-ledger.json",
-    "status": "published"
+    "status": "published-maintained-candidate-with-findings-folded"
   },
   "candidateReadiness": {
     "authorityBaseline": "v1.1.0-exact-public-release-published",
     "localInstalledVsix": "exact-v1.1.0-release-built",
     "localPublicDevcontainer": "v1.1.0-published-baseline",
     "localPublicFixtureHelper": "v1.1.0-published-baseline",
-    "publicRepoBootstrap": "in-progress-1.2.0",
-    "publicWikiCandidateReview": "pending-sergio",
+    "localAuthorityFindingsFold": "published-and-retained-on-maintained-public-candidate-surfaces",
+    "publicRepoBootstrap": "published-maintained-candidate-with-findings-folded",
+    "publicWikiCandidateReview": "awaiting-brand-new-fork-review-on-published-candidate",
+    "reviewReady": "ready-for-brand-new-fork-review",
     "exactPublicRelease": "v1.1.0-published",
     "requiredReviewEnvironment": "brand-new-fork-plus-brand-new-codespace"
+  },
+  "candidateStateMachine": {
+    "orderedStates": [
+      "local-authority-green",
+      "public-develop-published",
+      "public-wiki-published",
+      "review-ready",
+      "review-feedback-received",
+      "review-feedback-folded",
+      "tag-eligible"
+    ],
+    "currentState": "review-ready",
+    "reviewReadyRule": "local authority-green proof is necessary but not sufficient; the maintained public develop candidate head and maintained public wiki head must both be published and retained in docs/product/public-release-candidate.{md,json} before the next brand-new-fork review opens",
+    "dirtyPublicSurfaceRule": "preserve unrelated dirt, inspect overlapping changes, patch the maintained candidate slice narrowly, and pause only on direct unresolved conflicts instead of stopping candidate publication merely because the public source/wiki worktree is dirty"
   },
   "findingClassifications": [
     {
@@ -64,6 +80,15 @@
       "requirementRefs": ["VHS-REQ-516", "VHS-REQ-517", "VHS-REQ-518"],
       "adrImpact": "updated",
       "adrRefs": ["ADR-0034"]
+    },
+    {
+      "id": "FINDING-1.2.0-003-REVIEW-READY-BOUNDARY-GOVERNANCE-GAP",
+      "status": "closed",
+      "summary": "Local authority-green proof had to stop being treated as reviewable truth before the maintained public candidate source and wiki heads were republished.",
+      "requirementImpact": "updated",
+      "requirementRefs": ["VHS-REQ-519", "VHS-REQ-520"],
+      "adrImpact": "updated",
+      "adrRefs": ["ADR-0035"]
     }
   ],
   "exactRelease": {
@@ -91,17 +116,20 @@
       "codespaceTargetPath": "/workspaces/labview-icon-editor"
     },
     "publicRepoBootstrap": {
-      "status": "in-progress",
+      "status": "published-maintained-candidate-with-findings-folded",
       "command": "npm run public:repo:clone -- --repo-url <https-url>",
+      "interactiveCommand": "npm run public:repo:clone",
       "supportedHosts": [
         "github.com",
         "gitlab.com"
       ],
-      "authorityDevelopBaseline": "804ec9d",
+      "authorityDevelopBaseline": "8c99163",
       "notes": [
-        "The generic bootstrap is implemented on the authority 1.2.0 line but is not promoted to the public develop branch yet.",
+        "The generic bootstrap is implemented on the authority 1.2.0 line and the maintained public develop candidate that carries Sergio's first findings fold is published at e8b0925 through GitHub PR #15.",
+        "In a brand-new Codespace, the no-argument command now prompts for the public repo URL interactively and points users back to the canonical helper-backed sample when they cancel.",
         "When --branch is omitted, the command resolves the remote default branch; when provided, the explicit branch is honored exactly.",
-        "The exact v1.2.0 tag remains blocked until the maintained public wiki procedures are dry-run reviewed and accepted from a brand new fork and a brand new Codespace."
+        "Sergio dry-ran the maintained public wiki procedures from a brand new fork and a brand new Codespace and submitted findings that are now folded locally in authority.",
+        "Those findings are now republished on the maintained public develop head e8b0925 and maintained public wiki head 63a4208, so the next brand-new-fork review can proceed on live candidate surfaces."
       ]
     }
   },
@@ -130,24 +158,23 @@
     }
   },
   "testerFixtureStrategy": {
-    "decision": "helper-backed-canonical-path-plus-generic-public-bootstrap",
+    "decision": "helper-backed-canonical-path-plus-generic-public-bootstrap-reference-manual",
     "defaultCloneOnStartup": false,
     "command": "npm run public:fixture:icon-editor",
+    "interactiveGenericCommand": "npm run public:repo:clone",
     "genericCommand": "npm run public:repo:clone -- --repo-url <https-url>",
     "repoUrl": "https://github.com/ni/labview-icon-editor.git",
     "targetPath": "../labview-icon-editor",
     "genericTargetPathPattern": "../<repo-name>",
     "codespaceTargetPath": "/workspaces/<repo-name>",
-    "manualAlternativeWikiPage": "Manual-Actor-Framework-Clone",
+    "referenceManualWikiPage": "Review-Public-LabVIEW-VI-Changes",
+    "compatibilityRedirectWikiPage": "Clone-Public-Repo-In-Codespace",
     "refreshWikiPage": "Refresh-Codespace-Repositories",
     "requiredReviewEnvironment": "brand-new-fork-plus-brand-new-codespace"
   },
   "activeBlockers": [
     {
-      "id": "BLOCKER-1.2.0-001-PUBLIC-DEVELOP-PROMOTION-PENDING"
-    },
-    {
-      "id": "BLOCKER-1.2.0-002-WIKI-DRY-RUN-REVIEW-PENDING"
+      "id": "BLOCKER-1.2.0-003-POST-PUBLICATION-WIKI-REVIEW-PENDING"
     }
   ]
 }

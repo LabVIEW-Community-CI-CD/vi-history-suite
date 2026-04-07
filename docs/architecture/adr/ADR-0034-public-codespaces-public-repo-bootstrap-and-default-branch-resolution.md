@@ -45,8 +45,8 @@ Adopt this `1.2.0` public bootstrap contract:
   - is dirty
 - keep `npm run public:fixture:icon-editor` as the canonical easiest first-time
   proof for `ni/labview-icon-editor`
-- keep the generic public bootstrap procedure separate from the canonical
-  helper-backed procedure
+- keep the generic public bootstrap reference manual separate from the
+  canonical helper-backed quickstart
 - block the exact `v1.2.0` tag until the maintained public wiki procedures are
   dry-run reviewed and accepted from a brand new fork and a brand new Codespace
 
@@ -59,6 +59,8 @@ Positive:
 - the branch-selection contract becomes stronger than a brittle `main` versus
   `master` heuristic because it resolves the actual remote default branch
 - the novice-friendly icon-editor quickstart remains intact
+- the generic public-repo documentation can be written as a reference manual
+  for a clear review task instead of as a second quickstart
 
 Costs:
 

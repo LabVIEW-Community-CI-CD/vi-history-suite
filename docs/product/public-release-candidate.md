@@ -2,12 +2,12 @@
 
 - Version line: `1.2.0`
 - Burned exact release line: `v1.0.2`
-- Recorded at: `2026-04-07T20:33:02Z`
+- Recorded at: `2026-04-07T23:00:51Z`
 - Authority source of truth: GitLab `develop` -> `main`
 - Published public source commit: `daef8bd`
-- Authority `develop` candidate baseline: `804ec9d`
-- Public `develop` candidate commit: `not-yet-promoted`
-- Published public wiki head: `d184be2`
+- Authority `develop` candidate baseline: `8c99163`
+- Public `develop` candidate commit: `e8b0925`
+- Published public wiki head: `63a4208`
 
 ## Branch Model
 
@@ -28,10 +28,35 @@
 - Local exact VSIX build: `exact-v1.1.0-release-built`
 - Local public devcontainer: `v1.1.0-published-baseline`
 - Local public fixture helper: `v1.1.0-published-baseline`
-- Public repo bootstrap: `in-progress-1.2.0`
-- Public wiki candidate review: `pending-sergio`
+- Local authority findings fold:
+  `published-and-retained-on-maintained-public-candidate-surfaces`
+- Public repo bootstrap: `published-maintained-candidate-with-findings-folded`
+- Public wiki candidate review:
+  `awaiting-brand-new-fork-review-on-published-candidate`
+- Review-ready gate:
+  `ready-for-brand-new-fork-review`
 - Exact public release: `v1.1.0-published`
 - Required review environment: brand new fork plus brand new Codespace
+
+## Candidate State Machine
+
+- Ordered states:
+  - `local-authority-green`
+  - `public-develop-published`
+  - `public-wiki-published`
+  - `review-ready`
+  - `review-feedback-received`
+  - `review-feedback-folded`
+  - `tag-eligible`
+- Current state: `review-ready`
+- Review-ready rule: local authority-green proof is necessary but not
+  sufficient; the maintained public `develop` candidate head and maintained
+  public wiki head must both be published and retained here before the next
+  brand-new-fork review opens
+- Dirty public-surface rule: preserve unrelated dirt, inspect overlapping
+  changes, patch the maintained candidate slice narrowly, and pause only on
+  direct unresolved conflicts instead of stopping candidate publication merely
+  because the public source/wiki worktree is dirty
 
 ## Exact Release
 
@@ -63,10 +88,19 @@
 - The authority candidate line now carries `npm run public:repo:clone`, which
   accepts public `github.com` and `gitlab.com` HTTPS repo URLs without a
   provider selector.
+- In a brand-new Codespace, `npm run public:repo:clone` now supports an
+  interactive repo-URL prompt and prints the fallback guidance for the
+  canonical helper-backed sample when the prompt is cancelled.
 - When `--branch` is omitted, the generic bootstrap resolves the remote
   default branch; when `--branch` is provided, it is honored exactly.
 - The canonical `npm run public:fixture:icon-editor` helper remains the
   easiest first-time proof for `ni/labview-icon-editor`.
+- Public `develop` now carries the maintained generic bootstrap candidate with
+  Sergio's first findings fold at `e8b0925`, and the maintained public wiki
+  package that carries the same fold is published at `63a4208`.
+- Sergio's first dry-run findings are now folded locally in authority and
+  republished on the maintained public `develop` and public wiki candidate
+  heads, so the next brand-new-fork review can proceed on live public surfaces.
 - The exact `v1.2.0` tag is intentionally blocked until the maintained public
   wiki procedures are dry-run reviewed and accepted from a brand new fork and
   a brand new Codespace.
@@ -88,14 +122,16 @@
 
 ## Tester Fixture Strategy
 
-- Decision: helper-backed canonical path plus generic public-repo bootstrap
+- Decision: helper-backed canonical path plus generic public-repo reference manual
 - Canonical helper command: `npm run public:fixture:icon-editor`
+- Generic interactive command: `npm run public:repo:clone`
 - Generic bootstrap command:
   `npm run public:repo:clone -- --repo-url <https-url>`
 - Canonical helper target path: `../labview-icon-editor`
 - Generic bootstrap target path: `../<repo-name>`
 - Codespace target path pattern: `/workspaces/<repo-name>`
-- Manual alternative: `Manual-Actor-Framework-Clone`
+- Reference manual page: `Review-Public-LabVIEW-VI-Changes`
+- Compatibility redirect page: `Clone-Public-Repo-In-Codespace`
 - Refresh page: `Refresh-Codespace-Repositories`
 
 ## Governed Findings
@@ -107,16 +143,26 @@
   - ADR impact: `updated` via `ADR-0030`
 - `FINDING-1.2.0-002-PUBLIC-CODESPACES-PUBLIC-REPO-BOOTSTRAP`
   - status: `active`
+  - public `develop` candidate with Sergio's first findings fold was published
+    at `e8b0925` through GitHub PR `#15`
+  - Sergio review findings were submitted from a brand new fork and a brand
+    new Codespace against the public wiki head `23604e7`, then republished on
+    maintained public wiki head `63a4208`
   - requirement impact: `updated` via `VHS-REQ-516`, `VHS-REQ-517`, and
     `VHS-REQ-518`
   - ADR impact: `updated` via `ADR-0034`
+- `FINDING-1.2.0-003-REVIEW-READY-BOUNDARY-GOVERNANCE-GAP`
+  - status: `closed`
+  - local authority-green proof previously stopped short of maintained public
+    candidate publication, so the control plane now retains an explicit
+    `review-ready` boundary instead of treating local proof as reviewable truth
+  - requirement impact: `updated` via `VHS-REQ-519` and `VHS-REQ-520`
+  - ADR impact: `updated` via `ADR-0035`
 
 ## Remaining Blockers
 
-- The generic public GitHub/GitLab bootstrap is not yet promoted onto the
-  public `develop` branch.
-- The maintained public wiki procedures for that generic bootstrap still need
-  Sergio dry-run feedback from a brand new fork and a brand new Codespace
-  before exact tagging.
+- One final acceptance review from a brand new fork and a brand new Codespace
+  is still required on the maintained public `develop` candidate head
+  `e8b0925` and maintained public wiki head `63a4208` before exact tagging.
 - `v1.1.0` remains the current exact green line on `main`, while `v1.2.0`
   stays open on `develop`.

@@ -8,7 +8,17 @@ const scriptPath = path.join(repoRoot, 'scripts', 'preparePublicRepoClone.js');
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const script = require(scriptPath) as {
   SUPPORTED_PUBLIC_HOSTS: string[];
+  canPromptInteractively: (
+    input: { isTTY?: boolean; setRawMode?: unknown },
+    output: { isTTY?: boolean }
+  ) => boolean;
   deriveVisibleTargetRoot: (repoUrl: string, root?: string) => string;
+  getNextStepMessage: (targetRoot: string) => string;
+  getRepoReviewHint: (
+    repoUrl: string
+  ) => {
+    exampleViPath?: string;
+  } | undefined;
   getUsage: () => string;
   normalizeRepoUrl: (repoUrl: string) => string;
   parseArgs: (argv: string[]) => {
@@ -42,6 +52,7 @@ describe('prepare public repo clone script', () => {
 
     expect(usage).toContain('--repo-url <url>');
     expect(usage).toContain('github.com, gitlab.com');
+    expect(usage).toContain('omitting --repo-url opens a prompt');
     expect(script.SUPPORTED_PUBLIC_HOSTS).toEqual(['github.com', 'gitlab.com']);
 
     expect(() => script.resolveEffectiveOptions(script.parseArgs([]))).toThrow(
@@ -100,6 +111,25 @@ describe('prepare public repo clone script', () => {
     expect(
       script.deriveVisibleTargetRoot('https://github.com/crossrulz/SerialPortNuggets.git')
     ).toContain(`${path.sep}SerialPortNuggets`);
+    expect(script.getRepoReviewHint('https://gitlab.com/hampel-soft/open-source/hse-logger.git'))
+      .toMatchObject({
+        exampleViPath: 'Examples/Logging with Helper-VIs.vi'
+      });
+    expect(script.getRepoReviewHint('https://github.com/crossrulz/SerialPortNuggets.git'))
+      .toMatchObject({
+        exampleViPath: 'ASCII/Terminals/ASCII Command-Response.vi'
+      });
+    expect(script.getNextStepMessage('/workspaces/hse-logger')).toContain('press F5');
+    expect(script.getNextStepMessage('/workspaces/hse-logger')).toContain(
+      'File -> Open Folder... and open /workspaces/hse-logger'
+    );
+    expect(
+      script.canPromptInteractively(
+        { isTTY: true, setRawMode: () => undefined },
+        { isTTY: true }
+      )
+    ).toBe(true);
+    expect(script.canPromptInteractively({ isTTY: false }, { isTTY: true })).toBe(false);
   });
 
   it('rejects unsupported hosts and non-https URLs', () => {

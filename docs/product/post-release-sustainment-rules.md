@@ -98,6 +98,9 @@ Strict SemVer rule after an exact release:
   exact release version number
 - future sessions shall not treat a burned exact release as the green release
   baseline for later publication
+- future sessions shall not treat a candidate line as `review-ready` until the
+  maintained public `develop` candidate head and maintained public wiki head
+  are both published and retained in the authority candidate package
 
 Decision framework for choosing `major`, `minor`, or `patch`:
 
@@ -120,6 +123,30 @@ Do not reopen release refresh just because:
 - local characterization receipts changed without a governed release claim
 - an unrelated feature/doc note changed without affecting install or release
   truth
+
+Candidate publication boundary:
+
+- candidate-state progression is:
+  - `local-authority-green`
+  - `public-develop-published`
+  - `public-wiki-published`
+  - `review-ready`
+  - `review-feedback-received`
+  - `review-feedback-folded`
+  - `tag-eligible`
+- local authority-green proof is necessary but not sufficient for
+  `review-ready`
+- the next human review gate opens only after the maintained public `develop`
+  candidate head and maintained public wiki head are both live and retained in
+  `docs/product/public-release-candidate.{md,json}`
+- if the governed public source or public wiki worktree is dirty during
+  publication:
+  - preserve unrelated dirt
+  - inspect overlapping files
+  - patch only the maintained candidate slice narrowly
+  - pause only on direct unresolved conflicts
+  - do not treat unrelated dirty worktrees as a generic reason to stop
+    candidate publication
 
 ## Benchmark Refresh Rules
 
