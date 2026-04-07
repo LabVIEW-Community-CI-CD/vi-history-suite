@@ -1,8 +1,8 @@
 # Public Release Candidate
 
-- Version line: `1.0.3`
+- Version line: `1.0.4`
 - Burned exact release line: `v1.0.2`
-- Recorded at: `2026-04-07T06:30:06.000Z`
+- Recorded at: `2026-04-07T07:30:00.000Z`
 - Authority source of truth: GitLab `develop` -> `main`
 - Published public source commit: `4952acc`
 - Published public wiki head: `1fb3a00`
@@ -83,9 +83,10 @@
 - Target path: `../labview-icon-editor`
 - Codespace target path: `/workspaces/labview-icon-editor`
 - Manual alternative: `Manual-Actor-Framework-Clone`
+- Refresh page: `Refresh-Codespace-Repositories`
 
 ## Remaining Blockers
 
-- None. `v1.0.2` is retained as burned, `v1.0.3` is the next exact green line,
-  the public branch model is now explicit, and the canonical Docker-only human
-  pass is already retained on `resource/plugins/lv_icon.vi`.
+- None on the exact released line. `v1.0.2` is retained as burned, `v1.0.3` is
+  the current exact green line, and `1.0.4` is the active `develop` candidate
+  slice for the next exact public promotion.

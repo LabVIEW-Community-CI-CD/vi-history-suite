@@ -78,13 +78,18 @@ use the public wiki page:
 That page is the easiest first path for LabVIEW users because it now spells
 out:
 
-- `Code` -> `Codespaces` -> `New with options`
+- deselect `Copy the main branch only` when creating the fork
+- `Codespaces` `...` -> `New with options`
 - the `develop` branch selection
 - `16-core` machine selection
 - the browser message `Setting up remote connection: Building codespace`
+- the expected port `6010` forwarding dialog
 - the exact `Open Folder...` path for `lv_icon.vi`
 - the exact helper command to clone `ni/labview-icon-editor`
-- what to do if a `Vitest not found` popup appears
+
+For refresh-only steps after the first successful Codespace setup, use:
+
+- `https://github.com/svelderrainruiz/vi-history-suite/wiki/Refresh-Codespace-Repositories`
 
 If you want the separate manual-clone walkthrough for `ni/actor-framework`, use:
 

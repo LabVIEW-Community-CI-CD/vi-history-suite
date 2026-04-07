@@ -86,12 +86,22 @@ For the step-by-step fork-owner walkthrough that ends at
 - `https://github.com/svelderrainruiz/vi-history-suite/wiki/Fork-Codespace-Quickstart`
 
 That page is the easier first fork-owner path because the repo ships a helper
-for `ni/labview-icon-editor` and now includes the exact Codespaces machine
-selection plus browser/open-folder steps.
+for `ni/labview-icon-editor` and now includes:
+
+- fork guidance to keep the `develop` branch
+- `Codespaces` `...` -> `New with options`
+- `develop` + `16-core` Codespace setup
+- the browser message `Setting up remote connection: Building codespace`
+- the port `6010` forwarding dialog explanation
+- the exact `Open Folder...` path for `lv_icon.vi`
 
 For the separate manual-clone walkthrough for `ni/actor-framework`, use:
 
 - `https://github.com/svelderrainruiz/vi-history-suite/wiki/Manual-Actor-Framework-Clone`
+
+For refresh-only steps after the first successful Codespace setup, use:
+
+- `https://github.com/svelderrainruiz/vi-history-suite/wiki/Refresh-Codespace-Repositories`
 
 The guarded package path is:
 
@@ -112,4 +122,6 @@ npm run package -- --out /tmp/vi-history-suite-public-preview.vsix
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.0.3`
 - current published package line on `main`: `1.0.3`
+- current develop package line on `develop`: `1.0.4`
+- active exact release candidate line on `develop`: `v1.0.4`
 - public Codespaces evaluation branch: `develop`

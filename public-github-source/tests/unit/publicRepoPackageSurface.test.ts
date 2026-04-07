@@ -26,7 +26,7 @@ describe('public repo package surface', () => {
     const contributing = readText('CONTRIBUTING.md');
     const previewWorkflow = readText('.github/workflows/public-facade-package-preview.yml');
 
-    expect(manifest.version).toBe('1.0.3');
+    expect(manifest.version).toBe('1.0.4');
     expect(manifest.files).toEqual([
       'out/**',
       'resources/**',
@@ -66,11 +66,15 @@ describe('public repo package surface', () => {
     expect(readme).toContain('burned exact release line: `v1.0.2`');
     expect(readme).toContain('current exact released line: `v1.0.3`');
     expect(readme).toContain('current published package line on `main`: `1.0.3`');
+    expect(readme).toContain('current develop package line on `develop`: `1.0.4`');
+    expect(readme).toContain('active exact release candidate line on `develop`: `v1.0.4`');
     expect(readme).toContain('public Codespaces evaluation branch: `develop`');
+    expect(readme).toContain('Refresh-Codespace-Repositories');
     expect(install).toContain('Windows host + Linux engine');
     expect(install).toContain('host LabVIEW');
     expect(install).toContain('npm run public:host:bootstrap-linux');
     expect(install).toContain('npm run public:fixture:icon-editor');
+    expect(install).toContain('Refresh-Codespace-Repositories');
     expect(support).toContain('docker info --format');
     expect(support).toContain('does not use host LabVIEW as an installed-user fallback path');
     expect(contributing).toContain('source-available and intentionally restrictive');

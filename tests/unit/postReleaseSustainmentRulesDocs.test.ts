@@ -23,6 +23,8 @@ type SustainmentRules = {
       burnedExactVersionReleases?: string[];
       currentExactReleaseLine: string;
       currentMainPackageLine: string;
+      currentDevelopPackageLine?: string;
+      activeDevelopCandidateReleaseLine?: string;
       publicCodespaceBranch: string;
       integrationBranch?: string;
       releaseBranch?: string;
@@ -100,6 +102,8 @@ describe('post-release sustainment rules package', () => {
       burnedExactVersionReleases: ['v1.0.2'],
       currentExactReleaseLine: 'v1.0.3',
       currentMainPackageLine: '1.0.3',
+      currentDevelopPackageLine: '1.0.4',
+      activeDevelopCandidateReleaseLine: 'v1.0.4',
       publicCodespaceBranch: 'develop',
       integrationBranch: 'develop',
       releaseBranch: 'main'
@@ -117,6 +121,7 @@ describe('post-release sustainment rules package', () => {
     expect(rules.releaseCadence.strictSemverRule).toEqual(
       expect.arrayContaining([
         'after an exact release is published, the current published package line on main shall match that exact release line',
+        'when develop carries post-release work, the develop package line shall advance to the next exact release candidate before public-facing normalization continues',
         'any later repo change intended for publication shall advance package.json and the top CHANGELOG.md heading to the next SemVer line before further normalization or publication',
         'future sessions shall not treat an unreleased SemVer bump as complete until the matching public tag and public GitHub release are both published',
         'future sessions shall not keep landing post-release changes on the previous exact release version number',

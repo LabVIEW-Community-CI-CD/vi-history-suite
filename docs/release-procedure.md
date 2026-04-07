@@ -14,12 +14,17 @@
 - The current exact released line is `v1.0.3`.
 - The burned exact released line is `v1.0.2`.
 - The current published package line on `main` is `1.0.3`.
+- The current develop package line on `develop` is `1.0.4`.
+- The active exact release candidate line on `develop` is `v1.0.4`.
 - The public Codespaces evaluation branch is `develop`.
 - The integration branch is `develop`.
 - The release branch is `main`.
 - Protected-branch promotion shall rely on required checks, not operator memory.
 - After an exact release is published, the current published package line on
   `main` shall match that exact release line.
+- When `develop` carries post-release work, its package line shall advance to
+  the next exact release candidate before public guidance or publication
+  changes land on that branch.
 - Any later repo change intended for publication shall advance `package.json`
   and the top `CHANGELOG.md` heading to the next SemVer line before additional
   publication or release normalization continues.
@@ -144,3 +149,6 @@
 - The current published package line on `main` is `1.0.3`, tracked in
   `CHANGELOG.md`, and it should not rewrite the retained `v0.2.0`, `v1.0.0`,
   `v1.0.1`, or burned `v1.0.2` release evidence.
+- The current develop package line on `develop` is `1.0.4`, and the active
+  exact release candidate line on `develop` is `v1.0.4` until that candidate
+  is either promoted or retired.

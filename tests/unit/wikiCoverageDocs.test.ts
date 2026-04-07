@@ -5,7 +5,8 @@ import { describe, expect, it } from 'vitest';
 
 const repoRoot = path.resolve(__dirname, '..', '..');
 const wikiRoot =
-  process.env.VIHS_WIKI_REPO_ROOT ?? path.resolve(repoRoot, '..', 'vi-history-suite.wiki');
+  process.env.VIHS_INTERNAL_WIKI_REPO_ROOT ??
+  path.resolve(repoRoot, '..', 'vi-history-suite.wiki');
 
 type CoverageMatrix = {
   acceptedAggregationRules: Array<{ id: string }>;
@@ -39,7 +40,7 @@ function readJson<T>(relativePath: string): T {
 function requireWikiRoot(): string {
   if (!fs.existsSync(wikiRoot)) {
     throw new Error(
-      `Missing wiki root ${wikiRoot}. Set VIHS_WIKI_REPO_ROOT or materialize the sibling vi-history-suite.wiki checkout before running docs tests.`
+      `Missing wiki root ${wikiRoot}. Set VIHS_INTERNAL_WIKI_REPO_ROOT or materialize the sibling vi-history-suite.wiki checkout before running docs tests.`
     );
   }
 

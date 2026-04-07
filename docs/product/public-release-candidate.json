@@ -1,8 +1,8 @@
 {
   "schema": "vi-history-suite/public-release-candidate@v1",
-  "versionLine": "1.0.3",
+  "versionLine": "1.0.4",
   "burnedExactReleaseLine": "v1.0.2",
-  "recordedAt": "2026-04-07T06:30:06.000Z",
+  "recordedAt": "2026-04-07T07:30:00.000Z",
   "authorityRepo": {
     "role": "source-of-truth",
     "integrationBranch": "develop",
@@ -95,7 +95,8 @@
     "repoUrl": "https://github.com/ni/labview-icon-editor.git",
     "targetPath": "../labview-icon-editor",
     "codespaceTargetPath": "/workspaces/labview-icon-editor",
-    "manualAlternativeWikiPage": "Manual-Actor-Framework-Clone"
+    "manualAlternativeWikiPage": "Manual-Actor-Framework-Clone",
+    "refreshWikiPage": "Refresh-Codespace-Repositories"
   },
   "activeBlockers": []
 }

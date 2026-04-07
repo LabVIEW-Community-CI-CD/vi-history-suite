@@ -138,6 +138,8 @@ Latest landed ship target:
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.0.3`
 - current published package line on `main`: `1.0.3`
+- current develop package line on `develop`: `1.0.4`
+- active exact release candidate line on `develop`: `v1.0.4`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
 - release branch: `main`

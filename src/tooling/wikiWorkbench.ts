@@ -999,7 +999,7 @@ export async function writeWikiWorkbenchManifest(
 export function buildBundleSyncCommand(topology: WikiWorkbenchTopology): string {
   return [
     `VIHS_REPO_ROOT=${quoteEnv(topology.repoRoot)}`,
-    `VIHS_WIKI_REPO_ROOT=${quoteEnv(topology.wikiRepo.localPath)}`,
+    `VIHS_PUBLIC_GITHUB_WIKI_REPO_ROOT=${quoteEnv(topology.wikiRepo.localPath)}`,
     `VIHS_LEDGER_PATH=${quoteEnv(topology.ledgerJsonPath)}`,
     `VIHS_BUNDLE_ROOT=${quoteEnv(topology.bundleRoot)}`,
     'node scripts/syncBundledDocs.js'
@@ -1026,7 +1026,7 @@ export function defaultRunBundleSync(options: {
       env: {
         ...process.env,
         VIHS_REPO_ROOT: options.repoRoot,
-        VIHS_WIKI_REPO_ROOT: options.wikiRepoRoot,
+        VIHS_PUBLIC_GITHUB_WIKI_REPO_ROOT: options.wikiRepoRoot,
         VIHS_LEDGER_PATH: options.ledgerPath,
         VIHS_BUNDLE_ROOT: options.bundleRoot
       }

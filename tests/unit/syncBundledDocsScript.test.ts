@@ -49,9 +49,15 @@ describe('bundled docs sync script', () => {
     expect(bundledDocsScript.normalizeRepoRelativePath('/repo', '/repo/docs/test.md')).toBe(
       'docs/test.md'
     );
-    expect(bundledDocsScript.resolveBundledDocsPaths({ VIHS_REPO_ROOT: '/repo' }).wikiRepoRoot).toBe(
-      path.resolve('/repo', '..', 'vi-history-suite.github.wiki')
-    );
+    expect(
+      bundledDocsScript.resolveBundledDocsPaths({ VIHS_REPO_ROOT: '/repo' }).wikiRepoRoot
+    ).toBe(path.resolve('/repo', '..', 'vi-history-suite.github.wiki'));
+    expect(
+      bundledDocsScript.resolveBundledDocsPaths({
+        VIHS_REPO_ROOT: '/repo',
+        VIHS_PUBLIC_GITHUB_WIKI_REPO_ROOT: '/public/wiki'
+      }).wikiRepoRoot
+    ).toBe(path.resolve('/public/wiki'));
     expect(bundledDocsScript.resolveBundledDocsPaths({ VIHS_REPO_ROOT: '/repo' }).ledgerPath).toBe(
       path.resolve('/repo', 'docs', 'product', 'public-github-wiki-publication-ledger.json')
     );

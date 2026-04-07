@@ -34,6 +34,7 @@ describe('public release candidate control surface', () => {
         targetPath?: string;
         codespaceTargetPath?: string;
         manualAlternativeWikiPage?: string;
+        refreshWikiPage?: string;
       };
       activeBlockers?: Array<{ id?: string }>;
     }>('docs/product/public-release-candidate.json');
@@ -46,7 +47,7 @@ describe('public release candidate control surface', () => {
       'docs/product/issues/ISSUE-0407-public-facade-installer-and-windows-acceptance.md'
     );
 
-    expect(candidate.versionLine).toBe('1.0.3');
+    expect(candidate.versionLine).toBe('1.0.4');
     expect(candidate.burnedExactReleaseLine).toBe('v1.0.2');
     expect(candidate.authorityRepo).toMatchObject({
       role: 'source-of-truth',
@@ -81,7 +82,8 @@ describe('public release candidate control surface', () => {
       defaultCloneOnStartup: false,
       targetPath: '../labview-icon-editor',
       codespaceTargetPath: '/workspaces/labview-icon-editor',
-      manualAlternativeWikiPage: 'Manual-Actor-Framework-Clone'
+      manualAlternativeWikiPage: 'Manual-Actor-Framework-Clone',
+      refreshWikiPage: 'Refresh-Codespace-Repositories'
     });
     expect(candidate.activeBlockers).toEqual([]);
     expect(candidate).toMatchObject({
@@ -107,7 +109,7 @@ describe('public release candidate control surface', () => {
     });
 
     expect(candidateMarkdown).toContain('Public Release Candidate');
-    expect(candidateMarkdown).toContain('Version line: `1.0.3`');
+    expect(candidateMarkdown).toContain('Version line: `1.0.4`');
     expect(candidateMarkdown).toContain('Burned exact release line: `v1.0.2`');
     expect(candidateMarkdown).toContain('Authority source of truth: GitLab `develop` -> `main`');
     expect(candidateMarkdown).toContain('Published public source commit: `4952acc`');
@@ -122,7 +124,8 @@ describe('public release candidate control surface', () => {
     expect(candidateMarkdown).toContain('GitHub Codespace `novacula` remains retained hosted public-surface proof.');
     expect(candidateMarkdown).toContain('resource/plugins/lv_icon.vi');
     expect(candidateMarkdown).toContain('Gate D public acceptance: `passed`');
-    expect(candidateMarkdown).toContain('None. `v1.0.2` is retained as burned');
+    expect(candidateMarkdown).toContain('Refresh page: `Refresh-Codespace-Repositories`');
+    expect(candidateMarkdown).toContain('None on the exact released line.');
 
     expect(currentState).toContain('[Public Release Candidate](./public-release-candidate.md)');
     expect(currentState).toContain('local public devcontainer now passes on this machine');
