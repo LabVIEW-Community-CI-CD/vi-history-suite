@@ -3,7 +3,7 @@
 ## Status
 
 Closed on the Docker-only public-product acceptance gate. The current exact
-public line is `v1.0.3`, and `v1.0.2` is retained as burned.
+public line is `v1.0.4`, and `v1.0.2` is retained as burned.
 
 Closeout facts:
 

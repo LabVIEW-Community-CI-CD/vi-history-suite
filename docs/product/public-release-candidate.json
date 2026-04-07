@@ -1,8 +1,8 @@
 {
   "schema": "vi-history-suite/public-release-candidate@v1",
-  "versionLine": "1.0.4",
+  "versionLine": "1.0.5",
   "burnedExactReleaseLine": "v1.0.2",
-  "recordedAt": "2026-04-07T07:30:00.000Z",
+  "recordedAt": "2026-04-07T15:05:00.000Z",
   "authorityRepo": {
     "role": "source-of-truth",
     "integrationBranch": "develop",
@@ -20,30 +20,30 @@
   },
   "publishedPublicSource": {
     "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
-    "publishedCommit": "4952acc",
+    "publishedCommit": "5710d87",
     "publicationLedgerPath": "docs/product/public-github-source-publication-ledger.json",
     "status": "published"
   },
   "publishedPublicWiki": {
     "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite.wiki.git",
-    "publishedHeadCommit": "1fb3a00",
+    "publishedHeadCommit": "3ef5bee",
     "publicationLedgerPath": "docs/product/public-github-wiki-publication-ledger.json",
     "status": "published"
   },
   "candidateReadiness": {
-    "authorityBaseline": "local-gates-passing",
-    "localInstalledVsix": "exact-v1.0.3",
-    "localPublicDevcontainer": "passed",
-    "localPublicFixtureHelper": "passed",
-    "publicCodespace": "passed",
-    "gateDPublicAcceptance": "passed",
-    "exactPublicRelease": "v1.0.3-published"
+    "authorityBaseline": "develop-candidate-open",
+    "localInstalledVsix": "pending-v1.0.5",
+    "localPublicDevcontainer": "passed-v1.0.4-baseline",
+    "localPublicFixtureHelper": "passed-v1.0.4-baseline",
+    "publicCodespace": "passed-v1.0.4-baseline",
+    "gateDPublicAcceptance": "passed-v1.0.4-baseline",
+    "exactPublicRelease": "v1.0.4-published"
   },
   "exactRelease": {
-    "version": "v1.0.3",
-    "gitHubReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.0.3",
-    "gitHubAssetName": "vi-history-suite-1.0.3-public-release.vsix",
-    "gitHubAssetSha256": "0e5e5018043807bd3823e0db2918191246f9dd212e598a24144d557af9f50abf",
+    "version": "v1.0.4",
+    "gitHubReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.0.4",
+    "gitHubAssetName": "vi-history-suite-1.0.4-public-release.vsix",
+    "gitHubAssetSha256": "dd8abc7f5425037a3402913d0748e1d062bf5fd6412ff447c902439199ab54c6",
     "integrationBranch": "develop",
     "releaseBranch": "main"
   },
@@ -73,7 +73,7 @@
       "proofBaselineCommit": "4a8b27b",
       "notes": [
         "The hosted proof is retained as public-surface evidence rather than canonical human acceptance.",
-        "The later v1.0.3 surface changes are release-governance and fork-owner procedure corrections on top of that already-passed hosted runtime path."
+        "The later v1.0.4 surface changes are exact-release publication, branch-protection hardening, and fork-owner procedure corrections on top of that already-passed hosted runtime path."
       ]
     }
   },
@@ -98,5 +98,18 @@
     "manualAlternativeWikiPage": "Manual-Actor-Framework-Clone",
     "refreshWikiPage": "Refresh-Codespace-Repositories"
   },
-  "activeBlockers": []
+  "activeBlockers": [
+    {
+      "id": "BLOCKER-1.0.5-PUBLIC-DEVELOP-SYNC"
+    },
+    {
+      "id": "BLOCKER-1.0.5-FIRST-USE-PROCEDURE-HARDENING"
+    },
+    {
+      "id": "BLOCKER-1.0.5-EXACT-PUBLIC-RELEASE"
+    },
+    {
+      "id": "BLOCKER-1.0.5-EXACT-AUTHORITY-RELEASE"
+    }
+  ]
 }

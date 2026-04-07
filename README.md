@@ -396,12 +396,12 @@ Latest landed ship target:
 - `SHIP-0001`: releasable `v0.2.0` VSIX product
 - landed ship tranche: `TRANCHE-009`
 - landed ship issue: `ISSUE-0406`
-- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`
+- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.0.3`
-- current published package line on `main`: `1.0.3`
-- current develop package line on `develop`: `1.0.4`
-- active exact release candidate line on `develop`: `v1.0.4`
+- current exact released line: `v1.0.4`
+- current published package line on `main`: `1.0.4`
+- current develop package line on `develop`: `1.0.5`
+- active exact release candidate line on `develop`: `v1.0.5`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
 - release branch: `main`
@@ -410,7 +410,7 @@ Latest landed ship target:
 - docs-authoring image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
 - retained release evidence: GitLab release `v0.2.0`, tag pipeline `2428809456`,
   release job `13779604462`
-- remaining release blockers: none
+- remaining release blockers: exact `v1.0.5` promotion is not published yet
 
 ## Install Surface
 

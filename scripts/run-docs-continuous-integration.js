@@ -11,7 +11,8 @@ const repoRoot = path.resolve(path.dirname(fs.realpathSync.native(__filename)), 
 const PUBLIC_DOCS_TEST_FILES = [
   'tests/unit/bundledDocumentation.test.ts',
   'tests/unit/packageManifest.test.ts',
-  'tests/unit/publicSurfaceBoundaryDocs.test.ts'
+  'tests/unit/publicSurfaceBoundaryDocs.test.ts',
+  'tests/unit/publicForkOwnerProcedureDocs.test.ts'
 ];
 const INTERNAL_DOCS_TEST_FILES = [
   'tests/unit/postReleaseControlPlaneDocs.test.ts',

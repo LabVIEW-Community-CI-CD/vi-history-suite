@@ -48,10 +48,8 @@ Fast path:
 
 1. Open your fork in a Codespace or devcontainer on `develop`.
 2. Let browser VS Code finish `Setting up remote connection: Building codespace`.
-3. If a `Vitest not found` popup appears, close it and continue. VI History
-   does not require you to install anything extra for the public fork flow.
-4. Press `F5` to open the extension development host.
-5. Open the target Git repository there and use the checkbox-selected compare
+3. Press `F5` to open the extension development host.
+4. Open the target Git repository there and use the checkbox-selected compare
    flow.
 
 If the Linux VS Code host dependencies need to be refreshed manually, run:
@@ -86,6 +84,7 @@ out:
 - the expected port `6010` forwarding dialog
 - the exact `Open Folder...` path for `lv_icon.vi`
 - the exact helper command to clone `ni/labview-icon-editor`
+- that the page is first-time-only, with refresh steps kept separate
 
 For refresh-only steps after the first successful Codespace setup, use:
 

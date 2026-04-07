@@ -3,9 +3,30 @@
 This changelog is the governed version-line summary for `vi-history-suite`.
 
 Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
-`v1.0.2`, and `v1.0.3`.
+`v1.0.2`, `v1.0.3`, and `v1.0.4`.
 
 Burned exact-version releases now include `v1.0.2`.
+
+## [1.0.5] - 2026-04-07
+
+### Changed
+
+- `develop` is now the explicit public `1.0.5` integration candidate line,
+  while `main` remains aligned to the exact released `v1.0.4` public line
+  until the next exact release is published
+- the public fork-owner first-use Codespaces procedure is now tighter for a
+  LabVIEW-first reader: it keeps the `develop` fork requirement, the
+  `Codespaces` `...` -> `New with options` path, the `16-core` machine
+  selection, the browser build message, the top-left three-line menu, the port
+  `6010` forwarding dialog, and the exact `VI History` panel wording, while
+  removing stale Vitest-popup guidance from the first-use flow
+- the first-use quickstart and refresh workflow are now governed by a public
+  docs CI test that reads the published public wiki checkout directly, so the
+  fork-owner procedure can no longer drift silently from the authority/public
+  source contract
+- public GitHub wiki validation in GitLab CI now clones a matching candidate
+  branch when one exists and falls back to `master` otherwise, so `develop`
+  candidate docs can stay gated without prematurely mutating the published wiki
 
 ## [1.0.4] - 2026-04-07
 
@@ -20,9 +41,8 @@ Burned exact-version releases now include `v1.0.2`.
 - public refresh steps are now split into a separate
   `Refresh-Codespace-Repositories` page instead of being embedded into the
   first-time procedures
-- the authority docs/tests/package surfaces now retain an explicit branch-model
-  semver contract: `main` remains the exact `v1.0.3` release line while
-  `develop` carries the `1.0.4` candidate line
+- the public release line is now exact `v1.0.4` on `main`, and `develop`
+  remains aligned to `1.0.4` until the next published change advances it again
 - the authority/public wiki-root contract is now split between
   `VIHS_INTERNAL_WIKI_REPO_ROOT` and
   `VIHS_PUBLIC_GITHUB_WIKI_REPO_ROOT`, so public wiki overrides can no longer
