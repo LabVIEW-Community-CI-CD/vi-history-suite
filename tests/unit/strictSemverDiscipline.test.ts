@@ -79,13 +79,14 @@ describe('strict semver discipline', () => {
       'v1.0.6',
       'v1.1.0',
       'v1.2.0',
-      'v1.2.1'
+      'v1.2.1',
+      'v1.2.2'
     ]);
     expect(versionLineContract.burnedExactVersionReleases).toEqual(['v1.0.2']);
     expect(versionLineContract.integrationBranch).toBe('develop');
     expect(versionLineContract.releaseBranch).toBe('main');
     expect(pkg.version).toBe('1.2.2');
-    expect(versionLineContract.currentMainPackageLine).toBe('1.2.1');
+    expect(versionLineContract.currentMainPackageLine).toBe('1.2.2');
     expect(versionLineContract.currentDevelopPackageLine).toBe('1.2.2');
     expect(versionLineContract.activeDevelopCandidateReleaseLine).toBe('v1.2.2');
     expect(versionLineContract.activeReleaseCandidateBranch).toBeNull();
@@ -93,12 +94,12 @@ describe('strict semver discipline', () => {
     expect(pkg.version).toBe(versionLineContract.currentDevelopPackageLine);
     expect(versionLineContract.publicCodespaceBranch).toBe('develop');
     expect(compareSemver(versionLineContract.currentMainPackageLine, exactReleaseLine)).toBe(0);
-    expect(compareSemver(versionLineContract.currentMainPackageLine, pkg.version)).toBeLessThan(0);
+    expect(compareSemver(versionLineContract.currentMainPackageLine, pkg.version)).toBe(0);
     expect(compareSemver(pkg.version, activeCandidateReleaseLine)).toBe(0);
-    expect(compareSemver(pkg.version, exactReleaseLine)).toBeGreaterThan(0);
+    expect(compareSemver(pkg.version, exactReleaseLine)).toBe(0);
     expect(readme).toContain('- burned exact release line: `v1.0.2`');
-    expect(readme).toContain('- current exact released line: `v1.2.1`');
-    expect(readme).toContain('- current published package line on `main`: `1.2.1`');
+    expect(readme).toContain('- current exact released line: `v1.2.2`');
+    expect(readme).toContain('- current published package line on `main`: `1.2.2`');
     expect(readme).toContain('- current develop package line on `develop`: `1.2.2`');
     expect(readme).toContain('- active exact release candidate line on `develop`: `v1.2.2`');
     expect(readme).toContain('- no newer `release/*` branch is active yet');
@@ -107,8 +108,8 @@ describe('strict semver discipline', () => {
     expect(readme).toContain('- integration branch: `develop`');
     expect(readme).toContain('- release branch: `main`');
     expect(currentState).toContain('- burned exact release line: `v1.0.2`');
-    expect(currentState).toContain('- current exact released line: `v1.2.1`');
-    expect(currentState).toContain('- current published package line on `main`: `1.2.1`');
+    expect(currentState).toContain('- current exact released line: `v1.2.2`');
+    expect(currentState).toContain('- current published package line on `main`: `1.2.2`');
     expect(currentState).toContain('- current develop package line on `develop`: `1.2.2`');
     expect(currentState).toContain('- active exact release candidate line on `develop`: `v1.2.2`');
     expect(currentState).toContain('- no newer `release/*` branch is active yet');
@@ -116,9 +117,9 @@ describe('strict semver discipline', () => {
     expect(currentState).toContain('- public Codespaces evaluation branch: `develop`');
     expect(currentState).toContain('- integration branch: `develop`');
     expect(currentState).toContain('- release branch: `main`');
-    expect(releaseProcedure).toContain('The current exact released line is `v1.2.1`.');
+    expect(releaseProcedure).toContain('The current exact released line is `v1.2.2`.');
     expect(releaseProcedure).toContain('The burned exact released line is `v1.0.2`.');
-    expect(releaseProcedure).toContain("The current published package line on `main` is `1.2.1`.");
+    expect(releaseProcedure).toContain("The current published package line on `main` is `1.2.2`.");
     expect(releaseProcedure).toContain('The current develop package line on `develop` is `1.2.2`.');
     expect(releaseProcedure).toContain('The active exact release candidate line on `develop` is `v1.2.2`.');
     expect(releaseProcedure).toContain('No newer `release/*` branch is active yet.');
