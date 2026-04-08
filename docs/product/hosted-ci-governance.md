@@ -7,17 +7,16 @@ public GitHub required checks, and GitHub experiment workflows stop being
 raw-YAML-only truth.
 
 This document is the control-plane summary of the governed `1.2.1` patch line.
-The exact public release remains `v1.2.0`; `main` carries `1.2.0`, `develop`
-carries `1.2.1`, and the active exact release candidate line on `develop` is
-`v1.2.1`.
+The exact public release is now `v1.2.1`; both `main` and `develop` currently
+carry `1.2.1`, and no newer exact release candidate line is active yet.
 
 ## Opening Decision
 
-- current exact release line: `v1.2.0`
-- current `main` package line: `1.2.0`
+- current exact release line: `v1.2.1`
+- current `main` package line: `1.2.1`
 - current `develop` package line: `1.2.1`
-- active exact release candidate line on `develop`: `v1.2.1`
-- no `release/1.2.1` branch is active yet
+- no newer exact release candidate line is active on `develop` yet
+- no newer `release/*` branch is active yet
 - chosen bump: `patch`
 - rationale: this line governs VS Code Marketplace publication as an explicit
   exact-release closeout surface after `v1.2.0` became a live Marketplace

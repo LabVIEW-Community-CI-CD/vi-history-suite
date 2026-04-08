@@ -86,8 +86,8 @@ describe('public facade boundary docs', () => {
     expect(publicLedgerJson).toContain('"nextPage": null');
     expect(publicSourceLedger).toContain('Public source product repo baseline');
     expect(publicSourceLedger).toContain('published');
-    expect(publicSourceLedger).toContain('Current published public GitHub source HEAD: `c7cd6a0`');
-    expect(publicSourceLedger).toContain('c7cd6a0');
+    expect(publicSourceLedger).toContain('Current published public GitHub source HEAD: `2547344`');
+    expect(publicSourceLedger).toContain('2547344');
     expect(publicSourceLedger).toContain('Public source v1.1.0 exact release');
     expect(publicSourceLedger).toContain('Public source v1.2.0 exact release');
     expect(publicSourceLedger).toContain('Public source v1.2.0 candidate moved-VI and bundled-doc refresh');
@@ -95,13 +95,14 @@ describe('public facade boundary docs', () => {
       'Public source v1.2.1 Marketplace installed-user entry refresh'
     );
     expect(publicSourceLedgerJson).toContain('"publicationSurface": "public-github-source-repo"');
-    expect(publicSourceLedgerJson).toContain('"publishedHeadCommit": "c7cd6a0"');
+    expect(publicSourceLedgerJson).toContain('"publishedHeadCommit": "2547344"');
     expect(publicSourceLedgerJson).toContain('"status": "published"');
     expect(publicSourceLedgerJson).toContain('"repoCommit": "daef8bd"');
     expect(publicSourceLedgerJson).toContain('"repoCommit": "c9806c3"');
     expect(publicSourceLedgerJson).toContain('"repoCommit": "ac56456"');
     expect(publicSourceLedgerJson).toContain('"repoCommit": "c7cd6a0"');
     expect(publicSourceLedgerJson).toContain('"repoCommit": "96af6a3"');
+    expect(publicSourceLedgerJson).toContain('"repoCommit": "2547344"');
     expect(program).toContain('workflow_dispatch');
     expect(program).toContain('npm run public:smoke:linux');
     expect(program).toContain('docs:ci:public');

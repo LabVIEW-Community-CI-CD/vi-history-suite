@@ -2,10 +2,10 @@
   "schema": "vi-history-suite/hosted-ci-governance@v1",
   "recordedAt": "2026-04-07",
   "openingDecision": {
-    "currentExactReleaseLine": "v1.2.0",
-    "currentMainPackageLine": "1.2.0",
+    "currentExactReleaseLine": "v1.2.1",
+    "currentMainPackageLine": "1.2.1",
     "currentDevelopPackageLine": "1.2.1",
-    "activeDevelopCandidateReleaseLine": "v1.2.1",
+    "activeDevelopCandidateReleaseLine": null,
     "activeReleaseCandidateBranch": null,
     "chosenBump": "patch",
     "rationale": [

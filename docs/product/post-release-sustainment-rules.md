@@ -58,20 +58,20 @@ Refresh the release package when any of these change:
 Current version-line contract:
 
 - retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`,
-  `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`
+  `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.2.0`
-- current published package line on `main`: `1.2.0`
+- current exact released line: `v1.2.1`
+- current published package line on `main`: `1.2.1`
 - current develop package line on `develop`: `1.2.1`
-- active exact release candidate line on `develop`: `v1.2.1`
-- no `release/1.2.1` branch is active yet
+- no newer exact release candidate line is active on `develop` yet
+- no newer `release/*` branch is active yet
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
 - release branch: `main`
 - next-line branch model: `gitflow-lite`
 
-Active opening decision for the next line:
+Latest recorded opening decision for the current line:
 
 - chosen bump: `patch`
 - target exact candidate line: `v1.2.1`
@@ -106,6 +106,10 @@ Strict SemVer rule after an exact release:
 - future sessions shall not treat a candidate line as `review-ready` until the
   maintained public `develop` candidate head and maintained public wiki head
   are both published and retained in the authority candidate package
+- future sessions shall keep exact tagging blocked until the post-publication
+  human review gate closes, unless the product owner explicitly waives that
+  gate and the retained candidate package records the waiver plus the
+  post-publish review plan
 
 Decision framework for choosing `major`, `minor`, or `patch`:
 

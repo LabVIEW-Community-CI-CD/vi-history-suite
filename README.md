@@ -477,12 +477,12 @@ Latest landed ship target:
 - `SHIP-0001`: releasable `v0.2.0` VSIX product
 - landed ship tranche: `TRANCHE-009`
 - landed ship issue: `ISSUE-0406`
-- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`
+- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.2.0`
-- current published package line on `main`: `1.2.0`
+- current exact released line: `v1.2.1`
+- current published package line on `main`: `1.2.1`
 - current develop package line on `develop`: `1.2.1`
-- active exact release candidate line on `develop`: `v1.2.1`
+- no newer exact release candidate line is active on `develop` yet
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
@@ -502,12 +502,12 @@ Latest landed ship target:
 - docs-authoring image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
 - retained release evidence: GitLab release `v0.2.0`, tag pipeline `2428809456`,
   release job `13779604462`
-- remaining release blockers: none on the exact public `v1.2.0` line; public
-  `main` now publishes `c7cd6a0`, the public GitHub release `v1.2.0` is live,
+- remaining release blockers: none on the exact public `v1.2.1` line; public
+  `main` now publishes `2547344`, the public GitHub release `v1.2.1` is live,
   the VS Code Marketplace listing now publishes
-  `svelderrainruiz.vi-history-suite` version `1.2.0`, and the active `v1.2.1`
-  patch line is now open on `develop` for Marketplace-release control and
-  installed-user documentation redesign
+  `svelderrainruiz.vi-history-suite` version `1.2.1`, and Sergio elected
+  post-publish installed-extension review in local VS Code instead of a
+  pre-tag human review gate
 
 ## Install Surface
 

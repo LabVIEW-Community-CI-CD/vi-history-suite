@@ -40,11 +40,14 @@ describe('vs code marketplace publication and installed-user docs', () => {
       'https://marketplace.visualstudio.com/items?itemName=svelderrainruiz.vi-history-suite'
     );
     expect(ledger.homepageUrl).toBe('https://github.com/svelderrainruiz/vi-history-suite/wiki');
-    expect(ledger.currentPublishedVersion).toBe('1.2.0');
+    expect(ledger.currentPublishedVersion).toBe('1.2.1');
+    expect(ledger.currentVerificationSurface).toBe('official-gallery-extensionquery');
     expect(ledger.secretHandling).toContain('do-not-retain-pat');
 
-    expect(ledgerDoc).toContain('Current published Marketplace version: `1.2.0`');
+    expect(ledgerDoc).toContain('Current published Marketplace version: `1.2.1`');
     expect(ledgerDoc).toContain('manual-marketplace-portal-upload');
+    expect(ledgerDoc).toContain('pinned-vsce-cli');
+    expect(ledgerDoc).toContain('official gallery extension query');
     expect(currentState).toContain('VS Code Marketplace listing');
     expect(currentState).toContain('[vscode-marketplace-publication-ledger.md](./vscode-marketplace-publication-ledger.md)');
     expect(releaseProcedure).toContain('VS Code Marketplace version are all published');

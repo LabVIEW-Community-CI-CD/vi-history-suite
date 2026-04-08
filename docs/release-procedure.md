@@ -11,12 +11,12 @@
 - The first retained exact-version release is `v0.2.0`, with retained artifact
   `vi-history-suite-0.2.0.vsix` and manifest
   `release-evidence/release-manifest.json`.
-- The current exact released line is `v1.2.0`.
+- The current exact released line is `v1.2.1`.
 - The burned exact released line is `v1.0.2`.
-- The current published package line on `main` is `1.2.0`.
+- The current published package line on `main` is `1.2.1`.
 - The current develop package line on `develop` is `1.2.1`.
-- The active exact release candidate line on `develop` is `v1.2.1`.
-- No `release/1.2.1` branch is active yet.
+- No newer exact release candidate line is active on `develop` yet.
+- No newer `release/*` branch is active yet.
 - The public GitHub default branch is `main` because it carries the latest
   exact released source line.
 - The public Codespaces evaluation branch is `develop`.
@@ -163,7 +163,9 @@
     - do not publish blindly, but do not stop publication solely because the
       worktree is dirty
 18. Keep exact tagging blocked until the post-publication human review gate is
-    accepted on the maintained public candidate surfaces.
+    accepted on the maintained public candidate surfaces, unless the product
+    owner explicitly waives that gate and the retained candidate package plus
+    current-state docs record the waiver and post-publish review plan.
 
 ## Retained Evidence
 
@@ -203,13 +205,13 @@
   `13779604462`.
 - `v1.0.2` is retained as a burned release because the immutable tag published
   before the exact authority docs CI failure was discovered.
-- The current published package line on `main` is `1.2.0`, tracked in
+- The current published package line on `main` is `1.2.1`, tracked in
   `CHANGELOG.md`, and it should not rewrite the retained `v0.2.0`, `v1.0.0`,
   `v1.0.1`, burned `v1.0.2`, exact `v1.0.3`, exact `v1.0.4`, exact `v1.0.5`,
-  exact `v1.0.6`, exact `v1.1.0`, or exact `v1.2.0` release evidence.
-- The current develop package line on `develop` is `1.2.1`, the active exact
-  release candidate line on `develop` is `v1.2.1`, and no `release/1.2.1`
-  branch is active yet.
+  exact `v1.0.6`, exact `v1.1.0`, exact `v1.2.0`, or exact `v1.2.1` release
+  evidence.
+- The current develop package line on `develop` is `1.2.1`, and no newer
+  exact release candidate line or `release/*` branch is active yet.
 - The packaged extension homepage now points installed users to the maintained
   public wiki home, while the repo root remains the source and control-plane
   surface.

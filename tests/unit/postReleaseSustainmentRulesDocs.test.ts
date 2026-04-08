@@ -122,12 +122,12 @@ describe('post-release sustainment rules package', () => {
 
     expect(rules.releaseCadence.model).toBe('event-driven');
     expect(rules.releaseCadence.versionLineContract).toEqual({
-      retainedExactVersionReleases: ['v0.2.0', 'v1.0.0', 'v1.0.1', 'v1.0.2', 'v1.0.3', 'v1.0.4', 'v1.0.5', 'v1.0.6', 'v1.1.0', 'v1.2.0'],
+      retainedExactVersionReleases: ['v0.2.0', 'v1.0.0', 'v1.0.1', 'v1.0.2', 'v1.0.3', 'v1.0.4', 'v1.0.5', 'v1.0.6', 'v1.1.0', 'v1.2.0', 'v1.2.1'],
       burnedExactVersionReleases: ['v1.0.2'],
-      currentExactReleaseLine: 'v1.2.0',
-      currentMainPackageLine: '1.2.0',
+      currentExactReleaseLine: 'v1.2.1',
+      currentMainPackageLine: '1.2.1',
       currentDevelopPackageLine: '1.2.1',
-      activeDevelopCandidateReleaseLine: 'v1.2.1',
+      activeDevelopCandidateReleaseLine: null,
       activeReleaseCandidateBranch: null,
       publicDefaultBranch: 'main',
       publicCodespaceBranch: 'develop',
@@ -162,7 +162,8 @@ describe('post-release sustainment rules package', () => {
         'future sessions shall not treat an unreleased SemVer bump as complete until the matching public tag, public GitHub release, and VS Code Marketplace version are all published',
         'future sessions shall not keep landing post-release changes on the previous exact release version number',
         'future sessions shall not treat a burned exact release as the green release baseline for later publication',
-        'future sessions shall not treat a candidate line as review-ready until the maintained public develop candidate head and maintained public wiki head are both published and retained in the authority candidate package'
+        'future sessions shall not treat a candidate line as review-ready until the maintained public develop candidate head and maintained public wiki head are both published and retained in the authority candidate package',
+        'future sessions shall keep exact tagging blocked until the post-publication human review gate closes, unless the product owner explicitly waives that gate and the retained candidate package records the waiver plus the post-publish review plan'
       ])
     );
     expect(rules.releaseCadence.candidateStateModel).toEqual(
@@ -364,9 +365,9 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('## Benchmark Refresh Rules');
     expect(rulesDoc).toContain('## Operator And Documentation Upkeep Rules');
     expect(rulesDoc).toContain('public GitHub default branch: `main`');
-    expect(rulesDoc).toContain('current exact released line: `v1.2.0`');
+    expect(rulesDoc).toContain('current exact released line: `v1.2.1`');
     expect(rulesDoc).toContain('current develop package line on `develop`: `1.2.1`');
-    expect(rulesDoc).toContain('active exact release candidate line on `develop`: `v1.2.1`');
+    expect(rulesDoc).toContain('no newer exact release candidate line is active on `develop` yet');
     expect(rulesDoc).toContain('chosen bump: `patch`');
     expect(rulesDoc).toContain('develop');
     expect(rulesDoc).toContain('release branch');

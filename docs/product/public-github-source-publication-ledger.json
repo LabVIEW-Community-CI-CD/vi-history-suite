@@ -1,7 +1,7 @@
 {
   "generatedFor": "vi-history-suite",
   "publicationSurface": "public-github-source-repo",
-  "publishedHeadCommit": "c7cd6a0",
+  "publishedHeadCommit": "2547344",
   "publications": [
     {
       "id": "public-source-product-repo-baseline",
@@ -203,6 +203,22 @@
         "docs/release-procedure.md",
         "docs/product/vscode-marketplace-publication-ledger.md",
         "docs/architecture/adr/ADR-0036-vscode-marketplace-publication-and-installed-user-entry-surface.md"
+      ]
+    },
+    {
+      "id": "public-source-v1-2-1-exact-release",
+      "title": "Public source v1.2.1 exact release",
+      "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
+      "status": "published",
+      "publishedDate": "2026-04-08",
+      "repoCommit": "2547344",
+      "primaryAuthority": [
+        "README.md",
+        "CHANGELOG.md",
+        "docs/product/current-state.md",
+        "docs/product/public-release-candidate.md",
+        "docs/release-procedure.md",
+        "package.json"
       ]
     }
   ]

@@ -10,7 +10,7 @@ The machine-readable companion surface for this ledger is:
 
 - `docs/product/public-github-source-publication-ledger.json`
 
-Current published public GitHub source HEAD: `c7cd6a0`
+Current published public GitHub source HEAD: `2547344`
 
 ## Publications
 
@@ -30,6 +30,7 @@ Current published public GitHub source HEAD: `c7cd6a0`
 | Public source v1.2.0 candidate moved-VI and bundled-doc refresh | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-08` | `ac56456` | `docs/product/current-state.md`; `docs/product/public-release-candidate.md`; `docs/requirements/srs.md`; `docs/testing/test-plan.md` |
 | Public source v1.2.0 exact release | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-08` | `c7cd6a0` | `README.md`; `CHANGELOG.md`; `docs/product/public-release-candidate.md`; `docs/release-procedure.md`; `package.json` |
 | Public source v1.2.1 Marketplace installed-user entry refresh | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-08` | `96af6a3` | `README.md`; `INSTALL.md`; `CHANGELOG.md`; `docs/product/current-state.md`; `docs/release-procedure.md`; `docs/product/vscode-marketplace-publication-ledger.md`; `docs/architecture/adr/ADR-0036-vscode-marketplace-publication-and-installed-user-entry-surface.md` |
+| Public source v1.2.1 exact release | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-08` | `2547344` | `README.md`; `CHANGELOG.md`; `docs/product/current-state.md`; `docs/product/public-release-candidate.md`; `docs/release-procedure.md`; `package.json` |
 
 ## Publication Rules
 

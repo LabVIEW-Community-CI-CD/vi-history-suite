@@ -2,9 +2,9 @@
 
 - Version line: `1.2.1`
 - Burned exact release line: `v1.0.2`
-- Recorded at: `2026-04-08T03:48:02Z`
+- Recorded at: `2026-04-08T04:21:44Z`
 - Authority source of truth: GitLab `develop` -> `main`
-- Published public source commit: `c7cd6a0`
+- Published public source commit: `2547344`
 - Public `develop` candidate commit: `96af6a3`
 - Published public wiki head: `a12eb16`
 
@@ -23,23 +23,25 @@
 
 ## Readiness
 
-- Authority baseline: `v1.2.0-exact-public-release-published`
-- Local exact VSIX build: `preview-v1.2.1-package-built`
+- Authority baseline: `v1.2.1-exact-public-release-published`
+- Local exact VSIX build: `exact-v1.2.1-package-built-from-public-main`
 - Local public devcontainer: `v1.1.0-published-baseline`
 - Local public fixture helper: `v1.1.0-published-baseline`
 - Public repo bootstrap: `passed-brand-new-fork-review-on-hse-logger`
 - Public wiki candidate review:
-  `pending-human-review-on-published-v1.2.1-candidate`
-- Exact public release: `v1.2.0-published`
+  `waived-by-user-post-publish-installed-extension-review`
+- Exact public release: `v1.2.1-published`
 
 ## Exact Release
 
-- GitHub release: `v1.2.0`
+- GitHub release: `v1.2.1`
 - GitHub release URL:
-  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.2.0`
-- GitHub asset: `vi-history-suite-1.2.0-public-release.vsix`
+  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.2.1`
+- GitHub asset: `vi-history-suite-1.2.1.vsix`
 - GitHub asset SHA-256:
-  `f6f8362a0e8370c5d9a408b0923053bffbb71ff6ad2bf42cae7821e21189dac0`
+  `19129777e6e88d0b8667b11afad78889bddd1ca9ede263d9d2e003a5c5e15e7c`
+- VS Code Marketplace item: `svelderrainruiz.vi-history-suite`
+- VS Code Marketplace version: `1.2.1`
 
 ## Public Publication
 
@@ -49,18 +51,22 @@
 - The current published public `develop` candidate now lands through GitHub PR
   `#21` at commit `96af6a3`, with `package-preview` and
   `public-facade-linux-smoke` green before merge.
+- The exact public `main` release promotion now lands through GitHub PR `#23`
+  at commit `2547344`, with `package-preview` and
+  `public-facade-linux-smoke` green before merge.
 - The exact published public wiki head is retained in
   `docs/product/public-github-wiki-publication-ledger.md` and
   `docs/product/public-github-wiki-publication-ledger.json` and now points to
   `a12eb16`.
+- The exact VS Code Marketplace item now publishes `1.2.1`, verified through
+  the official gallery extension query after pinned `vsce` publication.
 
 ## Local Proof
 
-- The exact public `v1.2.0` VSIX was rebuilt from merged public `main` commit
-  `c7cd6a0` before GitHub release publication.
-- A new preview `1.2.1` VSIX was built locally after the Marketplace/homepage
-  and installed-user entry-surface redesign landed, and the packaged
-  extension now points installed users at the maintained public wiki home.
+- The exact public `v1.2.1` VSIX was rebuilt from merged public `main` commit
+  `2547344` before GitHub release and VS Code Marketplace publication.
+- The packaged extension now points installed users at the maintained public
+  wiki home instead of the repo root.
 - The local public devcontainer and helper-backed icon-editor path remain the
   published `v1.1.0` baseline.
 - Authority `develop` was realigned to exact `main` through GitLab MR `!11`
@@ -90,6 +96,15 @@
   surface test alignment, and the bundled-doc manifest that references the
   real published wiki head `a12eb16`.
 
+## Accepted Waivers
+
+- `WAIVER-1.2.1-001-POST-PUBLISH-INSTALLED-REVIEW`
+  - status: `accepted`
+  - scope: `pre-tag-installed-user-review-gate`
+  - recorded outcome: Sergio elected to review the published extension
+    directly in local VS Code after publication instead of holding the exact
+    closeout for another pre-tag human review pass.
+
 ## Hosted Proof
 
 - GitHub Codespace `novacula` remains retained hosted public-surface proof.
@@ -108,6 +123,8 @@
 - The earlier canonical helper-backed acceptance on
   `resource/plugins/lv_icon.vi` remains retained historical proof for the
   helper path.
+- Sergio explicitly waived the later pre-tag installed-user review gate and
+  will review the published `1.2.1` extension directly in local VS Code.
 
 ## Tester Fixture Strategy
 
@@ -132,8 +149,8 @@
   - ADR impact: `updated` via `ADR-0030`
 - `FINDING-1.2.0-002-PUBLIC-CODESPACES-PUBLIC-REPO-BOOTSTRAP`
   - status: `closed`
-  - exact public `main` now publishes `c7cd6a0`, the public GitHub release
-    `v1.2.0` is live, and the maintained public wiki head remains `b30d356`
+  - exact public `main` now publishes `2547344`, the public GitHub release
+    `v1.2.1` is live, and the maintained public wiki head remains `a12eb16`
   - requirement impact: `updated` via `VHS-REQ-516`, `VHS-REQ-517`, and
     `VHS-REQ-518`
   - ADR impact: `updated` via `ADR-0034`
@@ -155,10 +172,10 @@
   - ADR impact: `none`
 - `FINDING-1.2.1-001-MARKETPLACE-PUBLICATION-CONTROL-PLANE-GAP`
   - status: `closed`
-  - the VS Code Marketplace became a real exact-release distribution surface
-    at `v1.2.0`, so the control plane now retains publisher, listing,
-    closeout, and PAT-governance truth instead of leaving Marketplace
-    publication in chat or operator memory
+  - the VS Code Marketplace is now a governed exact-release distribution
+    surface, and the control plane now retains publisher, listing, closeout,
+    PAT-governance truth, and verified `1.2.1` publication evidence instead of
+    leaving Marketplace publication in chat or operator memory
   - requirement impact: `updated` via `VHS-REQ-522`, `VHS-REQ-523`, and
     `VHS-REQ-524`
   - ADR impact: `updated` via `ADR-0036`
@@ -173,8 +190,9 @@
 
 ## Remaining Blockers
 
-- No publication blocker remains on the `1.2.1` public repo/wiki surfaces.
-- `v1.2.0` remains the current exact green line on `main`, `96af6a3` is now
-  live on public `develop`, `a12eb16` is now live on the public wiki, and the
-  next gate is the installed-user review on those published `1.2.1` candidate
-  surfaces.
+- No release-path blocker remains on `v1.2.1`.
+- Public `main` now publishes `2547344`, public `develop` retains candidate
+  commit `96af6a3`, the public wiki remains `a12eb16`, the public GitHub
+  release `v1.2.1` is live, the VS Code Marketplace item now publishes
+  `1.2.1`, and Sergio elected post-publish installed-extension review in local
+  VS Code instead of a pre-tag human gate.

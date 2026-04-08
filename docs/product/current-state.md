@@ -146,11 +146,11 @@ Latest landed ship target:
 - retained release pipeline: `2428809456`
 - retained release job: `13779604462`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.2.0`
-- current published package line on `main`: `1.2.0`
+- current exact released line: `v1.2.1`
+- current published package line on `main`: `1.2.1`
 - current develop package line on `develop`: `1.2.1`
-- active exact release candidate line on `develop`: `v1.2.1`
-- no `release/1.2.1` branch is active yet
+- no newer exact release candidate line is active on `develop` yet
+- no newer `release/*` branch is active yet
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
@@ -161,13 +161,12 @@ Latest landed ship target:
 - VS Code Marketplace publication ledger: [vscode-marketplace-publication-ledger.md](./vscode-marketplace-publication-ledger.md)
 - current changelog: [CHANGELOG.md](../../CHANGELOG.md)
 - docs-workbench image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
-- remaining blockers: none on exact `v1.2.0`; public `main` publishes
-  `c7cd6a0`, the public GitHub release `v1.2.0` is live, the VS Code
-  Marketplace item `svelderrainruiz.vi-history-suite` publishes `1.2.0`, and
-  `v1.2.1` is the active patch candidate on `develop` for Marketplace-release
-  control plus installed-user documentation redesign; public `develop` now
-  publishes `96af6a3`, the public wiki now publishes `a12eb16`, and the next
-  gate is installed-user review on those published `1.2.1` surfaces
+- remaining blockers: none on exact `v1.2.1`; public `main` publishes
+  `2547344`, the public GitHub release `v1.2.1` is live, the public `develop`
+  candidate remains `96af6a3`, the public wiki publishes `a12eb16`, the
+  official gallery extension query now verifies Marketplace version `1.2.1`
+  for `svelderrainruiz.vi-history-suite`, and Sergio elected post-publish
+  installed-extension review in local VS Code instead of a pre-tag human gate
 
 Current active and recently closed tranches:
 
@@ -293,18 +292,18 @@ Post-release tranches:
   - this tranche now owns long-tail release cadence, benchmark refresh cadence, operator-surface upkeep, and post-release control-plane maintenance after benchmark proof, execution-policy closeout, and public-facade acceptance closeout all landed
   - release sustainment is now explicit event-driven repo truth: preview and tagged release refreshes occur only when package, release-manifest, public-release-kit, or release-procedure contracts change
   - benchmark sustainment is now explicit event-driven bounded truth: the accepted `129`-commit / `128`-pair packet, the Windows pair-129 ceiling, and the Linux pair-135/138 blocker stay stable unless the governed benchmark contract changes enough to trigger a reopen
-  - the active `1.2.1` patch slice now governs VS Code Marketplace publication
+  - the closed `1.2.1` patch slice now governs VS Code Marketplace publication
     as an explicit exact-release closeout surface and retains a dedicated
     Marketplace publication ledger instead of leaving Marketplace state in chat
     memory
-  - the same `1.2.1` slice now redesigns the installed-user entry surface so
-    Marketplace users land on maintained local-use documentation first, while
-    repo/fork/Codespaces procedures remain explicit secondary source-evaluation
-    lanes
+  - the same closed `1.2.1` slice now redesigns the installed-user entry
+    surface so Marketplace users land on maintained local-use documentation
+    first, while repo/fork/Codespaces procedures remain explicit secondary
+    source-evaluation lanes
   - the maintained public `develop` candidate now publishes `96af6a3`, the
-    public wiki entry surface now publishes `a12eb16`, and the next
-    `1.2.1` boundary is published installed-user review rather than more local
-    documentation normalization
+    public wiki entry surface remains `a12eb16`, the exact public `main` line
+    now publishes `2547344`, and the VS Code Marketplace item now verifies
+    `1.2.1`
   - sustainment does not absorb the active `TRANCHE-013` Docker-only installed-contract work or the reopened `TRANCHE-010` public-closeout rerun
 - `TRANCHE-013`: Extension execution flexibility and runtime acquisition UX
   - active issue: [ISSUE-0410 Extension Execution Flexibility And Runtime Acquisition UX](./issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md)
@@ -315,15 +314,15 @@ Post-release tranches:
 - `TRANCHE-014`: Public Codespaces public-repo bootstrap
   - closed issue: [ISSUE-0411 Public Codespaces Public-Repo Bootstrap](./issues/ISSUE-0411-public-codespaces-public-repo-bootstrap.md)
   - closed execution program: [PROGRAM-0006: Public Codespaces Public-Repo Bootstrap](./execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md)
-  - exact public `main` now publishes `v1.2.0`, and `develop` has advanced to
-    `1.2.1` as the next active patch candidate line
+  - exact public `main` now publishes `v1.2.1`, and `develop` remains aligned
+    to `1.2.1` until the next exact candidate line opens
   - the first `1.2.0` correction repaired branch-governance admission by
     realigning exact `main` back into `develop` before feature work continues
   - the line now adds one generic public-repo bootstrap surface for public
     GitHub and GitLab HTTPS repos while keeping the canonical icon-editor
     helper path separate
   - Sergio's documented brand-new-fork and brand-new-Codespace rerun now
-    passes on `Examples/Logging with Helper-VIs.vi`, so the exact `v1.2.0`
+    passes on `Examples/Logging with Helper-VIs.vi`, so the exact `v1.2.1`
     public release is closed with the maintained public wiki/reference-manual
     package accepted
 
@@ -348,7 +347,7 @@ Current active and queued post-release programs:
     GitHub wiki home as the intended local-use reader surface; the repo root is
     the source/contributor/control-plane surface instead of the first-contact
     installed-user overview
-  - the canonical Gate D blocker on `resource/plugins/lv_icon.vi` is retired, while `v1.0.2` is now retained as a burned exact release and the current exact public GitHub release line is `v1.2.0`
+  - the canonical Gate D blocker on `resource/plugins/lv_icon.vi` is retired, while `v1.0.2` is now retained as a burned exact release and the current exact public GitHub release line is `v1.2.1`
   - the public branch model is now explicit: `develop` is the integration and
     Codespaces-evaluation branch, and `main` is the release branch
   - protected-branch promotion now depends on required checks instead of direct

@@ -2,7 +2,7 @@
   "schema": "vi-history-suite/public-release-candidate@v1",
   "versionLine": "1.2.1",
   "burnedExactReleaseLine": "v1.0.2",
-  "recordedAt": "2026-04-08T03:48:02Z",
+  "recordedAt": "2026-04-08T04:21:44Z",
   "authorityRepo": {
     "role": "source-of-truth",
     "integrationBranch": "develop",
@@ -20,7 +20,7 @@
   },
   "publishedPublicSource": {
     "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
-    "publishedCommit": "c7cd6a0",
+    "publishedCommit": "2547344",
     "publicationLedgerPath": "docs/product/public-github-source-publication-ledger.json",
     "status": "published"
   },
@@ -37,13 +37,13 @@
     "status": "published-installed-user-entry-refresh"
   },
   "candidateReadiness": {
-    "authorityBaseline": "v1.2.0-exact-public-release-published",
-    "localInstalledVsix": "preview-v1.2.1-package-built",
+    "authorityBaseline": "v1.2.1-exact-public-release-published",
+    "localInstalledVsix": "exact-v1.2.1-package-built-from-public-main",
     "localPublicDevcontainer": "v1.1.0-published-baseline",
     "localPublicFixtureHelper": "v1.1.0-published-baseline",
     "publicRepoBootstrap": "passed-brand-new-fork-review-on-hse-logger",
-    "publicWikiCandidateReview": "pending-human-review-on-published-v1.2.1-candidate",
-    "exactPublicRelease": "v1.2.0-published"
+    "publicWikiCandidateReview": "waived-by-user-post-publish-installed-extension-review",
+    "exactPublicRelease": "v1.2.1-published"
   },
   "findingClassifications": [
     {
@@ -131,10 +131,13 @@
     }
   ],
   "exactRelease": {
-    "version": "v1.2.0",
-    "gitHubReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.2.0",
-    "gitHubAssetName": "vi-history-suite-1.2.0-public-release.vsix",
-    "gitHubAssetSha256": "f6f8362a0e8370c5d9a408b0923053bffbb71ff6ad2bf42cae7821e21189dac0",
+    "version": "v1.2.1",
+    "gitHubReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.2.1",
+    "gitHubAssetName": "vi-history-suite-1.2.1.vsix",
+    "gitHubAssetSha256": "19129777e6e88d0b8667b11afad78889bddd1ca9ede263d9d2e003a5c5e15e7c",
+    "marketplaceItemName": "svelderrainruiz.vi-history-suite",
+    "marketplaceVersion": "1.2.1",
+    "marketplaceVerification": "official-gallery-extensionquery-verified",
     "integrationBranch": "develop",
     "releaseBranch": "main"
   },
@@ -167,7 +170,7 @@
       "selectedCommit": "81325a775fdeb37141e08926d78aa0e47e887990",
       "baseCommit": "4a265f6e64ff7d2aff22b67d0c95f67fa043b5fb",
       "notes": [
-        "The generic bootstrap is now published on exact public main commit c7cd6a0 and released through GitHub release v1.2.0.",
+        "The generic bootstrap is now published on exact public main commit 2547344 and released through GitHub release v1.2.1.",
         "When --branch is omitted, the command resolves the remote default branch; when provided, the explicit branch is honored exactly.",
         "Moved-VI compare pairs now resolve the historical repo-relative path for each revision before blob reads and runtime staging proceed.",
         "Bundled compare-flow docs now retire stale Diff prev and retained-pair wording in favor of the checkbox-selected pair review path."
@@ -200,6 +203,16 @@
       "reviewerNote": "It worked on \"Examples/Logging with Helper-VIs.vi\"."
     }
   },
+  "acceptedWaivers": [
+    {
+      "id": "WAIVER-1.2.1-001-POST-PUBLISH-INSTALLED-REVIEW",
+      "status": "accepted",
+      "scope": "pre-tag-installed-user-review-gate",
+      "recordedAt": "2026-04-08T04:21:44Z",
+      "followup": "post-publish-installed-extension-review-in-local-vscode",
+      "instruction": "Proceed without my review, i will review it in the extension directly on visual studio code after being published"
+    }
+  ],
   "testerFixtureStrategy": {
     "decision": "helper-backed-canonical-path-plus-generic-public-bootstrap-reference-manual",
     "defaultCloneOnStartup": false,
@@ -215,9 +228,5 @@
     "refreshWikiPage": "Refresh-Codespace-Repositories",
     "requiredReviewEnvironment": "brand-new-fork-plus-brand-new-codespace"
   },
-  "activeBlockers": [
-    {
-      "id": "BLOCKER-1.2.1-001-INSTALLED-USER-PUBLISHED-REVIEW-PENDING"
-    }
-  ]
+  "activeBlockers": []
 }
