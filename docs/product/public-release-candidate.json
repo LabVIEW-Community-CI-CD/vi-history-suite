@@ -47,7 +47,7 @@
     "localPublicDevcontainer": "v1.1.0-published-baseline",
     "localPublicFixtureHelper": "v1.1.0-published-baseline",
     "historicalPublicRepoBootstrapBaseline": "exact-v1.2.0-human-baseline-retained",
-    "publishedSurfaceExpertAgentReview": "expert-agent-review-rerun-pending",
+    "publishedSurfaceExpertAgentReview": "no-findings",
     "exactPublicRelease": "v1.2.1-published"
   },
   "findingClassifications": [
@@ -148,7 +148,9 @@
       "canonicalCodexSkillPath": "/mnt/c/Users/sveld/.codex/skills/vi-history-suite-expert-agent-reviewer"
     },
     "latestPublishedSurfaceReview": {
-      "status": "expert-agent-review-rerun-pending",
+      "status": "no-findings",
+      "retainedAt": "2026-04-08T07:13:50Z",
+      "verdict": "no findings; exact release / Marketplace publish may proceed",
       "reviewedPublicDevelopCommit": "12391e1",
       "reviewedPublicWikiHead": "f6ed8a5",
       "priorReviewedPublicDevelopCommit": "96944d7",
@@ -174,11 +176,5 @@
     "refreshWikiPage": "Refresh-Codespace-Repositories",
     "requiredReviewEnvironment": "brand-new-fork-plus-brand-new-codespace"
   },
-  "activeBlockers": [
-    {
-      "id": "BLOCKER-1.2.2-001-EXPERT-AGENT-REVIEW-CLEAN-PASS",
-      "status": "open",
-      "summary": "The retained expert-agent review rerun against the published public develop/wiki heads has not yet returned a no-findings verdict."
-    }
-  ]
+  "activeBlockers": []
 }

@@ -30,7 +30,7 @@
 - Historical public repo bootstrap baseline:
   `exact-v1.2.0-human-baseline-retained`
 - Published-surface expert-agent review:
-  `expert-agent-review-rerun-pending`
+  `no-findings`
 - Exact public release: `v1.2.1-published`
 
 ## Exact Release Baseline
@@ -85,12 +85,14 @@
   `/mnt/c/Users/sveld/.codex/skills/vi-history-suite-expert-agent-reviewer`
 - Exact published public `develop` candidate under review: `12391e1`
 - Exact published public wiki head under review: `f6ed8a5`
-- Latest retained verdict: `expert-agent-review-rerun-pending`
+- Latest retained verdict: `no findings; exact release / Marketplace publish may proceed`
+- Retained at: `2026-04-08T07:13:50Z`
 - Prior retained expert-agent review: `findings-present` on `96944d7` /
   `d6da0c4` with `2` published-surface findings folded into the current
   candidate.
-- Exact `v1.2.2` tagging and Marketplace publication remain blocked until the
-  latest retained expert-agent review returns no findings.
+- Exact `v1.2.2` tagging and Marketplace publication are now eligible on
+  published-surface review grounds; protected promotion and exact closeout
+  still need to complete.
 
 ## Tester Fixture Strategy
 
@@ -132,8 +134,7 @@
 ## Remaining Blockers
 
 - No release-path blocker remains on exact `v1.2.1`.
-- `BLOCKER-1.2.2-001-EXPERT-AGENT-REVIEW-CLEAN-PASS`: public `main` remains
+- No active expert-agent blocker remains on `v1.2.2`; public `main` remains
   `2547344`, public `develop` now publishes `12391e1`, the public wiki now
-  publishes `f6ed8a5`, and no exact `v1.2.2` tag or Marketplace publish is
-  eligible until `vi-history-suite-expert-agent-reviewer` reruns on those
-  maintained public surfaces and comes back with no findings.
+  publishes `f6ed8a5`, and exact closeout may proceed through the protected
+  promotion path.

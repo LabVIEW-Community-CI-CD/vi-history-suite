@@ -117,7 +117,7 @@ describe('public release candidate control surface', () => {
       authorityBaseline: 'v1.2.1-exact-public-release-published',
       localInstalledVsix: 'candidate-v1.2.2-package-built-through-design-gate',
       historicalPublicRepoBootstrapBaseline: 'exact-v1.2.0-human-baseline-retained',
-      publishedSurfaceExpertAgentReview: 'expert-agent-review-rerun-pending',
+      publishedSurfaceExpertAgentReview: 'no-findings',
       exactPublicRelease: 'v1.2.1-published'
     });
     expect(candidate.findingClassifications).toEqual(
@@ -157,7 +157,7 @@ describe('public release candidate control surface', () => {
         '/mnt/c/Users/sveld/.codex/skills/vi-history-suite-expert-agent-reviewer'
     });
     expect(candidate.expertAgentReviewProofs?.latestPublishedSurfaceReview).toMatchObject({
-      status: 'expert-agent-review-rerun-pending',
+      status: 'no-findings',
       reviewedPublicDevelopCommit: '12391e1',
       reviewedPublicWikiHead: 'f6ed8a5',
       priorVerdict: 'findings-present',
@@ -170,21 +170,14 @@ describe('public release candidate control surface', () => {
       genericCommand: 'npm run public:repo:clone -- --repo-url <https-url>',
       requiredReviewEnvironment: 'brand-new-fork-plus-brand-new-codespace'
     });
-    expect(candidate.activeBlockers).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          id: 'BLOCKER-1.2.2-001-EXPERT-AGENT-REVIEW-CLEAN-PASS',
-          status: 'open'
-        })
-      ])
-    );
+    expect(candidate.activeBlockers).toEqual([]);
 
     expect(candidateMarkdown).toContain('Version line: `1.2.2`');
     expect(candidateMarkdown).toContain('Published public source commit: `2547344`');
     expect(candidateMarkdown).toContain('Public `develop` candidate commit: `12391e1`');
     expect(candidateMarkdown).toContain('Published public wiki head: `f6ed8a5`');
     expect(candidateMarkdown).toContain('Published-surface expert-agent review:');
-    expect(candidateMarkdown).toContain('`expert-agent-review-rerun-pending`');
+    expect(candidateMarkdown).toContain('`no-findings`');
     expect(candidateMarkdown).toContain('Required skill: `vi-history-suite-expert-agent-reviewer`');
     expect(candidateMarkdown).toContain(
       'The maintained public `develop` candidate now lands through GitHub PRs `#24`,'
@@ -194,15 +187,17 @@ describe('public release candidate control surface', () => {
     expect(candidateMarkdown).toContain('FINDING-1.2.2-002-EXACT-CLOSEOUT-BACKMERGE-OPERATOR-GAP');
     expect(candidateMarkdown).toContain('FINDING-1.2.2-003-MANUAL-REVIEW-GATE-DEPENDENCY');
     expect(candidateMarkdown).toContain('No release-path blocker remains on exact `v1.2.1`.');
-    expect(candidateMarkdown).toContain('BLOCKER-1.2.2-001-EXPERT-AGENT-REVIEW-CLEAN-PASS');
-    expect(candidateMarkdown).toContain('no exact `v1.2.2` tag or Marketplace publish is');
+    expect(candidateMarkdown).toContain(
+      'no findings; exact release / Marketplace publish may proceed'
+    );
+    expect(candidateMarkdown).toContain('No active expert-agent blocker remains on `v1.2.2`');
 
     expect(currentState).toContain('current exact released line: `v1.2.1`');
     expect(currentState).toContain('current develop package line on `develop`: `1.2.2`');
     expect(currentState).toContain('active exact release candidate line on `develop`: `v1.2.2`');
     expect(currentState).toContain('candidate commit `12391e1`');
     expect(currentState).toContain('`f6ed8a5`');
-    expect(currentState).toContain('waiting on a clean expert-agent review rerun via');
+    expect(currentState).toContain('clean no-findings expert-agent verdict via');
     expect(currentState).toContain('vi-history-suite-expert-agent-reviewer');
 
     expect(srs).toContain('VHS-REQ-527');

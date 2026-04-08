@@ -165,10 +165,10 @@ Latest landed ship target:
   `2547344`, the public GitHub release `v1.2.1` is live, public `develop` now
   publishes candidate commit `12391e1`, the public wiki publishes `f6ed8a5`,
   the official gallery extension query verifies Marketplace version `1.2.1`
-  for `svelderrainruiz.vi-history-suite`, and the active `v1.2.2` candidate is
-  now waiting on a clean expert-agent review rerun via
-  `vi-history-suite-expert-agent-reviewer` against the maintained public
-  surfaces
+  for `svelderrainruiz.vi-history-suite`, and the active `v1.2.2` candidate
+  now retains a clean no-findings expert-agent verdict via
+  `vi-history-suite-expert-agent-reviewer` against those maintained public
+  surfaces so exact closeout may proceed
 
 Current active and recently closed tranches:
 
@@ -342,8 +342,8 @@ Post-release tranches:
     `main` line has been back-merged into `develop` through the protected path
     and the resulting `develop` pipeline is green without a later human prompt
   - the maintained public `develop` candidate now publishes `12391e1`, the
-    public wiki head now publishes `f6ed8a5`, and the `v1.2.2` candidate is
-    awaiting a clean expert-agent review rerun via
+    public wiki head now publishes `f6ed8a5`, and the `v1.2.2` candidate now
+    retains a clean no-findings expert-agent verdict via
     `vi-history-suite-expert-agent-reviewer` on the maintained public surfaces
 - `TRANCHE-014`: Public Codespaces public-repo bootstrap
   - closed issue: [ISSUE-0411 Public Codespaces Public-Repo Bootstrap](./issues/ISSUE-0411-public-codespaces-public-repo-bootstrap.md)
