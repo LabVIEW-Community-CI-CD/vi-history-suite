@@ -60,4 +60,15 @@ describe('benchmark status action authority-root resolution', () => {
       authorityRepoRoot
     );
   });
+
+  it('fails closed to the current repo when no candidate satisfies the authority markers', async () => {
+    await expect(
+      resolveBenchmarkAuthorityRepoRoot('/workspace/current', {
+        stat: async () => ({
+          isFile: () => false
+        }) as never,
+        readFile: async () => '{"name":"vi-history-suite"}'
+      })
+    ).resolves.toBe('/workspace/current');
+  });
 });

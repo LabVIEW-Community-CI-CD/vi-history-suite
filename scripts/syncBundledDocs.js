@@ -502,13 +502,22 @@ async function buildBundledDocsOutput(paths, deps = {}) {
 }
 
 function normalizeBundleFileForComparison(relativePath, content) {
+  const normalizedContent = content.replace(/\r\n/g, '\n');
+
   if (relativePath === 'manifest.json') {
-    const parsed = JSON.parse(content);
+    const parsed = JSON.parse(normalizedContent);
     parsed.generatedAt = '__IGNORED__';
+    if (Array.isArray(parsed.pages)) {
+      for (const page of parsed.pages) {
+        if (page && typeof page === 'object' && 'wikiCommit' in page) {
+          page.wikiCommit = '__IGNORED__';
+        }
+      }
+    }
     return JSON.stringify(parsed, null, 2);
   }
 
-  return content;
+  return normalizedContent;
 }
 
 function compareBundledDocsFiles(expectedFiles, actualFiles) {

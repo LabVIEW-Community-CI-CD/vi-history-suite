@@ -7,17 +7,15 @@ public GitHub required checks, and GitHub experiment workflows stop being
 raw-YAML-only truth.
 
 This document is the control-plane summary of the governed `1.2.0` line. The
-exact public release remains `v1.1.0`; `main` still carries `1.1.0`, `develop`
-now carries active candidate line `1.2.0`, and `release/1.2.0` is now active
-for exact `v1.2.0` promotion.
+exact public release is now `v1.2.0`; `main` and `develop` both carry `1.2.0`,
+and no newer exact release candidate is active yet.
 
 ## Opening Decision
 
-- current exact release line: `v1.1.0`
-- current `main` package line: `1.1.0`
+- current exact release line: `v1.2.0`
+- current `main` package line: `1.2.0`
 - current `develop` package line: `1.2.0`
-- active exact release candidate line on `develop`: `v1.2.0`
-- active release-candidate branch: `release/1.2.0`
+- no newer exact release candidate line is active yet
 - chosen bump: `minor`
 - rationale: this line adds a governed public Codespaces/bootstrap capability
   for public GitHub and GitLab repos without breaking the exact `v1.1.0`
