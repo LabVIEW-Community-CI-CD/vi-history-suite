@@ -46,6 +46,8 @@ rerun remains explicit under reopened `PROGRAM-0002`.
 10. review-ready candidate publication boundary and dirty-public-surface handling
 11. VS Code Marketplace publication governance and retained publication evidence
 12. installed-user-first entry-surface redesign for Marketplace readers
+13. exact-closeout back-merge follow-through so exact `main` publication is
+    not treated as fully closed before `develop` is realigned and green again
 
 ## Queue Mapping
 
@@ -105,6 +107,9 @@ Every slice must preserve:
 - one governed Marketplace publication contract so exact release closeout is
   not treated as complete before the released VSIX is live on the Marketplace
   under the retained publisher/item identity
+- one governed exact-closeout back-merge rule so future sessions do not wait
+  for a human prompt before realigning exact released `main` back into
+  `develop`
 - one governed installed-user entry surface so Marketplace readers land on
   local-use guidance first and source-evaluation/fork procedures stay
   explicitly secondary

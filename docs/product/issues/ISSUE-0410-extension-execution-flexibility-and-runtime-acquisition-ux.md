@@ -12,9 +12,13 @@ Active post-release issue.
 
 Activation facts:
 
-- `TRANCHE-013` is active on the `1.0.0` breaking installed-extension contract
+- `TRANCHE-013` landed the Docker-only installed-extension contract and the
+  initial public/internal documentation split normalization
+- `TRANCHE-015` is now active on first-time installed-user Docker onboarding,
+  explicit missing-Docker guidance, and fail-closed first-run next actions
 - the runtime/package layer already removed installed host-mode/path knobs
-- the control-plane and public/internal docs split now need to be normalized
+- the next retained gap is no longer “assume Docker already exists on the
+  machine”; it is “make that first-run dependency explicit and recoverable”
 
 ## Scope
 
@@ -24,6 +28,7 @@ Activation facts:
 - canonical Docker-only request validation
 - no execution-policy bypass around that validation boundary
 - visible image-acquisition and front-facing runtime feedback
+- first-run missing-Docker onboarding and fail-closed recovery guidance
 - public GitHub front-face versus internal GitLab control-plane normalization
 - handoff to `PROGRAM-0002` for the next deterministic public Gate D rerun
 
@@ -47,6 +52,9 @@ Activation facts:
 - the current Docker daemon engine chooses the governed Windows or Linux image
   truthfully on Windows
 - missing images are acquired with visible progress and explicit failure truth
+- first-time users who do not yet have Docker installed or running get clear
+  install/start/retry guidance before image acquisition is treated as the next
+  step
 - package metadata and user-facing docs point to the public GitHub front face
   instead of the private GitLab authority repo
 
@@ -58,10 +66,14 @@ Activation facts:
 - updated bundled/public/internal reader surfaces
 - green docs and design gates after the control-plane update
 
-## First Active Slice
+## Current Active Slice
 
-- normalize the Docker-only installed contract into the control plane
-- retain the engine-aware Windows/Linux image-selection rule explicitly
-- add the public GitHub facade versus internal GitLab control-plane ADR
-- hand off the later public Gate D rerun to `PROGRAM-0002` without claiming it
-  complete yet
+- account explicitly for a first-time installed-extension user whose machine
+  does not yet have Docker installed or running
+- harden runtime-doctor, blocked-next-action, and installed-user reader
+  surfaces so they explain the missing-Docker boundary without assuming prior
+  Docker familiarity
+- preserve the Docker-only compare contract and no-host-fallback rule while
+  making the prerequisite and recovery path clearer
+- keep the later Gate D rerun handoff to `PROGRAM-0002` explicit without
+  claiming that public acceptance is reclosed yet

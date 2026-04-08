@@ -62,8 +62,8 @@ Current version-line contract:
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.2.1`
 - current published package line on `main`: `1.2.1`
-- current develop package line on `develop`: `1.2.1`
-- no newer exact release candidate line is active on `develop` yet
+- current develop package line on `develop`: `1.2.2`
+- active exact release candidate line on `develop`: `v1.2.2`
 - no newer `release/*` branch is active yet
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
@@ -74,16 +74,17 @@ Current version-line contract:
 Latest recorded opening decision for the current line:
 
 - chosen bump: `patch`
-- target exact candidate line: `v1.2.1`
+- target exact candidate line: `v1.2.2`
 - rationale: the next line governs VS Code Marketplace publication as an
-  explicit exact-release closeout surface after `v1.2.0` became the first live
-  Marketplace release
-- rationale: the same line redesigns the installed-user entry surface so
-  Marketplace users land on maintained local-use documentation instead of a
-  repo-first, branch-heavy source reader surface
+  exact-release closeout follow-through surface by making the protected
+  back-merge of exact released `main` into `develop` part of the same release
+  closeout instead of a separately elicited later task
+- rationale: the same line hardens first-run installed-user guidance and
+  runtime-doctor recovery so machines without Docker installed or running do
+  not look like broken image-acquisition cases
 - rejected `minor`: the slice hardens and redirects an existing released
   distribution surface instead of adding a new product capability
-- rejected `major`: no exact `v1.2.0` runtime or workflow contract is being
+- rejected `major`: no exact `v1.2.1` runtime or workflow contract is being
   intentionally broken or removed
 
 Strict SemVer rule after an exact release:
@@ -103,6 +104,9 @@ Strict SemVer rule after an exact release:
   exact release version number
 - future sessions shall not treat a burned exact release as the green release
   baseline for later publication
+- future sessions shall not treat an exact release as fully closed until the
+  matching released `main` line has been back-merged into `develop` through
+  the protected path and the resulting `develop` pipeline is green
 - future sessions shall not treat a candidate line as `review-ready` until the
   maintained public `develop` candidate head and maintained public wiki head
   are both published and retained in the authority candidate package
@@ -229,6 +233,9 @@ Required branch-model and CI posture:
   line opens when `develop` does not yet contain the exact released `main`
   baseline, and `npm run design:gate` shall keep that assertion first in the
   governed gate order
+- exact release closeout remains incomplete until the exact released `main`
+  line has been back-merged into `develop` through the protected path and the
+  resulting `develop` pipeline is green
 - `release/*` lanes are cut from `develop`, validate the release candidate, and
   merge to `main` plus back into `develop`
 - `hotfix/*` lanes are cut from `main`, fix one exact release line, and merge

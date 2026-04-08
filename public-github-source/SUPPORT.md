@@ -25,6 +25,8 @@ Please include:
 - operating system
 - whether the workspace was trusted
 - whether the target file was an eligible tracked LabVIEW VI
+- whether Docker was not installed yet, installed but not running, or already
+  running when the compare started
 - whether the issue happened on first-use image pull or on a warm image
 - Docker engine and host combination
   - Windows host with Linux engine
@@ -49,5 +51,5 @@ The public product contract is Docker-only and x64-only.
 
 The extension does not use host LabVIEW as an installed-user fallback path.
 
-If Docker is unavailable or the governed image cannot be acquired, the product
-should fail closed with visible next-step guidance.
+If Docker is not installed yet, not running yet, or the governed image cannot
+be acquired, the product should fail closed with visible next-step guidance.

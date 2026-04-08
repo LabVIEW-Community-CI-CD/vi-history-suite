@@ -6,7 +6,10 @@ Active post-release program.
 
 Reopen facts:
 
-- `TRANCHE-013` is active on the breaking `1.0.0` installed-extension contract
+- `TRANCHE-013` landed the core Docker-only installed contract, engine-aware
+  image-selection rule, and public/internal documentation split baseline
+- `TRANCHE-015` is active on first-time installed-user Docker onboarding and
+  missing-Docker fail-closed guidance
 - the installed extension now depends on Docker for comparison generation
 - the old flexible installed-mode story is no longer valid repo truth
 - `PROGRAM-0002` now needs a later Docker-only public acceptance rerun before
@@ -27,6 +30,8 @@ An installed extension user:
 - gets the governed Windows image when Docker is in Windows-engine mode
 - gets the governed Linux image when Docker is in Linux-engine mode
 - sees visible image-acquisition and next-action truth
+- can tell from the installed-user docs and runtime doctor whether Docker is
+  missing, not running yet, or merely still pulling the governed image
 - never has the extension probe or compete with host LabVIEW as fallback
 
 ## Workstreams
@@ -37,11 +42,14 @@ An installed extension user:
 4. front-facing runtime truth in the panel, notifications, and packets
 5. authority, bundled-doc, internal wiki, and public GitHub user-surface
    normalization
-6. handoff to `PROGRAM-0002` for the next Gate D acceptance rerun
+6. first-run missing-Docker onboarding and fail-closed recovery guidance
+7. handoff to `PROGRAM-0002` for the next Gate D acceptance rerun
 
 ## Queue Mapping
 
 - `TRANCHE-013`
+  - `ISSUE-0410`
+- `TRANCHE-015`
   - `ISSUE-0410`
 
 ## Exit Gates
@@ -65,6 +73,8 @@ An installed extension user:
 - the history panel, notifications, and retained packet surfaces expose the
   selected provider, current engine, selected image, acquisition outcome, and
   next action
+- missing-Docker first-run states tell the user to install or start Docker and
+  verify it before expecting image acquisition to begin
 
 ### Gate D: Public/Internal Surface Split
 

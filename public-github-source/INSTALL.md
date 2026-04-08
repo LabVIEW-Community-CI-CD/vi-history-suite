@@ -20,7 +20,8 @@ The installed extension compare workflow is Docker-only and x64-only.
 Required surfaces:
 
 - Visual Studio Code
-- Docker Desktop or another Docker-compatible engine available to VS Code
+- Docker Desktop or another Docker-compatible engine installed and running in
+  the same session that launches VS Code
 - a trusted Git repository containing an eligible LabVIEW VI
 
 Not required:
@@ -41,16 +42,28 @@ daemon engine:
 If the selected governed image is missing locally, the extension pulls it on
 first use before compare execution.
 
+Before the first compare on a fresh machine, confirm Docker is actually ready:
+
+```bash
+docker version
+docker info --format '{{.OSType}}'
+```
+
+If those checks fail, install or start Docker before expecting image
+acquisition to begin.
+
 ## Installed User Flow
 
 1. Install the extension from the VS Code Marketplace or from a governed VSIX.
-2. Open a trusted Git repository with an eligible LabVIEW VI.
-3. Run `VI History`.
-4. Select one commit checkbox.
-5. Select a second distinct commit checkbox.
-6. Wait for first-use image acquisition if the selected governed image is not
-   already present.
-7. Review the generated comparison report.
+2. Install or start Docker, then confirm `docker info` works in the same
+   session that will run VS Code.
+3. Open a trusted Git repository with an eligible LabVIEW VI.
+4. Run `VI History`.
+5. Select one commit checkbox.
+6. Select a second distinct commit checkbox.
+7. If the selected governed image is not already present but Docker is ready,
+   wait for first-use image acquisition.
+8. Review the generated comparison report.
 
 Marketplace and exact-release users can stop after the installed-user flow
 above. The rest of this page covers source evaluation and Codespaces work.

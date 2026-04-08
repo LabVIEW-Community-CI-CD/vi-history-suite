@@ -152,7 +152,7 @@ describe('public GitHub source promotion', () => {
   it('renders a narrower public package contract than authority', () => {
     const manifest = promotion.renderPublicPackageManifest();
 
-    expect(manifest.version).toBe('1.2.1');
+    expect(manifest.version).toBe('1.2.2');
     expect(manifest.files).toEqual([
       'out/**',
       'resources/**',

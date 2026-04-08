@@ -22,23 +22,28 @@ Installed-user start pages:
 
 Installed-user local workflow:
 
-1. open a trusted Git repository that contains an eligible LabVIEW VI
-2. right-click the VI and choose `VI History`
-3. select one commit checkbox
-4. select a second distinct commit checkbox
-5. wait for first-use Docker image acquisition if the governed image is not
-   already present
-6. review the generated comparison report
+1. install or start Docker Desktop or Docker, then confirm `docker info`
+   succeeds in the same session that will run VS Code
+2. open a trusted Git repository that contains an eligible LabVIEW VI
+3. right-click the VI and choose `VI History`
+4. select one commit checkbox
+5. select a second distinct commit checkbox
+6. if the governed image is missing but Docker is ready, wait for first-use
+   image acquisition
+7. review the generated comparison report
 
 Installed runtime contract:
 
 - compare generation is Docker-only and x64-only
 - no host LabVIEW installation is required
+- Docker CLI and a running Docker daemon must both be available before the
+  first compare can start
 - Windows selects the governed Windows or Linux image from the current Docker
   daemon engine
 - Linux uses the governed Linux image
-- if Docker is unavailable or the selected image cannot be acquired, the
-  extension fails closed with next-step guidance
+- if Docker is unavailable, not running yet, or the selected image cannot be
+  acquired, the extension fails closed with next-step guidance instead of
+  probing host LabVIEW
 
 If you want to evaluate the source repo instead of using the installed
 extension, use these source-evaluation pages:
@@ -481,8 +486,9 @@ Latest landed ship target:
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.2.1`
 - current published package line on `main`: `1.2.1`
-- current develop package line on `develop`: `1.2.1`
-- no newer exact release candidate line is active on `develop` yet
+- current develop package line on `develop`: `1.2.2`
+- active exact release candidate line on `develop`: `v1.2.2`
+- no newer `release/*` branch is active yet
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
@@ -505,9 +511,10 @@ Latest landed ship target:
 - remaining release blockers: none on the exact public `v1.2.1` line; public
   `main` now publishes `2547344`, the public GitHub release `v1.2.1` is live,
   the VS Code Marketplace listing now publishes
-  `svelderrainruiz.vi-history-suite` version `1.2.1`, and Sergio elected
-  post-publish installed-extension review in local VS Code instead of a
-  pre-tag human review gate
+  `svelderrainruiz.vi-history-suite` version `1.2.1`, `develop` is now opened
+  on `1.2.2`, and the next candidate line is intentionally focused on
+  first-run missing-Docker guidance plus automatic release-closeout
+  back-merge follow-through
 
 ## Install Surface
 
@@ -530,6 +537,8 @@ The current active tranches are:
 - `TRANCHE-014`: public Codespaces public-repo bootstrap
 - `TRANCHE-013`: extension execution contract simplification and Docker-only
   runtime UX
+- `TRANCHE-015`: installed-user first-run Docker onboarding and fail-closed
+  guidance
 - `TRANCHE-012`: post-release sustainment and release cadence
 - `TRANCHE-010`: public-source facade and public-product acceptance is a closed
   release-closeout tranche for the Docker-only public product, with exact

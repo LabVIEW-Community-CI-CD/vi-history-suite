@@ -1695,6 +1695,13 @@
 - `TEST-UNIT-337`: verify the packaged homepage and the primary public entry
   docs are installed-user first and keep source-evaluation/fork/Codespaces
   procedures explicit but secondary
+- `TEST-UNIT-338`: verify exact release closeout remains incomplete until the
+  exact released `main` line has been back-merged into `develop` through the
+  protected path and the resulting `develop` pipeline is green
+- `TEST-UNIT-339`: verify runtime-doctor next actions and installed-user docs
+  treat missing Docker CLI or a stopped Docker daemon as first-run
+  prerequisite failures with install/start/retry guidance instead of implying
+  image acquisition is always the first step
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are
@@ -1741,6 +1748,14 @@
 - `TEST-DOC-100`: review the Marketplace-linked homepage plus the primary
   public entry docs and confirm they now lead with installed-user local-workflow
   guidance while keeping source-evaluation procedures explicitly secondary
+- `TEST-DOC-101`: review ADR-0030, sustainment, hosted governance, release
+  procedure, current-state, SRS, RTM, and the test plan and confirm exact
+  release closeout now remains incomplete until the protected back-merge into
+  `develop` is merged and the resulting `develop` pipeline is green
+- `TEST-DOC-102`: review the installed-user README, public-source install
+  surfaces, public wiki user pages, execution-policy docs, and runtime-doctor
+  package and confirm first-run missing-Docker states now tell users to
+  install or start Docker and verify it before image acquisition is expected
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

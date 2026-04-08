@@ -14,8 +14,8 @@
 - The current exact released line is `v1.2.1`.
 - The burned exact released line is `v1.0.2`.
 - The current published package line on `main` is `1.2.1`.
-- The current develop package line on `develop` is `1.2.1`.
-- No newer exact release candidate line is active on `develop` yet.
+- The current develop package line on `develop` is `1.2.2`.
+- The active exact release candidate line on `develop` is `v1.2.2`.
 - No newer `release/*` branch is active yet.
 - The public GitHub default branch is `main` because it carries the latest
   exact released source line.
@@ -38,6 +38,9 @@
   publication or release normalization continues.
 - A SemVer bump is not complete until the matching public tag, public GitHub
   release, and VS Code Marketplace version are all published.
+- Exact release closeout is not complete until the exact released `main` line
+  has also been back-merged into `develop` through the protected path and the
+  resulting `develop` pipeline is green.
 - The release tag shall match both `package.json` and the top unreleased
   heading in [CHANGELOG.md](../CHANGELOG.md).
 - Tags shall be cut only from a green `main` commit after the required checks
@@ -145,7 +148,13 @@
     - Update `docs/product/vscode-marketplace-publication-ledger.{md,json}`
       with the publisher id, item id, version, listing URL, publication date,
       publication mode, and homepage URL used for the installed-user surface.
-16. Mark a candidate `review-ready` only after the maintained public candidate
+16. Back-merge the exact released `main` line into `develop` before claiming
+    exact closeout is complete or opening the next candidate line.
+    - use the protected merge path, not an ungoverned local-only shortcut
+    - wait for the resulting `develop` pipeline to succeed
+    - retain that merged-and-green `develop` state as part of the same exact
+      release closeout evidence instead of waiting for a later human prompt
+17. Mark a candidate `review-ready` only after the maintained public candidate
     surfaces are actually published.
     - local authority-green proof is necessary but not sufficient
     - the maintained public `develop` candidate head must be live
@@ -154,7 +163,7 @@
       `docs/product/public-release-candidate.{md,json}`
     - do not open the next human review gate until that `review-ready` state is
       recorded
-17. Treat dirty public source/wiki worktrees as governed publication surfaces,
+18. Treat dirty public source/wiki worktrees as governed publication surfaces,
     not as a generic stopping point.
     - preserve unrelated dirt
     - inspect overlapping changes
@@ -162,7 +171,7 @@
     - pause only when a direct unresolved conflict remains
     - do not publish blindly, but do not stop publication solely because the
       worktree is dirty
-18. Keep exact tagging blocked until the post-publication human review gate is
+19. Keep exact tagging blocked until the post-publication human review gate is
     accepted on the maintained public candidate surfaces, unless the product
     owner explicitly waives that gate and the retained candidate package plus
     current-state docs record the waiver and post-publish review plan.
@@ -210,8 +219,9 @@
   `v1.0.1`, burned `v1.0.2`, exact `v1.0.3`, exact `v1.0.4`, exact `v1.0.5`,
   exact `v1.0.6`, exact `v1.1.0`, exact `v1.2.0`, or exact `v1.2.1` release
   evidence.
-- The current develop package line on `develop` is `1.2.1`, and no newer
-  exact release candidate line or `release/*` branch is active yet.
+- The current develop package line on `develop` is `1.2.2`, the active exact
+  release candidate line on `develop` is `v1.2.2`, and no newer `release/*`
+  branch is active yet.
 - The packaged extension homepage now points installed users to the maintained
   public wiki home, while the repo root remains the source and control-plane
   surface.

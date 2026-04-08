@@ -243,6 +243,66 @@ describe('comparisonRuntimeDoctor', () => {
     );
   });
 
+  it('tells Windows first-time users to install Docker Desktop when the CLI is missing', () => {
+    const lines = buildComparisonRuntimeDoctorSummaryFromFacts({
+      reportStatus: 'blocked-runtime',
+      runtimeSelection: {
+        platform: 'win32',
+        executionMode: 'docker-only',
+        bitness: 'x64',
+        provider: 'windows-container',
+        blockedReason: 'docker-only-provider-unavailable',
+        windowsContainerDockerCliAvailable: false,
+        windowsContainerDaemonReachable: false,
+        providerDecisions: [],
+        notes: [],
+        registryQueryPlans: [],
+        candidates: []
+      },
+      runtimeExecution: {
+        state: 'not-available',
+        attempted: false,
+        reportExists: false,
+        blockedReason: 'docker-only-provider-unavailable',
+        diagnosticNotes: []
+      }
+    });
+
+    expect(lines.at(-1)).toBe(
+      'Next action: install Docker Desktop, start it once, and confirm `docker info` succeeds or change execution mode, then rerun comparison report generation.'
+    );
+  });
+
+  it('tells Linux users to reconnect the daemon when Docker is installed but not reachable', () => {
+    const lines = buildComparisonRuntimeDoctorSummaryFromFacts({
+      reportStatus: 'blocked-runtime',
+      runtimeSelection: {
+        platform: 'linux',
+        executionMode: 'docker-only',
+        bitness: 'x64',
+        provider: 'linux-container',
+        blockedReason: 'docker-only-provider-unavailable',
+        dockerCliAvailable: true,
+        dockerDaemonReachable: false,
+        providerDecisions: [],
+        notes: [],
+        registryQueryPlans: [],
+        candidates: []
+      },
+      runtimeExecution: {
+        state: 'not-available',
+        attempted: false,
+        reportExists: false,
+        blockedReason: 'docker-only-provider-unavailable',
+        diagnosticNotes: []
+      }
+    });
+
+    expect(lines.at(-1)).toBe(
+      'Next action: start or reconnect the Docker daemon and confirm `docker info` succeeds or change execution mode, then rerun comparison report generation.'
+    );
+  });
+
   it('surfaces host runtime facts and acquisition-failure guidance when auto mode selected Docker from a contaminated windows host surface', () => {
     const lines = buildComparisonRuntimeDoctorSummaryFromFacts({
       reportStatus: 'blocked-runtime',

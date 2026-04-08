@@ -227,11 +227,19 @@ function deriveContainerRecoveryAction(
   const dockerProductLabel = selection.platform === 'win32' ? 'Docker Desktop' : 'Docker';
 
   if (dockerCliAvailable === false) {
-    return `install or enable ${dockerProductLabel} for governed container execution`;
+    if (selection.platform === 'win32') {
+      return 'install Docker Desktop, start it once, and confirm `docker info` succeeds';
+    }
+
+    return 'install Docker, start the Docker daemon, and confirm `docker info` succeeds';
   }
 
   if (dockerDaemonReachable === false) {
-    return 'start or reconnect the Docker daemon';
+    if (selection.platform === 'win32') {
+      return 'start Docker Desktop and confirm `docker info` succeeds';
+    }
+
+    return 'start or reconnect the Docker daemon and confirm `docker info` succeeds';
   }
 
   if (containerCapabilityAvailable === false) {
