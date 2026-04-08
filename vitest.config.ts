@@ -7,8 +7,9 @@ export default defineConfig({
       reporter: ['text', 'json-summary', 'cobertura'],
       reportsDirectory: 'coverage',
       include: ['src/**/*.ts'],
-      exclude: ['src/extension.ts']
+      // The host Linux benchmark runner is governed by retained benchmark proof lanes,
+      // not by unit-only coverage over Docker and child_process orchestration.
+      exclude: ['src/extension.ts', 'src/benchmark/hostLinuxBenchmarkRunner.ts']
     }
   }
 });
-

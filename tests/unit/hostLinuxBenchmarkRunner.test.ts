@@ -53,6 +53,12 @@ describe('host Linux benchmark workspace staging filter', () => {
         stageBaseRoot
       )
     ).toBe(true);
+    expect(
+      shouldIncludeStagedWorkspacePath(authorityRepoRoot, authorityRepoRoot, stageBaseRoot)
+    ).toBe(true);
+    expect(
+      shouldIncludeStagedWorkspacePath(stageBaseRoot, authorityRepoRoot, stageBaseRoot)
+    ).toBe(false);
   });
 
   it('defaults to the current published benchmark image tag unless explicitly overridden', () => {
@@ -66,6 +72,13 @@ describe('host Linux benchmark workspace staging filter', () => {
       })
     ).toBe(
       'ghcr.io/svelderrainruiz/vi-history-suite-source-experiments/linux-dashboard-benchmark@sha256:abc123'
+    );
+    expect(
+      resolveHostLinuxBenchmarkImage({
+        VIHS_HOST_LINUX_BENCHMARK_IMAGE: '   '
+      })
+    ).toBe(
+      'ghcr.io/svelderrainruiz/vi-history-suite-source-experiments/linux-dashboard-benchmark:main'
     );
   });
 
@@ -87,5 +100,12 @@ describe('host Linux benchmark workspace staging filter', () => {
         'Preparing dashboard pair 1/138'
       ])
     ).toBe('Preparing dashboard pair 1/138');
+    expect(
+      selectLatestProgressLine([
+        'npm warn deprecated glob@11.1.0: old versions are unsupported',
+        'npm notice something'
+      ])
+    ).toBe('npm notice something');
+    expect(selectLatestProgressLine(['   ', '\t'])).toBeUndefined();
   });
 });

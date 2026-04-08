@@ -2,12 +2,12 @@
 
 ## Status
 
-Active candidate program.
+Closed exact-release program.
 
 Activation facts:
 
-- `TRANCHE-014` is active on the `1.2.0` minor line
-- exact public `v1.1.0` remains the released `main` baseline
+- `TRANCHE-014` closed on the exact `v1.2.0` public release line
+- exact public `v1.2.0` is now the released `main` baseline
 - the first `1.2.0` move repaired `develop` by back-merging exact `main`
   before feature work continued
 
@@ -98,7 +98,8 @@ Every slice shall preserve:
 
 ## Success Condition
 
-This program is complete when `vi-history-suite` can govern a public
+This program is complete. `vi-history-suite` now governs a public
 Codespaces/bootstrap path for public GitHub and GitLab repos, retains the
-canonical icon-editor quickstart separately, and closes exact `v1.2.0`
-only after the maintained public wiki procedures are accepted.
+canonical icon-editor quickstart separately, and closed exact `v1.2.0`
+after the maintained public wiki procedures were accepted from a brand new
+fork and a brand new Codespace.
