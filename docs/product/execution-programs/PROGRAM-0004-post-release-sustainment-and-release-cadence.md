@@ -44,6 +44,8 @@ rerun remains explicit under reopened `PROGRAM-0002`.
 8. hosted GitLab/GitHub protection semantics and workflow-lane classification
 9. public-source promotion target-root hygiene for local governed publication
 10. review-ready candidate publication boundary and dirty-public-surface handling
+11. VS Code Marketplace publication governance and retained publication evidence
+12. installed-user-first entry-surface redesign for Marketplace readers
 
 ## Queue Mapping
 
@@ -100,6 +102,12 @@ Every slice must preserve:
   published and retained
 - one governed dirty-public-surface rule so candidate publication preserves
   unrelated dirt and pauses only on direct unresolved conflicts
+- one governed Marketplace publication contract so exact release closeout is
+  not treated as complete before the released VSIX is live on the Marketplace
+  under the retained publisher/item identity
+- one governed installed-user entry surface so Marketplace readers land on
+  local-use guidance first and source-evaluation/fork procedures stay
+  explicitly secondary
 
 ## First Implementation Slice
 

@@ -2,7 +2,7 @@
   "name": "vi-history-suite",
   "displayName": "VI History Suite",
   "description": "VS Code extension for content-detected LabVIEW VI history review in Git repositories.",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "publisher": "svelderrainruiz",
   "license": "SEE LICENSE IN LICENSE",
   "private": true,
@@ -10,7 +10,7 @@
     "type": "git",
     "url": "https://github.com/svelderrainruiz/vi-history-suite.git"
   },
-  "homepage": "https://github.com/svelderrainruiz/vi-history-suite",
+  "homepage": "https://github.com/svelderrainruiz/vi-history-suite/wiki",
   "bugs": {
     "url": "https://github.com/svelderrainruiz/vi-history-suite/issues"
   },

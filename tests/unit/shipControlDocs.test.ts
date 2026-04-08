@@ -93,7 +93,7 @@ describe('ship-control direction system', () => {
     expect(matrix.activeIssueId).toBe('ISSUE-0406');
     expect(matrix.activeTrancheId).toBe('TRANCHE-009');
     expect(matrix.currentPackageVersion).toBe('0.2.0');
-    expect(pkg.version).toBe('1.2.0');
+    expect(pkg.version).toBe('1.2.1');
     expect(matrix.releaseTarget).toBe('v0.2.0');
     expect(matrix.targetVsixArtifact).toBe('vi-history-suite-0.2.0.vsix');
     expect(matrix.targetReleaseManifest).toBe('release-evidence/release-manifest.json');
@@ -200,11 +200,11 @@ describe('ship-control direction system', () => {
     expect(readme).toContain('npm run design:gate:assert-complete');
     expect(readme).toContain('- `SHIP-0001`: releasable `v0.2.0` VSIX product');
     expect(readme).toContain('- landed ship tranche: `TRANCHE-009`');
-    expect(readme).toContain('- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`');
+    expect(readme).toContain('- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`');
     expect(readme).toContain('- burned exact release line: `v1.0.2`');
-    expect(readme).toContain('- current exact released line: `v1.2.0`');
-    expect(readme).toContain('- current published package line on `main`: `1.2.0`');
-    expect(readme).toContain('- current develop package line on `develop`: `1.2.0`');
+    expect(readme).toContain('- current exact released line: `v1.2.1`');
+    expect(readme).toContain('- current published package line on `main`: `1.2.1`');
+    expect(readme).toContain('- current develop package line on `develop`: `1.2.1`');
     expect(readme).toContain('- no newer exact release candidate line is active on `develop` yet');
     expect(readme).toContain('- public GitHub default branch: `main`');
     expect(readme).toContain('- public Codespaces evaluation branch: `develop`');
@@ -233,9 +233,9 @@ describe('ship-control direction system', () => {
     expect(currentState).toContain('- landed ship tranche: `TRANCHE-009`');
     expect(currentState).toContain('- retained release artifact: `vi-history-suite-0.2.0.vsix`');
     expect(currentState).toContain('- burned exact release line: `v1.0.2`');
-    expect(currentState).toContain('- current exact released line: `v1.2.0`');
-    expect(currentState).toContain('- current published package line on `main`: `1.2.0`');
-    expect(currentState).toContain('- current develop package line on `develop`: `1.2.0`');
+    expect(currentState).toContain('- current exact released line: `v1.2.1`');
+    expect(currentState).toContain('- current published package line on `main`: `1.2.1`');
+    expect(currentState).toContain('- current develop package line on `develop`: `1.2.1`');
     expect(currentState).toContain('- no newer exact release candidate line is active on `develop` yet');
     expect(currentState).toContain('- public GitHub default branch: `main`');
     expect(currentState).toContain('- public Codespaces evaluation branch: `develop`');
@@ -266,6 +266,8 @@ describe('ship-control direction system', () => {
     expect(informationItemMap).toContain('| Public GitHub source authority map | `docs/product/public-github-source-authority-map.md` |');
     expect(informationItemMap).toContain('| Public GitHub source publication ledger | `docs/product/public-github-source-publication-ledger.md` |');
     expect(informationItemMap).toContain('| Machine-readable public GitHub source publication ledger | `docs/product/public-github-source-publication-ledger.json` |');
+    expect(informationItemMap).toContain('| VS Code Marketplace publication ledger | `docs/product/vscode-marketplace-publication-ledger.md` |');
+    expect(informationItemMap).toContain('| Machine-readable VS Code Marketplace publication ledger | `docs/product/vscode-marketplace-publication-ledger.json` |');
     expect(informationItemMap).toContain('`vi-history-suite-source-experiments`');
     expect(informationItemMap).toContain('`vi-history-suite.public`');
     expect(informationItemMap).toContain('`vi-history-suite.github.wiki`');
@@ -282,11 +284,11 @@ describe('ship-control direction system', () => {
     expect(releaseProcedure).toContain('[release readiness matrix](./product/release-readiness-matrix.json)');
     expect(releaseProcedure).toContain('vi-history-suite-0.2.0.vsix');
     expect(releaseProcedure).toContain('release-evidence/release-manifest.json');
-    expect(releaseProcedure).toContain('current exact released line is `v1.2.0`');
+    expect(releaseProcedure).toContain('current exact released line is `v1.2.1`');
     expect(releaseProcedure).toContain('burned exact released line is `v1.0.2`');
-    expect(releaseProcedure).toContain("current published package line on `main` is `1.2.0`");
-    expect(releaseProcedure).toContain("current develop package line on `develop` is `1.2.0`");
-    expect(releaseProcedure).toContain('No newer exact release candidate line is active on `develop` yet.');
+    expect(releaseProcedure).toContain("current published package line on `main` is `1.2.1`");
+    expect(releaseProcedure).toContain("current develop package line on `develop` is `1.2.1`");
+    expect(releaseProcedure).toContain('No newer exact release candidate line is active on `develop` yet');
     expect(releaseProcedure).toContain('public GitHub default branch is `main`');
     expect(releaseProcedure).toContain('public Codespaces evaluation branch is `develop`');
     expect(releaseProcedure).toContain('integration branch is `develop`');
@@ -304,6 +306,8 @@ describe('ship-control direction system', () => {
     expect(releaseProcedure).toContain('docs/product/public-github-source-authority-map.md');
     expect(releaseProcedure).toContain('docs/product/public-github-source-publication-ledger.md');
     expect(releaseProcedure).toContain('docs/product/public-github-source-publication-ledger.json');
+    expect(releaseProcedure).toContain('docs/product/vscode-marketplace-publication-ledger.md');
+    expect(releaseProcedure).toContain('docs/product/vscode-marketplace-publication-ledger.json');
     expect(releaseProcedure).toContain('docs/product/hosted-ci-governance.md');
     expect(releaseProcedure).toContain('docs/product/hosted-ci-governance.json');
     expect(releaseProcedure).toContain('npm run branch:governance:assert');
@@ -315,6 +319,8 @@ describe('ship-control direction system', () => {
     expect(releaseProcedure).toContain(
       'Stale bundled installed-user docs are therefore unshippable through the'
     );
+    expect(releaseProcedure).toContain('VS Code Marketplace item');
+    expect(releaseProcedure).toContain('Marketplace: Manage');
     expect(bundledInstallPage).toContain('<h2>Install Surfaces</h2>');
     expect(bundledInstallPage).toContain(
       'preview VSIX artifact from the latest successful <code>main</code> pipeline'
@@ -328,6 +334,7 @@ describe('ship-control direction system', () => {
     expect(bundledInstallPage).toContain('<h2>Release Procedure Summary</h2>');
     expect(bundledInstallPage).toContain('open <code>VI History</code> on an eligible VI');
     expect(bundledInstallPage).not.toContain('Retained exact release: <code>v0.2.0</code>');
+    expect(changelog).toContain('## [1.2.1] - 2026-04-07');
     expect(changelog).toContain('## [1.2.0] - 2026-04-07');
     expect(changelog).toContain('## [1.1.0] - 2026-04-07');
     expect(changelog).toContain('## [1.0.6] - 2026-04-07');

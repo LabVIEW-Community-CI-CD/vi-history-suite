@@ -1,9 +1,59 @@
 # vi-history-suite
 
-`vi-history-suite` is a governed TypeScript-first Visual Studio Code extension
-for developer-facing review of LabVIEW VI history in Git repositories.
+`vi-history-suite` is a Visual Studio Code extension for content-detected
+LabVIEW VI history review in Git repositories.
 
-## Public Devcontainer And Codespaces
+## If You Installed VI History Suite From The Marketplace
+
+Start here if you want to use the installed extension on a local Git
+repository. You do not need to fork this repo or learn the branch model to use
+the installed extension.
+
+Installed-user start pages:
+
+- Home:
+  `https://github.com/svelderrainruiz/vi-history-suite/wiki`
+- Install and release:
+  `https://github.com/svelderrainruiz/vi-history-suite/wiki/Install-And-Release`
+- User workflow:
+  `https://github.com/svelderrainruiz/vi-history-suite/wiki/User-Workflow`
+- Comparison reports and dashboard review:
+  `https://github.com/svelderrainruiz/vi-history-suite/wiki/Comparison-Reports-And-Dashboard-Review`
+
+Installed-user local workflow:
+
+1. open a trusted Git repository that contains an eligible LabVIEW VI
+2. right-click the VI and choose `VI History`
+3. select one commit checkbox
+4. select a second distinct commit checkbox
+5. wait for first-use Docker image acquisition if the governed image is not
+   already present
+6. review the generated comparison report
+
+Installed runtime contract:
+
+- compare generation is Docker-only and x64-only
+- no host LabVIEW installation is required
+- Windows selects the governed Windows or Linux image from the current Docker
+  daemon engine
+- Linux uses the governed Linux image
+- if Docker is unavailable or the selected image cannot be acquired, the
+  extension fails closed with next-step guidance
+
+If you want to evaluate the source repo instead of using the installed
+extension, use these source-evaluation pages:
+
+- canonical sample quickstart:
+  `https://github.com/svelderrainruiz/vi-history-suite/wiki/Fork-Codespace-Quickstart`
+- generic public-repo reference manual:
+  `https://github.com/svelderrainruiz/vi-history-suite/wiki/Review-Public-LabVIEW-VI-Changes`
+- refresh-only Codespaces steps:
+  `https://github.com/svelderrainruiz/vi-history-suite/wiki/Refresh-Codespace-Repositories`
+
+The rest of this README is the authority repo and release-control entry
+surface for the source tree, not the first-use installed-user manual.
+
+## Source Evaluation And Codespaces
 
 The public GitHub facade is expected to support evaluation inside Codespaces or
 a local devcontainer.
@@ -427,11 +477,11 @@ Latest landed ship target:
 - `SHIP-0001`: releasable `v0.2.0` VSIX product
 - landed ship tranche: `TRANCHE-009`
 - landed ship issue: `ISSUE-0406`
-- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`
+- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.2.0`
-- current published package line on `main`: `1.2.0`
-- current develop package line on `develop`: `1.2.0`
+- current exact released line: `v1.2.1`
+- current published package line on `main`: `1.2.1`
+- current develop package line on `develop`: `1.2.1`
 - no newer exact release candidate line is active on `develop` yet
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
@@ -439,6 +489,10 @@ Latest landed ship target:
 - release branch: `main`
 - next-line branch model: `gitflow-lite` (`feature/*`, `release/*`, `hotfix/*`)
 - hosted automation governance matrix: [docs/product/hosted-ci-governance.md](./docs/product/hosted-ci-governance.md)
+- VS Code Marketplace listing:
+  `https://marketplace.visualstudio.com/items?itemName=svelderrainruiz.vi-history-suite`
+- VS Code Marketplace publication ledger:
+  [docs/product/vscode-marketplace-publication-ledger.md](./docs/product/vscode-marketplace-publication-ledger.md)
 - public-source target-root governance: `npm run public:source:check` /
   `npm run public:source:promote` bind the intended local checkout through
   `--target-root` or `VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT` and fail closed on
@@ -448,9 +502,12 @@ Latest landed ship target:
 - docs-authoring image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
 - retained release evidence: GitLab release `v0.2.0`, tag pipeline `2428809456`,
   release job `13779604462`
-- remaining release blockers: none on the exact public `v1.2.0` line; public
-  `main` now publishes `c7cd6a0`, the public GitHub release `v1.2.0` is live,
-  and no newer exact release candidate is open yet
+- remaining release blockers: none on the exact public `v1.2.1` line; public
+  `main` now publishes `2547344`, the public GitHub release `v1.2.1` is live,
+  the VS Code Marketplace listing now publishes
+  `svelderrainruiz.vi-history-suite` version `1.2.1`, and Sergio elected
+  post-publish installed-extension review in local VS Code instead of a
+  pre-tag human review gate
 
 ## Install Surface
 
@@ -491,9 +548,10 @@ Current runtime direction for installed extension users:
   Linux-container mode
 - if Docker is unavailable or the current engine cannot satisfy the governed
   request, the extension fails closed instead of probing the host
-- the public extension-user front face is now
-  `https://github.com/svelderrainruiz/vi-history-suite`, while the private
-  GitLab repo remains the engineering authority and release-control surface
+- the installed-user front face is now the VS Code Marketplace listing plus
+  the public GitHub wiki, while the public GitHub repo remains the source and
+  contributor surface and the private GitLab repo remains the engineering
+  authority and release-control surface
 - the internal GitLab wiki remains maintainer-facing, and the public GitHub
   wiki is now the public extension-user wiki surface
 
