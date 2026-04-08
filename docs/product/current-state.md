@@ -159,9 +159,12 @@ Latest landed ship target:
   now publishes `daef8bd`, the public GitHub release `v1.1.0` is live, and
   `develop` now carries the active `v1.2.0` candidate line
 - `v1.2.0` is now back to `review-ready` on refreshed maintained public
-  `develop` candidate head `c9806c3` and maintained public wiki head
-  `b30d356`; exact tagging remains blocked until Sergio completes the next
-  brand-new-fork and brand-new-Codespace acceptance review
+  `develop` candidate head `ac56456` and maintained public wiki head
+  `b30d356`; that refreshed public source head now includes the moved-VI
+  historical-path compare fix, bundled compare-flow wording cleanup, and the
+  required-check path-admission repair for `public-facade-linux-smoke`, while
+  exact tagging remains blocked until Sergio completes the next brand-new-fork
+  and brand-new-Codespace acceptance review
 
 Current active tranche:
 
@@ -185,9 +188,13 @@ Current active tranche:
     smaller doc-clarification slice on the public README/install/wiki package
   - that clarification slice is now validated locally through focused
     authority/public tests plus docs/design gates
-  - the refreshed maintained public `develop` and public wiki heads are now
-    republished and retained, so the next brand-new-fork review can reopen
-    while the exact `v1.2.0` tag remains blocked pending acceptance
+  - Sergio's next brand-new-fork rerun on `hse-logger` then exposed a real
+    moved-VI compare blocker (`left-blob-read-failed`) on a pair where the VI
+    had moved between selected/base commits
+  - the refreshed maintained public `develop` head now carries the rename-aware
+    compare fix, bundled compare-flow wording cleanup, and public smoke
+    required-check path-admission repair, so the next brand-new-fork review can
+    reopen while the exact `v1.2.0` tag remains blocked pending acceptance
 - `TRANCHE-013`: Extension execution flexibility and runtime acquisition UX
 - active issue: [ISSUE-0410 Extension Execution Flexibility And Runtime Acquisition UX](./issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md)
 - active execution program: [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)

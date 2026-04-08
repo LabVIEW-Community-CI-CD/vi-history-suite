@@ -362,7 +362,7 @@ async function runHostNativeExecution(
     leftBlob = await deps.readBlob(
       repositoryRoot,
       record.preflight.left.revisionId,
-      record.preflight.normalizedRelativePath
+      record.preflight.left.resolvedRelativePath ?? record.preflight.normalizedRelativePath
     );
     await deps.writeFile(record.stagedRevisionPlan.leftFilePath, leftBlob);
   } catch {
@@ -383,7 +383,7 @@ async function runHostNativeExecution(
     rightBlob = await deps.readBlob(
       repositoryRoot,
       record.preflight.right.revisionId,
-      record.preflight.normalizedRelativePath
+      record.preflight.right.resolvedRelativePath ?? record.preflight.normalizedRelativePath
     );
     await deps.writeFile(record.stagedRevisionPlan.rightFilePath, rightBlob);
   } catch {

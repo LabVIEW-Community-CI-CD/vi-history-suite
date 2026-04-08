@@ -96,9 +96,9 @@ describe('public release candidate control surface', () => {
     expect(candidate.publishedPublicSource?.publishedCommit).toBe('daef8bd');
     expect(candidate.publicDevelopCandidate).toMatchObject({
       branch: 'develop',
-      candidateCommit: 'c9806c3',
-      status: 'published-maintained-candidate-with-doc-clarification-fold',
-      sourcePullRequest: '#16'
+      candidateCommit: 'ac56456',
+      status: 'published-maintained-candidate-with-moved-vi-and-bundled-doc-refresh',
+      sourcePullRequest: '#18'
     });
     expect(candidate.publishedPublicWiki).toMatchObject({
       publishedHeadCommit: 'b30d356',
@@ -110,7 +110,7 @@ describe('public release candidate control surface', () => {
       localPublicDevcontainer: 'v1.1.0-published-baseline',
       localPublicFixtureHelper: 'v1.1.0-published-baseline',
       localAuthorityFindingsFold: 'published-and-retained-on-maintained-public-candidate-surfaces',
-      publicRepoBootstrap: 'published-maintained-candidate-with-doc-clarification-fold',
+      publicRepoBootstrap: 'published-maintained-candidate-with-moved-vi-and-bundled-doc-refresh',
       publicWikiCandidateReview: 'ready-for-next-brand-new-fork-review-on-published-candidate',
       reviewReady: 'ready-for-brand-new-fork-review',
       requiredReviewEnvironment: 'brand-new-fork-plus-brand-new-codespace',
@@ -172,6 +172,14 @@ describe('public release candidate control surface', () => {
           requirementRefs: ['VHS-REQ-519', 'VHS-REQ-520'],
           adrImpact: 'updated',
           adrRefs: ['ADR-0035']
+        }),
+        expect.objectContaining({
+          id: 'FINDING-1.2.0-004-MOVED-VI-HISTORICAL-PATH-RESOLUTION',
+          status: 'closed',
+          requirementImpact: 'updated',
+          requirementRefs: ['VHS-REQ-521'],
+          adrImpact: 'none',
+          adrRefs: []
         })
       ])
     );
@@ -206,7 +214,7 @@ describe('public release candidate control surface', () => {
     expect(candidateMarkdown).toContain('Authority source of truth: GitLab `develop` -> `main`');
     expect(candidateMarkdown).toContain('Published public source commit: `daef8bd`');
     expect(candidateMarkdown).toContain('Authority `develop` candidate baseline: `8c99163`');
-    expect(candidateMarkdown).toContain('Public `develop` candidate commit: `c9806c3`');
+    expect(candidateMarkdown).toContain('Public `develop` candidate commit: `ac56456`');
     expect(candidateMarkdown).toContain('Published public wiki head: `b30d356`');
     expect(candidateMarkdown).toContain('Integration branch: `develop`');
     expect(candidateMarkdown).toContain('Release branch: `main`');
@@ -218,7 +226,7 @@ describe('public release candidate control surface', () => {
     expect(candidateMarkdown).toContain('Local authority findings fold:');
     expect(candidateMarkdown).toContain('published-and-retained-on-maintained-public-candidate-surfaces');
     expect(candidateMarkdown).toContain('Public repo bootstrap:');
-    expect(candidateMarkdown).toContain('published-maintained-candidate-with-doc-clarification-fold');
+    expect(candidateMarkdown).toContain('published-maintained-candidate-with-moved-vi-and-bundled-doc-refresh');
     expect(candidateMarkdown).toContain('Public wiki candidate review:');
     expect(candidateMarkdown).toContain('ready-for-next-brand-new-fork-review-on-published-candidate');
     expect(candidateMarkdown).toContain('Review-ready gate:');
@@ -238,9 +246,13 @@ describe('public release candidate control surface', () => {
     expect(candidateMarkdown).toContain("public `develop` candidate with Sergio's first findings fold was published");
     expect(candidateMarkdown).toContain('at `e8b0925` through GitHub PR `#15`');
     expect(candidateMarkdown).toContain('`c9806c3` through GitHub PR `#16`');
+    expect(candidateMarkdown).toContain('`fb46cbf` through GitHub PR `#17`');
+    expect(candidateMarkdown).toContain('`ac56456` through GitHub PR `#18`');
     expect(candidateMarkdown).toContain('`b30d356`');
     expect(candidateMarkdown).toContain('FINDING-1.2.0-003-REVIEW-READY-BOUNDARY-GOVERNANCE-GAP');
+    expect(candidateMarkdown).toContain('FINDING-1.2.0-004-MOVED-VI-HISTORICAL-PATH-RESOLUTION');
     expect(candidateMarkdown).toContain('status: `closed`');
+    expect(candidateMarkdown).toContain('`left-blob-read-failed`');
     expect(candidateMarkdown).toContain('Refresh page: `Refresh-Codespace-Repositories`');
     expect(candidateMarkdown).toContain('Review-ready rule: local authority-green proof is necessary but not');
     expect(candidateMarkdown).toContain('brand new fork plus brand new Codespace');
@@ -254,11 +266,14 @@ describe('public release candidate control surface', () => {
     expect(srs).toContain('fail-closed `review-ready` state');
     expect(srs).toContain('VHS-REQ-520');
     expect(srs).toContain('controlled patch targets');
+    expect(srs).toContain('VHS-REQ-521');
+    expect(srs).toContain('historical repo-relative path for each revision');
     expect(rtm).toContain('VHS-REQ-509');
     expect(rtm).toContain('Fail closed when an in-flight VI History webview progress or result update races with disposal of the panel');
     expect(rtm).toContain('VHS-REQ-518');
     expect(rtm).toContain('VHS-REQ-519');
     expect(rtm).toContain('VHS-REQ-520');
+    expect(rtm).toContain('VHS-REQ-521');
     expect(testPlan).toContain('TEST-UNIT-330');
     expect(testPlan).toContain('TEST-DOC-095');
     expect(testPlan).toContain('TEST-UNIT-332');
@@ -267,13 +282,15 @@ describe('public release candidate control surface', () => {
     expect(testPlan).toContain('TEST-UNIT-334');
     expect(testPlan).toContain('TEST-DOC-097');
     expect(testPlan).toContain('TEST-DOC-098');
+    expect(testPlan).toContain('TEST-UNIT-335');
 
     expect(currentState).toContain('[Public Release Candidate](./public-release-candidate.md)');
     expect(currentState).toContain('active exact release candidate line on `develop`: `v1.2.0`');
     expect(currentState).toContain('`TRANCHE-014`: Public Codespaces public-repo bootstrap');
     expect(currentState).toContain('`v1.2.0` is now back to `review-ready` on refreshed maintained public');
-    expect(currentState).toContain('`c9806c3`');
+    expect(currentState).toContain('`ac56456`');
     expect(currentState).toContain('`b30d356`');
+    expect(currentState).toContain('`left-blob-read-failed`');
     expect(currentState).toContain('current exact public GitHub release line is `v1.1.0`');
 
     expect(program).toContain('public GitHub and GitLab repos');

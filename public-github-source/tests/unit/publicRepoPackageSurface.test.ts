@@ -24,6 +24,10 @@ describe('public repo package surface', () => {
     const install = readText('INSTALL.md');
     const support = readText('SUPPORT.md');
     const contributing = readText('CONTRIBUTING.md');
+    const bundledUserWorkflow = readText('resources/bundled-docs/pages/user-workflow.html');
+    const bundledComparisonReview = readText(
+      'resources/bundled-docs/pages/comparison-reports-and-dashboard-review.html'
+    );
     const previewWorkflow = readText('.github/workflows/public-facade-package-preview.yml');
 
     expect(manifest.version).toBe('1.2.0');
@@ -47,7 +51,7 @@ describe('public repo package surface', () => {
       'node scripts/preparePublicTestFixture.js'
     );
     expect(manifest.scripts?.['test:design-contract']).toBe(
-      'npm exec -- vitest run tests/unit/bootstrapLinuxVsCodeHost.test.ts tests/unit/preparePublicRepoCloneScript.test.ts tests/unit/preparePublicTestFixtureScript.test.ts tests/unit/publicRepoPackageSurface.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicFacadeLinuxSmoke.test.ts tests/unit/runLinuxIntegrationHost.test.ts tests/unit/linuxContainerRuntimeExecutionSurface.test.ts'
+      'npm exec -- vitest run tests/unit/bootstrapLinuxVsCodeHost.test.ts tests/unit/comparisonReportPreflight.test.ts tests/unit/comparisonReportRuntimeExecution.test.ts tests/unit/preparePublicRepoCloneScript.test.ts tests/unit/preparePublicTestFixtureScript.test.ts tests/unit/publicRepoPackageSurface.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicFacadeLinuxSmoke.test.ts tests/unit/runLinuxIntegrationHost.test.ts tests/unit/linuxContainerRuntimeExecutionSurface.test.ts'
     );
     expect(manifest.scripts?.['package']).toBe(
       'npm run compile && npm run package:audit && node scripts/runPinnedVsce.js package'
@@ -119,6 +123,13 @@ describe('public repo package surface', () => {
     expect(contributing).toContain('npm run public:host:bootstrap-linux');
     expect(contributing).toContain('npm run public:fixture:icon-editor');
     expect(contributing).toContain('npm run public:repo:clone');
+    expect(bundledUserWorkflow).not.toContain('<code>Diff prev</code>');
+    expect(bundledComparisonReview).toContain(
+      'retained comparison evidence opens from the checkbox-selected pair'
+    );
+    expect(bundledComparisonReview).toContain('<h2>Checkbox-Selected Pair Review</h2>');
+    expect(bundledComparisonReview).not.toContain('<code>Diff prev</code>');
+    expect(bundledComparisonReview).not.toContain('<h2>Retained Pair Review</h2>');
     expect(previewWorkflow).toContain('name: Public Facade Package Preview');
     expect(previewWorkflow).toContain('  push:');
     expect(previewWorkflow).toContain("      - 'release/**'");
