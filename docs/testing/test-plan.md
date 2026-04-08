@@ -1688,6 +1688,13 @@
   moved or was renamed between the two retained commits, so moved-VI pairs do
   not fail with stale current-path blob reads when follow history can still
   resolve both sides
+- `TEST-UNIT-336`: verify the Marketplace governance package retains the live
+  publisher/item identity, records Marketplace publication separately from
+  GitHub/GitLab release evidence, and requires Marketplace publication before
+  exact closeout is considered complete
+- `TEST-UNIT-337`: verify the packaged homepage and the primary public entry
+  docs are installed-user first and keep source-evaluation/fork/Codespaces
+  procedures explicit but secondary
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are
@@ -1726,6 +1733,14 @@
   and the test plan and confirm governed public source/wiki publication now
   treats dirty worktrees as controlled patch targets instead of as a generic
   reason to stop candidate publication
+- `TEST-DOC-099`: review the Marketplace publication ledger, release
+  procedure, sustainment package, current-state, and ADR-0036 and confirm the
+  repo now retains exact Marketplace publication truth, the pinned `vsce`
+  publish path, the PAT scope rule, the manual portal fallback, and the
+  no-secret-retention rule
+- `TEST-DOC-100`: review the Marketplace-linked homepage plus the primary
+  public entry docs and confirm they now lead with installed-user local-workflow
+  guidance while keeping source-evaluation procedures explicitly secondary
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

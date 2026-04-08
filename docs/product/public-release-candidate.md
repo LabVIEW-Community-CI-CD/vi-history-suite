@@ -1,12 +1,12 @@
 # Public Release Candidate
 
-- Version line: `1.2.0`
+- Version line: `1.2.1`
 - Burned exact release line: `v1.0.2`
-- Recorded at: `2026-04-08T01:22:21Z`
+- Recorded at: `2026-04-08T03:48:02Z`
 - Authority source of truth: GitLab `develop` -> `main`
 - Published public source commit: `c7cd6a0`
-- Public `develop` candidate commit: `ac56456`
-- Published public wiki head: `b30d356`
+- Public `develop` candidate commit: `96af6a3`
+- Published public wiki head: `a12eb16`
 
 ## Branch Model
 
@@ -24,12 +24,12 @@
 ## Readiness
 
 - Authority baseline: `v1.2.0-exact-public-release-published`
-- Local exact VSIX build: `exact-v1.2.0-release-built`
+- Local exact VSIX build: `preview-v1.2.1-package-built`
 - Local public devcontainer: `v1.1.0-published-baseline`
 - Local public fixture helper: `v1.1.0-published-baseline`
 - Public repo bootstrap: `passed-brand-new-fork-review-on-hse-logger`
 - Public wiki candidate review:
-  `accepted-brand-new-fork-review-on-published-candidate`
+  `pending-human-review-on-published-v1.2.1-candidate`
 - Exact public release: `v1.2.0-published`
 
 ## Exact Release
@@ -46,14 +46,21 @@
 - The exact published public source head is retained in
   `docs/product/public-github-source-publication-ledger.md` and
   `docs/product/public-github-source-publication-ledger.json`.
+- The current published public `develop` candidate now lands through GitHub PR
+  `#21` at commit `96af6a3`, with `package-preview` and
+  `public-facade-linux-smoke` green before merge.
 - The exact published public wiki head is retained in
   `docs/product/public-github-wiki-publication-ledger.md` and
-  `docs/product/public-github-wiki-publication-ledger.json`.
+  `docs/product/public-github-wiki-publication-ledger.json` and now points to
+  `a12eb16`.
 
 ## Local Proof
 
 - The exact public `v1.2.0` VSIX was rebuilt from merged public `main` commit
   `c7cd6a0` before GitHub release publication.
+- A new preview `1.2.1` VSIX was built locally after the Marketplace/homepage
+  and installed-user entry-surface redesign landed, and the packaged
+  extension now points installed users at the maintained public wiki home.
 - The local public devcontainer and helper-backed icon-editor path remain the
   published `v1.1.0` baseline.
 - Authority `develop` was realigned to exact `main` through GitLab MR `!11`
@@ -78,6 +85,10 @@
   between the selected and base commits.
 - Bundled compare-flow docs now retire stale `Diff prev` and retained-pair
   wording in favor of the checkbox-selected pair review path.
+- The maintained public `develop` branch now carries the installed-user-first
+  README/install surface, the Marketplace homepage target, the public package
+  surface test alignment, and the bundled-doc manifest that references the
+  real published wiki head `a12eb16`.
 
 ## Hosted Proof
 
@@ -142,9 +153,28 @@
     reads and runtime staging proceed
   - requirement impact: `updated` via `VHS-REQ-521`
   - ADR impact: `none`
+- `FINDING-1.2.1-001-MARKETPLACE-PUBLICATION-CONTROL-PLANE-GAP`
+  - status: `closed`
+  - the VS Code Marketplace became a real exact-release distribution surface
+    at `v1.2.0`, so the control plane now retains publisher, listing,
+    closeout, and PAT-governance truth instead of leaving Marketplace
+    publication in chat or operator memory
+  - requirement impact: `updated` via `VHS-REQ-522`, `VHS-REQ-523`, and
+    `VHS-REQ-524`
+  - ADR impact: `updated` via `ADR-0036`
+- `FINDING-1.2.1-002-INSTALLED-USER-ENTRY-SURFACE-MISROUTED`
+  - status: `closed`
+  - Marketplace and installed-extension users were landing on repo-first,
+    branch-specific source guidance, so the installed-user entry surface is now
+    routed through the public wiki home/install pages and the packaged
+    homepage instead
+  - requirement impact: `updated` via `VHS-REQ-525` and `VHS-REQ-526`
+  - ADR impact: `updated` via `ADR-0036`
 
 ## Remaining Blockers
 
-- No active `1.2.0` public-source blockers remain.
-- `v1.2.0` is now the current exact green line on `main`, and no newer exact
-  release candidate is active on `develop` yet.
+- No publication blocker remains on the `1.2.1` public repo/wiki surfaces.
+- `v1.2.0` remains the current exact green line on `main`, `96af6a3` is now
+  live on public `develop`, `a12eb16` is now live on the public wiki, and the
+  next gate is the installed-user review on those published `1.2.1` candidate
+  surfaces.

@@ -1,8 +1,8 @@
 {
   "schema": "vi-history-suite/public-release-candidate@v1",
-  "versionLine": "1.2.0",
+  "versionLine": "1.2.1",
   "burnedExactReleaseLine": "v1.0.2",
-  "recordedAt": "2026-04-08T01:22:21Z",
+  "recordedAt": "2026-04-08T03:48:02Z",
   "authorityRepo": {
     "role": "source-of-truth",
     "integrationBranch": "develop",
@@ -26,23 +26,23 @@
   },
   "publicDevelopCandidate": {
     "branch": "develop",
-    "candidateCommit": "ac56456",
+    "candidateCommit": "96af6a3",
     "status": "merged-required-checks-green",
-    "sourcePullRequest": "#18"
+    "sourcePullRequest": "#21"
   },
   "publishedPublicWiki": {
     "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite.wiki.git",
-    "publishedHeadCommit": "b30d356",
+    "publishedHeadCommit": "a12eb16",
     "publicationLedgerPath": "docs/product/public-github-wiki-publication-ledger.json",
-    "status": "published-maintained-candidate-with-doc-clarification-fold"
+    "status": "published-installed-user-entry-refresh"
   },
   "candidateReadiness": {
     "authorityBaseline": "v1.2.0-exact-public-release-published",
-    "localInstalledVsix": "exact-v1.2.0-release-built",
+    "localInstalledVsix": "preview-v1.2.1-package-built",
     "localPublicDevcontainer": "v1.1.0-published-baseline",
     "localPublicFixtureHelper": "v1.1.0-published-baseline",
     "publicRepoBootstrap": "passed-brand-new-fork-review-on-hse-logger",
-    "publicWikiCandidateReview": "accepted-brand-new-fork-review-on-published-candidate",
+    "publicWikiCandidateReview": "pending-human-review-on-published-v1.2.1-candidate",
     "exactPublicRelease": "v1.2.0-published"
   },
   "findingClassifications": [
@@ -99,6 +99,35 @@
       ],
       "adrImpact": "none",
       "adrRefs": []
+    },
+    {
+      "id": "FINDING-1.2.1-001-MARKETPLACE-PUBLICATION-CONTROL-PLANE-GAP",
+      "status": "closed",
+      "summary": "VS Code Marketplace publication became a real exact-release distribution surface at v1.2.0, but the control plane had not yet retained publisher, listing, PAT-governance, and closeout evidence as governed release truth.",
+      "requirementImpact": "updated",
+      "requirementRefs": [
+        "VHS-REQ-522",
+        "VHS-REQ-523",
+        "VHS-REQ-524"
+      ],
+      "adrImpact": "updated",
+      "adrRefs": [
+        "ADR-0036"
+      ]
+    },
+    {
+      "id": "FINDING-1.2.1-002-INSTALLED-USER-ENTRY-SURFACE-MISROUTED",
+      "status": "closed",
+      "summary": "Marketplace and installed-extension users were still landing on repo-first, branch-specific source guidance instead of an installed-user-first documentation surface.",
+      "requirementImpact": "updated",
+      "requirementRefs": [
+        "VHS-REQ-525",
+        "VHS-REQ-526"
+      ],
+      "adrImpact": "updated",
+      "adrRefs": [
+        "ADR-0036"
+      ]
     }
   ],
   "exactRelease": {
@@ -188,7 +217,7 @@
   },
   "activeBlockers": [
     {
-      "id": "BLOCKER-1.2.0-005-BRAND-NEW-FORK-REVIEW-PENDING"
+      "id": "BLOCKER-1.2.1-001-INSTALLED-USER-PUBLISHED-REVIEW-PENDING"
     }
   ]
 }

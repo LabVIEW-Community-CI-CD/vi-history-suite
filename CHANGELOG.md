@@ -7,6 +7,30 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.2.1] - 2026-04-07
+
+### Changed
+
+- `v1.2.1` is now the active exact release candidate line on `develop`, while
+  the current exact released line on `main` remains `v1.2.0`
+- exact release closeout is now governed through a retained VS Code
+  Marketplace publication surface for `svelderrainruiz.vi-history-suite`
+  instead of relying on operator memory after the GitHub release and GitLab
+  tag are already green
+- the release control plane now records the governed publisher id, Marketplace
+  item id, publication URL, publication mode, and exact published version in a
+  dedicated Marketplace publication ledger
+- exact SemVer closeout now remains incomplete until the matching VSIX version
+  is verified on the VS Code Marketplace, and the release procedure now
+  records both the pinned `vsce` path and the manual portal-upload fallback
+- the packaged extension homepage now points Marketplace users to the
+  maintained public wiki home surface instead of the repo root, so the next
+  exact release does not route installed users into branch-specific source
+  guidance first
+- the root README, public source README, public install page, and public wiki
+  home/install pages now lead with the installed-extension local workflow and
+  keep repo/fork/Codespaces evaluation as an explicit secondary lane
+
 ## [1.2.0] - 2026-04-07
 
 ### Changed

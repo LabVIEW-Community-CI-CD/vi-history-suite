@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 interface ExtensionManifest {
   activationEvents?: string[];
   files?: string[];
+  homepage?: string;
   dependencies?: Record<string, string>;
   devDependencies?: Record<string, string>;
   extensionDependencies?: string[];
@@ -55,6 +56,7 @@ describe('extension manifest research alignment', () => {
       'CHANGELOG.md',
       'LICENSE'
     ]);
+    expect(manifest.homepage).toBe('https://github.com/svelderrainruiz/vi-history-suite/wiki');
     expect(manifest.activationEvents).toContain('onCommand:labviewViHistory.open');
     expect(manifest.activationEvents).toContain('onCommand:labviewViHistory.openDocumentation');
     expect(manifest.extensionDependencies).toContain('vscode.git');

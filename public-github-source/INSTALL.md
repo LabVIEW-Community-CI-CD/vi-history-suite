@@ -1,5 +1,18 @@
 # Install
 
+## Installed Extension Start
+
+If you installed `VI History Suite` from the VS Code Marketplace or from a
+VSIX and want to use it locally, start here. You do not need to fork the repo
+for this path.
+
+Installed-user start pages:
+
+- `https://github.com/svelderrainruiz/vi-history-suite/wiki`
+- `https://github.com/svelderrainruiz/vi-history-suite/wiki/Install-And-Release`
+- `https://github.com/svelderrainruiz/vi-history-suite/wiki/User-Workflow`
+- `https://github.com/svelderrainruiz/vi-history-suite/wiki/Comparison-Reports-And-Dashboard-Review`
+
 ## Public Runtime Contract
 
 The installed extension compare workflow is Docker-only and x64-only.
@@ -30,7 +43,7 @@ first use before compare execution.
 
 ## Installed User Flow
 
-1. Install the VSIX from a governed release.
+1. Install the extension from the VS Code Marketplace or from a governed VSIX.
 2. Open a trusted Git repository with an eligible LabVIEW VI.
 3. Run `VI History`.
 4. Select one commit checkbox.
@@ -39,7 +52,10 @@ first use before compare execution.
    already present.
 7. Review the generated comparison report.
 
-## Public Development And Evaluation
+Marketplace and exact-release users can stop after the installed-user flow
+above. The rest of this page covers source evaluation and Codespaces work.
+
+## Source Evaluation And Codespaces
 
 The public repo is intended to support devcontainer/Codespaces evaluation on
 the `develop` branch.
@@ -155,7 +171,7 @@ npm run public:smoke:linux
 
 ## Current Public Boundary
 
-This repo is the public source facade.
+This repo is the public source facade and source-evaluation surface.
 
 It does not publish:
 

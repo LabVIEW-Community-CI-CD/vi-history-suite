@@ -1,7 +1,7 @@
 {
   "generatedFor": "vi-history-suite",
   "publicationSurface": "public-github-user-wiki",
-  "publishedHeadCommit": "b30d356",
+  "publishedHeadCommit": "a12eb16",
   "pages": [
     {
       "id": "overview",
@@ -9,8 +9,8 @@
       "wikiPath": "Home",
       "wikiFileName": "Home.md",
       "status": "published",
-      "publishedDate": "2026-04-07",
-      "wikiCommit": "63a4208",
+      "publishedDate": "2026-04-08",
+      "wikiCommit": "a12eb16",
       "primaryAuthority": [
         "README.md",
         "docs/product/current-state.md",
@@ -37,8 +37,8 @@
       "wikiPath": "Install-And-Release",
       "wikiFileName": "Install-And-Release.md",
       "status": "published",
-      "publishedDate": "2026-04-07",
-      "wikiCommit": "63a4208",
+      "publishedDate": "2026-04-08",
+      "wikiCommit": "a12eb16",
       "primaryAuthority": [
         "README.md",
         "docs/release-procedure.md",

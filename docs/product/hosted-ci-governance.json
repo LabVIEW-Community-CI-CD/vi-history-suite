@@ -4,17 +4,17 @@
   "openingDecision": {
     "currentExactReleaseLine": "v1.2.0",
     "currentMainPackageLine": "1.2.0",
-    "currentDevelopPackageLine": "1.2.0",
-    "activeDevelopCandidateReleaseLine": null,
+    "currentDevelopPackageLine": "1.2.1",
+    "activeDevelopCandidateReleaseLine": "v1.2.1",
     "activeReleaseCandidateBranch": null,
-    "chosenBump": "minor",
+    "chosenBump": "patch",
     "rationale": [
-      "the next line adds one governed public Codespaces/bootstrap capability for public GitHub and GitLab repos without breaking the exact v1.1.0 public contract",
-      "the same line also hardens branch-governance admission so future feature work cannot reopen candidate work from a stale develop baseline"
+      "the next line governs VS Code Marketplace publication as an explicit exact-release closeout surface after v1.2.0 became a live Marketplace release",
+      "the same line redesigns the installed-user entry surface so Marketplace users land on maintained local-use docs instead of repo-first branch/governance docs"
     ],
     "rejectedAlternatives": {
-      "patch": "the slice adds a new governed public workflow instead of only correcting an existing released one",
-      "major": "no governed v1.1.0 public contract is intentionally broken or removed"
+      "minor": "the slice hardens and redirects an existing released distribution surface instead of adding a new product capability",
+      "major": "no governed v1.2.0 public contract is intentionally broken or removed"
     }
   },
   "branchModel": {

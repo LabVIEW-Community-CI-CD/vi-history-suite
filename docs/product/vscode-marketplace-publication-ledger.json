@@ -1,0 +1,27 @@
+{
+  "schema": "vi-history-suite/vscode-marketplace-publication-ledger@v1",
+  "publicationSurface": "vscode-marketplace",
+  "status": "published",
+  "publisherId": "svelderrainruiz",
+  "extensionId": "vi-history-suite",
+  "marketplaceItemName": "svelderrainruiz.vi-history-suite",
+  "listingUrl": "https://marketplace.visualstudio.com/items?itemName=svelderrainruiz.vi-history-suite",
+  "homepageUrl": "https://github.com/svelderrainruiz/vi-history-suite/wiki",
+  "currentPublishedVersion": "1.2.0",
+  "currentPublishedDate": "2026-04-07",
+  "secretHandling": "do-not-retain-pat-or-secret-material",
+  "publicationHistory": [
+    {
+      "status": "published",
+      "publishedDate": "2026-04-07",
+      "version": "1.2.0",
+      "publicationMode": "manual-marketplace-portal-upload",
+      "primaryAuthority": [
+        "README.md",
+        "package.json",
+        "CHANGELOG.md",
+        "docs/release-procedure.md"
+      ]
+    }
+  ]
+}

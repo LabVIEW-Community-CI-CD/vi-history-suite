@@ -40,7 +40,10 @@ The maintained release surfaces are:
 
 - `main` preview artifacts for governed install testing
 - SemVer-tagged exact-version release artifacts
+- VS Code Marketplace exact publication state for the released VSIX line
 - public release-kit source truth that consumes the immutable release
+- installed-user entry surfaces on the Marketplace listing, public wiki home,
+  root README, public-source README, and public install page
 - docs-authoring workbench publication surfaces tied to the same repo state
 
 Refresh the release package when any of these change:
@@ -59,8 +62,9 @@ Current version-line contract:
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.2.0`
 - current published package line on `main`: `1.2.0`
-- current develop package line on `develop`: `1.2.0`
-- no newer exact release candidate line is active on `develop` yet
+- current develop package line on `develop`: `1.2.1`
+- active exact release candidate line on `develop`: `v1.2.1`
+- no `release/1.2.1` branch is active yet
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
@@ -69,17 +73,18 @@ Current version-line contract:
 
 Active opening decision for the next line:
 
-- chosen bump: `minor`
-- target exact candidate line: `v1.2.0`
-- rationale: the next line adds one governed public Codespaces/bootstrap
-  capability for public GitHub and GitLab repos without breaking the exact
-  `v1.1.0` public contract
-- rationale: the same line also hardens branch-governance admission so future
-  feature work cannot reopen candidate work from a stale `develop` baseline
-- rejected `patch`: too small because the slice adds a new governed public
-  workflow instead of only correcting an existing released one
-- rejected `major`: no exact `v1.1.0` public contract is being broken or
-  removed
+- chosen bump: `patch`
+- target exact candidate line: `v1.2.1`
+- rationale: the next line governs VS Code Marketplace publication as an
+  explicit exact-release closeout surface after `v1.2.0` became the first live
+  Marketplace release
+- rationale: the same line redesigns the installed-user entry surface so
+  Marketplace users land on maintained local-use documentation instead of a
+  repo-first, branch-heavy source reader surface
+- rejected `minor`: the slice hardens and redirects an existing released
+  distribution surface instead of adding a new product capability
+- rejected `major`: no exact `v1.2.0` runtime or workflow contract is being
+  intentionally broken or removed
 
 Strict SemVer rule after an exact release:
 
@@ -92,7 +97,8 @@ Strict SemVer rule after an exact release:
   `package.json` and the top `CHANGELOG.md` heading to the next SemVer line
   before the changed state is normalized or published further
 - future sessions shall not treat an unreleased SemVer bump as complete until
-  the matching public tag and public GitHub release are both published
+  the matching public tag, public GitHub release, and VS Code Marketplace
+  version are all published
 - future sessions shall not keep landing post-release changes on the previous
   exact release version number
 - future sessions shall not treat a burned exact release as the green release
@@ -194,12 +200,17 @@ When sustainment-affecting truth changes, update these surfaces together:
 - active sustainment program and issue docs
 - `SHIP-0001` only where it points to the active driver-seat post-release lane
 - `CHANGELOG.md` when the current published package line on `main` or retained release history changes
+- `docs/product/vscode-marketplace-publication-ledger.md` and
+  `docs/product/vscode-marketplace-publication-ledger.json` when Marketplace
+  publication truth changes
 - `hosted-ci-governance.md` and `hosted-ci-governance.json` when hosted
   branch-protection or workflow responsibility changes
 - SRS, RTM, and test plan when normative behavior changes
 - wiki coverage/publication ledgers when reader-facing authority changes
 - published wiki pages that represent the changed authority docs
 - bundled docs after published wiki pages change
+- installed-user entry surfaces when the Marketplace, README, public-source
+  README, or public install guidance changes
 
 Required branch-model and CI posture:
 

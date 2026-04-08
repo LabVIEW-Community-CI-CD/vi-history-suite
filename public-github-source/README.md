@@ -6,6 +6,35 @@ history in Git repositories.
 This public GitHub repo is the source-facing product surface for extension
 users and public contributors.
 
+## If You Installed VI History Suite
+
+If you installed the extension from the VS Code Marketplace or from a VSIX,
+start with the public user wiki instead of the branch/governance sections in
+this repo.
+
+Installed-user start pages:
+
+- Home:
+  `https://github.com/svelderrainruiz/vi-history-suite/wiki`
+- Install and release:
+  `https://github.com/svelderrainruiz/vi-history-suite/wiki/Install-And-Release`
+- User workflow:
+  `https://github.com/svelderrainruiz/vi-history-suite/wiki/User-Workflow`
+- Comparison reports and dashboard review:
+  `https://github.com/svelderrainruiz/vi-history-suite/wiki/Comparison-Reports-And-Dashboard-Review`
+
+Local installed-user workflow:
+
+1. open a trusted Git repo that contains an eligible LabVIEW VI
+2. run `VI History`
+3. select one commit checkbox
+4. select a second distinct commit checkbox
+5. wait for first-use image acquisition if needed
+6. review the generated comparison report
+
+You do not need to fork this repo or choose a branch to use the installed
+extension locally.
+
 It is intentionally bounded:
 
 - Docker-only compare execution
@@ -36,9 +65,11 @@ The compare surface is Docker-only:
 
 ## Branch Use
 
-- If you are here to evaluate the next public candidate, the branch choice is
-  simple: use `develop`. Stay on `main` only if you want the latest exact
-  released source.
+- Branches matter only when you are evaluating or contributing to the source
+  repo. Marketplace and installed-extension users do not need this branch
+  model to use the product locally.
+- If you are here to evaluate the next public candidate, use `develop`. Stay
+  on `main` only if you want the latest exact released source.
 - `main` is the public default branch and tracks the latest exact released
   source line.
 - `develop` is the public evaluation branch for the next governed candidate
@@ -235,7 +266,7 @@ npm run package -- --out /tmp/vi-history-suite-public-preview.vsix
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.2.0`
 - current published package line on `main`: `1.2.0`
-- current develop package line on `develop`: `1.2.0`
-- no newer exact release candidate line is active on `develop` yet
+- current develop package line on `develop`: `1.2.1`
+- active exact release candidate line on `develop`: `v1.2.1`
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
