@@ -8,6 +8,24 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.2.2] - 2026-04-07
+
+### Changed
+
+- `v1.2.1` remains the exact public release line on `main`, while `develop`
+  now carries `1.2.2` as the next exact candidate line
+- exact release closeout now remains incomplete until the exact released
+  `main` line has been back-merged into `develop` through the protected path
+  and the resulting `develop` pipeline is green, so future sessions do not
+  wait for Sergio to elicit that follow-through explicitly
+- the sustainment control plane now treats missing or not-yet-running Docker
+  as an expected first-run installed-user boundary instead of assuming image
+  acquisition is always the first runtime step on a fresh machine
+- installed-user entry docs and runtime-doctor next actions now tell first-use
+  users to install or start Docker, confirm `docker info` works, and then
+  retry the checkbox-selected compare flow without implying host-LabVIEW
+  fallback
+
 ## [1.2.1] - 2026-04-07
 
 ### Changed

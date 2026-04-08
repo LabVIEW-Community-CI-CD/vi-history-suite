@@ -122,12 +122,12 @@ describe('post-release sustainment rules package', () => {
 
     expect(rules.releaseCadence.model).toBe('event-driven');
     expect(rules.releaseCadence.versionLineContract).toEqual({
-      retainedExactVersionReleases: ['v0.2.0', 'v1.0.0', 'v1.0.1', 'v1.0.2', 'v1.0.3', 'v1.0.4', 'v1.0.5', 'v1.0.6', 'v1.1.0', 'v1.2.0', 'v1.2.1'],
+      retainedExactVersionReleases: ['v0.2.0', 'v1.0.0', 'v1.0.1', 'v1.0.2', 'v1.0.3', 'v1.0.4', 'v1.0.5', 'v1.0.6', 'v1.1.0', 'v1.2.0', 'v1.2.1', 'v1.2.2'],
       burnedExactVersionReleases: ['v1.0.2'],
-      currentExactReleaseLine: 'v1.2.1',
-      currentMainPackageLine: '1.2.1',
-      currentDevelopPackageLine: '1.2.1',
-      activeDevelopCandidateReleaseLine: null,
+      currentExactReleaseLine: 'v1.2.2',
+      currentMainPackageLine: '1.2.2',
+      currentDevelopPackageLine: '1.2.2',
+      activeDevelopCandidateReleaseLine: 'v1.2.2',
       activeReleaseCandidateBranch: null,
       publicDefaultBranch: 'main',
       publicCodespaceBranch: 'develop',
@@ -162,8 +162,10 @@ describe('post-release sustainment rules package', () => {
         'future sessions shall not treat an unreleased SemVer bump as complete until the matching public tag, public GitHub release, and VS Code Marketplace version are all published',
         'future sessions shall not keep landing post-release changes on the previous exact release version number',
         'future sessions shall not treat a burned exact release as the green release baseline for later publication',
+        'future sessions shall not treat an exact release as fully closed until the matching released main line has been back-merged into develop through the protected path and the resulting develop pipeline is green',
         'future sessions shall not treat a candidate line as review-ready until the maintained public develop candidate head and maintained public wiki head are both published and retained in the authority candidate package',
-        'future sessions shall keep exact tagging blocked until the post-publication human review gate closes, unless the product owner explicitly waives that gate and the retained candidate package records the waiver plus the post-publish review plan'
+        'future sessions shall keep exact tagging blocked until the post-publication expert-agent review gate closes with no findings against the exact published public candidate heads retained in the authority candidate package',
+        'optional product-owner exploratory review may happen separately, but it shall not replace the clean expert-agent review gate for exact tagging'
       ])
     );
     expect(rules.releaseCadence.candidateStateModel).toEqual(
@@ -179,10 +181,20 @@ describe('post-release sustainment rules package', () => {
       'public-develop-published',
       'public-wiki-published',
       'review-ready',
-      'review-feedback-received',
-      'review-feedback-folded',
+      'expert-agent-review-findings-received',
+      'expert-agent-review-findings-folded',
       'tag-eligible'
     ]);
+    expect(rules.releaseCadence.candidateStateModel?.expertAgentReviewSkill).toEqual(
+      expect.objectContaining({
+        skillName: 'vi-history-suite-expert-agent-reviewer',
+        canonicalCodexSkillPath:
+          '/mnt/c/Users/sveld/.codex/skills/vi-history-suite-expert-agent-reviewer'
+      })
+    );
+    expect(rules.releaseCadence.candidateStateModel?.expertAgentReviewSkill?.gatingRule).toContain(
+      'no findings'
+    );
     expect(rules.releaseCadence.semverDecisionFramework).toEqual(
       expect.objectContaining({
         defaultGovernanceBump: 'patch',
@@ -208,12 +220,13 @@ describe('post-release sustainment rules package', () => {
     expect(rules.releaseCadence.activeOpeningDecision).toEqual(
       expect.objectContaining({
         chosenBump: 'patch',
-        targetDevelopCandidateReleaseLine: 'v1.2.1'
+        targetDevelopCandidateReleaseLine: 'v1.2.2'
       })
     );
     expect(rules.releaseCadence.activeOpeningDecision?.rationale).toEqual(
       expect.arrayContaining([
-        'the next line governs VS Code Marketplace publication as an explicit exact-release closeout surface after v1.2.0 became a live Marketplace release'
+        'the next line governs exact-release closeout follow-through by making the protected back-merge of exact released main into develop part of the same release closeout instead of a separately elicited later task',
+        'the same line hardens first-run installed-user guidance and runtime-doctor recovery so machines without Docker installed or running do not look like broken image-acquisition cases'
       ])
     );
 
@@ -365,9 +378,10 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('## Benchmark Refresh Rules');
     expect(rulesDoc).toContain('## Operator And Documentation Upkeep Rules');
     expect(rulesDoc).toContain('public GitHub default branch: `main`');
-    expect(rulesDoc).toContain('current exact released line: `v1.2.1`');
-    expect(rulesDoc).toContain('current develop package line on `develop`: `1.2.1`');
-    expect(rulesDoc).toContain('no newer exact release candidate line is active on `develop` yet');
+    expect(rulesDoc).toContain('current exact released line: `v1.2.2`');
+    expect(rulesDoc).toContain('current develop package line on `develop`: `1.2.2`');
+    expect(rulesDoc).toContain('active exact release candidate line on `develop`: `v1.2.2`');
+    expect(rulesDoc).toContain('no newer `release/*` branch is active yet');
     expect(rulesDoc).toContain('chosen bump: `patch`');
     expect(rulesDoc).toContain('develop');
     expect(rulesDoc).toContain('release branch');
@@ -386,6 +400,7 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('design:gate');
     expect(rulesDoc).toContain('burned exact release line');
     expect(rulesDoc).toContain('VS Code Marketplace exact publication state');
+    expect(rulesDoc).toContain('future sessions shall not treat an exact release as fully closed');
     expect(rulesDoc).toContain('installed-user entry surfaces');
     expect(rulesDoc).toContain('PROGRAM-0002');
     expect(rulesDoc).toContain('execution-policy bypass');

@@ -29,6 +29,10 @@ Current installed truth is:
   - Docker daemon `OSType=linux` selects the governed Linux container image
 - when the selected governed image is missing locally, the extension surfaces
   visible acquisition progress before comparison runtime launch
+- first use assumes Docker is already installed and running only when the host
+  actually proves that through the Docker CLI plus daemon checks; otherwise
+  the extension blocks before image acquisition and tells the user to install
+  or start Docker first
 - if Docker CLI is missing, the daemon is unreachable, or the current engine
   cannot satisfy the governed request, the extension fails closed with
   actionable user-facing guidance
@@ -99,6 +103,8 @@ When any of those conditions hold, the installed extension:
 - does not probe host LabVIEW
 - does not fall back to a different provider class
 - retains the next corrective action explicitly in the runtime surfaces
+- tells first-time users to install or start Docker and confirm it is working
+  before retrying compare generation
 
 ## Public And Internal Reader Surfaces
 

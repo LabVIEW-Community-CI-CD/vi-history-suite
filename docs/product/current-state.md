@@ -146,10 +146,10 @@ Latest landed ship target:
 - retained release pipeline: `2428809456`
 - retained release job: `13779604462`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.2.1`
-- current published package line on `main`: `1.2.1`
-- current develop package line on `develop`: `1.2.1`
-- no newer exact release candidate line is active on `develop` yet
+- current exact released line: `v1.2.2`
+- current published package line on `main`: `1.2.2`
+- current develop package line on `develop`: `1.2.2`
+- active exact release candidate line on `develop`: `v1.2.2`
 - no newer `release/*` branch is active yet
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
@@ -161,12 +161,13 @@ Latest landed ship target:
 - VS Code Marketplace publication ledger: [vscode-marketplace-publication-ledger.md](./vscode-marketplace-publication-ledger.md)
 - current changelog: [CHANGELOG.md](../../CHANGELOG.md)
 - docs-workbench image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
-- remaining blockers: none on exact `v1.2.1`; public `main` publishes
-  `2547344`, the public GitHub release `v1.2.1` is live, the public `develop`
-  candidate remains `96af6a3`, the public wiki publishes `a12eb16`, the
-  official gallery extension query now verifies Marketplace version `1.2.1`
-  for `svelderrainruiz.vi-history-suite`, and Sergio elected post-publish
-  installed-extension review in local VS Code instead of a pre-tag human gate
+- remaining blockers: none on exact `v1.2.2`; public `main` publishes
+  `86b19a2`, the public GitHub release `v1.2.2` is live, public `develop`
+  still publishes candidate commit `12391e1`, the public wiki publishes
+  `527a8b4`, the official gallery extension query verifies Marketplace version
+  `1.2.2` for `svelderrainruiz.vi-history-suite`, and the latest retained
+  expert-agent verdict returned no findings on those exact published public
+  release surfaces
 
 Current active and recently closed tranches:
 
@@ -197,8 +198,8 @@ Current active and recently closed tranches:
     compare fix, bundled compare-flow wording cleanup, and public smoke
     required-check path-admission repair, and Sergio's brand-new-fork rerun has
     now passed on `Examples/Logging with Helper-VIs.vi`, so exact `v1.2.0`
-    is now published on public `main` and no newer exact release candidate is
-    active yet
+    was published on public `main` before later candidate lines reopened on
+    `develop`
 - `TRANCHE-013`: Extension execution flexibility and runtime acquisition UX
 - active issue: [ISSUE-0410 Extension Execution Flexibility And Runtime Acquisition UX](./issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md)
 - active execution program: [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
@@ -209,12 +210,28 @@ Current active and recently closed tranches:
     engine on Windows
   - align package metadata, bundled docs, the public GitHub facade, and the
     internal GitLab control plane to that contract
+- `TRANCHE-015`: Installed-user first-run Docker onboarding and fail-closed guidance
+- active issue: [ISSUE-0410 Extension Execution Flexibility And Runtime Acquisition UX](./issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md)
+- active execution program: [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
+  - current first slice:
+  - account explicitly for machines where Docker is not installed or not
+    running yet instead of assuming the prerequisite already exists
+  - harden installed-user first-run guidance, runtime-doctor next actions, and
+    fail-closed recovery language around that missing-Docker boundary
+  - make `docker info`-style readiness an explicit first-run check before
+    image acquisition is expected to start
+  - keep the Docker-only compare contract and no-host-fallback rule explicit
+    while making the missing-Docker recovery path readable to first-time
+    installed users
 - `TRANCHE-012`: Post-release sustainment and release cadence
 - active issue: [ISSUE-0409 Post-Release Sustainment And Release Cadence](./issues/ISSUE-0409-post-release-sustainment-and-release-cadence.md)
 - active execution program: [PROGRAM-0004: Post-Release Sustainment And Release Cadence](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)
   - current first slice:
   - retain event-driven release refresh and benchmark refresh rules
   - keep authority/wiki/bundled-doc/operator surfaces aligned as truth changes
+  - keep exact release closeout incomplete until the matching released `main`
+    line has been back-merged into `develop` through the protected path and
+    the resulting `develop` pipeline is green
   - do not absorb the active `PROGRAM-0005` or reopened `PROGRAM-0002` work
     into generic sustainment language
 - closed public-product closeout:
@@ -300,10 +317,10 @@ Post-release tranches:
     surface so Marketplace users land on maintained local-use documentation
     first, while repo/fork/Codespaces procedures remain explicit secondary
     source-evaluation lanes
-  - the maintained public `develop` candidate now publishes `96af6a3`, the
-    public wiki entry surface remains `a12eb16`, the exact public `main` line
-    now publishes `2547344`, and the VS Code Marketplace item now verifies
-    `1.2.1`
+  - the exact public `main` line now publishes `86b19a2`, while the later
+    maintained public `develop` candidate still publishes `12391e1`, the
+    public wiki entry surface now publishes `527a8b4`, and the VS Code
+    Marketplace item verifies `1.2.2`
   - sustainment does not absorb the active `TRANCHE-013` Docker-only installed-contract work or the reopened `TRANCHE-010` public-closeout rerun
 - `TRANCHE-013`: Extension execution flexibility and runtime acquisition UX
   - active issue: [ISSUE-0410 Extension Execution Flexibility And Runtime Acquisition UX](./issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md)
@@ -311,20 +328,37 @@ Post-release tranches:
   - the installed extension now depends on Docker for compare generation, no longer exposes host-runtime mode/path knobs to extension users, constrains installed compare execution to x64 container surfaces, and selects the governed Windows or Linux image from the current Docker daemon engine instead of probing host LabVIEW
   - execution-policy bypass remains forbidden: installed compare execution must still pass canonical Docker-only request validation and governed provider hard stops
   - the runtime doctor, history panel, and retained packet surfaces now carry the selected provider, current Docker engine, selected image, acquisition state, and next action as explicit installed-runtime truth
+- `TRANCHE-015`: Installed-user first-run Docker onboarding and fail-closed guidance
+  - active issue: [ISSUE-0410 Extension Execution Flexibility And Runtime Acquisition UX](./issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md)
+  - active execution program: [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
+  - the active `v1.2.2` candidate now hardens machines where Docker is not
+    installed or not running yet instead of treating that prerequisite as
+    always satisfied on first use
+  - installed-user guidance, runtime-doctor next actions, and fail-closed
+    runtime messaging now tell first-use users to install or start Docker and
+    confirm `docker info` before expecting image acquisition
+  - exact release closeout is now retained as incomplete until the released
+    `main` line has been back-merged into `develop` through the protected path
+    and the resulting `develop` pipeline is green without a later human prompt
+  - the maintained public `develop` candidate still publishes `12391e1`, the
+    exact public `main` line now publishes `86b19a2`, the public wiki head now
+    publishes `527a8b4`, and the `v1.2.2` line now retains a clean no-findings
+    expert-agent verdict via `vi-history-suite-expert-agent-reviewer` on the
+    exact published public release surfaces
 - `TRANCHE-014`: Public Codespaces public-repo bootstrap
   - closed issue: [ISSUE-0411 Public Codespaces Public-Repo Bootstrap](./issues/ISSUE-0411-public-codespaces-public-repo-bootstrap.md)
   - closed execution program: [PROGRAM-0006: Public Codespaces Public-Repo Bootstrap](./execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md)
-  - exact public `main` now publishes `v1.2.1`, and `develop` remains aligned
-    to `1.2.1` until the next exact candidate line opens
+  - exact public `main` now publishes `v1.2.2`, while the later public
+    `develop` line remains separately tracked for the next opening decision
   - the first `1.2.0` correction repaired branch-governance admission by
     realigning exact `main` back into `develop` before feature work continues
   - the line now adds one generic public-repo bootstrap surface for public
     GitHub and GitLab HTTPS repos while keeping the canonical icon-editor
     helper path separate
-  - Sergio's documented brand-new-fork and brand-new-Codespace rerun now
-    passes on `Examples/Logging with Helper-VIs.vi`, so the exact `v1.2.1`
-    public release is closed with the maintained public wiki/reference-manual
-    package accepted
+  - Sergio's documented brand-new-fork and brand-new-Codespace rerun passes on
+    `Examples/Logging with Helper-VIs.vi`, the exact public `main` line now
+    publishes `86b19a2`, and the maintained public wiki/reference-manual
+    package now closes exact `v1.2.2`
 
 Current active and queued post-release programs:
 
@@ -347,7 +381,9 @@ Current active and queued post-release programs:
     GitHub wiki home as the intended local-use reader surface; the repo root is
     the source/contributor/control-plane surface instead of the first-contact
     installed-user overview
-  - the canonical Gate D blocker on `resource/plugins/lv_icon.vi` is retired, while `v1.0.2` is now retained as a burned exact release and the current exact public GitHub release line is `v1.2.1`
+  - the canonical Gate D blocker on `resource/plugins/lv_icon.vi` is retired,
+    while `v1.0.2` is now retained as a burned exact release and the current
+    exact public GitHub release line is `v1.2.2`
   - the public branch model is now explicit: `develop` is the integration and
     Codespaces-evaluation branch, and `main` is the release branch
   - protected-branch promotion now depends on required checks instead of direct

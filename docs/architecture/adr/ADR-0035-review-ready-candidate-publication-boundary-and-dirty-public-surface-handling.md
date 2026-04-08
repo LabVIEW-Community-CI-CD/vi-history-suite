@@ -32,16 +32,16 @@ Adopt this candidate-publication boundary:
   - `public-develop-published`
   - `public-wiki-published`
   - `review-ready`
-  - `review-feedback-received`
-  - `review-feedback-folded`
+  - `expert-agent-review-findings-received`
+  - `expert-agent-review-findings-folded`
   - `tag-eligible`
 - treat `review-ready` as a fail-closed state, not as an operator judgment
-- require both of these before the next human review gate opens:
+- require both of these before the next review gate opens:
   - the maintained public `develop` candidate head is actually published
   - the maintained public wiki head is actually published
 - retain those published heads in `docs/product/public-release-candidate.{md,json}`
 - keep local authority-green proof necessary but insufficient for reopening the
-  brand-new-fork human review gate
+  active expert-agent review gate
 
 Adopt this dirty-public-surface publication rule:
 

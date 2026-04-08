@@ -3,9 +3,25 @@
 This changelog is the governed version-line summary for `vi-history-suite`.
 
 Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
-`v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, and `v1.2.0`.
+`v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, and
+`v1.2.1`.
 
 Burned exact-version releases now include `v1.0.2`.
+
+## [1.2.2] - 2026-04-07
+
+### Changed
+
+- `v1.2.1` remains the exact public release line on `main`, while `develop`
+  now carries `1.2.2` and the active exact public release candidate line is
+  `v1.2.2`
+- exact release closeout is now retained as incomplete until the matching
+  released `main` line has been back-merged into `develop` through the
+  protected path and the resulting `develop` pipeline is green
+- installed-user docs and runtime-doctor next actions now treat missing Docker
+  CLI or a stopped daemon as an explicit first-run prerequisite boundary,
+  telling users to install or start Docker and confirm `docker info` succeeds
+  before image acquisition is expected
 
 ## [1.2.0] - 2026-04-07
 

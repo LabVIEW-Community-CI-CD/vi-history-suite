@@ -1,7 +1,7 @@
 {
   "generatedFor": "vi-history-suite",
   "publicationSurface": "public-github-source-repo",
-  "publishedHeadCommit": "2547344",
+  "publishedHeadCommit": "86b19a2",
   "publications": [
     {
       "id": "public-source-product-repo-baseline",
@@ -212,6 +212,68 @@
       "status": "published",
       "publishedDate": "2026-04-08",
       "repoCommit": "2547344",
+      "primaryAuthority": [
+        "README.md",
+        "CHANGELOG.md",
+        "docs/product/current-state.md",
+        "docs/product/public-release-candidate.md",
+        "docs/release-procedure.md",
+        "package.json"
+      ]
+    },
+    {
+      "id": "public-source-v1-2-2-docker-first-run-and-closeout-governance-refresh",
+      "title": "Public source v1.2.2 Docker-first-run and closeout-governance refresh",
+      "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
+      "status": "published",
+      "publishedDate": "2026-04-08",
+      "repoCommit": "894cd5f",
+      "primaryAuthority": [
+        "README.md",
+        "INSTALL.md",
+        "CHANGELOG.md",
+        "docs/product/current-state.md",
+        "docs/release-procedure.md",
+        "docs/product/post-release-sustainment-rules.md",
+        "docs/product/extension-execution-policy.md",
+        "resources/bundled-docs/manifest.json"
+      ]
+    },
+    {
+      "id": "public-source-v1-2-2-installed-user-entry-clarification-follow-up",
+      "title": "Public source v1.2.2 installed-user entry clarification follow-up",
+      "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
+      "status": "published",
+      "publishedDate": "2026-04-08",
+      "repoCommit": "96944d7",
+      "primaryAuthority": [
+        "README.md",
+        "docs/product/current-state.md",
+        "docs/product/public-release-candidate.md",
+        "docs/product/public-github-wiki-publication-ledger.md",
+        "resources/bundled-docs/manifest.json"
+      ]
+    },
+    {
+      "id": "public-source-v1-2-2-bundled-installed-user-docs-refresh",
+      "title": "Public source v1.2.2 bundled installed-user docs refresh",
+      "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
+      "status": "published",
+      "publishedDate": "2026-04-08",
+      "repoCommit": "12391e1",
+      "primaryAuthority": [
+        "docs/product/current-state.md",
+        "docs/product/public-release-candidate.md",
+        "resources/bundled-docs/manifest.json"
+      ]
+    },
+    {
+      "id": "public-source-v1-2-2-exact-release",
+      "title": "Public source v1.2.2 exact release",
+      "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
+      "status": "published",
+      "publishedDate": "2026-04-08",
+      "repoCommit": "86b19a2",
       "primaryAuthority": [
         "README.md",
         "CHANGELOG.md",

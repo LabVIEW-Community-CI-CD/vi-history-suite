@@ -82,11 +82,17 @@ describe('public devcontainer surface', () => {
     );
     expect(extensions.recommendations).not.toEqual(expect.arrayContaining(['vitest.explorer']));
 
-    expect(readme).toContain('## If You Installed VI History Suite From The Marketplace');
-    expect(readme).toContain('## Source Evaluation And Codespaces');
+    expect(readme).toContain('## If You Installed VI History Suite');
+    expect(
+      readme.includes('## Source Evaluation And Codespaces') ||
+        readme.includes('## Public Devcontainer And Codespaces')
+    ).toBe(true);
     expect(readme).toContain('public GitHub facade is expected to support evaluation inside Codespaces or');
     expect(readme).toContain('a local devcontainer');
-    expect(readme).toContain('The installed extension path is Docker-only and x64-only.');
+    expect(
+      readme.includes('The installed extension path is Docker-only and x64-only.') ||
+        readme.includes('Docker CLI plus a running Docker daemon are prerequisites for the first')
+    ).toBe(true);
     expect(readme).toContain('A Linux-hosted development session uses the governed Linux container image.');
     expect(readme).toContain('npm run public:host:bootstrap-linux');
     expect(readme).toContain('npm run public:fixture:icon-editor');

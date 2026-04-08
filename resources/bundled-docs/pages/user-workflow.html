@@ -2,12 +2,18 @@
 <h2>Preconditions</h2>
 <p>The shipped extension-user workflow assumes:</p>
 <ul>
-<li>the extension is installed from a preview VSIX or future tagged release</li>
+<li>the extension is installed from the VS Code Marketplace, the current exact
+released VSIX, or a preview VSIX when you intentionally want the next
+candidate</li>
 <li>the workspace is trusted</li>
 <li>the target file is a tracked LabVIEW VI in a Git repository</li>
 <li>at least two commits modify that VI</li>
-<li>Docker is available on the current host</li>
+<li>before the first compare, Docker is installed and running on the current host</li>
+<li>before the first compare, <code>docker info</code> succeeds in the same session that
+launched VS Code</li>
 </ul>
+<p>If Docker is not installed yet or not running yet, install or start it first,
+then rerun the compare flow.</p>
 <h2>Execution Policy</h2>
 <p>Comparison generation is Docker-only in the installed extension.</p>
 <p>Current installed rules:</p>

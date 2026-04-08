@@ -102,9 +102,9 @@ const bundledPageConfigs = {
       'Install Surfaces': [
         'Current install and release surfaces are:',
         '',
-        '- preview VSIX artifact from the `main` pipeline',
-        '- local package output via `npm run package`',
-        '- governed tagged release artifact retained under `release-evidence/`',
+        '- VS Code Marketplace listing under `svelderrainruiz.vi-history-suite`',
+        '- exact released VSIX from the matching GitHub release when you need the retained exact build',
+        '- local package output via `npm run package` when you are testing from source',
         '- packaged bundled user docs opened through `VI History: Open Documentation` or the history-panel `Open docs` action'
       ].join('\n')
     }
@@ -115,22 +115,24 @@ const bundledPageConfigs = {
       'Install Surfaces': [
         'Use one of these installed-user surfaces:',
         '',
-        '- preview VSIX artifact from the latest successful `main` pipeline',
-        '- local package output via `npm run package`',
-        '- tagged release VSIX for exact-version installs',
+        '- VS Code Marketplace listing under `svelderrainruiz.vi-history-suite`',
+        '- exact released VSIX from the matching GitHub release',
+        '- local package output via `npm run package` when you intentionally test from source',
         '- packaged bundled docs through `VI History: Open Documentation` or the history-panel `Open docs` action',
         '',
-        'After installing or updating the VSIX, reload VS Code before running the review flow.'
+        'Before the first compare on a fresh machine, install or start Docker and confirm `docker info` works in the same session that will run VS Code.'
       ].join('\n'),
       'Release Procedure Summary': [
-        'Use the preview VSIX for iteration or the tagged release VSIX when you need the exact released build.',
+        'Use the Marketplace listing for everyday installs or the exact released VSIX when you need the retained tagged build.',
         '',
         'Quick verification flow:',
         '',
-        '1. install the selected VSIX',
-        '2. reload VS Code',
-        '3. open `VI History` on an eligible VI inside a trusted Git workspace',
-        '4. use `Open docs` if you need the version-matched installed guide'
+        '1. install the extension from the Marketplace or from the exact released VSIX',
+        '2. install or start Docker, then confirm `docker info` succeeds',
+        '3. reload VS Code if you just installed or updated the extension',
+        '4. open `VI History` on an eligible VI inside a trusted Git workspace',
+        '5. select two distinct commit checkboxes to generate the compare',
+        '6. use `Open docs` if you need the version-matched installed guide'
       ].join('\n')
     }
   },

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-08T03:37:07.466Z",
+  "generatedAt": "2026-04-08T06:56:00.177Z",
   "sourceLedgerPath": "docs/product/public-github-wiki-publication-ledger.json",
   "sourceWikiRepoPath": "../vi-history-suite.github.wiki",
   "bundleAudience": "extension-users",
@@ -12,7 +12,7 @@
       "wikiFileName": "Home.md",
       "htmlFileName": "overview.html",
       "publishedDate": "2026-04-08",
-      "wikiCommit": "a12eb16"
+      "wikiCommit": "d6da0c4"
     },
     {
       "id": "install-and-release",
@@ -21,7 +21,7 @@
       "wikiFileName": "Install-And-Release.md",
       "htmlFileName": "install-and-release.html",
       "publishedDate": "2026-04-08",
-      "wikiCommit": "a12eb16"
+      "wikiCommit": "d6da0c4"
     },
     {
       "id": "user-workflow",
@@ -29,8 +29,8 @@
       "wikiPath": "User-Workflow",
       "wikiFileName": "User-Workflow.md",
       "htmlFileName": "user-workflow.html",
-      "publishedDate": "2026-04-06",
-      "wikiCommit": "ea06c37"
+      "publishedDate": "2026-04-08",
+      "wikiCommit": "d6da0c4"
     },
     {
       "id": "comparison-reports-and-dashboard-review",
@@ -38,8 +38,8 @@
       "wikiPath": "Comparison-Reports-And-Dashboard-Review",
       "wikiFileName": "Comparison-Reports-And-Dashboard-Review.md",
       "htmlFileName": "comparison-reports-and-dashboard-review.html",
-      "publishedDate": "2026-04-06",
-      "wikiCommit": "e28491c"
+      "publishedDate": "2026-04-08",
+      "wikiCommit": "1b2f476"
     }
   ]
 }

@@ -1677,7 +1677,7 @@
 - `TEST-UNIT-333`: verify the `1.2.0` public release-candidate package retains
   an explicit ordered state progression from local authority-green through
   published public source/wiki heads to `review-ready`, and fails closed so
-  local green proof alone does not reopen the brand-new-fork human review gate
+  local green proof alone does not reopen the expert-agent review gate
 - `TEST-UNIT-334`: verify release governance retains dirty public-source/wiki
   publication handling that preserves unrelated dirt, patches overlapping
   candidate files narrowly, and pauses only on direct unresolved conflicts
@@ -1695,6 +1695,17 @@
 - `TEST-UNIT-337`: verify the packaged homepage and the primary public entry
   docs are installed-user first and keep source-evaluation/fork/Codespaces
   procedures explicit but secondary
+- `TEST-UNIT-338`: verify exact release closeout remains incomplete until the
+  exact released `main` line has been back-merged into `develop` through the
+  protected path and the resulting `develop` pipeline is green
+- `TEST-UNIT-339`: verify runtime-doctor next actions and installed-user docs
+  treat missing Docker CLI or a stopped Docker daemon as first-run
+  prerequisite failures with install/start/retry guidance instead of implying
+  image acquisition is always the first step
+- `TEST-UNIT-340`: verify the active public release-candidate package retains
+  the `vi-history-suite-expert-agent-reviewer` skill identity, the exact
+  published public repo/wiki heads under review, the latest retained verdict,
+  and the blocking no-findings rule before `tag-eligible`
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are
@@ -1728,7 +1739,7 @@
   public release-candidate package, ISSUE-0411, PROGRAM-0006, ADR-0035, SRS,
   RTM, and the test plan and confirm the repo now retains an explicit
   `review-ready` boundary that requires published public `develop` and public
-  wiki candidate heads before Sergio's next brand-new-fork review starts
+  wiki candidate heads before the expert-agent review gate starts
 - `TEST-DOC-098`: review sustainment, release procedure, ADR-0035, SRS, RTM,
   and the test plan and confirm governed public source/wiki publication now
   treats dirty worktrees as controlled patch targets instead of as a generic
@@ -1741,6 +1752,19 @@
 - `TEST-DOC-100`: review the Marketplace-linked homepage plus the primary
   public entry docs and confirm they now lead with installed-user local-workflow
   guidance while keeping source-evaluation procedures explicitly secondary
+- `TEST-DOC-101`: review ADR-0030, sustainment, hosted governance, release
+  procedure, current-state, SRS, RTM, and the test plan and confirm exact
+  release closeout now remains incomplete until the protected back-merge into
+  `develop` is merged and the resulting `develop` pipeline is green
+- `TEST-DOC-102`: review the installed-user README, public-source install
+  surfaces, public wiki user pages, execution-policy docs, and runtime-doctor
+  package and confirm first-run missing-Docker states now tell users to
+  install or start Docker and verify it before image acquisition is expected
+- `TEST-DOC-103`: review sustainment, release procedure, current-state, the
+  public release-candidate package, ADR-0037, SRS, RTM, and the test plan and
+  confirm exact tagging and Marketplace publication now remain blocked until
+  the retained `vi-history-suite-expert-agent-reviewer` gate against the exact
+  published public candidate heads returns no findings
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

@@ -32,8 +32,9 @@ Adopt this next-line governance model:
   - `feature/*`
   - `release/*`
   - `hotfix/*`
-- back-merge exact released `main` into `develop` before opening the next
-  candidate line
+- treat exact release closeout as incomplete until exact released `main` has
+  been back-merged into `develop` through the protected path and the resulting
+  `develop` pipeline is green before opening the next candidate line
 - fail closed on that branch-baseline rule through one explicit
   `npm run branch:governance:assert` surface, and keep that assertion first in
   `npm run design:gate`
@@ -75,8 +76,8 @@ Adopt this lane-specific gate posture:
 Positive:
 
 - future sessions have governed criteria for the next bump instead of guessing
-- exact release truth is merged back into `develop` before new candidate work
-  starts
+- exact release truth is merged back into `develop` and proven green there
+  before release closeout is considered complete or new candidate work starts
 - branch topology and CI responsibility now reinforce each other
 
 Costs:
@@ -94,3 +95,5 @@ Costs:
 - keep the governed branch-baseline assertion as the fail-closed guard around
   realigning `develop` to the exact released `main` baseline before the next
   public candidate is promoted
+- keep exact release closeout incomplete until the protected back-merge into
+  `develop` and the green `develop` pipeline are both retained as evidence

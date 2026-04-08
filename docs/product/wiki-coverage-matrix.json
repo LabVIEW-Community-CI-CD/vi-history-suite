@@ -753,6 +753,17 @@
         "Architecture.md",
         "Architecture-Decision-Records.md"
       ]
+    },
+    {
+      "sourcePath": "docs/architecture/adr/ADR-0037-expert-agent-review-gate-for-public-candidates.md",
+      "itemType": "adr",
+      "aggregationRuleId": "adr-set-aggregate",
+      "representationStatus": "complete",
+      "publicationStatus": "published",
+      "wikiFiles": [
+        "Architecture.md",
+        "Architecture-Decision-Records.md"
+      ]
     }
   ]
 }

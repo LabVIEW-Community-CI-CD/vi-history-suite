@@ -30,7 +30,7 @@ describe('public repo package surface', () => {
     );
     const previewWorkflow = readText('.github/workflows/public-facade-package-preview.yml');
 
-    expect(manifest.version).toBe('1.2.1');
+    expect(manifest.version).toBe('1.2.2');
     expect(manifest.files).toEqual([
       'out/**',
       'resources/**',
@@ -65,7 +65,10 @@ describe('public repo package surface', () => {
 
     expect(readme).toContain('Docker-only compare execution');
     expect(readme).toContain('devcontainer or Codespace');
-    expect(readme).toContain('public GitHub repo is the source-facing product surface');
+    expect(readme).toContain('source-facing product surface');
+    expect(readme).toContain('## If You Installed VI History Suite');
+    expect(readme).toContain('You do not need to fork this repo or choose a branch to use the installed');
+    expect(readme).toContain('extension locally.');
     expect(readme).toContain('Fastest First Fork-Owner Run');
     expect(readme).toContain('Copy the main branch only');
     expect(readme).toContain('Codespace repository configuration');
@@ -91,14 +94,13 @@ describe('public repo package surface', () => {
     expect(readme).toContain('Use the exact path printed by the command');
     expect(readme).toContain('public default branch and tracks the latest exact released');
     expect(readme).toContain('GitHub opens this public repo on `main` by default');
-    expect(readme).toContain('retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`');
-    expect(readme).toContain('burned exact release line: `v1.0.2`');
-    expect(readme).toContain('current exact released line: `v1.2.1`');
-    expect(readme).toContain('current published package line on `main`: `1.2.1`');
-    expect(readme).toContain('current develop package line on `develop`: `1.2.1`');
-    expect(readme).toContain('no newer exact release candidate line is active on `develop` yet');
+    expect(readme).toContain('Docker CLI plus a running Docker daemon are prerequisites for the first');
+    expect(readme).toContain('If Docker is not installed yet, not running yet');
     expect(readme).toContain('public GitHub default branch: `main`');
     expect(readme).toContain('public Codespaces evaluation branch: `develop`');
+    expect(readme).toContain(
+      'retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`'
+    );
     expect(readme).toContain('Refresh-Codespace-Repositories');
     expect(readme).not.toContain('Manual-Actor-Framework-Clone');
     expect(install).toContain('Windows host + Linux engine');
@@ -110,6 +112,8 @@ describe('public repo package surface', () => {
     expect(install).toContain('Paste the repo URL when prompted');
     expect(install).toContain('canonical first-time procedures');
     expect(install).toContain('Supported repo URLs are public `https://github.com/...` and');
+    expect(install).toContain("docker info --format '{{.OSType}}'");
+    expect(install).toContain('If those checks fail, install or start Docker before expecting image');
     expect(install).toContain('Review-Public-LabVIEW-VI-Changes');
     expect(install).toContain('remote default branch automatically');
     expect(install).toContain('available fallback treated as best-effort');
@@ -142,18 +146,22 @@ describe('public repo package surface', () => {
     expect(previewWorkflow).toContain('npm run test:design-contract');
     expect(previewWorkflow).toContain('mkdir -p artifacts');
     expect(previewWorkflow).toContain('npm run package -- --out artifacts/vi-history-suite-public-preview.vsix');
-    expect(readText('CHANGELOG.md')).toContain('Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,');
-    expect(readText('CHANGELOG.md')).toContain('`v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, and `v1.2.0`.');
-    expect(readText('CHANGELOG.md')).toContain('## [1.2.1] - 2026-04-07');
-    expect(readText('CHANGELOG.md')).toContain(
+    const changelog = readText('CHANGELOG.md');
+    expect(changelog).toContain('Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,');
+    expect(changelog).toContain('`v1.2.1`.');
+    expect(changelog).toContain('## [1.2.2] - 2026-04-07');
+    expect(changelog).toContain('## [1.2.1] - 2026-04-07');
+    expect(changelog).toContain('install or start Docker');
+    expect(changelog).toContain('`docker info`');
+    expect(changelog).toContain(
       'Marketplace publication surface for `svelderrainruiz.vi-history-suite`'
     );
-    expect(readText('CHANGELOG.md')).toContain('homepage now points Marketplace users to the');
-    expect(readText('CHANGELOG.md')).toContain('## [1.2.0] - 2026-04-07');
-    expect(readText('CHANGELOG.md')).toContain('`v1.2.0` is now the exact public release line on `main`');
-    expect(readText('CHANGELOG.md')).toContain('the `release/1.2.0` promotion lane is now closed');
-    expect(readText('CHANGELOG.md')).toContain('moved-VI compare pairs');
-    expect(readText('CHANGELOG.md')).toContain('historical repo-relative path per revision');
-    expect(readText('CHANGELOG.md')).toContain('bundled compare-flow docs now retire stale `Diff prev`');
+    expect(changelog).toContain('homepage now points Marketplace users to the');
+    expect(changelog).toContain('## [1.2.0] - 2026-04-07');
+    expect(changelog).toContain('`v1.2.0` is now the exact public release line on `main`');
+    expect(changelog).toContain('the `release/1.2.0` promotion lane is now closed');
+    expect(changelog).toContain('moved-VI compare pairs');
+    expect(changelog).toContain('historical repo-relative path per revision');
+    expect(changelog).toContain('bundled compare-flow docs now retire stale `Diff prev`');
   });
 });

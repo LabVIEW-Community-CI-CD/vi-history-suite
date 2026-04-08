@@ -58,12 +58,13 @@ Refresh the release package when any of these change:
 Current version-line contract:
 
 - retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`,
-  `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`
+  `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`,
+  `v1.2.2`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.2.1`
-- current published package line on `main`: `1.2.1`
-- current develop package line on `develop`: `1.2.1`
-- no newer exact release candidate line is active on `develop` yet
+- current exact released line: `v1.2.2`
+- current published package line on `main`: `1.2.2`
+- current develop package line on `develop`: `1.2.2`
+- active exact release candidate line on `develop`: `v1.2.2`
 - no newer `release/*` branch is active yet
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
@@ -74,16 +75,17 @@ Current version-line contract:
 Latest recorded opening decision for the current line:
 
 - chosen bump: `patch`
-- target exact candidate line: `v1.2.1`
+- target exact candidate line: `v1.2.2`
 - rationale: the next line governs VS Code Marketplace publication as an
-  explicit exact-release closeout surface after `v1.2.0` became the first live
-  Marketplace release
-- rationale: the same line redesigns the installed-user entry surface so
-  Marketplace users land on maintained local-use documentation instead of a
-  repo-first, branch-heavy source reader surface
+  exact-release closeout follow-through surface by making the protected
+  back-merge of exact released `main` into `develop` part of the same release
+  closeout instead of a separately elicited later task
+- rationale: the same line hardens first-run installed-user guidance and
+  runtime-doctor recovery so machines without Docker installed or running do
+  not look like broken image-acquisition cases
 - rejected `minor`: the slice hardens and redirects an existing released
   distribution surface instead of adding a new product capability
-- rejected `major`: no exact `v1.2.0` runtime or workflow contract is being
+- rejected `major`: no exact `v1.2.1` runtime or workflow contract is being
   intentionally broken or removed
 
 Strict SemVer rule after an exact release:
@@ -103,13 +105,17 @@ Strict SemVer rule after an exact release:
   exact release version number
 - future sessions shall not treat a burned exact release as the green release
   baseline for later publication
+- future sessions shall not treat an exact release as fully closed until the
+  matching released `main` line has been back-merged into `develop` through
+  the protected path and the resulting `develop` pipeline is green
 - future sessions shall not treat a candidate line as `review-ready` until the
   maintained public `develop` candidate head and maintained public wiki head
   are both published and retained in the authority candidate package
 - future sessions shall keep exact tagging blocked until the post-publication
-  human review gate closes, unless the product owner explicitly waives that
-  gate and the retained candidate package records the waiver plus the
-  post-publish review plan
+  expert-agent review gate closes with no findings against the exact published
+  public candidate heads retained in the authority candidate package
+- optional product-owner exploratory review may happen separately, but it
+  shall not replace the clean expert-agent review gate for exact tagging
 
 Decision framework for choosing `major`, `minor`, or `patch`:
 
@@ -140,14 +146,18 @@ Candidate publication boundary:
   - `public-develop-published`
   - `public-wiki-published`
   - `review-ready`
-  - `review-feedback-received`
-  - `review-feedback-folded`
+  - `expert-agent-review-findings-received`
+  - `expert-agent-review-findings-folded`
   - `tag-eligible`
 - local authority-green proof is necessary but not sufficient for
   `review-ready`
-- the next human review gate opens only after the maintained public `develop`
-  candidate head and maintained public wiki head are both live and retained in
-  `docs/product/public-release-candidate.{md,json}`
+- the next expert-agent review gate opens only after the maintained public
+  `develop` candidate head and maintained public wiki head are both live and
+  retained in `docs/product/public-release-candidate.{md,json}`
+- the expert-agent review gate uses the retained
+  `vi-history-suite-expert-agent-reviewer` skill against those exact published
+  heads and exact tagging stays blocked until the latest retained verdict has
+  no findings
 - if the governed public source or public wiki worktree is dirty during
   publication:
   - preserve unrelated dirt
@@ -229,6 +239,9 @@ Required branch-model and CI posture:
   line opens when `develop` does not yet contain the exact released `main`
   baseline, and `npm run design:gate` shall keep that assertion first in the
   governed gate order
+- exact release closeout remains incomplete until the exact released `main`
+  line has been back-merged into `develop` through the protected path and the
+  resulting `develop` pipeline is green
 - `release/*` lanes are cut from `develop`, validate the release candidate, and
   merge to `main` plus back into `develop`
 - `hotfix/*` lanes are cut from `main`, fix one exact release line, and merge

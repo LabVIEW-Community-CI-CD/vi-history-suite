@@ -40,6 +40,9 @@ Activation is now satisfied:
 - explicit VS Code Marketplace publication governance so Marketplace
   publication, verification, and retained evidence are part of exact release
   closeout instead of a chat-memory side step
+- explicit exact-closeout back-merge governance so future sessions do not stop
+  after exact `main` publication and wait for Sergio to ask for the required
+  `develop` realignment
 - explicit installed-user entry-surface redesign so Marketplace readers land on
   local-use documentation first instead of repo/fork/branch guidance
 - benchmark refresh cadence and image contract upkeep
@@ -77,11 +80,14 @@ Activation is now satisfied:
 - local public-source promotion/check binds the intended checkout explicitly
   and fails closed on dirty target repos before reporting drift
 - candidate lines retain an explicit fail-closed `review-ready` state before
-  the next human review gate opens
+  the next expert-agent review gate opens
 - public candidate publication preserves unrelated dirt and pauses only on
   direct unresolved conflicts instead of stopping on any dirty worktree
 - exact release closeout retains Marketplace publication evidence under the
   governed publisher/item identity
+- exact release closeout remains incomplete until exact released `main` has
+  been back-merged into `develop` through the protected path and the resulting
+  `develop` pipeline is green
 - the first-contact installed-user documentation surface is useful to
   Marketplace users who only want to install and use the extension locally
 - future work does not fall back into unowned tail iteration
@@ -107,5 +113,12 @@ Activation is now satisfied:
 - keep extending the sustainment package when a real publication surface such
   as the VS Code Marketplace or its installed-user documentation entry surface
   becomes live but is still weakly governed
+- keep extending the sustainment package when required release follow-through,
+  such as the back-merge of exact `main` into `develop`, still depends on
+  operator prompting instead of retained closeout rules
+- keep extending the sustainment package when exact-tag eligibility still
+  depends on ad hoc manual review instead of a retained expert-agent review
+  skill and no-findings verdict against the exact published public candidate
+  surfaces
 - stop short of absorbing the active `PROGRAM-0005` or reopened `PROGRAM-0002`
   work into generic sustainment language

@@ -2,19 +2,19 @@
   "schema": "vi-history-suite/hosted-ci-governance@v1",
   "recordedAt": "2026-04-07",
   "openingDecision": {
-    "currentExactReleaseLine": "v1.2.1",
-    "currentMainPackageLine": "1.2.1",
-    "currentDevelopPackageLine": "1.2.1",
-    "activeDevelopCandidateReleaseLine": null,
+    "currentExactReleaseLine": "v1.2.2",
+    "currentMainPackageLine": "1.2.2",
+    "currentDevelopPackageLine": "1.2.2",
+    "activeDevelopCandidateReleaseLine": "v1.2.2",
     "activeReleaseCandidateBranch": null,
     "chosenBump": "patch",
     "rationale": [
-      "the next line governs VS Code Marketplace publication as an explicit exact-release closeout surface after v1.2.0 became a live Marketplace release",
-      "the same line redesigns the installed-user entry surface so Marketplace users land on maintained local-use docs instead of repo-first branch/governance docs"
+      "the next line governs exact-release closeout follow-through so the protected back-merge of exact released main into develop no longer waits for a separate human prompt",
+      "the same line hardens first-run missing-Docker guidance so fresh-machine installed users are told to install or start Docker before image acquisition is expected"
     ],
     "rejectedAlternatives": {
-      "minor": "the slice hardens and redirects an existing released distribution surface instead of adding a new product capability",
-      "major": "no governed v1.2.0 public contract is intentionally broken or removed"
+      "minor": "the slice hardens existing release and installed-user surfaces instead of adding a new product capability",
+      "major": "no governed v1.2.1 public contract is intentionally broken or removed"
     }
   },
   "branchModel": {

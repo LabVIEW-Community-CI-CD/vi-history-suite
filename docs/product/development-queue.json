@@ -123,11 +123,21 @@
   {
     "id": "TRANCHE-014",
     "title": "Public Codespaces public-repo bootstrap",
-    "status": "active",
+    "status": "done",
     "source": "author direction",
-    "summary": "Open `1.2.0` as the next minor line by repairing branch-governance admission first, then add one generic Codespaces/bootstrap command for public GitHub and GitLab HTTPS repos while keeping the canonical `ni/labview-icon-editor` helper-backed path separate and holding the exact tag behind human wiki-procedure review.",
+    "summary": "Closed on exact `v1.2.0` after the governed branch-baseline repair, the generic public GitHub/GitLab bootstrap command, the maintained reference-manual review path, and the retained human acceptance rerun all landed.",
     "issues": [
       "ISSUE-0411"
+    ]
+  },
+  {
+    "id": "TRANCHE-015",
+    "title": "Installed-user first-run Docker onboarding and fail-closed guidance",
+    "status": "active",
+    "source": "author direction",
+    "summary": "The active `v1.2.2` post-release slice under `ISSUE-0410` now accounts explicitly for first-time installed users whose machine does not yet have Docker installed or running, and hardens installed-user onboarding, runtime-doctor next actions, and front-surface guidance around that fail-closed boundary.",
+    "issues": [
+      "ISSUE-0410"
     ]
   }
 ]
