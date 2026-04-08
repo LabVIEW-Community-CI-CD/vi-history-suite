@@ -32,8 +32,8 @@ describe('public Codespaces public-repo bootstrap docs', () => {
     expect(currentState).toContain('`TRANCHE-014`: Public Codespaces public-repo bootstrap');
     expect(currentState).toContain('canonical `npm run public:fixture:icon-editor` helper-backed path');
     expect(currentState).toContain('generic `npm run public:repo:clone` surface');
-    expect(currentState).toContain('is now published on public `main`');
-    expect(currentState).toContain('no newer exact release candidate is active yet');
+    expect(currentState).toContain('exact public `main` now publishes `v1.2.0`');
+    expect(currentState).toContain('`1.2.1` as the next active patch candidate line');
 
     expect(candidate).toContain(
       'Decision: helper-backed canonical path plus generic public-repo reference manual'
@@ -43,10 +43,10 @@ describe('public Codespaces public-repo bootstrap docs', () => {
     expect(candidate).toContain('Generic bootstrap command:');
     expect(candidate).toContain('npm run public:repo:clone -- --repo-url <https-url>');
     expect(candidate).toContain('Public wiki candidate review:');
-    expect(candidate).toContain('accepted-brand-new-fork-review-on-published-candidate');
+    expect(candidate).toContain('pending-human-review-on-published-v1.2.1-candidate');
     expect(candidate).toContain('passed-brand-new-fork-review-on-hse-logger');
     expect(candidate).toContain('Exact public release: `v1.2.0-published`');
-    expect(candidate).toContain('No active `1.2.0` public-source blockers remain.');
+    expect(candidate).toContain('No publication blocker remains on the `1.2.1` public repo/wiki surfaces.');
 
     expect(issue).toContain('public `github.com` and `gitlab.com` HTTPS repos only');
     expect(issue).toContain('brand new fork');
