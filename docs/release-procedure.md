@@ -14,8 +14,10 @@
 - The current exact released line is `v1.1.0`.
 - The burned exact released line is `v1.0.2`.
 - The current published package line on `main` is `1.1.0`.
-- The current develop package line on `develop` is `1.1.0`.
-- No newer exact release candidate line is active on `develop` yet.
+- The current develop package line on `develop` is `1.2.0`.
+- The active exact release candidate line on `develop` is `v1.2.0`.
+- The active release-candidate branch is `release/1.2.0`.
+- The active SemVer opening decision is `minor`.
 - The public GitHub default branch is `main` because it carries the latest
   exact released source line.
 - The public Codespaces evaluation branch is `develop`.
@@ -57,6 +59,11 @@
 ## Steps
 
 1. Ensure branch promotion followed the governed branch model.
+   - Before opening or promoting the next candidate line, run
+     `npm run branch:governance:assert` or let `npm run design:gate` run it
+     first.
+   - Fail closed if `develop` does not yet contain the exact released `main`
+     baseline.
    - Land integration work on `develop`.
    - Promote release candidates from `develop` into `main`.
    - Do not tag from `develop`.
@@ -123,6 +130,25 @@
     - update `docs/product/public-github-source-publication-ledger.{md,json}`
 14. Keep public source publication separate from public GitHub wiki
     publication; one publication act does not imply the other.
+15. Mark a candidate `review-ready` only after the maintained public candidate
+    surfaces are actually published.
+    - local authority-green proof is necessary but not sufficient
+    - the maintained public `develop` candidate head must be live
+    - the maintained public wiki head must be live
+    - both published heads must be retained in
+      `docs/product/public-release-candidate.{md,json}`
+    - do not open the next human review gate until that `review-ready` state is
+      recorded
+16. Treat dirty public source/wiki worktrees as governed publication surfaces,
+    not as a generic stopping point.
+    - preserve unrelated dirt
+    - inspect overlapping changes
+    - patch only the maintained candidate files narrowly
+    - pause only when a direct unresolved conflict remains
+    - do not publish blindly, but do not stop publication solely because the
+      worktree is dirty
+17. Keep exact tagging blocked until the post-publication human review gate is
+    accepted on the maintained public candidate surfaces.
 
 ## Retained Evidence
 
@@ -164,5 +190,6 @@
   `CHANGELOG.md`, and it should not rewrite the retained `v0.2.0`, `v1.0.0`,
   `v1.0.1`, burned `v1.0.2`, exact `v1.0.3`, exact `v1.0.4`, exact `v1.0.5`,
   exact `v1.0.6`, or exact `v1.1.0` release evidence.
-- The current develop package line on `develop` is `1.1.0`, and no newer
-  exact release candidate line is active on `develop` yet.
+- The current develop package line on `develop` is `1.2.0`, the active exact
+  release candidate line is `v1.2.0`, `release/1.2.0` is the active
+  release-candidate branch, and the opening decision remains `minor`.

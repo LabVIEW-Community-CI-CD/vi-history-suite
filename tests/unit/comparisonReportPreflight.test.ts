@@ -8,7 +8,8 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import {
   buildRevisionBlobSpecifier,
-  preflightComparisonReportRevisions
+  preflightComparisonReportRevisions,
+  resolveRevisionRelativePaths
 } from '../../src/reporting/comparisonReportPreflight';
 
 const execFileAsync = promisify(execFile);
@@ -85,12 +86,14 @@ describe('comparisonReportPreflight', () => {
       blockedReason: undefined,
       left: {
         revisionId: leftRevisionId,
+        resolvedRelativePath: relativePath,
         blobSpecifier: `${leftRevisionId}:${relativePath}`,
         signature: 'LVIN',
         isVi: true
       },
       right: {
         revisionId: rightRevisionId,
+        resolvedRelativePath: relativePath,
         blobSpecifier: `${rightRevisionId}:${relativePath}`,
         signature: 'LVCC',
         isVi: true
@@ -125,12 +128,14 @@ describe('comparisonReportPreflight', () => {
       blockedReason: 'left-blob-not-vi',
       left: {
         revisionId: 'abcdef1234567890',
+        resolvedRelativePath: relativePath,
         blobSpecifier: 'abcdef1234567890:Tooling/deployment/VIP_Pre-Install Custom Action.vi',
         isVi: false,
         blockedReason: 'blob-not-vi'
       },
       right: {
         revisionId: '1111111122222222',
+        resolvedRelativePath: relativePath,
         blobSpecifier: '1111111122222222:Tooling/deployment/VIP_Pre-Install Custom Action.vi',
         isVi: false,
         blockedReason: 'blob-read-failed'
@@ -174,12 +179,14 @@ describe('comparisonReportPreflight', () => {
       blockedReason: 'right-blob-read-failed',
       left: {
         revisionId: 'abcdef1234567890',
+        resolvedRelativePath: relativePath,
         blobSpecifier: 'abcdef1234567890:Tooling/deployment/VIP_Pre-Install Custom Action.vi',
         signature: 'LVIN',
         isVi: true
       },
       right: {
         revisionId: '1111111122222222',
+        resolvedRelativePath: relativePath,
         blobSpecifier: '1111111122222222:Tooling/deployment/VIP_Pre-Install Custom Action.vi',
         isVi: false,
         blockedReason: 'blob-read-failed'
@@ -216,15 +223,78 @@ describe('comparisonReportPreflight', () => {
       blockedReason: 'right-blob-not-vi',
       left: {
         revisionId: 'abcdef1234567890',
+        resolvedRelativePath: relativePath,
         blobSpecifier: 'abcdef1234567890:Tooling/deployment/VIP_Pre-Install Custom Action.vi',
         signature: 'LVIN',
         isVi: true
       },
       right: {
         revisionId: '1111111122222222',
+        resolvedRelativePath: relativePath,
         blobSpecifier: '1111111122222222:Tooling/deployment/VIP_Pre-Install Custom Action.vi',
         isVi: false,
         blockedReason: 'blob-not-vi'
+      }
+    });
+  });
+
+  it('resolves revision-specific relative paths across a followed rename before blob preflight', async () => {
+    const repoRoot = await createTempRepoRoot();
+    const originalRelativePath = 'Examples/Logging with Helper-VIs.vi';
+    const renamedRelativePath = 'Source/Examples/Logging with Helper-VIs.vi';
+    const originalAbsolutePath = path.join(repoRoot, originalRelativePath);
+    const renamedAbsolutePath = path.join(repoRoot, renamedRelativePath);
+
+    await git(repoRoot, ['init']);
+    await git(repoRoot, ['config', 'user.name', 'VI History Suite']);
+    await git(repoRoot, ['config', 'user.email', 'vi-history-suite@example.com']);
+
+    await fs.mkdir(path.dirname(originalAbsolutePath), { recursive: true });
+    await writeViLikeFile(originalAbsolutePath, 'LVIN');
+    await git(repoRoot, ['add', originalRelativePath]);
+    await git(repoRoot, ['commit', '-m', 'Add example VI']);
+    const leftRevisionId = await git(repoRoot, ['rev-parse', 'HEAD']);
+
+    await fs.mkdir(path.dirname(renamedAbsolutePath), { recursive: true });
+    await fs.rename(originalAbsolutePath, renamedAbsolutePath);
+    await git(repoRoot, ['add', '-A']);
+    await git(repoRoot, ['commit', '-m', 'Move example VI into source tree']);
+    const rightRevisionId = await git(repoRoot, ['rev-parse', 'HEAD']);
+
+    await expect(
+      resolveRevisionRelativePaths(repoRoot, renamedRelativePath, [leftRevisionId, rightRevisionId])
+    ).resolves.toEqual(
+      new Map([
+        [leftRevisionId, originalRelativePath],
+        [rightRevisionId, renamedRelativePath]
+      ])
+    );
+
+    await expect(
+      preflightComparisonReportRevisions({
+        repoRoot,
+        relativePath: renamedRelativePath,
+        leftRevisionId,
+        rightRevisionId,
+        strictRsrcHeader: true
+      })
+    ).resolves.toEqual({
+      normalizedRelativePath: renamedRelativePath,
+      ready: true,
+      blockedReason: undefined,
+      left: {
+        revisionId: leftRevisionId,
+        resolvedRelativePath: originalRelativePath,
+        blobSpecifier: `${leftRevisionId}:${originalRelativePath}`,
+        signature: 'LVIN',
+        isVi: true
+      },
+      right: {
+        revisionId: rightRevisionId,
+        resolvedRelativePath: renamedRelativePath,
+        blobSpecifier: `${rightRevisionId}:${renamedRelativePath}`,
+        signature: 'LVIN',
+        isVi: true
       }
     });
   });

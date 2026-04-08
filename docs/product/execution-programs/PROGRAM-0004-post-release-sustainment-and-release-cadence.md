@@ -43,6 +43,7 @@ rerun remains explicit under reopened `PROGRAM-0002`.
 7. public GitHub workflow responsibility and churn-control governance
 8. hosted GitLab/GitHub protection semantics and workflow-lane classification
 9. public-source promotion target-root hygiene for local governed publication
+10. review-ready candidate publication boundary and dirty-public-surface handling
 
 ## Queue Mapping
 
@@ -94,6 +95,11 @@ Every slice must preserve:
   characterization-only experiment workflows
 - one governed public-source target-root rule so local promotion/check binds
   the intended checkout and fails closed on dirty side worktrees
+- one governed review-ready boundary so local authority-green proof does not
+  reopen human review before the maintained public candidate heads are actually
+  published and retained
+- one governed dirty-public-surface rule so candidate publication preserves
+  unrelated dirt and pauses only on direct unresolved conflicts
 
 ## First Implementation Slice
 

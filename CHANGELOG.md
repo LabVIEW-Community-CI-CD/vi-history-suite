@@ -7,6 +7,23 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.2.0] - 2026-04-07
+
+### Changed
+
+- `v1.1.0` remains the exact public release line on `main`, while `develop`
+  now carries the active `1.2.0` candidate line for the next public release
+- the `1.2.0` line opens one governed public Codespaces/bootstrap capability
+  for public `github.com` and `gitlab.com` HTTPS repos, with explicit branch
+  honor, remote default-branch resolution when the branch is omitted, and a
+  visible repo-sibling clone target instead of a hidden cache path
+- `npm run design:gate` now begins with a governed branch-baseline assertion so
+  future candidate work fails closed when `develop` has not yet been realigned
+  to the exact released `main` line
+- the exact `v1.2.0` tag is intentionally blocked until the public wiki
+  procedures for this new bootstrap path are reviewed and accepted on the
+  candidate line
+
 ## [1.1.0] - 2026-04-07
 
 ### Changed

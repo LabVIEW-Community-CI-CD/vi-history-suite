@@ -203,6 +203,55 @@ describe('comparisonReportRuntimeExecution', () => {
     );
   });
 
+  it('stages each revision from its resolved historical relative path when the VI moved', async () => {
+    const readRevisionBlob = vi
+      .fn()
+      .mockResolvedValueOnce(Buffer.from('left'))
+      .mockResolvedValueOnce(Buffer.from('right'));
+    const record = createReadyRecord();
+    record.preflight.left.resolvedRelativePath = 'Examples/foo.vi';
+    record.preflight.left.blobSpecifier = '1111111122222222:Examples/foo.vi';
+    record.preflight.right.resolvedRelativePath = 'Source/Examples/foo.vi';
+    record.preflight.right.blobSpecifier = 'abcdef1234567890:Source/Examples/foo.vi';
+    record.preflight.normalizedRelativePath = 'Source/Examples/foo.vi';
+    record.artifactPlan.normalizedRelativePath = 'Source/Examples/foo.vi';
+
+    await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob,
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        pathExists: vi.fn().mockResolvedValue(true),
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 0,
+          stdout: 'command stdout',
+          stderr: ''
+        }),
+        nowIso: vi.fn().mockReturnValueOnce('2026-04-02T01:00:00.000Z').mockReturnValueOnce('2026-04-02T01:00:03.000Z'),
+        nowMs: vi.fn().mockReturnValueOnce(1000).mockReturnValueOnce(4000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32'
+      }
+    );
+
+    expect(readRevisionBlob).toHaveBeenNthCalledWith(
+      1,
+      '/workspace/repo',
+      '1111111122222222',
+      'Examples/foo.vi'
+    );
+    expect(readRevisionBlob).toHaveBeenNthCalledWith(
+      2,
+      '/workspace/repo',
+      'abcdef1234567890',
+      'Source/Examples/foo.vi'
+    );
+  });
+
   it('fails with an explicit reason when the governed command exits without generating the report file', async () => {
     const result = await executeComparisonReport(
       {

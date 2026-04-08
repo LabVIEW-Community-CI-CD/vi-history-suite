@@ -187,10 +187,17 @@ describe('createOpenViHistoryCommand', () => {
     expect(createWebviewPanelMock).not.toHaveBeenCalled();
   });
 
-  it('shows an informational message when the selected file is not eligible', async () => {
+  it('loads the selected file directly and then reports ineligible results', async () => {
     const targetUri = createMockUri('/workspace/ineligible.vi');
     const historyService = {
-      load: vi.fn()
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'ineligible.vi',
+        signature: 'unknown',
+        eligible: false,
+        commits: []
+      })
     };
     const eligibilityIndexer = {
       isEligible: vi.fn().mockReturnValue(false)
@@ -204,11 +211,11 @@ describe('createOpenViHistoryCommand', () => {
 
     await command(targetUri as never);
 
-    expect(eligibilityIndexer.isEligible).toHaveBeenCalledWith(targetUri);
+    expect(eligibilityIndexer.isEligible).not.toHaveBeenCalled();
+    expect(historyService.load).toHaveBeenCalledWith(targetUri);
     expect(showInformationMessageMock).toHaveBeenCalledWith(
       'The selected file is not currently eligible for VI History.'
     );
-    expect(historyService.load).not.toHaveBeenCalled();
     expect(createWebviewPanelMock).not.toHaveBeenCalled();
   });
 
@@ -646,7 +653,6 @@ describe('createOpenViHistoryCommand', () => {
 
     await command();
 
-    expect(eligibilityIndexer.isEligible).toHaveBeenCalledWith(targetUri);
     expect(historyService.load).toHaveBeenCalledWith(targetUri);
     expect(createWebviewPanelMock).toHaveBeenCalledWith(
       'viHistorySuite.history',

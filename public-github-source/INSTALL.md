@@ -48,6 +48,9 @@ GitHub still opens the public repo on `main` by default. That is expected:
 `main` is the latest exact released line, while `develop` is the explicit
 evaluation branch for the next candidate.
 
+Treat the public wiki pages as the canonical first-time procedures. This page
+keeps the public install and evaluation paths summarized.
+
 Fast path:
 
 1. Open your fork in a Codespace or devcontainer on `develop`.
@@ -72,6 +75,43 @@ This clones `ni/labview-icon-editor` into a visible sibling folder named
 `labview-icon-editor`. In a GitHub Codespace created from this repo, the exact
 folder path is `/workspaces/labview-icon-editor`.
 
+If you want a generic public GitHub or GitLab repo instead, run:
+
+```bash
+npm run public:repo:clone
+```
+
+Paste the repo URL when prompted. If you press `Esc`, the prompt stops and you
+can fall back to the canonical sample helper:
+
+```bash
+npm run public:fixture:icon-editor
+```
+
+If you prefer a non-interactive command, use this template:
+
+```bash
+npm run public:repo:clone -- --repo-url https://github.com/<owner>/<repo>.git
+```
+
+Supported repo URLs are public `https://github.com/...` and
+`https://gitlab.com/...` only.
+
+Examples:
+
+```bash
+npm run public:repo:clone -- --repo-url https://gitlab.com/hampel-soft/open-source/hse-logger.git
+```
+
+```bash
+npm run public:repo:clone -- --repo-url https://github.com/crossrulz/SerialPortNuggets.git
+```
+
+If you need a specific branch, add `--branch <branch-name>`. Otherwise omit
+`--branch` and let the command resolve the remote default branch automatically,
+so the same command works for public repos that use `main`, `master`, or
+another default branch.
+
 If you want the full fork-owner walkthrough for the canonical public sample VI,
 use the public wiki page:
 
@@ -83,20 +123,29 @@ out:
 - deselect `Copy the main branch only` when creating the fork
 - `Codespaces` `...` -> `New with options`
 - the `develop` branch selection
-- `16-core` machine selection
+- that `16-core` is the supported first-time machine, with the largest
+  available fallback treated as best-effort
 - the browser message `Setting up remote connection: Building codespace`
 - the expected port `6010` forwarding dialog
 - the exact `Open Folder...` path for `lv_icon.vi`
 - the exact helper command to clone `ni/labview-icon-editor`
 - that the page is first-time-only, with refresh steps kept separate
+- that the intended dry-run review starts from a brand new fork and a brand
+  new Codespace
 
 For refresh-only steps after the first successful Codespace setup, use:
 
 - `https://github.com/svelderrainruiz/vi-history-suite/wiki/Refresh-Codespace-Repositories`
 
-If you want the separate manual-clone walkthrough for `ni/actor-framework`, use:
+If you want the reference manual for reviewing the changes of a LabVIEW VI
+between two commits on any public GitHub or GitLab repo, use:
 
-- `https://github.com/svelderrainruiz/vi-history-suite/wiki/Manual-Actor-Framework-Clone`
+- `https://github.com/svelderrainruiz/vi-history-suite/wiki/Review-Public-LabVIEW-VI-Changes`
+
+That page is first-time-only, assumes a brand new fork plus a brand new
+Codespace, tells the user to use the exact folder path printed by the clone
+command, and includes documented example VIs for both the public GitLab
+`hse-logger` repo and the public GitHub `SerialPortNuggets` repo.
 
 The public Linux cold-pull smoke lane is:
 
