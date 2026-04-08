@@ -2,7 +2,7 @@
   "schema": "vi-history-suite/public-release-candidate@v1",
   "versionLine": "1.2.2",
   "burnedExactReleaseLine": "v1.0.2",
-  "recordedAt": "2026-04-08T07:05:20Z",
+  "recordedAt": "2026-04-08T07:58:39Z",
   "authorityRepo": {
     "role": "source-of-truth",
     "integrationBranch": "develop",
@@ -20,9 +20,9 @@
   },
   "publishedPublicSource": {
     "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
-    "publishedCommit": "2547344",
+    "publishedCommit": "86b19a2",
     "publicationLedgerPath": "docs/product/public-github-source-publication-ledger.json",
-    "status": "published-exact-v1.2.1-main"
+    "status": "published-exact-v1.2.2-main"
   },
   "publicDevelopCandidate": {
     "branch": "develop",
@@ -37,9 +37,9 @@
   },
   "publishedPublicWiki": {
     "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite.wiki.git",
-    "publishedHeadCommit": "f6ed8a5",
+    "publishedHeadCommit": "527a8b4",
     "publicationLedgerPath": "docs/product/public-github-wiki-publication-ledger.json",
-    "status": "published-current-state-refresh"
+    "status": "published-exact-release-wiki-closeout"
   },
   "candidateReadiness": {
     "authorityBaseline": "v1.2.1-exact-public-release-published",
@@ -48,7 +48,7 @@
     "localPublicFixtureHelper": "v1.1.0-published-baseline",
     "historicalPublicRepoBootstrapBaseline": "exact-v1.2.0-human-baseline-retained",
     "publishedSurfaceExpertAgentReview": "no-findings",
-    "exactPublicRelease": "v1.2.1-published"
+    "exactPublicRelease": "v1.2.2-published"
   },
   "findingClassifications": [
     {
@@ -90,12 +90,12 @@
     }
   ],
   "exactRelease": {
-    "version": "v1.2.1",
-    "gitHubReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.2.1",
-    "gitHubAssetName": "vi-history-suite-1.2.1.vsix",
-    "gitHubAssetSha256": "19129777e6e88d0b8667b11afad78889bddd1ca9ede263d9d2e003a5c5e15e7c",
+    "version": "v1.2.2",
+    "gitHubReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.2.2",
+    "gitHubAssetName": "vi-history-suite-1.2.2.vsix",
+    "gitHubAssetSha256": "182b7b033fddc09191b6a7852bc94a045a9cc6847a4e3c22661dd288e42f76a9",
     "marketplaceItemName": "svelderrainruiz.vi-history-suite",
-    "marketplaceVersion": "1.2.1",
+    "marketplaceVersion": "1.2.2",
     "marketplaceVerification": "official-gallery-extensionquery-verified",
     "integrationBranch": "develop",
     "releaseBranch": "main"
@@ -149,10 +149,10 @@
     },
     "latestPublishedSurfaceReview": {
       "status": "no-findings",
-      "retainedAt": "2026-04-08T07:13:50Z",
+      "retainedAt": "2026-04-08T07:58:39Z",
       "verdict": "no findings; exact release / Marketplace publish may proceed",
-      "reviewedPublicDevelopCommit": "12391e1",
-      "reviewedPublicWikiHead": "f6ed8a5",
+      "reviewedPublicDevelopCommit": "86b19a2",
+      "reviewedPublicWikiHead": "527a8b4",
       "priorReviewedPublicDevelopCommit": "96944d7",
       "priorReviewedPublicWikiHead": "d6da0c4",
       "priorVerdict": "findings-present",

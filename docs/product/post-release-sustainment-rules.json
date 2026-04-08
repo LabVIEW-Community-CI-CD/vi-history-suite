@@ -23,13 +23,14 @@
         "v1.0.6",
         "v1.1.0",
         "v1.2.0",
-        "v1.2.1"
+        "v1.2.1",
+        "v1.2.2"
       ],
       "burnedExactVersionReleases": [
         "v1.0.2"
       ],
-      "currentExactReleaseLine": "v1.2.1",
-      "currentMainPackageLine": "1.2.1",
+      "currentExactReleaseLine": "v1.2.2",
+      "currentMainPackageLine": "1.2.2",
       "currentDevelopPackageLine": "1.2.2",
       "activeDevelopCandidateReleaseLine": "v1.2.2",
       "activeReleaseCandidateBranch": null,

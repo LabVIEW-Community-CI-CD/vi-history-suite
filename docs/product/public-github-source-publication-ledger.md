@@ -10,7 +10,7 @@ The machine-readable companion surface for this ledger is:
 
 - `docs/product/public-github-source-publication-ledger.json`
 
-Current published public GitHub source HEAD: `2547344`
+Current published public GitHub source HEAD: `86b19a2`
 
 ## Publications
 
@@ -34,6 +34,7 @@ Current published public GitHub source HEAD: `2547344`
 | Public source v1.2.2 Docker-first-run and closeout-governance refresh | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-08` | `894cd5f` | `README.md`; `INSTALL.md`; `CHANGELOG.md`; `docs/product/current-state.md`; `docs/release-procedure.md`; `docs/product/post-release-sustainment-rules.md`; `docs/product/extension-execution-policy.md`; `resources/bundled-docs/manifest.json` |
 | Public source v1.2.2 installed-user entry clarification follow-up | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-08` | `96944d7` | `README.md`; `docs/product/current-state.md`; `docs/product/public-release-candidate.md`; `docs/product/public-github-wiki-publication-ledger.md`; `resources/bundled-docs/manifest.json` |
 | Public source v1.2.2 bundled installed-user docs refresh | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-08` | `12391e1` | `docs/product/current-state.md`; `docs/product/public-release-candidate.md`; `resources/bundled-docs/manifest.json` |
+| Public source v1.2.2 exact release | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-08` | `86b19a2` | `README.md`; `CHANGELOG.md`; `docs/product/current-state.md`; `docs/product/public-release-candidate.md`; `docs/release-procedure.md`; `package.json` |
 
 ## Publication Rules
 

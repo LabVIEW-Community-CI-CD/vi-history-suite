@@ -482,10 +482,10 @@ Latest landed ship target:
 - `SHIP-0001`: releasable `v0.2.0` VSIX product
 - landed ship tranche: `TRANCHE-009`
 - landed ship issue: `ISSUE-0406`
-- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`
+- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`, `v1.2.2`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.2.1`
-- current published package line on `main`: `1.2.1`
+- current exact released line: `v1.2.2`
+- current published package line on `main`: `1.2.2`
 - current develop package line on `develop`: `1.2.2`
 - active exact release candidate line on `develop`: `v1.2.2`
 - no newer `release/*` branch is active yet
@@ -508,13 +508,13 @@ Latest landed ship target:
 - docs-authoring image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
 - retained release evidence: GitLab release `v0.2.0`, tag pipeline `2428809456`,
   release job `13779604462`
-- remaining release blockers: none on the exact public `v1.2.1` line; public
-  `main` now publishes `2547344`, the public GitHub release `v1.2.1` is live,
-  the VS Code Marketplace listing now publishes
-  `svelderrainruiz.vi-history-suite` version `1.2.1`, `develop` is now opened
-  on `1.2.2`, and the next candidate line is intentionally focused on
-  first-run missing-Docker guidance plus automatic release-closeout
-  back-merge follow-through
+- remaining release blockers: none on the exact public `v1.2.2` line; public
+  `main` now publishes `86b19a2`, the public GitHub release `v1.2.2` is live,
+  the maintained public wiki now publishes `527a8b4`, the official gallery
+  extension query verifies Marketplace version `1.2.2` for
+  `svelderrainruiz.vi-history-suite`, and the latest retained expert-agent
+  review returned no findings on the exact published public `main` / wiki
+  heads `86b19a2` / `527a8b4`
 
 ## Install Surface
 

@@ -40,11 +40,11 @@ describe('vs code marketplace publication and installed-user docs', () => {
       'https://marketplace.visualstudio.com/items?itemName=svelderrainruiz.vi-history-suite'
     );
     expect(ledger.homepageUrl).toBe('https://github.com/svelderrainruiz/vi-history-suite/wiki');
-    expect(ledger.currentPublishedVersion).toBe('1.2.1');
+    expect(ledger.currentPublishedVersion).toBe('1.2.2');
     expect(ledger.currentVerificationSurface).toBe('official-gallery-extensionquery');
     expect(ledger.secretHandling).toContain('do-not-retain-pat');
 
-    expect(ledgerDoc).toContain('Current published Marketplace version: `1.2.1`');
+    expect(ledgerDoc).toContain('Current published Marketplace version: `1.2.2`');
     expect(ledgerDoc).toContain('manual-marketplace-portal-upload');
     expect(ledgerDoc).toContain('pinned-vsce-cli');
     expect(ledgerDoc).toContain('official gallery extension query');
@@ -104,10 +104,10 @@ describe('vs code marketplace publication and installed-user docs', () => {
 
     expect(install).toContain('Installed Extension Users');
     expect(install).toContain(
-      'retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`'
+      'retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`, `v1.2.2`'
     );
     expect(install).toContain('VS Code Marketplace listing');
-    expect(install).toContain('exact released VSIX from GitHub release `v1.2.1`');
+    expect(install).toContain('exact released VSIX from GitHub release `v1.2.2`');
     expect(install).toContain("docker info --format '{{.OSType}}'");
     expect(install).toContain('If those checks fail, install or start Docker before expecting image');
     expect(install).toContain('Use this lane only when you want to evaluate the source repo');

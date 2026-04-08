@@ -100,8 +100,8 @@ describe('public release candidate control surface', () => {
       ])
     );
     expect(candidate.publishedPublicSource).toMatchObject({
-      publishedCommit: '2547344',
-      status: 'published-exact-v1.2.1-main'
+      publishedCommit: '86b19a2',
+      status: 'published-exact-v1.2.2-main'
     });
     expect(candidate.publicDevelopCandidate).toMatchObject({
       branch: 'develop',
@@ -110,15 +110,15 @@ describe('public release candidate control surface', () => {
       sourcePullRequest: '#27'
     });
     expect(candidate.publishedPublicWiki).toMatchObject({
-      publishedHeadCommit: 'f6ed8a5',
-      status: 'published-current-state-refresh'
+      publishedHeadCommit: '527a8b4',
+      status: 'published-exact-release-wiki-closeout'
     });
     expect(candidate.candidateReadiness).toMatchObject({
       authorityBaseline: 'v1.2.1-exact-public-release-published',
       localInstalledVsix: 'candidate-v1.2.2-package-built-through-design-gate',
       historicalPublicRepoBootstrapBaseline: 'exact-v1.2.0-human-baseline-retained',
       publishedSurfaceExpertAgentReview: 'no-findings',
-      exactPublicRelease: 'v1.2.1-published'
+      exactPublicRelease: 'v1.2.2-published'
     });
     expect(candidate.findingClassifications).toEqual(
       expect.arrayContaining([
@@ -142,9 +142,9 @@ describe('public release candidate control surface', () => {
       ])
     );
     expect(candidate.exactRelease).toMatchObject({
-      version: 'v1.2.1',
-      gitHubAssetName: 'vi-history-suite-1.2.1.vsix',
-      marketplaceVersion: '1.2.1'
+      version: 'v1.2.2',
+      gitHubAssetName: 'vi-history-suite-1.2.2.vsix',
+      marketplaceVersion: '1.2.2'
     });
     expect(candidate.historicalHumanProofs?.latestSubmission).toMatchObject({
       outcome: 'passed-human-review',
@@ -158,8 +158,8 @@ describe('public release candidate control surface', () => {
     });
     expect(candidate.expertAgentReviewProofs?.latestPublishedSurfaceReview).toMatchObject({
       status: 'no-findings',
-      reviewedPublicDevelopCommit: '12391e1',
-      reviewedPublicWikiHead: 'f6ed8a5',
+      reviewedPublicDevelopCommit: '86b19a2',
+      reviewedPublicWikiHead: '527a8b4',
       priorVerdict: 'findings-present',
       priorFindingCount: 2
     });
@@ -173,9 +173,9 @@ describe('public release candidate control surface', () => {
     expect(candidate.activeBlockers).toEqual([]);
 
     expect(candidateMarkdown).toContain('Version line: `1.2.2`');
-    expect(candidateMarkdown).toContain('Published public source commit: `2547344`');
+    expect(candidateMarkdown).toContain('Published public source commit: `86b19a2`');
     expect(candidateMarkdown).toContain('Public `develop` candidate commit: `12391e1`');
-    expect(candidateMarkdown).toContain('Published public wiki head: `f6ed8a5`');
+    expect(candidateMarkdown).toContain('Published public wiki head: `527a8b4`');
     expect(candidateMarkdown).toContain('Published-surface expert-agent review:');
     expect(candidateMarkdown).toContain('`no-findings`');
     expect(candidateMarkdown).toContain('Required skill: `vi-history-suite-expert-agent-reviewer`');
@@ -186,18 +186,19 @@ describe('public release candidate control surface', () => {
     expect(candidateMarkdown).toContain('FINDING-1.2.2-001-MISSING-DOCKER-FIRST-RUN-BOUNDARY');
     expect(candidateMarkdown).toContain('FINDING-1.2.2-002-EXACT-CLOSEOUT-BACKMERGE-OPERATOR-GAP');
     expect(candidateMarkdown).toContain('FINDING-1.2.2-003-MANUAL-REVIEW-GATE-DEPENDENCY');
-    expect(candidateMarkdown).toContain('No release-path blocker remains on exact `v1.2.1`.');
+    expect(candidateMarkdown).toContain('No release-path blocker remains on exact `v1.2.2`.');
     expect(candidateMarkdown).toContain(
       'no findings; exact release / Marketplace publish may proceed'
     );
     expect(candidateMarkdown).toContain('No active expert-agent blocker remains on `v1.2.2`');
 
-    expect(currentState).toContain('current exact released line: `v1.2.1`');
+    expect(currentState).toContain('current exact released line: `v1.2.2`');
     expect(currentState).toContain('current develop package line on `develop`: `1.2.2`');
     expect(currentState).toContain('active exact release candidate line on `develop`: `v1.2.2`');
     expect(currentState).toContain('candidate commit `12391e1`');
-    expect(currentState).toContain('`f6ed8a5`');
-    expect(currentState).toContain('clean no-findings expert-agent verdict via');
+    expect(currentState).toContain('`527a8b4`');
+    expect(currentState).toContain('clean no-findings');
+    expect(currentState).toContain('expert-agent verdict via');
     expect(currentState).toContain('vi-history-suite-expert-agent-reviewer');
 
     expect(srs).toContain('VHS-REQ-527');

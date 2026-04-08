@@ -32,9 +32,10 @@ describe('public Codespaces public-repo bootstrap docs', () => {
     expect(currentState).toContain('`TRANCHE-014`: Public Codespaces public-repo bootstrap');
     expect(currentState).toContain('canonical `npm run public:fixture:icon-editor` helper-backed path');
     expect(currentState).toContain('generic `npm run public:repo:clone` surface');
-    expect(currentState).toContain('current exact released line: `v1.2.1`');
+    expect(currentState).toContain('current exact released line: `v1.2.2`');
     expect(currentState).toContain('active exact release candidate line on `develop`: `v1.2.2`');
-    expect(currentState).toContain('clean no-findings expert-agent verdict via');
+    expect(currentState).toContain('clean no-findings');
+    expect(currentState).toContain('expert-agent verdict via');
     expect(currentState).toContain('vi-history-suite-expert-agent-reviewer');
 
     expect(candidate).toContain(
@@ -47,7 +48,7 @@ describe('public Codespaces public-repo bootstrap docs', () => {
     expect(candidate).toContain('Published-surface expert-agent review:');
     expect(candidate).toContain('`no-findings`');
     expect(candidate).toContain('Required skill: `vi-history-suite-expert-agent-reviewer`');
-    expect(candidate).toContain('Exact public release: `v1.2.1-published`');
+    expect(candidate).toContain('Exact public release: `v1.2.2-published`');
     expect(candidate).toContain('remains historical exact');
     expect(candidate).toContain('`v1.2.0` baseline evidence only');
     expect(candidate).toContain('No active expert-agent blocker remains on `v1.2.2`');
