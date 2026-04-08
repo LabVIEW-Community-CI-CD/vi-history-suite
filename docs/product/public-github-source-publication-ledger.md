@@ -10,7 +10,7 @@ The machine-readable companion surface for this ledger is:
 
 - `docs/product/public-github-source-publication-ledger.json`
 
-Current published public GitHub source HEAD: `c9806c3`
+Current published public GitHub source HEAD: `ac56456`
 
 ## Publications
 
@@ -27,6 +27,7 @@ Current published public GitHub source HEAD: `c9806c3`
 | Public source v1.0.6 exact release | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-07` | `66bdf73` | `README.md`; `CHANGELOG.md`; `docs/product/public-release-candidate.md`; `docs/release-procedure.md`; `package.json` |
 | Public source v1.1.0 exact release | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-07` | `daef8bd` | `README.md`; `CHANGELOG.md`; `docs/product/public-release-candidate.md`; `docs/release-procedure.md`; `package.json` |
 | Public source v1.2.0 candidate doc-clarification refresh | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-07` | `c9806c3` | `README.md`; `INSTALL.md`; `docs/product/current-state.md`; `docs/product/public-release-candidate.md` |
+| Public source v1.2.0 candidate moved-VI and bundled-doc refresh | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-08` | `ac56456` | `docs/product/current-state.md`; `docs/product/public-release-candidate.md`; `docs/requirements/srs.md`; `docs/testing/test-plan.md` |
 
 ## Publication Rules
 

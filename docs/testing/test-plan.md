@@ -1683,6 +1683,11 @@
   candidate files narrowly, and pauses only on direct unresolved conflicts
   instead of stopping candidate publication merely because the worktree is
   dirty
+- `TEST-UNIT-335`: verify comparison-report preflight and runtime staging
+  resolve selected/base historical VI paths per revision when a compared VI
+  moved or was renamed between the two retained commits, so moved-VI pairs do
+  not fail with stale current-path blob reads when follow history can still
+  resolve both sides
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are

@@ -204,7 +204,6 @@ const bundledPageConfigs = {
         '- `Open at commit`: open the selected retained revision',
         '- `Copy hash`: copy the retained commit hash',
         '- `Open docs`: open the bundled user documentation that ships with the installed extension version',
-        '- `Diff prev`: for content-detected VIs, retained comparison evidence still opens through governed comparison routing instead of plain text diff',
         '',
         'Practical selection rule:',
         '',
@@ -236,7 +235,7 @@ const bundledPageConfigs = {
     headings: [
       'Comparison Report Contract',
       'Runtime Doctor',
-      'Retained Pair Review',
+      'Checkbox-Selected Pair Review',
       'Progress, Cancellation, And Trust'
     ],
     replacements: {
@@ -266,14 +265,14 @@ const bundledPageConfigs = {
         '- blocked or failure reason when present',
         '- one bounded next action'
       ].join('\n'),
-      'Retained Pair Review': [
-        'At the history-panel level, pair review is checkbox-driven.',
+      'Checkbox-Selected Pair Review': [
+        'At the history-panel level, comparison review is checkbox-driven.',
         '',
         '- the primary compare path is selecting two retained revisions with the checkbox column',
         '- the second checkbox selection generates the comparison automatically for that exact selected/base pair',
         '- the oldest retained revision can still serve as the older/base side of a checkbox-selected pair',
         '- there is no separate compare button on commit rows for extension users',
-        '- `Diff prev` uses retained comparison evidence for governed VI review instead of falling back to VS Code text diff on binary VI content'
+        '- retained comparison evidence opens from the checkbox-selected pair instead of falling back to VS Code text diff on binary VI content'
       ].join('\n'),
       'Progress, Cancellation, And Trust': [
         'Comparison work is long-running enough that the extension treats it as an explicit progress surface.',

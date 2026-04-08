@@ -90,7 +90,11 @@ describe('public facade linux smoke', () => {
     expect(workflow).toContain('  push:');
     expect(workflow).toContain("      - 'release/**'");
     expect(workflow).toContain("      - 'hotfix/**'");
-    expect(workflow).toContain("      - 'scripts/runPublicFacadeLinuxSmoke.js'");
+    expect(workflow).toContain("      - '.github/workflows/public-facade-package-preview.yml'");
+    expect(workflow).toContain("      - 'INSTALL.md'");
+    expect(workflow).toContain("      - 'resources/**'");
+    expect(workflow).toContain("      - 'scripts/**'");
+    expect(workflow).toContain("      - 'tests/**'");
     expect(workflow).toContain("      - 'src/**'");
     expect(workflow).toContain('  pull_request:');
     expect(workflow).not.toContain('feature/**');

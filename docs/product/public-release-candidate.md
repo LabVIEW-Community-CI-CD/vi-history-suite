@@ -2,11 +2,11 @@
 
 - Version line: `1.2.0`
 - Burned exact release line: `v1.0.2`
-- Recorded at: `2026-04-07T23:43:38Z`
+- Recorded at: `2026-04-08T00:43:15Z`
 - Authority source of truth: GitLab `develop` -> `main`
 - Published public source commit: `daef8bd`
 - Authority `develop` candidate baseline: `8c99163`
-- Public `develop` candidate commit: `c9806c3`
+- Public `develop` candidate commit: `ac56456`
 - Published public wiki head: `b30d356`
 
 ## Branch Model
@@ -31,7 +31,7 @@
 - Local authority findings fold:
   `published-and-retained-on-maintained-public-candidate-surfaces`
 - Public repo bootstrap:
-  `published-maintained-candidate-with-doc-clarification-fold`
+  `published-maintained-candidate-with-moved-vi-and-bundled-doc-refresh`
 - Public wiki candidate review:
   `ready-for-next-brand-new-fork-review-on-published-candidate`
 - Review-ready gate:
@@ -107,8 +107,20 @@
   head `c9806c3` through GitHub PR `#16` and on maintained public wiki head
   `b30d356`, and it is validated by the focused doc/package proof plus
   `npm run docs:gate:core` and `npm run design:gate:assert-complete`.
-- The next brand-new-fork review can now reopen against those refreshed
-  maintained public candidate heads.
+- Sergio's brand-new-fork rerun against `hse-logger` then exposed a real
+  moved-VI compare blocker on selected/base pair `81325a7 -> 4a265f6`:
+  compare preflight and runtime staging still assumed the current workspace
+  path on both sides, so the candidate failed closed with
+  `left-blob-read-failed` even though follow history still resolved the same VI
+  across the move.
+- Maintained public `develop` then published the rename-aware compare fix at
+  `fb46cbf` through GitHub PR `#17`.
+- A follow-on refresh then published bundled compare-flow wording cleanup plus
+  the public `public-facade-linux-smoke` required-check path-admission repair
+  at maintained public `develop` head `ac56456` through GitHub PR `#18`, while
+  the maintained public wiki head remained `b30d356`.
+- The next brand-new-fork review can now reopen against maintained public
+  candidate head `ac56456` and maintained public wiki head `b30d356`.
 - The exact `v1.2.0` tag is intentionally blocked until the maintained public
   wiki procedures are dry-run reviewed and accepted from a brand new fork and
   a brand new Codespace.
@@ -170,11 +182,20 @@
     `review-ready` boundary instead of treating local proof as reviewable truth
   - requirement impact: `updated` via `VHS-REQ-519` and `VHS-REQ-520`
   - ADR impact: `updated` via `ADR-0035`
+- `FINDING-1.2.0-004-MOVED-VI-HISTORICAL-PATH-RESOLUTION`
+  - status: `closed`
+  - Sergio's brand-new-fork review found that moved VI pairs could still fail
+    compare preflight with `left-blob-read-failed` even though VI History had
+    correctly followed the file across the rename, so comparison generation now
+    resolves the historical repo-relative path for each revision before blob
+    reads and runtime staging proceed
+  - requirement impact: `updated` via `VHS-REQ-521`
+  - ADR impact: `none`
 
 ## Remaining Blockers
 
 - One final acceptance review from a brand new fork and a brand new Codespace
-  is still required on maintained public `develop` candidate head `c9806c3`
+  is still required on maintained public `develop` candidate head `ac56456`
   and maintained public wiki head `b30d356` before exact tagging.
 - `v1.1.0` remains the current exact green line on `main`, while `v1.2.0`
   stays open on `develop`.

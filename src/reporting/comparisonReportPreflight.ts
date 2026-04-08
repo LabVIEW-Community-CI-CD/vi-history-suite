@@ -11,6 +11,7 @@ export interface ComparisonReportPreflightOptions {
 
 export interface ComparisonReportPreflightBlobResult {
   revisionId: string;
+  resolvedRelativePath?: string;
   blobSpecifier: string;
   signature?: ViSignature;
   isVi: boolean;
@@ -31,6 +32,7 @@ export interface ComparisonReportPreflightResult {
 
 export interface ComparisonReportPreflightDeps {
   readRevisionBlob?: typeof readRevisionBlob;
+  resolveRevisionRelativePaths?: typeof resolveRevisionRelativePaths;
 }
 
 export function buildRevisionBlobSpecifier(revisionId: string, relativePath: string): string {
@@ -57,18 +59,25 @@ export async function preflightComparisonReportRevisions(
     normalizeRelativeGitPath(options.relativePath),
     'relativePath'
   );
+  const resolvedRelativePaths = await (
+    deps.resolveRevisionRelativePaths ?? resolveRevisionRelativePaths
+  )(options.repoRoot, normalizedRelativePath, [options.leftRevisionId, options.rightRevisionId]);
+  const leftRelativePath =
+    resolvedRelativePaths.get(options.leftRevisionId) ?? normalizedRelativePath;
+  const rightRelativePath =
+    resolvedRelativePaths.get(options.rightRevisionId) ?? normalizedRelativePath;
 
   const left = await inspectRevisionBlob(
     options.repoRoot,
     options.leftRevisionId,
-    normalizedRelativePath,
+    leftRelativePath,
     options.strictRsrcHeader ?? false,
     deps.readRevisionBlob ?? readRevisionBlob
   );
   const right = await inspectRevisionBlob(
     options.repoRoot,
     options.rightRevisionId,
-    normalizedRelativePath,
+    rightRelativePath,
     options.strictRsrcHeader ?? false,
     deps.readRevisionBlob ?? readRevisionBlob
   );
@@ -97,6 +106,7 @@ async function inspectRevisionBlob(
     if (!signature) {
       return {
         revisionId,
+        resolvedRelativePath: relativePath,
         blobSpecifier,
         isVi: false,
         blockedReason: 'blob-not-vi'
@@ -105,6 +115,7 @@ async function inspectRevisionBlob(
 
     return {
       revisionId,
+      resolvedRelativePath: relativePath,
       blobSpecifier,
       signature,
       isVi: true
@@ -112,11 +123,117 @@ async function inspectRevisionBlob(
   } catch {
     return {
       revisionId,
+      resolvedRelativePath: relativePath,
       blobSpecifier,
       isVi: false,
       blockedReason: 'blob-read-failed'
     };
   }
+}
+
+export async function resolveRevisionRelativePaths(
+  repoRoot: string,
+  relativePath: string,
+  revisionIds: string[]
+): Promise<Map<string, string>> {
+  const normalizedRelativePath = requireNonEmpty(
+    normalizeRelativeGitPath(relativePath),
+    'relativePath'
+  );
+  const requestedRevisionIds = new Set(
+    revisionIds.map((value) => requireNonEmpty(value, 'revisionId'))
+  );
+  if (requestedRevisionIds.size === 0) {
+    return new Map();
+  }
+
+  try {
+    const stdout = await runGit(
+      ['log', '--follow', '--name-status', '--format=COMMIT %H', '--', normalizedRelativePath],
+      repoRoot,
+      'utf8'
+    );
+    return parseRevisionRelativePathHistory(
+      String(stdout),
+      normalizedRelativePath,
+      requestedRevisionIds
+    );
+  } catch {
+    return new Map();
+  }
+}
+
+function parseRevisionRelativePathHistory(
+  output: string,
+  fallbackRelativePath: string,
+  requestedRevisionIds: ReadonlySet<string>
+): Map<string, string> {
+  const resolved = new Map<string, string>();
+  let currentCommit: string | undefined;
+  let currentStatusLines: string[] = [];
+  let followedRelativePath = fallbackRelativePath;
+
+  const finalizeCurrentCommit = (): void => {
+    if (!currentCommit) {
+      return;
+    }
+
+    const { pathAtCommit, olderPath } = deriveRevisionPathsForCommit(
+      currentStatusLines,
+      followedRelativePath
+    );
+    if (requestedRevisionIds.has(currentCommit)) {
+      resolved.set(currentCommit, pathAtCommit);
+    }
+    followedRelativePath = olderPath;
+  };
+
+  for (const rawLine of output.split(/\r?\n/)) {
+    const line = rawLine.trimEnd();
+    if (line.startsWith('COMMIT ')) {
+      finalizeCurrentCommit();
+      currentCommit = line.slice('COMMIT '.length).trim();
+      currentStatusLines = [];
+      continue;
+    }
+
+    if (line.length === 0) {
+      continue;
+    }
+
+    currentStatusLines.push(line);
+  }
+
+  finalizeCurrentCommit();
+  return resolved;
+}
+
+function deriveRevisionPathsForCommit(
+  statusLines: readonly string[],
+  fallbackRelativePath: string
+): { pathAtCommit: string; olderPath: string } {
+  for (const line of statusLines) {
+    const [status, ...rest] = line.split('\t');
+    if (!status) {
+      continue;
+    }
+
+    if ((status.startsWith('R') || status.startsWith('C')) && rest.length >= 2) {
+      const olderPath = normalizeRelativeGitPath(rest[0]);
+      const pathAtCommit = normalizeRelativeGitPath(rest[1]);
+      return { pathAtCommit, olderPath };
+    }
+
+    if (rest.length >= 1) {
+      const normalizedPath = normalizeRelativeGitPath(rest[0]);
+      return { pathAtCommit: normalizedPath, olderPath: normalizedPath };
+    }
+  }
+
+  return {
+    pathAtCommit: fallbackRelativePath,
+    olderPath: fallbackRelativePath
+  };
 }
 
 function deriveBlockedReason(
