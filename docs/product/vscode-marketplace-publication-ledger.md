@@ -18,7 +18,7 @@ The machine-readable companion surface for this ledger is:
   `https://marketplace.visualstudio.com/items?itemName=svelderrainruiz.vi-history-suite`
 - Installed-user homepage:
   `https://github.com/svelderrainruiz/vi-history-suite/wiki`
-- Current published Marketplace version: `1.2.1`
+- Current published Marketplace version: `1.2.2`
 - Current publication date: `2026-04-08`
 - Current verification surface: official gallery extension query
 
@@ -28,6 +28,7 @@ The machine-readable companion surface for this ledger is:
 | --- | --- | --- | --- | --- | --- |
 | VS Code Marketplace exact release | published | `2026-04-07` | `1.2.0` | `manual-marketplace-portal-upload` | `README.md`; `package.json`; `CHANGELOG.md`; `docs/release-procedure.md` |
 | VS Code Marketplace exact release | published | `2026-04-08` | `1.2.1` | `pinned-vsce-cli` | `README.md`; `package.json`; `CHANGELOG.md`; `docs/release-procedure.md`; `docs/product/current-state.md` |
+| VS Code Marketplace exact release | published | `2026-04-08` | `1.2.2` | `pinned-vsce-cli` | `README.md`; `package.json`; `CHANGELOG.md`; `docs/release-procedure.md`; `docs/product/current-state.md` |
 
 ## Publication Rules
 

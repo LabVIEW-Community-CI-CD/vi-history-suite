@@ -2,11 +2,11 @@
 
 - Version line: `1.2.2`
 - Burned exact release line: `v1.0.2`
-- Recorded at: `2026-04-08T07:05:20Z`
+- Recorded at: `2026-04-08T07:58:39Z`
 - Authority source of truth: GitLab `develop` -> `main`
-- Published public source commit: `2547344`
+- Published public source commit: `86b19a2`
 - Public `develop` candidate commit: `12391e1`
-- Published public wiki head: `f6ed8a5`
+- Published public wiki head: `527a8b4`
 
 ## Branch Model
 
@@ -31,30 +31,30 @@
   `exact-v1.2.0-human-baseline-retained`
 - Published-surface expert-agent review:
   `no-findings`
-- Exact public release: `v1.2.1-published`
+- Exact public release: `v1.2.2-published`
 
 ## Exact Release Baseline
 
-- GitHub release: `v1.2.1`
+- GitHub release: `v1.2.2`
 - GitHub release URL:
-  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.2.1`
-- GitHub asset: `vi-history-suite-1.2.1.vsix`
+  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.2.2`
+- GitHub asset: `vi-history-suite-1.2.2.vsix`
 - GitHub asset SHA-256:
-  `19129777e6e88d0b8667b11afad78889bddd1ca9ede263d9d2e003a5c5e15e7c`
+  `182b7b033fddc09191b6a7852bc94a045a9cc6847a4e3c22661dd288e42f76a9`
 - VS Code Marketplace item: `svelderrainruiz.vi-history-suite`
-- VS Code Marketplace version: `1.2.1`
+- VS Code Marketplace version: `1.2.2`
 
 ## Public Publication
 
-- The exact published public source head on `main` remains `2547344` and is
+- The exact published public source head on `main` now publishes `86b19a2` and is
   retained in `docs/product/public-github-source-publication-ledger.{md,json}`.
 - The maintained public `develop` candidate now lands through GitHub PRs `#24`,
   `#25`, `#26`, and `#27` at commit `12391e1`, with `package-preview` and
   `public-facade-linux-smoke` green before merge.
-- The maintained public wiki head is now `f6ed8a5` and is retained in
+- The maintained public wiki head is now `527a8b4` and is retained in
   `docs/product/public-github-wiki-publication-ledger.{md,json}`.
-- The exact VS Code Marketplace item still publishes `1.2.1`; `1.2.2` has not
-  been published or tagged yet.
+- The exact VS Code Marketplace item now verifies `1.2.2` through the official
+  gallery extension query.
 
 ## Local Proof
 
@@ -83,16 +83,17 @@
 - Required skill: `vi-history-suite-expert-agent-reviewer`
 - Canonical Codex skill path:
   `/mnt/c/Users/sveld/.codex/skills/vi-history-suite-expert-agent-reviewer`
-- Exact published public `develop` candidate under review: `12391e1`
-- Exact published public wiki head under review: `f6ed8a5`
+- Exact published public release commit under review: `86b19a2`
+- Exact published public wiki head under review: `527a8b4`
 - Latest retained verdict: `no findings; exact release / Marketplace publish may proceed`
-- Retained at: `2026-04-08T07:13:50Z`
+- Retained at: `2026-04-08T07:58:39Z`
 - Prior retained expert-agent review: `findings-present` on `96944d7` /
   `d6da0c4` with `2` published-surface findings folded into the current
   candidate.
 - Exact `v1.2.2` tagging and Marketplace publication are now eligible on
-  published-surface review grounds; protected promotion and exact closeout
-  still need to complete.
+  published-surface review grounds; the exact public release, exact public
+  wiki closeout, and Marketplace publication are all live on the retained
+  public surfaces.
 
 ## Tester Fixture Strategy
 
@@ -133,8 +134,8 @@
 
 ## Remaining Blockers
 
-- No release-path blocker remains on exact `v1.2.1`.
+- No release-path blocker remains on exact `v1.2.2`.
 - No active expert-agent blocker remains on `v1.2.2`; public `main` remains
-  `2547344`, public `develop` now publishes `12391e1`, the public wiki now
-  publishes `f6ed8a5`, and exact closeout may proceed through the protected
-  promotion path.
+  `86b19a2`, public `develop` still publishes `12391e1`, the public wiki now
+  publishes `527a8b4`, and the official gallery extension query verifies
+  Marketplace version `1.2.2`.

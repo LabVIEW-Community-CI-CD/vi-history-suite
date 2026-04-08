@@ -7,7 +7,7 @@
   "marketplaceItemName": "svelderrainruiz.vi-history-suite",
   "listingUrl": "https://marketplace.visualstudio.com/items?itemName=svelderrainruiz.vi-history-suite",
   "homepageUrl": "https://github.com/svelderrainruiz/vi-history-suite/wiki",
-  "currentPublishedVersion": "1.2.1",
+  "currentPublishedVersion": "1.2.2",
   "currentPublishedDate": "2026-04-08",
   "currentVerificationSurface": "official-gallery-extensionquery",
   "secretHandling": "do-not-retain-pat-or-secret-material",
@@ -28,6 +28,19 @@
       "status": "published",
       "publishedDate": "2026-04-08",
       "version": "1.2.1",
+      "publicationMode": "pinned-vsce-cli",
+      "primaryAuthority": [
+        "README.md",
+        "package.json",
+        "CHANGELOG.md",
+        "docs/release-procedure.md",
+        "docs/product/current-state.md"
+      ]
+    },
+    {
+      "status": "published",
+      "publishedDate": "2026-04-08",
+      "version": "1.2.2",
       "publicationMode": "pinned-vsce-cli",
       "primaryAuthority": [
         "README.md",

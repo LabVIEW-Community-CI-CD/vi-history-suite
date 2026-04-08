@@ -7,14 +7,14 @@ public GitHub required checks, and GitHub experiment workflows stop being
 raw-YAML-only truth.
 
 This document is the control-plane summary of the governed `1.2.2` patch line.
-The exact public release remains `v1.2.1`; `main` carries `1.2.1`,
-`develop` now carries `1.2.2`, and the active exact release candidate line on
-`develop` is `v1.2.2`.
+The exact public release is now `v1.2.2`; `main` carries `1.2.2`, `develop`
+still carries `1.2.2`, and the line retains the protected back-merge
+follow-through requirement before the next opening decision.
 
 ## Opening Decision
 
-- current exact release line: `v1.2.1`
-- current `main` package line: `1.2.1`
+- current exact release line: `v1.2.2`
+- current `main` package line: `1.2.2`
 - current `develop` package line: `1.2.2`
 - active exact release candidate line on `develop`: `v1.2.2`
 - no newer `release/*` branch is active yet

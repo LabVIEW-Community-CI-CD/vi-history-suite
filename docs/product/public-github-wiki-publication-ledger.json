@@ -1,7 +1,7 @@
 {
   "generatedFor": "vi-history-suite",
   "publicationSurface": "public-github-user-wiki",
-  "publishedHeadCommit": "f6ed8a5",
+  "publishedHeadCommit": "527a8b4",
   "pages": [
     {
       "id": "overview",
@@ -10,7 +10,7 @@
       "wikiFileName": "Home.md",
       "status": "published",
       "publishedDate": "2026-04-08",
-      "wikiCommit": "d6da0c4",
+      "wikiCommit": "527a8b4",
       "primaryAuthority": [
         "README.md",
         "docs/product/current-state.md",
@@ -137,7 +137,7 @@
       "wikiFileName": "Current-State.md",
       "status": "published",
       "publishedDate": "2026-04-08",
-      "wikiCommit": "f6ed8a5",
+      "wikiCommit": "527a8b4",
       "primaryAuthority": [
         "README.md",
         "docs/product/current-state.md",

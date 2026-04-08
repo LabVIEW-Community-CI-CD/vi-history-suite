@@ -200,10 +200,10 @@ describe('ship-control direction system', () => {
     expect(readme).toContain('npm run design:gate:assert-complete');
     expect(readme).toContain('- `SHIP-0001`: releasable `v0.2.0` VSIX product');
     expect(readme).toContain('- landed ship tranche: `TRANCHE-009`');
-    expect(readme).toContain('- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`');
+    expect(readme).toContain('- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`, `v1.2.2`');
     expect(readme).toContain('- burned exact release line: `v1.0.2`');
-    expect(readme).toContain('- current exact released line: `v1.2.1`');
-    expect(readme).toContain('- current published package line on `main`: `1.2.1`');
+    expect(readme).toContain('- current exact released line: `v1.2.2`');
+    expect(readme).toContain('- current published package line on `main`: `1.2.2`');
     expect(readme).toContain('- current develop package line on `develop`: `1.2.2`');
     expect(readme).toContain('- active exact release candidate line on `develop`: `v1.2.2`');
     expect(readme).toContain('- no newer `release/*` branch is active yet');
@@ -235,8 +235,8 @@ describe('ship-control direction system', () => {
     expect(currentState).toContain('- landed ship tranche: `TRANCHE-009`');
     expect(currentState).toContain('- retained release artifact: `vi-history-suite-0.2.0.vsix`');
     expect(currentState).toContain('- burned exact release line: `v1.0.2`');
-    expect(currentState).toContain('- current exact released line: `v1.2.1`');
-    expect(currentState).toContain('- current published package line on `main`: `1.2.1`');
+    expect(currentState).toContain('- current exact released line: `v1.2.2`');
+    expect(currentState).toContain('- current published package line on `main`: `1.2.2`');
     expect(currentState).toContain('- current develop package line on `develop`: `1.2.2`');
     expect(currentState).toContain('- active exact release candidate line on `develop`: `v1.2.2`');
     expect(currentState).toContain('- no newer `release/*` branch is active yet');
@@ -288,9 +288,9 @@ describe('ship-control direction system', () => {
     expect(releaseProcedure).toContain('[release readiness matrix](./product/release-readiness-matrix.json)');
     expect(releaseProcedure).toContain('vi-history-suite-0.2.0.vsix');
     expect(releaseProcedure).toContain('release-evidence/release-manifest.json');
-    expect(releaseProcedure).toContain('current exact released line is `v1.2.1`');
+    expect(releaseProcedure).toContain('current exact released line is `v1.2.2`');
     expect(releaseProcedure).toContain('burned exact released line is `v1.0.2`');
-    expect(releaseProcedure).toContain("current published package line on `main` is `1.2.1`");
+    expect(releaseProcedure).toContain("current published package line on `main` is `1.2.2`");
     expect(releaseProcedure).toContain("current develop package line on `develop` is `1.2.2`");
     expect(releaseProcedure).toContain('active exact release candidate line on `develop` is `v1.2.2`');
     expect(releaseProcedure).toContain('No newer `release/*` branch is active yet');
@@ -340,7 +340,6 @@ describe('ship-control direction system', () => {
     expect(bundledInstallPage).toContain('open <code>VI History</code> on an eligible VI');
     expect(bundledInstallPage).not.toContain('Retained exact release: <code>v0.2.0</code>');
     expect(changelog).toContain('## [1.2.2] - 2026-04-07');
-    expect(changelog).toContain('## [1.2.1] - 2026-04-07');
     expect(changelog).toContain('## [1.2.0] - 2026-04-07');
     expect(changelog).toContain('## [1.1.0] - 2026-04-07');
     expect(changelog).toContain('## [1.0.6] - 2026-04-07');
