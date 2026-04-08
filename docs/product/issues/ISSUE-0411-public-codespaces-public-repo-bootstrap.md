@@ -8,12 +8,12 @@ while keeping the canonical icon-editor helper path separate.
 
 ## Status
 
-Active candidate issue.
+Closed exact-release issue.
 
 Activation facts:
 
-- `TRANCHE-014` is now active on the `1.2.0` minor line
-- exact `v1.1.0` remains the released public baseline on `main`
+- `TRANCHE-014` closed on the `1.2.0` minor line
+- exact `v1.2.0` is now the released public baseline on `main`
 - authority `develop` was realigned to exact `main` before `1.2.0` feature work
   continued
 
@@ -60,8 +60,9 @@ Activation facts:
 - the candidate control plane exposes a fail-closed `review-ready` state that
   remains blocked until the maintained public `develop` candidate head and
   maintained public wiki head are both published and retained
-- the exact `v1.2.0` tag is blocked until Sergio accepts the maintained public
-  wiki procedure dry run from a brand new fork and a brand new Codespace
+- the exact `v1.2.0` tag remains gated on Sergio's maintained public wiki
+  procedure dry run from a brand new fork and a brand new Codespace until that
+  review is accepted and folded
 - governed publication of the maintained public source/wiki surfaces preserves
   unrelated dirty worktree changes and pauses only on direct unresolved
   conflicts
@@ -73,8 +74,8 @@ Activation facts:
 - updated requirements, RTM, test plan, and ADR package
 - green design and docs gates on the candidate line
 - retained `review-ready` state before the next human dry run opens
-- retained Sergio wiki-procedure review before exact tagging, using a brand new
-  fork and a brand new Codespace
+- retained Sergio wiki-procedure review and accepted rerun before exact
+  tagging, using a brand new fork and a brand new Codespace
 
 ## First Active Slice
 
