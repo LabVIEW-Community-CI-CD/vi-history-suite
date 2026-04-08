@@ -163,7 +163,7 @@ Latest landed ship target:
 - docs-workbench image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
 - remaining blockers: none on exact `v1.2.1`; public `main` publishes
   `2547344`, the public GitHub release `v1.2.1` is live, public `develop` now
-  publishes candidate commit `96944d7`, the public wiki publishes `d6da0c4`,
+  publishes candidate commit `12391e1`, the public wiki publishes `f6ed8a5`,
   the official gallery extension query verifies Marketplace version `1.2.1`
   for `svelderrainruiz.vi-history-suite`, and the active `v1.2.2` candidate is
   now waiting on a clean expert-agent review rerun via
@@ -319,8 +319,8 @@ Post-release tranches:
     first, while repo/fork/Codespaces procedures remain explicit secondary
     source-evaluation lanes
   - the exact public `main` line still publishes `2547344`, while the later
-    maintained public `develop` candidate now publishes `96944d7`, the public
-    wiki entry surface now publishes `d6da0c4`, and the VS Code Marketplace
+    maintained public `develop` candidate now publishes `12391e1`, the public
+    wiki entry surface now publishes `f6ed8a5`, and the VS Code Marketplace
     item still verifies `1.2.1`
   - sustainment does not absorb the active `TRANCHE-013` Docker-only installed-contract work or the reopened `TRANCHE-010` public-closeout rerun
 - `TRANCHE-013`: Extension execution flexibility and runtime acquisition UX
@@ -341,8 +341,8 @@ Post-release tranches:
   - exact release closeout is now retained as incomplete until the released
     `main` line has been back-merged into `develop` through the protected path
     and the resulting `develop` pipeline is green without a later human prompt
-  - the maintained public `develop` candidate now publishes `96944d7`, the
-    public wiki head now publishes `d6da0c4`, and the `v1.2.2` candidate is
+  - the maintained public `develop` candidate now publishes `12391e1`, the
+    public wiki head now publishes `f6ed8a5`, and the `v1.2.2` candidate is
     awaiting a clean expert-agent review rerun via
     `vi-history-suite-expert-agent-reviewer` on the maintained public surfaces
 - `TRANCHE-014`: Public Codespaces public-repo bootstrap

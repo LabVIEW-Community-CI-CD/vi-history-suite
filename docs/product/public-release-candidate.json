@@ -2,7 +2,7 @@
   "schema": "vi-history-suite/public-release-candidate@v1",
   "versionLine": "1.2.2",
   "burnedExactReleaseLine": "v1.0.2",
-  "recordedAt": "2026-04-08T06:41:19Z",
+  "recordedAt": "2026-04-08T07:05:20Z",
   "authorityRepo": {
     "role": "source-of-truth",
     "integrationBranch": "develop",
@@ -26,19 +26,20 @@
   },
   "publicDevelopCandidate": {
     "branch": "develop",
-    "candidateCommit": "96944d7",
+    "candidateCommit": "12391e1",
     "status": "merged-required-checks-green",
-    "sourcePullRequest": "#26",
+    "sourcePullRequest": "#27",
     "priorPullRequests": [
       "#24",
-      "#25"
+      "#25",
+      "#26"
     ]
   },
   "publishedPublicWiki": {
     "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite.wiki.git",
-    "publishedHeadCommit": "d6da0c4",
+    "publishedHeadCommit": "f6ed8a5",
     "publicationLedgerPath": "docs/product/public-github-wiki-publication-ledger.json",
-    "status": "published-installed-user-entry-clarification-follow-up"
+    "status": "published-current-state-refresh"
   },
   "candidateReadiness": {
     "authorityBaseline": "v1.2.1-exact-public-release-published",
@@ -148,12 +149,12 @@
     },
     "latestPublishedSurfaceReview": {
       "status": "expert-agent-review-rerun-pending",
-      "reviewedPublicDevelopCommit": "96944d7",
-      "reviewedPublicWikiHead": "d6da0c4",
-      "priorReviewedPublicDevelopCommit": "894cd5f",
-      "priorReviewedPublicWikiHead": "1b2f476",
+      "reviewedPublicDevelopCommit": "12391e1",
+      "reviewedPublicWikiHead": "f6ed8a5",
+      "priorReviewedPublicDevelopCommit": "96944d7",
+      "priorReviewedPublicWikiHead": "d6da0c4",
       "priorVerdict": "findings-present",
-      "priorFindingCount": 3,
+      "priorFindingCount": 2,
       "gatingRule": "exact-tag-and-marketplace-publication-blocked-until-latest-expert-agent-review-has-no-findings"
     }
   },

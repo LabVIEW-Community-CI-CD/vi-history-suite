@@ -105,13 +105,13 @@ describe('public release candidate control surface', () => {
     });
     expect(candidate.publicDevelopCandidate).toMatchObject({
       branch: 'develop',
-      candidateCommit: '96944d7',
+      candidateCommit: '12391e1',
       status: 'merged-required-checks-green',
-      sourcePullRequest: '#26'
+      sourcePullRequest: '#27'
     });
     expect(candidate.publishedPublicWiki).toMatchObject({
-      publishedHeadCommit: 'd6da0c4',
-      status: 'published-installed-user-entry-clarification-follow-up'
+      publishedHeadCommit: 'f6ed8a5',
+      status: 'published-current-state-refresh'
     });
     expect(candidate.candidateReadiness).toMatchObject({
       authorityBaseline: 'v1.2.1-exact-public-release-published',
@@ -158,10 +158,10 @@ describe('public release candidate control surface', () => {
     });
     expect(candidate.expertAgentReviewProofs?.latestPublishedSurfaceReview).toMatchObject({
       status: 'expert-agent-review-rerun-pending',
-      reviewedPublicDevelopCommit: '96944d7',
-      reviewedPublicWikiHead: 'd6da0c4',
+      reviewedPublicDevelopCommit: '12391e1',
+      reviewedPublicWikiHead: 'f6ed8a5',
       priorVerdict: 'findings-present',
-      priorFindingCount: 3
+      priorFindingCount: 2
     });
     expect(candidate.acceptedWaivers).toEqual([]);
     expect(candidate.testerFixtureStrategy).toMatchObject({
@@ -181,14 +181,15 @@ describe('public release candidate control surface', () => {
 
     expect(candidateMarkdown).toContain('Version line: `1.2.2`');
     expect(candidateMarkdown).toContain('Published public source commit: `2547344`');
-    expect(candidateMarkdown).toContain('Public `develop` candidate commit: `96944d7`');
-    expect(candidateMarkdown).toContain('Published public wiki head: `d6da0c4`');
+    expect(candidateMarkdown).toContain('Public `develop` candidate commit: `12391e1`');
+    expect(candidateMarkdown).toContain('Published public wiki head: `f6ed8a5`');
     expect(candidateMarkdown).toContain('Published-surface expert-agent review:');
     expect(candidateMarkdown).toContain('`expert-agent-review-rerun-pending`');
     expect(candidateMarkdown).toContain('Required skill: `vi-history-suite-expert-agent-reviewer`');
     expect(candidateMarkdown).toContain(
       'The maintained public `develop` candidate now lands through GitHub PRs `#24`,'
     );
+    expect(candidateMarkdown).toContain('`#27` at commit `12391e1`');
     expect(candidateMarkdown).toContain('FINDING-1.2.2-001-MISSING-DOCKER-FIRST-RUN-BOUNDARY');
     expect(candidateMarkdown).toContain('FINDING-1.2.2-002-EXACT-CLOSEOUT-BACKMERGE-OPERATOR-GAP');
     expect(candidateMarkdown).toContain('FINDING-1.2.2-003-MANUAL-REVIEW-GATE-DEPENDENCY');
@@ -199,8 +200,8 @@ describe('public release candidate control surface', () => {
     expect(currentState).toContain('current exact released line: `v1.2.1`');
     expect(currentState).toContain('current develop package line on `develop`: `1.2.2`');
     expect(currentState).toContain('active exact release candidate line on `develop`: `v1.2.2`');
-    expect(currentState).toContain('candidate commit `96944d7`');
-    expect(currentState).toContain('`d6da0c4`');
+    expect(currentState).toContain('candidate commit `12391e1`');
+    expect(currentState).toContain('`f6ed8a5`');
     expect(currentState).toContain('waiting on a clean expert-agent review rerun via');
     expect(currentState).toContain('vi-history-suite-expert-agent-reviewer');
 

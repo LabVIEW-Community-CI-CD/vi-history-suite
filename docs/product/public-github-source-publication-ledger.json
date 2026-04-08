@@ -253,6 +253,19 @@
         "docs/product/public-github-wiki-publication-ledger.md",
         "resources/bundled-docs/manifest.json"
       ]
+    },
+    {
+      "id": "public-source-v1-2-2-bundled-installed-user-docs-refresh",
+      "title": "Public source v1.2.2 bundled installed-user docs refresh",
+      "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
+      "status": "published",
+      "publishedDate": "2026-04-08",
+      "repoCommit": "12391e1",
+      "primaryAuthority": [
+        "docs/product/current-state.md",
+        "docs/product/public-release-candidate.md",
+        "resources/bundled-docs/manifest.json"
+      ]
     }
   ]
 }

@@ -12,7 +12,7 @@ The machine-readable companion surface for this ledger is:
 
 ## Published Wiki HEAD
 
-- Current published public GitHub wiki HEAD: `d6da0c4`
+- Current published public GitHub wiki HEAD: `f6ed8a5`
 
 ## Published Pages
 
@@ -27,7 +27,7 @@ The machine-readable companion surface for this ledger is:
 | Review Public LabVIEW VI Changes | `Review-Public-LabVIEW-VI-Changes` | published | `2026-04-07` | `b30d356` | `README.md`; `docs/product/current-state.md`; `docs/product/execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md` |
 | Manual Actor Framework Clone | `Manual-Actor-Framework-Clone` | published | `2026-04-07` | `63a4208` | `README.md`; `docs/product/current-state.md`; `docs/product/execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md` |
 | Refresh Codespace Repositories | `Refresh-Codespace-Repositories` | published | `2026-04-07` | `63a4208` | `README.md`; `docs/product/current-state.md`; `docs/product/execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md` |
-| Current State | `Current-State` | published | `2026-04-07` | `1fb3a00` | `README.md`; `docs/product/current-state.md`; `docs/product/extension-execution-policy.md` |
+| Current State | `Current-State` | published | `2026-04-08` | `f6ed8a5` | `README.md`; `docs/product/current-state.md`; `docs/product/extension-execution-policy.md` |
 
 ## Publication Rules
 

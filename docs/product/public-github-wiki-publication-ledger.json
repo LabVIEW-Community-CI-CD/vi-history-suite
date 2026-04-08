@@ -1,7 +1,7 @@
 {
   "generatedFor": "vi-history-suite",
   "publicationSurface": "public-github-user-wiki",
-  "publishedHeadCommit": "d6da0c4",
+  "publishedHeadCommit": "f6ed8a5",
   "pages": [
     {
       "id": "overview",
@@ -136,8 +136,8 @@
       "wikiPath": "Current-State",
       "wikiFileName": "Current-State.md",
       "status": "published",
-      "publishedDate": "2026-04-06",
-      "wikiCommit": "1fb3a00",
+      "publishedDate": "2026-04-08",
+      "wikiCommit": "f6ed8a5",
       "primaryAuthority": [
         "README.md",
         "docs/product/current-state.md",

@@ -2,11 +2,11 @@
 
 - Version line: `1.2.2`
 - Burned exact release line: `v1.0.2`
-- Recorded at: `2026-04-08T06:41:19Z`
+- Recorded at: `2026-04-08T07:05:20Z`
 - Authority source of truth: GitLab `develop` -> `main`
 - Published public source commit: `2547344`
-- Public `develop` candidate commit: `96944d7`
-- Published public wiki head: `d6da0c4`
+- Public `develop` candidate commit: `12391e1`
+- Published public wiki head: `f6ed8a5`
 
 ## Branch Model
 
@@ -49,9 +49,9 @@
 - The exact published public source head on `main` remains `2547344` and is
   retained in `docs/product/public-github-source-publication-ledger.{md,json}`.
 - The maintained public `develop` candidate now lands through GitHub PRs `#24`,
-  `#25`, and `#26` at commit `96944d7`, with `package-preview` and
+  `#25`, `#26`, and `#27` at commit `12391e1`, with `package-preview` and
   `public-facade-linux-smoke` green before merge.
-- The maintained public wiki head is now `d6da0c4` and is retained in
+- The maintained public wiki head is now `f6ed8a5` and is retained in
   `docs/product/public-github-wiki-publication-ledger.{md,json}`.
 - The exact VS Code Marketplace item still publishes `1.2.1`; `1.2.2` has not
   been published or tagged yet.
@@ -83,9 +83,12 @@
 - Required skill: `vi-history-suite-expert-agent-reviewer`
 - Canonical Codex skill path:
   `/mnt/c/Users/sveld/.codex/skills/vi-history-suite-expert-agent-reviewer`
-- Exact published public `develop` candidate under review: `96944d7`
-- Exact published public wiki head under review: `d6da0c4`
+- Exact published public `develop` candidate under review: `12391e1`
+- Exact published public wiki head under review: `f6ed8a5`
 - Latest retained verdict: `expert-agent-review-rerun-pending`
+- Prior retained expert-agent review: `findings-present` on `96944d7` /
+  `d6da0c4` with `2` published-surface findings folded into the current
+  candidate.
 - Exact `v1.2.2` tagging and Marketplace publication remain blocked until the
   latest retained expert-agent review returns no findings.
 
@@ -130,7 +133,7 @@
 
 - No release-path blocker remains on exact `v1.2.1`.
 - `BLOCKER-1.2.2-001-EXPERT-AGENT-REVIEW-CLEAN-PASS`: public `main` remains
-  `2547344`, public `develop` now publishes `96944d7`, the public wiki now
-  publishes `d6da0c4`, and no exact `v1.2.2` tag or Marketplace publish is
+  `2547344`, public `develop` now publishes `12391e1`, the public wiki now
+  publishes `f6ed8a5`, and no exact `v1.2.2` tag or Marketplace publish is
   eligible until `vi-history-suite-expert-agent-reviewer` reruns on those
   maintained public surfaces and comes back with no findings.
