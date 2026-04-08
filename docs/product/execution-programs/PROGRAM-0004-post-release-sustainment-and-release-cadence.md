@@ -100,10 +100,14 @@ Every slice must preserve:
 - one governed public-source target-root rule so local promotion/check binds
   the intended checkout and fails closed on dirty side worktrees
 - one governed review-ready boundary so local authority-green proof does not
-  reopen human review before the maintained public candidate heads are actually
+  reopen the active expert-agent review gate before the maintained public
+  candidate heads are actually
   published and retained
 - one governed dirty-public-surface rule so candidate publication preserves
   unrelated dirt and pauses only on direct unresolved conflicts
+- one governed expert-agent review gate so exact tagging stays blocked until
+  the retained `vi-history-suite-expert-agent-reviewer` verdict against the
+  exact published public candidate heads comes back with no findings
 - one governed Marketplace publication contract so exact release closeout is
   not treated as complete before the released VSIX is live on the Marketplace
   under the retained publisher/item identity

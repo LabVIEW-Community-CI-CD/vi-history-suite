@@ -69,7 +69,8 @@
       "future sessions shall not treat a burned exact release as the green release baseline for later publication",
       "future sessions shall not treat an exact release as fully closed until the matching released main line has been back-merged into develop through the protected path and the resulting develop pipeline is green",
       "future sessions shall not treat a candidate line as review-ready until the maintained public develop candidate head and maintained public wiki head are both published and retained in the authority candidate package",
-      "future sessions shall keep exact tagging blocked until the post-publication human review gate closes, unless the product owner explicitly waives that gate and the retained candidate package records the waiver plus the post-publish review plan"
+      "future sessions shall keep exact tagging blocked until the post-publication expert-agent review gate closes with no findings against the exact published public candidate heads retained in the authority candidate package",
+      "optional product-owner exploratory review may happen separately, but it shall not replace the clean expert-agent review gate for exact tagging"
     ],
     "candidateStateModel": {
       "orderedStates": [
@@ -77,11 +78,16 @@
         "public-develop-published",
         "public-wiki-published",
         "review-ready",
-        "review-feedback-received",
-        "review-feedback-folded",
+        "expert-agent-review-findings-received",
+        "expert-agent-review-findings-folded",
         "tag-eligible"
       ],
       "reviewReadyRule": "local authority-green proof is necessary but not sufficient; review-ready opens only after the maintained public develop candidate head and maintained public wiki head are both live and retained in docs/product/public-release-candidate.{md,json}",
+      "expertAgentReviewSkill": {
+        "skillName": "vi-history-suite-expert-agent-reviewer",
+        "canonicalCodexSkillPath": "/mnt/c/Users/sveld/.codex/skills/vi-history-suite-expert-agent-reviewer",
+        "gatingRule": "exact tagging and Marketplace publication stay blocked until the latest retained expert-agent review against the exact published public develop candidate head and exact published public wiki head returns no findings"
+      },
       "dirtyPublicSurfaceRule": "preserve unrelated dirt, inspect overlapping files, patch only the maintained candidate slice narrowly, and pause only on direct unresolved conflicts instead of stopping publication merely because the worktree is dirty"
     },
     "semverDecisionFramework": {
@@ -177,6 +183,7 @@
         "exact SemVer tags are cut from main only after the protected main pipeline succeeds",
         "local public-source promotion/check binds the intended checkout through --target-root or VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT and fails closed when the target repo is dirty",
         "candidate lines are not review-ready until the maintained public develop candidate head and maintained public wiki head are both published and retained in the authority candidate package",
+        "the active exact-tag gate uses the retained vi-history-suite-expert-agent-reviewer skill against the exact published public candidate heads and requires a no-findings verdict before tag eligibility",
         "dirty public-source/wiki worktrees are controlled publication surfaces: preserve unrelated dirt, patch overlapping maintained files narrowly, and pause only on direct unresolved conflicts"
       ],
       "requiredChecks": [

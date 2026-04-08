@@ -45,11 +45,24 @@ describe('public release candidate control surface', () => {
         gitHubAssetName?: string;
         marketplaceVersion?: string;
       };
-      humanReviewProofs?: {
+      historicalHumanProofs?: {
         latestSubmission?: {
           outcome?: string;
           relativePath?: string;
           reviewerNote?: string;
+        };
+      };
+      expertAgentReviewProofs?: {
+        requiredSkill?: {
+          skillName?: string;
+          canonicalCodexSkillPath?: string;
+        };
+        latestPublishedSurfaceReview?: {
+          status?: string;
+          reviewedPublicDevelopCommit?: string;
+          reviewedPublicWikiHead?: string;
+          priorVerdict?: string;
+          priorFindingCount?: number;
         };
       };
       acceptedWaivers?: unknown[];
@@ -59,7 +72,7 @@ describe('public release candidate control surface', () => {
         genericCommand?: string;
         requiredReviewEnvironment?: string;
       };
-      activeBlockers?: unknown[];
+      activeBlockers?: Array<{ id?: string; status?: string; summary?: string }>;
     }>('docs/product/public-release-candidate.json');
     const candidateMarkdown = readText('docs/product/public-release-candidate.md');
     const currentState = readText('docs/product/current-state.md');
@@ -92,19 +105,19 @@ describe('public release candidate control surface', () => {
     });
     expect(candidate.publicDevelopCandidate).toMatchObject({
       branch: 'develop',
-      candidateCommit: '894cd5f',
+      candidateCommit: '12391e1',
       status: 'merged-required-checks-green',
-      sourcePullRequest: '#25'
+      sourcePullRequest: '#27'
     });
     expect(candidate.publishedPublicWiki).toMatchObject({
-      publishedHeadCommit: '1b2f476',
-      status: 'published-docker-first-run-guidance-refresh'
+      publishedHeadCommit: 'f6ed8a5',
+      status: 'published-current-state-refresh'
     });
     expect(candidate.candidateReadiness).toMatchObject({
       authorityBaseline: 'v1.2.1-exact-public-release-published',
       localInstalledVsix: 'candidate-v1.2.2-package-built-through-design-gate',
-      publicRepoBootstrap: 'passed-brand-new-fork-review-on-hse-logger',
-      publicWikiCandidateReview: 'review-ready-awaiting-user-review',
+      historicalPublicRepoBootstrapBaseline: 'exact-v1.2.0-human-baseline-retained',
+      publishedSurfaceExpertAgentReview: 'no-findings',
       exactPublicRelease: 'v1.2.1-published'
     });
     expect(candidate.findingClassifications).toEqual(
@@ -119,6 +132,12 @@ describe('public release candidate control surface', () => {
           status: 'closed',
           requirementRefs: ['VHS-REQ-527'],
           adrRefs: ['ADR-0030']
+        }),
+        expect.objectContaining({
+          id: 'FINDING-1.2.2-003-MANUAL-REVIEW-GATE-DEPENDENCY',
+          status: 'closed',
+          requirementRefs: ['VHS-REQ-529'],
+          adrRefs: ['ADR-0037']
         })
       ])
     );
@@ -127,10 +146,22 @@ describe('public release candidate control surface', () => {
       gitHubAssetName: 'vi-history-suite-1.2.1.vsix',
       marketplaceVersion: '1.2.1'
     });
-    expect(candidate.humanReviewProofs?.latestSubmission).toMatchObject({
+    expect(candidate.historicalHumanProofs?.latestSubmission).toMatchObject({
       outcome: 'passed-human-review',
       relativePath: 'Examples/Logging with Helper-VIs.vi',
       reviewerNote: 'It worked on "Examples/Logging with Helper-VIs.vi".'
+    });
+    expect(candidate.expertAgentReviewProofs?.requiredSkill).toMatchObject({
+      skillName: 'vi-history-suite-expert-agent-reviewer',
+      canonicalCodexSkillPath:
+        '/mnt/c/Users/sveld/.codex/skills/vi-history-suite-expert-agent-reviewer'
+    });
+    expect(candidate.expertAgentReviewProofs?.latestPublishedSurfaceReview).toMatchObject({
+      status: 'no-findings',
+      reviewedPublicDevelopCommit: '12391e1',
+      reviewedPublicWikiHead: 'f6ed8a5',
+      priorVerdict: 'findings-present',
+      priorFindingCount: 2
     });
     expect(candidate.acceptedWaivers).toEqual([]);
     expect(candidate.testerFixtureStrategy).toMatchObject({
@@ -143,31 +174,43 @@ describe('public release candidate control surface', () => {
 
     expect(candidateMarkdown).toContain('Version line: `1.2.2`');
     expect(candidateMarkdown).toContain('Published public source commit: `2547344`');
-    expect(candidateMarkdown).toContain('Public `develop` candidate commit: `894cd5f`');
-    expect(candidateMarkdown).toContain('Published public wiki head: `1b2f476`');
-    expect(candidateMarkdown).toContain('Public wiki candidate review: `review-ready-awaiting-user-review`');
+    expect(candidateMarkdown).toContain('Public `develop` candidate commit: `12391e1`');
+    expect(candidateMarkdown).toContain('Published public wiki head: `f6ed8a5`');
+    expect(candidateMarkdown).toContain('Published-surface expert-agent review:');
+    expect(candidateMarkdown).toContain('`no-findings`');
+    expect(candidateMarkdown).toContain('Required skill: `vi-history-suite-expert-agent-reviewer`');
     expect(candidateMarkdown).toContain(
-      'The maintained public `develop` candidate now lands through GitHub PRs `#24`'
+      'The maintained public `develop` candidate now lands through GitHub PRs `#24`,'
     );
+    expect(candidateMarkdown).toContain('`#27` at commit `12391e1`');
     expect(candidateMarkdown).toContain('FINDING-1.2.2-001-MISSING-DOCKER-FIRST-RUN-BOUNDARY');
     expect(candidateMarkdown).toContain('FINDING-1.2.2-002-EXACT-CLOSEOUT-BACKMERGE-OPERATOR-GAP');
+    expect(candidateMarkdown).toContain('FINDING-1.2.2-003-MANUAL-REVIEW-GATE-DEPENDENCY');
     expect(candidateMarkdown).toContain('No release-path blocker remains on exact `v1.2.1`.');
-    expect(candidateMarkdown).toContain('`v1.2.2` is now `review-ready`');
+    expect(candidateMarkdown).toContain(
+      'no findings; exact release / Marketplace publish may proceed'
+    );
+    expect(candidateMarkdown).toContain('No active expert-agent blocker remains on `v1.2.2`');
 
     expect(currentState).toContain('current exact released line: `v1.2.1`');
     expect(currentState).toContain('current develop package line on `develop`: `1.2.2`');
     expect(currentState).toContain('active exact release candidate line on `develop`: `v1.2.2`');
-    expect(currentState).toContain('candidate commit `894cd5f`');
-    expect(currentState).toContain('`1b2f476`');
-    expect(currentState).toContain('review-ready on the maintained public surfaces');
+    expect(currentState).toContain('candidate commit `12391e1`');
+    expect(currentState).toContain('`f6ed8a5`');
+    expect(currentState).toContain('clean no-findings expert-agent verdict via');
+    expect(currentState).toContain('vi-history-suite-expert-agent-reviewer');
 
     expect(srs).toContain('VHS-REQ-527');
     expect(srs).toContain('VHS-REQ-528');
+    expect(srs).toContain('VHS-REQ-529');
     expect(rtm).toContain('VHS-REQ-527');
     expect(rtm).toContain('VHS-REQ-528');
+    expect(rtm).toContain('VHS-REQ-529');
     expect(testPlan).toContain('TEST-UNIT-338');
     expect(testPlan).toContain('TEST-UNIT-339');
+    expect(testPlan).toContain('TEST-UNIT-340');
     expect(testPlan).toContain('TEST-DOC-101');
     expect(testPlan).toContain('TEST-DOC-102');
+    expect(testPlan).toContain('TEST-DOC-103');
   });
 });

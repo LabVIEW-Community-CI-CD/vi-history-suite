@@ -69,6 +69,7 @@ describe('vs code marketplace publication and installed-user docs', () => {
     const publicSupport = collapseWhitespace(readAuthorityText('public-github-source/SUPPORT.md'));
     const home = collapseWhitespace(readPublicWikiText('Home.md'));
     const install = collapseWhitespace(readPublicWikiText('Install-And-Release.md'));
+    const userWorkflow = collapseWhitespace(readPublicWikiText('User-Workflow.md'));
 
     expect(pkg.homepage).toBe('https://github.com/svelderrainruiz/vi-history-suite/wiki');
 
@@ -94,11 +95,32 @@ describe('vs code marketplace publication and installed-user docs', () => {
     expect(home).toContain('You do not need to fork the repo or learn the branch model for this path.');
     expect(home).toContain('install or start Docker Desktop or Docker, then confirm `docker info`');
     expect(home).toContain('Source Evaluation And Codespaces');
+    expect(home).toContain(
+      'When you are evaluating the next public candidate, use `develop` rather than GitHub\'s default `main` branch.'
+    );
+    expect(home).toContain(
+      'public `https://github.com/...` or `https://gitlab.com/...` target repo'
+    );
 
     expect(install).toContain('Installed Extension Users');
+    expect(install).toContain(
+      'retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`'
+    );
     expect(install).toContain('VS Code Marketplace listing');
+    expect(install).toContain('exact released VSIX from GitHub release `v1.2.1`');
     expect(install).toContain("docker info --format '{{.OSType}}'");
     expect(install).toContain('If those checks fail, install or start Docker before expecting image');
     expect(install).toContain('Use this lane only when you want to evaluate the source repo');
+    expect(install).toContain('Open the repo or your fork on `develop` in a devcontainer or Codespace.');
+    expect(install).toContain(
+      'That generic bootstrap is intentionally limited to public `https://github.com/...` and `https://gitlab.com/...` repository URLs.'
+    );
+
+    expect(userWorkflow).toContain(
+      'the extension is installed from the VS Code Marketplace, the current exact released VSIX, or a preview VSIX when you intentionally want the next candidate'
+    );
+    expect(userWorkflow).toContain(
+      'If Docker is not installed yet or not running yet, install or start it first, then rerun the compare flow.'
+    );
   });
 });

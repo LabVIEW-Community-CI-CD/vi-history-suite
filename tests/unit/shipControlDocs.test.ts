@@ -328,14 +328,14 @@ describe('ship-control direction system', () => {
     expect(releaseProcedure).toContain('Marketplace: Manage');
     expect(bundledInstallPage).toContain('<h2>Install Surfaces</h2>');
     expect(bundledInstallPage).toContain(
-      'preview VSIX artifact from the latest successful <code>main</code> pipeline'
+      'VS Code Marketplace listing under <code>svelderrainruiz.vi-history-suite</code>'
     );
     expect(bundledInstallPage).toContain('local package output via <code>npm run package</code>');
-    expect(bundledInstallPage).toContain('tagged release VSIX for exact-version installs');
+    expect(bundledInstallPage).toContain('exact released VSIX from the matching GitHub release');
     expect(bundledInstallPage).toContain(
       'packaged bundled docs through <code>VI History: Open Documentation</code>'
     );
-    expect(bundledInstallPage).toContain('After installing or updating the VSIX, reload VS Code');
+    expect(bundledInstallPage).toContain('install or start Docker and confirm <code>docker info</code>');
     expect(bundledInstallPage).toContain('<h2>Release Procedure Summary</h2>');
     expect(bundledInstallPage).toContain('open <code>VI History</code> on an eligible VI');
     expect(bundledInstallPage).not.toContain('Retained exact release: <code>v0.2.0</code>');

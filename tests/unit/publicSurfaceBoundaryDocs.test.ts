@@ -60,8 +60,9 @@ describe('public facade boundary docs', () => {
     expect(internalLedger).toContain('internal GitLab maintainer wiki');
     expect(internalLedgerJson).toContain('"publicationSurface": "internal-gitlab-wiki"');
     expect(publicLedger).toContain('public GitHub user wiki');
-    expect(publicLedger).toContain('Current published public GitHub wiki HEAD: `1b2f476`');
-    expect(publicLedger).toContain('1b2f476');
+    expect(publicLedger).toContain('Current published public GitHub wiki HEAD: `f6ed8a5`');
+    expect(publicLedger).toContain('d6da0c4');
+    expect(publicLedger).toContain('f6ed8a5');
     expect(publicLedger).toContain('User Workflow');
     expect(publicLedger).toContain('Install And Release');
     expect(publicLedger).toContain('Fork Codespace Quickstart');
@@ -72,7 +73,7 @@ describe('public facade boundary docs', () => {
     expect(publicLedger).toContain('Refresh Codespace Repositories');
     expect(publicLedger).toContain('Current State');
     expect(publicLedgerJson).toContain('"publicationSurface": "public-github-user-wiki"');
-    expect(publicLedgerJson).toContain('"publishedHeadCommit": "1b2f476"');
+    expect(publicLedgerJson).toContain('"publishedHeadCommit": "f6ed8a5"');
     expect(publicLedgerJson).toContain('"wikiFileName": "Home.md"');
     expect(publicLedgerJson).toContain('"wikiFileName": "User-Workflow.md"');
     expect(publicLedgerJson).toContain('"wikiFileName": "Install-And-Release.md"');
@@ -97,6 +98,9 @@ describe('public facade boundary docs', () => {
     expect(publicSourceLedger).toContain(
       'Public source v1.2.2 Docker-first-run and closeout-governance refresh'
     );
+    expect(publicSourceLedger).toContain(
+      'Public source v1.2.2 bundled installed-user docs refresh'
+    );
     expect(publicSourceLedgerJson).toContain('"publicationSurface": "public-github-source-repo"');
     expect(publicSourceLedgerJson).toContain('"publishedHeadCommit": "2547344"');
     expect(publicSourceLedgerJson).toContain('"status": "published"');
@@ -107,6 +111,8 @@ describe('public facade boundary docs', () => {
     expect(publicSourceLedgerJson).toContain('"repoCommit": "96af6a3"');
     expect(publicSourceLedgerJson).toContain('"repoCommit": "2547344"');
     expect(publicSourceLedgerJson).toContain('"repoCommit": "894cd5f"');
+    expect(publicSourceLedgerJson).toContain('"repoCommit": "96944d7"');
+    expect(publicSourceLedgerJson).toContain('"repoCommit": "12391e1"');
     expect(program).toContain('workflow_dispatch');
     expect(program).toContain('npm run public:smoke:linux');
     expect(program).toContain('docs:ci:public');

@@ -2,18 +2,20 @@
 <h2>Install Surfaces</h2>
 <p>Use one of these installed-user surfaces:</p>
 <ul>
-<li>preview VSIX artifact from the latest successful <code>main</code> pipeline</li>
-<li>local package output via <code>npm run package</code></li>
-<li>tagged release VSIX for exact-version installs</li>
+<li>VS Code Marketplace listing under <code>svelderrainruiz.vi-history-suite</code></li>
+<li>exact released VSIX from the matching GitHub release</li>
+<li>local package output via <code>npm run package</code> when you intentionally test from source</li>
 <li>packaged bundled docs through <code>VI History: Open Documentation</code> or the history-panel <code>Open docs</code> action</li>
 </ul>
-<p>After installing or updating the VSIX, reload VS Code before running the review flow.</p>
+<p>Before the first compare on a fresh machine, install or start Docker and confirm <code>docker info</code> works in the same session that will run VS Code.</p>
 <h2>Release Procedure Summary</h2>
-<p>Use the preview VSIX for iteration or the tagged release VSIX when you need the exact released build.</p>
+<p>Use the Marketplace listing for everyday installs or the exact released VSIX when you need the retained tagged build.</p>
 <p>Quick verification flow:</p>
 <ol>
-<li>install the selected VSIX</li>
-<li>reload VS Code</li>
+<li>install the extension from the Marketplace or from the exact released VSIX</li>
+<li>install or start Docker, then confirm <code>docker info</code> succeeds</li>
+<li>reload VS Code if you just installed or updated the extension</li>
 <li>open <code>VI History</code> on an eligible VI inside a trusted Git workspace</li>
+<li>select two distinct commit checkboxes to generate the compare</li>
 <li>use <code>Open docs</code> if you need the version-matched installed guide</li>
 </ol>

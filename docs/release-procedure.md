@@ -161,8 +161,8 @@
     - the maintained public wiki head must be live
     - both published heads must be retained in
       `docs/product/public-release-candidate.{md,json}`
-    - do not open the next human review gate until that `review-ready` state is
-      recorded
+    - do not open the next expert-agent review gate until that `review-ready`
+      state is recorded
 18. Treat dirty public source/wiki worktrees as governed publication surfaces,
     not as a generic stopping point.
     - preserve unrelated dirt
@@ -171,10 +171,14 @@
     - pause only when a direct unresolved conflict remains
     - do not publish blindly, but do not stop publication solely because the
       worktree is dirty
-19. Keep exact tagging blocked until the post-publication human review gate is
-    accepted on the maintained public candidate surfaces, unless the product
-    owner explicitly waives that gate and the retained candidate package plus
-    current-state docs record the waiver and post-publish review plan.
+19. Keep exact tagging blocked until the post-publication expert-agent review
+    gate closes with no findings on the maintained public candidate surfaces.
+    - use the retained skill `vi-history-suite-expert-agent-reviewer`
+    - retain the reviewed public `develop` candidate commit and public wiki head
+      in `docs/product/public-release-candidate.{md,json}`
+    - retain the latest verdict and finding count in the same package
+    - optional product-owner exploratory review may happen separately, but it
+      does not replace the clean expert-agent review gate for exact tagging
 
 ## Retained Evidence
 

@@ -164,7 +164,8 @@ describe('post-release sustainment rules package', () => {
         'future sessions shall not treat a burned exact release as the green release baseline for later publication',
         'future sessions shall not treat an exact release as fully closed until the matching released main line has been back-merged into develop through the protected path and the resulting develop pipeline is green',
         'future sessions shall not treat a candidate line as review-ready until the maintained public develop candidate head and maintained public wiki head are both published and retained in the authority candidate package',
-        'future sessions shall keep exact tagging blocked until the post-publication human review gate closes, unless the product owner explicitly waives that gate and the retained candidate package records the waiver plus the post-publish review plan'
+        'future sessions shall keep exact tagging blocked until the post-publication expert-agent review gate closes with no findings against the exact published public candidate heads retained in the authority candidate package',
+        'optional product-owner exploratory review may happen separately, but it shall not replace the clean expert-agent review gate for exact tagging'
       ])
     );
     expect(rules.releaseCadence.candidateStateModel).toEqual(
@@ -180,10 +181,20 @@ describe('post-release sustainment rules package', () => {
       'public-develop-published',
       'public-wiki-published',
       'review-ready',
-      'review-feedback-received',
-      'review-feedback-folded',
+      'expert-agent-review-findings-received',
+      'expert-agent-review-findings-folded',
       'tag-eligible'
     ]);
+    expect(rules.releaseCadence.candidateStateModel?.expertAgentReviewSkill).toEqual(
+      expect.objectContaining({
+        skillName: 'vi-history-suite-expert-agent-reviewer',
+        canonicalCodexSkillPath:
+          '/mnt/c/Users/sveld/.codex/skills/vi-history-suite-expert-agent-reviewer'
+      })
+    );
+    expect(rules.releaseCadence.candidateStateModel?.expertAgentReviewSkill?.gatingRule).toContain(
+      'no findings'
+    );
     expect(rules.releaseCadence.semverDecisionFramework).toEqual(
       expect.objectContaining({
         defaultGovernanceBump: 'patch',
