@@ -60,9 +60,9 @@ Activation facts:
 - the candidate control plane exposes a fail-closed `review-ready` state that
   remains blocked until the maintained public `develop` candidate head and
   maintained public wiki head are both published and retained
-- the exact `v1.2.0` tag remains gated on Sergio's maintained public wiki
+- the exact `v1.2.0` tag remained gated on Sergio's maintained public wiki
   procedure dry run from a brand new fork and a brand new Codespace until that
-  review is accepted and folded
+  review was accepted and folded
 - governed publication of the maintained public source/wiki surfaces preserves
   unrelated dirty worktree changes and pauses only on direct unresolved
   conflicts

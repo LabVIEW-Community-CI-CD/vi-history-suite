@@ -158,12 +158,12 @@ Latest landed ship target:
   now publishes `c7cd6a0`, the public GitHub release `v1.2.0` is live, and
   no newer exact release candidate is active yet
 
-Current active tranche:
+Current active and recently closed tranches:
 
 - `TRANCHE-014`: Public Codespaces public-repo bootstrap
-- active issue: [ISSUE-0411 Public Codespaces Public-Repo Bootstrap](./issues/ISSUE-0411-public-codespaces-public-repo-bootstrap.md)
-- active execution program: [PROGRAM-0006: Public Codespaces Public-Repo Bootstrap](./execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md)
-  - current first slice:
+- closed issue: [ISSUE-0411 Public Codespaces Public-Repo Bootstrap](./issues/ISSUE-0411-public-codespaces-public-repo-bootstrap.md)
+- closed execution program: [PROGRAM-0006: Public Codespaces Public-Repo Bootstrap](./execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md)
+  - closed exact-release slice:
   - back-merge exact `v1.1.0` `main` into `develop` before the `1.2.0`
     candidate line continues
   - keep the canonical `npm run public:fixture:icon-editor` helper-backed path
@@ -174,8 +174,8 @@ Current active tranche:
   - keep the maintained public generic path as a standalone reference manual,
     not a second quickstart
   - Sergio's first dry-run review from a brand new fork and a brand new
-    Codespace has now produced findings that must be folded before the exact
-    `v1.2.0` tag remains eligible
+    Codespace produced findings that were folded before exact `v1.2.0`
+    publication
   - a repo-access LLM pre-review then narrowed the remaining issues to one
     smaller doc-clarification slice on the public README/install/wiki package
   - that clarification slice is now validated locally through focused
@@ -187,7 +187,8 @@ Current active tranche:
     compare fix, bundled compare-flow wording cleanup, and public smoke
     required-check path-admission repair, and Sergio's brand-new-fork rerun has
     now passed on `Examples/Logging with Helper-VIs.vi`, so exact `v1.2.0`
-    is now published on public `main`
+    is now published on public `main` and no newer exact release candidate is
+    active yet
 - `TRANCHE-013`: Extension execution flexibility and runtime acquisition UX
 - active issue: [ISSUE-0410 Extension Execution Flexibility And Runtime Acquisition UX](./issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md)
 - active execution program: [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)

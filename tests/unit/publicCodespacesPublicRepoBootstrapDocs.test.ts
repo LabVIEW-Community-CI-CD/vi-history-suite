@@ -10,7 +10,7 @@ function readText(relativePath: string): string {
 }
 
 describe('public Codespaces public-repo bootstrap docs', () => {
-  it('keeps the canonical helper path separate from the generic public-repo path and blocks exact tagging on review', () => {
+  it('keeps the canonical helper path separate from the generic public-repo path and retains the exact-release closure facts', () => {
     const readme = readText('README.md');
     const currentState = readText('docs/product/current-state.md');
     const candidate = readText('docs/product/public-release-candidate.md');
@@ -32,7 +32,8 @@ describe('public Codespaces public-repo bootstrap docs', () => {
     expect(currentState).toContain('`TRANCHE-014`: Public Codespaces public-repo bootstrap');
     expect(currentState).toContain('canonical `npm run public:fixture:icon-editor` helper-backed path');
     expect(currentState).toContain('generic `npm run public:repo:clone` surface');
-    expect(currentState).toContain('exact `v1.2.0` tag is intentionally blocked');
+    expect(currentState).toContain('is now published on public `main`');
+    expect(currentState).toContain('no newer exact release candidate is active yet');
 
     expect(candidate).toContain(
       'Decision: helper-backed canonical path plus generic public-repo reference manual'
@@ -41,19 +42,16 @@ describe('public Codespaces public-repo bootstrap docs', () => {
     expect(candidate).toContain('Generic interactive command: `npm run public:repo:clone`');
     expect(candidate).toContain('Generic bootstrap command:');
     expect(candidate).toContain('npm run public:repo:clone -- --repo-url <https-url>');
-    expect(candidate).toContain(
-      'Public wiki candidate review:'
-    );
-    expect(candidate).toContain('ready-for-next-brand-new-fork-review-on-published-candidate');
-    expect(candidate).toContain('Review-ready gate:');
-    expect(candidate).toContain('ready-for-brand-new-fork-review');
-    expect(candidate).toContain('Required review environment: brand new fork plus brand new Codespace');
-    expect(candidate).toContain('The exact `v1.2.0` tag is intentionally blocked');
+    expect(candidate).toContain('Public wiki candidate review:');
+    expect(candidate).toContain('accepted-brand-new-fork-review-on-published-candidate');
+    expect(candidate).toContain('passed-brand-new-fork-review-on-hse-logger');
+    expect(candidate).toContain('Exact public release: `v1.2.0-published`');
+    expect(candidate).toContain('No active `1.2.0` public-source blockers remain.');
 
     expect(issue).toContain('public `github.com` and `gitlab.com` HTTPS repos only');
     expect(issue).toContain('brand new fork');
     expect(issue).toContain('brand new Codespace');
-    expect(issue).toContain('exact `v1.2.0` tag is blocked until Sergio accepts');
+    expect(issue).toContain('exact `v1.2.0` tag remained gated on Sergio');
     expect(issue).toContain('fail-closed `review-ready` state');
     expect(program).toContain('Gate D: Human Procedure Review');
     expect(program).toContain('Gate D opens only after the candidate is marked `review-ready`');

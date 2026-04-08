@@ -113,7 +113,7 @@ describe('release governance package', () => {
     expect(adr6).toContain('preserve unrelated dirt');
     expect(hostedGovernance).toContain('# Hosted CI Governance');
     expect(hostedGovernance).toContain('current `develop` package line: `1.2.0`');
-    expect(hostedGovernance).toContain('active exact release candidate line on `develop`: `v1.2.0`');
+    expect(hostedGovernance).toContain('no newer exact release candidate line is active yet');
     expect(hostedGovernance).toContain('chosen bump: `minor`');
     expect(hostedGovernance).toContain('npm run branch:governance:assert');
     expect(hostedGovernanceJson.openingDecision.chosenBump).toBe('minor');
