@@ -6,22 +6,24 @@ Retain one governed hosted-automation matrix so GitLab authority pipelines,
 public GitHub required checks, and GitHub experiment workflows stop being
 raw-YAML-only truth.
 
-This document is the control-plane summary of the governed `1.2.0` line. The
-exact public release is now `v1.2.0`; `main` and `develop` both carry `1.2.0`,
-and no newer exact release candidate is active yet.
+This document is the control-plane summary of the governed `1.2.1` patch line.
+The exact public release is now `v1.2.1`; both `main` and `develop` currently
+carry `1.2.1`, and no newer exact release candidate line is active yet.
 
 ## Opening Decision
 
-- current exact release line: `v1.2.0`
-- current `main` package line: `1.2.0`
-- current `develop` package line: `1.2.0`
-- no newer exact release candidate line is active yet
-- chosen bump: `minor`
-- rationale: this line adds a governed public Codespaces/bootstrap capability
-  for public GitHub and GitLab repos without breaking the exact `v1.1.0`
-  contract
-- rationale: this line also adds a fail-closed branch-baseline assertion so
-  candidate work cannot reopen from a stale `develop` baseline
+- current exact release line: `v1.2.1`
+- current `main` package line: `1.2.1`
+- current `develop` package line: `1.2.1`
+- no newer exact release candidate line is active on `develop` yet
+- no newer `release/*` branch is active yet
+- chosen bump: `patch`
+- rationale: this line governs VS Code Marketplace publication as an explicit
+  exact-release closeout surface after `v1.2.0` became a live Marketplace
+  release
+- rationale: this line also redesigns the installed-user entry surface so
+  Marketplace users land on maintained local-use docs instead of repo-first
+  branch/governance docs
 
 ## Branch Model
 

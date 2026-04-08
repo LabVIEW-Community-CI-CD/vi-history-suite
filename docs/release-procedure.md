@@ -11,11 +11,12 @@
 - The first retained exact-version release is `v0.2.0`, with retained artifact
   `vi-history-suite-0.2.0.vsix` and manifest
   `release-evidence/release-manifest.json`.
-- The current exact released line is `v1.2.0`.
+- The current exact released line is `v1.2.1`.
 - The burned exact released line is `v1.0.2`.
-- The current published package line on `main` is `1.2.0`.
-- The current develop package line on `develop` is `1.2.0`.
+- The current published package line on `main` is `1.2.1`.
+- The current develop package line on `develop` is `1.2.1`.
 - No newer exact release candidate line is active on `develop` yet.
+- No newer `release/*` branch is active yet.
 - The public GitHub default branch is `main` because it carries the latest
   exact released source line.
 - The public Codespaces evaluation branch is `develop`.
@@ -35,8 +36,8 @@
 - Any later repo change intended for publication shall advance `package.json`
   and the top `CHANGELOG.md` heading to the next SemVer line before additional
   publication or release normalization continues.
-- A SemVer bump is not complete until the matching public tag and public
-  GitHub release are both published.
+- A SemVer bump is not complete until the matching public tag, public GitHub
+  release, and VS Code Marketplace version are all published.
 - The release tag shall match both `package.json` and the top unreleased
   heading in [CHANGELOG.md](../CHANGELOG.md).
 - Tags shall be cut only from a green `main` commit after the required checks
@@ -53,6 +54,9 @@
   - `docs/product/public-github-source-authority-map.md`
   - `docs/product/public-github-source-publication-ledger.md`
   - `docs/product/public-github-source-publication-ledger.json`
+- VS Code Marketplace publication is tracked separately in:
+  - `docs/product/vscode-marketplace-publication-ledger.md`
+  - `docs/product/vscode-marketplace-publication-ledger.json`
 
 ## Steps
 
@@ -128,7 +132,20 @@
     - update `docs/product/public-github-source-publication-ledger.{md,json}`
 14. Keep public source publication separate from public GitHub wiki
     publication; one publication act does not imply the other.
-15. Mark a candidate `review-ready` only after the maintained public candidate
+15. Publish the exact VSIX to the VS Code Marketplace and retain the result.
+    - The governed distribution surface is the VS Code Marketplace item
+      `svelderrainruiz.vi-history-suite`.
+    - The preferred CLI path is the pinned `@vscode/vsce` helper through
+      `scripts/runPinnedVsce.js`; manual Marketplace portal upload remains the
+      approved operator fallback.
+    - CLI publication requires an Azure DevOps PAT created with
+      `All accessible organizations` and `Marketplace: Manage`.
+    - Do not retain PAT contents in the repo, docs, ledgers, CI artifacts, or
+      chat logs.
+    - Update `docs/product/vscode-marketplace-publication-ledger.{md,json}`
+      with the publisher id, item id, version, listing URL, publication date,
+      publication mode, and homepage URL used for the installed-user surface.
+16. Mark a candidate `review-ready` only after the maintained public candidate
     surfaces are actually published.
     - local authority-green proof is necessary but not sufficient
     - the maintained public `develop` candidate head must be live
@@ -137,7 +154,7 @@
       `docs/product/public-release-candidate.{md,json}`
     - do not open the next human review gate until that `review-ready` state is
       recorded
-16. Treat dirty public source/wiki worktrees as governed publication surfaces,
+17. Treat dirty public source/wiki worktrees as governed publication surfaces,
     not as a generic stopping point.
     - preserve unrelated dirt
     - inspect overlapping changes
@@ -145,8 +162,10 @@
     - pause only when a direct unresolved conflict remains
     - do not publish blindly, but do not stop publication solely because the
       worktree is dirty
-17. Keep exact tagging blocked until the post-publication human review gate is
-    accepted on the maintained public candidate surfaces.
+18. Keep exact tagging blocked until the post-publication human review gate is
+    accepted on the maintained public candidate surfaces, unless the product
+    owner explicitly waives that gate and the retained candidate package plus
+    current-state docs record the waiver and post-publish review plan.
 
 ## Retained Evidence
 
@@ -168,7 +187,9 @@
 
 ## Current State
 
-- Marketplace publishing is not active in the current baseline.
+- VS Code Marketplace publishing is active in the current baseline, and exact
+  release closeout is not complete until the matching Marketplace version is
+  verified under `svelderrainruiz.vi-history-suite`.
 - Preview VSIX artifacts are available from `main`, but they are not the same
   thing as the governed SemVer release artifact.
 - The docs-authoring workbench image is a supporting documentation-package
@@ -184,9 +205,13 @@
   `13779604462`.
 - `v1.0.2` is retained as a burned release because the immutable tag published
   before the exact authority docs CI failure was discovered.
-- The current published package line on `main` is `1.2.0`, tracked in
+- The current published package line on `main` is `1.2.1`, tracked in
   `CHANGELOG.md`, and it should not rewrite the retained `v0.2.0`, `v1.0.0`,
   `v1.0.1`, burned `v1.0.2`, exact `v1.0.3`, exact `v1.0.4`, exact `v1.0.5`,
-  exact `v1.0.6`, exact `v1.1.0`, or exact `v1.2.0` release evidence.
-- The current develop package line on `develop` is `1.2.0`, and no newer exact
-  release candidate line is active yet.
+  exact `v1.0.6`, exact `v1.1.0`, exact `v1.2.0`, or exact `v1.2.1` release
+  evidence.
+- The current develop package line on `develop` is `1.2.1`, and no newer
+  exact release candidate line or `release/*` branch is active yet.
+- The packaged extension homepage now points installed users to the maintained
+  public wiki home, while the repo root remains the source and control-plane
+  surface.

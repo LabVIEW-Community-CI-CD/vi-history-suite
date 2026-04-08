@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-07T16:03:17.320Z",
+  "generatedAt": "2026-04-08T03:37:07.466Z",
   "sourceLedgerPath": "docs/product/public-github-wiki-publication-ledger.json",
   "sourceWikiRepoPath": "../vi-history-suite.github.wiki",
   "bundleAudience": "extension-users",
@@ -11,8 +11,8 @@
       "wikiPath": "Home",
       "wikiFileName": "Home.md",
       "htmlFileName": "overview.html",
-      "publishedDate": "2026-04-07",
-      "wikiCommit": "3ef5bee"
+      "publishedDate": "2026-04-08",
+      "wikiCommit": "a12eb16"
     },
     {
       "id": "install-and-release",
@@ -20,8 +20,8 @@
       "wikiPath": "Install-And-Release",
       "wikiFileName": "Install-And-Release.md",
       "htmlFileName": "install-and-release.html",
-      "publishedDate": "2026-04-07",
-      "wikiCommit": "d184be2"
+      "publishedDate": "2026-04-08",
+      "wikiCommit": "a12eb16"
     },
     {
       "id": "user-workflow",
