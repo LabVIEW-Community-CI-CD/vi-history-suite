@@ -25,12 +25,15 @@ Installed-user start pages:
 
 Local installed-user workflow:
 
-1. open a trusted Git repo that contains an eligible LabVIEW VI
-2. run `VI History`
-3. select one commit checkbox
-4. select a second distinct commit checkbox
-5. wait for first-use image acquisition if needed
-6. review the generated comparison report
+1. install or start Docker Desktop or Docker, then confirm `docker info`
+   succeeds in the same session that will run VS Code
+2. open a trusted Git repo that contains an eligible LabVIEW VI
+3. run `VI History`
+4. select one commit checkbox
+5. select a second distinct commit checkbox
+6. if the governed image is missing but Docker is ready, wait for first-use
+   image acquisition
+7. review the generated comparison report
 
 You do not need to fork this repo or choose a branch to use the installed
 extension locally.
@@ -39,6 +42,8 @@ It is intentionally bounded:
 
 - Docker-only compare execution
 - x64 container surfaces only
+- Docker CLI plus a running Docker daemon are prerequisites for the first
+  compare
 - repo-agnostic two-commit checkbox-selected compare flow
 - devcontainer/Codespaces-capable development path
 - no host-LabVIEW runtime competition in the installed-extension workflow
@@ -60,8 +65,9 @@ The compare surface is Docker-only:
   engine.
 - Linux hosts use the governed Linux image.
 - Missing governed images are pulled on first use with visible progress.
-- If Docker is unavailable or the selected image cannot be acquired, the
-  extension fails closed instead of probing host LabVIEW.
+- If Docker is not installed yet, not running yet, or the selected image
+  cannot be acquired, the extension fails closed instead of probing host
+  LabVIEW.
 
 ## Branch Use
 
@@ -266,7 +272,8 @@ npm run package -- --out /tmp/vi-history-suite-public-preview.vsix
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.2.1`
 - current published package line on `main`: `1.2.1`
-- current develop package line on `develop`: `1.2.1`
-- no newer exact release candidate line is active on `develop` yet
+- current develop package line on `develop`: `1.2.2`
+- active exact release candidate line on `develop`: `v1.2.2`
+- no newer `release/*` branch is active yet
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`

@@ -66,6 +66,7 @@ describe('vs code marketplace publication and installed-user docs', () => {
     const readme = collapseWhitespace(readAuthorityText('README.md'));
     const publicReadme = collapseWhitespace(readAuthorityText('public-github-source/README.md'));
     const publicInstall = collapseWhitespace(readAuthorityText('public-github-source/INSTALL.md'));
+    const publicSupport = collapseWhitespace(readAuthorityText('public-github-source/SUPPORT.md'));
     const home = collapseWhitespace(readPublicWikiText('Home.md'));
     const install = collapseWhitespace(readPublicWikiText('Install-And-Release.md'));
 
@@ -73,22 +74,31 @@ describe('vs code marketplace publication and installed-user docs', () => {
 
     expect(readme).toContain('If You Installed VI History Suite From The Marketplace');
     expect(readme).toContain('You do not need to fork this repo or learn the branch model to use the installed extension.');
+    expect(readme).toContain('install or start Docker Desktop or Docker, then confirm `docker info`');
     expect(readme).toContain('The rest of this README is the authority repo and release-control entry surface');
 
     expect(publicReadme).toContain('If You Installed VI History Suite');
     expect(publicReadme).toContain('You do not need to fork this repo or choose a branch to use the installed extension locally.');
+    expect(publicReadme).toContain('install or start Docker Desktop or Docker, then confirm `docker info`');
     expect(publicReadme).toContain('Branches matter only when you are evaluating or contributing to the source repo.');
 
     expect(publicInstall).toContain('Installed Extension Start');
     expect(publicInstall).toContain('You do not need to fork the repo for this path.');
+    expect(publicInstall).toContain("docker info --format '{{.OSType}}'");
+    expect(publicInstall).toContain('If those checks fail, install or start Docker before expecting image');
     expect(publicInstall).toContain('Marketplace and exact-release users can stop after the installed-user flow above.');
+    expect(publicSupport).toContain("docker info --format '{{.OSType}}'");
+    expect(publicSupport).toContain('If Docker is not installed yet, not running yet');
 
     expect(home).toContain('If You Installed The Extension');
     expect(home).toContain('You do not need to fork the repo or learn the branch model for this path.');
+    expect(home).toContain('install or start Docker Desktop or Docker, then confirm `docker info`');
     expect(home).toContain('Source Evaluation And Codespaces');
 
     expect(install).toContain('Installed Extension Users');
     expect(install).toContain('VS Code Marketplace listing');
+    expect(install).toContain("docker info --format '{{.OSType}}'");
+    expect(install).toContain('If those checks fail, install or start Docker before expecting image');
     expect(install).toContain('Use this lane only when you want to evaluate the source repo');
   });
 });

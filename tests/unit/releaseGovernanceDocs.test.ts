@@ -64,7 +64,7 @@ describe('release governance package', () => {
     );
     expect(rules.releaseCadence.activeOpeningDecision.chosenBump).toBe('patch');
     expect(rules.releaseCadence.activeOpeningDecision.targetDevelopCandidateReleaseLine).toBe(
-      'v1.2.1'
+      'v1.2.2'
     );
     expect(rules.releaseCadence.versionLineContract.publicDefaultBranch).toBe('main');
     expect(rules.operatorSurfaceSustainment.branchModel.model).toBe('gitflow-lite');
@@ -93,6 +93,7 @@ describe('release governance package', () => {
     expect(adr).toContain('`hotfix/*`');
     expect(adr).toContain('`npm run design:gate`');
     expect(adr).toContain('`npm run branch:governance:assert`');
+    expect(adr).toContain('back-merged into `develop`');
     expect(adr0).toContain('VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT');
     expect(adr0).toContain('rejecting a dirty target repo');
     expect(adr2).toContain('# ADR-0031: Finding-Driven ADR And Requirement Evolution');
@@ -120,8 +121,9 @@ describe('release governance package', () => {
     expect(adr7).toContain('manual Marketplace portal-upload fallback');
     expect(adr7).toContain('packaged extension `homepage` points to the maintained public wiki home');
     expect(hostedGovernance).toContain('# Hosted CI Governance');
-    expect(hostedGovernance).toContain('current `develop` package line: `1.2.1`');
-    expect(hostedGovernance).toContain('no newer exact release candidate line is active on `develop` yet');
+    expect(hostedGovernance).toContain('current `develop` package line: `1.2.2`');
+    expect(hostedGovernance).toContain('active exact release candidate line on `develop`: `v1.2.2`');
+    expect(hostedGovernance).toContain('no newer `release/*` branch is active yet');
     expect(hostedGovernance).toContain('chosen bump: `patch`');
     expect(hostedGovernance).toContain('npm run branch:governance:assert');
     expect(hostedGovernanceJson.openingDecision.chosenBump).toBe('patch');
@@ -158,6 +160,10 @@ describe('release governance package', () => {
     expect(srs).toContain('packaged extension manifest homepage');
     expect(srs).toContain('VHS-REQ-526');
     expect(srs).toContain('installed-user local workflow guidance');
+    expect(srs).toContain('VHS-REQ-527');
+    expect(srs).toContain('back-merged into `develop`');
+    expect(srs).toContain('VHS-REQ-528');
+    expect(srs).toContain('missing Docker CLI or a stopped Docker daemon');
     expect(rtm).toContain('public GitHub `main` remains the default branch and exact release branch');
     expect(rtm).toContain('PR-driven focused admission on `feature/*`');
     expect(rtm).toContain('push plus PR validation for `release/*` and `hotfix/*`');
@@ -178,6 +184,8 @@ describe('release governance package', () => {
     expect(rtm).toContain('VHS-REQ-524');
     expect(rtm).toContain('VHS-REQ-525');
     expect(rtm).toContain('VHS-REQ-526');
+    expect(rtm).toContain('VHS-REQ-527');
+    expect(rtm).toContain('VHS-REQ-528');
     expect(testPlan).toContain('public-default-branch');
     expect(testPlan).toContain('keeps GitHub `main` stable');
     expect(testPlan).toContain('PR-driven feature admission and push validation on `release/*` and');
@@ -205,6 +213,10 @@ describe('release governance package', () => {
     expect(testPlan).toContain('TEST-DOC-098');
     expect(testPlan).toContain('TEST-DOC-099');
     expect(testPlan).toContain('TEST-DOC-100');
+    expect(testPlan).toContain('TEST-UNIT-338');
+    expect(testPlan).toContain('TEST-UNIT-339');
+    expect(testPlan).toContain('TEST-DOC-101');
+    expect(testPlan).toContain('TEST-DOC-102');
     expect(rules.operatorSurfaceSustainment.branchModel.findingAdrDiscipline).toEqual(
       expect.arrayContaining([
         'every governed finding is classified before slice closeout as adr-update-required or no-adr-impact'
@@ -241,6 +253,7 @@ describe('release governance package', () => {
     expect(program).toContain('review-ready candidate publication boundary');
     expect(program).toContain('VS Code Marketplace publication governance');
     expect(program).toContain('installed-user-first entry-surface redesign');
+    expect(program).toContain('one governed exact-closeout back-merge rule');
     expect(issue).toContain('explicit major/minor/patch decision criteria');
     expect(issue).toContain('continuous refinement of ADR coverage from governed findings');
     expect(issue).toContain('branch-model and lane-specific CI/design-gate governance');
@@ -249,5 +262,6 @@ describe('release governance package', () => {
     expect(issue).toContain('stale dirty side checkout');
     expect(issue).toContain('VS Code Marketplace publication governance');
     expect(issue).toContain('installed-user entry-surface redesign');
+    expect(issue).toContain('exact-closeout back-merge governance');
   });
 });

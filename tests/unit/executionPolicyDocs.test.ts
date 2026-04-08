@@ -101,9 +101,12 @@ describe('execution-policy control plane', () => {
     expect(readme).toContain('PROGRAM-0005');
     expect(readme).toContain('TRANCHE-013');
     expect(readme).toContain('TRANCHE-012');
+    expect(readme).toContain('TRANCHE-015');
     expect(readme).toContain('Docker-only');
     expect(readme).toContain('public GitHub facade');
+    expect(readme).toContain('install or start Docker Desktop or Docker');
     expect(currentState).toContain('`TRANCHE-013`: Extension execution flexibility and runtime acquisition UX');
+    expect(currentState).toContain('`TRANCHE-015`: Installed-user first-run Docker onboarding and fail-closed guidance');
     expect(currentState).toContain('`TRANCHE-012`: Post-release sustainment and release cadence');
     expect(currentState).toContain(
       '[PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)'
@@ -119,6 +122,8 @@ describe('execution-policy control plane', () => {
     expect(queue).toContain('"status": "active"');
     expect(queue).toContain('"id": "TRANCHE-012"');
     expect(queue).toContain('"status": "active"');
+    expect(queue).toContain('"id": "TRANCHE-015"');
+    expect(queue).toContain('"status": "active"');
     expect(policy).not.toContain('`auto`');
     expect(policy).not.toContain('`host-only`');
     expect(policy).toContain('comparison generation is Docker-only in the installed extension');
@@ -130,28 +135,41 @@ describe('execution-policy control plane', () => {
     expect(policy).toContain('Docker daemon `OSType=linux` selects the governed Linux container image');
     expect(policy).toContain('selected provider, current Docker engine mode, selected image, acquisition');
     expect(policy).toContain('execution-policy bypass is not allowed');
+    expect(policy).toContain(
+      'first use assumes Docker is already installed and running only when the host'
+    );
+    expect(policy).toContain('Docker CLI plus daemon checks');
+    expect(policy).toContain('tells first-time users to install or start Docker and confirm it is working');
     expect(srs).toContain('VHS-REQ-459');
     expect(srs).toContain('VHS-REQ-470');
     expect(srs).toContain('VHS-REQ-482');
     expect(srs).toContain('VHS-REQ-475');
     expect(srs).toContain('Docker-only');
+    expect(srs).toContain('VHS-REQ-528');
+    expect(srs).toContain('missing Docker CLI or a stopped Docker daemon');
     expect(rtm).toContain('VHS-REQ-470');
     expect(rtm).toContain('current Docker daemon engine');
     expect(rtm).toContain('Docker-only');
     expect(rtm).toContain('ADR-0026-canonical-extension-execution-request-validation.md');
+    expect(rtm).toContain('VHS-REQ-528');
     expect(testPlan).toContain('TEST-UNIT-300');
     expect(testPlan).toContain('TEST-DOC-068');
     expect(testPlan).toContain('Docker-only');
+    expect(testPlan).toContain('TEST-UNIT-339');
+    expect(testPlan).toContain('TEST-DOC-102');
     expect(program).toContain('Active post-release program.');
     expect(program).toContain('the installed extension now depends on Docker for comparison generation');
     expect(program).toContain('gets the governed Windows image when Docker is in Windows-engine mode');
     expect(program).toContain('gets the governed Linux image when Docker is in Linux-engine mode');
     expect(program).toContain('authority, bundled-doc, internal wiki, and public GitHub user-surface');
     expect(program).toContain('Gate D: Public/Internal Surface Split');
+    expect(program).toContain('first-run missing-Docker onboarding and fail-closed recovery guidance');
     expect(issue).toContain('Active post-release issue.');
     expect(issue).toContain('Docker-only comparison contract');
     expect(issue).toContain('canonical Docker-only request validation');
     expect(issue).toContain('public GitHub front face');
+    expect(issue).toContain('a first-time installed-extension user whose machine');
+    expect(issue).toContain('does not yet have Docker installed or running');
     expect(sustainmentProgram).toContain('Active post-release program.');
     expect(sustainmentProgram).toContain('That work remains explicit under active `PROGRAM-0005`');
     expect(adr0006).toContain('superseded by ADR-0025');
