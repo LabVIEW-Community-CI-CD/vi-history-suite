@@ -70,6 +70,7 @@ describe('bundled documentation', () => {
     expect(loaded?.pageBodyHtml).toContain('select the second retained revision to generate a comparison report automatically for that exact pair');
     expect(loaded?.pageBodyHtml).toContain('the oldest retained revision is still selectable as the older/base side of a checkbox-selected pair');
     expect(loaded?.pageBodyHtml).toContain('there is no separate dashboard or decision-record step in the extension-user compare flow');
+    expect(loaded?.pageBodyHtml).not.toContain('<code>Diff prev</code>');
     expect(loaded?.pageBodyHtml).toContain('white <code>Comparison context</code> block');
     expect(loaded?.pageBodyHtml).toContain('selected/base commit hash, date, author, and subject facts');
     expect(loaded?.pageBodyHtml).toContain('Runtime diagnostics remain retained');
@@ -98,12 +99,16 @@ describe('bundled documentation', () => {
     expect(comparisonLoaded?.pageBodyHtml).toContain('white <code>Comparison context</code> block');
     expect(comparisonLoaded?.pageBodyHtml).toContain('selected/base commit hash, date, author, and subject facts');
     expect(comparisonLoaded?.pageBodyHtml).toContain('do not lead the embedded compare view');
+    expect(comparisonLoaded?.pageBodyHtml).toContain('<h2>Checkbox-Selected Pair Review</h2>');
     expect(comparisonLoaded?.pageBodyHtml).not.toContain('Observed NI Metadata');
     expect(comparisonLoaded?.pageBodyHtml).not.toContain('Exact-Pair Diagnosis');
     expect(comparisonLoaded?.pageBodyHtml).not.toContain('Proof Surfaces');
     expect(comparisonLoaded?.pageBodyHtml).not.toContain('pair-129');
     expect(comparisonLoaded?.pageBodyHtml).not.toContain('HARNESS-VHS');
     expect(comparisonLoaded?.pageBodyHtml).toContain('there is no separate compare button on commit rows for extension users');
+    expect(comparisonLoaded?.pageBodyHtml).toContain('retained comparison evidence opens from the checkbox-selected pair');
+    expect(comparisonLoaded?.pageBodyHtml).not.toContain('<code>Diff prev</code>');
+    expect(comparisonLoaded?.pageBodyHtml).not.toContain('<h2>Retained Pair Review</h2>');
     expect(comparisonLoaded?.pageBodyHtml).not.toContain('<h2>Dashboard Review</h2>');
 
     const overviewLoaded = await loadBundledDocumentationPage(extensionUri as never, 'overview');

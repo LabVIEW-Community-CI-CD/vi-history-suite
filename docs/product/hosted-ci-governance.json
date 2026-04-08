@@ -4,17 +4,17 @@
   "openingDecision": {
     "currentExactReleaseLine": "v1.1.0",
     "currentMainPackageLine": "1.1.0",
-    "currentDevelopPackageLine": "1.1.0",
-    "activeDevelopCandidateReleaseLine": null,
-    "activeReleaseCandidateBranch": null,
+    "currentDevelopPackageLine": "1.2.0",
+    "activeDevelopCandidateReleaseLine": "v1.2.0",
+    "activeReleaseCandidateBranch": "release/1.2.0",
     "chosenBump": "minor",
     "rationale": [
-      "the next line adds one governed hosted branch-protection and CI responsibility capability across authority GitLab, the public GitHub facade, and GitHub experiment lanes",
-      "the exact v1.0.6 public contract remains valid while the next-line operating model becomes more explicit and testable"
+      "the next line adds one governed public Codespaces/bootstrap capability for public GitHub and GitLab repos without breaking the exact v1.1.0 public contract",
+      "the same line also hardens branch-governance admission so future feature work cannot reopen candidate work from a stale develop baseline"
     ],
     "rejectedAlternatives": {
-      "patch": "the slice expands the maintained release operating model rather than only correcting one existing line",
-      "major": "no governed v1.0.6 public contract is intentionally broken or removed"
+      "patch": "the slice adds a new governed public workflow instead of only correcting an existing released one",
+      "major": "no governed v1.1.0 public contract is intentionally broken or removed"
     }
   },
   "branchModel": {
@@ -22,7 +22,7 @@
     "publicDefaultBranch": "main",
     "integrationBranch": "develop",
     "releaseBranch": "main",
-    "activeReleaseCandidateBranch": null,
+    "activeReleaseCandidateBranch": "release/1.2.0",
     "temporaryBranchPrefixes": [
       "feature/",
       "release/",
@@ -150,6 +150,7 @@
     },
     "designGateBoundary": {
       "localPromotionGate": "npm run design:gate",
+      "firstGateStep": "npm run branch:governance:assert",
       "assertionSurface": "npm run design:gate:assert-complete",
       "ciNamedRequiredCheck": false
     }

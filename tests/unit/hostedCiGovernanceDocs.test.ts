@@ -32,9 +32,9 @@ describe('hosted ci governance docs', () => {
       expect.objectContaining({
         currentExactReleaseLine: 'v1.1.0',
         currentMainPackageLine: '1.1.0',
-        currentDevelopPackageLine: '1.1.0',
-        activeDevelopCandidateReleaseLine: null,
-        activeReleaseCandidateBranch: null,
+        currentDevelopPackageLine: '1.2.0',
+        activeDevelopCandidateReleaseLine: 'v1.2.0',
+        activeReleaseCandidateBranch: 'release/1.2.0',
         chosenBump: 'minor'
       })
     );
@@ -56,9 +56,11 @@ describe('hosted ci governance docs', () => {
 
     expect(matrixDoc).toContain('current exact release line: `v1.1.0`');
     expect(matrixDoc).toContain('current `main` package line: `1.1.0`');
-    expect(matrixDoc).toContain('current `develop` package line: `1.1.0`');
-    expect(matrixDoc).toContain('no newer exact release candidate line is active yet');
+    expect(matrixDoc).toContain('current `develop` package line: `1.2.0`');
+    expect(matrixDoc).toContain('active exact release candidate line on `develop`: `v1.2.0`');
+    expect(matrixDoc).toContain('active release-candidate branch: `release/1.2.0`');
     expect(matrixDoc).toContain('chosen bump: `minor`');
+    expect(matrixDoc).toContain('npm run branch:governance:assert');
     expect(matrixDoc).toContain('merge gate: `only_allow_merge_if_pipeline_succeeds=true`');
     expect(matrixDoc).toContain('classification: characterization-only experiment automation');
     expect(adr).toContain('GitLab authority uses protected branches plus');

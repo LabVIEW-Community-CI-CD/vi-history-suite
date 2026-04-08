@@ -47,6 +47,7 @@ Read these in order:
 31. [hosted-ci-governance.json](./hosted-ci-governance.json)
 32. [Extension Execution Policy](./extension-execution-policy.md)
 33. [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
+34. [PROGRAM-0006: Public Codespaces Public-Repo Bootstrap](./execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md)
 
 ## Authority Stack
 
@@ -95,7 +96,8 @@ Current control-plane surfaces:
 31. [hosted-ci-governance.json](./hosted-ci-governance.json)
 32. [Extension Execution Policy](./extension-execution-policy.md)
 33. [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
-34. [Fast VS Code Loop](../dev-fast-loop.md)
+34. [PROGRAM-0006: Public Codespaces Public-Repo Bootstrap](./execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md)
+35. [Fast VS Code Loop](../dev-fast-loop.md)
 
 ## Committed Capability State
 
@@ -142,8 +144,10 @@ Latest landed ship target:
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.1.0`
 - current published package line on `main`: `1.1.0`
-- current develop package line on `develop`: `1.1.0`
-- no newer exact release candidate line is active on `develop` yet
+- current develop package line on `develop`: `1.2.0`
+- active exact release candidate line on `develop`: `v1.2.0`
+- active release-candidate branch: `release/1.2.0`
+- active SemVer opening decision: `minor`
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
@@ -154,10 +158,43 @@ Latest landed ship target:
 - docs-workbench image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
 - remaining blockers: none on the exact public `v1.1.0` line; public `main`
   now publishes `daef8bd`, the public GitHub release `v1.1.0` is live, and
-  no newer exact release candidate is active yet
+  `release/1.2.0` is now the active promotion lane for exact `v1.2.0`
+- `v1.2.0` is now `tag-eligible` on maintained public `develop` head
+  `ac56456` and maintained public wiki head `b30d356`; Sergio's brand-new-fork
+  and brand-new-Codespace rerun passed on
+  `Examples/Logging with Helper-VIs.vi`, so the final review blocker is closed
+  and exact closeout can proceed through `release/1.2.0`
 
 Current active tranche:
 
+- `TRANCHE-014`: Public Codespaces public-repo bootstrap
+- active issue: [ISSUE-0411 Public Codespaces Public-Repo Bootstrap](./issues/ISSUE-0411-public-codespaces-public-repo-bootstrap.md)
+- active execution program: [PROGRAM-0006: Public Codespaces Public-Repo Bootstrap](./execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md)
+  - current first slice:
+  - back-merge exact `v1.1.0` `main` into `develop` before the `1.2.0`
+    candidate line continues
+  - keep the canonical `npm run public:fixture:icon-editor` helper-backed path
+    as the easiest first-time proof for `ni/labview-icon-editor`
+  - add one generic `npm run public:repo:clone` surface for public GitHub and
+    GitLab HTTPS repos with optional explicit branch and remote default-branch
+    resolution when omitted
+  - keep the maintained public generic path as a standalone reference manual,
+    not a second quickstart
+  - Sergio's first dry-run review from a brand new fork and a brand new
+    Codespace has now produced findings that must be folded before the exact
+    `v1.2.0` tag remains eligible
+  - a repo-access LLM pre-review then narrowed the remaining issues to one
+    smaller doc-clarification slice on the public README/install/wiki package
+  - that clarification slice is now validated locally through focused
+    authority/public tests plus docs/design gates
+  - Sergio's next brand-new-fork rerun on `hse-logger` then exposed a real
+    moved-VI compare blocker (`left-blob-read-failed`) on a pair where the VI
+    had moved between selected/base commits
+  - the refreshed maintained public `develop` head now carries the rename-aware
+    compare fix, bundled compare-flow wording cleanup, and public smoke
+    required-check path-admission repair, and Sergio's brand-new-fork rerun has
+    now passed on `Examples/Logging with Helper-VIs.vi`, so `release/1.2.0`
+    is active for exact closeout
 - `TRANCHE-013`: Extension execution flexibility and runtime acquisition UX
 - active issue: [ISSUE-0410 Extension Execution Flexibility And Runtime Acquisition UX](./issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md)
 - active execution program: [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
@@ -258,6 +295,19 @@ Post-release tranches:
   - the installed extension now depends on Docker for compare generation, no longer exposes host-runtime mode/path knobs to extension users, constrains installed compare execution to x64 container surfaces, and selects the governed Windows or Linux image from the current Docker daemon engine instead of probing host LabVIEW
   - execution-policy bypass remains forbidden: installed compare execution must still pass canonical Docker-only request validation and governed provider hard stops
   - the runtime doctor, history panel, and retained packet surfaces now carry the selected provider, current Docker engine, selected image, acquisition state, and next action as explicit installed-runtime truth
+- `TRANCHE-014`: Public Codespaces public-repo bootstrap
+  - active issue: [ISSUE-0411 Public Codespaces Public-Repo Bootstrap](./issues/ISSUE-0411-public-codespaces-public-repo-bootstrap.md)
+  - active execution program: [PROGRAM-0006: Public Codespaces Public-Repo Bootstrap](./execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md)
+  - `develop` now carries the active `1.2.0` line while exact public `main`
+    remains `v1.1.0`
+  - the first `1.2.0` correction repaired branch-governance admission by
+    realigning exact `main` back into `develop` before feature work continues
+  - the line now adds one generic public-repo bootstrap surface for public
+    GitHub and GitLab HTTPS repos while keeping the canonical icon-editor
+    helper path separate
+  - the exact `v1.2.0` tag is intentionally blocked until Sergio's documented
+    brand-new-fork and brand-new-Codespace findings are folded and the
+    maintained public wiki/reference-manual package is accepted
 
 Current active and queued post-release programs:
 
@@ -271,7 +321,7 @@ Current active and queued post-release programs:
   - public GitHub facade repo is the public source product surface at `https://github.com/svelderrainruiz/vi-history-suite`; the exact published head is retained in `docs/product/public-github-source-publication-ledger.md` and `docs/product/public-github-source-publication-ledger.json`
   - public GitHub user wiki now exists at `https://github.com/svelderrainruiz/vi-history-suite.wiki.git` as a public extension-user reader surface; the exact published head is retained in `docs/product/public-github-wiki-publication-ledger.md` and `docs/product/public-github-wiki-publication-ledger.json`
   - public GitHub source publication is tracked separately from both wiki surfaces in `docs/product/public-github-source-publication-ledger.md` and `docs/product/public-github-source-publication-ledger.json`
-  - published public GitHub wiki pages now include `Home`, `User-Workflow`, `Install-And-Release`, `Fork-Codespace-Quickstart`, `Refresh-Codespace-Repositories`, `Manual-Actor-Framework-Clone`, `Comparison-Reports-And-Dashboard-Review`, and `Current-State`
+  - published public GitHub wiki pages now include `Home`, `User-Workflow`, `Install-And-Release`, `Fork-Codespace-Quickstart`, `Clone-Public-Repo-In-Codespace`, `Review-Public-LabVIEW-VI-Changes`, `Refresh-Codespace-Repositories`, `Manual-Actor-Framework-Clone`, `Comparison-Reports-And-Dashboard-Review`, and `Current-State`
   - the canonical Gate D blocker on `resource/plugins/lv_icon.vi` is retired, while `v1.0.2` is now retained as a burned exact release and the current exact public GitHub release line is `v1.1.0`
   - the public branch model is now explicit: `develop` is the integration and
     Codespaces-evaluation branch, and `main` is the release branch
@@ -310,6 +360,7 @@ Current active and queued post-release programs:
   - [PROGRAM-0003: Repeatable Benchmark Proof](./execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md)
   - [PROGRAM-0004: Post-Release Sustainment And Release Cadence](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)
   - [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
+  - [PROGRAM-0006: Public Codespaces Public-Repo Bootstrap](./execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md)
 
 The active-queue source of truth is:
 
@@ -318,6 +369,7 @@ The active-queue source of truth is:
 - [PROGRAM-0003: Repeatable Benchmark Proof](./execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md)
 - [PROGRAM-0004: Post-Release Sustainment And Release Cadence](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)
 - [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
+- [PROGRAM-0006: Public Codespaces Public-Repo Bootstrap](./execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md)
 - [extension-execution-policy.md](./extension-execution-policy.md)
 - [debt-retirement-contract.md](./debt-retirement-contract.md)
 - [debt-taxonomy.md](./debt-taxonomy.md)

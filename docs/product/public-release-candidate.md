@@ -1,12 +1,13 @@
 # Public Release Candidate
 
-- Version line: `1.1.0`
+- Version line: `1.2.0`
 - Burned exact release line: `v1.0.2`
-- Recorded at: `2026-04-07T19:33:34Z`
+- Recorded at: `2026-04-08T00:43:15Z`
 - Authority source of truth: GitLab `develop` -> `main`
 - Published public source commit: `daef8bd`
-- Public `develop` candidate commit: `648e399`
-- Published public wiki head: `d184be2`
+- Authority `develop` candidate baseline: `8c99163`
+- Public `develop` candidate commit: `ac56456`
+- Published public wiki head: `b30d356`
 
 ## Branch Model
 
@@ -25,11 +26,38 @@
 
 - Authority baseline: `v1.1.0-exact-public-release-published`
 - Local exact VSIX build: `exact-v1.1.0-release-built`
-- Local public devcontainer: `passed-v1.0.5-baseline`
-- Local public fixture helper: `passed-v1.0.5-baseline`
-- Public Codespace: `passed-v1.0.5-baseline`
-- Gate D public acceptance: `passed-v1.0.5-baseline`
+- Local public devcontainer: `v1.1.0-published-baseline`
+- Local public fixture helper: `v1.1.0-published-baseline`
+- Local authority findings fold:
+  `published-and-retained-on-maintained-public-candidate-surfaces`
+- Public repo bootstrap:
+  `published-maintained-candidate-with-moved-vi-and-bundled-doc-refresh`
+- Public wiki candidate review:
+  `ready-for-next-brand-new-fork-review-on-published-candidate`
+- Review-ready gate:
+  `ready-for-brand-new-fork-review`
 - Exact public release: `v1.1.0-published`
+- Required review environment: brand new fork plus brand new Codespace
+
+## Candidate State Machine
+
+- Ordered states:
+  - `local-authority-green`
+  - `public-develop-published`
+  - `public-wiki-published`
+  - `review-ready`
+  - `review-feedback-received`
+  - `review-feedback-folded`
+  - `tag-eligible`
+- Current state: `review-ready`
+- Review-ready rule: local authority-green proof is necessary but not
+  sufficient; the maintained public `develop` candidate head and maintained
+  public wiki head must both be published and retained here before the next
+  brand-new-fork review opens
+- Dirty public-surface rule: preserve unrelated dirt, inspect overlapping
+  changes, patch the maintained candidate slice narrowly, and pause only on
+  direct unresolved conflicts instead of stopping candidate publication merely
+  because the public source/wiki worktree is dirty
 
 ## Exact Release
 
@@ -53,20 +81,49 @@
 
 - The exact public `v1.1.0` VSIX was rebuilt from merged public `main` commit
   `daef8bd` before GitHub release publication.
-- The local public devcontainer passes on the governed machine surface.
-- The governed public fixture helper now stages `ni/labview-icon-editor` into
-  a visible repo-sibling `labview-icon-editor` folder instead of a hidden cache
-  path.
-- The helper-backed fork-owner path now targets upstream `develop`, which
-  preserves the commit history needed for the `VI History` context action on
-  `resource/plugins/lv_icon.vi`.
-- The public `VI History` action now surfaces immediately on `.vi`, `.ctl`,
-  and `.vit` files instead of waiting for background eligibility indexing.
-- The public package-preview required check now creates `artifacts/` before the
-  VSIX build so upload cannot fail after a successful package step.
-- The current `1.0.6` local hardening slice also retires the disposed-webview
-  progress race in `openViHistoryCommand` so in-flight compare progress cannot
-  throw through the extension host after the panel is gone.
+- The local public devcontainer and helper-backed icon-editor path remain the
+  published `v1.1.0` baseline.
+- Authority `develop` was realigned to exact `main` through GitLab MR `!11`
+  before `1.2.0` feature work continued, so the next feature line now starts
+  from a compliant branch baseline instead of reopening from stale `develop`.
+- The authority candidate line now carries `npm run public:repo:clone`, which
+  accepts public `github.com` and `gitlab.com` HTTPS repo URLs without a
+  provider selector.
+- In a brand-new Codespace, `npm run public:repo:clone` now supports an
+  interactive repo-URL prompt and prints the fallback guidance for the
+  canonical helper-backed sample when the prompt is cancelled.
+- When `--branch` is omitted, the generic bootstrap resolves the remote
+  default branch; when `--branch` is provided, it is honored exactly.
+- The canonical `npm run public:fixture:icon-editor` helper remains the
+  easiest first-time proof for `ni/labview-icon-editor`.
+- Public `develop` now carries the maintained generic bootstrap candidate with
+  Sergio's first findings fold at `e8b0925`, and the maintained public wiki
+  package that carried the same fold was published at `63a4208`.
+- A repo-access LLM pre-review reassessed those published candidate surfaces,
+  withdrew false blockers, and left one smaller doc-clarification slice for the
+  public README, install summary, host restriction wording, and compile
+  troubleshooting language.
+- That clarification slice was then republished on maintained public `develop`
+  head `c9806c3` through GitHub PR `#16` and on maintained public wiki head
+  `b30d356`, and it is validated by the focused doc/package proof plus
+  `npm run docs:gate:core` and `npm run design:gate:assert-complete`.
+- Sergio's brand-new-fork rerun against `hse-logger` then exposed a real
+  moved-VI compare blocker on selected/base pair `81325a7 -> 4a265f6`:
+  compare preflight and runtime staging still assumed the current workspace
+  path on both sides, so the candidate failed closed with
+  `left-blob-read-failed` even though follow history still resolved the same VI
+  across the move.
+- Maintained public `develop` then published the rename-aware compare fix at
+  `fb46cbf` through GitHub PR `#17`.
+- A follow-on refresh then published bundled compare-flow wording cleanup plus
+  the public `public-facade-linux-smoke` required-check path-admission repair
+  at maintained public `develop` head `ac56456` through GitHub PR `#18`, while
+  the maintained public wiki head remained `b30d356`.
+- The next brand-new-fork review can now reopen against maintained public
+  candidate head `ac56456` and maintained public wiki head `b30d356`.
+- The exact `v1.2.0` tag is intentionally blocked until the maintained public
+  wiki procedures are dry-run reviewed and accepted from a brand new fork and
+  a brand new Codespace.
 
 ## Hosted Proof
 
@@ -85,46 +142,60 @@
 
 ## Tester Fixture Strategy
 
-- Decision: optional governed helper
-- Command: `npm run public:fixture:icon-editor`
-- Target path: `../labview-icon-editor`
-- Codespace target path: `/workspaces/labview-icon-editor`
-- Manual alternative: `Manual-Actor-Framework-Clone`
+- Decision: helper-backed canonical path plus generic public-repo reference manual
+- Canonical helper command: `npm run public:fixture:icon-editor`
+- Generic interactive command: `npm run public:repo:clone`
+- Generic bootstrap command:
+  `npm run public:repo:clone -- --repo-url <https-url>`
+- Canonical helper target path: `../labview-icon-editor`
+- Generic bootstrap target path: `../<repo-name>`
+- Codespace target path pattern: `/workspaces/<repo-name>`
+- Reference manual page: `Review-Public-LabVIEW-VI-Changes`
+- Compatibility redirect page: `Clone-Public-Repo-In-Codespace`
 - Refresh page: `Refresh-Codespace-Repositories`
 
 ## Governed Findings
 
-- `FINDING-1.0.6-001-PUBLIC-DEVELOP-REALIGNMENT`
+- `FINDING-1.2.0-001-BRANCH-BASELINE-GOVERNANCE-GAP`
   - status: `closed`
-  - public `develop` merged at `648e399` with required GitHub checks green
-  - requirement impact: `updated` via `VHS-REQ-505`, `VHS-REQ-506`,
-    `VHS-REQ-507`, and `VHS-REQ-508`
-  - ADR impact: `updated` via `ADR-0030` and `ADR-0031`
-- `FINDING-1.0.6-002-HISTORY-PANEL-DISPOSED-WEBVIEW-PROGRESS-RACE`
+  - authority `develop` realigned at `804ec9d` through GitLab MR `!11`
+  - requirement impact: `updated` via `VHS-REQ-505` and `VHS-REQ-515`
+  - ADR impact: `updated` via `ADR-0030`
+- `FINDING-1.2.0-002-PUBLIC-CODESPACES-PUBLIC-REPO-BOOTSTRAP`
+  - status: `active`
+  - public `develop` candidate with Sergio's first findings fold was published
+    at `e8b0925` through GitHub PR `#15`
+  - Sergio review findings were submitted from a brand new fork and a brand
+    new Codespace against the public wiki head `23604e7`, then republished on
+    maintained public wiki head `63a4208`
+  - a repo-access LLM pre-review then found one smaller doc-clarification
+    slice; that slice was then republished on maintained public `develop` head
+    `c9806c3` through GitHub PR `#16` and on maintained public wiki head
+    `b30d356`
+  - requirement impact: `updated` via `VHS-REQ-516`, `VHS-REQ-517`, and
+    `VHS-REQ-518`
+  - ADR impact: `updated` via `ADR-0034`
+- `FINDING-1.2.0-003-REVIEW-READY-BOUNDARY-GOVERNANCE-GAP`
   - status: `closed`
-  - requirement impact: `updated` via `VHS-REQ-509`
-  - ADR impact: `no-impact`
-  - retained rationale: the fix stays within the existing history-panel
-    command/webview architecture and does not change sustained branch, release,
-    runtime-provider, or product-boundary decisions
-- `FINDING-1.0.6-003-PUBLIC-WORKFLOW-GOVERNANCE-GAP`
+  - local authority-green proof previously stopped short of maintained public
+    candidate publication, so the control plane now retains an explicit
+    `review-ready` boundary instead of treating local proof as reviewable truth
+  - requirement impact: `updated` via `VHS-REQ-519` and `VHS-REQ-520`
+  - ADR impact: `updated` via `ADR-0035`
+- `FINDING-1.2.0-004-MOVED-VI-HISTORICAL-PATH-RESOLUTION`
   - status: `closed`
-  - public `develop` merged at `648e399` with both required GitHub checks
-    green
-  - requirement impact: `updated` via `VHS-REQ-510`
-  - ADR impact: `updated` via `ADR-0032`
-  - retained rationale: the public workflow pair now has first-class
-    requirement/ADR capture plus bounded trigger and churn-control refactoring
+  - Sergio's brand-new-fork review found that moved VI pairs could still fail
+    compare preflight with `left-blob-read-failed` even though VI History had
+    correctly followed the file across the rename, so comparison generation now
+    resolves the historical repo-relative path for each revision before blob
+    reads and runtime staging proceed
+  - requirement impact: `updated` via `VHS-REQ-521`
+  - ADR impact: `none`
 
 ## Remaining Blockers
 
-- The branch-model hardening blocker is closed because public `develop` already
-  merged at `0985f96`.
-- The disposed-webview progress blocker is also closed because the public
-  hardening merge completed on `develop`.
-- The workflow-governance blocker is now also closed because public `develop`
-  merged at `975a7f2` with `package-preview` and
-  `public-facade-linux-smoke` green.
-- No active `1.1.0` public-source blockers remain.
-- `v1.1.0` is now the current exact green line on `main`, and no newer exact
-  release candidate is active on `develop` yet.
+- One final acceptance review from a brand new fork and a brand new Codespace
+  is still required on maintained public `develop` candidate head `ac56456`
+  and maintained public wiki head `b30d356` before exact tagging.
+- `v1.1.0` remains the current exact green line on `main`, while `v1.2.0`
+  stays open on `develop`.

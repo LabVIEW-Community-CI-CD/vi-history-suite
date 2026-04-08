@@ -34,6 +34,9 @@ Adopt this next-line governance model:
   - `hotfix/*`
 - back-merge exact released `main` into `develop` before opening the next
   candidate line
+- fail closed on that branch-baseline rule through one explicit
+  `npm run branch:governance:assert` surface, and keep that assertion first in
+  `npm run design:gate`
 
 Adopt this SemVer decision framework:
 
@@ -88,5 +91,6 @@ Costs:
   README, current-state, SRS, RTM, and test plan
 - keep branch-lane CI and `design:gate` obligations explicit on the next
   release line
-- realign public `develop` to the exact released `main` baseline before the
-  next public candidate is promoted
+- keep the governed branch-baseline assertion as the fail-closed guard around
+  realigning `develop` to the exact released `main` baseline before the next
+  public candidate is promoted

@@ -1,7 +1,7 @@
 {
   "generatedFor": "vi-history-suite",
   "publicationSurface": "public-github-source-repo",
-  "publishedHeadCommit": "daef8bd",
+  "publishedHeadCommit": "ac56456",
   "publications": [
     {
       "id": "public-source-product-repo-baseline",
@@ -143,6 +143,34 @@
         "docs/product/public-release-candidate.md",
         "docs/release-procedure.md",
         "package.json"
+      ]
+    },
+    {
+      "id": "public-source-v1-2-0-candidate-doc-clarification-refresh",
+      "title": "Public source v1.2.0 candidate doc-clarification refresh",
+      "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
+      "status": "published",
+      "publishedDate": "2026-04-07",
+      "repoCommit": "c9806c3",
+      "primaryAuthority": [
+        "README.md",
+        "INSTALL.md",
+        "docs/product/current-state.md",
+        "docs/product/public-release-candidate.md"
+      ]
+    },
+    {
+      "id": "public-source-v1-2-0-candidate-moved-vi-and-bundled-doc-refresh",
+      "title": "Public source v1.2.0 candidate moved-VI and bundled-doc refresh",
+      "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
+      "status": "published",
+      "publishedDate": "2026-04-08",
+      "repoCommit": "ac56456",
+      "primaryAuthority": [
+        "docs/product/current-state.md",
+        "docs/product/public-release-candidate.md",
+        "docs/requirements/srs.md",
+        "docs/testing/test-plan.md"
       ]
     }
   ]

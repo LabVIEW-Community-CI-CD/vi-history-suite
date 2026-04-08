@@ -6,20 +6,24 @@ Retain one governed hosted-automation matrix so GitLab authority pipelines,
 public GitHub required checks, and GitHub experiment workflows stop being
 raw-YAML-only truth.
 
-This document is the control-plane summary of the governed `1.1.0` hardening
-line. The exact public release is now `v1.1.0`; `main` and `develop` both
-carry `1.1.0`, and no newer exact release candidate is active yet.
+This document is the control-plane summary of the governed `1.2.0` line. The
+exact public release remains `v1.1.0`; `main` still carries `1.1.0`, `develop`
+now carries active candidate line `1.2.0`, and `release/1.2.0` is now active
+for exact `v1.2.0` promotion.
 
 ## Opening Decision
 
 - current exact release line: `v1.1.0`
 - current `main` package line: `1.1.0`
-- current `develop` package line: `1.1.0`
-- no newer exact release candidate line is active yet
+- current `develop` package line: `1.2.0`
+- active exact release candidate line on `develop`: `v1.2.0`
+- active release-candidate branch: `release/1.2.0`
 - chosen bump: `minor`
-- rationale: this line adds a governed hosted branch-protection and CI
-  responsibility capability across authority GitLab, the public GitHub facade,
-  and GitHub experiment lanes without breaking the exact `v1.0.6` contract
+- rationale: this line adds a governed public Codespaces/bootstrap capability
+  for public GitHub and GitLab repos without breaking the exact `v1.1.0`
+  contract
+- rationale: this line also adds a fail-closed branch-baseline assertion so
+  candidate work cannot reopen from a stale `develop` baseline
 
 ## Branch Model
 
@@ -64,6 +68,8 @@ Design-gate boundary:
 
 - `npm run design:gate` remains a governed local promotion gate for
   governance-heavy slices
+- `npm run design:gate` now starts with `npm run branch:governance:assert`
+  so the gate fails closed when `develop` has not yet absorbed exact `main`
 - `npm run design:gate:assert-complete` remains the retained assertion surface
 - GitLab does not pretend that local design-gate proof is a GitHub-style named
   required check

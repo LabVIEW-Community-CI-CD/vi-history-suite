@@ -41,6 +41,11 @@ type SustainmentRules = {
       patch?: string[];
       decisionRecordingRule?: string;
     };
+    candidateStateModel?: {
+      orderedStates?: string[];
+      reviewReadyRule?: string;
+      dirtyPublicSurfaceRule?: string;
+    };
     activeOpeningDecision?: {
       chosenBump?: string;
       targetDevelopCandidateReleaseLine?: string;
@@ -121,9 +126,9 @@ describe('post-release sustainment rules package', () => {
       burnedExactVersionReleases: ['v1.0.2'],
       currentExactReleaseLine: 'v1.1.0',
       currentMainPackageLine: '1.1.0',
-      currentDevelopPackageLine: '1.1.0',
-      activeDevelopCandidateReleaseLine: null,
-      activeReleaseCandidateBranch: null,
+      currentDevelopPackageLine: '1.2.0',
+      activeDevelopCandidateReleaseLine: 'v1.2.0',
+      activeReleaseCandidateBranch: 'release/1.2.0',
       publicDefaultBranch: 'main',
       publicCodespaceBranch: 'develop',
       integrationBranch: 'develop',
@@ -147,9 +152,27 @@ describe('post-release sustainment rules package', () => {
         'any later repo change intended for publication shall advance package.json and the top CHANGELOG.md heading to the next SemVer line before further normalization or publication',
         'future sessions shall not treat an unreleased SemVer bump as complete until the matching public tag and public GitHub release are both published',
         'future sessions shall not keep landing post-release changes on the previous exact release version number',
-        'future sessions shall not treat a burned exact release as the green release baseline for later publication'
+        'future sessions shall not treat a burned exact release as the green release baseline for later publication',
+        'future sessions shall not treat a candidate line as review-ready until the maintained public develop candidate head and maintained public wiki head are both published and retained in the authority candidate package'
       ])
     );
+    expect(rules.releaseCadence.candidateStateModel).toEqual(
+      expect.objectContaining({
+        reviewReadyRule:
+          'local authority-green proof is necessary but not sufficient; review-ready opens only after the maintained public develop candidate head and maintained public wiki head are both live and retained in docs/product/public-release-candidate.{md,json}',
+        dirtyPublicSurfaceRule:
+          'preserve unrelated dirt, inspect overlapping files, patch only the maintained candidate slice narrowly, and pause only on direct unresolved conflicts instead of stopping publication merely because the worktree is dirty'
+      })
+    );
+    expect(rules.releaseCadence.candidateStateModel?.orderedStates).toEqual([
+      'local-authority-green',
+      'public-develop-published',
+      'public-wiki-published',
+      'review-ready',
+      'review-feedback-received',
+      'review-feedback-folded',
+      'tag-eligible'
+    ]);
     expect(rules.releaseCadence.semverDecisionFramework).toEqual(
       expect.objectContaining({
         defaultGovernanceBump: 'patch',
@@ -175,12 +198,12 @@ describe('post-release sustainment rules package', () => {
     expect(rules.releaseCadence.activeOpeningDecision).toEqual(
       expect.objectContaining({
         chosenBump: 'minor',
-        targetDevelopCandidateReleaseLine: 'v1.1.0'
+        targetDevelopCandidateReleaseLine: 'v1.2.0'
       })
     );
     expect(rules.releaseCadence.activeOpeningDecision?.rationale).toEqual(
       expect.arrayContaining([
-        'the next line adds one governed hosted branch-protection and CI responsibility capability across authority GitLab, the public GitHub facade, and GitHub experiment lanes'
+        'the next line adds one governed public Codespaces/bootstrap capability for public GitHub and GitLab repos without breaking the exact v1.1.0 public contract'
       ])
     );
 
@@ -219,10 +242,13 @@ describe('post-release sustainment rules package', () => {
       expect.arrayContaining([
         'public GitHub default branch remains main so readers land on the latest exact released line by default',
         'feature/* branches target develop',
+        'the governed branch-baseline assertion surface fails closed when develop does not yet contain exact main before a new candidate line opens',
         'release/* branches are cut from develop and merge to main plus back into develop',
         'hotfix/* branches are cut from main and merge to main plus back into develop',
         'exact SemVer tags are cut from main only after the protected main pipeline succeeds',
-        'local public-source promotion/check binds the intended checkout through --target-root or VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT and fails closed when the target repo is dirty'
+        'local public-source promotion/check binds the intended checkout through --target-root or VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT and fails closed when the target repo is dirty',
+        'candidate lines are not review-ready until the maintained public develop candidate head and maintained public wiki head are both published and retained in the authority candidate package',
+        'dirty public-source/wiki worktrees are controlled publication surfaces: preserve unrelated dirt, patch overlapping maintained files narrowly, and pause only on direct unresolved conflicts'
       ])
     );
     expect(rules.operatorSurfaceSustainment.branchModel.requiredChecks).toEqual([
@@ -321,12 +347,15 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('## Operator And Documentation Upkeep Rules');
     expect(rulesDoc).toContain('public GitHub default branch: `main`');
     expect(rulesDoc).toContain('current exact released line: `v1.1.0`');
-    expect(rulesDoc).toContain('no newer exact release candidate line is active on `develop` yet');
+    expect(rulesDoc).toContain('current develop package line on `develop`: `1.2.0`');
+    expect(rulesDoc).toContain('active exact release candidate line on `develop`: `v1.2.0`');
+    expect(rulesDoc).toContain('active release-candidate branch: `release/1.2.0`');
     expect(rulesDoc).toContain('chosen bump: `minor`');
     expect(rulesDoc).toContain('develop');
     expect(rulesDoc).toContain('release branch');
     expect(rulesDoc).toContain('required checks');
     expect(rulesDoc).toContain('gitflow-lite');
+    expect(rulesDoc).toContain('npm run branch:governance:assert');
     expect(rulesDoc).toContain('Hosted automation governance is now retained explicitly:');
     expect(rulesDoc).toContain('Lane-specific CI and gate responsibilities:');
     expect(rulesDoc).toContain('Public GitHub workflow responsibility matrix:');

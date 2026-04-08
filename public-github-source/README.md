@@ -36,16 +36,18 @@ The compare surface is Docker-only:
 
 ## Branch Use
 
+- If you are here to evaluate the next public candidate, the branch choice is
+  simple: use `develop`. Stay on `main` only if you want the latest exact
+  released source.
 - `main` is the public default branch and tracks the latest exact released
   source line.
-- `develop` remains the public evaluation branch for the next governed
-  candidate line.
-- The current exact released line is `v1.1.0`.
-- No newer exact public release candidate is active yet.
+- `develop` is the public evaluation branch for the next governed candidate
+  line.
 - If you only want the latest released source or release-facing docs, stay on
-  `main`.
-- If you are following the first-time Codespaces or devcontainer evaluation
-  flow, explicitly choose `develop`.
+  `main`; if you are following the first-time Codespaces or devcontainer
+  evaluation flow, explicitly choose `develop`.
+- Exact release numbers and retained version facts are listed later in
+  `Current Version Line`.
 
 ## Fastest First Fork-Owner Run
 
@@ -54,7 +56,10 @@ If this is your first time using the public fork path, use this order:
 1. Fork the repo and clear `Copy the main branch only` so your fork keeps
    `develop`. Your fork can still keep `main` as its default branch.
 2. Create a Codespace from `develop` with `Codespace repository configuration`
-   -> `New with options` and choose a `16-core` machine when GitHub offers it.
+   -> `New with options` and choose a `16-core` machine. Treat `16-core` as
+   the supported first-time machine. If GitHub does not offer `16-core` on
+   your account, choose the largest machine available and treat that as
+   best-effort instead of equivalent support.
 3. Wait for the browser message
    `Setting up remote connection: Building codespace` to finish.
 4. Run `npm run public:fixture:icon-editor`.
@@ -64,6 +69,9 @@ If this is your first time using the public fork path, use this order:
 The full first-time walkthrough is on the public wiki:
 
 - `https://github.com/svelderrainruiz/vi-history-suite/wiki/Fork-Codespace-Quickstart`
+
+That first-time walkthrough is the canonical step-by-step path for a brand new
+fork and a brand new Codespace. This README keeps only the short summary.
 
 ## Public Development Path
 
@@ -100,6 +108,10 @@ manually, use:
 npm run public:host:bootstrap-linux
 ```
 
+Codespaces/devcontainers also run `npm ci` on create and `npm run compile` on
+start. Only rerun `npm run compile` manually if the setup was interrupted or
+you are troubleshooting a stale development host.
+
 The public Linux cold-pull smoke surface is:
 
 ```bash
@@ -131,13 +143,78 @@ for `ni/labview-icon-editor` and now includes:
 - the port `6010` forwarding dialog explanation
 - the exact `Open Folder...` path for `lv_icon.vi`
 
-For the separate manual-clone walkthrough for `ni/actor-framework`, use:
-
-- `https://github.com/svelderrainruiz/vi-history-suite/wiki/Manual-Actor-Framework-Clone`
-
 For refresh-only steps after the first successful Codespace setup, use:
 
 - `https://github.com/svelderrainruiz/vi-history-suite/wiki/Refresh-Codespace-Repositories`
+
+## Reference Manual For Any Public Repo
+
+If you want to review the changes of a LabVIEW VI between two commits on a
+public GitHub or public GitLab repo instead of the helper-backed
+`ni/labview-icon-editor` path, use the public wiki reference manual:
+
+- `https://github.com/svelderrainruiz/vi-history-suite/wiki/Review-Public-LabVIEW-VI-Changes`
+
+In a brand-new Codespace, start with the interactive command:
+
+```bash
+npm run public:repo:clone
+```
+
+Paste the repo URL when prompted. If you press `Esc`, the prompt stops and you
+can fall back to the canonical sample helper:
+
+```bash
+npm run public:fixture:icon-editor
+```
+
+If you prefer a non-interactive command, use this template:
+
+```bash
+npm run public:repo:clone -- --repo-url https://github.com/<owner>/<repo>.git
+```
+
+Supported repo URLs are public `https://github.com/...` and
+`https://gitlab.com/...` only.
+
+Examples:
+
+```bash
+npm run public:repo:clone -- --repo-url https://gitlab.com/hampel-soft/open-source/hse-logger.git
+```
+
+```bash
+npm run public:repo:clone -- --repo-url https://github.com/crossrulz/SerialPortNuggets.git
+```
+
+If you want a specific branch instead of the repo's default branch, add
+`--branch <branch-name>`. Otherwise omit `--branch` and let the command use the
+repo's remote default branch:
+
+```bash
+npm run public:repo:clone -- --repo-url https://github.com/crossrulz/SerialPortNuggets.git --branch <branch-name>
+```
+
+When `--branch` is omitted, the command resolves the remote default branch.
+That means it works whether the public target repo uses `main`, `master`, or a
+different default branch, and it keeps the first-time path simpler.
+
+The clone target stays visible instead of hidden:
+
+- `hse-logger` becomes `/workspaces/hse-logger`
+- `SerialPortNuggets` becomes `/workspaces/SerialPortNuggets`
+
+Use the exact path printed by the command when you later choose
+`File` -> `Open Folder...` in the extension development host.
+
+The reference manual keeps the generic public-repo path separate from the
+canonical helper-backed `lv_icon.vi` quickstart, and it assumes a brand new
+fork and a brand new Codespace. It also includes the documented example VIs:
+
+- [Hampel Software Engineering](https://hampel-soft.com/) `hse-logger`:
+  `Examples/Logging with Helper-VIs.vi`
+- `crossrulz/SerialPortNuggets`:
+  `ASCII/Terminals/ASCII Command-Response.vi`
 
 The guarded package path is:
 
@@ -158,7 +235,9 @@ npm run package -- --out /tmp/vi-history-suite-public-preview.vsix
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.1.0`
 - current published package line on `main`: `1.1.0`
-- current develop package line on `develop`: `1.1.0`
-- no newer exact release candidate line is active on `develop` yet
+- current develop package line on `develop`: `1.2.0`
+- active exact release candidate line on `develop`: `v1.2.0`
+- active release-candidate branch: `release/1.2.0`
+- active SemVer opening decision: `minor`
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`

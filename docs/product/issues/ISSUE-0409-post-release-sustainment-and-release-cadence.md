@@ -32,6 +32,11 @@ Activation is now satisfied:
   conflated
 - explicit public-source target-root governance so local promotion/check does
   not act on a stale dirty side checkout by mistake
+- explicit review-ready candidate publication governance so local
+  authority-green proof does not reopen human review before maintained public
+  candidate heads are actually published and retained
+- explicit dirty-public-surface handling so public candidate publication does
+  not stop prematurely just because the maintained worktrees are dirty
 - benchmark refresh cadence and image contract upkeep
 - operator-surface and documentation-workbench sustainment
 - post-release control-plane maintenance
@@ -66,6 +71,10 @@ Activation is now satisfied:
   governed matrix instead of being inferred from live settings
 - local public-source promotion/check binds the intended checkout explicitly
   and fails closed on dirty target repos before reporting drift
+- candidate lines retain an explicit fail-closed `review-ready` state before
+  the next human review gate opens
+- public candidate publication preserves unrelated dirt and pauses only on
+  direct unresolved conflicts instead of stopping on any dirty worktree
 - future work does not fall back into unowned tail iteration
 
 ## Required Evidence
@@ -83,5 +92,8 @@ Activation is now satisfied:
 - define the first maintained release-refresh and benchmark-refresh rules
 - retain those rules explicitly in `docs/product/post-release-sustainment-rules.md`
   and `docs/product/post-release-sustainment-rules.json`
+- keep extending the sustainment package when new release-control findings
+  expose missing boundaries such as `review-ready` publication gating or
+  dirty-public-surface handling
 - stop short of absorbing the active `PROGRAM-0005` or reopened `PROGRAM-0002`
   work into generic sustainment language

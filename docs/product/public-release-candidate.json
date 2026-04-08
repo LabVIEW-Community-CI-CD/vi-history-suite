@@ -1,8 +1,8 @@
 {
   "schema": "vi-history-suite/public-release-candidate@v1",
-  "versionLine": "1.1.0",
+  "versionLine": "1.2.0",
   "burnedExactReleaseLine": "v1.0.2",
-  "recordedAt": "2026-04-07T19:33:34Z",
+  "recordedAt": "2026-04-08T00:43:15Z",
   "authorityRepo": {
     "role": "source-of-truth",
     "integrationBranch": "develop",
@@ -26,52 +26,78 @@
   },
   "publicDevelopCandidate": {
     "branch": "develop",
-    "candidateCommit": "648e399",
-    "status": "merged-required-checks-green",
-    "sourcePullRequest": "#11"
+    "candidateCommit": "ac56456",
+    "status": "published-maintained-candidate-with-moved-vi-and-bundled-doc-refresh",
+    "sourcePullRequest": "#18"
   },
   "publishedPublicWiki": {
     "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite.wiki.git",
-    "publishedHeadCommit": "d184be2",
+    "publishedHeadCommit": "b30d356",
     "publicationLedgerPath": "docs/product/public-github-wiki-publication-ledger.json",
-    "status": "published"
+    "status": "published-maintained-candidate-with-doc-clarification-fold"
   },
   "candidateReadiness": {
     "authorityBaseline": "v1.1.0-exact-public-release-published",
     "localInstalledVsix": "exact-v1.1.0-release-built",
-    "localPublicDevcontainer": "passed-v1.0.5-baseline",
-    "localPublicFixtureHelper": "passed-v1.0.5-baseline",
-    "publicCodespace": "passed-v1.0.5-baseline",
-    "gateDPublicAcceptance": "passed-v1.0.5-baseline",
-    "exactPublicRelease": "v1.1.0-published"
+    "localPublicDevcontainer": "v1.1.0-published-baseline",
+    "localPublicFixtureHelper": "v1.1.0-published-baseline",
+    "localAuthorityFindingsFold": "published-and-retained-on-maintained-public-candidate-surfaces",
+    "publicRepoBootstrap": "published-maintained-candidate-with-moved-vi-and-bundled-doc-refresh",
+    "publicWikiCandidateReview": "ready-for-next-brand-new-fork-review-on-published-candidate",
+    "reviewReady": "ready-for-brand-new-fork-review",
+    "exactPublicRelease": "v1.1.0-published",
+    "requiredReviewEnvironment": "brand-new-fork-plus-brand-new-codespace"
+  },
+  "candidateStateMachine": {
+    "orderedStates": [
+      "local-authority-green",
+      "public-develop-published",
+      "public-wiki-published",
+      "review-ready",
+      "review-feedback-received",
+      "review-feedback-folded",
+      "tag-eligible"
+    ],
+    "currentState": "review-ready",
+    "reviewReadyRule": "local authority-green proof is necessary but not sufficient; the maintained public develop candidate head and maintained public wiki head must both be published and retained in docs/product/public-release-candidate.{md,json} before the next brand-new-fork review opens",
+    "dirtyPublicSurfaceRule": "preserve unrelated dirt, inspect overlapping changes, patch the maintained candidate slice narrowly, and pause only on direct unresolved conflicts instead of stopping candidate publication merely because the public source/wiki worktree is dirty"
   },
   "findingClassifications": [
     {
-      "id": "FINDING-1.0.6-001-PUBLIC-DEVELOP-REALIGNMENT",
+      "id": "FINDING-1.2.0-001-BRANCH-BASELINE-GOVERNANCE-GAP",
       "status": "closed",
-      "summary": "Public GitHub develop now carries the governed 1.0.6 branch-model and required-check hardening.",
+      "summary": "Authority develop had to be realigned to the exact released main line before the 1.2.0 feature branch could continue.",
       "requirementImpact": "updated",
-      "requirementRefs": ["VHS-REQ-505", "VHS-REQ-506", "VHS-REQ-507", "VHS-REQ-508"],
+      "requirementRefs": ["VHS-REQ-505", "VHS-REQ-515"],
       "adrImpact": "updated",
-      "adrRefs": ["ADR-0030", "ADR-0031"]
+      "adrRefs": ["ADR-0030"]
     },
     {
-      "id": "FINDING-1.0.6-002-HISTORY-PANEL-DISPOSED-WEBVIEW-PROGRESS-RACE",
-      "status": "closed",
-      "summary": "The history panel can race a disposed webview while compare progress or result updates are still being posted from an in-flight command.",
+      "id": "FINDING-1.2.0-002-PUBLIC-CODESPACES-PUBLIC-REPO-BOOTSTRAP",
+      "status": "active",
+      "summary": "The next minor line adds one generic public GitHub/GitLab bootstrap command while keeping the canonical helper-backed icon-editor path separate.",
       "requirementImpact": "updated",
-      "requirementRefs": ["VHS-REQ-509"],
-      "adrImpact": "no-impact",
-      "adrRationale": "The fix stays within the existing history-panel command/webview architecture and does not change sustained branch, release, runtime-provider, or product-boundary decisions."
+      "requirementRefs": ["VHS-REQ-516", "VHS-REQ-517", "VHS-REQ-518"],
+      "adrImpact": "updated",
+      "adrRefs": ["ADR-0034"]
     },
     {
-      "id": "FINDING-1.0.6-003-PUBLIC-WORKFLOW-GOVERNANCE-GAP",
+      "id": "FINDING-1.2.0-003-REVIEW-READY-BOUNDARY-GOVERNANCE-GAP",
       "status": "closed",
-      "summary": "The public GitHub workflow pair now has explicit owned responsibilities, bounded triggers, and per-ref churn control retained in both the public repo and authority control plane.",
+      "summary": "Local authority-green proof had to stop being treated as reviewable truth before the maintained public candidate source and wiki heads were republished.",
       "requirementImpact": "updated",
-      "requirementRefs": ["VHS-REQ-510"],
+      "requirementRefs": ["VHS-REQ-519", "VHS-REQ-520"],
       "adrImpact": "updated",
-      "adrRefs": ["ADR-0032"]
+      "adrRefs": ["ADR-0035"]
+    },
+    {
+      "id": "FINDING-1.2.0-004-MOVED-VI-HISTORICAL-PATH-RESOLUTION",
+      "status": "closed",
+      "summary": "Brand-new-fork review exposed moved-VI compare pairs that still failed preflight on stale current-path blob reads even though VI History had followed the same VI across the rename.",
+      "requirementImpact": "updated",
+      "requirementRefs": ["VHS-REQ-521"],
+      "adrImpact": "none",
+      "adrRefs": []
     }
   ],
   "exactRelease": {
@@ -97,6 +123,27 @@
       "repoUrl": "https://github.com/ni/labview-icon-editor.git",
       "targetPath": "../labview-icon-editor",
       "codespaceTargetPath": "/workspaces/labview-icon-editor"
+    },
+    "publicRepoBootstrap": {
+      "status": "published-maintained-candidate-with-moved-vi-and-bundled-doc-refresh",
+      "command": "npm run public:repo:clone -- --repo-url <https-url>",
+      "interactiveCommand": "npm run public:repo:clone",
+      "supportedHosts": [
+        "github.com",
+        "gitlab.com"
+      ],
+      "authorityDevelopBaseline": "8c99163",
+      "notes": [
+        "The generic bootstrap is implemented on the authority 1.2.0 line and the maintained public develop candidate that carried Sergio's first findings fold was published at e8b0925 through GitHub PR #15.",
+        "In a brand-new Codespace, the no-argument command now prompts for the public repo URL interactively and points users back to the canonical helper-backed sample when they cancel.",
+        "When --branch is omitted, the command resolves the remote default branch; when provided, the explicit branch is honored exactly.",
+        "Sergio dry-ran the maintained public wiki procedures from a brand new fork and a brand new Codespace and submitted findings that are now folded locally in authority.",
+        "A repo-access LLM pre-review then withdrew false blockers and left one smaller doc-clarification slice for the public README, install summary, supported-host wording, and compile troubleshooting language.",
+        "That clarification slice was then republished on maintained public develop head c9806c3 through GitHub PR #16 and on maintained public wiki head b30d356.",
+        "Sergio's next brand-new-fork review on hse-logger then found a real moved-VI compare blocker on selected/base pair 81325a7 -> 4a265f6 because comparison preflight and runtime staging still assumed the current workspace path on both sides.",
+        "The rename-aware compare fix was published on maintained public develop head fb46cbf through GitHub PR #17.",
+        "A follow-on maintained public refresh then published bundled compare-flow wording cleanup plus public-facade-linux-smoke required-check path-admission repair on develop head ac56456 through GitHub PR #18, while the maintained public wiki head remained b30d356."
+      ]
     }
   },
   "hostedProofs": {
@@ -124,14 +171,23 @@
     }
   },
   "testerFixtureStrategy": {
-    "decision": "optional-governed-helper",
+    "decision": "helper-backed-canonical-path-plus-generic-public-bootstrap-reference-manual",
     "defaultCloneOnStartup": false,
     "command": "npm run public:fixture:icon-editor",
+    "interactiveGenericCommand": "npm run public:repo:clone",
+    "genericCommand": "npm run public:repo:clone -- --repo-url <https-url>",
     "repoUrl": "https://github.com/ni/labview-icon-editor.git",
     "targetPath": "../labview-icon-editor",
-    "codespaceTargetPath": "/workspaces/labview-icon-editor",
-    "manualAlternativeWikiPage": "Manual-Actor-Framework-Clone",
-    "refreshWikiPage": "Refresh-Codespace-Repositories"
+    "genericTargetPathPattern": "../<repo-name>",
+    "codespaceTargetPath": "/workspaces/<repo-name>",
+    "referenceManualWikiPage": "Review-Public-LabVIEW-VI-Changes",
+    "compatibilityRedirectWikiPage": "Clone-Public-Repo-In-Codespace",
+    "refreshWikiPage": "Refresh-Codespace-Repositories",
+    "requiredReviewEnvironment": "brand-new-fork-plus-brand-new-codespace"
   },
-  "activeBlockers": []
+  "activeBlockers": [
+    {
+      "id": "BLOCKER-1.2.0-005-BRAND-NEW-FORK-REVIEW-PENDING"
+    }
+  ]
 }
