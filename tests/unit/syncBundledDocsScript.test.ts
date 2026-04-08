@@ -63,7 +63,7 @@ describe('bundled docs sync script', () => {
     );
   });
 
-  it('ignores manifest generatedAt churn while still failing on real bundle drift', () => {
+  it('ignores manifest generatedAt and page wikiCommit churn while still failing on real bundle drift', () => {
     const expected = new Map<string, string>([
       [
         'manifest.json',
@@ -72,7 +72,7 @@ describe('bundled docs sync script', () => {
             generatedAt: '2026-04-05T00:00:00.000Z',
             bundleAudience: 'extension-users',
             defaultPageId: 'overview',
-            pages: [{ id: 'overview', htmlFileName: 'overview.html' }]
+            pages: [{ id: 'overview', htmlFileName: 'overview.html', wikiCommit: 'abc1234' }]
           },
           null,
           2
@@ -88,7 +88,7 @@ describe('bundled docs sync script', () => {
             generatedAt: '2026-04-06T00:00:00.000Z',
             bundleAudience: 'extension-users',
             defaultPageId: 'overview',
-            pages: [{ id: 'overview', htmlFileName: 'overview.html' }]
+            pages: [{ id: 'overview', htmlFileName: 'overview.html', wikiCommit: 'def5678' }]
           },
           null,
           2
@@ -104,6 +104,22 @@ describe('bundled docs sync script', () => {
     expect(
       bundledDocsScript.compareBundledDocsFiles(expected, sameBundleDifferentTimestamp)
     ).toEqual([]);
+    expect(bundledDocsScript.compareBundledDocsFiles(expected, drifted)).toEqual([
+      {
+        path: 'pages/overview.html',
+        reason: 'content-mismatch'
+      }
+    ]);
+  });
+
+  it('ignores CRLF-versus-LF differences while still failing on substantive html drift', () => {
+    const expected = new Map<string, string>([['pages/overview.html', '<h1>Overview</h1>\r\n']]);
+    const sameContentLf = new Map<string, string>([['pages/overview.html', '<h1>Overview</h1>\n']]);
+    const drifted = new Map<string, string>([
+      ['pages/overview.html', '<h1>Overview changed</h1>\n']
+    ]);
+
+    expect(bundledDocsScript.compareBundledDocsFiles(expected, sameContentLf)).toEqual([]);
     expect(bundledDocsScript.compareBundledDocsFiles(expected, drifted)).toEqual([
       {
         path: 'pages/overview.html',

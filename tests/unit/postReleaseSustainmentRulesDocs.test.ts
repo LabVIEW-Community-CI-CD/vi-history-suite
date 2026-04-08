@@ -122,12 +122,12 @@ describe('post-release sustainment rules package', () => {
 
     expect(rules.releaseCadence.model).toBe('event-driven');
     expect(rules.releaseCadence.versionLineContract).toEqual({
-      retainedExactVersionReleases: ['v0.2.0', 'v1.0.0', 'v1.0.1', 'v1.0.2', 'v1.0.3', 'v1.0.4', 'v1.0.5', 'v1.0.6', 'v1.1.0'],
+      retainedExactVersionReleases: ['v0.2.0', 'v1.0.0', 'v1.0.1', 'v1.0.2', 'v1.0.3', 'v1.0.4', 'v1.0.5', 'v1.0.6', 'v1.1.0', 'v1.2.0'],
       burnedExactVersionReleases: ['v1.0.2'],
-      currentExactReleaseLine: 'v1.1.0',
-      currentMainPackageLine: '1.1.0',
-      currentDevelopPackageLine: '1.2.0',
-      activeDevelopCandidateReleaseLine: 'v1.2.0',
+      currentExactReleaseLine: 'v1.2.0',
+      currentMainPackageLine: '1.2.0',
+      currentDevelopPackageLine: '1.2.1',
+      activeDevelopCandidateReleaseLine: 'v1.2.1',
       activeReleaseCandidateBranch: null,
       publicDefaultBranch: 'main',
       publicCodespaceBranch: 'develop',
@@ -141,7 +141,16 @@ describe('post-release sustainment rules package', () => {
     expect(rules.releaseCadence.maintainedSurfaces).toContain(
       'release-evidence/release-manifest.json'
     );
+    expect(rules.releaseCadence.maintainedSurfaces).toContain(
+      'docs/product/vscode-marketplace-publication-ledger.md'
+    );
+    expect(rules.releaseCadence.maintainedSurfaces).toContain(
+      'VS Code Marketplace listing and installed-user homepage'
+    );
     expect(rules.releaseCadence.refreshTriggers).toContain('package.json version change');
+    expect(rules.releaseCadence.refreshTriggers).toContain(
+      'Marketplace publication, listing identity, or homepage change'
+    );
     expect(rules.releaseCadence.refreshTriggers).toContain(
       'release-procedure, ship-control, or docs-workbench publication contract change'
     );
@@ -150,7 +159,7 @@ describe('post-release sustainment rules package', () => {
         'after an exact release is published, the current published package line on main shall match that exact release line',
         'when develop carries post-release work, the develop package line shall advance to the next exact release candidate before public-facing normalization continues',
         'any later repo change intended for publication shall advance package.json and the top CHANGELOG.md heading to the next SemVer line before further normalization or publication',
-        'future sessions shall not treat an unreleased SemVer bump as complete until the matching public tag and public GitHub release are both published',
+        'future sessions shall not treat an unreleased SemVer bump as complete until the matching public tag, public GitHub release, and VS Code Marketplace version are all published',
         'future sessions shall not keep landing post-release changes on the previous exact release version number',
         'future sessions shall not treat a burned exact release as the green release baseline for later publication',
         'future sessions shall not treat a candidate line as review-ready until the maintained public develop candidate head and maintained public wiki head are both published and retained in the authority candidate package'
@@ -197,13 +206,13 @@ describe('post-release sustainment rules package', () => {
     );
     expect(rules.releaseCadence.activeOpeningDecision).toEqual(
       expect.objectContaining({
-        chosenBump: 'minor',
-        targetDevelopCandidateReleaseLine: 'v1.2.0'
+        chosenBump: 'patch',
+        targetDevelopCandidateReleaseLine: 'v1.2.1'
       })
     );
     expect(rules.releaseCadence.activeOpeningDecision?.rationale).toEqual(
       expect.arrayContaining([
-        'the next line adds one governed public Codespaces/bootstrap capability for public GitHub and GitLab repos without breaking the exact v1.1.0 public contract'
+        'the next line governs VS Code Marketplace publication as an explicit exact-release closeout surface after v1.2.0 became a live Marketplace release'
       ])
     );
 
@@ -318,6 +327,12 @@ describe('post-release sustainment rules package', () => {
       })
     );
     expect(rules.operatorSurfaceSustainment.requiredAuthorityUpdates).toContain(
+      'docs/product/vscode-marketplace-publication-ledger.md'
+    );
+    expect(rules.operatorSurfaceSustainment.requiredAuthorityUpdates).toContain(
+      'docs/product/vscode-marketplace-publication-ledger.json'
+    );
+    expect(rules.operatorSurfaceSustainment.requiredAuthorityUpdates).toContain(
       'docs/product/hosted-ci-governance.md'
     );
     expect(rules.operatorSurfaceSustainment.requiredAuthorityUpdates).toContain(
@@ -328,6 +343,9 @@ describe('post-release sustainment rules package', () => {
     );
     expect(rules.operatorSurfaceSustainment.requiredDerivedUpdatesWhenReaderFacingTruthChanges).toContain(
       'docs/product/wiki-publication-ledger.json'
+    );
+    expect(rules.operatorSurfaceSustainment.requiredDerivedUpdatesWhenReaderFacingTruthChanges).toContain(
+      'README.md'
     );
     expect(rules.operatorSurfaceSustainment.requiredVerification).toContain(
       'npm run design:gate:assert-complete'
@@ -346,11 +364,10 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('## Benchmark Refresh Rules');
     expect(rulesDoc).toContain('## Operator And Documentation Upkeep Rules');
     expect(rulesDoc).toContain('public GitHub default branch: `main`');
-    expect(rulesDoc).toContain('current exact released line: `v1.1.0`');
-    expect(rulesDoc).toContain('current develop package line on `develop`: `1.2.0`');
-    expect(rulesDoc).toContain('active exact release candidate line on `develop`: `v1.2.0`');
-    expect(rulesDoc).toContain('no `release/1.2.0` branch is active yet');
-    expect(rulesDoc).toContain('chosen bump: `minor`');
+    expect(rulesDoc).toContain('current exact released line: `v1.2.0`');
+    expect(rulesDoc).toContain('current develop package line on `develop`: `1.2.1`');
+    expect(rulesDoc).toContain('active exact release candidate line on `develop`: `v1.2.1`');
+    expect(rulesDoc).toContain('chosen bump: `patch`');
     expect(rulesDoc).toContain('develop');
     expect(rulesDoc).toContain('release branch');
     expect(rulesDoc).toContain('required checks');
@@ -367,6 +384,8 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('hotfix/*');
     expect(rulesDoc).toContain('design:gate');
     expect(rulesDoc).toContain('burned exact release line');
+    expect(rulesDoc).toContain('VS Code Marketplace exact publication state');
+    expect(rulesDoc).toContain('installed-user entry surfaces');
     expect(rulesDoc).toContain('PROGRAM-0002');
     expect(rulesDoc).toContain('execution-policy bypass');
     expect(rulesDoc).toContain('ExecutionPolicy Bypass');

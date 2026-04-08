@@ -1,7 +1,7 @@
 {
   "generatedFor": "vi-history-suite",
   "publicationSurface": "public-github-source-repo",
-  "publishedHeadCommit": "ac56456",
+  "publishedHeadCommit": "c7cd6a0",
   "publications": [
     {
       "id": "public-source-product-repo-baseline",
@@ -171,6 +171,38 @@
         "docs/product/public-release-candidate.md",
         "docs/requirements/srs.md",
         "docs/testing/test-plan.md"
+      ]
+    },
+    {
+      "id": "public-source-v1-2-0-exact-release",
+      "title": "Public source v1.2.0 exact release",
+      "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
+      "status": "published",
+      "publishedDate": "2026-04-08",
+      "repoCommit": "c7cd6a0",
+      "primaryAuthority": [
+        "README.md",
+        "CHANGELOG.md",
+        "docs/product/public-release-candidate.md",
+        "docs/release-procedure.md",
+        "package.json"
+      ]
+    },
+    {
+      "id": "public-source-v1-2-1-marketplace-installed-user-entry-refresh",
+      "title": "Public source v1.2.1 Marketplace installed-user entry refresh",
+      "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
+      "status": "published",
+      "publishedDate": "2026-04-08",
+      "repoCommit": "96af6a3",
+      "primaryAuthority": [
+        "README.md",
+        "INSTALL.md",
+        "CHANGELOG.md",
+        "docs/product/current-state.md",
+        "docs/release-procedure.md",
+        "docs/product/vscode-marketplace-publication-ledger.md",
+        "docs/architecture/adr/ADR-0036-vscode-marketplace-publication-and-installed-user-entry-surface.md"
       ]
     }
   ]

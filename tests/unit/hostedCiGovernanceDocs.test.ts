@@ -30,12 +30,12 @@ describe('hosted ci governance docs', () => {
 
     expect(matrix.openingDecision).toEqual(
       expect.objectContaining({
-        currentExactReleaseLine: 'v1.1.0',
-        currentMainPackageLine: '1.1.0',
-        currentDevelopPackageLine: '1.2.0',
-        activeDevelopCandidateReleaseLine: 'v1.2.0',
+        currentExactReleaseLine: 'v1.2.0',
+        currentMainPackageLine: '1.2.0',
+        currentDevelopPackageLine: '1.2.1',
+        activeDevelopCandidateReleaseLine: 'v1.2.1',
         activeReleaseCandidateBranch: null,
-        chosenBump: 'minor'
+        chosenBump: 'patch'
       })
     );
     expect(matrix.authorityGitLab.mergeGate).toBe('only_allow_merge_if_pipeline_succeeds');
@@ -54,12 +54,11 @@ describe('hosted ci governance docs', () => {
       })
     );
 
-    expect(matrixDoc).toContain('current exact release line: `v1.1.0`');
-    expect(matrixDoc).toContain('current `main` package line: `1.1.0`');
-    expect(matrixDoc).toContain('current `develop` package line: `1.2.0`');
-    expect(matrixDoc).toContain('active exact release candidate line on `develop`: `v1.2.0`');
-    expect(matrixDoc).toContain('no `release/1.2.0` branch is active yet');
-    expect(matrixDoc).toContain('chosen bump: `minor`');
+    expect(matrixDoc).toContain('current exact release line: `v1.2.0`');
+    expect(matrixDoc).toContain('current `main` package line: `1.2.0`');
+    expect(matrixDoc).toContain('current `develop` package line: `1.2.1`');
+    expect(matrixDoc).toContain('active exact release candidate line on `develop`: `v1.2.1`');
+    expect(matrixDoc).toContain('chosen bump: `patch`');
     expect(matrixDoc).toContain('npm run branch:governance:assert');
     expect(matrixDoc).toContain('merge gate: `only_allow_merge_if_pipeline_succeeds=true`');
     expect(matrixDoc).toContain('classification: characterization-only experiment automation');
