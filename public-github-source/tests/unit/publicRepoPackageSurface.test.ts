@@ -98,6 +98,9 @@ describe('public repo package surface', () => {
     expect(readme).toContain('If Docker is not installed yet, not running yet');
     expect(readme).toContain('public GitHub default branch: `main`');
     expect(readme).toContain('public Codespaces evaluation branch: `develop`');
+    expect(readme).toContain(
+      'retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`'
+    );
     expect(readme).toContain('Refresh-Codespace-Repositories');
     expect(readme).not.toContain('Manual-Actor-Framework-Clone');
     expect(install).toContain('Windows host + Linux engine');

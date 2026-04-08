@@ -1,7 +1,7 @@
 {
   "generatedFor": "vi-history-suite",
   "publicationSurface": "public-github-user-wiki",
-  "publishedHeadCommit": "1b2f476",
+  "publishedHeadCommit": "d6da0c4",
   "pages": [
     {
       "id": "overview",
@@ -10,7 +10,7 @@
       "wikiFileName": "Home.md",
       "status": "published",
       "publishedDate": "2026-04-08",
-      "wikiCommit": "1b2f476",
+      "wikiCommit": "d6da0c4",
       "primaryAuthority": [
         "README.md",
         "docs/product/current-state.md",
@@ -24,7 +24,7 @@
       "wikiFileName": "User-Workflow.md",
       "status": "published",
       "publishedDate": "2026-04-08",
-      "wikiCommit": "1b2f476",
+      "wikiCommit": "d6da0c4",
       "primaryAuthority": [
         "README.md",
         "docs/product/extension-execution-policy.md",
@@ -38,7 +38,7 @@
       "wikiFileName": "Install-And-Release.md",
       "status": "published",
       "publishedDate": "2026-04-08",
-      "wikiCommit": "1b2f476",
+      "wikiCommit": "d6da0c4",
       "primaryAuthority": [
         "README.md",
         "docs/release-procedure.md",

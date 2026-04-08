@@ -40,6 +40,9 @@ describe('release governance package', () => {
     const adr7 = readText(
       'docs/architecture/adr/ADR-0036-vscode-marketplace-publication-and-installed-user-entry-surface.md'
     );
+    const adr8 = readText(
+      'docs/architecture/adr/ADR-0037-expert-agent-review-gate-for-public-candidates.md'
+    );
     const hostedGovernance = readText('docs/product/hosted-ci-governance.md');
     const hostedGovernanceJson = readJson<any>('docs/product/hosted-ci-governance.json');
     const srs = readText('docs/requirements/srs.md');
@@ -120,6 +123,9 @@ describe('release governance package', () => {
     expect(adr7).toContain('Marketplace: Manage');
     expect(adr7).toContain('manual Marketplace portal-upload fallback');
     expect(adr7).toContain('packaged extension `homepage` points to the maintained public wiki home');
+    expect(adr8).toContain('# ADR-0037: Expert-Agent Review Gate For Public Candidates');
+    expect(adr8).toContain('vi-history-suite-expert-agent-reviewer');
+    expect(adr8).toContain('exact tagging and Marketplace publication blocked until the latest');
     expect(hostedGovernance).toContain('# Hosted CI Governance');
     expect(hostedGovernance).toContain('current `develop` package line: `1.2.2`');
     expect(hostedGovernance).toContain('active exact release candidate line on `develop`: `v1.2.2`');
@@ -164,6 +170,8 @@ describe('release governance package', () => {
     expect(srs).toContain('back-merged into `develop`');
     expect(srs).toContain('VHS-REQ-528');
     expect(srs).toContain('missing Docker CLI or a stopped Docker daemon');
+    expect(srs).toContain('VHS-REQ-529');
+    expect(srs).toContain('vi-history-suite-expert-agent-reviewer');
     expect(rtm).toContain('public GitHub `main` remains the default branch and exact release branch');
     expect(rtm).toContain('PR-driven focused admission on `feature/*`');
     expect(rtm).toContain('push plus PR validation for `release/*` and `hotfix/*`');
@@ -186,6 +194,7 @@ describe('release governance package', () => {
     expect(rtm).toContain('VHS-REQ-526');
     expect(rtm).toContain('VHS-REQ-527');
     expect(rtm).toContain('VHS-REQ-528');
+    expect(rtm).toContain('VHS-REQ-529');
     expect(testPlan).toContain('public-default-branch');
     expect(testPlan).toContain('keeps GitHub `main` stable');
     expect(testPlan).toContain('PR-driven feature admission and push validation on `release/*` and');
@@ -215,8 +224,10 @@ describe('release governance package', () => {
     expect(testPlan).toContain('TEST-DOC-100');
     expect(testPlan).toContain('TEST-UNIT-338');
     expect(testPlan).toContain('TEST-UNIT-339');
+    expect(testPlan).toContain('TEST-UNIT-340');
     expect(testPlan).toContain('TEST-DOC-101');
     expect(testPlan).toContain('TEST-DOC-102');
+    expect(testPlan).toContain('TEST-DOC-103');
     expect(rules.operatorSurfaceSustainment.branchModel.findingAdrDiscipline).toEqual(
       expect.arrayContaining([
         'every governed finding is classified before slice closeout as adr-update-required or no-adr-impact'
@@ -227,12 +238,15 @@ describe('release governance package', () => {
       'public-develop-published',
       'public-wiki-published',
       'review-ready',
-      'review-feedback-received',
-      'review-feedback-folded',
+      'expert-agent-review-findings-received',
+      'expert-agent-review-findings-folded',
       'tag-eligible'
     ]);
     expect(rules.releaseCadence.candidateStateModel.reviewReadyRule).toContain(
       'maintained public develop candidate head and maintained public wiki head'
+    );
+    expect(rules.releaseCadence.candidateStateModel.expertAgentReviewSkill.skillName).toBe(
+      'vi-history-suite-expert-agent-reviewer'
     );
     expect(rules.releaseCadence.candidateStateModel.dirtyPublicSurfaceRule).toContain(
       'preserve unrelated dirt'
@@ -251,6 +265,7 @@ describe('release governance package', () => {
     expect(program).toContain('hosted GitLab/GitHub protection semantics');
     expect(program).toContain('public-source promotion target-root hygiene');
     expect(program).toContain('review-ready candidate publication boundary');
+    expect(program).toContain('one governed expert-agent review gate');
     expect(program).toContain('VS Code Marketplace publication governance');
     expect(program).toContain('installed-user-first entry-surface redesign');
     expect(program).toContain('one governed exact-closeout back-merge rule');
@@ -263,5 +278,6 @@ describe('release governance package', () => {
     expect(issue).toContain('VS Code Marketplace publication governance');
     expect(issue).toContain('installed-user entry-surface redesign');
     expect(issue).toContain('exact-closeout back-merge governance');
+    expect(issue).toContain('expert-agent review');
   });
 });

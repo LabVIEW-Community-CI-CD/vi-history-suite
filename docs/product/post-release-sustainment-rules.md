@@ -111,9 +111,10 @@ Strict SemVer rule after an exact release:
   maintained public `develop` candidate head and maintained public wiki head
   are both published and retained in the authority candidate package
 - future sessions shall keep exact tagging blocked until the post-publication
-  human review gate closes, unless the product owner explicitly waives that
-  gate and the retained candidate package records the waiver plus the
-  post-publish review plan
+  expert-agent review gate closes with no findings against the exact published
+  public candidate heads retained in the authority candidate package
+- optional product-owner exploratory review may happen separately, but it
+  shall not replace the clean expert-agent review gate for exact tagging
 
 Decision framework for choosing `major`, `minor`, or `patch`:
 
@@ -144,14 +145,18 @@ Candidate publication boundary:
   - `public-develop-published`
   - `public-wiki-published`
   - `review-ready`
-  - `review-feedback-received`
-  - `review-feedback-folded`
+  - `expert-agent-review-findings-received`
+  - `expert-agent-review-findings-folded`
   - `tag-eligible`
 - local authority-green proof is necessary but not sufficient for
   `review-ready`
-- the next human review gate opens only after the maintained public `develop`
-  candidate head and maintained public wiki head are both live and retained in
-  `docs/product/public-release-candidate.{md,json}`
+- the next expert-agent review gate opens only after the maintained public
+  `develop` candidate head and maintained public wiki head are both live and
+  retained in `docs/product/public-release-candidate.{md,json}`
+- the expert-agent review gate uses the retained
+  `vi-history-suite-expert-agent-reviewer` skill against those exact published
+  heads and exact tagging stays blocked until the latest retained verdict has
+  no findings
 - if the governed public source or public wiki worktree is dirty during
   publication:
   - preserve unrelated dirt

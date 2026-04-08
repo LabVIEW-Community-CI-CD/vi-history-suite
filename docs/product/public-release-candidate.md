@@ -2,11 +2,11 @@
 
 - Version line: `1.2.2`
 - Burned exact release line: `v1.0.2`
-- Recorded at: `2026-04-08T06:04:12Z`
+- Recorded at: `2026-04-08T06:41:19Z`
 - Authority source of truth: GitLab `develop` -> `main`
 - Published public source commit: `2547344`
-- Public `develop` candidate commit: `894cd5f`
-- Published public wiki head: `1b2f476`
+- Public `develop` candidate commit: `96944d7`
+- Published public wiki head: `d6da0c4`
 
 ## Branch Model
 
@@ -27,8 +27,10 @@
 - Local installed VSIX build: `candidate-v1.2.2-package-built-through-design-gate`
 - Local public devcontainer: `v1.1.0-published-baseline`
 - Local public fixture helper: `v1.1.0-published-baseline`
-- Public repo bootstrap: `passed-brand-new-fork-review-on-hse-logger`
-- Public wiki candidate review: `review-ready-awaiting-user-review`
+- Historical public repo bootstrap baseline:
+  `exact-v1.2.0-human-baseline-retained`
+- Published-surface expert-agent review:
+  `expert-agent-review-rerun-pending`
 - Exact public release: `v1.2.1-published`
 
 ## Exact Release Baseline
@@ -46,10 +48,10 @@
 
 - The exact published public source head on `main` remains `2547344` and is
   retained in `docs/product/public-github-source-publication-ledger.{md,json}`.
-- The maintained public `develop` candidate now lands through GitHub PRs `#24`
-  and `#25` at commit `894cd5f`, with `package-preview` and
+- The maintained public `develop` candidate now lands through GitHub PRs `#24`,
+  `#25`, and `#26` at commit `96944d7`, with `package-preview` and
   `public-facade-linux-smoke` green before merge.
-- The maintained public wiki head is now `1b2f476` and is retained in
+- The maintained public wiki head is now `d6da0c4` and is retained in
   `docs/product/public-github-wiki-publication-ledger.{md,json}`.
 - The exact VS Code Marketplace item still publishes `1.2.1`; `1.2.2` has not
   been published or tagged yet.
@@ -65,14 +67,27 @@
   `main` line has been back-merged into `develop` through the protected path
   and the resulting `develop` pipeline is green.
 
-## Human Review Proof
+## Historical Public Bootstrap Baseline
 
-- The latest retained public bootstrap submission is still the accepted
-  `passed-human-review` recorded at `2026-04-08T01:22:21Z` on
+- The earlier retained public bootstrap submission remains historical exact
+  `v1.2.0` baseline evidence only; it is not the active `v1.2.2` tag gate.
+- The retained historical submission is `passed-human-review`, recorded at
+  `2026-04-08T01:22:21Z` on
   `/workspaces/hse-logger/Examples/Logging with Helper-VIs.vi`.
 - Selected/base pair:
   `81325a775fdeb37141e08926d78aa0e47e887990 -> 4a265f6e64ff7d2aff22b67d0c95f67fa043b5fb`
 - Reviewer note: `It worked on "Examples/Logging with Helper-VIs.vi".`
+
+## Expert Agent Review Gate
+
+- Required skill: `vi-history-suite-expert-agent-reviewer`
+- Canonical Codex skill path:
+  `/mnt/c/Users/sveld/.codex/skills/vi-history-suite-expert-agent-reviewer`
+- Exact published public `develop` candidate under review: `96944d7`
+- Exact published public wiki head under review: `d6da0c4`
+- Latest retained verdict: `expert-agent-review-rerun-pending`
+- Exact `v1.2.2` tagging and Marketplace publication remain blocked until the
+  latest retained expert-agent review returns no findings.
 
 ## Tester Fixture Strategy
 
@@ -103,12 +118,19 @@
     before back-merging released `main` into `develop`
   - requirement impact: `updated` via `VHS-REQ-527`
   - ADR impact: `updated` via `ADR-0030`
+- `FINDING-1.2.2-003-MANUAL-REVIEW-GATE-DEPENDENCY`
+  - status: `closed`
+  - summary: exact-tag eligibility was still depending on Sergio's manual
+    review instead of a retained expert-agent review skill and clean
+    published-surface verdict
+  - requirement impact: `updated` via `VHS-REQ-529`
+  - ADR impact: `updated` via `ADR-0037`
 
 ## Remaining Blockers
 
 - No release-path blocker remains on exact `v1.2.1`.
-- `v1.2.2` is now `review-ready` on the maintained public candidate surfaces:
-  public `main` remains `2547344`, public `develop` now publishes `894cd5f`,
-  the public wiki now publishes `1b2f476`, and the next gate is the human
-  review on those published `1.2.2` surfaces before any exact `v1.2.2` tag is
-  cut.
+- `BLOCKER-1.2.2-001-EXPERT-AGENT-REVIEW-CLEAN-PASS`: public `main` remains
+  `2547344`, public `develop` now publishes `96944d7`, the public wiki now
+  publishes `d6da0c4`, and no exact `v1.2.2` tag or Marketplace publish is
+  eligible until `vi-history-suite-expert-agent-reviewer` reruns on those
+  maintained public surfaces and comes back with no findings.

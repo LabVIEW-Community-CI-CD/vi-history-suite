@@ -144,7 +144,7 @@ describe('strict semver discipline', () => {
       'future sessions shall not treat an exact release as fully closed until the matching released main line has been back-merged into develop through the protected path and the resulting develop pipeline is green'
     );
     expect(sustainmentRules.releaseCadence.strictSemverRule).toContain(
-      'future sessions shall keep exact tagging blocked until the post-publication human review gate closes, unless the product owner explicitly waives that gate and the retained candidate package records the waiver plus the post-publish review plan'
+      'future sessions shall keep exact tagging blocked until the post-publication expert-agent review gate closes with no findings against the exact published public candidate heads retained in the authority candidate package'
     );
     expect(sustainmentRules.releaseCadence.strictSemverRule).toContain(
       'future sessions shall not treat a burned exact release as the green release baseline for later publication'

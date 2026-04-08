@@ -80,7 +80,7 @@ Activation is now satisfied:
 - local public-source promotion/check binds the intended checkout explicitly
   and fails closed on dirty target repos before reporting drift
 - candidate lines retain an explicit fail-closed `review-ready` state before
-  the next human review gate opens
+  the next expert-agent review gate opens
 - public candidate publication preserves unrelated dirt and pauses only on
   direct unresolved conflicts instead of stopping on any dirty worktree
 - exact release closeout retains Marketplace publication evidence under the
@@ -116,5 +116,9 @@ Activation is now satisfied:
 - keep extending the sustainment package when required release follow-through,
   such as the back-merge of exact `main` into `develop`, still depends on
   operator prompting instead of retained closeout rules
+- keep extending the sustainment package when exact-tag eligibility still
+  depends on ad hoc manual review instead of a retained expert-agent review
+  skill and no-findings verdict against the exact published public candidate
+  surfaces
 - stop short of absorbing the active `PROGRAM-0005` or reopened `PROGRAM-0002`
   work into generic sustainment language

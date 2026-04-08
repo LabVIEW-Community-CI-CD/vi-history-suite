@@ -2,7 +2,7 @@
   "schema": "vi-history-suite/public-release-candidate@v1",
   "versionLine": "1.2.2",
   "burnedExactReleaseLine": "v1.0.2",
-  "recordedAt": "2026-04-08T06:04:12Z",
+  "recordedAt": "2026-04-08T06:41:19Z",
   "authorityRepo": {
     "role": "source-of-truth",
     "integrationBranch": "develop",
@@ -26,26 +26,27 @@
   },
   "publicDevelopCandidate": {
     "branch": "develop",
-    "candidateCommit": "894cd5f",
+    "candidateCommit": "96944d7",
     "status": "merged-required-checks-green",
-    "sourcePullRequest": "#25",
+    "sourcePullRequest": "#26",
     "priorPullRequests": [
-      "#24"
+      "#24",
+      "#25"
     ]
   },
   "publishedPublicWiki": {
     "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite.wiki.git",
-    "publishedHeadCommit": "1b2f476",
+    "publishedHeadCommit": "d6da0c4",
     "publicationLedgerPath": "docs/product/public-github-wiki-publication-ledger.json",
-    "status": "published-docker-first-run-guidance-refresh"
+    "status": "published-installed-user-entry-clarification-follow-up"
   },
   "candidateReadiness": {
     "authorityBaseline": "v1.2.1-exact-public-release-published",
     "localInstalledVsix": "candidate-v1.2.2-package-built-through-design-gate",
     "localPublicDevcontainer": "v1.1.0-published-baseline",
     "localPublicFixtureHelper": "v1.1.0-published-baseline",
-    "publicRepoBootstrap": "passed-brand-new-fork-review-on-hse-logger",
-    "publicWikiCandidateReview": "review-ready-awaiting-user-review",
+    "historicalPublicRepoBootstrapBaseline": "exact-v1.2.0-human-baseline-retained",
+    "publishedSurfaceExpertAgentReview": "expert-agent-review-rerun-pending",
     "exactPublicRelease": "v1.2.1-published"
   },
   "findingClassifications": [
@@ -71,6 +72,19 @@
       "adrImpact": "updated",
       "adrRefs": [
         "ADR-0030"
+      ]
+    },
+    {
+      "id": "FINDING-1.2.2-003-MANUAL-REVIEW-GATE-DEPENDENCY",
+      "status": "closed",
+      "summary": "Exact-tag eligibility was still depending on Sergio's manual review instead of a retained expert-agent review skill and clean published-surface verdict.",
+      "requirementImpact": "updated",
+      "requirementRefs": [
+        "VHS-REQ-529"
+      ],
+      "adrImpact": "updated",
+      "adrRefs": [
+        "ADR-0037"
       ]
     }
   ],
@@ -101,7 +115,7 @@
       "codespaceTargetPath": "/workspaces/labview-icon-editor"
     },
     "publicRepoBootstrap": {
-      "status": "passed-brand-new-fork-review-on-hse-logger",
+      "status": "historical-v1.2.0-human-baseline-retained",
       "command": "npm run public:repo:clone -- --repo-url https://gitlab.com/hampel-soft/open-source/hse-logger.git",
       "interactiveCommand": "npm run public:repo:clone",
       "supportedHosts": [
@@ -114,7 +128,7 @@
       "baseCommit": "4a265f6e64ff7d2aff22b67d0c95f67fa043b5fb"
     }
   },
-  "humanReviewProofs": {
+  "historicalHumanProofs": {
     "latestSubmission": {
       "status": "passed-brand-new-fork-review",
       "recordedAt": "2026-04-08T01:22:21Z",
@@ -125,6 +139,22 @@
       "selectedCommit": "81325a775fdeb37141e08926d78aa0e47e887990",
       "baseCommit": "4a265f6e64ff7d2aff22b67d0c95f67fa043b5fb",
       "reviewerNote": "It worked on \"Examples/Logging with Helper-VIs.vi\"."
+    }
+  },
+  "expertAgentReviewProofs": {
+    "requiredSkill": {
+      "skillName": "vi-history-suite-expert-agent-reviewer",
+      "canonicalCodexSkillPath": "/mnt/c/Users/sveld/.codex/skills/vi-history-suite-expert-agent-reviewer"
+    },
+    "latestPublishedSurfaceReview": {
+      "status": "expert-agent-review-rerun-pending",
+      "reviewedPublicDevelopCommit": "96944d7",
+      "reviewedPublicWikiHead": "d6da0c4",
+      "priorReviewedPublicDevelopCommit": "894cd5f",
+      "priorReviewedPublicWikiHead": "1b2f476",
+      "priorVerdict": "findings-present",
+      "priorFindingCount": 3,
+      "gatingRule": "exact-tag-and-marketplace-publication-blocked-until-latest-expert-agent-review-has-no-findings"
     }
   },
   "acceptedWaivers": [],
@@ -143,5 +173,11 @@
     "refreshWikiPage": "Refresh-Codespace-Repositories",
     "requiredReviewEnvironment": "brand-new-fork-plus-brand-new-codespace"
   },
-  "activeBlockers": []
+  "activeBlockers": [
+    {
+      "id": "BLOCKER-1.2.2-001-EXPERT-AGENT-REVIEW-CLEAN-PASS",
+      "status": "open",
+      "summary": "The retained expert-agent review rerun against the published public develop/wiki heads has not yet returned a no-findings verdict."
+    }
+  ]
 }
