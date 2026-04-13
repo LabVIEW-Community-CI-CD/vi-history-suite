@@ -70,6 +70,11 @@ describe('extension manifest research alignment', () => {
       title: 'Open Documentation',
       category: 'VI History'
     });
+    expect(manifest.contributes?.commands).toContainEqual({
+      command: 'labviewViHistory.prepareLocalRuntimeSettingsCli',
+      title: 'Prepare Local Runtime Settings CLI',
+      category: 'VI History'
+    });
   });
 
   it('contributes the authoritative visibility gate in explorer and editor title menus', () => {

@@ -58,6 +58,11 @@
         "command": "labviewViHistory.openDocumentation",
         "title": "Open Documentation",
         "category": "VI History"
+      },
+      {
+        "command": "labviewViHistory.prepareLocalRuntimeSettingsCli",
+        "title": "Prepare Local Runtime Settings CLI",
+        "category": "VI History"
       }
     ],
     "menus": {
