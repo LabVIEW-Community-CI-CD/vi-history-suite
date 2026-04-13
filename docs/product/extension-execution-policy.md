@@ -18,14 +18,19 @@ runtime-related settings:
 
 Current develop-line implementation truth is:
 
-- installed-user runtime selection is now anchored to Windows local
+- default installed-user runtime selection is now anchored to Windows local
   `LabVIEWCLI` rather than public Docker settings
 - the extension manifest no longer exposes Docker image settings on the
   installed-user surface
+- persisted provider selection has not landed on the public installed-user
+  surface yet; the bounded expert Docker path remains an upcoming CLI-admitted
+  slice
 - the installed-user surface still does not expose `executionMode`,
-  host-runtime path overrides, or direct executable-path picking
+  host-runtime path overrides, direct executable-path picking, or image-family
+  picking
 - both version and bitness remain required by contract even though the later
-  runtime-preflight and explicit-compare slices are still landing
+  provider-selection, runtime-preflight, and explicit-compare slices are still
+  landing
 - execution-policy bypass is not allowed: no hidden flag, experimental switch,
   or alternate compare path may skip canonical installed-request validation
 
@@ -53,48 +58,62 @@ compare execution.”
 Under `PROGRAM-0005` / `ISSUE-0412` / `TRANCHE-016`, the installed-user
 contract is:
 
-- Windows local `LabVIEWCLI` instead of Docker
-- settings-only LabVIEW selection through:
+- host as the default provider through Windows local `LabVIEWCLI`
+- Docker only as a bounded expert provider persisted through the generated
+  settings CLI
+- required LabVIEW selection through:
   - `viHistorySuite.labviewVersion`
   - `viHistorySuite.labviewBitness`
 - optional settings seeding through a generated cross-platform CLI launcher
-  under user-profile storage
-- both settings are required by contract
-- path discovery remains internal rather than user-facing
+  under user-profile storage that persists provider, version, and bitness
+- both settings are required across both provider classes
+- path discovery and Docker image-family selection remain internal rather than
+  user-facing
+- when Docker is selected, the extension derives the governed Windows or Linux
+  image family from the current Docker engine
 - compare does not auto-run when the second commit is selected
-- the panel must show selected/base commit plus version and bitness before the
-  compare action is allowed to start
-- unresolved runtime selection must block compare in the panel and emit a VS
-  Code warning notification
-- Docker remains internal-only rather than part of the installed-user compare
-  contract
+- the panel must show selected/base commit plus provider, version, and
+  bitness before the compare action is allowed to start
+- unresolved or unsupported provider/runtime selection must block compare in
+  the panel and emit a VS Code warning notification
+- Docker `x86` is unsupported and fails closed with corrective guidance toward
+  host or `x64`
 
-The manifest/settings slice has landed. Runtime-resolution gating, explicit
-compare preflight, and warning behavior remain active follow-on slices.
+The manifest/settings slice has landed. Exact single-runtime ambiguity
+handling, persisted provider selection, Docker-provider preflight/acquisition,
+explicit compare preflight, and warning behavior remain active follow-on
+slices.
 
 ## Canonical Installed Execution Request
 
-Provider selection shall not reason from one setting at a time.
+Under the active replacement direction, provider selection shall not reason
+from one setting at a time.
 
 Before comparison execution starts, the installed extension resolves one
 canonical installed execution request from:
 
 - current host platform
+- persisted provider selection, with host as the default and Docker admitted
+  only through the generated settings CLI
 - required `viHistorySuite.labviewVersion`
 - required `viHistorySuite.labviewBitness`
-- local Windows LabVIEW installation discovery
+- local Windows LabVIEW installation discovery when the provider is host
 - local `LabVIEWCLI` availability for the requested version + bitness pair
+  when the provider is host
+- current Docker engine facts when the provider is Docker
+- governed image-family derivation from the current Docker engine when the
+  provider is Docker
 
 The extension validates that canonical request before:
 
-- provider selection
 - runtime launch
 - any user-facing claim that comparison generation is runnable
 
 If the request is non-canonical, the extension must fail closed before runtime
 work starts.
 
-There is no installed Docker fallback path in this contract.
+There is no silent fallback between host and Docker provider classes in this
+contract.
 
 ## Hard-Stop Rules
 
@@ -105,17 +124,22 @@ Important hard-stop factors include:
 
 - `viHistorySuite.labviewVersion` is missing
 - `viHistorySuite.labviewBitness` is missing
+- the persisted provider selection is missing, unsupported, or contradictory
+  to the current develop-line slice admission rules
 - no local LabVIEW installation matches the requested version + bitness pair
 - the resolved local runtime is ambiguous or incompatible
 - the matching local `LabVIEWCLI` surface cannot be resolved
+- Docker is selected but the current Docker engine cannot satisfy the governed
+  Windows/Linux image-family rule
+- Docker is selected together with unsupported `x86` bitness
 
 When any of those conditions hold, the installed extension:
 
-- does not fall back to Docker on the installed-user path
-- does not fall back to a different provider class
+- does not switch provider classes implicitly
 - retains the next corrective action explicitly in the runtime surfaces
-- tells users to set or correct version + bitness and install the matching
-  local LabVIEW surface before retrying compare generation
+- tells users to set or correct provider, version, and bitness and then
+  install the matching local LabVIEW surface or use Docker `x64` with a
+  compatible engine before retrying compare generation
 
 ## Public And Internal Reader Surfaces
 
@@ -128,9 +152,10 @@ This execution policy now lives on three different audience surfaces:
 
 The public extension-user surfaces shall describe:
 
-- local Windows `LabVIEWCLI` as the installed compare dependency
-- required version + bitness settings
-- fail-closed local runtime selection
+- host-default local Windows `LabVIEWCLI` as the installed compare dependency
+- expert Docker provider selection through the generated settings CLI
+- required provider, version, and bitness facts
+- fail-closed runtime/provider selection
 - compare workflow and next-step guidance
 
 They shall not publish:
@@ -145,23 +170,32 @@ for the private control plane.
 When those conditions force a hard stop, the required user-facing outcome is
 actionable guidance:
 
-- set the required version + bitness settings
-- install the matching local LabVIEW surface when it is missing
+- set or correct the required provider, version, and bitness facts
+- install the matching local LabVIEW surface when host is selected and missing
+- use Docker `x64` or switch back to host when the Docker bundle is
+  unsupported
 - retry after the requested local runtime resolves cleanly
 
 The extension is not allowed to silently continue past a local-runtime hard
-stop or to fall back to Docker on the installed-user path.
+stop or to silently switch provider classes on the installed-user path.
 
-## Internal Docker Containment
+## Bounded Expert Docker Provider
 
-Docker remains available only on internal maintainer and proof surfaces.
+Docker no longer remains the default installed-user dependency, but it also is
+not treated as a hidden maintainer-only path.
 
 That means:
 
+- installed-user manifest/settings still do not expose Docker image settings,
+  image-family picking, or a general provider picker
+- the generated settings CLI is the only admitted installed-user path for
+  selecting Docker
+- Docker preflight derives the governed Windows or Linux image family from the
+  current Docker engine
+- Docker `x86` remains unsupported and fails closed with guidance toward host
+  or `x64`
 - internal benchmark, proof, and maintainer workflows may still retain Docker
   explicitly
-- installed-user manifest/settings and installed-user reader surfaces no longer
-  present Docker as the compare contract
 - the historical released Docker baseline remains retained only as a separate
   exact-release fact, not as the active installed-user destination
 - the planned settings CLI is generated in place on first use instead of being
@@ -171,18 +205,20 @@ That means:
 
 Execution UX shall surface these facts directly:
 
+- requested provider
 - requested LabVIEW version
 - requested LabVIEW bitness
-- chosen local runtime
+- chosen local runtime or governed image family
 - hard-stop reason when execution cannot proceed
 - next action
+- CLI update hint when persisted provider/runtime facts need correction
 
 The installed-user surface is moving toward those facts through the current
-manifest/settings slice and the remaining runtime-preflight and explicit-
-compare slices.
-- whether the selected governed image was already present locally
+manifest/settings slice and the remaining provider-selection, runtime-
+preflight, and explicit-compare slices.
+- whether the selected governed Docker image was already present locally
 - whether the selected governed image still required acquisition or had already
-  been acquired
+  been acquired when Docker is selected
 - what the next user action is when acquisition or Docker capability blocks
   runtime truth
 

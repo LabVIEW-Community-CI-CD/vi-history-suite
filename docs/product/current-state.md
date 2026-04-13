@@ -200,17 +200,19 @@ Current active and recently closed tranches:
     now passed on `Examples/Logging with Helper-VIs.vi`, so exact `v1.2.0`
     was published on public `main` before later candidate lines reopened on
     `develop`
-- `TRANCHE-016`: Installed local LabVIEWCLI contract and explicit compare workflow
+- `TRANCHE-016`: Host-default LabVIEWCLI, expert Docker provider, and explicit compare workflow
 - active issue: [ISSUE-0412 Installed Local LabVIEWCLI Selection And Explicit Compare](./issues/ISSUE-0412-installed-local-labviewcli-selection-and-explicit-compare.md)
 - active execution program: [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
   - current first slice:
-  - rewrite the active installed-user direction around Windows local
-    `LabVIEWCLI`
+  - rewrite the active installed-user direction around host-default Windows
+    local `LabVIEWCLI` plus one bounded expert Docker provider selected
+    through the generated CLI
   - keep the current exact released Docker-only contract explicit until the
     replacement is actually implemented
-  - require settings-only LabVIEW version plus bitness selection
-  - replace second-selection auto-run with an explicit compare preflight and
-    explicit compare action
+  - require explicit provider, version, and bitness facts, with version plus
+    bitness required across both provider classes
+  - replace second-selection auto-run with an explicit compare preflight that
+    shows provider, version, and bitness before the explicit compare action
 - `TRANCHE-012`: Post-release sustainment and release cadence
 - active issue: [ISSUE-0409 Post-Release Sustainment And Release Cadence](./issues/ISSUE-0409-post-release-sustainment-and-release-cadence.md)
 - active execution program: [PROGRAM-0004: Post-Release Sustainment And Release Cadence](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)
@@ -311,18 +313,19 @@ Post-release tranches:
     Marketplace item verifies `1.2.2`
   - sustainment does not absorb the active `TRANCHE-016` local-LabVIEWCLI
     contract reset or the reopened `TRANCHE-010` public-closeout rerun
-- `TRANCHE-016`: Installed local LabVIEWCLI contract and explicit compare workflow
+- `TRANCHE-016`: Host-default LabVIEWCLI, expert Docker provider, and explicit compare workflow
   - active issue: [ISSUE-0412 Installed Local LabVIEWCLI Selection And Explicit Compare](./issues/ISSUE-0412-installed-local-labviewcli-selection-and-explicit-compare.md)
   - active execution program: [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
   - the current exact released installed extension is still Docker-only, but
     that is now historical baseline truth rather than the active destination
   - the control-plane reset and installed manifest/settings slices are landed
-  - required-settings runtime preflight is partially landed, but exact
+  - required-settings host runtime preflight is partially landed, but exact
     single-runtime ambiguity handling is still open
-  - the remaining active slices are on-demand settings CLI generation,
-    explicit compare preflight, and installed-user warning behavior
-  - Docker is being confined to internal and maintainer proof surfaces instead
-    of the installed-user compare contract
+  - the remaining active slices are generated provider-selection CLI support,
+    Docker provider preflight/acquisition, explicit compare preflight, and
+    installed-user warning behavior
+  - Docker is now a bounded expert provider rather than either the default
+    installed-user dependency or an internal-only path
 - historical installed-user Docker baseline:
   - `TRANCHE-013`: Extension execution flexibility and runtime acquisition UX
     - historical issue: [ISSUE-0410 Extension Execution Flexibility And Runtime Acquisition UX](./issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md)

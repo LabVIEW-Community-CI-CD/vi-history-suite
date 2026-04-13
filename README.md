@@ -48,11 +48,15 @@ Installed runtime contract:
 Active develop direction:
 
 - the active control plane is replacing this installed-user Docker dependency
-  on Windows with local `LabVIEWCLI`
+  with host-default Windows local `LabVIEWCLI` plus one bounded expert Docker
+  provider
 - the installed manifest/settings slice now exposes required LabVIEW version
   plus bitness instead of public Docker settings
 - the next user-seeding surface is an on-demand CLI generated into user-profile
-  storage rather than a prebuilt VSIX-shipped binary
+  storage rather than a prebuilt VSIX-shipped binary, and that CLI will
+  persist provider, version, and bitness together
+- Docker remains an expert path only, derived from the current Docker engine,
+  and Docker `x86` will fail closed with host/`x64` guidance
 - the active direction is governed under `TRANCHE-016` / `ISSUE-0412` /
   `PROGRAM-0005`
 - the exact released installed workflow above remains the truthful release
@@ -549,7 +553,7 @@ Current install paths are:
 The current active tranches are:
 
 - `TRANCHE-016`: installed local LabVIEWCLI contract and explicit compare
-  workflow
+  workflow with bounded expert Docker
 - `TRANCHE-012`: post-release sustainment and release cadence
 
 Recent historical tranches are:
@@ -578,12 +582,17 @@ Current runtime direction for installed extension users:
   - if Docker is unavailable or the current engine cannot satisfy the governed
     request, the extension fails closed instead of probing the host
 - active develop direction:
-  - installed Windows users will use local `LabVIEWCLI` instead of Docker
+  - installed Windows users will default to local `LabVIEWCLI`, while Docker
+    survives only as a bounded expert provider selected through the generated
+    CLI
   - the installed manifest/settings contract now exposes required LabVIEW
-    version plus bitness
-  - the planned settings CLI will be generated in place on first use rather
-    than shipped as a prebuilt payload
-  - compare will move behind a dedicated preflight section and explicit
+    version plus bitness and will stay deterministic across both provider
+    classes
+  - the planned settings CLI will be generated in place on first use, will
+    persist provider plus version/bitness, and will not ship as a prebuilt
+    payload
+  - compare will move behind a dedicated preflight section that shows
+    selected/base commit plus provider/version/bitness before the explicit
     `Compare` action
 - the installed-user front face is now the VS Code Marketplace listing plus
   the public GitHub wiki, while the public GitHub repo remains the source and

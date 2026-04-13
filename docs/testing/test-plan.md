@@ -1300,7 +1300,8 @@
   `viHistorySuite.linuxContainerImage`, does not expose `executionMode` or
   installed host-runtime knobs on the current released line, and keeps that
   released Docker-only baseline explicit while the authority control plane
-  promotes the active local-`LabVIEWCLI` replacement direction
+  promotes the active host-default local-`LabVIEWCLI` plus expert-Docker
+  replacement direction
 - `TEST-DOC-064`: review current-state, PROGRAM-0003, ISSUE-0408, canonical
   exact-pair diagnosis guidance, ADR-0024, and the debt ledger and confirm the
   repo documents effective runtime override bundle validation rather than a raw
@@ -1308,12 +1309,13 @@
 - `TEST-DOC-065`: review README, current-state, extension-execution-policy,
   ADR-0025, PROGRAM-0005, ISSUE-0410, ISSUE-0412, and the debt ledger and
   confirm the current released Docker-only installed contract remains explicit
-  while the active control plane now promotes the local-`LabVIEWCLI`
-  replacement direction
+  while the active control plane now promotes the host-default
+  local-`LabVIEWCLI` plus expert-Docker replacement direction
 - `TEST-UNIT-300`: verify the execution-policy control-plane package keeps
   the no-bypass rule, the current released Docker-only execution baseline, and
-  the active local-`LabVIEWCLI` replacement direction aligned across authority
-  docs after the manifest removed `viHistorySuite.executionMode`
+  the active host-default local-`LabVIEWCLI` plus expert-Docker replacement
+  direction aligned across authority docs after the manifest removed
+  `viHistorySuite.executionMode`
 - `TEST-UNIT-301`: verify the Windows benchmark summary fails closed when any
   retained pair is `runtimeExecutionState=not-available`, retains the blocked
   reason as terminal benchmark truth, snapshots immutable per-run
@@ -1324,7 +1326,8 @@
   PROGRAM-0005, ISSUE-0410, ISSUE-0412, current-state, and the debt ledger and
   confirm the authority package now keeps canonical Docker-only request
   validation explicit as current implemented truth while promoting the active
-  local-`LabVIEWCLI` transition without claiming it is already shipped
+  host-default local-`LabVIEWCLI` plus expert-Docker transition without
+  claiming it is already shipped
 - `TEST-DOC-069`: review README, current-state, harnesses, PROGRAM-0003, and
   ISSUE-0408 and confirm contaminated Windows benchmark-image reruns are
   documented as fail-closed `not-available` benchmark truth with immutable
@@ -1690,22 +1693,33 @@
   and the blocking no-findings rule before `tag-eligible`
 - `TEST-UNIT-341`: verify the installed-user manifest/settings contract
   exposes `viHistorySuite.labviewVersion` and
-  `viHistorySuite.labviewBitness`, removes Docker from the installed-user
-  contract, keeps Docker internal-only, and reads the installed-user settings
-  through the host-local runtime-settings surface
+  `viHistorySuite.labviewBitness`, keeps host as the default installed-user
+  direction, avoids general Docker/image-family settings on the public
+  installed-user surface, and reads the installed-user runtime facts through
+  the host-local runtime-settings surface
 - `TEST-UNIT-342`: verify Windows runtime preflight requires version and
   bitness, resolves exactly one local LabVIEW + `LabVIEWCLI` installation, and
   fails closed when the requested runtime is missing, ambiguous, or
   incompatible
 - `TEST-UNIT-343`: verify selecting the second commit no longer auto-runs
   compare, and the compare preflight renders selected/base commit plus LabVIEW
-  version and bitness before the explicit `Compare` action
-- `TEST-UNIT-344`: verify missing or unresolved LabVIEW version/bitness blocks
-  compare in the panel and emits a VS Code warning notification
+  version, bitness, and provider before the explicit `Compare` action
+- `TEST-UNIT-344`: verify missing, unresolved, or unsupported provider/runtime
+  selection blocks compare in the panel and emits a VS Code warning
+  notification
 - `TEST-UNIT-345`: verify the on-demand settings CLI materializes platform
-  launchers under user-profile storage on first use, writes
-  `viHistorySuite.labviewVersion` plus `viHistorySuite.labviewBitness`, and
+  launchers under user-profile storage on first use, writes provider plus
+  `viHistorySuite.labviewVersion` and `viHistorySuite.labviewBitness`, and
   does not require PATH mutation or a prebuilt VSIX-shipped CLI payload
+- `TEST-UNIT-346`: verify the installed compare contract defaults to host and
+  admits Docker only as a bounded expert provider persisted through the
+  generated settings CLI
+- `TEST-UNIT-347`: verify Docker preflight derives the governed image family
+  from the current engine and fails closed on unsupported Docker `x86` with
+  host/`x64` corrective guidance
+- `TEST-UNIT-348`: verify compare preflight shows provider as read-only text
+  and retains an explicit CLI update hint when provider/runtime settings need
+  correction
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are
@@ -1772,9 +1786,9 @@
   `ISSUE-0412` as the active direction
 - `TEST-DOC-105`: review SRS, RTM, test plan, extension-execution-policy, and
   ISSUE-0412 and confirm the planned installed-user replacement contract is
-  now explicit around required LabVIEW version + bitness settings, local
-  `LabVIEWCLI` runtime resolution, explicit compare preflight, panel +
-  warning fail-closed behavior, and internal-only Docker
+  now explicit around required LabVIEW version + bitness settings, host-default
+  local `LabVIEWCLI`, bounded expert Docker admission through the generated
+  CLI, explicit compare preflight, and panel + warning fail-closed behavior
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

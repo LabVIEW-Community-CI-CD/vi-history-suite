@@ -41,7 +41,7 @@ describe('execution-policy control plane', () => {
     expect(debtLedgerJson).toContain('"retirementCommit": "2f4ced0"');
   });
 
-  it('keeps the current Docker-only baseline explicit while promoting the active local LabVIEWCLI transition', () => {
+  it('keeps the current Docker-only baseline explicit while promoting the active host-default LabVIEWCLI plus expert Docker transition', () => {
     const manifest = readJson<{
       contributes?: { configuration?: { properties?: Record<string, unknown> } };
     }>('package.json');
@@ -96,9 +96,10 @@ describe('execution-policy control plane', () => {
     expect(readme).toContain('ISSUE-0412');
     expect(readme).toContain('Docker-only');
     expect(readme).toContain('local `LabVIEWCLI`');
+    expect(readme).toContain('bounded expert Docker');
     expect(readme).toContain('install or start Docker Desktop or Docker');
     expect(currentState).toContain(
-      '`TRANCHE-016`: Installed local LabVIEWCLI contract and explicit compare workflow'
+      '`TRANCHE-016`: Host-default LabVIEWCLI, expert Docker provider, and explicit compare workflow'
     );
     expect(currentState).toContain('`TRANCHE-012`: Post-release sustainment and release cadence');
     expect(currentState).toContain(
@@ -131,7 +132,8 @@ describe('execution-policy control plane', () => {
     expect(policy).toContain('Active Control-Plane Direction');
     expect(policy).toContain('compare does not auto-run when the second commit is selected');
     expect(policy).toContain('execution-policy bypass is not allowed');
-    expect(policy).toContain('Docker remains internal-only');
+    expect(policy).toContain('bounded expert Docker');
+    expect(policy).toContain('current Docker engine');
     expect(srs).toContain('VHS-REQ-459');
     expect(srs).toContain('VHS-REQ-470');
     expect(srs).toContain('VHS-REQ-482');
@@ -141,6 +143,7 @@ describe('execution-policy control plane', () => {
     expect(srs).toContain('VHS-REQ-530');
     expect(srs).toContain('VHS-REQ-531');
     expect(srs).toContain('VHS-REQ-536');
+    expect(srs).toContain('VHS-REQ-540');
     expect(srs).toContain('missing Docker CLI or a stopped Docker daemon');
     expect(srs).toContain('labviewVersion');
     expect(srs).toContain('explicit `Compare` action');
@@ -152,10 +155,14 @@ describe('execution-policy control plane', () => {
     expect(rtm).toContain('VHS-REQ-530');
     expect(rtm).toContain('VHS-REQ-531');
     expect(rtm).toContain('VHS-REQ-536');
+    expect(rtm).toContain('VHS-REQ-540');
     expect(rtm).toContain('Implemented');
     expect(testPlan).toContain('TEST-UNIT-300');
     expect(testPlan).toContain('TEST-UNIT-341');
     expect(testPlan).toContain('TEST-UNIT-344');
+    expect(testPlan).toContain('TEST-UNIT-346');
+    expect(testPlan).toContain('TEST-UNIT-347');
+    expect(testPlan).toContain('TEST-UNIT-348');
     expect(testPlan).toContain('Docker-only');
     expect(testPlan).toContain('TEST-UNIT-339');
     expect(testPlan).toContain('TEST-DOC-102');
@@ -166,12 +173,12 @@ describe('execution-policy control plane', () => {
     expect(program).toContain('TRANCHE-016');
     expect(program).toContain('installed manifest/settings');
     expect(program).toContain('explicit `Compare` action');
-    expect(program).toContain('internal-only Docker');
+    expect(program).toContain('expert Docker provider');
     expect(issueCurrent).toContain('Closed historical issue, superseded by `ISSUE-0412`');
     expect(issueCurrent).toContain('TRANCHE-013');
     expect(issueCurrent).toContain('TRANCHE-015');
     expect(issueNext).toContain('Active post-release issue.');
-    expect(issueNext).toContain('settings-only LabVIEW version + bitness selection');
+    expect(issueNext).toContain('provider/version/bitness');
     expect(issueNext).toContain('explicit compare preflight state');
     expect(issueNext).toContain('VS Code warning notification');
     expect(sustainmentProgram).toContain('Active post-release program.');

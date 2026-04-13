@@ -16,9 +16,10 @@ Activation facts:
 - the exact released installed extension still uses the Docker-only contract
   retained under `ISSUE-0410`
 - `TRANCHE-016` is active for replacing that installed-user contract on
-  Windows with local `LabVIEWCLI`
-- Docker is no longer the intended installed-user destination for this surface;
-  it is becoming internal-only
+  Windows with host-default local `LabVIEWCLI` plus one bounded expert Docker
+  provider
+- Docker is no longer the default installed-user destination for this
+  surface; it survives only as a generated-CLI-selected expert path
 - the current codebase already contains internal runtime-locator support that
   can be refocused around local `LabVIEWCLI` resolution
 
@@ -28,15 +29,18 @@ history instead of chat memory.
 ## Scope
 
 - Windows installed-extension compare execution through local `LabVIEWCLI`
-- settings-only LabVIEW version + bitness selection
+- required LabVIEW version + bitness selection across both provider classes
+- bounded expert Docker provider selection through the generated settings CLI
 - cross-platform settings CLI that writes those settings into user-profile
   storage without PATH mutation
 - fail-closed local runtime resolution and preflight
+- fail-closed Docker preflight derived from the active engine and explicit
+  rejection of unsupported Docker `x86`
 - explicit compare preflight state after commit selection
-- selected/base commit plus version/bitness visibility before compare starts
+- selected/base commit plus provider/version/bitness visibility before compare
+  starts
 - panel block plus VS Code warning when required runtime selection is missing
   or unresolved
-- internal-only Docker containment for maintainer and proof surfaces
 - control-plane rewrite across queue, current-state, execution policy,
   requirements, RTM, and test plan
 
@@ -44,8 +48,8 @@ history instead of chat memory.
 
 - claiming the current released package already implements the replacement
   contract before the runtime and UI slices land
-- expanding the installed-user contract into path-picking or provider-mode
-  selection
+- expanding the installed-user contract into path-picking, direct
+  image-family selection, or a general panel-side provider picker
 - shipping a prebuilt external settings CLI payload inside the VSIX
 - removing internal Docker proof surfaces that are still useful to maintainers
 - changing the public evaluation repo scope beyond `vi-history-suite`
@@ -62,15 +66,19 @@ history instead of chat memory.
 - `TRANCHE-016` is the active queue surface and `ISSUE-0410` is historical
   rather than active
 - the installed-user settings contract requires version and bitness
+- the installed-user contract defaults to host and admits Docker only through
+  the generated settings CLI
 - runtime preflight resolves one local Windows `LabVIEWCLI` install or fails
   closed
+- Docker preflight derives the governed image family from the active engine and
+  fails closed on unsupported Docker `x86`
 - first settings-CLI use builds a local launcher in user-profile storage
   instead of depending on a prebuilt VSIX-shipped CLI binary
 - compare does not auto-run on second selection
-- the panel shows selected/base commit plus version/bitness before compare
+- the panel shows selected/base commit plus provider/version/bitness before
+  compare
 - unresolved runtime selection blocks compare in-panel and through a VS Code
   warning notification
-- Docker is internal-only on the installed-user surface
 
 ## Required Evidence
 
@@ -83,10 +91,11 @@ history instead of chat memory.
 
 ## Current Active Slice
 
-- finish exact single-runtime preflight by failing closed on ambiguity, not
-  only on missing required settings
+- finish exact single-runtime host preflight by failing closed on ambiguity,
+  not only on missing required settings
 - add an on-demand cross-platform settings CLI that is generated into
-  user-profile storage on first use
+  user-profile storage on first use and persists provider plus version/bitness
+- add bounded expert Docker admission and engine-derived preflight
 - land the explicit compare-preflight workflow after second commit selection
 
 ## Round 1: User Proposal Facts

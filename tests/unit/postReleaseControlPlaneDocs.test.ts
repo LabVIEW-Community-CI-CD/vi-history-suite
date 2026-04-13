@@ -48,10 +48,10 @@ describe('post-release control-plane coherence', () => {
     });
     expect(queue.filter((entry) => entry.status === 'active')).toContainEqual({
       id: 'TRANCHE-016',
-      title: 'Installed local LabVIEWCLI contract and explicit compare workflow',
+      title: 'Host-default LabVIEWCLI, expert Docker provider, and explicit compare workflow',
       status: 'active',
       source: 'author direction',
-      summary: expect.stringContaining('local-LabVIEWCLI settings contract'),
+      summary: expect.stringContaining('host-default Windows local-LabVIEWCLI workflow'),
       issues: ['ISSUE-0412']
     });
     expect(queue.find((entry) => entry.id === 'TRANCHE-010')).toMatchObject({
@@ -70,6 +70,7 @@ describe('post-release control-plane coherence', () => {
     expect(currentState).toContain('Comparison report is as expected.');
     expect(currentState).toContain('current exact released installed extension is still Docker-only');
     expect(currentState).toContain('installed manifest/settings');
+    expect(currentState).toContain('bounded expert provider');
 
     expect(program).toContain('Closed on the Docker-only public-product acceptance gate.');
     expect(program).toContain('the installed extension compare workflow is now Docker-only and x64-only');

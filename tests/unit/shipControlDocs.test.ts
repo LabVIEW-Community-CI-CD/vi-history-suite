@@ -215,6 +215,7 @@ describe('ship-control direction system', () => {
     expect(readme).toContain('- hosted automation governance matrix: [docs/product/hosted-ci-governance.md]');
     expect(readme).toContain('- current changelog: [CHANGELOG.md](./CHANGELOG.md)');
     expect(readme).toContain('- `TRANCHE-016`: installed local LabVIEWCLI contract and explicit compare');
+    expect(readme).toContain('workflow with bounded expert Docker');
     expect(readme).toContain('- `TRANCHE-014`: public Codespaces public-repo bootstrap');
     expect(readme).toContain('- `TRANCHE-015`: historical first-run Docker onboarding and fail-closed');
     expect(readme).toContain('- `TRANCHE-010`: public-source facade and public-product acceptance is a closed');
