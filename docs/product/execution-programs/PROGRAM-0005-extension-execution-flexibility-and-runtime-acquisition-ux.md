@@ -16,6 +16,8 @@ Current facts:
 - `TRANCHE-016` is the active tranche for replacing that installed-user
   contract on Windows with a local `LabVIEWCLI` workflow
 - `ISSUE-0412` is the active issue for the replacement direction
+- the control-plane reset is landed and the installed manifest/settings
+  contract slice is now the active implementation checkpoint
 - `PROGRAM-0002` still owns the later public acceptance rerun once the next
   installed-user contract is actually published
 

@@ -79,9 +79,15 @@ describe('execution-policy control plane', () => {
       'viHistorySuite.executionMode'
     );
     expect(manifest.contributes?.configuration?.properties).toHaveProperty(
-      'viHistorySuite.windowsContainerImage'
+      'viHistorySuite.labviewVersion'
     );
     expect(manifest.contributes?.configuration?.properties).toHaveProperty(
+      'viHistorySuite.labviewBitness'
+    );
+    expect(manifest.contributes?.configuration?.properties).not.toHaveProperty(
+      'viHistorySuite.windowsContainerImage'
+    );
+    expect(manifest.contributes?.configuration?.properties).not.toHaveProperty(
       'viHistorySuite.linuxContainerImage'
     );
     expect(readme).toContain('PROGRAM-0005');
@@ -102,7 +108,8 @@ describe('execution-policy control plane', () => {
       '[PROGRAM-0004: Post-Release Sustainment And Release Cadence](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)'
     );
     expect(currentState).toContain('current exact released installed extension is still Docker-only');
-    expect(currentState).toContain('required version plus bitness settings');
+    expect(currentState).toContain('installed manifest/settings');
+    expect(currentState).toContain('installed manifest/settings');
     expect(currentState).toContain('public GitHub facade repo is the public source product surface');
     expect(currentState).toContain('public GitHub user wiki now exists');
     expect(queue).toContain('"id": "TRANCHE-016"');
@@ -116,21 +123,14 @@ describe('execution-policy control plane', () => {
     expect(queue).toContain('"status": "active"');
     expect(policy).not.toContain('`auto`');
     expect(policy).not.toContain('`host-only`');
-    expect(policy).toContain('comparison generation is Docker-only in the installed extension');
-    expect(policy).toContain('viHistorySuite.windowsContainerImage');
-    expect(policy).toContain('viHistorySuite.linuxContainerImage');
-    expect(policy).toContain('Active Control-Plane Direction');
     expect(policy).toContain('viHistorySuite.labviewVersion');
     expect(policy).toContain('viHistorySuite.labviewBitness');
+    expect(policy).toContain('manifest no longer exposes Docker image settings');
+    expect(policy).toContain('Exact Released Historical Baseline');
+    expect(policy).toContain('comparison generation is Docker-only in the released installed extension');
+    expect(policy).toContain('Active Control-Plane Direction');
     expect(policy).toContain('compare does not auto-run when the second commit is selected');
-    expect(policy).toContain('Windows Engine Matrix');
-    expect(policy).toContain('Docker daemon `OSType=windows` selects the governed Windows container image');
-    expect(policy).toContain('Docker daemon `OSType=linux` selects the governed Linux container image');
     expect(policy).toContain('execution-policy bypass is not allowed');
-    expect(policy).toContain(
-      'first use assumes Docker is already installed and running only when the host'
-    );
-    expect(policy).toContain('Docker CLI plus daemon checks');
     expect(policy).toContain('Docker remains internal-only');
     expect(srs).toContain('VHS-REQ-459');
     expect(srs).toContain('VHS-REQ-470');
@@ -152,7 +152,7 @@ describe('execution-policy control plane', () => {
     expect(rtm).toContain('VHS-REQ-530');
     expect(rtm).toContain('VHS-REQ-531');
     expect(rtm).toContain('VHS-REQ-536');
-    expect(rtm).toContain('Planned');
+    expect(rtm).toContain('Implemented');
     expect(testPlan).toContain('TEST-UNIT-300');
     expect(testPlan).toContain('TEST-UNIT-341');
     expect(testPlan).toContain('TEST-UNIT-344');
@@ -164,6 +164,7 @@ describe('execution-policy control plane', () => {
     expect(program).toContain('Active post-release program.');
     expect(program).toContain('local `LabVIEWCLI`');
     expect(program).toContain('TRANCHE-016');
+    expect(program).toContain('installed manifest/settings');
     expect(program).toContain('explicit `Compare` action');
     expect(program).toContain('internal-only Docker');
     expect(issueCurrent).toContain('Closed historical issue, superseded by `ISSUE-0412`');

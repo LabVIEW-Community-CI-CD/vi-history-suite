@@ -1213,18 +1213,34 @@ export function readComparisonRuntimeSettings(
     'viHistorySuite'
   )
 ): ComparisonRuntimeSettings {
+  const labviewVersion = readTrimmedStringSetting(configuration, 'labviewVersion');
+  const labviewBitness = readConfiguredLabviewBitness(configuration);
+
   return {
-    executionMode: 'docker-only',
-    bitness: 'x64',
-    windowsContainerImage: configuration.get<string>(
-      'windowsContainerImage',
-      'nationalinstruments/labview:2026q1-windows'
-    ),
-    linuxContainerImage: configuration.get<string>(
-      'linuxContainerImage',
-      'nationalinstruments/labview:2026q1-linux'
-    )
+    executionMode: 'host-only',
+    labviewVersion,
+    bitness: labviewBitness
   };
+}
+
+function readTrimmedStringSetting(
+  configuration: Pick<vscode.WorkspaceConfiguration, 'get'>,
+  key: string
+): string | undefined {
+  const value = configuration.get<string>(key);
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : undefined;
+}
+
+function readConfiguredLabviewBitness(
+  configuration: Pick<vscode.WorkspaceConfiguration, 'get'>
+): 'x86' | 'x64' | undefined {
+  const value = readTrimmedStringSetting(configuration, 'labviewBitness');
+  if (value === 'x86' || value === 'x64') {
+    return value;
+  }
+
+  return undefined;
 }
 
 export function resolveRuntimePlatform(platform: NodeJS.Platform): RuntimePlatform {

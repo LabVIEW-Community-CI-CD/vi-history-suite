@@ -69,7 +69,7 @@ describe('post-release control-plane coherence', () => {
     expect(currentState).toContain('retained hosted public proof on GitHub Codespace `novacula` now passes');
     expect(currentState).toContain('Comparison report is as expected.');
     expect(currentState).toContain('current exact released installed extension is still Docker-only');
-    expect(currentState).toContain('required version plus bitness settings');
+    expect(currentState).toContain('installed manifest/settings');
 
     expect(program).toContain('Closed on the Docker-only public-product acceptance gate.');
     expect(program).toContain('the installed extension compare workflow is now Docker-only and x64-only');

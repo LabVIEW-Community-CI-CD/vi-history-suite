@@ -3699,21 +3699,21 @@ describe('comparisonReportAction', () => {
     getConfigurationMock.mockReturnValue({
       get: <T>(key: string, defaultValue: T) => {
         const values: Record<string, unknown> = {
-          windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
+          labviewVersion: ' 2026 ',
+          labviewBitness: 'x86',
           executionMode: 'host-only',
           labviewCliPath: 'C:\\Tools\\LabVIEWCLI.exe',
           labviewExePath: 'C:\\Tools\\LabVIEW.exe',
-          bitness: 'x86'
+          bitness: 'x64'
         };
         return (values[key] as T | undefined) ?? defaultValue;
       }
     });
 
     expect(readComparisonRuntimeSettings()).toEqual({
-      executionMode: 'docker-only',
-      windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
-      linuxContainerImage: 'nationalinstruments/labview:2026q1-linux',
-      bitness: 'x64'
+      executionMode: 'host-only',
+      labviewVersion: '2026',
+      bitness: 'x86'
     });
     expect(resolveRuntimePlatform('freebsd' as NodeJS.Platform)).toBe('linux');
   });

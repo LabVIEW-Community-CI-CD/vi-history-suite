@@ -72,16 +72,18 @@ history instead of chat memory.
 - updated queue, README, current-state, ship-control, and execution-policy docs
 - updated `PROGRAM-0005`, `ISSUE-0410`, and this issue
 - updated SRS, RTM, and test plan
-- focused docs and design gates for the control-plane rewrite
+- focused docs, manifest, and runtime-settings gates for each landed slice
 
 ## Current Active Slice
 
-- perform the control-plane reset first
-- keep the current released Docker-only baseline explicit instead of pretending
-  the replacement is already published
-- promote `TRANCHE-016` / `ISSUE-0412` as the active installed-user direction
-- seed the requirement and verification package for the later manifest,
-  runtime, and explicit-compare slices
+- land the installed manifest/settings contract
+- expose `viHistorySuite.labviewVersion` plus
+  `viHistorySuite.labviewBitness` on the installed-user surface
+- remove public Docker settings from the installed extension manifest while
+  retaining the historical released Docker baseline in docs
+- switch the installed settings reader onto Windows local `LabVIEWCLI`
+  selection fields without overclaiming the later runtime-preflight or
+  explicit-compare slices
 
 ## Round 1: User Proposal Facts
 

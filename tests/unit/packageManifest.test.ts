@@ -93,17 +93,23 @@ describe('extension manifest research alignment', () => {
     expect(manifest.capabilities?.untrustedWorkspaces).toEqual({
       supported: 'limited',
       description:
-        'VI History disables background indexing and governed Docker comparison-report execution in untrusted workspaces.',
+        'VI History disables background indexing and installed comparison execution in untrusted workspaces.',
       restrictedConfigurations: [
-        'viHistorySuite.windowsContainerImage',
-        'viHistorySuite.linuxContainerImage'
+        'viHistorySuite.labviewVersion',
+        'viHistorySuite.labviewBitness'
       ]
     });
 
     expect(manifest.contributes?.configuration?.properties).toHaveProperty(
-      'viHistorySuite.windowsContainerImage'
+      'viHistorySuite.labviewVersion'
     );
     expect(manifest.contributes?.configuration?.properties).toHaveProperty(
+      'viHistorySuite.labviewBitness'
+    );
+    expect(manifest.contributes?.configuration?.properties).not.toHaveProperty(
+      'viHistorySuite.windowsContainerImage'
+    );
+    expect(manifest.contributes?.configuration?.properties).not.toHaveProperty(
       'viHistorySuite.linuxContainerImage'
     );
     expect(manifest.contributes?.configuration?.properties).not.toHaveProperty(

@@ -20,10 +20,10 @@
   "capabilities": {
     "untrustedWorkspaces": {
       "supported": "limited",
-      "description": "VI History disables background indexing and governed Docker comparison-report execution in untrusted workspaces.",
+      "description": "VI History disables background indexing and installed comparison execution in untrusted workspaces.",
       "restrictedConfigurations": [
-        "viHistorySuite.windowsContainerImage",
-        "viHistorySuite.linuxContainerImage"
+        "viHistorySuite.labviewVersion",
+        "viHistorySuite.labviewBitness"
       ]
     }
   },
@@ -107,15 +107,17 @@
           "maximum": 5000,
           "description": "Explicit retained-commit ceiling when historyWindowMode is capped."
         },
-        "viHistorySuite.windowsContainerImage": {
+        "viHistorySuite.labviewVersion": {
           "type": "string",
-          "default": "nationalinstruments/labview:2026q1-windows",
-          "description": "Required governed Windows-engine LabVIEW container image for Docker-only comparison-report execution when Docker runs in Windows-container mode."
+          "description": "Required installed-user LabVIEW major version for local Windows LabVIEWCLI comparison preflight. Example: 2026."
         },
-        "viHistorySuite.linuxContainerImage": {
+        "viHistorySuite.labviewBitness": {
           "type": "string",
-          "default": "nationalinstruments/labview:2026q1-linux",
-          "description": "Required governed Linux-engine LabVIEW container image for Docker-only comparison-report execution when Docker runs in Linux-container mode."
+          "enum": [
+            "x86",
+            "x64"
+          ],
+          "description": "Required installed-user LabVIEW bitness for local Windows LabVIEWCLI comparison preflight."
         }
       }
     }

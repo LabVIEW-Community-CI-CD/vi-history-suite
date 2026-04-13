@@ -1691,7 +1691,8 @@
 - `TEST-UNIT-341`: verify the installed-user manifest/settings contract
   exposes `viHistorySuite.labviewVersion` and
   `viHistorySuite.labviewBitness`, removes Docker from the installed-user
-  contract, and keeps Docker internal-only
+  contract, keeps Docker internal-only, and reads the installed-user settings
+  through the host-local runtime-settings surface
 - `TEST-UNIT-342`: verify Windows runtime preflight requires version and
   bitness, resolves exactly one local LabVIEW + `LabVIEWCLI` installation, and
   fails closed when the requested runtime is missing, ambiguous, or

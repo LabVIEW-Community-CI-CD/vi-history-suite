@@ -34,6 +34,7 @@ export type DockerContainerAcquisitionState =
 
 export interface ComparisonRuntimeSettings {
   executionMode?: RuntimeExecutionMode;
+  labviewVersion?: string;
   labviewCliPath?: string;
   labviewExePath?: string;
   bitness?: RuntimeBitness;
@@ -752,7 +753,7 @@ export async function locateComparisonRuntime(
       ...buildContainerSelectionFactsForReturn(),
       notes: [
         'No supported LabVIEW 2026 runtime was located for report generation.',
-        'Install LabVIEW 2026 Q1 or configure viHistorySuite.labviewExePath to an explicit LabVIEW 2026 executable.'
+        'Install the requested LabVIEW version locally and set viHistorySuite.labviewVersion plus viHistorySuite.labviewBitness before retrying compare.'
       ],
       registryQueryPlans,
       candidates
@@ -1004,12 +1005,12 @@ export async function locateComparisonRuntime(
 
   if (platform === 'linux') {
     notes.push(
-      'Linux report generation remains best-effort; configure viHistorySuite.labviewCliPath when LabVIEW CLI is installed outside documented scan roots.'
+      'Linux report generation remains best-effort; use documented LabVIEWCLI scan roots or an internal proof surface when explicit runtime overrides are required.'
     );
   }
 
   notes.push(
-    'Configure viHistorySuite.labviewCliPath to an installed LabVIEWCLI when the documented scan roots do not contain one.'
+    'Install the matching LabVIEWCLI under the documented scan roots, or use an internal proof surface when explicit runtime overrides are required.'
   );
 
   return {

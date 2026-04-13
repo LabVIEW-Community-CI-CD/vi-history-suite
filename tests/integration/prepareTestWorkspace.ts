@@ -47,8 +47,8 @@ export async function prepareIntegrationWorkspace(
     path.join(workspacePath, '.vscode', 'settings.json'),
     JSON.stringify(
       {
-        'viHistorySuite.windowsContainerImage': 'nationalinstruments/labview:2026q1-windows',
-        'viHistorySuite.linuxContainerImage': 'nationalinstruments/labview:2026q1-linux'
+        'viHistorySuite.labviewVersion': '2026',
+        'viHistorySuite.labviewBitness': 'x64'
       },
       null,
       2

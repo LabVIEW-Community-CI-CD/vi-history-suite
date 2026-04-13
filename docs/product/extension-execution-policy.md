@@ -10,52 +10,47 @@ behavior from scattered code, benchmark scripts, or prior chat.
 
 ## Current Implemented Posture
 
-The current exact released installed extension now exposes only these
+The active installed-extension settings surface now exposes only these
 runtime-related settings:
 
-- `viHistorySuite.windowsContainerImage`
-- `viHistorySuite.linuxContainerImage`
+- `viHistorySuite.labviewVersion`
+- `viHistorySuite.labviewBitness`
 
-Current installed release truth is:
+Current develop-line implementation truth is:
 
-- comparison generation is Docker-only in the installed extension
-- the installed extension no longer exposes `executionMode`, host-runtime path
-  overrides, or a user-facing bitness selector
-- installed comparison generation now constrains to x64 container execution
-- host-native LabVIEW remains available for governed maintainer proof surfaces,
-  but it is no longer part of the extension-user compare workflow
-- on Windows hosts, the extension chooses the governed container provider from
-  the current Docker daemon engine instead of assuming Windows containers only:
-  - Docker daemon `OSType=windows` selects the governed Windows container image
-  - Docker daemon `OSType=linux` selects the governed Linux container image
-- when the selected governed image is missing locally, the extension surfaces
-  visible acquisition progress before comparison runtime launch
-- first use assumes Docker is already installed and running only when the host
-  actually proves that through the Docker CLI plus daemon checks; otherwise
-  the extension blocks before image acquisition and tells the user to install
-  or start Docker first
-- if Docker CLI is missing, the daemon is unreachable, or the current engine
-  cannot satisfy the governed request, the extension fails closed with
-  actionable user-facing guidance
-- the extension does not probe host LabVIEW as fallback when Docker is absent,
-  misconfigured, or running the other engine
-- the history panel, retained packet, and runtime-doctor surfaces retain the
-  selected provider, current Docker engine mode, selected image, acquisition
-  outcome, and next action as explicit runtime truth
+- installed-user runtime selection is now anchored to Windows local
+  `LabVIEWCLI` rather than public Docker settings
+- the extension manifest no longer exposes Docker image settings on the
+  installed-user surface
+- the installed-user surface still does not expose `executionMode`,
+  host-runtime path overrides, or direct executable-path picking
+- both version and bitness remain required by contract even though the later
+  runtime-preflight and explicit-compare slices are still landing
 - execution-policy bypass is not allowed: no hidden flag, experimental switch,
-  or alternate compare path may skip canonical installed-request validation,
-  Docker-only boundaries, or governed provider hard stops
+  or alternate compare path may skip canonical installed-request validation
 
-So the current released installed compare contract is explicit: Docker is a
-dependency of the extension, and the current Docker daemon engine decides
-whether the governed Windows or Linux image is used.
+## Exact Released Historical Baseline
+
+The exact released installed extension at `v1.2.2` remains a separate
+historical baseline:
+
+- comparison generation is Docker-only in the released installed extension
+- the released package depends on Docker CLI plus a reachable Docker daemon
+- Windows selects the governed Windows or Linux image from the current Docker
+  daemon engine
+- first-use acquisition, missing-Docker guidance, and Docker-only hard stops
+  remain truthful for that released line
+
+This document keeps that baseline explicit so future sessions do not confuse
+the historical release contract with the current develop-line replacement
+direction.
 
 ## Active Control-Plane Direction
 
 The active installed-user direction is no longer “keep Docker-only installed
 compare execution.”
 
-Under `PROGRAM-0005` / `ISSUE-0412` / `TRANCHE-016`, the next installed-user
+Under `PROGRAM-0005` / `ISSUE-0412` / `TRANCHE-016`, the installed-user
 contract is:
 
 - Windows local `LabVIEWCLI` instead of Docker
@@ -72,9 +67,8 @@ contract is:
 - Docker remains internal-only rather than part of the installed-user compare
   contract
 
-This transition direction does not mean the released package already behaves
-that way. The current released installed baseline above remains truthful until
-the replacement slices land.
+The manifest/settings slice has landed. Runtime-resolution gating, explicit
+compare preflight, and warning behavior remain active follow-on slices.
 
 ## Canonical Installed Execution Request
 
@@ -84,32 +78,21 @@ Before comparison execution starts, the installed extension resolves one
 canonical installed execution request from:
 
 - current host platform
-- fixed installed compare bitness: `x64`
-- Docker CLI availability
-- Docker daemon reachability
-- current Docker daemon engine mode (`windows` or `linux`)
-- governed Windows and Linux image references
-- presence or absence of the selected governed image
+- required `viHistorySuite.labviewVersion`
+- required `viHistorySuite.labviewBitness`
+- local Windows LabVIEW installation discovery
+- local `LabVIEWCLI` availability for the requested version + bitness pair
 
 The extension validates that canonical request before:
 
 - provider selection
-- image acquisition
-- container launch
+- runtime launch
 - any user-facing claim that comparison generation is runnable
 
 If the request is non-canonical, the extension must fail closed before runtime
 work starts.
 
-There is no installed host-fallback path in this contract.
-
-## Windows Engine Matrix
-
-| Docker daemon engine on Windows | Selected provider | Selected image | Required outcome |
-| --- | --- | --- | --- |
-| `windows` | `windows-container` | `viHistorySuite.windowsContainerImage` | Run through the governed Windows container provider. Acquire the image first when it is missing locally. |
-| `linux` | `linux-container` | `viHistorySuite.linuxContainerImage` | Run through the governed Linux container provider. Acquire the image first when it is missing locally. |
-| unavailable | none | none | Hard stop with guidance to install, start, or repair Docker Desktop. Do not probe host LabVIEW. |
+There is no installed Docker fallback path in this contract.
 
 ## Hard-Stop Rules
 
@@ -118,20 +101,19 @@ deterministic and non-invasive.
 
 Important hard-stop factors include:
 
-- Docker CLI is missing from the current host surface
-- Docker is installed but the daemon is not reachable
-- the daemon reports neither governed `windows` nor governed `linux` container
-  mode
-- the selected governed image reference is invalid or not pullable
-- governed image acquisition fails
+- `viHistorySuite.labviewVersion` is missing
+- `viHistorySuite.labviewBitness` is missing
+- no local LabVIEW installation matches the requested version + bitness pair
+- the resolved local runtime is ambiguous or incompatible
+- the matching local `LabVIEWCLI` surface cannot be resolved
 
 When any of those conditions hold, the installed extension:
 
-- does not probe host LabVIEW
+- does not fall back to Docker on the installed-user path
 - does not fall back to a different provider class
 - retains the next corrective action explicitly in the runtime surfaces
-- tells first-time users to install or start Docker and confirm it is working
-  before retrying compare generation
+- tells users to set or correct version + bitness and install the matching
+  local LabVIEW surface before retrying compare generation
 
 ## Public And Internal Reader Surfaces
 
@@ -144,9 +126,9 @@ This execution policy now lives on three different audience surfaces:
 
 The public extension-user surfaces shall describe:
 
-- Docker as the installed compare dependency
-- current-engine Windows-versus-Linux image selection
-- image-acquisition behavior
+- local Windows `LabVIEWCLI` as the installed compare dependency
+- required version + bitness settings
+- fail-closed local runtime selection
 - compare workflow and next-step guidance
 
 They shall not publish:
@@ -161,63 +143,39 @@ for the private control plane.
 When those conditions force a hard stop, the required user-facing outcome is
 actionable guidance:
 
-- install, start, repair, or authenticate Docker as needed
-- on Windows, keep or switch the Docker daemon to the engine whose governed
-  image the user intends to exercise
-- retry after the selected governed image can be pulled successfully
+- set the required version + bitness settings
+- install the matching local LabVIEW surface when it is missing
+- retry after the requested local runtime resolves cleanly
 
-The extension is not allowed to silently continue past a Docker hard stop or
-to probe host LabVIEW as an alternate compare path.
+The extension is not allowed to silently continue past a local-runtime hard
+stop or to fall back to Docker on the installed-user path.
 
-## Docker Acquisition Contract
+## Internal Docker Containment
 
-When Docker execution is selected and the required image is not available
-locally, the extension shall surface acquisition progress to the user.
+Docker remains available only on internal maintainer and proof surfaces.
 
-That progress contract must be explicit enough to show:
+That means:
 
-- which image is being considered
-- whether the image is already present locally
-- when the image is being pulled
-- when the pull completes
-- when the pull fails
-- what the next user action is if acquisition cannot complete
-
-The platform rule is explicit:
-
-- on Windows, pull the governed image that matches the current Docker daemon
-  engine
-- on Linux hosts, pull the governed Linux image
-
-Acquisition progress is part of the product contract, not a hidden background
-detail, because image pulls are long-running and otherwise look like a frozen
-review action.
-
-The currently landed acquisition slice now satisfies that contract for the
-comparison-report action path: when the selected governed image is missing, the
-user sees pull progress, completion, or acquisition failure before runtime
-launch continues.
+- internal benchmark, proof, and maintainer workflows may still retain Docker
+  explicitly
+- installed-user manifest/settings and installed-user reader surfaces no longer
+  present Docker as the compare contract
+- the historical released Docker baseline remains retained only as a separate
+  exact-release fact, not as the active installed-user destination
 
 ## Transparency Contract
 
 Execution UX shall surface these facts directly:
 
-- chosen provider
-- current Docker daemon engine
-- selected governed image
-- selected Docker-capability facts
-- acquisition outcome
+- requested LabVIEW version
+- requested LabVIEW bitness
+- chosen local runtime
 - hard-stop reason when execution cannot proceed
 - next action
 
-The currently landed execution-policy slices now retain these facts when the
-Docker-only path is evaluated:
-
-- chosen provider
-- whether Docker CLI was available
-- whether the Docker daemon was reachable
-- which container mode was active
-- which governed image was selected from that engine
+The installed-user surface is moving toward those facts through the current
+manifest/settings slice and the remaining runtime-preflight and explicit-
+compare slices.
 - whether the selected governed image was already present locally
 - whether the selected governed image still required acquisition or had already
   been acquired
