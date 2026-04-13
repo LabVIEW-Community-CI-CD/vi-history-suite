@@ -149,13 +149,26 @@ This execution policy now lives on three different audience surfaces:
 - public GitHub extension-user surfaces, including the public facade repo and
   the new public GitHub wiki when those pages are materialized
 
-The public extension-user surfaces shall describe:
+The authority/internal control plane is where the active develop-line
+host-default local Windows `LabVIEWCLI` plus bounded expert Docker contract is
+described before publication.
 
-- host-default local Windows `LabVIEWCLI` as the installed compare dependency
-- expert Docker provider selection through the generated settings CLI
-- required provider, version, and bitness facts
-- fail-closed runtime/provider selection
-- compare workflow and next-step guidance
+Until that replacement contract is truthfully published and rerun through
+`PROGRAM-0002`, the public extension-user surfaces shall continue to describe
+the exact released `v1.2.2` installed-user baseline:
+
+- Docker-only compare execution
+- Docker CLI plus a reachable Docker daemon as installed-user prerequisites
+- current-engine-derived Windows/Linux governed image selection
+- Docker-required fail-closed runtime guidance
+- the exact released compare workflow and bundled/public user guidance
+
+The active develop-line replacement direction does not become bundled or public
+user truth early just because the branch implementation is already landed.
+
+After a future publication handoff, the bundled and public extension-user
+surfaces shall be realigned to the then-current published installed-user
+contract rather than to unreleased branch behavior.
 
 They shall not publish:
 
@@ -166,8 +179,9 @@ They shall not publish:
 The internal GitLab wiki remains the maintainer-facing derived reader surface
 for the private control plane.
 
-When those conditions force a hard stop, the required user-facing outcome is
-actionable guidance:
+When those conditions force a hard stop inside the active develop-line
+replacement direction, the required user-facing outcome is actionable
+guidance:
 
 - set or correct the required provider, version, and bitness facts
 - install the matching local LabVIEW surface when host is selected and missing

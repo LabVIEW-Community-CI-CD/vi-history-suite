@@ -96,9 +96,10 @@ history instead of chat memory.
 
 - keep the current released Docker-only installed contract explicit until the
   branch replacement is truthfully published
-- normalize reader and packaged/public documentation surfaces around the now
-  landed generated settings CLI, exact Windows host-runtime preflight, and
-  explicit compare-preflight workflow
+- normalize authority/internal documentation around the now landed generated
+  settings CLI, exact Windows host-runtime preflight, and explicit
+  compare-preflight workflow while keeping packaged/public docs on the exact
+  released Docker-only baseline until publication
 - prepare the later `PROGRAM-0002` public acceptance handoff once the
   replacement contract is ready for publication
 

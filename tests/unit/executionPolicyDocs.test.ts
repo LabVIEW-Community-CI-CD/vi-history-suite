@@ -139,6 +139,9 @@ describe('execution-policy control plane', () => {
     expect(policy).toContain('execution-policy bypass is not allowed');
     expect(policy).toContain('bounded expert provider');
     expect(policy).toContain('current Docker engine');
+    expect(policy).toContain('the public extension-user surfaces shall continue to describe');
+    expect(policy).toContain('the exact released `v1.2.2` installed-user baseline');
+    expect(policy).toContain('The active develop-line replacement direction does not become bundled or public');
     expect(srs).toContain('VHS-REQ-459');
     expect(srs).toContain('VHS-REQ-470');
     expect(srs).toContain('VHS-REQ-482');
@@ -183,12 +186,13 @@ describe('execution-policy control plane', () => {
     expect(program).toContain('installed manifest/settings');
     expect(program).toContain('explicit `Compare` action');
     expect(program).toContain('expert Docker provider');
+    expect(program).toContain('bundled docs and public reader surfaces keep the exact released Docker-only');
     expect(issueCurrent).toContain('Closed historical issue, superseded by `ISSUE-0412`');
     expect(issueCurrent).toContain('TRANCHE-013');
     expect(issueCurrent).toContain('TRANCHE-015');
     expect(issueNext).toContain('Active post-release issue.');
     expect(issueNext).toContain('generated settings CLI, exact Windows');
-    expect(issueNext).toContain('normalize reader and packaged/public documentation surfaces');
+    expect(issueNext).toContain('keeping packaged/public docs on the exact');
     expect(issueNext).toContain('provider/version/bitness');
     expect(issueNext).toContain('explicit compare preflight state');
     expect(issueNext).toContain('VS Code warning notification');

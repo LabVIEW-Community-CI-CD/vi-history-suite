@@ -132,8 +132,12 @@ An installed extension user:
 
 ### Gate E: Installed-User Surface Normalization
 
-- bundled docs, runtime doctor, and installed-user reader surfaces describe
-  host-default local `LabVIEWCLI` plus the bounded expert Docker provider
+- authority/internal control-plane docs and branch runtime-doctor surfaces
+  describe host-default local `LabVIEWCLI` plus the bounded expert Docker
+  provider
+- bundled docs and public reader surfaces keep the exact released Docker-only
+  installed-user baseline until the replacement contract is truthfully
+  published and handed off to `PROGRAM-0002`
 - private/internal versus public reader-surface boundaries remain explicit
 
 ### Gate F: Public Acceptance Handoff
@@ -146,8 +150,10 @@ An installed extension user:
 
 Every slice shall preserve:
 
-- truthful current-release Docker-only baseline wording until replacement code
-  is actually landed
+- truthful current-release Docker-only baseline wording on bundled/public
+  reader surfaces until replacement code is actually published
+- truthful branch-implementation wording on authority/internal surfaces once
+  replacement slices are actually landed
 - no silent fallback away from the active installed-user contract or away from
   an explicitly selected provider
 - no execution-policy bypass around canonical validation for the active
@@ -164,4 +170,5 @@ This program is complete when the installed Windows extension can execute
 comparison work through one host-default local `LabVIEWCLI` contract with
 required version plus bitness selection, one bounded expert Docker provider
 selected through the generated CLI, fail-closed runtime/provider resolution,
-explicit compare preflight, and coherent public/internal docs.
+explicit compare preflight, and coherent authority/public docs where bundled
+and public user surfaces are promoted only after truthful publication.

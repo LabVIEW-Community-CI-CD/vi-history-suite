@@ -56,6 +56,10 @@ directly to the public GitHub source repo.
   mirror of the authority repo.
 - Public source publication shall be one-way: normalize in GitLab authority
   first, then promote outward.
+- Until a newer installed-user bundle is actually published, the public source
+  repo shall keep the exact released Docker-only installed-user contract and
+  shall not promote unreleased host-default `LabVIEWCLI` wording from
+  authority-only docs.
 - Public source publication shall be recorded in the dedicated public source
   publication ledger, not in the internal GitLab wiki ledger or the public
   GitHub wiki ledger.
