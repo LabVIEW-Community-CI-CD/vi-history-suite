@@ -19,7 +19,8 @@ const {
   createWebviewPanelMock: vi.fn(),
   withProgressMock: vi.fn(),
   workspaceState: {
-    isTrusted: true
+    isTrusted: true,
+    getConfiguration: vi.fn()
   },
   windowState: {
     activeTextEditor: undefined as { document: { uri: MockUri } } | undefined
@@ -102,6 +103,17 @@ import { HistoryPanelTracker } from '../../src/ui/historyPanelTracker';
 describe('createOpenViHistoryCommand', () => {
   beforeEach(() => {
     workspaceState.isTrusted = true;
+    workspaceState.getConfiguration.mockReset();
+    workspaceState.getConfiguration.mockReturnValue({
+      get: <T>(key: string, defaultValue: T) => {
+        const values: Record<string, unknown> = {
+          runtimeProvider: 'host',
+          labviewVersion: '2026',
+          labviewBitness: 'x64'
+        };
+        return (values[key] as T | undefined) ?? defaultValue;
+      }
+    });
     windowState.activeTextEditor = undefined;
     showErrorMessageMock.mockReset();
     showWarningMessageMock.mockReset();
@@ -1004,6 +1016,79 @@ describe('createOpenViHistoryCommand', () => {
     );
   });
 
+  it('blocks explicit compare generation when compare preflight is not ready', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    const comparisonReportAction = vi.fn();
+    const comparePreflightResolver = vi.fn().mockResolvedValue({
+      status: 'blocked',
+      provider: 'docker',
+      labviewVersion: '2026',
+      labviewBitness: 'x86',
+      nextAction:
+        'Next action: use Docker with viHistorySuite.labviewBitness=x64 or switch viHistorySuite.runtimeProvider to host, then review compare preflight before choosing Compare.',
+      cliHint:
+        'Provider is read-only here. Use the generated settings CLI to update provider, LabVIEW version, or LabVIEW bitness when correction is required.',
+      warningMessage:
+        'Compare preflight is blocked. Use Docker with viHistorySuite.labviewBitness=x64 or switch viHistorySuite.runtimeProvider to host, then review compare preflight before choosing Compare.'
+    });
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Newest revision',
+            previousHash: '1111111122222222'
+          },
+          {
+            hash: '1111111122222222',
+            authorDate: '2026-04-01T00:00:00Z',
+            authorName: 'B User',
+            subject: 'Older revision'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      comparisonReportAction,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      comparePreflightResolver
+    );
+
+    await command(targetUri as never);
+    await tracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReportFromSelection',
+      selectedHashes: ['abcdef1234567890', '1111111122222222']
+    });
+
+    expect(comparePreflightResolver).toHaveBeenCalled();
+    expect(comparisonReportAction).not.toHaveBeenCalled();
+    expect(showWarningMessageMock).toHaveBeenCalledWith(
+      'Compare preflight is blocked. Use Docker with viHistorySuite.labviewBitness=x64 or switch viHistorySuite.runtimeProvider to host, then review compare preflight before choosing Compare.'
+    );
+  });
+
   it('falls back to the bundled overview page when a stale documentation page id is requested', async () => {
     const targetUri = createMockUri('/workspace/eligible.vi');
     const tracker = new HistoryPanelTracker();
@@ -1498,7 +1583,7 @@ describe('createOpenViHistoryCommand', () => {
     });
 
     expect(showInformationMessageMock).toHaveBeenCalledWith(
-      'No retained VI Comparison Report exists for this pair yet. Use the commit checkboxes to generate retained evidence for it.'
+      'No retained VI Comparison Report exists for this pair yet. Use the compare preflight section to generate retained evidence for it.'
     );
     expect(tracker.getLastActionSummary()).toEqual({
       command: 'diffPrevious',
@@ -1563,7 +1648,7 @@ describe('createOpenViHistoryCommand', () => {
     });
 
     expect(showInformationMessageMock).toHaveBeenCalledWith(
-      'Retained VI Comparison evidence for this pair is stale or invalid. Use the commit checkboxes to rebuild retained evidence for it.'
+      'Retained VI Comparison evidence for this pair is stale or invalid. Use the compare preflight section to rebuild retained evidence for it.'
     );
     expect(tracker.getLastActionSummary()).toEqual({
       command: 'diffPrevious',
@@ -3288,7 +3373,7 @@ describe('createOpenViHistoryCommand', () => {
     });
 
     expect(showInformationMessageMock).toHaveBeenCalledWith(
-      'VI Comparison Report opened, but retained pair evidence was not archived for later reuse. Use the commit checkboxes to rebuild retained evidence for this pair if it is not yet reviewable.'
+      'VI Comparison Report opened, but retained pair evidence was not archived for later reuse. Use the compare preflight section to rebuild retained evidence for this pair if it is not yet reviewable.'
     );
     expect(panel?.webview.html).not.toContain('data-testid="history-action-report"');
     expect(panel?.webview.html).not.toContain('data-testid="history-action-diff"');

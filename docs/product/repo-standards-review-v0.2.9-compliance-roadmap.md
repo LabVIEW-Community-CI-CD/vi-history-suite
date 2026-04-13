@@ -18,13 +18,16 @@ instead of living in chat memory.
   governance rewrite on this branch
 - pass 3 status: checkpoint 1 complete
 - pass 4 status: complete
-- pass 5 status: checkpoint 2 complete
+- pass 5 status: checkpoint 3 complete
 - pass 5 checkpoint 1 outcome: the runtime-provider and compare-flow
   requirement cluster now separates current implemented baseline truth from the
   active replacement direction
 - pass 5 checkpoint 2 outcome: installed compare runtime selection is now
   provider-driven from persisted `host|docker` settings in the live locator and
   doctor surfaces, with focused proof for both paths
+- pass 5 checkpoint 3 outcome: the live VI History panel now uses explicit
+  compare preflight with a dedicated `Compare` action, and the command path
+  blocks compare generation when preflight is not ready
 
 ## Pass Order
 
@@ -73,7 +76,7 @@ instead of living in chat memory.
 5. Pass 5: Requirement-system refactor
    - objective: normalize the large requirement corpus instead of patching it
      piecemeal
-   - status: checkpoint 2 complete on this branch
+   - status: checkpoint 3 complete on this branch
    - checkpoint 1 scope:
      - separate the current implemented checkbox auto-run workflow from the
        planned explicit compare replacement
@@ -88,6 +91,13 @@ instead of living in chat memory.
        proof context instead of the source of installed-user truth
      - update runtime doctor guidance so host-only contamination points users
        toward the expert Docker path instead of a vague execution-mode change
+   - checkpoint 3 scope:
+     - replace second-selection compare auto-run with explicit compare
+       preflight in the live history panel
+     - show selected commit, base commit, provider, LabVIEW version, and
+       LabVIEW bitness before compare execution
+     - block compare generation when preflight is not ready and retain focused
+       command-path proof for that block
    - focus:
      - split `SyRS` versus `SRS` ownership cleanly
      - merge duplicates
@@ -130,11 +140,9 @@ instead of living in chat memory.
 
 ## Immediate Next Move
 
-Continue pass 5 on the same branch from checkpoint 2:
+Continue pass 6 on the same branch from the completed pass 5 checkpoints:
 
-- use the narrowed contradiction ledger to target the remaining live product
-  drift in the explicit compare workflow
-- keep broader requirement-package cleanup deferred until the explicit compare
-  surface reflects the active control-plane direction
-- leave ADR renames and the rest of the large RTM cleanup for the later
-  dedicated passes
+- use the narrowed contradiction ledger to target ADR naming drift first
+- keep broader RTM and test-plan cleanup sequenced behind the ADR and
+  architecture normalization pass
+- leave large-scale requirement-row cleanup for the dedicated later passes

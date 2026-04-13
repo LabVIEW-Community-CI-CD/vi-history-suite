@@ -11,9 +11,20 @@ interface CompareRuntimeDetailItem {
   value: string;
 }
 
+export interface HistoryPanelComparePreflightState {
+  status: 'ready' | 'blocked' | 'unavailable';
+  provider: string;
+  labviewVersion: string;
+  labviewBitness: string;
+  nextAction: string;
+  cliHint: string;
+  warningMessage?: string;
+}
+
 export function renderHistoryPanelHtml(
   model: ViHistoryViewModel,
-  lastActionSummary?: HistoryPanelActionSummary
+  lastActionSummary?: HistoryPanelActionSummary,
+  comparePreflightState?: HistoryPanelComparePreflightState
 ): string {
   const capabilities = model.surfaceCapabilities ?? {};
   const support = model.repositorySupport;
@@ -24,9 +35,13 @@ export function renderHistoryPanelHtml(
   const historyWindowSummary = renderHistoryWindowSummary(model);
   const latestCompareRuntime = deriveInitialCompareRuntimeStatus(lastActionSummary);
   const comparisonSelectionEnabled = capabilities.comparisonGenerationAvailable !== false;
-  const comparisonSelectionStatus = comparisonSelectionEnabled
-    ? 'Select any two retained revisions. The second checkbox selection will generate a comparison report automatically for that exact pair, using the newer commit as selected and the older commit as base.'
-    : 'Two-commit selection is unavailable in this build.';
+  const effectiveComparePreflightState = deriveComparePreflightState(
+    comparisonSelectionEnabled,
+    comparePreflightState
+  );
+  const initialComparePreflightSummary = deriveInitialComparePreflightSummary(
+    effectiveComparePreflightState
+  );
   const documentationButton =
     capabilities.documentationAvailable !== false
       ? '<button data-testid="history-action-documentation" data-command="openDocumentation" data-page-id="user-workflow">Open docs</button>'
@@ -60,7 +75,7 @@ export function renderHistoryPanelHtml(
       } />`;
       const compareBase = commit.previousHash
         ? `<div data-testid="history-compare-pair"><strong>Adjacent:</strong> <code>${escapeHtml(commit.hash.slice(0, 8))}</code> <strong>vs prior:</strong> <code>${escapeHtml(commit.previousHash.slice(0, 8))}</code></div>`
-        : 'Oldest retained revision (selectable as the older/base side of a checkbox-selected pair)';
+        : 'Oldest retained revision (selectable as the older/base side of explicit compare preflight)';
 
       return `
         <tr data-testid="history-row" data-commit-index="${index}">
@@ -212,9 +227,19 @@ export function renderHistoryPanelHtml(
       <span data-testid="history-compare-runtime-next-action" id="compare-runtime-next-action">${escapeHtml(latestCompareRuntime.nextAction)}</span>
       <div data-testid="history-compare-runtime-details" id="compare-runtime-details">${renderCompareRuntimeDetails(latestCompareRuntime.details)}</div>
     </div>
-    <div class="status" data-testid="history-compare-selection-status" id="compare-selection-status" role="status" aria-live="polite">
-      <strong>Primary compare workflow:</strong><br />
-      <span data-testid="history-compare-selection-summary" id="compare-selection-summary">${escapeHtml(comparisonSelectionStatus)}</span>
+    <div class="status" data-testid="history-compare-preflight" id="compare-preflight" data-state="${escapeHtml(effectiveComparePreflightState.status)}" role="status" aria-live="polite">
+      <strong>Compare preflight:</strong><br />
+      <span data-testid="history-compare-preflight-summary" id="compare-preflight-summary">${escapeHtml(initialComparePreflightSummary)}</span><br />
+      <span data-testid="history-compare-preflight-next-action" id="compare-preflight-next-action">${escapeHtml(effectiveComparePreflightState.nextAction)}</span>
+      <div data-testid="history-compare-preflight-details" id="compare-preflight-details">
+        <div data-testid="history-compare-preflight-selected"><strong>Selected commit:</strong> <span id="compare-preflight-selected-value">Not selected yet.</span></div>
+        <div data-testid="history-compare-preflight-base"><strong>Base commit:</strong> <span id="compare-preflight-base-value">Not selected yet.</span></div>
+        <div data-testid="history-compare-preflight-provider"><strong>Provider:</strong> <span id="compare-preflight-provider-value">${escapeHtml(effectiveComparePreflightState.provider)}</span></div>
+        <div data-testid="history-compare-preflight-version"><strong>LabVIEW version:</strong> <span id="compare-preflight-version-value">${escapeHtml(effectiveComparePreflightState.labviewVersion)}</span></div>
+        <div data-testid="history-compare-preflight-bitness"><strong>LabVIEW bitness:</strong> <span id="compare-preflight-bitness-value">${escapeHtml(effectiveComparePreflightState.labviewBitness)}</span></div>
+      </div>
+      <div data-testid="history-compare-preflight-cli-hint" id="compare-preflight-cli-hint">${escapeHtml(effectiveComparePreflightState.cliHint)}</div>
+      <button data-testid="history-action-compare-selected" id="history-action-compare-selected" data-command="generateComparisonReportFromSelection" ${comparisonSelectionEnabled && effectiveComparePreflightState.status === 'ready' ? 'disabled' : 'disabled'}>Compare</button>
     </div>
     <div class="packet" data-testid="history-review-packet">
       <div data-testid="history-chronology-order"><strong>Order:</strong> Newest commit first</div>
@@ -233,7 +258,7 @@ export function renderHistoryPanelHtml(
     </div>
     ${repositorySupportHtml}
     <div class="packet" data-testid="history-surface-capabilities">
-      <div data-testid="history-capability-comparison"><strong>Pair selection:</strong> ${capabilitySummary.comparisonGeneration}</div>
+        <div data-testid="history-capability-comparison"><strong>Pair selection:</strong> ${capabilitySummary.comparisonGeneration}</div>
       <div data-testid="history-capability-open-compare"><strong>Retained pair review:</strong> ${capabilitySummary.openCompare}</div>
       <div data-testid="history-capability-documentation"><strong>Documentation:</strong> ${capabilitySummary.documentation}</div>
       ${benchmarkStatusCapabilityHtml}
@@ -246,8 +271,8 @@ export function renderHistoryPanelHtml(
       <strong>Reviewer guidance:</strong>
       <ol>
         <li data-testid="history-guidance-step">Use the newest/oldest packet to confirm the retained review window before acting on a specific revision.</li>
-        <li data-testid="history-guidance-step">Use the commit checkboxes as the primary compare workflow. Select any first retained revision, then select the second retained revision to generate the comparison report automatically for that pair.</li>
-        <li data-testid="history-guidance-step">Checkbox selection defines the exact selected/base pair. The adjacent-pair text in each row is chronology context only and does not limit which two retained revisions you can compare.</li>
+        <li data-testid="history-guidance-step">Use the commit checkboxes to select exactly two retained revisions, then review the compare preflight section before choosing <code>Compare</code>.</li>
+        <li data-testid="history-guidance-step">The compare preflight section defines the exact selected/base pair. The adjacent-pair text in each row is chronology context only and does not limit which two retained revisions you can compare.</li>
         <li data-testid="history-guidance-step">Use <code>Open docs</code> to open the bundled user documentation that ships with this installed extension version instead of leaving VS Code for repo-hosted docs.</li>
         ${reviewGuidanceBenchmarkStep}
         ${reviewGuidanceHumanReviewStep}
@@ -257,8 +282,8 @@ export function renderHistoryPanelHtml(
       <strong>Confidence and scope:</strong>
       <div class="confidence-grid">
         <div data-testid="history-confidence-basis"><strong>Basis:</strong> Local Git history, tracked-file status, and content-detected VI signature checks.</div>
-        <div data-testid="history-confidence-rating"><strong>Confidence:</strong> Direct local evidence for chronology, path provenance, retained hashes, and retained compare pairing.</div>
-        <div data-testid="history-scope-included"><strong>Included here:</strong> Repository/path facts, retained commit chronology, checkbox-selected compare pairing, and retained compare-pair summaries.</div>
+        <div data-testid="history-confidence-rating"><strong>Confidence:</strong> Direct local evidence for chronology, path provenance, retained hashes, and explicit selected/base compare preflight facts.</div>
+        <div data-testid="history-scope-included"><strong>Included here:</strong> Repository/path facts, retained commit chronology, explicit selected/base compare preflight, and retained compare-pair summaries.</div>
         <div data-testid="history-scope-excluded"><strong>Needs external comparison tooling:</strong> Binary semantic differences, visual or cosmetic change detection, and LabVIEW comparison-report output.</div>
       </div>
     </div>
@@ -282,6 +307,8 @@ export function renderHistoryPanelHtml(
     <script>
       const vscode = acquireVsCodeApi();
       let panelState = vscode.getState() ?? {};
+      const compareSelectionEnabled = ${JSON.stringify(comparisonSelectionEnabled)};
+      const comparePreflight = ${JSON.stringify(effectiveComparePreflightState)};
       function readHostReviewDraft() {
         const draft = panelState.hostReviewDraft;
         if (!draft || typeof draft !== 'object') {
@@ -316,18 +343,109 @@ export function renderHistoryPanelHtml(
           (candidate) => candidate instanceof HTMLInputElement
         );
       }
-      function updateCommitSelectionStatus(message) {
-        const status = document.getElementById('compare-selection-summary');
+      function updateComparePreflightSummary(message) {
+        const status = document.getElementById('compare-preflight-summary');
         if (status instanceof HTMLElement) {
           status.textContent = message;
         }
       }
-      function clearCommitSelection() {
-        for (const candidate of getCommitSelectionInputs()) {
-          if (candidate instanceof HTMLInputElement) {
-            candidate.checked = false;
-          }
+      function updateComparePreflightNextAction(message) {
+        const nextAction = document.getElementById('compare-preflight-next-action');
+        if (nextAction instanceof HTMLElement) {
+          nextAction.textContent = message;
         }
+      }
+      function updateComparePreflightPair(selectedValue, baseValue) {
+        const selected = document.getElementById('compare-preflight-selected-value');
+        const base = document.getElementById('compare-preflight-base-value');
+        if (selected instanceof HTMLElement) {
+          selected.textContent = selectedValue;
+        }
+        if (base instanceof HTMLElement) {
+          base.textContent = baseValue;
+        }
+      }
+      function updateCompareButtonState(enabled) {
+        const compareButton = document.getElementById('history-action-compare-selected');
+        if (compareButton instanceof HTMLButtonElement) {
+          compareButton.disabled = !enabled;
+        }
+      }
+      function resolveSelectedPair() {
+        const checked = getCommitSelectionInputs().filter((candidate) => candidate.checked);
+        if (checked.length !== 2) {
+          return undefined;
+        }
+
+        const ranked = checked
+          .map((candidate) => {
+            const row = candidate.closest('[data-commit-index]');
+            const commitIndexText =
+              row instanceof HTMLElement ? row.dataset.commitIndex : undefined;
+            return {
+              hash: candidate.dataset.hash ?? '',
+              commitIndex: Number(commitIndexText ?? '999999')
+            };
+          })
+          .filter((candidate) => candidate.hash.length > 0)
+          .sort((left, right) => left.commitIndex - right.commitIndex);
+
+        if (ranked.length !== 2) {
+          return undefined;
+        }
+
+        return {
+          selectedHash: ranked[0].hash,
+          baseHash: ranked[1].hash
+        };
+      }
+      function updateComparePreflightSelectionState() {
+        const checked = getCommitSelectionInputs().filter((candidate) => candidate.checked);
+        if (!compareSelectionEnabled) {
+          updateComparePreflightPair('Unavailable in this build.', 'Unavailable in this build.');
+          updateComparePreflightSummary('Compare preflight is unavailable in this build.');
+          updateComparePreflightNextAction(comparePreflight.nextAction);
+          updateCompareButtonState(false);
+          return;
+        }
+
+        if (checked.length === 0) {
+          updateComparePreflightPair('Not selected yet.', 'Not selected yet.');
+          updateComparePreflightSummary(${JSON.stringify(initialComparePreflightSummary)});
+          updateComparePreflightNextAction(comparePreflight.nextAction);
+          updateCompareButtonState(false);
+          return;
+        }
+
+        if (checked.length === 1) {
+          const selectedHash = checked[0].dataset.hash ?? '';
+          updateComparePreflightPair(selectedHash.slice(0, 8), 'Not selected yet.');
+          updateComparePreflightSummary('Select one more retained revision to populate compare preflight.');
+          updateComparePreflightNextAction('Next action: select one more retained revision, then review the selected/base pair before choosing Compare.');
+          updateCompareButtonState(false);
+          return;
+        }
+
+        const pair = resolveSelectedPair();
+        if (!pair) {
+          updateComparePreflightPair('Not selected yet.', 'Not selected yet.');
+          updateComparePreflightSummary('Compare preflight could not resolve a stable selected/base pair from the current checkbox state.');
+          updateComparePreflightNextAction('Next action: clear the current checkbox state, select exactly two retained revisions again, and then review the compare preflight before choosing Compare.');
+          updateCompareButtonState(false);
+          return;
+        }
+
+        updateComparePreflightPair(pair.selectedHash.slice(0, 8), pair.baseHash.slice(0, 8));
+        if (comparePreflight.status === 'ready') {
+          updateComparePreflightSummary('Compare preflight is ready for ' + pair.selectedHash.slice(0, 8) + ' vs ' + pair.baseHash.slice(0, 8) + '.');
+          updateComparePreflightNextAction('Next action: review the explicit selected/base pair, then choose Compare.');
+          updateCompareButtonState(true);
+          return;
+        }
+
+        updateComparePreflightSummary('Compare preflight is blocked for ' + pair.selectedHash.slice(0, 8) + ' vs ' + pair.baseHash.slice(0, 8) + '.');
+        updateComparePreflightNextAction(comparePreflight.nextAction);
+        updateCompareButtonState(false);
       }
       function handleCommitSelectionChange(target) {
         if (!(target instanceof HTMLInputElement) || target.dataset.hash === undefined) {
@@ -335,25 +453,12 @@ export function renderHistoryPanelHtml(
         }
 
         const checked = getCommitSelectionInputs().filter((candidate) => candidate.checked);
-        if (checked.length === 0) {
-          updateCommitSelectionStatus(${JSON.stringify(comparisonSelectionStatus)});
+        if (checked.length > 2) {
+          target.checked = false;
+          updateComparePreflightSelectionState();
           return;
         }
-        if (checked.length === 1) {
-          updateCommitSelectionStatus('Select one more retained revision to generate a comparison report for the chosen pair.');
-          return;
-        }
-
-        const selectedHashes = checked
-          .map((candidate) => candidate.dataset.hash ?? '')
-          .filter((value) => value.length > 0)
-          .slice(0, 2);
-        updateCommitSelectionStatus('Generating compare for the selected retained pair...');
-        clearCommitSelection();
-        vscode.postMessage({
-          command: 'generateComparisonReportFromSelection',
-          selectedHashes
-        });
+        updateComparePreflightSelectionState();
       }
       function restoreHostReviewDraft() {
         const draft = readHostReviewDraft();
@@ -373,6 +478,7 @@ export function renderHistoryPanelHtml(
       }
 
       restoreHostReviewDraft();
+      updateComparePreflightSelectionState();
 
       window.addEventListener('message', (event) => {
         const message = event.data;
@@ -527,6 +633,21 @@ export function renderHistoryPanelHtml(
           }
           target.disabled = true;
         }
+        if (command === 'generateComparisonReportFromSelection') {
+          const pair = resolveSelectedPair();
+          if (!pair) {
+            updateComparePreflightSelectionState();
+            return;
+          }
+          if (comparePreflight.status !== 'ready') {
+            vscode.postMessage({
+              command: 'notifyComparePreflightBlocked',
+              warningMessage: comparePreflight.warningMessage ?? comparePreflight.nextAction
+            });
+            return;
+          }
+          payload.selectedHashes = [pair.selectedHash, pair.baseHash];
+        }
         vscode.postMessage(payload);
       });
     </script>
@@ -558,7 +679,7 @@ function deriveInitialCompareRuntimeStatus(
     status: 'idle',
     summary: 'No compare action from this panel has retained provider or acquisition truth yet.',
     nextAction:
-      'Next action: use the commit checkboxes to generate a comparison report and surface the selected provider and any acquisition state here.',
+      'Next action: review compare preflight, then choose Compare to surface the selected provider and any acquisition state here.',
     details: []
   };
 }
@@ -589,11 +710,59 @@ export function renderHistoryReviewPacketText(model: ViHistoryViewModel): string
     `Oldest retained commit: ${renderCommitSummary(oldestCommit)}`,
     'Confidence and scope:',
     '- Basis: local Git history, tracked-file status, and content-detected VI signature checks.',
-    '- Included here: chronology, path provenance, retained hashes, checkbox-selected compare pairing, and retained compare pairs.',
+    '- Included here: chronology, path provenance, retained hashes, explicit selected/base compare preflight, and retained compare pairs.',
     '- Needs external comparison tooling: binary semantic differences, visual or cosmetic change detection, and LabVIEW comparison-report output.',
     'Retained compare pairs:',
     comparePairs
   ].join('\n');
+}
+
+function deriveComparePreflightState(
+  comparisonSelectionEnabled: boolean,
+  comparePreflightState?: HistoryPanelComparePreflightState
+): HistoryPanelComparePreflightState {
+  if (!comparisonSelectionEnabled) {
+    return {
+      status: 'unavailable',
+      provider: comparePreflightState?.provider ?? 'Unavailable in this build.',
+      labviewVersion: comparePreflightState?.labviewVersion ?? 'Unavailable in this build.',
+      labviewBitness: comparePreflightState?.labviewBitness ?? 'Unavailable in this build.',
+      nextAction: 'Next action: compare preflight is unavailable in this extension build.',
+      cliHint:
+        comparePreflightState?.cliHint ??
+        'Provider and runtime settings are read-only here; this build does not expose compare generation.',
+      warningMessage: comparePreflightState?.warningMessage
+    };
+  }
+
+  return (
+    comparePreflightState ?? {
+      status: 'blocked',
+      provider: 'host',
+      labviewVersion: 'Unset',
+      labviewBitness: 'Unset',
+      nextAction:
+        'Next action: set viHistorySuite.labviewVersion and viHistorySuite.labviewBitness, then review compare preflight before choosing Compare.',
+      cliHint:
+        'Provider is read-only here. Use the generated settings CLI to update provider, LabVIEW version, or LabVIEW bitness when correction is required.',
+      warningMessage:
+        'Compare preflight is blocked. Set viHistorySuite.labviewVersion and viHistorySuite.labviewBitness, then review compare preflight before choosing Compare.'
+    }
+  );
+}
+
+function deriveInitialComparePreflightSummary(
+  comparePreflightState: HistoryPanelComparePreflightState
+): string {
+  if (comparePreflightState.status === 'ready') {
+    return 'Select two retained revisions to populate compare preflight, then choose Compare to generate retained evidence for that exact pair.';
+  }
+
+  if (comparePreflightState.status === 'unavailable') {
+    return 'Compare preflight is unavailable in this build.';
+  }
+
+  return 'Compare preflight is blocked until provider/runtime settings are corrected.';
 }
 
 function escapeHtml(value: string): string {
@@ -671,13 +840,13 @@ function renderCapabilitySummary(
         ? 'Blocked by the current repository support policy'
       : capabilities.comparisonGenerationAvailable === false
         ? 'Unavailable in this build'
-        : 'Available for any retained review window with at least two commits; the second checkbox selection generates the explicit selected/base pair',
+        : 'Available for any retained review window with at least two commits; selecting two revisions populates explicit compare preflight and Compare runs the explicit selected/base pair',
     openCompare:
       coreReviewBlocked
         ? 'Blocked by the current repository support policy'
       : capabilities.retainedComparisonOpenAvailable === false
         ? 'Retained comparison opening is unavailable in this build'
-        : 'Retained comparison evidence opens automatically through the checkbox-selected compare flow when available; no separate compare button is exposed on commit rows',
+        : 'Retained comparison evidence opens through the dedicated compare preflight workflow when available; no separate compare button is exposed on commit rows',
     documentation:
       capabilities.documentationAvailable === false
         ? 'Unavailable in this build'
