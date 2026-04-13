@@ -1465,7 +1465,7 @@
   `public:gate-d:prepare-cold-pull`; and retains a readable Markdown packet
   shape for the recorded public-product acceptance preflight
 - `TEST-UNIT-320`: verify the next-line governance package keeps the
-  post-release SemVer decision framework, the `gitflow-lite` branch model, the
+  post-release SemVer decision framework, the governed `GitFlow` branch model, the
   lane-specific CI and `design:gate` posture, the public-default-branch
   decision that keeps GitHub `main` stable for casual readers while `develop`
   remains the explicit evaluation branch, and the `v1.0.5` exact / `v1.0.6`
@@ -1508,12 +1508,14 @@
 - `TEST-DOC-085`: review README, current-state, release-procedure,
   PROGRAM-0004, ISSUE-0409, ADR-0030, SRS, RTM, and the test plan and confirm
   the next-line control plane now retains explicit `major`/`minor`/`patch`
-  choice criteria, a governed `gitflow-lite` branch topology, the explicit
-  rule that public GitHub `main` stays the default branch while `develop`
-  remains the evaluation branch, and lane-specific CI plus `design:gate`
-  obligations for `feature/*`, `develop`, `release/*`, `hotfix/*`, and `main`,
-  including PR-driven feature admission and push validation on `release/*` and
-  `hotfix/*`
+  choice criteria, a governed `GitFlow` branch topology, the explicit
+  rule that public GitHub `main` stays the default branch while `release/*`
+  remains the release-candidate branch family and `develop` remains the
+  evaluation branch, and lane-specific CI plus `design:gate` obligations for
+  `feature/*`, `develop`, `release/*`, `hotfix/*`, and `main`, including
+  `feature/*` branches cut from `develop` and merged back into `develop`,
+  release/hotfix merge-backs into `develop`, and push validation on
+  `release/*` and `hotfix/*`
 - `TEST-DOC-086`: review PROGRAM-0004, ISSUE-0409, sustainment rules, SRS,
   RTM, and the test plan and confirm the repo now retains a continuous
   finding-to-requirement discipline that forces governed findings to either
@@ -1638,8 +1640,9 @@
   merge-request admission instead of a generic preview push lane
 - `TEST-UNIT-327`: read `docs/cm/cm-plan.md`, sustainment rules, release
   procedure, current-state, README, and the hosted automation matrix and
-  confirm they all agree that `develop` is the integration branch and `main`
-  is the exact release branch
+  confirm they all agree that `develop` is the integration branch, `main` is
+  the protected exact-release line, and `release/*` / `hotfix/*` are the
+  governed short-lived promotion lanes
 - `TEST-UNIT-328`: verify `promotePublicGithubSource` honors
   `VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT` when no explicit `--target-root` is
   supplied and fails closed on dirty target repos before comparison or write

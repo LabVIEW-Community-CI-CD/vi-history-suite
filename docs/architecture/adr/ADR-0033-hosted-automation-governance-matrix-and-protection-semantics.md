@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-The repo already had the right high-level intent for `gitflow-lite`,
+The repo already had the right high-level intent for governed `GitFlow`,
 SemVer-aware post-release work, and the two public GitHub required checks.
 What it still lacked was one retained place that answered the questions future
 sessions would otherwise rediscover from live settings and raw YAML:
@@ -20,8 +20,8 @@ sessions would otherwise rediscover from live settings and raw YAML:
 
 That gap already produced drift. The CM plan still claimed `main` was the
 working integration branch even though the sustainment package had already
-normalized `develop` as the integration branch and `main` as the exact release
-branch.
+normalized `develop` as the integration branch and `main` as the protected
+exact-release line.
 
 ## Decision
 

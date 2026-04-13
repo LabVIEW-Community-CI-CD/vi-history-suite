@@ -210,8 +210,10 @@ describe('ship-control direction system', () => {
     expect(readme).toContain('- public GitHub default branch: `main`');
     expect(readme).toContain('- public Codespaces evaluation branch: `develop`');
     expect(readme).toContain('- integration branch: `develop`');
-    expect(readme).toContain('- release branch: `main`');
-    expect(readme).toContain('- next-line branch model: `gitflow-lite` (`feature/*`, `release/*`, `hotfix/*`)');
+    expect(readme).toContain('- protected exact-release line: `main`');
+    expect(readme).toContain('- release-candidate branch family: `release/*`');
+    expect(readme).toContain('- hotfix branch family: `hotfix/*`');
+    expect(readme).toContain('- next-line branch model: `GitFlow`');
     expect(readme).toContain('- hosted automation governance matrix: [docs/product/hosted-ci-governance.md]');
     expect(readme).toContain('- current changelog: [CHANGELOG.md](./CHANGELOG.md)');
     expect(readme).toContain('- `TRANCHE-016`: installed local LabVIEWCLI contract and explicit compare');
@@ -245,8 +247,10 @@ describe('ship-control direction system', () => {
     expect(currentState).toContain('- public GitHub default branch: `main`');
     expect(currentState).toContain('- public Codespaces evaluation branch: `develop`');
     expect(currentState).toContain('- integration branch: `develop`');
-    expect(currentState).toContain('- release branch: `main`');
-    expect(currentState).toContain('- next-line branch model: `gitflow-lite` (`feature/*`, `release/*`, `hotfix/*`)');
+    expect(currentState).toContain('- protected exact-release line: `main`');
+    expect(currentState).toContain('- release-candidate branch family: `release/*`');
+    expect(currentState).toContain('- hotfix branch family: `hotfix/*`');
+    expect(currentState).toContain('- next-line branch model: `GitFlow`');
     expect(currentState).toContain('- hosted automation governance matrix: [hosted-ci-governance.md](./hosted-ci-governance.md)');
     expect(currentState).toContain('- current changelog: [CHANGELOG.md](../../CHANGELOG.md)');
     expect(currentState).toContain('`TRANCHE-016`');
@@ -300,8 +304,9 @@ describe('ship-control direction system', () => {
     expect(releaseProcedure).toContain('public GitHub default branch is `main`');
     expect(releaseProcedure).toContain('public Codespaces evaluation branch is `develop`');
     expect(releaseProcedure).toContain('integration branch is `develop`');
-    expect(releaseProcedure).toContain('release branch is `main`');
-    expect(releaseProcedure).toContain('gitflow-lite');
+    expect(releaseProcedure).toContain('protected exact-release line is `main`');
+    expect(releaseProcedure).toContain('release-candidate branch family is `release/*`');
+    expect(releaseProcedure).toContain('next-line branch model is `GitFlow`');
     expect(releaseProcedure).toContain('required checks');
     expect(releaseProcedure).toContain('`main` shall match that exact release line');
     expect(releaseProcedure).toContain('advance `package.json`');
@@ -356,8 +361,10 @@ describe('ship-control direction system', () => {
     expect(changelog).toContain('## [0.2.0] - 2026-04-03');
     expect(cmPlan).toContain('# Configuration Management Plan');
     expect(cmPlan).toContain('- Scheme: `vX.Y.Z`');
+    expect(cmPlan).toContain('- Public default branch: `main`');
     expect(cmPlan).toContain('- Integration branch: `develop`');
-    expect(cmPlan).toContain('- Release branch: `main`');
+    expect(cmPlan).toContain('- Release-candidate branch family: `release/*`');
+    expect(cmPlan).toContain('- Hotfix branch family: `hotfix/*`');
     expect(cmPlan).toContain('- Protected-branch rule: rely on required checks instead of operator memory');
 
     expect(workbenchDoc).toContain('registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main');

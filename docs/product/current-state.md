@@ -154,8 +154,15 @@ Latest landed ship target:
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
-- release branch: `main`
-- next-line branch model: `gitflow-lite` (`feature/*`, `release/*`, `hotfix/*`)
+- protected exact-release line: `main`
+- release-candidate branch family: `release/*`
+- hotfix branch family: `hotfix/*`
+- next-line branch model: `GitFlow`
+- `feature/*` branches are cut from `develop` and merge back into `develop`
+- `release/*` branches are cut from `develop`, merge into `main`, merge back
+  into `develop`, and are deleted only after both merges complete
+- `hotfix/*` branches are cut from `main`, merge into `main`, merge back into
+  `develop`, and are deleted only after both merges complete
 - hosted automation governance matrix: [hosted-ci-governance.md](./hosted-ci-governance.md)
 - VS Code Marketplace listing: `https://marketplace.visualstudio.com/items?itemName=svelderrainruiz.vi-history-suite`
 - VS Code Marketplace publication ledger: [vscode-marketplace-publication-ledger.md](./vscode-marketplace-publication-ledger.md)
@@ -378,7 +385,8 @@ Current active and queued post-release programs:
     while `v1.0.2` is now retained as a burned exact release and the current
     exact public GitHub release line is `v1.2.2`
   - the public branch model is now explicit: `develop` is the integration and
-    Codespaces-evaluation branch, and `main` is the release branch
+    Codespaces-evaluation branch, `release/*` is the release-candidate lane,
+    and `main` remains the protected exact-release line
   - protected-branch promotion now depends on required checks instead of direct
     operator memory
   - public GitHub wiki publication is tracked separately from the internal GitLab maintainer wiki in `docs/product/public-github-wiki-publication-ledger.md` and `docs/product/public-github-wiki-publication-ledger.json`

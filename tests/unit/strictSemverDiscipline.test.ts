@@ -49,6 +49,8 @@ type SustainmentRules = {
       publicCodespaceBranch: string;
       integrationBranch?: string;
       releaseBranch?: string;
+      hotfixBranch?: string;
+      exactReleaseLineBranch?: string;
     };
     strictSemverRule: string[];
   };
@@ -84,7 +86,9 @@ describe('strict semver discipline', () => {
     ]);
     expect(versionLineContract.burnedExactVersionReleases).toEqual(['v1.0.2']);
     expect(versionLineContract.integrationBranch).toBe('develop');
-    expect(versionLineContract.releaseBranch).toBe('main');
+    expect(versionLineContract.releaseBranch).toBe('release/*');
+    expect(versionLineContract.hotfixBranch).toBe('hotfix/*');
+    expect(versionLineContract.exactReleaseLineBranch).toBe('main');
     expect(pkg.version).toBe('1.2.2');
     expect(versionLineContract.currentMainPackageLine).toBe('1.2.2');
     expect(versionLineContract.currentDevelopPackageLine).toBe('1.2.2');
@@ -106,7 +110,8 @@ describe('strict semver discipline', () => {
     expect(readme).toContain('- public GitHub default branch: `main`');
     expect(readme).toContain('- public Codespaces evaluation branch: `develop`');
     expect(readme).toContain('- integration branch: `develop`');
-    expect(readme).toContain('- release branch: `main`');
+    expect(readme).toContain('- protected exact-release line: `main`');
+    expect(readme).toContain('- release-candidate branch family: `release/*`');
     expect(currentState).toContain('- burned exact release line: `v1.0.2`');
     expect(currentState).toContain('- current exact released line: `v1.2.2`');
     expect(currentState).toContain('- current published package line on `main`: `1.2.2`');
@@ -116,7 +121,8 @@ describe('strict semver discipline', () => {
     expect(currentState).toContain('- public GitHub default branch: `main`');
     expect(currentState).toContain('- public Codespaces evaluation branch: `develop`');
     expect(currentState).toContain('- integration branch: `develop`');
-    expect(currentState).toContain('- release branch: `main`');
+    expect(currentState).toContain('- protected exact-release line: `main`');
+    expect(currentState).toContain('- release-candidate branch family: `release/*`');
     expect(releaseProcedure).toContain('The current exact released line is `v1.2.2`.');
     expect(releaseProcedure).toContain('The burned exact released line is `v1.0.2`.');
     expect(releaseProcedure).toContain("The current published package line on `main` is `1.2.2`.");
@@ -132,8 +138,9 @@ describe('strict semver discipline', () => {
     expect(releaseProcedure).toContain('top `CHANGELOG.md` heading to the next SemVer line');
     expect(releaseProcedure).toContain('npm run branch:governance:assert');
     expect(releaseProcedure).toContain('integration branch is `develop`');
-    expect(releaseProcedure).toContain('release branch is `main`');
-    expect(releaseProcedure).toContain('gitflow-lite');
+    expect(releaseProcedure).toContain('protected exact-release line is `main`');
+    expect(releaseProcedure).toContain('release-candidate branch family is `release/*`');
+    expect(releaseProcedure).toContain('next-line branch model is `GitFlow`');
     expect(releaseProcedure).toContain('required checks');
     expect(sustainmentRules.releaseCadence.strictSemverRule).toContain(
       'when develop carries post-release work, the develop package line shall advance to the next exact release candidate before public-facing normalization continues'

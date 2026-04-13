@@ -29,6 +29,8 @@ type SustainmentRules = {
       publicCodespaceBranch: string;
       integrationBranch?: string;
       releaseBranch?: string;
+      hotfixBranch?: string;
+      exactReleaseLineBranch?: string;
       nextLineBranchModel?: string;
     };
     maintainedSurfaces: string[];
@@ -74,6 +76,8 @@ type SustainmentRules = {
       model?: string;
       integrationBranch?: string;
       releaseBranch?: string;
+      hotfixBranch?: string;
+      exactReleaseLineBranch?: string;
       temporaryBranchPrefixes?: string[];
       promotionRules?: string[];
       requiredChecks?: string[];
@@ -132,8 +136,10 @@ describe('post-release sustainment rules package', () => {
       publicDefaultBranch: 'main',
       publicCodespaceBranch: 'develop',
       integrationBranch: 'develop',
-      releaseBranch: 'main',
-      nextLineBranchModel: 'gitflow-lite'
+      releaseBranch: 'release/*',
+      hotfixBranch: 'hotfix/*',
+      exactReleaseLineBranch: 'main',
+      nextLineBranchModel: 'gitflow'
     });
     expect(rules.releaseCadence.maintainedSurfaces).toContain(
       'preview-evidence/vi-history-suite-<version>.vsix'
@@ -253,9 +259,11 @@ describe('post-release sustainment rules package', () => {
       'out-of-scope alternative Windows x86 provisioning that is not part of the current governed image contract'
     );
 
-    expect(rules.operatorSurfaceSustainment.branchModel.model).toBe('gitflow-lite');
+    expect(rules.operatorSurfaceSustainment.branchModel.model).toBe('gitflow');
     expect(rules.operatorSurfaceSustainment.branchModel.integrationBranch).toBe('develop');
-    expect(rules.operatorSurfaceSustainment.branchModel.releaseBranch).toBe('main');
+    expect(rules.operatorSurfaceSustainment.branchModel.releaseBranch).toBe('release/*');
+    expect(rules.operatorSurfaceSustainment.branchModel.hotfixBranch).toBe('hotfix/*');
+    expect(rules.operatorSurfaceSustainment.branchModel.exactReleaseLineBranch).toBe('main');
     expect(rules.operatorSurfaceSustainment.branchModel.temporaryBranchPrefixes).toEqual([
       'feature/',
       'release/',
@@ -264,10 +272,10 @@ describe('post-release sustainment rules package', () => {
     expect(rules.operatorSurfaceSustainment.branchModel.promotionRules).toEqual(
       expect.arrayContaining([
         'public GitHub default branch remains main so readers land on the latest exact released line by default',
-        'feature/* branches target develop',
+        'feature/* branches are cut from develop and merge back into develop',
         'the governed branch-baseline assertion surface fails closed when develop does not yet contain exact main before a new candidate line opens',
-        'release/* branches are cut from develop and merge to main plus back into develop',
-        'hotfix/* branches are cut from main and merge to main plus back into develop',
+        'release/* branches are cut from develop, merge into main, merge back into develop, and are deleted only after both merges complete',
+        'hotfix/* branches are cut from main, merge into main, merge back into develop, and are deleted only after both merges complete',
         'exact SemVer tags are cut from main only after the protected main pipeline succeeds',
         'local public-source promotion/check binds the intended checkout through --target-root or VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT and fails closed when the target repo is dirty',
         'candidate lines are not review-ready until the maintained public develop candidate head and maintained public wiki head are both published and retained in the authority candidate package',
@@ -384,9 +392,9 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('no newer `release/*` branch is active yet');
     expect(rulesDoc).toContain('chosen bump: `patch`');
     expect(rulesDoc).toContain('develop');
-    expect(rulesDoc).toContain('release branch');
+    expect(rulesDoc).toContain('protected exact-release line');
     expect(rulesDoc).toContain('required checks');
-    expect(rulesDoc).toContain('gitflow-lite');
+    expect(rulesDoc).toContain('GitFlow');
     expect(rulesDoc).toContain('npm run branch:governance:assert');
     expect(rulesDoc).toContain('Hosted automation governance is now retained explicitly:');
     expect(rulesDoc).toContain('Lane-specific CI and gate responsibilities:');

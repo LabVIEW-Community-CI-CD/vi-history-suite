@@ -510,8 +510,15 @@ Latest landed ship target:
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
-- release branch: `main`
-- next-line branch model: `gitflow-lite` (`feature/*`, `release/*`, `hotfix/*`)
+- protected exact-release line: `main`
+- release-candidate branch family: `release/*`
+- hotfix branch family: `hotfix/*`
+- next-line branch model: `GitFlow`
+- `feature/*` branches are cut from `develop` and merge back into `develop`
+- `release/*` branches are cut from `develop`, merge into `main`, merge back
+  into `develop`, and are deleted only after both merges complete
+- `hotfix/*` branches are cut from `main`, merge into `main`, merge back into
+  `develop`, and are deleted only after both merges complete
 - hosted automation governance matrix: [docs/product/hosted-ci-governance.md](./docs/product/hosted-ci-governance.md)
 - VS Code Marketplace listing:
   `https://marketplace.visualstudio.com/items?itemName=svelderrainruiz.vi-history-suite`

@@ -184,7 +184,7 @@
 - [ADR-0029](./adr/ADR-0029-develop-integration-main-release-and-required-checks.md):
   `develop` as integration, `main` as release, and required-check discipline
 - [ADR-0030](./adr/ADR-0030-semver-decision-framework-and-gitflow-lite-branch-ci-topology.md):
-  SemVer decision framework and gitflow-lite branch/CI topology
+  SemVer decision framework and GitFlow branch/CI topology
 - [ADR-0031](./adr/ADR-0031-finding-driven-adr-and-requirement-evolution.md):
   Finding-driven ADR and requirement evolution
 - [ADR-0032](./adr/ADR-0032-public-facade-github-workflow-responsibility-matrix.md):
