@@ -136,6 +136,7 @@ interface BuildProviderDecisionsOptions {
   platform: RuntimePlatform;
   containerRuntimePlatform?: Extract<RuntimePlatform, 'win32' | 'linux'>;
   executionMode: RuntimeExecutionMode;
+  requestedProvider?: 'host' | 'docker';
   bitness: RuntimeBitness;
   configuredWindowsContainerImage: string;
   configuredLinuxContainerImage: string;
@@ -411,6 +412,7 @@ export async function locateComparisonRuntime(
         providerDecisions: buildProviderDecisions({
           platform,
           executionMode,
+          requestedProvider: settings.requestedProvider,
           bitness,
           configuredWindowsContainerImage: windowsContainerImage,
           configuredLinuxContainerImage: linuxContainerImage,
@@ -435,6 +437,7 @@ export async function locateComparisonRuntime(
       providerDecisions: buildProviderDecisions({
         platform,
         executionMode,
+        requestedProvider: settings.requestedProvider,
         bitness,
         configuredWindowsContainerImage: windowsContainerImage,
         configuredLinuxContainerImage: linuxContainerImage,
@@ -465,6 +468,7 @@ export async function locateComparisonRuntime(
       providerDecisions: buildProviderDecisions({
         platform,
         executionMode,
+        requestedProvider: settings.requestedProvider,
         bitness,
         configuredWindowsContainerImage: windowsContainerImage,
         configuredLinuxContainerImage: linuxContainerImage,
@@ -577,6 +581,7 @@ export async function locateComparisonRuntime(
             platform,
             containerRuntimePlatform: resolveContainerRuntimePlatform(containerFacts),
             executionMode,
+            requestedProvider: settings.requestedProvider,
             bitness,
             configuredWindowsContainerImage: windowsContainerImage,
             configuredLinuxContainerImage: linuxContainerImage,
@@ -611,6 +616,7 @@ export async function locateComparisonRuntime(
           platform,
           containerRuntimePlatform: containerFacts?.runtimePlatform,
           executionMode,
+          requestedProvider: settings.requestedProvider,
           bitness,
           configuredWindowsContainerImage: windowsContainerImage,
           configuredLinuxContainerImage: linuxContainerImage,
@@ -646,6 +652,7 @@ export async function locateComparisonRuntime(
           platform,
           containerRuntimePlatform: containerFacts?.runtimePlatform,
           executionMode,
+          requestedProvider: settings.requestedProvider,
           bitness,
           configuredWindowsContainerImage: windowsContainerImage,
           configuredLinuxContainerImage: linuxContainerImage,
@@ -675,6 +682,7 @@ export async function locateComparisonRuntime(
           platform,
           containerRuntimePlatform: containerFacts?.runtimePlatform,
           executionMode,
+          requestedProvider: settings.requestedProvider,
           bitness,
           configuredWindowsContainerImage: windowsContainerImage,
           configuredLinuxContainerImage: linuxContainerImage,
@@ -706,6 +714,7 @@ export async function locateComparisonRuntime(
           platform,
           containerRuntimePlatform: containerFacts?.runtimePlatform,
           executionMode,
+          requestedProvider: settings.requestedProvider,
           bitness,
           configuredWindowsContainerImage: windowsContainerImage,
           configuredLinuxContainerImage: linuxContainerImage,
@@ -740,6 +749,7 @@ export async function locateComparisonRuntime(
           ? resolveContainerRuntimePlatform(containerFacts)
           : undefined,
         executionMode,
+        requestedProvider: settings.requestedProvider,
         bitness,
         configuredWindowsContainerImage: windowsContainerImage,
         configuredLinuxContainerImage: linuxContainerImage,
@@ -791,6 +801,7 @@ export async function locateComparisonRuntime(
         platform,
         containerRuntimePlatform: containerFacts?.runtimePlatform,
         executionMode,
+        requestedProvider: settings.requestedProvider,
         bitness,
         configuredWindowsContainerImage: windowsContainerImage,
         configuredLinuxContainerImage: linuxContainerImage,
@@ -839,6 +850,7 @@ export async function locateComparisonRuntime(
             platform,
             containerRuntimePlatform: resolveContainerRuntimePlatform(containerFacts),
             executionMode,
+            requestedProvider: settings.requestedProvider,
             bitness,
             configuredWindowsContainerImage: windowsContainerImage,
             configuredLinuxContainerImage: linuxContainerImage,
@@ -883,6 +895,7 @@ export async function locateComparisonRuntime(
         platform,
         containerRuntimePlatform: containerFacts?.runtimePlatform,
         executionMode,
+        requestedProvider: settings.requestedProvider,
         bitness,
         configuredWindowsContainerImage: windowsContainerImage,
         configuredLinuxContainerImage: linuxContainerImage,
@@ -941,6 +954,7 @@ export async function locateComparisonRuntime(
             platform,
             containerRuntimePlatform: resolveContainerRuntimePlatform(containerFacts),
             executionMode,
+            requestedProvider: settings.requestedProvider,
             bitness,
             configuredWindowsContainerImage: windowsContainerImage,
             configuredLinuxContainerImage: linuxContainerImage,
@@ -995,6 +1009,7 @@ export async function locateComparisonRuntime(
         platform,
         containerRuntimePlatform: containerFacts?.runtimePlatform,
         executionMode,
+        requestedProvider: settings.requestedProvider,
         bitness,
         configuredWindowsContainerImage: windowsContainerImage,
         configuredLinuxContainerImage: linuxContainerImage,
@@ -1048,6 +1063,7 @@ export async function locateComparisonRuntime(
           platform,
           containerRuntimePlatform: resolveContainerRuntimePlatform(containerFacts),
           executionMode,
+          requestedProvider: settings.requestedProvider,
           bitness,
           configuredWindowsContainerImage: windowsContainerImage,
           configuredLinuxContainerImage: linuxContainerImage,
@@ -1091,6 +1107,7 @@ export async function locateComparisonRuntime(
         platform,
         containerRuntimePlatform: containerFacts?.runtimePlatform,
         executionMode,
+        requestedProvider: settings.requestedProvider,
         bitness,
         configuredWindowsContainerImage: windowsContainerImage,
         configuredLinuxContainerImage: linuxContainerImage,
@@ -1132,6 +1149,7 @@ export async function locateComparisonRuntime(
         platform,
         containerRuntimePlatform: containerFacts?.runtimePlatform,
         executionMode,
+        requestedProvider: settings.requestedProvider,
         bitness,
         configuredWindowsContainerImage: windowsContainerImage,
         configuredLinuxContainerImage: linuxContainerImage,
@@ -1179,6 +1197,7 @@ export async function locateComparisonRuntime(
       platform,
       containerRuntimePlatform: containerFacts?.runtimePlatform,
       executionMode,
+      requestedProvider: settings.requestedProvider,
       bitness,
       configuredWindowsContainerImage: windowsContainerImage,
       configuredLinuxContainerImage: linuxContainerImage,
@@ -1493,6 +1512,7 @@ function describeSelectedContainerProvider(options: {
   provider: Extract<ComparisonRuntimeProvider, 'windows-container' | 'linux-container'>;
   runtimePlatform: Extract<RuntimePlatform, 'win32' | 'linux'>;
   executionMode: RuntimeExecutionMode;
+  requestedProvider?: 'host' | 'docker';
   containerImage: string;
   dockerCliAvailable?: boolean;
   dockerDaemonReachable?: boolean;
@@ -1521,6 +1541,10 @@ function describeSelectedContainerProvider(options: {
           options.imageAvailable === false
         ? `Docker daemon was reachable in ${options.containerHostMode ?? 'unknown'}-container mode, and governed ${providerLabel} image ${options.containerImage} will be acquired before launch`
       : `Governed ${providerLabel} image ${options.containerImage} was selected`;
+
+  if (options.requestedProvider === 'docker') {
+    return `${capabilitySummary} because the Docker provider was requested.`;
+  }
 
   if (options.executionMode === 'docker-only') {
     return `${capabilitySummary} for docker-only execution.`;
@@ -1582,6 +1606,7 @@ function buildSelectedContainerRuntimeSelection(options: {
     provider,
     runtimePlatform,
     executionMode: options.executionMode,
+    requestedProvider: options.requestedProvider,
     containerImage,
     dockerCliAvailable: options.selectedContainerFacts.dockerCliAvailable,
     dockerDaemonReachable: options.selectedContainerFacts.dockerDaemonReachable,
@@ -1660,6 +1685,8 @@ function buildProviderDecisions(
   options: BuildProviderDecisionsOptions
 ): RuntimeProviderDecision[] {
   const decisions: RuntimeProviderDecision[] = [];
+  const hostProviderRequested = options.requestedProvider === 'host';
+  const dockerProviderRequested = options.requestedProvider === 'docker';
   const containerRelevant =
     options.platform === 'win32' ||
     (options.platform === 'linux' &&
@@ -1692,7 +1719,9 @@ function buildProviderDecisions(
       provider: selectedContainerProvider,
       outcome: 'selected',
       reason:
-        options.executionMode === 'docker-only'
+        dockerProviderRequested
+          ? `provider-request-docker-selected-${selectedContainerProvider}`
+          : options.executionMode === 'docker-only'
           ? `execution-mode-docker-only-selected-${selectedContainerProvider}`
           : windowsAutoDockerInstalled && !options.hostRuntimeConflictDetected
             ? `auto-selected-${selectedContainerProvider}-because-docker-installed`
@@ -1708,6 +1737,7 @@ function buildProviderDecisions(
           provider: selectedContainerProvider,
           runtimePlatform: options.containerRuntimePlatform ?? 'win32',
           executionMode: options.executionMode,
+          requestedProvider: options.requestedProvider,
           containerImage:
             options.containerImage ??
             resolveContainerImageForHostMode({
@@ -1737,7 +1767,9 @@ function buildProviderDecisions(
       provider: 'host-native',
       outcome: 'rejected',
       reason:
-        options.executionMode === 'docker-only'
+        dockerProviderRequested
+          ? 'provider-request-docker-disallows-host-native'
+          : options.executionMode === 'docker-only'
           ? 'execution-mode-docker-only-disallows-host-native'
           : windowsAutoDockerInstalled
             ? 'auto-docker-installed-disallows-host-native'
@@ -1745,7 +1777,9 @@ function buildProviderDecisions(
             ? 'host-native-runtime-surface-contaminated'
             : deriveHostNativeRejectedReason(options),
       detail:
-        options.executionMode === 'docker-only'
+        dockerProviderRequested
+          ? 'Host-native execution was not selected because the Docker provider was requested.'
+          : options.executionMode === 'docker-only'
           ? 'Host-native execution was not selected because docker-only execution was requested.'
           : windowsAutoDockerInstalled
             ? 'Host-native execution was not selected because Docker Desktop is installed and governed auto execution uses the current Docker engine provider.'
@@ -1761,8 +1795,12 @@ function buildProviderDecisions(
       decisions.push({
         provider: selectedContainerProvider,
         outcome: 'rejected',
-        reason: 'execution-mode-host-only-disallows-docker',
-        detail: 'Docker container execution was not selected because host-only execution was requested.'
+        reason: hostProviderRequested
+          ? 'provider-request-host-disallows-docker'
+          : 'execution-mode-host-only-disallows-docker',
+        detail: hostProviderRequested
+          ? 'Docker container execution was not selected because the host provider was requested.'
+          : 'Docker container execution was not selected because host-only execution was requested.'
       });
     } else if (options.executionMode === 'docker-only') {
       decisions.push(
@@ -1909,13 +1947,17 @@ function buildProviderDecisions(
       provider: 'host-native',
       outcome: 'selected',
       reason:
-        options.executionMode === 'host-only'
+        hostProviderRequested
+          ? 'provider-request-host-selected-host-native'
+          : options.executionMode === 'host-only'
           ? 'execution-mode-host-only-selected-host-native'
           : windowsAutoDockerMissing
             ? 'auto-selected-host-native-because-docker-not-installed'
             : 'host-native-labview-cli-selected',
       detail:
-        options.executionMode === 'host-only'
+        hostProviderRequested
+          ? 'Host provider was requested and host-native LabVIEW 2026 plus LabVIEWCLI were available.'
+          : options.executionMode === 'host-only'
           ? 'Host-only execution was requested and host-native LabVIEW 2026 plus LabVIEWCLI were available.'
           : windowsAutoDockerMissing
             ? 'Auto execution selected host-native LabVIEW 2026 plus LabVIEWCLI because Docker Desktop was not detected on Windows.'
@@ -1953,6 +1995,9 @@ function deriveHostNativeRejectedReason(options: BuildProviderDecisionsOptions):
   }
   if (options.blockedReason === 'labview-cli-ambiguous-for-bitness') {
     return 'host-native-labview-cli-ambiguous-for-bitness';
+  }
+  if (options.requestedProvider === 'docker') {
+    return 'provider-request-docker-disallows-host-native';
   }
   if (options.executionMode === 'docker-only') {
     return 'execution-mode-docker-only-disallows-host-native';
@@ -1993,6 +2038,9 @@ function deriveHostNativeRejectedDetail(options: BuildProviderDecisionsOptions):
   }
   if (options.blockedReason === 'labview-cli-ambiguous-for-bitness') {
     return 'A supported LabVIEW executable matched the requested version and bitness, but multiple matching LabVIEWCLI surfaces were located for that bitness.';
+  }
+  if (options.requestedProvider === 'docker') {
+    return 'Host-native execution was not selected because the Docker provider was requested.';
   }
   if (options.executionMode === 'docker-only') {
     return 'Host-native execution was not selected because docker-only execution was requested.';

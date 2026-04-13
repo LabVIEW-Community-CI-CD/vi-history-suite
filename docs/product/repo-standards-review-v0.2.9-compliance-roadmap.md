@@ -18,7 +18,7 @@ instead of living in chat memory.
   governance rewrite on this branch
 - pass 3 status: checkpoint 1 complete
 - pass 4 status: complete
-- pass 5 status: checkpoint 12 complete
+- pass 5 status: checkpoint 13 complete
 - pass 5 checkpoint 1 outcome: the runtime-provider and compare-flow
   requirement cluster now separates current implemented baseline truth from the
   active replacement direction
@@ -60,6 +60,10 @@ instead of living in chat memory.
 - pass 5 checkpoint 12 outcome: retained comparison-report packet HTML now
   renders `Provider request` instead of `Execution mode` while still deriving
   a readable provider-request value from older execution-mode-only packets
+- pass 5 checkpoint 13 outcome: runtime locator provider-decision reasons and
+  details now use `provider-request-*` wording when the active branch carries
+  an explicit persisted host or docker provider request, while the legacy
+  `executionMode` and `auto` characterization lanes remain intact
 - pass 6 status: checkpoint 3 complete
 - pass 6 checkpoint 1 outcome: `ADR-0030` now uses a GitFlow-aligned file path
   and the live architecture, RTM, wiki-coverage, and release-governance test
@@ -133,7 +137,7 @@ instead of living in chat memory.
 5. Pass 5: Requirement-system refactor
    - objective: normalize the large requirement corpus instead of patching it
      piecemeal
-  - status: checkpoint 12 complete on this branch
+  - status: checkpoint 13 complete on this branch
    - checkpoint 1 scope:
      - separate the current implemented checkbox auto-run workflow from the
        planned explicit compare replacement
@@ -203,6 +207,11 @@ instead of living in chat memory.
       from `Execution mode` to `Provider request`
     - keep older execution-mode-only packets readable by deriving a compatible
       provider-request label
+  - checkpoint 13 scope:
+    - normalize runtime locator provider-decision reason codes and details for
+      explicit persisted host or docker provider requests
+    - preserve the older `executionMode` override and `auto` characterization
+      lanes as legacy/internal compatibility surfaces
    - focus:
      - split `SyRS` versus `SRS` ownership cleanly
      - merge duplicates

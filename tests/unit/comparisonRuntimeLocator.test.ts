@@ -376,16 +376,16 @@ describe('comparisonRuntimeLocator', () => {
       {
         provider: 'windows-container',
         outcome: 'rejected',
-        reason: 'execution-mode-host-only-disallows-docker',
+        reason: 'provider-request-host-disallows-docker',
         detail:
-          'Docker container execution was not selected because host-only execution was requested.'
+          'Docker container execution was not selected because the host provider was requested.'
       },
       {
         provider: 'host-native',
         outcome: 'selected',
-        reason: 'execution-mode-host-only-selected-host-native',
+        reason: 'provider-request-host-selected-host-native',
         detail:
-          'Host-only execution was requested and host-native LabVIEW 2026 plus LabVIEWCLI were available.'
+          'Host provider was requested and host-native LabVIEW 2026 plus LabVIEWCLI were available.'
       }
     ]);
   });
@@ -422,9 +422,9 @@ describe('comparisonRuntimeLocator', () => {
       {
         provider: 'windows-container',
         outcome: 'rejected',
-        reason: 'execution-mode-host-only-disallows-docker',
+        reason: 'provider-request-host-disallows-docker',
         detail:
-          'Docker container execution was not selected because host-only execution was requested.'
+          'Docker container execution was not selected because the host provider was requested.'
       },
       {
         provider: 'host-native',
@@ -468,9 +468,9 @@ describe('comparisonRuntimeLocator', () => {
       {
         provider: 'windows-container',
         outcome: 'rejected',
-        reason: 'execution-mode-host-only-disallows-docker',
+        reason: 'provider-request-host-disallows-docker',
         detail:
-          'Docker container execution was not selected because host-only execution was requested.'
+          'Docker container execution was not selected because the host provider was requested.'
       },
       {
         provider: 'host-native',
@@ -515,9 +515,9 @@ describe('comparisonRuntimeLocator', () => {
       {
         provider: 'windows-container',
         outcome: 'rejected',
-        reason: 'execution-mode-host-only-disallows-docker',
+        reason: 'provider-request-host-disallows-docker',
         detail:
-          'Docker container execution was not selected because host-only execution was requested.'
+          'Docker container execution was not selected because the host provider was requested.'
       },
       {
         provider: 'host-native',
@@ -829,16 +829,16 @@ describe('comparisonRuntimeLocator', () => {
       {
         provider: 'windows-container',
         outcome: 'selected',
-        reason: 'execution-mode-docker-only-selected-windows-container',
+        reason: 'provider-request-docker-selected-windows-container',
         detail:
-          'Docker daemon was reachable in windows-container mode with governed Windows container image nationalinstruments/labview:2026q1-windows present locally for docker-only execution.'
+          'Docker daemon was reachable in windows-container mode with governed Windows container image nationalinstruments/labview:2026q1-windows present locally because the Docker provider was requested.'
       },
       {
         provider: 'host-native',
         outcome: 'rejected',
-        reason: 'execution-mode-docker-only-disallows-host-native',
+        reason: 'provider-request-docker-disallows-host-native',
         detail:
-          'Host-native execution was not selected because docker-only execution was requested.'
+          'Host-native execution was not selected because the Docker provider was requested.'
       }
     ]);
   });
