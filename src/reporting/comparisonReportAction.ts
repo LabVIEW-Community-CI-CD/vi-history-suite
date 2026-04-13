@@ -1218,13 +1218,9 @@ export function readComparisonRuntimeSettings(
   const configuredProvider = readConfiguredRuntimeProvider(configuration);
 
   return {
-    executionMode:
-      configuredProvider.provider === 'docker'
-        ? 'docker-only'
-        : configuredProvider.invalidProvider
-          ? undefined
-          : 'host-only',
-    requestedProvider: configuredProvider.provider ?? 'host',
+    requestedProvider:
+      configuredProvider.provider ??
+      (configuredProvider.invalidProvider ? undefined : 'host'),
     invalidRequestedProvider: configuredProvider.invalidProvider,
     requireVersionAndBitness: true,
     labviewVersion,

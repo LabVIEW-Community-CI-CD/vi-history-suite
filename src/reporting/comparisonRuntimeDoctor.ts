@@ -150,7 +150,7 @@ function deriveRuntimeDoctorNextAction(options: {
       blockedReason === 'windows-host-runtime-surface-contaminated'
     ) {
       if (executionMode === 'host-only') {
-        return 'Next action: close existing LabVIEW/LabVIEWCLI/LVCompare sessions, clear the governed VI Server listener on the selected port, or change execution mode, then rerun comparison report generation.';
+        return 'Next action: close existing LabVIEW/LabVIEWCLI/LVCompare sessions, clear the governed VI Server listener on the selected port, or switch to a Docker-backed compare path, then rerun comparison report generation.';
       }
       return `Next action: close existing LabVIEW/LabVIEWCLI/LVCompare sessions, clear the governed VI Server listener on the selected port, or ${deriveContainerRecoveryAction(options.runtimeSelection)}, then rerun comparison report generation.`;
     }
@@ -179,7 +179,7 @@ function deriveRuntimeDoctorNextAction(options: {
     }
 
     if (executionMode === 'host-only') {
-      return 'Next action: make the selected host-native runtime available, resolve host conflicts, or change execution mode, then rerun comparison report generation.';
+      return 'Next action: make the selected host-native runtime available, resolve host conflicts, or switch to a Docker-backed compare path, then rerun comparison report generation.';
     }
 
     if (executionMode === 'docker-only') {

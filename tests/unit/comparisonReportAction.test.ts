@@ -3711,7 +3711,6 @@ describe('comparisonReportAction', () => {
     });
 
     expect(readComparisonRuntimeSettings()).toEqual({
-      executionMode: 'docker-only',
       requestedProvider: 'docker',
       requireVersionAndBitness: true,
       labviewVersion: '2026',
@@ -3733,7 +3732,7 @@ describe('comparisonReportAction', () => {
     });
 
     expect(readComparisonRuntimeSettings()).toEqual({
-      requestedProvider: 'host',
+      requestedProvider: undefined,
       invalidRequestedProvider: 'weird',
       requireVersionAndBitness: true,
       labviewVersion: '2026',

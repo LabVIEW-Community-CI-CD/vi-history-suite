@@ -18,10 +18,13 @@ instead of living in chat memory.
   governance rewrite on this branch
 - pass 3 status: checkpoint 1 complete
 - pass 4 status: complete
-- pass 5 status: checkpoint 1 in progress
-- pass 5 checkpoint 1 target: partition the runtime-provider and compare-flow
-  requirement cluster into current implemented baseline versus active
-  replacement direction before widening into broader requirement cleanup
+- pass 5 status: checkpoint 2 complete
+- pass 5 checkpoint 1 outcome: the runtime-provider and compare-flow
+  requirement cluster now separates current implemented baseline truth from the
+  active replacement direction
+- pass 5 checkpoint 2 outcome: installed compare runtime selection is now
+  provider-driven from persisted `host|docker` settings in the live locator and
+  doctor surfaces, with focused proof for both paths
 
 ## Pass Order
 
@@ -70,7 +73,7 @@ instead of living in chat memory.
 5. Pass 5: Requirement-system refactor
    - objective: normalize the large requirement corpus instead of patching it
      piecemeal
-   - status: checkpoint 1 complete on this branch
+   - status: checkpoint 2 complete on this branch
    - checkpoint 1 scope:
      - separate the current implemented checkbox auto-run workflow from the
        planned explicit compare replacement
@@ -78,6 +81,13 @@ instead of living in chat memory.
        host-default plus expert-Docker installed-user contract
      - retell the bounded Windows-container proof path without mislabeling it
        as the active installed-user default
+   - checkpoint 2 scope:
+     - make installed compare runtime selection derive effective provider
+       intent from persisted `viHistorySuite.runtimeProvider`
+     - retain the legacy `executionMode` surface only as compatibility and
+       proof context instead of the source of installed-user truth
+     - update runtime doctor guidance so host-only contamination points users
+       toward the expert Docker path instead of a vague execution-mode change
    - focus:
      - split `SyRS` versus `SRS` ownership cleanly
      - merge duplicates
@@ -120,11 +130,11 @@ instead of living in chat memory.
 
 ## Immediate Next Move
 
-Continue pass 5 on the same branch from checkpoint 1:
+Continue pass 5 on the same branch from checkpoint 2:
 
 - use the narrowed contradiction ledger to target the remaining live product
-  drift in runtime-provider implementation and explicit compare workflow
-- keep broader requirement-package cleanup deferred until the live product
-  truth is less contradictory
+  drift in the explicit compare workflow
+- keep broader requirement-package cleanup deferred until the explicit compare
+  surface reflects the active control-plane direction
 - leave ADR renames and the rest of the large RTM cleanup for the later
   dedicated passes

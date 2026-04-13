@@ -343,6 +343,50 @@ describe('comparisonRuntimeLocator', () => {
     );
   });
 
+  it('derives host-only execution from the persisted host provider for installed compare', async () => {
+    const cleanHost = buildCleanWindowsHostDeps();
+    const result = await locateComparisonRuntime(
+      'win32',
+      {
+        requestedProvider: 'host',
+        requireVersionAndBitness: true,
+        labviewVersion: '2026',
+        bitness: 'x64'
+      },
+      {
+        queryWindowsContainerProviderFacts: vi.fn().mockResolvedValue(buildWindowsContainerFacts()),
+        pathExists: vi.fn(async (filePath: string) =>
+          [
+            'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
+            'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
+          ].includes(filePath)
+        ),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        ...cleanHost
+      }
+    );
+
+    expect(result.requestedProvider).toBe('host');
+    expect(result.executionMode).toBe('host-only');
+    expect(result.provider).toBe('host-native');
+    expect(result.providerDecisions).toEqual([
+      {
+        provider: 'windows-container',
+        outcome: 'rejected',
+        reason: 'execution-mode-host-only-disallows-docker',
+        detail:
+          'Docker container execution was not selected because host-only execution was requested.'
+      },
+      {
+        provider: 'host-native',
+        outcome: 'selected',
+        reason: 'execution-mode-host-only-selected-host-native',
+        detail:
+          'Host-only execution was requested and host-native LabVIEW 2026 plus LabVIEWCLI were available.'
+      }
+    ]);
+  });
+
   it('honors an explicit x86 preference when both Windows bitnesses are available', async () => {
     const cleanHost = buildCleanWindowsHostDeps();
     const result = await locateComparisonRuntime(
@@ -602,6 +646,50 @@ describe('comparisonRuntimeLocator', () => {
         reason: 'docker-only-windows-x64-provider-required',
         detail:
           'Docker-only execution currently requires the governed 64-bit container provider.'
+      },
+      {
+        provider: 'host-native',
+        outcome: 'rejected',
+        reason: 'execution-mode-docker-only-disallows-host-native',
+        detail:
+          'Host-native execution was not selected because docker-only execution was requested.'
+      }
+    ]);
+  });
+
+  it('derives docker-only execution from the persisted docker provider for installed compare', async () => {
+    const cleanHost = buildCleanWindowsHostDeps();
+    const result = await locateComparisonRuntime(
+      'win32',
+      {
+        requestedProvider: 'docker',
+        requireVersionAndBitness: true,
+        labviewVersion: '2026',
+        bitness: 'x64'
+      },
+      {
+        queryWindowsContainerProviderFacts: vi.fn().mockResolvedValue(buildWindowsContainerFacts()),
+        pathExists: vi.fn(async (filePath: string) =>
+          [
+            'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
+            'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
+          ].includes(filePath)
+        ),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        ...cleanHost
+      }
+    );
+
+    expect(result.requestedProvider).toBe('docker');
+    expect(result.executionMode).toBe('docker-only');
+    expect(result.provider).toBe('windows-container');
+    expect(result.providerDecisions).toEqual([
+      {
+        provider: 'windows-container',
+        outcome: 'selected',
+        reason: 'execution-mode-docker-only-selected-windows-container',
+        detail:
+          'Docker daemon was reachable in windows-container mode with governed Windows container image nationalinstruments/labview:2026q1-windows present locally for docker-only execution.'
       },
       {
         provider: 'host-native',

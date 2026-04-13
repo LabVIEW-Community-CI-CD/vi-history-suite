@@ -282,6 +282,39 @@ describe('comparisonRuntimeDoctor', () => {
     );
   });
 
+  it('uses Docker-backed guidance when the requested host provider is blocked by a contaminated Windows runtime surface', () => {
+    const lines = buildComparisonRuntimeDoctorSummaryFromFacts({
+      reportStatus: 'blocked-runtime',
+      runtimeSelection: {
+        platform: 'win32',
+        executionMode: 'host-only',
+        requestedProvider: 'host',
+        bitness: 'x64',
+        provider: 'unavailable',
+        blockedReason: 'windows-host-runtime-surface-contaminated',
+        hostLabviewIniPath:
+          'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.ini',
+        hostLabviewTcpPort: 3363,
+        hostRuntimeConflictDetected: true,
+        providerDecisions: [],
+        notes: [],
+        registryQueryPlans: [],
+        candidates: []
+      },
+      runtimeExecution: {
+        state: 'not-available',
+        attempted: false,
+        reportExists: false,
+        blockedReason: 'windows-host-runtime-surface-contaminated',
+        diagnosticNotes: []
+      }
+    });
+
+    expect(lines.at(-1)).toBe(
+      'Next action: close existing LabVIEW/LabVIEWCLI/LVCompare sessions, clear the governed VI Server listener on the selected port, or switch to a Docker-backed compare path, then rerun comparison report generation.'
+    );
+  });
+
   it('uses explicit next action guidance when the persisted provider is invalid', () => {
     const lines = buildComparisonRuntimeDoctorSummaryFromFacts({
       reportStatus: 'blocked-runtime',
