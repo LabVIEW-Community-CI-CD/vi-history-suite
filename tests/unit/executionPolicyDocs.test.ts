@@ -112,7 +112,8 @@ describe('execution-policy control plane', () => {
       '`TRANCHE-016`: Host-default LabVIEWCLI, expert Docker provider, and explicit compare workflow'
     );
     expect(currentState).toContain('exact Windows host-runtime preflight');
-    expect(currentState).toContain('remaining work is reader-surface normalization');
+    expect(currentState).toContain('released `repo-standards-review` `v0.2.9` compliance closeout');
+    expect(currentState).toContain('remaining work is branch promotion into `develop`');
     expect(currentState).toContain('`TRANCHE-012`: Post-release sustainment and release cadence');
     expect(currentState).toContain(
       '[PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)'
@@ -196,6 +197,9 @@ describe('execution-policy control plane', () => {
     expect(program).toContain('TRANCHE-016');
     expect(program).toContain('Windows exact-runtime preflight is now landed');
     expect(program).toContain('remaining work on this program is now narrower');
+    expect(program).toContain('promotion');
+    expect(program).toContain('into `develop`');
+    expect(program).toContain('issue-0412-promotion-and-publication-handoff.md');
     expect(program).toContain('installed manifest/settings');
     expect(program).toContain('explicit `Compare` action');
     expect(program).toContain('expert Docker provider');
@@ -205,7 +209,7 @@ describe('execution-policy control plane', () => {
     expect(issueCurrent).toContain('TRANCHE-015');
     expect(issueNext).toContain('Active post-release issue.');
     expect(issueNext).toContain('generated settings CLI, exact Windows');
-    expect(issueNext).toContain('keeping packaged/public docs on the exact');
+    expect(issueNext).toContain('keep packaged/public docs on the exact released Docker-only baseline');
     expect(issueNext).toContain('provider/version/bitness');
     expect(issueNext).toContain('explicit compare preflight state');
     expect(issueNext).toContain('VS Code warning notification');
@@ -218,6 +222,8 @@ describe('execution-policy control plane', () => {
     expect(issueNext).toContain('bounded');
     expect(issueNext).toContain('internal/runtime-proof compatibility surfaces');
     expect(issueNext).toContain('uses explicit compare preflight');
+    expect(issueNext).toContain('queue branch promotion into `develop`');
+    expect(issueNext).toContain('issue-0412-promotion-and-publication-handoff.md');
     expect(issueNext).toContain('auto-generating compare output');
     expect(sustainmentProgram).toContain('Active post-release program.');
     expect(sustainmentProgram).toContain('That work remains explicit under active `PROGRAM-0005`');

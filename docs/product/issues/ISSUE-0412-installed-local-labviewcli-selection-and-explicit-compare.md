@@ -23,6 +23,8 @@ Activation facts:
 - the current branch now lands the generated settings CLI, exact Windows
   host-runtime preflight, and explicit compare-preflight workflow for that
   replacement contract
+- released `repo-standards-review` `v0.2.9` compliance closeout is now
+  retained for this branch implementation
 - the exact released line is still Docker-only until that branch
   implementation is published and rerun through public acceptance
 
@@ -96,12 +98,14 @@ history instead of chat memory.
 
 - keep the current released Docker-only installed contract explicit until the
   branch replacement is truthfully published
-- normalize authority/internal documentation around the now landed generated
-  settings CLI, exact Windows host-runtime preflight, and explicit
-  compare-preflight workflow while keeping packaged/public docs on the exact
-  released Docker-only baseline until publication
-- prepare the later `PROGRAM-0002` public acceptance handoff once the
-  replacement contract is ready for publication
+- treat standards-compliance refactor work on this branch as closed under
+  released `repo-standards-review` `v0.2.9` unless a later released-skill
+  audit fails
+- queue branch promotion into `develop`
+- keep packaged/public docs on the exact released Docker-only baseline until
+  the replacement contract is truthfully publishable
+- retain the later `PROGRAM-0002` public acceptance handoff explicitly in
+  [issue-0412-promotion-and-publication-handoff.md](../issue-0412-promotion-and-publication-handoff.md)
 
 ## Round 1: User Proposal Facts
 

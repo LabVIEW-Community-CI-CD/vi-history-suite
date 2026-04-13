@@ -278,6 +278,7 @@ describe('ship-control direction system', () => {
     expect(informationItemMap).toContain('| Public GitHub source publication ledger | `docs/product/public-github-source-publication-ledger.md` |');
     expect(informationItemMap).toContain('| Machine-readable public GitHub source publication ledger | `docs/product/public-github-source-publication-ledger.json` |');
     expect(informationItemMap).toContain('| VS Code Marketplace publication ledger | `docs/product/vscode-marketplace-publication-ledger.md` |');
+    expect(informationItemMap).toContain('| ISSUE-0412 promotion and publication handoff | `docs/product/issue-0412-promotion-and-publication-handoff.md` |');
     expect(informationItemMap).toContain('| Machine-readable VS Code Marketplace publication ledger | `docs/product/vscode-marketplace-publication-ledger.json` |');
     expect(informationItemMap).toContain('`vi-history-suite-source-experiments`');
     expect(informationItemMap).toContain('`vi-history-suite.public`');

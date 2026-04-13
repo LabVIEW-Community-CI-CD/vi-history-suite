@@ -31,11 +31,16 @@ Current facts:
   auto-run is removed, compare preflight shows selected/base commit plus
   provider/version/bitness, and compare stays blocked until explicit
   preflight-ready execution
-- remaining work on this program is now narrower: reader-surface
-  normalization, packaged/public truth alignment, and later public acceptance
-  handoff after this replacement contract is actually published
+- released `repo-standards-review` `v0.2.9` compliance closeout is now
+  retained on this branch
+- remaining work on this program is now narrower: feature-branch promotion
+  into `develop`, packaged/public truth alignment when the replacement
+  contract is actually publishable, and later public acceptance handoff after
+  that publication boundary is real
 - `PROGRAM-0002` still owns the later public acceptance rerun once the next
   installed-user contract is actually published
+- the retained branch handoff packet is
+  [issue-0412-promotion-and-publication-handoff.md](../issue-0412-promotion-and-publication-handoff.md)
 
 ## Purpose
 
@@ -145,6 +150,9 @@ An installed extension user:
 - the repo retains one explicit handoff into `PROGRAM-0002` for the next
   deterministic public rerun after the local-`LabVIEWCLI` installed contract
   is the truthful published bundle
+- the branch also retains one explicit promotion/publication handoff packet so
+  future sessions do not reopen completed standards work while deciding merge
+  and publication order
 
 ## Delivery Rules
 

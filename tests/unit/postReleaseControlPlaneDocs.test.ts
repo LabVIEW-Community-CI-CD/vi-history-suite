@@ -71,6 +71,7 @@ describe('post-release control-plane coherence', () => {
     expect(currentState).toContain('current exact released installed extension is still Docker-only');
     expect(currentState).toContain('installed manifest/settings');
     expect(currentState).toContain('bounded expert provider');
+    expect(currentState).toContain('branch promotion into `develop`');
 
     expect(program).toContain('Closed on the Docker-only public-product acceptance gate.');
     expect(program).toContain('the installed extension compare workflow is now Docker-only and x64-only');

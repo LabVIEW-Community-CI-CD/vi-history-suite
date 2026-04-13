@@ -221,8 +221,14 @@ Current active and recently closed tranches:
   - branch implementation now includes explicit compare preflight that shows
     selected/base commit plus provider, version, and bitness before the
     explicit compare action
-  - remaining work is reader-surface normalization and later public acceptance
-    rerun after the replacement contract is truthfully published
+  - released `repo-standards-review` `v0.2.9` compliance closeout is now
+    retained on this branch
+  - remaining work is branch promotion into `develop`, truthful
+    packaged/public reader-surface promotion only when the replacement
+    contract is actually publishable, and later public acceptance handoff
+    through `PROGRAM-0002`
+  - retained handoff packet:
+    [issue-0412-promotion-and-publication-handoff.md](./issue-0412-promotion-and-publication-handoff.md)
 - `TRANCHE-012`: Post-release sustainment and release cadence
 - active issue: [ISSUE-0409 Post-Release Sustainment And Release Cadence](./issues/ISSUE-0409-post-release-sustainment-and-release-cadence.md)
 - active execution program: [PROGRAM-0004: Post-Release Sustainment And Release Cadence](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)
@@ -335,8 +341,13 @@ Post-release tranches:
     the governed engine-derived image-family admission path
   - installed-user warning behavior is now landed with compare-preflight block
     plus VS Code warning surfaces
-  - the remaining active slices are reader-surface normalization, packaged
-    truth alignment, and later public acceptance handoff after publication
+  - released `repo-standards-review` `v0.2.9` compliance closeout is retained
+    in the branch control plane
+  - the remaining active slices are branch promotion into `develop`,
+    packaged/public truth alignment when publication is actually truthful, and
+    later public acceptance handoff after publication
+  - retained handoff packet:
+    [issue-0412-promotion-and-publication-handoff.md](./issue-0412-promotion-and-publication-handoff.md)
   - Docker is now a bounded expert provider rather than either the default
     installed-user dependency or an internal-only path
 - historical installed-user Docker baseline:
