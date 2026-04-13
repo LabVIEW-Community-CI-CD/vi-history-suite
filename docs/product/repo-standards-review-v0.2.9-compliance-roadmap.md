@@ -34,6 +34,8 @@ instead of living in chat memory.
      - contradiction ledger
      - obsolete-artifact ledger
      - uplift backlog grouped by `REQ`, `ARCH`, `CM`, `DOC`, and `TEST`
+   - retained inventory packet:
+     [repo-standards-review-v0.2.9-pass-2-gap-inventory.md](./repo-standards-review-v0.2.9-pass-2-gap-inventory.md)
 
 3. Pass 3: Information-item package uplift
    - objective: add the missing governed package expected by the released
