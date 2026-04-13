@@ -18,7 +18,7 @@ instead of living in chat memory.
   governance rewrite on this branch
 - pass 3 status: checkpoint 1 complete
 - pass 4 status: complete
-- pass 5 status: checkpoint 17 complete
+- pass 5 status: checkpoint 18 complete
 - pass 5 checkpoint 1 outcome: the runtime-provider and compare-flow
   requirement cluster now separates current implemented baseline truth from the
   active replacement direction
@@ -80,6 +80,10 @@ instead of living in chat memory.
   governing `SRS` and `RTM` now use proof-admission doctrine consistently with
   the already-normalized benchmark-proof ADR, current-state, issue, program,
   test-plan, and CLI surfaces
+- pass 5 checkpoint 18 outcome: the exact-pair proof requirement cluster for
+  `VHS-REQ-449`, `VHS-REQ-450`, and `VHS-REQ-452` now uses
+  proof-admission-specific wording consistently across the governing `SRS`,
+  `RTM`, test-plan, current-state, ADR, and benchmark-proof product packets
 - pass 6 status: checkpoint 3 complete
 - pass 6 checkpoint 1 outcome: `ADR-0030` now uses a GitFlow-aligned file path
   and the live architecture, RTM, wiki-coverage, and release-governance test

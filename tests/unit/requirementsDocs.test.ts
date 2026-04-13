@@ -188,8 +188,12 @@ describe('requirements documentation coherence', () => {
     expect(rtm).toContain('selecting two distinct retained revisions establishes one explicit compare-preflight pair');
     expect(rtm).toContain('canonical proof-admission contract');
     expect(rtm).toContain('effective proof-admission bundle');
+    expect(rtm).toContain('explicit proof-admission override bundles');
+    expect(rtm).toContain('explicit Windows proof-admission runtime paths');
     expect(rtm).not.toContain('canonical runtime-override admission contract');
     expect(rtm).not.toContain('effective runtime override bundle');
+    expect(rtm).not.toContain('explicit runtime override bundles');
+    expect(rtm).not.toContain('explicit Windows runtime override paths');
     expect(rtm).toContain('without a resolved governing container image');
     expect(rtm).not.toContain('without a configured container image');
     expect(rtm).toContain('remains available as a bounded expert lane');

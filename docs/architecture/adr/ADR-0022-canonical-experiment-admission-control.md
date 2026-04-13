@@ -49,8 +49,8 @@ Adopt canonical experiment admission control for `PROGRAM-0003`.
    - explicit Windows executable paths must match governed executable basenames
 3. Exact-pair selected/base hash validation remains a local rule of
    `runGovernedProof report-smoke` and stays governed by `ADR-0021`.
-4. On the canonical Windows host, explicit runtime override paths shall exist
-   before a targeted rerun starts.
+4. On the canonical Windows host, explicit Windows proof-admission runtime
+   paths shall exist before a targeted rerun starts.
 5. Canonical Windows host-native comparison execution shall still fail closed
    when runtime preflight detects:
    - already-running `LabVIEW.exe`, `LabVIEWCLI.exe`, or `LVCompare.exe`

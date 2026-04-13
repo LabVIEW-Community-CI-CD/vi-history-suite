@@ -1118,19 +1118,21 @@
   non-canonical exact-pair diagnosis argument bundles, including partial
   selected/base hashes, incomplete canonical runtime bundles, Windows
   bitness/path contradictions, and wrong executable basenames for explicit
-  runtime override paths
+  proof-admission runtime paths
 - `TEST-UNIT-294`: verify canonical Windows exact-pair proof fails closed when
-  explicit runtime override paths are missing on the canonical host, when
-  stale `LabVIEW.exe` / `LabVIEWCLI.exe` / `LVCompare.exe` processes are
-  already running, or when the selected `LabVIEW.ini`-derived VI Server port
-  already has a listener before launch
+  explicit Windows proof-admission runtime paths are missing on the canonical
+  host, when stale `LabVIEW.exe` / `LabVIEWCLI.exe` / `LVCompare.exe`
+  processes are already running, or when the selected `LabVIEW.ini`-derived
+  VI Server port already has a listener before launch
 - `TEST-UNIT-295`: verify the shared PROGRAM-0003 CLI admission layer rejects
-  contradictory explicit runtime override bundles across exact-pair smoke,
-  dashboard smoke, decision-record, and Windows/Linux benchmark entrypoints
-- `TEST-UNIT-296`: verify canonical Windows explicit runtime override bundles
-  reject Windows path bundles only when they contradict the selected runtime
-  bitness, while the canonical x86 `LabVIEWCLI.exe` plus x64 `LabVIEW.exe`
-  bundle still passes admission control for governed host x64 proof
+  contradictory explicit proof-admission override bundles across exact-pair
+  smoke, dashboard smoke, decision-record, and Windows/Linux benchmark
+  entrypoints
+- `TEST-UNIT-296`: verify canonical Windows explicit proof-admission override
+  bundles reject Windows path bundles only when they contradict the selected
+  runtime bitness, while the canonical x86 `LabVIEWCLI.exe` plus x64
+  `LabVIEW.exe` bundle still passes admission control for governed host x64
+  proof
 - `TEST-UNIT-297`: verify the debt-retirement contract package remains
   machine-checkable: the contract/taxonomy/ledger docs stay discoverable in
   the authority control plane, and the machine-readable debt ledger keeps
@@ -1266,14 +1268,14 @@
 - `TEST-DOC-057`: review current-state, harnesses, PROGRAM-0003, ISSUE-0408,
   and ADR-0021 and confirm canonical exact-pair diagnosis arguments are
   documented as fail-closed on incomplete selected/base hashes, incomplete
-  canonical runtime bundles, or contradictory Windows bitness/runtime override
-  paths, rather than allowing ambiguous experiment launches to proceed
+  canonical runtime bundles, or contradictory Windows bitness/proof-admission
+  runtime paths, rather than allowing ambiguous experiment launches to proceed
 - `TEST-DOC-058`: review current-state, harnesses, canonical exact-pair
   diagnosis guidance, PROGRAM-0003, ISSUE-0408, and ADR-0021 and confirm the
   canonical Windows proof surface is documented as requiring existing explicit
-  runtime paths plus a clean host runtime surface before launch, including no
-  stale LabVIEW-related processes and no preexisting listener on the selected
-  `LabVIEW.ini` VI Server port
+  Windows proof-admission runtime paths plus a clean host runtime surface
+  before launch, including no stale LabVIEW-related processes and no
+  preexisting listener on the selected `LabVIEW.ini` VI Server port
 - `TEST-DOC-059`: review current-state, harnesses, canonical exact-pair
   diagnosis guidance, PROGRAM-0003, ISSUE-0408, and ADR-0022 and confirm the
   PROGRAM-0003 proof-admission contract for explicit runtime override inputs
@@ -1282,8 +1284,8 @@
   diagnosis entrypoint
 - `TEST-DOC-060`: review current-state, harnesses, canonical exact-pair
   diagnosis guidance, PROGRAM-0003, ISSUE-0408, and ADR-0022 and confirm
-  explicit Windows runtime override bundles are documented as invalid when
-  they mix x86 and x64 paths, even when `--bitness` is omitted
+  explicit Windows proof-admission override bundles are documented as invalid
+  when they mix x86 and x64 paths, even when `--bitness` is omitted
 - `TEST-DOC-061`: review README, current-state, documentation workbench,
   wiki-authority map, debt-retirement contract, debt taxonomy, and ADR-0023
   and confirm the repo documents one no-silent-debt contract instead of

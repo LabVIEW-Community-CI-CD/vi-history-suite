@@ -69,7 +69,7 @@ Windows container provider rather than the host-native surface.
 - `--selected-hash` and `--base-hash` must be supplied together.
 - Both hashes must be full 40-character git hashes.
 - Shared `PROGRAM-0003` proof-admission validation still applies here:
-  - explicit runtime override paths require matching `--platform` and
+  - explicit proof-admission runtime paths require matching `--platform` and
     canonical `CreateComparisonReport` path bundles
   - CLI arguments, environment variables, and subcommand-local defaults are
     validated as one effective runtime bundle before execution begins
@@ -83,10 +83,10 @@ Windows container provider rather than the host-native surface.
 - Explicit runtime paths must match their governed executable basenames:
   - `LabVIEWCLI.exe`
   - `LabVIEW.exe`
-- On the canonical Windows host, explicit runtime override paths must exist
-  before the harness runs.
-- Explicit Windows runtime override paths must resolve to one coherent x86 or
-  x64 bundle even when `--bitness` is omitted.
+- On the canonical Windows host, explicit Windows proof-admission runtime
+  paths must exist before the harness runs.
+- Explicit Windows proof-admission runtime paths must resolve to one coherent
+  x86 or x64 bundle even when `--bitness` is omitted.
 - Windows `--bitness` must not contradict explicit
   `Program Files` / `Program Files (x86)` runtime paths.
 - Canonical Windows host-native diagnosis requires a clean host runtime

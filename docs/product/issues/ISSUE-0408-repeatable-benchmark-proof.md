@@ -155,9 +155,9 @@ Current retained benchmark truth at closure:
   Windows bitness/path contradictions are rejected before they can contaminate
   retained benchmark blocker evidence
 - `VHS-REQ-450` now governs canonical Windows host proof hygiene too: explicit
-  Windows runtime override paths must exist before a targeted rerun starts,
-  host-native Windows comparison execution now blocks before launch when stale
-  `LabVIEW.exe` / `LabVIEWCLI.exe` / `LVCompare.exe` sessions or a
+  Windows proof-admission runtime paths must exist before a targeted rerun
+  starts, host-native Windows comparison execution now blocks before launch
+  when stale `LabVIEW.exe` / `LabVIEWCLI.exe` / `LVCompare.exe` sessions or a
   preexisting listener on the selected `LabVIEW.ini`-derived VI Server port
   would contaminate the rerun, and the current canonical machine is now
   documented as exposing only the x86 `LabVIEWCLI.exe` path locally even
@@ -166,14 +166,14 @@ Current retained benchmark truth at closure:
   public `runGovernedProof` surface and its `dashboard-smoke`,
   `decision-record`, `report-smoke`, `benchmark-linux`, and
   `benchmark-windows` subcommands now share one canonical proof-admission
-  validation layer for explicit runtime override bundles, so contradictory
-  explicit runtime bundles are rejected before they can contaminate retained
-  benchmark blocker evidence
+  validation layer for explicit proof-admission override bundles, so
+  contradictory explicit proof-admission bundles are rejected before they can
+  contaminate retained benchmark blocker evidence
 - `VHS-REQ-452` now governs canonical Windows bundle coherence too: explicit
-  Windows runtime override bundles now fail closed only when they contradict
-  the selected runtime bitness, while the canonical x86 `LabVIEWCLI.exe`
-  plus x64 `LabVIEW.exe` bundle is admitted when that x64 LabVIEW 2026
-  surface is the selected governed host runtime
+  Windows proof-admission override bundles now fail closed only when they
+  contradict the selected runtime bitness, while the canonical x86
+  `LabVIEWCLI.exe` plus x64 `LabVIEW.exe` bundle is admitted when that x64
+  LabVIEW 2026 surface is the selected governed host runtime
 - `VHS-REQ-457..458` now govern the effective proof-admission bundle too:
   governed proof subcommands validate the effective runtime bundle after CLI
   arguments, environment variables, and subcommand-local defaults are
