@@ -104,6 +104,8 @@ describe('execution-policy control plane', () => {
     expect(currentState).toContain(
       '`TRANCHE-016`: Host-default LabVIEWCLI, expert Docker provider, and explicit compare workflow'
     );
+    expect(currentState).toContain('exact Windows host-runtime preflight');
+    expect(currentState).toContain('remaining work is reader-surface normalization');
     expect(currentState).toContain('`TRANCHE-012`: Post-release sustainment and release cadence');
     expect(currentState).toContain(
       '[PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)'
@@ -176,6 +178,8 @@ describe('execution-policy control plane', () => {
     expect(program).toContain('Active post-release program.');
     expect(program).toContain('local `LabVIEWCLI`');
     expect(program).toContain('TRANCHE-016');
+    expect(program).toContain('Windows exact-runtime preflight is now landed');
+    expect(program).toContain('remaining work on this program is now narrower');
     expect(program).toContain('installed manifest/settings');
     expect(program).toContain('explicit `Compare` action');
     expect(program).toContain('expert Docker provider');
@@ -183,6 +187,8 @@ describe('execution-policy control plane', () => {
     expect(issueCurrent).toContain('TRANCHE-013');
     expect(issueCurrent).toContain('TRANCHE-015');
     expect(issueNext).toContain('Active post-release issue.');
+    expect(issueNext).toContain('generated settings CLI, exact Windows');
+    expect(issueNext).toContain('normalize reader and packaged/public documentation surfaces');
     expect(issueNext).toContain('provider/version/bitness');
     expect(issueNext).toContain('explicit compare preflight state');
     expect(issueNext).toContain('VS Code warning notification');

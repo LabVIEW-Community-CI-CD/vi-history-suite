@@ -20,8 +20,11 @@ Activation facts:
   provider
 - Docker is no longer the default installed-user destination for this
   surface; it survives only as a generated-CLI-selected expert path
-- the current codebase already contains internal runtime-locator support that
-  can be refocused around local `LabVIEWCLI` resolution
+- the current branch now lands the generated settings CLI, exact Windows
+  host-runtime preflight, and explicit compare-preflight workflow for that
+  replacement contract
+- the exact released line is still Docker-only until that branch
+  implementation is published and rerun through public acceptance
 
 Round 1 is retained in this file so subsequent rounds can continue from git
 history instead of chat memory.
@@ -47,7 +50,7 @@ history instead of chat memory.
 ## Non-Goals
 
 - claiming the current released package already implements the replacement
-  contract before the runtime and UI slices land
+  contract before the branch implementation is published
 - expanding the installed-user contract into path-picking, direct
   image-family selection, or a general panel-side provider picker
 - shipping a prebuilt external settings CLI payload inside the VSIX
@@ -91,9 +94,13 @@ history instead of chat memory.
 
 ## Current Active Slice
 
-- finish exact single-runtime host preflight by failing closed on ambiguity,
-  not only on missing required settings
-- land the explicit compare-preflight workflow after second commit selection
+- keep the current released Docker-only installed contract explicit until the
+  branch replacement is truthfully published
+- normalize reader and packaged/public documentation surfaces around the now
+  landed generated settings CLI, exact Windows host-runtime preflight, and
+  explicit compare-preflight workflow
+- prepare the later `PROGRAM-0002` public acceptance handoff once the
+  replacement contract is ready for publication
 
 ## Round 1: User Proposal Facts
 

@@ -210,17 +210,19 @@ Current active and recently closed tranches:
 - `TRANCHE-016`: Host-default LabVIEWCLI, expert Docker provider, and explicit compare workflow
 - active issue: [ISSUE-0412 Installed Local LabVIEWCLI Selection And Explicit Compare](./issues/ISSUE-0412-installed-local-labviewcli-selection-and-explicit-compare.md)
 - active execution program: [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
-  - current first slice:
-  - rewrite the active installed-user direction around host-default Windows
-    local `LabVIEWCLI` plus one bounded expert Docker provider selected
-    through the generated CLI
   - keep the current exact released Docker-only contract explicit until the
-    replacement is actually implemented
-  - land generated provider selection with explicit provider, version, and
-    bitness facts, with version plus bitness required across both provider
-    classes
-  - replace second-selection auto-run with an explicit compare preflight that
-    shows provider, version, and bitness before the explicit compare action
+    replacement is actually published
+  - branch implementation now includes generated provider selection with
+    explicit provider, version, and bitness facts, with version plus bitness
+    required across both provider classes
+  - branch implementation now includes exact Windows host-runtime preflight
+    that resolves one matching local `LabVIEWCLI`-backed runtime and fails
+    closed on missing, ambiguous, or incompatible resolution
+  - branch implementation now includes explicit compare preflight that shows
+    selected/base commit plus provider, version, and bitness before the
+    explicit compare action
+  - remaining work is reader-surface normalization and later public acceptance
+    rerun after the replacement contract is truthfully published
 - `TRANCHE-012`: Post-release sustainment and release cadence
 - active issue: [ISSUE-0409 Post-Release Sustainment And Release Cadence](./issues/ISSUE-0409-post-release-sustainment-and-release-cadence.md)
 - active execution program: [PROGRAM-0004: Post-Release Sustainment And Release Cadence](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)
@@ -326,14 +328,15 @@ Post-release tranches:
   - active execution program: [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
   - the current exact released installed extension is still Docker-only, but
     that is now historical baseline truth rather than the active destination
-  - the control-plane reset, installed manifest/settings slice, and generated
-    provider-selection CLI slice are landed
-  - required-settings host runtime preflight is partially landed, but exact
-    single-runtime ambiguity handling is still open
+  - the control-plane reset, installed manifest/settings slice, generated
+    provider-selection CLI slice, exact Windows host-runtime preflight, and
+    explicit compare preflight are now landed on this branch
   - expert Docker provider selection now flows through the generated CLI and
     the governed engine-derived image-family admission path
-  - the remaining active slices are exact single-runtime ambiguity handling,
-    explicit compare preflight, and installed-user warning behavior
+  - installed-user warning behavior is now landed with compare-preflight block
+    plus VS Code warning surfaces
+  - the remaining active slices are reader-surface normalization, packaged
+    truth alignment, and later public acceptance handoff after publication
   - Docker is now a bounded expert provider rather than either the default
     installed-user dependency or an internal-only path
 - historical installed-user Docker baseline:

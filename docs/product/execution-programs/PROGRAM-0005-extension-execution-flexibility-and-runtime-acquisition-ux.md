@@ -12,7 +12,8 @@ Current facts:
 - `TRANCHE-015` landed the current released first-run Docker onboarding and
   missing-Docker fail-closed guidance
 - the exact released installed extension still depends on Docker for
-  comparison generation while the replacement slices are unlanded
+  comparison generation while the replacement branch implementation remains
+  unpublished
 - `TRANCHE-016` is the active tranche for replacing that installed-user
   contract with a host-default Windows local `LabVIEWCLI` workflow plus a
   bounded expert Docker provider
@@ -22,9 +23,17 @@ Current facts:
 - the generated settings CLI now persists provider, version, and bitness, and
   that provider selection now flows into the governed host-default and Docker
   runtime-admission path
-- the required-settings runtime preflight is partially landed, but exact
-  single-runtime ambiguity handling and the explicit compare workflow are
-  still open
+- the Windows exact-runtime preflight is now landed: installed compare
+  resolves one exact version+bitness LabVIEW executable plus matching
+  `LabVIEWCLI` surface and fails closed on missing, ambiguous, or
+  incompatible host resolution
+- the explicit compare workflow is now landed on this branch: second-selection
+  auto-run is removed, compare preflight shows selected/base commit plus
+  provider/version/bitness, and compare stays blocked until explicit
+  preflight-ready execution
+- remaining work on this program is now narrower: reader-surface
+  normalization, packaged/public truth alignment, and later public acceptance
+  handoff after this replacement contract is actually published
 - `PROGRAM-0002` still owns the later public acceptance rerun once the next
   installed-user contract is actually published
 

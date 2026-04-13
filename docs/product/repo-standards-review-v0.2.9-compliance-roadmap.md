@@ -44,6 +44,12 @@ instead of living in chat memory.
 - pass 6 checkpoint 3 outcome: the active execution RTM and test-plan traces
   now point at `ADR-0038` as active doctrine, and the branch keeps
   `VHS-REQ-532..540` promoted as implemented branch truth
+- pass 7 status: checkpoint 1 complete
+- pass 7 checkpoint 1 outcome: the active reader/control-plane status surfaces
+  now reflect that generated provider selection, exact Windows host-runtime
+  preflight, and explicit compare preflight are landed on this branch, while
+  publication-facing normalization and later public acceptance handoff remain
+  the open work
 
 ## Pass Order
 
@@ -155,6 +161,11 @@ instead of living in chat memory.
 7. Pass 7: Missing-document and proof-surface uplift
    - objective: add or repair the remaining documentation and proof surfaces
      needed for compliance
+   - status: checkpoint 1 complete on this branch
+   - checkpoint 1 scope:
+     - normalize the active status blocks in current-state, `PROGRAM-0005`,
+       and `ISSUE-0412` so they stop understating the implemented branch truth
+       after `VHS-REQ-532..540` landed
    - likely scope:
      - CM and release-control gaps outside pass 1
      - test-plan gaps
