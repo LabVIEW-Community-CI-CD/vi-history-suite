@@ -1305,12 +1305,12 @@
   repo documents effective runtime override bundle validation rather than a raw
   CLI-only rule, including the removal of hidden explicit Windows defaults
 - `TEST-DOC-065`: review README, current-state, extension-execution-policy,
-  ADR-0025, PROGRAM-0005, ISSUE-0410, ISSUE-0412, and the debt ledger and
-  confirm the current released Docker-only installed contract remains explicit
-  while the active control plane now promotes the host-default
-  local-`LabVIEWCLI` plus expert-Docker replacement direction and no longer
-  misstates Windows auto/Docker-first behavior as the active installed-user
-  contract
+  ADR-0025, ADR-0038, PROGRAM-0005, ISSUE-0410, ISSUE-0412, and the debt
+  ledger and confirm the current released Docker-only installed contract
+  remains explicit while `ADR-0038` and the active control plane now promote
+  the host-default local-`LabVIEWCLI` plus expert-Docker replacement
+  direction without mis-stating the released Docker-first behavior as the
+  active installed-user contract
 - `TEST-UNIT-300`: verify the execution-policy control-plane package keeps
   the no-bypass rule, the historical Docker-only execution-request-validation
   baseline, and the active host-default local-`LabVIEWCLI` plus expert-Docker
@@ -1323,12 +1323,11 @@
   comparable-prefix packet selection prefer the latest eligible timestamped
   proof within one proof root
 - `TEST-DOC-067`: review extension-execution-policy, ADR-0025, ADR-0026,
-  PROGRAM-0005, ISSUE-0410, ISSUE-0412, current-state, and the debt ledger and
-  confirm the authority package now keeps canonical Docker-only request
-  validation explicit as historical implemented truth for the released line
-  while promoting the active host-default local-`LabVIEWCLI` plus
-  expert-Docker transition without
-  claiming it is already shipped
+  ADR-0038, PROGRAM-0005, ISSUE-0410, ISSUE-0412, current-state, and the debt
+  ledger and confirm the authority package now keeps canonical Docker-only
+  request validation explicit as historical implemented truth for the released
+  line while `ADR-0038` governs the active host-default local-`LabVIEWCLI`
+  plus expert-Docker transition without claiming it is already shipped
 - `TEST-DOC-069`: review README, current-state, harnesses, PROGRAM-0003, and
   ISSUE-0408 and confirm contaminated Windows benchmark-image reruns are
   documented as fail-closed `not-available` benchmark truth with immutable
@@ -1788,11 +1787,14 @@
   and confirm the control plane now keeps the current released Docker-only
   installed contract explicit while promoting `TRANCHE-016` /
   `ISSUE-0412` as the active direction
-- `TEST-DOC-105`: review SRS, RTM, test plan, extension-execution-policy, and
-  ISSUE-0412 and confirm the planned installed-user replacement contract is
-  now explicit around required LabVIEW version + bitness settings, host-default
-  local `LabVIEWCLI`, bounded expert Docker admission through the generated
-  CLI, explicit compare preflight, and panel + warning fail-closed behavior
+- `TEST-DOC-105`: review SRS, RTM, test plan, extension-execution-policy,
+  `ADR-0038`, and ISSUE-0412 and confirm the active develop-line
+  installed-user replacement contract is explicit and truthfully traced around
+  required LabVIEW version + bitness settings, host-default local
+  `LabVIEWCLI`, bounded expert Docker admission through the generated CLI,
+  explicit compare preflight, panel + warning fail-closed behavior, and the
+  remaining planned Windows exact-runtime-selection refinement under
+  `VHS-REQ-532`
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

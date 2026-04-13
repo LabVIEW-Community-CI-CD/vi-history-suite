@@ -22,6 +22,8 @@ describe('repo-standards-review compliance docs', () => {
     expect(roadmap).toContain(
       '[repo-standards-review-v0.2.9-pass-4-contradiction-ledger.md](./repo-standards-review-v0.2.9-pass-4-contradiction-ledger.md)'
     );
+    expect(roadmap).toContain('pass 6 checkpoint 3 outcome');
+    expect(roadmap).toContain('`VHS-REQ-532`');
     expect(ledger).toContain('CONTRA-001');
     expect(ledger).toContain('CONTRA-002');
     expect(ledger).toContain('CONTRA-003');

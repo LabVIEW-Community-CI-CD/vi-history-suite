@@ -171,6 +171,8 @@ describe('execution-policy control plane', () => {
     expect(testPlan).toContain('TEST-DOC-102');
     expect(testPlan).toContain('TEST-DOC-104');
     expect(testPlan).toContain('TEST-DOC-105');
+    expect(testPlan).toContain('ADR-0038');
+    expect(testPlan).toContain('VHS-REQ-532');
     expect(program).toContain('Active post-release program.');
     expect(program).toContain('local `LabVIEWCLI`');
     expect(program).toContain('TRANCHE-016');

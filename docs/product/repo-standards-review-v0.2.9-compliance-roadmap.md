@@ -28,7 +28,7 @@ instead of living in chat memory.
 - pass 5 checkpoint 3 outcome: the live VI History panel now uses explicit
   compare preflight with a dedicated `Compare` action, and the command path
   blocks compare generation when preflight is not ready
-- pass 6 status: checkpoint 1 complete
+- pass 6 status: checkpoint 3 complete
 - pass 6 checkpoint 1 outcome: `ADR-0030` now uses a GitFlow-aligned file path
   and the live architecture, RTM, wiki-coverage, and release-governance test
   surfaces all point at the corrected path
@@ -37,6 +37,10 @@ instead of living in chat memory.
   host-default plus expert-Docker contract through new `ADR-0038`, while
   `ADR-0025` and `ADR-0026` are retained explicitly as superseded historical
   baseline decisions
+- pass 6 checkpoint 3 outcome: the active execution RTM and test-plan traces
+  now point at `ADR-0038` as active doctrine, and the branch keeps
+  `VHS-REQ-532` explicitly planned while `VHS-REQ-533..540` remain promoted as
+  implemented branch truth
 
 ## Pass Order
 
@@ -116,7 +120,7 @@ instead of living in chat memory.
 6. Pass 6: Architecture and ADR refactor
    - objective: align the large ADR package to the released skill's current
      architecture expectations
-   - status: checkpoint 2 complete on this branch
+   - status: checkpoint 3 complete on this branch
    - checkpoint 1 scope:
      - rename `ADR-0030` to remove the retired `gitflow-lite` filename drift
      - update architecture overview, RTM, wiki coverage, and release-governance
@@ -128,6 +132,12 @@ instead of living in chat memory.
        Docker-only baseline decisions
      - realign the primary architecture overview and execution-policy docs to
        the active ADR rather than the historical baseline
+   - checkpoint 3 scope:
+     - retrace the active execution RTM and test-plan review surfaces through
+       `ADR-0038`
+     - keep `VHS-REQ-532` explicitly planned until Windows exact-runtime
+       selection handles the remaining ambiguous/incompatible refinement
+       instead of over-promoting the row early
    - focus:
      - keep the architecture description as primary truth
      - keep ADRs as retained decision rationale where they still add value
@@ -161,11 +171,12 @@ instead of living in chat memory.
 
 ## Immediate Next Move
 
-Continue pass 6 on the same branch from checkpoint 2:
+Resume the requirement-system cleanup from the now-stable pass-6 execution
+doctrine package:
 
-- use the narrowed contradiction ledger and active ADR package to find any
-  remaining live architecture/package contradictions beyond the new execution
-  doctrine split
-- keep broader RTM and test-plan cleanup sequenced behind the architecture
-  normalization pass
-- leave large-scale requirement-row cleanup for the dedicated later passes
+- implement the remaining Windows exact-runtime-selection refinement behind
+  `VHS-REQ-532`
+- widen the requirement-row cleanup beyond the targeted runtime-provider
+  cluster now that ADR and traceability drift is narrowed out
+- keep later missing-document and proof-surface uplift sequenced behind those
+  requirement/package corrections
