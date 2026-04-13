@@ -259,6 +259,58 @@ The implementation surface is split today:
   installed-user workflow should fail closed until both required settings are
   present and resolvable.
 
+## Round 6: Docker-Selectable CLI Proposal Reopening
+
+- Windows Docker image acquisition should be treated the same way as Linux
+  Docker image acquisition, including cold-pull behavior.
+- The settings CLI should be able to select Docker explicitly.
+- If Docker is not explicitly selected, execution should default to the host
+  runtime path.
+- The default NI Docker images support only 64-bit LabVIEW on both Linux and
+  Windows.
+- The bitness flag should remain required even when Docker is selected.
+- If the user selects Docker plus 32-bit, the product should inform the user
+  that the Docker image does not support 32-bit LabVIEW.
+
+## Round 6: Contract Impact
+
+- This proposal reopens two decisions that were previously treated as settled:
+  - Docker was being constrained to `internal-only`.
+  - Installed-user runtime selection was being modeled as `settings-only`
+    LabVIEW version plus bitness, without a user-facing provider switch.
+- The proposal now points toward a user-facing provider-selection contract with
+  host as the default path and Docker as an explicit opt-in path.
+- That means the next roadmap cannot be considered stable until provider
+  selection, CLI scope, and Docker-support boundaries are re-settled.
+
+## Round 6: First-Round Questions
+
+1. Do you want Docker to become a supported extension-user execution provider
+   again, or do you want it to remain primarily an expert or maintainer path
+   that is only exposed through the CLI?
+2. When you say “use the CLI to be able to select Docker explicitly,” do you
+   mean:
+   - the same generated settings CLI writes a provider selection into user
+     settings, or
+   - a one-shot command-line flag chooses Docker only for the current run?
+3. If Docker is not selected, should the default host path be:
+   - local `LabVIEWCLI` on Windows only, or
+   - local `LabVIEWCLI` anywhere the host runtime can be resolved?
+4. Do you still want LabVIEW version and bitness to remain required even for
+   the host path, with no auto-pick fallback?
+5. When Docker is explicitly selected with 32-bit LabVIEW, should the product:
+   - fail closed before compare starts, or
+   - silently fall back to host?
+6. If Docker is explicitly selected, should version still matter to the user
+   contract when the NI image is effectively one governed 64-bit runtime
+   surface?
+7. Should Windows and Linux Docker cold-pull behavior be presented as the same
+   user-facing acquisition flow, or do you want Windows to stay visibly
+   distinguished because it depends on Windows-container mode?
+8. Do you want this provider-selection choice exposed only through the CLI, or
+   also visible in the compare preflight section before the explicit
+   `Compare` action?
+
 ## Round 3: Recommendations
 
 1. Replace the public installed-user settings surface with exactly two
