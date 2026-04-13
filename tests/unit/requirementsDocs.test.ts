@@ -186,6 +186,10 @@ describe('requirements documentation coherence', () => {
       'executionMode, labviewCliPath, labviewExePath, windowsContainerImage, and bitness'
     );
     expect(rtm).toContain('selecting two distinct retained revisions establishes one explicit compare-preflight pair');
+    expect(rtm).toContain('canonical proof-admission contract');
+    expect(rtm).toContain('effective proof-admission bundle');
+    expect(rtm).not.toContain('canonical runtime-override admission contract');
+    expect(rtm).not.toContain('effective runtime override bundle');
     expect(rtm).toContain('without a resolved governing container image');
     expect(rtm).not.toContain('without a configured container image');
     expect(rtm).toContain('remains available as a bounded expert lane');

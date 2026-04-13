@@ -18,7 +18,7 @@ instead of living in chat memory.
   governance rewrite on this branch
 - pass 3 status: checkpoint 1 complete
 - pass 4 status: complete
-- pass 5 status: checkpoint 16 complete
+- pass 5 status: checkpoint 17 complete
 - pass 5 checkpoint 1 outcome: the runtime-provider and compare-flow
   requirement cluster now separates current implemented baseline truth from the
   active replacement direction
@@ -76,6 +76,10 @@ instead of living in chat memory.
   describes `runGovernedProof report-smoke` flags as bounded proof-admission
   overrides rather than general runtime-selection overrides, and the matching
   RTM and test-plan wording traces that narrower proof-only contract
+- pass 5 checkpoint 17 outcome: `VHS-REQ-451` and `VHS-REQ-457` in the
+  governing `SRS` and `RTM` now use proof-admission doctrine consistently with
+  the already-normalized benchmark-proof ADR, current-state, issue, program,
+  test-plan, and CLI surfaces
 - pass 6 status: checkpoint 3 complete
 - pass 6 checkpoint 1 outcome: `ADR-0030` now uses a GitFlow-aligned file path
   and the live architecture, RTM, wiki-coverage, and release-governance test
@@ -172,7 +176,7 @@ instead of living in chat memory.
 5. Pass 5: Requirement-system refactor
    - objective: normalize the large requirement corpus instead of patching it
      piecemeal
-  - status: checkpoint 16 complete on this branch
+  - status: checkpoint 17 complete on this branch
    - checkpoint 1 scope:
      - separate the current implemented checkbox auto-run workflow from the
        planned explicit compare replacement
@@ -264,6 +268,12 @@ instead of living in chat memory.
       explicit only as bounded proof-admission inputs
     - retrace the matching RTM and test-plan wording to that narrower
       proof-only contract
+  - checkpoint 17 scope:
+    - normalize `VHS-REQ-451` and `VHS-REQ-457` so the governing requirement
+      rows describe shared proof-admission and effective proof-admission
+      bundle validation rather than the older runtime-override doctrine
+    - retrace the matching RTM and requirement-doc guards to that narrower
+      proof-admission wording
    - focus:
      - split `SyRS` versus `SRS` ownership cleanly
      - merge duplicates
