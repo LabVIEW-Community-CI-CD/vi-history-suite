@@ -76,12 +76,10 @@
 - Runtime dependencies:
   - Node runtime bundled with VS Code extension host
   - Git executable on PATH
-  - optional LabVIEW 2026 Q1 host-native tooling for compatible Windows x32 or
-    x64 execution when the selected execution mode permits host-native launch
-    and the host runtime surface is conflict-free
-  - optional Windows container runtime for governed isolated execution when
-    the selected execution mode is `docker-only` or when `auto` detects a
-    conflicting host LabVIEW 2026 session or governed VI Server collision
+  - optional Windows local LabVIEW 2026 plus matching `LabVIEWCLI` tooling for
+    the selected version and bitness when the active provider is host
+  - optional Docker engine plus the governed Windows or Linux image family
+    when the bounded expert Docker provider is selected
   - optional Linux VS Code runtime bootstrap for the governed fallback
     extension-host proof lane
   - dedicated docs-authoring image for documentation-package iteration
@@ -101,8 +99,12 @@
 - Known tradeoffs:
   - Git CLI requires Git on PATH
   - non-file URI fallback is less I/O efficient than local partial reads
-  - Windows 64-bit isolated container execution is the preferred extension-user
-    isolation path and is now wired into live report generation
+  - host-default installed compare now depends on matching local LabVIEW plus
+    `LabVIEWCLI` resolution for the selected version and bitness
+  - expert Docker remains available, but only through the generated settings
+    CLI and engine-derived image-family selection
+  - the exact released Docker-only installed baseline is retained separately
+    from the active develop-line installed-user architecture
   - the first-class multi-report dashboard is implemented as a retained
     pair-archive and concentration packet surface, while additional review UX
     tuning remains a follow-on slice
@@ -112,10 +114,9 @@
 - documentation-package iteration now has its own published workbench image,
   separate from extension runtime proof lanes
 - extension execution policy is now governed separately from bitness
-  preference, with future `auto` / `host-only` / `docker-only` mode behavior
-  documented in a dedicated product policy and ADR package, alongside one
-  canonical effective execution-request validation boundary before provider
-  selection or Docker acquisition begins
+  preference, with host as the default installed provider, Docker retained as
+  a bounded expert path, and explicit compare preflight documenting one
+  canonical execution-request validation boundary before runtime work begins
 - published wiki pages now also drive a version-matched bundled user-doc
   surface that can be opened from the installed extension without repo access
 - cross-repo navigation is governed from the main repo docs package and
@@ -174,9 +175,9 @@
 - [ADR-0024](./adr/ADR-0024-canonical-effective-runtime-override-validation.md):
   Canonical effective runtime-override validation
 - [ADR-0025](./adr/ADR-0025-transparent-extension-execution-flexibility-and-runtime-acquisition-ux.md):
-  Transparent extension execution flexibility and runtime acquisition UX
+  Historical exact released Docker-only installed execution baseline
 - [ADR-0026](./adr/ADR-0026-canonical-extension-execution-request-validation.md):
-  Canonical extension execution-request validation
+  Historical exact released Docker-only execution-request validation baseline
 - [ADR-0027](./adr/ADR-0027-public-github-facade-and-user-wiki-vs-internal-gitlab-control-plane.md):
   Public GitHub facade and user-wiki boundary versus the internal GitLab control plane
 - [ADR-0028](./adr/ADR-0028-governed-authority-to-public-source-promotion-system.md):
@@ -191,3 +192,13 @@
   Public facade GitHub workflow responsibility matrix
 - [ADR-0033](./adr/ADR-0033-hosted-automation-governance-matrix-and-protection-semantics.md):
   Hosted automation governance matrix and protection semantics
+- [ADR-0034](./adr/ADR-0034-public-codespaces-public-repo-bootstrap-and-default-branch-resolution.md):
+  Public Codespaces public-repo bootstrap and default-branch resolution
+- [ADR-0035](./adr/ADR-0035-review-ready-candidate-publication-boundary-and-dirty-public-surface-handling.md):
+  Review-ready candidate publication boundary and dirty public-surface handling
+- [ADR-0036](./adr/ADR-0036-vscode-marketplace-publication-and-installed-user-entry-surface.md):
+  VS Code Marketplace publication and installed-user entry surface
+- [ADR-0037](./adr/ADR-0037-expert-agent-review-gate-for-public-candidates.md):
+  Expert-agent review gate for public candidates
+- [ADR-0038](./adr/ADR-0038-host-default-local-labviewcli-bounded-expert-docker-and-explicit-compare-preflight.md):
+  Active host-default local `LabVIEWCLI`, bounded expert Docker, and explicit compare preflight

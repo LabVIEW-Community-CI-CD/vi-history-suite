@@ -257,8 +257,11 @@ The current broader product work is split intentionally:
 - the current released Docker-only installed baseline remains retained
   historically under `ISSUE-0410` / `TRANCHE-013` / `TRANCHE-015`
 
-Canonical validation of the effective execution request for this future work is
-governed by `ADR-0026`.
+Canonical validation of the active installed execution request is governed by
+`ADR-0038`.
+
+`ADR-0025` and `ADR-0026` remain retained only as the exact released
+Docker-only baseline decisions.
 
 `DEBT-0006` is now retired in `docs/product/debt-ledger.json`.
 
@@ -270,5 +273,6 @@ governed by `ADR-0026`.
 - [PROGRAM-0005](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
 - [ISSUE-0412](./issues/ISSUE-0412-installed-local-labviewcli-selection-and-explicit-compare.md)
 - [ISSUE-0410](./issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md)
+- [ADR-0038](../architecture/adr/ADR-0038-host-default-local-labviewcli-bounded-expert-docker-and-explicit-compare-preflight.md)
 - [ADR-0025](../architecture/adr/ADR-0025-transparent-extension-execution-flexibility-and-runtime-acquisition-ux.md)
 - [ADR-0026](../architecture/adr/ADR-0026-canonical-extension-execution-request-validation.md)

@@ -32,6 +32,11 @@ instead of living in chat memory.
 - pass 6 checkpoint 1 outcome: `ADR-0030` now uses a GitFlow-aligned file path
   and the live architecture, RTM, wiki-coverage, and release-governance test
   surfaces all point at the corrected path
+- pass 6 checkpoint 2 outcome: the architecture package now distinguishes the
+  historical Docker-only installed baseline from the active develop-line
+  host-default plus expert-Docker contract through new `ADR-0038`, while
+  `ADR-0025` and `ADR-0026` are retained explicitly as superseded historical
+  baseline decisions
 
 ## Pass Order
 
@@ -111,11 +116,18 @@ instead of living in chat memory.
 6. Pass 6: Architecture and ADR refactor
    - objective: align the large ADR package to the released skill's current
      architecture expectations
-   - status: checkpoint 1 complete on this branch
+   - status: checkpoint 2 complete on this branch
    - checkpoint 1 scope:
      - rename `ADR-0030` to remove the retired `gitflow-lite` filename drift
      - update architecture overview, RTM, wiki coverage, and release-governance
        tests to the corrected ADR path
+   - checkpoint 2 scope:
+     - introduce an active ADR for host-default local `LabVIEWCLI`, bounded
+       expert Docker, and explicit compare preflight
+     - downgrade `ADR-0025` and `ADR-0026` to superseded historical
+       Docker-only baseline decisions
+     - realign the primary architecture overview and execution-policy docs to
+       the active ADR rather than the historical baseline
    - focus:
      - keep the architecture description as primary truth
      - keep ADRs as retained decision rationale where they still add value
@@ -149,10 +161,11 @@ instead of living in chat memory.
 
 ## Immediate Next Move
 
-Continue pass 6 on the same branch from checkpoint 1:
+Continue pass 6 on the same branch from checkpoint 2:
 
-- use the narrowed contradiction ledger to find any remaining live ADR/package
-  contradictions beyond the `ADR-0030` rename
+- use the narrowed contradiction ledger and active ADR package to find any
+  remaining live architecture/package contradictions beyond the new execution
+  doctrine split
 - keep broader RTM and test-plan cleanup sequenced behind the architecture
   normalization pass
 - leave large-scale requirement-row cleanup for the dedicated later passes

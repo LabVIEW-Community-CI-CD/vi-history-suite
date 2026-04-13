@@ -74,6 +74,9 @@ describe('execution-policy control plane', () => {
     const adr0026 = readText(
       'docs/architecture/adr/ADR-0026-canonical-extension-execution-request-validation.md'
     );
+    const adr0038 = readText(
+      'docs/architecture/adr/ADR-0038-host-default-local-labviewcli-bounded-expert-docker-and-explicit-compare-preflight.md'
+    );
 
     expect(manifest.contributes?.configuration?.properties).not.toHaveProperty(
       'viHistorySuite.executionMode'
@@ -184,13 +187,25 @@ describe('execution-policy control plane', () => {
     expect(sustainmentProgram).toContain('Active post-release program.');
     expect(sustainmentProgram).toContain('That work remains explicit under active `PROGRAM-0005`');
     expect(adr0006).toContain('superseded by ADR-0025');
-    expect(adr0025).toContain('Docker-Only Installed Extension Execution');
+    expect(policy).toContain('Canonical validation of the active installed execution request is governed by');
+    expect(policy).toContain('`ADR-0038`');
+    expect(policy).toContain('`ADR-0025` and `ADR-0026` remain retained only as the exact released');
+    expect(adr0025).toContain('## Status');
+    expect(adr0025).toContain('Superseded');
+    expect(adr0025).toContain('superseded by `ADR-0038`');
+    expect(adr0025).toContain('exact released `v1.2.2` Docker-only installed baseline');
     expect(adr0025).toContain('executionMode');
-    expect(adr0025).toContain('some Windows users can run only Linux containers');
-    expect(adr0025).toContain('the current Docker daemon engine');
-    expect(adr0026).toContain('Canonical Docker-Only Installed Execution-Request Validation');
-    expect(adr0026).toContain('current Docker daemon engine');
+    expect(adr0026).toContain('## Status');
+    expect(adr0026).toContain('Superseded');
+    expect(adr0026).toContain('superseded by `ADR-0038`');
+    expect(adr0026).toContain('exact released `v1.2.2` Docker-only validation baseline');
     expect(adr0026).toContain('There is no installed-execution bypass path');
+    expect(adr0038).toContain('# ADR-0038: Host-Default Local LabVIEWCLI, Bounded Expert Docker, And Explicit Compare Preflight');
+    expect(adr0038).toContain('Host is the default installed compare provider through Windows local');
+    expect(adr0038).toContain('Docker remains admitted only as a bounded expert provider');
+    expect(adr0038).toContain('The history-panel compare workflow shall enter explicit compare preflight');
+    expect(adr0038).toContain('selected commit');
+    expect(adr0038).toContain('ADR-0025` and `ADR-0026` remain retained as the exact released');
     expect(debtLedger).toContain('"id": "DEBT-0006"');
     expect(debtLedger).toContain('"programId": "PROGRAM-0005"');
     expect(debtLedger).toContain('"status": "retired"');
