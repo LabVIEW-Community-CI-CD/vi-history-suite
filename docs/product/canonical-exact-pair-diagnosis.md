@@ -9,6 +9,11 @@ benchmark evidence.
 This document defines the exact-pair-specific admission contract for
 `runGovernedProof report-smoke`.
 
+The `--execution-mode` flags named here are bounded exact-pair diagnosis inputs
+for governed proof reruns. They are not installed-user extension settings, not
+panel/provider UX, and not public evidence that the active extension contract
+still exposes `executionMode`.
+
 The wider shared runtime-override admission control for the public
 governed-proof surface and its `PROGRAM-0003` subcommands is governed
 separately in `ADR-0022`. Exact-pair diagnosis
@@ -124,6 +129,9 @@ This document governs one public proof surface only:
 - `npm run proof:run -- report-smoke ...`
 
 It does not publish a public engine selector or a public `LVCompare` override.
+It also does not reopen `executionMode` as installed-user product doctrine;
+that flag remains a bounded proof-surface admission input for exact-pair
+diagnosis only.
 Any retained `LVCompare` receipts remain internal parity evidence carried by
 benchmark packets and control-plane docs, not by the public operator CLI
 contract.
