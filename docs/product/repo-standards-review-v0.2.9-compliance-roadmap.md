@@ -44,7 +44,7 @@ instead of living in chat memory.
    - objective: add the missing governed package expected by the released
      skill, including `SyRS`, aligned `SRS`, `RTM`, architecture description,
      release-control package, and information-item map updates
-   - status: checkpoint 1 in progress on this branch
+   - status: checkpoint 1 complete on this branch
    - checkpoint 1 scope:
      - add `docs/requirements/syrs.md`
      - update `SRS` to declare its parent `SyRS`
@@ -56,7 +56,15 @@ instead of living in chat memory.
      - make the repo apply the same standards discipline it is using for its
        external contract
 
-4. Pass 4: Requirement-system refactor
+4. Pass 4: Contradiction ledger
+   - objective: retain one explicit ledger of naming drift, superseded
+     doctrine, and package-level contradictions before broad content rewrites
+     begin
+   - status: complete on this branch
+   - retained ledger:
+     [repo-standards-review-v0.2.9-pass-4-contradiction-ledger.md](./repo-standards-review-v0.2.9-pass-4-contradiction-ledger.md)
+
+5. Pass 5: Requirement-system refactor
    - objective: normalize the large requirement corpus instead of patching it
      piecemeal
    - focus:
@@ -65,7 +73,7 @@ instead of living in chat memory.
      - retire stale or contradictory requirement rows
      - restore truthful `REQ -> TEST -> CODE/DOC` traceability
 
-5. Pass 5: Architecture and ADR refactor
+6. Pass 6: Architecture and ADR refactor
    - objective: align the large ADR package to the released skill's current
      architecture expectations
    - focus:
@@ -74,7 +82,7 @@ instead of living in chat memory.
      - mark superseded or contradictory ADRs explicitly instead of leaving
        them as live doctrine
 
-6. Pass 6: Missing-document and proof-surface uplift
+7. Pass 7: Missing-document and proof-surface uplift
    - objective: add or repair the remaining documentation and proof surfaces
      needed for compliance
    - likely scope:
@@ -83,7 +91,7 @@ instead of living in chat memory.
      - release and publication evidence
      - any missing information items exposed by pass 2
 
-7. Pass 7: Release-candidate compliance closeout
+8. Pass 8: Release-candidate compliance closeout
    - objective: rerun the released skill until the target branch reaches a
      clean external audit result across the governed gates
    - closeout rule:
@@ -101,9 +109,10 @@ instead of living in chat memory.
 
 ## Immediate Next Move
 
-Finish pass 3 checkpoint 1 on the same branch:
+Start pass 5 on the same branch:
 
-- validate the new `SyRS` package and explicit ownership split
-- retain the pass-3 checkpoint in git
-- then move to pass 4 contradiction-ledger work without widening directly into
-  the full `540`-row requirement refactor
+- use the contradiction ledger to target the runtime-provider rows that no
+  longer fit the host-default doctrine
+- keep requirement partitioning narrow and evidence-led instead of editing the
+  full `540`-row package at once
+- leave ADR renames and RTM-wide cleanup for the later dedicated passes
