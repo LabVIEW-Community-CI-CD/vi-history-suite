@@ -28,6 +28,10 @@ instead of living in chat memory.
 - pass 5 checkpoint 3 outcome: the live VI History panel now uses explicit
   compare preflight with a dedicated `Compare` action, and the command path
   blocks compare generation when preflight is not ready
+- pass 6 status: checkpoint 1 complete
+- pass 6 checkpoint 1 outcome: `ADR-0030` now uses a GitFlow-aligned file path
+  and the live architecture, RTM, wiki-coverage, and release-governance test
+  surfaces all point at the corrected path
 
 ## Pass Order
 
@@ -107,6 +111,11 @@ instead of living in chat memory.
 6. Pass 6: Architecture and ADR refactor
    - objective: align the large ADR package to the released skill's current
      architecture expectations
+   - status: checkpoint 1 complete on this branch
+   - checkpoint 1 scope:
+     - rename `ADR-0030` to remove the retired `gitflow-lite` filename drift
+     - update architecture overview, RTM, wiki coverage, and release-governance
+       tests to the corrected ADR path
    - focus:
      - keep the architecture description as primary truth
      - keep ADRs as retained decision rationale where they still add value
@@ -140,9 +149,10 @@ instead of living in chat memory.
 
 ## Immediate Next Move
 
-Continue pass 6 on the same branch from the completed pass 5 checkpoints:
+Continue pass 6 on the same branch from checkpoint 1:
 
-- use the narrowed contradiction ledger to target ADR naming drift first
-- keep broader RTM and test-plan cleanup sequenced behind the ADR and
-  architecture normalization pass
+- use the narrowed contradiction ledger to find any remaining live ADR/package
+  contradictions beyond the `ADR-0030` rename
+- keep broader RTM and test-plan cleanup sequenced behind the architecture
+  normalization pass
 - leave large-scale requirement-row cleanup for the dedicated later passes

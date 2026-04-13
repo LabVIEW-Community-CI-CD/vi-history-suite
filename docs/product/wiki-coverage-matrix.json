@@ -678,7 +678,7 @@
       ]
     },
     {
-      "sourcePath": "docs/architecture/adr/ADR-0030-semver-decision-framework-and-gitflow-lite-branch-ci-topology.md",
+      "sourcePath": "docs/architecture/adr/ADR-0030-semver-decision-framework-and-gitflow-branch-ci-topology.md",
       "itemType": "adr",
       "aggregationRuleId": "adr-set-aggregate",
       "representationStatus": "complete",

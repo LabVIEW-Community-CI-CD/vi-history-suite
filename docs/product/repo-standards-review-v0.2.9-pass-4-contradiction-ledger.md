@@ -15,14 +15,18 @@ current branch carries the replacement direction.
 
 ## Open Contradictions
 
+No open contradictions remain from the original pass-4 ledger. The remaining
+passes are now broader normalization passes rather than fixes for one specific
+live contradiction.
+
 | ID | Area | Contradiction | Evidence | Impact | Planned Resolution |
 | --- | --- | --- | --- | --- | --- |
-| CONTRA-001 | ADR naming | `ADR-0030` text now governs `GitFlow`, but the retained file path still names `gitflow-lite`. | `docs/architecture/adr/ADR-0030-semver-decision-framework-and-gitflow-lite-branch-ci-topology.md`; `docs/architecture/overview.md`; `docs/requirements/rtm.csv`; `docs/product/wiki-coverage-matrix.json` | Readers and traceability surfaces still retain the retired doctrine string even though the live content was corrected. | Pass 6 ADR and architecture normalization: rename the ADR path and update all governed references together. |
 
 ## Resolved Or Narrowed After Pass 5 Checkpoint 1
 
 | ID | Area | Resolution | Evidence | Remaining Risk |
 | --- | --- | --- | --- | --- |
+| CONTRA-001 | ADR naming | `ADR-0030` now uses a GitFlow-aligned file path, and the live architecture, RTM, wiki-coverage, and release-governance test surfaces all point at the corrected ADR path. | `docs/architecture/adr/ADR-0030-semver-decision-framework-and-gitflow-branch-ci-topology.md`; `docs/architecture/overview.md`; `docs/requirements/rtm.csv`; `docs/product/wiki-coverage-matrix.json`; `tests/unit/releaseGovernanceDocs.test.ts` | Older retained pass inventory still mentions the historical filename drift, which is correct as historical evidence. |
 | CONTRA-002 | Compare workflow | The live history panel now uses explicit compare preflight, renders the selected/base pair plus provider/runtime facts before execution, and blocks compare generation when preflight is not ready. | `src/ui/historyPanel.ts`; `src/commands/openViHistoryCommand.ts`; `src/ui/historyPanelTracker.ts`; `tests/unit/historyPanel.test.ts`; `tests/unit/openViHistoryCommand.test.ts` | Broader documentation and ADR cleanup still remains for later passes, but the visible compare interaction now matches the active control-plane direction. |
 | CONTRA-004 | Requirement package doctrine | The targeted runtime-provider and compare-flow rows now distinguish current implemented baseline truth from the active replacement direction instead of claiming one collapsed doctrine. | `docs/requirements/srs.md` (`VHS-REQ-133`, `VHS-REQ-146`, `VHS-REQ-220`, `VHS-REQ-459..475`, `VHS-REQ-498`, `VHS-REQ-499`); `docs/requirements/rtm.csv`; `docs/testing/test-plan.md` (`TEST-UNIT-299`, `TEST-DOC-065`, `TEST-UNIT-300`, `TEST-DOC-067`, `TEST-UNIT-317`) | Broader requirement cleanup still remains for later passes, but this specific runtime-provider contradiction cluster is no longer internally self-contradictory. |
 | CONTRA-003 | Runtime provider control plane versus implementation | Installed compare runtime selection now derives effective host-versus-Docker intent from persisted `viHistorySuite.runtimeProvider` settings, and the focused locator plus doctor proofs no longer depend on the legacy `executionMode` inputs to establish installed-user provider choice. | `src/reporting/comparisonReportAction.ts`; `src/reporting/comparisonRuntimeLocator.ts`; `src/reporting/comparisonRuntimeDoctor.ts`; `tests/unit/comparisonReportAction.test.ts`; `tests/unit/comparisonRuntimeLocator.test.ts`; `tests/unit/comparisonRuntimeDoctor.test.ts` | Broader runtime cleanup still remains for later passes, but this installed-user provider-selection contradiction is now narrowed out of the live control plane. |
@@ -34,8 +38,8 @@ editing.
 
 The highest-value next move is now:
 
-1. ADR rename and architecture-reference cleanup
-2. broader RTM and test-plan re-trace after those corrections land
+1. broader architecture and ADR normalization beyond the retired filename drift
+2. RTM and test-plan re-trace after those corrections land
 3. later large-package requirement cleanup as its own pass
 
 That order keeps the remaining live contradiction surface narrow before the

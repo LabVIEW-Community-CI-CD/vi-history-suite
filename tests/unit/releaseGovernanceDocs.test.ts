@@ -17,7 +17,7 @@ describe('release governance package', () => {
   it('retains the semver decision framework and GitFlow branch/ci topology', () => {
     const rules = readJson<any>('docs/product/post-release-sustainment-rules.json');
     const adr = readText(
-      'docs/architecture/adr/ADR-0030-semver-decision-framework-and-gitflow-lite-branch-ci-topology.md'
+      'docs/architecture/adr/ADR-0030-semver-decision-framework-and-gitflow-branch-ci-topology.md'
     );
     const adr0 = readText(
       'docs/architecture/adr/ADR-0028-governed-authority-to-public-source-promotion-system.md'
