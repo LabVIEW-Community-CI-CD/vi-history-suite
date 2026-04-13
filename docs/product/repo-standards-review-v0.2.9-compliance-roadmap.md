@@ -18,7 +18,7 @@ instead of living in chat memory.
   governance rewrite on this branch
 - pass 3 status: checkpoint 1 complete
 - pass 4 status: complete
-- pass 5 status: checkpoint 4 complete
+- pass 5 status: checkpoint 5 complete
 - pass 5 checkpoint 1 outcome: the runtime-provider and compare-flow
   requirement cluster now separates current implemented baseline truth from the
   active replacement direction
@@ -32,6 +32,10 @@ instead of living in chat memory.
   resolves one exact version+bitness LabVIEW executable plus matching
   `LabVIEWCLI` surface, and fails closed on missing, ambiguous, or
   incompatible host resolution under `VHS-REQ-532`
+- pass 5 checkpoint 5 outcome: the compare-selection requirement cluster now
+  matches the live explicit compare-preflight implementation, and the
+  capability-state package no longer claims second-selection compare auto-run
+  as current branch truth
 - pass 6 status: checkpoint 3 complete
 - pass 6 checkpoint 1 outcome: `ADR-0030` now uses a GitFlow-aligned file path
   and the live architecture, RTM, wiki-coverage, and release-governance test
@@ -102,7 +106,7 @@ instead of living in chat memory.
 5. Pass 5: Requirement-system refactor
    - objective: normalize the large requirement corpus instead of patching it
      piecemeal
-   - status: checkpoint 4 complete on this branch
+   - status: checkpoint 5 complete on this branch
    - checkpoint 1 scope:
      - separate the current implemented checkbox auto-run workflow from the
        planned explicit compare replacement
@@ -130,6 +134,12 @@ instead of living in chat memory.
        surface
      - fail closed when that host resolution is missing, ambiguous, or
        incompatible instead of selecting the first matching candidate
+   - checkpoint 5 scope:
+     - rewrite the compare-selection requirement and RTM rows so they match
+       explicit compare preflight instead of the retired auto-run branch truth
+     - retrace the matching test-plan proof line for that requirement cluster
+     - normalize the main capability-state package so it no longer claims
+       second-selection compare auto-run as current branch behavior
    - focus:
      - split `SyRS` versus `SRS` ownership cleanly
      - merge duplicates

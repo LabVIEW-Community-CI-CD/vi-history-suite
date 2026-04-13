@@ -122,6 +122,9 @@ describe('requirements documentation coherence', () => {
   it('keeps the research-facing dashboard and history-panel trace surfaces current', () => {
     const alignment = readText('docs/research/authoritative/research-alignment.md');
     const currentState = readText('docs/product/current-state.md');
+    const srs = readText('docs/requirements/srs.md');
+    const rtm = readText('docs/requirements/rtm.csv');
+    const testPlan = readText('docs/testing/test-plan.md');
     const implementationIndex = JSON.parse(
       readText('docs/research/authoritative/research-implementation-index.json')
     ) as {
@@ -141,6 +144,16 @@ describe('requirements documentation coherence', () => {
 
     expect(currentState).toContain('truncated auto/capped window');
     expect(currentState).toContain('latest-dashboard-run.json');
+    expect(currentState).toContain('checkbox-selected explicit compare-preflight workflow');
+    expect(currentState).not.toContain(
+      'the second checkbox selection triggers comparison generation automatically'
+    );
+    expect(srs).toContain('selecting two distinct retained revisions establishes one explicit compare-preflight pair');
+    expect(srs).not.toContain(
+      'selecting the second distinct retained revision triggers comparison-report generation automatically'
+    );
+    expect(rtm).toContain('selecting two distinct retained revisions establishes one explicit compare-preflight pair');
+    expect(testPlan).toContain('explicit compare-preflight entrypoint');
 
     expect(alignment).toContain('history-window packet');
     expect(alignment).toContain('latest-run discovery');

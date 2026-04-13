@@ -960,10 +960,11 @@
   repo-support classification, keep chronology/docs visible, and keep the
   checkbox-selected compare flow available on generic repositories while making
   deeper benchmark and maintainer host-review governance explicit
-- `TEST-UNIT-317`: verify the current implemented checkbox workflow treats the
-  second distinct checkbox selection as the auto-run compare entrypoint for the
-  exact newer-selected and older-base pair, and that a retained window of only
-  two commits is enough to use the current primary extension-user compare flow
+- `TEST-UNIT-317`: verify the current implemented checkbox workflow treats two
+  distinct checkbox selections as the explicit compare-preflight entrypoint for
+  the exact newer-selected and older-base pair, and that a retained window of
+  only two commits is enough to use the current primary extension-user compare
+  flow
 - `TEST-UNIT-318`: verify generated-report and retained-packet compare views
   now lead with a white-background comparison-context block that surfaces the
   selected/base commit hash, date, author, and subject facts, while runtime
