@@ -299,7 +299,7 @@
 - `TEST-UNIT-072`: prove the canonical comparison-report smoke runner selects a
   retained compare pair, persists report artifacts, and records runtime facts
 - `TEST-UNIT-073`: prove the canonical comparison-report smoke CLI parses
-  runtime-selection overrides and prints a deterministic success summary
+  bounded proof-admission overrides and prints a deterministic success summary
 - `TEST-UNIT-074`: prove the runtime locator retains actionable missing-runtime
   and missing-tool notes for blocked report generation
 - `TEST-UNIT-075`: prove the runtime executor normalizes win32 interop paths,

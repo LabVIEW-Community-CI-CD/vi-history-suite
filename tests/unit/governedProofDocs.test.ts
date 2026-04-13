@@ -68,6 +68,9 @@ describe('governed proof documentation contract', () => {
     expect(exactPair).toContain('bounded exact-pair diagnosis inputs');
     expect(exactPair).toContain('not installed-user extension settings');
     expect(exactPair).toContain('does not reopen `executionMode` as installed-user product doctrine');
+    expect(srs).toContain('bounded proof-admission overrides');
+    expect(rtm).toContain('bounded proof-admission overrides');
+    expect(testPlan).toContain('bounded proof-admission overrides');
     expect(srs).toContain('one public governed proof entrypoint');
     expect(srs).toContain('LabVIEWCLI CreateComparisonReport');
     expect(srs).toContain('host-operation-matrix');
