@@ -315,17 +315,17 @@ function collectInstalledUserTruths(repoRootPath) {
   const html = fs.existsSync(userWorkflowPath) ? fs.readFileSync(userWorkflowPath, 'utf8') : '';
 
   return {
-    windowsAutoUsesDockerWhenInstalled: html.includes(
-      'on Windows, use the governed Windows container whenever Docker Desktop is installed'
+    dockerOnlyCompareExecution: html.includes(
+      'Comparison generation is Docker-only in the installed extension.'
     ),
-    noSilentProviderFallback: html.includes(
-      'no mode silently falls back to a different provider'
+    engineAwareImageSelection: html.includes(
+      'on Windows, the current Docker daemon engine selects the governed Windows image'
     ),
-    dockerRequiredHardStop: html.includes(
-      'if Docker is required but unavailable, the extension stops and tells you what to fix'
+    dockerRequiredHardStopWithoutHostFallback: html.includes(
+      'the extension hard-stops and does not probe host LabVIEW'
     ),
-    providerChoiceAndProgressVisible: html.includes(
-      'compare progress, provider choice, and Windows image acquisition state stay visible'
+    providerAndProgressVisible: html.includes(
+      'compare progress, selected provider, current engine, selected image, acquisition state, and next action stay visible'
     )
   };
 }
@@ -407,10 +407,10 @@ function buildDocsContinuousIntegrationMarkdown(report) {
     '',
     '## Installed-User Truth Checks',
     '',
-    `- Windows auto uses Docker when installed: ${String(report.installedUserTruths.windowsAutoUsesDockerWhenInstalled)}`,
-    `- No silent provider fallback: ${String(report.installedUserTruths.noSilentProviderFallback)}`,
-    `- Docker-required hard stop documented: ${String(report.installedUserTruths.dockerRequiredHardStop)}`,
-    `- Provider choice and progress visibility documented: ${String(report.installedUserTruths.providerChoiceAndProgressVisible)}`,
+    `- Docker-only compare execution documented: ${String(report.installedUserTruths.dockerOnlyCompareExecution)}`,
+    `- Engine-aware image selection documented: ${String(report.installedUserTruths.engineAwareImageSelection)}`,
+    `- Docker-required hard stop without host fallback documented: ${String(report.installedUserTruths.dockerRequiredHardStopWithoutHostFallback)}`,
+    `- Provider and progress visibility documented: ${String(report.installedUserTruths.providerAndProgressVisible)}`,
     '',
     '## Steps',
     '',

@@ -57,7 +57,9 @@ export async function runDesignGate(
   repoRoot: string,
   deps: DesignGateRunnerDeps = {}
 ): Promise<DesignGateReport> {
-  const assuranceScriptPath = await resolveDesignGateAssuranceScriptPath(repoRoot, deps);
+  const assuranceScriptPath = deps.runStep
+    ? deps.env?.VI_HISTORY_SUITE_ASSURANCE_SCRIPT?.trim() || defaultAssuranceScriptPath()
+    : await resolveDesignGateAssuranceScriptPath(repoRoot, deps);
   const steps = buildDesignGatePlan(repoRoot, assuranceScriptPath);
   const results: DesignGateStepResult[] = [];
   let status: 'pass' | 'fail' = 'pass';

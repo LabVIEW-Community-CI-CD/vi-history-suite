@@ -219,6 +219,316 @@ describe('comparisonRuntimeLocator', () => {
     ]);
   });
 
+  it('fails closed for the installed-user path when both version and bitness are missing', async () => {
+    const result = await locateComparisonRuntime(
+      'win32',
+      {
+        executionMode: 'host-only',
+        requireVersionAndBitness: true
+      },
+      {
+        pathExists: vi.fn().mockResolvedValue(false),
+        queryWindowsRegistry: vi.fn().mockResolvedValue('')
+      }
+    );
+
+    expect(result.provider).toBe('unavailable');
+    expect(result.blockedReason).toBe('labview-runtime-selection-required');
+    expect(result.notes).toEqual([
+      'Installed compare requires both viHistorySuite.labviewVersion and viHistorySuite.labviewBitness before local runtime preflight can proceed.'
+    ]);
+    expect(result.providerDecisions).toEqual([
+      {
+        provider: 'windows-container',
+        outcome: 'rejected',
+        reason: 'execution-mode-host-only-disallows-docker',
+        detail:
+          'Docker container execution was not selected because host-only execution was requested.'
+      },
+      {
+        provider: 'host-native',
+        outcome: 'rejected',
+        reason: 'host-native-runtime-selection-required',
+        detail:
+          'Host-native execution was not selected because installed compare requires both LabVIEW version and bitness settings before runtime preflight can proceed.'
+      }
+    ]);
+  });
+
+  it('fails closed for the installed-user path when bitness is missing', async () => {
+    const result = await locateComparisonRuntime(
+      'win32',
+      {
+        executionMode: 'host-only',
+        requireVersionAndBitness: true,
+        labviewVersion: '2026'
+      },
+      {
+        pathExists: vi.fn().mockResolvedValue(false),
+        queryWindowsRegistry: vi.fn().mockResolvedValue('')
+      }
+    );
+
+    expect(result.provider).toBe('unavailable');
+    expect(result.blockedReason).toBe('labview-bitness-required');
+    expect(result.notes).toEqual([
+      'Installed compare requires viHistorySuite.labviewBitness before local runtime preflight can proceed.'
+    ]);
+  });
+
+  it('fails closed for the installed-user path when the persisted provider is invalid', async () => {
+    const result = await locateComparisonRuntime(
+      'win32',
+      {
+        invalidRequestedProvider: 'weird',
+        requireVersionAndBitness: true,
+        labviewVersion: '2026',
+        bitness: 'x64'
+      },
+      {
+        pathExists: vi.fn().mockResolvedValue(false),
+        queryWindowsRegistry: vi.fn().mockResolvedValue('')
+      }
+    );
+
+    expect(result.provider).toBe('unavailable');
+    expect(result.blockedReason).toBe('installed-provider-invalid');
+    expect(result.notes).toEqual([
+      'Installed compare requires viHistorySuite.runtimeProvider to be either host or docker before runtime preflight can proceed.'
+    ]);
+    expect(result.providerDecisions).toEqual([
+      {
+        provider: 'windows-container',
+        outcome: 'rejected',
+        reason: 'invalid-installed-provider',
+        detail:
+          'Docker container execution was not selected because viHistorySuite.runtimeProvider must be either host or docker.'
+      },
+      {
+        provider: 'host-native',
+        outcome: 'rejected',
+        reason: 'invalid-installed-provider',
+        detail:
+          'Host-native execution was not selected because viHistorySuite.runtimeProvider must be either host or docker.'
+      }
+    ]);
+  });
+
+  it('filters host-native Windows runtime selection by requested LabVIEW version', async () => {
+    const cleanHost = buildCleanWindowsHostDeps();
+    const result = await locateComparisonRuntime(
+      'win32',
+      {
+        executionMode: 'host-only',
+        requireVersionAndBitness: true,
+        labviewVersion: '2024',
+        bitness: 'x64'
+      },
+      {
+        pathExists: vi.fn(async (filePath: string) =>
+          [
+            'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
+            'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
+          ].includes(filePath)
+        ),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        ...cleanHost
+      }
+    );
+
+    expect(result.provider).toBe('unavailable');
+    expect(result.blockedReason).toBe('labview-exe-not-found');
+    expect(result.notes).toContain(
+      'No supported LabVIEW 2024 x64 runtime was located for report generation.'
+    );
+  });
+
+  it('derives host-only execution from the persisted host provider for installed compare', async () => {
+    const cleanHost = buildCleanWindowsHostDeps();
+    const result = await locateComparisonRuntime(
+      'win32',
+      {
+        requestedProvider: 'host',
+        requireVersionAndBitness: true,
+        labviewVersion: '2026',
+        bitness: 'x64'
+      },
+      {
+        queryWindowsContainerProviderFacts: vi.fn().mockResolvedValue(buildWindowsContainerFacts()),
+        pathExists: vi.fn(async (filePath: string) =>
+          [
+            'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
+            'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
+          ].includes(filePath)
+        ),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        ...cleanHost
+      }
+    );
+
+    expect(result.requestedProvider).toBe('host');
+    expect(result.executionMode).toBe('host-only');
+    expect(result.provider).toBe('host-native');
+    expect(result.labviewCli?.path).toBe(
+      'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
+    );
+    expect(result.providerDecisions).toEqual([
+      {
+        provider: 'windows-container',
+        outcome: 'rejected',
+        reason: 'provider-request-host-disallows-docker',
+        detail:
+          'Docker container execution was not selected because the host provider was requested.'
+      },
+      {
+        provider: 'host-native',
+        outcome: 'selected',
+        reason: 'provider-request-host-selected-host-native',
+        detail:
+          'Host provider was requested and host-native LabVIEW 2026 plus LabVIEWCLI were available.'
+      }
+    ]);
+  });
+
+  it('fails closed for installed compare when multiple matching Windows LabVIEW executables satisfy the requested version and bitness', async () => {
+    const cleanHost = buildCleanWindowsHostDeps();
+    const result = await locateComparisonRuntime(
+      'win32',
+      {
+        requestedProvider: 'host',
+        requireVersionAndBitness: true,
+        labviewVersion: '2026',
+        bitness: 'x64'
+      },
+      {
+        pathExists: vi.fn(async (filePath: string) =>
+          [
+            'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
+            'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+            'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
+          ].includes(filePath)
+        ),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        ...cleanHost
+      }
+    );
+
+    expect(result.provider).toBe('unavailable');
+    expect(result.blockedReason).toBe('labview-exe-ambiguous');
+    expect(result.notes).toEqual([
+      'Installed compare found multiple supported LabVIEW 2026 x64 runtimes, so local runtime preflight could not resolve one exact executable.'
+    ]);
+    expect(result.providerDecisions).toEqual([
+      {
+        provider: 'windows-container',
+        outcome: 'rejected',
+        reason: 'provider-request-host-disallows-docker',
+        detail:
+          'Docker container execution was not selected because the host provider was requested.'
+      },
+      {
+        provider: 'host-native',
+        outcome: 'rejected',
+        reason: 'host-native-labview-exe-ambiguous',
+        detail:
+          'Host-native execution was not selected because multiple supported LabVIEW executables matched the requested version and bitness.'
+      }
+    ]);
+  });
+
+  it('fails closed for installed compare when no matching LabVIEWCLI surface exists for the requested bitness', async () => {
+    const cleanHost = buildCleanWindowsHostDeps();
+    const result = await locateComparisonRuntime(
+      'win32',
+      {
+        requestedProvider: 'host',
+        requireVersionAndBitness: true,
+        labviewVersion: '2026',
+        bitness: 'x86'
+      },
+      {
+        pathExists: vi.fn(async (filePath: string) =>
+          [
+            'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
+            'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
+          ].includes(filePath)
+        ),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        ...cleanHost
+      }
+    );
+
+    expect(result.provider).toBe('unavailable');
+    expect(result.blockedReason).toBe('labview-cli-not-found-for-bitness');
+    expect(result.notes).toEqual([
+      'No matching LabVIEWCLI x86 surface was located for requested LabVIEW 2026 x86 execution.',
+      'Install the matching LabVIEWCLI surface for the requested bitness, or adjust viHistorySuite.runtimeProvider, viHistorySuite.labviewVersion, or viHistorySuite.labviewBitness before retrying compare.'
+    ]);
+    expect(result.providerDecisions).toEqual([
+      {
+        provider: 'windows-container',
+        outcome: 'rejected',
+        reason: 'provider-request-host-disallows-docker',
+        detail:
+          'Docker container execution was not selected because the host provider was requested.'
+      },
+      {
+        provider: 'host-native',
+        outcome: 'rejected',
+        reason: 'host-native-labview-cli-not-found-for-bitness',
+        detail:
+          'A supported LabVIEW executable matched the requested version and bitness, but no matching LabVIEWCLI surface was located for that bitness.'
+      }
+    ]);
+  });
+
+  it('fails closed for installed compare when multiple matching LabVIEWCLI surfaces exist for the requested bitness', async () => {
+    const cleanHost = buildCleanWindowsHostDeps();
+    const result = await locateComparisonRuntime(
+      'win32',
+      {
+        requestedProvider: 'host',
+        requireVersionAndBitness: true,
+        labviewVersion: '2026',
+        bitness: 'x64',
+        labviewCliPath: 'D:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
+      },
+      {
+        pathExists: vi.fn(async (filePath: string) =>
+          [
+            'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
+            'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+            'D:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
+          ].includes(filePath)
+        ),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        ...cleanHost
+      }
+    );
+
+    expect(result.provider).toBe('unavailable');
+    expect(result.blockedReason).toBe('labview-cli-ambiguous-for-bitness');
+    expect(result.notes).toEqual([
+      'Installed compare found multiple LabVIEWCLI surfaces for requested x64 execution, so local runtime preflight could not resolve one exact CLI path.'
+    ]);
+    expect(result.providerDecisions).toEqual([
+      {
+        provider: 'windows-container',
+        outcome: 'rejected',
+        reason: 'provider-request-host-disallows-docker',
+        detail:
+          'Docker container execution was not selected because the host provider was requested.'
+      },
+      {
+        provider: 'host-native',
+        outcome: 'rejected',
+        reason: 'host-native-labview-cli-ambiguous-for-bitness',
+        detail:
+          'A supported LabVIEW executable matched the requested version and bitness, but multiple matching LabVIEWCLI surfaces were located for that bitness.'
+      }
+    ]);
+  });
+
   it('honors an explicit x86 preference when both Windows bitnesses are available', async () => {
     const cleanHost = buildCleanWindowsHostDeps();
     const result = await locateComparisonRuntime(
@@ -489,6 +799,145 @@ describe('comparisonRuntimeLocator', () => {
     ]);
   });
 
+  it('derives docker-only execution from the persisted docker provider for installed compare', async () => {
+    const cleanHost = buildCleanWindowsHostDeps();
+    const result = await locateComparisonRuntime(
+      'win32',
+      {
+        requestedProvider: 'docker',
+        requireVersionAndBitness: true,
+        labviewVersion: '2026',
+        bitness: 'x64'
+      },
+      {
+        queryWindowsContainerProviderFacts: vi.fn().mockResolvedValue(buildWindowsContainerFacts()),
+        pathExists: vi.fn(async (filePath: string) =>
+          [
+            'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
+            'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
+          ].includes(filePath)
+        ),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        ...cleanHost
+      }
+    );
+
+    expect(result.requestedProvider).toBe('docker');
+    expect(result.executionMode).toBe('docker-only');
+    expect(result.provider).toBe('windows-container');
+    expect(result.providerDecisions).toEqual([
+      {
+        provider: 'windows-container',
+        outcome: 'selected',
+        reason: 'provider-request-docker-selected-windows-container',
+        detail:
+          'Docker daemon was reachable in windows-container mode with governed Windows container image nationalinstruments/labview:2026q1-windows present locally because the Docker provider was requested.'
+      },
+      {
+        provider: 'host-native',
+        outcome: 'rejected',
+        reason: 'provider-request-docker-disallows-host-native',
+        detail:
+          'Host-native execution was not selected because the Docker provider was requested.'
+      }
+    ]);
+  });
+
+  it('fails closed for the persisted docker provider when x86 Windows execution is requested', async () => {
+    const result = await locateComparisonRuntime(
+      'win32',
+      {
+        requestedProvider: 'docker',
+        requireVersionAndBitness: true,
+        labviewVersion: '2026',
+        bitness: 'x86'
+      },
+      {
+        queryWindowsContainerProviderFacts: vi.fn().mockResolvedValue(buildWindowsContainerFacts()),
+        pathExists: vi.fn().mockResolvedValue(false),
+        queryWindowsRegistry: vi.fn().mockResolvedValue('')
+      }
+    );
+
+    expect(result.requestedProvider).toBe('docker');
+    expect(result.executionMode).toBe('docker-only');
+    expect(result.provider).toBe('unavailable');
+    expect(result.blockedReason).toBe('docker-provider-requires-windows-x64');
+    expect(result.notes).toContain(
+      'The Docker provider currently requires the governed 64-bit container provider.'
+    );
+    expect(result.providerDecisions).toEqual([
+      {
+        provider: 'windows-container',
+        outcome: 'rejected',
+        reason: 'docker-provider-windows-x64-required',
+        detail: 'The Docker provider currently requires the governed 64-bit container provider.'
+      },
+      {
+        provider: 'host-native',
+        outcome: 'rejected',
+        reason: 'provider-request-docker-disallows-host-native',
+        detail: 'Host-native execution was not selected because the Docker provider was requested.'
+      }
+    ]);
+  });
+
+  it('fails closed for the persisted docker provider when the governed Docker provider is unavailable', async () => {
+    const cleanHost = buildCleanWindowsHostDeps();
+    const result = await locateComparisonRuntime(
+      'win32',
+      {
+        requestedProvider: 'docker',
+        requireVersionAndBitness: true,
+        labviewVersion: '2026',
+        bitness: 'x64'
+      },
+      {
+        queryWindowsContainerProviderFacts: vi
+          .fn()
+          .mockResolvedValue(
+            buildWindowsContainerFacts({
+              dockerCliAvailable: false,
+              dockerDaemonReachable: false,
+              windowsContainerCapabilityAvailable: false,
+              imageAvailable: false
+            })
+          ),
+        pathExists: vi.fn(async (filePath: string) =>
+          [
+            'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
+            'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
+          ].includes(filePath)
+        ),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        ...cleanHost
+      }
+    );
+
+    expect(result.requestedProvider).toBe('docker');
+    expect(result.executionMode).toBe('docker-only');
+    expect(result.provider).toBe('unavailable');
+    expect(result.blockedReason).toBe('docker-provider-unavailable');
+    expect(result.notes).toContain(
+      'The Docker provider was requested, but Docker CLI was not available on the current host, so governed Windows container image nationalinstruments/labview:2026q1-windows could not be used.'
+    );
+    expect(result.providerDecisions).toEqual([
+      {
+        provider: 'windows-container',
+        outcome: 'rejected',
+        reason: 'docker-provider-unavailable',
+        detail:
+          'The Docker provider was requested, but Docker CLI was not available on the current host, so governed Windows container image nationalinstruments/labview:2026q1-windows could not be used.'
+      },
+      {
+        provider: 'host-native',
+        outcome: 'rejected',
+        reason: 'provider-request-docker-disallows-host-native',
+        detail: 'Host-native execution was not selected because the Docker provider was requested.'
+      }
+    ]);
+  });
+
   it('selects the governed linux container provider for docker-only execution on Linux hosts', async () => {
     const result = await locateComparisonRuntime(
       'linux',
@@ -553,7 +1002,7 @@ describe('comparisonRuntimeLocator', () => {
     expect(result.provider).toBe('unavailable');
     expect(result.blockedReason).toBe('labview-exe-not-found');
     expect(result.notes).toContain(
-      'Install LabVIEW 2026 Q1 or configure viHistorySuite.labviewExePath to an explicit LabVIEW 2026 executable.'
+      'Install the requested LabVIEW version locally and set viHistorySuite.labviewVersion plus viHistorySuite.labviewBitness before retrying compare.'
     );
   });
 
@@ -572,10 +1021,10 @@ describe('comparisonRuntimeLocator', () => {
     expect(result.blockedReason).toBe('comparison-tool-not-found');
     expect(result.labviewExe?.path).toBe('/usr/local/natinst/LabVIEW-2026Q1-64/labview');
     expect(result.notes).toContain(
-      'Linux report generation remains best-effort; configure viHistorySuite.labviewCliPath when LabVIEW CLI is installed outside documented scan roots.'
+      'Linux report generation remains best-effort; use documented LabVIEWCLI scan roots or an internal proof surface when explicit proof-admission overrides are required.'
     );
     expect(result.notes).toContain(
-      'Configure viHistorySuite.labviewCliPath to an installed LabVIEWCLI when the documented scan roots do not contain one.'
+      'Install the matching LabVIEWCLI under the documented scan roots, or use an internal proof surface when explicit proof-admission overrides are required.'
     );
     expect(result.providerDecisions).toEqual([
       {
@@ -1029,6 +1478,36 @@ HKEY_LOCAL_MACHINE\\SOFTWARE\\WOW6432Node\\National Instruments\\LabVIEW
           'Validated Windows host runtime facts showed existing LabVIEW-related process or governed VI Server port activity, so host-native execution was not selected.'
       }
     ]);
+  });
+
+  it('uses provider-aware contamination notes when the persisted host provider is blocked', async () => {
+    const conflictedHost = buildConflictedWindowsHostDeps();
+    const result = await locateComparisonRuntime(
+      'win32',
+      {
+        requestedProvider: 'host',
+        requireVersionAndBitness: true,
+        labviewVersion: '2026',
+        bitness: 'x64'
+      },
+      {
+        queryWindowsContainerProviderFacts: vi.fn().mockResolvedValue(buildWindowsContainerFacts()),
+        pathExists: vi.fn(async (filePath: string) =>
+          [
+            'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
+            'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
+          ].includes(filePath)
+        ),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        ...conflictedHost
+      }
+    );
+
+    expect(result.requestedProvider).toBe('host');
+    expect(result.blockedReason).toBe('windows-host-runtime-surface-contaminated');
+    expect(result.notes).toContain(
+      'The requested host provider cannot proceed because the validated Windows host runtime surface is contaminated by existing LabVIEW-related activity.'
+    );
   });
 
   it('uses the default filesystem access path when no path-exists dependency is injected', async () => {

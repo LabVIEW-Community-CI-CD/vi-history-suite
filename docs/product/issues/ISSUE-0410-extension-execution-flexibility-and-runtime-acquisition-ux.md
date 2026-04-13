@@ -2,40 +2,42 @@
 
 ## Goal
 
-Give installed extension users one Docker-only comparison contract with
-engine-aware Windows/Linux image selection, visible acquisition truth, and no
-host-native fallback behavior.
+Retain the historical landed record for the Docker-only installed-extension
+contract that was current before the local-`LabVIEWCLI` replacement direction
+reopened this surface.
 
 ## Status
 
-Active post-release issue.
+Closed historical issue, superseded by `ISSUE-0412`.
 
-Activation facts:
+Historical closeout facts:
 
 - `TRANCHE-013` landed the Docker-only installed-extension contract and the
   initial public/internal documentation split normalization
-- `TRANCHE-015` is now active on first-time installed-user Docker onboarding,
-  explicit missing-Docker guidance, and fail-closed first-run next actions
-- the runtime/package layer already removed installed host-mode/path knobs
-- the next retained gap is no longer “assume Docker already exists on the
-  machine”; it is “make that first-run dependency explicit and recoverable”
+- `TRANCHE-015` landed first-time installed-user Docker onboarding, explicit
+  missing-Docker guidance, and fail-closed first-run next actions
+- the runtime/package layer removed installed host-mode/path knobs from the
+  released extension surface
+- this direction remains the current released baseline on exact `v1.2.2`, but
+  it is no longer the active product direction
+- `ISSUE-0412` / `TRANCHE-016` now own the replacement path to Windows local
+  `LabVIEWCLI`
 
 ## Scope
 
-- Docker-only installed compare execution
+- historical Docker-only installed compare execution
 - current-Docker-engine selection of governed Windows versus governed Linux
   image on Windows hosts
 - canonical Docker-only request validation
-- no execution-policy bypass around that validation boundary
 - visible image-acquisition and front-facing runtime feedback
 - first-run missing-Docker onboarding and fail-closed recovery guidance
-- public GitHub front-face versus internal GitLab control-plane normalization
-- handoff to `PROGRAM-0002` for the next deterministic public Gate D rerun
+- public/internal reader-surface normalization for the released Docker-only
+  contract
 
 ## Non-Goals
 
-- reopening benchmark proof under `PROGRAM-0003`
-- using host-native LabVIEW as part of the installed extension compare path
+- reopening this issue as the active installed-user direction
+- defining the Windows local-`LabVIEWCLI` replacement contract
 - unbounded runtime expansion without a clear installed contract
 
 ## Dependencies
@@ -43,30 +45,24 @@ Activation facts:
 - truthful current-state, queue, and execution-policy surfaces
 - the dedicated ADR package for Docker-only execution and public/internal
   audience split
+- historical tranche retention under `TRANCHE-013` and `TRANCHE-015`
 
 ## Acceptance Criteria
 
-- installed users no longer receive provider-mode or host-runtime knobs
-- the installed extension validates one canonical Docker-only request before
-  pull or launch
-- the current Docker daemon engine chooses the governed Windows or Linux image
-  truthfully on Windows
-- missing images are acquired with visible progress and explicit failure truth
-- first-time users who do not yet have Docker installed or running get clear
-  install/start/retry guidance before image acquisition is treated as the next
-  step
-- package metadata and user-facing docs point to the public GitHub front face
-  instead of the private GitLab authority repo
+- the historical Docker-only installed contract remains discoverable as the
+  exact released baseline that landed before the reopened replacement work
+- `ISSUE-0412` can supersede this direction without erasing what exact
+  `v1.2.2` still implements
+- future sessions do not mistake this issue for the active product destination
 
 ## Required Evidence
 
-- updated package manifest and runtime docs
-- updated README, current-state, queue, ADR, and execution-policy docs
-- updated requirements, RTM, and test plan
-- updated bundled/public/internal reader surfaces
-- green docs and design gates after the control-plane update
+- retained queue, program, and current-state references that classify this
+  issue as superseded rather than active
+- a retained active successor issue: `ISSUE-0412`
+- green docs gates after the supersession rewrite
 
-## Current Active Slice
+## Historical Landed Slice
 
 - account explicitly for a first-time installed-extension user whose machine
   does not yet have Docker installed or running
@@ -75,5 +71,7 @@ Activation facts:
   Docker familiarity
 - preserve the Docker-only compare contract and no-host-fallback rule while
   making the prerequisite and recovery path clearer
-- keep the later Gate D rerun handoff to `PROGRAM-0002` explicit without
-  claiming that public acceptance is reclosed yet
+
+## Active Successor
+
+- [ISSUE-0412: Installed Local LabVIEWCLI Selection And Explicit Compare](./ISSUE-0412-installed-local-labviewcli-selection-and-explicit-compare.md)

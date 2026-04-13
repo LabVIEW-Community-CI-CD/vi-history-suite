@@ -14,7 +14,7 @@ Activation is now satisfied:
 
 - `PROGRAM-0003` is now closed on the benchmark-proof packet under
   `TRANCHE-011`
-- `PROGRAM-0005` is active again under `TRANCHE-013`
+- `PROGRAM-0005` is active again under `TRANCHE-016`
 - `TRANCHE-012` is now the active queue tranche
 
 ## Scope

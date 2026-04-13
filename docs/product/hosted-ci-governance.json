@@ -18,10 +18,12 @@
     }
   },
   "branchModel": {
-    "model": "gitflow-lite",
+    "model": "gitflow",
     "publicDefaultBranch": "main",
     "integrationBranch": "develop",
-    "releaseBranch": "main",
+    "releaseBranch": "release/*",
+    "hotfixBranch": "hotfix/*",
+    "exactReleaseLineBranch": "main",
     "activeReleaseCandidateBranch": null,
     "temporaryBranchPrefixes": [
       "feature/",

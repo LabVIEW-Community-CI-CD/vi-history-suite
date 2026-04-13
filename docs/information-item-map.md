@@ -46,13 +46,18 @@
 | Bundled user documentation pack | `resources/bundled-docs/manifest.json` | sole author | the published wiki set changes or the packaged-doc navigation surface changes | the installed extension can open version-matched packaged docs without repo access |
 | Documentation package workbench | `docs/documentation-workbench.md` | sole author | docs-authoring workflow, wiki-workbench commands, published image references, or docs-gate commands change | future requirements/wiki iteration can start from one published workbench, one governed wiki-workbench CLI, and one retained publication-prep flow instead of ad hoc host setup |
 | Program repo jump surface | `docs/product/program-repo-jump.md` | sole author | the local repo constellation, public/internal reader surfaces, public source facade, private experiment mirror, or jump commands change | future sessions can jump between `vi-history-suite`, `vi-history-suite.public`, `vi-history-suite.github.wiki`, `vi-history-suite-source-experiments`, `vi-history-suite.wiki`, and `repo-standards-review` from one governed map |
+| Repo-standards-review compliance roadmap | `docs/product/repo-standards-review-v0.2.9-compliance-roadmap.md` | sole author | an external released-skill pass closes, reopens, or reorders a compliance refactor pass | future sessions can resume the standards uplift from repo truth instead of reconstructing the pass order from chat memory |
+| Repo-standards-review contradiction ledger | `docs/product/repo-standards-review-v0.2.9-pass-4-contradiction-ledger.md` | sole author | a released-skill-backed contradiction is discovered, retired, or reclassified | future sessions can see which contradictions still drive the next uplift passes and which historical baselines are intentionally retained |
+| Repo-standards-review closeout packet | `docs/product/repo-standards-review-v0.2.9-pass-8-closeout.md` | sole author | a released-skill compliance pass reaches or loses clean closeout on the active branch | future sessions can distinguish completed compliance closeout from remaining feature or publication work without reconstructing audit status from chat memory |
+| ISSUE-0412 promotion and publication handoff | `docs/product/issue-0412-promotion-and-publication-handoff.md` | sole author | the next governed move after `TRANCHE-016` compliance closeout changes | future sessions can tell when the remaining work is branch promotion and publication handoff rather than reopened standards debt |
 | Development queue | `docs/product/development-queue.json` | sole author | tranche order or status changes | queue reflects the active implementation program |
 | Dashboard epic | `docs/product/epics/EPIC-0004-multi-report-developer-dashboard.md` | sole author | multi-report dashboard scope changes | epic matches the active product direction and queue |
 | Dashboard ADR | `docs/architecture/adr/ADR-0007-multi-report-review-dashboard.md` | sole author | multi-report dashboard architecture changes | ADR rationale matches the product and report-subsystem direction |
 | Dashboard concentration ADR | `docs/architecture/adr/ADR-0008-concentration-first-dashboard-for-high-volume-review.md` | sole author | high-volume review design changes | ADR rationale matches the dashboard concentration and drill-down direction |
 | Review scenarios | `docs/product/review-scenarios.md` | sole author | human-review scenario or maturity changes | scenario registry matches the dashboard direction and harnesses |
 | Decision record template | `docs/product/decision-record-template.md` | sole author | human-review decision model changes | template matches the review scenario and dashboard evidence model |
-| Specification | `docs/requirements/srs.md` | sole author | capability change | requirement IDs and fit criteria are current |
+| System Specification | `docs/requirements/syrs.md` | sole author | system boundary, runtime-provider doctrine, release-control model, or information-item ownership changes | system-level intent and fit criteria are current |
+| Software Specification | `docs/requirements/srs.md` | sole author | software capability, implementation-level fit criterion, or software boundary change | software requirement IDs and fit criteria are current |
 | Traceability matrix | `docs/requirements/rtm.csv` | sole author | requirement or test change | every active requirement has at least one proving row |
 | Test plan | `docs/testing/test-plan.md` | sole author | verification strategy change | test cases and entry/exit criteria are current, and every governed RTM verification id is enumerated in the plan |
 | Architecture packet | `docs/architecture/overview.md` | sole author | design change | containers/components reflect live code |
@@ -65,5 +70,5 @@
 - Local runtime and design-gate evidence under `.cache/` is regenerated evidence,
   not the committed source of truth for repo meaning.
 - Future readers should start with `README.md`, `docs/product/current-state.md`,
-  `docs/product/debt-retirement-contract.md`, and
+  `docs/requirements/syrs.md`, `docs/product/debt-retirement-contract.md`, and
   `docs/research/authoritative/research-implementation-index.json`.

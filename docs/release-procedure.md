@@ -21,8 +21,10 @@
   exact released source line.
 - The public Codespaces evaluation branch is `develop`.
 - The integration branch is `develop`.
-- The release branch is `main`.
-- The next-line branch model is `gitflow-lite` with temporary
+- The protected exact-release line is `main`.
+- The release-candidate branch family is `release/*`.
+- The hotfix branch family is `hotfix/*`.
+- The next-line branch model is `GitFlow` with temporary
   `feature/*`, `release/*`, and `hotfix/*` lanes.
 - The hosted automation governance matrix is retained in:
   - `docs/product/hosted-ci-governance.md`
@@ -69,11 +71,21 @@
      first.
    - Fail closed if `develop` does not yet contain the exact released `main`
      baseline.
-   - Land integration work on `develop`.
-   - Promote release candidates from `develop` into `main`.
-   - Do not tag from `develop`.
-   - Do not rely on direct pushes to a protected release branch as the primary
-     release path.
+   - Feature branches are cut from `develop` and merge back into `develop`.
+   - Cut `feature/*` branches from `develop` only and merge them back into
+     `develop`.
+   - Release branches are cut from `develop`, merge into `main`, and merge
+     back into `develop`.
+   - Cut `release/*` branches from `develop`, merge the same `release/*`
+     branch into `main`, merge that `release/*` branch back into `develop`,
+     and delete it only after both merges complete.
+   - Delete the release branch only after both merges complete.
+   - Cut `hotfix/*` branches from `main`, merge the same `hotfix/*` branch
+     into `main`, merge that `hotfix/*` branch back into `develop`, and
+     delete it only after both merges complete.
+   - Do not tag from `develop`, `feature/*`, `release/*`, or `hotfix/*`.
+   - Do not rely on direct pushes to a protected exact-release line as the
+     primary release path.
 2. Ensure `main` is in a governed baseline state.
    - Either wait for `npm run design:gate` to exit `0`, or run
      `npm run design:gate:assert-complete` against the retained latest report

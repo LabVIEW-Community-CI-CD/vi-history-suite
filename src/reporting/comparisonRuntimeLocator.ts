@@ -34,6 +34,10 @@ export type DockerContainerAcquisitionState =
 
 export interface ComparisonRuntimeSettings {
   executionMode?: RuntimeExecutionMode;
+  requireVersionAndBitness?: boolean;
+  requestedProvider?: 'host' | 'docker';
+  invalidRequestedProvider?: string;
+  labviewVersion?: string;
   labviewCliPath?: string;
   labviewExePath?: string;
   bitness?: RuntimeBitness;
@@ -63,10 +67,18 @@ export interface RuntimeProviderDecision {
   detail: string;
 }
 
+interface ExactWindowsHostRuntimeResolution {
+  labviewExe?: RuntimeToolCandidate;
+  labviewCli?: RuntimeToolCandidate;
+  blockedReason?: string;
+  notes?: string[];
+}
+
 export interface ComparisonRuntimeSelection {
   platform: RuntimePlatform;
   containerRuntimePlatform?: Extract<RuntimePlatform, 'win32' | 'linux'>;
   executionMode?: RuntimeExecutionMode;
+  requestedProvider?: 'host' | 'docker';
   headlessRequested?: boolean;
   bitness: RuntimeBitness;
   provider: ComparisonRuntimeProvider;
@@ -124,6 +136,7 @@ interface BuildProviderDecisionsOptions {
   platform: RuntimePlatform;
   containerRuntimePlatform?: Extract<RuntimePlatform, 'win32' | 'linux'>;
   executionMode: RuntimeExecutionMode;
+  requestedProvider?: 'host' | 'docker';
   bitness: RuntimeBitness;
   configuredWindowsContainerImage: string;
   configuredLinuxContainerImage: string;
@@ -322,7 +335,9 @@ export async function locateComparisonRuntime(
   settings: ComparisonRuntimeSettings = {},
   deps: ComparisonRuntimeLocatorDeps = {}
 ): Promise<ComparisonRuntimeSelection> {
-  const executionMode = settings.executionMode ?? 'auto';
+  const executionMode = resolveEffectiveExecutionMode(settings);
+  const requireVersionAndBitness = settings.requireVersionAndBitness === true;
+  const requestedLabviewVersion = normalizeRequestedLabviewVersion(settings.labviewVersion);
   const bitness = settings.bitness ?? 'x64';
   const notes: string[] = [];
   const registryQueryPlans = platform === 'win32' ? buildWindowsRegistryQueryPlans() : [];
@@ -331,16 +346,98 @@ export async function locateComparisonRuntime(
   const windowsContainerImage = resolveWindowsContainerImage(settings.windowsContainerImage);
   const linuxContainerImage = resolveLinuxContainerImage(settings.linuxContainerImage);
 
+  if (settings.invalidRequestedProvider) {
+    const containerProvider: RuntimeSelectableProvider =
+      platform === 'linux' ? 'linux-container' : 'windows-container';
+    return {
+      platform,
+      executionMode,
+      requestedProvider: settings.requestedProvider,
+      bitness,
+      provider: 'unavailable',
+      blockedReason: 'installed-provider-invalid',
+      providerDecisions: [
+        {
+          provider: containerProvider,
+          outcome: 'rejected',
+          reason: 'invalid-installed-provider',
+          detail:
+            'Docker container execution was not selected because viHistorySuite.runtimeProvider must be either host or docker.'
+        },
+        {
+          provider: 'host-native',
+          outcome: 'rejected',
+          reason: 'invalid-installed-provider',
+          detail:
+            'Host-native execution was not selected because viHistorySuite.runtimeProvider must be either host or docker.'
+        }
+      ],
+      notes: [
+        'Installed compare requires viHistorySuite.runtimeProvider to be either host or docker before runtime preflight can proceed.'
+      ],
+      registryQueryPlans,
+      candidates: []
+    };
+  }
+
+  if (platform === 'win32' && requireVersionAndBitness) {
+    const missingVersion = !requestedLabviewVersion;
+    const missingBitness = settings.bitness === undefined;
+    if (missingVersion || missingBitness) {
+      const blockedReason =
+        missingVersion && missingBitness
+          ? 'labview-runtime-selection-required'
+          : missingVersion
+            ? 'labview-version-required'
+            : 'labview-bitness-required';
+      const selectionNotes =
+        missingVersion && missingBitness
+          ? [
+              'Installed compare requires both viHistorySuite.labviewVersion and viHistorySuite.labviewBitness before local runtime preflight can proceed.'
+            ]
+          : missingVersion
+            ? [
+                'Installed compare requires viHistorySuite.labviewVersion before local runtime preflight can proceed.'
+              ]
+            : [
+                'Installed compare requires viHistorySuite.labviewBitness before local runtime preflight can proceed.'
+              ];
+      return {
+        platform,
+        executionMode,
+        requestedProvider: settings.requestedProvider,
+        bitness,
+        provider: 'unavailable',
+        blockedReason,
+        providerDecisions: buildProviderDecisions({
+          platform,
+          executionMode,
+          requestedProvider: settings.requestedProvider,
+          bitness,
+          configuredWindowsContainerImage: windowsContainerImage,
+          configuredLinuxContainerImage: linuxContainerImage,
+          containerAvailable: false,
+          blockedReason
+        }),
+        notes: selectionNotes,
+        registryQueryPlans,
+        candidates: []
+      };
+    }
+  }
+
   if (platform === 'darwin') {
     return {
       platform,
       executionMode,
+      requestedProvider: settings.requestedProvider,
       bitness,
       provider: 'unavailable',
       blockedReason: 'labview-2026q1-unsupported-on-macos',
       providerDecisions: buildProviderDecisions({
         platform,
         executionMode,
+        requestedProvider: settings.requestedProvider,
         bitness,
         configuredWindowsContainerImage: windowsContainerImage,
         configuredLinuxContainerImage: linuxContainerImage,
@@ -364,12 +461,14 @@ export async function locateComparisonRuntime(
     return {
       platform,
       executionMode,
+      requestedProvider: settings.requestedProvider,
       bitness,
       provider: 'unavailable',
       blockedReason: `configured-${configuredFailure.kind}-path-missing`,
       providerDecisions: buildProviderDecisions({
         platform,
         executionMode,
+        requestedProvider: settings.requestedProvider,
         bitness,
         configuredWindowsContainerImage: windowsContainerImage,
         configuredLinuxContainerImage: linuxContainerImage,
@@ -472,6 +571,7 @@ export async function locateComparisonRuntime(
         return buildSelectedContainerRuntimeSelection({
           hostPlatform: platform,
           executionMode,
+          requestedProvider: settings.requestedProvider,
           bitness,
           configuredWindowsContainerImage: windowsContainerImage,
           configuredLinuxContainerImage: linuxContainerImage,
@@ -481,6 +581,7 @@ export async function locateComparisonRuntime(
             platform,
             containerRuntimePlatform: resolveContainerRuntimePlatform(containerFacts),
             executionMode,
+            requestedProvider: settings.requestedProvider,
             bitness,
             configuredWindowsContainerImage: windowsContainerImage,
             configuredLinuxContainerImage: linuxContainerImage,
@@ -505,6 +606,7 @@ export async function locateComparisonRuntime(
       return buildUnavailableContainerSelection({
         hostPlatform: platform,
         executionMode,
+        requestedProvider: settings.requestedProvider,
         bitness,
         configuredWindowsContainerImage: windowsContainerImage,
         configuredLinuxContainerImage: linuxContainerImage,
@@ -514,6 +616,7 @@ export async function locateComparisonRuntime(
           platform,
           containerRuntimePlatform: containerFacts?.runtimePlatform,
           executionMode,
+          requestedProvider: settings.requestedProvider,
           bitness,
           configuredWindowsContainerImage: windowsContainerImage,
           configuredLinuxContainerImage: linuxContainerImage,
@@ -537,17 +640,31 @@ export async function locateComparisonRuntime(
 
   if (executionMode === 'docker-only') {
     containerAvailable = await ensureContainerAvailability();
+    const dockerProviderNotSupportedBlockedReason =
+      settings.requestedProvider === 'docker'
+        ? 'docker-provider-not-supported-on-platform'
+        : 'docker-only-provider-not-supported-on-platform';
+    const dockerProviderRequiresWindowsX64BlockedReason =
+      settings.requestedProvider === 'docker'
+        ? 'docker-provider-requires-windows-x64'
+        : 'docker-only-requires-windows-x64-provider';
+    const dockerProviderUnavailableBlockedReason =
+      settings.requestedProvider === 'docker'
+        ? 'docker-provider-unavailable'
+        : 'docker-only-provider-unavailable';
     if (platform !== 'win32' && platform !== 'linux') {
       return {
         platform,
         executionMode,
+        requestedProvider: settings.requestedProvider,
         bitness,
         provider: 'unavailable',
-        blockedReason: 'docker-only-provider-not-supported-on-platform',
+        blockedReason: dockerProviderNotSupportedBlockedReason,
         providerDecisions: buildProviderDecisions({
           platform,
           containerRuntimePlatform: containerFacts?.runtimePlatform,
           executionMode,
+          requestedProvider: settings.requestedProvider,
           bitness,
           configuredWindowsContainerImage: windowsContainerImage,
           configuredLinuxContainerImage: linuxContainerImage,
@@ -555,10 +672,12 @@ export async function locateComparisonRuntime(
           containerAvailable,
           containerEvaluated,
           ...buildContainerDecisionFacts(),
-          blockedReason: 'docker-only-provider-not-supported-on-platform'
+          blockedReason: dockerProviderNotSupportedBlockedReason
         }),
         notes: [
-          'Docker-only comparison-report execution is currently governed for Windows hosts and Linux hosts using the current Docker daemon engine.'
+          settings.requestedProvider === 'docker'
+            ? 'The Docker provider is currently governed for Windows hosts and Linux hosts using the current Docker daemon engine.'
+            : 'Docker-only comparison-report execution is currently governed for Windows hosts and Linux hosts using the current Docker daemon engine.'
         ],
         registryQueryPlans,
         candidates
@@ -569,13 +688,15 @@ export async function locateComparisonRuntime(
       return {
         platform,
         executionMode,
+        requestedProvider: settings.requestedProvider,
         bitness,
         provider: 'unavailable',
-        blockedReason: 'docker-only-requires-windows-x64-provider',
+        blockedReason: dockerProviderRequiresWindowsX64BlockedReason,
         providerDecisions: buildProviderDecisions({
           platform,
           containerRuntimePlatform: containerFacts?.runtimePlatform,
           executionMode,
+          requestedProvider: settings.requestedProvider,
           bitness,
           configuredWindowsContainerImage: windowsContainerImage,
           configuredLinuxContainerImage: linuxContainerImage,
@@ -583,10 +704,12 @@ export async function locateComparisonRuntime(
           containerAvailable,
           containerEvaluated,
           ...buildContainerDecisionFacts(),
-          blockedReason: 'docker-only-requires-windows-x64-provider'
+          blockedReason: dockerProviderRequiresWindowsX64BlockedReason
         }),
         notes: [
-          'Docker-only execution currently requires the governed 64-bit container provider.'
+          settings.requestedProvider === 'docker'
+            ? 'The Docker provider currently requires the governed 64-bit container provider.'
+            : 'Docker-only execution currently requires the governed 64-bit container provider.'
         ],
         registryQueryPlans,
         candidates
@@ -597,15 +720,17 @@ export async function locateComparisonRuntime(
       return buildUnavailableContainerSelection({
         hostPlatform: platform,
         executionMode,
+        requestedProvider: settings.requestedProvider,
         bitness,
         configuredWindowsContainerImage: windowsContainerImage,
         configuredLinuxContainerImage: linuxContainerImage,
         selectedContainerFacts: containerFacts,
-        blockedReason: 'docker-only-provider-unavailable',
+        blockedReason: dockerProviderUnavailableBlockedReason,
         providerDecisions: buildProviderDecisions({
           platform,
           containerRuntimePlatform: containerFacts?.runtimePlatform,
           executionMode,
+          requestedProvider: settings.requestedProvider,
           bitness,
           configuredWindowsContainerImage: windowsContainerImage,
           configuredLinuxContainerImage: linuxContainerImage,
@@ -613,10 +738,14 @@ export async function locateComparisonRuntime(
           containerAvailable,
           containerEvaluated,
           ...buildContainerDecisionFacts(),
-          blockedReason: 'docker-only-provider-unavailable'
+          blockedReason: dockerProviderUnavailableBlockedReason
         }),
         notes: [
-          `Docker-only execution was requested, but ${describeUnavailableContainerProvider(containerFacts, {
+          `${
+            settings.requestedProvider === 'docker'
+              ? 'The Docker provider was requested'
+              : 'Docker-only execution was requested'
+          }, but ${describeUnavailableContainerProvider(containerFacts, {
             configuredWindowsContainerImage: windowsContainerImage,
             configuredLinuxContainerImage: linuxContainerImage
           })}`
@@ -629,6 +758,7 @@ export async function locateComparisonRuntime(
     return buildSelectedContainerRuntimeSelection({
       hostPlatform: platform,
       executionMode,
+      requestedProvider: settings.requestedProvider,
       bitness,
       configuredWindowsContainerImage: windowsContainerImage,
       configuredLinuxContainerImage: linuxContainerImage,
@@ -639,6 +769,7 @@ export async function locateComparisonRuntime(
           ? resolveContainerRuntimePlatform(containerFacts)
           : undefined,
         executionMode,
+        requestedProvider: settings.requestedProvider,
         bitness,
         configuredWindowsContainerImage: windowsContainerImage,
         configuredLinuxContainerImage: linuxContainerImage,
@@ -662,9 +793,50 @@ export async function locateComparisonRuntime(
   }
 
   const labviewCandidates = candidates.filter(
-    (candidate) => candidate.kind === 'labview-exe' && candidate.exists
+    (candidate) =>
+      candidate.kind === 'labview-exe' &&
+      candidate.exists &&
+      matchesRequestedLabviewVersion(candidate, requestedLabviewVersion)
   );
-  const labviewExe = selectPreferredLabviewCandidate(labviewCandidates, bitness, platform);
+  const exactWindowsHostRuntime =
+    platform === 'win32' &&
+    requireVersionAndBitness &&
+    requestedLabviewVersion
+      ? resolveExactWindowsHostRuntime(candidates, requestedLabviewVersion, bitness)
+      : undefined;
+  const labviewExe =
+    exactWindowsHostRuntime?.labviewExe ??
+    selectPreferredLabviewCandidate(labviewCandidates, bitness, platform);
+
+  if (exactWindowsHostRuntime?.blockedReason) {
+    return {
+      platform,
+      executionMode,
+      requestedProvider: settings.requestedProvider,
+      bitness,
+      provider: 'unavailable',
+      blockedReason: exactWindowsHostRuntime.blockedReason,
+      providerDecisions: buildProviderDecisions({
+        platform,
+        containerRuntimePlatform: containerFacts?.runtimePlatform,
+        executionMode,
+        requestedProvider: settings.requestedProvider,
+        bitness,
+        configuredWindowsContainerImage: windowsContainerImage,
+        configuredLinuxContainerImage: linuxContainerImage,
+        containerImage: containerFacts?.image,
+        containerAvailable,
+        containerEvaluated,
+        ...buildContainerDecisionFacts(),
+        blockedReason: exactWindowsHostRuntime.blockedReason,
+        labviewExeFound: exactWindowsHostRuntime.blockedReason !== 'labview-exe-not-found'
+      }),
+      ...buildContainerSelectionFactsForReturn(),
+      notes: exactWindowsHostRuntime.notes ?? [],
+      registryQueryPlans,
+      candidates
+    };
+  }
   const hostRuntimeSurfaceFacts =
     platform === 'win32' && labviewExe
       ? await observeWindowsHostRuntimeSurfaceFacts(labviewExe.path, {
@@ -686,6 +858,7 @@ export async function locateComparisonRuntime(
         return buildSelectedContainerRuntimeSelection({
           hostPlatform: platform,
           executionMode,
+          requestedProvider: settings.requestedProvider,
           bitness,
           configuredWindowsContainerImage: windowsContainerImage,
           configuredLinuxContainerImage: linuxContainerImage,
@@ -696,6 +869,7 @@ export async function locateComparisonRuntime(
             platform,
             containerRuntimePlatform: resolveContainerRuntimePlatform(containerFacts),
             executionMode,
+            requestedProvider: settings.requestedProvider,
             bitness,
             configuredWindowsContainerImage: windowsContainerImage,
             configuredLinuxContainerImage: linuxContainerImage,
@@ -732,6 +906,7 @@ export async function locateComparisonRuntime(
     return {
       platform,
       executionMode,
+      requestedProvider: settings.requestedProvider,
       bitness,
       provider: 'unavailable',
       blockedReason: 'labview-exe-not-found',
@@ -739,6 +914,7 @@ export async function locateComparisonRuntime(
         platform,
         containerRuntimePlatform: containerFacts?.runtimePlatform,
         executionMode,
+        requestedProvider: settings.requestedProvider,
         bitness,
         configuredWindowsContainerImage: windowsContainerImage,
         configuredLinuxContainerImage: linuxContainerImage,
@@ -750,16 +926,23 @@ export async function locateComparisonRuntime(
         labviewExeFound: false
       }),
       ...buildContainerSelectionFactsForReturn(),
-      notes: [
-        'No supported LabVIEW 2026 runtime was located for report generation.',
-        'Install LabVIEW 2026 Q1 or configure viHistorySuite.labviewExePath to an explicit LabVIEW 2026 executable.'
-      ],
+      notes:
+        platform === 'win32' && requireVersionAndBitness && requestedLabviewVersion
+          ? [
+              `No supported LabVIEW ${requestedLabviewVersion} ${bitness} runtime was located for report generation.`,
+              'Install the requested LabVIEW version locally and set viHistorySuite.labviewVersion plus viHistorySuite.labviewBitness before retrying compare.'
+            ]
+          : [
+              `No supported LabVIEW ${requestedLabviewVersion ?? '2026'} runtime was located for report generation.`,
+              'Install the requested LabVIEW version locally and set viHistorySuite.labviewVersion plus viHistorySuite.labviewBitness before retrying compare.'
+            ],
       registryQueryPlans,
       candidates
     };
   }
 
   const labviewCli =
+    exactWindowsHostRuntime?.labviewCli ??
     candidates.find((candidate) => candidate.kind === 'labview-cli' && candidate.exists) ??
     undefined;
   const lvCompare =
@@ -776,6 +959,7 @@ export async function locateComparisonRuntime(
         return buildSelectedContainerRuntimeSelection({
           hostPlatform: platform,
           executionMode,
+          requestedProvider: settings.requestedProvider,
           bitness,
           configuredWindowsContainerImage: windowsContainerImage,
           configuredLinuxContainerImage: linuxContainerImage,
@@ -789,6 +973,7 @@ export async function locateComparisonRuntime(
             platform,
             containerRuntimePlatform: resolveContainerRuntimePlatform(containerFacts),
             executionMode,
+            requestedProvider: settings.requestedProvider,
             bitness,
             configuredWindowsContainerImage: windowsContainerImage,
             configuredLinuxContainerImage: linuxContainerImage,
@@ -824,7 +1009,9 @@ export async function locateComparisonRuntime(
       }
     } else if (executionMode === 'host-only') {
       notes.push(
-        'Host-only execution cannot proceed because the validated Windows host runtime surface is contaminated by existing LabVIEW-related activity.'
+        settings.requestedProvider === 'host'
+          ? 'The requested host provider cannot proceed because the validated Windows host runtime surface is contaminated by existing LabVIEW-related activity.'
+          : 'Host-only execution cannot proceed because the validated Windows host runtime surface is contaminated by existing LabVIEW-related activity.'
       );
     } else if (bitness === 'x86') {
       notes.push(
@@ -835,6 +1022,7 @@ export async function locateComparisonRuntime(
     return {
       platform,
       executionMode,
+      requestedProvider: settings.requestedProvider,
       bitness,
       provider: 'unavailable',
       blockedReason: 'windows-host-runtime-surface-contaminated',
@@ -842,6 +1030,7 @@ export async function locateComparisonRuntime(
         platform,
         containerRuntimePlatform: containerFacts?.runtimePlatform,
         executionMode,
+        requestedProvider: settings.requestedProvider,
         bitness,
         configuredWindowsContainerImage: windowsContainerImage,
         configuredLinuxContainerImage: linuxContainerImage,
@@ -880,6 +1069,7 @@ export async function locateComparisonRuntime(
       return buildSelectedContainerRuntimeSelection({
         hostPlatform: platform,
         executionMode,
+        requestedProvider: settings.requestedProvider,
         bitness,
         configuredWindowsContainerImage: windowsContainerImage,
         configuredLinuxContainerImage: linuxContainerImage,
@@ -894,6 +1084,7 @@ export async function locateComparisonRuntime(
           platform,
           containerRuntimePlatform: resolveContainerRuntimePlatform(containerFacts),
           executionMode,
+          requestedProvider: settings.requestedProvider,
           bitness,
           configuredWindowsContainerImage: windowsContainerImage,
           configuredLinuxContainerImage: linuxContainerImage,
@@ -930,12 +1121,14 @@ export async function locateComparisonRuntime(
     return {
       platform,
       executionMode,
+      requestedProvider: settings.requestedProvider,
       bitness,
       provider: 'host-native',
       providerDecisions: buildProviderDecisions({
         platform,
         containerRuntimePlatform: containerFacts?.runtimePlatform,
         executionMode,
+        requestedProvider: settings.requestedProvider,
         bitness,
         configuredWindowsContainerImage: windowsContainerImage,
         configuredLinuxContainerImage: linuxContainerImage,
@@ -970,12 +1163,14 @@ export async function locateComparisonRuntime(
     return {
       platform,
       executionMode,
+      requestedProvider: settings.requestedProvider,
       bitness,
       provider: 'unavailable',
       providerDecisions: buildProviderDecisions({
         platform,
         containerRuntimePlatform: containerFacts?.runtimePlatform,
         executionMode,
+        requestedProvider: settings.requestedProvider,
         bitness,
         configuredWindowsContainerImage: windowsContainerImage,
         configuredLinuxContainerImage: linuxContainerImage,
@@ -1004,17 +1199,18 @@ export async function locateComparisonRuntime(
 
   if (platform === 'linux') {
     notes.push(
-      'Linux report generation remains best-effort; configure viHistorySuite.labviewCliPath when LabVIEW CLI is installed outside documented scan roots.'
+      'Linux report generation remains best-effort; use documented LabVIEWCLI scan roots or an internal proof surface when explicit proof-admission overrides are required.'
     );
   }
 
   notes.push(
-    'Configure viHistorySuite.labviewCliPath to an installed LabVIEWCLI when the documented scan roots do not contain one.'
+    'Install the matching LabVIEWCLI under the documented scan roots, or use an internal proof surface when explicit proof-admission overrides are required.'
   );
 
   return {
     platform,
     executionMode,
+    requestedProvider: settings.requestedProvider,
     bitness,
     provider: 'unavailable',
     blockedReason: 'comparison-tool-not-found',
@@ -1022,6 +1218,7 @@ export async function locateComparisonRuntime(
       platform,
       containerRuntimePlatform: containerFacts?.runtimePlatform,
       executionMode,
+      requestedProvider: settings.requestedProvider,
       bitness,
       configuredWindowsContainerImage: windowsContainerImage,
       configuredLinuxContainerImage: linuxContainerImage,
@@ -1040,6 +1237,18 @@ export async function locateComparisonRuntime(
     registryQueryPlans,
     candidates
   };
+}
+
+function resolveEffectiveExecutionMode(
+  settings: ComparisonRuntimeSettings
+): RuntimeExecutionMode {
+  if (settings.requestedProvider === 'host') {
+    return 'host-only';
+  }
+  if (settings.requestedProvider === 'docker') {
+    return 'docker-only';
+  }
+  return settings.executionMode ?? 'auto';
 }
 
 async function observeWindowsHostRuntimeSurfaceFacts(
@@ -1324,6 +1533,7 @@ function describeSelectedContainerProvider(options: {
   provider: Extract<ComparisonRuntimeProvider, 'windows-container' | 'linux-container'>;
   runtimePlatform: Extract<RuntimePlatform, 'win32' | 'linux'>;
   executionMode: RuntimeExecutionMode;
+  requestedProvider?: 'host' | 'docker';
   containerImage: string;
   dockerCliAvailable?: boolean;
   dockerDaemonReachable?: boolean;
@@ -1353,6 +1563,10 @@ function describeSelectedContainerProvider(options: {
         ? `Docker daemon was reachable in ${options.containerHostMode ?? 'unknown'}-container mode, and governed ${providerLabel} image ${options.containerImage} will be acquired before launch`
       : `Governed ${providerLabel} image ${options.containerImage} was selected`;
 
+  if (options.requestedProvider === 'docker') {
+    return `${capabilitySummary} because the Docker provider was requested.`;
+  }
+
   if (options.executionMode === 'docker-only') {
     return `${capabilitySummary} for docker-only execution.`;
   }
@@ -1379,6 +1593,7 @@ function describeSelectedContainerProvider(options: {
 function buildSelectedContainerRuntimeSelection(options: {
   hostPlatform: RuntimePlatform;
   executionMode: RuntimeExecutionMode;
+  requestedProvider?: 'host' | 'docker';
   bitness: RuntimeBitness;
   configuredWindowsContainerImage: string;
   configuredLinuxContainerImage: string;
@@ -1412,6 +1627,7 @@ function buildSelectedContainerRuntimeSelection(options: {
     provider,
     runtimePlatform,
     executionMode: options.executionMode,
+    requestedProvider: options.requestedProvider,
     containerImage,
     dockerCliAvailable: options.selectedContainerFacts.dockerCliAvailable,
     dockerDaemonReachable: options.selectedContainerFacts.dockerDaemonReachable,
@@ -1426,6 +1642,7 @@ function buildSelectedContainerRuntimeSelection(options: {
     platform: options.hostPlatform,
     containerRuntimePlatform: runtimePlatform,
     executionMode: options.executionMode,
+    requestedProvider: options.requestedProvider,
     bitness: options.bitness,
     provider,
     providerDecisions: options.providerDecisions,
@@ -1448,6 +1665,7 @@ function buildSelectedContainerRuntimeSelection(options: {
 function buildUnavailableContainerSelection(options: {
   hostPlatform: RuntimePlatform;
   executionMode: RuntimeExecutionMode;
+  requestedProvider?: 'host' | 'docker';
   bitness: RuntimeBitness;
   configuredWindowsContainerImage: string;
   configuredLinuxContainerImage: string;
@@ -1464,6 +1682,7 @@ function buildUnavailableContainerSelection(options: {
       ? resolveContainerRuntimePlatform(options.selectedContainerFacts)
       : undefined,
     executionMode: options.executionMode,
+    requestedProvider: options.requestedProvider,
     bitness: options.bitness,
     provider: 'unavailable',
     blockedReason: options.blockedReason,
@@ -1487,6 +1706,8 @@ function buildProviderDecisions(
   options: BuildProviderDecisionsOptions
 ): RuntimeProviderDecision[] {
   const decisions: RuntimeProviderDecision[] = [];
+  const hostProviderRequested = options.requestedProvider === 'host';
+  const dockerProviderRequested = options.requestedProvider === 'docker';
   const containerRelevant =
     options.platform === 'win32' ||
     (options.platform === 'linux' &&
@@ -1519,7 +1740,9 @@ function buildProviderDecisions(
       provider: selectedContainerProvider,
       outcome: 'selected',
       reason:
-        options.executionMode === 'docker-only'
+        dockerProviderRequested
+          ? `provider-request-docker-selected-${selectedContainerProvider}`
+          : options.executionMode === 'docker-only'
           ? `execution-mode-docker-only-selected-${selectedContainerProvider}`
           : windowsAutoDockerInstalled && !options.hostRuntimeConflictDetected
             ? `auto-selected-${selectedContainerProvider}-because-docker-installed`
@@ -1535,6 +1758,7 @@ function buildProviderDecisions(
           provider: selectedContainerProvider,
           runtimePlatform: options.containerRuntimePlatform ?? 'win32',
           executionMode: options.executionMode,
+          requestedProvider: options.requestedProvider,
           containerImage:
             options.containerImage ??
             resolveContainerImageForHostMode({
@@ -1564,7 +1788,9 @@ function buildProviderDecisions(
       provider: 'host-native',
       outcome: 'rejected',
       reason:
-        options.executionMode === 'docker-only'
+        dockerProviderRequested
+          ? 'provider-request-docker-disallows-host-native'
+          : options.executionMode === 'docker-only'
           ? 'execution-mode-docker-only-disallows-host-native'
           : windowsAutoDockerInstalled
             ? 'auto-docker-installed-disallows-host-native'
@@ -1572,7 +1798,9 @@ function buildProviderDecisions(
             ? 'host-native-runtime-surface-contaminated'
             : deriveHostNativeRejectedReason(options),
       detail:
-        options.executionMode === 'docker-only'
+        dockerProviderRequested
+          ? 'Host-native execution was not selected because the Docker provider was requested.'
+          : options.executionMode === 'docker-only'
           ? 'Host-native execution was not selected because docker-only execution was requested.'
           : windowsAutoDockerInstalled
             ? 'Host-native execution was not selected because Docker Desktop is installed and governed auto execution uses the current Docker engine provider.'
@@ -1588,24 +1816,41 @@ function buildProviderDecisions(
       decisions.push({
         provider: selectedContainerProvider,
         outcome: 'rejected',
-        reason: 'execution-mode-host-only-disallows-docker',
-        detail: 'Docker container execution was not selected because host-only execution was requested.'
+        reason: hostProviderRequested
+          ? 'provider-request-host-disallows-docker'
+          : 'execution-mode-host-only-disallows-docker',
+        detail: hostProviderRequested
+          ? 'Docker container execution was not selected because the host provider was requested.'
+          : 'Docker container execution was not selected because host-only execution was requested.'
       });
     } else if (options.executionMode === 'docker-only') {
       decisions.push(
-        options.blockedReason === 'docker-only-requires-windows-x64-provider'
+        options.blockedReason === 'docker-only-requires-windows-x64-provider' ||
+        options.blockedReason === 'docker-provider-requires-windows-x64'
           ? {
               provider: selectedContainerProvider,
               outcome: 'rejected',
-              reason: 'docker-only-windows-x64-provider-required',
+              reason:
+                options.requestedProvider === 'docker'
+                  ? 'docker-provider-windows-x64-required'
+                  : 'docker-only-windows-x64-provider-required',
               detail:
-                'Docker-only execution currently requires the governed 64-bit container provider.'
+                options.requestedProvider === 'docker'
+                  ? 'The Docker provider currently requires the governed 64-bit container provider.'
+                  : 'Docker-only execution currently requires the governed 64-bit container provider.'
             }
           : {
               provider: selectedContainerProvider,
               outcome: 'rejected',
-              reason: 'docker-only-provider-unavailable',
-              detail: `Docker-only execution was requested, but ${describeUnavailableContainerProvider(
+              reason:
+                options.requestedProvider === 'docker'
+                  ? 'docker-provider-unavailable'
+                  : 'docker-only-provider-unavailable',
+              detail: `${
+                options.requestedProvider === 'docker'
+                  ? 'The Docker provider was requested'
+                  : 'Docker-only execution was requested'
+              }, but ${describeUnavailableContainerProvider(
                 options.containerImage
                   ? {
                       image: options.containerImage,
@@ -1736,13 +1981,17 @@ function buildProviderDecisions(
       provider: 'host-native',
       outcome: 'selected',
       reason:
-        options.executionMode === 'host-only'
+        hostProviderRequested
+          ? 'provider-request-host-selected-host-native'
+          : options.executionMode === 'host-only'
           ? 'execution-mode-host-only-selected-host-native'
           : windowsAutoDockerMissing
             ? 'auto-selected-host-native-because-docker-not-installed'
             : 'host-native-labview-cli-selected',
       detail:
-        options.executionMode === 'host-only'
+        hostProviderRequested
+          ? 'Host provider was requested and host-native LabVIEW 2026 plus LabVIEWCLI were available.'
+          : options.executionMode === 'host-only'
           ? 'Host-only execution was requested and host-native LabVIEW 2026 plus LabVIEWCLI were available.'
           : windowsAutoDockerMissing
             ? 'Auto execution selected host-native LabVIEW 2026 plus LabVIEWCLI because Docker Desktop was not detected on Windows.'
@@ -1763,6 +2012,27 @@ function buildProviderDecisions(
 }
 
 function deriveHostNativeRejectedReason(options: BuildProviderDecisionsOptions): string {
+  if (options.blockedReason === 'labview-runtime-selection-required') {
+    return 'host-native-runtime-selection-required';
+  }
+  if (options.blockedReason === 'labview-version-required') {
+    return 'host-native-labview-version-required';
+  }
+  if (options.blockedReason === 'labview-bitness-required') {
+    return 'host-native-labview-bitness-required';
+  }
+  if (options.blockedReason === 'labview-exe-ambiguous') {
+    return 'host-native-labview-exe-ambiguous';
+  }
+  if (options.blockedReason === 'labview-cli-not-found-for-bitness') {
+    return 'host-native-labview-cli-not-found-for-bitness';
+  }
+  if (options.blockedReason === 'labview-cli-ambiguous-for-bitness') {
+    return 'host-native-labview-cli-ambiguous-for-bitness';
+  }
+  if (options.requestedProvider === 'docker') {
+    return 'provider-request-docker-disallows-host-native';
+  }
   if (options.executionMode === 'docker-only') {
     return 'execution-mode-docker-only-disallows-host-native';
   }
@@ -1785,6 +2055,27 @@ function deriveHostNativeRejectedReason(options: BuildProviderDecisionsOptions):
 }
 
 function deriveHostNativeRejectedDetail(options: BuildProviderDecisionsOptions): string {
+  if (options.blockedReason === 'labview-runtime-selection-required') {
+    return 'Host-native execution was not selected because installed compare requires both LabVIEW version and bitness settings before runtime preflight can proceed.';
+  }
+  if (options.blockedReason === 'labview-version-required') {
+    return 'Host-native execution was not selected because installed compare requires a LabVIEW version setting before runtime preflight can proceed.';
+  }
+  if (options.blockedReason === 'labview-bitness-required') {
+    return 'Host-native execution was not selected because installed compare requires a LabVIEW bitness setting before runtime preflight can proceed.';
+  }
+  if (options.blockedReason === 'labview-exe-ambiguous') {
+    return 'Host-native execution was not selected because multiple supported LabVIEW executables matched the requested version and bitness.';
+  }
+  if (options.blockedReason === 'labview-cli-not-found-for-bitness') {
+    return 'A supported LabVIEW executable matched the requested version and bitness, but no matching LabVIEWCLI surface was located for that bitness.';
+  }
+  if (options.blockedReason === 'labview-cli-ambiguous-for-bitness') {
+    return 'A supported LabVIEW executable matched the requested version and bitness, but multiple matching LabVIEWCLI surfaces were located for that bitness.';
+  }
+  if (options.requestedProvider === 'docker') {
+    return 'Host-native execution was not selected because the Docker provider was requested.';
+  }
   if (options.executionMode === 'docker-only') {
     return 'Host-native execution was not selected because docker-only execution was requested.';
   }
@@ -1825,6 +2116,16 @@ function resolveLinuxContainerImage(rawImage: string | undefined): string {
   return trimmed || DEFAULT_LINUX_CONTAINER_IMAGE;
 }
 
+function normalizeRequestedLabviewVersion(rawVersion: string | undefined): string | undefined {
+  const trimmed = rawVersion?.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  const yearMatch = trimmed.match(/\b(20\d{2})\b/u);
+  return yearMatch?.[1] ?? trimmed;
+}
+
 async function resolveConfiguredCandidates(
   settings: ComparisonRuntimeSettings,
   pathExists: (filePath: string) => Promise<boolean>
@@ -1855,7 +2156,8 @@ function buildConfiguredCandidate(
     kind,
     path: trimmed,
     source: 'configured',
-    bitness: kind === 'labview-exe' ? inferBitnessFromPath(trimmed) : undefined
+    bitness:
+      kind === 'labview-exe' || kind === 'labview-cli' ? inferBitnessFromPath(trimmed) : undefined
   };
 }
 
@@ -1905,6 +2207,92 @@ function selectPreferredLabviewCandidate(
   }
 
   return candidates[0];
+}
+
+function resolveExactWindowsHostRuntime(
+  candidates: RuntimeToolCandidate[],
+  requestedVersion: string,
+  bitness: RuntimeBitness
+): ExactWindowsHostRuntimeResolution {
+  const matchingLabviewCandidates = candidates.filter(
+    (candidate) =>
+      candidate.kind === 'labview-exe' &&
+      candidate.exists &&
+      candidate.bitness === bitness &&
+      matchesRequestedLabviewVersion(candidate, requestedVersion)
+  );
+
+  if (matchingLabviewCandidates.length > 1) {
+    return {
+      blockedReason: 'labview-exe-ambiguous',
+      notes: [
+        `Installed compare found multiple supported LabVIEW ${requestedVersion} ${bitness} runtimes, so local runtime preflight could not resolve one exact executable.`
+      ]
+    };
+  }
+
+  const labviewExe = matchingLabviewCandidates[0];
+  if (!labviewExe) {
+    return {
+      blockedReason: 'labview-exe-not-found',
+      notes: [
+        `No supported LabVIEW ${requestedVersion} ${bitness} runtime was located for report generation.`,
+        'Install the requested LabVIEW version locally and set viHistorySuite.labviewVersion plus viHistorySuite.labviewBitness before retrying compare.'
+      ]
+    };
+  }
+
+  const matchingLabviewCliCandidates = candidates.filter(
+    (candidate) =>
+      candidate.kind === 'labview-cli' && candidate.exists && candidate.bitness === bitness
+  );
+
+  if (matchingLabviewCliCandidates.length > 1) {
+    return {
+      blockedReason: 'labview-cli-ambiguous-for-bitness',
+      notes: [
+        `Installed compare found multiple LabVIEWCLI surfaces for requested ${bitness} execution, so local runtime preflight could not resolve one exact CLI path.`
+      ]
+    };
+  }
+
+  const labviewCli = matchingLabviewCliCandidates[0];
+  if (!labviewCli) {
+    return {
+      blockedReason: 'labview-cli-not-found-for-bitness',
+      notes: [
+        `No matching LabVIEWCLI ${bitness} surface was located for requested LabVIEW ${requestedVersion} ${bitness} execution.`,
+        'Install the matching LabVIEWCLI surface for the requested bitness, or adjust viHistorySuite.runtimeProvider, viHistorySuite.labviewVersion, or viHistorySuite.labviewBitness before retrying compare.'
+      ]
+    };
+  }
+
+  return {
+    labviewExe,
+    labviewCli
+  };
+}
+
+function matchesRequestedLabviewVersion(
+  candidate: RuntimeToolCandidate,
+  requestedVersion: string | undefined
+): boolean {
+  if (!requestedVersion || candidate.kind !== 'labview-exe') {
+    return true;
+  }
+
+  return extractLabviewMajorVersion(candidate.path) === requestedVersion;
+}
+
+function extractLabviewMajorVersion(filePath: string): string | undefined {
+  const normalized = filePath.replaceAll('/', '\\');
+  const folderMatch = normalized.match(/\\LabVIEW ([^\\]+)\\LabVIEW\.exe$/iu);
+  if (!folderMatch) {
+    return undefined;
+  }
+
+  const yearMatch = folderMatch[1].match(/\b(20\d{2})\b/u);
+  return yearMatch?.[1];
 }
 
 function inferBitnessFromPath(filePath: string): RuntimeBitness | undefined {

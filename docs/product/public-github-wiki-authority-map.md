@@ -47,6 +47,10 @@ directly to the public user wiki.
 
 - The public GitHub wiki is a curated extension-user reader surface.
 - It shall not mirror the internal GitLab wiki wholesale.
+- Until a newer installed-user bundle is actually published, public GitHub
+  wiki pages and bundled installed-user docs shall keep the exact released
+  Docker-only installed-user contract instead of unreleased develop-line
+  replacement wording.
 - Public wiki publication must be recorded in the dedicated public publication
   ledger, not the internal GitLab wiki ledger.
 - Bundled installed-user documentation should stay aligned with the public user

@@ -21,7 +21,7 @@ const FULL_SELECTED_HASH = 'abcdef1234567890abcdef1234567890abcdef12';
 const FULL_BASE_HASH = '1111111122222222333333334444444455555555';
 
 describe('runHarnessReportSmokeCli', () => {
-  it('parses deterministic runtime override flags and help', () => {
+  it('parses deterministic proof-admission flags and help', () => {
     expect(parseHarnessReportSmokeArgs([])).toEqual({
       harnessId: 'HARNESS-VHS-001',
       strictRsrcHeader: false,
@@ -126,14 +126,14 @@ describe('runHarnessReportSmokeCli', () => {
           '--execution-mode',
           'host-only'
         ])
-    ).toThrow(/Canonical runtime overrides require --platform/);
+    ).toThrow(/Canonical proof-admission overrides require --platform/);
     expect(
       () =>
         parseHarnessReportSmokeArgs([
           '--labview-cli-path',
           WINDOWS_LABVIEW_CLI_PATH
         ])
-    ).toThrow(/Canonical runtime overrides require --platform/);
+    ).toThrow(/Canonical proof-admission overrides require --platform/);
     expect(
       () =>
         parseHarnessReportSmokeArgs([
@@ -185,9 +185,10 @@ describe('runHarnessReportSmokeCli', () => {
     expect(getHarnessReportSmokeUsage()).toContain('--execution-mode');
     expect(getHarnessReportSmokeUsage()).toContain('--labview-cli-path');
     expect(getHarnessReportSmokeUsage()).toContain('Canonical diagnosis rules:');
+    expect(getHarnessReportSmokeUsage()).toContain('proof-admission provider override');
   });
 
-  it('prints the deterministic report-smoke success summary and forwards runtime overrides', async () => {
+  it('prints the deterministic report-smoke success summary and forwards proof-admission overrides', async () => {
     const writes: string[] = [];
     const cleanupWindowsHostRuntimeSurface = vi.fn().mockResolvedValue(undefined);
     const runner = vi.fn().mockResolvedValue({

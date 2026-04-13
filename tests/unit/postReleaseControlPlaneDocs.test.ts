@@ -47,12 +47,12 @@ describe('post-release control-plane coherence', () => {
       issues: ['ISSUE-0409']
     });
     expect(queue.filter((entry) => entry.status === 'active')).toContainEqual({
-      id: 'TRANCHE-013',
-      title: 'Extension execution flexibility and runtime acquisition UX',
+      id: 'TRANCHE-016',
+      title: 'Host-default LabVIEWCLI, expert Docker provider, and explicit compare workflow',
       status: 'active',
       source: 'author direction',
-      summary: expect.stringContaining('public-user and internal-authority docs surfaces'),
-      issues: ['ISSUE-0410']
+      summary: expect.stringContaining('host-default Windows local-LabVIEWCLI workflow'),
+      issues: ['ISSUE-0412']
     });
     expect(queue.find((entry) => entry.id === 'TRANCHE-010')).toMatchObject({
       status: 'done',
@@ -61,13 +61,17 @@ describe('post-release control-plane coherence', () => {
 
     expect(currentState).toContain('`TRANCHE-010`');
     expect(currentState).toContain('`TRANCHE-012`');
-    expect(currentState).toContain('`TRANCHE-013`');
+    expect(currentState).toContain('`TRANCHE-016`');
     expect(currentState).toContain('public GitHub facade repo is the public source product surface');
     expect(currentState).toContain('public GitHub user wiki now exists at');
     expect(currentState).toContain('closed public-product closeout');
     expect(currentState).toContain('retained preflight preparation already proves');
     expect(currentState).toContain('retained hosted public proof on GitHub Codespace `novacula` now passes');
     expect(currentState).toContain('Comparison report is as expected.');
+    expect(currentState).toContain('current exact released installed extension is still Docker-only');
+    expect(currentState).toContain('installed manifest/settings');
+    expect(currentState).toContain('bounded expert provider');
+    expect(currentState).toContain('branch promotion into `develop`');
 
     expect(program).toContain('Closed on the Docker-only public-product acceptance gate.');
     expect(program).toContain('the installed extension compare workflow is now Docker-only and x64-only');
@@ -86,6 +90,7 @@ describe('post-release control-plane coherence', () => {
 
     expect(benchmarkProgram).toContain('Closed on bounded post-release benchmark truth.');
     expect(sustainmentProgram).toContain('Active post-release program.');
+    expect(sustainmentProgram).toContain('installed local-`LabVIEWCLI`');
   });
 
   it('keeps the public-facade split, docs-CI split, and Gate D cold-pull truth explicit', () => {
@@ -102,6 +107,8 @@ describe('post-release control-plane coherence', () => {
     expect(currentState).toContain('docs:ci:internal');
     expect(currentState).toContain('public-facade Linux smoke lane');
     expect(currentState).toContain('Docker is now part of the default installed extension setup path');
+    expect(currentState).toContain('Docker-required hard stops without host fallback');
+    expect(currentState).toContain('provider and progress visibility in the bundled guide');
     expect(currentState).toContain('workflow_dispatch');
     expect(currentState).toContain('npm run public:smoke:linux');
 

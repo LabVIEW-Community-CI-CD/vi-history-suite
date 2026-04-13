@@ -35,6 +35,7 @@ import {
   OpenedDashboardPanelSummary,
   OpenedHistoryPanelSummary
 } from './ui/historyPanelTracker';
+import { ensureLocalRuntimeSettingsCli } from './tooling/localRuntimeSettingsCli';
 
 export interface ViHistorySuiteApi {
   refreshEligibility(): Promise<void>;
@@ -152,6 +153,33 @@ export async function activate(
         }
       }
     )
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('labviewViHistory.prepareLocalRuntimeSettingsCli', async () => {
+      if (!context.globalStorageUri) {
+        void vscode.window.showWarningMessage(
+          'VI History could not prepare the local runtime settings CLI because extension-global storage is unavailable.'
+        );
+        return {
+          outcome: 'missing-global-storage-uri' as const
+        };
+      }
+
+      const materializedCli = await ensureLocalRuntimeSettingsCli(
+        context.globalStorageUri.fsPath,
+        context.extensionPath
+      );
+
+      void vscode.window.showInformationMessage(
+        `Prepared VI History local runtime settings CLI at ${materializedCli.rootDirectoryPath}`
+      );
+
+      return {
+        outcome: 'prepared-local-runtime-settings-cli' as const,
+        ...materializedCli
+      };
+    })
   );
 
   await eligibilityIndexer.start();

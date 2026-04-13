@@ -291,6 +291,12 @@ describe('documentation-package workbench', () => {
     expect(workbenchDoc).toContain('docs_continuous_integration');
     expect(workbenchDoc).toContain('docs_public_continuous_integration');
     expect(workbenchDoc).toContain('docs_internal_continuous_integration');
+    expect(workbenchDoc).toContain('Docker-only compare execution in the bundled installed-user guide');
+    expect(workbenchDoc).toContain('engine-aware Windows/Linux image selection');
+    expect(workbenchDoc).toContain('Docker-required hard stops without host fallback');
+    expect(workbenchDoc).toContain('provider and progress visibility in the bundled installed-user guide');
+    expect(workbenchDoc).not.toContain('Docker-first Windows `auto` behavior when Docker Desktop is installed');
+    expect(workbenchDoc).not.toContain('no silent provider fallback');
     expect(workbenchDoc).toContain('${CI_PROJECT_PATH}.wiki.git');
     expect(workbenchDoc).toContain('no-op completion receipt');
     expect(workbenchDoc).toContain('nextPage = null');

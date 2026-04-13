@@ -10,6 +10,23 @@ const bundledDocsScript = require(path.resolve(
   'scripts',
   'syncBundledDocs.js'
 )) as {
+  readPublishedWikiMarkdown: (
+    paths: {
+      wikiRepoRoot: string;
+    },
+    page: {
+      wikiFileName: string;
+      wikiCommit?: string;
+    },
+    deps?: {
+      readFile?: (targetPath: string, encoding: string) => Promise<string>;
+      spawnSync?: (
+        command: string,
+        args: string[],
+        options: { encoding: string }
+      ) => { status: number; stdout?: string; stderr?: string; error?: Error };
+    }
+  ) => Promise<string>;
   compareBundledDocsFiles: (
     expectedFiles: Map<string, string>,
     actualFiles: Map<string, string>
@@ -126,5 +143,30 @@ describe('bundled docs sync script', () => {
         reason: 'content-mismatch'
       }
     ]);
+  });
+
+  it('reads the published wiki page from the retained ledger commit instead of the dirty worktree', async () => {
+    const readFile = async () => 'dirty worktree markdown';
+    const spawnSync = () => ({
+      status: 0,
+      stdout: 'published markdown from retained commit',
+      stderr: ''
+    });
+
+    await expect(
+      bundledDocsScript.readPublishedWikiMarkdown(
+        {
+          wikiRepoRoot: '/wiki'
+        },
+        {
+          wikiFileName: 'User-Workflow.md',
+          wikiCommit: 'abc1234'
+        },
+        {
+          readFile,
+          spawnSync
+        }
+      )
+    ).resolves.toBe('published markdown from retained commit');
   });
 });

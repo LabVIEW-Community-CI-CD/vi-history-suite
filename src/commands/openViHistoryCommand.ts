@@ -5,6 +5,7 @@ import { GitApi } from '../git/gitApi';
 import { ViEligibilityIndexer } from '../indexing/viEligibilityIndexer';
 import {
   ComparisonReportActionResult,
+  readComparisonRuntimeSettings,
 } from '../reporting/comparisonReportAction';
 import {
   MultiReportDashboardActionResult,
@@ -23,6 +24,7 @@ import {
 } from '../review/humanReviewSubmissionAction';
 import { ViHistoryService } from '../services/viHistoryService';
 import {
+  HistoryPanelComparePreflightState,
   renderHistoryPanelHtml,
   renderHistoryReviewPacketText
 } from '../ui/historyPanel';
@@ -83,7 +85,8 @@ export function createOpenViHistoryCommand(
   }) => Promise<HumanReviewSubmissionActionResult>,
   openBenchmarkStatusAction?: (request: {
     authorityRepoRoot: string;
-  }) => Promise<BenchmarkStatusActionResult>
+  }) => Promise<BenchmarkStatusActionResult>,
+  comparePreflightResolver?: () => Promise<HistoryPanelComparePreflightState>
 ): (uri?: vscode.Uri) => Promise<void> {
   return async (uri?: vscode.Uri) => {
     const targetUri = uri ?? vscode.window.activeTextEditor?.document.uri;
@@ -147,12 +150,16 @@ export function createOpenViHistoryCommand(
       },
       hasRetainedComparisonReport
     );
+    const comparePreflightState = await resolveHistoryPanelComparePreflightState(
+      comparePreflightResolver
+    );
     if (repositorySupport?.tier === 'unsupported') {
       void vscode.window.showWarningMessage(repositorySupport.supportGuidance);
     }
     const renderedHtml = renderHistoryPanelHtml(
       model,
-      panelTracker?.getLastActionSummary()
+      panelTracker?.getLastActionSummary(),
+      comparePreflightState
     );
     const panel = vscode.window.createWebviewPanel(
       'viHistorySuite.history',
@@ -406,11 +413,11 @@ export function createOpenViHistoryCommand(
           );
         } else if (result.outcome === 'missing-retained-comparison-report') {
           void vscode.window.showInformationMessage(
-            'No retained VI Comparison Report exists for this pair yet. Use the commit checkboxes to generate retained evidence for it.'
+            'No retained VI Comparison Report exists for this pair yet. Use the compare preflight section to generate retained evidence for it.'
           );
         } else if (result.outcome === 'invalid-retained-comparison-report') {
           void vscode.window.showInformationMessage(
-            'Retained VI Comparison evidence for this pair is stale or invalid. Use the commit checkboxes to rebuild retained evidence for it.'
+            'Retained VI Comparison evidence for this pair is stale or invalid. Use the compare preflight section to rebuild retained evidence for it.'
           );
         }
         const runtimeWarningMessage = buildComparisonRuntimeWarningMessage(
@@ -435,7 +442,7 @@ export function createOpenViHistoryCommand(
         ) {
           if (result.retainedArchiveAvailable === false) {
             void vscode.window.showInformationMessage(
-              'VI Comparison Report opened, but retained pair evidence was not archived for later reuse. Use the commit checkboxes to rebuild retained evidence for this pair if it is not yet reviewable.'
+              'VI Comparison Report opened, but retained pair evidence was not archived for later reuse. Use the compare preflight section to rebuild retained evidence for this pair if it is not yet reviewable.'
             );
           } else {
             const selectedCommit = model.commits.find((commit) => commit.hash === selectedHash);
@@ -443,7 +450,8 @@ export function createOpenViHistoryCommand(
               selectedCommit.retainedComparisonEvidenceAvailable = true;
               safeUpdatePanelHtml(renderHistoryPanelHtml(
                 model,
-                panelTracker?.getLastActionSummary()
+                panelTracker?.getLastActionSummary(),
+                comparePreflightState
               ));
             }
           }
@@ -629,7 +637,8 @@ export function createOpenViHistoryCommand(
           );
           panel.webview.html = renderHistoryPanelHtml(
             model,
-            panelTracker?.getLastActionSummary()
+            panelTracker?.getLastActionSummary(),
+            comparePreflightState
           );
         }
         return;
@@ -830,11 +839,27 @@ export function createOpenViHistoryCommand(
         return;
       }
 
+      if (command === 'notifyComparePreflightBlocked') {
+        void vscode.window.showWarningMessage(
+          typeof message.warningMessage === 'string' && message.warningMessage.length > 0
+            ? message.warningMessage
+            : comparePreflightState.warningMessage ?? comparePreflightState.nextAction
+        );
+        return;
+      }
+
       if (command === 'generateComparisonReportFromSelection') {
+        if (comparePreflightState.status !== 'ready') {
+          void vscode.window.showWarningMessage(
+            comparePreflightState.warningMessage ?? comparePreflightState.nextAction
+          );
+          return;
+        }
+
         const explicitPair = resolveExplicitComparisonPair(model, selectedHashes);
         if (!explicitPair) {
           void vscode.window.showInformationMessage(
-            'Select two distinct retained revisions to generate a comparison report.'
+            'Select two distinct retained revisions to populate compare preflight.'
           );
           panelTracker?.recordAction({
             command,
@@ -1088,7 +1113,7 @@ function buildComparisonRuntimePanelUpdate(
   const runtimeProvider = deriveRuntimeProviderFromDoctorSummary(
     result.runtimeDoctorSummaryLines
   );
-  const executionMode = deriveRuntimeExecutionModeFromDoctorSummary(
+  const providerRequest = deriveRuntimeProviderRequestFromDoctorSummary(
     result.runtimeDoctorSummaryLines
   );
   const acquisitionState = deriveWindowsContainerAcquisitionStateFromDoctorSummary(
@@ -1100,7 +1125,7 @@ function buildComparisonRuntimePanelUpdate(
   const segments = [
     `${commandLabel} for ${pairLabel}.`,
     `Provider: ${runtimeProvider ?? 'none'}.`,
-    `Execution mode: ${executionMode ?? 'auto'}.`,
+    `Provider request: ${providerRequest ?? 'auto'}.`,
     `Report status: ${result.reportStatus ?? 'none'}.`,
     `Runtime state: ${result.runtimeExecutionState ?? 'none'}.`
   ];
@@ -1124,7 +1149,7 @@ function buildComparisonRuntimePanelUpdate(
   const details = buildComparisonRuntimePanelDetails(
     result,
     runtimeProvider,
-    executionMode,
+    providerRequest,
     acquisitionState,
     rejectedProviderSummary
   );
@@ -1193,7 +1218,7 @@ function buildComparisonRuntimeWarningMessage(
   const runtimeProvider = deriveRuntimeProviderFromDoctorSummary(
     result.runtimeDoctorSummaryLines
   );
-  const executionMode = deriveRuntimeExecutionModeFromDoctorSummary(
+  const providerRequest = deriveRuntimeProviderRequestFromDoctorSummary(
     result.runtimeDoctorSummaryLines
   );
   const acquisitionState = deriveWindowsContainerAcquisitionStateFromDoctorSummary(
@@ -1211,8 +1236,8 @@ function buildComparisonRuntimeWarningMessage(
   if (runtimeProvider) {
     segments.push(`Provider: ${runtimeProvider}.`);
   }
-  if (executionMode) {
-    segments.push(`Execution mode: ${executionMode}.`);
+  if (providerRequest) {
+    segments.push(`Provider request: ${providerRequest}.`);
   }
   if (acquisitionState) {
     segments.push(`Container image acquisition: ${acquisitionState}.`);
@@ -1261,7 +1286,7 @@ function buildComparisonRuntimeInformationMessage(
   const runtimeProvider = deriveRuntimeProviderFromDoctorSummary(
     result.runtimeDoctorSummaryLines
   );
-  const executionMode = deriveRuntimeExecutionModeFromDoctorSummary(
+  const providerRequest = deriveRuntimeProviderRequestFromDoctorSummary(
     result.runtimeDoctorSummaryLines
   );
   const acquisitionState = deriveWindowsContainerAcquisitionStateFromDoctorSummary(
@@ -1275,8 +1300,8 @@ function buildComparisonRuntimeInformationMessage(
   if (runtimeProvider) {
     segments.push(`Provider: ${runtimeProvider}.`);
   }
-  if (executionMode) {
-    segments.push(`Execution mode: ${executionMode}.`);
+  if (providerRequest) {
+    segments.push(`Provider request: ${providerRequest}.`);
   }
   if (acquisitionState) {
     segments.push(`Container image acquisition: ${acquisitionState}.`);
@@ -1374,6 +1399,105 @@ function resolveExplicitComparisonPair(
   };
 }
 
+async function resolveHistoryPanelComparePreflightState(
+  comparePreflightResolver?: () => Promise<HistoryPanelComparePreflightState>
+): Promise<HistoryPanelComparePreflightState> {
+  if (comparePreflightResolver) {
+    return comparePreflightResolver();
+  }
+
+  const settings = readComparisonRuntimeSettings();
+  const provider = settings.invalidRequestedProvider
+    ? `Invalid (${settings.invalidRequestedProvider})`
+    : settings.requestedProvider === 'docker'
+      ? 'docker'
+      : 'host';
+  const labviewVersion = settings.labviewVersion ?? 'Unset';
+  const labviewBitness = settings.bitness ?? 'Unset';
+  const cliHint =
+    'Provider is read-only here. Use the generated settings CLI to update provider, LabVIEW version, or LabVIEW bitness when correction is required.';
+
+  if (settings.invalidRequestedProvider) {
+    return {
+      status: 'blocked',
+      provider,
+      labviewVersion,
+      labviewBitness,
+      nextAction:
+        'Next action: set viHistorySuite.runtimeProvider to host or docker, then review compare preflight before choosing Compare.',
+      cliHint,
+      warningMessage:
+        'Compare preflight is blocked. Set viHistorySuite.runtimeProvider to host or docker, then review compare preflight before choosing Compare.'
+    };
+  }
+
+  if (!settings.labviewVersion && !settings.bitness) {
+    return {
+      status: 'blocked',
+      provider,
+      labviewVersion,
+      labviewBitness,
+      nextAction:
+        'Next action: set viHistorySuite.labviewVersion and viHistorySuite.labviewBitness, then review compare preflight before choosing Compare.',
+      cliHint,
+      warningMessage:
+        'Compare preflight is blocked. Set viHistorySuite.labviewVersion and viHistorySuite.labviewBitness, then review compare preflight before choosing Compare.'
+    };
+  }
+
+  if (!settings.labviewVersion) {
+    return {
+      status: 'blocked',
+      provider,
+      labviewVersion,
+      labviewBitness,
+      nextAction:
+        'Next action: set viHistorySuite.labviewVersion, then review compare preflight before choosing Compare.',
+      cliHint,
+      warningMessage:
+        'Compare preflight is blocked. Set viHistorySuite.labviewVersion, then review compare preflight before choosing Compare.'
+    };
+  }
+
+  if (!settings.bitness) {
+    return {
+      status: 'blocked',
+      provider,
+      labviewVersion,
+      labviewBitness,
+      nextAction:
+        'Next action: set viHistorySuite.labviewBitness, then review compare preflight before choosing Compare.',
+      cliHint,
+      warningMessage:
+        'Compare preflight is blocked. Set viHistorySuite.labviewBitness, then review compare preflight before choosing Compare.'
+    };
+  }
+
+  if (settings.requestedProvider === 'docker' && settings.bitness === 'x86') {
+    return {
+      status: 'blocked',
+      provider,
+      labviewVersion,
+      labviewBitness,
+      nextAction:
+        'Next action: use Docker with viHistorySuite.labviewBitness=x64 or switch viHistorySuite.runtimeProvider to host, then review compare preflight before choosing Compare.',
+      cliHint,
+      warningMessage:
+        'Compare preflight is blocked. Docker requires viHistorySuite.labviewBitness=x64 or viHistorySuite.runtimeProvider=host before Compare can run.'
+    };
+  }
+
+  return {
+    status: 'ready',
+    provider,
+    labviewVersion,
+    labviewBitness,
+    nextAction:
+      'Next action: select two retained revisions, review the explicit selected/base pair, then choose Compare.',
+    cliHint
+  };
+}
+
 function deriveComparisonRuntimeNextAction(
   summaryLines: string[] | undefined
 ): string | undefined {
@@ -1394,9 +1518,17 @@ function deriveRuntimeProviderFromDoctorSummary(
   return match?.[1];
 }
 
-function deriveRuntimeExecutionModeFromDoctorSummary(
+function deriveRuntimeProviderRequestFromDoctorSummary(
   summaryLines: string[] | undefined
 ): string | undefined {
+  const providerRequestLine = summaryLines?.find((line) =>
+    line.startsWith('Provider request=')
+  );
+  if (providerRequestLine) {
+    const match = providerRequestLine.match(/^Provider request=([^.;]+)[.;]?$/);
+    return match?.[1];
+  }
+
   const executionModeLine = summaryLines?.find((line) =>
     line.startsWith('Selected execution mode=')
   );
@@ -1405,7 +1537,7 @@ function deriveRuntimeExecutionModeFromDoctorSummary(
   }
 
   const match = executionModeLine.match(/^Selected execution mode=([^.;]+)[.;]?$/);
-  return match?.[1];
+  return mapLegacyExecutionModeToProviderRequest(match?.[1]);
 }
 
 function deriveWindowsContainerAcquisitionStateFromDoctorSummary(
@@ -1450,7 +1582,7 @@ function deriveRejectedProviderSummaryFromDoctorSummary(
 function buildComparisonRuntimePanelDetails(
   result: ComparisonReportActionResult,
   runtimeProvider: string | undefined,
-  executionMode: string | undefined,
+  providerRequest: string | undefined,
   acquisitionState: string | undefined,
   rejectedProviderSummary: string | undefined
 ): ComparisonRuntimePanelDetail[] {
@@ -1460,8 +1592,8 @@ function buildComparisonRuntimePanelDetails(
       value: runtimeProvider ?? 'none'
     },
     {
-      label: 'Execution mode',
-      value: executionMode ?? 'auto'
+      label: 'Provider request',
+      value: providerRequest ?? 'auto'
     },
     {
       label: 'Report status',
@@ -1509,4 +1641,22 @@ function buildComparisonRuntimePanelDetails(
   }
 
   return details;
+}
+
+function mapLegacyExecutionModeToProviderRequest(
+  executionMode: string | undefined
+): string | undefined {
+  if (!executionMode) {
+    return undefined;
+  }
+
+  if (executionMode === 'host-only') {
+    return 'host';
+  }
+
+  if (executionMode === 'docker-only') {
+    return 'docker';
+  }
+
+  return executionMode;
 }

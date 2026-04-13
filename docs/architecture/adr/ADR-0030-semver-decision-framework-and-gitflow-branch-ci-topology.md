@@ -1,4 +1,4 @@
-# ADR-0030: SemVer Decision Framework And Gitflow-Lite Branch/CI Topology
+# ADR-0030: SemVer Decision Framework And GitFlow Branch/CI Topology
 
 ## Status
 
@@ -24,14 +24,18 @@ promote, and what checks they owe before merge or tag.
 
 Adopt this next-line governance model:
 
-- keep `main` as the exact release branch
+- keep `main` as the protected exact-release line and public default branch
 - keep `develop` as the integration branch
-- keep the public GitHub default branch on `main` so casual readers and fork
-  owners land on the latest exact released line by default
 - add governed temporary lanes:
   - `feature/*`
   - `release/*`
   - `hotfix/*`
+- require `feature/*` branches to be cut from `develop` and merged back into
+  `develop`
+- require `release/*` branches to be cut from `develop`, merged into `main`,
+  merged back into `develop`, and deleted only after both merges complete
+- require `hotfix/*` branches to be cut from `main`, merged into `main`,
+  merged back into `develop`, and deleted only after both merges complete
 - treat exact release closeout as incomplete until exact released `main` has
   been back-merged into `develop` through the protected path and the resulting
   `develop` pipeline is green before opening the next candidate line

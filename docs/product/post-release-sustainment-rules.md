@@ -24,10 +24,15 @@ active.
 The current release branch model is explicit too:
 
 - `develop` is the integration branch
-- `main` is the release branch
+- `main` is the protected exact-release line and public default branch
+- `feature/*` branches are cut from `develop` and merge back into `develop`
+- `release/*` branches are cut from `develop`, merge into `main`, merge back
+  into `develop`, and are deleted only after both merges complete
+- `hotfix/*` branches are cut from `main`, merge into `main`, merge back into
+  `develop`, and are deleted only after both merges complete
 - protected-branch promotion shall use required checks instead of operator
   memory
-- the next sustained topology is `gitflow-lite`, adding explicit
+- the next sustained topology is `GitFlow`, adding explicit
   `feature/*`, `release/*`, and `hotfix/*` lanes around those long-lived
   branches instead of treating all post-release work as generic `develop`
   traffic
@@ -69,8 +74,10 @@ Current version-line contract:
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
-- release branch: `main`
-- next-line branch model: `gitflow-lite`
+- protected exact-release line: `main`
+- release-candidate branch family: `release/*`
+- hotfix branch family: `hotfix/*`
+- next-line branch model: `GitFlow`
 
 Latest recorded opening decision for the current line:
 
@@ -234,7 +241,7 @@ Required branch-model and CI posture:
   owners land on the latest exact released line by default
 - protected-branch promotion uses required checks instead of direct operator
   trust
-- `feature/*` lanes target `develop`
+- `feature/*` lanes are cut from `develop` and merge back into `develop`
 - `npm run branch:governance:assert` shall fail closed before a new candidate
   line opens when `develop` does not yet contain the exact released `main`
   baseline, and `npm run design:gate` shall keep that assertion first in the
@@ -242,10 +249,12 @@ Required branch-model and CI posture:
 - exact release closeout remains incomplete until the exact released `main`
   line has been back-merged into `develop` through the protected path and the
   resulting `develop` pipeline is green
-- `release/*` lanes are cut from `develop`, validate the release candidate, and
-  merge to `main` plus back into `develop`
-- `hotfix/*` lanes are cut from `main`, fix one exact release line, and merge
-  to `main` plus back into `develop`
+- `release/*` lanes are cut from `develop`, validate the release candidate,
+  merge to `main`, merge back into `develop`, and are deleted only after both
+  merges complete
+- `hotfix/*` lanes are cut from `main`, fix one exact release line, merge to
+  `main`, merge back into `develop`, and are deleted only after both merges
+  complete
 - local public-source promotion/check binds the intended checkout through
   `--target-root` or `VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT` and fails closed
   when the target repo is dirty

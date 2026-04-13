@@ -1,4 +1,4 @@
-# ADR-0029: Develop Integration, Main Release, And Required Checks
+# ADR-0029: Develop Integration, Protected Main Release Line, And Required Checks
 
 ## Status
 
@@ -27,7 +27,8 @@ instead of allowing release work to collapse straight into `main`.
 Adopt this branch and release model:
 
 - `develop` is the integration branch
-- `main` is the release branch
+- `main` is the protected exact-release line
+- exact release-candidate branches use `release/*`
 - exact SemVer tags are cut from `main` only
 - protected-branch promotion shall use required checks
 - a burned exact release shall never be reused as the green release baseline

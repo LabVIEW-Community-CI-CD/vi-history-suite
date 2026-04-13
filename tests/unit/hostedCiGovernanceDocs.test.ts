@@ -73,7 +73,7 @@ describe('hosted ci governance docs', () => {
     expect(gitlabCi).not.toContain(`- if: '$CI_COMMIT_BRANCH'`);
 
     expect(cmPlan).toContain(
-      '`develop` is the working integration branch and `main` is the exact release branch'
+      '`develop` is the working integration branch, `feature/*` branches are cut from `develop` and merge back into `develop`, `release/*` branches are cut from `develop`, merge into `main`, merge back into `develop`, and are deleted only after both merges complete, and `main` remains the protected exact-release line'
     );
     expect(readme).toContain('[Hosted CI Governance](./docs/product/hosted-ci-governance.md)');
     expect(readme).toContain(

@@ -25,8 +25,9 @@
   Windows registry evidence.
 - Keep report-runtime execution behind an explicit provider boundary:
   - host-native provider is implemented now
-  - Windows 64-bit isolated container provider is reserved as the preferred
-    future isolation path
+  - Windows 64-bit isolated container provider remains available as the
+    bounded expert isolation path when governed Docker execution or proof is
+    selected
 - Keep Windows 32-bit report execution on the host-native path.
 - Keep public report generation on canonical `CreateComparisonReport` and fail
   closed when that governed engine is unavailable on the selected surface.
@@ -39,19 +40,20 @@
 
 - The locator module gives the repo a truthful runtime contract before live
   NI execution is wired into the report packet path.
-- A provider boundary prevents the future container path from being bolted onto
-  host-native assumptions later.
+- A provider boundary prevents the isolated container path from being bolted
+  onto host-native assumptions later.
 - Keeping 32-bit host-native and 64-bit container-capable aligns with the
-  author’s collision-avoidance requirement without overclaiming live container
-  execution in the current tranche.
+  author’s collision-avoidance requirement while preserving a bounded expert
+  Docker path without pretending it is the default installed-user lane.
 
 ## Consequences
 
 - Positive:
   - runtime selection becomes testable and traceable
-  - host-native and future container execution are separated cleanly
+  - host-native and bounded expert container execution are separated cleanly
   - Windows 64-bit isolation is captured as architecture, not chat memory
 - Negative:
-  - live NI report execution is still not implemented
-  - the container provider remains a later tranche and must be integrated
-    carefully with workspace trust and progress UX
+  - container execution remains more operationally complex than the
+    host-default installed-user lane
+  - the bounded expert container path still has to stay aligned with workspace
+    trust, progress UX, and retained provider-proof surfaces

@@ -139,6 +139,7 @@ describe('comparisonReportPacket', () => {
         runtimeSelection: {
           platform: 'win32',
           bitness: 'x64',
+          requestedProvider: 'host',
           provider: 'host-native',
           engine: 'labview-cli',
           hostLabviewIniPath:
@@ -178,6 +179,7 @@ describe('comparisonReportPacket', () => {
     expect(writes.has(result.reportFilePath)).toBe(false);
     expect(writes.get(result.packetFilePath)).toContain('Ready for runtime:</strong> yes');
     expect(writes.get(result.packetFilePath)).toContain('data-testid="comparison-report-generated-report-missing"');
+    expect(writes.get(result.packetFilePath)).toContain('Provider request:</strong> host');
     expect(writes.get(result.packetFilePath)).toContain('Host LabVIEW.ini:</strong> C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.ini');
     expect(writes.get(result.packetFilePath)).toContain('Host VI Server port:</strong> 3363');
     expect(writes.get(result.packetFilePath)).toContain('Host conflict detected:</strong> no');
@@ -268,6 +270,7 @@ describe('comparisonReportPacket', () => {
         runtimeSelection: {
           platform: 'win32',
           executionMode: 'auto',
+          requestedProvider: 'docker',
           bitness: 'x64',
           provider: 'windows-container',
           engine: 'labview-cli',
@@ -301,6 +304,7 @@ describe('comparisonReportPacket', () => {
     expect(writes.get(result.packetFilePath)).toContain(
       'No LabVIEW-generated comparison report has been executed because the governed container image could not be acquired before runtime launch.'
     );
+    expect(writes.get(result.packetFilePath)).toContain('Provider request:</strong> docker');
     expect(writes.get(result.packetFilePath)).toContain('Provider:</strong> windows-container');
     expect(writes.get(result.packetFilePath)).toContain(
       'Container acquisition state:</strong> failed'
@@ -359,6 +363,73 @@ describe('comparisonReportPacket', () => {
     );
 
     expect(result.record.generatedAt).toBe('2026-04-04T05:06:07.000Z');
+  });
+
+  it('falls back to legacy execution-mode facts when requested provider is absent', () => {
+    const html = renderComparisonReportPacketHtml({
+      generatedAt: '2026-04-04T00:00:00.000Z',
+      reportTitle: 'VI Comparison Report: foo.vi',
+      reportStatus: 'blocked-runtime',
+      reportType: 'diff',
+      selectedHash: 'abcdef1234567890',
+      baseHash: '1111111122222222',
+      artifactPlan: {
+        reportDirectory: '/workspace/.storage/reports/foo.vi',
+        reportFilePath: '/workspace/.storage/reports/foo.vi/diff-report-foo.vi.html',
+        packetFilePath: '/workspace/.storage/reports/foo.vi/diff-report-packet-foo.vi.html',
+        metadataFilePath: '/workspace/.storage/reports/foo.vi/diff-report-packet-foo.vi.json',
+        stagingDirectory: '/workspace/.storage/reports/foo.vi/staging',
+        normalizedRelativePath: 'foo.vi',
+        fullFilename: 'foo.vi',
+        reportFilename: 'diff-report-foo.vi.html',
+        packetFilename: 'diff-report-packet-foo.vi.html'
+      },
+      stagedRevisionPlan: {
+        stagingDirectory: '/workspace/.storage/reports/foo.vi/staging',
+        leftRevisionId: '1111111122222222',
+        rightRevisionId: 'abcdef1234567890',
+        leftFilename: 'left-111111112222-foo.vi',
+        rightFilename: 'right-abcdef123456-foo.vi',
+        leftFilePath: '/workspace/.storage/reports/foo.vi/staging/left-111111112222-foo.vi',
+        rightFilePath: '/workspace/.storage/reports/foo.vi/staging/right-abcdef123456-foo.vi'
+      },
+      preflight: {
+        normalizedRelativePath: 'foo.vi',
+        ready: true,
+        left: {
+          revisionId: '1111111122222222',
+          blobSpecifier: '1111111122222222:foo.vi',
+          signature: 'LVIN',
+          isVi: true
+        },
+        right: {
+          revisionId: 'abcdef1234567890',
+          blobSpecifier: 'abcdef1234567890:foo.vi',
+          signature: 'LVCC',
+          isVi: true
+        }
+      },
+      runtimeSelection: {
+        platform: 'win32',
+        executionMode: 'docker-only',
+        bitness: 'x64',
+        provider: 'windows-container',
+        engine: 'labview-cli',
+        notes: [],
+        registryQueryPlans: [],
+        candidates: []
+      },
+      runtimeExecutionState: 'not-available',
+      runtimeExecution: {
+        state: 'not-available',
+        attempted: false,
+        reportExists: false,
+        doctorSummaryLines: ['Legacy execution-mode packet.']
+      }
+    });
+
+    expect(html).toContain('Provider request:</strong> docker');
+    expect(html).not.toContain('Execution mode:</strong>');
   });
 
   it('renders the generated-report iframe and success note when execution succeeds', async () => {

@@ -1213,18 +1213,54 @@ export function readComparisonRuntimeSettings(
     'viHistorySuite'
   )
 ): ComparisonRuntimeSettings {
+  const labviewVersion = readTrimmedStringSetting(configuration, 'labviewVersion');
+  const labviewBitness = readConfiguredLabviewBitness(configuration);
+  const configuredProvider = readConfiguredRuntimeProvider(configuration);
+
   return {
-    executionMode: 'docker-only',
-    bitness: 'x64',
-    windowsContainerImage: configuration.get<string>(
-      'windowsContainerImage',
-      'nationalinstruments/labview:2026q1-windows'
-    ),
-    linuxContainerImage: configuration.get<string>(
-      'linuxContainerImage',
-      'nationalinstruments/labview:2026q1-linux'
-    )
+    requestedProvider:
+      configuredProvider.provider ??
+      (configuredProvider.invalidProvider ? undefined : 'host'),
+    invalidRequestedProvider: configuredProvider.invalidProvider,
+    requireVersionAndBitness: true,
+    labviewVersion,
+    bitness: labviewBitness
   };
+}
+
+function readTrimmedStringSetting(
+  configuration: Pick<vscode.WorkspaceConfiguration, 'get'>,
+  key: string
+): string | undefined {
+  const value = configuration.get<string>(key);
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : undefined;
+}
+
+function readConfiguredLabviewBitness(
+  configuration: Pick<vscode.WorkspaceConfiguration, 'get'>
+): 'x86' | 'x64' | undefined {
+  const value = readTrimmedStringSetting(configuration, 'labviewBitness');
+  if (value === 'x86' || value === 'x64') {
+    return value;
+  }
+
+  return undefined;
+}
+
+function readConfiguredRuntimeProvider(
+  configuration: Pick<vscode.WorkspaceConfiguration, 'get'>
+): { provider?: 'host' | 'docker'; invalidProvider?: string } {
+  const value = readTrimmedStringSetting(configuration, 'runtimeProvider');
+  if (!value) {
+    return {};
+  }
+
+  if (value === 'host' || value === 'docker') {
+    return { provider: value };
+  }
+
+  return { invalidProvider: value };
 }
 
 export function resolveRuntimePlatform(platform: NodeJS.Platform): RuntimePlatform {

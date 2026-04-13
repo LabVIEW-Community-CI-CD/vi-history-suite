@@ -23,12 +23,21 @@ interface DashboardRecord {
   }>;
 }
 
+interface PreparedLocalRuntimeSettingsCliSummary {
+  outcome: 'prepared-local-runtime-settings-cli' | 'missing-global-storage-uri';
+  javascriptLauncherPath?: string;
+  windowsLauncherPath?: string;
+  posixLauncherPath?: string;
+  rootDirectoryPath?: string;
+}
+
 export async function runIntegrationSuite(): Promise<void> {
   const metadata = await loadMetadata();
   const api = await loadExtensionApi();
 
   await api.refreshEligibility();
   await testEligibleVersusIneligibleFlow(api, metadata);
+  await testPrepareLocalRuntimeSettingsCli();
   await testPanelOpenFlow(api, metadata);
 }
 
@@ -412,6 +421,23 @@ async function testPanelOpenFlow(
   assert.equal(refreshedDashboardAction.outcome, 'opened-review-dashboard');
   assert.equal(api.getOpenDashboardPanelCount(), 2);
   assert.equal(api.getPanelActionCount(), 10);
+}
+
+async function testPrepareLocalRuntimeSettingsCli(): Promise<void> {
+  const result = (await vscode.commands.executeCommand(
+    'labviewViHistory.prepareLocalRuntimeSettingsCli'
+  )) as PreparedLocalRuntimeSettingsCliSummary;
+
+  assert.ok(result);
+  assert.equal(result.outcome, 'prepared-local-runtime-settings-cli');
+  assert.ok(result.rootDirectoryPath);
+  assert.ok(result.javascriptLauncherPath);
+  assert.ok(result.windowsLauncherPath);
+  assert.ok(result.posixLauncherPath);
+
+  await fs.access(result.javascriptLauncherPath!);
+  await fs.access(result.windowsLauncherPath!);
+  await fs.access(result.posixLauncherPath!);
 }
 
 async function waitFor(

@@ -3,6 +3,7 @@
 const fsSync = require('node:fs');
 const fs = require('node:fs/promises');
 const path = require('node:path');
+const { spawnSync } = require('node:child_process');
 
 const defaultRepoRoot = path.resolve(
   path.dirname(fsSync.realpathSync.native(__filename)),
@@ -304,6 +305,36 @@ async function readPublicationLedger(ledgerPath) {
   return JSON.parse(raw);
 }
 
+async function readPublishedWikiMarkdown(paths, page, deps = {}) {
+  const readFile = deps.readFile ?? fs.readFile;
+
+  if (!page?.wikiCommit) {
+    const markdownPath = path.join(paths.wikiRepoRoot, page.wikiFileName);
+    return readFile(markdownPath, 'utf8');
+  }
+
+  const gitShow = (deps.spawnSync ?? spawnSync)(
+    'git',
+    ['-C', paths.wikiRepoRoot, 'show', `${page.wikiCommit}:${page.wikiFileName}`],
+    {
+      encoding: 'utf8'
+    }
+  );
+
+  if (gitShow.error) {
+    throw gitShow.error;
+  }
+
+  if (gitShow.status !== 0) {
+    const stderr = (gitShow.stderr ?? '').trim();
+    throw new Error(
+      `Failed to read published wiki page ${page.wikiFileName} at ${page.wikiCommit}: ${stderr || `git exited ${gitShow.status}`}`
+    );
+  }
+
+  return gitShow.stdout;
+}
+
 function rewriteAnchors(html, pagesByWikiTarget) {
   return html.replace(/<a\s+href="([^"]+)"([^>]*)>([\s\S]*?)<\/a>/g, (_match, href, rest, body) => {
     const normalizedHref = href.trim();
@@ -430,10 +461,10 @@ function stripExcludedListOnlyLinks(markdown, pagesByWikiTarget) {
   return filteredLines.join('\n').replace(/\n{3,}/g, '\n\n');
 }
 
-async function renderPublishedPage(marked, pageId, markdownPath, pagesByWikiTarget) {
-  const markdown = await fs.readFile(markdownPath, 'utf8');
+async function renderPublishedPage(marked, page, paths, pagesByWikiTarget, deps = {}) {
+  const markdown = await readPublishedWikiMarkdown(paths, page, deps);
   const sanitizedMarkdown = stripExcludedListOnlyLinks(
-    selectBundledSections(stripAuthorityPrelude(markdown), pageId),
+    selectBundledSections(stripAuthorityPrelude(markdown), page.id),
     pagesByWikiTarget
   );
   const html = marked.parse(sanitizedMarkdown, {
@@ -473,13 +504,13 @@ async function buildBundledDocsOutput(paths, deps = {}) {
   const files = new Map();
 
   for (const page of publishedPages) {
-    const markdownPath = path.join(paths.wikiRepoRoot, page.wikiFileName);
     const pageFileName = `${page.id}.html`;
     const renderedHtml = await renderPublishedPage(
       marked,
-      page.id,
-      markdownPath,
-      pagesByWikiTarget
+      page,
+      paths,
+      pagesByWikiTarget,
+      deps
     );
 
     files.set(path.posix.join('pages', pageFileName), renderedHtml);
@@ -730,6 +761,7 @@ module.exports = {
   normalizeBundleFileForComparison,
   normalizeRepoRelativePath,
   parseBundledDocsArgs,
+  readPublishedWikiMarkdown,
   resolveBundledDocsPaths,
   runBundledDocsSync,
   writeBundledDocs

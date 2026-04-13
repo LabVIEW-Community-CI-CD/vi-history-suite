@@ -77,9 +77,9 @@ describe('ship-control direction system', () => {
     const queue = readJson<QueueEntry[]>('docs/product/development-queue.json');
     const activeTranches = queue.filter((entry) => entry.status === 'active');
 
-    expect(activeTranches).toHaveLength(3);
+    expect(activeTranches).toHaveLength(2);
     expect(activeTranches.map((entry) => entry.id)).toEqual(
-      expect.arrayContaining(['TRANCHE-012', 'TRANCHE-013', 'TRANCHE-015'])
+      expect.arrayContaining(['TRANCHE-012', 'TRANCHE-016'])
     );
   });
 
@@ -210,12 +210,16 @@ describe('ship-control direction system', () => {
     expect(readme).toContain('- public GitHub default branch: `main`');
     expect(readme).toContain('- public Codespaces evaluation branch: `develop`');
     expect(readme).toContain('- integration branch: `develop`');
-    expect(readme).toContain('- release branch: `main`');
-    expect(readme).toContain('- next-line branch model: `gitflow-lite` (`feature/*`, `release/*`, `hotfix/*`)');
+    expect(readme).toContain('- protected exact-release line: `main`');
+    expect(readme).toContain('- release-candidate branch family: `release/*`');
+    expect(readme).toContain('- hotfix branch family: `hotfix/*`');
+    expect(readme).toContain('- next-line branch model: `GitFlow`');
     expect(readme).toContain('- hosted automation governance matrix: [docs/product/hosted-ci-governance.md]');
     expect(readme).toContain('- current changelog: [CHANGELOG.md](./CHANGELOG.md)');
+    expect(readme).toContain('- `TRANCHE-016`: installed local LabVIEWCLI contract and explicit compare');
+    expect(readme).toContain('workflow with bounded expert Docker');
     expect(readme).toContain('- `TRANCHE-014`: public Codespaces public-repo bootstrap');
-    expect(readme).toContain('- `TRANCHE-015`: installed-user first-run Docker onboarding and fail-closed');
+    expect(readme).toContain('- `TRANCHE-015`: historical first-run Docker onboarding and fail-closed');
     expect(readme).toContain('- `TRANCHE-010`: public-source facade and public-product acceptance is a closed');
     expect(readme).toContain('npm run public:repo:clone');
     expect(readme).toContain('private GitHub experiment repo');
@@ -243,10 +247,13 @@ describe('ship-control direction system', () => {
     expect(currentState).toContain('- public GitHub default branch: `main`');
     expect(currentState).toContain('- public Codespaces evaluation branch: `develop`');
     expect(currentState).toContain('- integration branch: `develop`');
-    expect(currentState).toContain('- release branch: `main`');
-    expect(currentState).toContain('- next-line branch model: `gitflow-lite` (`feature/*`, `release/*`, `hotfix/*`)');
+    expect(currentState).toContain('- protected exact-release line: `main`');
+    expect(currentState).toContain('- release-candidate branch family: `release/*`');
+    expect(currentState).toContain('- hotfix branch family: `hotfix/*`');
+    expect(currentState).toContain('- next-line branch model: `GitFlow`');
     expect(currentState).toContain('- hosted automation governance matrix: [hosted-ci-governance.md](./hosted-ci-governance.md)');
     expect(currentState).toContain('- current changelog: [CHANGELOG.md](../../CHANGELOG.md)');
+    expect(currentState).toContain('`TRANCHE-016`');
     expect(currentState).toContain('`TRANCHE-014`');
     expect(currentState).toContain('`TRANCHE-015`');
     expect(currentState).toContain('- closed public-product closeout:');
@@ -271,6 +278,7 @@ describe('ship-control direction system', () => {
     expect(informationItemMap).toContain('| Public GitHub source publication ledger | `docs/product/public-github-source-publication-ledger.md` |');
     expect(informationItemMap).toContain('| Machine-readable public GitHub source publication ledger | `docs/product/public-github-source-publication-ledger.json` |');
     expect(informationItemMap).toContain('| VS Code Marketplace publication ledger | `docs/product/vscode-marketplace-publication-ledger.md` |');
+    expect(informationItemMap).toContain('| ISSUE-0412 promotion and publication handoff | `docs/product/issue-0412-promotion-and-publication-handoff.md` |');
     expect(informationItemMap).toContain('| Machine-readable VS Code Marketplace publication ledger | `docs/product/vscode-marketplace-publication-ledger.json` |');
     expect(informationItemMap).toContain('`vi-history-suite-source-experiments`');
     expect(informationItemMap).toContain('`vi-history-suite.public`');
@@ -297,8 +305,9 @@ describe('ship-control direction system', () => {
     expect(releaseProcedure).toContain('public GitHub default branch is `main`');
     expect(releaseProcedure).toContain('public Codespaces evaluation branch is `develop`');
     expect(releaseProcedure).toContain('integration branch is `develop`');
-    expect(releaseProcedure).toContain('release branch is `main`');
-    expect(releaseProcedure).toContain('gitflow-lite');
+    expect(releaseProcedure).toContain('protected exact-release line is `main`');
+    expect(releaseProcedure).toContain('release-candidate branch family is `release/*`');
+    expect(releaseProcedure).toContain('next-line branch model is `GitFlow`');
     expect(releaseProcedure).toContain('required checks');
     expect(releaseProcedure).toContain('`main` shall match that exact release line');
     expect(releaseProcedure).toContain('advance `package.json`');
@@ -353,8 +362,10 @@ describe('ship-control direction system', () => {
     expect(changelog).toContain('## [0.2.0] - 2026-04-03');
     expect(cmPlan).toContain('# Configuration Management Plan');
     expect(cmPlan).toContain('- Scheme: `vX.Y.Z`');
+    expect(cmPlan).toContain('- Public default branch: `main`');
     expect(cmPlan).toContain('- Integration branch: `develop`');
-    expect(cmPlan).toContain('- Release branch: `main`');
+    expect(cmPlan).toContain('- Release-candidate branch family: `release/*`');
+    expect(cmPlan).toContain('- Hotfix branch family: `hotfix/*`');
     expect(cmPlan).toContain('- Protected-branch rule: rely on required checks instead of operator memory');
 
     expect(workbenchDoc).toContain('registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main');

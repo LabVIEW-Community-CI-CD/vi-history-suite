@@ -12,8 +12,8 @@ Closed and landed for the first immutable SemVer release:
 - retained release: `v0.2.0`
 - retained pipeline: `2428809456`
 - retained release job: `13779604462`
-- current repo-active tranche: `TRANCHE-013`
-- current repo-active issue: [ISSUE-0410 Extension Execution Flexibility And Runtime Acquisition UX](./issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md)
+- current repo-active tranche: `TRANCHE-016`
+- current repo-active issue: [ISSUE-0412 Installed Local LabVIEWCLI Selection And Explicit Compare](./issues/ISSUE-0412-installed-local-labviewcli-selection-and-explicit-compare.md)
 - current repo-active execution program: [PROGRAM-0005 Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
 - reopened repo-closeout tranche: `TRANCHE-010`
 - reopened repo-closeout issue: [ISSUE-0407 Public Facade Release Kit And Host-Machine Acceptance](./issues/ISSUE-0407-public-facade-installer-and-windows-acceptance.md)

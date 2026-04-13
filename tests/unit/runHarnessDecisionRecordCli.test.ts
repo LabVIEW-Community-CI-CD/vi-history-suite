@@ -93,7 +93,7 @@ describe('runHarnessDecisionRecordCli', () => {
         '--labview-exe-path',
         WINDOWS_LABVIEW_EXE_PATH
       ])
-    ).toThrow('Canonical CreateComparisonReport overrides require both --labview-cli-path and --labview-exe-path.');
+    ).toThrow('Canonical CreateComparisonReport proof-admission overrides require both --labview-cli-path and --labview-exe-path.');
     expect(() => parseHarnessDecisionRecordArgs(['--unknown'])).toThrow('Unknown argument: --unknown');
   });
 
@@ -124,7 +124,7 @@ describe('runHarnessDecisionRecordCli', () => {
     );
   });
 
-  it('passes explicit runtime overrides and follow-up flags to the harness runner', async () => {
+  it('passes explicit proof-admission overrides and follow-up flags to the harness runner', async () => {
     const stdout = { write: vi.fn() };
     const runner = vi.fn(async () => ({
       report: {

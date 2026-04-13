@@ -46,6 +46,54 @@ const docsContinuousIntegration = require(path.resolve(
     explicitEvidenceDir?: string,
     repoRoot?: string
   ) => string;
+  buildDocsContinuousIntegrationReport: (options: {
+    recordedAt: string;
+    status: 'passed' | 'failed';
+    repoRoot: string;
+    evidenceDir: string;
+    skipLinks: boolean;
+    surface: 'all' | 'public' | 'internal';
+    steps: Array<{
+      id: string;
+      title?: string;
+      command: string;
+      args: string[];
+      status: 'passed' | 'failed';
+    }>;
+    failure?: { stepId?: string; message: string; exitCode?: number | null } | null;
+    env?: NodeJS.ProcessEnv;
+  }) => {
+    installedUserTruths: {
+      dockerOnlyCompareExecution: boolean;
+      engineAwareImageSelection: boolean;
+      dockerRequiredHardStopWithoutHostFallback: boolean;
+      providerAndProgressVisible: boolean;
+    };
+  };
+  buildDocsContinuousIntegrationMarkdown: (report: {
+    status: string;
+    recordedAt: string;
+    surface: string;
+    repoRoot: string;
+    wikiRoot: string;
+    ledgerPath: string;
+    skipLinks: boolean;
+    bundleCheck?: { status?: string } | null;
+    wikiDoctorIssueCount?: number | null;
+    wikiPlanPageCount?: number | null;
+    wikiNextPageId?: string | null;
+    internalPublishedWikiPageCount?: number | null;
+    publicPublishedWikiPageCount?: number | null;
+    bundledPageCount?: number | null;
+    installedUserTruths: {
+      dockerOnlyCompareExecution: boolean;
+      engineAwareImageSelection: boolean;
+      dockerRequiredHardStopWithoutHostFallback: boolean;
+      providerAndProgressVisible: boolean;
+    };
+    steps: Array<{ id: string; command: string; args: string[]; status: string }>;
+    failure?: { stepId?: string | null; message: string } | null;
+  }) => string;
   runDocsContinuousIntegration: (
     argv?: string[],
     deps?: {
@@ -260,5 +308,42 @@ describe('documentation continuous integration runner', () => {
     expect(stderrWrites).toEqual([]);
     expect(stdoutWrites.join('')).toContain('[docs-ci] Documentation continuous integration passed.');
     expect(executedStepIds).toEqual(['compile', 'public-docs-tests', 'bundle-check', 'links']);
+  });
+
+  it('retains the released bundled-doc execution truths in the docs-ci report', () => {
+    const report = docsContinuousIntegration.buildDocsContinuousIntegrationReport({
+      recordedAt: '2026-04-13T22:30:00.000Z',
+      status: 'passed',
+      repoRoot,
+      evidenceDir: path.join(repoRoot, '.cache', 'docs-integration', 'latest'),
+      skipLinks: false,
+      surface: 'all',
+      steps: [],
+      failure: null,
+      env: process.env
+    });
+
+    expect(report.installedUserTruths).toEqual({
+      dockerOnlyCompareExecution: true,
+      engineAwareImageSelection: true,
+      dockerRequiredHardStopWithoutHostFallback: true,
+      providerAndProgressVisible: true
+    });
+
+    const markdown = docsContinuousIntegration.buildDocsContinuousIntegrationMarkdown({
+      ...report,
+      wikiRoot: path.join(repoRoot, '..', 'vi-history-suite.github.wiki'),
+      ledgerPath: path.join(repoRoot, 'docs', 'product', 'public-github-wiki-publication-ledger.json'),
+      steps: []
+    });
+
+    expect(markdown).toContain('Docker-only compare execution documented: true');
+    expect(markdown).toContain('Engine-aware image selection documented: true');
+    expect(markdown).toContain(
+      'Docker-required hard stop without host fallback documented: true'
+    );
+    expect(markdown).toContain('Provider and progress visibility documented: true');
+    expect(markdown).not.toContain('Windows auto uses Docker when installed');
+    expect(markdown).not.toContain('No silent provider fallback');
   });
 });

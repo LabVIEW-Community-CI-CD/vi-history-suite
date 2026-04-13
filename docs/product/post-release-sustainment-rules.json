@@ -37,8 +37,10 @@
       "publicDefaultBranch": "main",
       "publicCodespaceBranch": "develop",
       "integrationBranch": "develop",
-      "releaseBranch": "main",
-      "nextLineBranchModel": "gitflow-lite"
+      "releaseBranch": "release/*",
+      "hotfixBranch": "hotfix/*",
+      "exactReleaseLineBranch": "main",
+      "nextLineBranchModel": "gitflow"
     },
     "maintainedSurfaces": [
       "preview-evidence/vi-history-suite-<version>.vsix",
@@ -166,9 +168,11 @@
   },
   "operatorSurfaceSustainment": {
     "branchModel": {
-      "model": "gitflow-lite",
+      "model": "gitflow",
       "integrationBranch": "develop",
-      "releaseBranch": "main",
+      "releaseBranch": "release/*",
+      "hotfixBranch": "hotfix/*",
+      "exactReleaseLineBranch": "main",
       "temporaryBranchPrefixes": [
         "feature/",
         "release/",
@@ -176,11 +180,11 @@
       ],
       "promotionRules": [
         "public GitHub default branch remains main so readers land on the latest exact released line by default",
-        "feature/* branches target develop",
+        "feature/* branches are cut from develop and merge back into develop",
         "the governed branch-baseline assertion surface fails closed when develop does not yet contain exact main before a new candidate line opens",
         "exact release closeout remains incomplete until the exact released main line has been back-merged into develop through the protected path and the resulting develop pipeline is green",
-        "release/* branches are cut from develop and merge to main plus back into develop",
-        "hotfix/* branches are cut from main and merge to main plus back into develop",
+        "release/* branches are cut from develop, merge into main, merge back into develop, and are deleted only after both merges complete",
+        "hotfix/* branches are cut from main, merge into main, merge back into develop, and are deleted only after both merges complete",
         "exact SemVer tags are cut from main only after the protected main pipeline succeeds",
         "local public-source promotion/check binds the intended checkout through --target-root or VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT and fails closed when the target repo is dirty",
         "candidate lines are not review-ready until the maintained public develop candidate head and maintained public wiki head are both published and retained in the authority candidate package",

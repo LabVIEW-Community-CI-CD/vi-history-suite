@@ -53,9 +53,12 @@ describe('public facade boundary docs', () => {
     expect(internalMap).toContain('public GitHub user wiki');
     expect(publicMap).toContain('public GitHub user wiki only');
     expect(publicMap).toContain('shall not use these as primary truth sources');
+    expect(publicMap).toContain('shall keep the exact released');
+    expect(publicMap).toContain('Docker-only installed-user contract');
     expect(publicMap).toContain('docs/requirements/srs.md');
     expect(publicSourceMap).toContain('public GitHub source repo only');
     expect(publicSourceMap).toContain('curated product surface');
+    expect(publicSourceMap).toContain('shall keep the exact released Docker-only installed-user contract');
     expect(publicSourceMap).toContain('docs/requirements/srs.md');
     expect(internalLedger).toContain('internal GitLab maintainer wiki');
     expect(internalLedgerJson).toContain('"publicationSurface": "internal-gitlab-wiki"');

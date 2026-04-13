@@ -38,7 +38,8 @@ Current landed state:
 - `.github/workflows/public-facade-package-preview.yml` defines the public
   package-preview lane
 - the public-source branch model is now explicit: `develop` is the integration
-  branch used for public Codespaces evaluation and `main` is the release branch
+  branch used for public Codespaces evaluation, `release/*` is the
+  release-candidate lane, and `main` remains the protected exact-release line
 - protected-branch promotion now depends on required checks rather than direct
   operator memory
 - the authority repo now retains `npm run public:gate-d:preflight` and

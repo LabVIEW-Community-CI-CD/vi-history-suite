@@ -28,11 +28,14 @@ follow-through requirement before the next opening decision.
 
 ## Branch Model
 
-- `main`: exact release branch and public default branch
+- `main`: protected exact-release line and public default branch
 - `develop`: integration and public-evaluation branch
-- `feature/*`: short-lived merge-request-driven development lane
-- `release/*`: release-candidate lane cut from `develop`
-- `hotfix/*`: exact-line repair lane cut from `main`
+- `feature/*`: short-lived development lane cut from `develop` and merged back
+  into `develop`
+- `release/*`: release-candidate lane cut from `develop`, merged into `main`,
+  merged back into `develop`, and deleted only after both merges complete
+- `hotfix/*`: exact-line repair lane cut from `main`, merged into `main`,
+  merged back into `develop`, and deleted only after both merges complete
 
 ## Authority GitLab
 

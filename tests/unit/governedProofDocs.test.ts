@@ -65,6 +65,16 @@ describe('governed proof documentation contract', () => {
     expect(harnesses).toContain('npm run proof:run -- report-smoke');
     expect(harnesses).toContain('host-operation-matrix');
     expect(exactPair).toContain('runGovernedProof report-smoke');
+    expect(exactPair).toContain('bounded exact-pair diagnosis inputs');
+    expect(exactPair).toContain('not installed-user extension settings');
+    expect(exactPair).toContain('does not reopen `executionMode` as installed-user product doctrine');
+    expect(admissionAdr).toContain('accepts proof-admission override arguments');
+    expect(admissionAdr).toContain('Shared proof-admission validation');
+    expect(effectiveBundleAdr).toContain('shared proof-admission boundary');
+    expect(effectiveBundleAdr).toContain('effective proof-admission validation');
+    expect(srs).toContain('bounded proof-admission overrides');
+    expect(rtm).toContain('bounded proof-admission overrides');
+    expect(testPlan).toContain('bounded proof-admission overrides');
     expect(srs).toContain('one public governed proof entrypoint');
     expect(srs).toContain('LabVIEWCLI CreateComparisonReport');
     expect(srs).toContain('host-operation-matrix');

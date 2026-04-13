@@ -47,10 +47,10 @@ export function getHarnessDashboardSmokeUsage(): string {
     'Options:',
     '  --harness-id <id>              Select the canonical harness to run.',
     '  --strict-rsrc-header           Require RSRC header validation during VI detection.',
-    '  --platform <value>             Override runtime detection platform for report-tool selection.',
-    '  --bitness <value>       Set explicit runtime bitness for report-tool selection.',
-    '  --labview-cli-path <path>      Provide an explicit LabVIEWCLI path for report-tool selection.',
-    '  --labview-exe-path <path>      Provide an explicit LabVIEW executable path for report-tool selection.',
+    '  --platform <value>             Set the proof-admission platform for report-tool selection.',
+    '  --bitness <value>              Set explicit proof-admission runtime bitness for report-tool selection.',
+    '  --labview-cli-path <path>      Provide an explicit proof-admission LabVIEWCLI path for report-tool selection.',
+    '  --labview-exe-path <path>      Provide an explicit proof-admission LabVIEW executable path for report-tool selection.',
     '  --dashboard-commit-window <n>  Limit the retained dashboard window to at least 3 commits.',
     '  --help                         Print this help and exit without running the harness.'
   ].join('\n');

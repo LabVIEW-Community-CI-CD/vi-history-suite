@@ -3,7 +3,7 @@
 - Version line: `1.2.2`
 - Burned exact release line: `v1.0.2`
 - Recorded at: `2026-04-08T07:58:39Z`
-- Authority source of truth: GitLab `develop` -> `main`
+- Authority source of truth: GitLab `develop` -> `release/*` -> `main`
 - Published public source commit: `86b19a2`
 - Public `develop` candidate commit: `12391e1`
 - Published public wiki head: `527a8b4`
@@ -11,7 +11,9 @@
 ## Branch Model
 
 - Integration branch: `develop`
-- Release branch: `main`
+- Protected exact-release line: `main`
+- Release-candidate branch family: `release/*`
+- Hotfix branch family: `hotfix/*`
 - Required checks:
   - `docs_continuous_integration`
   - `docs_public_continuous_integration`

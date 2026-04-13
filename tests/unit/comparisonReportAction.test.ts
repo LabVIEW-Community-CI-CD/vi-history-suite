@@ -3699,22 +3699,44 @@ describe('comparisonReportAction', () => {
     getConfigurationMock.mockReturnValue({
       get: <T>(key: string, defaultValue: T) => {
         const values: Record<string, unknown> = {
-          windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
-          executionMode: 'host-only',
+          runtimeProvider: 'docker',
+          labviewVersion: ' 2026 ',
+          labviewBitness: 'x86',
           labviewCliPath: 'C:\\Tools\\LabVIEWCLI.exe',
           labviewExePath: 'C:\\Tools\\LabVIEW.exe',
-          bitness: 'x86'
+          bitness: 'x64'
         };
         return (values[key] as T | undefined) ?? defaultValue;
       }
     });
 
     expect(readComparisonRuntimeSettings()).toEqual({
-      executionMode: 'docker-only',
-      windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
-      linuxContainerImage: 'nationalinstruments/labview:2026q1-linux',
-      bitness: 'x64'
+      requestedProvider: 'docker',
+      requireVersionAndBitness: true,
+      labviewVersion: '2026',
+      bitness: 'x86'
     });
     expect(resolveRuntimePlatform('freebsd' as NodeJS.Platform)).toBe('linux');
+  });
+
+  it('fails closed later when the workspace configuration contains an invalid runtime provider', () => {
+    getConfigurationMock.mockReturnValue({
+      get: <T>(key: string, defaultValue: T) => {
+        const values: Record<string, unknown> = {
+          runtimeProvider: 'weird',
+          labviewVersion: '2026',
+          labviewBitness: 'x64'
+        };
+        return (values[key] as T | undefined) ?? defaultValue;
+      }
+    });
+
+    expect(readComparisonRuntimeSettings()).toEqual({
+      requestedProvider: undefined,
+      invalidRequestedProvider: 'weird',
+      requireVersionAndBitness: true,
+      labviewVersion: '2026',
+      bitness: 'x64'
+    });
   });
 });

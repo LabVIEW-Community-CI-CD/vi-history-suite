@@ -90,7 +90,7 @@ describe('public devcontainer surface', () => {
     expect(readme).toContain('public GitHub facade is expected to support evaluation inside Codespaces or');
     expect(readme).toContain('a local devcontainer');
     expect(
-      readme.includes('The installed extension path is Docker-only and x64-only.') ||
+      readme.includes('The current exact released installed extension path is Docker-only and') ||
         readme.includes('Docker CLI plus a running Docker daemon are prerequisites for the first')
     ).toBe(true);
     expect(readme).toContain('A Linux-hosted development session uses the governed Linux container image.');

@@ -87,6 +87,18 @@ function extractSrsRequirementIds(text: string): string[] {
 }
 
 describe('requirements documentation coherence', () => {
+  it('keeps the system and software requirement package split explicit', () => {
+    const syrs = readText('docs/requirements/syrs.md');
+    const srs = readText('docs/requirements/srs.md');
+    const informationItemMap = readText('docs/information-item-map.md');
+
+    expect(syrs).toContain('# System Requirements Specification');
+    expect(srs).toContain('Parent system specification: [docs/requirements/syrs.md](./syrs.md)');
+    expect(srs).toContain('This document refines the software behavior within the system boundary');
+    expect(informationItemMap).toContain('| System Specification | `docs/requirements/syrs.md` |');
+    expect(informationItemMap).toContain('| Software Specification | `docs/requirements/srs.md` |');
+  });
+
   it('keeps the SRS and RTM on the same requirement-id set', () => {
     const srsIds = new Set(extractSrsRequirementIds(readText('docs/requirements/srs.md')));
     const rtmIds = new Set(parseRtmRows().map((row) => row.ReqID));
@@ -110,6 +122,12 @@ describe('requirements documentation coherence', () => {
   it('keeps the research-facing dashboard and history-panel trace surfaces current', () => {
     const alignment = readText('docs/research/authoritative/research-alignment.md');
     const currentState = readText('docs/product/current-state.md');
+    const srs = readText('docs/requirements/srs.md');
+    const rtm = readText('docs/requirements/rtm.csv');
+    const testPlan = readText('docs/testing/test-plan.md');
+    const adr0005 = readText(
+      'docs/architecture/adr/ADR-0005-runtime-provider-selection-and-windows64-isolation.md'
+    );
     const implementationIndex = JSON.parse(
       readText('docs/research/authoritative/research-implementation-index.json')
     ) as {
@@ -129,6 +147,80 @@ describe('requirements documentation coherence', () => {
 
     expect(currentState).toContain('truncated auto/capped window');
     expect(currentState).toContain('latest-dashboard-run.json');
+    expect(currentState).toContain('checkbox-selected explicit compare-preflight workflow');
+    expect(currentState).not.toContain(
+      'the second checkbox selection triggers comparison generation automatically'
+    );
+    expect(srs).toContain(
+      'Governed internal/runtime-proof override inputs shall allow explicit override through `labviewCliPath`, `labviewExePath`, and `bitness`'
+    );
+    expect(srs).not.toContain(
+      'Runtime tool settings shall allow explicit user override through `labviewCliPath`, `labviewExePath`, and `bitness`'
+    );
+    expect(srs).toContain('selecting two distinct retained revisions establishes one explicit compare-preflight pair');
+    expect(srs).not.toContain(
+      'selecting the second distinct retained revision triggers comparison-report generation automatically'
+    );
+    expect(srs).toContain(
+      'Missing-runtime selections retain notes that point to the missing provider/runtime facts that actually govern the active lane'
+    );
+    expect(srs).not.toContain(
+      'Missing-runtime selections retain notes pointing to `viHistorySuite.labviewExePath` or `viHistorySuite.labviewCliPath` as appropriate.'
+    );
+    expect(srs).toContain(
+      'When the Windows 64-bit container provider is selected without a resolved governing container image'
+    );
+    expect(srs).not.toContain(
+      'When the Windows 64-bit container provider is selected without a configured container image'
+    );
+    expect(srs).toContain(
+      'isolated LabVIEW 2026 Q1 Windows container path remains available as a bounded expert lane'
+    );
+    expect(srs).not.toContain(
+      'isolated LabVIEW 2026 Q1 Windows container path can be introduced'
+    );
+    expect(rtm).toContain(
+      'Keep governed internal/runtime-proof override inputs for labviewCliPath, labviewExePath, and bitness ahead of auto-discovery'
+    );
+    expect(rtm).not.toContain(
+      'executionMode, labviewCliPath, labviewExePath, windowsContainerImage, and bitness'
+    );
+    expect(rtm).toContain('selecting two distinct retained revisions establishes one explicit compare-preflight pair');
+    expect(rtm).toContain('canonical proof-admission contract');
+    expect(rtm).toContain('effective proof-admission bundle');
+    expect(rtm).toContain('explicit proof-admission override bundles');
+    expect(rtm).toContain('explicit Windows proof-admission runtime paths');
+    expect(rtm).not.toContain('canonical runtime-override admission contract');
+    expect(rtm).not.toContain('effective runtime override bundle');
+    expect(rtm).not.toContain('effective launch bundle');
+    expect(rtm).not.toContain('explicit runtime override bundles');
+    expect(rtm).not.toContain('explicit Windows runtime override paths');
+    expect(rtm).toContain('without a resolved governing container image');
+    expect(rtm).not.toContain('without a configured container image');
+    expect(rtm).toContain('remains available as a bounded expert lane');
+    expect(rtm).toContain(
+      'surface provider request, chosen provider, rejected-provider reasons, acquisition outcome, and next action'
+    );
+    expect(rtm).not.toContain(
+      'surface the selected execution mode, chosen provider, rejected-provider reasons, acquisition outcome, and next action'
+    );
+    expect(rtm).toContain(
+      'surface the current released Docker-only installed-user execution-policy truths'
+    );
+    expect(rtm).not.toContain(
+      'surface the critical Docker-first Windows installed-user execution-policy truths'
+    );
+    expect(testPlan).toContain('explicit compare-preflight entrypoint');
+    expect(testPlan).toContain('does not expose');
+    expect(testPlan).toContain('`labviewCliPath`, `labviewExePath`, `bitness`, `executionMode`, or public');
+    expect(testPlan).toContain('without a resolved governing image');
+    expect(testPlan).toContain('bounded expert isolated container execution path');
+    expect(testPlan).toContain('truth checks for Docker-only');
+    expect(testPlan).toContain('compare execution, engine-aware Windows/Linux image selection');
+    expect(testPlan).toContain('Docker-required hard stops without host fallback');
+    expect(testPlan).not.toContain('critical Docker-first Windows');
+    expect(adr0005).toContain('bounded expert isolation path');
+    expect(adr0005).not.toContain('preferred future isolation path');
 
     expect(alignment).toContain('history-window packet');
     expect(alignment).toContain('latest-run discovery');

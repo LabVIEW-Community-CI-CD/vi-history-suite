@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-08T06:56:00.177Z",
+  "generatedAt": "2026-04-13T23:31:24.222Z",
   "sourceLedgerPath": "docs/product/public-github-wiki-publication-ledger.json",
   "sourceWikiRepoPath": "../vi-history-suite.github.wiki",
   "bundleAudience": "extension-users",
@@ -12,7 +12,7 @@
       "wikiFileName": "Home.md",
       "htmlFileName": "overview.html",
       "publishedDate": "2026-04-08",
-      "wikiCommit": "d6da0c4"
+      "wikiCommit": "527a8b4"
     },
     {
       "id": "install-and-release",

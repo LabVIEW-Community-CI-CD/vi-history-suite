@@ -199,8 +199,8 @@
   tranche
 - `TEST-UNIT-059`: validate the VI History panel exposes a checkbox on every
   retained commit row, keeps compare generation/opening controls off the
-  extension-user row-action surface, and routes compare generation through the
-  second checkbox selection
+  extension-user row-action surface, and routes compare selection through
+  explicit compare preflight after two distinct checkbox selections
 - `TEST-UNIT-060`: validate the comparison-report action fails closed when
   workspace-scoped storage is unavailable and the command surfaces the stable
   warning
@@ -223,13 +223,16 @@
 - `TEST-UNIT-071`: validate the host-native comparison-report execution runner
   stages revision blobs, runs the governed command, retains stdout/stderr
   artifacts, and records explicit failure reasons
-- `TEST-UNIT-063`: validate explicit runtime settings override auto-discovery,
-  Windows registry/install-root discovery is retained, and runtime selection
-  chooses the governed host-native engine deterministically
+- `TEST-UNIT-063`: validate governed internal/runtime-proof override inputs
+  still override auto-discovery, Windows registry/install-root discovery is
+  retained, and runtime selection chooses the governed host-native engine
+  deterministically
 - `TEST-UNIT-064`: validate runtime discovery retains explicit Linux/macOS
   availability constraints and fallback behavior when CLI tooling is missing
-- `TEST-UNIT-066`: validate the extension manifest exposes `labviewCliPath`
-  and keeps all external runtime settings restricted in untrusted workspaces
+- `TEST-UNIT-066`: validate the extension manifest does not expose
+  `labviewCliPath`, `labviewExePath`, `bitness`, `executionMode`, or public
+  image settings, while keeping the admitted installed-user runtime settings
+  restricted in untrusted workspaces
 - `TEST-DOC-001`: review the extension design summary and SRS to confirm
   rename following remains explicitly best effort rather than a guaranteed
   history-rewrite contract
@@ -242,7 +245,7 @@
   WebviewPanel-only surface, desktop/remote-host boundary, and no-publish
   TimelineProvider policy
 - `TEST-DOC-005`: review architecture for the Windows 64-bit runtime-provider
-  boundary and the future isolated container execution path
+  boundary and the bounded expert isolated container execution path
 - `TEST-DOC-006`: review architecture for the dedicated extension-user Windows
   64-bit `labview2026q1` container isolation policy and confirm it remains
   separate from host-native 32-bit execution
@@ -296,7 +299,7 @@
 - `TEST-UNIT-072`: prove the canonical comparison-report smoke runner selects a
   retained compare pair, persists report artifacts, and records runtime facts
 - `TEST-UNIT-073`: prove the canonical comparison-report smoke CLI parses
-  runtime-selection overrides and prints a deterministic success summary
+  bounded proof-admission overrides and prints a deterministic success summary
 - `TEST-UNIT-074`: prove the runtime locator retains actionable missing-runtime
   and missing-tool notes for blocked report generation
 - `TEST-UNIT-075`: prove the runtime executor normalizes win32 interop paths,
@@ -469,7 +472,7 @@
   observed-process arrays and renders them as `none` on the retained panel HTML
 - `TEST-UNIT-131`: prove the Windows-container provider fails closed with
   `windows-container-image-unavailable` before command execution when selected
-  without a configured image
+  without a resolved governing image
 - `TEST-UNIT-132`: prove container-reported NI diagnostic log paths only map
   into host-readable storage when they remain under the governed runtime root
 - `TEST-UNIT-133`: prove NI diagnostic logs that report `LabVIEW launched
@@ -960,10 +963,11 @@
   repo-support classification, keep chronology/docs visible, and keep the
   checkbox-selected compare flow available on generic repositories while making
   deeper benchmark and maintainer host-review governance explicit
-- `TEST-UNIT-317`: verify the second checkbox selection triggers compare
-  generation automatically for the exact newer-selected and older-base pair,
-  and that a retained window of only two commits is enough to use the primary
-  extension-user compare flow
+- `TEST-UNIT-317`: verify the current implemented checkbox workflow treats two
+  distinct checkbox selections as the explicit compare-preflight entrypoint for
+  the exact newer-selected and older-base pair, and that a retained window of
+  only two commits is enough to use the current primary extension-user compare
+  flow
 - `TEST-UNIT-318`: verify generated-report and retained-packet compare views
   now lead with a white-background comparison-context block that surfaces the
   selected/base commit hash, date, author, and subject facts, while runtime
@@ -1114,19 +1118,21 @@
   non-canonical exact-pair diagnosis argument bundles, including partial
   selected/base hashes, incomplete canonical runtime bundles, Windows
   bitness/path contradictions, and wrong executable basenames for explicit
-  runtime override paths
+  proof-admission runtime paths
 - `TEST-UNIT-294`: verify canonical Windows exact-pair proof fails closed when
-  explicit runtime override paths are missing on the canonical host, when
-  stale `LabVIEW.exe` / `LabVIEWCLI.exe` / `LVCompare.exe` processes are
-  already running, or when the selected `LabVIEW.ini`-derived VI Server port
-  already has a listener before launch
+  explicit Windows proof-admission runtime paths are missing on the canonical
+  host, when stale `LabVIEW.exe` / `LabVIEWCLI.exe` / `LVCompare.exe`
+  processes are already running, or when the selected `LabVIEW.ini`-derived
+  VI Server port already has a listener before launch
 - `TEST-UNIT-295`: verify the shared PROGRAM-0003 CLI admission layer rejects
-  contradictory explicit runtime override bundles across exact-pair smoke,
-  dashboard smoke, decision-record, and Windows/Linux benchmark entrypoints
-- `TEST-UNIT-296`: verify canonical Windows explicit runtime override bundles
-  reject Windows path bundles only when they contradict the selected runtime
-  bitness, while the canonical x86 `LabVIEWCLI.exe` plus x64 `LabVIEW.exe`
-  bundle still passes admission control for governed host x64 proof
+  contradictory explicit proof-admission override bundles across exact-pair
+  smoke, dashboard smoke, decision-record, and Windows/Linux benchmark
+  entrypoints
+- `TEST-UNIT-296`: verify canonical Windows explicit proof-admission override
+  bundles reject Windows path bundles only when they contradict the selected
+  runtime bitness, while the canonical x86 `LabVIEWCLI.exe` plus x64
+  `LabVIEW.exe` bundle still passes admission control for governed host x64
+  proof
 - `TEST-UNIT-297`: verify the debt-retirement contract package remains
   machine-checkable: the contract/taxonomy/ledger docs stay discoverable in
   the authority control plane, and the machine-readable debt ledger keeps
@@ -1262,23 +1268,24 @@
 - `TEST-DOC-057`: review current-state, harnesses, PROGRAM-0003, ISSUE-0408,
   and ADR-0021 and confirm canonical exact-pair diagnosis arguments are
   documented as fail-closed on incomplete selected/base hashes, incomplete
-  canonical runtime bundles, or contradictory Windows bitness/runtime override
-  paths, rather than allowing ambiguous experiment launches to proceed
+  canonical runtime bundles, or contradictory Windows bitness/proof-admission
+  runtime paths, rather than allowing ambiguous experiment launches to proceed
 - `TEST-DOC-058`: review current-state, harnesses, canonical exact-pair
   diagnosis guidance, PROGRAM-0003, ISSUE-0408, and ADR-0021 and confirm the
   canonical Windows proof surface is documented as requiring existing explicit
-  runtime paths plus a clean host runtime surface before launch, including no
-  stale LabVIEW-related processes and no preexisting listener on the selected
-  `LabVIEW.ini` VI Server port
+  Windows proof-admission runtime paths plus a clean host runtime surface
+  before launch, including no stale LabVIEW-related processes and no
+  preexisting listener on the selected `LabVIEW.ini` VI Server port
 - `TEST-DOC-059`: review current-state, harnesses, canonical exact-pair
   diagnosis guidance, PROGRAM-0003, ISSUE-0408, and ADR-0022 and confirm the
-  PROGRAM-0003 runtime-override admission contract is documented as shared
-  across dashboard-smoke, decision-record, exact-pair smoke, and the
-  Windows/Linux benchmark CLIs rather than living in one diagnosis entrypoint
+  PROGRAM-0003 proof-admission contract for explicit proof-admission override
+  inputs is documented as shared across dashboard-smoke, decision-record,
+  exact-pair smoke, and the Windows/Linux benchmark CLIs rather than living
+  in one diagnosis entrypoint
 - `TEST-DOC-060`: review current-state, harnesses, canonical exact-pair
   diagnosis guidance, PROGRAM-0003, ISSUE-0408, and ADR-0022 and confirm
-  explicit Windows runtime override bundles are documented as invalid when
-  they mix x86 and x64 paths, even when `--bitness` is omitted
+  explicit Windows proof-admission override bundles are documented as invalid
+  when they mix x86 and x64 paths, even when `--bitness` is omitted
 - `TEST-DOC-061`: review README, current-state, documentation workbench,
   wiki-authority map, debt-retirement contract, debt taxonomy, and ADR-0023
   and confirm the repo documents one no-silent-debt contract instead of
@@ -1292,36 +1299,33 @@
   surfaces represent the debt-retirement contract and debt ledger rather than
   hiding those control-plane surfaces in authority docs only
 - `TEST-UNIT-298`: verify PROGRAM-0003 benchmark-proof subcommands validate the
-  effective runtime override bundle after CLI/env/default synthesis, reject
-  non-canonical env-derived explicit Windows bundles, and keep default Windows
-  benchmark runtime settings undefined when no explicit override is requested
-- `TEST-UNIT-299`: verify the installed extension exposes only
-  `viHistorySuite.windowsContainerImage` and
-  `viHistorySuite.linuxContainerImage`, does not expose `executionMode` or
-  installed host-runtime knobs, and keeps the Docker-only execution-policy
-  package aligned across README, current-state, extension-execution-policy,
-  ADR-0025, queue/program/issue docs, debt ledger, and published reader
-  surfaces
+  effective proof-admission bundle after CLI/env/default synthesis, reject
+  non-canonical env-derived explicit Windows bundles, and keep default
+  Windows benchmark runtime settings undefined when no explicit override is
+  requested
+- `TEST-UNIT-299`: verify the authority package keeps the exact released
+  Docker-only image-settings baseline explicit while the active branch
+  manifest/settings surface exposes `viHistorySuite.labviewVersion` and
+  `viHistorySuite.labviewBitness`, omits `executionMode` and public image
+  settings, treats Docker as a generated-CLI-selected expert provider, and
+  keeps older execution-mode-only runtime doctor summaries readable as legacy
+  provider-request evidence
 - `TEST-DOC-064`: review current-state, PROGRAM-0003, ISSUE-0408, canonical
   exact-pair diagnosis guidance, ADR-0024, and the debt ledger and confirm the
-  repo documents effective runtime override bundle validation rather than a raw
-  CLI-only rule, including the removal of hidden explicit Windows defaults
+  repo documents effective proof-admission bundle validation rather than a
+  raw CLI-only rule, including the removal of hidden explicit Windows defaults
 - `TEST-DOC-065`: review README, current-state, extension-execution-policy,
-  ADR-0025, PROGRAM-0005, ISSUE-0410, and the debt ledger and confirm the
-  current Docker-only installed contract, engine-aware Windows/Linux image
-  selection, no-host-fallback rule, Docker-required hard stops, visible image-
-  pull progress, and user-facing provider/acquisition transparency are all
-  explicit
-- `TEST-DOC-066`: review the wiki coverage matrix, publication ledger,
-  User-Workflow, Requirements-And-Verification, Current-State, Architecture,
-  and Architecture-Decision-Records pages and confirm the execution-policy
-  package and current `PROGRAM-0005` control plane are represented on the
-  published reader surfaces
+  ADR-0025, ADR-0038, PROGRAM-0005, ISSUE-0410, ISSUE-0412, and the debt
+  ledger and confirm the current released Docker-only installed contract
+  remains explicit while `ADR-0038` and the active control plane now promote
+  the host-default local-`LabVIEWCLI` plus expert-Docker replacement
+  direction without mis-stating the released Docker-first behavior as the
+  active installed-user contract
 - `TEST-UNIT-300`: verify the execution-policy control-plane package keeps
-  canonical Docker-only execution-request validation, engine-aware Windows/Linux
-  image selection, Docker hard stops, and the retired execution-policy debt
-  item aligned across authority docs after the manifest removes
-  `viHistorySuite.executionMode`
+  the no-bypass rule, the historical Docker-only execution-request-validation
+  baseline, and the active host-default local-`LabVIEWCLI` plus expert-Docker
+  replacement direction aligned across authority docs and runtime-settings
+  ingestion after the manifest removed `viHistorySuite.executionMode`
 - `TEST-UNIT-301`: verify the Windows benchmark summary fails closed when any
   retained pair is `runtimeExecutionState=not-available`, retains the blocked
   reason as terminal benchmark truth, snapshots immutable per-run
@@ -1329,20 +1333,11 @@
   comparable-prefix packet selection prefer the latest eligible timestamped
   proof within one proof root
 - `TEST-DOC-067`: review extension-execution-policy, ADR-0025, ADR-0026,
-  PROGRAM-0005, ISSUE-0410, current-state, and the debt ledger and confirm the
-  current package makes canonical Docker-only request validation, engine-aware
-  Windows/Linux image selection, Docker hard stops, visible acquisition-state
-  truth, live in-panel compare-runtime progress, the in-panel latest compare-
-  runtime summary, the concise compare blocked/failure warning surface, the
-  concise compare success surface, structured history-panel compare-runtime
-  detail rendering, reopened-panel compare-runtime persistence, and Docker-
-  corrective guidance explicit
-- `TEST-DOC-068`: review User-Workflow, Requirements-And-Verification,
-  Current-State, Architecture, Architecture-Decision-Records, Development-Queue,
-  Debt-Retirement-Contract, and Debt-Ledger pages and confirm the published
-  reader surfaces represent ADR-0026 plus the current Docker-only installed
-  contract, engine-aware Windows/Linux image selection, and the public/internal
-  audience split instead of the older mode-based story
+  ADR-0038, PROGRAM-0005, ISSUE-0410, ISSUE-0412, current-state, and the debt
+  ledger and confirm the authority package now keeps canonical Docker-only
+  request validation explicit as historical implemented truth for the released
+  line while `ADR-0038` governs the active host-default local-`LabVIEWCLI`
+  plus expert-Docker transition without claiming it is already shipped
 - `TEST-DOC-069`: review README, current-state, harnesses, PROGRAM-0003, and
   ISSUE-0408 and confirm contaminated Windows benchmark-image reruns are
   documented as fail-closed `not-available` benchmark truth with immutable
@@ -1480,7 +1475,7 @@
   `public:gate-d:prepare-cold-pull`; and retains a readable Markdown packet
   shape for the recorded public-product acceptance preflight
 - `TEST-UNIT-320`: verify the next-line governance package keeps the
-  post-release SemVer decision framework, the `gitflow-lite` branch model, the
+  post-release SemVer decision framework, the governed `GitFlow` branch model, the
   lane-specific CI and `design:gate` posture, the public-default-branch
   decision that keeps GitHub `main` stable for casual readers while `develop`
   remains the explicit evaluation branch, and the `v1.0.5` exact / `v1.0.6`
@@ -1523,12 +1518,14 @@
 - `TEST-DOC-085`: review README, current-state, release-procedure,
   PROGRAM-0004, ISSUE-0409, ADR-0030, SRS, RTM, and the test plan and confirm
   the next-line control plane now retains explicit `major`/`minor`/`patch`
-  choice criteria, a governed `gitflow-lite` branch topology, the explicit
-  rule that public GitHub `main` stays the default branch while `develop`
-  remains the evaluation branch, and lane-specific CI plus `design:gate`
-  obligations for `feature/*`, `develop`, `release/*`, `hotfix/*`, and `main`,
-  including PR-driven feature admission and push validation on `release/*` and
-  `hotfix/*`
+  choice criteria, a governed `GitFlow` branch topology, the explicit
+  rule that public GitHub `main` stays the default branch while `release/*`
+  remains the release-candidate branch family and `develop` remains the
+  evaluation branch, and lane-specific CI plus `design:gate` obligations for
+  `feature/*`, `develop`, `release/*`, `hotfix/*`, and `main`, including
+  `feature/*` branches cut from `develop` and merged back into `develop`,
+  release/hotfix merge-backs into `develop`, and push validation on
+  `release/*` and `hotfix/*`
 - `TEST-DOC-086`: review PROGRAM-0004, ISSUE-0409, sustainment rules, SRS,
   RTM, and the test plan and confirm the repo now retains a continuous
   finding-to-requirement discipline that forces governed findings to either
@@ -1550,10 +1547,11 @@
 - `TEST-DOC-077`: review documentation-workbench, current-state, SRS, and RTM
   and confirm the documentation continuous-integration contract now retains
   docs-integration evidence, bundle-drift checks, wiki doctor/plan facts, and
-  explicit installed-user execution-policy truth checks for Docker-first
-  Windows `auto`, no silent fallback, Docker-required hard stops, and
-  front-facing provider/progress guidance, while the governed package path
-  refreshes bundled installed-user docs before VSIX creation
+  explicit installed-user execution-policy truth checks for Docker-only
+  compare execution, engine-aware Windows/Linux image selection,
+  Docker-required hard stops without host fallback, and front-facing
+  provider/progress guidance, while the governed package path refreshes
+  bundled installed-user docs before VSIX creation
 - `TEST-DOC-078`: review current-state, PROGRAM-0003, ISSUE-0408, SRS, RTM,
   and the test plan and confirm the repo now retains a LabVIEW 2026-only
   Windows host operation matrix that runs the x64 tranche first and gates the
@@ -1653,8 +1651,9 @@
   merge-request admission instead of a generic preview push lane
 - `TEST-UNIT-327`: read `docs/cm/cm-plan.md`, sustainment rules, release
   procedure, current-state, README, and the hosted automation matrix and
-  confirm they all agree that `develop` is the integration branch and `main`
-  is the exact release branch
+  confirm they all agree that `develop` is the integration branch, `main` is
+  the protected exact-release line, and `release/*` / `hotfix/*` are the
+  governed short-lived promotion lanes
 - `TEST-UNIT-328`: verify `promotePublicGithubSource` honors
   `VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT` when no explicit `--target-root` is
   supplied and fails closed on dirty target repos before comparison or write
@@ -1706,6 +1705,35 @@
   the `vi-history-suite-expert-agent-reviewer` skill identity, the exact
   published public repo/wiki heads under review, the latest retained verdict,
   and the blocking no-findings rule before `tag-eligible`
+- `TEST-UNIT-341`: verify the installed-user manifest/settings contract
+  exposes `viHistorySuite.labviewVersion` and
+  `viHistorySuite.labviewBitness`, keeps host as the default installed-user
+  direction, avoids general Docker/image-family settings on the public
+  installed-user surface, and reads the installed-user runtime facts through
+  the host-local runtime-settings surface
+- `TEST-UNIT-342`: verify Windows runtime preflight requires version and
+  bitness, resolves exactly one local LabVIEW + `LabVIEWCLI` installation, and
+  fails closed when the requested runtime is missing, ambiguous, or
+  incompatible
+- `TEST-UNIT-343`: verify selecting the second commit no longer auto-runs
+  compare, and the compare preflight renders selected/base commit plus LabVIEW
+  version, bitness, and provider before the explicit `Compare` action
+- `TEST-UNIT-344`: verify missing, unresolved, or unsupported provider/runtime
+  selection blocks compare in the panel and emits a VS Code warning
+  notification
+- `TEST-UNIT-345`: verify the on-demand settings CLI materializes platform
+  launchers under user-profile storage on first use, writes provider plus
+  `viHistorySuite.labviewVersion` and `viHistorySuite.labviewBitness`, and
+  does not require PATH mutation or a prebuilt VSIX-shipped CLI payload
+- `TEST-UNIT-346`: verify the installed compare contract defaults to host and
+  admits Docker only as a bounded expert provider persisted through the
+  generated settings CLI
+- `TEST-UNIT-347`: verify Docker preflight derives the governed image family
+  from the current engine and fails closed on unsupported Docker `x86` with
+  host/`x64` corrective guidance
+- `TEST-UNIT-348`: verify compare preflight shows provider as read-only text
+  and retains an explicit CLI update hint when provider/runtime settings need
+  correction
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are
@@ -1765,6 +1793,19 @@
   confirm exact tagging and Marketplace publication now remain blocked until
   the retained `vi-history-suite-expert-agent-reviewer` gate against the exact
   published public candidate heads returns no findings
+- `TEST-DOC-104`: review README, current-state, ship control, development
+  queue, extension-execution-policy, PROGRAM-0005, ISSUE-0410, and ISSUE-0412
+  and confirm the control plane now keeps the current released Docker-only
+  installed contract explicit while promoting `TRANCHE-016` /
+  `ISSUE-0412` as the active direction
+- `TEST-DOC-105`: review SRS, RTM, test plan, extension-execution-policy,
+  `ADR-0038`, and ISSUE-0412 and confirm the active develop-line
+  installed-user replacement contract is explicit and truthfully traced around
+  required LabVIEW version + bitness settings, host-default local
+  `LabVIEWCLI`, bounded expert Docker admission through the generated CLI,
+  explicit compare preflight, panel + warning fail-closed behavior, and the
+  Windows exact-runtime-selection fail-closed behavior retained under
+  `VHS-REQ-532`
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

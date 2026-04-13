@@ -56,11 +56,19 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('Copy review packet');
     expect(html).toContain('data-testid="history-status"');
     expect(html).toContain('data-testid="history-compare-runtime-status"');
-    expect(html).toContain('data-testid="history-compare-selection-status"');
-    expect(html).toContain('data-testid="history-compare-selection-summary"');
+    expect(html).toContain('data-testid="history-compare-preflight"');
+    expect(html).toContain('data-testid="history-compare-preflight-summary"');
+    expect(html).toContain('data-testid="history-compare-preflight-next-action"');
+    expect(html).toContain('data-testid="history-compare-preflight-selected"');
+    expect(html).toContain('data-testid="history-compare-preflight-base"');
+    expect(html).toContain('data-testid="history-compare-preflight-provider"');
+    expect(html).toContain('data-testid="history-compare-preflight-version"');
+    expect(html).toContain('data-testid="history-compare-preflight-bitness"');
+    expect(html).toContain('data-testid="history-compare-preflight-cli-hint"');
     expect(html).toContain('data-testid="history-compare-runtime-summary"');
     expect(html).toContain('data-testid="history-compare-runtime-next-action"');
     expect(html).toContain('data-testid="history-compare-runtime-details"');
+    expect(html).toContain('data-testid="history-action-compare-selected"');
     expect(html).toContain('data-testid="history-review-packet"');
     expect(html).toContain('data-testid="history-status-history-window"');
     expect(html).toContain('data-testid="history-review-window"');
@@ -104,10 +112,10 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('Reviewer guidance:');
     expect(html).toContain('Confidence and scope:');
     expect(html).toContain('Local Git history, tracked-file status, and content-detected VI signature checks.');
-    expect(html).toContain('Direct local evidence for chronology, path provenance, retained hashes, and retained compare pairing.');
-    expect(html).toContain('Repository/path facts, retained commit chronology, checkbox-selected compare pairing, and retained compare-pair summaries.');
-    expect(html).toContain('Pair selection:</strong> Available for any retained review window with at least two commits; the second checkbox selection generates the explicit selected/base pair');
-    expect(html).toContain('Retained pair review:</strong> Retained comparison evidence opens automatically through the checkbox-selected compare flow when available; no separate compare button is exposed on commit rows');
+    expect(html).toContain('Direct local evidence for chronology, path provenance, retained hashes, and explicit selected/base compare preflight facts.');
+    expect(html).toContain('Repository/path facts, retained commit chronology, explicit selected/base compare preflight, and retained compare-pair summaries.');
+    expect(html).toContain('Pair selection:</strong> Available for any retained review window with at least two commits; selecting two revisions populates explicit compare preflight and Compare runs the explicit selected/base pair');
+    expect(html).toContain('Retained pair review:</strong> Retained comparison evidence opens through the dedicated compare preflight workflow when available; no separate compare button is exposed on commit rows');
     expect(html).toContain('Documentation:</strong> Available in this build');
     expect(html).toContain(
       "Benchmark status:</strong> Available only on Sergio Velderrain's canonical Windows 11 host machine"
@@ -119,7 +127,7 @@ describe('renderHistoryPanelHtml', () => {
     expect(html).toContain('Binary semantic differences, visual or cosmetic change detection, and LabVIEW comparison-report output.');
     expect(html).toContain('Adjacent:</strong> <code>abcdef12</code>');
     expect(html).toContain('vs prior:</strong> <code>11111111</code>');
-    expect(html).toContain('Checkbox selection defines the exact selected/base pair. The adjacent-pair text in each row is chronology context only');
+    expect(html).toContain('The compare preflight section defines the exact selected/base pair. The adjacent-pair text in each row is chronology context only');
     expect(html).toContain('Open docs</code> to open the bundled user documentation');
     expect(html).toContain(
       'Open benchmark status</code> on the canonical Windows 11 host when you need the retained Windows baseline plus the live or completed Linux benchmark state inside VS Code'
@@ -135,12 +143,21 @@ describe('renderHistoryPanelHtml', () => {
       'No compare action from this panel has retained provider or acquisition truth yet.'
     );
     expect(html).toContain(
-      'Select any two retained revisions. The second checkbox selection will generate a comparison report automatically for that exact pair, using the newer commit as selected and the older commit as base.'
+      'Compare preflight is blocked until provider/runtime settings are corrected.'
     );
-    expect(html).toContain("command: 'generateComparisonReportFromSelection'");
+    expect(html).toContain(
+      'Next action: review compare preflight, then choose Compare to surface the selected provider and any acquisition state here.'
+    );
+    expect(html).toContain(
+      'Next action: set viHistorySuite.labviewVersion and viHistorySuite.labviewBitness, then review compare preflight before choosing Compare.'
+    );
+    expect(html).toContain(
+      'Provider is read-only here. Use the generated settings CLI to update provider, LabVIEW version, or LabVIEW bitness when correction is required.'
+    );
+    expect(html).toContain('data-command="generateComparisonReportFromSelection"');
     expect(html).toContain('handleCommitSelectionChange');
-    expect(html).toContain('Select one more retained revision to generate a comparison report for the chosen pair.');
-    expect(html).toContain('Generating compare for the selected retained pair...');
+    expect(html).toContain('Select one more retained revision to populate compare preflight.');
+    expect(html).toContain('Compare preflight is ready for ');
     expect(html).toContain('let panelState = vscode.getState() ?? {};');
     expect(html).toContain('hostReviewDraft');
     expect(html).toContain('persistHostReviewDraft');
@@ -210,7 +227,7 @@ describe('renderHistoryPanelHtml', () => {
       outcome: 'opened-comparison-report',
       comparisonRuntimePanelStatus: 'succeeded',
       comparisonRuntimePanelSummary:
-        'Generate compare for abcdef12 vs 11111111. Provider: windows-container. Execution mode: auto. Report status: ready-for-runtime. Runtime state: succeeded. Windows image acquisition: acquired.',
+        'Generate compare for abcdef12 vs 11111111. Provider: windows-container. Provider request: auto. Report status: ready-for-runtime. Runtime state: succeeded. Windows image acquisition: acquired.',
       comparisonRuntimePanelNextAction:
         'Next action: open the retained comparison packet for the full governed runtime summary.',
       comparisonRuntimePanelDetails: [
@@ -219,7 +236,7 @@ describe('renderHistoryPanelHtml', () => {
           value: 'windows-container'
         },
         {
-          label: 'Execution mode',
+          label: 'Provider request',
           value: 'auto'
         },
         {
@@ -239,13 +256,13 @@ describe('renderHistoryPanelHtml', () => {
 
     expect(html).toContain('data-state="succeeded"');
     expect(html).toContain(
-      'Generate compare for abcdef12 vs 11111111. Provider: windows-container. Execution mode: auto. Report status: ready-for-runtime. Runtime state: succeeded. Windows image acquisition: acquired.'
+      'Generate compare for abcdef12 vs 11111111. Provider: windows-container. Provider request: auto. Report status: ready-for-runtime. Runtime state: succeeded. Windows image acquisition: acquired.'
     );
     expect(html).toContain(
       'Next action: open the retained comparison packet for the full governed runtime summary.'
     );
     expect(html).toContain('<strong>Provider:</strong> windows-container');
-    expect(html).toContain('<strong>Execution mode:</strong> auto');
+    expect(html).toContain('<strong>Provider request:</strong> auto');
     expect(html).toContain('<strong>Windows image acquisition:</strong> acquired');
   });
 
@@ -360,7 +377,7 @@ describe('renderHistoryPanelHtml', () => {
     expect(reviewPacket).toContain('Repo support: Governed upstream: NI LabVIEW Icon Editor');
     expect(reviewPacket).toContain('Retained revisions: 2');
     expect(reviewPacket).toContain('History window: capped window truncated to 2/4 commits at the configured ceiling (2)');
-    expect(reviewPacket).toContain('Included here: chronology, path provenance, retained hashes, checkbox-selected compare pairing, and retained compare pairs.');
+    expect(reviewPacket).toContain('Included here: chronology, path provenance, retained hashes, explicit selected/base compare preflight, and retained compare pairs.');
     expect(reviewPacket).toContain('Confidence and scope:');
     expect(reviewPacket).toContain('Needs external comparison tooling: binary semantic differences, visual or cosmetic change detection, and LabVIEW comparison-report output.');
     expect(reviewPacket).toContain('- abcdef12 vs 11111111 :: Improve deployment behavior');
@@ -479,7 +496,7 @@ describe('renderHistoryPanelHtml', () => {
     });
 
     expect(html).toContain('Repo-agnostic support');
-    expect(html).toContain('Pair selection:</strong> Available for any retained review window with at least two commits; the second checkbox selection generates the explicit selected/base pair');
+    expect(html).toContain('Pair selection:</strong> Available for any retained review window with at least two commits; selecting two revisions populates explicit compare preflight and Compare runs the explicit selected/base pair');
     expect(html).not.toContain('data-testid="history-action-dashboard"');
     expect(html).not.toContain('data-testid="history-action-decision-record"');
     expect(html).toContain('data-testid="history-action-open"');

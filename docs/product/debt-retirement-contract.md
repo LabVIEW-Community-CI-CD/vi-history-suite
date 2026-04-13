@@ -99,11 +99,14 @@ Current seed examples:
 - retired contamination debt from ambiguous exact-pair diagnosis bundles
 - retired contamination debt from mixed explicit Windows x86/x64 runtime path
   bundles
-- retired contamination debt from effective runtime override bundles that used
+- retired contamination debt from effective proof-admission bundles that used
   to bypass canonical admission control after CLI/env/default synthesis
-- open Windows pair-129 benchmark-proof debt
-- open Linux pair-135 full-window benchmark-proof debt
-- open extension execution-mode and Docker-acquisition UX debt
+- accepted bounded exception for the Windows pair-129 benchmark ceiling under
+  the current governed image contract
+- accepted bounded exception for the Linux pair-135 full-window benchmark
+  ceiling under the current governed Linux contract
+- retired extension execution-mode and Docker-acquisition UX debt from the
+  earlier Docker-only installed baseline
 
 ## Operational Rule
 
