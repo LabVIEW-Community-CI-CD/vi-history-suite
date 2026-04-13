@@ -92,3 +92,58 @@ The implementation surface is split today:
   explicit compare execution
 - decide what failure contract applies when the requested LabVIEW version or
   bitness is not installed locally
+
+## Round 2: Recommendations
+
+1. Treat this proposal as a product-contract reset, not a small UX tweak.
+   `ISSUE-0410` and `PROGRAM-0005` currently govern installed execution as
+   Docker-only, so the roadmap will need to replace or explicitly supersede
+   that contract.
+2. Make Windows installed-user compare canonical on local `LabVIEWCLI`, not
+   “Docker first with host fallback.” The repo already contains internal
+   `host-native` + `labview-cli` runtime-selection machinery in
+   `src/reporting/comparisonRuntimeLocator.ts`.
+3. Model runtime selection around three facts:
+   - requested LabVIEW version
+   - requested LabVIEW bitness
+   - resolved executable path
+   Bitness alone is not enough for the user workflow you described.
+4. Replace the current “second checkbox auto-runs compare” flow with an
+   explicit preflight state that shows:
+   - selected commit
+   - base commit
+   - resolved LabVIEW version
+   - resolved LabVIEW bitness
+   - explicit compare action
+5. Fail closed when the requested version or bitness is not installed. Silent
+   fallback would make the version/bitness surface untrustworthy.
+6. Keep Docker, if it survives at all, outside the default installed-user
+   compare path until a later round proves it still belongs in the contract.
+
+## Round 2: Follow-Up Questions
+
+1. Should this proposal replace the current Docker-only installed-user contract
+   entirely, or create a Windows installed-user exception?
+2. Should Docker remain anywhere in the installed compare surface after this
+   change?
+   Options under consideration:
+   - internal-only
+   - advanced installed option
+   - remove from installed compare
+3. Where should the user set `--labview-version` and `--labview-bitness`?
+   Options under consideration:
+   - settings only
+   - panel only
+   - both settings and panel
+4. If the user specifies only bitness, should “latest installed” mean the
+   latest installed LabVIEW matching that bitness?
+5. If the user specifies only version, should bitness default to:
+   - latest matching install
+   - x64 preferred
+   - fail until bitness is explicit
+6. In the pre-compare state, do you want to show only version and bitness, or
+   also the resolved `LabVIEW.exe` and `LabVIEWCLI.exe` paths?
+7. Should the canonical compare ordering remain newer commit = selected side
+   and older commit = base side regardless of selection order?
+8. After your answers, should the next round stay at contract-and-roadmap
+   level, or should implementation slicing begin immediately?
