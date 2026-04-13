@@ -640,6 +640,18 @@ export async function locateComparisonRuntime(
 
   if (executionMode === 'docker-only') {
     containerAvailable = await ensureContainerAvailability();
+    const dockerProviderNotSupportedBlockedReason =
+      settings.requestedProvider === 'docker'
+        ? 'docker-provider-not-supported-on-platform'
+        : 'docker-only-provider-not-supported-on-platform';
+    const dockerProviderRequiresWindowsX64BlockedReason =
+      settings.requestedProvider === 'docker'
+        ? 'docker-provider-requires-windows-x64'
+        : 'docker-only-requires-windows-x64-provider';
+    const dockerProviderUnavailableBlockedReason =
+      settings.requestedProvider === 'docker'
+        ? 'docker-provider-unavailable'
+        : 'docker-only-provider-unavailable';
     if (platform !== 'win32' && platform !== 'linux') {
       return {
         platform,
@@ -647,7 +659,7 @@ export async function locateComparisonRuntime(
         requestedProvider: settings.requestedProvider,
         bitness,
         provider: 'unavailable',
-        blockedReason: 'docker-only-provider-not-supported-on-platform',
+        blockedReason: dockerProviderNotSupportedBlockedReason,
         providerDecisions: buildProviderDecisions({
           platform,
           containerRuntimePlatform: containerFacts?.runtimePlatform,
@@ -660,7 +672,7 @@ export async function locateComparisonRuntime(
           containerAvailable,
           containerEvaluated,
           ...buildContainerDecisionFacts(),
-          blockedReason: 'docker-only-provider-not-supported-on-platform'
+          blockedReason: dockerProviderNotSupportedBlockedReason
         }),
         notes: [
           'Docker-only comparison-report execution is currently governed for Windows hosts and Linux hosts using the current Docker daemon engine.'
@@ -677,7 +689,7 @@ export async function locateComparisonRuntime(
         requestedProvider: settings.requestedProvider,
         bitness,
         provider: 'unavailable',
-        blockedReason: 'docker-only-requires-windows-x64-provider',
+        blockedReason: dockerProviderRequiresWindowsX64BlockedReason,
         providerDecisions: buildProviderDecisions({
           platform,
           containerRuntimePlatform: containerFacts?.runtimePlatform,
@@ -690,7 +702,7 @@ export async function locateComparisonRuntime(
           containerAvailable,
           containerEvaluated,
           ...buildContainerDecisionFacts(),
-          blockedReason: 'docker-only-requires-windows-x64-provider'
+          blockedReason: dockerProviderRequiresWindowsX64BlockedReason
         }),
         notes: [
           'Docker-only execution currently requires the governed 64-bit container provider.'
@@ -709,7 +721,7 @@ export async function locateComparisonRuntime(
         configuredWindowsContainerImage: windowsContainerImage,
         configuredLinuxContainerImage: linuxContainerImage,
         selectedContainerFacts: containerFacts,
-        blockedReason: 'docker-only-provider-unavailable',
+        blockedReason: dockerProviderUnavailableBlockedReason,
         providerDecisions: buildProviderDecisions({
           platform,
           containerRuntimePlatform: containerFacts?.runtimePlatform,
@@ -722,7 +734,7 @@ export async function locateComparisonRuntime(
           containerAvailable,
           containerEvaluated,
           ...buildContainerDecisionFacts(),
-          blockedReason: 'docker-only-provider-unavailable'
+          blockedReason: dockerProviderUnavailableBlockedReason
         }),
         notes: [
           `Docker-only execution was requested, but ${describeUnavailableContainerProvider(containerFacts, {
@@ -1804,19 +1816,32 @@ function buildProviderDecisions(
       });
     } else if (options.executionMode === 'docker-only') {
       decisions.push(
-        options.blockedReason === 'docker-only-requires-windows-x64-provider'
+        options.blockedReason === 'docker-only-requires-windows-x64-provider' ||
+        options.blockedReason === 'docker-provider-requires-windows-x64'
           ? {
               provider: selectedContainerProvider,
               outcome: 'rejected',
-              reason: 'docker-only-windows-x64-provider-required',
+              reason:
+                options.requestedProvider === 'docker'
+                  ? 'docker-provider-windows-x64-required'
+                  : 'docker-only-windows-x64-provider-required',
               detail:
-                'Docker-only execution currently requires the governed 64-bit container provider.'
+                options.requestedProvider === 'docker'
+                  ? 'The Docker provider currently requires the governed 64-bit container provider.'
+                  : 'Docker-only execution currently requires the governed 64-bit container provider.'
             }
           : {
               provider: selectedContainerProvider,
               outcome: 'rejected',
-              reason: 'docker-only-provider-unavailable',
-              detail: `Docker-only execution was requested, but ${describeUnavailableContainerProvider(
+              reason:
+                options.requestedProvider === 'docker'
+                  ? 'docker-provider-unavailable'
+                  : 'docker-only-provider-unavailable',
+              detail: `${
+                options.requestedProvider === 'docker'
+                  ? 'The Docker provider was requested'
+                  : 'Docker-only execution was requested'
+              }, but ${describeUnavailableContainerProvider(
                 options.containerImage
                   ? {
                       image: options.containerImage,

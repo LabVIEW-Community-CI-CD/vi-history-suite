@@ -843,6 +843,95 @@ describe('comparisonRuntimeLocator', () => {
     ]);
   });
 
+  it('fails closed for the persisted docker provider when x86 Windows execution is requested', async () => {
+    const result = await locateComparisonRuntime(
+      'win32',
+      {
+        requestedProvider: 'docker',
+        requireVersionAndBitness: true,
+        labviewVersion: '2026',
+        bitness: 'x86'
+      },
+      {
+        queryWindowsContainerProviderFacts: vi.fn().mockResolvedValue(buildWindowsContainerFacts()),
+        pathExists: vi.fn().mockResolvedValue(false),
+        queryWindowsRegistry: vi.fn().mockResolvedValue('')
+      }
+    );
+
+    expect(result.requestedProvider).toBe('docker');
+    expect(result.executionMode).toBe('docker-only');
+    expect(result.provider).toBe('unavailable');
+    expect(result.blockedReason).toBe('docker-provider-requires-windows-x64');
+    expect(result.providerDecisions).toEqual([
+      {
+        provider: 'windows-container',
+        outcome: 'rejected',
+        reason: 'docker-provider-windows-x64-required',
+        detail: 'The Docker provider currently requires the governed 64-bit container provider.'
+      },
+      {
+        provider: 'host-native',
+        outcome: 'rejected',
+        reason: 'provider-request-docker-disallows-host-native',
+        detail: 'Host-native execution was not selected because the Docker provider was requested.'
+      }
+    ]);
+  });
+
+  it('fails closed for the persisted docker provider when the governed Docker provider is unavailable', async () => {
+    const cleanHost = buildCleanWindowsHostDeps();
+    const result = await locateComparisonRuntime(
+      'win32',
+      {
+        requestedProvider: 'docker',
+        requireVersionAndBitness: true,
+        labviewVersion: '2026',
+        bitness: 'x64'
+      },
+      {
+        queryWindowsContainerProviderFacts: vi
+          .fn()
+          .mockResolvedValue(
+            buildWindowsContainerFacts({
+              dockerCliAvailable: false,
+              dockerDaemonReachable: false,
+              windowsContainerCapabilityAvailable: false,
+              imageAvailable: false
+            })
+          ),
+        pathExists: vi.fn(async (filePath: string) =>
+          [
+            'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
+            'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
+          ].includes(filePath)
+        ),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        ...cleanHost
+      }
+    );
+
+    expect(result.requestedProvider).toBe('docker');
+    expect(result.executionMode).toBe('docker-only');
+    expect(result.provider).toBe('unavailable');
+    expect(result.blockedReason).toBe('docker-provider-unavailable');
+    expect(result.providerDecisions).toEqual([
+      {
+        provider: 'windows-container',
+        outcome: 'rejected',
+        reason: 'docker-provider-unavailable',
+        detail:
+          'The Docker provider was requested, but Docker CLI was not available on the current host, so governed Windows container image nationalinstruments/labview:2026q1-windows could not be used.'
+      },
+      {
+        provider: 'host-native',
+        outcome: 'rejected',
+        reason: 'provider-request-docker-disallows-host-native',
+        detail: 'Host-native execution was not selected because the Docker provider was requested.'
+      }
+    ]);
+  });
+
   it('selects the governed linux container provider for docker-only execution on Linux hosts', async () => {
     const result = await locateComparisonRuntime(
       'linux',

@@ -383,6 +383,37 @@ describe('comparisonRuntimeDoctor', () => {
     );
   });
 
+  it('uses the same recovery guidance for the explicit docker provider unavailable path', () => {
+    const lines = buildComparisonRuntimeDoctorSummaryFromFacts({
+      reportStatus: 'blocked-runtime',
+      runtimeSelection: {
+        platform: 'win32',
+        executionMode: 'docker-only',
+        requestedProvider: 'docker',
+        bitness: 'x64',
+        provider: 'windows-container',
+        blockedReason: 'docker-provider-unavailable',
+        windowsContainerDockerCliAvailable: false,
+        windowsContainerDaemonReachable: false,
+        providerDecisions: [],
+        notes: [],
+        registryQueryPlans: [],
+        candidates: []
+      },
+      runtimeExecution: {
+        state: 'not-available',
+        attempted: false,
+        reportExists: false,
+        blockedReason: 'docker-provider-unavailable',
+        diagnosticNotes: []
+      }
+    });
+
+    expect(lines.at(-1)).toBe(
+      'Next action: install Docker Desktop, start it once, and confirm `docker info` succeeds or set viHistorySuite.runtimeProvider to host, then rerun comparison report generation.'
+    );
+  });
+
   it('tells Linux users to reconnect the daemon when Docker is installed but not reachable', () => {
     const lines = buildComparisonRuntimeDoctorSummaryFromFacts({
       reportStatus: 'blocked-runtime',

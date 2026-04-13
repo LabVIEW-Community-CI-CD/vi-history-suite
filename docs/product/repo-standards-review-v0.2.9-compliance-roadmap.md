@@ -18,7 +18,7 @@ instead of living in chat memory.
   governance rewrite on this branch
 - pass 3 status: checkpoint 1 complete
 - pass 4 status: complete
-- pass 5 status: checkpoint 13 complete
+- pass 5 status: checkpoint 14 complete
 - pass 5 checkpoint 1 outcome: the runtime-provider and compare-flow
   requirement cluster now separates current implemented baseline truth from the
   active replacement direction
@@ -64,6 +64,10 @@ instead of living in chat memory.
   details now use `provider-request-*` wording when the active branch carries
   an explicit persisted host or docker provider request, while the legacy
   `executionMode` and `auto` characterization lanes remain intact
+- pass 5 checkpoint 14 outcome: explicit persisted Docker-provider blocks now
+  emit `docker-provider-*` blocked reasons, while the legacy
+  `docker-only-*` and `auto-docker-installed-*` characterization lanes remain
+  intact for older override and proof surfaces
 - pass 6 status: checkpoint 3 complete
 - pass 6 checkpoint 1 outcome: `ADR-0030` now uses a GitFlow-aligned file path
   and the live architecture, RTM, wiki-coverage, and release-governance test
@@ -137,7 +141,7 @@ instead of living in chat memory.
 5. Pass 5: Requirement-system refactor
    - objective: normalize the large requirement corpus instead of patching it
      piecemeal
-  - status: checkpoint 13 complete on this branch
+  - status: checkpoint 14 complete on this branch
    - checkpoint 1 scope:
      - separate the current implemented checkbox auto-run workflow from the
        planned explicit compare replacement
@@ -212,6 +216,11 @@ instead of living in chat memory.
       explicit persisted host or docker provider requests
     - preserve the older `executionMode` override and `auto` characterization
       lanes as legacy/internal compatibility surfaces
+  - checkpoint 14 scope:
+    - normalize blocked-reason vocabulary for explicit persisted Docker
+      provider requests
+    - preserve the older `docker-only-*` and `auto-docker-installed-*`
+      blocked-reason surfaces as legacy/internal compatibility lanes
    - focus:
      - split `SyRS` versus `SRS` ownership cleanly
      - merge duplicates

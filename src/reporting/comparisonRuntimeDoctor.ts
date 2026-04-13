@@ -174,15 +174,24 @@ function deriveRuntimeDoctorNextAction(options: {
       return `Next action: close existing LabVIEW/LabVIEWCLI/LVCompare sessions, clear the governed VI Server listener on the selected port, or ${deriveContainerRecoveryAction(options.runtimeSelection)}, then rerun comparison report generation.`;
     }
 
-    if (blockedReason === 'docker-only-provider-not-supported-on-platform') {
+    if (
+      blockedReason === 'docker-only-provider-not-supported-on-platform' ||
+      blockedReason === 'docker-provider-not-supported-on-platform'
+    ) {
       return 'Next action: set viHistorySuite.runtimeProvider to host on this platform, then rerun comparison report generation.';
     }
 
-    if (blockedReason === 'docker-only-requires-windows-x64-provider') {
+    if (
+      blockedReason === 'docker-only-requires-windows-x64-provider' ||
+      blockedReason === 'docker-provider-requires-windows-x64'
+    ) {
       return 'Next action: set viHistorySuite.runtimeProvider to host or use Docker with viHistorySuite.labviewBitness=x64, then rerun comparison report generation.';
     }
 
-    if (blockedReason === 'docker-only-provider-unavailable') {
+    if (
+      blockedReason === 'docker-only-provider-unavailable' ||
+      blockedReason === 'docker-provider-unavailable'
+    ) {
       return `Next action: ${deriveContainerRecoveryAction(options.runtimeSelection)} or set viHistorySuite.runtimeProvider to host, then rerun comparison report generation.`;
     }
 
