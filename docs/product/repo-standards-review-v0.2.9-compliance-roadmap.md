@@ -18,7 +18,7 @@ instead of living in chat memory.
   governance rewrite on this branch
 - pass 3 status: checkpoint 1 complete
 - pass 4 status: complete
-- pass 5 status: checkpoint 7 complete
+- pass 5 status: checkpoint 8 complete
 - pass 5 checkpoint 1 outcome: the runtime-provider and compare-flow
   requirement cluster now separates current implemented baseline truth from the
   active replacement direction
@@ -44,6 +44,9 @@ instead of living in chat memory.
   the active branch at retired public path settings and now traces blocked
   compare guidance to provider-safe version, bitness, Docker-prerequisite, or
   bounded internal-override facts as appropriate
+- pass 5 checkpoint 8 outcome: the remaining Windows-container image row now
+  treats image resolution as an internal governing invariant instead of
+  implying that installed users still configure public image settings directly
 - pass 6 status: checkpoint 3 complete
 - pass 6 checkpoint 1 outcome: `ADR-0030` now uses a GitFlow-aligned file path
   and the live architecture, RTM, wiki-coverage, and release-governance test
@@ -114,7 +117,7 @@ instead of living in chat memory.
 5. Pass 5: Requirement-system refactor
    - objective: normalize the large requirement corpus instead of patching it
      piecemeal
-   - status: checkpoint 7 complete on this branch
+   - status: checkpoint 8 complete on this branch
    - checkpoint 1 scope:
      - separate the current implemented checkbox auto-run workflow from the
        planned explicit compare replacement
@@ -161,6 +164,10 @@ instead of living in chat memory.
        branch users toward retired public path settings
      - keep missing-runtime notes aligned to provider-safe version, bitness,
        Docker-prerequisite, and bounded internal-override correction paths
+   - checkpoint 8 scope:
+     - normalize the Windows-container image requirement row so it reflects a
+       resolved internal governing image invariant rather than a public image
+       configuration surface
    - focus:
      - split `SyRS` versus `SRS` ownership cleanly
      - merge duplicates

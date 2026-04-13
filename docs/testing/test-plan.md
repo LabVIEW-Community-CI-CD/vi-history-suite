@@ -472,7 +472,7 @@
   observed-process arrays and renders them as `none` on the retained panel HTML
 - `TEST-UNIT-131`: prove the Windows-container provider fails closed with
   `windows-container-image-unavailable` before command execution when selected
-  without a configured image
+  without a resolved governing image
 - `TEST-UNIT-132`: prove container-reported NI diagnostic log paths only map
   into host-readable storage when they remain under the governed runtime root
 - `TEST-UNIT-133`: prove NI diagnostic logs that report `LabVIEW launched

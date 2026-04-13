@@ -164,6 +164,12 @@ describe('requirements documentation coherence', () => {
     expect(srs).not.toContain(
       'Missing-runtime selections retain notes pointing to `viHistorySuite.labviewExePath` or `viHistorySuite.labviewCliPath` as appropriate.'
     );
+    expect(srs).toContain(
+      'When the Windows 64-bit container provider is selected without a resolved governing container image'
+    );
+    expect(srs).not.toContain(
+      'When the Windows 64-bit container provider is selected without a configured container image'
+    );
     expect(rtm).toContain(
       'Keep governed internal/runtime-proof override inputs for labviewCliPath, labviewExePath, and bitness ahead of auto-discovery'
     );
@@ -171,9 +177,12 @@ describe('requirements documentation coherence', () => {
       'executionMode, labviewCliPath, labviewExePath, windowsContainerImage, and bitness'
     );
     expect(rtm).toContain('selecting two distinct retained revisions establishes one explicit compare-preflight pair');
+    expect(rtm).toContain('without a resolved governing container image');
+    expect(rtm).not.toContain('without a configured container image');
     expect(testPlan).toContain('explicit compare-preflight entrypoint');
     expect(testPlan).toContain('does not expose');
     expect(testPlan).toContain('`labviewCliPath`, `labviewExePath`, `bitness`, `executionMode`, or public');
+    expect(testPlan).toContain('without a resolved governing image');
 
     expect(alignment).toContain('history-window packet');
     expect(alignment).toContain('latest-run discovery');
