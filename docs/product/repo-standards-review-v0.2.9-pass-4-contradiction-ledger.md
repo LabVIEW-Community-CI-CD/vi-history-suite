@@ -22,6 +22,18 @@ live contradiction.
 | ID | Area | Contradiction | Evidence | Impact | Planned Resolution |
 | --- | --- | --- | --- | --- | --- |
 
+## Intentional Compatibility Surfaces
+
+The remaining `execution-mode` hits are deliberate compatibility or proof-only
+surfaces, not open installed-user doctrine contradictions.
+
+| ID | Area | Retained Surface | Evidence | Why It Stays |
+| --- | --- | --- | --- | --- |
+| COMPAT-001 | Proof-entrypoint CLI | The exact-pair and report-smoke proof entrypoints still retain the bounded `--execution-mode` flag and the matching `VHS-REQ-154` wording. | `docs/requirements/srs.md` (`VHS-REQ-154`); `docs/requirements/rtm.csv` (`VHS-REQ-154`); `src/cli/runHarnessReportSmoke.ts`; `tests/unit/runHarnessReportSmokeCli.test.ts`; `docs/product/canonical-exact-pair-diagnosis.md` | This flag is still the governed proof-admission contract for targeted reruns; removing it would erase a deliberate proof surface rather than resolve drift. |
+| COMPAT-002 | Retained summary readability | The command and packet layers still derive `Provider request` from older retained `Selected execution mode=...` facts when newer provider-request lines are absent. | `src/commands/openViHistoryCommand.ts`; `src/reporting/comparisonReportPacket.ts`; `tests/unit/openViHistoryCommand.test.ts`; `tests/unit/comparisonReportPacket.test.ts` | Older retained evidence stays readable without rewriting prior packets or losing history fidelity. |
+| COMPAT-003 | Runtime-selection reason codes | The runtime locator still emits `execution-mode-*` reason codes when a bounded proof or legacy override path is the real source of provider intent and no persisted provider request exists. | `src/reporting/comparisonRuntimeLocator.ts`; `tests/unit/comparisonRuntimeLocator.test.ts`; `tests/unit/comparisonRuntimeDoctor.test.ts` | Those reason codes still distinguish bounded proof-admission inputs from the active installed-user provider-request path. |
+| COMPAT-004 | Historical debt and tranche packets | Historical debt and development-queue packets still retain older execution-mode and Docker-only baseline wording as historical evidence. | `docs/product/debt-ledger.json`; `docs/product/development-queue.json`; `docs/product/debt-retirement-contract.md` | These packets record past baseline truth and debt retirement state; rewriting them as current doctrine would falsify retained history. |
+
 ## Resolved Or Narrowed After Pass 5 Checkpoint 1
 
 | ID | Area | Resolution | Evidence | Remaining Risk |

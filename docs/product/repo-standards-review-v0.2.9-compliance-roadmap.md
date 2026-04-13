@@ -154,6 +154,11 @@ instead of living in chat memory.
   `Selected execution mode=...` runtime doctor summary fallback so the active
   panel and warning surfaces still derive `Provider request` correctly when
   older retained evidence lacks the newer provider-request line
+- pass 7 checkpoint 12 outcome: the contradiction ledger now classifies the
+  remaining `execution-mode` hits explicitly as bounded proof-entrypoint,
+  retained-summary, runtime-reason-code, or historical-packet compatibility
+  surfaces instead of leaving them to look like open installed-user doctrine
+  drift
 
 ## Pass Order
 
@@ -202,7 +207,7 @@ instead of living in chat memory.
 5. Pass 5: Requirement-system refactor
    - objective: normalize the large requirement corpus instead of patching it
      piecemeal
-   - status: checkpoint 19 complete on this branch
+   - status: checkpoint 20 complete on this branch
    - checkpoint 1 scope:
      - separate the current implemented checkbox auto-run workflow from the
        planned explicit compare replacement
@@ -335,7 +340,7 @@ instead of living in chat memory.
 7. Pass 7: Missing-document and proof-surface uplift
    - objective: add or repair the remaining documentation and proof surfaces
      needed for compliance
-  - status: checkpoint 9 complete on this branch
+  - status: checkpoint 12 complete on this branch
   - checkpoint 1 scope:
      - normalize the active status blocks in current-state, `PROGRAM-0005`,
        and `ISSUE-0412` so they stop understating the implemented branch truth
@@ -386,6 +391,21 @@ instead of living in chat memory.
     - normalize governed proof CLI help and validation wording so it names
       proof-admission overrides instead of generic runtime overrides
     - keep the CLI flag names and underlying compatibility behavior stable
+  - checkpoint 10 scope:
+    - align the debt-retirement contract seed examples with the
+      machine-readable ledger's actual retired versus accepted-exception state
+    - stop presenting bounded benchmark ceilings and retired extension UX debt
+      as still-open cleanup
+  - checkpoint 11 scope:
+    - add command-surface proof that older `Selected execution mode=...`
+      runtime doctor summaries still derive a readable `Provider request`
+      value in the active panel and warning surfaces
+  - checkpoint 12 scope:
+    - classify the remaining `execution-mode` hits explicitly as bounded
+      proof-entrypoint, retained-summary, runtime-reason-code, or
+      historical-packet compatibility surfaces
+    - stop treating those preserved compatibility paths as open installed-user
+      doctrine drift
   - likely scope:
      - CM and release-control gaps outside pass 1
      - test-plan gaps

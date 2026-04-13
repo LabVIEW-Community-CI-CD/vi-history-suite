@@ -22,14 +22,18 @@ describe('repo-standards-review compliance docs', () => {
     expect(roadmap).toContain(
       '[repo-standards-review-v0.2.9-pass-4-contradiction-ledger.md](./repo-standards-review-v0.2.9-pass-4-contradiction-ledger.md)'
     );
+    expect(roadmap).toContain('pass 5 status: checkpoint 20 complete');
     expect(roadmap).toContain('pass 6 checkpoint 3 outcome');
-    expect(roadmap).toContain('pass 7 checkpoint 2 outcome');
+    expect(roadmap).toContain('pass 7 checkpoint 12 outcome');
     expect(roadmap).toContain('`VHS-REQ-532`');
     expect(ledger).toContain('CONTRA-001');
     expect(ledger).toContain('CONTRA-002');
     expect(ledger).toContain('CONTRA-003');
     expect(ledger).toContain('CONTRA-004');
     expect(ledger).toContain('CONTRA-006');
+    expect(ledger).toContain('## Intentional Compatibility Surfaces');
+    expect(ledger).toContain('COMPAT-001');
+    expect(ledger).toContain('COMPAT-004');
     expect(ledger).toContain(
       'does not treat the exact released `v1.2.2` Docker-only installed baseline as'
     );
