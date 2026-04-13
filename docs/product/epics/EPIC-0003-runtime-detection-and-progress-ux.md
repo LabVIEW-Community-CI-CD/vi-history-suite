@@ -5,22 +5,33 @@
 Deliver a governed runtime/tool-discovery and progress experience aligned to the
 authoritative research:
 
-- explicit user tool-path overrides
+- exact released Docker-only bundled/user runtime truth
+- active branch provider request, version, and bitness truth
 - Windows registry and install-root discovery
 - macOS/Linux documented-root discovery and constraint retention
 - notification, status-bar, and webview progress surfaces
 
 ## Scope
 
-- `executionMode`, `labviewCliPath`, `labviewExePath`, `bitness`,
-  `windowsContainerImage`
+- exact released bundled/user baseline:
+  - Docker-only compare execution
+  - current Docker engine selection of governed Windows or Linux image family
+  - visible image acquisition and blocked-provider guidance
+- active branch authority/internal direction:
+  - generated settings CLI with provider, LabVIEW version, and bitness
+  - host-default Windows local `LabVIEWCLI`
+  - bounded expert Docker provider selection
+  - explicit compare preflight before execution
+- bounded internal/runtime-proof compatibility inputs:
+  - `executionMode`
+  - `labviewCliPath`
+  - `labviewExePath`
+  - internal image overrides
 - Windows discovery heuristics and retained detection facts
 - macOS/Linux discovery heuristics and platform constraint facts
 - notification progress with percent, processed/total, and ETA
 - discreet status-bar progress item
 - webview progress surface for long-running report generation
-- explicit provider choice and Docker-first Windows `auto` truth in the
-  extension-user surface
 
 ## Excluded From This Epic
 

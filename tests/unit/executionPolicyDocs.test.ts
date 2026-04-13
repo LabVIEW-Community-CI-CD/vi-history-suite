@@ -49,6 +49,9 @@ describe('execution-policy control plane', () => {
     const currentState = readText('docs/product/current-state.md');
     const queue = readText('docs/product/development-queue.json');
     const policy = readText('docs/product/extension-execution-policy.md');
+    const epic = readText(
+      'docs/product/epics/EPIC-0003-runtime-detection-and-progress-ux.md'
+    );
     const srs = readText('docs/requirements/srs.md');
     const rtm = readText('docs/requirements/rtm.csv');
     const testPlan = readText('docs/testing/test-plan.md');
@@ -142,6 +145,12 @@ describe('execution-policy control plane', () => {
     expect(policy).toContain('the public extension-user surfaces shall continue to describe');
     expect(policy).toContain('the exact released `v1.2.2` installed-user baseline');
     expect(policy).toContain('The active develop-line replacement direction does not become bundled or public');
+    expect(epic).toContain('exact released Docker-only bundled/user runtime truth');
+    expect(epic).toContain('active branch provider request, version, and bitness truth');
+    expect(epic).toContain('generated settings CLI with provider, LabVIEW version, and bitness');
+    expect(epic).toContain('host-default Windows local `LabVIEWCLI`');
+    expect(epic).toContain('bounded internal/runtime-proof compatibility inputs');
+    expect(epic).not.toContain('Docker-first Windows `auto` truth in the');
     expect(srs).toContain('VHS-REQ-459');
     expect(srs).toContain('VHS-REQ-470');
     expect(srs).toContain('VHS-REQ-482');
