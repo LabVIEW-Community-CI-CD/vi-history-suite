@@ -18,7 +18,7 @@ instead of living in chat memory.
   governance rewrite on this branch
 - pass 3 status: checkpoint 1 complete
 - pass 4 status: complete
-- pass 5 status: checkpoint 11 complete
+- pass 5 status: checkpoint 12 complete
 - pass 5 checkpoint 1 outcome: the runtime-provider and compare-flow
   requirement cluster now separates current implemented baseline truth from the
   active replacement direction
@@ -57,6 +57,9 @@ instead of living in chat memory.
 - pass 5 checkpoint 11 outcome: the docs-CI requirement and retained
   installed-user truth packet now key off the exact released Docker-only
   bundled-guide facts instead of the older Docker-first Windows auto shorthand
+- pass 5 checkpoint 12 outcome: retained comparison-report packet HTML now
+  renders `Provider request` instead of `Execution mode` while still deriving
+  a readable provider-request value from older execution-mode-only packets
 - pass 6 status: checkpoint 3 complete
 - pass 6 checkpoint 1 outcome: `ADR-0030` now uses a GitFlow-aligned file path
   and the live architecture, RTM, wiki-coverage, and release-governance test
@@ -130,7 +133,7 @@ instead of living in chat memory.
 5. Pass 5: Requirement-system refactor
    - objective: normalize the large requirement corpus instead of patching it
      piecemeal
-   - status: checkpoint 11 complete on this branch
+  - status: checkpoint 12 complete on this branch
    - checkpoint 1 scope:
      - separate the current implemented checkbox auto-run workflow from the
        planned explicit compare replacement
@@ -190,11 +193,16 @@ instead of living in chat memory.
        wording with provider-request wording
      - keep the command layer compatible with older retained execution-mode
        doctor summaries so historical packets remain readable
-   - checkpoint 11 scope:
-     - normalize the docs-CI requirement row and retained truth-packet labels
-       so they match the exact released bundled-doc execution-policy facts
-     - remove the older Docker-first Windows auto shorthand from the active
-       requirement/package wording
+  - checkpoint 11 scope:
+    - normalize the docs-CI requirement row and retained truth-packet labels
+      so they match the exact released bundled-doc execution-policy facts
+    - remove the older Docker-first Windows auto shorthand from the active
+      requirement/package wording
+  - checkpoint 12 scope:
+    - normalize the retained comparison-report packet runtime-selection surface
+      from `Execution mode` to `Provider request`
+    - keep older execution-mode-only packets readable by deriving a compatible
+      provider-request label
    - focus:
      - split `SyRS` versus `SRS` ownership cleanly
      - merge duplicates

@@ -181,6 +181,7 @@ export function renderComparisonReportPacketHtml(record: ComparisonReportPacketR
   const left = record.preflight.left;
   const right = record.preflight.right;
   const runtimeSelection = record.runtimeSelection;
+  const providerRequest = deriveProviderRequestLabel(runtimeSelection);
   const runtimeExecution = record.runtimeExecution;
   const runtimeNote = renderRuntimeNote(record);
   const comparisonContextMarkup = renderComparisonContextSection(record);
@@ -249,7 +250,7 @@ export function renderComparisonReportPacketHtml(record: ComparisonReportPacketR
     ${runtimeDoctorMarkup}
     <h2>Runtime selection</h2>
     <div class="grid" data-testid="comparison-report-runtime-selection">
-      <div><strong>Execution mode:</strong> ${escapeHtml(runtimeSelection.executionMode ?? 'auto')}</div>
+      <div><strong>Provider request:</strong> ${escapeHtml(providerRequest)}</div>
       <div><strong>Provider:</strong> ${escapeHtml(runtimeSelection.provider)}</div>
       <div><strong>Engine:</strong> ${escapeHtml(runtimeSelection.engine ?? 'none')}</div>
       <div><strong>Blocked reason:</strong> ${escapeHtml(runtimeSelection.blockedReason ?? 'none')}</div>
@@ -433,6 +434,22 @@ function escapeHtml(value: string): string {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
+}
+
+function deriveProviderRequestLabel(runtimeSelection: ComparisonRuntimeSelection): string {
+  if (runtimeSelection.requestedProvider) {
+    return runtimeSelection.requestedProvider;
+  }
+
+  if (runtimeSelection.executionMode === 'host-only') {
+    return 'host';
+  }
+
+  if (runtimeSelection.executionMode === 'docker-only') {
+    return 'docker';
+  }
+
+  return runtimeSelection.executionMode ?? 'auto';
 }
 
 function defaultNow(): string {
