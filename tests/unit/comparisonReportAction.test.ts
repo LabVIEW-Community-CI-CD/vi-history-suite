@@ -3712,6 +3712,7 @@ describe('comparisonReportAction', () => {
 
     expect(readComparisonRuntimeSettings()).toEqual({
       executionMode: 'host-only',
+      requireVersionAndBitness: true,
       labviewVersion: '2026',
       bitness: 'x86'
     });

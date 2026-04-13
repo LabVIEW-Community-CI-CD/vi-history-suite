@@ -243,6 +243,45 @@ describe('comparisonRuntimeDoctor', () => {
     );
   });
 
+  it('uses explicit next action guidance when installed runtime settings are missing', () => {
+    const lines = buildComparisonRuntimeDoctorSummaryFromFacts({
+      reportStatus: 'blocked-runtime',
+      runtimeSelection: {
+        platform: 'win32',
+        executionMode: 'host-only',
+        bitness: 'x64',
+        provider: 'unavailable',
+        blockedReason: 'labview-version-required',
+        providerDecisions: [
+          {
+            provider: 'host-native',
+            outcome: 'rejected',
+            reason: 'host-native-labview-version-required',
+            detail:
+              'Host-native execution was not selected because installed compare requires a LabVIEW version setting before runtime preflight can proceed.'
+          }
+        ],
+        notes: [
+          'Installed compare requires viHistorySuite.labviewVersion before local runtime preflight can proceed.'
+        ],
+        registryQueryPlans: [],
+        candidates: []
+      },
+      runtimeExecution: {
+        state: 'not-available',
+        attempted: false,
+        reportExists: false,
+        blockedReason: 'labview-version-required',
+        diagnosticNotes: []
+      }
+    });
+
+    expect(lines).toContain('Runtime blocked reason: labview-version-required.');
+    expect(lines.at(-1)).toBe(
+      'Next action: set viHistorySuite.labviewVersion, then rerun comparison report generation.'
+    );
+  });
+
   it('tells Windows first-time users to install Docker Desktop when the CLI is missing', () => {
     const lines = buildComparisonRuntimeDoctorSummaryFromFacts({
       reportStatus: 'blocked-runtime',

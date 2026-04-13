@@ -34,6 +34,7 @@ export type DockerContainerAcquisitionState =
 
 export interface ComparisonRuntimeSettings {
   executionMode?: RuntimeExecutionMode;
+  requireVersionAndBitness?: boolean;
   labviewVersion?: string;
   labviewCliPath?: string;
   labviewExePath?: string;
@@ -324,6 +325,8 @@ export async function locateComparisonRuntime(
   deps: ComparisonRuntimeLocatorDeps = {}
 ): Promise<ComparisonRuntimeSelection> {
   const executionMode = settings.executionMode ?? 'auto';
+  const requireVersionAndBitness = settings.requireVersionAndBitness === true;
+  const requestedLabviewVersion = normalizeRequestedLabviewVersion(settings.labviewVersion);
   const bitness = settings.bitness ?? 'x64';
   const notes: string[] = [];
   const registryQueryPlans = platform === 'win32' ? buildWindowsRegistryQueryPlans() : [];
@@ -331,6 +334,50 @@ export async function locateComparisonRuntime(
   const hostPlatform = deps.hostPlatform ?? process.platform;
   const windowsContainerImage = resolveWindowsContainerImage(settings.windowsContainerImage);
   const linuxContainerImage = resolveLinuxContainerImage(settings.linuxContainerImage);
+
+  if (platform === 'win32' && requireVersionAndBitness) {
+    const missingVersion = !requestedLabviewVersion;
+    const missingBitness = settings.bitness === undefined;
+    if (missingVersion || missingBitness) {
+      const blockedReason =
+        missingVersion && missingBitness
+          ? 'labview-runtime-selection-required'
+          : missingVersion
+            ? 'labview-version-required'
+            : 'labview-bitness-required';
+      const selectionNotes =
+        missingVersion && missingBitness
+          ? [
+              'Installed compare requires both viHistorySuite.labviewVersion and viHistorySuite.labviewBitness before local runtime preflight can proceed.'
+            ]
+          : missingVersion
+            ? [
+                'Installed compare requires viHistorySuite.labviewVersion before local runtime preflight can proceed.'
+              ]
+            : [
+                'Installed compare requires viHistorySuite.labviewBitness before local runtime preflight can proceed.'
+              ];
+      return {
+        platform,
+        executionMode,
+        bitness,
+        provider: 'unavailable',
+        blockedReason,
+        providerDecisions: buildProviderDecisions({
+          platform,
+          executionMode,
+          bitness,
+          configuredWindowsContainerImage: windowsContainerImage,
+          configuredLinuxContainerImage: linuxContainerImage,
+          containerAvailable: false,
+          blockedReason
+        }),
+        notes: selectionNotes,
+        registryQueryPlans,
+        candidates: []
+      };
+    }
+  }
 
   if (platform === 'darwin') {
     return {
@@ -663,7 +710,10 @@ export async function locateComparisonRuntime(
   }
 
   const labviewCandidates = candidates.filter(
-    (candidate) => candidate.kind === 'labview-exe' && candidate.exists
+    (candidate) =>
+      candidate.kind === 'labview-exe' &&
+      candidate.exists &&
+      matchesRequestedLabviewVersion(candidate, requestedLabviewVersion)
   );
   const labviewExe = selectPreferredLabviewCandidate(labviewCandidates, bitness, platform);
   const hostRuntimeSurfaceFacts =
@@ -752,7 +802,7 @@ export async function locateComparisonRuntime(
       }),
       ...buildContainerSelectionFactsForReturn(),
       notes: [
-        'No supported LabVIEW 2026 runtime was located for report generation.',
+        `No supported LabVIEW ${requestedLabviewVersion ?? '2026'} runtime was located for report generation.`,
         'Install the requested LabVIEW version locally and set viHistorySuite.labviewVersion plus viHistorySuite.labviewBitness before retrying compare.'
       ],
       registryQueryPlans,
@@ -1764,6 +1814,15 @@ function buildProviderDecisions(
 }
 
 function deriveHostNativeRejectedReason(options: BuildProviderDecisionsOptions): string {
+  if (options.blockedReason === 'labview-runtime-selection-required') {
+    return 'host-native-runtime-selection-required';
+  }
+  if (options.blockedReason === 'labview-version-required') {
+    return 'host-native-labview-version-required';
+  }
+  if (options.blockedReason === 'labview-bitness-required') {
+    return 'host-native-labview-bitness-required';
+  }
   if (options.executionMode === 'docker-only') {
     return 'execution-mode-docker-only-disallows-host-native';
   }
@@ -1786,6 +1845,15 @@ function deriveHostNativeRejectedReason(options: BuildProviderDecisionsOptions):
 }
 
 function deriveHostNativeRejectedDetail(options: BuildProviderDecisionsOptions): string {
+  if (options.blockedReason === 'labview-runtime-selection-required') {
+    return 'Host-native execution was not selected because installed compare requires both LabVIEW version and bitness settings before runtime preflight can proceed.';
+  }
+  if (options.blockedReason === 'labview-version-required') {
+    return 'Host-native execution was not selected because installed compare requires a LabVIEW version setting before runtime preflight can proceed.';
+  }
+  if (options.blockedReason === 'labview-bitness-required') {
+    return 'Host-native execution was not selected because installed compare requires a LabVIEW bitness setting before runtime preflight can proceed.';
+  }
   if (options.executionMode === 'docker-only') {
     return 'Host-native execution was not selected because docker-only execution was requested.';
   }
@@ -1824,6 +1892,16 @@ function resolveWindowsContainerImage(rawImage: string | undefined): string {
 function resolveLinuxContainerImage(rawImage: string | undefined): string {
   const trimmed = rawImage?.trim();
   return trimmed || DEFAULT_LINUX_CONTAINER_IMAGE;
+}
+
+function normalizeRequestedLabviewVersion(rawVersion: string | undefined): string | undefined {
+  const trimmed = rawVersion?.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  const yearMatch = trimmed.match(/\b(20\d{2})\b/u);
+  return yearMatch?.[1] ?? trimmed;
 }
 
 async function resolveConfiguredCandidates(
@@ -1906,6 +1984,28 @@ function selectPreferredLabviewCandidate(
   }
 
   return candidates[0];
+}
+
+function matchesRequestedLabviewVersion(
+  candidate: RuntimeToolCandidate,
+  requestedVersion: string | undefined
+): boolean {
+  if (!requestedVersion || candidate.kind !== 'labview-exe') {
+    return true;
+  }
+
+  return extractLabviewMajorVersion(candidate.path) === requestedVersion;
+}
+
+function extractLabviewMajorVersion(filePath: string): string | undefined {
+  const normalized = filePath.replaceAll('/', '\\');
+  const folderMatch = normalized.match(/\\LabVIEW ([^\\]+)\\LabVIEW\.exe$/iu);
+  if (!folderMatch) {
+    return undefined;
+  }
+
+  const yearMatch = folderMatch[1].match(/\b(20\d{2})\b/u);
+  return yearMatch?.[1];
 }
 
 function inferBitnessFromPath(filePath: string): RuntimeBitness | undefined {

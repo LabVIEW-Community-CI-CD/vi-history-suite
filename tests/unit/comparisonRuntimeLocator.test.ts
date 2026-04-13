@@ -219,6 +219,92 @@ describe('comparisonRuntimeLocator', () => {
     ]);
   });
 
+  it('fails closed for the installed-user path when both version and bitness are missing', async () => {
+    const result = await locateComparisonRuntime(
+      'win32',
+      {
+        executionMode: 'host-only',
+        requireVersionAndBitness: true
+      },
+      {
+        pathExists: vi.fn().mockResolvedValue(false),
+        queryWindowsRegistry: vi.fn().mockResolvedValue('')
+      }
+    );
+
+    expect(result.provider).toBe('unavailable');
+    expect(result.blockedReason).toBe('labview-runtime-selection-required');
+    expect(result.notes).toEqual([
+      'Installed compare requires both viHistorySuite.labviewVersion and viHistorySuite.labviewBitness before local runtime preflight can proceed.'
+    ]);
+    expect(result.providerDecisions).toEqual([
+      {
+        provider: 'windows-container',
+        outcome: 'rejected',
+        reason: 'execution-mode-host-only-disallows-docker',
+        detail:
+          'Docker container execution was not selected because host-only execution was requested.'
+      },
+      {
+        provider: 'host-native',
+        outcome: 'rejected',
+        reason: 'host-native-runtime-selection-required',
+        detail:
+          'Host-native execution was not selected because installed compare requires both LabVIEW version and bitness settings before runtime preflight can proceed.'
+      }
+    ]);
+  });
+
+  it('fails closed for the installed-user path when bitness is missing', async () => {
+    const result = await locateComparisonRuntime(
+      'win32',
+      {
+        executionMode: 'host-only',
+        requireVersionAndBitness: true,
+        labviewVersion: '2026'
+      },
+      {
+        pathExists: vi.fn().mockResolvedValue(false),
+        queryWindowsRegistry: vi.fn().mockResolvedValue('')
+      }
+    );
+
+    expect(result.provider).toBe('unavailable');
+    expect(result.blockedReason).toBe('labview-bitness-required');
+    expect(result.notes).toEqual([
+      'Installed compare requires viHistorySuite.labviewBitness before local runtime preflight can proceed.'
+    ]);
+  });
+
+  it('filters host-native Windows runtime selection by requested LabVIEW version', async () => {
+    const cleanHost = buildCleanWindowsHostDeps();
+    const result = await locateComparisonRuntime(
+      'win32',
+      {
+        executionMode: 'host-only',
+        requireVersionAndBitness: true,
+        labviewVersion: '2024',
+        bitness: 'x64'
+      },
+      {
+        pathExists: vi.fn(async (filePath: string) =>
+          [
+            'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
+            'C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
+          ].includes(filePath)
+        ),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        ...cleanHost
+      }
+    );
+
+    expect(result.provider).toBe('unavailable');
+    expect(result.blockedReason).toBe('labview-exe-not-found');
+    expect(result.notes).toContain(
+      'No supported LabVIEW 2024 runtime was located for report generation.'
+    );
+  });
+
   it('honors an explicit x86 preference when both Windows bitnesses are available', async () => {
     const cleanHost = buildCleanWindowsHostDeps();
     const result = await locateComparisonRuntime(
@@ -553,7 +639,7 @@ describe('comparisonRuntimeLocator', () => {
     expect(result.provider).toBe('unavailable');
     expect(result.blockedReason).toBe('labview-exe-not-found');
     expect(result.notes).toContain(
-      'Install LabVIEW 2026 Q1 or configure viHistorySuite.labviewExePath to an explicit LabVIEW 2026 executable.'
+      'Install the requested LabVIEW version locally and set viHistorySuite.labviewVersion plus viHistorySuite.labviewBitness before retrying compare.'
     );
   });
 
@@ -572,10 +658,10 @@ describe('comparisonRuntimeLocator', () => {
     expect(result.blockedReason).toBe('comparison-tool-not-found');
     expect(result.labviewExe?.path).toBe('/usr/local/natinst/LabVIEW-2026Q1-64/labview');
     expect(result.notes).toContain(
-      'Linux report generation remains best-effort; configure viHistorySuite.labviewCliPath when LabVIEW CLI is installed outside documented scan roots.'
+      'Linux report generation remains best-effort; use documented LabVIEWCLI scan roots or an internal proof surface when explicit runtime overrides are required.'
     );
     expect(result.notes).toContain(
-      'Configure viHistorySuite.labviewCliPath to an installed LabVIEWCLI when the documented scan roots do not contain one.'
+      'Install the matching LabVIEWCLI under the documented scan roots, or use an internal proof surface when explicit runtime overrides are required.'
     );
     expect(result.providerDecisions).toEqual([
       {

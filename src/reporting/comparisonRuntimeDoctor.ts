@@ -129,6 +129,18 @@ function deriveRuntimeDoctorNextAction(options: {
   }
 
   if (options.reportStatus === 'blocked-runtime' || options.runtimeExecution.state === 'not-available') {
+    if (blockedReason === 'labview-runtime-selection-required') {
+      return 'Next action: set viHistorySuite.labviewVersion and viHistorySuite.labviewBitness, then rerun comparison report generation.';
+    }
+
+    if (blockedReason === 'labview-version-required') {
+      return 'Next action: set viHistorySuite.labviewVersion, then rerun comparison report generation.';
+    }
+
+    if (blockedReason === 'labview-bitness-required') {
+      return 'Next action: set viHistorySuite.labviewBitness, then rerun comparison report generation.';
+    }
+
     if (
       options.runtimeSelection.platform === 'win32' &&
       blockedReason === 'windows-host-runtime-surface-contaminated'

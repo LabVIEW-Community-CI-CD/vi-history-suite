@@ -1218,6 +1218,7 @@ export function readComparisonRuntimeSettings(
 
   return {
     executionMode: 'host-only',
+    requireVersionAndBitness: true,
     labviewVersion,
     bitness: labviewBitness
   };
