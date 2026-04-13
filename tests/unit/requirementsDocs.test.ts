@@ -148,12 +148,26 @@ describe('requirements documentation coherence', () => {
     expect(currentState).not.toContain(
       'the second checkbox selection triggers comparison generation automatically'
     );
+    expect(srs).toContain(
+      'Governed internal/runtime-proof override inputs shall allow explicit override through `labviewCliPath`, `labviewExePath`, and `bitness`'
+    );
+    expect(srs).not.toContain(
+      'Runtime tool settings shall allow explicit user override through `labviewCliPath`, `labviewExePath`, and `bitness`'
+    );
     expect(srs).toContain('selecting two distinct retained revisions establishes one explicit compare-preflight pair');
     expect(srs).not.toContain(
       'selecting the second distinct retained revision triggers comparison-report generation automatically'
     );
+    expect(rtm).toContain(
+      'Keep governed internal/runtime-proof override inputs for labviewCliPath, labviewExePath, and bitness ahead of auto-discovery'
+    );
+    expect(rtm).not.toContain(
+      'executionMode, labviewCliPath, labviewExePath, windowsContainerImage, and bitness'
+    );
     expect(rtm).toContain('selecting two distinct retained revisions establishes one explicit compare-preflight pair');
     expect(testPlan).toContain('explicit compare-preflight entrypoint');
+    expect(testPlan).toContain('does not expose');
+    expect(testPlan).toContain('`labviewCliPath`, `labviewExePath`, `bitness`, `executionMode`, or public');
 
     expect(alignment).toContain('history-window packet');
     expect(alignment).toContain('latest-run discovery');

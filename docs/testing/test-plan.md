@@ -199,8 +199,8 @@
   tranche
 - `TEST-UNIT-059`: validate the VI History panel exposes a checkbox on every
   retained commit row, keeps compare generation/opening controls off the
-  extension-user row-action surface, and routes compare generation through the
-  second checkbox selection
+  extension-user row-action surface, and routes compare selection through
+  explicit compare preflight after two distinct checkbox selections
 - `TEST-UNIT-060`: validate the comparison-report action fails closed when
   workspace-scoped storage is unavailable and the command surfaces the stable
   warning
@@ -223,13 +223,16 @@
 - `TEST-UNIT-071`: validate the host-native comparison-report execution runner
   stages revision blobs, runs the governed command, retains stdout/stderr
   artifacts, and records explicit failure reasons
-- `TEST-UNIT-063`: validate explicit runtime settings override auto-discovery,
-  Windows registry/install-root discovery is retained, and runtime selection
-  chooses the governed host-native engine deterministically
+- `TEST-UNIT-063`: validate governed internal/runtime-proof override inputs
+  still override auto-discovery, Windows registry/install-root discovery is
+  retained, and runtime selection chooses the governed host-native engine
+  deterministically
 - `TEST-UNIT-064`: validate runtime discovery retains explicit Linux/macOS
   availability constraints and fallback behavior when CLI tooling is missing
-- `TEST-UNIT-066`: validate the extension manifest exposes `labviewCliPath`
-  and keeps all external runtime settings restricted in untrusted workspaces
+- `TEST-UNIT-066`: validate the extension manifest does not expose
+  `labviewCliPath`, `labviewExePath`, `bitness`, `executionMode`, or public
+  image settings, while keeping the admitted installed-user runtime settings
+  restricted in untrusted workspaces
 - `TEST-DOC-001`: review the extension design summary and SRS to confirm
   rename following remains explicitly best effort rather than a guaranteed
   history-rewrite contract
