@@ -200,29 +200,17 @@ Current active and recently closed tranches:
     now passed on `Examples/Logging with Helper-VIs.vi`, so exact `v1.2.0`
     was published on public `main` before later candidate lines reopened on
     `develop`
-- `TRANCHE-013`: Extension execution flexibility and runtime acquisition UX
-- active issue: [ISSUE-0410 Extension Execution Flexibility And Runtime Acquisition UX](./issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md)
+- `TRANCHE-016`: Installed local LabVIEWCLI contract and explicit compare workflow
+- active issue: [ISSUE-0412 Installed Local LabVIEWCLI Selection And Explicit Compare](./issues/ISSUE-0412-installed-local-labviewcli-selection-and-explicit-compare.md)
 - active execution program: [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
   - current first slice:
-  - normalize the Docker-only installed-extension contract for `1.0.0`
-  - keep installed compare generation on Docker-only x64 execution
-  - select the governed Windows or Linux image from the current Docker daemon
-    engine on Windows
-  - align package metadata, bundled docs, the public GitHub facade, and the
-    internal GitLab control plane to that contract
-- `TRANCHE-015`: Installed-user first-run Docker onboarding and fail-closed guidance
-- active issue: [ISSUE-0410 Extension Execution Flexibility And Runtime Acquisition UX](./issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md)
-- active execution program: [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
-  - current first slice:
-  - account explicitly for machines where Docker is not installed or not
-    running yet instead of assuming the prerequisite already exists
-  - harden installed-user first-run guidance, runtime-doctor next actions, and
-    fail-closed recovery language around that missing-Docker boundary
-  - make `docker info`-style readiness an explicit first-run check before
-    image acquisition is expected to start
-  - keep the Docker-only compare contract and no-host-fallback rule explicit
-    while making the missing-Docker recovery path readable to first-time
-    installed users
+  - rewrite the active installed-user direction around Windows local
+    `LabVIEWCLI`
+  - keep the current exact released Docker-only contract explicit until the
+    replacement is actually implemented
+  - require settings-only LabVIEW version plus bitness selection
+  - replace second-selection auto-run with an explicit compare preflight and
+    explicit compare action
 - `TRANCHE-012`: Post-release sustainment and release cadence
 - active issue: [ISSUE-0409 Post-Release Sustainment And Release Cadence](./issues/ISSUE-0409-post-release-sustainment-and-release-cadence.md)
 - active execution program: [PROGRAM-0004: Post-Release Sustainment And Release Cadence](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)
@@ -232,8 +220,8 @@ Current active and recently closed tranches:
   - keep exact release closeout incomplete until the matching released `main`
     line has been back-merged into `develop` through the protected path and
     the resulting `develop` pipeline is green
-  - do not absorb the active `PROGRAM-0005` or reopened `PROGRAM-0002` work
-    into generic sustainment language
+  - do not absorb the active `PROGRAM-0005` local-LabVIEWCLI work or reopened
+    `PROGRAM-0002` work into generic sustainment language
 - closed public-product closeout:
   - `TRANCHE-010` / [ISSUE-0407 Public Source Facade And Public-Product Acceptance](./issues/ISSUE-0407-public-facade-installer-and-windows-acceptance.md) / [PROGRAM-0002: Public Source Facade And Public-Product Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
   - the earlier retained canonical host pass at `2026-04-06T20:48:13.412Z`
@@ -321,30 +309,27 @@ Post-release tranches:
     maintained public `develop` candidate still publishes `12391e1`, the
     public wiki entry surface now publishes `527a8b4`, and the VS Code
     Marketplace item verifies `1.2.2`
-  - sustainment does not absorb the active `TRANCHE-013` Docker-only installed-contract work or the reopened `TRANCHE-010` public-closeout rerun
-- `TRANCHE-013`: Extension execution flexibility and runtime acquisition UX
-  - active issue: [ISSUE-0410 Extension Execution Flexibility And Runtime Acquisition UX](./issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md)
+  - sustainment does not absorb the active `TRANCHE-016` local-LabVIEWCLI
+    contract reset or the reopened `TRANCHE-010` public-closeout rerun
+- `TRANCHE-016`: Installed local LabVIEWCLI contract and explicit compare workflow
+  - active issue: [ISSUE-0412 Installed Local LabVIEWCLI Selection And Explicit Compare](./issues/ISSUE-0412-installed-local-labviewcli-selection-and-explicit-compare.md)
   - active execution program: [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
-  - the installed extension now depends on Docker for compare generation, no longer exposes host-runtime mode/path knobs to extension users, constrains installed compare execution to x64 container surfaces, and selects the governed Windows or Linux image from the current Docker daemon engine instead of probing host LabVIEW
-  - execution-policy bypass remains forbidden: installed compare execution must still pass canonical Docker-only request validation and governed provider hard stops
-  - the runtime doctor, history panel, and retained packet surfaces now carry the selected provider, current Docker engine, selected image, acquisition state, and next action as explicit installed-runtime truth
-- `TRANCHE-015`: Installed-user first-run Docker onboarding and fail-closed guidance
-  - active issue: [ISSUE-0410 Extension Execution Flexibility And Runtime Acquisition UX](./issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md)
-  - active execution program: [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
-  - the active `v1.2.2` candidate now hardens machines where Docker is not
-    installed or not running yet instead of treating that prerequisite as
-    always satisfied on first use
-  - installed-user guidance, runtime-doctor next actions, and fail-closed
-    runtime messaging now tell first-use users to install or start Docker and
-    confirm `docker info` before expecting image acquisition
-  - exact release closeout is now retained as incomplete until the released
-    `main` line has been back-merged into `develop` through the protected path
-    and the resulting `develop` pipeline is green without a later human prompt
-  - the maintained public `develop` candidate still publishes `12391e1`, the
-    exact public `main` line now publishes `86b19a2`, the public wiki head now
-    publishes `527a8b4`, and the `v1.2.2` line now retains a clean no-findings
-    expert-agent verdict via `vi-history-suite-expert-agent-reviewer` on the
-    exact published public release surfaces
+  - the current exact released installed extension is still Docker-only, but
+    that is now historical baseline truth rather than the active destination
+  - the active slice resets the control plane around Windows local
+    `LabVIEWCLI`, required version plus bitness settings, and an explicit
+    compare preflight
+  - Docker is being confined to internal and maintainer proof surfaces instead
+    of the installed-user compare contract
+- historical installed-user Docker baseline:
+  - `TRANCHE-013`: Extension execution flexibility and runtime acquisition UX
+    - historical issue: [ISSUE-0410 Extension Execution Flexibility And Runtime Acquisition UX](./issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md)
+    - landed the current released Docker-only compare contract and no-host-
+      fallback rule
+  - `TRANCHE-015`: Installed-user first-run Docker onboarding and fail-closed guidance
+    - historical issue: [ISSUE-0410 Extension Execution Flexibility And Runtime Acquisition UX](./issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md)
+    - landed the current released missing-Docker guidance and fail-closed
+      first-run recovery text
 - `TRANCHE-014`: Public Codespaces public-repo bootstrap
   - closed issue: [ISSUE-0411 Public Codespaces Public-Repo Bootstrap](./issues/ISSUE-0411-public-codespaces-public-repo-bootstrap.md)
   - closed execution program: [PROGRAM-0006: Public Codespaces Public-Repo Bootstrap](./execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md)

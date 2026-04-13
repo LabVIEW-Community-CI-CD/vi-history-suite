@@ -105,7 +105,7 @@
     "title": "Post-release sustainment and release cadence",
     "status": "active",
     "source": "author direction",
-    "summary": "Sustain the public release kit, benchmark refresh cadence, operator surfaces, SemVer discipline, hosted branch/CI governance, and post-release control-plane upkeep as event-driven repo truth, while keeping sustainment separate from the reopened `PROGRAM-0002` public closeout and the active `PROGRAM-0005` Docker-only installed-contract work.",
+    "summary": "Sustain the public release kit, benchmark refresh cadence, operator surfaces, SemVer discipline, hosted branch/CI governance, and post-release control-plane upkeep as event-driven repo truth, while keeping sustainment separate from the reopened `PROGRAM-0002` public closeout and the active `PROGRAM-0005` installed local-LabVIEWCLI contract reset.",
     "issues": [
       "ISSUE-0409"
     ]
@@ -113,9 +113,9 @@
   {
     "id": "TRANCHE-013",
     "title": "Extension execution flexibility and runtime acquisition UX",
-    "status": "active",
+    "status": "done",
     "source": "author direction",
-    "summary": "Reopened on the `1.0.0` Docker-only installed-extension contract: the extension shall depend on Docker for comparison generation, shall stop exposing host-native execution-mode and host-path knobs to extension users, shall select the governed Windows or Linux image from the current Docker daemon engine, shall fail closed instead of probing host LabVIEW, and shall align the public GitHub front face plus public-user and internal-authority docs surfaces to that contract.",
+    "summary": "Historical landed tranche for the Docker-only installed-extension contract: the extension depends on Docker for comparison generation, stops exposing host-native execution-mode and host-path knobs to extension users, selects the governed Windows or Linux image from the current Docker daemon engine, and fails closed instead of probing host LabVIEW. This tranche remains retained as current released baseline truth but is superseded as the active direction by `TRANCHE-016`.",
     "issues": [
       "ISSUE-0410"
     ]
@@ -133,11 +133,21 @@
   {
     "id": "TRANCHE-015",
     "title": "Installed-user first-run Docker onboarding and fail-closed guidance",
-    "status": "active",
+    "status": "done",
     "source": "author direction",
-    "summary": "The active `v1.2.2` post-release slice under `ISSUE-0410` now accounts explicitly for first-time installed users whose machine does not yet have Docker installed or running, and hardens installed-user onboarding, runtime-doctor next actions, and front-surface guidance around that fail-closed boundary.",
+    "summary": "Historical landed `v1.2.2` slice under `ISSUE-0410` that accounts explicitly for first-time installed users whose machine does not yet have Docker installed or running, and hardens installed-user onboarding, runtime-doctor next actions, and front-surface guidance around that fail-closed boundary. This tranche remains retained as current released baseline truth but is superseded as the active direction by `TRANCHE-016`.",
     "issues": [
       "ISSUE-0410"
+    ]
+  },
+  {
+    "id": "TRANCHE-016",
+    "title": "Installed local LabVIEWCLI contract and explicit compare workflow",
+    "status": "active",
+    "source": "author direction",
+    "summary": "Replace the installed Docker-only compare contract with a Windows local-LabVIEWCLI settings contract, require explicit LabVIEW version plus bitness selection, add fail-closed local runtime resolution, and replace automatic second-selection compare generation with a dedicated compare preflight section plus explicit compare action.",
+    "issues": [
+      "ISSUE-0412"
     ]
   }
 ]

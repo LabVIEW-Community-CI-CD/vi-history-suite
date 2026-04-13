@@ -1298,30 +1298,22 @@
 - `TEST-UNIT-299`: verify the installed extension exposes only
   `viHistorySuite.windowsContainerImage` and
   `viHistorySuite.linuxContainerImage`, does not expose `executionMode` or
-  installed host-runtime knobs, and keeps the Docker-only execution-policy
-  package aligned across README, current-state, extension-execution-policy,
-  ADR-0025, queue/program/issue docs, debt ledger, and published reader
-  surfaces
+  installed host-runtime knobs on the current released line, and keeps that
+  released Docker-only baseline explicit while the authority control plane
+  promotes the active local-`LabVIEWCLI` replacement direction
 - `TEST-DOC-064`: review current-state, PROGRAM-0003, ISSUE-0408, canonical
   exact-pair diagnosis guidance, ADR-0024, and the debt ledger and confirm the
   repo documents effective runtime override bundle validation rather than a raw
   CLI-only rule, including the removal of hidden explicit Windows defaults
 - `TEST-DOC-065`: review README, current-state, extension-execution-policy,
-  ADR-0025, PROGRAM-0005, ISSUE-0410, and the debt ledger and confirm the
-  current Docker-only installed contract, engine-aware Windows/Linux image
-  selection, no-host-fallback rule, Docker-required hard stops, visible image-
-  pull progress, and user-facing provider/acquisition transparency are all
-  explicit
-- `TEST-DOC-066`: review the wiki coverage matrix, publication ledger,
-  User-Workflow, Requirements-And-Verification, Current-State, Architecture,
-  and Architecture-Decision-Records pages and confirm the execution-policy
-  package and current `PROGRAM-0005` control plane are represented on the
-  published reader surfaces
+  ADR-0025, PROGRAM-0005, ISSUE-0410, ISSUE-0412, and the debt ledger and
+  confirm the current released Docker-only installed contract remains explicit
+  while the active control plane now promotes the local-`LabVIEWCLI`
+  replacement direction
 - `TEST-UNIT-300`: verify the execution-policy control-plane package keeps
-  canonical Docker-only execution-request validation, engine-aware Windows/Linux
-  image selection, Docker hard stops, and the retired execution-policy debt
-  item aligned across authority docs after the manifest removes
-  `viHistorySuite.executionMode`
+  the no-bypass rule, the current released Docker-only execution baseline, and
+  the active local-`LabVIEWCLI` replacement direction aligned across authority
+  docs after the manifest removed `viHistorySuite.executionMode`
 - `TEST-UNIT-301`: verify the Windows benchmark summary fails closed when any
   retained pair is `runtimeExecutionState=not-available`, retains the blocked
   reason as terminal benchmark truth, snapshots immutable per-run
@@ -1329,20 +1321,10 @@
   comparable-prefix packet selection prefer the latest eligible timestamped
   proof within one proof root
 - `TEST-DOC-067`: review extension-execution-policy, ADR-0025, ADR-0026,
-  PROGRAM-0005, ISSUE-0410, current-state, and the debt ledger and confirm the
-  current package makes canonical Docker-only request validation, engine-aware
-  Windows/Linux image selection, Docker hard stops, visible acquisition-state
-  truth, live in-panel compare-runtime progress, the in-panel latest compare-
-  runtime summary, the concise compare blocked/failure warning surface, the
-  concise compare success surface, structured history-panel compare-runtime
-  detail rendering, reopened-panel compare-runtime persistence, and Docker-
-  corrective guidance explicit
-- `TEST-DOC-068`: review User-Workflow, Requirements-And-Verification,
-  Current-State, Architecture, Architecture-Decision-Records, Development-Queue,
-  Debt-Retirement-Contract, and Debt-Ledger pages and confirm the published
-  reader surfaces represent ADR-0026 plus the current Docker-only installed
-  contract, engine-aware Windows/Linux image selection, and the public/internal
-  audience split instead of the older mode-based story
+  PROGRAM-0005, ISSUE-0410, ISSUE-0412, current-state, and the debt ledger and
+  confirm the authority package now keeps canonical Docker-only request
+  validation explicit as current implemented truth while promoting the active
+  local-`LabVIEWCLI` transition without claiming it is already shipped
 - `TEST-DOC-069`: review README, current-state, harnesses, PROGRAM-0003, and
   ISSUE-0408 and confirm contaminated Windows benchmark-image reruns are
   documented as fail-closed `not-available` benchmark truth with immutable
@@ -1706,6 +1688,19 @@
   the `vi-history-suite-expert-agent-reviewer` skill identity, the exact
   published public repo/wiki heads under review, the latest retained verdict,
   and the blocking no-findings rule before `tag-eligible`
+- `TEST-UNIT-341`: verify the installed-user manifest/settings contract
+  exposes `viHistorySuite.labviewVersion` and
+  `viHistorySuite.labviewBitness`, removes Docker from the installed-user
+  contract, and keeps Docker internal-only
+- `TEST-UNIT-342`: verify Windows runtime preflight requires version and
+  bitness, resolves exactly one local LabVIEW + `LabVIEWCLI` installation, and
+  fails closed when the requested runtime is missing, ambiguous, or
+  incompatible
+- `TEST-UNIT-343`: verify selecting the second commit no longer auto-runs
+  compare, and the compare preflight renders selected/base commit plus LabVIEW
+  version and bitness before the explicit `Compare` action
+- `TEST-UNIT-344`: verify missing or unresolved LabVIEW version/bitness blocks
+  compare in the panel and emits a VS Code warning notification
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are
@@ -1765,6 +1760,16 @@
   confirm exact tagging and Marketplace publication now remain blocked until
   the retained `vi-history-suite-expert-agent-reviewer` gate against the exact
   published public candidate heads returns no findings
+- `TEST-DOC-104`: review README, current-state, ship control, development
+  queue, extension-execution-policy, PROGRAM-0005, ISSUE-0410, and ISSUE-0412
+  and confirm the control plane now keeps the current released Docker-only
+  installed contract explicit while promoting `TRANCHE-016` /
+  `ISSUE-0412` as the active direction
+- `TEST-DOC-105`: review SRS, RTM, test plan, extension-execution-policy, and
+  ISSUE-0412 and confirm the planned installed-user replacement contract is
+  now explicit around required LabVIEW version + bitness settings, local
+  `LabVIEWCLI` runtime resolution, explicit compare preflight, panel +
+  warning fail-closed behavior, and internal-only Docker
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

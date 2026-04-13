@@ -9,10 +9,79 @@ the selected pair before compare generation starts.
 
 ## Status
 
-Proposal discovery issue.
+Active post-release issue.
+
+Activation facts:
+
+- the exact released installed extension still uses the Docker-only contract
+  retained under `ISSUE-0410`
+- `TRANCHE-016` is active for replacing that installed-user contract on
+  Windows with local `LabVIEWCLI`
+- Docker is no longer the intended installed-user destination for this surface;
+  it is becoming internal-only
+- the current codebase already contains internal runtime-locator support that
+  can be refocused around local `LabVIEWCLI` resolution
 
 Round 1 is retained in this file so subsequent rounds can continue from git
 history instead of chat memory.
+
+## Scope
+
+- Windows installed-extension compare execution through local `LabVIEWCLI`
+- settings-only LabVIEW version + bitness selection
+- fail-closed local runtime resolution and preflight
+- explicit compare preflight state after commit selection
+- selected/base commit plus version/bitness visibility before compare starts
+- panel block plus VS Code warning when required runtime selection is missing
+  or unresolved
+- internal-only Docker containment for maintainer and proof surfaces
+- control-plane rewrite across queue, current-state, execution policy,
+  requirements, RTM, and test plan
+
+## Non-Goals
+
+- claiming the current released package already implements the replacement
+  contract before the runtime and UI slices land
+- expanding the installed-user contract into path-picking or provider-mode
+  selection
+- removing internal Docker proof surfaces that are still useful to maintainers
+- changing the public evaluation repo scope beyond `vi-history-suite`
+
+## Dependencies
+
+- truthful current-state, queue, ship-control, and execution-policy surfaces
+- `src/reporting/comparisonRuntimeLocator.ts`
+- `src/ui/historyPanel.ts`
+- `src/commands/openViHistoryCommand.ts`
+
+## Acceptance Criteria
+
+- `TRANCHE-016` is the active queue surface and `ISSUE-0410` is historical
+  rather than active
+- the installed-user settings contract requires version and bitness
+- runtime preflight resolves one local Windows `LabVIEWCLI` install or fails
+  closed
+- compare does not auto-run on second selection
+- the panel shows selected/base commit plus version/bitness before compare
+- unresolved runtime selection blocks compare in-panel and through a VS Code
+  warning notification
+- Docker is internal-only on the installed-user surface
+
+## Required Evidence
+
+- updated queue, README, current-state, ship-control, and execution-policy docs
+- updated `PROGRAM-0005`, `ISSUE-0410`, and this issue
+- updated SRS, RTM, and test plan
+- focused docs and design gates for the control-plane rewrite
+
+## Current Active Slice
+
+- perform the control-plane reset first
+- keep the current released Docker-only baseline explicit instead of pretending
+  the replacement is already published
+- promote `TRANCHE-016` / `ISSUE-0412` as the active installed-user direction
+- seed the requirement and verification package for the later manifest,
+  runtime, and explicit-compare slices
 
 ## Round 1: User Proposal Facts
 
@@ -41,14 +110,15 @@ history instead of chat memory.
 
 ## Current Repo Truth That This Proposal Reopens
 
-The current committed control plane says the opposite:
+At the start of proposal discovery, the committed control plane said the
+opposite:
 
 - [PROGRAM-0005](../execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
   defines the installed extension north star as Docker-only compare execution
   with no host LabVIEW fallback
 - [ISSUE-0410](./ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md)
-  scopes the active post-release issue to Docker-only installed execution and
-  explicitly lists host-native LabVIEW as a non-goal
+  was the active post-release issue for Docker-only installed execution and
+  explicitly listed host-native LabVIEW as a non-goal
 
 This means the proposal is not a small UX tweak. It is a product-direction
 change that must either replace or explicitly supersede the current
@@ -96,7 +166,7 @@ The implementation surface is split today:
 ## Round 2: Recommendations
 
 1. Treat this proposal as a product-contract reset, not a small UX tweak.
-   `ISSUE-0410` and `PROGRAM-0005` currently govern installed execution as
+   At discovery start, `ISSUE-0410` and `PROGRAM-0005` governed installed execution as
    Docker-only, so the roadmap will need to replace or explicitly supersede
    that contract.
 2. Make Windows installed-user compare canonical on local `LabVIEWCLI`, not

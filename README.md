@@ -20,7 +20,7 @@ Installed-user start pages:
 - Comparison reports and dashboard review:
   `https://github.com/svelderrainruiz/vi-history-suite/wiki/Comparison-Reports-And-Dashboard-Review`
 
-Installed-user local workflow:
+Installed-user local workflow on the current exact released line (`v1.2.2`):
 
 1. install or start Docker Desktop or Docker, then confirm `docker info`
    succeeds in the same session that will run VS Code
@@ -45,6 +45,15 @@ Installed runtime contract:
   acquired, the extension fails closed with next-step guidance instead of
   probing host LabVIEW
 
+Active develop direction:
+
+- the active control plane is replacing this installed-user Docker dependency
+  on Windows with local `LabVIEWCLI`
+- the active direction is governed under `TRANCHE-016` / `ISSUE-0412` /
+  `PROGRAM-0005`
+- until those slices land, the exact released installed workflow above remains
+  the truthful baseline
+
 If you want to evaluate the source repo instead of using the installed
 extension, use these source-evaluation pages:
 
@@ -63,7 +72,8 @@ surface for the source tree, not the first-use installed-user manual.
 The public GitHub facade is expected to support evaluation inside Codespaces or
 a local devcontainer.
 
-- The installed extension path is Docker-only and x64-only.
+- The current exact released installed extension path is Docker-only and
+  x64-only.
 - A Linux-hosted development session uses the governed Linux container image.
 - A Windows-hosted development session uses the governed Windows or Linux
   container image that matches the current Docker daemon engine.
@@ -359,7 +369,8 @@ Committed and governed today:
   evidence
 - authoritative ship-control surfaces that retain one landed release target,
   one readiness matrix, and one blocker ledger in the repo itself while the
-  development queue carries the single active post-release tranche
+  development queue carries the active post-release driver-seat tranche plus
+  any separately active product-direction tranche
 - a published docs-authoring workbench image plus a repo-native docs gate for
   iterating on requirements, ADRs, release-readiness docs, and future
   wiki-source material in a governed environment
@@ -378,10 +389,9 @@ Committed and governed today:
   and `docs/product/debt-ledger.{md,json}` so technical and documentation debt
   cannot remain implicit across future sessions, with retired debt, open debt,
   and accepted exceptions all bound to explicit owner programs and next gates
-- a governed extension-execution-policy package that now constrains installed
-  comparison generation to Docker-only x64 execution, selects the governed
-  Windows or Linux image from the current Docker daemon engine, and fails
-  closed instead of probing host LabVIEW
+- a governed extension-execution-policy package that retains the current exact
+  released Docker-only installed baseline while actively resetting the
+  installed-user direction toward Windows local `LabVIEWCLI`
 - a governed cross-repo jump surface that resolves the product repo, wiki repo,
   and companion `repo-standards-review` skill repo from one local map and one
   CLI entrypoint
@@ -534,12 +544,16 @@ Current install paths are:
 
 The current active tranches are:
 
-- `TRANCHE-014`: public Codespaces public-repo bootstrap
-- `TRANCHE-013`: extension execution contract simplification and Docker-only
-  runtime UX
-- `TRANCHE-015`: installed-user first-run Docker onboarding and fail-closed
-  guidance
+- `TRANCHE-016`: installed local LabVIEWCLI contract and explicit compare
+  workflow
 - `TRANCHE-012`: post-release sustainment and release cadence
+
+Recent historical tranches are:
+
+- `TRANCHE-014`: public Codespaces public-repo bootstrap
+- `TRANCHE-013`: historical Docker-only installed execution contract baseline
+- `TRANCHE-015`: historical first-run Docker onboarding and fail-closed
+  guidance
 - `TRANCHE-010`: public-source facade and public-product acceptance is a closed
   release-closeout tranche for the Docker-only public product, with exact
   release `v1.0.3` and burned release `v1.0.2`
@@ -550,13 +564,20 @@ The current active tranches are:
 
 Current runtime direction for installed extension users:
 
-- comparison generation is Docker-only in the extension
-- the installed extension no longer exposes host-native runtime-selection knobs
-- on Windows, compare execution uses the governed Windows image when Docker is
-  in Windows-container mode and the governed Linux image when Docker is in
-  Linux-container mode
-- if Docker is unavailable or the current engine cannot satisfy the governed
-  request, the extension fails closed instead of probing the host
+- current exact released baseline:
+  - comparison generation is Docker-only in the extension
+  - the installed extension no longer exposes host-native runtime-selection
+    knobs
+  - on Windows, compare execution uses the governed Windows image when Docker
+    is in Windows-container mode and the governed Linux image when Docker is
+    in Linux-container mode
+  - if Docker is unavailable or the current engine cannot satisfy the governed
+    request, the extension fails closed instead of probing the host
+- active develop direction:
+  - installed Windows users will use local `LabVIEWCLI` instead of Docker
+  - required settings will be LabVIEW version plus bitness
+  - compare will move behind a dedicated preflight section and explicit
+    `Compare` action
 - the installed-user front face is now the VS Code Marketplace listing plus
   the public GitHub wiki, while the public GitHub repo remains the source and
   contributor surface and the private GitLab repo remains the engineering

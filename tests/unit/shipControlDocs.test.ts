@@ -77,9 +77,9 @@ describe('ship-control direction system', () => {
     const queue = readJson<QueueEntry[]>('docs/product/development-queue.json');
     const activeTranches = queue.filter((entry) => entry.status === 'active');
 
-    expect(activeTranches).toHaveLength(3);
+    expect(activeTranches).toHaveLength(2);
     expect(activeTranches.map((entry) => entry.id)).toEqual(
-      expect.arrayContaining(['TRANCHE-012', 'TRANCHE-013', 'TRANCHE-015'])
+      expect.arrayContaining(['TRANCHE-012', 'TRANCHE-016'])
     );
   });
 
@@ -214,8 +214,9 @@ describe('ship-control direction system', () => {
     expect(readme).toContain('- next-line branch model: `gitflow-lite` (`feature/*`, `release/*`, `hotfix/*`)');
     expect(readme).toContain('- hosted automation governance matrix: [docs/product/hosted-ci-governance.md]');
     expect(readme).toContain('- current changelog: [CHANGELOG.md](./CHANGELOG.md)');
+    expect(readme).toContain('- `TRANCHE-016`: installed local LabVIEWCLI contract and explicit compare');
     expect(readme).toContain('- `TRANCHE-014`: public Codespaces public-repo bootstrap');
-    expect(readme).toContain('- `TRANCHE-015`: installed-user first-run Docker onboarding and fail-closed');
+    expect(readme).toContain('- `TRANCHE-015`: historical first-run Docker onboarding and fail-closed');
     expect(readme).toContain('- `TRANCHE-010`: public-source facade and public-product acceptance is a closed');
     expect(readme).toContain('npm run public:repo:clone');
     expect(readme).toContain('private GitHub experiment repo');
@@ -247,6 +248,7 @@ describe('ship-control direction system', () => {
     expect(currentState).toContain('- next-line branch model: `gitflow-lite` (`feature/*`, `release/*`, `hotfix/*`)');
     expect(currentState).toContain('- hosted automation governance matrix: [hosted-ci-governance.md](./hosted-ci-governance.md)');
     expect(currentState).toContain('- current changelog: [CHANGELOG.md](../../CHANGELOG.md)');
+    expect(currentState).toContain('`TRANCHE-016`');
     expect(currentState).toContain('`TRANCHE-014`');
     expect(currentState).toContain('`TRANCHE-015`');
     expect(currentState).toContain('- closed public-product closeout:');

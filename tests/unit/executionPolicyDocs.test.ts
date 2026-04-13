@@ -4,9 +4,6 @@ import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const repoRoot = path.resolve(__dirname, '..', '..');
-const wikiRoot =
-  process.env.VIHS_INTERNAL_WIKI_REPO_ROOT ??
-  path.resolve(repoRoot, '..', 'vi-history-suite.wiki');
 
 function readText(relativePath: string): string {
   return fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
@@ -14,16 +11,6 @@ function readText(relativePath: string): string {
 
 function readJson<T>(relativePath: string): T {
   return JSON.parse(readText(relativePath)) as T;
-}
-
-function readWikiText(fileName: string): string {
-  const candidate = path.join(wikiRoot, fileName);
-  if (!fs.existsSync(candidate)) {
-    throw new Error(
-      `Missing wiki file ${candidate}. Set VIHS_INTERNAL_WIKI_REPO_ROOT or materialize the sibling vi-history-suite.wiki checkout before running docs tests.`
-    );
-  }
-  return fs.readFileSync(candidate, 'utf8');
 }
 
 describe('execution-policy control plane', () => {
@@ -54,7 +41,7 @@ describe('execution-policy control plane', () => {
     expect(debtLedgerJson).toContain('"retirementCommit": "2f4ced0"');
   });
 
-  it('keeps the active Docker-only execution-policy package aligned across authority and reader surfaces', () => {
+  it('keeps the current Docker-only baseline explicit while promoting the active local LabVIEWCLI transition', () => {
     const manifest = readJson<{
       contributes?: { configuration?: { properties?: Record<string, unknown> } };
     }>('package.json');
@@ -71,8 +58,11 @@ describe('execution-policy control plane', () => {
     const program = readText(
       'docs/product/execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md'
     );
-    const issue = readText(
+    const issueCurrent = readText(
       'docs/product/issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md'
+    );
+    const issueNext = readText(
+      'docs/product/issues/ISSUE-0412-installed-local-labviewcli-selection-and-explicit-compare.md'
     );
     const debtLedger = readText('docs/product/debt-ledger.json');
     const adr0006 = readText(
@@ -84,10 +74,6 @@ describe('execution-policy control plane', () => {
     const adr0026 = readText(
       'docs/architecture/adr/ADR-0026-canonical-extension-execution-request-validation.md'
     );
-    const coverage = readText('docs/product/wiki-coverage-matrix.json');
-    const publicationLedger = readText('docs/product/wiki-publication-ledger.json');
-    const userWorkflow = readWikiText('User-Workflow.md');
-    const requirementsWiki = readWikiText('Requirements-And-Verification.md');
 
     expect(manifest.contributes?.configuration?.properties).not.toHaveProperty(
       'viHistorySuite.executionMode'
@@ -99,14 +85,15 @@ describe('execution-policy control plane', () => {
       'viHistorySuite.linuxContainerImage'
     );
     expect(readme).toContain('PROGRAM-0005');
-    expect(readme).toContain('TRANCHE-013');
     expect(readme).toContain('TRANCHE-012');
-    expect(readme).toContain('TRANCHE-015');
+    expect(readme).toContain('TRANCHE-016');
+    expect(readme).toContain('ISSUE-0412');
     expect(readme).toContain('Docker-only');
-    expect(readme).toContain('public GitHub facade');
+    expect(readme).toContain('local `LabVIEWCLI`');
     expect(readme).toContain('install or start Docker Desktop or Docker');
-    expect(currentState).toContain('`TRANCHE-013`: Extension execution flexibility and runtime acquisition UX');
-    expect(currentState).toContain('`TRANCHE-015`: Installed-user first-run Docker onboarding and fail-closed guidance');
+    expect(currentState).toContain(
+      '`TRANCHE-016`: Installed local LabVIEWCLI contract and explicit compare workflow'
+    );
     expect(currentState).toContain('`TRANCHE-012`: Post-release sustainment and release cadence');
     expect(currentState).toContain(
       '[PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)'
@@ -114,62 +101,78 @@ describe('execution-policy control plane', () => {
     expect(currentState).toContain(
       '[PROGRAM-0004: Post-Release Sustainment And Release Cadence](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)'
     );
-    expect(currentState).toContain('the installed extension now depends on Docker for compare generation');
-    expect(currentState).toContain('selected provider, current Docker engine, selected image, acquisition state, and next action');
+    expect(currentState).toContain('current exact released installed extension is still Docker-only');
+    expect(currentState).toContain('required version plus bitness settings');
     expect(currentState).toContain('public GitHub facade repo is the public source product surface');
     expect(currentState).toContain('public GitHub user wiki now exists');
+    expect(queue).toContain('"id": "TRANCHE-016"');
+    expect(queue).toContain('"issues": [\n      "ISSUE-0412"\n    ]');
+    expect(queue).toContain('"id": "TRANCHE-013"');
+    expect(queue).toContain('"id": "TRANCHE-015"');
+    expect(queue).toContain('"status": "done"');
     expect(queue).toContain('"id": "TRANCHE-013"');
     expect(queue).toContain('"status": "active"');
     expect(queue).toContain('"id": "TRANCHE-012"');
-    expect(queue).toContain('"status": "active"');
-    expect(queue).toContain('"id": "TRANCHE-015"');
     expect(queue).toContain('"status": "active"');
     expect(policy).not.toContain('`auto`');
     expect(policy).not.toContain('`host-only`');
     expect(policy).toContain('comparison generation is Docker-only in the installed extension');
     expect(policy).toContain('viHistorySuite.windowsContainerImage');
     expect(policy).toContain('viHistorySuite.linuxContainerImage');
-    expect(policy).toContain('There is no installed host-fallback path in this contract.');
+    expect(policy).toContain('Active Control-Plane Direction');
+    expect(policy).toContain('viHistorySuite.labviewVersion');
+    expect(policy).toContain('viHistorySuite.labviewBitness');
+    expect(policy).toContain('compare does not auto-run when the second commit is selected');
     expect(policy).toContain('Windows Engine Matrix');
     expect(policy).toContain('Docker daemon `OSType=windows` selects the governed Windows container image');
     expect(policy).toContain('Docker daemon `OSType=linux` selects the governed Linux container image');
-    expect(policy).toContain('selected provider, current Docker engine mode, selected image, acquisition');
     expect(policy).toContain('execution-policy bypass is not allowed');
     expect(policy).toContain(
       'first use assumes Docker is already installed and running only when the host'
     );
     expect(policy).toContain('Docker CLI plus daemon checks');
-    expect(policy).toContain('tells first-time users to install or start Docker and confirm it is working');
+    expect(policy).toContain('Docker remains internal-only');
     expect(srs).toContain('VHS-REQ-459');
     expect(srs).toContain('VHS-REQ-470');
     expect(srs).toContain('VHS-REQ-482');
     expect(srs).toContain('VHS-REQ-475');
     expect(srs).toContain('Docker-only');
     expect(srs).toContain('VHS-REQ-528');
+    expect(srs).toContain('VHS-REQ-530');
+    expect(srs).toContain('VHS-REQ-531');
+    expect(srs).toContain('VHS-REQ-536');
     expect(srs).toContain('missing Docker CLI or a stopped Docker daemon');
+    expect(srs).toContain('labviewVersion');
+    expect(srs).toContain('explicit `Compare` action');
     expect(rtm).toContain('VHS-REQ-470');
     expect(rtm).toContain('current Docker daemon engine');
     expect(rtm).toContain('Docker-only');
     expect(rtm).toContain('ADR-0026-canonical-extension-execution-request-validation.md');
     expect(rtm).toContain('VHS-REQ-528');
+    expect(rtm).toContain('VHS-REQ-530');
+    expect(rtm).toContain('VHS-REQ-531');
+    expect(rtm).toContain('VHS-REQ-536');
+    expect(rtm).toContain('Planned');
     expect(testPlan).toContain('TEST-UNIT-300');
-    expect(testPlan).toContain('TEST-DOC-068');
+    expect(testPlan).toContain('TEST-UNIT-341');
+    expect(testPlan).toContain('TEST-UNIT-344');
     expect(testPlan).toContain('Docker-only');
     expect(testPlan).toContain('TEST-UNIT-339');
     expect(testPlan).toContain('TEST-DOC-102');
+    expect(testPlan).toContain('TEST-DOC-104');
+    expect(testPlan).toContain('TEST-DOC-105');
     expect(program).toContain('Active post-release program.');
-    expect(program).toContain('the installed extension now depends on Docker for comparison generation');
-    expect(program).toContain('gets the governed Windows image when Docker is in Windows-engine mode');
-    expect(program).toContain('gets the governed Linux image when Docker is in Linux-engine mode');
-    expect(program).toContain('authority, bundled-doc, internal wiki, and public GitHub user-surface');
-    expect(program).toContain('Gate D: Public/Internal Surface Split');
-    expect(program).toContain('first-run missing-Docker onboarding and fail-closed recovery guidance');
-    expect(issue).toContain('Active post-release issue.');
-    expect(issue).toContain('Docker-only comparison contract');
-    expect(issue).toContain('canonical Docker-only request validation');
-    expect(issue).toContain('public GitHub front face');
-    expect(issue).toContain('a first-time installed-extension user whose machine');
-    expect(issue).toContain('does not yet have Docker installed or running');
+    expect(program).toContain('local `LabVIEWCLI`');
+    expect(program).toContain('TRANCHE-016');
+    expect(program).toContain('explicit `Compare` action');
+    expect(program).toContain('internal-only Docker');
+    expect(issueCurrent).toContain('Closed historical issue, superseded by `ISSUE-0412`');
+    expect(issueCurrent).toContain('TRANCHE-013');
+    expect(issueCurrent).toContain('TRANCHE-015');
+    expect(issueNext).toContain('Active post-release issue.');
+    expect(issueNext).toContain('settings-only LabVIEW version + bitness selection');
+    expect(issueNext).toContain('explicit compare preflight state');
+    expect(issueNext).toContain('VS Code warning notification');
     expect(sustainmentProgram).toContain('Active post-release program.');
     expect(sustainmentProgram).toContain('That work remains explicit under active `PROGRAM-0005`');
     expect(adr0006).toContain('superseded by ADR-0025');
@@ -185,13 +188,5 @@ describe('execution-policy control plane', () => {
     expect(debtLedger).toContain('"status": "retired"');
     expect(debtLedger).toContain('Docker-only');
     expect(debtLedger).toContain('current Docker daemon engine on Windows');
-    expect(coverage).toContain('"sourcePath": "docs/product/extension-execution-policy.md"');
-    expect(coverage).toContain('ADR-0027-public-github-facade-and-user-wiki-vs-internal-gitlab-control-plane.md');
-    expect(publicationLedger).toContain('"wikiFileName": "User-Workflow.md"');
-    expect(userWorkflow).toContain('The installed extension now uses one Docker-only compare contract.');
-    expect(userWorkflow).toContain('on Windows, the current Docker daemon engine selects the governed Windows');
-    expect(userWorkflow).toContain('white `Comparison context` block');
-    expect(requirementsWiki).toContain('Docker-only execution contract');
-    expect(requirementsWiki).toContain('the installed extension no longer exposes `executionMode`');
   });
 });

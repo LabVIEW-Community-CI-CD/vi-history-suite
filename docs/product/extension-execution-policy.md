@@ -10,12 +10,13 @@ behavior from scattered code, benchmark scripts, or prior chat.
 
 ## Current Implemented Posture
 
-The installed extension now exposes only these runtime-related settings:
+The current exact released installed extension now exposes only these
+runtime-related settings:
 
 - `viHistorySuite.windowsContainerImage`
 - `viHistorySuite.linuxContainerImage`
 
-Current installed truth is:
+Current installed release truth is:
 
 - comparison generation is Docker-only in the installed extension
 - the installed extension no longer exposes `executionMode`, host-runtime path
@@ -45,9 +46,35 @@ Current installed truth is:
   or alternate compare path may skip canonical installed-request validation,
   Docker-only boundaries, or governed provider hard stops
 
-So the installed compare contract is now explicit: Docker is a dependency of
-the extension, and the current Docker daemon engine decides whether the
-governed Windows or Linux image is used.
+So the current released installed compare contract is explicit: Docker is a
+dependency of the extension, and the current Docker daemon engine decides
+whether the governed Windows or Linux image is used.
+
+## Active Control-Plane Direction
+
+The active installed-user direction is no longer “keep Docker-only installed
+compare execution.”
+
+Under `PROGRAM-0005` / `ISSUE-0412` / `TRANCHE-016`, the next installed-user
+contract is:
+
+- Windows local `LabVIEWCLI` instead of Docker
+- settings-only LabVIEW selection through:
+  - `viHistorySuite.labviewVersion`
+  - `viHistorySuite.labviewBitness`
+- both settings are required by contract
+- path discovery remains internal rather than user-facing
+- compare does not auto-run when the second commit is selected
+- the panel must show selected/base commit plus version and bitness before the
+  compare action is allowed to start
+- unresolved runtime selection must block compare in the panel and emit a VS
+  Code warning notification
+- Docker remains internal-only rather than part of the installed-user compare
+  contract
+
+This transition direction does not mean the released package already behaves
+that way. The current released installed baseline above remains truthful until
+the replacement slices land.
 
 ## Canonical Installed Execution Request
 
@@ -228,8 +255,10 @@ The current broader product work is split intentionally:
 - benchmark proof stays in `PROGRAM-0003`
 - sustainment remains active under `PROGRAM-0004` / `ISSUE-0409` /
   `TRANCHE-012`
-- the Docker-only installed contract plus public/internal normalization remain
-  active under `PROGRAM-0005` / `ISSUE-0410` / `TRANCHE-013`
+- the active installed-user replacement direction now remains under
+  `PROGRAM-0005` / `ISSUE-0412` / `TRANCHE-016`
+- the current released Docker-only installed baseline remains retained
+  historically under `ISSUE-0410` / `TRANCHE-013` / `TRANCHE-015`
 
 Canonical validation of the effective execution request for this future work is
 governed by `ADR-0026`.
@@ -242,6 +271,7 @@ governed by `ADR-0026`.
 - [Development Queue](./development-queue.json)
 - [PROGRAM-0004](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)
 - [PROGRAM-0005](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
+- [ISSUE-0412](./issues/ISSUE-0412-installed-local-labviewcli-selection-and-explicit-compare.md)
 - [ISSUE-0410](./issues/ISSUE-0410-extension-execution-flexibility-and-runtime-acquisition-ux.md)
 - [ADR-0025](../architecture/adr/ADR-0025-transparent-extension-execution-flexibility-and-runtime-acquisition-ux.md)
 - [ADR-0026](../architecture/adr/ADR-0026-canonical-extension-execution-request-validation.md)

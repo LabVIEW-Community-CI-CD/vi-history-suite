@@ -7,7 +7,8 @@ Active post-release program.
 Activation is now satisfied:
 
 - `PROGRAM-0003` is closed on the benchmark-proof packet under `TRANCHE-011`
-- `PROGRAM-0005` is active again on the breaking `1.0.0` Docker-only contract
+- `PROGRAM-0005` is active again on the installed local-`LabVIEWCLI`
+  contract reset under `TRANCHE-016`
 - the queue has promoted `TRANCHE-012` to `active`
 
 ## Purpose
