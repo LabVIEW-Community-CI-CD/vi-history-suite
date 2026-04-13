@@ -276,6 +276,44 @@ describe('comparisonRuntimeLocator', () => {
     ]);
   });
 
+  it('fails closed for the installed-user path when the persisted provider is invalid', async () => {
+    const result = await locateComparisonRuntime(
+      'win32',
+      {
+        invalidRequestedProvider: 'weird',
+        requireVersionAndBitness: true,
+        labviewVersion: '2026',
+        bitness: 'x64'
+      },
+      {
+        pathExists: vi.fn().mockResolvedValue(false),
+        queryWindowsRegistry: vi.fn().mockResolvedValue('')
+      }
+    );
+
+    expect(result.provider).toBe('unavailable');
+    expect(result.blockedReason).toBe('installed-provider-invalid');
+    expect(result.notes).toEqual([
+      'Installed compare requires viHistorySuite.runtimeProvider to be either host or docker before runtime preflight can proceed.'
+    ]);
+    expect(result.providerDecisions).toEqual([
+      {
+        provider: 'windows-container',
+        outcome: 'rejected',
+        reason: 'invalid-installed-provider',
+        detail:
+          'Docker container execution was not selected because viHistorySuite.runtimeProvider must be either host or docker.'
+      },
+      {
+        provider: 'host-native',
+        outcome: 'rejected',
+        reason: 'invalid-installed-provider',
+        detail:
+          'Host-native execution was not selected because viHistorySuite.runtimeProvider must be either host or docker.'
+      }
+    ]);
+  });
+
   it('filters host-native Windows runtime selection by requested LabVIEW version', async () => {
     const cleanHost = buildCleanWindowsHostDeps();
     const result = await locateComparisonRuntime(

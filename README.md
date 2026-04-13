@@ -52,9 +52,9 @@ Active develop direction:
   provider
 - the installed manifest/settings slice now exposes required LabVIEW version
   plus bitness instead of public Docker settings
-- the next user-seeding surface is an on-demand CLI generated into user-profile
-  storage rather than a prebuilt VSIX-shipped binary, and that CLI will
-  persist provider, version, and bitness together
+- the on-demand CLI is now generated into user-profile storage rather than a
+  prebuilt VSIX-shipped binary, and it persists provider, version, and
+  bitness together
 - Docker remains an expert path only, derived from the current Docker engine,
   and Docker `x86` will fail closed with host/`x64` guidance
 - the active direction is governed under `TRANCHE-016` / `ISSUE-0412` /
@@ -588,9 +588,8 @@ Current runtime direction for installed extension users:
   - the installed manifest/settings contract now exposes required LabVIEW
     version plus bitness and will stay deterministic across both provider
     classes
-  - the planned settings CLI will be generated in place on first use, will
-    persist provider plus version/bitness, and will not ship as a prebuilt
-    payload
+  - the settings CLI is generated in place on first use, persists provider
+    plus version/bitness, and does not ship as a prebuilt payload
   - compare will move behind a dedicated preflight section that shows
     selected/base commit plus provider/version/bitness before the explicit
     `Compare` action

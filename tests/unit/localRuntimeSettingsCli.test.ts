@@ -25,9 +25,11 @@ describe('localRuntimeSettingsCli', () => {
     );
   });
 
-  it('parses explicit version, bitness, and settings-file arguments', () => {
+  it('parses explicit provider, version, bitness, and settings-file arguments', () => {
     expect(
       parseLocalRuntimeSettingsCliArgs([
+        '--provider',
+        'docker',
         '--labview-version',
         '2026',
         '--labview-bitness',
@@ -37,6 +39,7 @@ describe('localRuntimeSettingsCli', () => {
       ])
     ).toEqual({
       helpRequested: false,
+      provider: 'docker',
       labviewVersion: '2026',
       labviewBitness: 'x64',
       settingsFilePath: './settings.json'
@@ -47,8 +50,12 @@ describe('localRuntimeSettingsCli', () => {
     });
     expect(getLocalRuntimeSettingsCliUsage()).toContain('--labview-version');
     expect(getLocalRuntimeSettingsCliUsage()).toContain('--labview-bitness');
+    expect(getLocalRuntimeSettingsCliUsage()).toContain('--provider');
     expect(() => parseLocalRuntimeSettingsCliArgs(['--labview-version'])).toThrow(
       /Missing value for --labview-version/
+    );
+    expect(() => parseLocalRuntimeSettingsCliArgs(['--provider', 'auto'])).toThrow(
+      /Unsupported compare provider/
     );
     expect(() =>
       parseLocalRuntimeSettingsCliArgs(['--labview-bitness', 'arm64'])
@@ -69,7 +76,7 @@ describe('localRuntimeSettingsCli', () => {
     );
   });
 
-  it('writes LabVIEW version and bitness into the target VS Code settings file', async () => {
+  it('writes provider, LabVIEW version, and bitness into the target VS Code settings file', async () => {
     const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-local-runtime-cli-'));
     tempDirectories.push(tempRoot);
     const settingsFilePath = path.join(tempRoot, 'settings.json');
@@ -82,6 +89,8 @@ describe('localRuntimeSettingsCli', () => {
 
     const result = await runLocalRuntimeSettingsCli(
       [
+        '--provider',
+        'docker',
         '--labview-version',
         '2026',
         '--labview-bitness',
@@ -101,16 +110,19 @@ describe('localRuntimeSettingsCli', () => {
     expect(result).toEqual({
       outcome: 'updated-settings',
       settingsFilePath,
+      provider: 'docker',
       labviewVersion: '2026',
       labviewBitness: 'x64'
     });
 
     expect(JSON.parse(await fs.readFile(settingsFilePath, 'utf8'))).toEqual({
       'editor.tabSize': 2,
+      'viHistorySuite.runtimeProvider': 'docker',
       'viHistorySuite.labviewVersion': '2026',
       'viHistorySuite.labviewBitness': 'x64'
     });
     expect(stdout.join('')).toContain(settingsFilePath);
+    expect(stdout.join('')).toContain('viHistorySuite.runtimeProvider=docker');
     expect(stdout.join('')).toContain('viHistorySuite.labviewVersion=2026');
     expect(stdout.join('')).toContain('viHistorySuite.labviewBitness=x64');
   });
@@ -119,7 +131,7 @@ describe('localRuntimeSettingsCli', () => {
     const stderr: string[] = [];
 
     await expect(
-      runLocalRuntimeSettingsCliMain(['--labview-version', '2026'], {
+      runLocalRuntimeSettingsCliMain(['--provider', 'host', '--labview-version', '2026'], {
         stderr: {
           write(text: string) {
             stderr.push(text);
@@ -158,5 +170,6 @@ describe('localRuntimeSettingsCli', () => {
     expect(windowsLauncher).not.toContain('PATH=');
     expect(posixLauncher).toContain('run-local-runtime-settings-cli.js');
     expect(posixLauncher).not.toContain('PATH=');
+    expect(materialized.exampleCommand).toContain('--provider host');
   });
 });

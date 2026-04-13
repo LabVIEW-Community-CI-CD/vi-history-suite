@@ -19,10 +19,12 @@ Current facts:
 - `ISSUE-0412` is the active issue for the replacement direction
 - the control-plane reset is landed and the installed manifest/settings
   contract slice is landed
+- the generated settings CLI now persists provider, version, and bitness, and
+  that provider selection now flows into the governed host-default and Docker
+  runtime-admission path
 - the required-settings runtime preflight is partially landed, but exact
-  single-runtime ambiguity handling, persisted provider selection, Docker
-  provider preflight, the on-demand settings CLI, and the explicit compare
-  workflow are still open
+  single-runtime ambiguity handling and the explicit compare workflow are
+  still open
 - `PROGRAM-0002` still owns the later public acceptance rerun once the next
   installed-user contract is actually published
 

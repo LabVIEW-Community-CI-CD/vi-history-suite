@@ -35,6 +35,8 @@ export type DockerContainerAcquisitionState =
 export interface ComparisonRuntimeSettings {
   executionMode?: RuntimeExecutionMode;
   requireVersionAndBitness?: boolean;
+  requestedProvider?: 'host' | 'docker';
+  invalidRequestedProvider?: string;
   labviewVersion?: string;
   labviewCliPath?: string;
   labviewExePath?: string;
@@ -334,6 +336,39 @@ export async function locateComparisonRuntime(
   const hostPlatform = deps.hostPlatform ?? process.platform;
   const windowsContainerImage = resolveWindowsContainerImage(settings.windowsContainerImage);
   const linuxContainerImage = resolveLinuxContainerImage(settings.linuxContainerImage);
+
+  if (settings.invalidRequestedProvider) {
+    const containerProvider: RuntimeSelectableProvider =
+      platform === 'linux' ? 'linux-container' : 'windows-container';
+    return {
+      platform,
+      executionMode,
+      bitness,
+      provider: 'unavailable',
+      blockedReason: 'installed-provider-invalid',
+      providerDecisions: [
+        {
+          provider: containerProvider,
+          outcome: 'rejected',
+          reason: 'invalid-installed-provider',
+          detail:
+            'Docker container execution was not selected because viHistorySuite.runtimeProvider must be either host or docker.'
+        },
+        {
+          provider: 'host-native',
+          outcome: 'rejected',
+          reason: 'invalid-installed-provider',
+          detail:
+            'Host-native execution was not selected because viHistorySuite.runtimeProvider must be either host or docker.'
+        }
+      ],
+      notes: [
+        'Installed compare requires viHistorySuite.runtimeProvider to be either host or docker before runtime preflight can proceed.'
+      ],
+      registryQueryPlans,
+      candidates: []
+    };
+  }
 
   if (platform === 'win32' && requireVersionAndBitness) {
     const missingVersion = !requestedLabviewVersion;

@@ -209,8 +209,9 @@ Current active and recently closed tranches:
     through the generated CLI
   - keep the current exact released Docker-only contract explicit until the
     replacement is actually implemented
-  - require explicit provider, version, and bitness facts, with version plus
-    bitness required across both provider classes
+  - land generated provider selection with explicit provider, version, and
+    bitness facts, with version plus bitness required across both provider
+    classes
   - replace second-selection auto-run with an explicit compare preflight that
     shows provider, version, and bitness before the explicit compare action
 - `TRANCHE-012`: Post-release sustainment and release cadence
@@ -318,12 +319,14 @@ Post-release tranches:
   - active execution program: [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
   - the current exact released installed extension is still Docker-only, but
     that is now historical baseline truth rather than the active destination
-  - the control-plane reset and installed manifest/settings slices are landed
+  - the control-plane reset, installed manifest/settings slice, and generated
+    provider-selection CLI slice are landed
   - required-settings host runtime preflight is partially landed, but exact
     single-runtime ambiguity handling is still open
-  - the remaining active slices are generated provider-selection CLI support,
-    Docker provider preflight/acquisition, explicit compare preflight, and
-    installed-user warning behavior
+  - expert Docker provider selection now flows through the generated CLI and
+    the governed engine-derived image-family admission path
+  - the remaining active slices are exact single-runtime ambiguity handling,
+    explicit compare preflight, and installed-user warning behavior
   - Docker is now a bounded expert provider rather than either the default
     installed-user dependency or an internal-only path
 - historical installed-user Docker baseline:

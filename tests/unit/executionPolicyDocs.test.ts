@@ -132,7 +132,7 @@ describe('execution-policy control plane', () => {
     expect(policy).toContain('Active Control-Plane Direction');
     expect(policy).toContain('compare does not auto-run when the second commit is selected');
     expect(policy).toContain('execution-policy bypass is not allowed');
-    expect(policy).toContain('bounded expert Docker');
+    expect(policy).toContain('bounded expert provider');
     expect(policy).toContain('current Docker engine');
     expect(srs).toContain('VHS-REQ-459');
     expect(srs).toContain('VHS-REQ-470');

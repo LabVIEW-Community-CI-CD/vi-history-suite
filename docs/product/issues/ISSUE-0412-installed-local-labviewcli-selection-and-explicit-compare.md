@@ -93,9 +93,6 @@ history instead of chat memory.
 
 - finish exact single-runtime host preflight by failing closed on ambiguity,
   not only on missing required settings
-- add an on-demand cross-platform settings CLI that is generated into
-  user-profile storage on first use and persists provider plus version/bitness
-- add bounded expert Docker admission and engine-derived preflight
 - land the explicit compare-preflight workflow after second commit selection
 
 ## Round 1: User Proposal Facts

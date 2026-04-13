@@ -22,14 +22,14 @@ Current develop-line implementation truth is:
   `LabVIEWCLI` rather than public Docker settings
 - the extension manifest no longer exposes Docker image settings on the
   installed-user surface
-- persisted provider selection has not landed on the public installed-user
-  surface yet; the bounded expert Docker path remains an upcoming CLI-admitted
-  slice
+- persisted provider selection now lands through the generated settings CLI,
+  while the public installed-user manifest still does not expose a general
+  provider setting
 - the installed-user surface still does not expose `executionMode`,
   host-runtime path overrides, direct executable-path picking, or image-family
   picking
 - both version and bitness remain required by contract even though the later
-  provider-selection, runtime-preflight, and explicit-compare slices are still
+  host-runtime ambiguity handling and explicit-compare slices are still
   landing
 - execution-policy bypass is not allowed: no hidden flag, experimental switch,
   or alternate compare path may skip canonical installed-request validation
@@ -79,10 +79,9 @@ contract is:
 - Docker `x86` is unsupported and fails closed with corrective guidance toward
   host or `x64`
 
-The manifest/settings slice has landed. Exact single-runtime ambiguity
-handling, persisted provider selection, Docker-provider preflight/acquisition,
-explicit compare preflight, and warning behavior remain active follow-on
-slices.
+The manifest/settings slice and generated provider-selection CLI slice have
+landed. Exact single-runtime ambiguity handling plus explicit compare
+preflight remain active follow-on slices.
 
 ## Canonical Installed Execution Request
 

@@ -3,9 +3,11 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 
 export type LocalRuntimeSettingsCliBitness = 'x86' | 'x64';
+export type LocalRuntimeSettingsCliProvider = 'host' | 'docker';
 
 export interface LocalRuntimeSettingsCliArgs {
   helpRequested: boolean;
+  provider?: LocalRuntimeSettingsCliProvider;
   labviewVersion?: string;
   labviewBitness?: LocalRuntimeSettingsCliBitness;
   settingsFilePath?: string;
@@ -14,6 +16,7 @@ export interface LocalRuntimeSettingsCliArgs {
 export interface LocalRuntimeSettingsCliRunResult {
   outcome: 'help' | 'updated-settings';
   settingsFilePath?: string;
+  provider?: LocalRuntimeSettingsCliProvider;
   labviewVersion?: string;
   labviewBitness?: LocalRuntimeSettingsCliBitness;
 }
@@ -48,9 +51,10 @@ const POSIX_LAUNCHER_NAME = 'vihs-runtime-settings';
 
 export function getLocalRuntimeSettingsCliUsage(): string {
   return [
-    'Usage: vihs-runtime-settings --labview-version <major> --labview-bitness <x86|x64> [--settings-file <path>]',
+    'Usage: vihs-runtime-settings --provider <host|docker> --labview-version <major> --labview-bitness <x86|x64> [--settings-file <path>]',
     '',
     'Options:',
+    '  --provider         Required compare provider: host or docker',
     '  --labview-version  Required LabVIEW major version. Example: 2026',
     '  --labview-bitness Required LabVIEW bitness: x86 or x64',
     '  --settings-file   Optional explicit VS Code settings.json path',
@@ -68,6 +72,9 @@ export function parseLocalRuntimeSettingsCliArgs(argv: readonly string[]): Local
     switch (argument) {
       case '--help':
         parsed.helpRequested = true;
+        break;
+      case '--provider':
+        parsed.provider = normalizeProvider(readRequiredArgValue(argv, argument, ++index));
         break;
       case '--labview-version':
         parsed.labviewVersion = readRequiredArgValue(argv, argument, ++index);
@@ -126,7 +133,7 @@ export function buildLocalRuntimeSettingsCliMaterialization(
     windowsLauncherPath,
     posixLauncherPath,
     modulePath,
-    exampleCommand: `${POSIX_LAUNCHER_NAME} --labview-version 2026 --labview-bitness x64`
+    exampleCommand: `${POSIX_LAUNCHER_NAME} --provider host --labview-version 2026 --labview-bitness x64`
   };
 }
 
@@ -168,6 +175,10 @@ export async function runLocalRuntimeSettingsCli(
     throw new Error('Missing required --labview-version.');
   }
 
+  if (!parsed.provider) {
+    throw new Error('Missing required --provider.');
+  }
+
   if (!parsed.labviewBitness) {
     throw new Error('Missing required --labview-bitness.');
   }
@@ -175,12 +186,14 @@ export async function runLocalRuntimeSettingsCli(
   const settingsFilePath = resolveSettingsFilePath(parsed, deps);
   await writeVsCodeSettingsFile(
     settingsFilePath,
+    parsed.provider,
     parsed.labviewVersion,
     parsed.labviewBitness,
     deps.fs ?? fs
   );
 
   writeLine(deps.stdout ?? process.stdout, `Updated ${settingsFilePath}`);
+  writeLine(deps.stdout ?? process.stdout, `viHistorySuite.runtimeProvider=${parsed.provider}`);
   writeLine(
     deps.stdout ?? process.stdout,
     `viHistorySuite.labviewVersion=${parsed.labviewVersion}`
@@ -193,6 +206,7 @@ export async function runLocalRuntimeSettingsCli(
   return {
     outcome: 'updated-settings',
     settingsFilePath,
+    provider: parsed.provider,
     labviewVersion: parsed.labviewVersion,
     labviewBitness: parsed.labviewBitness
   };
@@ -234,6 +248,15 @@ function normalizeLabviewBitness(value: string): LocalRuntimeSettingsCliBitness 
   throw new Error(`Unsupported LabVIEW bitness: ${value}`);
 }
 
+function normalizeProvider(value: string): LocalRuntimeSettingsCliProvider {
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'host' || normalized === 'docker') {
+    return normalized;
+  }
+
+  throw new Error(`Unsupported compare provider: ${value}`);
+}
+
 function resolveSettingsFilePath(
   parsed: LocalRuntimeSettingsCliArgs,
   deps: LocalRuntimeSettingsCliDeps
@@ -252,6 +275,7 @@ function resolveSettingsFilePath(
 
 async function writeVsCodeSettingsFile(
   settingsFilePath: string,
+  provider: LocalRuntimeSettingsCliProvider,
   labviewVersion: string,
   labviewBitness: LocalRuntimeSettingsCliBitness,
   fsApi: Pick<typeof fs, 'mkdir' | 'readFile' | 'writeFile'>
@@ -259,6 +283,7 @@ async function writeVsCodeSettingsFile(
   await fsApi.mkdir(path.dirname(settingsFilePath), { recursive: true });
 
   const existingSettings = await readExistingSettingsFile(settingsFilePath, fsApi);
+  existingSettings['viHistorySuite.runtimeProvider'] = provider;
   existingSettings['viHistorySuite.labviewVersion'] = labviewVersion;
   existingSettings['viHistorySuite.labviewBitness'] = labviewBitness;
 

@@ -1215,9 +1215,17 @@ export function readComparisonRuntimeSettings(
 ): ComparisonRuntimeSettings {
   const labviewVersion = readTrimmedStringSetting(configuration, 'labviewVersion');
   const labviewBitness = readConfiguredLabviewBitness(configuration);
+  const configuredProvider = readConfiguredRuntimeProvider(configuration);
 
   return {
-    executionMode: 'host-only',
+    executionMode:
+      configuredProvider.provider === 'docker'
+        ? 'docker-only'
+        : configuredProvider.invalidProvider
+          ? undefined
+          : 'host-only',
+    requestedProvider: configuredProvider.provider ?? 'host',
+    invalidRequestedProvider: configuredProvider.invalidProvider,
     requireVersionAndBitness: true,
     labviewVersion,
     bitness: labviewBitness
@@ -1242,6 +1250,21 @@ function readConfiguredLabviewBitness(
   }
 
   return undefined;
+}
+
+function readConfiguredRuntimeProvider(
+  configuration: Pick<vscode.WorkspaceConfiguration, 'get'>
+): { provider?: 'host' | 'docker'; invalidProvider?: string } {
+  const value = readTrimmedStringSetting(configuration, 'runtimeProvider');
+  if (!value) {
+    return {};
+  }
+
+  if (value === 'host' || value === 'docker') {
+    return { provider: value };
+  }
+
+  return { invalidProvider: value };
 }
 
 export function resolveRuntimePlatform(platform: NodeJS.Platform): RuntimePlatform {

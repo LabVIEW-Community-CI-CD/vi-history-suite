@@ -129,6 +129,10 @@ function deriveRuntimeDoctorNextAction(options: {
   }
 
   if (options.reportStatus === 'blocked-runtime' || options.runtimeExecution.state === 'not-available') {
+    if (blockedReason === 'installed-provider-invalid') {
+      return 'Next action: set viHistorySuite.runtimeProvider to host or docker, then rerun comparison report generation.';
+    }
+
     if (blockedReason === 'labview-runtime-selection-required') {
       return 'Next action: set viHistorySuite.labviewVersion and viHistorySuite.labviewBitness, then rerun comparison report generation.';
     }
@@ -152,15 +156,15 @@ function deriveRuntimeDoctorNextAction(options: {
     }
 
     if (blockedReason === 'docker-only-provider-not-supported-on-platform') {
-      return 'Next action: change execution mode to auto or host-only on this platform, then rerun comparison report generation.';
+      return 'Next action: set viHistorySuite.runtimeProvider to host on this platform, then rerun comparison report generation.';
     }
 
     if (blockedReason === 'docker-only-requires-windows-x64-provider') {
-      return 'Next action: use the governed 64-bit container lane or change execution mode, then rerun comparison report generation.';
+      return 'Next action: set viHistorySuite.runtimeProvider to host or use Docker with viHistorySuite.labviewBitness=x64, then rerun comparison report generation.';
     }
 
     if (blockedReason === 'docker-only-provider-unavailable') {
-      return `Next action: ${deriveContainerRecoveryAction(options.runtimeSelection)} or change execution mode, then rerun comparison report generation.`;
+      return `Next action: ${deriveContainerRecoveryAction(options.runtimeSelection)} or set viHistorySuite.runtimeProvider to host, then rerun comparison report generation.`;
     }
 
     if (blockedReason === 'auto-docker-installed-provider-unavailable') {

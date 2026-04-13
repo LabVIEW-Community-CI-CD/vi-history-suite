@@ -282,6 +282,44 @@ describe('comparisonRuntimeDoctor', () => {
     );
   });
 
+  it('uses explicit next action guidance when the persisted provider is invalid', () => {
+    const lines = buildComparisonRuntimeDoctorSummaryFromFacts({
+      reportStatus: 'blocked-runtime',
+      runtimeSelection: {
+        platform: 'win32',
+        bitness: 'x64',
+        provider: 'unavailable',
+        blockedReason: 'installed-provider-invalid',
+        providerDecisions: [
+          {
+            provider: 'windows-container',
+            outcome: 'rejected',
+            reason: 'invalid-installed-provider',
+            detail:
+              'Docker container execution was not selected because viHistorySuite.runtimeProvider must be either host or docker.'
+          }
+        ],
+        notes: [
+          'Installed compare requires viHistorySuite.runtimeProvider to be either host or docker before runtime preflight can proceed.'
+        ],
+        registryQueryPlans: [],
+        candidates: []
+      },
+      runtimeExecution: {
+        state: 'not-available',
+        attempted: false,
+        reportExists: false,
+        blockedReason: 'installed-provider-invalid',
+        diagnosticNotes: []
+      }
+    });
+
+    expect(lines).toContain('Runtime blocked reason: installed-provider-invalid.');
+    expect(lines.at(-1)).toBe(
+      'Next action: set viHistorySuite.runtimeProvider to host or docker, then rerun comparison report generation.'
+    );
+  });
+
   it('tells Windows first-time users to install Docker Desktop when the CLI is missing', () => {
     const lines = buildComparisonRuntimeDoctorSummaryFromFacts({
       reportStatus: 'blocked-runtime',
@@ -308,7 +346,7 @@ describe('comparisonRuntimeDoctor', () => {
     });
 
     expect(lines.at(-1)).toBe(
-      'Next action: install Docker Desktop, start it once, and confirm `docker info` succeeds or change execution mode, then rerun comparison report generation.'
+      'Next action: install Docker Desktop, start it once, and confirm `docker info` succeeds or set viHistorySuite.runtimeProvider to host, then rerun comparison report generation.'
     );
   });
 
@@ -338,7 +376,7 @@ describe('comparisonRuntimeDoctor', () => {
     });
 
     expect(lines.at(-1)).toBe(
-      'Next action: start or reconnect the Docker daemon and confirm `docker info` succeeds or change execution mode, then rerun comparison report generation.'
+      'Next action: start or reconnect the Docker daemon and confirm `docker info` succeeds or set viHistorySuite.runtimeProvider to host, then rerun comparison report generation.'
     );
   });
 
