@@ -284,3 +284,122 @@ Reason:
 4. If you accept 1 through 3, the next round will convert this issue into an
    explicit roadmap and tranche proposal instead of asking another contract
    round.
+
+## Round 5: User Answers
+
+1. Yes.
+2. Yes.
+3. Yes.
+
+## Round 5: Roadmap Established
+
+No further contract rounds are required to establish a roadmap.
+
+The contract is now stable enough to plan work against these settled facts:
+
+- installed-user compare no longer uses a Docker-only contract
+- Docker becomes internal-only
+- installed-user runtime selection is settings-only
+- both LabVIEW version and bitness are required
+- compare must not auto-run after second selection
+- the panel preflight must show:
+  - selected commit
+  - base commit
+  - version
+  - bitness
+- unresolved runtime selection must fail closed in the panel and through a VS
+  Code warning notification
+- canonical compare ordering remains newer = selected, older = base
+
+## Round 5: Recommended Control-Plane Move
+
+1. Rewrite `PROGRAM-0005` around the new installed-user local-LabVIEWCLI
+   contract instead of opening a second competing program.
+2. Supersede `ISSUE-0410` with `ISSUE-0412` as the active issue for this
+   surface.
+3. Introduce a new active tranche to replace the Docker-only tranche direction.
+
+Recommended tranche proposal:
+
+- `TRANCHE-016`
+- title: `Installed local LabVIEWCLI contract and explicit compare workflow`
+- source: `author direction`
+- summary: replace the installed Docker-only compare contract with a
+  Windows local-LabVIEWCLI settings contract, require explicit version and
+  bitness selection, add fail-closed runtime resolution, and replace automatic
+  second-selection compare generation with a dedicated compare preflight
+  section plus explicit compare action.
+
+## Round 5: Proposed Roadmap
+
+### Slice 1: Control-plane reset
+
+- rewrite `PROGRAM-0005` north star, gates, and delivery rules around Windows
+  local `LabVIEWCLI`
+- mark the Docker-only installed-user direction in `ISSUE-0410`,
+  `TRANCHE-013`, and `TRANCHE-015` as superseded
+- promote `ISSUE-0412` and `TRANCHE-016` as the active path
+- update current-state, queue, execution policy, requirements, RTM, and test
+  plan to match the new contract
+
+### Slice 2: Manifest and settings contract
+
+- remove installed-user Docker image settings from the public manifest contract
+- add public installed-user settings for:
+  - `viHistorySuite.labviewVersion`
+  - `viHistorySuite.labviewBitness`
+- make both required by contract
+- keep path discovery internal rather than exposing path knobs publicly
+- update manifest/docs tests that currently enforce `VHS-REQ-459`
+
+### Slice 3: Runtime resolution preflight
+
+- replace Docker-only runtime validation with local-install resolution on
+  Windows
+- require the selected version + bitness to resolve exactly one supported local
+  install
+- resolve `LabVIEWCLI` and the matching LabVIEW executable internally
+- fail closed when resolution is absent, ambiguous, or incompatible
+- surface blocking status in-panel plus one VS Code warning notification
+
+### Slice 4: Explicit compare workflow
+
+- remove second-selection auto-run behavior from the history panel
+- add a dedicated compare preflight section
+- show selected/base commit plus resolved version and bitness
+- add one explicit `Compare` action bound to the preflight state
+- preserve canonical newer-selected / older-base ordering
+
+### Slice 5: Internal-only Docker containment
+
+- move Docker compare language out of the installed-user surface
+- keep Docker in internal/maintainer proof and auxiliary surfaces only
+- ensure public installed docs no longer imply Docker is required for extension
+  users
+- keep any internal Docker proof lanes explicit and separate from the installed
+  contract
+
+### Slice 6: Proof and acceptance
+
+- add unit coverage for manifest/settings contract reset
+- add unit coverage for fail-closed runtime resolution and explicit compare
+  preflight behavior
+- add extension-host proof that compare does not auto-run after second
+  selection
+- add extension-host proof that missing version/bitness selection blocks
+  compare and emits the warning surface
+
+## Round 5: Recommended Implementation Order
+
+1. Slice 1: control-plane reset
+2. Slice 2: manifest and settings contract
+3. Slice 3: runtime resolution preflight
+4. Slice 4: explicit compare workflow
+5. Slice 5: internal-only Docker containment
+6. Slice 6: proof and acceptance
+
+## Round 5: Next Gate
+
+The next truthful move is to commit the control-plane rewrite first, not jump
+directly into runtime code changes while the repo still says installed users
+are Docker-only.
