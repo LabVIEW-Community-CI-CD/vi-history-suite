@@ -1541,10 +1541,11 @@
 - `TEST-DOC-077`: review documentation-workbench, current-state, SRS, and RTM
   and confirm the documentation continuous-integration contract now retains
   docs-integration evidence, bundle-drift checks, wiki doctor/plan facts, and
-  explicit installed-user execution-policy truth checks for Docker-first
-  Windows `auto`, no silent fallback, Docker-required hard stops, and
-  front-facing provider/progress guidance, while the governed package path
-  refreshes bundled installed-user docs before VSIX creation
+  explicit installed-user execution-policy truth checks for Docker-only
+  compare execution, engine-aware Windows/Linux image selection,
+  Docker-required hard stops without host fallback, and front-facing
+  provider/progress guidance, while the governed package path refreshes
+  bundled installed-user docs before VSIX creation
 - `TEST-DOC-078`: review current-state, PROGRAM-0003, ISSUE-0408, SRS, RTM,
   and the test plan and confirm the repo now retains a LabVIEW 2026-only
   Windows host operation matrix that runs the x64 tranche first and gates the

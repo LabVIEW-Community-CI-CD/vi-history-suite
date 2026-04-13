@@ -195,11 +195,21 @@ describe('requirements documentation coherence', () => {
     expect(rtm).not.toContain(
       'surface the selected execution mode, chosen provider, rejected-provider reasons, acquisition outcome, and next action'
     );
+    expect(rtm).toContain(
+      'surface the current released Docker-only installed-user execution-policy truths'
+    );
+    expect(rtm).not.toContain(
+      'surface the critical Docker-first Windows installed-user execution-policy truths'
+    );
     expect(testPlan).toContain('explicit compare-preflight entrypoint');
     expect(testPlan).toContain('does not expose');
     expect(testPlan).toContain('`labviewCliPath`, `labviewExePath`, `bitness`, `executionMode`, or public');
     expect(testPlan).toContain('without a resolved governing image');
     expect(testPlan).toContain('bounded expert isolated container execution path');
+    expect(testPlan).toContain('truth checks for Docker-only');
+    expect(testPlan).toContain('compare execution, engine-aware Windows/Linux image selection');
+    expect(testPlan).toContain('Docker-required hard stops without host fallback');
+    expect(testPlan).not.toContain('critical Docker-first Windows');
     expect(adr0005).toContain('bounded expert isolation path');
     expect(adr0005).not.toContain('preferred future isolation path');
 
