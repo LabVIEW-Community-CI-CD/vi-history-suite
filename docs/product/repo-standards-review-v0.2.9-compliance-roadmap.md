@@ -105,7 +105,7 @@ instead of living in chat memory.
   diagnosis, benchmark-proof issue/program traces, debt exit criteria, and
   execution-policy doc guards while keeping the stable file path intact for
   historical publication traceability
-- pass 7 status: checkpoint 9 complete
+- pass 7 status: checkpoint 10 complete
 - pass 7 checkpoint 1 outcome: the active reader/control-plane status surfaces
   now reflect that generated provider selection, exact Windows host-runtime
   preflight, and explicit compare preflight are landed on this branch, while
@@ -142,6 +142,10 @@ instead of living in chat memory.
 - pass 7 checkpoint 9 outcome: governed proof CLI help and validation text now
   uses proof-admission wording while keeping the stable flag surface and
   compatibility code paths intact
+- pass 7 checkpoint 10 outcome: the debt-retirement contract seed examples now
+  match the machine-readable ledger's actual retired versus
+  accepted-exception statuses instead of describing the bounded benchmark
+  ceilings and earlier extension UX debt as open work
 
 ## Pass Order
 
