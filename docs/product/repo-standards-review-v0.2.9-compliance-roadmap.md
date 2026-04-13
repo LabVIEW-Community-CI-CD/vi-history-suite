@@ -18,7 +18,7 @@ instead of living in chat memory.
   governance rewrite on this branch
 - pass 3 status: checkpoint 1 complete
 - pass 4 status: complete
-- pass 5 status: checkpoint 6 complete
+- pass 5 status: checkpoint 7 complete
 - pass 5 checkpoint 1 outcome: the runtime-provider and compare-flow
   requirement cluster now separates current implemented baseline truth from the
   active replacement direction
@@ -40,6 +40,10 @@ instead of living in chat memory.
   compare-selection rows now distinguish internal/runtime-proof compatibility
   inputs from the public installed-user manifest and no longer claim auto-run
   compare behavior as current branch truth
+- pass 5 checkpoint 7 outcome: older missing-runtime guidance no longer points
+  the active branch at retired public path settings and now traces blocked
+  compare guidance to provider-safe version, bitness, Docker-prerequisite, or
+  bounded internal-override facts as appropriate
 - pass 6 status: checkpoint 3 complete
 - pass 6 checkpoint 1 outcome: `ADR-0030` now uses a GitFlow-aligned file path
   and the live architecture, RTM, wiki-coverage, and release-governance test
@@ -110,7 +114,7 @@ instead of living in chat memory.
 5. Pass 5: Requirement-system refactor
    - objective: normalize the large requirement corpus instead of patching it
      piecemeal
-   - status: checkpoint 6 complete on this branch
+   - status: checkpoint 7 complete on this branch
    - checkpoint 1 scope:
      - separate the current implemented checkbox auto-run workflow from the
        planned explicit compare replacement
@@ -152,6 +156,11 @@ instead of living in chat memory.
        explicit compare-preflight model
      - add regression guards so the obsolete path-level manifest and compare
        auto-run wording do not re-enter the requirements package
+   - checkpoint 7 scope:
+     - normalize older missing-runtime guidance so it no longer points active
+       branch users toward retired public path settings
+     - keep missing-runtime notes aligned to provider-safe version, bitness,
+       Docker-prerequisite, and bounded internal-override correction paths
    - focus:
      - split `SyRS` versus `SRS` ownership cleanly
      - merge duplicates

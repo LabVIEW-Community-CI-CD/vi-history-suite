@@ -158,6 +158,12 @@ describe('requirements documentation coherence', () => {
     expect(srs).not.toContain(
       'selecting the second distinct retained revision triggers comparison-report generation automatically'
     );
+    expect(srs).toContain(
+      'Missing-runtime selections retain notes that point to the missing provider/runtime facts that actually govern the active lane'
+    );
+    expect(srs).not.toContain(
+      'Missing-runtime selections retain notes pointing to `viHistorySuite.labviewExePath` or `viHistorySuite.labviewCliPath` as appropriate.'
+    );
     expect(rtm).toContain(
       'Keep governed internal/runtime-proof override inputs for labviewCliPath, labviewExePath, and bitness ahead of auto-discovery'
     );
