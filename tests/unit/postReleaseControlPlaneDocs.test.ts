@@ -106,6 +106,8 @@ describe('post-release control-plane coherence', () => {
     expect(currentState).toContain('docs:ci:internal');
     expect(currentState).toContain('public-facade Linux smoke lane');
     expect(currentState).toContain('Docker is now part of the default installed extension setup path');
+    expect(currentState).toContain('Docker-required hard stops without host fallback');
+    expect(currentState).toContain('provider and progress visibility in the bundled guide');
     expect(currentState).toContain('workflow_dispatch');
     expect(currentState).toContain('npm run public:smoke:linux');
 

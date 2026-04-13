@@ -69,7 +69,7 @@ instead of living in chat memory.
 - pass 6 checkpoint 3 outcome: the active execution RTM and test-plan traces
   now point at `ADR-0038` as active doctrine, and the branch keeps
   `VHS-REQ-532..540` promoted as implemented branch truth
-- pass 7 status: checkpoint 2 complete
+- pass 7 status: checkpoint 3 complete
 - pass 7 checkpoint 1 outcome: the active reader/control-plane status surfaces
   now reflect that generated provider selection, exact Windows host-runtime
   preflight, and explicit compare preflight are landed on this branch, while
@@ -79,6 +79,9 @@ instead of living in chat memory.
   `PROGRAM-0005` now keep bundled/public user surfaces on the exact released
   Docker-only baseline until a future publication handoff, while the active
   host-default plus expert-Docker replacement remains authority/internal truth
+- pass 7 checkpoint 3 outcome: the docs-authoring workbench and current-state
+  docs-CI summaries now state the exact released bundled-guide execution truths
+  instead of the older Docker-first Windows auto shorthand
 
 ## Pass Order
 
@@ -227,19 +230,24 @@ instead of living in chat memory.
 7. Pass 7: Missing-document and proof-surface uplift
    - objective: add or repair the remaining documentation and proof surfaces
      needed for compliance
-   - status: checkpoint 2 complete on this branch
-   - checkpoint 1 scope:
+  - status: checkpoint 3 complete on this branch
+  - checkpoint 1 scope:
      - normalize the active status blocks in current-state, `PROGRAM-0005`,
        and `ISSUE-0412` so they stop understating the implemented branch truth
        after `VHS-REQ-532..540` landed
-   - checkpoint 2 scope:
-     - make the authority/internal versus bundled/public reader-surface split
-       explicit in the execution policy and public authority maps
-     - keep the exact released Docker-only installed-user baseline as the only
-       truthful bundled/public user contract until a future publication pass
-     - prevent unreleased host-default `LabVIEWCLI` wording from leaking into
-       public-facing reader truth early
-   - likely scope:
+  - checkpoint 2 scope:
+    - make the authority/internal versus bundled/public reader-surface split
+      explicit in the execution policy and public authority maps
+    - keep the exact released Docker-only installed-user baseline as the only
+      truthful bundled/public user contract until a future publication pass
+    - prevent unreleased host-default `LabVIEWCLI` wording from leaking into
+      public-facing reader truth early
+  - checkpoint 3 scope:
+    - normalize docs-authoring and current-state docs-CI summaries so they use
+      the exact released bundled-guide execution truths
+    - remove the older Docker-first Windows auto shorthand from those live
+      control-plane reader surfaces
+  - likely scope:
      - CM and release-control gaps outside pass 1
      - test-plan gaps
      - release and publication evidence
