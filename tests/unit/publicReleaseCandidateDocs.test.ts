@@ -197,9 +197,7 @@ describe('public release candidate control surface', () => {
     expect(currentState).toContain('active exact release candidate line on `develop`: `v1.2.2`');
     expect(currentState).toContain('candidate commit `12391e1`');
     expect(currentState).toContain('`527a8b4`');
-    expect(currentState).toContain('clean no-findings');
-    expect(currentState).toContain('expert-agent verdict via');
-    expect(currentState).toContain('vi-history-suite-expert-agent-reviewer');
+    expect(currentState).toContain('expert-agent verdict returned no findings');
 
     expect(srs).toContain('VHS-REQ-527');
     expect(srs).toContain('VHS-REQ-528');
