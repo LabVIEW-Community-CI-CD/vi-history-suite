@@ -16,9 +16,12 @@ instead of living in chat memory.
 - pass 1 status: complete
 - pass 1 outcome: released-skill CM gate now passes after the GitFlow branch
   governance rewrite on this branch
-- pass 3 status: checkpoint 1 in progress
-- pass 3 checkpoint 1 target: introduce `SyRS` and make `SyRS` versus `SRS`
-  ownership explicit before widening into requirement partitioning
+- pass 3 status: checkpoint 1 complete
+- pass 4 status: complete
+- pass 5 status: checkpoint 1 in progress
+- pass 5 checkpoint 1 target: partition the runtime-provider and compare-flow
+  requirement cluster into current implemented baseline versus active
+  replacement direction before widening into broader requirement cleanup
 
 ## Pass Order
 
@@ -67,6 +70,14 @@ instead of living in chat memory.
 5. Pass 5: Requirement-system refactor
    - objective: normalize the large requirement corpus instead of patching it
      piecemeal
+   - status: checkpoint 1 complete on this branch
+   - checkpoint 1 scope:
+     - separate the current implemented checkbox auto-run workflow from the
+       planned explicit compare replacement
+     - separate the exact released Docker-only baseline from the active
+       host-default plus expert-Docker installed-user contract
+     - retell the bounded Windows-container proof path without mislabeling it
+       as the active installed-user default
    - focus:
      - split `SyRS` versus `SRS` ownership cleanly
      - merge duplicates
@@ -109,10 +120,11 @@ instead of living in chat memory.
 
 ## Immediate Next Move
 
-Start pass 5 on the same branch:
+Continue pass 5 on the same branch from checkpoint 1:
 
-- use the contradiction ledger to target the runtime-provider rows that no
-  longer fit the host-default doctrine
-- keep requirement partitioning narrow and evidence-led instead of editing the
-  full `540`-row package at once
-- leave ADR renames and RTM-wide cleanup for the later dedicated passes
+- use the narrowed contradiction ledger to target the remaining live product
+  drift in runtime-provider implementation and explicit compare workflow
+- keep broader requirement-package cleanup deferred until the live product
+  truth is less contradictory
+- leave ADR renames and the rest of the large RTM cleanup for the later
+  dedicated passes

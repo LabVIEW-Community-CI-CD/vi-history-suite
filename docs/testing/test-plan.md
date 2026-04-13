@@ -960,10 +960,10 @@
   repo-support classification, keep chronology/docs visible, and keep the
   checkbox-selected compare flow available on generic repositories while making
   deeper benchmark and maintainer host-review governance explicit
-- `TEST-UNIT-317`: verify the second checkbox selection triggers compare
-  generation automatically for the exact newer-selected and older-base pair,
-  and that a retained window of only two commits is enough to use the primary
-  extension-user compare flow
+- `TEST-UNIT-317`: verify the current implemented checkbox workflow treats the
+  second distinct checkbox selection as the auto-run compare entrypoint for the
+  exact newer-selected and older-base pair, and that a retained window of only
+  two commits is enough to use the current primary extension-user compare flow
 - `TEST-UNIT-318`: verify generated-report and retained-packet compare views
   now lead with a white-background comparison-context block that surfaces the
   selected/base commit hash, date, author, and subject facts, while runtime
@@ -1295,13 +1295,11 @@
   effective runtime override bundle after CLI/env/default synthesis, reject
   non-canonical env-derived explicit Windows bundles, and keep default Windows
   benchmark runtime settings undefined when no explicit override is requested
-- `TEST-UNIT-299`: verify the installed extension exposes only
-  `viHistorySuite.windowsContainerImage` and
-  `viHistorySuite.linuxContainerImage`, does not expose `executionMode` or
-  installed host-runtime knobs on the current released line, and keeps that
-  released Docker-only baseline explicit while the authority control plane
-  promotes the active host-default local-`LabVIEWCLI` plus expert-Docker
-  replacement direction
+- `TEST-UNIT-299`: verify the authority package keeps the exact released
+  Docker-only image-settings baseline explicit while the active branch
+  manifest/settings surface exposes `viHistorySuite.labviewVersion` and
+  `viHistorySuite.labviewBitness`, omits `executionMode` and public image
+  settings, and treats Docker as a generated-CLI-selected expert provider
 - `TEST-DOC-064`: review current-state, PROGRAM-0003, ISSUE-0408, canonical
   exact-pair diagnosis guidance, ADR-0024, and the debt ledger and confirm the
   repo documents effective runtime override bundle validation rather than a raw
@@ -1310,12 +1308,14 @@
   ADR-0025, PROGRAM-0005, ISSUE-0410, ISSUE-0412, and the debt ledger and
   confirm the current released Docker-only installed contract remains explicit
   while the active control plane now promotes the host-default
-  local-`LabVIEWCLI` plus expert-Docker replacement direction
+  local-`LabVIEWCLI` plus expert-Docker replacement direction and no longer
+  misstates Windows auto/Docker-first behavior as the active installed-user
+  contract
 - `TEST-UNIT-300`: verify the execution-policy control-plane package keeps
-  the no-bypass rule, the current released Docker-only execution baseline, and
-  the active host-default local-`LabVIEWCLI` plus expert-Docker replacement
-  direction aligned across authority docs after the manifest removed
-  `viHistorySuite.executionMode`
+  the no-bypass rule, the historical Docker-only execution-request-validation
+  baseline, and the active host-default local-`LabVIEWCLI` plus expert-Docker
+  replacement direction aligned across authority docs and runtime-settings
+  ingestion after the manifest removed `viHistorySuite.executionMode`
 - `TEST-UNIT-301`: verify the Windows benchmark summary fails closed when any
   retained pair is `runtimeExecutionState=not-available`, retains the blocked
   reason as terminal benchmark truth, snapshots immutable per-run
@@ -1325,8 +1325,9 @@
 - `TEST-DOC-067`: review extension-execution-policy, ADR-0025, ADR-0026,
   PROGRAM-0005, ISSUE-0410, ISSUE-0412, current-state, and the debt ledger and
   confirm the authority package now keeps canonical Docker-only request
-  validation explicit as current implemented truth while promoting the active
-  host-default local-`LabVIEWCLI` plus expert-Docker transition without
+  validation explicit as historical implemented truth for the released line
+  while promoting the active host-default local-`LabVIEWCLI` plus
+  expert-Docker transition without
   claiming it is already shipped
 - `TEST-DOC-069`: review README, current-state, harnesses, PROGRAM-0003, and
   ISSUE-0408 and confirm contaminated Windows benchmark-image reruns are
