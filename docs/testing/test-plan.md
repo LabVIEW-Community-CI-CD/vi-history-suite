@@ -1278,10 +1278,10 @@
   preexisting listener on the selected `LabVIEW.ini` VI Server port
 - `TEST-DOC-059`: review current-state, harnesses, canonical exact-pair
   diagnosis guidance, PROGRAM-0003, ISSUE-0408, and ADR-0022 and confirm the
-  PROGRAM-0003 proof-admission contract for explicit runtime override inputs
-  is documented as shared across dashboard-smoke, decision-record, exact-pair
-  smoke, and the Windows/Linux benchmark CLIs rather than living in one
-  diagnosis entrypoint
+  PROGRAM-0003 proof-admission contract for explicit proof-admission override
+  inputs is documented as shared across dashboard-smoke, decision-record,
+  exact-pair smoke, and the Windows/Linux benchmark CLIs rather than living
+  in one diagnosis entrypoint
 - `TEST-DOC-060`: review current-state, harnesses, canonical exact-pair
   diagnosis guidance, PROGRAM-0003, ISSUE-0408, and ADR-0022 and confirm
   explicit Windows proof-admission override bundles are documented as invalid

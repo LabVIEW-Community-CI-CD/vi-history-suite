@@ -32,14 +32,14 @@ describe('execution-policy control plane', () => {
     expect(adr).toContain('shall not inject hidden explicit Windows runtime executable defaults');
     expect(currentState).toContain('`VHS-REQ-457..458` are now implemented');
     expect(currentState).toContain(
-      'proof-admission validation for explicit runtime override bundles'
+      'proof-admission validation for explicit proof-admission override bundles'
     );
     expect(currentState).toContain('effective proof-admission bundle');
     expect(benchmarkProgram).toContain('`ADR-0024`');
     expect(benchmarkProgram).toContain('proof-admission layer');
     expect(benchmarkIssue).toContain('`VHS-REQ-457..458`');
     expect(benchmarkIssue).toContain('effective proof-admission bundle');
-    expect(diagnosis).toContain('effective runtime bundle');
+    expect(diagnosis).toContain('effective proof-admission bundle');
     expect(debtLedger).toContain('DEBT-0005');
     expect(debtLedgerJson).toContain('"id": "DEBT-0005"');
     expect(debtLedgerJson).toContain('"retirementCommit": "2f4ced0"');

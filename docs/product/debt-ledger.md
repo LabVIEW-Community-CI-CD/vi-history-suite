@@ -28,8 +28,8 @@ The governing contract and taxonomy are:
 ## Notes
 
 - `DEBT-0001` captures the now-retired ambiguity where exact-pair diagnosis
-  could admit incomplete selected/base hash bundles or contradictory runtime
-  override bundles.
+  could admit incomplete selected/base hash bundles or contradictory
+  proof-admission override bundles.
 - `DEBT-0002` captures the now-retired contamination seam where explicit
   Windows runtime paths could mix x86 and x64 surfaces when
   `--bitness` was omitted.
@@ -44,8 +44,9 @@ The governing contract and taxonomy are:
   governed `CloseLabVIEW -Headless` reset exited `1`, so the current Linux
   contract remains bounded at that late full-window seam.
 - `DEBT-0005` captures the now-retired admission-control gap where
-  CLI/env/default synthesis could materialize an explicit effective runtime
-  bundle after a narrower raw-CLI validation pass had already succeeded.
+  CLI/env/default synthesis could materialize an explicit effective
+  proof-admission bundle after a narrower raw-CLI validation pass had already
+  succeeded.
 - `DEBT-0006` is now retired: the installed extension no longer exposes
   `executionMode` or installed host-runtime knobs, comparison generation now
   stays on one Docker-only x64 contract, the current Docker daemon engine on

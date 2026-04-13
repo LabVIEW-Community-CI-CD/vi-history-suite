@@ -175,8 +175,8 @@ Current retained benchmark truth at closure:
   `LabVIEWCLI.exe` plus x64 `LabVIEW.exe` bundle is admitted when that x64
   LabVIEW 2026 surface is the selected governed host runtime
 - `VHS-REQ-457..458` now govern the effective proof-admission bundle too:
-  governed proof subcommands validate the effective runtime bundle after CLI
-  arguments, environment variables, and subcommand-local defaults are
+  governed proof subcommands validate the effective proof-admission bundle
+  after CLI arguments, environment variables, and subcommand-local defaults are
   resolved, and the Windows benchmark path no longer injects hidden explicit
   Windows executable defaults when no explicit override was requested
 - `VHS-REQ-476` now governs contaminated Windows benchmark-image reruns too:

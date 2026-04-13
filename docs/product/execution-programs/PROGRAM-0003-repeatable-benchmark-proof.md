@@ -244,10 +244,10 @@ generic host-attach story.
 
 `ADR-0024` plus `VHS-REQ-457..458` now tighten that PROGRAM-0003
 proof-admission layer one step further: governed proof subcommands validate
-the effective runtime bundle after CLI arguments, environment variables, and
-subcommand-local defaults have been resolved, and the Windows benchmark CLI
-no longer injects hidden explicit Windows executable defaults when no
-explicit override was requested.
+the effective proof-admission bundle after CLI arguments, environment
+variables, and subcommand-local defaults have been resolved, and the Windows
+benchmark CLI no longer injects hidden explicit Windows executable defaults
+when no explicit override was requested.
 
 `VHS-REQ-476` closes a separate Windows benchmark-proof contamination seam that
 the latest canonical-host rerun exposed. With stale non-headless host

@@ -14,11 +14,12 @@ for governed proof reruns. They are not installed-user extension settings, not
 panel/provider UX, and not public evidence that the active extension contract
 still exposes `executionMode`.
 
-The wider shared proof-admission control for explicit runtime override inputs
-on the public governed-proof surface and its `PROGRAM-0003` subcommands is governed
-separately in `ADR-0022`. Exact-pair diagnosis
-inherits that shared layer, inherits the effective runtime bundle validation
-rule from `ADR-0024`, and then adds the selected/base pair contract below.
+The wider shared proof-admission control for explicit proof-admission override
+inputs on the public governed-proof surface and its `PROGRAM-0003`
+subcommands is governed separately in `ADR-0022`. Exact-pair diagnosis
+inherits that shared layer, inherits the effective proof-admission bundle
+validation rule from `ADR-0024`, and then adds the selected/base pair
+contract below.
 
 ## Canonical Profiles
 
@@ -72,7 +73,7 @@ Windows container provider rather than the host-native surface.
   - explicit proof-admission runtime paths require matching `--platform` and
     canonical `CreateComparisonReport` path bundles
   - CLI arguments, environment variables, and subcommand-local defaults are
-    validated as one effective runtime bundle before execution begins
+    validated as one effective proof-admission bundle before execution begins
   - the same admission layer now governs `runGovernedProof` subcommands for
     `dashboard-smoke`, `decision-record`, `report-smoke`, `benchmark-linux`,
     and `benchmark-windows`

@@ -84,7 +84,7 @@ instead of living in chat memory.
   `VHS-REQ-449`, `VHS-REQ-450`, and `VHS-REQ-452` now uses
   proof-admission-specific wording consistently across the governing `SRS`,
   `RTM`, test-plan, current-state, ADR, and benchmark-proof product packets
-- pass 6 status: checkpoint 3 complete
+- pass 6 status: checkpoint 4 complete
 - pass 6 checkpoint 1 outcome: `ADR-0030` now uses a GitFlow-aligned file path
   and the live architecture, RTM, wiki-coverage, and release-governance test
   surfaces all point at the corrected path
@@ -96,6 +96,11 @@ instead of living in chat memory.
 - pass 6 checkpoint 3 outcome: the active execution RTM and test-plan traces
   now point at `ADR-0038` as active doctrine, and the branch keeps
   `VHS-REQ-532..540` promoted as implemented branch truth
+- pass 6 checkpoint 4 outcome: `ADR-0024` now uses effective
+  proof-admission wording consistently through its active doctrine, exact-pair
+  diagnosis, benchmark-proof issue/program traces, debt exit criteria, and
+  execution-policy doc guards while keeping the stable file path intact for
+  historical publication traceability
 - pass 7 status: checkpoint 9 complete
 - pass 7 checkpoint 1 outcome: the active reader/control-plane status surfaces
   now reflect that generated provider selection, exact Windows host-runtime
@@ -123,8 +128,9 @@ instead of living in chat memory.
   input for targeted reruns, not installed-user extension doctrine
 - pass 7 checkpoint 7 outcome: the shared `PROGRAM-0003` proof doctrine in
   `ADR-0021`, `ADR-0022`, `ADR-0024`, `PROGRAM-0003`, `ISSUE-0408`, and
-  current-state now characterizes explicit runtime override inputs as bounded
-  proof-admission control rather than generic runtime-override doctrine
+  current-state now characterizes explicit proof-admission override inputs as
+  bounded proof-admission control rather than generic runtime-override
+  doctrine
 - pass 7 checkpoint 8 outcome: the `current-state` and `test-plan` traces for
   `VHS-REQ-451` and `VHS-REQ-457..458` now describe shared proof-admission and
   effective proof-admission bundle validation consistently with the normalized
@@ -350,8 +356,8 @@ instead of living in chat memory.
   - checkpoint 7 scope:
     - normalize the shared `PROGRAM-0003` proof-control package so
       `ADR-0021`, `ADR-0022`, `ADR-0024`, current-state, and the benchmark
-      proof issue/program surfaces describe explicit runtime override inputs as
-      bounded proof-admission control
+      proof issue/program surfaces describe explicit proof-admission override
+      inputs as bounded proof-admission control
     - keep the effective runtime-bundle validation rule intact while removing
       the broader doctrine drift from those documentation surfaces
   - checkpoint 8 scope:
