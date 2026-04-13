@@ -147,3 +147,76 @@ The implementation surface is split today:
    and older commit = base side regardless of selection order?
 8. After your answers, should the next round stay at contract-and-roadmap
    level, or should implementation slicing begin immediately?
+
+## Round 3: User Answers
+
+1. The proposal replaces the current Docker-only installed-user contract
+   entirely.
+2. Docker remains `internal-only`.
+3. Runtime selection is `settings-only`.
+4. The user must specify both version and bitness; specifying only bitness is
+   not sufficient.
+5. The user must specify both version and bitness; specifying only version is
+   not sufficient.
+
+## Round 3: Updated Working Assessment
+
+- `VHS-REQ-459` and the Docker-only installed-user control plane are no longer
+  compatible with the desired product direction.
+- The installed-user runtime surface should stop centering Docker image
+  settings and instead expose a Windows local-LabVIEWCLI selection contract.
+- Auto-picking latest installed LabVIEW is no longer the right default because
+  the user has clarified that both version and bitness must be explicitly
+  selected.
+- The runtime locator can still auto-discover installations internally, but the
+  installed-user workflow should fail closed until both required settings are
+  present and resolvable.
+
+## Round 3: Recommendations
+
+1. Replace the public installed-user settings surface with exactly two
+   required settings:
+   - `viHistorySuite.labviewVersion`
+   - `viHistorySuite.labviewBitness`
+   and remove Docker image settings from the installed-user contract.
+2. Keep executable-path discovery internal. Do not make path selection a
+   user-facing knob if the intended operator contract is version + bitness
+   only.
+3. Introduce a hard preflight gate:
+   compare cannot run until both settings are present and the runtime locator
+   resolves one matching local LabVIEW installation plus its `LabVIEWCLI`
+   surface.
+4. Make the history panel explicitly show the resolved runtime choice before
+   compare execution so the user can verify that their settings mapped to the
+   expected local install.
+5. Replace “second selection auto-generates compare” with a stable review
+   state and one explicit compare action. The current auto-run contract should
+   be treated as obsolete.
+6. Keep Docker proof and Docker settings in internal or maintainer surfaces
+   only. Do not leave them half-public, because that would preserve contract
+   ambiguity.
+
+## Round 3: Follow-Up Questions
+
+1. For the installed-user settings contract, do you want the values to be:
+   - free-text strings
+   - enumerated pick lists generated from discovered installs
+   - free-text settings plus validation messages
+2. Should the explicit compare action live:
+   - in the main history panel header
+   - in the compare-selection status card
+   - in a dedicated compare preflight section
+3. Before compare starts, should the panel show only:
+   - selected/base commit
+   - LabVIEW version
+   - bitness
+   or should it also show the resolved local executable paths as read-only
+   facts?
+4. If the selected version+bitness is not installed locally, should the user
+   see:
+   - a blocking panel status only
+   - a blocking panel status plus a VS Code warning notification
+5. Should the canonical compare ordering remain newer commit = selected side
+   and older commit = base side regardless of selection order?
+6. Do you want the next round to begin turning this into concrete roadmap
+   slices, or do you want one more contract round first?
