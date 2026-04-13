@@ -18,7 +18,7 @@ instead of living in chat memory.
   governance rewrite on this branch
 - pass 3 status: checkpoint 1 complete
 - pass 4 status: complete
-- pass 5 status: checkpoint 19 complete
+- pass 5 status: checkpoint 20 complete
 - pass 5 checkpoint 1 outcome: the runtime-provider and compare-flow
   requirement cluster now separates current implemented baseline truth from the
   active replacement direction
@@ -88,6 +88,10 @@ instead of living in chat memory.
   governing requirement rows and proof-only test wording now use effective
   proof-admission bundle language consistently, and the roadmap status lines
   no longer understate the completed pass-5 and pass-6 checkpoints
+- pass 5 checkpoint 20 outcome: the remaining live runtime-locator fallback
+  notes now describe proof-only host-missing guidance in terms of explicit
+  proof-admission overrides rather than generic runtime-override wording,
+  while the legacy compatibility reason codes remain stable
 - pass 6 status: checkpoint 4 complete
 - pass 6 checkpoint 1 outcome: `ADR-0030` now uses a GitFlow-aligned file path
   and the live architecture, RTM, wiki-coverage, and release-governance test

@@ -1021,10 +1021,10 @@ describe('comparisonRuntimeLocator', () => {
     expect(result.blockedReason).toBe('comparison-tool-not-found');
     expect(result.labviewExe?.path).toBe('/usr/local/natinst/LabVIEW-2026Q1-64/labview');
     expect(result.notes).toContain(
-      'Linux report generation remains best-effort; use documented LabVIEWCLI scan roots or an internal proof surface when explicit runtime overrides are required.'
+      'Linux report generation remains best-effort; use documented LabVIEWCLI scan roots or an internal proof surface when explicit proof-admission overrides are required.'
     );
     expect(result.notes).toContain(
-      'Install the matching LabVIEWCLI under the documented scan roots, or use an internal proof surface when explicit runtime overrides are required.'
+      'Install the matching LabVIEWCLI under the documented scan roots, or use an internal proof surface when explicit proof-admission overrides are required.'
     );
     expect(result.providerDecisions).toEqual([
       {

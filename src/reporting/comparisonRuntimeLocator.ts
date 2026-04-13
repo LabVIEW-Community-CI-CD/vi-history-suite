@@ -1200,12 +1200,12 @@ export async function locateComparisonRuntime(
 
   if (platform === 'linux') {
     notes.push(
-      'Linux report generation remains best-effort; use documented LabVIEWCLI scan roots or an internal proof surface when explicit runtime overrides are required.'
+      'Linux report generation remains best-effort; use documented LabVIEWCLI scan roots or an internal proof surface when explicit proof-admission overrides are required.'
     );
   }
 
   notes.push(
-    'Install the matching LabVIEWCLI under the documented scan roots, or use an internal proof surface when explicit runtime overrides are required.'
+    'Install the matching LabVIEWCLI under the documented scan roots, or use an internal proof surface when explicit proof-admission overrides are required.'
   );
 
   return {
