@@ -2675,6 +2675,84 @@ describe('createOpenViHistoryCommand', () => {
     });
   });
 
+  it('keeps legacy execution-mode-only doctor summaries readable as provider-request evidence', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    const comparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'retained-comparison-report-evidence',
+      reportStatus: 'blocked-runtime',
+      runtimeExecutionState: 'not-available',
+      blockedReason: 'docker-provider-unavailable',
+      runtimeDoctorSummaryLines: [
+        'Selected provider=windows-container; engine=labview-cli; platform=win32; bitness=x64.',
+        'Selected execution mode=docker-only.',
+        'Provider decision: rejected host-native because Host-native execution was not selected because docker-only execution was requested.',
+        'Tool facts: WindowsContainerCapability=available; ContainerAcquisitionState=failed',
+        'Next action: repair Docker connectivity or image registry access, then pull the governed Windows container image and rerun comparison report generation.'
+      ],
+      packetFilePath: '/workspace/.storage/reports/repo/file/report-packet.html',
+      reportFilePath: '/workspace/.storage/reports/repo/file/diff-report-eligible.vi.html',
+      metadataFilePath: '/workspace/.storage/reports/repo/file/report-metadata.json',
+      title: 'VI Comparison Report: eligible.vi'
+    });
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Update VI',
+            previousHash: '1111111122222222'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      comparisonReportAction
+    );
+
+    await command(targetUri as never);
+    await tracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReport',
+      hash: 'abcdef1234567890'
+    });
+
+    expect(showWarningMessageMock).toHaveBeenCalledWith(
+      'Generate compare blocked. Provider: windows-container. Provider request: docker. Container image acquisition: failed. Rejected providers: host-native because Host-native execution was not selected because docker-only execution was requested. Blocked reason: docker-provider-unavailable. Next action: repair Docker connectivity or image registry access, then pull the governed Windows container image and rerun comparison report generation.'
+    );
+    expect(tracker.getLastActionSummary()).toMatchObject({
+      comparisonRuntimePanelSummary:
+        'Generate compare for abcdef12 vs 11111111. Provider: windows-container. Provider request: docker. Report status: blocked-runtime. Runtime state: not-available. Container image acquisition: failed. Rejected providers: host-native because Host-native execution was not selected because docker-only execution was requested. Blocked reason: docker-provider-unavailable.',
+      comparisonRuntimePanelDetails: [
+        { label: 'Provider', value: 'windows-container' },
+        { label: 'Provider request', value: 'docker' },
+        { label: 'Report status', value: 'blocked-runtime' },
+        { label: 'Runtime state', value: 'not-available' },
+        { label: 'Container image acquisition', value: 'failed' },
+        {
+          label: 'Rejected providers',
+          value:
+            'host-native because Host-native execution was not selected because docker-only execution was requested'
+        },
+        { label: 'Blocked reason', value: 'docker-provider-unavailable' }
+      ]
+    });
+  });
+
   it('surfaces stable warnings when panel actions are blocked by workspace trust after the panel is already open', async () => {
     const targetUri = createMockUri('/workspace/eligible.vi');
     const tracker = new HistoryPanelTracker();

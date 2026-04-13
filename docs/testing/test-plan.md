@@ -1307,7 +1307,9 @@
   Docker-only image-settings baseline explicit while the active branch
   manifest/settings surface exposes `viHistorySuite.labviewVersion` and
   `viHistorySuite.labviewBitness`, omits `executionMode` and public image
-  settings, and treats Docker as a generated-CLI-selected expert provider
+  settings, treats Docker as a generated-CLI-selected expert provider, and
+  keeps older execution-mode-only runtime doctor summaries readable as legacy
+  provider-request evidence
 - `TEST-DOC-064`: review current-state, PROGRAM-0003, ISSUE-0408, canonical
   exact-pair diagnosis guidance, ADR-0024, and the debt ledger and confirm the
   repo documents effective proof-admission bundle validation rather than a

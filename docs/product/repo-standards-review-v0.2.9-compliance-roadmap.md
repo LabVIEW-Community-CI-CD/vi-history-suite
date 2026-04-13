@@ -109,7 +109,7 @@ instead of living in chat memory.
   diagnosis, benchmark-proof issue/program traces, debt exit criteria, and
   execution-policy doc guards while keeping the stable file path intact for
   historical publication traceability
-- pass 7 status: checkpoint 10 complete
+- pass 7 status: checkpoint 11 complete
 - pass 7 checkpoint 1 outcome: the active reader/control-plane status surfaces
   now reflect that generated provider selection, exact Windows host-runtime
   preflight, and explicit compare preflight are landed on this branch, while
@@ -150,6 +150,10 @@ instead of living in chat memory.
   match the machine-readable ledger's actual retired versus
   accepted-exception statuses instead of describing the bounded benchmark
   ceilings and earlier extension UX debt as open work
+- pass 7 checkpoint 11 outcome: command-surface proof now guards the legacy
+  `Selected execution mode=...` runtime doctor summary fallback so the active
+  panel and warning surfaces still derive `Provider request` correctly when
+  older retained evidence lacks the newer provider-request line
 
 ## Pass Order
 
