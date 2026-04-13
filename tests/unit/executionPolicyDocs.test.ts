@@ -205,6 +205,16 @@ describe('execution-policy control plane', () => {
     expect(issueNext).toContain('provider/version/bitness');
     expect(issueNext).toContain('explicit compare preflight state');
     expect(issueNext).toContain('VS Code warning notification');
+    expect(issueNext).toContain('Round 1 Discovery-Time Code Evidence');
+    expect(issueNext).toContain('That discovery snapshot is no longer current branch truth.');
+    expect(issueNext).toContain('Current Branch Checkpoint');
+    expect(issueNext).toContain('does not expose public image settings or public `executionMode`');
+    expect(issueNext).toContain('retaining');
+    expect(issueNext).toContain('`executionMode`, explicit paths, and related override lanes');
+    expect(issueNext).toContain('bounded');
+    expect(issueNext).toContain('internal/runtime-proof compatibility surfaces');
+    expect(issueNext).toContain('uses explicit compare preflight');
+    expect(issueNext).toContain('auto-generating compare output');
     expect(sustainmentProgram).toContain('Active post-release program.');
     expect(sustainmentProgram).toContain('That work remains explicit under active `PROGRAM-0005`');
     expect(adr0006).toContain('superseded by ADR-0025');

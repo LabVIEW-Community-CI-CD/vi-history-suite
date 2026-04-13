@@ -84,7 +84,7 @@ instead of living in chat memory.
 - pass 6 checkpoint 3 outcome: the active execution RTM and test-plan traces
   now point at `ADR-0038` as active doctrine, and the branch keeps
   `VHS-REQ-532..540` promoted as implemented branch truth
-- pass 7 status: checkpoint 4 complete
+- pass 7 status: checkpoint 5 complete
 - pass 7 checkpoint 1 outcome: the active reader/control-plane status surfaces
   now reflect that generated provider selection, exact Windows host-runtime
   preflight, and explicit compare preflight are landed on this branch, while
@@ -102,6 +102,10 @@ instead of living in chat memory.
   host-default plus expert-Docker direction, and the bounded
   internal/runtime-proof compatibility inputs instead of collapsing them into
   one outdated extension-user story
+- pass 7 checkpoint 5 outcome: `ISSUE-0412` now labels its round-1 code
+  evidence explicitly as discovery-time historical context and retains one
+  separate current-branch checkpoint so the issue packet no longer presents
+  stale Docker-image-setting and auto-run statements as live branch truth
 
 ## Pass Order
 
@@ -271,7 +275,7 @@ instead of living in chat memory.
 7. Pass 7: Missing-document and proof-surface uplift
    - objective: add or repair the remaining documentation and proof surfaces
      needed for compliance
-  - status: checkpoint 4 complete on this branch
+  - status: checkpoint 5 complete on this branch
   - checkpoint 1 scope:
      - normalize the active status blocks in current-state, `PROGRAM-0005`,
        and `ISSUE-0412` so they stop understating the implemented branch truth
@@ -295,6 +299,12 @@ instead of living in chat memory.
     - keep `executionMode` and explicit path overrides named only as bounded
       internal/runtime-proof compatibility inputs instead of public
       installed-user doctrine
+  - checkpoint 5 scope:
+    - normalize the active issue packet so its round-based historical
+      discovery evidence stays explicit historical context instead of being
+      mistaken for live branch truth
+    - retain one current-branch checkpoint inside the issue packet for the
+      now-landed provider/settings/runtime/preflight slices
   - likely scope:
      - CM and release-control gaps outside pass 1
      - test-plan gaps

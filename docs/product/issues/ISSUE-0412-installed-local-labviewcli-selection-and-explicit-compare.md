@@ -144,9 +144,9 @@ This means the proposal is not a small UX tweak. It is a product-direction
 change that must either replace or explicitly supersede the current
 Docker-only installed contract.
 
-## Current Code Evidence
+## Round 1 Discovery-Time Code Evidence
 
-The implementation surface is split today:
+At proposal discovery time, the implementation surface was split this way:
 
 - `package.json` still contributes a Docker-centered installed-user settings
   surface through `viHistorySuite.windowsContainerImage` and
@@ -162,6 +162,26 @@ The implementation surface is split today:
 - `src/commands/openViHistoryCommand.ts` and
   `tests/unit/openViHistoryCommand.test.ts` already encode the current
   second-selection auto-generate behavior
+
+That discovery snapshot is no longer current branch truth.
+
+## Current Branch Checkpoint
+
+The active branch now lands the replacement control-plane slices that were
+still only proposal material during round 1:
+
+- `package.json` now exposes `viHistorySuite.runtimeProvider`,
+  `viHistorySuite.labviewVersion`, and `viHistorySuite.labviewBitness` and
+  does not expose public image settings or public `executionMode`
+- `src/reporting/comparisonRuntimeLocator.ts` now derives installed-user
+  provider selection from persisted provider request first, while retaining
+  `executionMode`, explicit paths, and related override lanes only as bounded
+  internal/runtime-proof compatibility surfaces
+- `src/ui/historyPanel.ts` now uses explicit compare preflight instead of
+  auto-generating compare output on second commit selection
+- `src/commands/openViHistoryCommand.ts` now surfaces provider request,
+  selected provider, and preflight/block facts instead of treating
+  second-selection auto-run as the live branch contract
 
 ## Round 1 Working Assessment
 
