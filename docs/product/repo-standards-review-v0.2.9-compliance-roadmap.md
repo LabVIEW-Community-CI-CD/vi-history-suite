@@ -16,6 +16,9 @@ instead of living in chat memory.
 - pass 1 status: complete
 - pass 1 outcome: released-skill CM gate now passes after the GitFlow branch
   governance rewrite on this branch
+- pass 3 status: checkpoint 1 in progress
+- pass 3 checkpoint 1 target: introduce `SyRS` and make `SyRS` versus `SRS`
+  ownership explicit before widening into requirement partitioning
 
 ## Pass Order
 
@@ -41,6 +44,12 @@ instead of living in chat memory.
    - objective: add the missing governed package expected by the released
      skill, including `SyRS`, aligned `SRS`, `RTM`, architecture description,
      release-control package, and information-item map updates
+   - status: checkpoint 1 in progress on this branch
+   - checkpoint 1 scope:
+     - add `docs/requirements/syrs.md`
+     - update `SRS` to declare its parent `SyRS`
+     - update the information-item map to split system versus software
+       ownership explicitly
    - focus:
      - separate system-level and software-level scope truthfully
      - stop relying on partial package coverage
@@ -92,11 +101,9 @@ instead of living in chat memory.
 
 ## Immediate Next Move
 
-Start pass 2 on the same branch:
+Finish pass 3 checkpoint 1 on the same branch:
 
-- rerun released-skill audit and evidence-pack intentionally as a baseline
-- classify the remaining compliance work into a contradiction map and uplift
-  backlog
-- use that retained map to decide whether the next slice belongs in this
-  branch, a dedicated compliance branch, or a later promotion branch from
-  `develop`
+- validate the new `SyRS` package and explicit ownership split
+- retain the pass-3 checkpoint in git
+- then move to pass 4 contradiction-ledger work without widening directly into
+  the full `540`-row requirement refactor

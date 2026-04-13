@@ -6,15 +6,20 @@
 - Version: `v1.0.0`
 - Owner: sole author
 - Status: draft baseline
+- Parent system specification: [docs/requirements/syrs.md](./syrs.md)
 
 ## Scope
 
 - Purpose: deliver a governed VS Code extension baseline for content-detected VI
   history review in Git repositories, aligned to the authoritative research
   packet under `docs/research/authoritative/`.
+- This document refines the software behavior within the system boundary
+  defined in [syrs.md](./syrs.md).
 - In scope: content detection, eligibility indexing, authoritative menu gating,
   history panel, report planning, runtime/tool detection, local CI, and
   repo-native governance artifacts.
+- System-level release-control doctrine, documentation-package ownership, and
+  product-scope constraints are governed in [syrs.md](./syrs.md).
 - Out of scope for the current implemented tranche: live NI report execution,
   TimelineProvider publishable support, VS Code for Web, and external runtime
   dependencies on other VI-history repos.

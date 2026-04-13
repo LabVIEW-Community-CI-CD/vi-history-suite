@@ -52,7 +52,8 @@
 | Dashboard concentration ADR | `docs/architecture/adr/ADR-0008-concentration-first-dashboard-for-high-volume-review.md` | sole author | high-volume review design changes | ADR rationale matches the dashboard concentration and drill-down direction |
 | Review scenarios | `docs/product/review-scenarios.md` | sole author | human-review scenario or maturity changes | scenario registry matches the dashboard direction and harnesses |
 | Decision record template | `docs/product/decision-record-template.md` | sole author | human-review decision model changes | template matches the review scenario and dashboard evidence model |
-| Specification | `docs/requirements/srs.md` | sole author | capability change | requirement IDs and fit criteria are current |
+| System Specification | `docs/requirements/syrs.md` | sole author | system boundary, runtime-provider doctrine, release-control model, or information-item ownership changes | system-level intent and fit criteria are current |
+| Software Specification | `docs/requirements/srs.md` | sole author | software capability, implementation-level fit criterion, or software boundary change | software requirement IDs and fit criteria are current |
 | Traceability matrix | `docs/requirements/rtm.csv` | sole author | requirement or test change | every active requirement has at least one proving row |
 | Test plan | `docs/testing/test-plan.md` | sole author | verification strategy change | test cases and entry/exit criteria are current, and every governed RTM verification id is enumerated in the plan |
 | Architecture packet | `docs/architecture/overview.md` | sole author | design change | containers/components reflect live code |
@@ -65,5 +66,5 @@
 - Local runtime and design-gate evidence under `.cache/` is regenerated evidence,
   not the committed source of truth for repo meaning.
 - Future readers should start with `README.md`, `docs/product/current-state.md`,
-  `docs/product/debt-retirement-contract.md`, and
+  `docs/requirements/syrs.md`, `docs/product/debt-retirement-contract.md`, and
   `docs/research/authoritative/research-implementation-index.json`.

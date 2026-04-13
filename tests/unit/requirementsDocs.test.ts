@@ -87,6 +87,18 @@ function extractSrsRequirementIds(text: string): string[] {
 }
 
 describe('requirements documentation coherence', () => {
+  it('keeps the system and software requirement package split explicit', () => {
+    const syrs = readText('docs/requirements/syrs.md');
+    const srs = readText('docs/requirements/srs.md');
+    const informationItemMap = readText('docs/information-item-map.md');
+
+    expect(syrs).toContain('# System Requirements Specification');
+    expect(srs).toContain('Parent system specification: [docs/requirements/syrs.md](./syrs.md)');
+    expect(srs).toContain('This document refines the software behavior within the system boundary');
+    expect(informationItemMap).toContain('| System Specification | `docs/requirements/syrs.md` |');
+    expect(informationItemMap).toContain('| Software Specification | `docs/requirements/srs.md` |');
+  });
+
   it('keeps the SRS and RTM on the same requirement-id set', () => {
     const srsIds = new Set(extractSrsRequirementIds(readText('docs/requirements/srs.md')));
     const rtmIds = new Set(parseRtmRows().map((row) => row.ReqID));
