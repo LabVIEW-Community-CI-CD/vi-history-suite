@@ -719,3 +719,130 @@ Recommended tranche proposal:
 The next truthful move is to commit the control-plane rewrite first, not jump
 directly into runtime code changes while the repo still says installed users
 are Docker-only.
+
+## Round 9: Revised Roadmap Established
+
+Rounds 6 through 8 supersede the earlier Round 5 roadmap in one specific way:
+Docker no longer disappears from the installed-user contract entirely. Instead,
+the stable contract is now:
+
+- host-native Windows `LabVIEWCLI` is the default installed-user provider
+- Docker remains available only as a bounded expert provider selected through
+  the generated settings CLI
+- provider selection persists in user settings
+- provider is two-state: `host` or `docker`
+- Docker image family is derived from the active Docker engine
+- version and bitness remain required across both providers
+- Docker `x86` fails closed before compare starts
+- Docker preflight shows corrective guidance for both `host` and `x64`
+- compare preflight shows provider, version, and bitness together before the
+  explicit `Compare` action
+
+The roadmap is now stable again.
+
+## Round 9: Revised Control-Plane Move
+
+1. Rewrite `PROGRAM-0005` so it no longer claims Docker is absent from the
+   installed-user destination entirely.
+   New truth:
+   host-native `LabVIEWCLI` is the default installed-user path, while Docker
+   survives as a bounded expert CLI-selected provider.
+2. Keep `ISSUE-0410` as the closed historical Docker-first released baseline.
+3. Keep `TRANCHE-016` as the active tranche, but revise its summary and gates
+   to reflect host-default plus expert-Docker rather than host-only.
+
+Revised tranche statement:
+
+- `TRANCHE-016`
+- title: `Installed local LabVIEWCLI default path, expert Docker provider, and explicit compare workflow`
+- source: `author direction`
+- summary: replace the released Docker-first installed compare contract with a
+  host-default Windows `LabVIEWCLI` contract that still admits a bounded
+  expert Docker provider through the generated settings CLI, requires explicit
+  provider plus version plus bitness selection, validates the selected provider
+  fail-closed before compare, and replaces automatic second-selection compare
+  generation with a dedicated compare preflight section plus explicit compare
+  action.
+
+## Round 9: Revised Roadmap
+
+### Slice 1: Control-Plane Reset
+
+- rewrite `PROGRAM-0005`, execution policy, current-state, queue, README,
+  requirements, RTM, and test plan around:
+  - host-default installed compare
+  - bounded expert Docker provider
+  - explicit provider + version + bitness settings contract
+- classify the current exact released Docker-first contract as historical
+  implemented truth under `ISSUE-0410`, `TRANCHE-013`, and `TRANCHE-015`
+- remove stale claims that Docker is fully absent from future installed-user
+  execution
+
+### Slice 2: Persisted Provider-Selection CLI Contract
+
+- extend the generated user-profile CLI so one command writes exactly:
+  - provider
+  - LabVIEW version
+  - LabVIEW bitness
+- keep provider values bounded to:
+  - `host`
+  - `docker`
+- default the persisted provider to `host`
+- keep the CLI as the only place where Docker is selected explicitly
+
+### Slice 3: Host Runtime Preflight
+
+- require the selected version + bitness to resolve exactly one local Windows
+  `LabVIEWCLI`-backed runtime when provider = `host`
+- fail closed on missing, ambiguous, or incompatible host resolution
+- preserve one panel block plus one VS Code warning surface
+
+### Slice 4: Docker Runtime Preflight And Acquisition
+
+- when provider = `docker`, derive the governed Windows versus Linux image from
+  the active Docker engine automatically
+- retain one unified cold-pull/acquisition flow across Linux and Windows
+- reject unsupported bundles such as Docker + `x86` before compare starts
+- surface dual corrective guidance:
+  - switch provider to `host`
+  - or switch bitness to `x64`
+- keep engine-specific facts as bounded diagnostics rather than new provider
+  modes
+
+### Slice 5: Explicit Compare Workflow
+
+- remove second-selection auto-run behavior
+- add a dedicated compare preflight section
+- show:
+  - selected commit
+  - base commit
+  - provider
+  - LabVIEW version
+  - LabVIEW bitness
+- add one explicit `Compare` action
+- add a visible “update via CLI” hint on the provider/runtime summary
+- preserve canonical newer-selected / older-base ordering
+
+### Slice 6: Reader-Surface And Proof Normalization
+
+- normalize bundled, authority, and public execution-policy docs around the
+  new host-default plus expert-Docker contract
+- prove that host remains the default path when Docker is not selected
+- prove that Docker provider selection persists in settings through the CLI
+- prove that Docker `x86` fails closed with the dual corrective guidance
+- prove that compare does not start automatically on second selection
+
+## Round 9: Revised Implementation Order
+
+1. Slice 1: control-plane reset
+2. Slice 2: persisted provider-selection CLI contract
+3. Slice 3: host runtime preflight
+4. Slice 4: Docker runtime preflight and acquisition
+5. Slice 5: explicit compare workflow
+6. Slice 6: reader-surface and proof normalization
+
+## Round 9: Next Gate
+
+The next truthful move is still the control-plane rewrite first. The current
+program docs still encode the older “Docker fully internal-only” direction, so
+implementation should not advance further until that drift is removed.
