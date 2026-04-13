@@ -311,6 +311,91 @@ The implementation surface is split today:
    also visible in the compare preflight section before the explicit
    `Compare` action?
 
+## Round 7: User Answers
+
+1. Docker should be exposed only through the CLI as a bounded expert path.
+2. Docker selection should persist in user settings.
+3. If Docker is not explicitly selected, the default execution path should be
+   local `LabVIEWCLI` on Windows.
+4. The user asked for a UX-driven decision on whether version and bitness
+   remain required for every compare request.
+5. The user asked for a UX-driven decision on Docker plus `x86`.
+6. The user asked for a UX-driven decision on whether version still matters
+   when Docker is selected.
+7. The user asked for a UX-driven decision on whether Windows and Linux Docker
+   cold-pull behavior should be unified or visibly distinct.
+8. The user asked for a UX-driven decision on whether provider selection
+   should also be surfaced in compare preflight.
+
+## Round 7: Decisions
+
+1. Version and bitness should remain required for every compare request,
+   including the default host-native Windows path.
+   Rationale:
+   the requested runtime becomes deterministic, the compare result remains
+   attributable to one chosen LabVIEW surface, and the one-time CLI setup cost
+   is lower than the long-term ambiguity cost of auto-picking the wrong local
+   install.
+2. Docker plus `x86` should fail closed before compare starts.
+   Rationale:
+   expert users asked for Docker explicitly, so silently falling back to host
+   would hide a provider mismatch; the truthful UX is to block early and tell
+   the user that the governed NI Docker surface is x64-only.
+3. Version should still matter when Docker is selected.
+   Rationale:
+   the settings contract stays uniform across providers, and Docker admission
+   can truthfully reject version/bitness bundles that do not match the governed
+   NI image surface instead of silently overriding the user's chosen version.
+4. Docker acquisition should use one unified top-level flow across Windows and
+   Linux, with provider-specific diagnostics retained when needed.
+   Rationale:
+   users should see one consistent acquisition model (`selected`, `present`,
+   `pulling`, `acquired`, `failed`), while Windows-specific engine-mode facts
+   remain visible only when they matter.
+5. Provider selection should also be visible in compare preflight, even though
+   it is CLI-settable only.
+   Rationale:
+   preflight needs to tell the user what will actually run; hidden provider
+   state would make the explicit `Compare` action untrustworthy.
+
+## Round 7: Recommendations
+
+1. Replace the earlier “Docker becomes internal-only” direction with a narrower
+   rule:
+   Docker is not a normal panel workflow, but it is still a governed
+   expert-selectable provider through the settings CLI.
+2. Keep one persisted provider setting in user settings, but default it to the
+   host path.
+3. Keep the version+bitness requirement uniform across both providers.
+4. Treat Docker `x86` and unsupported Docker-version requests as preflight
+   admission failures, not as fallback cases.
+5. Show provider, version, and bitness together in the compare preflight
+   section before the explicit `Compare` action.
+6. Keep Docker acquisition and cold-pull progress under one shared user-facing
+   model, with Windows-specific engine-mode checks as bounded detail.
+
+## Round 7: Follow-Up Questions
+
+1. Do you want the provider setting to be:
+   - `host` or `docker`
+   - or a three-state value such as `host`, `docker-linux`, `docker-windows`?
+2. When Docker is selected, should the product choose the Windows versus Linux
+   NI image automatically from the current Docker engine, or should the CLI let
+   the expert user force one image family?
+3. For the persisted CLI contract, do you want one command that sets all three
+   facts together:
+   - provider
+   - LabVIEW version
+   - LabVIEW bitness
+   or separate commands for provider versus runtime selection?
+4. When preflight blocks Docker because the selected bundle is unsupported,
+   should the corrective guidance point the user to:
+   - rerun the CLI with `host`
+   - rerun the CLI with `x64`
+   - both
+5. Should the compare preflight section show the provider as read-only text, or
+   do you want it to include an “update via CLI” hint right there?
+
 ## Round 3: Recommendations
 
 1. Replace the public installed-user settings surface with exactly two
