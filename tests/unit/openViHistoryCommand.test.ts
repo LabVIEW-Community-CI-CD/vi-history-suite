@@ -2446,7 +2446,7 @@ describe('createOpenViHistoryCommand', () => {
       runtimeDiagnosticReason: 'labview-path-ignored-last-used-default',
       runtimeDoctorSummaryLines: [
         'Selected provider=host-native; engine=labview-cli; platform=win32; bitness=x86.',
-        'Selected execution mode=auto.',
+        'Provider request=auto.',
         'Next action: close the conflicting LabVIEW 2026 session or correct the selected host LabVIEW path before rerunning comparison report generation.'
       ],
       runtimeDiagnosticNotes: [
@@ -2514,7 +2514,7 @@ describe('createOpenViHistoryCommand', () => {
     });
 
     expect(showWarningMessageMock).toHaveBeenCalledWith(
-      'Generate compare runtime failed. Provider: host-native. Execution mode: auto. Failure reason: command-exited-nonzero. Diagnostic reason: labview-path-ignored-last-used-default. Next action: close the conflicting LabVIEW 2026 session or correct the selected host LabVIEW path before rerunning comparison report generation.'
+      'Generate compare runtime failed. Provider: host-native. Provider request: auto. Failure reason: command-exited-nonzero. Diagnostic reason: labview-path-ignored-last-used-default. Next action: close the conflicting LabVIEW 2026 session or correct the selected host LabVIEW path before rerunning comparison report generation.'
     );
     expect(tracker.getLastActionSummary()).toEqual({
       command: 'generateComparisonReport',
@@ -2526,12 +2526,12 @@ describe('createOpenViHistoryCommand', () => {
       runtimeFailureReason: 'command-exited-nonzero',
       comparisonRuntimePanelStatus: 'failed',
       comparisonRuntimePanelSummary:
-        'Generate compare for abcdef12 vs 11111111. Provider: host-native. Execution mode: auto. Report status: ready-for-runtime. Runtime state: failed. Failure reason: command-exited-nonzero. Diagnostic reason: labview-path-ignored-last-used-default.',
+        'Generate compare for abcdef12 vs 11111111. Provider: host-native. Provider request: auto. Report status: ready-for-runtime. Runtime state: failed. Failure reason: command-exited-nonzero. Diagnostic reason: labview-path-ignored-last-used-default.',
       comparisonRuntimePanelNextAction:
         'Next action: close the conflicting LabVIEW 2026 session or correct the selected host LabVIEW path before rerunning comparison report generation.',
       comparisonRuntimePanelDetails: [
         { label: 'Provider', value: 'host-native' },
-        { label: 'Execution mode', value: 'auto' },
+        { label: 'Provider request', value: 'auto' },
         { label: 'Report status', value: 'ready-for-runtime' },
         { label: 'Runtime state', value: 'failed' },
         { label: 'Failure reason', value: 'command-exited-nonzero' },
@@ -2584,7 +2584,7 @@ describe('createOpenViHistoryCommand', () => {
       blockedReason: 'windows-container-image-acquisition-failed',
       runtimeDoctorSummaryLines: [
         'Selected provider=windows-container; engine=labview-cli; platform=win32; bitness=x64.',
-        'Selected execution mode=auto.',
+        'Provider request=auto.',
         'Provider decision: rejected host-native because existing LabVIEW-related processes or a listener on governed VI Server port 3364 already exist.',
         'Tool facts: WindowsContainerCapability=available; ContainerAcquisitionState=failed',
         'Next action: repair Docker connectivity or image registry access, then pull the governed Windows container image and rerun comparison report generation.'
@@ -2632,13 +2632,13 @@ describe('createOpenViHistoryCommand', () => {
 
     const panel = createWebviewPanelMock.mock.results[0]?.value as MockPanel | undefined;
     expect(showWarningMessageMock).toHaveBeenCalledWith(
-      'Generate compare blocked. Provider: windows-container. Execution mode: auto. Container image acquisition: failed. Rejected providers: host-native because existing LabVIEW-related processes or a listener on governed VI Server port 3364 already exist. Blocked reason: windows-container-image-acquisition-failed. Next action: repair Docker connectivity or image registry access, then pull the governed Windows container image and rerun comparison report generation.'
+      'Generate compare blocked. Provider: windows-container. Provider request: auto. Container image acquisition: failed. Rejected providers: host-native because existing LabVIEW-related processes or a listener on governed VI Server port 3364 already exist. Blocked reason: windows-container-image-acquisition-failed. Next action: repair Docker connectivity or image registry access, then pull the governed Windows container image and rerun comparison report generation.'
     );
     expect(panel?.webview.postMessage).toHaveBeenCalledWith({
       type: 'comparisonRuntimeResult',
       status: 'blocked',
       summary:
-        'Generate compare for abcdef12 vs 11111111. Provider: windows-container. Execution mode: auto. Report status: blocked-runtime. Runtime state: not-available. Container image acquisition: failed. Rejected providers: host-native because existing LabVIEW-related processes or a listener on governed VI Server port 3364 already exist. Blocked reason: windows-container-image-acquisition-failed.',
+        'Generate compare for abcdef12 vs 11111111. Provider: windows-container. Provider request: auto. Report status: blocked-runtime. Runtime state: not-available. Container image acquisition: failed. Rejected providers: host-native because existing LabVIEW-related processes or a listener on governed VI Server port 3364 already exist. Blocked reason: windows-container-image-acquisition-failed.',
       nextAction:
         'Next action: repair Docker connectivity or image registry access, then pull the governed Windows container image and rerun comparison report generation.',
       details: [
@@ -2647,7 +2647,7 @@ describe('createOpenViHistoryCommand', () => {
           value: 'windows-container'
         },
         {
-          label: 'Execution mode',
+          label: 'Provider request',
           value: 'auto'
         },
         {
@@ -3040,7 +3040,7 @@ describe('createOpenViHistoryCommand', () => {
       type: 'comparisonRuntimeResult',
       status: 'succeeded',
       summary:
-        'Generate compare for abcdef12 vs 11111111. Provider: none. Execution mode: auto. Report status: ready-for-runtime. Runtime state: succeeded.',
+        'Generate compare for abcdef12 vs 11111111. Provider: none. Provider request: auto. Report status: ready-for-runtime. Runtime state: succeeded.',
       nextAction:
         'Next action: open the retained comparison packet for the full governed runtime summary.',
       details: [
@@ -3049,7 +3049,7 @@ describe('createOpenViHistoryCommand', () => {
           value: 'none'
         },
         {
-          label: 'Execution mode',
+          label: 'Provider request',
           value: 'auto'
         },
         {
@@ -3138,7 +3138,7 @@ describe('createOpenViHistoryCommand', () => {
       runtimeExecutionState: 'succeeded',
       runtimeDoctorSummaryLines: [
         'Selected provider=windows-container; engine=labview-cli; platform=win32; bitness=x64.',
-        'Selected execution mode=auto.',
+        'Provider request=auto.',
         'Provider decision: rejected host-native because existing LabVIEW-related processes or a listener on governed VI Server port 3364 already exist.',
         'Tool facts: WindowsContainerCapability=available; ContainerAcquisitionState=acquired',
         'Next action: open the retained comparison packet for the full governed runtime summary.'
@@ -3181,7 +3181,7 @@ describe('createOpenViHistoryCommand', () => {
     });
 
     expect(showInformationMessageMock).toHaveBeenCalledWith(
-      'Generate compare completed. Provider: windows-container. Execution mode: auto. Container image acquisition: acquired. Rejected providers: host-native because existing LabVIEW-related processes or a listener on governed VI Server port 3364 already exist.'
+      'Generate compare completed. Provider: windows-container. Provider request: auto. Container image acquisition: acquired. Rejected providers: host-native because existing LabVIEW-related processes or a listener on governed VI Server port 3364 already exist.'
     );
   });
 
@@ -3194,7 +3194,7 @@ describe('createOpenViHistoryCommand', () => {
       runtimeExecutionState: 'succeeded',
       runtimeDoctorSummaryLines: [
         'Selected provider=windows-container; engine=labview-cli; platform=win32; bitness=x64.',
-        'Selected execution mode=auto.',
+        'Provider request=auto.',
         'Tool facts: WindowsContainerCapability=available; ContainerAcquisitionState=acquired',
         'Next action: open the retained comparison packet for the full governed runtime summary.'
       ]
@@ -3239,7 +3239,7 @@ describe('createOpenViHistoryCommand', () => {
     const reopenedPanel = createWebviewPanelMock.mock.results[1]?.value as MockPanel | undefined;
     expect(reopenedPanel?.webview.html).toContain('data-state="succeeded"');
     expect(reopenedPanel?.webview.html).toContain(
-      'Generate compare for abcdef12 vs 11111111. Provider: windows-container. Execution mode: auto. Report status: ready-for-runtime. Runtime state: succeeded. Container image acquisition: acquired.'
+      'Generate compare for abcdef12 vs 11111111. Provider: windows-container. Provider request: auto. Report status: ready-for-runtime. Runtime state: succeeded. Container image acquisition: acquired.'
     );
     expect(reopenedPanel?.webview.html).toContain(
       'Next action: open the retained comparison packet for the full governed runtime summary.'

@@ -1113,7 +1113,7 @@ function buildComparisonRuntimePanelUpdate(
   const runtimeProvider = deriveRuntimeProviderFromDoctorSummary(
     result.runtimeDoctorSummaryLines
   );
-  const executionMode = deriveRuntimeExecutionModeFromDoctorSummary(
+  const providerRequest = deriveRuntimeProviderRequestFromDoctorSummary(
     result.runtimeDoctorSummaryLines
   );
   const acquisitionState = deriveWindowsContainerAcquisitionStateFromDoctorSummary(
@@ -1125,7 +1125,7 @@ function buildComparisonRuntimePanelUpdate(
   const segments = [
     `${commandLabel} for ${pairLabel}.`,
     `Provider: ${runtimeProvider ?? 'none'}.`,
-    `Execution mode: ${executionMode ?? 'auto'}.`,
+    `Provider request: ${providerRequest ?? 'auto'}.`,
     `Report status: ${result.reportStatus ?? 'none'}.`,
     `Runtime state: ${result.runtimeExecutionState ?? 'none'}.`
   ];
@@ -1149,7 +1149,7 @@ function buildComparisonRuntimePanelUpdate(
   const details = buildComparisonRuntimePanelDetails(
     result,
     runtimeProvider,
-    executionMode,
+    providerRequest,
     acquisitionState,
     rejectedProviderSummary
   );
@@ -1218,7 +1218,7 @@ function buildComparisonRuntimeWarningMessage(
   const runtimeProvider = deriveRuntimeProviderFromDoctorSummary(
     result.runtimeDoctorSummaryLines
   );
-  const executionMode = deriveRuntimeExecutionModeFromDoctorSummary(
+  const providerRequest = deriveRuntimeProviderRequestFromDoctorSummary(
     result.runtimeDoctorSummaryLines
   );
   const acquisitionState = deriveWindowsContainerAcquisitionStateFromDoctorSummary(
@@ -1236,8 +1236,8 @@ function buildComparisonRuntimeWarningMessage(
   if (runtimeProvider) {
     segments.push(`Provider: ${runtimeProvider}.`);
   }
-  if (executionMode) {
-    segments.push(`Execution mode: ${executionMode}.`);
+  if (providerRequest) {
+    segments.push(`Provider request: ${providerRequest}.`);
   }
   if (acquisitionState) {
     segments.push(`Container image acquisition: ${acquisitionState}.`);
@@ -1286,7 +1286,7 @@ function buildComparisonRuntimeInformationMessage(
   const runtimeProvider = deriveRuntimeProviderFromDoctorSummary(
     result.runtimeDoctorSummaryLines
   );
-  const executionMode = deriveRuntimeExecutionModeFromDoctorSummary(
+  const providerRequest = deriveRuntimeProviderRequestFromDoctorSummary(
     result.runtimeDoctorSummaryLines
   );
   const acquisitionState = deriveWindowsContainerAcquisitionStateFromDoctorSummary(
@@ -1300,8 +1300,8 @@ function buildComparisonRuntimeInformationMessage(
   if (runtimeProvider) {
     segments.push(`Provider: ${runtimeProvider}.`);
   }
-  if (executionMode) {
-    segments.push(`Execution mode: ${executionMode}.`);
+  if (providerRequest) {
+    segments.push(`Provider request: ${providerRequest}.`);
   }
   if (acquisitionState) {
     segments.push(`Container image acquisition: ${acquisitionState}.`);
@@ -1518,9 +1518,17 @@ function deriveRuntimeProviderFromDoctorSummary(
   return match?.[1];
 }
 
-function deriveRuntimeExecutionModeFromDoctorSummary(
+function deriveRuntimeProviderRequestFromDoctorSummary(
   summaryLines: string[] | undefined
 ): string | undefined {
+  const providerRequestLine = summaryLines?.find((line) =>
+    line.startsWith('Provider request=')
+  );
+  if (providerRequestLine) {
+    const match = providerRequestLine.match(/^Provider request=([^.;]+)[.;]?$/);
+    return match?.[1];
+  }
+
   const executionModeLine = summaryLines?.find((line) =>
     line.startsWith('Selected execution mode=')
   );
@@ -1529,7 +1537,7 @@ function deriveRuntimeExecutionModeFromDoctorSummary(
   }
 
   const match = executionModeLine.match(/^Selected execution mode=([^.;]+)[.;]?$/);
-  return match?.[1];
+  return mapLegacyExecutionModeToProviderRequest(match?.[1]);
 }
 
 function deriveWindowsContainerAcquisitionStateFromDoctorSummary(
@@ -1574,7 +1582,7 @@ function deriveRejectedProviderSummaryFromDoctorSummary(
 function buildComparisonRuntimePanelDetails(
   result: ComparisonReportActionResult,
   runtimeProvider: string | undefined,
-  executionMode: string | undefined,
+  providerRequest: string | undefined,
   acquisitionState: string | undefined,
   rejectedProviderSummary: string | undefined
 ): ComparisonRuntimePanelDetail[] {
@@ -1584,8 +1592,8 @@ function buildComparisonRuntimePanelDetails(
       value: runtimeProvider ?? 'none'
     },
     {
-      label: 'Execution mode',
-      value: executionMode ?? 'auto'
+      label: 'Provider request',
+      value: providerRequest ?? 'auto'
     },
     {
       label: 'Report status',
@@ -1633,4 +1641,22 @@ function buildComparisonRuntimePanelDetails(
   }
 
   return details;
+}
+
+function mapLegacyExecutionModeToProviderRequest(
+  executionMode: string | undefined
+): string | undefined {
+  if (!executionMode) {
+    return undefined;
+  }
+
+  if (executionMode === 'host-only') {
+    return 'host';
+  }
+
+  if (executionMode === 'docker-only') {
+    return 'docker';
+  }
+
+  return executionMode;
 }

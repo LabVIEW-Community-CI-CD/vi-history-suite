@@ -227,7 +227,7 @@ describe('renderHistoryPanelHtml', () => {
       outcome: 'opened-comparison-report',
       comparisonRuntimePanelStatus: 'succeeded',
       comparisonRuntimePanelSummary:
-        'Generate compare for abcdef12 vs 11111111. Provider: windows-container. Execution mode: auto. Report status: ready-for-runtime. Runtime state: succeeded. Windows image acquisition: acquired.',
+        'Generate compare for abcdef12 vs 11111111. Provider: windows-container. Provider request: auto. Report status: ready-for-runtime. Runtime state: succeeded. Windows image acquisition: acquired.',
       comparisonRuntimePanelNextAction:
         'Next action: open the retained comparison packet for the full governed runtime summary.',
       comparisonRuntimePanelDetails: [
@@ -236,7 +236,7 @@ describe('renderHistoryPanelHtml', () => {
           value: 'windows-container'
         },
         {
-          label: 'Execution mode',
+          label: 'Provider request',
           value: 'auto'
         },
         {
@@ -256,13 +256,13 @@ describe('renderHistoryPanelHtml', () => {
 
     expect(html).toContain('data-state="succeeded"');
     expect(html).toContain(
-      'Generate compare for abcdef12 vs 11111111. Provider: windows-container. Execution mode: auto. Report status: ready-for-runtime. Runtime state: succeeded. Windows image acquisition: acquired.'
+      'Generate compare for abcdef12 vs 11111111. Provider: windows-container. Provider request: auto. Report status: ready-for-runtime. Runtime state: succeeded. Windows image acquisition: acquired.'
     );
     expect(html).toContain(
       'Next action: open the retained comparison packet for the full governed runtime summary.'
     );
     expect(html).toContain('<strong>Provider:</strong> windows-container');
-    expect(html).toContain('<strong>Execution mode:</strong> auto');
+    expect(html).toContain('<strong>Provider request:</strong> auto');
     expect(html).toContain('<strong>Windows image acquisition:</strong> acquired');
   });
 

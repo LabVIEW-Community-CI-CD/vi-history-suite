@@ -23,12 +23,12 @@ export function buildComparisonRuntimeDoctorSummaryFromFacts(options: {
   const lines: string[] = [];
   const selection = options.runtimeSelection;
   const execution = options.runtimeExecution;
-  const executionMode = selection.executionMode ?? 'auto';
+  const providerRequest = deriveProviderRequestLabel(selection);
 
   lines.push(
     `Selected provider=${selection.provider}; engine=${selection.engine ?? 'none'}; platform=${selection.platform}; bitness=${selection.bitness}.`
   );
-  lines.push(`Selected execution mode=${executionMode}.`);
+  lines.push(`Provider request=${providerRequest}.`);
 
   if (selection.providerDecisions?.length) {
     lines.push(
@@ -112,6 +112,25 @@ export function buildComparisonRuntimeDoctorSummaryFromFacts(options: {
 
   lines.push(deriveRuntimeDoctorNextAction(options));
   return lines;
+}
+
+function deriveProviderRequestLabel(selection: {
+  requestedProvider?: 'host' | 'docker';
+  executionMode?: string;
+}): string {
+  if (selection.requestedProvider === 'host' || selection.requestedProvider === 'docker') {
+    return selection.requestedProvider;
+  }
+
+  if (selection.executionMode === 'host-only') {
+    return 'host';
+  }
+
+  if (selection.executionMode === 'docker-only') {
+    return 'docker';
+  }
+
+  return 'auto';
 }
 
 function deriveRuntimeDoctorNextAction(options: {

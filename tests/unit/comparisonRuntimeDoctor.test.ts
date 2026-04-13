@@ -42,7 +42,7 @@ describe('comparisonRuntimeDoctor', () => {
 
     expect(lines).toEqual([
       'Selected provider=unavailable; engine=none; platform=win32; bitness=x64.',
-      'Selected execution mode=auto.',
+      'Provider request=auto.',
       'Provider decision: rejected windows-container because Windows container image nationalinstruments/labview:2026q1-windows was not available to the current host.',
       'Provider decision: rejected host-native because A supported LabVIEW 2026 executable was located, but neither LabVIEWCLI nor LVCompare was located for host-native comparison-report execution.',
       'Selection notes: Configured LabVIEW CLI path was missing.',
@@ -109,7 +109,7 @@ describe('comparisonRuntimeDoctor', () => {
     expect(lines).toContain(
       'Selected provider=host-native; engine=labview-cli; platform=win32; bitness=x86.'
     );
-    expect(lines).toContain('Selected execution mode=host-only.');
+    expect(lines).toContain('Provider request=host.');
     expect(lines).toContain(
       'Selected runtime tools: LabVIEW=C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe | LabVIEWCLI=C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe.'
     );
@@ -176,7 +176,7 @@ describe('comparisonRuntimeDoctor', () => {
     expect(lines).toContain(
       'Selected provider=windows-container; engine=labview-cli; platform=win32; bitness=x64.'
     );
-    expect(lines).toContain('Selected execution mode=docker-only.');
+    expect(lines).toContain('Provider request=docker.');
     expect(lines).toContain(
       'Selected runtime tools: ContainerImage=nationalinstruments/labview:2026q1-windows.'
     );
@@ -237,7 +237,7 @@ describe('comparisonRuntimeDoctor', () => {
       }
     });
 
-    expect(lines).toContain('Selected execution mode=docker-only.');
+    expect(lines).toContain('Provider request=docker.');
     expect(lines.at(-1)).toBe(
       'Next action: repair Docker connectivity or image registry access, then pull the governed Windows container image and rerun comparison report generation.'
     );
@@ -465,7 +465,7 @@ describe('comparisonRuntimeDoctor', () => {
       }
     });
 
-    expect(lines).toContain('Selected execution mode=auto.');
+    expect(lines).toContain('Provider request=auto.');
     expect(lines).toContain(
       'Selected runtime tools: ContainerImage=nationalinstruments/labview:2026q1-windows | DockerCliAvailable=yes | DockerDaemonReachable=yes | ContainerHostMode=windows | ContainerCapability=yes | ContainerImagePresent=no | ContainerAcquisitionState=failed | HostLabVIEW.ini=C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.ini | HostVITcpPort=3363 | HostConflictDetected=yes.'
     );

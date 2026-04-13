@@ -189,6 +189,12 @@ describe('requirements documentation coherence', () => {
     expect(rtm).toContain('without a resolved governing container image');
     expect(rtm).not.toContain('without a configured container image');
     expect(rtm).toContain('remains available as a bounded expert lane');
+    expect(rtm).toContain(
+      'surface provider request, chosen provider, rejected-provider reasons, acquisition outcome, and next action'
+    );
+    expect(rtm).not.toContain(
+      'surface the selected execution mode, chosen provider, rejected-provider reasons, acquisition outcome, and next action'
+    );
     expect(testPlan).toContain('explicit compare-preflight entrypoint');
     expect(testPlan).toContain('does not expose');
     expect(testPlan).toContain('`labviewCliPath`, `labviewExePath`, `bitness`, `executionMode`, or public');

@@ -18,7 +18,7 @@ instead of living in chat memory.
   governance rewrite on this branch
 - pass 3 status: checkpoint 1 complete
 - pass 4 status: complete
-- pass 5 status: checkpoint 9 complete
+- pass 5 status: checkpoint 10 complete
 - pass 5 checkpoint 1 outcome: the runtime-provider and compare-flow
   requirement cluster now separates current implemented baseline truth from the
   active replacement direction
@@ -50,6 +50,10 @@ instead of living in chat memory.
 - pass 5 checkpoint 9 outcome: the older Windows x64 provider-boundary package
   no longer describes expert Docker isolation as a future-only path and now
   keeps that lane aligned with the active bounded-expert contract
+- pass 5 checkpoint 10 outcome: runtime doctor and history-panel runtime
+  summaries now foreground provider request instead of legacy execution-mode
+  vocabulary, while keeping older execution-mode-only retained summaries
+  readable as legacy evidence
 - pass 6 status: checkpoint 3 complete
 - pass 6 checkpoint 1 outcome: `ADR-0030` now uses a GitFlow-aligned file path
   and the live architecture, RTM, wiki-coverage, and release-governance test
@@ -120,7 +124,7 @@ instead of living in chat memory.
 5. Pass 5: Requirement-system refactor
    - objective: normalize the large requirement corpus instead of patching it
      piecemeal
-   - status: checkpoint 9 complete on this branch
+   - status: checkpoint 10 complete on this branch
    - checkpoint 1 scope:
      - separate the current implemented checkbox auto-run workflow from the
        planned explicit compare replacement
@@ -175,6 +179,11 @@ instead of living in chat memory.
      - normalize the Windows x64 provider-boundary requirement and supporting
        ADR/test-plan wording so expert Docker isolation is retained as a live
        bounded lane instead of a future-only placeholder
+   - checkpoint 10 scope:
+     - replace front-facing runtime-doctor and panel-summary execution-mode
+       wording with provider-request wording
+     - keep the command layer compatible with older retained execution-mode
+       doctor summaries so historical packets remain readable
    - focus:
      - split `SyRS` versus `SRS` ownership cleanly
      - merge duplicates
