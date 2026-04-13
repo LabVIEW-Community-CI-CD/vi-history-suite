@@ -67,6 +67,13 @@ export interface RuntimeProviderDecision {
   detail: string;
 }
 
+interface ExactWindowsHostRuntimeResolution {
+  labviewExe?: RuntimeToolCandidate;
+  labviewCli?: RuntimeToolCandidate;
+  blockedReason?: string;
+  notes?: string[];
+}
+
 export interface ComparisonRuntimeSelection {
   platform: RuntimePlatform;
   containerRuntimePlatform?: Extract<RuntimePlatform, 'win32' | 'linux'>;
@@ -761,7 +768,45 @@ export async function locateComparisonRuntime(
       candidate.exists &&
       matchesRequestedLabviewVersion(candidate, requestedLabviewVersion)
   );
-  const labviewExe = selectPreferredLabviewCandidate(labviewCandidates, bitness, platform);
+  const exactWindowsHostRuntime =
+    platform === 'win32' &&
+    requireVersionAndBitness &&
+    requestedLabviewVersion &&
+    executionMode !== 'docker-only'
+      ? resolveExactWindowsHostRuntime(candidates, requestedLabviewVersion, bitness)
+      : undefined;
+  const labviewExe =
+    exactWindowsHostRuntime?.labviewExe ??
+    selectPreferredLabviewCandidate(labviewCandidates, bitness, platform);
+
+  if (exactWindowsHostRuntime?.blockedReason) {
+    return {
+      platform,
+      executionMode,
+      requestedProvider: settings.requestedProvider,
+      bitness,
+      provider: 'unavailable',
+      blockedReason: exactWindowsHostRuntime.blockedReason,
+      providerDecisions: buildProviderDecisions({
+        platform,
+        containerRuntimePlatform: containerFacts?.runtimePlatform,
+        executionMode,
+        bitness,
+        configuredWindowsContainerImage: windowsContainerImage,
+        configuredLinuxContainerImage: linuxContainerImage,
+        containerImage: containerFacts?.image,
+        containerAvailable,
+        containerEvaluated,
+        ...buildContainerDecisionFacts(),
+        blockedReason: exactWindowsHostRuntime.blockedReason,
+        labviewExeFound: exactWindowsHostRuntime.blockedReason !== 'labview-exe-not-found'
+      }),
+      ...buildContainerSelectionFactsForReturn(),
+      notes: exactWindowsHostRuntime.notes ?? [],
+      registryQueryPlans,
+      candidates
+    };
+  }
   const hostRuntimeSurfaceFacts =
     platform === 'win32' && labviewExe
       ? await observeWindowsHostRuntimeSurfaceFacts(labviewExe.path, {
@@ -849,16 +894,23 @@ export async function locateComparisonRuntime(
         labviewExeFound: false
       }),
       ...buildContainerSelectionFactsForReturn(),
-      notes: [
-        `No supported LabVIEW ${requestedLabviewVersion ?? '2026'} runtime was located for report generation.`,
-        'Install the requested LabVIEW version locally and set viHistorySuite.labviewVersion plus viHistorySuite.labviewBitness before retrying compare.'
-      ],
+      notes:
+        platform === 'win32' && requireVersionAndBitness && requestedLabviewVersion
+          ? [
+              `No supported LabVIEW ${requestedLabviewVersion} ${bitness} runtime was located for report generation.`,
+              'Install the requested LabVIEW version locally and set viHistorySuite.labviewVersion plus viHistorySuite.labviewBitness before retrying compare.'
+            ]
+          : [
+              `No supported LabVIEW ${requestedLabviewVersion ?? '2026'} runtime was located for report generation.`,
+              'Install the requested LabVIEW version locally and set viHistorySuite.labviewVersion plus viHistorySuite.labviewBitness before retrying compare.'
+            ],
       registryQueryPlans,
       candidates
     };
   }
 
   const labviewCli =
+    exactWindowsHostRuntime?.labviewCli ??
     candidates.find((candidate) => candidate.kind === 'labview-cli' && candidate.exists) ??
     undefined;
   const lvCompare =
@@ -1893,6 +1945,15 @@ function deriveHostNativeRejectedReason(options: BuildProviderDecisionsOptions):
   if (options.blockedReason === 'labview-bitness-required') {
     return 'host-native-labview-bitness-required';
   }
+  if (options.blockedReason === 'labview-exe-ambiguous') {
+    return 'host-native-labview-exe-ambiguous';
+  }
+  if (options.blockedReason === 'labview-cli-not-found-for-bitness') {
+    return 'host-native-labview-cli-not-found-for-bitness';
+  }
+  if (options.blockedReason === 'labview-cli-ambiguous-for-bitness') {
+    return 'host-native-labview-cli-ambiguous-for-bitness';
+  }
   if (options.executionMode === 'docker-only') {
     return 'execution-mode-docker-only-disallows-host-native';
   }
@@ -1923,6 +1984,15 @@ function deriveHostNativeRejectedDetail(options: BuildProviderDecisionsOptions):
   }
   if (options.blockedReason === 'labview-bitness-required') {
     return 'Host-native execution was not selected because installed compare requires a LabVIEW bitness setting before runtime preflight can proceed.';
+  }
+  if (options.blockedReason === 'labview-exe-ambiguous') {
+    return 'Host-native execution was not selected because multiple supported LabVIEW executables matched the requested version and bitness.';
+  }
+  if (options.blockedReason === 'labview-cli-not-found-for-bitness') {
+    return 'A supported LabVIEW executable matched the requested version and bitness, but no matching LabVIEWCLI surface was located for that bitness.';
+  }
+  if (options.blockedReason === 'labview-cli-ambiguous-for-bitness') {
+    return 'A supported LabVIEW executable matched the requested version and bitness, but multiple matching LabVIEWCLI surfaces were located for that bitness.';
   }
   if (options.executionMode === 'docker-only') {
     return 'Host-native execution was not selected because docker-only execution was requested.';
@@ -2004,7 +2074,8 @@ function buildConfiguredCandidate(
     kind,
     path: trimmed,
     source: 'configured',
-    bitness: kind === 'labview-exe' ? inferBitnessFromPath(trimmed) : undefined
+    bitness:
+      kind === 'labview-exe' || kind === 'labview-cli' ? inferBitnessFromPath(trimmed) : undefined
   };
 }
 
@@ -2054,6 +2125,70 @@ function selectPreferredLabviewCandidate(
   }
 
   return candidates[0];
+}
+
+function resolveExactWindowsHostRuntime(
+  candidates: RuntimeToolCandidate[],
+  requestedVersion: string,
+  bitness: RuntimeBitness
+): ExactWindowsHostRuntimeResolution {
+  const matchingLabviewCandidates = candidates.filter(
+    (candidate) =>
+      candidate.kind === 'labview-exe' &&
+      candidate.exists &&
+      candidate.bitness === bitness &&
+      matchesRequestedLabviewVersion(candidate, requestedVersion)
+  );
+
+  if (matchingLabviewCandidates.length > 1) {
+    return {
+      blockedReason: 'labview-exe-ambiguous',
+      notes: [
+        `Installed compare found multiple supported LabVIEW ${requestedVersion} ${bitness} runtimes, so local runtime preflight could not resolve one exact executable.`
+      ]
+    };
+  }
+
+  const labviewExe = matchingLabviewCandidates[0];
+  if (!labviewExe) {
+    return {
+      blockedReason: 'labview-exe-not-found',
+      notes: [
+        `No supported LabVIEW ${requestedVersion} ${bitness} runtime was located for report generation.`,
+        'Install the requested LabVIEW version locally and set viHistorySuite.labviewVersion plus viHistorySuite.labviewBitness before retrying compare.'
+      ]
+    };
+  }
+
+  const matchingLabviewCliCandidates = candidates.filter(
+    (candidate) =>
+      candidate.kind === 'labview-cli' && candidate.exists && candidate.bitness === bitness
+  );
+
+  if (matchingLabviewCliCandidates.length > 1) {
+    return {
+      blockedReason: 'labview-cli-ambiguous-for-bitness',
+      notes: [
+        `Installed compare found multiple LabVIEWCLI surfaces for requested ${bitness} execution, so local runtime preflight could not resolve one exact CLI path.`
+      ]
+    };
+  }
+
+  const labviewCli = matchingLabviewCliCandidates[0];
+  if (!labviewCli) {
+    return {
+      blockedReason: 'labview-cli-not-found-for-bitness',
+      notes: [
+        `No matching LabVIEWCLI ${bitness} surface was located for requested LabVIEW ${requestedVersion} ${bitness} execution.`,
+        'Install the matching LabVIEWCLI surface for the requested bitness, or adjust viHistorySuite.runtimeProvider, viHistorySuite.labviewVersion, or viHistorySuite.labviewBitness before retrying compare.'
+      ]
+    };
+  }
+
+  return {
+    labviewExe,
+    labviewCli
+  };
 }
 
 function matchesRequestedLabviewVersion(

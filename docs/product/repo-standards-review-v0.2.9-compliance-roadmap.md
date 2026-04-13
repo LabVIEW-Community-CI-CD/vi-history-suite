@@ -18,7 +18,7 @@ instead of living in chat memory.
   governance rewrite on this branch
 - pass 3 status: checkpoint 1 complete
 - pass 4 status: complete
-- pass 5 status: checkpoint 3 complete
+- pass 5 status: checkpoint 4 complete
 - pass 5 checkpoint 1 outcome: the runtime-provider and compare-flow
   requirement cluster now separates current implemented baseline truth from the
   active replacement direction
@@ -28,6 +28,10 @@ instead of living in chat memory.
 - pass 5 checkpoint 3 outcome: the live VI History panel now uses explicit
   compare preflight with a dedicated `Compare` action, and the command path
   blocks compare generation when preflight is not ready
+- pass 5 checkpoint 4 outcome: Windows installed compare runtime preflight now
+  resolves one exact version+bitness LabVIEW executable plus matching
+  `LabVIEWCLI` surface, and fails closed on missing, ambiguous, or
+  incompatible host resolution under `VHS-REQ-532`
 - pass 6 status: checkpoint 3 complete
 - pass 6 checkpoint 1 outcome: `ADR-0030` now uses a GitFlow-aligned file path
   and the live architecture, RTM, wiki-coverage, and release-governance test
@@ -39,8 +43,7 @@ instead of living in chat memory.
   baseline decisions
 - pass 6 checkpoint 3 outcome: the active execution RTM and test-plan traces
   now point at `ADR-0038` as active doctrine, and the branch keeps
-  `VHS-REQ-532` explicitly planned while `VHS-REQ-533..540` remain promoted as
-  implemented branch truth
+  `VHS-REQ-532..540` promoted as implemented branch truth
 
 ## Pass Order
 
@@ -89,7 +92,7 @@ instead of living in chat memory.
 5. Pass 5: Requirement-system refactor
    - objective: normalize the large requirement corpus instead of patching it
      piecemeal
-   - status: checkpoint 3 complete on this branch
+   - status: checkpoint 4 complete on this branch
    - checkpoint 1 scope:
      - separate the current implemented checkbox auto-run workflow from the
        planned explicit compare replacement
@@ -111,6 +114,12 @@ instead of living in chat memory.
        LabVIEW bitness before compare execution
      - block compare generation when preflight is not ready and retain focused
        command-path proof for that block
+   - checkpoint 4 scope:
+     - make Windows installed compare runtime preflight resolve one exact
+       version+bitness LabVIEW executable plus one matching `LabVIEWCLI`
+       surface
+     - fail closed when that host resolution is missing, ambiguous, or
+       incompatible instead of selecting the first matching candidate
    - focus:
      - split `SyRS` versus `SRS` ownership cleanly
      - merge duplicates
@@ -135,9 +144,8 @@ instead of living in chat memory.
    - checkpoint 3 scope:
      - retrace the active execution RTM and test-plan review surfaces through
        `ADR-0038`
-     - keep `VHS-REQ-532` explicitly planned until Windows exact-runtime
-       selection handles the remaining ambiguous/incompatible refinement
-       instead of over-promoting the row early
+     - keep the active execution RTM and test-plan package honest until the
+       matching Windows exact-runtime-selection refinement is actually proven
    - focus:
      - keep the architecture description as primary truth
      - keep ADRs as retained decision rationale where they still add value
@@ -171,11 +179,9 @@ instead of living in chat memory.
 
 ## Immediate Next Move
 
-Resume the requirement-system cleanup from the now-stable pass-6 execution
-doctrine package:
+Continue the broader requirement-system cleanup from the now-stable pass-5 and
+pass-6 execution package:
 
-- implement the remaining Windows exact-runtime-selection refinement behind
-  `VHS-REQ-532`
 - widen the requirement-row cleanup beyond the targeted runtime-provider
   cluster now that ADR and traceability drift is narrowed out
 - keep later missing-document and proof-surface uplift sequenced behind those

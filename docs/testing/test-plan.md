@@ -1793,7 +1793,7 @@
   required LabVIEW version + bitness settings, host-default local
   `LabVIEWCLI`, bounded expert Docker admission through the generated CLI,
   explicit compare preflight, panel + warning fail-closed behavior, and the
-  remaining planned Windows exact-runtime-selection refinement under
+  Windows exact-runtime-selection fail-closed behavior retained under
   `VHS-REQ-532`
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`

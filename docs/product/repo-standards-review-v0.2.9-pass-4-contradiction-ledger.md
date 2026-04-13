@@ -39,12 +39,12 @@ that closure rather than reopen another narrow ADR-only cleanup loop.
 
 The highest-value next move is now:
 
-1. implement the remaining Windows exact-runtime-selection refinement behind
-   `VHS-REQ-532`
-2. widen the requirement-row normalization beyond the targeted
+1. widen the requirement-row normalization beyond the targeted
    runtime-provider cluster
-3. keep later missing-document and proof-surface uplift sequenced behind those
+2. keep later missing-document and proof-surface uplift sequenced behind those
    requirement/package corrections
+3. keep release-candidate compliance closeout behind those broader package
+   corrections
 
 That order keeps the remaining live contradiction surface narrow before the
 broader naming and traceability cleanup begins.
