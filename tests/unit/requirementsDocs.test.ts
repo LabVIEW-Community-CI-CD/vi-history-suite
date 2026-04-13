@@ -192,6 +192,7 @@ describe('requirements documentation coherence', () => {
     expect(rtm).toContain('explicit Windows proof-admission runtime paths');
     expect(rtm).not.toContain('canonical runtime-override admission contract');
     expect(rtm).not.toContain('effective runtime override bundle');
+    expect(rtm).not.toContain('effective launch bundle');
     expect(rtm).not.toContain('explicit runtime override bundles');
     expect(rtm).not.toContain('explicit Windows runtime override paths');
     expect(rtm).toContain('without a resolved governing container image');

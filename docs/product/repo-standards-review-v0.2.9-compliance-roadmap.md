@@ -18,7 +18,7 @@ instead of living in chat memory.
   governance rewrite on this branch
 - pass 3 status: checkpoint 1 complete
 - pass 4 status: complete
-- pass 5 status: checkpoint 18 complete
+- pass 5 status: checkpoint 19 complete
 - pass 5 checkpoint 1 outcome: the runtime-provider and compare-flow
   requirement cluster now separates current implemented baseline truth from the
   active replacement direction
@@ -84,6 +84,10 @@ instead of living in chat memory.
   `VHS-REQ-449`, `VHS-REQ-450`, and `VHS-REQ-452` now uses
   proof-admission-specific wording consistently across the governing `SRS`,
   `RTM`, test-plan, current-state, ADR, and benchmark-proof product packets
+- pass 5 checkpoint 19 outcome: the remaining active `VHS-REQ-457..458`
+  governing requirement rows and proof-only test wording now use effective
+  proof-admission bundle language consistently, and the roadmap status lines
+  no longer understate the completed pass-5 and pass-6 checkpoints
 - pass 6 status: checkpoint 4 complete
 - pass 6 checkpoint 1 outcome: `ADR-0030` now uses a GitFlow-aligned file path
   and the live architecture, RTM, wiki-coverage, and release-governance test
@@ -186,7 +190,7 @@ instead of living in chat memory.
 5. Pass 5: Requirement-system refactor
    - objective: normalize the large requirement corpus instead of patching it
      piecemeal
-  - status: checkpoint 17 complete on this branch
+   - status: checkpoint 19 complete on this branch
    - checkpoint 1 scope:
      - separate the current implemented checkbox auto-run workflow from the
        planned explicit compare replacement
@@ -293,7 +297,7 @@ instead of living in chat memory.
 6. Pass 6: Architecture and ADR refactor
    - objective: align the large ADR package to the released skill's current
      architecture expectations
-   - status: checkpoint 3 complete on this branch
+   - status: checkpoint 4 complete on this branch
    - checkpoint 1 scope:
      - rename `ADR-0030` to remove the retired `gitflow-lite` filename drift
      - update architecture overview, RTM, wiki coverage, and release-governance
