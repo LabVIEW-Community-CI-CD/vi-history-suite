@@ -51,6 +51,8 @@ Active develop direction:
   on Windows with local `LabVIEWCLI`
 - the installed manifest/settings slice now exposes required LabVIEW version
   plus bitness instead of public Docker settings
+- the next user-seeding surface is an on-demand CLI generated into user-profile
+  storage rather than a prebuilt VSIX-shipped binary
 - the active direction is governed under `TRANCHE-016` / `ISSUE-0412` /
   `PROGRAM-0005`
 - the exact released installed workflow above remains the truthful release
@@ -579,6 +581,8 @@ Current runtime direction for installed extension users:
   - installed Windows users will use local `LabVIEWCLI` instead of Docker
   - the installed manifest/settings contract now exposes required LabVIEW
     version plus bitness
+  - the planned settings CLI will be generated in place on first use rather
+    than shipped as a prebuilt payload
   - compare will move behind a dedicated preflight section and explicit
     `Compare` action
 - the installed-user front face is now the VS Code Marketplace listing plus

@@ -57,6 +57,8 @@ contract is:
 - settings-only LabVIEW selection through:
   - `viHistorySuite.labviewVersion`
   - `viHistorySuite.labviewBitness`
+- optional settings seeding through a generated cross-platform CLI launcher
+  under user-profile storage
 - both settings are required by contract
 - path discovery remains internal rather than user-facing
 - compare does not auto-run when the second commit is selected
@@ -162,6 +164,8 @@ That means:
   present Docker as the compare contract
 - the historical released Docker baseline remains retained only as a separate
   exact-release fact, not as the active installed-user destination
+- the planned settings CLI is generated in place on first use instead of being
+  shipped as a prebuilt VSIX payload
 
 ## Transparency Contract
 

@@ -1702,6 +1702,10 @@
   version and bitness before the explicit `Compare` action
 - `TEST-UNIT-344`: verify missing or unresolved LabVIEW version/bitness blocks
   compare in the panel and emits a VS Code warning notification
+- `TEST-UNIT-345`: verify the on-demand settings CLI materializes platform
+  launchers under user-profile storage on first use, writes
+  `viHistorySuite.labviewVersion` plus `viHistorySuite.labviewBitness`, and
+  does not require PATH mutation or a prebuilt VSIX-shipped CLI payload
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are

@@ -29,6 +29,8 @@ history instead of chat memory.
 
 - Windows installed-extension compare execution through local `LabVIEWCLI`
 - settings-only LabVIEW version + bitness selection
+- cross-platform settings CLI that writes those settings into user-profile
+  storage without PATH mutation
 - fail-closed local runtime resolution and preflight
 - explicit compare preflight state after commit selection
 - selected/base commit plus version/bitness visibility before compare starts
@@ -44,6 +46,7 @@ history instead of chat memory.
   contract before the runtime and UI slices land
 - expanding the installed-user contract into path-picking or provider-mode
   selection
+- shipping a prebuilt external settings CLI payload inside the VSIX
 - removing internal Docker proof surfaces that are still useful to maintainers
 - changing the public evaluation repo scope beyond `vi-history-suite`
 
@@ -61,6 +64,8 @@ history instead of chat memory.
 - the installed-user settings contract requires version and bitness
 - runtime preflight resolves one local Windows `LabVIEWCLI` install or fails
   closed
+- first settings-CLI use builds a local launcher in user-profile storage
+  instead of depending on a prebuilt VSIX-shipped CLI binary
 - compare does not auto-run on second selection
 - the panel shows selected/base commit plus version/bitness before compare
 - unresolved runtime selection blocks compare in-panel and through a VS Code
@@ -76,14 +81,11 @@ history instead of chat memory.
 
 ## Current Active Slice
 
-- land the installed manifest/settings contract
-- expose `viHistorySuite.labviewVersion` plus
-  `viHistorySuite.labviewBitness` on the installed-user surface
-- remove public Docker settings from the installed extension manifest while
-  retaining the historical released Docker baseline in docs
-- switch the installed settings reader onto Windows local `LabVIEWCLI`
-  selection fields without overclaiming the later runtime-preflight or
-  explicit-compare slices
+- finish exact single-runtime preflight by failing closed on ambiguity, not
+  only on missing required settings
+- add an on-demand cross-platform settings CLI that is generated into
+  user-profile storage on first use
+- land the explicit compare-preflight workflow after second commit selection
 
 ## Round 1: User Proposal Facts
 
@@ -218,7 +220,18 @@ The implementation surface is split today:
 7. Should the canonical compare ordering remain newer commit = selected side
    and older commit = base side regardless of selection order?
 8. After your answers, should the next round stay at contract-and-roadmap
-   level, or should implementation slicing begin immediately?
+  level, or should implementation slicing begin immediately?
+
+## Round 5: On-Demand Settings CLI Direction
+
+- the settings CLI should not be shipped as a prebuilt VSIX payload
+- instead, the first settings operation should build the CLI in place under
+  user-profile storage
+- the launcher should remain cross-platform so Windows and Linux test hosts can
+  seed the same settings contract
+- the CLI still writes only `viHistorySuite.labviewVersion` and
+  `viHistorySuite.labviewBitness`; it does not become a separate runtime mode
+  or path-picking surface
 
 ## Round 3: User Answers
 

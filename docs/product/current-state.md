@@ -316,11 +316,11 @@ Post-release tranches:
   - active execution program: [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
   - the current exact released installed extension is still Docker-only, but
     that is now historical baseline truth rather than the active destination
-  - the control-plane reset is landed and the installed manifest/settings
-    slice now exposes required version plus bitness on the installed-user
-    surface
-  - the remaining active slices are local runtime preflight, explicit compare
-    preflight, and installed-user warning behavior
+  - the control-plane reset and installed manifest/settings slices are landed
+  - required-settings runtime preflight is partially landed, but exact
+    single-runtime ambiguity handling is still open
+  - the remaining active slices are on-demand settings CLI generation,
+    explicit compare preflight, and installed-user warning behavior
   - Docker is being confined to internal and maintainer proof surfaces instead
     of the installed-user compare contract
 - historical installed-user Docker baseline:

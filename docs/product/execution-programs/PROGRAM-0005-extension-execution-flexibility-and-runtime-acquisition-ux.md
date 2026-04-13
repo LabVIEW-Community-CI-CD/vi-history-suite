@@ -17,7 +17,10 @@ Current facts:
   contract on Windows with a local `LabVIEWCLI` workflow
 - `ISSUE-0412` is the active issue for the replacement direction
 - the control-plane reset is landed and the installed manifest/settings
-  contract slice is now the active implementation checkpoint
+  contract slice is landed
+- the required-settings runtime preflight is partially landed, but exact
+  single-runtime ambiguity handling, the on-demand settings CLI, and the
+  explicit compare workflow are still open
 - `PROGRAM-0002` still owns the later public acceptance rerun once the next
   installed-user contract is actually published
 
@@ -33,6 +36,8 @@ An installed extension user:
 
 - uses one compare workflow with no provider-mode choice
 - selects one LabVIEW version and one LabVIEW bitness through settings only
+- can seed those settings through a generated cross-platform CLI that writes
+  into user-profile storage on first use
 - runs comparison generation through one matching local Windows
   `LabVIEWCLI`-backed installation
 - sees selected/base commit plus version and bitness before compare starts
@@ -48,10 +53,11 @@ An installed extension user:
    local-`LabVIEWCLI` replacement direction
 2. installed manifest and settings contract for required version + bitness
 3. local runtime-resolution preflight and fail-closed validation
-4. explicit compare preflight UX in the history panel
-5. internal-only Docker containment for maintainer/proof surfaces
-6. authority/bundled/public reader-surface normalization after implementation
-7. handoff to `PROGRAM-0002` for the next public acceptance rerun after the
+4. on-demand cross-platform settings CLI generation into user-profile storage
+5. explicit compare preflight UX in the history panel
+6. internal-only Docker containment for maintainer/proof surfaces
+7. authority/bundled/public reader-surface normalization after implementation
+8. handoff to `PROGRAM-0002` for the next public acceptance rerun after the
    replacement contract is published
 
 ## Queue Mapping
@@ -84,6 +90,8 @@ An installed extension user:
 - local runtime resolution validates one canonical Windows `LabVIEWCLI`
   request before compare can run
 - missing, ambiguous, or incompatible local runtime resolution fails closed
+- the settings contract can be seeded through a generated cross-platform CLI
+  launcher under user-profile storage rather than a prebuilt VSIX-shipped CLI
 
 ### Gate C: Explicit Compare Workflow
 
@@ -115,6 +123,7 @@ Every slice shall preserve:
 - no execution-policy bypass around canonical validation for the active
   contract
 - no installed-user path-picking or provider-mode matrix
+- no PATH mutation and no prebuilt external CLI payload inside the VSIX
 - no automatic compare start on second selection
 - no public/internal documentation audience collapse
 
