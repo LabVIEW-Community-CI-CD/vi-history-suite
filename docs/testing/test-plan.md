@@ -1276,9 +1276,10 @@
   `LabVIEW.ini` VI Server port
 - `TEST-DOC-059`: review current-state, harnesses, canonical exact-pair
   diagnosis guidance, PROGRAM-0003, ISSUE-0408, and ADR-0022 and confirm the
-  PROGRAM-0003 runtime-override admission contract is documented as shared
-  across dashboard-smoke, decision-record, exact-pair smoke, and the
-  Windows/Linux benchmark CLIs rather than living in one diagnosis entrypoint
+  PROGRAM-0003 proof-admission contract for explicit runtime override inputs
+  is documented as shared across dashboard-smoke, decision-record, exact-pair
+  smoke, and the Windows/Linux benchmark CLIs rather than living in one
+  diagnosis entrypoint
 - `TEST-DOC-060`: review current-state, harnesses, canonical exact-pair
   diagnosis guidance, PROGRAM-0003, ISSUE-0408, and ADR-0022 and confirm
   explicit Windows runtime override bundles are documented as invalid when
@@ -1296,9 +1297,10 @@
   surfaces represent the debt-retirement contract and debt ledger rather than
   hiding those control-plane surfaces in authority docs only
 - `TEST-UNIT-298`: verify PROGRAM-0003 benchmark-proof subcommands validate the
-  effective runtime override bundle after CLI/env/default synthesis, reject
-  non-canonical env-derived explicit Windows bundles, and keep default Windows
-  benchmark runtime settings undefined when no explicit override is requested
+  effective proof-admission bundle after CLI/env/default synthesis, reject
+  non-canonical env-derived explicit Windows bundles, and keep default
+  Windows benchmark runtime settings undefined when no explicit override is
+  requested
 - `TEST-UNIT-299`: verify the authority package keeps the exact released
   Docker-only image-settings baseline explicit while the active branch
   manifest/settings surface exposes `viHistorySuite.labviewVersion` and
@@ -1306,8 +1308,8 @@
   settings, and treats Docker as a generated-CLI-selected expert provider
 - `TEST-DOC-064`: review current-state, PROGRAM-0003, ISSUE-0408, canonical
   exact-pair diagnosis guidance, ADR-0024, and the debt ledger and confirm the
-  repo documents effective runtime override bundle validation rather than a raw
-  CLI-only rule, including the removal of hidden explicit Windows defaults
+  repo documents effective proof-admission bundle validation rather than a
+  raw CLI-only rule, including the removal of hidden explicit Windows defaults
 - `TEST-DOC-065`: review README, current-state, extension-execution-policy,
   ADR-0025, ADR-0038, PROGRAM-0005, ISSUE-0410, ISSUE-0412, and the debt
   ledger and confirm the current released Docker-only installed contract

@@ -88,7 +88,7 @@ instead of living in chat memory.
 - pass 6 checkpoint 3 outcome: the active execution RTM and test-plan traces
   now point at `ADR-0038` as active doctrine, and the branch keeps
   `VHS-REQ-532..540` promoted as implemented branch truth
-- pass 7 status: checkpoint 7 complete
+- pass 7 status: checkpoint 8 complete
 - pass 7 checkpoint 1 outcome: the active reader/control-plane status surfaces
   now reflect that generated provider selection, exact Windows host-runtime
   preflight, and explicit compare preflight are landed on this branch, while
@@ -117,6 +117,10 @@ instead of living in chat memory.
   `ADR-0021`, `ADR-0022`, `ADR-0024`, `PROGRAM-0003`, `ISSUE-0408`, and
   current-state now characterizes explicit runtime override inputs as bounded
   proof-admission control rather than generic runtime-override doctrine
+- pass 7 checkpoint 8 outcome: the `current-state` and `test-plan` traces for
+  `VHS-REQ-451` and `VHS-REQ-457..458` now describe shared proof-admission and
+  effective proof-admission bundle validation consistently with the normalized
+  ADR and benchmark-proof surfaces
 
 ## Pass Order
 
@@ -292,7 +296,7 @@ instead of living in chat memory.
 7. Pass 7: Missing-document and proof-surface uplift
    - objective: add or repair the remaining documentation and proof surfaces
      needed for compliance
-  - status: checkpoint 7 complete on this branch
+  - status: checkpoint 8 complete on this branch
   - checkpoint 1 scope:
      - normalize the active status blocks in current-state, `PROGRAM-0005`,
        and `ISSUE-0412` so they stop understating the implemented branch truth
@@ -333,6 +337,12 @@ instead of living in chat memory.
       bounded proof-admission control
     - keep the effective runtime-bundle validation rule intact while removing
       the broader doctrine drift from those documentation surfaces
+  - checkpoint 8 scope:
+    - retrace the `current-state` and `test-plan` package for
+      `VHS-REQ-451` and `VHS-REQ-457..458` so those review surfaces match the
+      normalized proof-admission doctrine
+    - keep the older exact runtime-override input facts explicit while
+      removing the broader shared-doctrine drift from those trace surfaces
   - likely scope:
      - CM and release-control gaps outside pass 1
      - test-plan gaps

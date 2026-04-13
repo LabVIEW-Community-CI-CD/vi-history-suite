@@ -34,6 +34,7 @@ describe('execution-policy control plane', () => {
     expect(currentState).toContain(
       'proof-admission validation for explicit runtime override bundles'
     );
+    expect(currentState).toContain('effective proof-admission bundle');
     expect(benchmarkProgram).toContain('`ADR-0024`');
     expect(benchmarkProgram).toContain('proof-admission layer');
     expect(benchmarkIssue).toContain('`VHS-REQ-457..458`');
