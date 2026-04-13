@@ -18,7 +18,7 @@ instead of living in chat memory.
   governance rewrite on this branch
 - pass 3 status: checkpoint 1 complete
 - pass 4 status: complete
-- pass 5 status: checkpoint 14 complete
+- pass 5 status: checkpoint 15 complete
 - pass 5 checkpoint 1 outcome: the runtime-provider and compare-flow
   requirement cluster now separates current implemented baseline truth from the
   active replacement direction
@@ -68,6 +68,10 @@ instead of living in chat memory.
   emit `docker-provider-*` blocked reasons, while the legacy
   `docker-only-*` and `auto-docker-installed-*` characterization lanes remain
   intact for older override and proof surfaces
+- pass 5 checkpoint 15 outcome: explicit persisted host and docker provider
+  notes plus runtime-doctor next-action derivation now key off
+  `requestedProvider` first, while legacy `executionMode` remains retained as
+  compatibility evidence
 - pass 6 status: checkpoint 3 complete
 - pass 6 checkpoint 1 outcome: `ADR-0030` now uses a GitFlow-aligned file path
   and the live architecture, RTM, wiki-coverage, and release-governance test
@@ -141,7 +145,7 @@ instead of living in chat memory.
 5. Pass 5: Requirement-system refactor
    - objective: normalize the large requirement corpus instead of patching it
      piecemeal
-  - status: checkpoint 14 complete on this branch
+  - status: checkpoint 15 complete on this branch
    - checkpoint 1 scope:
      - separate the current implemented checkbox auto-run workflow from the
        planned explicit compare replacement
@@ -221,6 +225,12 @@ instead of living in chat memory.
       provider requests
     - preserve the older `docker-only-*` and `auto-docker-installed-*`
       blocked-reason surfaces as legacy/internal compatibility lanes
+  - checkpoint 15 scope:
+    - normalize explicit host/docker provider notes so active blocked and
+      selected-runtime narration no longer falls back to legacy
+      `host-only`/`docker-only` wording when `requestedProvider` is present
+    - derive runtime-doctor host/docker next actions from `requestedProvider`
+      first while preserving `executionMode` as compatibility evidence
    - focus:
      - split `SyRS` versus `SRS` ownership cleanly
      - merge duplicates

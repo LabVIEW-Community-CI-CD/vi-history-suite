@@ -675,7 +675,9 @@ export async function locateComparisonRuntime(
           blockedReason: dockerProviderNotSupportedBlockedReason
         }),
         notes: [
-          'Docker-only comparison-report execution is currently governed for Windows hosts and Linux hosts using the current Docker daemon engine.'
+          settings.requestedProvider === 'docker'
+            ? 'The Docker provider is currently governed for Windows hosts and Linux hosts using the current Docker daemon engine.'
+            : 'Docker-only comparison-report execution is currently governed for Windows hosts and Linux hosts using the current Docker daemon engine.'
         ],
         registryQueryPlans,
         candidates
@@ -705,7 +707,9 @@ export async function locateComparisonRuntime(
           blockedReason: dockerProviderRequiresWindowsX64BlockedReason
         }),
         notes: [
-          'Docker-only execution currently requires the governed 64-bit container provider.'
+          settings.requestedProvider === 'docker'
+            ? 'The Docker provider currently requires the governed 64-bit container provider.'
+            : 'Docker-only execution currently requires the governed 64-bit container provider.'
         ],
         registryQueryPlans,
         candidates
@@ -737,7 +741,11 @@ export async function locateComparisonRuntime(
           blockedReason: dockerProviderUnavailableBlockedReason
         }),
         notes: [
-          `Docker-only execution was requested, but ${describeUnavailableContainerProvider(containerFacts, {
+          `${
+            settings.requestedProvider === 'docker'
+              ? 'The Docker provider was requested'
+              : 'Docker-only execution was requested'
+          }, but ${describeUnavailableContainerProvider(containerFacts, {
             configuredWindowsContainerImage: windowsContainerImage,
             configuredLinuxContainerImage: linuxContainerImage
           })}`
@@ -1002,7 +1010,9 @@ export async function locateComparisonRuntime(
       }
     } else if (executionMode === 'host-only') {
       notes.push(
-        'Host-only execution cannot proceed because the validated Windows host runtime surface is contaminated by existing LabVIEW-related activity.'
+        settings.requestedProvider === 'host'
+          ? 'The requested host provider cannot proceed because the validated Windows host runtime surface is contaminated by existing LabVIEW-related activity.'
+          : 'Host-only execution cannot proceed because the validated Windows host runtime surface is contaminated by existing LabVIEW-related activity.'
       );
     } else if (bitness === 'x86') {
       notes.push(

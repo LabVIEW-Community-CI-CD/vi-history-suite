@@ -118,19 +118,7 @@ function deriveProviderRequestLabel(selection: {
   requestedProvider?: 'host' | 'docker';
   executionMode?: string;
 }): string {
-  if (selection.requestedProvider === 'host' || selection.requestedProvider === 'docker') {
-    return selection.requestedProvider;
-  }
-
-  if (selection.executionMode === 'host-only') {
-    return 'host';
-  }
-
-  if (selection.executionMode === 'docker-only') {
-    return 'docker';
-  }
-
-  return 'auto';
+  return deriveRequestedProviderIntent(selection);
 }
 
 function deriveRuntimeDoctorNextAction(options: {
@@ -139,7 +127,7 @@ function deriveRuntimeDoctorNextAction(options: {
   runtimeSelection: ComparisonReportPacketRecord['runtimeSelection'];
   runtimeExecution: ComparisonReportRuntimeExecution;
 }): string {
-  const executionMode = options.runtimeSelection.executionMode ?? 'auto';
+  const providerRequest = deriveRequestedProviderIntent(options.runtimeSelection);
   const blockedReason =
     options.runtimeExecution.blockedReason ?? options.runtimeSelection.blockedReason;
 
@@ -168,7 +156,7 @@ function deriveRuntimeDoctorNextAction(options: {
       options.runtimeSelection.platform === 'win32' &&
       blockedReason === 'windows-host-runtime-surface-contaminated'
     ) {
-      if (executionMode === 'host-only') {
+      if (providerRequest === 'host') {
         return 'Next action: close existing LabVIEW/LabVIEWCLI/LVCompare sessions, clear the governed VI Server listener on the selected port, or switch to a Docker-backed compare path, then rerun comparison report generation.';
       }
       return `Next action: close existing LabVIEW/LabVIEWCLI/LVCompare sessions, clear the governed VI Server listener on the selected port, or ${deriveContainerRecoveryAction(options.runtimeSelection)}, then rerun comparison report generation.`;
@@ -206,11 +194,11 @@ function deriveRuntimeDoctorNextAction(options: {
       return `Next action: ${deriveContainerRecoveryAction(options.runtimeSelection)} and rerun comparison report generation.`;
     }
 
-    if (executionMode === 'host-only') {
+    if (providerRequest === 'host') {
       return 'Next action: make the selected host-native runtime available, resolve host conflicts, or switch to a Docker-backed compare path, then rerun comparison report generation.';
     }
 
-    if (executionMode === 'docker-only') {
+    if (providerRequest === 'docker') {
       return `Next action: ${deriveContainerRecoveryAction(options.runtimeSelection)} and rerun comparison report generation.`;
     }
 
@@ -226,6 +214,25 @@ function deriveRuntimeDoctorNextAction(options: {
   }
 
   return 'Next action: run comparison report generation from a trusted workspace to retain LabVIEW comparison-report artifacts for this revision pair.';
+}
+
+function deriveRequestedProviderIntent(selection: {
+  requestedProvider?: 'host' | 'docker';
+  executionMode?: string;
+}): 'host' | 'docker' | 'auto' {
+  if (selection.requestedProvider === 'host' || selection.requestedProvider === 'docker') {
+    return selection.requestedProvider;
+  }
+
+  if (selection.executionMode === 'host-only') {
+    return 'host';
+  }
+
+  if (selection.executionMode === 'docker-only') {
+    return 'docker';
+  }
+
+  return 'auto';
 }
 
 function stripTerminalPunctuation(value: string): string {

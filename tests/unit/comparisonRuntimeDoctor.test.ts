@@ -287,7 +287,6 @@ describe('comparisonRuntimeDoctor', () => {
       reportStatus: 'blocked-runtime',
       runtimeSelection: {
         platform: 'win32',
-        executionMode: 'host-only',
         requestedProvider: 'host',
         bitness: 'x64',
         provider: 'unavailable',
@@ -388,7 +387,6 @@ describe('comparisonRuntimeDoctor', () => {
       reportStatus: 'blocked-runtime',
       runtimeSelection: {
         platform: 'win32',
-        executionMode: 'docker-only',
         requestedProvider: 'docker',
         bitness: 'x64',
         provider: 'windows-container',
