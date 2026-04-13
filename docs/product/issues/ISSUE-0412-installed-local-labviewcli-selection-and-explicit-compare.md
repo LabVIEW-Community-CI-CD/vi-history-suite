@@ -220,3 +220,67 @@ The implementation surface is split today:
    and older commit = base side regardless of selection order?
 6. Do you want the next round to begin turning this into concrete roadmap
    slices, or do you want one more contract round first?
+
+## Round 4: User Answers
+
+3. The panel should show selected/base commit plus LabVIEW version and
+   bitness.
+4. Missing local runtime selection should surface both:
+   - a blocking panel status
+   - a VS Code warning notification
+6. Codex should decide whether roadmap work can begin.
+
+## Round 4: Codex Decision
+
+Roadmap work can begin now.
+
+Reason:
+
+- the major contract pivots are already settled:
+  - installed-user compare is no longer Docker-only
+  - Docker becomes internal-only
+  - runtime selection is settings-only
+  - version and bitness are both required
+  - auto-run after second selection is no longer acceptable
+- the remaining open items are now implementation-shaping details rather than
+  program-direction blockers
+
+## Round 4: Recommendations
+
+1. Start roadmap slicing now. Do not spend another full round on whether the
+   roadmap is allowed to exist.
+2. Use static settings plus validation rather than dynamic discovered pick
+   lists as the primary contract. The user asked for settings-only, and the
+   current VS Code manifest contribution model is naturally aligned to explicit
+   settings with fail-closed validation.
+3. Put the explicit `Compare` action in a dedicated compare preflight section
+   rather than the global panel header. That keeps the selected/base pair and
+   resolved runtime facts adjacent to the action that depends on them.
+4. Keep canonical ordering as newer commit = selected side and older commit =
+   base side regardless of selection order. That matches the current report
+   generation assumptions and avoids introducing symmetric-pair ambiguity into
+   the retained report contract.
+5. The first roadmap slice should be control-plane and manifest truth:
+   replace the Docker-only installed-user contract in docs, requirements, and
+   manifest tests before runtime implementation starts.
+6. The second roadmap slice should be runtime-selection preflight:
+   require version + bitness settings, resolve one local install, and block
+   compare when resolution fails.
+7. The third roadmap slice should be explicit compare UX:
+   remove second-selection auto-run, add the compare preflight section, and
+   surface selected/base commit plus resolved version/bitness before execution.
+
+## Round 4: Follow-Up Questions
+
+1. For settings values, do you accept the recommended contract:
+   - `viHistorySuite.labviewVersion`: free-text string
+   - `viHistorySuite.labviewBitness`: constrained enum (`x86` | `x64`)
+   with fail-closed validation messages?
+2. Do you accept the recommended compare action placement:
+   a dedicated compare preflight section?
+3. Do you accept the recommended canonical ordering:
+   newer commit = selected side, older commit = base side, regardless of
+   selection order?
+4. If you accept 1 through 3, the next round will convert this issue into an
+   explicit roadmap and tranche proposal instead of asking another contract
+   round.
