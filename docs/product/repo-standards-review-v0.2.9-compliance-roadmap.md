@@ -13,6 +13,11 @@ instead of living in chat memory.
 
 - released assurance baseline: `repo-standards-review` `v0.2.9`
 - first proving target: `feature/local-labviewcli-selection-and-explicit-compare`
+- pass 8 status: complete
+- pass 8 outcome: the active branch now has retained closeout proof that
+  released `repo-standards-review` `v0.2.9` passes cleanly across the governed
+  gates, so remaining work is now product/publication work unless a future
+  released-skill audit reopens a gap
 - pass 1 status: complete
 - pass 1 outcome: released-skill CM gate now passes after the GitFlow branch
   governance rewrite on this branch
@@ -415,6 +420,9 @@ instead of living in chat memory.
 8. Pass 8: Release-candidate compliance closeout
    - objective: rerun the released skill until the target branch reaches a
      clean external audit result across the governed gates
+   - status: complete on this branch
+   - retained closeout packet:
+     [repo-standards-review-v0.2.9-pass-8-closeout.md](./repo-standards-review-v0.2.9-pass-8-closeout.md)
    - closeout rule:
      - no external compliance claim is made until the released skill passes on
        the exact target branch under review
@@ -430,10 +438,14 @@ instead of living in chat memory.
 
 ## Immediate Next Move
 
-Return to the broader requirement-system cleanup from the now-stable pass-5,
-pass-6, and pass-7 execution package:
+The standards-compliance refactor is closed for this branch under released
+`repo-standards-review` `v0.2.9`.
 
-- widen the requirement-row cleanup beyond the targeted runtime-provider
-  cluster now that ADR and traceability drift is narrowed out
-- keep later missing-document and proof-surface uplift sequenced behind those
-  requirement/package corrections
+The next move is no longer another compliance pass. It is product decision and
+promotion planning:
+
+- decide whether this branch should merge as one tranche or split follow-on
+  product work first
+- keep future public/bundled publication shifts governed as publication work
+  rather than reopening standards debt unless a later released-skill audit
+  fails

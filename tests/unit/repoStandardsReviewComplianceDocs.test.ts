@@ -14,18 +14,28 @@ describe('repo-standards-review compliance docs', () => {
     const informationItemMap = readText('docs/information-item-map.md');
     const roadmap = readText('docs/product/repo-standards-review-v0.2.9-compliance-roadmap.md');
     const ledger = readText('docs/product/repo-standards-review-v0.2.9-pass-4-contradiction-ledger.md');
+    const closeout = readText('docs/product/repo-standards-review-v0.2.9-pass-8-closeout.md');
 
     expect(informationItemMap).toContain(
       '| Repo-standards-review contradiction ledger | `docs/product/repo-standards-review-v0.2.9-pass-4-contradiction-ledger.md` |'
     );
+    expect(informationItemMap).toContain(
+      '| Repo-standards-review closeout packet | `docs/product/repo-standards-review-v0.2.9-pass-8-closeout.md` |'
+    );
     expect(roadmap).toContain('Pass 4: Contradiction ledger');
+    expect(roadmap).toContain('pass 8 status: complete');
     expect(roadmap).toContain(
       '[repo-standards-review-v0.2.9-pass-4-contradiction-ledger.md](./repo-standards-review-v0.2.9-pass-4-contradiction-ledger.md)'
+    );
+    expect(roadmap).toContain(
+      '[repo-standards-review-v0.2.9-pass-8-closeout.md](./repo-standards-review-v0.2.9-pass-8-closeout.md)'
     );
     expect(roadmap).toContain('pass 5 status: checkpoint 20 complete');
     expect(roadmap).toContain('pass 6 checkpoint 3 outcome');
     expect(roadmap).toContain('pass 7 checkpoint 12 outcome');
     expect(roadmap).toContain('`VHS-REQ-532`');
+    expect(closeout).toContain('compliant under released `repo-standards-review` `v0.2.9`');
+    expect(closeout).toContain('/tmp/vi-history-suite-user-rounds-rsr-v0.2.9-pass8a.Rgtw4g');
     expect(ledger).toContain('CONTRA-001');
     expect(ledger).toContain('CONTRA-002');
     expect(ledger).toContain('CONTRA-003');
