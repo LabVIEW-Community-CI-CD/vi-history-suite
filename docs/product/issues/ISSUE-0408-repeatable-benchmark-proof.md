@@ -165,15 +165,16 @@ Current retained benchmark truth at closure:
 - `VHS-REQ-451` now governs shared PROGRAM-0003 admission control: the one
   public `runGovernedProof` surface and its `dashboard-smoke`,
   `decision-record`, `report-smoke`, `benchmark-linux`, and
-  `benchmark-windows` subcommands now share one canonical
-  runtime-override validation layer, so contradictory explicit runtime bundles
-  are rejected before they can contaminate retained benchmark blocker evidence
+  `benchmark-windows` subcommands now share one canonical proof-admission
+  validation layer for explicit runtime override bundles, so contradictory
+  explicit runtime bundles are rejected before they can contaminate retained
+  benchmark blocker evidence
 - `VHS-REQ-452` now governs canonical Windows bundle coherence too: explicit
   Windows runtime override bundles now fail closed only when they contradict
   the selected runtime bitness, while the canonical x86 `LabVIEWCLI.exe`
   plus x64 `LabVIEW.exe` bundle is admitted when that x64 LabVIEW 2026
   surface is the selected governed host runtime
-- `VHS-REQ-457..458` now govern the effective runtime override bundle too:
+- `VHS-REQ-457..458` now govern the effective proof-admission bundle too:
   governed proof subcommands validate the effective runtime bundle after CLI
   arguments, environment variables, and subcommand-local defaults are
   resolved, and the Windows benchmark path no longer injects hidden explicit

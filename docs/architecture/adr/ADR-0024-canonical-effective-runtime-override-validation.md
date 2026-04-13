@@ -6,8 +6,9 @@ Accepted
 
 ## Context
 
-`ADR-0022` established one shared runtime-override admission boundary for
-`PROGRAM-0003`, but that decision still left one important ambiguity:
+`ADR-0022` established one shared proof-admission boundary for explicit
+runtime override inputs in `PROGRAM-0003`, but that decision still left one
+important ambiguity:
 the one public governed-proof surface does not always execute from raw CLI
 args alone.
 
@@ -29,11 +30,13 @@ non-canonical retained evidence look like product behavior.
 
 ## Decision
 
-Adopt canonical effective runtime-override validation for the public
+Adopt canonical effective proof-admission validation for the public
 governed-proof surface and the benchmark-proof or exact-pair handlers behind
 it.
 
-1. Canonical runtime-override admission shall validate the effective runtime bundle after CLI arguments, environment variables, and entrypoint-local defaults have been resolved.
+1. Canonical effective proof-admission validation shall validate the effective
+   runtime bundle after CLI arguments, environment variables, and
+   entrypoint-local defaults have been resolved.
 2. Governed proof subcommands and their internal handlers shall not inject hidden explicit Windows runtime executable defaults into the effective launch bundle when the operator did not request an explicit override.
 3. If any non-CLI source materializes explicit runtime paths, the resulting
    effective bundle shall still satisfy the same canonical engine, platform,
@@ -69,8 +72,8 @@ it.
   a canonical engine/platform shape explicitly
 - governed proof subcommands can reject previously tolerated env/default
   combinations that were never truly canonical
-- the control plane grows because effective-bundle validation is now its own
-  documented contract
+- the control plane grows because effective proof-admission validation is now
+  its own documented contract
 
 ## Implementation Surface
 

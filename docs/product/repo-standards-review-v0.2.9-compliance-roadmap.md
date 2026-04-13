@@ -88,7 +88,7 @@ instead of living in chat memory.
 - pass 6 checkpoint 3 outcome: the active execution RTM and test-plan traces
   now point at `ADR-0038` as active doctrine, and the branch keeps
   `VHS-REQ-532..540` promoted as implemented branch truth
-- pass 7 status: checkpoint 6 complete
+- pass 7 status: checkpoint 7 complete
 - pass 7 checkpoint 1 outcome: the active reader/control-plane status surfaces
   now reflect that generated provider selection, exact Windows host-runtime
   preflight, and explicit compare preflight are landed on this branch, while
@@ -113,6 +113,10 @@ instead of living in chat memory.
 - pass 7 checkpoint 6 outcome: canonical exact-pair diagnosis now says
   explicitly that `--execution-mode` is a bounded proof-surface admission
   input for targeted reruns, not installed-user extension doctrine
+- pass 7 checkpoint 7 outcome: the shared `PROGRAM-0003` proof doctrine in
+  `ADR-0021`, `ADR-0022`, `ADR-0024`, `PROGRAM-0003`, `ISSUE-0408`, and
+  current-state now characterizes explicit runtime override inputs as bounded
+  proof-admission control rather than generic runtime-override doctrine
 
 ## Pass Order
 
@@ -288,7 +292,7 @@ instead of living in chat memory.
 7. Pass 7: Missing-document and proof-surface uplift
    - objective: add or repair the remaining documentation and proof surfaces
      needed for compliance
-  - status: checkpoint 6 complete on this branch
+  - status: checkpoint 7 complete on this branch
   - checkpoint 1 scope:
      - normalize the active status blocks in current-state, `PROGRAM-0005`,
        and `ISSUE-0412` so they stop understating the implemented branch truth
@@ -322,6 +326,13 @@ instead of living in chat memory.
     - normalize the canonical exact-pair diagnosis reader surface so
       `--execution-mode` is kept explicit as a bounded proof-admission input
       instead of a possible installed-user contract signal
+  - checkpoint 7 scope:
+    - normalize the shared `PROGRAM-0003` proof-control package so
+      `ADR-0021`, `ADR-0022`, `ADR-0024`, current-state, and the benchmark
+      proof issue/program surfaces describe explicit runtime override inputs as
+      bounded proof-admission control
+    - keep the effective runtime-bundle validation rule intact while removing
+      the broader doctrine drift from those documentation surfaces
   - likely scope:
      - CM and release-control gaps outside pass 1
      - test-plan gaps

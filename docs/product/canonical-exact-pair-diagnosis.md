@@ -14,8 +14,8 @@ for governed proof reruns. They are not installed-user extension settings, not
 panel/provider UX, and not public evidence that the active extension contract
 still exposes `executionMode`.
 
-The wider shared runtime-override admission control for the public
-governed-proof surface and its `PROGRAM-0003` subcommands is governed
+The wider shared proof-admission control for explicit runtime override inputs
+on the public governed-proof surface and its `PROGRAM-0003` subcommands is governed
 separately in `ADR-0022`. Exact-pair diagnosis
 inherits that shared layer, inherits the effective runtime bundle validation
 rule from `ADR-0024`, and then adds the selected/base pair contract below.
@@ -68,7 +68,7 @@ Windows container provider rather than the host-native surface.
 
 - `--selected-hash` and `--base-hash` must be supplied together.
 - Both hashes must be full 40-character git hashes.
-- Shared `PROGRAM-0003` runtime-override validation still applies here:
+- Shared `PROGRAM-0003` proof-admission validation still applies here:
   - explicit runtime override paths require matching `--platform` and
     canonical `CreateComparisonReport` path bundles
   - CLI arguments, environment variables, and subcommand-local defaults are

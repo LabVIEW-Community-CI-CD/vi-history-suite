@@ -14,7 +14,7 @@ function readJson<T>(relativePath: string): T {
 }
 
 describe('execution-policy control plane', () => {
-  it('keeps canonical effective runtime-override validation explicit across PROGRAM-0003 control surfaces', () => {
+  it('keeps canonical effective proof-admission validation explicit across PROGRAM-0003 control surfaces', () => {
     const currentState = readText('docs/product/current-state.md');
     const benchmarkProgram = readText(
       'docs/product/execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md'
@@ -27,14 +27,17 @@ describe('execution-policy control plane', () => {
       'docs/architecture/adr/ADR-0024-canonical-effective-runtime-override-validation.md'
     );
 
-    expect(adr).toContain('CLI arguments, environment variables, and entrypoint-local defaults');
+    expect(adr).toContain('CLI arguments, environment variables, and');
+    expect(adr).toContain('entrypoint-local defaults have been resolved');
     expect(adr).toContain('shall not inject hidden explicit Windows runtime executable defaults');
     expect(currentState).toContain('`VHS-REQ-457..458` are now implemented');
-    expect(currentState).toContain('effective runtime override bundle');
+    expect(currentState).toContain(
+      'proof-admission validation for explicit runtime override bundles'
+    );
     expect(benchmarkProgram).toContain('`ADR-0024`');
-    expect(benchmarkProgram).toContain('effective runtime bundle');
+    expect(benchmarkProgram).toContain('proof-admission layer');
     expect(benchmarkIssue).toContain('`VHS-REQ-457..458`');
-    expect(benchmarkIssue).toContain('effective runtime override bundle');
+    expect(benchmarkIssue).toContain('effective proof-admission bundle');
     expect(diagnosis).toContain('effective runtime bundle');
     expect(debtLedger).toContain('DEBT-0005');
     expect(debtLedgerJson).toContain('"id": "DEBT-0005"');
