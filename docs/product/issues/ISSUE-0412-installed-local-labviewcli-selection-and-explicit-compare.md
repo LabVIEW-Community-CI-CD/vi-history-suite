@@ -396,6 +396,98 @@ The implementation surface is split today:
 5. Should the compare preflight section show the provider as read-only text, or
    do you want it to include an “update via CLI” hint right there?
 
+## Round 8: User Answers
+
+1. The user asked for a decision on whether the persisted provider setting
+   should be two-state or three-state.
+2. The user asked for a developer-experience decision on whether Docker image
+   family should be chosen automatically or forced explicitly through the CLI.
+3. The persisted CLI contract should use one command that sets provider,
+   LabVIEW version, and LabVIEW bitness together.
+4. The user asked for a developer-experience decision on corrective guidance
+   when Docker is selected with an unsupported bundle.
+5. The user asked for a developer-experience decision on whether compare
+   preflight should include a CLI hint.
+
+## Round 8: Decisions
+
+1. The persisted provider setting should be two-state:
+   - `host`
+   - `docker`
+   Rationale:
+   provider selection should answer only “local host runtime or governed Docker
+   runtime.” Splitting Docker into `docker-linux` and `docker-windows` would
+   expose engine-family details that the product can derive from the active
+   Docker engine and would create extra state the user has to keep coherent.
+2. When Docker is selected, the product should choose the Windows versus Linux
+   NI image automatically from the current Docker engine.
+   Rationale:
+   the current engine is already the authoritative execution constraint, so
+   making users force an image family would mainly create contradictory states
+   such as “docker-windows requested while Linux engine is active.” The better
+   developer experience is one Docker selection plus truthful preflight about
+   the current engine and selected image.
+3. Unsupported Docker bundles should surface corrective guidance for both:
+   - switch provider to `host`
+   - or switch bitness to `x64`
+   Rationale:
+   that gives the user both truthful escape routes without hiding the reason
+   for the failure. For `x86`, host preserves the requested bitness, while
+   `x64` preserves the requested provider.
+4. The compare preflight should show provider as read-only text plus an
+   explicit “update via CLI” hint.
+   Rationale:
+   users need to see what will actually run, and expert users need the shortest
+   path to fix mismatched provider state without hunting through docs or
+   settings.
+
+## Round 8: Updated Working Assessment
+
+- The provider contract is now coherent enough to restate the roadmap:
+  - host-native `LabVIEWCLI` is the default installed-user path
+  - Docker remains available only as a bounded expert CLI-selected provider
+  - provider choice persists in settings
+  - image family is derived from the active Docker engine
+  - version and bitness remain required across both providers
+  - Docker `x86` is a fail-closed preflight error with dual corrective guidance
+  - compare preflight must show provider, version, and bitness together
+- The earlier “Docker becomes internal-only” direction is no longer valid and
+  needs to be superseded before an honest roadmap can be published.
+
+## Round 8: Recommendations
+
+1. Replace the previous control-plane language that removed Docker from the
+   installed-user contract entirely.
+   New truth:
+   Docker survives as a bounded expert provider selected through the settings
+   CLI, while host-native Windows `LabVIEWCLI` is the default installed-user
+   workflow.
+2. Keep one generated settings CLI command that writes exactly three user
+   choices together:
+   - provider
+   - LabVIEW version
+   - LabVIEW bitness
+3. Make preflight responsible for provider-specific admissibility:
+   - host: matching local runtime must resolve
+   - docker: active engine must determine the image family and the selected
+     bundle must be x64-compatible with the governed image surface
+4. Keep the compare preflight section as the visible contract summary:
+   - selected commit
+   - base commit
+   - provider
+   - LabVIEW version
+   - LabVIEW bitness
+   - explicit `Compare` action
+5. Treat provider-specific acquisition and validation as implementation slices,
+   not as open contract questions, because the contract is now stable enough to
+   roadmap.
+
+## Round 8: Roadmap Readiness
+
+- The contract is now stable enough to establish a revised roadmap.
+- The next round should stop asking contract questions and convert the updated
+  provider model into explicit control-plane and implementation slices.
+
 ## Round 3: Recommendations
 
 1. Replace the public installed-user settings surface with exactly two
