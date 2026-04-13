@@ -245,7 +245,7 @@
   WebviewPanel-only surface, desktop/remote-host boundary, and no-publish
   TimelineProvider policy
 - `TEST-DOC-005`: review architecture for the Windows 64-bit runtime-provider
-  boundary and the future isolated container execution path
+  boundary and the bounded expert isolated container execution path
 - `TEST-DOC-006`: review architecture for the dedicated extension-user Windows
   64-bit `labview2026q1` container isolation policy and confirm it remains
   separate from host-native 32-bit execution

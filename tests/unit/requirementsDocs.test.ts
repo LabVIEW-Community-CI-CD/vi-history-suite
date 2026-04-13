@@ -125,6 +125,9 @@ describe('requirements documentation coherence', () => {
     const srs = readText('docs/requirements/srs.md');
     const rtm = readText('docs/requirements/rtm.csv');
     const testPlan = readText('docs/testing/test-plan.md');
+    const adr0005 = readText(
+      'docs/architecture/adr/ADR-0005-runtime-provider-selection-and-windows64-isolation.md'
+    );
     const implementationIndex = JSON.parse(
       readText('docs/research/authoritative/research-implementation-index.json')
     ) as {
@@ -170,6 +173,12 @@ describe('requirements documentation coherence', () => {
     expect(srs).not.toContain(
       'When the Windows 64-bit container provider is selected without a configured container image'
     );
+    expect(srs).toContain(
+      'isolated LabVIEW 2026 Q1 Windows container path remains available as a bounded expert lane'
+    );
+    expect(srs).not.toContain(
+      'isolated LabVIEW 2026 Q1 Windows container path can be introduced'
+    );
     expect(rtm).toContain(
       'Keep governed internal/runtime-proof override inputs for labviewCliPath, labviewExePath, and bitness ahead of auto-discovery'
     );
@@ -179,10 +188,14 @@ describe('requirements documentation coherence', () => {
     expect(rtm).toContain('selecting two distinct retained revisions establishes one explicit compare-preflight pair');
     expect(rtm).toContain('without a resolved governing container image');
     expect(rtm).not.toContain('without a configured container image');
+    expect(rtm).toContain('remains available as a bounded expert lane');
     expect(testPlan).toContain('explicit compare-preflight entrypoint');
     expect(testPlan).toContain('does not expose');
     expect(testPlan).toContain('`labviewCliPath`, `labviewExePath`, `bitness`, `executionMode`, or public');
     expect(testPlan).toContain('without a resolved governing image');
+    expect(testPlan).toContain('bounded expert isolated container execution path');
+    expect(adr0005).toContain('bounded expert isolation path');
+    expect(adr0005).not.toContain('preferred future isolation path');
 
     expect(alignment).toContain('history-window packet');
     expect(alignment).toContain('latest-run discovery');
