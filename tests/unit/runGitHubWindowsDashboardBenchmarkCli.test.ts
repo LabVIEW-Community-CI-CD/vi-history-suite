@@ -58,7 +58,7 @@ describe('runGitHubWindowsDashboardBenchmarkCli', () => {
         '--labview-exe-path',
         WINDOWS_LABVIEW_EXE_PATH
       ])
-    ).toThrow(/Canonical CreateComparisonReport overrides require both --labview-cli-path and --labview-exe-path/);
+    ).toThrow(/Canonical CreateComparisonReport proof-admission overrides require both --labview-cli-path and --labview-exe-path/);
     expect(() =>
       parseGitHubWindowsDashboardBenchmarkArgs([
         '--labview-cli-path',

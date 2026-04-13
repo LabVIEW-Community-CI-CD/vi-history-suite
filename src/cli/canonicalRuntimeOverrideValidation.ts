@@ -52,12 +52,12 @@ export function validateCanonicalRuntimeOverrideArgs(
   }
 
   if (explicitRuntimeOverrideRequested && !normalizedArgs.runtimePlatform) {
-    throw new Error(`Canonical runtime overrides require --platform.\n\n${usageText}`);
+    throw new Error(`Canonical proof-admission overrides require --platform.\n\n${usageText}`);
   }
 
   if (Boolean(normalizedArgs.labviewCliPath) !== Boolean(normalizedArgs.labviewExePath)) {
     throw new Error(
-      `Canonical CreateComparisonReport overrides require both --labview-cli-path and --labview-exe-path.\n\n${usageText}`
+      `Canonical CreateComparisonReport proof-admission overrides require both --labview-cli-path and --labview-exe-path.\n\n${usageText}`
     );
   }
 

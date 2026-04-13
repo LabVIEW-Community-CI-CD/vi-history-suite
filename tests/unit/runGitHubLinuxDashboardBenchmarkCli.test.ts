@@ -51,7 +51,7 @@ describe('runGitHubLinuxDashboardBenchmarkCli', () => {
     ).toThrow(/Unsupported value for --dashboard-commit-window/);
     expect(() =>
       parseGitHubLinuxDashboardBenchmarkArgs(['--labview-exe-path', LINUX_LABVIEW_EXE_PATH])
-    ).toThrow(/Canonical CreateComparisonReport overrides require both --labview-cli-path and --labview-exe-path/);
+    ).toThrow(/Canonical CreateComparisonReport proof-admission overrides require both --labview-cli-path and --labview-exe-path/);
     expect(() => parseGitHubLinuxDashboardBenchmarkArgs(['--labview-exe-path'])).toThrow(
       /Missing value for --labview-exe-path/
     );

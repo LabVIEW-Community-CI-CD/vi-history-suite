@@ -88,7 +88,7 @@ instead of living in chat memory.
 - pass 6 checkpoint 3 outcome: the active execution RTM and test-plan traces
   now point at `ADR-0038` as active doctrine, and the branch keeps
   `VHS-REQ-532..540` promoted as implemented branch truth
-- pass 7 status: checkpoint 8 complete
+- pass 7 status: checkpoint 9 complete
 - pass 7 checkpoint 1 outcome: the active reader/control-plane status surfaces
   now reflect that generated provider selection, exact Windows host-runtime
   preflight, and explicit compare preflight are landed on this branch, while
@@ -121,6 +121,9 @@ instead of living in chat memory.
   `VHS-REQ-451` and `VHS-REQ-457..458` now describe shared proof-admission and
   effective proof-admission bundle validation consistently with the normalized
   ADR and benchmark-proof surfaces
+- pass 7 checkpoint 9 outcome: governed proof CLI help and validation text now
+  uses proof-admission wording while keeping the stable flag surface and
+  compatibility code paths intact
 
 ## Pass Order
 
@@ -296,7 +299,7 @@ instead of living in chat memory.
 7. Pass 7: Missing-document and proof-surface uplift
    - objective: add or repair the remaining documentation and proof surfaces
      needed for compliance
-  - status: checkpoint 8 complete on this branch
+  - status: checkpoint 9 complete on this branch
   - checkpoint 1 scope:
      - normalize the active status blocks in current-state, `PROGRAM-0005`,
        and `ISSUE-0412` so they stop understating the implemented branch truth
@@ -343,6 +346,10 @@ instead of living in chat memory.
       normalized proof-admission doctrine
     - keep the older exact runtime-override input facts explicit while
       removing the broader shared-doctrine drift from those trace surfaces
+  - checkpoint 9 scope:
+    - normalize governed proof CLI help and validation wording so it names
+      proof-admission overrides instead of generic runtime overrides
+    - keep the CLI flag names and underlying compatibility behavior stable
   - likely scope:
      - CM and release-control gaps outside pass 1
      - test-plan gaps
