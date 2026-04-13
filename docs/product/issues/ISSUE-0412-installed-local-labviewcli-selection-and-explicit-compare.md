@@ -77,6 +77,8 @@ history instead of chat memory.
 - updated queue, README, current-state, ship-control, and execution-policy docs
 - updated `PROGRAM-0005`, `ISSUE-0410`, and this issue
 - updated SRS, RTM, and test plan
+- `python3 /mnt/c/Users/sveld/.codex/skills/repo-standards-review/scripts/preflight_local_dependencies.py --json`
+- `python3 /mnt/c/Users/sveld/.codex/skills/repo-standards-review/scripts/requirements_quality_check.py /home/sveld/code/standards/vi-history-suite-user-rounds --json`
 - focused docs, manifest, and runtime-settings gates for each landed slice
 
 ## Current Active Slice
