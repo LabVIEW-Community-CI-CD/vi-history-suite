@@ -801,8 +801,7 @@ export async function locateComparisonRuntime(
   const exactWindowsHostRuntime =
     platform === 'win32' &&
     requireVersionAndBitness &&
-    requestedLabviewVersion &&
-    executionMode !== 'docker-only'
+    requestedLabviewVersion
       ? resolveExactWindowsHostRuntime(candidates, requestedLabviewVersion, bitness)
       : undefined;
   const labviewExe =
