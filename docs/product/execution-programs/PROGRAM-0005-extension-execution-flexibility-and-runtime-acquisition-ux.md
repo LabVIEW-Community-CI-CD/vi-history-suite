@@ -31,10 +31,11 @@ Current facts:
   settings file
 - the explicit Windows proof lane `npm run test:integration:windows` now
   proves the `.cmd` launcher path and the default no-`--settings-file` target
-  under a disposable `APPDATA\\Code\\User\\settings.json`
+  under a disposable `APPDATA\\Code\\User\\settings.json`, aligned to the
+  active disposable Windows integration-host profile
 - the remaining CLI proof gap is explicit only for direct live mutation of
-  the active real user-profile VS Code settings target while Code is already
-  running
+  the already-running VS Code session; the generated CLI now warns users to
+  reload or restart the window before using Compare when Code is already open
 - the Windows exact-runtime preflight is now landed: installed compare
   resolves one exact version+bitness LabVIEW executable plus matching
   `LabVIEWCLI` surface and fails closed on missing, ambiguous, or

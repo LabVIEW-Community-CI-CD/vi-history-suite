@@ -202,6 +202,10 @@ export async function runLocalRuntimeSettingsCli(
     deps.stdout ?? process.stdout,
     `viHistorySuite.labviewBitness=${parsed.labviewBitness}`
   );
+  writeLine(
+    deps.stdout ?? process.stdout,
+    'If VS Code is already running, reload or restart the window before using Compare so the updated settings are picked up.'
+  );
 
   return {
     outcome: 'updated-settings',

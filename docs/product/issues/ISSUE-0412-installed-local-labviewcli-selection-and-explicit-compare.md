@@ -196,15 +196,17 @@ still only proposal material during round 1:
 - the explicit Windows proof lane `npm run test:integration:windows` now
   also proves the `.cmd` launcher path and the default
   no-`--settings-file` target under a disposable
-  `APPDATA\\Code\\User\\settings.json`
+  `APPDATA\\Code\\User\\settings.json`, aligned to the active disposable
+  Windows integration-host profile
 - `src/ui/historyPanel.ts` now uses explicit compare preflight instead of
   auto-generating compare output on second commit selection
 - `src/commands/openViHistoryCommand.ts` now surfaces provider request,
   selected provider, and preflight/block facts instead of treating
   second-selection auto-run as the live branch contract
-- direct live mutation of the active real user-profile VS Code settings target
-  while Code is already running remains unproven and is retained as the
-  remaining proof gap
+- direct live mutation of the already-running VS Code session remains
+  unproven and is retained as the remaining proof gap; the generated CLI now
+  warns users to reload or restart the window before using Compare when Code
+  is already open
   for this slice
 
 ## Round 1 Working Assessment

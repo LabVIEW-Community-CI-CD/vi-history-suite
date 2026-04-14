@@ -512,28 +512,59 @@ async function testPrepareLocalRuntimeSettingsCli(): Promise<void> {
     });
 
     if (process.platform === 'win32') {
-      const fakeAppDataRoot = path.join(tempRoot, 'fake-appdata');
-      const defaultSettingsFilePath = path.join(fakeAppDataRoot, 'Code', 'User', 'settings.json');
+      const activeAppDataRoot = process.env.APPDATA;
+      assert.ok(activeAppDataRoot, 'Windows integration host must expose APPDATA.');
+      const defaultSettingsFilePath = path.join(activeAppDataRoot, 'Code', 'User', 'settings.json');
+      const initialRuntimeSettings = readViHistorySuiteRuntimeSettings();
+      const firstProvider = initialRuntimeSettings.runtimeProvider === 'host' ? 'docker' : 'host';
+      const secondProvider = firstProvider === 'host' ? 'docker' : 'host';
       const defaultTargetRun = await runPreparedLocalRuntimeSettingsCli(
         result,
-        ['--provider', 'host', '--labview-version', '2026', '--labview-bitness', 'x64'],
-        {
-          env: {
-            ...process.env,
-            APPDATA: fakeAppDataRoot
-          }
-        }
+        ['--provider', firstProvider, '--labview-version', '2026', '--labview-bitness', 'x64']
       );
       assert.equal(defaultTargetRun.launcherPath, result.windowsLauncherPath);
       assert.match(
         defaultTargetRun.stdout,
         new RegExp(defaultSettingsFilePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
       );
-      assert.deepEqual(JSON.parse(await fs.readFile(defaultSettingsFilePath, 'utf8')), {
-        'viHistorySuite.runtimeProvider': 'host',
-        'viHistorySuite.labviewVersion': '2026',
-        'viHistorySuite.labviewBitness': 'x64'
-      });
+      assert.match(
+        defaultTargetRun.stdout,
+        new RegExp(`viHistorySuite\\.runtimeProvider=${firstProvider}`)
+      );
+      assertRuntimeSettingsFileContains(
+        JSON.parse(await fs.readFile(defaultSettingsFilePath, 'utf8')) as Record<string, unknown>,
+        {
+          runtimeProvider: firstProvider,
+          labviewVersion: '2026',
+          labviewBitness: 'x64'
+        }
+      );
+
+      const activeDockerRun = await runPreparedLocalRuntimeSettingsCli(result, [
+        '--provider',
+        secondProvider,
+        '--labview-version',
+        '2026',
+        '--labview-bitness',
+        'x64'
+      ]);
+      assert.equal(activeDockerRun.launcherPath, result.windowsLauncherPath);
+      assert.match(
+        activeDockerRun.stdout,
+        new RegExp(defaultSettingsFilePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+      );
+      assert.match(
+        activeDockerRun.stdout,
+        new RegExp(`viHistorySuite\\.runtimeProvider=${secondProvider}`)
+      );
+      assertRuntimeSettingsFileContains(
+        JSON.parse(await fs.readFile(defaultSettingsFilePath, 'utf8')) as Record<string, unknown>,
+        {
+          runtimeProvider: secondProvider,
+          labviewVersion: '2026',
+          labviewBitness: 'x64'
+        }
+      );
     }
   } finally {
     await fs.rm(tempRoot, { recursive: true, force: true });
@@ -568,6 +599,32 @@ async function runPreparedLocalRuntimeSettingsCli(
     ...execution,
     launcherPath: result.posixLauncherPath!
   };
+}
+
+function readViHistorySuiteRuntimeSettings(): {
+  runtimeProvider: string | undefined;
+  labviewVersion: string | undefined;
+  labviewBitness: string | undefined;
+} {
+  const configuration = vscode.workspace.getConfiguration('viHistorySuite');
+  return {
+    runtimeProvider: configuration.get<string>('runtimeProvider'),
+    labviewVersion: configuration.get<string>('labviewVersion'),
+    labviewBitness: configuration.get<string>('labviewBitness')
+  };
+}
+
+function assertRuntimeSettingsFileContains(
+  settings: Record<string, unknown>,
+  expected: {
+    runtimeProvider: string;
+    labviewVersion: string;
+    labviewBitness: string;
+  }
+): void {
+  assert.equal(settings['viHistorySuite.runtimeProvider'], expected.runtimeProvider);
+  assert.equal(settings['viHistorySuite.labviewVersion'], expected.labviewVersion);
+  assert.equal(settings['viHistorySuite.labviewBitness'], expected.labviewBitness);
 }
 
 async function waitFor(

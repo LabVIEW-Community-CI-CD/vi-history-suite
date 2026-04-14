@@ -349,10 +349,12 @@ Post-release tranches:
     settings file
   - the explicit Windows proof lane `npm run test:integration:windows` now
     proves the `.cmd` launcher path and the default no-`--settings-file`
-    target under a disposable `APPDATA\\Code\\User\\settings.json`
+    target under a disposable `APPDATA\\Code\\User\\settings.json`, aligned
+    to the active disposable Windows integration-host profile
   - the remaining CLI proof gap is now narrower: direct live mutation of the
-    active real user-profile VS Code settings target while Code is already
-    running is not yet end-to-end proven on this line
+    already-running VS Code session is not yet end-to-end proven on this
+    line, so the generated CLI now warns users to reload or restart the
+    window before using Compare when Code is already open
   - released `repo-standards-review` `v0.2.9` compliance closeout is retained
     in the branch control plane
   - the remaining active slices are packaged/public truth alignment when

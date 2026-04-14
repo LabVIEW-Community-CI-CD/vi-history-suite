@@ -120,10 +120,9 @@ describe('execution-policy control plane', () => {
     expect(currentState).toContain('`npm run test:integration:windows`');
     expect(currentState).toContain('proves the `.cmd` launcher path');
     expect(currentState).toContain('APPDATA\\\\Code\\\\User\\\\settings.json');
-    expect(currentState).toContain(
-      'active real user-profile VS Code settings target while Code is already'
-    );
-    expect(currentState).toContain('running is not yet end-to-end proven');
+    expect(currentState).toContain('active disposable Windows integration-host profile');
+    expect(currentState).toContain('already-running VS Code session is not yet end-to-end proven');
+    expect(currentState).toContain('reload or restart the');
     expect(currentState).toContain('released `repo-standards-review` `v0.2.9` compliance closeout');
     expect(currentState).toContain('remaining active slices are packaged/public truth alignment');
     expect(currentState).toContain('`TRANCHE-012`: Post-release sustainment and release cadence');
@@ -216,7 +215,9 @@ describe('execution-policy control plane', () => {
     expect(program).toContain('proves the `.cmd` launcher path');
     expect(program).toContain('APPDATA\\\\Code\\\\User\\\\settings.json');
     expect(program).toContain('current-host launcher execution against a temporary');
-    expect(program).toContain('active real user-profile VS Code settings target while Code is already');
+    expect(program).toContain('active disposable Windows integration-host profile');
+    expect(program).toContain('already-running VS Code session');
+    expect(program).toContain('reload or restart the window before using Compare');
     expect(program).toContain('issue-0412-promotion-and-publication-handoff.md');
     expect(program).toContain('installed manifest/settings');
     expect(program).toContain('explicit `Compare` action');
@@ -231,8 +232,9 @@ describe('execution-policy control plane', () => {
     expect(issueNext).toContain('current-host launcher execution against a temporary settings file');
     expect(issueNext).toContain('`.cmd` launcher path');
     expect(issueNext).toContain('APPDATA\\\\Code\\\\User\\\\settings.json');
-    expect(issueNext).toContain('direct live mutation of the active');
-    expect(issueNext).toContain('real user-profile VS Code settings target while Code is already running');
+    expect(issueNext).toContain('active disposable');
+    expect(issueNext).toContain('direct live mutation of the already-running VS Code session');
+    expect(issueNext).toContain('reload or restart the window before using Compare');
     expect(issueNext).toContain('keep packaged/public docs on the exact released Docker-only baseline');
     expect(issueNext).toContain('provider/version/bitness');
     expect(issueNext).toContain('explicit compare preflight state');
