@@ -1831,10 +1831,18 @@ Information-for-users review cases:
   one exact bounded blocker receipt per unresolved seam
 - `TEST-SMOKE-021`: prove `CreateComparisonReport` admission on the supported
   LabVIEW 2026 x64 host bundle, or retain the exact bounded blocker receipt
-  when that bundle remains non-admissible after prerequisite closeout
+  when that bundle remains non-admissible after prerequisite closeout; the
+  retained x64 receipt shall keep the direct `CreateComparisonReport`
+  command-line proof, the derived VI Server port (`3363`), the banner
+  observation that `LabVIEWCLI.exe` was seen while `LabVIEW.exe` was absent,
+  and the final `command-timed-out` outcome
 - `TEST-SMOKE-022`: prove `CreateComparisonReport` admission on the supported
   LabVIEW 2026 x86 host bundle, or retain the exact bounded blocker receipt
-  when that bundle remains non-admissible after prerequisite closeout
+  when that bundle remains non-admissible after prerequisite closeout; the
+  retained x86 receipt shall keep the direct `CreateComparisonReport`
+  command-line proof, the derived VI Server port (`3364`), the banner
+  observation that `LabVIEWCLI.exe` was seen while `LabVIEW.exe` was absent,
+  and the final `command-timed-out` outcome
 - `TEST-DOC-106`: review current-state, `PROGRAM-0005`, `ISSUE-0412`, the
   SRS, RTM, and the test plan and confirm the remaining live-session reload
   contract is explicit until direct active-session uptake is end-to-end proven
@@ -1843,9 +1851,10 @@ Information-for-users review cases:
   retains explicit trust and settings-target governance instead of relying on
   chat-memory doctrine
 - `TEST-DOC-108`: review current-state, the host-operation matrix docs, the
-  SRS, RTM, and the test plan and confirm the remaining LabVIEW 2026
-  prerequisite-operation seams and `CreateComparisonReport` admission proof
-  are retained as explicit host-proof gates instead of informal notes
+  tracked host `CreateComparisonReport` packet, the SRS, RTM, and the test
+  plan and confirm the remaining LabVIEW 2026 prerequisite-operation seams
+  plus the direct x64/x86 `CreateComparisonReport` blocker receipts are
+  retained as explicit host-proof gates instead of informal notes
 - `TEST-DOC-109`: review README, current-state, `PROGRAM-0005`, `ISSUE-0412`,
   the branch handoff packet, the SRS, RTM, and the test plan and confirm
   bundled/public installed-user surfaces remain on the exact released
