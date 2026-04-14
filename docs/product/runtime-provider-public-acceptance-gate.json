@@ -31,7 +31,8 @@
   ],
   "remainingGateCriteria": [
     "publication-alignment slices must promote truthful maintained public candidate surfaces for the host-default contract",
-    "bundled docs, public GitHub source, public GitHub wiki, and Marketplace reader surfaces shall stay on the exact released Docker-only baseline until the maintained public candidate actually carries the host-default contract",
+    "exact public main, exact public wiki, exact bundled installed-user docs, and Marketplace reader surfaces shall stay on the exact released Docker-only baseline until a newer exact release is actually published",
+    "maintained public develop candidate heads and maintained public candidate wiki heads may carry the opened v1.3.0 host-default contract once those candidate heads are actually published and retained in the authority candidate package",
     "the maintained public candidate heads shall be retained in docs/product/public-release-candidate.md and docs/product/public-release-candidate.json",
     "the governed public acceptance rerun shall execute against those published candidate heads and retain pass-or-blocked evidence before review-ready advances",
     "the gate closes only after the host-default installed contract is both truthfully published and accepted on the governed public surface"
@@ -41,5 +42,5 @@
     "treating local authority-green proof as equivalent to public acceptance",
     "rewriting public or bundled installed-user surfaces ahead of truthful candidate publication"
   ],
-  "nextMove": "feature/runtime-provider-publication-alignment"
+  "nextMove": "feature/runtime-provider-public-candidate-publication"
 }

@@ -49,9 +49,13 @@ Docker-only public closeout is still active implementation work.
 
 - publication-alignment slices must promote truthful maintained public
   candidate surfaces for the host-default contract
-- bundled docs, public GitHub source, public GitHub wiki, and Marketplace
-  reader surfaces shall stay on the exact released Docker-only baseline until
-  the maintained public candidate actually carries the host-default contract
+- exact public `main`, exact public wiki, exact bundled installed-user docs,
+  and Marketplace reader surfaces shall stay on the exact released Docker-only
+  baseline until a newer exact release is actually published
+- maintained public `develop` candidate heads and maintained public candidate
+  wiki heads may carry the opened `v1.3.0` host-default contract once those
+  candidate heads are actually published and retained in the authority
+  candidate package
 - the maintained public candidate heads shall be retained in
   `docs/product/public-release-candidate.{md,json}`
 - the governed public acceptance rerun shall execute against those published
@@ -69,5 +73,5 @@ Docker-only public closeout is still active implementation work.
 
 ## Next Move
 
-- `feature/runtime-provider-publication-alignment`
+- `feature/runtime-provider-public-candidate-publication`
 
