@@ -1,11 +1,15 @@
 # ISSUE-0413: Planned Requirements 085-098 Closeout Roadmap
 
+## Status
+
+Closed on April 14, 2026.
+
 ## Goal
 
 Close the remaining planned requirement set in `docs/requirements/rtm.csv`
 without reopening already-implemented runtime-provider work.
 
-As of April 14, 2026, the remaining planned requirements are:
+The closeout scope was:
 
 - `VHS-REQ-085`
 - `VHS-REQ-086`
@@ -58,6 +62,17 @@ As of April 14, 2026, the remaining planned requirements are:
    docs + tests + control-plane surfaces are aligned and RTM rows move to
    `Implemented`.
 
+## Completion Record
+
+All three planned sequence branches merged to `develop`:
+
+1. `feature/req-085-088-review-surface-and-progress-closeout`
+2. `feature/req-089-093-compare-artifact-governance-closeout`
+3. `feature/req-097-098-desktop-boundary-and-packaging-guidance-closeout`
+
+`docs/requirements/rtm.csv` now records `VHS-REQ-085..093` and `VHS-REQ-097..098`
+as `Implemented`, and no `Planned` rows remain in the RTM.
+
 ## Execution Rules
 
 - each branch must carry requirement-to-test trace updates in RTM and test plan
@@ -76,3 +91,5 @@ As of April 14, 2026, the remaining planned requirements are:
 
 This issue is complete when all eleven requirement rows above are `Implemented`
 and no new planned rows are introduced for the same scope.
+
+Condition met.
