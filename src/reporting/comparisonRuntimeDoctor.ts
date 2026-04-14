@@ -110,6 +110,11 @@ export function buildComparisonRuntimeDoctorSummaryFromFacts(options: {
     lines.push(`Exit observed process names: ${execution.exitObservedProcessNames.join(' | ')}.`);
   }
 
+  const settingsFreshnessNote = deriveRuntimeDoctorSettingsFreshnessNote(options);
+  if (settingsFreshnessNote) {
+    lines.push(settingsFreshnessNote);
+  }
+
   lines.push(deriveRuntimeDoctorNextAction(options));
   return lines;
 }
@@ -236,6 +241,27 @@ function deriveRuntimeDoctorNextAction(options: {
 
 function buildRuntimeSettingsReloadAction(settingsAction: string, finalAction: string): string {
   return `Next action: ${settingsAction}. If you just used the generated settings CLI while VS Code was already open, reload or restart the window. Then ${finalAction}.`;
+}
+
+function deriveRuntimeDoctorSettingsFreshnessNote(options: {
+  reportStatus: ComparisonReportPacketRecord['reportStatus'];
+  runtimeSelection: ComparisonReportPacketRecord['runtimeSelection'];
+  runtimeExecution: ComparisonReportRuntimeExecution;
+}): string | undefined {
+  const providerRequest = options.runtimeSelection.requestedProvider;
+  if (providerRequest !== 'host' && providerRequest !== 'docker') {
+    return undefined;
+  }
+
+  if (
+    options.reportStatus !== 'blocked-runtime' &&
+    options.runtimeExecution.state !== 'not-available' &&
+    options.runtimeExecution.state !== 'failed'
+  ) {
+    return undefined;
+  }
+
+  return 'Settings freshness: if you just used the generated settings CLI while VS Code was already open, reload or restart the window before trusting this runtime result.';
 }
 
 function deriveRequestedProviderIntent(selection: {

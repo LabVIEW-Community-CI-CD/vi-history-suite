@@ -204,7 +204,7 @@ export async function runLocalRuntimeSettingsCli(
   );
   writeLine(
     deps.stdout ?? process.stdout,
-    'If VS Code is already running, reload or restart the window before using Compare so the updated settings are picked up.'
+    'If VS Code is already running, reload or restart the window before trusting Compare or other runtime-provider surfaces to reflect the updated provider and runtime facts.'
   );
 
   return {

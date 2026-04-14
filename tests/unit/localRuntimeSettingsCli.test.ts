@@ -126,7 +126,7 @@ describe('localRuntimeSettingsCli', () => {
     expect(stdout.join('')).toContain('viHistorySuite.labviewVersion=2026');
     expect(stdout.join('')).toContain('viHistorySuite.labviewBitness=x64');
     expect(stdout.join('')).toContain(
-      'If VS Code is already running, reload or restart the window before using Compare'
+      'If VS Code is already running, reload or restart the window before trusting Compare or other runtime-provider surfaces'
     );
   });
 

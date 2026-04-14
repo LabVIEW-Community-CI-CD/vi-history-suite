@@ -1593,6 +1593,9 @@ function buildRuntimeBackedBlockedComparePreflightState(options: {
   if (options.runtimeSelection.blockedReason) {
     warningSegments.push(`Blocked reason: ${options.runtimeSelection.blockedReason}.`);
   }
+  warningSegments.push(
+    'If you just used the generated settings CLI while VS Code was already open, reload or restart the window before trusting compare preflight.'
+  );
   warningSegments.push(nextAction);
 
   return {

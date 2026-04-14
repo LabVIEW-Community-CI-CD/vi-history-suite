@@ -1168,7 +1168,7 @@ describe('createOpenViHistoryCommand', () => {
     );
     expect(comparisonReportAction).not.toHaveBeenCalled();
     expect(showWarningMessageMock).toHaveBeenCalledWith(
-      'Compare preflight is blocked. Provider: unavailable. Provider request: host. Blocked reason: labview-exe-not-found. Next action: make the selected host-native runtime available, resolve host conflicts, or switch to a Docker-backed compare path, then rerun comparison report generation.'
+      'Compare preflight is blocked. Provider: unavailable. Provider request: host. Blocked reason: labview-exe-not-found. If you just used the generated settings CLI while VS Code was already open, reload or restart the window before trusting compare preflight. Next action: make the selected host-native runtime available, resolve host conflicts, or switch to a Docker-backed compare path, then rerun comparison report generation.'
     );
   });
 
