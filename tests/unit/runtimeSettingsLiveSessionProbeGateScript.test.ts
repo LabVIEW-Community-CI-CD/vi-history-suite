@@ -212,6 +212,40 @@ describe('assertRuntimeSettingsLiveSessionProbePacket script', () => {
     );
   });
 
+  it('fails validation when mutation target alignment is false even if target and persisted provider match', () => {
+    const failures = probeGate.validateProbePacket({
+      outcome: 'probed-runtime-settings-live-session',
+      packetRunId: '2026-04-14T13-07-33-123Z',
+      packetJsonPath: '/tmp/packet.json',
+      packetMarkdownPath: '/tmp/packet.md',
+      latestPacketJsonPath: '/tmp/latest-summary.json',
+      latestPacketMarkdownPath: '/tmp/latest-summary.md',
+      persistedProvider: 'host',
+      mutationProviderTarget: 'host',
+      mutationTargetPersistedMatch: false,
+      liveUptakeObservation: 'in-session-updated',
+      safeRestoreApplied: true,
+      safeRestoreVerified: true,
+      providerDrift: false,
+      versionDrift: false,
+      bitnessDrift: false,
+      driftDetected: false,
+      historyTotalRuns: 3,
+      historyReloadRequiredCount: 1,
+      historyInSessionUpdatedCount: 2,
+      historyUnknownObservationCount: 0,
+      historyStance: 'live-uptake-not-proven',
+      historyProofStatus: 'not-fully-proven'
+    });
+
+    expect(failures).toContain(
+      'mutationTargetPersistedMatch must align with mutationProviderTarget versus persistedProvider (true)'
+    );
+    expect(failures).toContain(
+      'mutationTargetPersistedMatch must be true for latest retained probe packet evidence'
+    );
+  });
+
   it('passes on a valid packet file via --packet', async () => {
     const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-live-probe-gate-'));
     temporaryDirectories.push(tempRoot);

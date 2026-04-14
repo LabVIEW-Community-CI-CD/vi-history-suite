@@ -375,7 +375,8 @@ Post-release tranches:
     cumulative retained history stance counts on each packet
   - one local fail-closed packet gate now exists at
     `npm run proof:runtime-settings-live-session:assert`; it blocks admission
-    when the retained latest probe packet is missing or malformed
+    when the retained latest probe packet is missing, malformed, or does not
+    prove `mutationTargetPersistedMatch=true`
   - one local history receipt now exists at
     `npm run proof:runtime-settings-live-session:history`; it summarizes
     retained probe runs into one bounded live-uptake stance and explicit

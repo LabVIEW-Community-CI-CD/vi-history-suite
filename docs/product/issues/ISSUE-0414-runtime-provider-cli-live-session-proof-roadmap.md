@@ -34,11 +34,11 @@ The unresolved seam remains explicit:
 
 Current implementation branch:
 
-- `feature/runtime-provider-live-session-target-alignment-receipt` (in progress)
+- `feature/runtime-provider-live-session-latest-alignment-assert` (in progress)
 
 Most recently merged branch:
 
-- `feature/runtime-provider-live-session-not-fully-proven-receipt`
+- `feature/runtime-provider-live-session-target-alignment-receipt`
 
 ## Roadmap (Feature Branch Sequence)
 
@@ -103,11 +103,17 @@ Most recently merged branch:
   `re-evaluation-required`) onto packet/history/policy surfaces so the current
   CLI live-session boundary is machine-readable rather than only implied.
 
-13. `feature/runtime-provider-live-session-target-alignment-receipt` (in progress)
+13. `feature/runtime-provider-live-session-target-alignment-receipt` (merged)
 - Add one explicit retained mutation-target alignment receipt
   (`mutationTargetPersistedMatch`) and fail-closed policy/history admission when
   retained probe runs do not show that requested provider selection actually
   became the persisted provider.
+
+14. `feature/runtime-provider-live-session-latest-alignment-assert` (in progress)
+- Tighten the local latest-packet gate so admission fails when
+  `mutationTargetPersistedMatch` is not explicitly `true`, making latest
+  retained probe evidence fail closed when requested provider selection did not
+  take effect.
 
 ## Admission Rules
 
