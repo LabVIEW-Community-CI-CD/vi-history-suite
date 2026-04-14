@@ -13,13 +13,16 @@ scattered across queue summaries, ship history, and benchmark notes.
 - tranche: `TRANCHE-012`
 - issue: `ISSUE-0409`
 - execution program: `PROGRAM-0004`
-- parallel public-closeout lane: `TRANCHE-010` / `PROGRAM-0002` is reopened on
-  the `1.0.0` Docker-only public contract
+- historical public-closeout record: `TRANCHE-010` / `PROGRAM-0002` is closed
+  on the Docker-only public contract
+- next runtime-provider public-acceptance gate:
+  [runtime-provider-public-acceptance-gate.md](./runtime-provider-public-acceptance-gate.md)
 
 The sustainment lane now owns the only active post-release driver seat. It does
-not absorb `PROGRAM-0002`, `PROGRAM-0003`, or `PROGRAM-0005` into generic
-maintenance language; those programs remain explicit when they reopen or stay
-active.
+not absorb the historical `PROGRAM-0002` closeout, `PROGRAM-0003`,
+`PROGRAM-0005`, or the open runtime-provider public-acceptance gate into
+generic maintenance language; those surfaces remain explicit when they are
+historical or active.
 
 The current release branch model is explicit too:
 

@@ -1859,10 +1859,11 @@ Information-for-users review cases:
   plus the direct x64/x86 `CreateComparisonReport` blocker receipts are
   retained as explicit host-proof gates instead of informal notes
 - `TEST-DOC-109`: review README, current-state, `PROGRAM-0005`, `ISSUE-0412`,
-  the branch handoff packet, the SRS, RTM, and the test plan and confirm
+  the branch handoff packet, the runtime-provider public-acceptance gate
+  packet, the release procedure, the SRS, RTM, and the test plan and confirm
   bundled/public installed-user surfaces remain on the exact released
-  Docker-only baseline until the host-default provider contract clears public
-  acceptance
+  Docker-only baseline until the host-default provider contract clears the
+  explicit governed public-acceptance gate
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are

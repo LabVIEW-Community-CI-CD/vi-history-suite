@@ -178,6 +178,8 @@
     - local authority-green proof is necessary but not sufficient
     - the maintained public `develop` candidate head must be live
     - the maintained public wiki head must be live
+    - the next installed-user publication boundary must remain explicit in
+      `docs/product/runtime-provider-public-acceptance-gate.{md,json}`
     - both published heads must be retained in
       `docs/product/public-release-candidate.{md,json}`
     - do not open the next expert-agent review gate until that `review-ready`

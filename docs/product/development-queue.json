@@ -105,7 +105,7 @@
     "title": "Post-release sustainment and release cadence",
     "status": "active",
     "source": "author direction",
-    "summary": "Sustain the public release kit, benchmark refresh cadence, operator surfaces, SemVer discipline, hosted branch/CI governance, and public-user and internal-authority docs surfaces as event-driven repo truth, while keeping sustainment separate from the reopened `PROGRAM-0002` public closeout and the active `PROGRAM-0005` installed local-LabVIEWCLI contract reset.",
+    "summary": "Sustain the public release kit, benchmark refresh cadence, operator surfaces, SemVer discipline, hosted branch/CI governance, and public-user and internal-authority docs surfaces as event-driven repo truth, while keeping sustainment separate from the historical `PROGRAM-0002` Docker-only public closeout, the explicit runtime-provider public-acceptance gate, and the active `PROGRAM-0005` installed local-LabVIEWCLI contract reset.",
     "issues": [
       "ISSUE-0409"
     ]
@@ -145,7 +145,7 @@
   "title": "Host-default LabVIEWCLI, expert Docker provider, and explicit compare workflow",
     "status": "active",
     "source": "author direction",
-  "summary": "Replace the installed Docker-only compare contract with a host-default Windows local-LabVIEWCLI workflow, retain Docker only as a bounded expert provider selected through the generated settings CLI, require explicit provider-safe LabVIEW version plus bitness selection, add fail-closed host and Docker preflight, replace automatic second-selection compare generation with a dedicated compare preflight section plus explicit compare action, and then carry the landed branch through governed promotion into develop plus the later publication/public-acceptance handoff.",
+  "summary": "Replace the installed Docker-only compare contract with a host-default Windows local-LabVIEWCLI workflow, retain Docker only as a bounded expert provider selected through the generated settings CLI, require explicit provider-safe LabVIEW version plus bitness selection, add fail-closed host and Docker preflight, replace automatic second-selection compare generation with a dedicated compare preflight section plus explicit compare action, and then carry the landed develop-line contract through truthful publication alignment plus the explicit runtime-provider public-acceptance gate.",
     "issues": [
       "ISSUE-0412"
     ]

@@ -22,7 +22,8 @@ control-plane upkeep an explicit home.
 
 Feature-layer execution-policy work is not owned by this sustainment program.
 That work remains explicit under active `PROGRAM-0005`, and the public-closeout
-rerun remains explicit under reopened `PROGRAM-0002`.
+record remains explicit under historical `PROGRAM-0002` plus the open
+runtime-provider public-acceptance gate.
 
 ## North Star
 
@@ -143,5 +144,5 @@ That retained slice now:
 This program is complete when `vi-history-suite` has a stable post-benchmark
 operating model for releases, benchmark refresh, and documentation/operator
 upkeep, with no ambiguity about where ongoing maintenance work belongs while
-reopened public-closeout or execution-policy work remains explicitly outside
-the sustainment bucket.
+historical public-closeout, the open runtime-provider public-acceptance gate,
+or execution-policy work remains explicitly outside the sustainment bucket.

@@ -225,10 +225,12 @@ Current active and recently closed tranches:
     retained on this branch
   - remaining work is branch promotion into `develop`, truthful
     packaged/public reader-surface promotion only when the replacement
-    contract is actually publishable, and later public acceptance handoff
-    through `PROGRAM-0002`
+    contract is actually publishable, and the later runtime-provider public
+    acceptance gate after candidate publication is real
   - retained handoff packet:
     [issue-0412-promotion-and-publication-handoff.md](./issue-0412-promotion-and-publication-handoff.md)
+  - explicit next public-acceptance gate:
+    [runtime-provider-public-acceptance-gate.md](./runtime-provider-public-acceptance-gate.md)
 - `TRANCHE-012`: Post-release sustainment and release cadence
 - active issue: [ISSUE-0409 Post-Release Sustainment And Release Cadence](./issues/ISSUE-0409-post-release-sustainment-and-release-cadence.md)
 - active execution program: [PROGRAM-0004: Post-Release Sustainment And Release Cadence](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)
@@ -238,8 +240,9 @@ Current active and recently closed tranches:
   - keep exact release closeout incomplete until the matching released `main`
     line has been back-merged into `develop` through the protected path and
     the resulting `develop` pipeline is green
-  - do not absorb the active `PROGRAM-0005` local-LabVIEWCLI work or reopened
-    `PROGRAM-0002` work into generic sustainment language
+  - do not absorb the active `PROGRAM-0005` local-LabVIEWCLI work, the
+    historical `PROGRAM-0002` Docker-only closeout, or the open
+    runtime-provider public-acceptance gate into generic sustainment language
 - closed public-product closeout:
   - `TRANCHE-010` / [ISSUE-0407 Public Source Facade And Public-Product Acceptance](./issues/ISSUE-0407-public-facade-installer-and-windows-acceptance.md) / [PROGRAM-0002: Public Source Facade And Public-Product Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
   - the earlier retained canonical host pass at `2026-04-06T20:48:13.412Z`
@@ -329,7 +332,8 @@ Post-release tranches:
     public wiki entry surface now publishes `527a8b4`, and the VS Code
     Marketplace item verifies `1.2.2`
   - sustainment does not absorb the active `TRANCHE-016` local-LabVIEWCLI
-    contract reset or the reopened `TRANCHE-010` public-closeout rerun
+    contract reset, the historical `TRANCHE-010` Docker-only public closeout,
+    or the open runtime-provider public-acceptance gate
 - `TRANCHE-016`: Host-default LabVIEWCLI, expert Docker provider, and explicit compare workflow
   - active issue: [ISSUE-0412 Installed Local LabVIEWCLI Selection And Explicit Compare](./issues/ISSUE-0412-installed-local-labviewcli-selection-and-explicit-compare.md)
   - active execution program: [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
@@ -367,9 +371,14 @@ Post-release tranches:
     in the branch control plane
   - the remaining active slices are packaged/public truth alignment when
     publication is actually truthful, the unresolved live active-settings
-    mutation seam, and later public acceptance handoff after publication
+    mutation seam, and the explicit runtime-provider public-acceptance gate
+    after publication
   - retained handoff packet:
     [issue-0412-promotion-and-publication-handoff.md](./issue-0412-promotion-and-publication-handoff.md)
+  - explicit public-acceptance gate:
+    [runtime-provider-public-acceptance-gate.md](./runtime-provider-public-acceptance-gate.md)
+    and
+    [runtime-provider-public-acceptance-gate.json](./runtime-provider-public-acceptance-gate.json)
   - Docker is now a bounded expert provider rather than either the default
     installed-user dependency or an internal-only path
 - historical installed-user Docker baseline:
@@ -396,10 +405,13 @@ Post-release tranches:
     publishes `86b19a2`, and the maintained public wiki/reference-manual
     package now closes exact `v1.2.2`
 
-Current active and queued post-release programs:
+Historical public closeout and next runtime-provider public-acceptance gate:
 
 - [PROGRAM-0002: Public Source Facade And Public-Product Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
-- active issue: [ISSUE-0407 Public Source Facade And Public-Product Acceptance](./issues/ISSUE-0407-public-facade-installer-and-windows-acceptance.md)
+- historical issue: [ISSUE-0407 Public Source Facade And Public-Product Acceptance](./issues/ISSUE-0407-public-facade-installer-and-windows-acceptance.md)
+- next gate:
+  - [runtime-provider-public-acceptance-gate.md](./runtime-provider-public-acceptance-gate.md)
+  - [runtime-provider-public-acceptance-gate.json](./runtime-provider-public-acceptance-gate.json)
 - trust boundary:
   - private GitLab immutable release remains product truth
   - private GitLab source repo remains the authority repo and release-control surface
@@ -437,7 +449,7 @@ Current active and queued post-release programs:
   - `docs:ci:public` and `docs:ci:internal` now split public-user and internal-authority docs surfaces without removing the retained umbrella `docs:ci` lane
   - NSIS has been removed from the active public toolchain
   - Docker is now part of the default installed extension setup path
-  - the current Windows 11 host machine has already proven the earlier public bundle, and the published public GitHub source repo plus the canonical fixture workspace are now the deterministic acceptance surface for the next Docker-only Gate D rerun
+  - the current Windows 11 host machine has already proven the earlier public bundle, and the published public GitHub source repo plus the canonical fixture workspace remain historical acceptance evidence for the closed Docker-only line rather than automatic proof for the next host-default contract
   - the public-facade Linux smoke lane now exists through `.github/workflows/public-facade-linux-smoke.yml`, supports `workflow_dispatch`, and uses `npm run public:smoke:linux` as the public Docker-product smoke surface
   - the authority repo now retains `npm run public:gate-d:preflight` and `npm run public:gate-d:prepare-cold-pull` so the next human Gate D rerun can record published public commits, canonical fixture facts, Docker Linux engine state, and governed-image absence before the compare pass starts
   - the [Public Release Candidate](./public-release-candidate.md) and [public-release-candidate.json](./public-release-candidate.json) now retain the stable multi-surface exact-release snapshot without relying on ephemeral pipeline ids
@@ -450,7 +462,7 @@ Current active and queued post-release programs:
     default startup dependency
   - the setup adapters prepare Visual Studio Code and Git when needed, install the exact VSIX, and materialize the local `ni/labview-icon-editor` Git fixture workspace with commit history
   - Visual Studio Code CLI automates install/verify/open surfaces after setup
-  - the earlier retained manual right-click review pass remains historical evidence only, and Sergio Velderrain remains the sole named maintainer of the canonical host-machine proof surface for the reopened Docker-only Gate D contract
+  - the earlier retained manual right-click review pass remains historical evidence only, and Sergio Velderrain remains the sole named maintainer of the canonical host-machine proof surface for the closed Docker-only Gate D contract
   - the private extension now retains that human closeout through a deterministic in-IDE submission surface bound to the canonical host machine
   - the public acceptance surface now includes a dedicated host-machine human-gate closeout script with structured checklist retention in the acceptance record
   - public GitHub issues are supplemental field feedback, not gate-closing proof
@@ -459,6 +471,8 @@ Current active and queued post-release programs:
   - [PROGRAM-0004: Post-Release Sustainment And Release Cadence](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)
   - [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
   - [PROGRAM-0006: Public Codespaces Public-Repo Bootstrap](./execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md)
+  - [runtime-provider-public-acceptance-gate.md](./runtime-provider-public-acceptance-gate.md)
+  - [runtime-provider-public-acceptance-gate.json](./runtime-provider-public-acceptance-gate.json)
 
 The active-queue source of truth is:
 
@@ -468,6 +482,8 @@ The active-queue source of truth is:
 - [PROGRAM-0004: Post-Release Sustainment And Release Cadence](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)
 - [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
 - [PROGRAM-0006: Public Codespaces Public-Repo Bootstrap](./execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md)
+- [runtime-provider-public-acceptance-gate.md](./runtime-provider-public-acceptance-gate.md)
+- [runtime-provider-public-acceptance-gate.json](./runtime-provider-public-acceptance-gate.json)
 - [extension-execution-policy.md](./extension-execution-policy.md)
 - [debt-retirement-contract.md](./debt-retirement-contract.md)
 - [debt-taxonomy.md](./debt-taxonomy.md)
