@@ -198,6 +198,12 @@ still only proposal material during round 1:
   no-`--settings-file` target under a disposable
   `APPDATA\\Code\\User\\settings.json`, aligned to the active disposable
   Windows integration-host profile
+- that same Windows proof lane now also proves the governed CLI
+  readback/validation surface on a persisted `docker` / `2026` / `x64`
+  bundle: when Docker Desktop and the governed Windows image are available on
+  the canonical host, validation returns `runtimeValidationOutcome=ready`
+  with `runtimeProvider=windows-container`, `runtimeEngine=labview-cli`, and
+  no blocked reason
 - `src/ui/historyPanel.ts` now uses explicit compare preflight instead of
   auto-generating compare output on second commit selection
 - `src/commands/openViHistoryCommand.ts` now surfaces provider request,

@@ -1825,7 +1825,10 @@ Information-for-users review cases:
   failure mode when the governed runtime dependency is unavailable or stale
 - `TEST-INTEG-011`: prove the governed provider-CLI readback or validation
   surface reports the persisted provider/version/bitness bundle and the
-  bounded runtime-validation outcome from a real extension-host session
+  bounded runtime-validation outcome from a real extension-host session; the
+  explicit Windows lane shall prove that a persisted `docker` / `2026` / `x64`
+  bundle validates as `ready` with `windows-container` plus `labview-cli` when
+  Docker Desktop and the governed Windows image are available
 - `TEST-SMOKE-020`: prove the canonical Windows host-operation matrix closes
   the remaining LabVIEW 2026 x86/x64 prerequisite-operation seams or retains
   one exact bounded blocker receipt per unresolved seam

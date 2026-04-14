@@ -352,6 +352,12 @@ Post-release tranches:
     proves the `.cmd` launcher path and the default no-`--settings-file`
     target under a disposable `APPDATA\\Code\\User\\settings.json`, aligned
     to the active disposable Windows integration-host profile
+  - that same Windows proof lane now also proves the governed provider-CLI
+    validation surface against a persisted `docker` / `2026` / `x64` bundle:
+    when Docker Desktop and the governed Windows image are available on the
+    canonical host, validation returns `runtimeValidationOutcome=ready`,
+    `runtimeProvider=windows-container`, `runtimeEngine=labview-cli`, and no
+    blocked reason
   - the remaining CLI proof gap is now narrower: direct live mutation of the
     already-running VS Code session is not yet end-to-end proven on this
     line, so the generated CLI plus the settings-driven compare-preflight and
