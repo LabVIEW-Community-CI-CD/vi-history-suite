@@ -51,6 +51,7 @@ describe('extension manifest research alignment', () => {
     expect(manifest.activationEvents).toContain('onStartupFinished');
     expect(manifest.files).toEqual([
       'out/**',
+      'node_modules/jsonc-parser/**',
       'resources/**',
       'README.md',
       'CHANGELOG.md',

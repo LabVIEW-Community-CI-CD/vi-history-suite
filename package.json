@@ -35,6 +35,7 @@
   "main": "./out/extension.js",
   "files": [
     "out/**",
+    "node_modules/jsonc-parser/**",
     "resources/**",
     "README.md",
     "CHANGELOG.md",

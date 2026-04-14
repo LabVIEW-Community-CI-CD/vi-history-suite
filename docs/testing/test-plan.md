@@ -1003,10 +1003,11 @@ Information-for-users review cases:
   host runs to the current published benchmark image tag unless explicitly
   overridden, and fail closed when only a stale launch receipt remains and no
   live host Linux benchmark container exists
-- `TEST-UNIT-257`: verify the packaged runtime-surface audit rejects declared
-  runtime npm dependencies, rejects packaged `node_modules` or transient/test
-  artifacts such as `.cache` and `.vscode-test`, and allows the current
-  compiled-only VSIX surface
+- `TEST-UNIT-257`: verify the packaged runtime-surface audit rejects ungoverned
+  runtime npm dependencies, rejects missing payload for a governed runtime
+  dependency such as `jsonc-parser`, rejects ungoverned packaged `node_modules`
+  or transient/test artifacts such as `.cache` and `.vscode-test`, and allows
+  the current governed runtime VSIX surface
 - `TEST-UNIT-258`: verify the root manifest excludes packaging-only npm
   tooling from default `npm ci`, while the guarded package path still invokes
   the pinned `vsce` package on demand through the dedicated helper script
@@ -1201,10 +1202,10 @@ Information-for-users review cases:
   published-image defaulting, and stale-launch-receipt fail-closed behavior
 - `TEST-DOC-036`: review README, current-state, release procedure, and
   ADR-0015 and confirm the packaged VSIX surface is documented as a compile-
-  and-audit guarded compiled-only surface that fails closed on runtime
-  `node_modules`, `.cache`, or `.vscode-test` leakage and keeps packaging-only
-  toolchain dependencies out of the default compile/test/benchmark install
-  surface
+  and-audit guarded surface that fails closed on ungoverned runtime
+  `node_modules`, missing governed dependency payloads, `.cache`, or
+  `.vscode-test` leakage while keeping packaging-only toolchain dependencies
+  out of the default compile/test/benchmark install surface
 - `TEST-DOC-037`: review README, current-state, and ADR-0016 and confirm the
   canonical host Linux benchmark lane and the private GitHub experiment lane
   are governed to stay aligned on the same authority-repo commit and published

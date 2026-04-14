@@ -420,7 +420,7 @@ Current active and queued post-release programs:
     operator memory
   - public GitHub wiki publication is tracked separately from the internal GitLab maintainer wiki in `docs/product/public-github-wiki-publication-ledger.md` and `docs/product/public-github-wiki-publication-ledger.json`
   - public GitHub source repo is not the private GitHub experiment mirror
-  - the authority VSIX install surface is compile-and-audit guarded and does not permit shipped runtime `node_modules`
+  - the authority VSIX install surface is compile-and-audit guarded, admits only explicitly governed shipped runtime dependencies, and fails closed on ungoverned `node_modules` payloads
   - the public GitHub source repo and public GitHub wiki publish extension-user and public-product material only; they do not publish private requirements, benchmark-control detail, or design-gate docs
   - public source promotion is now a governed one-way act through `npm run public:source:promote`
   - the local public-source operator surface now binds the intended checkout
