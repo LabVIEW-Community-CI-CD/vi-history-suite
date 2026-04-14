@@ -70,6 +70,14 @@ interface RuntimeSettingsLiveSessionProbeSummary {
   packetMarkdownPath: string;
   latestPacketJsonPath: string;
   latestPacketMarkdownPath: string;
+  historyTotalRuns: number;
+  historyReloadRequiredCount: number;
+  historyInSessionUpdatedCount: number;
+  historyUnknownObservationCount: number;
+  historyStance:
+    | 'live-uptake-not-proven'
+    | 'candidate-live-uptake-observed'
+    | 'insufficient-evidence';
 }
 
 const execFile = promisify(execFileCallback);
@@ -714,6 +722,28 @@ async function testProbeRuntimeSettingsLiveSession(): Promise<void> {
   assert.ok(summary.packetMarkdownPath);
   assert.ok(summary.latestPacketJsonPath);
   assert.ok(summary.latestPacketMarkdownPath);
+  assert.ok(summary.historyTotalRuns >= 1);
+  assert.ok(summary.historyReloadRequiredCount >= 0);
+  assert.ok(summary.historyInSessionUpdatedCount >= 0);
+  assert.ok(summary.historyUnknownObservationCount >= 0);
+  assert.ok(
+    summary.historyStance === 'live-uptake-not-proven' ||
+      summary.historyStance === 'candidate-live-uptake-observed' ||
+      summary.historyStance === 'insufficient-evidence'
+  );
+  assert.ok(
+    summary.historyTotalRuns >=
+      summary.historyReloadRequiredCount +
+        summary.historyInSessionUpdatedCount +
+        summary.historyUnknownObservationCount
+  );
+  const expectedHistoryStance =
+    summary.historyReloadRequiredCount > 0
+      ? 'live-uptake-not-proven'
+      : summary.historyInSessionUpdatedCount > 0 && summary.historyUnknownObservationCount === 0
+        ? 'candidate-live-uptake-observed'
+        : 'insufficient-evidence';
+  assert.equal(summary.historyStance, expectedHistoryStance);
   await fs.access(summary.packetJsonPath);
   await fs.access(summary.packetMarkdownPath);
   await fs.access(summary.latestPacketJsonPath);

@@ -34,11 +34,11 @@ The unresolved seam remains explicit:
 
 Current implementation branch:
 
-- `feature/runtime-provider-live-session-policy-boundary-assert` (in progress)
+- `feature/runtime-provider-live-session-packet-history-stance` (in progress)
 
 Most recently merged branch:
 
-- `feature/runtime-provider-live-session-history-receipt`
+- `feature/runtime-provider-live-session-policy-boundary-assert`
 
 ## Roadmap (Feature Branch Sequence)
 
@@ -71,7 +71,7 @@ Most recently merged branch:
   session remains unproven, and strengthen the retained evidence contract with
   the landed probe packet plus local gate
 
-7. `feature/runtime-provider-live-session-uptake-receipt` (in progress)
+7. `feature/runtime-provider-live-session-uptake-receipt` (merged)
 - Retain one explicit packet-level live-uptake observation receipt that
   classifies each probe run as in-session-updated versus reload-required, with
   fail-closed local gate validation for that classification.
@@ -81,11 +81,16 @@ Most recently merged branch:
   runs into one policy-facing stance (`live-uptake-not-proven`,
   `candidate-live-uptake-observed`, or `insufficient-evidence`).
 
-9. `feature/runtime-provider-live-session-policy-boundary-assert` (in progress)
+9. `feature/runtime-provider-live-session-policy-boundary-assert` (merged)
 - Add one fail-closed policy-boundary assertion command that enforces the
   retained `VHS-REQ-542` evidence stance before merge and forces explicit
   re-evaluation when retained history no longer supports unconditional reload
   guidance.
+
+10. `feature/runtime-provider-live-session-packet-history-stance` (in progress)
+- Add one cumulative history-stance receipt directly on each retained probe
+  packet so every packet carries both point-in-time drift facts and retained
+  policy evidence context.
 
 ## Admission Rules
 

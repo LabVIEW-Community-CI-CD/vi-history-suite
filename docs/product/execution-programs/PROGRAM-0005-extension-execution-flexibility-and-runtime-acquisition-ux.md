@@ -43,6 +43,9 @@ Current facts:
   `Markdown`) under extension-global storage
 - retained probe packets now also classify live uptake explicitly as
   `in-session-updated` versus `reload-required` on each run
+- each retained probe packet now also carries cumulative retained history
+  counters and stance so point-in-time drift facts are packaged with current
+  policy evidence context
 - one local fail-closed packet gate now exists at
   `npm run proof:runtime-settings-live-session:assert` so malformed or missing
   retained probe evidence blocks admission

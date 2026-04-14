@@ -54,6 +54,11 @@ describe('runtimeSettingsLiveSessionProbePacket', () => {
     );
 
     expect(summary.packetRunId).toBe('2026-04-14T13-07-33-123Z');
+    expect(summary.historyTotalRuns).toBe(1);
+    expect(summary.historyReloadRequiredCount).toBe(1);
+    expect(summary.historyInSessionUpdatedCount).toBe(0);
+    expect(summary.historyUnknownObservationCount).toBe(0);
+    expect(summary.historyStance).toBe('live-uptake-not-proven');
     await expect(fs.access(summary.packetJsonPath)).resolves.toBeUndefined();
     await expect(fs.access(summary.packetMarkdownPath)).resolves.toBeUndefined();
     await expect(fs.access(summary.latestPacketJsonPath)).resolves.toBeUndefined();
@@ -64,10 +69,12 @@ describe('runtimeSettingsLiveSessionProbePacket', () => {
       driftDetected: boolean;
       providerDrift: boolean;
       packetMarkdownPath: string;
+      historyStance: string;
     };
     expect(packetJson.packetRunId).toBe('2026-04-14T13-07-33-123Z');
     expect(packetJson.driftDetected).toBe(true);
     expect(packetJson.providerDrift).toBe(true);
+    expect(packetJson.historyStance).toBe('live-uptake-not-proven');
     expect(packetJson.packetMarkdownPath).toBe(summary.packetMarkdownPath);
 
     const packetMarkdown = await fs.readFile(summary.packetMarkdownPath, 'utf8');
@@ -76,6 +83,8 @@ describe('runtimeSettingsLiveSessionProbePacket', () => {
     expect(packetMarkdown).toContain('Live uptake observation: `reload-required`');
     expect(packetMarkdown).toContain('Safe restore applied: `yes`');
     expect(packetMarkdown).toContain('Safe restore verified: `yes`');
+    expect(packetMarkdown).toContain('## History Receipt');
+    expect(packetMarkdown).toContain('History stance: `live-uptake-not-proven`');
     expect(packetMarkdown).toContain('## Baseline Persisted Settings Facts');
     expect(packetMarkdown).toContain('Provider: `docker`');
     expect(packetMarkdown).toContain('Provider: `host`');

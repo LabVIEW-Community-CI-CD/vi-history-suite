@@ -22,6 +22,11 @@ export type RuntimeSettingsLiveSessionUptakeObservation =
   | 'in-session-updated'
   | 'reload-required';
 
+export type RuntimeSettingsLiveSessionHistoryStance =
+  | 'live-uptake-not-proven'
+  | 'candidate-live-uptake-observed'
+  | 'insufficient-evidence';
+
 export interface RuntimeSettingsLiveSessionProbeSummary {
   outcome: 'probed-runtime-settings-live-session';
   settingsFilePath?: string;
@@ -55,6 +60,11 @@ export interface RuntimeSettingsLiveSessionProbeSummaryWithPacket
   packetMarkdownPath: string;
   latestPacketJsonPath: string;
   latestPacketMarkdownPath: string;
+  historyTotalRuns: number;
+  historyReloadRequiredCount: number;
+  historyInSessionUpdatedCount: number;
+  historyUnknownObservationCount: number;
+  historyStance: RuntimeSettingsLiveSessionHistoryStance;
 }
 
 export function buildRuntimeSettingsLiveSessionProbeSummary(
