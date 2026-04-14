@@ -254,6 +254,9 @@ describe('requirements documentation coherence', () => {
     expect(rtm).toContain('TEST-INTEG-011');
     expect(rtm).toContain('TEST-SMOKE-022');
     expect(rtm).toContain('TEST-DOC-109');
+    expect(rtm).toContain('docs/product/runtime-provider-public-acceptance-gate.md');
+    expect(rtm).toContain('docs/product/runtime-provider-public-acceptance-gate.json');
+    expect(rtm).toContain('docs/release-procedure.md');
 
     expect(testPlan).toContain('TEST-UNIT-349');
     expect(testPlan).toContain('settings-only fallback cannot');
@@ -266,5 +269,7 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('TEST-SMOKE-020');
     expect(testPlan).toContain('TEST-DOC-108');
     expect(testPlan).toContain('TEST-DOC-109');
+    expect(testPlan).toContain('runtime-provider public-acceptance gate');
+    expect(testPlan).toContain('release procedure');
   });
 });

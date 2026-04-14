@@ -49,7 +49,8 @@ Activation is now satisfied:
 - operator-surface and documentation-workbench sustainment
 - post-release control-plane maintenance
 - not the active extension execution-contract program under `PROGRAM-0005`
-- not the reopened public-closeout rerun under `PROGRAM-0002`
+- not the historical Docker-only public closeout under `PROGRAM-0002`
+- not the next runtime-provider public-acceptance gate
 
 ## Non-Goals
 
@@ -60,7 +61,8 @@ Activation is now satisfied:
 
 - completed `PROGRAM-0003`
 - active `PROGRAM-0005`
-- reopened `PROGRAM-0002`
+- historical `PROGRAM-0002` closeout
+- explicit runtime-provider public-acceptance gate
 - truthful current-state and queue surfaces
 
 ## Acceptance Criteria
@@ -120,5 +122,6 @@ Activation is now satisfied:
   depends on ad hoc manual review instead of a retained expert-agent review
   skill and no-findings verdict against the exact published public candidate
   surfaces
-- stop short of absorbing the active `PROGRAM-0005` or reopened `PROGRAM-0002`
-  work into generic sustainment language
+- stop short of absorbing the active `PROGRAM-0005`, the historical
+  `PROGRAM-0002` closeout, or the explicit runtime-provider public-acceptance
+  gate into generic sustainment language

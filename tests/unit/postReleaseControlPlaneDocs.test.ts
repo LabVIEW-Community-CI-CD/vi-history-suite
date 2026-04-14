@@ -25,6 +25,13 @@ describe('post-release control-plane coherence', () => {
   it('keeps the active post-release queue and public-facade program surfaces aligned', () => {
     const queue = readJson<QueueEntry[]>('docs/product/development-queue.json');
     const currentState = readText('docs/product/current-state.md');
+    const gateDoc = readText('docs/product/runtime-provider-public-acceptance-gate.md');
+    const gateJson = readJson<{
+      status: string;
+      historicalPublicCloseout?: { programId?: string; state?: string };
+      activeImplementationDirection?: { programId?: string };
+      nextMove?: string;
+    }>('docs/product/runtime-provider-public-acceptance-gate.json');
     const program = readText(
       'docs/product/execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md'
     );
@@ -43,7 +50,7 @@ describe('post-release control-plane coherence', () => {
       title: 'Post-release sustainment and release cadence',
       status: 'active',
       source: 'author direction',
-      summary: expect.stringContaining('benchmark refresh cadence'),
+      summary: expect.stringContaining('runtime-provider public-acceptance gate'),
       issues: ['ISSUE-0409']
     });
     expect(queue.filter((entry) => entry.status === 'active')).toContainEqual({
@@ -51,7 +58,7 @@ describe('post-release control-plane coherence', () => {
       title: 'Host-default LabVIEWCLI, expert Docker provider, and explicit compare workflow',
       status: 'active',
       source: 'author direction',
-      summary: expect.stringContaining('host-default Windows local-LabVIEWCLI workflow'),
+      summary: expect.stringContaining('runtime-provider public-acceptance gate'),
       issues: ['ISSUE-0412']
     });
     expect(queue.find((entry) => entry.id === 'TRANCHE-010')).toMatchObject({
@@ -76,6 +83,9 @@ describe('post-release control-plane coherence', () => {
     expect(currentState).toContain('APPDATA\\\\Code\\\\User\\\\settings.json');
     expect(currentState).toContain('active disposable Windows integration-host profile');
     expect(currentState).toContain('already-running VS Code session');
+    expect(currentState).toContain('Historical public closeout and next runtime-provider public-acceptance gate:');
+    expect(currentState).toContain('runtime-provider-public-acceptance-gate.md');
+    expect(currentState).toContain('runtime-provider-public-acceptance-gate.json');
 
     expect(program).toContain('Closed on the Docker-only public-product acceptance gate.');
     expect(program).toContain('the installed extension compare workflow is now Docker-only and x64-only');
@@ -91,6 +101,23 @@ describe('post-release control-plane coherence', () => {
     expect(issue).toContain('current exact release line is `v1.1.0`');
     expect(issue).toContain('retained Gate D preflight preparation already proves');
     expect(issue).toContain('GitHub Codespace `novacula` now passes the hosted public smoke');
+
+    expect(gateDoc).toContain('gate state: `open`');
+    expect(gateDoc).toContain('historical public closeout: `TRANCHE-010` / `ISSUE-0407` / `PROGRAM-0002`');
+    expect(gateDoc).toContain('feature/runtime-provider-publication-alignment');
+    expect(gateJson.status).toBe('open');
+    expect(gateJson.historicalPublicCloseout).toEqual(
+      expect.objectContaining({
+        programId: 'PROGRAM-0002',
+        state: 'closed-docker-only-public-contract'
+      })
+    );
+    expect(gateJson.activeImplementationDirection).toEqual(
+      expect.objectContaining({
+        programId: 'PROGRAM-0005'
+      })
+    );
+    expect(gateJson.nextMove).toBe('feature/runtime-provider-publication-alignment');
 
     expect(benchmarkProgram).toContain('Closed on bounded post-release benchmark truth.');
     expect(sustainmentProgram).toContain('Active post-release program.');
@@ -115,6 +142,7 @@ describe('post-release control-plane coherence', () => {
     expect(currentState).toContain('provider and progress visibility in the bundled guide');
     expect(currentState).toContain('workflow_dispatch');
     expect(currentState).toContain('npm run public:smoke:linux');
+    expect(currentState).toContain('closed Docker-only Gate D contract');
 
     expect(program).toContain('public GitHub wiki publication is tracked separately');
     expect(program).toContain('docs:ci:public');

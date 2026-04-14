@@ -113,8 +113,10 @@ history instead of chat memory.
   not yet end-to-end proven
 - keep packaged/public docs on the exact released Docker-only baseline until
   the replacement contract is truthfully publishable
-- retain the later `PROGRAM-0002` public acceptance handoff explicitly in
+- retain the historical branch-transition packet explicitly in
   [issue-0412-promotion-and-publication-handoff.md](../issue-0412-promotion-and-publication-handoff.md)
+- retain the next runtime-provider public-acceptance gate explicitly in
+  [runtime-provider-public-acceptance-gate.md](../runtime-provider-public-acceptance-gate.md)
 
 ## Round 1: User Proposal Facts
 

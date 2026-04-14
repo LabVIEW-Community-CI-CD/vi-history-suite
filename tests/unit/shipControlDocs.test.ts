@@ -259,6 +259,8 @@ describe('ship-control direction system', () => {
     expect(currentState).toContain('- closed public-product closeout:');
     expect(currentState).toContain('`TRANCHE-010` / [ISSUE-0407 Public Source Facade And Public-Product Acceptance]');
     expect(currentState).toContain('[PROGRAM-0002: Public Source Facade And Public-Product Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)');
+    expect(currentState).toContain('[runtime-provider-public-acceptance-gate.md](./runtime-provider-public-acceptance-gate.md)');
+    expect(currentState).toContain('[runtime-provider-public-acceptance-gate.json](./runtime-provider-public-acceptance-gate.json)');
     expect(currentState).toContain('`vi-history-suite-source-experiments`');
 
     expect(informationItemMap).toContain('| Ship target | `docs/product/SHIP-0001-releasable-vi-history-suite.md` |');
@@ -279,6 +281,8 @@ describe('ship-control direction system', () => {
     expect(informationItemMap).toContain('| Machine-readable public GitHub source publication ledger | `docs/product/public-github-source-publication-ledger.json` |');
     expect(informationItemMap).toContain('| VS Code Marketplace publication ledger | `docs/product/vscode-marketplace-publication-ledger.md` |');
     expect(informationItemMap).toContain('| ISSUE-0412 promotion and publication handoff | `docs/product/issue-0412-promotion-and-publication-handoff.md` |');
+    expect(informationItemMap).toContain('| Runtime-provider public-acceptance gate | `docs/product/runtime-provider-public-acceptance-gate.md` |');
+    expect(informationItemMap).toContain('| Machine-readable runtime-provider public-acceptance gate | `docs/product/runtime-provider-public-acceptance-gate.json` |');
     expect(informationItemMap).toContain('| Machine-readable VS Code Marketplace publication ledger | `docs/product/vscode-marketplace-publication-ledger.json` |');
     expect(informationItemMap).toContain('`vi-history-suite-source-experiments`');
     expect(informationItemMap).toContain('`vi-history-suite.public`');
@@ -322,6 +326,7 @@ describe('ship-control direction system', () => {
     expect(releaseProcedure).toContain('docs/product/public-github-source-publication-ledger.json');
     expect(releaseProcedure).toContain('docs/product/vscode-marketplace-publication-ledger.md');
     expect(releaseProcedure).toContain('docs/product/vscode-marketplace-publication-ledger.json');
+    expect(releaseProcedure).toContain('docs/product/runtime-provider-public-acceptance-gate.{md,json}');
     expect(releaseProcedure).toContain('docs/product/hosted-ci-governance.md');
     expect(releaseProcedure).toContain('docs/product/hosted-ci-governance.json');
     expect(releaseProcedure).toContain('npm run branch:governance:assert');

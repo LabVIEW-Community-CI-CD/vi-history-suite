@@ -219,6 +219,7 @@ describe('execution-policy control plane', () => {
     expect(program).toContain('already-running VS Code session');
     expect(program).toContain('reload or restart the window before using Compare');
     expect(program).toContain('issue-0412-promotion-and-publication-handoff.md');
+    expect(program).toContain('runtime-provider-public-acceptance-gate.md');
     expect(program).toContain('installed manifest/settings');
     expect(program).toContain('explicit `Compare` action');
     expect(program).toContain('expert Docker provider');
@@ -249,6 +250,7 @@ describe('execution-policy control plane', () => {
     expect(issueNext).toContain('internal/runtime-proof compatibility surfaces');
     expect(issueNext).toContain('uses explicit compare preflight');
     expect(issueNext).toContain('issue-0412-promotion-and-publication-handoff.md');
+    expect(issueNext).toContain('runtime-provider-public-acceptance-gate.md');
     expect(issueNext).toContain('auto-generating compare output');
     expect(sustainmentProgram).toContain('Active post-release program.');
     expect(sustainmentProgram).toContain('That work remains explicit under active `PROGRAM-0005`');

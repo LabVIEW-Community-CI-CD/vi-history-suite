@@ -16,6 +16,14 @@ type SustainmentRules = {
     programId: string;
     state: string;
   };
+  nextRuntimeProviderPublicAcceptanceGate?: {
+    pathMd: string;
+    pathJson: string;
+    state: string;
+    trancheId: string;
+    issueId: string;
+    programId: string;
+  };
   releaseCadence: {
     model: string;
     versionLineContract: {
@@ -121,7 +129,15 @@ describe('post-release sustainment rules package', () => {
       trancheId: 'TRANCHE-010',
       issueId: 'ISSUE-0407',
       programId: 'PROGRAM-0002',
-      state: 'reopened-on-docker-only-public-contract'
+      state: 'historical-docker-only-public-closeout'
+    });
+    expect(rules.nextRuntimeProviderPublicAcceptanceGate).toEqual({
+      pathMd: 'docs/product/runtime-provider-public-acceptance-gate.md',
+      pathJson: 'docs/product/runtime-provider-public-acceptance-gate.json',
+      state: 'open',
+      trancheId: 'TRANCHE-016',
+      issueId: 'ISSUE-0412',
+      programId: 'PROGRAM-0005'
     });
 
     expect(rules.releaseCadence.model).toBe('event-driven');
@@ -363,6 +379,12 @@ describe('post-release sustainment rules package', () => {
     expect(rules.operatorSurfaceSustainment.requiredAuthorityUpdates).toContain(
       'docs/product/post-release-sustainment-rules.md'
     );
+    expect(rules.operatorSurfaceSustainment.requiredAuthorityUpdates).toContain(
+      'docs/product/runtime-provider-public-acceptance-gate.md'
+    );
+    expect(rules.operatorSurfaceSustainment.requiredAuthorityUpdates).toContain(
+      'docs/product/runtime-provider-public-acceptance-gate.json'
+    );
     expect(rules.operatorSurfaceSustainment.requiredDerivedUpdatesWhenReaderFacingTruthChanges).toContain(
       'docs/product/wiki-publication-ledger.json'
     );
@@ -411,6 +433,8 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('future sessions shall not treat an exact release as fully closed');
     expect(rulesDoc).toContain('installed-user entry surfaces');
     expect(rulesDoc).toContain('PROGRAM-0002');
+    expect(rulesDoc).toContain('historical public-closeout record');
+    expect(rulesDoc).toContain('runtime-provider-public-acceptance-gate.md');
     expect(rulesDoc).toContain('execution-policy bypass');
     expect(rulesDoc).toContain('ExecutionPolicy Bypass');
 
@@ -423,7 +447,8 @@ describe('post-release sustainment rules package', () => {
     expect(ship).toContain('[post-release-sustainment-rules.md](./post-release-sustainment-rules.md)');
     expect(program).toContain('[post-release-sustainment-rules.md](../post-release-sustainment-rules.md)');
     expect(issue).toContain('docs/product/post-release-sustainment-rules.md');
-    expect(issue).toContain('reopened `PROGRAM-0002`');
+    expect(issue).toContain('historical `PROGRAM-0002` closeout');
+    expect(issue).toContain('runtime-provider public-acceptance gate');
 
     expect(informationItemMap).toContain(
       '| Post-release sustainment rules | `docs/product/post-release-sustainment-rules.md` |'

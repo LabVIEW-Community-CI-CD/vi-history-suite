@@ -54,12 +54,14 @@ Current facts:
   retained on this branch
 - remaining work on this program is now narrower: live default-settings
   mutation proof, packaged/public truth alignment when the replacement
-  contract is actually publishable, and later public acceptance handoff after
-  that publication boundary is real
-- `PROGRAM-0002` still owns the later public acceptance rerun once the next
-  installed-user contract is actually published
+  contract is actually publishable, and the explicit runtime-provider public
+  acceptance gate after that publication boundary is real
+- `PROGRAM-0002` remains historical Docker-only public-closeout truth; it is
+  not the active gate for the next host-default installed contract
 - the retained branch handoff packet is
   [issue-0412-promotion-and-publication-handoff.md](../issue-0412-promotion-and-publication-handoff.md)
+- the explicit next public-acceptance gate is
+  [runtime-provider-public-acceptance-gate.md](../runtime-provider-public-acceptance-gate.md)
 
 ## Purpose
 
@@ -102,8 +104,8 @@ An installed extension user:
 5. on-demand cross-platform settings CLI generation into user-profile storage
 6. explicit compare preflight UX in the history panel
 7. authority/bundled/public reader-surface normalization after implementation
-8. handoff to `PROGRAM-0002` for the next public acceptance rerun after the
-   replacement contract is published
+8. runtime-provider public acceptance gate after the replacement contract is
+   published
 
 ## Queue Mapping
 
@@ -162,14 +164,17 @@ An installed extension user:
   provider
 - bundled docs and public reader surfaces keep the exact released Docker-only
   installed-user baseline until the replacement contract is truthfully
-  published and handed off to `PROGRAM-0002`
+  published and admitted through the explicit runtime-provider
+  public-acceptance gate
 - private/internal versus public reader-surface boundaries remain explicit
 
-### Gate F: Public Acceptance Handoff
+### Gate F: Public Acceptance Gate
 
-- the repo retains one explicit handoff into `PROGRAM-0002` for the next
-  deterministic public rerun after the local-`LabVIEWCLI` installed contract
-  is the truthful published bundle
+- the repo retains one explicit runtime-provider public-acceptance gate for
+  the next deterministic public rerun after the local-`LabVIEWCLI` installed
+  contract is the truthful published bundle
+- `PROGRAM-0002` and `ISSUE-0407` remain retained as the historical
+  Docker-only public-closeout record instead of an active feature gate
 - the branch also retains one explicit promotion/publication handoff packet so
   future sessions do not reopen completed standards work while deciding merge
   and publication order
