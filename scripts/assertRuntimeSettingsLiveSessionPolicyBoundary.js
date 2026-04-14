@@ -69,6 +69,11 @@ function run(argv = process.argv.slice(2), deps = {}) {
   }
 
   const summary = history.summarizeHistory(packetRoot, runSummaries);
+  if (summary.proofStatus !== 'not-fully-proven') {
+    throw new Error(
+      `Runtime-settings live-session policy boundary no longer classifies the CLI live-session seam as not fully proven (proofStatus=${summary.proofStatus}). Re-evaluate VHS-REQ-542 and aligned docs before merge.`
+    );
+  }
   if (summary.stance !== 'live-uptake-not-proven') {
     throw new Error(
       `Runtime-settings live-session policy boundary no longer supports unconditional reload guidance (stance=${summary.stance}). Re-evaluate VHS-REQ-542 and aligned docs before merge.`
@@ -84,6 +89,7 @@ function run(argv = process.argv.slice(2), deps = {}) {
     stdout.write(`${JSON.stringify(summary, null, 2)}\n`);
   } else {
     stdout.write('Runtime settings live-session policy boundary: pass\n');
+    stdout.write(`- proofStatus: ${summary.proofStatus}\n`);
     stdout.write(`- stance: ${summary.stance}\n`);
     stdout.write(`- providerSelectionCoverage: ${summary.providerSelectionCoverage}\n`);
     stdout.write(`- reloadRequiredCount: ${summary.reloadRequiredCount}\n`);

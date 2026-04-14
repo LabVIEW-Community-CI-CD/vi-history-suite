@@ -158,6 +158,7 @@ function validateProbePacket(summary) {
   const historyInSessionUpdatedCount = requireNumber('historyInSessionUpdatedCount');
   const historyUnknownObservationCount = requireNumber('historyUnknownObservationCount');
   const historyStance = requireString('historyStance');
+  const historyProofStatus = requireString('historyProofStatus');
 
   if (
     typeof safeRestoreApplied === 'boolean' &&
@@ -192,6 +193,15 @@ function validateProbePacket(summary) {
   ) {
     failures.push(
       `historyStance must be live-uptake-not-proven, candidate-live-uptake-observed, or insufficient-evidence, received ${historyStance}`
+    );
+  }
+  if (
+    historyProofStatus &&
+    historyProofStatus !== 'not-fully-proven' &&
+    historyProofStatus !== 're-evaluation-required'
+  ) {
+    failures.push(
+      `historyProofStatus must be not-fully-proven or re-evaluation-required, received ${historyProofStatus}`
     );
   }
 
@@ -254,6 +264,13 @@ function validateProbePacket(summary) {
           : 'insufficient-evidence';
     if (historyStance !== expectedStance) {
       failures.push(`historyStance must match retained history counts (${expectedStance})`);
+    }
+    const expectedProofStatus =
+      expectedStance === 'candidate-live-uptake-observed'
+        ? 're-evaluation-required'
+        : 'not-fully-proven';
+    if (historyProofStatus && historyProofStatus !== expectedProofStatus) {
+      failures.push(`historyProofStatus must match historyStance (${expectedProofStatus})`);
     }
   }
 

@@ -51,7 +51,8 @@ Current facts:
   retained probe evidence blocks admission
 - one local history receipt now exists at
   `npm run proof:runtime-settings-live-session:history` so retained probe runs
-  can be summarized into one bounded live-uptake stance
+  can be summarized into one bounded live-uptake stance plus explicit
+  not-fully-proven versus re-evaluation-required proof status
 - one local policy-boundary assertion now exists at
   `npm run proof:runtime-settings-live-session:policy:assert` so merges fail
   closed when retained history no longer supports unconditional reload guidance

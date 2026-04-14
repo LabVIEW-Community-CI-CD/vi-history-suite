@@ -173,6 +173,8 @@ See also:
 - Notes:
   - retained summary now also reports provider-selection coverage from
     `mutationProviderTarget` receipts (`host` and `docker`)
+  - retained summary now reports explicit proof status:
+    `not-fully-proven` or `re-evaluation-required`
   - optional packet-root override:
     `npm run proof:runtime-settings-live-session:history -- --packet-root <path>`
   - use `--json` for machine-readable branch or MR receipts
@@ -190,6 +192,8 @@ See also:
   - returns non-zero when retained history does not include both `host` and
     `docker` mutation targets, forcing explicit CLI provider-selection
     coverage before merge
+  - returns non-zero when retained proof status becomes
+    `re-evaluation-required`, forcing explicit policy re-evaluation before merge
 
 `npm run test:integration:windows`
 

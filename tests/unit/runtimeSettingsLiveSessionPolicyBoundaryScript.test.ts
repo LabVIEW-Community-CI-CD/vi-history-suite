@@ -97,7 +97,7 @@ describe('assertRuntimeSettingsLiveSessionPolicyBoundary script', () => {
     ]);
 
     expect(() => boundaryScript.run(['--packet-root', packetRoot])).toThrow(
-      'policy boundary no longer supports unconditional reload guidance'
+      'policy boundary no longer classifies the CLI live-session seam as not fully proven'
     );
   });
 

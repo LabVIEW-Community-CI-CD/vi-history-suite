@@ -44,6 +44,7 @@ const historyScript = require(path.resolve(
     mutationTargetHostCount: number;
     mutationTargetDockerCount: number;
     providerSelectionCoverage: string;
+    proofStatus: string;
     latestObservation?: string;
   };
   run: (
@@ -106,6 +107,7 @@ describe('printRuntimeSettingsLiveSessionProbeHistory script', () => {
     expect(summary.mutationTargetHostCount).toBe(1);
     expect(summary.mutationTargetDockerCount).toBe(1);
     expect(summary.providerSelectionCoverage).toBe('bidirectional-selection-observed');
+    expect(summary.proofStatus).toBe('not-fully-proven');
     expect(summary.latestObservation).toBe('reload-required');
     expect(summary.stance).toBe('live-uptake-not-proven');
   });
@@ -129,6 +131,7 @@ describe('printRuntimeSettingsLiveSessionProbeHistory script', () => {
     expect(summary.mutationTargetHostCount).toBe(0);
     expect(summary.mutationTargetDockerCount).toBe(0);
     expect(summary.providerSelectionCoverage).toBe('insufficient-evidence');
+    expect(summary.proofStatus).toBe('re-evaluation-required');
     expect(summary.latestObservation).toBe('in-session-updated');
   });
 
@@ -157,10 +160,12 @@ describe('printRuntimeSettingsLiveSessionProbeHistory script', () => {
       stance: string;
       totalRuns: number;
       providerSelectionCoverage: string;
+      proofStatus: string;
     };
     expect(parsed.totalRuns).toBe(1);
     expect(parsed.stance).toBe('live-uptake-not-proven');
     expect(parsed.providerSelectionCoverage).toBe('insufficient-evidence');
+    expect(parsed.proofStatus).toBe('not-fully-proven');
   });
 });
 
