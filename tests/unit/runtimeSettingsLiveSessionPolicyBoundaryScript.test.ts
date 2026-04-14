@@ -253,6 +253,39 @@ describe('assertRuntimeSettingsLiveSessionPolicyBoundary script', () => {
       'requires retained in-session-updated observations to remain absent'
     );
   });
+
+  it('fails when retained history includes unknown observations', async () => {
+    const packetRoot = await seedHistoryPackets(temporaryDirectories, [
+      {
+        runId: '2026-04-14T13-00-00-000Z',
+        summary: {
+          liveUptakeObservation: 'reload-required',
+          driftDetected: true,
+          baselinePersistedProvider: 'host',
+          persistedProvider: 'docker',
+          mutationProviderTarget: 'docker',
+          mutationTargetPersistedMatch: true,
+          mutationTargetBaselineChanged: true,
+          safeRestoreVerified: true
+        }
+      },
+      {
+        runId: '2026-04-14T12-00-00-000Z',
+        summary: {
+          baselinePersistedProvider: 'docker',
+          persistedProvider: 'host',
+          mutationProviderTarget: 'host',
+          mutationTargetPersistedMatch: true,
+          mutationTargetBaselineChanged: true,
+          safeRestoreVerified: true
+        }
+      }
+    ]);
+
+    expect(() => boundaryScript.run(['--packet-root', packetRoot])).toThrow(
+      'requires retained unknown observations to remain absent'
+    );
+  });
 });
 
 async function seedHistoryPackets(

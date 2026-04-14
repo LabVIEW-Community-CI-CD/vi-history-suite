@@ -172,6 +172,8 @@ See also:
     `in-session-updated`
   - fails closed when retained history reports any
     `historyInSessionUpdatedCount > 0`
+  - fails closed when retained history reports any
+    `historyUnknownObservationCount > 0`
 
 `npm run proof:runtime-settings-live-session:history`
 
@@ -214,6 +216,8 @@ See also:
     `reload-required`
   - returns non-zero when retained history includes one or more
     `in-session-updated` observations
+  - returns non-zero when retained history includes one or more unknown
+    observations
   - returns non-zero when retained proof status becomes
     `re-evaluation-required`, forcing explicit policy re-evaluation before merge
 

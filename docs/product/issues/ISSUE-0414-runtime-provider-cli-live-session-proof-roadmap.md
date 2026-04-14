@@ -34,11 +34,11 @@ The unresolved seam remains explicit:
 
 Current implementation branch:
 
-- `feature/runtime-provider-live-session-history-uptake-assert` (in progress)
+- `feature/runtime-provider-live-session-history-observation-completeness-assert` (in progress)
 
 Most recently merged branch:
 
-- `feature/runtime-provider-live-session-latest-observation-assert`
+- `feature/runtime-provider-live-session-history-uptake-assert`
 
 ## Roadmap (Feature Branch Sequence)
 
@@ -132,9 +132,14 @@ Most recently merged branch:
   probe observation must remain `reload-required`; `in-session-updated` latest
   evidence now fails closed and forces explicit re-evaluation.
 
-18. `feature/runtime-provider-live-session-history-uptake-assert` (in progress)
+18. `feature/runtime-provider-live-session-history-uptake-assert` (merged)
 - Tighten latest-packet and policy-boundary admission so retained history must
   contain zero `in-session-updated` observations while this line keeps the
+  `not-fully-proven` / reload-required boundary active.
+
+19. `feature/runtime-provider-live-session-history-observation-completeness-assert` (in progress)
+- Tighten latest-packet and policy-boundary admission so retained history must
+  also contain zero unknown live-uptake observations while this line keeps the
   `not-fully-proven` / reload-required boundary active.
 
 ## Admission Rules

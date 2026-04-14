@@ -332,6 +332,11 @@ function validateProbePacket(summary) {
       'historyInSessionUpdatedCount must remain 0 for latest retained probe packet evidence'
     );
   }
+  if (typeof historyUnknownObservationCount === 'number' && historyUnknownObservationCount > 0) {
+    failures.push(
+      'historyUnknownObservationCount must remain 0 for latest retained probe packet evidence'
+    );
+  }
 
   return failures;
 }
