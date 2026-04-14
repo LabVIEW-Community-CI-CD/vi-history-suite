@@ -1795,6 +1795,59 @@ Information-for-users review cases:
 - `TEST-UNIT-348`: verify compare preflight shows provider as read-only text
   and retains an explicit CLI update hint when provider/runtime settings need
   correction
+- `TEST-UNIT-349`: verify installed compare preflight admits `ready` only
+  after the governing runtime-selection layer confirms the active
+  provider/version/bitness bundle, and that settings-only fallback cannot
+  surface a publishable runtime-backed ready state
+- `TEST-UNIT-350`: verify the generated settings CLI, compare-preflight
+  surface, and runtime-doctor surface retain the reload-or-restart contract
+  while live uptake of CLI-written settings into an already-running VS Code
+  session is still unproven
+- `TEST-UNIT-351`: verify the generated settings CLI accepts governed VS Code
+  settings targets with JSONC comments or trailing commas, preserves unrelated
+  settings content, and rewrites only provider/version/bitness facts
+- `TEST-UNIT-352`: verify the materialized settings-CLI launcher either
+  executes through the governed runtime contract or fails closed with one
+  actionable missing-or-stale runtime dependency message instead of assuming
+  host PATH behavior
+- `TEST-UNIT-353`: verify `labviewViHistory.prepareLocalRuntimeSettingsCli`
+  retains explicit trust and settings-target governance, including the
+  governed materialization location and admitted untrusted-workspace posture
+- `TEST-UNIT-354`: verify the provider CLI exposes one governed readback or
+  validation surface that reports persisted provider/version/bitness truth
+  plus runtime-validation outcome without reopening path-picking or a
+  panel-side provider picker
+- `TEST-INTEG-010`: prove the generated settings-CLI launcher runtime
+  dependency contract on the supported host surface and retain the actionable
+  failure mode when the governed runtime dependency is unavailable or stale
+- `TEST-INTEG-011`: prove the governed provider-CLI readback or validation
+  surface reports the persisted provider/version/bitness bundle and the
+  bounded runtime-validation outcome from a real extension-host session
+- `TEST-SMOKE-020`: prove the canonical Windows host-operation matrix closes
+  the remaining LabVIEW 2026 x86/x64 prerequisite-operation seams or retains
+  one exact bounded blocker receipt per unresolved seam
+- `TEST-SMOKE-021`: prove `CreateComparisonReport` admission on the supported
+  LabVIEW 2026 x64 host bundle, or retain the exact bounded blocker receipt
+  when that bundle remains non-admissible after prerequisite closeout
+- `TEST-SMOKE-022`: prove `CreateComparisonReport` admission on the supported
+  LabVIEW 2026 x86 host bundle, or retain the exact bounded blocker receipt
+  when that bundle remains non-admissible after prerequisite closeout
+- `TEST-DOC-106`: review current-state, `PROGRAM-0005`, `ISSUE-0412`, the
+  SRS, RTM, and the test plan and confirm the remaining live-session reload
+  contract is explicit until direct active-session uptake is end-to-end proven
+- `TEST-DOC-107`: review the manifest, prepare-command surface, SRS, RTM, and
+  the test plan and confirm the generated settings-CLI prepare command now
+  retains explicit trust and settings-target governance instead of relying on
+  chat-memory doctrine
+- `TEST-DOC-108`: review current-state, the host-operation matrix docs, the
+  SRS, RTM, and the test plan and confirm the remaining LabVIEW 2026
+  prerequisite-operation seams and `CreateComparisonReport` admission proof
+  are retained as explicit host-proof gates instead of informal notes
+- `TEST-DOC-109`: review README, current-state, `PROGRAM-0005`, `ISSUE-0412`,
+  the branch handoff packet, the SRS, RTM, and the test plan and confirm
+  bundled/public installed-user surfaces remain on the exact released
+  Docker-only baseline until the host-default provider contract clears public
+  acceptance
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are
