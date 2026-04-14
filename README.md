@@ -578,8 +578,8 @@ Latest landed ship target:
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.2.2`
 - current published package line on `main`: `1.2.2`
-- current develop package line on `develop`: `1.2.2`
-- active exact release candidate line on `develop`: `v1.2.2`
+- current develop package line on `develop`: `1.3.0`
+- active exact release candidate line on `develop`: `v1.3.0`
 - no newer `release/*` branch is active yet
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
@@ -608,12 +608,14 @@ Latest landed ship target:
 - retained release evidence: GitLab release `v0.2.0`, tag pipeline `2428809456`,
   release job `13779604462`
 - remaining release blockers: none on the exact public `v1.2.2` line; public
-  `main` now publishes `86b19a2`, the public GitHub release `v1.2.2` is live,
-  the maintained public wiki now publishes `527a8b4`, the official gallery
-  extension query verifies Marketplace version `1.2.2` for
+  `main` still publishes `86b19a2`, the public GitHub release `v1.2.2` is
+  live, the maintained public wiki still publishes `527a8b4`, the official
+  gallery extension query verifies Marketplace version `1.2.2` for
   `svelderrainruiz.vi-history-suite`, and the latest retained expert-agent
-  review returned no findings on the exact published public `main` / wiki
-  heads `86b19a2` / `527a8b4`
+  review returned no findings on those exact published public `main` / wiki
+  heads; the next `v1.3.0` candidate remains blocked until the maintained
+  public `develop` head and maintained public wiki head are both published and
+  the post-publication expert-agent review closes with no findings
 
 ## Install Surface
 

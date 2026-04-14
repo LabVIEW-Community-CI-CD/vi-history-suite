@@ -33,7 +33,7 @@ describe('public Codespaces public-repo bootstrap docs', () => {
     expect(currentState).toContain('canonical `npm run public:fixture:icon-editor` helper-backed path');
     expect(currentState).toContain('generic `npm run public:repo:clone` surface');
     expect(currentState).toContain('current exact released line: `v1.2.2`');
-    expect(currentState).toContain('active exact release candidate line on `develop`: `v1.2.2`');
+    expect(currentState).toContain('active exact release candidate line on `develop`: `v1.3.0`');
     expect(currentState).toContain('expert-agent verdict returned no findings');
 
     expect(candidate).toContain(
@@ -44,12 +44,12 @@ describe('public Codespaces public-repo bootstrap docs', () => {
     expect(candidate).toContain('Generic bootstrap command:');
     expect(candidate).toContain('npm run public:repo:clone -- --repo-url <https-url>');
     expect(candidate).toContain('Published-surface expert-agent review:');
-    expect(candidate).toContain('`no-findings`');
+    expect(candidate).toContain('`pending-next-published-candidate`');
     expect(candidate).toContain('Required skill: `vi-history-suite-expert-agent-reviewer`');
     expect(candidate).toContain('Exact public release: `v1.2.2-published`');
     expect(candidate).toContain('remains historical exact');
     expect(candidate).toContain('`v1.2.0` baseline evidence only');
-    expect(candidate).toContain('No active expert-agent blocker remains on `v1.2.2`');
+    expect(candidate).toContain('Active `v1.3.0` candidate blockers remain:');
 
     expect(issue).toContain('public `github.com` and `gitlab.com` HTTPS repos only');
     expect(issue).toContain('brand new fork');

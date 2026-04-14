@@ -6,25 +6,24 @@ Retain one governed hosted-automation matrix so GitLab authority pipelines,
 public GitHub required checks, and GitHub experiment workflows stop being
 raw-YAML-only truth.
 
-This document is the control-plane summary of the governed `1.2.2` patch line.
-The exact public release is now `v1.2.2`; `main` carries `1.2.2`, `develop`
-still carries `1.2.2`, and the line retains the protected back-merge
-follow-through requirement before the next opening decision.
+This document is the control-plane summary of the governed `1.3.0` candidate
+opening. The exact public release remains `v1.2.2`; `main` carries `1.2.2`,
+`develop` now carries `1.3.0`, and the line retains the protected
+post-publication acceptance gates before exact tagging can reopen.
 
 ## Opening Decision
 
 - current exact release line: `v1.2.2`
 - current `main` package line: `1.2.2`
-- current `develop` package line: `1.2.2`
-- active exact release candidate line on `develop`: `v1.2.2`
+- current `develop` package line: `1.3.0`
+- active exact release candidate line on `develop`: `v1.3.0`
 - no newer `release/*` branch is active yet
-- chosen bump: `patch`
-- rationale: this line governs exact-release closeout follow-through so the
-  protected back-merge of exact released `main` into `develop` no longer waits
-  for a separate human prompt
-- rationale: this line also hardens first-run missing-Docker guidance so
-  fresh-machine installed users are told to install or start Docker before
-  image acquisition is expected
+- chosen bump: `minor`
+- rationale: this line opens a new governed installed-user capability and
+  supported workflow by promoting host-default Windows local `LabVIEWCLI`
+  with bounded expert Docker
+- rationale: exact `v1.2.2` remains the truthful published baseline while the
+  next public candidate and review gates are reopened on `v1.3.0`
 
 ## Branch Model
 
@@ -76,8 +75,8 @@ Design-gate boundary:
 - `npm run design:gate` now starts with `npm run branch:governance:assert`
   so the gate fails closed when `develop` has not yet absorbed exact `main`
 - exact release closeout also remains incomplete until the protected
-  back-merge into `develop` and the resulting green `develop` pipeline are
-  retained as part of the same release follow-through
+  back-merge of exact released `main` into `develop` and the resulting green
+  `develop` pipeline are retained as part of the same release follow-through
 - `npm run design:gate:assert-complete` remains the retained assertion surface
 - GitLab does not pretend that local design-gate proof is a GitHub-style named
   required check

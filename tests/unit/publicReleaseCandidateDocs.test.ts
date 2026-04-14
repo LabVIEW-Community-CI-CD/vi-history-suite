@@ -14,7 +14,7 @@ function readJson<T>(relativePath: string): T {
 }
 
 describe('public release candidate control surface', () => {
-  it('retains the current 1.2.2 public candidate state across control-plane docs', () => {
+  it('retains the current 1.3.0 candidate-opening state while keeping 1.2.2 as the exact published baseline', () => {
     const candidate = readJson<{
       versionLine?: string;
       burnedExactReleaseLine?: string;
@@ -80,7 +80,7 @@ describe('public release candidate control surface', () => {
     const rtm = readText('docs/requirements/rtm.csv');
     const testPlan = readText('docs/testing/test-plan.md');
 
-    expect(candidate.versionLine).toBe('1.2.2');
+    expect(candidate.versionLine).toBe('1.3.0');
     expect(candidate.burnedExactReleaseLine).toBe('v1.0.2');
     expect(candidate.authorityRepo).toMatchObject({
       role: 'source-of-truth',
@@ -105,19 +105,20 @@ describe('public release candidate control surface', () => {
     });
     expect(candidate.publicDevelopCandidate).toMatchObject({
       branch: 'develop',
-      candidateCommit: '12391e1',
-      status: 'merged-required-checks-green',
-      sourcePullRequest: '#27'
+      candidateCommit: null,
+      status: 'local-authority-green-not-yet-published',
+      sourcePullRequest: null
     });
     expect(candidate.publishedPublicWiki).toMatchObject({
       publishedHeadCommit: '527a8b4',
       status: 'published-exact-release-wiki-closeout'
     });
     expect(candidate.candidateReadiness).toMatchObject({
-      authorityBaseline: 'v1.2.1-exact-public-release-published',
-      localInstalledVsix: 'candidate-v1.2.2-package-built-through-design-gate',
+      authorityBaseline: 'v1.2.2-exact-public-release-published',
+      localInstalledVsix: 'candidate-v1.3.0-line-opened-awaiting-public-build',
       historicalPublicRepoBootstrapBaseline: 'exact-v1.2.0-human-baseline-retained',
-      publishedSurfaceExpertAgentReview: 'no-findings',
+      publishedSurfaceExpertAgentReview: 'pending-next-published-candidate',
+      runtimeProviderPublicAcceptanceGate: 'open',
       exactPublicRelease: 'v1.2.2-published'
     });
     expect(candidate.findingClassifications).toEqual(
@@ -170,19 +171,38 @@ describe('public release candidate control surface', () => {
       genericCommand: 'npm run public:repo:clone -- --repo-url <https-url>',
       requiredReviewEnvironment: 'brand-new-fork-plus-brand-new-codespace'
     });
-    expect(candidate.activeBlockers).toEqual([]);
+    expect(candidate.activeBlockers).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'BLOCKER-1.3.0-001-RUNTIME-PROVIDER-PUBLIC-ACCEPTANCE-GATE',
+          status: 'open'
+        }),
+        expect.objectContaining({
+          id: 'BLOCKER-1.3.0-002-PUBLIC-DEVELOP-CANDIDATE-NOT-PUBLISHED',
+          status: 'open'
+        }),
+        expect.objectContaining({
+          id: 'BLOCKER-1.3.0-003-PUBLIC-WIKI-CANDIDATE-NOT-PUBLISHED',
+          status: 'open'
+        }),
+        expect.objectContaining({
+          id: 'BLOCKER-1.3.0-004-EXPERT-AGENT-REVIEW-PENDING',
+          status: 'open'
+        })
+      ])
+    );
 
-    expect(candidateMarkdown).toContain('Version line: `1.2.2`');
+    expect(candidateMarkdown).toContain('Version line: `1.3.0`');
     expect(candidateMarkdown).toContain('Published public source commit: `86b19a2`');
-    expect(candidateMarkdown).toContain('Public `develop` candidate commit: `12391e1`');
+    expect(candidateMarkdown).toContain('Public `develop` candidate commit: `not yet published`');
     expect(candidateMarkdown).toContain('Published public wiki head: `527a8b4`');
     expect(candidateMarkdown).toContain('Published-surface expert-agent review:');
-    expect(candidateMarkdown).toContain('`no-findings`');
+    expect(candidateMarkdown).toContain('`pending-next-published-candidate`');
+    expect(candidateMarkdown).toContain('Runtime-provider public-acceptance gate: `open`');
     expect(candidateMarkdown).toContain('Required skill: `vi-history-suite-expert-agent-reviewer`');
     expect(candidateMarkdown).toContain(
-      'The maintained public `develop` candidate now lands through GitHub PRs `#24`,'
+      'The maintained public `develop` candidate for `v1.3.0` is not yet'
     );
-    expect(candidateMarkdown).toContain('`#27` at commit `12391e1`');
     expect(candidateMarkdown).toContain('FINDING-1.2.2-001-MISSING-DOCKER-FIRST-RUN-BOUNDARY');
     expect(candidateMarkdown).toContain('FINDING-1.2.2-002-EXACT-CLOSEOUT-BACKMERGE-OPERATOR-GAP');
     expect(candidateMarkdown).toContain('FINDING-1.2.2-003-MANUAL-REVIEW-GATE-DEPENDENCY');
@@ -190,14 +210,15 @@ describe('public release candidate control surface', () => {
     expect(candidateMarkdown).toContain(
       'no findings; exact release / Marketplace publish may proceed'
     );
-    expect(candidateMarkdown).toContain('No active expert-agent blocker remains on `v1.2.2`');
+    expect(candidateMarkdown).toContain('Active `v1.3.0` candidate blockers remain:');
 
     expect(currentState).toContain('current exact released line: `v1.2.2`');
-    expect(currentState).toContain('current develop package line on `develop`: `1.2.2`');
-    expect(currentState).toContain('active exact release candidate line on `develop`: `v1.2.2`');
-    expect(currentState).toContain('candidate commit `12391e1`');
+    expect(currentState).toContain('current develop package line on `develop`: `1.3.0`');
+    expect(currentState).toContain('active exact release candidate line on `develop`: `v1.3.0`');
     expect(currentState).toContain('`527a8b4`');
     expect(currentState).toContain('expert-agent verdict returned no findings');
+    expect(currentState).toContain('the next `v1.3.0` candidate remains');
+    expect(currentState).toContain('post-publication expert-agent review');
 
     expect(srs).toContain('VHS-REQ-527');
     expect(srs).toContain('VHS-REQ-528');

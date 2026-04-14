@@ -52,10 +52,11 @@ The next public gate is now retained explicitly in:
 1. keep the exact released `v1.2.2` Docker-only installed-user bundle and
    public surfaces unchanged until the replacement contract is the truthful
    candidate
-2. once the replacement contract becomes the truthful candidate, reopen the
-   packaged/public promotion slice and drive the published acceptance rerun
-   through the explicit runtime-provider public-acceptance gate
-3. treat this packet as retained branch-transition context, not as the live
+2. once the replacement contract becomes the truthful candidate, open the next
+   SemVer candidate line on `develop` before packaged/public promotion resumes
+3. drive the published acceptance rerun through the explicit runtime-provider
+   public-acceptance gate
+4. treat this packet as retained branch-transition context, not as the live
    gate record
 
 ## Stop Rule
