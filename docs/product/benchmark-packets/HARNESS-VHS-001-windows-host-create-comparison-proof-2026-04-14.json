@@ -1,0 +1,45 @@
+{
+  "packetId": "HARNESS-VHS-001-windows-host-create-comparison-proof-2026-04-14",
+  "proofDate": "2026-04-14",
+  "harnessId": "HARNESS-VHS-001",
+  "provider": "host-native",
+  "engine": "labview-cli",
+  "operation": "CreateComparisonReport",
+  "result": "bounded-blocker-retained",
+  "satisfiedRequirementIds": [
+    "VHS-REQ-548"
+  ],
+  "bundles": [
+    {
+      "bundle": "x64",
+      "generatedAt": "2026-04-14T08:16:54.983Z",
+      "receiptPath": ".cache/governed-proof/windows-host-create-comparison-proof/2026-04-14/x64/comparison-report-smoke.json",
+      "reportStatus": "ready-for-runtime",
+      "runtimeExecutionState": "failed",
+      "runtimeFailureReason": "command-timed-out",
+      "runtimeBlockedReason": null,
+      "runtimeLabviewIniPath": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.ini",
+      "runtimeLabviewTcpPort": 3363,
+      "runtimeObservedProcessNames": [
+        "LabVIEWCLI.exe"
+      ],
+      "runtimeExitObservedProcessNames": [],
+      "generatedReportExists": false
+    },
+    {
+      "bundle": "x86",
+      "generatedAt": "2026-04-14T08:19:25.288Z",
+      "receiptPath": ".cache/governed-proof/windows-host-create-comparison-proof/2026-04-14/x86/comparison-report-smoke.json",
+      "reportStatus": "ready-for-runtime",
+      "runtimeExecutionState": "failed",
+      "runtimeFailureReason": "command-timed-out",
+      "runtimeBlockedReason": null,
+      "runtimeLabviewIniPath": "C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.ini",
+      "runtimeLabviewTcpPort": 3364,
+      "runtimeObservedProcessNames": [
+        "LabVIEWCLI.exe"
+      ],
+      "runtimeExitObservedProcessNames": [],
+      "generatedReportExists": false
+    }
+  ]

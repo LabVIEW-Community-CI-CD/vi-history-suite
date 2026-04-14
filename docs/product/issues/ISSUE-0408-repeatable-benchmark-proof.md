@@ -219,6 +219,19 @@ Current retained benchmark truth at closure:
   The older warm-headless x64 success and x86-specific `CloseLabVIEW` /
   `RunUnitTests` seams remain retained historical evidence, but they are not
   the newest prerequisite-operation truth.
+- direct canonical-host `CreateComparisonReport` blocker proof is now retained
+  explicitly too in the tracked packet
+  `docs/product/benchmark-packets/HARNESS-VHS-001-windows-host-create-comparison-proof-2026-04-14.md`
+  plus the raw governed roots
+  `.cache/governed-proof/windows-host-create-comparison-proof/2026-04-14/x64/`
+  and `.cache/governed-proof/windows-host-create-comparison-proof/2026-04-14/x86/`.
+  Both supported host bundles reached `ready-for-runtime`, derived explicit
+  VI Server ports (`3363` for the x64 LabVIEW 2026 surface and `3364` for the
+  x86 surface), observed `LabVIEWCLI.exe` while `LabVIEW.exe` was absent at
+  the banner snapshot, retained no LabVIEW-related processes at exit, and
+  still failed `command-timed-out` after `120000ms` without a generated
+  report. So `VHS-REQ-548` is now retained as two direct host-bundle blocker
+  receipts rather than as an inferred report-admission gap.
 
 ## Scope
 

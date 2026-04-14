@@ -238,9 +238,21 @@ correctly gates the x86 tranche as `x64-tranche-did-not-complete-cleanly`.
 So the active canonical-host seam is now the x64 cold-attach contamination
 path; the older warm-headless x64 success and x86 `CloseLabVIEW` /
 `RunUnitTests` seams remain useful historical evidence, but they are not the
-newest admission truth. `CreateComparisonReport` therefore stays correctly
-gated behind the fresh x64 cold-host blocker instead of reopening report
-admission prematurely.
+newest admission truth. The host-operation matrix therefore still keeps
+`CreateComparisonReport` gated behind the fresh x64 cold-host blocker instead
+of reopening report admission prematurely.
+Fresh direct canonical-host report proof on that same date now retains the
+bundle-specific blocker more explicitly in the tracked packet
+`docs/product/benchmark-packets/HARNESS-VHS-001-windows-host-create-comparison-proof-2026-04-14.md`
+plus the raw governed roots
+`.cache/governed-proof/windows-host-create-comparison-proof/2026-04-14/x64/`
+and `.cache/governed-proof/windows-host-create-comparison-proof/2026-04-14/x86/`.
+Both supported host bundles reached canonical `CreateComparisonReport`
+execution, derived explicit VI Server ports (`3363` for x64 and `3364` for
+x86), observed only `LabVIEWCLI.exe` at the retained banner snapshot, retained
+no LabVIEW-related processes at exit, and still timed out after `120000ms`
+without a generated report. So `VHS-REQ-548` is now satisfied as exact bounded
+blocker retention for both supported bundles, not only as prerequisite gating.
 
 `ADR-0024` plus `VHS-REQ-457..458` now tighten that PROGRAM-0003
 proof-admission layer one step further: governed proof subcommands validate
