@@ -41,6 +41,7 @@ import {
   runLocalRuntimeSettingsCli
 } from './tooling/localRuntimeSettingsCli';
 import { buildRuntimeSettingsLiveSessionProbeSummary } from './tooling/runtimeSettingsLiveSessionProbe';
+import { persistRuntimeSettingsLiveSessionProbePacket } from './tooling/runtimeSettingsLiveSessionProbePacket';
 
 export interface ViHistorySuiteApi {
   refreshEligibility(): Promise<void>;
@@ -195,6 +196,12 @@ export async function activate(
 
   context.subscriptions.push(
     vscode.commands.registerCommand('labviewViHistory.probeRuntimeSettingsLiveSession', async () => {
+      if (!context.globalStorageUri) {
+        throw new Error(
+          'VI History could not retain a runtime settings live-session probe packet because extension-global storage is unavailable.'
+        );
+      }
+
       const liveSettings = readTrimmedLiveRuntimeSettings();
       const quietStdout = {
         write(_text: string): void {
@@ -222,18 +229,22 @@ export async function activate(
         runtimeEngine: validated.runtimeEngine,
         runtimeBlockedReason: validated.runtimeBlockedReason
       });
+      const packetSummary = await persistRuntimeSettingsLiveSessionProbePacket(
+        summary,
+        context.globalStorageUri.fsPath
+      );
 
-      if (summary.driftDetected) {
+      if (packetSummary.driftDetected) {
         void vscode.window.showWarningMessage(
-          'Runtime settings drift is present between persisted settings.json values and the active VS Code session. Reload or restart the window before trusting Compare surfaces.'
+          `Runtime settings drift is present between persisted settings.json values and the active VS Code session. Reload or restart the window before trusting Compare surfaces. Retained probe packet: ${packetSummary.packetJsonPath}.`
         );
       } else {
         void vscode.window.showInformationMessage(
-          'Runtime settings live-session probe found no drift between persisted settings.json values and the active VS Code session.'
+          `Runtime settings live-session probe found no drift between persisted settings.json values and the active VS Code session. Retained probe packet: ${packetSummary.packetJsonPath}.`
         );
       }
 
-      return summary;
+      return packetSummary;
     })
   );
 

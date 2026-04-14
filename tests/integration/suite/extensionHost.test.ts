@@ -58,6 +58,11 @@ interface RuntimeSettingsLiveSessionProbeSummary {
   runtimeProvider?: string;
   runtimeEngine?: string;
   runtimeBlockedReason?: string;
+  packetRunId: string;
+  packetJsonPath: string;
+  packetMarkdownPath: string;
+  latestPacketJsonPath: string;
+  latestPacketMarkdownPath: string;
 }
 
 const execFile = promisify(execFileCallback);
@@ -668,6 +673,15 @@ async function testProbeRuntimeSettingsLiveSession(): Promise<void> {
   assert.equal(typeof summary.versionDrift, 'boolean');
   assert.equal(typeof summary.bitnessDrift, 'boolean');
   assert.equal(typeof summary.driftDetected, 'boolean');
+  assert.ok(summary.packetRunId);
+  assert.ok(summary.packetJsonPath);
+  assert.ok(summary.packetMarkdownPath);
+  assert.ok(summary.latestPacketJsonPath);
+  assert.ok(summary.latestPacketMarkdownPath);
+  await fs.access(summary.packetJsonPath);
+  await fs.access(summary.packetMarkdownPath);
+  await fs.access(summary.latestPacketJsonPath);
+  await fs.access(summary.latestPacketMarkdownPath);
 }
 
 async function runPreparedLocalRuntimeSettingsCli(

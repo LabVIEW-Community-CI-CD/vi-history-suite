@@ -33,6 +33,15 @@ export interface RuntimeSettingsLiveSessionProbeSummary {
   runtimeBlockedReason?: string;
 }
 
+export interface RuntimeSettingsLiveSessionProbeSummaryWithPacket
+  extends RuntimeSettingsLiveSessionProbeSummary {
+  packetRunId: string;
+  packetJsonPath: string;
+  packetMarkdownPath: string;
+  latestPacketJsonPath: string;
+  latestPacketMarkdownPath: string;
+}
+
 export function buildRuntimeSettingsLiveSessionProbeSummary(
   input: RuntimeSettingsLiveSessionProbeInput
 ): RuntimeSettingsLiveSessionProbeSummary {
