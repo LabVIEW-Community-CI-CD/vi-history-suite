@@ -295,6 +295,11 @@ function validateProbePacket(summary) {
       failures.push(`historyProofStatus must match historyStance (${expectedProofStatus})`);
     }
   }
+  if (historyProofStatus === 're-evaluation-required') {
+    failures.push(
+      'historyProofStatus must remain not-fully-proven for latest retained probe packet evidence'
+    );
+  }
 
   return failures;
 }

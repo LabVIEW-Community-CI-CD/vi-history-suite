@@ -164,6 +164,8 @@ See also:
     `svelderrainruiz.vi-history-suite`
   - fails closed when `mutationTargetPersistedMatch` is not explicitly `true`
     on the latest retained probe packet
+  - fails closed when latest packet `historyProofStatus` is
+    `re-evaluation-required`
 
 `npm run proof:runtime-settings-live-session:history`
 
