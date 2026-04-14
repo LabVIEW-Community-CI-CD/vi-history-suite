@@ -100,11 +100,15 @@ describe('extension manifest research alignment', () => {
       description:
         'VI History disables background indexing and installed comparison execution in untrusted workspaces.',
       restrictedConfigurations: [
+        'viHistorySuite.runtimeProvider',
         'viHistorySuite.labviewVersion',
         'viHistorySuite.labviewBitness'
       ]
     });
 
+    expect(manifest.contributes?.configuration?.properties).toHaveProperty(
+      'viHistorySuite.runtimeProvider'
+    );
     expect(manifest.contributes?.configuration?.properties).toHaveProperty(
       'viHistorySuite.labviewVersion'
     );
@@ -129,6 +133,14 @@ describe('extension manifest research alignment', () => {
     expect(manifest.contributes?.configuration?.properties).not.toHaveProperty(
       'viHistorySuite.bitness'
     );
+    expect(
+      manifest.contributes?.configuration?.properties?.['viHistorySuite.runtimeProvider']
+    ).toEqual({
+      type: 'string',
+      enum: ['host', 'docker'],
+      description:
+        'Installed-user compare provider request. Host is the default local LabVIEWCLI path; docker is a bounded expert path selected through the generated settings CLI.'
+    });
   });
 
   it('exposes the fast local VS Code loop, docs-package workbench, repo-jump, and preview refresh scripts', () => {

@@ -21,6 +21,9 @@ async function main(): Promise<void> {
   });
   const useWindowsHost = hostStrategy.mode === 'windows';
   const integrationRuntimeRoot = await selectIntegrationRuntimeRoot(repoRoot, useWindowsHost);
+  const windowsProfile = useWindowsHost
+    ? buildWindowsIntegrationProfile(integrationRuntimeRoot)
+    : undefined;
 
   const metadata = await prepareIntegrationWorkspace(
     path.join(integrationRuntimeRoot, 'workspace')
@@ -35,6 +38,7 @@ async function main(): Promise<void> {
 
   try {
     if (useWindowsHost) {
+      await fs.rm(windowsProfile!.linuxProfileRoot, { recursive: true, force: true });
       stagedExtensionRoot = await stageExtensionForWindowsHost(
         repoRoot,
         path.join(integrationRuntimeRoot, 'extension-host')
@@ -46,10 +50,13 @@ async function main(): Promise<void> {
       );
       process.chdir('/mnt/c/Windows');
       testEnv = {
-        ...buildWindowsExtensionHostEnv(launchArgs[0]),
+        ...buildWindowsExtensionHostEnv(launchArgs[0], {
+          appDataWindowsPath: windowsProfile!.windowsAppDataRoot
+        }),
         ...buildDecisionRecordAutomationEnv()
       };
       launchArgs[0] = toWindowsPath(metadata.workspacePath);
+      launchArgs.push(`--user-data-dir=${windowsProfile!.windowsUserDataDirectory}`);
       await writeRuntimeConfig(
         path.join(stagedExtensionRoot, 'out-tests', 'tests', 'integration', 'test-runtime.json'),
         {
@@ -120,7 +127,8 @@ function toWindowsPath(value: string): string {
 }
 
 function buildWindowsExtensionHostEnv(
-  workspaceWindowsPath: string
+  workspaceWindowsPath: string,
+  options: { appDataWindowsPath?: string } = {}
 ): Record<string, string> {
   const environment = readWindowsEnvironment();
   const windowsPath = environment.Path ?? environment.PATH ?? '';
@@ -130,15 +138,37 @@ function buildWindowsExtensionHostEnv(
     environment,
     safeDirectoryEntries.map((value) => ({ key: 'safe.directory', value }))
   );
+  const withProfileOverrides =
+    options.appDataWindowsPath && options.appDataWindowsPath.trim().length > 0
+      ? {
+          ...withSafeDirectory,
+          APPDATA: options.appDataWindowsPath
+        }
+      : withSafeDirectory;
   if (!gitDirectory) {
-    return withSafeDirectory;
+    return withProfileOverrides;
   }
 
   const mergedPath = prependWindowsPathEntry(windowsPath, gitDirectory);
   return {
-    ...withSafeDirectory,
+    ...withProfileOverrides,
     PATH: mergedPath,
     Path: mergedPath
+  };
+}
+
+function buildWindowsIntegrationProfile(integrationRuntimeRoot: string): {
+  linuxProfileRoot: string;
+  windowsAppDataRoot: string;
+  windowsUserDataDirectory: string;
+} {
+  const linuxProfileRoot = path.join(integrationRuntimeRoot, 'windows-profile');
+  const linuxAppDataRoot = path.join(linuxProfileRoot, 'AppData', 'Roaming');
+  const windowsAppDataRoot = toWindowsPath(linuxAppDataRoot);
+  return {
+    linuxProfileRoot,
+    windowsAppDataRoot,
+    windowsUserDataDirectory: path.win32.join(windowsAppDataRoot, 'Code')
   };
 }
 

@@ -20,9 +20,22 @@ Current facts:
 - `ISSUE-0412` is the active issue for the replacement direction
 - the control-plane reset is landed and the installed manifest/settings
   contract slice is landed
+- the installed manifest now truthfully exposes
+  `viHistorySuite.runtimeProvider`, `viHistorySuite.labviewVersion`, and
+  `viHistorySuite.labviewBitness`
 - the generated settings CLI now persists provider, version, and bitness, and
   that provider selection now flows into the governed host-default and Docker
   runtime-admission path
+- the generated settings CLI is now proven through first-use launcher
+  materialization plus current-host launcher execution against a temporary
+  settings file
+- the explicit Windows proof lane `npm run test:integration:windows` now
+  proves the `.cmd` launcher path and the default no-`--settings-file` target
+  under a disposable `APPDATA\\Code\\User\\settings.json`, aligned to the
+  active disposable Windows integration-host profile
+- the remaining CLI proof gap is explicit only for direct live mutation of
+  the already-running VS Code session; the generated CLI now warns users to
+  reload or restart the window before using Compare when Code is already open
 - the Windows exact-runtime preflight is now landed: installed compare
   resolves one exact version+bitness LabVIEW executable plus matching
   `LabVIEWCLI` surface and fails closed on missing, ambiguous, or
@@ -33,8 +46,8 @@ Current facts:
   preflight-ready execution
 - released `repo-standards-review` `v0.2.9` compliance closeout is now
   retained on this branch
-- remaining work on this program is now narrower: feature-branch promotion
-  into `develop`, packaged/public truth alignment when the replacement
+- remaining work on this program is now narrower: live default-settings
+  mutation proof, packaged/public truth alignment when the replacement
   contract is actually publishable, and later public acceptance handoff after
   that publication boundary is real
 - `PROGRAM-0002` still owns the later public acceptance rerun once the next
@@ -115,6 +128,7 @@ An installed extension user:
   settings contract
 - the settings contract can be seeded through a generated cross-platform CLI
   launcher under user-profile storage rather than a prebuilt VSIX-shipped CLI
+- the current-host generated launcher path is proven end to end
 - host runtime resolution validates one canonical Windows `LabVIEWCLI`
   request before compare can run
 - missing, ambiguous, or incompatible local runtime resolution fails closed
@@ -153,6 +167,8 @@ An installed extension user:
 - the branch also retains one explicit promotion/publication handoff packet so
   future sessions do not reopen completed standards work while deciding merge
   and publication order
+- the unresolved live user-settings proof gap remains explicit until a
+  supported default-settings proof lane closes it
 
 ## Delivery Rules
 
