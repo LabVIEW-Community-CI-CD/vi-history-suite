@@ -378,7 +378,8 @@ Post-release tranches:
     when the retained latest probe packet is missing, malformed, or does not
     prove `mutationTargetPersistedMatch=true`,
     `mutationTargetBaselineChanged=true`, and
-    `historyProofStatus=not-fully-proven`
+    `historyProofStatus=not-fully-proven` with latest
+    `liveUptakeObservation=reload-required`
   - one local history receipt now exists at
     `npm run proof:runtime-settings-live-session:history`; it summarizes
     retained probe runs into one bounded live-uptake stance and explicit
@@ -389,7 +390,8 @@ Post-release tranches:
     closed when retained history no longer supports unconditional reload
     guidance or when retained probe runs do not include bidirectional
     provider-selection mutation coverage (`host` and `docker`) with explicit
-    retained mutation-target alignment and baseline-switch receipts
+    retained mutation-target alignment and baseline-switch receipts, and when
+    the latest retained probe observation is not `reload-required`
   - the remaining CLI proof gap is now narrower: direct live mutation of the
     already-running VS Code session is not yet end-to-end proven on this line;
     probe mutation safe-restore is now fail-closed and locally proven, so the

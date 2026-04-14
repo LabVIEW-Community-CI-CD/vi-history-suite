@@ -183,6 +183,41 @@ describe('assertRuntimeSettingsLiveSessionPolicyBoundary script', () => {
       'requires explicit baseline-switch receipts'
     );
   });
+
+  it('fails when latest retained observation is not reload-required', async () => {
+    const packetRoot = await seedHistoryPackets(temporaryDirectories, [
+      {
+        runId: '2026-04-14T13-00-00-000Z',
+        summary: {
+          liveUptakeObservation: 'in-session-updated',
+          driftDetected: false,
+          baselinePersistedProvider: 'host',
+          persistedProvider: 'docker',
+          mutationProviderTarget: 'docker',
+          mutationTargetPersistedMatch: true,
+          mutationTargetBaselineChanged: true,
+          safeRestoreVerified: true
+        }
+      },
+      {
+        runId: '2026-04-14T12-00-00-000Z',
+        summary: {
+          liveUptakeObservation: 'reload-required',
+          driftDetected: true,
+          baselinePersistedProvider: 'docker',
+          persistedProvider: 'host',
+          mutationProviderTarget: 'host',
+          mutationTargetPersistedMatch: true,
+          mutationTargetBaselineChanged: true,
+          safeRestoreVerified: true
+        }
+      }
+    ]);
+
+    expect(() => boundaryScript.run(['--packet-root', packetRoot])).toThrow(
+      'requires latest retained probe observation to remain reload-required'
+    );
+  });
 });
 
 async function seedHistoryPackets(

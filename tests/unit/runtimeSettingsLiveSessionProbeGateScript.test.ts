@@ -218,6 +218,39 @@ describe('assertRuntimeSettingsLiveSessionProbePacket script', () => {
     );
   });
 
+  it('fails validation when latest packet live uptake observation is in-session-updated', () => {
+    const failures = probeGate.validateProbePacket({
+      outcome: 'probed-runtime-settings-live-session',
+      packetRunId: '2026-04-14T13-07-33-123Z',
+      packetJsonPath: '/tmp/packet.json',
+      packetMarkdownPath: '/tmp/packet.md',
+      latestPacketJsonPath: '/tmp/latest-summary.json',
+      latestPacketMarkdownPath: '/tmp/latest-summary.md',
+      baselinePersistedProvider: 'docker',
+      persistedProvider: 'host',
+      mutationProviderTarget: 'host',
+      mutationTargetPersistedMatch: true,
+      mutationTargetBaselineChanged: true,
+      liveUptakeObservation: 'in-session-updated',
+      safeRestoreApplied: true,
+      safeRestoreVerified: true,
+      providerDrift: false,
+      versionDrift: false,
+      bitnessDrift: false,
+      driftDetected: false,
+      historyTotalRuns: 3,
+      historyReloadRequiredCount: 1,
+      historyInSessionUpdatedCount: 2,
+      historyUnknownObservationCount: 0,
+      historyStance: 'live-uptake-not-proven',
+      historyProofStatus: 'not-fully-proven'
+    });
+
+    expect(failures).toContain(
+      'liveUptakeObservation must remain reload-required for latest retained probe packet evidence'
+    );
+  });
+
   it('fails validation when mutation target alignment conflicts with persisted provider', () => {
     const failures = probeGate.validateProbePacket({
       outcome: 'probed-runtime-settings-live-session',
@@ -342,13 +375,13 @@ describe('assertRuntimeSettingsLiveSessionProbePacket script', () => {
           mutationProviderTarget: 'host',
           mutationTargetPersistedMatch: true,
           mutationTargetBaselineChanged: true,
-          liveUptakeObservation: 'in-session-updated',
+          liveUptakeObservation: 'reload-required',
           safeRestoreApplied: true,
           safeRestoreVerified: true,
-          providerDrift: false,
+          providerDrift: true,
           versionDrift: false,
           bitnessDrift: false,
-          driftDetected: false,
+          driftDetected: true,
           historyTotalRuns: 3,
           historyReloadRequiredCount: 1,
           historyInSessionUpdatedCount: 2,
