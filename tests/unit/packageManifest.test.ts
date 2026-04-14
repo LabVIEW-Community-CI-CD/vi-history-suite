@@ -96,6 +96,38 @@ describe('extension manifest research alignment', () => {
     );
   });
 
+  it('keeps the published review surface webview-panel-based with no timeline provider publication path', () => {
+    const manifest = readManifest();
+    const extensionSource = fs.readFileSync(
+      path.resolve(__dirname, '..', '..', 'src', 'extension.ts'),
+      'utf8'
+    );
+    const openCommandSource = fs.readFileSync(
+      path.resolve(__dirname, '..', '..', 'src', 'commands', 'openViHistoryCommand.ts'),
+      'utf8'
+    );
+    const activationEvents = manifest.activationEvents ?? [];
+    const contributedCommands = manifest.contributes?.commands ?? [];
+    const manifestSnapshot = JSON.stringify(manifest).toLowerCase();
+
+    expect(extensionSource).toContain('createOpenViHistoryCommand');
+    expect(extensionSource).not.toContain('TimelineProvider');
+    expect(extensionSource).not.toContain('registerTimeline');
+    expect(openCommandSource).toContain('createWebviewPanel');
+    expect(openCommandSource).not.toContain('TimelineProvider');
+    expect(openCommandSource).not.toContain('registerTimeline');
+    expect(activationEvents.some((event) => event.toLowerCase().includes('timeline'))).toBe(
+      false
+    );
+    expect(
+      contributedCommands.some((command) =>
+        (command.command ?? '').toLowerCase().includes('timeline')
+      )
+    ).toBe(false);
+    expect(manifestSnapshot).not.toContain('timelineprovider');
+    expect(manifestSnapshot).not.toContain('registertimeline');
+  });
+
   it('declares limited untrusted-workspace support and restricts external tool settings', () => {
     const manifest = readManifest();
 
