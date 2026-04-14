@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import path from 'node:path';
 
 const {
   buildDockerArgs,
@@ -7,6 +8,8 @@ const {
   resolvePublishedRegistryCredentials,
   resolvePublishedRegistryHost
 } = require('../../scripts/runDocsWorkbenchDocker.js');
+
+const repoBaseName = path.basename(process.cwd());
 
 describe('runDocsWorkbenchDocker', () => {
   it('derives the registry host from a published image reference', () => {
@@ -67,26 +70,26 @@ describe('runDocsWorkbenchDocker', () => {
     expect(gateArgs.slice(0, 3)).toEqual(['run', '--rm', '-v']);
     expect(gateArgs[3]).toContain('/repo-parent');
     expect(gateArgs).toContain('GIT_CONFIG_COUNT=3');
-    expect(gateArgs).toContain('VIHS_DOCS_WORKSPACE=/repo-parent/vi-history-suite-user-rounds');
-    expect(gateArgs).toContain('/repo-parent/vi-history-suite-user-rounds');
+    expect(gateArgs).toContain(`VIHS_DOCS_WORKSPACE=/repo-parent/${repoBaseName}`);
+    expect(gateArgs).toContain(`/repo-parent/${repoBaseName}`);
     expect(gateArgs.slice(-3)).toEqual(['npm', 'run', 'docs:gate']);
 
     expect(shellArgs.slice(0, 3)).toEqual(['run', '--rm', '-it']);
     expect(shellArgs[4]).toContain('/repo-parent');
     expect(shellArgs).toContain('GIT_CONFIG_COUNT=3');
-    expect(shellArgs).toContain('VIHS_DOCS_WORKSPACE=/repo-parent/vi-history-suite-user-rounds');
-    expect(shellArgs).toContain('/repo-parent/vi-history-suite-user-rounds');
+    expect(shellArgs).toContain(`VIHS_DOCS_WORKSPACE=/repo-parent/${repoBaseName}`);
+    expect(shellArgs).toContain(`/repo-parent/${repoBaseName}`);
     expect(shellArgs.at(-1)).toBe('bash');
   });
 
   it('predeclares the mounted repo and sibling wiki roots as safe directories', () => {
-    expect(buildGitSafeDirectoryEnvArgs('vi-history-suite-user-rounds')).toEqual([
+    expect(buildGitSafeDirectoryEnvArgs(repoBaseName)).toEqual([
       '-e',
       'GIT_CONFIG_COUNT=3',
       '-e',
       'GIT_CONFIG_KEY_0=safe.directory',
       '-e',
-      'GIT_CONFIG_VALUE_0=/repo-parent/vi-history-suite-user-rounds',
+      `GIT_CONFIG_VALUE_0=/repo-parent/${repoBaseName}`,
       '-e',
       'GIT_CONFIG_KEY_1=safe.directory',
       '-e',
