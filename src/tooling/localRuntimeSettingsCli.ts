@@ -1,6 +1,7 @@
 import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import { applyEdits, modify, parse, type ParseError } from 'jsonc-parser';
 
 export type LocalRuntimeSettingsCliBitness = 'x86' | 'x64';
 export type LocalRuntimeSettingsCliProvider = 'host' | 'docker';
@@ -286,42 +287,101 @@ async function writeVsCodeSettingsFile(
 ): Promise<void> {
   await fsApi.mkdir(path.dirname(settingsFilePath), { recursive: true });
 
-  const existingSettings = await readExistingSettingsFile(settingsFilePath, fsApi);
-  existingSettings['viHistorySuite.runtimeProvider'] = provider;
-  existingSettings['viHistorySuite.labviewVersion'] = labviewVersion;
-  existingSettings['viHistorySuite.labviewBitness'] = labviewBitness;
+  const existingSettingsText = await readExistingSettingsFileText(settingsFilePath, fsApi);
+  const endOfLine = detectSettingsEndOfLine(existingSettingsText);
+  let updatedSettingsText = normalizeSettingsJsoncText(existingSettingsText, settingsFilePath);
 
-  await fsApi.writeFile(settingsFilePath, `${JSON.stringify(existingSettings, null, 2)}\n`, 'utf8');
+  updatedSettingsText = applySettingsJsoncEdit(
+    updatedSettingsText,
+    ['viHistorySuite.runtimeProvider'],
+    provider,
+    endOfLine
+  );
+  updatedSettingsText = applySettingsJsoncEdit(
+    updatedSettingsText,
+    ['viHistorySuite.labviewVersion'],
+    labviewVersion,
+    endOfLine
+  );
+  updatedSettingsText = applySettingsJsoncEdit(
+    updatedSettingsText,
+    ['viHistorySuite.labviewBitness'],
+    labviewBitness,
+    endOfLine
+  );
+
+  await fsApi.writeFile(
+    settingsFilePath,
+    ensureTerminalNewline(updatedSettingsText, endOfLine),
+    'utf8'
+  );
 }
 
-async function readExistingSettingsFile(
+async function readExistingSettingsFileText(
   settingsFilePath: string,
   fsApi: Pick<typeof fs, 'readFile'>
-): Promise<Record<string, unknown>> {
+): Promise<string | undefined> {
   try {
-    const raw = await fsApi.readFile(settingsFilePath, 'utf8');
-    const trimmed = raw.trim();
-    if (!trimmed) {
-      return {};
-    }
-
-    const parsed = JSON.parse(trimmed) as unknown;
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      throw new Error('VS Code settings.json must contain a JSON object.');
-    }
-
-    return { ...(parsed as Record<string, unknown>) };
+    return await fsApi.readFile(settingsFilePath, 'utf8');
   } catch (error) {
     if (isMissingFileError(error)) {
-      return {};
-    }
-
-    if (error instanceof SyntaxError) {
-      throw new Error(`Failed to parse VS Code settings JSON at ${settingsFilePath}.`);
+      return undefined;
     }
 
     throw error;
   }
+}
+
+function normalizeSettingsJsoncText(
+  existingSettingsText: string | undefined,
+  settingsFilePath: string
+): string {
+  const candidateText = existingSettingsText?.trim() ? existingSettingsText : '{}';
+  const parseErrors: ParseError[] = [];
+  const parsed = parse(candidateText, parseErrors, {
+    allowTrailingComma: true,
+    disallowComments: false
+  }) as unknown;
+
+  if (parseErrors.length > 0) {
+    throw new Error(`Failed to parse VS Code settings JSONC at ${settingsFilePath}.`);
+  }
+
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error('VS Code settings.json must contain a JSON object.');
+  }
+
+  return candidateText;
+}
+
+function applySettingsJsoncEdit(
+  settingsText: string,
+  pathSegments: readonly string[],
+  value: string,
+  endOfLine: '\n' | '\r\n'
+): string {
+  const edits = modify(settingsText, [...pathSegments], value, {
+    formattingOptions: {
+      insertSpaces: true,
+      tabSize: 2,
+      eol: endOfLine
+    }
+  });
+  return applyEdits(settingsText, edits);
+}
+
+function detectSettingsEndOfLine(existingSettingsText: string | undefined): '\n' | '\r\n' {
+  if (existingSettingsText?.includes('\r\n')) {
+    return '\r\n';
+  }
+  return '\n';
+}
+
+function ensureTerminalNewline(settingsText: string, endOfLine: '\n' | '\r\n'): string {
+  if (settingsText.endsWith(endOfLine)) {
+    return settingsText;
+  }
+  return `${settingsText}${endOfLine}`;
 }
 
 function isMissingFileError(error: unknown): error is NodeJS.ErrnoException {

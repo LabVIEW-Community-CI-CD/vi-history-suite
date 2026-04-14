@@ -1,6 +1,7 @@
 import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import { parse } from 'jsonc-parser';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -76,13 +77,20 @@ describe('localRuntimeSettingsCli', () => {
     );
   });
 
-  it('writes provider, LabVIEW version, and bitness into the target VS Code settings file', async () => {
+  it('updates governed provider settings in JSONC targets without destroying unrelated content', async () => {
     const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-local-runtime-cli-'));
     tempDirectories.push(tempRoot);
     const settingsFilePath = path.join(tempRoot, 'settings.json');
     await fs.writeFile(
       settingsFilePath,
-      `${JSON.stringify({ 'editor.tabSize': 2 }, null, 2)}\n`,
+      [
+        '{',
+        '  // keep this comment',
+        '  "editor.tabSize": 2,',
+        '  "workbench.colorTheme": "Default Dark+",',
+        '}',
+        ''
+      ].join('\n'),
       'utf8'
     );
     const stdout: string[] = [];
@@ -115,8 +123,13 @@ describe('localRuntimeSettingsCli', () => {
       labviewBitness: 'x64'
     });
 
-    expect(JSON.parse(await fs.readFile(settingsFilePath, 'utf8'))).toEqual({
+    const updatedSettingsText = await fs.readFile(settingsFilePath, 'utf8');
+    expect(updatedSettingsText).toContain('// keep this comment');
+    expect(updatedSettingsText).toContain('"editor.tabSize": 2');
+    expect(updatedSettingsText).toContain('"workbench.colorTheme": "Default Dark+"');
+    expect(parse(updatedSettingsText)).toEqual({
       'editor.tabSize': 2,
+      'workbench.colorTheme': 'Default Dark+',
       'viHistorySuite.runtimeProvider': 'docker',
       'viHistorySuite.labviewVersion': '2026',
       'viHistorySuite.labviewBitness': 'x64'
@@ -128,6 +141,29 @@ describe('localRuntimeSettingsCli', () => {
     expect(stdout.join('')).toContain(
       'If VS Code is already running, reload or restart the window before trusting Compare or other runtime-provider surfaces'
     );
+  });
+
+  it('fails closed when the settings target cannot be normalized into one mutable settings object', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-local-runtime-cli-invalid-'));
+    tempDirectories.push(tempRoot);
+    const settingsFilePath = path.join(tempRoot, 'settings.json');
+    await fs.writeFile(settingsFilePath, '[1, 2, 3]\n', 'utf8');
+
+    await expect(
+      runLocalRuntimeSettingsCli(
+        [
+          '--provider',
+          'host',
+          '--labview-version',
+          '2026',
+          '--labview-bitness',
+          'x64',
+          '--settings-file',
+          settingsFilePath
+        ],
+        {}
+      )
+    ).rejects.toThrow('VS Code settings.json must contain a JSON object.');
   });
 
   it('returns a non-zero exit code when required settings arguments are missing', async () => {
