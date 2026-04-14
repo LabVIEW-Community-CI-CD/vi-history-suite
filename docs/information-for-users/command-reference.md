@@ -162,6 +162,8 @@ See also:
   - environment fallback: `VIHS_RUNTIME_SETTINGS_LIVE_SESSION_PACKET=<path>`
   - default packet target resolves to the VS Code user global-storage path for
     `svelderrainruiz.vi-history-suite`
+  - fails closed when `mutationTargetPersistedMatch` is not explicitly `true`
+    on the latest retained probe packet
 
 `npm run proof:runtime-settings-live-session:history`
 

@@ -190,6 +190,11 @@ function validateProbePacket(summary) {
         `mutationTargetPersistedMatch must align with mutationProviderTarget versus persistedProvider (${expectedMutationMatch})`
       );
     }
+    if (!mutationTargetPersistedMatch) {
+      failures.push(
+        'mutationTargetPersistedMatch must be true for latest retained probe packet evidence'
+      );
+    }
   }
 
   if (

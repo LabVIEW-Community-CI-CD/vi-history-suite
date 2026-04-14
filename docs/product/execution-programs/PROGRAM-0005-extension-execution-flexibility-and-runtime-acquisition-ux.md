@@ -48,7 +48,8 @@ Current facts:
   policy evidence context
 - one local fail-closed packet gate now exists at
   `npm run proof:runtime-settings-live-session:assert` so malformed or missing
-  retained probe evidence blocks admission
+  retained probe evidence blocks admission, including latest-packet
+  `mutationTargetPersistedMatch=true` enforcement
 - one local history receipt now exists at
   `npm run proof:runtime-settings-live-session:history` so retained probe runs
   can be summarized into one bounded live-uptake stance plus explicit
