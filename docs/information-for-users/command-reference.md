@@ -225,6 +225,10 @@ See also:
   - returns non-zero when latest retained provider drift is not explicit
     `true`
   - returns non-zero when retained history includes one or more
+    `providerDrift=false` outcomes
+  - returns non-zero when retained history lacks explicit `providerDrift`
+    receipts on any run
+  - returns non-zero when retained history includes one or more
     `in-session-updated` observations
   - returns non-zero when retained history does not show safe-restore
     verification on every retained run

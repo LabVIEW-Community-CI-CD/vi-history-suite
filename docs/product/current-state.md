@@ -399,9 +399,11 @@ Post-release tranches:
     provider-selection mutation coverage (`host` and `docker`) with explicit
     retained mutation-target alignment and baseline-switch receipts, and when
     the latest retained probe observation is not `reload-required`, latest
-    retained provider drift is not explicit `true`, or retained history still
-    includes one or more `in-session-updated` or unknown observations, or
-    retained safe-restore verification is not complete across retained runs
+    retained provider drift is not explicit `true`, retained history includes
+    one or more `providerDrift=false` or missing provider-drift receipts, or
+    retained history still includes one or more `in-session-updated` or
+    unknown observations, or retained safe-restore verification is not complete
+    across retained runs
   - the remaining CLI proof gap is now narrower: direct live mutation of the
     already-running VS Code session is not yet end-to-end proven on this line;
     probe mutation safe-restore is now fail-closed and locally proven, so the
