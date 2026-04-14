@@ -49,6 +49,10 @@ const CLI_ROOT_DIRECTORY_NAME = 'local-runtime-settings-cli';
 const JAVASCRIPT_LAUNCHER_NAME = 'run-local-runtime-settings-cli.js';
 const WINDOWS_LAUNCHER_NAME = 'vihs-runtime-settings.cmd';
 const POSIX_LAUNCHER_NAME = 'vihs-runtime-settings';
+const MISSING_NODE_RUNTIME_MESSAGE =
+  'VI History runtime-settings CLI requires a usable Node.js runtime on PATH. Install or restore Node.js, then rerun \"VI History: Prepare Local Runtime Settings CLI\" to refresh the launcher if this dependency changed.';
+const STALE_LAUNCHER_MESSAGE =
+  'VI History runtime-settings CLI launcher is stale or incomplete. Run \"VI History: Prepare Local Runtime Settings CLI\" again to refresh the generated launcher files.';
 
 export function getLocalRuntimeSettingsCliUsage(): string {
   return [
@@ -396,8 +400,27 @@ function isMissingFileError(error: unknown): error is NodeJS.ErrnoException {
 function renderJavascriptLauncher(modulePath: string): string {
   return [
     '#!/usr/bin/env node',
-    `const cli = require(${JSON.stringify(modulePath)});`,
-    "void cli.runLocalRuntimeSettingsCliMain(process.argv.slice(2)).then((code) => {",
+    'const path = require(\'node:path\');',
+    `const modulePath = ${JSON.stringify(modulePath)};`,
+    'let cli;',
+    'try {',
+    '  cli = require(modulePath);',
+    '} catch (error) {',
+    `  console.error(${JSON.stringify(STALE_LAUNCHER_MESSAGE)});`,
+    '  if (error instanceof Error && error.message) {',
+    "    console.error(`Module: ${path.resolve(modulePath)}`);",
+    '    console.error(error.message);',
+    '  }',
+    '  process.exitCode = 1;',
+    '  return;',
+    '}',
+    'if (!cli || typeof cli.runLocalRuntimeSettingsCliMain !== \'function\') {',
+    `  console.error(${JSON.stringify(STALE_LAUNCHER_MESSAGE)});`,
+    "  console.error(`Module: ${path.resolve(modulePath)}`);",
+    '  process.exitCode = 1;',
+    '  return;',
+    '}',
+    'void cli.runLocalRuntimeSettingsCliMain(process.argv.slice(2)).then((code) => {',
     '  process.exitCode = code;',
     '});',
     ''
@@ -405,18 +428,38 @@ function renderJavascriptLauncher(modulePath: string): string {
 }
 
 function renderWindowsLauncher(): string {
-  return ['@echo off', 'set SCRIPT_DIR=%~dp0', 'node "%SCRIPT_DIR%run-local-runtime-settings-cli.js" %*', ''].join(
-    '\r\n'
-  );
+  return [
+    '@echo off',
+    'set SCRIPT_DIR=%~dp0',
+    'where node >nul 2>nul',
+    'if errorlevel 1 (',
+    `  >&2 echo ${escapeWindowsBatchEcho(MISSING_NODE_RUNTIME_MESSAGE)}`,
+    '  exit /b 1',
+    ')',
+    'node "%SCRIPT_DIR%run-local-runtime-settings-cli.js" %*',
+    ''
+  ].join('\r\n');
 }
 
 function renderPosixLauncher(): string {
   return [
     '#!/usr/bin/env sh',
     'SCRIPT_DIR="$(cd -- "$(dirname -- "$0")" && pwd)"',
-    'node "$SCRIPT_DIR/run-local-runtime-settings-cli.js" "$@"',
+    'if ! command -v node >/dev/null 2>&1; then',
+    `  printf '%s\\n' '${escapeSingleQuotedShellString(MISSING_NODE_RUNTIME_MESSAGE)}' >&2`,
+    '  exit 1',
+    'fi',
+    'exec node "$SCRIPT_DIR/run-local-runtime-settings-cli.js" "$@"',
     ''
   ].join('\n');
+}
+
+function escapeWindowsBatchEcho(value: string): string {
+  return value.replace(/"/g, '""');
+}
+
+function escapeSingleQuotedShellString(value: string): string {
+  return value.replace(/'/g, `'\"'\"'`);
 }
 
 function writeLine(stream: WritableStreamLike, text: string): void {

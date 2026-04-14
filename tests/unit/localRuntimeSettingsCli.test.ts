@@ -1,6 +1,8 @@
 import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
+import { execFile as execFileCallback } from 'node:child_process';
+import { promisify } from 'node:util';
 import { parse } from 'jsonc-parser';
 
 import { afterEach, describe, expect, it } from 'vitest';
@@ -14,6 +16,8 @@ import {
   runLocalRuntimeSettingsCli,
   runLocalRuntimeSettingsCliMain
 } from '../../src/tooling/localRuntimeSettingsCli';
+
+const execFile = promisify(execFileCallback);
 
 describe('localRuntimeSettingsCli', () => {
   const tempDirectories: string[] = [];
@@ -205,10 +209,43 @@ describe('localRuntimeSettingsCli', () => {
     const posixLauncher = await fs.readFile(materialized.posixLauncherPath, 'utf8');
 
     expect(javascriptLauncher).toContain(JSON.stringify(materialized.modulePath));
+    expect(javascriptLauncher).toContain(
+      'VI History runtime-settings CLI launcher is stale or incomplete.'
+    );
     expect(windowsLauncher).toContain('run-local-runtime-settings-cli.js');
-    expect(windowsLauncher).not.toContain('PATH=');
+    expect(windowsLauncher).toContain('where node >nul 2>nul');
+    expect(windowsLauncher).toContain(
+      'VI History runtime-settings CLI requires a usable Node.js runtime on PATH.'
+    );
     expect(posixLauncher).toContain('run-local-runtime-settings-cli.js');
-    expect(posixLauncher).not.toContain('PATH=');
+    expect(posixLauncher).toContain('command -v node >/dev/null 2>&1');
+    expect(posixLauncher).toContain(
+      'VI History runtime-settings CLI requires a usable Node.js runtime on PATH.'
+    );
     expect(materialized.exampleCommand).toContain('--provider host');
+  });
+
+  it('fails closed with a stable stale-launcher message when the generated module is missing', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-local-runtime-stale-launcher-'));
+    tempDirectories.push(tempRoot);
+
+    const globalStoragePath = path.join(tempRoot, 'global storage');
+    const extensionPath = path.join(tempRoot, 'extension with spaces');
+    const modulePath = path.join(extensionPath, 'out', 'tooling', 'localRuntimeSettingsCli.js');
+    await fs.mkdir(path.dirname(modulePath), { recursive: true });
+    await fs.writeFile(modulePath, 'exports.runLocalRuntimeSettingsCliMain = async () => 0;\n', 'utf8');
+
+    const materialized = await ensureLocalRuntimeSettingsCli(globalStoragePath, extensionPath);
+    await fs.rm(modulePath, { force: true });
+
+    const result = await execFile(process.execPath, [materialized.javascriptLauncherPath], {
+      encoding: 'utf8'
+    }).catch((error: Error & { stdout?: string; stderr?: string; code?: number }) => error);
+
+    expect(result.code).toBe(1);
+    expect(result.stderr ?? '').toContain(
+      'VI History runtime-settings CLI launcher is stale or incomplete.'
+    );
+    expect(result.stderr ?? '').toContain(materialized.modulePath);
   });
 });
