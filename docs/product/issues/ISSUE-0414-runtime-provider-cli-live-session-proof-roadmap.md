@@ -31,7 +31,11 @@ The unresolved seam remains explicit:
 
 Current implementation branch:
 
-- `feature/runtime-provider-live-session-probe-command` (in progress)
+- `feature/runtime-provider-live-session-proof-packet` (in progress)
+
+Most recently merged branch:
+
+- `feature/runtime-provider-live-session-probe-command`
 
 ## Roadmap (Feature Branch Sequence)
 
