@@ -272,6 +272,10 @@ function translatePathForDocker(hostPath, dockerCommand) {
     return hostPath;
   }
 
+  if (!isWsl()) {
+    return hostPath;
+  }
+
   return execFileSync('wslpath', ['-w', hostPath], {
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'ignore']
