@@ -382,9 +382,11 @@ Post-release tranches:
     Compare when Code is already open
   - released `repo-standards-review` `v0.2.9` compliance closeout is retained
     in the branch control plane
+  - the retained gate decision now keeps reload-or-restart guidance active
+    while direct live-session mutation safe-restore remains unproven
   - the remaining active slices are the unresolved live active-settings
-    mutation seam (safe-restore plus final gate decision) and later
-    exact-release promotion once the candidate line is admitted
+    mutation safe-restore seam and later exact-release promotion once the
+    candidate line is admitted
   - retained handoff packet:
     [issue-0412-promotion-and-publication-handoff.md](./issue-0412-promotion-and-publication-handoff.md)
   - explicit public-acceptance gate:
