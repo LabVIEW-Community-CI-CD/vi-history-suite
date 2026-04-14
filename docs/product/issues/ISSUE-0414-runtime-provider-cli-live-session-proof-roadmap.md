@@ -34,11 +34,11 @@ The unresolved seam remains explicit:
 
 Current implementation branch:
 
-- `feature/runtime-provider-live-session-latest-observation-assert` (in progress)
+- `feature/runtime-provider-live-session-history-uptake-assert` (in progress)
 
 Most recently merged branch:
 
-- `feature/runtime-provider-live-session-baseline-switch-receipt`
+- `feature/runtime-provider-live-session-latest-observation-assert`
 
 ## Roadmap (Feature Branch Sequence)
 
@@ -127,10 +127,15 @@ Most recently merged branch:
   admission when retained probe evidence does not show that mutation changed
   persisted provider truth from baseline to target.
 
-17. `feature/runtime-provider-live-session-latest-observation-assert` (in progress)
+17. `feature/runtime-provider-live-session-latest-observation-assert` (merged)
 - Tighten latest-packet and policy-boundary admission so the latest retained
   probe observation must remain `reload-required`; `in-session-updated` latest
   evidence now fails closed and forces explicit re-evaluation.
+
+18. `feature/runtime-provider-live-session-history-uptake-assert` (in progress)
+- Tighten latest-packet and policy-boundary admission so retained history must
+  contain zero `in-session-updated` observations while this line keeps the
+  `not-fully-proven` / reload-required boundary active.
 
 ## Admission Rules
 

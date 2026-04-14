@@ -103,7 +103,8 @@ Use the live-session probe plus packet gate:
   `mutationTargetPersistedMatch=true`,
   `mutationTargetBaselineChanged=true`, and
   `historyProofStatus=not-fully-proven` with latest
-  `liveUptakeObservation=reload-required`
+  `liveUptakeObservation=reload-required` and retained
+  `historyInSessionUpdatedCount=0`
 - run `npm run proof:runtime-settings-live-session:history` to summarize
   retained runs into one live-uptake stance
 - run `npm run proof:runtime-settings-live-session:policy:assert` to fail
