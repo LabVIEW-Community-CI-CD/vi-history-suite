@@ -34,11 +34,11 @@ The unresolved seam remains explicit:
 
 Current implementation branch:
 
-- `feature/runtime-provider-live-session-history-receipt` (in progress)
+- `feature/runtime-provider-live-session-policy-boundary-assert` (in progress)
 
 Most recently merged branch:
 
-- `feature/runtime-provider-live-session-uptake-receipt`
+- `feature/runtime-provider-live-session-history-receipt`
 
 ## Roadmap (Feature Branch Sequence)
 
@@ -76,10 +76,16 @@ Most recently merged branch:
   classifies each probe run as in-session-updated versus reload-required, with
   fail-closed local gate validation for that classification.
 
-8. `feature/runtime-provider-live-session-history-receipt` (in progress)
+8. `feature/runtime-provider-live-session-history-receipt` (merged)
 - Add one retained history-receipt command that summarizes all retained probe
   runs into one policy-facing stance (`live-uptake-not-proven`,
   `candidate-live-uptake-observed`, or `insufficient-evidence`).
+
+9. `feature/runtime-provider-live-session-policy-boundary-assert` (in progress)
+- Add one fail-closed policy-boundary assertion command that enforces the
+  retained `VHS-REQ-542` evidence stance before merge and forces explicit
+  re-evaluation when retained history no longer supports unconditional reload
+  guidance.
 
 ## Admission Rules
 

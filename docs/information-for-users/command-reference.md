@@ -175,6 +175,17 @@ See also:
     `npm run proof:runtime-settings-live-session:history -- --packet-root <path>`
   - use `--json` for machine-readable branch or MR receipts
 
+`npm run proof:runtime-settings-live-session:policy:assert`
+
+- Purpose: fail closed when retained probe history no longer supports the
+  current unconditional reload-or-restart policy boundary.
+- Use when: enforcing `VHS-REQ-542` evidence posture before merge.
+- Notes:
+  - optional packet-root override:
+    `npm run proof:runtime-settings-live-session:policy:assert -- --packet-root <path>`
+  - returns non-zero when stance is `candidate-live-uptake-observed` or
+    `insufficient-evidence`, forcing explicit policy re-evaluation
+
 `npm run test:integration:windows`
 
 - Purpose: prove the Windows integration-host lane, including the `.cmd`
