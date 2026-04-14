@@ -117,12 +117,12 @@ describe('execution-policy control plane', () => {
     expect(currentState).toContain('exact Windows host-runtime preflight');
     expect(currentState).toContain('`viHistorySuite.runtimeProvider`');
     expect(currentState).toContain('current-host launcher invocation against a temporary');
-    expect(currentState).toContain('the remaining CLI proof gap is explicit');
-    expect(currentState).toContain('Windows launcher execution and');
+    expect(currentState).toContain('`npm run test:integration:windows`');
+    expect(currentState).toContain('proves the `.cmd` launcher path as well');
     expect(currentState).toContain(
-      'direct live user-profile VS Code settings mutation are not yet end-to-end'
+      'direct live user-profile'
     );
-    expect(currentState).toContain('proven on this line');
+    expect(currentState).toContain('default settings target is not yet');
     expect(currentState).toContain('released `repo-standards-review` `v0.2.9` compliance closeout');
     expect(currentState).toContain('remaining active slices are packaged/public truth alignment');
     expect(currentState).toContain('`TRANCHE-012`: Post-release sustainment and release cadence');
@@ -198,6 +198,7 @@ describe('execution-policy control plane', () => {
     expect(testPlan).toContain('TEST-UNIT-347');
     expect(testPlan).toContain('TEST-UNIT-348');
     expect(testPlan).toContain('TEST-INTEG-009');
+    expect(testPlan).toContain('`npm run test:integration:windows`');
     expect(testPlan).toContain('Docker-only');
     expect(testPlan).toContain('TEST-UNIT-339');
     expect(testPlan).toContain('TEST-DOC-102');
@@ -210,8 +211,9 @@ describe('execution-policy control plane', () => {
     expect(program).toContain('TRANCHE-016');
     expect(program).toContain('Windows exact-runtime preflight is now landed');
     expect(program).toContain('remaining work on this program is now narrower');
-    expect(program).toContain('remaining CLI proof gap is explicit');
+    expect(program).toContain('proves the `.cmd` launcher path as well');
     expect(program).toContain('current-host launcher execution against a temporary');
+    expect(program).toContain('default settings target');
     expect(program).toContain('issue-0412-promotion-and-publication-handoff.md');
     expect(program).toContain('installed manifest/settings');
     expect(program).toContain('explicit `Compare` action');
@@ -224,7 +226,8 @@ describe('execution-policy control plane', () => {
     expect(issueNext).toContain('generated settings CLI, exact Windows');
     expect(issueNext).toContain('keep the installed manifest/settings slice truthful');
     expect(issueNext).toContain('current-host launcher execution against a temporary settings file');
-    expect(issueNext).toContain('Windows launcher execution and live');
+    expect(issueNext).toContain('`.cmd` launcher path');
+    expect(issueNext).toContain('default settings target');
     expect(issueNext).toContain('keep packaged/public docs on the exact released Docker-only baseline');
     expect(issueNext).toContain('provider/version/bitness');
     expect(issueNext).toContain('explicit compare preflight state');

@@ -347,14 +347,16 @@ Post-release tranches:
   - the generated settings CLI is now proven through first-use launcher
     materialization plus current-host launcher invocation against a temporary
     settings file
-  - the remaining CLI proof gap is explicit: Windows launcher execution and
-    direct live user-profile VS Code settings mutation are not yet end-to-end
-    proven on this line
+  - the explicit Windows proof lane `npm run test:integration:windows` now
+    proves the `.cmd` launcher path as well
+  - the remaining CLI proof gap is now narrower: direct live user-profile
+    VS Code settings mutation against the default settings target is not yet
+    end-to-end proven on this line
   - released `repo-standards-review` `v0.2.9` compliance closeout is retained
     in the branch control plane
   - the remaining active slices are packaged/public truth alignment when
-    publication is actually truthful, the unresolved CLI proof gap on Windows,
-    and later public acceptance handoff after publication
+    publication is actually truthful, the unresolved live default-settings
+    mutation seam, and later public acceptance handoff after publication
   - retained handoff packet:
     [issue-0412-promotion-and-publication-handoff.md](./issue-0412-promotion-and-publication-handoff.md)
   - Docker is now a bounded expert provider rather than either the default

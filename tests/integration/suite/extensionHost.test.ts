@@ -469,6 +469,11 @@ async function testPrepareLocalRuntimeSettingsCli(): Promise<void> {
       '--settings-file',
       settingsFilePath
     ]);
+    if (process.platform === 'win32') {
+      assert.equal(hostRun.launcherPath, result.windowsLauncherPath);
+    } else {
+      assert.equal(hostRun.launcherPath, result.posixLauncherPath);
+    }
     assert.match(hostRun.stdout, /viHistorySuite\.runtimeProvider=host/);
     assert.match(hostRun.stdout, /viHistorySuite\.labviewVersion=2026/);
     assert.match(hostRun.stdout, /viHistorySuite\.labviewBitness=x64/);
@@ -489,6 +494,11 @@ async function testPrepareLocalRuntimeSettingsCli(): Promise<void> {
       '--settings-file',
       settingsFilePath
     ]);
+    if (process.platform === 'win32') {
+      assert.equal(dockerRun.launcherPath, result.windowsLauncherPath);
+    } else {
+      assert.equal(dockerRun.launcherPath, result.posixLauncherPath);
+    }
     assert.match(dockerRun.stdout, /viHistorySuite\.runtimeProvider=docker/);
     assert.deepEqual(JSON.parse(await fs.readFile(settingsFilePath, 'utf8')), {
       'editor.tabSize': 2,
@@ -504,14 +514,26 @@ async function testPrepareLocalRuntimeSettingsCli(): Promise<void> {
 async function runPreparedLocalRuntimeSettingsCli(
   result: PreparedLocalRuntimeSettingsCliSummary,
   args: string[]
-): Promise<{ stdout: string; stderr: string }> {
+): Promise<{ stdout: string; stderr: string; launcherPath: string }> {
   if (process.platform === 'win32') {
-    return await execFile('cmd.exe', ['/d', '/s', '/c', result.windowsLauncherPath!, ...args], {
-      encoding: 'utf8'
-    });
+    const execution = await execFile(
+      'cmd.exe',
+      ['/d', '/s', '/c', result.windowsLauncherPath!, ...args],
+      {
+        encoding: 'utf8'
+      }
+    );
+    return {
+      ...execution,
+      launcherPath: result.windowsLauncherPath!
+    };
   }
 
-  return await execFile(result.posixLauncherPath!, args, { encoding: 'utf8' });
+  const execution = await execFile(result.posixLauncherPath!, args, { encoding: 'utf8' });
+  return {
+    ...execution,
+    launcherPath: result.posixLauncherPath!
+  };
 }
 
 async function waitFor(

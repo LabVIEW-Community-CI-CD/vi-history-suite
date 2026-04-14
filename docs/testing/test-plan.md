@@ -300,7 +300,8 @@
   preparation command, execute the current-host generated launcher against a
   temporary settings file, and prove the CLI can switch the persisted
   provider request between `host` and `docker` while writing LabVIEW version
-  and bitness facts
+  and bitness facts; the explicit Windows proof lane is
+  `npm run test:integration:windows`, which forces the `.cmd` launcher path
 - `TEST-UNIT-072`: prove the canonical comparison-report smoke runner selects a
   retained compare pair, persists report artifacts, and records runtime facts
 - `TEST-UNIT-073`: prove the canonical comparison-report smoke CLI parses
@@ -1730,7 +1731,9 @@
   launchers under user-profile storage on first use, writes provider plus
   `viHistorySuite.labviewVersion` and `viHistorySuite.labviewBitness`, and
   does not require PATH mutation or a prebuilt VSIX-shipped CLI payload; real
-  current-host launcher execution is traced separately by `TEST-INTEG-009`
+  current-host plus explicit Windows launcher execution are traced separately
+  by `TEST-INTEG-009`; live mutation of the default user-profile VS Code
+  settings target remains a later proof seam
 - `TEST-UNIT-346`: verify the installed compare contract defaults to host and
   admits Docker only as a bounded expert provider persisted through the
   generated settings CLI

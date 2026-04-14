@@ -71,12 +71,9 @@ describe('post-release control-plane coherence', () => {
     expect(currentState).toContain('current exact released installed extension is still Docker-only');
     expect(currentState).toContain('installed manifest/settings');
     expect(currentState).toContain('bounded expert provider');
-    expect(currentState).toContain('the remaining CLI proof gap is explicit');
-    expect(currentState).toContain('Windows launcher execution and');
-    expect(currentState).toContain(
-      'direct live user-profile VS Code settings mutation are not yet end-to-end'
-    );
-    expect(currentState).toContain('proven on this line');
+    expect(currentState).toContain('`npm run test:integration:windows`');
+    expect(currentState).toContain('proves the `.cmd` launcher path as well');
+    expect(currentState).toContain('default settings target is not yet');
 
     expect(program).toContain('Closed on the Docker-only public-product acceptance gate.');
     expect(program).toContain('the installed extension compare workflow is now Docker-only and x64-only');
