@@ -184,6 +184,9 @@ function summarizeHistory(packetRoot, runSummaries) {
   const latestMutationTarget = latest
     ? normalizeMutationProviderTarget(latest.summary)
     : undefined;
+  const latestProviderDrift = latest
+    ? normalizeProviderDrift(latest.summary)
+    : undefined;
   const stance =
     reloadRequiredCount > 0
       ? 'live-uptake-not-proven'
@@ -218,6 +221,7 @@ function summarizeHistory(packetRoot, runSummaries) {
     latestSummaryPath: latest?.summaryPath,
     latestObservation,
     latestMutationTarget,
+    latestProviderDrift,
     stance,
     proofStatus,
     providerSelectionCoverage,
@@ -302,6 +306,13 @@ function normalizeMutationTargetBaselineChanged(summary) {
   return undefined;
 }
 
+function normalizeProviderDrift(summary) {
+  if (summary && typeof summary.providerDrift === 'boolean') {
+    return summary.providerDrift;
+  }
+  return undefined;
+}
+
 function formatHistorySummary(summary) {
   return [
     'Runtime settings live-session probe history receipt',
@@ -323,6 +334,7 @@ function formatHistorySummary(summary) {
     `- latestRunId: ${summary.latestRunId ?? '<none>'}`,
     `- latestObservation: ${summary.latestObservation ?? '<none>'}`,
     `- latestMutationTarget: ${summary.latestMutationTarget ?? '<none>'}`,
+    `- latestProviderDrift: ${summary.latestProviderDrift ?? '<none>'}`,
     `- stance: ${summary.stance}`,
     `- proofStatus: ${summary.proofStatus}`,
     `- providerSelectionCoverage: ${summary.providerSelectionCoverage}`,
@@ -416,6 +428,7 @@ module.exports = {
   normalizeMutationProviderTarget,
   normalizeMutationTargetPersistedMatch,
   normalizeMutationTargetBaselineChanged,
+  normalizeProviderDrift,
   formatHistorySummary,
   run
 };

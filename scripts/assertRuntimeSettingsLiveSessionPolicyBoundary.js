@@ -124,6 +124,11 @@ function run(argv = process.argv.slice(2), deps = {}) {
       `Runtime-settings live-session policy boundary requires explicit baseline-switch receipts on retained runs (mutationTargetBaselineUnknownCount=${summary.mutationTargetBaselineUnknownCount}).`
     );
   }
+  if (summary.latestProviderDrift !== true) {
+    throw new Error(
+      `Runtime-settings live-session policy boundary requires latest retained provider drift to remain explicit and true (latestProviderDrift=${summary.latestProviderDrift ?? '<none>'}).`
+    );
+  }
 
   if (parsed.json) {
     stdout.write(`${JSON.stringify(summary, null, 2)}\n`);
@@ -150,6 +155,7 @@ function run(argv = process.argv.slice(2), deps = {}) {
       `- mutationTargetBaselineUnknownCount: ${summary.mutationTargetBaselineUnknownCount}\n`
     );
     stdout.write(`- latestObservation: ${summary.latestObservation ?? '<none>'}\n`);
+    stdout.write(`- latestProviderDrift: ${summary.latestProviderDrift ?? '<none>'}\n`);
   }
 
   return {

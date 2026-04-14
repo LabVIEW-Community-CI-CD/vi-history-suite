@@ -113,7 +113,8 @@ Use the live-session probe plus packet gate:
 - run `npm run proof:runtime-settings-live-session:history` to summarize
   retained runs into one live-uptake stance
 - run `npm run proof:runtime-settings-live-session:policy:assert` to fail
-  closed when retained evidence no longer supports unconditional reload guidance
+  closed when retained evidence no longer supports unconditional reload
+  guidance or latest retained provider drift is no longer explicit `true`
 
 This narrows the proof gap and now includes fail-closed probe safe-restore, but
 it still does not prove direct live uptake of updated settings in the current

@@ -52,6 +52,7 @@ const historyScript = require(path.resolve(
     mutationTargetBaselineUnchangedCount: number;
     mutationTargetBaselineUnknownCount: number;
     latestObservation?: string;
+    latestProviderDrift?: boolean;
   };
   run: (
     argv?: readonly string[],
@@ -91,6 +92,7 @@ describe('printRuntimeSettingsLiveSessionProbeHistory script', () => {
         runId: '2026-04-14T13-00-00-000Z',
         summary: {
           liveUptakeObservation: 'reload-required',
+          providerDrift: true,
           baselinePersistedProvider: 'host',
           persistedProvider: 'docker',
           mutationProviderTarget: 'docker',
@@ -129,6 +131,7 @@ describe('printRuntimeSettingsLiveSessionProbeHistory script', () => {
     expect(summary.providerSelectionCoverage).toBe('bidirectional-selection-observed');
     expect(summary.proofStatus).toBe('not-fully-proven');
     expect(summary.latestObservation).toBe('reload-required');
+    expect(summary.latestProviderDrift).toBe(true);
     expect(summary.stance).toBe('live-uptake-not-proven');
   });
 
