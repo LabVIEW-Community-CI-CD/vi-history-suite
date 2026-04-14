@@ -126,6 +126,14 @@ function validateProbePacket(summary) {
     }
     return value;
   };
+  const requireNumber = (key) => {
+    const value = summary[key];
+    if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
+      failures.push(`${key} must be a non-negative finite number`);
+      return undefined;
+    }
+    return value;
+  };
 
   const outcome = requireString('outcome');
   if (outcome && outcome !== 'probed-runtime-settings-live-session') {
@@ -145,6 +153,11 @@ function validateProbePacket(summary) {
   const versionDrift = requireBoolean('versionDrift');
   const bitnessDrift = requireBoolean('bitnessDrift');
   const driftDetected = requireBoolean('driftDetected');
+  const historyTotalRuns = requireNumber('historyTotalRuns');
+  const historyReloadRequiredCount = requireNumber('historyReloadRequiredCount');
+  const historyInSessionUpdatedCount = requireNumber('historyInSessionUpdatedCount');
+  const historyUnknownObservationCount = requireNumber('historyUnknownObservationCount');
+  const historyStance = requireString('historyStance');
 
   if (
     typeof safeRestoreApplied === 'boolean' &&
@@ -168,6 +181,17 @@ function validateProbePacket(summary) {
   ) {
     failures.push(
       `liveUptakeObservation must be in-session-updated or reload-required, received ${liveUptakeObservation}`
+    );
+  }
+
+  if (
+    historyStance &&
+    historyStance !== 'live-uptake-not-proven' &&
+    historyStance !== 'candidate-live-uptake-observed' &&
+    historyStance !== 'insufficient-evidence'
+  ) {
+    failures.push(
+      `historyStance must be live-uptake-not-proven, candidate-live-uptake-observed, or insufficient-evidence, received ${historyStance}`
     );
   }
 
@@ -196,6 +220,40 @@ function validateProbePacket(summary) {
       expectedDrift !== false
     ) {
       failures.push('liveUptakeObservation in-session-updated requires driftDetected=false');
+    }
+  }
+
+  if (
+    typeof historyTotalRuns === 'number' &&
+    typeof historyReloadRequiredCount === 'number' &&
+    typeof historyInSessionUpdatedCount === 'number' &&
+    typeof historyUnknownObservationCount === 'number'
+  ) {
+    const expectedMinimum =
+      historyReloadRequiredCount +
+      historyInSessionUpdatedCount +
+      historyUnknownObservationCount;
+    if (historyTotalRuns < expectedMinimum) {
+      failures.push(
+        `historyTotalRuns must be >= historyReloadRequiredCount + historyInSessionUpdatedCount + historyUnknownObservationCount (${expectedMinimum})`
+      );
+    }
+  }
+
+  if (
+    historyStance &&
+    typeof historyReloadRequiredCount === 'number' &&
+    typeof historyInSessionUpdatedCount === 'number' &&
+    typeof historyUnknownObservationCount === 'number'
+  ) {
+    const expectedStance =
+      historyReloadRequiredCount > 0
+        ? 'live-uptake-not-proven'
+        : historyInSessionUpdatedCount > 0 && historyUnknownObservationCount === 0
+          ? 'candidate-live-uptake-observed'
+          : 'insufficient-evidence';
+    if (historyStance !== expectedStance) {
+      failures.push(`historyStance must match retained history counts (${expectedStance})`);
     }
   }
 
@@ -242,6 +300,7 @@ function run(argv = process.argv.slice(2), deps = {}) {
   stdout.write(`- runId: ${summary.packetRunId}\n`);
   stdout.write(`- driftDetected: ${summary.driftDetected ? 'yes' : 'no'}\n`);
   stdout.write(`- liveUptakeObservation: ${summary.liveUptakeObservation}\n`);
+  stdout.write(`- historyStance: ${summary.historyStance}\n`);
   return {
     outcome: 'pass',
     packetPath,

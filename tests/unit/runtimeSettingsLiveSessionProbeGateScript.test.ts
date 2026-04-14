@@ -78,7 +78,12 @@ describe('assertRuntimeSettingsLiveSessionProbePacket script', () => {
       providerDrift: true,
       versionDrift: false,
       bitnessDrift: false,
-      driftDetected: false
+      driftDetected: false,
+      historyTotalRuns: 4,
+      historyReloadRequiredCount: 2,
+      historyInSessionUpdatedCount: 1,
+      historyUnknownObservationCount: 1,
+      historyStance: 'live-uptake-not-proven'
     });
 
     expect(failures).toContain(
@@ -101,10 +106,43 @@ describe('assertRuntimeSettingsLiveSessionProbePacket script', () => {
       providerDrift: true,
       versionDrift: false,
       bitnessDrift: false,
-      driftDetected: true
+      driftDetected: true,
+      historyTotalRuns: 1,
+      historyReloadRequiredCount: 1,
+      historyInSessionUpdatedCount: 0,
+      historyUnknownObservationCount: 0,
+      historyStance: 'live-uptake-not-proven'
     });
 
     expect(failures).toContain('liveUptakeObservation in-session-updated requires driftDetected=false');
+  });
+
+  it('fails validation when history stance conflicts with retained counts', () => {
+    const failures = probeGate.validateProbePacket({
+      outcome: 'probed-runtime-settings-live-session',
+      packetRunId: '2026-04-14T13-07-33-123Z',
+      packetJsonPath: '/tmp/packet.json',
+      packetMarkdownPath: '/tmp/packet.md',
+      latestPacketJsonPath: '/tmp/latest-summary.json',
+      latestPacketMarkdownPath: '/tmp/latest-summary.md',
+      mutationProviderTarget: 'host',
+      liveUptakeObservation: 'in-session-updated',
+      safeRestoreApplied: true,
+      safeRestoreVerified: true,
+      providerDrift: false,
+      versionDrift: false,
+      bitnessDrift: false,
+      driftDetected: false,
+      historyTotalRuns: 2,
+      historyReloadRequiredCount: 0,
+      historyInSessionUpdatedCount: 2,
+      historyUnknownObservationCount: 0,
+      historyStance: 'live-uptake-not-proven'
+    });
+
+    expect(failures).toContain(
+      'historyStance must match retained history counts (candidate-live-uptake-observed)'
+    );
   });
 
   it('passes on a valid packet file via --packet', async () => {
@@ -128,7 +166,12 @@ describe('assertRuntimeSettingsLiveSessionProbePacket script', () => {
           providerDrift: false,
           versionDrift: false,
           bitnessDrift: false,
-          driftDetected: false
+          driftDetected: false,
+          historyTotalRuns: 3,
+          historyReloadRequiredCount: 1,
+          historyInSessionUpdatedCount: 2,
+          historyUnknownObservationCount: 0,
+          historyStance: 'live-uptake-not-proven'
         },
         null,
         2

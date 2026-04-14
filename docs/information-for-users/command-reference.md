@@ -145,8 +145,8 @@ See also:
   - the command retains per-run and latest probe packets under extension-global
     storage
   - probe packets include persisted and live provider/version/bitness plus
-    drift booleans, a normalized live-uptake observation, and
-    runtime-validation facts
+    drift booleans, a normalized live-uptake observation, cumulative retained
+    history stance counters, and runtime-validation facts
   - this probe surface now applies fail-closed safe-restore around probe
     mutation, but direct live uptake of updated settings is still unproven;
     reload or restart guidance remains active when drift is detected
