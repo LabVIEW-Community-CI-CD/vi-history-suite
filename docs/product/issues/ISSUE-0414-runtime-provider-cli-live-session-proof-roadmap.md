@@ -34,11 +34,11 @@ The unresolved seam remains explicit:
 
 Current implementation branch:
 
-- `feature/runtime-provider-live-session-latest-provider-facts-assert` (in progress)
+- `feature/runtime-provider-live-session-latest-provider-drift-assert` (in progress)
 
 Most recently merged branch:
 
-- `feature/runtime-provider-live-session-latest-safe-restore-assert`
+- `feature/runtime-provider-live-session-latest-provider-facts-assert`
 
 ## Roadmap (Feature Branch Sequence)
 
@@ -160,9 +160,14 @@ Most recently merged branch:
 - Tighten latest-packet admission so latest retained packet must keep
   `safeRestoreVerified=true` before local admission.
 
-24. `feature/runtime-provider-live-session-latest-provider-facts-assert` (in progress)
+24. `feature/runtime-provider-live-session-latest-provider-facts-assert` (merged)
 - Tighten latest-packet admission so retained baseline/persisted provider facts
   must be explicit `host` or `docker` values before local admission.
+
+25. `feature/runtime-provider-live-session-latest-provider-drift-assert` (in progress)
+- Tighten latest-packet admission so retained provider-selection drift remains
+  explicitly present (`providerDrift=true`) rather than being inferred only from
+  aggregate drift.
 
 ## Admission Rules
 

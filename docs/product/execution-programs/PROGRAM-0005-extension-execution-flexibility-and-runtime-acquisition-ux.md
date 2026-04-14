@@ -54,7 +54,8 @@ Current facts:
   `historyProofStatus=not-fully-proven` plus latest-packet
   `historyStance=live-uptake-not-proven`, plus latest-packet
   `liveUptakeObservation=reload-required`, latest-packet
-  `safeRestoreVerified=true`, explicit baseline/persisted provider
+  `safeRestoreVerified=true`, latest-packet `providerDrift=true`,
+  explicit baseline/persisted provider
   `host`/`docker` facts, plus retained
   `historyInSessionUpdatedCount=0` plus
   `historyUnknownObservationCount=0`, with retained history total/count
@@ -86,7 +87,7 @@ Current facts:
   auto-run is removed, compare preflight shows selected/base commit plus
   provider/version/bitness, and compare stays blocked until explicit
   preflight-ready execution
-- released `repo-standards-review` `v0.2.9` compliance closeout is now
+- released `repo-standards-review` `v0.2.13` compliance-workbench closeout is now
   retained on this branch
 - retained gate decision now keeps `VHS-REQ-542` reload-or-restart guidance as
   active truth while direct live-session uptake of updated settings remains

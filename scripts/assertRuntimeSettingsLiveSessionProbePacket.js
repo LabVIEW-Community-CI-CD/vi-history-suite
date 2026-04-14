@@ -244,6 +244,11 @@ function validateProbePacket(summary) {
       'safeRestoreVerified must remain true for latest retained probe packet evidence'
     );
   }
+  if (providerDrift === false) {
+    failures.push(
+      'providerDrift must remain true for latest retained probe packet evidence'
+    );
+  }
 
   if (
     historyStance &&
