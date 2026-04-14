@@ -145,6 +145,8 @@ function validateProbePacket(summary) {
   requireString('packetMarkdownPath');
   requireString('latestPacketJsonPath');
   requireString('latestPacketMarkdownPath');
+  const persistedProvider = requireString('persistedProvider');
+  const baselinePersistedProvider = requireString('baselinePersistedProvider');
   const mutationProviderTarget = requireString('mutationProviderTarget');
   const mutationTargetPersistedMatch = requireBoolean('mutationTargetPersistedMatch');
   const mutationTargetBaselineChanged = requireBoolean('mutationTargetBaselineChanged');
@@ -176,14 +178,18 @@ function validateProbePacket(summary) {
       `mutationProviderTarget must be host or docker when present, received ${mutationProviderTarget}`
     );
   }
-  const normalizedPersistedProvider =
-    typeof summary.persistedProvider === 'string'
-      ? summary.persistedProvider.trim().toLowerCase()
-      : undefined;
-  const normalizedBaselineProvider =
-    typeof summary.baselinePersistedProvider === 'string'
-      ? summary.baselinePersistedProvider.trim().toLowerCase()
-      : undefined;
+  const normalizedPersistedProvider = persistedProvider?.trim().toLowerCase();
+  const normalizedBaselineProvider = baselinePersistedProvider?.trim().toLowerCase();
+  if (normalizedPersistedProvider !== 'host' && normalizedPersistedProvider !== 'docker') {
+    failures.push(
+      `persistedProvider must be host or docker for latest retained probe packet evidence, received ${persistedProvider}`
+    );
+  }
+  if (normalizedBaselineProvider !== 'host' && normalizedBaselineProvider !== 'docker') {
+    failures.push(
+      `baselinePersistedProvider must be host or docker for latest retained probe packet evidence, received ${baselinePersistedProvider}`
+    );
+  }
   if (
     (mutationProviderTarget === 'host' || mutationProviderTarget === 'docker') &&
     (normalizedPersistedProvider === 'host' || normalizedPersistedProvider === 'docker') &&
