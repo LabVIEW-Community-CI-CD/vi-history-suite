@@ -37,8 +37,10 @@ import {
 } from './ui/historyPanelTracker';
 import {
   ensureLocalRuntimeSettingsCli,
-  resolveLocalRuntimeSettingsCliGovernanceContract
+  resolveLocalRuntimeSettingsCliGovernanceContract,
+  runLocalRuntimeSettingsCli
 } from './tooling/localRuntimeSettingsCli';
+import { buildRuntimeSettingsLiveSessionProbeSummary } from './tooling/runtimeSettingsLiveSessionProbe';
 
 export interface ViHistorySuiteApi {
   refreshEligibility(): Promise<void>;
@@ -191,6 +193,50 @@ export async function activate(
     })
   );
 
+  context.subscriptions.push(
+    vscode.commands.registerCommand('labviewViHistory.probeRuntimeSettingsLiveSession', async () => {
+      const liveSettings = readTrimmedLiveRuntimeSettings();
+      const quietStdout = {
+        write(_text: string): void {
+          // Intentionally suppressed: command result carries the probe summary.
+        }
+      };
+
+      const validated = await runLocalRuntimeSettingsCli(['--validate'], { stdout: quietStdout });
+      if (validated.outcome !== 'validated-settings') {
+        throw new Error(
+          `Runtime settings live-session probe expected validated-settings outcome, received ${validated.outcome}.`
+        );
+      }
+
+      const summary = buildRuntimeSettingsLiveSessionProbeSummary({
+        settingsFilePath: validated.settingsFilePath,
+        persisted: {
+          runtimeProvider: validated.persistedProvider,
+          labviewVersion: validated.persistedLabviewVersion,
+          labviewBitness: validated.persistedLabviewBitness
+        },
+        live: liveSettings,
+        runtimeValidationOutcome: validated.runtimeValidationOutcome,
+        runtimeProvider: validated.runtimeProvider,
+        runtimeEngine: validated.runtimeEngine,
+        runtimeBlockedReason: validated.runtimeBlockedReason
+      });
+
+      if (summary.driftDetected) {
+        void vscode.window.showWarningMessage(
+          'Runtime settings drift is present between persisted settings.json values and the active VS Code session. Reload or restart the window before trusting Compare surfaces.'
+        );
+      } else {
+        void vscode.window.showInformationMessage(
+          'Runtime settings live-session probe found no drift between persisted settings.json values and the active VS Code session.'
+        );
+      }
+
+      return summary;
+    })
+  );
+
   await eligibilityIndexer.start();
 
   return {
@@ -219,4 +265,30 @@ export async function activate(
 
 export function deactivate(): void {
   // Nothing to do yet.
+}
+
+function readTrimmedLiveRuntimeSettings(): {
+  runtimeProvider?: string;
+  labviewVersion?: string;
+  labviewBitness?: string;
+} {
+  const configuration = vscode.workspace.getConfiguration('viHistorySuite');
+  return {
+    runtimeProvider: readTrimmedStringSetting(configuration, 'runtimeProvider'),
+    labviewVersion: readTrimmedStringSetting(configuration, 'labviewVersion'),
+    labviewBitness: readTrimmedStringSetting(configuration, 'labviewBitness')
+  };
+}
+
+function readTrimmedStringSetting(
+  configuration: vscode.WorkspaceConfiguration,
+  key: string
+): string | undefined {
+  const value = configuration.get<string>(key);
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
 }

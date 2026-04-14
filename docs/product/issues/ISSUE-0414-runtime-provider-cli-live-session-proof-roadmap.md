@@ -29,6 +29,10 @@ The unresolved seam remains explicit:
   while Code is already running is not yet retained as an end-to-end proof
   packet
 
+Current implementation branch:
+
+- `feature/runtime-provider-live-session-probe-command` (in progress)
+
 ## Roadmap (Feature Branch Sequence)
 
 1. `feature/runtime-provider-live-session-probe-command`
