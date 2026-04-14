@@ -51,6 +51,9 @@ const historyScript = require(path.resolve(
     mutationTargetBaselineChangedCount: number;
     mutationTargetBaselineUnchangedCount: number;
     mutationTargetBaselineUnknownCount: number;
+    providerDriftTrueCount: number;
+    providerDriftFalseCount: number;
+    providerDriftUnknownCount: number;
     latestObservation?: string;
     latestProviderDrift?: boolean;
   };
@@ -105,6 +108,7 @@ describe('printRuntimeSettingsLiveSessionProbeHistory script', () => {
         runId: '2026-04-14T12-00-00-000Z',
         summary: {
           liveUptakeObservation: 'in-session-updated',
+          providerDrift: false,
           baselinePersistedProvider: 'docker',
           persistedProvider: 'host',
           mutationProviderTarget: 'host',
@@ -128,6 +132,9 @@ describe('printRuntimeSettingsLiveSessionProbeHistory script', () => {
     expect(summary.mutationTargetBaselineChangedCount).toBe(2);
     expect(summary.mutationTargetBaselineUnchangedCount).toBe(0);
     expect(summary.mutationTargetBaselineUnknownCount).toBe(0);
+    expect(summary.providerDriftTrueCount).toBe(1);
+    expect(summary.providerDriftFalseCount).toBe(1);
+    expect(summary.providerDriftUnknownCount).toBe(0);
     expect(summary.providerSelectionCoverage).toBe('bidirectional-selection-observed');
     expect(summary.proofStatus).toBe('not-fully-proven');
     expect(summary.latestObservation).toBe('reload-required');
@@ -155,6 +162,7 @@ describe('printRuntimeSettingsLiveSessionProbeHistory script', () => {
     expect(summary.mutationTargetDockerCount).toBe(0);
     expect(summary.mutationTargetPersistedUnknownCount).toBe(1);
     expect(summary.mutationTargetBaselineUnknownCount).toBe(1);
+    expect(summary.providerDriftUnknownCount).toBe(1);
     expect(summary.providerSelectionCoverage).toBe('insufficient-evidence');
     expect(summary.proofStatus).toBe('re-evaluation-required');
     expect(summary.latestObservation).toBe('in-session-updated');

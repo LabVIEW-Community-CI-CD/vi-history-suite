@@ -136,6 +136,9 @@ function summarizeHistory(packetRoot, runSummaries) {
   let mutationTargetBaselineChangedCount = 0;
   let mutationTargetBaselineUnchangedCount = 0;
   let mutationTargetBaselineUnknownCount = 0;
+  let providerDriftTrueCount = 0;
+  let providerDriftFalseCount = 0;
+  let providerDriftUnknownCount = 0;
 
   for (const run of runSummaries) {
     const observation = normalizeObservation(run.summary);
@@ -177,6 +180,15 @@ function summarizeHistory(packetRoot, runSummaries) {
     } else {
       mutationTargetBaselineUnknownCount += 1;
     }
+
+    const providerDrift = normalizeProviderDrift(run.summary);
+    if (providerDrift === true) {
+      providerDriftTrueCount += 1;
+    } else if (providerDrift === false) {
+      providerDriftFalseCount += 1;
+    } else {
+      providerDriftUnknownCount += 1;
+    }
   }
 
   const latest = runSummaries[0];
@@ -217,6 +229,9 @@ function summarizeHistory(packetRoot, runSummaries) {
     mutationTargetBaselineChangedCount,
     mutationTargetBaselineUnchangedCount,
     mutationTargetBaselineUnknownCount,
+    providerDriftTrueCount,
+    providerDriftFalseCount,
+    providerDriftUnknownCount,
     latestRunId: latest?.runId,
     latestSummaryPath: latest?.summaryPath,
     latestObservation,
@@ -331,6 +346,9 @@ function formatHistorySummary(summary) {
     `- mutationTargetBaselineChangedCount: ${summary.mutationTargetBaselineChangedCount}`,
     `- mutationTargetBaselineUnchangedCount: ${summary.mutationTargetBaselineUnchangedCount}`,
     `- mutationTargetBaselineUnknownCount: ${summary.mutationTargetBaselineUnknownCount}`,
+    `- providerDriftTrueCount: ${summary.providerDriftTrueCount}`,
+    `- providerDriftFalseCount: ${summary.providerDriftFalseCount}`,
+    `- providerDriftUnknownCount: ${summary.providerDriftUnknownCount}`,
     `- latestRunId: ${summary.latestRunId ?? '<none>'}`,
     `- latestObservation: ${summary.latestObservation ?? '<none>'}`,
     `- latestMutationTarget: ${summary.latestMutationTarget ?? '<none>'}`,

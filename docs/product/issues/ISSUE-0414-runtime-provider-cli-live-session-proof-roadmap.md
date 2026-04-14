@@ -34,11 +34,11 @@ The unresolved seam remains explicit:
 
 Current implementation branch:
 
-- `feature/runtime-provider-live-session-policy-latest-provider-drift-assert` (in progress)
+- `feature/runtime-provider-live-session-history-provider-drift-completeness-assert` (in progress)
 
 Most recently merged branch:
 
-- `feature/runtime-provider-live-session-latest-provider-drift-assert`
+- `feature/runtime-provider-live-session-policy-latest-provider-drift-assert`
 
 ## Roadmap (Feature Branch Sequence)
 
@@ -169,9 +169,14 @@ Most recently merged branch:
   explicitly present (`providerDrift=true`) rather than being inferred only from
   aggregate drift.
 
-26. `feature/runtime-provider-live-session-policy-latest-provider-drift-assert` (in progress)
+26. `feature/runtime-provider-live-session-policy-latest-provider-drift-assert` (merged)
 - Tighten policy-boundary admission so latest retained run must also keep
   explicit provider-selection drift (`latestProviderDrift=true`) before merge.
+
+27. `feature/runtime-provider-live-session-history-provider-drift-completeness-assert` (in progress)
+- Tighten policy-boundary admission so retained history must keep explicit
+  provider-drift receipts on every run and zero retained `providerDrift=false`
+  outcomes while this line preserves the reload-required seam.
 
 ## Admission Rules
 

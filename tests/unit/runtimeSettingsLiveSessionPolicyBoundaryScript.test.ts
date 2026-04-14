@@ -360,6 +360,42 @@ describe('assertRuntimeSettingsLiveSessionPolicyBoundary script', () => {
       'requires latest retained provider drift to remain explicit and true'
     );
   });
+
+  it('fails when any retained run lacks explicit provider-drift receipt', async () => {
+    const packetRoot = await seedHistoryPackets(temporaryDirectories, [
+      {
+        runId: '2026-04-14T13-00-00-000Z',
+        summary: {
+          liveUptakeObservation: 'reload-required',
+          driftDetected: true,
+          providerDrift: true,
+          baselinePersistedProvider: 'host',
+          persistedProvider: 'docker',
+          mutationProviderTarget: 'docker',
+          mutationTargetPersistedMatch: true,
+          mutationTargetBaselineChanged: true,
+          safeRestoreVerified: true
+        }
+      },
+      {
+        runId: '2026-04-14T12-00-00-000Z',
+        summary: {
+          liveUptakeObservation: 'reload-required',
+          driftDetected: true,
+          baselinePersistedProvider: 'docker',
+          persistedProvider: 'host',
+          mutationProviderTarget: 'host',
+          mutationTargetPersistedMatch: true,
+          mutationTargetBaselineChanged: true,
+          safeRestoreVerified: true
+        }
+      }
+    ]);
+
+    expect(() => boundaryScript.run(['--packet-root', packetRoot])).toThrow(
+      'requires explicit provider-drift receipts on every retained run'
+    );
+  });
 });
 
 async function seedHistoryPackets(

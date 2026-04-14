@@ -129,6 +129,16 @@ function run(argv = process.argv.slice(2), deps = {}) {
       `Runtime-settings live-session policy boundary requires latest retained provider drift to remain explicit and true (latestProviderDrift=${summary.latestProviderDrift ?? '<none>'}).`
     );
   }
+  if (summary.providerDriftFalseCount > 0) {
+    throw new Error(
+      `Runtime-settings live-session policy boundary requires retained provider-drift false outcomes to remain absent (providerDriftFalseCount=${summary.providerDriftFalseCount}).`
+    );
+  }
+  if (summary.providerDriftUnknownCount > 0) {
+    throw new Error(
+      `Runtime-settings live-session policy boundary requires explicit provider-drift receipts on every retained run (providerDriftUnknownCount=${summary.providerDriftUnknownCount}).`
+    );
+  }
 
   if (parsed.json) {
     stdout.write(`${JSON.stringify(summary, null, 2)}\n`);
@@ -156,6 +166,9 @@ function run(argv = process.argv.slice(2), deps = {}) {
     );
     stdout.write(`- latestObservation: ${summary.latestObservation ?? '<none>'}\n`);
     stdout.write(`- latestProviderDrift: ${summary.latestProviderDrift ?? '<none>'}\n`);
+    stdout.write(`- providerDriftTrueCount: ${summary.providerDriftTrueCount}\n`);
+    stdout.write(`- providerDriftFalseCount: ${summary.providerDriftFalseCount}\n`);
+    stdout.write(`- providerDriftUnknownCount: ${summary.providerDriftUnknownCount}\n`);
   }
 
   return {
