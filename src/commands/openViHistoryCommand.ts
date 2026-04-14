@@ -6,13 +6,22 @@ import { ViEligibilityIndexer } from '../indexing/viEligibilityIndexer';
 import {
   ComparisonReportActionResult,
   readComparisonRuntimeSettings,
+  resolveRuntimePlatform,
 } from '../reporting/comparisonReportAction';
+import {
+  ComparisonRuntimeSelection,
+  ComparisonRuntimeSettings,
+  locateComparisonRuntime,
+  RuntimePlatform
+} from '../reporting/comparisonRuntimeLocator';
+import { buildComparisonRuntimeDoctorSummaryFromFacts } from '../reporting/comparisonRuntimeDoctor';
 import {
   MultiReportDashboardActionResult,
 } from '../dashboard/multiReportDashboardAction';
 import {
   DocumentationActionResult
 } from '../docs/bundledDocumentationAction';
+import type { ComparisonReportRuntimeExecution } from '../reporting/comparisonReportPacket';
 import {
   BenchmarkStatusActionResult
 } from '../benchmark/benchmarkStatusAction';
@@ -86,7 +95,12 @@ export function createOpenViHistoryCommand(
   openBenchmarkStatusAction?: (request: {
     authorityRepoRoot: string;
   }) => Promise<BenchmarkStatusActionResult>,
-  comparePreflightResolver?: () => Promise<HistoryPanelComparePreflightState>
+  comparePreflightResolver?: () => Promise<HistoryPanelComparePreflightState>,
+  runtimePlatform?: RuntimePlatform,
+  runtimeLocator?: (
+    platform: RuntimePlatform,
+    settings: ComparisonRuntimeSettings
+  ) => Promise<ComparisonRuntimeSelection>
 ): (uri?: vscode.Uri) => Promise<void> {
   return async (uri?: vscode.Uri) => {
     const targetUri = uri ?? vscode.window.activeTextEditor?.document.uri;
@@ -151,7 +165,9 @@ export function createOpenViHistoryCommand(
       hasRetainedComparisonReport
     );
     const comparePreflightState = await resolveHistoryPanelComparePreflightState(
-      comparePreflightResolver
+      comparePreflightResolver,
+      runtimePlatform,
+      runtimeLocator
     );
     if (repositorySupport?.tier === 'unsupported') {
       void vscode.window.showWarningMessage(repositorySupport.supportGuidance);
@@ -1400,7 +1416,12 @@ function resolveExplicitComparisonPair(
 }
 
 async function resolveHistoryPanelComparePreflightState(
-  comparePreflightResolver?: () => Promise<HistoryPanelComparePreflightState>
+  comparePreflightResolver?: () => Promise<HistoryPanelComparePreflightState>,
+  runtimePlatform?: RuntimePlatform,
+  runtimeLocator?: (
+    platform: RuntimePlatform,
+    settings: ComparisonRuntimeSettings
+  ) => Promise<ComparisonRuntimeSelection>
 ): Promise<HistoryPanelComparePreflightState> {
   if (comparePreflightResolver) {
     return comparePreflightResolver();
@@ -1496,6 +1517,23 @@ async function resolveHistoryPanelComparePreflightState(
     };
   }
 
+  const effectiveRuntimePlatform = runtimePlatform ?? resolveRuntimePlatform(process.platform);
+  if (effectiveRuntimePlatform === 'win32') {
+    const runtimeSelection = await (runtimeLocator ?? locateComparisonRuntime)(
+      effectiveRuntimePlatform,
+      settings
+    );
+    if (runtimeSelection.provider === 'unavailable' || runtimeSelection.blockedReason) {
+      return buildRuntimeBackedBlockedComparePreflightState({
+        provider,
+        labviewVersion,
+        labviewBitness,
+        cliHint,
+        runtimeSelection
+      });
+    }
+  }
+
   return {
     status: 'ready',
     provider,
@@ -1519,6 +1557,67 @@ function buildComparePreflightSettingsAction(settingsAction: string): string {
 
 function buildComparePreflightWarningMessage(settingsAction: string): string {
   return `Compare preflight is blocked. ${settingsAction}. If you just used the generated settings CLI while VS Code was already open, reload or restart the window. Then review compare preflight before choosing Compare.`;
+}
+
+function buildRuntimeBackedBlockedComparePreflightState(options: {
+  provider: string;
+  labviewVersion: string;
+  labviewBitness: string;
+  cliHint: string;
+  runtimeSelection: ComparisonRuntimeSelection;
+}): HistoryPanelComparePreflightState {
+  const runtimeDoctorSummaryLines = buildComparisonRuntimeDoctorSummaryFromFacts({
+    reportStatus: 'blocked-runtime',
+    runtimeSelection: options.runtimeSelection,
+    runtimeExecution: buildComparePreflightRuntimeExecution(options.runtimeSelection)
+  });
+  const runtimeProvider = deriveRuntimeProviderFromDoctorSummary(runtimeDoctorSummaryLines);
+  const providerRequest = deriveRuntimeProviderRequestFromDoctorSummary(runtimeDoctorSummaryLines);
+  const rejectedProviderSummary = deriveRejectedProviderSummaryFromDoctorSummary(
+    runtimeDoctorSummaryLines
+  );
+  const nextAction =
+    deriveComparisonRuntimeNextAction(runtimeDoctorSummaryLines) ??
+    'Next action: make the selected runtime provider available or adjust runtime settings, then rerun compare preflight.';
+  const warningSegments = ['Compare preflight is blocked.'];
+
+  if (runtimeProvider) {
+    warningSegments.push(`Provider: ${runtimeProvider}.`);
+  }
+  if (providerRequest) {
+    warningSegments.push(`Provider request: ${providerRequest}.`);
+  }
+  if (rejectedProviderSummary) {
+    warningSegments.push(`Rejected providers: ${rejectedProviderSummary}.`);
+  }
+  if (options.runtimeSelection.blockedReason) {
+    warningSegments.push(`Blocked reason: ${options.runtimeSelection.blockedReason}.`);
+  }
+  warningSegments.push(nextAction);
+
+  return {
+    status: 'blocked',
+    provider: options.provider,
+    labviewVersion: options.labviewVersion,
+    labviewBitness: options.labviewBitness,
+    nextAction,
+    cliHint: options.cliHint,
+    warningMessage: warningSegments.join(' ')
+  };
+}
+
+function buildComparePreflightRuntimeExecution(
+  runtimeSelection: ComparisonRuntimeSelection
+): ComparisonReportRuntimeExecution {
+  return {
+    state: 'not-available',
+    attempted: false,
+    reportExists: false,
+    acquisitionState:
+      runtimeSelection.containerAcquisitionState ?? runtimeSelection.windowsContainerAcquisitionState,
+    blockedReason: runtimeSelection.blockedReason,
+    diagnosticNotes: []
+  };
 }
 
 function deriveRuntimeProviderFromDoctorSummary(

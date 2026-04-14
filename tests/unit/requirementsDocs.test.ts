@@ -79,7 +79,7 @@ function parseRtmRows(): Array<Record<string, string>> {
 }
 
 function extractPlanIds(text: string): string[] {
-  return [...text.matchAll(/`(TEST-[A-Z]+-\d+)`/g)].map((match) => match[1]);
+  return [...text.matchAll(/`(TEST(?:-[A-Z]+)?-\d+)`/g)].map((match) => match[1]);
 }
 
 function extractSrsRequirementIds(text: string): string[] {
