@@ -111,6 +111,8 @@ history instead of chat memory.
 - keep the remaining proof gap explicit: direct live mutation of the active
   real user-profile VS Code settings target while Code is already running is
   not yet end-to-end proven
+- execute the governed follow-on branch sequence for that seam through
+  [ISSUE-0414 Runtime-Provider CLI Live-Session Proof Roadmap](./ISSUE-0414-runtime-provider-cli-live-session-proof-roadmap.md)
 - keep packaged/public docs on the exact released Docker-only baseline until
   the replacement contract is truthfully publishable
 - retain the historical branch-transition packet explicitly in
