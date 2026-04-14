@@ -115,23 +115,23 @@ See also:
 
 ## Assurance Execution
 
-`docker run --rm -v /path/to/repo:/target registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:v0.2.12 python3 scripts/run_assurance.py /target --profile release-gate`
+`docker run --rm -v /path/to/repo:/target registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:v0.2.13 python3 scripts/run_assurance.py /target --profile release-gate`
 
-- Purpose: assess this repo against the released `repo-standards-review v0.2.12`
+- Purpose: assess this repo against the released `repo-standards-review v0.2.13`
   assurance baseline from the published compliance workbench.
 - Use when: checking the outer standards posture for a branch after the
   repo-native docs gate is already clean.
 
-`python3 /tmp/repo-standards-review-v0.2.12-tag/scripts/information_for_users_check.py /home/sveld/code/standards/vi-history-suite-user-rounds --json`
+`python3 /tmp/repo-standards-review-v0.2.13-tag/scripts/external_user_information_check.py /home/sveld/code/standards/vi-history-suite-user-rounds --json`
 
-- Purpose: reproduce the exact released `v0.2.12` user-information boundary in
+- Purpose: reproduce the exact released `v0.2.13` external user-information boundary in
   the current local environment.
 - Use when: advancing the `26514` uptake branches and confirming the next
   precise failure boundary.
 
 ## Release And Control Surfaces
 
-`python3 /tmp/repo-standards-review-v0.2.12-tag/scripts/requirements_quality_check.py /home/sveld/code/standards/vi-history-suite-user-rounds --json`
+`python3 /tmp/repo-standards-review-v0.2.13-tag/scripts/requirements_quality_check.py /home/sveld/code/standards/vi-history-suite-user-rounds --json`
 
 - Purpose: check the governed requirements package with the released skill.
 - Use when: a branch changes `docs/requirements/srs.md`, `docs/requirements/syrs.md`,

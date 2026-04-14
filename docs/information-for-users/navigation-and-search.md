@@ -1,4 +1,4 @@
-# Information For Users Navigation And Search
+# Navigation And Search
 
 Applies to: exact released installed baseline `v1.2.2` plus the active
 `develop` authority direction
@@ -15,10 +15,16 @@ See also:
 - [Delivery Profile](./delivery-profile.md)
 - [Command Reference](./command-reference.md)
 - [FAQ](./faq.md)
+- [User Guide](../user-guide.md)
+- [Quick Reference](../quick-reference.md)
 - [Information Item Map](../information-item-map.md)
 - [Public Release Candidate](../product/public-release-candidate.md)
 
-## Navigation Architecture
+Use `docs/user-guide.md` for the starter route and `docs/quick-reference.md`
+for the bounded external quick-answer route before dropping into the deeper
+internal control docs.
+
+## Route Hierarchy
 
 | Route class | Primary surface | Use it for | Current-location cue |
 | --- | --- | --- | --- |
@@ -74,7 +80,7 @@ See also:
   standards lookup, not as the repo's own docs-search engine:
 
 ```bash
-python3 /tmp/repo-standards-review-v0.2.12-tag/scripts/search_standards.py --help
+python3 /tmp/repo-standards-review-v0.2.13-tag/scripts/search_standards.py --help
 ```
 
 - Current example:

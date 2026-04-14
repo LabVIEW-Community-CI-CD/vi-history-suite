@@ -1,4 +1,4 @@
-# Information For Users Style Guide
+# Style Guide
 
 ## Related Surfaces
 
@@ -7,6 +7,7 @@
 - [Navigation And Search](./navigation-and-search.md)
 - [Delivery Profile](./delivery-profile.md)
 - [Glossary](./glossary.md)
+- [User Guide](../user-guide.md)
 - [Command Reference](./command-reference.md)
 - [Information Item Map](../information-item-map.md)
 - [Public Release Candidate](../product/public-release-candidate.md)
@@ -23,7 +24,7 @@
 - When a recurring question can be answered by an existing governed surface,
   link to it instead of copying the content into a new location.
 
-## Writing Style
+## Writing Rules
 
 - Prefer direct, concrete sentences over promotional language.
 - Use imperative phrasing for procedures.
@@ -91,7 +92,7 @@
 - Use the released `repo-standards-review` standards-search helper only for
   standards PDF lookup.
 
-## Glossary Discipline
+## Terminology Rules
 
 - Add or revise a glossary entry when a governed surface introduces a term or
   repo-specific meaning likely to be unfamiliar to novice users.
@@ -100,6 +101,8 @@
   unfamiliar term without defining it locally.
 - When a route doc, the FAQ, or the command reference changes because a
   command, release, governance, or standards term changed, re-check the glossary.
+- Keep `docs/glossary.md` and `docs/user-guide.md` aligned when route language
+  or release-versus-branch terminology changes.
 
 ## Terminology
 
@@ -117,7 +120,7 @@
 - Prefer fenced code blocks for runnable command sequences.
 - Keep related commands grouped by purpose.
 
-## Accessibility
+## Accessibility Baseline
 
 - Use text-first, searchable Markdown as the default governed format.
 - Avoid instructions that depend only on color.
@@ -137,5 +140,5 @@
   surface grows or shifts role.
 - Keep `README.md`, `INSTALL.md`, the docs workbench, the FAQ, and the command
   reference aligned.
-- Run the exact released `v0.2.12` information-for-users checker before
+- Run the exact released `v0.2.13` external user-information checker before
   treating this package as review-ready.
