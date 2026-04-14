@@ -19,6 +19,7 @@ const INTERNAL_DOCS_TEST_FILES = [
   'tests/unit/debtLedgerDocs.test.ts',
   'tests/unit/executionPolicyDocs.test.ts',
   'tests/unit/governedProofDocs.test.ts',
+  'tests/unit/informationForUsersSupportDocs.test.ts',
   'tests/unit/requirementsDocs.test.ts',
   'tests/unit/shipControlDocs.test.ts',
   'tests/unit/docsWorkbenchDocs.test.ts',
