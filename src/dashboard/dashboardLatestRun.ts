@@ -29,8 +29,9 @@ export interface MultiReportDashboardLatestRunExperimentRecord {
     historyWindowMode: 'auto' | 'capped';
     maxHistoryEntries: number;
     effectiveHistoryEntryCeiling: number;
-    executionMode: 'docker-only';
-    bitness: 'x64';
+    providerRequest: 'host' | 'docker';
+    labviewVersion?: string;
+    labviewBitness?: 'x86' | 'x64';
     windowsContainerImage?: string;
     linuxContainerImage?: string;
   };

@@ -537,7 +537,7 @@ describe('runHarnessDashboardSmoke', () => {
               blockedPairIds: ['pair-a'],
               overviewImageCount: 0,
               detailItemCount: 0,
-              providerSummaries: [{ label: 'host-native / labview-cli / auto / win32', pairCount: 1 }]
+              providerSummaries: [{ label: 'host-native / labview-cli / x64 / win32', pairCount: 1 }]
             }
           },
           jsonFilePath: '/tmp/reports/HARNESS-VHS-001/workspace-storage/dashboards/repo/file/window/dashboard.json',

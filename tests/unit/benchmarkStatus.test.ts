@@ -108,7 +108,7 @@ describe('benchmark status surfaces', () => {
             detailItemCount: 138,
             providerSummaries: [
               {
-                label: 'windows-container / labview-cli / auto / win32',
+                label: 'windows-container / labview-cli / x64 / win32',
                 pairCount: 138
               }
             ]
@@ -362,7 +362,7 @@ describe('benchmark status surfaces', () => {
             generatedReportCount: 4,
             providerSummaries: [
               {
-                label: 'windows-container / labview-cli / auto / win32',
+                label: 'windows-container / labview-cli / x64 / win32',
                 pairCount: 4
               }
             ]

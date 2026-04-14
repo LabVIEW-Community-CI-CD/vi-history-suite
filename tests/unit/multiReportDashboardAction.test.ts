@@ -187,7 +187,7 @@ describe('multiReportDashboardAction', () => {
           pairWithDetailCount: 0,
           providerSummaries: [
             {
-              label: 'host-native / labview-cli / auto / linux',
+              label: 'host-native / labview-cli / x64 / linux',
               pairCount: 135
             }
           ],
@@ -1049,9 +1049,8 @@ describe('multiReportDashboardAction', () => {
           historyWindowMode: 'auto',
           maxHistoryEntries: 100,
           effectiveHistoryEntryCeiling: 1000,
-          executionMode: 'docker-only',
-          bitness: 'x64',
-          windowsContainerImage: 'nationalinstruments/labview:2026q1-windows'
+          providerRequest: 'host',
+          labviewBitness: 'x64'
         },
         historyWindow: {
           loadedCommitCount: 3,
