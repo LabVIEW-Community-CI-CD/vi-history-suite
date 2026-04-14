@@ -122,6 +122,19 @@ See also:
     trusting Compare or other runtime-provider surfaces to reflect the updated
     provider and runtime facts
 
+`vihs-runtime-settings --validate [--settings-file <path>]`
+
+- Purpose: report the persisted provider/version/bitness bundle plus the
+  bounded runtime-validation outcome for the governed settings target.
+- Use when: confirming what the CLI actually persisted before trusting Compare
+  or other runtime-provider surfaces.
+- Notes:
+  - without `--settings-file`, the governed validation target is the
+    platform-default user `settings.json`
+  - the output retains `runtimeValidationOutcome`, `runtimeProvider`,
+    `runtimeEngine`, and `runtimeBlockedReason` without reopening path-picking
+    or a panel-side provider picker
+
 `npm run test:integration:windows`
 
 - Purpose: prove the Windows integration-host lane, including the `.cmd`

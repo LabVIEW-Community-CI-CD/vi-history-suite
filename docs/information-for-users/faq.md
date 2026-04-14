@@ -78,6 +78,18 @@ Use `VI History: Prepare Local Runtime Settings CLI` first.
 - The prepare command is admitted in untrusted workspaces because it only
   prepares launcher files, but installed compare remains blocked there.
 
+### How do I check what the runtime-settings CLI actually persisted?
+
+Use the governed validation surface:
+
+`vihs-runtime-settings --validate [--settings-file <path>]`
+
+It reports the persisted `viHistorySuite.runtimeProvider`,
+`viHistorySuite.labviewVersion`, and `viHistorySuite.labviewBitness` facts,
+plus `runtimeValidationOutcome`, `runtimeProvider`, `runtimeEngine`, and
+`runtimeBlockedReason`. This keeps validation on one bounded CLI surface
+without reopening path-picking or a panel-side provider picker.
+
 ### Where do I find the key commands or checks?
 
 Use [Command Reference](./command-reference.md) for the compact stable command

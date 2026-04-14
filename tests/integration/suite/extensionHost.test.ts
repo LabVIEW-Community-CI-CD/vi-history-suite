@@ -520,6 +520,42 @@ async function testPrepareLocalRuntimeSettingsCli(): Promise<void> {
       'viHistorySuite.labviewBitness': 'x64'
     });
 
+    const invalidSettingsFilePath = path.join(tempRoot, 'invalid-settings.json');
+    await fs.writeFile(
+      invalidSettingsFilePath,
+      JSON.stringify(
+        {
+          'viHistorySuite.runtimeProvider': 'mystery',
+          'viHistorySuite.labviewVersion': '2026',
+          'viHistorySuite.labviewBitness': 'x64'
+        },
+        null,
+        2
+      ) + '\n',
+      'utf8'
+    );
+    const validationRun = await runPreparedLocalRuntimeSettingsCli(result, [
+      '--validate',
+      '--settings-file',
+      invalidSettingsFilePath
+    ]);
+    if (process.platform === 'win32') {
+      assert.equal(validationRun.launcherPath, result.windowsLauncherPath);
+    } else {
+      assert.equal(validationRun.launcherPath, result.posixLauncherPath);
+    }
+    assert.match(
+      validationRun.stdout,
+      new RegExp(invalidSettingsFilePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    );
+    assert.match(validationRun.stdout, /viHistorySuite\.runtimeProvider=mystery/);
+    assert.match(validationRun.stdout, /viHistorySuite\.labviewVersion=2026/);
+    assert.match(validationRun.stdout, /viHistorySuite\.labviewBitness=x64/);
+    assert.match(validationRun.stdout, /runtimeValidationOutcome=blocked/);
+    assert.match(validationRun.stdout, /runtimeProvider=unavailable/);
+    assert.match(validationRun.stdout, /runtimeEngine=<none>/);
+    assert.match(validationRun.stdout, /runtimeBlockedReason=installed-provider-invalid/);
+
     if (process.platform === 'win32') {
       const activeAppDataRoot = process.env.APPDATA;
       assert.ok(activeAppDataRoot, 'Windows integration host must expose APPDATA.');

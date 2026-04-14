@@ -47,8 +47,10 @@ describe('information-for-users support docs', () => {
     expect(faq).toContain('Docker-only and x64-only installed path.');
     expect(faq).toContain('before trusting Compare or other');
     expect(faq).toContain('Where does the generated runtime-settings CLI live');
+    expect(faq).toContain('How do I check what the runtime-settings CLI actually persisted');
     expect(faq).toContain('Workspace settings are not a supported target');
     expect(faq).toContain('prepare command is admitted in untrusted workspaces');
+    expect(faq).toContain('runtimeValidationOutcome');
 
     expect(commandReference).toContain('npm run docs:workbench:gate');
     expect(commandReference).toContain('VI History: Prepare Local Runtime Settings CLI');
@@ -57,7 +59,9 @@ describe('information-for-users support docs', () => {
     expect(commandReference).toContain('explicit `--settings-file` override');
     expect(commandReference).toContain('admitted in untrusted workspaces');
     expect(commandReference).toContain('vihs-runtime-settings --provider <host|docker>');
+    expect(commandReference).toContain('vihs-runtime-settings --validate');
     expect(commandReference).toContain('trusting Compare or other runtime-provider surfaces');
+    expect(commandReference).toContain('runtimeBlockedReason');
     expect(commandReference).toContain('assurance-workbench:v0.2.13');
     expect(commandReference).toContain('/tmp/repo-standards-review-v0.2.13-tag/scripts/external_user_information_check.py');
   });
