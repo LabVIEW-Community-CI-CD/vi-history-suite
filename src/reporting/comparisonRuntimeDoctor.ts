@@ -137,19 +137,31 @@ function deriveRuntimeDoctorNextAction(options: {
 
   if (options.reportStatus === 'blocked-runtime' || options.runtimeExecution.state === 'not-available') {
     if (blockedReason === 'installed-provider-invalid') {
-      return 'Next action: set viHistorySuite.runtimeProvider to host or docker, then rerun comparison report generation.';
+      return buildRuntimeSettingsReloadAction(
+        'set viHistorySuite.runtimeProvider to host or docker',
+        'rerun comparison report generation'
+      );
     }
 
     if (blockedReason === 'labview-runtime-selection-required') {
-      return 'Next action: set viHistorySuite.labviewVersion and viHistorySuite.labviewBitness, then rerun comparison report generation.';
+      return buildRuntimeSettingsReloadAction(
+        'set viHistorySuite.labviewVersion and viHistorySuite.labviewBitness',
+        'rerun comparison report generation'
+      );
     }
 
     if (blockedReason === 'labview-version-required') {
-      return 'Next action: set viHistorySuite.labviewVersion, then rerun comparison report generation.';
+      return buildRuntimeSettingsReloadAction(
+        'set viHistorySuite.labviewVersion',
+        'rerun comparison report generation'
+      );
     }
 
     if (blockedReason === 'labview-bitness-required') {
-      return 'Next action: set viHistorySuite.labviewBitness, then rerun comparison report generation.';
+      return buildRuntimeSettingsReloadAction(
+        'set viHistorySuite.labviewBitness',
+        'rerun comparison report generation'
+      );
     }
 
     if (
@@ -166,14 +178,20 @@ function deriveRuntimeDoctorNextAction(options: {
       blockedReason === 'docker-only-provider-not-supported-on-platform' ||
       blockedReason === 'docker-provider-not-supported-on-platform'
     ) {
-      return 'Next action: set viHistorySuite.runtimeProvider to host on this platform, then rerun comparison report generation.';
+      return buildRuntimeSettingsReloadAction(
+        'set viHistorySuite.runtimeProvider to host on this platform',
+        'rerun comparison report generation'
+      );
     }
 
     if (
       blockedReason === 'docker-only-requires-windows-x64-provider' ||
       blockedReason === 'docker-provider-requires-windows-x64'
     ) {
-      return 'Next action: set viHistorySuite.runtimeProvider to host or use Docker with viHistorySuite.labviewBitness=x64, then rerun comparison report generation.';
+      return buildRuntimeSettingsReloadAction(
+        'set viHistorySuite.runtimeProvider to host or use Docker with viHistorySuite.labviewBitness=x64',
+        'rerun comparison report generation'
+      );
     }
 
     if (
@@ -214,6 +232,10 @@ function deriveRuntimeDoctorNextAction(options: {
   }
 
   return 'Next action: run comparison report generation from a trusted workspace to retain LabVIEW comparison-report artifacts for this revision pair.';
+}
+
+function buildRuntimeSettingsReloadAction(settingsAction: string, finalAction: string): string {
+  return `Next action: ${settingsAction}. If you just used the generated settings CLI while VS Code was already open, reload or restart the window. Then ${finalAction}.`;
 }
 
 function deriveRequestedProviderIntent(selection: {
