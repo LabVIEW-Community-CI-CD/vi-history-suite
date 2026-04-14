@@ -32,6 +32,52 @@
 - local coverage is generated
 - no blocking defect is left in the initial command or history flow
 
+## Information-For-Users Coverage
+
+- retained planning and style-governance controls
+- retained audience and task
+- retained topic architecture
+- retained delivery profile
+- retained navigation and search posture
+- retained specialized-support posture
+- retained accessibility baseline
+- retained glossary discipline
+- retained documentation change-control
+- retained docs-quality gate
+- retained release proof
+- explicit `26514` claim boundary
+- bounded document set
+- selected process duties in `26514 §§5-6`
+- selected product duties in `26514 §§7-9`
+- Markdown-based repo documentation scope
+- release-versioned evidence model
+- Information planning and style governance
+- Audience and task profile depth
+- Topic architecture and section role mapping
+- Delivery profile coverage
+- Navigation and search posture
+- FAQ and quick-reference governance
+- Accessibility baseline
+- Glossary discipline
+- Documentation change control
+- Documentation quality gate
+- Release proof packet
+
+Information-for-users review cases:
+
+- `TEST-114 information-for-users navigation and claim-boundary review`
+- `TEST-115 information plan and style-governance review`
+- `TEST-116 audience and task profile review`
+- `TEST-117 topic architecture review`
+- `TEST-118 delivery-profile review`
+- `TEST-119 navigation and search review`
+- `TEST-120 specialized-support review`
+- `TEST-121 accessibility baseline review`
+- `TEST-122 documentation change-control review`
+- `TEST-123 documentation quality gate review`
+- `TEST-124 release-proof review`
+- `TEST-125 glossary discipline review`
+
 ## Coverage Targets
 
 | Metric | Target | Evidence |

@@ -91,6 +91,8 @@
 | Durable evidence route | `docs/product/public-release-candidate.md` plus the public source/wiki publication ledgers are the retained public evidence path |
 | External assurance authority | released `repo-standards-review v0.2.12` is the current outer standards baseline for this tranche |
 
+The stable skill contract reference for this repo is the explicit absence of a repo-local `SKILL.md` plus the governed entry-route set above.
+
 ## Audiences And Tasks
 
 The retained audience and task model lives in
@@ -165,8 +167,7 @@ This section is the section-to-topic-role map for the current bounded package.
   command manual, it is not an API reference, it is not API-doc scope, and it
   does not describe chatbot or VRS behavior.
 - Temporary workarounds belong in the FAQ only until the stable route doc can
-  incorporate it there as soon as feasible. When that happens, shorten,
-  redirect, or retire the FAQ answer.
+  incorporate it there as soon as feasible. When that happens, shorten, redirect, or retire the FAQ answer.
 
 ## Accessibility And Usability
 

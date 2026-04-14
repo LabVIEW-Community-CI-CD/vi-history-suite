@@ -1,4 +1,4 @@
-# FAQ
+# Information For Users FAQ
 
 ## Document Control
 
@@ -7,6 +7,7 @@
   `develop` authority direction
 - Last reviewed: `2026-04-13`
 - Primary audience: installed users, source evaluators, and maintainers
+- Topic type: troubleshooting and quick-reference support
 - Primary entry route: `README.md` and `INSTALL.md`
 
 See also:
@@ -15,6 +16,29 @@ See also:
 - [INSTALL.md](../../INSTALL.md)
 - [Command Reference](./command-reference.md)
 - [Documentation Package Workbench](../documentation-workbench.md)
+- [Release Procedure](../release-procedure.md)
+
+## Scope Boundary
+
+- This FAQ is a governed quick-answer and troubleshooting surface for recurring
+  route questions.
+- Do not keep the only copy of a stable step-by-step procedure in the FAQ.
+- It does not own a FAQ-only search subsystem; the governed repo search posture
+  stays with native editor, browser, GitLab, and `rg` search.
+- The FAQ may retain temporary workarounds, but stable doctrine belongs back in
+  the main route docs or control docs.
+
+## Lifecycle Rules
+
+- Temporary workarounds stay here only until the stable route or control doc can
+  incorporate it there as soon as feasible.
+- When a question becomes stable doctrine, shorten, redirect, or retire the FAQ
+  entry and keep the durable version in the route doc, the command reference,
+  or the release candidate evidence path.
+- Keep the release candidate route visible when a question affects publication,
+  audit, or release-facing review.
+- Keep answers short enough to scan quickly; if an answer grows toward ten or more
+  lines of stable procedure, move it into a dedicated route doc.
 
 ## Questions
 
@@ -54,6 +78,30 @@ The important route split is:
 - outer standards verification for this tranche uses released
   `repo-standards-review v0.2.12`
 
+### How do I run the canonical gate?
+
+Use the command surface that matches the task:
+
+- for repo-native doc validation, run `node scripts/run-docs-gate.js`
+- for the containerized authoring surface, run `npm run docs:workbench:gate`
+- for the broader branch line, run `npm run test`
+
+### How do I search the governed docs quickly?
+
+Use the governed repo search posture:
+
+- editor or GitLab search for broad browsing
+- `rg -n "<term>" docs README.md INSTALL.md` for exact local search
+- the FAQ does not define a FAQ-only search subsystem
+
+### What accessibility features does this docs package provide?
+
+- the package is text-first and uses copyable commands
+- instructions avoid color-only meaning and use non-color-dependent instructions
+- the package requires a text-first route and relies on native capabilities
+  of Markdown readers, editors, and browsers rather than claiming extra
+  repo-specific accessibility controls
+
 ### What should I do when the expected route fails?
 
 - If a docs-package change is involved, run `node scripts/run-docs-gate.js`
@@ -64,3 +112,9 @@ The important route split is:
 - If you are checking the broader standards posture for this branch, use the
   released `repo-standards-review v0.2.12` baseline instead of older parked
   roadmap branches.
+
+### Where do I start when I need to cut a release?
+
+Start with [Release Procedure](../release-procedure.md), then use the release
+candidate route in [Public Release Candidate](../product/public-release-candidate.md)
+when you need the retained release candidate evidence.

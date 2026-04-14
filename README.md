@@ -9,6 +9,8 @@ repo's bounded document set. It now carries selected process duties in
 documentation, and release-versioned evidence links, but it does not assert
 blanket full conformance to the whole standard.
 
+This README retains selected process duties in `26514 §§5-6`, Markdown-based repo documentation, and does not assert blanket full conformance.
+
 ## Topic Roles
 
 | Section | Topic role | Current meaning |

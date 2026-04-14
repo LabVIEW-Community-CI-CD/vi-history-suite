@@ -50,6 +50,21 @@
 - Route indexes are allowed only where a surface actually serves as a route
   wrapper, such as `README.md`.
 
+## Topic Titles
+
+- Route indexes are allowed only for entry surfaces.
+- Dedicated concept-topic titles use noun phrases.
+- Dedicated task-topic titles use verb phrases.
+- Troubleshooting titles use the problem in user language.
+
+## Minimum Topic Structure
+
+- Dedicated short-form support docs keep metadata, a scope or boundary section,
+  and stable related links.
+- Mixed route docs keep a compact `Topic Roles` section.
+- Topic titles and usage follow Merriam-Webster and Chicago Manual of Style
+  where repo-specific terminology does not override them.
+
 ## Metadata Minimum
 
 - Dedicated short-form governed docs with version-sensitive behavior keep
@@ -83,6 +98,8 @@
 - Define glossary entries in the user's terms, not maintainer shorthand.
 - Keep a stable glossary cross-link when the FAQ or command reference uses an
   unfamiliar term without defining it locally.
+- When a route doc, the FAQ, or the command reference changes because a
+  command, release, governance, or standards term changed, re-check the glossary.
 
 ## Terminology
 
@@ -109,6 +126,8 @@
   say so directly.
 - If a non-text artifact is necessary, include a text alternative that states
   the task-relevant meaning.
+- Do not imply repo-specific accessibility controls beyond the text-first
+  package posture already retained in this repo.
 
 ## Review Rules
 
