@@ -146,8 +146,9 @@ See also:
     storage
   - probe packets include persisted and live provider/version/bitness plus
     drift booleans and runtime-validation facts
-  - this probe surface does not yet prove safe restore after partial mutation
-    failures; reload or restart guidance remains active when drift is detected
+  - this probe surface now applies fail-closed safe-restore around probe
+    mutation, but direct live uptake of updated settings is still unproven;
+    reload or restart guidance remains active when drift is detected
 
 `npm run proof:runtime-settings-live-session:assert`
 

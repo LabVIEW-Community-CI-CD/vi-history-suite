@@ -47,6 +47,9 @@ interface RuntimeSettingsLiveSessionProbeSummary {
   persistedProvider?: string;
   persistedLabviewVersion?: string;
   persistedLabviewBitness?: string;
+  baselinePersistedProvider?: string;
+  baselinePersistedLabviewVersion?: string;
+  baselinePersistedLabviewBitness?: string;
   liveProvider?: string;
   liveLabviewVersion?: string;
   liveLabviewBitness?: string;
@@ -54,6 +57,9 @@ interface RuntimeSettingsLiveSessionProbeSummary {
   versionDrift: boolean;
   bitnessDrift: boolean;
   driftDetected: boolean;
+  mutationProviderTarget?: string;
+  safeRestoreApplied: boolean;
+  safeRestoreVerified: boolean;
   runtimeValidationOutcome?: 'ready' | 'blocked';
   runtimeProvider?: string;
   runtimeEngine?: string;
@@ -663,6 +669,21 @@ async function testPrepareLocalRuntimeSettingsCli(): Promise<void> {
 }
 
 async function testProbeRuntimeSettingsLiveSession(): Promise<void> {
+  const prepared = (await vscode.commands.executeCommand(
+    'labviewViHistory.prepareLocalRuntimeSettingsCli'
+  )) as PreparedLocalRuntimeSettingsCliSummary;
+  assert.ok(prepared.defaultSettingsFilePath);
+
+  const settingsFilePath = prepared.defaultSettingsFilePath!;
+  let baselineSettingsText: string | undefined;
+  try {
+    baselineSettingsText = await fs.readFile(settingsFilePath, 'utf8');
+  } catch (error) {
+    if (!(error && typeof error === 'object' && 'code' in error && (error as NodeJS.ErrnoException).code === 'ENOENT')) {
+      throw error;
+    }
+  }
+
   const summary = (await vscode.commands.executeCommand(
     'labviewViHistory.probeRuntimeSettingsLiveSession'
   )) as RuntimeSettingsLiveSessionProbeSummary;
@@ -673,6 +694,12 @@ async function testProbeRuntimeSettingsLiveSession(): Promise<void> {
   assert.equal(typeof summary.versionDrift, 'boolean');
   assert.equal(typeof summary.bitnessDrift, 'boolean');
   assert.equal(typeof summary.driftDetected, 'boolean');
+  assert.equal(summary.safeRestoreApplied, true);
+  assert.equal(summary.safeRestoreVerified, true);
+  assert.ok(summary.mutationProviderTarget === 'host' || summary.mutationProviderTarget === 'docker');
+  assert.ok(summary.baselinePersistedProvider === 'host' || summary.baselinePersistedProvider === 'docker');
+  assert.equal(summary.persistedProvider, summary.mutationProviderTarget);
+  assert.notEqual(summary.baselinePersistedProvider, summary.persistedProvider);
   assert.ok(summary.packetRunId);
   assert.ok(summary.packetJsonPath);
   assert.ok(summary.packetMarkdownPath);
@@ -682,6 +709,16 @@ async function testProbeRuntimeSettingsLiveSession(): Promise<void> {
   await fs.access(summary.packetMarkdownPath);
   await fs.access(summary.latestPacketJsonPath);
   await fs.access(summary.latestPacketMarkdownPath);
+
+  let restoredSettingsText: string | undefined;
+  try {
+    restoredSettingsText = await fs.readFile(settingsFilePath, 'utf8');
+  } catch (error) {
+    if (!(error && typeof error === 'object' && 'code' in error && (error as NodeJS.ErrnoException).code === 'ENOENT')) {
+      throw error;
+    }
+  }
+  assert.equal(restoredSettingsText, baselineSettingsText);
 }
 
 async function runPreparedLocalRuntimeSettingsCli(
