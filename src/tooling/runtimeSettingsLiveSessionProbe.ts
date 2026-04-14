@@ -50,6 +50,7 @@ export interface RuntimeSettingsLiveSessionProbeSummary {
   liveUptakeObservation: RuntimeSettingsLiveSessionUptakeObservation;
   mutationProviderTarget?: string;
   mutationTargetPersistedMatch?: boolean;
+  mutationTargetBaselineChanged?: boolean;
   safeRestoreApplied: boolean;
   safeRestoreVerified: boolean;
   runtimeValidationOutcome?: 'ready' | 'blocked';
@@ -118,6 +119,10 @@ export function buildRuntimeSettingsLiveSessionProbeSummary(
       mutationProviderTarget,
       persistedProvider
     ),
+    mutationTargetBaselineChanged: classifyMutationTargetBaselineChanged(
+      baselinePersistedProvider,
+      persistedProvider
+    ),
     safeRestoreApplied: input.safeRestoreApplied === true,
     safeRestoreVerified: input.safeRestoreVerified === true,
     runtimeValidationOutcome: input.runtimeValidationOutcome,
@@ -162,4 +167,19 @@ function classifyMutationTargetPersistedMatch(
     return undefined;
   }
   return mutationProviderTarget === normalizedPersisted;
+}
+
+function classifyMutationTargetBaselineChanged(
+  baselinePersistedProvider: string | undefined,
+  persistedProvider: string | undefined
+): boolean | undefined {
+  const normalizedBaseline = normalizeComparableProvider(baselinePersistedProvider);
+  const normalizedPersisted = normalizeComparableProvider(persistedProvider);
+  if (
+    (normalizedBaseline !== 'host' && normalizedBaseline !== 'docker') ||
+    (normalizedPersisted !== 'host' && normalizedPersisted !== 'docker')
+  ) {
+    return undefined;
+  }
+  return normalizedBaseline !== normalizedPersisted;
 }

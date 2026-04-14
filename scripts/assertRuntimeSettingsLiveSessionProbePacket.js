@@ -147,6 +147,7 @@ function validateProbePacket(summary) {
   requireString('latestPacketMarkdownPath');
   const mutationProviderTarget = requireString('mutationProviderTarget');
   const mutationTargetPersistedMatch = requireBoolean('mutationTargetPersistedMatch');
+  const mutationTargetBaselineChanged = requireBoolean('mutationTargetBaselineChanged');
   const liveUptakeObservation = requireString('liveUptakeObservation');
   const safeRestoreApplied = requireBoolean('safeRestoreApplied');
   const safeRestoreVerified = requireBoolean('safeRestoreVerified');
@@ -179,6 +180,10 @@ function validateProbePacket(summary) {
     typeof summary.persistedProvider === 'string'
       ? summary.persistedProvider.trim().toLowerCase()
       : undefined;
+  const normalizedBaselineProvider =
+    typeof summary.baselinePersistedProvider === 'string'
+      ? summary.baselinePersistedProvider.trim().toLowerCase()
+      : undefined;
   if (
     (mutationProviderTarget === 'host' || mutationProviderTarget === 'docker') &&
     (normalizedPersistedProvider === 'host' || normalizedPersistedProvider === 'docker') &&
@@ -193,6 +198,23 @@ function validateProbePacket(summary) {
     if (!mutationTargetPersistedMatch) {
       failures.push(
         'mutationTargetPersistedMatch must be true for latest retained probe packet evidence'
+      );
+    }
+  }
+  if (
+    (normalizedBaselineProvider === 'host' || normalizedBaselineProvider === 'docker') &&
+    (normalizedPersistedProvider === 'host' || normalizedPersistedProvider === 'docker') &&
+    typeof mutationTargetBaselineChanged === 'boolean'
+  ) {
+    const expectedBaselineChanged = normalizedBaselineProvider !== normalizedPersistedProvider;
+    if (mutationTargetBaselineChanged !== expectedBaselineChanged) {
+      failures.push(
+        `mutationTargetBaselineChanged must align with baselinePersistedProvider versus persistedProvider (${expectedBaselineChanged})`
+      );
+    }
+    if (!mutationTargetBaselineChanged) {
+      failures.push(
+        'mutationTargetBaselineChanged must be true for latest retained probe packet evidence'
       );
     }
   }

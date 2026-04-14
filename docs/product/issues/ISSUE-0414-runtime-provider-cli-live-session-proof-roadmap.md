@@ -34,11 +34,11 @@ The unresolved seam remains explicit:
 
 Current implementation branch:
 
-- `feature/runtime-provider-live-session-latest-proof-status-assert` (in progress)
+- `feature/runtime-provider-live-session-baseline-switch-receipt` (in progress)
 
 Most recently merged branch:
 
-- `feature/runtime-provider-live-session-latest-alignment-assert`
+- `feature/runtime-provider-live-session-latest-proof-status-assert`
 
 ## Roadmap (Feature Branch Sequence)
 
@@ -115,11 +115,17 @@ Most recently merged branch:
   retained probe evidence fail closed when requested provider selection did not
   take effect.
 
-15. `feature/runtime-provider-live-session-latest-proof-status-assert` (in progress)
+15. `feature/runtime-provider-live-session-latest-proof-status-assert` (merged)
 - Tighten the local latest-packet gate so admission also fails when latest
   retained packet proof status becomes `re-evaluation-required`, keeping the
   "CLI live-session seam is not fully proven" boundary explicit at latest-packet
   admission time.
+
+16. `feature/runtime-provider-live-session-baseline-switch-receipt` (in progress)
+- Add one explicit retained baseline-switch receipt
+  (`mutationTargetBaselineChanged`) and fail-closed latest/history/policy
+  admission when retained probe evidence does not show that mutation changed
+  persisted provider truth from baseline to target.
 
 ## Admission Rules
 

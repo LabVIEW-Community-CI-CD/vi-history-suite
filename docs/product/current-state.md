@@ -376,17 +376,20 @@ Post-release tranches:
   - one local fail-closed packet gate now exists at
     `npm run proof:runtime-settings-live-session:assert`; it blocks admission
     when the retained latest probe packet is missing, malformed, or does not
-    prove `mutationTargetPersistedMatch=true` and `historyProofStatus=not-fully-proven`
+    prove `mutationTargetPersistedMatch=true`,
+    `mutationTargetBaselineChanged=true`, and
+    `historyProofStatus=not-fully-proven`
   - one local history receipt now exists at
     `npm run proof:runtime-settings-live-session:history`; it summarizes
     retained probe runs into one bounded live-uptake stance and explicit
     proof-status receipt (`not-fully-proven` vs `re-evaluation-required`),
-    plus mutation-target alignment counts
+    plus mutation-target alignment counts and baseline-switch counts
   - one local policy-boundary assertion now exists at
     `npm run proof:runtime-settings-live-session:policy:assert`; it fails
     closed when retained history no longer supports unconditional reload
     guidance or when retained probe runs do not include bidirectional
-    provider-selection mutation coverage (`host` and `docker`)
+    provider-selection mutation coverage (`host` and `docker`) with explicit
+    retained mutation-target alignment and baseline-switch receipts
   - the remaining CLI proof gap is now narrower: direct live mutation of the
     already-running VS Code session is not yet end-to-end proven on this line;
     probe mutation safe-restore is now fail-closed and locally proven, so the

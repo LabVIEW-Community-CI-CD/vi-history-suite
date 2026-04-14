@@ -101,6 +101,7 @@ function renderProbeSummaryMarkdown(summary: RuntimeSettingsLiveSessionProbeSumm
     `- Bitness drift: \`${summary.bitnessDrift ? 'yes' : 'no'}\``,
     `- Mutation provider target: \`${summary.mutationProviderTarget ?? '<none>'}\``,
     `- Mutation target aligned with persisted provider: \`${formatBooleanReceipt(summary.mutationTargetPersistedMatch)}\``,
+    `- Baseline provider changed after mutation: \`${formatBooleanReceipt(summary.mutationTargetBaselineChanged)}\``,
     `- Safe restore applied: \`${summary.safeRestoreApplied ? 'yes' : 'no'}\``,
     `- Safe restore verified: \`${summary.safeRestoreVerified ? 'yes' : 'no'}\``,
     '',
