@@ -163,6 +163,12 @@
 16. Back-merge the exact released `main` line into `develop` before claiming
     exact closeout is complete or opening the next candidate line.
     - use the protected merge path, not an ungoverned local-only shortcut
+    - for local GitLab API automation, resolve the repo token through
+      `node scripts/resolveLocalGitLabApiToken.js --json`; the governed local
+      path is `/home/sveld/.config/codex/secrets/vi-history-suite.gitlab-api-token.txt`
+    - queue merge requests through
+      `node scripts/queueGovernedMergeRequest.js --source-branch <branch> --target-branch develop --title <title> --description-file <path> --auto-merge --remove-source-branch`
+      instead of depending on remembered `glab` auth state
     - wait for the resulting `develop` pipeline to succeed
     - retain that merged-and-green `develop` state as part of the same exact
       release closeout evidence instead of waiting for a later human prompt

@@ -227,6 +227,15 @@ describe('release governance package', () => {
     expect(testPlan).toContain('TEST-DOC-101');
     expect(testPlan).toContain('TEST-DOC-102');
     expect(testPlan).toContain('TEST-DOC-103');
+    expect(readText('docs/release-procedure.md')).toContain(
+      'node scripts/resolveLocalGitLabApiToken.js --json'
+    );
+    expect(readText('docs/release-procedure.md')).toContain(
+      '/home/sveld/.config/codex/secrets/vi-history-suite.gitlab-api-token.txt'
+    );
+    expect(readText('docs/release-procedure.md')).toContain(
+      'node scripts/queueGovernedMergeRequest.js'
+    );
     expect(rules.operatorSurfaceSustainment.branchModel.findingAdrDiscipline).toEqual(
       expect.arrayContaining([
         'every governed finding is classified before slice closeout as adr-update-required or no-adr-impact'
