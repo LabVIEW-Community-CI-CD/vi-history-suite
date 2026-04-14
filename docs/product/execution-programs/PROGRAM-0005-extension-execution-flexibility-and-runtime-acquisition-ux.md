@@ -46,6 +46,9 @@ Current facts:
 - one local fail-closed packet gate now exists at
   `npm run proof:runtime-settings-live-session:assert` so malformed or missing
   retained probe evidence blocks admission
+- one local history receipt now exists at
+  `npm run proof:runtime-settings-live-session:history` so retained probe runs
+  can be summarized into one bounded live-uptake stance
 - the remaining CLI proof gap is now narrower: direct mutation safety and
   automatic live uptake around a live already-running VS Code session is still
   not end-to-end proven; probe mutation safe-restore is now fail-closed and

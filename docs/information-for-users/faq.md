@@ -100,6 +100,8 @@ Use the live-session probe plus packet gate:
   `reload-required`)
 - run `npm run proof:runtime-settings-live-session:assert` to fail closed if
   the latest retained packet is missing or malformed
+- run `npm run proof:runtime-settings-live-session:history` to summarize
+  retained runs into one live-uptake stance
 
 This narrows the proof gap and now includes fail-closed probe safe-restore, but
 it still does not prove direct live uptake of updated settings in the current
