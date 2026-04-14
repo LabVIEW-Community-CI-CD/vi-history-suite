@@ -500,7 +500,7 @@ function buildSnapshotBase() {
       comparePairCount: 5,
       preparedPairCount: 5,
       generatedReportCount: 5,
-      providerSummary: 'windows-container / labview-cli / auto / win32 (5)',
+      providerSummary: 'windows-container / labview-cli / x64 / win32 (5)',
       totalDurationMs: 90000,
       evidencePreparationDurationMs: 30000,
       etaMeanAbsolutePercentageError: 4.321

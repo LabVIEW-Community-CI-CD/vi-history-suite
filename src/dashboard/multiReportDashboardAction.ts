@@ -746,8 +746,9 @@ function buildDashboardLatestRunExperimentRecord(options: {
       historyWindowMode: options.historyWindowMode,
       maxHistoryEntries: options.configuredMaxHistoryEntries,
       effectiveHistoryEntryCeiling: options.effectiveHistoryEntryCeiling,
-      executionMode: 'docker-only',
-      bitness: 'x64',
+      providerRequest: options.runtimeSettings.requestedProvider ?? 'host',
+      labviewVersion: options.runtimeSettings.labviewVersion,
+      labviewBitness: options.runtimeSettings.bitness,
       windowsContainerImage: options.runtimeSettings.windowsContainerImage,
       linuxContainerImage: options.runtimeSettings.linuxContainerImage
     },
@@ -796,10 +797,10 @@ function safeReadComparisonRuntimeSettings(): ReturnType<typeof readComparisonRu
     return readComparisonRuntimeSettings();
   } catch {
     return {
-      executionMode: 'docker-only',
+      requestedProvider: 'host',
+      requireVersionAndBitness: true,
       bitness: 'x64',
-      windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
-      linuxContainerImage: 'nationalinstruments/labview:2026q1-linux'
+      labviewVersion: undefined
     };
   }
 }
