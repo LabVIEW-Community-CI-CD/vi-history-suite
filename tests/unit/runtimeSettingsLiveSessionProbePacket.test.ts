@@ -41,6 +41,7 @@ describe('runtimeSettingsLiveSessionProbePacket', () => {
         liveUptakeObservation: 'reload-required',
         mutationProviderTarget: 'docker',
         mutationTargetPersistedMatch: true,
+        mutationTargetBaselineChanged: true,
         safeRestoreApplied: true,
         safeRestoreVerified: true,
         runtimeValidationOutcome: 'ready',
@@ -88,6 +89,7 @@ describe('runtimeSettingsLiveSessionProbePacket', () => {
     expect(packetMarkdown).toContain(
       'Mutation target aligned with persisted provider: `yes`'
     );
+    expect(packetMarkdown).toContain('Baseline provider changed after mutation: `yes`');
     expect(packetMarkdown).toContain('Safe restore applied: `yes`');
     expect(packetMarkdown).toContain('Safe restore verified: `yes`');
     expect(packetMarkdown).toContain('## History Receipt');

@@ -56,8 +56,11 @@ describe('assertRuntimeSettingsLiveSessionPolicyBoundary script', () => {
         summary: {
           liveUptakeObservation: 'reload-required',
           driftDetected: true,
+          baselinePersistedProvider: 'host',
+          persistedProvider: 'docker',
           mutationProviderTarget: 'docker',
           mutationTargetPersistedMatch: true,
+          mutationTargetBaselineChanged: true,
           safeRestoreVerified: true
         }
       },
@@ -66,8 +69,11 @@ describe('assertRuntimeSettingsLiveSessionPolicyBoundary script', () => {
         summary: {
           liveUptakeObservation: 'reload-required',
           driftDetected: true,
+          baselinePersistedProvider: 'docker',
+          persistedProvider: 'host',
           mutationProviderTarget: 'host',
           mutationTargetPersistedMatch: true,
+          mutationTargetBaselineChanged: true,
           safeRestoreVerified: true
         }
       }
@@ -146,6 +152,35 @@ describe('assertRuntimeSettingsLiveSessionPolicyBoundary script', () => {
 
     expect(() => boundaryScript.run(['--packet-root', packetRoot])).toThrow(
       'requires explicit mutation target alignment receipts'
+    );
+  });
+
+  it('fails when retained history lacks explicit baseline-switch receipts', async () => {
+    const packetRoot = await seedHistoryPackets(temporaryDirectories, [
+      {
+        runId: '2026-04-14T13-00-00-000Z',
+        summary: {
+          liveUptakeObservation: 'reload-required',
+          driftDetected: true,
+          mutationProviderTarget: 'docker',
+          mutationTargetPersistedMatch: true,
+          safeRestoreVerified: true
+        }
+      },
+      {
+        runId: '2026-04-14T12-00-00-000Z',
+        summary: {
+          liveUptakeObservation: 'reload-required',
+          driftDetected: true,
+          mutationProviderTarget: 'host',
+          mutationTargetPersistedMatch: true,
+          safeRestoreVerified: true
+        }
+      }
+    ]);
+
+    expect(() => boundaryScript.run(['--packet-root', packetRoot])).toThrow(
+      'requires explicit baseline-switch receipts'
     );
   });
 });

@@ -94,6 +94,16 @@ function run(argv = process.argv.slice(2), deps = {}) {
       `Runtime-settings live-session policy boundary requires explicit mutation target alignment receipts on retained runs (mutationTargetPersistedUnknownCount=${summary.mutationTargetPersistedUnknownCount}).`
     );
   }
+  if (summary.mutationTargetBaselineUnchangedCount > 0) {
+    throw new Error(
+      `Runtime-settings live-session policy boundary requires baseline-to-persisted provider switch on retained runs (mutationTargetBaselineUnchangedCount=${summary.mutationTargetBaselineUnchangedCount}).`
+    );
+  }
+  if (summary.mutationTargetBaselineUnknownCount > 0) {
+    throw new Error(
+      `Runtime-settings live-session policy boundary requires explicit baseline-switch receipts on retained runs (mutationTargetBaselineUnknownCount=${summary.mutationTargetBaselineUnknownCount}).`
+    );
+  }
 
   if (parsed.json) {
     stdout.write(`${JSON.stringify(summary, null, 2)}\n`);
@@ -111,6 +121,12 @@ function run(argv = process.argv.slice(2), deps = {}) {
     );
     stdout.write(
       `- mutationTargetPersistedUnknownCount: ${summary.mutationTargetPersistedUnknownCount}\n`
+    );
+    stdout.write(
+      `- mutationTargetBaselineUnchangedCount: ${summary.mutationTargetBaselineUnchangedCount}\n`
+    );
+    stdout.write(
+      `- mutationTargetBaselineUnknownCount: ${summary.mutationTargetBaselineUnknownCount}\n`
     );
     stdout.write(`- latestObservation: ${summary.latestObservation ?? '<none>'}\n`);
   }

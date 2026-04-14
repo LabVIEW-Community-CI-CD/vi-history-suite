@@ -164,6 +164,8 @@ See also:
     `svelderrainruiz.vi-history-suite`
   - fails closed when `mutationTargetPersistedMatch` is not explicitly `true`
     on the latest retained probe packet
+  - fails closed when `mutationTargetBaselineChanged` is not explicitly `true`
+    on the latest retained probe packet
   - fails closed when latest packet `historyProofStatus` is
     `re-evaluation-required`
 
@@ -179,6 +181,8 @@ See also:
     `mutationProviderTarget` receipts (`host` and `docker`)
   - retained summary now reports mutation-target alignment counts that show
     whether requested provider selection became persisted provider truth
+  - retained summary now reports baseline-switch counts that show whether the
+    retained baseline provider changed to the retained persisted provider
   - retained summary now reports explicit proof status:
     `not-fully-proven` or `re-evaluation-required`
   - optional packet-root override:
@@ -200,6 +204,8 @@ See also:
     coverage before merge
   - returns non-zero when retained runs do not carry explicit
     mutation-target alignment receipts or show alignment mismatches
+  - returns non-zero when retained runs do not carry explicit baseline-switch
+    receipts or show no baseline-to-persisted provider change
   - returns non-zero when retained proof status becomes
     `re-evaluation-required`, forcing explicit policy re-evaluation before merge
 

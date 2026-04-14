@@ -133,6 +133,9 @@ function summarizeHistory(packetRoot, runSummaries) {
   let mutationTargetPersistedMatchCount = 0;
   let mutationTargetPersistedMismatchCount = 0;
   let mutationTargetPersistedUnknownCount = 0;
+  let mutationTargetBaselineChangedCount = 0;
+  let mutationTargetBaselineUnchangedCount = 0;
+  let mutationTargetBaselineUnknownCount = 0;
 
   for (const run of runSummaries) {
     const observation = normalizeObservation(run.summary);
@@ -164,6 +167,15 @@ function summarizeHistory(packetRoot, runSummaries) {
       mutationTargetPersistedMismatchCount += 1;
     } else {
       mutationTargetPersistedUnknownCount += 1;
+    }
+
+    const targetBaselineChanged = normalizeMutationTargetBaselineChanged(run.summary);
+    if (targetBaselineChanged === true) {
+      mutationTargetBaselineChangedCount += 1;
+    } else if (targetBaselineChanged === false) {
+      mutationTargetBaselineUnchangedCount += 1;
+    } else {
+      mutationTargetBaselineUnknownCount += 1;
     }
   }
 
@@ -199,6 +211,9 @@ function summarizeHistory(packetRoot, runSummaries) {
     mutationTargetPersistedMatchCount,
     mutationTargetPersistedMismatchCount,
     mutationTargetPersistedUnknownCount,
+    mutationTargetBaselineChangedCount,
+    mutationTargetBaselineUnchangedCount,
+    mutationTargetBaselineUnknownCount,
     latestRunId: latest?.runId,
     latestSummaryPath: latest?.summaryPath,
     latestObservation,
@@ -266,6 +281,27 @@ function normalizeMutationTargetPersistedMatch(summary) {
   return undefined;
 }
 
+function normalizeMutationTargetBaselineChanged(summary) {
+  if (summary && typeof summary.mutationTargetBaselineChanged === 'boolean') {
+    return summary.mutationTargetBaselineChanged;
+  }
+  const baselineProvider =
+    summary && typeof summary.baselinePersistedProvider === 'string'
+      ? summary.baselinePersistedProvider.trim().toLowerCase()
+      : '';
+  const persistedProvider =
+    summary && typeof summary.persistedProvider === 'string'
+      ? summary.persistedProvider.trim().toLowerCase()
+      : '';
+  if (
+    (baselineProvider === 'host' || baselineProvider === 'docker') &&
+    (persistedProvider === 'host' || persistedProvider === 'docker')
+  ) {
+    return baselineProvider !== persistedProvider;
+  }
+  return undefined;
+}
+
 function formatHistorySummary(summary) {
   return [
     'Runtime settings live-session probe history receipt',
@@ -281,6 +317,9 @@ function formatHistorySummary(summary) {
     `- mutationTargetPersistedMatchCount: ${summary.mutationTargetPersistedMatchCount}`,
     `- mutationTargetPersistedMismatchCount: ${summary.mutationTargetPersistedMismatchCount}`,
     `- mutationTargetPersistedUnknownCount: ${summary.mutationTargetPersistedUnknownCount}`,
+    `- mutationTargetBaselineChangedCount: ${summary.mutationTargetBaselineChangedCount}`,
+    `- mutationTargetBaselineUnchangedCount: ${summary.mutationTargetBaselineUnchangedCount}`,
+    `- mutationTargetBaselineUnknownCount: ${summary.mutationTargetBaselineUnknownCount}`,
     `- latestRunId: ${summary.latestRunId ?? '<none>'}`,
     `- latestObservation: ${summary.latestObservation ?? '<none>'}`,
     `- latestMutationTarget: ${summary.latestMutationTarget ?? '<none>'}`,
@@ -376,6 +415,7 @@ module.exports = {
   normalizeObservation,
   normalizeMutationProviderTarget,
   normalizeMutationTargetPersistedMatch,
+  normalizeMutationTargetBaselineChanged,
   formatHistorySummary,
   run
 };
