@@ -26,7 +26,7 @@ docs_continuous_integration:
   image: node:24
   script:
     - git clone "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.wiki.git" ../vi-history-suite.wiki
-    - export PUBLIC_GITHUB_WIKI_BRANCH="${VIHS_PUBLIC_GITHUB_WIKI_BRANCH:-${CI_COMMIT_REF_NAME}}"
+    - export PUBLIC_GITHUB_WIKI_BRANCH="${VIHS_PUBLIC_GITHUB_WIKI_BRANCH:-${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME:-${CI_COMMIT_BRANCH:-${CI_DEFAULT_BRANCH}}}}"
     - git clone --branch "${PUBLIC_GITHUB_WIKI_BRANCH}" "https://github.com/svelderrainruiz/vi-history-suite.wiki.git" ../vi-history-suite.github.wiki || git clone "https://github.com/svelderrainruiz/vi-history-suite.wiki.git" ../vi-history-suite.github.wiki
     - npm ci
     - node scripts/run-docs-continuous-integration.js --skip-links --evidence-dir docs-integration-evidence
@@ -47,7 +47,7 @@ docs_public_continuous_integration:
   stage: docs
   image: node:24
   script:
-    - export PUBLIC_GITHUB_WIKI_BRANCH="${VIHS_PUBLIC_GITHUB_WIKI_BRANCH:-${CI_COMMIT_REF_NAME}}"
+    - export PUBLIC_GITHUB_WIKI_BRANCH="${VIHS_PUBLIC_GITHUB_WIKI_BRANCH:-${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME:-${CI_COMMIT_BRANCH:-${CI_DEFAULT_BRANCH}}}}"
     - git clone --branch "${PUBLIC_GITHUB_WIKI_BRANCH}" "https://github.com/svelderrainruiz/vi-history-suite.wiki.git" ../vi-history-suite.github.wiki || git clone "https://github.com/svelderrainruiz/vi-history-suite.wiki.git" ../vi-history-suite.github.wiki
     - export VIHS_PUBLIC_GITHUB_WIKI_REPO_ROOT="${CI_PROJECT_DIR}/../vi-history-suite.github.wiki"
     - export VIHS_LEDGER_PATH="${CI_PROJECT_DIR}/docs/product/public-github-wiki-publication-ledger.json"
@@ -218,7 +218,7 @@ test_extension:
   image: node:24
   script:
     - git clone "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.wiki.git" ../vi-history-suite.wiki
-    - export PUBLIC_GITHUB_WIKI_BRANCH="${VIHS_PUBLIC_GITHUB_WIKI_BRANCH:-${CI_COMMIT_REF_NAME}}"
+    - export PUBLIC_GITHUB_WIKI_BRANCH="${VIHS_PUBLIC_GITHUB_WIKI_BRANCH:-${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME:-${CI_COMMIT_BRANCH:-${CI_DEFAULT_BRANCH}}}}"
     - git clone --branch "${PUBLIC_GITHUB_WIKI_BRANCH}" "https://github.com/svelderrainruiz/vi-history-suite.wiki.git" ../vi-history-suite.github.wiki || git clone "https://github.com/svelderrainruiz/vi-history-suite.wiki.git" ../vi-history-suite.github.wiki
     - export VIHS_INTERNAL_WIKI_REPO_ROOT="${CI_PROJECT_DIR}/../vi-history-suite.wiki"
     - npm ci
@@ -260,7 +260,7 @@ package_extension_preview:
     - test_extension
   script:
     - git clone "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.wiki.git" ../vi-history-suite.wiki
-    - export PUBLIC_GITHUB_WIKI_BRANCH="${VIHS_PUBLIC_GITHUB_WIKI_BRANCH:-${CI_COMMIT_REF_NAME}}"
+    - export PUBLIC_GITHUB_WIKI_BRANCH="${VIHS_PUBLIC_GITHUB_WIKI_BRANCH:-${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME:-${CI_COMMIT_BRANCH:-${CI_DEFAULT_BRANCH}}}}"
     - git clone --branch "${PUBLIC_GITHUB_WIKI_BRANCH}" "https://github.com/svelderrainruiz/vi-history-suite.wiki.git" ../vi-history-suite.github.wiki || git clone "https://github.com/svelderrainruiz/vi-history-suite.wiki.git" ../vi-history-suite.github.wiki
     - npm ci
     - PACKAGE_VERSION=$(node -p "require('./package.json').version")
@@ -309,7 +309,7 @@ release_extension:
     - test_extension
   script:
     - git clone "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.wiki.git" ../vi-history-suite.wiki
-    - export PUBLIC_GITHUB_WIKI_BRANCH="${VIHS_PUBLIC_GITHUB_WIKI_BRANCH:-${CI_COMMIT_REF_NAME}}"
+    - export PUBLIC_GITHUB_WIKI_BRANCH="${VIHS_PUBLIC_GITHUB_WIKI_BRANCH:-${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME:-${CI_COMMIT_BRANCH:-${CI_DEFAULT_BRANCH}}}}"
     - git clone --branch "${PUBLIC_GITHUB_WIKI_BRANCH}" "https://github.com/svelderrainruiz/vi-history-suite.wiki.git" ../vi-history-suite.github.wiki || git clone "https://github.com/svelderrainruiz/vi-history-suite.wiki.git" ../vi-history-suite.github.wiki
     - export VIHS_INTERNAL_WIKI_REPO_ROOT="${CI_PROJECT_DIR}/../vi-history-suite.wiki"
     - npm ci
