@@ -33,6 +33,7 @@ describe('public repo package surface', () => {
     expect(manifest.version).toBe('1.3.0');
     expect(manifest.files).toEqual([
       'out/**',
+      'node_modules/jsonc-parser/**',
       'resources/**',
       'README.md',
       'CHANGELOG.md',
