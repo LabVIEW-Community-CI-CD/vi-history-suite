@@ -34,11 +34,11 @@ The unresolved seam remains explicit:
 
 Current implementation branch:
 
-- `feature/runtime-provider-live-session-doc-sync` (in progress)
+- `feature/runtime-provider-live-session-gate-decision` (in progress)
 
 Most recently merged branch:
 
-- `feature/runtime-provider-live-session-local-gate`
+- `feature/runtime-provider-live-session-doc-sync`
 
 ## Roadmap (Feature Branch Sequence)
 
@@ -58,14 +58,17 @@ Most recently merged branch:
 - Add one local-first admission command that runs the probe and fails closed on
   missing packet or malformed outcome fields.
 
-5. `feature/runtime-provider-live-session-doc-sync` (in progress)
+5. `feature/runtime-provider-live-session-doc-sync` (merged)
 - Align `PROGRAM-0005`, `ISSUE-0412`, current-state, and user support docs to
   the exact new probe contract and residual boundaries.
 
-6. `feature/runtime-provider-live-session-gate-decision` (pending)
+6. `feature/runtime-provider-live-session-gate-decision` (in progress)
 - Re-evaluate `VHS-REQ-542` wording and either:
 - keep the reload contract as active truth with stronger evidence, or
 - replace it with a narrower residual warning only where proof still fails.
+- decision on this branch: keep the reload-or-restart contract active while
+  direct live mutation safe-restore remains unproven, and strengthen the
+  retained evidence contract with the landed probe packet plus local gate
 
 ## Admission Rules
 

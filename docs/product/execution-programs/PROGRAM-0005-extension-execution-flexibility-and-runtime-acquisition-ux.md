@@ -57,9 +57,11 @@ Current facts:
   preflight-ready execution
 - released `repo-standards-review` `v0.2.9` compliance closeout is now
   retained on this branch
+- retained gate decision now keeps `VHS-REQ-542` reload-or-restart guidance as
+  active truth while direct live-session mutation safe-restore remains
+  unproven, with probe packet plus local packet-gate evidence now explicit
 - remaining work on this program is now narrower: live default-settings
-  mutation safe-restore proof and the final gate decision on retained reload
-  guidance remain under active `ISSUE-0414`
+  mutation safe-restore proof remains under active `ISSUE-0414`
 - `PROGRAM-0002` remains historical Docker-only public-closeout truth; it is
   not the active gate for the next host-default installed contract
 - the retained branch handoff packet is

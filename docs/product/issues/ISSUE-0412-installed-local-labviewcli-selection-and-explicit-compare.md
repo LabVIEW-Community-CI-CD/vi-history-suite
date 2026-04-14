@@ -111,6 +111,9 @@ history instead of chat memory.
 - retain the governed live-session probe lane from `ISSUE-0414`: persisted
   versus live runtime settings drift probe command, retained packet output, and
   local fail-closed packet assertion
+- retain the `ISSUE-0414` gate decision: keep reload-or-restart guidance as
+  active truth while direct live-session mutation safe-restore remains
+  unproven
 - keep the remaining proof gap explicit: direct live mutation of the active
   real user-profile VS Code settings target while Code is already running,
   including fail-closed safe-restore behavior, is not yet end-to-end proven
@@ -218,11 +221,11 @@ still only proposal material during round 1:
   second-selection auto-run as the live branch contract
 - direct live mutation of the already-running VS Code session remains
   partially proven through a retained persisted-versus-live probe packet plus
-  local packet gate, but end-to-end mutation safety remains unproven and is
-  retained as the remaining proof gap; the generated CLI plus the
-  settings-driven compare-preflight and runtime-doctor surfaces now warn users
-  to reload or restart the window before using Compare when Code is already
-  open
+  local packet gate, and the retained gate decision keeps reload-or-restart
+  guidance active while end-to-end mutation safety remains unproven; the
+  generated CLI plus the settings-driven compare-preflight and runtime-doctor
+  surfaces now warn users to reload or restart the window before using Compare
+  when Code is already open
   for this slice
 
 ## Round 1 Working Assessment
