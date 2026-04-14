@@ -53,7 +53,8 @@ Current facts:
   `mutationTargetBaselineChanged=true` enforcement, and latest-packet
   `historyProofStatus=not-fully-proven` plus latest-packet
   `historyStance=live-uptake-not-proven`, plus latest-packet
-  `liveUptakeObservation=reload-required` plus retained
+  `liveUptakeObservation=reload-required`, latest-packet
+  `safeRestoreVerified=true`, plus retained
   `historyInSessionUpdatedCount=0` plus
   `historyUnknownObservationCount=0`, with retained history total/count
   integrity enforcement

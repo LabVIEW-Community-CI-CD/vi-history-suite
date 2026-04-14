@@ -34,11 +34,11 @@ The unresolved seam remains explicit:
 
 Current implementation branch:
 
-- `feature/runtime-provider-live-session-history-safe-restore-completeness-assert` (in progress)
+- `feature/runtime-provider-live-session-latest-safe-restore-assert` (in progress)
 
 Most recently merged branch:
 
-- `feature/runtime-provider-live-session-history-count-integrity-assert`
+- `feature/runtime-provider-live-session-history-safe-restore-completeness-assert`
 
 ## Roadmap (Feature Branch Sequence)
 
@@ -152,9 +152,13 @@ Most recently merged branch:
   equal the sum of retained observation-class counts, preventing hidden
   unclassified remainder from passing local admission.
 
-22. `feature/runtime-provider-live-session-history-safe-restore-completeness-assert` (in progress)
+22. `feature/runtime-provider-live-session-history-safe-restore-completeness-assert` (merged)
 - Tighten policy-boundary admission so retained history must show
   safe-restore verification on every retained run before merge.
+
+23. `feature/runtime-provider-live-session-latest-safe-restore-assert` (in progress)
+- Tighten latest-packet admission so latest retained packet must keep
+  `safeRestoreVerified=true` before local admission.
 
 ## Admission Rules
 

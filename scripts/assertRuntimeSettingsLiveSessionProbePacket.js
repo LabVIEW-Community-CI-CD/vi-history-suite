@@ -233,6 +233,11 @@ function validateProbePacket(summary) {
       'liveUptakeObservation must remain reload-required for latest retained probe packet evidence'
     );
   }
+  if (safeRestoreVerified === false) {
+    failures.push(
+      'safeRestoreVerified must remain true for latest retained probe packet evidence'
+    );
+  }
 
   if (
     historyStance &&

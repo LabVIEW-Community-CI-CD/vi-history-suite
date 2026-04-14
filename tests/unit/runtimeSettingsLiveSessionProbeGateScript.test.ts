@@ -251,6 +251,39 @@ describe('assertRuntimeSettingsLiveSessionProbePacket script', () => {
     );
   });
 
+  it('fails validation when latest packet safe-restore verification is false', () => {
+    const failures = probeGate.validateProbePacket({
+      outcome: 'probed-runtime-settings-live-session',
+      packetRunId: '2026-04-14T13-07-33-123Z',
+      packetJsonPath: '/tmp/packet.json',
+      packetMarkdownPath: '/tmp/packet.md',
+      latestPacketJsonPath: '/tmp/latest-summary.json',
+      latestPacketMarkdownPath: '/tmp/latest-summary.md',
+      baselinePersistedProvider: 'docker',
+      persistedProvider: 'host',
+      mutationProviderTarget: 'host',
+      mutationTargetPersistedMatch: true,
+      mutationTargetBaselineChanged: true,
+      liveUptakeObservation: 'reload-required',
+      safeRestoreApplied: false,
+      safeRestoreVerified: false,
+      providerDrift: true,
+      versionDrift: false,
+      bitnessDrift: false,
+      driftDetected: true,
+      historyTotalRuns: 1,
+      historyReloadRequiredCount: 1,
+      historyInSessionUpdatedCount: 0,
+      historyUnknownObservationCount: 0,
+      historyStance: 'live-uptake-not-proven',
+      historyProofStatus: 'not-fully-proven'
+    });
+
+    expect(failures).toContain(
+      'safeRestoreVerified must remain true for latest retained probe packet evidence'
+    );
+  });
+
   it('fails validation when retained history includes in-session-updated runs', () => {
     const failures = probeGate.validateProbePacket({
       outcome: 'probed-runtime-settings-live-session',
