@@ -2,10 +2,10 @@
 
 - Version line: `1.3.0`
 - Burned exact release line: `v1.0.2`
-- Recorded at: `2026-04-14T09:51:37Z`
+- Recorded at: `2026-04-14T10:30:20Z`
 - Authority source of truth: GitLab `develop` -> `release/*` -> `main`
 - Published public source commit: `86b19a2`
-- Public `develop` candidate commit: `722c1f7`
+- Public `develop` candidate commit: `b1de8c5`
 - Published public wiki head: `fc6af3c`
 
 ## Branch Model
@@ -32,7 +32,7 @@
 - Historical public repo bootstrap baseline:
   `exact-v1.2.0-human-baseline-retained`
 - Published-surface expert-agent review:
-  `pending-post-publication-v1.3.0-candidate`
+  `no-findings-post-publication-v1.3.0-candidate`
 - Runtime-provider public-acceptance gate: `open`
 - Exact public release: `v1.2.2-published`
 
@@ -52,11 +52,11 @@
 - The exact published public source head on `main` now publishes `86b19a2` and is
   retained in `docs/product/public-github-source-publication-ledger.{md,json}`.
 - The maintained public `develop` candidate for `v1.3.0` now publishes
-  `722c1f7` through GitHub PR `#31` and is retained here.
+  `b1de8c5` through GitHub PR `#32` and is retained here.
 - The maintained public wiki head is now `fc6af3c` and is retained in
   `docs/product/public-github-wiki-publication-ledger.{md,json}`.
-- Review-ready remains closed until the post-publication expert-agent review
-  returns a clean verdict on those live candidate heads.
+- Review-ready is retained open because the post-publication expert-agent
+  review now returns a clean verdict on those live candidate heads.
 - The exact VS Code Marketplace item still verifies `1.2.2` through the
   official gallery extension query.
 
@@ -90,15 +90,15 @@
 - Exact published public release commit under review: `86b19a2`
 - Exact published public wiki head under review: `527a8b4`
 - Latest retained verdict: `no findings; exact release / Marketplace publish may proceed`
-- Retained at: `2026-04-08T07:58:39Z`
-- Next published public `develop` candidate commit awaiting review: `722c1f7`
-- Next published public wiki candidate head awaiting review: `fc6af3c`
-- Prior retained expert-agent review: `findings-present` on `96944d7` /
-  `d6da0c4` with `2` published-surface findings folded into the current
+- Retained at: `2026-04-14T10:30:20Z`
+- Exact published public candidate commit under review: `b1de8c5`
+- Exact published public wiki head under review: `fc6af3c`
+- Prior retained expert-agent review: `findings-present` on `722c1f7` /
+  `fc6af3c` with `2` published-surface findings folded into the current
   candidate.
 - Exact `v1.2.2` tagging and Marketplace publication remain closed cleanly on
-  published-surface review grounds; the next `v1.3.0` expert-agent review is
-  now pending on the live public candidate heads.
+  published-surface review grounds, and the latest `v1.3.0` expert-agent
+  review on live public candidate heads is now retained with no findings.
 
 ## Tester Fixture Strategy
 
@@ -142,5 +142,3 @@
 - No release-path blocker remains on exact `v1.2.2`.
 - Active `v1.3.0` candidate blockers remain:
   - runtime-provider public-acceptance gate is still open
-  - the next expert-agent review is pending on public `develop` `722c1f7`
-    and public wiki `fc6af3c`

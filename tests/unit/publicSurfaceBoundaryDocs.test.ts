@@ -93,9 +93,10 @@ describe('public facade boundary docs', () => {
     expect(publicLedgerJson).toContain('"nextPage": null');
     expect(publicSourceLedger).toContain('Public source product repo baseline');
     expect(publicSourceLedger).toContain('published');
-    expect(publicSourceLedger).toContain('Current published public GitHub source HEAD: `722c1f7`');
+    expect(publicSourceLedger).toContain('Current published public GitHub source HEAD: `b1de8c5`');
     expect(publicSourceLedger).toContain('86b19a2');
     expect(publicSourceLedger).toContain('722c1f7');
+    expect(publicSourceLedger).toContain('b1de8c5');
     expect(publicSourceLedger).toContain('Public source v1.1.0 exact release');
     expect(publicSourceLedger).toContain('Public source v1.2.0 exact release');
     expect(publicSourceLedger).toContain('Public source v1.2.0 candidate moved-VI and bundled-doc refresh');
@@ -111,7 +112,7 @@ describe('public facade boundary docs', () => {
       'Public source v1.2.2 bundled installed-user docs refresh'
     );
     expect(publicSourceLedgerJson).toContain('"publicationSurface": "public-github-source-repo"');
-    expect(publicSourceLedgerJson).toContain('"publishedHeadCommit": "722c1f7"');
+    expect(publicSourceLedgerJson).toContain('"publishedHeadCommit": "b1de8c5"');
     expect(publicSourceLedgerJson).toContain('"status": "published"');
     expect(publicSourceLedgerJson).toContain('"repoCommit": "daef8bd"');
     expect(publicSourceLedgerJson).toContain('"repoCommit": "c9806c3"');
@@ -124,6 +125,7 @@ describe('public facade boundary docs', () => {
     expect(publicSourceLedgerJson).toContain('"repoCommit": "12391e1"');
     expect(publicSourceLedgerJson).toContain('"repoCommit": "86b19a2"');
     expect(publicSourceLedgerJson).toContain('"repoCommit": "722c1f7"');
+    expect(publicSourceLedgerJson).toContain('"repoCommit": "b1de8c5"');
     expect(program).toContain('workflow_dispatch');
     expect(program).toContain('npm run public:smoke:linux');
     expect(program).toContain('docs:ci:public');

@@ -174,9 +174,10 @@ Latest landed ship target:
   `svelderrainruiz.vi-history-suite`, and the latest retained expert-agent
   verdict returned no findings on those exact published public release
   surfaces; the next `v1.3.0` candidate now publishes public `develop`
-  `722c1f7` plus public wiki head `fc6af3c`, and remains blocked until the
-  runtime-provider public-acceptance gate is closed and the post-publication
-  expert-agent review closes with no findings
+  `b1de8c5` plus public wiki head `fc6af3c`, the post-publication
+  expert-agent review now also retains no findings on those live candidate
+  heads, and the remaining open gate is the runtime-provider public-acceptance
+  boundary
 
 Current active and recently closed tranches:
 
@@ -330,7 +331,7 @@ Post-release tranches:
     first, while repo/fork/Codespaces procedures remain explicit secondary
     source-evaluation lanes
   - the exact public `main` line now publishes `86b19a2`, the maintained
-    public `develop` candidate now publishes `722c1f7`, the public wiki
+    public `develop` candidate now publishes `b1de8c5`, the public wiki
     candidate head now publishes `fc6af3c`, the VS Code Marketplace item
     verifies `1.2.2`, and the later public candidate line is now reopened on
     `v1.3.0` instead of remaining attached to the historical exact `1.2.2`

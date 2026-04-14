@@ -10,7 +10,7 @@ The machine-readable companion surface for this ledger is:
 
 - `docs/product/public-github-source-publication-ledger.json`
 
-Current published public GitHub source HEAD: `722c1f7`
+Current published public GitHub source HEAD: `b1de8c5`
 
 ## Publications
 
@@ -36,6 +36,7 @@ Current published public GitHub source HEAD: `722c1f7`
 | Public source v1.2.2 bundled installed-user docs refresh | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-08` | `12391e1` | `docs/product/current-state.md`; `docs/product/public-release-candidate.md`; `resources/bundled-docs/manifest.json` |
 | Public source v1.2.2 exact release | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-08` | `86b19a2` | `README.md`; `CHANGELOG.md`; `docs/product/current-state.md`; `docs/product/public-release-candidate.md`; `docs/release-procedure.md`; `package.json` |
 | Public source v1.3.0 runtime-provider public develop candidate | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-14` | `722c1f7` | `README.md`; `INSTALL.md`; `SUPPORT.md`; `docs/product/current-state.md`; `docs/product/public-release-candidate.md`; `docs/release-procedure.md`; `package.json` |
+| Public source v1.3.0 post-publication expert-review fold | `github.com/svelderrainruiz/vi-history-suite` | published | `2026-04-14` | `b1de8c5` | `README.md`; `INSTALL.md`; `SUPPORT.md`; `resources/bundled-docs/manifest.json`; `docs/product/current-state.md`; `docs/product/public-release-candidate.md`; `docs/release-procedure.md` |
 
 ## Publication Rules
 
