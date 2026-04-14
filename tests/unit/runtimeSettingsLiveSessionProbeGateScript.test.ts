@@ -83,7 +83,8 @@ describe('assertRuntimeSettingsLiveSessionProbePacket script', () => {
       historyReloadRequiredCount: 2,
       historyInSessionUpdatedCount: 1,
       historyUnknownObservationCount: 1,
-      historyStance: 'live-uptake-not-proven'
+      historyStance: 'live-uptake-not-proven',
+      historyProofStatus: 'not-fully-proven'
     });
 
     expect(failures).toContain(
@@ -111,7 +112,8 @@ describe('assertRuntimeSettingsLiveSessionProbePacket script', () => {
       historyReloadRequiredCount: 1,
       historyInSessionUpdatedCount: 0,
       historyUnknownObservationCount: 0,
-      historyStance: 'live-uptake-not-proven'
+      historyStance: 'live-uptake-not-proven',
+      historyProofStatus: 'not-fully-proven'
     });
 
     expect(failures).toContain('liveUptakeObservation in-session-updated requires driftDetected=false');
@@ -137,11 +139,41 @@ describe('assertRuntimeSettingsLiveSessionProbePacket script', () => {
       historyReloadRequiredCount: 0,
       historyInSessionUpdatedCount: 2,
       historyUnknownObservationCount: 0,
-      historyStance: 'live-uptake-not-proven'
+      historyStance: 'live-uptake-not-proven',
+      historyProofStatus: 'not-fully-proven'
     });
 
     expect(failures).toContain(
       'historyStance must match retained history counts (candidate-live-uptake-observed)'
+    );
+  });
+
+  it('fails validation when history proof status conflicts with history stance', () => {
+    const failures = probeGate.validateProbePacket({
+      outcome: 'probed-runtime-settings-live-session',
+      packetRunId: '2026-04-14T13-07-33-123Z',
+      packetJsonPath: '/tmp/packet.json',
+      packetMarkdownPath: '/tmp/packet.md',
+      latestPacketJsonPath: '/tmp/latest-summary.json',
+      latestPacketMarkdownPath: '/tmp/latest-summary.md',
+      mutationProviderTarget: 'host',
+      liveUptakeObservation: 'in-session-updated',
+      safeRestoreApplied: true,
+      safeRestoreVerified: true,
+      providerDrift: false,
+      versionDrift: false,
+      bitnessDrift: false,
+      driftDetected: false,
+      historyTotalRuns: 2,
+      historyReloadRequiredCount: 0,
+      historyInSessionUpdatedCount: 2,
+      historyUnknownObservationCount: 0,
+      historyStance: 'candidate-live-uptake-observed',
+      historyProofStatus: 'not-fully-proven'
+    });
+
+    expect(failures).toContain(
+      'historyProofStatus must match historyStance (re-evaluation-required)'
     );
   });
 
@@ -171,7 +203,8 @@ describe('assertRuntimeSettingsLiveSessionProbePacket script', () => {
           historyReloadRequiredCount: 1,
           historyInSessionUpdatedCount: 2,
           historyUnknownObservationCount: 0,
-          historyStance: 'live-uptake-not-proven'
+          historyStance: 'live-uptake-not-proven',
+          historyProofStatus: 'not-fully-proven'
         },
         null,
         2

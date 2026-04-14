@@ -378,7 +378,8 @@ Post-release tranches:
     when the retained latest probe packet is missing or malformed
   - one local history receipt now exists at
     `npm run proof:runtime-settings-live-session:history`; it summarizes
-    retained probe runs into one bounded live-uptake stance
+    retained probe runs into one bounded live-uptake stance and explicit
+    proof-status receipt (`not-fully-proven` vs `re-evaluation-required`)
   - one local policy-boundary assertion now exists at
     `npm run proof:runtime-settings-live-session:policy:assert`; it fails
     closed when retained history no longer supports unconditional reload

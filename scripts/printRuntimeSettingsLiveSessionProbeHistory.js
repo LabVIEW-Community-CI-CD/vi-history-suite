@@ -172,6 +172,7 @@ function summarizeHistory(packetRoot, runSummaries) {
       : mutationTargetHostCount > 0 || mutationTargetDockerCount > 0
         ? 'single-provider-only'
         : 'insufficient-evidence';
+  const proofStatus = classifyProofStatus(stance);
 
   return {
     packetRoot,
@@ -188,6 +189,7 @@ function summarizeHistory(packetRoot, runSummaries) {
     latestObservation,
     latestMutationTarget,
     stance,
+    proofStatus,
     providerSelectionCoverage,
     recommendation:
       stance === 'live-uptake-not-proven'
@@ -196,6 +198,13 @@ function summarizeHistory(packetRoot, runSummaries) {
           ? 'All retained runs report in-session-updated. Re-evaluate whether VHS-REQ-542 wording should stay unchanged.'
           : 'Run additional live-session probes before making a policy decision.'
   };
+}
+
+function classifyProofStatus(stance) {
+  if (stance === 'candidate-live-uptake-observed') {
+    return 're-evaluation-required';
+  }
+  return 'not-fully-proven';
 }
 
 function normalizeObservation(summary) {
@@ -240,6 +249,7 @@ function formatHistorySummary(summary) {
     `- latestObservation: ${summary.latestObservation ?? '<none>'}`,
     `- latestMutationTarget: ${summary.latestMutationTarget ?? '<none>'}`,
     `- stance: ${summary.stance}`,
+    `- proofStatus: ${summary.proofStatus}`,
     `- providerSelectionCoverage: ${summary.providerSelectionCoverage}`,
     `- recommendation: ${summary.recommendation}`,
     ''
@@ -326,6 +336,7 @@ module.exports = {
   resolveDefaultPacketRoot,
   collectRunSummaries,
   summarizeHistory,
+  classifyProofStatus,
   normalizeObservation,
   normalizeMutationProviderTarget,
   formatHistorySummary,

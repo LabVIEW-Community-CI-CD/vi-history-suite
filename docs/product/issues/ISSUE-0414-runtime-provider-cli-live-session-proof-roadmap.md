@@ -34,11 +34,11 @@ The unresolved seam remains explicit:
 
 Current implementation branch:
 
-- `feature/runtime-provider-live-session-provider-selection-coverage` (in progress)
+- `feature/runtime-provider-live-session-not-fully-proven-receipt` (in progress)
 
 Most recently merged branch:
 
-- `feature/runtime-provider-live-session-packet-history-stance`
+- `feature/runtime-provider-live-session-provider-selection-coverage`
 
 ## Roadmap (Feature Branch Sequence)
 
@@ -92,11 +92,16 @@ Most recently merged branch:
   packet so every packet carries both point-in-time drift facts and retained
   policy evidence context.
 
-11. `feature/runtime-provider-live-session-provider-selection-coverage` (in progress)
+11. `feature/runtime-provider-live-session-provider-selection-coverage` (merged)
 - Extend retained history and policy-boundary assertions so merge admission also
   requires retained bidirectional provider-selection coverage (`host` and
   `docker` mutation targets), proving the CLI provider-selection path was
   exercised both directions while live uptake remains explicitly not fully proven.
+
+12. `feature/runtime-provider-live-session-not-fully-proven-receipt` (in progress)
+- Add one explicit retained proof-status receipt (`not-fully-proven` vs
+  `re-evaluation-required`) onto packet/history/policy surfaces so the current
+  CLI live-session boundary is machine-readable rather than only implied.
 
 ## Admission Rules
 

@@ -3,6 +3,7 @@ import * as path from 'node:path';
 
 import {
   RuntimeSettingsLiveSessionHistoryStance,
+  RuntimeSettingsLiveSessionProofStatus,
   RuntimeSettingsLiveSessionProbeSummary,
   RuntimeSettingsLiveSessionProbeSummaryWithPacket,
   RuntimeSettingsLiveSessionUptakeObservation
@@ -50,6 +51,7 @@ export async function persistRuntimeSettingsLiveSessionProbePacket(
   const currentObservation = normalizeLiveUptakeObservation(summary);
   const historyCounts = mergeCurrentObservation(existingHistoryCounts, currentObservation);
   const historyStance = classifyHistoryStance(historyCounts);
+  const historyProofStatus = classifyHistoryProofStatus(historyStance);
 
   const packetSummary: RuntimeSettingsLiveSessionProbeSummaryWithPacket = {
     ...summary,
@@ -62,7 +64,8 @@ export async function persistRuntimeSettingsLiveSessionProbePacket(
     historyReloadRequiredCount: historyCounts.reloadRequiredCount,
     historyInSessionUpdatedCount: historyCounts.inSessionUpdatedCount,
     historyUnknownObservationCount: historyCounts.unknownObservationCount,
-    historyStance
+    historyStance,
+    historyProofStatus
   };
 
   await fsApi.mkdir(runDirectory, { recursive: true });
@@ -107,6 +110,7 @@ function renderProbeSummaryMarkdown(summary: RuntimeSettingsLiveSessionProbeSumm
     `- In-session-updated runs: \`${summary.historyInSessionUpdatedCount}\``,
     `- Unknown-observation runs: \`${summary.historyUnknownObservationCount}\``,
     `- History stance: \`${summary.historyStance}\``,
+    `- History proof status: \`${summary.historyProofStatus}\``,
     '',
     '## Baseline Persisted Settings Facts',
     '',
@@ -218,6 +222,14 @@ function classifyHistoryStance(
     return 'candidate-live-uptake-observed';
   }
   return 'insufficient-evidence';
+}
+
+function classifyHistoryProofStatus(
+  stance: RuntimeSettingsLiveSessionHistoryStance
+): RuntimeSettingsLiveSessionProofStatus {
+  return stance === 'candidate-live-uptake-observed'
+    ? 're-evaluation-required'
+    : 'not-fully-proven';
 }
 
 function normalizeLiveUptakeObservation(

@@ -27,6 +27,10 @@ export type RuntimeSettingsLiveSessionHistoryStance =
   | 'candidate-live-uptake-observed'
   | 'insufficient-evidence';
 
+export type RuntimeSettingsLiveSessionProofStatus =
+  | 'not-fully-proven'
+  | 're-evaluation-required';
+
 export interface RuntimeSettingsLiveSessionProbeSummary {
   outcome: 'probed-runtime-settings-live-session';
   settingsFilePath?: string;
@@ -65,6 +69,7 @@ export interface RuntimeSettingsLiveSessionProbeSummaryWithPacket
   historyInSessionUpdatedCount: number;
   historyUnknownObservationCount: number;
   historyStance: RuntimeSettingsLiveSessionHistoryStance;
+  historyProofStatus: RuntimeSettingsLiveSessionProofStatus;
 }
 
 export function buildRuntimeSettingsLiveSessionProbeSummary(
