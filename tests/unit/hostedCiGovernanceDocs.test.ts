@@ -41,7 +41,14 @@ describe('hosted ci governance docs', () => {
     expect(matrix.authorityGitLab.mergeGate).toBe('only_allow_merge_if_pipeline_succeeds');
     expect(matrix.authorityGitLab.namedRequiredChecks).toBe(false);
     expect(matrix.authorityGitLab.jobs.package_extension_preview.admittedRefs).toEqual(
-      expect.arrayContaining(['develop', 'release/*', 'hotfix/*', 'main', 'vX.Y.Z-tags'])
+      expect.arrayContaining([
+        'merge_request_event',
+        'develop',
+        'release/*',
+        'hotfix/*',
+        'main',
+        'vX.Y.Z-tags'
+      ])
     );
     expect(matrix.publicGitHub.requiredChecks).toEqual([
       'package-preview',
@@ -68,6 +75,9 @@ describe('hosted ci governance docs', () => {
     expect(adr).toContain('GitHub benchmark workflows remain governed characterization lanes');
 
     expect(gitlabCi).toContain(`- if: '$CI_COMMIT_BRANCH == "develop"'`);
+    expect(gitlabCi).toContain(
+      `- if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "develop"'`
+    );
     expect(gitlabCi).toContain(`- if: '$CI_COMMIT_BRANCH =~ /^release\\/.+$/'`);
     expect(gitlabCi).toContain(`- if: '$CI_COMMIT_BRANCH =~ /^hotfix\\/.+$/'`);
     expect(gitlabCi).not.toContain(`- if: '$CI_COMMIT_BRANCH'`);
