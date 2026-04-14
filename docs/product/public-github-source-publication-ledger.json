@@ -1,7 +1,7 @@
 {
   "generatedFor": "vi-history-suite",
   "publicationSurface": "public-github-source-repo",
-  "publishedHeadCommit": "722c1f7",
+  "publishedHeadCommit": "b1de8c5",
   "publications": [
     {
       "id": "public-source-product-repo-baseline",
@@ -298,6 +298,23 @@
         "docs/product/public-release-candidate.md",
         "docs/release-procedure.md",
         "package.json"
+      ]
+    },
+    {
+      "id": "public-source-v1-3-0-post-publication-expert-review-fold",
+      "title": "Public source v1.3.0 post-publication expert-review fold",
+      "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
+      "status": "published",
+      "publishedDate": "2026-04-14",
+      "repoCommit": "b1de8c5",
+      "primaryAuthority": [
+        "README.md",
+        "INSTALL.md",
+        "SUPPORT.md",
+        "resources/bundled-docs/manifest.json",
+        "docs/product/current-state.md",
+        "docs/product/public-release-candidate.md",
+        "docs/release-procedure.md"
       ]
     }
   ]

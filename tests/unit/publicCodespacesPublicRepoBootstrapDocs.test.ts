@@ -46,7 +46,7 @@ describe('public Codespaces public-repo bootstrap docs', () => {
     expect(candidate).toContain('Generic bootstrap command:');
     expect(candidate).toContain('npm run public:repo:clone -- --repo-url <https-url>');
     expect(candidate).toContain('Published-surface expert-agent review:');
-    expect(candidate).toContain('`pending-post-publication-v1.3.0-candidate`');
+    expect(candidate).toContain('`no-findings-post-publication-v1.3.0-candidate`');
     expect(candidate).toContain('Required skill: `vi-history-suite-expert-agent-reviewer`');
     expect(candidate).toContain('Exact public release: `v1.2.2-published`');
     expect(candidate).toContain('remains historical exact');

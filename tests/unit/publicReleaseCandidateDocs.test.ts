@@ -105,9 +105,9 @@ describe('public release candidate control surface', () => {
     });
     expect(candidate.publicDevelopCandidate).toMatchObject({
       branch: 'develop',
-      candidateCommit: '722c1f7',
-      status: 'published-public-develop-candidate-awaiting-expert-review',
-      sourcePullRequest: '#31'
+      candidateCommit: 'b1de8c5',
+      status: 'published-public-develop-candidate-reviewed-no-findings',
+      sourcePullRequest: '#32'
     });
     expect(candidate.publishedPublicWiki).toMatchObject({
       publishedHeadCommit: 'fc6af3c',
@@ -117,7 +117,7 @@ describe('public release candidate control surface', () => {
       authorityBaseline: 'v1.2.2-exact-public-release-published',
       localInstalledVsix: 'candidate-v1.3.0-line-opened-awaiting-public-build',
       historicalPublicRepoBootstrapBaseline: 'exact-v1.2.0-human-baseline-retained',
-      publishedSurfaceExpertAgentReview: 'pending-post-publication-v1.3.0-candidate',
+      publishedSurfaceExpertAgentReview: 'no-findings-post-publication-v1.3.0-candidate',
       runtimeProviderPublicAcceptanceGate: 'open',
       exactPublicRelease: 'v1.2.2-published'
     });
@@ -159,9 +159,9 @@ describe('public release candidate control surface', () => {
     });
     expect(candidate.expertAgentReviewProofs?.latestPublishedSurfaceReview).toMatchObject({
       status: 'no-findings',
-      reviewedPublicDevelopCommit: '86b19a2',
-      reviewedPublicWikiHead: '527a8b4',
-      nextPublishedCandidateCommit: '722c1f7',
+      reviewedPublicDevelopCommit: 'b1de8c5',
+      reviewedPublicWikiHead: 'fc6af3c',
+      nextPublishedCandidateCommit: 'b1de8c5',
       nextPublishedCandidateWikiHead: 'fc6af3c',
       priorVerdict: 'findings-present',
       priorFindingCount: 2
@@ -178,20 +178,16 @@ describe('public release candidate control surface', () => {
         expect.objectContaining({
           id: 'BLOCKER-1.3.0-001-RUNTIME-PROVIDER-PUBLIC-ACCEPTANCE-GATE',
           status: 'open'
-        }),
-        expect.objectContaining({
-          id: 'BLOCKER-1.3.0-004-EXPERT-AGENT-REVIEW-PENDING',
-          status: 'open'
         })
       ])
     );
 
     expect(candidateMarkdown).toContain('Version line: `1.3.0`');
     expect(candidateMarkdown).toContain('Published public source commit: `86b19a2`');
-    expect(candidateMarkdown).toContain('Public `develop` candidate commit: `722c1f7`');
+    expect(candidateMarkdown).toContain('Public `develop` candidate commit: `b1de8c5`');
     expect(candidateMarkdown).toContain('Published public wiki head: `fc6af3c`');
     expect(candidateMarkdown).toContain('Published-surface expert-agent review:');
-    expect(candidateMarkdown).toContain('`pending-post-publication-v1.3.0-candidate`');
+    expect(candidateMarkdown).toContain('`no-findings-post-publication-v1.3.0-candidate`');
     expect(candidateMarkdown).toContain('Runtime-provider public-acceptance gate: `open`');
     expect(candidateMarkdown).toContain('Required skill: `vi-history-suite-expert-agent-reviewer`');
     expect(candidateMarkdown).toContain('The maintained public `develop` candidate for `v1.3.0` now publishes');
@@ -207,13 +203,13 @@ describe('public release candidate control surface', () => {
     expect(currentState).toContain('current exact released line: `v1.2.2`');
     expect(currentState).toContain('current develop package line on `develop`: `1.3.0`');
     expect(currentState).toContain('active exact release candidate line on `develop`: `v1.3.0`');
-    expect(currentState).toContain('`722c1f7`');
+    expect(currentState).toContain('`b1de8c5`');
     expect(currentState).toContain('`fc6af3c`');
     expect(currentState).toContain(
       'verdict returned no findings on those exact published public release'
     );
     expect(currentState).toContain('the next `v1.3.0` candidate now publishes public `develop`');
-    expect(currentState).toContain('expert-agent review closes with no findings');
+    expect(currentState).toContain('expert-agent review now also retains no findings');
 
     expect(srs).toContain('VHS-REQ-527');
     expect(srs).toContain('VHS-REQ-528');
