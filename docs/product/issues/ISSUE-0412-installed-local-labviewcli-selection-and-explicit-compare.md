@@ -112,11 +112,12 @@ history instead of chat memory.
   versus live runtime settings drift probe command, retained packet output, and
   local fail-closed packet assertion
 - retain the `ISSUE-0414` gate decision: keep reload-or-restart guidance as
-  active truth while direct live-session mutation safe-restore remains
+  active truth while direct live-session uptake of updated settings remains
   unproven
 - keep the remaining proof gap explicit: direct live mutation of the active
-  real user-profile VS Code settings target while Code is already running,
-  including fail-closed safe-restore behavior, is not yet end-to-end proven
+  real user-profile VS Code settings target while Code is already running is
+  not yet end-to-end proven, even though probe-path fail-closed safe-restore is
+  now covered
 - execute the governed follow-on branch sequence for that seam through
   [ISSUE-0414 Runtime-Provider CLI Live-Session Proof Roadmap](./ISSUE-0414-runtime-provider-cli-live-session-proof-roadmap.md)
 - keep packaged/public docs on the exact released Docker-only baseline until

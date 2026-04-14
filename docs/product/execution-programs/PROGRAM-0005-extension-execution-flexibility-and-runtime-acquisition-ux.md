@@ -45,8 +45,10 @@ Current facts:
   `npm run proof:runtime-settings-live-session:assert` so malformed or missing
   retained probe evidence blocks admission
 - the remaining CLI proof gap is now narrower: direct mutation safety and
-  automatic restore around a live already-running VS Code session are still
-  not end-to-end proven, and users still need to reload or restart the window before using Compare when drift is detected
+  automatic live uptake around a live already-running VS Code session is still
+  not end-to-end proven; probe mutation safe-restore is now fail-closed and
+  locally proven, and users still need to reload or restart the window before using Compare
+  when drift is detected
 - the Windows exact-runtime preflight is now landed: installed compare
   resolves one exact version+bitness LabVIEW executable plus matching
   `LabVIEWCLI` surface and fails closed on missing, ambiguous, or
@@ -58,10 +60,10 @@ Current facts:
 - released `repo-standards-review` `v0.2.9` compliance closeout is now
   retained on this branch
 - retained gate decision now keeps `VHS-REQ-542` reload-or-restart guidance as
-  active truth while direct live-session mutation safe-restore remains
+  active truth while direct live-session uptake of updated settings remains
   unproven, with probe packet plus local packet-gate evidence now explicit
 - remaining work on this program is now narrower: live default-settings
-  mutation safe-restore proof remains under active `ISSUE-0414`
+  uptake proof remains under active `ISSUE-0414`
 - `PROGRAM-0002` remains historical Docker-only public-closeout truth; it is
   not the active gate for the next host-default installed contract
 - the retained branch handoff packet is

@@ -28,6 +28,9 @@ describe('runtimeSettingsLiveSessionProbePacket', () => {
         persistedProvider: 'docker',
         persistedLabviewVersion: '2026',
         persistedLabviewBitness: 'x64',
+        baselinePersistedProvider: 'host',
+        baselinePersistedLabviewVersion: '2026',
+        baselinePersistedLabviewBitness: 'x64',
         liveProvider: 'host',
         liveLabviewVersion: '2026',
         liveLabviewBitness: 'x64',
@@ -35,6 +38,9 @@ describe('runtimeSettingsLiveSessionProbePacket', () => {
         versionDrift: false,
         bitnessDrift: false,
         driftDetected: true,
+        mutationProviderTarget: 'docker',
+        safeRestoreApplied: true,
+        safeRestoreVerified: true,
         runtimeValidationOutcome: 'ready',
         runtimeProvider: 'windows-container',
         runtimeEngine: 'labview-cli',
@@ -66,6 +72,9 @@ describe('runtimeSettingsLiveSessionProbePacket', () => {
     const packetMarkdown = await fs.readFile(summary.packetMarkdownPath, 'utf8');
     expect(packetMarkdown).toContain('# Runtime Settings Live-Session Probe Packet');
     expect(packetMarkdown).toContain('Drift detected: `yes`');
+    expect(packetMarkdown).toContain('Safe restore applied: `yes`');
+    expect(packetMarkdown).toContain('Safe restore verified: `yes`');
+    expect(packetMarkdown).toContain('## Baseline Persisted Settings Facts');
     expect(packetMarkdown).toContain('Provider: `docker`');
     expect(packetMarkdown).toContain('Provider: `host`');
   });

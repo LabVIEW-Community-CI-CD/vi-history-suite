@@ -27,6 +27,8 @@ describe('runtimeSettingsLiveSessionProbe', () => {
     expect(summary.versionDrift).toBe(false);
     expect(summary.bitnessDrift).toBe(false);
     expect(summary.driftDetected).toBe(true);
+    expect(summary.safeRestoreApplied).toBe(false);
+    expect(summary.safeRestoreVerified).toBe(false);
   });
 
   it('keeps drift false when persisted and live facts match after normalization', () => {
@@ -44,13 +46,19 @@ describe('runtimeSettingsLiveSessionProbe', () => {
       runtimeValidationOutcome: 'blocked',
       runtimeProvider: 'unavailable',
       runtimeEngine: undefined,
-      runtimeBlockedReason: 'installed-provider-invalid'
+      runtimeBlockedReason: 'installed-provider-invalid',
+      mutationProviderTarget: 'DOCKER',
+      safeRestoreApplied: true,
+      safeRestoreVerified: true
     });
 
     expect(summary.providerDrift).toBe(false);
     expect(summary.versionDrift).toBe(false);
     expect(summary.bitnessDrift).toBe(false);
     expect(summary.driftDetected).toBe(false);
+    expect(summary.mutationProviderTarget).toBe('docker');
+    expect(summary.safeRestoreApplied).toBe(true);
+    expect(summary.safeRestoreVerified).toBe(true);
     expect(summary.runtimeValidationOutcome).toBe('blocked');
     expect(summary.runtimeProvider).toBe('unavailable');
   });

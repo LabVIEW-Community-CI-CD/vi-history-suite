@@ -137,10 +137,28 @@ function validateProbePacket(summary) {
   requireString('packetMarkdownPath');
   requireString('latestPacketJsonPath');
   requireString('latestPacketMarkdownPath');
+  const mutationProviderTarget = requireString('mutationProviderTarget');
+  const safeRestoreApplied = requireBoolean('safeRestoreApplied');
+  const safeRestoreVerified = requireBoolean('safeRestoreVerified');
   const providerDrift = requireBoolean('providerDrift');
   const versionDrift = requireBoolean('versionDrift');
   const bitnessDrift = requireBoolean('bitnessDrift');
   const driftDetected = requireBoolean('driftDetected');
+
+  if (
+    typeof safeRestoreApplied === 'boolean' &&
+    typeof safeRestoreVerified === 'boolean' &&
+    safeRestoreApplied &&
+    !safeRestoreVerified
+  ) {
+    failures.push('safeRestoreVerified must be true when safeRestoreApplied is true');
+  }
+
+  if (mutationProviderTarget && mutationProviderTarget !== 'host' && mutationProviderTarget !== 'docker') {
+    failures.push(
+      `mutationProviderTarget must be host or docker when present, received ${mutationProviderTarget}`
+    );
+  }
 
   if (
     typeof providerDrift === 'boolean' &&

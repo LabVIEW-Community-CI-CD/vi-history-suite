@@ -7,11 +7,15 @@ export interface RuntimeSettingsLiveSessionFacts {
 export interface RuntimeSettingsLiveSessionProbeInput {
   settingsFilePath?: string;
   persisted: RuntimeSettingsLiveSessionFacts;
+  baselinePersisted?: RuntimeSettingsLiveSessionFacts;
   live: RuntimeSettingsLiveSessionFacts;
   runtimeValidationOutcome?: 'ready' | 'blocked';
   runtimeProvider?: string;
   runtimeEngine?: string;
   runtimeBlockedReason?: string;
+  mutationProviderTarget?: string;
+  safeRestoreApplied?: boolean;
+  safeRestoreVerified?: boolean;
 }
 
 export interface RuntimeSettingsLiveSessionProbeSummary {
@@ -20,6 +24,9 @@ export interface RuntimeSettingsLiveSessionProbeSummary {
   persistedProvider?: string;
   persistedLabviewVersion?: string;
   persistedLabviewBitness?: string;
+  baselinePersistedProvider?: string;
+  baselinePersistedLabviewVersion?: string;
+  baselinePersistedLabviewBitness?: string;
   liveProvider?: string;
   liveLabviewVersion?: string;
   liveLabviewBitness?: string;
@@ -27,6 +34,9 @@ export interface RuntimeSettingsLiveSessionProbeSummary {
   versionDrift: boolean;
   bitnessDrift: boolean;
   driftDetected: boolean;
+  mutationProviderTarget?: string;
+  safeRestoreApplied: boolean;
+  safeRestoreVerified: boolean;
   runtimeValidationOutcome?: 'ready' | 'blocked';
   runtimeProvider?: string;
   runtimeEngine?: string;
@@ -48,6 +58,9 @@ export function buildRuntimeSettingsLiveSessionProbeSummary(
   const persistedProvider = normalizeTrimmed(input.persisted.runtimeProvider);
   const persistedLabviewVersion = normalizeTrimmed(input.persisted.labviewVersion);
   const persistedLabviewBitness = normalizeTrimmed(input.persisted.labviewBitness);
+  const baselinePersistedProvider = normalizeTrimmed(input.baselinePersisted?.runtimeProvider);
+  const baselinePersistedLabviewVersion = normalizeTrimmed(input.baselinePersisted?.labviewVersion);
+  const baselinePersistedLabviewBitness = normalizeTrimmed(input.baselinePersisted?.labviewBitness);
   const liveProvider = normalizeTrimmed(input.live.runtimeProvider);
   const liveLabviewVersion = normalizeTrimmed(input.live.labviewVersion);
   const liveLabviewBitness = normalizeTrimmed(input.live.labviewBitness);
@@ -65,6 +78,9 @@ export function buildRuntimeSettingsLiveSessionProbeSummary(
     persistedProvider,
     persistedLabviewVersion,
     persistedLabviewBitness,
+    baselinePersistedProvider,
+    baselinePersistedLabviewVersion,
+    baselinePersistedLabviewBitness,
     liveProvider,
     liveLabviewVersion,
     liveLabviewBitness,
@@ -72,6 +88,9 @@ export function buildRuntimeSettingsLiveSessionProbeSummary(
     versionDrift,
     bitnessDrift,
     driftDetected: providerDrift || versionDrift || bitnessDrift,
+    mutationProviderTarget: normalizeComparableProvider(input.mutationProviderTarget),
+    safeRestoreApplied: input.safeRestoreApplied === true,
+    safeRestoreVerified: input.safeRestoreVerified === true,
     runtimeValidationOutcome: input.runtimeValidationOutcome,
     runtimeProvider: input.runtimeProvider,
     runtimeEngine: input.runtimeEngine,

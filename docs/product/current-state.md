@@ -376,17 +376,16 @@ Post-release tranches:
     when the retained latest probe packet is missing or malformed
   - the remaining CLI proof gap is now narrower: direct live mutation of the
     already-running VS Code session is not yet end-to-end proven on this line;
-    safe restore after partial mutation failure is also unproven, so the
+    probe mutation safe-restore is now fail-closed and locally proven, so the
     generated CLI plus the settings-driven compare-preflight and runtime-doctor
-    surfaces now warn users to reload or restart the window before using
-    Compare when Code is already open
+    surfaces keep guidance to reload or restart the window until live uptake
+    itself is proven
   - released `repo-standards-review` `v0.2.9` compliance closeout is retained
     in the branch control plane
   - the retained gate decision now keeps reload-or-restart guidance active
-    while direct live-session mutation safe-restore remains unproven
-  - the remaining active slices are the unresolved live active-settings
-    mutation safe-restore seam and later exact-release promotion once the
-    candidate line is admitted
+    while direct live-session uptake of updated settings remains unproven
+  - the remaining active slices are the unresolved live active-settings uptake
+    seam and later exact-release promotion once the candidate line is admitted
   - retained handoff packet:
     [issue-0412-promotion-and-publication-handoff.md](./issue-0412-promotion-and-publication-handoff.md)
   - explicit public-acceptance gate:

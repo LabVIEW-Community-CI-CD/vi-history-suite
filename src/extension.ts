@@ -42,6 +42,10 @@ import {
 } from './tooling/localRuntimeSettingsCli';
 import { buildRuntimeSettingsLiveSessionProbeSummary } from './tooling/runtimeSettingsLiveSessionProbe';
 import { persistRuntimeSettingsLiveSessionProbePacket } from './tooling/runtimeSettingsLiveSessionProbePacket';
+import {
+  deriveRuntimeSettingsLiveSessionMutationRequest,
+  runWithRuntimeSettingsSafeRestore
+} from './tooling/runtimeSettingsLiveSessionSafeRestore';
 
 export interface ViHistorySuiteApi {
   refreshEligibility(): Promise<void>;
@@ -202,32 +206,93 @@ export async function activate(
         );
       }
 
-      const liveSettings = readTrimmedLiveRuntimeSettings();
       const quietStdout = {
         write(_text: string): void {
           // Intentionally suppressed: command result carries the probe summary.
         }
       };
 
-      const validated = await runLocalRuntimeSettingsCli(['--validate'], { stdout: quietStdout });
-      if (validated.outcome !== 'validated-settings') {
+      const validatedBaseline = await runLocalRuntimeSettingsCli(['--validate'], {
+        stdout: quietStdout
+      });
+      if (validatedBaseline.outcome !== 'validated-settings') {
         throw new Error(
-          `Runtime settings live-session probe expected validated-settings outcome, received ${validated.outcome}.`
+          `Runtime settings live-session probe expected validated-settings outcome, received ${validatedBaseline.outcome}.`
         );
       }
 
+      if (!validatedBaseline.settingsFilePath) {
+        throw new Error(
+          'Runtime settings live-session probe expected a validated settings file path before safe-restore mutation.'
+        );
+      }
+      const baselineSettingsFilePath = validatedBaseline.settingsFilePath;
+
+      const mutationRequest = deriveRuntimeSettingsLiveSessionMutationRequest({
+        persistedProvider: validatedBaseline.persistedProvider,
+        persistedLabviewVersion: validatedBaseline.persistedLabviewVersion,
+        persistedLabviewBitness: validatedBaseline.persistedLabviewBitness
+      });
+
+      const probedMutation = await runWithRuntimeSettingsSafeRestore(
+        baselineSettingsFilePath,
+        async () => {
+          const updated = await runLocalRuntimeSettingsCli(
+            [
+              '--provider',
+              mutationRequest.provider,
+              '--labview-version',
+              mutationRequest.labviewVersion,
+              '--labview-bitness',
+              mutationRequest.labviewBitness,
+              '--settings-file',
+              baselineSettingsFilePath
+            ],
+            { stdout: quietStdout }
+          );
+          if (updated.outcome !== 'updated-settings') {
+            throw new Error(
+              `Runtime settings live-session probe expected updated-settings outcome, received ${updated.outcome}.`
+            );
+          }
+
+          const validatedMutated = await runLocalRuntimeSettingsCli(
+            ['--validate', '--settings-file', baselineSettingsFilePath],
+            { stdout: quietStdout }
+          );
+          if (validatedMutated.outcome !== 'validated-settings') {
+            throw new Error(
+              `Runtime settings live-session probe expected validated-settings outcome after mutation, received ${validatedMutated.outcome}.`
+            );
+          }
+
+          return {
+            validatedMutated,
+            liveSettingsDuringMutation: readTrimmedLiveRuntimeSettings()
+          };
+        }
+      );
+
       const summary = buildRuntimeSettingsLiveSessionProbeSummary({
-        settingsFilePath: validated.settingsFilePath,
+        settingsFilePath: baselineSettingsFilePath,
         persisted: {
-          runtimeProvider: validated.persistedProvider,
-          labviewVersion: validated.persistedLabviewVersion,
-          labviewBitness: validated.persistedLabviewBitness
+          runtimeProvider: probedMutation.value.validatedMutated.persistedProvider,
+          labviewVersion: probedMutation.value.validatedMutated.persistedLabviewVersion,
+          labviewBitness: probedMutation.value.validatedMutated.persistedLabviewBitness
         },
-        live: liveSettings,
-        runtimeValidationOutcome: validated.runtimeValidationOutcome,
-        runtimeProvider: validated.runtimeProvider,
-        runtimeEngine: validated.runtimeEngine,
-        runtimeBlockedReason: validated.runtimeBlockedReason
+        baselinePersisted: {
+          runtimeProvider: validatedBaseline.persistedProvider,
+          labviewVersion: validatedBaseline.persistedLabviewVersion,
+          labviewBitness: validatedBaseline.persistedLabviewBitness
+        },
+        live: probedMutation.value.liveSettingsDuringMutation,
+        mutationProviderTarget: mutationRequest.provider,
+        safeRestoreApplied: true,
+        safeRestoreVerified: probedMutation.safeRestoreVerified,
+        runtimeValidationOutcome: probedMutation.value.validatedMutated.runtimeValidationOutcome,
+        runtimeProvider: probedMutation.value.validatedMutated.runtimeProvider,
+        runtimeEngine: probedMutation.value.validatedMutated.runtimeEngine,
+        runtimeBlockedReason: probedMutation.value.validatedMutated.runtimeBlockedReason
       });
       const packetSummary = await persistRuntimeSettingsLiveSessionProbePacket(
         summary,

@@ -100,9 +100,9 @@ Use the live-session probe plus packet gate:
 - run `npm run proof:runtime-settings-live-session:assert` to fail closed if
   the latest retained packet is missing or malformed
 
-This narrows the proof gap, but it does not yet prove safe restore after
-partial mutation failures; reload or restart guidance remains active when
-drift is detected.
+This narrows the proof gap and now includes fail-closed probe safe-restore, but
+it still does not prove direct live uptake of updated settings in the current
+session; reload or restart guidance remains active when drift is detected.
 
 ### Where do I find the key commands or checks?
 
