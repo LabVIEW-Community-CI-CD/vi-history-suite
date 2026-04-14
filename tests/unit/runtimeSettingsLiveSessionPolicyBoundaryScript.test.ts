@@ -56,6 +56,7 @@ describe('assertRuntimeSettingsLiveSessionPolicyBoundary script', () => {
         summary: {
           liveUptakeObservation: 'reload-required',
           driftDetected: true,
+          providerDrift: true,
           baselinePersistedProvider: 'host',
           persistedProvider: 'docker',
           mutationProviderTarget: 'docker',
@@ -69,6 +70,7 @@ describe('assertRuntimeSettingsLiveSessionPolicyBoundary script', () => {
         summary: {
           liveUptakeObservation: 'reload-required',
           driftDetected: true,
+          providerDrift: true,
           baselinePersistedProvider: 'docker',
           persistedProvider: 'host',
           mutationProviderTarget: 'host',
@@ -319,6 +321,43 @@ describe('assertRuntimeSettingsLiveSessionPolicyBoundary script', () => {
 
     expect(() => boundaryScript.run(['--packet-root', packetRoot])).toThrow(
       'requires safe-restore verification on every retained run'
+    );
+  });
+
+  it('fails when latest retained provider drift is not explicit true', async () => {
+    const packetRoot = await seedHistoryPackets(temporaryDirectories, [
+      {
+        runId: '2026-04-14T13-00-00-000Z',
+        summary: {
+          liveUptakeObservation: 'reload-required',
+          driftDetected: true,
+          providerDrift: false,
+          baselinePersistedProvider: 'host',
+          persistedProvider: 'docker',
+          mutationProviderTarget: 'docker',
+          mutationTargetPersistedMatch: true,
+          mutationTargetBaselineChanged: true,
+          safeRestoreVerified: true
+        }
+      },
+      {
+        runId: '2026-04-14T12-00-00-000Z',
+        summary: {
+          liveUptakeObservation: 'reload-required',
+          driftDetected: true,
+          providerDrift: true,
+          baselinePersistedProvider: 'docker',
+          persistedProvider: 'host',
+          mutationProviderTarget: 'host',
+          mutationTargetPersistedMatch: true,
+          mutationTargetBaselineChanged: true,
+          safeRestoreVerified: true
+        }
+      }
+    ]);
+
+    expect(() => boundaryScript.run(['--packet-root', packetRoot])).toThrow(
+      'requires latest retained provider drift to remain explicit and true'
     );
   });
 });

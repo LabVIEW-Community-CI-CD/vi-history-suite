@@ -222,6 +222,8 @@ See also:
     receipts or show no baseline-to-persisted provider change
   - returns non-zero when latest retained observation is not
     `reload-required`
+  - returns non-zero when latest retained provider drift is not explicit
+    `true`
   - returns non-zero when retained history includes one or more
     `in-session-updated` observations
   - returns non-zero when retained history does not show safe-restore
