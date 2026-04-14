@@ -22,11 +22,14 @@ Runtime-diagnostic and process-observation detail remain retained for diagnosis,
 <li>one bounded next action</li>
 </ul>
 <h2>Checkbox-Selected Pair Review</h2>
-<p>At the history-panel level, comparison review is checkbox-driven.</p>
+<p>At the history-panel level, comparison review is pair-selection first.</p>
 <ul>
-<li>the primary compare path is selecting two retained revisions with the checkbox column</li>
-<li>the second checkbox selection generates the comparison automatically for that exact selected/base pair</li>
+<li>use the checkbox column to select exactly two retained revisions</li>
+<li>review the explicit compare preflight section for the exact selected/base pair plus runtime facts</li>
+<li>choose <code>Compare</code> to generate or reopen retained comparison evidence for that exact pair</li>
+<li>the newer selected revision becomes <code>selected</code> and the older selected revision becomes <code>base</code></li>
 <li>the oldest retained revision can still serve as the older/base side of a checkbox-selected pair</li>
+<li>there is no auto-run compare trigger on the second checkbox selection</li>
 <li>there is no separate compare button on commit rows for extension users</li>
 <li>retained comparison evidence opens from the checkbox-selected pair instead of falling back to VS Code text diff on binary VI content</li>
 </ul>

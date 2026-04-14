@@ -318,14 +318,14 @@ function collectInstalledUserTruths(repoRootPath) {
   const html = fs.existsSync(userWorkflowPath) ? fs.readFileSync(userWorkflowPath, 'utf8') : '';
 
   return {
-    dockerOnlyCompareExecution: html.includes(
-      'Comparison generation is Docker-only in the installed extension.'
+    hostDefaultProviderDocumented: html.includes(
+      'Windows defaults to local <code>LabVIEWCLI</code> when the persisted provider is absent'
     ),
-    engineAwareImageSelection: html.includes(
-      'on Windows, the current Docker daemon engine selects the governed Windows image'
+    explicitProviderBundleValidationDocumented: html.includes(
+      '<code>VI History: Check Runtime Readiness</code> and <code>vihs-runtime-settings --validate</code> expose whether the current bundle is <code>ready</code>, <code>needs-image-acquisition</code>, or blocked'
     ),
-    dockerRequiredHardStopWithoutHostFallback: html.includes(
-      'the extension hard-stops and does not probe host LabVIEW'
+    dockerExpertProviderDocumented: html.includes(
+      'Docker remains a bounded expert provider selected through the generated settings CLI'
     ),
     providerAndProgressVisible: html.includes(
       'compare progress, selected provider, current engine, selected image, acquisition state, and next action stay visible'
@@ -410,9 +410,9 @@ function buildDocsContinuousIntegrationMarkdown(report) {
     '',
     '## Installed-User Truth Checks',
     '',
-    `- Docker-only compare execution documented: ${String(report.installedUserTruths.dockerOnlyCompareExecution)}`,
-    `- Engine-aware image selection documented: ${String(report.installedUserTruths.engineAwareImageSelection)}`,
-    `- Docker-required hard stop without host fallback documented: ${String(report.installedUserTruths.dockerRequiredHardStopWithoutHostFallback)}`,
+    `- Host-default provider documented: ${String(report.installedUserTruths.hostDefaultProviderDocumented)}`,
+    `- Explicit provider bundle validation documented: ${String(report.installedUserTruths.explicitProviderBundleValidationDocumented)}`,
+    `- Docker expert-provider boundary documented: ${String(report.installedUserTruths.dockerExpertProviderDocumented)}`,
     `- Provider and progress visibility documented: ${String(report.installedUserTruths.providerAndProgressVisible)}`,
     '',
     '## Steps',

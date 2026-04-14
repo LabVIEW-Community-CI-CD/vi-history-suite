@@ -349,7 +349,8 @@ describe('ship-control direction system', () => {
     expect(bundledInstallPage).toContain(
       'packaged bundled docs through <code>VI History: Open Documentation</code>'
     );
-    expect(bundledInstallPage).toContain('install or start Docker and confirm <code>docker info</code>');
+    expect(bundledInstallPage).toContain('Windows defaults to local <code>LabVIEWCLI</code> when the persisted provider is absent');
+    expect(bundledInstallPage).toContain('review the explicit compare preflight section and choose <code>Compare</code>');
     expect(bundledInstallPage).toContain('<h2>Release Procedure Summary</h2>');
     expect(bundledInstallPage).toContain('open <code>VI History</code> on an eligible VI');
     expect(bundledInstallPage).not.toContain('Retained exact release: <code>v0.2.0</code>');

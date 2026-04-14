@@ -65,9 +65,9 @@ const docsContinuousIntegration = require(path.resolve(
     env?: NodeJS.ProcessEnv;
   }) => {
     installedUserTruths: {
-      dockerOnlyCompareExecution: boolean;
-      engineAwareImageSelection: boolean;
-      dockerRequiredHardStopWithoutHostFallback: boolean;
+      hostDefaultProviderDocumented: boolean;
+      explicitProviderBundleValidationDocumented: boolean;
+      dockerExpertProviderDocumented: boolean;
       providerAndProgressVisible: boolean;
     };
   };
@@ -87,9 +87,9 @@ const docsContinuousIntegration = require(path.resolve(
     publicPublishedWikiPageCount?: number | null;
     bundledPageCount?: number | null;
     installedUserTruths: {
-      dockerOnlyCompareExecution: boolean;
-      engineAwareImageSelection: boolean;
-      dockerRequiredHardStopWithoutHostFallback: boolean;
+      hostDefaultProviderDocumented: boolean;
+      explicitProviderBundleValidationDocumented: boolean;
+      dockerExpertProviderDocumented: boolean;
       providerAndProgressVisible: boolean;
     };
     steps: Array<{ id: string; command: string; args: string[]; status: string }>;
@@ -342,9 +342,9 @@ describe('documentation continuous integration runner', () => {
     });
 
     expect(report.installedUserTruths).toEqual({
-      dockerOnlyCompareExecution: true,
-      engineAwareImageSelection: true,
-      dockerRequiredHardStopWithoutHostFallback: true,
+      hostDefaultProviderDocumented: true,
+      explicitProviderBundleValidationDocumented: true,
+      dockerExpertProviderDocumented: true,
       providerAndProgressVisible: true
     });
 
@@ -355,11 +355,9 @@ describe('documentation continuous integration runner', () => {
       steps: []
     });
 
-    expect(markdown).toContain('Docker-only compare execution documented: true');
-    expect(markdown).toContain('Engine-aware image selection documented: true');
-    expect(markdown).toContain(
-      'Docker-required hard stop without host fallback documented: true'
-    );
+    expect(markdown).toContain('Host-default provider documented: true');
+    expect(markdown).toContain('Explicit provider bundle validation documented: true');
+    expect(markdown).toContain('Docker expert-provider boundary documented: true');
     expect(markdown).toContain('Provider and progress visibility documented: true');
     expect(markdown).not.toContain('Windows auto uses Docker when installed');
     expect(markdown).not.toContain('No silent provider fallback');
