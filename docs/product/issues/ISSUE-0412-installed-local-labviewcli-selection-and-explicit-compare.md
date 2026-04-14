@@ -108,9 +108,12 @@ history instead of chat memory.
   plus current-host launcher execution against a temporary settings file
 - prove the explicit Windows no-`--settings-file` target under a disposable
   `APPDATA\\Code\\User\\settings.json`
+- retain the governed live-session probe lane from `ISSUE-0414`: persisted
+  versus live runtime settings drift probe command, retained packet output, and
+  local fail-closed packet assertion
 - keep the remaining proof gap explicit: direct live mutation of the active
-  real user-profile VS Code settings target while Code is already running is
-  not yet end-to-end proven
+  real user-profile VS Code settings target while Code is already running,
+  including fail-closed safe-restore behavior, is not yet end-to-end proven
 - execute the governed follow-on branch sequence for that seam through
   [ISSUE-0414 Runtime-Provider CLI Live-Session Proof Roadmap](./ISSUE-0414-runtime-provider-cli-live-session-proof-roadmap.md)
 - keep packaged/public docs on the exact released Docker-only baseline until
@@ -214,10 +217,12 @@ still only proposal material during round 1:
   selected provider, and preflight/block facts instead of treating
   second-selection auto-run as the live branch contract
 - direct live mutation of the already-running VS Code session remains
-  unproven and is retained as the remaining proof gap; the generated CLI plus
-  the settings-driven compare-preflight and runtime-doctor surfaces now warn
-  users to reload or restart the window before using Compare when Code is
-  already open
+  partially proven through a retained persisted-versus-live probe packet plus
+  local packet gate, but end-to-end mutation safety remains unproven and is
+  retained as the remaining proof gap; the generated CLI plus the
+  settings-driven compare-preflight and runtime-doctor surfaces now warn users
+  to reload or restart the window before using Compare when Code is already
+  open
   for this slice
 
 ## Round 1 Working Assessment

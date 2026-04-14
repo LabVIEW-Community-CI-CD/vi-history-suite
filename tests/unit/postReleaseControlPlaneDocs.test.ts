@@ -106,7 +106,7 @@ describe('post-release control-plane coherence', () => {
 
     expect(gateDoc).toContain('gate state: `closed`');
     expect(gateDoc).toContain('historical public closeout: `TRANCHE-010` / `ISSUE-0407` / `PROGRAM-0002`');
-    expect(gateDoc).toContain('feature/runtime-provider-live-session-probe-command');
+    expect(gateDoc).toContain('feature/runtime-provider-live-session-gate-decision');
     expect(gateJson.status).toBe('closed');
     expect(gateJson.historicalPublicCloseout).toEqual(
       expect.objectContaining({
@@ -119,7 +119,7 @@ describe('post-release control-plane coherence', () => {
         programId: 'PROGRAM-0005'
       })
     );
-    expect(gateJson.nextMove).toBe('feature/runtime-provider-live-session-probe-command');
+    expect(gateJson.nextMove).toBe('feature/runtime-provider-live-session-gate-decision');
 
     expect(benchmarkProgram).toContain('Closed on bounded post-release benchmark truth.');
     expect(sustainmentProgram).toContain('Active post-release program.');

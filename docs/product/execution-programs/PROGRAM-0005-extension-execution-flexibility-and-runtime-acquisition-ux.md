@@ -37,11 +37,16 @@ Current facts:
   validation surface reports `ready` plus `windows-container` / `labview-cli`
   for the persisted `docker` / `2026` / `x64` bundle when Docker Desktop and
   the governed Windows image are available on the canonical host
-- the remaining CLI proof gap is explicit only for direct live mutation of
-  the already-running VS Code session; the generated CLI plus the
-  settings-driven compare-preflight and runtime-doctor surfaces now warn
-  users to reload or restart the window before using Compare when Code is
-  already open
+- a governed live-session probe command now compares persisted
+  provider/version/bitness facts against active in-session VS Code runtime
+  settings and retains one per-run plus one latest probe packet (`JSON` and
+  `Markdown`) under extension-global storage
+- one local fail-closed packet gate now exists at
+  `npm run proof:runtime-settings-live-session:assert` so malformed or missing
+  retained probe evidence blocks admission
+- the remaining CLI proof gap is now narrower: direct mutation safety and
+  automatic restore around a live already-running VS Code session are still
+  not end-to-end proven, and users still need to reload or restart the window before using Compare when drift is detected
 - the Windows exact-runtime preflight is now landed: installed compare
   resolves one exact version+bitness LabVIEW executable plus matching
   `LabVIEWCLI` surface and fails closed on missing, ambiguous, or
@@ -53,9 +58,8 @@ Current facts:
 - released `repo-standards-review` `v0.2.9` compliance closeout is now
   retained on this branch
 - remaining work on this program is now narrower: live default-settings
-  mutation proof and later exact-release promotion work after candidate
-  publication alignment and runtime-provider public acceptance are retained as
-  closed
+  mutation safe-restore proof and the final gate decision on retained reload
+  guidance remain under active `ISSUE-0414`
 - `PROGRAM-0002` remains historical Docker-only public-closeout truth; it is
   not the active gate for the next host-default installed contract
 - the retained branch handoff packet is
@@ -179,7 +183,8 @@ An installed extension user:
   future sessions do not reopen completed standards work while deciding merge
   and publication order
 - the unresolved live user-settings proof gap remains explicit until a
-  supported default-settings proof lane closes it
+  supported default-settings proof lane closes it; the current retained
+  proof lane is the live-session probe plus local packet gate
 
 ## Delivery Rules
 
