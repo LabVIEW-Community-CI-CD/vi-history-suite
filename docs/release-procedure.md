@@ -14,8 +14,8 @@
 - The current exact released line is `v1.2.2`.
 - The burned exact released line is `v1.0.2`.
 - The current published package line on `main` is `1.2.2`.
-- The current develop package line on `develop` is `1.2.2`.
-- The active exact release candidate line on `develop` is `v1.2.2`.
+- The current develop package line on `develop` is `1.3.0`.
+- The active exact release candidate line on `develop` is `v1.3.0`.
 - No newer `release/*` branch is active yet.
 - The public GitHub default branch is `main` because it carries the latest
   exact released source line.
@@ -245,8 +245,8 @@
   exact `v1.0.6`, exact `v1.1.0`, exact `v1.2.0`, `v1.2.1`, or exact
   `v1.2.2` release
   evidence.
-- The current develop package line on `develop` is `1.2.2`, the active exact
-  release candidate line on `develop` is `v1.2.2`, and no newer `release/*`
+- The current develop package line on `develop` is `1.3.0`, the active exact
+  release candidate line on `develop` is `v1.3.0`, and no newer `release/*`
   branch is active yet.
 - The packaged extension homepage now points installed users to the maintained
   public wiki home, while the repo root remains the source and control-plane

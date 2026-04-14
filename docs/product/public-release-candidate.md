@@ -1,11 +1,11 @@
 # Public Release Candidate
 
-- Version line: `1.2.2`
+- Version line: `1.3.0`
 - Burned exact release line: `v1.0.2`
-- Recorded at: `2026-04-08T07:58:39Z`
+- Recorded at: `2026-04-14T00:00:00Z`
 - Authority source of truth: GitLab `develop` -> `release/*` -> `main`
 - Published public source commit: `86b19a2`
-- Public `develop` candidate commit: `12391e1`
+- Public `develop` candidate commit: `not yet published`
 - Published public wiki head: `527a8b4`
 
 ## Branch Model
@@ -25,14 +25,15 @@
 
 ## Readiness
 
-- Authority baseline: `v1.2.1-exact-public-release-published`
-- Local installed VSIX build: `candidate-v1.2.2-package-built-through-design-gate`
+- Authority baseline: `v1.2.2-exact-public-release-published`
+- Local installed VSIX build: `candidate-v1.3.0-line-opened-awaiting-public-build`
 - Local public devcontainer: `v1.1.0-published-baseline`
 - Local public fixture helper: `v1.1.0-published-baseline`
 - Historical public repo bootstrap baseline:
   `exact-v1.2.0-human-baseline-retained`
 - Published-surface expert-agent review:
-  `no-findings`
+  `pending-next-published-candidate`
+- Runtime-provider public-acceptance gate: `open`
 - Exact public release: `v1.2.2-published`
 
 ## Exact Release Baseline
@@ -50,13 +51,13 @@
 
 - The exact published public source head on `main` now publishes `86b19a2` and is
   retained in `docs/product/public-github-source-publication-ledger.{md,json}`.
-- The maintained public `develop` candidate now lands through GitHub PRs `#24`,
-  `#25`, `#26`, and `#27` at commit `12391e1`, with `package-preview` and
-  `public-facade-linux-smoke` green before merge.
+- The maintained public `develop` candidate for `v1.3.0` is not yet
+  published; review-ready remains closed until the next public `develop` head
+  is live and retained here.
 - The maintained public wiki head is now `527a8b4` and is retained in
   `docs/product/public-github-wiki-publication-ledger.{md,json}`.
-- The exact VS Code Marketplace item now verifies `1.2.2` through the official
-  gallery extension query.
+- The exact VS Code Marketplace item still verifies `1.2.2` through the
+  official gallery extension query.
 
 ## Local Proof
 
@@ -92,10 +93,9 @@
 - Prior retained expert-agent review: `findings-present` on `96944d7` /
   `d6da0c4` with `2` published-surface findings folded into the current
   candidate.
-- Exact `v1.2.2` tagging and Marketplace publication are now eligible on
-  published-surface review grounds; the exact public release, exact public
-  wiki closeout, and Marketplace publication are all live on the retained
-  public surfaces.
+- Exact `v1.2.2` tagging and Marketplace publication remain closed cleanly on
+  published-surface review grounds; the next `v1.3.0` expert-agent review is
+  still pending because the next public candidate heads are not yet live.
 
 ## Tester Fixture Strategy
 
@@ -137,7 +137,9 @@
 ## Remaining Blockers
 
 - No release-path blocker remains on exact `v1.2.2`.
-- No active expert-agent blocker remains on `v1.2.2`; public `main` remains
-  `86b19a2`, public `develop` still publishes `12391e1`, the public wiki now
-  publishes `527a8b4`, and the official gallery extension query verifies
-  Marketplace version `1.2.2`.
+- Active `v1.3.0` candidate blockers remain:
+  - runtime-provider public-acceptance gate is still open
+  - the next public `develop` candidate head is not yet published
+  - the next public wiki candidate head is not yet published
+  - the next expert-agent review is pending until those exact candidate heads
+    are live

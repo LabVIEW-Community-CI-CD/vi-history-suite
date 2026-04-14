@@ -39,8 +39,8 @@
       ],
       "currentExactReleaseLine": "v1.2.2",
       "currentMainPackageLine": "1.2.2",
-      "currentDevelopPackageLine": "1.2.2",
-      "activeDevelopCandidateReleaseLine": "v1.2.2",
+      "currentDevelopPackageLine": "1.3.0",
+      "activeDevelopCandidateReleaseLine": "v1.3.0",
       "activeReleaseCandidateBranch": null,
       "publicDefaultBranch": "main",
       "publicCodespaceBranch": "develop",
@@ -120,16 +120,16 @@
       "decisionRecordingRule": "record the chosen bump rationale in the control plane before further publication or release normalization continues"
     },
     "activeOpeningDecision": {
-      "recordedAt": "2026-04-07",
-      "chosenBump": "patch",
-      "targetDevelopCandidateReleaseLine": "v1.2.2",
+      "recordedAt": "2026-04-14",
+      "chosenBump": "minor",
+      "targetDevelopCandidateReleaseLine": "v1.3.0",
       "rationale": [
-        "the next line governs exact-release closeout follow-through by making the protected back-merge of exact released main into develop part of the same release closeout instead of a separately elicited later task",
-        "the same line hardens first-run installed-user guidance and runtime-doctor recovery so machines without Docker installed or running do not look like broken image-acquisition cases"
+        "the next line adds a governed installed-user capability and supported workflow by promoting host-default Windows local LabVIEWCLI with bounded expert Docker instead of only hardening the exact released Docker-only surface",
+        "the v1.3.0 line keeps exact v1.2.2 as the truthful published baseline while opening the next candidate line required for runtime-provider public publication work"
       ],
       "rejectedAlternatives": {
-        "minor": "rejected because the slice hardens existing release and installed-user surfaces instead of adding a new product capability",
-        "major": "rejected because no governed v1.2.1 runtime or workflow contract is intentionally broken or removed"
+        "patch": "rejected because the slice now opens a new governed capability line instead of only hardening the already-published exact v1.2.2 contract",
+        "major": "rejected because no exact v1.2.2 public or maintainer contract is intentionally broken or removed; the published baseline remains intact until the next candidate is actually published"
       }
     },
     "explicitNonTriggers": [

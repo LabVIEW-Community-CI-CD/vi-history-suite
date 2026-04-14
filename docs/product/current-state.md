@@ -148,8 +148,8 @@ Latest landed ship target:
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.2.2`
 - current published package line on `main`: `1.2.2`
-- current develop package line on `develop`: `1.2.2`
-- active exact release candidate line on `develop`: `v1.2.2`
+- current develop package line on `develop`: `1.3.0`
+- active exact release candidate line on `develop`: `v1.3.0`
 - no newer `release/*` branch is active yet
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
@@ -169,12 +169,14 @@ Latest landed ship target:
 - current changelog: [CHANGELOG.md](../../CHANGELOG.md)
 - docs-workbench image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
 - remaining blockers: none on exact `v1.2.2`; public `main` publishes
-  `86b19a2`, the public GitHub release `v1.2.2` is live, public `develop`
-  still publishes candidate commit `12391e1`, the public wiki publishes
-  `527a8b4`, the official gallery extension query verifies Marketplace version
-  `1.2.2` for `svelderrainruiz.vi-history-suite`, and the latest retained
-  expert-agent verdict returned no findings on those exact published public
-  release surfaces
+  `86b19a2`, the public GitHub release `v1.2.2` is live, the public wiki
+  publishes `527a8b4`, the official gallery extension query verifies
+  Marketplace version `1.2.2` for `svelderrainruiz.vi-history-suite`, and the
+  latest retained expert-agent verdict returned no findings on those exact
+  published public release surfaces; the next `v1.3.0` candidate remains
+  blocked until the maintained public `develop` head and maintained public
+  wiki head are both published and the post-publication expert-agent review
+  closes with no findings
 
 Current active and recently closed tranches:
 
@@ -327,10 +329,11 @@ Post-release tranches:
     surface so Marketplace users land on maintained local-use documentation
     first, while repo/fork/Codespaces procedures remain explicit secondary
     source-evaluation lanes
-  - the exact public `main` line now publishes `86b19a2`, while the later
-    maintained public `develop` candidate still publishes `12391e1`, the
-    public wiki entry surface now publishes `527a8b4`, and the VS Code
-    Marketplace item verifies `1.2.2`
+  - the exact public `main` line now publishes `86b19a2`, the public wiki
+    entry surface now publishes `527a8b4`, the VS Code Marketplace item
+    verifies `1.2.2`, and the later public candidate line is now reopened on
+    `v1.3.0` instead of remaining attached to the historical exact `1.2.2`
+    publication closeout
   - sustainment does not absorb the active `TRANCHE-016` local-LabVIEWCLI
     contract reset, the historical `TRANCHE-010` Docker-only public closeout,
     or the open runtime-provider public-acceptance gate
@@ -394,7 +397,7 @@ Post-release tranches:
   - closed issue: [ISSUE-0411 Public Codespaces Public-Repo Bootstrap](./issues/ISSUE-0411-public-codespaces-public-repo-bootstrap.md)
   - closed execution program: [PROGRAM-0006: Public Codespaces Public-Repo Bootstrap](./execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md)
   - exact public `main` now publishes `v1.2.2`, while the later public
-    `develop` line remains separately tracked for the next opening decision
+    `develop` line is now reopened as the next exact candidate line `v1.3.0`
   - the first `1.2.0` correction repaired branch-governance admission by
     realigning exact `main` back into `develop` before feature work continues
   - the line now adds one generic public-repo bootstrap surface for public

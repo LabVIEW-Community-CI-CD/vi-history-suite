@@ -71,8 +71,8 @@ Current version-line contract:
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.2.2`
 - current published package line on `main`: `1.2.2`
-- current develop package line on `develop`: `1.2.2`
-- active exact release candidate line on `develop`: `v1.2.2`
+- current develop package line on `develop`: `1.3.0`
+- active exact release candidate line on `develop`: `v1.3.0`
 - no newer `release/*` branch is active yet
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
@@ -84,19 +84,20 @@ Current version-line contract:
 
 Latest recorded opening decision for the current line:
 
-- chosen bump: `patch`
-- target exact candidate line: `v1.2.2`
-- rationale: the next line governs VS Code Marketplace publication as an
-  exact-release closeout follow-through surface by making the protected
-  back-merge of exact released `main` into `develop` part of the same release
-  closeout instead of a separately elicited later task
-- rationale: the same line hardens first-run installed-user guidance and
-  runtime-doctor recovery so machines without Docker installed or running do
-  not look like broken image-acquisition cases
-- rejected `minor`: the slice hardens and redirects an existing released
-  distribution surface instead of adding a new product capability
-- rejected `major`: no exact `v1.2.1` runtime or workflow contract is being
-  intentionally broken or removed
+- chosen bump: `minor`
+- target exact candidate line: `v1.3.0`
+- rationale: the next line adds a governed installed-user capability and
+  supported workflow by promoting host-default Windows local `LabVIEWCLI` with
+  bounded expert Docker instead of only hardening the exact released
+  Docker-only surface
+- rationale: the `v1.3.0` line keeps exact `v1.2.2` as the truthful published
+  baseline while opening the next candidate line required for runtime-provider
+  public publication work
+- rejected `patch`: the slice now opens a new governed capability line instead
+  of only hardening the already-published exact `v1.2.2` contract
+- rejected `major`: no exact `v1.2.2` public or maintainer contract is being
+  intentionally broken or removed; the published baseline remains intact until
+  the next candidate is actually published
 
 Strict SemVer rule after an exact release:
 

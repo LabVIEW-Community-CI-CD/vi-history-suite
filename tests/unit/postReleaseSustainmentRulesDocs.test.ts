@@ -146,8 +146,8 @@ describe('post-release sustainment rules package', () => {
       burnedExactVersionReleases: ['v1.0.2'],
       currentExactReleaseLine: 'v1.2.2',
       currentMainPackageLine: '1.2.2',
-      currentDevelopPackageLine: '1.2.2',
-      activeDevelopCandidateReleaseLine: 'v1.2.2',
+      currentDevelopPackageLine: '1.3.0',
+      activeDevelopCandidateReleaseLine: 'v1.3.0',
       activeReleaseCandidateBranch: null,
       publicDefaultBranch: 'main',
       publicCodespaceBranch: 'develop',
@@ -241,14 +241,14 @@ describe('post-release sustainment rules package', () => {
     );
     expect(rules.releaseCadence.activeOpeningDecision).toEqual(
       expect.objectContaining({
-        chosenBump: 'patch',
-        targetDevelopCandidateReleaseLine: 'v1.2.2'
+        chosenBump: 'minor',
+        targetDevelopCandidateReleaseLine: 'v1.3.0'
       })
     );
     expect(rules.releaseCadence.activeOpeningDecision?.rationale).toEqual(
       expect.arrayContaining([
-        'the next line governs exact-release closeout follow-through by making the protected back-merge of exact released main into develop part of the same release closeout instead of a separately elicited later task',
-        'the same line hardens first-run installed-user guidance and runtime-doctor recovery so machines without Docker installed or running do not look like broken image-acquisition cases'
+        'the next line adds a governed installed-user capability and supported workflow by promoting host-default Windows local LabVIEWCLI with bounded expert Docker instead of only hardening the exact released Docker-only surface',
+        'the v1.3.0 line keeps exact v1.2.2 as the truthful published baseline while opening the next candidate line required for runtime-provider public publication work'
       ])
     );
 
@@ -409,10 +409,10 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('## Operator And Documentation Upkeep Rules');
     expect(rulesDoc).toContain('public GitHub default branch: `main`');
     expect(rulesDoc).toContain('current exact released line: `v1.2.2`');
-    expect(rulesDoc).toContain('current develop package line on `develop`: `1.2.2`');
-    expect(rulesDoc).toContain('active exact release candidate line on `develop`: `v1.2.2`');
+    expect(rulesDoc).toContain('current develop package line on `develop`: `1.3.0`');
+    expect(rulesDoc).toContain('active exact release candidate line on `develop`: `v1.3.0`');
     expect(rulesDoc).toContain('no newer `release/*` branch is active yet');
-    expect(rulesDoc).toContain('chosen bump: `patch`');
+    expect(rulesDoc).toContain('chosen bump: `minor`');
     expect(rulesDoc).toContain('develop');
     expect(rulesDoc).toContain('protected exact-release line');
     expect(rulesDoc).toContain('required checks');
