@@ -12,6 +12,11 @@ import { evaluateViEligibilityForFsPath } from '../services/viHistoryModel';
 
 type EligibilityMap = Record<string, true>;
 type IndexedRepository = Pick<GitRepository, 'rootUri'>;
+type IndexedRepositoryWorkItem = {
+  repository: IndexedRepository;
+  trackedFiles: string[];
+  head: string;
+};
 
 export interface EligibilityDebugSnapshot {
   indexedRepositoryRoots: string[];
@@ -23,13 +28,21 @@ export class ViEligibilityIndexer implements vscode.Disposable {
   private readonly disposables: vscode.Disposable[] = [];
   private readonly repositoryStateDisposables = new Map<string, vscode.Disposable>();
   private readonly eligibilityCache = new Map<string, boolean>();
+  private readonly statusBarItem: vscode.StatusBarItem;
   private refreshHandle: NodeJS.Timeout | undefined;
   private refreshRunning = false;
   private refreshPending = false;
   private eligiblePaths: EligibilityMap = {};
   private lastIndexedRepositoryRoots: string[] = [];
 
-  constructor(private readonly gitApi: GitApi | undefined) {}
+  constructor(private readonly gitApi: GitApi | undefined) {
+    this.statusBarItem = vscode.window.createStatusBarItem(
+      vscode.StatusBarAlignment.Left,
+      95
+    );
+    this.statusBarItem.hide();
+    this.disposables.push(this.statusBarItem);
+  }
 
   async start(): Promise<void> {
     this.registerListeners();
@@ -178,6 +191,7 @@ export class ViEligibilityIndexer implements vscode.Disposable {
     if (!vscode.workspace.isTrusted) {
       this.eligiblePaths = {};
       this.lastIndexedRepositoryRoots = [];
+      this.hideStatusBarProgress();
       await vscode.commands.executeCommand('setContext', 'labviewViHistory.eligiblePaths', {});
       return;
     }
@@ -187,8 +201,34 @@ export class ViEligibilityIndexer implements vscode.Disposable {
       vscode.workspace.workspaceFolders ?? []
     );
     const nextIndexedRepositoryRoots = repositories.map((repository) => repository.rootUri.fsPath);
+    const repositoryWorkItems: IndexedRepositoryWorkItem[] = [];
+    let totalTrackedFiles = 0;
     const nextEligiblePaths: EligibilityMap = {};
     let refreshOutcome: 'applied' | 'cancelled' | 'workspace-untrusted' = 'applied';
+
+    for (const repository of repositories) {
+      if (!vscode.workspace.isTrusted) {
+        refreshOutcome = 'workspace-untrusted';
+        break;
+      }
+
+      try {
+        const trackedFiles = await listTrackedFiles(repository.rootUri.fsPath);
+        const head = await getRepoHead(repository.rootUri.fsPath);
+        repositoryWorkItems.push({
+          repository,
+          trackedFiles,
+          head
+        });
+        totalTrackedFiles += trackedFiles.length;
+      } catch {
+        // Fail closed per repository and continue indexing other repositories.
+      }
+    }
+
+    let processedTrackedFiles = 0;
+    let lastReportedPercent = 0;
+    const refreshStartMs = Date.now();
 
     await vscode.window.withProgress(
       {
@@ -197,7 +237,17 @@ export class ViEligibilityIndexer implements vscode.Disposable {
         cancellable: true
       },
       async (progress, cancellationToken) => {
-        for (const repository of repositories) {
+        if (totalTrackedFiles > 0) {
+          const initialUpdate = buildIndexingProgressUpdate({
+            repositoryName: path.basename(repositoryWorkItems[0].repository.rootUri.fsPath),
+            processed: 0,
+            total: totalTrackedFiles,
+            elapsedMs: 0
+          });
+          this.showStatusBarProgress(initialUpdate);
+        }
+
+        for (const workItem of repositoryWorkItems) {
           if (cancellationToken.isCancellationRequested) {
             refreshOutcome = 'cancelled';
             return;
@@ -207,20 +257,10 @@ export class ViEligibilityIndexer implements vscode.Disposable {
             return;
           }
 
-          let trackedFiles: string[];
-          let head: string;
-
-          try {
-            trackedFiles = await listTrackedFiles(repository.rootUri.fsPath);
-            head = await getRepoHead(repository.rootUri.fsPath);
-          } catch {
-            continue;
-          }
-
           const concurrency = getConfiguredConcurrency();
-          let processedWithinRepository = 0;
+          const repositoryName = path.basename(workItem.repository.rootUri.fsPath);
 
-          await forEachConcurrent(trackedFiles, concurrency, async (relativePath) => {
+          await forEachConcurrent(workItem.trackedFiles, concurrency, async (relativePath) => {
             if (refreshOutcome !== 'applied') {
               return;
             }
@@ -233,14 +273,14 @@ export class ViEligibilityIndexer implements vscode.Disposable {
               return;
             }
 
-            const cacheKey = buildCacheKey(repository, head, relativePath);
-            const fileUri = vscode.Uri.joinPath(repository.rootUri, relativePath);
+            const cacheKey = buildCacheKey(workItem.repository, workItem.head, relativePath);
+            const fileUri = vscode.Uri.joinPath(workItem.repository.rootUri, relativePath);
 
             let isEligible = this.eligibilityCache.get(cacheKey);
             if (isEligible === undefined) {
               try {
                 const eligibility = await evaluateViEligibilityForFsPath(fileUri.fsPath, {
-                  repoRoot: repository.rootUri.fsPath,
+                  repoRoot: workItem.repository.rootUri.fsPath,
                   strictRsrcHeader: getStrictHeaderSetting()
                 });
                 isEligible = eligibility.eligible;
@@ -256,10 +296,23 @@ export class ViEligibilityIndexer implements vscode.Disposable {
               }
             }
 
-            processedWithinRepository += 1;
-            progress.report({
-              message: `${path.basename(repository.rootUri.fsPath)} ${processedWithinRepository}/${trackedFiles.length}`
+            processedTrackedFiles += 1;
+            const progressUpdate = buildIndexingProgressUpdate({
+              repositoryName,
+              processed: processedTrackedFiles,
+              total: totalTrackedFiles,
+              elapsedMs: Math.max(0, Date.now() - refreshStartMs)
             });
+            const progressIncrement = Math.max(
+              0,
+              progressUpdate.percent - lastReportedPercent
+            );
+            lastReportedPercent = progressUpdate.percent;
+            progress.report({
+              message: progressUpdate.message,
+              increment: progressIncrement > 0 ? progressIncrement : undefined
+            });
+            this.showStatusBarProgress(progressUpdate);
           });
 
           if (refreshOutcome !== 'applied') {
@@ -275,24 +328,96 @@ export class ViEligibilityIndexer implements vscode.Disposable {
       | 'workspace-untrusted';
 
     if (finalRefreshOutcome === 'cancelled') {
+      this.hideStatusBarProgress();
       return;
     }
 
     if (finalRefreshOutcome === 'workspace-untrusted') {
       this.eligiblePaths = {};
       this.lastIndexedRepositoryRoots = [];
+      this.hideStatusBarProgress();
       await vscode.commands.executeCommand('setContext', 'labviewViHistory.eligiblePaths', {});
       return;
     }
 
     this.lastIndexedRepositoryRoots = nextIndexedRepositoryRoots;
     this.eligiblePaths = nextEligiblePaths;
+    this.hideStatusBarProgress();
     await vscode.commands.executeCommand(
       'setContext',
       'labviewViHistory.eligiblePaths',
       nextEligiblePaths
     );
   }
+
+  private showStatusBarProgress(update: IndexingProgressUpdate): void {
+    this.statusBarItem.text = `$(sync~spin) VI History ${update.percentLabel} (${update.processed}/${update.total}) ETA ${update.etaLabel}`;
+    this.statusBarItem.tooltip = [
+      'VI History indexing',
+      '',
+      `${update.repositoryName}: ${update.percentLabel} (${update.processed}/${update.total})`,
+      `ETA ${update.etaLabel}`
+    ].join('\n');
+    this.statusBarItem.show();
+  }
+
+  private hideStatusBarProgress(): void {
+    this.statusBarItem.hide();
+  }
+}
+
+type IndexingProgressUpdate = {
+  repositoryName: string;
+  processed: number;
+  total: number;
+  percent: number;
+  percentLabel: string;
+  etaLabel: string;
+  message: string;
+};
+
+function buildIndexingProgressUpdate(options: {
+  repositoryName: string;
+  processed: number;
+  total: number;
+  elapsedMs: number;
+}): IndexingProgressUpdate {
+  const total = Math.max(1, options.total);
+  const processed = Math.max(0, Math.min(options.processed, total));
+  const percent = (processed / total) * 100;
+  const percentLabel = `${Math.round(percent)}%`;
+  const remainingItems = Math.max(0, total - processed);
+  const etaMs =
+    processed > 0 && remainingItems > 0
+      ? Math.round((options.elapsedMs / processed) * remainingItems)
+      : 0;
+  const etaLabel = formatEta(etaMs);
+  return {
+    repositoryName: options.repositoryName,
+    processed,
+    total,
+    percent,
+    percentLabel,
+    etaLabel,
+    message: `${options.repositoryName} ${percentLabel} (${processed}/${total}) ETA ${etaLabel}`
+  };
+}
+
+function formatEta(milliseconds: number): string {
+  const totalSeconds = Math.max(0, Math.round(milliseconds / 1000));
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (hours > 0) {
+    return `${hours.toString().padStart(2, '0')}:${minutes
+      .toString()
+      .padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  }
+
+  return `${minutes.toString().padStart(2, '0')}:${seconds
+    .toString()
+    .padStart(2, '0')}`;
 }
 
 export function buildCacheKey(

@@ -5,6 +5,7 @@ const {
   configurationValues,
   commandExecuteMock,
   withProgressMock,
+  createStatusBarItemMock,
   progressReportMock,
   workspaceFolderListeners,
   workspaceTrustListeners,
@@ -23,6 +24,13 @@ const {
   ]),
   commandExecuteMock: vi.fn(),
   withProgressMock: vi.fn(),
+  createStatusBarItemMock: vi.fn(() => ({
+    text: '',
+    tooltip: '',
+    show: vi.fn(),
+    hide: vi.fn(),
+    dispose: vi.fn()
+  })),
   progressReportMock: vi.fn(),
   workspaceFolderListeners: [] as Array<() => unknown>,
   workspaceTrustListeners: [] as Array<() => unknown>,
@@ -78,13 +86,17 @@ vi.mock('vscode', () => ({
     }
   },
   window: {
-    withProgress: withProgressMock
+    withProgress: withProgressMock,
+    createStatusBarItem: createStatusBarItemMock
   },
   commands: {
     executeCommand: commandExecuteMock
   },
   ProgressLocation: {
     Window: 10
+  },
+  StatusBarAlignment: {
+    Left: 1
   },
   Disposable: class Disposable {
     static from(...disposables: Array<{ dispose?: () => void }>) {
@@ -148,6 +160,7 @@ describe('viEligibilityIndexer helpers', () => {
     workspaceState.isTrusted = true;
     workspaceState.workspaceFolders = [];
     withProgressMock.mockReset();
+    createStatusBarItemMock.mockClear();
     withProgressMock.mockImplementation(async (_options, task) =>
       task(
         {
@@ -262,6 +275,7 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
     workspaceState.isTrusted = true;
     workspaceState.workspaceFolders = [];
     withProgressMock.mockReset();
+    createStatusBarItemMock.mockClear();
     withProgressMock.mockImplementation(async (_options, task) =>
       task(
         {
@@ -377,7 +391,7 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
     ]);
   });
 
-  it('keeps indexing progress counts truthful within each repository', async () => {
+  it('reports global indexing percent, processed totals, and ETA through notification progress and status bar', async () => {
     configurationValues.set('maxIndexedConcurrency', 1);
     workspaceState.workspaceFolders = [
       { uri: { fsPath: '/workspace/repo-a', path: '/workspace/repo-a' } } as never,
@@ -411,11 +425,28 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
 
     await indexer.refresh();
 
-    expect(progressReportMock.mock.calls).toEqual([
-      [{ message: 'repo-a 1/2' }],
-      [{ message: 'repo-a 2/2' }],
-      [{ message: 'repo-b 1/1' }]
+    const progressMessages = progressReportMock.mock.calls.map(
+      ([update]) => (update as { message: string }).message
+    );
+    expect(progressMessages).toEqual([
+      'repo-a 33% (1/3) ETA 00:00',
+      'repo-a 67% (2/3) ETA 00:00',
+      'repo-b 100% (3/3) ETA 00:00'
     ]);
+
+    const statusBar = createStatusBarItemMock.mock.results[0]?.value as
+      | {
+          text: string;
+          tooltip: string;
+          show: ReturnType<typeof vi.fn>;
+          hide: ReturnType<typeof vi.fn>;
+        }
+      | undefined;
+    expect(statusBar).toBeDefined();
+    expect(statusBar?.show).toHaveBeenCalled();
+    expect(statusBar?.text).toContain('100% (3/3) ETA 00:00');
+    expect(statusBar?.tooltip).toContain('repo-b: 100% (3/3)');
+    expect(statusBar?.hide).toHaveBeenCalled();
   });
 
   it('preserves the previous eligibility snapshot when cancellation is requested mid-refresh', async () => {
@@ -620,8 +651,8 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
 
     await indexer.refresh();
 
-    expect(listTrackedFilesMock).toHaveBeenCalledTimes(1);
-    expect(getRepoHeadMock).toHaveBeenCalledTimes(1);
+    expect(listTrackedFilesMock).toHaveBeenCalledTimes(2);
+    expect(getRepoHeadMock).toHaveBeenCalledTimes(2);
     expect(indexer.isEligible({ fsPath: '/workspace/repo/tracked.vi', path: '/workspace/repo/tracked.vi' } as never)).toBe(true);
     expect(commandExecuteMock.mock.calls.at(-1)).toEqual([
       'setContext',
@@ -670,7 +701,8 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
 
     await indexer.refresh();
 
-    expect(listTrackedFilesMock).toHaveBeenCalledTimes(1);
+    expect(listTrackedFilesMock).toHaveBeenCalledTimes(2);
+    expect(getRepoHeadMock).toHaveBeenCalledTimes(2);
     expect(indexer.getDebugSnapshot()).toEqual({
       indexedRepositoryRoots: [],
       eligiblePathCount: 0,
