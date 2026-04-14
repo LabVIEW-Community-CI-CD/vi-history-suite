@@ -196,6 +196,7 @@
     "design:gate:assert-complete": "npm run compile && node out/cli/runVerifyDesignGateCompletion.js",
     "proof:run": "npm run compile && node out/cli/runGovernedProof.js",
     "proof:runtime-settings-live-session:assert": "node scripts/assertRuntimeSettingsLiveSessionProbePacket.js",
+    "proof:runtime-settings-live-session:history": "node scripts/printRuntimeSettingsLiveSessionProbeHistory.js",
     "test:design-contract": "npm exec -- vitest run tests/unit/packageManifest.test.ts tests/unit/comparisonRuntimeLocator.test.ts tests/unit/runGovernedProofCli.test.ts tests/unit/governedLegacyProofEntrypoints.test.ts tests/unit/governedProofDocs.test.ts tests/unit/githubLinuxBenchmarkWorkflow.test.ts tests/unit/githubWindowsBenchmarkWorkflow.test.ts tests/unit/designGate.test.ts tests/unit/designGateRunner.test.ts tests/unit/preparePublicRepoCloneScript.test.ts tests/unit/preparePublicTestFixtureScript.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicFacadeLinuxSmoke.test.ts tests/unit/publicGithubSourcePromotion.test.ts tests/unit/publicProductGateDPreflight.test.ts",
     "pretest": "npm run compile",
     "preview:refresh": "npm run package && node -e \"const fs=require('node:fs'); const p=require('./package.json'); const name=p.name+'-'+p.version+'.vsix'; fs.copyFileSync(name, 'preview-evidence/'+name); fs.copyFileSync(name, '/mnt/c/Users/sveld/Downloads/'+name); console.log('Refreshed '+name);\"",

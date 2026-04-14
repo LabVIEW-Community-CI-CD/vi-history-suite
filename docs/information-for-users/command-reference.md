@@ -163,6 +163,18 @@ See also:
   - default packet target resolves to the VS Code user global-storage path for
     `svelderrainruiz.vi-history-suite`
 
+`npm run proof:runtime-settings-live-session:history`
+
+- Purpose: summarize retained live-session probe history into one policy-facing
+  receipt (`live-uptake-not-proven`, `candidate-live-uptake-observed`, or
+  `insufficient-evidence`).
+- Use when: deciding whether reload-or-restart guidance remains required for
+  the current retained evidence set.
+- Notes:
+  - optional packet-root override:
+    `npm run proof:runtime-settings-live-session:history -- --packet-root <path>`
+  - use `--json` for machine-readable branch or MR receipts
+
 `npm run test:integration:windows`
 
 - Purpose: prove the Windows integration-host lane, including the `.cmd`

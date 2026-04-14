@@ -34,11 +34,11 @@ The unresolved seam remains explicit:
 
 Current implementation branch:
 
-- `feature/runtime-provider-live-session-uptake-receipt` (in progress)
+- `feature/runtime-provider-live-session-history-receipt` (in progress)
 
 Most recently merged branch:
 
-- `feature/runtime-provider-live-session-safe-restore`
+- `feature/runtime-provider-live-session-uptake-receipt`
 
 ## Roadmap (Feature Branch Sequence)
 
@@ -75,6 +75,11 @@ Most recently merged branch:
 - Retain one explicit packet-level live-uptake observation receipt that
   classifies each probe run as in-session-updated versus reload-required, with
   fail-closed local gate validation for that classification.
+
+8. `feature/runtime-provider-live-session-history-receipt` (in progress)
+- Add one retained history-receipt command that summarizes all retained probe
+  runs into one policy-facing stance (`live-uptake-not-proven`,
+  `candidate-live-uptake-observed`, or `insufficient-evidence`).
 
 ## Admission Rules
 
