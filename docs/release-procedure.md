@@ -115,9 +115,10 @@
    - Packaging-only npm tooling is intentionally excluded from the default
      repo `npm ci` surface and is invoked only on demand through the pinned
      `scripts/runPinnedVsce.js` helper when packaging is requested.
-   - Packaging must fail closed if the packaged surface includes runtime
-     `node_modules` or transient/test artifacts such as `.cache` or
-     `.vscode-test`.
+   - Packaging must fail closed if the packaged surface includes ungoverned
+     runtime `node_modules`, if a governed runtime dependency payload is
+     missing, or if transient/test artifacts such as `.cache` or
+     `.vscode-test` would ship.
 7. Retain release evidence under `release-evidence/`.
 8. Review the generated release record and release manifest before any
    downstream distribution step.

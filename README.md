@@ -510,9 +510,10 @@ Committed and governed today:
   VSIX instead of requiring repo access
 - a configured GitLab SemVer release lane that validates tag/package sync,
   packages a versioned VSIX, and retains a machine-readable release manifest
-- a fail-closed package-runtime audit that keeps the shipped VSIX surface
-  compiled-only and blocks runtime `node_modules`, `.cache`, or `.vscode-test`
-  leakage before packaging
+- a fail-closed package-runtime audit that allows only explicitly governed
+  shipped runtime dependencies, blocks ungoverned runtime `node_modules`,
+  `.cache`, or `.vscode-test` leakage, and fails closed if a governed runtime
+  dependency payload is missing before packaging
 - packaging-only npm tooling is kept out of the default `npm ci` surface for
   compile/test/benchmark work and is invoked only on demand by the guarded
   packaging path

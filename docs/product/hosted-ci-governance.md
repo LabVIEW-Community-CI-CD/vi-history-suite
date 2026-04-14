@@ -60,8 +60,9 @@ Job ownership:
   docs integrity on merge requests, governed branch lanes, and exact tags
 - `test_extension`: compile, test, and coverage gate on merge requests,
   governed branch lanes, and exact tags
-- `package_extension_preview`: preview VSIX packaging on `develop`, `main`,
-  `release/*`, `hotfix/*`, and exact tags; no generic `feature/*` push lane
+- `package_extension_preview`: preview VSIX packaging on merge requests into
+  protected branch lanes, on `develop`, `main`, `release/*`, `hotfix/*`, and
+  exact tags; no generic `feature/*` push lane
 - `publish_docs_authoring_image`: publication-support lane on `main` and exact
   tags only
 - `wiki_workbench_prepare_published`: documentation-publication preparation on

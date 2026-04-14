@@ -123,6 +123,7 @@
       "package_extension_preview": {
         "classification": "preview-package-lane",
         "admittedRefs": [
+          "merge_request_event",
           "develop",
           "release/*",
           "hotfix/*",

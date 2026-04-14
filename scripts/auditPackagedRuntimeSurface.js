@@ -6,6 +6,7 @@ const { VSCE_PACKAGE_SPEC } = require('./runPinnedVsce');
 
 const repoRoot = path.resolve(path.dirname(fs.realpathSync.native(__filename)), '..');
 const manifestPath = path.join(repoRoot, 'package.json');
+const GOVERNED_RUNTIME_DEPENDENCIES = ['jsonc-parser'];
 const FORBIDDEN_PACKAGED_PATH_SEGMENTS = [
   '/node_modules/',
   '/.cache/',
@@ -30,17 +31,50 @@ function parseVsceListOutput(stdout) {
     .filter((line) => !line.startsWith('WARNING'));
 }
 
+function isGovernedRuntimeDependency(name) {
+  return GOVERNED_RUNTIME_DEPENDENCIES.includes(name);
+}
+
+function isGovernedRuntimeDependencyPath(packagedPath) {
+  const normalized = `/${packagedPath.replace(/^\/+/u, '')}`;
+  return GOVERNED_RUNTIME_DEPENDENCIES.some(
+    (name) => normalized === `/node_modules/${name}` || normalized.startsWith(`/node_modules/${name}/`)
+  );
+}
+
 function findRuntimeSurfaceViolations({ manifest, packagedPaths }) {
   const violations = [];
   const runtimeDependencies = Object.keys(manifest.dependencies ?? {});
-  if (runtimeDependencies.length > 0) {
+  const ungovernedRuntimeDependencies = runtimeDependencies.filter(
+    (name) => !isGovernedRuntimeDependency(name)
+  );
+  if (ungovernedRuntimeDependencies.length > 0) {
     violations.push(
-      `Runtime dependencies are not allowed in package.json: ${runtimeDependencies.join(', ')}`
+      `Ungoverned runtime dependencies are not allowed in package.json: ${ungovernedRuntimeDependencies.join(', ')}`
+    );
+  }
+
+  const missingGovernedDependencyPayloads = runtimeDependencies
+    .filter((name) => isGovernedRuntimeDependency(name))
+    .filter(
+      (name) =>
+        !packagedPaths.some((packagedPath) => {
+          const normalized = `/${packagedPath.replace(/^\/+/u, '')}`;
+          return normalized === `/node_modules/${name}` || normalized.startsWith(`/node_modules/${name}/`);
+        })
+    );
+
+  if (missingGovernedDependencyPayloads.length > 0) {
+    violations.push(
+      `Packaged VSIX surface is missing governed runtime dependency payloads: ${missingGovernedDependencyPayloads.join(', ')}`
     );
   }
 
   const forbiddenPaths = packagedPaths.filter((packagedPath) => {
     const normalized = `/${packagedPath.replace(/^\/+/u, '')}`;
+    if (isGovernedRuntimeDependencyPath(packagedPath)) {
+      return false;
+    }
     return (
       FORBIDDEN_PACKAGED_PATH_SEGMENTS.some((segment) => normalized.includes(segment)) ||
       FORBIDDEN_PACKAGED_PATH_SUFFIXES.some((suffix) => normalized.endsWith(suffix))
@@ -134,6 +168,7 @@ if (require.main === module) {
 }
 
 module.exports = {
+  GOVERNED_RUNTIME_DEPENDENCIES,
   FORBIDDEN_PACKAGE_NAMES,
   FORBIDDEN_PACKAGED_PATH_SEGMENTS,
   FORBIDDEN_PACKAGED_PATH_SUFFIXES,

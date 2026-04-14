@@ -155,6 +155,7 @@ describe('public GitHub source promotion', () => {
     expect(manifest.version).toBe('1.2.2');
     expect(manifest.files).toEqual([
       'out/**',
+      'node_modules/jsonc-parser/**',
       'resources/**',
       'README.md',
       'CHANGELOG.md',
