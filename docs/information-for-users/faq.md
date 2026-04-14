@@ -76,7 +76,7 @@ The important route split is:
 - repo-native docs authoring and docs validation stay in the `vi-history-suite`
   docs workbench
 - outer standards verification for this tranche uses released
-  `repo-standards-review v0.2.12`
+  `repo-standards-review v0.2.13`
 
 ### How do I run the canonical gate?
 
@@ -110,7 +110,7 @@ Use the governed repo search posture:
 - If Compare is still showing stale provider or runtime facts after a CLI
   update, reload or restart the VS Code window.
 - If you are checking the broader standards posture for this branch, use the
-  released `repo-standards-review v0.2.12` baseline instead of older parked
+  released `repo-standards-review v0.2.13` baseline instead of older parked
   roadmap branches.
 
 ### Where do I start when I need to cut a release?

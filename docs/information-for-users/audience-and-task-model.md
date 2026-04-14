@@ -1,4 +1,4 @@
-# Information For Users Audience And Task Model
+# Audience And Task Model
 
 Applies to: exact released installed baseline `v1.2.2` plus the active
 `develop` authority direction
@@ -21,6 +21,10 @@ See also:
 - [Glossary](./glossary.md)
 - [Information Item Map](../information-item-map.md)
 
+The governing control surfaces for this topic are
+`docs/information-for-users/plan.md` and
+`docs/information-for-users/delivery-profile.md`.
+
 ## Audience Hierarchy And Overlap
 
 | Audience family | Audience | Similar interaction with the repo | Role-overlap note |
@@ -38,7 +42,7 @@ See also:
 - `Auditor` appears here only as an occasional reviewer of retained public
   evidence, not as a primary product user.
 
-## Primary Audiences
+## Audience Profiles
 
 | Audience | Role family | Background and training | Learning stage | Usage frequency | Operational context | Preferred surfaces |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -91,3 +95,11 @@ participation.
   terminals, docs, and public-evidence surfaces.
 - Publication reviewers need a durable evidence route and stable terminology,
   not implementation detail.
+
+## Review Notes
+
+- Review this surface when the released starter pack changes shape, when the
+  route split between the exact released line and active `develop` changes, or
+  when `docs/information-for-users/plan.md` or
+  `docs/information-for-users/delivery-profile.md` changes enough to alter
+  audience ownership.

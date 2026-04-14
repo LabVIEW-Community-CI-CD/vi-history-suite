@@ -30,7 +30,7 @@ describe('information-for-users support docs', () => {
       '| Information-for-users command reference | `docs/information-for-users/command-reference.md` |'
     );
 
-    expect(plan).toContain('released `repo-standards-review v0.2.12`');
+    expect(plan).toContain('released `repo-standards-review v0.2.13`');
     expect(plan).toContain('repo-native docs workbench');
     expect(plan).toContain(
       'exact released installed baseline explicit as `v1.2.2` Docker-only and x64-only'
@@ -49,7 +49,7 @@ describe('information-for-users support docs', () => {
 
     expect(commandReference).toContain('npm run docs:workbench:gate');
     expect(commandReference).toContain('vihs-runtime-settings --provider <host|docker>');
-    expect(commandReference).toContain('assurance-workbench:v0.2.12');
-    expect(commandReference).toContain('/tmp/repo-standards-review-v0.2.12-tag/scripts/information_for_users_check.py');
+    expect(commandReference).toContain('assurance-workbench:v0.2.13');
+    expect(commandReference).toContain('/tmp/repo-standards-review-v0.2.13-tag/scripts/external_user_information_check.py');
   });
 });

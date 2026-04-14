@@ -1,4 +1,4 @@
-# Information For Users Delivery Profile
+# Delivery Profile
 
 Applies to: exact released installed baseline `v1.2.2` plus the active
 `develop` authority direction
@@ -13,13 +13,15 @@ See also:
 - [Plan](./plan.md)
 - [Audience And Task Model](./audience-and-task-model.md)
 - [Navigation And Search](./navigation-and-search.md)
+- [Quick Reference](../quick-reference.md)
 - [FAQ](./faq.md)
 - [Command Reference](./command-reference.md)
 - [Documentation Package Workbench](../documentation-workbench.md)
 - [Public Release Candidate](../product/public-release-candidate.md)
 
 Version applicability or update trigger: update this surface when route
-ownership, release packet evidence paths, or repo support boundaries change.
+ownership, release packet evidence paths, repo support boundaries, or the
+external starter pack change.
 
 ## Delivery Rules
 
@@ -36,7 +38,7 @@ ownership, release packet evidence paths, or repo support boundaries change.
 - Use the public release candidate and publication ledgers as the durable
   evidence fallback when the live route docs are insufficient for review.
 
-## Audience-Task Delivery Profiles
+## Surface Delivery Matrix
 
 | Audience | Task | Information type | Primary surface | Secondary surface | Urgency | Persistence | Simultaneous-use requirement | Access method or entry route | Fallback path | Update trigger |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -46,7 +48,7 @@ ownership, release packet evidence paths, or repo support boundaries change.
 | Maintainer | Author documentation-package changes | task, reference | docs workbench | command reference and style guide | high | persistent | yes | docs workbench -> command reference -> style guide | local clone plus repo-native docs workbench container | update when docs-authoring commands or validation split changes |
 | Publication reviewer | Inspect public release and publication evidence | proof, reference | public release candidate | public source/wiki publication ledgers | medium | persistent | no | public release candidate -> ledgers | retained publication ledgers and release evidence | update when exact release or public publication state changes |
 
-## Delivery Boundaries
+## Delivery Assumptions
 
 - The exact released installed-user contract remains `v1.2.2` Docker-only and
   x64-only until a later publication tranche changes that truth.
@@ -59,3 +61,16 @@ ownership, release packet evidence paths, or repo support boundaries change.
   user-information entry surfaces.
 - The release packet route for public publication evidence remains the public
   release candidate and related ledgers, not a copied self-application packet.
+- The external starter pack routes through
+  `docs/information-for-users/navigation-and-search.md` and
+  `docs/quick-reference.md` instead of duplicating deeper command-reference or
+  release-procedure content.
+
+## Update Triggers
+
+- update this surface when route ownership changes
+- update this surface when the released install route or the active branch route
+  split changes
+- update this surface when `docs/information-for-users/navigation-and-search.md`
+  or `docs/quick-reference.md` changes enough to alter fallback or entry-route
+  meaning

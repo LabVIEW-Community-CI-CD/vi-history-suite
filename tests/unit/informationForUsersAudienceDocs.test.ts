@@ -31,6 +31,9 @@ describe('information-for-users audience/navigation package', () => {
     expect(plan).toContain('selected process duties in `26514 §§5-6`');
     expect(plan).toContain('selected product duties in `26514 §§7-9`');
     expect(plan).toContain('release-versioned evidence');
+    expect(plan).toContain('## Document Set');
+    expect(plan).toContain('## Quality Goals');
+    expect(plan).toContain('## Review And Update Triggers');
     expect(plan).toContain('## Audiences And Tasks');
     expect(plan).toContain('## Navigation Metadata And Search');
     expect(plan).toContain('## Documentation Quality Acceptance');
@@ -53,22 +56,38 @@ describe('information-for-users audience/navigation package', () => {
     expect(readme).toContain('./docs/information-for-users/command-reference.md');
     expect(readme).toContain('./docs/information-for-users/faq.md');
 
+    expect(audience).toContain('# Audience And Task Model');
+    expect(audience).toContain('## Audience Profiles');
+    expect(audience).toContain('## Review Notes');
     expect(audience).toContain('Installed user');
     expect(audience).toContain('Source evaluator');
     expect(audience).toContain('Publication reviewer');
     expect(audience).toContain('exact released installed baseline `v1.2.2`');
 
+    expect(navigation).toContain('# Navigation And Search');
+    expect(navigation).toContain('## Route Hierarchy');
     expect(navigation).toContain('Top-level route');
     expect(navigation).toContain('Retained item index');
     expect(navigation).toContain('Durable evidence route');
     expect(navigation).toContain('docs/product/public-release-candidate.md');
+    expect(navigation).toContain('docs/user-guide.md');
+    expect(navigation).toContain('docs/quick-reference.md');
     expect(navigation).toContain('rg -n');
 
+    expect(delivery).toContain('# Delivery Profile');
+    expect(delivery).toContain('## Surface Delivery Matrix');
+    expect(delivery).toContain('## Delivery Assumptions');
+    expect(delivery).toContain('## Update Triggers');
     expect(delivery).toContain('exact released installed baseline `v1.2.2`');
     expect(delivery).toContain('host-default Windows local');
     expect(delivery).toContain('`LabVIEWCLI` plus bounded expert Docker');
+    expect(delivery).toContain('docs/quick-reference.md');
     expect(delivery).toContain('public release candidate');
 
+    expect(styleGuide).toContain('# Style Guide');
+    expect(styleGuide).toContain('## Writing Rules');
+    expect(styleGuide).toContain('## Terminology Rules');
+    expect(styleGuide).toContain('## Accessibility Baseline');
     expect(styleGuide).toContain('released compliance workbench');
     expect(styleGuide).toContain('Avoid instructions that depend only on color.');
     expect(styleGuide).toContain('exact released line');
