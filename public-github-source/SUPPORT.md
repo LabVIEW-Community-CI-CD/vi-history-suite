@@ -6,7 +6,9 @@ Use this public GitHub repo for:
 
 - installed-extension bugs
 - compare-generation issues
+- runtime-provider issues on the maintained public candidate
 - Docker image acquisition/runtime issues
+- local Windows `LabVIEWCLI` preflight and readiness issues
 - checkbox-selected compare UX feedback
 - public documentation problems
 
@@ -23,11 +25,16 @@ Please include:
 
 - extension version
 - operating system
+- whether you were on the exact released `main` line or the maintained public
+  `develop` candidate
 - whether the workspace was trusted
 - whether the target file was an eligible tracked LabVIEW VI
-- whether Docker was not installed yet, installed but not running, or already
-  running when the compare started
-- whether the issue happened on first-use image pull or on a warm image
+- the persisted provider, LabVIEW version, and LabVIEW bitness bundle
+- whether you ran `VI History: Check Runtime Readiness`
+- whether VS Code was already open when the generated settings CLI last wrote
+  settings
+- whether the issue happened on first-use image pull, on a warm image, or on a
+  host-default Windows local `LabVIEWCLI` path
 - Docker engine and host combination
   - Windows host with Linux engine
   - Windows host with Windows engine
@@ -41,15 +48,19 @@ Useful command output:
 code --version
 code --list-extensions --show-versions
 git --version
+vihs-runtime-settings --validate
 docker version
 docker info --format '{{.OSType}}'
 ```
 
 ## Current Product Boundary
 
-The public product contract is Docker-only and x64-only.
+The public product boundary is now split:
 
-The extension does not use host LabVIEW as an installed-user fallback path.
+- exact released `main` remains Docker-only and x64-only
+- maintained public `develop` opens host-default Windows local `LabVIEWCLI`
+  plus one bounded expert Docker provider
 
-If Docker is not installed yet, not running yet, or the governed image cannot
-be acquired, the product should fail closed with visible next-step guidance.
+If the candidate host or Docker bundle is missing, contradictory, unsupported,
+or blocked, the product should fail closed with visible next-step guidance
+instead of silently switching provider classes.

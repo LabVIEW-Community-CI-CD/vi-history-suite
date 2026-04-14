@@ -105,19 +105,19 @@ describe('public release candidate control surface', () => {
     });
     expect(candidate.publicDevelopCandidate).toMatchObject({
       branch: 'develop',
-      candidateCommit: null,
-      status: 'local-authority-green-not-yet-published',
-      sourcePullRequest: null
+      candidateCommit: '722c1f7',
+      status: 'published-public-develop-candidate-awaiting-expert-review',
+      sourcePullRequest: '#31'
     });
     expect(candidate.publishedPublicWiki).toMatchObject({
-      publishedHeadCommit: '527a8b4',
-      status: 'published-exact-release-wiki-closeout'
+      publishedHeadCommit: 'fc6af3c',
+      status: 'published-v1.3.0-candidate-wiki-head'
     });
     expect(candidate.candidateReadiness).toMatchObject({
       authorityBaseline: 'v1.2.2-exact-public-release-published',
       localInstalledVsix: 'candidate-v1.3.0-line-opened-awaiting-public-build',
       historicalPublicRepoBootstrapBaseline: 'exact-v1.2.0-human-baseline-retained',
-      publishedSurfaceExpertAgentReview: 'pending-next-published-candidate',
+      publishedSurfaceExpertAgentReview: 'pending-post-publication-v1.3.0-candidate',
       runtimeProviderPublicAcceptanceGate: 'open',
       exactPublicRelease: 'v1.2.2-published'
     });
@@ -161,6 +161,8 @@ describe('public release candidate control surface', () => {
       status: 'no-findings',
       reviewedPublicDevelopCommit: '86b19a2',
       reviewedPublicWikiHead: '527a8b4',
+      nextPublishedCandidateCommit: '722c1f7',
+      nextPublishedCandidateWikiHead: 'fc6af3c',
       priorVerdict: 'findings-present',
       priorFindingCount: 2
     });
@@ -178,14 +180,6 @@ describe('public release candidate control surface', () => {
           status: 'open'
         }),
         expect.objectContaining({
-          id: 'BLOCKER-1.3.0-002-PUBLIC-DEVELOP-CANDIDATE-NOT-PUBLISHED',
-          status: 'open'
-        }),
-        expect.objectContaining({
-          id: 'BLOCKER-1.3.0-003-PUBLIC-WIKI-CANDIDATE-NOT-PUBLISHED',
-          status: 'open'
-        }),
-        expect.objectContaining({
           id: 'BLOCKER-1.3.0-004-EXPERT-AGENT-REVIEW-PENDING',
           status: 'open'
         })
@@ -194,15 +188,13 @@ describe('public release candidate control surface', () => {
 
     expect(candidateMarkdown).toContain('Version line: `1.3.0`');
     expect(candidateMarkdown).toContain('Published public source commit: `86b19a2`');
-    expect(candidateMarkdown).toContain('Public `develop` candidate commit: `not yet published`');
-    expect(candidateMarkdown).toContain('Published public wiki head: `527a8b4`');
+    expect(candidateMarkdown).toContain('Public `develop` candidate commit: `722c1f7`');
+    expect(candidateMarkdown).toContain('Published public wiki head: `fc6af3c`');
     expect(candidateMarkdown).toContain('Published-surface expert-agent review:');
-    expect(candidateMarkdown).toContain('`pending-next-published-candidate`');
+    expect(candidateMarkdown).toContain('`pending-post-publication-v1.3.0-candidate`');
     expect(candidateMarkdown).toContain('Runtime-provider public-acceptance gate: `open`');
     expect(candidateMarkdown).toContain('Required skill: `vi-history-suite-expert-agent-reviewer`');
-    expect(candidateMarkdown).toContain(
-      'The maintained public `develop` candidate for `v1.3.0` is not yet'
-    );
+    expect(candidateMarkdown).toContain('The maintained public `develop` candidate for `v1.3.0` now publishes');
     expect(candidateMarkdown).toContain('FINDING-1.2.2-001-MISSING-DOCKER-FIRST-RUN-BOUNDARY');
     expect(candidateMarkdown).toContain('FINDING-1.2.2-002-EXACT-CLOSEOUT-BACKMERGE-OPERATOR-GAP');
     expect(candidateMarkdown).toContain('FINDING-1.2.2-003-MANUAL-REVIEW-GATE-DEPENDENCY');
@@ -215,10 +207,13 @@ describe('public release candidate control surface', () => {
     expect(currentState).toContain('current exact released line: `v1.2.2`');
     expect(currentState).toContain('current develop package line on `develop`: `1.3.0`');
     expect(currentState).toContain('active exact release candidate line on `develop`: `v1.3.0`');
-    expect(currentState).toContain('`527a8b4`');
-    expect(currentState).toContain('expert-agent verdict returned no findings');
-    expect(currentState).toContain('the next `v1.3.0` candidate remains');
-    expect(currentState).toContain('post-publication expert-agent review');
+    expect(currentState).toContain('`722c1f7`');
+    expect(currentState).toContain('`fc6af3c`');
+    expect(currentState).toContain(
+      'verdict returned no findings on those exact published public release'
+    );
+    expect(currentState).toContain('the next `v1.3.0` candidate now publishes public `develop`');
+    expect(currentState).toContain('expert-agent review closes with no findings');
 
     expect(srs).toContain('VHS-REQ-527');
     expect(srs).toContain('VHS-REQ-528');

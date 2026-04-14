@@ -169,14 +169,14 @@ Latest landed ship target:
 - current changelog: [CHANGELOG.md](../../CHANGELOG.md)
 - docs-workbench image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
 - remaining blockers: none on exact `v1.2.2`; public `main` publishes
-  `86b19a2`, the public GitHub release `v1.2.2` is live, the public wiki
-  publishes `527a8b4`, the official gallery extension query verifies
-  Marketplace version `1.2.2` for `svelderrainruiz.vi-history-suite`, and the
-  latest retained expert-agent verdict returned no findings on those exact
-  published public release surfaces; the next `v1.3.0` candidate remains
-  blocked until the maintained public `develop` head and maintained public
-  wiki head are both published and the post-publication expert-agent review
-  closes with no findings
+  `86b19a2`, the public GitHub release `v1.2.2` is live, the official gallery
+  extension query verifies Marketplace version `1.2.2` for
+  `svelderrainruiz.vi-history-suite`, and the latest retained expert-agent
+  verdict returned no findings on those exact published public release
+  surfaces; the next `v1.3.0` candidate now publishes public `develop`
+  `722c1f7` plus public wiki head `fc6af3c`, and remains blocked until the
+  runtime-provider public-acceptance gate is closed and the post-publication
+  expert-agent review closes with no findings
 
 Current active and recently closed tranches:
 
@@ -329,8 +329,9 @@ Post-release tranches:
     surface so Marketplace users land on maintained local-use documentation
     first, while repo/fork/Codespaces procedures remain explicit secondary
     source-evaluation lanes
-  - the exact public `main` line now publishes `86b19a2`, the public wiki
-    entry surface now publishes `527a8b4`, the VS Code Marketplace item
+  - the exact public `main` line now publishes `86b19a2`, the maintained
+    public `develop` candidate now publishes `722c1f7`, the public wiki
+    candidate head now publishes `fc6af3c`, the VS Code Marketplace item
     verifies `1.2.2`, and the later public candidate line is now reopened on
     `v1.3.0` instead of remaining attached to the historical exact `1.2.2`
     publication closeout
@@ -406,7 +407,8 @@ Post-release tranches:
   - Sergio's documented brand-new-fork and brand-new-Codespace rerun passes on
     `Examples/Logging with Helper-VIs.vi`, the exact public `main` line now
     publishes `86b19a2`, and the maintained public wiki/reference-manual
-    package now closes exact `v1.2.2`
+    package now publishes `fc6af3c` for the next `v1.3.0` candidate while the
+    exact `v1.2.2` closeout stays retained
 
 Historical public closeout and next runtime-provider public-acceptance gate:
 

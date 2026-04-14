@@ -14,7 +14,7 @@ function readJson<T>(relativePath: string): T {
 }
 
 describe('public repo package surface', () => {
-  it('keeps the public repo on the Docker-only public product contract', () => {
+  it('keeps the public repo on the exact-release main baseline while opening the host-default develop candidate', () => {
     const manifest = readJson<{
       scripts?: Record<string, string>;
       version?: string;
@@ -30,7 +30,7 @@ describe('public repo package surface', () => {
     );
     const previewWorkflow = readText('.github/workflows/public-facade-package-preview.yml');
 
-    expect(manifest.version).toBe('1.2.2');
+    expect(manifest.version).toBe('1.3.0');
     expect(manifest.files).toEqual([
       'out/**',
       'resources/**',
@@ -63,7 +63,13 @@ describe('public repo package surface', () => {
     expect(manifest.scripts).not.toHaveProperty('proof:run');
     expect(manifest.scripts).not.toHaveProperty('benchmark:github:latest');
 
-    expect(readme).toContain('Docker-only compare execution');
+    expect(readme).toContain('maintained public candidate on `develop` opens host-default Windows');
+    expect(readme).toContain('LabVIEWCLI');
+    expect(readme).toContain('bounded expert Docker provider');
+    expect(readme).toContain('VI History: Prepare Local Runtime Settings CLI');
+    expect(readme).toContain('VI History: Check Runtime Readiness');
+    expect(readme).toContain('review the explicit compare preflight section');
+    expect(readme).toContain('choose `Compare`');
     expect(readme).toContain('devcontainer or Codespace');
     expect(readme).toContain('source-facing product surface');
     expect(readme).toContain('## If You Installed VI History Suite');
@@ -94,8 +100,9 @@ describe('public repo package surface', () => {
     expect(readme).toContain('Use the exact path printed by the command');
     expect(readme).toContain('public default branch and tracks the latest exact released');
     expect(readme).toContain('GitHub opens this public repo on `main` by default');
-    expect(readme).toContain('Docker CLI plus a running Docker daemon are prerequisites for the first');
-    expect(readme).toContain('If Docker is not installed yet, not running yet');
+    expect(readme).toContain('exact released `main` line and Marketplace `1.2.2` install route remain');
+    expect(readme).toContain('main` keeps the exact released Docker-only installed-user contract');
+    expect(readme).toContain('develop` carries the maintained public candidate');
     expect(readme).toContain('public GitHub default branch: `main`');
     expect(readme).toContain('public Codespaces evaluation branch: `develop`');
     expect(readme).toContain(
@@ -103,8 +110,12 @@ describe('public repo package surface', () => {
     );
     expect(readme).toContain('Refresh-Codespace-Repositories');
     expect(readme).not.toContain('Manual-Actor-Framework-Clone');
-    expect(install).toContain('Windows host + Linux engine');
-    expect(install).toContain('host LabVIEW');
+    expect(install).toContain('exact released `main` / Marketplace `1.2.2`: Docker-only and x64-only');
+    expect(install).toContain('maintained public `develop` candidate: host-default Windows local');
+    expect(install).toContain('VI History: Prepare Local Runtime Settings CLI');
+    expect(install).toContain('VI History: Check Runtime Readiness');
+    expect(install).toContain('vihs-runtime-settings --provider <host|docker>');
+    expect(install).toContain('explicit compare preflight');
     expect(install).toContain('npm run public:host:bootstrap-linux');
     expect(install).toContain('npm run public:fixture:icon-editor');
     expect(install).toContain('npm run public:repo:clone');
@@ -113,15 +124,17 @@ describe('public repo package surface', () => {
     expect(install).toContain('canonical first-time procedures');
     expect(install).toContain('Supported repo URLs are public `https://github.com/...` and');
     expect(install).toContain("docker info --format '{{.OSType}}'");
-    expect(install).toContain('If those checks fail, install or start Docker before expecting image');
+    expect(install).toContain('If the candidate host route reports a blocked runtime');
     expect(install).toContain('Review-Public-LabVIEW-VI-Changes');
     expect(install).toContain('remote default branch automatically');
     expect(install).toContain('available fallback treated as best-effort');
     expect(install).toContain('Refresh-Codespace-Repositories');
     expect(install).not.toContain('Manual-Actor-Framework-Clone');
     expect(install).not.toContain('Vitest not found');
-    expect(support).toContain('docker info --format');
-    expect(support).toContain('does not use host LabVIEW as an installed-user fallback path');
+    expect(support).toContain('runtime-provider issues on the maintained public candidate');
+    expect(support).toContain('local Windows `LabVIEWCLI` preflight and readiness issues');
+    expect(support).toContain('vihs-runtime-settings --validate');
+    expect(support).toContain('maintained public `develop` opens host-default Windows local `LabVIEWCLI`');
     expect(contributing).toContain('source-available and intentionally restrictive');
     expect(contributing).toContain('npm run public:host:bootstrap-linux');
     expect(contributing).toContain('npm run public:fixture:icon-editor');
