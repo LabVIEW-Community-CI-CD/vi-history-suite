@@ -397,7 +397,8 @@ Post-release tranches:
     retained mutation-target alignment and baseline-switch receipts, and when
     the latest retained probe observation is not `reload-required` or retained
     history still includes one or more `in-session-updated` or unknown
-    observations
+    observations, or retained safe-restore verification is not complete across
+    retained runs
   - the remaining CLI proof gap is now narrower: direct live mutation of the
     already-running VS Code session is not yet end-to-end proven on this line;
     probe mutation safe-restore is now fail-closed and locally proven, so the
