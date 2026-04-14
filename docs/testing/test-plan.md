@@ -1812,7 +1812,9 @@ Information-for-users review cases:
   host PATH behavior
 - `TEST-UNIT-353`: verify `labviewViHistory.prepareLocalRuntimeSettingsCli`
   retains explicit trust and settings-target governance, including the
-  governed materialization location and admitted untrusted-workspace posture
+  governed materialization location, the default-user-versus-explicit-settings
+  target contract, and the admitted untrusted-workspace posture while compare
+  remains blocked there
 - `TEST-UNIT-354`: verify the provider CLI exposes one governed readback or
   validation surface that reports persisted provider/version/bitness truth
   plus runtime-validation outcome without reopening path-picking or a

@@ -46,8 +46,16 @@ describe('information-for-users support docs', () => {
     expect(faq).toContain('The current exact released line, `v1.2.2`, still uses the');
     expect(faq).toContain('Docker-only and x64-only installed path.');
     expect(faq).toContain('before trusting Compare or other');
+    expect(faq).toContain('Where does the generated runtime-settings CLI live');
+    expect(faq).toContain('Workspace settings are not a supported target');
+    expect(faq).toContain('prepare command is admitted in untrusted workspaces');
 
     expect(commandReference).toContain('npm run docs:workbench:gate');
+    expect(commandReference).toContain('VI History: Prepare Local Runtime Settings CLI');
+    expect(commandReference).toContain('extension-global storage root');
+    expect(commandReference).toContain('default user `settings.json` path');
+    expect(commandReference).toContain('explicit `--settings-file` override');
+    expect(commandReference).toContain('admitted in untrusted workspaces');
     expect(commandReference).toContain('vihs-runtime-settings --provider <host|docker>');
     expect(commandReference).toContain('trusting Compare or other runtime-provider surfaces');
     expect(commandReference).toContain('assurance-workbench:v0.2.13');

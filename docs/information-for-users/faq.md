@@ -5,7 +5,7 @@
 - Product or service: `vi-history-suite`
 - Applies to: exact released installed baseline `v1.2.2` plus the active
   `develop` authority direction
-- Last reviewed: `2026-04-13`
+- Last reviewed: `2026-04-14`
 - Primary audience: installed users, source evaluators, and maintainers
 - Topic type: troubleshooting and quick-reference support
 - Primary entry route: `README.md` and `INSTALL.md`
@@ -65,6 +65,18 @@ The active branch treats host as the default provider and Docker as the
 bounded expert path. If VS Code is already running when the CLI updates the
 settings file, reload or restart the window before trusting Compare or other
 runtime-provider surfaces to reflect the updated provider and runtime facts.
+
+### Where does the generated runtime-settings CLI live, and what can it write?
+
+Use `VI History: Prepare Local Runtime Settings CLI` first.
+
+- The prepare command materializes the launchers under the extension-global
+  storage root.
+- The governed settings targets are the platform-default user
+  `settings.json` path or one explicit `--settings-file` override.
+- Workspace settings are not a supported target for this CLI surface.
+- The prepare command is admitted in untrusted workspaces because it only
+  prepares launcher files, but installed compare remains blocked there.
 
 ### Where do I find the key commands or checks?
 

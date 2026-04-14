@@ -35,7 +35,10 @@ import {
   OpenedDashboardPanelSummary,
   OpenedHistoryPanelSummary
 } from './ui/historyPanelTracker';
-import { ensureLocalRuntimeSettingsCli } from './tooling/localRuntimeSettingsCli';
+import {
+  ensureLocalRuntimeSettingsCli,
+  resolveLocalRuntimeSettingsCliGovernanceContract
+} from './tooling/localRuntimeSettingsCli';
 
 export interface ViHistorySuiteApi {
   refreshEligibility(): Promise<void>;
@@ -170,14 +173,20 @@ export async function activate(
         context.globalStorageUri.fsPath,
         context.extensionPath
       );
+      const governanceContract = resolveLocalRuntimeSettingsCliGovernanceContract();
 
       void vscode.window.showInformationMessage(
-        `Prepared VI History local runtime settings CLI at ${materializedCli.rootDirectoryPath}`
+        [
+          `Prepared VI History local runtime settings CLI at ${materializedCli.rootDirectoryPath}.`,
+          `Governed settings targets: default user settings.json at ${governanceContract.defaultSettingsFilePath} or an explicit --settings-file path.`,
+          'This prepare command is admitted in untrusted workspaces because it only materializes the launcher; installed compare remains disabled there.'
+        ].join(' ')
       );
 
       return {
         outcome: 'prepared-local-runtime-settings-cli' as const,
-        ...materializedCli
+        ...materializedCli,
+        ...governanceContract
       };
     })
   );

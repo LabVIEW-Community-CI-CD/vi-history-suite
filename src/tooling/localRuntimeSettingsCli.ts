@@ -31,6 +31,12 @@ export interface MaterializedLocalRuntimeSettingsCli {
   exampleCommand: string;
 }
 
+export interface LocalRuntimeSettingsCliGovernanceContract {
+  defaultSettingsFilePath: string;
+  supportedSettingsTargets: readonly ['default-user-settings', 'explicit-settings-file'];
+  untrustedWorkspacePosture: 'prepare-command-admitted-compare-blocked';
+}
+
 interface WritableStreamLike {
   write(text: string): unknown;
 }
@@ -139,6 +145,20 @@ export function buildLocalRuntimeSettingsCliMaterialization(
     posixLauncherPath,
     modulePath,
     exampleCommand: `${POSIX_LAUNCHER_NAME} --provider host --labview-version 2026 --labview-bitness x64`
+  };
+}
+
+export function resolveLocalRuntimeSettingsCliGovernanceContract(
+  deps: LocalRuntimeSettingsCliDeps = {}
+): LocalRuntimeSettingsCliGovernanceContract {
+  return {
+    defaultSettingsFilePath: resolveDefaultVsCodeSettingsPath(
+      deps.platform ?? process.platform,
+      deps.env ?? process.env,
+      deps.homedir ?? os.homedir
+    ),
+    supportedSettingsTargets: ['default-user-settings', 'explicit-settings-file'],
+    untrustedWorkspacePosture: 'prepare-command-admitted-compare-blocked'
   };
 }
 
