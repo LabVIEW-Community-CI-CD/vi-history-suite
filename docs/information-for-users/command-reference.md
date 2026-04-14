@@ -168,6 +168,8 @@ See also:
     on the latest retained probe packet
   - fails closed when latest packet `historyProofStatus` is
     `re-evaluation-required`
+  - fails closed when latest packet `historyStance` is not
+    `live-uptake-not-proven`
   - fails closed when latest packet `liveUptakeObservation` is
     `in-session-updated`
   - fails closed when retained history reports any

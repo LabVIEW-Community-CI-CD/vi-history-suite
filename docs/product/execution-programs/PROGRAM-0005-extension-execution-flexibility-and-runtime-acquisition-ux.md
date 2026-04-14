@@ -52,6 +52,7 @@ Current facts:
   `mutationTargetPersistedMatch=true` enforcement, latest-packet
   `mutationTargetBaselineChanged=true` enforcement, and latest-packet
   `historyProofStatus=not-fully-proven` plus latest-packet
+  `historyStance=live-uptake-not-proven`, plus latest-packet
   `liveUptakeObservation=reload-required` plus retained
   `historyInSessionUpdatedCount=0` plus
   `historyUnknownObservationCount=0` enforcement
