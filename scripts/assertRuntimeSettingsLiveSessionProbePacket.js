@@ -146,6 +146,7 @@ function validateProbePacket(summary) {
   requireString('latestPacketJsonPath');
   requireString('latestPacketMarkdownPath');
   const mutationProviderTarget = requireString('mutationProviderTarget');
+  const mutationTargetPersistedMatch = requireBoolean('mutationTargetPersistedMatch');
   const liveUptakeObservation = requireString('liveUptakeObservation');
   const safeRestoreApplied = requireBoolean('safeRestoreApplied');
   const safeRestoreVerified = requireBoolean('safeRestoreVerified');
@@ -173,6 +174,22 @@ function validateProbePacket(summary) {
     failures.push(
       `mutationProviderTarget must be host or docker when present, received ${mutationProviderTarget}`
     );
+  }
+  const normalizedPersistedProvider =
+    typeof summary.persistedProvider === 'string'
+      ? summary.persistedProvider.trim().toLowerCase()
+      : undefined;
+  if (
+    (mutationProviderTarget === 'host' || mutationProviderTarget === 'docker') &&
+    (normalizedPersistedProvider === 'host' || normalizedPersistedProvider === 'docker') &&
+    typeof mutationTargetPersistedMatch === 'boolean'
+  ) {
+    const expectedMutationMatch = mutationProviderTarget === normalizedPersistedProvider;
+    if (mutationTargetPersistedMatch !== expectedMutationMatch) {
+      failures.push(
+        `mutationTargetPersistedMatch must align with mutationProviderTarget versus persistedProvider (${expectedMutationMatch})`
+      );
+    }
   }
 
   if (

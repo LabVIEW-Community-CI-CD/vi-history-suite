@@ -45,6 +45,9 @@ const historyScript = require(path.resolve(
     mutationTargetDockerCount: number;
     providerSelectionCoverage: string;
     proofStatus: string;
+    mutationTargetPersistedMatchCount: number;
+    mutationTargetPersistedMismatchCount: number;
+    mutationTargetPersistedUnknownCount: number;
     latestObservation?: string;
   };
   run: (
@@ -86,6 +89,7 @@ describe('printRuntimeSettingsLiveSessionProbeHistory script', () => {
         summary: {
           liveUptakeObservation: 'reload-required',
           mutationProviderTarget: 'docker',
+          mutationTargetPersistedMatch: true,
           safeRestoreVerified: true
         }
       },
@@ -94,6 +98,7 @@ describe('printRuntimeSettingsLiveSessionProbeHistory script', () => {
         summary: {
           liveUptakeObservation: 'in-session-updated',
           mutationProviderTarget: 'host',
+          mutationTargetPersistedMatch: true,
           safeRestoreVerified: true
         }
       }
@@ -106,6 +111,9 @@ describe('printRuntimeSettingsLiveSessionProbeHistory script', () => {
     expect(summary.inSessionUpdatedCount).toBe(1);
     expect(summary.mutationTargetHostCount).toBe(1);
     expect(summary.mutationTargetDockerCount).toBe(1);
+    expect(summary.mutationTargetPersistedMatchCount).toBe(2);
+    expect(summary.mutationTargetPersistedMismatchCount).toBe(0);
+    expect(summary.mutationTargetPersistedUnknownCount).toBe(0);
     expect(summary.providerSelectionCoverage).toBe('bidirectional-selection-observed');
     expect(summary.proofStatus).toBe('not-fully-proven');
     expect(summary.latestObservation).toBe('reload-required');
@@ -130,6 +138,7 @@ describe('printRuntimeSettingsLiveSessionProbeHistory script', () => {
     expect(summary.reloadRequiredCount).toBe(0);
     expect(summary.mutationTargetHostCount).toBe(0);
     expect(summary.mutationTargetDockerCount).toBe(0);
+    expect(summary.mutationTargetPersistedUnknownCount).toBe(1);
     expect(summary.providerSelectionCoverage).toBe('insufficient-evidence');
     expect(summary.proofStatus).toBe('re-evaluation-required');
     expect(summary.latestObservation).toBe('in-session-updated');

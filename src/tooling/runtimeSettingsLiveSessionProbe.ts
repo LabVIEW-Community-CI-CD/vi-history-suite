@@ -49,6 +49,7 @@ export interface RuntimeSettingsLiveSessionProbeSummary {
   driftDetected: boolean;
   liveUptakeObservation: RuntimeSettingsLiveSessionUptakeObservation;
   mutationProviderTarget?: string;
+  mutationTargetPersistedMatch?: boolean;
   safeRestoreApplied: boolean;
   safeRestoreVerified: boolean;
   runtimeValidationOutcome?: 'ready' | 'blocked';
@@ -93,6 +94,8 @@ export function buildRuntimeSettingsLiveSessionProbeSummary(
     normalizeComparableBitness(liveLabviewBitness);
   const driftDetected = providerDrift || versionDrift || bitnessDrift;
 
+  const mutationProviderTarget = normalizeComparableProvider(input.mutationProviderTarget);
+
   return {
     outcome: 'probed-runtime-settings-live-session',
     settingsFilePath: input.settingsFilePath,
@@ -110,7 +113,11 @@ export function buildRuntimeSettingsLiveSessionProbeSummary(
     bitnessDrift,
     driftDetected,
     liveUptakeObservation: classifyLiveUptakeObservation(driftDetected),
-    mutationProviderTarget: normalizeComparableProvider(input.mutationProviderTarget),
+    mutationProviderTarget,
+    mutationTargetPersistedMatch: classifyMutationTargetPersistedMatch(
+      mutationProviderTarget,
+      persistedProvider
+    ),
     safeRestoreApplied: input.safeRestoreApplied === true,
     safeRestoreVerified: input.safeRestoreVerified === true,
     runtimeValidationOutcome: input.runtimeValidationOutcome,
@@ -141,4 +148,18 @@ function classifyLiveUptakeObservation(
   driftDetected: boolean
 ): RuntimeSettingsLiveSessionUptakeObservation {
   return driftDetected ? 'reload-required' : 'in-session-updated';
+}
+
+function classifyMutationTargetPersistedMatch(
+  mutationProviderTarget: string | undefined,
+  persistedProvider: string | undefined
+): boolean | undefined {
+  if (mutationProviderTarget !== 'host' && mutationProviderTarget !== 'docker') {
+    return undefined;
+  }
+  const normalizedPersisted = normalizeComparableProvider(persistedProvider);
+  if (normalizedPersisted !== 'host' && normalizedPersisted !== 'docker') {
+    return undefined;
+  }
+  return mutationProviderTarget === normalizedPersisted;
 }

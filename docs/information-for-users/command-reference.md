@@ -173,6 +173,8 @@ See also:
 - Notes:
   - retained summary now also reports provider-selection coverage from
     `mutationProviderTarget` receipts (`host` and `docker`)
+  - retained summary now reports mutation-target alignment counts that show
+    whether requested provider selection became persisted provider truth
   - retained summary now reports explicit proof status:
     `not-fully-proven` or `re-evaluation-required`
   - optional packet-root override:
@@ -192,6 +194,8 @@ See also:
   - returns non-zero when retained history does not include both `host` and
     `docker` mutation targets, forcing explicit CLI provider-selection
     coverage before merge
+  - returns non-zero when retained runs do not carry explicit
+    mutation-target alignment receipts or show alignment mismatches
   - returns non-zero when retained proof status becomes
     `re-evaluation-required`, forcing explicit policy re-evaluation before merge
 
