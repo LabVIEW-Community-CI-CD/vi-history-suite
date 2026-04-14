@@ -27,6 +27,7 @@ describe('runtimeSettingsLiveSessionProbe', () => {
     expect(summary.versionDrift).toBe(false);
     expect(summary.bitnessDrift).toBe(false);
     expect(summary.driftDetected).toBe(true);
+    expect(summary.liveUptakeObservation).toBe('reload-required');
     expect(summary.safeRestoreApplied).toBe(false);
     expect(summary.safeRestoreVerified).toBe(false);
   });
@@ -56,6 +57,7 @@ describe('runtimeSettingsLiveSessionProbe', () => {
     expect(summary.versionDrift).toBe(false);
     expect(summary.bitnessDrift).toBe(false);
     expect(summary.driftDetected).toBe(false);
+    expect(summary.liveUptakeObservation).toBe('in-session-updated');
     expect(summary.mutationProviderTarget).toBe('docker');
     expect(summary.safeRestoreApplied).toBe(true);
     expect(summary.safeRestoreVerified).toBe(true);

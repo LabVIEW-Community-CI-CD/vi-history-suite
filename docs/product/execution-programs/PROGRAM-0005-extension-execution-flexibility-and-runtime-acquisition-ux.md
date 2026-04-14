@@ -41,6 +41,8 @@ Current facts:
   provider/version/bitness facts against active in-session VS Code runtime
   settings and retains one per-run plus one latest probe packet (`JSON` and
   `Markdown`) under extension-global storage
+- retained probe packets now also classify live uptake explicitly as
+  `in-session-updated` versus `reload-required` on each run
 - one local fail-closed packet gate now exists at
   `npm run proof:runtime-settings-live-session:assert` so malformed or missing
   retained probe evidence blocks admission

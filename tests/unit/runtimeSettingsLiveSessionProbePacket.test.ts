@@ -38,6 +38,7 @@ describe('runtimeSettingsLiveSessionProbePacket', () => {
         versionDrift: false,
         bitnessDrift: false,
         driftDetected: true,
+        liveUptakeObservation: 'reload-required',
         mutationProviderTarget: 'docker',
         safeRestoreApplied: true,
         safeRestoreVerified: true,
@@ -72,6 +73,7 @@ describe('runtimeSettingsLiveSessionProbePacket', () => {
     const packetMarkdown = await fs.readFile(summary.packetMarkdownPath, 'utf8');
     expect(packetMarkdown).toContain('# Runtime Settings Live-Session Probe Packet');
     expect(packetMarkdown).toContain('Drift detected: `yes`');
+    expect(packetMarkdown).toContain('Live uptake observation: `reload-required`');
     expect(packetMarkdown).toContain('Safe restore applied: `yes`');
     expect(packetMarkdown).toContain('Safe restore verified: `yes`');
     expect(packetMarkdown).toContain('## Baseline Persisted Settings Facts');

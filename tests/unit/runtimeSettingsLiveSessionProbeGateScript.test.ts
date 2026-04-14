@@ -72,6 +72,7 @@ describe('assertRuntimeSettingsLiveSessionProbePacket script', () => {
       latestPacketJsonPath: '/tmp/latest-summary.json',
       latestPacketMarkdownPath: '/tmp/latest-summary.md',
       mutationProviderTarget: 'docker',
+      liveUptakeObservation: 'reload-required',
       safeRestoreApplied: true,
       safeRestoreVerified: true,
       providerDrift: true,
@@ -83,6 +84,27 @@ describe('assertRuntimeSettingsLiveSessionProbePacket script', () => {
     expect(failures).toContain(
       'driftDetected must equal providerDrift || versionDrift || bitnessDrift (true)'
     );
+  });
+
+  it('fails validation when live uptake observation conflicts with drift facts', () => {
+    const failures = probeGate.validateProbePacket({
+      outcome: 'probed-runtime-settings-live-session',
+      packetRunId: '2026-04-14T13-07-33-123Z',
+      packetJsonPath: '/tmp/packet.json',
+      packetMarkdownPath: '/tmp/packet.md',
+      latestPacketJsonPath: '/tmp/latest-summary.json',
+      latestPacketMarkdownPath: '/tmp/latest-summary.md',
+      mutationProviderTarget: 'host',
+      liveUptakeObservation: 'in-session-updated',
+      safeRestoreApplied: true,
+      safeRestoreVerified: true,
+      providerDrift: true,
+      versionDrift: false,
+      bitnessDrift: false,
+      driftDetected: true
+    });
+
+    expect(failures).toContain('liveUptakeObservation in-session-updated requires driftDetected=false');
   });
 
   it('passes on a valid packet file via --packet', async () => {
@@ -100,6 +122,7 @@ describe('assertRuntimeSettingsLiveSessionProbePacket script', () => {
           latestPacketJsonPath: packetPath,
           latestPacketMarkdownPath: path.join(tempRoot, 'latest-summary.md'),
           mutationProviderTarget: 'host',
+          liveUptakeObservation: 'in-session-updated',
           safeRestoreApplied: true,
           safeRestoreVerified: true,
           providerDrift: false,

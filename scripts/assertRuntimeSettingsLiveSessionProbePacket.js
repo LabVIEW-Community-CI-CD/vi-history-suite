@@ -138,6 +138,7 @@ function validateProbePacket(summary) {
   requireString('latestPacketJsonPath');
   requireString('latestPacketMarkdownPath');
   const mutationProviderTarget = requireString('mutationProviderTarget');
+  const liveUptakeObservation = requireString('liveUptakeObservation');
   const safeRestoreApplied = requireBoolean('safeRestoreApplied');
   const safeRestoreVerified = requireBoolean('safeRestoreVerified');
   const providerDrift = requireBoolean('providerDrift');
@@ -161,6 +162,16 @@ function validateProbePacket(summary) {
   }
 
   if (
+    liveUptakeObservation &&
+    liveUptakeObservation !== 'in-session-updated' &&
+    liveUptakeObservation !== 'reload-required'
+  ) {
+    failures.push(
+      `liveUptakeObservation must be in-session-updated or reload-required, received ${liveUptakeObservation}`
+    );
+  }
+
+  if (
     typeof providerDrift === 'boolean' &&
     typeof versionDrift === 'boolean' &&
     typeof bitnessDrift === 'boolean' &&
@@ -171,6 +182,20 @@ function validateProbePacket(summary) {
       failures.push(
         `driftDetected must equal providerDrift || versionDrift || bitnessDrift (${expectedDrift})`
       );
+    }
+
+    if (
+      liveUptakeObservation === 'reload-required' &&
+      expectedDrift !== true
+    ) {
+      failures.push('liveUptakeObservation reload-required requires driftDetected=true');
+    }
+
+    if (
+      liveUptakeObservation === 'in-session-updated' &&
+      expectedDrift !== false
+    ) {
+      failures.push('liveUptakeObservation in-session-updated requires driftDetected=false');
     }
   }
 
@@ -216,6 +241,7 @@ function run(argv = process.argv.slice(2), deps = {}) {
   stdout.write(`- packet: ${packetPath}\n`);
   stdout.write(`- runId: ${summary.packetRunId}\n`);
   stdout.write(`- driftDetected: ${summary.driftDetected ? 'yes' : 'no'}\n`);
+  stdout.write(`- liveUptakeObservation: ${summary.liveUptakeObservation}\n`);
   return {
     outcome: 'pass',
     packetPath,

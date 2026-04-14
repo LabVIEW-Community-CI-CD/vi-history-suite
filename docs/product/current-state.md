@@ -370,7 +370,8 @@ Post-release tranches:
   - a governed live-session probe command now compares persisted
     provider/version/bitness facts against active in-session VS Code runtime
     settings and retains per-run plus latest probe packets (`JSON` and
-    `Markdown`) under extension-global storage
+    `Markdown`) under extension-global storage, including explicit
+    `in-session-updated` versus `reload-required` live-uptake observation
   - one local fail-closed packet gate now exists at
     `npm run proof:runtime-settings-live-session:assert`; it blocks admission
     when the retained latest probe packet is missing or malformed

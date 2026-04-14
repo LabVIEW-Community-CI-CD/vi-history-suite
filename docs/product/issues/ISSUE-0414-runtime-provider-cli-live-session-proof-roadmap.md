@@ -34,11 +34,11 @@ The unresolved seam remains explicit:
 
 Current implementation branch:
 
-- `feature/runtime-provider-live-session-safe-restore` (in progress)
+- `feature/runtime-provider-live-session-uptake-receipt` (in progress)
 
 Most recently merged branch:
 
-- `feature/runtime-provider-live-session-gate-decision`
+- `feature/runtime-provider-live-session-safe-restore`
 
 ## Roadmap (Feature Branch Sequence)
 
@@ -46,7 +46,7 @@ Most recently merged branch:
 - Add one governed probe surface that captures persisted provider/version/bitness
   facts against live in-session runtime settings facts and reports drift.
 
-2. `feature/runtime-provider-live-session-safe-restore` (in progress)
+2. `feature/runtime-provider-live-session-safe-restore` (merged)
 - Add fail-closed restore behavior so probe runs do not leave mutated user
   settings behind when a probe fails partway through.
 
@@ -70,6 +70,11 @@ Most recently merged branch:
   direct live uptake of CLI-written settings in an already-running VS Code
   session remains unproven, and strengthen the retained evidence contract with
   the landed probe packet plus local gate
+
+7. `feature/runtime-provider-live-session-uptake-receipt` (in progress)
+- Retain one explicit packet-level live-uptake observation receipt that
+  classifies each probe run as in-session-updated versus reload-required, with
+  fail-closed local gate validation for that classification.
 
 ## Admission Rules
 

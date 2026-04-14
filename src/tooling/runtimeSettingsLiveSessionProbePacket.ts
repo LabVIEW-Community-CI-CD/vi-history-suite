@@ -74,6 +74,7 @@ function renderProbeSummaryMarkdown(summary: RuntimeSettingsLiveSessionProbeSumm
     '',
     `- Run id: \`${summary.packetRunId}\``,
     `- Drift detected: \`${summary.driftDetected ? 'yes' : 'no'}\``,
+    `- Live uptake observation: \`${summary.liveUptakeObservation}\``,
     `- Provider drift: \`${summary.providerDrift ? 'yes' : 'no'}\``,
     `- Version drift: \`${summary.versionDrift ? 'yes' : 'no'}\``,
     `- Bitness drift: \`${summary.bitnessDrift ? 'yes' : 'no'}\``,
