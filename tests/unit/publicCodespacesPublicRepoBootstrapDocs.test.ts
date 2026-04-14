@@ -34,7 +34,9 @@ describe('public Codespaces public-repo bootstrap docs', () => {
     expect(currentState).toContain('generic `npm run public:repo:clone` surface');
     expect(currentState).toContain('current exact released line: `v1.2.2`');
     expect(currentState).toContain('active exact release candidate line on `develop`: `v1.3.0`');
-    expect(currentState).toContain('expert-agent verdict returned no findings');
+    expect(currentState).toContain(
+      'verdict returned no findings on those exact published public release'
+    );
 
     expect(candidate).toContain(
       'Decision: helper-backed canonical path plus generic public-repo reference manual'
@@ -44,7 +46,7 @@ describe('public Codespaces public-repo bootstrap docs', () => {
     expect(candidate).toContain('Generic bootstrap command:');
     expect(candidate).toContain('npm run public:repo:clone -- --repo-url <https-url>');
     expect(candidate).toContain('Published-surface expert-agent review:');
-    expect(candidate).toContain('`pending-next-published-candidate`');
+    expect(candidate).toContain('`pending-post-publication-v1.3.0-candidate`');
     expect(candidate).toContain('Required skill: `vi-history-suite-expert-agent-reviewer`');
     expect(candidate).toContain('Exact public release: `v1.2.2-published`');
     expect(candidate).toContain('remains historical exact');

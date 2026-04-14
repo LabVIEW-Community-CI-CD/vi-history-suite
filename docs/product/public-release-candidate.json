@@ -2,7 +2,7 @@
   "schema": "vi-history-suite/public-release-candidate@v1",
   "versionLine": "1.3.0",
   "burnedExactReleaseLine": "v1.0.2",
-  "recordedAt": "2026-04-14T00:00:00Z",
+  "recordedAt": "2026-04-14T09:51:37Z",
   "authorityRepo": {
     "role": "source-of-truth",
     "integrationBranch": "develop",
@@ -26,9 +26,9 @@
   },
   "publicDevelopCandidate": {
     "branch": "develop",
-    "candidateCommit": null,
-    "status": "local-authority-green-not-yet-published",
-    "sourcePullRequest": null,
+    "candidateCommit": "722c1f7",
+    "status": "published-public-develop-candidate-awaiting-expert-review",
+    "sourcePullRequest": "#31",
     "priorPullRequests": [
       "#24",
       "#25",
@@ -39,9 +39,9 @@
   },
   "publishedPublicWiki": {
     "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite.wiki.git",
-    "publishedHeadCommit": "527a8b4",
+    "publishedHeadCommit": "fc6af3c",
     "publicationLedgerPath": "docs/product/public-github-wiki-publication-ledger.json",
-    "status": "published-exact-release-wiki-closeout"
+    "status": "published-v1.3.0-candidate-wiki-head"
   },
   "candidateReadiness": {
     "authorityBaseline": "v1.2.2-exact-public-release-published",
@@ -49,7 +49,7 @@
     "localPublicDevcontainer": "v1.1.0-published-baseline",
     "localPublicFixtureHelper": "v1.1.0-published-baseline",
     "historicalPublicRepoBootstrapBaseline": "exact-v1.2.0-human-baseline-retained",
-    "publishedSurfaceExpertAgentReview": "pending-next-published-candidate",
+    "publishedSurfaceExpertAgentReview": "pending-post-publication-v1.3.0-candidate",
     "runtimeProviderPublicAcceptanceGate": "open",
     "exactPublicRelease": "v1.2.2-published"
   },
@@ -156,6 +156,8 @@
       "verdict": "no findings; exact release / Marketplace publish may proceed",
       "reviewedPublicDevelopCommit": "86b19a2",
       "reviewedPublicWikiHead": "527a8b4",
+      "nextPublishedCandidateCommit": "722c1f7",
+      "nextPublishedCandidateWikiHead": "fc6af3c",
       "priorReviewedPublicDevelopCommit": "96944d7",
       "priorReviewedPublicWikiHead": "d6da0c4",
       "priorVerdict": "findings-present",
@@ -186,19 +188,9 @@
       "summary": "The runtime-provider public-acceptance gate is still open for the next public candidate line."
     },
     {
-      "id": "BLOCKER-1.3.0-002-PUBLIC-DEVELOP-CANDIDATE-NOT-PUBLISHED",
-      "status": "open",
-      "summary": "The next public develop candidate head is not yet published and retained in this package."
-    },
-    {
-      "id": "BLOCKER-1.3.0-003-PUBLIC-WIKI-CANDIDATE-NOT-PUBLISHED",
-      "status": "open",
-      "summary": "The next public wiki candidate head is not yet published and retained in this package."
-    },
-    {
       "id": "BLOCKER-1.3.0-004-EXPERT-AGENT-REVIEW-PENDING",
       "status": "open",
-      "summary": "The next post-publication expert-agent review remains pending until the next candidate heads are live."
+      "summary": "The next post-publication expert-agent review remains pending on public develop `722c1f7` and public wiki `fc6af3c`."
     }
   ]
 }

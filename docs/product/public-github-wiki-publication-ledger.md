@@ -12,16 +12,16 @@ The machine-readable companion surface for this ledger is:
 
 ## Published Wiki HEAD
 
-- Current published public GitHub wiki HEAD: `527a8b4`
+- Current published public GitHub wiki HEAD: `fc6af3c`
 
 ## Published Pages
 
 | Page | Wiki Path | Status | Published | Wiki Commit | Primary Authority |
 | --- | --- | --- | --- | --- | --- |
-| Overview | `Home` | published | `2026-04-08` | `d6da0c4` | `README.md`; `docs/product/current-state.md`; `docs/product/extension-execution-policy.md` |
-| User Workflow | `User-Workflow` | published | `2026-04-08` | `d6da0c4` | `README.md`; `docs/product/extension-execution-policy.md`; `docs/product/current-state.md` |
-| Install And Release | `Install-And-Release` | published | `2026-04-08` | `527a8b4` | `README.md`; `docs/release-procedure.md`; `docs/product/current-state.md` |
-| Comparison Reports And Dashboard Review | `Comparison-Reports-And-Dashboard-Review` | published | `2026-04-08` | `1b2f476` | `README.md`; `docs/product/current-state.md`; `docs/product/extension-execution-policy.md`; `docs/product/execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md` |
+| Overview | `Home` | published | `2026-04-14` | `fc6af3c` | `README.md`; `docs/product/current-state.md`; `docs/product/extension-execution-policy.md` |
+| User Workflow | `User-Workflow` | published | `2026-04-14` | `fc6af3c` | `README.md`; `docs/product/extension-execution-policy.md`; `docs/product/current-state.md` |
+| Install And Release | `Install-And-Release` | published | `2026-04-14` | `fc6af3c` | `README.md`; `docs/release-procedure.md`; `docs/product/current-state.md` |
+| Comparison Reports And Dashboard Review | `Comparison-Reports-And-Dashboard-Review` | published | `2026-04-14` | `fc6af3c` | `README.md`; `docs/product/current-state.md`; `docs/product/extension-execution-policy.md`; `docs/product/execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md` |
 | Fork Codespace Quickstart | `Fork-Codespace-Quickstart` | published | `2026-04-07` | `b30d356` | `README.md`; `docs/product/current-state.md`; `docs/product/execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md` |
 | Clone Public Repo In Codespace | `Clone-Public-Repo-In-Codespace` | published | `2026-04-07` | `63a4208` | `README.md`; `docs/product/current-state.md`; `docs/product/execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md` |
 | Review Public LabVIEW VI Changes | `Review-Public-LabVIEW-VI-Changes` | published | `2026-04-07` | `b30d356` | `README.md`; `docs/product/current-state.md`; `docs/product/execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md` |

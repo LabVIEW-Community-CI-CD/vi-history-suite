@@ -23,30 +23,35 @@ Installed-user start pages:
 - Comparison reports and dashboard review:
   `https://github.com/svelderrainruiz/vi-history-suite/wiki/Comparison-Reports-And-Dashboard-Review`
 
-Local installed-user workflow:
+Maintained public candidate workflow on `develop`:
 
-1. install or start Docker Desktop or Docker, then confirm `docker info`
-   succeeds in the same session that will run VS Code
-2. open a trusted Git repo that contains an eligible LabVIEW VI
-3. run `VI History`
-4. select one commit checkbox
-5. select a second distinct commit checkbox
-6. if the governed image is missing but Docker is ready, wait for first-use
-   image acquisition
-7. review the generated comparison report
+1. run `VI History: Prepare Local Runtime Settings CLI`
+2. persist the provider, LabVIEW version, and LabVIEW bitness through
+   `vihs-runtime-settings --provider <host|docker> --labview-version <major> --labview-bitness <x86|x64>`
+3. if VS Code was already open when the CLI updated settings, reload or restart
+   the window
+4. run `VI History: Check Runtime Readiness`
+5. open a trusted Git repo that contains an eligible LabVIEW VI
+6. run `VI History`
+7. select exactly two retained revisions with the commit checkboxes
+8. review the explicit compare preflight section, then choose `Compare`
+9. review the generated comparison report or the retained blocked/runtime facts
 
 You do not need to fork this repo or choose a branch to use the installed
 extension locally.
 
 It is intentionally bounded:
 
-- Docker-only compare execution
-- x64 container surfaces only
-- Docker CLI plus a running Docker daemon are prerequisites for the first
-  compare
-- repo-agnostic two-commit checkbox-selected compare flow
-- devcontainer/Codespaces-capable development path
-- no host-LabVIEW runtime competition in the installed-extension workflow
+- the exact released `main` line and Marketplace `1.2.2` install route remain
+  Docker-only
+- the maintained public candidate on `develop` opens host-default Windows
+  local `LabVIEWCLI` plus one bounded expert Docker provider
+- provider, LabVIEW version, and LabVIEW bitness stay explicit and user-set
+  through the generated settings CLI
+- Docker `x86` is unsupported and fails closed with host-or-`x64` guidance
+- runtime readiness and compare preflight stay explicit before compare
+- repo-agnostic exact selected/base compare remains the installed review flow
+- devcontainer/Codespaces-capable development path remains available
 
 This repo does not publish the internal GitLab control plane, benchmark
 governance, or maintainer-only acceptance evidence.
@@ -55,19 +60,26 @@ governance, or maintainer-only acceptance evidence.
 
 - Open a trusted Git repository containing an eligible LabVIEW VI.
 - Run `VI History`.
-- Select one commit checkbox.
-- Select a second distinct commit checkbox.
-- The second checkbox selection triggers compare generation automatically.
+- Use the commit checkboxes to select exactly two retained revisions.
+- Review the explicit compare preflight section.
+- Choose `Compare` for that exact selected/base pair.
 
-The compare surface is Docker-only:
+The maintained public candidate on `develop` keeps the runtime contract
+explicit:
 
-- Windows hosts use the governed image that matches the current Docker daemon
-  engine.
-- Linux hosts use the governed Linux image.
-- Missing governed images are pulled on first use with visible progress.
-- If Docker is not installed yet, not running yet, or the selected image
-  cannot be acquired, the extension fails closed instead of probing host
-  LabVIEW.
+- Windows defaults to local `LabVIEWCLI` when the persisted provider is absent.
+- Docker is a bounded expert provider selected through the generated settings
+  CLI instead of a panel-side picker.
+- `viHistorySuite.labviewVersion` and `viHistorySuite.labviewBitness` are
+  required across both provider classes.
+- `VI History: Check Runtime Readiness` and `vihs-runtime-settings --validate`
+  expose whether the current bundle is `ready`, `needs-image-acquisition`, or
+  blocked.
+- If Docker is selected, the extension derives the governed Windows or Linux
+  image family from the current Docker engine and fails closed on unsupported
+  `x86`.
+- If VS Code was already open when the generated settings CLI changed the
+  provider bundle, reload or restart before trusting compare preflight.
 
 ## Branch Use
 
@@ -76,6 +88,9 @@ The compare surface is Docker-only:
   model to use the product locally.
 - If you are here to evaluate the next public candidate, use `develop`. Stay
   on `main` only if you want the latest exact released source.
+- `main` keeps the exact released Docker-only installed-user contract.
+- `develop` carries the maintained public candidate for the next host-default
+  Windows local `LabVIEWCLI` line.
 - `main` is the public default branch and tracks the latest exact released
   source line.
 - `develop` is the public evaluation branch for the next governed candidate
@@ -125,7 +140,10 @@ The public GitHub facade is expected to support evaluation inside Codespaces or
 a local devcontainer.
 
 - A Linux-hosted development session uses the governed Linux container image.
-- No host LabVIEW installation is required for the installed extension path.
+- The exact released installed extension path on `main` does not require host
+  LabVIEW.
+- The maintained public candidate on `develop` is where Windows local
+  `LabVIEWCLI` evaluation becomes relevant.
 
 Typical public fast loop:
 

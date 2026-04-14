@@ -1,7 +1,7 @@
 {
   "generatedFor": "vi-history-suite",
   "publicationSurface": "public-github-user-wiki",
-  "publishedHeadCommit": "527a8b4",
+  "publishedHeadCommit": "fc6af3c",
   "pages": [
     {
       "id": "overview",
@@ -9,8 +9,8 @@
       "wikiPath": "Home",
       "wikiFileName": "Home.md",
       "status": "published",
-      "publishedDate": "2026-04-08",
-      "wikiCommit": "527a8b4",
+      "publishedDate": "2026-04-14",
+      "wikiCommit": "fc6af3c",
       "primaryAuthority": [
         "README.md",
         "docs/product/current-state.md",
@@ -23,8 +23,8 @@
       "wikiPath": "User-Workflow",
       "wikiFileName": "User-Workflow.md",
       "status": "published",
-      "publishedDate": "2026-04-08",
-      "wikiCommit": "d6da0c4",
+      "publishedDate": "2026-04-14",
+      "wikiCommit": "fc6af3c",
       "primaryAuthority": [
         "README.md",
         "docs/product/extension-execution-policy.md",
@@ -37,8 +37,8 @@
       "wikiPath": "Install-And-Release",
       "wikiFileName": "Install-And-Release.md",
       "status": "published",
-      "publishedDate": "2026-04-08",
-      "wikiCommit": "d6da0c4",
+      "publishedDate": "2026-04-14",
+      "wikiCommit": "fc6af3c",
       "primaryAuthority": [
         "README.md",
         "docs/release-procedure.md",
@@ -51,8 +51,8 @@
       "wikiPath": "Comparison-Reports-And-Dashboard-Review",
       "wikiFileName": "Comparison-Reports-And-Dashboard-Review.md",
       "status": "published",
-      "publishedDate": "2026-04-08",
-      "wikiCommit": "1b2f476",
+      "publishedDate": "2026-04-14",
+      "wikiCommit": "fc6af3c",
       "primaryAuthority": [
         "README.md",
         "docs/product/current-state.md",
