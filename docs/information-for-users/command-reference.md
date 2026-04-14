@@ -172,6 +172,7 @@ See also:
     `live-uptake-not-proven`
   - fails closed when latest packet `liveUptakeObservation` is
     `in-session-updated`
+  - fails closed when latest packet `safeRestoreVerified` is not `true`
   - fails closed when retained history reports any
     `historyInSessionUpdatedCount > 0`
   - fails closed when retained history reports any

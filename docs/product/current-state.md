@@ -380,7 +380,8 @@ Post-release tranches:
     `mutationTargetBaselineChanged=true`, and
     `historyProofStatus=not-fully-proven`,
     `historyStance=live-uptake-not-proven`, with latest
-    `liveUptakeObservation=reload-required` and retained
+    `liveUptakeObservation=reload-required`,
+    `safeRestoreVerified=true`, and retained
     `historyInSessionUpdatedCount=0` plus
     `historyUnknownObservationCount=0`, with retained history total/count
     integrity preserved
