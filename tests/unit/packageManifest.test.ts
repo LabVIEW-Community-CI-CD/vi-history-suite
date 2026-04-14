@@ -4,6 +4,9 @@ import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 interface ExtensionManifest {
+  main?: string;
+  browser?: string;
+  extensionKind?: string[];
   activationEvents?: string[];
   files?: string[];
   homepage?: string;
@@ -126,6 +129,28 @@ describe('extension manifest research alignment', () => {
     ).toBe(false);
     expect(manifestSnapshot).not.toContain('timelineprovider');
     expect(manifestSnapshot).not.toContain('registertimeline');
+  });
+
+  it('keeps the desktop and remote-host boundary by excluding publishable web-target extension entrypoints', () => {
+    const manifest = readManifest();
+    const boundaryAdr = fs.readFileSync(
+      path.resolve(
+        __dirname,
+        '..',
+        '..',
+        'docs',
+        'architecture',
+        'adr',
+        'ADR-0003-workspace-report-storage-and-desktop-boundary.md'
+      ),
+      'utf8'
+    );
+
+    expect(manifest.main).toBe('./out/extension.js');
+    expect(manifest.browser).toBeUndefined();
+    expect(manifest.extensionKind ?? []).not.toContain('web');
+    expect(boundaryAdr).toContain('desktop and remote extension hosts');
+    expect(boundaryAdr).toContain('no publishable VS Code web target');
   });
 
   it('declares limited untrusted-workspace support and restricts external tool settings', () => {
