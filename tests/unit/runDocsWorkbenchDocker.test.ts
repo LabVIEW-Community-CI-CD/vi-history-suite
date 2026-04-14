@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 const {
+  buildDockerArgs,
+  buildGitSafeDirectoryEnvArgs,
   formatPublishedRegistryAccessError,
   resolvePublishedRegistryCredentials,
   resolvePublishedRegistryHost
@@ -48,5 +50,51 @@ describe('runDocsWorkbenchDocker', () => {
     expect(message).toContain('Published docs workbench image pull failed');
     expect(message).toContain('registry.gitlab.com');
     expect(message).toContain('GITLAB_TOKEN');
+  });
+
+  it('mounts the repo parent for gate and shell commands so sibling wiki roots stay visible', () => {
+    const gateArgs = buildDockerArgs(
+      'gate',
+      'docker.exe',
+      'vi-history-suite-docs-authoring:local'
+    );
+    const shellArgs = buildDockerArgs(
+      'shell',
+      'docker.exe',
+      'vi-history-suite-docs-authoring:local'
+    );
+
+    expect(gateArgs.slice(0, 3)).toEqual(['run', '--rm', '-v']);
+    expect(gateArgs[3]).toContain('/repo-parent');
+    expect(gateArgs).toContain('GIT_CONFIG_COUNT=3');
+    expect(gateArgs).toContain('VIHS_DOCS_WORKSPACE=/repo-parent/vi-history-suite-user-rounds');
+    expect(gateArgs).toContain('/repo-parent/vi-history-suite-user-rounds');
+    expect(gateArgs.slice(-3)).toEqual(['npm', 'run', 'docs:gate']);
+
+    expect(shellArgs.slice(0, 3)).toEqual(['run', '--rm', '-it']);
+    expect(shellArgs[4]).toContain('/repo-parent');
+    expect(shellArgs).toContain('GIT_CONFIG_COUNT=3');
+    expect(shellArgs).toContain('VIHS_DOCS_WORKSPACE=/repo-parent/vi-history-suite-user-rounds');
+    expect(shellArgs).toContain('/repo-parent/vi-history-suite-user-rounds');
+    expect(shellArgs.at(-1)).toBe('bash');
+  });
+
+  it('predeclares the mounted repo and sibling wiki roots as safe directories', () => {
+    expect(buildGitSafeDirectoryEnvArgs('vi-history-suite-user-rounds')).toEqual([
+      '-e',
+      'GIT_CONFIG_COUNT=3',
+      '-e',
+      'GIT_CONFIG_KEY_0=safe.directory',
+      '-e',
+      'GIT_CONFIG_VALUE_0=/repo-parent/vi-history-suite-user-rounds',
+      '-e',
+      'GIT_CONFIG_KEY_1=safe.directory',
+      '-e',
+      'GIT_CONFIG_VALUE_1=/repo-parent/vi-history-suite.wiki',
+      '-e',
+      'GIT_CONFIG_KEY_2=safe.directory',
+      '-e',
+      'GIT_CONFIG_VALUE_2=/repo-parent/vi-history-suite.github.wiki'
+    ]);
   });
 });

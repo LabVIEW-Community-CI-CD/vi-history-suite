@@ -2,13 +2,13 @@
 set -euo pipefail
 
 resolve_workspace_root() {
-  if [[ -n "${VIHS_DOCS_WORKSPACE:-}" ]]; then
-    printf '%s\n' "${VIHS_DOCS_WORKSPACE}"
+  if [[ -n "${CI_PROJECT_DIR:-}" && -f "${CI_PROJECT_DIR}/package.json" ]]; then
+    printf '%s\n' "${CI_PROJECT_DIR}"
     return
   fi
 
-  if [[ -n "${CI_PROJECT_DIR:-}" && -f "${CI_PROJECT_DIR}/package.json" ]]; then
-    printf '%s\n' "${CI_PROJECT_DIR}"
+  if [[ -n "${VIHS_DOCS_WORKSPACE:-}" ]]; then
+    printf '%s\n' "${VIHS_DOCS_WORKSPACE}"
     return
   fi
 
