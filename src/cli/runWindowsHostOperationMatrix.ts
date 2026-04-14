@@ -76,6 +76,7 @@ export interface WindowsHostOperationMatrixCaseResult {
   executionMode: MatrixExecutionMode;
   status: 'succeeded' | 'failed' | 'blocked' | 'gated';
   blockedReason?: string;
+  cleanupFailureMessage?: string;
   exitCode?: number;
   stdoutFilePath?: string;
   stderrFilePath?: string;
@@ -446,10 +447,16 @@ export async function runWindowsHostOperationMatrixCli(
     }
 
     if (preRunObservation.processes.length > 0) {
-      await cleanupRuntimeSurface();
-      preRunCleanupApplied = true;
-      postPreRunCleanupObservation = await inspectRuntimeSurface();
-      if (postPreRunCleanupObservation.processes.length > 0) {
+      const cleanupAttempt = await attemptWindowsHostRuntimeSurfaceCleanup(
+        cleanupRuntimeSurface,
+        inspectRuntimeSurface
+      );
+      preRunCleanupApplied = cleanupAttempt.cleanupApplied;
+      postPreRunCleanupObservation = cleanupAttempt.observation;
+      if (
+        cleanupAttempt.errorMessage ||
+        (postPreRunCleanupObservation?.processes.length ?? 0) > 0
+      ) {
         results.push({
           operation: testCase.operation,
           bitness: testCase.bitness,
@@ -460,7 +467,10 @@ export async function runWindowsHostOperationMatrixCli(
           tcpSettingsNotes: tcpSettings.notes,
           executionMode: testCase.executionMode,
           status: 'blocked',
-          blockedReason: 'pre-run-runtime-surface-contaminated',
+          blockedReason: cleanupAttempt.errorMessage
+            ? 'pre-run-runtime-surface-cleanup-failed'
+            : 'pre-run-runtime-surface-contaminated',
+          cleanupFailureMessage: cleanupAttempt.errorMessage,
           preRunObservation,
           preRunCleanupApplied,
           postPreRunCleanupObservation,
@@ -522,6 +532,12 @@ export async function runWindowsHostOperationMatrixCli(
       await launchHeadlessLabview(testCase.labviewExePath);
       sessionPreparationObservation = await inspectRuntimeSurface();
       if (!isExpectedWarmHeadlessPreparationSurface(sessionPreparationObservation, testCase.labviewExePath)) {
+        const cleanupAttempt = await attemptWindowsHostRuntimeSurfaceCleanup(
+          cleanupRuntimeSurface,
+          inspectRuntimeSurface
+        );
+        postRunCleanupApplied = cleanupAttempt.cleanupApplied;
+        const postRunCleanupObservation = cleanupAttempt.observation;
         results.push({
           operation: testCase.operation,
           bitness: testCase.bitness,
@@ -533,13 +549,14 @@ export async function runWindowsHostOperationMatrixCli(
           executionMode: testCase.executionMode,
           status: 'blocked',
           blockedReason: 'warm-headless-prelaunch-did-not-retain-governed-labview-surface',
+          cleanupFailureMessage: cleanupAttempt.errorMessage,
           preRunObservation,
           preRunCleanupApplied,
           postPreRunCleanupObservation,
           sessionPreparationObservation,
-          postRunCleanupApplied
+          postRunCleanupApplied,
+          postRunCleanupObservation
         });
-        await cleanupRuntimeSurface();
         updateTrancheGateState(testCase, 'blocked', trancheGateState);
         continue;
       }
@@ -554,20 +571,36 @@ export async function runWindowsHostOperationMatrixCli(
     let status: WindowsHostOperationMatrixCaseResult['status'] =
       commandResult.exitCode === 0 ? 'succeeded' : 'failed';
     let blockedReason: string | undefined = undefined;
+    let cleanupFailureMessage: string | undefined = undefined;
     if (testCase.sessionState === 'warm-headless' && isExpectedWarmHeadlessPreparationSurface(postRunObservation, testCase.labviewExePath)) {
-      await cleanupRuntimeSurface();
-      postRunCleanupApplied = true;
-      postRunCleanupObservation = await inspectRuntimeSurface();
-      if (postRunCleanupObservation.processes.length > 0) {
+      const cleanupAttempt = await attemptWindowsHostRuntimeSurfaceCleanup(
+        cleanupRuntimeSurface,
+        inspectRuntimeSurface
+      );
+      postRunCleanupApplied = cleanupAttempt.cleanupApplied;
+      postRunCleanupObservation = cleanupAttempt.observation;
+      cleanupFailureMessage = cleanupAttempt.errorMessage;
+      if (
+        cleanupAttempt.errorMessage ||
+        (postRunCleanupObservation?.processes.length ?? 0) > 0
+      ) {
         status = 'failed';
-        blockedReason = 'post-run-runtime-surface-contaminated';
+        blockedReason = cleanupAttempt.errorMessage
+          ? 'post-run-runtime-surface-cleanup-failed'
+          : 'post-run-runtime-surface-contaminated';
       }
     } else if (postRunObservation.processes.length > 0) {
-      await cleanupRuntimeSurface();
-      postRunCleanupApplied = true;
-      postRunCleanupObservation = await inspectRuntimeSurface();
+      const cleanupAttempt = await attemptWindowsHostRuntimeSurfaceCleanup(
+        cleanupRuntimeSurface,
+        inspectRuntimeSurface
+      );
+      postRunCleanupApplied = cleanupAttempt.cleanupApplied;
+      postRunCleanupObservation = cleanupAttempt.observation;
+      cleanupFailureMessage = cleanupAttempt.errorMessage;
       status = 'failed';
-      blockedReason = 'post-run-runtime-surface-contaminated';
+      blockedReason = cleanupAttempt.errorMessage
+        ? 'post-run-runtime-surface-cleanup-failed'
+        : 'post-run-runtime-surface-contaminated';
     }
 
     results.push({
@@ -581,6 +614,7 @@ export async function runWindowsHostOperationMatrixCli(
       executionMode: testCase.executionMode,
       status,
       blockedReason,
+      cleanupFailureMessage,
       exitCode: commandResult.exitCode,
       stdoutFilePath,
       stderrFilePath,
@@ -820,7 +854,7 @@ function renderWindowsHostOperationMatrixMarkdown(report: WindowsHostOperationMa
 
   for (const result of report.results) {
     const detail =
-      result.blockedReason ||
+      [result.blockedReason, result.cleanupFailureMessage].filter(Boolean).join(': ') ||
       (result.exitCode !== undefined ? `exit ${result.exitCode}` : '') ||
       (result.postRunCleanupApplied ? 'post-run cleanup applied' : '') ||
       'ok';
@@ -833,6 +867,28 @@ function renderWindowsHostOperationMatrixMarkdown(report: WindowsHostOperationMa
 }
 
 maybeRunWindowsHostOperationMatrixCliAsMain();
+
+async function attemptWindowsHostRuntimeSurfaceCleanup(
+  cleanupRuntimeSurface: () => Promise<void>,
+  inspectRuntimeSurface: () => Promise<WindowsHostRuntimeSurfaceSnapshot>
+): Promise<{
+  cleanupApplied: true;
+  observation: WindowsHostRuntimeSurfaceSnapshot;
+  errorMessage?: string;
+}> {
+  let errorMessage: string | undefined;
+  try {
+    await cleanupRuntimeSurface();
+  } catch (error) {
+    errorMessage = formatMatrixError(error);
+  }
+
+  return {
+    cleanupApplied: true,
+    observation: await inspectRuntimeSurface(),
+    errorMessage
+  };
+}
 
 function isExpectedWarmHeadlessPreparationSurface(
   observation: WindowsHostRuntimeSurfaceSnapshot,
@@ -848,6 +904,14 @@ function isExpectedWarmHeadlessPreparationSurface(
 
 function normalizeWindowsPath(value: string | undefined): string | undefined {
   return value?.replaceAll('/', '\\').trim().toLowerCase();
+}
+
+function formatMatrixError(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return String(error);
 }
 
 function shouldGateX86CaseBehindX64Tranche(
