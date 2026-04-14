@@ -30,9 +30,11 @@ Current facts:
   materialization plus current-host launcher execution against a temporary
   settings file
 - the explicit Windows proof lane `npm run test:integration:windows` now
-  proves the `.cmd` launcher path as well
-- the remaining CLI proof gap is explicit only for direct live user-profile
-  VS Code settings mutation against the default settings target
+  proves the `.cmd` launcher path and the default no-`--settings-file` target
+  under a disposable `APPDATA\\Code\\User\\settings.json`
+- the remaining CLI proof gap is explicit only for direct live mutation of
+  the active real user-profile VS Code settings target while Code is already
+  running
 - the Windows exact-runtime preflight is now landed: installed compare
   resolves one exact version+bitness LabVIEW executable plus matching
   `LabVIEWCLI` surface and fails closed on missing, ambiguous, or

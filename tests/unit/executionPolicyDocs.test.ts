@@ -118,11 +118,12 @@ describe('execution-policy control plane', () => {
     expect(currentState).toContain('`viHistorySuite.runtimeProvider`');
     expect(currentState).toContain('current-host launcher invocation against a temporary');
     expect(currentState).toContain('`npm run test:integration:windows`');
-    expect(currentState).toContain('proves the `.cmd` launcher path as well');
+    expect(currentState).toContain('proves the `.cmd` launcher path');
+    expect(currentState).toContain('APPDATA\\\\Code\\\\User\\\\settings.json');
     expect(currentState).toContain(
-      'direct live user-profile'
+      'active real user-profile VS Code settings target while Code is already'
     );
-    expect(currentState).toContain('default settings target is not yet');
+    expect(currentState).toContain('running is not yet end-to-end proven');
     expect(currentState).toContain('released `repo-standards-review` `v0.2.9` compliance closeout');
     expect(currentState).toContain('remaining active slices are packaged/public truth alignment');
     expect(currentState).toContain('`TRANCHE-012`: Post-release sustainment and release cadence');
@@ -199,6 +200,7 @@ describe('execution-policy control plane', () => {
     expect(testPlan).toContain('TEST-UNIT-348');
     expect(testPlan).toContain('TEST-INTEG-009');
     expect(testPlan).toContain('`npm run test:integration:windows`');
+    expect(testPlan).toContain('no-`--settings-file` target under a disposable');
     expect(testPlan).toContain('Docker-only');
     expect(testPlan).toContain('TEST-UNIT-339');
     expect(testPlan).toContain('TEST-DOC-102');
@@ -211,9 +213,10 @@ describe('execution-policy control plane', () => {
     expect(program).toContain('TRANCHE-016');
     expect(program).toContain('Windows exact-runtime preflight is now landed');
     expect(program).toContain('remaining work on this program is now narrower');
-    expect(program).toContain('proves the `.cmd` launcher path as well');
+    expect(program).toContain('proves the `.cmd` launcher path');
+    expect(program).toContain('APPDATA\\\\Code\\\\User\\\\settings.json');
     expect(program).toContain('current-host launcher execution against a temporary');
-    expect(program).toContain('default settings target');
+    expect(program).toContain('active real user-profile VS Code settings target while Code is already');
     expect(program).toContain('issue-0412-promotion-and-publication-handoff.md');
     expect(program).toContain('installed manifest/settings');
     expect(program).toContain('explicit `Compare` action');
@@ -227,7 +230,9 @@ describe('execution-policy control plane', () => {
     expect(issueNext).toContain('keep the installed manifest/settings slice truthful');
     expect(issueNext).toContain('current-host launcher execution against a temporary settings file');
     expect(issueNext).toContain('`.cmd` launcher path');
-    expect(issueNext).toContain('default settings target');
+    expect(issueNext).toContain('APPDATA\\\\Code\\\\User\\\\settings.json');
+    expect(issueNext).toContain('direct live mutation of the active');
+    expect(issueNext).toContain('real user-profile VS Code settings target while Code is already running');
     expect(issueNext).toContain('keep packaged/public docs on the exact released Docker-only baseline');
     expect(issueNext).toContain('provider/version/bitness');
     expect(issueNext).toContain('explicit compare preflight state');

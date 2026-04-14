@@ -348,14 +348,15 @@ Post-release tranches:
     materialization plus current-host launcher invocation against a temporary
     settings file
   - the explicit Windows proof lane `npm run test:integration:windows` now
-    proves the `.cmd` launcher path as well
-  - the remaining CLI proof gap is now narrower: direct live user-profile
-    VS Code settings mutation against the default settings target is not yet
-    end-to-end proven on this line
+    proves the `.cmd` launcher path and the default no-`--settings-file`
+    target under a disposable `APPDATA\\Code\\User\\settings.json`
+  - the remaining CLI proof gap is now narrower: direct live mutation of the
+    active real user-profile VS Code settings target while Code is already
+    running is not yet end-to-end proven on this line
   - released `repo-standards-review` `v0.2.9` compliance closeout is retained
     in the branch control plane
   - the remaining active slices are packaged/public truth alignment when
-    publication is actually truthful, the unresolved live default-settings
+    publication is actually truthful, the unresolved live active-settings
     mutation seam, and later public acceptance handoff after publication
   - retained handoff packet:
     [issue-0412-promotion-and-publication-handoff.md](./issue-0412-promotion-and-publication-handoff.md)

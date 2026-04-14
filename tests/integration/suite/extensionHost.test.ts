@@ -34,6 +34,10 @@ interface PreparedLocalRuntimeSettingsCliSummary {
   rootDirectoryPath?: string;
 }
 
+interface PreparedLocalRuntimeSettingsCliExecutionOptions {
+  env?: NodeJS.ProcessEnv;
+}
+
 const execFile = promisify(execFileCallback);
 
 export async function runIntegrationSuite(): Promise<void> {
@@ -506,6 +510,31 @@ async function testPrepareLocalRuntimeSettingsCli(): Promise<void> {
       'viHistorySuite.labviewVersion': '2026',
       'viHistorySuite.labviewBitness': 'x64'
     });
+
+    if (process.platform === 'win32') {
+      const fakeAppDataRoot = path.join(tempRoot, 'fake-appdata');
+      const defaultSettingsFilePath = path.join(fakeAppDataRoot, 'Code', 'User', 'settings.json');
+      const defaultTargetRun = await runPreparedLocalRuntimeSettingsCli(
+        result,
+        ['--provider', 'host', '--labview-version', '2026', '--labview-bitness', 'x64'],
+        {
+          env: {
+            ...process.env,
+            APPDATA: fakeAppDataRoot
+          }
+        }
+      );
+      assert.equal(defaultTargetRun.launcherPath, result.windowsLauncherPath);
+      assert.match(
+        defaultTargetRun.stdout,
+        new RegExp(defaultSettingsFilePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+      );
+      assert.deepEqual(JSON.parse(await fs.readFile(defaultSettingsFilePath, 'utf8')), {
+        'viHistorySuite.runtimeProvider': 'host',
+        'viHistorySuite.labviewVersion': '2026',
+        'viHistorySuite.labviewBitness': 'x64'
+      });
+    }
   } finally {
     await fs.rm(tempRoot, { recursive: true, force: true });
   }
@@ -513,14 +542,16 @@ async function testPrepareLocalRuntimeSettingsCli(): Promise<void> {
 
 async function runPreparedLocalRuntimeSettingsCli(
   result: PreparedLocalRuntimeSettingsCliSummary,
-  args: string[]
+  args: string[],
+  options: PreparedLocalRuntimeSettingsCliExecutionOptions = {}
 ): Promise<{ stdout: string; stderr: string; launcherPath: string }> {
   if (process.platform === 'win32') {
     const execution = await execFile(
       'cmd.exe',
       ['/d', '/s', '/c', result.windowsLauncherPath!, ...args],
       {
-        encoding: 'utf8'
+        encoding: 'utf8',
+        env: options.env
       }
     );
     return {
@@ -529,7 +560,10 @@ async function runPreparedLocalRuntimeSettingsCli(
     };
   }
 
-  const execution = await execFile(result.posixLauncherPath!, args, { encoding: 'utf8' });
+  const execution = await execFile(result.posixLauncherPath!, args, {
+    encoding: 'utf8',
+    env: options.env
+  });
   return {
     ...execution,
     launcherPath: result.posixLauncherPath!

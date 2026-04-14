@@ -72,8 +72,9 @@ describe('post-release control-plane coherence', () => {
     expect(currentState).toContain('installed manifest/settings');
     expect(currentState).toContain('bounded expert provider');
     expect(currentState).toContain('`npm run test:integration:windows`');
-    expect(currentState).toContain('proves the `.cmd` launcher path as well');
-    expect(currentState).toContain('default settings target is not yet');
+    expect(currentState).toContain('proves the `.cmd` launcher path');
+    expect(currentState).toContain('APPDATA\\\\Code\\\\User\\\\settings.json');
+    expect(currentState).toContain('active real user-profile VS Code settings target while Code is already');
 
     expect(program).toContain('Closed on the Docker-only public-product acceptance gate.');
     expect(program).toContain('the installed extension compare workflow is now Docker-only and x64-only');
