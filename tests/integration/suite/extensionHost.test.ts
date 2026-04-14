@@ -41,6 +41,25 @@ interface PreparedLocalRuntimeSettingsCliExecutionOptions {
   env?: NodeJS.ProcessEnv;
 }
 
+interface RuntimeSettingsLiveSessionProbeSummary {
+  outcome: 'probed-runtime-settings-live-session';
+  settingsFilePath?: string;
+  persistedProvider?: string;
+  persistedLabviewVersion?: string;
+  persistedLabviewBitness?: string;
+  liveProvider?: string;
+  liveLabviewVersion?: string;
+  liveLabviewBitness?: string;
+  providerDrift: boolean;
+  versionDrift: boolean;
+  bitnessDrift: boolean;
+  driftDetected: boolean;
+  runtimeValidationOutcome?: 'ready' | 'blocked';
+  runtimeProvider?: string;
+  runtimeEngine?: string;
+  runtimeBlockedReason?: string;
+}
+
 const execFile = promisify(execFileCallback);
 
 export async function runIntegrationSuite(): Promise<void> {
@@ -50,6 +69,7 @@ export async function runIntegrationSuite(): Promise<void> {
   await api.refreshEligibility();
   await testEligibleVersusIneligibleFlow(api, metadata);
   await testPrepareLocalRuntimeSettingsCli();
+  await testProbeRuntimeSettingsLiveSession();
   await testPanelOpenFlow(api, metadata);
 }
 
@@ -635,6 +655,19 @@ async function testPrepareLocalRuntimeSettingsCli(): Promise<void> {
   } finally {
     await fs.rm(tempRoot, { recursive: true, force: true });
   }
+}
+
+async function testProbeRuntimeSettingsLiveSession(): Promise<void> {
+  const summary = (await vscode.commands.executeCommand(
+    'labviewViHistory.probeRuntimeSettingsLiveSession'
+  )) as RuntimeSettingsLiveSessionProbeSummary;
+
+  assert.ok(summary);
+  assert.equal(summary.outcome, 'probed-runtime-settings-live-session');
+  assert.equal(typeof summary.providerDrift, 'boolean');
+  assert.equal(typeof summary.versionDrift, 'boolean');
+  assert.equal(typeof summary.bitnessDrift, 'boolean');
+  assert.equal(typeof summary.driftDetected, 'boolean');
 }
 
 async function runPreparedLocalRuntimeSettingsCli(
