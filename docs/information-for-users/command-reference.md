@@ -102,8 +102,9 @@ See also:
   the active branch.
 - Notes:
   - the CLI is generated into user-profile storage on first use
-  - if VS Code is already running, reload or restart the window before using
-    Compare
+  - if VS Code is already running, reload or restart the window before
+    trusting Compare or other runtime-provider surfaces to reflect the updated
+    provider and runtime facts
 
 `npm run test:integration:windows`
 

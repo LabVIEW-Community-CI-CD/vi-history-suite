@@ -309,6 +309,9 @@ describe('comparisonRuntimeDoctor', () => {
       }
     });
 
+    expect(lines).toContain(
+      'Settings freshness: if you just used the generated settings CLI while VS Code was already open, reload or restart the window before trusting this runtime result.'
+    );
     expect(lines.at(-1)).toBe(
       'Next action: close existing LabVIEW/LabVIEWCLI/LVCompare sessions, clear the governed VI Server listener on the selected port, or switch to a Docker-backed compare path, then rerun comparison report generation.'
     );

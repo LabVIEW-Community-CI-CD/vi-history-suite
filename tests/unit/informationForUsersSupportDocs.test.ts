@@ -45,10 +45,11 @@ describe('information-for-users support docs', () => {
 
     expect(faq).toContain('The current exact released line, `v1.2.2`, still uses the');
     expect(faq).toContain('Docker-only and x64-only installed path.');
-    expect(faq).toContain('reload or restart the window before using Compare');
+    expect(faq).toContain('before trusting Compare or other');
 
     expect(commandReference).toContain('npm run docs:workbench:gate');
     expect(commandReference).toContain('vihs-runtime-settings --provider <host|docker>');
+    expect(commandReference).toContain('trusting Compare or other runtime-provider surfaces');
     expect(commandReference).toContain('assurance-workbench:v0.2.13');
     expect(commandReference).toContain('/tmp/repo-standards-review-v0.2.13-tag/scripts/external_user_information_check.py');
   });

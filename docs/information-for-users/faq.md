@@ -63,8 +63,8 @@ Use the generated runtime-settings CLI on the active branch:
 
 The active branch treats host as the default provider and Docker as the
 bounded expert path. If VS Code is already running when the CLI updates the
-settings file, reload or restart the window before using Compare so the new
-settings are picked up.
+settings file, reload or restart the window before trusting Compare or other
+runtime-provider surfaces to reflect the updated provider and runtime facts.
 
 ### Where do I find the key commands or checks?
 
@@ -108,7 +108,7 @@ Use the governed repo search posture:
   first, then the docs-workbench gate if you need the containerized authoring
   surface.
 - If Compare is still showing stale provider or runtime facts after a CLI
-  update, reload or restart the VS Code window.
+  update, reload or restart the VS Code window before trusting Compare.
 - If you are checking the broader standards posture for this branch, use the
   released `repo-standards-review v0.2.13` baseline instead of older parked
   roadmap branches.
