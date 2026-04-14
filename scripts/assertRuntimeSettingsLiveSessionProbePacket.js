@@ -297,6 +297,11 @@ function validateProbePacket(summary) {
         `historyTotalRuns must be >= historyReloadRequiredCount + historyInSessionUpdatedCount + historyUnknownObservationCount (${expectedMinimum})`
       );
     }
+    if (historyTotalRuns !== expectedMinimum) {
+      failures.push(
+        `historyTotalRuns must equal historyReloadRequiredCount + historyInSessionUpdatedCount + historyUnknownObservationCount (${expectedMinimum})`
+      );
+    }
   }
 
   if (

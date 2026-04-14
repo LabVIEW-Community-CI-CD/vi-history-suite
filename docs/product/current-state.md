@@ -382,7 +382,8 @@ Post-release tranches:
     `historyStance=live-uptake-not-proven`, with latest
     `liveUptakeObservation=reload-required` and retained
     `historyInSessionUpdatedCount=0` plus
-    `historyUnknownObservationCount=0`
+    `historyUnknownObservationCount=0`, with retained history total/count
+    integrity preserved
   - one local history receipt now exists at
     `npm run proof:runtime-settings-live-session:history`; it summarizes
     retained probe runs into one bounded live-uptake stance and explicit
