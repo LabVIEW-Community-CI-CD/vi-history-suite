@@ -2,7 +2,7 @@
 
 - Version line: `1.3.0`
 - Burned exact release line: `v1.0.2`
-- Recorded at: `2026-04-14T10:30:20Z`
+- Recorded at: `2026-04-14T10:45:07Z`
 - Authority source of truth: GitLab `develop` -> `release/*` -> `main`
 - Published public source commit: `86b19a2`
 - Public `develop` candidate commit: `b1de8c5`
@@ -33,7 +33,7 @@
   `exact-v1.2.0-human-baseline-retained`
 - Published-surface expert-agent review:
   `no-findings-post-publication-v1.3.0-candidate`
-- Runtime-provider public-acceptance gate: `open`
+- Runtime-provider public-acceptance gate: `closed`
 - Exact public release: `v1.2.2-published`
 
 ## Exact Release Baseline
@@ -55,8 +55,9 @@
   `b1de8c5` through GitHub PR `#32` and is retained here.
 - The maintained public wiki head is now `fc6af3c` and is retained in
   `docs/product/public-github-wiki-publication-ledger.{md,json}`.
-- Review-ready is retained open because the post-publication expert-agent
-  review now returns a clean verdict on those live candidate heads.
+- Review-ready is retained and the runtime-provider public-acceptance gate is
+  now closed because the post-publication expert-agent review returns a clean
+  verdict on those live candidate heads.
 - The exact VS Code Marketplace item still verifies `1.2.2` through the
   official gallery extension query.
 
@@ -140,5 +141,5 @@
 ## Remaining Blockers
 
 - No release-path blocker remains on exact `v1.2.2`.
-- Active `v1.3.0` candidate blockers remain:
-  - runtime-provider public-acceptance gate is still open
+- Runtime-provider public-acceptance gate is now closed on the published
+  `v1.3.0` candidate heads (`b1de8c5` / `fc6af3c`).

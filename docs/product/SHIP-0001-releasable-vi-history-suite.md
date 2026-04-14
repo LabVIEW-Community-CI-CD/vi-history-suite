@@ -18,14 +18,14 @@ Closed and landed for the first immutable SemVer release:
 - historical public-closeout tranche: `TRANCHE-010`
 - historical public-closeout issue: [ISSUE-0407 Public Facade Release Kit And Host-Machine Acceptance](./issues/ISSUE-0407-public-facade-installer-and-windows-acceptance.md)
 - historical public-closeout execution program: [PROGRAM-0002 Public Facade Release Kit And Host-Machine Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
-- next runtime-provider public-acceptance gate:
+- runtime-provider public-acceptance gate record:
   [runtime-provider-public-acceptance-gate.md](./runtime-provider-public-acceptance-gate.md)
 - current driver-seat post-release tranche: `TRANCHE-012`
 - current driver-seat post-release issue: [ISSUE-0409 Post-Release Sustainment And Release Cadence](./issues/ISSUE-0409-post-release-sustainment-and-release-cadence.md)
 - current driver-seat post-release execution program: [PROGRAM-0004 Post-Release Sustainment And Release Cadence](./execution-programs/PROGRAM-0004-post-release-sustainment-and-release-cadence.md)
 - current governed post-release lanes:
   - historical `TRANCHE-010` / [ISSUE-0407 Public Facade Release Kit And Host-Machine Acceptance](./issues/ISSUE-0407-public-facade-installer-and-windows-acceptance.md) / [PROGRAM-0002 Public Facade Release Kit And Host-Machine Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
-  - open runtime-provider public-acceptance gate:
+  - closed runtime-provider public-acceptance gate record:
     [runtime-provider-public-acceptance-gate.md](./runtime-provider-public-acceptance-gate.md)
   - closed `TRANCHE-011` / [ISSUE-0408 Repeatable Benchmark Proof](./issues/ISSUE-0408-repeatable-benchmark-proof.md) / [PROGRAM-0003 Repeatable Benchmark Proof](./execution-programs/PROGRAM-0003-repeatable-benchmark-proof.md)
 

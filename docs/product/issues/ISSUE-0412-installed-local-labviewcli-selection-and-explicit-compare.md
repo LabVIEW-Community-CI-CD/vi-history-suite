@@ -115,7 +115,7 @@ history instead of chat memory.
   the replacement contract is truthfully publishable
 - retain the historical branch-transition packet explicitly in
   [issue-0412-promotion-and-publication-handoff.md](../issue-0412-promotion-and-publication-handoff.md)
-- retain the next runtime-provider public-acceptance gate explicitly in
+- retain the runtime-provider public-acceptance gate record explicitly in
   [runtime-provider-public-acceptance-gate.md](../runtime-provider-public-acceptance-gate.md)
 
 ## Round 1: User Proposal Facts

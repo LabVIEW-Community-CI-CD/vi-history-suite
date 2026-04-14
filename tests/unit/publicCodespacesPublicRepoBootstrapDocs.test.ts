@@ -51,7 +51,7 @@ describe('public Codespaces public-repo bootstrap docs', () => {
     expect(candidate).toContain('Exact public release: `v1.2.2-published`');
     expect(candidate).toContain('remains historical exact');
     expect(candidate).toContain('`v1.2.0` baseline evidence only');
-    expect(candidate).toContain('Active `v1.3.0` candidate blockers remain:');
+    expect(candidate).toContain('Runtime-provider public-acceptance gate is now closed');
 
     expect(issue).toContain('public `github.com` and `gitlab.com` HTTPS repos only');
     expect(issue).toContain('brand new fork');

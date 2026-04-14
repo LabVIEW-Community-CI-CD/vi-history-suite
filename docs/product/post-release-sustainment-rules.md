@@ -15,12 +15,12 @@ scattered across queue summaries, ship history, and benchmark notes.
 - execution program: `PROGRAM-0004`
 - historical public-closeout record: `TRANCHE-010` / `PROGRAM-0002` is closed
   on the Docker-only public contract
-- next runtime-provider public-acceptance gate:
+- runtime-provider public-acceptance gate record:
   [runtime-provider-public-acceptance-gate.md](./runtime-provider-public-acceptance-gate.md)
 
 The sustainment lane now owns the only active post-release driver seat. It does
 not absorb the historical `PROGRAM-0002` closeout, `PROGRAM-0003`,
-`PROGRAM-0005`, or the open runtime-provider public-acceptance gate into
+`PROGRAM-0005`, or the runtime-provider public-acceptance gate record into
 generic maintenance language; those surfaces remain explicit when they are
 historical or active.
 
