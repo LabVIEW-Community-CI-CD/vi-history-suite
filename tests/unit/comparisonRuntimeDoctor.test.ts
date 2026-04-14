@@ -278,7 +278,7 @@ describe('comparisonRuntimeDoctor', () => {
 
     expect(lines).toContain('Runtime blocked reason: labview-version-required.');
     expect(lines.at(-1)).toBe(
-      'Next action: set viHistorySuite.labviewVersion, then rerun comparison report generation.'
+      'Next action: set viHistorySuite.labviewVersion. If you just used the generated settings CLI while VS Code was already open, reload or restart the window. Then rerun comparison report generation.'
     );
   });
 
@@ -348,7 +348,7 @@ describe('comparisonRuntimeDoctor', () => {
 
     expect(lines).toContain('Runtime blocked reason: installed-provider-invalid.');
     expect(lines.at(-1)).toBe(
-      'Next action: set viHistorySuite.runtimeProvider to host or docker, then rerun comparison report generation.'
+      'Next action: set viHistorySuite.runtimeProvider to host or docker. If you just used the generated settings CLI while VS Code was already open, reload or restart the window. Then rerun comparison report generation.'
     );
   });
 

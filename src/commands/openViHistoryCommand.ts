@@ -1415,7 +1415,7 @@ async function resolveHistoryPanelComparePreflightState(
   const labviewVersion = settings.labviewVersion ?? 'Unset';
   const labviewBitness = settings.bitness ?? 'Unset';
   const cliHint =
-    'Provider is read-only here. Use the generated settings CLI to update provider, LabVIEW version, or LabVIEW bitness when correction is required.';
+    'Provider is read-only here. Use the generated settings CLI to update provider, LabVIEW version, or LabVIEW bitness when correction is required. If you just used the generated settings CLI while VS Code was already open, reload or restart the window before trusting compare preflight.';
 
   if (settings.invalidRequestedProvider) {
     return {
@@ -1423,11 +1423,13 @@ async function resolveHistoryPanelComparePreflightState(
       provider,
       labviewVersion,
       labviewBitness,
-      nextAction:
-        'Next action: set viHistorySuite.runtimeProvider to host or docker, then review compare preflight before choosing Compare.',
+      nextAction: buildComparePreflightSettingsAction(
+        'set viHistorySuite.runtimeProvider to host or docker'
+      ),
       cliHint,
-      warningMessage:
-        'Compare preflight is blocked. Set viHistorySuite.runtimeProvider to host or docker, then review compare preflight before choosing Compare.'
+      warningMessage: buildComparePreflightWarningMessage(
+        'Set viHistorySuite.runtimeProvider to host or docker'
+      )
     };
   }
 
@@ -1437,11 +1439,13 @@ async function resolveHistoryPanelComparePreflightState(
       provider,
       labviewVersion,
       labviewBitness,
-      nextAction:
-        'Next action: set viHistorySuite.labviewVersion and viHistorySuite.labviewBitness, then review compare preflight before choosing Compare.',
+      nextAction: buildComparePreflightSettingsAction(
+        'set viHistorySuite.labviewVersion and viHistorySuite.labviewBitness'
+      ),
       cliHint,
-      warningMessage:
-        'Compare preflight is blocked. Set viHistorySuite.labviewVersion and viHistorySuite.labviewBitness, then review compare preflight before choosing Compare.'
+      warningMessage: buildComparePreflightWarningMessage(
+        'Set viHistorySuite.labviewVersion and viHistorySuite.labviewBitness'
+      )
     };
   }
 
@@ -1451,11 +1455,13 @@ async function resolveHistoryPanelComparePreflightState(
       provider,
       labviewVersion,
       labviewBitness,
-      nextAction:
-        'Next action: set viHistorySuite.labviewVersion, then review compare preflight before choosing Compare.',
+      nextAction: buildComparePreflightSettingsAction(
+        'set viHistorySuite.labviewVersion'
+      ),
       cliHint,
-      warningMessage:
-        'Compare preflight is blocked. Set viHistorySuite.labviewVersion, then review compare preflight before choosing Compare.'
+      warningMessage: buildComparePreflightWarningMessage(
+        'Set viHistorySuite.labviewVersion'
+      )
     };
   }
 
@@ -1465,11 +1471,13 @@ async function resolveHistoryPanelComparePreflightState(
       provider,
       labviewVersion,
       labviewBitness,
-      nextAction:
-        'Next action: set viHistorySuite.labviewBitness, then review compare preflight before choosing Compare.',
+      nextAction: buildComparePreflightSettingsAction(
+        'set viHistorySuite.labviewBitness'
+      ),
       cliHint,
-      warningMessage:
-        'Compare preflight is blocked. Set viHistorySuite.labviewBitness, then review compare preflight before choosing Compare.'
+      warningMessage: buildComparePreflightWarningMessage(
+        'Set viHistorySuite.labviewBitness'
+      )
     };
   }
 
@@ -1479,11 +1487,12 @@ async function resolveHistoryPanelComparePreflightState(
       provider,
       labviewVersion,
       labviewBitness,
-      nextAction:
-        'Next action: use Docker with viHistorySuite.labviewBitness=x64 or switch viHistorySuite.runtimeProvider to host, then review compare preflight before choosing Compare.',
+      nextAction: buildComparePreflightSettingsAction(
+        'use Docker with viHistorySuite.labviewBitness=x64 or switch viHistorySuite.runtimeProvider to host'
+      ),
       cliHint,
       warningMessage:
-        'Compare preflight is blocked. Docker requires viHistorySuite.labviewBitness=x64 or viHistorySuite.runtimeProvider=host before Compare can run.'
+        'Compare preflight is blocked. Docker requires viHistorySuite.labviewBitness=x64 or viHistorySuite.runtimeProvider=host before Compare can run. If you just used the generated settings CLI while VS Code was already open, reload or restart the window. Then review compare preflight before choosing Compare.'
     };
   }
 
@@ -1502,6 +1511,14 @@ function deriveComparisonRuntimeNextAction(
   summaryLines: string[] | undefined
 ): string | undefined {
   return summaryLines?.find((line) => line.startsWith('Next action:'));
+}
+
+function buildComparePreflightSettingsAction(settingsAction: string): string {
+  return `Next action: ${settingsAction}. If you just used the generated settings CLI while VS Code was already open, reload or restart the window. Then review compare preflight before choosing Compare.`;
+}
+
+function buildComparePreflightWarningMessage(settingsAction: string): string {
+  return `Compare preflight is blocked. ${settingsAction}. If you just used the generated settings CLI while VS Code was already open, reload or restart the window. Then review compare preflight before choosing Compare.`;
 }
 
 function deriveRuntimeProviderFromDoctorSummary(

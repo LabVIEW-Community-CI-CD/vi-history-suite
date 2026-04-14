@@ -34,8 +34,10 @@ Current facts:
   under a disposable `APPDATA\\Code\\User\\settings.json`, aligned to the
   active disposable Windows integration-host profile
 - the remaining CLI proof gap is explicit only for direct live mutation of
-  the already-running VS Code session; the generated CLI now warns users to
-  reload or restart the window before using Compare when Code is already open
+  the already-running VS Code session; the generated CLI plus the
+  settings-driven compare-preflight and runtime-doctor surfaces now warn
+  users to reload or restart the window before using Compare when Code is
+  already open
 - the Windows exact-runtime preflight is now landed: installed compare
   resolves one exact version+bitness LabVIEW executable plus matching
   `LabVIEWCLI` surface and fails closed on missing, ambiguous, or

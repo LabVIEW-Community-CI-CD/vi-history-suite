@@ -1737,7 +1737,8 @@
   current-host plus explicit Windows launcher execution are traced separately
   by `TEST-INTEG-009`; live mutation of the active real user-profile VS Code
   settings target while Code is already running remains a later proof seam,
-  and the CLI warns users to reload or restart the window before Compare when
+  and the CLI plus the settings-driven compare-preflight/runtime-doctor
+  surfaces warn users to reload or restart the window before Compare when
   Code is already open
 - `TEST-UNIT-346`: verify the installed compare contract defaults to host and
   admits Docker only as a bounded expert provider persisted through the

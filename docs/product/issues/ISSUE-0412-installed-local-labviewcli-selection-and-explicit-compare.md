@@ -204,9 +204,10 @@ still only proposal material during round 1:
   selected provider, and preflight/block facts instead of treating
   second-selection auto-run as the live branch contract
 - direct live mutation of the already-running VS Code session remains
-  unproven and is retained as the remaining proof gap; the generated CLI now
-  warns users to reload or restart the window before using Compare when Code
-  is already open
+  unproven and is retained as the remaining proof gap; the generated CLI plus
+  the settings-driven compare-preflight and runtime-doctor surfaces now warn
+  users to reload or restart the window before using Compare when Code is
+  already open
   for this slice
 
 ## Round 1 Working Assessment
