@@ -84,6 +84,11 @@ function run(argv = process.argv.slice(2), deps = {}) {
       `Runtime-settings live-session policy boundary requires latest retained probe observation to remain reload-required (latestObservation=${summary.latestObservation ?? '<none>'}).`
     );
   }
+  if (summary.inSessionUpdatedCount > 0) {
+    throw new Error(
+      `Runtime-settings live-session policy boundary requires retained in-session-updated observations to remain absent (inSessionUpdatedCount=${summary.inSessionUpdatedCount}).`
+    );
+  }
   if (summary.mutationTargetHostCount < 1 || summary.mutationTargetDockerCount < 1) {
     throw new Error(
       `Runtime-settings live-session policy boundary requires retained bidirectional provider-selection coverage (mutationTargetHostCount=${summary.mutationTargetHostCount}, mutationTargetDockerCount=${summary.mutationTargetDockerCount}).`

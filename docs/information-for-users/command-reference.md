@@ -170,6 +170,8 @@ See also:
     `re-evaluation-required`
   - fails closed when latest packet `liveUptakeObservation` is
     `in-session-updated`
+  - fails closed when retained history reports any
+    `historyInSessionUpdatedCount > 0`
 
 `npm run proof:runtime-settings-live-session:history`
 
@@ -210,6 +212,8 @@ See also:
     receipts or show no baseline-to-persisted provider change
   - returns non-zero when latest retained observation is not
     `reload-required`
+  - returns non-zero when retained history includes one or more
+    `in-session-updated` observations
   - returns non-zero when retained proof status becomes
     `re-evaluation-required`, forcing explicit policy re-evaluation before merge
 

@@ -52,7 +52,8 @@ Current facts:
   `mutationTargetPersistedMatch=true` enforcement, latest-packet
   `mutationTargetBaselineChanged=true` enforcement, and latest-packet
   `historyProofStatus=not-fully-proven` plus latest-packet
-  `liveUptakeObservation=reload-required` enforcement
+  `liveUptakeObservation=reload-required` plus retained
+  `historyInSessionUpdatedCount=0` enforcement
 - one local history receipt now exists at
   `npm run proof:runtime-settings-live-session:history` so retained probe runs
   can be summarized into one bounded live-uptake stance plus explicit
@@ -64,6 +65,7 @@ Current facts:
   or does not retain bidirectional CLI provider-selection mutation coverage
   with explicit mutation-target alignment and baseline-switch receipts, and
   when the latest retained probe observation no longer remains reload-required
+  or retained history includes one or more in-session-updated observations
 - the remaining CLI proof gap is now narrower: direct mutation safety and
   automatic live uptake around a live already-running VS Code session is still
   not end-to-end proven; probe mutation safe-restore is now fail-closed and
