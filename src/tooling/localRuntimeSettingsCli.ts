@@ -2,12 +2,21 @@ import * as fs from 'node:fs/promises';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { applyEdits, modify, parse, type ParseError } from 'jsonc-parser';
+import {
+  locateComparisonRuntime,
+  type ComparisonRuntimeEngine,
+  type ComparisonRuntimeLocatorDeps,
+  type ComparisonRuntimeProvider,
+  type RuntimePlatform,
+  type ComparisonRuntimeSettings
+} from '../reporting/comparisonRuntimeLocator';
 
 export type LocalRuntimeSettingsCliBitness = 'x86' | 'x64';
 export type LocalRuntimeSettingsCliProvider = 'host' | 'docker';
 
 export interface LocalRuntimeSettingsCliArgs {
   helpRequested: boolean;
+  validateRequested?: boolean;
   provider?: LocalRuntimeSettingsCliProvider;
   labviewVersion?: string;
   labviewBitness?: LocalRuntimeSettingsCliBitness;
@@ -15,11 +24,18 @@ export interface LocalRuntimeSettingsCliArgs {
 }
 
 export interface LocalRuntimeSettingsCliRunResult {
-  outcome: 'help' | 'updated-settings';
+  outcome: 'help' | 'updated-settings' | 'validated-settings';
   settingsFilePath?: string;
   provider?: LocalRuntimeSettingsCliProvider;
   labviewVersion?: string;
   labviewBitness?: LocalRuntimeSettingsCliBitness;
+  persistedProvider?: string;
+  persistedLabviewVersion?: string;
+  persistedLabviewBitness?: string;
+  runtimeValidationOutcome?: 'ready' | 'blocked';
+  runtimeProvider?: ComparisonRuntimeProvider;
+  runtimeEngine?: ComparisonRuntimeEngine;
+  runtimeBlockedReason?: string;
 }
 
 export interface MaterializedLocalRuntimeSettingsCli {
@@ -49,6 +65,8 @@ interface LocalRuntimeSettingsCliDeps {
   homedir?: () => string;
   platform?: NodeJS.Platform;
   env?: NodeJS.ProcessEnv;
+  locateRuntime?: typeof locateComparisonRuntime;
+  runtimeLocatorDeps?: ComparisonRuntimeLocatorDeps;
 }
 
 const CLI_ROOT_DIRECTORY_NAME = 'local-runtime-settings-cli';
@@ -69,6 +87,7 @@ export function getLocalRuntimeSettingsCliUsage(): string {
     '  --labview-version  Required LabVIEW major version. Example: 2026',
     '  --labview-bitness Required LabVIEW bitness: x86 or x64',
     '  --settings-file   Optional explicit VS Code settings.json path',
+    '  --validate        Report persisted provider/version/bitness facts plus bounded runtime validation for the governed settings target',
     '  --help            Show this help text'
   ].join('\n');
 }
@@ -83,6 +102,9 @@ export function parseLocalRuntimeSettingsCliArgs(argv: readonly string[]): Local
     switch (argument) {
       case '--help':
         parsed.helpRequested = true;
+        break;
+      case '--validate':
+        parsed.validateRequested = true;
         break;
       case '--provider':
         parsed.provider = normalizeProvider(readRequiredArgValue(argv, argument, ++index));
@@ -196,6 +218,10 @@ export async function runLocalRuntimeSettingsCli(
     return { outcome: 'help' };
   }
 
+  if (parsed.validateRequested) {
+    return validateLocalRuntimeSettingsCli(parsed, deps);
+  }
+
   if (!parsed.labviewVersion) {
     throw new Error('Missing required --labview-version.');
   }
@@ -302,6 +328,63 @@ function resolveSettingsFilePath(
   );
 }
 
+async function validateLocalRuntimeSettingsCli(
+  parsed: LocalRuntimeSettingsCliArgs,
+  deps: LocalRuntimeSettingsCliDeps
+): Promise<LocalRuntimeSettingsCliRunResult> {
+  const settingsFilePath = resolveSettingsFilePath(parsed, deps);
+  const settingsFacts = await readPersistedRuntimeSettingsFacts(settingsFilePath, deps.fs ?? fs);
+  const locateRuntime = deps.locateRuntime ?? locateComparisonRuntime;
+  const runtimeSelection = await locateRuntime(
+    resolveCliRuntimePlatform(deps.platform ?? process.platform),
+    settingsFacts.runtimeSettings,
+    deps.runtimeLocatorDeps
+  );
+  const runtimeValidationOutcome =
+    runtimeSelection.provider !== 'unavailable' && !runtimeSelection.blockedReason
+      ? 'ready'
+      : 'blocked';
+
+  writeLine(deps.stdout ?? process.stdout, `Validated ${settingsFilePath}`);
+  writeLine(
+    deps.stdout ?? process.stdout,
+    `viHistorySuite.runtimeProvider=${formatPersistedFact(settingsFacts.persistedProvider)}`
+  );
+  writeLine(
+    deps.stdout ?? process.stdout,
+    `viHistorySuite.labviewVersion=${formatPersistedFact(settingsFacts.persistedLabviewVersion)}`
+  );
+  writeLine(
+    deps.stdout ?? process.stdout,
+    `viHistorySuite.labviewBitness=${formatPersistedFact(settingsFacts.persistedLabviewBitness)}`
+  );
+  writeLine(
+    deps.stdout ?? process.stdout,
+    `runtimeValidationOutcome=${runtimeValidationOutcome}`
+  );
+  writeLine(deps.stdout ?? process.stdout, `runtimeProvider=${runtimeSelection.provider}`);
+  writeLine(
+    deps.stdout ?? process.stdout,
+    `runtimeEngine=${runtimeSelection.engine ?? '<none>'}`
+  );
+  writeLine(
+    deps.stdout ?? process.stdout,
+    `runtimeBlockedReason=${runtimeSelection.blockedReason ?? '<none>'}`
+  );
+
+  return {
+    outcome: 'validated-settings',
+    settingsFilePath,
+    persistedProvider: settingsFacts.persistedProvider,
+    persistedLabviewVersion: settingsFacts.persistedLabviewVersion,
+    persistedLabviewBitness: settingsFacts.persistedLabviewBitness,
+    runtimeValidationOutcome,
+    runtimeProvider: runtimeSelection.provider,
+    runtimeEngine: runtimeSelection.engine,
+    runtimeBlockedReason: runtimeSelection.blockedReason
+  };
+}
+
 async function writeVsCodeSettingsFile(
   settingsFilePath: string,
   provider: LocalRuntimeSettingsCliProvider,
@@ -339,6 +422,59 @@ async function writeVsCodeSettingsFile(
     ensureTerminalNewline(updatedSettingsText, endOfLine),
     'utf8'
   );
+}
+
+interface PersistedRuntimeSettingsFacts {
+  persistedProvider?: string;
+  persistedLabviewVersion?: string;
+  persistedLabviewBitness?: string;
+  runtimeSettings: ComparisonRuntimeSettings;
+}
+
+async function readPersistedRuntimeSettingsFacts(
+  settingsFilePath: string,
+  fsApi: Pick<typeof fs, 'readFile'>
+): Promise<PersistedRuntimeSettingsFacts> {
+  const existingSettingsText = await readExistingSettingsFileText(settingsFilePath, fsApi);
+  const normalizedSettingsText = normalizeSettingsJsoncText(existingSettingsText, settingsFilePath);
+  const parsed = parse(normalizedSettingsText, [], {
+    allowTrailingComma: true,
+    disallowComments: false
+  }) as Record<string, unknown>;
+  const persistedProvider = readTrimmedSettingsProperty(
+    parsed,
+    'viHistorySuite.runtimeProvider'
+  );
+  const persistedLabviewVersion = readTrimmedSettingsProperty(
+    parsed,
+    'viHistorySuite.labviewVersion'
+  );
+  const persistedLabviewBitness = readTrimmedSettingsProperty(
+    parsed,
+    'viHistorySuite.labviewBitness'
+  );
+
+  return {
+    persistedProvider,
+    persistedLabviewVersion,
+    persistedLabviewBitness,
+    runtimeSettings: {
+      requestedProvider:
+        persistedProvider === 'host' || persistedProvider === 'docker'
+          ? persistedProvider
+          : undefined,
+      invalidRequestedProvider:
+        persistedProvider && persistedProvider !== 'host' && persistedProvider !== 'docker'
+          ? persistedProvider
+          : undefined,
+      requireVersionAndBitness: true,
+      labviewVersion: persistedLabviewVersion,
+      bitness:
+        persistedLabviewBitness === 'x86' || persistedLabviewBitness === 'x64'
+          ? persistedLabviewBitness
+          : undefined
+    }
+  };
 }
 
 async function readExistingSettingsFileText(
@@ -414,6 +550,33 @@ function isMissingFileError(error: unknown): error is NodeJS.ErrnoException {
     typeof error === 'object' &&
     'code' in error &&
     (error as NodeJS.ErrnoException).code === 'ENOENT'
+  );
+}
+
+function readTrimmedSettingsProperty(
+  settingsObject: Record<string, unknown>,
+  propertyName: string
+): string | undefined {
+  const value = settingsObject[propertyName];
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+
+  const trimmedValue = value.trim();
+  return trimmedValue ? trimmedValue : undefined;
+}
+
+function formatPersistedFact(value: string | undefined): string {
+  return value ?? '<missing>';
+}
+
+function resolveCliRuntimePlatform(platform: NodeJS.Platform): RuntimePlatform {
+  if (platform === 'win32' || platform === 'linux' || platform === 'darwin') {
+    return platform;
+  }
+
+  throw new Error(
+    `Unsupported runtime platform for VI History settings CLI validation: ${platform}`
   );
 }
 

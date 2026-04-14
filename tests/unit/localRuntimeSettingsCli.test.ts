@@ -54,9 +54,17 @@ describe('localRuntimeSettingsCli', () => {
     expect(parseLocalRuntimeSettingsCliArgs(['--help'])).toEqual({
       helpRequested: true
     });
+    expect(
+      parseLocalRuntimeSettingsCliArgs(['--validate', '--settings-file', './settings.json'])
+    ).toEqual({
+      helpRequested: false,
+      validateRequested: true,
+      settingsFilePath: './settings.json'
+    });
     expect(getLocalRuntimeSettingsCliUsage()).toContain('--labview-version');
     expect(getLocalRuntimeSettingsCliUsage()).toContain('--labview-bitness');
     expect(getLocalRuntimeSettingsCliUsage()).toContain('--provider');
+    expect(getLocalRuntimeSettingsCliUsage()).toContain('--validate');
     expect(() => parseLocalRuntimeSettingsCliArgs(['--labview-version'])).toThrow(
       /Missing value for --labview-version/
     );
@@ -185,6 +193,54 @@ describe('localRuntimeSettingsCli', () => {
         {}
       )
     ).rejects.toThrow('VS Code settings.json must contain a JSON object.');
+  });
+
+  it('reports persisted provider/version/bitness truth plus bounded runtime validation outcome', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-local-runtime-cli-validate-'));
+    tempDirectories.push(tempRoot);
+    const settingsFilePath = path.join(tempRoot, 'settings.json');
+    await fs.writeFile(
+      settingsFilePath,
+      [
+        '{',
+        '  "viHistorySuite.runtimeProvider": "mystery",',
+        '  "viHistorySuite.labviewVersion": "2026",',
+        '  "viHistorySuite.labviewBitness": "x64"',
+        '}',
+        ''
+      ].join('\n'),
+      'utf8'
+    );
+    const stdout: string[] = [];
+
+    const result = await runLocalRuntimeSettingsCli(['--validate', '--settings-file', settingsFilePath], {
+      stdout: {
+        write(text: string) {
+          stdout.push(text);
+        }
+      }
+    });
+
+    expect(result).toEqual({
+      outcome: 'validated-settings',
+      settingsFilePath,
+      persistedProvider: 'mystery',
+      persistedLabviewVersion: '2026',
+      persistedLabviewBitness: 'x64',
+      runtimeValidationOutcome: 'blocked',
+      runtimeProvider: 'unavailable',
+      runtimeEngine: undefined,
+      runtimeBlockedReason: 'installed-provider-invalid'
+    });
+
+    expect(stdout.join('')).toContain(`Validated ${settingsFilePath}`);
+    expect(stdout.join('')).toContain('viHistorySuite.runtimeProvider=mystery');
+    expect(stdout.join('')).toContain('viHistorySuite.labviewVersion=2026');
+    expect(stdout.join('')).toContain('viHistorySuite.labviewBitness=x64');
+    expect(stdout.join('')).toContain('runtimeValidationOutcome=blocked');
+    expect(stdout.join('')).toContain('runtimeProvider=unavailable');
+    expect(stdout.join('')).toContain('runtimeEngine=<none>');
+    expect(stdout.join('')).toContain('runtimeBlockedReason=installed-provider-invalid');
   });
 
   it('returns a non-zero exit code when required settings arguments are missing', async () => {
