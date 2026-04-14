@@ -40,6 +40,7 @@ describe('runtimeSettingsLiveSessionProbePacket', () => {
         driftDetected: true,
         liveUptakeObservation: 'reload-required',
         mutationProviderTarget: 'docker',
+        mutationTargetPersistedMatch: true,
         safeRestoreApplied: true,
         safeRestoreVerified: true,
         runtimeValidationOutcome: 'ready',
@@ -84,6 +85,9 @@ describe('runtimeSettingsLiveSessionProbePacket', () => {
     expect(packetMarkdown).toContain('# Runtime Settings Live-Session Probe Packet');
     expect(packetMarkdown).toContain('Drift detected: `yes`');
     expect(packetMarkdown).toContain('Live uptake observation: `reload-required`');
+    expect(packetMarkdown).toContain(
+      'Mutation target aligned with persisted provider: `yes`'
+    );
     expect(packetMarkdown).toContain('Safe restore applied: `yes`');
     expect(packetMarkdown).toContain('Safe restore verified: `yes`');
     expect(packetMarkdown).toContain('## History Receipt');

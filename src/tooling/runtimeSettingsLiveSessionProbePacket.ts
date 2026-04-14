@@ -100,6 +100,7 @@ function renderProbeSummaryMarkdown(summary: RuntimeSettingsLiveSessionProbeSumm
     `- Version drift: \`${summary.versionDrift ? 'yes' : 'no'}\``,
     `- Bitness drift: \`${summary.bitnessDrift ? 'yes' : 'no'}\``,
     `- Mutation provider target: \`${summary.mutationProviderTarget ?? '<none>'}\``,
+    `- Mutation target aligned with persisted provider: \`${formatBooleanReceipt(summary.mutationTargetPersistedMatch)}\``,
     `- Safe restore applied: \`${summary.safeRestoreApplied ? 'yes' : 'no'}\``,
     `- Safe restore verified: \`${summary.safeRestoreVerified ? 'yes' : 'no'}\``,
     '',
@@ -256,4 +257,14 @@ function normalizeLiveUptakeObservation(
     return 'in-session-updated';
   }
   return undefined;
+}
+
+function formatBooleanReceipt(value: boolean | undefined): string {
+  if (value === true) {
+    return 'yes';
+  }
+  if (value === false) {
+    return 'no';
+  }
+  return '<none>';
 }

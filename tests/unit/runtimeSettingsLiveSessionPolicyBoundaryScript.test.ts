@@ -57,6 +57,7 @@ describe('assertRuntimeSettingsLiveSessionPolicyBoundary script', () => {
           liveUptakeObservation: 'reload-required',
           driftDetected: true,
           mutationProviderTarget: 'docker',
+          mutationTargetPersistedMatch: true,
           safeRestoreVerified: true
         }
       },
@@ -66,6 +67,7 @@ describe('assertRuntimeSettingsLiveSessionPolicyBoundary script', () => {
           liveUptakeObservation: 'reload-required',
           driftDetected: true,
           mutationProviderTarget: 'host',
+          mutationTargetPersistedMatch: true,
           safeRestoreVerified: true
         }
       }
@@ -109,6 +111,7 @@ describe('assertRuntimeSettingsLiveSessionPolicyBoundary script', () => {
           liveUptakeObservation: 'reload-required',
           driftDetected: true,
           mutationProviderTarget: 'docker',
+          mutationTargetPersistedMatch: true,
           safeRestoreVerified: true
         }
       }
@@ -116,6 +119,33 @@ describe('assertRuntimeSettingsLiveSessionPolicyBoundary script', () => {
 
     expect(() => boundaryScript.run(['--packet-root', packetRoot])).toThrow(
       'requires retained bidirectional provider-selection coverage'
+    );
+  });
+
+  it('fails when retained history lacks explicit mutation-target alignment receipts', async () => {
+    const packetRoot = await seedHistoryPackets(temporaryDirectories, [
+      {
+        runId: '2026-04-14T13-00-00-000Z',
+        summary: {
+          liveUptakeObservation: 'reload-required',
+          driftDetected: true,
+          mutationProviderTarget: 'docker',
+          safeRestoreVerified: true
+        }
+      },
+      {
+        runId: '2026-04-14T12-00-00-000Z',
+        summary: {
+          liveUptakeObservation: 'reload-required',
+          driftDetected: true,
+          mutationProviderTarget: 'host',
+          safeRestoreVerified: true
+        }
+      }
+    ]);
+
+    expect(() => boundaryScript.run(['--packet-root', packetRoot])).toThrow(
+      'requires explicit mutation target alignment receipts'
     );
   });
 });

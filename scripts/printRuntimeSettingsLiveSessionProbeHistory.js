@@ -130,6 +130,9 @@ function summarizeHistory(packetRoot, runSummaries) {
   let mutationTargetHostCount = 0;
   let mutationTargetDockerCount = 0;
   let mutationTargetUnknownCount = 0;
+  let mutationTargetPersistedMatchCount = 0;
+  let mutationTargetPersistedMismatchCount = 0;
+  let mutationTargetPersistedUnknownCount = 0;
 
   for (const run of runSummaries) {
     const observation = normalizeObservation(run.summary);
@@ -152,6 +155,15 @@ function summarizeHistory(packetRoot, runSummaries) {
       mutationTargetDockerCount += 1;
     } else {
       mutationTargetUnknownCount += 1;
+    }
+
+    const targetPersistedMatch = normalizeMutationTargetPersistedMatch(run.summary);
+    if (targetPersistedMatch === true) {
+      mutationTargetPersistedMatchCount += 1;
+    } else if (targetPersistedMatch === false) {
+      mutationTargetPersistedMismatchCount += 1;
+    } else {
+      mutationTargetPersistedUnknownCount += 1;
     }
   }
 
@@ -184,6 +196,9 @@ function summarizeHistory(packetRoot, runSummaries) {
     mutationTargetHostCount,
     mutationTargetDockerCount,
     mutationTargetUnknownCount,
+    mutationTargetPersistedMatchCount,
+    mutationTargetPersistedMismatchCount,
+    mutationTargetPersistedUnknownCount,
     latestRunId: latest?.runId,
     latestSummaryPath: latest?.summaryPath,
     latestObservation,
@@ -233,6 +248,24 @@ function normalizeMutationProviderTarget(summary) {
   return undefined;
 }
 
+function normalizeMutationTargetPersistedMatch(summary) {
+  if (summary && typeof summary.mutationTargetPersistedMatch === 'boolean') {
+    return summary.mutationTargetPersistedMatch;
+  }
+  const mutationTarget = normalizeMutationProviderTarget(summary);
+  const persistedProvider =
+    summary && typeof summary.persistedProvider === 'string'
+      ? summary.persistedProvider.trim().toLowerCase()
+      : '';
+  if (
+    (mutationTarget === 'host' || mutationTarget === 'docker') &&
+    (persistedProvider === 'host' || persistedProvider === 'docker')
+  ) {
+    return mutationTarget === persistedProvider;
+  }
+  return undefined;
+}
+
 function formatHistorySummary(summary) {
   return [
     'Runtime settings live-session probe history receipt',
@@ -245,6 +278,9 @@ function formatHistorySummary(summary) {
     `- mutationTargetHostCount: ${summary.mutationTargetHostCount}`,
     `- mutationTargetDockerCount: ${summary.mutationTargetDockerCount}`,
     `- mutationTargetUnknownCount: ${summary.mutationTargetUnknownCount}`,
+    `- mutationTargetPersistedMatchCount: ${summary.mutationTargetPersistedMatchCount}`,
+    `- mutationTargetPersistedMismatchCount: ${summary.mutationTargetPersistedMismatchCount}`,
+    `- mutationTargetPersistedUnknownCount: ${summary.mutationTargetPersistedUnknownCount}`,
     `- latestRunId: ${summary.latestRunId ?? '<none>'}`,
     `- latestObservation: ${summary.latestObservation ?? '<none>'}`,
     `- latestMutationTarget: ${summary.latestMutationTarget ?? '<none>'}`,
@@ -339,6 +375,7 @@ module.exports = {
   classifyProofStatus,
   normalizeObservation,
   normalizeMutationProviderTarget,
+  normalizeMutationTargetPersistedMatch,
   formatHistorySummary,
   run
 };

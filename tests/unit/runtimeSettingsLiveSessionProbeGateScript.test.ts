@@ -72,6 +72,7 @@ describe('assertRuntimeSettingsLiveSessionProbePacket script', () => {
       latestPacketJsonPath: '/tmp/latest-summary.json',
       latestPacketMarkdownPath: '/tmp/latest-summary.md',
       mutationProviderTarget: 'docker',
+      mutationTargetPersistedMatch: true,
       liveUptakeObservation: 'reload-required',
       safeRestoreApplied: true,
       safeRestoreVerified: true,
@@ -101,6 +102,7 @@ describe('assertRuntimeSettingsLiveSessionProbePacket script', () => {
       latestPacketJsonPath: '/tmp/latest-summary.json',
       latestPacketMarkdownPath: '/tmp/latest-summary.md',
       mutationProviderTarget: 'host',
+      mutationTargetPersistedMatch: true,
       liveUptakeObservation: 'in-session-updated',
       safeRestoreApplied: true,
       safeRestoreVerified: true,
@@ -128,6 +130,7 @@ describe('assertRuntimeSettingsLiveSessionProbePacket script', () => {
       latestPacketJsonPath: '/tmp/latest-summary.json',
       latestPacketMarkdownPath: '/tmp/latest-summary.md',
       mutationProviderTarget: 'host',
+      mutationTargetPersistedMatch: true,
       liveUptakeObservation: 'in-session-updated',
       safeRestoreApplied: true,
       safeRestoreVerified: true,
@@ -157,6 +160,7 @@ describe('assertRuntimeSettingsLiveSessionProbePacket script', () => {
       latestPacketJsonPath: '/tmp/latest-summary.json',
       latestPacketMarkdownPath: '/tmp/latest-summary.md',
       mutationProviderTarget: 'host',
+      mutationTargetPersistedMatch: true,
       liveUptakeObservation: 'in-session-updated',
       safeRestoreApplied: true,
       safeRestoreVerified: true,
@@ -177,6 +181,37 @@ describe('assertRuntimeSettingsLiveSessionProbePacket script', () => {
     );
   });
 
+  it('fails validation when mutation target alignment conflicts with persisted provider', () => {
+    const failures = probeGate.validateProbePacket({
+      outcome: 'probed-runtime-settings-live-session',
+      packetRunId: '2026-04-14T13-07-33-123Z',
+      packetJsonPath: '/tmp/packet.json',
+      packetMarkdownPath: '/tmp/packet.md',
+      latestPacketJsonPath: '/tmp/latest-summary.json',
+      latestPacketMarkdownPath: '/tmp/latest-summary.md',
+      persistedProvider: 'docker',
+      mutationProviderTarget: 'host',
+      mutationTargetPersistedMatch: true,
+      liveUptakeObservation: 'in-session-updated',
+      safeRestoreApplied: true,
+      safeRestoreVerified: true,
+      providerDrift: false,
+      versionDrift: false,
+      bitnessDrift: false,
+      driftDetected: false,
+      historyTotalRuns: 3,
+      historyReloadRequiredCount: 1,
+      historyInSessionUpdatedCount: 2,
+      historyUnknownObservationCount: 0,
+      historyStance: 'live-uptake-not-proven',
+      historyProofStatus: 'not-fully-proven'
+    });
+
+    expect(failures).toContain(
+      'mutationTargetPersistedMatch must align with mutationProviderTarget versus persistedProvider (false)'
+    );
+  });
+
   it('passes on a valid packet file via --packet', async () => {
     const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-live-probe-gate-'));
     temporaryDirectories.push(tempRoot);
@@ -191,7 +226,9 @@ describe('assertRuntimeSettingsLiveSessionProbePacket script', () => {
           packetMarkdownPath: path.join(tempRoot, 'latest-summary.md'),
           latestPacketJsonPath: packetPath,
           latestPacketMarkdownPath: path.join(tempRoot, 'latest-summary.md'),
+          persistedProvider: 'host',
           mutationProviderTarget: 'host',
+          mutationTargetPersistedMatch: true,
           liveUptakeObservation: 'in-session-updated',
           safeRestoreApplied: true,
           safeRestoreVerified: true,

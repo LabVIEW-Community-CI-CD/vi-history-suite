@@ -84,6 +84,16 @@ function run(argv = process.argv.slice(2), deps = {}) {
       `Runtime-settings live-session policy boundary requires retained bidirectional provider-selection coverage (mutationTargetHostCount=${summary.mutationTargetHostCount}, mutationTargetDockerCount=${summary.mutationTargetDockerCount}).`
     );
   }
+  if (summary.mutationTargetPersistedMismatchCount > 0) {
+    throw new Error(
+      `Runtime-settings live-session policy boundary requires mutation target alignment with persisted provider on retained runs (mutationTargetPersistedMismatchCount=${summary.mutationTargetPersistedMismatchCount}).`
+    );
+  }
+  if (summary.mutationTargetPersistedUnknownCount > 0) {
+    throw new Error(
+      `Runtime-settings live-session policy boundary requires explicit mutation target alignment receipts on retained runs (mutationTargetPersistedUnknownCount=${summary.mutationTargetPersistedUnknownCount}).`
+    );
+  }
 
   if (parsed.json) {
     stdout.write(`${JSON.stringify(summary, null, 2)}\n`);
@@ -96,6 +106,12 @@ function run(argv = process.argv.slice(2), deps = {}) {
     stdout.write(`- inSessionUpdatedCount: ${summary.inSessionUpdatedCount}\n`);
     stdout.write(`- mutationTargetHostCount: ${summary.mutationTargetHostCount}\n`);
     stdout.write(`- mutationTargetDockerCount: ${summary.mutationTargetDockerCount}\n`);
+    stdout.write(
+      `- mutationTargetPersistedMismatchCount: ${summary.mutationTargetPersistedMismatchCount}\n`
+    );
+    stdout.write(
+      `- mutationTargetPersistedUnknownCount: ${summary.mutationTargetPersistedUnknownCount}\n`
+    );
     stdout.write(`- latestObservation: ${summary.latestObservation ?? '<none>'}\n`);
   }
 
