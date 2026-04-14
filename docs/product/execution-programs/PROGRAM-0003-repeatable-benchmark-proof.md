@@ -225,22 +225,22 @@ local canonical `labview-ci-cd/actions/VICompareTooling` tree for the
 sample fixtures for the fixture-backed operations,
 and keep `CreateComparisonReport` gated until those simpler host operations
 have been exercised first.
-Fresh canonical-host evidence on `2026-04-06` now narrows that follow-on lane
-further. The governed host-operation matrix now runs `LabVIEWCLI` through the
-retained foreground PowerShell path instead of the older background sidecar
-wrapper, and the corrected warm-headless x64-then-x86 ledger proves that
-`ExecuteBuildSpec`, `MassCompile`, `RunVI`, `RunVIAnalyzer`, and
-`PrintToSingleFileHtml` succeed cleanly on both admitted LabVIEW 2026 host
-surfaces. `CloseLabVIEW -Headless` succeeds on x64 too, but the same x86
-`CloseLabVIEW -Headless` case still leaves both `LabVIEW.exe` and
-`LabVIEWCLI.exe` hot until diagnostic cleanup. `RunUnitTests` on both x86 and
-x64 connects to the governed VI Server port and then exits `1` with `-350053`
-missing/bad operation files. So the stale `linux-headless-recursive-load`
-wording is now known to be too broad: the active canonical-host seam is the
-x86 `CloseLabVIEW` session-close path plus the cross-bitness `RunUnitTests`
-operation-admission failure, with `CreateComparisonReport` still correctly
-gated behind those remaining prerequisites rather than a broad Linux-only or
-generic host-attach story.
+Fresh canonical-host evidence on `2026-04-14` now retains the next blocker
+more strictly than the older `2026-04-06` warm-headless ledger. The governed
+host-operation matrix still runs `LabVIEWCLI` through the retained foreground
+PowerShell path, but the fresh cold-only receipt at
+`.cache/governed-proof/windows-host-operation-matrix/2026-04-14T07-59-35-969Z/host-operation-matrix.json`
+proves that every x64 cold prerequisite case now leaves `LabVIEWCLI.exe` hot
+long enough to retain `post-run-runtime-surface-contaminated`, even though the
+runner cleans the host surface again afterward. That means the x64 tranche no
+longer completes cleanly under cold attach, and the same governed run
+correctly gates the x86 tranche as `x64-tranche-did-not-complete-cleanly`.
+So the active canonical-host seam is now the x64 cold-attach contamination
+path; the older warm-headless x64 success and x86 `CloseLabVIEW` /
+`RunUnitTests` seams remain useful historical evidence, but they are not the
+newest admission truth. `CreateComparisonReport` therefore stays correctly
+gated behind the fresh x64 cold-host blocker instead of reopening report
+admission prematurely.
 
 `ADR-0024` plus `VHS-REQ-457..458` now tighten that PROGRAM-0003
 proof-admission layer one step further: governed proof subcommands validate

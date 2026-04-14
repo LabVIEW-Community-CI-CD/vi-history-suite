@@ -403,6 +403,73 @@ describe('runWindowsHostOperationMatrixCli', () => {
     );
   });
 
+  it('retains a blocked result when pre-run cleanup itself fails on a contaminated host surface', async () => {
+    const writeFile = vi.fn().mockResolvedValue(undefined);
+    const cleanupRuntimeSurface = vi
+      .fn()
+      .mockRejectedValue(
+        new Error('Windows host runtime cleanup failed; remaining processes: LabVIEW, LabVIEWCLI')
+      );
+    const inspectRuntimeSurface = vi
+      .fn()
+      .mockResolvedValueOnce({
+        capturedAt: '2026-04-14T07:55:49.802Z',
+        processes: [
+          { processName: 'LabVIEW', pid: 18320 },
+          { processName: 'LabVIEWCLI', pid: 17092 }
+        ],
+        processNames: ['LabVIEW', 'LabVIEWCLI']
+      })
+      .mockResolvedValueOnce({
+        capturedAt: '2026-04-14T07:55:50.802Z',
+        processes: [
+          { processName: 'LabVIEW', pid: 18320 },
+          { processName: 'LabVIEWCLI', pid: 17092 }
+        ],
+        processNames: ['LabVIEW', 'LabVIEWCLI']
+      });
+
+    await expect(
+      runWindowsHostOperationMatrixCli(
+        ['--operation', 'CloseLabVIEW', '--bitness', 'x64'],
+        {
+          repoRoot: '/tmp/vi-history-suite',
+          mkdir: vi.fn().mockResolvedValue(undefined),
+          readFile: vi.fn().mockResolvedValue('server.tcp.enabled=true\n') as never,
+          writeFile,
+          nowIso: () => '2026-04-14T07:55:49.802Z',
+          stdout: { write() {} },
+          inspectRuntimeSurface,
+          cleanupRuntimeSurface,
+          listInstalledOperations: vi.fn().mockResolvedValue([
+            'CloseLabVIEW',
+            'CreateComparisonReport',
+            'ExecuteBuildSpec',
+            'MassCompile',
+            'RunUnitTests',
+            'RunVI',
+            'RunVIAnalyzer'
+          ]),
+          runLabviewCliCommand: vi.fn()
+        }
+      )
+    ).resolves.toBe('pass');
+
+    expect(cleanupRuntimeSurface).toHaveBeenCalledTimes(1);
+    expect(writeFile).toHaveBeenCalledWith(
+      '/tmp/vi-history-suite/.cache/governed-proof/windows-host-operation-matrix/latest-run.json',
+      expect.stringContaining('"blockedReason": "pre-run-runtime-surface-cleanup-failed"'),
+      'utf8'
+    );
+    expect(writeFile).toHaveBeenCalledWith(
+      '/tmp/vi-history-suite/.cache/governed-proof/windows-host-operation-matrix/latest-run.json',
+      expect.stringContaining(
+        '"cleanupFailureMessage": "Windows host runtime cleanup failed; remaining processes: LabVIEW, LabVIEWCLI"'
+      ),
+      'utf8'
+    );
+  });
+
   it('gates the x86 tranche behind a successful earlier x64 tranche when bitness all is requested', async () => {
     const writeFile = vi.fn().mockResolvedValue(undefined);
     const runLabviewCliCommand = vi

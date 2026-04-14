@@ -206,19 +206,19 @@ Current retained benchmark truth at closure:
   sample fixtures for the fixture-backed operations,
   and keeps `CreateComparisonReport` gated until the simpler host operations
   are exercised first
-- that follow-on host lane now also retains a materially narrower seam than
-  the old Linux-only wording implied: the host-operation matrix now uses the
+- that follow-on host lane now also retains a fresher bounded blocker than the
+  older warm-headless ledger alone: the host-operation matrix still uses the
   retained foreground PowerShell `LabVIEWCLI` path instead of the older
-  background sidecar wrapper, the fresh warm-headless x64-then-x86 ledger proves
-  `ExecuteBuildSpec`, `MassCompile`, `RunVI`, `RunVIAnalyzer`, and
-  `PrintToSingleFileHtml` succeed cleanly on both admitted LabVIEW 2026 host
-  surfaces, x64 `CloseLabVIEW -Headless` now succeeds too, x86
-  `CloseLabVIEW -Headless` still leaves both `LabVIEW.exe` and
-  `LabVIEWCLI.exe` hot until diagnostic cleanup, and `RunUnitTests` on both
-  bitness surfaces exits `1` with `-350053` missing/bad operation files; so
-  the retained canonical-host blocker is now bounded as an x86
-  `CloseLabVIEW` session-close seam plus a cross-bitness `RunUnitTests`
-  operation-admission failure rather than a broad cold/warm attach stall
+  background sidecar wrapper, but the fresh cold-only receipt at
+  `.cache/governed-proof/windows-host-operation-matrix/2026-04-14T07-59-35-969Z/host-operation-matrix.json`
+  proves that every x64 cold prerequisite case now leaves `LabVIEWCLI.exe`
+  hot long enough to retain `post-run-runtime-surface-contaminated`; that
+  keeps the x64 tranche non-green and correctly gates the entire x86 tranche
+  as `x64-tranche-did-not-complete-cleanly` in the same governed run. So the
+  active canonical-host blocker is now the x64 cold-attach contamination seam.
+  The older warm-headless x64 success and x86-specific `CloseLabVIEW` /
+  `RunUnitTests` seams remain retained historical evidence, but they are not
+  the newest prerequisite-operation truth.
 
 ## Scope
 
