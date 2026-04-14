@@ -232,4 +232,39 @@ describe('requirements documentation coherence', () => {
     expect(dashboardSurface?.requirements).toContain('VHS-REQ-388');
     expect(dashboardSurface?.requirements).toContain('VHS-REQ-389');
   });
+
+  it('keeps the second runtime-provider CLI requirement cluster explicit', () => {
+    const srs = readText('docs/requirements/srs.md');
+    const rtm = readText('docs/requirements/rtm.csv');
+    const testPlan = readText('docs/testing/test-plan.md');
+
+    expect(srs).toContain('derive `ready` state from runtime-backed provider and runtime resolution');
+    expect(srs).toContain('reload or restart the window before trusting updated provider or runtime facts');
+    expect(srs).toContain('support governed VS Code settings targets that contain JSONC comments or trailing commas');
+    expect(srs).toContain('generated settings-CLI launcher surface shall make its runtime dependency explicit');
+    expect(srs).toContain('`labviewViHistory.prepareLocalRuntimeSettingsCli` command shall make its trust and settings-target governance explicit');
+    expect(srs).toContain('expose one governed readback or validation surface');
+    expect(srs).toContain('close the remaining LabVIEW 2026 operation-matrix admission seams');
+    expect(srs).toContain('prove `CreateComparisonReport` admission on each supported LabVIEW 2026 host bundle');
+    expect(srs).toContain('remain on the exact released Docker-only baseline until the host-default provider contract is source-backed');
+
+    expect(rtm).toContain('VHS-REQ-541');
+    expect(rtm).toContain('VHS-REQ-549');
+    expect(rtm).toContain('TEST-UNIT-349');
+    expect(rtm).toContain('TEST-INTEG-011');
+    expect(rtm).toContain('TEST-SMOKE-022');
+    expect(rtm).toContain('TEST-DOC-109');
+
+    expect(testPlan).toContain('TEST-UNIT-349');
+    expect(testPlan).toContain('settings-only fallback cannot');
+    expect(testPlan).toContain('publishable runtime-backed ready state');
+    expect(testPlan).toContain('TEST-UNIT-351');
+    expect(testPlan).toContain('JSONC comments or trailing commas');
+    expect(testPlan).toContain('TEST-UNIT-352');
+    expect(testPlan).toContain('TEST-INTEG-010');
+    expect(testPlan).toContain('TEST-INTEG-011');
+    expect(testPlan).toContain('TEST-SMOKE-020');
+    expect(testPlan).toContain('TEST-DOC-108');
+    expect(testPlan).toContain('TEST-DOC-109');
+  });
 });
