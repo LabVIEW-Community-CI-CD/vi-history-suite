@@ -327,6 +327,11 @@ function validateProbePacket(summary) {
       'historyProofStatus must remain not-fully-proven for latest retained probe packet evidence'
     );
   }
+  if (historyStance && historyStance !== 'live-uptake-not-proven') {
+    failures.push(
+      'historyStance must remain live-uptake-not-proven for latest retained probe packet evidence'
+    );
+  }
   if (typeof historyInSessionUpdatedCount === 'number' && historyInSessionUpdatedCount > 0) {
     failures.push(
       'historyInSessionUpdatedCount must remain 0 for latest retained probe packet evidence'

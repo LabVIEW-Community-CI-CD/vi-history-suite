@@ -378,7 +378,8 @@ Post-release tranches:
     when the retained latest probe packet is missing, malformed, or does not
     prove `mutationTargetPersistedMatch=true`,
     `mutationTargetBaselineChanged=true`, and
-    `historyProofStatus=not-fully-proven` with latest
+    `historyProofStatus=not-fully-proven`,
+    `historyStance=live-uptake-not-proven`, with latest
     `liveUptakeObservation=reload-required` and retained
     `historyInSessionUpdatedCount=0` plus
     `historyUnknownObservationCount=0`

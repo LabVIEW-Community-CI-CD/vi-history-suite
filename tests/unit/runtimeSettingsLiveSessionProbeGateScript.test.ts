@@ -317,6 +317,39 @@ describe('assertRuntimeSettingsLiveSessionProbePacket script', () => {
     );
   });
 
+  it('fails validation when latest packet history stance is not live-uptake-not-proven', () => {
+    const failures = probeGate.validateProbePacket({
+      outcome: 'probed-runtime-settings-live-session',
+      packetRunId: '2026-04-14T13-07-33-123Z',
+      packetJsonPath: '/tmp/packet.json',
+      packetMarkdownPath: '/tmp/packet.md',
+      latestPacketJsonPath: '/tmp/latest-summary.json',
+      latestPacketMarkdownPath: '/tmp/latest-summary.md',
+      baselinePersistedProvider: 'docker',
+      persistedProvider: 'host',
+      mutationProviderTarget: 'host',
+      mutationTargetPersistedMatch: true,
+      mutationTargetBaselineChanged: true,
+      liveUptakeObservation: 'reload-required',
+      safeRestoreApplied: true,
+      safeRestoreVerified: true,
+      providerDrift: true,
+      versionDrift: false,
+      bitnessDrift: false,
+      driftDetected: true,
+      historyTotalRuns: 1,
+      historyReloadRequiredCount: 0,
+      historyInSessionUpdatedCount: 0,
+      historyUnknownObservationCount: 1,
+      historyStance: 'insufficient-evidence',
+      historyProofStatus: 'not-fully-proven'
+    });
+
+    expect(failures).toContain(
+      'historyStance must remain live-uptake-not-proven for latest retained probe packet evidence'
+    );
+  });
+
   it('fails validation when mutation target alignment conflicts with persisted provider', () => {
     const failures = probeGate.validateProbePacket({
       outcome: 'probed-runtime-settings-live-session',
