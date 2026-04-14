@@ -53,7 +53,8 @@ describe('repo-agnostic checkbox workflow docs', () => {
     expect(rtm).toContain('two retained commits are enough to use VI History');
     expect(rtm).toContain('explicit compare-preflight pair');
     expect(testPlan).toContain('checkbox-only');
-    expect(bundledSync).toContain('the primary and only extension-user compare control');
+    expect(bundledSync).toContain('`Checkboxes`: define the exact selected/base pair you want to compare');
+    expect(bundledSync).toContain('`Compare`: generates or reopens retained comparison evidence for the exact admitted pair');
     expect(bundledSync).toContain('the oldest retained revision is still selectable as the older/base side of a checkbox-selected pair');
     expect(bundledSync).not.toContain('review-scenarios-and-decision-records');
   });
