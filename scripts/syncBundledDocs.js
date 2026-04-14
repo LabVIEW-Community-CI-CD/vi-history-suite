@@ -121,7 +121,14 @@ const bundledPageConfigs = {
         '- local package output via `npm run package` when you intentionally test from source',
         '- packaged bundled docs through `VI History: Open Documentation` or the history-panel `Open docs` action',
         '',
-        'Before the first compare on a fresh machine, install or start Docker and confirm `docker info` works in the same session that will run VS Code.'
+        'Current runtime contract for this build:',
+        '',
+        '- Windows defaults to local `LabVIEWCLI` when the persisted provider is absent',
+        '- Docker remains a bounded expert provider selected through the generated settings CLI',
+        '- persist provider, LabVIEW version, and LabVIEW bitness through `vihs-runtime-settings` before compare',
+        '- if VS Code was already open when the generated settings CLI changed settings, reload or restart before trusting compare preflight',
+        '- run `VI History: Check Runtime Readiness` before the first compare on a fresh machine',
+        '- if Docker is selected, confirm `docker info` works in the same session that runs VS Code'
       ].join('\n'),
       'Release Procedure Summary': [
         'Use the Marketplace listing for everyday installs or the exact released VSIX when you need the retained tagged build.',
@@ -129,11 +136,14 @@ const bundledPageConfigs = {
         'Quick verification flow:',
         '',
         '1. install the extension from the Marketplace or from the exact released VSIX',
-        '2. install or start Docker, then confirm `docker info` succeeds',
-        '3. reload VS Code if you just installed or updated the extension',
-        '4. open `VI History` on an eligible VI inside a trusted Git workspace',
-        '5. select two distinct commit checkboxes to generate the compare',
-        '6. use `Open docs` if you need the version-matched installed guide'
+        '2. run `VI History: Prepare Local Runtime Settings CLI`',
+        '3. persist the provider, LabVIEW version, and LabVIEW bitness through `vihs-runtime-settings`',
+        '4. if VS Code was already open when the generated settings CLI changed settings, reload or restart the window',
+        '5. run `VI History: Check Runtime Readiness`',
+        '6. open `VI History` on an eligible VI inside a trusted Git workspace',
+        '7. select exactly two retained revisions with the commit checkboxes',
+        '8. review the explicit compare preflight section and choose `Compare`',
+        '9. use `Open docs` if you need the version-matched installed guide'
       ].join('\n')
     }
   },
@@ -149,16 +159,16 @@ const bundledPageConfigs = {
     ],
     replacements: {
       'Execution Policy': [
-        'Comparison generation is Docker-only in the installed extension.',
+        'Comparison generation follows the current provider-explicit installed contract.',
         '',
         'Current installed rules:',
         '',
-        '- the extension no longer exposes `viHistorySuite.executionMode`, host-runtime path overrides, or a user-facing bitness selector',
-        '- compare execution is constrained to governed x64 container surfaces',
-        '- on Windows, the current Docker daemon engine selects the governed Windows image when `OSType=windows` and the governed Linux image when `OSType=linux`',
-        '- on Linux hosts, the governed Linux image is the installed compare surface',
-        '- if the selected governed image is missing, the extension shows image-pull progress before runtime launch',
-        '- if Docker CLI is missing, the daemon is unreachable, or the current engine cannot satisfy the governed request, the extension hard-stops and does not probe host LabVIEW',
+        '- Windows defaults to local `LabVIEWCLI` when the persisted provider is absent',
+        '- Docker remains a bounded expert provider selected through the generated settings CLI',
+        '- `viHistorySuite.labviewVersion` and `viHistorySuite.labviewBitness` stay explicit across both provider classes',
+        '- `VI History: Check Runtime Readiness` and `vihs-runtime-settings --validate` expose whether the current bundle is `ready`, `needs-image-acquisition`, or blocked',
+        '- if Docker is selected, the extension derives the governed Windows or Linux image family from the current engine and fails closed on unsupported `x86`',
+        '- if the chosen provider bundle is blocked, compare stops with next-step guidance instead of silently switching provider classes',
         '- compare progress, selected provider, current engine, selected image, acquisition state, and next action stay visible in the history panel while the action runs'
       ].join('\n'),
       'Repository Support': [
@@ -183,10 +193,11 @@ const bundledPageConfigs = {
         'The embedded compare view now leads with a white `Comparison context` block that foregrounds selected/base commit hash, date, author, and subject facts before any deeper runtime evidence.',
         'Runtime diagnostics remain retained, but they stay on packet/runtime evidence surfaces instead of leading the embedded compare view.',
         '',
-        'Checkbox-selected pair behavior is explicit:',
+        'Exact-pair compare behavior is explicit:',
         '',
-        '- select any first retained revision with the checkbox column',
-        '- select the second retained revision to generate a comparison report automatically for that exact pair',
+        '- select exactly two retained revisions with the checkbox column',
+        '- review the explicit compare preflight section for the exact selected/base pair plus runtime facts',
+        '- choose `Compare` to generate or reopen retained comparison evidence for that exact pair',
         '- the newer selected revision becomes `selected` and the older selected revision becomes `base`',
         '- the oldest retained revision is still selectable as the older/base side of a checkbox-selected pair',
         '',
@@ -200,10 +211,13 @@ const bundledPageConfigs = {
         '   - VI signature',
         '   - retained commit chronology',
         '3. Use the checkbox column to choose the exact two retained revisions you want to compare.',
+        '4. Review the explicit compare preflight section for the exact selected/base pair.',
+        '5. Choose `Compare`.',
         '',
         'The current action model is:',
         '',
-        '- `Checkboxes`: the primary and only extension-user compare control; selecting the second retained revision triggers the comparison automatically',
+        '- `Checkboxes`: define the exact selected/base pair you want to compare',
+        '- `Compare`: generates or reopens retained comparison evidence for the exact admitted pair',
         '- `Open at commit`: open the selected retained revision',
         '- `Copy hash`: copy the retained commit hash',
         '- `Open docs`: open the bundled user documentation that ships with the installed extension version',
@@ -212,6 +226,8 @@ const bundledPageConfigs = {
         '',
         '- any retained window with at least two commits is enough to use VI History',
         '- the adjacent-pair text in a row is chronology context only; the two checked revisions define the exact compare pair',
+        '- the newer selected revision becomes `selected` and the older selected revision becomes `base`',
+        '- the oldest retained revision is still selectable as the older/base side of a checkbox-selected pair',
         '- there is no separate dashboard or decision-record step in the extension-user compare flow'
       ].join('\n'),
       'Trust, Progress, And Cancellation': [
@@ -269,11 +285,14 @@ const bundledPageConfigs = {
         '- one bounded next action'
       ].join('\n'),
       'Checkbox-Selected Pair Review': [
-        'At the history-panel level, comparison review is checkbox-driven.',
+        'At the history-panel level, comparison review is pair-selection first.',
         '',
-        '- the primary compare path is selecting two retained revisions with the checkbox column',
-        '- the second checkbox selection generates the comparison automatically for that exact selected/base pair',
+        '- use the checkbox column to select exactly two retained revisions',
+        '- review the explicit compare preflight section for the exact selected/base pair plus runtime facts',
+        '- choose `Compare` to generate or reopen retained comparison evidence for that exact pair',
+        '- the newer selected revision becomes `selected` and the older selected revision becomes `base`',
         '- the oldest retained revision can still serve as the older/base side of a checkbox-selected pair',
+        '- there is no auto-run compare trigger on the second checkbox selection',
         '- there is no separate compare button on commit rows for extension users',
         '- retained comparison evidence opens from the checkbox-selected pair instead of falling back to VS Code text diff on binary VI content'
       ].join('\n'),

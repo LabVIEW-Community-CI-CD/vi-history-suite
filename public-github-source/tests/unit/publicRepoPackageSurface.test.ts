@@ -106,8 +106,12 @@ describe('public repo package surface', () => {
     expect(readme).toContain('public GitHub default branch: `main`');
     expect(readme).toContain('public Codespaces evaluation branch: `develop`');
     expect(readme).toContain(
-      'retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`'
+      'retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`, `v1.2.2`'
     );
+    expect(readme).toContain('current exact released line: `v1.2.2`');
+    expect(readme).toContain('current published package line on `main`: `1.2.2`');
+    expect(readme).toContain('current develop package line on `develop`: `1.3.0`');
+    expect(readme).toContain('active public candidate line on `develop`: `v1.3.0`');
     expect(readme).toContain('Refresh-Codespace-Repositories');
     expect(readme).not.toContain('Manual-Actor-Framework-Clone');
     expect(install).toContain('exact released `main` / Marketplace `1.2.2`: Docker-only and x64-only');
