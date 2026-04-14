@@ -520,6 +520,26 @@ async function testPrepareLocalRuntimeSettingsCli(): Promise<void> {
       'viHistorySuite.labviewBitness': 'x64'
     });
 
+    if (process.platform === 'win32') {
+      const dockerValidationRun = await runPreparedLocalRuntimeSettingsCli(result, [
+        '--validate',
+        '--settings-file',
+        settingsFilePath
+      ]);
+      assert.equal(dockerValidationRun.launcherPath, result.windowsLauncherPath);
+      assert.match(
+        dockerValidationRun.stdout,
+        new RegExp(settingsFilePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+      );
+      assert.match(dockerValidationRun.stdout, /viHistorySuite\.runtimeProvider=docker/);
+      assert.match(dockerValidationRun.stdout, /viHistorySuite\.labviewVersion=2026/);
+      assert.match(dockerValidationRun.stdout, /viHistorySuite\.labviewBitness=x64/);
+      assert.match(dockerValidationRun.stdout, /runtimeValidationOutcome=ready/);
+      assert.match(dockerValidationRun.stdout, /runtimeProvider=windows-container/);
+      assert.match(dockerValidationRun.stdout, /runtimeEngine=labview-cli/);
+      assert.match(dockerValidationRun.stdout, /runtimeBlockedReason=<none>/);
+    }
+
     const invalidSettingsFilePath = path.join(tempRoot, 'invalid-settings.json');
     await fs.writeFile(
       invalidSettingsFilePath,
