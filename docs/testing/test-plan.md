@@ -1795,7 +1795,7 @@ Information-for-users review cases:
 - `TEST-UNIT-348`: verify compare preflight shows provider as read-only text
   and retains an explicit CLI update hint when provider/runtime settings need
   correction
-- `TEST-UNIT-349`: verify installed compare preflight admits `ready` only
+- `TEST-349` / `TEST-UNIT-349`: verify installed compare preflight admits `ready` only
   after the governing runtime-selection layer confirms the active
   provider/version/bitness bundle, and that settings-only fallback cannot
   surface a publishable runtime-backed ready state

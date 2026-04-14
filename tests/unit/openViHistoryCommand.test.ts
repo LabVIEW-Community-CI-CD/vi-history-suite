@@ -1089,6 +1089,181 @@ describe('createOpenViHistoryCommand', () => {
     );
   });
 
+  it('derives supported win32 compare preflight blocking from runtime-backed resolution instead of settings alone', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    const comparisonReportAction = vi.fn();
+    const runtimeLocator = vi.fn().mockResolvedValue({
+      platform: 'win32',
+      executionMode: 'host-only',
+      requestedProvider: 'host',
+      bitness: 'x64',
+      provider: 'unavailable',
+      blockedReason: 'labview-exe-not-found',
+      notes: [
+        'No supported LabVIEW 2026 executable was located for host-native comparison-report execution.'
+      ],
+      registryQueryPlans: [],
+      candidates: []
+    });
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Newest revision',
+            previousHash: '1111111122222222'
+          },
+          {
+            hash: '1111111122222222',
+            authorDate: '2026-04-01T00:00:00Z',
+            authorName: 'B User',
+            subject: 'Older revision'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      comparisonReportAction,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      'win32',
+      runtimeLocator as never
+    );
+
+    await command(targetUri as never);
+    await tracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReportFromSelection',
+      selectedHashes: ['abcdef1234567890', '1111111122222222']
+    });
+
+    expect(runtimeLocator).toHaveBeenCalledWith(
+      'win32',
+      expect.objectContaining({
+        requestedProvider: 'host',
+        labviewVersion: '2026',
+        bitness: 'x64'
+      })
+    );
+    expect(comparisonReportAction).not.toHaveBeenCalled();
+    expect(showWarningMessageMock).toHaveBeenCalledWith(
+      'Compare preflight is blocked. Provider: unavailable. Provider request: host. Blocked reason: labview-exe-not-found. Next action: make the selected host-native runtime available, resolve host conflicts, or switch to a Docker-backed compare path, then rerun comparison report generation.'
+    );
+  });
+
+  it('admits supported win32 compare preflight only after runtime-backed resolution confirms the bundle', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    const comparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'opened-comparison-report',
+      reportStatus: 'ready-for-runtime',
+      runtimeExecutionState: 'succeeded',
+      reportFilePath: '/workspace/.storage/reports/repo/file/diff-report-eligible.vi.html',
+      metadataFilePath: '/workspace/.storage/reports/repo/file/report-metadata.json',
+      reportWebviewUri: 'webview:/report',
+      title: 'VI Comparison Report: eligible.vi'
+    });
+    const runtimeLocator = vi.fn().mockResolvedValue({
+      platform: 'win32',
+      executionMode: 'host-only',
+      requestedProvider: 'host',
+      bitness: 'x64',
+      provider: 'host-native',
+      engine: 'labview-cli',
+      notes: [],
+      registryQueryPlans: [],
+      candidates: []
+    });
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Newest revision',
+            previousHash: '1111111122222222'
+          },
+          {
+            hash: '1111111122222222',
+            authorDate: '2026-04-01T00:00:00Z',
+            authorName: 'B User',
+            subject: 'Older revision'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      comparisonReportAction,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      'win32',
+      runtimeLocator as never
+    );
+
+    await command(targetUri as never);
+    await tracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReportFromSelection',
+      selectedHashes: ['abcdef1234567890', '1111111122222222']
+    });
+
+    expect(runtimeLocator).toHaveBeenCalledWith(
+      'win32',
+      expect.objectContaining({
+        requestedProvider: 'host',
+        labviewVersion: '2026',
+        bitness: 'x64'
+      })
+    );
+    expect(comparisonReportAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        selectedHash: 'abcdef1234567890',
+        baseHash: '1111111122222222',
+        reportProgress: expect.any(Function)
+      })
+    );
+  });
+
   it('falls back to the bundled overview page when a stale documentation page id is requested', async () => {
     const targetUri = createMockUri('/workspace/eligible.vi');
     const tracker = new HistoryPanelTracker();

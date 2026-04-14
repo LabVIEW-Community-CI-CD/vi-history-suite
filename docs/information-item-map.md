@@ -104,6 +104,7 @@
 | System Specification | `docs/requirements/syrs.md` | sole author | system boundary, runtime-provider doctrine, release-control model, or information-item ownership changes | system-level intent and fit criteria are current |
 | Software Specification | `docs/requirements/srs.md` | sole author | software capability, implementation-level fit criterion, or software boundary change | software requirement IDs and fit criteria are current |
 | Traceability matrix | `docs/requirements/rtm.csv` | sole author | requirement or test change | every active requirement has at least one proving row |
+| Critical-path traceability matrix | `docs/requirements/rtm-release-gate.csv` | sole author | published release-gate parser budget changes or critical-path requirement admission changes | at least one critical Req -> Test -> Code row remains parseable by the published assurance workbench |
 | Test plan | `docs/testing/test-plan.md` | sole author | verification strategy change | test cases and entry/exit criteria are current, and every governed RTM verification id is enumerated in the plan |
 | Architecture packet | `docs/architecture/overview.md` | sole author | design change | containers/components reflect live code |
 | ADR | `docs/architecture/adr/ADR-0001-vscode-typescript-baseline.md` | sole author | architectural direction change | ADR status and rationale remain correct |
