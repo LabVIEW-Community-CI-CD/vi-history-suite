@@ -58,6 +58,9 @@ describe('extension manifest research alignment', () => {
     ]);
     expect(manifest.homepage).toBe('https://github.com/svelderrainruiz/vi-history-suite/wiki');
     expect(manifest.activationEvents).toContain('onCommand:labviewViHistory.open');
+    expect(manifest.activationEvents).toContain(
+      'onCommand:labviewViHistory.prepareLocalRuntimeSettingsCli'
+    );
     expect(manifest.activationEvents).toContain('onCommand:labviewViHistory.openDocumentation');
     expect(manifest.extensionDependencies).toContain('vscode.git');
     expect(manifest.contributes?.commands).toContainEqual({

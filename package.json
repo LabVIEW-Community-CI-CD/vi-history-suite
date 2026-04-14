@@ -43,6 +43,7 @@
   "activationEvents": [
     "onStartupFinished",
     "onCommand:labviewViHistory.open",
+    "onCommand:labviewViHistory.prepareLocalRuntimeSettingsCli",
     "onCommand:labviewViHistory.openDocumentation"
   ],
   "extensionDependencies": [

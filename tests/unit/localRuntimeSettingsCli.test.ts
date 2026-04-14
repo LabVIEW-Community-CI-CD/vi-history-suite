@@ -12,6 +12,7 @@ import {
   ensureLocalRuntimeSettingsCli,
   getLocalRuntimeSettingsCliUsage,
   parseLocalRuntimeSettingsCliArgs,
+  resolveLocalRuntimeSettingsCliGovernanceContract,
   resolveDefaultVsCodeSettingsPath,
   runLocalRuntimeSettingsCli,
   runLocalRuntimeSettingsCliMain
@@ -79,6 +80,22 @@ describe('localRuntimeSettingsCli', () => {
     expect(resolveDefaultVsCodeSettingsPath('linux', {}, () => '/home/tester')).toBe(
       '/home/tester/.config/Code/User/settings.json'
     );
+  });
+
+  it('retains the governed settings-target contract and admitted untrusted-workspace posture', () => {
+    expect(
+      resolveLocalRuntimeSettingsCliGovernanceContract({
+        platform: 'win32',
+        env: {
+          APPDATA: 'C:\\Users\\tester\\AppData\\Roaming'
+        },
+        homedir: () => 'C:\\Users\\tester'
+      })
+    ).toEqual({
+      defaultSettingsFilePath: 'C:\\Users\\tester\\AppData\\Roaming\\Code\\User\\settings.json',
+      supportedSettingsTargets: ['default-user-settings', 'explicit-settings-file'],
+      untrustedWorkspacePosture: 'prepare-command-admitted-compare-blocked'
+    });
   });
 
   it('updates governed provider settings in JSONC targets without destroying unrelated content', async () => {

@@ -2,7 +2,7 @@
 
 Applies to: exact released installed baseline `v1.2.2` plus the active
 `develop` authority direction
-Last reviewed: `2026-04-13`
+Last reviewed: `2026-04-14`
 Primary audience: maintainers, source evaluators, and advanced installed users
 Topic type: reference
 Primary entry route: `README.md` or `INSTALL.md`
@@ -94,6 +94,20 @@ See also:
 
 ## Runtime Provider CLI And Proof
 
+`VI History: Prepare Local Runtime Settings CLI`
+
+- Purpose: materialize the governed runtime-settings launchers under the
+  extension-global storage root.
+- Use when: first preparing the local runtime-provider CLI or refreshing it
+  after launcher or runtime changes.
+- Notes:
+  - the governed materialization root is the extension-global storage path
+    reported by the command result
+  - supported settings targets are the default user `settings.json` path for
+    the current platform or one explicit `--settings-file` override
+  - this prepare command is admitted in untrusted workspaces because it only
+    materializes the launcher; installed compare remains blocked there
+
 `vihs-runtime-settings --provider <host|docker> --labview-version <major> --labview-bitness <x86|x64> [--settings-file <path>]`
 
 - Purpose: persist the active branch provider request, LabVIEW version, and
@@ -102,6 +116,8 @@ See also:
   the active branch.
 - Notes:
   - the CLI is generated into user-profile storage on first use
+  - without `--settings-file`, the governed target is the platform-default
+    user `settings.json`; workspace settings are not a supported target
   - if VS Code is already running, reload or restart the window before
     trusting Compare or other runtime-provider surfaces to reflect the updated
     provider and runtime facts

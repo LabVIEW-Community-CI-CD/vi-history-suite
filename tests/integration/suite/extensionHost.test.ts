@@ -28,10 +28,13 @@ interface DashboardRecord {
 
 interface PreparedLocalRuntimeSettingsCliSummary {
   outcome: 'prepared-local-runtime-settings-cli' | 'missing-global-storage-uri';
+  defaultSettingsFilePath?: string;
   javascriptLauncherPath?: string;
   windowsLauncherPath?: string;
   posixLauncherPath?: string;
   rootDirectoryPath?: string;
+  supportedSettingsTargets?: readonly string[];
+  untrustedWorkspacePosture?: string;
 }
 
 interface PreparedLocalRuntimeSettingsCliExecutionOptions {
@@ -449,6 +452,12 @@ async function testPrepareLocalRuntimeSettingsCli(): Promise<void> {
   assert.ok(result.javascriptLauncherPath);
   assert.ok(result.windowsLauncherPath);
   assert.ok(result.posixLauncherPath);
+  assert.ok(result.defaultSettingsFilePath);
+  assert.deepEqual(result.supportedSettingsTargets, [
+    'default-user-settings',
+    'explicit-settings-file'
+  ]);
+  assert.equal(result.untrustedWorkspacePosture, 'prepare-command-admitted-compare-blocked');
 
   await fs.access(result.javascriptLauncherPath!);
   await fs.access(result.windowsLauncherPath!);
@@ -515,6 +524,7 @@ async function testPrepareLocalRuntimeSettingsCli(): Promise<void> {
       const activeAppDataRoot = process.env.APPDATA;
       assert.ok(activeAppDataRoot, 'Windows integration host must expose APPDATA.');
       const defaultSettingsFilePath = path.join(activeAppDataRoot, 'Code', 'User', 'settings.json');
+      assert.equal(result.defaultSettingsFilePath, defaultSettingsFilePath);
       const initialRuntimeSettings = readViHistorySuiteRuntimeSettings();
       const firstProvider = initialRuntimeSettings.runtimeProvider === 'host' ? 'docker' : 'host';
       const secondProvider = firstProvider === 'host' ? 'docker' : 'host';
