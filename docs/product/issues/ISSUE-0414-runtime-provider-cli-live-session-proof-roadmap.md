@@ -34,11 +34,11 @@ The unresolved seam remains explicit:
 
 Current implementation branch:
 
-- `feature/runtime-provider-live-session-latest-alignment-assert` (in progress)
+- `feature/runtime-provider-live-session-latest-proof-status-assert` (in progress)
 
 Most recently merged branch:
 
-- `feature/runtime-provider-live-session-target-alignment-receipt`
+- `feature/runtime-provider-live-session-latest-alignment-assert`
 
 ## Roadmap (Feature Branch Sequence)
 
@@ -109,11 +109,17 @@ Most recently merged branch:
   retained probe runs do not show that requested provider selection actually
   became the persisted provider.
 
-14. `feature/runtime-provider-live-session-latest-alignment-assert` (in progress)
+14. `feature/runtime-provider-live-session-latest-alignment-assert` (merged)
 - Tighten the local latest-packet gate so admission fails when
   `mutationTargetPersistedMatch` is not explicitly `true`, making latest
   retained probe evidence fail closed when requested provider selection did not
   take effect.
+
+15. `feature/runtime-provider-live-session-latest-proof-status-assert` (in progress)
+- Tighten the local latest-packet gate so admission also fails when latest
+  retained packet proof status becomes `re-evaluation-required`, keeping the
+  "CLI live-session seam is not fully proven" boundary explicit at latest-packet
+  admission time.
 
 ## Admission Rules
 

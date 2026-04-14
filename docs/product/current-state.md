@@ -376,7 +376,7 @@ Post-release tranches:
   - one local fail-closed packet gate now exists at
     `npm run proof:runtime-settings-live-session:assert`; it blocks admission
     when the retained latest probe packet is missing, malformed, or does not
-    prove `mutationTargetPersistedMatch=true`
+    prove `mutationTargetPersistedMatch=true` and `historyProofStatus=not-fully-proven`
   - one local history receipt now exists at
     `npm run proof:runtime-settings-live-session:history`; it summarizes
     retained probe runs into one bounded live-uptake stance and explicit
