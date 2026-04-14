@@ -272,6 +272,10 @@ function translatePathForDocker(hostPath, dockerCommand) {
     return hostPath;
   }
 
+  if (!isWsl()) {
+    return hostPath;
+  }
+
   return execFileSync('wslpath', ['-w', hostPath], {
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'ignore']
@@ -286,6 +290,7 @@ function buildDockerArgs(mode, dockerCommand, docsImage) {
   const repoRootPath = translatePathForDocker(repoRoot, dockerCommand);
   const parentRootPath = translatePathForDocker(path.dirname(repoRoot), dockerCommand);
   const repoBaseName = path.basename(repoRoot);
+  const gitSafeDirectoryEnvArgs = buildGitSafeDirectoryEnvArgs(repoBaseName);
 
   if (mode === 'build') {
     if (docsImage !== localDocsImage) {
@@ -299,11 +304,38 @@ function buildDockerArgs(mode, dockerCommand, docsImage) {
   }
 
   if (mode === 'gate') {
-    return ['run', '--rm', '-v', `${repoRootPath}:/workspace`, '-w', '/workspace', docsImage, 'npm', 'run', 'docs:gate'];
+    return [
+      'run',
+      '--rm',
+      '-v',
+      `${parentRootPath}:/repo-parent`,
+      '-e',
+      `VIHS_DOCS_WORKSPACE=/repo-parent/${repoBaseName}`,
+      ...gitSafeDirectoryEnvArgs,
+      '-w',
+      `/repo-parent/${repoBaseName}`,
+      docsImage,
+      'npm',
+      'run',
+      'docs:gate'
+    ];
   }
 
   if (mode === 'shell') {
-    return ['run', '--rm', '-it', '-v', `${repoRootPath}:/workspace`, '-w', '/workspace', docsImage, 'bash'];
+    return [
+      'run',
+      '--rm',
+      '-it',
+      '-v',
+      `${parentRootPath}:/repo-parent`,
+      '-e',
+      `VIHS_DOCS_WORKSPACE=/repo-parent/${repoBaseName}`,
+      ...gitSafeDirectoryEnvArgs,
+      '-w',
+      `/repo-parent/${repoBaseName}`,
+      docsImage,
+      'bash'
+    ];
   }
 
   const wikiCommandMap = {
@@ -325,6 +357,7 @@ function buildDockerArgs(mode, dockerCommand, docsImage) {
     `${parentRootPath}:/repo-parent`,
     '-e',
     `VIHS_DOCS_WORKSPACE=/repo-parent/${repoBaseName}`,
+    ...gitSafeDirectoryEnvArgs,
     '-w',
     `/repo-parent/${repoBaseName}`,
     docsImage,
@@ -412,8 +445,25 @@ function main(argv = process.argv.slice(2)) {
   return typeof result.status === 'number' ? result.status : 1;
 }
 
+function buildGitSafeDirectoryEnvArgs(repoBaseName) {
+  const safeDirectories = [
+    `/repo-parent/${repoBaseName}`,
+    '/repo-parent/vi-history-suite.wiki',
+    '/repo-parent/vi-history-suite.github.wiki'
+  ];
+  const args = ['-e', `GIT_CONFIG_COUNT=${safeDirectories.length}`];
+
+  safeDirectories.forEach((directoryPath, index) => {
+    args.push('-e', `GIT_CONFIG_KEY_${index}=safe.directory`);
+    args.push('-e', `GIT_CONFIG_VALUE_${index}=${directoryPath}`);
+  });
+
+  return args;
+}
+
 module.exports = {
   buildDockerArgs,
+  buildGitSafeDirectoryEnvArgs,
   formatPublishedRegistryAccessError,
   parseArgs,
   resolveDocsImage,

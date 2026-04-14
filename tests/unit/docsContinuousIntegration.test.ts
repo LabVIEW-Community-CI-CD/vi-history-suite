@@ -1,4 +1,5 @@
 import * as path from 'node:path';
+import * as os from 'node:os';
 
 import { describe, expect, it } from 'vitest';
 
@@ -192,7 +193,21 @@ describe('documentation continuous integration runner', () => {
       command: 'npx'
     });
     expect(allSteps.find((step) => step.id === 'internal-docs-tests')).toMatchObject({
-      command: 'npx'
+      command: 'npx',
+      args: ['vitest', 'run', ...[
+        'tests/unit/postReleaseControlPlaneDocs.test.ts',
+        'tests/unit/debtLedgerDocs.test.ts',
+        'tests/unit/executionPolicyDocs.test.ts',
+        'tests/unit/governedProofDocs.test.ts',
+        'tests/unit/informationForUsersSupportDocs.test.ts',
+        'tests/unit/requirementsDocs.test.ts',
+        'tests/unit/shipControlDocs.test.ts',
+        'tests/unit/docsWorkbenchDocs.test.ts',
+        'tests/unit/docsContinuousIntegration.test.ts',
+        'tests/unit/syncBundledDocsScript.test.ts',
+        'tests/unit/wikiCoverageDocs.test.ts',
+        'tests/unit/runWikiWorkbenchCli.test.ts'
+      ]]
     });
     expect(allSteps.find((step) => step.id === 'bundle-check')).toMatchObject({
       command: 'node',
@@ -281,15 +296,16 @@ describe('documentation continuous integration runner', () => {
     const executedStepIds: string[] = [];
     const stdoutWrites: string[] = [];
     const stderrWrites: string[] = [];
+    const evidenceDir = path.join(os.tmpdir(), 'vihs-docs-ci-public-proof');
     const stepIdByCommand = new Map([
       ['npm run compile', 'compile'],
       ['npx vitest run tests/unit/bundledDocumentation.test.ts tests/unit/packageManifest.test.ts tests/unit/publicSurfaceBoundaryDocs.test.ts tests/unit/publicForkOwnerProcedureDocs.test.ts', 'public-docs-tests'],
-      ['node scripts/syncBundledDocs.js --check --report ' + path.join(repoRoot, '.cache', 'docs-integration', 'public', 'latest', 'bundled-docs-check.json'), 'bundle-check'],
+      ['node scripts/syncBundledDocs.js --check --report ' + path.join(evidenceDir, 'bundled-docs-check.json'), 'bundle-check'],
       ['lychee --verbose --no-progress --include-fragments README.md docs/**/*.md', 'links']
     ]);
 
     const result = await docsContinuousIntegration.runDocsContinuousIntegration(
-      ['--surface', 'public'],
+      ['--surface', 'public', '--evidence-dir', evidenceDir],
       {
         cwd: repoRoot,
         env: process.env,
