@@ -41,6 +41,9 @@ const historyScript = require(path.resolve(
     totalRuns: number;
     reloadRequiredCount: number;
     inSessionUpdatedCount: number;
+    mutationTargetHostCount: number;
+    mutationTargetDockerCount: number;
+    providerSelectionCoverage: string;
     latestObservation?: string;
   };
   run: (
@@ -81,6 +84,7 @@ describe('printRuntimeSettingsLiveSessionProbeHistory script', () => {
         runId: '2026-04-14T13-00-00-000Z',
         summary: {
           liveUptakeObservation: 'reload-required',
+          mutationProviderTarget: 'docker',
           safeRestoreVerified: true
         }
       },
@@ -88,6 +92,7 @@ describe('printRuntimeSettingsLiveSessionProbeHistory script', () => {
         runId: '2026-04-14T12-00-00-000Z',
         summary: {
           liveUptakeObservation: 'in-session-updated',
+          mutationProviderTarget: 'host',
           safeRestoreVerified: true
         }
       }
@@ -98,6 +103,9 @@ describe('printRuntimeSettingsLiveSessionProbeHistory script', () => {
     expect(summary.totalRuns).toBe(2);
     expect(summary.reloadRequiredCount).toBe(1);
     expect(summary.inSessionUpdatedCount).toBe(1);
+    expect(summary.mutationTargetHostCount).toBe(1);
+    expect(summary.mutationTargetDockerCount).toBe(1);
+    expect(summary.providerSelectionCoverage).toBe('bidirectional-selection-observed');
     expect(summary.latestObservation).toBe('reload-required');
     expect(summary.stance).toBe('live-uptake-not-proven');
   });
@@ -118,6 +126,9 @@ describe('printRuntimeSettingsLiveSessionProbeHistory script', () => {
     expect(summary.totalRuns).toBe(1);
     expect(summary.inSessionUpdatedCount).toBe(1);
     expect(summary.reloadRequiredCount).toBe(0);
+    expect(summary.mutationTargetHostCount).toBe(0);
+    expect(summary.mutationTargetDockerCount).toBe(0);
+    expect(summary.providerSelectionCoverage).toBe('insufficient-evidence');
     expect(summary.latestObservation).toBe('in-session-updated');
   });
 
@@ -142,9 +153,14 @@ describe('printRuntimeSettingsLiveSessionProbeHistory script', () => {
     });
 
     expect(result.outcome).toBe('ok');
-    const parsed = JSON.parse(stdout.join('')) as { stance: string; totalRuns: number };
+    const parsed = JSON.parse(stdout.join('')) as {
+      stance: string;
+      totalRuns: number;
+      providerSelectionCoverage: string;
+    };
     expect(parsed.totalRuns).toBe(1);
     expect(parsed.stance).toBe('live-uptake-not-proven');
+    expect(parsed.providerSelectionCoverage).toBe('insufficient-evidence');
   });
 });
 
