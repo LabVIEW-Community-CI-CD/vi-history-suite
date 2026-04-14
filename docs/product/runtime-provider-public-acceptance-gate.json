@@ -53,5 +53,5 @@
     "treating local authority-green proof as equivalent to public acceptance",
     "rewriting public or bundled installed-user surfaces ahead of truthful candidate publication"
   ],
-  "nextMove": "feature/runtime-provider-live-session-probe-command"
+  "nextMove": "feature/runtime-provider-live-session-gate-decision"
 }

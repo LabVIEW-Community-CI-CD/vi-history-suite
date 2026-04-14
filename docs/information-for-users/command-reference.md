@@ -135,6 +135,32 @@ See also:
     `runtimeEngine`, and `runtimeBlockedReason` without reopening path-picking
     or a panel-side provider picker
 
+`labviewViHistory.probeRuntimeSettingsLiveSession`
+
+- Purpose: compare persisted runtime-settings facts against active in-session
+  VS Code runtime settings and retain one governed probe packet.
+- Use when: checking live-session drift after CLI updates in an already-running
+  VS Code session.
+- Notes:
+  - the command retains per-run and latest probe packets under extension-global
+    storage
+  - probe packets include persisted and live provider/version/bitness plus
+    drift booleans and runtime-validation facts
+  - this probe surface does not yet prove safe restore after partial mutation
+    failures; reload or restart guidance remains active when drift is detected
+
+`npm run proof:runtime-settings-live-session:assert`
+
+- Purpose: fail closed when the retained latest live-session probe packet is
+  missing or malformed.
+- Use when: asserting local admission for the current live-session probe
+  evidence before merge or handoff.
+- Notes:
+  - optional packet override: `npm run proof:runtime-settings-live-session:assert -- --packet <path>`
+  - environment fallback: `VIHS_RUNTIME_SETTINGS_LIVE_SESSION_PACKET=<path>`
+  - default packet target resolves to the VS Code user global-storage path for
+    `svelderrainruiz.vi-history-suite`
+
 `npm run test:integration:windows`
 
 - Purpose: prove the Windows integration-host lane, including the `.cmd`

@@ -367,16 +367,24 @@ Post-release tranches:
     canonical host, validation returns `runtimeValidationOutcome=ready`,
     `runtimeProvider=windows-container`, `runtimeEngine=labview-cli`, and no
     blocked reason
+  - a governed live-session probe command now compares persisted
+    provider/version/bitness facts against active in-session VS Code runtime
+    settings and retains per-run plus latest probe packets (`JSON` and
+    `Markdown`) under extension-global storage
+  - one local fail-closed packet gate now exists at
+    `npm run proof:runtime-settings-live-session:assert`; it blocks admission
+    when the retained latest probe packet is missing or malformed
   - the remaining CLI proof gap is now narrower: direct live mutation of the
-    already-running VS Code session is not yet end-to-end proven on this
-    line, so the generated CLI plus the settings-driven compare-preflight and
-    runtime-doctor surfaces now warn users to reload or restart the window
-    before using Compare when Code is already open
+    already-running VS Code session is not yet end-to-end proven on this line;
+    safe restore after partial mutation failure is also unproven, so the
+    generated CLI plus the settings-driven compare-preflight and runtime-doctor
+    surfaces now warn users to reload or restart the window before using
+    Compare when Code is already open
   - released `repo-standards-review` `v0.2.9` compliance closeout is retained
     in the branch control plane
   - the remaining active slices are the unresolved live active-settings
-    mutation seam and later exact-release promotion once the candidate line is
-    admitted
+    mutation seam (safe-restore plus final gate decision) and later
+    exact-release promotion once the candidate line is admitted
   - retained handoff packet:
     [issue-0412-promotion-and-publication-handoff.md](./issue-0412-promotion-and-publication-handoff.md)
   - explicit public-acceptance gate:

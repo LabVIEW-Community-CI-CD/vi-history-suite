@@ -74,5 +74,5 @@ closeout is still active implementation work.
 
 ## Next Move
 
-- `feature/runtime-provider-live-session-probe-command`
+- `feature/runtime-provider-live-session-gate-decision`
 

@@ -28,38 +28,41 @@ The unresolved seam remains explicit:
 - direct live mutation of the active real user-profile VS Code settings target
   while Code is already running is not yet retained as an end-to-end proof
   packet
+- governed live-session probe support is now landed for persisted-versus-live
+  drift detection, retained packet output, and fail-closed local packet
+  validation
 
 Current implementation branch:
 
-- `feature/runtime-provider-live-session-local-gate` (in progress)
+- `feature/runtime-provider-live-session-doc-sync` (in progress)
 
 Most recently merged branch:
 
-- `feature/runtime-provider-live-session-proof-packet`
+- `feature/runtime-provider-live-session-local-gate`
 
 ## Roadmap (Feature Branch Sequence)
 
-1. `feature/runtime-provider-live-session-probe-command`
+1. `feature/runtime-provider-live-session-probe-command` (merged)
 - Add one governed probe surface that captures persisted provider/version/bitness
   facts against live in-session runtime settings facts and reports drift.
 
-2. `feature/runtime-provider-live-session-safe-restore`
+2. `feature/runtime-provider-live-session-safe-restore` (pending)
 - Add fail-closed restore behavior so probe runs do not leave mutated user
   settings behind when a probe fails partway through.
 
-3. `feature/runtime-provider-live-session-proof-packet`
+3. `feature/runtime-provider-live-session-proof-packet` (merged)
 - Emit one retained packet format (JSON + Markdown) for probe runs so live
   proof outcomes are reviewable without terminal logs.
 
-4. `feature/runtime-provider-live-session-local-gate`
+4. `feature/runtime-provider-live-session-local-gate` (merged)
 - Add one local-first admission command that runs the probe and fails closed on
   missing packet or malformed outcome fields.
 
-5. `feature/runtime-provider-live-session-doc-sync`
+5. `feature/runtime-provider-live-session-doc-sync` (in progress)
 - Align `PROGRAM-0005`, `ISSUE-0412`, current-state, and user support docs to
   the exact new probe contract and residual boundaries.
 
-6. `feature/runtime-provider-live-session-gate-decision`
+6. `feature/runtime-provider-live-session-gate-decision` (pending)
 - Re-evaluate `VHS-REQ-542` wording and either:
 - keep the reload contract as active truth with stronger evidence, or
 - replace it with a narrower residual warning only where proof still fails.

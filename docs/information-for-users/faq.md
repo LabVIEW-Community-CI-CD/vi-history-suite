@@ -90,6 +90,20 @@ plus `runtimeValidationOutcome`, `runtimeProvider`, `runtimeEngine`, and
 `runtimeBlockedReason`. This keeps validation on one bounded CLI surface
 without reopening path-picking or a panel-side provider picker.
 
+### How do I check live-session drift after changing runtime settings?
+
+Use the live-session probe plus packet gate:
+
+- run `labviewViHistory.probeRuntimeSettingsLiveSession` to retain a probe
+  packet comparing persisted and active in-session provider/version/bitness
+  facts
+- run `npm run proof:runtime-settings-live-session:assert` to fail closed if
+  the latest retained packet is missing or malformed
+
+This narrows the proof gap, but it does not yet prove safe restore after
+partial mutation failures; reload or restart guidance remains active when
+drift is detected.
+
 ### Where do I find the key commands or checks?
 
 Use [Command Reference](./command-reference.md) for the compact stable command
@@ -133,6 +147,9 @@ Use the governed repo search posture:
   surface.
 - If Compare is still showing stale provider or runtime facts after a CLI
   update, reload or restart the VS Code window before trusting Compare.
+- If a live-session proof packet is required for admission, run
+  `npm run proof:runtime-settings-live-session:assert` and treat failure as a
+  hard stop.
 - If you are checking the broader standards posture for this branch, use the
   released `repo-standards-review v0.2.13` baseline instead of older parked
   roadmap branches.
