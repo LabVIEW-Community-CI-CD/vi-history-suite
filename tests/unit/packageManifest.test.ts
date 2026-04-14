@@ -143,10 +143,12 @@ describe('extension manifest research alignment', () => {
     });
   });
 
-  it('exposes the fast local VS Code loop, docs-package workbench, repo-jump, and preview refresh scripts', () => {
+  it('exposes the fast local VS Code loop, docs-package workbench, repo-jump, preview refresh scripts, and the governed JSONC runtime dependency', () => {
     const manifest = readManifest();
 
-    expect(manifest.dependencies ?? {}).toEqual({});
+    expect(manifest.dependencies ?? {}).toEqual({
+      'jsonc-parser': expect.any(String)
+    });
     expect(manifest.devDependencies).not.toHaveProperty('@vscode/vsce');
     expect(manifest.scripts?.['dev:watch']).toBe('tsc -p . --watch --preserveWatchOutput');
     expect(manifest.scripts?.['dev:workspace']).toContain('runDevHost.js --prepare-workspace-only');
