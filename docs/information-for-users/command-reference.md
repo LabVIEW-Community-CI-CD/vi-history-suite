@@ -220,6 +220,8 @@ See also:
     `reload-required`
   - returns non-zero when retained history includes one or more
     `in-session-updated` observations
+  - returns non-zero when retained history does not show safe-restore
+    verification on every retained run
   - returns non-zero when retained history includes one or more unknown
     observations
   - returns non-zero when retained proof status becomes

@@ -69,7 +69,8 @@ Current facts:
   with explicit mutation-target alignment and baseline-switch receipts, and
   when the latest retained probe observation no longer remains reload-required
   or retained history includes one or more in-session-updated or unknown
-  observations
+  observations, and when retained safe-restore verification is not complete
+  across retained runs
 - the remaining CLI proof gap is now narrower: direct mutation safety and
   automatic live uptake around a live already-running VS Code session is still
   not end-to-end proven; probe mutation safe-restore is now fail-closed and

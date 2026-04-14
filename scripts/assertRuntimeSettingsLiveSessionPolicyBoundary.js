@@ -89,6 +89,11 @@ function run(argv = process.argv.slice(2), deps = {}) {
       `Runtime-settings live-session policy boundary requires retained in-session-updated observations to remain absent (inSessionUpdatedCount=${summary.inSessionUpdatedCount}).`
     );
   }
+  if (summary.safeRestoreVerifiedCount !== summary.totalRuns) {
+    throw new Error(
+      `Runtime-settings live-session policy boundary requires safe-restore verification on every retained run (safeRestoreVerifiedCount=${summary.safeRestoreVerifiedCount}, totalRuns=${summary.totalRuns}).`
+    );
+  }
   if (summary.unknownObservationCount > 0) {
     throw new Error(
       `Runtime-settings live-session policy boundary requires retained unknown observations to remain absent (unknownObservationCount=${summary.unknownObservationCount}).`
@@ -129,6 +134,7 @@ function run(argv = process.argv.slice(2), deps = {}) {
     stdout.write(`- providerSelectionCoverage: ${summary.providerSelectionCoverage}\n`);
     stdout.write(`- reloadRequiredCount: ${summary.reloadRequiredCount}\n`);
     stdout.write(`- inSessionUpdatedCount: ${summary.inSessionUpdatedCount}\n`);
+    stdout.write(`- safeRestoreVerifiedCount: ${summary.safeRestoreVerifiedCount}\n`);
     stdout.write(`- mutationTargetHostCount: ${summary.mutationTargetHostCount}\n`);
     stdout.write(`- mutationTargetDockerCount: ${summary.mutationTargetDockerCount}\n`);
     stdout.write(

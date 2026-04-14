@@ -34,11 +34,11 @@ The unresolved seam remains explicit:
 
 Current implementation branch:
 
-- `feature/runtime-provider-live-session-history-count-integrity-assert` (in progress)
+- `feature/runtime-provider-live-session-history-safe-restore-completeness-assert` (in progress)
 
 Most recently merged branch:
 
-- `feature/runtime-provider-live-session-latest-history-stance-assert`
+- `feature/runtime-provider-live-session-history-count-integrity-assert`
 
 ## Roadmap (Feature Branch Sequence)
 
@@ -147,10 +147,14 @@ Most recently merged branch:
   remain `live-uptake-not-proven`, forcing explicit re-evaluation before local
   admission when latest retained stance drifts to another value.
 
-21. `feature/runtime-provider-live-session-history-count-integrity-assert` (in progress)
+21. `feature/runtime-provider-live-session-history-count-integrity-assert` (merged)
 - Tighten latest-packet admission so retained `historyTotalRuns` must exactly
   equal the sum of retained observation-class counts, preventing hidden
   unclassified remainder from passing local admission.
+
+22. `feature/runtime-provider-live-session-history-safe-restore-completeness-assert` (in progress)
+- Tighten policy-boundary admission so retained history must show
+  safe-restore verification on every retained run before merge.
 
 ## Admission Rules
 
