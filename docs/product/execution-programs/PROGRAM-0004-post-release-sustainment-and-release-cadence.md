@@ -144,5 +144,5 @@ That retained slice now:
 This program is complete when `vi-history-suite` has a stable post-benchmark
 operating model for releases, benchmark refresh, and documentation/operator
 upkeep, with no ambiguity about where ongoing maintenance work belongs while
-historical public-closeout, the open runtime-provider public-acceptance gate,
+historical public-closeout, the runtime-provider public-acceptance gate record,
 or execution-policy work remains explicitly outside the sustainment bucket.

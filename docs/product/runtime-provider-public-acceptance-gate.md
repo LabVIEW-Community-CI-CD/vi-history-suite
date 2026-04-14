@@ -2,17 +2,22 @@
 
 ## Purpose
 
-Retain the next governed public-acceptance boundary for the host-default
-Windows local `LabVIEWCLI` installed contract without pretending the earlier
-Docker-only public closeout is still active implementation work.
+Retain the governed public-acceptance boundary for the host-default Windows
+local `LabVIEWCLI` installed contract, including the closure receipt after the
+published candidate rerun, without pretending the earlier Docker-only public
+closeout is still active implementation work.
 
 ## Governing Control Plane
 
-- gate state: `open`
+- gate state: `closed`
+- closed at: `2026-04-14T10:45:07Z`
 - historical public closeout: `TRANCHE-010` / `ISSUE-0407` / `PROGRAM-0002`
 - active implementation direction: `TRANCHE-016` / `ISSUE-0412` /
   `PROGRAM-0005`
 - exact released public baseline: `v1.2.2` Docker-only installed-user contract
+- closure evidence: published public `develop` candidate `b1de8c5`, published
+  public wiki head `fc6af3c`, and retained expert-agent rerun verdict
+  `no findings` at `2026-04-14T10:30:20Z`
 - retained branch-transition packet:
   [issue-0412-promotion-and-publication-handoff.md](./issue-0412-promotion-and-publication-handoff.md)
 
@@ -45,24 +50,20 @@ Docker-only public closeout is still active implementation work.
 - runtime-doctor and packet/dashboard surfaces now use provider-based
   wording instead of stale `executionMode` narration
 
-## Remaining Gate Criteria
+## Gate Criteria Satisfaction
 
-- publication-alignment slices must promote truthful maintained public
-  candidate surfaces for the host-default contract
+- publication-alignment slices promoted truthful maintained public candidate
+  surfaces for the host-default contract
 - exact public `main`, exact public wiki, exact bundled installed-user docs,
-  and Marketplace reader surfaces shall stay on the exact released Docker-only
-  baseline until a newer exact release is actually published
-- maintained public `develop` candidate heads and maintained public candidate
-  wiki heads may carry the opened `v1.3.0` host-default contract once those
-  candidate heads are actually published and retained in the authority
-  candidate package
-- the maintained public candidate heads shall be retained in
+  and Marketplace reader surfaces are still retained on the exact released
+  Docker-only baseline until a newer exact release is actually published
+- maintained public `develop` candidate and maintained public candidate wiki
+  heads now publish `b1de8c5` / `fc6af3c` and are retained in
   `docs/product/public-release-candidate.{md,json}`
-- the governed public acceptance rerun shall execute against those published
-  candidate heads and retain pass-or-blocked evidence before `review-ready`
-  advances
-- the gate closes only after the host-default installed contract is both
-  truthfully published and accepted on the governed public surface
+- the governed public acceptance rerun is retained on those published candidate
+  heads with a clean `no findings` verdict
+- the host-default installed contract is now both truthfully published
+  (candidate heads) and accepted (retained rerun), so this gate is closed
 
 ## Non-Criteria
 
@@ -73,5 +74,5 @@ Docker-only public closeout is still active implementation work.
 
 ## Next Move
 
-- `feature/runtime-provider-public-candidate-publication`
+- `feature/runtime-provider-live-settings-session-proof`
 

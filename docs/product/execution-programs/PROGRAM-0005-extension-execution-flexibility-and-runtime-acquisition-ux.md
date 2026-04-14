@@ -53,14 +53,14 @@ Current facts:
 - released `repo-standards-review` `v0.2.9` compliance closeout is now
   retained on this branch
 - remaining work on this program is now narrower: live default-settings
-  mutation proof, packaged/public truth alignment when the replacement
-  contract is actually publishable, and the explicit runtime-provider public
-  acceptance gate after that publication boundary is real
+  mutation proof and later exact-release promotion work after candidate
+  publication alignment and runtime-provider public acceptance are retained as
+  closed
 - `PROGRAM-0002` remains historical Docker-only public-closeout truth; it is
   not the active gate for the next host-default installed contract
 - the retained branch handoff packet is
   [issue-0412-promotion-and-publication-handoff.md](../issue-0412-promotion-and-publication-handoff.md)
-- the explicit next public-acceptance gate is
+- the explicit public-acceptance gate record is
   [runtime-provider-public-acceptance-gate.md](../runtime-provider-public-acceptance-gate.md)
 
 ## Purpose

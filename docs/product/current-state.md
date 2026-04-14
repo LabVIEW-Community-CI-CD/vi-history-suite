@@ -176,8 +176,8 @@ Latest landed ship target:
   surfaces; the next `v1.3.0` candidate now publishes public `develop`
   `b1de8c5` plus public wiki head `fc6af3c`, the post-publication
   expert-agent review now also retains no findings on those live candidate
-  heads, and the remaining open gate is the runtime-provider public-acceptance
-  boundary
+  heads, and the runtime-provider public-acceptance gate is now closed on that
+  published candidate pair
 
 Current active and recently closed tranches:
 
@@ -226,13 +226,13 @@ Current active and recently closed tranches:
     explicit compare action
   - released `repo-standards-review` `v0.2.9` compliance closeout is now
     retained on this branch
-  - remaining work is branch promotion into `develop`, truthful
-    packaged/public reader-surface promotion only when the replacement
-    contract is actually publishable, and the later runtime-provider public
-    acceptance gate after candidate publication is real
+  - branch promotion into `develop`, candidate publication alignment, and the
+    runtime-provider public-acceptance gate are now retained as completed
+  - remaining work is the unresolved live active-settings mutation seam for an
+    already-running VS Code session plus later exact-release promotion work
   - retained handoff packet:
     [issue-0412-promotion-and-publication-handoff.md](./issue-0412-promotion-and-publication-handoff.md)
-  - explicit next public-acceptance gate:
+  - explicit public-acceptance gate record:
     [runtime-provider-public-acceptance-gate.md](./runtime-provider-public-acceptance-gate.md)
 - `TRANCHE-012`: Post-release sustainment and release cadence
 - active issue: [ISSUE-0409 Post-Release Sustainment And Release Cadence](./issues/ISSUE-0409-post-release-sustainment-and-release-cadence.md)
@@ -244,8 +244,8 @@ Current active and recently closed tranches:
     line has been back-merged into `develop` through the protected path and
     the resulting `develop` pipeline is green
   - do not absorb the active `PROGRAM-0005` local-LabVIEWCLI work, the
-    historical `PROGRAM-0002` Docker-only closeout, or the open
-    runtime-provider public-acceptance gate into generic sustainment language
+    historical `PROGRAM-0002` Docker-only closeout, or the runtime-provider
+    public-acceptance gate record into generic sustainment language
 - closed public-product closeout:
   - `TRANCHE-010` / [ISSUE-0407 Public Source Facade And Public-Product Acceptance](./issues/ISSUE-0407-public-facade-installer-and-windows-acceptance.md) / [PROGRAM-0002: Public Source Facade And Public-Product Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
   - the earlier retained canonical host pass at `2026-04-06T20:48:13.412Z`
@@ -338,7 +338,7 @@ Post-release tranches:
     publication closeout
   - sustainment does not absorb the active `TRANCHE-016` local-LabVIEWCLI
     contract reset, the historical `TRANCHE-010` Docker-only public closeout,
-    or the open runtime-provider public-acceptance gate
+    or the runtime-provider public-acceptance gate record
 - `TRANCHE-016`: Host-default LabVIEWCLI, expert Docker provider, and explicit compare workflow
   - active issue: [ISSUE-0412 Installed Local LabVIEWCLI Selection And Explicit Compare](./issues/ISSUE-0412-installed-local-labviewcli-selection-and-explicit-compare.md)
   - active execution program: [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
@@ -374,10 +374,9 @@ Post-release tranches:
     before using Compare when Code is already open
   - released `repo-standards-review` `v0.2.9` compliance closeout is retained
     in the branch control plane
-  - the remaining active slices are packaged/public truth alignment when
-    publication is actually truthful, the unresolved live active-settings
-    mutation seam, and the explicit runtime-provider public-acceptance gate
-    after publication
+  - the remaining active slices are the unresolved live active-settings
+    mutation seam and later exact-release promotion once the candidate line is
+    admitted
   - retained handoff packet:
     [issue-0412-promotion-and-publication-handoff.md](./issue-0412-promotion-and-publication-handoff.md)
   - explicit public-acceptance gate:
@@ -411,11 +410,11 @@ Post-release tranches:
     package now publishes `fc6af3c` for the next `v1.3.0` candidate while the
     exact `v1.2.2` closeout stays retained
 
-Historical public closeout and next runtime-provider public-acceptance gate:
+Historical public closeout and runtime-provider public-acceptance gate record:
 
 - [PROGRAM-0002: Public Source Facade And Public-Product Acceptance](./execution-programs/PROGRAM-0002-public-facade-installer-and-windows-acceptance.md)
 - historical issue: [ISSUE-0407 Public Source Facade And Public-Product Acceptance](./issues/ISSUE-0407-public-facade-installer-and-windows-acceptance.md)
-- next gate:
+- gate record (closed):
   - [runtime-provider-public-acceptance-gate.md](./runtime-provider-public-acceptance-gate.md)
   - [runtime-provider-public-acceptance-gate.json](./runtime-provider-public-acceptance-gate.json)
 - trust boundary:

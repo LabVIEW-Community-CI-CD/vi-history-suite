@@ -50,7 +50,7 @@ Activation is now satisfied:
 - post-release control-plane maintenance
 - not the active extension execution-contract program under `PROGRAM-0005`
 - not the historical Docker-only public closeout under `PROGRAM-0002`
-- not the next runtime-provider public-acceptance gate
+- not the runtime-provider public-acceptance gate record
 
 ## Non-Goals
 

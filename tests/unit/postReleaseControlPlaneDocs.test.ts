@@ -83,7 +83,9 @@ describe('post-release control-plane coherence', () => {
     expect(currentState).toContain('APPDATA\\\\Code\\\\User\\\\settings.json');
     expect(currentState).toContain('active disposable Windows integration-host profile');
     expect(currentState).toContain('already-running VS Code session');
-    expect(currentState).toContain('Historical public closeout and next runtime-provider public-acceptance gate:');
+    expect(currentState).toContain(
+      'Historical public closeout and runtime-provider public-acceptance gate record:'
+    );
     expect(currentState).toContain('runtime-provider-public-acceptance-gate.md');
     expect(currentState).toContain('runtime-provider-public-acceptance-gate.json');
 
@@ -102,10 +104,10 @@ describe('post-release control-plane coherence', () => {
     expect(issue).toContain('retained Gate D preflight preparation already proves');
     expect(issue).toContain('GitHub Codespace `novacula` now passes the hosted public smoke');
 
-    expect(gateDoc).toContain('gate state: `open`');
+    expect(gateDoc).toContain('gate state: `closed`');
     expect(gateDoc).toContain('historical public closeout: `TRANCHE-010` / `ISSUE-0407` / `PROGRAM-0002`');
-    expect(gateDoc).toContain('feature/runtime-provider-public-candidate-publication');
-    expect(gateJson.status).toBe('open');
+    expect(gateDoc).toContain('feature/runtime-provider-live-settings-session-proof');
+    expect(gateJson.status).toBe('closed');
     expect(gateJson.historicalPublicCloseout).toEqual(
       expect.objectContaining({
         programId: 'PROGRAM-0002',
@@ -117,7 +119,7 @@ describe('post-release control-plane coherence', () => {
         programId: 'PROGRAM-0005'
       })
     );
-    expect(gateJson.nextMove).toBe('feature/runtime-provider-public-candidate-publication');
+    expect(gateJson.nextMove).toBe('feature/runtime-provider-live-settings-session-proof');
 
     expect(benchmarkProgram).toContain('Closed on bounded post-release benchmark truth.');
     expect(sustainmentProgram).toContain('Active post-release program.');

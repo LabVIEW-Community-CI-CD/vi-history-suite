@@ -124,7 +124,7 @@ describe('execution-policy control plane', () => {
     expect(currentState).toContain('already-running VS Code session is not yet end-to-end proven');
     expect(currentState).toContain('reload or restart the');
     expect(currentState).toContain('released `repo-standards-review` `v0.2.9` compliance closeout');
-    expect(currentState).toContain('remaining active slices are packaged/public truth alignment');
+    expect(currentState).toContain('remaining active slices are the unresolved live active-settings');
     expect(currentState).toContain('`TRANCHE-012`: Post-release sustainment and release cadence');
     expect(currentState).toContain(
       '[PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)'

@@ -118,7 +118,7 @@ describe('public release candidate control surface', () => {
       localInstalledVsix: 'candidate-v1.3.0-line-opened-awaiting-public-build',
       historicalPublicRepoBootstrapBaseline: 'exact-v1.2.0-human-baseline-retained',
       publishedSurfaceExpertAgentReview: 'no-findings-post-publication-v1.3.0-candidate',
-      runtimeProviderPublicAcceptanceGate: 'open',
+      runtimeProviderPublicAcceptanceGate: 'closed-on-published-v1.3.0-candidate-heads',
       exactPublicRelease: 'v1.2.2-published'
     });
     expect(candidate.findingClassifications).toEqual(
@@ -173,14 +173,7 @@ describe('public release candidate control surface', () => {
       genericCommand: 'npm run public:repo:clone -- --repo-url <https-url>',
       requiredReviewEnvironment: 'brand-new-fork-plus-brand-new-codespace'
     });
-    expect(candidate.activeBlockers).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          id: 'BLOCKER-1.3.0-001-RUNTIME-PROVIDER-PUBLIC-ACCEPTANCE-GATE',
-          status: 'open'
-        })
-      ])
-    );
+    expect(candidate.activeBlockers).toEqual([]);
 
     expect(candidateMarkdown).toContain('Version line: `1.3.0`');
     expect(candidateMarkdown).toContain('Published public source commit: `86b19a2`');
@@ -188,7 +181,7 @@ describe('public release candidate control surface', () => {
     expect(candidateMarkdown).toContain('Published public wiki head: `fc6af3c`');
     expect(candidateMarkdown).toContain('Published-surface expert-agent review:');
     expect(candidateMarkdown).toContain('`no-findings-post-publication-v1.3.0-candidate`');
-    expect(candidateMarkdown).toContain('Runtime-provider public-acceptance gate: `open`');
+    expect(candidateMarkdown).toContain('Runtime-provider public-acceptance gate: `closed`');
     expect(candidateMarkdown).toContain('Required skill: `vi-history-suite-expert-agent-reviewer`');
     expect(candidateMarkdown).toContain('The maintained public `develop` candidate for `v1.3.0` now publishes');
     expect(candidateMarkdown).toContain('FINDING-1.2.2-001-MISSING-DOCKER-FIRST-RUN-BOUNDARY');
@@ -198,7 +191,7 @@ describe('public release candidate control surface', () => {
     expect(candidateMarkdown).toContain(
       'no findings; exact release / Marketplace publish may proceed'
     );
-    expect(candidateMarkdown).toContain('Active `v1.3.0` candidate blockers remain:');
+    expect(candidateMarkdown).toContain('Runtime-provider public-acceptance gate is now closed');
 
     expect(currentState).toContain('current exact released line: `v1.2.2`');
     expect(currentState).toContain('current develop package line on `develop`: `1.3.0`');
