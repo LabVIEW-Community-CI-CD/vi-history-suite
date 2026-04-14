@@ -45,6 +45,21 @@
 | Urgent | sole author | immediate |
 | Concession | sole author | explicitly documented |
 
+## Documentation Impact And Role Mapping
+
+- The governed documentation package under `docs/` is a managed configuration
+  surface, not informal commentary.
+- The docs package is a bounded document set for change-control purposes.
+- Any documentation impact assessment must consider command behavior, release flow,
+  claim boundary, route or support posture, and accessibility baseline.
+- Release-control packet and release-facing proof surfaces move with the branch
+  and release-control doctrine that authorizes them.
+
+| Documentation role | Current owner | Current rule |
+| --- | --- | --- |
+| information developer | sole author | update or confirm docs when a governed surface is reviewed, changed, or confirmed |
+| approving authority | sole author | approve release-control and claim-boundary changes before promotion |
+
 ## Status Accounting
 
 - Record location: Git history and GitLab pipelines

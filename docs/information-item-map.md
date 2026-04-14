@@ -16,9 +16,14 @@
   metadata explicit.
 - Governance and planning docs keep explicit scope and neighboring authority
   surfaces through `Related Surfaces` or equivalent control sections.
+- This map keeps owner, trigger, and proving-evidence fields explicit.
 - The table below is the retained item index for governed artifacts and durable
   evidence routes, not only a file inventory. It uses owner, trigger, and
   proving-evidence fields to keep responsibility and validation discoverable.
+- The map distinguishes product authority surfaces and control authority surfaces.
+- The package is first-class information-for-users work.
+- candidate provenance is retained when a feature branch or release-ready
+  checkpoint changes the package truth.
 - Durable evidence routes for public release and publication are retained in
   `docs/product/public-release-candidate.md` plus the public source/wiki
   publication ledgers.
@@ -28,8 +33,7 @@
   minimum structure expectations, product authority surfaces, control authority
   surfaces, primary and secondary surfaces, simultaneous-use routes, fallback
   paths, and section-to-topic-role mapping.
-- The support-lifecycle rule for this package is explicit: temporary answers
-  are incorporated or retired when they stabilize.
+- The support-lifecycle rule for this package is explicit: temporary answers are incorporated or retired when they stabilize.
 - Triggers now include quick-reference-boundary change, compact quick-reference
   scope, specialized-support surfaces, API-doc depth, chatbot or VRS behavior,
   release-proof change, tailored `26514` claim summary, and candidate

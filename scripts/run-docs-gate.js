@@ -64,6 +64,7 @@ function createDocsGateSteps(options = {}) {
         'tests/unit/executionPolicyDocs.test.ts',
         'tests/unit/governedProofDocs.test.ts',
         'tests/unit/informationForUsersAudienceDocs.test.ts',
+        'tests/unit/informationForUsersQualityDocs.test.ts',
         'tests/unit/informationForUsersSupportDocs.test.ts',
         'tests/unit/requirementsDocs.test.ts',
         'tests/unit/packageManifest.test.ts',

@@ -16,12 +16,17 @@ See also:
 
 ## Quick-Reference Boundary
 
-- This surface is a compact command and route locator.
-- It is not a full user guide and it is not an API reference.
+- This surface is a compact quick-reference guide and route locator.
+- It is not a full user guide, it is not a full command manual, and it is not an API reference.
 - Keep stable task walkthroughs in `README.md`, `INSTALL.md`,
   `docs/documentation-workbench.md`, `PROGRAM-0005`, or `ISSUE-0412`.
 - Use the FAQ for short answers and reload guidance, then move stable doctrine
   back into the main governed surfaces.
+- This repo does not use `MAINTAINING.md`, `OPERATIONS.md`, or `SKILL.md` as
+  first-class user entry surfaces.
+- temporary workaround answers belong in the FAQ until they stabilize.
+- This surface does not own API-doc depth decisions and it does not describe
+  chatbot or VRS behavior.
 
 ## Public Evaluation And Installed Baseline
 
@@ -74,6 +79,19 @@ See also:
 - Purpose: run the retained documentation continuous-integration lane locally.
 - Use when: you need the broader docs evidence surface, not only the fast gate.
 
+## Canonical Validation
+
+`node scripts/run-docs-gate.js`
+
+- Purpose: run the canonical repo-native docs gate.
+- Use when: validating the bounded document set before broader release checks.
+
+`npm run test`
+
+- Purpose: run the main repo validation suite.
+- Use when: a slice changes source, docs guards, or integration behavior beyond
+  one narrow local proof.
+
 ## Runtime Provider CLI And Proof
 
 `vihs-runtime-settings --provider <host|docker> --labview-version <major> --labview-bitness <x86|x64> [--settings-file <path>]`
@@ -94,6 +112,8 @@ See also:
 - Use when: validating the current runtime-provider CLI proof slice.
 
 ## Outer Compliance Baseline
+
+## Assurance Execution
 
 `docker run --rm -v /path/to/repo:/target registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:v0.2.12 python3 scripts/run_assurance.py /target --profile release-gate`
 
@@ -116,6 +136,41 @@ See also:
 - Purpose: check the governed requirements package with the released skill.
 - Use when: a branch changes `docs/requirements/srs.md`, `docs/requirements/syrs.md`,
   or `docs/requirements/rtm.csv`.
+
+## Release Control
+
+`git checkout develop && git pull`
+
+- Purpose: return to the current integration baseline before cutting a new
+  feature or release slice.
+- Use when: resyncing the repo control plane.
+
+`git checkout -b feature/<name>`
+
+- Purpose: cut the next GitFlow feature slice from `develop`.
+- Use when: a new truthful documentation or source-backed branch is starting.
+
+## Standards Lookup
+
+`python3 scripts/pipeline.py validate-skill`
+
+- Purpose: validate the local `repo-standards-review` skill clone when the
+  external standards tool itself is under inspection.
+- Use when: the released checker points you back to its own retained doctrine.
+
+`python3 scripts/search_standards.py`
+
+- Purpose: search retained standards packets in a local `repo-standards-review`
+  workspace.
+- Use when: a `26514` token or standards clause needs to be verified directly.
+
+## Documentation Search
+
+`rg -n "<term>" README.md docs`
+
+- Purpose: search the governed repo docs quickly without a custom search
+  subsystem.
+- Use when: locating routes, release language, or support-boundary phrases.
 
 `npm run test`
 

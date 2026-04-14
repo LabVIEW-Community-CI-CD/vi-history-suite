@@ -18,6 +18,9 @@ See also:
 - [Documentation Package Workbench](../documentation-workbench.md)
 - [Public Release Candidate](../product/public-release-candidate.md)
 
+Version applicability or update trigger: update this surface when route
+ownership, release packet evidence paths, or repo support boundaries change.
+
 ## Delivery Rules
 
 - Use `README.md` as the orientation route while the user is still deciding
@@ -52,3 +55,7 @@ See also:
   silently replace the exact released install route.
 - The docs package remains text-first Markdown; no additional media channels
   are currently claimed.
+- `MAINTAINING.md` and `OPERATIONS.md` are not first-class `vi-history-suite`
+  user-information entry surfaces.
+- The release packet route for public publication evidence remains the public
+  release candidate and related ledgers, not a copied self-application packet.
