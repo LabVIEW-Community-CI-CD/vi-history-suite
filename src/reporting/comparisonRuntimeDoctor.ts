@@ -87,7 +87,11 @@ export function buildComparisonRuntimeDoctorSummaryFromFacts(options: {
   }
 
   if (options.reportStatus === 'blocked-runtime' || execution.state === 'not-available') {
-    lines.push(`Runtime blocked reason: ${selection.blockedReason ?? execution.blockedReason ?? 'none'}.`);
+    lines.push(
+      `Runtime blocked reason: ${normalizeRuntimeDoctorBlockedReason(
+        selection.blockedReason ?? execution.blockedReason
+      )}.`
+    );
   }
 
   if (execution.failureReason) {
@@ -281,6 +285,20 @@ function deriveRequestedProviderIntent(selection: {
   }
 
   return 'auto';
+}
+
+function normalizeRuntimeDoctorBlockedReason(blockedReason?: string): string {
+  switch (blockedReason) {
+    case 'docker-only-provider-not-supported-on-platform':
+      return 'docker-provider-not-supported-on-platform';
+    case 'docker-only-requires-windows-x64-provider':
+      return 'docker-provider-requires-windows-x64';
+    case 'docker-only-provider-unavailable':
+    case 'auto-docker-installed-provider-unavailable':
+      return 'docker-provider-unavailable';
+    default:
+      return blockedReason ?? 'none';
+  }
 }
 
 function stripTerminalPunctuation(value: string): string {

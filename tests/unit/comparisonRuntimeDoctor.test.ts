@@ -383,6 +383,7 @@ describe('comparisonRuntimeDoctor', () => {
     expect(lines.at(-1)).toBe(
       'Next action: install Docker Desktop, start it once, and confirm `docker info` succeeds or set viHistorySuite.runtimeProvider to host, then rerun comparison report generation.'
     );
+    expect(lines).toContain('Runtime blocked reason: docker-provider-unavailable.');
   });
 
   it('uses the same recovery guidance for the explicit docker provider unavailable path', () => {
@@ -413,6 +414,7 @@ describe('comparisonRuntimeDoctor', () => {
     expect(lines.at(-1)).toBe(
       'Next action: install Docker Desktop, start it once, and confirm `docker info` succeeds or set viHistorySuite.runtimeProvider to host, then rerun comparison report generation.'
     );
+    expect(lines).toContain('Runtime blocked reason: docker-provider-unavailable.');
   });
 
   it('tells Linux users to reconnect the daemon when Docker is installed but not reachable', () => {
@@ -443,6 +445,7 @@ describe('comparisonRuntimeDoctor', () => {
     expect(lines.at(-1)).toBe(
       'Next action: start or reconnect the Docker daemon and confirm `docker info` succeeds or set viHistorySuite.runtimeProvider to host, then rerun comparison report generation.'
     );
+    expect(lines).toContain('Runtime blocked reason: docker-provider-unavailable.');
   });
 
   it('surfaces host runtime facts and acquisition-failure guidance when auto mode selected Docker from a contaminated windows host surface', () => {
