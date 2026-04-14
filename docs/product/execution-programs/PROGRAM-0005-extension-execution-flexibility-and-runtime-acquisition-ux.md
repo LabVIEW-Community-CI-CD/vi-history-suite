@@ -20,9 +20,18 @@ Current facts:
 - `ISSUE-0412` is the active issue for the replacement direction
 - the control-plane reset is landed and the installed manifest/settings
   contract slice is landed
+- the installed manifest now truthfully exposes
+  `viHistorySuite.runtimeProvider`, `viHistorySuite.labviewVersion`, and
+  `viHistorySuite.labviewBitness`
 - the generated settings CLI now persists provider, version, and bitness, and
   that provider selection now flows into the governed host-default and Docker
   runtime-admission path
+- the generated settings CLI is now proven through first-use launcher
+  materialization plus current-host launcher execution against a temporary
+  settings file
+- the remaining CLI proof gap is explicit: Windows launcher execution and
+  direct live user-profile VS Code settings mutation are not yet end-to-end
+  proven on this line
 - the Windows exact-runtime preflight is now landed: installed compare
   resolves one exact version+bitness LabVIEW executable plus matching
   `LabVIEWCLI` surface and fails closed on missing, ambiguous, or
@@ -33,10 +42,10 @@ Current facts:
   preflight-ready execution
 - released `repo-standards-review` `v0.2.9` compliance closeout is now
   retained on this branch
-- remaining work on this program is now narrower: feature-branch promotion
-  into `develop`, packaged/public truth alignment when the replacement
-  contract is actually publishable, and later public acceptance handoff after
-  that publication boundary is real
+- remaining work on this program is now narrower: Windows-specific end-to-end
+  CLI proof, packaged/public truth alignment when the replacement contract is
+  actually publishable, and later public acceptance handoff after that
+  publication boundary is real
 - `PROGRAM-0002` still owns the later public acceptance rerun once the next
   installed-user contract is actually published
 - the retained branch handoff packet is
@@ -115,6 +124,7 @@ An installed extension user:
   settings contract
 - the settings contract can be seeded through a generated cross-platform CLI
   launcher under user-profile storage rather than a prebuilt VSIX-shipped CLI
+- the current-host generated launcher path is proven end to end
 - host runtime resolution validates one canonical Windows `LabVIEWCLI`
   request before compare can run
 - missing, ambiguous, or incompatible local runtime resolution fails closed
@@ -153,6 +163,8 @@ An installed extension user:
 - the branch also retains one explicit promotion/publication handoff packet so
   future sessions do not reopen completed standards work while deciding merge
   and publication order
+- the unresolved Windows launcher and live user-settings proof gap remains
+  explicit until a supported Windows proof lane closes it
 
 ## Delivery Rules
 

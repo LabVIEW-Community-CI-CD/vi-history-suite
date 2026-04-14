@@ -101,7 +101,13 @@ history instead of chat memory.
 - treat standards-compliance refactor work on this branch as closed under
   released `repo-standards-review` `v0.2.9` unless a later released-skill
   audit fails
-- queue branch promotion into `develop`
+- keep the installed manifest/settings slice truthful by exposing
+  `viHistorySuite.runtimeProvider`, `viHistorySuite.labviewVersion`, and
+  `viHistorySuite.labviewBitness`
+- prove the generated settings CLI through first-use launcher materialization
+  plus current-host launcher execution against a temporary settings file
+- keep the remaining proof gap explicit: Windows launcher execution and live
+  user-profile VS Code settings mutation are not yet end-to-end proven
 - keep packaged/public docs on the exact released Docker-only baseline until
   the replacement contract is truthfully publishable
 - retain the later `PROGRAM-0002` public acceptance handoff explicitly in
@@ -181,11 +187,17 @@ still only proposal material during round 1:
   provider selection from persisted provider request first, while retaining
   `executionMode`, explicit paths, and related override lanes only as bounded
   internal/runtime-proof compatibility surfaces
+- `tests/integration/suite/extensionHost.test.ts` now proves the prepared
+  current-host launcher can switch provider intent between `host` and
+  `docker` while writing version and bitness into a temporary settings file
 - `src/ui/historyPanel.ts` now uses explicit compare preflight instead of
   auto-generating compare output on second commit selection
 - `src/commands/openViHistoryCommand.ts` now surfaces provider request,
   selected provider, and preflight/block facts instead of treating
   second-selection auto-run as the live branch contract
+- Windows launcher execution and direct live user-profile VS Code settings
+  mutation remain unproven and are retained as the remaining proof gap for
+  this slice
 
 ## Round 1 Working Assessment
 

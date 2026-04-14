@@ -334,18 +334,27 @@ Post-release tranches:
   - active execution program: [PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
   - the current exact released installed extension is still Docker-only, but
     that is now historical baseline truth rather than the active destination
-  - the control-plane reset, installed manifest/settings slice, generated
-    provider-selection CLI slice, exact Windows host-runtime preflight, and
-    explicit compare preflight are now landed on this branch
+  - the control-plane reset, explicit compare preflight, exact Windows
+    host-runtime preflight, and provider-selection CLI slice are now landed
+    on `develop`
+  - the installed manifest/settings slice now truthfully exposes
+    `viHistorySuite.runtimeProvider`, `viHistorySuite.labviewVersion`, and
+    `viHistorySuite.labviewBitness`
   - expert Docker provider selection now flows through the generated CLI and
     the governed engine-derived image-family admission path
   - installed-user warning behavior is now landed with compare-preflight block
     plus VS Code warning surfaces
+  - the generated settings CLI is now proven through first-use launcher
+    materialization plus current-host launcher invocation against a temporary
+    settings file
+  - the remaining CLI proof gap is explicit: Windows launcher execution and
+    direct live user-profile VS Code settings mutation are not yet end-to-end
+    proven on this line
   - released `repo-standards-review` `v0.2.9` compliance closeout is retained
     in the branch control plane
-  - the remaining active slices are branch promotion into `develop`,
-    packaged/public truth alignment when publication is actually truthful, and
-    later public acceptance handoff after publication
+  - the remaining active slices are packaged/public truth alignment when
+    publication is actually truthful, the unresolved CLI proof gap on Windows,
+    and later public acceptance handoff after publication
   - retained handoff packet:
     [issue-0412-promotion-and-publication-handoff.md](./issue-0412-promotion-and-publication-handoff.md)
   - Docker is now a bounded expert provider rather than either the default

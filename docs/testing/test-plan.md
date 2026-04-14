@@ -296,6 +296,11 @@
 - `TEST-INTEG-003`: run the real extension-host report action and retain a
   truthful runtime-selection summary that justifies either `ready-for-runtime`
   or `blocked-runtime` on the active host
+- `TEST-INTEG-009`: run the real extension-host local-runtime settings CLI
+  preparation command, execute the current-host generated launcher against a
+  temporary settings file, and prove the CLI can switch the persisted
+  provider request between `host` and `docker` while writing LabVIEW version
+  and bitness facts
 - `TEST-UNIT-072`: prove the canonical comparison-report smoke runner selects a
   retained compare pair, persists report artifacts, and records runtime facts
 - `TEST-UNIT-073`: prove the canonical comparison-report smoke CLI parses
@@ -1724,7 +1729,8 @@
 - `TEST-UNIT-345`: verify the on-demand settings CLI materializes platform
   launchers under user-profile storage on first use, writes provider plus
   `viHistorySuite.labviewVersion` and `viHistorySuite.labviewBitness`, and
-  does not require PATH mutation or a prebuilt VSIX-shipped CLI payload
+  does not require PATH mutation or a prebuilt VSIX-shipped CLI payload; real
+  current-host launcher execution is traced separately by `TEST-INTEG-009`
 - `TEST-UNIT-346`: verify the installed compare contract defaults to host and
   admits Docker only as a bounded expert provider persisted through the
   generated settings CLI

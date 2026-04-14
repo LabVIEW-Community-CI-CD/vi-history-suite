@@ -22,6 +22,7 @@
       "supported": "limited",
       "description": "VI History disables background indexing and installed comparison execution in untrusted workspaces.",
       "restrictedConfigurations": [
+        "viHistorySuite.runtimeProvider",
         "viHistorySuite.labviewVersion",
         "viHistorySuite.labviewBitness"
       ]
@@ -111,6 +112,14 @@
           "minimum": 2,
           "maximum": 5000,
           "description": "Explicit retained-commit ceiling when historyWindowMode is capped."
+        },
+        "viHistorySuite.runtimeProvider": {
+          "type": "string",
+          "enum": [
+            "host",
+            "docker"
+          ],
+          "description": "Installed-user compare provider request. Host is the default local LabVIEWCLI path; docker is a bounded expert path selected through the generated settings CLI."
         },
         "viHistorySuite.labviewVersion": {
           "type": "string",
