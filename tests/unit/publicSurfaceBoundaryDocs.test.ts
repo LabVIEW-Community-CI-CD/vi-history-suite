@@ -53,12 +53,15 @@ describe('public facade boundary docs', () => {
     expect(internalMap).toContain('public GitHub user wiki');
     expect(publicMap).toContain('public GitHub user wiki only');
     expect(publicMap).toContain('shall not use these as primary truth sources');
-    expect(publicMap).toContain('shall keep the exact released');
-    expect(publicMap).toContain('Docker-only installed-user contract');
+    expect(publicMap).toContain('Exact public release wiki pages and bundled installed-user docs shall keep');
+    expect(publicMap).toContain('Maintained public candidate wiki heads may publish the opened `v1.3.0`');
+    expect(publicMap).toContain('candidate surfaces shall stay explicit');
     expect(publicMap).toContain('docs/requirements/srs.md');
     expect(publicSourceMap).toContain('public GitHub source repo only');
     expect(publicSourceMap).toContain('curated product surface');
-    expect(publicSourceMap).toContain('shall keep the exact released Docker-only installed-user contract');
+    expect(publicSourceMap).toContain('Exact public `main` shall keep the exact released `v1.2.2` Docker-only');
+    expect(publicSourceMap).toContain('Maintained public candidate heads on public `develop` may publish the opened');
+    expect(publicSourceMap).toContain('candidate lane shall stay explicit');
     expect(publicSourceMap).toContain('docs/requirements/srs.md');
     expect(internalLedger).toContain('internal GitLab maintainer wiki');
     expect(internalLedgerJson).toContain('"publicationSurface": "internal-gitlab-wiki"');
