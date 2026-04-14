@@ -381,7 +381,8 @@ Post-release tranches:
     `historyProofStatus=not-fully-proven`,
     `historyStance=live-uptake-not-proven`, with latest
     `liveUptakeObservation=reload-required`,
-    `safeRestoreVerified=true`, and retained
+    `safeRestoreVerified=true`, explicit baseline/persisted provider
+    `host`/`docker` facts, and retained
     `historyInSessionUpdatedCount=0` plus
     `historyUnknownObservationCount=0`, with retained history total/count
     integrity preserved

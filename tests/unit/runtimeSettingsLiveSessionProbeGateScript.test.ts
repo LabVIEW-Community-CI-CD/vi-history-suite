@@ -284,6 +284,42 @@ describe('assertRuntimeSettingsLiveSessionProbePacket script', () => {
     );
   });
 
+  it('fails validation when latest packet provider facts are not explicit host/docker values', () => {
+    const failures = probeGate.validateProbePacket({
+      outcome: 'probed-runtime-settings-live-session',
+      packetRunId: '2026-04-14T13-07-33-123Z',
+      packetJsonPath: '/tmp/packet.json',
+      packetMarkdownPath: '/tmp/packet.md',
+      latestPacketJsonPath: '/tmp/latest-summary.json',
+      latestPacketMarkdownPath: '/tmp/latest-summary.md',
+      baselinePersistedProvider: 'mystery',
+      persistedProvider: 'unknown',
+      mutationProviderTarget: 'host',
+      mutationTargetPersistedMatch: true,
+      mutationTargetBaselineChanged: true,
+      liveUptakeObservation: 'reload-required',
+      safeRestoreApplied: true,
+      safeRestoreVerified: true,
+      providerDrift: true,
+      versionDrift: false,
+      bitnessDrift: false,
+      driftDetected: true,
+      historyTotalRuns: 1,
+      historyReloadRequiredCount: 1,
+      historyInSessionUpdatedCount: 0,
+      historyUnknownObservationCount: 0,
+      historyStance: 'live-uptake-not-proven',
+      historyProofStatus: 'not-fully-proven'
+    });
+
+    expect(failures).toContain(
+      'persistedProvider must be host or docker for latest retained probe packet evidence, received unknown'
+    );
+    expect(failures).toContain(
+      'baselinePersistedProvider must be host or docker for latest retained probe packet evidence, received mystery'
+    );
+  });
+
   it('fails validation when retained history includes in-session-updated runs', () => {
     const failures = probeGate.validateProbePacket({
       outcome: 'probed-runtime-settings-live-session',

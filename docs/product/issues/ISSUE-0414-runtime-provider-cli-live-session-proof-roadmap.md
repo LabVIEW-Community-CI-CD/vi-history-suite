@@ -34,11 +34,11 @@ The unresolved seam remains explicit:
 
 Current implementation branch:
 
-- `feature/runtime-provider-live-session-latest-safe-restore-assert` (in progress)
+- `feature/runtime-provider-live-session-latest-provider-facts-assert` (in progress)
 
 Most recently merged branch:
 
-- `feature/runtime-provider-live-session-history-safe-restore-completeness-assert`
+- `feature/runtime-provider-live-session-latest-safe-restore-assert`
 
 ## Roadmap (Feature Branch Sequence)
 
@@ -156,9 +156,13 @@ Most recently merged branch:
 - Tighten policy-boundary admission so retained history must show
   safe-restore verification on every retained run before merge.
 
-23. `feature/runtime-provider-live-session-latest-safe-restore-assert` (in progress)
+23. `feature/runtime-provider-live-session-latest-safe-restore-assert` (merged)
 - Tighten latest-packet admission so latest retained packet must keep
   `safeRestoreVerified=true` before local admission.
+
+24. `feature/runtime-provider-live-session-latest-provider-facts-assert` (in progress)
+- Tighten latest-packet admission so retained baseline/persisted provider facts
+  must be explicit `host` or `docker` values before local admission.
 
 ## Admission Rules
 

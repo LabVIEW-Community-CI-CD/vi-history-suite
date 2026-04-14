@@ -54,7 +54,8 @@ Current facts:
   `historyProofStatus=not-fully-proven` plus latest-packet
   `historyStance=live-uptake-not-proven`, plus latest-packet
   `liveUptakeObservation=reload-required`, latest-packet
-  `safeRestoreVerified=true`, plus retained
+  `safeRestoreVerified=true`, explicit baseline/persisted provider
+  `host`/`docker` facts, plus retained
   `historyInSessionUpdatedCount=0` plus
   `historyUnknownObservationCount=0`, with retained history total/count
   integrity enforcement
