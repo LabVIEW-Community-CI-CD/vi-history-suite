@@ -382,7 +382,8 @@ Post-release tranches:
   - one local policy-boundary assertion now exists at
     `npm run proof:runtime-settings-live-session:policy:assert`; it fails
     closed when retained history no longer supports unconditional reload
-    guidance
+    guidance or when retained probe runs do not include bidirectional
+    provider-selection mutation coverage (`host` and `docker`)
   - the remaining CLI proof gap is now narrower: direct live mutation of the
     already-running VS Code session is not yet end-to-end proven on this line;
     probe mutation safe-restore is now fail-closed and locally proven, so the

@@ -56,6 +56,16 @@ describe('assertRuntimeSettingsLiveSessionPolicyBoundary script', () => {
         summary: {
           liveUptakeObservation: 'reload-required',
           driftDetected: true,
+          mutationProviderTarget: 'docker',
+          safeRestoreVerified: true
+        }
+      },
+      {
+        runId: '2026-04-14T12-00-00-000Z',
+        summary: {
+          liveUptakeObservation: 'reload-required',
+          driftDetected: true,
+          mutationProviderTarget: 'host',
           safeRestoreVerified: true
         }
       }
@@ -88,6 +98,24 @@ describe('assertRuntimeSettingsLiveSessionPolicyBoundary script', () => {
 
     expect(() => boundaryScript.run(['--packet-root', packetRoot])).toThrow(
       'policy boundary no longer supports unconditional reload guidance'
+    );
+  });
+
+  it('fails when retained history does not include both provider mutation targets', async () => {
+    const packetRoot = await seedHistoryPackets(temporaryDirectories, [
+      {
+        runId: '2026-04-14T13-00-00-000Z',
+        summary: {
+          liveUptakeObservation: 'reload-required',
+          driftDetected: true,
+          mutationProviderTarget: 'docker',
+          safeRestoreVerified: true
+        }
+      }
+    ]);
+
+    expect(() => boundaryScript.run(['--packet-root', packetRoot])).toThrow(
+      'requires retained bidirectional provider-selection coverage'
     );
   });
 });

@@ -171,6 +171,8 @@ See also:
 - Use when: deciding whether reload-or-restart guidance remains required for
   the current retained evidence set.
 - Notes:
+  - retained summary now also reports provider-selection coverage from
+    `mutationProviderTarget` receipts (`host` and `docker`)
   - optional packet-root override:
     `npm run proof:runtime-settings-live-session:history -- --packet-root <path>`
   - use `--json` for machine-readable branch or MR receipts
@@ -185,6 +187,9 @@ See also:
     `npm run proof:runtime-settings-live-session:policy:assert -- --packet-root <path>`
   - returns non-zero when stance is `candidate-live-uptake-observed` or
     `insufficient-evidence`, forcing explicit policy re-evaluation
+  - returns non-zero when retained history does not include both `host` and
+    `docker` mutation targets, forcing explicit CLI provider-selection
+    coverage before merge
 
 `npm run test:integration:windows`
 

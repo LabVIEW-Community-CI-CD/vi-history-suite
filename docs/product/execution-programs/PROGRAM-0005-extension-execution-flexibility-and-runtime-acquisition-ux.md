@@ -55,6 +55,7 @@ Current facts:
 - one local policy-boundary assertion now exists at
   `npm run proof:runtime-settings-live-session:policy:assert` so merges fail
   closed when retained history no longer supports unconditional reload guidance
+  or does not retain bidirectional CLI provider-selection mutation coverage
 - the remaining CLI proof gap is now narrower: direct mutation safety and
   automatic live uptake around a live already-running VS Code session is still
   not end-to-end proven; probe mutation safe-restore is now fail-closed and

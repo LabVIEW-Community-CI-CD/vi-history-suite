@@ -74,14 +74,22 @@ function run(argv = process.argv.slice(2), deps = {}) {
       `Runtime-settings live-session policy boundary no longer supports unconditional reload guidance (stance=${summary.stance}). Re-evaluate VHS-REQ-542 and aligned docs before merge.`
     );
   }
+  if (summary.mutationTargetHostCount < 1 || summary.mutationTargetDockerCount < 1) {
+    throw new Error(
+      `Runtime-settings live-session policy boundary requires retained bidirectional provider-selection coverage (mutationTargetHostCount=${summary.mutationTargetHostCount}, mutationTargetDockerCount=${summary.mutationTargetDockerCount}).`
+    );
+  }
 
   if (parsed.json) {
     stdout.write(`${JSON.stringify(summary, null, 2)}\n`);
   } else {
     stdout.write('Runtime settings live-session policy boundary: pass\n');
     stdout.write(`- stance: ${summary.stance}\n`);
+    stdout.write(`- providerSelectionCoverage: ${summary.providerSelectionCoverage}\n`);
     stdout.write(`- reloadRequiredCount: ${summary.reloadRequiredCount}\n`);
     stdout.write(`- inSessionUpdatedCount: ${summary.inSessionUpdatedCount}\n`);
+    stdout.write(`- mutationTargetHostCount: ${summary.mutationTargetHostCount}\n`);
+    stdout.write(`- mutationTargetDockerCount: ${summary.mutationTargetDockerCount}\n`);
     stdout.write(`- latestObservation: ${summary.latestObservation ?? '<none>'}\n`);
   }
 

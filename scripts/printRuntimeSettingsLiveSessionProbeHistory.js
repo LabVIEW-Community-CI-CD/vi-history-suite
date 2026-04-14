@@ -127,6 +127,9 @@ function summarizeHistory(packetRoot, runSummaries) {
   let inSessionUpdatedCount = 0;
   let unknownObservationCount = 0;
   let safeRestoreVerifiedCount = 0;
+  let mutationTargetHostCount = 0;
+  let mutationTargetDockerCount = 0;
+  let mutationTargetUnknownCount = 0;
 
   for (const run of runSummaries) {
     const observation = normalizeObservation(run.summary);
@@ -141,15 +144,33 @@ function summarizeHistory(packetRoot, runSummaries) {
     if (run.summary.safeRestoreVerified === true) {
       safeRestoreVerifiedCount += 1;
     }
+
+    const mutationTarget = normalizeMutationProviderTarget(run.summary);
+    if (mutationTarget === 'host') {
+      mutationTargetHostCount += 1;
+    } else if (mutationTarget === 'docker') {
+      mutationTargetDockerCount += 1;
+    } else {
+      mutationTargetUnknownCount += 1;
+    }
   }
 
   const latest = runSummaries[0];
   const latestObservation = latest ? normalizeObservation(latest.summary) : undefined;
+  const latestMutationTarget = latest
+    ? normalizeMutationProviderTarget(latest.summary)
+    : undefined;
   const stance =
     reloadRequiredCount > 0
       ? 'live-uptake-not-proven'
       : inSessionUpdatedCount > 0 && unknownObservationCount === 0
         ? 'candidate-live-uptake-observed'
+        : 'insufficient-evidence';
+  const providerSelectionCoverage =
+    mutationTargetHostCount > 0 && mutationTargetDockerCount > 0
+      ? 'bidirectional-selection-observed'
+      : mutationTargetHostCount > 0 || mutationTargetDockerCount > 0
+        ? 'single-provider-only'
         : 'insufficient-evidence';
 
   return {
@@ -159,10 +180,15 @@ function summarizeHistory(packetRoot, runSummaries) {
     inSessionUpdatedCount,
     unknownObservationCount,
     safeRestoreVerifiedCount,
+    mutationTargetHostCount,
+    mutationTargetDockerCount,
+    mutationTargetUnknownCount,
     latestRunId: latest?.runId,
     latestSummaryPath: latest?.summaryPath,
     latestObservation,
+    latestMutationTarget,
     stance,
+    providerSelectionCoverage,
     recommendation:
       stance === 'live-uptake-not-proven'
         ? 'Keep reload-or-restart guidance active; retained history still contains reload-required runs.'
@@ -187,6 +213,17 @@ function normalizeObservation(summary) {
   return undefined;
 }
 
+function normalizeMutationProviderTarget(summary) {
+  const candidate =
+    summary && typeof summary.mutationProviderTarget === 'string'
+      ? summary.mutationProviderTarget.trim().toLowerCase()
+      : '';
+  if (candidate === 'host' || candidate === 'docker') {
+    return candidate;
+  }
+  return undefined;
+}
+
 function formatHistorySummary(summary) {
   return [
     'Runtime settings live-session probe history receipt',
@@ -196,9 +233,14 @@ function formatHistorySummary(summary) {
     `- inSessionUpdatedCount: ${summary.inSessionUpdatedCount}`,
     `- unknownObservationCount: ${summary.unknownObservationCount}`,
     `- safeRestoreVerifiedCount: ${summary.safeRestoreVerifiedCount}`,
+    `- mutationTargetHostCount: ${summary.mutationTargetHostCount}`,
+    `- mutationTargetDockerCount: ${summary.mutationTargetDockerCount}`,
+    `- mutationTargetUnknownCount: ${summary.mutationTargetUnknownCount}`,
     `- latestRunId: ${summary.latestRunId ?? '<none>'}`,
     `- latestObservation: ${summary.latestObservation ?? '<none>'}`,
+    `- latestMutationTarget: ${summary.latestMutationTarget ?? '<none>'}`,
     `- stance: ${summary.stance}`,
+    `- providerSelectionCoverage: ${summary.providerSelectionCoverage}`,
     `- recommendation: ${summary.recommendation}`,
     ''
   ].join('\n');
@@ -285,6 +327,7 @@ module.exports = {
   collectRunSummaries,
   summarizeHistory,
   normalizeObservation,
+  normalizeMutationProviderTarget,
   formatHistorySummary,
   run
 };
