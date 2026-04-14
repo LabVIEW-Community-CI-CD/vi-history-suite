@@ -199,6 +199,7 @@ describe('documentation continuous integration runner', () => {
         'tests/unit/debtLedgerDocs.test.ts',
         'tests/unit/executionPolicyDocs.test.ts',
         'tests/unit/governedProofDocs.test.ts',
+        'tests/unit/informationForUsersAudienceDocs.test.ts',
         'tests/unit/informationForUsersSupportDocs.test.ts',
         'tests/unit/requirementsDocs.test.ts',
         'tests/unit/shipControlDocs.test.ts',

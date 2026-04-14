@@ -7,6 +7,35 @@
 - Baseline: `draft-baseline`
 - Owner: sole author
 
+## Authority And Metadata Expectations
+
+- Dedicated short-form information-for-users docs keep `Applies to:`,
+  `Last reviewed:`, `Primary audience:`, `Topic type:`, `Primary entry route:`,
+  and `See also:` near the top.
+- Those dedicated support docs also keep version applicability and review
+  metadata explicit.
+- Governance and planning docs keep explicit scope and neighboring authority
+  surfaces through `Related Surfaces` or equivalent control sections.
+- The table below is the retained item index for governed artifacts and durable
+  evidence routes, not only a file inventory. It uses owner, trigger, and
+  proving-evidence fields to keep responsibility and validation discoverable.
+- Durable evidence routes for public release and publication are retained in
+  `docs/product/public-release-candidate.md` plus the public source/wiki
+  publication ledgers.
+- The information-for-users package is now treated as first-class
+  information-for-users work rather than as a side note in the product docs.
+- This map is also the bridge between topic architecture, topic-title rules,
+  minimum structure expectations, product authority surfaces, control authority
+  surfaces, primary and secondary surfaces, simultaneous-use routes, fallback
+  paths, and section-to-topic-role mapping.
+- The support-lifecycle rule for this package is explicit: temporary answers
+  are incorporated or retired when they stabilize.
+- Triggers now include quick-reference-boundary change, compact quick-reference
+  scope, specialized-support surfaces, API-doc depth, chatbot or VRS behavior,
+  release-proof change, tailored `26514` claim summary, and candidate
+  provenance such as candidate tag, source branch, and source whenever those
+  meanings affect a governed surface.
+
 ## Information Items
 
 | Item Type | Current Path | Owner | Trigger | Proving Evidence |
@@ -32,10 +61,14 @@
 | Hosted CI governance | `docs/product/hosted-ci-governance.md` | sole author | hosted branch-protection semantics, workflow ownership, or lane admission changes | future sessions can distinguish GitLab authority admission, GitHub required checks, and characterization-only experiment workflows without inferring policy from raw YAML or live settings |
 | Machine-readable hosted CI governance | `docs/product/hosted-ci-governance.json` | sole author | hosted branch-protection semantics, workflow ownership, lane admission, or active opening-decision facts change | the hosted automation model remains machine-checkable and aligned to sustainment rules, release procedure, and workflow files |
 | Extension execution policy | `docs/product/extension-execution-policy.md` | sole author | installed compare runtime dependency, Docker-engine selection, canonical execution-request validation, acquisition UX, or public/internal execution-doc audience split changes | future sessions and users can discover the intended Docker-only x64 compare behavior, current-engine Windows-versus-Linux image selection, container-capability hard stops, and image-pull UX without inferring product intent from source or chat |
-| Information-for-users plan | `docs/information-for-users/plan.md` | sole author | released user-information baseline, support-surface scope, or validation split changes | future sessions can recover the current governed support-package boundary and validation model without reconstructing it from release intake notes |
-| Information-for-users glossary | `docs/information-for-users/glossary.md` | sole author | key user-facing repo terms or active runtime-provider terminology changes | future sessions and readers can interpret branch and release terms consistently without inferring meaning from scattered product docs |
-| Information-for-users FAQ | `docs/information-for-users/faq.md` | sole author | recurring support questions, route guidance, or released-user baseline boundaries change | future sessions and readers can recover the compact first-response support posture without searching across broader control-plane docs |
-| Information-for-users command reference | `docs/information-for-users/command-reference.md` | sole author | stable command routes, docs-workbench commands, or released assurance commands change | future sessions and readers can find the compact governed command surface without reconstructing it from README, INSTALL, and control-plane docs |
+| Information-for-users plan | `docs/information-for-users/plan.md` | sole author | the bounded user-information package, support-surface claim boundary, validation split, or tailored `26514` claim summary changes | future sessions can recover the selected `26514`-style support scope and the repo-workbench versus compliance-workbench split without reconstructing it from chat memory |
+| Information-for-users audience and task model | `docs/information-for-users/audience-and-task-model.md` | sole author | user families, task patterns, or route responsibilities change | future sessions can see which audiences and tasks the package is actually optimized for instead of inferring that from ad hoc doc wording |
+| Information For Users Navigation And Search | `docs/information-for-users/navigation-and-search.md` | sole author | route hierarchy, metadata minimum, search posture, durable evidence routes, or top-level route changes | future sessions can recover the top-level route, retained item index, durable evidence route, and navigation architecture without reconstructing navigation rules from chat memory |
+| Information For Users Delivery Profile | `docs/information-for-users/delivery-profile.md` | sole author | audience-task delivery decisions, simultaneous-use routes, fallback paths, or route applicability change | future sessions can tell which surface owns which user task, what the primary and secondary surfaces are, and what fallback path still remains truthful |
+| Information For Users Style Guide | `docs/information-for-users/style-guide.md` | sole author | wording discipline, metadata rules, glossary discipline, accessibility baseline, minimum structure expectations, or review rules change | future sessions can keep user-information docs consistent with the exact released boundary, active branch direction, text-first posture, and support-lifecycle expectations |
+| Information-for-users glossary | `docs/information-for-users/glossary.md` | sole author | key user-facing repo terms, user-language definitions, or active runtime-provider terminology changes | future sessions and readers can interpret branch and release terms consistently without inferring meaning from scattered product docs |
+| Information-for-users FAQ | `docs/information-for-users/faq.md` | sole author | recurring support questions, route guidance, temporary answers, or released-user baseline boundaries change | future sessions and readers can recover the compact first-response support posture without searching across broader control-plane docs |
+| Information-for-users command reference | `docs/information-for-users/command-reference.md` | sole author | stable command routes, docs-workbench commands, quick-reference-boundary change, compact quick-reference scope, or released assurance commands change | future sessions and readers can find the compact governed command surface without reconstructing it from README, INSTALL, and control-plane docs |
 | Public GitHub source authority map | `docs/product/public-github-source-authority-map.md` | sole author | the public source repo boundary, authority stack, or one-way promotion rules change | future sessions can publish the public GitHub source repo from governed authority without mirroring the internal control plane blindly |
 | Public GitHub source publication ledger | `docs/product/public-github-source-publication-ledger.md` | sole author | the public source repo is actually published or publication metadata changes | the authority repo can tell which public GitHub source commit is live without treating source publication as implied by internal normalization |
 | Machine-readable public GitHub source publication ledger | `docs/product/public-github-source-publication-ledger.json` | sole author | the public source repo publication state or published commit changes | future automation can resolve the current public GitHub source publication state without scraping Markdown |

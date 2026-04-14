@@ -3,6 +3,77 @@
 `vi-history-suite` is a Visual Studio Code extension for content-detected
 LabVIEW VI history review in Git repositories.
 
+This README is the top-level route and an allowed mixed route surface for the
+repo's bounded document set. It now carries selected process duties in
+`26514 §§5-6`, selected product duties in `26514 §§7-9`, Markdown-based repo
+documentation, and release-versioned evidence links, but it does not assert
+blanket full conformance to the whole standard.
+
+## Topic Roles
+
+| Section | Topic role | Current meaning |
+| --- | --- | --- |
+| `Start Here` | route index | primary repo orientation and read order |
+| `Primary entrypoints` | reference index | stable jump points into install, source-evaluation, docs-authoring, and release/public evidence routes |
+| `Troubleshooting` | troubleshooting route | quick route recovery without turning the README into the only manual |
+
+The README is the top-level route. The retained item index is [`docs/information-item-map.md`](./docs/information-item-map.md). The durable evidence route for public release and publication state is [`docs/product/public-release-candidate.md`](./docs/product/public-release-candidate.md).
+
+## Information For Users
+
+The current information-for-users package is intentionally small and truthful
+to the released product line and the active branch line:
+
+- [Plan](./docs/information-for-users/plan.md)
+- [Audience And Task Model](./docs/information-for-users/audience-and-task-model.md)
+- [Navigation And Search](./docs/information-for-users/navigation-and-search.md)
+- [Delivery Profile](./docs/information-for-users/delivery-profile.md)
+- [Style Guide](./docs/information-for-users/style-guide.md)
+- [Glossary](./docs/information-for-users/glossary.md)
+- [FAQ](./docs/information-for-users/faq.md)
+- [Command Reference](./docs/information-for-users/command-reference.md)
+
+## Primary entrypoints
+
+- exact released install route:
+  [INSTALL.md](./INSTALL.md)
+- public source-evaluation route:
+  [Source Evaluation And Codespaces](#source-evaluation-and-codespaces)
+- docs-authoring and docs-workbench route:
+  [Documentation Package Workbench](./docs/documentation-workbench.md)
+- active branch runtime-provider doctrine:
+  [PROGRAM-0005](./docs/product/execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)
+  and
+  [ISSUE-0412](./docs/product/issues/ISSUE-0412-installed-local-labviewcli-selection-and-explicit-compare.md)
+- durable release/public evidence route:
+  [Public Release Candidate](./docs/product/public-release-candidate.md)
+
+## Common Tasks
+
+- Use the exact released extension:
+  start with [INSTALL.md](./INSTALL.md) and the Marketplace section below.
+- Evaluate the source repo:
+  start with [Source Evaluation And Codespaces](#source-evaluation-and-codespaces).
+- Switch provider, version, and bitness on the active branch:
+  use the generated CLI from
+  [Command Reference](./docs/information-for-users/command-reference.md).
+- Author or validate documentation-package changes:
+  use [Documentation Package Workbench](./docs/documentation-workbench.md).
+- Review public release or publication proof:
+  use [Public Release Candidate](./docs/product/public-release-candidate.md)
+  and the publication ledgers named there.
+
+## Troubleshooting
+
+- For recurring route and support questions, use
+  [FAQ](./docs/information-for-users/faq.md).
+- For quick command lookup, use
+  [Command Reference](./docs/information-for-users/command-reference.md).
+- For docs-package validation or route failures, use
+  [Documentation Package Workbench](./docs/documentation-workbench.md).
+- For public release/publication verification, use
+  [Public Release Candidate](./docs/product/public-release-candidate.md).
+
 ## If You Installed VI History Suite From The Marketplace
 
 Start here if you want to use the installed extension on a local Git
