@@ -34,11 +34,11 @@ The unresolved seam remains explicit:
 
 Current implementation branch:
 
-- `feature/runtime-provider-live-session-baseline-switch-receipt` (in progress)
+- `feature/runtime-provider-live-session-latest-observation-assert` (in progress)
 
 Most recently merged branch:
 
-- `feature/runtime-provider-live-session-latest-proof-status-assert`
+- `feature/runtime-provider-live-session-baseline-switch-receipt`
 
 ## Roadmap (Feature Branch Sequence)
 
@@ -121,11 +121,16 @@ Most recently merged branch:
   "CLI live-session seam is not fully proven" boundary explicit at latest-packet
   admission time.
 
-16. `feature/runtime-provider-live-session-baseline-switch-receipt` (in progress)
+16. `feature/runtime-provider-live-session-baseline-switch-receipt` (merged)
 - Add one explicit retained baseline-switch receipt
   (`mutationTargetBaselineChanged`) and fail-closed latest/history/policy
   admission when retained probe evidence does not show that mutation changed
   persisted provider truth from baseline to target.
+
+17. `feature/runtime-provider-live-session-latest-observation-assert` (in progress)
+- Tighten latest-packet and policy-boundary admission so the latest retained
+  probe observation must remain `reload-required`; `in-session-updated` latest
+  evidence now fails closed and forces explicit re-evaluation.
 
 ## Admission Rules
 

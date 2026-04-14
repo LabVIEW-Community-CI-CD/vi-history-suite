@@ -228,6 +228,11 @@ function validateProbePacket(summary) {
       `liveUptakeObservation must be in-session-updated or reload-required, received ${liveUptakeObservation}`
     );
   }
+  if (liveUptakeObservation && liveUptakeObservation !== 'reload-required') {
+    failures.push(
+      'liveUptakeObservation must remain reload-required for latest retained probe packet evidence'
+    );
+  }
 
   if (
     historyStance &&
