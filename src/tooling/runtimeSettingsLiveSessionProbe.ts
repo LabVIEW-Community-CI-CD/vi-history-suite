@@ -18,6 +18,10 @@ export interface RuntimeSettingsLiveSessionProbeInput {
   safeRestoreVerified?: boolean;
 }
 
+export type RuntimeSettingsLiveSessionUptakeObservation =
+  | 'in-session-updated'
+  | 'reload-required';
+
 export interface RuntimeSettingsLiveSessionProbeSummary {
   outcome: 'probed-runtime-settings-live-session';
   settingsFilePath?: string;
@@ -34,6 +38,7 @@ export interface RuntimeSettingsLiveSessionProbeSummary {
   versionDrift: boolean;
   bitnessDrift: boolean;
   driftDetected: boolean;
+  liveUptakeObservation: RuntimeSettingsLiveSessionUptakeObservation;
   mutationProviderTarget?: string;
   safeRestoreApplied: boolean;
   safeRestoreVerified: boolean;
@@ -71,6 +76,7 @@ export function buildRuntimeSettingsLiveSessionProbeSummary(
   const bitnessDrift =
     normalizeComparableBitness(persistedLabviewBitness) !==
     normalizeComparableBitness(liveLabviewBitness);
+  const driftDetected = providerDrift || versionDrift || bitnessDrift;
 
   return {
     outcome: 'probed-runtime-settings-live-session',
@@ -87,7 +93,8 @@ export function buildRuntimeSettingsLiveSessionProbeSummary(
     providerDrift,
     versionDrift,
     bitnessDrift,
-    driftDetected: providerDrift || versionDrift || bitnessDrift,
+    driftDetected,
+    liveUptakeObservation: classifyLiveUptakeObservation(driftDetected),
     mutationProviderTarget: normalizeComparableProvider(input.mutationProviderTarget),
     safeRestoreApplied: input.safeRestoreApplied === true,
     safeRestoreVerified: input.safeRestoreVerified === true,
@@ -113,4 +120,10 @@ function normalizeComparableProvider(value: string | undefined): string | undefi
 
 function normalizeComparableBitness(value: string | undefined): string | undefined {
   return value?.toLowerCase();
+}
+
+function classifyLiveUptakeObservation(
+  driftDetected: boolean
+): RuntimeSettingsLiveSessionUptakeObservation {
+  return driftDetected ? 'reload-required' : 'in-session-updated';
 }

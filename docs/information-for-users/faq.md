@@ -96,7 +96,8 @@ Use the live-session probe plus packet gate:
 
 - run `labviewViHistory.probeRuntimeSettingsLiveSession` to retain a probe
   packet comparing persisted and active in-session provider/version/bitness
-  facts
+  facts plus an explicit live-uptake observation (`in-session-updated` or
+  `reload-required`)
 - run `npm run proof:runtime-settings-live-session:assert` to fail closed if
   the latest retained packet is missing or malformed
 

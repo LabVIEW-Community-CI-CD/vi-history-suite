@@ -57,6 +57,7 @@ interface RuntimeSettingsLiveSessionProbeSummary {
   versionDrift: boolean;
   bitnessDrift: boolean;
   driftDetected: boolean;
+  liveUptakeObservation: 'in-session-updated' | 'reload-required';
   mutationProviderTarget?: string;
   safeRestoreApplied: boolean;
   safeRestoreVerified: boolean;
@@ -694,12 +695,20 @@ async function testProbeRuntimeSettingsLiveSession(): Promise<void> {
   assert.equal(typeof summary.versionDrift, 'boolean');
   assert.equal(typeof summary.bitnessDrift, 'boolean');
   assert.equal(typeof summary.driftDetected, 'boolean');
+  assert.ok(
+    summary.liveUptakeObservation === 'in-session-updated' ||
+      summary.liveUptakeObservation === 'reload-required'
+  );
   assert.equal(summary.safeRestoreApplied, true);
   assert.equal(summary.safeRestoreVerified, true);
   assert.ok(summary.mutationProviderTarget === 'host' || summary.mutationProviderTarget === 'docker');
   assert.ok(summary.baselinePersistedProvider === 'host' || summary.baselinePersistedProvider === 'docker');
   assert.equal(summary.persistedProvider, summary.mutationProviderTarget);
   assert.notEqual(summary.baselinePersistedProvider, summary.persistedProvider);
+  assert.equal(
+    summary.liveUptakeObservation,
+    summary.driftDetected ? 'reload-required' : 'in-session-updated'
+  );
   assert.ok(summary.packetRunId);
   assert.ok(summary.packetJsonPath);
   assert.ok(summary.packetMarkdownPath);
