@@ -106,7 +106,8 @@ Use the live-session probe plus packet gate:
   `historyStance=live-uptake-not-proven`, with latest
   `liveUptakeObservation=reload-required` and retained
   `historyInSessionUpdatedCount=0` plus
-  `historyUnknownObservationCount=0`
+  `historyUnknownObservationCount=0`, with retained history total/count
+  integrity preserved
 - run `npm run proof:runtime-settings-live-session:history` to summarize
   retained runs into one live-uptake stance
 - run `npm run proof:runtime-settings-live-session:policy:assert` to fail

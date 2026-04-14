@@ -176,6 +176,8 @@ See also:
     `historyInSessionUpdatedCount > 0`
   - fails closed when retained history reports any
     `historyUnknownObservationCount > 0`
+  - fails closed when retained `historyTotalRuns` does not exactly equal the
+    sum of retained observation-class counts
 
 `npm run proof:runtime-settings-live-session:history`
 

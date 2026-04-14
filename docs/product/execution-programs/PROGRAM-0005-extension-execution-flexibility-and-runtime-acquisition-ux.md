@@ -55,7 +55,8 @@ Current facts:
   `historyStance=live-uptake-not-proven`, plus latest-packet
   `liveUptakeObservation=reload-required` plus retained
   `historyInSessionUpdatedCount=0` plus
-  `historyUnknownObservationCount=0` enforcement
+  `historyUnknownObservationCount=0`, with retained history total/count
+  integrity enforcement
 - one local history receipt now exists at
   `npm run proof:runtime-settings-live-session:history` so retained probe runs
   can be summarized into one bounded live-uptake stance plus explicit

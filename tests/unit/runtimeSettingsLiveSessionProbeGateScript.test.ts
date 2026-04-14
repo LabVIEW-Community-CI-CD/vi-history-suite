@@ -350,6 +350,39 @@ describe('assertRuntimeSettingsLiveSessionProbePacket script', () => {
     );
   });
 
+  it('fails validation when history total does not exactly match observation-class sum', () => {
+    const failures = probeGate.validateProbePacket({
+      outcome: 'probed-runtime-settings-live-session',
+      packetRunId: '2026-04-14T13-07-33-123Z',
+      packetJsonPath: '/tmp/packet.json',
+      packetMarkdownPath: '/tmp/packet.md',
+      latestPacketJsonPath: '/tmp/latest-summary.json',
+      latestPacketMarkdownPath: '/tmp/latest-summary.md',
+      baselinePersistedProvider: 'docker',
+      persistedProvider: 'host',
+      mutationProviderTarget: 'host',
+      mutationTargetPersistedMatch: true,
+      mutationTargetBaselineChanged: true,
+      liveUptakeObservation: 'reload-required',
+      safeRestoreApplied: true,
+      safeRestoreVerified: true,
+      providerDrift: true,
+      versionDrift: false,
+      bitnessDrift: false,
+      driftDetected: true,
+      historyTotalRuns: 2,
+      historyReloadRequiredCount: 1,
+      historyInSessionUpdatedCount: 0,
+      historyUnknownObservationCount: 0,
+      historyStance: 'live-uptake-not-proven',
+      historyProofStatus: 'not-fully-proven'
+    });
+
+    expect(failures).toContain(
+      'historyTotalRuns must equal historyReloadRequiredCount + historyInSessionUpdatedCount + historyUnknownObservationCount (1)'
+    );
+  });
+
   it('fails validation when mutation target alignment conflicts with persisted provider', () => {
     const failures = probeGate.validateProbePacket({
       outcome: 'probed-runtime-settings-live-session',
@@ -481,7 +514,7 @@ describe('assertRuntimeSettingsLiveSessionProbePacket script', () => {
           versionDrift: false,
           bitnessDrift: false,
           driftDetected: true,
-          historyTotalRuns: 3,
+          historyTotalRuns: 1,
           historyReloadRequiredCount: 1,
           historyInSessionUpdatedCount: 0,
           historyUnknownObservationCount: 0,
