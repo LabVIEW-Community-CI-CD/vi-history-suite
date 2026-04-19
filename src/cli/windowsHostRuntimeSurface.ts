@@ -1,6 +1,7 @@
 import { execFile } from 'node:child_process';
 
 const WINDOWS_HOST_RUNTIME_PROCESS_NAMES = ['LabVIEW', 'LabVIEWCLI', 'LVCompare'] as const;
+const WINDOWS_HOST_RUNTIME_IMAGE_NAMES = ['LabVIEW.exe', 'LabVIEWCLI.exe', 'LVCompare.exe'] as const;
 const WINDOWS_HOST_RUNTIME_CLEANUP_TIMEOUT_SECONDS = 10;
 const WINDOWS_HOST_RUNTIME_CLEANUP_POLL_INTERVAL_MS = 500;
 
@@ -139,9 +140,14 @@ function renderWindowsHostRuntimeProcessNamesForPowershell(): string {
   return WINDOWS_HOST_RUNTIME_PROCESS_NAMES.map((processName) => `"${processName}"`).join(', ');
 }
 
+function renderWindowsHostRuntimeImageNamesForPowershell(): string {
+  return WINDOWS_HOST_RUNTIME_IMAGE_NAMES.map((imageName) => `"${imageName}"`).join(', ');
+}
+
 function buildWindowsHostRuntimeCleanupCommand(): string {
   return [
     `$names = @(${renderWindowsHostRuntimeProcessNamesForPowershell()})`,
+    `$imageNames = @(${renderWindowsHostRuntimeImageNamesForPowershell()})`,
     `$deadlineUtc = [DateTime]::UtcNow.AddSeconds(${WINDOWS_HOST_RUNTIME_CLEANUP_TIMEOUT_SECONDS})`,
     'while ($true) {',
     '  $remaining = @(Get-Process -Name $names -ErrorAction SilentlyContinue | Sort-Object ProcessName,Id | Select-Object ProcessName,Id)',
@@ -151,6 +157,9 @@ function buildWindowsHostRuntimeCleanupCommand(): string {
     '  foreach ($proc in $remaining) {',
     '    Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue',
     '    cmd.exe /c "taskkill /PID $($proc.Id) /T /F >NUL 2>NUL" | Out-Null',
+    '  }',
+    '  foreach ($imageName in $imageNames) {',
+    '    cmd.exe /c "taskkill /IM $imageName /T /F >NUL 2>NUL" | Out-Null',
     '  }',
     `  Start-Sleep -Milliseconds ${WINDOWS_HOST_RUNTIME_CLEANUP_POLL_INTERVAL_MS}`,
     '  $stillRemaining = @(Get-Process -Name $names -ErrorAction SilentlyContinue | Sort-Object ProcessName,Id | Select-Object -ExpandProperty ProcessName)',

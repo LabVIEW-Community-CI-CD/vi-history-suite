@@ -78,7 +78,8 @@ Runner operator hardening:
   `VIHS Governed Runner Lanes`, duplicate-manager collapse so exactly one
   current-user runner manager remains per config, cold-admission fail-closed
   cleanup of stale `LabVIEW` / `LabVIEWCLI` / `LVCompare` runtime processes
-  before the runner starts, and the repo-owned bootstrap asset
+  before the runner starts using bounded `Stop-Process` plus
+  `taskkill /PID /T /F` and `taskkill /IM /T /F`, and the repo-owned bootstrap asset
   `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1`
 
 Job ownership:

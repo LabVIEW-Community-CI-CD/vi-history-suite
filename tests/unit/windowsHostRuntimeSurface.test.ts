@@ -75,6 +75,10 @@ describe('windowsHostRuntimeSurface', () => {
     expect(command).toContain('while ($true)');
     expect(command).toContain('AddSeconds(10)');
     expect(command).toContain('taskkill /PID $($proc.Id) /T /F');
+    expect(command).toContain('LabVIEW.exe');
+    expect(command).toContain('LabVIEWCLI.exe');
+    expect(command).toContain('LVCompare.exe');
+    expect(command).toContain('taskkill /IM $imageName /T /F');
     expect(command).toContain('Start-Sleep -Milliseconds 500');
   });
 

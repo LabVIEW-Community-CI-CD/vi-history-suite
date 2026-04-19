@@ -98,6 +98,8 @@ describe('windows private release packet docs', () => {
     expect(packetDoc).toContain(
       'that Windows bootstrap clears stale `LabVIEW`, `LabVIEWCLI`, and'
     );
+    expect(packetDoc).toContain('taskkill /PID /T /F');
+    expect(packetDoc).toContain('taskkill /IM /T /F');
     expect(packetDoc).toContain('fails closed if');
     expect(packetDoc).toContain('contamination remains');
     expect(packetDoc).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
@@ -136,6 +138,11 @@ describe('windows private release packet docs', () => {
         hostInstallState: 'current-user-scheduled-task-bootstrap-active',
         coldAdmissionRuntimeCleanup: {
           processNames: ['LabVIEW', 'LabVIEWCLI', 'LVCompare'],
+          terminationStrategy: [
+            'stop-process-force-by-pid',
+            'taskkill-pid-tree',
+            'taskkill-image-tree'
+          ],
           failurePolicy: 'fail-closed-before-runner-start'
         },
         repoOwnedOperatorAssets: {

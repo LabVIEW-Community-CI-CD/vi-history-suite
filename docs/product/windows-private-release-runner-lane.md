@@ -99,7 +99,8 @@ Current host activation state:
   the same config before ensuring exactly one current-user manager remains
 - on cold admission, the startup script clears stale `LabVIEW`,
   `LabVIEWCLI`, and `LVCompare` processes before the current-user runner
-  starts, and it fails closed if any remain
+  starts with bounded `Stop-Process`, `taskkill /PID /T /F`, and
+  `taskkill /IM /T /F`, and it fails closed if any remain
 - Windows service installation is not active for this admitted lane
 
 ## Repo-Owned Host Assets
@@ -114,6 +115,11 @@ The governed host asset pack for this lane is versioned in the repo:
 The Windows bootstrap script is the repo-owned source of truth for duplicate
 collapse, cold-admission runtime cleanup, current-user runner launch, and WSL
 wake-up on user logon.
+
+The host-native proof path inside `npm run acceptance:windows:private-release`
+uses the same bounded cleanup family before and after host execution, so
+mid-session `LabVIEW.exe` contamination blocks the lane immediately instead of
+waiting for the next logon bootstrap.
 
 ## Apply Or Update On The Admitted Host
 
@@ -136,8 +142,10 @@ wsl.exe -d Ubuntu bash -lc '$HOME/gitlab-runner/start-linux-assurance.sh'
 
 The bootstrap only performs stale-runtime cleanup before cold runner
 admission. If no governed current-user runner manager is active, it forcibly
-clears `LabVIEW`, `LabVIEWCLI`, and `LVCompare`; if any of those processes
-remain afterward, the lane fails closed and the runner is not started.
+clears `LabVIEW`, `LabVIEWCLI`, and `LVCompare` with bounded
+`Stop-Process`, `taskkill /PID /T /F`, and `taskkill /IM /T /F`; if any of
+those processes remain afterward, the lane fails closed and the runner is not
+started.
 
 ## Manual Registration Pack
 

@@ -115,6 +115,11 @@ describe('hosted ci governance docs', () => {
           duplicateProcessPolicy: 'collapse-duplicates-per-config',
           coldAdmissionRuntimeCleanup: {
             processNames: ['LabVIEW', 'LabVIEWCLI', 'LVCompare'],
+            terminationStrategy: [
+              'stop-process-force-by-pid',
+              'taskkill-pid-tree',
+              'taskkill-image-tree'
+            ],
             failurePolicy: 'fail-closed-before-runner-start'
           },
           repoOwnedBootstrapScript: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',
@@ -158,6 +163,8 @@ describe('hosted ci governance docs', () => {
     expect(matrixDoc).toContain(
       '`LabVIEW` / `LabVIEWCLI` / `LVCompare` runtime processes'
     );
+    expect(matrixDoc).toContain('taskkill /PID /T /F');
+    expect(matrixDoc).toContain('taskkill /IM /T /F');
     expect(matrixDoc).toContain('start-governed-runner-lanes.ps1');
     expect(matrixDoc).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
     expect(matrixDoc).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
