@@ -83,10 +83,10 @@ describe('localRuntimeSettingsCli', () => {
         { APPDATA: 'C:\\Users\\tester\\AppData\\Roaming' },
         () => 'C:\\Users\\tester'
       )
-    ).toBe('C:\\Users\\tester\\AppData\\Roaming\\Code\\User\\settings.json');
+    ).toBe(path.win32.join('C:\\Users\\tester\\AppData\\Roaming', 'Code', 'User', 'settings.json'));
 
     expect(resolveDefaultVsCodeSettingsPath('linux', {}, () => '/home/tester')).toBe(
-      '/home/tester/.config/Code/User/settings.json'
+      path.posix.join('/home/tester', '.config', 'Code', 'User', 'settings.json')
     );
   });
 
@@ -100,7 +100,12 @@ describe('localRuntimeSettingsCli', () => {
         homedir: () => 'C:\\Users\\tester'
       })
     ).toEqual({
-      defaultSettingsFilePath: 'C:\\Users\\tester\\AppData\\Roaming\\Code\\User\\settings.json',
+      defaultSettingsFilePath: path.win32.join(
+        'C:\\Users\\tester\\AppData\\Roaming',
+        'Code',
+        'User',
+        'settings.json'
+      ),
       supportedSettingsTargets: ['default-user-settings', 'explicit-settings-file'],
       untrustedWorkspacePosture: 'prepare-command-admitted-compare-blocked'
     });

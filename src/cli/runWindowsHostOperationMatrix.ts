@@ -160,7 +160,7 @@ export function parseWindowsHostOperationMatrixArgs(
   let labviewCliPath = DEFAULT_WINDOWS_LABVIEW_CLI_PATH;
   let x86LabviewExePath = DEFAULT_WINDOWS_LABVIEW_2026_X86_PATH;
   let x64LabviewExePath = DEFAULT_WINDOWS_LABVIEW_2026_X64_PATH;
-  let additionalOperationDirectory = path.resolve(
+  let additionalOperationDirectory = resolvePreservingExplicitPathStyle(
     repoRoot,
     '..',
     'labview-ci-cd',
@@ -390,7 +390,13 @@ export async function runWindowsHostOperationMatrixCli(
   const runLabviewCliCommand = deps.runLabviewCliCommand ?? defaultRunLabviewCliCommand;
 
   const runId = nowIso().replace(/[:.]/g, '-');
-  const reportRoot = path.join(repoRoot, '.cache', 'governed-proof', 'windows-host-operation-matrix', runId);
+  const reportRoot = joinPreservingExplicitPathStyle(
+    repoRoot,
+    '.cache',
+    'governed-proof',
+    'windows-host-operation-matrix',
+    runId
+  );
   await mkdir(reportRoot, { recursive: true });
 
   const installedOperationsDirectory = deriveWindowsLabviewCliOperationsDirectory(args.labviewCliPath);
@@ -407,8 +413,8 @@ export async function runWindowsHostOperationMatrixCli(
   };
   for (const testCase of buildWindowsHostOperationMatrixCases(args)) {
     const caseId = `${testCase.operation}-${testCase.bitness}-${testCase.sessionState}`;
-    const stdoutFilePath = path.join(reportRoot, `${caseId}.stdout.txt`);
-    const stderrFilePath = path.join(reportRoot, `${caseId}.stderr.txt`);
+    const stdoutFilePath = joinPreservingExplicitPathStyle(reportRoot, `${caseId}.stdout.txt`);
+    const stderrFilePath = joinPreservingExplicitPathStyle(reportRoot, `${caseId}.stderr.txt`);
     const preRunObservation = await inspectRuntimeSurface();
     let preRunCleanupApplied = false;
     let postPreRunCleanupObservation: WindowsHostRuntimeSurfaceSnapshot | undefined;
@@ -644,9 +650,18 @@ export async function runWindowsHostOperationMatrixCli(
     results
   };
 
-  const reportJsonPath = path.join(reportRoot, 'host-operation-matrix.json');
-  const reportMarkdownPath = path.join(reportRoot, 'host-operation-matrix.md');
-  const latestReportPath = path.join(repoRoot, '.cache', 'governed-proof', 'windows-host-operation-matrix', 'latest-run.json');
+  const reportJsonPath = joinPreservingExplicitPathStyle(reportRoot, 'host-operation-matrix.json');
+  const reportMarkdownPath = joinPreservingExplicitPathStyle(
+    reportRoot,
+    'host-operation-matrix.md'
+  );
+  const latestReportPath = joinPreservingExplicitPathStyle(
+    repoRoot,
+    '.cache',
+    'governed-proof',
+    'windows-host-operation-matrix',
+    'latest-run.json'
+  );
   await writeFile(reportJsonPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
   await writeFile(reportMarkdownPath, `${renderWindowsHostOperationMatrixMarkdown(report)}\n`, 'utf8');
   await writeFile(latestReportPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8');
@@ -693,6 +708,38 @@ export function maybeRunWindowsHostOperationMatrixCliAsMain(
 function deriveWindowsLabviewCliOperationsDirectory(labviewCliPath: string): string {
   const normalized = labviewCliPath.replaceAll('/', '\\').trim();
   return normalized.replace(/\\LabVIEWCLI\.exe$/i, '\\Operations');
+}
+
+function usesExplicitPosixPathStyle(rootPath: string): boolean {
+  return rootPath.startsWith('/');
+}
+
+function usesExplicitWindowsPathStyle(rootPath: string): boolean {
+  return /^[A-Za-z]:[\\/]/.test(rootPath) || rootPath.startsWith('\\\\');
+}
+
+function joinPreservingExplicitPathStyle(rootPath: string, ...segments: string[]): string {
+  if (usesExplicitPosixPathStyle(rootPath)) {
+    return path.posix.join(rootPath, ...segments.map((segment) => segment.replace(/\\/g, '/')));
+  }
+
+  if (usesExplicitWindowsPathStyle(rootPath)) {
+    return path.win32.join(rootPath, ...segments.map((segment) => segment.replace(/\//g, '\\')));
+  }
+
+  return path.join(rootPath, ...segments);
+}
+
+function resolvePreservingExplicitPathStyle(rootPath: string, ...segments: string[]): string {
+  if (usesExplicitPosixPathStyle(rootPath)) {
+    return path.posix.resolve(rootPath, ...segments.map((segment) => segment.replace(/\\/g, '/')));
+  }
+
+  if (usesExplicitWindowsPathStyle(rootPath)) {
+    return path.win32.resolve(rootPath, ...segments.map((segment) => segment.replace(/\//g, '\\')));
+  }
+
+  return path.resolve(rootPath, ...segments);
 }
 
 async function defaultListInstalledLabviewCliOperations(operationsDirectory: string): Promise<string[]> {

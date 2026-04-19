@@ -224,8 +224,9 @@ Current active and recently closed tranches:
   - branch implementation now includes explicit compare preflight that shows
     selected/base commit plus provider, version, and bitness before the
     explicit compare action
-  - released `repo-standards-review` `v0.2.9` compliance closeout is now
-    retained on this branch
+  - historical released `repo-standards-review` `v0.2.9` compliance closeout
+    is retained on this branch, and the current outer assurance baseline is
+    now released `repo-standards-review` `v0.2.18`
   - branch promotion into `develop`, candidate publication alignment, and the
     runtime-provider public-acceptance gate are now retained as completed
   - remaining work is the unresolved live active-settings mutation seam for an
@@ -367,6 +368,26 @@ Post-release tranches:
     canonical host, validation returns `runtimeValidationOutcome=ready`,
     `runtimeProvider=windows-container`, `runtimeEngine=labview-cli`, and no
     blocked reason
+  - current real-host x64 validation now admits the governed mixed-bitness
+    host bundle on this machine: persisted `host` / `2026` / `x64` settings
+    resolve to x64 `LabVIEW.exe` plus the canonical installed x86
+    `LabVIEWCLI.exe`, and the governed x64 host proof now succeeds on that
+    same mixed-bitness bundle when the proof command is given a bounded
+    `300000ms` runtime budget
+  - the earlier retained `HARNESS-VHS-002` x64 host-only timeout receipt at
+    `180000ms` remains historical under-timed evidence only; the current
+    retained host truth is that `CreateComparisonReport` on
+    `resource/plugins/lv_icon.vi` generated a report on this machine under the
+    same mixed-bitness bundle, with `LabVIEWCLI.exe` observed at the banner
+    snapshot and `LabVIEW.exe` observed at exit
+  - private-release proof focus is now explicit: close the Windows x64 host
+    and Windows-container lanes first instead of widening the active slice
+    back into x86 host proof breadth
+  - WSL is not part of the active Windows x64 private-release contract: the
+    supported proof lanes on this machine are native Windows host execution
+    and Docker Desktop Windows-container execution, retained under
+    `.cache/private-release/1.3.0/windows-x64-host/` and
+    `.cache/private-release/1.3.0/windows-x64-container/`
   - a governed live-session probe command now compares persisted
     provider/version/bitness facts against active in-session VS Code runtime
     settings and retains per-run plus latest probe packets (`JSON` and
@@ -410,8 +431,9 @@ Post-release tranches:
     generated CLI plus the settings-driven compare-preflight and runtime-doctor
     surfaces keep guidance to reload or restart the window until live uptake
     itself is proven
-  - released `repo-standards-review` `v0.2.9` compliance closeout is retained
-    in the branch control plane
+  - historical released `repo-standards-review` `v0.2.9` compliance closeout
+    is retained in the branch control plane, while the current outer
+    assurance baseline is released `repo-standards-review` `v0.2.18`
   - the retained gate decision now keeps reload-or-restart guidance active
     while direct live-session uptake of updated settings remains unproven
   - the remaining active slices are the unresolved live active-settings uptake

@@ -19,6 +19,7 @@ const docsContinuousIntegration = require(path.resolve(
     evidenceDir?: string;
     env?: NodeJS.ProcessEnv;
     repoRoot?: string;
+    platform?: string;
   }) => Array<{
     id: string;
     command: string;
@@ -152,17 +153,20 @@ describe('documentation continuous integration runner', () => {
     const allSteps = docsContinuousIntegration.createDocsContinuousIntegrationSteps({
       skipLinks: true,
       evidenceDir,
-      env: deterministicEnv
+      env: deterministicEnv,
+      platform: 'linux'
     });
     const publicSteps = docsContinuousIntegration.createDocsContinuousIntegrationSteps({
       surface: 'public',
       evidenceDir,
-      env: deterministicEnv
+      env: deterministicEnv,
+      platform: 'linux'
     });
     const internalSteps = docsContinuousIntegration.createDocsContinuousIntegrationSteps({
       surface: 'internal',
       evidenceDir,
-      env: deterministicEnv
+      env: deterministicEnv,
+      platform: 'linux'
     });
 
     expect(allSteps.map((step) => step.id)).toEqual([
@@ -292,6 +296,33 @@ describe('documentation continuous integration runner', () => {
     expect(
       docsContinuousIntegration.resolveDocsContinuousIntegrationEvidenceDir('public', undefined, repoRoot)
     ).toEqual(path.join(repoRoot, '.cache', 'docs-integration', 'public', 'latest'));
+    expect(
+      docsContinuousIntegration.createDocsContinuousIntegrationSteps({
+        surface: 'public',
+        evidenceDir,
+        env: deterministicEnv,
+        platform: 'win32'
+      }).find((step) => step.id === 'compile')
+    ).toMatchObject({
+      command: 'cmd.exe',
+      args: ['/d', '/s', '/c', 'npm run compile']
+    });
+    expect(
+      docsContinuousIntegration.createDocsContinuousIntegrationSteps({
+        surface: 'public',
+        evidenceDir,
+        env: deterministicEnv,
+        platform: 'win32'
+      }).find((step) => step.id === 'public-docs-tests')
+    ).toMatchObject({
+      command: 'cmd.exe',
+      args: [
+        '/d',
+        '/s',
+        '/c',
+        'npx vitest run tests/unit/bundledDocumentation.test.ts tests/unit/packageManifest.test.ts tests/unit/publicSurfaceBoundaryDocs.test.ts tests/unit/publicForkOwnerProcedureDocs.test.ts'
+      ]
+    });
   });
 
   it('forwards the parsed surface into the executed step plan', async () => {
@@ -310,6 +341,7 @@ describe('documentation continuous integration runner', () => {
       ['--surface', 'public', '--evidence-dir', evidenceDir],
       {
         cwd: repoRoot,
+        platform: 'linux',
         env: process.env,
         now: () => new Date('2026-04-07T01:05:00.000Z'),
         stdout: { write: (text: string) => stdoutWrites.push(text) },

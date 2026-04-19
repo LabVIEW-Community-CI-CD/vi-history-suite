@@ -2,7 +2,7 @@
 
 Applies to: exact released installed baseline `v1.2.2` plus the active
 `develop` authority direction
-Last reviewed: `2026-04-14`
+Last reviewed: `2026-04-18`
 Primary audience: maintainers, source evaluators, and advanced installed users
 Topic type: reference
 Primary entry route: `README.md` or `INSTALL.md`
@@ -118,6 +118,9 @@ See also:
   - the CLI is generated into user-profile storage on first use
   - without `--settings-file`, the governed target is the platform-default
     user `settings.json`; workspace settings are not a supported target
+  - for the supported Windows x64 private-release route, use native Windows
+    host LabVIEW or Docker Desktop in Windows-container mode; WSL is not an
+    admitted dependency for that path
   - if VS Code is already running, reload or restart the window before
     trusting Compare or other runtime-provider surfaces to reflect the updated
     provider and runtime facts
@@ -247,23 +250,23 @@ See also:
 
 ## Assurance Execution
 
-`docker run --rm -v /path/to/repo:/target registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:v0.2.13 python3 scripts/run_assurance.py /target --profile release-gate`
+`docker run --rm -v /path/to/repo:/target registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:v0.2.18 python3 scripts/run_assurance.py /target --profile release-gate`
 
-- Purpose: assess this repo against the released `repo-standards-review v0.2.13`
+- Purpose: assess this repo against the released `repo-standards-review v0.2.18`
   assurance baseline from the published compliance workbench.
 - Use when: checking the outer standards posture for a branch after the
   repo-native docs gate is already clean.
 
-`python3 /tmp/repo-standards-review-v0.2.13-tag/scripts/external_user_information_check.py /home/sveld/code/standards/vi-history-suite-user-rounds --json`
+`py -3 "$env:USERPROFILE\\.codex\\skills\\repo-standards-review\\scripts\\external_user_information_check.py" . --json`
 
-- Purpose: reproduce the exact released `v0.2.13` external user-information boundary in
+- Purpose: reproduce the exact released `v0.2.18` external user-information boundary in
   the current local environment.
 - Use when: advancing the `26514` uptake branches and confirming the next
   precise failure boundary.
 
 ## Release And Control Surfaces
 
-`python3 /tmp/repo-standards-review-v0.2.13-tag/scripts/requirements_quality_check.py /home/sveld/code/standards/vi-history-suite-user-rounds --json`
+`py -3 "$env:USERPROFILE\\.codex\\skills\\repo-standards-review\\scripts\\requirements_quality_check.py" . --json`
 
 - Purpose: check the governed requirements package with the released skill.
 - Use when: a branch changes `docs/requirements/srs.md`, `docs/requirements/syrs.md`,

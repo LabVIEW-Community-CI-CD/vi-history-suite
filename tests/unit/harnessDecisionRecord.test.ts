@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import * as path from 'node:path';
 
 import { runHarnessDecisionRecord } from '../../src/harness/harnessDecisionRecord';
 
@@ -140,7 +141,7 @@ describe('harnessDecisionRecord', () => {
     expect(result.report.decisionRecordJsonPath).toMatch(/decision-record\.json$/);
     expect(persistDecisionRecord).toHaveBeenCalledOnce();
     expect(persistDecisionRecord).toHaveBeenCalledWith(
-      '/tmp/reports/HARNESS-VHS-001/workspace-storage',
+      path.join('/tmp/reports', 'HARNESS-VHS-001', 'workspace-storage'),
       expect.objectContaining({
         pairwiseReportPaths: ['/tmp/a-report.html', '/tmp/b-report.html'],
         missingOrBlockedFacts: [

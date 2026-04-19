@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import * as path from 'node:path';
 
 import {
   applyVerifyDesignGateCompletionCliExitCode,
@@ -12,7 +13,7 @@ import {
 describe('runVerifyDesignGateCompletionCli', () => {
   it('resolves the default repo root relative to the CLI module directory', () => {
     expect(resolveVerifyDesignGateCompletionRepoRoot('/tmp/vi-history-suite/out/cli')).toBe(
-      '/tmp/vi-history-suite'
+      path.resolve('/tmp/vi-history-suite')
     );
   });
 

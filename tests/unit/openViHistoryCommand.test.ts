@@ -948,6 +948,16 @@ describe('createOpenViHistoryCommand', () => {
       reportWebviewUri: 'webview:/report',
       title: 'VI Comparison Report: eligible.vi'
     });
+    const comparePreflightResolver = vi.fn().mockResolvedValue({
+      status: 'ready',
+      provider: 'host',
+      labviewVersion: '2026',
+      labviewBitness: 'x64',
+      nextAction:
+        'Next action: select two retained revisions, review the explicit selected/base pair, then choose Compare.',
+      cliHint:
+        'Provider is read-only here. Use the generated settings CLI to update provider, LabVIEW version, or LabVIEW bitness when correction is required. If you just used the generated settings CLI while VS Code was already open, reload or restart the window before trusting compare preflight.'
+    });
     const historyService = {
       load: vi.fn().mockResolvedValue({
         repositoryName: 'repo',
@@ -988,7 +998,15 @@ describe('createOpenViHistoryCommand', () => {
       eligibilityIndexer as never,
       undefined,
       tracker,
-      comparisonReportAction
+      comparisonReportAction,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      comparePreflightResolver
     );
 
     await command(targetUri as never);

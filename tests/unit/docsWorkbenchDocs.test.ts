@@ -15,6 +15,52 @@ function readManifest(): { scripts?: Record<string, string> } {
   return JSON.parse(readText('package.json')) as { scripts?: Record<string, string> };
 }
 
+function removeTreeWithRetry(targetPath: string) {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    try {
+      fs.rmSync(targetPath, { recursive: true, force: true });
+      return;
+    } catch (error) {
+      lastError = error;
+      if (
+        !(error instanceof Error) ||
+        !('code' in error) ||
+        (error as NodeJS.ErrnoException).code !== 'EPERM'
+      ) {
+        throw error;
+      }
+    }
+  }
+
+  if (process.platform === 'win32') {
+    const cleanup = spawnSync('cmd.exe', ['/d', '/s', '/c', `rmdir /s /q "${targetPath}"`], {
+      encoding: 'utf8'
+    });
+
+    if (cleanup.status === 0 || !fs.existsSync(targetPath)) {
+      return;
+    }
+  }
+
+  throw lastError;
+}
+
+function toWslPath(hostPath: string): string {
+  const normalizedHostPath =
+    process.platform === 'win32' ? hostPath.replace(/\\/g, '/') : hostPath;
+  const result = spawnSync('wsl.exe', ['wslpath', '-a', '-u', normalizedHostPath], {
+    encoding: 'utf8'
+  });
+
+  if (result.status !== 0) {
+    throw new Error(result.stderr || `Failed to convert path to WSL form: ${hostPath}`);
+  }
+
+  return result.stdout.trim();
+}
+
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const docsGate = require(path.join(repoRoot, 'scripts', 'run-docs-gate.js')) as {
   createDocsGateSteps: (options?: { skipLinks?: boolean }) => Array<{
@@ -22,10 +68,13 @@ const docsGate = require(path.join(repoRoot, 'scripts', 'run-docs-gate.js')) as 
     command: string;
     args: string[];
   }>;
+  resolveNodeToolArgs: (command: string, args: string[], platform?: string) => string[];
+  resolveNodeToolCommand: (command: string, platform?: string) => string;
   runDocsGate: (
     argv?: string[],
     deps?: {
       cwd?: string;
+      platform?: string;
       stdout?: { write: (text: string) => void };
       spawnSync?: (
         command: string,
@@ -51,7 +100,10 @@ describe('documentation-package workbench', () => {
     expect(() => docsGate.parseDocsGateArgs(['--weird'])).toThrow(/Unknown argument/);
     expect(docsGate.getDocsGateUsage()).toContain('--skip-links');
 
-    expect(docsGate.createDocsGateSteps()).toEqual([
+    expect(docsGate.createDocsGateSteps({ skipLinks: false, platform: 'linux' } as {
+      skipLinks?: boolean;
+      platform?: string;
+    })).toEqual([
       {
         id: 'compile',
         title: 'Compile TypeScript surfaces',
@@ -99,10 +151,56 @@ describe('documentation-package workbench', () => {
       }
     ]);
 
-    expect(docsGate.createDocsGateSteps({ skipLinks: true }).map((step) => step.id)).toEqual([
+    expect(docsGate.createDocsGateSteps({ skipLinks: true, platform: 'linux' } as {
+      skipLinks?: boolean;
+      platform?: string;
+    }).map((step) => step.id)).toEqual([
       'compile',
       'docs-tests',
       'bundle-check'
+    ]);
+
+    expect(docsGate.resolveNodeToolCommand('npm', 'win32')).toBe('cmd.exe');
+    expect(docsGate.resolveNodeToolCommand('npx', 'win32')).toBe('cmd.exe');
+    expect(docsGate.resolveNodeToolArgs('npm', ['run', 'compile'], 'win32')).toEqual([
+      '/d',
+      '/s',
+      '/c',
+      'npm run compile'
+    ]);
+    expect(docsGate.resolveNodeToolArgs('npx', ['vitest', 'run'], 'win32')).toEqual([
+      '/d',
+      '/s',
+      '/c',
+      'npx vitest run'
+    ]);
+    expect(docsGate.createDocsGateSteps({ skipLinks: true, platform: 'win32' } as {
+      skipLinks?: boolean;
+      platform?: string;
+    })).toEqual([
+      {
+        id: 'compile',
+        title: 'Compile TypeScript surfaces',
+        command: 'cmd.exe',
+        args: ['/d', '/s', '/c', 'npm run compile']
+      },
+      {
+        id: 'docs-tests',
+        title: 'Run documentation-package alignment tests',
+        command: 'cmd.exe',
+        args: [
+          '/d',
+          '/s',
+          '/c',
+          'npx vitest run tests/unit/bundledDocumentation.test.ts tests/unit/postReleaseControlPlaneDocs.test.ts tests/unit/publicSurfaceBoundaryDocs.test.ts tests/unit/publicForkOwnerProcedureDocs.test.ts tests/unit/debtLedgerDocs.test.ts tests/unit/executionPolicyDocs.test.ts tests/unit/governedProofDocs.test.ts tests/unit/informationForUsersAudienceDocs.test.ts tests/unit/informationForUsersQualityDocs.test.ts tests/unit/informationForUsersSupportDocs.test.ts tests/unit/requirementsDocs.test.ts tests/unit/packageManifest.test.ts tests/unit/shipControlDocs.test.ts tests/unit/docsWorkbenchDocs.test.ts tests/unit/docsContinuousIntegration.test.ts tests/unit/syncBundledDocsScript.test.ts tests/unit/wikiCoverageDocs.test.ts tests/unit/runWikiWorkbenchCli.test.ts'
+        ]
+      },
+      {
+        id: 'bundle-check',
+        title: 'Check bundled documentation drift',
+        command: 'node',
+        args: ['scripts/syncBundledDocs.js', '--check']
+      }
     ]);
   });
 
@@ -110,6 +208,7 @@ describe('documentation-package workbench', () => {
     const spawned: string[] = [];
 
     const result = docsGate.runDocsGate(['--skip-links'], {
+      platform: 'linux',
       stdout: {
         write: () => {}
       },
@@ -138,20 +237,39 @@ describe('documentation-package workbench', () => {
     fs.mkdirSync(path.join(workspaceRoot, 'node_modules'), { recursive: true });
     fs.writeFileSync(path.join(workspaceRoot, 'package.json'), '{}\n', 'utf8');
 
-    const result = spawnSync('bash', [entrypointPath, 'bash', '-lc', 'pwd'], {
-      cwd: tempRoot,
-      env: {
-        ...process.env,
-        CI_PROJECT_DIR: workspaceRoot
-      },
-      encoding: 'utf8'
-    });
+    const result =
+      process.platform === 'win32'
+        ? spawnSync(
+            'wsl.exe',
+            [
+              'bash',
+              '-lc',
+              `CI_PROJECT_DIR='${toWslPath(workspaceRoot)}' '${toWslPath(entrypointPath)}' bash -lc pwd`
+            ],
+            {
+              cwd: tempRoot,
+              env: {
+                ...process.env
+              },
+              encoding: 'utf8'
+            }
+          )
+        : spawnSync('bash', [entrypointPath, 'bash', '-lc', 'pwd'], {
+            cwd: tempRoot,
+            env: {
+              ...process.env,
+              CI_PROJECT_DIR: workspaceRoot
+            },
+            encoding: 'utf8'
+          });
 
     try {
       expect(result.status).toBe(0);
-      expect(result.stdout.trim()).toBe(workspaceRoot);
+      expect(result.stdout.trim()).toBe(
+        process.platform === 'win32' ? toWslPath(workspaceRoot) : workspaceRoot
+      );
     } finally {
-      fs.rmSync(tempRoot, { recursive: true, force: true });
+      removeTreeWithRetry(tempRoot);
     }
   });
 

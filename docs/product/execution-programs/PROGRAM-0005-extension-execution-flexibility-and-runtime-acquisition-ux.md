@@ -37,6 +37,25 @@ Current facts:
   validation surface reports `ready` plus `windows-container` / `labview-cli`
   for the persisted `docker` / `2026` / `x64` bundle when Docker Desktop and
   the governed Windows image are available on the canonical host
+- current real-host x64 evidence now narrows the next slice further: on this
+  canonical Windows host the persisted `host` / `2026` / `x64` bundle now
+  validates through the admitted x64 `LabVIEW.exe` plus installed x86
+  `LabVIEWCLI.exe` host bundle, and the governed x64 host proof now succeeds
+  on that same bundle when the proof command is given a bounded `300000ms`
+  runtime budget
+- the earlier retained `HARNESS-VHS-002` x64 host-only timeout receipt at
+  `180000ms` remains historical under-timed evidence only; the current
+  retained host truth is a generated report on `lv_icon.vi` under the same
+  mixed-bitness bundle, with `LabVIEWCLI.exe` observed at the banner snapshot
+  and `LabVIEW.exe` observed at exit
+- private-release proof focus is now explicit: close the Windows x64 host and
+  Windows-container lanes first; do not widen the slice back into x86 host
+  proof breadth before the x64 contract is source-backed
+- WSL is not part of the active Windows x64 private-release path; the first
+  admission surfaces are native Windows host execution plus Docker Desktop in
+  Windows-container mode on the same Windows machine, with retained proof
+  receipts under `.cache/private-release/1.3.0/windows-x64-host/` and
+  `.cache/private-release/1.3.0/windows-x64-container/`
 - a governed live-session probe command now compares persisted
   provider/version/bitness facts against active in-session VS Code runtime
   settings and retains one per-run plus one latest probe packet (`JSON` and
@@ -89,8 +108,9 @@ Current facts:
   auto-run is removed, compare preflight shows selected/base commit plus
   provider/version/bitness, and compare stays blocked until explicit
   preflight-ready execution
-- released `repo-standards-review` `v0.2.13` compliance-workbench closeout is now
-  retained on this branch
+- historical released `repo-standards-review` `v0.2.9` compliance closeout is
+  retained on this branch, and the current outer assurance baseline is now
+  released `repo-standards-review` `v0.2.18`
 - retained gate decision now keeps `VHS-REQ-542` reload-or-restart guidance as
   active truth while direct live-session uptake of updated settings remains
   unproven, with probe packet plus local packet-gate evidence now explicit
@@ -120,9 +140,10 @@ An installed extension user:
   across both provider classes
 - can seed provider, version, and bitness through a generated cross-platform
   CLI that writes into user-profile storage on first use
-- runs comparison generation through either one matching local Windows
-  `LabVIEWCLI`-backed installation or one governed Docker image family derived
-  from the current Docker engine
+- runs comparison generation through either one governed local Windows bundle,
+  including the canonical x86 `LabVIEWCLI.exe` plus x64 `LabVIEW.exe` host
+  shape when that is what the machine actually installs, or one governed
+  Docker image family derived from the current Docker engine
 - sees selected/base commit plus provider, version, and bitness before compare
   starts
 - must press an explicit `Compare` action instead of triggering compare on the

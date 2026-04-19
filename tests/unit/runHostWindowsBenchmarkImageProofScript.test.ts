@@ -204,23 +204,23 @@ describe('runHostWindowsBenchmarkImageProof script', () => {
       'ni-labview-icon-editor'
     );
     expect(hostWindowsProof.getLocalHarnessSourceCandidates('HARNESS-VHS-002')).toEqual([
-      '/mnt/c/dev/ni-labview-icon-editor',
-      '/mnt/c/Users/sveld/AppData/Local/VI History Suite/acceptance/host-machine/setup/install-root/fixtures-workspace/labview-icon-editor'
+      'C:\\dev\\ni-labview-icon-editor',
+      'C:\\Users\\sveld\\AppData\\Local\\VI History Suite\\acceptance\\host-machine\\setup\\install-root\\fixtures-workspace\\labview-icon-editor'
     ]);
 
     const resolved = hostWindowsProof.resolveLocalHarnessSeedSource('HARNESS-VHS-002', {
       existsSync: (filePath) =>
-        filePath === '/mnt/c/dev/ni-labview-icon-editor/.git' ||
+        filePath === 'C:\\dev\\ni-labview-icon-editor\\.git' ||
         filePath ===
-          '/mnt/c/Users/sveld/AppData/Local/VI History Suite/acceptance/host-machine/setup/install-root/fixtures-workspace/labview-icon-editor/.git'
+          'C:\\Users\\sveld\\AppData\\Local\\VI History Suite\\acceptance\\host-machine\\setup\\install-root\\fixtures-workspace\\labview-icon-editor\\.git'
     });
 
-    expect(resolved).toBe('/mnt/c/dev/ni-labview-icon-editor');
+    expect(resolved).toBe('C:\\dev\\ni-labview-icon-editor');
   });
 
-  it('builds deterministic proof paths and rejects unsupported Linux roots', () => {
+  it('builds deterministic proof paths from native Windows roots and still rejects unsupported non-Windows roots', () => {
     const proofPaths = hostWindowsProof.buildHostWindowsBenchmarkPaths(
-      '/mnt/c/Users/sveld/AppData/Local/VI History Suite/windows-benchmark-image-proof',
+      'C:\\Users\\sveld\\AppData\\Local\\VI History Suite\\windows-benchmark-image-proof',
       'HARNESS-VHS-002',
       () => new Date('2026-04-05T08:00:00.000Z')
     );
@@ -231,22 +231,26 @@ describe('runHostWindowsBenchmarkImageProof script', () => {
     expect(proofPaths.cacheRootWindows).toBe(
       'C:\\Users\\sveld\\AppData\\Local\\VI History Suite\\windows-benchmark-image-proof\\cache'
     );
-    expect(proofPaths.harnessCloneRootLinux).toContain('/cache/harnesses');
-    expect(proofPaths.harnessClonePathLinux).toContain('/cache/harnesses/ni-labview-icon-editor');
+    expect(proofPaths.harnessCloneRootLinux).toContain('\\cache\\harnesses');
+    expect(proofPaths.harnessClonePathLinux).toContain('\\cache\\harnesses\\ni-labview-icon-editor');
     expect(proofPaths.summaryPathLinux).toContain(
-      '/cache/github-experiments/windows-dashboard-benchmark/HARNESS-VHS-002/latest-summary.json'
+      '\\cache\\github-experiments\\windows-dashboard-benchmark\\HARNESS-VHS-002\\latest-summary.json'
     );
     expect(proofPaths.latestRuntimeSurfacePathLinux).toContain(
-      '/cache/github-experiments/windows-dashboard-benchmark/HARNESS-VHS-002/latest-runtime-surface.json'
+      '\\cache\\github-experiments\\windows-dashboard-benchmark\\HARNESS-VHS-002\\latest-runtime-surface.json'
     );
     expect(proofPaths.timestampedRuntimeSurfacePathLinux).toContain(
-      '/cache/github-experiments/windows-dashboard-benchmark/HARNESS-VHS-002/runtime-surface-20260405-080000.json'
+      '\\cache\\github-experiments\\windows-dashboard-benchmark\\HARNESS-VHS-002\\runtime-surface-20260405-080000.json'
     );
-    expect(proofPaths.launchReceiptPathLinux).toContain('/latest-launch.json');
-    expect(proofPaths.logPathLinux).toContain('/run-20260405-080000.log');
+    expect(proofPaths.launchReceiptPathLinux).toContain('\\latest-launch.json');
+    expect(proofPaths.logPathLinux).toContain('\\run-20260405-080000.log');
+
+    expect(
+      hostWindowsProof.toWindowsPathFromWsl('/mnt/c/Users/sveld/AppData/Local/VI History Suite/windows-benchmark-image-proof')
+    ).toBe('C:\\Users\\sveld\\AppData\\Local\\VI History Suite\\windows-benchmark-image-proof');
 
     expect(() => hostWindowsProof.toWindowsPathFromWsl('/home/sveld/not-on-a-drive')).toThrow(
-      'Use a /mnt/<drive>/... proof root.'
+      'Use a Windows path or a legacy /mnt/<drive>/... proof root.'
     );
   });
 

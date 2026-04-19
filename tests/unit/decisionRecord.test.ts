@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import * as path from 'node:path';
 
 import {
   buildReviewDecisionRecordArtifactPlan,
@@ -68,7 +69,7 @@ describe('decisionRecord', () => {
     );
 
     expect(artifactPlan.decisionDirectory).toContain(
-      '/tmp/storage/decision-records/repo-id/file-id/window-id/SCENARIO-VHS-001/'
+      `${path.join('/tmp/storage', 'decision-records', 'repo-id', 'file-id', 'window-id', 'SCENARIO-VHS-001')}${path.sep}`
     );
     expect(artifactPlan.jsonFilePath).toMatch(/decision-record\.json$/);
     expect(artifactPlan.markdownFilePath).toMatch(/decision-record\.md$/);

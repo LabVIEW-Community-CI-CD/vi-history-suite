@@ -1821,6 +1821,12 @@ Information-for-users review cases:
   validation surface that reports persisted provider/version/bitness truth
   plus runtime-validation outcome without reopening path-picking or a
   panel-side provider picker
+- `TEST-UNIT-355`: verify Windows host runtime validation accepts the
+  governed mixed-bitness x64 host bundle when the canonical host resolves
+  `C:\Program Files\National Instruments\LabVIEW 2026\LabVIEW.exe` together
+  with the installed x86
+  `C:\Program Files (x86)\National Instruments\Shared\LabVIEW CLI\LabVIEWCLI.exe`
+  instead of failing closed with `labview-cli-not-found-for-bitness`
 - `TEST-INTEG-010`: prove the generated settings-CLI launcher runtime
   dependency contract on the supported host surface and retain the actionable
   failure mode when the governed runtime dependency is unavailable or stale
@@ -1830,16 +1836,23 @@ Information-for-users review cases:
   explicit Windows lane shall prove that a persisted `docker` / `2026` / `x64`
   bundle validates as `ready` with `windows-container` plus `labview-cli` when
   Docker Desktop and the governed Windows image are available
+- `TEST-INTEG-012`: prove the explicit Windows x64 host lane reports a
+  persisted `host` / `2026` / `x64` bundle as `ready` on the canonical host
+  when the admitted local runtime shape is x64 `LabVIEW.exe` plus the
+  canonical installed x86 `LabVIEWCLI.exe`
 - `TEST-SMOKE-020`: prove the canonical Windows host-operation matrix closes
   the remaining LabVIEW 2026 x86/x64 prerequisite-operation seams or retains
   one exact bounded blocker receipt per unresolved seam
 - `TEST-SMOKE-021`: prove `CreateComparisonReport` admission on the supported
   LabVIEW 2026 x64 host bundle, or retain the exact bounded blocker receipt
   when that bundle remains non-admissible after prerequisite closeout; the
-  retained x64 receipt shall keep the direct `CreateComparisonReport`
-  command-line proof, the derived VI Server port (`3363`), the banner
-  observation that `LabVIEWCLI.exe` was seen while `LabVIEW.exe` was absent,
-  and the final `command-timed-out` outcome
+  retained x64 bundle shall treat the installed x86 `LabVIEWCLI.exe` plus x64
+  `LabVIEW.exe` host shape as the first private-release proof surface, and the
+  retained x64 success receipt shall keep the direct `CreateComparisonReport`
+  command-line proof, the derived VI Server port (`3363`), the bounded
+  `300000ms` runtime budget, the banner observation that `LabVIEWCLI.exe` was
+  seen while `LabVIEW.exe` was absent, the exit observation that
+  `LabVIEW.exe` was observed, and the final generated-report outcome
 - `TEST-SMOKE-022`: prove `CreateComparisonReport` admission on the supported
   LabVIEW 2026 x86 host bundle, or retain the exact bounded blocker receipt
   when that bundle remains non-admissible after prerequisite closeout; the
@@ -1866,6 +1879,12 @@ Information-for-users review cases:
   bundled/public installed-user surfaces remain on the exact released
   Docker-only baseline until the host-default provider contract clears the
   explicit governed public-acceptance gate
+- `TEST-DOC-110`: review current-state, `PROGRAM-0005`, `ISSUE-0412`, the
+  command reference, the FAQ, the SRS, the RTM, and the test plan and confirm
+  the active Windows x64 private-release route is native Windows only: host
+  LabVIEW plus Docker Desktop Windows-container proof are the first admission
+  surfaces, while WSL is retained historical context only and not an admitted
+  installed-user or private-release dependency
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are

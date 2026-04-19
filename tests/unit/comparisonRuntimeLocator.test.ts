@@ -482,6 +482,57 @@ describe('comparisonRuntimeLocator', () => {
     ]);
   });
 
+  it('accepts the canonical installed x86 LabVIEWCLI surface for requested Windows x64 host validation when no x64 CLI is present', async () => {
+    const cleanHost = buildCleanWindowsHostDeps();
+    const result = await locateComparisonRuntime(
+      'win32',
+      {
+        requestedProvider: 'host',
+        requireVersionAndBitness: true,
+        labviewVersion: '2026',
+        bitness: 'x64'
+      },
+      {
+        pathExists: vi.fn(async (filePath: string) =>
+          [
+            'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe',
+            'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
+          ].includes(filePath)
+        ),
+        queryWindowsRegistry: vi.fn().mockResolvedValue(''),
+        ...cleanHost
+      }
+    );
+
+    expect(result.provider).toBe('host-native');
+    expect(result.engine).toBe('labview-cli');
+    expect(result.labviewExe?.path).toBe(
+      'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.exe'
+    );
+    expect(result.labviewCli?.path).toBe(
+      'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe'
+    );
+    expect(result.notes).toContain(
+      'Installed compare accepted the canonical x86 LabVIEWCLI surface for requested LabVIEW 2026 x64 execution because no x64 LabVIEWCLI surface was present on the host.'
+    );
+    expect(result.providerDecisions).toEqual([
+      {
+        provider: 'windows-container',
+        outcome: 'rejected',
+        reason: 'provider-request-host-disallows-docker',
+        detail:
+          'Docker container execution was not selected because the host provider was requested.'
+      },
+      {
+        provider: 'host-native',
+        outcome: 'selected',
+        reason: 'provider-request-host-selected-host-native',
+        detail:
+          'Host provider was requested and host-native LabVIEW 2026 plus LabVIEWCLI were available.'
+      }
+    ]);
+  });
+
   it('fails closed for installed compare when multiple matching LabVIEWCLI surfaces exist for the requested bitness', async () => {
     const cleanHost = buildCleanWindowsHostDeps();
     const result = await locateComparisonRuntime(

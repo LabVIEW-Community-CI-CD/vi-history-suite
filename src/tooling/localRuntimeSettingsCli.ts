@@ -139,12 +139,19 @@ export function resolveDefaultVsCodeSettingsPath(
   }
 
   if (platform === 'linux') {
-    const configHome = env.XDG_CONFIG_HOME ?? path.join(homedir(), '.config');
-    return path.join(configHome, 'Code', 'User', 'settings.json');
+    const configHome = env.XDG_CONFIG_HOME ?? path.posix.join(homedir().replace(/\\/g, '/'), '.config');
+    return path.posix.join(configHome.replace(/\\/g, '/'), 'Code', 'User', 'settings.json');
   }
 
   if (platform === 'darwin') {
-    return path.join(homedir(), 'Library', 'Application Support', 'Code', 'User', 'settings.json');
+    return path.posix.join(
+      homedir().replace(/\\/g, '/'),
+      'Library',
+      'Application Support',
+      'Code',
+      'User',
+      'settings.json'
+    );
   }
 
   throw new Error(`Unsupported platform for VI History settings CLI: ${platform}`);

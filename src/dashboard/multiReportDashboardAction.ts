@@ -433,7 +433,7 @@ export function createMultiReportDashboardAction(
     );
     if (dashboardDirectoryExists) {
       const etaAccuracyFilePath = etaAccuracyRecord
-        ? path.join(
+        ? joinPreservingExplicitPathStyle(
             dashboard.record.artifactPlan.dashboardDirectory,
             DASHBOARD_PAIR_ETA_ACCURACY_FILENAME
           )
@@ -568,8 +568,8 @@ export function createMultiReportDashboardAction(
         return;
       }
 
-      const storageRoot = path.resolve(storageUri.fsPath);
-      const artifactPath = path.resolve(payload.filePath);
+      const storageRoot = resolvePreservingExplicitPathStyle(storageUri.fsPath);
+      const artifactPath = resolvePreservingExplicitPathStyle(payload.filePath);
       if (!isDescendantPath(storageRoot, artifactPath)) {
         panelTracker?.recordDashboardArtifactAction({
           command: 'openDashboardArtifact',
@@ -1022,8 +1022,44 @@ function normalizeDashboardArtifactMessage(message: unknown): DashboardArtifactM
 }
 
 function isDescendantPath(rootPath: string, candidatePath: string): boolean {
-  const relativePath = path.relative(rootPath, candidatePath);
-  return relativePath !== '' && !relativePath.startsWith('..') && !path.isAbsolute(relativePath);
+  const relativePath = relativePreservingExplicitPathStyle(rootPath, candidatePath);
+  return relativePath !== '' && !relativePath.startsWith('..') && !isAbsolutePreservingExplicitPathStyle(relativePath);
+}
+
+function usesExplicitPosixPathStyle(rootPath: string): boolean {
+  return rootPath.startsWith('/');
+}
+
+function joinPreservingExplicitPathStyle(rootPath: string, ...segments: string[]): string {
+  if (usesExplicitPosixPathStyle(rootPath)) {
+    return path.posix.join(rootPath, ...segments.map((segment) => segment.replace(/\\/g, '/')));
+  }
+
+  return path.join(rootPath, ...segments);
+}
+
+function resolvePreservingExplicitPathStyle(targetPath: string): string {
+  if (usesExplicitPosixPathStyle(targetPath)) {
+    return path.posix.resolve(targetPath);
+  }
+
+  return path.resolve(targetPath);
+}
+
+function relativePreservingExplicitPathStyle(rootPath: string, candidatePath: string): string {
+  if (usesExplicitPosixPathStyle(rootPath) || usesExplicitPosixPathStyle(candidatePath)) {
+    return path.posix.relative(rootPath.replace(/\\/g, '/'), candidatePath.replace(/\\/g, '/'));
+  }
+
+  return path.relative(rootPath, candidatePath);
+}
+
+function isAbsolutePreservingExplicitPathStyle(candidatePath: string): boolean {
+  if (usesExplicitPosixPathStyle(candidatePath)) {
+    return path.posix.isAbsolute(candidatePath);
+  }
+
+  return path.isAbsolute(candidatePath);
 }
 
 function doesArtifactPathMatchKind(

@@ -326,9 +326,23 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
   });
 
   it('maps /workspace and Windows drive paths into local host paths', () => {
+    const expectedWindowsStandalonePath =
+      process.platform === 'win32'
+        ? 'C:\\Users\\sveld\\report-metadata.json'
+        : '/mnt/c/Users/sveld/report-metadata.json';
     expect(
       comparablePacket.normalizeArtifactPath('C:\\Users\\sveld\\report-metadata.json')
-    ).toBe('/mnt/c/Users/sveld/report-metadata.json');
+    ).toBe(expectedWindowsStandalonePath);
+    const expectedWindowsWorkspacePath =
+      process.platform === 'win32'
+        ? path.win32.join(
+            'C:\\Users\\sveld\\AppData\\Local\\VI History Suite\\windows-benchmark-image-proof',
+            'cache',
+            'harness-reports',
+            'HARNESS-VHS-002',
+            'dashboard-smoke.json'
+          )
+        : '/mnt/c/Users/sveld/AppData/Local/VI History Suite/windows-benchmark-image-proof/cache/harness-reports/HARNESS-VHS-002/dashboard-smoke.json';
     expect(
       comparablePacket.normalizeArtifactPath(
         'C:\\workspace\\.cache\\harness-reports\\HARNESS-VHS-002\\dashboard-smoke.json',
@@ -337,16 +351,20 @@ describe('buildComparablePrefixBenchmarkPacket script', () => {
             '/mnt/c/Users/sveld/AppData/Local/VI History Suite/windows-benchmark-image-proof'
         }
       )
-    ).toBe(
-      '/mnt/c/Users/sveld/AppData/Local/VI History Suite/windows-benchmark-image-proof/cache/harness-reports/HARNESS-VHS-002/dashboard-smoke.json'
-    );
+    ).toBe(expectedWindowsWorkspacePath);
+    const expectedLinuxWorkspacePath =
+      process.platform === 'win32'
+        ? path.win32.join(
+            'C:\\Users\\sveld\\AppData\\Local\\VI History Suite\\host-linux-dashboard-benchmark\\workspace-stage\\current',
+            '.cache',
+            'report-metadata.json'
+          )
+        : '/mnt/c/Users/sveld/AppData/Local/VI History Suite/host-linux-dashboard-benchmark/workspace-stage/current/.cache/report-metadata.json';
     expect(
       comparablePacket.normalizeArtifactPath('/workspace/.cache/report-metadata.json', {
         linuxWorkspaceRoot: '/mnt/c/Users/sveld/AppData/Local/VI History Suite/host-linux-dashboard-benchmark/workspace-stage/current'
       })
-    ).toBe(
-      '/mnt/c/Users/sveld/AppData/Local/VI History Suite/host-linux-dashboard-benchmark/workspace-stage/current/.cache/report-metadata.json'
-    );
+    ).toBe(expectedLinuxWorkspacePath);
   });
 
   it('reads a retained Windows exact-pair diagnosis report', async () => {

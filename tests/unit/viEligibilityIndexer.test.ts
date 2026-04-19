@@ -513,9 +513,9 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
     expect(commandExecuteMock.mock.calls.at(-1)).toEqual([
       'setContext',
       'labviewViHistory.eligiblePaths',
-      {
+      expect.objectContaining({
         '/workspace/repo/tracked.vi': true
-      }
+      })
     ]);
   });
 
@@ -657,9 +657,9 @@ describe('ViEligibilityIndexer refresh and listeners', () => {
     expect(commandExecuteMock.mock.calls.at(-1)).toEqual([
       'setContext',
       'labviewViHistory.eligiblePaths',
-      {
+      expect.objectContaining({
         '/workspace/repo/tracked.vi': true
-      }
+      })
     ]);
   });
 

@@ -140,5 +140,5 @@
   surface grows or shifts role.
 - Keep `README.md`, `INSTALL.md`, the docs workbench, the FAQ, and the command
   reference aligned.
-- Run the exact released `v0.2.13` external user-information checker before
+- Run the exact released `v0.2.18` external user-information checker before
   treating this package as review-ready.

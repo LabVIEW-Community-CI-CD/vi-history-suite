@@ -69,9 +69,9 @@ function resolveDefaultPacketRoot(
   }
 
   if (platform === 'linux') {
-    const configHome = env.XDG_CONFIG_HOME ?? path.join(homedir(), '.config');
-    return path.join(
-      configHome,
+    const configHome = env.XDG_CONFIG_HOME ?? path.posix.join(homedir().replace(/\\/g, '/'), '.config');
+    return path.posix.join(
+      configHome.replace(/\\/g, '/'),
       'Code',
       'User',
       'globalStorage',
@@ -81,8 +81,8 @@ function resolveDefaultPacketRoot(
   }
 
   if (platform === 'darwin') {
-    return path.join(
-      homedir(),
+    return path.posix.join(
+      homedir().replace(/\\/g, '/'),
       'Library',
       'Application Support',
       'Code',

@@ -14,13 +14,19 @@ const extensionUri = {
   fsPath: repoRoot
 };
 
+function normalizePathSeparators(input: string): string {
+  return input.replace(/\\/g, '/');
+}
+
 describe('bundled documentation', () => {
   it('retains a curated extension-user bundle instead of mirroring every published wiki page', async () => {
     const { manifest, manifestFilePath } = await readBundledDocumentationManifest(
       extensionUri as never
     );
 
-    expect(manifestFilePath).toMatch(/resources\/bundled-docs\/manifest\.json$/);
+    expect(normalizePathSeparators(manifestFilePath)).toMatch(
+      /resources\/bundled-docs\/manifest\.json$/
+    );
     expect(manifest.bundleAudience).toBe('extension-users');
     expect(manifest.defaultPageId).toBe('overview');
     expect(manifest.pages.map((page) => page.id)).toEqual([

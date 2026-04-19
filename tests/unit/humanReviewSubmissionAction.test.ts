@@ -1,3 +1,5 @@
+import * as path from 'node:path';
+
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { workspaceState, envState } = vi.hoisted(() => ({
@@ -311,7 +313,7 @@ describe('humanReviewSubmissionAction', () => {
     });
 
     expect(readFile).toHaveBeenCalledWith(
-      '/workspace/storage/dashboards/latest-dashboard-run.json',
+      path.posix.join('/workspace/storage', 'dashboards', 'latest-dashboard-run.json'),
       'utf8'
     );
     expect(persistSubmission).toHaveBeenCalledWith(
@@ -324,7 +326,11 @@ describe('humanReviewSubmissionAction', () => {
         note: 'Manual review looked deterministic.',
         canonicalHostStorageRoot: '/workspace/global-storage',
         latestDashboardRun: {
-          filePath: '/workspace/storage/dashboards/latest-dashboard-run.json',
+          filePath: path.posix.join(
+            '/workspace/storage',
+            'dashboards',
+            'latest-dashboard-run.json'
+          ),
           repositoryRoot: '/workspace/labview-icon-editor',
           relativePath: 'resource/plugins/NIIconEditor/lv_icon.vi',
           dashboardGeneratedAt: '2026-04-07T18:00:00.000Z'

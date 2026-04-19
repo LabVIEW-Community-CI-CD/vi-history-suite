@@ -5,7 +5,7 @@
 - Product or service: `vi-history-suite`
 - Applies to: exact released installed baseline `v1.2.2` plus the active
   `develop` authority direction
-- Last reviewed: `2026-04-14`
+- Last reviewed: `2026-04-18`
 - Primary audience: installed users, source evaluators, and maintainers
 - Topic type: troubleshooting and quick-reference support
 - Primary entry route: `README.md` and `INSTALL.md`
@@ -132,7 +132,7 @@ The important route split is:
 - repo-native docs authoring and docs validation stay in the `vi-history-suite`
   docs workbench
 - outer standards verification for this tranche uses released
-  `repo-standards-review v0.2.13`
+  `repo-standards-review v0.2.18`
 
 ### How do I run the canonical gate?
 
@@ -141,6 +141,18 @@ Use the command surface that matches the task:
 - for repo-native doc validation, run `node scripts/run-docs-gate.js`
 - for the containerized authoring surface, run `npm run docs:workbench:gate`
 - for the broader branch line, run `npm run test`
+
+### Do I need WSL for the supported Windows x64 path?
+
+No.
+
+For the active Windows x64 private-release and installed-user proof path, use:
+
+- native Windows host LabVIEW for the host lane
+- Docker Desktop in Windows-container mode for the expert container lane
+
+WSL is retained historical context only; it is not a required dependency for
+the supported Windows x64 user path or the private-release proof route.
 
 ### How do I search the governed docs quickly?
 
@@ -169,7 +181,7 @@ Use the governed repo search posture:
   `npm run proof:runtime-settings-live-session:assert` and treat failure as a
   hard stop.
 - If you are checking the broader standards posture for this branch, use the
-  released `repo-standards-review v0.2.13` baseline instead of older parked
+  released `repo-standards-review v0.2.18` baseline instead of older parked
   roadmap branches.
 
 ### Where do I start when I need to cut a release?

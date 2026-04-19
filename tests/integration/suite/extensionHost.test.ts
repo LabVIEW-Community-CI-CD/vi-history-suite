@@ -81,6 +81,10 @@ interface RuntimeSettingsLiveSessionProbeSummary {
 }
 
 const execFile = promisify(execFileCallback);
+const WINDOWS_X64_LABVIEW_EXE_PATH =
+  'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe';
+const WINDOWS_X86_LABVIEW_CLI_PATH =
+  'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe';
 
 export async function runIntegrationSuite(): Promise<void> {
   const metadata = await loadMetadata();
@@ -537,6 +541,30 @@ async function testPrepareLocalRuntimeSettingsCli(): Promise<void> {
       'viHistorySuite.labviewBitness': 'x64'
     });
 
+    if (
+      process.platform === 'win32' &&
+      (await pathExists(WINDOWS_X64_LABVIEW_EXE_PATH)) &&
+      (await pathExists(WINDOWS_X86_LABVIEW_CLI_PATH))
+    ) {
+      const hostValidationRun = await runPreparedLocalRuntimeSettingsCli(result, [
+        '--validate',
+        '--settings-file',
+        settingsFilePath
+      ]);
+      assert.equal(hostValidationRun.launcherPath, result.windowsLauncherPath);
+      assert.match(
+        hostValidationRun.stdout,
+        new RegExp(settingsFilePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+      );
+      assert.match(hostValidationRun.stdout, /viHistorySuite\.runtimeProvider=host/);
+      assert.match(hostValidationRun.stdout, /viHistorySuite\.labviewVersion=2026/);
+      assert.match(hostValidationRun.stdout, /viHistorySuite\.labviewBitness=x64/);
+      assert.match(hostValidationRun.stdout, /runtimeValidationOutcome=ready/);
+      assert.match(hostValidationRun.stdout, /runtimeProvider=host-native/);
+      assert.match(hostValidationRun.stdout, /runtimeEngine=labview-cli/);
+      assert.match(hostValidationRun.stdout, /runtimeBlockedReason=<none>/);
+    }
+
     const dockerRun = await runPreparedLocalRuntimeSettingsCli(result, [
       '--provider',
       'docker',
@@ -677,6 +705,15 @@ async function testPrepareLocalRuntimeSettingsCli(): Promise<void> {
   }
 }
 
+async function pathExists(candidatePath: string): Promise<boolean> {
+  try {
+    await fs.access(candidatePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 async function testProbeRuntimeSettingsLiveSession(): Promise<void> {
   const prepared = (await vscode.commands.executeCommand(
     'labviewViHistory.prepareLocalRuntimeSettingsCli'
@@ -684,6 +721,33 @@ async function testProbeRuntimeSettingsLiveSession(): Promise<void> {
   assert.ok(prepared.defaultSettingsFilePath);
 
   const settingsFilePath = prepared.defaultSettingsFilePath!;
+  const initialRuntimeSettings = readViHistorySuiteRuntimeSettings();
+  const baselineProvider = initialRuntimeSettings.runtimeProvider === 'docker' ? 'docker' : 'host';
+
+  const seededBaseline = await runPreparedLocalRuntimeSettingsCli(prepared, [
+    '--provider',
+    baselineProvider,
+    '--labview-version',
+    '2026',
+    '--labview-bitness',
+    'x64'
+  ]);
+  if (process.platform === 'win32') {
+    assert.equal(seededBaseline.launcherPath, prepared.windowsLauncherPath);
+  } else {
+    assert.equal(seededBaseline.launcherPath, prepared.posixLauncherPath);
+  }
+  assert.match(
+    seededBaseline.stdout,
+    new RegExp(settingsFilePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+  );
+  assert.match(
+    seededBaseline.stdout,
+    new RegExp(`viHistorySuite\\.runtimeProvider=${baselineProvider}`)
+  );
+  assert.match(seededBaseline.stdout, /viHistorySuite\.labviewVersion=2026/);
+  assert.match(seededBaseline.stdout, /viHistorySuite\.labviewBitness=x64/);
+
   let baselineSettingsText: string | undefined;
   try {
     baselineSettingsText = await fs.readFile(settingsFilePath, 'utf8');

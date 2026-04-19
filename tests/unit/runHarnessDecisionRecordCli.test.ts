@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import * as path from 'node:path';
 
 import {
   formatHarnessDecisionRecordSuccess,
@@ -185,8 +186,8 @@ describe('runHarnessDecisionRecordCli', () => {
     ).resolves.toBe('pass');
 
     expect(runner).toHaveBeenCalledWith('HARNESS-VHS-001', {
-      cloneRoot: '/repo/.cache/harnesses',
-      reportRoot: '/repo/.cache/harness-reports',
+      cloneRoot: path.resolve('/repo', '.cache', 'harnesses'),
+      reportRoot: path.resolve('/repo', '.cache', 'harness-reports'),
       scenarioId: 'SCENARIO-VHS-001',
       reviewer: 'Reviewer',
       reviewQuestion: 'Question?',

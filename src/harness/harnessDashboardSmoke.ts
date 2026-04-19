@@ -129,7 +129,10 @@ export async function runHarnessDashboardSmoke(
     options.cloneRoot,
     deps
   );
-  const targetAbsolutePath = path.join(cloneDirectory, definition.targetRelativePath);
+  const targetAbsolutePath = joinPreservingExplicitPathStyle(
+    cloneDirectory,
+    definition.targetRelativePath
+  );
   const historyLimit = Math.max(3, options.dashboardCommitWindow ?? 3);
   const [head, model, eligibility] = await Promise.all([
     (deps.getRepoHead ?? getRepoHead)(cloneDirectory),
@@ -400,11 +403,11 @@ export async function runHarnessDashboardSmoke(
     pairSummaries
   };
 
-  const outputDirectory = path.join(options.reportRoot, definition.id);
+  const outputDirectory = joinPreservingExplicitPathStyle(options.reportRoot, definition.id);
   await (deps.mkdir ?? fs.mkdir)(outputDirectory, { recursive: true });
-  const reportJsonPath = path.join(outputDirectory, 'dashboard-smoke.json');
-  const reportMarkdownPath = path.join(outputDirectory, 'dashboard-smoke.md');
-  const reportHtmlPath = path.join(outputDirectory, 'dashboard-smoke.html');
+  const reportJsonPath = joinPreservingExplicitPathStyle(outputDirectory, 'dashboard-smoke.json');
+  const reportMarkdownPath = joinPreservingExplicitPathStyle(outputDirectory, 'dashboard-smoke.md');
+  const reportHtmlPath = joinPreservingExplicitPathStyle(outputDirectory, 'dashboard-smoke.html');
 
   await (deps.writeFile ?? fs.writeFile)(reportJsonPath, JSON.stringify(report, null, 2));
   await (deps.writeFile ?? fs.writeFile)(
@@ -621,6 +624,14 @@ function formatDurationSeconds(value: number): string {
     return `${roundSeconds(value / 60)}m`;
   }
   return `${roundSeconds(value)}s`;
+}
+
+function joinPreservingExplicitPathStyle(rootPath: string, ...segments: string[]): string {
+  if (rootPath.startsWith('/')) {
+    return path.posix.join(rootPath, ...segments);
+  }
+
+  return path.join(rootPath, ...segments);
 }
 
 function describePreparedPairOutcome(

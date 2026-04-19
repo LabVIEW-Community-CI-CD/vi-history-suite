@@ -2,7 +2,7 @@
 
 Applies to: exact released installed baseline `v1.2.2` plus the active
 `develop` authority direction
-Last reviewed: `2026-04-13`
+Last reviewed: `2026-04-18`
 Primary audience: installed users, source evaluators, maintainers, and
 publication reviewers
 Topic type: navigation and reference policy
@@ -80,7 +80,7 @@ internal control docs.
   standards lookup, not as the repo's own docs-search engine:
 
 ```bash
-python3 /tmp/repo-standards-review-v0.2.13-tag/scripts/search_standards.py --help
+py -3 "$env:USERPROFILE\\.codex\\skills\\repo-standards-review\\scripts\\search_standards.py" --help
 ```
 
 - Current example:

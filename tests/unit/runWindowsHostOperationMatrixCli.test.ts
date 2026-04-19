@@ -10,6 +10,12 @@ import {
   runWindowsHostOperationMatrixCli
 } from '../../src/cli/runWindowsHostOperationMatrix';
 
+const WINDOWS_REPO_ROOT = 'D:\\workspace\\vi-history-suite';
+const WINDOWS_ADDITIONAL_OPERATIONS_ROOT =
+  'D:\\workspace\\labview-ci-cd\\actions\\VICompareTooling';
+const WINDOWS_MATRIX_ROOT =
+  'D:\\workspace\\vi-history-suite\\.cache\\governed-proof\\windows-host-operation-matrix';
+
 describe('runWindowsHostOperationMatrixCli', () => {
   it('runs the foreground PowerShell LabVIEWCLI path and captures operation output', async () => {
     const child = new EventEmitter() as EventEmitter & {
@@ -94,7 +100,7 @@ describe('runWindowsHostOperationMatrixCli', () => {
   });
 
   it('parses defaults and builds the governed 2026 host matrix cases', () => {
-    const parsed = parseWindowsHostOperationMatrixArgs([], '/tmp/vi-history-suite');
+    const parsed = parseWindowsHostOperationMatrixArgs([], WINDOWS_REPO_ROOT);
     expect(parsed.helpRequested).toBe(false);
     expect(parsed.operation).toBe('all');
     expect(parsed.bitness).toBe('all');
@@ -102,7 +108,7 @@ describe('runWindowsHostOperationMatrixCli', () => {
     expect(parsed.labviewCliPath).toContain('LabVIEW CLI\\LabVIEWCLI.exe');
     expect(parsed.x86LabviewExePath).toContain('Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe');
     expect(parsed.x64LabviewExePath).toContain('Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe');
-    expect(parsed.additionalOperationDirectory).toBe('/tmp/labview-ci-cd/actions/VICompareTooling');
+    expect(parsed.additionalOperationDirectory).toBe(WINDOWS_ADDITIONAL_OPERATIONS_ROOT);
     expect(getWindowsHostOperationMatrixUsage()).toContain('runGovernedProof host-operation-matrix');
 
     const cases = buildWindowsHostOperationMatrixCases({
@@ -169,7 +175,7 @@ describe('runWindowsHostOperationMatrixCli', () => {
       runWindowsHostOperationMatrixCli(
         ['--operation', 'CloseLabVIEW', '--bitness', 'x64'],
         {
-          repoRoot: '/tmp/vi-history-suite',
+          repoRoot: WINDOWS_REPO_ROOT,
           mkdir,
           readFile: readFile as never,
           writeFile,
@@ -195,12 +201,12 @@ describe('runWindowsHostOperationMatrixCli', () => {
       expect.arrayContaining(['-OperationName', 'CloseLabVIEW', '-Headless', '-PortNumber', '3363'])
     );
     expect(writeFile).toHaveBeenCalledWith(
-      '/tmp/vi-history-suite/.cache/governed-proof/windows-host-operation-matrix/2026-04-06T12-00-00-000Z/CloseLabVIEW-x64-cold.stdout.txt',
+      'D:\\workspace\\vi-history-suite\\.cache\\governed-proof\\windows-host-operation-matrix\\2026-04-06T12-00-00-000Z\\CloseLabVIEW-x64-cold.stdout.txt',
       'ok',
       'utf8'
     );
     expect(writeFile).toHaveBeenCalledWith(
-      '/tmp/vi-history-suite/.cache/governed-proof/windows-host-operation-matrix/latest-run.json',
+      'D:\\workspace\\vi-history-suite\\.cache\\governed-proof\\windows-host-operation-matrix\\latest-run.json',
       expect.stringContaining('"operation": "CloseLabVIEW"'),
       'utf8'
     );
@@ -251,7 +257,7 @@ describe('runWindowsHostOperationMatrixCli', () => {
       runWindowsHostOperationMatrixCli(
         ['--operation', 'MassCompile', '--bitness', 'x64', '--session-state', 'warm-headless'],
         {
-          repoRoot: '/tmp/vi-history-suite',
+          repoRoot: WINDOWS_REPO_ROOT,
           mkdir: vi.fn().mockResolvedValue(undefined),
           readFile: readFile as never,
           writeFile,
@@ -279,17 +285,17 @@ describe('runWindowsHostOperationMatrixCli', () => {
     ).resolves.toBe('pass');
 
     expect(writeFile).toHaveBeenCalledWith(
-      '/tmp/vi-history-suite/.cache/governed-proof/windows-host-operation-matrix/latest-run.json',
+      `${WINDOWS_MATRIX_ROOT}\\latest-run.json`,
       expect.stringContaining('"sessionState": "warm-headless"'),
       'utf8'
     );
     expect(writeFile).toHaveBeenCalledWith(
-      '/tmp/vi-history-suite/.cache/governed-proof/windows-host-operation-matrix/latest-run.json',
+      `${WINDOWS_MATRIX_ROOT}\\latest-run.json`,
       expect.stringContaining('"status": "succeeded"'),
       'utf8'
     );
     expect(writeFile).toHaveBeenCalledWith(
-      '/tmp/vi-history-suite/.cache/governed-proof/windows-host-operation-matrix/latest-run.json',
+      `${WINDOWS_MATRIX_ROOT}\\latest-run.json`,
       expect.stringContaining('"labviewTcpPort": 3363'),
       'utf8'
     );
@@ -302,7 +308,7 @@ describe('runWindowsHostOperationMatrixCli', () => {
       runWindowsHostOperationMatrixCli(
         ['--operation', 'PrintToSingleFileHtml', '--bitness', 'x64', '--session-state', 'warm-headless'],
         {
-          repoRoot: '/tmp/vi-history-suite',
+          repoRoot: WINDOWS_REPO_ROOT,
           mkdir: vi.fn().mockResolvedValue(undefined),
           writeFile,
           pathExists: vi.fn().mockResolvedValue(false),
@@ -332,7 +338,7 @@ describe('runWindowsHostOperationMatrixCli', () => {
     ).resolves.toBe('pass');
 
     expect(writeFile).toHaveBeenCalledWith(
-      '/tmp/vi-history-suite/.cache/governed-proof/windows-host-operation-matrix/latest-run.json',
+      `${WINDOWS_MATRIX_ROOT}\\latest-run.json`,
       expect.stringContaining('"blockedReason": "missing-additional-operation-directory"'),
       'utf8'
     );
@@ -364,7 +370,7 @@ describe('runWindowsHostOperationMatrixCli', () => {
       runWindowsHostOperationMatrixCli(
         ['--operation', 'CloseLabVIEW', '--bitness', 'x86'],
         {
-          repoRoot: '/tmp/vi-history-suite',
+          repoRoot: WINDOWS_REPO_ROOT,
           mkdir: vi.fn().mockResolvedValue(undefined),
           readFile: readFile as never,
           writeFile,
@@ -392,12 +398,12 @@ describe('runWindowsHostOperationMatrixCli', () => {
 
     expect(cleanupRuntimeSurface).toHaveBeenCalledTimes(1);
     expect(writeFile).toHaveBeenCalledWith(
-      '/tmp/vi-history-suite/.cache/governed-proof/windows-host-operation-matrix/latest-run.json',
+      `${WINDOWS_MATRIX_ROOT}\\latest-run.json`,
       expect.stringContaining('"blockedReason": "post-run-runtime-surface-contaminated"'),
       'utf8'
     );
     expect(writeFile).toHaveBeenCalledWith(
-      '/tmp/vi-history-suite/.cache/governed-proof/windows-host-operation-matrix/latest-run.json',
+      `${WINDOWS_MATRIX_ROOT}\\latest-run.json`,
       expect.stringContaining('"labviewTcpPort": 3364'),
       'utf8'
     );
@@ -433,7 +439,7 @@ describe('runWindowsHostOperationMatrixCli', () => {
       runWindowsHostOperationMatrixCli(
         ['--operation', 'CloseLabVIEW', '--bitness', 'x64'],
         {
-          repoRoot: '/tmp/vi-history-suite',
+          repoRoot: WINDOWS_REPO_ROOT,
           mkdir: vi.fn().mockResolvedValue(undefined),
           readFile: vi.fn().mockResolvedValue('server.tcp.enabled=true\n') as never,
           writeFile,
@@ -457,12 +463,12 @@ describe('runWindowsHostOperationMatrixCli', () => {
 
     expect(cleanupRuntimeSurface).toHaveBeenCalledTimes(1);
     expect(writeFile).toHaveBeenCalledWith(
-      '/tmp/vi-history-suite/.cache/governed-proof/windows-host-operation-matrix/latest-run.json',
+      `${WINDOWS_MATRIX_ROOT}\\latest-run.json`,
       expect.stringContaining('"blockedReason": "pre-run-runtime-surface-cleanup-failed"'),
       'utf8'
     );
     expect(writeFile).toHaveBeenCalledWith(
-      '/tmp/vi-history-suite/.cache/governed-proof/windows-host-operation-matrix/latest-run.json',
+      `${WINDOWS_MATRIX_ROOT}\\latest-run.json`,
       expect.stringContaining(
         '"cleanupFailureMessage": "Windows host runtime cleanup failed; remaining processes: LabVIEW, LabVIEWCLI"'
       ),
@@ -493,7 +499,7 @@ describe('runWindowsHostOperationMatrixCli', () => {
       runWindowsHostOperationMatrixCli(
         ['--operation', 'CloseLabVIEW', '--bitness', 'all'],
         {
-          repoRoot: '/tmp/vi-history-suite',
+          repoRoot: WINDOWS_REPO_ROOT,
           mkdir: vi.fn().mockResolvedValue(undefined),
           writeFile,
           readFile: readFile as never,
@@ -522,7 +528,7 @@ describe('runWindowsHostOperationMatrixCli', () => {
       expect.arrayContaining(['-OperationName', 'CloseLabVIEW', '-LabVIEWPath', 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'])
     );
     expect(writeFile).toHaveBeenCalledWith(
-      '/tmp/vi-history-suite/.cache/governed-proof/windows-host-operation-matrix/latest-run.json',
+      `${WINDOWS_MATRIX_ROOT}\\latest-run.json`,
       expect.stringContaining('"blockedReason": "x64-tranche-did-not-complete-cleanly"'),
       'utf8'
     );

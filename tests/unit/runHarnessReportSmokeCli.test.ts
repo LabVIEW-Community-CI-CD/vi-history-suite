@@ -1,3 +1,5 @@
+import * as path from 'node:path';
+
 import { describe, expect, it, vi } from 'vitest';
 
 import {
@@ -249,8 +251,8 @@ describe('runHarnessReportSmokeCli', () => {
     ).resolves.toBe('pass');
 
     expect(runner).toHaveBeenCalledWith('HARNESS-VHS-001', {
-      cloneRoot: '/tmp/vi-history-suite/.cache/harnesses',
-      reportRoot: '/tmp/vi-history-suite/.cache/harness-reports',
+      cloneRoot: path.resolve('/tmp/vi-history-suite', '.cache', 'harnesses'),
+      reportRoot: path.resolve('/tmp/vi-history-suite', '.cache', 'harness-reports'),
       strictRsrcHeader: false,
       selectedHash: FULL_SELECTED_HASH,
       baseHash: FULL_BASE_HASH,

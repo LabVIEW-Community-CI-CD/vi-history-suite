@@ -1189,7 +1189,7 @@ describe('runHarnessReportSmoke', () => {
     );
   });
 
-  it('falls back to a report-scoped /mnt interop root when default Windows temp roots are unavailable', async () => {
+  it('forwards an undefined interop root when default Windows bridge candidates are unavailable', async () => {
     const executeComparisonReport = vi.fn().mockResolvedValue({
       record: {
         reportTitle: 'VI Comparison Report: VIP_Pre-Install Custom Action.vi',
@@ -1393,7 +1393,7 @@ describe('runHarnessReportSmoke', () => {
     expect(executeComparisonReport).toHaveBeenCalledWith(
       expect.objectContaining({
         repositoryRoot: '/tmp/harnesses/ni-labview-icon-editor',
-        interopWorkspaceRoot: '/mnt/c/reports/HARNESS-VHS-001/windows-interop'
+        interopWorkspaceRoot: undefined
       }),
       {
         commandTimeoutMs: undefined
