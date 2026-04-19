@@ -171,8 +171,8 @@ export async function runHarnessDashboardSmokeCli(
   });
 
   const repoRoot = deps.repoRoot ?? path.resolve(__dirname, '..', '..');
-  const cloneRoot = path.resolve(repoRoot, '.cache', 'harnesses');
-  const reportRoot = path.resolve(repoRoot, '.cache', 'harness-reports');
+  const cloneRoot = joinPreservingExplicitPathStyle(repoRoot, '.cache', 'harnesses');
+  const reportRoot = joinPreservingExplicitPathStyle(repoRoot, '.cache', 'harness-reports');
 
   const result = await (deps.runner ?? runHarnessDashboardSmoke)(args.harnessId, {
     cloneRoot,
@@ -272,3 +272,23 @@ export function maybeRunHarnessDashboardSmokeCliAsMain(
 }
 
 maybeRunHarnessDashboardSmokeCliAsMain();
+
+function usesExplicitPosixPathStyle(rootPath: string): boolean {
+  return rootPath.startsWith('/');
+}
+
+function usesExplicitWindowsPathStyle(rootPath: string): boolean {
+  return /^[A-Za-z]:[\\/]/.test(rootPath) || rootPath.startsWith('\\\\');
+}
+
+function joinPreservingExplicitPathStyle(rootPath: string, ...segments: string[]): string {
+  if (usesExplicitPosixPathStyle(rootPath)) {
+    return path.posix.join(rootPath, ...segments.map((segment) => segment.replace(/\\/g, '/')));
+  }
+
+  if (usesExplicitWindowsPathStyle(rootPath)) {
+    return path.win32.join(rootPath, ...segments.map((segment) => segment.replace(/\//g, '\\')));
+  }
+
+  return path.join(rootPath, ...segments);
+}

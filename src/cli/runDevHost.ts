@@ -49,17 +49,22 @@ export async function runDevHostCli(
     : (
         workspaceMetadata = await (
           deps.prepareFixtureWorkspace ?? prepareViHistoryDevHostWorkspace
-        )(path.join(runtimeRoot, 'workspace-fixture'))
+        )(joinPreservingExplicitPathStyle(runtimeRoot, 'workspace-fixture'))
       ).workspacePath;
 
   if (args.prepareWorkspaceOnly) {
     if (!workspaceMetadata) {
       workspaceMetadata = await (
         deps.prepareFixtureWorkspace ?? prepareViHistoryDevHostWorkspace
-      )(path.join(runtimeRoot, 'workspace-fixture'));
+      )(joinPreservingExplicitPathStyle(runtimeRoot, 'workspace-fixture'));
     }
     stdout.write(`Prepared VI History Suite dev-host workspace: ${workspaceMetadata.workspacePath}\n`);
-    stdout.write(`Eligible fixture: ${path.join(workspaceMetadata.workspacePath, workspaceMetadata.eligibleRelativePath)}\n`);
+    stdout.write(
+      `Eligible fixture: ${joinPreservingExplicitPathStyle(
+        workspaceMetadata.workspacePath,
+        workspaceMetadata.eligibleRelativePath
+      )}\n`
+    );
     return 'prepared';
   }
 
@@ -69,7 +74,7 @@ export async function runDevHostCli(
   const extensionDevelopmentPath = args.stageExtension
     ? await (deps.stageExtension ?? stageViHistoryDevHostExtension)(
         repoRoot,
-        path.join(runtimeRoot, 'extension-stage')
+        joinPreservingExplicitPathStyle(runtimeRoot, 'extension-stage')
       )
     : repoRoot;
 
@@ -137,6 +142,18 @@ function normalizeWorkspacePath(candidate: string): string {
   }
 
   return path.resolve(candidate);
+}
+
+function joinPreservingExplicitPathStyle(rootPath: string, ...segments: string[]): string {
+  if (rootPath.startsWith('/')) {
+    return path.posix.join(rootPath, ...segments.map((segment) => segment.replace(/\\/g, '/')));
+  }
+
+  if (/^[A-Za-z]:[\\/]/.test(rootPath) || rootPath.startsWith('\\\\')) {
+    return path.win32.join(rootPath, ...segments.map((segment) => segment.replace(/\//g, '\\')));
+  }
+
+  return path.join(rootPath, ...segments);
 }
 
 maybeRunDevHostCliAsMain();
