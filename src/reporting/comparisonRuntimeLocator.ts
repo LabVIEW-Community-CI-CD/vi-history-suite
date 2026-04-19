@@ -837,6 +837,9 @@ export async function locateComparisonRuntime(
       candidates
     };
   }
+  if (exactWindowsHostRuntime?.notes?.length) {
+    notes.push(...exactWindowsHostRuntime.notes);
+  }
   const hostRuntimeSurfaceFacts =
     platform === 'win32' && labviewExe
       ? await observeWindowsHostRuntimeSurfaceFacts(labviewExe.path, {
@@ -2256,7 +2259,32 @@ function resolveExactWindowsHostRuntime(
     };
   }
 
-  const labviewCli = matchingLabviewCliCandidates[0];
+  let labviewCli = matchingLabviewCliCandidates[0];
+  const notes: string[] = [];
+
+  if (!labviewCli && bitness === 'x64') {
+    const canonicalX86FallbackCandidates = candidates.filter(
+      (candidate) =>
+        candidate.kind === 'labview-cli' && candidate.exists && candidate.bitness === 'x86'
+    );
+
+    if (canonicalX86FallbackCandidates.length > 1) {
+      return {
+        blockedReason: 'labview-cli-ambiguous-for-bitness',
+        notes: [
+          `Installed compare found multiple canonical x86 LabVIEWCLI fallback surfaces while resolving requested LabVIEW ${requestedVersion} x64 execution, so local runtime preflight could not resolve one exact CLI path.`
+        ]
+      };
+    }
+
+    labviewCli = canonicalX86FallbackCandidates[0];
+    if (labviewCli) {
+      notes.push(
+        `Installed compare accepted the canonical x86 LabVIEWCLI surface for requested LabVIEW ${requestedVersion} x64 execution because no x64 LabVIEWCLI surface was present on the host.`
+      );
+    }
+  }
+
   if (!labviewCli) {
     return {
       blockedReason: 'labview-cli-not-found-for-bitness',
@@ -2269,7 +2297,8 @@ function resolveExactWindowsHostRuntime(
 
   return {
     labviewExe,
-    labviewCli
+    labviewCli,
+    notes: notes.length > 0 ? notes : undefined
   };
 }
 

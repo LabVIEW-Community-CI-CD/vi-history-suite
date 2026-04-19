@@ -1135,7 +1135,7 @@ describe('comparisonReportAction', () => {
       displayedEvidenceKind: 'packet',
       title: 'VI Comparison Report: foo.vi'
     });
-    expect(locateRuntime).toHaveBeenCalledWith('linux', {
+    expect(locateRuntime).toHaveBeenCalledWith(resolveRuntimePlatform(process.platform), {
       bitness: 'x86'
     });
     expect(persistComparisonReport).toHaveBeenCalledWith(

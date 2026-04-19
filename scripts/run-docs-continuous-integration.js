@@ -5,7 +5,7 @@ const fsp = require('node:fs/promises');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 
-const { createDocsGateSteps } = require('./run-docs-gate.js');
+const { createDocsGateSteps, resolveNodeToolArgs, resolveNodeToolCommand } = require('./run-docs-gate.js');
 
 const repoRoot = path.resolve(path.dirname(fs.realpathSync.native(__filename)), '..');
 const PUBLIC_DOCS_TEST_FILES = [
@@ -144,6 +144,7 @@ function resolveDocsContinuousIntegrationEvidenceDir(surface, explicitEvidenceDi
 
 function createDocsContinuousIntegrationSteps(options = {}) {
   const surface = options.surface ?? 'all';
+  const platform = options.platform ?? process.platform;
   const evidenceDir = resolveDocsContinuousIntegrationEvidenceDir(
     surface,
     options.evidenceDir,
@@ -159,8 +160,8 @@ function createDocsContinuousIntegrationSteps(options = {}) {
     {
       id: 'compile',
       title: 'Compile TypeScript surfaces',
-      command: 'npm',
-      args: ['run', 'compile'],
+      command: resolveNodeToolCommand('npm', platform),
+      args: resolveNodeToolArgs('npm', ['run', 'compile'], platform),
       stdoutFileName: 'compile.stdout.log',
       stderrFileName: 'compile.stderr.log'
     }
@@ -171,8 +172,8 @@ function createDocsContinuousIntegrationSteps(options = {}) {
       {
         id: 'public-docs-tests',
         title: 'Run public-user documentation alignment tests',
-        command: 'npx',
-        args: ['vitest', 'run', ...PUBLIC_DOCS_TEST_FILES],
+        command: resolveNodeToolCommand('npx', platform),
+        args: resolveNodeToolArgs('npx', ['vitest', 'run', ...PUBLIC_DOCS_TEST_FILES], platform),
         stdoutFileName: 'public-docs-tests.stdout.log',
         stderrFileName: 'public-docs-tests.stderr.log'
       },
@@ -207,8 +208,8 @@ function createDocsContinuousIntegrationSteps(options = {}) {
       {
         id: 'internal-docs-tests',
         title: 'Run internal-authority documentation alignment tests',
-        command: 'npx',
-        args: ['vitest', 'run', ...INTERNAL_DOCS_TEST_FILES],
+        command: resolveNodeToolCommand('npx', platform),
+        args: resolveNodeToolArgs('npx', ['vitest', 'run', ...INTERNAL_DOCS_TEST_FILES], platform),
         stdoutFileName: 'internal-docs-tests.stdout.log',
         stderrFileName: 'internal-docs-tests.stderr.log'
       },
@@ -456,7 +457,8 @@ async function runDocsContinuousIntegration(argv = process.argv.slice(2), deps =
   const steps = createDocsContinuousIntegrationSteps({
     surface: parsed.surface,
     skipLinks: parsed.skipLinks,
-    evidenceDir
+    evidenceDir,
+    platform: deps.platform ?? process.platform
   });
   const stepResults = [];
   let status = 'passed';

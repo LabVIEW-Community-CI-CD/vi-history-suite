@@ -1157,28 +1157,30 @@ function normalizeArtifactPath(filePath, options = {}) {
     throw new Error('Missing artifact path.');
   }
 
+  const windowsWorkspaceRoot = normalizeWorkspaceRootPath(options.windowsWorkspaceRoot);
+  const linuxWorkspaceRoot = normalizeWorkspaceRootPath(options.linuxWorkspaceRoot);
   let normalized = filePath.replace(/\\/g, '/');
   if (normalized.startsWith('C:/workspace/.cache/')) {
-    if (!options.windowsWorkspaceRoot) {
+    if (!windowsWorkspaceRoot) {
       throw new Error(`Cannot resolve Windows benchmark workspace cache path: ${filePath}`);
     }
     return path.join(
-      options.windowsWorkspaceRoot,
+      windowsWorkspaceRoot,
       'cache',
       normalized.slice('C:/workspace/.cache/'.length)
     );
   }
   if (normalized.startsWith('C:/workspace/')) {
-    if (!options.windowsWorkspaceRoot) {
+    if (!windowsWorkspaceRoot) {
       throw new Error(`Cannot resolve Windows benchmark workspace path: ${filePath}`);
     }
-    return path.join(options.windowsWorkspaceRoot, normalized.slice('C:/workspace/'.length));
+    return path.join(windowsWorkspaceRoot, normalized.slice('C:/workspace/'.length));
   }
   if (normalized.startsWith('/workspace/')) {
-    if (!options.linuxWorkspaceRoot) {
+    if (!linuxWorkspaceRoot) {
       throw new Error(`Cannot resolve Linux benchmark workspace path: ${filePath}`);
     }
-    return path.join(options.linuxWorkspaceRoot, normalized.slice('/workspace/'.length));
+    return path.join(linuxWorkspaceRoot, normalized.slice('/workspace/'.length));
   }
   if (/^[A-Za-z]:\//.test(normalized)) {
     if (process.platform === 'win32') {
@@ -1187,6 +1189,22 @@ function normalizeArtifactPath(filePath, options = {}) {
     return path.join('/mnt', normalized[0].toLowerCase(), normalized.slice(3));
   }
   return normalized;
+}
+
+function normalizeWorkspaceRootPath(rootPath) {
+  if (typeof rootPath !== 'string' || rootPath.length === 0) {
+    return rootPath;
+  }
+
+  if (process.platform === 'win32') {
+    const mountedWindowsPath = rootPath.match(/^\/mnt\/([a-zA-Z])\/(.*)$/);
+    if (mountedWindowsPath) {
+      const [, driveLetter, remainder] = mountedWindowsPath;
+      return `${driveLetter.toUpperCase()}:\\${remainder.replace(/\//g, '\\')}`;
+    }
+  }
+
+  return rootPath;
 }
 
 function isEligibleWindowsBenchmarkImageSurface(summary, dashboardSmoke) {

@@ -56,10 +56,10 @@ export interface LaunchViHistoryDevHostDeps {
 }
 
 const DEFAULT_WINDOWS_CODE_PATH_CANDIDATES = [
-  '/mnt/c/Program Files/Microsoft VS Code/Code.exe',
-  '/mnt/c/Users/sveld/AppData/Local/Programs/Microsoft VS Code/Code.exe'
+  'C:\\Program Files\\Microsoft VS Code\\Code.exe',
+  'C:\\Users\\sveld\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe'
 ];
-const DEFAULT_WINDOWS_RUNTIME_ROOT = '/mnt/c/Users/sveld/AppData/Local/Temp/vihs-dev-host';
+const DEFAULT_WINDOWS_RUNTIME_ROOT = 'C:\\Users\\sveld\\AppData\\Local\\Temp\\vihs-dev-host';
 
 export function getViHistoryDevHostUsage(): string {
   return [
@@ -130,21 +130,25 @@ export function parseViHistoryDevHostArgs(argv: string[]): ViHistoryDevHostCliAr
   };
 }
 
-export function toWindowsPath(
-  value: string,
-  distroName: string = (process.env.WSL_DISTRO_NAME ?? 'Ubuntu').trim() || 'Ubuntu'
-): string {
-  if (value.startsWith('/mnt/') && value.length > 7) {
-    const driveLetter = value[5].toUpperCase();
-    const remainder = value.slice(7).replaceAll('/', '\\');
-    return `${driveLetter}:\\${remainder}`;
+export function toWindowsPath(value: string): string {
+  const trimmed = value.trim();
+  if (/^[A-Za-z]:[\\/]/.test(trimmed) || trimmed.startsWith('\\\\')) {
+    return path.win32.normalize(trimmed);
   }
 
-  if (value.startsWith('/')) {
-    return `\\\\wsl.localhost\\${distroName}${value.replaceAll('/', '\\')}`;
+  if (trimmed.startsWith('/mnt/') && trimmed.length > 7) {
+    const driveLetter = trimmed[5].toUpperCase();
+    const remainder = trimmed.slice(7).replaceAll('/', '\\');
+    return path.win32.normalize(`${driveLetter}:\\${remainder}`);
   }
 
-  return value;
+  if (trimmed.startsWith('/')) {
+    throw new Error(
+      `Unsupported non-Windows path for Windows dev-host execution: ${value}.`
+    );
+  }
+
+  return path.win32.normalize(trimmed.replaceAll('/', '\\'));
 }
 
 export async function canWriteDirectory(directoryPath: string): Promise<boolean> {

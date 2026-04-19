@@ -134,7 +134,7 @@ describe('gitCli parsing', () => {
     const trackedFiles = await listTrackedFiles(repoRoot);
 
     expect(head).toMatch(/^[0-9a-f]{40}$/);
-    expect(resolvedRoot).toBe(repoRoot);
+    expect(path.normalize(resolvedRoot)).toBe(path.normalize(repoRoot));
     expect(trackedFiles).toEqual(['folder with spaces/other.vi', 'nested/sample.vi']);
   });
 

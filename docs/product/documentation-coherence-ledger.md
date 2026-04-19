@@ -42,7 +42,7 @@ source inference or chat memory.
   - result: `pass`
 - Standards-guided release gate:
   - command:
-    `python3 /mnt/c/Users/sveld/.codex/skills/repo-standards-review/scripts/run_assurance.py /home/sveld/code/standards/vi-history-suite --profile release-gate`
+    `py -3 "$env:USERPROFILE\\.codex\\skills\\repo-standards-review\\scripts\\run_assurance.py" . --profile release-gate`
   - result:
     `coverage PASS`, `cm PASS`, `req PASS`, `arch PASS`, `doc PASS`, `dod PASS`
 
@@ -87,9 +87,9 @@ source inference or chat memory.
 
 ## Residual External Risks
 
-- The companion `repo-standards-review` release is tagged locally as `v0.2.2`,
-  but GitLab release-publication proof could not be confirmed through the local
-  API path on this machine.
+- The companion `repo-standards-review` release on this machine is now
+  `v0.2.18`; older local references such as `v0.2.2` are historical and
+  should not be treated as the current outer assurance baseline.
 - The docs-authoring image is fully wired in the repo and CI, but local Docker
   runtime proof is still environment-dependent on this machine.
 - `research-implementation-index.json` remains a curated capability-status

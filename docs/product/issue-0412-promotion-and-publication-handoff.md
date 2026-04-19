@@ -3,7 +3,9 @@
 ## Purpose
 
 Retain the next governed move after the active branch reached clean external
-compliance under released `repo-standards-review` `v0.2.9`.
+compliance under the historical released `repo-standards-review` `v0.2.9`
+closeout, while the current outer assurance baseline has moved to released
+`repo-standards-review` `v0.2.18`.
 
 This packet now exists so future sessions do not reopen completed standards
 work when the remaining work is really historical branch-transition context,
@@ -28,7 +30,10 @@ runtime-provider public-acceptance gate.
 - explicit compare preflight is the active branch workflow
 - authority/internal control-plane surfaces now reflect the host-default plus
   bounded expert Docker doctrine truthfully
-- released `repo-standards-review` `v0.2.9` passes cleanly on this branch
+- the retained `repo-standards-review` `v0.2.9` closeout still documents the
+  historical compliance uplift on this branch
+- the current outer assurance baseline for fresh audits is released
+  `repo-standards-review` `v0.2.18`
 - the branch has already been promoted into `develop`
 
 ## Remaining Work After Compliance Closeout

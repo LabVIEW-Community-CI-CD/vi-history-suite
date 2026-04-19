@@ -24,6 +24,10 @@ import {
   runDevHostCliMain
 } from '../../src/cli/runDevHost';
 
+const WINDOWS_REPO_ROOT = 'D:\\workspace\\vi-history-suite';
+const WINDOWS_RUNTIME_ROOT = 'C:\\Users\\sveld\\AppData\\Local\\Temp\\vihs-dev-host';
+const WINDOWS_WORKSPACE_ROOT = 'C:\\dev\\labview-icon-editor';
+
 describe('runDevHostCli', () => {
   it('parses deterministic fast-loop args and usage', () => {
     expect(parseViHistoryDevHostArgs([])).toEqual({
@@ -66,47 +70,40 @@ describe('runDevHostCli', () => {
 
   it('builds a stable launch plan for a reusable dev host', () => {
     const plan = buildViHistoryDevHostLaunchPlan({
-      codeExecutablePath: '/mnt/c/Program Files/Microsoft VS Code/Code.exe',
-      runtimeRoot: '/mnt/c/Users/sveld/AppData/Local/Temp/vihs-dev-host',
-      repoRoot: '/home/sveld/code/standards/vi-history-suite',
-      workspacePath: '/mnt/c/dev/labview-icon-editor',
-      extensionDevelopmentPath: '/home/sveld/code/standards/vi-history-suite',
+      codeExecutablePath: 'C:\\Program Files\\Microsoft VS Code\\Code.exe',
+      runtimeRoot: WINDOWS_RUNTIME_ROOT,
+      repoRoot: WINDOWS_REPO_ROOT,
+      workspacePath: WINDOWS_WORKSPACE_ROOT,
+      extensionDevelopmentPath: WINDOWS_REPO_ROOT,
       preparedFixtureWorkspace: false,
       extensionMode: 'direct'
     });
 
-    expect(plan.windowsWorkspacePath).toBe('C:\\dev\\labview-icon-editor');
+    expect(plan.windowsWorkspacePath).toBe(WINDOWS_WORKSPACE_ROOT);
     expect(plan.windowsUserDataDir).toBe(
       'C:\\Users\\sveld\\AppData\\Local\\Temp\\vihs-dev-host\\user-data'
     );
     expect(plan.launchArgs).toContain('--new-window');
     expect(plan.launchArgs).toContain('--disable-workspace-trust');
-    expect(
-      plan.launchArgs.some(
-        (argument) =>
-          argument.startsWith('--extensionDevelopmentPath=\\\\wsl.localhost\\') &&
-          argument.endsWith('\\home\\sveld\\code\\standards\\vi-history-suite')
-      )
-    ).toBe(
-      true
-    );
+    expect(plan.launchArgs).toContain(`--extensionDevelopmentPath=${WINDOWS_REPO_ROOT}`);
   });
 
   it('prepares the reusable fixture workspace without requiring Code.exe', async () => {
     const writes: string[] = [];
     const prepareFixtureWorkspace = vi.fn().mockResolvedValue({
-      workspacePath: '/tmp/vihs-dev-host/workspace-fixture',
+      workspacePath: 'C:\\Users\\sveld\\AppData\\Local\\Temp\\vihs-dev-host\\workspace-fixture',
       eligibleRelativePath: 'fixtures/eligible-dev-loop.vi',
       ineligibleRelativePath: 'fixtures/ineligible-dev-loop.bin',
-      metadataPath: '/tmp/vihs-dev-host/workspace-fixture/.vihs-dev-host-meta.json'
+      metadataPath:
+        'C:\\Users\\sveld\\AppData\\Local\\Temp\\vihs-dev-host\\workspace-fixture\\.vihs-dev-host-meta.json'
     });
     const resolveCodeExecutablePath = vi.fn();
     const launcher = vi.fn();
 
     await expect(
       runDevHostCli(['--prepare-workspace-only'], {
-        repoRoot: '/workspace/vi-history-suite',
-        resolveRuntimeRoot: async () => '/tmp/vihs-dev-host',
+        repoRoot: WINDOWS_REPO_ROOT,
+        resolveRuntimeRoot: async () => WINDOWS_RUNTIME_ROOT,
         resolveCodeExecutablePath,
         prepareFixtureWorkspace,
         launcher,
@@ -119,10 +116,14 @@ describe('runDevHostCli', () => {
     ).resolves.toBe('prepared');
 
     expect(resolveCodeExecutablePath).not.toHaveBeenCalled();
-    expect(prepareFixtureWorkspace).toHaveBeenCalledWith('/tmp/vihs-dev-host/workspace-fixture');
+    expect(prepareFixtureWorkspace).toHaveBeenCalledWith(
+      'C:\\Users\\sveld\\AppData\\Local\\Temp\\vihs-dev-host\\workspace-fixture'
+    );
     expect(launcher).not.toHaveBeenCalled();
     expect(writes.join('')).toContain('Prepared VI History Suite dev-host workspace');
-    expect(writes.join('')).toContain('fixtures/eligible-dev-loop.vi');
+    expect(writes.join('')).toContain(
+      'Eligible fixture: C:\\Users\\sveld\\AppData\\Local\\Temp\\vihs-dev-host\\workspace-fixture\\fixtures\\eligible-dev-loop.vi'
+    );
   });
 
   it('prepares an explicitly requested relative workspace path without resolving Code.exe', async () => {
@@ -137,8 +138,8 @@ describe('runDevHostCli', () => {
 
     await expect(
       runDevHostCli(['--workspace-path', 'relative-dev-workspace', '--prepare-workspace-only'], {
-        repoRoot: '/workspace/vi-history-suite',
-        resolveRuntimeRoot: async () => '/tmp/vihs-dev-host',
+        repoRoot: WINDOWS_REPO_ROOT,
+        resolveRuntimeRoot: async () => WINDOWS_RUNTIME_ROOT,
         resolveCodeExecutablePath,
         prepareFixtureWorkspace,
         stdout: {
@@ -150,19 +151,23 @@ describe('runDevHostCli', () => {
     ).resolves.toBe('prepared');
 
     expect(resolveCodeExecutablePath).not.toHaveBeenCalled();
-    expect(prepareFixtureWorkspace).toHaveBeenCalledWith('/tmp/vihs-dev-host/workspace-fixture');
+    expect(prepareFixtureWorkspace).toHaveBeenCalledWith(
+      'C:\\Users\\sveld\\AppData\\Local\\Temp\\vihs-dev-host\\workspace-fixture'
+    );
     expect(writes.join('')).toContain(path.resolve('relative-dev-workspace'));
   });
 
   it('launches the dev host in direct or staged mode with a stable summary', async () => {
     const writes: string[] = [];
     const launcher = vi.fn().mockResolvedValue(undefined);
-    const stageExtension = vi.fn().mockResolvedValue('/tmp/vihs-dev-host/extension-stage');
+    const stageExtension = vi
+      .fn()
+      .mockResolvedValue('C:\\Users\\sveld\\AppData\\Local\\Temp\\vihs-dev-host\\extension-stage');
 
     await expect(
       runDevHostCli(['--workspace-path', 'C:\\dev\\labview-icon-editor', '--stage-extension'], {
-        repoRoot: '/workspace/vi-history-suite',
-        resolveRuntimeRoot: async () => '/tmp/vihs-dev-host',
+        repoRoot: WINDOWS_REPO_ROOT,
+        resolveRuntimeRoot: async () => WINDOWS_RUNTIME_ROOT,
         resolveCodeExecutablePath: () => 'C:\\Program Files\\Microsoft VS Code\\Code.exe',
         stageExtension,
         launcher,
@@ -175,8 +180,8 @@ describe('runDevHostCli', () => {
     ).resolves.toBe('launched');
 
     expect(stageExtension).toHaveBeenCalledWith(
-      '/workspace/vi-history-suite',
-      '/tmp/vihs-dev-host/extension-stage'
+      WINDOWS_REPO_ROOT,
+      'C:\\Users\\sveld\\AppData\\Local\\Temp\\vihs-dev-host\\extension-stage'
     );
     expect(launcher).toHaveBeenCalledTimes(1);
     const launchedPlan = launcher.mock.calls[0]?.[0];
@@ -197,8 +202,8 @@ describe('runDevHostCli', () => {
 
     await expect(
       runDevHostCli(['--workspace-path', 'relative-dev-workspace'], {
-        repoRoot: '/workspace/vi-history-suite',
-        resolveRuntimeRoot: async () => '/tmp/vihs-dev-host',
+        repoRoot: WINDOWS_REPO_ROOT,
+        resolveRuntimeRoot: async () => WINDOWS_RUNTIME_ROOT,
         resolveCodeExecutablePath: () => 'C:\\Program Files\\Microsoft VS Code\\Code.exe',
         stageExtension,
         launcher,
@@ -214,7 +219,7 @@ describe('runDevHostCli', () => {
     expect(launcher).toHaveBeenCalledTimes(1);
     const launchedPlan = launcher.mock.calls[0]?.[0];
     expect(launchedPlan.extensionMode).toBe('direct');
-    expect(launchedPlan.extensionDevelopmentPath).toBe('/workspace/vi-history-suite');
+    expect(launchedPlan.extensionDevelopmentPath).toBe(WINDOWS_REPO_ROOT);
     expect(launchedPlan.workspacePath).toBe(path.resolve('relative-dev-workspace'));
     expect(writes.join('')).toContain('Extension mode: direct');
   });
@@ -274,8 +279,8 @@ describe('runDevHostCli', () => {
 
   it('normalizes WSL paths and resolves runtime roots for the fast loop', async () => {
     expect(toWindowsPath('/mnt/c/dev/labview-icon-editor')).toBe('C:\\dev\\labview-icon-editor');
-    expect(toWindowsPath('/home/sveld/code/standards/vi-history-suite', 'Ubuntu')).toBe(
-      '\\\\wsl.localhost\\Ubuntu\\home\\sveld\\code\\standards\\vi-history-suite'
+    expect(() => toWindowsPath('/home/sveld/code/standards/vi-history-suite')).toThrow(
+      /Unsupported non-Windows path/
     );
     expect(toWindowsPath('C:\\dev\\labview-icon-editor')).toBe('C:\\dev\\labview-icon-editor');
 
@@ -283,8 +288,8 @@ describe('runDevHostCli', () => {
     const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-dev-host-repo-'));
     expect(await canWriteDirectory(writableRoot)).toBe(true);
     expect(
-      await resolveViHistoryDevHostRuntimeRoot('/workspace/vi-history-suite', async () => true)
-    ).toBe('/mnt/c/Users/sveld/AppData/Local/Temp/vihs-dev-host');
+      await resolveViHistoryDevHostRuntimeRoot(WINDOWS_REPO_ROOT, async () => true)
+    ).toBe(WINDOWS_RUNTIME_ROOT);
     expect(await resolveViHistoryDevHostRuntimeRoot(repoRoot, async () => false)).toBe(
       path.join(repoRoot, '.cache', 'dev-host')
     );
@@ -351,9 +356,9 @@ describe('runDevHostCli', () => {
     const plan = buildViHistoryDevHostLaunchPlan({
       codeExecutablePath: explicitCodePath,
       runtimeRoot: path.join(os.tmpdir(), 'vihs-dev-host-launch'),
-      repoRoot: '/home/sveld/code/standards/vi-history-suite',
-      workspacePath: '/mnt/c/dev/labview-icon-editor',
-      extensionDevelopmentPath: '/home/sveld/code/standards/vi-history-suite',
+      repoRoot: WINDOWS_REPO_ROOT,
+      workspacePath: WINDOWS_WORKSPACE_ROOT,
+      extensionDevelopmentPath: WINDOWS_REPO_ROOT,
       preparedFixtureWorkspace: true,
       extensionMode: 'direct'
     });
@@ -368,11 +373,11 @@ describe('runDevHostCli', () => {
     expect(unref).toHaveBeenCalled();
     expect(
       formatViHistoryDevHostSummary(plan, {
-        workspacePath: '/tmp/workspace-fixture',
+        workspacePath: 'C:\\tmp\\workspace-fixture',
         eligibleRelativePath: 'fixtures/eligible-dev-loop.vi',
         ineligibleRelativePath: 'fixtures/ineligible-dev-loop.bin',
-        metadataPath: '/tmp/workspace-fixture/.vihs-dev-host-meta.json'
+        metadataPath: 'C:\\tmp\\workspace-fixture\\.vihs-dev-host-meta.json'
       }).join('\n')
-    ).toContain('Eligible fixture: /tmp/workspace-fixture/fixtures/eligible-dev-loop.vi');
+    ).toContain('Eligible fixture: C:\\tmp\\workspace-fixture\\fixtures\\eligible-dev-loop.vi');
   });
 });

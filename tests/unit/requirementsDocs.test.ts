@@ -247,13 +247,19 @@ describe('requirements documentation coherence', () => {
     expect(srs).toContain('close the remaining LabVIEW 2026 operation-matrix admission seams');
     expect(srs).toContain('prove `CreateComparisonReport` admission on each supported LabVIEW 2026 host bundle');
     expect(srs).toContain('remain on the exact released Docker-only baseline until the host-default provider contract is source-backed');
+    expect(srs).toContain('VHS-REQ-551');
+    expect(srs).toContain(
+      'shall use native Windows host execution and native Windows-container execution'
+    );
 
     expect(rtm).toContain('VHS-REQ-541');
     expect(rtm).toContain('VHS-REQ-549');
+    expect(rtm).toContain('VHS-REQ-551');
     expect(rtm).toContain('TEST-UNIT-349');
     expect(rtm).toContain('TEST-INTEG-011');
     expect(rtm).toContain('TEST-SMOKE-022');
     expect(rtm).toContain('TEST-DOC-109');
+    expect(rtm).toContain('TEST-DOC-110');
     expect(rtm).toContain('docs/product/runtime-provider-public-acceptance-gate.md');
     expect(rtm).toContain('docs/product/runtime-provider-public-acceptance-gate.json');
     expect(rtm).toContain('docs/release-procedure.md');
@@ -269,6 +275,9 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('TEST-SMOKE-020');
     expect(testPlan).toContain('TEST-DOC-108');
     expect(testPlan).toContain('TEST-DOC-109');
+    expect(testPlan).toContain('TEST-DOC-110');
+    expect(testPlan).toContain('native Windows only');
+    expect(testPlan).toContain('WSL is retained historical context only');
     expect(testPlan).toContain('runtime-provider public-acceptance gate');
     expect(testPlan).toContain('release procedure');
   });

@@ -123,7 +123,9 @@ describe('execution-policy control plane', () => {
     expect(currentState).toContain('active disposable Windows integration-host profile');
     expect(currentState).toContain('already-running VS Code session is not yet end-to-end proven');
     expect(currentState).toContain('reload or restart the');
-    expect(currentState).toContain('released `repo-standards-review` `v0.2.9` compliance closeout');
+    expect(currentState).toContain('historical released `repo-standards-review` `v0.2.9` compliance closeout');
+    expect(currentState).toContain('current outer');
+    expect(currentState).toContain('assurance baseline is released `repo-standards-review` `v0.2.18`');
     expect(currentState).toContain('remaining active slices are the unresolved live active-settings');
     expect(currentState).toContain('`TRANCHE-012`: Post-release sustainment and release cadence');
     expect(currentState).toContain(
@@ -135,6 +137,9 @@ describe('execution-policy control plane', () => {
     expect(currentState).toContain('current exact released installed extension is still Docker-only');
     expect(currentState).toContain('installed manifest/settings');
     expect(currentState).toContain('installed manifest/settings');
+    expect(currentState).toContain('WSL is not part of the active Windows x64 private-release contract');
+    expect(currentState).toContain('native Windows host execution');
+    expect(currentState).toContain('Docker Desktop Windows-container execution');
     expect(currentState).toContain('public GitHub facade repo is the public source product surface');
     expect(currentState).toContain('public GitHub user wiki now exists');
     expect(queue).toContain('"id": "TRANCHE-016"');
@@ -218,6 +223,9 @@ describe('execution-policy control plane', () => {
     expect(program).toContain('active disposable Windows integration-host profile');
     expect(program).toContain('already-running VS Code session');
     expect(program).toContain('reload or restart the window before using Compare');
+    expect(program).toContain('WSL is not part of the active Windows x64 private-release path');
+    expect(program).toContain('Docker Desktop in');
+    expect(program).toContain('Windows-container mode');
     expect(program).toContain('issue-0412-promotion-and-publication-handoff.md');
     expect(program).toContain('runtime-provider-public-acceptance-gate.md');
     expect(program).toContain('installed manifest/settings');
@@ -236,6 +244,8 @@ describe('execution-policy control plane', () => {
     expect(issueNext).toContain('active disposable');
     expect(issueNext).toContain('direct live mutation of the already-running VS Code session');
     expect(issueNext).toContain('reload or restart the window before using Compare');
+    expect(issueNext).toContain('keep WSL out of the active Windows x64 private-release contract');
+    expect(issueNext).toContain('Docker Desktop');
     expect(issueNext).toContain('keep packaged/public docs on the exact released Docker-only baseline');
     expect(issueNext).toContain('provider/version/bitness');
     expect(issueNext).toContain('explicit compare preflight state');

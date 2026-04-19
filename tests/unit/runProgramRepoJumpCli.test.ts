@@ -107,11 +107,11 @@ describe('runProgramRepoJumpCli', () => {
         { CODEX_HOME: '/tmp/codex-home' },
         { homedir: () => '/tmp/home' }
       )
-    ).toContain('/tmp/codex-home/skills/repo-standards-review');
+    ).toContain(path.join('/tmp/codex-home', 'skills', 'repo-standards-review'));
 
     expect(
       resolveCodexSkillPathCandidates('repo-standards-review', {}, { homedir: () => '/tmp/home' })[0]
-    ).toBe('/tmp/home/.codex/skills/repo-standards-review');
+    ).toBe(path.join('/tmp/home', '.codex', 'skills', 'repo-standards-review'));
   });
 
   it('renders text or json output and supports help plus main-module execution', async () => {

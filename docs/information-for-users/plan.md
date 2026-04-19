@@ -9,7 +9,7 @@
   authority direction, and the public-evaluation routes
 - Standards posture: selected process duties in `26514 §§5-6` and selected
   product duties in `26514 §§7-9`, adopted through released
-  `repo-standards-review v0.2.13`
+  `repo-standards-review v0.2.18`
 - Claim boundary: Markdown-based repo documentation plus release-versioned
   evidence; this package does not assert blanket full conformance to every
   `26514` clause
@@ -64,13 +64,13 @@ package. The external starter docs now include `docs/user-guide.md`,
 | Product duties | selected product duties in `26514 §§7-9` for route docs, FAQ, glossary, command reference, audience model, navigation, delivery profile, and style governance |
 | Delivery scope | Markdown-based repo documentation scope plus retained release-versioned evidence model |
 | Out of scope | blanket `26514` full-conformance claims, copied self-application-only `repo-standards-review` packet paths, video, audio, embedded help, and chatbot or VRS behavior |
-| Evidence model | repo-native docs gate plus the released `repo-standards-review v0.2.13` compliance workbench and exact checkers |
+| Evidence model | repo-native docs gate plus the released `repo-standards-review v0.2.18` compliance workbench and exact checkers |
 
 ## Documentation Planning Inputs
 
 | Input | Current retained decision |
 | --- | --- |
-| Standards source | released `repo-standards-review v0.2.13` plus truthful `vi-history-suite` authority surfaces |
+| Standards source | released `repo-standards-review v0.2.18` plus truthful `vi-history-suite` authority surfaces |
 | Stable skill contract reference | `vi-history-suite` has no `SKILL.md`; use `README.md`, `INSTALL.md`, and `docs/documentation-workbench.md` instead |
 | Team and roles | one maintainer authoring the package, with installed users, source evaluators, and reviewers as the primary user families |
 | Deliverables inventory | `README.md`, `INSTALL.md`, docs workbench, audience model, navigation, delivery profile, style guide, glossary, FAQ, command reference, and durable release/public evidence routes |
@@ -85,7 +85,7 @@ package. The external starter docs now include `docs/user-guide.md`,
 | Reuse strategy | keep compact support answers here, but move stable task or policy doctrine back into `README.md`, `INSTALL.md`, `PROGRAM-0005`, `ISSUE-0412`, `docs/documentation-workbench.md`, or release/public evidence surfaces |
 | Version posture | keep the exact released installed baseline explicit as `v1.2.2` Docker-only and x64-only until a later publication tranche changes that truth |
 | Branch posture | keep the active `develop` direction explicit as host-default Windows local `LabVIEWCLI` plus one bounded expert Docker provider |
-| Validation split | use the repo-native docs workbench for authoring and the released `repo-standards-review v0.2.13` compliance workbench as the outer assurance baseline |
+| Validation split | use the repo-native docs workbench for authoring and the released `repo-standards-review v0.2.18` compliance workbench as the outer assurance baseline |
 
 ## Authority And Source Inputs
 
@@ -96,7 +96,7 @@ package. The external starter docs now include `docs/user-guide.md`,
 | Docs authoring authority | `docs/documentation-workbench.md` owns the repo-native docs-workbench commands and boundaries |
 | Release-control authority | `docs/release-procedure.md` and `docs/cm/cm-plan.md` define the governed release path |
 | Durable evidence route | `docs/product/public-release-candidate.md` plus the public source/wiki publication ledgers are the retained public evidence path |
-| External assurance authority | released `repo-standards-review v0.2.13` is the current outer standards baseline for this tranche |
+| External assurance authority | released `repo-standards-review v0.2.18` is the current outer standards baseline for this tranche |
 
 The stable skill contract reference for this repo is the explicit absence of a repo-local `SKILL.md` plus the governed entry-route set above.
 
@@ -208,8 +208,8 @@ This section is the section-to-topic-role map for the current bounded package.
 - Release-facing quality evidence:
   - repo-native docs gate
   - repo-native docs workbench gate
-  - released `repo-standards-review v0.2.13` exact checker set
-  - released `repo-standards-review v0.2.13` compliance workbench release gate
+  - released `repo-standards-review v0.2.18` exact checker set
+  - released `repo-standards-review v0.2.18` compliance workbench release gate
 
 ## Tooling And Validation
 
@@ -217,9 +217,9 @@ This section is the section-to-topic-role map for the current bounded package.
 - Repo-native docs workbench gate:
   `node scripts/runDocsWorkbenchDocker.js gate`
 - Released external release gate:
-  `docker run --rm -v /path/to/repo:/target registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:v0.2.13 python3 scripts/run_assurance.py /target --profile release-gate`
+  `docker run --rm -v /path/to/repo:/target registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:v0.2.18 python3 scripts/run_assurance.py /target --profile release-gate`
 - Released external user-information checker:
-  `python3 /tmp/repo-standards-review-v0.2.13-tag/scripts/external_user_information_check.py /home/sveld/code/standards/vi-history-suite-user-rounds --json`
+  `py -3 "$env:USERPROFILE\\.codex\\skills\\repo-standards-review\\scripts\\external_user_information_check.py" . --json`
 
 ## Review And Update Triggers
 

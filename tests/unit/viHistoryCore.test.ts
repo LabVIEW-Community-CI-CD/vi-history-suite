@@ -124,7 +124,7 @@ describe('viHistoryModel', () => {
 
     const eligibility = await evaluateViEligibilityForFsPath(targetPath);
 
-    expect(eligibility.repositoryRoot).toBe(repoRoot);
+    expect(path.normalize(eligibility.repositoryRoot)).toBe(path.normalize(repoRoot));
     expect(eligibility.relativePath).toBe('nested/content-detected.bin');
     expect(eligibility.signature).toBe('LVCC');
     expect(eligibility.commitHashes).toHaveLength(2);
@@ -145,7 +145,7 @@ describe('viHistoryModel', () => {
 
     const viewModel = await loadViHistoryViewModelFromFsPath(targetPath);
 
-    expect(viewModel.repositoryRoot).toBe(repoRoot);
+    expect(path.normalize(viewModel.repositoryRoot)).toBe(path.normalize(repoRoot));
     expect(viewModel.repositoryName).toBe(path.basename(repoRoot));
     expect(viewModel.relativePath).toBe('nested/default-history.weird');
     expect(viewModel.signature).toBe('LVIN');

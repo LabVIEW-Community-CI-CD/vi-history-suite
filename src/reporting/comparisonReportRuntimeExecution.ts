@@ -1697,12 +1697,20 @@ function buildLinuxContainerWorkspaceLayout(
     leftFilename,
     rightFilename,
     reportFilename,
-    leftFilePath: path.join(hostLayout.stagingDirectory, leftFilename),
-    rightFilePath: path.join(hostLayout.stagingDirectory, rightFilename),
-    reportFilePath: path.join(hostLayout.reportDirectory, reportFilename),
+    leftFilePath: joinPreservingExplicitPathStyle(hostLayout.stagingDirectory, leftFilename),
+    rightFilePath: joinPreservingExplicitPathStyle(hostLayout.stagingDirectory, rightFilename),
+    reportFilePath: joinPreservingExplicitPathStyle(hostLayout.reportDirectory, reportFilename),
     reportIdentityFilenames: [leftFilename, rightFilename],
     reportTextReplacements: replacements
   };
+}
+
+function joinPreservingExplicitPathStyle(rootPath: string, ...segments: string[]): string {
+  if (rootPath.startsWith('/')) {
+    return path.posix.join(rootPath, ...segments.map((segment) => segment.replace(/\\/g, '/')));
+  }
+
+  return path.join(rootPath, ...segments);
 }
 
 function buildLinuxContainerRuntimeFilenameAlias(filename: string): string {
@@ -1884,7 +1892,10 @@ export async function prepareWindowsContainerExecutionContext(
     };
   }
 
-  const hostTempDirectory = path.join(hostLayout.reportDirectory, 'container-temp');
+  const hostTempDirectory = joinPreservingExplicitPathStyle(
+    hostLayout.reportDirectory,
+    'container-temp'
+  );
   const hostTempDirectoryWindows = path.win32.join(hostReportDirectory, 'container-temp');
   await deps.mkdir(hostTempDirectory, { recursive: true });
 
@@ -1978,7 +1989,10 @@ export async function prepareLinuxContainerExecutionContext(
     };
   }
 
-  const hostTempDirectory = path.join(hostLayout.reportDirectory, 'container-temp');
+  const hostTempDirectory = joinPreservingExplicitPathStyle(
+    hostLayout.reportDirectory,
+    'container-temp'
+  );
   await deps.mkdir(hostTempDirectory, { recursive: true });
   const workspaceLayout = buildLinuxContainerWorkspaceLayout(record, hostLayout);
   if (workspaceLayout.leftFilePath !== hostLayout.leftFilePath) {

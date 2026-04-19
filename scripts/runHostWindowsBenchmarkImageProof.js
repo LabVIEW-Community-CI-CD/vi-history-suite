@@ -12,7 +12,7 @@ const DEFAULT_HARNESS_ID = 'HARNESS-VHS-002';
 const DEFAULT_DOCKER_CONTEXT = 'desktop-windows';
 const DEFAULT_REPO_ROOT = path.resolve(__dirname, '..');
 const DEFAULT_PROOF_ROOT_LINUX =
-  '/mnt/c/Users/sveld/AppData/Local/VI History Suite/windows-benchmark-image-proof';
+  'C:\\Users\\sveld\\AppData\\Local\\VI History Suite\\windows-benchmark-image-proof';
 const COMPARABLE_PREFIX_PACKET_RELATIVE = path.join(
   'docs',
   'product',
@@ -49,12 +49,12 @@ const CONTAINER_BOOTSTRAP_COMMAND = [
 ].join(' ');
 const LOCAL_HARNESS_SOURCE_CANDIDATES = {
   'HARNESS-VHS-001': [
-    '/mnt/c/dev/ni-labview-icon-editor',
-    '/mnt/c/Users/sveld/AppData/Local/VI History Suite/acceptance/host-machine/setup/install-root/fixtures-workspace/labview-icon-editor'
+    'C:\\dev\\ni-labview-icon-editor',
+    'C:\\Users\\sveld\\AppData\\Local\\VI History Suite\\acceptance\\host-machine\\setup\\install-root\\fixtures-workspace\\labview-icon-editor'
   ],
   'HARNESS-VHS-002': [
-    '/mnt/c/dev/ni-labview-icon-editor',
-    '/mnt/c/Users/sveld/AppData/Local/VI History Suite/acceptance/host-machine/setup/install-root/fixtures-workspace/labview-icon-editor'
+    'C:\\dev\\ni-labview-icon-editor',
+    'C:\\Users\\sveld\\AppData\\Local\\VI History Suite\\acceptance\\host-machine\\setup\\install-root\\fixtures-workspace\\labview-icon-editor'
   ]
 };
 const HARNESS_CLONE_DIRECTORY_BY_ID = {
@@ -188,7 +188,7 @@ function getUsage() {
     '  --image <ref>            Override the Windows benchmark image reference.',
     `  --harness-id <id>       Harness id to execute. Defaults to ${DEFAULT_HARNESS_ID}.`,
     '  --dashboard-commit-window <count> Override the retained dashboard commit window; defaults to the tracked comparable-prefix packet for HARNESS-VHS-002 when available.',
-    `  --proof-root <path>     Linux-visible proof root. Defaults to ${DEFAULT_PROOF_ROOT_LINUX}.`,
+    `  --proof-root <path>     Windows proof root. Defaults to ${DEFAULT_PROOF_ROOT_LINUX}.`,
     `  --docker-context <name> Docker context for Windows containers. Defaults to ${DEFAULT_DOCKER_CONTEXT}.`,
     '  --inspect-runtime-surface-only Retain the current governed Windows-image runtime surface without launching the benchmark.',
     '  --no-pull               Skip docker pull before launch.',
@@ -262,7 +262,7 @@ function parseArgs(argv) {
     imageRef,
     harnessId,
     repoRoot: DEFAULT_REPO_ROOT,
-    proofRootLinux: path.resolve(proofRootLinux),
+    proofRootLinux: toWindowsPathFromWsl(proofRootLinux),
     dockerContext,
     dashboardCommitWindow,
     inspectRuntimeSurfaceOnly,
@@ -274,12 +274,12 @@ function parseArgs(argv) {
 
 function buildHostWindowsBenchmarkPaths(proofRootLinux, harnessId, now = () => new Date()) {
   const proofRootWindows = toWindowsPathFromWsl(proofRootLinux);
-  const cacheRootLinux = path.join(proofRootLinux, 'cache');
-  const cacheRootWindows = `${proofRootWindows}\\cache`;
-  const harnessCloneRootLinux = path.join(cacheRootLinux, 'harnesses');
+  const cacheRootLinux = path.win32.join(proofRootWindows, 'cache');
+  const cacheRootWindows = path.win32.join(proofRootWindows, 'cache');
+  const harnessCloneRootLinux = path.win32.join(cacheRootWindows, 'harnesses');
   const cloneDirectoryName = getHarnessCloneDirectoryName(harnessId);
-  const benchmarkRootLinux = path.join(
-    cacheRootLinux,
+  const benchmarkRootLinux = path.win32.join(
+    cacheRootWindows,
     'github-experiments',
     'windows-dashboard-benchmark',
     harnessId
@@ -291,31 +291,35 @@ function buildHostWindowsBenchmarkPaths(proofRootLinux, harnessId, now = () => n
     cacheRootWindows,
     harnessCloneRootLinux,
     harnessClonePathLinux: cloneDirectoryName
-      ? path.join(harnessCloneRootLinux, cloneDirectoryName)
+      ? path.win32.join(harnessCloneRootLinux, cloneDirectoryName)
       : undefined,
     benchmarkRootLinux,
-    summaryPathLinux: path.join(benchmarkRootLinux, 'latest-summary.json'),
-    latestRuntimeSurfacePathLinux: path.join(benchmarkRootLinux, 'latest-runtime-surface.json'),
-    timestampedRuntimeSurfacePathLinux: path.join(
+    summaryPathLinux: path.win32.join(benchmarkRootLinux, 'latest-summary.json'),
+    latestRuntimeSurfacePathLinux: path.win32.join(benchmarkRootLinux, 'latest-runtime-surface.json'),
+    timestampedRuntimeSurfacePathLinux: path.win32.join(
       benchmarkRootLinux,
       `runtime-surface-${buildRunId(now())}.json`
     ),
-    launchReceiptPathLinux: path.join(proofRootLinux, 'latest-launch.json'),
-    logPathLinux: path.join(proofRootLinux, `run-${buildRunId(now())}.log`)
+    launchReceiptPathLinux: path.win32.join(proofRootWindows, 'latest-launch.json'),
+    logPathLinux: path.win32.join(proofRootWindows, `run-${buildRunId(now())}.log`)
   };
 }
 
 function toWindowsPathFromWsl(linuxPath) {
-  const normalized = path.resolve(linuxPath).replace(/\\/g, '/');
+  const trimmed = String(linuxPath).trim();
+  if (/^[A-Za-z]:[\\/]/.test(trimmed) || trimmed.startsWith('\\\\')) {
+    return path.win32.normalize(trimmed);
+  }
+  const normalized = trimmed.replace(/\\/g, '/');
   const match = normalized.match(/^\/mnt\/([a-zA-Z])\/(.*)$/);
   if (!match) {
     throw new Error(
-      `Cannot translate ${linuxPath} to a Windows path. Use a /mnt/<drive>/... proof root.`
+      `Cannot translate ${linuxPath} to a Windows path. Use a Windows path or a legacy /mnt/<drive>/... proof root.`
     );
   }
   const drive = match[1].toUpperCase();
   const remainder = match[2].split('/').filter(Boolean).join('\\');
-  return `${drive}:\\${remainder}`;
+  return path.win32.normalize(`${drive}:\\${remainder}`);
 }
 
 function buildDockerRunArgs(options) {

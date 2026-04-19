@@ -23,8 +23,20 @@ Activation facts:
 - the current branch now lands the generated settings CLI, exact Windows
   host-runtime preflight, and explicit compare-preflight workflow for that
   replacement contract
-- released `repo-standards-review` `v0.2.9` compliance closeout is now
-  retained for this branch implementation
+- current real-host x64 evidence now closes the remaining control-plane gap
+  for persisted host validation: the generated settings CLI and runtime
+  validation surface admit the canonical Windows mixed-bitness host bundle in
+  which x64 `LabVIEW.exe` is paired with the installed x86
+  `LabVIEWCLI.exe`, and the governed x64 host proof now succeeds on that same
+  bundle when the proof command is given a bounded `300000ms` runtime budget
+- the earlier retained `HARNESS-VHS-002` x64 host-only timeout receipt at
+  `180000ms` remains historical under-timed evidence only; the current
+  retained host truth is a generated report on `lv_icon.vi` under the same
+  mixed-bitness bundle, with `LabVIEWCLI.exe` observed at the banner snapshot
+  and `LabVIEW.exe` observed at exit
+- historical released `repo-standards-review` `v0.2.9` compliance closeout is
+  retained for this branch implementation, and the current outer assurance
+  baseline is now released `repo-standards-review` `v0.2.18`
 - the exact released line is still Docker-only until that branch
   implementation is published and rerun through public acceptance
 
@@ -74,7 +86,8 @@ history instead of chat memory.
 - the installed-user contract defaults to host and admits Docker only through
   the generated settings CLI
 - runtime preflight resolves one local Windows `LabVIEWCLI` install or fails
-  closed
+  closed, including the admitted canonical x86-CLI-plus-x64-LabVIEW host
+  bundle when that is the installed Windows x64 surface
 - Docker preflight derives the governed image family from the active engine and
   fails closed on unsupported Docker `x86`
 - first settings-CLI use builds a local launcher in user-profile storage
@@ -90,17 +103,24 @@ history instead of chat memory.
 - updated queue, README, current-state, ship-control, and execution-policy docs
 - updated `PROGRAM-0005`, `ISSUE-0410`, and this issue
 - updated SRS, RTM, and test plan
-- `python3 /mnt/c/Users/sveld/.codex/skills/repo-standards-review/scripts/preflight_local_dependencies.py --json`
-- `python3 /mnt/c/Users/sveld/.codex/skills/repo-standards-review/scripts/requirements_quality_check.py /home/sveld/code/standards/vi-history-suite-user-rounds --json`
+- `py -3 "$env:USERPROFILE\\.codex\\skills\\repo-standards-review\\scripts\\preflight_local_dependencies.py" --json`
+- `py -3 "$env:USERPROFILE\\.codex\\skills\\repo-standards-review\\scripts\\requirements_quality_check.py" . --json`
 - focused docs, manifest, and runtime-settings gates for each landed slice
 
 ## Current Active Slice
 
 - keep the current released Docker-only installed contract explicit until the
   branch replacement is truthfully published
-- treat standards-compliance refactor work on this branch as closed under
-  released `repo-standards-review` `v0.2.9` unless a later released-skill
-  audit fails
+- keep the private-release proof focus on Windows x64 host and
+  Windows-container lanes first; x86 host proof remains later breadth, not
+  the first admission target
+- keep WSL out of the active Windows x64 private-release contract: the first
+  admission surfaces are native Windows host proof and Docker Desktop
+  Windows-container proof on the same Windows machine
+- treat standards-compliance refactor work on this branch as historically
+  closed under the retained released `repo-standards-review` `v0.2.9`
+  closeout and currently audited against released
+  `repo-standards-review` `v0.2.18` unless a later released-skill audit fails
 - keep the installed manifest/settings slice truthful by exposing
   `viHistorySuite.runtimeProvider`, `viHistorySuite.labviewVersion`, and
   `viHistorySuite.labviewBitness`
@@ -108,6 +128,20 @@ history instead of chat memory.
   plus current-host launcher execution against a temporary settings file
 - prove the explicit Windows no-`--settings-file` target under a disposable
   `APPDATA\\Code\\User\\settings.json`
+- close the real-host x64 validation contradiction first: persisted
+  `host` / `2026` / `x64` settings must stop failing with
+  `labview-cli-not-found-for-bitness` when the canonical host resolves x64
+  `LabVIEW.exe` plus the installed x86 `LabVIEWCLI.exe`
+- keep the retained `HARNESS-VHS-002` x64 host-only timeout receipt explicit:
+  the first real-host proof reached `ready-for-runtime` on `lv_icon.vi` with
+  the admitted mixed-bitness bundle, timed out after `180000ms`, and remains
+  retained as historical under-timed evidence rather than active branch truth;
+  the current retained host proof is the `300000ms` rerun that generated the
+  report and observed `LabVIEW.exe` at exit
+- retain the current Windows x64 proof receipts as the active branch truth:
+  `.cache/private-release/1.3.0/windows-x64-host/` proves the native host lane
+  and `.cache/private-release/1.3.0/windows-x64-container/` proves the Docker
+  Desktop Windows-container lane on the same machine
 - retain the governed live-session probe lane from `ISSUE-0414`: persisted
   versus live runtime settings drift probe command, retained packet output, and
   local fail-closed packet assertion

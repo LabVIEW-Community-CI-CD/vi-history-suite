@@ -55,11 +55,24 @@ describe('assertRuntimeSettingsLiveSessionProbePacket script', () => {
         () => 'C:\\Users\\tester'
       )
     ).toContain(
-      'C:\\Users\\tester\\AppData\\Roaming\\Code\\User\\globalStorage\\svelderrainruiz.vi-history-suite'
+      path.join(
+        'C:\\Users\\tester\\AppData\\Roaming',
+        'Code',
+        'User',
+        'globalStorage',
+        'svelderrainruiz.vi-history-suite'
+      )
     );
 
     expect(probeGate.resolveDefaultPacketPath('linux', {}, () => '/home/tester')).toContain(
-      '/home/tester/.config/Code/User/globalStorage/svelderrainruiz.vi-history-suite'
+      path.posix.join(
+        '/home/tester',
+        '.config',
+        'Code',
+        'User',
+        'globalStorage',
+        'svelderrainruiz.vi-history-suite'
+      )
     );
   });
 

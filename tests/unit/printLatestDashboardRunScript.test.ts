@@ -69,7 +69,11 @@ describe('printLatestDashboardRun script', () => {
     );
 
     const previousHome = process.env.HOME;
+    const previousUserProfile = process.env.USERPROFILE;
+    const previousHomeDrive = process.env.HOMEDRIVE;
+    const previousHomePath = process.env.HOMEPATH;
     process.env.HOME = path.join(tempRoot, 'home');
+    process.env.USERPROFILE = path.join(tempRoot, 'home');
     try {
       const latest = latestDashboardRun.findLatestDashboardRun(repoRoot);
       expect(latest?.manifestPath).toBe(userManifestPath);
@@ -79,21 +83,36 @@ describe('printLatestDashboardRun script', () => {
       } else {
         process.env.HOME = previousHome;
       }
+      if (previousUserProfile === undefined) {
+        delete process.env.USERPROFILE;
+      } else {
+        process.env.USERPROFILE = previousUserProfile;
+      }
+      if (previousHomeDrive === undefined) {
+        delete process.env.HOMEDRIVE;
+      } else {
+        process.env.HOMEDRIVE = previousHomeDrive;
+      }
+      if (previousHomePath === undefined) {
+        delete process.env.HOMEPATH;
+      } else {
+        process.env.HOMEPATH = previousHomePath;
+      }
     }
   });
 
   it('classifies repo-local .vscode-test artifacts as the lowest discovery priority', () => {
     const repoTestPath =
-      '/home/sveld/code/standards/vi-history-suite/.vscode-test/user-data/User/workspaceStorage/x/svelderrainruiz.vi-history-suite/dashboards/latest-dashboard-run.json';
+      'C:\\home\\sveld\\code\\standards\\vi-history-suite\\.vscode-test\\user-data\\User\\workspaceStorage\\x\\svelderrainruiz.vi-history-suite\\dashboards\\latest-dashboard-run.json';
     const harnessPath =
-      '/home/sveld/code/standards/vi-history-suite/.cache/harness-reports/HARNESS-VHS-001/dashboard-smoke/latest-dashboard-run.json';
+      'C:\\home\\sveld\\code\\standards\\vi-history-suite\\.cache\\harness-reports\\HARNESS-VHS-001\\dashboard-smoke\\latest-dashboard-run.json';
     const userPath =
-      '/mnt/c/Users/sveld/AppData/Roaming/Code/User/workspaceStorage/x/svelderrainruiz.vi-history-suite/dashboards/latest-dashboard-run.json';
+      'C:\\Users\\sveld\\AppData\\Roaming\\Code\\User\\workspaceStorage\\x\\svelderrainruiz.vi-history-suite\\dashboards\\latest-dashboard-run.json';
 
     expect(latestDashboardRun.isRepoVscodeTestPath(repoTestPath)).toBe(true);
     expect(latestDashboardRun.getDiscoveryPriority(repoTestPath)).toBe(0);
     expect(latestDashboardRun.getDiscoveryPriority(harnessPath)).toBe(1);
-    expect(latestDashboardRun.getDiscoveryPriority(userPath)).toBe(2);
+    expect(latestDashboardRun.getDiscoveryPriority(userPath)).toBe(3);
     expect(latestDashboardRun.isHostWorkspaceArtifactPath(repoTestPath)).toBe(false);
     expect(latestDashboardRun.isHostWorkspaceArtifactPath(harnessPath)).toBe(false);
     expect(latestDashboardRun.isHostWorkspaceArtifactPath(userPath)).toBe(true);
@@ -157,7 +176,11 @@ describe('printLatestDashboardRun script', () => {
     );
 
     const previousHome = process.env.HOME;
+    const previousUserProfile = process.env.USERPROFILE;
+    const previousHomeDrive = process.env.HOMEDRIVE;
+    const previousHomePath = process.env.HOMEPATH;
     process.env.HOME = path.join(tempRoot, 'home');
+    process.env.USERPROFILE = path.join(tempRoot, 'home');
     try {
       const latest = latestDashboardRun.findLatestDashboardRun(repoRoot, { hostOnly: true });
       expect(latest?.manifestPath).toBe(hostManifestPath);
@@ -166,6 +189,21 @@ describe('printLatestDashboardRun script', () => {
         delete process.env.HOME;
       } else {
         process.env.HOME = previousHome;
+      }
+      if (previousUserProfile === undefined) {
+        delete process.env.USERPROFILE;
+      } else {
+        process.env.USERPROFILE = previousUserProfile;
+      }
+      if (previousHomeDrive === undefined) {
+        delete process.env.HOMEDRIVE;
+      } else {
+        process.env.HOMEDRIVE = previousHomeDrive;
+      }
+      if (previousHomePath === undefined) {
+        delete process.env.HOMEPATH;
+      } else {
+        process.env.HOMEPATH = previousHomePath;
       }
     }
   });

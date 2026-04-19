@@ -400,7 +400,9 @@ describe('ship-control direction system', () => {
 
     expect(coherenceLedger).toContain('# Documentation Coherence Ledger');
     expect(coherenceLedger).toContain('run-docs-continuous-integration.js --skip-links');
-    expect(coherenceLedger).toContain('run_assurance.py /home/sveld/code/standards/vi-history-suite --profile release-gate');
+    expect(coherenceLedger).toContain(
+      '$env:USERPROFILE\\\\.codex\\\\skills\\\\repo-standards-review\\\\scripts\\\\run_assurance.py'
+    );
     expect(coherenceLedger).toContain('DOC-001');
     expect(coherenceLedger).toContain('DOC-004');
     expect(coherenceLedger).toContain('DOC-005');

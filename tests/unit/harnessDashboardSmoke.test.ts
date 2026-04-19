@@ -1,3 +1,5 @@
+import * as path from 'node:path';
+
 import { describe, expect, it, vi } from 'vitest';
 
 import {
@@ -273,7 +275,10 @@ describe('runHarnessDashboardSmoke', () => {
     expect(result.report.dashboardOverviewImageCount).toBe(2);
     expect(result.report.dashboardDetailItemCount).toBe(5);
     expect(result.report.dashboardEtaAccuracyFilePath).toBe(
-      '/tmp/reports/HARNESS-VHS-001/workspace-storage/dashboards/repo/file/window/dashboard-pair-eta-accuracy.json'
+      path.join(
+        '/tmp/reports/HARNESS-VHS-001/workspace-storage/dashboards/repo/file/window',
+        'dashboard-pair-eta-accuracy.json'
+      )
     );
     expect(result.report.dashboardEtaAccuracyRecord).toMatchObject({
       preparedPairCount: 2,
@@ -288,7 +293,7 @@ describe('runHarnessDashboardSmoke', () => {
     });
     expect(result.report.dashboardEtaAccuracyRecord?.context).toMatchObject({
       source: 'harness-dashboard-smoke',
-      workspaceStorageRoot: '/tmp/reports/HARNESS-VHS-001/workspace-storage',
+      workspaceStorageRoot: path.join('/tmp/reports', 'HARNESS-VHS-001', 'workspace-storage'),
       repositoryName: 'ni-labview-icon-editor',
       relativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi'
     });
@@ -320,7 +325,15 @@ describe('runHarnessDashboardSmoke', () => {
     expect(writes.get(result.reportJsonPath)).toContain('"dashboardArchivedPairCount": 2');
     expect(writes.get(result.reportJsonPath)).toContain('"dashboardEtaAccuracyFilePath"');
     expect(
-      writes.get('/tmp/reports/HARNESS-VHS-001/workspace-storage/dashboards/latest-dashboard-run.json')
+      writes.get(
+        path.join(
+          '/tmp/reports',
+          'HARNESS-VHS-001',
+          'workspace-storage',
+          'dashboards',
+          'latest-dashboard-run.json'
+        )
+      )
     ).toContain('"source": "harness-dashboard-smoke"');
     expect(writes.get(result.reportMarkdownPath)).toContain('Harness Dashboard Smoke');
     expect(writes.get(result.reportMarkdownPath)).toContain(
