@@ -21,6 +21,9 @@
   prep only: clean the user-facing docs on a docs-only feature branch first,
   then prepare the Windows packet on a separate feature branch before any
   `release/*` branch is cut.
+- The tracked Windows x64 private-release packet for that prep sequence is:
+  - `docs/product/private-release-windows-x64-v1.3.0.md`
+  - `docs/product/private-release-windows-x64-v1.3.0.json`
 - Public Linux smoke, exact tagging, Marketplace publication, and `main`
   promotion remain out of scope for that private-release-prep sequence.
 - The public GitHub default branch is `main` because it carries the latest
