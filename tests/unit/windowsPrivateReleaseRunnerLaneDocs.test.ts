@@ -43,6 +43,9 @@ describe('windows private release runner lane docs', () => {
     expect(runnerLaneDoc).toContain('VIHS Governed Runner Lanes');
     expect(runnerLaneDoc).toContain('start-governed-runner-lanes.ps1');
     expect(runnerLaneDoc).toContain('duplicate `gitlab-runner.exe` manager processes');
+    expect(runnerLaneDoc).toContain('stale `LabVIEW`,');
+    expect(runnerLaneDoc).toContain('`LabVIEWCLI`, and `LVCompare` processes');
+    expect(runnerLaneDoc).toContain('fails closed if any remain');
     expect(runnerLaneDoc).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
     expect(runnerLaneDoc).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
     expect(runnerLaneDoc).toContain("Register-ScheduledTask -TaskName 'VIHS Governed Runner Lanes'");
@@ -56,6 +59,10 @@ describe('windows private release runner lane docs', () => {
     expect(hostedGovernanceDoc).toContain('VIHS Governed Runner Lanes');
     expect(hostedGovernanceDoc).toContain('start-governed-runner-lanes.ps1');
     expect(hostedGovernanceDoc).toContain('request_concurrency = 2');
+    expect(hostedGovernanceDoc).toContain('cold-admission fail-closed');
+    expect(hostedGovernanceDoc).toContain(
+      '`LabVIEW` / `LabVIEWCLI` / `LVCompare` runtime processes'
+    );
     expect(hostedGovernanceDoc).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
     expect(hostedGovernanceJson.authorityGitLab.runnerLanes.windowsPrivateRelease).toEqual(
       expect.objectContaining({
@@ -68,6 +75,10 @@ describe('windows private release runner lane docs', () => {
           scheduledTask: 'VIHS Governed Runner Lanes',
           lifecycleOwner: 'interactive-current-user-scheduled-task',
           duplicateProcessPolicy: 'collapse-duplicates-per-config',
+          coldAdmissionRuntimeCleanup: {
+            processNames: ['LabVIEW', 'LabVIEWCLI', 'LVCompare'],
+            failurePolicy: 'fail-closed-before-runner-start'
+          },
           repoOwnedBootstrapScript: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',
           repoOwnedLinuxHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh'
         })

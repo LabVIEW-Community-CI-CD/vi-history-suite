@@ -6,6 +6,11 @@ $runnerConfig = Join-Path $runnerRoot 'config.toml'
 $logDir = Join-Path $runnerRoot 'logs'
 $stdoutLog = Join-Path $logDir 'gitlab-runner-stdout.log'
 $stderrLog = Join-Path $logDir 'gitlab-runner-stderr.log'
+$windowsProofRuntimeProcessNames = @(
+  'LabVIEW'
+  'LabVIEWCLI'
+  'LVCompare'
+)
 
 function Get-ConfiguredWindowsRunners {
   @(
@@ -28,6 +33,28 @@ function Remove-DuplicateWindowsRunners {
   return $windowsRunners
 }
 
+function Get-WindowsProofRuntimeProcesses {
+  @(
+    Get-Process -Name $windowsProofRuntimeProcessNames -ErrorAction SilentlyContinue |
+      Sort-Object ProcessName, Id
+  )
+}
+
+function Clear-WindowsProofRuntimeSurface {
+  $runtimeProcesses = Get-WindowsProofRuntimeProcesses
+  foreach ($runtimeProcess in $runtimeProcesses) {
+    Stop-Process -Id $runtimeProcess.Id -Force -ErrorAction SilentlyContinue
+    & taskkill.exe /PID $runtimeProcess.Id /T /F *> $null
+  }
+
+  $remainingRuntimeProcesses = Get-WindowsProofRuntimeProcesses
+  if ($remainingRuntimeProcesses.Count -gt 0) {
+    $remainingRuntimeProcessSummary = $remainingRuntimeProcesses |
+      ForEach-Object { "$($_.ProcessName) ($($_.Id))" }
+    throw "Windows proof runtime cleanup failed before cold runner admission; remaining processes: $($remainingRuntimeProcessSummary -join ', ')"
+  }
+}
+
 if (-not (Test-Path -LiteralPath $logDir)) {
   New-Item -ItemType Directory -Path $logDir | Out-Null
 }
@@ -35,6 +62,7 @@ if (-not (Test-Path -LiteralPath $logDir)) {
 $windowsRunners = Remove-DuplicateWindowsRunners
 
 if ($windowsRunners.Count -eq 0) {
+  Clear-WindowsProofRuntimeSurface
   Start-Process -FilePath $runnerExe `
     -ArgumentList @('run', '--config', $runnerConfig) `
     -WorkingDirectory $runnerRoot `

@@ -93,6 +93,9 @@ the tagged GitLab Windows runner lane that retains this same scenario under
     `VIHS Governed Runner Lanes`
   - the governed Windows bootstrap asset is
     `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1`
+  - that Windows bootstrap clears stale `LabVIEW`, `LabVIEWCLI`, and
+    `LVCompare` before cold runner admission and fails closed if
+    contamination remains
   - the governed Linux helper and service unit are
     `scripts/gitlab-runner/linux/start-linux-assurance.sh` and
     `scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service`

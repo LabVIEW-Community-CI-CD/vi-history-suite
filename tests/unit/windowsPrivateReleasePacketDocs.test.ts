@@ -43,6 +43,10 @@ interface PrivateReleasePacket {
     artifactRoot: string;
     expectedManifestPath: string;
     hostInstallState: string;
+    coldAdmissionRuntimeCleanup?: {
+      processNames: string[];
+      failurePolicy: string;
+    };
     firstRetainedReceipt: {
       mergeRequestIid: number;
       pipelineId: number;
@@ -91,6 +95,11 @@ describe('windows private release packet docs', () => {
     expect(packetDoc).toContain('windows-private-release-evidence/');
     expect(packetDoc).toContain('repo-controlled host asset pack is versioned under');
     expect(packetDoc).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
+    expect(packetDoc).toContain(
+      'that Windows bootstrap clears stale `LabVIEW`, `LabVIEWCLI`, and'
+    );
+    expect(packetDoc).toContain('fails closed if');
+    expect(packetDoc).toContain('contamination remains');
     expect(packetDoc).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
     expect(packetDoc).toContain('scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service');
     expect(packetDoc).toContain('## First Retained Runner Receipt');
@@ -125,6 +134,10 @@ describe('windows private release packet docs', () => {
         artifactRoot: 'windows-private-release-evidence/',
         expectedManifestPath: 'windows-private-release-evidence/manifest.json',
         hostInstallState: 'current-user-scheduled-task-bootstrap-active',
+        coldAdmissionRuntimeCleanup: {
+          processNames: ['LabVIEW', 'LabVIEWCLI', 'LVCompare'],
+          failurePolicy: 'fail-closed-before-runner-start'
+        },
         repoOwnedOperatorAssets: {
           windowsBootstrapScript: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',
           linuxHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',

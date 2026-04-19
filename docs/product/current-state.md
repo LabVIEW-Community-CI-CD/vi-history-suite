@@ -176,6 +176,9 @@ Latest landed ship target:
   - `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1`
   - `scripts/gitlab-runner/linux/start-linux-assurance.sh`
   - `scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service`
+  - the Windows bootstrap clears stale `LabVIEW`, `LabVIEWCLI`, and
+    `LVCompare` before cold runner admission and fails closed if contamination
+    remains
 - VS Code Marketplace listing: `https://marketplace.visualstudio.com/items?itemName=svelderrainruiz.vi-history-suite`
 - VS Code Marketplace publication ledger: [vscode-marketplace-publication-ledger.md](./vscode-marketplace-publication-ledger.md)
 - current changelog: [CHANGELOG.md](../../CHANGELOG.md)

@@ -76,8 +76,10 @@ Runner operator hardening:
   `request_concurrency = 2`, scheduled bootstrap surface
   `C:\GitLab-Runner\start-governed-runner-lanes.ps1`, scheduled task
   `VIHS Governed Runner Lanes`, duplicate-manager collapse so exactly one
-  current-user runner manager remains per config, and the repo-owned bootstrap
-  asset `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1`
+  current-user runner manager remains per config, cold-admission fail-closed
+  cleanup of stale `LabVIEW` / `LabVIEWCLI` / `LVCompare` runtime processes
+  before the runner starts, and the repo-owned bootstrap asset
+  `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1`
 
 Job ownership:
 
