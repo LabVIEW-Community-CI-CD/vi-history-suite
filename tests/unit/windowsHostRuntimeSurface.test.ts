@@ -53,6 +53,31 @@ describe('windowsHostRuntimeSurface', () => {
     ).rejects.toThrow('cleanup failed');
   });
 
+  it('uses bounded taskkill-backed cleanup for stubborn Windows host runtime processes', async () => {
+    const execFileImpl = vi.fn((_file, _args, callback) => {
+      callback(null, '', '');
+      return {} as never;
+    });
+
+    await expect(
+      cleanupWindowsHostRuntimeSurface({
+        execFileImpl: execFileImpl as never
+      })
+    ).resolves.toBeUndefined();
+
+    expect(execFileImpl).toHaveBeenCalledTimes(1);
+    expect(execFileImpl).toHaveBeenCalledWith(
+      'powershell.exe',
+      ['-NoProfile', '-Command', expect.any(String)],
+      expect.any(Function)
+    );
+    const command = execFileImpl.mock.calls[0]?.[1]?.[2];
+    expect(command).toContain('while ($true)');
+    expect(command).toContain('AddSeconds(10)');
+    expect(command).toContain('taskkill /PID $($proc.Id) /T /F');
+    expect(command).toContain('Start-Sleep -Milliseconds 500');
+  });
+
   it('launches headless LabVIEW and retains the process id', async () => {
     const execFileImpl = vi.fn((_file, _args, callback) => {
       callback(null, '{"Id":54860}', '');
