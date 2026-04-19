@@ -276,6 +276,9 @@ describe('extension manifest research alignment', () => {
     expect(manifest.scripts?.['assurance:uplift']).toBe(
       'node scripts/runAssuranceAudit.js --lane uplift'
     );
+    expect(manifest.scripts?.['gitlab:git-credential:refresh']).toBe(
+      'node scripts/refreshLocalGitLabGitCredential.js'
+    );
     expect(manifest.scripts?.['branch:governance:assert']).toBe(
       'node scripts/assertGovernedBranchBaseline.js'
     );

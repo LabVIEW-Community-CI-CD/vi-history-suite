@@ -204,12 +204,19 @@
 16. Back-merge the exact released `main` line into `develop` before claiming
     exact closeout is complete or opening the next candidate line.
     - use the protected merge path, not an ungoverned local-only shortcut
+    - refresh repo-local Git HTTPS transport through
+      `npm run gitlab:git-credential:refresh` instead of depending on
+      remembered keyring or credential-manager state after host restart
     - for local GitLab API automation, resolve the repo token through
       `node scripts/resolveLocalGitLabApiToken.js --json`; the governed local
       path is `%USERPROFILE%\.config\codex\secrets\vi-history-suite.gitlab-api-token.txt`
       on Windows hosts and
       `$HOME/.config/codex/secrets/vi-history-suite.gitlab-api-token.txt` on
       Linux/WSL hosts
+    - `npm run gitlab:git-credential:refresh` uses that same token source,
+      rewrites the repo-local `credential.https://gitlab.com.username`
+      setting, replaces stale `gitlab.com` credentials, and read-proves access
+      with `git ls-remote origin HEAD`
     - queue merge requests through
       `node scripts/queueGovernedMergeRequest.js --source-branch <branch> --target-branch develop --title <title> --description-file <path> --auto-merge --remove-source-branch`
       instead of depending on remembered `glab` auth state
