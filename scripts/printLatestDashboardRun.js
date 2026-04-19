@@ -301,6 +301,14 @@ function isHostWorkspaceArtifactPath(filePath) {
 }
 
 function isCurrentHomeWorkspaceArtifactPath(filePath) {
+  const normalizedFilePath = normalizePortablePath(filePath);
+  if (
+    normalizedFilePath.includes('/appdata/roaming/code/user/workspacestorage/') ||
+    normalizedFilePath.includes('/.config/code/user/workspacestorage/')
+  ) {
+    return true;
+  }
+
   const home = os.homedir();
   if (!home) {
     return false;
@@ -309,7 +317,6 @@ function isCurrentHomeWorkspaceArtifactPath(filePath) {
     path.join(home, '.config', 'Code', 'User', 'workspaceStorage'),
     path.join(home, 'AppData', 'Roaming', 'Code', 'User', 'workspaceStorage')
   ];
-  const normalizedFilePath = normalizePortablePath(filePath);
   return candidates.some((candidate) =>
     normalizedFilePath.startsWith(`${normalizePortablePath(candidate)}/`)
   );
