@@ -1893,6 +1893,41 @@ Information-for-users review cases:
   current-state, the private-release packet, the runner-lane contract, the
   SRS, the RTM, and the test plan and confirm preview and exact packaging now
   depend on the tagged Windows shell-runner acceptance lane
+- `TEST-UNIT-357`: verify the hosted CI governance package, `.gitlab-ci.yml`,
+  README, current-state, and the release procedure retain the published
+  `repo-standards-review` assurance-workbench lane, its
+  `assurance_release_gate` job name, the published image reference, and the
+  preview/exact packaging dependency on that lane
+- `TEST-DOC-112`: review `.gitlab-ci.yml`, hosted governance, README,
+  current-state, the release procedure, the SRS, the RTM, and the test plan
+  and confirm the published assurance-workbench `release-gate` lane is now a
+  required GitLab governance check that blocks preview and exact packaging
+- `TEST-UNIT-358`: verify `scripts/runAssuranceAudit.js` stages the governed
+  `repo` and `authority-docs` targets, excludes transient or non-authority
+  paths, and builds the expected local-skill command plan
+- `TEST-UNIT-359`: verify `.gitlab-ci.yml`, the Linux assurance runner-lane
+  contract, the hosted-governance package, and `package.json` retain the
+  separate self-hosted Linux assurance lane plus the required
+  `assurance:*` command surface
+- `TEST-UNIT-360`: verify preview and exact packaging now depend on
+  `assurance_release_gate`, `assurance_26514_authority`,
+  `assurance_requirements_quality`, and
+  `assurance_external_user_information`, while `assurance_audit_packet`
+  remains advisory only
+- `TEST-UNIT-361`: verify the contradiction-guard test family keeps the
+  assurance baseline split, exact released versus active candidate scope
+  split, requirements-to-user-doc semantics, and authority-doc metadata
+  coherence explicit
+- `TEST-DOC-113`: review `.gitlab-ci.yml`, `linux-assurance-runner-lane.md`,
+  hosted governance, current-state, README, and the release procedure and
+  confirm the Linux assurance lane is separate from the Windows proof lane,
+  authenticates locally, pulls the latest external image, and owns the
+  blocking plus advisory assurance jobs truthfully
+- `TEST-DOC-114`: review README, current-state, the release procedure, FAQ,
+  command reference, SRS, RTM, and the contradiction-guard tests and confirm
+  the repo keeps the `:main` versus `v0.2.18` baseline split, the exact
+  released `v1.2.2` versus active `v1.3.0` scope split, the requirements/user-
+  doc semantics, and authority-doc metadata coherence explicit
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are

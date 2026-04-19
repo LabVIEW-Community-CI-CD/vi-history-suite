@@ -386,6 +386,9 @@ describe('post-release sustainment rules package', () => {
     expect(rules.operatorSurfaceSustainment.requiredAuthorityUpdates).toContain(
       'docs/product/runtime-provider-public-acceptance-gate.json'
     );
+    expect(rules.operatorSurfaceSustainment.requiredAuthorityUpdates).toContain(
+      'docs/product/linux-assurance-runner-lane.md'
+    );
     expect(rules.operatorSurfaceSustainment.requiredDerivedUpdatesWhenReaderFacingTruthChanges).toContain(
       'docs/product/wiki-publication-ledger.json'
     );
@@ -436,6 +439,7 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('PROGRAM-0002');
     expect(rulesDoc).toContain('historical public-closeout record');
     expect(rulesDoc).toContain('runtime-provider-public-acceptance-gate.md');
+    expect(rulesDoc).toContain('linux-assurance-runner-lane.md');
     expect(rulesDoc).toContain('execution-policy bypass');
     expect(rulesDoc).toContain('ExecutionPolicy Bypass');
 

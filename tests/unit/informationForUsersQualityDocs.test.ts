@@ -10,7 +10,7 @@ function readText(relativePath: string): string {
 }
 
 describe('information-for-users docs quality and proof package', () => {
-  it('retains the v0.2.18 quality and proof tokens in the support surfaces', () => {
+  it('retains the latest-lane quality and proof tokens in the support surfaces', () => {
     const faq = readText('docs/information-for-users/faq.md');
     const commandReference = readText('docs/information-for-users/command-reference.md');
     const glossary = readText('docs/information-for-users/glossary.md');
@@ -45,7 +45,7 @@ describe('information-for-users docs quality and proof package', () => {
     expect(styleGuide).toContain('Do not imply repo-specific accessibility controls');
   });
 
-  it('retains the v0.2.18 proof and change-control tokens in control docs', () => {
+  it('retains the latest-lane proof and change-control tokens in control docs', () => {
     const testPlan = readText('docs/testing/test-plan.md');
     const cmPlan = readText('docs/cm/cm-plan.md');
     const informationItemMap = readText('docs/information-item-map.md');

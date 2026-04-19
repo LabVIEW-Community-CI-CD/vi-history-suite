@@ -69,6 +69,8 @@ to the released product line and the active branch line:
 
 - The active `develop` candidate is a Windows x64 private-release route, not a
   cross-platform exact/public release.
+- The current exact released line (`v1.2.2`) remains the last exact released
+  installed baseline on `main`.
 - The supported current user path on this branch is:
   - native Windows host LabVIEW selected through the generated runtime-settings
     CLI
@@ -76,10 +78,20 @@ to the released product line and the active branch line:
     lane
 - WSL is historical context only for this route; it is not part of the
   supported Windows x64 private-release contract.
-- The governed CI lane for this route is the tagged Windows shell-runner job
-  `windows_private_release_acceptance`, which retains
-  `windows-private-release-evidence/` through
-  [Windows Private-Release Runner Lane](./docs/product/windows-private-release-runner-lane.md).
+- The governed CI lanes for this route are:
+  - the tagged Windows shell-runner job
+    `windows_private_release_acceptance`, which retains
+    `windows-private-release-evidence/` through
+    [Windows Private-Release Runner Lane](./docs/product/windows-private-release-runner-lane.md)
+  - the separate local authenticated self-hosted Linux assurance runner lane,
+    governed by
+    [Linux Assurance Runner Lane](./docs/product/linux-assurance-runner-lane.md),
+    which pulls the latest published
+    `registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main`
+    image and runs the blocking jobs `assurance_release_gate`,
+    `assurance_26514_authority`, `assurance_requirements_quality`, and
+    `assurance_external_user_information` before preview or exact packaging
+    continues
 - Linux public smoke and Linux benchmark lanes remain repo-owned evaluation or
   maintainer proof surfaces. They are not part of the active installed-user or
   private-release claim for `v1.3.0`.
@@ -646,6 +658,7 @@ Latest landed ship target:
 - target release manifest: `release-evidence/release-manifest.json`
 - current changelog: [CHANGELOG.md](./CHANGELOG.md)
 - docs-authoring image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
+- assurance-workbench image: `registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main`
 - retained release evidence: GitLab release `v0.2.0`, tag pipeline `2428809456`,
   release job `13779604462`
 - remaining release blockers: none on the exact public `v1.2.2` line; public

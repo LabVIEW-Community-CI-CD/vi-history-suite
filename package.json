@@ -160,6 +160,12 @@
     "docs:ci:public:core": "node scripts/run-docs-continuous-integration.js --surface public --skip-links",
     "docs:ci:internal": "node scripts/run-docs-continuous-integration.js --surface internal",
     "docs:ci:internal:core": "node scripts/run-docs-continuous-integration.js --surface internal --skip-links",
+    "assurance:release-gate": "node scripts/runAssuranceAudit.js --lane release-gate",
+    "assurance:26514:authority": "node scripts/runAssuranceAudit.js --lane 26514-authority",
+    "assurance:requirements": "node scripts/runAssuranceAudit.js --lane requirements",
+    "assurance:user-info": "node scripts/runAssuranceAudit.js --lane user-info",
+    "assurance:evidence-pack": "node scripts/runAssuranceAudit.js --lane evidence-pack",
+    "assurance:uplift": "node scripts/runAssuranceAudit.js --lane uplift",
     "branch:governance:assert": "node scripts/assertGovernedBranchBaseline.js",
     "public:host:bootstrap-linux": "node scripts/bootstrapLinuxVsCodeHost.js install",
     "public:smoke:linux": "npm run compile && node scripts/runPublicFacadeLinuxSmoke.js",
@@ -214,12 +220,12 @@
   "devDependencies": {
     "@types/node": "^24.6.0",
     "@types/vscode": "^1.90.0",
-    "@vitest/coverage-v8": "^4.1.2",
+    "@vitest/coverage-v8": "^4.1.4",
     "@vscode/test-electron": "^2.5.2",
     "marked": "^17.0.5",
     "rimraf": "^6.0.1",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.2"
+    "vitest": "^4.1.4"
   },
   "dependencies": {
     "jsonc-parser": "^3.3.1"

@@ -4,8 +4,9 @@
 
 Retain the next governed move after the active branch reached clean external
 compliance under the historical released `repo-standards-review` `v0.2.9`
-closeout, while the current outer assurance baseline has moved to released
-`repo-standards-review` `v0.2.18`.
+closeout, while the current outer assurance lane has moved to the published
+`repo-standards-review` assurance-workbench `:main` image and the latest
+tagged release remains `v0.2.18`.
 
 This packet now exists so future sessions do not reopen completed standards
 work when the remaining work is really historical branch-transition context,
@@ -32,8 +33,10 @@ runtime-provider public-acceptance gate.
   bounded expert Docker doctrine truthfully
 - the retained `repo-standards-review` `v0.2.9` closeout still documents the
   historical compliance uplift on this branch
-- the current outer assurance baseline for fresh audits is released
-  `repo-standards-review` `v0.2.18`
+- the current outer assurance lane for fresh audits is the published
+  `repo-standards-review` assurance-workbench `:main` image on the separate
+  self-hosted Linux assurance runner lane, while `v0.2.18` remains the latest
+  tagged release
 - the branch has already been promoted into `develop`
 
 ## Remaining Work After Compliance Closeout

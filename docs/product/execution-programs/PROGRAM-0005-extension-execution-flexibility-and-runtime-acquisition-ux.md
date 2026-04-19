@@ -109,8 +109,9 @@ Current facts:
   provider/version/bitness, and compare stays blocked until explicit
   preflight-ready execution
 - historical released `repo-standards-review` `v0.2.9` compliance closeout is
-  retained on this branch, and the current outer assurance baseline is now
-  released `repo-standards-review` `v0.2.18`
+  retained on this branch, the current outer assurance lane now uses the
+  published `repo-standards-review` assurance-workbench `:main` image, and
+  the latest tagged release remains `v0.2.18`
 - retained gate decision now keeps `VHS-REQ-542` reload-or-restart guidance as
   active truth while direct live-session uptake of updated settings remains
   unproven, with probe packet plus local packet-gate evidence now explicit

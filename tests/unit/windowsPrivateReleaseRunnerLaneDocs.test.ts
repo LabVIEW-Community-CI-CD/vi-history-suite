@@ -36,9 +36,11 @@ describe('windows private release runner lane docs', () => {
     expect(runnerLaneDoc).toContain('--tag-list "windows,x64,labview-host,docker-windows,private-release"');
     expect(runnerLaneDoc).toContain('windows-private-release-evidence/host/harness-report/**');
     expect(runnerLaneDoc).toContain('windows-private-release-evidence/container/harness-report/**');
+    expect(runnerLaneDoc).toContain('linux-assurance-runner-lane.md');
 
     expect(sustainmentDoc).toContain('windows-private-release-runner-lane.md');
     expect(sustainmentDoc).toContain('GitLab `windows_private_release_acceptance`');
+    expect(sustainmentDoc).toContain('linux-assurance-runner-lane.md');
 
     expect(hostedGovernanceDoc).toContain('`windows_private_release_acceptance`');
     expect(hostedGovernanceDoc).toContain('retains the canonical Windows x64 private-release acceptance evidence');

@@ -258,6 +258,24 @@ describe('extension manifest research alignment', () => {
     expect(manifest.scripts?.['docs:ci:internal:core']).toBe(
       'node scripts/run-docs-continuous-integration.js --surface internal --skip-links'
     );
+    expect(manifest.scripts?.['assurance:release-gate']).toBe(
+      'node scripts/runAssuranceAudit.js --lane release-gate'
+    );
+    expect(manifest.scripts?.['assurance:26514:authority']).toBe(
+      'node scripts/runAssuranceAudit.js --lane 26514-authority'
+    );
+    expect(manifest.scripts?.['assurance:requirements']).toBe(
+      'node scripts/runAssuranceAudit.js --lane requirements'
+    );
+    expect(manifest.scripts?.['assurance:user-info']).toBe(
+      'node scripts/runAssuranceAudit.js --lane user-info'
+    );
+    expect(manifest.scripts?.['assurance:evidence-pack']).toBe(
+      'node scripts/runAssuranceAudit.js --lane evidence-pack'
+    );
+    expect(manifest.scripts?.['assurance:uplift']).toBe(
+      'node scripts/runAssuranceAudit.js --lane uplift'
+    );
     expect(manifest.scripts?.['branch:governance:assert']).toBe(
       'node scripts/assertGovernedBranchBaseline.js'
     );

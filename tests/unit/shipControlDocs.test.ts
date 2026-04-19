@@ -234,6 +234,7 @@ describe('ship-control direction system', () => {
     expect(currentState).toContain('[program-repo-jump.md](./program-repo-jump.md)');
     expect(currentState).toContain('[Documentation Package Workbench](../documentation-workbench.md)');
     expect(currentState).toContain('[hosted-ci-governance.md](./hosted-ci-governance.md)');
+    expect(currentState).toContain('[linux-assurance-runner-lane.md](./linux-assurance-runner-lane.md)');
     expect(currentState).toContain('npm run design:gate:assert-complete');
     expect(currentState).toContain('- `SHIP-0001`: releasable `v0.2.0` VSIX product');
     expect(currentState).toContain('- landed ship tranche: `TRANCHE-009`');
@@ -273,6 +274,7 @@ describe('ship-control direction system', () => {
     expect(informationItemMap).toContain('| Machine-readable wiki publication ledger | `docs/product/wiki-publication-ledger.json` |');
     expect(informationItemMap).toContain('| Hosted CI governance | `docs/product/hosted-ci-governance.md` |');
     expect(informationItemMap).toContain('| Machine-readable hosted CI governance | `docs/product/hosted-ci-governance.json` |');
+    expect(informationItemMap).toContain('| Linux assurance runner lane | `docs/product/linux-assurance-runner-lane.md` |');
     expect(informationItemMap).toContain('| Bundled user documentation pack | `resources/bundled-docs/manifest.json` |');
     expect(informationItemMap).toContain('| Documentation package workbench | `docs/documentation-workbench.md` |');
     expect(informationItemMap).toContain('| Program repo jump surface | `docs/product/program-repo-jump.md` |');
@@ -329,6 +331,7 @@ describe('ship-control direction system', () => {
     expect(releaseProcedure).toContain('docs/product/runtime-provider-public-acceptance-gate.{md,json}');
     expect(releaseProcedure).toContain('docs/product/hosted-ci-governance.md');
     expect(releaseProcedure).toContain('docs/product/hosted-ci-governance.json');
+    expect(releaseProcedure).toContain('docs/product/linux-assurance-runner-lane.md');
     expect(releaseProcedure).toContain('npm run branch:governance:assert');
     expect(releaseProcedure).toContain('npm run public:source:promote');
     expect(releaseProcedure).toContain('resources/bundled-docs/manifest.json');
@@ -479,6 +482,18 @@ describe('ship-control direction system', () => {
     expect(gitlabCi).toContain('docs-integration-evidence/');
     expect(gitlabCi).toContain('publish_docs_authoring_image:');
     expect(gitlabCi).toContain('wiki_workbench_prepare_published:');
+    expect(gitlabCi).toContain('assurance_release_gate:');
+    expect(gitlabCi).toContain('assurance_26514_authority:');
+    expect(gitlabCi).toContain('assurance_requirements_quality:');
+    expect(gitlabCi).toContain('assurance_external_user_information:');
+    expect(gitlabCi).toContain('assurance_audit_packet:');
+    expect(gitlabCi).toContain('registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main');
+    expect(gitlabCi).toContain('VIHS_ASSURANCE_EXECUTOR: container');
+    expect(gitlabCi).toContain('docker pull "${VIHS_ASSURANCE_IMAGE}"');
+    expect(gitlabCi).toContain('npm run assurance:release-gate -- --evidence-dir assurance-release-gate-evidence');
+    expect(gitlabCi).toContain('npm run assurance:26514:authority -- --evidence-dir assurance-26514-authority-evidence');
+    expect(gitlabCi).toContain('npm run assurance:requirements -- --evidence-dir assurance-requirements-quality-evidence');
+    expect(gitlabCi).toContain('npm run assurance:user-info -- --evidence-dir assurance-external-user-information-evidence');
     expect(gitlabCi).toContain('--dockerfile "${CI_PROJECT_DIR}/docker/docs-authoring/Dockerfile"');
     expect(gitlabCi).toContain('${CI_REGISTRY_IMAGE}/docs-authoring:main');
     expect(gitlabCi).toContain('${CI_REGISTRY_IMAGE}/docs-authoring:sha-${CI_COMMIT_SHORT_SHA}');
@@ -502,11 +517,16 @@ describe('ship-control direction system', () => {
 
     expect(readme).toContain('preview-evidence/vi-history-suite-<version>.vsix');
     expect(readme).toContain('registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main');
+    expect(readme).toContain('registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main');
+    expect(readme).toContain('Linux Assurance Runner Lane');
     expect(readme).toContain('governed tagged release artifact');
     expect(currentState).toContain('docs-workbench image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`');
+    expect(currentState).toContain('assurance-workbench image: `registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main`');
     expect(currentState).toContain('preview install surface: `preview-evidence/vi-history-suite-<version>.vsix`');
     expect(releaseProcedure).toContain('For pre-release install testing, use the `package_extension_preview` artifact');
     expect(releaseProcedure).toContain('The repo also publishes a separate docs-authoring workbench image');
+    expect(releaseProcedure).toContain('The protected-branch release-gate CI lane uses the published external');
+    expect(releaseProcedure).toContain('local authenticated self-hosted Linux assurance runner lane');
     expect(releaseProcedure).toContain('Preview VSIX artifacts are available from `main`');
   });
 });

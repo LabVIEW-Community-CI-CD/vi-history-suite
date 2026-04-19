@@ -253,25 +253,36 @@ See also:
 
 ## Assurance Execution
 
-`docker run --rm -v /path/to/repo:/target registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:v0.2.18 python3 scripts/run_assurance.py /target --profile release-gate`
+`npm run assurance:release-gate`
 
-- Purpose: assess this repo against the released `repo-standards-review v0.2.18`
-  assurance baseline from the published compliance workbench.
+- Purpose: assess this repo against the published rolling
+  `repo-standards-review` assurance-workbench lane through the repo-owned
+  audit wrapper.
 - Use when: checking the outer standards posture for a branch after the
   repo-native docs gate is already clean.
+- Exact tagged-release note: `v0.2.18` is the latest tagged
+  `repo-standards-review` release when an exact released baseline must be
+  reproduced instead of the rolling lane.
 
-`py -3 "$env:USERPROFILE\\.codex\\skills\\repo-standards-review\\scripts\\external_user_information_check.py" . --json`
+`npm run assurance:26514:authority`
 
-- Purpose: reproduce the exact released `v0.2.18` external user-information boundary in
-  the current local environment.
+- Purpose: run the bounded authority-doc `26514` documentation-proof lane.
 - Use when: advancing the `26514` uptake branches and confirming the next
-  precise failure boundary.
+  precise failure boundary from a clean staged authority-doc target.
+
+`npm run assurance:user-info`
+
+- Purpose: reproduce the governed external user-information checker through the
+  repo-owned wrapper.
+- Use when: confirming the external user-information pack remains internally
+  consistent after support-surface edits.
 
 ## Release And Control Surfaces
 
-`py -3 "$env:USERPROFILE\\.codex\\skills\\repo-standards-review\\scripts\\requirements_quality_check.py" . --json`
+`npm run assurance:requirements`
 
-- Purpose: check the governed requirements package with the released skill.
+- Purpose: check the governed requirements package with the repo-owned
+  assurance wrapper.
 - Use when: a branch changes `docs/requirements/srs.md`, `docs/requirements/syrs.md`,
   or `docs/requirements/rtm.csv`.
 

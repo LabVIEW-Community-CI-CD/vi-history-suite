@@ -10,7 +10,7 @@ function readText(relativePath: string): string {
 }
 
 describe('external user-information starter pack', () => {
-  it('retains the required v0.2.18 starter docs and consistent metadata', () => {
+  it('retains the required starter docs and consistent metadata', () => {
     const userGuide = readText('docs/user-guide.md');
     const faq = readText('docs/faq.md');
     const glossary = readText('docs/glossary.md');

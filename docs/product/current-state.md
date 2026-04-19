@@ -21,9 +21,10 @@ Read these in order:
 5. [Windows x64 Private-Release Packet](./private-release-windows-x64-v1.3.0.md)
 6. [Windows x64 Private-Release Packet JSON](./private-release-windows-x64-v1.3.0.json)
 7. [Windows Private-Release Runner Lane](./windows-private-release-runner-lane.md)
-8. [Research Implementation Index](../research/authoritative/research-implementation-index.json)
-9. [Research Alignment Matrix](../research/authoritative/research-alignment.md)
-10. [Development Queue](./development-queue.json)
+8. [Linux Assurance Runner Lane](./linux-assurance-runner-lane.md)
+9. [Research Implementation Index](../research/authoritative/research-implementation-index.json)
+10. [Research Alignment Matrix](../research/authoritative/research-alignment.md)
+11. [Development Queue](./development-queue.json)
 11. [Architecture Overview](../architecture/overview.md)
 12. [Software Requirements Specification](../requirements/srs.md)
 13. [SHIP-0001: Releasable VI History Suite](./SHIP-0001-releasable-vi-history-suite.md)
@@ -75,11 +76,12 @@ Current control-plane surfaces:
 5. [private-release-windows-x64-v1.3.0.md](./private-release-windows-x64-v1.3.0.md)
 6. [private-release-windows-x64-v1.3.0.json](./private-release-windows-x64-v1.3.0.json)
 7. [windows-private-release-runner-lane.md](./windows-private-release-runner-lane.md)
-8. [research-implementation-index.json](../research/authoritative/research-implementation-index.json)
-9. [development-queue.json](./development-queue.json)
-10. [next-research-prompt.md](../research/authoritative/next-research-prompt.md)
-11. [SHIP-0001: Releasable VI History Suite](./SHIP-0001-releasable-vi-history-suite.md)
-12. [release-readiness-matrix.json](./release-readiness-matrix.json)
+8. [linux-assurance-runner-lane.md](./linux-assurance-runner-lane.md)
+9. [research-implementation-index.json](../research/authoritative/research-implementation-index.json)
+10. [development-queue.json](./development-queue.json)
+11. [next-research-prompt.md](../research/authoritative/next-research-prompt.md)
+12. [SHIP-0001: Releasable VI History Suite](./SHIP-0001-releasable-vi-history-suite.md)
+13. [release-readiness-matrix.json](./release-readiness-matrix.json)
 13. [blocker-ledger.json](./blocker-ledger.json)
 14. [wiki-authority-map.md](./wiki-authority-map.md)
 15. [documentation-coherence-ledger.md](./documentation-coherence-ledger.md)
@@ -174,6 +176,7 @@ Latest landed ship target:
 - VS Code Marketplace publication ledger: [vscode-marketplace-publication-ledger.md](./vscode-marketplace-publication-ledger.md)
 - current changelog: [CHANGELOG.md](../../CHANGELOG.md)
 - docs-workbench image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
+- assurance-workbench image: `registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main`
 - remaining blockers: none on exact `v1.2.2`; public `main` publishes
   `86b19a2`, the public GitHub release `v1.2.2` is live, the official gallery
   extension query verifies Marketplace version `1.2.2` for
@@ -231,8 +234,9 @@ Current active and recently closed tranches:
     selected/base commit plus provider, version, and bitness before the
     explicit compare action
   - historical released `repo-standards-review` `v0.2.9` compliance closeout
-    is retained on this branch, and the current outer assurance baseline is
-    now released `repo-standards-review` `v0.2.18`
+    is retained on this branch, the current outer assurance lane now uses the
+    published `repo-standards-review` assurance-workbench `:main` image, and
+    the latest tagged release remains `v0.2.18`
   - branch promotion into `develop`, candidate publication alignment, and the
     runtime-provider public-acceptance gate are now retained as completed
   - remaining work is the unresolved live active-settings mutation seam for an
@@ -409,6 +413,16 @@ Post-release tranches:
     the job `windows_private_release_acceptance` calls
     `npm run acceptance:windows:private-release` and retains
     `windows-private-release-evidence/` as the machine-readable recovery root
+  - the repo now also retains a separate self-hosted Linux assurance lane for
+    the same protected branch sequence in
+    [linux-assurance-runner-lane.md](./linux-assurance-runner-lane.md): the
+    blocking jobs `assurance_release_gate`, `assurance_26514_authority`,
+    `assurance_requirements_quality`, and
+    `assurance_external_user_information` all pull the latest published
+    `registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main`
+    image on the local authenticated Linux runner and block preview or exact
+    packaging when any blocking assurance lane fails, while
+    `assurance_audit_packet` remains advisory only
   - a governed live-session probe command now compares persisted
     provider/version/bitness facts against active in-session VS Code runtime
     settings and retains per-run plus latest probe packets (`JSON` and
@@ -454,7 +468,9 @@ Post-release tranches:
     itself is proven
   - historical released `repo-standards-review` `v0.2.9` compliance closeout
     is retained in the branch control plane, while the current outer
-    assurance baseline is released `repo-standards-review` `v0.2.18`
+    assurance lane uses the published `repo-standards-review`
+    assurance-workbench `:main` image and the latest tagged release remains
+    `v0.2.18`
   - the retained gate decision now keeps reload-or-restart guidance active
     while direct live-session uptake of updated settings remains unproven
   - the remaining active slices are the unresolved live active-settings uptake

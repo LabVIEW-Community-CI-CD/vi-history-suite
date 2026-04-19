@@ -10,6 +10,9 @@ the repo can retain one repeatable Windows-host receipt for the canonical
 installed-user-equivalent compare scenario on `resource/plugins/lv_icon.vi`
 without depending on ad hoc local desktop memory.
 
+It is intentionally separate from the Linux assurance runner lane documented in
+[linux-assurance-runner-lane.md](./linux-assurance-runner-lane.md).
+
 ## Governing Surfaces
 
 - GitLab job: `windows_private_release_acceptance`
@@ -20,6 +23,8 @@ without depending on ad hoc local desktop memory.
   [private-release-windows-x64-v1.3.0.md](./private-release-windows-x64-v1.3.0.md)
 - hosted governance package:
   [hosted-ci-governance.md](./hosted-ci-governance.md)
+- separate standards lane:
+  [linux-assurance-runner-lane.md](./linux-assurance-runner-lane.md)
 
 ## Active Scenario
 

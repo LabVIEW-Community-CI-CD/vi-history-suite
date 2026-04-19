@@ -26,6 +26,12 @@
   - `docs/product/private-release-windows-x64-v1.3.0.json`
 - The governed Windows runner-lane contract for that prep sequence is:
   - `docs/product/windows-private-release-runner-lane.md`
+- The governed external assurance lane for that prep sequence is:
+  - `docs/product/linux-assurance-runner-lane.md`
+  - blocking jobs `assurance_release_gate`, `assurance_26514_authority`,
+    `assurance_requirements_quality`, and
+    `assurance_external_user_information`
+  - advisory job `assurance_audit_packet`
 - Public Linux smoke, exact tagging, Marketplace publication, and `main`
   promotion remain out of scope for that private-release-prep sequence.
 - The public GitHub default branch is `main` because it carries the latest
@@ -61,6 +67,9 @@
 - The repo also publishes a separate docs-authoring workbench image for
   documentation-package iteration:
   `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
+- The protected-branch release-gate CI lane uses the published external
+  assurance-workbench image on the local authenticated self-hosted Linux assurance runner lane:
+  `registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main`
 - Documentation-package coherence and future wiki seeding are tracked in:
   - `docs/product/documentation-coherence-ledger.md`
   - `docs/product/wiki-seed-plan.md`
@@ -119,6 +128,17 @@
      when one combined local report is more convenient.
 6. Run compile, test, coverage generation, and VSIX packaging through GitLab
    CI.
+   - the blocking Linux assurance jobs now run through the repo-owned
+     `npm run assurance:*` wrapper on the local authenticated self-hosted Linux
+     runner lane, which pulls the latest published
+     `repo-standards-review` assurance-workbench `:main` image before each
+     job:
+     - `assurance_release_gate`
+     - `assurance_26514_authority`
+     - `assurance_requirements_quality`
+     - `assurance_external_user_information`
+   - `assurance_audit_packet` is advisory only and retains the non-blocking
+     `evidence-pack` and `compliance-uplift` outputs.
    - The guarded `npm run package` path now runs compile,
      `npm run docs:bundle`, `npm run package:audit`, and then `vsce package`.
      Stale bundled installed-user docs are therefore unshippable through the

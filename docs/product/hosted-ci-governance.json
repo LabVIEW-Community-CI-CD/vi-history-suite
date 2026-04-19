@@ -64,6 +64,33 @@
         "mergeRequestPipelines": false
       }
     },
+    "runnerLanes": {
+      "linuxAssurance": {
+        "description": "local-linux-assurance",
+        "classification": "required-self-hosted-linux-assurance-lane",
+        "tags": [
+          "linux",
+          "x64",
+          "docker",
+          "assurance",
+          "private-release"
+        ],
+        "pullsLatestImage": "registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main",
+        "runnerContractDoc": "docs/product/linux-assurance-runner-lane.md"
+      },
+      "windowsPrivateRelease": {
+        "description": "ghost",
+        "classification": "required-self-hosted-windows-proof-lane",
+        "tags": [
+          "windows",
+          "x64",
+          "labview-host",
+          "docker-windows",
+          "private-release"
+        ],
+        "runnerContractDoc": "docs/product/windows-private-release-runner-lane.md"
+      }
+    },
     "jobs": {
       "docs_link_check": {
         "classification": "required-governance-check",
@@ -100,6 +127,61 @@
       },
       "docs_internal_continuous_integration": {
         "classification": "required-governance-check",
+        "admittedRefs": [
+          "merge_request_event",
+          "develop",
+          "release/*",
+          "hotfix/*",
+          "main",
+          "vX.Y.Z-tags"
+        ]
+      },
+      "assurance_release_gate": {
+        "classification": "required-governance-check",
+        "admittedRefs": [
+          "merge_request_event",
+          "develop",
+          "release/*",
+          "hotfix/*",
+          "main",
+          "vX.Y.Z-tags"
+        ]
+      },
+      "assurance_26514_authority": {
+        "classification": "required-governance-check",
+        "admittedRefs": [
+          "merge_request_event",
+          "develop",
+          "release/*",
+          "hotfix/*",
+          "main",
+          "vX.Y.Z-tags"
+        ]
+      },
+      "assurance_requirements_quality": {
+        "classification": "required-governance-check",
+        "admittedRefs": [
+          "merge_request_event",
+          "develop",
+          "release/*",
+          "hotfix/*",
+          "main",
+          "vX.Y.Z-tags"
+        ]
+      },
+      "assurance_external_user_information": {
+        "classification": "required-governance-check",
+        "admittedRefs": [
+          "merge_request_event",
+          "develop",
+          "release/*",
+          "hotfix/*",
+          "main",
+          "vX.Y.Z-tags"
+        ]
+      },
+      "assurance_audit_packet": {
+        "classification": "advisory-governance-check",
         "admittedRefs": [
           "merge_request_event",
           "develop",
@@ -232,6 +314,7 @@
     "docs/requirements/rtm.csv",
     "docs/testing/test-plan.md",
     "docs/product/windows-private-release-runner-lane.md",
+    "docs/product/linux-assurance-runner-lane.md",
     "docs/product/hosted-ci-governance.md",
     "docs/product/hosted-ci-governance.json"
   ]
