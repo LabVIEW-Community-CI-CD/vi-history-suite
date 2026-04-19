@@ -97,8 +97,9 @@ to the released product line and the active branch line:
   - `scripts/gitlab-runner/linux/start-linux-assurance.sh`
   - `scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service`
 - the Windows bootstrap clears stale `LabVIEW`, `LabVIEWCLI`, and
-  `LVCompare` before cold runner admission and fails closed if contamination
-  remains
+  `LVCompare` before cold runner admission with bounded `Stop-Process`,
+  `taskkill /PID /T /F`, and `taskkill /IM /T /F`, and fails closed if
+  contamination remains
 - Linux public smoke and Linux benchmark lanes remain repo-owned evaluation or
   maintainer proof surfaces. They are not part of the active installed-user or
   private-release claim for `v1.3.0`.

@@ -121,9 +121,15 @@ describe('runner lane operator assets', () => {
     expect(windowsBootstrap).toContain("'LabVIEW'");
     expect(windowsBootstrap).toContain("'LabVIEWCLI'");
     expect(windowsBootstrap).toContain("'LVCompare'");
+    expect(windowsBootstrap).toContain('$windowsProofRuntimeImageNames = @(');
+    expect(windowsBootstrap).toContain("'LabVIEW.exe'");
+    expect(windowsBootstrap).toContain("'LabVIEWCLI.exe'");
+    expect(windowsBootstrap).toContain("'LVCompare.exe'");
     expect(windowsBootstrap).toContain('Get-WindowsProofRuntimeProcesses');
     expect(windowsBootstrap).toContain('Clear-WindowsProofRuntimeSurface');
     expect(windowsBootstrap).toContain('taskkill.exe /PID $runtimeProcess.Id /T /F');
+    expect(windowsBootstrap).toContain('taskkill.exe /IM $runtimeImageName /T /F');
+    expect(windowsBootstrap).toContain('Start-Sleep -Milliseconds $windowsProofRuntimeCleanupPollMilliseconds');
     expect(windowsBootstrap).toContain(
       'Windows proof runtime cleanup failed before cold runner admission; remaining processes:'
     );
@@ -143,6 +149,11 @@ describe('runner lane operator assets', () => {
         expect.objectContaining({
           coldAdmissionRuntimeCleanup: {
             processNames: ['LabVIEW', 'LabVIEWCLI', 'LVCompare'],
+            terminationStrategy: [
+              'stop-process-force-by-pid',
+              'taskkill-pid-tree',
+              'taskkill-image-tree'
+            ],
             failurePolicy: 'fail-closed-before-runner-start'
           }
         })
@@ -157,6 +168,11 @@ describe('runner lane operator assets', () => {
       expect.objectContaining({
         coldAdmissionRuntimeCleanup: {
           processNames: ['LabVIEW', 'LabVIEWCLI', 'LVCompare'],
+          terminationStrategy: [
+            'stop-process-force-by-pid',
+            'taskkill-pid-tree',
+            'taskkill-image-tree'
+          ],
           failurePolicy: 'fail-closed-before-runner-start'
         }
       })

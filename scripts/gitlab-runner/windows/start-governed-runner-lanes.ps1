@@ -11,6 +11,13 @@ $windowsProofRuntimeProcessNames = @(
   'LabVIEWCLI'
   'LVCompare'
 )
+$windowsProofRuntimeImageNames = @(
+  'LabVIEW.exe'
+  'LabVIEWCLI.exe'
+  'LVCompare.exe'
+)
+$windowsProofRuntimeCleanupTimeoutSeconds = 10
+$windowsProofRuntimeCleanupPollMilliseconds = 500
 
 function Get-ConfiguredWindowsRunners {
   @(
@@ -41,17 +48,32 @@ function Get-WindowsProofRuntimeProcesses {
 }
 
 function Clear-WindowsProofRuntimeSurface {
-  $runtimeProcesses = Get-WindowsProofRuntimeProcesses
-  foreach ($runtimeProcess in $runtimeProcesses) {
-    Stop-Process -Id $runtimeProcess.Id -Force -ErrorAction SilentlyContinue
-    & taskkill.exe /PID $runtimeProcess.Id /T /F *> $null
-  }
+  $deadlineUtc = [DateTime]::UtcNow.AddSeconds($windowsProofRuntimeCleanupTimeoutSeconds)
+  while ($true) {
+    $runtimeProcesses = Get-WindowsProofRuntimeProcesses
+    if ($runtimeProcesses.Count -eq 0) {
+      return
+    }
 
-  $remainingRuntimeProcesses = Get-WindowsProofRuntimeProcesses
-  if ($remainingRuntimeProcesses.Count -gt 0) {
-    $remainingRuntimeProcessSummary = $remainingRuntimeProcesses |
-      ForEach-Object { "$($_.ProcessName) ($($_.Id))" }
-    throw "Windows proof runtime cleanup failed before cold runner admission; remaining processes: $($remainingRuntimeProcessSummary -join ', ')"
+    foreach ($runtimeProcess in $runtimeProcesses) {
+      Stop-Process -Id $runtimeProcess.Id -Force -ErrorAction SilentlyContinue
+      & taskkill.exe /PID $runtimeProcess.Id /T /F *> $null
+    }
+    foreach ($runtimeImageName in $windowsProofRuntimeImageNames) {
+      & taskkill.exe /IM $runtimeImageName /T /F *> $null
+    }
+
+    Start-Sleep -Milliseconds $windowsProofRuntimeCleanupPollMilliseconds
+
+    $remainingRuntimeProcesses = Get-WindowsProofRuntimeProcesses
+    if ($remainingRuntimeProcesses.Count -eq 0) {
+      return
+    }
+    if ([DateTime]::UtcNow -ge $deadlineUtc) {
+      $remainingRuntimeProcessSummary = $remainingRuntimeProcesses |
+        ForEach-Object { "$($_.ProcessName) ($($_.Id))" }
+      throw "Windows proof runtime cleanup failed before cold runner admission; remaining processes: $($remainingRuntimeProcessSummary -join ', ')"
+    }
   }
 }
 

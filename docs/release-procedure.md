@@ -37,7 +37,9 @@
   - `scripts/gitlab-runner/linux/start-linux-assurance.sh`
   - `scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service`
 - The Windows bootstrap clears stale `LabVIEW`, `LabVIEWCLI`, and `LVCompare`
-  before cold runner admission and fails closed if contamination remains.
+  before cold runner admission with bounded `Stop-Process`,
+  `taskkill /PID /T /F`, and `taskkill /IM /T /F`, and fails closed if
+  contamination remains.
 - Public Linux smoke, exact tagging, Marketplace publication, and `main`
   promotion remain out of scope for that private-release-prep sequence.
 - The public GitHub default branch is `main` because it carries the latest

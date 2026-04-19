@@ -45,6 +45,8 @@ describe('windows private release runner lane docs', () => {
     expect(runnerLaneDoc).toContain('duplicate `gitlab-runner.exe` manager processes');
     expect(runnerLaneDoc).toContain('stale `LabVIEW`,');
     expect(runnerLaneDoc).toContain('`LabVIEWCLI`, and `LVCompare` processes');
+    expect(runnerLaneDoc).toContain('taskkill /PID /T /F');
+    expect(runnerLaneDoc).toContain('taskkill /IM /T /F');
     expect(runnerLaneDoc).toContain('fails closed if any remain');
     expect(runnerLaneDoc).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
     expect(runnerLaneDoc).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
@@ -63,6 +65,8 @@ describe('windows private release runner lane docs', () => {
     expect(hostedGovernanceDoc).toContain(
       '`LabVIEW` / `LabVIEWCLI` / `LVCompare` runtime processes'
     );
+    expect(hostedGovernanceDoc).toContain('taskkill /PID /T /F');
+    expect(hostedGovernanceDoc).toContain('taskkill /IM /T /F');
     expect(hostedGovernanceDoc).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
     expect(hostedGovernanceJson.authorityGitLab.runnerLanes.windowsPrivateRelease).toEqual(
       expect.objectContaining({
@@ -77,6 +81,11 @@ describe('windows private release runner lane docs', () => {
           duplicateProcessPolicy: 'collapse-duplicates-per-config',
           coldAdmissionRuntimeCleanup: {
             processNames: ['LabVIEW', 'LabVIEWCLI', 'LVCompare'],
+            terminationStrategy: [
+              'stop-process-force-by-pid',
+              'taskkill-pid-tree',
+              'taskkill-image-tree'
+            ],
             failurePolicy: 'fail-closed-before-runner-start'
           },
           repoOwnedBootstrapScript: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',

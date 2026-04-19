@@ -95,6 +95,11 @@
         "LabVIEWCLI",
         "LVCompare"
       ],
+      "terminationStrategy": [
+        "stop-process-force-by-pid",
+        "taskkill-pid-tree",
+        "taskkill-image-tree"
+      ],
       "failurePolicy": "fail-closed-before-runner-start"
     },
     "repoOwnedOperatorAssets": {

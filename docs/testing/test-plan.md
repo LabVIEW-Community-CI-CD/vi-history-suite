@@ -1462,8 +1462,8 @@ Information-for-users review cases:
   earlier background sidecar wrapper
 - `TEST-UNIT-315`: verify the shared Windows host runtime-surface helper
   parses observed `LabVIEW.exe` / `LabVIEWCLI.exe` / `LVCompare.exe` process
-  facts deterministically and fails closed when cleanup PowerShell returns an
-  error
+  facts deterministically, uses bounded PID-tree plus image-name forced
+  cleanup, and fails closed when cleanup PowerShell returns an error
 - `TEST-SMOKE-003`: inventory the installed LabVIEWCLI operation set from
   `C:\Program Files (x86)\National Instruments\Shared\LabVIEW CLI\Operations`,
   add the repo-supplied `PrintToSingleFileHtml` additional operation from the
@@ -1925,7 +1925,8 @@ Information-for-users review cases:
   asset paths plus admitted host apply/update steps
 - `TEST-UNIT-363`: verify the repo-owned Windows bootstrap clears stale
   `LabVIEW`, `LabVIEWCLI`, and `LVCompare` before cold runner admission, uses
-  forced descendant termination, and fails closed when contamination remains
+  bounded PID-tree plus image-name forced descendant termination, and fails
+  closed when contamination remains
 - `TEST-DOC-113`: review `.gitlab-ci.yml`, `linux-assurance-runner-lane.md`,
   hosted governance, current-state, README, and the release procedure and
   confirm the Linux assurance lane is separate from the Windows proof lane,
