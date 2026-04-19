@@ -230,6 +230,8 @@ When sustainment-affecting truth changes, update these surfaces together:
   publication truth changes
 - `hosted-ci-governance.md` and `hosted-ci-governance.json` when hosted
   branch-protection or workflow responsibility changes
+- `windows-private-release-runner-lane.md` when the tagged Windows private-release
+  acceptance lane, runner identity, or retained evidence contract changes
 - SRS, RTM, and test plan when normative behavior changes
 - wiki coverage/publication ledgers when reader-facing authority changes
 - published wiki pages that represent the changed authority docs
@@ -267,6 +269,7 @@ Required branch-model and CI posture:
   - GitLab `docs_public_continuous_integration`
   - GitLab `docs_internal_continuous_integration`
   - GitLab `test_extension`
+  - GitLab `windows_private_release_acceptance`
   - GitLab `package_extension_preview`
   - GitHub `Public Facade Package Preview / package-preview`
   - GitHub `Public Facade Linux Smoke / public-facade-linux-smoke`

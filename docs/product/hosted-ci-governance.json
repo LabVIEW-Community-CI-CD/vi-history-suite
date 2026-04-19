@@ -120,6 +120,17 @@
           "vX.Y.Z-tags"
         ]
       },
+      "windows_private_release_acceptance": {
+        "classification": "required-governance-check",
+        "admittedRefs": [
+          "merge_request_event",
+          "develop",
+          "release/*",
+          "hotfix/*",
+          "main",
+          "vX.Y.Z-tags"
+        ]
+      },
       "package_extension_preview": {
         "classification": "preview-package-lane",
         "admittedRefs": [
@@ -220,6 +231,7 @@
     "docs/requirements/srs.md",
     "docs/requirements/rtm.csv",
     "docs/testing/test-plan.md",
+    "docs/product/windows-private-release-runner-lane.md",
     "docs/product/hosted-ci-governance.md",
     "docs/product/hosted-ci-governance.json"
   ]

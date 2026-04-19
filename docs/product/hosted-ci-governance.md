@@ -59,14 +59,21 @@ Job ownership:
   docs integrity on merge requests, governed branch lanes, and exact tags
 - `test_extension`: compile, test, and coverage gate on merge requests,
   governed branch lanes, and exact tags
+- `windows_private_release_acceptance`: tagged Windows shell-runner lane that
+  retains the canonical Windows x64 private-release acceptance evidence for
+  `resource/plugins/lv_icon.vi` on both host-native and Windows-container
+  providers before preview or exact packaging continues
 - `package_extension_preview`: preview VSIX packaging on merge requests into
   protected branch lanes, on `develop`, `main`, `release/*`, `hotfix/*`, and
-  exact tags; no generic `feature/*` push lane
+  exact tags; it now depends on `test_extension` plus
+  `windows_private_release_acceptance`, and there is still no generic
+  `feature/*` push lane
 - `publish_docs_authoring_image`: publication-support lane on `main` and exact
   tags only
 - `wiki_workbench_prepare_published`: documentation-publication preparation on
   `main` only
-- `release_extension`: exact-version release lane on exact tags only
+- `release_extension`: exact-version release lane on exact tags only, now
+  blocked on `test_extension` plus `windows_private_release_acceptance`
 
 Design-gate boundary:
 
@@ -134,4 +141,5 @@ When hosted automation truth changes, update together:
 - `docs/requirements/rtm.csv`
 - `docs/testing/test-plan.md`
 - this hosted governance package
+- `docs/product/windows-private-release-runner-lane.md`
 - affected workflow YAML

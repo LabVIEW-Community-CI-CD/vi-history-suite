@@ -303,6 +303,7 @@ describe('post-release sustainment rules package', () => {
       'docs_public_continuous_integration',
       'docs_internal_continuous_integration',
       'test_extension',
+      'windows_private_release_acceptance',
       'package_extension_preview',
       'Public Facade Package Preview / package-preview',
       'Public Facade Linux Smoke / public-facade-linux-smoke'

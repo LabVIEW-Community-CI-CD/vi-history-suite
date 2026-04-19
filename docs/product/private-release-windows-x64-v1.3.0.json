@@ -1,6 +1,6 @@
 {
   "packetId": "private-release-windows-x64-v1.3.0",
-  "status": "ready-for-prep-branch-validation",
+  "status": "runner-lane-defined-pending-host-registration",
   "scope": {
     "supportClaim": "windows-x64-private-release-only",
     "supportedProofLanes": [
@@ -72,6 +72,24 @@
     "containerSettingsValidate": ".cache/private-release/1.3.0/windows-x64-container/settings-validate.txt",
     "containerProofRun": ".cache/private-release/1.3.0/windows-x64-container/proof-run.txt"
   },
+  "gitlabRunnerLane": {
+    "jobName": "windows_private_release_acceptance",
+    "governedCli": "npm run acceptance:windows:private-release",
+    "governedScript": "scripts/runWindowsPrivateReleaseAcceptance.js",
+    "runnerDescription": "ghost-vihs-windows-private-release",
+    "runnerId": 52775679,
+    "runnerTags": [
+      "windows",
+      "x64",
+      "labview-host",
+      "docker-windows",
+      "private-release"
+    ],
+    "runnerContractDoc": "docs/product/windows-private-release-runner-lane.md",
+    "artifactRoot": "windows-private-release-evidence/",
+    "expectedManifestPath": "windows-private-release-evidence/manifest.json",
+    "hostInstallState": "manual-registration-pending"
+  },
   "validationPack": [
     "npm run design:gate",
     "py -3 C:\\Users\\sveld\\.codex\\skills\\repo-standards-review\\scripts\\run_assurance.py . --profile release-gate",
@@ -79,7 +97,8 @@
     "npm run package -- --out \"preview-evidence/vi-history-suite-1.3.0.vsix\""
   ],
   "nextMove": [
-    "merge feature/windows-private-release-prep back into develop",
-    "cut feature/linux-runtime-variant"
+    "install and register the tagged Windows runner manually",
+    "retain the first windows_private_release_acceptance receipt",
+    "keep feature/linux-runtime-variant frozen until the Windows runner lane is green"
   ]
 }

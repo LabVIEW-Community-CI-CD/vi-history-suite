@@ -76,6 +76,10 @@ to the released product line and the active branch line:
     lane
 - WSL is historical context only for this route; it is not part of the
   supported Windows x64 private-release contract.
+- The governed CI lane for this route is the tagged Windows shell-runner job
+  `windows_private_release_acceptance`, which retains
+  `windows-private-release-evidence/` through
+  [Windows Private-Release Runner Lane](./docs/product/windows-private-release-runner-lane.md).
 - Linux public smoke and Linux benchmark lanes remain repo-owned evaluation or
   maintainer proof surfaces. They are not part of the active installed-user or
   private-release claim for `v1.3.0`.

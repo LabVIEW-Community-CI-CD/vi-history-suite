@@ -50,6 +50,19 @@ describe('hosted ci governance docs', () => {
         'vX.Y.Z-tags'
       ])
     );
+    expect(matrix.authorityGitLab.jobs.windows_private_release_acceptance).toEqual(
+      expect.objectContaining({
+        classification: 'required-governance-check',
+        admittedRefs: expect.arrayContaining([
+          'merge_request_event',
+          'develop',
+          'release/*',
+          'hotfix/*',
+          'main',
+          'vX.Y.Z-tags'
+        ])
+      })
+    );
     expect(matrix.publicGitHub.requiredChecks).toEqual([
       'package-preview',
       'public-facade-linux-smoke'
@@ -71,6 +84,7 @@ describe('hosted ci governance docs', () => {
     expect(matrixDoc).toContain('merge gate: `only_allow_merge_if_pipeline_succeeds=true`');
     expect(matrixDoc).toContain('classification: characterization-only experiment automation');
     expect(matrixDoc).toContain('back-merge of exact released `main` into `develop`');
+    expect(matrixDoc).toContain('`windows_private_release_acceptance`');
     expect(adr).toContain('GitLab authority uses protected branches plus');
     expect(adr).toContain('GitHub benchmark workflows remain governed characterization lanes');
 
@@ -80,6 +94,9 @@ describe('hosted ci governance docs', () => {
     );
     expect(gitlabCi).toContain(`- if: '$CI_COMMIT_BRANCH =~ /^release\\/.+$/'`);
     expect(gitlabCi).toContain(`- if: '$CI_COMMIT_BRANCH =~ /^hotfix\\/.+$/'`);
+    expect(gitlabCi).toContain('windows_private_release_acceptance:');
+    expect(gitlabCi).toContain('npm run acceptance:windows:private-release');
+    expect(gitlabCi).toContain('windows-private-release-evidence/');
     expect(gitlabCi).not.toContain(`- if: '$CI_COMMIT_BRANCH'`);
 
     expect(cmPlan).toContain(

@@ -1885,6 +1885,14 @@ Information-for-users review cases:
   LabVIEW plus Docker Desktop Windows-container proof are the first admission
   surfaces, while WSL is retained historical context only and not an admitted
   installed-user or private-release dependency
+- `TEST-UNIT-356`: verify the governed Windows private-release acceptance
+  script keeps the canonical `HARNESS-VHS-002` `lv_icon.vi` selected/base pair,
+  retains separate host and Windows-container command plans, and emits the
+  machine-readable runner manifest under `windows-private-release-evidence/`
+- `TEST-DOC-111`: review `.gitlab-ci.yml`, hosted governance, sustainment,
+  current-state, the private-release packet, the runner-lane contract, the
+  SRS, the RTM, and the test plan and confirm preview and exact packaging now
+  depend on the tagged Windows shell-runner acceptance lane
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are
