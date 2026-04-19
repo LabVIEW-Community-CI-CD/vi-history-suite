@@ -36,7 +36,9 @@ Activation facts:
   and `LabVIEW.exe` observed at exit
 - historical released `repo-standards-review` `v0.2.9` compliance closeout is
   retained for this branch implementation, and the current outer assurance
-  baseline is now released `repo-standards-review` `v0.2.18`
+  lane now uses the published `repo-standards-review`
+  assurance-workbench `:main` image while `v0.2.18` remains the latest tagged
+  release
 - the exact released line is still Docker-only until that branch
   implementation is published and rerun through public acceptance
 
@@ -119,8 +121,10 @@ history instead of chat memory.
   Windows-container proof on the same Windows machine
 - treat standards-compliance refactor work on this branch as historically
   closed under the retained released `repo-standards-review` `v0.2.9`
-  closeout and currently audited against released
-  `repo-standards-review` `v0.2.18` unless a later released-skill audit fails
+  closeout and currently audited against the published
+  `repo-standards-review` assurance-workbench `:main` lane unless a later
+  rolling-lane audit fails; keep `v0.2.18` as the latest tagged release when
+  exact released reproduction is needed
 - keep the installed manifest/settings slice truthful by exposing
   `viHistorySuite.runtimeProvider`, `viHistorySuite.labviewVersion`, and
   `viHistorySuite.labviewBitness`

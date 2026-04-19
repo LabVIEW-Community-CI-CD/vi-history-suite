@@ -26,6 +26,9 @@
   - `docs/product/private-release-windows-x64-v1.3.0.json`
 - The governed Windows runner-lane contract for that prep sequence is:
   - `docs/product/windows-private-release-runner-lane.md`
+- The governed external assurance lane for that prep sequence is:
+  - `assurance_release_gate` from
+    `registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main`
 - Public Linux smoke, exact tagging, Marketplace publication, and `main`
   promotion remain out of scope for that private-release-prep sequence.
 - The public GitHub default branch is `main` because it carries the latest
@@ -61,6 +64,9 @@
 - The repo also publishes a separate docs-authoring workbench image for
   documentation-package iteration:
   `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
+- The protected-branch release-gate CI lane uses the published external
+  assurance-workbench image:
+  `registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main`
 - Documentation-package coherence and future wiki seeding are tracked in:
   - `docs/product/documentation-coherence-ledger.md`
   - `docs/product/wiki-seed-plan.md`
@@ -119,6 +125,10 @@
      when one combined local report is more convenient.
 6. Run compile, test, coverage generation, and VSIX packaging through GitLab
    CI.
+   - `assurance_release_gate` now runs
+     `python3 /opt/repo-standards-review/scripts/run_assurance.py . --profile release-gate`
+     from the published `repo-standards-review` assurance-workbench image and
+     must pass before preview or exact packaging continues.
    - The guarded `npm run package` path now runs compile,
      `npm run docs:bundle`, `npm run package:audit`, and then `vsce package`.
      Stale bundled installed-user docs are therefore unshippable through the

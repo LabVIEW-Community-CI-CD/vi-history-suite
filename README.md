@@ -76,10 +76,14 @@ to the released product line and the active branch line:
     lane
 - WSL is historical context only for this route; it is not part of the
   supported Windows x64 private-release contract.
-- The governed CI lane for this route is the tagged Windows shell-runner job
-  `windows_private_release_acceptance`, which retains
-  `windows-private-release-evidence/` through
-  [Windows Private-Release Runner Lane](./docs/product/windows-private-release-runner-lane.md).
+- The governed CI lanes for this route are:
+  - the tagged Windows shell-runner job
+    `windows_private_release_acceptance`, which retains
+    `windows-private-release-evidence/` through
+    [Windows Private-Release Runner Lane](./docs/product/windows-private-release-runner-lane.md)
+  - `assurance_release_gate`, which runs the bounded `release-gate` audit from
+    `registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main`
+    before preview or exact packaging continues
 - Linux public smoke and Linux benchmark lanes remain repo-owned evaluation or
   maintainer proof surfaces. They are not part of the active installed-user or
   private-release claim for `v1.3.0`.
@@ -646,6 +650,7 @@ Latest landed ship target:
 - target release manifest: `release-evidence/release-manifest.json`
 - current changelog: [CHANGELOG.md](./CHANGELOG.md)
 - docs-authoring image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
+- assurance-workbench image: `registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main`
 - retained release evidence: GitLab release `v0.2.0`, tag pipeline `2428809456`,
   release job `13779604462`
 - remaining release blockers: none on the exact public `v1.2.2` line; public

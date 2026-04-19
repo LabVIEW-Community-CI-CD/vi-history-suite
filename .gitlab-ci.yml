@@ -87,6 +87,25 @@ docs_internal_continuous_integration:
     - if: '$CI_COMMIT_BRANCH =~ /^hotfix\/.+$/'
     - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
 
+assurance_release_gate:
+  stage: docs
+  image: registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main
+  script:
+    - mkdir -p assurance-release-gate-evidence
+    - python3 /opt/repo-standards-review/scripts/run_assurance.py . --profile release-gate | tee assurance-release-gate-evidence/release-gate-scorecard.txt
+  artifacts:
+    when: always
+    expire_in: never
+    paths:
+      - assurance-release-gate-evidence/
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_BRANCH =~ /^release\/.+$/'
+    - if: '$CI_COMMIT_BRANCH =~ /^hotfix\/.+$/'
+    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
+
 publish_docs_authoring_image:
   stage: image
   image:
@@ -282,6 +301,7 @@ package_extension_preview:
   stage: package
   image: node:24
   needs:
+    - assurance_release_gate
     - test_extension
     - windows_private_release_acceptance
   script:
@@ -332,6 +352,7 @@ release_extension:
   stage: release
   image: node:24
   needs:
+    - assurance_release_gate
     - test_extension
     - windows_private_release_acceptance
   script:

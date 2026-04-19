@@ -109,6 +109,17 @@
           "vX.Y.Z-tags"
         ]
       },
+      "assurance_release_gate": {
+        "classification": "required-governance-check",
+        "admittedRefs": [
+          "merge_request_event",
+          "develop",
+          "release/*",
+          "hotfix/*",
+          "main",
+          "vX.Y.Z-tags"
+        ]
+      },
       "test_extension": {
         "classification": "required-governance-check",
         "admittedRefs": [

@@ -32,7 +32,8 @@ describe('information-for-users support docs', () => {
       '| Information-for-users command reference | `docs/information-for-users/command-reference.md` |'
     );
 
-    expect(plan).toContain('released `repo-standards-review v0.2.18`');
+    expect(plan).toContain('published `repo-standards-review` assurance-workbench `:main`');
+    expect(plan).toContain('latest tagged release `v0.2.18`');
     expect(plan).toContain('repo-native docs workbench');
     expect(plan).toContain(
       'exact released installed baseline explicit as `v1.2.2` Docker-only and x64-only'
@@ -85,7 +86,7 @@ describe('information-for-users support docs', () => {
     expect(commandReference).toContain('admitted dependency for that path');
     expect(commandReference).not.toContain('`npm run public:smoke:linux`');
     expect(commandReference).toContain('The active Windows x64 private-release route does not use');
-    expect(commandReference).toContain('assurance-workbench:v0.2.18');
+    expect(commandReference).toContain('assurance-workbench:main');
     expect(commandReference).toContain(
       '$env:USERPROFILE\\\\.codex\\\\skills\\\\repo-standards-review\\\\scripts\\\\external_user_information_check.py'
     );

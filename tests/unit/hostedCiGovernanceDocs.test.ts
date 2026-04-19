@@ -63,6 +63,19 @@ describe('hosted ci governance docs', () => {
         ])
       })
     );
+    expect(matrix.authorityGitLab.jobs.assurance_release_gate).toEqual(
+      expect.objectContaining({
+        classification: 'required-governance-check',
+        admittedRefs: expect.arrayContaining([
+          'merge_request_event',
+          'develop',
+          'release/*',
+          'hotfix/*',
+          'main',
+          'vX.Y.Z-tags'
+        ])
+      })
+    );
     expect(matrix.publicGitHub.requiredChecks).toEqual([
       'package-preview',
       'public-facade-linux-smoke'
@@ -85,6 +98,8 @@ describe('hosted ci governance docs', () => {
     expect(matrixDoc).toContain('classification: characterization-only experiment automation');
     expect(matrixDoc).toContain('back-merge of exact released `main` into `develop`');
     expect(matrixDoc).toContain('`windows_private_release_acceptance`');
+    expect(matrixDoc).toContain('`assurance_release_gate`');
+    expect(matrixDoc).toContain('repo-standards-review');
     expect(adr).toContain('GitLab authority uses protected branches plus');
     expect(adr).toContain('GitHub benchmark workflows remain governed characterization lanes');
 
@@ -97,6 +112,9 @@ describe('hosted ci governance docs', () => {
     expect(gitlabCi).toContain('windows_private_release_acceptance:');
     expect(gitlabCi).toContain('npm run acceptance:windows:private-release');
     expect(gitlabCi).toContain('windows-private-release-evidence/');
+    expect(gitlabCi).toContain('assurance_release_gate:');
+    expect(gitlabCi).toContain('registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main');
+    expect(gitlabCi).toContain('python3 /opt/repo-standards-review/scripts/run_assurance.py . --profile release-gate');
     expect(gitlabCi).not.toContain(`- if: '$CI_COMMIT_BRANCH'`);
 
     expect(cmPlan).toContain(
@@ -106,11 +124,17 @@ describe('hosted ci governance docs', () => {
     expect(readme).toContain(
       '- hosted automation governance matrix: [docs/product/hosted-ci-governance.md]'
     );
+    expect(readme).toContain('assurance_release_gate');
+    expect(readme).toContain('registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main');
     expect(currentState).toContain('[hosted-ci-governance.md](./hosted-ci-governance.md)');
     expect(currentState).toContain(
       '- hosted automation governance matrix: [hosted-ci-governance.md](./hosted-ci-governance.md)'
     );
+    expect(currentState).toContain('assurance_release_gate');
+    expect(currentState).toContain('registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main');
     expect(releaseProcedure).toContain('The hosted automation governance matrix is retained in:');
+    expect(releaseProcedure).toContain('assurance_release_gate');
+    expect(releaseProcedure).toContain('repo-standards-review/assurance-workbench:main');
 
     expect(linuxBenchmarkWorkflow).toContain('name: Linux Runtime Benchmark Experiment');
     expect(linuxBenchmarkWorkflow).toContain('- experiment/**');

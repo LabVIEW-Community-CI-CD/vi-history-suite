@@ -131,8 +131,9 @@ The important route split is:
 
 - repo-native docs authoring and docs validation stay in the `vi-history-suite`
   docs workbench
-- outer standards verification for this tranche uses released
-  `repo-standards-review v0.2.18`
+- outer standards verification for this tranche uses the published
+  `repo-standards-review` assurance-workbench `:main` lane; `v0.2.18`
+  remains the latest tagged release when an exact released baseline is needed
 
 ### How do I run the canonical gate?
 
@@ -181,8 +182,9 @@ Use the governed repo search posture:
   `npm run proof:runtime-settings-live-session:assert` and treat failure as a
   hard stop.
 - If you are checking the broader standards posture for this branch, use the
-  released `repo-standards-review v0.2.18` baseline instead of older parked
-  roadmap branches.
+  published `repo-standards-review` assurance-workbench `:main` lane. Use
+  `v0.2.18` only when you need the latest tagged released baseline instead of
+  the rolling lane.
 
 ### Where do I start when I need to cut a release?
 

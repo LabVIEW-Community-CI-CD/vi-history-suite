@@ -1893,6 +1893,15 @@ Information-for-users review cases:
   current-state, the private-release packet, the runner-lane contract, the
   SRS, the RTM, and the test plan and confirm preview and exact packaging now
   depend on the tagged Windows shell-runner acceptance lane
+- `TEST-UNIT-357`: verify the hosted CI governance package, `.gitlab-ci.yml`,
+  README, current-state, and the release procedure retain the published
+  `repo-standards-review` assurance-workbench lane, its
+  `assurance_release_gate` job name, the published image reference, and the
+  preview/exact packaging dependency on that lane
+- `TEST-DOC-112`: review `.gitlab-ci.yml`, hosted governance, README,
+  current-state, the release procedure, the SRS, the RTM, and the test plan
+  and confirm the published assurance-workbench `release-gate` lane is now a
+  required GitLab governance check that blocks preview and exact packaging
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are

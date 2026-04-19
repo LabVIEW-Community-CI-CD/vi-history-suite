@@ -253,17 +253,20 @@ See also:
 
 ## Assurance Execution
 
-`docker run --rm -v /path/to/repo:/target registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:v0.2.18 python3 scripts/run_assurance.py /target --profile release-gate`
+`docker run --rm -v /path/to/repo:/target registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main python3 scripts/run_assurance.py /target --profile release-gate`
 
-- Purpose: assess this repo against the released `repo-standards-review v0.2.18`
-  assurance baseline from the published compliance workbench.
+- Purpose: assess this repo against the published rolling
+  `repo-standards-review` assurance-workbench lane.
 - Use when: checking the outer standards posture for a branch after the
   repo-native docs gate is already clean.
+- Exact tagged-release note: `v0.2.18` is the latest tagged
+  `repo-standards-review` release when an exact released baseline must be
+  reproduced instead of the rolling lane.
 
 `py -3 "$env:USERPROFILE\\.codex\\skills\\repo-standards-review\\scripts\\external_user_information_check.py" . --json`
 
-- Purpose: reproduce the exact released `v0.2.18` external user-information boundary in
-  the current local environment.
+- Purpose: reproduce the current installed-skill external user-information
+  boundary in the local environment.
 - Use when: advancing the `26514` uptake branches and confirming the next
   precise failure boundary.
 

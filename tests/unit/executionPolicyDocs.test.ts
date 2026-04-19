@@ -125,7 +125,9 @@ describe('execution-policy control plane', () => {
     expect(currentState).toContain('reload or restart the');
     expect(currentState).toContain('historical released `repo-standards-review` `v0.2.9` compliance closeout');
     expect(currentState).toContain('current outer');
-    expect(currentState).toContain('assurance baseline is released `repo-standards-review` `v0.2.18`');
+    expect(currentState).toContain('assurance lane uses the published `repo-standards-review`');
+    expect(currentState).toContain('assurance-workbench `:main` image');
+    expect(currentState).toContain('latest tagged release remains `v0.2.18`');
     expect(currentState).toContain('remaining active slices are the unresolved live active-settings');
     expect(currentState).toContain('`TRANCHE-012`: Post-release sustainment and release cadence');
     expect(currentState).toContain(

@@ -479,6 +479,9 @@ describe('ship-control direction system', () => {
     expect(gitlabCi).toContain('docs-integration-evidence/');
     expect(gitlabCi).toContain('publish_docs_authoring_image:');
     expect(gitlabCi).toContain('wiki_workbench_prepare_published:');
+    expect(gitlabCi).toContain('assurance_release_gate:');
+    expect(gitlabCi).toContain('registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main');
+    expect(gitlabCi).toContain('python3 /opt/repo-standards-review/scripts/run_assurance.py . --profile release-gate');
     expect(gitlabCi).toContain('--dockerfile "${CI_PROJECT_DIR}/docker/docs-authoring/Dockerfile"');
     expect(gitlabCi).toContain('${CI_REGISTRY_IMAGE}/docs-authoring:main');
     expect(gitlabCi).toContain('${CI_REGISTRY_IMAGE}/docs-authoring:sha-${CI_COMMIT_SHORT_SHA}');
@@ -502,11 +505,14 @@ describe('ship-control direction system', () => {
 
     expect(readme).toContain('preview-evidence/vi-history-suite-<version>.vsix');
     expect(readme).toContain('registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main');
+    expect(readme).toContain('registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main');
     expect(readme).toContain('governed tagged release artifact');
     expect(currentState).toContain('docs-workbench image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`');
+    expect(currentState).toContain('assurance-workbench image: `registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main`');
     expect(currentState).toContain('preview install surface: `preview-evidence/vi-history-suite-<version>.vsix`');
     expect(releaseProcedure).toContain('For pre-release install testing, use the `package_extension_preview` artifact');
     expect(releaseProcedure).toContain('The repo also publishes a separate docs-authoring workbench image');
+    expect(releaseProcedure).toContain('The protected-branch release-gate CI lane uses the published external');
     expect(releaseProcedure).toContain('Preview VSIX artifacts are available from `main`');
   });
 });

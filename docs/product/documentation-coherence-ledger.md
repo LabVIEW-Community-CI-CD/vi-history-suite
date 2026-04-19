@@ -87,9 +87,10 @@ source inference or chat memory.
 
 ## Residual External Risks
 
-- The companion `repo-standards-review` release on this machine is now
-  `v0.2.18`; older local references such as `v0.2.2` are historical and
-  should not be treated as the current outer assurance baseline.
+- The companion `repo-standards-review` source of truth now splits cleanly:
+  the latest tagged release is `v0.2.18`, while the active rolling outer
+  assurance lane is `assurance-workbench:main`; older local references such as
+  `v0.2.2` are historical only.
 - The docs-authoring image is fully wired in the repo and CI, but local Docker
   runtime proof is still environment-dependent on this machine.
 - `research-implementation-index.json` remains a curated capability-status

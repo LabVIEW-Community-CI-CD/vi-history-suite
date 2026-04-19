@@ -57,6 +57,10 @@ Job ownership:
 - `docs_link_check`, `docs_continuous_integration`,
   `docs_public_continuous_integration`, `docs_internal_continuous_integration`:
   docs integrity on merge requests, governed branch lanes, and exact tags
+- `assurance_release_gate`: published `repo-standards-review`
+  assurance-workbench lane on merge requests, governed branch lanes, and exact
+  tags; it runs the bounded `release-gate` audit against the checked-out repo
+  through `registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main`
 - `test_extension`: compile, test, and coverage gate on merge requests,
   governed branch lanes, and exact tags
 - `windows_private_release_acceptance`: tagged Windows shell-runner lane that
@@ -65,15 +69,16 @@ Job ownership:
   providers before preview or exact packaging continues
 - `package_extension_preview`: preview VSIX packaging on merge requests into
   protected branch lanes, on `develop`, `main`, `release/*`, `hotfix/*`, and
-  exact tags; it now depends on `test_extension` plus
-  `windows_private_release_acceptance`, and there is still no generic
+  exact tags; it now depends on `assurance_release_gate`, `test_extension`,
+  and `windows_private_release_acceptance`, and there is still no generic
   `feature/*` push lane
 - `publish_docs_authoring_image`: publication-support lane on `main` and exact
   tags only
 - `wiki_workbench_prepare_published`: documentation-publication preparation on
   `main` only
 - `release_extension`: exact-version release lane on exact tags only, now
-  blocked on `test_extension` plus `windows_private_release_acceptance`
+  blocked on `assurance_release_gate`, `test_extension`, and
+  `windows_private_release_acceptance`
 
 Design-gate boundary:
 
