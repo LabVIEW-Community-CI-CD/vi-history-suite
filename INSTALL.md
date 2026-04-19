@@ -1,6 +1,50 @@
 # Install
 
-## Public Runtime Contract
+## Route Boundary
+
+- The exact released public line remains `v1.2.2`.
+- The active `develop` candidate is a Windows x64 private-release route.
+- Source evaluation, Codespaces, and Linux public smoke remain separate from
+  the active private-release path.
+
+## Active `develop` Windows x64 Private-Release Candidate
+
+Use this route when you are validating the current `1.3.0` candidate on a real
+Windows machine before any exact/public release work.
+
+Required surfaces:
+
+- Visual Studio Code on native Windows
+- a trusted Git repository containing an eligible LabVIEW VI
+- the generated runtime-settings CLI
+- installed LabVIEW selected through the runtime-settings CLI for the host lane
+- Docker Desktop in Windows-container mode only when using the bounded expert
+  Docker lane
+
+Not required:
+
+- WSL for the supported Windows x64 path
+- Linux public smoke lanes
+- private GitLab access
+
+Private-release candidate flow:
+
+1. Run `VI History: Prepare Local Runtime Settings CLI`.
+2. Set the intended provider and runtime facts with one of these:
+   - `vihs-runtime-settings --provider host --labview-version 2026 --labview-bitness x64`
+   - `vihs-runtime-settings --provider docker --labview-version 2026 --labview-bitness x64`
+3. If you selected Docker, confirm Docker Desktop is already in
+   Windows-container mode before trusting Compare.
+4. Reload or restart the VS Code window if it was already open when the CLI
+   updated settings.
+5. Open the trusted repo, run `VI History`, select the commit pair, review the
+   explicit compare preflight, and choose `Compare`.
+
+The active private-release claim on `develop` is Windows x64 only. Linux and
+Codespaces remain source-evaluation or internal proof surfaces, not the
+supported installed-user route for this candidate.
+
+## Exact Released Public Runtime Contract
 
 The installed extension compare workflow is Docker-only and x64-only.
 
@@ -40,6 +84,9 @@ first use before compare execution.
 7. Review the generated comparison report.
 
 ## Public Development And Evaluation
+
+This route remains useful for source evaluation, but it is not part of the
+active Windows x64 private-release contract above.
 
 The public repo is intended to support devcontainer/Codespaces evaluation on
 the `develop` branch.

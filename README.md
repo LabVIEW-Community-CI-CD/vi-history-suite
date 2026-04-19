@@ -65,6 +65,21 @@ to the released product line and the active branch line:
   use [Public Release Candidate](./docs/product/public-release-candidate.md)
   and the publication ledgers named there.
 
+## Current `develop` Private-Release Boundary
+
+- The active `develop` candidate is a Windows x64 private-release route, not a
+  cross-platform exact/public release.
+- The supported current user path on this branch is:
+  - native Windows host LabVIEW selected through the generated runtime-settings
+    CLI
+  - Docker Desktop in Windows-container mode for the bounded expert container
+    lane
+- WSL is historical context only for this route; it is not part of the
+  supported Windows x64 private-release contract.
+- Linux public smoke and Linux benchmark lanes remain repo-owned evaluation or
+  maintainer proof surfaces. They are not part of the active installed-user or
+  private-release claim for `v1.3.0`.
+
 ## Troubleshooting
 
 - For recurring route and support questions, use
@@ -135,6 +150,19 @@ Active develop direction:
 - the exact released installed workflow above remains the truthful release
   baseline until the replacement slices are published
 
+Active `develop` Windows x64 private-release candidate:
+
+1. run `VI History: Prepare Local Runtime Settings CLI`
+2. set the runtime explicitly with
+   `vihs-runtime-settings --provider <host|docker> --labview-version 2026 --labview-bitness x64`
+3. use `--provider host` for the supported native Windows host lane or
+   `--provider docker` only when Docker Desktop is already in
+   Windows-container mode
+4. reload or restart VS Code if it was already running when the settings
+   changed
+5. open `VI History`, select the target commits, review explicit compare
+   preflight, and choose `Compare`
+
 If you want to evaluate the source repo instead of using the installed
 extension, use these source-evaluation pages:
 
@@ -152,6 +180,11 @@ surface for the source tree, not the first-use installed-user manual.
 
 The public GitHub facade is expected to support evaluation inside Codespaces or
 a local devcontainer.
+
+This route is intentionally separate from the active Windows x64
+private-release path. Codespaces, devcontainers, and Linux-hosted evaluation
+remain source-evaluation surfaces, not the supported installed-user claim for
+the current private-release candidate.
 
 - The current exact released installed extension path is Docker-only and
   x64-only.
@@ -229,6 +262,10 @@ The maintained Gate D operator preflight surfaces are:
 npm run public:gate-d:preflight
 npm run public:gate-d:prepare-cold-pull
 ```
+
+Everything below this point is authority-repo, maintainer, or proof-surface
+context. It is not the first-use manual for the active Windows x64
+private-release candidate.
 
 It is no longer just an initial command-and-panel baseline. The repo now
 contains:

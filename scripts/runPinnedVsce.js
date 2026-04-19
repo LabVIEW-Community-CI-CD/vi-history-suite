@@ -4,16 +4,37 @@ const { spawnSync } = require('node:child_process');
 
 const VSCE_PACKAGE_SPEC = '@vscode/vsce@3.7.1';
 
-function getNpmCommand() {
-  return process.platform === 'win32' ? 'npm.cmd' : 'npm';
+function quoteCmdArg(value) {
+  const text = String(value);
+  if (!/[ \t"&^<>|()]/u.test(text)) {
+    return text;
+  }
+  return `"${text.replace(/(["^])/gu, '^$1')}"`;
+}
+
+function buildPinnedVsceInvocation(args, deps = {}) {
+  const platform = deps.platform ?? process.platform;
+  const baseArgs = ['exec', '--yes', '--package', VSCE_PACKAGE_SPEC, '--', 'vsce', ...args];
+  if (platform === 'win32') {
+    return {
+      command: 'cmd.exe',
+      args: ['/d', '/s', '/c', ['npm.cmd', ...baseArgs].map(quoteCmdArg).join(' ')]
+    };
+  }
+
+  return {
+    command: 'npm',
+    args: baseArgs
+  };
 }
 
 function runPinnedVsce(args, deps = {}) {
   const spawnSyncImpl = deps.spawnSync ?? spawnSync;
   const cwd = deps.cwd ?? process.cwd();
+  const invocation = buildPinnedVsceInvocation(args, deps);
   const result = spawnSyncImpl(
-    getNpmCommand(),
-    ['exec', '--yes', '--package', VSCE_PACKAGE_SPEC, '--', 'vsce', ...args],
+    invocation.command,
+    invocation.args,
     {
       cwd,
       stdio: 'inherit',
@@ -43,5 +64,6 @@ if (require.main === module) {
 
 module.exports = {
   VSCE_PACKAGE_SPEC,
+  buildPinnedVsceInvocation,
   runPinnedVsce
 };

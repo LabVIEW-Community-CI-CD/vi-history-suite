@@ -16,6 +16,8 @@ describe('information-for-users support docs', () => {
     const glossary = readText('docs/information-for-users/glossary.md');
     const faq = readText('docs/information-for-users/faq.md');
     const commandReference = readText('docs/information-for-users/command-reference.md');
+    const readme = readText('README.md');
+    const install = readText('INSTALL.md');
 
     expect(informationItemMap).toContain(
       '| Information-for-users plan | `docs/information-for-users/plan.md` |'
@@ -57,6 +59,17 @@ describe('information-for-users support docs', () => {
     expect(faq).toContain('WSL is retained historical context only');
     expect(faq).toContain('private-release proof route');
 
+    expect(readme).toContain('Current `develop` Private-Release Boundary');
+    expect(readme).toContain('Windows x64 private-release route');
+    expect(readme).toContain('Docker Desktop in Windows-container mode');
+    expect(readme).toContain('Linux public smoke and Linux benchmark lanes remain');
+    expect(readme).toContain('not the first-use manual for the active Windows x64');
+
+    expect(install).toContain('Active `develop` Windows x64 Private-Release Candidate');
+    expect(install).toContain('The active `develop` candidate is a Windows x64 private-release route.');
+    expect(install).toContain('Docker Desktop in Windows-container mode only when using the bounded expert');
+    expect(install).toContain('The active private-release claim on `develop` is Windows x64 only.');
+
     expect(commandReference).toContain('npm run docs:workbench:gate');
     expect(commandReference).toContain('VI History: Prepare Local Runtime Settings CLI');
     expect(commandReference).toContain('extension-global storage root');
@@ -70,6 +83,8 @@ describe('information-for-users support docs', () => {
     expect(commandReference).toContain('supported Windows x64 private-release route');
     expect(commandReference).toContain('WSL is not');
     expect(commandReference).toContain('admitted dependency for that path');
+    expect(commandReference).not.toContain('`npm run public:smoke:linux`');
+    expect(commandReference).toContain('The active Windows x64 private-release route does not use');
     expect(commandReference).toContain('assurance-workbench:v0.2.18');
     expect(commandReference).toContain(
       '$env:USERPROFILE\\\\.codex\\\\skills\\\\repo-standards-review\\\\scripts\\\\external_user_information_check.py'
