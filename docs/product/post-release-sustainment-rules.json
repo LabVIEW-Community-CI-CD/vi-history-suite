@@ -216,6 +216,19 @@
             "scheduledTaskAction": "powershell.exe -NoLogo -NoProfile -File \"C:\\GitLab-Runner\\start-governed-runner-lanes.ps1\"",
             "failurePolicy": "fail-closed-unless-exactly-one-configured-manager-after-apply"
           },
+          "hostAssertionSurface": {
+            "script": "scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1",
+            "wrapperScript": "scripts/assertGovernedRunnerLanes.js",
+            "packageScript": "npm run gitlab:runner:assert",
+            "verification": [
+              "bootstrap-hash-match",
+              "scheduled-task-action-match",
+              "scheduled-task-logon-trigger",
+              "request-concurrency-two",
+              "exactly-one-configured-runner-manager"
+            ],
+            "failurePolicy": "fail-closed-on-live-host-drift"
+          },
           "hostNativeMidSessionContaminationRecovery": {
             "trigger": "windows-host-runtime-cleanup-failed",
             "retryDelayMs": 5000,
@@ -232,6 +245,21 @@
               "systemctl-is-active"
             ],
             "failurePolicy": "fail-closed-unless-service-enabled-and-active"
+          },
+          "hostAssertionSurface": {
+            "script": "scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh",
+            "wrapperScript": "scripts/assertGovernedRunnerLanes.js",
+            "packageScript": "npm run gitlab:runner:assert",
+            "verification": [
+              "helper-hash-match",
+              "service-unit-hash-match",
+              "request-concurrency-two",
+              "service-fragment-path-match",
+              "service-user-match",
+              "service-working-directory-match",
+              "exactly-one-configured-runner-process"
+            ],
+            "failurePolicy": "fail-closed-on-live-host-drift"
           }
         }
       },

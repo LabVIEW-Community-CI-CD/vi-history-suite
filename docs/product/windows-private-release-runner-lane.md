@@ -111,10 +111,14 @@ The governed host asset pack for this lane is versioned in the repo:
   `scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1`
 - Windows bootstrap script:
   `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1`
+- Windows drift assertion script:
+  `scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1`
 - Linux apply/update script:
   `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh`
 - Linux helper invoked by that bootstrap:
   `scripts/gitlab-runner/linux/start-linux-assurance.sh`
+- Cross-lane wrapper from the admitted Windows host:
+  `scripts/assertGovernedRunnerLanes.js` via `npm run gitlab:runner:assert`
 
 The Windows apply script is the repo-owned update surface for the admitted
 scheduled task contract. It copies the repo-owned bootstrap to
@@ -126,6 +130,14 @@ runner manager remains after apply.
 The Windows bootstrap script remains the repo-owned source of truth for
 duplicate collapse, cold-admission runtime cleanup, current-user runner
 launch, and WSL wake-up on user logon.
+
+The Windows assertion surface is the repo-owned live drift check for the
+admitted scheduled-task/bootstrap contract. It fails closed unless the
+installed bootstrap hash still matches the repo source, the scheduled task
+retains the exact
+`powershell.exe -NoLogo -NoProfile -File "C:\GitLab-Runner\start-governed-runner-lanes.ps1"`
+action plus its logon trigger, `C:\GitLab-Runner\config.toml` still contains
+`request_concurrency = 2`, and exactly one configured runner manager is live.
 
 The host-native proof path inside `npm run acceptance:windows:private-release`
 uses the same bounded cleanup family before and after host execution, so
@@ -163,6 +175,21 @@ clears `LabVIEW`, `LabVIEWCLI`, and `LVCompare` with bounded
 `Stop-Process`, `taskkill /PID /T /F`, and `taskkill /IM /T /F`; if any of
 those processes remain afterward, the lane fails closed and the runner is not
 started.
+
+## Assert Live Host Drift
+
+From the repo root on the admitted Windows host:
+
+```powershell
+powershell.exe -NoLogo -NoProfile -File .\scripts\gitlab-runner\windows\assert-governed-runner-lanes.ps1
+npm run gitlab:runner:assert
+```
+
+The direct PowerShell assertion checks only the admitted Windows lane. The
+repo-owned wrapper defaults to both lanes on the admitted Windows host: it
+runs the Windows assertion directly and the Linux assertion through WSL, so
+future sessions can prove the current scheduled-task/bootstrap state and the
+paired Linux assurance service state in one command.
 
 ## Manual Registration Pack
 

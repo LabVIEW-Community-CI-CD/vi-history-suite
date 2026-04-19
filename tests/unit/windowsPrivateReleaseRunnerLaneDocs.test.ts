@@ -43,10 +43,14 @@ describe('windows private release runner lane docs', () => {
     expect(runnerLaneDoc).toContain('VIHS Governed Runner Lanes');
     expect(runnerLaneDoc).toContain('apply-governed-runner-lanes.ps1');
     expect(runnerLaneDoc).toContain('start-governed-runner-lanes.ps1');
+    expect(runnerLaneDoc).toContain('assert-governed-runner-lanes.ps1');
+    expect(runnerLaneDoc).toContain('scripts/assertGovernedRunnerLanes.js');
+    expect(runnerLaneDoc).toContain('npm run gitlab:runner:assert');
     expect(runnerLaneDoc).toContain('-NoLogo -NoProfile -File');
     expect(runnerLaneDoc).not.toContain('ExecutionPolicy Bypass -File');
     expect(runnerLaneDoc).toContain('fails closed unless exactly one configured');
     expect(runnerLaneDoc).toContain('runner manager remains after apply');
+    expect(runnerLaneDoc).toContain('installed bootstrap hash still matches the repo source');
     expect(runnerLaneDoc).toContain('duplicate `gitlab-runner.exe` manager processes');
     expect(runnerLaneDoc).toContain('stale `LabVIEW`,');
     expect(runnerLaneDoc).toContain('`LabVIEWCLI`, and `LVCompare` processes');
@@ -73,6 +77,9 @@ describe('windows private release runner lane docs', () => {
     expect(hostedGovernanceDoc).toContain('VIHS Governed Runner Lanes');
     expect(hostedGovernanceDoc).toContain('apply-governed-runner-lanes.ps1');
     expect(hostedGovernanceDoc).toContain('start-governed-runner-lanes.ps1');
+    expect(hostedGovernanceDoc).toContain('assert-governed-runner-lanes.ps1');
+    expect(hostedGovernanceDoc).toContain('scripts/assertGovernedRunnerLanes.js');
+    expect(hostedGovernanceDoc).toContain('npm run gitlab:runner:assert');
     expect(hostedGovernanceDoc).toContain('request_concurrency = 2');
     expect(hostedGovernanceDoc).toContain('cold-admission fail-closed');
     expect(hostedGovernanceDoc).toContain(
@@ -112,10 +119,23 @@ describe('windows private release runner lane docs', () => {
             failurePolicy: 'fail-closed-before-runner-start'
           },
           repoOwnedBootstrapScript: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',
+          repoOwnedAssertScript: 'scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1',
           repoOwnedLinuxHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
+          combinedAssertionScript: 'scripts/assertGovernedRunnerLanes.js',
+          combinedAssertionPackageScript: 'npm run gitlab:runner:assert',
           applyVerification: {
             checks: ['scheduled-task-registered', 'exactly-one-configured-runner-manager'],
             failurePolicy: 'fail-closed-unless-scheduled-task-and-runner-process-are-live'
+          },
+          assertVerification: {
+            checks: [
+              'bootstrap-hash-match',
+              'scheduled-task-action-match',
+              'scheduled-task-logon-trigger',
+              'request-concurrency-two',
+              'exactly-one-configured-runner-manager'
+            ],
+            failurePolicy: 'fail-closed-on-live-host-drift'
           }
         })
       })
@@ -134,6 +154,9 @@ describe('windows private release runner lane docs', () => {
 
     expect(packageManifest.scripts?.['acceptance:windows:private-release']).toBe(
       'npm run compile && node scripts/runWindowsPrivateReleaseAcceptance.js'
+    );
+    expect(packageManifest.scripts?.['gitlab:runner:assert']).toBe(
+      'node scripts/assertGovernedRunnerLanes.js'
     );
   });
 });

@@ -108,11 +108,26 @@ describe('hosted ci governance docs', () => {
           repoOwnedApplyScript: 'scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh',
           repoOwnedHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
           repoOwnedServiceUnit: 'scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service',
+          repoOwnedAssertScript: 'scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh',
+          combinedAssertionScript: 'scripts/assertGovernedRunnerLanes.js',
+          combinedAssertionPackageScript: 'npm run gitlab:runner:assert',
           applyVerification: {
             requiredUser: 'sveld',
             requiredHome: '/home/sveld',
             checks: ['systemctl-is-enabled', 'systemctl-is-active'],
             failurePolicy: 'fail-closed-unless-service-enabled-and-active'
+          },
+          assertVerification: {
+            checks: [
+              'helper-hash-match',
+              'service-unit-hash-match',
+              'request-concurrency-two',
+              'service-fragment-path-match',
+              'service-user-match',
+              'service-working-directory-match',
+              'exactly-one-configured-runner-process'
+            ],
+            failurePolicy: 'fail-closed-on-live-host-drift'
           }
         })
       })
@@ -145,10 +160,23 @@ describe('hosted ci governance docs', () => {
             failurePolicy: 'fail-closed-before-runner-start'
           },
           repoOwnedBootstrapScript: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',
+          repoOwnedAssertScript: 'scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1',
           repoOwnedLinuxHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
+          combinedAssertionScript: 'scripts/assertGovernedRunnerLanes.js',
+          combinedAssertionPackageScript: 'npm run gitlab:runner:assert',
           applyVerification: {
             checks: ['scheduled-task-registered', 'exactly-one-configured-runner-manager'],
             failurePolicy: 'fail-closed-unless-scheduled-task-and-runner-process-are-live'
+          },
+          assertVerification: {
+            checks: [
+              'bootstrap-hash-match',
+              'scheduled-task-action-match',
+              'scheduled-task-logon-trigger',
+              'request-concurrency-two',
+              'exactly-one-configured-runner-manager'
+            ],
+            failurePolicy: 'fail-closed-on-live-host-drift'
           }
         })
       })
@@ -198,11 +226,16 @@ describe('hosted ci governance docs', () => {
     expect(matrixDoc).toContain('retries that host-native proof once');
     expect(matrixDoc).toContain('without `ExecutionPolicy Bypass`');
     expect(matrixDoc).toContain('start-governed-runner-lanes.ps1');
+    expect(matrixDoc).toContain('assert-governed-runner-lanes.ps1');
     expect(matrixDoc).toContain('scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1');
     expect(matrixDoc).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
+    expect(matrixDoc).toContain('scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1');
     expect(matrixDoc).toContain('scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
     expect(matrixDoc).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
     expect(matrixDoc).toContain('scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service');
+    expect(matrixDoc).toContain('scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh');
+    expect(matrixDoc).toContain('scripts/assertGovernedRunnerLanes.js');
+    expect(matrixDoc).toContain('npm run gitlab:runner:assert');
     expect(adr).toContain('GitLab authority uses protected branches plus');
     expect(adr).toContain('GitHub benchmark workflows remain governed characterization lanes');
 
