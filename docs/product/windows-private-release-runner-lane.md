@@ -99,6 +99,37 @@ Current host activation state:
   the same config before ensuring exactly one current-user manager remains
 - Windows service installation is not active for this admitted lane
 
+## Repo-Owned Host Assets
+
+The governed host asset pack for this lane is versioned in the repo:
+
+- Windows bootstrap script:
+  `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1`
+- Linux helper invoked by that bootstrap:
+  `scripts/gitlab-runner/linux/start-linux-assurance.sh`
+
+The Windows bootstrap script is the repo-owned source of truth for duplicate
+collapse, current-user runner launch, and WSL wake-up on user logon.
+
+## Apply Or Update On The Admitted Host
+
+From the repo root on the admitted Windows host:
+
+```powershell
+Copy-Item -LiteralPath .\scripts\gitlab-runner\windows\start-governed-runner-lanes.ps1 -Destination C:\GitLab-Runner\start-governed-runner-lanes.ps1 -Force
+$runnerTaskAction = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument '-NoLogo -NoProfile -ExecutionPolicy Bypass -File "C:\GitLab-Runner\start-governed-runner-lanes.ps1"'
+$runnerTaskTrigger = New-ScheduledTaskTrigger -AtLogOn
+$runnerTaskPrincipal = New-ScheduledTaskPrincipal -UserId "$env:USERDOMAIN\$env:USERNAME" -LogonType Interactive -RunLevel Highest
+Register-ScheduledTask -TaskName 'VIHS Governed Runner Lanes' -Action $runnerTaskAction -Trigger $runnerTaskTrigger -Principal $runnerTaskPrincipal -Force
+Start-ScheduledTask -TaskName 'VIHS Governed Runner Lanes'
+```
+
+The admitted Linux helper path consumed by that bootstrap remains:
+
+```powershell
+wsl.exe -d Ubuntu bash -lc '$HOME/gitlab-runner/start-linux-assurance.sh'
+```
+
 ## Manual Registration Pack
 
 Do not commit the runner authentication token. Manual host registration uses a

@@ -32,6 +32,10 @@
     `assurance_requirements_quality`, and
     `assurance_external_user_information`
   - advisory job `assurance_audit_packet`
+- The repo-owned runner host asset pack for those lanes is:
+  - `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1`
+  - `scripts/gitlab-runner/linux/start-linux-assurance.sh`
+  - `scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service`
 - Public Linux smoke, exact tagging, Marketplace publication, and `main`
   promotion remain out of scope for that private-release-prep sequence.
 - The public GitHub default branch is `main` because it carries the latest

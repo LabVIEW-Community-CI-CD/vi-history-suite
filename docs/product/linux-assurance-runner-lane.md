@@ -93,6 +93,38 @@ The governed recovery model after a host reboot is to restore Ubuntu and let
 `vihs-linux-assurance-runner.service` own restart and keep-alive. The lane
 shall not depend on a long-lived interactive `gitlab-runner run` shell.
 
+## Repo-Owned Host Assets
+
+The governed host asset pack for this lane is versioned in the repo:
+
+- Linux helper script:
+  `scripts/gitlab-runner/linux/start-linux-assurance.sh`
+- Linux service unit:
+  `scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service`
+
+The helper script is the bounded cross-OS recovery surface invoked from the
+Windows logon bootstrap. The service unit remains the admitted steady-state
+lifecycle owner on the Linux host.
+
+## Apply Or Update On The Admitted Host
+
+From the repo root inside the admitted Ubuntu host:
+
+```bash
+install -d "$HOME/gitlab-runner"
+install -m 0755 scripts/gitlab-runner/linux/start-linux-assurance.sh "$HOME/gitlab-runner/start-linux-assurance.sh"
+sudo install -m 0644 scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service /etc/systemd/system/vihs-linux-assurance-runner.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now vihs-linux-assurance-runner.service
+systemctl is-enabled vihs-linux-assurance-runner.service
+systemctl is-active vihs-linux-assurance-runner.service
+```
+
+The admitted first host shape is the Ubuntu user `sveld`, so the repo-owned
+service unit intentionally retains `/home/sveld` and `User=sveld`. If the
+admitted host user or home path changes later, update the repo-owned asset,
+the hosted-governance package, and this lane contract together.
+
 ## Manual Registration Pack
 
 Do not commit the runner authentication token. Manual host registration uses a

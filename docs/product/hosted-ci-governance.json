@@ -81,7 +81,9 @@
           "configPath": "~/.gitlab-runner/config.toml",
           "requestConcurrency": 2,
           "lifecycleOwner": "systemd",
-          "serviceUnit": "vihs-linux-assurance-runner.service"
+          "serviceUnit": "vihs-linux-assurance-runner.service",
+          "repoOwnedHelperScript": "scripts/gitlab-runner/linux/start-linux-assurance.sh",
+          "repoOwnedServiceUnit": "scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service"
         }
       },
       "windowsPrivateRelease": {
@@ -101,7 +103,9 @@
           "bootstrapScript": "C:\\GitLab-Runner\\start-governed-runner-lanes.ps1",
           "scheduledTask": "VIHS Governed Runner Lanes",
           "lifecycleOwner": "interactive-current-user-scheduled-task",
-          "duplicateProcessPolicy": "collapse-duplicates-per-config"
+          "duplicateProcessPolicy": "collapse-duplicates-per-config",
+          "repoOwnedBootstrapScript": "scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1",
+          "repoOwnedLinuxHelperScript": "scripts/gitlab-runner/linux/start-linux-assurance.sh"
         }
       }
     },

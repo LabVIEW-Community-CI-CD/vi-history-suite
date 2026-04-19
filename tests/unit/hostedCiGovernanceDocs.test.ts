@@ -96,7 +96,9 @@ describe('hosted ci governance docs', () => {
           configPath: '~/.gitlab-runner/config.toml',
           requestConcurrency: 2,
           lifecycleOwner: 'systemd',
-          serviceUnit: 'vihs-linux-assurance-runner.service'
+          serviceUnit: 'vihs-linux-assurance-runner.service',
+          repoOwnedHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
+          repoOwnedServiceUnit: 'scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service'
         })
       })
     );
@@ -110,7 +112,9 @@ describe('hosted ci governance docs', () => {
           bootstrapScript: 'C:\\GitLab-Runner\\start-governed-runner-lanes.ps1',
           scheduledTask: 'VIHS Governed Runner Lanes',
           lifecycleOwner: 'interactive-current-user-scheduled-task',
-          duplicateProcessPolicy: 'collapse-duplicates-per-config'
+          duplicateProcessPolicy: 'collapse-duplicates-per-config',
+          repoOwnedBootstrapScript: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',
+          repoOwnedLinuxHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh'
         })
       })
     );
@@ -147,6 +151,9 @@ describe('hosted ci governance docs', () => {
     expect(matrixDoc).toContain('vihs-linux-assurance-runner.service');
     expect(matrixDoc).toContain('VIHS Governed Runner Lanes');
     expect(matrixDoc).toContain('start-governed-runner-lanes.ps1');
+    expect(matrixDoc).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
+    expect(matrixDoc).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
+    expect(matrixDoc).toContain('scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service');
     expect(adr).toContain('GitLab authority uses protected branches plus');
     expect(adr).toContain('GitHub benchmark workflows remain governed characterization lanes');
 

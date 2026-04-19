@@ -68,13 +68,16 @@ Runner operator hardening:
 - `linux-assurance`: admitted config path
   `~/.gitlab-runner/config.toml`, per-runner
   `request_concurrency = 2`, and steady-state lifecycle owned by Ubuntu
-  `systemd` unit `vihs-linux-assurance-runner.service`
+  `systemd` unit `vihs-linux-assurance-runner.service`, with repo-owned host
+  assets at `scripts/gitlab-runner/linux/start-linux-assurance.sh` and
+  `scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service`
 - `windows-private-release`: admitted config path
   `C:\GitLab-Runner\config.toml`, per-runner
   `request_concurrency = 2`, scheduled bootstrap surface
   `C:\GitLab-Runner\start-governed-runner-lanes.ps1`, scheduled task
-  `VIHS Governed Runner Lanes`, and duplicate-manager collapse so exactly one
-  current-user runner manager remains per config
+  `VIHS Governed Runner Lanes`, duplicate-manager collapse so exactly one
+  current-user runner manager remains per config, and the repo-owned bootstrap
+  asset `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1`
 
 Job ownership:
 

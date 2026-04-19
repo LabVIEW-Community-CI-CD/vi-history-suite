@@ -86,9 +86,16 @@ the tagged GitLab Windows runner lane that retains this same scenario under
   `windows-private-release-evidence/manifest.json`
 - current branch interpretation:
   - the repo-controlled runner lane is defined on this branch
+  - the repo-controlled host asset pack is versioned under
+    `scripts/gitlab-runner/`
   - the admitted runner on this host is `ghost` (`52775990`)
-  - the runner is active in current-user foreground mode through
-    `gitlab-runner.exe run`
+  - the runner is launched at user logon by scheduled task
+    `VIHS Governed Runner Lanes`
+  - the governed Windows bootstrap asset is
+    `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1`
+  - the governed Linux helper and service unit are
+    `scripts/gitlab-runner/linux/start-linux-assurance.sh` and
+    `scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service`
   - no secret runner token is retained in the repo
 
 ## First Retained Runner Receipt
