@@ -411,7 +411,7 @@ async function shouldRetryWindowsHostProofStep(
     return false;
   }
 
-  return transcriptText.includes(WINDOWS_HOST_RUNTIME_CLEANUP_FAILURE_SIGNATURE);
+  return transcriptText.replace(/\s+/gu, ' ').includes(WINDOWS_HOST_RUNTIME_CLEANUP_FAILURE_SIGNATURE);
 }
 
 function runCommand(command, args, options) {

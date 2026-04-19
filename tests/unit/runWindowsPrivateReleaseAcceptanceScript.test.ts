@@ -381,7 +381,7 @@ describe('runWindowsPrivateReleaseAcceptance script', () => {
     const transcriptPath = path.join(tempRoot, 'proof-run.txt');
     await fsp.writeFile(
       transcriptPath,
-      '$ node out/cli/runGovernedProof.js\n\nWindows host runtime cleanup failed; remaining processes: LabVIEW\n',
+      '$ node out/cli/runGovernedProof.js\n\nWindows host runtime cleanup failed; remaining \nprocesses: LabVIEW\n',
       'utf8'
     );
 
