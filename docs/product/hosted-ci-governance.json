@@ -82,8 +82,18 @@
           "requestConcurrency": 2,
           "lifecycleOwner": "systemd",
           "serviceUnit": "vihs-linux-assurance-runner.service",
+          "repoOwnedApplyScript": "scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh",
           "repoOwnedHelperScript": "scripts/gitlab-runner/linux/start-linux-assurance.sh",
-          "repoOwnedServiceUnit": "scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service"
+          "repoOwnedServiceUnit": "scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service",
+          "applyVerification": {
+            "requiredUser": "sveld",
+            "requiredHome": "/home/sveld",
+            "checks": [
+              "systemctl-is-enabled",
+              "systemctl-is-active"
+            ],
+            "failurePolicy": "fail-closed-unless-service-enabled-and-active"
+          }
         }
       },
       "windowsPrivateRelease": {
@@ -103,6 +113,12 @@
           "bootstrapScript": "C:\\GitLab-Runner\\start-governed-runner-lanes.ps1",
           "scheduledTask": "VIHS Governed Runner Lanes",
           "lifecycleOwner": "interactive-current-user-scheduled-task",
+          "repoOwnedApplyScript": "scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1",
+          "bootstrapTaskAction": {
+            "executable": "powershell.exe",
+            "arguments": "-NoLogo -NoProfile -File \"C:\\GitLab-Runner\\start-governed-runner-lanes.ps1\"",
+            "executionPolicy": "ambient-no-bypass"
+          },
           "duplicateProcessPolicy": "collapse-duplicates-per-config",
           "coldAdmissionRuntimeCleanup": {
             "processNames": [
@@ -118,7 +134,14 @@
             "failurePolicy": "fail-closed-before-runner-start"
           },
           "repoOwnedBootstrapScript": "scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1",
-          "repoOwnedLinuxHelperScript": "scripts/gitlab-runner/linux/start-linux-assurance.sh"
+          "repoOwnedLinuxHelperScript": "scripts/gitlab-runner/linux/start-linux-assurance.sh",
+          "applyVerification": {
+            "checks": [
+              "scheduled-task-registered",
+              "exactly-one-configured-runner-manager"
+            ],
+            "failurePolicy": "fail-closed-unless-scheduled-task-and-runner-process-are-live"
+          }
         }
       }
     },

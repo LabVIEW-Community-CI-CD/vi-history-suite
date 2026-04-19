@@ -86,13 +86,19 @@ the tagged GitLab Windows runner lane that retains this same scenario under
   `windows-private-release-evidence/manifest.json`
 - current branch interpretation:
   - the repo-controlled runner lane is defined on this branch
-  - the repo-controlled host asset pack is versioned under
+  - the repo-controlled host asset pack and apply surfaces are versioned under
     `scripts/gitlab-runner/`
   - the admitted runner on this host is `ghost` (`52775990`)
   - the runner is launched at user logon by scheduled task
     `VIHS Governed Runner Lanes`
+  - the governed Windows apply surface is
+    `scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1`
   - the governed Windows bootstrap asset is
     `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1`
+  - the admitted scheduled-task action stays
+    `powershell.exe -NoLogo -NoProfile -File "C:\GitLab-Runner\start-governed-runner-lanes.ps1"`
+    without `ExecutionPolicy Bypass`, and the apply surface fails closed
+    unless exactly one configured runner manager remains after apply
   - that Windows bootstrap clears stale `LabVIEW`, `LabVIEWCLI`, and
     `LVCompare` before cold runner admission with bounded `Stop-Process`,
     `taskkill /PID /T /F`, and `taskkill /IM /T /F`, and fails closed if
@@ -102,8 +108,9 @@ the tagged GitLab Windows runner lane that retains this same scenario under
     `windows-private-release-evidence/host/proof-run-pre-recovery.txt`, waits
     `5000` ms, reruns the host-native proof once, and fails closed if the
     retry still fails
-  - the governed Linux helper and service unit are
-    `scripts/gitlab-runner/linux/start-linux-assurance.sh` and
+  - the governed Linux apply/helper/service surfaces are
+    `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh`,
+    `scripts/gitlab-runner/linux/start-linux-assurance.sh`, and
     `scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service`
   - no secret runner token is retained in the repo
 

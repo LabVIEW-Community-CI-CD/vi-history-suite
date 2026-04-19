@@ -314,6 +314,12 @@ describe('post-release sustainment rules package', () => {
     ).toEqual(
       expect.objectContaining({
         windows_private_release_acceptance: {
+          hostApplySurface: {
+            script: 'scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1',
+            scheduledTaskAction:
+              'powershell.exe -NoLogo -NoProfile -File "C:\\GitLab-Runner\\start-governed-runner-lanes.ps1"',
+            failurePolicy: 'fail-closed-unless-exactly-one-configured-manager-after-apply'
+          },
           hostNativeMidSessionContaminationRecovery: {
             trigger: 'windows-host-runtime-cleanup-failed',
             retryDelayMs: 5000,
@@ -321,6 +327,13 @@ describe('post-release sustainment rules package', () => {
             firstFailureTranscript:
               'windows-private-release-evidence/host/proof-run-pre-recovery.txt',
             failurePolicy: 'fail-closed-after-single-retry'
+          }
+        },
+        linux_assurance: {
+          hostApplySurface: {
+            script: 'scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh',
+            verification: ['systemctl-is-enabled', 'systemctl-is-active'],
+            failurePolicy: 'fail-closed-unless-service-enabled-and-active'
           }
         }
       })
@@ -461,6 +474,9 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('ExecutionPolicy Bypass');
     expect(rulesDoc).toContain('proof-run-pre-recovery.txt');
     expect(rulesDoc).toContain('single retry');
+    expect(rulesDoc).toContain('apply-governed-runner-lanes.ps1');
+    expect(rulesDoc).toContain('apply-linux-assurance-runner.sh');
+    expect(rulesDoc).toContain('without `ExecutionPolicy Bypass`');
 
     expect(readme).toContain(
       '[Post-Release Sustainment Rules](./docs/product/post-release-sustainment-rules.md)'

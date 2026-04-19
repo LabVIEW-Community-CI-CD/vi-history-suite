@@ -105,8 +105,15 @@ describe('hosted ci governance docs', () => {
           requestConcurrency: 2,
           lifecycleOwner: 'systemd',
           serviceUnit: 'vihs-linux-assurance-runner.service',
+          repoOwnedApplyScript: 'scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh',
           repoOwnedHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
-          repoOwnedServiceUnit: 'scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service'
+          repoOwnedServiceUnit: 'scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service',
+          applyVerification: {
+            requiredUser: 'sveld',
+            requiredHome: '/home/sveld',
+            checks: ['systemctl-is-enabled', 'systemctl-is-active'],
+            failurePolicy: 'fail-closed-unless-service-enabled-and-active'
+          }
         })
       })
     );
@@ -120,6 +127,13 @@ describe('hosted ci governance docs', () => {
           bootstrapScript: 'C:\\GitLab-Runner\\start-governed-runner-lanes.ps1',
           scheduledTask: 'VIHS Governed Runner Lanes',
           lifecycleOwner: 'interactive-current-user-scheduled-task',
+          repoOwnedApplyScript: 'scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1',
+          bootstrapTaskAction: {
+            executable: 'powershell.exe',
+            arguments:
+              '-NoLogo -NoProfile -File "C:\\GitLab-Runner\\start-governed-runner-lanes.ps1"',
+            executionPolicy: 'ambient-no-bypass'
+          },
           duplicateProcessPolicy: 'collapse-duplicates-per-config',
           coldAdmissionRuntimeCleanup: {
             processNames: ['LabVIEW', 'LabVIEWCLI', 'LVCompare'],
@@ -131,7 +145,11 @@ describe('hosted ci governance docs', () => {
             failurePolicy: 'fail-closed-before-runner-start'
           },
           repoOwnedBootstrapScript: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',
-          repoOwnedLinuxHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh'
+          repoOwnedLinuxHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
+          applyVerification: {
+            checks: ['scheduled-task-registered', 'exactly-one-configured-runner-manager'],
+            failurePolicy: 'fail-closed-unless-scheduled-task-and-runner-process-are-live'
+          }
         })
       })
     );
@@ -167,6 +185,8 @@ describe('hosted ci governance docs', () => {
     expect(matrixDoc).toContain('request_concurrency = 2');
     expect(matrixDoc).toContain('vihs-linux-assurance-runner.service');
     expect(matrixDoc).toContain('VIHS Governed Runner Lanes');
+    expect(matrixDoc).toContain('apply-linux-assurance-runner.sh');
+    expect(matrixDoc).toContain('apply-governed-runner-lanes.ps1');
     expect(matrixDoc).toContain('cold-admission fail-closed');
     expect(matrixDoc).toContain(
       '`LabVIEW` / `LabVIEWCLI` / `LVCompare` runtime processes'
@@ -176,8 +196,11 @@ describe('hosted ci governance docs', () => {
     expect(matrixDoc).toContain('proof-run-pre-recovery.txt');
     expect(matrixDoc).toContain('`5000` ms');
     expect(matrixDoc).toContain('retries that host-native proof once');
+    expect(matrixDoc).toContain('without `ExecutionPolicy Bypass`');
     expect(matrixDoc).toContain('start-governed-runner-lanes.ps1');
+    expect(matrixDoc).toContain('scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1');
     expect(matrixDoc).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
+    expect(matrixDoc).toContain('scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
     expect(matrixDoc).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
     expect(matrixDoc).toContain('scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service');
     expect(adr).toContain('GitLab authority uses protected branches plus');

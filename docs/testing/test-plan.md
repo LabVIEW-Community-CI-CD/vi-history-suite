@@ -1919,10 +1919,10 @@ Information-for-users review cases:
   split, requirements-to-user-doc semantics, and authority-doc metadata
   coherence explicit
 - `TEST-UNIT-362`: verify the repo-owned runner host asset pack retains the
-  Windows logon bootstrap script, the Linux assurance helper, and the Linux
-  assurance `systemd` unit, and that the lane docs, hosted governance, the
-  private-release packet, and the wider control plane point to those exact
-  asset paths plus admitted host apply/update steps
+  Windows apply/bootstrap scripts, the Linux apply/helper scripts, and the
+  Linux assurance `systemd` unit, and that the lane docs, hosted governance,
+  the private-release packet, and the wider control plane point to those exact
+  asset paths plus repo-owned fail-closed host apply/update behavior
 - `TEST-UNIT-363`: verify the repo-owned Windows bootstrap clears stale
   `LabVIEW`, `LabVIEWCLI`, and `LVCompare` before cold runner admission, uses
   bounded PID-tree plus image-name forced descendant termination, and fails
@@ -1945,8 +1945,9 @@ Information-for-users review cases:
 - `TEST-DOC-115`: review the runner-lane contracts, hosted governance,
   private-release packet, information-item map, README, current-state,
   release procedure, SRS, RTM, and the new asset-pack test and confirm the
-  governed runner host asset pack is repo-owned and recoverable without
-  untracked machine-only startup files
+  governed runner host asset pack and repo-owned apply surfaces are versioned,
+  recoverable without untracked machine-only startup files, and explicit about
+  fail-closed host apply/update behavior
 - `TEST-DOC-116`: review the runner-lane contract, hosted governance,
   private-release packet, README, current-state, release procedure, SRS, RTM,
   and the test plan and confirm the Windows proof lane retains cold-admission

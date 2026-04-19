@@ -43,8 +43,14 @@ interface PrivateReleasePacket {
     artifactRoot: string;
     expectedManifestPath: string;
     hostInstallState: string;
+    hostApplySurface?: {
+      windowsApplyScript: string;
+      scheduledTaskAction: string;
+      failurePolicy: string;
+    };
     coldAdmissionRuntimeCleanup?: {
       processNames: string[];
+      terminationStrategy?: string[];
       failurePolicy: string;
     };
     midSessionRuntimeRecovery?: {
@@ -101,8 +107,10 @@ describe('windows private release packet docs', () => {
     expect(packetDoc).toContain('WSL as part of the active user or proof contract');
     expect(packetDoc).toContain('windows_private_release_acceptance');
     expect(packetDoc).toContain('windows-private-release-evidence/');
-    expect(packetDoc).toContain('repo-controlled host asset pack is versioned under');
+    expect(packetDoc).toContain('repo-controlled host asset pack and apply surfaces are versioned under');
+    expect(packetDoc).toContain('scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1');
     expect(packetDoc).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
+    expect(packetDoc).toContain('without `ExecutionPolicy Bypass`');
     expect(packetDoc).toContain(
       'that Windows bootstrap clears stale `LabVIEW`, `LabVIEWCLI`, and'
     );
@@ -113,6 +121,7 @@ describe('windows private release packet docs', () => {
     expect(packetDoc).toContain('proof-run-pre-recovery.txt');
     expect(packetDoc).toContain('`5000` ms');
     expect(packetDoc).toContain('reruns the host-native proof once');
+    expect(packetDoc).toContain('scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
     expect(packetDoc).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
     expect(packetDoc).toContain('scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service');
     expect(packetDoc).toContain('## First Retained Runner Receipt');
@@ -147,6 +156,12 @@ describe('windows private release packet docs', () => {
         artifactRoot: 'windows-private-release-evidence/',
         expectedManifestPath: 'windows-private-release-evidence/manifest.json',
         hostInstallState: 'current-user-scheduled-task-bootstrap-active',
+        hostApplySurface: {
+          windowsApplyScript: 'scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1',
+          scheduledTaskAction:
+            'powershell.exe -NoLogo -NoProfile -File "C:\\GitLab-Runner\\start-governed-runner-lanes.ps1"',
+          failurePolicy: 'fail-closed-unless-exactly-one-configured-manager-after-apply'
+        },
         coldAdmissionRuntimeCleanup: {
           processNames: ['LabVIEW', 'LabVIEWCLI', 'LVCompare'],
           terminationStrategy: [
@@ -165,7 +180,9 @@ describe('windows private release packet docs', () => {
           failurePolicy: 'fail-closed-after-single-retry'
         },
         repoOwnedOperatorAssets: {
+          windowsApplyScript: 'scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1',
           windowsBootstrapScript: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',
+          linuxApplyScript: 'scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh',
           linuxHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
           linuxServiceUnit: 'scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service'
         }

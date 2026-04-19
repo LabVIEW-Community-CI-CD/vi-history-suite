@@ -172,14 +172,23 @@ Latest landed ship target:
 - `hotfix/*` branches are cut from `main`, merge into `main`, merge back into
   `develop`, and are deleted only after both merges complete
 - hosted automation governance matrix: [hosted-ci-governance.md](./hosted-ci-governance.md)
-- repo-owned runner host asset pack:
+- repo-owned runner host asset pack and apply surfaces:
+  - `scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1`
   - `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1`
+  - `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh`
   - `scripts/gitlab-runner/linux/start-linux-assurance.sh`
   - `scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service`
+  - the Windows apply surface keeps the scheduled task on
+    `powershell.exe -NoLogo -NoProfile -File "C:\GitLab-Runner\start-governed-runner-lanes.ps1"`
+    without `ExecutionPolicy Bypass` and fails closed unless exactly one
+    configured runner manager remains after apply
   - the Windows bootstrap clears stale `LabVIEW`, `LabVIEWCLI`, and
     `LVCompare` before cold runner admission with bounded `Stop-Process`,
     `taskkill /PID /T /F`, and `taskkill /IM /T /F`, and fails closed if
     contamination remains
+  - the Linux apply surface installs the helper and service unit and fails
+    closed unless `vihs-linux-assurance-runner.service` is both enabled and
+    active after apply
   - when the host-native Windows proof exits on that same cleanup seam, the
     acceptance wrapper retains
     `windows-private-release-evidence/host/proof-run-pre-recovery.txt`, waits

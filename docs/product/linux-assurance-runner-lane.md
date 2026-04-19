@@ -97,13 +97,20 @@ shall not depend on a long-lived interactive `gitlab-runner run` shell.
 
 The governed host asset pack for this lane is versioned in the repo:
 
+- Linux apply/update script:
+  `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh`
 - Linux helper script:
   `scripts/gitlab-runner/linux/start-linux-assurance.sh`
 - Linux service unit:
   `scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service`
 
-The helper script is the bounded cross-OS recovery surface invoked from the
-Windows logon bootstrap. The service unit remains the admitted steady-state
+The Linux apply script is the repo-owned update surface for the admitted
+service contract. It copies the helper, installs the service unit, reloads
+`systemd`, enables and starts the service, and fails closed unless the service
+finishes `enabled` and `active`.
+
+The helper script remains the bounded cross-OS recovery surface invoked from
+the Windows logon bootstrap. The service unit remains the admitted steady-state
 lifecycle owner on the Linux host.
 
 ## Apply Or Update On The Admitted Host
@@ -111,13 +118,7 @@ lifecycle owner on the Linux host.
 From the repo root inside the admitted Ubuntu host:
 
 ```bash
-install -d "$HOME/gitlab-runner"
-install -m 0755 scripts/gitlab-runner/linux/start-linux-assurance.sh "$HOME/gitlab-runner/start-linux-assurance.sh"
-sudo install -m 0644 scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service /etc/systemd/system/vihs-linux-assurance-runner.service
-sudo systemctl daemon-reload
-sudo systemctl enable --now vihs-linux-assurance-runner.service
-systemctl is-enabled vihs-linux-assurance-runner.service
-systemctl is-active vihs-linux-assurance-runner.service
+bash ./scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh
 ```
 
 The admitted first host shape is the Ubuntu user `sveld`, so the repo-owned
