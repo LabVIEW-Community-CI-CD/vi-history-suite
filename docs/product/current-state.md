@@ -180,6 +180,11 @@ Latest landed ship target:
     `LVCompare` before cold runner admission with bounded `Stop-Process`,
     `taskkill /PID /T /F`, and `taskkill /IM /T /F`, and fails closed if
     contamination remains
+  - when the host-native Windows proof exits on that same cleanup seam, the
+    acceptance wrapper retains
+    `windows-private-release-evidence/host/proof-run-pre-recovery.txt`, waits
+    `5000` ms, retries the host-native proof once, and still fails closed if
+    the retry cannot restore a clean host surface
 - VS Code Marketplace listing: `https://marketplace.visualstudio.com/items?itemName=svelderrainruiz.vi-history-suite`
 - VS Code Marketplace publication ledger: [vscode-marketplace-publication-ledger.md](./vscode-marketplace-publication-ledger.md)
 - current changelog: [CHANGELOG.md](../../CHANGELOG.md)

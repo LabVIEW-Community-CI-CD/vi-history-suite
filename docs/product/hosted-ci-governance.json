@@ -242,7 +242,15 @@
           "hotfix/*",
           "main",
           "vX.Y.Z-tags"
-        ]
+        ],
+        "runtimeContaminationRecovery": {
+          "laneId": "windows-host-native",
+          "trigger": "windows-host-runtime-cleanup-failed",
+          "retryDelayMs": 5000,
+          "maxProofRetries": 1,
+          "firstFailureTranscript": "windows-private-release-evidence/host/proof-run-pre-recovery.txt",
+          "failurePolicy": "fail-closed-after-single-retry"
+        }
       },
       "package_extension_preview": {
         "classification": "preview-package-lane",

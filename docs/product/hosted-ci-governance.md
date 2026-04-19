@@ -108,7 +108,11 @@ Job ownership:
 - `windows_private_release_acceptance`: tagged Windows shell-runner lane that
   retains the canonical Windows x64 private-release acceptance evidence for
   `resource/plugins/lv_icon.vi` on both host-native and Windows-container
-  providers before preview or exact packaging continues
+  providers before preview or exact packaging continues; when the host-native
+  proof exits at the shared Windows cleanup seam, it retains
+  `windows-private-release-evidence/host/proof-run-pre-recovery.txt`, waits
+  `5000` ms, retries that host-native proof once, and fails closed if the
+  retry still cannot restore a clean host surface
 - `package_extension_preview`: preview VSIX packaging on merge requests into
   protected branch lanes, on `develop`, `main`, `release/*`, `hotfix/*`, and
   exact tags; it now depends on the blocking Linux assurance lanes

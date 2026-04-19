@@ -48,6 +48,11 @@ describe('windows private release runner lane docs', () => {
     expect(runnerLaneDoc).toContain('taskkill /PID /T /F');
     expect(runnerLaneDoc).toContain('taskkill /IM /T /F');
     expect(runnerLaneDoc).toContain('fails closed if any remain');
+    expect(runnerLaneDoc).toContain('proof-run-pre-recovery.txt');
+    expect(runnerLaneDoc).toContain('waits `5000` ms');
+    expect(runnerLaneDoc).toContain('reruns the same host-native proof once');
+    expect(runnerLaneDoc).toContain('proofAttemptCount');
+    expect(runnerLaneDoc).toContain('boundedRecovery');
     expect(runnerLaneDoc).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
     expect(runnerLaneDoc).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
     expect(runnerLaneDoc).toContain("Register-ScheduledTask -TaskName 'VIHS Governed Runner Lanes'");
@@ -67,6 +72,9 @@ describe('windows private release runner lane docs', () => {
     );
     expect(hostedGovernanceDoc).toContain('taskkill /PID /T /F');
     expect(hostedGovernanceDoc).toContain('taskkill /IM /T /F');
+    expect(hostedGovernanceDoc).toContain('proof-run-pre-recovery.txt');
+    expect(hostedGovernanceDoc).toContain('`5000` ms');
+    expect(hostedGovernanceDoc).toContain('retries that host-native proof once');
     expect(hostedGovernanceDoc).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
     expect(hostedGovernanceJson.authorityGitLab.runnerLanes.windowsPrivateRelease).toEqual(
       expect.objectContaining({
@@ -93,6 +101,17 @@ describe('windows private release runner lane docs', () => {
         })
       })
     );
+    expect(
+      hostedGovernanceJson.authorityGitLab.jobs.windows_private_release_acceptance
+        .runtimeContaminationRecovery
+    ).toEqual({
+      laneId: 'windows-host-native',
+      trigger: 'windows-host-runtime-cleanup-failed',
+      retryDelayMs: 5000,
+      maxProofRetries: 1,
+      firstFailureTranscript: 'windows-private-release-evidence/host/proof-run-pre-recovery.txt',
+      failurePolicy: 'fail-closed-after-single-retry'
+    });
 
     expect(packageManifest.scripts?.['acceptance:windows:private-release']).toBe(
       'npm run compile && node scripts/runWindowsPrivateReleaseAcceptance.js'

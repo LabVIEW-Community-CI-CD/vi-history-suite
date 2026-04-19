@@ -102,6 +102,14 @@
       ],
       "failurePolicy": "fail-closed-before-runner-start"
     },
+    "midSessionRuntimeRecovery": {
+      "laneId": "windows-host-native",
+      "trigger": "windows-host-runtime-cleanup-failed",
+      "retryDelayMs": 5000,
+      "maxProofRetries": 1,
+      "firstFailureTranscript": "windows-private-release-evidence/host/proof-run-pre-recovery.txt",
+      "failurePolicy": "fail-closed-after-single-retry"
+    },
     "repoOwnedOperatorAssets": {
       "windowsBootstrapScript": "scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1",
       "linuxHelperScript": "scripts/gitlab-runner/linux/start-linux-assurance.sh",

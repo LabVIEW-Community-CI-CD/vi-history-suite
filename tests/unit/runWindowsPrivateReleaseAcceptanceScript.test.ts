@@ -1,3 +1,6 @@
+import * as fs from 'node:fs';
+import * as fsp from 'node:fs/promises';
+import * as os from 'node:os';
 import * as path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
@@ -81,6 +84,58 @@ const acceptanceScript = require(path.resolve(
     }>;
   };
   formatCommand: (command: string, args: string[]) => string;
+  runLaneStep: (
+    plan: {
+      repoRoot: string;
+      evidenceRoot: string;
+      harnessReportRoot?: string;
+    },
+    lane: {
+      laneId: string;
+      outputRoot: string;
+      transcripts?: {
+        proofRunPreRecovery?: string;
+      };
+    },
+    step: {
+      kind: string;
+      transcriptFileName: string;
+      command: string;
+      args: string[];
+    },
+    deps?: {
+      runCommandImpl?: (
+        command: string,
+        args: string[],
+        options: {
+          cwd: string;
+          transcriptPath: string;
+        }
+      ) => void;
+      fspImpl?: typeof fsp;
+      sleepImpl?: (milliseconds: number) => Promise<void>;
+    }
+  ) => Promise<{
+    transcriptPath: string;
+    boundedRecovery?: {
+      attempted: boolean;
+      trigger: string;
+      retryDelayMs: number;
+      firstFailureTranscript: string;
+    };
+  }>;
+  shouldRetryWindowsHostProofStep: (
+    lane: {
+      laneId: string;
+    },
+    step: {
+      kind: string;
+    },
+    transcriptPath: string,
+    deps?: {
+      fspImpl?: typeof fsp;
+    }
+  ) => Promise<boolean>;
 };
 
 describe('runWindowsPrivateReleaseAcceptance script', () => {
@@ -236,5 +291,123 @@ describe('runWindowsPrivateReleaseAcceptance script', () => {
     ).toBe(
       'node.exe out/cli/runGovernedProof.js --settings-file "C:\\Users\\sveld\\AppData\\Roaming\\Code\\User\\settings.json"'
     );
+  });
+
+  it('retries the Windows host proof step once when the first transcript shows cleanup contamination failure', async () => {
+    const tempRoot = await fsp.mkdtemp(
+      path.join(os.tmpdir(), 'vihs-windows-proof-bounded-retry-')
+    );
+    const evidenceRoot = path.join(tempRoot, 'windows-private-release-evidence');
+    const outputRoot = path.join(evidenceRoot, 'host');
+    await fsp.mkdir(outputRoot, { recursive: true });
+
+    let callCount = 0;
+    const runCommandImpl = (
+      _command: string,
+      _args: string[],
+      options: { cwd: string; transcriptPath: string }
+    ) => {
+      callCount += 1;
+      if (callCount === 1) {
+        fs.writeFileSync(
+          options.transcriptPath,
+          '$ node out/cli/runGovernedProof.js\n\nWindows host runtime cleanup failed; remaining processes: LabVIEW\n',
+          'utf8'
+        );
+        throw new Error('Command failed with exit code 1: node out/cli/runGovernedProof.js');
+      }
+
+      fs.writeFileSync(
+        options.transcriptPath,
+        '$ node out/cli/runGovernedProof.js\n\nhost proof succeeded\n',
+        'utf8'
+      );
+    };
+    let sleptForMilliseconds = 0;
+
+    const result = await acceptanceScript.runLaneStep(
+      {
+        repoRoot: tempRoot,
+        evidenceRoot,
+        harnessReportRoot: path.join(tempRoot, '.cache', 'harness-reports', 'HARNESS-VHS-002')
+      },
+      {
+        laneId: 'windows-host-native',
+        outputRoot,
+        transcripts: {
+          proofRunPreRecovery: 'proof-run-pre-recovery.txt'
+        }
+      },
+      {
+        kind: 'proof-run',
+        transcriptFileName: 'proof-run.txt',
+        command: 'node',
+        args: ['out/cli/runGovernedProof.js']
+      },
+      {
+        fspImpl: fsp,
+        runCommandImpl,
+        sleepImpl: async (milliseconds: number) => {
+          sleptForMilliseconds = milliseconds;
+        }
+      }
+    );
+
+    expect(callCount).toBe(2);
+    expect(sleptForMilliseconds).toBe(5000);
+    expect(result.transcriptPath.replaceAll('\\', '/')).toBe('host/proof-run.txt');
+    expect(result.boundedRecovery).toEqual(
+      expect.objectContaining({
+        attempted: true,
+        trigger: 'windows-host-runtime-cleanup-failed',
+        retryDelayMs: 5000
+      })
+    );
+    expect(result.boundedRecovery?.firstFailureTranscript.replaceAll('\\', '/')).toBe(
+      'host/proof-run-pre-recovery.txt'
+    );
+    await expect(
+      fsp.readFile(path.join(outputRoot, 'proof-run-pre-recovery.txt'), 'utf8')
+    ).resolves.toContain('Windows host runtime cleanup failed; remaining processes: LabVIEW');
+    await expect(fsp.readFile(path.join(outputRoot, 'proof-run.txt'), 'utf8')).resolves.toContain(
+      'host proof succeeded'
+    );
+  });
+
+  it('limits the bounded retry trigger to the Windows host proof step cleanup failure signature', async () => {
+    const tempRoot = await fsp.mkdtemp(
+      path.join(os.tmpdir(), 'vihs-windows-proof-retry-signature-')
+    );
+    const transcriptPath = path.join(tempRoot, 'proof-run.txt');
+    await fsp.writeFile(
+      transcriptPath,
+      '$ node out/cli/runGovernedProof.js\n\nWindows host runtime cleanup failed; remaining \nprocesses: LabVIEW\n',
+      'utf8'
+    );
+
+    await expect(
+      acceptanceScript.shouldRetryWindowsHostProofStep(
+        { laneId: 'windows-host-native' },
+        { kind: 'proof-run' },
+        transcriptPath,
+        { fspImpl: fsp }
+      )
+    ).resolves.toBe(true);
+    await expect(
+      acceptanceScript.shouldRetryWindowsHostProofStep(
+        { laneId: 'windows-container' },
+        { kind: 'proof-run' },
+        transcriptPath,
+        { fspImpl: fsp }
+      )
+    ).resolves.toBe(false);
+    await expect(
+      acceptanceScript.shouldRetryWindowsHostProofStep(
+        { laneId: 'windows-host-native' },
+        { kind: 'settings-write' },
+        transcriptPath,
+        { fspImpl: fsp }
+      )
+    ).resolves.toBe(false);
   });
 });

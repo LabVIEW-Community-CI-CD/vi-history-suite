@@ -100,6 +100,10 @@ to the released product line and the active branch line:
   `LVCompare` before cold runner admission with bounded `Stop-Process`,
   `taskkill /PID /T /F`, and `taskkill /IM /T /F`, and fails closed if
   contamination remains
+- when the host-native Windows proof exits on that same cleanup seam, the
+  acceptance wrapper retains `windows-private-release-evidence/host/proof-run-pre-recovery.txt`,
+  waits `5000` ms, retries that host-native proof once, and still fails closed
+  if the retry cannot restore a clean host surface
 - Linux public smoke and Linux benchmark lanes remain repo-owned evaluation or
   maintainer proof surfaces. They are not part of the active installed-user or
   private-release claim for `v1.3.0`.
