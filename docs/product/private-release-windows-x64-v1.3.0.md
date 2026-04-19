@@ -97,6 +97,11 @@ the tagged GitLab Windows runner lane that retains this same scenario under
     `LVCompare` before cold runner admission with bounded `Stop-Process`,
     `taskkill /PID /T /F`, and `taskkill /IM /T /F`, and fails closed if
     contamination remains
+  - when the host-native proof exits on that same cleanup seam, the acceptance
+    wrapper preserves the first failed proof transcript as
+    `windows-private-release-evidence/host/proof-run-pre-recovery.txt`, waits
+    `5000` ms, reruns the host-native proof once, and fails closed if the
+    retry still fails
   - the governed Linux helper and service unit are
     `scripts/gitlab-runner/linux/start-linux-assurance.sh` and
     `scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service`

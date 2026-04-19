@@ -119,7 +119,11 @@ wake-up on user logon.
 The host-native proof path inside `npm run acceptance:windows:private-release`
 uses the same bounded cleanup family before and after host execution, so
 mid-session `LabVIEW.exe` contamination blocks the lane immediately instead of
-waiting for the next logon bootstrap.
+waiting for the next logon bootstrap. When that shared cleanup fails before the
+host-native proof begins, the acceptance wrapper retains the first failed proof
+transcript as `windows-private-release-evidence/host/proof-run-pre-recovery.txt`,
+waits `5000` ms, reruns the same host-native proof once, and fails closed if
+that single retry still cannot restore a clean host surface.
 
 ## Apply Or Update On The Admitted Host
 
@@ -192,6 +196,8 @@ The job shall retain:
 - `windows-private-release-evidence/host/settings-file.json`
 - `windows-private-release-evidence/host/settings-write.txt`
 - `windows-private-release-evidence/host/proof-run.txt`
+- when bounded mid-session contamination recovery fires:
+  `windows-private-release-evidence/host/proof-run-pre-recovery.txt`
 - `windows-private-release-evidence/host/harness-report/**`
 - `windows-private-release-evidence/container/settings-file.json`
 - `windows-private-release-evidence/container/settings-write.txt`
@@ -199,8 +205,10 @@ The job shall retain:
 - `windows-private-release-evidence/container/proof-run.txt`
 - `windows-private-release-evidence/container/harness-report/**`
 
-The machine-readable manifest is the first recovery surface. Future sessions
-should not reconstruct runner-lane truth from job logs alone.
+The machine-readable manifest is the first recovery surface. When the bounded
+host-native retry path is used, it records `proofAttemptCount` plus
+`boundedRecovery` so future sessions do not have to reconstruct that recovery
+from job logs alone.
 
 ## Stop Rules
 

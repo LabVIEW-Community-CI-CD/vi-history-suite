@@ -1927,6 +1927,11 @@ Information-for-users review cases:
   `LabVIEW`, `LabVIEWCLI`, and `LVCompare` before cold runner admission, uses
   bounded PID-tree plus image-name forced descendant termination, and fails
   closed when contamination remains
+- `TEST-UNIT-364`: verify the Windows private-release acceptance wrapper
+  preserves the first failed host proof transcript, waits `5000` ms, retries
+  the host-native proof once when the shared Windows cleanup seam fails before
+  proof execution, and still fails closed when the retry is not eligible or
+  cannot restore a clean host surface
 - `TEST-DOC-113`: review `.gitlab-ci.yml`, `linux-assurance-runner-lane.md`,
   hosted governance, current-state, README, and the release procedure and
   confirm the Linux assurance lane is separate from the Windows proof lane,
@@ -1947,6 +1952,12 @@ Information-for-users review cases:
   and the test plan and confirm the Windows proof lane retains cold-admission
   stale-runtime cleanup plus fail-closed startup semantics after restart or
   logon
+- `TEST-DOC-117`: review the Windows runner-lane contract, hosted governance,
+  private-release packet, README, current-state, release procedure, sustainment
+  rules, SRS, RTM, and the test plan and confirm the bounded host-native
+  contamination-recovery retry is explicit: `proof-run-pre-recovery.txt` is
+  retained, the retry waits `5000` ms, only one retry is admitted, and the
+  lane still fails closed if the retry cannot restore a clean host surface
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are

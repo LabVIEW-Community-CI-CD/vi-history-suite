@@ -60,7 +60,15 @@ describe('hosted ci governance docs', () => {
           'hotfix/*',
           'main',
           'vX.Y.Z-tags'
-        ])
+        ]),
+        runtimeContaminationRecovery: {
+          laneId: 'windows-host-native',
+          trigger: 'windows-host-runtime-cleanup-failed',
+          retryDelayMs: 5000,
+          maxProofRetries: 1,
+          firstFailureTranscript: 'windows-private-release-evidence/host/proof-run-pre-recovery.txt',
+          failurePolicy: 'fail-closed-after-single-retry'
+        }
       })
     );
     expect(matrix.authorityGitLab.jobs.assurance_release_gate).toEqual(
@@ -165,6 +173,9 @@ describe('hosted ci governance docs', () => {
     );
     expect(matrixDoc).toContain('taskkill /PID /T /F');
     expect(matrixDoc).toContain('taskkill /IM /T /F');
+    expect(matrixDoc).toContain('proof-run-pre-recovery.txt');
+    expect(matrixDoc).toContain('`5000` ms');
+    expect(matrixDoc).toContain('retries that host-native proof once');
     expect(matrixDoc).toContain('start-governed-runner-lanes.ps1');
     expect(matrixDoc).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
     expect(matrixDoc).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');

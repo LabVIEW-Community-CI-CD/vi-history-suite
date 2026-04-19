@@ -47,6 +47,14 @@ interface PrivateReleasePacket {
       processNames: string[];
       failurePolicy: string;
     };
+    midSessionRuntimeRecovery?: {
+      laneId: string;
+      trigger: string;
+      retryDelayMs: number;
+      maxProofRetries: number;
+      firstFailureTranscript: string;
+      failurePolicy: string;
+    };
     firstRetainedReceipt: {
       mergeRequestIid: number;
       pipelineId: number;
@@ -102,6 +110,9 @@ describe('windows private release packet docs', () => {
     expect(packetDoc).toContain('taskkill /IM /T /F');
     expect(packetDoc).toContain('fails closed if');
     expect(packetDoc).toContain('contamination remains');
+    expect(packetDoc).toContain('proof-run-pre-recovery.txt');
+    expect(packetDoc).toContain('`5000` ms');
+    expect(packetDoc).toContain('reruns the host-native proof once');
     expect(packetDoc).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
     expect(packetDoc).toContain('scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service');
     expect(packetDoc).toContain('## First Retained Runner Receipt');
@@ -144,6 +155,14 @@ describe('windows private release packet docs', () => {
             'taskkill-image-tree'
           ],
           failurePolicy: 'fail-closed-before-runner-start'
+        },
+        midSessionRuntimeRecovery: {
+          laneId: 'windows-host-native',
+          trigger: 'windows-host-runtime-cleanup-failed',
+          retryDelayMs: 5000,
+          maxProofRetries: 1,
+          firstFailureTranscript: 'windows-private-release-evidence/host/proof-run-pre-recovery.txt',
+          failurePolicy: 'fail-closed-after-single-retry'
         },
         repoOwnedOperatorAssets: {
           windowsBootstrapScript: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',

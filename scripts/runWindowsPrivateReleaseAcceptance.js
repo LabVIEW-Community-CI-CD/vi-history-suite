@@ -21,6 +21,9 @@ const DEFAULT_SELECTED_HASH = '8741bb08026c104100720c0ef48621e4ab7762fd';
 const DEFAULT_BASE_HASH = 'c188cdec606aac3b17d8b17274baa19eef3e4017';
 const DEFAULT_RUNTIME_TIMEOUT_MS = 300000;
 const DEFAULT_BITNESS = 'x64';
+const WINDOWS_HOST_RUNTIME_CLEANUP_FAILURE_SIGNATURE =
+  'Windows host runtime cleanup failed; remaining processes:';
+const WINDOWS_HOST_PROOF_RETRY_DELAY_MS = 5000;
 const DEFAULT_HOST_SETTINGS_FILE = path.join(DEFAULT_SETTINGS_ROOT, 'host-settings.json');
 const DEFAULT_CONTAINER_SETTINGS_FILE = path.join(
   DEFAULT_SETTINGS_ROOT,
@@ -164,7 +167,8 @@ function buildWindowsPrivateReleaseAcceptancePlan(options) {
         proofExecutionMode: 'host-only',
         transcripts: {
           settingsWrite: 'settings-write.txt',
-          proofRun: 'proof-run.txt'
+          proofRun: 'proof-run.txt',
+          proofRunPreRecovery: 'proof-run-pre-recovery.txt'
         },
         steps: [
           {
@@ -295,17 +299,17 @@ async function runLane(plan, lane) {
   await fsp.mkdir(path.dirname(lane.settingsFilePath), { recursive: true });
 
   const transcriptPaths = {};
+  let boundedRecovery;
   for (const step of lane.steps) {
     if (step.kind === 'proof-run') {
       await fsp.rm(plan.harnessReportRoot, { recursive: true, force: true });
     }
 
-    const transcriptPath = path.join(lane.outputRoot, step.transcriptFileName);
-    runCommand(step.command, step.args, {
-      cwd: plan.repoRoot,
-      transcriptPath
-    });
-    transcriptPaths[step.kind] = path.relative(plan.evidenceRoot, transcriptPath);
+    const stepResult = await runLaneStep(plan, lane, step);
+    transcriptPaths[step.kind] = stepResult.transcriptPath;
+    if (stepResult.boundedRecovery) {
+      boundedRecovery = stepResult.boundedRecovery;
+    }
   }
 
   await copySettingsFile(lane.settingsFilePath, lane.outputRoot);
@@ -320,6 +324,8 @@ async function runLane(plan, lane) {
     proofExecutionMode: lane.proofExecutionMode,
     settingsFilePath: path.relative(plan.evidenceRoot, path.join(lane.outputRoot, 'settings-file.json')),
     transcripts: transcriptPaths,
+    proofAttemptCount: boundedRecovery ? 2 : 1,
+    boundedRecovery,
     copiedHarnessReportRoot: path.relative(plan.evidenceRoot, copiedHarnessReportRoot),
     report: {
       generatedAt: report.generatedAt,
@@ -342,6 +348,70 @@ async function runLane(plan, lane) {
       )
     }
   };
+}
+
+async function runLaneStep(plan, lane, step, deps = {}) {
+  const runCommandImpl = deps.runCommandImpl ?? runCommand;
+  const fspImpl = deps.fspImpl ?? fsp;
+  const sleepImpl = deps.sleepImpl ?? defaultSleep;
+  const transcriptPath = path.join(lane.outputRoot, step.transcriptFileName);
+
+  try {
+    runCommandImpl(step.command, step.args, {
+      cwd: plan.repoRoot,
+      transcriptPath
+    });
+    return {
+      transcriptPath: path.relative(plan.evidenceRoot, transcriptPath)
+    };
+  } catch (error) {
+    if (!(await shouldRetryWindowsHostProofStep(lane, step, transcriptPath, { fspImpl }))) {
+      throw error;
+    }
+
+    const preRecoveryTranscriptName =
+      lane.transcripts?.proofRunPreRecovery ?? 'proof-run-pre-recovery.txt';
+    const preRecoveryTranscriptPath = path.join(lane.outputRoot, preRecoveryTranscriptName);
+    await fspImpl.rm(preRecoveryTranscriptPath, { force: true });
+    await fspImpl.rename(transcriptPath, preRecoveryTranscriptPath);
+    await fspImpl.rm(plan.harnessReportRoot, { recursive: true, force: true });
+    await sleepImpl(WINDOWS_HOST_PROOF_RETRY_DELAY_MS);
+    runCommandImpl(step.command, step.args, {
+      cwd: plan.repoRoot,
+      transcriptPath
+    });
+
+    return {
+      transcriptPath: path.relative(plan.evidenceRoot, transcriptPath),
+      boundedRecovery: {
+        attempted: true,
+        trigger: 'windows-host-runtime-cleanup-failed',
+        retryDelayMs: WINDOWS_HOST_PROOF_RETRY_DELAY_MS,
+        firstFailureTranscript: path.relative(plan.evidenceRoot, preRecoveryTranscriptPath)
+      }
+    };
+  }
+}
+
+async function shouldRetryWindowsHostProofStep(
+  lane,
+  step,
+  transcriptPath,
+  deps = {}
+) {
+  if (lane.laneId !== 'windows-host-native' || step.kind !== 'proof-run') {
+    return false;
+  }
+
+  const fspImpl = deps.fspImpl ?? fsp;
+  let transcriptText = '';
+  try {
+    transcriptText = await fspImpl.readFile(transcriptPath, 'utf8');
+  } catch {
+    return false;
+  }
+
+  return transcriptText.includes(WINDOWS_HOST_RUNTIME_CLEANUP_FAILURE_SIGNATURE);
 }
 
 function runCommand(command, args, options) {
@@ -391,6 +461,12 @@ function toPortableLeafName(candidatePath) {
   return path.posix.basename(String(candidatePath).replace(/\\/g, '/'));
 }
 
+function defaultSleep(milliseconds) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, milliseconds);
+  });
+}
+
 async function copySettingsFile(sourcePath, laneRoot) {
   await fsp.copyFile(sourcePath, path.join(laneRoot, 'settings-file.json'));
 }
@@ -437,5 +513,7 @@ module.exports = {
   buildWindowsPrivateReleaseAcceptancePlan,
   buildManifest,
   formatCommand,
-  toPortableLeafName
+  toPortableLeafName,
+  runLaneStep,
+  shouldRetryWindowsHostProofStep
 };

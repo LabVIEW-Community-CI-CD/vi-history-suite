@@ -89,6 +89,7 @@ type SustainmentRules = {
       temporaryBranchPrefixes?: string[];
       promotionRules?: string[];
       requiredChecks?: string[];
+      governedLaneBehaviors?: Record<string, unknown>;
       laneResponsibilities?: Record<string, string[]>;
     };
     requiredAuthorityUpdates: string[];
@@ -308,6 +309,22 @@ describe('post-release sustainment rules package', () => {
       'Public Facade Package Preview / package-preview',
       'Public Facade Linux Smoke / public-facade-linux-smoke'
     ]);
+    expect(
+      rules.operatorSurfaceSustainment.branchModel?.governedLaneBehaviors
+    ).toEqual(
+      expect.objectContaining({
+        windows_private_release_acceptance: {
+          hostNativeMidSessionContaminationRecovery: {
+            trigger: 'windows-host-runtime-cleanup-failed',
+            retryDelayMs: 5000,
+            maxProofRetries: 1,
+            firstFailureTranscript:
+              'windows-private-release-evidence/host/proof-run-pre-recovery.txt',
+            failurePolicy: 'fail-closed-after-single-retry'
+          }
+        }
+      })
+    );
     expect(rules.operatorSurfaceSustainment.branchModel.laneResponsibilities).toEqual({
       'feature/*': [
         'focused tests for the changed surface',
@@ -442,6 +459,8 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('linux-assurance-runner-lane.md');
     expect(rulesDoc).toContain('execution-policy bypass');
     expect(rulesDoc).toContain('ExecutionPolicy Bypass');
+    expect(rulesDoc).toContain('proof-run-pre-recovery.txt');
+    expect(rulesDoc).toContain('single retry');
 
     expect(readme).toContain(
       '[Post-Release Sustainment Rules](./docs/product/post-release-sustainment-rules.md)'

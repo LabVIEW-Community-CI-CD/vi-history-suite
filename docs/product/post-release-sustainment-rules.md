@@ -286,6 +286,11 @@ Hosted automation governance is now retained explicitly:
   `package-preview` and `public-facade-linux-smoke`
 - GitHub benchmark workflows are characterization-only experiment lanes and
   are not exact-release required checks
+- GitLab `windows_private_release_acceptance` now retains one bounded
+  host-native retry when the shared Windows cleanup seam fails before proof
+  execution, preserving `windows-private-release-evidence/host/proof-run-pre-recovery.txt`
+  and still failing closed after that single retry if the host cannot be
+  restored to a clean proof surface
 - the authoritative matrix for those distinctions is:
   - `docs/product/hosted-ci-governance.md`
   - `docs/product/hosted-ci-governance.json`

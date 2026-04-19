@@ -40,6 +40,11 @@
   before cold runner admission with bounded `Stop-Process`,
   `taskkill /PID /T /F`, and `taskkill /IM /T /F`, and fails closed if
   contamination remains.
+- When the host-native Windows proof exits on that same cleanup seam, the
+  acceptance wrapper retains
+  `windows-private-release-evidence/host/proof-run-pre-recovery.txt`, waits
+  `5000` ms, retries the host-native proof once, and still fails closed if the
+  retry cannot restore a clean host surface.
 - Public Linux smoke, exact tagging, Marketplace publication, and `main`
   promotion remain out of scope for that private-release-prep sequence.
 - The public GitHub default branch is `main` because it carries the latest
