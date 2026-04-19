@@ -239,6 +239,12 @@ describe('release governance package', () => {
     expect(readText('docs/release-procedure.md')).toContain(
       'node scripts/queueGovernedMergeRequest.js'
     );
+    expect(readText('docs/release-procedure.md')).toContain(
+      'npm run gitlab:git-credential:refresh'
+    );
+    expect(readText('docs/release-procedure.md')).toContain(
+      'git ls-remote origin HEAD'
+    );
     expect(rules.operatorSurfaceSustainment.branchModel.findingAdrDiscipline).toEqual(
       expect.arrayContaining([
         'every governed finding is classified before slice closeout as adr-update-required or no-adr-impact'

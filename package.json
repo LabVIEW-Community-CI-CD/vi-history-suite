@@ -166,6 +166,7 @@
     "assurance:user-info": "node scripts/runAssuranceAudit.js --lane user-info",
     "assurance:evidence-pack": "node scripts/runAssuranceAudit.js --lane evidence-pack",
     "assurance:uplift": "node scripts/runAssuranceAudit.js --lane uplift",
+    "gitlab:git-credential:refresh": "node scripts/refreshLocalGitLabGitCredential.js",
     "branch:governance:assert": "node scripts/assertGovernedBranchBaseline.js",
     "public:host:bootstrap-linux": "node scripts/bootstrapLinuxVsCodeHost.js install",
     "public:smoke:linux": "npm run compile && node scripts/runPublicFacadeLinuxSmoke.js",

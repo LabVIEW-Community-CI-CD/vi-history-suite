@@ -32,6 +32,66 @@ const tokenResolver = require(path.resolve(
 };
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
+const gitCredentialRefresh = require(path.resolve(
+  __dirname,
+  '..',
+  '..',
+  'scripts',
+  'refreshLocalGitLabGitCredential.js'
+)) as {
+  DEFAULT_GIT_REMOTE_NAME: string;
+  DEFAULT_GITLAB_HOST: string;
+  DEFAULT_GIT_PROTOCOL: string;
+  FALLBACK_GITLAB_GIT_USERNAME: string;
+  GITLAB_GIT_USERNAME_ENV: string;
+  parseRefreshLocalGitLabGitCredentialArgs: (argv: string[]) => {
+    helpRequested: boolean;
+    json: boolean;
+    remoteName: string;
+    username: string;
+    checkRemote: boolean;
+  };
+  parseGitRemoteUrl: (remoteUrl: string) => {
+    scheme: string;
+    host: string;
+    namespaceOwner: string;
+    projectPath: string;
+  };
+  buildGitCredentialInput: (input: {
+    protocol: string;
+    host: string;
+    username?: string;
+    password?: string;
+  }) => string;
+  buildGitCredentialRejectUsernames: (context: {
+    configuredUsername?: string;
+    namespaceOwner?: string;
+    username: string;
+  }) => string[];
+  getRefreshLocalGitLabGitCredentialUsage: () => string;
+  runRefreshLocalGitLabGitCredential: (
+    argv?: string[],
+    deps?: {
+      stdout?: { write: (value: string) => void };
+      env?: NodeJS.ProcessEnv;
+      repoRoot?: string;
+      token?: string;
+      fs?: typeof fs;
+      spawnSync?: typeof import('node:child_process').spawnSync;
+    }
+  ) => {
+    outcome: string;
+    remoteName: string;
+    remoteUrl: string;
+    protocol: string;
+    host: string;
+    username: string;
+    checkRemote: boolean;
+    verification?: string;
+  };
+};
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const mergeRequestQueue = require(path.resolve(
   __dirname,
   '..',
@@ -174,6 +234,182 @@ describe('local GitLab automation scripts', () => {
     expect(mergeRequestQueue.getQueueGovernedMergeRequestUsage()).toContain(
       'resolveLocalGitLabApiToken.js'
     );
+  });
+
+  it('refreshes the repo-local GitLab HTTPS credential and read-proves remote access', () => {
+    const calls: Array<{ args: string[]; input?: string }> = [];
+    const writes: string[] = [];
+    const spawnSyncStub: typeof import('node:child_process').spawnSync = ((command, args, options) => {
+      const normalizedArgs = (args ?? []).map((argument) => `${argument}`);
+      calls.push({
+        args: normalizedArgs,
+        input: typeof options?.input === 'string' ? options.input : undefined
+      });
+
+      if (
+        normalizedArgs.join(' ') === '-C /repo remote get-url origin'
+      ) {
+        return {
+          status: 0,
+          stdout: 'https://gitlab.com/svelderrainruiz/vi-history-suite.git\n',
+          stderr: ''
+        } as ReturnType<typeof import('node:child_process').spawnSync>;
+      }
+
+      if (
+        normalizedArgs.join(' ') ===
+        '-C /repo config --local --get credential.https://gitlab.com.username'
+      ) {
+        return {
+          status: 0,
+          stdout: 'legacy-user\n',
+          stderr: ''
+        } as ReturnType<typeof import('node:child_process').spawnSync>;
+      }
+
+      if (
+        normalizedArgs.slice(0, 4).join(' ') === '-C /repo credential reject' ||
+        normalizedArgs.join(' ') ===
+          '-C /repo config --local credential.https://gitlab.com.username legacy-user' ||
+        normalizedArgs.join(' ') === '-C /repo credential approve'
+      ) {
+        return {
+          status: 0,
+          stdout: '',
+          stderr: ''
+        } as ReturnType<typeof import('node:child_process').spawnSync>;
+      }
+
+      if (
+        normalizedArgs.join(' ') === '-C /repo ls-remote --exit-code origin HEAD'
+      ) {
+        return {
+          status: 0,
+          stdout: 'abcdef1234567890\tHEAD\n',
+          stderr: ''
+        } as ReturnType<typeof import('node:child_process').spawnSync>;
+      }
+
+      throw new Error(`Unexpected git call: ${command} ${normalizedArgs.join(' ')}`);
+    }) as typeof import('node:child_process').spawnSync;
+
+    const result = gitCredentialRefresh.runRefreshLocalGitLabGitCredential(
+      ['--json'],
+      {
+        repoRoot: '/repo',
+        token: 'secret-token',
+        spawnSync: spawnSyncStub,
+        stdout: {
+          write: (value: string) => {
+            writes.push(value);
+            return true;
+          }
+        }
+      }
+    );
+
+    expect(result).toMatchObject({
+      outcome: 'refreshed',
+      remoteName: 'origin',
+      remoteUrl: 'https://gitlab.com/svelderrainruiz/vi-history-suite.git',
+      protocol: 'https',
+      host: 'gitlab.com',
+      username: 'legacy-user',
+      checkRemote: true,
+      verification: 'abcdef1234567890\tHEAD'
+    });
+    expect(gitCredentialRefresh.parseRefreshLocalGitLabGitCredentialArgs([])).toEqual({
+      helpRequested: false,
+      json: false,
+      remoteName: 'origin',
+      username: '',
+      checkRemote: true
+    });
+    expect(
+      gitCredentialRefresh.parseRefreshLocalGitLabGitCredentialArgs([
+        '--remote',
+        'upstream',
+        '--username',
+        'oauth2',
+        '--no-check-remote',
+        '--json'
+      ])
+    ).toEqual({
+      helpRequested: false,
+      json: true,
+      remoteName: 'upstream',
+      username: 'oauth2',
+      checkRemote: false
+    });
+    expect(
+      gitCredentialRefresh.parseGitRemoteUrl(
+        'https://gitlab.com/svelderrainruiz/vi-history-suite.git'
+      )
+    ).toEqual({
+      scheme: 'https',
+      host: 'gitlab.com',
+      namespaceOwner: 'svelderrainruiz',
+      projectPath: 'svelderrainruiz/vi-history-suite'
+    });
+    expect(
+      gitCredentialRefresh.parseGitRemoteUrl(
+        'git@gitlab.com:svelderrainruiz/vi-history-suite.git'
+      )
+    ).toEqual({
+      scheme: 'ssh',
+      host: 'gitlab.com',
+      namespaceOwner: 'svelderrainruiz',
+      projectPath: 'svelderrainruiz/vi-history-suite'
+    });
+    expect(
+      gitCredentialRefresh.buildGitCredentialInput({
+        protocol: 'https',
+        host: 'gitlab.com',
+        username: 'oauth2',
+        password: 'secret-token'
+      })
+    ).toContain('password=secret-token');
+    expect(
+      gitCredentialRefresh.buildGitCredentialRejectUsernames({
+        configuredUsername: 'legacy-user',
+        namespaceOwner: 'svelderrainruiz',
+        username: 'oauth2'
+      })
+    ).toEqual(['legacy-user', 'svelderrainruiz', 'oauth2']);
+    expect(gitCredentialRefresh.getRefreshLocalGitLabGitCredentialUsage()).toContain(
+      'resolveLocalGitLabApiToken.js'
+    );
+    expect(gitCredentialRefresh.getRefreshLocalGitLabGitCredentialUsage()).toContain(
+      'git ls-remote <remote> HEAD'
+    );
+    expect(gitCredentialRefresh.getRefreshLocalGitLabGitCredentialUsage()).toContain(
+      gitCredentialRefresh.GITLAB_GIT_USERNAME_ENV
+    );
+    expect(writes.join('')).toContain('"outcome": "refreshed"');
+    expect(
+      calls.filter((call) => call.args.join(' ') === '-C /repo credential reject').length
+    ).toBe(4);
+    expect(
+      calls.some(
+        (call) =>
+          call.args.join(' ') ===
+            '-C /repo config --local credential.https://gitlab.com.username legacy-user'
+      )
+    ).toBe(true);
+    expect(
+      calls.some(
+        (call) =>
+          call.args.join(' ') === '-C /repo credential approve' &&
+          call.input?.includes('password=secret-token')
+      )
+    ).toBe(true);
+    expect(
+      calls.some((call) => call.args.join(' ') === '-C /repo ls-remote --exit-code origin HEAD')
+    ).toBe(true);
+    expect(gitCredentialRefresh.DEFAULT_GIT_REMOTE_NAME).toBe('origin');
+    expect(gitCredentialRefresh.DEFAULT_GITLAB_HOST).toBe('gitlab.com');
+    expect(gitCredentialRefresh.DEFAULT_GIT_PROTOCOL).toBe('https');
+    expect(gitCredentialRefresh.FALLBACK_GITLAB_GIT_USERNAME).toBe('oauth2');
   });
 
   it('queues a governed merge request and arms auto-merge through direct API calls', async () => {
