@@ -107,14 +107,25 @@ Current host activation state:
 
 The governed host asset pack for this lane is versioned in the repo:
 
+- Windows apply/update script:
+  `scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1`
 - Windows bootstrap script:
   `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1`
+- Linux apply/update script:
+  `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh`
 - Linux helper invoked by that bootstrap:
   `scripts/gitlab-runner/linux/start-linux-assurance.sh`
 
-The Windows bootstrap script is the repo-owned source of truth for duplicate
-collapse, cold-admission runtime cleanup, current-user runner launch, and WSL
-wake-up on user logon.
+The Windows apply script is the repo-owned update surface for the admitted
+scheduled task contract. It copies the repo-owned bootstrap to
+`C:\GitLab-Runner`, registers the task action as
+`powershell.exe -NoLogo -NoProfile -File "C:\GitLab-Runner\start-governed-runner-lanes.ps1"`,
+starts that task immediately, and fails closed unless exactly one configured
+runner manager remains after apply.
+
+The Windows bootstrap script remains the repo-owned source of truth for
+duplicate collapse, cold-admission runtime cleanup, current-user runner
+launch, and WSL wake-up on user logon.
 
 The host-native proof path inside `npm run acceptance:windows:private-release`
 uses the same bounded cleanup family before and after host execution, so
@@ -130,15 +141,17 @@ that single retry still cannot restore a clean host surface.
 From the repo root on the admitted Windows host:
 
 ```powershell
-Copy-Item -LiteralPath .\scripts\gitlab-runner\windows\start-governed-runner-lanes.ps1 -Destination C:\GitLab-Runner\start-governed-runner-lanes.ps1 -Force
-$runnerTaskAction = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument '-NoLogo -NoProfile -ExecutionPolicy Bypass -File "C:\GitLab-Runner\start-governed-runner-lanes.ps1"'
-$runnerTaskTrigger = New-ScheduledTaskTrigger -AtLogOn
-$runnerTaskPrincipal = New-ScheduledTaskPrincipal -UserId "$env:USERDOMAIN\$env:USERNAME" -LogonType Interactive -RunLevel Highest
-Register-ScheduledTask -TaskName 'VIHS Governed Runner Lanes' -Action $runnerTaskAction -Trigger $runnerTaskTrigger -Principal $runnerTaskPrincipal -Force
-Start-ScheduledTask -TaskName 'VIHS Governed Runner Lanes'
+powershell.exe -NoLogo -NoProfile -File .\scripts\gitlab-runner\windows\apply-governed-runner-lanes.ps1
 ```
 
-The admitted Linux helper path consumed by that bootstrap remains:
+That repo-owned apply surface requires the admitted `C:\GitLab-Runner`
+registration baseline to exist already: `gitlab-runner.exe`,
+`config.toml`, and the governed current-user Windows runner registration.
+
+It keeps the scheduled-task action on the ambient PowerShell execution policy
+instead of `ExecutionPolicy Bypass`.
+
+The admitted Linux helper path consumed by the bootstrap remains:
 
 ```powershell
 wsl.exe -d Ubuntu bash -lc '$HOME/gitlab-runner/start-linux-assurance.sh'
@@ -175,7 +188,7 @@ gitlab-runner.exe register `
 Governed current-user startup:
 
 ```powershell
-powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "C:\GitLab-Runner\start-governed-runner-lanes.ps1"
+powershell.exe -NoLogo -NoProfile -File "C:\GitLab-Runner\start-governed-runner-lanes.ps1"
 ```
 
 Direct foreground recovery, if the scheduled bootstrap surface is unavailable:

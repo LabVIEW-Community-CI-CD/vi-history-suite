@@ -15,9 +15,13 @@ function readJson<T>(relativePath: string): T {
 
 describe('runner lane operator assets', () => {
   it('retains the repo-owned Windows bootstrap, Linux helper, Linux service unit, and the control-plane references to them', () => {
+    const windowsApply = readText(
+      'scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1'
+    );
     const windowsBootstrap = readText(
       'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1'
     );
+    const linuxApply = readText('scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
     const linuxHelper = readText('scripts/gitlab-runner/linux/start-linux-assurance.sh');
     const linuxService = readText(
       'scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service'
@@ -33,12 +37,23 @@ describe('runner lane operator assets', () => {
     const currentState = readText('docs/product/current-state.md');
     const releaseProcedure = readText('docs/release-procedure.md');
 
+    expect(windowsApply).toContain("Register-ScheduledTask -TaskName $TaskName");
+    expect(windowsApply).toContain('-NoLogo -NoProfile -File');
+    expect(windowsApply).not.toContain('ExecutionPolicy Bypass');
+    expect(windowsApply).toContain('expected exactly one configured gitlab-runner manager after apply');
+
     expect(windowsBootstrap).toContain("$runnerRoot = 'C:\\GitLab-Runner'");
     expect(windowsBootstrap).toContain("Start-Process -FilePath $runnerExe");
     expect(windowsBootstrap).toContain('Stop-Process -Id $duplicateWindowsRunner.ProcessId -Force');
     expect(windowsBootstrap).toContain(
       "wsl.exe -d Ubuntu bash -lc '$HOME/gitlab-runner/start-linux-assurance.sh' | Out-Null"
     );
+
+    expect(linuxApply).toContain('EXPECTED_USER="sveld"');
+    expect(linuxApply).toContain('sudo systemctl enable --now "$SERVICE_NAME"');
+    expect(linuxApply).toContain('systemctl is-enabled "$SERVICE_NAME"');
+    expect(linuxApply).toContain('systemctl is-active "$SERVICE_NAME"');
+    expect(linuxApply).toContain('is not active after apply');
 
     expect(linuxHelper).toContain('RUNNER_BIN="$HOME/gitlab-runner/bin/gitlab-runner"');
     expect(linuxHelper).toContain('CONFIG="$HOME/.gitlab-runner/config.toml"');
@@ -56,37 +71,51 @@ describe('runner lane operator assets', () => {
     expect(linuxService).toContain('Restart=always');
     expect(linuxService).toContain('WantedBy=multi-user.target');
 
+    expect(windowsLaneDoc).toContain('scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1');
     expect(windowsLaneDoc).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
+    expect(windowsLaneDoc).not.toContain('ExecutionPolicy Bypass -File "C:\\GitLab-Runner\\start-governed-runner-lanes.ps1"');
+    expect(windowsLaneDoc).toContain('fails closed unless exactly one configured');
+    expect(windowsLaneDoc).toContain('runner manager remains after apply');
+    expect(windowsLaneDoc).toContain('scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
     expect(windowsLaneDoc).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
-    expect(windowsLaneDoc).toContain("Register-ScheduledTask -TaskName 'VIHS Governed Runner Lanes'");
+    expect(windowsLaneDoc).toContain('powershell.exe -NoLogo -NoProfile -File .\\scripts\\gitlab-runner\\windows\\apply-governed-runner-lanes.ps1');
+    expect(linuxLaneDoc).toContain('scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
     expect(linuxLaneDoc).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
     expect(linuxLaneDoc).toContain('scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service');
-    expect(linuxLaneDoc).toContain('sudo systemctl enable --now vihs-linux-assurance-runner.service');
+    expect(linuxLaneDoc).toContain('bash ./scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
 
+    expect(hostedGovernanceDoc).toContain('scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1');
     expect(hostedGovernanceDoc).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
+    expect(hostedGovernanceDoc).toContain('scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
     expect(hostedGovernanceDoc).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
     expect(hostedGovernanceDoc).toContain('scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service');
     expect(hostedGovernanceJson.authorityGitLab.runnerLanes.linuxAssurance.operatorModel).toEqual(
       expect.objectContaining({
+        repoOwnedApplyScript: 'scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh',
         repoOwnedHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
         repoOwnedServiceUnit: 'scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service'
       })
     );
     expect(hostedGovernanceJson.authorityGitLab.runnerLanes.windowsPrivateRelease.operatorModel).toEqual(
       expect.objectContaining({
+        repoOwnedApplyScript: 'scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1',
         repoOwnedBootstrapScript: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',
         repoOwnedLinuxHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh'
       })
     );
 
+    expect(privateReleasePacketDoc).toContain('scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1');
     expect(privateReleasePacketDoc).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
+    expect(privateReleasePacketDoc).toContain('scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
     expect(privateReleasePacketDoc).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
     expect(privateReleasePacketDoc).toContain('scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service');
     expect(privateReleasePacketJson.gitlabRunnerLane).toEqual(
       expect.objectContaining({
         hostInstallState: 'current-user-scheduled-task-bootstrap-active',
         repoOwnedOperatorAssets: {
+          windowsApplyScript: 'scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1',
           windowsBootstrapScript: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',
+          linuxApplyScript: 'scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh',
           linuxHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
           linuxServiceUnit: 'scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service'
         }
@@ -96,12 +125,18 @@ describe('runner lane operator assets', () => {
     expect(informationItemMap).toContain(
       '| Governed runner host asset pack | `scripts/gitlab-runner/` |'
     );
+    expect(readme).toContain('scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1');
     expect(readme).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
+    expect(readme).toContain('scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
     expect(readme).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
-    expect(currentState).toContain('repo-owned runner host asset pack:');
+    expect(currentState).toContain('repo-owned runner host asset pack and apply surfaces:');
+    expect(currentState).toContain('scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1');
+    expect(currentState).toContain('scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
     expect(currentState).toContain('scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service');
-    expect(releaseProcedure).toContain('The repo-owned runner host asset pack for those lanes is:');
+    expect(releaseProcedure).toContain('The repo-owned runner host asset pack and apply surfaces for those lanes are:');
+    expect(releaseProcedure).toContain('scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1');
     expect(releaseProcedure).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
+    expect(releaseProcedure).toContain('scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
   });
 
   it('retains cold-admission Windows proof runtime cleanup in the bootstrap and linked control-plane docs', () => {

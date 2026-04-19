@@ -261,6 +261,8 @@ describe('requirements documentation coherence', () => {
     expect(srs).toContain('assurance_audit_packet');
     expect(srs).toContain('VHS-REQ-557');
     expect(srs).toContain('repo-native contradiction guards');
+    expect(srs).toContain('VHS-REQ-558');
+    expect(srs).toContain('Windows logon bootstrap script plus Windows apply script');
     expect(srs).toContain('VHS-REQ-560');
     expect(srs).toContain('bounded host-native contamination-recovery retry');
 
@@ -272,6 +274,7 @@ describe('requirements documentation coherence', () => {
     expect(rtm).toContain('VHS-REQ-555');
     expect(rtm).toContain('VHS-REQ-556');
     expect(rtm).toContain('VHS-REQ-557');
+    expect(rtm).toContain('VHS-REQ-558');
     expect(rtm).toContain('TEST-UNIT-349');
     expect(rtm).toContain('TEST-INTEG-011');
     expect(rtm).toContain('TEST-SMOKE-022');
@@ -310,9 +313,11 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('TEST-UNIT-359');
     expect(testPlan).toContain('TEST-UNIT-360');
     expect(testPlan).toContain('TEST-UNIT-361');
+    expect(testPlan).toContain('TEST-UNIT-362');
     expect(testPlan).toContain('TEST-UNIT-364');
     expect(testPlan).toContain('TEST-DOC-113');
     expect(testPlan).toContain('TEST-DOC-114');
+    expect(testPlan).toContain('TEST-DOC-115');
     expect(testPlan).toContain('TEST-DOC-117');
     expect(testPlan).toContain('native Windows only');
     expect(testPlan).toContain('WSL is retained historical context only');

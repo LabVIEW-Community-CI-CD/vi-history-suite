@@ -41,7 +41,12 @@ describe('windows private release runner lane docs', () => {
     expect(runnerLaneDoc).toContain('C:\\GitLab-Runner\\config.toml');
     expect(runnerLaneDoc).toContain('request_concurrency = 2');
     expect(runnerLaneDoc).toContain('VIHS Governed Runner Lanes');
+    expect(runnerLaneDoc).toContain('apply-governed-runner-lanes.ps1');
     expect(runnerLaneDoc).toContain('start-governed-runner-lanes.ps1');
+    expect(runnerLaneDoc).toContain('-NoLogo -NoProfile -File');
+    expect(runnerLaneDoc).not.toContain('ExecutionPolicy Bypass -File');
+    expect(runnerLaneDoc).toContain('fails closed unless exactly one configured');
+    expect(runnerLaneDoc).toContain('runner manager remains after apply');
     expect(runnerLaneDoc).toContain('duplicate `gitlab-runner.exe` manager processes');
     expect(runnerLaneDoc).toContain('stale `LabVIEW`,');
     expect(runnerLaneDoc).toContain('`LabVIEWCLI`, and `LVCompare` processes');
@@ -53,17 +58,20 @@ describe('windows private release runner lane docs', () => {
     expect(runnerLaneDoc).toContain('reruns the same host-native proof once');
     expect(runnerLaneDoc).toContain('proofAttemptCount');
     expect(runnerLaneDoc).toContain('boundedRecovery');
+    expect(runnerLaneDoc).toContain('scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
     expect(runnerLaneDoc).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
     expect(runnerLaneDoc).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
-    expect(runnerLaneDoc).toContain("Register-ScheduledTask -TaskName 'VIHS Governed Runner Lanes'");
+    expect(runnerLaneDoc).toContain('powershell.exe -NoLogo -NoProfile -File .\\scripts\\gitlab-runner\\windows\\apply-governed-runner-lanes.ps1');
 
     expect(sustainmentDoc).toContain('windows-private-release-runner-lane.md');
     expect(sustainmentDoc).toContain('GitLab `windows_private_release_acceptance`');
+    expect(sustainmentDoc).toContain('scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1');
     expect(sustainmentDoc).toContain('linux-assurance-runner-lane.md');
 
     expect(hostedGovernanceDoc).toContain('`windows_private_release_acceptance`');
     expect(hostedGovernanceDoc).toContain('retains the canonical Windows x64 private-release acceptance evidence');
     expect(hostedGovernanceDoc).toContain('VIHS Governed Runner Lanes');
+    expect(hostedGovernanceDoc).toContain('apply-governed-runner-lanes.ps1');
     expect(hostedGovernanceDoc).toContain('start-governed-runner-lanes.ps1');
     expect(hostedGovernanceDoc).toContain('request_concurrency = 2');
     expect(hostedGovernanceDoc).toContain('cold-admission fail-closed');
@@ -86,6 +94,13 @@ describe('windows private release runner lane docs', () => {
           bootstrapScript: 'C:\\GitLab-Runner\\start-governed-runner-lanes.ps1',
           scheduledTask: 'VIHS Governed Runner Lanes',
           lifecycleOwner: 'interactive-current-user-scheduled-task',
+          repoOwnedApplyScript: 'scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1',
+          bootstrapTaskAction: {
+            executable: 'powershell.exe',
+            arguments:
+              '-NoLogo -NoProfile -File "C:\\GitLab-Runner\\start-governed-runner-lanes.ps1"',
+            executionPolicy: 'ambient-no-bypass'
+          },
           duplicateProcessPolicy: 'collapse-duplicates-per-config',
           coldAdmissionRuntimeCleanup: {
             processNames: ['LabVIEW', 'LabVIEWCLI', 'LVCompare'],
@@ -97,7 +112,11 @@ describe('windows private release runner lane docs', () => {
             failurePolicy: 'fail-closed-before-runner-start'
           },
           repoOwnedBootstrapScript: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',
-          repoOwnedLinuxHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh'
+          repoOwnedLinuxHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
+          applyVerification: {
+            checks: ['scheduled-task-registered', 'exactly-one-configured-runner-manager'],
+            failurePolicy: 'fail-closed-unless-scheduled-task-and-runner-process-are-live'
+          }
         })
       })
     );

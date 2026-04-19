@@ -291,6 +291,13 @@ Hosted automation governance is now retained explicitly:
   execution, preserving `windows-private-release-evidence/host/proof-run-pre-recovery.txt`
   and still failing closed after that single retry if the host cannot be
   restored to a clean proof surface
+- GitLab runner upkeep now uses repo-owned apply surfaces:
+  `scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1` keeps the
+  scheduled task on ambient execution policy without `ExecutionPolicy Bypass`
+  and fails closed unless exactly one configured Windows runner manager
+  remains after apply, while
+  `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh` fails closed
+  unless `vihs-linux-assurance-runner.service` finishes `enabled` and `active`
 - the authoritative matrix for those distinctions is:
   - `docs/product/hosted-ci-governance.md`
   - `docs/product/hosted-ci-governance.json`

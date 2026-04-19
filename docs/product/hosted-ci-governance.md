@@ -69,8 +69,11 @@ Runner operator hardening:
   `~/.gitlab-runner/config.toml`, per-runner
   `request_concurrency = 2`, and steady-state lifecycle owned by Ubuntu
   `systemd` unit `vihs-linux-assurance-runner.service`, with repo-owned host
-  assets at `scripts/gitlab-runner/linux/start-linux-assurance.sh` and
-  `scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service`
+  assets at `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh`,
+  `scripts/gitlab-runner/linux/start-linux-assurance.sh`, and
+  `scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service`; the
+  Linux apply surface fails closed unless the admitted `systemd` service is
+  both enabled and active after apply
 - `windows-private-release`: admitted config path
   `C:\GitLab-Runner\config.toml`, per-runner
   `request_concurrency = 2`, scheduled bootstrap surface
@@ -80,7 +83,12 @@ Runner operator hardening:
   cleanup of stale `LabVIEW` / `LabVIEWCLI` / `LVCompare` runtime processes
   before the runner starts using bounded `Stop-Process` plus
   `taskkill /PID /T /F` and `taskkill /IM /T /F`, and the repo-owned bootstrap asset
-  `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1`
+  `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1`; the
+  repo-owned apply surface `scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1`
+  keeps the scheduled-task action on
+  `powershell.exe -NoLogo -NoProfile -File "C:\GitLab-Runner\start-governed-runner-lanes.ps1"`
+  without `ExecutionPolicy Bypass` and fails closed unless exactly one
+  configured runner manager remains after apply
 
 Job ownership:
 
