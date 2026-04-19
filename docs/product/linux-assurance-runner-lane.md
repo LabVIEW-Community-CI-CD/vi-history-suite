@@ -80,6 +80,19 @@ Registry authentication may be satisfied either by:
 The first governed path is the protected-variable route retained in
 `.gitlab-ci.yml`.
 
+## Governed Operator Model
+
+The admitted operator contract for the current Linux assurance host is:
+
+- runner config path: `~/.gitlab-runner/config.toml`
+- per-runner request concurrency: `request_concurrency = 2`
+- steady-state lifecycle owner: Ubuntu `systemd`
+- admitted service unit: `vihs-linux-assurance-runner.service`
+
+The governed recovery model after a host reboot is to restore Ubuntu and let
+`vihs-linux-assurance-runner.service` own restart and keep-alive. The lane
+shall not depend on a long-lived interactive `gitlab-runner run` shell.
+
 ## Manual Registration Pack
 
 Do not commit the runner authentication token. Manual host registration uses a

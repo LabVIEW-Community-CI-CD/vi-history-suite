@@ -90,7 +90,13 @@ admission shape.
 Current host activation state:
 
 - registered on the project as runner `ghost` (`52775990`)
-- executing in current-user foreground mode through `gitlab-runner.exe run`
+- launched at user logon by scheduled task `VIHS Governed Runner Lanes`
+- scheduled task bootstrap surface:
+  `C:\GitLab-Runner\start-governed-runner-lanes.ps1`
+- admitted runner config path: `C:\GitLab-Runner\config.toml`
+- per-runner request concurrency: `request_concurrency = 2`
+- startup script collapses duplicate `gitlab-runner.exe` manager processes for
+  the same config before ensuring exactly one current-user manager remains
 - Windows service installation is not active for this admitted lane
 
 ## Manual Registration Pack
@@ -114,15 +120,21 @@ gitlab-runner.exe register `
   --maximum-timeout 7200
 ```
 
-Foreground current-user execution:
+Governed current-user startup:
 
 ```powershell
-gitlab-runner.exe run
+powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "C:\GitLab-Runner\start-governed-runner-lanes.ps1"
 ```
 
-If a scheduled task or service wrapper is added later, it shall preserve the
-same signed-in user context needed for Docker Desktop Windows-container access
-and host LabVIEW proof.
+Direct foreground recovery, if the scheduled bootstrap surface is unavailable:
+
+```powershell
+gitlab-runner.exe run --config C:\GitLab-Runner\config.toml
+```
+
+The lane shall continue to preserve the same signed-in user context needed for
+Docker Desktop Windows-container access and host LabVIEW proof. Do not replace
+that contract with a `LocalSystem` service.
 
 ## Retained Evidence Contract
 

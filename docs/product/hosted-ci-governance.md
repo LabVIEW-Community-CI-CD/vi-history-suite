@@ -63,6 +63,19 @@ Runner lanes:
   native Windows host plus Windows-container proof; it is governed by
   [windows-private-release-runner-lane.md](./windows-private-release-runner-lane.md)
 
+Runner operator hardening:
+
+- `linux-assurance`: admitted config path
+  `~/.gitlab-runner/config.toml`, per-runner
+  `request_concurrency = 2`, and steady-state lifecycle owned by Ubuntu
+  `systemd` unit `vihs-linux-assurance-runner.service`
+- `windows-private-release`: admitted config path
+  `C:\GitLab-Runner\config.toml`, per-runner
+  `request_concurrency = 2`, scheduled bootstrap surface
+  `C:\GitLab-Runner\start-governed-runner-lanes.ps1`, scheduled task
+  `VIHS Governed Runner Lanes`, and duplicate-manager collapse so exactly one
+  current-user runner manager remains per config
+
 Job ownership:
 
 - `docs_link_check`, `docs_continuous_integration`,

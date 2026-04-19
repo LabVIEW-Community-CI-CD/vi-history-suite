@@ -91,7 +91,27 @@ describe('hosted ci governance docs', () => {
     expect(matrix.authorityGitLab.runnerLanes.linuxAssurance).toEqual(
       expect.objectContaining({
         description: 'local-linux-assurance',
-        runnerContractDoc: 'docs/product/linux-assurance-runner-lane.md'
+        runnerContractDoc: 'docs/product/linux-assurance-runner-lane.md',
+        operatorModel: expect.objectContaining({
+          configPath: '~/.gitlab-runner/config.toml',
+          requestConcurrency: 2,
+          lifecycleOwner: 'systemd',
+          serviceUnit: 'vihs-linux-assurance-runner.service'
+        })
+      })
+    );
+    expect(matrix.authorityGitLab.runnerLanes.windowsPrivateRelease).toEqual(
+      expect.objectContaining({
+        description: 'ghost',
+        runnerContractDoc: 'docs/product/windows-private-release-runner-lane.md',
+        operatorModel: expect.objectContaining({
+          configPath: 'C:\\GitLab-Runner\\config.toml',
+          requestConcurrency: 2,
+          bootstrapScript: 'C:\\GitLab-Runner\\start-governed-runner-lanes.ps1',
+          scheduledTask: 'VIHS Governed Runner Lanes',
+          lifecycleOwner: 'interactive-current-user-scheduled-task',
+          duplicateProcessPolicy: 'collapse-duplicates-per-config'
+        })
       })
     );
     expect(matrix.publicGitHub.requiredChecks).toEqual([
@@ -123,6 +143,10 @@ describe('hosted ci governance docs', () => {
     expect(matrixDoc).toContain('`assurance_external_user_information`');
     expect(matrixDoc).toContain('`assurance_audit_packet`');
     expect(matrixDoc).toContain('repo-standards-review');
+    expect(matrixDoc).toContain('request_concurrency = 2');
+    expect(matrixDoc).toContain('vihs-linux-assurance-runner.service');
+    expect(matrixDoc).toContain('VIHS Governed Runner Lanes');
+    expect(matrixDoc).toContain('start-governed-runner-lanes.ps1');
     expect(adr).toContain('GitLab authority uses protected branches plus');
     expect(adr).toContain('GitHub benchmark workflows remain governed characterization lanes');
 
