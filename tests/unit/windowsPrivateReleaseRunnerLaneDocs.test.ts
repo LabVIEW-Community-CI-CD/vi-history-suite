@@ -19,6 +19,7 @@ describe('windows private release runner lane docs', () => {
     const runnerLaneDoc = readText('docs/product/windows-private-release-runner-lane.md');
     const sustainmentDoc = readText('docs/product/post-release-sustainment-rules.md');
     const hostedGovernanceDoc = readText('docs/product/hosted-ci-governance.md');
+    const hostedGovernanceJson = readJson<any>('docs/product/hosted-ci-governance.json');
     const packageManifest = readJson<{ scripts?: Record<string, string> }>('package.json');
 
     expect(gitlabCi).toContain('windows_private_release_acceptance:');
@@ -37,6 +38,11 @@ describe('windows private release runner lane docs', () => {
     expect(runnerLaneDoc).toContain('windows-private-release-evidence/host/harness-report/**');
     expect(runnerLaneDoc).toContain('windows-private-release-evidence/container/harness-report/**');
     expect(runnerLaneDoc).toContain('linux-assurance-runner-lane.md');
+    expect(runnerLaneDoc).toContain('C:\\GitLab-Runner\\config.toml');
+    expect(runnerLaneDoc).toContain('request_concurrency = 2');
+    expect(runnerLaneDoc).toContain('VIHS Governed Runner Lanes');
+    expect(runnerLaneDoc).toContain('start-governed-runner-lanes.ps1');
+    expect(runnerLaneDoc).toContain('duplicate `gitlab-runner.exe` manager processes');
 
     expect(sustainmentDoc).toContain('windows-private-release-runner-lane.md');
     expect(sustainmentDoc).toContain('GitLab `windows_private_release_acceptance`');
@@ -44,6 +50,23 @@ describe('windows private release runner lane docs', () => {
 
     expect(hostedGovernanceDoc).toContain('`windows_private_release_acceptance`');
     expect(hostedGovernanceDoc).toContain('retains the canonical Windows x64 private-release acceptance evidence');
+    expect(hostedGovernanceDoc).toContain('VIHS Governed Runner Lanes');
+    expect(hostedGovernanceDoc).toContain('start-governed-runner-lanes.ps1');
+    expect(hostedGovernanceDoc).toContain('request_concurrency = 2');
+    expect(hostedGovernanceJson.authorityGitLab.runnerLanes.windowsPrivateRelease).toEqual(
+      expect.objectContaining({
+        description: 'ghost',
+        runnerContractDoc: 'docs/product/windows-private-release-runner-lane.md',
+        operatorModel: expect.objectContaining({
+          configPath: 'C:\\GitLab-Runner\\config.toml',
+          requestConcurrency: 2,
+          bootstrapScript: 'C:\\GitLab-Runner\\start-governed-runner-lanes.ps1',
+          scheduledTask: 'VIHS Governed Runner Lanes',
+          lifecycleOwner: 'interactive-current-user-scheduled-task',
+          duplicateProcessPolicy: 'collapse-duplicates-per-config'
+        })
+      })
+    );
 
     expect(packageManifest.scripts?.['acceptance:windows:private-release']).toBe(
       'npm run compile && node scripts/runWindowsPrivateReleaseAcceptance.js'

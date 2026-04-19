@@ -1,6 +1,6 @@
 {
   "schema": "vi-history-suite/hosted-ci-governance@v1",
-  "recordedAt": "2026-04-14",
+  "recordedAt": "2026-04-19",
   "openingDecision": {
     "currentExactReleaseLine": "v1.2.2",
     "currentMainPackageLine": "1.2.2",
@@ -76,7 +76,13 @@
           "private-release"
         ],
         "pullsLatestImage": "registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main",
-        "runnerContractDoc": "docs/product/linux-assurance-runner-lane.md"
+        "runnerContractDoc": "docs/product/linux-assurance-runner-lane.md",
+        "operatorModel": {
+          "configPath": "~/.gitlab-runner/config.toml",
+          "requestConcurrency": 2,
+          "lifecycleOwner": "systemd",
+          "serviceUnit": "vihs-linux-assurance-runner.service"
+        }
       },
       "windowsPrivateRelease": {
         "description": "ghost",
@@ -88,7 +94,15 @@
           "docker-windows",
           "private-release"
         ],
-        "runnerContractDoc": "docs/product/windows-private-release-runner-lane.md"
+        "runnerContractDoc": "docs/product/windows-private-release-runner-lane.md",
+        "operatorModel": {
+          "configPath": "C:\\GitLab-Runner\\config.toml",
+          "requestConcurrency": 2,
+          "bootstrapScript": "C:\\GitLab-Runner\\start-governed-runner-lanes.ps1",
+          "scheduledTask": "VIHS Governed Runner Lanes",
+          "lifecycleOwner": "interactive-current-user-scheduled-task",
+          "duplicateProcessPolicy": "collapse-duplicates-per-config"
+        }
       }
     },
     "jobs": {

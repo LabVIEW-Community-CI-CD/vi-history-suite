@@ -54,15 +54,26 @@ describe('linux assurance runner lane docs', () => {
     expect(runnerLaneDoc).toContain('assurance_audit_packet');
     expect(runnerLaneDoc).toContain('VIHS_ASSURANCE_REGISTRY_USER');
     expect(runnerLaneDoc).toContain('VIHS_ASSURANCE_REGISTRY_PASSWORD');
+    expect(runnerLaneDoc).toContain('~/.gitlab-runner/config.toml');
+    expect(runnerLaneDoc).toContain('request_concurrency = 2');
+    expect(runnerLaneDoc).toContain('vihs-linux-assurance-runner.service');
     expect(runnerLaneDoc).toContain('separate from the Windows private-release proof lane');
 
     expect(windowsRunnerLaneDoc).toContain('linux-assurance-runner-lane.md');
     expect(hostedGovernanceDoc).toContain('linux-assurance');
+    expect(hostedGovernanceDoc).toContain('request_concurrency = 2');
+    expect(hostedGovernanceDoc).toContain('vihs-linux-assurance-runner.service');
     expect(hostedGovernanceDoc).toContain('windows-private-release');
     expect(hostedGovernanceJson.authorityGitLab.runnerLanes.linuxAssurance).toEqual(
       expect.objectContaining({
         description: 'local-linux-assurance',
-        runnerContractDoc: 'docs/product/linux-assurance-runner-lane.md'
+        runnerContractDoc: 'docs/product/linux-assurance-runner-lane.md',
+        operatorModel: expect.objectContaining({
+          configPath: '~/.gitlab-runner/config.toml',
+          requestConcurrency: 2,
+          lifecycleOwner: 'systemd',
+          serviceUnit: 'vihs-linux-assurance-runner.service'
+        })
       })
     );
     expect(hostedGovernanceJson.authorityGitLab.jobs.assurance_audit_packet.classification).toBe(
