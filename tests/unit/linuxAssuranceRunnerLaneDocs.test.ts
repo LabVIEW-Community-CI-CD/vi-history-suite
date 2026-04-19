@@ -57,12 +57,17 @@ describe('linux assurance runner lane docs', () => {
     expect(runnerLaneDoc).toContain('~/.gitlab-runner/config.toml');
     expect(runnerLaneDoc).toContain('request_concurrency = 2');
     expect(runnerLaneDoc).toContain('vihs-linux-assurance-runner.service');
+    expect(runnerLaneDoc).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
+    expect(runnerLaneDoc).toContain('scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service');
+    expect(runnerLaneDoc).toContain('sudo systemctl enable --now vihs-linux-assurance-runner.service');
     expect(runnerLaneDoc).toContain('separate from the Windows private-release proof lane');
 
     expect(windowsRunnerLaneDoc).toContain('linux-assurance-runner-lane.md');
     expect(hostedGovernanceDoc).toContain('linux-assurance');
     expect(hostedGovernanceDoc).toContain('request_concurrency = 2');
     expect(hostedGovernanceDoc).toContain('vihs-linux-assurance-runner.service');
+    expect(hostedGovernanceDoc).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
+    expect(hostedGovernanceDoc).toContain('scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service');
     expect(hostedGovernanceDoc).toContain('windows-private-release');
     expect(hostedGovernanceJson.authorityGitLab.runnerLanes.linuxAssurance).toEqual(
       expect.objectContaining({
@@ -72,7 +77,9 @@ describe('linux assurance runner lane docs', () => {
           configPath: '~/.gitlab-runner/config.toml',
           requestConcurrency: 2,
           lifecycleOwner: 'systemd',
-          serviceUnit: 'vihs-linux-assurance-runner.service'
+          serviceUnit: 'vihs-linux-assurance-runner.service',
+          repoOwnedHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
+          repoOwnedServiceUnit: 'scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service'
         })
       })
     );

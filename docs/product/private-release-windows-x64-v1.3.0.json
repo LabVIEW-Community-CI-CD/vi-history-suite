@@ -88,7 +88,12 @@
     "runnerContractDoc": "docs/product/windows-private-release-runner-lane.md",
     "artifactRoot": "windows-private-release-evidence/",
     "expectedManifestPath": "windows-private-release-evidence/manifest.json",
-    "hostInstallState": "current-user-foreground-run-active",
+    "hostInstallState": "current-user-scheduled-task-bootstrap-active",
+    "repoOwnedOperatorAssets": {
+      "windowsBootstrapScript": "scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1",
+      "linuxHelperScript": "scripts/gitlab-runner/linux/start-linux-assurance.sh",
+      "linuxServiceUnit": "scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service"
+    },
     "firstRetainedReceipt": {
       "mergeRequestIid": 91,
       "pipelineId": 2463649610,

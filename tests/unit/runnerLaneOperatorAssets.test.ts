@@ -1,0 +1,106 @@
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+
+import { describe, expect, it } from 'vitest';
+
+const repoRoot = path.resolve(__dirname, '..', '..');
+
+function readText(relativePath: string): string {
+  return fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
+}
+
+function readJson<T>(relativePath: string): T {
+  return JSON.parse(readText(relativePath)) as T;
+}
+
+describe('runner lane operator assets', () => {
+  it('retains the repo-owned Windows bootstrap, Linux helper, Linux service unit, and the control-plane references to them', () => {
+    const windowsBootstrap = readText(
+      'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1'
+    );
+    const linuxHelper = readText('scripts/gitlab-runner/linux/start-linux-assurance.sh');
+    const linuxService = readText(
+      'scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service'
+    );
+    const windowsLaneDoc = readText('docs/product/windows-private-release-runner-lane.md');
+    const linuxLaneDoc = readText('docs/product/linux-assurance-runner-lane.md');
+    const hostedGovernanceDoc = readText('docs/product/hosted-ci-governance.md');
+    const hostedGovernanceJson = readJson<any>('docs/product/hosted-ci-governance.json');
+    const privateReleasePacketDoc = readText('docs/product/private-release-windows-x64-v1.3.0.md');
+    const privateReleasePacketJson = readJson<any>('docs/product/private-release-windows-x64-v1.3.0.json');
+    const informationItemMap = readText('docs/information-item-map.md');
+    const readme = readText('README.md');
+    const currentState = readText('docs/product/current-state.md');
+    const releaseProcedure = readText('docs/release-procedure.md');
+
+    expect(windowsBootstrap).toContain("$runnerRoot = 'C:\\GitLab-Runner'");
+    expect(windowsBootstrap).toContain("Start-Process -FilePath $runnerExe");
+    expect(windowsBootstrap).toContain('Stop-Process -Id $duplicateWindowsRunner.ProcessId -Force');
+    expect(windowsBootstrap).toContain(
+      "wsl.exe -d Ubuntu bash -lc '$HOME/gitlab-runner/start-linux-assurance.sh' | Out-Null"
+    );
+
+    expect(linuxHelper).toContain('RUNNER_BIN="$HOME/gitlab-runner/bin/gitlab-runner"');
+    expect(linuxHelper).toContain('CONFIG="$HOME/.gitlab-runner/config.toml"');
+    expect(linuxHelper).toContain('pgrep -af "$RUNNER_BIN run --config $CONFIG"');
+    expect(linuxHelper).toContain(
+      'nohup "$RUNNER_BIN" run --config "$CONFIG" >>"$LOG_DIR/stdout.log" 2>>"$LOG_DIR/stderr.log" </dev/null &'
+    );
+
+    expect(linuxService).toContain('Description=VIHS Linux assurance GitLab runner');
+    expect(linuxService).toContain('User=sveld');
+    expect(linuxService).toContain('WorkingDirectory=/home/sveld');
+    expect(linuxService).toContain(
+      'ExecStart=/home/sveld/gitlab-runner/bin/gitlab-runner run --config /home/sveld/.gitlab-runner/config.toml'
+    );
+    expect(linuxService).toContain('Restart=always');
+    expect(linuxService).toContain('WantedBy=multi-user.target');
+
+    expect(windowsLaneDoc).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
+    expect(windowsLaneDoc).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
+    expect(windowsLaneDoc).toContain("Register-ScheduledTask -TaskName 'VIHS Governed Runner Lanes'");
+    expect(linuxLaneDoc).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
+    expect(linuxLaneDoc).toContain('scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service');
+    expect(linuxLaneDoc).toContain('sudo systemctl enable --now vihs-linux-assurance-runner.service');
+
+    expect(hostedGovernanceDoc).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
+    expect(hostedGovernanceDoc).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
+    expect(hostedGovernanceDoc).toContain('scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service');
+    expect(hostedGovernanceJson.authorityGitLab.runnerLanes.linuxAssurance.operatorModel).toEqual(
+      expect.objectContaining({
+        repoOwnedHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
+        repoOwnedServiceUnit: 'scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service'
+      })
+    );
+    expect(hostedGovernanceJson.authorityGitLab.runnerLanes.windowsPrivateRelease.operatorModel).toEqual(
+      expect.objectContaining({
+        repoOwnedBootstrapScript: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',
+        repoOwnedLinuxHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh'
+      })
+    );
+
+    expect(privateReleasePacketDoc).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
+    expect(privateReleasePacketDoc).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
+    expect(privateReleasePacketDoc).toContain('scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service');
+    expect(privateReleasePacketJson.gitlabRunnerLane).toEqual(
+      expect.objectContaining({
+        hostInstallState: 'current-user-scheduled-task-bootstrap-active',
+        repoOwnedOperatorAssets: {
+          windowsBootstrapScript: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',
+          linuxHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
+          linuxServiceUnit: 'scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service'
+        }
+      })
+    );
+
+    expect(informationItemMap).toContain(
+      '| Governed runner host asset pack | `scripts/gitlab-runner/` |'
+    );
+    expect(readme).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
+    expect(readme).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
+    expect(currentState).toContain('repo-owned runner host asset pack:');
+    expect(currentState).toContain('scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service');
+    expect(releaseProcedure).toContain('The repo-owned runner host asset pack for those lanes is:');
+    expect(releaseProcedure).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
+  });
+});

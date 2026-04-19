@@ -1918,6 +1918,11 @@ Information-for-users review cases:
   assurance baseline split, exact released versus active candidate scope
   split, requirements-to-user-doc semantics, and authority-doc metadata
   coherence explicit
+- `TEST-UNIT-362`: verify the repo-owned runner host asset pack retains the
+  Windows logon bootstrap script, the Linux assurance helper, and the Linux
+  assurance `systemd` unit, and that the lane docs, hosted governance, the
+  private-release packet, and the wider control plane point to those exact
+  asset paths plus admitted host apply/update steps
 - `TEST-DOC-113`: review `.gitlab-ci.yml`, `linux-assurance-runner-lane.md`,
   hosted governance, current-state, README, and the release procedure and
   confirm the Linux assurance lane is separate from the Windows proof lane,
@@ -1928,6 +1933,11 @@ Information-for-users review cases:
   the repo keeps the `:main` versus `v0.2.18` baseline split, the exact
   released `v1.2.2` versus active `v1.3.0` scope split, the requirements/user-
   doc semantics, and authority-doc metadata coherence explicit
+- `TEST-DOC-115`: review the runner-lane contracts, hosted governance,
+  private-release packet, information-item map, README, current-state,
+  release procedure, SRS, RTM, and the new asset-pack test and confirm the
+  governed runner host asset pack is repo-owned and recoverable without
+  untracked machine-only startup files
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are
