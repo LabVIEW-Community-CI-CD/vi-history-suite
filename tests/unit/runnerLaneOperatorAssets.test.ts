@@ -103,4 +103,73 @@ describe('runner lane operator assets', () => {
     expect(releaseProcedure).toContain('The repo-owned runner host asset pack for those lanes is:');
     expect(releaseProcedure).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
   });
+
+  it('retains cold-admission Windows proof runtime cleanup in the bootstrap and linked control-plane docs', () => {
+    const windowsBootstrap = readText(
+      'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1'
+    );
+    const windowsLaneDoc = readText('docs/product/windows-private-release-runner-lane.md');
+    const hostedGovernanceDoc = readText('docs/product/hosted-ci-governance.md');
+    const hostedGovernanceJson = readJson<any>('docs/product/hosted-ci-governance.json');
+    const privateReleasePacketDoc = readText('docs/product/private-release-windows-x64-v1.3.0.md');
+    const privateReleasePacketJson = readJson<any>('docs/product/private-release-windows-x64-v1.3.0.json');
+    const readme = readText('README.md');
+    const currentState = readText('docs/product/current-state.md');
+    const releaseProcedure = readText('docs/release-procedure.md');
+
+    expect(windowsBootstrap).toContain('$windowsProofRuntimeProcessNames = @(');
+    expect(windowsBootstrap).toContain("'LabVIEW'");
+    expect(windowsBootstrap).toContain("'LabVIEWCLI'");
+    expect(windowsBootstrap).toContain("'LVCompare'");
+    expect(windowsBootstrap).toContain('Get-WindowsProofRuntimeProcesses');
+    expect(windowsBootstrap).toContain('Clear-WindowsProofRuntimeSurface');
+    expect(windowsBootstrap).toContain('taskkill.exe /PID $runtimeProcess.Id /T /F');
+    expect(windowsBootstrap).toContain(
+      'Windows proof runtime cleanup failed before cold runner admission; remaining processes:'
+    );
+    expect(windowsBootstrap).toMatch(
+      /if \(\$windowsRunners\.Count -eq 0\) \{\r?\n  Clear-WindowsProofRuntimeSurface\r?\n  Start-Process -FilePath \$runnerExe/
+    );
+
+    expect(windowsLaneDoc).toContain('stale `LabVIEW`,');
+    expect(windowsLaneDoc).toContain('`LabVIEWCLI`, and `LVCompare` processes');
+    expect(windowsLaneDoc).toContain('fails closed if any remain');
+    expect(hostedGovernanceDoc).toContain('cold-admission fail-closed');
+    expect(hostedGovernanceDoc).toContain(
+      '`LabVIEW` / `LabVIEWCLI` / `LVCompare` runtime processes'
+    );
+    expect(hostedGovernanceJson.authorityGitLab.runnerLanes.windowsPrivateRelease.operatorModel)
+      .toEqual(
+        expect.objectContaining({
+          coldAdmissionRuntimeCleanup: {
+            processNames: ['LabVIEW', 'LabVIEWCLI', 'LVCompare'],
+            failurePolicy: 'fail-closed-before-runner-start'
+          }
+        })
+      );
+
+    expect(privateReleasePacketDoc).toContain(
+      'that Windows bootstrap clears stale `LabVIEW`, `LabVIEWCLI`, and'
+    );
+    expect(privateReleasePacketDoc).toContain('fails closed if');
+    expect(privateReleasePacketDoc).toContain('contamination remains');
+    expect(privateReleasePacketJson.gitlabRunnerLane).toEqual(
+      expect.objectContaining({
+        coldAdmissionRuntimeCleanup: {
+          processNames: ['LabVIEW', 'LabVIEWCLI', 'LVCompare'],
+          failurePolicy: 'fail-closed-before-runner-start'
+        }
+      })
+    );
+
+    expect(readme).toContain(
+      'the Windows bootstrap clears stale `LabVIEW`, `LabVIEWCLI`, and'
+    );
+    expect(currentState).toContain(
+      'the Windows bootstrap clears stale `LabVIEW`, `LabVIEWCLI`, and'
+    );
+    expect(releaseProcedure).toContain(
+      'The Windows bootstrap clears stale `LabVIEW`, `LabVIEWCLI`, and `LVCompare`'
+    );
+  });
 });

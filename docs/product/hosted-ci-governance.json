@@ -104,6 +104,14 @@
           "scheduledTask": "VIHS Governed Runner Lanes",
           "lifecycleOwner": "interactive-current-user-scheduled-task",
           "duplicateProcessPolicy": "collapse-duplicates-per-config",
+          "coldAdmissionRuntimeCleanup": {
+            "processNames": [
+              "LabVIEW",
+              "LabVIEWCLI",
+              "LVCompare"
+            ],
+            "failurePolicy": "fail-closed-before-runner-start"
+          },
           "repoOwnedBootstrapScript": "scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1",
           "repoOwnedLinuxHelperScript": "scripts/gitlab-runner/linux/start-linux-assurance.sh"
         }

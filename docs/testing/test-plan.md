@@ -1923,6 +1923,9 @@ Information-for-users review cases:
   assurance `systemd` unit, and that the lane docs, hosted governance, the
   private-release packet, and the wider control plane point to those exact
   asset paths plus admitted host apply/update steps
+- `TEST-UNIT-363`: verify the repo-owned Windows bootstrap clears stale
+  `LabVIEW`, `LabVIEWCLI`, and `LVCompare` before cold runner admission, uses
+  forced descendant termination, and fails closed when contamination remains
 - `TEST-DOC-113`: review `.gitlab-ci.yml`, `linux-assurance-runner-lane.md`,
   hosted governance, current-state, README, and the release procedure and
   confirm the Linux assurance lane is separate from the Windows proof lane,
@@ -1938,6 +1941,11 @@ Information-for-users review cases:
   release procedure, SRS, RTM, and the new asset-pack test and confirm the
   governed runner host asset pack is repo-owned and recoverable without
   untracked machine-only startup files
+- `TEST-DOC-116`: review the runner-lane contract, hosted governance,
+  private-release packet, README, current-state, release procedure, SRS, RTM,
+  and the test plan and confirm the Windows proof lane retains cold-admission
+  stale-runtime cleanup plus fail-closed startup semantics after restart or
+  logon
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are

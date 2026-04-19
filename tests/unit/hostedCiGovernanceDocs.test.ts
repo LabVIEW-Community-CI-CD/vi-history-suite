@@ -113,6 +113,10 @@ describe('hosted ci governance docs', () => {
           scheduledTask: 'VIHS Governed Runner Lanes',
           lifecycleOwner: 'interactive-current-user-scheduled-task',
           duplicateProcessPolicy: 'collapse-duplicates-per-config',
+          coldAdmissionRuntimeCleanup: {
+            processNames: ['LabVIEW', 'LabVIEWCLI', 'LVCompare'],
+            failurePolicy: 'fail-closed-before-runner-start'
+          },
           repoOwnedBootstrapScript: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',
           repoOwnedLinuxHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh'
         })
@@ -150,6 +154,10 @@ describe('hosted ci governance docs', () => {
     expect(matrixDoc).toContain('request_concurrency = 2');
     expect(matrixDoc).toContain('vihs-linux-assurance-runner.service');
     expect(matrixDoc).toContain('VIHS Governed Runner Lanes');
+    expect(matrixDoc).toContain('cold-admission fail-closed');
+    expect(matrixDoc).toContain(
+      '`LabVIEW` / `LabVIEWCLI` / `LVCompare` runtime processes'
+    );
     expect(matrixDoc).toContain('start-governed-runner-lanes.ps1');
     expect(matrixDoc).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
     expect(matrixDoc).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
