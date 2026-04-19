@@ -53,8 +53,8 @@ parallel UI-automation stack.
 
 Tracked project runner metadata:
 
-- runner id: `52775679`
-- description: `ghost-vihs-windows-private-release`
+- runner id: `52775990`
+- description: `ghost`
 - tags:
   - `windows`
   - `x64`
@@ -82,6 +82,12 @@ Desktop and the host LabVIEW proof path depend on the signed-in Windows user
 context. A service wrapper can be added later, but it is not the first governed
 admission shape.
 
+Current host activation state:
+
+- registered on the project as runner `ghost` (`52775990`)
+- executing in current-user foreground mode through `gitlab-runner.exe run`
+- Windows service installation is not active for this admitted lane
+
 ## Manual Registration Pack
 
 Do not commit the runner authentication token. Manual host registration uses a
@@ -96,7 +102,7 @@ gitlab-runner.exe register `
   --token "<runner-auth-token>" `
   --executor "shell" `
   --shell "pwsh" `
-  --description "ghost-vihs-windows-private-release" `
+  --description "ghost" `
   --tag-list "windows,x64,labview-host,docker-windows,private-release" `
   --locked="true" `
   --run-untagged="false" `

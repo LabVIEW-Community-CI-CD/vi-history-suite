@@ -76,7 +76,7 @@ describe('windows private release packet docs', () => {
     expect(packetDoc).toContain('windows-private-release-evidence/');
 
     expect(packetJson.packetId).toBe('private-release-windows-x64-v1.3.0');
-    expect(packetJson.status).toBe('runner-lane-defined-pending-host-registration');
+    expect(packetJson.status).toBe('runner-active-pending-first-receipt');
     expect(packetJson.scope.supportClaim).toBe('windows-x64-private-release-only');
     expect(packetJson.scope.supportedProofLanes).toEqual([
       'windows-host-native',
@@ -97,10 +97,12 @@ describe('windows private release packet docs', () => {
         jobName: 'windows_private_release_acceptance',
         governedCli: 'npm run acceptance:windows:private-release',
         governedScript: 'scripts/runWindowsPrivateReleaseAcceptance.js',
+        runnerDescription: 'ghost',
+        runnerId: 52775990,
         runnerContractDoc: 'docs/product/windows-private-release-runner-lane.md',
         artifactRoot: 'windows-private-release-evidence/',
         expectedManifestPath: 'windows-private-release-evidence/manifest.json',
-        hostInstallState: 'manual-registration-pending'
+        hostInstallState: 'current-user-foreground-run-active'
       })
     );
     expect(packetJson.proofLanes).toEqual(
@@ -142,7 +144,8 @@ describe('windows private release packet docs', () => {
     expect(runnerLaneDoc).toContain('# Windows Private-Release Runner Lane');
     expect(runnerLaneDoc).toContain('windows_private_release_acceptance');
     expect(runnerLaneDoc).toContain('npm run acceptance:windows:private-release');
-    expect(runnerLaneDoc).toContain('ghost-vihs-windows-private-release');
+    expect(runnerLaneDoc).toContain('ghost');
+    expect(runnerLaneDoc).toContain('52775990');
     expect(runnerLaneDoc).toContain('windows-private-release-evidence/manifest.json');
     expect(runnerLaneDoc).toContain('<runner-auth-token>');
   });

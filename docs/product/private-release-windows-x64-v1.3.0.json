@@ -1,6 +1,6 @@
 {
   "packetId": "private-release-windows-x64-v1.3.0",
-  "status": "runner-lane-defined-pending-host-registration",
+  "status": "runner-active-pending-first-receipt",
   "scope": {
     "supportClaim": "windows-x64-private-release-only",
     "supportedProofLanes": [
@@ -76,8 +76,8 @@
     "jobName": "windows_private_release_acceptance",
     "governedCli": "npm run acceptance:windows:private-release",
     "governedScript": "scripts/runWindowsPrivateReleaseAcceptance.js",
-    "runnerDescription": "ghost-vihs-windows-private-release",
-    "runnerId": 52775679,
+    "runnerDescription": "ghost",
+    "runnerId": 52775990,
     "runnerTags": [
       "windows",
       "x64",
@@ -88,7 +88,7 @@
     "runnerContractDoc": "docs/product/windows-private-release-runner-lane.md",
     "artifactRoot": "windows-private-release-evidence/",
     "expectedManifestPath": "windows-private-release-evidence/manifest.json",
-    "hostInstallState": "manual-registration-pending"
+    "hostInstallState": "current-user-foreground-run-active"
   },
   "validationPack": [
     "npm run design:gate",
@@ -97,7 +97,6 @@
     "npm run package -- --out \"preview-evidence/vi-history-suite-1.3.0.vsix\""
   ],
   "nextMove": [
-    "install and register the tagged Windows runner manually",
     "retain the first windows_private_release_acceptance receipt",
     "keep feature/linux-runtime-variant frozen until the Windows runner lane is green"
   ]

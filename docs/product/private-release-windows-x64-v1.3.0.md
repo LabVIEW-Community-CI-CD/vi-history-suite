@@ -86,7 +86,9 @@ the tagged GitLab Windows runner lane that retains this same scenario under
   `windows-private-release-evidence/manifest.json`
 - current branch interpretation:
   - the repo-controlled runner lane is defined on this branch
-  - host install and runner registration remain manual Windows admin work
+  - the admitted runner on this host is `ghost` (`52775990`)
+  - the runner is active in current-user foreground mode through
+    `gitlab-runner.exe run`
   - no secret runner token is retained in the repo
 
 ## Validation Pack
@@ -108,7 +110,6 @@ The prep branch is considered ready only when these pass:
 
 ## Next Move
 
-- install and register the tagged Windows runner manually
 - retain the first `windows_private_release_acceptance` receipt on the
   admitted Windows host
 - keep Linux deferred until the Windows runner lane is green
