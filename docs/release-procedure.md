@@ -17,6 +17,12 @@
 - The current develop package line on `develop` is `1.3.0`.
 - The active exact release candidate line on `develop` is `v1.3.0`.
 - No newer `release/*` branch is active yet.
+- The current `v1.3.0` pre-release sequence remains Windows x64 private-release
+  prep only: clean the user-facing docs on a docs-only feature branch first,
+  then prepare the Windows packet on a separate feature branch before any
+  `release/*` branch is cut.
+- Public Linux smoke, exact tagging, Marketplace publication, and `main`
+  promotion remain out of scope for that private-release-prep sequence.
 - The public GitHub default branch is `main` because it carries the latest
   exact released source line.
 - The public Codespaces evaluation branch is `develop`.
@@ -130,6 +136,9 @@
    under `resources/bundled-docs/`.
 12. When the public Docker product contract changes materially, rerun the
     public-facade Linux smoke lane through:
+    - these Linux checks remain exact/public-release or source-evaluation
+      surfaces; they are not part of the current Windows-only private-release
+      prep route
     - local `npm run public:smoke:linux`
     - local `npm run public:gate-d:preflight`
     - local `npm run public:gate-d:prepare-cold-pull` immediately before the

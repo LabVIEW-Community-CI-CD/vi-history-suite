@@ -383,6 +383,10 @@ Post-release tranches:
   - private-release proof focus is now explicit: close the Windows x64 host
     and Windows-container lanes first instead of widening the active slice
     back into x86 host proof breadth
+  - installed-user and private-release docs now fail closed on scope: Windows
+    x64 only for the active `1.3.0` candidate, with Linux public smoke and
+    Linux benchmark material retained only as source-evaluation or internal
+    proof surfaces rather than part of the active user contract
   - WSL is not part of the active Windows x64 private-release contract: the
     supported proof lanes on this machine are native Windows host execution
     and Docker Desktop Windows-container execution, retained under

@@ -30,6 +30,11 @@ See also:
 
 ## Public Evaluation And Installed Baseline
 
+- The active Windows x64 private-release route does not use the Linux public
+  smoke lane.
+- Commands prefixed with `public:` below are source-evaluation or maintainer
+  surfaces, not the supported installed-user private-release steps.
+
 `npm run public:repo:clone`
 
 - Purpose: clone a supported public GitHub or GitLab repo for source
@@ -41,11 +46,6 @@ See also:
 
 - Purpose: clone the canonical governed public sample repository.
 - Use when: you want the easiest first proof route for public evaluation.
-
-`npm run public:smoke:linux`
-
-- Purpose: run the public Linux cold-pull smoke lane.
-- Use when: checking the public evaluation surface on the governed Linux path.
 
 ## Documentation Package Workbench
 
@@ -121,6 +121,9 @@ See also:
   - for the supported Windows x64 private-release route, use native Windows
     host LabVIEW or Docker Desktop in Windows-container mode; WSL is not an
     admitted dependency for that path
+  - the Linux public smoke lane and Linux benchmark lanes are outside this
+    installed-user private-release route and remain maintainer/source-evaluation
+    proof surfaces
   - if VS Code is already running, reload or restart the window before
     trusting Compare or other runtime-provider surfaces to reflect the updated
     provider and runtime facts
