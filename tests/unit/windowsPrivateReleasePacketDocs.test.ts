@@ -37,10 +37,25 @@ interface PrivateReleasePacket {
     jobName: string;
     governedCli: string;
     governedScript: string;
+    runnerDescription: string;
+    runnerId: number;
     runnerContractDoc: string;
     artifactRoot: string;
     expectedManifestPath: string;
     hostInstallState: string;
+    firstRetainedReceipt: {
+      mergeRequestIid: number;
+      pipelineId: number;
+      jobId: number;
+      commitSha: string;
+      status: string;
+      queuedDurationSeconds: number;
+      durationSeconds: number;
+      finishedAt: string;
+      webUrl: string;
+      artifactsFile: string;
+      artifactsSizeBytes: number;
+    };
   };
 }
 
@@ -74,9 +89,12 @@ describe('windows private release packet docs', () => {
     expect(packetDoc).toContain('WSL as part of the active user or proof contract');
     expect(packetDoc).toContain('windows_private_release_acceptance');
     expect(packetDoc).toContain('windows-private-release-evidence/');
+    expect(packetDoc).toContain('## First Retained Runner Receipt');
+    expect(packetDoc).toContain('| Merge request | `!91` |');
+    expect(packetDoc).toContain('The first governed `windows_private_release_acceptance` receipt is now');
 
     expect(packetJson.packetId).toBe('private-release-windows-x64-v1.3.0');
-    expect(packetJson.status).toBe('runner-active-pending-first-receipt');
+    expect(packetJson.status).toBe('ready-for-private-release');
     expect(packetJson.scope.supportClaim).toBe('windows-x64-private-release-only');
     expect(packetJson.scope.supportedProofLanes).toEqual([
       'windows-host-native',
@@ -105,6 +123,19 @@ describe('windows private release packet docs', () => {
         hostInstallState: 'current-user-foreground-run-active'
       })
     );
+    expect(packetJson.gitlabRunnerLane.firstRetainedReceipt).toEqual({
+      mergeRequestIid: 91,
+      pipelineId: 2463649610,
+      jobId: 13988738012,
+      commitSha: 'd154a47bf1211d9a9fe8bc4c10352989780d1810',
+      status: 'success',
+      queuedDurationSeconds: 0.51449,
+      durationSeconds: 257.909998,
+      finishedAt: '2026-04-19T15:12:02.212Z',
+      webUrl: 'https://gitlab.com/svelderrainruiz/vi-history-suite/-/jobs/13988738012',
+      artifactsFile: 'artifacts.zip',
+      artifactsSizeBytes: 1729689
+    });
     expect(packetJson.proofLanes).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
