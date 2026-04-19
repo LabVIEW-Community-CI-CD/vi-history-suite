@@ -387,6 +387,10 @@ function quoteCommandSegment(segment) {
   return String(segment);
 }
 
+function toPortableLeafName(candidatePath) {
+  return path.posix.basename(String(candidatePath).replace(/\\/g, '/'));
+}
+
 async function copySettingsFile(sourcePath, laneRoot) {
   await fsp.copyFile(sourcePath, path.join(laneRoot, 'settings-file.json'));
 }
@@ -416,7 +420,7 @@ function buildManifest(plan, laneResults) {
     selectedHash: plan.selectedHash,
     baseHash: plan.baseHash,
     runtimeTimeoutMs: plan.runtimeTimeoutMs,
-    evidenceRoot: path.basename(plan.evidenceRoot),
+    evidenceRoot: toPortableLeafName(plan.evidenceRoot),
     lanes: laneResults
   };
 }
@@ -432,5 +436,6 @@ module.exports = {
   parseArgs,
   buildWindowsPrivateReleaseAcceptancePlan,
   buildManifest,
-  formatCommand
+  formatCommand,
+  toPortableLeafName
 };
