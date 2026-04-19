@@ -1,6 +1,6 @@
 {
   "packetId": "private-release-windows-x64-v1.3.0",
-  "status": "runner-active-pending-first-receipt",
+  "status": "ready-for-private-release",
   "scope": {
     "supportClaim": "windows-x64-private-release-only",
     "supportedProofLanes": [
@@ -88,7 +88,20 @@
     "runnerContractDoc": "docs/product/windows-private-release-runner-lane.md",
     "artifactRoot": "windows-private-release-evidence/",
     "expectedManifestPath": "windows-private-release-evidence/manifest.json",
-    "hostInstallState": "current-user-foreground-run-active"
+    "hostInstallState": "current-user-foreground-run-active",
+    "firstRetainedReceipt": {
+      "mergeRequestIid": 91,
+      "pipelineId": 2463649610,
+      "jobId": 13988738012,
+      "commitSha": "d154a47bf1211d9a9fe8bc4c10352989780d1810",
+      "status": "success",
+      "queuedDurationSeconds": 0.51449,
+      "durationSeconds": 257.909998,
+      "finishedAt": "2026-04-19T15:12:02.212Z",
+      "webUrl": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/jobs/13988738012",
+      "artifactsFile": "artifacts.zip",
+      "artifactsSizeBytes": 1729689
+    }
   },
   "validationPack": [
     "npm run design:gate",
@@ -97,7 +110,8 @@
     "npm run package -- --out \"preview-evidence/vi-history-suite-1.3.0.vsix\""
   ],
   "nextMove": [
-    "retain the first windows_private_release_acceptance receipt",
-    "keep feature/linux-runtime-variant frozen until the Windows runner lane is green"
+    "cut the Windows-only private release from the retained v1.3.0 packet",
+    "keep feature/linux-runtime-variant frozen until the Windows-only private release is formally closed",
+    "treat Windows x86 as a later non-blocking characterization lane"
   ]
 }

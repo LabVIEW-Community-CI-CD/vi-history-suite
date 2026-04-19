@@ -91,6 +91,26 @@ the tagged GitLab Windows runner lane that retains this same scenario under
     `gitlab-runner.exe run`
   - no secret runner token is retained in the repo
 
+## First Retained Runner Receipt
+
+| Field | Value |
+| --- | --- |
+| Merge request | `!91` |
+| Pipeline | `2463649610` |
+| Job | `13988738012` |
+| Commit | `d154a47bf1211d9a9fe8bc4c10352989780d1810` |
+| Status | `success` |
+| Queued duration | `0.51449` seconds |
+| Duration | `257.909998` seconds |
+| Finished at | `2026-04-19T15:12:02.212Z` |
+| Job URL | `https://gitlab.com/svelderrainruiz/vi-history-suite/-/jobs/13988738012` |
+| Artifacts file | `artifacts.zip` |
+| Artifacts size | `1729689` bytes |
+
+The first governed `windows_private_release_acceptance` receipt is now
+retained on `develop`, so this packet no longer depends on an unproven runner
+lane.
+
 ## Validation Pack
 
 The prep branch is considered ready only when these pass:
@@ -106,10 +126,13 @@ The prep branch is considered ready only when these pass:
   instead of to ignored `.cache` roots and chat memory alone.
 - The package and proof packet stay Windows-only and x64-only for this prep
   sequence.
+- The governed GitLab Windows runner lane has produced its first retained
+  receipt and the packet is ready for a Windows-only private release decision.
 - Linux remains a later branch concern and is not part of this packet.
 
 ## Next Move
 
-- retain the first `windows_private_release_acceptance` receipt on the
-  admitted Windows host
-- keep Linux deferred until the Windows runner lane is green
+- cut the Windows-only private release from the retained `v1.3.0` packet
+- keep Linux deferred until the Windows-only private release is formally
+  closed
+- treat Windows x86 as a later non-blocking characterization lane
