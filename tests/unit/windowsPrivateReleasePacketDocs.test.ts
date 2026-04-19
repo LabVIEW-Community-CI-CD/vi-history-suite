@@ -33,6 +33,15 @@ interface PrivateReleasePacket {
     status: string;
     retainedRoot: string;
   }>;
+  gitlabRunnerLane: {
+    jobName: string;
+    governedCli: string;
+    governedScript: string;
+    runnerContractDoc: string;
+    artifactRoot: string;
+    expectedManifestPath: string;
+    hostInstallState: string;
+  };
 }
 
 const repoRoot = path.resolve(__dirname, '..', '..');
@@ -52,6 +61,7 @@ describe('windows private release packet docs', () => {
     const currentState = readText('docs/product/current-state.md');
     const informationItemMap = readText('docs/information-item-map.md');
     const releaseProcedure = readText('docs/release-procedure.md');
+    const runnerLaneDoc = readText('docs/product/windows-private-release-runner-lane.md');
 
     expect(packetDoc).toContain('# Windows x64 Private-Release Packet `v1.3.0`');
     expect(packetDoc).toContain('Windows x64 private release only');
@@ -62,9 +72,11 @@ describe('windows private release packet docs', () => {
     expect(packetDoc).toContain('.cache/private-release/1.3.0/windows-x64-host/');
     expect(packetDoc).toContain('.cache/private-release/1.3.0/windows-x64-container/');
     expect(packetDoc).toContain('WSL as part of the active user or proof contract');
+    expect(packetDoc).toContain('windows_private_release_acceptance');
+    expect(packetDoc).toContain('windows-private-release-evidence/');
 
     expect(packetJson.packetId).toBe('private-release-windows-x64-v1.3.0');
-    expect(packetJson.status).toBe('ready-for-prep-branch-validation');
+    expect(packetJson.status).toBe('runner-active-pending-first-receipt');
     expect(packetJson.scope.supportClaim).toBe('windows-x64-private-release-only');
     expect(packetJson.scope.supportedProofLanes).toEqual([
       'windows-host-native',
@@ -80,6 +92,19 @@ describe('windows private release packet docs', () => {
       '3092C9B740F13AC31FDEABCE00822FBDA13A3C7C6AEF0261D92EA38051751ACA'
     );
     expect(packetJson.packageEvidence.sizeBytes).toBe(497392);
+    expect(packetJson.gitlabRunnerLane).toEqual(
+      expect.objectContaining({
+        jobName: 'windows_private_release_acceptance',
+        governedCli: 'npm run acceptance:windows:private-release',
+        governedScript: 'scripts/runWindowsPrivateReleaseAcceptance.js',
+        runnerDescription: 'ghost',
+        runnerId: 52775990,
+        runnerContractDoc: 'docs/product/windows-private-release-runner-lane.md',
+        artifactRoot: 'windows-private-release-evidence/',
+        expectedManifestPath: 'windows-private-release-evidence/manifest.json',
+        hostInstallState: 'current-user-foreground-run-active'
+      })
+    );
     expect(packetJson.proofLanes).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -97,7 +122,10 @@ describe('windows private release packet docs', () => {
 
     expect(currentState).toContain('[Windows x64 Private-Release Packet](./private-release-windows-x64-v1.3.0.md)');
     expect(currentState).toContain('[Windows x64 Private-Release Packet JSON](./private-release-windows-x64-v1.3.0.json)');
+    expect(currentState).toContain('[windows-private-release-runner-lane.md](./windows-private-release-runner-lane.md)');
     expect(currentState).toContain('private-release-windows-x64-v1.3.0.md');
+    expect(currentState).toContain('windows_private_release_acceptance');
+    expect(currentState).toContain('windows-private-release-evidence/');
 
     expect(informationItemMap).toContain(
       '| Windows x64 private-release packet | `docs/product/private-release-windows-x64-v1.3.0.md` |'
@@ -105,8 +133,20 @@ describe('windows private release packet docs', () => {
     expect(informationItemMap).toContain(
       '| Machine-readable Windows x64 private-release packet | `docs/product/private-release-windows-x64-v1.3.0.json` |'
     );
+    expect(informationItemMap).toContain(
+      '| Windows private-release runner lane | `docs/product/windows-private-release-runner-lane.md` |'
+    );
 
     expect(releaseProcedure).toContain('docs/product/private-release-windows-x64-v1.3.0.md');
     expect(releaseProcedure).toContain('docs/product/private-release-windows-x64-v1.3.0.json');
+    expect(releaseProcedure).toContain('docs/product/windows-private-release-runner-lane.md');
+
+    expect(runnerLaneDoc).toContain('# Windows Private-Release Runner Lane');
+    expect(runnerLaneDoc).toContain('windows_private_release_acceptance');
+    expect(runnerLaneDoc).toContain('npm run acceptance:windows:private-release');
+    expect(runnerLaneDoc).toContain('ghost');
+    expect(runnerLaneDoc).toContain('52775990');
+    expect(runnerLaneDoc).toContain('windows-private-release-evidence/manifest.json');
+    expect(runnerLaneDoc).toContain('<runner-auth-token>');
   });
 });

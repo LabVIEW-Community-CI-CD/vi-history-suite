@@ -4,7 +4,9 @@
 
 Retain the governed Windows-only private-release-prep packet for the current
 `develop` package line `1.3.0` without claiming an exact/public release,
-Marketplace publication, or Linux support.
+Marketplace publication, or Linux support. The current branch extension adds
+the tagged GitLab Windows runner lane that retains this same scenario under
+`windows-private-release-evidence/`.
 
 ## Governing Sequence
 
@@ -72,6 +74,23 @@ Marketplace publication, or Linux support.
 - container proof run:
   `.cache/private-release/1.3.0/windows-x64-container/proof-run.txt`
 
+## Governed Runner Lane
+
+- GitLab job: `windows_private_release_acceptance`
+- governed CLI: `npm run acceptance:windows:private-release`
+- governed script: `scripts/runWindowsPrivateReleaseAcceptance.js`
+- runner-lane contract:
+  [windows-private-release-runner-lane.md](./windows-private-release-runner-lane.md)
+- retained artifact root: `windows-private-release-evidence/`
+- expected machine-readable receipt:
+  `windows-private-release-evidence/manifest.json`
+- current branch interpretation:
+  - the repo-controlled runner lane is defined on this branch
+  - the admitted runner on this host is `ghost` (`52775990`)
+  - the runner is active in current-user foreground mode through
+    `gitlab-runner.exe run`
+  - no secret runner token is retained in the repo
+
 ## Validation Pack
 
 The prep branch is considered ready only when these pass:
@@ -91,5 +110,6 @@ The prep branch is considered ready only when these pass:
 
 ## Next Move
 
-- merge `feature/windows-private-release-prep` back into `develop`
-- cut `feature/linux-runtime-variant`
+- retain the first `windows_private_release_acceptance` receipt on the
+  admitted Windows host
+- keep Linux deferred until the Windows runner lane is green

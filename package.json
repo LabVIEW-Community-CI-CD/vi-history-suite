@@ -195,6 +195,7 @@
     "design:gate": "npm run compile && node out/cli/runDesignGate.js",
     "design:gate:assert-complete": "npm run compile && node out/cli/runVerifyDesignGateCompletion.js",
     "proof:run": "npm run compile && node out/cli/runGovernedProof.js",
+    "acceptance:windows:private-release": "npm run compile && node scripts/runWindowsPrivateReleaseAcceptance.js",
     "proof:runtime-settings-live-session:assert": "node scripts/assertRuntimeSettingsLiveSessionProbePacket.js",
     "proof:runtime-settings-live-session:history": "node scripts/printRuntimeSettingsLiveSessionProbeHistory.js",
     "proof:runtime-settings-live-session:policy:assert": "node scripts/assertRuntimeSettingsLiveSessionPolicyBoundary.js",

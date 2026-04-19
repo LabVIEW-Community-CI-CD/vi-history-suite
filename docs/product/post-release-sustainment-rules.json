@@ -204,6 +204,7 @@
         "docs_public_continuous_integration",
         "docs_internal_continuous_integration",
         "test_extension",
+        "windows_private_release_acceptance",
         "package_extension_preview",
         "Public Facade Package Preview / package-preview",
         "Public Facade Linux Smoke / public-facade-linux-smoke"
@@ -340,6 +341,7 @@
       "docs/product/runtime-provider-public-acceptance-gate.json",
       "docs/product/vscode-marketplace-publication-ledger.md",
       "docs/product/vscode-marketplace-publication-ledger.json",
+      "docs/product/windows-private-release-runner-lane.md",
       "docs/product/hosted-ci-governance.md",
       "docs/product/hosted-ci-governance.json",
       "docs/product/post-release-sustainment-rules.md",
