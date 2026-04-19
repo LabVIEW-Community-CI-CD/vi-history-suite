@@ -206,7 +206,10 @@
     - use the protected merge path, not an ungoverned local-only shortcut
     - for local GitLab API automation, resolve the repo token through
       `node scripts/resolveLocalGitLabApiToken.js --json`; the governed local
-      path is `/home/sveld/.config/codex/secrets/vi-history-suite.gitlab-api-token.txt`
+      path is `%USERPROFILE%\.config\codex\secrets\vi-history-suite.gitlab-api-token.txt`
+      on Windows hosts and
+      `$HOME/.config/codex/secrets/vi-history-suite.gitlab-api-token.txt` on
+      Linux/WSL hosts
     - queue merge requests through
       `node scripts/queueGovernedMergeRequest.js --source-branch <branch> --target-branch develop --title <title> --description-file <path> --auto-merge --remove-source-branch`
       instead of depending on remembered `glab` auth state

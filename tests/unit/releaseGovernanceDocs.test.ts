@@ -231,7 +231,10 @@ describe('release governance package', () => {
       'node scripts/resolveLocalGitLabApiToken.js --json'
     );
     expect(readText('docs/release-procedure.md')).toContain(
-      '/home/sveld/.config/codex/secrets/vi-history-suite.gitlab-api-token.txt'
+      '%USERPROFILE%\\.config\\codex\\secrets\\vi-history-suite.gitlab-api-token.txt'
+    );
+    expect(readText('docs/release-procedure.md')).toContain(
+      '$HOME/.config/codex/secrets/vi-history-suite.gitlab-api-token.txt'
     );
     expect(readText('docs/release-procedure.md')).toContain(
       'node scripts/queueGovernedMergeRequest.js'

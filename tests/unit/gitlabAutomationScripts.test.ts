@@ -15,6 +15,10 @@ const tokenResolver = require(path.resolve(
   DEFAULT_GITLAB_API_TOKEN_FILE: string;
   GITLAB_API_TOKEN_FILE_ENV: string;
   PLACEHOLDER: string;
+  GITLAB_API_TOKEN_BASENAME: string;
+  WINDOWS_GITLAB_API_TOKEN_FILE_EXAMPLE: string;
+  POSIX_GITLAB_API_TOKEN_FILE_EXAMPLE: string;
+  buildDefaultGitLabApiTokenFilePath: (homeDir?: string) => string;
   resolveGitLabApiTokenFilePath: (env?: NodeJS.ProcessEnv) => string;
   inspectGitLabApiTokenFile: (tokenFilePath: string, fsApi?: typeof fs) => {
     path: string;
@@ -76,9 +80,21 @@ describe('local GitLab automation scripts', () => {
   it('resolves the governed vi-history-suite token path fail-closed', () => {
     const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'vihs-token-resolver-'));
     const tokenFile = path.join(tempRoot, 'vi-history-suite-token.txt');
+    const expectedDefaultPath = path.resolve(
+      os.homedir(),
+      '.config',
+      'codex',
+      'secrets',
+      tokenResolver.GITLAB_API_TOKEN_BASENAME
+    );
 
     fs.writeFileSync(tokenFile, 'token-value\n', 'utf8');
 
+    expect(tokenResolver.DEFAULT_GITLAB_API_TOKEN_FILE).toBe(expectedDefaultPath);
+    expect(tokenResolver.buildDefaultGitLabApiTokenFilePath(os.homedir())).toBe(
+      expectedDefaultPath
+    );
+    expect(tokenResolver.resolveGitLabApiTokenFilePath({})).toBe(expectedDefaultPath);
     expect(
       tokenResolver.resolveGitLabApiTokenFilePath({
         [tokenResolver.GITLAB_API_TOKEN_FILE_ENV]: tokenFile
@@ -101,6 +117,12 @@ describe('local GitLab automation scripts', () => {
 
     expect(tokenResolver.getResolveLocalGitLabApiTokenUsage()).toContain(
       tokenResolver.DEFAULT_GITLAB_API_TOKEN_FILE
+    );
+    expect(tokenResolver.getResolveLocalGitLabApiTokenUsage()).toContain(
+      tokenResolver.WINDOWS_GITLAB_API_TOKEN_FILE_EXAMPLE
+    );
+    expect(tokenResolver.getResolveLocalGitLabApiTokenUsage()).toContain(
+      tokenResolver.POSIX_GITLAB_API_TOKEN_FILE_EXAMPLE
     );
     expect(tokenResolver.getResolveLocalGitLabApiTokenUsage()).toContain(
       tokenResolver.GITLAB_API_TOKEN_FILE_ENV
