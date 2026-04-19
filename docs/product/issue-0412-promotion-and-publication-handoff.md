@@ -34,8 +34,9 @@ runtime-provider public-acceptance gate.
 - the retained `repo-standards-review` `v0.2.9` closeout still documents the
   historical compliance uplift on this branch
 - the current outer assurance lane for fresh audits is the published
-  `repo-standards-review` assurance-workbench `:main` image, while
-  `v0.2.18` remains the latest tagged release
+  `repo-standards-review` assurance-workbench `:main` image on the separate
+  self-hosted Linux assurance runner lane, while `v0.2.18` remains the latest
+  tagged release
 - the branch has already been promoted into `develop`
 
 ## Remaining Work After Compliance Closeout

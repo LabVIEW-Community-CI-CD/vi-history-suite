@@ -182,9 +182,11 @@ Use the governed repo search posture:
   `npm run proof:runtime-settings-live-session:assert` and treat failure as a
   hard stop.
 - If you are checking the broader standards posture for this branch, use the
-  published `repo-standards-review` assurance-workbench `:main` lane. Use
-  `v0.2.18` only when you need the latest tagged released baseline instead of
-  the rolling lane.
+  repo-owned assurance wrapper such as `npm run assurance:release-gate` on the
+  current branch. The governed Linux assurance runner lane still pulls the
+  published `repo-standards-review` assurance-workbench `:main` image in CI.
+  Use `v0.2.18` only when you need the latest tagged released baseline instead
+  of the rolling lane.
 
 ### Where do I start when I need to cut a release?
 

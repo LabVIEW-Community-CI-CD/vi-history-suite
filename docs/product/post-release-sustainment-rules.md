@@ -232,6 +232,9 @@ When sustainment-affecting truth changes, update these surfaces together:
   branch-protection or workflow responsibility changes
 - `windows-private-release-runner-lane.md` when the tagged Windows private-release
   acceptance lane, runner identity, or retained evidence contract changes
+- `linux-assurance-runner-lane.md` when the separate Linux assurance runner
+  lane, external image-auth contract, or retained blocking/advisory assurance
+  lane ownership changes
 - SRS, RTM, and test plan when normative behavior changes
 - wiki coverage/publication ledgers when reader-facing authority changes
 - published wiki pages that represent the changed authority docs

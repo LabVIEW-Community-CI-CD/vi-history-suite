@@ -87,17 +87,111 @@ docs_internal_continuous_integration:
     - if: '$CI_COMMIT_BRANCH =~ /^hotfix\/.+$/'
     - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
 
+.linux_assurance_runner:
+  tags:
+    - linux
+    - x64
+    - docker
+    - assurance
+    - private-release
+  variables:
+    VIHS_ASSURANCE_EXECUTOR: container
+    VIHS_ASSURANCE_CONTAINER_RUNTIME: docker
+    VIHS_ASSURANCE_IMAGE: registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main
+  before_script:
+    - |
+      if [ -n "${VIHS_ASSURANCE_REGISTRY_USER}" ] && [ -n "${VIHS_ASSURANCE_REGISTRY_PASSWORD}" ]; then
+        printf '%s' "${VIHS_ASSURANCE_REGISTRY_PASSWORD}" | docker login registry.gitlab.com --username "${VIHS_ASSURANCE_REGISTRY_USER}" --password-stdin
+      elif [ -n "${VIHS_ASSURANCE_REGISTRY_USER}" ] || [ -n "${VIHS_ASSURANCE_REGISTRY_PASSWORD}" ]; then
+        echo "VIHS_ASSURANCE_REGISTRY_USER and VIHS_ASSURANCE_REGISTRY_PASSWORD must be set together." >&2
+        exit 1
+      fi
+    - docker pull "${VIHS_ASSURANCE_IMAGE}"
+
 assurance_release_gate:
+  extends: .linux_assurance_runner
   stage: docs
-  image: registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main
   script:
-    - mkdir -p assurance-release-gate-evidence
-    - python3 /opt/repo-standards-review/scripts/run_assurance.py . --profile release-gate | tee assurance-release-gate-evidence/release-gate-scorecard.txt
+    - npm run assurance:release-gate -- --evidence-dir assurance-release-gate-evidence
   artifacts:
     when: always
     expire_in: never
     paths:
       - assurance-release-gate-evidence/
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_BRANCH =~ /^release\/.+$/'
+    - if: '$CI_COMMIT_BRANCH =~ /^hotfix\/.+$/'
+    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
+
+assurance_26514_authority:
+  extends: .linux_assurance_runner
+  stage: docs
+  script:
+    - npm run assurance:26514:authority -- --evidence-dir assurance-26514-authority-evidence
+  artifacts:
+    when: always
+    expire_in: never
+    paths:
+      - assurance-26514-authority-evidence/
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_BRANCH =~ /^release\/.+$/'
+    - if: '$CI_COMMIT_BRANCH =~ /^hotfix\/.+$/'
+    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
+
+assurance_requirements_quality:
+  extends: .linux_assurance_runner
+  stage: docs
+  script:
+    - npm run assurance:requirements -- --evidence-dir assurance-requirements-quality-evidence
+  artifacts:
+    when: always
+    expire_in: never
+    paths:
+      - assurance-requirements-quality-evidence/
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_BRANCH =~ /^release\/.+$/'
+    - if: '$CI_COMMIT_BRANCH =~ /^hotfix\/.+$/'
+    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
+
+assurance_external_user_information:
+  extends: .linux_assurance_runner
+  stage: docs
+  script:
+    - npm run assurance:user-info -- --evidence-dir assurance-external-user-information-evidence
+  artifacts:
+    when: always
+    expire_in: never
+    paths:
+      - assurance-external-user-information-evidence/
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_BRANCH =~ /^release\/.+$/'
+    - if: '$CI_COMMIT_BRANCH =~ /^hotfix\/.+$/'
+    - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
+
+assurance_audit_packet:
+  extends: .linux_assurance_runner
+  stage: docs
+  allow_failure: true
+  script:
+    - npm run assurance:evidence-pack -- --evidence-dir assurance-audit-packet-evidence/evidence-pack
+    - npm run assurance:uplift -- --evidence-dir assurance-audit-packet-evidence/uplift
+  artifacts:
+    when: always
+    expire_in: never
+    paths:
+      - assurance-audit-packet-evidence/
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
@@ -302,6 +396,9 @@ package_extension_preview:
   image: node:24
   needs:
     - assurance_release_gate
+    - assurance_26514_authority
+    - assurance_requirements_quality
+    - assurance_external_user_information
     - test_extension
     - windows_private_release_acceptance
   script:
@@ -353,6 +450,9 @@ release_extension:
   image: node:24
   needs:
     - assurance_release_gate
+    - assurance_26514_authority
+    - assurance_requirements_quality
+    - assurance_external_user_information
     - test_extension
     - windows_private_release_acceptance
   script:

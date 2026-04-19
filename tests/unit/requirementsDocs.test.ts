@@ -253,11 +253,23 @@ describe('requirements documentation coherence', () => {
     );
     expect(srs).toContain('VHS-REQ-553');
     expect(srs).toContain('published `repo-standards-review` assurance-workbench lane');
+    expect(srs).toContain('VHS-REQ-554');
+    expect(srs).toContain('self-hosted Linux assurance runner lane');
+    expect(srs).toContain('VHS-REQ-555');
+    expect(srs).toContain('repo-owned `assurance:*` command surface');
+    expect(srs).toContain('VHS-REQ-556');
+    expect(srs).toContain('assurance_audit_packet');
+    expect(srs).toContain('VHS-REQ-557');
+    expect(srs).toContain('repo-native contradiction guards');
 
     expect(rtm).toContain('VHS-REQ-541');
     expect(rtm).toContain('VHS-REQ-549');
     expect(rtm).toContain('VHS-REQ-551');
     expect(rtm).toContain('VHS-REQ-553');
+    expect(rtm).toContain('VHS-REQ-554');
+    expect(rtm).toContain('VHS-REQ-555');
+    expect(rtm).toContain('VHS-REQ-556');
+    expect(rtm).toContain('VHS-REQ-557');
     expect(rtm).toContain('TEST-UNIT-349');
     expect(rtm).toContain('TEST-INTEG-011');
     expect(rtm).toContain('TEST-SMOKE-022');
@@ -265,9 +277,16 @@ describe('requirements documentation coherence', () => {
     expect(rtm).toContain('TEST-DOC-110');
     expect(rtm).toContain('TEST-UNIT-357');
     expect(rtm).toContain('TEST-DOC-112');
+    expect(rtm).toContain('TEST-UNIT-358');
+    expect(rtm).toContain('TEST-UNIT-359');
+    expect(rtm).toContain('TEST-UNIT-360');
+    expect(rtm).toContain('TEST-UNIT-361');
+    expect(rtm).toContain('TEST-DOC-113');
+    expect(rtm).toContain('TEST-DOC-114');
     expect(rtm).toContain('docs/product/runtime-provider-public-acceptance-gate.md');
     expect(rtm).toContain('docs/product/runtime-provider-public-acceptance-gate.json');
     expect(rtm).toContain('docs/release-procedure.md');
+    expect(rtm).toContain('docs/product/linux-assurance-runner-lane.md');
 
     expect(testPlan).toContain('TEST-UNIT-349');
     expect(testPlan).toContain('settings-only fallback cannot');
@@ -283,6 +302,12 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('TEST-DOC-110');
     expect(testPlan).toContain('TEST-UNIT-357');
     expect(testPlan).toContain('TEST-DOC-112');
+    expect(testPlan).toContain('TEST-UNIT-358');
+    expect(testPlan).toContain('TEST-UNIT-359');
+    expect(testPlan).toContain('TEST-UNIT-360');
+    expect(testPlan).toContain('TEST-UNIT-361');
+    expect(testPlan).toContain('TEST-DOC-113');
+    expect(testPlan).toContain('TEST-DOC-114');
     expect(testPlan).toContain('native Windows only');
     expect(testPlan).toContain('WSL is retained historical context only');
     expect(testPlan).toContain('runtime-provider public-acceptance gate');

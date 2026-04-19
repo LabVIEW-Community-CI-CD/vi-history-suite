@@ -52,15 +52,38 @@ Lane admission:
   admitted
 - exact `vX.Y.Z` tags: exact release evidence lane
 
+Runner lanes:
+
+- `linux-assurance`: local authenticated self-hosted Linux shell-runner lane
+  for external standards assurance; it pulls the latest published
+  `repo-standards-review` assurance-workbench `:main` image before each
+  assurance job and is governed by
+  [linux-assurance-runner-lane.md](./linux-assurance-runner-lane.md)
+- `windows-private-release`: tagged Windows current-user shell-runner lane for
+  native Windows host plus Windows-container proof; it is governed by
+  [windows-private-release-runner-lane.md](./windows-private-release-runner-lane.md)
+
 Job ownership:
 
 - `docs_link_check`, `docs_continuous_integration`,
   `docs_public_continuous_integration`, `docs_internal_continuous_integration`:
   docs integrity on merge requests, governed branch lanes, and exact tags
-- `assurance_release_gate`: published `repo-standards-review`
-  assurance-workbench lane on merge requests, governed branch lanes, and exact
-  tags; it runs the bounded `release-gate` audit against the checked-out repo
-  through `registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main`
+- `assurance_release_gate`: blocking Linux-assurance lane on merge requests,
+  governed branch lanes, and exact tags; it stages the bounded repo scope,
+  pulls the latest published
+  `registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main`
+  image on the local authenticated self-hosted Linux runner, and runs the
+  bounded `release-gate` audit against that staged target through the
+  repo-owned wrapper
+- `assurance_26514_authority`: blocking Linux-assurance lane that stages the
+  governed authority-docs scope and retains the `documentation-proof` output
+- `assurance_requirements_quality`: blocking Linux-assurance lane that runs the
+  governed requirements-quality checker
+- `assurance_external_user_information`: blocking Linux-assurance lane that
+  runs the governed external user-information checker
+- `assurance_audit_packet`: advisory Linux-assurance lane that retains the
+  bounded `evidence-pack` and `compliance-uplift` outputs without blocking
+  packaging
 - `test_extension`: compile, test, and coverage gate on merge requests,
   governed branch lanes, and exact tags
 - `windows_private_release_acceptance`: tagged Windows shell-runner lane that
@@ -69,15 +92,18 @@ Job ownership:
   providers before preview or exact packaging continues
 - `package_extension_preview`: preview VSIX packaging on merge requests into
   protected branch lanes, on `develop`, `main`, `release/*`, `hotfix/*`, and
-  exact tags; it now depends on `assurance_release_gate`, `test_extension`,
-  and `windows_private_release_acceptance`, and there is still no generic
+  exact tags; it now depends on the blocking Linux assurance lanes
+  `assurance_release_gate`, `assurance_26514_authority`,
+  `assurance_requirements_quality`, and
+  `assurance_external_user_information`, plus `test_extension` and
+  `windows_private_release_acceptance`, and there is still no generic
   `feature/*` push lane
 - `publish_docs_authoring_image`: publication-support lane on `main` and exact
   tags only
 - `wiki_workbench_prepare_published`: documentation-publication preparation on
   `main` only
 - `release_extension`: exact-version release lane on exact tags only, now
-  blocked on `assurance_release_gate`, `test_extension`, and
+  blocked on the same blocking Linux assurance lanes, `test_extension`, and
   `windows_private_release_acceptance`
 
 Design-gate boundary:
@@ -147,4 +173,5 @@ When hosted automation truth changes, update together:
 - `docs/testing/test-plan.md`
 - this hosted governance package
 - `docs/product/windows-private-release-runner-lane.md`
+- `docs/product/linux-assurance-runner-lane.md`
 - affected workflow YAML

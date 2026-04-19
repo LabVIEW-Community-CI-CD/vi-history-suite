@@ -1,0 +1,94 @@
+import * as fs from 'node:fs';
+import * as path from 'node:path';
+
+import { describe, expect, it } from 'vitest';
+
+const repoRoot = path.resolve(__dirname, '..', '..');
+
+function readText(relativePath: string): string {
+  return fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
+}
+
+function readJson<T>(relativePath: string): T {
+  return JSON.parse(readText(relativePath)) as T;
+}
+
+describe('linux assurance runner lane docs', () => {
+  it('keeps the Linux assurance lane separate from Windows proof and wires the blocking/advisory assurance jobs', () => {
+    const gitlabCi = readText('.gitlab-ci.yml');
+    const runnerLaneDoc = readText('docs/product/linux-assurance-runner-lane.md');
+    const windowsRunnerLaneDoc = readText('docs/product/windows-private-release-runner-lane.md');
+    const hostedGovernanceDoc = readText('docs/product/hosted-ci-governance.md');
+    const hostedGovernanceJson = readJson<any>('docs/product/hosted-ci-governance.json');
+    const informationItemMap = readText('docs/information-item-map.md');
+    const packageManifest = readJson<{ scripts?: Record<string, string> }>('package.json');
+
+    expect(gitlabCi).toContain('assurance_release_gate:');
+    expect(gitlabCi).toContain('assurance_26514_authority:');
+    expect(gitlabCi).toContain('assurance_requirements_quality:');
+    expect(gitlabCi).toContain('assurance_external_user_information:');
+    expect(gitlabCi).toContain('assurance_audit_packet:');
+    expect(gitlabCi).toContain('- linux');
+    expect(gitlabCi).toContain('- assurance');
+    expect(gitlabCi).toContain('VIHS_ASSURANCE_EXECUTOR: container');
+    expect(gitlabCi).toContain('VIHS_ASSURANCE_IMAGE: registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main');
+    expect(gitlabCi).toContain('docker pull "${VIHS_ASSURANCE_IMAGE}"');
+    expect(gitlabCi).toContain('npm run assurance:release-gate -- --evidence-dir assurance-release-gate-evidence');
+    expect(gitlabCi).toContain('npm run assurance:26514:authority -- --evidence-dir assurance-26514-authority-evidence');
+    expect(gitlabCi).toContain('npm run assurance:requirements -- --evidence-dir assurance-requirements-quality-evidence');
+    expect(gitlabCi).toContain('npm run assurance:user-info -- --evidence-dir assurance-external-user-information-evidence');
+    expect(gitlabCi).toContain('npm run assurance:evidence-pack -- --evidence-dir assurance-audit-packet-evidence/evidence-pack');
+    expect(gitlabCi).toContain('npm run assurance:uplift -- --evidence-dir assurance-audit-packet-evidence/uplift');
+    expect(gitlabCi).toContain('- assurance_release_gate');
+    expect(gitlabCi).toContain('- assurance_26514_authority');
+    expect(gitlabCi).toContain('- assurance_requirements_quality');
+    expect(gitlabCi).toContain('- assurance_external_user_information');
+
+    expect(runnerLaneDoc).toContain('# Linux Assurance Runner Lane');
+    expect(runnerLaneDoc).toContain('local-linux-assurance');
+    expect(runnerLaneDoc).toContain('--tag-list "linux,x64,docker,assurance,private-release"');
+    expect(runnerLaneDoc).toContain('assurance_release_gate');
+    expect(runnerLaneDoc).toContain('assurance_26514_authority');
+    expect(runnerLaneDoc).toContain('assurance_requirements_quality');
+    expect(runnerLaneDoc).toContain('assurance_external_user_information');
+    expect(runnerLaneDoc).toContain('assurance_audit_packet');
+    expect(runnerLaneDoc).toContain('VIHS_ASSURANCE_REGISTRY_USER');
+    expect(runnerLaneDoc).toContain('VIHS_ASSURANCE_REGISTRY_PASSWORD');
+    expect(runnerLaneDoc).toContain('separate from the Windows private-release proof lane');
+
+    expect(windowsRunnerLaneDoc).toContain('linux-assurance-runner-lane.md');
+    expect(hostedGovernanceDoc).toContain('linux-assurance');
+    expect(hostedGovernanceDoc).toContain('windows-private-release');
+    expect(hostedGovernanceJson.authorityGitLab.runnerLanes.linuxAssurance).toEqual(
+      expect.objectContaining({
+        description: 'local-linux-assurance',
+        runnerContractDoc: 'docs/product/linux-assurance-runner-lane.md'
+      })
+    );
+    expect(hostedGovernanceJson.authorityGitLab.jobs.assurance_audit_packet.classification).toBe(
+      'advisory-governance-check'
+    );
+
+    expect(informationItemMap).toContain(
+      '| Linux assurance runner lane | `docs/product/linux-assurance-runner-lane.md` |'
+    );
+    expect(packageManifest.scripts?.['assurance:release-gate']).toBe(
+      'node scripts/runAssuranceAudit.js --lane release-gate'
+    );
+    expect(packageManifest.scripts?.['assurance:26514:authority']).toBe(
+      'node scripts/runAssuranceAudit.js --lane 26514-authority'
+    );
+    expect(packageManifest.scripts?.['assurance:requirements']).toBe(
+      'node scripts/runAssuranceAudit.js --lane requirements'
+    );
+    expect(packageManifest.scripts?.['assurance:user-info']).toBe(
+      'node scripts/runAssuranceAudit.js --lane user-info'
+    );
+    expect(packageManifest.scripts?.['assurance:evidence-pack']).toBe(
+      'node scripts/runAssuranceAudit.js --lane evidence-pack'
+    );
+    expect(packageManifest.scripts?.['assurance:uplift']).toBe(
+      'node scripts/runAssuranceAudit.js --lane uplift'
+    );
+  });
+});

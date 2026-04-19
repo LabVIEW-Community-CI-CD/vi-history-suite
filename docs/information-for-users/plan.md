@@ -219,9 +219,9 @@ This section is the section-to-topic-role map for the current bounded package.
 - Repo-native docs workbench gate:
   `node scripts/runDocsWorkbenchDocker.js gate`
 - Released external release gate:
-`docker run --rm -v /path/to/repo:/target registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main python3 scripts/run_assurance.py /target --profile release-gate`
+  `npm run assurance:release-gate`
 - Released external user-information checker:
-  `py -3 "$env:USERPROFILE\\.codex\\skills\\repo-standards-review\\scripts\\external_user_information_check.py" . --json`
+  `npm run assurance:user-info`
 
 ## Review And Update Triggers
 

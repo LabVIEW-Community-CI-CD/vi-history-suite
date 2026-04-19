@@ -21,9 +21,10 @@ Read these in order:
 5. [Windows x64 Private-Release Packet](./private-release-windows-x64-v1.3.0.md)
 6. [Windows x64 Private-Release Packet JSON](./private-release-windows-x64-v1.3.0.json)
 7. [Windows Private-Release Runner Lane](./windows-private-release-runner-lane.md)
-8. [Research Implementation Index](../research/authoritative/research-implementation-index.json)
-9. [Research Alignment Matrix](../research/authoritative/research-alignment.md)
-10. [Development Queue](./development-queue.json)
+8. [Linux Assurance Runner Lane](./linux-assurance-runner-lane.md)
+9. [Research Implementation Index](../research/authoritative/research-implementation-index.json)
+10. [Research Alignment Matrix](../research/authoritative/research-alignment.md)
+11. [Development Queue](./development-queue.json)
 11. [Architecture Overview](../architecture/overview.md)
 12. [Software Requirements Specification](../requirements/srs.md)
 13. [SHIP-0001: Releasable VI History Suite](./SHIP-0001-releasable-vi-history-suite.md)
@@ -75,11 +76,12 @@ Current control-plane surfaces:
 5. [private-release-windows-x64-v1.3.0.md](./private-release-windows-x64-v1.3.0.md)
 6. [private-release-windows-x64-v1.3.0.json](./private-release-windows-x64-v1.3.0.json)
 7. [windows-private-release-runner-lane.md](./windows-private-release-runner-lane.md)
-8. [research-implementation-index.json](../research/authoritative/research-implementation-index.json)
-9. [development-queue.json](./development-queue.json)
-10. [next-research-prompt.md](../research/authoritative/next-research-prompt.md)
-11. [SHIP-0001: Releasable VI History Suite](./SHIP-0001-releasable-vi-history-suite.md)
-12. [release-readiness-matrix.json](./release-readiness-matrix.json)
+8. [linux-assurance-runner-lane.md](./linux-assurance-runner-lane.md)
+9. [research-implementation-index.json](../research/authoritative/research-implementation-index.json)
+10. [development-queue.json](./development-queue.json)
+11. [next-research-prompt.md](../research/authoritative/next-research-prompt.md)
+12. [SHIP-0001: Releasable VI History Suite](./SHIP-0001-releasable-vi-history-suite.md)
+13. [release-readiness-matrix.json](./release-readiness-matrix.json)
 13. [blocker-ledger.json](./blocker-ledger.json)
 14. [wiki-authority-map.md](./wiki-authority-map.md)
 15. [documentation-coherence-ledger.md](./documentation-coherence-ledger.md)
@@ -411,11 +413,16 @@ Post-release tranches:
     the job `windows_private_release_acceptance` calls
     `npm run acceptance:windows:private-release` and retains
     `windows-private-release-evidence/` as the machine-readable recovery root
-  - the repo now also retains the published external assurance lane for the
-    same protected branch sequence: `assurance_release_gate` runs the bounded
-    `release-gate` audit from
+  - the repo now also retains a separate self-hosted Linux assurance lane for
+    the same protected branch sequence in
+    [linux-assurance-runner-lane.md](./linux-assurance-runner-lane.md): the
+    blocking jobs `assurance_release_gate`, `assurance_26514_authority`,
+    `assurance_requirements_quality`, and
+    `assurance_external_user_information` all pull the latest published
     `registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main`
-    and blocks preview or exact packaging when that lane fails
+    image on the local authenticated Linux runner and block preview or exact
+    packaging when any blocking assurance lane fails, while
+    `assurance_audit_packet` remains advisory only
   - a governed live-session probe command now compares persisted
     provider/version/bitness facts against active in-session VS Code runtime
     settings and retains per-run plus latest probe packets (`JSON` and
