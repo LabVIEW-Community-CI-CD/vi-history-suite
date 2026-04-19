@@ -1,12 +1,28 @@
 #!/usr/bin/env node
 
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 
-const DEFAULT_GITLAB_API_TOKEN_FILE =
-  '/home/sveld/.config/codex/secrets/vi-history-suite.gitlab-api-token.txt';
 const GITLAB_API_TOKEN_FILE_ENV = 'VIHS_GITLAB_API_TOKEN_FILE';
 const PLACEHOLDER = 'REPLACE_WITH_VI_HISTORY_SUITE_GITLAB_API_TOKEN';
+const GITLAB_API_TOKEN_BASENAME = 'vi-history-suite.gitlab-api-token.txt';
+const WINDOWS_GITLAB_API_TOKEN_FILE_EXAMPLE =
+  'C:\\Users\\sveld\\.config\\codex\\secrets\\vi-history-suite.gitlab-api-token.txt';
+const POSIX_GITLAB_API_TOKEN_FILE_EXAMPLE =
+  '/home/sveld/.config/codex/secrets/vi-history-suite.gitlab-api-token.txt';
+
+function buildDefaultGitLabApiTokenFilePath(homeDir = os.homedir()) {
+  return path.resolve(
+    homeDir,
+    '.config',
+    'codex',
+    'secrets',
+    GITLAB_API_TOKEN_BASENAME
+  );
+}
+
+const DEFAULT_GITLAB_API_TOKEN_FILE = buildDefaultGitLabApiTokenFilePath();
 
 function resolveGitLabApiTokenFilePath(env = process.env) {
   const override = `${env[GITLAB_API_TOKEN_FILE_ENV] ?? ''}`.trim();
@@ -67,7 +83,8 @@ function getResolveLocalGitLabApiTokenUsage() {
     'Usage: node scripts/resolveLocalGitLabApiToken.js [--json] [--print-path] [--help]',
     '',
     'Resolve the local vi-history-suite GitLab API token file fail-closed.',
-    `When ${GITLAB_API_TOKEN_FILE_ENV} is unset, the default path is ${DEFAULT_GITLAB_API_TOKEN_FILE}.`
+    `When ${GITLAB_API_TOKEN_FILE_ENV} is unset, the default path is ${DEFAULT_GITLAB_API_TOKEN_FILE}.`,
+    `Governed examples: Windows ${WINDOWS_GITLAB_API_TOKEN_FILE_EXAMPLE} | Linux/WSL ${POSIX_GITLAB_API_TOKEN_FILE_EXAMPLE}.`
   ].join('\n');
 }
 
@@ -149,6 +166,10 @@ module.exports = {
   DEFAULT_GITLAB_API_TOKEN_FILE,
   GITLAB_API_TOKEN_FILE_ENV,
   PLACEHOLDER,
+  GITLAB_API_TOKEN_BASENAME,
+  WINDOWS_GITLAB_API_TOKEN_FILE_EXAMPLE,
+  POSIX_GITLAB_API_TOKEN_FILE_EXAMPLE,
+  buildDefaultGitLabApiTokenFilePath,
   getResolveLocalGitLabApiTokenUsage,
   parseResolveLocalGitLabApiTokenArgs,
   resolveGitLabApiTokenFilePath,
