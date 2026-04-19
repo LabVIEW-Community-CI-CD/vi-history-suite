@@ -137,6 +137,7 @@ describe('run assurance audit script', () => {
       '/tmp/raw-output',
       {
         VIHS_ASSURANCE_CONTAINER_RUNTIME: 'docker',
+        VIHS_ASSURANCE_CONTAINER_USER: '1000:1000',
         VIHS_ASSURANCE_IMAGE:
           'registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main'
       },
@@ -145,6 +146,8 @@ describe('run assurance audit script', () => {
 
     expect(invocation.command).toBe('docker');
     expect(invocation.args).toContain('run');
+    expect(invocation.args).toContain('--user');
+    expect(invocation.args).toContain('1000:1000');
     expect(invocation.args).toContain('/opt/repo-standards-review/scripts/run_assurance.py');
     expect(invocation.args).toContain('--profile');
     expect(invocation.args).toContain('release-gate');

@@ -419,6 +419,12 @@ function buildContainerInvocation(
   const laneConfig = ensureLaneConfig(lane);
   const containerRuntime = `${env.VIHS_ASSURANCE_CONTAINER_RUNTIME || DEFAULT_CONTAINER_RUNTIME}`.trim();
   const assuranceImage = `${env.VIHS_ASSURANCE_IMAGE || DEFAULT_ASSURANCE_IMAGE}`.trim();
+  const containerUser = `${env.VIHS_ASSURANCE_CONTAINER_USER || ''}`.trim();
+  const resolvedContainerUser =
+    containerUser ||
+    (typeof process.getuid === 'function' && typeof process.getgid === 'function'
+      ? `${String(process.getuid())}:${String(process.getgid())}`
+      : '');
   const targetMountPath = '/target';
   const outputMountPath = '/output';
 
@@ -428,6 +434,7 @@ function buildContainerInvocation(
       args: [
         'run',
         '--rm',
+        ...(resolvedContainerUser ? ['--user', resolvedContainerUser] : []),
         '-v',
         `${targetPath}:${targetMountPath}:ro`,
         assuranceImage,
@@ -444,6 +451,7 @@ function buildContainerInvocation(
     args: [
       'run',
       '--rm',
+      ...(resolvedContainerUser ? ['--user', resolvedContainerUser] : []),
       '-v',
       `${targetPath}:${targetMountPath}:ro`,
       '-v',
