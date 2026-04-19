@@ -2,7 +2,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
-const { VSCE_PACKAGE_SPEC } = require('./runPinnedVsce');
+const { VSCE_PACKAGE_SPEC, buildPinnedVsceInvocation } = require('./runPinnedVsce');
 
 const repoRoot = path.resolve(path.dirname(fs.realpathSync.native(__filename)), '..');
 const manifestPath = path.join(repoRoot, 'package.json');
@@ -100,23 +100,20 @@ function findRuntimeSurfaceViolations({ manifest, packagedPaths }) {
   return violations;
 }
 
-function getNpmCommand() {
-  return process.platform === 'win32' ? 'npm.cmd' : 'npm';
-}
-
 function auditPackagedRuntimeSurface(deps = {}) {
   const cwd = deps.cwd ?? repoRoot;
   const spawnSyncImpl = deps.spawnSync ?? require('node:child_process').spawnSync;
   const stdout = deps.stdout ?? process.stdout;
   const stderr = deps.stderr ?? process.stderr;
   const manifest = deps.manifest ?? JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+  const invocation = buildPinnedVsceInvocation(['ls', '--dependencies', '--no-yarn'], deps);
 
   stdout.write(
     `[package-audit] Listing packaged VSIX surface via pinned ${VSCE_PACKAGE_SPEC}.\n`
   );
   const result = spawnSyncImpl(
-    getNpmCommand(),
-    ['exec', '--yes', '--package', VSCE_PACKAGE_SPEC, '--', 'vsce', 'ls', '--dependencies', '--no-yarn'],
+    invocation.command,
+    invocation.args,
     {
       cwd,
       encoding: 'utf8',
