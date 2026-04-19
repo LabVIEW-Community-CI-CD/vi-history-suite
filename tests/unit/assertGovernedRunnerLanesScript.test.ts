@@ -64,7 +64,13 @@ describe('assert governed runner lanes script', () => {
         '-NoLogo',
         '-NoProfile',
         '-File',
-        'D:\\repo\\scripts\\gitlab-runner\\windows\\assert-governed-runner-lanes.ps1'
+        path.join(
+          'D:\\repo',
+          'scripts',
+          'gitlab-runner',
+          'windows',
+          'assert-governed-runner-lanes.ps1'
+        )
       ]
     });
     expect(script.buildLinuxAssertionInvocation('D:\\repo', 'Ubuntu', 'win32')).toEqual({
