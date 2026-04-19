@@ -55,7 +55,7 @@ describe('assertRuntimeSettingsLiveSessionProbePacket script', () => {
         () => 'C:\\Users\\tester'
       )
     ).toContain(
-      path.join(
+      path.win32.join(
         'C:\\Users\\tester\\AppData\\Roaming',
         'Code',
         'User',

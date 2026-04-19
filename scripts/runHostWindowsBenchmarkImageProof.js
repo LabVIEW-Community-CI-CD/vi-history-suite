@@ -365,7 +365,7 @@ function getLocalHarnessSourceCandidates(harnessId) {
 function resolveLocalHarnessSeedSource(harnessId, deps = {}) {
   const existsSync = deps.existsSync ?? fs.existsSync;
   return getLocalHarnessSourceCandidates(harnessId).find((candidate) =>
-    existsSync(path.join(candidate, '.git'))
+    existsSync(path.win32.join(candidate, '.git'))
   );
 }
 

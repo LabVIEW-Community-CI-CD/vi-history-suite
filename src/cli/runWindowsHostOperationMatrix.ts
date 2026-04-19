@@ -714,9 +714,17 @@ function usesExplicitPosixPathStyle(rootPath: string): boolean {
   return rootPath.startsWith('/');
 }
 
+function usesExplicitWindowsPathStyle(rootPath: string): boolean {
+  return /^[A-Za-z]:[\\/]/.test(rootPath) || rootPath.startsWith('\\\\');
+}
+
 function joinPreservingExplicitPathStyle(rootPath: string, ...segments: string[]): string {
   if (usesExplicitPosixPathStyle(rootPath)) {
-    return path.posix.join(rootPath, ...segments);
+    return path.posix.join(rootPath, ...segments.map((segment) => segment.replace(/\\/g, '/')));
+  }
+
+  if (usesExplicitWindowsPathStyle(rootPath)) {
+    return path.win32.join(rootPath, ...segments.map((segment) => segment.replace(/\//g, '\\')));
   }
 
   return path.join(rootPath, ...segments);
@@ -724,7 +732,11 @@ function joinPreservingExplicitPathStyle(rootPath: string, ...segments: string[]
 
 function resolvePreservingExplicitPathStyle(rootPath: string, ...segments: string[]): string {
   if (usesExplicitPosixPathStyle(rootPath)) {
-    return path.posix.resolve(rootPath, ...segments);
+    return path.posix.resolve(rootPath, ...segments.map((segment) => segment.replace(/\\/g, '/')));
+  }
+
+  if (usesExplicitWindowsPathStyle(rootPath)) {
+    return path.win32.resolve(rootPath, ...segments.map((segment) => segment.replace(/\//g, '\\')));
   }
 
   return path.resolve(rootPath, ...segments);

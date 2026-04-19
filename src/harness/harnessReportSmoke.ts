@@ -734,7 +734,7 @@ function resolveCurrentRuntimePlatform(): RuntimePlatform {
 
 export async function resolveHarnessWindowsInteropRoot(
   configuredRoot: string | undefined,
-  reportScopedFallback: string,
+  _reportScopedFallback: string,
   runtimePlatform: RuntimePlatform,
   deps: HarnessReportSmokeDeps
 ): Promise<string | undefined> {
@@ -750,10 +750,6 @@ export async function resolveHarnessWindowsInteropRoot(
   const defaultRoot = await selectDefaultWindowsInteropRoot(deps);
   if (defaultRoot) {
     return defaultRoot;
-  }
-
-  if (reportScopedFallback.startsWith('/mnt/')) {
-    return reportScopedFallback;
   }
 
   return undefined;

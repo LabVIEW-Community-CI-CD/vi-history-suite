@@ -283,9 +283,9 @@ export async function runGitHubLinuxDashboardBenchmarkCli(
   );
 
   const repoRoot = deps.repoRoot ?? path.resolve(__dirname, '..', '..');
-  const cloneRoot = path.resolve(repoRoot, '.cache', 'harnesses');
-  const reportRoot = path.resolve(repoRoot, '.cache', 'harness-reports');
-  const benchmarkRoot = path.resolve(
+  const cloneRoot = joinPreservingExplicitPathStyle(repoRoot, '.cache', 'harnesses');
+  const reportRoot = joinPreservingExplicitPathStyle(repoRoot, '.cache', 'harness-reports');
+  const benchmarkRoot = joinPreservingExplicitPathStyle(
     repoRoot,
     '.cache',
     'github-experiments',
@@ -295,7 +295,7 @@ export async function runGitHubLinuxDashboardBenchmarkCli(
   const harnessDefinition = getCanonicalHarnessDefinition(args.harnessId);
   const now = deps.now ?? (() => new Date());
   const startedAtDate = now();
-  const latestProgressPath = path.join(benchmarkRoot, 'latest-progress.json');
+  const latestProgressPath = joinPreservingExplicitPathStyle(benchmarkRoot, 'latest-progress.json');
   const mkdir = deps.mkdir ?? fs.mkdir;
   const writeFile = deps.writeFile ?? fs.writeFile;
   const pathExists = deps.pathExists ?? defaultPathExists;
@@ -371,11 +371,11 @@ export async function runGitHubLinuxDashboardBenchmarkCli(
       process.env.COMPAREVI_NI_LINUX_IMAGE ??
       'nationalinstruments/labview:2026q1-linux'
   });
-  const runSummaryPath = path.join(
+  const runSummaryPath = joinPreservingExplicitPathStyle(
     benchmarkRoot,
     `${summary.completedAt.replaceAll(':', '').replaceAll('.', '').replace('T', '-').replace('Z', '')}.json`
   );
-  const latestSummaryPath = path.join(benchmarkRoot, 'latest-summary.json');
+  const latestSummaryPath = joinPreservingExplicitPathStyle(benchmarkRoot, 'latest-summary.json');
   summary.retainedArtifacts.runSummaryPath = runSummaryPath;
   summary.retainedArtifacts.latestSummaryPath = latestSummaryPath;
   if (summary.completionState === 'failed') {
@@ -386,7 +386,7 @@ export async function runGitHubLinuxDashboardBenchmarkCli(
       completedAtDate
     );
     if (failureReceipt) {
-      const pairFailureReceiptPath = path.join(
+      const pairFailureReceiptPath = joinPreservingExplicitPathStyle(
         benchmarkRoot,
         `pair-failure-pair-${String(failureReceipt.pairIndex).padStart(4, '0')}.json`
       );
@@ -550,8 +550,14 @@ export function buildGitHubLinuxDashboardBenchmarkSummary(
       smokeJsonPath: result.reportJsonPath,
       smokeMarkdownPath: result.reportMarkdownPath,
       smokeHtmlPath: result.reportHtmlPath,
-      latestSummaryPath: path.join(options.benchmarkRoot, 'latest-summary.json'),
-      runSummaryPath: path.join(options.benchmarkRoot, 'pending-run-summary.json')
+      latestSummaryPath: joinPreservingExplicitPathStyle(
+        options.benchmarkRoot,
+        'latest-summary.json'
+      ),
+      runSummaryPath: joinPreservingExplicitPathStyle(
+        options.benchmarkRoot,
+        'pending-run-summary.json'
+      )
     }
   };
 }
@@ -725,3 +731,23 @@ export function maybeRunGitHubLinuxDashboardBenchmarkCliAsMain(
 }
 
 maybeRunGitHubLinuxDashboardBenchmarkCliAsMain();
+
+function usesExplicitPosixPathStyle(rootPath: string): boolean {
+  return rootPath.startsWith('/');
+}
+
+function usesExplicitWindowsPathStyle(rootPath: string): boolean {
+  return /^[A-Za-z]:[\\/]/.test(rootPath) || rootPath.startsWith('\\\\');
+}
+
+function joinPreservingExplicitPathStyle(rootPath: string, ...segments: string[]): string {
+  if (usesExplicitPosixPathStyle(rootPath)) {
+    return path.posix.join(rootPath, ...segments.map((segment) => segment.replace(/\\/g, '/')));
+  }
+
+  if (usesExplicitWindowsPathStyle(rootPath)) {
+    return path.win32.join(rootPath, ...segments.map((segment) => segment.replace(/\//g, '\\')));
+  }
+
+  return path.join(rootPath, ...segments);
+}
