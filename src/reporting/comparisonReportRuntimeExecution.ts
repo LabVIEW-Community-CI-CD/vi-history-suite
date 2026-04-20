@@ -521,10 +521,10 @@ async function runHostNativeExecution(
         commandResult.exitCode === 0 &&
         reportExists;
       const failureClassification = commandResult.cancelled
-        ? {
-            reason: 'command-cancelled',
-            notes: ['Comparison-report runtime was cancelled before completion.']
-          }
+        ? classifyCancelledRuntimeFailure({
+            engine: record.runtimeSelection.engine,
+            diagnosticReason: diagnostics.reason
+          })
         : commandResult.timedOut
         ? {
             reason: 'command-timed-out',
@@ -1150,6 +1150,17 @@ function shouldAttemptWindowsHeadlessRecovery(
     record.runtimeSelection.engine === 'labview-cli' &&
     execution.state === 'failed' &&
     execution.diagnosticReason === 'labview-cli-call-by-reference' &&
+    wasWindowsHeadlessLabviewCliExecutionRequested(record, execution)
+  );
+}
+
+function wasWindowsHeadlessLabviewCliExecutionRequested(
+  record: ComparisonReportPacketRecord,
+  execution: ComparisonReportRuntimeExecution
+): boolean {
+  return (
+    record.runtimeSelection.provider === 'windows-container' ||
+    record.runtimeSelection.headlessRequested === true ||
     isHeadlessLabviewCliExecution(execution.args)
   );
 }
@@ -1189,9 +1200,27 @@ async function attemptLabviewCliHeadlessSessionReset(
     record.runtimeSelection.labviewExe?.path,
     labviewTcpPort
   );
+  const windowsContainerImage =
+    record.runtimeSelection.containerImage?.trim() ||
+    record.runtimeSelection.windowsContainerImage?.trim();
   const linuxContainerImage = record.runtimeSelection.containerImage?.trim();
   const closeCommandPlan =
-    record.runtimeSelection.provider === 'linux-container' && linuxContainerImage
+    record.runtimeSelection.provider === 'windows-container' && windowsContainerImage
+      ? buildWindowsContainerCommandPlan(record, baseCloseCommandPlan, {
+          hostReportDirectory:
+            normalizeWindowsInteropPath(path.dirname(executionContext.reportFilePath)) ??
+            path.win32.dirname(executionContext.reportFilePath),
+          hostTempDirectory:
+            normalizeWindowsInteropPath(
+              executionContext.diagnosticPathMapping?.hostRoot ??
+                path.join(path.dirname(executionContext.reportFilePath), 'container-temp')
+            ) ??
+            path.win32.join(path.win32.dirname(executionContext.reportFilePath), 'container-temp'),
+          containerWorkspaceRoot: WINDOWS_CONTAINER_WORKSPACE_ROOT,
+          containerImage: windowsContainerImage,
+          processPlatform: executionContext.reportFilePath.includes('\\') ? 'win32' : 'linux'
+        }) ?? baseCloseCommandPlan
+      : record.runtimeSelection.provider === 'linux-container' && linuxContainerImage
       ? buildLinuxContainerCommandPlan(record, baseCloseCommandPlan, {
           hostReportDirectory: path.dirname(executionContext.reportFilePath),
           hostTempDirectory:
@@ -2963,6 +2992,31 @@ function classifyRuntimeFailure(options: {
   return {
     reason: 'report-file-not-generated',
     notes: []
+  };
+}
+
+function classifyCancelledRuntimeFailure(options: {
+  engine?: 'labview-cli' | 'lvcompare';
+  diagnosticReason?: string;
+}): {
+  reason: string;
+  notes: string[];
+} {
+  if (
+    options.engine === 'labview-cli' &&
+    options.diagnosticReason === 'labview-cli-call-by-reference'
+  ) {
+    return {
+      reason: 'command-exited-nonzero',
+      notes: [
+        'Comparison-report runtime retained a LabVIEW CLI Error 66 / Call By Reference failure before a cancellation-shaped transport exit was observed.'
+      ]
+    };
+  }
+
+  return {
+    reason: 'command-cancelled',
+    notes: ['Comparison-report runtime was cancelled before completion.']
   };
 }
 
