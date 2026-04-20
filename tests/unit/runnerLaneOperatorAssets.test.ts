@@ -231,16 +231,9 @@ describe('runner lane operator assets', () => {
       '| Governed runner host asset pack | `scripts/gitlab-runner/` |'
     );
     expect(informationItemMap).toContain('cross-lane runner-assert wrapper');
-    expect(readme).toContain('scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1');
-    expect(readme).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
-    expect(readme).toContain('scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1');
-    expect(readme).toContain('scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1');
-    expect(readme).toContain('scripts/runWindowsProofRuntimeRecoveryRehearsal.js');
-    expect(readme).toContain('scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
-    expect(readme).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
-    expect(readme).toContain('scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh');
-    expect(readme).toContain('scripts/assertGovernedRunnerLanes.js');
-    expect(readme).toContain('npm run gitlab:runner:assert');
+    expect(readme).toContain('## Authority And Release Control');
+    expect(readme).toContain('[Hosted CI Governance](./docs/product/hosted-ci-governance.md)');
+    expect(readme).toContain('[Release Procedure](./docs/release-procedure.md)');
     expect(currentState).toContain('repo-owned runner host asset pack, apply surfaces, and live drift');
     expect(currentState).toContain('scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1');
     expect(currentState).toContain('scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1');
@@ -343,9 +336,8 @@ describe('runner lane operator assets', () => {
       })
     );
 
-    expect(readme).toContain(
-      'the Windows bootstrap clears stale `LabVIEW`, `LabVIEWCLI`, and'
-    );
+    expect(readme).toContain('## Authority And Release Control');
+    expect(readme).toContain('[Hosted CI Governance](./docs/product/hosted-ci-governance.md)');
     expect(currentState).toContain(
       'the Windows bootstrap clears stale `LabVIEW`, `LabVIEWCLI`, and'
     );

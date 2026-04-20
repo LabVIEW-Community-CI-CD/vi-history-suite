@@ -22,12 +22,12 @@ describe('public Codespaces public-repo bootstrap docs', () => {
       'docs/architecture/adr/ADR-0034-public-codespaces-public-repo-bootstrap-and-default-branch-resolution.md'
     );
 
-    expect(readme).toContain('npm run public:fixture:icon-editor');
-    expect(readme).toContain('npm run public:repo:clone -- --repo-url https://github.com/crossrulz/SerialPortNuggets.git');
-    expect(readme).toContain('repo-sibling `labview-icon-editor`');
-    expect(readme).toContain('visible repo-sibling folder');
-    expect(readme).toContain('reference manual for reviewing the changes of a LabVIEW VI between two');
-    expect(readme).toContain('a quickstart for the canonical helper-backed `ni/labview-icon-editor` path');
+    expect(readme).toContain('## Need Source Evaluation Or Contribution?');
+    expect(readme).toContain('[INSTALL.md](./INSTALL.md)');
+    expect(readme).toContain('Fork-Codespace-Quickstart');
+    expect(readme).toContain('Review-Public-LabVIEW-VI-Changes');
+    expect(readme).toContain('Refresh-Codespace-Repositories');
+    expect(readme).toContain('Use `main` when you only need the latest exact released source.');
 
     expect(currentState).toContain('`TRANCHE-014`: Public Codespaces public-repo bootstrap');
     expect(currentState).toContain('canonical `npm run public:fixture:icon-editor` helper-backed path');

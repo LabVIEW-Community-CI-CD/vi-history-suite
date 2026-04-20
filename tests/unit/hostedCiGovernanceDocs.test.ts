@@ -291,9 +291,8 @@ describe('hosted ci governance docs', () => {
     expect(readme).toContain(
       '- hosted automation governance matrix: [docs/product/hosted-ci-governance.md]'
     );
-    expect(readme).toContain('assurance_release_gate');
-    expect(readme).toContain('assurance_26514_authority');
-    expect(readme).toContain('registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main');
+    expect(readme).toContain('## Authority And Release Control');
+    expect(readme).toContain('[Release Procedure](./docs/release-procedure.md)');
     expect(currentState).toContain('[hosted-ci-governance.md](./hosted-ci-governance.md)');
     expect(currentState).toContain(
       '- hosted automation governance matrix: [hosted-ci-governance.md](./hosted-ci-governance.md)'
