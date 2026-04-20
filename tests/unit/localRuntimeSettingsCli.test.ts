@@ -152,6 +152,7 @@ describe('localRuntimeSettingsCli', () => {
     expect(result).toEqual({
       outcome: 'updated-settings',
       settingsFilePath,
+      settingsTarget: 'explicit-settings-file',
       provider: 'docker',
       labviewVersion: '2026',
       labviewBitness: 'x64'
@@ -169,6 +170,8 @@ describe('localRuntimeSettingsCli', () => {
       'viHistorySuite.labviewBitness': 'x64'
     });
     expect(stdout.join('')).toContain(settingsFilePath);
+    expect(stdout.join('')).toContain('settingsTarget=explicit-settings-file');
+    expect(stdout.join('')).toContain(`settingsFilePath=${settingsFilePath}`);
     expect(stdout.join('')).toContain('viHistorySuite.runtimeProvider=docker');
     expect(stdout.join('')).toContain('viHistorySuite.labviewVersion=2026');
     expect(stdout.join('')).toContain('viHistorySuite.labviewBitness=x64');
@@ -200,6 +203,38 @@ describe('localRuntimeSettingsCli', () => {
     ).rejects.toThrow('VS Code settings.json must contain a JSON object.');
   });
 
+  it('rejects workspace settings targets for both mutation and validation', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-local-runtime-cli-workspace-'));
+    tempDirectories.push(tempRoot);
+    const settingsFilePath = path.join(tempRoot, '.vscode', 'settings.json');
+    await fs.mkdir(path.dirname(settingsFilePath), { recursive: true });
+    await fs.writeFile(settingsFilePath, '{}\n', 'utf8');
+
+    await expect(
+      runLocalRuntimeSettingsCli(
+        [
+          '--provider',
+          'host',
+          '--labview-version',
+          '2026',
+          '--labview-bitness',
+          'x64',
+          '--settings-file',
+          settingsFilePath
+        ],
+        {}
+      )
+    ).rejects.toThrow(
+      'Workspace settings are not supported for VI History runtime-settings CLI.'
+    );
+
+    await expect(
+      runLocalRuntimeSettingsCli(['--validate', '--settings-file', settingsFilePath], {})
+    ).rejects.toThrow(
+      'Workspace settings are not supported for VI History runtime-settings CLI.'
+    );
+  });
+
   it('reports persisted provider/version/bitness truth plus bounded runtime validation outcome', async () => {
     const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-local-runtime-cli-validate-'));
     tempDirectories.push(tempRoot);
@@ -229,6 +264,7 @@ describe('localRuntimeSettingsCli', () => {
     expect(result).toEqual({
       outcome: 'validated-settings',
       settingsFilePath,
+      settingsTarget: 'explicit-settings-file',
       persistedProvider: 'mystery',
       persistedLabviewVersion: '2026',
       persistedLabviewBitness: 'x64',
@@ -238,7 +274,9 @@ describe('localRuntimeSettingsCli', () => {
       runtimeBlockedReason: 'installed-provider-invalid'
     });
 
-    expect(stdout.join('')).toContain(`Validated ${settingsFilePath}`);
+    expect(stdout.join('')).toContain(`Validated explicit-settings-file target ${settingsFilePath}`);
+    expect(stdout.join('')).toContain('settingsTarget=explicit-settings-file');
+    expect(stdout.join('')).toContain(`settingsFilePath=${settingsFilePath}`);
     expect(stdout.join('')).toContain('viHistorySuite.runtimeProvider=mystery');
     expect(stdout.join('')).toContain('viHistorySuite.labviewVersion=2026');
     expect(stdout.join('')).toContain('viHistorySuite.labviewBitness=x64');
@@ -282,6 +320,14 @@ describe('localRuntimeSettingsCli', () => {
     await expect(fs.access(materialized.windowsLauncherPath)).resolves.toBeUndefined();
     await expect(fs.access(materialized.posixLauncherPath)).resolves.toBeUndefined();
 
+    if (process.platform === 'win32') {
+      expect(materialized.currentPlatformLauncherPath).toBe(materialized.windowsLauncherPath);
+      expect(materialized.nextCommand).toContain(materialized.windowsLauncherPath);
+    } else {
+      expect(materialized.currentPlatformLauncherPath).toBe(materialized.posixLauncherPath);
+      expect(materialized.nextCommand).toContain(materialized.posixLauncherPath);
+    }
+
     const javascriptLauncher = await fs.readFile(materialized.javascriptLauncherPath, 'utf8');
     const windowsLauncher = await fs.readFile(materialized.windowsLauncherPath, 'utf8');
     const posixLauncher = await fs.readFile(materialized.posixLauncherPath, 'utf8');
@@ -301,6 +347,7 @@ describe('localRuntimeSettingsCli', () => {
       'VI History runtime-settings CLI requires a usable Node.js runtime on PATH.'
     );
     expect(materialized.exampleCommand).toContain('--provider host');
+    expect(materialized.exampleCommand).toBe(materialized.nextCommand);
   });
 
   it('fails closed with a stable stale-launcher message when the generated module is missing', async () => {

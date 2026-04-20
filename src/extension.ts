@@ -185,6 +185,8 @@ export async function activate(
       void vscode.window.showInformationMessage(
         [
           `Prepared VI History local runtime settings CLI at ${materializedCli.rootDirectoryPath}.`,
+          `Current launcher path: ${materializedCli.currentPlatformLauncherPath}.`,
+          `Run next: ${materializedCli.nextCommand}.`,
           `Governed settings targets: default user settings.json at ${governanceContract.defaultSettingsFilePath} or an explicit --settings-file path.`,
           'This prepare command is admitted in untrusted workspaces because it only materializes the launcher; installed compare remains disabled there.'
         ].join(' ')

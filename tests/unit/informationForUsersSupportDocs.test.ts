@@ -50,6 +50,7 @@ describe('information-for-users support docs', () => {
     expect(faq).toContain('Docker-only and x64-only installed path.');
     expect(faq).toContain('review Compare or runtime validation again after the update');
     expect(faq).toContain('reload or restart the window only if that already-running session still shows');
+    expect(faq).toContain('prepare reports for your current platform');
     expect(faq).toContain('Where does the generated runtime-settings CLI live');
     expect(faq).toContain('How do I check what the runtime-settings CLI actually persisted');
     expect(faq).toContain('Workspace settings are not a supported target');
@@ -79,10 +80,12 @@ describe('information-for-users support docs', () => {
     expect(commandReference).toContain('npm run docs:workbench:gate');
     expect(commandReference).toContain('VI History: Prepare Local Runtime Settings CLI');
     expect(commandReference).toContain('extension-global storage root');
+    expect(commandReference).toContain('exact next command to run from any repo shell');
     expect(commandReference).toContain('default user `settings.json` path');
     expect(commandReference).toContain('explicit `--settings-file` override');
     expect(commandReference).toContain('admitted in untrusted workspaces');
     expect(commandReference).toContain('vihs-runtime-settings --provider <host|docker>');
+    expect(commandReference).toContain('does not mutate `PATH`');
     expect(commandReference).toContain('vihs-runtime-settings --validate');
     expect(commandReference).toContain('before trusting Compare');
     expect(commandReference).toContain('or other runtime-provider surfaces');

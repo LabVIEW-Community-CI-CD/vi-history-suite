@@ -57,7 +57,9 @@ Use the route that matches your real task.
 
 ### How do I switch between host and Docker on the active branch?
 
-Use the generated runtime-settings CLI on the active branch:
+Run `VI History: Prepare Local Runtime Settings CLI` first, then use the exact
+launcher command that prepare reports for your current platform. The logical
+launcher shape is:
 
 `vihs-runtime-settings --provider <host|docker> --labview-version <major> --labview-bitness <x86|x64>`
 
@@ -73,6 +75,9 @@ Use `VI History: Prepare Local Runtime Settings CLI` first.
 
 - The prepare command materializes the launchers under the extension-global
   storage root.
+- The prepare result reports the current-platform launcher path plus one exact
+  next command to run from any repo shell without reconstructing that hidden
+  storage layout.
 - The command reference and this FAQ are the governed installed-user help and
   recovery surfaces for that CLI.
 - The governed settings targets are the platform-default user
@@ -85,7 +90,9 @@ Use `VI History: Prepare Local Runtime Settings CLI` first.
 
 ### How do I check what the runtime-settings CLI actually persisted?
 
-Use the governed validation surface:
+Run `VI History: Prepare Local Runtime Settings CLI` first, then use the exact
+launcher command that prepare reports for your current platform. The governed
+validation shape is:
 
 `vihs-runtime-settings --validate [--settings-file <path>]`
 
