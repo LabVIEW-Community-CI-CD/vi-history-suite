@@ -1,6 +1,3 @@
-Set-StrictMode -Version Latest
-$ErrorActionPreference = 'Stop'
-
 param(
   [string]$CodeCommand = 'code',
   [string]$ExtensionId = 'svelderrainruiz.vi-history-suite',
@@ -8,6 +5,9 @@ param(
   [switch]$SkipInstall,
   [switch]$NonInteractive
 )
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
 
 $script:DefaultProvider = 'host'
 $script:DefaultPlatform = 'windows'
@@ -26,6 +26,54 @@ function Test-InteractiveConsole {
   } catch {
     return $false
   }
+}
+
+function Resolve-VSCodeCliCommand {
+  param([string]$CliCommand)
+
+  $commands = @(Get-Command -Name $CliCommand -All -ErrorAction SilentlyContinue)
+  if ($commands.Count -eq 0) {
+    throw "VS Code CLI '$CliCommand' was not found on PATH. Install Visual Studio Code and ensure the governed CLI surface resolves in this PowerShell session."
+  }
+
+  foreach ($command in $commands) {
+    $candidatePath = $command.Source
+    if (-not $candidatePath) {
+      $candidatePath = $command.Path
+    }
+
+    if (-not $candidatePath) {
+      continue
+    }
+
+    $normalizedCandidatePath = $candidatePath.ToLowerInvariant()
+    if ($normalizedCandidatePath.EndsWith('\bin\code.cmd') -or $normalizedCandidatePath.EndsWith('\bin\code')) {
+      return $candidatePath
+    }
+  }
+
+  foreach ($command in $commands) {
+    $candidatePath = $command.Source
+    if (-not $candidatePath) {
+      $candidatePath = $command.Path
+    }
+
+    if (-not $candidatePath) {
+      continue
+    }
+
+    $normalizedCandidatePath = $candidatePath.ToLowerInvariant()
+    if (-not $normalizedCandidatePath.EndsWith('\code.exe')) {
+      continue
+    }
+
+    $cliSiblingPath = Join-Path (Join-Path (Split-Path -Parent $candidatePath) 'bin') 'code.cmd'
+    if (Test-Path -LiteralPath $cliSiblingPath) {
+      return $cliSiblingPath
+    }
+  }
+
+  return $commands[0].Source
 }
 
 function Resolve-ExtensionInstallRoot {
@@ -132,7 +180,7 @@ function Ensure-VihsLaunchers {
   $globalStorageRoot = Resolve-VihsGlobalStorageRoot -PublisherExtensionId $PublisherExtensionId
   $modulePath = Join-Path $ExtensionInstallRoot 'out\tooling\localRuntimeSettingsCli.js'
   if (-not (Test-Path -LiteralPath $modulePath)) {
-    throw "Installed CLI module not found at $modulePath."
+    throw "Installed CLI module not found at $modulePath. The installed Marketplace payload for $PublisherExtensionId does not yet include the vihs terminal-entrypoint surface. Publish or install an updated extension package, then rerun this bootstrap."
   }
 
   New-Item -ItemType Directory -Force -Path $globalStorageRoot | Out-Null
@@ -350,14 +398,11 @@ function Install-VihsExtension {
     [string]$PublisherExtensionId
   )
 
-  $command = Get-Command -Name $CliCommand -ErrorAction SilentlyContinue
-  if (-not $command) {
-    throw "VS Code CLI '$CliCommand' was not found on PATH. Install Visual Studio Code and ensure `code` resolves in this PowerShell session."
-  }
+  $resolvedCliCommand = Resolve-VSCodeCliCommand -CliCommand $CliCommand
 
   Write-Host "Installing $PublisherExtensionId from the VS Code Marketplace..."
-  & $CliCommand --install-extension $PublisherExtensionId --force
-  if ($LASTEXITCODE -ne 0) {
+  & $resolvedCliCommand --install-extension $PublisherExtensionId --force
+  if ((Get-Variable -Name LASTEXITCODE -Scope Global -ErrorAction SilentlyContinue) -and $global:LASTEXITCODE -ne 0) {
     throw "VS Code Marketplace install failed for $PublisherExtensionId."
   }
 }
