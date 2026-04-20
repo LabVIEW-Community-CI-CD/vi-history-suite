@@ -245,10 +245,10 @@ describe('requirements documentation coherence', () => {
     expect(srs).toContain('`npm run proof:runtime-settings-live-session`');
     expect(srs).toContain('support governed VS Code settings targets that contain JSONC comments or trailing commas');
     expect(srs).toContain(
-      'generated settings-CLI launcher surface shall make its runtime dependency and stale-launcher recovery explicit'
+      'bare `vihs` terminal entrypoint shall make its runtime dependency and recovery explicit'
     );
-    expect(srs).toContain('`labviewViHistory.prepareLocalRuntimeSettingsCli` command shall make its trust and settings-target governance explicit');
-    expect(srs).toContain('expose one governed validation surface');
+    expect(srs).toContain('bare `vihs` terminal entrypoint shall make terminal discoverability explicit');
+    expect(srs).toContain('installed-user `vihs` surface shall expose one governed validation action');
     expect(srs).toContain('close the remaining LabVIEW 2026 operation-matrix admission seams');
     expect(srs).toContain(
       'prove `CreateComparisonReport` admission on the supported LabVIEW 2026 x64 release host bundle'
@@ -323,6 +323,8 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('TEST-UNIT-352');
     expect(testPlan).toContain('TEST-INTEG-010');
     expect(testPlan).toContain('TEST-INTEG-011');
+    expect(testPlan).toContain('bare `vihs` terminal entrypoint');
+    expect(testPlan).toContain('prints exact copyable next commands');
     expect(testPlan).toContain('characterization receipt without');
     expect(testPlan).toContain('current release admission');
     expect(testPlan).toContain('TEST-SMOKE-020');
