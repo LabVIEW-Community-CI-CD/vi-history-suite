@@ -94,6 +94,60 @@ function createReadyRecord(): ComparisonReportPacketRecord {
   };
 }
 
+function createWindowsContainerReadyRecord(): ComparisonReportPacketRecord {
+  const reportDirectory = 'C:\\workspace\\.storage\\reports\\repoid123456\\fileid123456';
+  const stagingDirectory = `${reportDirectory}\\staging`;
+
+  return {
+    ...createReadyRecord(),
+    artifactPlan: {
+      ...createReadyRecord().artifactPlan,
+      reportDirectory,
+      stagingDirectory,
+      reportFilePath: `${reportDirectory}\\diff-report-foo.vi.html`,
+      packetFilePath: `${reportDirectory}\\report-packet.html`,
+      metadataFilePath: `${reportDirectory}\\report-metadata.json`,
+      runtimeStdoutFilePath: `${reportDirectory}\\runtime-stdout.txt`,
+      runtimeStderrFilePath: `${reportDirectory}\\runtime-stderr.txt`,
+      runtimeDiagnosticLogFilePath: `${reportDirectory}\\runtime-diagnostic-log.txt`,
+      runtimeProcessObservationFilePath: `${reportDirectory}\\runtime-process-observation.json`,
+      allowedLocalRootPaths: ['C:\\workspace\\.storage', 'C:\\workspace\\.storage\\reports\\repoid123456']
+    },
+    stagedRevisionPlan: {
+      leftFilename: 'left-111111112222-foo.vi',
+      leftFilePath: `${stagingDirectory}\\left-111111112222-foo.vi`,
+      rightFilename: 'right-abcdef123456-foo.vi',
+      rightFilePath: `${stagingDirectory}\\right-abcdef123456-foo.vi`
+    },
+    runtimeSelection: {
+      ...createReadyRecord().runtimeSelection,
+      bitness: 'x64',
+      provider: 'windows-container',
+      executionMode: 'auto',
+      containerImage: 'nationalinstruments/labview:2026q1-windows',
+      labviewExe: {
+        kind: 'labview-exe',
+        path: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+        source: 'configured',
+        exists: true,
+        bitness: 'x64'
+      },
+      labviewCli: {
+        kind: 'labview-cli',
+        path: 'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+        source: 'configured',
+        exists: true,
+        bitness: 'x86'
+      }
+    },
+    runtimeExecution: {
+      ...createReadyRecord().runtimeExecution,
+      stdoutFilePath: `${reportDirectory}\\runtime-stdout.txt`,
+      stderrFilePath: `${reportDirectory}\\runtime-stderr.txt`
+    }
+  };
+}
+
 describe('comparisonReportRuntimeExecution', () => {
   it('stages each revision from its resolved historical relative path when the VI moved', async () => {
     const readRevisionBlob = vi
@@ -228,6 +282,95 @@ describe('comparisonReportRuntimeExecution', () => {
     expect(result.reason).toBe('labview-cli-vi-password-protected');
     expect(result.notes).toContain(
       'LabVIEW CLI connected to LabVIEW before CreateComparisonReport failed because one or both selected VI revisions are password protected.'
+    );
+  });
+
+  it('retries windows-container call-by-reference failures through containerized CloseLabVIEW and retains the normalized failure reason', async () => {
+    const record = createWindowsContainerReadyRecord();
+    const diagnosticLogPath =
+      'C:\\workspace\\.storage\\reports\\repoid123456\\fileid123456\\container-temp\\lvtemporary_123.log';
+    const diagnosticText = [
+      'Using LabVIEW: "C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe"',
+      'Connection established with LabVIEW at port number 3363.',
+      'Error code : 66',
+      'Error message : Call By Reference in RunExecuteOperationVI.vi->RunOperationCore.vi->RunOperation.vi->RunOperation.vi.ProxyCaller',
+      'An error occurred while running the LabVIEW CLI.'
+    ].join('\r\n');
+    const runtimeStdout = [
+      'LabVIEWCLI started logging in file:  C:\\vi-history-suite\\container-temp\\lvtemporary_123.log',
+      'Using LabVIEW: "C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe"',
+      'Connection established with LabVIEW at port number 3363.',
+      '[vi-history-suite-container-meta]retryAttempts=1;prelaunchAttempted=1;iniPath=C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.ini;connectedPort=3363;openTimeout=180;afterLaunchTimeout=180.'
+    ].join('\n');
+    const runCommand = vi
+      .fn()
+      .mockResolvedValueOnce({
+        exitCode: 130,
+        signal: 'SIGKILL',
+        stdout: runtimeStdout,
+        stderr: 'comparison-command cancelled by user\n',
+        cancelled: true
+      })
+      .mockResolvedValueOnce({
+        exitCode: 0,
+        stdout: 'close ok',
+        stderr: ''
+      })
+      .mockResolvedValueOnce({
+        exitCode: 130,
+        signal: 'SIGKILL',
+        stdout: runtimeStdout,
+        stderr: 'comparison-command cancelled by user\n',
+        cancelled: true
+      });
+    const pathExists = vi.fn(async (filePath: string) => filePath === diagnosticLogPath);
+    const readFile = vi.fn(async (filePath: string) => {
+      if (filePath === diagnosticLogPath) {
+        return diagnosticText;
+      }
+      throw new Error(`Unexpected read: ${filePath}`);
+    });
+
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: 'C:\\workspace\\repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyFile: vi.fn().mockResolvedValue(undefined) as never,
+        copyDirectory: vi.fn().mockResolvedValue(undefined) as never,
+        removePath: vi.fn().mockResolvedValue(undefined) as never,
+        unlinkFile: vi.fn().mockResolvedValue(undefined) as never,
+        readdir: vi.fn().mockResolvedValue([]) as never,
+        readFile: readFile as never,
+        pathExists,
+        runCommand,
+        nowIso: vi.fn().mockReturnValue('2026-04-19T22:00:00.000Z'),
+        nowMs: vi.fn().mockReturnValue(1000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32'
+      }
+    );
+
+    expect(runCommand).toHaveBeenCalledTimes(3);
+    expect(runCommand.mock.calls[1]?.[0]).toMatchObject({
+      executable: 'powershell.exe'
+    });
+    expect(result.record.runtimeExecution.failureReason).toBe('command-exited-nonzero');
+    expect(result.record.runtimeExecution.diagnosticReason).toBe('labview-cli-call-by-reference');
+    expect(result.record.runtimeExecution.headlessSessionResetExecutable).toBe('powershell.exe');
+    expect(result.record.runtimeExecution.headlessSessionResetExitCode).toBe(0);
+    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+      'Attempted Windows headless session reset via LabVIEWCLI CloseLabVIEW after call-by-reference diagnosis, then retried the pair once.'
+    );
+    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+      'Comparison-report runtime retained a LabVIEW CLI Error 66 / Call By Reference failure before a cancellation-shaped transport exit was observed.'
     );
   });
 });
