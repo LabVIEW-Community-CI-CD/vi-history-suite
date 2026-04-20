@@ -2,12 +2,13 @@ import path from 'node:path';
 
 import { describe, expect, it, vi } from 'vitest';
 
-const { VSCE_PACKAGE_SPEC, buildPinnedVsceInvocation, resolveVsceOutputPath, runPinnedVsce } = require('../../scripts/runPinnedVsce.js') as {
+const { VSCE_PACKAGE_SPEC, buildPinnedVsceInvocation, resolvePathApi, resolveVsceOutputPath, runPinnedVsce } = require('../../scripts/runPinnedVsce.js') as {
   VSCE_PACKAGE_SPEC: string;
   buildPinnedVsceInvocation: (
     args: string[],
     deps?: { platform?: string }
   ) => { command: string; args: string[] };
+  resolvePathApi: (platform?: string) => typeof path.win32 | typeof path.posix;
   resolveVsceOutputPath: (args: string[]) => string | undefined;
   runPinnedVsce: (
     args: string[],
@@ -53,6 +54,7 @@ describe('runPinnedVsce', () => {
     const spawnSync = vi.fn(() => ({ status: 0 }));
     const mkdirSync = vi.fn();
     const cwd = 'D:\\repo';
+    const pathApi = resolvePathApi('win32');
 
     expect(
       runPinnedVsce(['package', '--out', 'test.vsix'], {
@@ -62,7 +64,9 @@ describe('runPinnedVsce', () => {
         platform: 'win32'
       })
     ).toBe(0);
-    expect(mkdirSync).toHaveBeenCalledWith(cwd, { recursive: true });
+    expect(mkdirSync).toHaveBeenCalledWith(pathApi.dirname(pathApi.resolve(cwd, 'test.vsix')), {
+      recursive: true
+    });
     expect(spawnSync).toHaveBeenCalledWith(
       'cmd.exe',
       ['/d', '/s', '/c', `npm.cmd exec --yes --package ${VSCE_PACKAGE_SPEC} -- vsce package --out test.vsix`],
@@ -77,7 +81,8 @@ describe('runPinnedVsce', () => {
   it('creates the parent directory for nested --out targets before invoking vsce', () => {
     const spawnSync = vi.fn(() => ({ status: 0 }));
     const mkdirSync = vi.fn();
-    const cwd = 'D:\\repo';
+    const cwd = '/repo';
+    const pathApi = resolvePathApi('linux');
 
     runPinnedVsce(['package', '--out', 'preview-evidence/test.vsix'], {
       spawnSync,
@@ -86,9 +91,12 @@ describe('runPinnedVsce', () => {
       platform: 'linux'
     });
 
-    expect(mkdirSync).toHaveBeenCalledWith(path.join(cwd, 'preview-evidence'), {
+    expect(mkdirSync).toHaveBeenCalledWith(
+      pathApi.dirname(pathApi.resolve(cwd, 'preview-evidence/test.vsix')),
+      {
       recursive: true
-    });
+      }
+    );
     expect(spawnSync).toHaveBeenCalledOnce();
   });
 });
