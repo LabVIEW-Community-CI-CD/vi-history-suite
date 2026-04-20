@@ -258,4 +258,81 @@ describe('runRuntimeSettingsLiveSessionProof script', () => {
       })
     ).toThrow('Runtime-settings live-session proof integration lane failed with exit code 2');
   });
+
+  it('retains reviewable history fields when the packet gate fails closed', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-live-proof-packet-fail-'));
+    temporaryDirectories.push(tempRoot);
+
+    const repoRoot = path.join(tempRoot, 'repo');
+    const evidenceDir = path.join(repoRoot, '.cache', 'runtime-settings-live-session-proof', 'latest');
+    const retainedPacketRoot = path.join(evidenceDir, 'integration-proof-output', 'packet-root');
+    const retainedLatestPacketPath = path.join(retainedPacketRoot, 'latest-summary.json');
+    await fs.mkdir(retainedPacketRoot, { recursive: true });
+    await fs.mkdir(repoRoot, { recursive: true });
+    await fs.writeFile(
+      retainedLatestPacketPath,
+      `${JSON.stringify(
+        {
+          packetRunId: '2026-04-20T01-45-26-400Z',
+          liveUptakeObservation: 'in-session-updated',
+          historyStance: 'candidate-live-uptake-observed',
+          historyProofStatus: 're-evaluation-required',
+          historyTotalRuns: 1,
+          historyReloadRequiredCount: 0,
+          historyInSessionUpdatedCount: 1,
+          historyUnknownObservationCount: 0,
+          providerDrift: false,
+          packetJsonPath: 'C:\\retained\\probe-summary.json',
+          packetMarkdownPath: 'C:\\retained\\probe-summary.md',
+          latestPacketJsonPath: 'C:\\retained\\latest-summary.json',
+          latestPacketMarkdownPath: 'C:\\retained\\latest-summary.md'
+        },
+        null,
+        2
+      )}\n`,
+      'utf8'
+    );
+
+    expect(() =>
+      proofScript.run([], {
+        repoRoot,
+        platform: 'win32',
+        fs: require('node:fs'),
+        historyFs: require('node:fs'),
+        now: () => new Date('2026-04-20T02:05:00.000Z'),
+        spawnSync: vi.fn().mockReturnValue({
+          status: 0,
+          stdout: 'integration ok\n',
+          stderr: ''
+        }) as never,
+        packetGate: {
+          run: vi.fn().mockImplementation(() => {
+            throw new Error('Runtime-settings live-session probe packet failed validation');
+          })
+        }
+      })
+    ).toThrow('Runtime-settings live-session probe packet failed validation');
+
+    const receiptJson = JSON.parse(
+      await fs.readFile(path.join(evidenceDir, 'runtime-settings-live-session-proof.json'), 'utf8')
+    ) as {
+      status: string;
+      historyReceipt?: { summary?: Record<string, unknown> };
+      policyBoundary?: { summary?: Record<string, unknown> };
+    };
+    expect(receiptJson.status).toBe('failed');
+    expect(receiptJson.historyReceipt?.summary?.stance).toBe('candidate-live-uptake-observed');
+    expect(receiptJson.historyReceipt?.summary?.proofStatus).toBe('re-evaluation-required');
+    expect(receiptJson.policyBoundary?.summary?.latestProviderDrift).toBe(false);
+
+    const receiptMarkdown = await fs.readFile(
+      path.join(evidenceDir, 'runtime-settings-live-session-proof.md'),
+      'utf8'
+    );
+    expect(receiptMarkdown).toContain('History stance: `candidate-live-uptake-observed`');
+    expect(receiptMarkdown).toContain('Proof status: `re-evaluation-required`');
+    expect(receiptMarkdown).toContain('In-session-updated runs: `1`');
+    expect(receiptMarkdown).toContain('Latest provider drift: `false`');
+    expect(receiptMarkdown).toContain('Per-run packet JSON: `C:\\retained\\probe-summary.json`');
+  });
 });

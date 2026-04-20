@@ -310,6 +310,7 @@ function run(argv = process.argv.slice(2), deps = {}) {
   } catch (error) {
     const failureMessage = error instanceof Error ? error.message : String(error);
     const retainedPacketSummary = tryReadJson(fsApi, retainedLatestPacketPath);
+    const derivedHistorySummary = deriveHistorySummaryFromPacketSummary(retainedPacketSummary);
     receipt = {
       schema: 'vi-history-suite/runtime-settings-live-session-proof@v1',
       status: 'failed',
@@ -326,12 +327,19 @@ function run(argv = process.argv.slice(2), deps = {}) {
       probePacket: {
         retainedPacketRoot,
         latestPacketPath: retainedLatestPacketPath,
-        probeCommandSummaryPath
+        probeCommandSummaryPath,
+        ...projectProbePacketFromSummary(retainedPacketSummary)
       },
+      historyReceipt: derivedHistorySummary
+        ? {
+            summary: derivedHistorySummary
+          }
+        : undefined,
       packetSummary:
         retainedPacketSummary && typeof retainedPacketSummary === 'object'
           ? retainedPacketSummary
           : undefined,
+      policyBoundary: derivePolicyBoundaryFromPacketSummary(retainedPacketSummary),
       failureMessage
     };
     writeReceiptFiles(fsApi, receiptJsonPath, receiptMarkdownPath, receipt);
@@ -399,6 +407,65 @@ function writeReceiptFiles(fsApi, receiptJsonPath, receiptMarkdownPath, receipt)
   fsApi.writeFileSync(receiptMarkdownPath, renderReceiptMarkdown(receipt), 'utf8');
 }
 
+function projectProbePacketFromSummary(packetSummary) {
+  if (!packetSummary || typeof packetSummary !== 'object') {
+    return {};
+  }
+
+  return {
+    packetJsonPath: packetSummary.packetJsonPath,
+    packetMarkdownPath: packetSummary.packetMarkdownPath,
+    latestPacketJsonPath: packetSummary.latestPacketJsonPath,
+    latestPacketMarkdownPath: packetSummary.latestPacketMarkdownPath
+  };
+}
+
+function deriveHistorySummaryFromPacketSummary(packetSummary) {
+  if (!packetSummary || typeof packetSummary !== 'object') {
+    return undefined;
+  }
+
+  const historyFields = [
+    'historyTotalRuns',
+    'historyReloadRequiredCount',
+    'historyInSessionUpdatedCount',
+    'historyUnknownObservationCount',
+    'historyStance',
+    'historyProofStatus'
+  ];
+  if (!historyFields.some((field) => packetSummary[field] !== undefined)) {
+    return undefined;
+  }
+
+  return {
+    totalRuns: packetSummary.historyTotalRuns,
+    reloadRequiredCount: packetSummary.historyReloadRequiredCount,
+    inSessionUpdatedCount: packetSummary.historyInSessionUpdatedCount,
+    unknownObservationCount: packetSummary.historyUnknownObservationCount,
+    latestObservation: packetSummary.liveUptakeObservation,
+    latestProviderDrift: packetSummary.providerDrift,
+    stance: packetSummary.historyStance,
+    proofStatus: packetSummary.historyProofStatus
+  };
+}
+
+function derivePolicyBoundaryFromPacketSummary(packetSummary) {
+  if (!packetSummary || typeof packetSummary !== 'object') {
+    return undefined;
+  }
+
+  if (packetSummary.providerDrift === undefined) {
+    return undefined;
+  }
+
+  return {
+    outcome: 'packet-validation-failed-before-policy-boundary',
+    summary: {
+      latestProviderDrift: packetSummary.providerDrift
+    }
+  };
+}
+
 function renderReceiptMarkdown(receipt) {
   return [
     '# Runtime Settings Live-Session Proof Receipt',
@@ -409,8 +476,8 @@ function renderReceiptMarkdown(receipt) {
     `- Evidence dir: \`${receipt.evidenceDir}\``,
     `- Packet run id: \`${formatReceiptValue(receipt.packetSummary?.packetRunId)}\``,
     `- Live uptake observation: \`${formatReceiptValue(receipt.packetSummary?.liveUptakeObservation)}\``,
-    `- History stance: \`${formatReceiptValue(receipt.historyReceipt?.summary?.stance)}\``,
-    `- Proof status: \`${formatReceiptValue(receipt.historyReceipt?.summary?.proofStatus)}\``,
+    `- History stance: \`${formatReceiptValue(receipt.historyReceipt?.summary?.stance ?? receipt.packetSummary?.historyStance)}\``,
+    `- Proof status: \`${formatReceiptValue(receipt.historyReceipt?.summary?.proofStatus ?? receipt.packetSummary?.historyProofStatus)}\``,
     '',
     '## Integration Step',
     '',
@@ -425,8 +492,8 @@ function renderReceiptMarkdown(receipt) {
     `- Retained packet root: \`${formatReceiptValue(receipt.probePacket?.retainedPacketRoot)}\``,
     `- Latest packet: \`${formatReceiptValue(receipt.probePacket?.latestPacketPath)}\``,
     `- Probe command summary: \`${formatReceiptValue(receipt.probePacket?.probeCommandSummaryPath)}\``,
-    `- Per-run packet JSON: \`${formatReceiptValue(receipt.probePacket?.packetJsonPath)}\``,
-    `- Per-run packet Markdown: \`${formatReceiptValue(receipt.probePacket?.packetMarkdownPath)}\``,
+    `- Per-run packet JSON: \`${formatReceiptValue(receipt.probePacket?.packetJsonPath ?? receipt.packetSummary?.packetJsonPath)}\``,
+    `- Per-run packet Markdown: \`${formatReceiptValue(receipt.probePacket?.packetMarkdownPath ?? receipt.packetSummary?.packetMarkdownPath)}\``,
     `- Snapshot JSON: \`${formatReceiptValue(receipt.probePacket?.snapshotJsonPath)}\``,
     `- Snapshot Markdown: \`${formatReceiptValue(receipt.probePacket?.snapshotMarkdownPath)}\``,
     '',
@@ -434,16 +501,16 @@ function renderReceiptMarkdown(receipt) {
     '',
     `- JSON: \`${formatReceiptValue(receipt.historyReceipt?.jsonPath)}\``,
     `- Markdown: \`${formatReceiptValue(receipt.historyReceipt?.markdownPath)}\``,
-    `- Total runs: \`${formatReceiptValue(receipt.historyReceipt?.summary?.totalRuns)}\``,
-    `- Reload-required runs: \`${formatReceiptValue(receipt.historyReceipt?.summary?.reloadRequiredCount)}\``,
-    `- In-session-updated runs: \`${formatReceiptValue(receipt.historyReceipt?.summary?.inSessionUpdatedCount)}\``,
-    `- Unknown-observation runs: \`${formatReceiptValue(receipt.historyReceipt?.summary?.unknownObservationCount)}\``,
+    `- Total runs: \`${formatReceiptValue(receipt.historyReceipt?.summary?.totalRuns ?? receipt.packetSummary?.historyTotalRuns)}\``,
+    `- Reload-required runs: \`${formatReceiptValue(receipt.historyReceipt?.summary?.reloadRequiredCount ?? receipt.packetSummary?.historyReloadRequiredCount)}\``,
+    `- In-session-updated runs: \`${formatReceiptValue(receipt.historyReceipt?.summary?.inSessionUpdatedCount ?? receipt.packetSummary?.historyInSessionUpdatedCount)}\``,
+    `- Unknown-observation runs: \`${formatReceiptValue(receipt.historyReceipt?.summary?.unknownObservationCount ?? receipt.packetSummary?.historyUnknownObservationCount)}\``,
     '',
     '## Policy Boundary',
     '',
     `- Outcome: \`${formatReceiptValue(receipt.policyBoundary?.outcome)}\``,
     `- Provider selection coverage: \`${formatReceiptValue(receipt.policyBoundary?.summary?.providerSelectionCoverage)}\``,
-    `- Latest provider drift: \`${formatReceiptValue(receipt.policyBoundary?.summary?.latestProviderDrift)}\``,
+    `- Latest provider drift: \`${formatReceiptValue(receipt.policyBoundary?.summary?.latestProviderDrift ?? receipt.packetSummary?.providerDrift)}\``,
     '',
     '## Failure',
     '',
@@ -480,6 +547,9 @@ module.exports = {
   resolveHost,
   resolveEvidenceDir,
   buildIntegrationProofCommand,
+  projectProbePacketFromSummary,
+  deriveHistorySummaryFromPacketSummary,
+  derivePolicyBoundaryFromPacketSummary,
   renderReceiptMarkdown,
   run
 };
