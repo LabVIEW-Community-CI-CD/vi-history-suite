@@ -207,16 +207,18 @@ function buildDecisionRecordAutomationEnv(): Record<string, string> {
 }
 
 function buildIntegrationControlEnv(): Record<string, string> {
+  const controlEnv: Record<string, string> = {
+    VI_HISTORY_SUITE_DISABLE_PERSISTENT_USER_PATH_ADMISSION: '1'
+  };
   const proofOutputDirectory = (
     process.env.VI_HISTORY_SUITE_RUNTIME_SETTINGS_LIVE_SESSION_PROOF_OUTPUT_DIR ?? ''
   ).trim();
-  if (!proofOutputDirectory) {
-    return {};
+  if (proofOutputDirectory) {
+    controlEnv.VI_HISTORY_SUITE_RUNTIME_SETTINGS_LIVE_SESSION_PROOF_OUTPUT_DIR =
+      proofOutputDirectory;
   }
 
-  return {
-    VI_HISTORY_SUITE_RUNTIME_SETTINGS_LIVE_SESSION_PROOF_OUTPUT_DIR: proofOutputDirectory
-  };
+  return controlEnv;
 }
 
 void main().catch((error) => {

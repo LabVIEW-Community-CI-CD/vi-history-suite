@@ -128,7 +128,7 @@ export async function activate(
     }
   };
   let admittedLocalRuntimeSettingsCli: MaterializedLocalRuntimeSettingsCli | undefined;
-  if (context.globalStorageUri && vscode.workspace.workspaceFolders?.length) {
+  if (context.globalStorageUri) {
     admittedLocalRuntimeSettingsCli = await admitLocalRuntimeSettingsCliToTerminalPath(
       context.globalStorageUri.fsPath,
       context.extensionPath,
