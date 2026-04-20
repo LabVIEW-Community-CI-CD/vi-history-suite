@@ -470,7 +470,11 @@ describe('localRuntimeSettingsCli', () => {
     tempDirectories.push(tempRoot);
 
     const appDataRoot = path.join(tempRoot, 'AppData', 'Roaming');
-    const settingsFilePath = path.join(appDataRoot, 'Code', 'User', 'settings.json');
+    const settingsFilePath = resolveDefaultVsCodeSettingsPath(
+      'win32',
+      { APPDATA: appDataRoot },
+      () => tempRoot
+    );
     const stdout: string[] = [];
     const prompts = ['', '', '', ''];
 
@@ -520,7 +524,11 @@ describe('localRuntimeSettingsCli', () => {
     tempDirectories.push(tempRoot);
 
     const appDataRoot = path.join(tempRoot, 'AppData', 'Roaming');
-    const settingsFilePath = path.join(appDataRoot, 'Code', 'User', 'settings.json');
+    const settingsFilePath = resolveDefaultVsCodeSettingsPath(
+      'win32',
+      { APPDATA: appDataRoot },
+      () => tempRoot
+    );
     const stdout: string[] = [];
     const prompts = ['', '', '2024', '', '2026', ''];
 
@@ -577,7 +585,11 @@ describe('localRuntimeSettingsCli', () => {
     tempDirectories.push(tempRoot);
 
     const appDataRoot = path.join(tempRoot, 'AppData', 'Roaming');
-    const settingsFilePath = path.join(appDataRoot, 'Code', 'User', 'settings.json');
+    const settingsFilePath = resolveDefaultVsCodeSettingsPath(
+      'win32',
+      { APPDATA: appDataRoot },
+      () => tempRoot
+    );
     const stdout: string[] = [];
     const prompts = ['docker', 'linux', '2024', '2026', '', 'windows', '', ''];
 
