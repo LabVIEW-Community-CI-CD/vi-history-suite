@@ -342,14 +342,14 @@ Information-for-users review cases:
 - `TEST-INTEG-003`: run the real extension-host report action and retain a
   truthful runtime-selection summary that justifies either `ready-for-runtime`
   or `blocked-runtime` on the active host
-- `TEST-INTEG-009`: run the real extension-host local-runtime settings CLI
-  preparation command, execute the generated launcher against temporary and
-  default settings targets, and prove the user-scope CLI can switch the
-  persisted provider request between `host` and `docker` while writing
-  LabVIEW version and bitness facts without PATH mutation, hidden-path
-  reconstruction, or admin elevation; the explicit Windows proof lane is
-  `npm run test:integration:windows`, which forces the `.cmd` launcher path
-  and proves the default no-`--settings-file` target under a disposable
+- `TEST-INTEG-009`: run the real extension-host repo-terminal admission path
+  and prove `vihs` is available as a bare command in a supported repo-opened
+  terminal session, can switch the persisted provider request between `host`
+  and `docker` while writing LabVIEW version and bitness facts, and does so
+  without hidden-path reconstruction, a mandatory prepare-first flow, manual
+  shell-profile editing, or admin elevation; the explicit Windows proof lane
+  is `npm run test:integration:windows`, which proves arbitrary-cwd invocation
+  plus the default no-`--settings-file` target under a disposable
   `APPDATA\\Code\\User\\settings.json`, aligned to the active disposable
   Windows integration-host profile
 - `TEST-UNIT-072`: prove the canonical comparison-report smoke runner selects a
@@ -1778,20 +1778,19 @@ Information-for-users review cases:
 - `TEST-UNIT-344`: verify missing, unresolved, or unsupported provider/runtime
   selection blocks compare in the panel and emits a VS Code warning
   notification
-- `TEST-UNIT-345`: verify the governed prepare surface materializes platform
-  launchers under user-profile storage, retains the launcher-location
-  contract, writes provider plus `viHistorySuite.labviewVersion` and
-  `viHistorySuite.labviewBitness`, and stays inside user-owned installation
-  doctrine without PATH mutation, admin elevation, or a prebuilt
-  VSIX-shipped CLI payload; real current-host plus explicit Windows launcher
-  execution are traced separately by `TEST-INTEG-009`; live mutation of the
-  active real user-profile VS Code settings target while Code is already
-  running remains a later proof seam, and the CLI plus the settings-driven
-  compare-preflight/runtime-doctor surfaces warn users to reload or restart
-  the window before Compare when Code is already open
+- `TEST-UNIT-345`: verify the governed repo-terminal `vihs` surface resolves
+  as a bare command in supported repo-opened terminals, writes provider plus
+  `viHistorySuite.labviewVersion` and `viHistorySuite.labviewBitness`, and
+  stays inside user-owned installation doctrine without hidden-path
+  reconstruction, a mandatory prepare-first flow, manual shell-profile
+  editing, admin elevation, or a prebuilt VSIX-shipped CLI payload; real
+  current-host execution remains traced separately by `TEST-INTEG-009`, and
+  the CLI plus the settings-driven compare-preflight/runtime-doctor surfaces
+  warn users to reload or restart the window only when an already-running
+  session still shows stale provider or runtime facts
 - `TEST-UNIT-346`: verify the installed compare contract defaults to host and
   admits Docker only as a bounded expert provider persisted and rechecked
-  through the generated settings CLI
+  through the admitted `vihs` repo-terminal settings surface
 - `TEST-UNIT-347`: verify Docker preflight derives the governed image family
   from the current engine and fails closed on unsupported Docker `x86` with
   host/`x64` corrective guidance
@@ -1802,7 +1801,7 @@ Information-for-users review cases:
   after the governing runtime-selection layer confirms the active
   provider/version/bitness bundle, and that settings-only fallback cannot
   surface a publishable runtime-backed ready state
-- `TEST-UNIT-350`: verify the generated settings CLI, compare-preflight
+- `TEST-UNIT-350`: verify the `vihs` settings surface, compare-preflight
   surface, and runtime-doctor surface retain conditional stale-result
   guidance while live uptake of CLI-written settings into an already-running
   VS Code session is still only partially proven, and that retained
@@ -1810,42 +1809,39 @@ Information-for-users review cases:
   evidence remains explicit for that boundary, while the repo-owned
   `npm run proof:runtime-settings-live-session` wrapper snapshots the current
   packet/history/policy bundle into one reviewable receipt directory
-- `TEST-UNIT-351`: verify the generated settings CLI accepts governed VS Code
+- `TEST-UNIT-351`: verify the `vihs` settings surface accepts governed VS Code
   settings targets with JSONC comments or trailing commas, names the effective
   settings target in update or validation output, preserves unrelated settings
   content, rejects unsupported workspace-target widening, and rewrites only
   provider/version/bitness facts
-- `TEST-UNIT-352`: verify the materialized settings-CLI launcher either
-  executes through the governed runtime contract or fails closed with one
-  actionable missing-or-stale runtime dependency message that directs the user
-  back to `VI History: Prepare Local Runtime Settings CLI` instead of
-  assuming host PATH behavior
-- `TEST-UNIT-353`: verify `labviewViHistory.prepareLocalRuntimeSettingsCli`
-  retains explicit trust and settings-target governance, including the
-  governed materialization location, launcher-location contract, supported
-  refresh action, the default-user-versus-explicit-settings target contract,
-  and the admitted untrusted-workspace posture while compare remains blocked
-  there
-- `TEST-UNIT-354`: verify the provider CLI exposes one governed validation
-  surface at `--validate` that reports persisted provider/version/bitness
-  truth plus runtime-validation outcome without reopening path-picking or a
-  panel-side provider picker
+- `TEST-UNIT-352`: verify the bare `vihs` terminal entrypoint either executes
+  through the governed runtime contract or fails closed with one actionable
+  missing-or-stale runtime dependency message that restores the admitted
+  terminal surface without hidden-path reconstruction
+- `TEST-UNIT-353`: verify `vihs` with no arguments presents the admitted
+  runtime-settings actions for the active repo, prints exact copyable next commands,
+  and, on interactive TTY surfaces, admits guided selection of
+  supported provider/version/bitness values without command memorization
+- `TEST-UNIT-354`: verify the `vihs` surface exposes one governed validation
+  action that reports persisted provider/version/bitness truth plus
+  runtime-validation outcome without reopening path-picking or a panel-side
+  provider picker
 - `TEST-UNIT-355`: verify Windows host runtime validation accepts the
   governed mixed-bitness x64 host bundle when the canonical host resolves
   `C:\Program Files\National Instruments\LabVIEW 2026\LabVIEW.exe` together
   with the installed x86
   `C:\Program Files (x86)\National Instruments\Shared\LabVIEW CLI\LabVIEWCLI.exe`
   instead of failing closed with `labview-cli-not-found-for-bitness`
-- `TEST-INTEG-010`: prove the generated settings-CLI launcher runtime
+- `TEST-INTEG-010`: prove the bare `vihs` terminal entrypoint runtime
   dependency contract on the supported host surface and retain the actionable
-  failure mode that directs the operator back to the prepare command when the
-  governed runtime dependency is unavailable or stale
-- `TEST-INTEG-011`: prove the governed provider-CLI validation surface at
-  `--validate` reports the persisted provider/version/bitness bundle and the
-  bounded runtime-validation outcome from a real extension-host session; the
-  explicit Windows lane shall prove that a persisted `docker` / `2026` / `x64`
-  bundle validates as `ready` with `windows-container` plus `labview-cli` when
-  Docker Desktop and the governed Windows image are available
+  failure mode that restores the admitted terminal surface when the governed
+  runtime dependency is unavailable or stale
+- `TEST-INTEG-011`: prove the governed `vihs` validation action reports the
+  persisted provider/version/bitness bundle and the bounded runtime-validation
+  outcome from a real extension-host session; the explicit Windows lane shall
+  prove that a persisted `docker` / `2026` / `x64` bundle validates as `ready`
+  with `windows-container` plus `labview-cli` when Docker Desktop and the
+  governed Windows image are available
 - `TEST-INTEG-012`: prove the explicit Windows x64 host lane reports a
   persisted `host` / `2026` / `x64` bundle as `ready` on the canonical host
   when the admitted local runtime shape is x64 `LabVIEW.exe` plus the
@@ -1877,11 +1873,10 @@ Information-for-users review cases:
   supporting probe, packet/history/policy gates, and repo-owned proof-receipt
   surface remain explicit until direct active-session uptake is end-to-end
   proven
-- `TEST-DOC-107`: review the manifest, prepare-command surface, SRS, RTM, and
-  the test plan and confirm the generated settings-CLI prepare command plus
-  the command-reference and FAQ help package retain explicit launcher
-  discovery, refresh, trust, and settings-target governance instead of
-  relying on chat-memory doctrine
+- `TEST-DOC-107`: review the manifest, terminal-entrypoint surface, SRS, RTM,
+  and the test plan and confirm the bare `vihs` contract plus its copyable
+  command and interactive-discovery posture remain explicit instead of relying
+  on chat-memory doctrine
 - `TEST-DOC-108`: review current-state, the host-operation matrix docs, the
   tracked host `CreateComparisonReport` packet, the SRS, RTM, and the test
   plan and confirm the remaining LabVIEW 2026 prerequisite-operation seams
@@ -2065,13 +2060,12 @@ Information-for-users review cases:
   and confirm the control plane now keeps the current released Docker-only
   installed contract explicit while promoting `TRANCHE-016` /
   `ISSUE-0412` as the active direction
-- `TEST-DOC-105`: review SRS, RTM, test plan, extension-execution-policy,
-  `ADR-0038`, and ISSUE-0412 and confirm the active develop-line
-  installed-user replacement contract is explicit and truthfully traced around
-  required LabVIEW version + bitness settings, host-default local
-  `LabVIEWCLI`, bounded expert Docker admission through the generated CLI,
-  explicit compare preflight, panel + warning fail-closed behavior, and the
-  Windows exact-runtime-selection fail-closed behavior retained under
+- `TEST-DOC-105`: review SRS, RTM, and the test plan and confirm the active
+  develop-line installed-user replacement contract is explicit and truthfully
+  traced around required LabVIEW version + bitness settings, host-default
+  local `LabVIEWCLI`, bounded expert Docker admission through the bare `vihs`
+  surface, explicit compare preflight, panel + warning fail-closed behavior,
+  and the Windows exact-runtime-selection fail-closed behavior retained under
   `VHS-REQ-532`
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
