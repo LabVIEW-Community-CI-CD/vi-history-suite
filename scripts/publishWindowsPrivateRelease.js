@@ -301,9 +301,11 @@ async function createOrUpdateRelease(projectPath, release, token, deps = {}) {
   const existing = await readRelease(projectPath, release.tag, token, deps);
   const body = {
     name: release.name,
-    description: release.description,
-    released_at: release.releasedAt
+    description: release.description
   };
+  if (release.releasedAt) {
+    body.released_at = release.releasedAt;
+  }
 
   if (existing) {
     const response = await gitLabRequest(
