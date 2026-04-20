@@ -59,7 +59,7 @@ describe('bundled documentation', () => {
       'Windows defaults to local <code>LabVIEWCLI</code> when the persisted provider is absent'
     );
     expect(loaded?.pageBodyHtml).toContain(
-      'Docker remains a bounded expert provider selected through the generated settings CLI'
+      'Docker remains a bounded expert provider selected through the published install/bootstrap surface or later <code>vihs</code> updates'
     );
     expect(loaded?.pageBodyHtml).toContain(
       'the current bundle is <code>ready</code>, <code>needs-image-acquisition</code>, or blocked'

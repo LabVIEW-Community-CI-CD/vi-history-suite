@@ -25,17 +25,21 @@ Installed-user start pages:
 
 Maintained public candidate workflow on `develop`:
 
-1. run `VI History: Prepare Local Runtime Settings CLI`
-2. persist the provider, LabVIEW version, and LabVIEW bitness through
-   `vihs-runtime-settings --provider <host|docker> --labview-version <major> --labview-bitness <x86|x64>`
-3. if VS Code was already open when the CLI updated settings, reload or restart
-   the window
-4. run `VI History: Check Runtime Readiness`
-5. open a trusted Git repo that contains an eligible LabVIEW VI
-6. run `VI History`
-7. select exactly two retained revisions with the commit checkboxes
-8. review the explicit compare preflight section, then choose `Compare`
-9. review the generated comparison report or the retained blocked/runtime facts
+1. in Windows PowerShell, run
+   `irm https://gitlab.com/svelderrainruiz/vi-history-suite/-/raw/develop/scripts/install-vihs-extension.ps1 | iex`
+2. let the bootstrap install the Marketplace extension, seed or read back the
+   current settings bundle, and keep or change provider/year/bitness with the
+   keyboard
+3. run `vihs --validate`
+4. if Docker is selected, confirm Docker Desktop is already in
+   Windows-container mode
+5. if VS Code was already open when settings changed, reload or restart only if
+   the session still shows stale provider or runtime facts
+6. open a trusted Git repo that contains an eligible LabVIEW VI
+7. run `VI History`
+8. select exactly two retained revisions with the commit checkboxes
+9. review the explicit compare preflight section, then choose `Compare`
+10. review the generated comparison report or the retained blocked/runtime facts
 
 You do not need to fork this repo or choose a branch to use the installed
 extension locally.
@@ -47,7 +51,7 @@ It is intentionally bounded:
 - the maintained public candidate on `develop` opens host-default Windows
   local `LabVIEWCLI` plus one bounded expert Docker provider
 - provider, LabVIEW version, and LabVIEW bitness stay explicit and user-set
-  through the generated settings CLI
+  through the published install/bootstrap surface plus later `vihs` updates
 - Docker `x86` is unsupported and fails closed with host-or-`x64` guidance
 - runtime readiness and compare preflight stay explicit before compare
 - repo-agnostic exact selected/base compare remains the installed review flow
@@ -72,9 +76,8 @@ explicit:
   CLI instead of a panel-side picker.
 - `viHistorySuite.labviewVersion` and `viHistorySuite.labviewBitness` are
   required across both provider classes.
-- `VI History: Check Runtime Readiness` and `vihs-runtime-settings --validate`
-  expose whether the current bundle is `ready`, `needs-image-acquisition`, or
-  blocked.
+- `vihs --validate` exposes whether the current bundle is `ready`,
+  `needs-image-acquisition`, or blocked.
 - If Docker is selected, the extension derives the governed Windows or Linux
   image family from the current Docker engine and fails closed on unsupported
   `x86`.

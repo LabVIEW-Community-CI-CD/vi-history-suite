@@ -21,7 +21,7 @@ split:
 - exact released `main` / Marketplace `1.2.2`: Docker-only and x64-only
 - maintained public `develop` candidate: host-default Windows local
   `LabVIEWCLI` plus one bounded expert Docker provider selected through the
-  generated settings CLI
+  published Windows PowerShell install/bootstrap surface and later `vihs`
 
 Required surfaces:
 
@@ -44,14 +44,15 @@ Not required:
 On the maintained public candidate line, installed compare begins from one
 explicit provider request plus required LabVIEW facts:
 
-- `vihs-runtime-settings --provider <host|docker> --labview-version <major> --labview-bitness <x86|x64>`
-- `VI History: Check Runtime Readiness`
-- `vihs-runtime-settings --validate`
+- `irm https://gitlab.com/svelderrainruiz/vi-history-suite/-/raw/develop/scripts/install-vihs-extension.ps1 | iex`
+- `vihs`
+- `vihs --validate`
 
 The candidate runtime rules are:
 
 - host is the default provider on Windows local `LabVIEWCLI`
-- Docker remains a bounded expert provider selected through the generated CLI
+- Docker remains a bounded expert provider selected through the bootstrap or
+  later `vihs`
 - Docker `x86` is unsupported and fails closed with host-or-`x64` guidance
 - if VS Code was already open when the CLI updated settings, reload or restart
   before trusting compare preflight
@@ -70,9 +71,9 @@ Before the first compare on a fresh machine, confirm the relevant runtime is
 actually ready:
 
 ```bash
-VI History: Prepare Local Runtime Settings CLI
-vihs-runtime-settings --provider <host|docker> --labview-version <major> --labview-bitness <x86|x64>
-vihs-runtime-settings --validate
+irm https://gitlab.com/svelderrainruiz/vi-history-suite/-/raw/develop/scripts/install-vihs-extension.ps1 | iex
+vihs
+vihs --validate
 ```
 
 If you are using Docker, also confirm:
@@ -90,13 +91,15 @@ correct provider, version, or bitness before expecting Compare to run.
 
 1. Install the extension from the VS Code Marketplace, from the exact released
    VSIX, or from a candidate build when you intentionally want the next line.
-2. On the maintained public candidate, run
-   `VI History: Prepare Local Runtime Settings CLI`.
-3. Persist the provider, LabVIEW version, and LabVIEW bitness through
-   `vihs-runtime-settings`.
-4. If VS Code was already open when the CLI changed settings, reload or
-   restart the window.
-5. Run `VI History: Check Runtime Readiness`.
+2. On the maintained public candidate, run the published Windows PowerShell
+   bootstrap
+   `irm https://gitlab.com/svelderrainruiz/vi-history-suite/-/raw/develop/scripts/install-vihs-extension.ps1 | iex`.
+3. Keep or change provider, LabVIEW year, and bitness through that bootstrap
+   or a later `vihs` run.
+4. If VS Code was already open when the bootstrap or `vihs` changed settings,
+   reload or restart the window only if the session still shows stale
+   provider or runtime facts.
+5. Run `vihs --validate`.
 6. Open a trusted Git repository with an eligible LabVIEW VI.
 7. Run `VI History`.
 8. Select exactly two retained revisions with the commit checkboxes.

@@ -97,6 +97,32 @@ See also:
 This section and the FAQ are the governed installed-user help surface for the
 runtime-settings CLI on the active branch.
 
+`irm https://gitlab.com/svelderrainruiz/vi-history-suite/-/raw/develop/scripts/install-vihs-extension.ps1 | iex`
+
+- Purpose: run the governed Windows PowerShell install/bootstrap surface for a
+  Marketplace install, first-time settings selection, and immediate `vihs`
+  materialization in the same session.
+- Use when: installing the maintained candidate from the command line on
+  Windows and you want provider/year/bitness selection during installation
+  instead of discovering setup later through chat memory or hidden paths.
+- Notes:
+  - the bootstrap itself runs the Marketplace install through
+    `code --install-extension svelderrainruiz.vi-history-suite --force`; raw
+    `code --install-extension` alone is not the governed interactive install
+    surface
+  - on interactive Windows PowerShell sessions, the bootstrap derives platform
+    from the current host and prompts only for provider, LabVIEW year, and
+    bitness; `Enter` keeps the current or seeded value at each prompt
+  - when settings are missing, the bootstrap seeds
+    `host/windows/2026/x64` before readback or selection
+  - on non-interactive surfaces, the bootstrap retains or seeds that same
+    governed default bundle and prints exact follow-up `vihs` commands instead
+    of hanging on prompts
+  - the bootstrap writes the governed VS Code user `settings.json` target and
+    materializes the `vihs` and `vihs-runtime-settings` launchers under the
+    extension-global storage root without manual shell-profile editing or
+    machine-wide install doctrine
+
 `VI History: Prepare Local Runtime Settings CLI`
 
 - Purpose: repair or refresh the governed `vihs` terminal entrypoint plus the
@@ -106,6 +132,9 @@ runtime-settings CLI on the active branch.
 - Notes:
   - the governed materialization root is the extension-global storage path
     reported by the command result
+  - the published install/bootstrap surface and extension activation both
+    materialize the same admitted `vihs` launchers; use this prepare command
+    only when that admitted terminal surface needs repair or refresh
   - extension activation admits bare `vihs` in supported VS Code terminals and,
     on Windows, persists governed user-scope PATH admission so new PowerShell
     windows can resolve `vihs` by name without manual shell-profile editing or

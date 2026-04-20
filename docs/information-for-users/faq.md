@@ -55,6 +55,26 @@ Use the route that matches your real task.
 - If you are editing the authority docs package, start with
   `docs/documentation-workbench.md` and the docs-workbench gate.
 
+### How do I install from PowerShell and choose settings during install?
+
+Use the governed Windows PowerShell bootstrap command:
+
+`irm https://gitlab.com/svelderrainruiz/vi-history-suite/-/raw/develop/scripts/install-vihs-extension.ps1 | iex`
+
+- That bootstrap runs the Marketplace install through
+  `code --install-extension svelderrainruiz.vi-history-suite --force`, but raw
+  `code --install-extension` alone is not the governed interactive install
+  surface.
+- The bootstrap derives platform from the current host and asks only for
+  provider, LabVIEW year, and bitness.
+- If settings are missing, it seeds `host/windows/2026/x64` first, reads the
+  current bundle back, and lets you keep each value by pressing `Enter`.
+- If PowerShell is not interactive, the bootstrap retains or seeds the
+  governed default bundle and prints the exact follow-up `vihs` commands
+  instead of hanging on prompts.
+- After install, use `vihs` to adjust settings later and `vihs --validate` to
+  confirm what the current settings target actually persisted.
+
 ### How do I switch between host and Docker on the active branch?
 
 In supported Windows PowerShell sessions and admitted VS Code terminals, type
@@ -84,8 +104,9 @@ stale provider or runtime facts.
 
 The governed launchers live under the extension-global storage root.
 
-- Extension activation materializes the launchers there and admits bare `vihs`
-  in supported VS Code terminals.
+- The published install/bootstrap surface and extension activation both
+  materialize the launchers there.
+- Extension activation admits bare `vihs` in supported VS Code terminals.
 - On Windows, extension admission also persists governed user-scope PATH
   admission so new standalone PowerShell windows can resolve `vihs` by name
   without manual shell-profile editing or machine-wide install doctrine.

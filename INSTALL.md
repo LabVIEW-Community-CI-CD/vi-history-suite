@@ -16,7 +16,7 @@ Required surfaces:
 
 - Visual Studio Code on native Windows
 - a trusted Git repository containing an eligible LabVIEW VI
-- the generated runtime-settings CLI
+- the governed Windows PowerShell install/bootstrap command
 - installed LabVIEW selected through the runtime-settings CLI for the host lane
 - Docker Desktop in Windows-container mode only when using the bounded expert
   Docker lane
@@ -29,15 +29,18 @@ Not required:
 
 Private-release candidate flow:
 
-1. Run `VI History: Prepare Local Runtime Settings CLI`.
-2. Set the intended provider and runtime facts with one of these:
-   - `vihs-runtime-settings --provider host --labview-version 2026 --labview-bitness x64`
-   - `vihs-runtime-settings --provider docker --labview-version 2026 --labview-bitness x64`
-3. If you selected Docker, confirm Docker Desktop is already in
+1. In Windows PowerShell, run
+   `irm https://gitlab.com/svelderrainruiz/vi-history-suite/-/raw/develop/scripts/install-vihs-extension.ps1 | iex`.
+2. Let the bootstrap install the Marketplace extension, materialize the
+   admitted `vihs` command, and keep or change provider/year/bitness in the
+   same PowerShell session.
+3. Run `vihs --validate`.
+4. If you selected Docker, confirm Docker Desktop is already in
    Windows-container mode before trusting Compare.
-4. Reload or restart the VS Code window if it was already open when the CLI
-   updated settings.
-5. Open the trusted repo, run `VI History`, select the commit pair, review the
+5. Reload or restart the VS Code window only if the already-running session
+   still shows stale provider or runtime facts after the bootstrap or a later
+   `vihs` update.
+6. Open the trusted repo, run `VI History`, select the commit pair, review the
    explicit compare preflight, and choose `Compare`.
 
 The active private-release claim on `develop` is Windows x64 only. Linux and

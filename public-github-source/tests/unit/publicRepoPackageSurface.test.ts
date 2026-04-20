@@ -67,8 +67,8 @@ describe('public repo package surface', () => {
     expect(readme).toContain('maintained public candidate on `develop` opens host-default Windows');
     expect(readme).toContain('LabVIEWCLI');
     expect(readme).toContain('bounded expert Docker provider');
-    expect(readme).toContain('VI History: Prepare Local Runtime Settings CLI');
-    expect(readme).toContain('VI History: Check Runtime Readiness');
+    expect(readme).toContain('install-vihs-extension.ps1');
+    expect(readme).toContain('vihs --validate');
     expect(readme).toContain('review the explicit compare preflight section');
     expect(readme).toContain('choose `Compare`');
     expect(readme).toContain('devcontainer or Codespace');
@@ -117,9 +117,9 @@ describe('public repo package surface', () => {
     expect(readme).not.toContain('Manual-Actor-Framework-Clone');
     expect(install).toContain('exact released `main` / Marketplace `1.2.2`: Docker-only and x64-only');
     expect(install).toContain('maintained public `develop` candidate: host-default Windows local');
-    expect(install).toContain('VI History: Prepare Local Runtime Settings CLI');
-    expect(install).toContain('VI History: Check Runtime Readiness');
-    expect(install).toContain('vihs-runtime-settings --provider <host|docker>');
+    expect(install).toContain('install-vihs-extension.ps1');
+    expect(install).toContain('vihs');
+    expect(install).toContain('vihs --validate');
     expect(install).toContain('explicit compare preflight');
     expect(install).toContain('npm run public:host:bootstrap-linux');
     expect(install).toContain('npm run public:fixture:icon-editor');
@@ -138,7 +138,7 @@ describe('public repo package surface', () => {
     expect(install).not.toContain('Vitest not found');
     expect(support).toContain('runtime-provider issues on the maintained public candidate');
     expect(support).toContain('local Windows `LabVIEWCLI` preflight and readiness issues');
-    expect(support).toContain('vihs-runtime-settings --validate');
+    expect(support).toContain('vihs --validate');
     expect(support).toContain('maintained public `develop` opens host-default Windows local `LabVIEWCLI`');
     expect(contributing).toContain('source-available and intentionally restrictive');
     expect(contributing).toContain('npm run public:host:bootstrap-linux');

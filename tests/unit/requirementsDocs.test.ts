@@ -280,6 +280,10 @@ describe('requirements documentation coherence', () => {
     expect(srs).toContain('repo-owned live drift assertion surfaces');
     expect(srs).toContain('VHS-REQ-562');
     expect(srs).toContain('Windows proof runtime recovery rehearsal surface');
+    expect(srs).toContain('VHS-REQ-563');
+    expect(srs).toContain('published PowerShell bootstrap command');
+    expect(srs).toContain('materializes the admitted `vihs` terminal entrypoint');
+    expect(srs).toContain('without claiming raw `code --install-extension` interactivity');
 
     expect(rtm).toContain('VHS-REQ-541');
     expect(rtm).toContain('VHS-REQ-549');
@@ -293,6 +297,7 @@ describe('requirements documentation coherence', () => {
     expect(rtm).toContain('VHS-REQ-558');
     expect(rtm).toContain('VHS-REQ-561');
     expect(rtm).toContain('VHS-REQ-562');
+    expect(rtm).toContain('VHS-REQ-563');
     expect(rtm).toContain('TEST-UNIT-349');
     expect(rtm).toContain('TEST-INTEG-011');
     expect(rtm).toContain('TEST-SMOKE-022');
@@ -307,15 +312,18 @@ describe('requirements documentation coherence', () => {
     expect(rtm).toContain('TEST-UNIT-364');
     expect(rtm).toContain('TEST-UNIT-365');
     expect(rtm).toContain('TEST-UNIT-366');
+    expect(rtm).toContain('TEST-UNIT-367');
     expect(rtm).toContain('TEST-DOC-113');
     expect(rtm).toContain('TEST-DOC-114');
     expect(rtm).toContain('TEST-DOC-117');
     expect(rtm).toContain('TEST-DOC-118');
     expect(rtm).toContain('TEST-DOC-119');
+    expect(rtm).toContain('TEST-DOC-120');
     expect(rtm).toContain('docs/product/runtime-provider-public-acceptance-gate.md');
     expect(rtm).toContain('docs/product/runtime-provider-public-acceptance-gate.json');
     expect(rtm).toContain('docs/release-procedure.md');
     expect(rtm).toContain('docs/product/linux-assurance-runner-lane.md');
+    expect(rtm).toContain('scripts/install-vihs-extension.ps1');
 
     expect(testPlan).toContain('TEST-UNIT-349');
     expect(testPlan).toContain('settings-only fallback cannot');
@@ -347,17 +355,21 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('TEST-UNIT-364');
     expect(testPlan).toContain('TEST-UNIT-365');
     expect(testPlan).toContain('TEST-UNIT-366');
+    expect(testPlan).toContain('TEST-UNIT-367');
     expect(testPlan).toContain('TEST-DOC-113');
     expect(testPlan).toContain('TEST-DOC-114');
     expect(testPlan).toContain('TEST-DOC-115');
     expect(testPlan).toContain('TEST-DOC-117');
     expect(testPlan).toContain('TEST-DOC-118');
     expect(testPlan).toContain('TEST-DOC-119');
+    expect(testPlan).toContain('TEST-DOC-120');
     expect(testPlan).toContain('proof-runtime-recovery.txt');
     expect(testPlan).toContain('headless LabVIEW contamination');
     expect(testPlan).toContain('native Windows only');
     expect(testPlan).toContain('Docker Desktop Windows-container execution');
     expect(testPlan).toContain('runtime-provider public-acceptance gate');
     expect(testPlan).toContain('release procedure');
+    expect(testPlan).toContain('published Windows PowerShell install bootstrap');
+    expect(testPlan).toContain('raw `code --install-extension` interactivity');
   });
 });

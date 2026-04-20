@@ -1959,6 +1959,13 @@ Information-for-users review cases:
   headless LabVIEW contamination, runs the repo-owned recovery script,
   retains the rehearsal receipt plus `proof-runtime-recovery.txt`, and proves
   the post-recovery runtime surface is clean again
+- `TEST-UNIT-367`: verify the published Windows PowerShell install bootstrap
+  runs the Marketplace install for `svelderrainruiz.vi-history-suite`,
+  materializes the admitted `vihs` launchers, derives platform from the
+  current host, prompts only for provider/LabVIEW year/bitness when
+  interactive, and on non-interactive surfaces seeds or retains the governed
+  default `host/windows/2026/x64` bundle plus exact follow-up `vihs` commands
+  without claiming raw `code --install-extension` interactivity
 - `TEST-DOC-113`: review `.gitlab-ci.yml`, `linux-assurance-runner-lane.md`,
   hosted governance, current-state, README, and the release procedure and
   confirm the Linux assurance lane is separate from the Windows proof lane,
@@ -2002,6 +2009,12 @@ Information-for-users review cases:
   `npm run gitlab:runner:windows:recovery:rehearse`, seeds one headless
   LabVIEW contamination, and refreshes
   `.cache/windows-proof-runtime-recovery-rehearsal/latest.json`
+- `TEST-DOC-120`: review the SRS, RTM, test plan, README, INSTALL, command
+  reference, FAQ, and `scripts/install-vihs-extension.ps1` and confirm the
+  governed interactive install surface is the published Windows PowerShell
+  bootstrap rather than raw `code --install-extension` alone, with exact
+  follow-up `vihs` commands and Windows-host-derived platform posture kept
+  explicit
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are
