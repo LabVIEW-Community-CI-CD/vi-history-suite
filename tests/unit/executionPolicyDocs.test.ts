@@ -122,7 +122,8 @@ describe('execution-policy control plane', () => {
     expect(currentState).toContain('APPDATA\\\\Code\\\\User\\\\settings.json');
     expect(currentState).toContain('active disposable Windows integration-host profile');
     expect(currentState).toContain('already-running VS Code session is not yet end-to-end proven');
-    expect(currentState).toContain('reload or restart the');
+    expect(currentState).toContain('review Compare or runtime validation again after CLI updates');
+    expect(currentState).toContain('or restart only if stale provider or runtime facts remain');
     expect(currentState).toContain('`npm run proof:runtime-settings-live-session`');
     expect(currentState).toContain('historical released `repo-standards-review` `v0.2.9` compliance closeout');
     expect(currentState).toContain('current outer');
@@ -226,7 +227,8 @@ describe('execution-policy control plane', () => {
     expect(program).toContain('active disposable Windows integration-host profile');
     expect(program).toContain('already-running VS Code session');
     expect(program).toContain('`npm run proof:runtime-settings-live-session`');
-    expect(program).toContain('reload or restart the window before using Compare');
+    expect(program).toContain('review Compare or runtime validation again after CLI updates');
+    expect(program).toContain('reload or restart the window only if stale facts remain');
     expect(program).toContain('WSL is not part of the active Windows x64 private-release path');
     expect(program).toContain('Docker Desktop in');
     expect(program).toContain('Windows-container mode');
@@ -248,7 +250,8 @@ describe('execution-policy control plane', () => {
     expect(issueNext).toContain('active disposable');
     expect(issueNext).toContain('direct live mutation of the already-running VS Code session');
     expect(issueNext).toContain('`.cache/runtime-settings-live-session-proof/latest/`');
-    expect(issueNext).toContain('reload or restart the window before using Compare');
+    expect(issueNext).toContain('review Compare or runtime validation again after CLI updates');
+    expect(issueNext).toContain('or restart only if stale provider or runtime facts remain');
     expect(issueNext).toContain('keep WSL out of the active Windows x64 private-release contract');
     expect(issueNext).toContain('Docker Desktop');
     expect(issueNext).toContain('keep packaged/public docs on the exact released Docker-only baseline');

@@ -1801,13 +1801,13 @@ Information-for-users review cases:
   provider/version/bitness bundle, and that settings-only fallback cannot
   surface a publishable runtime-backed ready state
 - `TEST-UNIT-350`: verify the generated settings CLI, compare-preflight
-  surface, and runtime-doctor surface retain the reload-or-restart contract
-  while live uptake of CLI-written settings into an already-running VS Code
-  session is still unproven, and that retained persisted-versus-live probe
-  packet plus local packet-gate evidence remains explicit for that boundary,
-  while the repo-owned `npm run proof:runtime-settings-live-session` wrapper
-  snapshots the current packet/history/policy bundle into one reviewable
-  receipt directory
+  surface, and runtime-doctor surface retain conditional stale-result
+  guidance while live uptake of CLI-written settings into an already-running
+  VS Code session is still only partially proven, and that retained
+  persisted-versus-live probe packet plus local packet/history/policy-gate
+  evidence remains explicit for that boundary, while the repo-owned
+  `npm run proof:runtime-settings-live-session` wrapper snapshots the current
+  packet/history/policy bundle into one reviewable receipt directory
 - `TEST-UNIT-351`: verify the generated settings CLI accepts governed VS Code
   settings targets with JSONC comments or trailing commas, preserves unrelated
   settings content, and rewrites only provider/version/bitness facts
@@ -1865,9 +1865,10 @@ Information-for-users review cases:
   and the final `command-timed-out` outcome
 - `TEST-DOC-106`: review current-state, `PROGRAM-0005`, `ISSUE-0412`, the
   SRS, RTM, test plan, command reference, FAQ, and `ISSUE-0414` roadmap and
-  confirm the retained live-session reload contract plus supporting probe,
-  packet/history/policy gates, and repo-owned proof-receipt surface remain
-  explicit until direct active-session uptake is end-to-end proven
+  confirm the retained live-session conditional stale-result guidance plus
+  supporting probe, packet/history/policy gates, and repo-owned proof-receipt
+  surface remain explicit until direct active-session uptake is end-to-end
+  proven
 - `TEST-DOC-107`: review the manifest, prepare-command surface, SRS, RTM, and
   the test plan and confirm the generated settings-CLI prepare command now
   retains explicit trust and settings-target governance instead of relying on

@@ -2,7 +2,7 @@
 
 Applies to: exact released installed baseline `v1.2.2` plus the active
 `develop` authority direction
-Last reviewed: `2026-04-18`
+Last reviewed: `2026-04-19`
 Primary audience: maintainers, source evaluators, and advanced installed users
 Topic type: reference
 Primary entry route: `README.md` or `INSTALL.md`
@@ -124,9 +124,9 @@ See also:
   - the Linux public smoke lane and Linux benchmark lanes are outside this
     installed-user private-release route and remain maintainer/source-evaluation
     proof surfaces
-  - if VS Code is already running, reload or restart the window before
-    trusting Compare or other runtime-provider surfaces to reflect the updated
-    provider and runtime facts
+  - if VS Code is already running, review compare preflight or runtime
+    validation again after the CLI update and reload or restart the window
+    only if that session still shows stale provider or runtime facts
 
 `vihs-runtime-settings --validate [--settings-file <path>]`
 
@@ -154,8 +154,10 @@ See also:
     drift booleans, a normalized live-uptake observation, cumulative retained
     history stance counters, and runtime-validation facts
   - this probe surface now applies fail-closed safe-restore around probe
-    mutation, but direct live uptake of updated settings is still unproven;
-    reload or restart guidance remains active when drift is detected
+    mutation and retains candidate live-uptake evidence for the admitted
+    provider-mutation path, but direct live uptake of updated settings is
+    still not fully proven across all runtime facts; reload or restart stays
+    the fallback only when stale facts remain after the CLI update
 
 `npm run proof:runtime-settings-live-session`
 
@@ -163,7 +165,7 @@ See also:
   current supported host and snapshot the latest probe packet, retained
   history receipt, policy-boundary receipt, and integration logs.
 - Use when: refreshing one repo-owned end-to-end receipt for the current
-  reload-or-restart boundary.
+  conditional stale-result guidance boundary.
 - Notes:
   - the default receipt root is
     `.cache/runtime-settings-live-session-proof/latest/`
@@ -175,7 +177,7 @@ See also:
   - on Windows this command runs the governed native Windows extension-host
     integration lane; on Linux it runs the governed Linux extension-host lane
   - the command fails closed if the retained latest packet or policy boundary
-    no longer supports the active reload-or-restart contract
+    no longer supports the active conditional stale-result guidance boundary
   - even on a fail-closed run, the receipt directory still keeps the copied
     packet root, integration logs, and top-level proof receipt for review
 
@@ -195,17 +197,19 @@ See also:
   - fails closed when `mutationTargetBaselineChanged` is not explicitly `true`
     on the latest retained probe packet
   - fails closed when latest packet `historyProofStatus` is
-    `re-evaluation-required`
+    not `re-evaluation-required`
   - fails closed when latest packet `historyStance` is not
-    `live-uptake-not-proven`
+    `candidate-live-uptake-observed`
   - fails closed when latest packet `liveUptakeObservation` is
-    `in-session-updated`
+    not `in-session-updated`
   - fails closed when latest packet `safeRestoreVerified` is not `true`
-  - fails closed when latest packet `providerDrift` is not `true`
+  - fails closed when latest packet `providerDrift` is not `false`
   - fails closed when latest packet baseline/persisted provider facts are not
     explicit `host`/`docker` values
   - fails closed when retained history reports any
-    `historyInSessionUpdatedCount > 0`
+    `historyReloadRequiredCount > 0`
+  - fails closed when retained history reports any
+    `historyInSessionUpdatedCount < 1`
   - fails closed when retained history reports any
     `historyUnknownObservationCount > 0`
   - fails closed when retained `historyTotalRuns` does not exactly equal the
@@ -216,8 +220,8 @@ See also:
 - Purpose: summarize retained live-session probe history into one policy-facing
   receipt (`live-uptake-not-proven`, `candidate-live-uptake-observed`, or
   `insufficient-evidence`).
-- Use when: deciding whether reload-or-restart guidance remains required for
-  the current retained evidence set.
+- Use when: deciding whether the current retained evidence still supports the
+  active conditional stale-result guidance.
 - Notes:
   - retained summary now also reports provider-selection coverage from
     `mutationProviderTarget` receipts (`host` and `docker`)
@@ -234,13 +238,13 @@ See also:
 `npm run proof:runtime-settings-live-session:policy:assert`
 
 - Purpose: fail closed when retained probe history no longer supports the
-  current unconditional reload-or-restart policy boundary.
+  current conditional stale-result guidance policy boundary.
 - Use when: enforcing `VHS-REQ-542` evidence posture before merge.
 - Notes:
   - optional packet-root override:
     `npm run proof:runtime-settings-live-session:policy:assert -- --packet-root <path>`
-  - returns non-zero when stance is `candidate-live-uptake-observed` or
-    `insufficient-evidence`, forcing explicit policy re-evaluation
+  - returns non-zero when stance is not
+    `candidate-live-uptake-observed`, forcing explicit policy re-evaluation
   - returns non-zero when retained history does not include both `host` and
     `docker` mutation targets, forcing explicit CLI provider-selection
     coverage before merge
@@ -249,21 +253,22 @@ See also:
   - returns non-zero when retained runs do not carry explicit baseline-switch
     receipts or show no baseline-to-persisted provider change
   - returns non-zero when latest retained observation is not
-    `reload-required`
+    `in-session-updated`
   - returns non-zero when latest retained provider drift is not explicit
-    `true`
+    `false`
   - returns non-zero when retained history includes one or more
-    `providerDrift=false` outcomes
+    `reload-required` observations
+  - returns non-zero when retained history includes one or more
+    `providerDrift=true` outcomes
   - returns non-zero when retained history lacks explicit `providerDrift`
     receipts on any run
-  - returns non-zero when retained history includes one or more
-    `in-session-updated` observations
   - returns non-zero when retained history does not show safe-restore
     verification on every retained run
   - returns non-zero when retained history includes one or more unknown
     observations
   - returns non-zero when retained proof status becomes
-    `re-evaluation-required`, forcing explicit policy re-evaluation before merge
+    anything other than `re-evaluation-required`, forcing explicit policy
+    re-evaluation before merge
 
 `npm run test:integration:windows`
 

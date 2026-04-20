@@ -278,7 +278,7 @@ describe('comparisonRuntimeDoctor', () => {
 
     expect(lines).toContain('Runtime blocked reason: labview-version-required.');
     expect(lines.at(-1)).toBe(
-      'Next action: set viHistorySuite.labviewVersion. If you just used the generated settings CLI while VS Code was already open, reload or restart the window. Then rerun comparison report generation.'
+      'Next action: set viHistorySuite.labviewVersion. Then rerun comparison report generation. If this already-running VS Code session still shows stale provider or runtime facts after the CLI update, reload or restart the window and try again.'
     );
   });
 
@@ -310,7 +310,7 @@ describe('comparisonRuntimeDoctor', () => {
     });
 
     expect(lines).toContain(
-      'Settings freshness: if you just used the generated settings CLI while VS Code was already open, reload or restart the window before trusting this runtime result.'
+      'Settings freshness: if this already-running VS Code session still shows stale provider or runtime facts after the generated settings CLI update, reload or restart the window and retry.'
     );
     expect(lines.at(-1)).toBe(
       'Next action: close existing LabVIEW/LabVIEWCLI/LVCompare sessions, clear the governed VI Server listener on the selected port, or switch to a Docker-backed compare path, then rerun comparison report generation.'
@@ -351,7 +351,7 @@ describe('comparisonRuntimeDoctor', () => {
 
     expect(lines).toContain('Runtime blocked reason: installed-provider-invalid.');
     expect(lines.at(-1)).toBe(
-      'Next action: set viHistorySuite.runtimeProvider to host or docker. If you just used the generated settings CLI while VS Code was already open, reload or restart the window. Then rerun comparison report generation.'
+      'Next action: set viHistorySuite.runtimeProvider to host or docker. Then rerun comparison report generation. If this already-running VS Code session still shows stale provider or runtime facts after the CLI update, reload or restart the window and try again.'
     );
   });
 

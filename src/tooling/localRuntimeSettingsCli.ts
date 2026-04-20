@@ -262,7 +262,7 @@ export async function runLocalRuntimeSettingsCli(
   );
   writeLine(
     deps.stdout ?? process.stdout,
-    'If VS Code is already running, reload or restart the window before trusting Compare or other runtime-provider surfaces to reflect the updated provider and runtime facts.'
+    'If this already-running VS Code session still shows stale provider or runtime facts after the CLI update, reload or restart the window and retry Compare or runtime validation.'
   );
 
   return {

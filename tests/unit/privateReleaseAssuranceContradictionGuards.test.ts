@@ -55,7 +55,9 @@ describe('private release assurance contradiction guards', () => {
     expect(commandReference).toContain('npm run assurance:release-gate');
     expect(commandReference).toContain('npm run assurance:requirements');
     expect(commandReference).toContain('npm run assurance:user-info');
-    expect(faq).toContain('reload or restart the VS Code window before trusting Compare');
+    expect(faq).toContain(
+      'reload or restart the VS Code window and review Compare again'
+    );
     expect(faq).toContain('WSL is retained historical context only');
   });
 
