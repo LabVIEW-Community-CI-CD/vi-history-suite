@@ -99,6 +99,9 @@ the tagged GitLab Windows runner lane that retains this same scenario under
     `scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1`
   - the governed Windows proof runtime recovery surface is
     `scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1`
+  - the governed Windows proof runtime recovery rehearsal surface is
+    `scripts/runWindowsProofRuntimeRecoveryRehearsal.js` via
+    `npm run gitlab:runner:windows:recovery:rehearse`
   - the admitted scheduled-task action stays
     `powershell.exe -NoLogo -NoProfile -File "C:\GitLab-Runner\start-governed-runner-lanes.ps1"`
     without `ExecutionPolicy Bypass`, and the apply surface fails closed
@@ -120,6 +123,11 @@ the tagged GitLab Windows runner lane that retains this same scenario under
     retains `windows-private-release-evidence/host/proof-runtime-recovery.txt`,
     waits `5000` ms, reruns the host-native proof once, and fails closed if
     the repo-owned recovery step plus retry still fails
+  - the admitted Windows host also retains one controlled headless LabVIEW
+    contamination rehearsal via
+    `scripts/runWindowsProofRuntimeRecoveryRehearsal.js` /
+    `npm run gitlab:runner:windows:recovery:rehearse`, with the latest receipt
+    refreshed at `.cache/windows-proof-runtime-recovery-rehearsal/latest.json`
   - the governed Linux apply/helper/service surfaces are
     `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh`,
     `scripts/gitlab-runner/linux/start-linux-assurance.sh`, and
@@ -155,6 +163,10 @@ the tagged GitLab Windows runner lane that retains this same scenario under
 The first governed `windows_private_release_acceptance` receipt is now
 retained on `develop`, so this packet no longer depends on an unproven runner
 lane.
+
+The operator-only recovery rehearsal stays separate from that CI receipt. It
+exists to prove the repo-owned Windows recovery path under one controlled
+headless LabVIEW contamination without waiting for a real job failure.
 
 ## Validation Pack
 

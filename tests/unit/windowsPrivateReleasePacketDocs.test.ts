@@ -68,6 +68,17 @@ interface PrivateReleasePacket {
       firstFailureTranscript: string;
       failurePolicy: string;
     };
+    midSessionRecoveryRehearsal?: {
+      governedScript: string;
+      packageScript: string;
+      receiptRoot: string;
+      latestReceipt: string;
+      requestedLabviewVersion: string;
+      requestedLabviewBitness: string;
+      contaminationSeedMode: string;
+      recoveryTranscriptLeaf: string;
+      failurePolicy: string;
+    };
     firstRetainedReceipt: {
       mergeRequestIid: number;
       pipelineId: number;
@@ -119,8 +130,10 @@ describe('windows private release packet docs', () => {
     expect(packetDoc).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
     expect(packetDoc).toContain('scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1');
     expect(packetDoc).toContain('scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1');
+    expect(packetDoc).toContain('scripts/runWindowsProofRuntimeRecoveryRehearsal.js');
     expect(packetDoc).toContain('scripts/assertGovernedRunnerLanes.js');
     expect(packetDoc).toContain('npm run gitlab:runner:assert');
+    expect(packetDoc).toContain('npm run gitlab:runner:windows:recovery:rehearse');
     expect(packetDoc).toContain('without `ExecutionPolicy Bypass`');
     expect(packetDoc).toContain('governed Windows drift assertion fails closed');
     expect(packetDoc).toContain(
@@ -135,6 +148,8 @@ describe('windows private release packet docs', () => {
     expect(packetDoc).toContain('`5000` ms');
     expect(packetDoc).toContain('repo-owned Windows proof runtime recovery script');
     expect(packetDoc).toContain('reruns the host-native proof once');
+    expect(packetDoc).toContain('.cache/windows-proof-runtime-recovery-rehearsal/latest.json');
+    expect(packetDoc).toContain('headless LabVIEW contamination');
     expect(packetDoc).toContain('scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
     expect(packetDoc).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
     expect(packetDoc).toContain('scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service');
@@ -203,18 +218,31 @@ describe('windows private release packet docs', () => {
           firstFailureTranscript: 'windows-private-release-evidence/host/proof-run-pre-recovery.txt',
           failurePolicy: 'fail-closed-after-repo-recovery-script-and-single-retry'
         },
+        midSessionRecoveryRehearsal: {
+          governedScript: 'scripts/runWindowsProofRuntimeRecoveryRehearsal.js',
+          packageScript: 'npm run gitlab:runner:windows:recovery:rehearse',
+          receiptRoot: '.cache/windows-proof-runtime-recovery-rehearsal',
+          latestReceipt: '.cache/windows-proof-runtime-recovery-rehearsal/latest.json',
+          requestedLabviewVersion: '2026',
+          requestedLabviewBitness: 'x64',
+          contaminationSeedMode: 'headless-labview-launch',
+          recoveryTranscriptLeaf: 'proof-runtime-recovery.txt',
+          failurePolicy: 'fail-closed-unless-clean-before-and-after-governed-recovery-rehearsal'
+        },
         repoOwnedOperatorAssets: {
           windowsApplyScript: 'scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1',
           windowsBootstrapScript: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',
           windowsAssertScript: 'scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1',
           windowsRecoveryScript:
             'scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1',
+          windowsRecoveryRehearsalScript: 'scripts/runWindowsProofRuntimeRecoveryRehearsal.js',
           linuxApplyScript: 'scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh',
           linuxHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
           linuxServiceUnit: 'scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service',
           linuxAssertScript: 'scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh',
           runnerAssertionWrapperScript: 'scripts/assertGovernedRunnerLanes.js',
-          runnerAssertionPackageScript: 'npm run gitlab:runner:assert'
+          runnerAssertionPackageScript: 'npm run gitlab:runner:assert',
+          runnerRecoveryRehearsalPackageScript: 'npm run gitlab:runner:windows:recovery:rehearse'
         }
       })
     );
