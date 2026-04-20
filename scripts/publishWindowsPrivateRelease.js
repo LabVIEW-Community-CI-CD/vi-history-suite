@@ -180,11 +180,32 @@ function buildNpmCommand(platform = process.platform) {
   return platform === 'win32' ? 'npm.cmd' : 'npm';
 }
 
+function quoteCmdArg(value) {
+  const text = String(value);
+  if (!/[ \t"&^<>|()]/u.test(text)) {
+    return text;
+  }
+  return `"${text.replace(/(["^])/gu, '^$1')}"`;
+}
+
 function runPackageBuild(vsixPath, deps = {}) {
   const spawnSyncImpl = deps.spawnSync ?? spawnSync;
   const cwd = deps.repoRoot ?? repoRoot();
-  const command = deps.npmCommand ?? buildNpmCommand(deps.platform ?? process.platform);
-  const result = spawnSyncImpl(command, ['run', 'package', '--', '--out', vsixPath], {
+  const platform = deps.platform ?? process.platform;
+  const npmCommand = deps.npmCommand ?? buildNpmCommand(platform);
+  const invocation =
+    platform === 'win32'
+      ? {
+          command: 'cmd.exe',
+          args: ['/d', '/s', '/c', [npmCommand, 'run', 'package', '--', '--out', vsixPath]
+            .map(quoteCmdArg)
+            .join(' ')]
+        }
+      : {
+          command: npmCommand,
+          args: ['run', 'package', '--', '--out', vsixPath]
+        };
+  const result = spawnSyncImpl(invocation.command, invocation.args, {
     cwd,
     stdio: 'inherit',
     shell: false
