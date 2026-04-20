@@ -167,6 +167,7 @@
     "assurance:evidence-pack": "node scripts/runAssuranceAudit.js --lane evidence-pack",
     "assurance:uplift": "node scripts/runAssuranceAudit.js --lane uplift",
     "gitlab:git-credential:refresh": "node scripts/refreshLocalGitLabGitCredential.js",
+    "gitlab:private-release:publish": "node scripts/publishWindowsPrivateRelease.js",
     "gitlab:runner:assert": "node scripts/assertGovernedRunnerLanes.js",
     "gitlab:runner:windows:recovery:rehearse": "npm run compile && node scripts/runWindowsProofRuntimeRecoveryRehearsal.js",
     "branch:governance:assert": "node scripts/assertGovernedBranchBaseline.js",

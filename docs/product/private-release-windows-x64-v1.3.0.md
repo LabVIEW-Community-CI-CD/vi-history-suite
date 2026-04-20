@@ -2,18 +2,22 @@
 
 ## Purpose
 
-Retain the governed Windows-only private-release-prep packet for the current
-`develop` package line `1.3.0` without claiming an exact/public release,
-Marketplace publication, or Linux support. The current branch extension adds
-the tagged GitLab Windows runner lane that retains this same scenario under
-`windows-private-release-evidence/`.
+Retain the governed Windows-only private-release packet and published private
+GitLab release for the current `develop` package line `1.3.0` without
+claiming an exact/public release, Marketplace publication, or Linux support.
+The current branch extension adds the tagged GitLab Windows runner lane that
+retains this same scenario under `windows-private-release-evidence/` plus the
+repo-owned `npm run gitlab:private-release:publish` surface that packages and
+publishes the controlled Windows-only install asset.
 
 ## Governing Sequence
 
 - docs-only branch merged first: `feature/windows-private-release-docs-26514`
   at `376dd881ecbe0ab9f474500c20f7719f84d72d85`
-- current prep branch: `feature/windows-private-release-prep`
-- package-audit baseline commit: `1d10b52a9c2b5081c621e91379985a6da2626bdc`
+- current private-release publication branch:
+  `feature/windows-private-release-publication-governance`
+- published private-release source commit:
+  `f3aba5f5ba0a307032f88051b3bcb26a30f288f8`
 - next deferred branch after this prep slice merges: `feature/linux-runtime-variant`
 
 ## Scope
@@ -41,10 +45,27 @@ the tagged GitLab Windows runner lane that retains this same scenario under
 - package line: `1.3.0`
 - retained package path: `preview-evidence/vi-history-suite-1.3.0.vsix`
 - retained package SHA-256:
-  `3092C9B740F13AC31FDEABCE00822FBDA13A3C7C6AEF0261D92EA38051751ACA`
-- retained package size: `497392` bytes
-- package-audit baseline commit:
-  `1d10b52a9c2b5081c621e91379985a6da2626bdc`
+  `89CDC47DB2C3468A951FC0CD0812AEA041BCF0A77CFDF34DD65B5B1BEA7BCD52`
+- retained package size: `501601` bytes
+
+## Private Release Publication
+
+- publish command: `npm run gitlab:private-release:publish`
+- release channel: GitLab private release
+- release tag: `private-v1.3.0-windows-x64`
+- release name: `Windows x64 Private Release v1.3.0`
+- release URL:
+  `https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.0-windows-x64`
+- published source branch:
+  `feature/windows-private-release-publication-governance`
+- published source commit:
+  `f3aba5f5ba0a307032f88051b3bcb26a30f288f8`
+- VSIX direct asset URL:
+  `https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.0-windows-x64/downloads/private-releases/windows-x64/vi-history-suite-1.3.0.vsix`
+- SHA-256 direct asset URL:
+  `https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.0-windows-x64/downloads/private-releases/windows-x64/vi-history-suite-1.3.0.vsix.sha256`
+- retained publish receipt:
+  `.cache/private-release-publish/latest/private-release-publish.json`
 
 ## Proved Scenario
 
@@ -185,14 +206,18 @@ The prep branch is considered ready only when these pass:
 - The package and proof packet stay Windows-only and x64-only for this prep
   sequence.
 - The governed GitLab Windows runner lane has produced its first retained
-  receipt and the packet is ready for a Windows-only private release decision.
+  receipt, and the governed private GitLab release now packages that same
+  Windows-only claim for controlled install testing.
 - Linux remains a later branch concern and is not part of this packet.
 
 ## Next Move
 
-- cut the Windows-only private release from the retained `v1.3.0` packet
-- keep Linux deferred until the Windows-only private release is formally
-  closed
+- use the published `private-v1.3.0-windows-x64` GitLab release as the
+  controlled Windows-only install surface for `1.3.0` feedback
+- keep exact SemVer/public release, Marketplace publication, and `main`
+  promotion on the later governed `release/* -> main -> develop` path
+- keep Linux deferred until the exact/public `1.3.0` line closes, and open
+  Linux LabVIEW 64-bit only on the next release after `1.3.0`
 - keep Windows x86 / 32-bit LabVIEW out of scope for the active `v1.3.0`
   release claim and treat any retained x86 evidence as later non-blocking
   characterization only

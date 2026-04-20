@@ -115,7 +115,7 @@ describe('public release candidate control surface', () => {
     });
     expect(candidate.candidateReadiness).toMatchObject({
       authorityBaseline: 'v1.2.2-exact-public-release-published',
-      localInstalledVsix: 'candidate-v1.3.0-line-opened-awaiting-public-build',
+      localInstalledVsix: 'private-v1.3.0-windows-x64-published',
       historicalPublicRepoBootstrapBaseline: 'exact-v1.2.0-human-baseline-retained',
       publishedSurfaceExpertAgentReview: 'no-findings-post-publication-v1.3.0-candidate',
       runtimeProviderPublicAcceptanceGate: 'closed-on-published-v1.3.0-candidate-heads',
@@ -182,6 +182,7 @@ describe('public release candidate control surface', () => {
     expect(candidateMarkdown).toContain('Published-surface expert-agent review:');
     expect(candidateMarkdown).toContain('`no-findings-post-publication-v1.3.0-candidate`');
     expect(candidateMarkdown).toContain('Runtime-provider public-acceptance gate: `closed`');
+    expect(candidateMarkdown).toContain('private-v1.3.0-windows-x64');
     expect(candidateMarkdown).toContain('Required skill: `vi-history-suite-expert-agent-reviewer`');
     expect(candidateMarkdown).toContain('The maintained public `develop` candidate for `v1.3.0` now publishes');
     expect(candidateMarkdown).toContain('FINDING-1.2.2-001-MISSING-DOCKER-FIRST-RUN-BOUNDARY');

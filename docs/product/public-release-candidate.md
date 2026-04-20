@@ -26,7 +26,7 @@
 ## Readiness
 
 - Authority baseline: `v1.2.2-exact-public-release-published`
-- Local installed VSIX build: `candidate-v1.3.0-line-opened-awaiting-public-build`
+- Local installed VSIX build: `private-v1.3.0-windows-x64-published`
 - Local public devcontainer: `v1.1.0-published-baseline`
 - Local public fixture helper: `v1.1.0-published-baseline`
 - Historical public repo bootstrap baseline:
@@ -66,6 +66,9 @@
 - `npm run branch:governance:assert`, `npm run docs:gate:core`,
   `npm run design:gate`, and `npm run design:gate:assert-complete` all passed
   on the `1.2.2` authority tranche before public publication.
+- The controlled Windows-only private GitLab release for the current candidate
+  is now published at
+  `https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.0-windows-x64`.
 - Installed-user docs, bundled docs, and runtime-doctor next actions now treat
   missing Docker CLI or a stopped daemon as a first-run prerequisite boundary.
 - Exact release closeout is now governed as incomplete until the released

@@ -71,6 +71,11 @@ to the released product line and the active branch line:
   cross-platform exact/public release.
 - The current exact released line (`v1.2.2`) remains the last exact released
   installed baseline on `main`.
+- The governed private GitLab release for this route is
+  `private-v1.3.0-windows-x64`, retained in the
+  [Windows x64 Private-Release Packet](./docs/product/private-release-windows-x64-v1.3.0.md)
+  and published at
+  `https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.0-windows-x64`.
 - The supported current user path on this branch is:
   - native Windows host LabVIEW selected through the generated runtime-settings
     CLI
@@ -210,8 +215,10 @@ Active develop direction:
   and Docker `x86` will fail closed with host/`x64` guidance
 - the active direction is governed under `TRANCHE-016` / `ISSUE-0412` /
   `PROGRAM-0005`
-- the exact released installed workflow above remains the truthful release
-  baseline until the replacement slices are published
+- the exact released installed workflow above remains the truthful public
+  release baseline until the replacement slices are published publicly; the
+  controlled Windows x64 private GitLab release is tracked separately in the
+  private-release packet
 
 Active `develop` Windows x64 private-release candidate:
 

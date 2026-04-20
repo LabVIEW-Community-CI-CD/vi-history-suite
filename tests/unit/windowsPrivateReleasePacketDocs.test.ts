@@ -16,9 +16,9 @@ interface PrivateReleasePacket {
       name: string;
       mergedBaselineCommit: string;
     };
-    prepBranch: {
+    publicationBranch: {
       name: string;
-      packageAuditBaselineCommit: string;
+      publishedSourceCommit: string;
     };
     nextDeferredBranch: string;
   };
@@ -27,6 +27,19 @@ interface PrivateReleasePacket {
     vsixPath: string;
     sha256: string;
     sizeBytes: number;
+  };
+  publication?: {
+    status: string;
+    releaseChannel: string;
+    releaseTag: string;
+    releaseName: string;
+    releaseUrl: string;
+    publishCommand: string;
+    sourceBranch: string;
+    sourceCommit: string;
+    vsixDirectAssetUrl: string;
+    checksumDirectAssetUrl: string;
+    publishReceipt: string;
   };
   proofLanes: Array<{
     laneId: string;
@@ -117,7 +130,7 @@ describe('windows private release packet docs', () => {
     expect(packetDoc).toContain('# Windows x64 Private-Release Packet `v1.3.0`');
     expect(packetDoc).toContain('Windows x64 private release only');
     expect(packetDoc).toContain('feature/windows-private-release-docs-26514');
-    expect(packetDoc).toContain('feature/windows-private-release-prep');
+    expect(packetDoc).toContain('feature/windows-private-release-publication-governance');
     expect(packetDoc).toContain('feature/linux-runtime-variant');
     expect(packetDoc).toContain('preview-evidence/vi-history-suite-1.3.0.vsix');
     expect(packetDoc).toContain('.cache/private-release/1.3.0/windows-x64-host/');
@@ -155,12 +168,16 @@ describe('windows private release packet docs', () => {
     expect(packetDoc).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
     expect(packetDoc).toContain('scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service');
     expect(packetDoc).toContain('scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh');
+    expect(packetDoc).toContain('## Private Release Publication');
+    expect(packetDoc).toContain('npm run gitlab:private-release:publish');
+    expect(packetDoc).toContain('private-v1.3.0-windows-x64');
+    expect(packetDoc).toContain('Windows x64 Private Release v1.3.0');
     expect(packetDoc).toContain('## First Retained Runner Receipt');
     expect(packetDoc).toContain('| Merge request | `!91` |');
     expect(packetDoc).toContain('The first governed `windows_private_release_acceptance` receipt is now');
 
     expect(packetJson.packetId).toBe('private-release-windows-x64-v1.3.0');
-    expect(packetJson.status).toBe('ready-for-private-release');
+    expect(packetJson.status).toBe('published-private-release');
     expect(packetJson.scope.supportClaim).toBe('windows-x64-private-release-only');
     expect(packetJson.scope.supportedProofLanes).toEqual([
       'windows-host-native',
@@ -169,14 +186,35 @@ describe('windows private release packet docs', () => {
     expect(packetJson.scope.nonScope).toContain('windows-x86-labview-release-support');
     expect(packetJson.scope.nonScope).toContain('wsl-active-support');
     expect(packetJson.governingSequence.docsBranch.name).toBe('feature/windows-private-release-docs-26514');
-    expect(packetJson.governingSequence.prepBranch.name).toBe('feature/windows-private-release-prep');
+    expect(packetJson.governingSequence.publicationBranch.name).toBe(
+      'feature/windows-private-release-publication-governance'
+    );
+    expect(packetJson.governingSequence.publicationBranch.publishedSourceCommit).toBe(
+      'f3aba5f5ba0a307032f88051b3bcb26a30f288f8'
+    );
     expect(packetJson.governingSequence.nextDeferredBranch).toBe('feature/linux-runtime-variant');
     expect(packetJson.packageEvidence.versionLine).toBe('1.3.0');
     expect(packetJson.packageEvidence.vsixPath).toBe('preview-evidence/vi-history-suite-1.3.0.vsix');
     expect(packetJson.packageEvidence.sha256).toBe(
-      '3092C9B740F13AC31FDEABCE00822FBDA13A3C7C6AEF0261D92EA38051751ACA'
+      '89CDC47DB2C3468A951FC0CD0812AEA041BCF0A77CFDF34DD65B5B1BEA7BCD52'
     );
-    expect(packetJson.packageEvidence.sizeBytes).toBe(497392);
+    expect(packetJson.packageEvidence.sizeBytes).toBe(501601);
+    expect(packetJson.publication).toEqual({
+      status: 'published',
+      releaseChannel: 'gitlab-private-release',
+      releaseTag: 'private-v1.3.0-windows-x64',
+      releaseName: 'Windows x64 Private Release v1.3.0',
+      releaseUrl:
+        'https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.0-windows-x64',
+      publishCommand: 'npm run gitlab:private-release:publish',
+      sourceBranch: 'feature/windows-private-release-publication-governance',
+      sourceCommit: 'f3aba5f5ba0a307032f88051b3bcb26a30f288f8',
+      vsixDirectAssetUrl:
+        'https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.0-windows-x64/downloads/private-releases/windows-x64/vi-history-suite-1.3.0.vsix',
+      checksumDirectAssetUrl:
+        'https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.0-windows-x64/downloads/private-releases/windows-x64/vi-history-suite-1.3.0.vsix.sha256',
+      publishReceipt: '.cache/private-release-publish/latest/private-release-publish.json'
+    });
     expect(packetJson.gitlabRunnerLane).toEqual(
       expect.objectContaining({
         jobName: 'windows_private_release_acceptance',
@@ -296,6 +334,8 @@ describe('windows private release packet docs', () => {
     expect(releaseProcedure).toContain('docs/product/private-release-windows-x64-v1.3.0.md');
     expect(releaseProcedure).toContain('docs/product/private-release-windows-x64-v1.3.0.json');
     expect(releaseProcedure).toContain('docs/product/windows-private-release-runner-lane.md');
+    expect(releaseProcedure).toContain('npm run gitlab:private-release:publish');
+    expect(releaseProcedure).toContain('private-v1.3.0-windows-x64');
 
     expect(runnerLaneDoc).toContain('# Windows Private-Release Runner Lane');
     expect(runnerLaneDoc).toContain('windows_private_release_acceptance');

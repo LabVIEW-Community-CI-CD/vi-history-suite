@@ -45,7 +45,7 @@
   },
   "candidateReadiness": {
     "authorityBaseline": "v1.2.2-exact-public-release-published",
-    "localInstalledVsix": "candidate-v1.3.0-line-opened-awaiting-public-build",
+    "localInstalledVsix": "private-v1.3.0-windows-x64-published",
     "localPublicDevcontainer": "v1.1.0-published-baseline",
     "localPublicFixtureHelper": "v1.1.0-published-baseline",
     "historicalPublicRepoBootstrapBaseline": "exact-v1.2.0-human-baseline-retained",
@@ -104,6 +104,11 @@
     "releaseBranch": "main"
   },
   "localProofs": {
+    "privateRelease": {
+      "status": "published",
+      "tag": "private-v1.3.0-windows-x64",
+      "releaseUrl": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.0-windows-x64"
+    },
     "localPublicDevcontainer": {
       "status": "passed",
       "notes": [
