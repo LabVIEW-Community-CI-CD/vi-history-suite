@@ -190,15 +190,15 @@ describe('windows private release packet docs', () => {
       'feature/windows-private-release-publication-governance'
     );
     expect(packetJson.governingSequence.publicationBranch.publishedSourceCommit).toBe(
-      '7f7a6c85cf476d2454ada2464704a4b82c2de921'
+      'f3aba5f5ba0a307032f88051b3bcb26a30f288f8'
     );
     expect(packetJson.governingSequence.nextDeferredBranch).toBe('feature/linux-runtime-variant');
     expect(packetJson.packageEvidence.versionLine).toBe('1.3.0');
     expect(packetJson.packageEvidence.vsixPath).toBe('preview-evidence/vi-history-suite-1.3.0.vsix');
     expect(packetJson.packageEvidence.sha256).toBe(
-      'D9715C82A5DA955F32F4CF96AD036E61113A07E506E258A57CD25473692F6448'
+      '89CDC47DB2C3468A951FC0CD0812AEA041BCF0A77CFDF34DD65B5B1BEA7BCD52'
     );
-    expect(packetJson.packageEvidence.sizeBytes).toBe(501486);
+    expect(packetJson.packageEvidence.sizeBytes).toBe(501601);
     expect(packetJson.publication).toEqual({
       status: 'published',
       releaseChannel: 'gitlab-private-release',
@@ -208,7 +208,7 @@ describe('windows private release packet docs', () => {
         'https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.0-windows-x64',
       publishCommand: 'npm run gitlab:private-release:publish',
       sourceBranch: 'feature/windows-private-release-publication-governance',
-      sourceCommit: '7f7a6c85cf476d2454ada2464704a4b82c2de921',
+      sourceCommit: 'f3aba5f5ba0a307032f88051b3bcb26a30f288f8',
       vsixDirectAssetUrl:
         'https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.0-windows-x64/downloads/private-releases/windows-x64/vi-history-suite-1.3.0.vsix',
       checksumDirectAssetUrl:

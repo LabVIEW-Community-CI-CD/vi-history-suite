@@ -24,15 +24,15 @@
     },
     "publicationBranch": {
       "name": "feature/windows-private-release-publication-governance",
-      "publishedSourceCommit": "7f7a6c85cf476d2454ada2464704a4b82c2de921"
+      "publishedSourceCommit": "f3aba5f5ba0a307032f88051b3bcb26a30f288f8"
     },
     "nextDeferredBranch": "feature/linux-runtime-variant"
   },
   "packageEvidence": {
     "versionLine": "1.3.0",
     "vsixPath": "preview-evidence/vi-history-suite-1.3.0.vsix",
-    "sha256": "D9715C82A5DA955F32F4CF96AD036E61113A07E506E258A57CD25473692F6448",
-    "sizeBytes": 501486
+    "sha256": "89CDC47DB2C3468A951FC0CD0812AEA041BCF0A77CFDF34DD65B5B1BEA7BCD52",
+    "sizeBytes": 501601
   },
   "publication": {
     "status": "published",
@@ -42,7 +42,7 @@
     "releaseUrl": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.0-windows-x64",
     "publishCommand": "npm run gitlab:private-release:publish",
     "sourceBranch": "feature/windows-private-release-publication-governance",
-    "sourceCommit": "7f7a6c85cf476d2454ada2464704a4b82c2de921",
+    "sourceCommit": "f3aba5f5ba0a307032f88051b3bcb26a30f288f8",
     "vsixDirectAssetUrl": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.0-windows-x64/downloads/private-releases/windows-x64/vi-history-suite-1.3.0.vsix",
     "checksumDirectAssetUrl": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.0-windows-x64/downloads/private-releases/windows-x64/vi-history-suite-1.3.0.vsix.sha256",
     "publishReceipt": ".cache/private-release-publish/latest/private-release-publish.json"
