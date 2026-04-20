@@ -320,6 +320,19 @@ describe('post-release sustainment rules package', () => {
               'powershell.exe -NoLogo -NoProfile -File "C:\\GitLab-Runner\\start-governed-runner-lanes.ps1"',
             failurePolicy: 'fail-closed-unless-exactly-one-configured-manager-after-apply'
           },
+          hostAssertionSurface: {
+            script: 'scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1',
+            wrapperScript: 'scripts/assertGovernedRunnerLanes.js',
+            packageScript: 'npm run gitlab:runner:assert',
+            verification: [
+              'bootstrap-hash-match',
+              'scheduled-task-action-match',
+              'scheduled-task-logon-trigger',
+              'request-concurrency-two',
+              'exactly-one-configured-runner-manager'
+            ],
+            failurePolicy: 'fail-closed-on-live-host-drift'
+          },
           hostNativeMidSessionContaminationRecovery: {
             trigger: 'windows-host-runtime-cleanup-failed',
             retryDelayMs: 5000,
@@ -334,6 +347,21 @@ describe('post-release sustainment rules package', () => {
             script: 'scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh',
             verification: ['systemctl-is-enabled', 'systemctl-is-active'],
             failurePolicy: 'fail-closed-unless-service-enabled-and-active'
+          },
+          hostAssertionSurface: {
+            script: 'scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh',
+            wrapperScript: 'scripts/assertGovernedRunnerLanes.js',
+            packageScript: 'npm run gitlab:runner:assert',
+            verification: [
+              'helper-hash-match',
+              'service-unit-hash-match',
+              'request-concurrency-two',
+              'service-fragment-path-match',
+              'service-user-match',
+              'service-working-directory-match',
+              'exactly-one-configured-runner-process'
+            ],
+            failurePolicy: 'fail-closed-on-live-host-drift'
           }
         }
       })
@@ -475,7 +503,11 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('proof-run-pre-recovery.txt');
     expect(rulesDoc).toContain('single retry');
     expect(rulesDoc).toContain('apply-governed-runner-lanes.ps1');
+    expect(rulesDoc).toContain('assert-governed-runner-lanes.ps1');
     expect(rulesDoc).toContain('apply-linux-assurance-runner.sh');
+    expect(rulesDoc).toContain('assert-linux-assurance-runner.sh');
+    expect(rulesDoc).toContain('scripts/assertGovernedRunnerLanes.js');
+    expect(rulesDoc).toContain('npm run gitlab:runner:assert');
     expect(rulesDoc).toContain('without `ExecutionPolicy Bypass`');
 
     expect(readme).toContain(

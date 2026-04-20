@@ -1932,6 +1932,10 @@ Information-for-users review cases:
   the host-native proof once when the shared Windows cleanup seam fails before
   proof execution, and still fails closed when the retry is not eligible or
   cannot restore a clean host surface
+- `TEST-UNIT-365`: verify the repo-owned runner drift-assert surfaces keep the
+  admitted Windows and Linux assertion commands explicit, keep the combined
+  wrapper and `npm run gitlab:runner:assert` package surface explicit, and
+  fail closed when the Windows assertion is requested from a non-Windows host
 - `TEST-DOC-113`: review `.gitlab-ci.yml`, `linux-assurance-runner-lane.md`,
   hosted governance, current-state, README, and the release procedure and
   confirm the Linux assurance lane is separate from the Windows proof lane,
@@ -1959,6 +1963,12 @@ Information-for-users review cases:
   contamination-recovery retry is explicit: `proof-run-pre-recovery.txt` is
   retained, the retry waits `5000` ms, only one retry is admitted, and the
   lane still fails closed if the retry cannot restore a clean host surface
+- `TEST-DOC-118`: review the runner-lane contracts, hosted governance,
+  private-release packet, README, current-state, release procedure, sustainment
+  package, SRS, RTM, and the test plan and confirm the repo-owned live
+  drift-assert surfaces and the combined wrapper are explicit about exact
+  scheduled-task/bootstrap state, installed helper/service/bootstrap hash
+  matching, `request_concurrency = 2`, and live runner/service process checks
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are

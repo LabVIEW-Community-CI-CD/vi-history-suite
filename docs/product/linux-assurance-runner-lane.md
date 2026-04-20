@@ -103,11 +103,22 @@ The governed host asset pack for this lane is versioned in the repo:
   `scripts/gitlab-runner/linux/start-linux-assurance.sh`
 - Linux service unit:
   `scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service`
+- Linux drift assertion script:
+  `scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh`
+- Cross-lane wrapper from the admitted Windows host:
+  `scripts/assertGovernedRunnerLanes.js` via `npm run gitlab:runner:assert`
 
 The Linux apply script is the repo-owned update surface for the admitted
 service contract. It copies the helper, installs the service unit, reloads
 `systemd`, enables and starts the service, and fails closed unless the service
 finishes `enabled` and `active`.
+
+The Linux assertion surface is the repo-owned live drift check for the
+admitted helper/service contract. It fails closed unless the installed helper
+and service unit still match the repo source, `~/.gitlab-runner/config.toml`
+still contains `request_concurrency = 2`, the admitted service fragment path,
+user, and working directory remain exact, and exactly one configured runner
+process is live.
 
 The helper script remains the bounded cross-OS recovery surface invoked from
 the Windows logon bootstrap. The service unit remains the admitted steady-state
@@ -125,6 +136,21 @@ The admitted first host shape is the Ubuntu user `sveld`, so the repo-owned
 service unit intentionally retains `/home/sveld` and `User=sveld`. If the
 admitted host user or home path changes later, update the repo-owned asset,
 the hosted-governance package, and this lane contract together.
+
+## Assert Live Host Drift
+
+From the repo root inside the admitted Ubuntu host:
+
+```bash
+bash ./scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh
+```
+
+From the admitted Windows host, the combined wrapper can assert this Linux
+lane by running:
+
+```powershell
+npm run gitlab:runner:assert -- --surface linux
+```
 
 ## Manual Registration Pack
 

@@ -70,10 +70,17 @@ Runner operator hardening:
   `request_concurrency = 2`, and steady-state lifecycle owned by Ubuntu
   `systemd` unit `vihs-linux-assurance-runner.service`, with repo-owned host
   assets at `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh`,
-  `scripts/gitlab-runner/linux/start-linux-assurance.sh`, and
-  `scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service`; the
-  Linux apply surface fails closed unless the admitted `systemd` service is
-  both enabled and active after apply
+  `scripts/gitlab-runner/linux/start-linux-assurance.sh`,
+  `scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service`, and
+  `scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh`, with the
+  admitted Windows-host wrapper retained at
+  `scripts/assertGovernedRunnerLanes.js` via `npm run gitlab:runner:assert`;
+  the Linux apply surface fails closed unless the admitted `systemd` service
+  is both enabled and active after apply, and the Linux assertion surface
+  fails closed unless the installed helper and service unit still match the
+  repo asset pack, `request_concurrency = 2` is still present, the admitted
+  fragment path/user/working directory remain exact, and exactly one
+  configured runner process is live
 - `windows-private-release`: admitted config path
   `C:\GitLab-Runner\config.toml`, per-runner
   `request_concurrency = 2`, scheduled bootstrap surface
@@ -82,13 +89,23 @@ Runner operator hardening:
   current-user runner manager remains per config, cold-admission fail-closed
   cleanup of stale `LabVIEW` / `LabVIEWCLI` / `LVCompare` runtime processes
   before the runner starts using bounded `Stop-Process` plus
-  `taskkill /PID /T /F` and `taskkill /IM /T /F`, and the repo-owned bootstrap asset
-  `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1`; the
-  repo-owned apply surface `scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1`
+  `taskkill /PID /T /F` and `taskkill /IM /T /F`, the repo-owned bootstrap
+  asset `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1`, and
+  the repo-owned drift assertion surface
+  `scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1`; the
+  combined Windows-host wrapper remains
+  `scripts/assertGovernedRunnerLanes.js` via `npm run gitlab:runner:assert`;
+  the repo-owned apply surface
+  `scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1`
   keeps the scheduled-task action on
   `powershell.exe -NoLogo -NoProfile -File "C:\GitLab-Runner\start-governed-runner-lanes.ps1"`
   without `ExecutionPolicy Bypass` and fails closed unless exactly one
-  configured runner manager remains after apply
+  configured runner manager remains after apply, while the Windows assertion
+  surface fails closed unless the installed bootstrap hash still matches the
+  repo source, that exact scheduled-task action plus its logon trigger remain
+  intact, `request_concurrency = 2` remains in
+  `C:\GitLab-Runner\config.toml`, and exactly one configured runner manager is
+  live
 
 Job ownership:
 

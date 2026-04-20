@@ -48,6 +48,13 @@ interface PrivateReleasePacket {
       scheduledTaskAction: string;
       failurePolicy: string;
     };
+    hostAssertionSurface?: {
+      runnerAssertionWrapperScript: string;
+      runnerAssertionPackageScript: string;
+      windowsAssertScript: string;
+      linuxAssertScript: string;
+      failurePolicy: string;
+    };
     coldAdmissionRuntimeCleanup?: {
       processNames: string[];
       terminationStrategy?: string[];
@@ -110,7 +117,11 @@ describe('windows private release packet docs', () => {
     expect(packetDoc).toContain('repo-controlled host asset pack and apply surfaces are versioned under');
     expect(packetDoc).toContain('scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1');
     expect(packetDoc).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
+    expect(packetDoc).toContain('scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1');
+    expect(packetDoc).toContain('scripts/assertGovernedRunnerLanes.js');
+    expect(packetDoc).toContain('npm run gitlab:runner:assert');
     expect(packetDoc).toContain('without `ExecutionPolicy Bypass`');
+    expect(packetDoc).toContain('governed Windows drift assertion fails closed');
     expect(packetDoc).toContain(
       'that Windows bootstrap clears stale `LabVIEW`, `LabVIEWCLI`, and'
     );
@@ -124,6 +135,7 @@ describe('windows private release packet docs', () => {
     expect(packetDoc).toContain('scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
     expect(packetDoc).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
     expect(packetDoc).toContain('scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service');
+    expect(packetDoc).toContain('scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh');
     expect(packetDoc).toContain('## First Retained Runner Receipt');
     expect(packetDoc).toContain('| Merge request | `!91` |');
     expect(packetDoc).toContain('The first governed `windows_private_release_acceptance` receipt is now');
@@ -162,6 +174,13 @@ describe('windows private release packet docs', () => {
             'powershell.exe -NoLogo -NoProfile -File "C:\\GitLab-Runner\\start-governed-runner-lanes.ps1"',
           failurePolicy: 'fail-closed-unless-exactly-one-configured-manager-after-apply'
         },
+        hostAssertionSurface: {
+          runnerAssertionWrapperScript: 'scripts/assertGovernedRunnerLanes.js',
+          runnerAssertionPackageScript: 'npm run gitlab:runner:assert',
+          windowsAssertScript: 'scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1',
+          linuxAssertScript: 'scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh',
+          failurePolicy: 'fail-closed-on-live-host-drift'
+        },
         coldAdmissionRuntimeCleanup: {
           processNames: ['LabVIEW', 'LabVIEWCLI', 'LVCompare'],
           terminationStrategy: [
@@ -182,9 +201,13 @@ describe('windows private release packet docs', () => {
         repoOwnedOperatorAssets: {
           windowsApplyScript: 'scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1',
           windowsBootstrapScript: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',
+          windowsAssertScript: 'scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1',
           linuxApplyScript: 'scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh',
           linuxHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
-          linuxServiceUnit: 'scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service'
+          linuxServiceUnit: 'scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service',
+          linuxAssertScript: 'scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh',
+          runnerAssertionWrapperScript: 'scripts/assertGovernedRunnerLanes.js',
+          runnerAssertionPackageScript: 'npm run gitlab:runner:assert'
         }
       })
     );

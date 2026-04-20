@@ -119,6 +119,9 @@ Every slice must preserve:
 - one governed installed-user entry surface so Marketplace readers land on
   local-use guidance first and source-evaluation/fork procedures stay
   explicitly secondary
+- one governed apply-plus-assert contract for admitted runner/operator hosts
+  so live host drift can be proven from the repo instead of trusted from
+  machine memory
 
 ## First Implementation Slice
 
@@ -137,6 +140,9 @@ That retained slice now:
   contract
 - define the required authority/wiki/bundled-doc refresh steps for future
   sustainment slices
+- keep admitted runner/operator upkeep on repo-owned apply plus live
+  drift-assert surfaces when those hosts remain part of protected-branch
+  admission
 - stop short of claiming new product-layer expansion
 
 ## Success Condition

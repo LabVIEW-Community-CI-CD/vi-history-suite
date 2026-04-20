@@ -172,16 +172,25 @@ Latest landed ship target:
 - `hotfix/*` branches are cut from `main`, merge into `main`, merge back into
   `develop`, and are deleted only after both merges complete
 - hosted automation governance matrix: [hosted-ci-governance.md](./hosted-ci-governance.md)
-- repo-owned runner host asset pack and apply surfaces:
+- repo-owned runner host asset pack, apply surfaces, and live drift
+  assertions:
   - `scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1`
   - `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1`
+  - `scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1`
   - `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh`
   - `scripts/gitlab-runner/linux/start-linux-assurance.sh`
   - `scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service`
+  - `scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh`
+  - `scripts/assertGovernedRunnerLanes.js` via `npm run gitlab:runner:assert`
   - the Windows apply surface keeps the scheduled task on
     `powershell.exe -NoLogo -NoProfile -File "C:\GitLab-Runner\start-governed-runner-lanes.ps1"`
     without `ExecutionPolicy Bypass` and fails closed unless exactly one
     configured runner manager remains after apply
+  - the Windows drift assertion surface fails closed unless the installed
+    bootstrap still matches the repo source, the scheduled task retains that
+    exact action plus its logon trigger, `C:\GitLab-Runner\config.toml` still
+    contains `request_concurrency = 2`, and exactly one configured runner
+    manager is live
   - the Windows bootstrap clears stale `LabVIEW`, `LabVIEWCLI`, and
     `LVCompare` before cold runner admission with bounded `Stop-Process`,
     `taskkill /PID /T /F`, and `taskkill /IM /T /F`, and fails closed if
@@ -189,6 +198,11 @@ Latest landed ship target:
   - the Linux apply surface installs the helper and service unit and fails
     closed unless `vihs-linux-assurance-runner.service` is both enabled and
     active after apply
+  - the Linux drift assertion surface fails closed unless the installed helper
+    and service unit still match the repo source,
+    `~/.gitlab-runner/config.toml` still contains
+    `request_concurrency = 2`, the admitted service fragment/user and working
+    directory remain exact, and exactly one configured runner process is live
   - when the host-native Windows proof exits on that same cleanup seam, the
     acceptance wrapper retains
     `windows-private-release-evidence/host/proof-run-pre-recovery.txt`, waits
