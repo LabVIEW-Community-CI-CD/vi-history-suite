@@ -98,6 +98,8 @@ to the released product line and the active branch line:
   - `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1`
   - `scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1`
   - `scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1`
+  - `scripts/runWindowsProofRuntimeRecoveryRehearsal.js` via
+    `npm run gitlab:runner:windows:recovery:rehearse`
   - `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh`
   - `scripts/gitlab-runner/linux/start-linux-assurance.sh`
   - `scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service`
@@ -130,6 +132,13 @@ to the released product line and the active branch line:
   retains `windows-private-release-evidence/host/proof-runtime-recovery.txt`,
   waits `5000` ms, retries that host-native proof once, and still fails closed
   if the repo-owned recovery step plus retry cannot restore a clean host surface
+- the Windows proof runtime recovery rehearsal surface is
+  `scripts/runWindowsProofRuntimeRecoveryRehearsal.js` via
+  `npm run gitlab:runner:windows:recovery:rehearse`; it fails closed unless
+  the admitted Windows host starts clean, seeds one headless LabVIEW
+  contamination on the governed host-native `2026` `x64` runtime, runs the
+  same repo-owned recovery script, and retains the latest rehearsal receipt at
+  `.cache/windows-proof-runtime-recovery-rehearsal/latest.json`
 - Linux public smoke and Linux benchmark lanes remain repo-owned evaluation or
   maintainer proof surfaces. They are not part of the active installed-user or
   private-release claim for `v1.3.0`.

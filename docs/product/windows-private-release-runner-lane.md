@@ -115,6 +115,9 @@ The governed host asset pack for this lane is versioned in the repo:
   `scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1`
 - Windows proof runtime recovery script:
   `scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1`
+- Windows proof runtime recovery rehearsal wrapper:
+  `scripts/runWindowsProofRuntimeRecoveryRehearsal.js` via
+  `npm run gitlab:runner:windows:recovery:rehearse`
 - Linux apply/update script:
   `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh`
 - Linux helper invoked by that bootstrap:
@@ -154,6 +157,15 @@ retains its transcript as
 `5000` ms, reruns the same host-native proof once, and fails closed if that
 repo-owned recovery step plus single retry still cannot restore a clean host
 surface.
+
+The operator-only recovery rehearsal surface is
+`scripts/runWindowsProofRuntimeRecoveryRehearsal.js` via
+`npm run gitlab:runner:windows:recovery:rehearse`. It fails closed unless the
+admitted Windows host starts clean, resolves the governed host-native LabVIEW
+`2026` `x64` executable, seeds one headless LabVIEW contamination, runs the
+same repo-owned recovery script, and proves the host is clean again after that
+recovery. The latest rehearsal receipt is retained at
+`.cache/windows-proof-runtime-recovery-rehearsal/latest.json`.
 
 ## Apply Or Update On The Admitted Host
 
@@ -197,6 +209,22 @@ repo-owned wrapper defaults to both lanes on the admitted Windows host: it
 runs the Windows assertion directly and the Linux assertion through WSL, so
 future sessions can prove the current scheduled-task/bootstrap state and the
 paired Linux assurance service state in one command.
+
+## Rehearse Governed Recovery
+
+From the repo root on the admitted Windows host:
+
+```powershell
+npm run gitlab:runner:windows:recovery:rehearse
+```
+
+That governed rehearsal surface is native Windows only. It fails closed unless
+the host is already clean before the run starts, then seeds one headless
+LabVIEW contamination, runs
+`scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1`,
+retains a timestamped receipt root under
+`.cache/windows-proof-runtime-recovery-rehearsal/`, and refreshes
+`.cache/windows-proof-runtime-recovery-rehearsal/latest.json`.
 
 ## Manual Registration Pack
 
@@ -252,6 +280,11 @@ The job shall retain:
 - when bounded mid-session contamination recovery fires:
   `windows-private-release-evidence/host/proof-run-pre-recovery.txt`
   and `windows-private-release-evidence/host/proof-runtime-recovery.txt`
+- operator-only recovery rehearsal receipts under
+  `.cache/windows-proof-runtime-recovery-rehearsal/<timestamp>/`, including
+  `proof-runtime-recovery.txt`
+- the latest operator-only recovery rehearsal receipt at
+  `.cache/windows-proof-runtime-recovery-rehearsal/latest.json`
 - `windows-private-release-evidence/host/harness-report/**`
 - `windows-private-release-evidence/container/settings-file.json`
 - `windows-private-release-evidence/container/settings-write.txt`
@@ -264,6 +297,12 @@ host-native retry path is used, it records `proofAttemptCount` plus
 `boundedRecovery`, including the repo-owned recovery script path and retained
 recovery transcript, so future sessions do not have to reconstruct that
 recovery from job logs alone.
+
+The governed recovery rehearsal receipt is the second recovery surface. It
+records the headless LabVIEW contamination seed, the repo-owned recovery
+transcript path, and the preflight plus post-recovery runtime snapshots so
+future sessions do not need ad hoc manual contamination steps to prove that
+the recovery contract still works.
 
 ## Stop Rules
 

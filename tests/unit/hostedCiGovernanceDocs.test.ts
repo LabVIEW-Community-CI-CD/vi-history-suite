@@ -165,9 +165,20 @@ describe('hosted ci governance docs', () => {
           repoOwnedAssertScript: 'scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1',
           repoOwnedRecoveryScript:
             'scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1',
+          repoOwnedRecoveryRehearsalScript: 'scripts/runWindowsProofRuntimeRecoveryRehearsal.js',
           repoOwnedLinuxHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
           combinedAssertionScript: 'scripts/assertGovernedRunnerLanes.js',
           combinedAssertionPackageScript: 'npm run gitlab:runner:assert',
+          recoveryRehearsal: {
+            packageScript: 'npm run gitlab:runner:windows:recovery:rehearse',
+            receiptRoot: '.cache/windows-proof-runtime-recovery-rehearsal',
+            latestReceipt: '.cache/windows-proof-runtime-recovery-rehearsal/latest.json',
+            requestedLabviewVersion: '2026',
+            requestedLabviewBitness: 'x64',
+            contaminationSeedMode: 'headless-labview-launch',
+            recoveryTranscriptLeaf: 'proof-runtime-recovery.txt',
+            failurePolicy: 'fail-closed-unless-clean-before-and-after-governed-recovery-rehearsal'
+          },
           applyVerification: {
             checks: ['scheduled-task-registered', 'exactly-one-configured-runner-manager'],
             failurePolicy: 'fail-closed-unless-scheduled-task-and-runner-process-are-live'
@@ -230,6 +241,9 @@ describe('hosted ci governance docs', () => {
     expect(matrixDoc).toContain('`5000` ms');
     expect(matrixDoc).toContain('retries that host-native proof once');
     expect(matrixDoc).toContain('recover-windows-proof-runtime-surface.ps1');
+    expect(matrixDoc).toContain('runWindowsProofRuntimeRecoveryRehearsal.js');
+    expect(matrixDoc).toContain('npm run gitlab:runner:windows:recovery:rehearse');
+    expect(matrixDoc).toContain('.cache/windows-proof-runtime-recovery-rehearsal/latest.json');
     expect(matrixDoc).toContain('without `ExecutionPolicy Bypass`');
     expect(matrixDoc).toContain('start-governed-runner-lanes.ps1');
     expect(matrixDoc).toContain('assert-governed-runner-lanes.ps1');

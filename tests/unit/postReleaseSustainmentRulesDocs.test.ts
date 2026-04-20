@@ -344,6 +344,17 @@ describe('post-release sustainment rules package', () => {
             firstFailureTranscript:
               'windows-private-release-evidence/host/proof-run-pre-recovery.txt',
             failurePolicy: 'fail-closed-after-repo-recovery-script-and-single-retry'
+          },
+          hostNativeMidSessionRecoveryRehearsal: {
+            script: 'scripts/runWindowsProofRuntimeRecoveryRehearsal.js',
+            packageScript: 'npm run gitlab:runner:windows:recovery:rehearse',
+            receiptRoot: '.cache/windows-proof-runtime-recovery-rehearsal',
+            latestReceipt: '.cache/windows-proof-runtime-recovery-rehearsal/latest.json',
+            requestedLabviewVersion: '2026',
+            requestedLabviewBitness: 'x64',
+            contaminationSeedMode: 'headless-labview-launch',
+            recoveryTranscriptLeaf: 'proof-runtime-recovery.txt',
+            failurePolicy: 'fail-closed-unless-clean-before-and-after-governed-recovery-rehearsal'
           }
         },
         linux_assurance: {
@@ -508,6 +519,9 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('proof-runtime-recovery.txt');
     expect(rulesDoc).toContain('single retry');
     expect(rulesDoc).toContain('recover-windows-proof-runtime-surface.ps1');
+    expect(rulesDoc).toContain('runWindowsProofRuntimeRecoveryRehearsal.js');
+    expect(rulesDoc).toContain('npm run gitlab:runner:windows:recovery:rehearse');
+    expect(rulesDoc).toContain('.cache/windows-proof-runtime-recovery-rehearsal/latest.json');
     expect(rulesDoc).toContain('apply-governed-runner-lanes.ps1');
     expect(rulesDoc).toContain('assert-governed-runner-lanes.ps1');
     expect(rulesDoc).toContain('apply-linux-assurance-runner.sh');

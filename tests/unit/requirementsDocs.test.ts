@@ -267,6 +267,8 @@ describe('requirements documentation coherence', () => {
     expect(srs).toContain('repo-owned Windows proof runtime recovery script');
     expect(srs).toContain('VHS-REQ-561');
     expect(srs).toContain('repo-owned live drift assertion surfaces');
+    expect(srs).toContain('VHS-REQ-562');
+    expect(srs).toContain('Windows proof runtime recovery rehearsal surface');
 
     expect(rtm).toContain('VHS-REQ-541');
     expect(rtm).toContain('VHS-REQ-549');
@@ -278,6 +280,7 @@ describe('requirements documentation coherence', () => {
     expect(rtm).toContain('VHS-REQ-557');
     expect(rtm).toContain('VHS-REQ-558');
     expect(rtm).toContain('VHS-REQ-561');
+    expect(rtm).toContain('VHS-REQ-562');
     expect(rtm).toContain('TEST-UNIT-349');
     expect(rtm).toContain('TEST-INTEG-011');
     expect(rtm).toContain('TEST-SMOKE-022');
@@ -291,10 +294,12 @@ describe('requirements documentation coherence', () => {
     expect(rtm).toContain('TEST-UNIT-361');
     expect(rtm).toContain('TEST-UNIT-364');
     expect(rtm).toContain('TEST-UNIT-365');
+    expect(rtm).toContain('TEST-UNIT-366');
     expect(rtm).toContain('TEST-DOC-113');
     expect(rtm).toContain('TEST-DOC-114');
     expect(rtm).toContain('TEST-DOC-117');
     expect(rtm).toContain('TEST-DOC-118');
+    expect(rtm).toContain('TEST-DOC-119');
     expect(rtm).toContain('docs/product/runtime-provider-public-acceptance-gate.md');
     expect(rtm).toContain('docs/product/runtime-provider-public-acceptance-gate.json');
     expect(rtm).toContain('docs/release-procedure.md');
@@ -321,12 +326,15 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('TEST-UNIT-362');
     expect(testPlan).toContain('TEST-UNIT-364');
     expect(testPlan).toContain('TEST-UNIT-365');
+    expect(testPlan).toContain('TEST-UNIT-366');
     expect(testPlan).toContain('TEST-DOC-113');
     expect(testPlan).toContain('TEST-DOC-114');
     expect(testPlan).toContain('TEST-DOC-115');
     expect(testPlan).toContain('TEST-DOC-117');
     expect(testPlan).toContain('TEST-DOC-118');
+    expect(testPlan).toContain('TEST-DOC-119');
     expect(testPlan).toContain('proof-runtime-recovery.txt');
+    expect(testPlan).toContain('headless LabVIEW contamination');
     expect(testPlan).toContain('native Windows only');
     expect(testPlan).toContain('WSL is retained historical context only');
     expect(testPlan).toContain('runtime-provider public-acceptance gate');

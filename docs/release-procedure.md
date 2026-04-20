@@ -38,6 +38,8 @@
   - `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1`
   - `scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1`
   - `scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1`
+  - `scripts/runWindowsProofRuntimeRecoveryRehearsal.js` via
+    `npm run gitlab:runner:windows:recovery:rehearse`
   - `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh`
   - `scripts/gitlab-runner/linux/start-linux-assurance.sh`
   - `scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service`
@@ -72,6 +74,13 @@
   waits `5000` ms, retries the host-native proof once, and still fails closed
   if the repo-owned recovery step plus retry cannot restore a clean host
   surface.
+- The Windows proof runtime recovery rehearsal surface is
+  `scripts/runWindowsProofRuntimeRecoveryRehearsal.js` via
+  `npm run gitlab:runner:windows:recovery:rehearse`; it fails closed unless
+  the admitted Windows host starts clean, seeds one headless LabVIEW
+  contamination on the governed host-native `2026` `x64` runtime, runs the
+  same repo-owned recovery script, and retains the latest rehearsal receipt at
+  `.cache/windows-proof-runtime-recovery-rehearsal/latest.json`.
 - Public Linux smoke, exact tagging, Marketplace publication, and `main`
   promotion remain out of scope for that private-release-prep sequence.
 - The public GitHub default branch is `main` because it carries the latest

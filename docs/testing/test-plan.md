@@ -1938,6 +1938,11 @@ Information-for-users review cases:
   admitted Windows and Linux assertion commands explicit, keep the combined
   wrapper and `npm run gitlab:runner:assert` package surface explicit, and
   fail closed when the Windows assertion is requested from a non-Windows host
+- `TEST-UNIT-366`: verify the Windows proof runtime recovery rehearsal surface
+  fails closed unless the admitted Windows host starts clean, seeds one
+  headless LabVIEW contamination, runs the repo-owned recovery script,
+  retains the rehearsal receipt plus `proof-runtime-recovery.txt`, and proves
+  the post-recovery runtime surface is clean again
 - `TEST-DOC-113`: review `.gitlab-ci.yml`, `linux-assurance-runner-lane.md`,
   hosted governance, current-state, README, and the release procedure and
   confirm the Linux assurance lane is separate from the Windows proof lane,
@@ -1973,6 +1978,14 @@ Information-for-users review cases:
   drift-assert surfaces and the combined wrapper are explicit about exact
   scheduled-task/bootstrap state, installed helper/service/bootstrap hash
   matching, `request_concurrency = 2`, and live runner/service process checks
+- `TEST-DOC-119`: review the Windows runner-lane contract, hosted governance,
+  private-release packet, README, current-state, release procedure, sustainment
+  package, SRS, RTM, and the test plan and confirm the repo-owned Windows
+  proof runtime recovery rehearsal surface is explicit: it uses
+  `runWindowsProofRuntimeRecoveryRehearsal.js`, is admitted through
+  `npm run gitlab:runner:windows:recovery:rehearse`, seeds one headless
+  LabVIEW contamination, and refreshes
+  `.cache/windows-proof-runtime-recovery-rehearsal/latest.json`
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are

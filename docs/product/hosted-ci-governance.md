@@ -95,6 +95,10 @@ Runner operator hardening:
   `scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1`; the
   combined Windows-host wrapper remains
   `scripts/assertGovernedRunnerLanes.js` via `npm run gitlab:runner:assert`;
+  the operator-only recovery rehearsal wrapper is
+  `scripts/runWindowsProofRuntimeRecoveryRehearsal.js` via
+  `npm run gitlab:runner:windows:recovery:rehearse`, retaining the latest
+  receipt at `.cache/windows-proof-runtime-recovery-rehearsal/latest.json`;
   the repo-owned apply surface
   `scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1`
   keeps the scheduled-task action on
@@ -140,7 +144,13 @@ Job ownership:
     retains `windows-private-release-evidence/host/proof-runtime-recovery.txt`,
     waits `5000` ms, retries that host-native proof once, and fails closed if
     the repo-owned recovery step plus retry still cannot restore a clean host
-    surface
+    surface; the same admitted Windows host also retains one governed recovery
+    rehearsal surface via
+    `scripts/runWindowsProofRuntimeRecoveryRehearsal.js` /
+    `npm run gitlab:runner:windows:recovery:rehearse`, which fails closed
+    unless the host starts clean, seeds one headless LabVIEW contamination,
+    runs that same recovery script, and refreshes
+    `.cache/windows-proof-runtime-recovery-rehearsal/latest.json`
 - `package_extension_preview`: preview VSIX packaging on merge requests into
   protected branch lanes, on `develop`, `main`, `release/*`, `hotfix/*`, and
   exact tags; it now depends on the blocking Linux assurance lanes

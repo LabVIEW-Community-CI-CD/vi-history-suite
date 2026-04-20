@@ -168,6 +168,7 @@
     "assurance:uplift": "node scripts/runAssuranceAudit.js --lane uplift",
     "gitlab:git-credential:refresh": "node scripts/refreshLocalGitLabGitCredential.js",
     "gitlab:runner:assert": "node scripts/assertGovernedRunnerLanes.js",
+    "gitlab:runner:windows:recovery:rehearse": "npm run compile && node scripts/runWindowsProofRuntimeRecoveryRehearsal.js",
     "branch:governance:assert": "node scripts/assertGovernedBranchBaseline.js",
     "public:host:bootstrap-linux": "node scripts/bootstrapLinuxVsCodeHost.js install",
     "public:smoke:linux": "npm run compile && node scripts/runPublicFacadeLinuxSmoke.js",

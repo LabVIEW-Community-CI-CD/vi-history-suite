@@ -309,7 +309,13 @@ Hosted automation governance is now retained explicitly:
   admitted service fragment/user/working directory, and one live configured
   Linux runner process remain intact; and the admitted Windows-host wrapper
   for both lane assertions is `scripts/assertGovernedRunnerLanes.js` via
-  `npm run gitlab:runner:assert`
+  `npm run gitlab:runner:assert`; the operator-only Windows recovery rehearsal
+  wrapper is `scripts/runWindowsProofRuntimeRecoveryRehearsal.js` via
+  `npm run gitlab:runner:windows:recovery:rehearse`, and it fails closed
+  unless the admitted Windows host starts clean, seeds one headless LabVIEW
+  contamination, runs that same repo-owned recovery script, and refreshes the
+  latest retained rehearsal receipt at
+  `.cache/windows-proof-runtime-recovery-rehearsal/latest.json`
 - the authoritative matrix for those distinctions is:
   - `docs/product/hosted-ci-governance.md`
   - `docs/product/hosted-ci-governance.json`
