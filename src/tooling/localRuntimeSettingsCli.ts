@@ -44,7 +44,12 @@ export interface MaterializedLocalRuntimeSettingsCli {
   javascriptLauncherPath: string;
   windowsLauncherPath: string;
   posixLauncherPath: string;
+  windowsTerminalEntrypointPath: string;
+  posixTerminalEntrypointPath: string;
   currentPlatformLauncherPath: string;
+  currentPlatformTerminalEntrypointPath: string;
+  terminalCommandName: string;
+  pathPrependValue: string;
   modulePath: string;
   nextCommand: string;
   exampleCommand: string;
@@ -58,6 +63,10 @@ export interface LocalRuntimeSettingsCliGovernanceContract {
 
 interface WritableStreamLike {
   write(text: string): unknown;
+}
+
+interface EnvironmentVariableCollectionLike {
+  prepend(name: string, value: string): void;
 }
 
 interface LocalRuntimeSettingsCliDeps {
@@ -81,6 +90,9 @@ const CLI_ROOT_DIRECTORY_NAME = 'local-runtime-settings-cli';
 const JAVASCRIPT_LAUNCHER_NAME = 'run-local-runtime-settings-cli.js';
 const WINDOWS_LAUNCHER_NAME = 'vihs-runtime-settings.cmd';
 const POSIX_LAUNCHER_NAME = 'vihs-runtime-settings';
+const WINDOWS_TERMINAL_ENTRYPOINT_NAME = 'vihs.cmd';
+const POSIX_TERMINAL_ENTRYPOINT_NAME = 'vihs';
+const TERMINAL_COMMAND_NAME = 'vihs';
 const MISSING_NODE_RUNTIME_MESSAGE =
   'VI History runtime-settings CLI requires a usable Node.js runtime on PATH. Install or restore Node.js, then rerun \"VI History: Prepare Local Runtime Settings CLI\" to refresh the launcher if this dependency changed.';
 const STALE_LAUNCHER_MESSAGE =
@@ -88,7 +100,7 @@ const STALE_LAUNCHER_MESSAGE =
 
 export function getLocalRuntimeSettingsCliUsage(): string {
   return [
-    'Usage: vihs-runtime-settings --provider <host|docker> --labview-version <major> --labview-bitness <x86|x64> [--settings-file <path>]',
+    'Usage: vihs --provider <host|docker> --labview-version <major> --labview-bitness <x86|x64> [--settings-file <path>]',
     '',
     'Options:',
     '  --provider         Required compare provider: host or docker',
@@ -174,13 +186,23 @@ export function buildLocalRuntimeSettingsCliMaterialization(
   const javascriptLauncherPath = path.join(rootDirectoryPath, JAVASCRIPT_LAUNCHER_NAME);
   const windowsLauncherPath = path.join(rootDirectoryPath, WINDOWS_LAUNCHER_NAME);
   const posixLauncherPath = path.join(rootDirectoryPath, POSIX_LAUNCHER_NAME);
+  const windowsTerminalEntrypointPath = path.join(
+    rootDirectoryPath,
+    WINDOWS_TERMINAL_ENTRYPOINT_NAME
+  );
+  const posixTerminalEntrypointPath = path.join(rootDirectoryPath, POSIX_TERMINAL_ENTRYPOINT_NAME);
   const modulePath = path.join(extensionPath, 'out', 'tooling', 'localRuntimeSettingsCli.js');
   const currentPlatformLauncherPath = resolveCurrentPlatformLauncherPath(
     windowsLauncherPath,
     posixLauncherPath,
     platform
   );
-  const nextCommand = buildLauncherCommandLine(currentPlatformLauncherPath, platform, [
+  const currentPlatformTerminalEntrypointPath = resolveCurrentPlatformLauncherPath(
+    windowsTerminalEntrypointPath,
+    posixTerminalEntrypointPath,
+    platform
+  );
+  const nextCommand = buildBareCommandLine([
     '--provider',
     'host',
     '--labview-version',
@@ -194,7 +216,12 @@ export function buildLocalRuntimeSettingsCliMaterialization(
     javascriptLauncherPath,
     windowsLauncherPath,
     posixLauncherPath,
+    windowsTerminalEntrypointPath,
+    posixTerminalEntrypointPath,
     currentPlatformLauncherPath,
+    currentPlatformTerminalEntrypointPath,
+    terminalCommandName: TERMINAL_COMMAND_NAME,
+    pathPrependValue: buildPathPrependValue(rootDirectoryPath, platform),
     modulePath,
     nextCommand,
     exampleCommand: nextCommand
@@ -232,9 +259,31 @@ export async function ensureLocalRuntimeSettingsCli(
   );
   await fsApi.writeFile(plan.windowsLauncherPath, renderWindowsLauncher(), 'utf8');
   await fsApi.writeFile(plan.posixLauncherPath, renderPosixLauncher(), 'utf8');
+  await fsApi.writeFile(
+    plan.windowsTerminalEntrypointPath,
+    renderWindowsLauncher(),
+    'utf8'
+  );
+  await fsApi.writeFile(
+    plan.posixTerminalEntrypointPath,
+    renderPosixLauncher(),
+    'utf8'
+  );
   await fsApi.chmod(plan.javascriptLauncherPath, 0o755);
   await fsApi.chmod(plan.posixLauncherPath, 0o755);
+  await fsApi.chmod(plan.posixTerminalEntrypointPath, 0o755);
 
+  return plan;
+}
+
+export async function admitLocalRuntimeSettingsCliToTerminalPath(
+  globalStoragePath: string,
+  extensionPath: string,
+  environmentVariableCollection: EnvironmentVariableCollectionLike,
+  deps: LocalRuntimeSettingsCliDeps = {}
+): Promise<MaterializedLocalRuntimeSettingsCli> {
+  const plan = await ensureLocalRuntimeSettingsCli(globalStoragePath, extensionPath, deps);
+  environmentVariableCollection.prepend('PATH', plan.pathPrependValue);
   return plan;
 }
 
@@ -242,6 +291,11 @@ export async function runLocalRuntimeSettingsCli(
   argv: readonly string[],
   deps: LocalRuntimeSettingsCliDeps = {}
 ): Promise<LocalRuntimeSettingsCliRunResult> {
+  if (argv.length === 0) {
+    writeLine(deps.stdout ?? process.stdout, renderTerminalEntrypointDiscoveryText());
+    return { outcome: 'help' };
+  }
+
   const parsed = parseLocalRuntimeSettingsCliArgs(argv);
 
   if (parsed.helpRequested) {
@@ -662,12 +716,34 @@ function resolveCurrentPlatformLauncherPath(
   return platform === 'win32' ? windowsLauncherPath : posixLauncherPath;
 }
 
+function buildPathPrependValue(rootDirectoryPath: string, platform: NodeJS.Platform): string {
+  return `${rootDirectoryPath}${platform === 'win32' ? ';' : ':'}`;
+}
+
 function buildLauncherCommandLine(
   launcherPath: string,
   platform: NodeJS.Platform,
   args: readonly string[]
 ): string {
   return [quoteLauncherPathForShell(launcherPath, platform), ...args].join(' ');
+}
+
+function buildBareCommandLine(args: readonly string[]): string {
+  return [TERMINAL_COMMAND_NAME, ...args].join(' ');
+}
+
+function renderTerminalEntrypointDiscoveryText(): string {
+  return [
+    'VI History runtime-settings terminal entrypoint',
+    '',
+    'Copy one of these commands:',
+    `  ${buildBareCommandLine(['--provider', 'host', '--labview-version', '2026', '--labview-bitness', 'x64'])}`,
+    `  ${buildBareCommandLine(['--provider', 'docker', '--labview-version', '2026', '--labview-bitness', 'x64'])}`,
+    `  ${buildBareCommandLine(['--validate'])}`,
+    '',
+    'Optional:',
+    '  add --settings-file <path> to target one explicit non-workspace settings.json file'
+  ].join('\n');
 }
 
 function quoteLauncherPathForShell(launcherPath: string, platform: NodeJS.Platform): string {
