@@ -21,6 +21,9 @@
   prep only: clean the user-facing docs on a docs-only feature branch first,
   then prepare the Windows packet on a separate feature branch before any
   `release/*` branch is cut.
+- Windows x86 / 32-bit LabVIEW remains out of scope for that `v1.3.0`
+  pre-release sequence; any retained x86 host evidence is characterization
+  only and does not expand the Windows x64 private-release claim.
 - The tracked Windows x64 private-release packet for that prep sequence is:
   - `docs/product/private-release-windows-x64-v1.3.0.md`
   - `docs/product/private-release-windows-x64-v1.3.0.json`

@@ -34,6 +34,8 @@ Activation facts:
   retained host truth is a generated report on `lv_icon.vi` under the same
   mixed-bitness bundle, with `LabVIEWCLI.exe` observed at the banner snapshot
   and `LabVIEW.exe` observed at exit
+- Windows x86 / 32-bit LabVIEW remains out of scope for the active `v1.3.0`
+  release, and any retained x86 host evidence is characterization only
 - historical released `repo-standards-review` `v0.2.9` compliance closeout is
   retained for this branch implementation, and the current outer assurance
   lane now uses the published `repo-standards-review`
@@ -114,8 +116,9 @@ history instead of chat memory.
 - keep the current released Docker-only installed contract explicit until the
   branch replacement is truthfully published
 - keep the private-release proof focus on Windows x64 host and
-  Windows-container lanes first; x86 host proof remains later breadth, not
-  the first admission target
+  Windows-container lanes only for the active `v1.3.0` candidate; Windows x86
+  / 32-bit LabVIEW remains out of scope for that release and any retained x86
+  proof is later characterization only
 - keep WSL out of the active Windows x64 private-release contract: the first
   admission surfaces are native Windows host proof and Docker Desktop
   Windows-container proof on the same Windows machine

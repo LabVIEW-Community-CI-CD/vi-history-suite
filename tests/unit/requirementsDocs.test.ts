@@ -248,7 +248,10 @@ describe('requirements documentation coherence', () => {
     expect(srs).toContain('`labviewViHistory.prepareLocalRuntimeSettingsCli` command shall make its trust and settings-target governance explicit');
     expect(srs).toContain('expose one governed readback or validation surface');
     expect(srs).toContain('close the remaining LabVIEW 2026 operation-matrix admission seams');
-    expect(srs).toContain('prove `CreateComparisonReport` admission on each supported LabVIEW 2026 host bundle');
+    expect(srs).toContain(
+      'prove `CreateComparisonReport` admission on the supported LabVIEW 2026 x64 release host bundle'
+    );
+    expect(srs).toContain('Windows x86 host-bundle rerun remains non-blocking characterization only');
     expect(srs).toContain('remain on the exact released Docker-only baseline until the host-default provider contract is source-backed');
     expect(srs).toContain('VHS-REQ-551');
     expect(srs).toContain(
@@ -318,6 +321,8 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('TEST-UNIT-352');
     expect(testPlan).toContain('TEST-INTEG-010');
     expect(testPlan).toContain('TEST-INTEG-011');
+    expect(testPlan).toContain('characterization receipt without');
+    expect(testPlan).toContain('current release admission');
     expect(testPlan).toContain('TEST-SMOKE-020');
     expect(testPlan).toContain('TEST-DOC-108');
     expect(testPlan).toContain('TEST-DOC-109');

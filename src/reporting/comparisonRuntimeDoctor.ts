@@ -233,6 +233,10 @@ function deriveRuntimeDoctorNextAction(options: {
   }
 
   if (options.runtimeExecution.state === 'failed') {
+    if (options.runtimeExecution.diagnosticReason === 'labview-cli-vi-password-protected') {
+      return 'Next action: choose a revision pair whose selected/base VI is not password protected, or remove password protection before rerunning comparison report generation.';
+    }
+
     if (
       options.runtimeSelection.platform === 'win32' &&
       options.runtimeSelection.provider === 'host-native' &&

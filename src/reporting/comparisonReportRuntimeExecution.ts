@@ -2779,6 +2779,9 @@ export function classifyLabviewCliDiagnosticText(
 } {
   const notes: string[] = [];
   const launchSucceeded = /LabVIEW launched successfully\./i.test(diagnosticText);
+  const connectedToLabview = /Connection established with LabVIEW at port number \d+\./i.test(
+    diagnosticText
+  );
   const invalidPathLines = diagnosticText.match(/^.*path invalid or does not exist:\s*.+$/gim);
   if (invalidPathLines && invalidPathLines.length > 0) {
     notes.push(
@@ -2828,8 +2831,20 @@ export function classifyLabviewCliDiagnosticText(
     };
   }
 
+  if (/VI is password protected\./i.test(diagnosticText)) {
+    notes.push(
+      connectedToLabview
+        ? 'LabVIEW CLI connected to LabVIEW before CreateComparisonReport failed because one or both selected VI revisions are password protected.'
+        : 'LabVIEW CLI could not generate a comparison report because one or both selected VI revisions are password protected.'
+    );
+    return {
+      reason: 'labview-cli-vi-password-protected',
+      notes: connectedToLabview ? notes : appendLaunchConfirmationNote(notes, launchSucceeded)
+    };
+  }
+
   if (
-    /Connection established with LabVIEW at port number \d+\./i.test(diagnosticText) &&
+    connectedToLabview &&
     /Error code\s*:\s*66\b/i.test(diagnosticText) &&
     /Call By Reference/i.test(diagnosticText)
   ) {

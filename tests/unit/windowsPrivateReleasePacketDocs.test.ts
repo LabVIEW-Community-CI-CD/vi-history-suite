@@ -122,6 +122,7 @@ describe('windows private release packet docs', () => {
     expect(packetDoc).toContain('preview-evidence/vi-history-suite-1.3.0.vsix');
     expect(packetDoc).toContain('.cache/private-release/1.3.0/windows-x64-host/');
     expect(packetDoc).toContain('.cache/private-release/1.3.0/windows-x64-container/');
+    expect(packetDoc).toContain('Windows x86 / 32-bit LabVIEW release support');
     expect(packetDoc).toContain('WSL as part of the active user or proof contract');
     expect(packetDoc).toContain('windows_private_release_acceptance');
     expect(packetDoc).toContain('windows-private-release-evidence/');
@@ -165,6 +166,7 @@ describe('windows private release packet docs', () => {
       'windows-host-native',
       'windows-container'
     ]);
+    expect(packetJson.scope.nonScope).toContain('windows-x86-labview-release-support');
     expect(packetJson.scope.nonScope).toContain('wsl-active-support');
     expect(packetJson.governingSequence.docsBranch.name).toBe('feature/windows-private-release-docs-26514');
     expect(packetJson.governingSequence.prepBranch.name).toBe('feature/windows-private-release-prep');

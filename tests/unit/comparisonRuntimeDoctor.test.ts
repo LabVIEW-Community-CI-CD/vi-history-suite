@@ -185,6 +185,59 @@ describe('comparisonRuntimeDoctor', () => {
     );
   });
 
+  it('uses password-protected guidance when the retained runtime diagnosis proves protected VI revisions', () => {
+    const lines = buildComparisonRuntimeDoctorSummaryFromFacts({
+      reportStatus: 'ready-for-runtime',
+      runtimeSelection: {
+        platform: 'win32',
+        requestedProvider: 'docker',
+        bitness: 'x64',
+        provider: 'windows-container',
+        engine: 'labview-cli',
+        windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
+        providerDecisions: [
+          {
+            provider: 'windows-container',
+            outcome: 'selected',
+            reason: 'provider-request-docker-selected-windows-container',
+            detail:
+              'Docker daemon was reachable in windows-container mode with governed Windows container image nationalinstruments/labview:2026q1-windows present locally because the Docker provider was requested.'
+          },
+          {
+            provider: 'host-native',
+            outcome: 'rejected',
+            reason: 'provider-request-docker-rejected-host-native',
+            detail:
+              'Host-native execution was not selected because the Docker provider was requested.'
+          }
+        ],
+        notes: [
+          'Docker daemon was reachable in windows-container mode with governed Windows container image nationalinstruments/labview:2026q1-windows present locally because the Docker provider was requested.'
+        ],
+        registryQueryPlans: [],
+        candidates: []
+      },
+      runtimeExecution: {
+        state: 'failed',
+        attempted: true,
+        reportExists: false,
+        failureReason: 'command-exited-nonzero',
+        diagnosticReason: 'labview-cli-vi-password-protected',
+        diagnosticLogSourcePath: 'C:\\vi-history-suite\\container-temp\\lvtemporary_73141.log',
+        diagnosticNotes: [
+          'LabVIEW CLI connected to LabVIEW before CreateComparisonReport failed because one or both selected VI revisions are password protected.'
+        ]
+      }
+    });
+
+    expect(lines).toContain('Provider request=docker.');
+    expect(lines).toContain('Runtime failure reason: command-exited-nonzero.');
+    expect(lines).toContain('Runtime diagnostic reason: labview-cli-vi-password-protected.');
+    expect(lines.at(-1)).toBe(
+      'Next action: choose a revision pair whose selected/base VI is not password protected, or remove password protection before rerunning comparison report generation.'
+    );
+  });
+
   it('summarizes successful execution with review-oriented next action', () => {
     const lines = buildComparisonRuntimeDoctorSummaryFromFacts({
       reportStatus: 'ready-for-runtime',

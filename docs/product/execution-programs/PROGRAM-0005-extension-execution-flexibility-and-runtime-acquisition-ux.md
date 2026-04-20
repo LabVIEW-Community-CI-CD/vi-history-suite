@@ -49,8 +49,9 @@ Current facts:
   mixed-bitness bundle, with `LabVIEWCLI.exe` observed at the banner snapshot
   and `LabVIEW.exe` observed at exit
 - private-release proof focus is now explicit: close the Windows x64 host and
-  Windows-container lanes first; do not widen the slice back into x86 host
-  proof breadth before the x64 contract is source-backed
+  Windows-container lanes only for the active `v1.3.0` candidate; Windows x86
+  / 32-bit LabVIEW remains characterization-only and out of scope for that
+  release admission
 - WSL is not part of the active Windows x64 private-release path; the first
   admission surfaces are native Windows host execution plus Docker Desktop in
   Windows-container mode on the same Windows machine, with retained proof
