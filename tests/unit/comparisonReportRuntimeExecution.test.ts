@@ -289,6 +289,8 @@ describe('comparisonReportRuntimeExecution', () => {
     const record = createWindowsContainerReadyRecord();
     const diagnosticLogPath =
       'C:\\workspace\\.storage\\reports\\repoid123456\\fileid123456\\container-temp\\lvtemporary_123.log';
+    const matchesDiagnosticLogPath = (filePath: string) =>
+      filePath.replaceAll('/', '\\') === diagnosticLogPath;
     const diagnosticText = [
       'Using LabVIEW: "C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe"',
       'Connection established with LabVIEW at port number 3363.',
@@ -323,9 +325,9 @@ describe('comparisonReportRuntimeExecution', () => {
         stderr: 'comparison-command cancelled by user\n',
         cancelled: true
       });
-    const pathExists = vi.fn(async (filePath: string) => filePath === diagnosticLogPath);
+    const pathExists = vi.fn(async (filePath: string) => matchesDiagnosticLogPath(filePath));
     const readFile = vi.fn(async (filePath: string) => {
-      if (filePath === diagnosticLogPath) {
+      if (matchesDiagnosticLogPath(filePath)) {
         return diagnosticText;
       }
       throw new Error(`Unexpected read: ${filePath}`);

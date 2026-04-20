@@ -1150,17 +1150,16 @@ function shouldAttemptWindowsHeadlessRecovery(
     record.runtimeSelection.engine === 'labview-cli' &&
     execution.state === 'failed' &&
     execution.diagnosticReason === 'labview-cli-call-by-reference' &&
-    wasHeadlessLabviewCliExecutionRequested(record, execution)
+    wasWindowsHeadlessLabviewCliExecutionRequested(record, execution)
   );
 }
 
-function wasHeadlessLabviewCliExecutionRequested(
+function wasWindowsHeadlessLabviewCliExecutionRequested(
   record: ComparisonReportPacketRecord,
   execution: ComparisonReportRuntimeExecution
 ): boolean {
   return (
     record.runtimeSelection.provider === 'windows-container' ||
-    record.runtimeSelection.provider === 'linux-container' ||
     record.runtimeSelection.headlessRequested === true ||
     isHeadlessLabviewCliExecution(execution.args)
   );
