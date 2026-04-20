@@ -73,11 +73,15 @@ Use `VI History: Prepare Local Runtime Settings CLI` first.
 
 - The prepare command materializes the launchers under the extension-global
   storage root.
+- The command reference and this FAQ are the governed installed-user help and
+  recovery surfaces for that CLI.
 - The governed settings targets are the platform-default user
   `settings.json` path or one explicit `--settings-file` override.
 - Workspace settings are not a supported target for this CLI surface.
 - The prepare command is admitted in untrusted workspaces because it only
   prepares launcher files, but installed compare remains blocked there.
+- If the launcher is missing, stale, or Node.js was repaired, rerun the same
+  prepare command to refresh it.
 
 ### How do I check what the runtime-settings CLI actually persisted?
 
@@ -89,7 +93,9 @@ It reports the persisted `viHistorySuite.runtimeProvider`,
 `viHistorySuite.labviewVersion`, and `viHistorySuite.labviewBitness` facts,
 plus `runtimeValidationOutcome`, `runtimeProvider`, `runtimeEngine`, and
 `runtimeBlockedReason`. This keeps validation on one bounded CLI surface
-without reopening path-picking or a panel-side provider picker.
+without reopening path-picking or a panel-side provider picker. On the current
+Windows x64 private-release route, `ready` means the native Windows host or
+Docker Desktop Windows-container contract is admissible without WSL.
 
 ### How do I check live-session drift after changing runtime settings?
 

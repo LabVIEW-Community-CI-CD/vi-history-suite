@@ -94,6 +94,9 @@ See also:
 
 ## Runtime Provider CLI And Proof
 
+This section and the FAQ are the governed installed-user help surface for the
+runtime-settings CLI on the active branch.
+
 `VI History: Prepare Local Runtime Settings CLI`
 
 - Purpose: materialize the governed runtime-settings launchers under the
@@ -103,6 +106,8 @@ See also:
 - Notes:
   - the governed materialization root is the extension-global storage path
     reported by the command result
+  - rerun this same prepare command when the launcher is missing, stale, or a
+    repaired Node.js runtime needs a refreshed launcher
   - supported settings targets are the default user `settings.json` path for
     the current platform or one explicit `--settings-file` override
   - this prepare command is admitted in untrusted workspaces because it only
@@ -140,6 +145,9 @@ See also:
   - the output retains `runtimeValidationOutcome`, `runtimeProvider`,
     `runtimeEngine`, and `runtimeBlockedReason` without reopening path-picking
     or a panel-side provider picker
+  - on the current Windows x64 private-release route, treat `ready` as the
+    native Windows host or Docker Desktop Windows-container contract; WSL is
+    not an admitted dependency for that path
 
 `labviewViHistory.probeRuntimeSettingsLiveSession`
 

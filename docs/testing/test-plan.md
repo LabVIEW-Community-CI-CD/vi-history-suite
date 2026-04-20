@@ -343,10 +343,11 @@ Information-for-users review cases:
   truthful runtime-selection summary that justifies either `ready-for-runtime`
   or `blocked-runtime` on the active host
 - `TEST-INTEG-009`: run the real extension-host local-runtime settings CLI
-  preparation command, execute the current-host generated launcher against a
-  temporary settings file, and prove the CLI can switch the persisted
-  provider request between `host` and `docker` while writing LabVIEW version
-  and bitness facts; the explicit Windows proof lane is
+  preparation command, execute the generated launcher against temporary and
+  default settings targets, and prove the user-scope CLI can switch the
+  persisted provider request between `host` and `docker` while writing
+  LabVIEW version and bitness facts without PATH mutation, hidden-path
+  reconstruction, or admin elevation; the explicit Windows proof lane is
   `npm run test:integration:windows`, which forces the `.cmd` launcher path
   and proves the default no-`--settings-file` target under a disposable
   `APPDATA\\Code\\User\\settings.json`, aligned to the active disposable
@@ -1777,19 +1778,20 @@ Information-for-users review cases:
 - `TEST-UNIT-344`: verify missing, unresolved, or unsupported provider/runtime
   selection blocks compare in the panel and emits a VS Code warning
   notification
-- `TEST-UNIT-345`: verify the on-demand settings CLI materializes platform
-  launchers under user-profile storage on first use, writes provider plus
-  `viHistorySuite.labviewVersion` and `viHistorySuite.labviewBitness`, and
-  does not require PATH mutation or a prebuilt VSIX-shipped CLI payload; real
-  current-host plus explicit Windows launcher execution are traced separately
-  by `TEST-INTEG-009`; live mutation of the active real user-profile VS Code
-  settings target while Code is already running remains a later proof seam,
-  and the CLI plus the settings-driven compare-preflight/runtime-doctor
-  surfaces warn users to reload or restart the window before Compare when
-  Code is already open
+- `TEST-UNIT-345`: verify the governed prepare surface materializes platform
+  launchers under user-profile storage, retains the launcher-location
+  contract, writes provider plus `viHistorySuite.labviewVersion` and
+  `viHistorySuite.labviewBitness`, and stays inside user-owned installation
+  doctrine without PATH mutation, admin elevation, or a prebuilt
+  VSIX-shipped CLI payload; real current-host plus explicit Windows launcher
+  execution are traced separately by `TEST-INTEG-009`; live mutation of the
+  active real user-profile VS Code settings target while Code is already
+  running remains a later proof seam, and the CLI plus the settings-driven
+  compare-preflight/runtime-doctor surfaces warn users to reload or restart
+  the window before Compare when Code is already open
 - `TEST-UNIT-346`: verify the installed compare contract defaults to host and
-  admits Docker only as a bounded expert provider persisted through the
-  generated settings CLI
+  admits Docker only as a bounded expert provider persisted and rechecked
+  through the generated settings CLI
 - `TEST-UNIT-347`: verify Docker preflight derives the governed image family
   from the current engine and fails closed on unsupported Docker `x86` with
   host/`x64` corrective guidance
@@ -1809,20 +1811,24 @@ Information-for-users review cases:
   `npm run proof:runtime-settings-live-session` wrapper snapshots the current
   packet/history/policy bundle into one reviewable receipt directory
 - `TEST-UNIT-351`: verify the generated settings CLI accepts governed VS Code
-  settings targets with JSONC comments or trailing commas, preserves unrelated
-  settings content, and rewrites only provider/version/bitness facts
+  settings targets with JSONC comments or trailing commas, names the effective
+  settings target in update or validation output, preserves unrelated settings
+  content, rejects unsupported workspace-target widening, and rewrites only
+  provider/version/bitness facts
 - `TEST-UNIT-352`: verify the materialized settings-CLI launcher either
   executes through the governed runtime contract or fails closed with one
-  actionable missing-or-stale runtime dependency message instead of assuming
-  host PATH behavior
+  actionable missing-or-stale runtime dependency message that directs the user
+  back to `VI History: Prepare Local Runtime Settings CLI` instead of
+  assuming host PATH behavior
 - `TEST-UNIT-353`: verify `labviewViHistory.prepareLocalRuntimeSettingsCli`
   retains explicit trust and settings-target governance, including the
-  governed materialization location, the default-user-versus-explicit-settings
-  target contract, and the admitted untrusted-workspace posture while compare
-  remains blocked there
-- `TEST-UNIT-354`: verify the provider CLI exposes one governed readback or
-  validation surface that reports persisted provider/version/bitness truth
-  plus runtime-validation outcome without reopening path-picking or a
+  governed materialization location, launcher-location contract, supported
+  refresh action, the default-user-versus-explicit-settings target contract,
+  and the admitted untrusted-workspace posture while compare remains blocked
+  there
+- `TEST-UNIT-354`: verify the provider CLI exposes one governed validation
+  surface at `--validate` that reports persisted provider/version/bitness
+  truth plus runtime-validation outcome without reopening path-picking or a
   panel-side provider picker
 - `TEST-UNIT-355`: verify Windows host runtime validation accepts the
   governed mixed-bitness x64 host bundle when the canonical host resolves
@@ -1832,9 +1838,10 @@ Information-for-users review cases:
   instead of failing closed with `labview-cli-not-found-for-bitness`
 - `TEST-INTEG-010`: prove the generated settings-CLI launcher runtime
   dependency contract on the supported host surface and retain the actionable
-  failure mode when the governed runtime dependency is unavailable or stale
-- `TEST-INTEG-011`: prove the governed provider-CLI readback or validation
-  surface reports the persisted provider/version/bitness bundle and the
+  failure mode that directs the operator back to the prepare command when the
+  governed runtime dependency is unavailable or stale
+- `TEST-INTEG-011`: prove the governed provider-CLI validation surface at
+  `--validate` reports the persisted provider/version/bitness bundle and the
   bounded runtime-validation outcome from a real extension-host session; the
   explicit Windows lane shall prove that a persisted `docker` / `2026` / `x64`
   bundle validates as `ready` with `windows-container` plus `labview-cli` when
@@ -1871,9 +1878,10 @@ Information-for-users review cases:
   surface remain explicit until direct active-session uptake is end-to-end
   proven
 - `TEST-DOC-107`: review the manifest, prepare-command surface, SRS, RTM, and
-  the test plan and confirm the generated settings-CLI prepare command now
-  retains explicit trust and settings-target governance instead of relying on
-  chat-memory doctrine
+  the test plan and confirm the generated settings-CLI prepare command plus
+  the command-reference and FAQ help package retain explicit launcher
+  discovery, refresh, trust, and settings-target governance instead of
+  relying on chat-memory doctrine
 - `TEST-DOC-108`: review current-state, the host-operation matrix docs, the
   tracked host `CreateComparisonReport` packet, the SRS, RTM, and the test
   plan and confirm the remaining LabVIEW 2026 prerequisite-operation seams
@@ -1888,9 +1896,10 @@ Information-for-users review cases:
 - `TEST-DOC-110`: review current-state, `PROGRAM-0005`, `ISSUE-0412`, the
   command reference, the FAQ, the SRS, the RTM, and the test plan and confirm
   the active Windows x64 private-release route is native Windows only: host
-  LabVIEW plus Docker Desktop Windows-container proof are the first admission
-  surfaces, while WSL is retained historical context only and not an admitted
-  installed-user or private-release dependency
+  validation admits the governed mixed-bitness LabVIEW bundle, Docker proof
+  admits Docker Desktop Windows-container execution, and WSL is retained
+  historical context only rather than an admitted installed-user or
+  private-release dependency
 - `TEST-UNIT-356`: verify the governed Windows private-release acceptance
   script keeps the canonical `HARNESS-VHS-002` `lv_icon.vi` selected/base pair,
   retains separate host and Windows-container command plans, and emits the
