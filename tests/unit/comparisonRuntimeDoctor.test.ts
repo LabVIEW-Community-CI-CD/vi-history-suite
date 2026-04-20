@@ -135,6 +135,56 @@ describe('comparisonRuntimeDoctor', () => {
     );
   });
 
+  it('uses bounded host guidance for host-native CreateComparisonReport timeouts where LabVIEW never appears', () => {
+    const lines = buildComparisonRuntimeDoctorSummaryFromFacts({
+      reportStatus: 'ready-for-runtime',
+      runtimeSelection: {
+        platform: 'win32',
+        bitness: 'x64',
+        provider: 'host-native',
+        engine: 'labview-cli',
+        labviewExe: {
+          kind: 'labview-exe',
+          path: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+          source: 'configured',
+          exists: true,
+          bitness: 'x64'
+        },
+        labviewCli: {
+          kind: 'labview-cli',
+          path: 'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+          source: 'configured',
+          exists: true,
+          bitness: 'x86'
+        },
+        notes: ['Host-native execution was selected.'],
+        registryQueryPlans: [],
+        candidates: []
+      },
+      runtimeExecution: {
+        state: 'failed',
+        attempted: true,
+        reportExists: false,
+        failureReason: 'command-timed-out',
+        diagnosticReason: 'labview-cli-timeout-no-labview-through-exit',
+        diagnosticNotes: [
+          'Comparison-report runtime timed out after 120000ms.',
+          'LabVIEW CLI timed out without generating a report; at the retained cli-log-banner snapshot, LabVIEWCLI.exe was observed while LabVIEW.exe was not observed, and no LabVIEW-related processes remained at the retained process-exit snapshot.'
+        ],
+        observedProcessNames: ['LabVIEWCLI.exe'],
+        exitObservedProcessNames: []
+      }
+    });
+
+    expect(lines).toContain('Runtime failure reason: command-timed-out.');
+    expect(lines).toContain(
+      'Runtime diagnostic reason: labview-cli-timeout-no-labview-through-exit.'
+    );
+    expect(lines.at(-1)).toBe(
+      'Next action: review the retained runtime process observations and confirm the selected LabVIEW 2026 host bundle, then rerun comparison report generation or switch to a Docker-backed compare path if the host-native CreateComparisonReport seam remains blocked.'
+    );
+  });
+
   it('summarizes successful execution with review-oriented next action', () => {
     const lines = buildComparisonRuntimeDoctorSummaryFromFacts({
       reportStatus: 'ready-for-runtime',

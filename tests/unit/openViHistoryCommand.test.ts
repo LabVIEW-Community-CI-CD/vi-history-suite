@@ -1861,6 +1861,83 @@ describe('createOpenViHistoryCommand', () => {
     });
   });
 
+  it('surfaces bounded host timeout guidance when diffPrevious reopens retained failed host-native compare evidence', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    const openRetainedComparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'opened-comparison-report',
+      reportStatus: 'ready-for-runtime',
+      runtimeExecutionState: 'failed',
+      runtimeFailureReason: 'command-timed-out',
+      runtimeDiagnosticReason: 'labview-cli-timeout-no-labview-through-exit',
+      runtimeDoctorSummaryLines: [
+        'Selected provider=host-native; engine=labview-cli; platform=win32; bitness=x64.',
+        'Provider request=auto.',
+        'Runtime failure reason: command-timed-out.',
+        'Runtime diagnostic reason: labview-cli-timeout-no-labview-through-exit.',
+        'Observed process names: LabVIEWCLI.exe.',
+        'Exit observed process names: .',
+        'Next action: review the retained runtime process observations and confirm the selected LabVIEW 2026 host bundle, then rerun comparison report generation or switch to a Docker-backed compare path if the host-native CreateComparisonReport seam remains blocked.'
+      ],
+      reportFilePath: '/workspace/.storage/reports/repo/file/diff-report-eligible.vi.html',
+      metadataFilePath: '/workspace/.storage/reports/repo/file/report-metadata.json',
+      reportWebviewUri: 'webview:/report',
+      generatedReportExists: false,
+      title: 'VI Comparison Report: eligible.vi'
+    });
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Update VI',
+            previousHash: '1111111122222222'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      undefined,
+      undefined,
+      openRetainedComparisonReportAction
+    );
+
+    await command(targetUri as never);
+    await tracker.dispatchLastPanelMessage({
+      command: 'diffPrevious',
+      hash: 'abcdef1234567890'
+    });
+
+    expect(showWarningMessageMock).toHaveBeenCalledWith(
+      'Open compare runtime failed. Provider: host-native. Provider request: auto. Failure reason: command-timed-out. Diagnostic reason: labview-cli-timeout-no-labview-through-exit. Next action: review the retained runtime process observations and confirm the selected LabVIEW 2026 host bundle, then rerun comparison report generation or switch to a Docker-backed compare path if the host-native CreateComparisonReport seam remains blocked.'
+    );
+    expect(tracker.getLastActionSummary()).toMatchObject({
+      command: 'diffPrevious',
+      hash: 'abcdef1234567890',
+      outcome: 'opened-comparison-report',
+      reportStatus: 'ready-for-runtime',
+      runtimeExecutionState: 'failed',
+      runtimeFailureReason: 'command-timed-out',
+      runtimeDiagnosticReason: 'labview-cli-timeout-no-labview-through-exit',
+      comparisonRuntimePanelStatus: 'failed'
+    });
+  });
+
   it('uses retained-compare-specific cancellation messaging when diffPrevious opening is cancelled', async () => {
     const targetUri = createMockUri('/workspace/eligible.vi');
     const tracker = new HistoryPanelTracker();

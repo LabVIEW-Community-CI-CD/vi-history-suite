@@ -543,6 +543,15 @@ async function runHostNativeExecution(
             processObservation: processObservation?.bannerSnapshot,
             exitProcessObservation: processObservation?.exitSnapshot
           });
+      const timeoutDiagnostic = commandResult.timedOut
+        ? classifyTimedOutRuntimeDiagnostic({
+            engine: record.runtimeSelection.engine,
+            processObservation: processObservation?.bannerSnapshot,
+            exitProcessObservation: processObservation?.exitSnapshot
+          })
+        : {
+            notes: []
+          };
       const retainedLabviewIniPath =
         windowsContainerRuntimeFacts.labviewIniPath ?? windowsLabviewTcpSettings.labviewIniPath;
       const retainedLabviewTcpPort =
@@ -552,6 +561,7 @@ async function runHostNativeExecution(
         windowsLabviewTcpSettings.notes,
         windowsContainerRuntimeFacts.notes,
         diagnostics.notes,
+        timeoutDiagnostic.notes,
         finalizedReport.validationNotes,
         failureClassification.notes
       );
@@ -561,7 +571,7 @@ async function runHostNativeExecution(
         attempted: true,
         reportExists,
         failureReason: succeeded ? undefined : failureClassification.reason,
-        diagnosticReason: diagnostics.reason,
+        diagnosticReason: diagnostics.reason ?? timeoutDiagnostic.reason,
         diagnosticNotes,
         diagnosticLogSourcePath: diagnostics.sourcePath,
         diagnosticLogArtifactPath: diagnostics.artifactPath,
@@ -2938,6 +2948,47 @@ function classifyRuntimeFailure(options: {
   return {
     reason: 'report-file-not-generated',
     notes: []
+  };
+}
+
+function classifyTimedOutRuntimeDiagnostic(options: {
+  engine?: 'labview-cli' | 'lvcompare';
+  processObservation?: RuntimeProcessObservation;
+  exitProcessObservation?: RuntimeProcessObservation;
+}): {
+  reason?: string;
+  notes: string[];
+} {
+  if (
+    options.engine !== 'labview-cli' ||
+    options.processObservation?.trigger !== 'cli-log-banner' ||
+    !options.processObservation.labviewCliProcessObserved ||
+    options.processObservation.labviewProcessObserved
+  ) {
+    return {
+      notes: []
+    };
+  }
+
+  if (
+    options.exitProcessObservation?.trigger === 'process-exit' &&
+    !options.exitProcessObservation.labviewProcessObserved &&
+    !options.exitProcessObservation.labviewCliProcessObserved &&
+    !options.exitProcessObservation.lvcompareProcessObserved
+  ) {
+    return {
+      reason: 'labview-cli-timeout-no-labview-through-exit',
+      notes: [
+        'LabVIEW CLI timed out without generating a report; at the retained cli-log-banner snapshot, LabVIEWCLI.exe was observed while LabVIEW.exe was not observed, and no LabVIEW-related processes remained at the retained process-exit snapshot.'
+      ]
+    };
+  }
+
+  return {
+    reason: 'labview-cli-timeout-no-labview-at-banner-snapshot',
+    notes: [
+      'LabVIEW CLI timed out without generating a report; at the retained cli-log-banner snapshot, LabVIEWCLI.exe was observed while LabVIEW.exe was not observed.'
+    ]
   };
 }
 
