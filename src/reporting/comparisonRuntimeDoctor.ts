@@ -233,6 +233,18 @@ function deriveRuntimeDoctorNextAction(options: {
   }
 
   if (options.runtimeExecution.state === 'failed') {
+    if (
+      options.runtimeSelection.platform === 'win32' &&
+      options.runtimeSelection.provider === 'host-native' &&
+      options.runtimeExecution.failureReason === 'command-timed-out' &&
+      (options.runtimeExecution.diagnosticReason ===
+        'labview-cli-timeout-no-labview-at-banner-snapshot' ||
+        options.runtimeExecution.diagnosticReason ===
+          'labview-cli-timeout-no-labview-through-exit')
+    ) {
+      return 'Next action: review the retained runtime process observations and confirm the selected LabVIEW 2026 host bundle, then rerun comparison report generation or switch to a Docker-backed compare path if the host-native CreateComparisonReport seam remains blocked.';
+    }
+
     return 'Next action: use the retained runtime notes, stdout/stderr artifacts, and diagnostic log to correct the runtime environment, then rerun comparison report generation.';
   }
 

@@ -140,4 +140,73 @@ describe('comparisonReportRuntimeExecution', () => {
       'Source/Examples/foo.vi'
     );
   });
+
+  it('retains a bounded host timeout diagnostic when LabVIEWCLI is observed without LabVIEW through exit', async () => {
+    const record = createReadyRecord();
+    const result = await executeComparisonReport(
+      {
+        record,
+        repositoryRoot: '/workspace/repo'
+      },
+      {
+        readRevisionBlob: vi
+          .fn()
+          .mockResolvedValueOnce(Buffer.from('left'))
+          .mockResolvedValueOnce(Buffer.from('right')),
+        mkdir: vi.fn().mockResolvedValue(undefined),
+        writeFile: vi.fn().mockResolvedValue(undefined) as never,
+        pathExists: vi.fn().mockResolvedValue(false),
+        runCommand: vi.fn().mockResolvedValue({
+          exitCode: 124,
+          stdout: 'command stdout',
+          stderr: '',
+          timedOut: true,
+          timeoutMs: 120000,
+          processObservation: {
+            capturedAt: '2026-04-19T21:00:01.000Z',
+            trigger: 'cli-log-banner',
+            observedProcesses: [
+              {
+                imageName: 'LabVIEWCLI.exe',
+                pid: 4242
+              }
+            ],
+            observedProcessNames: ['LabVIEWCLI.exe'],
+            labviewProcessObserved: false,
+            labviewCliProcessObserved: true,
+            lvcompareProcessObserved: false
+          },
+          exitProcessObservation: {
+            capturedAt: '2026-04-19T21:02:01.000Z',
+            trigger: 'process-exit',
+            observedProcesses: [],
+            observedProcessNames: [],
+            labviewProcessObserved: false,
+            labviewCliProcessObserved: false,
+            lvcompareProcessObserved: false
+          }
+        }),
+        nowIso: vi
+          .fn()
+          .mockReturnValueOnce('2026-04-19T21:00:00.000Z')
+          .mockReturnValueOnce('2026-04-19T21:02:01.000Z'),
+        nowMs: vi.fn().mockReturnValueOnce(1000).mockReturnValueOnce(121000),
+        writePacketRecord: vi.fn().mockResolvedValue(undefined),
+        processPlatform: 'win32'
+      }
+    );
+
+    expect(result.record.runtimeExecution.failureReason).toBe('command-timed-out');
+    expect(result.record.runtimeExecution.diagnosticReason).toBe(
+      'labview-cli-timeout-no-labview-through-exit'
+    );
+    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+      'Comparison-report runtime timed out after 120000ms.'
+    );
+    expect(result.record.runtimeExecution.diagnosticNotes).toContain(
+      'LabVIEW CLI timed out without generating a report; at the retained cli-log-banner snapshot, LabVIEWCLI.exe was observed while LabVIEW.exe was not observed, and no LabVIEW-related processes remained at the retained process-exit snapshot.'
+    );
+    expect(result.record.runtimeExecution.observedProcessNames).toEqual(['LabVIEWCLI.exe']);
+    expect(result.record.runtimeExecution.exitObservedProcessNames).toEqual([]);
+  });
 });
