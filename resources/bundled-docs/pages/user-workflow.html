@@ -2,29 +2,22 @@
 <h2>Preconditions</h2>
 <p>The shipped extension-user workflow assumes:</p>
 <ul>
-<li>the extension is installed from the VS Code Marketplace, the current exact
-released VSIX, or a preview VSIX when you intentionally want the next
-candidate</li>
+<li>the extension is installed from the VS Code Marketplace, the current exact released VSIX, or a preview VSIX when you intentionally want the next candidate</li>
 <li>the workspace is trusted</li>
 <li>the target file is a tracked LabVIEW VI in a Git repository</li>
 <li>at least two commits modify that VI</li>
-<li>for the exact released <code>main</code> path: Docker is installed and running on the
-current host, and <code>docker info</code> succeeds in the same session that launched
-VS Code</li>
-<li>for the maintained public <code>develop</code> candidate: the provider, LabVIEW version,
-and LabVIEW bitness are persisted through <code>vihs-runtime-settings</code></li>
-<li>if VS Code was already open when the generated settings CLI changed the
-provider bundle, the window is reloaded or restarted before compare preflight
-is trusted</li>
+<li>for the exact released <code>main</code> path: Docker is installed and running on the current host, and <code>docker info</code> succeeds in the same session that launched VS Code</li>
+<li>for the maintained public <code>develop</code> candidate: the published Windows PowerShell bootstrap or a later <code>vihs</code> run persists the provider, LabVIEW version, and LabVIEW bitness bundle</li>
+<li>if VS Code was already open when the generated settings CLI changed the provider bundle, the window is reloaded or restarted before compare preflight is trusted</li>
 </ul>
 <h2>Execution Policy</h2>
 <p>Comparison generation follows the current provider-explicit installed contract.</p>
 <p>Current installed rules:</p>
 <ul>
 <li>Windows defaults to local <code>LabVIEWCLI</code> when the persisted provider is absent</li>
-<li>Docker remains a bounded expert provider selected through the generated settings CLI</li>
+<li>Docker remains a bounded expert provider selected through the published install/bootstrap surface or later <code>vihs</code> updates</li>
 <li><code>viHistorySuite.labviewVersion</code> and <code>viHistorySuite.labviewBitness</code> stay explicit across both provider classes</li>
-<li><code>VI History: Check Runtime Readiness</code> and <code>vihs-runtime-settings --validate</code> expose whether the current bundle is <code>ready</code>, <code>needs-image-acquisition</code>, or blocked</li>
+<li><code>vihs --validate</code> exposes whether the current bundle is <code>ready</code>, <code>needs-image-acquisition</code>, or blocked</li>
 <li>if Docker is selected, the extension derives the governed Windows or Linux image family from the current engine and fails closed on unsupported <code>x86</code></li>
 <li>if the chosen provider bundle is blocked, compare stops with next-step guidance instead of silently switching provider classes</li>
 <li>compare progress, selected provider, current engine, selected image, acquisition state, and next action stay visible in the history panel while the action runs</li>

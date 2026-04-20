@@ -8,12 +8,14 @@ import { parse } from 'jsonc-parser';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import {
+  admitLocalRuntimeSettingsCliToTerminalPath,
   buildLocalRuntimeSettingsCliMaterialization,
   ensureLocalRuntimeSettingsCli,
   getLocalRuntimeSettingsCliUsage,
   parseLocalRuntimeSettingsCliArgs,
   resolveLocalRuntimeSettingsCliGovernanceContract,
   resolveDefaultVsCodeSettingsPath,
+  runInteractiveLocalRuntimeSettingsCli,
   runLocalRuntimeSettingsCli,
   runLocalRuntimeSettingsCliMain
 } from '../../src/tooling/localRuntimeSettingsCli';
@@ -65,6 +67,7 @@ describe('localRuntimeSettingsCli', () => {
     expect(getLocalRuntimeSettingsCliUsage()).toContain('--labview-bitness');
     expect(getLocalRuntimeSettingsCliUsage()).toContain('--provider');
     expect(getLocalRuntimeSettingsCliUsage()).toContain('--validate');
+    expect(getLocalRuntimeSettingsCliUsage()).toContain('Usage: vihs ');
     expect(() => parseLocalRuntimeSettingsCliArgs(['--labview-version'])).toThrow(
       /Missing value for --labview-version/
     );
@@ -302,6 +305,28 @@ describe('localRuntimeSettingsCli', () => {
     expect(stderr.join('')).toContain('Missing required --labview-bitness');
   });
 
+  it('prints bare vihs copyable next commands when invoked without arguments', async () => {
+    const stdout: string[] = [];
+
+    const result = await runLocalRuntimeSettingsCli([], {
+      stdout: {
+        write(text: string) {
+          stdout.push(text);
+        }
+      }
+    });
+
+    expect(result).toEqual({ outcome: 'help' });
+    expect(stdout.join('')).toContain('VI History runtime-settings terminal entrypoint');
+    expect(stdout.join('')).toContain(
+      'vihs --provider host --labview-version 2026 --labview-bitness x64'
+    );
+    expect(stdout.join('')).toContain(
+      'vihs --provider docker --labview-version 2026 --labview-bitness x64'
+    );
+    expect(stdout.join('')).toContain('vihs --validate');
+  });
+
   it('materializes launchers under global storage without shipping a separate binary payload', async () => {
     const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-local-runtime-launchers-'));
     tempDirectories.push(tempRoot);
@@ -319,18 +344,32 @@ describe('localRuntimeSettingsCli', () => {
     await expect(fs.access(materialized.javascriptLauncherPath)).resolves.toBeUndefined();
     await expect(fs.access(materialized.windowsLauncherPath)).resolves.toBeUndefined();
     await expect(fs.access(materialized.posixLauncherPath)).resolves.toBeUndefined();
+    await expect(fs.access(materialized.windowsTerminalEntrypointPath)).resolves.toBeUndefined();
+    await expect(fs.access(materialized.posixTerminalEntrypointPath)).resolves.toBeUndefined();
 
     if (process.platform === 'win32') {
       expect(materialized.currentPlatformLauncherPath).toBe(materialized.windowsLauncherPath);
-      expect(materialized.nextCommand).toContain(materialized.windowsLauncherPath);
+      expect(materialized.currentPlatformTerminalEntrypointPath).toBe(
+        materialized.windowsTerminalEntrypointPath
+      );
     } else {
       expect(materialized.currentPlatformLauncherPath).toBe(materialized.posixLauncherPath);
-      expect(materialized.nextCommand).toContain(materialized.posixLauncherPath);
+      expect(materialized.currentPlatformTerminalEntrypointPath).toBe(
+        materialized.posixTerminalEntrypointPath
+      );
     }
 
     const javascriptLauncher = await fs.readFile(materialized.javascriptLauncherPath, 'utf8');
     const windowsLauncher = await fs.readFile(materialized.windowsLauncherPath, 'utf8');
     const posixLauncher = await fs.readFile(materialized.posixLauncherPath, 'utf8');
+    const windowsTerminalEntrypoint = await fs.readFile(
+      materialized.windowsTerminalEntrypointPath,
+      'utf8'
+    );
+    const posixTerminalEntrypoint = await fs.readFile(
+      materialized.posixTerminalEntrypointPath,
+      'utf8'
+    );
 
     expect(javascriptLauncher).toContain(JSON.stringify(materialized.modulePath));
     expect(javascriptLauncher).toContain(
@@ -346,8 +385,251 @@ describe('localRuntimeSettingsCli', () => {
     expect(posixLauncher).toContain(
       'VI History runtime-settings CLI requires a usable Node.js runtime on PATH.'
     );
+    expect(windowsTerminalEntrypoint).toContain('run-local-runtime-settings-cli.js');
+    expect(posixTerminalEntrypoint).toContain('run-local-runtime-settings-cli.js');
+    expect(materialized.terminalCommandName).toBe('vihs');
+    expect(materialized.pathPrependValue).toBe(
+      `${materialized.rootDirectoryPath}${process.platform === 'win32' ? ';' : ':'}`
+    );
     expect(materialized.exampleCommand).toContain('--provider host');
     expect(materialized.exampleCommand).toBe(materialized.nextCommand);
+    expect(materialized.nextCommand).toContain('vihs --provider host');
+  });
+
+  it('admits the bare vihs terminal entrypoint through PATH prepend', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-local-runtime-admission-'));
+    tempDirectories.push(tempRoot);
+
+    const globalStoragePath = path.join(tempRoot, 'global storage');
+    const extensionPath = path.join(tempRoot, 'extension with spaces');
+    const modulePath = path.join(extensionPath, 'out', 'tooling', 'localRuntimeSettingsCli.js');
+    await fs.mkdir(path.dirname(modulePath), { recursive: true });
+    await fs.writeFile(modulePath, 'exports.runLocalRuntimeSettingsCliMain = async () => 0;\n', 'utf8');
+
+    const prepends: Array<{ name: string; value: string }> = [];
+    const persistedPathEntries: string[] = [];
+    const admitted = await admitLocalRuntimeSettingsCliToTerminalPath(
+      globalStoragePath,
+      extensionPath,
+      {
+        prepend(name: string, value: string) {
+          prepends.push({ name, value });
+        }
+      },
+      {
+        platform: 'win32',
+        persistWindowsUserPathPrepend: async (pathEntry: string) => {
+          persistedPathEntries.push(pathEntry);
+        }
+      }
+    );
+
+    expect(prepends).toEqual([
+      {
+        name: 'PATH',
+        value: admitted.pathPrependValue
+      }
+    ]);
+    expect(persistedPathEntries).toEqual([admitted.rootDirectoryPath]);
+    await expect(fs.access(admitted.currentPlatformTerminalEntrypointPath)).resolves.toBeUndefined();
+  });
+
+  it('skips persistent user PATH admission when the test guard disables it', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-local-runtime-admission-disabled-'));
+    tempDirectories.push(tempRoot);
+
+    const globalStoragePath = path.join(tempRoot, 'global storage');
+    const extensionPath = path.join(tempRoot, 'extension with spaces');
+    const modulePath = path.join(extensionPath, 'out', 'tooling', 'localRuntimeSettingsCli.js');
+    await fs.mkdir(path.dirname(modulePath), { recursive: true });
+    await fs.writeFile(modulePath, 'exports.runLocalRuntimeSettingsCliMain = async () => 0;\n', 'utf8');
+
+    const persistedPathEntries: string[] = [];
+    await admitLocalRuntimeSettingsCliToTerminalPath(
+      globalStoragePath,
+      extensionPath,
+      {
+        prepend() {}
+      },
+      {
+        platform: 'win32',
+        env: {
+          VI_HISTORY_SUITE_DISABLE_PERSISTENT_USER_PATH_ADMISSION: '1'
+        },
+        persistWindowsUserPathPrepend: async (pathEntry: string) => {
+          persistedPathEntries.push(pathEntry);
+        }
+      }
+    );
+
+    expect(persistedPathEntries).toEqual([]);
+  });
+
+  it('seeds default host settings and validates them when interactive vihs accepts defaults', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-local-runtime-interactive-defaults-'));
+    tempDirectories.push(tempRoot);
+
+    const appDataRoot = path.join(tempRoot, 'AppData', 'Roaming');
+    const settingsFilePath = resolveDefaultVsCodeSettingsPath(
+      'win32',
+      { APPDATA: appDataRoot },
+      () => tempRoot
+    );
+    const stdout: string[] = [];
+    const prompts = ['', '', '', ''];
+
+    const result = await runInteractiveLocalRuntimeSettingsCli({
+      platform: 'win32',
+      env: {
+        APPDATA: appDataRoot
+      },
+      homedir: () => tempRoot,
+      stdout: {
+        write(text: string) {
+          stdout.push(text);
+        }
+      },
+      promptLine: async () => prompts.shift() ?? '',
+      locateRuntime: async (_platform, settings) => ({
+        platform: 'win32',
+        requestedProvider: settings.requestedProvider,
+        bitness: settings.bitness ?? 'x64',
+        provider: 'host-native',
+        engine: 'labview-cli',
+        notes: [],
+        registryQueryPlans: [],
+        candidates: []
+      })
+    });
+
+    expect(result.outcome).toBe('validated-settings');
+    expect(result.runtimeValidationOutcome).toBe('ready');
+    expect(result.runtimeProvider).toBe('host-native');
+    expect(parse(await fs.readFile(settingsFilePath, 'utf8'))).toEqual({
+      'viHistorySuite.runtimeProvider': 'host',
+      'viHistorySuite.labviewVersion': '2026',
+      'viHistorySuite.labviewBitness': 'x64'
+    });
+    expect(stdout.join('')).toContain(
+      `Created default VI History runtime settings at ${settingsFilePath} with host/windows/2026/x64.`
+    );
+    expect(stdout.join('')).toContain(
+      'Current VI History settings: provider=host, platform=windows, labviewVersion=2026, labviewBitness=x64'
+    );
+    expect(stdout.join('')).toContain('runtimeValidationOutcome=ready');
+  });
+
+  it('prompts for a different host year when the selected LabVIEW version is not installed', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-local-runtime-interactive-host-year-'));
+    tempDirectories.push(tempRoot);
+
+    const appDataRoot = path.join(tempRoot, 'AppData', 'Roaming');
+    const settingsFilePath = resolveDefaultVsCodeSettingsPath(
+      'win32',
+      { APPDATA: appDataRoot },
+      () => tempRoot
+    );
+    const stdout: string[] = [];
+    const prompts = ['', '', '2024', '', '2026', ''];
+
+    const result = await runInteractiveLocalRuntimeSettingsCli({
+      platform: 'win32',
+      env: {
+        APPDATA: appDataRoot
+      },
+      homedir: () => tempRoot,
+      stdout: {
+        write(text: string) {
+          stdout.push(text);
+        }
+      },
+      promptLine: async () => prompts.shift() ?? '',
+      locateRuntime: async (_platform, settings) => {
+        if (settings.requestedProvider === 'host' && settings.labviewVersion === '2024') {
+          return {
+            platform: 'win32',
+            requestedProvider: settings.requestedProvider,
+            bitness: settings.bitness ?? 'x64',
+            provider: 'unavailable',
+            blockedReason: 'labview-exe-not-found',
+            notes: [],
+            registryQueryPlans: [],
+            candidates: []
+          };
+        }
+
+        return {
+          platform: 'win32',
+          requestedProvider: settings.requestedProvider,
+          bitness: settings.bitness ?? 'x64',
+          provider: 'host-native',
+          engine: 'labview-cli',
+          notes: [],
+          registryQueryPlans: [],
+          candidates: []
+        };
+      }
+    });
+
+    expect(result.runtimeValidationOutcome).toBe('ready');
+    expect(stdout.join('')).toContain('LabVIEW 2024 not installed.');
+    expect(parse(await fs.readFile(settingsFilePath, 'utf8'))).toEqual({
+      'viHistorySuite.runtimeProvider': 'host',
+      'viHistorySuite.labviewVersion': '2026',
+      'viHistorySuite.labviewBitness': 'x64'
+    });
+  });
+
+  it('surfaces unsupported and not-implemented docker paths during interactive vihs selection', async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-local-runtime-interactive-docker-'));
+    tempDirectories.push(tempRoot);
+
+    const appDataRoot = path.join(tempRoot, 'AppData', 'Roaming');
+    const settingsFilePath = resolveDefaultVsCodeSettingsPath(
+      'win32',
+      { APPDATA: appDataRoot },
+      () => tempRoot
+    );
+    const stdout: string[] = [];
+    const prompts = ['docker', 'linux', '2024', '2026', '', 'windows', '', ''];
+
+    const result = await runInteractiveLocalRuntimeSettingsCli({
+      platform: 'win32',
+      env: {
+        APPDATA: appDataRoot
+      },
+      homedir: () => tempRoot,
+      stdout: {
+        write(text: string) {
+          stdout.push(text);
+        }
+      },
+      promptLine: async () => prompts.shift() ?? '',
+      locateRuntime: async (_platform, settings) => ({
+        platform: 'win32',
+        requestedProvider: settings.requestedProvider,
+        bitness: settings.bitness ?? 'x64',
+        provider: 'windows-container',
+        engine: 'labview-cli',
+        notes: [],
+        registryQueryPlans: [],
+        candidates: []
+      })
+    });
+
+    expect(result.runtimeValidationOutcome).toBe('ready');
+    expect(result.runtimeProvider).toBe('windows-container');
+    expect(stdout.join('')).toContain(
+      'Docker 2024 is unsupported. Currently implemented: host/windows 2020-2026 and docker/windows 2026 x64.'
+    );
+    expect(stdout.join('')).toContain(
+      'docker/linux is not currently implemented. Currently implemented: host/windows 2020-2026 and docker/windows 2026 x64.'
+    );
+    expect(parse(await fs.readFile(settingsFilePath, 'utf8'))).toEqual({
+      'viHistorySuite.runtimeProvider': 'docker',
+      'viHistorySuite.labviewVersion': '2026',
+      'viHistorySuite.labviewBitness': 'x64'
+    });
   });
 
   it('fails closed with a stable stale-launcher message when the generated module is missing', async () => {

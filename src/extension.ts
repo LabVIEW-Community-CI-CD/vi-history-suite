@@ -36,7 +36,9 @@ import {
   OpenedHistoryPanelSummary
 } from './ui/historyPanelTracker';
 import {
+  admitLocalRuntimeSettingsCliToTerminalPath,
   ensureLocalRuntimeSettingsCli,
+  type MaterializedLocalRuntimeSettingsCli,
   resolveLocalRuntimeSettingsCliGovernanceContract,
   runLocalRuntimeSettingsCli
 } from './tooling/localRuntimeSettingsCli';
@@ -51,6 +53,9 @@ export interface ViHistorySuiteApi {
   refreshEligibility(): Promise<void>;
   isEligible(uri: vscode.Uri): boolean;
   loadHistory(uri: vscode.Uri): Promise<ViHistoryViewModel>;
+  getLocalRuntimeSettingsTerminalEntrypoint():
+    | MaterializedLocalRuntimeSettingsCli
+    | undefined;
   getEligibilityDebugSnapshot(): EligibilityDebugSnapshot;
   getLastOpenedPanel(): OpenedHistoryPanelSummary | undefined;
   getOpenHistoryPanelCount(): number;
@@ -122,6 +127,14 @@ export async function activate(
       return false;
     }
   };
+  let admittedLocalRuntimeSettingsCli: MaterializedLocalRuntimeSettingsCli | undefined;
+  if (context.globalStorageUri) {
+    admittedLocalRuntimeSettingsCli = await admitLocalRuntimeSettingsCliToTerminalPath(
+      context.globalStorageUri.fsPath,
+      context.extensionPath,
+      context.environmentVariableCollection
+    );
+  }
 
   context.subscriptions.push(eligibilityIndexer);
 
@@ -185,7 +198,9 @@ export async function activate(
       void vscode.window.showInformationMessage(
         [
           `Prepared VI History local runtime settings CLI at ${materializedCli.rootDirectoryPath}.`,
-          `Current launcher path: ${materializedCli.currentPlatformLauncherPath}.`,
+          `Bare repo-terminal command: ${materializedCli.terminalCommandName}.`,
+          `Current terminal entrypoint path: ${materializedCli.currentPlatformTerminalEntrypointPath}.`,
+          `Compatibility launcher path: ${materializedCli.currentPlatformLauncherPath}.`,
           `Run next: ${materializedCli.nextCommand}.`,
           `Governed settings targets: default user settings.json at ${governanceContract.defaultSettingsFilePath} or an explicit --settings-file path.`,
           'This prepare command is admitted in untrusted workspaces because it only materializes the launcher; installed compare remains disabled there.'
@@ -321,6 +336,7 @@ export async function activate(
     refreshEligibility: async () => eligibilityIndexer.refresh(),
     isEligible: (uri: vscode.Uri) => eligibilityIndexer.isEligible(uri),
     loadHistory: (uri: vscode.Uri) => historyService.load(uri),
+    getLocalRuntimeSettingsTerminalEntrypoint: () => admittedLocalRuntimeSettingsCli,
     getEligibilityDebugSnapshot: () => eligibilityIndexer.getDebugSnapshot(),
     getLastOpenedPanel: () => panelTracker.getLastOpenedPanel(),
     getOpenHistoryPanelCount: () => panelTracker.getOpenCount(),

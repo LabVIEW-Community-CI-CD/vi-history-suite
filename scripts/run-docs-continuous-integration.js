@@ -323,10 +323,10 @@ function collectInstalledUserTruths(repoRootPath) {
       'Windows defaults to local <code>LabVIEWCLI</code> when the persisted provider is absent'
     ),
     explicitProviderBundleValidationDocumented: html.includes(
-      '<code>VI History: Check Runtime Readiness</code> and <code>vihs-runtime-settings --validate</code> expose whether the current bundle is <code>ready</code>, <code>needs-image-acquisition</code>, or blocked'
+      '<code>vihs --validate</code> exposes whether the current bundle is <code>ready</code>, <code>needs-image-acquisition</code>, or blocked'
     ),
     dockerExpertProviderDocumented: html.includes(
-      'Docker remains a bounded expert provider selected through the generated settings CLI'
+      'Docker remains a bounded expert provider selected through the published install/bootstrap surface or later <code>vihs</code> updates'
     ),
     providerAndProgressVisible: html.includes(
       'compare progress, selected provider, current engine, selected image, acquisition state, and next action stay visible'

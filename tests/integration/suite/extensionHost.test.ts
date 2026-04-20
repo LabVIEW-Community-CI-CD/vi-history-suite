@@ -32,7 +32,12 @@ interface PreparedLocalRuntimeSettingsCliSummary {
   javascriptLauncherPath?: string;
   windowsLauncherPath?: string;
   posixLauncherPath?: string;
+  windowsTerminalEntrypointPath?: string;
+  posixTerminalEntrypointPath?: string;
   currentPlatformLauncherPath?: string;
+  currentPlatformTerminalEntrypointPath?: string;
+  terminalCommandName?: string;
+  pathPrependValue?: string;
   rootDirectoryPath?: string;
   nextCommand?: string;
   exampleCommand?: string;
@@ -97,6 +102,7 @@ export async function runIntegrationSuite(): Promise<void> {
 
   await api.refreshEligibility();
   await testEligibleVersusIneligibleFlow(api, metadata);
+  await testAdmittedLocalRuntimeSettingsTerminalEntrypoint(api);
   await testPrepareLocalRuntimeSettingsCli();
   await testProbeRuntimeSettingsLiveSession();
   await testPanelOpenFlow(api, metadata);
@@ -501,10 +507,15 @@ async function testPrepareLocalRuntimeSettingsCli(): Promise<void> {
   assert.ok(result.javascriptLauncherPath);
   assert.ok(result.windowsLauncherPath);
   assert.ok(result.posixLauncherPath);
+  assert.ok(result.windowsTerminalEntrypointPath);
+  assert.ok(result.posixTerminalEntrypointPath);
   assert.ok(result.currentPlatformLauncherPath);
+  assert.ok(result.currentPlatformTerminalEntrypointPath);
   assert.ok(result.defaultSettingsFilePath);
   assert.ok(result.nextCommand);
   assert.ok(result.exampleCommand);
+  assert.equal(result.terminalCommandName, 'vihs');
+  assert.ok(result.pathPrependValue);
   assert.deepEqual(result.supportedSettingsTargets, [
     'default-user-settings',
     'explicit-settings-file'
@@ -514,12 +525,25 @@ async function testPrepareLocalRuntimeSettingsCli(): Promise<void> {
   await fs.access(result.javascriptLauncherPath!);
   await fs.access(result.windowsLauncherPath!);
   await fs.access(result.posixLauncherPath!);
+  await fs.access(result.windowsTerminalEntrypointPath!);
+  await fs.access(result.posixTerminalEntrypointPath!);
   assert.equal(result.exampleCommand, result.nextCommand);
-  assert.match(result.nextCommand!, /--provider host --labview-version 2026 --labview-bitness x64/);
+  assert.match(
+    result.nextCommand!,
+    /^vihs --provider host --labview-version 2026 --labview-bitness x64$/
+  );
   if (process.platform === 'win32') {
     assert.equal(result.currentPlatformLauncherPath, result.windowsLauncherPath);
+    assert.equal(
+      result.currentPlatformTerminalEntrypointPath,
+      result.windowsTerminalEntrypointPath
+    );
   } else {
     assert.equal(result.currentPlatformLauncherPath, result.posixLauncherPath);
+    assert.equal(
+      result.currentPlatformTerminalEntrypointPath,
+      result.posixTerminalEntrypointPath
+    );
   }
 
   const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-runtime-settings-cli-'));
@@ -735,6 +759,62 @@ async function testPrepareLocalRuntimeSettingsCli(): Promise<void> {
   }
 }
 
+async function testAdmittedLocalRuntimeSettingsTerminalEntrypoint(
+  api: ViHistorySuiteApi
+): Promise<void> {
+  const admitted = api.getLocalRuntimeSettingsTerminalEntrypoint();
+  assert.ok(admitted, 'extension activation should admit the bare vihs terminal entrypoint');
+  assert.equal(admitted.terminalCommandName, 'vihs');
+  assert.ok(admitted.pathPrependValue);
+  assert.ok(admitted.currentPlatformTerminalEntrypointPath);
+
+  const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-terminal-entrypoint-'));
+  try {
+    const settingsFilePath = path.join(tempRoot, 'settings.json');
+    const arbitraryWorkingDirectory = path.join(tempRoot, 'arbitrary-repo-shell');
+    await fs.mkdir(arbitraryWorkingDirectory, { recursive: true });
+    await fs.writeFile(
+      settingsFilePath,
+      `${JSON.stringify({ 'editor.tabSize': 2 }, null, 2)}\n`,
+      'utf8'
+    );
+
+    const discoveryRun = await runAdmittedLocalRuntimeSettingsCli(admitted, [], {
+      cwd: arbitraryWorkingDirectory
+    });
+    assert.match(discoveryRun.stdout, /vihs --provider host --labview-version 2026 --labview-bitness x64/);
+    assert.match(discoveryRun.stdout, /vihs --validate/);
+
+    const hostRun = await runAdmittedLocalRuntimeSettingsCli(
+      admitted,
+      [
+        '--provider',
+        'host',
+        '--labview-version',
+        '2026',
+        '--labview-bitness',
+        'x64',
+        '--settings-file',
+        settingsFilePath
+      ],
+      {
+        cwd: arbitraryWorkingDirectory
+      }
+    );
+    assert.equal(hostRun.launcherPath, 'vihs');
+    assert.match(hostRun.stdout, /settingsTarget=explicit-settings-file/);
+    assert.match(hostRun.stdout, /viHistorySuite\.runtimeProvider=host/);
+    assert.deepEqual(JSON.parse(await fs.readFile(settingsFilePath, 'utf8')), {
+      'editor.tabSize': 2,
+      'viHistorySuite.runtimeProvider': 'host',
+      'viHistorySuite.labviewVersion': '2026',
+      'viHistorySuite.labviewBitness': 'x64'
+    });
+  } finally {
+    await fs.rm(tempRoot, { recursive: true, force: true });
+  }
+}
+
 async function pathExists(candidatePath: string): Promise<boolean> {
   try {
     await fs.access(candidatePath);
@@ -916,6 +996,43 @@ async function runPreparedLocalRuntimeSettingsCli(
   };
 }
 
+async function runAdmittedLocalRuntimeSettingsCli(
+  result: {
+    pathPrependValue?: string;
+  },
+  args: string[],
+  options: PreparedLocalRuntimeSettingsCliExecutionOptions = {}
+): Promise<{ stdout: string; stderr: string; launcherPath: string }> {
+  const env = {
+    ...process.env,
+    ...options.env,
+    PATH: `${result.pathPrependValue ?? ''}${options.env?.PATH ?? process.env.PATH ?? ''}`
+  };
+
+  if (process.platform === 'win32') {
+    const execution = await execFile('cmd.exe', ['/d', '/s', '/c', 'vihs', ...args], {
+      encoding: 'utf8',
+      env,
+      cwd: options.cwd
+    });
+    return {
+      ...execution,
+      launcherPath: 'vihs'
+    };
+  }
+
+  const commandLine = ['vihs', ...args.map(quotePosixShellArg)].join(' ');
+  const execution = await execFile('sh', ['-lc', commandLine], {
+    encoding: 'utf8',
+    env,
+    cwd: options.cwd
+  });
+  return {
+    ...execution,
+    launcherPath: 'vihs'
+  };
+}
+
 async function maybeWriteRuntimeSettingsLiveSessionProofOutput(
   summary: RuntimeSettingsLiveSessionProbeSummary
 ): Promise<void> {
@@ -962,6 +1079,10 @@ function assertRuntimeSettingsFileContains(
   assert.equal(settings['viHistorySuite.runtimeProvider'], expected.runtimeProvider);
   assert.equal(settings['viHistorySuite.labviewVersion'], expected.labviewVersion);
   assert.equal(settings['viHistorySuite.labviewBitness'], expected.labviewBitness);
+}
+
+function quotePosixShellArg(value: string): string {
+  return `'${value.replace(/'/g, `'\"'\"'`)}'`;
 }
 
 async function waitFor(

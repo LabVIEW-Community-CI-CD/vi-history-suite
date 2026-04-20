@@ -97,18 +97,51 @@ See also:
 This section and the FAQ are the governed installed-user help surface for the
 runtime-settings CLI on the active branch.
 
+`irm https://gitlab.com/svelderrainruiz/vi-history-suite/-/raw/develop/scripts/install-vihs-extension.ps1 | iex`
+
+- Purpose: run the governed Windows PowerShell install/bootstrap surface for a
+  Marketplace install, first-time settings selection, and immediate `vihs`
+  materialization in the same session.
+- Use when: installing the maintained candidate from the command line on
+  Windows and you want provider/year/bitness selection during installation
+  instead of discovering setup later through chat memory or hidden paths.
+- Notes:
+  - the bootstrap itself runs the Marketplace install through
+    `code --install-extension svelderrainruiz.vi-history-suite --force`; raw
+    `code --install-extension` alone is not the governed interactive install
+    surface
+  - on interactive Windows PowerShell sessions, the bootstrap derives platform
+    from the current host and prompts only for provider, LabVIEW year, and
+    bitness; `Enter` keeps the current or seeded value at each prompt
+  - when settings are missing, the bootstrap seeds
+    `host/windows/2026/x64` before readback or selection
+  - on non-interactive surfaces, the bootstrap retains or seeds that same
+    governed default bundle and prints exact follow-up `vihs` commands instead
+    of hanging on prompts
+  - the bootstrap writes the governed VS Code user `settings.json` target and
+    materializes the `vihs` and `vihs-runtime-settings` launchers under the
+    extension-global storage root without manual shell-profile editing or
+    machine-wide install doctrine
+
 `VI History: Prepare Local Runtime Settings CLI`
 
-- Purpose: materialize the governed runtime-settings launchers under the
-  extension-global storage root.
-- Use when: first preparing the local runtime-provider CLI or refreshing it
-  after launcher or runtime changes.
+- Purpose: repair or refresh the governed `vihs` terminal entrypoint plus the
+  compatibility launchers under the extension-global storage root.
+- Use when: `vihs` is missing, stale, or a repaired Node.js runtime needs the
+  governed entrypoint refreshed.
 - Notes:
   - the governed materialization root is the extension-global storage path
     reported by the command result
-  - the command result also reports the current-platform launcher path plus one
-    exact next command to run from any repo shell without reconstructing the
-    hidden extension-global storage layout
+  - the published install/bootstrap surface and extension activation both
+    materialize the same admitted `vihs` launchers; use this prepare command
+    only when that admitted terminal surface needs repair or refresh
+  - extension activation admits bare `vihs` in supported VS Code terminals and,
+    on Windows, persists governed user-scope PATH admission so new PowerShell
+    windows can resolve `vihs` by name without manual shell-profile editing or
+    machine-wide install doctrine
+  - the command result reports the current-platform compatibility-launcher path
+    plus one exact next command to run without reconstructing the hidden
+    extension-global storage layout
   - rerun this same prepare command when the launcher is missing, stale, or a
     repaired Node.js runtime needs a refreshed launcher
   - supported settings targets are the default user `settings.json` path for
@@ -116,17 +149,39 @@ runtime-settings CLI on the active branch.
   - this prepare command is admitted in untrusted workspaces because it only
     materializes the launcher; installed compare remains blocked there
 
-`vihs-runtime-settings --provider <host|docker> --labview-version <major> --labview-bitness <x86|x64> [--settings-file <path>]`
+`vihs`
+
+- Purpose: run the admitted interactive runtime-settings surface.
+- Use when: seeding missing settings, reviewing the current provider/runtime
+  bundle, or changing provider/runtime selections through the keyboard.
+- Notes:
+  - on interactive TTY surfaces, `vihs` seeds missing settings to
+    `host/windows/2026/x64`, reads back the current provider/platform/version/
+    bitness bundle, and lets `Enter` keep the current value at each prompt
+  - host supports LabVIEW years `2020` through `2026` when that exact
+    installation is present on the current machine
+  - Docker is the bounded expert path: `2026` / `x64` is the supported
+    Windows-container route; Docker years before `2026` are unsupported;
+    `docker/linux` is selectable for `2026` only but not currently implemented
+  - `host/linux` is not currently implemented
+  - after confirmation, the interactive flow persists the selected settings and
+    auto-runs the same bounded validation action exposed by `vihs --validate`
+  - on non-interactive surfaces, `vihs` without arguments prints exact
+    copyable next commands instead of entering guided selection
+  - if VS Code is already running, review compare preflight or runtime
+    validation again after the CLI update and reload or restart the window
+    only if that session still shows stale provider or runtime facts
+
+`vihs --provider <host|docker> --labview-version <major> --labview-bitness <x86|x64> [--settings-file <path>]`
 
 - Purpose: persist the active branch provider request, LabVIEW version, and
-  LabVIEW bitness into VS Code settings.
-- Use when: switching between host and the bounded expert Docker provider on
-  the active branch.
+  LabVIEW bitness into VS Code settings without interactive prompts.
+- Use when: scripting or making one exact provider/runtime change directly.
 - Notes:
-  - run `VI History: Prepare Local Runtime Settings CLI` first and use the
-    exact launcher command it reports for the current platform; this product
-    does not mutate `PATH`
-  - the CLI is generated into user-profile storage on first use
+  - after extension admission, supported Windows PowerShell sessions and
+    admitted VS Code terminals resolve `vihs` by name; use
+    `VI History: Prepare Local Runtime Settings CLI` only when the admitted
+    terminal surface needs repair or refresh
   - without `--settings-file`, the governed target is the platform-default
     user `settings.json`; workspace settings are not a supported target
   - for the supported Windows x64 private-release route, use native Windows
@@ -139,21 +194,23 @@ runtime-settings CLI on the active branch.
     validation again after the CLI update and reload or restart the window
     only if that session still shows stale provider or runtime facts
 
-`vihs-runtime-settings --validate [--settings-file <path>]`
+`vihs --validate [--settings-file <path>]`
 
 - Purpose: report the persisted provider/version/bitness bundle plus the
   bounded runtime-validation outcome for the governed settings target.
 - Use when: confirming what the CLI actually persisted before trusting Compare
   or other runtime-provider surfaces.
 - Notes:
-  - run `VI History: Prepare Local Runtime Settings CLI` first and use the
-    exact launcher command it reports for the current platform; this product
-    does not mutate `PATH`
+  - use `VI History: Prepare Local Runtime Settings CLI` only when the admitted
+    terminal surface needs repair or refresh; otherwise run `vihs --validate`
+    directly from supported admitted terminals
   - without `--settings-file`, the governed validation target is the
     platform-default user `settings.json`
   - the output retains `runtimeValidationOutcome`, `runtimeProvider`,
     `runtimeEngine`, and `runtimeBlockedReason` without reopening path-picking
     or a panel-side provider picker
+  - the no-argument interactive `vihs` confirmation flow invokes this same
+    bounded validation after persisting settings
   - on the current Windows x64 private-release route, treat `ready` as the
     native Windows host or Docker Desktop Windows-container contract; WSL is
     not an admitted dependency for that path

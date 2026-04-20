@@ -206,6 +206,9 @@ Active develop direction:
 - the active control plane is replacing this installed-user Docker dependency
   with host-default Windows local `LabVIEWCLI` plus one bounded expert Docker
   provider
+- the first governed install surface for that candidate is now the published
+  Windows PowerShell bootstrap command
+  `irm https://gitlab.com/svelderrainruiz/vi-history-suite/-/raw/develop/scripts/install-vihs-extension.ps1 | iex`
 - the installed manifest/settings slice now exposes required LabVIEW version
   plus bitness instead of public Docker settings
 - the on-demand CLI is now generated into user-profile storage rather than a
@@ -222,15 +225,17 @@ Active develop direction:
 
 Active `develop` Windows x64 private-release candidate:
 
-1. run `VI History: Prepare Local Runtime Settings CLI`
-2. set the runtime explicitly with
-   `vihs-runtime-settings --provider <host|docker> --labview-version 2026 --labview-bitness x64`
-3. use `--provider host` for the supported native Windows host lane or
-   `--provider docker` only when Docker Desktop is already in
-   Windows-container mode
-4. reload or restart VS Code if it was already running when the settings
-   changed
-5. open `VI History`, select the target commits, review explicit compare
+1. in Windows PowerShell, run
+   `irm https://gitlab.com/svelderrainruiz/vi-history-suite/-/raw/develop/scripts/install-vihs-extension.ps1 | iex`
+2. let the bootstrap install the Marketplace extension, seed or read back the
+   current settings bundle, and keep or change provider/year/bitness with the
+   keyboard
+3. run `vihs --validate`
+4. use provider `host` for the supported native Windows host lane or provider
+   `docker` only when Docker Desktop is already in Windows-container mode
+5. reload or restart VS Code only if the already-running session still shows
+   stale provider or runtime facts after the bootstrap or later `vihs` update
+6. open `VI History`, select the target commits, review explicit compare
    preflight, and choose `Compare`
 
 If you want to evaluate the source repo instead of using the installed
