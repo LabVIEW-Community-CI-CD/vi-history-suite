@@ -57,11 +57,22 @@ Use the route that matches your real task.
 
 ### How do I switch between host and Docker on the active branch?
 
-Run `VI History: Prepare Local Runtime Settings CLI` first, then use the exact
-launcher command that prepare reports for your current platform. The logical
-launcher shape is:
+In supported Windows PowerShell sessions and admitted VS Code terminals, type
+`vihs`.
 
-`vihs-runtime-settings --provider <host|docker> --labview-version <major> --labview-bitness <x86|x64>`
+- If settings are missing, `vihs` seeds `host/windows/2026/x64` first.
+- `vihs` reads back the current provider/platform/version/bitness bundle so you
+  can keep each value by pressing `Enter` or stop at one prompt and choose a
+  different value.
+- Host is the default provider and supports LabVIEW years `2020` through `2026`
+  when that exact installation is present on the current machine.
+- Docker is the bounded expert path: `2026` / `x64` is the supported
+  Windows-container route; Docker years before `2026` are unsupported;
+  `docker/linux` is selectable for `2026` only but is not currently
+  implemented; `host/linux` is not currently implemented.
+- For non-interactive scripting, use the exact command shape:
+
+`vihs --provider <host|docker> --labview-version <major> --labview-bitness <x86|x64>`
 
 The active branch treats host as the default provider and Docker as the
 bounded expert path. If VS Code is already running when the CLI updates the
@@ -71,13 +82,16 @@ stale provider or runtime facts.
 
 ### Where does the generated runtime-settings CLI live, and what can it write?
 
-Use `VI History: Prepare Local Runtime Settings CLI` first.
+The governed launchers live under the extension-global storage root.
 
-- The prepare command materializes the launchers under the extension-global
-  storage root.
-- The prepare result reports the current-platform launcher path plus one exact
-  next command to run from any repo shell without reconstructing that hidden
-  storage layout.
+- Extension activation materializes the launchers there and admits bare `vihs`
+  in supported VS Code terminals.
+- On Windows, extension admission also persists governed user-scope PATH
+  admission so new standalone PowerShell windows can resolve `vihs` by name
+  without manual shell-profile editing or machine-wide install doctrine.
+- `VI History: Prepare Local Runtime Settings CLI` is the governed repair and
+  refresh surface when `vihs` is missing, stale, or a repaired Node.js runtime
+  needs the entrypoint refreshed.
 - The command reference and this FAQ are the governed installed-user help and
   recovery surfaces for that CLI.
 - The governed settings targets are the platform-default user
@@ -90,11 +104,9 @@ Use `VI History: Prepare Local Runtime Settings CLI` first.
 
 ### How do I check what the runtime-settings CLI actually persisted?
 
-Run `VI History: Prepare Local Runtime Settings CLI` first, then use the exact
-launcher command that prepare reports for your current platform. The governed
-validation shape is:
+Run the governed validation action:
 
-`vihs-runtime-settings --validate [--settings-file <path>]`
+`vihs --validate [--settings-file <path>]`
 
 It reports the persisted `viHistorySuite.runtimeProvider`,
 `viHistorySuite.labviewVersion`, and `viHistorySuite.labviewBitness` facts,
@@ -102,7 +114,9 @@ plus `runtimeValidationOutcome`, `runtimeProvider`, `runtimeEngine`, and
 `runtimeBlockedReason`. This keeps validation on one bounded CLI surface
 without reopening path-picking or a panel-side provider picker. On the current
 Windows x64 private-release route, `ready` means the native Windows host or
-Docker Desktop Windows-container contract is admissible without WSL.
+Docker Desktop Windows-container contract is admissible without WSL. The
+interactive no-argument `vihs` flow invokes this same bounded validation after
+you confirm or change settings.
 
 ### How do I check live-session drift after changing runtime settings?
 

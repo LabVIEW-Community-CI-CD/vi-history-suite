@@ -1778,19 +1778,22 @@ Information-for-users review cases:
 - `TEST-UNIT-344`: verify missing, unresolved, or unsupported provider/runtime
   selection blocks compare in the panel and emits a VS Code warning
   notification
-- `TEST-UNIT-345`: verify the governed repo-terminal `vihs` surface resolves
-  as a bare command in supported repo-opened terminals, writes provider plus
+- `TEST-UNIT-345`: verify the governed `vihs` surface resolves as a bare
+  command in supported admitted Windows PowerShell sessions, including VS Code
+  integrated terminals and standalone PowerShell windows reached through
+  governed user-scope admission, writes provider plus
   `viHistorySuite.labviewVersion` and `viHistorySuite.labviewBitness`, and
   stays inside user-owned installation doctrine without hidden-path
   reconstruction, a mandatory prepare-first flow, manual shell-profile
-  editing, admin elevation, or a prebuilt VSIX-shipped CLI payload; real
-  current-host execution remains traced separately by `TEST-INTEG-009`, and
-  the CLI plus the settings-driven compare-preflight/runtime-doctor surfaces
-  warn users to reload or restart the window only when an already-running
-  session still shows stale provider or runtime facts
+  editing, admin elevation, machine-wide install doctrine, or a prebuilt
+  VSIX-shipped CLI payload; real current-host execution remains traced
+  separately by `TEST-INTEG-009`, and the CLI plus the settings-driven
+  compare-preflight/runtime-doctor surfaces warn users to reload or restart
+  the window only when an already-running session still shows stale provider or
+  runtime facts
 - `TEST-UNIT-346`: verify the installed compare contract defaults to host and
   admits Docker only as a bounded expert provider persisted and rechecked
-  through the admitted `vihs` repo-terminal settings surface
+  through the admitted `vihs` terminal settings surface
 - `TEST-UNIT-347`: verify Docker preflight derives the governed image family
   from the current engine and fails closed on unsupported Docker `x86` with
   host/`x64` corrective guidance
@@ -1818,14 +1821,17 @@ Information-for-users review cases:
   through the governed runtime contract or fails closed with one actionable
   missing-or-stale runtime dependency message that restores the admitted
   terminal surface without hidden-path reconstruction
-- `TEST-UNIT-353`: verify `vihs` with no arguments presents the admitted
-  runtime-settings actions for the active repo, prints exact copyable next commands,
-  and, on interactive TTY surfaces, admits guided selection of
-  supported provider/version/bitness values without command memorization
-- `TEST-UNIT-354`: verify the `vihs` surface exposes one governed validation
-  action that reports persisted provider/version/bitness truth plus
-  runtime-validation outcome without reopening path-picking or a panel-side
-  provider picker
+- `TEST-UNIT-353`: verify `vihs` with no arguments seeds missing settings to
+  `host/windows/2026/x64`, reads back the current provider/platform/version/bitness
+  bundle, prints exact copyable next commands, and, on interactive TTY
+  surfaces, admits Enter-through confirmation or guided selection of supported
+  provider/platform/version/bitness values while failing closed with explicit
+  unsupported or not-yet-implemented path guidance
+- `TEST-UNIT-354`: verify the `vihs` surface exposes `vihs --validate` as one
+  governed validation action that reports persisted provider/version/bitness
+  truth plus runtime-validation outcome, and that the no-argument interactive
+  confirmation flow invokes that same bounded validation after persisting
+  settings without reopening path-picking or a panel-side provider picker
 - `TEST-UNIT-355`: verify Windows host runtime validation accepts the
   governed mixed-bitness x64 host bundle when the canonical host resolves
   `C:\Program Files\National Instruments\LabVIEW 2026\LabVIEW.exe` together

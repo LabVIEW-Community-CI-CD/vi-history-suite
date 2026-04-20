@@ -242,12 +242,15 @@ describe('requirements documentation coherence', () => {
     expect(srs).toContain(
       'reload or restart the window only if that already-running session still shows stale provider or runtime facts'
     );
+    expect(srs).toContain('standalone PowerShell windows after governed user-scope admission');
     expect(srs).toContain('`npm run proof:runtime-settings-live-session`');
     expect(srs).toContain('support governed VS Code settings targets that contain JSONC comments or trailing commas');
     expect(srs).toContain(
       'bare `vihs` terminal entrypoint shall make its runtime dependency and recovery explicit'
     );
     expect(srs).toContain('bare `vihs` terminal entrypoint shall make terminal discoverability explicit');
+    expect(srs).toContain('seeding missing settings to `host/windows/2026/x64`');
+    expect(srs).toContain('Enter-through confirmation or guided selection');
     expect(srs).toContain('installed-user `vihs` surface shall expose one governed validation action');
     expect(srs).toContain('close the remaining LabVIEW 2026 operation-matrix admission seams');
     expect(srs).toContain(
@@ -325,6 +328,9 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('TEST-INTEG-011');
     expect(testPlan).toContain('bare `vihs` terminal entrypoint');
     expect(testPlan).toContain('prints exact copyable next commands');
+    expect(testPlan).toContain('standalone PowerShell windows reached through');
+    expect(testPlan).toContain('seeds missing settings to');
+    expect(testPlan).toContain('Enter-through confirmation or guided selection');
     expect(testPlan).toContain('characterization receipt without');
     expect(testPlan).toContain('current release admission');
     expect(testPlan).toContain('TEST-SMOKE-020');
