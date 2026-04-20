@@ -30,6 +30,7 @@ the tagged GitLab Windows runner lane that retains this same scenario under
 
 - Linux installed-user support
 - Linux proof as part of the active private-release claim
+- Windows x86 / 32-bit LabVIEW release support
 - WSL as part of the active user or proof contract
 - exact SemVer tagging
 - VS Code Marketplace publication
@@ -192,4 +193,6 @@ The prep branch is considered ready only when these pass:
 - cut the Windows-only private release from the retained `v1.3.0` packet
 - keep Linux deferred until the Windows-only private release is formally
   closed
-- treat Windows x86 as a later non-blocking characterization lane
+- keep Windows x86 / 32-bit LabVIEW out of scope for the active `v1.3.0`
+  release claim and treat any retained x86 evidence as later non-blocking
+  characterization only

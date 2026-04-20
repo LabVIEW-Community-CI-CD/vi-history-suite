@@ -769,6 +769,9 @@ Current runtime direction for installed extension users:
   - installed Windows users will default to local `LabVIEWCLI`, while Docker
     survives only as a bounded expert provider selected through the generated
     CLI
+  - the active `v1.3.0` release-admission slice is Windows x64 only; Windows
+    x86 / 32-bit LabVIEW remains out of scope and any retained x86 host
+    evidence is characterization-only
   - the installed manifest/settings contract now exposes required LabVIEW
     version plus bitness and will stay deterministic across both provider
     classes

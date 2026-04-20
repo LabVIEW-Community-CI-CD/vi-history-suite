@@ -1844,8 +1844,9 @@ Information-for-users review cases:
   when the admitted local runtime shape is x64 `LabVIEW.exe` plus the
   canonical installed x86 `LabVIEWCLI.exe`
 - `TEST-SMOKE-020`: prove the canonical Windows host-operation matrix closes
-  the remaining LabVIEW 2026 x86/x64 prerequisite-operation seams or retains
-  one exact bounded blocker receipt per unresolved seam
+  the remaining LabVIEW 2026 x64 release prerequisite-operation seams or
+  retains one exact bounded blocker receipt per unresolved x64 seam, while any
+  retained x86 lane output stays explicit non-release characterization only
 - `TEST-SMOKE-021`: prove `CreateComparisonReport` admission on the supported
   LabVIEW 2026 x64 host bundle, or retain the exact bounded blocker receipt
   when that bundle remains non-admissible after prerequisite closeout; the
@@ -1856,13 +1857,13 @@ Information-for-users review cases:
   `300000ms` runtime budget, the banner observation that `LabVIEWCLI.exe` was
   seen while `LabVIEW.exe` was absent, the exit observation that
   `LabVIEW.exe` was observed, and the final generated-report outcome
-- `TEST-SMOKE-022`: prove `CreateComparisonReport` admission on the supported
-  LabVIEW 2026 x86 host bundle, or retain the exact bounded blocker receipt
-  when that bundle remains non-admissible after prerequisite closeout; the
-  retained x86 receipt shall keep the direct `CreateComparisonReport`
-  command-line proof, the derived VI Server port (`3364`), the banner
-  observation that `LabVIEWCLI.exe` was seen while `LabVIEW.exe` was absent,
-  and the final `command-timed-out` outcome
+- `TEST-SMOKE-022`: if a Windows x86 host-bundle rerun is retained, preserve
+  the exact bounded `CreateComparisonReport` characterization receipt without
+  treating that rerun as part of current release admission; the retained x86
+  receipt shall keep the direct `CreateComparisonReport` command-line proof,
+  the derived VI Server port (`3364`), the banner observation that
+  `LabVIEWCLI.exe` was seen while `LabVIEW.exe` was absent, and the final
+  `command-timed-out` outcome
 - `TEST-DOC-106`: review current-state, `PROGRAM-0005`, `ISSUE-0412`, the
   SRS, RTM, test plan, command reference, FAQ, and `ISSUE-0414` roadmap and
   confirm the retained live-session conditional stale-result guidance plus

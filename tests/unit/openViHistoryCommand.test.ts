@@ -3023,6 +3023,84 @@ describe('createOpenViHistoryCommand', () => {
     });
   });
 
+  it('surfaces password-protected docker compare failures with the retained diagnostic reason and next action', async () => {
+    const targetUri = createMockUri('/workspace/eligible.vi');
+    const tracker = new HistoryPanelTracker();
+    const comparisonReportAction = vi.fn().mockResolvedValue({
+      outcome: 'opened-comparison-report',
+      reportStatus: 'ready-for-runtime',
+      runtimeExecutionState: 'failed',
+      runtimeFailureReason: 'command-exited-nonzero',
+      runtimeDiagnosticReason: 'labview-cli-vi-password-protected',
+      runtimeDoctorSummaryLines: [
+        'Selected provider=windows-container; engine=labview-cli; platform=win32; bitness=x64.',
+        'Provider request=docker.',
+        'Provider decision: selected windows-container because Docker daemon was reachable in windows-container mode with governed Windows container image nationalinstruments/labview:2026q1-windows present locally because the Docker provider was requested.',
+        'Provider decision: rejected host-native because Host-native execution was not selected because the Docker provider was requested.',
+        'Runtime failure reason: command-exited-nonzero.',
+        'Runtime diagnostic reason: labview-cli-vi-password-protected.',
+        'Next action: choose a revision pair whose selected/base VI is not password protected, or remove password protection before rerunning comparison report generation.'
+      ],
+      runtimeDiagnosticNotes: [
+        'LabVIEW CLI connected to LabVIEW before CreateComparisonReport failed because one or both selected VI revisions are password protected.'
+      ],
+      runtimeDiagnosticLogSourcePath:
+        'C:\\vi-history-suite\\container-temp\\lvtemporary_73141.log',
+      runtimeDiagnosticLogArtifactPath:
+        '/workspace/.storage/reports/repo/file/runtime-diagnostic-log.txt',
+      reportFilePath: '/workspace/.storage/reports/repo/file/diff-report-eligible.vi.html',
+      metadataFilePath: '/workspace/.storage/reports/repo/file/report-metadata.json',
+      reportWebviewUri: 'webview:/report',
+      title: 'VI Comparison Report: eligible.vi'
+    });
+    const historyService = {
+      load: vi.fn().mockResolvedValue({
+        repositoryName: 'repo',
+        repositoryRoot: '/workspace',
+        relativePath: 'eligible.vi',
+        signature: 'LVIN',
+        eligible: true,
+        commits: [
+          {
+            hash: 'abcdef1234567890',
+            authorDate: '2026-04-02T00:00:00Z',
+            authorName: 'A User',
+            subject: 'Update VI',
+            previousHash: '1111111122222222'
+          }
+        ]
+      })
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(true)
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined,
+      tracker,
+      comparisonReportAction
+    );
+
+    await command(targetUri as never);
+    await tracker.dispatchLastPanelMessage({
+      command: 'generateComparisonReport',
+      hash: 'abcdef1234567890'
+    });
+
+    expect(showWarningMessageMock).toHaveBeenCalledWith(
+      'Generate compare runtime failed. Provider: windows-container. Provider request: docker. Rejected providers: host-native because Host-native execution was not selected because the Docker provider was requested. Failure reason: command-exited-nonzero. Diagnostic reason: labview-cli-vi-password-protected. Next action: choose a revision pair whose selected/base VI is not password protected, or remove password protection before rerunning comparison report generation.'
+    );
+    expect(tracker.getLastActionSummary()).toMatchObject({
+      runtimeDiagnosticReason: 'labview-cli-vi-password-protected',
+      comparisonRuntimePanelSummary:
+        'Generate compare for abcdef12 vs 11111111. Provider: windows-container. Provider request: docker. Report status: ready-for-runtime. Runtime state: failed. Rejected providers: host-native because Host-native execution was not selected because the Docker provider was requested. Failure reason: command-exited-nonzero. Diagnostic reason: labview-cli-vi-password-protected.',
+      comparisonRuntimePanelNextAction:
+        'Next action: choose a revision pair whose selected/base VI is not password protected, or remove password protection before rerunning comparison report generation.'
+    });
+  });
+
   it('surfaces stable warnings when panel actions are blocked by workspace trust after the panel is already open', async () => {
     const targetUri = createMockUri('/workspace/eligible.vi');
     const tracker = new HistoryPanelTracker();

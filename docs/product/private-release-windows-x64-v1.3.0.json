@@ -10,6 +10,7 @@
     "nonScope": [
       "linux-installed-user-support",
       "linux-proof-as-active-private-release-claim",
+      "windows-x86-labview-release-support",
       "wsl-active-support",
       "exact-semver-tagging",
       "marketplace-publication",
@@ -172,6 +173,6 @@
   "nextMove": [
     "cut the Windows-only private release from the retained v1.3.0 packet",
     "keep feature/linux-runtime-variant frozen until the Windows-only private release is formally closed",
-    "treat Windows x86 as a later non-blocking characterization lane"
+    "keep Windows x86 / 32-bit LabVIEW out of scope for the active v1.3.0 release claim and treat any retained x86 evidence as later non-blocking characterization only"
   ]
 }

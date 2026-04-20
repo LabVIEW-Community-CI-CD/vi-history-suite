@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { executeComparisonReport } from '../../src/reporting/comparisonReportRuntimeExecution';
+import {
+  classifyLabviewCliDiagnosticText,
+  executeComparisonReport
+} from '../../src/reporting/comparisonReportRuntimeExecution';
 import { ComparisonReportPacketRecord } from '../../src/reporting/comparisonReportPacket';
 
 function createReadyRecord(): ComparisonReportPacketRecord {
@@ -208,5 +211,23 @@ describe('comparisonReportRuntimeExecution', () => {
     );
     expect(result.record.runtimeExecution.observedProcessNames).toEqual(['LabVIEWCLI.exe']);
     expect(result.record.runtimeExecution.exitObservedProcessNames).toEqual([]);
+  });
+
+  it('classifies password-protected CreateComparisonReport failures from retained LabVIEW CLI diagnostics', () => {
+    const result = classifyLabviewCliDiagnosticText(
+      [
+        'Using LabVIEW: "C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe"',
+        'Connection established with LabVIEW at port number 3363.',
+        'Operation output:',
+        'LabVIEW: (Hex 0x410) VI is password protected.',
+        'CreateComparisonReport operation failed.'
+      ].join('\r\n'),
+      'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe'
+    );
+
+    expect(result.reason).toBe('labview-cli-vi-password-protected');
+    expect(result.notes).toContain(
+      'LabVIEW CLI connected to LabVIEW before CreateComparisonReport failed because one or both selected VI revisions are password protected.'
+    );
   });
 });
