@@ -335,11 +335,15 @@ describe('post-release sustainment rules package', () => {
           },
           hostNativeMidSessionContaminationRecovery: {
             trigger: 'windows-host-runtime-cleanup-failed',
+            recoveryScript:
+              'scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1',
+            recoveryTranscript:
+              'windows-private-release-evidence/host/proof-runtime-recovery.txt',
             retryDelayMs: 5000,
             maxProofRetries: 1,
             firstFailureTranscript:
               'windows-private-release-evidence/host/proof-run-pre-recovery.txt',
-            failurePolicy: 'fail-closed-after-single-retry'
+            failurePolicy: 'fail-closed-after-repo-recovery-script-and-single-retry'
           }
         },
         linux_assurance: {
@@ -501,7 +505,9 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('execution-policy bypass');
     expect(rulesDoc).toContain('ExecutionPolicy Bypass');
     expect(rulesDoc).toContain('proof-run-pre-recovery.txt');
+    expect(rulesDoc).toContain('proof-runtime-recovery.txt');
     expect(rulesDoc).toContain('single retry');
+    expect(rulesDoc).toContain('recover-windows-proof-runtime-surface.ps1');
     expect(rulesDoc).toContain('apply-governed-runner-lanes.ps1');
     expect(rulesDoc).toContain('assert-governed-runner-lanes.ps1');
     expect(rulesDoc).toContain('apply-linux-assurance-runner.sh');

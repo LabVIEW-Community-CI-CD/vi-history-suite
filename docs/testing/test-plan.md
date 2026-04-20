@@ -1928,10 +1928,12 @@ Information-for-users review cases:
   bounded PID-tree plus image-name forced descendant termination, and fails
   closed when contamination remains
 - `TEST-UNIT-364`: verify the Windows private-release acceptance wrapper
-  preserves the first failed host proof transcript, waits `5000` ms, retries
-  the host-native proof once when the shared Windows cleanup seam fails before
-  proof execution, and still fails closed when the retry is not eligible or
-  cannot restore a clean host surface
+    preserves the first failed host proof transcript, runs the repo-owned
+    Windows proof runtime recovery script, retains
+    `proof-runtime-recovery.txt`, waits `5000` ms, retries the host-native
+    proof once when the shared Windows cleanup seam fails before proof
+    execution, and still fails closed when that recovery step plus retry is
+    not eligible or cannot restore a clean host surface
 - `TEST-UNIT-365`: verify the repo-owned runner drift-assert surfaces keep the
   admitted Windows and Linux assertion commands explicit, keep the combined
   wrapper and `npm run gitlab:runner:assert` package surface explicit, and
@@ -1958,11 +1960,13 @@ Information-for-users review cases:
   stale-runtime cleanup plus fail-closed startup semantics after restart or
   logon
 - `TEST-DOC-117`: review the Windows runner-lane contract, hosted governance,
-  private-release packet, README, current-state, release procedure, sustainment
-  rules, SRS, RTM, and the test plan and confirm the bounded host-native
-  contamination-recovery retry is explicit: `proof-run-pre-recovery.txt` is
-  retained, the retry waits `5000` ms, only one retry is admitted, and the
-  lane still fails closed if the retry cannot restore a clean host surface
+    private-release packet, README, current-state, release procedure, sustainment
+    rules, SRS, RTM, and the test plan and confirm the bounded host-native
+    contamination-recovery retry is explicit: `proof-run-pre-recovery.txt` is
+    retained, `recover-windows-proof-runtime-surface.ps1` is invoked,
+    `proof-runtime-recovery.txt` is retained, the retry waits `5000` ms, only
+    one retry is admitted, and the lane still fails closed if that recovery
+    step plus retry cannot restore a clean host surface
 - `TEST-DOC-118`: review the runner-lane contracts, hosted governance,
   private-release packet, README, current-state, release procedure, sustainment
   package, SRS, RTM, and the test plan and confirm the repo-owned live

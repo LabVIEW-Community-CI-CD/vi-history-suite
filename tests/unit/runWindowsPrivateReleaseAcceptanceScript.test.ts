@@ -117,9 +117,12 @@ const acceptanceScript = require(path.resolve(
     }
   ) => Promise<{
     transcriptPath: string;
+    recoveryTranscriptPath?: string;
     boundedRecovery?: {
       attempted: boolean;
       trigger: string;
+      recoveryScript?: string;
+      recoveryTranscript?: string;
       retryDelayMs: number;
       firstFailureTranscript: string;
     };
@@ -136,7 +139,32 @@ const acceptanceScript = require(path.resolve(
       fspImpl?: typeof fsp;
     }
   ) => Promise<boolean>;
+  runWindowsHostProofRuntimeRecovery: (
+    plan: {
+      repoRoot: string;
+      evidenceRoot: string;
+    },
+    lane: {
+      outputRoot: string;
+      transcripts?: {
+        proofRuntimeRecovery?: string;
+      };
+    },
+    deps?: {
+      runCommandImpl?: (
+        command: string,
+        args: string[],
+        options: {
+          cwd: string;
+          transcriptPath: string;
+        }
+      ) => void;
+      fspImpl?: typeof fsp;
+    }
+  ) => Promise<string>;
 };
+
+const repoRoot = path.resolve(__dirname, '..', '..');
 
 describe('runWindowsPrivateReleaseAcceptance script', () => {
   it('builds the canonical host and container acceptance plan for lv_icon.vi', () => {
@@ -300,13 +328,28 @@ describe('runWindowsPrivateReleaseAcceptance script', () => {
     const evidenceRoot = path.join(tempRoot, 'windows-private-release-evidence');
     const outputRoot = path.join(evidenceRoot, 'host');
     await fsp.mkdir(outputRoot, { recursive: true });
+    const recoveryScriptPath = path.join(
+      tempRoot,
+      'scripts',
+      'gitlab-runner',
+      'windows',
+      'recover-windows-proof-runtime-surface.ps1'
+    );
+    await fsp.mkdir(path.dirname(recoveryScriptPath), { recursive: true });
+    await fsp.writeFile(recoveryScriptPath, "Write-Output '{\"status\":\"clean\"}'\n", 'utf8');
 
     let callCount = 0;
+    const commands: Array<{ command: string; args: string[]; transcriptPath: string }> = [];
     const runCommandImpl = (
       _command: string,
       _args: string[],
       options: { cwd: string; transcriptPath: string }
     ) => {
+      commands.push({
+        command: _command,
+        args: _args,
+        transcriptPath: options.transcriptPath
+      });
       callCount += 1;
       if (callCount === 1) {
         fs.writeFileSync(
@@ -315,6 +358,15 @@ describe('runWindowsPrivateReleaseAcceptance script', () => {
           'utf8'
         );
         throw new Error('Command failed with exit code 1: node out/cli/runGovernedProof.js');
+      }
+
+      if (callCount === 2) {
+        fs.writeFileSync(
+          options.transcriptPath,
+          '{\n  "status": "clean",\n  "attemptCount": 1\n}\n',
+          'utf8'
+        );
+        return;
       }
 
       fs.writeFileSync(
@@ -353,13 +405,37 @@ describe('runWindowsPrivateReleaseAcceptance script', () => {
       }
     );
 
-    expect(callCount).toBe(2);
+    expect(callCount).toBe(3);
+    expect(commands[1]).toEqual(
+      expect.objectContaining({
+        command: 'powershell.exe',
+        args: expect.arrayContaining([
+          '-NoLogo',
+          '-NoProfile',
+          '-File',
+          expect.stringContaining(
+            path.join(
+              'scripts',
+              'gitlab-runner',
+              'windows',
+              'recover-windows-proof-runtime-surface.ps1'
+            )
+          )
+        ]),
+        transcriptPath: path.join(outputRoot, 'proof-runtime-recovery.txt')
+      })
+    );
     expect(sleptForMilliseconds).toBe(5000);
     expect(result.transcriptPath.replaceAll('\\', '/')).toBe('host/proof-run.txt');
+    expect(result.recoveryTranscriptPath?.replaceAll('\\', '/')).toBe(
+      'host/proof-runtime-recovery.txt'
+    );
     expect(result.boundedRecovery).toEqual(
       expect.objectContaining({
         attempted: true,
         trigger: 'windows-host-runtime-cleanup-failed',
+        recoveryScript: 'scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1',
+        recoveryTranscript: 'host/proof-runtime-recovery.txt',
         retryDelayMs: 5000
       })
     );
@@ -369,9 +445,71 @@ describe('runWindowsPrivateReleaseAcceptance script', () => {
     await expect(
       fsp.readFile(path.join(outputRoot, 'proof-run-pre-recovery.txt'), 'utf8')
     ).resolves.toContain('Windows host runtime cleanup failed; remaining processes: LabVIEW');
+    await expect(
+      fsp.readFile(path.join(outputRoot, 'proof-runtime-recovery.txt'), 'utf8')
+    ).resolves.toContain('"status": "clean"');
     await expect(fsp.readFile(path.join(outputRoot, 'proof-run.txt'), 'utf8')).resolves.toContain(
       'host proof succeeded'
     );
+  });
+
+  it('runs the governed Windows proof runtime recovery script and retains its transcript path', async () => {
+    const tempRoot = await fsp.mkdtemp(
+      path.join(os.tmpdir(), 'vihs-windows-proof-runtime-recovery-')
+    );
+    const evidenceRoot = path.join(tempRoot, 'windows-private-release-evidence');
+    const outputRoot = path.join(evidenceRoot, 'host');
+    await fsp.mkdir(outputRoot, { recursive: true });
+    const recoveryScriptPath = path.join(
+      tempRoot,
+      'scripts',
+      'gitlab-runner',
+      'windows',
+      'recover-windows-proof-runtime-surface.ps1'
+    );
+    await fsp.mkdir(path.dirname(recoveryScriptPath), { recursive: true });
+    await fsp.writeFile(recoveryScriptPath, "Write-Output '{\"status\":\"clean\"}'\n", 'utf8');
+
+    const calls: Array<{ command: string; args: string[]; transcriptPath: string }> = [];
+    const transcriptPath = await acceptanceScript.runWindowsHostProofRuntimeRecovery(
+      {
+        repoRoot,
+        evidenceRoot
+      },
+      {
+        outputRoot,
+        transcripts: {
+          proofRuntimeRecovery: 'proof-runtime-recovery.txt'
+        }
+      },
+      {
+        fspImpl: fsp,
+        runCommandImpl: (command, args, options) => {
+          calls.push({ command, args, transcriptPath: options.transcriptPath });
+          fs.writeFileSync(options.transcriptPath, '{"status":"clean"}\n', 'utf8');
+        }
+      }
+    );
+
+    expect(transcriptPath.replaceAll('\\', '/')).toBe('host/proof-runtime-recovery.txt');
+    expect(calls).toEqual([
+      expect.objectContaining({
+        command: 'powershell.exe',
+        args: expect.arrayContaining([
+          '-NoLogo',
+          '-NoProfile',
+          '-File',
+          path.join(
+            repoRoot,
+            'scripts',
+            'gitlab-runner',
+            'windows',
+            'recover-windows-proof-runtime-surface.ps1'
+          )
+        ]),
+        transcriptPath: path.join(outputRoot, 'proof-runtime-recovery.txt')
+      })
+    ]);
   });
 
   it('limits the bounded retry trigger to the Windows host proof step cleanup failure signature', async () => {

@@ -177,6 +177,7 @@ Latest landed ship target:
   - `scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1`
   - `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1`
   - `scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1`
+  - `scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1`
   - `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh`
   - `scripts/gitlab-runner/linux/start-linux-assurance.sh`
   - `scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service`
@@ -203,11 +204,14 @@ Latest landed ship target:
     `~/.gitlab-runner/config.toml` still contains
     `request_concurrency = 2`, the admitted service fragment/user and working
     directory remain exact, and exactly one configured runner process is live
-  - when the host-native Windows proof exits on that same cleanup seam, the
-    acceptance wrapper retains
-    `windows-private-release-evidence/host/proof-run-pre-recovery.txt`, waits
-    `5000` ms, retries the host-native proof once, and still fails closed if
-    the retry cannot restore a clean host surface
+    - when the host-native Windows proof exits on that same cleanup seam, the
+      acceptance wrapper retains
+      `windows-private-release-evidence/host/proof-run-pre-recovery.txt`, runs
+      `scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1`,
+      retains `windows-private-release-evidence/host/proof-runtime-recovery.txt`,
+      waits `5000` ms, retries the host-native proof once, and still fails
+      closed if the repo-owned recovery step plus retry cannot restore a clean
+      host surface
 - VS Code Marketplace listing: `https://marketplace.visualstudio.com/items?itemName=svelderrainruiz.vi-history-suite`
 - VS Code Marketplace publication ledger: [vscode-marketplace-publication-ledger.md](./vscode-marketplace-publication-ledger.md)
 - current changelog: [CHANGELOG.md](../../CHANGELOG.md)

@@ -44,6 +44,7 @@ describe('windows private release runner lane docs', () => {
     expect(runnerLaneDoc).toContain('apply-governed-runner-lanes.ps1');
     expect(runnerLaneDoc).toContain('start-governed-runner-lanes.ps1');
     expect(runnerLaneDoc).toContain('assert-governed-runner-lanes.ps1');
+    expect(runnerLaneDoc).toContain('recover-windows-proof-runtime-surface.ps1');
     expect(runnerLaneDoc).toContain('scripts/assertGovernedRunnerLanes.js');
     expect(runnerLaneDoc).toContain('npm run gitlab:runner:assert');
     expect(runnerLaneDoc).toContain('-NoLogo -NoProfile -File');
@@ -58,7 +59,9 @@ describe('windows private release runner lane docs', () => {
     expect(runnerLaneDoc).toContain('taskkill /IM /T /F');
     expect(runnerLaneDoc).toContain('fails closed if any remain');
     expect(runnerLaneDoc).toContain('proof-run-pre-recovery.txt');
-    expect(runnerLaneDoc).toContain('waits `5000` ms');
+    expect(runnerLaneDoc).toContain('proof-runtime-recovery.txt');
+    expect(runnerLaneDoc).toContain('`5000` ms');
+    expect(runnerLaneDoc).toContain('repo-owned Windows proof runtime recovery script');
     expect(runnerLaneDoc).toContain('reruns the same host-native proof once');
     expect(runnerLaneDoc).toContain('proofAttemptCount');
     expect(runnerLaneDoc).toContain('boundedRecovery');
@@ -88,7 +91,9 @@ describe('windows private release runner lane docs', () => {
     expect(hostedGovernanceDoc).toContain('taskkill /PID /T /F');
     expect(hostedGovernanceDoc).toContain('taskkill /IM /T /F');
     expect(hostedGovernanceDoc).toContain('proof-run-pre-recovery.txt');
+    expect(hostedGovernanceDoc).toContain('proof-runtime-recovery.txt');
     expect(hostedGovernanceDoc).toContain('`5000` ms');
+    expect(hostedGovernanceDoc).toContain('recover-windows-proof-runtime-surface.ps1');
     expect(hostedGovernanceDoc).toContain('retries that host-native proof once');
     expect(hostedGovernanceDoc).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
     expect(hostedGovernanceJson.authorityGitLab.runnerLanes.windowsPrivateRelease).toEqual(
@@ -120,6 +125,8 @@ describe('windows private release runner lane docs', () => {
           },
           repoOwnedBootstrapScript: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',
           repoOwnedAssertScript: 'scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1',
+          repoOwnedRecoveryScript:
+            'scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1',
           repoOwnedLinuxHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
           combinedAssertionScript: 'scripts/assertGovernedRunnerLanes.js',
           combinedAssertionPackageScript: 'npm run gitlab:runner:assert',
@@ -146,10 +153,12 @@ describe('windows private release runner lane docs', () => {
     ).toEqual({
       laneId: 'windows-host-native',
       trigger: 'windows-host-runtime-cleanup-failed',
+      recoveryScript: 'scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1',
+      recoveryTranscript: 'windows-private-release-evidence/host/proof-runtime-recovery.txt',
       retryDelayMs: 5000,
       maxProofRetries: 1,
       firstFailureTranscript: 'windows-private-release-evidence/host/proof-run-pre-recovery.txt',
-      failurePolicy: 'fail-closed-after-single-retry'
+      failurePolicy: 'fail-closed-after-repo-recovery-script-and-single-retry'
     });
 
     expect(packageManifest.scripts?.['acceptance:windows:private-release']).toBe(

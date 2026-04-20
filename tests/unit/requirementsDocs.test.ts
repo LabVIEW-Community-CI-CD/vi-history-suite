@@ -264,7 +264,7 @@ describe('requirements documentation coherence', () => {
     expect(srs).toContain('VHS-REQ-558');
     expect(srs).toContain('Windows logon bootstrap script plus Windows apply script');
     expect(srs).toContain('VHS-REQ-560');
-    expect(srs).toContain('bounded host-native contamination-recovery retry');
+    expect(srs).toContain('repo-owned Windows proof runtime recovery script');
     expect(srs).toContain('VHS-REQ-561');
     expect(srs).toContain('repo-owned live drift assertion surfaces');
 
@@ -326,6 +326,7 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('TEST-DOC-115');
     expect(testPlan).toContain('TEST-DOC-117');
     expect(testPlan).toContain('TEST-DOC-118');
+    expect(testPlan).toContain('proof-runtime-recovery.txt');
     expect(testPlan).toContain('native Windows only');
     expect(testPlan).toContain('WSL is retained historical context only');
     expect(testPlan).toContain('runtime-provider public-acceptance gate');

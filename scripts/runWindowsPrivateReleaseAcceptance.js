@@ -23,6 +23,8 @@ const DEFAULT_RUNTIME_TIMEOUT_MS = 300000;
 const DEFAULT_BITNESS = 'x64';
 const WINDOWS_HOST_RUNTIME_CLEANUP_FAILURE_SIGNATURE =
   'Windows host runtime cleanup failed; remaining processes:';
+const WINDOWS_HOST_RUNTIME_RECOVERY_SCRIPT =
+  'scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1';
 const WINDOWS_HOST_PROOF_RETRY_DELAY_MS = 5000;
 const DEFAULT_HOST_SETTINGS_FILE = path.join(DEFAULT_SETTINGS_ROOT, 'host-settings.json');
 const DEFAULT_CONTAINER_SETTINGS_FILE = path.join(
@@ -168,7 +170,8 @@ function buildWindowsPrivateReleaseAcceptancePlan(options) {
         transcripts: {
           settingsWrite: 'settings-write.txt',
           proofRun: 'proof-run.txt',
-          proofRunPreRecovery: 'proof-run-pre-recovery.txt'
+          proofRunPreRecovery: 'proof-run-pre-recovery.txt',
+          proofRuntimeRecovery: 'proof-runtime-recovery.txt'
         },
         steps: [
           {
@@ -286,8 +289,12 @@ async function ensureCompiledSurfaces(plan) {
 }
 
 async function ensurePathExists(candidatePath, guidance) {
+  await ensurePathExistsWithFsp(fsp, candidatePath, guidance);
+}
+
+async function ensurePathExistsWithFsp(fspImpl, candidatePath, guidance) {
   try {
-    await fsp.access(candidatePath, fs.constants.F_OK);
+    await fspImpl.access(candidatePath, fs.constants.F_OK);
   } catch {
     throw new Error(`${candidatePath} is missing. ${guidance}`);
   }
@@ -309,6 +316,9 @@ async function runLane(plan, lane) {
     transcriptPaths[step.kind] = stepResult.transcriptPath;
     if (stepResult.boundedRecovery) {
       boundedRecovery = stepResult.boundedRecovery;
+    }
+    if (stepResult.recoveryTranscriptPath) {
+      transcriptPaths.proofRuntimeRecovery = stepResult.recoveryTranscriptPath;
     }
   }
 
@@ -362,7 +372,7 @@ async function runLaneStep(plan, lane, step, deps = {}) {
       transcriptPath
     });
     return {
-      transcriptPath: path.relative(plan.evidenceRoot, transcriptPath)
+      transcriptPath: toPortableRelativePath(plan.evidenceRoot, transcriptPath)
     };
   } catch (error) {
     if (!(await shouldRetryWindowsHostProofStep(lane, step, transcriptPath, { fspImpl }))) {
@@ -375,6 +385,10 @@ async function runLaneStep(plan, lane, step, deps = {}) {
     await fspImpl.rm(preRecoveryTranscriptPath, { force: true });
     await fspImpl.rename(transcriptPath, preRecoveryTranscriptPath);
     await fspImpl.rm(plan.harnessReportRoot, { recursive: true, force: true });
+    const recoveryTranscriptPath = await runWindowsHostProofRuntimeRecovery(plan, lane, {
+      fspImpl,
+      runCommandImpl
+    });
     await sleepImpl(WINDOWS_HOST_PROOF_RETRY_DELAY_MS);
     runCommandImpl(step.command, step.args, {
       cwd: plan.repoRoot,
@@ -382,15 +396,46 @@ async function runLaneStep(plan, lane, step, deps = {}) {
     });
 
     return {
-      transcriptPath: path.relative(plan.evidenceRoot, transcriptPath),
+      transcriptPath: toPortableRelativePath(plan.evidenceRoot, transcriptPath),
+      recoveryTranscriptPath,
       boundedRecovery: {
         attempted: true,
         trigger: 'windows-host-runtime-cleanup-failed',
+        recoveryScript: WINDOWS_HOST_RUNTIME_RECOVERY_SCRIPT,
+        recoveryTranscript: recoveryTranscriptPath,
         retryDelayMs: WINDOWS_HOST_PROOF_RETRY_DELAY_MS,
-        firstFailureTranscript: path.relative(plan.evidenceRoot, preRecoveryTranscriptPath)
+        firstFailureTranscript: toPortableRelativePath(plan.evidenceRoot, preRecoveryTranscriptPath)
       }
     };
   }
+}
+
+async function runWindowsHostProofRuntimeRecovery(plan, lane, deps = {}) {
+  const fspImpl = deps.fspImpl ?? fsp;
+  const runCommandImpl = deps.runCommandImpl ?? runCommand;
+  const recoveryScriptPath = path.join(
+    plan.repoRoot,
+    ...WINDOWS_HOST_RUNTIME_RECOVERY_SCRIPT.split('/')
+  );
+  await ensurePathExistsWithFsp(
+    fspImpl,
+    recoveryScriptPath,
+    'The governed Windows proof runtime recovery script is missing.'
+  );
+
+  const recoveryTranscriptName =
+    lane.transcripts?.proofRuntimeRecovery ?? 'proof-runtime-recovery.txt';
+  const recoveryTranscriptPath = path.join(lane.outputRoot, recoveryTranscriptName);
+  runCommandImpl(
+    'powershell.exe',
+    ['-NoLogo', '-NoProfile', '-File', recoveryScriptPath],
+    {
+      cwd: plan.repoRoot,
+      transcriptPath: recoveryTranscriptPath
+    }
+  );
+
+  return toPortableRelativePath(plan.evidenceRoot, recoveryTranscriptPath);
 }
 
 async function shouldRetryWindowsHostProofStep(
@@ -461,6 +506,10 @@ function toPortableLeafName(candidatePath) {
   return path.posix.basename(String(candidatePath).replace(/\\/g, '/'));
 }
 
+function toPortableRelativePath(rootPath, candidatePath) {
+  return path.relative(rootPath, candidatePath).replace(/\\/g, '/');
+}
+
 function defaultSleep(milliseconds) {
   return new Promise((resolve) => {
     setTimeout(resolve, milliseconds);
@@ -515,5 +564,6 @@ module.exports = {
   formatCommand,
   toPortableLeafName,
   runLaneStep,
-  shouldRetryWindowsHostProofStep
+  shouldRetryWindowsHostProofStep,
+  runWindowsHostProofRuntimeRecovery
 };

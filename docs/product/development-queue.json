@@ -105,7 +105,7 @@
     "title": "Post-release sustainment and release cadence",
     "status": "active",
     "source": "author direction",
-    "summary": "Sustain the public release kit, benchmark refresh cadence, operator surfaces, repo-owned runner apply/assert surfaces, SemVer discipline, hosted branch/CI governance, and public-user and internal-authority docs surfaces as event-driven repo truth, while keeping sustainment separate from the historical `PROGRAM-0002` Docker-only public closeout, the explicit runtime-provider public-acceptance gate, and the active `PROGRAM-0005` installed local-LabVIEWCLI contract reset.",
+    "summary": "Sustain the public release kit, benchmark refresh cadence, operator surfaces, repo-owned runner apply/recovery/assert surfaces, SemVer discipline, hosted branch/CI governance, and public-user and internal-authority docs surfaces as event-driven repo truth, while keeping sustainment separate from the historical `PROGRAM-0002` Docker-only public closeout, the explicit runtime-provider public-acceptance gate, and the active `PROGRAM-0005` installed local-LabVIEWCLI contract reset.",
     "issues": [
       "ISSUE-0409"
     ]

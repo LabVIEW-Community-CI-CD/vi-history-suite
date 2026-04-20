@@ -64,10 +64,12 @@ describe('hosted ci governance docs', () => {
         runtimeContaminationRecovery: {
           laneId: 'windows-host-native',
           trigger: 'windows-host-runtime-cleanup-failed',
+          recoveryScript: 'scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1',
+          recoveryTranscript: 'windows-private-release-evidence/host/proof-runtime-recovery.txt',
           retryDelayMs: 5000,
           maxProofRetries: 1,
           firstFailureTranscript: 'windows-private-release-evidence/host/proof-run-pre-recovery.txt',
-          failurePolicy: 'fail-closed-after-single-retry'
+          failurePolicy: 'fail-closed-after-repo-recovery-script-and-single-retry'
         }
       })
     );
@@ -161,6 +163,8 @@ describe('hosted ci governance docs', () => {
           },
           repoOwnedBootstrapScript: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',
           repoOwnedAssertScript: 'scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1',
+          repoOwnedRecoveryScript:
+            'scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1',
           repoOwnedLinuxHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
           combinedAssertionScript: 'scripts/assertGovernedRunnerLanes.js',
           combinedAssertionPackageScript: 'npm run gitlab:runner:assert',
@@ -222,14 +226,17 @@ describe('hosted ci governance docs', () => {
     expect(matrixDoc).toContain('taskkill /PID /T /F');
     expect(matrixDoc).toContain('taskkill /IM /T /F');
     expect(matrixDoc).toContain('proof-run-pre-recovery.txt');
+    expect(matrixDoc).toContain('proof-runtime-recovery.txt');
     expect(matrixDoc).toContain('`5000` ms');
     expect(matrixDoc).toContain('retries that host-native proof once');
+    expect(matrixDoc).toContain('recover-windows-proof-runtime-surface.ps1');
     expect(matrixDoc).toContain('without `ExecutionPolicy Bypass`');
     expect(matrixDoc).toContain('start-governed-runner-lanes.ps1');
     expect(matrixDoc).toContain('assert-governed-runner-lanes.ps1');
     expect(matrixDoc).toContain('scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1');
     expect(matrixDoc).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
     expect(matrixDoc).toContain('scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1');
+    expect(matrixDoc).toContain('scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1');
     expect(matrixDoc).toContain('scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
     expect(matrixDoc).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
     expect(matrixDoc).toContain('scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service');

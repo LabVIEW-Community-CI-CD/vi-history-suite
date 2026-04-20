@@ -97,6 +97,8 @@ the tagged GitLab Windows runner lane that retains this same scenario under
     `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1`
   - the governed Windows drift assertion surface is
     `scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1`
+  - the governed Windows proof runtime recovery surface is
+    `scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1`
   - the admitted scheduled-task action stays
     `powershell.exe -NoLogo -NoProfile -File "C:\GitLab-Runner\start-governed-runner-lanes.ps1"`
     without `ExecutionPolicy Bypass`, and the apply surface fails closed
@@ -112,9 +114,12 @@ the tagged GitLab Windows runner lane that retains this same scenario under
     contamination remains
   - when the host-native proof exits on that same cleanup seam, the acceptance
     wrapper preserves the first failed proof transcript as
-    `windows-private-release-evidence/host/proof-run-pre-recovery.txt`, waits
-    `5000` ms, reruns the host-native proof once, and fails closed if the
-    retry still fails
+    `windows-private-release-evidence/host/proof-run-pre-recovery.txt`, runs
+    the repo-owned Windows proof runtime recovery script
+    `scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1`,
+    retains `windows-private-release-evidence/host/proof-runtime-recovery.txt`,
+    waits `5000` ms, reruns the host-native proof once, and fails closed if
+    the repo-owned recovery step plus retry still fails
   - the governed Linux apply/helper/service surfaces are
     `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh`,
     `scripts/gitlab-runner/linux/start-linux-assurance.sh`, and

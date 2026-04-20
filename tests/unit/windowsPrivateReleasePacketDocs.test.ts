@@ -118,6 +118,7 @@ describe('windows private release packet docs', () => {
     expect(packetDoc).toContain('scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1');
     expect(packetDoc).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
     expect(packetDoc).toContain('scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1');
+    expect(packetDoc).toContain('scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1');
     expect(packetDoc).toContain('scripts/assertGovernedRunnerLanes.js');
     expect(packetDoc).toContain('npm run gitlab:runner:assert');
     expect(packetDoc).toContain('without `ExecutionPolicy Bypass`');
@@ -130,7 +131,9 @@ describe('windows private release packet docs', () => {
     expect(packetDoc).toContain('fails closed if');
     expect(packetDoc).toContain('contamination remains');
     expect(packetDoc).toContain('proof-run-pre-recovery.txt');
+    expect(packetDoc).toContain('proof-runtime-recovery.txt');
     expect(packetDoc).toContain('`5000` ms');
+    expect(packetDoc).toContain('repo-owned Windows proof runtime recovery script');
     expect(packetDoc).toContain('reruns the host-native proof once');
     expect(packetDoc).toContain('scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
     expect(packetDoc).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
@@ -193,15 +196,19 @@ describe('windows private release packet docs', () => {
         midSessionRuntimeRecovery: {
           laneId: 'windows-host-native',
           trigger: 'windows-host-runtime-cleanup-failed',
+          recoveryScript: 'scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1',
+          recoveryTranscript: 'windows-private-release-evidence/host/proof-runtime-recovery.txt',
           retryDelayMs: 5000,
           maxProofRetries: 1,
           firstFailureTranscript: 'windows-private-release-evidence/host/proof-run-pre-recovery.txt',
-          failurePolicy: 'fail-closed-after-single-retry'
+          failurePolicy: 'fail-closed-after-repo-recovery-script-and-single-retry'
         },
         repoOwnedOperatorAssets: {
           windowsApplyScript: 'scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1',
           windowsBootstrapScript: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',
           windowsAssertScript: 'scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1',
+          windowsRecoveryScript:
+            'scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1',
           linuxApplyScript: 'scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh',
           linuxHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
           linuxServiceUnit: 'scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service',
