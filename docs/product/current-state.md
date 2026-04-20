@@ -158,6 +158,9 @@ Latest landed ship target:
 - current published package line on `main`: `1.2.2`
 - current develop package line on `develop`: `1.3.0`
 - active exact release candidate line on `develop`: `v1.3.0`
+- current Windows x64 private GitLab release: `private-v1.3.0-windows-x64`
+- private GitLab release URL:
+  `https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.0-windows-x64`
 - no newer `release/*` branch is active yet
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
@@ -473,6 +476,9 @@ Post-release tranches:
     [private-release-windows-x64-v1.3.0.md](./private-release-windows-x64-v1.3.0.md)
     and
     [private-release-windows-x64-v1.3.0.json](./private-release-windows-x64-v1.3.0.json)
+  - the governed private GitLab release for that same packet is now published
+    as `private-v1.3.0-windows-x64` and is refreshable through
+    `npm run gitlab:private-release:publish`
   - the repo now retains the tagged GitLab Windows acceptance lane for this
     same scenario in
     [windows-private-release-runner-lane.md](./windows-private-release-runner-lane.md):

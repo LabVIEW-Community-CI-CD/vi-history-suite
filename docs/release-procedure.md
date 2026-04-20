@@ -18,15 +18,19 @@
 - The active exact release candidate line on `develop` is `v1.3.0`.
 - No newer `release/*` branch is active yet.
 - The current `v1.3.0` pre-release sequence remains Windows x64 private-release
-  prep only: clean the user-facing docs on a docs-only feature branch first,
-  then prepare the Windows packet on a separate feature branch before any
-  `release/*` branch is cut.
+  only: clean the user-facing docs on a docs-only feature branch first, then
+  prepare the Windows packet and publish or refresh the governed private
+  GitLab release on a separate feature branch before any `release/*` branch
+  is cut.
 - Windows x86 / 32-bit LabVIEW remains out of scope for that `v1.3.0`
   pre-release sequence; any retained x86 host evidence is characterization
   only and does not expand the Windows x64 private-release claim.
 - The tracked Windows x64 private-release packet for that prep sequence is:
   - `docs/product/private-release-windows-x64-v1.3.0.md`
   - `docs/product/private-release-windows-x64-v1.3.0.json`
+- The governed private-release publish surface for that sequence is:
+  - `npm run gitlab:private-release:publish`
+  - current retained private-release tag: `private-v1.3.0-windows-x64`
 - The governed Windows runner-lane contract for that prep sequence is:
   - `docs/product/windows-private-release-runner-lane.md`
 - The governed external assurance lane for that prep sequence is:
@@ -136,6 +140,11 @@
   - `docs/product/vscode-marketplace-publication-ledger.json`
 
 ## Steps
+
+For the current `v1.3.0` Windows-only private-release line, run
+`npm run gitlab:private-release:publish` after the packet and validation pack
+are green so the controlled private GitLab release stays current before any
+exact/public `release/*` promotion begins.
 
 1. Ensure branch promotion followed the governed branch model.
    - Before opening or promoting the next candidate line, run
