@@ -118,7 +118,15 @@ export function createOpenViHistoryCommand(
       return;
     }
 
-    const loadedModel = await historyService.load(targetUri);
+    let loadedModel: Awaited<ReturnType<ViHistoryService['load']>>;
+    try {
+      loadedModel = await historyService.load(targetUri);
+    } catch (error) {
+      void vscode.window.showErrorMessage(
+        buildHistoryLoadFailureMessage(targetUri.fsPath, error)
+      );
+      return;
+    }
     if (!loadedModel.eligible) {
       void vscode.window.showInformationMessage(
         'The selected file is not currently eligible for VI History.'
@@ -1778,4 +1786,43 @@ function mapLegacyExecutionModeToProviderRequest(
   }
 
   return executionMode;
+}
+
+function buildHistoryLoadFailureMessage(
+  targetFsPath: string,
+  error: unknown
+): string {
+  if (isInstalledProgramFilesLvIconPath(targetFsPath)) {
+    return 'The selected installed copy of lv_icon.vi is not the governed review surface. Open resource/plugins/lv_icon.vi from a Git-backed ni/labview-icon-editor clone instead; the Program Files copy has no commit history for VI Comparison Report generation.';
+  }
+
+  if (isGitRepositoryResolutionFailure(error)) {
+    return 'VI History could not load the selected file because it is not inside a tracked Git repository. Open a local Git-backed LabVIEW VI with commit history instead.';
+  }
+
+  return 'VI History could not load the selected file.';
+}
+
+function isInstalledProgramFilesLvIconPath(targetFsPath: string): boolean {
+  const normalizedPath = targetFsPath.replaceAll('/', '\\');
+  const lowerPath = normalizedPath.toLowerCase();
+
+  return (
+    path.win32.basename(normalizedPath).toLowerCase() === 'lv_icon.vi' &&
+    lowerPath.includes('\\program files') &&
+    lowerPath.includes('\\national instruments\\')
+  );
+}
+
+function isGitRepositoryResolutionFailure(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const message = error.message.toLowerCase();
+  return (
+    message.includes('not a git repository') ||
+    message.includes('rev-parse') ||
+    message.includes('--show-toplevel')
+  );
 }
