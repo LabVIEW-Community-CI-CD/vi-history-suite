@@ -69,21 +69,41 @@ describe('vs code marketplace publication and installed-user docs', () => {
     const publicReadme = collapseWhitespace(readAuthorityText('public-github-source/README.md'));
     const publicInstall = collapseWhitespace(readAuthorityText('public-github-source/INSTALL.md'));
     const publicSupport = collapseWhitespace(readAuthorityText('public-github-source/SUPPORT.md'));
+    const publicBugReport = collapseWhitespace(
+      readAuthorityText('public-github-source/.github/ISSUE_TEMPLATE/bug-report.yml')
+    );
+    const publicLabviewVersion = collapseWhitespace(
+      readAuthorityText('public-github-source/.github/ISSUE_TEMPLATE/labview-version-support.yml')
+    );
+    const publicFeatureRequest = collapseWhitespace(
+      readAuthorityText('public-github-source/.github/ISSUE_TEMPLATE/feature-request.yml')
+    );
+    const publicIssueConfig = collapseWhitespace(
+      readAuthorityText('public-github-source/.github/ISSUE_TEMPLATE/config.yml')
+    );
     const home = collapseWhitespace(readPublicWikiText('Home.md'));
     const install = collapseWhitespace(readPublicWikiText('Install-And-Release.md'));
     const userWorkflow = collapseWhitespace(readPublicWikiText('User-Workflow.md'));
 
     expect(pkg.homepage).toBe('https://github.com/svelderrainruiz/vi-history-suite/wiki');
 
-    expect(readme).toContain('If You Installed VI History Suite From The Marketplace');
-    expect(readme).toContain('You do not need to fork this repo or learn the branch model to use the installed extension.');
-    expect(readme).toContain('install or start Docker Desktop or Docker, then confirm `docker info`');
-    expect(readme).toContain('The rest of this README is the authority repo and release-control entry surface');
+    expect(readme).toContain('Install And Use');
+    expect(readme).toContain('You do not need to fork this repo, learn the branch model');
+    expect(readme).toContain('install-vihs-extension.ps1');
+    expect(readme).toContain('vihs --validate');
+    expect(readme).toContain('Report A Problem Or Request Support');
+    expect(readme).toContain('issues/new/choose');
+    expect(readme).toContain('LabVIEW version support request');
+    expect(readme).toContain('Need Source Evaluation Or Contribution?');
 
-    expect(publicReadme).toContain('If You Installed VI History Suite');
-    expect(publicReadme).toContain('You do not need to fork this repo or choose a branch to use the installed extension locally.');
-    expect(publicReadme).toContain('Windows defaults to local `LabVIEWCLI` when the persisted provider is absent.');
-    expect(publicReadme).toContain('Branches matter only when you are evaluating or contributing to the source repo.');
+    expect(publicReadme).toContain('Install And Use');
+    expect(publicReadme).toContain('You do not need to fork this repo or choose a branch to use the extension locally.');
+    expect(publicReadme).toContain('install-vihs-extension.ps1');
+    expect(publicReadme).toContain('vihs --validate');
+    expect(publicReadme).toContain('Report A Problem Or Request Support');
+    expect(publicReadme).toContain('LabVIEW version support request');
+    expect(publicReadme).toContain('Need Source Evaluation Or Contribution?');
+    expect(publicReadme).toContain('Use `main` when you only need the latest exact released source.');
 
     expect(publicInstall).toContain('Installed Extension Start');
     expect(publicInstall).toContain('You do not need to fork the repo for this path.');
@@ -94,6 +114,19 @@ describe('vs code marketplace publication and installed-user docs', () => {
     expect(publicSupport).toContain(
       'If the candidate host or Docker bundle is missing, contradictory, unsupported, or blocked, the product should fail closed with visible next-step guidance'
     );
+    expect(publicBugReport).toContain('install, settings, validation, or compare problem');
+    expect(publicBugReport).toContain('Install route');
+    expect(publicBugReport).toContain('`vihs --validate` output');
+    expect(publicBugReport).toContain('What command or surface failed?');
+    expect(publicLabviewVersion).toContain('LabVIEW version support request');
+    expect(publicLabviewVersion).toContain('Requested LabVIEW year');
+    expect(publicLabviewVersion).toContain('Current guidance or failure output');
+    expect(publicFeatureRequest).toContain(
+      'install, configuration, validation, or compare improvement'
+    );
+    expect(publicFeatureRequest).toContain('Which surface should improve?');
+    expect(publicIssueConfig).toContain('Install and release guide');
+    expect(publicIssueConfig).toContain('User workflow');
 
     expect(home).toContain('If You Installed The Extension');
     expect(home).toContain('You do not need to fork the repo or learn the branch model for this path.');

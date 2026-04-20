@@ -29,8 +29,8 @@ describe('private release assurance contradiction guards', () => {
     const currentState = readText('docs/product/current-state.md');
     const releaseProcedure = readText('docs/release-procedure.md');
 
-    expect(readme).toContain('The active `develop` candidate is a Windows x64 private-release route');
-    expect(readme).toContain('The current exact released line (`v1.2.2`)');
+    expect(readme).toContain('exact released Marketplace line `1.2.2`: Docker-only and x64-only');
+    expect(readme).toContain('maintained `develop` candidate line `1.3.0`: Windows PowerShell bootstrap');
     expect(currentState).toContain('current exact released line: `v1.2.2`');
     expect(currentState).toContain('active exact release candidate line on `develop`: `v1.3.0`');
     expect(releaseProcedure).toContain('The current `v1.3.0` pre-release sequence remains Windows x64 private-release');

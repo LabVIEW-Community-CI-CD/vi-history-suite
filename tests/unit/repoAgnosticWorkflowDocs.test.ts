@@ -23,11 +23,12 @@ describe('repo-agnostic checkbox workflow docs', () => {
       'ADR-0017-bounded-repo-family-support.md'
     );
 
-    for (const content of [readme, currentState, srs, rtm, testPlan, adr]) {
+    for (const content of [currentState, srs, rtm, testPlan, adr]) {
       expect(content).toContain('repo-agnostic');
     }
 
-    expect(readme).toContain('VI History is available in any trusted Git repository');
+    expect(readme).toContain('Open a trusted Git repo containing an eligible LabVIEW VI.');
+    expect(readme).toContain('review any public repo:');
     expect(currentState).toContain('Repo-agnostic support with governed-evidence depth');
     expect(srs).toContain('checkbox-selected compare flow');
     expect(rtm).toContain('checkbox-selected compare flow');

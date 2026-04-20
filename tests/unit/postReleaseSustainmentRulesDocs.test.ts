@@ -530,9 +530,11 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('npm run gitlab:runner:assert');
     expect(rulesDoc).toContain('without `ExecutionPolicy Bypass`');
 
+    expect(readme).toContain('## Authority And Release Control');
     expect(readme).toContain(
-      '[Post-Release Sustainment Rules](./docs/product/post-release-sustainment-rules.md)'
+      '[docs/product/public-release-candidate.md](./docs/product/public-release-candidate.md)'
     );
+    expect(readme).toContain('[Release Procedure](./docs/release-procedure.md)');
     expect(currentState).toContain(
       '[post-release-sustainment-rules.md](./post-release-sustainment-rules.md)'
     );
