@@ -149,9 +149,9 @@ history instead of chat memory.
 - retain the governed live-session probe lane from `ISSUE-0414`: persisted
   versus live runtime settings drift probe command, retained packet output, and
   local fail-closed packet assertion
-- retain the `ISSUE-0414` gate decision: keep reload-or-restart guidance as
-  active truth while direct live-session uptake of updated settings remains
-  unproven
+- retain the `ISSUE-0414` gate decision: keep conditional stale-result
+  guidance as active truth while direct live-session uptake of updated settings
+  remains only partially proven
 - keep the remaining proof gap explicit: direct live mutation of the active
   real user-profile VS Code settings target while Code is already running is
   not yet end-to-end proven, even though probe-path fail-closed safe-restore is
@@ -260,15 +260,16 @@ still only proposal material during round 1:
   second-selection auto-run as the live branch contract
 - direct live mutation of the already-running VS Code session remains
   partially proven through a retained persisted-versus-live probe packet plus
-  local packet gate, and the retained gate decision keeps reload-or-restart
-  guidance active while end-to-end mutation safety remains unproven; the
-  generated CLI plus the settings-driven compare-preflight and runtime-doctor
-  surfaces now warn users to reload or restart the window before using Compare
-  and one repo-owned proof runner now snapshots the latest probe packet,
-  retained history receipt, policy-boundary receipt, and integration logs under
-  `.cache/runtime-settings-live-session-proof/latest/`
-  when Code is already open
-  for this slice
+  local packet gate, and the retained gate decision now keeps conditional
+  stale-result guidance active while end-to-end mutation safety remains
+  unproven across all runtime facts; the generated CLI plus the
+  settings-driven compare-preflight and runtime-doctor surfaces now tell users
+  to review Compare or runtime validation again after CLI updates and reload
+  or restart only if stale provider or runtime facts remain, and one
+  repo-owned proof runner now snapshots the latest probe packet, retained
+  history receipt, policy-boundary receipt, and integration logs under
+  `.cache/runtime-settings-live-session-proof/latest/` when Code is already
+  open for this slice
 
 ## Round 1 Working Assessment
 

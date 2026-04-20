@@ -78,6 +78,7 @@ interface RuntimeSettingsLiveSessionProbeSummary {
     | 'live-uptake-not-proven'
     | 'candidate-live-uptake-observed'
     | 'insufficient-evidence';
+  historyProofStatus: 'not-fully-proven' | 're-evaluation-required';
 }
 
 const execFile = promisify(execFileCallback);
@@ -722,8 +723,36 @@ async function testProbeRuntimeSettingsLiveSession(): Promise<void> {
 
   const settingsFilePath = prepared.defaultSettingsFilePath!;
   const initialRuntimeSettings = readViHistorySuiteRuntimeSettings();
-  const baselineProvider = initialRuntimeSettings.runtimeProvider === 'docker' ? 'docker' : 'host';
+  const firstBaselineProvider =
+    initialRuntimeSettings.runtimeProvider === 'docker' ? 'docker' : 'host';
+  const secondBaselineProvider = firstBaselineProvider === 'docker' ? 'host' : 'docker';
 
+  const firstSummary = await runAndAssertRuntimeSettingsLiveSessionProbe(
+    prepared,
+    settingsFilePath,
+    firstBaselineProvider
+  );
+  const secondSummary = await runAndAssertRuntimeSettingsLiveSessionProbe(
+    prepared,
+    settingsFilePath,
+    secondBaselineProvider
+  );
+
+  assert.equal(firstSummary.historyTotalRuns, 1);
+  assert.equal(secondSummary.historyTotalRuns, 2);
+  assert.equal(secondSummary.historyReloadRequiredCount, 0);
+  assert.equal(secondSummary.historyUnknownObservationCount, 0);
+  assert.equal(secondSummary.historyInSessionUpdatedCount, 2);
+  assert.equal(secondSummary.historyStance, 'candidate-live-uptake-observed');
+  assert.equal(secondSummary.historyProofStatus, 're-evaluation-required');
+  await maybeWriteRuntimeSettingsLiveSessionProofOutput(secondSummary);
+}
+
+async function runAndAssertRuntimeSettingsLiveSessionProbe(
+  prepared: PreparedLocalRuntimeSettingsCliSummary,
+  settingsFilePath: string,
+  baselineProvider: 'host' | 'docker'
+): Promise<RuntimeSettingsLiveSessionProbeSummary> {
   const seededBaseline = await runPreparedLocalRuntimeSettingsCli(prepared, [
     '--provider',
     baselineProvider,
@@ -775,6 +804,7 @@ async function testProbeRuntimeSettingsLiveSession(): Promise<void> {
   assert.equal(summary.safeRestoreVerified, true);
   assert.ok(summary.mutationProviderTarget === 'host' || summary.mutationProviderTarget === 'docker');
   assert.ok(summary.baselinePersistedProvider === 'host' || summary.baselinePersistedProvider === 'docker');
+  assert.equal(summary.baselinePersistedProvider, baselineProvider);
   assert.equal(summary.persistedProvider, summary.mutationProviderTarget);
   assert.notEqual(summary.baselinePersistedProvider, summary.persistedProvider);
   assert.equal(
@@ -812,7 +842,6 @@ async function testProbeRuntimeSettingsLiveSession(): Promise<void> {
   await fs.access(summary.packetMarkdownPath);
   await fs.access(summary.latestPacketJsonPath);
   await fs.access(summary.latestPacketMarkdownPath);
-  await maybeWriteRuntimeSettingsLiveSessionProofOutput(summary);
 
   let restoredSettingsText: string | undefined;
   try {
@@ -823,6 +852,7 @@ async function testProbeRuntimeSettingsLiveSession(): Promise<void> {
     }
   }
   assert.equal(restoredSettingsText, baselineSettingsText);
+  return summary;
 }
 
 async function runPreparedLocalRuntimeSettingsCli(

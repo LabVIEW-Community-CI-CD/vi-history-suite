@@ -239,7 +239,9 @@ describe('requirements documentation coherence', () => {
     const testPlan = readText('docs/testing/test-plan.md');
 
     expect(srs).toContain('derive `ready` state from runtime-backed provider and runtime resolution');
-    expect(srs).toContain('reload or restart the window before trusting updated provider or runtime facts');
+    expect(srs).toContain(
+      'reload or restart the window only if that already-running session still shows stale provider or runtime facts'
+    );
     expect(srs).toContain('`npm run proof:runtime-settings-live-session`');
     expect(srs).toContain('support governed VS Code settings targets that contain JSONC comments or trailing commas');
     expect(srs).toContain('generated settings-CLI launcher surface shall make its runtime dependency explicit');

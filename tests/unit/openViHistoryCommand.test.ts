@@ -956,7 +956,7 @@ describe('createOpenViHistoryCommand', () => {
       nextAction:
         'Next action: select two retained revisions, review the explicit selected/base pair, then choose Compare.',
       cliHint:
-        'Provider is read-only here. Use the generated settings CLI to update provider, LabVIEW version, or LabVIEW bitness when correction is required. If you just used the generated settings CLI while VS Code was already open, reload or restart the window before trusting compare preflight.'
+        'Provider is read-only here. Use the generated settings CLI to update provider, LabVIEW version, or LabVIEW bitness when correction is required. Review compare preflight again after the CLI update. If this already-running VS Code session still shows stale provider or runtime facts, reload or restart the window and review compare preflight again.'
     });
     const historyService = {
       load: vi.fn().mockResolvedValue({
@@ -1186,7 +1186,7 @@ describe('createOpenViHistoryCommand', () => {
     );
     expect(comparisonReportAction).not.toHaveBeenCalled();
     expect(showWarningMessageMock).toHaveBeenCalledWith(
-      'Compare preflight is blocked. Provider: unavailable. Provider request: host. Blocked reason: labview-exe-not-found. If you just used the generated settings CLI while VS Code was already open, reload or restart the window before trusting compare preflight. Next action: make the selected host-native runtime available, resolve host conflicts, or switch to a Docker-backed compare path, then rerun comparison report generation.'
+      'Compare preflight is blocked. Provider: unavailable. Provider request: host. Blocked reason: labview-exe-not-found. If this already-running VS Code session still shows stale provider or runtime facts after the CLI update, reload or restart the window and review compare preflight again. Next action: make the selected host-native runtime available, resolve host conflicts, or switch to a Docker-backed compare path, then rerun comparison report generation.'
     );
   });
 

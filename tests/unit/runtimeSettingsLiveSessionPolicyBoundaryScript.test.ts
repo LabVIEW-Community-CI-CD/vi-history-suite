@@ -49,35 +49,23 @@ describe('assertRuntimeSettingsLiveSessionPolicyBoundary script', () => {
     });
   });
 
-  it('passes when retained history stance is live-uptake-not-proven', async () => {
+  it('passes when retained history supports conditional stale-result guidance', async () => {
     const packetRoot = await seedHistoryPackets(temporaryDirectories, [
       {
         runId: '2026-04-14T13-00-00-000Z',
-        summary: {
-          liveUptakeObservation: 'reload-required',
-          driftDetected: true,
-          providerDrift: true,
+        summary: createObservedRunSummary({
           baselinePersistedProvider: 'host',
           persistedProvider: 'docker',
-          mutationProviderTarget: 'docker',
-          mutationTargetPersistedMatch: true,
-          mutationTargetBaselineChanged: true,
-          safeRestoreVerified: true
-        }
+          mutationProviderTarget: 'docker'
+        })
       },
       {
         runId: '2026-04-14T12-00-00-000Z',
-        summary: {
-          liveUptakeObservation: 'reload-required',
-          driftDetected: true,
-          providerDrift: true,
+        summary: createObservedRunSummary({
           baselinePersistedProvider: 'docker',
           persistedProvider: 'host',
-          mutationProviderTarget: 'host',
-          mutationTargetPersistedMatch: true,
-          mutationTargetBaselineChanged: true,
-          safeRestoreVerified: true
-        }
+          mutationProviderTarget: 'host'
+        })
       }
     ]);
     const stdout: string[] = [];
@@ -94,20 +82,33 @@ describe('assertRuntimeSettingsLiveSessionPolicyBoundary script', () => {
     expect(stdout.join('')).toContain('Runtime settings live-session policy boundary: pass');
   });
 
-  it('fails when retained history no longer supports unconditional reload guidance', async () => {
+  it('fails when retained history no longer retains the admitted proof status', async () => {
     const packetRoot = await seedHistoryPackets(temporaryDirectories, [
       {
         runId: '2026-04-14T13-00-00-000Z',
         summary: {
-          liveUptakeObservation: 'in-session-updated',
-          driftDetected: false,
-          safeRestoreVerified: true
+          ...createObservedRunSummary({
+            baselinePersistedProvider: 'host',
+            persistedProvider: 'docker',
+            mutationProviderTarget: 'docker'
+          }),
+          liveUptakeObservation: 'reload-required',
+          driftDetected: true,
+          providerDrift: true
         }
+      },
+      {
+        runId: '2026-04-14T12-00-00-000Z',
+        summary: createObservedRunSummary({
+          baselinePersistedProvider: 'docker',
+          persistedProvider: 'host',
+          mutationProviderTarget: 'host'
+        })
       }
     ]);
 
     expect(() => boundaryScript.run(['--packet-root', packetRoot])).toThrow(
-      'policy boundary no longer classifies the CLI live-session seam as not fully proven'
+      'no longer retains the admitted conditional-guidance proof status'
     );
   });
 
@@ -115,13 +116,11 @@ describe('assertRuntimeSettingsLiveSessionPolicyBoundary script', () => {
     const packetRoot = await seedHistoryPackets(temporaryDirectories, [
       {
         runId: '2026-04-14T13-00-00-000Z',
-        summary: {
-          liveUptakeObservation: 'reload-required',
-          driftDetected: true,
-          mutationProviderTarget: 'docker',
-          mutationTargetPersistedMatch: true,
-          safeRestoreVerified: true
-        }
+        summary: createObservedRunSummary({
+          baselinePersistedProvider: 'host',
+          persistedProvider: 'docker',
+          mutationProviderTarget: 'docker'
+        })
       }
     ]);
 
@@ -135,19 +134,25 @@ describe('assertRuntimeSettingsLiveSessionPolicyBoundary script', () => {
       {
         runId: '2026-04-14T13-00-00-000Z',
         summary: {
-          liveUptakeObservation: 'reload-required',
-          driftDetected: true,
-          mutationProviderTarget: 'docker',
-          safeRestoreVerified: true
+          ...createObservedRunSummary({
+            baselinePersistedProvider: 'host',
+            persistedProvider: 'docker',
+            mutationProviderTarget: 'docker'
+          }),
+          mutationTargetPersistedMatch: undefined,
+          persistedProvider: 'unknown'
         }
       },
       {
         runId: '2026-04-14T12-00-00-000Z',
         summary: {
-          liveUptakeObservation: 'reload-required',
-          driftDetected: true,
-          mutationProviderTarget: 'host',
-          safeRestoreVerified: true
+          ...createObservedRunSummary({
+            baselinePersistedProvider: 'docker',
+            persistedProvider: 'host',
+            mutationProviderTarget: 'host'
+          }),
+          mutationTargetPersistedMatch: undefined,
+          persistedProvider: 'unknown'
         }
       }
     ]);
@@ -162,21 +167,25 @@ describe('assertRuntimeSettingsLiveSessionPolicyBoundary script', () => {
       {
         runId: '2026-04-14T13-00-00-000Z',
         summary: {
-          liveUptakeObservation: 'reload-required',
-          driftDetected: true,
-          mutationProviderTarget: 'docker',
-          mutationTargetPersistedMatch: true,
-          safeRestoreVerified: true
+          ...createObservedRunSummary({
+            baselinePersistedProvider: 'host',
+            persistedProvider: 'docker',
+            mutationProviderTarget: 'docker'
+          }),
+          mutationTargetBaselineChanged: undefined,
+          baselinePersistedProvider: 'unknown'
         }
       },
       {
         runId: '2026-04-14T12-00-00-000Z',
         summary: {
-          liveUptakeObservation: 'reload-required',
-          driftDetected: true,
-          mutationProviderTarget: 'host',
-          mutationTargetPersistedMatch: true,
-          safeRestoreVerified: true
+          ...createObservedRunSummary({
+            baselinePersistedProvider: 'docker',
+            persistedProvider: 'host',
+            mutationProviderTarget: 'host'
+          }),
+          mutationTargetBaselineChanged: undefined,
+          baselinePersistedProvider: 'unknown'
         }
       }
     ]);
@@ -186,134 +195,24 @@ describe('assertRuntimeSettingsLiveSessionPolicyBoundary script', () => {
     );
   });
 
-  it('fails when latest retained observation is not reload-required', async () => {
-    const packetRoot = await seedHistoryPackets(temporaryDirectories, [
-      {
-        runId: '2026-04-14T13-00-00-000Z',
-        summary: {
-          liveUptakeObservation: 'in-session-updated',
-          driftDetected: false,
-          baselinePersistedProvider: 'host',
-          persistedProvider: 'docker',
-          mutationProviderTarget: 'docker',
-          mutationTargetPersistedMatch: true,
-          mutationTargetBaselineChanged: true,
-          safeRestoreVerified: true
-        }
-      },
-      {
-        runId: '2026-04-14T12-00-00-000Z',
-        summary: {
-          liveUptakeObservation: 'reload-required',
-          driftDetected: true,
-          baselinePersistedProvider: 'docker',
-          persistedProvider: 'host',
-          mutationProviderTarget: 'host',
-          mutationTargetPersistedMatch: true,
-          mutationTargetBaselineChanged: true,
-          safeRestoreVerified: true
-        }
-      }
-    ]);
-
-    expect(() => boundaryScript.run(['--packet-root', packetRoot])).toThrow(
-      'requires latest retained probe observation to remain reload-required'
-    );
-  });
-
-  it('fails when retained history includes in-session-updated observations', async () => {
-    const packetRoot = await seedHistoryPackets(temporaryDirectories, [
-      {
-        runId: '2026-04-14T13-00-00-000Z',
-        summary: {
-          liveUptakeObservation: 'reload-required',
-          driftDetected: true,
-          baselinePersistedProvider: 'host',
-          persistedProvider: 'docker',
-          mutationProviderTarget: 'docker',
-          mutationTargetPersistedMatch: true,
-          mutationTargetBaselineChanged: true,
-          safeRestoreVerified: true
-        }
-      },
-      {
-        runId: '2026-04-14T12-00-00-000Z',
-        summary: {
-          liveUptakeObservation: 'in-session-updated',
-          driftDetected: false,
-          baselinePersistedProvider: 'docker',
-          persistedProvider: 'host',
-          mutationProviderTarget: 'host',
-          mutationTargetPersistedMatch: true,
-          mutationTargetBaselineChanged: true,
-          safeRestoreVerified: true
-        }
-      }
-    ]);
-
-    expect(() => boundaryScript.run(['--packet-root', packetRoot])).toThrow(
-      'requires retained in-session-updated observations to remain absent'
-    );
-  });
-
-  it('fails when retained history includes unknown observations', async () => {
-    const packetRoot = await seedHistoryPackets(temporaryDirectories, [
-      {
-        runId: '2026-04-14T13-00-00-000Z',
-        summary: {
-          liveUptakeObservation: 'reload-required',
-          driftDetected: true,
-          baselinePersistedProvider: 'host',
-          persistedProvider: 'docker',
-          mutationProviderTarget: 'docker',
-          mutationTargetPersistedMatch: true,
-          mutationTargetBaselineChanged: true,
-          safeRestoreVerified: true
-        }
-      },
-      {
-        runId: '2026-04-14T12-00-00-000Z',
-        summary: {
-          baselinePersistedProvider: 'docker',
-          persistedProvider: 'host',
-          mutationProviderTarget: 'host',
-          mutationTargetPersistedMatch: true,
-          mutationTargetBaselineChanged: true,
-          safeRestoreVerified: true
-        }
-      }
-    ]);
-
-    expect(() => boundaryScript.run(['--packet-root', packetRoot])).toThrow(
-      'requires retained unknown observations to remain absent'
-    );
-  });
-
   it('fails when retained history lacks safe-restore verification on any run', async () => {
     const packetRoot = await seedHistoryPackets(temporaryDirectories, [
       {
         runId: '2026-04-14T13-00-00-000Z',
-        summary: {
-          liveUptakeObservation: 'reload-required',
-          driftDetected: true,
+        summary: createObservedRunSummary({
           baselinePersistedProvider: 'host',
           persistedProvider: 'docker',
-          mutationProviderTarget: 'docker',
-          mutationTargetPersistedMatch: true,
-          mutationTargetBaselineChanged: true,
-          safeRestoreVerified: true
-        }
+          mutationProviderTarget: 'docker'
+        })
       },
       {
         runId: '2026-04-14T12-00-00-000Z',
         summary: {
-          liveUptakeObservation: 'reload-required',
-          driftDetected: true,
-          baselinePersistedProvider: 'docker',
-          persistedProvider: 'host',
-          mutationProviderTarget: 'host',
-          mutationTargetPersistedMatch: true,
-          mutationTargetBaselineChanged: true,
+          ...createObservedRunSummary({
+            baselinePersistedProvider: 'docker',
+            persistedProvider: 'host',
+            mutationProviderTarget: 'host'
+          }),
           safeRestoreVerified: false
         }
       }
@@ -324,40 +223,31 @@ describe('assertRuntimeSettingsLiveSessionPolicyBoundary script', () => {
     );
   });
 
-  it('fails when latest retained provider drift is not explicit true', async () => {
+  it('fails when latest retained provider drift is not explicit false', async () => {
     const packetRoot = await seedHistoryPackets(temporaryDirectories, [
       {
         runId: '2026-04-14T13-00-00-000Z',
         summary: {
-          liveUptakeObservation: 'reload-required',
-          driftDetected: true,
-          providerDrift: false,
-          baselinePersistedProvider: 'host',
-          persistedProvider: 'docker',
-          mutationProviderTarget: 'docker',
-          mutationTargetPersistedMatch: true,
-          mutationTargetBaselineChanged: true,
-          safeRestoreVerified: true
+          ...createObservedRunSummary({
+            baselinePersistedProvider: 'host',
+            persistedProvider: 'docker',
+            mutationProviderTarget: 'docker'
+          }),
+          providerDrift: true
         }
       },
       {
         runId: '2026-04-14T12-00-00-000Z',
-        summary: {
-          liveUptakeObservation: 'reload-required',
-          driftDetected: true,
-          providerDrift: true,
+        summary: createObservedRunSummary({
           baselinePersistedProvider: 'docker',
           persistedProvider: 'host',
-          mutationProviderTarget: 'host',
-          mutationTargetPersistedMatch: true,
-          mutationTargetBaselineChanged: true,
-          safeRestoreVerified: true
-        }
+          mutationProviderTarget: 'host'
+        })
       }
     ]);
 
     expect(() => boundaryScript.run(['--packet-root', packetRoot])).toThrow(
-      'requires latest retained provider drift to remain explicit and true'
+      'requires latest retained provider drift to remain explicit and false'
     );
   });
 
@@ -365,29 +255,21 @@ describe('assertRuntimeSettingsLiveSessionPolicyBoundary script', () => {
     const packetRoot = await seedHistoryPackets(temporaryDirectories, [
       {
         runId: '2026-04-14T13-00-00-000Z',
-        summary: {
-          liveUptakeObservation: 'reload-required',
-          driftDetected: true,
-          providerDrift: true,
+        summary: createObservedRunSummary({
           baselinePersistedProvider: 'host',
           persistedProvider: 'docker',
-          mutationProviderTarget: 'docker',
-          mutationTargetPersistedMatch: true,
-          mutationTargetBaselineChanged: true,
-          safeRestoreVerified: true
-        }
+          mutationProviderTarget: 'docker'
+        })
       },
       {
         runId: '2026-04-14T12-00-00-000Z',
         summary: {
-          liveUptakeObservation: 'reload-required',
-          driftDetected: true,
-          baselinePersistedProvider: 'docker',
-          persistedProvider: 'host',
-          mutationProviderTarget: 'host',
-          mutationTargetPersistedMatch: true,
-          mutationTargetBaselineChanged: true,
-          safeRestoreVerified: true
+          ...createObservedRunSummary({
+            baselinePersistedProvider: 'docker',
+            persistedProvider: 'host',
+            mutationProviderTarget: 'host'
+          }),
+          providerDrift: undefined
         }
       }
     ]);
@@ -397,6 +279,24 @@ describe('assertRuntimeSettingsLiveSessionPolicyBoundary script', () => {
     );
   });
 });
+
+function createObservedRunSummary(input: {
+  baselinePersistedProvider: 'host' | 'docker';
+  persistedProvider: 'host' | 'docker';
+  mutationProviderTarget: 'host' | 'docker';
+}): Record<string, unknown> {
+  return {
+    liveUptakeObservation: 'in-session-updated',
+    driftDetected: false,
+    providerDrift: false,
+    baselinePersistedProvider: input.baselinePersistedProvider,
+    persistedProvider: input.persistedProvider,
+    mutationProviderTarget: input.mutationProviderTarget,
+    mutationTargetPersistedMatch: true,
+    mutationTargetBaselineChanged: true,
+    safeRestoreVerified: true
+  };
+}
 
 async function seedHistoryPackets(
   temporaryDirectories: string[],

@@ -11,7 +11,7 @@ function getUsage() {
   return [
     'Usage: node scripts/assertRuntimeSettingsLiveSessionPolicyBoundary.js [--packet-root <path>] [--json] [--help]',
     '',
-    'Fail closed when retained live-session probe history no longer supports the current reload-or-restart policy boundary.'
+    'Fail closed when retained live-session probe history no longer supports the current conditional stale-result guidance boundary.'
   ].join('\n');
 }
 
@@ -69,24 +69,29 @@ function run(argv = process.argv.slice(2), deps = {}) {
   }
 
   const summary = history.summarizeHistory(packetRoot, runSummaries);
-  if (summary.proofStatus !== 'not-fully-proven') {
+  if (summary.proofStatus !== 're-evaluation-required') {
     throw new Error(
-      `Runtime-settings live-session policy boundary no longer classifies the CLI live-session seam as not fully proven (proofStatus=${summary.proofStatus}). Re-evaluate VHS-REQ-542 and aligned docs before merge.`
+      `Runtime-settings live-session policy boundary no longer retains the admitted conditional-guidance proof status (proofStatus=${summary.proofStatus}). Re-evaluate VHS-REQ-542 and aligned docs before merge.`
     );
   }
-  if (summary.stance !== 'live-uptake-not-proven') {
+  if (summary.stance !== 'candidate-live-uptake-observed') {
     throw new Error(
-      `Runtime-settings live-session policy boundary no longer supports unconditional reload guidance (stance=${summary.stance}). Re-evaluate VHS-REQ-542 and aligned docs before merge.`
+      `Runtime-settings live-session policy boundary no longer supports conditional stale-result guidance (stance=${summary.stance}). Re-evaluate VHS-REQ-542 and aligned docs before merge.`
     );
   }
-  if (summary.latestObservation !== 'reload-required') {
+  if (summary.latestObservation !== 'in-session-updated') {
     throw new Error(
-      `Runtime-settings live-session policy boundary requires latest retained probe observation to remain reload-required (latestObservation=${summary.latestObservation ?? '<none>'}).`
+      `Runtime-settings live-session policy boundary requires latest retained probe observation to remain in-session-updated (latestObservation=${summary.latestObservation ?? '<none>'}).`
     );
   }
-  if (summary.inSessionUpdatedCount > 0) {
+  if (summary.reloadRequiredCount > 0) {
     throw new Error(
-      `Runtime-settings live-session policy boundary requires retained in-session-updated observations to remain absent (inSessionUpdatedCount=${summary.inSessionUpdatedCount}).`
+      `Runtime-settings live-session policy boundary requires retained reload-required observations to remain absent (reloadRequiredCount=${summary.reloadRequiredCount}).`
+    );
+  }
+  if (summary.inSessionUpdatedCount < 1) {
+    throw new Error(
+      `Runtime-settings live-session policy boundary requires retained in-session-updated observations to be present (inSessionUpdatedCount=${summary.inSessionUpdatedCount}).`
     );
   }
   if (summary.safeRestoreVerifiedCount !== summary.totalRuns) {
@@ -124,14 +129,14 @@ function run(argv = process.argv.slice(2), deps = {}) {
       `Runtime-settings live-session policy boundary requires explicit baseline-switch receipts on retained runs (mutationTargetBaselineUnknownCount=${summary.mutationTargetBaselineUnknownCount}).`
     );
   }
-  if (summary.latestProviderDrift !== true) {
+  if (summary.latestProviderDrift !== false) {
     throw new Error(
-      `Runtime-settings live-session policy boundary requires latest retained provider drift to remain explicit and true (latestProviderDrift=${summary.latestProviderDrift ?? '<none>'}).`
+      `Runtime-settings live-session policy boundary requires latest retained provider drift to remain explicit and false (latestProviderDrift=${summary.latestProviderDrift ?? '<none>'}).`
     );
   }
-  if (summary.providerDriftFalseCount > 0) {
+  if (summary.providerDriftTrueCount > 0) {
     throw new Error(
-      `Runtime-settings live-session policy boundary requires retained provider-drift false outcomes to remain absent (providerDriftFalseCount=${summary.providerDriftFalseCount}).`
+      `Runtime-settings live-session policy boundary requires retained provider-drift true outcomes to remain absent (providerDriftTrueCount=${summary.providerDriftTrueCount}).`
     );
   }
   if (summary.providerDriftUnknownCount > 0) {

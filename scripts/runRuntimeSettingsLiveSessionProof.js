@@ -254,8 +254,22 @@ function run(argv = process.argv.slice(2), deps = {}) {
 
     const packetSnapshotJsonPath = path.join(evidenceDir, 'probe-summary.json');
     const packetSnapshotMarkdownPath = path.join(evidenceDir, 'probe-summary.md');
-    copyFileOrThrow(fsApi, packetResult.summary.packetJsonPath, packetSnapshotJsonPath);
-    copyFileOrThrow(fsApi, packetResult.summary.packetMarkdownPath, packetSnapshotMarkdownPath);
+    const retainedPerRunPacketJsonPath = resolveRetainedPerRunPacketPath(
+      fsApi,
+      packetRoot,
+      packetResult.summary.packetRunId,
+      packetResult.summary.packetJsonPath,
+      'probe-summary.json'
+    );
+    const retainedPerRunPacketMarkdownPath = resolveRetainedPerRunPacketPath(
+      fsApi,
+      packetRoot,
+      packetResult.summary.packetRunId,
+      packetResult.summary.packetMarkdownPath,
+      'probe-summary.md'
+    );
+    copyFileOrThrow(fsApi, retainedPerRunPacketJsonPath, packetSnapshotJsonPath);
+    copyFileOrThrow(fsApi, retainedPerRunPacketMarkdownPath, packetSnapshotMarkdownPath);
 
     const historySummaryJsonPath = path.join(evidenceDir, 'history-summary.json');
     const historySummaryMarkdownPath = path.join(evidenceDir, 'history-summary.md');
@@ -392,6 +406,33 @@ function copyFileOrThrow(fsApi, sourcePath, destinationPath) {
     throw new Error('Runtime-settings live-session proof expected a non-empty source file path.');
   }
   fsApi.copyFileSync(sourcePath, destinationPath);
+}
+
+function resolveRetainedPerRunPacketPath(
+  fsApi,
+  packetRoot,
+  packetRunId,
+  sourcePath,
+  filename
+) {
+  const normalizedSourcePath =
+    typeof sourcePath === 'string' && sourcePath.trim() !== '' ? sourcePath : undefined;
+  if (normalizedSourcePath && fsApi.existsSync(normalizedSourcePath)) {
+    return normalizedSourcePath;
+  }
+
+  const normalizedRunId =
+    typeof packetRunId === 'string' && packetRunId.trim() !== '' ? packetRunId : undefined;
+  if (normalizedRunId) {
+    const retainedCopyPath = path.join(packetRoot, normalizedRunId, filename);
+    if (fsApi.existsSync(retainedCopyPath)) {
+      return retainedCopyPath;
+    }
+  }
+
+  throw new Error(
+    `Runtime-settings live-session proof could not resolve retained ${filename} from ${normalizedSourcePath ?? '<none>'} or packet root ${packetRoot}.`
+  );
 }
 
 function tryReadJson(fsApi, filePath) {
@@ -551,5 +592,6 @@ module.exports = {
   deriveHistorySummaryFromPacketSummary,
   derivePolicyBoundaryFromPacketSummary,
   renderReceiptMarkdown,
+  resolveRetainedPerRunPacketPath,
   run
 };

@@ -21,7 +21,8 @@ proof depth and operator confidence for:
 
 `ISSUE-0412` already retained the branch truth that the generated settings CLI
 can switch provider intent between `host` and `docker`, and that compare
-preflight/runtime-doctor surfaces carry reload guidance.
+preflight/runtime-doctor surfaces carry one bounded stale-result guidance
+contract.
 
 The unresolved seam remains explicit:
 
@@ -35,11 +36,11 @@ The unresolved seam remains explicit:
 
 Current implementation branch:
 
-- `feature/runtime-provider-live-session-proof-surface` (in progress)
+- `feature/runtime-provider-live-session-conditional-guidance` (in progress)
 
 Most recently merged branch:
 
-- `feature/runtime-provider-live-session-history-provider-drift-completeness-assert`
+- `feature/runtime-provider-live-session-proof-surface`
 
 ## Roadmap (Feature Branch Sequence)
 
@@ -179,11 +180,26 @@ Most recently merged branch:
   provider-drift receipts on every run and zero retained `providerDrift=false`
   outcomes while this line preserves the reload-required seam.
 
-28. `feature/runtime-provider-live-session-proof-surface` (in progress)
+28. `feature/runtime-provider-live-session-proof-surface` (merged)
 - Add one repo-owned end-to-end proof runner that executes the governed
   extension-host lane on the current supported host, then snapshots the latest
   probe packet, retained history receipt, policy-boundary receipt, and
   integration logs into one reviewable receipt directory.
+
+29. `feature/runtime-provider-live-session-conditional-guidance` (in progress)
+- Re-evaluate `VHS-REQ-542` after the retained bidirectional proof bundle now
+  observes `candidate-live-uptake-observed` with
+  `historyProofStatus=re-evaluation-required`, and replace unconditional reload
+  guidance with one narrower conditional stale-result rule.
+- decision on this branch: compare-preflight and runtime-doctor surfaces shall
+  tell users to review refreshed compare/runtime results after CLI updates and
+  reload or restart only when the current already-running session still shows
+  stale provider or runtime facts.
+- latest-packet and policy admission on this branch now fail closed unless the
+  latest retained packet remains `in-session-updated`,
+  `providerDrift=false`, `historyReloadRequiredCount=0`, and retained
+  bidirectional provider-selection coverage plus alignment/baseline-switch
+  receipts remain explicit.
 
 ## Admission Rules
 

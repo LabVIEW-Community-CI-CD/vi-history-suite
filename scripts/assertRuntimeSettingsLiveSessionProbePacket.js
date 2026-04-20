@@ -234,9 +234,9 @@ function validateProbePacket(summary) {
       `liveUptakeObservation must be in-session-updated or reload-required, received ${liveUptakeObservation}`
     );
   }
-  if (liveUptakeObservation && liveUptakeObservation !== 'reload-required') {
+  if (liveUptakeObservation && liveUptakeObservation !== 'in-session-updated') {
     failures.push(
-      'liveUptakeObservation must remain reload-required for latest retained probe packet evidence'
+      'liveUptakeObservation must remain in-session-updated for latest retained probe packet evidence'
     );
   }
   if (safeRestoreVerified === false) {
@@ -244,9 +244,9 @@ function validateProbePacket(summary) {
       'safeRestoreVerified must remain true for latest retained probe packet evidence'
     );
   }
-  if (providerDrift === false) {
+  if (providerDrift === true) {
     failures.push(
-      'providerDrift must remain true for latest retained probe packet evidence'
+      'providerDrift must remain false for latest retained probe packet evidence'
     );
   }
 
@@ -343,19 +343,24 @@ function validateProbePacket(summary) {
       failures.push(`historyProofStatus must match historyStance (${expectedProofStatus})`);
     }
   }
-  if (historyProofStatus === 're-evaluation-required') {
+  if (historyProofStatus === 'not-fully-proven') {
     failures.push(
-      'historyProofStatus must remain not-fully-proven for latest retained probe packet evidence'
+      'historyProofStatus must remain re-evaluation-required for latest retained probe packet evidence'
     );
   }
-  if (historyStance && historyStance !== 'live-uptake-not-proven') {
+  if (historyStance && historyStance !== 'candidate-live-uptake-observed') {
     failures.push(
-      'historyStance must remain live-uptake-not-proven for latest retained probe packet evidence'
+      'historyStance must remain candidate-live-uptake-observed for latest retained probe packet evidence'
     );
   }
-  if (typeof historyInSessionUpdatedCount === 'number' && historyInSessionUpdatedCount > 0) {
+  if (typeof historyReloadRequiredCount === 'number' && historyReloadRequiredCount > 0) {
     failures.push(
-      'historyInSessionUpdatedCount must remain 0 for latest retained probe packet evidence'
+      'historyReloadRequiredCount must remain 0 for latest retained probe packet evidence'
+    );
+  }
+  if (typeof historyInSessionUpdatedCount === 'number' && historyInSessionUpdatedCount < 1) {
+    failures.push(
+      'historyInSessionUpdatedCount must remain at least 1 for latest retained probe packet evidence'
     );
   }
   if (typeof historyUnknownObservationCount === 'number' && historyUnknownObservationCount > 0) {

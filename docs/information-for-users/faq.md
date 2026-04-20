@@ -5,7 +5,7 @@
 - Product or service: `vi-history-suite`
 - Applies to: exact released installed baseline `v1.2.2` plus the active
   `develop` authority direction
-- Last reviewed: `2026-04-18`
+- Last reviewed: `2026-04-19`
 - Primary audience: installed users, source evaluators, and maintainers
 - Topic type: troubleshooting and quick-reference support
 - Primary entry route: `README.md` and `INSTALL.md`
@@ -63,8 +63,9 @@ Use the generated runtime-settings CLI on the active branch:
 
 The active branch treats host as the default provider and Docker as the
 bounded expert path. If VS Code is already running when the CLI updates the
-settings file, reload or restart the window before trusting Compare or other
-runtime-provider surfaces to reflect the updated provider and runtime facts.
+settings file, review Compare or runtime validation again after the update and
+reload or restart the window only if that already-running session still shows
+stale provider or runtime facts.
 
 ### Where does the generated runtime-settings CLI live, and what can it write?
 
@@ -109,26 +110,29 @@ or the lower-level probe and gates when you need to inspect each surface:
   the latest retained packet is missing, malformed, or does not keep
   `mutationTargetPersistedMatch=true`,
   `mutationTargetBaselineChanged=true`, and
-  `historyProofStatus=not-fully-proven`,
-  `historyStance=live-uptake-not-proven`, with latest
-  `liveUptakeObservation=reload-required`,
-  `safeRestoreVerified=true`, latest `providerDrift=true`, explicit baseline/persisted provider
-  `host`/`docker` facts, and retained
-  `historyInSessionUpdatedCount=0` plus
+  `historyProofStatus=re-evaluation-required`,
+  `historyStance=candidate-live-uptake-observed`, with latest
+  `liveUptakeObservation=in-session-updated`,
+  `safeRestoreVerified=true`, latest `providerDrift=false`, explicit
+  baseline/persisted provider `host`/`docker` facts, and retained
+  `historyReloadRequiredCount=0` plus
   `historyUnknownObservationCount=0`, with retained history total/count
   integrity preserved
 - run `npm run proof:runtime-settings-live-session:history` to summarize
   retained runs into one live-uptake stance
 - run `npm run proof:runtime-settings-live-session:policy:assert` to fail
-  closed when retained evidence no longer supports unconditional reload
-  guidance, latest retained provider drift is no longer explicit `true`, or
-  retained history includes `providerDrift=false` or missing provider-drift
+  closed when retained evidence no longer supports the current conditional
+  stale-result guidance boundary, latest retained provider drift is no longer
+  explicit `false`, or retained history includes `reload-required`,
+  `providerDrift=true`, or missing provider-drift
   receipts
 
 This narrows the proof gap and now includes one repo-owned end-to-end proof
-receipt plus fail-closed probe safe-restore, but it still does not prove direct
-live uptake of updated settings in the current session; reload or restart
-guidance remains active when drift is detected.
+receipt plus fail-closed probe safe-restore. It now observes in-session
+provider uptake on the admitted bidirectional provider-mutation path, but it
+still does not prove live uptake of every runtime fact in every already-running
+session surface; reload or restart remains the fallback only when stale facts
+remain after the CLI update.
 
 ### Where do I find the key commands or checks?
 
@@ -185,7 +189,7 @@ Use the governed repo search posture:
   first, then the docs-workbench gate if you need the containerized authoring
   surface.
 - If Compare is still showing stale provider or runtime facts after a CLI
-  update, reload or restart the VS Code window before trusting Compare.
+  update, reload or restart the VS Code window and review Compare again.
 - If a live-session proof packet is required for admission, run
   `npm run proof:runtime-settings-live-session:assert` and treat failure as a
   hard stop.

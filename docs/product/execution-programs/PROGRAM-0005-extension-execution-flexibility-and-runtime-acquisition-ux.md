@@ -70,13 +70,14 @@ Current facts:
   retained probe evidence blocks admission, including latest-packet
   `mutationTargetPersistedMatch=true` enforcement, latest-packet
   `mutationTargetBaselineChanged=true` enforcement, and latest-packet
-  `historyProofStatus=not-fully-proven` plus latest-packet
-  `historyStance=live-uptake-not-proven`, plus latest-packet
-  `liveUptakeObservation=reload-required`, latest-packet
-  `safeRestoreVerified=true`, latest-packet `providerDrift=true`,
+  `historyProofStatus=re-evaluation-required` plus latest-packet
+  `historyStance=candidate-live-uptake-observed`, plus latest-packet
+  `liveUptakeObservation=in-session-updated`, latest-packet
+  `safeRestoreVerified=true`, latest-packet `providerDrift=false`,
   explicit baseline/persisted provider
   `host`/`docker` facts, plus retained
-  `historyInSessionUpdatedCount=0` plus
+  `historyReloadRequiredCount=0` plus retained
+  `historyInSessionUpdatedCount>=1` plus
   `historyUnknownObservationCount=0`, with retained history total/count
   integrity enforcement
 - one local history receipt now exists at
@@ -86,15 +87,15 @@ Current facts:
   mutation-target alignment receipts and baseline-switch receipts
 - one local policy-boundary assertion now exists at
   `npm run proof:runtime-settings-live-session:policy:assert` so merges fail
-  closed when retained history no longer supports unconditional reload guidance
+  closed when retained history no longer supports conditional stale-result guidance
   or does not retain bidirectional CLI provider-selection mutation coverage
   with explicit mutation-target alignment and baseline-switch receipts, and
-  when the latest retained probe observation no longer remains reload-required,
-  latest retained provider drift is not explicit `true`, retained history
-  includes one or more `providerDrift=false` or missing provider-drift
-  receipts, or retained history includes one or more in-session-updated or
-  unknown observations, and when retained safe-restore verification is not
-  complete across retained runs
+  when the latest retained probe observation no longer remains
+  `in-session-updated`, latest retained provider drift is not explicit
+  `false`, retained history includes one or more `reload-required`,
+  `providerDrift=true`, or missing provider-drift receipts, or retained
+  history includes one or more unknown observations, and when retained
+  safe-restore verification is not complete across retained runs
 - one repo-owned end-to-end proof runner now exists at
   `npm run proof:runtime-settings-live-session`; it executes the governed
   extension-host lane on the current supported host and snapshots the latest
@@ -102,9 +103,11 @@ Current facts:
   integration logs under `.cache/runtime-settings-live-session-proof/latest/`
 - the remaining CLI proof gap is now narrower: direct mutation safety and
   automatic live uptake around a live already-running VS Code session is still
-  not end-to-end proven; probe mutation safe-restore is now fail-closed and
-  locally proven, and users still need to reload or restart the window before using Compare
-  when drift is detected
+  not end-to-end proven across all runtime facts; probe mutation safe-restore
+  is now fail-closed and locally proven, and retained proof now observes
+  provider live uptake on the admitted bidirectional provider-mutation path, so
+  users should review Compare or runtime validation again after CLI updates and
+  reload or restart the window only if stale facts remain
 - the Windows exact-runtime preflight is now landed: installed compare
   resolves one exact version+bitness LabVIEW executable plus matching
   `LabVIEWCLI` surface and fails closed on missing, ambiguous, or
@@ -117,9 +120,10 @@ Current facts:
   retained on this branch, the current outer assurance lane now uses the
   published `repo-standards-review` assurance-workbench `:main` image, and
   the latest tagged release remains `v0.2.18`
-- retained gate decision now keeps `VHS-REQ-542` reload-or-restart guidance as
-  active truth while direct live-session uptake of updated settings remains
-  unproven, with probe packet plus local packet-gate evidence now explicit
+- retained gate decision now keeps `VHS-REQ-542` conditional stale-result
+  guidance as active truth while direct live-session uptake of updated settings
+  remains only partially proven, with probe packet plus local packet-gate
+  evidence now explicit
 - remaining work on this program is now narrower: live default-settings
   uptake proof remains under active `ISSUE-0414`
 - `PROGRAM-0002` remains historical Docker-only public-closeout truth; it is

@@ -242,9 +242,9 @@ function summarizeHistory(packetRoot, runSummaries) {
     providerSelectionCoverage,
     recommendation:
       stance === 'live-uptake-not-proven'
-        ? 'Keep reload-or-restart guidance active; retained history still contains reload-required runs.'
+        ? 'Retained history still contains reload-required runs. Keep stale-result reload guidance available until the active session no longer drifts after CLI updates.'
         : stance === 'candidate-live-uptake-observed'
-          ? 'All retained runs report in-session-updated. Re-evaluate whether VHS-REQ-542 wording should stay unchanged.'
+          ? 'Retained runs observe in-session provider uptake on the admitted provider-mutation path. Review refreshed compare/runtime results after CLI updates and reload only if the session still shows stale facts.'
           : 'Run additional live-session probes before making a policy decision.'
   };
 }

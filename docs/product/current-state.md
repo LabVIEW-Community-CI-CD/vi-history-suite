@@ -483,13 +483,14 @@ Post-release tranches:
     when the retained latest probe packet is missing, malformed, or does not
     prove `mutationTargetPersistedMatch=true`,
     `mutationTargetBaselineChanged=true`, and
-    `historyProofStatus=not-fully-proven`,
-    `historyStance=live-uptake-not-proven`, with latest
-    `liveUptakeObservation=reload-required`,
-    `safeRestoreVerified=true`, latest `providerDrift=true`,
+    `historyProofStatus=re-evaluation-required`,
+    `historyStance=candidate-live-uptake-observed`, with latest
+    `liveUptakeObservation=in-session-updated`,
+    `safeRestoreVerified=true`, latest `providerDrift=false`,
     explicit baseline/persisted provider
     `host`/`docker` facts, and retained
-    `historyInSessionUpdatedCount=0` plus
+    `historyReloadRequiredCount=0` plus retained
+    `historyInSessionUpdatedCount>=1` plus
     `historyUnknownObservationCount=0`, with retained history total/count
     integrity preserved
   - one local history receipt now exists at
@@ -499,16 +500,16 @@ Post-release tranches:
     plus mutation-target alignment counts and baseline-switch counts
   - one local policy-boundary assertion now exists at
     `npm run proof:runtime-settings-live-session:policy:assert`; it fails
-    closed when retained history no longer supports unconditional reload
-    guidance or when retained probe runs do not include bidirectional
+    closed when retained history no longer supports the current conditional
+    stale-result guidance or when retained probe runs do not include bidirectional
     provider-selection mutation coverage (`host` and `docker`) with explicit
     retained mutation-target alignment and baseline-switch receipts, and when
-    the latest retained probe observation is not `reload-required`, latest
-    retained provider drift is not explicit `true`, retained history includes
-    one or more `providerDrift=false` or missing provider-drift receipts, or
-    retained history still includes one or more `in-session-updated` or
-    unknown observations, or retained safe-restore verification is not complete
-    across retained runs
+    the latest retained probe observation is not `in-session-updated`, latest
+    retained provider drift is not explicit `false`, retained history includes
+    one or more `reload-required`, `providerDrift=true`, or missing
+    provider-drift receipts, or retained history includes unknown
+    observations, or retained safe-restore verification is not complete across
+    retained runs
   - one repo-owned end-to-end proof runner now exists at
     `npm run proof:runtime-settings-live-session`; it executes the governed
     extension-host lane on the current supported host and snapshots the latest
@@ -516,10 +517,12 @@ Post-release tranches:
     integration logs under `.cache/runtime-settings-live-session-proof/latest/`
   - the remaining CLI proof gap is now narrower: direct live mutation of the
     already-running VS Code session is not yet end-to-end proven on this line;
-    probe mutation safe-restore is now fail-closed and locally proven, so the
-    generated CLI plus the settings-driven compare-preflight and runtime-doctor
-    surfaces keep guidance to reload or restart the window until live uptake
-    itself is proven
+    probe mutation safe-restore is now fail-closed and locally proven, and
+    retained proof now observes provider live uptake on the admitted
+    bidirectional provider-mutation path, so the generated CLI plus the
+    settings-driven compare-preflight and runtime-doctor surfaces tell users
+    to review Compare or runtime validation again after CLI updates and reload
+    or restart only if stale provider or runtime facts remain
   - historical released `repo-standards-review` `v0.2.9` compliance closeout
     is retained in the branch control plane, while the current outer
     assurance lane uses the published `repo-standards-review`
