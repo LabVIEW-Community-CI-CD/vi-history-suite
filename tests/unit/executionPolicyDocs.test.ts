@@ -123,6 +123,7 @@ describe('execution-policy control plane', () => {
     expect(currentState).toContain('active disposable Windows integration-host profile');
     expect(currentState).toContain('already-running VS Code session is not yet end-to-end proven');
     expect(currentState).toContain('reload or restart the');
+    expect(currentState).toContain('`npm run proof:runtime-settings-live-session`');
     expect(currentState).toContain('historical released `repo-standards-review` `v0.2.9` compliance closeout');
     expect(currentState).toContain('current outer');
     expect(currentState).toContain('assurance lane uses the published `repo-standards-review`');
@@ -224,6 +225,7 @@ describe('execution-policy control plane', () => {
     expect(program).toContain('current-host launcher execution against a temporary');
     expect(program).toContain('active disposable Windows integration-host profile');
     expect(program).toContain('already-running VS Code session');
+    expect(program).toContain('`npm run proof:runtime-settings-live-session`');
     expect(program).toContain('reload or restart the window before using Compare');
     expect(program).toContain('WSL is not part of the active Windows x64 private-release path');
     expect(program).toContain('Docker Desktop in');
@@ -245,6 +247,7 @@ describe('execution-policy control plane', () => {
     expect(issueNext).toContain('APPDATA\\\\Code\\\\User\\\\settings.json');
     expect(issueNext).toContain('active disposable');
     expect(issueNext).toContain('direct live mutation of the already-running VS Code session');
+    expect(issueNext).toContain('`.cache/runtime-settings-live-session-proof/latest/`');
     expect(issueNext).toContain('reload or restart the window before using Compare');
     expect(issueNext).toContain('keep WSL out of the active Windows x64 private-release contract');
     expect(issueNext).toContain('Docker Desktop');

@@ -375,6 +375,9 @@ describe('extension manifest research alignment', () => {
     expect(manifest.scripts?.['proof:run']).toBe(
       'npm run compile && node out/cli/runGovernedProof.js'
     );
+    expect(manifest.scripts?.['proof:runtime-settings-live-session']).toBe(
+      'node scripts/runRuntimeSettingsLiveSessionProof.js'
+    );
     expect(manifest.scripts?.['test:integration:linux']).toBe(
       'node scripts/runLinuxIntegrationHost.js'
     );

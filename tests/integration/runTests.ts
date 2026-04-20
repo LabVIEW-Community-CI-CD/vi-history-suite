@@ -47,7 +47,10 @@ async function main(): Promise<void> {
   let vscodeExecutablePath: string;
   let extensionDevelopmentPath = repoRoot;
   let extensionTestsPath = extensionTestsEntry;
-  let testEnv: Record<string, string> = buildDecisionRecordAutomationEnv();
+  let testEnv: Record<string, string> = {
+    ...buildDecisionRecordAutomationEnv(),
+    ...buildIntegrationControlEnv()
+  };
   let stagedExtensionRoot: string | undefined;
 
   try {
@@ -66,7 +69,8 @@ async function main(): Promise<void> {
         ...buildWindowsExtensionHostEnv(launchArgs[0], {
           appDataWindowsPath: windowsProfile!.windowsAppDataRoot
         }),
-        ...buildDecisionRecordAutomationEnv()
+        ...buildDecisionRecordAutomationEnv(),
+        ...buildIntegrationControlEnv()
       };
       launchArgs[0] = toWindowsPath(metadata.workspacePath);
       launchArgs.push(`--user-data-dir=${windowsProfile!.windowsUserDataDirectory}`);
@@ -199,6 +203,19 @@ function buildDecisionRecordAutomationEnv(): Record<string, string> {
     VI_HISTORY_SUITE_DECISION_CONFIDENCE: 'medium',
     VI_HISTORY_SUITE_DECISION_RATIONALE:
       'Integration automation uses a stable bounded rationale to avoid UI prompts during the extension-host lane.'
+  };
+}
+
+function buildIntegrationControlEnv(): Record<string, string> {
+  const proofOutputDirectory = (
+    process.env.VI_HISTORY_SUITE_RUNTIME_SETTINGS_LIVE_SESSION_PROOF_OUTPUT_DIR ?? ''
+  ).trim();
+  if (!proofOutputDirectory) {
+    return {};
+  }
+
+  return {
+    VI_HISTORY_SUITE_RUNTIME_SETTINGS_LIVE_SESSION_PROOF_OUTPUT_DIR: proofOutputDirectory
   };
 }
 

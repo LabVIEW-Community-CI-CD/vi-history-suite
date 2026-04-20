@@ -264,6 +264,9 @@ still only proposal material during round 1:
   guidance active while end-to-end mutation safety remains unproven; the
   generated CLI plus the settings-driven compare-preflight and runtime-doctor
   surfaces now warn users to reload or restart the window before using Compare
+  and one repo-owned proof runner now snapshots the latest probe packet,
+  retained history receipt, policy-boundary receipt, and integration logs under
+  `.cache/runtime-settings-live-session-proof/latest/`
   when Code is already open
   for this slice
 
