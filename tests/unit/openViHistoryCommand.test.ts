@@ -231,6 +231,31 @@ describe('createOpenViHistoryCommand', () => {
     expect(createWebviewPanelMock).not.toHaveBeenCalled();
   });
 
+  it('blocks the installed Program Files lv_icon.vi copy and points to the governed icon-editor clone', async () => {
+    const targetUri = createMockUri(
+      'C:\\Program Files\\National Instruments\\LabVIEW 2026\\resource\\plugins\\lv_icon.vi'
+    );
+    const historyService = {
+      load: vi.fn().mockRejectedValue(new Error('fatal: not a git repository'))
+    };
+    const eligibilityIndexer = {
+      isEligible: vi.fn().mockReturnValue(false)
+    };
+
+    const command = createOpenViHistoryCommand(
+      historyService as never,
+      eligibilityIndexer as never,
+      undefined
+    );
+
+    await command(targetUri as never);
+
+    expect(showErrorMessageMock).toHaveBeenCalledWith(
+      'The selected installed copy of lv_icon.vi is not the governed review surface. Open resource/plugins/lv_icon.vi from a Git-backed ni/labview-icon-editor clone instead; the Program Files copy has no commit history for VI Comparison Report generation.'
+    );
+    expect(createWebviewPanelMock).not.toHaveBeenCalled();
+  });
+
   it('shows warnings when Git-backed revision URIs cannot be resolved', async () => {
     const targetUri = createMockUri('/workspace/eligible.vi');
     const tracker = new HistoryPanelTracker();
