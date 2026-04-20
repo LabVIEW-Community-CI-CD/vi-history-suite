@@ -29,16 +29,17 @@ The unresolved seam remains explicit:
   while Code is already running is not yet retained as an end-to-end proof
   packet
 - governed live-session probe support is now landed for persisted-versus-live
-  drift detection, retained packet output, and fail-closed local packet
-  validation
+  drift detection, retained packet output, fail-closed local packet
+  validation, and one repo-owned proof runner that snapshots the current
+  packet/history/policy bundle plus integration logs
 
 Current implementation branch:
 
-- `feature/runtime-provider-live-session-history-provider-drift-completeness-assert` (in progress)
+- `feature/runtime-provider-live-session-proof-surface` (in progress)
 
 Most recently merged branch:
 
-- `feature/runtime-provider-live-session-policy-latest-provider-drift-assert`
+- `feature/runtime-provider-live-session-history-provider-drift-completeness-assert`
 
 ## Roadmap (Feature Branch Sequence)
 
@@ -173,10 +174,16 @@ Most recently merged branch:
 - Tighten policy-boundary admission so latest retained run must also keep
   explicit provider-selection drift (`latestProviderDrift=true`) before merge.
 
-27. `feature/runtime-provider-live-session-history-provider-drift-completeness-assert` (in progress)
+27. `feature/runtime-provider-live-session-history-provider-drift-completeness-assert` (merged)
 - Tighten policy-boundary admission so retained history must keep explicit
   provider-drift receipts on every run and zero retained `providerDrift=false`
   outcomes while this line preserves the reload-required seam.
+
+28. `feature/runtime-provider-live-session-proof-surface` (in progress)
+- Add one repo-owned end-to-end proof runner that executes the governed
+  extension-host lane on the current supported host, then snapshots the latest
+  probe packet, retained history receipt, policy-boundary receipt, and
+  integration logs into one reviewable receipt directory.
 
 ## Admission Rules
 

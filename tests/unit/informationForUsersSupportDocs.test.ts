@@ -59,6 +59,8 @@ describe('information-for-users support docs', () => {
     expect(faq).toContain('Docker Desktop in Windows-container mode');
     expect(faq).toContain('WSL is retained historical context only');
     expect(faq).toContain('private-release proof route');
+    expect(faq).toContain('npm run proof:runtime-settings-live-session');
+    expect(faq).toContain('.cache/runtime-settings-live-session-proof/latest/');
 
     expect(readme).toContain('Current `develop` Private-Release Boundary');
     expect(readme).toContain('Windows x64 private-release route');
@@ -83,6 +85,9 @@ describe('information-for-users support docs', () => {
     expect(commandReference).toContain('vihs-runtime-settings --validate');
     expect(commandReference).toContain('trusting Compare or other runtime-provider surfaces');
     expect(commandReference).toContain('runtimeBlockedReason');
+    expect(commandReference).toContain('npm run proof:runtime-settings-live-session');
+    expect(commandReference).toContain('runtime-settings-live-session-proof.json');
+    expect(commandReference).toContain('.cache/runtime-settings-live-session-proof/latest/');
     expect(commandReference).toContain('supported Windows x64 private-release route');
     expect(commandReference).toContain('WSL is not');
     expect(commandReference).toContain('admitted dependency for that path');

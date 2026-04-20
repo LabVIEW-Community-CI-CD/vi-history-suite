@@ -509,6 +509,11 @@ Post-release tranches:
     retained history still includes one or more `in-session-updated` or
     unknown observations, or retained safe-restore verification is not complete
     across retained runs
+  - one repo-owned end-to-end proof runner now exists at
+    `npm run proof:runtime-settings-live-session`; it executes the governed
+    extension-host lane on the current supported host and snapshots the latest
+    probe packet, retained history receipt, policy-boundary receipt, and
+    integration logs under `.cache/runtime-settings-live-session-proof/latest/`
   - the remaining CLI proof gap is now narrower: direct live mutation of the
     already-running VS Code session is not yet end-to-end proven on this line;
     probe mutation safe-restore is now fail-closed and locally proven, so the

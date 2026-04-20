@@ -92,7 +92,14 @@ without reopening path-picking or a panel-side provider picker.
 
 ### How do I check live-session drift after changing runtime settings?
 
-Use the live-session probe plus packet gate:
+Use the repo-owned proof command when you need one retained end-to-end receipt,
+or the lower-level probe and gates when you need to inspect each surface:
+
+- run `npm run proof:runtime-settings-live-session` to execute the governed
+  extension-host proof lane on the current supported host and snapshot the
+  latest probe packet, retained history summary, policy-boundary receipt, and
+  integration logs under `.cache/runtime-settings-live-session-proof/latest/`
+  even when the command fails closed on stale policy evidence
 
 - run `labviewViHistory.probeRuntimeSettingsLiveSession` to retain a probe
   packet comparing persisted and active in-session provider/version/bitness
@@ -118,9 +125,10 @@ Use the live-session probe plus packet gate:
   retained history includes `providerDrift=false` or missing provider-drift
   receipts
 
-This narrows the proof gap and now includes fail-closed probe safe-restore, but
-it still does not prove direct live uptake of updated settings in the current
-session; reload or restart guidance remains active when drift is detected.
+This narrows the proof gap and now includes one repo-owned end-to-end proof
+receipt plus fail-closed probe safe-restore, but it still does not prove direct
+live uptake of updated settings in the current session; reload or restart
+guidance remains active when drift is detected.
 
 ### Where do I find the key commands or checks?
 

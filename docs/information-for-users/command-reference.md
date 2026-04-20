@@ -157,6 +157,28 @@ See also:
     mutation, but direct live uptake of updated settings is still unproven;
     reload or restart guidance remains active when drift is detected
 
+`npm run proof:runtime-settings-live-session`
+
+- Purpose: run the governed extension-host live-session proof lane on the
+  current supported host and snapshot the latest probe packet, retained
+  history receipt, policy-boundary receipt, and integration logs.
+- Use when: refreshing one repo-owned end-to-end receipt for the current
+  reload-or-restart boundary.
+- Notes:
+  - the default receipt root is
+    `.cache/runtime-settings-live-session-proof/latest/`
+  - the command retains `runtime-settings-live-session-proof.json` and
+    `.md`, plus integration stdout/stderr logs and snapshot copies of the
+    current per-run probe packet
+  - use `--evidence-dir <path>` to retain the receipt somewhere else
+  - use `--json` for machine-readable operator output
+  - on Windows this command runs the governed native Windows extension-host
+    integration lane; on Linux it runs the governed Linux extension-host lane
+  - the command fails closed if the retained latest packet or policy boundary
+    no longer supports the active reload-or-restart contract
+  - even on a fail-closed run, the receipt directory still keeps the copied
+    packet root, integration logs, and top-level proof receipt for review
+
 `npm run proof:runtime-settings-live-session:assert`
 
 - Purpose: fail closed when the retained latest live-session probe packet is

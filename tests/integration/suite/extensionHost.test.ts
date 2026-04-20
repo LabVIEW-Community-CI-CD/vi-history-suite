@@ -812,6 +812,7 @@ async function testProbeRuntimeSettingsLiveSession(): Promise<void> {
   await fs.access(summary.packetMarkdownPath);
   await fs.access(summary.latestPacketJsonPath);
   await fs.access(summary.latestPacketMarkdownPath);
+  await maybeWriteRuntimeSettingsLiveSessionProofOutput(summary);
 
   let restoredSettingsText: string | undefined;
   try {
@@ -852,6 +853,28 @@ async function runPreparedLocalRuntimeSettingsCli(
     ...execution,
     launcherPath: result.posixLauncherPath!
   };
+}
+
+async function maybeWriteRuntimeSettingsLiveSessionProofOutput(
+  summary: RuntimeSettingsLiveSessionProbeSummary
+): Promise<void> {
+  const outputDirectory = (
+    process.env.VI_HISTORY_SUITE_RUNTIME_SETTINGS_LIVE_SESSION_PROOF_OUTPUT_DIR ?? ''
+  ).trim();
+  if (!outputDirectory) {
+    return;
+  }
+
+  const packetRoot = path.dirname(summary.latestPacketJsonPath);
+  const retainedPacketRoot = path.join(outputDirectory, 'packet-root');
+  await fs.rm(outputDirectory, { recursive: true, force: true });
+  await fs.mkdir(outputDirectory, { recursive: true });
+  await fs.cp(packetRoot, retainedPacketRoot, { recursive: true });
+  await fs.writeFile(
+    path.join(outputDirectory, 'probe-command-summary.json'),
+    `${JSON.stringify(summary, null, 2)}\n`,
+    'utf8'
+  );
 }
 
 function readViHistorySuiteRuntimeSettings(): {

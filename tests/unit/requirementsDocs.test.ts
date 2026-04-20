@@ -240,6 +240,7 @@ describe('requirements documentation coherence', () => {
 
     expect(srs).toContain('derive `ready` state from runtime-backed provider and runtime resolution');
     expect(srs).toContain('reload or restart the window before trusting updated provider or runtime facts');
+    expect(srs).toContain('`npm run proof:runtime-settings-live-session`');
     expect(srs).toContain('support governed VS Code settings targets that contain JSONC comments or trailing commas');
     expect(srs).toContain('generated settings-CLI launcher surface shall make its runtime dependency explicit');
     expect(srs).toContain('`labviewViHistory.prepareLocalRuntimeSettingsCli` command shall make its trust and settings-target governance explicit');
@@ -272,6 +273,7 @@ describe('requirements documentation coherence', () => {
 
     expect(rtm).toContain('VHS-REQ-541');
     expect(rtm).toContain('VHS-REQ-549');
+    expect(rtm).toContain('scripts/runRuntimeSettingsLiveSessionProof.js');
     expect(rtm).toContain('VHS-REQ-551');
     expect(rtm).toContain('VHS-REQ-553');
     expect(rtm).toContain('VHS-REQ-554');
@@ -307,6 +309,7 @@ describe('requirements documentation coherence', () => {
 
     expect(testPlan).toContain('TEST-UNIT-349');
     expect(testPlan).toContain('settings-only fallback cannot');
+    expect(testPlan).toContain('npm run proof:runtime-settings-live-session');
     expect(testPlan).toContain('publishable runtime-backed ready state');
     expect(testPlan).toContain('TEST-UNIT-351');
     expect(testPlan).toContain('JSONC comments or trailing commas');
