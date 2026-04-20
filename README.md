@@ -97,6 +97,7 @@ to the released product line and the active branch line:
   - `scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1`
   - `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1`
   - `scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1`
+  - `scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1`
   - `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh`
   - `scripts/gitlab-runner/linux/start-linux-assurance.sh`
   - `scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service`
@@ -125,8 +126,10 @@ to the released product line and the active branch line:
   process is live
 - when the host-native Windows proof exits on that same cleanup seam, the
   acceptance wrapper retains `windows-private-release-evidence/host/proof-run-pre-recovery.txt`,
+  runs `scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1`,
+  retains `windows-private-release-evidence/host/proof-runtime-recovery.txt`,
   waits `5000` ms, retries that host-native proof once, and still fails closed
-  if the retry cannot restore a clean host surface
+  if the repo-owned recovery step plus retry cannot restore a clean host surface
 - Linux public smoke and Linux benchmark lanes remain repo-owned evaluation or
   maintainer proof surfaces. They are not part of the active installed-user or
   private-release claim for `v1.3.0`.

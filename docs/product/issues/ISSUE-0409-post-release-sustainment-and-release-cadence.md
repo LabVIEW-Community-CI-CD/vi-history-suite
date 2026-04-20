@@ -47,8 +47,8 @@ Activation is now satisfied:
   local-use documentation first instead of repo/fork/branch guidance
 - benchmark refresh cadence and image contract upkeep
 - operator-surface and documentation-workbench sustainment
-- repo-owned live drift assertion surfaces for sustained runner/operator
-  contracts
+- repo-owned recovery plus live drift assertion surfaces for sustained
+  runner/operator contracts
 - post-release control-plane maintenance
 - not the active extension execution-contract program under `PROGRAM-0005`
 - not the historical Docker-only public closeout under `PROGRAM-0002`
@@ -72,8 +72,9 @@ Activation is now satisfied:
 - sustainment operating rules are explicit in the control plane
 - release and benchmark refresh cadence are bounded and discoverable
 - operator/documentation upkeep has a governed maintenance path
-- sustained runner/operator lanes retain repo-owned apply plus live
-  drift-assert surfaces instead of depending on host memory between applies
+- sustained runner/operator lanes retain repo-owned apply, recovery, plus
+  live drift-assert surfaces instead of depending on host memory between
+  applies or mid-session operator intervention
 - future release lines carry an explicit SemVer-decision and branch-lane CI model
 - future governed findings either update the requirement package in the same
   slice or retain an explicit no-impact rationale
@@ -125,6 +126,9 @@ Activation is now satisfied:
 - keep extending the sustainment package when admitted runner hosts have
   repo-owned apply surfaces but still lack repo-owned live drift assertions
   for their current installed state
+- keep extending the sustainment package when admitted Windows proof lanes
+  still need manual operator cleanup instead of a retained repo-owned
+  mid-session recovery surface
 - keep extending the sustainment package when exact-tag eligibility still
   depends on ad hoc manual review instead of a retained expert-agent review
   skill and no-findings verdict against the exact published public candidate

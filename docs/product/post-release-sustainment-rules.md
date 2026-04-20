@@ -288,9 +288,11 @@ Hosted automation governance is now retained explicitly:
   are not exact-release required checks
 - GitLab `windows_private_release_acceptance` now retains one bounded
   host-native retry when the shared Windows cleanup seam fails before proof
-  execution, preserving `windows-private-release-evidence/host/proof-run-pre-recovery.txt`
-  and still failing closed after that single retry if the host cannot be
-  restored to a clean proof surface
+  execution, preserving `windows-private-release-evidence/host/proof-run-pre-recovery.txt`,
+  running `scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1`,
+  retaining `windows-private-release-evidence/host/proof-runtime-recovery.txt`,
+  and still failing closed after that single retry if the repo-owned recovery
+  step cannot restore a clean proof surface
 - GitLab runner upkeep now uses repo-owned apply and live drift-assert
   surfaces:
   `scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1` keeps the

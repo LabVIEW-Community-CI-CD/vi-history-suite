@@ -24,6 +24,9 @@ describe('runner lane operator assets', () => {
     const windowsAssert = readText(
       'scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1'
     );
+    const windowsRecovery = readText(
+      'scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1'
+    );
     const linuxApply = readText('scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
     const linuxHelper = readText('scripts/gitlab-runner/linux/start-linux-assurance.sh');
     const linuxService = readText(
@@ -64,6 +67,13 @@ describe('runner lane operator assets', () => {
     expect(windowsAssert).toContain('expected exactly one configured gitlab-runner manager');
     expect(windowsAssert).toContain('bootstrapSourceSha256');
 
+    expect(windowsRecovery).toContain("'LabVIEW'");
+    expect(windowsRecovery).toContain("'LabVIEWCLI'");
+    expect(windowsRecovery).toContain("'LVCompare'");
+    expect(windowsRecovery).toContain('taskkill.exe /PID $process.Id /T /F');
+    expect(windowsRecovery).toContain('Invoke-CimMethod -InputObject $cimProcess -MethodName Terminate');
+    expect(windowsRecovery).toContain("schema = 'vi-history-suite/windows-proof-runtime-recovery@v1'");
+
     expect(linuxApply).toContain('EXPECTED_USER="sveld"');
     expect(linuxApply).toContain('sudo systemctl enable --now "$SERVICE_NAME"');
     expect(linuxApply).toContain('systemctl is-enabled "$SERVICE_NAME"');
@@ -102,6 +112,7 @@ describe('runner lane operator assets', () => {
     expect(windowsLaneDoc).toContain('scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1');
     expect(windowsLaneDoc).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
     expect(windowsLaneDoc).toContain('scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1');
+    expect(windowsLaneDoc).toContain('scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1');
     expect(windowsLaneDoc).toContain('scripts/assertGovernedRunnerLanes.js');
     expect(windowsLaneDoc).toContain('npm run gitlab:runner:assert');
     expect(windowsLaneDoc).not.toContain('ExecutionPolicy Bypass -File "C:\\GitLab-Runner\\start-governed-runner-lanes.ps1"');
@@ -144,6 +155,8 @@ describe('runner lane operator assets', () => {
         repoOwnedApplyScript: 'scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1',
         repoOwnedBootstrapScript: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',
         repoOwnedAssertScript: 'scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1',
+        repoOwnedRecoveryScript:
+          'scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1',
         repoOwnedLinuxHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
         combinedAssertionScript: 'scripts/assertGovernedRunnerLanes.js',
         combinedAssertionPackageScript: 'npm run gitlab:runner:assert'
@@ -153,6 +166,7 @@ describe('runner lane operator assets', () => {
     expect(privateReleasePacketDoc).toContain('scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1');
     expect(privateReleasePacketDoc).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
     expect(privateReleasePacketDoc).toContain('scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1');
+    expect(privateReleasePacketDoc).toContain('scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1');
     expect(privateReleasePacketDoc).toContain('scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
     expect(privateReleasePacketDoc).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
     expect(privateReleasePacketDoc).toContain('scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service');
@@ -173,6 +187,8 @@ describe('runner lane operator assets', () => {
           windowsApplyScript: 'scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1',
           windowsBootstrapScript: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',
           windowsAssertScript: 'scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1',
+          windowsRecoveryScript:
+            'scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1',
           linuxApplyScript: 'scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh',
           linuxHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
           linuxServiceUnit: 'scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service',
@@ -190,6 +206,7 @@ describe('runner lane operator assets', () => {
     expect(readme).toContain('scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1');
     expect(readme).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
     expect(readme).toContain('scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1');
+    expect(readme).toContain('scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1');
     expect(readme).toContain('scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
     expect(readme).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
     expect(readme).toContain('scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh');
@@ -198,6 +215,7 @@ describe('runner lane operator assets', () => {
     expect(currentState).toContain('repo-owned runner host asset pack, apply surfaces, and live drift');
     expect(currentState).toContain('scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1');
     expect(currentState).toContain('scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1');
+    expect(currentState).toContain('scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1');
     expect(currentState).toContain('scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
     expect(currentState).toContain('scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service');
     expect(currentState).toContain('scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh');
@@ -207,6 +225,7 @@ describe('runner lane operator assets', () => {
     expect(releaseProcedure).toContain('scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1');
     expect(releaseProcedure).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
     expect(releaseProcedure).toContain('scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1');
+    expect(releaseProcedure).toContain('scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1');
     expect(releaseProcedure).toContain('scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
     expect(releaseProcedure).toContain('scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh');
     expect(releaseProcedure).toContain('scripts/assertGovernedRunnerLanes.js');

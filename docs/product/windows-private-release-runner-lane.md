@@ -113,6 +113,8 @@ The governed host asset pack for this lane is versioned in the repo:
   `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1`
 - Windows drift assertion script:
   `scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1`
+- Windows proof runtime recovery script:
+  `scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1`
 - Linux apply/update script:
   `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh`
 - Linux helper invoked by that bootstrap:
@@ -145,8 +147,13 @@ mid-session `LabVIEW.exe` contamination blocks the lane immediately instead of
 waiting for the next logon bootstrap. When that shared cleanup fails before the
 host-native proof begins, the acceptance wrapper retains the first failed proof
 transcript as `windows-private-release-evidence/host/proof-run-pre-recovery.txt`,
-waits `5000` ms, reruns the same host-native proof once, and fails closed if
-that single retry still cannot restore a clean host surface.
+runs the repo-owned Windows proof runtime recovery script
+`scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1`,
+retains its transcript as
+`windows-private-release-evidence/host/proof-runtime-recovery.txt`, waits
+`5000` ms, reruns the same host-native proof once, and fails closed if that
+repo-owned recovery step plus single retry still cannot restore a clean host
+surface.
 
 ## Apply Or Update On The Admitted Host
 
@@ -224,6 +231,12 @@ Direct foreground recovery, if the scheduled bootstrap surface is unavailable:
 gitlab-runner.exe run --config C:\GitLab-Runner\config.toml
 ```
 
+Governed mid-session Windows proof runtime recovery from the repo root:
+
+```powershell
+powershell.exe -NoLogo -NoProfile -File .\scripts\gitlab-runner\windows\recover-windows-proof-runtime-surface.ps1
+```
+
 The lane shall continue to preserve the same signed-in user context needed for
 Docker Desktop Windows-container access and host LabVIEW proof. Do not replace
 that contract with a `LocalSystem` service.
@@ -238,6 +251,7 @@ The job shall retain:
 - `windows-private-release-evidence/host/proof-run.txt`
 - when bounded mid-session contamination recovery fires:
   `windows-private-release-evidence/host/proof-run-pre-recovery.txt`
+  and `windows-private-release-evidence/host/proof-runtime-recovery.txt`
 - `windows-private-release-evidence/host/harness-report/**`
 - `windows-private-release-evidence/container/settings-file.json`
 - `windows-private-release-evidence/container/settings-write.txt`
@@ -247,8 +261,9 @@ The job shall retain:
 
 The machine-readable manifest is the first recovery surface. When the bounded
 host-native retry path is used, it records `proofAttemptCount` plus
-`boundedRecovery` so future sessions do not have to reconstruct that recovery
-from job logs alone.
+`boundedRecovery`, including the repo-owned recovery script path and retained
+recovery transcript, so future sessions do not have to reconstruct that
+recovery from job logs alone.
 
 ## Stop Rules
 
