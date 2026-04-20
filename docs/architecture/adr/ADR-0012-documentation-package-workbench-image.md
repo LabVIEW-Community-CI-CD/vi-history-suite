@@ -24,8 +24,11 @@ surface for documentation-package iteration.
 
 The workbench shall:
 
-1. mount the repository at `/workspace`
-2. bootstrap `node_modules` when needed
+1. resolve the repository root at runtime from `CI_PROJECT_DIR`,
+   `VIHS_DOCS_WORKSPACE`, or the `/workspace` fallback
+2. keep a container-owned `node_modules` surface and refresh it from
+   `package-lock.json` when needed so Linux workbench runs do not inherit
+   incompatible host-mounted optional bindings
 3. default to `npm run docs:gate`
 4. remain separate from end-user extension runtime proof and NI execution proof
 5. publish to the GitLab container registry for reuse by future sessions
@@ -37,6 +40,8 @@ The workbench shall:
 - documentation-package iteration has one stable environment
 - wiki-preparation work can start from a published, repo-native workbench
 - docs gate behavior is less dependent on host drift
+- Linux workbench runs stay on a governed dependency surface instead of
+  inheriting incompatible host-mounted optional bindings
 
 ### Negative
 

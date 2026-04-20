@@ -282,6 +282,16 @@ function translatePathForDocker(hostPath, dockerCommand) {
   }).trim();
 }
 
+function resolveNodeModulesVolumeName(repoBaseName) {
+  const normalizedRepoBaseName = repoBaseName
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_.-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  const safeRepoBaseName = normalizedRepoBaseName || 'vihs-docs-workspace';
+  return `${safeRepoBaseName}-docs-node-modules`;
+}
+
 function buildDockerArgs(mode, dockerCommand, docsImage) {
   const dockerfilePath = translatePathForDocker(
     path.join(repoRoot, 'docker', 'docs-authoring', 'Dockerfile'),
@@ -290,6 +300,7 @@ function buildDockerArgs(mode, dockerCommand, docsImage) {
   const repoRootPath = translatePathForDocker(repoRoot, dockerCommand);
   const parentRootPath = translatePathForDocker(path.dirname(repoRoot), dockerCommand);
   const repoBaseName = path.basename(repoRoot);
+  const nodeModulesVolumeName = resolveNodeModulesVolumeName(repoBaseName);
   const gitSafeDirectoryEnvArgs = buildGitSafeDirectoryEnvArgs(repoBaseName);
 
   if (mode === 'build') {
@@ -309,6 +320,8 @@ function buildDockerArgs(mode, dockerCommand, docsImage) {
       '--rm',
       '-v',
       `${parentRootPath}:/repo-parent`,
+      '-v',
+      `${nodeModulesVolumeName}:/repo-parent/${repoBaseName}/node_modules`,
       '-e',
       `VIHS_DOCS_WORKSPACE=/repo-parent/${repoBaseName}`,
       ...gitSafeDirectoryEnvArgs,
@@ -328,6 +341,8 @@ function buildDockerArgs(mode, dockerCommand, docsImage) {
       '-it',
       '-v',
       `${parentRootPath}:/repo-parent`,
+      '-v',
+      `${nodeModulesVolumeName}:/repo-parent/${repoBaseName}/node_modules`,
       '-e',
       `VIHS_DOCS_WORKSPACE=/repo-parent/${repoBaseName}`,
       ...gitSafeDirectoryEnvArgs,
@@ -355,6 +370,8 @@ function buildDockerArgs(mode, dockerCommand, docsImage) {
     '--rm',
     '-v',
     `${parentRootPath}:/repo-parent`,
+    '-v',
+    `${nodeModulesVolumeName}:/repo-parent/${repoBaseName}/node_modules`,
     '-e',
     `VIHS_DOCS_WORKSPACE=/repo-parent/${repoBaseName}`,
     ...gitSafeDirectoryEnvArgs,
@@ -466,6 +483,7 @@ module.exports = {
   buildGitSafeDirectoryEnvArgs,
   formatPublishedRegistryAccessError,
   parseArgs,
+  resolveNodeModulesVolumeName,
   resolveDocsImage,
   resolvePublishedRegistryCredentials,
   resolvePublishedRegistryHost

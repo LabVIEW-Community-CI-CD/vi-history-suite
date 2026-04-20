@@ -6,6 +6,7 @@ const {
   buildGitSafeDirectoryEnvArgs,
   formatPublishedRegistryAccessError,
   resolvePublishedRegistryCredentials,
+  resolveNodeModulesVolumeName,
   resolvePublishedRegistryHost
 } = require('../../scripts/runDocsWorkbenchDocker.js');
 
@@ -69,6 +70,9 @@ describe('runDocsWorkbenchDocker', () => {
 
     expect(gateArgs.slice(0, 3)).toEqual(['run', '--rm', '-v']);
     expect(gateArgs[3]).toContain('/repo-parent');
+    expect(gateArgs).toContain(
+      `${resolveNodeModulesVolumeName(repoBaseName)}:/repo-parent/${repoBaseName}/node_modules`
+    );
     expect(gateArgs).toContain('GIT_CONFIG_COUNT=3');
     expect(gateArgs).toContain(`VIHS_DOCS_WORKSPACE=/repo-parent/${repoBaseName}`);
     expect(gateArgs).toContain(`/repo-parent/${repoBaseName}`);
@@ -76,6 +80,9 @@ describe('runDocsWorkbenchDocker', () => {
 
     expect(shellArgs.slice(0, 3)).toEqual(['run', '--rm', '-it']);
     expect(shellArgs[4]).toContain('/repo-parent');
+    expect(shellArgs).toContain(
+      `${resolveNodeModulesVolumeName(repoBaseName)}:/repo-parent/${repoBaseName}/node_modules`
+    );
     expect(shellArgs).toContain('GIT_CONFIG_COUNT=3');
     expect(shellArgs).toContain(`VIHS_DOCS_WORKSPACE=/repo-parent/${repoBaseName}`);
     expect(shellArgs).toContain(`/repo-parent/${repoBaseName}`);

@@ -235,6 +235,7 @@ describe('ship-control direction system', () => {
     expect(currentState).toContain('[Documentation Package Workbench](../documentation-workbench.md)');
     expect(currentState).toContain('[hosted-ci-governance.md](./hosted-ci-governance.md)');
     expect(currentState).toContain('[linux-assurance-runner-lane.md](./linux-assurance-runner-lane.md)');
+    expect(currentState).toContain('container-owned `node_modules` volume plus `package-lock.json` refresh');
     expect(currentState).toContain('npm run design:gate:assert-complete');
     expect(currentState).toContain('- `SHIP-0001`: releasable `v0.2.0` VSIX product');
     expect(currentState).toContain('- landed ship tranche: `TRANCHE-009`');
@@ -402,7 +403,8 @@ describe('ship-control direction system', () => {
     expect(workbenchDoc).toContain('docs-integration-evidence/docs-integration-report.json');
 
     expect(coherenceLedger).toContain('# Documentation Coherence Ledger');
-    expect(coherenceLedger).toContain('run-docs-continuous-integration.js --skip-links');
+    expect(coherenceLedger).toContain('run-docs-gate.js');
+    expect(coherenceLedger).toContain('runDocsWorkbenchDocker.js gate');
     expect(coherenceLedger).toContain(
       '$env:USERPROFILE\\\\.codex\\\\skills\\\\repo-standards-review\\\\scripts\\\\run_assurance.py'
     );
@@ -415,11 +417,15 @@ describe('ship-control direction system', () => {
     expect(coherenceLedger).toContain('planned fourth experiment mirror');
     expect(coherenceLedger).toContain('DOC-012');
     expect(coherenceLedger).toContain('DOC-013');
+    expect(coherenceLedger).toContain('DOC-015');
+    expect(coherenceLedger).toContain('container-owned `node_modules` surface');
 
     expect(wikiSeedPlan).toContain('# Wiki Seed Plan');
     expect(wikiSeedPlan).toContain('docs/product/documentation-coherence-ledger.md');
     expect(wikiSeedPlan).toContain('docs/product/wiki-publication-ledger.md');
     expect(wikiSeedPlan).toContain('npm run wiki:workbench:prepare');
+    expect(wikiSeedPlan).toContain('--page-id <published-page-id>');
+    expect(wikiSeedPlan).toContain('refresh-existing-page');
     expect(wikiSeedPlan).toContain('src/');
 
     expect(wikiPublicationLedger).toContain('# Wiki Publication Ledger');
@@ -434,6 +440,8 @@ describe('ship-control direction system', () => {
     expect(wikiAuthorityMap).toContain('[documentation-coherence-ledger.md](./documentation-coherence-ledger.md)');
     expect(wikiAuthorityMap).toContain('[wiki-seed-plan.md](./wiki-seed-plan.md)');
     expect(wikiAuthorityMap).toContain('[wiki-publication-ledger.md](./wiki-publication-ledger.md)');
+    expect(wikiAuthorityMap).toContain('keep `nextPage = null` closed');
+    expect(wikiAuthorityMap).toContain('--page-id <published-page-id>');
     expect(wikiAuthorityMap).toContain('npm run docs:workbench:wiki:prepare');
     expect(wikiAuthorityMap).toContain('docs/product/program-repo-jump.md');
 
@@ -450,6 +458,8 @@ describe('ship-control direction system', () => {
     expect(programRepoJump).toContain('vi-history-suite.github.wiki');
     expect(programRepoJump).toContain('npm run wiki:workbench:doctor');
     expect(adr0012).toContain('# ADR-0012: Documentation-Package Workbench Image');
+    expect(adr0012).toContain('resolve the repository root at runtime from `CI_PROJECT_DIR`,');
+    expect(adr0012).toContain('container-owned `node_modules` surface');
     expect(adr0013).toContain('# ADR-0013: Authority-First Wiki Seeding');
     expect(adr0014).toContain('# ADR-0014: Cross-Repo Navigation Control Plane');
     expect(adr0015).toContain('# ADR-0015: Version-Matched Bundled User Documentation');

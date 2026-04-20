@@ -210,9 +210,17 @@ Do not draft or refresh wiki pages until:
 - Retain a governed staging bundle and publication-prep receipt through
   `npm run wiki:workbench:prepare` or `npm run docs:workbench:wiki:prepare`
   before treating a page as ready for publication.
+- When a materially changed authority doc requires refreshing an already
+  published page while `nextPage` remains closed, use
+  `npm run wiki:workbench:prepare -- --page-id <published-page-id>` or the
+  Docker-first equivalent so the retained receipt records a
+  `refresh-existing-page` path instead of a no-op completion.
 - Treat the wiki as finished only when `docs/product/wiki-coverage-matrix.json`
   is zero-gap and `docs/product/wiki-publication-ledger.json` retains no
   `nextPage` target.
+- Do not update the wiki publication ledgers for that refresh path until the
+  refreshed wiki page is actually pushed and its retained publication metadata
+  changes.
 - If a tranche changes the current debt picture, publish the debt wiki pages in
   the same tranche instead of leaving technical/documentation debt discoverable
   only from authority Markdown or JSON.
