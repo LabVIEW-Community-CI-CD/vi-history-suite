@@ -1,5 +1,11 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Public user wiki
-    url: https://github.com/svelderrainruiz/vi-history-suite/wiki
-    about: Start with the public user-facing workflow and install guidance.
+  - name: Install and release guide
+    url: https://github.com/svelderrainruiz/vi-history-suite/wiki/Install-And-Release
+    about: Start here for the install bootstrap and the supported installed-user route.
+  - name: User workflow
+    url: https://github.com/svelderrainruiz/vi-history-suite/wiki/User-Workflow
+    about: Use this when the extension is installed and you want the compare flow.
+  - name: Comparison reports and dashboard review
+    url: https://github.com/svelderrainruiz/vi-history-suite/wiki/Comparison-Reports-And-Dashboard-Review
+    about: Use this when compare ran and you need to interpret the retained output.

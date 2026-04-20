@@ -68,13 +68,15 @@ describe('information-for-users support docs', () => {
     expect(faq).toContain('npm run proof:runtime-settings-live-session');
     expect(faq).toContain('.cache/runtime-settings-live-session-proof/latest/');
 
-    expect(readme).toContain('Current `develop` Private-Release Boundary');
-    expect(readme).toContain('Windows x64 private-release route');
-    expect(readme).toContain('Docker Desktop in Windows-container mode');
-    expect(readme).toContain('Linux Assurance Runner Lane');
-    expect(readme).toContain('assurance_26514_authority');
-    expect(readme).toContain('Linux public smoke and Linux benchmark lanes remain');
-    expect(readme).toContain('not the first-use manual for the active Windows x64');
+    expect(readme).toContain('Install And Use');
+    expect(readme).toContain('If you want to install the extension and use it locally, start here.');
+    expect(readme).toContain('install-vihs-extension.ps1');
+    expect(readme).toContain('vihs --validate');
+    expect(readme).toContain('Report A Problem Or Request Support');
+    expect(readme).toContain('issues/new/choose');
+    expect(readme).toContain('LabVIEW version support request');
+    expect(readme).toContain('Need Source Evaluation Or Contribution?');
+    expect(readme).toContain('Authority And Release Control');
 
     expect(install).toContain('Active `develop` Windows x64 Private-Release Candidate');
     expect(install).toContain('The active `develop` candidate is a Windows x64 private-release route.');
