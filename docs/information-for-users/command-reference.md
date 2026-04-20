@@ -94,6 +94,9 @@ See also:
 
 ## Runtime Provider CLI And Proof
 
+This section and the FAQ are the governed installed-user help surface for the
+runtime-settings CLI on the active branch.
+
 `VI History: Prepare Local Runtime Settings CLI`
 
 - Purpose: materialize the governed runtime-settings launchers under the
@@ -103,6 +106,11 @@ See also:
 - Notes:
   - the governed materialization root is the extension-global storage path
     reported by the command result
+  - the command result also reports the current-platform launcher path plus one
+    exact next command to run from any repo shell without reconstructing the
+    hidden extension-global storage layout
+  - rerun this same prepare command when the launcher is missing, stale, or a
+    repaired Node.js runtime needs a refreshed launcher
   - supported settings targets are the default user `settings.json` path for
     the current platform or one explicit `--settings-file` override
   - this prepare command is admitted in untrusted workspaces because it only
@@ -115,6 +123,9 @@ See also:
 - Use when: switching between host and the bounded expert Docker provider on
   the active branch.
 - Notes:
+  - run `VI History: Prepare Local Runtime Settings CLI` first and use the
+    exact launcher command it reports for the current platform; this product
+    does not mutate `PATH`
   - the CLI is generated into user-profile storage on first use
   - without `--settings-file`, the governed target is the platform-default
     user `settings.json`; workspace settings are not a supported target
@@ -135,11 +146,17 @@ See also:
 - Use when: confirming what the CLI actually persisted before trusting Compare
   or other runtime-provider surfaces.
 - Notes:
+  - run `VI History: Prepare Local Runtime Settings CLI` first and use the
+    exact launcher command it reports for the current platform; this product
+    does not mutate `PATH`
   - without `--settings-file`, the governed validation target is the
     platform-default user `settings.json`
   - the output retains `runtimeValidationOutcome`, `runtimeProvider`,
     `runtimeEngine`, and `runtimeBlockedReason` without reopening path-picking
     or a panel-side provider picker
+  - on the current Windows x64 private-release route, treat `ready` as the
+    native Windows host or Docker Desktop Windows-container contract; WSL is
+    not an admitted dependency for that path
 
 `labviewViHistory.probeRuntimeSettingsLiveSession`
 

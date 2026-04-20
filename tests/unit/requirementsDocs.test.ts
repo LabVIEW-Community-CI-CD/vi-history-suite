@@ -244,9 +244,11 @@ describe('requirements documentation coherence', () => {
     );
     expect(srs).toContain('`npm run proof:runtime-settings-live-session`');
     expect(srs).toContain('support governed VS Code settings targets that contain JSONC comments or trailing commas');
-    expect(srs).toContain('generated settings-CLI launcher surface shall make its runtime dependency explicit');
+    expect(srs).toContain(
+      'generated settings-CLI launcher surface shall make its runtime dependency and stale-launcher recovery explicit'
+    );
     expect(srs).toContain('`labviewViHistory.prepareLocalRuntimeSettingsCli` command shall make its trust and settings-target governance explicit');
-    expect(srs).toContain('expose one governed readback or validation surface');
+    expect(srs).toContain('expose one governed validation surface');
     expect(srs).toContain('close the remaining LabVIEW 2026 operation-matrix admission seams');
     expect(srs).toContain(
       'prove `CreateComparisonReport` admission on the supported LabVIEW 2026 x64 release host bundle'
@@ -346,7 +348,7 @@ describe('requirements documentation coherence', () => {
     expect(testPlan).toContain('proof-runtime-recovery.txt');
     expect(testPlan).toContain('headless LabVIEW contamination');
     expect(testPlan).toContain('native Windows only');
-    expect(testPlan).toContain('WSL is retained historical context only');
+    expect(testPlan).toContain('Docker Desktop Windows-container execution');
     expect(testPlan).toContain('runtime-provider public-acceptance gate');
     expect(testPlan).toContain('release procedure');
   });

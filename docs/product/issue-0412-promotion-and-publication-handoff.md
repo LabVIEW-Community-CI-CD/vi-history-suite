@@ -67,6 +67,46 @@ The next public gate is now retained explicitly in:
 4. treat this packet as retained branch-transition context, not as the live
    gate record
 
+## Current Review-Ready Branch Packet
+
+- branch: `feature/wip-wiki-and-cli-usability`
+- remote state: pushed and in sync with
+  `origin/feature/wip-wiki-and-cli-usability`
+- reviewable commit stack:
+  1. `e0bff69` `docs: retain runtime-settings CLI usability draft`
+  2. `392ca23` `docs: promote runtime-settings CLI usability contract`
+  3. `b52063b` `docs: harden docs workbench and wiki refresh flow`
+  4. `d67488d` `docs: retain issue-0412 review handoff packet`
+
+The commit stack is intentionally split this way:
+
+- commit 1 keeps the draft artifact separate from governed-surface promotion
+- commit 2 promotes the finalized runtime-settings CLI decisions into the
+  information-for-users package, SRS, RTM, and test plan
+- commit 3 hardens the docs-workbench dependency-isolation and wiki-refresh
+  control plane
+- commit 4 retains this exact review handoff packet on the branch so the
+  reviewer-facing packet is carried by repo history instead of chat memory
+
+The current review packet was validated locally before push with:
+
+- requirement-quality check: `pass`
+- focused requirements/docs/workbench/wiki tests: `pass`
+- `node scripts/runDocsWorkbenchDocker.js gate`: `pass`
+- `python3 scripts/run_assurance.py . --profile release-gate`: `pass`
+
+After this handoff packet was added, the branch also passed:
+
+- `node scripts/run-docs-gate.js --skip-links`: `pass`
+
+Non-blocking caveats:
+
+- the draft file remains in the branch intentionally as retained iteration
+  context, while the promoted governed truth is carried by the later commits
+- host-local `node scripts/run-docs-gate.js` still depends on local `lychee`;
+  the governed Docker-first docs-workbench gate remains the authoritative
+  fallback when that host binary is absent
+
 ## Stop Rule
 
 Do not reopen standards-debt work on this branch unless a later released-skill

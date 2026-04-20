@@ -369,7 +369,8 @@ describe('documentation-package workbench', () => {
     expect(dockerfile).toContain('FROM node:24-bookworm');
     expect(dockerfile).toContain('lychee-x86_64-unknown-linux-gnu.tar.gz');
     expect(dockerfile).toContain('CMD ["npm", "run", "docs:gate"]');
-    expect(entrypoint).toContain('if [[ ! -d node_modules ]]; then');
+    expect(entrypoint).toContain('node_modules/.vihs-docs-workbench-package-lock.sha256');
+    expect(entrypoint).toContain('sha256sum package-lock.json');
     expect(entrypoint).toContain('npm ci');
     expect(entrypoint).toContain('CI_PROJECT_DIR');
     expect(entrypoint).toContain('VIHS_DOCS_WORKSPACE');
@@ -379,6 +380,7 @@ describe('documentation-package workbench', () => {
     expect(dockerHelper).toContain("command: 'docker.exe'");
     expect(dockerHelper).toContain("'--context', 'desktop-linux'");
     expect(dockerHelper).toContain("path.join(repoRoot, 'docker', 'docs-authoring', 'Dockerfile')");
+    expect(dockerHelper).toContain('/node_modules');
 
     expect(workbenchDoc).toContain('npm run docs:workbench:build');
     expect(workbenchDoc).toContain('npm run docs:workbench:gate');
@@ -409,6 +411,7 @@ describe('documentation-package workbench', () => {
     expect(workbenchDoc).toContain('VIHS_INTERNAL_WIKI_REPO_ROOT');
     expect(workbenchDoc).toContain('VIHS_PUBLIC_GITHUB_WIKI_REPO_ROOT');
     expect(workbenchDoc).toContain('CI_PROJECT_DIR');
+    expect(workbenchDoc).toContain('container-owned `node_modules`');
     expect(workbenchDoc).toContain('docs_continuous_integration');
     expect(workbenchDoc).toContain('docs_public_continuous_integration');
     expect(workbenchDoc).toContain('docs_internal_continuous_integration');
@@ -421,6 +424,8 @@ describe('documentation-package workbench', () => {
     expect(workbenchDoc).toContain('${CI_PROJECT_PATH}.wiki.git');
     expect(workbenchDoc).toContain('no-op completion receipt');
     expect(workbenchDoc).toContain('nextPage = null');
+    expect(workbenchDoc).toContain('--page-id <published-page-id>');
+    expect(workbenchDoc).toContain('refresh-existing-page');
     expect(workbenchDoc).toContain(
       'stale bundled installed-user docs are therefore unshippable through the'
     );

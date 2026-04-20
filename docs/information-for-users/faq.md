@@ -57,7 +57,9 @@ Use the route that matches your real task.
 
 ### How do I switch between host and Docker on the active branch?
 
-Use the generated runtime-settings CLI on the active branch:
+Run `VI History: Prepare Local Runtime Settings CLI` first, then use the exact
+launcher command that prepare reports for your current platform. The logical
+launcher shape is:
 
 `vihs-runtime-settings --provider <host|docker> --labview-version <major> --labview-bitness <x86|x64>`
 
@@ -73,15 +75,24 @@ Use `VI History: Prepare Local Runtime Settings CLI` first.
 
 - The prepare command materializes the launchers under the extension-global
   storage root.
+- The prepare result reports the current-platform launcher path plus one exact
+  next command to run from any repo shell without reconstructing that hidden
+  storage layout.
+- The command reference and this FAQ are the governed installed-user help and
+  recovery surfaces for that CLI.
 - The governed settings targets are the platform-default user
   `settings.json` path or one explicit `--settings-file` override.
 - Workspace settings are not a supported target for this CLI surface.
 - The prepare command is admitted in untrusted workspaces because it only
   prepares launcher files, but installed compare remains blocked there.
+- If the launcher is missing, stale, or Node.js was repaired, rerun the same
+  prepare command to refresh it.
 
 ### How do I check what the runtime-settings CLI actually persisted?
 
-Use the governed validation surface:
+Run `VI History: Prepare Local Runtime Settings CLI` first, then use the exact
+launcher command that prepare reports for your current platform. The governed
+validation shape is:
 
 `vihs-runtime-settings --validate [--settings-file <path>]`
 
@@ -89,7 +100,9 @@ It reports the persisted `viHistorySuite.runtimeProvider`,
 `viHistorySuite.labviewVersion`, and `viHistorySuite.labviewBitness` facts,
 plus `runtimeValidationOutcome`, `runtimeProvider`, `runtimeEngine`, and
 `runtimeBlockedReason`. This keeps validation on one bounded CLI surface
-without reopening path-picking or a panel-side provider picker.
+without reopening path-picking or a panel-side provider picker. On the current
+Windows x64 private-release route, `ready` means the native Windows host or
+Docker Desktop Windows-container contract is admissible without WSL.
 
 ### How do I check live-session drift after changing runtime settings?
 

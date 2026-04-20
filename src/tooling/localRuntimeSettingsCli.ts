@@ -26,6 +26,7 @@ export interface LocalRuntimeSettingsCliArgs {
 export interface LocalRuntimeSettingsCliRunResult {
   outcome: 'help' | 'updated-settings' | 'validated-settings';
   settingsFilePath?: string;
+  settingsTarget?: LocalRuntimeSettingsCliGovernanceContract['supportedSettingsTargets'][number];
   provider?: LocalRuntimeSettingsCliProvider;
   labviewVersion?: string;
   labviewBitness?: LocalRuntimeSettingsCliBitness;
@@ -43,7 +44,9 @@ export interface MaterializedLocalRuntimeSettingsCli {
   javascriptLauncherPath: string;
   windowsLauncherPath: string;
   posixLauncherPath: string;
+  currentPlatformLauncherPath: string;
   modulePath: string;
+  nextCommand: string;
   exampleCommand: string;
 }
 
@@ -67,6 +70,11 @@ interface LocalRuntimeSettingsCliDeps {
   env?: NodeJS.ProcessEnv;
   locateRuntime?: typeof locateComparisonRuntime;
   runtimeLocatorDeps?: ComparisonRuntimeLocatorDeps;
+}
+
+interface ResolvedLocalRuntimeSettingsCliTarget {
+  settingsFilePath: string;
+  settingsTarget: LocalRuntimeSettingsCliGovernanceContract['supportedSettingsTargets'][number];
 }
 
 const CLI_ROOT_DIRECTORY_NAME = 'local-runtime-settings-cli';
@@ -159,21 +167,37 @@ export function resolveDefaultVsCodeSettingsPath(
 
 export function buildLocalRuntimeSettingsCliMaterialization(
   globalStoragePath: string,
-  extensionPath: string
+  extensionPath: string,
+  platform: NodeJS.Platform = process.platform
 ): MaterializedLocalRuntimeSettingsCli {
   const rootDirectoryPath = path.join(globalStoragePath, CLI_ROOT_DIRECTORY_NAME);
   const javascriptLauncherPath = path.join(rootDirectoryPath, JAVASCRIPT_LAUNCHER_NAME);
   const windowsLauncherPath = path.join(rootDirectoryPath, WINDOWS_LAUNCHER_NAME);
   const posixLauncherPath = path.join(rootDirectoryPath, POSIX_LAUNCHER_NAME);
   const modulePath = path.join(extensionPath, 'out', 'tooling', 'localRuntimeSettingsCli.js');
+  const currentPlatformLauncherPath = resolveCurrentPlatformLauncherPath(
+    windowsLauncherPath,
+    posixLauncherPath,
+    platform
+  );
+  const nextCommand = buildLauncherCommandLine(currentPlatformLauncherPath, platform, [
+    '--provider',
+    'host',
+    '--labview-version',
+    '2026',
+    '--labview-bitness',
+    'x64'
+  ]);
 
   return {
     rootDirectoryPath,
     javascriptLauncherPath,
     windowsLauncherPath,
     posixLauncherPath,
+    currentPlatformLauncherPath,
     modulePath,
-    exampleCommand: `${POSIX_LAUNCHER_NAME} --provider host --labview-version 2026 --labview-bitness x64`
+    nextCommand,
+    exampleCommand: nextCommand
   };
 }
 
@@ -241,7 +265,8 @@ export async function runLocalRuntimeSettingsCli(
     throw new Error('Missing required --labview-bitness.');
   }
 
-  const settingsFilePath = resolveSettingsFilePath(parsed, deps);
+  const resolvedTarget = resolveSettingsTarget(parsed, deps);
+  const settingsFilePath = resolvedTarget.settingsFilePath;
   await writeVsCodeSettingsFile(
     settingsFilePath,
     parsed.provider,
@@ -250,7 +275,15 @@ export async function runLocalRuntimeSettingsCli(
     deps.fs ?? fs
   );
 
-  writeLine(deps.stdout ?? process.stdout, `Updated ${settingsFilePath}`);
+  writeLine(
+    deps.stdout ?? process.stdout,
+    `Updated ${resolvedTarget.settingsTarget} target ${settingsFilePath}`
+  );
+  writeLine(
+    deps.stdout ?? process.stdout,
+    `settingsTarget=${resolvedTarget.settingsTarget}`
+  );
+  writeLine(deps.stdout ?? process.stdout, `settingsFilePath=${settingsFilePath}`);
   writeLine(deps.stdout ?? process.stdout, `viHistorySuite.runtimeProvider=${parsed.provider}`);
   writeLine(
     deps.stdout ?? process.stdout,
@@ -268,6 +301,7 @@ export async function runLocalRuntimeSettingsCli(
   return {
     outcome: 'updated-settings',
     settingsFilePath,
+    settingsTarget: resolvedTarget.settingsTarget,
     provider: parsed.provider,
     labviewVersion: parsed.labviewVersion,
     labviewBitness: parsed.labviewBitness
@@ -319,27 +353,36 @@ function normalizeProvider(value: string): LocalRuntimeSettingsCliProvider {
   throw new Error(`Unsupported compare provider: ${value}`);
 }
 
-function resolveSettingsFilePath(
+function resolveSettingsTarget(
   parsed: LocalRuntimeSettingsCliArgs,
   deps: LocalRuntimeSettingsCliDeps
-): string {
+): ResolvedLocalRuntimeSettingsCliTarget {
   if (parsed.settingsFilePath) {
     const cwd = deps.cwd ?? process.cwd;
-    return path.resolve(cwd(), parsed.settingsFilePath);
+    const settingsFilePath = path.resolve(cwd(), parsed.settingsFilePath);
+    assertSupportedSettingsTarget(settingsFilePath);
+    return {
+      settingsFilePath,
+      settingsTarget: 'explicit-settings-file'
+    };
   }
 
-  return resolveDefaultVsCodeSettingsPath(
-    deps.platform ?? process.platform,
-    deps.env ?? process.env,
-    deps.homedir ?? os.homedir
-  );
+  return {
+    settingsFilePath: resolveDefaultVsCodeSettingsPath(
+      deps.platform ?? process.platform,
+      deps.env ?? process.env,
+      deps.homedir ?? os.homedir
+    ),
+    settingsTarget: 'default-user-settings'
+  };
 }
 
 async function validateLocalRuntimeSettingsCli(
   parsed: LocalRuntimeSettingsCliArgs,
   deps: LocalRuntimeSettingsCliDeps
 ): Promise<LocalRuntimeSettingsCliRunResult> {
-  const settingsFilePath = resolveSettingsFilePath(parsed, deps);
+  const resolvedTarget = resolveSettingsTarget(parsed, deps);
+  const settingsFilePath = resolvedTarget.settingsFilePath;
   const settingsFacts = await readPersistedRuntimeSettingsFacts(settingsFilePath, deps.fs ?? fs);
   const locateRuntime = deps.locateRuntime ?? locateComparisonRuntime;
   const runtimeSelection = await locateRuntime(
@@ -352,7 +395,15 @@ async function validateLocalRuntimeSettingsCli(
       ? 'ready'
       : 'blocked';
 
-  writeLine(deps.stdout ?? process.stdout, `Validated ${settingsFilePath}`);
+  writeLine(
+    deps.stdout ?? process.stdout,
+    `Validated ${resolvedTarget.settingsTarget} target ${settingsFilePath}`
+  );
+  writeLine(
+    deps.stdout ?? process.stdout,
+    `settingsTarget=${resolvedTarget.settingsTarget}`
+  );
+  writeLine(deps.stdout ?? process.stdout, `settingsFilePath=${settingsFilePath}`);
   writeLine(
     deps.stdout ?? process.stdout,
     `viHistorySuite.runtimeProvider=${formatPersistedFact(settingsFacts.persistedProvider)}`
@@ -382,6 +433,7 @@ async function validateLocalRuntimeSettingsCli(
   return {
     outcome: 'validated-settings',
     settingsFilePath,
+    settingsTarget: resolvedTarget.settingsTarget,
     persistedProvider: settingsFacts.persistedProvider,
     persistedLabviewVersion: settingsFacts.persistedLabviewVersion,
     persistedLabviewBitness: settingsFacts.persistedLabviewBitness,
@@ -551,6 +603,21 @@ function ensureTerminalNewline(settingsText: string, endOfLine: '\n' | '\r\n'): 
   return `${settingsText}${endOfLine}`;
 }
 
+function assertSupportedSettingsTarget(settingsFilePath: string): void {
+  const normalizedSegments = path
+    .normalize(settingsFilePath)
+    .split(/[\\/]+/)
+    .map((segment) => segment.toLowerCase());
+  const finalSegment = normalizedSegments.at(-1);
+  const parentSegment = normalizedSegments.at(-2);
+
+  if (parentSegment === '.vscode' && finalSegment === 'settings.json') {
+    throw new Error(
+      'Workspace settings are not supported for VI History runtime-settings CLI. Use the default user settings.json target or an explicit non-workspace settings-file path.'
+    );
+  }
+}
+
 function isMissingFileError(error: unknown): error is NodeJS.ErrnoException {
   return (
     !!error &&
@@ -585,6 +652,30 @@ function resolveCliRuntimePlatform(platform: NodeJS.Platform): RuntimePlatform {
   throw new Error(
     `Unsupported runtime platform for VI History settings CLI validation: ${platform}`
   );
+}
+
+function resolveCurrentPlatformLauncherPath(
+  windowsLauncherPath: string,
+  posixLauncherPath: string,
+  platform: NodeJS.Platform
+): string {
+  return platform === 'win32' ? windowsLauncherPath : posixLauncherPath;
+}
+
+function buildLauncherCommandLine(
+  launcherPath: string,
+  platform: NodeJS.Platform,
+  args: readonly string[]
+): string {
+  return [quoteLauncherPathForShell(launcherPath, platform), ...args].join(' ');
+}
+
+function quoteLauncherPathForShell(launcherPath: string, platform: NodeJS.Platform): string {
+  if (platform === 'win32') {
+    return `"${launcherPath.replace(/"/g, '""')}"`;
+  }
+
+  return `'${escapeSingleQuotedShellString(launcherPath)}'`;
 }
 
 function renderJavascriptLauncher(modulePath: string): string {

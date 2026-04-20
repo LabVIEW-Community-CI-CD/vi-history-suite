@@ -32,13 +32,17 @@ interface PreparedLocalRuntimeSettingsCliSummary {
   javascriptLauncherPath?: string;
   windowsLauncherPath?: string;
   posixLauncherPath?: string;
+  currentPlatformLauncherPath?: string;
   rootDirectoryPath?: string;
+  nextCommand?: string;
+  exampleCommand?: string;
   supportedSettingsTargets?: readonly string[];
   untrustedWorkspacePosture?: string;
 }
 
 interface PreparedLocalRuntimeSettingsCliExecutionOptions {
   env?: NodeJS.ProcessEnv;
+  cwd?: string;
 }
 
 interface RuntimeSettingsLiveSessionProbeSummary {
@@ -497,7 +501,10 @@ async function testPrepareLocalRuntimeSettingsCli(): Promise<void> {
   assert.ok(result.javascriptLauncherPath);
   assert.ok(result.windowsLauncherPath);
   assert.ok(result.posixLauncherPath);
+  assert.ok(result.currentPlatformLauncherPath);
   assert.ok(result.defaultSettingsFilePath);
+  assert.ok(result.nextCommand);
+  assert.ok(result.exampleCommand);
   assert.deepEqual(result.supportedSettingsTargets, [
     'default-user-settings',
     'explicit-settings-file'
@@ -507,10 +514,19 @@ async function testPrepareLocalRuntimeSettingsCli(): Promise<void> {
   await fs.access(result.javascriptLauncherPath!);
   await fs.access(result.windowsLauncherPath!);
   await fs.access(result.posixLauncherPath!);
+  assert.equal(result.exampleCommand, result.nextCommand);
+  assert.match(result.nextCommand!, /--provider host --labview-version 2026 --labview-bitness x64/);
+  if (process.platform === 'win32') {
+    assert.equal(result.currentPlatformLauncherPath, result.windowsLauncherPath);
+  } else {
+    assert.equal(result.currentPlatformLauncherPath, result.posixLauncherPath);
+  }
 
   const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-runtime-settings-cli-'));
   try {
     const settingsFilePath = path.join(tempRoot, 'settings.json');
+    const arbitraryWorkingDirectory = path.join(tempRoot, 'arbitrary-repo-shell');
+    await fs.mkdir(arbitraryWorkingDirectory, { recursive: true });
     await fs.writeFile(
       settingsFilePath,
       `${JSON.stringify({ 'editor.tabSize': 2 }, null, 2)}\n`,
@@ -526,12 +542,19 @@ async function testPrepareLocalRuntimeSettingsCli(): Promise<void> {
       'x64',
       '--settings-file',
       settingsFilePath
-    ]);
+    ], {
+      cwd: arbitraryWorkingDirectory
+    });
     if (process.platform === 'win32') {
       assert.equal(hostRun.launcherPath, result.windowsLauncherPath);
     } else {
       assert.equal(hostRun.launcherPath, result.posixLauncherPath);
     }
+    assert.match(hostRun.stdout, /settingsTarget=explicit-settings-file/);
+    assert.match(
+      hostRun.stdout,
+      new RegExp(`settingsFilePath=${settingsFilePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`)
+    );
     assert.match(hostRun.stdout, /viHistorySuite\.runtimeProvider=host/);
     assert.match(hostRun.stdout, /viHistorySuite\.labviewVersion=2026/);
     assert.match(hostRun.stdout, /viHistorySuite\.labviewBitness=x64/);
@@ -557,6 +580,7 @@ async function testPrepareLocalRuntimeSettingsCli(): Promise<void> {
         hostValidationRun.stdout,
         new RegExp(settingsFilePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
       );
+      assert.match(hostValidationRun.stdout, /settingsTarget=explicit-settings-file/);
       assert.match(hostValidationRun.stdout, /viHistorySuite\.runtimeProvider=host/);
       assert.match(hostValidationRun.stdout, /viHistorySuite\.labviewVersion=2026/);
       assert.match(hostValidationRun.stdout, /viHistorySuite\.labviewBitness=x64/);
@@ -582,6 +606,7 @@ async function testPrepareLocalRuntimeSettingsCli(): Promise<void> {
       assert.equal(dockerRun.launcherPath, result.posixLauncherPath);
     }
     assert.match(dockerRun.stdout, /viHistorySuite\.runtimeProvider=docker/);
+    assert.match(dockerRun.stdout, /settingsTarget=explicit-settings-file/);
     assert.deepEqual(JSON.parse(await fs.readFile(settingsFilePath, 'utf8')), {
       'editor.tabSize': 2,
       'viHistorySuite.runtimeProvider': 'docker',
@@ -600,6 +625,7 @@ async function testPrepareLocalRuntimeSettingsCli(): Promise<void> {
         dockerValidationRun.stdout,
         new RegExp(settingsFilePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
       );
+      assert.match(dockerValidationRun.stdout, /settingsTarget=explicit-settings-file/);
       assert.match(dockerValidationRun.stdout, /viHistorySuite\.runtimeProvider=docker/);
       assert.match(dockerValidationRun.stdout, /viHistorySuite\.labviewVersion=2026/);
       assert.match(dockerValidationRun.stdout, /viHistorySuite\.labviewBitness=x64/);
@@ -637,6 +663,7 @@ async function testPrepareLocalRuntimeSettingsCli(): Promise<void> {
       validationRun.stdout,
       new RegExp(invalidSettingsFilePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
     );
+    assert.match(validationRun.stdout, /settingsTarget=explicit-settings-file/);
     assert.match(validationRun.stdout, /viHistorySuite\.runtimeProvider=mystery/);
     assert.match(validationRun.stdout, /viHistorySuite\.labviewVersion=2026/);
     assert.match(validationRun.stdout, /viHistorySuite\.labviewBitness=x64/);
@@ -662,6 +689,7 @@ async function testPrepareLocalRuntimeSettingsCli(): Promise<void> {
         defaultTargetRun.stdout,
         new RegExp(defaultSettingsFilePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
       );
+      assert.match(defaultTargetRun.stdout, /settingsTarget=default-user-settings/);
       assert.match(
         defaultTargetRun.stdout,
         new RegExp(`viHistorySuite\\.runtimeProvider=${firstProvider}`)
@@ -688,6 +716,7 @@ async function testPrepareLocalRuntimeSettingsCli(): Promise<void> {
         activeDockerRun.stdout,
         new RegExp(defaultSettingsFilePath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
       );
+      assert.match(activeDockerRun.stdout, /settingsTarget=default-user-settings/);
       assert.match(
         activeDockerRun.stdout,
         new RegExp(`viHistorySuite\\.runtimeProvider=${secondProvider}`)
@@ -866,7 +895,8 @@ async function runPreparedLocalRuntimeSettingsCli(
       ['/d', '/s', '/c', result.windowsLauncherPath!, ...args],
       {
         encoding: 'utf8',
-        env: options.env
+        env: options.env,
+        cwd: options.cwd
       }
     );
     return {
@@ -877,7 +907,8 @@ async function runPreparedLocalRuntimeSettingsCli(
 
   const execution = await execFile(result.posixLauncherPath!, args, {
     encoding: 'utf8',
-    env: options.env
+    env: options.env,
+    cwd: options.cwd
   });
   return {
     ...execution,
