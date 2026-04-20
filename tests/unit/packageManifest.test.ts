@@ -279,6 +279,9 @@ describe('extension manifest research alignment', () => {
     expect(manifest.scripts?.['gitlab:git-credential:refresh']).toBe(
       'node scripts/refreshLocalGitLabGitCredential.js'
     );
+    expect(manifest.scripts?.['gitlab:private-release:publish']).toBe(
+      'node scripts/publishWindowsPrivateRelease.js'
+    );
     expect(manifest.scripts?.['branch:governance:assert']).toBe(
       'node scripts/assertGovernedBranchBaseline.js'
     );
