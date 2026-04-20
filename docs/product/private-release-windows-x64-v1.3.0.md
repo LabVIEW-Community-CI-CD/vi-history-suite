@@ -15,9 +15,9 @@ publishes the controlled Windows-only install asset.
 - docs-only branch merged first: `feature/windows-private-release-docs-26514`
   at `376dd881ecbe0ab9f474500c20f7719f84d72d85`
 - current private-release publication branch:
-  `feature/windows-private-release-publication-governance`
+  `feature/windows-private-release-v1.3.0-refresh`
 - published private-release source commit:
-  `f3aba5f5ba0a307032f88051b3bcb26a30f288f8`
+  `e26ac6f504152e02e61572cb6aa0d8345f3af2bb`
 - next deferred branch after this prep slice merges: `feature/linux-runtime-variant`
 
 ## Scope
@@ -45,8 +45,8 @@ publishes the controlled Windows-only install asset.
 - package line: `1.3.0`
 - retained package path: `preview-evidence/vi-history-suite-1.3.0.vsix`
 - retained package SHA-256:
-  `89CDC47DB2C3468A951FC0CD0812AEA041BCF0A77CFDF34DD65B5B1BEA7BCD52`
-- retained package size: `501601` bytes
+  `F46CCB721B1AB772408EB2CFDBDFFCA917E41229D38E9F624CE107C795D53EA8`
+- retained package size: `493630` bytes
 
 ## Private Release Publication
 
@@ -57,9 +57,9 @@ publishes the controlled Windows-only install asset.
 - release URL:
   `https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.0-windows-x64`
 - published source branch:
-  `feature/windows-private-release-publication-governance`
+  `feature/windows-private-release-v1.3.0-refresh`
 - published source commit:
-  `f3aba5f5ba0a307032f88051b3bcb26a30f288f8`
+  `e26ac6f504152e02e61572cb6aa0d8345f3af2bb`
 - VSIX direct asset URL:
   `https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.0-windows-x64/downloads/private-releases/windows-x64/vi-history-suite-1.3.0.vsix`
 - SHA-256 direct asset URL:
