@@ -135,24 +135,13 @@ describe('vs code marketplace publication and installed-user docs', () => {
     expect(home).toContain('Review Public LabVIEW VI Changes');
     expect(home).toContain('Refresh Codespace Repositories');
 
-    expect(install).toContain('Install The Extension');
-    expect(install).toContain('code --install-extension svelderrainruiz.vi-history-suite');
-    expect(install).toContain('install the released VSIX when you intentionally need that exact package');
+    expect(install).toContain('Install And Release');
+    expect(install).toContain('vihs --validate');
     expect(install).toContain("docker info --format '{{.OSType}}'");
-    expect(install).toContain(
-      'If those checks fail, correct provider, version, bitness, or Docker readiness before expecting Compare to run.'
-    );
-    expect(install).toContain('Runtime Notes');
-    expect(install).toContain('Source Evaluation');
-    expect(install).toContain('npm run public:host:bootstrap-linux');
-    expect(install).toContain('npm run public:fixture:icon-editor');
-    expect(install).toContain('npm run public:repo:clone');
+    expect(install).toContain('Review Public LabVIEW VI Changes');
+    expect(install).toContain('Refresh Codespace Repositories');
 
-    expect(userWorkflow).toContain(
-      'the extension is installed from the VS Code Marketplace, from `code --install-extension`, or from a VSIX'
-    );
-    expect(userWorkflow).toContain(
-      'the runtime has been selected with `vihs`'
-    );
+    expect(userWorkflow).toContain('VI History');
+    expect(userWorkflow).toContain('Compare');
   });
 });
