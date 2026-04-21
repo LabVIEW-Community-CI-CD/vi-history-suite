@@ -179,7 +179,7 @@ describe('windows private release runner lane docs', () => {
     });
 
     expect(packageManifest.scripts?.['acceptance:windows:private-release']).toBe(
-      'npm run compile && node scripts/runWindowsPrivateReleaseAcceptance.js'
+      'tsc -p . && node scripts/runWindowsPrivateReleaseAcceptance.js'
     );
     expect(packageManifest.scripts?.['gitlab:runner:assert']).toBe(
       'node scripts/assertGovernedRunnerLanes.js'
