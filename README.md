@@ -78,21 +78,18 @@ Installed-user help:
 
 ## Supported Today
 
-- exact released Marketplace line `1.2.2`: Docker-only and x64-only
-- maintained `develop` candidate line `1.3.0`: Windows PowerShell bootstrap
-  plus `vihs`, with default `host/windows/2026/x64`, local `LabVIEWCLI`, and
-  bounded expert Docker
-- for the exact released Docker-only line, install or start Docker Desktop or
-  Docker before the first compare
+- Windows defaults to local `LabVIEWCLI`
+- run `vihs --validate` before the first compare on a fresh machine
+- right-click a `.vi`, `.ctl`, or `.vit` file in the Explorer, or use the
+  editor-title `VI History` action, to start a comparison
+- if Docker is selected, install or start Docker Desktop or Docker before the
+  first compare
 - host Windows LabVIEW years `2020` through `2026` are selectable when they
   are installed locally
 - `docker/windows` is supported for `2026` `x64` only
 - Docker years before `2026` are unsupported
 - `docker/linux` for `2026` and `host/linux` are not currently implemented
 - blocked or unsupported paths fail closed with explicit next-step guidance
-- exact released baseline reminder:
-  install or start Docker Desktop or Docker before the first compare on the
-  Docker-only line
 
 ## Report A Problem Or Request Support
 
@@ -196,13 +193,13 @@ Authority release facts:
 
 - `SHIP-0001`: releasable `v0.2.0` VSIX product
 - landed ship tranche: `TRANCHE-009`
-- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`, `v1.2.2`
+- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`, `v1.2.2`, `v1.3.0`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.2.2`
-- current published package line on `main`: `1.2.2`
+- current exact released line: `v1.3.0`
+- current published package line on `main`: `1.3.0`
 - current develop package line on `develop`: `1.3.0`
-- active exact release candidate line on `develop`: `v1.3.0`
-- active release-candidate branch: `release/1.3.0`
+- active exact release candidate line on `develop`: none; exact `v1.3.0` closeout is complete and the next SemVer line is not open yet
+- active release-candidate branch: none
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`

@@ -154,11 +154,12 @@ Latest landed ship target:
 - retained release pipeline: `2428809456`
 - retained release job: `13779604462`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.2.2`
-- current published package line on `main`: `1.2.2`
+- current exact released line: `v1.3.0`
+- current published package line on `main`: `1.3.0`
 - current develop package line on `develop`: `1.3.0`
-- active exact release candidate line on `develop`: `v1.3.0`
-- active release-candidate branch: `release/1.3.0`
+- active exact release candidate line on `develop`: none; exact `v1.3.0`
+  closeout is complete and the next SemVer line is not open yet
+- active release-candidate branch: none
 - current Windows x64 private GitLab release: `private-v1.3.0-windows-x64`
 - private GitLab release URL:
   `https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.0-windows-x64`
@@ -229,16 +230,14 @@ Latest landed ship target:
 - current changelog: [CHANGELOG.md](../../CHANGELOG.md)
 - docs-workbench image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
 - assurance-workbench image: `registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main`
-- remaining blockers: none on exact `v1.2.2`; public `main` publishes
-  `86b19a2`, the public GitHub release `v1.2.2` is live, the official gallery
-  extension query verifies Marketplace version `1.2.2` for
-  `svelderrainruiz.vi-history-suite`, and the latest retained expert-agent
-  verdict returned no findings on those exact published public release
-  surfaces; the next `v1.3.0` candidate now publishes public `develop`
-  `b1de8c5` plus public wiki head `fc6af3c`, the post-publication
-  expert-agent review now also retains no findings on those live candidate
-  heads, and the runtime-provider public-acceptance gate is now closed on that
-  published candidate pair
+- remaining blockers: none on exact `v1.3.0`; authority `main` `9587a99`
+  was back-merged into `develop` as `04b07bd` through the protected path, the
+  resulting `develop` pipeline `2467081960` is green, public `main`
+  publishes `0ea58af`, public GitHub release `v1.3.0` is live, the official
+  gallery extension query verifies Marketplace version `1.3.0` for
+  `svelderrainruiz.vi-history-suite`, the last clean published public
+  candidate remains public `develop` `0f19f4b` plus public wiki head
+  `53b5348`, and the next SemVer line is not open yet
 
 Current active and recently closed tranches:
 
@@ -408,12 +407,12 @@ Post-release tranches:
     surface so Marketplace users land on maintained local-use documentation
     first, while repo/fork/Codespaces procedures remain explicit secondary
     source-evaluation lanes
-  - the exact public `main` line now publishes `86b19a2`, the maintained
-    public `develop` candidate now publishes `b1de8c5`, the public wiki
-    candidate head now publishes `fc6af3c`, the VS Code Marketplace item
-    verifies `1.2.2`, and the later public candidate line is now reopened on
-    `v1.3.0` instead of remaining attached to the historical exact `1.2.2`
-    publication closeout
+  - the exact public `main` line now publishes `0ea58af`, the last clean
+    public `develop` candidate remains `0f19f4b`, the last clean public wiki
+    candidate head remains `53b5348`, the VS Code Marketplace item verifies
+    `1.3.0`, and exact `v1.3.0` closeout is now complete on authority `main`
+    `9587a99` back-merged into `develop` `04b07bd` with green pipeline
+    `2467081960`; the next exact line is not open yet
   - sustainment does not absorb the active `TRANCHE-016` local-LabVIEWCLI
     contract reset, the historical `TRANCHE-010` Docker-only public closeout,
     or the runtime-provider public-acceptance gate record
@@ -575,8 +574,8 @@ Post-release tranches:
 - `TRANCHE-014`: Public Codespaces public-repo bootstrap
   - closed issue: [ISSUE-0411 Public Codespaces Public-Repo Bootstrap](./issues/ISSUE-0411-public-codespaces-public-repo-bootstrap.md)
   - closed execution program: [PROGRAM-0006: Public Codespaces Public-Repo Bootstrap](./execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md)
-  - exact public `main` now publishes `v1.2.2`, while the later public
-    `develop` line is now reopened as the next exact candidate line `v1.3.0`
+  - exact public `main` now publishes `v1.3.0`, and no later public
+    `develop` line is open yet
   - the first `1.2.0` correction repaired branch-governance admission by
     realigning exact `main` back into `develop` before feature work continues
   - the line now adds one generic public-repo bootstrap surface for public
@@ -584,9 +583,11 @@ Post-release tranches:
     helper path separate
   - Sergio's documented brand-new-fork and brand-new-Codespace rerun passes on
     `Examples/Logging with Helper-VIs.vi`, the exact public `main` line now
-    publishes `86b19a2`, and the maintained public wiki/reference-manual
-    package now publishes `fc6af3c` for the next `v1.3.0` candidate while the
-    exact `v1.2.2` closeout stays retained
+    publishes `0ea58af`, the VS Code Marketplace listing now serves `1.3.0`,
+    the maintained public wiki/reference-manual package now publishes
+    `53b5348`, the last clean public `develop` candidate remains `0f19f4b`,
+    and exact `v1.3.0` closeout is complete on authority `develop`
+    `04b07bd`
 
 Historical public closeout and runtime-provider public-acceptance gate record:
 
@@ -614,7 +615,7 @@ Historical public closeout and runtime-provider public-acceptance gate record:
     installed-user overview
   - the canonical Gate D blocker on `resource/plugins/lv_icon.vi` is retired,
     while `v1.0.2` is now retained as a burned exact release and the current
-    exact public GitHub release line is `v1.2.2`
+    exact public GitHub release line is `v1.3.0`
   - the public branch model is now explicit: `develop` is the integration and
     Codespaces-evaluation branch, `release/*` is the release-candidate lane,
     and `main` remains the protected exact-release line

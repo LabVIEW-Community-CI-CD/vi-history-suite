@@ -32,11 +32,11 @@ describe('public Codespaces public-repo bootstrap docs', () => {
     expect(currentState).toContain('`TRANCHE-014`: Public Codespaces public-repo bootstrap');
     expect(currentState).toContain('canonical `npm run public:fixture:icon-editor` helper-backed path');
     expect(currentState).toContain('generic `npm run public:repo:clone` surface');
-    expect(currentState).toContain('current exact released line: `v1.2.2`');
-    expect(currentState).toContain('active exact release candidate line on `develop`: `v1.3.0`');
+    expect(currentState).toContain('current exact released line: `v1.3.0`');
     expect(currentState).toContain(
-      'verdict returned no findings on those exact published public release'
+      'active exact release candidate line on `develop`: none; exact `v1.3.0`'
     );
+    expect(currentState).toContain('the next SemVer line is not open yet');
 
     expect(candidate).toContain(
       'Decision: helper-backed canonical path plus generic public-repo reference manual'
@@ -48,10 +48,10 @@ describe('public Codespaces public-repo bootstrap docs', () => {
     expect(candidate).toContain('Published-surface expert-agent review:');
     expect(candidate).toContain('`no-findings-post-publication-v1.3.0-candidate`');
     expect(candidate).toContain('Required skill: `vi-history-suite-expert-agent-reviewer`');
-    expect(candidate).toContain('Exact public release: `v1.2.2-published`');
+    expect(candidate).toContain('Exact public release: `v1.3.0-github-release-and-marketplace-published`');
     expect(candidate).toContain('remains historical exact');
     expect(candidate).toContain('`v1.2.0` baseline evidence only');
-    expect(candidate).toContain('Runtime-provider public-acceptance gate is now closed');
+    expect(candidate).toContain('Runtime-provider public-acceptance gate remains closed');
 
     expect(issue).toContain('public `github.com` and `gitlab.com` HTTPS repos only');
     expect(issue).toContain('brand new fork');

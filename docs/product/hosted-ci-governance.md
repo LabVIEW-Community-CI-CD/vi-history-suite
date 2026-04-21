@@ -6,13 +6,27 @@ Retain one governed hosted-automation matrix so GitLab authority pipelines,
 public GitHub required checks, and GitHub experiment workflows stop being
 raw-YAML-only truth.
 
-This document is the control-plane summary of the governed `1.3.0` exact-tag
-and Marketplace-closeout opening. The exact public release remains `v1.2.2`;
-`main` carries `1.2.2`, `develop` carries `1.3.0`, and the clean published-
-surface review gate has now reopened the protected closeout lane on
-`release/1.3.0`.
+This document is the control-plane summary of the governed `v1.3.0`
+exact-tag, public-release, Marketplace publication, and exact-closeout
+sequence. The exact public release now serves `v1.3.0`, `main` carries
+`1.3.0`, `develop` carries `1.3.0`, the Marketplace listing serves `1.3.0`,
+authority `main` `9587a99` is back-merged into `develop` `04b07bd`, the
+resulting `develop` pipeline `2467081960` is green, and no next
+release-candidate branch is open yet.
 
-## Opening Decision
+## Current Exact Closeout State
+
+- current exact release line: `v1.3.0`
+- current `main` package line: `1.3.0`
+- current `develop` package line: `1.3.0`
+- active exact release candidate line on `develop`: none; exact `v1.3.0`
+  closeout is complete and the next SemVer line is not open yet
+- active release-candidate branch: none
+- protected back-merge proof: authority `main` `9587a99` into `develop`
+  `04b07bd`
+- resulting `develop` pipeline: `2467081960` `success`
+
+## Historical Opening Decision For v1.3.0
 
 - current exact release line: `v1.2.2`
 - current `main` package line: `1.2.2`
@@ -174,9 +188,9 @@ Design-gate boundary:
   governance-heavy slices
 - `npm run design:gate` now starts with `npm run branch:governance:assert`
   so the gate fails closed when `develop` has not yet absorbed exact `main`
-- exact release closeout also remains incomplete until the protected
-  back-merge of exact released `main` into `develop` and the resulting green
-  `develop` pipeline are retained as part of the same release follow-through
+- exact release closeout only becomes complete after the protected back-merge
+  of exact released `main` into `develop` and the resulting green `develop`
+  pipeline are retained as part of the same release follow-through
 - `npm run design:gate:assert-complete` remains the retained assertion surface
 - GitLab does not pretend that local design-gate proof is a GitHub-style named
   required check

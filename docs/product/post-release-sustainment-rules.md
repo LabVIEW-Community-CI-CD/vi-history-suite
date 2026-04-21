@@ -68,13 +68,14 @@ Current version-line contract:
 
 - retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`,
   `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`,
-  `v1.2.2`
+  `v1.2.2`, `v1.3.0`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.2.2`
-- current published package line on `main`: `1.2.2`
+- current exact released line: `v1.3.0`
+- current published package line on `main`: `1.3.0`
 - current develop package line on `develop`: `1.3.0`
-- active exact release candidate line on `develop`: `v1.3.0`
-- active release-candidate branch: `release/1.3.0`
+- active exact release candidate line on `develop`: none; exact `v1.3.0`
+  closeout is complete and the next SemVer line is not open yet
+- active release-candidate branch: none
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
@@ -83,7 +84,7 @@ Current version-line contract:
 - hotfix branch family: `hotfix/*`
 - next-line branch model: `GitFlow`
 
-Latest recorded opening decision for the current line:
+Historical opening decision that opened exact `v1.3.0`:
 
 - chosen bump: `minor`
 - target exact candidate line: `v1.3.0`
