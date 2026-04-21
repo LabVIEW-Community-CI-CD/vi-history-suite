@@ -18,6 +18,10 @@ governed_runner_admission:
   script:
     - $ErrorActionPreference = 'Stop'
     - npm ci
+    - $npmCommand = (Get-Command npm -ErrorAction Stop).Source
+    - $nodeDirectory = Split-Path -Parent $npmCommand
+    - if (-not (Test-Path (Join-Path $nodeDirectory 'node.exe'))) { throw "Unable to locate node.exe adjacent to npm at $npmCommand" }
+    - $env:PATH = "$nodeDirectory;$env:PATH"
     - npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence
   artifacts:
     when: always
@@ -407,6 +411,10 @@ windows_private_release_acceptance:
   script:
     - $ErrorActionPreference = 'Stop'
     - npm ci
+    - $npmCommand = (Get-Command npm -ErrorAction Stop).Source
+    - $nodeDirectory = Split-Path -Parent $npmCommand
+    - if (-not (Test-Path (Join-Path $nodeDirectory 'node.exe'))) { throw "Unable to locate node.exe adjacent to npm at $npmCommand" }
+    - $env:PATH = "$nodeDirectory;$env:PATH"
     - npm run acceptance:windows:private-release
   artifacts:
     when: always
