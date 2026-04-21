@@ -2,11 +2,11 @@
 
 - Version line: `1.3.0`
 - Burned exact release line: `v1.0.2`
-- Recorded at: `2026-04-14T10:45:07Z`
+- Recorded at: `2026-04-21`
 - Authority source of truth: GitLab `develop` -> `release/*` -> `main`
-- Published public source commit: `86b19a2`
-- Public `develop` candidate commit: `b1de8c5`
-- Published public wiki head: `fc6af3c`
+- Published public source commit: `0ea58af`
+- Public `develop` candidate commit: `0f19f4b`
+- Published public wiki head: `53b5348`
 
 ## Branch Model
 
@@ -25,7 +25,7 @@
 
 ## Readiness
 
-- Authority baseline: `v1.2.2-exact-public-release-published`
+- Authority baseline: `v1.3.0-exact-closeout-complete-no-next-line-open`
 - Local installed VSIX build: `private-v1.3.0-windows-x64-published`
 - Local public devcontainer: `v1.1.0-published-baseline`
 - Local public fixture helper: `v1.1.0-published-baseline`
@@ -34,46 +34,48 @@
 - Published-surface expert-agent review:
   `no-findings-post-publication-v1.3.0-candidate`
 - Runtime-provider public-acceptance gate: `closed`
-- Exact public release: `v1.2.2-published`
+- Exact public release: `v1.3.0-github-release-and-marketplace-published`
 
 ## Exact Release Baseline
 
-- GitHub release: `v1.2.2`
+- GitHub release: `v1.3.0`
 - GitHub release URL:
-  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.2.2`
-- GitHub asset: `vi-history-suite-1.2.2.vsix`
+  `https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.0`
+- GitHub asset: `vi-history-suite-1.3.0.vsix`
 - GitHub asset SHA-256:
-  `182b7b033fddc09191b6a7852bc94a045a9cc6847a4e3c22661dd288e42f76a9`
+  `2fcafa94dc87e78bfe7f85484b62763f8506b0d706c9574c0f5ee60052fa8811`
 - VS Code Marketplace item: `svelderrainruiz.vi-history-suite`
-- VS Code Marketplace version: `1.2.2`
+- VS Code Marketplace version: `1.3.0`
 
 ## Public Publication
 
-- The exact published public source head on `main` now publishes `86b19a2` and is
-  retained in `docs/product/public-github-source-publication-ledger.{md,json}`.
-- The maintained public `develop` candidate for `v1.3.0` now publishes
-  `b1de8c5` through GitHub PR `#32` and is retained here.
-- The maintained public wiki head is now `fc6af3c` and is retained in
+- The exact published public source head on `main` now publishes `0ea58af`,
+  and public GitHub exact release `v1.3.0` is retained in
+  `docs/product/public-github-source-publication-ledger.{md,json}`.
+- The last clean public `develop` candidate for `v1.3.0` remains `0f19f4b`
+  through GitHub PR `#35` and is retained here.
+- The last clean public wiki head remains `53b5348` and is retained in
   `docs/product/public-github-wiki-publication-ledger.{md,json}`.
-- Review-ready is retained and the runtime-provider public-acceptance gate is
-  now closed because the post-publication expert-agent review returns a clean
-  verdict on those live candidate heads.
-- The exact VS Code Marketplace item still verifies `1.2.2` through the
-  official gallery extension query.
+- The latest expert-agent review on those live candidate heads returned
+  `no findings` after the public-wiki review fold publication `c71af69` and
+  the bundled-doc wording follow-up publication `0f19f4b`.
+- Exact closeout is now retained complete because authority `main` `9587a99`
+  was back-merged into `develop` `04b07bd` through the protected path and the
+  resulting `develop` pipeline `2467081960` is green.
 
 ## Local Proof
 
 - `npm run branch:governance:assert`, `npm run docs:gate:core`,
   `npm run design:gate`, and `npm run design:gate:assert-complete` all passed
-  on the `1.2.2` authority tranche before public publication.
+  on the authority tranche before public publication and exact closeout.
 - The controlled Windows-only private GitLab release for the current candidate
   is now published at
   `https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.0-windows-x64`.
 - Installed-user docs, bundled docs, and runtime-doctor next actions now treat
   missing Docker CLI or a stopped daemon as a first-run prerequisite boundary.
-- Exact release closeout is now governed as incomplete until the released
-  `main` line has been back-merged into `develop` through the protected path
-  and the resulting `develop` pipeline is green.
+- Exact release closeout is now retained complete on authority `main`
+  `9587a99` back-merged into `develop` `04b07bd` with green `develop`
+  pipeline `2467081960`.
 
 ## Historical Public Bootstrap Baseline
 
@@ -91,18 +93,21 @@
 - Required skill: `vi-history-suite-expert-agent-reviewer`
 - Canonical Codex skill path:
   `/mnt/c/Users/sveld/.codex/skills/vi-history-suite-expert-agent-reviewer`
-- Exact published public release commit under review: `86b19a2`
-- Exact published public wiki head under review: `527a8b4`
+- Exact published public release commit retained for exact `v1.3.0`:
+  `0ea58af`
+- Exact published public wiki head retained for the last clean candidate:
+  `53b5348`
 - Latest retained verdict: `no findings; exact release / Marketplace publish may proceed`
-- Retained at: `2026-04-14T10:30:20Z`
-- Exact published public candidate commit under review: `b1de8c5`
-- Exact published public wiki head under review: `fc6af3c`
-- Prior retained expert-agent review: `findings-present` on `722c1f7` /
+- Retained at: `2026-04-21T02:48:58Z`
+- Exact published public candidate commit under review: `0f19f4b`
+- Exact published public wiki head under review: `53b5348`
+- Prior retained expert-agent review: `findings-present` on `1c369f7` /
   `fc6af3c` with `2` published-surface findings folded into the current
   candidate.
-- Exact `v1.2.2` tagging and Marketplace publication remain closed cleanly on
-  published-surface review grounds, and the latest `v1.3.0` expert-agent
-  review on live public candidate heads is now retained with no findings.
+- Exact `v1.3.0` tagging, public GitHub release, and Marketplace publication
+  now remain closed cleanly on published-surface review grounds, and
+  authority exact closeout is retained complete on back-merge `04b07bd` with
+  green pipeline `2467081960`.
 
 ## Tester Fixture Strategy
 
@@ -143,6 +148,7 @@
 
 ## Remaining Blockers
 
-- No release-path blocker remains on exact `v1.2.2`.
-- Runtime-provider public-acceptance gate is now closed on the published
-  `v1.3.0` candidate heads (`b1de8c5` / `fc6af3c`).
+- No release-path blocker remains on exact `v1.3.0`.
+- Runtime-provider public-acceptance gate remains closed on the published
+  `v1.3.0` candidate heads (`0f19f4b` / `53b5348`).
+- The next SemVer line is not open yet.

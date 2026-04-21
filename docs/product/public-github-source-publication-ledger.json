@@ -1,7 +1,7 @@
 {
   "generatedFor": "vi-history-suite",
   "publicationSurface": "public-github-source-repo",
-  "publishedHeadCommit": "b1de8c5",
+  "publishedHeadCommit": "0ea58af",
   "publications": [
     {
       "id": "public-source-product-repo-baseline",
@@ -315,6 +315,65 @@
         "docs/product/current-state.md",
         "docs/product/public-release-candidate.md",
         "docs/release-procedure.md"
+      ]
+    },
+    {
+      "id": "public-source-v1-3-0-publication-control-refresh",
+      "title": "Public source v1.3.0 publication-control refresh",
+      "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
+      "status": "published",
+      "publishedDate": "2026-04-20",
+      "repoCommit": "1c369f7",
+      "primaryAuthority": [
+        "public-github-source/.github/ISSUE_TEMPLATE/labview-version-support.yml",
+        "public-github-source/tests/unit/publicRepoPackageSurface.test.ts",
+        "tests/integration/suite/extensionHost.test.ts",
+        "docs/product/public-release-candidate.md",
+        "docs/release-procedure.md"
+      ]
+    },
+    {
+      "id": "public-source-v1-3-0-public-wiki-review-fold-publication",
+      "title": "Public source v1.3.0 public-wiki review fold publication",
+      "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
+      "status": "published",
+      "publishedDate": "2026-04-20",
+      "repoCommit": "c71af69",
+      "primaryAuthority": [
+        "docs/product/public-github-wiki-publication-ledger.md",
+        "docs/product/public-github-wiki-publication-ledger.json",
+        "resources/bundled-docs/manifest.json",
+        "docs/product/public-release-candidate.md",
+        "docs/release-procedure.md"
+      ]
+    },
+    {
+      "id": "public-source-v1-3-0-bundled-doc-wording-follow-up",
+      "title": "Public source v1.3.0 bundled-doc wording follow-up",
+      "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
+      "status": "published",
+      "publishedDate": "2026-04-20",
+      "repoCommit": "0f19f4b",
+      "primaryAuthority": [
+        "public-github-source/SUPPORT.md",
+        "resources/bundled-docs/manifest.json",
+        "docs/product/public-release-candidate.md",
+        "docs/release-procedure.md"
+      ]
+    },
+    {
+      "id": "public-source-v1-3-0-exact-release",
+      "title": "Public source v1.3.0 exact release",
+      "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
+      "status": "published",
+      "publishedDate": "2026-04-21",
+      "repoCommit": "0ea58af",
+      "primaryAuthority": [
+        "README.md",
+        "CHANGELOG.md",
+        "docs/product/public-release-candidate.md",
+        "docs/release-procedure.md",
+        "package.json"
       ]
     }
   ]

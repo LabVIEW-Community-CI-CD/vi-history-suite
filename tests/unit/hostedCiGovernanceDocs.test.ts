@@ -216,7 +216,8 @@ describe('hosted ci governance docs', () => {
     expect(matrixDoc).toContain('npm run branch:governance:assert');
     expect(matrixDoc).toContain('merge gate: `only_allow_merge_if_pipeline_succeeds=true`');
     expect(matrixDoc).toContain('classification: characterization-only experiment automation');
-    expect(matrixDoc).toContain('back-merge of exact released `main` into `develop`');
+    expect(matrixDoc).toContain('protected back-merge');
+    expect(matrixDoc).toContain('resulting green `develop`');
     expect(matrixDoc).toContain('linux-assurance');
     expect(matrixDoc).toContain('`windows_private_release_acceptance`');
     expect(matrixDoc).toContain('`assurance_release_gate`');

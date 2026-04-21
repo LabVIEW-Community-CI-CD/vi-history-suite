@@ -24,15 +24,17 @@ describe('private release assurance contradiction guards', () => {
     expect(faq).toContain('`v0.2.18`');
   });
 
-  it('keeps the exact released Docker-only scope separate from the active Windows private-release candidate', () => {
+  it('keeps the exact released installed-user contract separate from the private Windows prep surface', () => {
     const readme = readText('README.md');
     const currentState = readText('docs/product/current-state.md');
     const releaseProcedure = readText('docs/release-procedure.md');
 
-    expect(readme).toContain('exact released Marketplace line `1.2.2`: Docker-only and x64-only');
-    expect(readme).toContain('maintained `develop` candidate line `1.3.0`: Windows PowerShell bootstrap');
-    expect(currentState).toContain('current exact released line: `v1.2.2`');
-    expect(currentState).toContain('active exact release candidate line on `develop`: `v1.3.0`');
+    expect(readme).toContain('Windows defaults to local `LabVIEWCLI`');
+    expect(readme).toContain('if Docker is selected, install or start Docker Desktop or Docker');
+    expect(currentState).toContain('current exact released line: `v1.3.0`');
+    expect(currentState).toContain(
+      'active exact release candidate line on `develop`: none; exact `v1.3.0`'
+    );
     expect(releaseProcedure).toContain(
       'The retained Windows x64 private-release packet remains prep-only evidence'
     );

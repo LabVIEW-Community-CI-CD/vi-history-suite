@@ -11,12 +11,13 @@
 - The first retained exact-version release is `v0.2.0`, with retained artifact
   `vi-history-suite-0.2.0.vsix` and manifest
   `release-evidence/release-manifest.json`.
-- The current exact released line is `v1.2.2`.
+- The current exact released line is `v1.3.0`.
 - The burned exact released line is `v1.0.2`.
-- The current published package line on `main` is `1.2.2`.
+- The current published package line on `main` is `1.3.0`.
 - The current develop package line on `develop` is `1.3.0`.
-- The active exact release candidate line on `develop` is `v1.3.0`.
-- The active release-candidate branch is `release/1.3.0`.
+- The active exact release candidate line on `develop` is none; exact
+  `v1.3.0` closeout is complete and the next SemVer line is not open yet.
+- The active release-candidate branch is none.
 - The retained Windows x64 private-release packet remains prep-only evidence
   for `v1.3.0`; it does not imply exact tagging, public GitHub release,
   `main` promotion, or VS Code Marketplace publication.
@@ -342,15 +343,15 @@ exact/public `release/*` promotion begins.
   `13779604462`.
 - `v1.0.2` is retained as a burned release because the immutable tag published
   before the exact authority docs CI failure was discovered.
-- The current published package line on `main` is `1.2.2`, tracked in
+- The current published package line on `main` is `1.3.0`, tracked in
   `CHANGELOG.md`, and it should not rewrite the retained `v0.2.0`, `v1.0.0`,
   `v1.0.1`, burned `v1.0.2`, exact `v1.0.3`, exact `v1.0.4`, exact `v1.0.5`,
-  exact `v1.0.6`, exact `v1.1.0`, exact `v1.2.0`, `v1.2.1`, or exact
-  `v1.2.2` release
-  evidence.
-- The current develop package line on `develop` is `1.3.0`, the active exact
-  release candidate line on `develop` is `v1.3.0`, and no newer `release/*`
-  branch is active yet.
+  exact `v1.0.6`, exact `v1.1.0`, exact `v1.2.0`, exact `v1.2.1`, exact
+  `v1.2.2`, or exact `v1.3.0` release evidence.
+- The current develop package line on `develop` is `1.3.0`, exact `v1.3.0`
+  closeout is complete on authority `main` `9587a99` back-merged into
+  `develop` `04b07bd` with green pipeline `2467081960`, and no newer
+  `release/*` branch is active yet.
 - The packaged extension homepage now points installed users to the maintained
   public wiki home, while the repo root remains the source and control-plane
   surface.
