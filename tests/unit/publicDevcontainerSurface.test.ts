@@ -83,15 +83,13 @@ describe('public devcontainer surface', () => {
     );
     expect(extensions.recommendations).not.toEqual(expect.arrayContaining(['vitest.explorer']));
 
-    expect(readme).toContain('## Install The Extension');
-    expect(readme).toContain('## Evaluate From Source');
-    expect(readme).toContain('## Contribute');
+    expect(readme).toContain('## Need Source Evaluation Or Contribution?');
     expect(readme).toContain('[INSTALL.md](./INSTALL.md)');
     expect(readme).toContain('[CONTRIBUTING.md](./CONTRIBUTING.md)');
-    expect(install).toContain('Use this lane only when you want to inspect the source repo');
+    expect(install).toContain('This route remains useful for source evaluation');
     expect(install).toContain('npm run public:host:bootstrap-linux');
     expect(install).toContain('npm run public:fixture:icon-editor');
     expect(install).toContain('npm run public:repo:clone');
-    expect(install).toContain('review another public Git repository with');
+    expect(install).toContain('If you want a generic public GitHub or GitLab repo instead');
   });
 });

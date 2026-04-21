@@ -88,7 +88,7 @@ describe('vs code marketplace publication and installed-user docs', () => {
     expect(pkg.homepage).toBe('https://github.com/svelderrainruiz/vi-history-suite/wiki');
 
     expect(readme).toContain('Install And Use');
-    expect(readme).toContain('You do not need to fork this repo, learn the branch model');
+    expect(readme).toContain('If you want to install the extension and use it locally, start here.');
     expect(readme).toContain('install-vihs-extension.ps1');
     expect(readme).toContain('vihs --validate');
     expect(readme).toContain('Report A Problem Or Request Support');
@@ -96,23 +96,22 @@ describe('vs code marketplace publication and installed-user docs', () => {
     expect(readme).toContain('LabVIEW version support request');
     expect(readme).toContain('Need Source Evaluation Or Contribution?');
 
-    expect(publicReadme).toContain('Install And Use');
-    expect(publicReadme).toContain('You do not need to fork this repo or choose a branch to use the extension locally.');
-    expect(publicReadme).toContain('install-vihs-extension.ps1');
+    expect(publicReadme).toContain('Install The Extension');
+    expect(publicReadme).toContain('code --install-extension svelderrainruiz.vi-history-suite');
     expect(publicReadme).toContain('vihs --validate');
     expect(publicReadme).toContain('Report A Problem Or Request Support');
-    expect(publicReadme).toContain('LabVIEW version support request');
-    expect(publicReadme).toContain('Need Source Evaluation Or Contribution?');
-    expect(publicReadme).toContain('Use `main` when you only need the latest exact released source.');
+    expect(publicReadme).toContain('LabVIEW Version Support Request');
+    expect(publicReadme).toContain('Evaluate From Source');
+    expect(publicReadme).toContain('Contribute');
 
-    expect(publicInstall).toContain('Installed Extension Start');
-    expect(publicInstall).toContain('You do not need to fork the repo for this path.');
+    expect(publicInstall).toContain('Install The Extension');
+    expect(publicInstall).toContain('First-Time Setup');
     expect(publicInstall).toContain("docker info --format '{{.OSType}}'");
-    expect(publicInstall).toContain('If those checks fail, install or start Docker before expecting image');
-    expect(publicInstall).toContain('Marketplace and exact-release users can stop after the installed-user flow above.');
+    expect(publicInstall).toContain('If those checks fail, correct provider, version, bitness, or Docker readiness');
+    expect(publicInstall).toContain('Use this lane only when you want to inspect the source repo');
     expect(publicSupport).toContain("docker info --format '{{.OSType}}'");
     expect(publicSupport).toContain(
-      'If the candidate host or Docker bundle is missing, contradictory, unsupported, or blocked, the product should fail closed with visible next-step guidance'
+      'if the selected host or Docker bundle is missing, contradictory, unsupported, or blocked, the product should fail closed with visible next-step guidance'
     );
     expect(publicBugReport).toContain('install, settings, validation, or compare problem');
     expect(publicBugReport).toContain('Install route');
