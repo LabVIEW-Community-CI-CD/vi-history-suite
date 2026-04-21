@@ -197,8 +197,8 @@ Authority release facts:
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.3.0`
 - current published package line on `main`: `1.3.0`
-- current develop package line on `develop`: `1.3.0`
-- active exact release candidate line on `develop`: none; exact `v1.3.0` closeout is complete and the next SemVer line is not open yet
+- current develop package line on `develop`: `1.3.1`
+- active exact release candidate line on `develop`: `v1.3.1`
 - active release-candidate branch: none
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
@@ -216,7 +216,7 @@ Authority release facts:
 - `TRANCHE-010`: public-source facade and public-product acceptance is a closed tranche
 - active control-plane direction:
   [PROGRAM-0005](./docs/product/execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md),
-  `TRANCHE-012`, `TRANCHE-016`, and `ISSUE-0412`
+  `TRANCHE-012`, `TRANCHE-016`, `ISSUE-0412`, and `ISSUE-0414`
 - preview install surface: `preview-evidence/vi-history-suite-<version>.vsix`
 - governed tagged release artifact and release manifest live under
   `release-evidence/`

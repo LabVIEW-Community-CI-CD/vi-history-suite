@@ -278,6 +278,42 @@ describe('assertRuntimeSettingsLiveSessionPolicyBoundary script', () => {
       'requires explicit provider-drift receipts on every retained run'
     );
   });
+
+  it('fails when any retained run lacks an explicit mutation target receipt', async () => {
+    const packetRoot = await seedHistoryPackets(temporaryDirectories, [
+      {
+        runId: '2026-04-14T13-00-00-000Z',
+        summary: createObservedRunSummary({
+          baselinePersistedProvider: 'host',
+          persistedProvider: 'docker',
+          mutationProviderTarget: 'docker'
+        })
+      },
+      {
+        runId: '2026-04-14T12-00-00-000Z',
+        summary: createObservedRunSummary({
+          baselinePersistedProvider: 'docker',
+          persistedProvider: 'host',
+          mutationProviderTarget: 'host'
+        })
+      },
+      {
+        runId: '2026-04-14T11-00-00-000Z',
+        summary: {
+          ...createObservedRunSummary({
+            baselinePersistedProvider: 'docker',
+            persistedProvider: 'host',
+            mutationProviderTarget: 'host'
+          }),
+          mutationProviderTarget: undefined
+        }
+      }
+    ]);
+
+    expect(() => boundaryScript.run(['--packet-root', packetRoot])).toThrow(
+      'requires explicit mutation target receipts on retained runs'
+    );
+  });
 });
 
 function createObservedRunSummary(input: {

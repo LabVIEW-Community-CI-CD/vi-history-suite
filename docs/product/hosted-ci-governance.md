@@ -9,10 +9,10 @@ raw-YAML-only truth.
 This document is the control-plane summary of the governed `v1.3.0`
 exact-tag, public-release, Marketplace publication, and exact-closeout
 sequence. The exact public release now serves `v1.3.0`, `main` carries
-`1.3.0`, `develop` carries `1.3.0`, the Marketplace listing serves `1.3.0`,
-authority `main` `9587a99` is back-merged into `develop` `04b07bd`, the
-resulting `develop` pipeline `2467081960` is green, and no next
-release-candidate branch is open yet.
+`1.3.0`, `develop` now carries `1.3.1` as the next candidate line, the
+Marketplace listing serves `1.3.0`, authority `main` `9587a99` is
+back-merged into `develop` `04b07bd`, the resulting `develop` pipeline
+`2467081960` is green, and no `release/1.3.1` branch is open yet.
 
 ## Current Exact Closeout State
 
@@ -26,19 +26,20 @@ release-candidate branch is open yet.
   `04b07bd`
 - resulting `develop` pipeline: `2467081960` `success`
 
-## Historical Opening Decision For v1.3.0
+## Active Opening Decision For v1.3.1
 
-- current exact release line: `v1.2.2`
-- current `main` package line: `1.2.2`
-- current `develop` package line: `1.3.0`
-- active exact release candidate line on `develop`: `v1.3.0`
-- active release-candidate branch: `release/1.3.0`
-- chosen bump: `minor`
-- rationale: this line opens a new governed installed-user capability and
-  supported workflow by promoting host-default Windows local `LabVIEWCLI`
-  with bounded expert Docker
-- rationale: exact `v1.2.2` remains the truthful published baseline while the
-  next public candidate and review gates are reopened on `v1.3.0`
+- current exact release line: `v1.3.0`
+- current `main` package line: `1.3.0`
+- current `develop` package line: `1.3.1`
+- active exact release candidate line on `develop`: `v1.3.1`
+- active release-candidate branch: none
+- chosen bump: `patch`
+- rationale: this line hardens the published host-default Windows local
+  `LabVIEWCLI` workflow and retained live-session proof/control surfaces
+  without opening another governed installed-user capability line
+- rationale: exact `v1.3.0` remains the truthful published baseline while the
+  `v1.3.1` patch line opens on `develop` for `ISSUE-0414` proof-depth and
+  release-control follow-through
 
 ## Branch Model
 

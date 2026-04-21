@@ -742,11 +742,11 @@ function deriveComparePreflightState(
       labviewVersion: 'Unset',
       labviewBitness: 'Unset',
       nextAction:
-        'Next action: set viHistorySuite.labviewVersion and viHistorySuite.labviewBitness, then review compare preflight before choosing Compare.',
+        'Next action: use the generated settings CLI to set viHistorySuite.labviewVersion and viHistorySuite.labviewBitness, then review compare preflight before choosing Compare.',
       cliHint:
         'Provider is read-only here. Use the generated settings CLI to update provider, LabVIEW version, or LabVIEW bitness when correction is required.',
       warningMessage:
-        'Compare preflight is blocked. Set viHistorySuite.labviewVersion and viHistorySuite.labviewBitness, then review compare preflight before choosing Compare.'
+        'Compare preflight is blocked. Use the generated settings CLI to set viHistorySuite.labviewVersion and viHistorySuite.labviewBitness, then review compare preflight before choosing Compare.'
     }
   );
 }

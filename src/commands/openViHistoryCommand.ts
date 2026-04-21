@@ -1444,7 +1444,7 @@ async function resolveHistoryPanelComparePreflightState(
   const labviewVersion = settings.labviewVersion ?? 'Unset';
   const labviewBitness = settings.bitness ?? 'Unset';
   const cliHint =
-    'Provider is read-only here. Use the generated settings CLI to update provider, LabVIEW version, or LabVIEW bitness when correction is required. Review compare preflight again after the CLI update. If this already-running VS Code session still shows stale provider or runtime facts, reload or restart the window and review compare preflight again.';
+    'Provider is read-only here. Use the generated settings CLI to update provider, LabVIEW version, or LabVIEW bitness when correction is required. Review compare preflight again after the CLI update. Reload or restart the window only if this already-running VS Code session still shows stale provider or runtime facts.';
 
   if (settings.invalidRequestedProvider) {
     return {
@@ -1521,7 +1521,7 @@ async function resolveHistoryPanelComparePreflightState(
       ),
       cliHint,
       warningMessage:
-        'Compare preflight is blocked. Docker requires viHistorySuite.labviewBitness=x64 or viHistorySuite.runtimeProvider=host before Compare can run. Then review compare preflight before choosing Compare. If this already-running VS Code session still shows stale provider or runtime facts after the CLI update, reload or restart the window and review compare preflight again.'
+        'Compare preflight is blocked. Docker requires viHistorySuite.labviewBitness=x64 or viHistorySuite.runtimeProvider=host before Compare can run. Use the generated settings CLI, then review compare preflight before choosing Compare. Reload or restart the window only if this already-running VS Code session still shows stale provider or runtime facts after the CLI update.'
     };
   }
 
@@ -1560,11 +1560,11 @@ function deriveComparisonRuntimeNextAction(
 }
 
 function buildComparePreflightSettingsAction(settingsAction: string): string {
-  return `Next action: ${settingsAction}. Then review compare preflight before choosing Compare. If this already-running VS Code session still shows stale provider or runtime facts after the CLI update, reload or restart the window and review compare preflight again.`;
+  return `Next action: ${settingsAction}. Use the generated settings CLI, then review compare preflight before choosing Compare. Reload or restart the window only if this already-running VS Code session still shows stale provider or runtime facts after the CLI update.`;
 }
 
 function buildComparePreflightWarningMessage(settingsAction: string): string {
-  return `Compare preflight is blocked. ${settingsAction}. Then review compare preflight before choosing Compare. If this already-running VS Code session still shows stale provider or runtime facts after the CLI update, reload or restart the window and review compare preflight again.`;
+  return `Compare preflight is blocked. ${settingsAction}. Use the generated settings CLI, then review compare preflight before choosing Compare. Reload or restart the window only if this already-running VS Code session still shows stale provider or runtime facts after the CLI update.`;
 }
 
 function buildRuntimeBackedBlockedComparePreflightState(options: {
@@ -1602,7 +1602,7 @@ function buildRuntimeBackedBlockedComparePreflightState(options: {
     warningSegments.push(`Blocked reason: ${options.runtimeSelection.blockedReason}.`);
   }
   warningSegments.push(
-    'If this already-running VS Code session still shows stale provider or runtime facts after the CLI update, reload or restart the window and review compare preflight again.'
+    'If you update provider or runtime settings with the CLI, review compare preflight again. Reload or restart the window only if this already-running VS Code session still shows stale provider or runtime facts after the CLI update.'
   );
   warningSegments.push(nextAction);
 

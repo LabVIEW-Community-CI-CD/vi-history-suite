@@ -114,6 +114,17 @@ describe('bundled documentation', () => {
       extensionUri as never,
       'comparison-reports-and-dashboard-review'
     );
+    const installLoaded = await loadBundledDocumentationPage(
+      extensionUri as never,
+      'install-and-release'
+    );
+    expect(installLoaded?.pageBodyHtml).toContain(
+      '<code>code --install-extension svelderrainruiz.vi-history-suite</code>'
+    );
+    expect(installLoaded?.pageBodyHtml).toContain(
+      'run <code>VI History: Prepare Local Runtime Settings CLI</code> from the Command Palette'
+    );
+    expect(installLoaded?.pageBodyHtml).not.toContain('install-vihs-extension.ps1');
     expect(comparisonLoaded?.pageBodyHtml).toContain(
       'use the checkbox column to select exactly two retained revisions'
     );

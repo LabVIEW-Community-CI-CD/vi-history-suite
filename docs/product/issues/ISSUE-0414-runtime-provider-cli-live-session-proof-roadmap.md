@@ -8,7 +8,11 @@ the already-landed host-versus-docker provider-selection contract stable.
 
 ## Status
 
-Active roadmap issue for post-`ISSUE-0412` proof hardening.
+Authority implementation roadmap for post-`ISSUE-0412` proof hardening. The
+current `v1.3.1` branch now retains a fresh governed Windows proof receipt
+that satisfies the strengthened latest-packet/history/policy boundary, so no
+further `ISSUE-0414` implementation slice is currently required before the
+next public candidate publication step.
 
 This issue does not reopen settled provider-contract decisions. It only drives
 proof depth and operator confidence for:
@@ -36,7 +40,7 @@ The unresolved seam remains explicit:
 
 Current implementation branch:
 
-- `feature/runtime-provider-live-session-conditional-guidance` (in progress)
+- `feature/open-next-semver-line` (retaining the fresh `v1.3.1` proof result)
 
 Most recently merged branch:
 
@@ -186,7 +190,7 @@ Most recently merged branch:
   probe packet, retained history receipt, policy-boundary receipt, and
   integration logs into one reviewable receipt directory.
 
-29. `feature/runtime-provider-live-session-conditional-guidance` (in progress)
+29. `feature/runtime-provider-live-session-conditional-guidance` (implemented on the current `v1.3.1` authority branch)
 - Re-evaluate `VHS-REQ-542` after the retained bidirectional proof bundle now
   observes `candidate-live-uptake-observed` with
   `historyProofStatus=re-evaluation-required`, and replace unconditional reload
@@ -200,6 +204,16 @@ Most recently merged branch:
   `providerDrift=false`, `historyReloadRequiredCount=0`, and retained
   bidirectional provider-selection coverage plus alignment/baseline-switch
   receipts remain explicit.
+- retained authority proof refresh on this branch:
+  `.cache/runtime-settings-live-session-proof/latest/runtime-settings-live-session-proof.json`
+  generated at `2026-04-21T06:48:16.064Z`, with latest retained packet run
+  `2026-04-21T06-45-35-068Z`, `historyReloadRequiredCount=0`,
+  `historyInSessionUpdatedCount=2`, `historyUnknownObservationCount=0`,
+  `providerSelectionCoverage=bidirectional-selection-observed`,
+  `mutationTargetHostCount=1`, `mutationTargetDockerCount=1`, zero retained
+  alignment/baseline-switch unknowns or mismatches, latest
+  `liveUptakeObservation=in-session-updated`, and latest
+  `providerDrift=false`
 
 ## Admission Rules
 

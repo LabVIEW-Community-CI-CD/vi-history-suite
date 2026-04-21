@@ -471,8 +471,18 @@ function deriveHistorySummaryFromPacketSummary(packetSummary) {
     'historyReloadRequiredCount',
     'historyInSessionUpdatedCount',
     'historyUnknownObservationCount',
+    'mutationTargetHostCount',
+    'mutationTargetDockerCount',
+    'mutationTargetUnknownCount',
+    'mutationTargetPersistedMatchCount',
+    'mutationTargetPersistedMismatchCount',
+    'mutationTargetPersistedUnknownCount',
+    'mutationTargetBaselineChangedCount',
+    'mutationTargetBaselineUnchangedCount',
+    'mutationTargetBaselineUnknownCount',
     'historyStance',
-    'historyProofStatus'
+    'historyProofStatus',
+    'providerSelectionCoverage'
   ];
   if (!historyFields.some((field) => packetSummary[field] !== undefined)) {
     return undefined;
@@ -483,10 +493,20 @@ function deriveHistorySummaryFromPacketSummary(packetSummary) {
     reloadRequiredCount: packetSummary.historyReloadRequiredCount,
     inSessionUpdatedCount: packetSummary.historyInSessionUpdatedCount,
     unknownObservationCount: packetSummary.historyUnknownObservationCount,
+    mutationTargetHostCount: packetSummary.mutationTargetHostCount,
+    mutationTargetDockerCount: packetSummary.mutationTargetDockerCount,
+    mutationTargetUnknownCount: packetSummary.mutationTargetUnknownCount,
+    mutationTargetPersistedMatchCount: packetSummary.mutationTargetPersistedMatchCount,
+    mutationTargetPersistedMismatchCount: packetSummary.mutationTargetPersistedMismatchCount,
+    mutationTargetPersistedUnknownCount: packetSummary.mutationTargetPersistedUnknownCount,
+    mutationTargetBaselineChangedCount: packetSummary.mutationTargetBaselineChangedCount,
+    mutationTargetBaselineUnchangedCount: packetSummary.mutationTargetBaselineUnchangedCount,
+    mutationTargetBaselineUnknownCount: packetSummary.mutationTargetBaselineUnknownCount,
     latestObservation: packetSummary.liveUptakeObservation,
     latestProviderDrift: packetSummary.providerDrift,
     stance: packetSummary.historyStance,
-    proofStatus: packetSummary.historyProofStatus
+    proofStatus: packetSummary.historyProofStatus,
+    providerSelectionCoverage: packetSummary.providerSelectionCoverage
   };
 }
 
@@ -502,6 +522,14 @@ function derivePolicyBoundaryFromPacketSummary(packetSummary) {
   return {
     outcome: 'packet-validation-failed-before-policy-boundary',
     summary: {
+      providerSelectionCoverage: packetSummary.providerSelectionCoverage,
+      mutationTargetHostCount: packetSummary.mutationTargetHostCount,
+      mutationTargetDockerCount: packetSummary.mutationTargetDockerCount,
+      mutationTargetUnknownCount: packetSummary.mutationTargetUnknownCount,
+      mutationTargetPersistedMismatchCount: packetSummary.mutationTargetPersistedMismatchCount,
+      mutationTargetPersistedUnknownCount: packetSummary.mutationTargetPersistedUnknownCount,
+      mutationTargetBaselineUnchangedCount: packetSummary.mutationTargetBaselineUnchangedCount,
+      mutationTargetBaselineUnknownCount: packetSummary.mutationTargetBaselineUnknownCount,
       latestProviderDrift: packetSummary.providerDrift
     }
   };
@@ -546,12 +574,27 @@ function renderReceiptMarkdown(receipt) {
     `- Reload-required runs: \`${formatReceiptValue(receipt.historyReceipt?.summary?.reloadRequiredCount ?? receipt.packetSummary?.historyReloadRequiredCount)}\``,
     `- In-session-updated runs: \`${formatReceiptValue(receipt.historyReceipt?.summary?.inSessionUpdatedCount ?? receipt.packetSummary?.historyInSessionUpdatedCount)}\``,
     `- Unknown-observation runs: \`${formatReceiptValue(receipt.historyReceipt?.summary?.unknownObservationCount ?? receipt.packetSummary?.historyUnknownObservationCount)}\``,
+    `- Provider selection coverage: \`${formatReceiptValue(receipt.historyReceipt?.summary?.providerSelectionCoverage ?? receipt.packetSummary?.providerSelectionCoverage)}\``,
+    `- Mutation target host runs: \`${formatReceiptValue(receipt.historyReceipt?.summary?.mutationTargetHostCount ?? receipt.packetSummary?.mutationTargetHostCount)}\``,
+    `- Mutation target docker runs: \`${formatReceiptValue(receipt.historyReceipt?.summary?.mutationTargetDockerCount ?? receipt.packetSummary?.mutationTargetDockerCount)}\``,
+    `- Mutation target unknown runs: \`${formatReceiptValue(receipt.historyReceipt?.summary?.mutationTargetUnknownCount ?? receipt.packetSummary?.mutationTargetUnknownCount)}\``,
+    `- Mutation target aligned runs: \`${formatReceiptValue(receipt.historyReceipt?.summary?.mutationTargetPersistedMatchCount ?? receipt.packetSummary?.mutationTargetPersistedMatchCount)}\``,
+    `- Mutation target mismatch runs: \`${formatReceiptValue(receipt.historyReceipt?.summary?.mutationTargetPersistedMismatchCount ?? receipt.packetSummary?.mutationTargetPersistedMismatchCount)}\``,
+    `- Mutation target alignment unknown runs: \`${formatReceiptValue(receipt.historyReceipt?.summary?.mutationTargetPersistedUnknownCount ?? receipt.packetSummary?.mutationTargetPersistedUnknownCount)}\``,
+    `- Baseline-switch changed runs: \`${formatReceiptValue(receipt.historyReceipt?.summary?.mutationTargetBaselineChangedCount ?? receipt.packetSummary?.mutationTargetBaselineChangedCount)}\``,
+    `- Baseline-switch unchanged runs: \`${formatReceiptValue(receipt.historyReceipt?.summary?.mutationTargetBaselineUnchangedCount ?? receipt.packetSummary?.mutationTargetBaselineUnchangedCount)}\``,
+    `- Baseline-switch unknown runs: \`${formatReceiptValue(receipt.historyReceipt?.summary?.mutationTargetBaselineUnknownCount ?? receipt.packetSummary?.mutationTargetBaselineUnknownCount)}\``,
     '',
     '## Policy Boundary',
     '',
     `- Outcome: \`${formatReceiptValue(receipt.policyBoundary?.outcome)}\``,
-    `- Provider selection coverage: \`${formatReceiptValue(receipt.policyBoundary?.summary?.providerSelectionCoverage)}\``,
+    `- Provider selection coverage: \`${formatReceiptValue(receipt.policyBoundary?.summary?.providerSelectionCoverage ?? receipt.historyReceipt?.summary?.providerSelectionCoverage ?? receipt.packetSummary?.providerSelectionCoverage)}\``,
     `- Latest provider drift: \`${formatReceiptValue(receipt.policyBoundary?.summary?.latestProviderDrift ?? receipt.packetSummary?.providerDrift)}\``,
+    `- Mutation target unknown runs: \`${formatReceiptValue(receipt.policyBoundary?.summary?.mutationTargetUnknownCount ?? receipt.historyReceipt?.summary?.mutationTargetUnknownCount ?? receipt.packetSummary?.mutationTargetUnknownCount)}\``,
+    `- Mutation target mismatch runs: \`${formatReceiptValue(receipt.policyBoundary?.summary?.mutationTargetPersistedMismatchCount ?? receipt.historyReceipt?.summary?.mutationTargetPersistedMismatchCount ?? receipt.packetSummary?.mutationTargetPersistedMismatchCount)}\``,
+    `- Mutation target alignment unknown runs: \`${formatReceiptValue(receipt.policyBoundary?.summary?.mutationTargetPersistedUnknownCount ?? receipt.historyReceipt?.summary?.mutationTargetPersistedUnknownCount ?? receipt.packetSummary?.mutationTargetPersistedUnknownCount)}\``,
+    `- Baseline-switch unchanged runs: \`${formatReceiptValue(receipt.policyBoundary?.summary?.mutationTargetBaselineUnchangedCount ?? receipt.historyReceipt?.summary?.mutationTargetBaselineUnchangedCount ?? receipt.packetSummary?.mutationTargetBaselineUnchangedCount)}\``,
+    `- Baseline-switch unknown runs: \`${formatReceiptValue(receipt.policyBoundary?.summary?.mutationTargetBaselineUnknownCount ?? receipt.historyReceipt?.summary?.mutationTargetBaselineUnknownCount ?? receipt.packetSummary?.mutationTargetBaselineUnknownCount)}\``,
     '',
     '## Failure',
     '',

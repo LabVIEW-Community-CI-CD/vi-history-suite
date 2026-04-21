@@ -14,13 +14,14 @@
 - The current exact released line is `v1.3.0`.
 - The burned exact released line is `v1.0.2`.
 - The current published package line on `main` is `1.3.0`.
-- The current develop package line on `develop` is `1.3.0`.
-- The active exact release candidate line on `develop` is none; exact
-  `v1.3.0` closeout is complete and the next SemVer line is not open yet.
+- The current develop package line on `develop` is `1.3.1`.
+- The active exact release candidate line on `develop` is `v1.3.1`.
 - The active release-candidate branch is none.
-- The retained Windows x64 private-release packet remains prep-only evidence
-  for `v1.3.0`; it does not imply exact tagging, public GitHub release,
-  `main` promotion, or VS Code Marketplace publication.
+- The retained Windows x64 private-release packet remains historical prep-only
+  evidence for exact `v1.3.0`; `v1.3.1` has not reopened private-release
+  preparation yet, and that historical packet still does not imply exact
+  tagging, public GitHub release, `main` promotion, or VS Code Marketplace
+  publication.
 - Windows x86 / 32-bit LabVIEW remains out of scope for that `v1.3.0`
   pre-release sequence; any retained x86 host evidence is characterization
   only and does not expand the Windows x64 private-release claim.

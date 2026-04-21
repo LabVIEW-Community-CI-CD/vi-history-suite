@@ -54,19 +54,20 @@ describe('public facade boundary docs', () => {
     expect(publicMap).toContain('public GitHub user wiki only');
     expect(publicMap).toContain('shall not use these as primary truth sources');
     expect(publicMap).toContain('Exact public release wiki pages and bundled installed-user docs shall keep');
-    expect(publicMap).toContain('No later public candidate wiki head is open yet');
+    expect(publicMap).toContain('The maintained public candidate wiki head is now `141c39e`');
     expect(publicMap).toContain('candidate surfaces shall stay explicit');
     expect(publicMap).toContain('docs/requirements/srs.md');
     expect(publicSourceMap).toContain('public GitHub source repo only');
     expect(publicSourceMap).toContain('curated product surface');
     expect(publicSourceMap).toContain('Exact public `main` shall keep the exact released `v1.3.0` host-default');
-    expect(publicSourceMap).toContain('No later public candidate line is open yet');
+    expect(publicSourceMap).toContain('The maintained public `develop` candidate for `v1.3.1` now publishes');
     expect(publicSourceMap).toContain('any later candidate lane shall stay');
     expect(publicSourceMap).toContain('docs/requirements/srs.md');
     expect(internalLedger).toContain('internal GitLab maintainer wiki');
     expect(internalLedgerJson).toContain('"publicationSurface": "internal-gitlab-wiki"');
     expect(publicLedger).toContain('public GitHub user wiki');
-    expect(publicLedger).toContain('Current published public GitHub wiki HEAD: `53b5348`');
+    expect(publicLedger).toContain('Current published public GitHub wiki HEAD: `141c39e`');
+    expect(publicLedger).toContain('141c39e');
     expect(publicLedger).toContain('53b5348');
     expect(publicLedger).toContain('527a8b4');
     expect(publicLedger).toContain('User Workflow');
@@ -79,7 +80,8 @@ describe('public facade boundary docs', () => {
     expect(publicLedger).toContain('Refresh Codespace Repositories');
     expect(publicLedger).toContain('Current State');
     expect(publicLedgerJson).toContain('"publicationSurface": "public-github-user-wiki"');
-    expect(publicLedgerJson).toContain('"publishedHeadCommit": "53b5348"');
+    expect(publicLedgerJson).toContain('"publishedHeadCommit": "141c39e"');
+    expect(publicLedgerJson).toContain('"wikiCommit": "141c39e"');
     expect(publicLedgerJson).toContain('"wikiFileName": "Home.md"');
     expect(publicLedgerJson).toContain('"wikiFileName": "User-Workflow.md"');
     expect(publicLedgerJson).toContain('"wikiFileName": "Install-And-Release.md"');
@@ -93,7 +95,7 @@ describe('public facade boundary docs', () => {
     expect(publicLedgerJson).toContain('"nextPage": null');
     expect(publicSourceLedger).toContain('Public source product repo baseline');
     expect(publicSourceLedger).toContain('published');
-    expect(publicSourceLedger).toContain('Current published public GitHub source HEAD: `0ea58af`');
+    expect(publicSourceLedger).toContain('Current published public GitHub source HEAD: `ab293d5`');
     expect(publicSourceLedger).toContain('86b19a2');
     expect(publicSourceLedger).toContain('722c1f7');
     expect(publicSourceLedger).toContain('b1de8c5');
@@ -101,6 +103,8 @@ describe('public facade boundary docs', () => {
     expect(publicSourceLedger).toContain('c71af69');
     expect(publicSourceLedger).toContain('0f19f4b');
     expect(publicSourceLedger).toContain('0ea58af');
+    expect(publicSourceLedger).toContain('ab293d5');
+    expect(publicSourceLedger).toContain('eecdfeb');
     expect(publicSourceLedger).toContain('Public source v1.1.0 exact release');
     expect(publicSourceLedger).toContain('Public source v1.2.0 exact release');
     expect(publicSourceLedger).toContain('Public source v1.2.0 candidate moved-VI and bundled-doc refresh');
@@ -113,6 +117,8 @@ describe('public facade boundary docs', () => {
     expect(publicSourceLedger).toContain('Public source v1.3.0 public-wiki review fold publication');
     expect(publicSourceLedger).toContain('Public source v1.3.0 bundled-doc wording follow-up');
     expect(publicSourceLedger).toContain('Public source v1.3.0 exact release');
+    expect(publicSourceLedger).toContain('Public source v1.3.1 public develop candidate');
+    expect(publicSourceLedger).toContain('Public source v1.3.1 published-review fold');
     expect(publicSourceLedger).toContain(
       'Public source v1.2.2 Docker-first-run and closeout-governance refresh'
     );
@@ -120,7 +126,7 @@ describe('public facade boundary docs', () => {
       'Public source v1.2.2 bundled installed-user docs refresh'
     );
     expect(publicSourceLedgerJson).toContain('"publicationSurface": "public-github-source-repo"');
-    expect(publicSourceLedgerJson).toContain('"publishedHeadCommit": "0ea58af"');
+    expect(publicSourceLedgerJson).toContain('"publishedHeadCommit": "ab293d5"');
     expect(publicSourceLedgerJson).toContain('"status": "published"');
     expect(publicSourceLedgerJson).toContain('"repoCommit": "daef8bd"');
     expect(publicSourceLedgerJson).toContain('"repoCommit": "c9806c3"');
@@ -138,6 +144,8 @@ describe('public facade boundary docs', () => {
     expect(publicSourceLedgerJson).toContain('"repoCommit": "c71af69"');
     expect(publicSourceLedgerJson).toContain('"repoCommit": "0f19f4b"');
     expect(publicSourceLedgerJson).toContain('"repoCommit": "0ea58af"');
+    expect(publicSourceLedgerJson).toContain('"repoCommit": "eecdfeb"');
+    expect(publicSourceLedgerJson).toContain('"repoCommit": "ab293d5"');
     expect(program).toContain('workflow_dispatch');
     expect(program).toContain('npm run public:smoke:linux');
     expect(program).toContain('docs:ci:public');

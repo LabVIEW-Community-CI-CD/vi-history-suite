@@ -6,7 +6,7 @@ Use this public GitHub repo for:
 
 - installed-extension bugs
 - compare-generation issues
-- runtime-provider issues on the maintained public candidate
+- runtime-provider issues
 - Docker image acquisition/runtime issues
 - local Windows `LabVIEWCLI` preflight and readiness issues
 - checkbox-selected compare UX feedback
@@ -25,8 +25,8 @@ Please include:
 
 - extension version
 - operating system
-- whether you were on the exact released `main` line or the maintained public
-  `develop` candidate
+- whether you installed from the Marketplace, from `code --install-extension`,
+  or from a VSIX
 - whether the workspace was trusted
 - whether the target file was an eligible tracked LabVIEW VI
 - the persisted provider, LabVIEW version, and LabVIEW bitness bundle
@@ -55,12 +55,8 @@ docker info --format '{{.OSType}}'
 
 ## Current Product Boundary
 
-The public product boundary is now split:
-
-- exact released `main` remains Docker-only and x64-only
-- maintained public `develop` opens host-default Windows local `LabVIEWCLI`
-  plus one bounded expert Docker provider
-
-If the candidate host or Docker bundle is missing, contradictory, unsupported,
-or blocked, the product should fail closed with visible next-step guidance
-instead of silently switching provider classes.
+- Windows defaults to local `LabVIEWCLI`
+- Docker remains a bounded expert provider
+- if the selected host or Docker bundle is missing, contradictory,
+  unsupported, or blocked, the product should fail closed with visible
+  next-step guidance instead of silently switching provider classes

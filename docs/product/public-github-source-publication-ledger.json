@@ -1,7 +1,7 @@
 {
   "generatedFor": "vi-history-suite",
   "publicationSurface": "public-github-source-repo",
-  "publishedHeadCommit": "0ea58af",
+  "publishedHeadCommit": "ab293d5",
   "publications": [
     {
       "id": "public-source-product-repo-baseline",
@@ -374,6 +374,42 @@
         "docs/product/public-release-candidate.md",
         "docs/release-procedure.md",
         "package.json"
+      ]
+    },
+    {
+      "id": "public-source-v1-3-1-public-develop-candidate",
+      "title": "Public source v1.3.1 public develop candidate",
+      "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
+      "status": "published",
+      "publishedDate": "2026-04-21",
+      "repoCommit": "eecdfeb",
+      "primaryAuthority": [
+        "public-github-source/README.md",
+        "public-github-source/INSTALL.md",
+        "public-github-source/SUPPORT.md",
+        "public-github-source/.github/ISSUE_TEMPLATE/bug-report.yml",
+        "public-github-source/tests/unit/publicRepoPackageSurface.test.ts",
+        "tests/unit/publicDevcontainerSurface.test.ts",
+        "tests/integration/suite/extensionHost.test.ts",
+        "docs/product/public-release-candidate.md",
+        "docs/release-procedure.md"
+      ]
+    },
+    {
+      "id": "public-source-v1-3-1-published-review-fold",
+      "title": "Public source v1.3.1 published-review fold",
+      "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
+      "status": "published",
+      "publishedDate": "2026-04-21",
+      "repoCommit": "ab293d5",
+      "primaryAuthority": [
+        "scripts/syncBundledDocs.js",
+        "resources/bundled-docs/manifest.json",
+        "resources/bundled-docs/pages/install-and-release.html",
+        "resources/bundled-docs/pages/user-workflow.html",
+        "tests/unit/bundledDocumentation.test.ts",
+        "docs/product/public-release-candidate.md",
+        "docs/release-procedure.md"
       ]
     }
   ]

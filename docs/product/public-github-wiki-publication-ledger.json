@@ -1,7 +1,7 @@
 {
   "generatedFor": "vi-history-suite",
   "publicationSurface": "public-github-user-wiki",
-  "publishedHeadCommit": "53b5348",
+  "publishedHeadCommit": "141c39e",
   "pages": [
     {
       "id": "overview",
@@ -9,8 +9,8 @@
       "wikiPath": "Home",
       "wikiFileName": "Home.md",
       "status": "published",
-      "publishedDate": "2026-04-20",
-      "wikiCommit": "53b5348",
+      "publishedDate": "2026-04-21",
+      "wikiCommit": "2638ea9",
       "primaryAuthority": [
         "README.md",
         "docs/product/current-state.md",
@@ -23,8 +23,8 @@
       "wikiPath": "User-Workflow",
       "wikiFileName": "User-Workflow.md",
       "status": "published",
-      "publishedDate": "2026-04-20",
-      "wikiCommit": "53b5348",
+      "publishedDate": "2026-04-21",
+      "wikiCommit": "2638ea9",
       "primaryAuthority": [
         "README.md",
         "docs/product/extension-execution-policy.md",
@@ -37,8 +37,8 @@
       "wikiPath": "Install-And-Release",
       "wikiFileName": "Install-And-Release.md",
       "status": "published",
-      "publishedDate": "2026-04-20",
-      "wikiCommit": "53b5348",
+      "publishedDate": "2026-04-21",
+      "wikiCommit": "2638ea9",
       "primaryAuthority": [
         "README.md",
         "docs/release-procedure.md",
@@ -66,8 +66,8 @@
       "wikiPath": "Fork-Codespace-Quickstart",
       "wikiFileName": "Fork-Codespace-Quickstart.md",
       "status": "published",
-      "publishedDate": "2026-04-20",
-      "wikiCommit": "53b5348",
+      "publishedDate": "2026-04-21",
+      "wikiCommit": "141c39e",
       "primaryAuthority": [
         "README.md",
         "docs/product/current-state.md",

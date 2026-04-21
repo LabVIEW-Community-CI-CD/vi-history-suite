@@ -3,6 +3,7 @@ import * as path from 'node:path';
 
 import {
   RuntimeSettingsLiveSessionHistoryStance,
+  RuntimeSettingsLiveSessionProviderSelectionCoverage,
   RuntimeSettingsLiveSessionProofStatus,
   RuntimeSettingsLiveSessionProbeSummary,
   RuntimeSettingsLiveSessionProbeSummaryWithPacket,
@@ -27,6 +28,15 @@ interface RuntimeSettingsLiveSessionProbeHistoryCounts {
   reloadRequiredCount: number;
   inSessionUpdatedCount: number;
   unknownObservationCount: number;
+  mutationTargetHostCount: number;
+  mutationTargetDockerCount: number;
+  mutationTargetUnknownCount: number;
+  mutationTargetPersistedMatchCount: number;
+  mutationTargetPersistedMismatchCount: number;
+  mutationTargetPersistedUnknownCount: number;
+  mutationTargetBaselineChangedCount: number;
+  mutationTargetBaselineUnchangedCount: number;
+  mutationTargetBaselineUnknownCount: number;
 }
 
 export async function persistRuntimeSettingsLiveSessionProbePacket(
@@ -48,10 +58,10 @@ export async function persistRuntimeSettingsLiveSessionProbePacket(
   const latestPacketJsonPath = path.join(packetRoot, 'latest-summary.json');
   const latestPacketMarkdownPath = path.join(packetRoot, 'latest-summary.md');
   const existingHistoryCounts = await collectExistingProbeHistoryCounts(packetRoot, fsApi);
-  const currentObservation = normalizeLiveUptakeObservation(summary);
-  const historyCounts = mergeCurrentObservation(existingHistoryCounts, currentObservation);
+  const historyCounts = mergeCurrentSummary(existingHistoryCounts, summary);
   const historyStance = classifyHistoryStance(historyCounts);
   const historyProofStatus = classifyHistoryProofStatus(historyStance);
+  const providerSelectionCoverage = classifyProviderSelectionCoverage(historyCounts);
 
   const packetSummary: RuntimeSettingsLiveSessionProbeSummaryWithPacket = {
     ...summary,
@@ -64,8 +74,18 @@ export async function persistRuntimeSettingsLiveSessionProbePacket(
     historyReloadRequiredCount: historyCounts.reloadRequiredCount,
     historyInSessionUpdatedCount: historyCounts.inSessionUpdatedCount,
     historyUnknownObservationCount: historyCounts.unknownObservationCount,
+    mutationTargetHostCount: historyCounts.mutationTargetHostCount,
+    mutationTargetDockerCount: historyCounts.mutationTargetDockerCount,
+    mutationTargetUnknownCount: historyCounts.mutationTargetUnknownCount,
+    mutationTargetPersistedMatchCount: historyCounts.mutationTargetPersistedMatchCount,
+    mutationTargetPersistedMismatchCount: historyCounts.mutationTargetPersistedMismatchCount,
+    mutationTargetPersistedUnknownCount: historyCounts.mutationTargetPersistedUnknownCount,
+    mutationTargetBaselineChangedCount: historyCounts.mutationTargetBaselineChangedCount,
+    mutationTargetBaselineUnchangedCount: historyCounts.mutationTargetBaselineUnchangedCount,
+    mutationTargetBaselineUnknownCount: historyCounts.mutationTargetBaselineUnknownCount,
     historyStance,
-    historyProofStatus
+    historyProofStatus,
+    providerSelectionCoverage
   };
 
   await fsApi.mkdir(runDirectory, { recursive: true });
@@ -111,6 +131,16 @@ function renderProbeSummaryMarkdown(summary: RuntimeSettingsLiveSessionProbeSumm
     `- Reload-required runs: \`${summary.historyReloadRequiredCount}\``,
     `- In-session-updated runs: \`${summary.historyInSessionUpdatedCount}\``,
     `- Unknown-observation runs: \`${summary.historyUnknownObservationCount}\``,
+    `- Provider selection coverage: \`${summary.providerSelectionCoverage}\``,
+    `- Mutation target host runs: \`${summary.mutationTargetHostCount}\``,
+    `- Mutation target docker runs: \`${summary.mutationTargetDockerCount}\``,
+    `- Mutation target unknown runs: \`${summary.mutationTargetUnknownCount}\``,
+    `- Mutation target aligned runs: \`${summary.mutationTargetPersistedMatchCount}\``,
+    `- Mutation target mismatch runs: \`${summary.mutationTargetPersistedMismatchCount}\``,
+    `- Mutation target alignment unknown runs: \`${summary.mutationTargetPersistedUnknownCount}\``,
+    `- Baseline-switch changed runs: \`${summary.mutationTargetBaselineChangedCount}\``,
+    `- Baseline-switch unchanged runs: \`${summary.mutationTargetBaselineUnchangedCount}\``,
+    `- Baseline-switch unknown runs: \`${summary.mutationTargetBaselineUnknownCount}\``,
     `- History stance: \`${summary.historyStance}\``,
     `- History proof status: \`${summary.historyProofStatus}\``,
     '',
@@ -150,7 +180,16 @@ async function collectExistingProbeHistoryCounts(
     totalRuns: 0,
     reloadRequiredCount: 0,
     inSessionUpdatedCount: 0,
-    unknownObservationCount: 0
+    unknownObservationCount: 0,
+    mutationTargetHostCount: 0,
+    mutationTargetDockerCount: 0,
+    mutationTargetUnknownCount: 0,
+    mutationTargetPersistedMatchCount: 0,
+    mutationTargetPersistedMismatchCount: 0,
+    mutationTargetPersistedUnknownCount: 0,
+    mutationTargetBaselineChangedCount: 0,
+    mutationTargetBaselineUnchangedCount: 0,
+    mutationTargetBaselineUnknownCount: 0
   };
 
   let entries: Array<{ isDirectory: () => boolean; name: string }>;
@@ -177,40 +216,86 @@ async function collectExistingProbeHistoryCounts(
     }
 
     counts.totalRuns += 1;
-    const observation = normalizeLiveUptakeObservation(parsed);
-    if (observation === 'reload-required') {
-      counts.reloadRequiredCount += 1;
-    } else if (observation === 'in-session-updated') {
-      counts.inSessionUpdatedCount += 1;
-    } else {
-      counts.unknownObservationCount += 1;
-    }
+    incrementObservationCount(counts, normalizeLiveUptakeObservation(parsed));
+    incrementMutationTargetCount(
+      counts,
+      normalizeMutationProviderTarget((parsed as { mutationProviderTarget?: unknown }).mutationProviderTarget)
+    );
+    incrementBooleanReceiptCount(
+      normalizeBooleanReceipt((parsed as { mutationTargetPersistedMatch?: unknown }).mutationTargetPersistedMatch),
+      () => {
+        counts.mutationTargetPersistedMatchCount += 1;
+      },
+      () => {
+        counts.mutationTargetPersistedMismatchCount += 1;
+      },
+      () => {
+        counts.mutationTargetPersistedUnknownCount += 1;
+      }
+    );
+    incrementBooleanReceiptCount(
+      normalizeBooleanReceipt((parsed as { mutationTargetBaselineChanged?: unknown }).mutationTargetBaselineChanged),
+      () => {
+        counts.mutationTargetBaselineChangedCount += 1;
+      },
+      () => {
+        counts.mutationTargetBaselineUnchangedCount += 1;
+      },
+      () => {
+        counts.mutationTargetBaselineUnknownCount += 1;
+      }
+    );
   }
 
   return counts;
 }
 
-function mergeCurrentObservation(
+function mergeCurrentSummary(
   existing: RuntimeSettingsLiveSessionProbeHistoryCounts,
-  currentObservation: RuntimeSettingsLiveSessionUptakeObservation | undefined
+  currentSummary: RuntimeSettingsLiveSessionProbeSummary
 ): RuntimeSettingsLiveSessionProbeHistoryCounts {
   const merged: RuntimeSettingsLiveSessionProbeHistoryCounts = {
     totalRuns: existing.totalRuns + 1,
     reloadRequiredCount: existing.reloadRequiredCount,
     inSessionUpdatedCount: existing.inSessionUpdatedCount,
-    unknownObservationCount: existing.unknownObservationCount
+    unknownObservationCount: existing.unknownObservationCount,
+    mutationTargetHostCount: existing.mutationTargetHostCount,
+    mutationTargetDockerCount: existing.mutationTargetDockerCount,
+    mutationTargetUnknownCount: existing.mutationTargetUnknownCount,
+    mutationTargetPersistedMatchCount: existing.mutationTargetPersistedMatchCount,
+    mutationTargetPersistedMismatchCount: existing.mutationTargetPersistedMismatchCount,
+    mutationTargetPersistedUnknownCount: existing.mutationTargetPersistedUnknownCount,
+    mutationTargetBaselineChangedCount: existing.mutationTargetBaselineChangedCount,
+    mutationTargetBaselineUnchangedCount: existing.mutationTargetBaselineUnchangedCount,
+    mutationTargetBaselineUnknownCount: existing.mutationTargetBaselineUnknownCount
   };
 
-  if (currentObservation === 'reload-required') {
-    merged.reloadRequiredCount += 1;
-    return merged;
-  }
-  if (currentObservation === 'in-session-updated') {
-    merged.inSessionUpdatedCount += 1;
-    return merged;
-  }
-
-  merged.unknownObservationCount += 1;
+  incrementObservationCount(merged, currentSummary.liveUptakeObservation);
+  incrementMutationTargetCount(merged, normalizeMutationProviderTarget(currentSummary.mutationProviderTarget));
+  incrementBooleanReceiptCount(
+    currentSummary.mutationTargetPersistedMatch,
+    () => {
+      merged.mutationTargetPersistedMatchCount += 1;
+    },
+    () => {
+      merged.mutationTargetPersistedMismatchCount += 1;
+    },
+    () => {
+      merged.mutationTargetPersistedUnknownCount += 1;
+    }
+  );
+  incrementBooleanReceiptCount(
+    currentSummary.mutationTargetBaselineChanged,
+    () => {
+      merged.mutationTargetBaselineChangedCount += 1;
+    },
+    () => {
+      merged.mutationTargetBaselineUnchangedCount += 1;
+    },
+    () => {
+      merged.mutationTargetBaselineUnknownCount += 1;
+    }
+  );
   return merged;
 }
 
@@ -232,6 +317,18 @@ function classifyHistoryProofStatus(
   return stance === 'candidate-live-uptake-observed'
     ? 're-evaluation-required'
     : 'not-fully-proven';
+}
+
+function classifyProviderSelectionCoverage(
+  counts: RuntimeSettingsLiveSessionProbeHistoryCounts
+): RuntimeSettingsLiveSessionProviderSelectionCoverage {
+  if (counts.mutationTargetHostCount > 0 && counts.mutationTargetDockerCount > 0) {
+    return 'bidirectional-selection-observed';
+  }
+  if (counts.mutationTargetHostCount > 0 || counts.mutationTargetDockerCount > 0) {
+    return 'single-provider-only';
+  }
+  return 'insufficient-evidence';
 }
 
 function normalizeLiveUptakeObservation(
@@ -258,6 +355,65 @@ function normalizeLiveUptakeObservation(
     return 'in-session-updated';
   }
   return undefined;
+}
+
+function normalizeMutationProviderTarget(value: unknown): 'host' | 'docker' | undefined {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+  const normalized = value.trim().toLowerCase();
+  return normalized === 'host' || normalized === 'docker' ? normalized : undefined;
+}
+
+function normalizeBooleanReceipt(value: unknown): boolean | undefined {
+  return typeof value === 'boolean' ? value : undefined;
+}
+
+function incrementObservationCount(
+  counts: RuntimeSettingsLiveSessionProbeHistoryCounts,
+  observation: RuntimeSettingsLiveSessionUptakeObservation | undefined
+): void {
+  if (observation === 'reload-required') {
+    counts.reloadRequiredCount += 1;
+    return;
+  }
+  if (observation === 'in-session-updated') {
+    counts.inSessionUpdatedCount += 1;
+    return;
+  }
+  counts.unknownObservationCount += 1;
+}
+
+function incrementMutationTargetCount(
+  counts: RuntimeSettingsLiveSessionProbeHistoryCounts,
+  mutationTarget: 'host' | 'docker' | undefined
+): void {
+  if (mutationTarget === 'host') {
+    counts.mutationTargetHostCount += 1;
+    return;
+  }
+  if (mutationTarget === 'docker') {
+    counts.mutationTargetDockerCount += 1;
+    return;
+  }
+  counts.mutationTargetUnknownCount += 1;
+}
+
+function incrementBooleanReceiptCount(
+  value: boolean | undefined,
+  whenTrue: () => void,
+  whenFalse: () => void,
+  whenUnknown: () => void
+): void {
+  if (value === true) {
+    whenTrue();
+    return;
+  }
+  if (value === false) {
+    whenFalse();
+    return;
+  }
+  whenUnknown();
 }
 
 function formatBooleanReceipt(value: boolean | undefined): string {
