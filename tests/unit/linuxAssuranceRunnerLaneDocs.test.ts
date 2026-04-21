@@ -212,10 +212,10 @@ describe('linux assurance runner lane docs', () => {
       'node scripts/runAssuranceAudit.js --lane uplift'
     );
     expect(packageManifest.scripts?.['gitlab:runner:assert']).toBe(
-      'node scripts/assertGovernedRunnerLanes.js'
+      'scripts\\invoke-node-from-npm-execpath.cmd scripts/assertGovernedRunnerLanes.js'
     );
     expect(packageManifest.scripts?.['gitlab:runner:doctor']).toBe(
-      'node scripts/doctorGovernedRunnerLanes.js'
+      'scripts\\invoke-node-from-npm-execpath.cmd scripts/doctorGovernedRunnerLanes.js'
     );
   });
 });

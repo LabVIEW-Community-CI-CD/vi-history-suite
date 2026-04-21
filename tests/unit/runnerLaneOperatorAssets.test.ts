@@ -385,13 +385,13 @@ describe('runner lane operator assets', () => {
     expect(releaseProcedure).toContain('concurrent = 2');
     expect(releaseProcedure).toContain('governed_runner_admission');
     expect(packageManifest.scripts?.['gitlab:runner:assert']).toBe(
-      'node scripts/assertGovernedRunnerLanes.js'
+      'scripts\\invoke-node-from-npm-execpath.cmd scripts/assertGovernedRunnerLanes.js'
     );
     expect(packageManifest.scripts?.['gitlab:runner:doctor']).toBe(
-      'node scripts/doctorGovernedRunnerLanes.js'
+      'scripts\\invoke-node-from-npm-execpath.cmd scripts/doctorGovernedRunnerLanes.js'
     );
     expect(packageManifest.scripts?.['gitlab:runner:windows:recovery:rehearse']).toBe(
-      'npm run compile && node scripts/runWindowsProofRuntimeRecoveryRehearsal.js'
+      'npm run compile && scripts\\invoke-node-from-npm-execpath.cmd scripts/runWindowsProofRuntimeRecoveryRehearsal.js'
     );
   });
 

@@ -234,16 +234,16 @@ describe('windows private release runner lane docs', () => {
     });
 
     expect(packageManifest.scripts?.['acceptance:windows:private-release']).toBe(
-      'node ./node_modules/typescript/bin/tsc -p . && node scripts/runWindowsPrivateReleaseAcceptance.js'
+      'scripts\\invoke-node-from-npm-execpath.cmd .\\node_modules\\typescript\\bin\\tsc -p . && scripts\\invoke-node-from-npm-execpath.cmd scripts/runWindowsPrivateReleaseAcceptance.js'
     );
     expect(packageManifest.scripts?.['gitlab:runner:doctor']).toBe(
-      'node scripts/doctorGovernedRunnerLanes.js'
+      'scripts\\invoke-node-from-npm-execpath.cmd scripts/doctorGovernedRunnerLanes.js'
     );
     expect(packageManifest.scripts?.['gitlab:runner:assert']).toBe(
-      'node scripts/assertGovernedRunnerLanes.js'
+      'scripts\\invoke-node-from-npm-execpath.cmd scripts/assertGovernedRunnerLanes.js'
     );
     expect(packageManifest.scripts?.['gitlab:runner:windows:recovery:rehearse']).toBe(
-      'npm run compile && node scripts/runWindowsProofRuntimeRecoveryRehearsal.js'
+      'npm run compile && scripts\\invoke-node-from-npm-execpath.cmd scripts/runWindowsProofRuntimeRecoveryRehearsal.js'
     );
   });
 });

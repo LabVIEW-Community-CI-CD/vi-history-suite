@@ -285,7 +285,7 @@ describe('extension manifest research alignment', () => {
       'node scripts/publishWindowsPrivateRelease.js'
     );
     expect(manifest.scripts?.['gitlab:runner:doctor']).toBe(
-      'node scripts/doctorGovernedRunnerLanes.js'
+      'scripts\\invoke-node-from-npm-execpath.cmd scripts/doctorGovernedRunnerLanes.js'
     );
     expect(manifest.scripts?.['branch:governance:assert']).toBe(
       'node scripts/assertGovernedBranchBaseline.js'
