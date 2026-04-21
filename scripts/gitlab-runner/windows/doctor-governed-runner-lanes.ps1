@@ -96,7 +96,7 @@ if (-not (Test-Path -LiteralPath $bootstrapDestination)) {
 
 if (Test-Path -LiteralPath $startupReceiptPath) {
   try {
-    $startupReceipt = Get-Content -LiteralPath $startupReceiptPath -Raw | ConvertFrom-Json -Depth 12
+    $startupReceipt = Get-Content -LiteralPath $startupReceiptPath -Raw | ConvertFrom-Json
     $startupReceiptGeneratedAt = $startupReceipt.generatedAt
     $startupReceiptHealthy = $startupReceipt.healthy
     if (-not $startupReceiptHealthy) {

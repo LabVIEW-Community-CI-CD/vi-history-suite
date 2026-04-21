@@ -120,7 +120,7 @@ function Start-LinuxAssuranceSurface {
     $bootstrapPayload = $null
     try {
       if (-not [string]::IsNullOrWhiteSpace($bootstrapText)) {
-        $bootstrapPayload = $bootstrapText | ConvertFrom-Json -Depth 12
+        $bootstrapPayload = $bootstrapText | ConvertFrom-Json
       }
     }
     catch {

@@ -99,7 +99,8 @@ describe('runner lane operator assets', () => {
     expect(linuxApply).toContain('command -v node');
     expect(linuxApply).toContain('concurrent = 2');
     expect(linuxApply).toContain('request_concurrency = 2');
-    expect(linuxApply).toContain('sudo systemctl enable --now "$SERVICE_NAME"');
+    expect(linuxApply).toContain('Governed Linux assurance apply requires non-interactive sudo access.');
+    expect(linuxApply).toContain('sudo -n systemctl enable --now "$SERVICE_NAME"');
     expect(linuxApply).toContain('systemctl is-enabled "$SERVICE_NAME"');
     expect(linuxApply).toContain('systemctl is-active "$SERVICE_NAME"');
     expect(linuxApply).toContain('is not active after apply');
