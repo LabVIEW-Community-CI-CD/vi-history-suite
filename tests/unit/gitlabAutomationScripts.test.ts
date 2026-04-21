@@ -163,6 +163,7 @@ const privateReleasePublisher = require(path.resolve(
   resolvePrivateReleaseTag: (version: string) => string;
   resolvePrivateReleaseName: (version: string) => string;
   resolvePrivateReleaseVsixPath: (version: string) => string;
+  resolvePrivateReleasePacketJsonPath: (version: string) => string;
   resolvePrivateReleaseChecksumPath: (vsixPath: string) => string;
   resolveDirectAssetPath: (fileName: string, directory?: string) => string;
   buildBrowserReleaseUrl: (projectPath: string, tag: string, browserUrl?: string) => string;
@@ -388,6 +389,7 @@ describe('local GitLab automation scripts', () => {
     expect(
       privateReleasePublisher.buildPrivateReleaseDescription({
         releaseName: 'Windows x64 Private Release v1.3.0',
+        versionLine: '1.3.0',
         sourceBranch: 'feature/example',
         commitSha: 'abcdef1234567890',
         packetJsonPath: 'docs/product/private-release-windows-x64-v1.3.0.json',
@@ -396,6 +398,9 @@ describe('local GitLab automation scripts', () => {
         sizeBytes: 42
       })
     ).toContain('Windows x64 private release only');
+    expect(
+      privateReleasePublisher.resolvePrivateReleasePacketJsonPath('1.3.0')
+    ).toBe(path.join('docs', 'product', 'private-release-windows-x64-v1.3.0.json'));
     expect(privateReleasePublisher.getPublishWindowsPrivateReleaseUsage()).toContain(
       '--skip-package'
     );
@@ -693,15 +698,15 @@ describe('local GitLab automation scripts', () => {
     fs.mkdirSync(path.join(tempRoot, 'preview-evidence'), { recursive: true });
     fs.writeFileSync(
       path.join(tempRoot, 'package.json'),
-      JSON.stringify({ version: '1.3.0' }, null, 2),
+      JSON.stringify({ version: '1.3.1' }, null, 2),
       'utf8'
     );
     fs.writeFileSync(
-      path.join(tempRoot, 'docs', 'product', 'private-release-windows-x64-v1.3.0.json'),
+      path.join(tempRoot, 'docs', 'product', 'private-release-windows-x64-v1.3.1.json'),
       JSON.stringify(
         {
           packageEvidence: {
-            versionLine: '1.3.0'
+            versionLine: '1.3.1'
           }
         },
         null,
@@ -710,7 +715,7 @@ describe('local GitLab automation scripts', () => {
       'utf8'
     );
     fs.writeFileSync(
-      path.join(tempRoot, 'preview-evidence', 'vi-history-suite-1.3.0.vsix'),
+      path.join(tempRoot, 'preview-evidence', 'vi-history-suite-1.3.1.vsix'),
       'published-vsix',
       'utf8'
     );
@@ -729,7 +734,7 @@ describe('local GitLab automation scripts', () => {
       if (
         method === 'GET' &&
         url.endsWith(
-          '/projects/svelderrainruiz%2Fvi-history-suite/releases/private-v1.3.0-windows-x64'
+          '/projects/svelderrainruiz%2Fvi-history-suite/releases/private-v1.3.1-windows-x64'
         )
       ) {
         return new Response('Release not found', { status: 404 });
@@ -740,8 +745,8 @@ describe('local GitLab automation scripts', () => {
       ) {
         return new Response(
           JSON.stringify({
-            tag_name: 'private-v1.3.0-windows-x64',
-            name: 'Windows x64 Private Release v1.3.0'
+            tag_name: 'private-v1.3.1-windows-x64',
+            name: 'Windows x64 Private Release v1.3.1'
           }),
           { status: 201, headers: { 'Content-Type': 'application/json' } }
         );
@@ -751,7 +756,7 @@ describe('local GitLab automation scripts', () => {
         url.endsWith('/projects/svelderrainruiz%2Fvi-history-suite/uploads')
       ) {
         const uploadId = nextUploadId++;
-        const fileName = uploadId === 1 ? 'vi-history-suite-1.3.0.vsix' : 'vi-history-suite-1.3.0.vsix.sha256';
+        const fileName = uploadId === 1 ? 'vi-history-suite-1.3.1.vsix' : 'vi-history-suite-1.3.1.vsix.sha256';
         return new Response(
           JSON.stringify({
             id: uploadId,
@@ -764,7 +769,7 @@ describe('local GitLab automation scripts', () => {
       if (
         method === 'GET' &&
         url.endsWith(
-          '/projects/svelderrainruiz%2Fvi-history-suite/releases/private-v1.3.0-windows-x64/assets/links'
+          '/projects/svelderrainruiz%2Fvi-history-suite/releases/private-v1.3.1-windows-x64/assets/links'
         )
       ) {
         return new Response(JSON.stringify(releaseLinks), {
@@ -775,7 +780,7 @@ describe('local GitLab automation scripts', () => {
       if (
         method === 'POST' &&
         url.endsWith(
-          '/projects/svelderrainruiz%2Fvi-history-suite/releases/private-v1.3.0-windows-x64/assets/links'
+          '/projects/svelderrainruiz%2Fvi-history-suite/releases/private-v1.3.1-windows-x64/assets/links'
         )
       ) {
         const body = String(init?.body ?? '');
@@ -787,7 +792,7 @@ describe('local GitLab automation scripts', () => {
           name,
           url: params.get('url') ?? '',
           direct_asset_url:
-            `https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.0-windows-x64/downloads${directAssetPath}`
+            `https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.1-windows-x64/downloads${directAssetPath}`
         };
         releaseLinks.push(link);
         return new Response(JSON.stringify(link), {
@@ -851,24 +856,24 @@ describe('local GitLab automation scripts', () => {
       projectPath: 'svelderrainruiz/vi-history-suite',
       sourceBranch: 'feature/private-release-publish',
       commitSha: 'abcdef1234567890abcdef1234567890abcdef12',
-      releaseTag: 'private-v1.3.0-windows-x64',
-      releaseName: 'Windows x64 Private Release v1.3.0',
+      releaseTag: 'private-v1.3.1-windows-x64',
+      releaseName: 'Windows x64 Private Release v1.3.1',
       releaseUrl:
-        'https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.0-windows-x64',
+        'https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.1-windows-x64',
       releaseMutation: 'created',
       vsix: {
-        path: 'preview-evidence/vi-history-suite-1.3.0.vsix',
-        fileName: 'vi-history-suite-1.3.0.vsix',
-        directAssetPath: '/private-releases/windows-x64/vi-history-suite-1.3.0.vsix',
+        path: 'preview-evidence/vi-history-suite-1.3.1.vsix',
+        fileName: 'vi-history-suite-1.3.1.vsix',
+        directAssetPath: '/private-releases/windows-x64/vi-history-suite-1.3.1.vsix',
         directAssetUrl:
-          'https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.0-windows-x64/downloads/private-releases/windows-x64/vi-history-suite-1.3.0.vsix'
+          'https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.1-windows-x64/downloads/private-releases/windows-x64/vi-history-suite-1.3.1.vsix'
       },
       checksum: {
-        path: 'preview-evidence/vi-history-suite-1.3.0.vsix.sha256',
-        fileName: 'vi-history-suite-1.3.0.vsix.sha256',
-        directAssetPath: '/private-releases/windows-x64/vi-history-suite-1.3.0.vsix.sha256',
+        path: 'preview-evidence/vi-history-suite-1.3.1.vsix.sha256',
+        fileName: 'vi-history-suite-1.3.1.vsix.sha256',
+        directAssetPath: '/private-releases/windows-x64/vi-history-suite-1.3.1.vsix.sha256',
         directAssetUrl:
-          'https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.0-windows-x64/downloads/private-releases/windows-x64/vi-history-suite-1.3.0.vsix.sha256'
+          'https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.1-windows-x64/downloads/private-releases/windows-x64/vi-history-suite-1.3.1.vsix.sha256'
       },
       receipt: {
         receiptRoot: '.cache/private-release-publish/latest',
@@ -909,7 +914,7 @@ describe('local GitLab automation scripts', () => {
         (request) =>
           request.method === 'POST' &&
           request.url.endsWith(
-            '/projects/svelderrainruiz%2Fvi-history-suite/releases/private-v1.3.0-windows-x64/assets/links'
+            '/projects/svelderrainruiz%2Fvi-history-suite/releases/private-v1.3.1-windows-x64/assets/links'
           )
       )
     ).toHaveLength(2);

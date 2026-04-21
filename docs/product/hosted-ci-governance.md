@@ -12,7 +12,9 @@ sequence. The exact public release now serves `v1.3.0`, `main` carries
 `1.3.0`, `develop` now carries `1.3.1` as the next candidate line, the
 Marketplace listing serves `1.3.0`, authority `main` `9587a99` is
 back-merged into `develop` `04b07bd`, the resulting `develop` pipeline
-`2467081960` is green, and no `release/1.3.1` branch is open yet.
+`2467081960` is green, protected `develop` `0f4db5e` is now green through
+pipeline `2468407077`, and `release/1.3.1` is open from that merged-green
+state.
 
 ## Current Exact Closeout State
 
@@ -32,7 +34,7 @@ back-merged into `develop` `04b07bd`, the resulting `develop` pipeline
 - current `main` package line: `1.3.0`
 - current `develop` package line: `1.3.1`
 - active exact release candidate line on `develop`: `v1.3.1`
-- active release-candidate branch: none
+- active release-candidate branch: `release/1.3.1`
 - chosen bump: `patch`
 - rationale: this line hardens the published host-default Windows local
   `LabVIEWCLI` workflow and retained live-session proof/control surfaces

@@ -94,7 +94,7 @@ describe('strict semver discipline', () => {
     expect(versionLineContract.currentMainPackageLine).toBe('1.3.0');
     expect(versionLineContract.currentDevelopPackageLine).toBe('1.3.1');
     expect(versionLineContract.activeDevelopCandidateReleaseLine).toBe('v1.3.1');
-    expect(versionLineContract.activeReleaseCandidateBranch).toBeNull();
+    expect(versionLineContract.activeReleaseCandidateBranch).toBe('release/1.3.1');
     expect(versionLineContract.publicDefaultBranch).toBe('main');
     expect(pkg.version).toBe(versionLineContract.currentDevelopPackageLine);
     expect(versionLineContract.publicCodespaceBranch).toBe('develop');
@@ -107,7 +107,9 @@ describe('strict semver discipline', () => {
     expect(readme).toContain('- current published package line on `main`: `1.3.0`');
     expect(readme).toContain('- current develop package line on `develop`: `1.3.1`');
     expect(readme).toContain('- active exact release candidate line on `develop`: `v1.3.1`');
-    expect(readme).toContain('- active release-candidate branch: none');
+    expect(readme).toContain('- active release-candidate branch: `release/1.3.1`');
+    expect(readme).toContain('- active Windows x64 private-release-prep slice: `release/1.3.1`');
+    expect(readme).toContain('docs/product/private-release-windows-x64-v1.3.1.md');
     expect(readme).toContain('- public GitHub default branch: `main`');
     expect(readme).toContain('- public Codespaces evaluation branch: `develop`');
     expect(readme).toContain('- integration branch: `develop`');
@@ -118,7 +120,9 @@ describe('strict semver discipline', () => {
     expect(currentState).toContain('- current published package line on `main`: `1.3.0`');
     expect(currentState).toContain('- current develop package line on `develop`: `1.3.1`');
     expect(currentState).toContain('- active exact release candidate line on `develop`: `v1.3.1`');
-    expect(currentState).toContain('- active release-candidate branch: none');
+    expect(currentState).toContain('- active release-candidate branch: `release/1.3.1`');
+    expect(currentState).toContain('- active Windows x64 private-release-prep slice: `release/1.3.1`');
+    expect(currentState).toContain('private-release-windows-x64-v1.3.1.md');
     expect(currentState).toContain('- public GitHub default branch: `main`');
     expect(currentState).toContain('- public Codespaces evaluation branch: `develop`');
     expect(currentState).toContain('- integration branch: `develop`');
@@ -129,7 +133,9 @@ describe('strict semver discipline', () => {
     expect(releaseProcedure).toContain("The current published package line on `main` is `1.3.0`.");
     expect(releaseProcedure).toContain('The current develop package line on `develop` is `1.3.1`.');
     expect(releaseProcedure).toContain('The active exact release candidate line on `develop` is `v1.3.1`.');
-    expect(releaseProcedure).toContain('The active release-candidate branch is none.');
+    expect(releaseProcedure).toContain('The active release-candidate branch is `release/1.3.1`.');
+    expect(releaseProcedure).toContain('The active Windows x64 private-release-prep slice is `release/1.3.1`.');
+    expect(releaseProcedure).toContain('docs/product/private-release-windows-x64-v1.3.1.md');
     expect(releaseProcedure).toContain('The public GitHub default branch is `main`');
     expect(releaseProcedure).toContain('`main` shall match that exact release line');
     expect(releaseProcedure).toContain('When `develop` carries post-release work');

@@ -109,11 +109,23 @@
     "integrationBranch": "develop",
     "releaseBranch": "main"
   },
+  "exactReleaseReopening": {
+    "status": "reopened-on-authority-release-1.3.1-branch",
+    "releaseBranch": "release/1.3.1",
+    "mergedGreenDevelopCommit": "0f4db5e",
+    "mergedGreenDevelopPipelineId": 2468407077,
+    "mergedGreenDevelopPipelineStatus": "success",
+    "releaseBranchCommit": "3fe766a",
+    "releaseBranchPipelineId": 2468432598,
+    "releaseBranchPipelineStatus": "success",
+    "nextSeparateAct": "protected-main-promotion",
+    "marketplaceVersionRetained": "1.3.0"
+  },
   "localProofs": {
     "privateRelease": {
-      "status": "historical-v1.3.0-private-release-retained",
-      "tag": "private-v1.3.0-windows-x64",
-      "releaseUrl": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.0-windows-x64"
+      "status": "current-v1.3.1-private-release-published",
+      "tag": "private-v1.3.1-windows-x64",
+      "releaseUrl": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.1-windows-x64"
     },
     "issue0414LiveSessionProof": {
       "status": "passed",

@@ -35,8 +35,9 @@ describe('public Codespaces public-repo bootstrap docs', () => {
     expect(currentState).toContain('current exact released line: `v1.3.0`');
     expect(currentState).toContain('active exact release candidate line on `develop`: `v1.3.1`');
     expect(currentState).toContain(
-      '`v1.3.1` and is now `tag-eligible` for exact-release reopening on'
+      'authority exact-release reopening is now retained on `release/1.3.1`'
     );
+    expect(currentState).toContain('the next exact-release act is protected `main`');
 
     expect(candidate).toContain(
       'Decision: helper-backed canonical path plus generic public-repo reference manual'
