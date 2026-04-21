@@ -135,7 +135,7 @@ describe('post-release sustainment rules package', () => {
     expect(rules.nextRuntimeProviderPublicAcceptanceGate).toEqual({
       pathMd: 'docs/product/runtime-provider-public-acceptance-gate.md',
       pathJson: 'docs/product/runtime-provider-public-acceptance-gate.json',
-      state: 'open',
+      state: 'closed',
       trancheId: 'TRANCHE-016',
       issueId: 'ISSUE-0412',
       programId: 'PROGRAM-0005'
@@ -149,7 +149,7 @@ describe('post-release sustainment rules package', () => {
       currentMainPackageLine: '1.2.2',
       currentDevelopPackageLine: '1.3.0',
       activeDevelopCandidateReleaseLine: 'v1.3.0',
-      activeReleaseCandidateBranch: null,
+      activeReleaseCandidateBranch: 'release/1.3.0',
       publicDefaultBranch: 'main',
       publicCodespaceBranch: 'develop',
       integrationBranch: 'develop',
@@ -488,7 +488,7 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('current exact released line: `v1.2.2`');
     expect(rulesDoc).toContain('current develop package line on `develop`: `1.3.0`');
     expect(rulesDoc).toContain('active exact release candidate line on `develop`: `v1.3.0`');
-    expect(rulesDoc).toContain('no newer `release/*` branch is active yet');
+    expect(rulesDoc).toContain('active release-candidate branch: `release/1.3.0`');
     expect(rulesDoc).toContain('chosen bump: `minor`');
     expect(rulesDoc).toContain('develop');
     expect(rulesDoc).toContain('protected exact-release line');

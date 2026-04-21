@@ -17,6 +17,7 @@ scattered across queue summaries, ship history, and benchmark notes.
   on the Docker-only public contract
 - runtime-provider public-acceptance gate record:
   [runtime-provider-public-acceptance-gate.md](./runtime-provider-public-acceptance-gate.md)
+  is now closed cleanly on the retained published candidate heads
 
 The sustainment lane now owns the only active post-release driver seat. It does
 not absorb the historical `PROGRAM-0002` closeout, `PROGRAM-0003`,
@@ -73,7 +74,7 @@ Current version-line contract:
 - current published package line on `main`: `1.2.2`
 - current develop package line on `develop`: `1.3.0`
 - active exact release candidate line on `develop`: `v1.3.0`
-- no newer `release/*` branch is active yet
+- active release-candidate branch: `release/1.3.0`
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
