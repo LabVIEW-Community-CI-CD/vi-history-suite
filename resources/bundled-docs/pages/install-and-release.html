@@ -5,17 +5,29 @@
 <li>VS Code Marketplace listing under <code>svelderrainruiz.vi-history-suite</code></li>
 <li>exact released VSIX from the matching GitHub release</li>
 <li>local package output via <code>npm run package</code> when you intentionally test from source</li>
+<li>published Windows PowerShell bootstrap <code>irm https://gitlab.com/svelderrainruiz/vi-history-suite/-/raw/develop/scripts/install-vihs-extension.ps1 | iex</code> on the maintained candidate line</li>
 <li>packaged bundled docs through <code>VI History: Open Documentation</code> or the history-panel <code>Open docs</code> action</li>
 </ul>
-<p>Before the first compare on a fresh machine, install or start Docker and confirm <code>docker info</code> works in the same session that will run VS Code.</p>
+<p>Current runtime contract for this build:</p>
+<ul>
+<li>Windows defaults to local <code>LabVIEWCLI</code> when the persisted provider is absent</li>
+<li>Docker remains a bounded expert provider selected through the published install/bootstrap surface or later <code>vihs</code> updates</li>
+<li>run the published PowerShell bootstrap once, then use <code>vihs</code> or <code>vihs --validate</code> as the admitted follow-up commands</li>
+<li>if VS Code was already open when the generated settings CLI changed settings, reload or restart before trusting compare preflight</li>
+<li>run <code>vihs --validate</code> before the first compare on a fresh machine</li>
+<li>if Docker is selected, confirm <code>docker info</code> works in the same session that runs VS Code</li>
+</ul>
 <h2>Release Procedure Summary</h2>
 <p>Use the Marketplace listing for everyday installs or the exact released VSIX when you need the retained tagged build.</p>
 <p>Quick verification flow:</p>
 <ol>
 <li>install the extension from the Marketplace or from the exact released VSIX</li>
-<li>install or start Docker, then confirm <code>docker info</code> succeeds</li>
-<li>reload VS Code if you just installed or updated the extension</li>
+<li>on the maintained candidate line, run <code>irm https://gitlab.com/svelderrainruiz/vi-history-suite/-/raw/develop/scripts/install-vihs-extension.ps1 | iex</code></li>
+<li>keep or change provider, LabVIEW year, and bitness through that bootstrap or a later <code>vihs</code> run</li>
+<li>run <code>vihs --validate</code></li>
+<li>if VS Code was already open when the bootstrap or later <code>vihs</code> update changed settings, reload or restart the window only if stale facts remain</li>
 <li>open <code>VI History</code> on an eligible VI inside a trusted Git workspace</li>
-<li>select two distinct commit checkboxes to generate the compare</li>
+<li>select exactly two retained revisions with the commit checkboxes</li>
+<li>review the explicit compare preflight section and choose <code>Compare</code></li>
 <li>use <code>Open docs</code> if you need the version-matched installed guide</li>
 </ol>

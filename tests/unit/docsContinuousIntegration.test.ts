@@ -1,4 +1,5 @@
 import * as path from 'node:path';
+import * as os from 'node:os';
 
 import { describe, expect, it } from 'vitest';
 
@@ -18,6 +19,7 @@ const docsContinuousIntegration = require(path.resolve(
     evidenceDir?: string;
     env?: NodeJS.ProcessEnv;
     repoRoot?: string;
+    platform?: string;
   }) => Array<{
     id: string;
     command: string;
@@ -46,6 +48,54 @@ const docsContinuousIntegration = require(path.resolve(
     explicitEvidenceDir?: string,
     repoRoot?: string
   ) => string;
+  buildDocsContinuousIntegrationReport: (options: {
+    recordedAt: string;
+    status: 'passed' | 'failed';
+    repoRoot: string;
+    evidenceDir: string;
+    skipLinks: boolean;
+    surface: 'all' | 'public' | 'internal';
+    steps: Array<{
+      id: string;
+      title?: string;
+      command: string;
+      args: string[];
+      status: 'passed' | 'failed';
+    }>;
+    failure?: { stepId?: string; message: string; exitCode?: number | null } | null;
+    env?: NodeJS.ProcessEnv;
+  }) => {
+    installedUserTruths: {
+      hostDefaultProviderDocumented: boolean;
+      explicitProviderBundleValidationDocumented: boolean;
+      dockerExpertProviderDocumented: boolean;
+      providerAndProgressVisible: boolean;
+    };
+  };
+  buildDocsContinuousIntegrationMarkdown: (report: {
+    status: string;
+    recordedAt: string;
+    surface: string;
+    repoRoot: string;
+    wikiRoot: string;
+    ledgerPath: string;
+    skipLinks: boolean;
+    bundleCheck?: { status?: string } | null;
+    wikiDoctorIssueCount?: number | null;
+    wikiPlanPageCount?: number | null;
+    wikiNextPageId?: string | null;
+    internalPublishedWikiPageCount?: number | null;
+    publicPublishedWikiPageCount?: number | null;
+    bundledPageCount?: number | null;
+    installedUserTruths: {
+      hostDefaultProviderDocumented: boolean;
+      explicitProviderBundleValidationDocumented: boolean;
+      dockerExpertProviderDocumented: boolean;
+      providerAndProgressVisible: boolean;
+    };
+    steps: Array<{ id: string; command: string; args: string[]; status: string }>;
+    failure?: { stepId?: string | null; message: string } | null;
+  }) => string;
   runDocsContinuousIntegration: (
     argv?: string[],
     deps?: {
@@ -103,17 +153,20 @@ describe('documentation continuous integration runner', () => {
     const allSteps = docsContinuousIntegration.createDocsContinuousIntegrationSteps({
       skipLinks: true,
       evidenceDir,
-      env: deterministicEnv
+      env: deterministicEnv,
+      platform: 'linux'
     });
     const publicSteps = docsContinuousIntegration.createDocsContinuousIntegrationSteps({
       surface: 'public',
       evidenceDir,
-      env: deterministicEnv
+      env: deterministicEnv,
+      platform: 'linux'
     });
     const internalSteps = docsContinuousIntegration.createDocsContinuousIntegrationSteps({
       surface: 'internal',
       evidenceDir,
-      env: deterministicEnv
+      env: deterministicEnv,
+      platform: 'linux'
     });
 
     expect(allSteps.map((step) => step.id)).toEqual([
@@ -144,7 +197,23 @@ describe('documentation continuous integration runner', () => {
       command: 'npx'
     });
     expect(allSteps.find((step) => step.id === 'internal-docs-tests')).toMatchObject({
-      command: 'npx'
+      command: 'npx',
+      args: ['vitest', 'run', ...[
+        'tests/unit/postReleaseControlPlaneDocs.test.ts',
+        'tests/unit/debtLedgerDocs.test.ts',
+        'tests/unit/executionPolicyDocs.test.ts',
+        'tests/unit/governedProofDocs.test.ts',
+        'tests/unit/informationForUsersAudienceDocs.test.ts',
+        'tests/unit/informationForUsersQualityDocs.test.ts',
+        'tests/unit/informationForUsersSupportDocs.test.ts',
+        'tests/unit/requirementsDocs.test.ts',
+        'tests/unit/shipControlDocs.test.ts',
+        'tests/unit/docsWorkbenchDocs.test.ts',
+        'tests/unit/docsContinuousIntegration.test.ts',
+        'tests/unit/syncBundledDocsScript.test.ts',
+        'tests/unit/wikiCoverageDocs.test.ts',
+        'tests/unit/runWikiWorkbenchCli.test.ts'
+      ]]
     });
     expect(allSteps.find((step) => step.id === 'bundle-check')).toMatchObject({
       command: 'node',
@@ -227,23 +296,52 @@ describe('documentation continuous integration runner', () => {
     expect(
       docsContinuousIntegration.resolveDocsContinuousIntegrationEvidenceDir('public', undefined, repoRoot)
     ).toEqual(path.join(repoRoot, '.cache', 'docs-integration', 'public', 'latest'));
+    expect(
+      docsContinuousIntegration.createDocsContinuousIntegrationSteps({
+        surface: 'public',
+        evidenceDir,
+        env: deterministicEnv,
+        platform: 'win32'
+      }).find((step) => step.id === 'compile')
+    ).toMatchObject({
+      command: 'cmd.exe',
+      args: ['/d', '/s', '/c', 'npm run compile']
+    });
+    expect(
+      docsContinuousIntegration.createDocsContinuousIntegrationSteps({
+        surface: 'public',
+        evidenceDir,
+        env: deterministicEnv,
+        platform: 'win32'
+      }).find((step) => step.id === 'public-docs-tests')
+    ).toMatchObject({
+      command: 'cmd.exe',
+      args: [
+        '/d',
+        '/s',
+        '/c',
+        'npx vitest run tests/unit/bundledDocumentation.test.ts tests/unit/packageManifest.test.ts tests/unit/publicSurfaceBoundaryDocs.test.ts tests/unit/publicForkOwnerProcedureDocs.test.ts'
+      ]
+    });
   });
 
   it('forwards the parsed surface into the executed step plan', async () => {
     const executedStepIds: string[] = [];
     const stdoutWrites: string[] = [];
     const stderrWrites: string[] = [];
+    const evidenceDir = path.join(os.tmpdir(), 'vihs-docs-ci-public-proof');
     const stepIdByCommand = new Map([
       ['npm run compile', 'compile'],
       ['npx vitest run tests/unit/bundledDocumentation.test.ts tests/unit/packageManifest.test.ts tests/unit/publicSurfaceBoundaryDocs.test.ts tests/unit/publicForkOwnerProcedureDocs.test.ts', 'public-docs-tests'],
-      ['node scripts/syncBundledDocs.js --check --report ' + path.join(repoRoot, '.cache', 'docs-integration', 'public', 'latest', 'bundled-docs-check.json'), 'bundle-check'],
+      ['node scripts/syncBundledDocs.js --check --report ' + path.join(evidenceDir, 'bundled-docs-check.json'), 'bundle-check'],
       ['lychee --verbose --no-progress --include-fragments README.md docs/**/*.md', 'links']
     ]);
 
     const result = await docsContinuousIntegration.runDocsContinuousIntegration(
-      ['--surface', 'public'],
+      ['--surface', 'public', '--evidence-dir', evidenceDir],
       {
         cwd: repoRoot,
+        platform: 'linux',
         env: process.env,
         now: () => new Date('2026-04-07T01:05:00.000Z'),
         stdout: { write: (text: string) => stdoutWrites.push(text) },
@@ -260,5 +358,40 @@ describe('documentation continuous integration runner', () => {
     expect(stderrWrites).toEqual([]);
     expect(stdoutWrites.join('')).toContain('[docs-ci] Documentation continuous integration passed.');
     expect(executedStepIds).toEqual(['compile', 'public-docs-tests', 'bundle-check', 'links']);
+  });
+
+  it('retains the released bundled-doc execution truths in the docs-ci report', () => {
+    const report = docsContinuousIntegration.buildDocsContinuousIntegrationReport({
+      recordedAt: '2026-04-13T22:30:00.000Z',
+      status: 'passed',
+      repoRoot,
+      evidenceDir: path.join(repoRoot, '.cache', 'docs-integration', 'latest'),
+      skipLinks: false,
+      surface: 'all',
+      steps: [],
+      failure: null,
+      env: process.env
+    });
+
+    expect(report.installedUserTruths).toEqual({
+      hostDefaultProviderDocumented: true,
+      explicitProviderBundleValidationDocumented: true,
+      dockerExpertProviderDocumented: true,
+      providerAndProgressVisible: true
+    });
+
+    const markdown = docsContinuousIntegration.buildDocsContinuousIntegrationMarkdown({
+      ...report,
+      wikiRoot: path.join(repoRoot, '..', 'vi-history-suite.github.wiki'),
+      ledgerPath: path.join(repoRoot, 'docs', 'product', 'public-github-wiki-publication-ledger.json'),
+      steps: []
+    });
+
+    expect(markdown).toContain('Host-default provider documented: true');
+    expect(markdown).toContain('Explicit provider bundle validation documented: true');
+    expect(markdown).toContain('Docker expert-provider boundary documented: true');
+    expect(markdown).toContain('Provider and progress visibility documented: true');
+    expect(markdown).not.toContain('Windows auto uses Docker when installed');
+    expect(markdown).not.toContain('No silent provider fallback');
   });
 });

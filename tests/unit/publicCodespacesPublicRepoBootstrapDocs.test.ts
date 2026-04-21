@@ -22,21 +22,21 @@ describe('public Codespaces public-repo bootstrap docs', () => {
       'docs/architecture/adr/ADR-0034-public-codespaces-public-repo-bootstrap-and-default-branch-resolution.md'
     );
 
-    expect(readme).toContain('npm run public:fixture:icon-editor');
-    expect(readme).toContain('npm run public:repo:clone -- --repo-url https://github.com/crossrulz/SerialPortNuggets.git');
-    expect(readme).toContain('repo-sibling `labview-icon-editor`');
-    expect(readme).toContain('visible repo-sibling folder');
-    expect(readme).toContain('reference manual for reviewing the changes of a LabVIEW VI between two');
-    expect(readme).toContain('a quickstart for the canonical helper-backed `ni/labview-icon-editor` path');
+    expect(readme).toContain('## Need Source Evaluation Or Contribution?');
+    expect(readme).toContain('[INSTALL.md](./INSTALL.md)');
+    expect(readme).toContain('Fork-Codespace-Quickstart');
+    expect(readme).toContain('Review-Public-LabVIEW-VI-Changes');
+    expect(readme).toContain('Refresh-Codespace-Repositories');
+    expect(readme).toContain('Use `main` when you only need the latest exact released source.');
 
     expect(currentState).toContain('`TRANCHE-014`: Public Codespaces public-repo bootstrap');
     expect(currentState).toContain('canonical `npm run public:fixture:icon-editor` helper-backed path');
     expect(currentState).toContain('generic `npm run public:repo:clone` surface');
     expect(currentState).toContain('current exact released line: `v1.2.2`');
-    expect(currentState).toContain('active exact release candidate line on `develop`: `v1.2.2`');
-    expect(currentState).toContain('clean no-findings');
-    expect(currentState).toContain('expert-agent verdict via');
-    expect(currentState).toContain('vi-history-suite-expert-agent-reviewer');
+    expect(currentState).toContain('active exact release candidate line on `develop`: `v1.3.0`');
+    expect(currentState).toContain(
+      'verdict returned no findings on those exact published public release'
+    );
 
     expect(candidate).toContain(
       'Decision: helper-backed canonical path plus generic public-repo reference manual'
@@ -46,12 +46,12 @@ describe('public Codespaces public-repo bootstrap docs', () => {
     expect(candidate).toContain('Generic bootstrap command:');
     expect(candidate).toContain('npm run public:repo:clone -- --repo-url <https-url>');
     expect(candidate).toContain('Published-surface expert-agent review:');
-    expect(candidate).toContain('`no-findings`');
+    expect(candidate).toContain('`no-findings-post-publication-v1.3.0-candidate`');
     expect(candidate).toContain('Required skill: `vi-history-suite-expert-agent-reviewer`');
     expect(candidate).toContain('Exact public release: `v1.2.2-published`');
     expect(candidate).toContain('remains historical exact');
     expect(candidate).toContain('`v1.2.0` baseline evidence only');
-    expect(candidate).toContain('No active expert-agent blocker remains on `v1.2.2`');
+    expect(candidate).toContain('Runtime-provider public-acceptance gate is now closed');
 
     expect(issue).toContain('public `github.com` and `gitlab.com` HTTPS repos only');
     expect(issue).toContain('brand new fork');

@@ -351,6 +351,55 @@ describe('wiki workbench cli', () => {
     expect(prepReceipt.page).toBeUndefined();
   });
 
+  it('supports refreshing a published page by explicit page id when nextPage is null', async () => {
+    const { repoRoot, wikiRoot } = await createWikiWorkbenchFixture();
+    const ledgerPath = path.join(repoRoot, 'docs', 'product', 'wiki-publication-ledger.json');
+    const ledger = JSON.parse(await fs.readFile(ledgerPath, 'utf8')) as {
+      generatedFor: string;
+      pages: Array<unknown>;
+      nextPage?: unknown;
+    };
+    delete ledger.nextPage;
+    await fs.writeFile(ledgerPath, `${JSON.stringify(ledger, null, 2)}\n`, 'utf8');
+
+    await runWikiWorkbenchCli(['prepare-publication', '--page-id', 'overview'], {
+      repoRoot,
+      getGitRemote: (candidate) => {
+        if (candidate === repoRoot) {
+          return 'https://gitlab.com/svelderrainruiz/vi-history-suite.git';
+        }
+
+        if (candidate === wikiRoot) {
+          return 'https://gitlab.com/svelderrainruiz/vi-history-suite.wiki.git';
+        }
+
+        return undefined;
+      }
+    });
+
+    const prepReceiptPath = path.join(
+      repoRoot,
+      '.cache',
+      'wiki-workbench',
+      'publication-prep',
+      'overview',
+      'publication-prep.json'
+    );
+    const prepReceipt = JSON.parse(await fs.readFile(prepReceiptPath, 'utf8'));
+
+    expect(prepReceipt).toMatchObject({
+      publicationMode: 'refresh-existing-page',
+      ledgerUpdateRequired: false,
+      completionState: 'prepared',
+      currentWikiExists: true
+    });
+    expect(prepReceipt.page).toMatchObject({
+      id: 'overview',
+      status: 'published'
+    });
+    expect(prepReceipt.message).toContain('Prepared wiki publication evidence for overview.');
+  });
+
   it('fails closed when a published wiki file is missing', async () => {
     const { repoRoot } = await createWikiWorkbenchFixture();
     await fs.rm(path.join(repoRoot, '..', 'vi-history-suite.wiki', 'home.md'));

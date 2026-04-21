@@ -272,8 +272,15 @@ export async function buildAndPersistMultiReportDashboard(
         if (!(await pathExists(image.sourceFilePath))) {
           continue;
         }
-        const relativePath = path.join('assets', entry.pairId, image.sourceRelativePath);
-        const destinationPath = path.join(artifactPlan.dashboardDirectory, relativePath);
+        const relativePath = path.posix.join(
+          'assets',
+          entry.pairId,
+          image.sourceRelativePath.replaceAll('\\', '/')
+        );
+        const destinationPath = joinPreservingExplicitPathStyle(
+          artifactPlan.dashboardDirectory,
+          relativePath
+        );
         await mkdir(path.dirname(destinationPath), { recursive: true });
         await copyFile(image.sourceFilePath, destinationPath);
         entry.dashboardImageAssets.push({
@@ -503,7 +510,7 @@ export function renderMultiReportDashboardHtml(
             .map((group) => {
               const groupImagesHtml = group.images
                 .map((image) => {
-                  const absolutePath = path.join(
+                  const absolutePath = joinPreservingExplicitPathStyle(
                     record.artifactPlan.dashboardDirectory,
                     image.dashboardRelativePath
                   );
@@ -969,7 +976,7 @@ function buildMultiReportDashboardArtifactPlan(
   const repoId = createDeterministicId(model.repositoryRoot);
   const fileId = createDeterministicId(`${model.repositoryRoot}\n${model.relativePath}`);
   const windowId = createDeterministicId(model.commits.map((commit) => commit.hash).join('\n'));
-  const dashboardDirectory = path.join(
+  const dashboardDirectory = joinPreservingExplicitPathStyle(
     storageRoot,
     DASHBOARDS_DIRECTORY,
     repoId,
@@ -982,10 +989,18 @@ function buildMultiReportDashboardArtifactPlan(
     fileId,
     windowId,
     dashboardDirectory,
-    jsonFilePath: path.join(dashboardDirectory, 'dashboard.json'),
-    htmlFilePath: path.join(dashboardDirectory, 'dashboard.html'),
-    assetsDirectory: path.join(dashboardDirectory, 'assets')
+    jsonFilePath: joinPreservingExplicitPathStyle(dashboardDirectory, 'dashboard.json'),
+    htmlFilePath: joinPreservingExplicitPathStyle(dashboardDirectory, 'dashboard.html'),
+    assetsDirectory: joinPreservingExplicitPathStyle(dashboardDirectory, 'assets')
   };
+}
+
+function joinPreservingExplicitPathStyle(rootPath: string, ...segments: string[]): string {
+  if (rootPath.startsWith('/')) {
+    return path.posix.join(rootPath, ...segments.map((segment) => segment.replace(/\\/g, '/')));
+  }
+
+  return path.join(rootPath, ...segments);
 }
 
 async function buildDashboardEntry(

@@ -15,6 +15,52 @@ function readManifest(): { scripts?: Record<string, string> } {
   return JSON.parse(readText('package.json')) as { scripts?: Record<string, string> };
 }
 
+function removeTreeWithRetry(targetPath: string) {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    try {
+      fs.rmSync(targetPath, { recursive: true, force: true });
+      return;
+    } catch (error) {
+      lastError = error;
+      if (
+        !(error instanceof Error) ||
+        !('code' in error) ||
+        (error as NodeJS.ErrnoException).code !== 'EPERM'
+      ) {
+        throw error;
+      }
+    }
+  }
+
+  if (process.platform === 'win32') {
+    const cleanup = spawnSync('cmd.exe', ['/d', '/s', '/c', `rmdir /s /q "${targetPath}"`], {
+      encoding: 'utf8'
+    });
+
+    if (cleanup.status === 0 || !fs.existsSync(targetPath)) {
+      return;
+    }
+  }
+
+  throw lastError;
+}
+
+function toWslPath(hostPath: string): string {
+  const normalizedHostPath =
+    process.platform === 'win32' ? hostPath.replace(/\\/g, '/') : hostPath;
+  const result = spawnSync('wsl.exe', ['wslpath', '-a', '-u', normalizedHostPath], {
+    encoding: 'utf8'
+  });
+
+  if (result.status !== 0) {
+    throw new Error(result.stderr || `Failed to convert path to WSL form: ${hostPath}`);
+  }
+
+  return result.stdout.trim();
+}
+
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const docsGate = require(path.join(repoRoot, 'scripts', 'run-docs-gate.js')) as {
   createDocsGateSteps: (options?: { skipLinks?: boolean }) => Array<{
@@ -22,10 +68,13 @@ const docsGate = require(path.join(repoRoot, 'scripts', 'run-docs-gate.js')) as 
     command: string;
     args: string[];
   }>;
+  resolveNodeToolArgs: (command: string, args: string[], platform?: string) => string[];
+  resolveNodeToolCommand: (command: string, platform?: string) => string;
   runDocsGate: (
     argv?: string[],
     deps?: {
       cwd?: string;
+      platform?: string;
       stdout?: { write: (text: string) => void };
       spawnSync?: (
         command: string,
@@ -51,7 +100,10 @@ describe('documentation-package workbench', () => {
     expect(() => docsGate.parseDocsGateArgs(['--weird'])).toThrow(/Unknown argument/);
     expect(docsGate.getDocsGateUsage()).toContain('--skip-links');
 
-    expect(docsGate.createDocsGateSteps()).toEqual([
+    expect(docsGate.createDocsGateSteps({ skipLinks: false, platform: 'linux' } as {
+      skipLinks?: boolean;
+      platform?: string;
+    })).toEqual([
       {
         id: 'compile',
         title: 'Compile TypeScript surfaces',
@@ -72,6 +124,10 @@ describe('documentation-package workbench', () => {
           'tests/unit/debtLedgerDocs.test.ts',
           'tests/unit/executionPolicyDocs.test.ts',
           'tests/unit/governedProofDocs.test.ts',
+          'tests/unit/informationForUsersAudienceDocs.test.ts',
+          'tests/unit/informationForUsersQualityDocs.test.ts',
+          'tests/unit/informationForUsersSupportDocs.test.ts',
+          'tests/unit/installVihsExtensionScript.test.ts',
           'tests/unit/requirementsDocs.test.ts',
           'tests/unit/packageManifest.test.ts',
           'tests/unit/shipControlDocs.test.ts',
@@ -96,10 +152,56 @@ describe('documentation-package workbench', () => {
       }
     ]);
 
-    expect(docsGate.createDocsGateSteps({ skipLinks: true }).map((step) => step.id)).toEqual([
+    expect(docsGate.createDocsGateSteps({ skipLinks: true, platform: 'linux' } as {
+      skipLinks?: boolean;
+      platform?: string;
+    }).map((step) => step.id)).toEqual([
       'compile',
       'docs-tests',
       'bundle-check'
+    ]);
+
+    expect(docsGate.resolveNodeToolCommand('npm', 'win32')).toBe('cmd.exe');
+    expect(docsGate.resolveNodeToolCommand('npx', 'win32')).toBe('cmd.exe');
+    expect(docsGate.resolveNodeToolArgs('npm', ['run', 'compile'], 'win32')).toEqual([
+      '/d',
+      '/s',
+      '/c',
+      'npm run compile'
+    ]);
+    expect(docsGate.resolveNodeToolArgs('npx', ['vitest', 'run'], 'win32')).toEqual([
+      '/d',
+      '/s',
+      '/c',
+      'npx vitest run'
+    ]);
+    expect(docsGate.createDocsGateSteps({ skipLinks: true, platform: 'win32' } as {
+      skipLinks?: boolean;
+      platform?: string;
+    })).toEqual([
+      {
+        id: 'compile',
+        title: 'Compile TypeScript surfaces',
+        command: 'cmd.exe',
+        args: ['/d', '/s', '/c', 'npm run compile']
+      },
+      {
+        id: 'docs-tests',
+        title: 'Run documentation-package alignment tests',
+        command: 'cmd.exe',
+        args: [
+          '/d',
+          '/s',
+          '/c',
+          'npx vitest run tests/unit/bundledDocumentation.test.ts tests/unit/postReleaseControlPlaneDocs.test.ts tests/unit/publicSurfaceBoundaryDocs.test.ts tests/unit/publicForkOwnerProcedureDocs.test.ts tests/unit/debtLedgerDocs.test.ts tests/unit/executionPolicyDocs.test.ts tests/unit/governedProofDocs.test.ts tests/unit/informationForUsersAudienceDocs.test.ts tests/unit/informationForUsersQualityDocs.test.ts tests/unit/informationForUsersSupportDocs.test.ts tests/unit/installVihsExtensionScript.test.ts tests/unit/requirementsDocs.test.ts tests/unit/packageManifest.test.ts tests/unit/shipControlDocs.test.ts tests/unit/docsWorkbenchDocs.test.ts tests/unit/docsContinuousIntegration.test.ts tests/unit/syncBundledDocsScript.test.ts tests/unit/wikiCoverageDocs.test.ts tests/unit/runWikiWorkbenchCli.test.ts'
+        ]
+      },
+      {
+        id: 'bundle-check',
+        title: 'Check bundled documentation drift',
+        command: 'node',
+        args: ['scripts/syncBundledDocs.js', '--check']
+      }
     ]);
   });
 
@@ -107,6 +209,7 @@ describe('documentation-package workbench', () => {
     const spawned: string[] = [];
 
     const result = docsGate.runDocsGate(['--skip-links'], {
+      platform: 'linux',
       stdout: {
         write: () => {}
       },
@@ -122,7 +225,7 @@ describe('documentation-package workbench', () => {
     expect(result).toBe('pass');
     expect(spawned).toEqual([
       'npm run compile',
-      'npx vitest run tests/unit/bundledDocumentation.test.ts tests/unit/postReleaseControlPlaneDocs.test.ts tests/unit/publicSurfaceBoundaryDocs.test.ts tests/unit/publicForkOwnerProcedureDocs.test.ts tests/unit/debtLedgerDocs.test.ts tests/unit/executionPolicyDocs.test.ts tests/unit/governedProofDocs.test.ts tests/unit/requirementsDocs.test.ts tests/unit/packageManifest.test.ts tests/unit/shipControlDocs.test.ts tests/unit/docsWorkbenchDocs.test.ts tests/unit/docsContinuousIntegration.test.ts tests/unit/syncBundledDocsScript.test.ts tests/unit/wikiCoverageDocs.test.ts tests/unit/runWikiWorkbenchCli.test.ts',
+      'npx vitest run tests/unit/bundledDocumentation.test.ts tests/unit/postReleaseControlPlaneDocs.test.ts tests/unit/publicSurfaceBoundaryDocs.test.ts tests/unit/publicForkOwnerProcedureDocs.test.ts tests/unit/debtLedgerDocs.test.ts tests/unit/executionPolicyDocs.test.ts tests/unit/governedProofDocs.test.ts tests/unit/informationForUsersAudienceDocs.test.ts tests/unit/informationForUsersQualityDocs.test.ts tests/unit/informationForUsersSupportDocs.test.ts tests/unit/installVihsExtensionScript.test.ts tests/unit/requirementsDocs.test.ts tests/unit/packageManifest.test.ts tests/unit/shipControlDocs.test.ts tests/unit/docsWorkbenchDocs.test.ts tests/unit/docsContinuousIntegration.test.ts tests/unit/syncBundledDocsScript.test.ts tests/unit/wikiCoverageDocs.test.ts tests/unit/runWikiWorkbenchCli.test.ts',
       'node scripts/syncBundledDocs.js --check'
     ]);
   });
@@ -135,20 +238,39 @@ describe('documentation-package workbench', () => {
     fs.mkdirSync(path.join(workspaceRoot, 'node_modules'), { recursive: true });
     fs.writeFileSync(path.join(workspaceRoot, 'package.json'), '{}\n', 'utf8');
 
-    const result = spawnSync('bash', [entrypointPath, 'bash', '-lc', 'pwd'], {
-      cwd: tempRoot,
-      env: {
-        ...process.env,
-        CI_PROJECT_DIR: workspaceRoot
-      },
-      encoding: 'utf8'
-    });
+    const result =
+      process.platform === 'win32'
+        ? spawnSync(
+            'wsl.exe',
+            [
+              'bash',
+              '-lc',
+              `CI_PROJECT_DIR='${toWslPath(workspaceRoot)}' '${toWslPath(entrypointPath)}' bash -lc pwd`
+            ],
+            {
+              cwd: tempRoot,
+              env: {
+                ...process.env
+              },
+              encoding: 'utf8'
+            }
+          )
+        : spawnSync('bash', [entrypointPath, 'bash', '-lc', 'pwd'], {
+            cwd: tempRoot,
+            env: {
+              ...process.env,
+              CI_PROJECT_DIR: workspaceRoot
+            },
+            encoding: 'utf8'
+          });
 
     try {
       expect(result.status).toBe(0);
-      expect(result.stdout.trim()).toBe(workspaceRoot);
+      expect(result.stdout.trim()).toBe(
+        process.platform === 'win32' ? toWslPath(workspaceRoot) : workspaceRoot
+      );
     } finally {
-      fs.rmSync(tempRoot, { recursive: true, force: true });
+      removeTreeWithRetry(tempRoot);
     }
   });
 
@@ -248,7 +370,8 @@ describe('documentation-package workbench', () => {
     expect(dockerfile).toContain('FROM node:24-bookworm');
     expect(dockerfile).toContain('lychee-x86_64-unknown-linux-gnu.tar.gz');
     expect(dockerfile).toContain('CMD ["npm", "run", "docs:gate"]');
-    expect(entrypoint).toContain('if [[ ! -d node_modules ]]; then');
+    expect(entrypoint).toContain('node_modules/.vihs-docs-workbench-package-lock.sha256');
+    expect(entrypoint).toContain('sha256sum package-lock.json');
     expect(entrypoint).toContain('npm ci');
     expect(entrypoint).toContain('CI_PROJECT_DIR');
     expect(entrypoint).toContain('VIHS_DOCS_WORKSPACE');
@@ -258,6 +381,7 @@ describe('documentation-package workbench', () => {
     expect(dockerHelper).toContain("command: 'docker.exe'");
     expect(dockerHelper).toContain("'--context', 'desktop-linux'");
     expect(dockerHelper).toContain("path.join(repoRoot, 'docker', 'docs-authoring', 'Dockerfile')");
+    expect(dockerHelper).toContain('/node_modules');
 
     expect(workbenchDoc).toContain('npm run docs:workbench:build');
     expect(workbenchDoc).toContain('npm run docs:workbench:gate');
@@ -288,12 +412,21 @@ describe('documentation-package workbench', () => {
     expect(workbenchDoc).toContain('VIHS_INTERNAL_WIKI_REPO_ROOT');
     expect(workbenchDoc).toContain('VIHS_PUBLIC_GITHUB_WIKI_REPO_ROOT');
     expect(workbenchDoc).toContain('CI_PROJECT_DIR');
+    expect(workbenchDoc).toContain('container-owned `node_modules`');
     expect(workbenchDoc).toContain('docs_continuous_integration');
     expect(workbenchDoc).toContain('docs_public_continuous_integration');
     expect(workbenchDoc).toContain('docs_internal_continuous_integration');
+    expect(workbenchDoc).toContain('Docker-only compare execution in the bundled installed-user guide');
+    expect(workbenchDoc).toContain('engine-aware Windows/Linux image selection');
+    expect(workbenchDoc).toContain('Docker-required hard stops without host fallback');
+    expect(workbenchDoc).toContain('provider and progress visibility in the bundled installed-user guide');
+    expect(workbenchDoc).not.toContain('Docker-first Windows `auto` behavior when Docker Desktop is installed');
+    expect(workbenchDoc).not.toContain('no silent provider fallback');
     expect(workbenchDoc).toContain('${CI_PROJECT_PATH}.wiki.git');
     expect(workbenchDoc).toContain('no-op completion receipt');
     expect(workbenchDoc).toContain('nextPage = null');
+    expect(workbenchDoc).toContain('--page-id <published-page-id>');
+    expect(workbenchDoc).toContain('refresh-existing-page');
     expect(workbenchDoc).toContain(
       'stale bundled installed-user docs are therefore unshippable through the'
     );
@@ -345,7 +478,9 @@ describe('documentation-package workbench', () => {
     expect(gitlabCi).toContain('docs_internal_continuous_integration:');
     expect(gitlabCi).toContain('${CI_PROJECT_PATH}.wiki.git');
     expect(gitlabCi).toContain('https://github.com/svelderrainruiz/vi-history-suite.wiki.git');
-    expect(gitlabCi).toContain('PUBLIC_GITHUB_WIKI_BRANCH="${VIHS_PUBLIC_GITHUB_WIKI_BRANCH:-${CI_COMMIT_REF_NAME}}"');
+    expect(gitlabCi).toContain(
+      'PUBLIC_GITHUB_WIKI_BRANCH="${VIHS_PUBLIC_GITHUB_WIKI_BRANCH:-${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME:-${CI_COMMIT_BRANCH:-${CI_DEFAULT_BRANCH}}}}"'
+    );
     expect(gitlabCi).toContain('git clone --branch "${PUBLIC_GITHUB_WIKI_BRANCH}" "https://github.com/svelderrainruiz/vi-history-suite.wiki.git" ../vi-history-suite.github.wiki || git clone "https://github.com/svelderrainruiz/vi-history-suite.wiki.git" ../vi-history-suite.github.wiki');
     expect(gitlabCi).toContain(
       'VIHS_INTERNAL_WIKI_REPO_ROOT="${CI_PROJECT_DIR}/../vi-history-suite.wiki"'

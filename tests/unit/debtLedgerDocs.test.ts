@@ -75,6 +75,9 @@ describe('debt-retirement contract', () => {
     expect(contract).toContain('no silent debt');
     expect(contract).toContain('accepted bounded exception');
     expect(contract).toContain('docs/product/debt-ledger.json');
+    expect(contract).toContain('accepted bounded exception for the Windows pair-129 benchmark ceiling');
+    expect(contract).toContain('accepted bounded exception for the Linux pair-135 full-window benchmark');
+    expect(contract).toContain('retired extension execution-mode and Docker-acquisition UX debt');
     expect(taxonomy).toContain('| `technical` |');
     expect(taxonomy).toContain('| `accepted-exception` |');
     expect(ledger).toContain('DEBT-0001');

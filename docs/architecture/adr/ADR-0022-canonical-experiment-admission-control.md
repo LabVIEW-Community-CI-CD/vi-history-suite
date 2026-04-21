@@ -19,9 +19,9 @@ handlers can still influence retained evidence:
 - `benchmark-linux`
 
 `ADR-0021` already tightened exact-pair argument rules, but sibling
-subcommands and internal handlers could still accept contradictory runtime
-override bundles even though they feed the same retained benchmark and
-diagnosis surfaces.
+subcommands and internal handlers could still accept contradictory
+proof-admission override bundles even though they feed the same retained
+benchmark and diagnosis surfaces.
 
 Separately, the canonical Windows host has proven that stale non-headless
 LabVIEW processes, preexisting governed VI Server listeners, multiple installed
@@ -37,10 +37,11 @@ run rather than on one governed experiment contract.
 Adopt canonical experiment admission control for `PROGRAM-0003`.
 
 1. The one public governed-proof surface and every internal handler behind its
-   `PROGRAM-0003` subcommands that accepts runtime override arguments shall
-   share one canonical validation contract before execution starts.
-2. Shared runtime override validation shall reject contradictory bundles:
-   - explicit override paths require matching platform and engine selectors
+   `PROGRAM-0003` subcommands that accepts proof-admission override arguments
+   shall share one canonical validation contract before execution starts.
+2. Shared proof-admission validation shall reject contradictory bundles:
+   - explicit proof-admission paths require matching platform and engine
+     selectors
    - engine-specific path sets must remain complete and non-conflicting
    - Windows bitness overrides must not contradict explicit runtime paths
    - explicit Windows runtime paths must not mix x86 and x64 surfaces even
@@ -48,8 +49,8 @@ Adopt canonical experiment admission control for `PROGRAM-0003`.
    - explicit Windows executable paths must match governed executable basenames
 3. Exact-pair selected/base hash validation remains a local rule of
    `runGovernedProof report-smoke` and stays governed by `ADR-0021`.
-4. On the canonical Windows host, explicit runtime override paths shall exist
-   before a targeted rerun starts.
+4. On the canonical Windows host, explicit Windows proof-admission runtime
+   paths shall exist before a targeted rerun starts.
 5. Canonical Windows host-native comparison execution shall still fail closed
    when runtime preflight detects:
    - already-running `LabVIEW.exe`, `LabVIEWCLI.exe`, or `LVCompare.exe`
@@ -72,7 +73,7 @@ Adopt canonical experiment admission control for `PROGRAM-0003`.
 - canonical Windows host reruns fail earlier and more truthfully when the host
   itself is the problem
 - the control plane now distinguishes exact-pair argument rules from wider
-  experiment admission control
+  proof-admission control for governed experiments
 
 ### Negative
 
@@ -81,7 +82,8 @@ Adopt canonical experiment admission control for `PROGRAM-0003`.
 - explicit Windows bundles that contradict the selected runtime bitness are
   now classified as experiment contamination instead of being allowed to
   retain misleading blocker evidence
-- operators must keep explicit runtime overrides coherent across more surfaces
+- operators must keep explicit proof-admission overrides coherent across more
+  surfaces
 - documentation upkeep expands because the admission-control boundary is now a
   first-class product contract
 

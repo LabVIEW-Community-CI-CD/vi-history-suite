@@ -23,12 +23,12 @@ export function buildComparisonRuntimeDoctorSummaryFromFacts(options: {
   const lines: string[] = [];
   const selection = options.runtimeSelection;
   const execution = options.runtimeExecution;
-  const executionMode = selection.executionMode ?? 'auto';
+  const providerRequest = deriveProviderRequestLabel(selection);
 
   lines.push(
     `Selected provider=${selection.provider}; engine=${selection.engine ?? 'none'}; platform=${selection.platform}; bitness=${selection.bitness}.`
   );
-  lines.push(`Selected execution mode=${executionMode}.`);
+  lines.push(`Provider request=${providerRequest}.`);
 
   if (selection.providerDecisions?.length) {
     lines.push(
@@ -87,7 +87,11 @@ export function buildComparisonRuntimeDoctorSummaryFromFacts(options: {
   }
 
   if (options.reportStatus === 'blocked-runtime' || execution.state === 'not-available') {
-    lines.push(`Runtime blocked reason: ${selection.blockedReason ?? execution.blockedReason ?? 'none'}.`);
+    lines.push(
+      `Runtime blocked reason: ${normalizeRuntimeDoctorBlockedReason(
+        selection.blockedReason ?? execution.blockedReason
+      )}.`
+    );
   }
 
   if (execution.failureReason) {
@@ -110,8 +114,20 @@ export function buildComparisonRuntimeDoctorSummaryFromFacts(options: {
     lines.push(`Exit observed process names: ${execution.exitObservedProcessNames.join(' | ')}.`);
   }
 
+  const settingsFreshnessNote = deriveRuntimeDoctorSettingsFreshnessNote(options);
+  if (settingsFreshnessNote) {
+    lines.push(settingsFreshnessNote);
+  }
+
   lines.push(deriveRuntimeDoctorNextAction(options));
   return lines;
+}
+
+function deriveProviderRequestLabel(selection: {
+  requestedProvider?: 'host' | 'docker';
+  executionMode?: string;
+}): string {
+  return deriveRequestedProviderIntent(selection);
 }
 
 function deriveRuntimeDoctorNextAction(options: {
@@ -120,7 +136,7 @@ function deriveRuntimeDoctorNextAction(options: {
   runtimeSelection: ComparisonReportPacketRecord['runtimeSelection'];
   runtimeExecution: ComparisonReportRuntimeExecution;
 }): string {
-  const executionMode = options.runtimeSelection.executionMode ?? 'auto';
+  const providerRequest = deriveRequestedProviderIntent(options.runtimeSelection);
   const blockedReason =
     options.runtimeExecution.blockedReason ?? options.runtimeSelection.blockedReason;
 
@@ -129,26 +145,69 @@ function deriveRuntimeDoctorNextAction(options: {
   }
 
   if (options.reportStatus === 'blocked-runtime' || options.runtimeExecution.state === 'not-available') {
+    if (blockedReason === 'installed-provider-invalid') {
+      return buildRuntimeSettingsReloadAction(
+        'set viHistorySuite.runtimeProvider to host or docker',
+        'rerun comparison report generation'
+      );
+    }
+
+    if (blockedReason === 'labview-runtime-selection-required') {
+      return buildRuntimeSettingsReloadAction(
+        'set viHistorySuite.labviewVersion and viHistorySuite.labviewBitness',
+        'rerun comparison report generation'
+      );
+    }
+
+    if (blockedReason === 'labview-version-required') {
+      return buildRuntimeSettingsReloadAction(
+        'set viHistorySuite.labviewVersion',
+        'rerun comparison report generation'
+      );
+    }
+
+    if (blockedReason === 'labview-bitness-required') {
+      return buildRuntimeSettingsReloadAction(
+        'set viHistorySuite.labviewBitness',
+        'rerun comparison report generation'
+      );
+    }
+
     if (
       options.runtimeSelection.platform === 'win32' &&
       blockedReason === 'windows-host-runtime-surface-contaminated'
     ) {
-      if (executionMode === 'host-only') {
-        return 'Next action: close existing LabVIEW/LabVIEWCLI/LVCompare sessions, clear the governed VI Server listener on the selected port, or change execution mode, then rerun comparison report generation.';
+      if (providerRequest === 'host') {
+        return 'Next action: close existing LabVIEW/LabVIEWCLI/LVCompare sessions, clear the governed VI Server listener on the selected port, or switch to a Docker-backed compare path, then rerun comparison report generation.';
       }
       return `Next action: close existing LabVIEW/LabVIEWCLI/LVCompare sessions, clear the governed VI Server listener on the selected port, or ${deriveContainerRecoveryAction(options.runtimeSelection)}, then rerun comparison report generation.`;
     }
 
-    if (blockedReason === 'docker-only-provider-not-supported-on-platform') {
-      return 'Next action: change execution mode to auto or host-only on this platform, then rerun comparison report generation.';
+    if (
+      blockedReason === 'docker-only-provider-not-supported-on-platform' ||
+      blockedReason === 'docker-provider-not-supported-on-platform'
+    ) {
+      return buildRuntimeSettingsReloadAction(
+        'set viHistorySuite.runtimeProvider to host on this platform',
+        'rerun comparison report generation'
+      );
     }
 
-    if (blockedReason === 'docker-only-requires-windows-x64-provider') {
-      return 'Next action: use the governed 64-bit container lane or change execution mode, then rerun comparison report generation.';
+    if (
+      blockedReason === 'docker-only-requires-windows-x64-provider' ||
+      blockedReason === 'docker-provider-requires-windows-x64'
+    ) {
+      return buildRuntimeSettingsReloadAction(
+        'set viHistorySuite.runtimeProvider to host or use Docker with viHistorySuite.labviewBitness=x64',
+        'rerun comparison report generation'
+      );
     }
 
-    if (blockedReason === 'docker-only-provider-unavailable') {
-      return `Next action: ${deriveContainerRecoveryAction(options.runtimeSelection)} or change execution mode, then rerun comparison report generation.`;
+    if (
+      blockedReason === 'docker-only-provider-unavailable' ||
+      blockedReason === 'docker-provider-unavailable'
+    ) {
+      return `Next action: ${deriveContainerRecoveryAction(options.runtimeSelection)} or set viHistorySuite.runtimeProvider to host, then rerun comparison report generation.`;
     }
 
     if (blockedReason === 'auto-docker-installed-provider-unavailable') {
@@ -162,11 +221,11 @@ function deriveRuntimeDoctorNextAction(options: {
       return `Next action: ${deriveContainerRecoveryAction(options.runtimeSelection)} and rerun comparison report generation.`;
     }
 
-    if (executionMode === 'host-only') {
-      return 'Next action: make the selected host-native runtime available, resolve host conflicts, or change execution mode, then rerun comparison report generation.';
+    if (providerRequest === 'host') {
+      return 'Next action: make the selected host-native runtime available, resolve host conflicts, or switch to a Docker-backed compare path, then rerun comparison report generation.';
     }
 
-    if (executionMode === 'docker-only') {
+    if (providerRequest === 'docker') {
       return `Next action: ${deriveContainerRecoveryAction(options.runtimeSelection)} and rerun comparison report generation.`;
     }
 
@@ -174,6 +233,22 @@ function deriveRuntimeDoctorNextAction(options: {
   }
 
   if (options.runtimeExecution.state === 'failed') {
+    if (options.runtimeExecution.diagnosticReason === 'labview-cli-vi-password-protected') {
+      return 'Next action: choose a revision pair whose selected/base VI is not password protected, or remove password protection before rerunning comparison report generation.';
+    }
+
+    if (
+      options.runtimeSelection.platform === 'win32' &&
+      options.runtimeSelection.provider === 'host-native' &&
+      options.runtimeExecution.failureReason === 'command-timed-out' &&
+      (options.runtimeExecution.diagnosticReason ===
+        'labview-cli-timeout-no-labview-at-banner-snapshot' ||
+        options.runtimeExecution.diagnosticReason ===
+          'labview-cli-timeout-no-labview-through-exit')
+    ) {
+      return 'Next action: review the retained runtime process observations and confirm the selected LabVIEW 2026 host bundle, then rerun comparison report generation or switch to a Docker-backed compare path if the host-native CreateComparisonReport seam remains blocked.';
+    }
+
     return 'Next action: use the retained runtime notes, stdout/stderr artifacts, and diagnostic log to correct the runtime environment, then rerun comparison report generation.';
   }
 
@@ -182,6 +257,64 @@ function deriveRuntimeDoctorNextAction(options: {
   }
 
   return 'Next action: run comparison report generation from a trusted workspace to retain LabVIEW comparison-report artifacts for this revision pair.';
+}
+
+function buildRuntimeSettingsReloadAction(settingsAction: string, finalAction: string): string {
+  return `Next action: ${settingsAction}. Then ${finalAction}. If this already-running VS Code session still shows stale provider or runtime facts after the CLI update, reload or restart the window and try again.`;
+}
+
+function deriveRuntimeDoctorSettingsFreshnessNote(options: {
+  reportStatus: ComparisonReportPacketRecord['reportStatus'];
+  runtimeSelection: ComparisonReportPacketRecord['runtimeSelection'];
+  runtimeExecution: ComparisonReportRuntimeExecution;
+}): string | undefined {
+  const providerRequest = options.runtimeSelection.requestedProvider;
+  if (providerRequest !== 'host' && providerRequest !== 'docker') {
+    return undefined;
+  }
+
+  if (
+    options.reportStatus !== 'blocked-runtime' &&
+    options.runtimeExecution.state !== 'not-available' &&
+    options.runtimeExecution.state !== 'failed'
+  ) {
+    return undefined;
+  }
+
+  return 'Settings freshness: if this already-running VS Code session still shows stale provider or runtime facts after the generated settings CLI update, reload or restart the window and retry.';
+}
+
+function deriveRequestedProviderIntent(selection: {
+  requestedProvider?: 'host' | 'docker';
+  executionMode?: string;
+}): 'host' | 'docker' | 'auto' {
+  if (selection.requestedProvider === 'host' || selection.requestedProvider === 'docker') {
+    return selection.requestedProvider;
+  }
+
+  if (selection.executionMode === 'host-only') {
+    return 'host';
+  }
+
+  if (selection.executionMode === 'docker-only') {
+    return 'docker';
+  }
+
+  return 'auto';
+}
+
+function normalizeRuntimeDoctorBlockedReason(blockedReason?: string): string {
+  switch (blockedReason) {
+    case 'docker-only-provider-not-supported-on-platform':
+      return 'docker-provider-not-supported-on-platform';
+    case 'docker-only-requires-windows-x64-provider':
+      return 'docker-provider-requires-windows-x64';
+    case 'docker-only-provider-unavailable':
+    case 'auto-docker-installed-provider-unavailable':
+      return 'docker-provider-unavailable';
+    default:
+      return blockedReason ?? 'none';
+  }
 }
 
 function stripTerminalPunctuation(value: string): string {

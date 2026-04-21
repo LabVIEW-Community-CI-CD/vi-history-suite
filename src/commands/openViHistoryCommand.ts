@@ -5,13 +5,23 @@ import { GitApi } from '../git/gitApi';
 import { ViEligibilityIndexer } from '../indexing/viEligibilityIndexer';
 import {
   ComparisonReportActionResult,
+  readComparisonRuntimeSettings,
+  resolveRuntimePlatform,
 } from '../reporting/comparisonReportAction';
+import {
+  ComparisonRuntimeSelection,
+  ComparisonRuntimeSettings,
+  locateComparisonRuntime,
+  RuntimePlatform
+} from '../reporting/comparisonRuntimeLocator';
+import { buildComparisonRuntimeDoctorSummaryFromFacts } from '../reporting/comparisonRuntimeDoctor';
 import {
   MultiReportDashboardActionResult,
 } from '../dashboard/multiReportDashboardAction';
 import {
   DocumentationActionResult
 } from '../docs/bundledDocumentationAction';
+import type { ComparisonReportRuntimeExecution } from '../reporting/comparisonReportPacket';
 import {
   BenchmarkStatusActionResult
 } from '../benchmark/benchmarkStatusAction';
@@ -23,6 +33,7 @@ import {
 } from '../review/humanReviewSubmissionAction';
 import { ViHistoryService } from '../services/viHistoryService';
 import {
+  HistoryPanelComparePreflightState,
   renderHistoryPanelHtml,
   renderHistoryReviewPacketText
 } from '../ui/historyPanel';
@@ -83,7 +94,13 @@ export function createOpenViHistoryCommand(
   }) => Promise<HumanReviewSubmissionActionResult>,
   openBenchmarkStatusAction?: (request: {
     authorityRepoRoot: string;
-  }) => Promise<BenchmarkStatusActionResult>
+  }) => Promise<BenchmarkStatusActionResult>,
+  comparePreflightResolver?: () => Promise<HistoryPanelComparePreflightState>,
+  runtimePlatform?: RuntimePlatform,
+  runtimeLocator?: (
+    platform: RuntimePlatform,
+    settings: ComparisonRuntimeSettings
+  ) => Promise<ComparisonRuntimeSelection>
 ): (uri?: vscode.Uri) => Promise<void> {
   return async (uri?: vscode.Uri) => {
     const targetUri = uri ?? vscode.window.activeTextEditor?.document.uri;
@@ -101,7 +118,15 @@ export function createOpenViHistoryCommand(
       return;
     }
 
-    const loadedModel = await historyService.load(targetUri);
+    let loadedModel: Awaited<ReturnType<ViHistoryService['load']>>;
+    try {
+      loadedModel = await historyService.load(targetUri);
+    } catch (error) {
+      void vscode.window.showErrorMessage(
+        buildHistoryLoadFailureMessage(targetUri.fsPath, error)
+      );
+      return;
+    }
     if (!loadedModel.eligible) {
       void vscode.window.showInformationMessage(
         'The selected file is not currently eligible for VI History.'
@@ -147,12 +172,18 @@ export function createOpenViHistoryCommand(
       },
       hasRetainedComparisonReport
     );
+    const comparePreflightState = await resolveHistoryPanelComparePreflightState(
+      comparePreflightResolver,
+      runtimePlatform,
+      runtimeLocator
+    );
     if (repositorySupport?.tier === 'unsupported') {
       void vscode.window.showWarningMessage(repositorySupport.supportGuidance);
     }
     const renderedHtml = renderHistoryPanelHtml(
       model,
-      panelTracker?.getLastActionSummary()
+      panelTracker?.getLastActionSummary(),
+      comparePreflightState
     );
     const panel = vscode.window.createWebviewPanel(
       'viHistorySuite.history',
@@ -406,11 +437,11 @@ export function createOpenViHistoryCommand(
           );
         } else if (result.outcome === 'missing-retained-comparison-report') {
           void vscode.window.showInformationMessage(
-            'No retained VI Comparison Report exists for this pair yet. Use the commit checkboxes to generate retained evidence for it.'
+            'No retained VI Comparison Report exists for this pair yet. Use the compare preflight section to generate retained evidence for it.'
           );
         } else if (result.outcome === 'invalid-retained-comparison-report') {
           void vscode.window.showInformationMessage(
-            'Retained VI Comparison evidence for this pair is stale or invalid. Use the commit checkboxes to rebuild retained evidence for it.'
+            'Retained VI Comparison evidence for this pair is stale or invalid. Use the compare preflight section to rebuild retained evidence for it.'
           );
         }
         const runtimeWarningMessage = buildComparisonRuntimeWarningMessage(
@@ -435,7 +466,7 @@ export function createOpenViHistoryCommand(
         ) {
           if (result.retainedArchiveAvailable === false) {
             void vscode.window.showInformationMessage(
-              'VI Comparison Report opened, but retained pair evidence was not archived for later reuse. Use the commit checkboxes to rebuild retained evidence for this pair if it is not yet reviewable.'
+              'VI Comparison Report opened, but retained pair evidence was not archived for later reuse. Use the compare preflight section to rebuild retained evidence for this pair if it is not yet reviewable.'
             );
           } else {
             const selectedCommit = model.commits.find((commit) => commit.hash === selectedHash);
@@ -443,7 +474,8 @@ export function createOpenViHistoryCommand(
               selectedCommit.retainedComparisonEvidenceAvailable = true;
               safeUpdatePanelHtml(renderHistoryPanelHtml(
                 model,
-                panelTracker?.getLastActionSummary()
+                panelTracker?.getLastActionSummary(),
+                comparePreflightState
               ));
             }
           }
@@ -629,7 +661,8 @@ export function createOpenViHistoryCommand(
           );
           panel.webview.html = renderHistoryPanelHtml(
             model,
-            panelTracker?.getLastActionSummary()
+            panelTracker?.getLastActionSummary(),
+            comparePreflightState
           );
         }
         return;
@@ -830,11 +863,27 @@ export function createOpenViHistoryCommand(
         return;
       }
 
+      if (command === 'notifyComparePreflightBlocked') {
+        void vscode.window.showWarningMessage(
+          typeof message.warningMessage === 'string' && message.warningMessage.length > 0
+            ? message.warningMessage
+            : comparePreflightState.warningMessage ?? comparePreflightState.nextAction
+        );
+        return;
+      }
+
       if (command === 'generateComparisonReportFromSelection') {
+        if (comparePreflightState.status !== 'ready') {
+          void vscode.window.showWarningMessage(
+            comparePreflightState.warningMessage ?? comparePreflightState.nextAction
+          );
+          return;
+        }
+
         const explicitPair = resolveExplicitComparisonPair(model, selectedHashes);
         if (!explicitPair) {
           void vscode.window.showInformationMessage(
-            'Select two distinct retained revisions to generate a comparison report.'
+            'Select two distinct retained revisions to populate compare preflight.'
           );
           panelTracker?.recordAction({
             command,
@@ -1088,7 +1137,7 @@ function buildComparisonRuntimePanelUpdate(
   const runtimeProvider = deriveRuntimeProviderFromDoctorSummary(
     result.runtimeDoctorSummaryLines
   );
-  const executionMode = deriveRuntimeExecutionModeFromDoctorSummary(
+  const providerRequest = deriveRuntimeProviderRequestFromDoctorSummary(
     result.runtimeDoctorSummaryLines
   );
   const acquisitionState = deriveWindowsContainerAcquisitionStateFromDoctorSummary(
@@ -1100,7 +1149,7 @@ function buildComparisonRuntimePanelUpdate(
   const segments = [
     `${commandLabel} for ${pairLabel}.`,
     `Provider: ${runtimeProvider ?? 'none'}.`,
-    `Execution mode: ${executionMode ?? 'auto'}.`,
+    `Provider request: ${providerRequest ?? 'auto'}.`,
     `Report status: ${result.reportStatus ?? 'none'}.`,
     `Runtime state: ${result.runtimeExecutionState ?? 'none'}.`
   ];
@@ -1124,7 +1173,7 @@ function buildComparisonRuntimePanelUpdate(
   const details = buildComparisonRuntimePanelDetails(
     result,
     runtimeProvider,
-    executionMode,
+    providerRequest,
     acquisitionState,
     rejectedProviderSummary
   );
@@ -1193,7 +1242,7 @@ function buildComparisonRuntimeWarningMessage(
   const runtimeProvider = deriveRuntimeProviderFromDoctorSummary(
     result.runtimeDoctorSummaryLines
   );
-  const executionMode = deriveRuntimeExecutionModeFromDoctorSummary(
+  const providerRequest = deriveRuntimeProviderRequestFromDoctorSummary(
     result.runtimeDoctorSummaryLines
   );
   const acquisitionState = deriveWindowsContainerAcquisitionStateFromDoctorSummary(
@@ -1211,8 +1260,8 @@ function buildComparisonRuntimeWarningMessage(
   if (runtimeProvider) {
     segments.push(`Provider: ${runtimeProvider}.`);
   }
-  if (executionMode) {
-    segments.push(`Execution mode: ${executionMode}.`);
+  if (providerRequest) {
+    segments.push(`Provider request: ${providerRequest}.`);
   }
   if (acquisitionState) {
     segments.push(`Container image acquisition: ${acquisitionState}.`);
@@ -1261,7 +1310,7 @@ function buildComparisonRuntimeInformationMessage(
   const runtimeProvider = deriveRuntimeProviderFromDoctorSummary(
     result.runtimeDoctorSummaryLines
   );
-  const executionMode = deriveRuntimeExecutionModeFromDoctorSummary(
+  const providerRequest = deriveRuntimeProviderRequestFromDoctorSummary(
     result.runtimeDoctorSummaryLines
   );
   const acquisitionState = deriveWindowsContainerAcquisitionStateFromDoctorSummary(
@@ -1275,8 +1324,8 @@ function buildComparisonRuntimeInformationMessage(
   if (runtimeProvider) {
     segments.push(`Provider: ${runtimeProvider}.`);
   }
-  if (executionMode) {
-    segments.push(`Execution mode: ${executionMode}.`);
+  if (providerRequest) {
+    segments.push(`Provider request: ${providerRequest}.`);
   }
   if (acquisitionState) {
     segments.push(`Container image acquisition: ${acquisitionState}.`);
@@ -1374,10 +1423,212 @@ function resolveExplicitComparisonPair(
   };
 }
 
+async function resolveHistoryPanelComparePreflightState(
+  comparePreflightResolver?: () => Promise<HistoryPanelComparePreflightState>,
+  runtimePlatform?: RuntimePlatform,
+  runtimeLocator?: (
+    platform: RuntimePlatform,
+    settings: ComparisonRuntimeSettings
+  ) => Promise<ComparisonRuntimeSelection>
+): Promise<HistoryPanelComparePreflightState> {
+  if (comparePreflightResolver) {
+    return comparePreflightResolver();
+  }
+
+  const settings = readComparisonRuntimeSettings();
+  const provider = settings.invalidRequestedProvider
+    ? `Invalid (${settings.invalidRequestedProvider})`
+    : settings.requestedProvider === 'docker'
+      ? 'docker'
+      : 'host';
+  const labviewVersion = settings.labviewVersion ?? 'Unset';
+  const labviewBitness = settings.bitness ?? 'Unset';
+  const cliHint =
+    'Provider is read-only here. Use the generated settings CLI to update provider, LabVIEW version, or LabVIEW bitness when correction is required. Review compare preflight again after the CLI update. If this already-running VS Code session still shows stale provider or runtime facts, reload or restart the window and review compare preflight again.';
+
+  if (settings.invalidRequestedProvider) {
+    return {
+      status: 'blocked',
+      provider,
+      labviewVersion,
+      labviewBitness,
+      nextAction: buildComparePreflightSettingsAction(
+        'set viHistorySuite.runtimeProvider to host or docker'
+      ),
+      cliHint,
+      warningMessage: buildComparePreflightWarningMessage(
+        'Set viHistorySuite.runtimeProvider to host or docker'
+      )
+    };
+  }
+
+  if (!settings.labviewVersion && !settings.bitness) {
+    return {
+      status: 'blocked',
+      provider,
+      labviewVersion,
+      labviewBitness,
+      nextAction: buildComparePreflightSettingsAction(
+        'set viHistorySuite.labviewVersion and viHistorySuite.labviewBitness'
+      ),
+      cliHint,
+      warningMessage: buildComparePreflightWarningMessage(
+        'Set viHistorySuite.labviewVersion and viHistorySuite.labviewBitness'
+      )
+    };
+  }
+
+  if (!settings.labviewVersion) {
+    return {
+      status: 'blocked',
+      provider,
+      labviewVersion,
+      labviewBitness,
+      nextAction: buildComparePreflightSettingsAction(
+        'set viHistorySuite.labviewVersion'
+      ),
+      cliHint,
+      warningMessage: buildComparePreflightWarningMessage(
+        'Set viHistorySuite.labviewVersion'
+      )
+    };
+  }
+
+  if (!settings.bitness) {
+    return {
+      status: 'blocked',
+      provider,
+      labviewVersion,
+      labviewBitness,
+      nextAction: buildComparePreflightSettingsAction(
+        'set viHistorySuite.labviewBitness'
+      ),
+      cliHint,
+      warningMessage: buildComparePreflightWarningMessage(
+        'Set viHistorySuite.labviewBitness'
+      )
+    };
+  }
+
+  if (settings.requestedProvider === 'docker' && settings.bitness === 'x86') {
+    return {
+      status: 'blocked',
+      provider,
+      labviewVersion,
+      labviewBitness,
+      nextAction: buildComparePreflightSettingsAction(
+        'use Docker with viHistorySuite.labviewBitness=x64 or switch viHistorySuite.runtimeProvider to host'
+      ),
+      cliHint,
+      warningMessage:
+        'Compare preflight is blocked. Docker requires viHistorySuite.labviewBitness=x64 or viHistorySuite.runtimeProvider=host before Compare can run. Then review compare preflight before choosing Compare. If this already-running VS Code session still shows stale provider or runtime facts after the CLI update, reload or restart the window and review compare preflight again.'
+    };
+  }
+
+  const effectiveRuntimePlatform = runtimePlatform ?? resolveRuntimePlatform(process.platform);
+  if (effectiveRuntimePlatform === 'win32') {
+    const runtimeSelection = await (runtimeLocator ?? locateComparisonRuntime)(
+      effectiveRuntimePlatform,
+      settings
+    );
+    if (runtimeSelection.provider === 'unavailable' || runtimeSelection.blockedReason) {
+      return buildRuntimeBackedBlockedComparePreflightState({
+        provider,
+        labviewVersion,
+        labviewBitness,
+        cliHint,
+        runtimeSelection
+      });
+    }
+  }
+
+  return {
+    status: 'ready',
+    provider,
+    labviewVersion,
+    labviewBitness,
+    nextAction:
+      'Next action: select two retained revisions, review the explicit selected/base pair, then choose Compare.',
+    cliHint
+  };
+}
+
 function deriveComparisonRuntimeNextAction(
   summaryLines: string[] | undefined
 ): string | undefined {
   return summaryLines?.find((line) => line.startsWith('Next action:'));
+}
+
+function buildComparePreflightSettingsAction(settingsAction: string): string {
+  return `Next action: ${settingsAction}. Then review compare preflight before choosing Compare. If this already-running VS Code session still shows stale provider or runtime facts after the CLI update, reload or restart the window and review compare preflight again.`;
+}
+
+function buildComparePreflightWarningMessage(settingsAction: string): string {
+  return `Compare preflight is blocked. ${settingsAction}. Then review compare preflight before choosing Compare. If this already-running VS Code session still shows stale provider or runtime facts after the CLI update, reload or restart the window and review compare preflight again.`;
+}
+
+function buildRuntimeBackedBlockedComparePreflightState(options: {
+  provider: string;
+  labviewVersion: string;
+  labviewBitness: string;
+  cliHint: string;
+  runtimeSelection: ComparisonRuntimeSelection;
+}): HistoryPanelComparePreflightState {
+  const runtimeDoctorSummaryLines = buildComparisonRuntimeDoctorSummaryFromFacts({
+    reportStatus: 'blocked-runtime',
+    runtimeSelection: options.runtimeSelection,
+    runtimeExecution: buildComparePreflightRuntimeExecution(options.runtimeSelection)
+  });
+  const runtimeProvider = deriveRuntimeProviderFromDoctorSummary(runtimeDoctorSummaryLines);
+  const providerRequest = deriveRuntimeProviderRequestFromDoctorSummary(runtimeDoctorSummaryLines);
+  const rejectedProviderSummary = deriveRejectedProviderSummaryFromDoctorSummary(
+    runtimeDoctorSummaryLines
+  );
+  const nextAction =
+    deriveComparisonRuntimeNextAction(runtimeDoctorSummaryLines) ??
+    'Next action: make the selected runtime provider available or adjust runtime settings, then rerun compare preflight.';
+  const warningSegments = ['Compare preflight is blocked.'];
+
+  if (runtimeProvider) {
+    warningSegments.push(`Provider: ${runtimeProvider}.`);
+  }
+  if (providerRequest) {
+    warningSegments.push(`Provider request: ${providerRequest}.`);
+  }
+  if (rejectedProviderSummary) {
+    warningSegments.push(`Rejected providers: ${rejectedProviderSummary}.`);
+  }
+  if (options.runtimeSelection.blockedReason) {
+    warningSegments.push(`Blocked reason: ${options.runtimeSelection.blockedReason}.`);
+  }
+  warningSegments.push(
+    'If this already-running VS Code session still shows stale provider or runtime facts after the CLI update, reload or restart the window and review compare preflight again.'
+  );
+  warningSegments.push(nextAction);
+
+  return {
+    status: 'blocked',
+    provider: options.provider,
+    labviewVersion: options.labviewVersion,
+    labviewBitness: options.labviewBitness,
+    nextAction,
+    cliHint: options.cliHint,
+    warningMessage: warningSegments.join(' ')
+  };
+}
+
+function buildComparePreflightRuntimeExecution(
+  runtimeSelection: ComparisonRuntimeSelection
+): ComparisonReportRuntimeExecution {
+  return {
+    state: 'not-available',
+    attempted: false,
+    reportExists: false,
+    acquisitionState:
+      runtimeSelection.containerAcquisitionState ?? runtimeSelection.windowsContainerAcquisitionState,
+    blockedReason: runtimeSelection.blockedReason,
+    diagnosticNotes: []
+  };
 }
 
 function deriveRuntimeProviderFromDoctorSummary(
@@ -1394,9 +1645,17 @@ function deriveRuntimeProviderFromDoctorSummary(
   return match?.[1];
 }
 
-function deriveRuntimeExecutionModeFromDoctorSummary(
+function deriveRuntimeProviderRequestFromDoctorSummary(
   summaryLines: string[] | undefined
 ): string | undefined {
+  const providerRequestLine = summaryLines?.find((line) =>
+    line.startsWith('Provider request=')
+  );
+  if (providerRequestLine) {
+    const match = providerRequestLine.match(/^Provider request=([^.;]+)[.;]?$/);
+    return match?.[1];
+  }
+
   const executionModeLine = summaryLines?.find((line) =>
     line.startsWith('Selected execution mode=')
   );
@@ -1405,7 +1664,7 @@ function deriveRuntimeExecutionModeFromDoctorSummary(
   }
 
   const match = executionModeLine.match(/^Selected execution mode=([^.;]+)[.;]?$/);
-  return match?.[1];
+  return mapLegacyExecutionModeToProviderRequest(match?.[1]);
 }
 
 function deriveWindowsContainerAcquisitionStateFromDoctorSummary(
@@ -1450,7 +1709,7 @@ function deriveRejectedProviderSummaryFromDoctorSummary(
 function buildComparisonRuntimePanelDetails(
   result: ComparisonReportActionResult,
   runtimeProvider: string | undefined,
-  executionMode: string | undefined,
+  providerRequest: string | undefined,
   acquisitionState: string | undefined,
   rejectedProviderSummary: string | undefined
 ): ComparisonRuntimePanelDetail[] {
@@ -1460,8 +1719,8 @@ function buildComparisonRuntimePanelDetails(
       value: runtimeProvider ?? 'none'
     },
     {
-      label: 'Execution mode',
-      value: executionMode ?? 'auto'
+      label: 'Provider request',
+      value: providerRequest ?? 'auto'
     },
     {
       label: 'Report status',
@@ -1509,4 +1768,61 @@ function buildComparisonRuntimePanelDetails(
   }
 
   return details;
+}
+
+function mapLegacyExecutionModeToProviderRequest(
+  executionMode: string | undefined
+): string | undefined {
+  if (!executionMode) {
+    return undefined;
+  }
+
+  if (executionMode === 'host-only') {
+    return 'host';
+  }
+
+  if (executionMode === 'docker-only') {
+    return 'docker';
+  }
+
+  return executionMode;
+}
+
+function buildHistoryLoadFailureMessage(
+  targetFsPath: string,
+  error: unknown
+): string {
+  if (isInstalledProgramFilesLvIconPath(targetFsPath)) {
+    return 'The selected installed copy of lv_icon.vi is not the governed review surface. Open resource/plugins/lv_icon.vi from a Git-backed ni/labview-icon-editor clone instead; the Program Files copy has no commit history for VI Comparison Report generation.';
+  }
+
+  if (isGitRepositoryResolutionFailure(error)) {
+    return 'VI History could not load the selected file because it is not inside a tracked Git repository. Open a local Git-backed LabVIEW VI with commit history instead.';
+  }
+
+  return 'VI History could not load the selected file.';
+}
+
+function isInstalledProgramFilesLvIconPath(targetFsPath: string): boolean {
+  const normalizedPath = targetFsPath.replaceAll('/', '\\');
+  const lowerPath = normalizedPath.toLowerCase();
+
+  return (
+    path.win32.basename(normalizedPath).toLowerCase() === 'lv_icon.vi' &&
+    lowerPath.includes('\\program files') &&
+    lowerPath.includes('\\national instruments\\')
+  );
+}
+
+function isGitRepositoryResolutionFailure(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const message = error.message.toLowerCase();
+  return (
+    message.includes('not a git repository') ||
+    message.includes('rev-parse') ||
+    message.includes('--show-toplevel')
+  );
 }

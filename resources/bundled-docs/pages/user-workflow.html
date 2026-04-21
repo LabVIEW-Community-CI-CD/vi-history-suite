@@ -2,28 +2,24 @@
 <h2>Preconditions</h2>
 <p>The shipped extension-user workflow assumes:</p>
 <ul>
-<li>the extension is installed from the VS Code Marketplace, the current exact
-released VSIX, or a preview VSIX when you intentionally want the next
-candidate</li>
+<li>the extension is installed from the VS Code Marketplace, the current exact released VSIX, or a preview VSIX when you intentionally want the next candidate</li>
 <li>the workspace is trusted</li>
 <li>the target file is a tracked LabVIEW VI in a Git repository</li>
 <li>at least two commits modify that VI</li>
-<li>before the first compare, Docker is installed and running on the current host</li>
-<li>before the first compare, <code>docker info</code> succeeds in the same session that
-launched VS Code</li>
+<li>for the exact released <code>main</code> path: Docker is installed and running on the current host, and <code>docker info</code> succeeds in the same session that launched VS Code</li>
+<li>for the maintained public <code>develop</code> candidate: the published Windows PowerShell bootstrap or a later <code>vihs</code> run persists the provider, LabVIEW version, and LabVIEW bitness bundle</li>
+<li>if VS Code was already open when the generated settings CLI changed the provider bundle, the window is reloaded or restarted before compare preflight is trusted</li>
 </ul>
-<p>If Docker is not installed yet or not running yet, install or start it first,
-then rerun the compare flow.</p>
 <h2>Execution Policy</h2>
-<p>Comparison generation is Docker-only in the installed extension.</p>
+<p>Comparison generation follows the current provider-explicit installed contract.</p>
 <p>Current installed rules:</p>
 <ul>
-<li>the extension no longer exposes <code>viHistorySuite.executionMode</code>, host-runtime path overrides, or a user-facing bitness selector</li>
-<li>compare execution is constrained to governed x64 container surfaces</li>
-<li>on Windows, the current Docker daemon engine selects the governed Windows image when <code>OSType=windows</code> and the governed Linux image when <code>OSType=linux</code></li>
-<li>on Linux hosts, the governed Linux image is the installed compare surface</li>
-<li>if the selected governed image is missing, the extension shows image-pull progress before runtime launch</li>
-<li>if Docker CLI is missing, the daemon is unreachable, or the current engine cannot satisfy the governed request, the extension hard-stops and does not probe host LabVIEW</li>
+<li>Windows defaults to local <code>LabVIEWCLI</code> when the persisted provider is absent</li>
+<li>Docker remains a bounded expert provider selected through the published install/bootstrap surface or later <code>vihs</code> updates</li>
+<li><code>viHistorySuite.labviewVersion</code> and <code>viHistorySuite.labviewBitness</code> stay explicit across both provider classes</li>
+<li><code>vihs --validate</code> exposes whether the current bundle is <code>ready</code>, <code>needs-image-acquisition</code>, or blocked</li>
+<li>if Docker is selected, the extension derives the governed Windows or Linux image family from the current engine and fails closed on unsupported <code>x86</code></li>
+<li>if the chosen provider bundle is blocked, compare stops with next-step guidance instead of silently switching provider classes</li>
 <li>compare progress, selected provider, current engine, selected image, acquisition state, and next action stay visible in the history panel while the action runs</li>
 </ul>
 <h2>Repository Support</h2>
@@ -45,10 +41,13 @@ then rerun the compare flow.</p>
 </ul>
 </li>
 <li>Use the checkbox column to choose the exact two retained revisions you want to compare.</li>
+<li>Review the explicit compare preflight section for the exact selected/base pair.</li>
+<li>Choose <code>Compare</code>.</li>
 </ol>
 <p>The current action model is:</p>
 <ul>
-<li><code>Checkboxes</code>: the primary and only extension-user compare control; selecting the second retained revision triggers the comparison automatically</li>
+<li><code>Checkboxes</code>: define the exact selected/base pair you want to compare</li>
+<li><code>Compare</code>: generates or reopens retained comparison evidence for the exact admitted pair</li>
 <li><code>Open at commit</code>: open the selected retained revision</li>
 <li><code>Copy hash</code>: copy the retained commit hash</li>
 <li><code>Open docs</code>: open the bundled user documentation that ships with the installed extension version</li>
@@ -57,6 +56,8 @@ then rerun the compare flow.</p>
 <ul>
 <li>any retained window with at least two commits is enough to use VI History</li>
 <li>the adjacent-pair text in a row is chronology context only; the two checked revisions define the exact compare pair</li>
+<li>the newer selected revision becomes <code>selected</code> and the older selected revision becomes <code>base</code></li>
+<li>the oldest retained revision is still selectable as the older/base side of a checkbox-selected pair</li>
 <li>there is no separate dashboard or decision-record step in the extension-user compare flow</li>
 </ul>
 <h2>Comparison Report Flow</h2>
@@ -70,10 +71,11 @@ then rerun the compare flow.</p>
 </ul>
 <p>The embedded compare view now leads with a white <code>Comparison context</code> block that foregrounds selected/base commit hash, date, author, and subject facts before any deeper runtime evidence.
 Runtime diagnostics remain retained, but they stay on packet/runtime evidence surfaces instead of leading the embedded compare view.</p>
-<p>Checkbox-selected pair behavior is explicit:</p>
+<p>Exact-pair compare behavior is explicit:</p>
 <ul>
-<li>select any first retained revision with the checkbox column</li>
-<li>select the second retained revision to generate a comparison report automatically for that exact pair</li>
+<li>select exactly two retained revisions with the checkbox column</li>
+<li>review the explicit compare preflight section for the exact selected/base pair plus runtime facts</li>
+<li>choose <code>Compare</code> to generate or reopen retained comparison evidence for that exact pair</li>
 <li>the newer selected revision becomes <code>selected</code> and the older selected revision becomes <code>base</code></li>
 <li>the oldest retained revision is still selectable as the older/base side of a checkbox-selected pair</li>
 </ul>

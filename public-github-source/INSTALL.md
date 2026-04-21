@@ -15,25 +15,50 @@ Installed-user start pages:
 
 ## Public Runtime Contract
 
-The installed extension compare workflow is Docker-only and x64-only.
+The public exact release and the maintained public candidate are intentionally
+split:
+
+- exact released `main` / Marketplace `1.2.2`: Docker-only and x64-only
+- maintained public `develop` candidate: host-default Windows local
+  `LabVIEWCLI` plus one bounded expert Docker provider selected through the
+  published Windows PowerShell install/bootstrap surface and later `vihs`
 
 Required surfaces:
 
 - Visual Studio Code
-- Docker Desktop or another Docker-compatible engine installed and running in
-  the same session that launches VS Code
 - a trusted Git repository containing an eligible LabVIEW VI
+- for the exact released Docker-only route: Docker Desktop or another
+  Docker-compatible engine installed and running in the same session that
+  launches VS Code
+- for the maintained public candidate host route: one local Windows LabVIEW
+  installation plus one matching `LabVIEWCLI` surface for the requested
+  version and bitness
 
 Not required:
 
-- host LabVIEW
-- host LabVIEW CLI
 - private GitLab access
+- for the exact released Docker-only route: host LabVIEW and host LabVIEW CLI
 
 ## Runtime Selection
 
-The extension selects the governed image from the current host and Docker
-daemon engine:
+On the maintained public candidate line, installed compare begins from one
+explicit provider request plus required LabVIEW facts:
+
+- `irm https://gitlab.com/svelderrainruiz/vi-history-suite/-/raw/develop/scripts/install-vihs-extension.ps1 | iex`
+- `vihs`
+- `vihs --validate`
+
+The candidate runtime rules are:
+
+- host is the default provider on Windows local `LabVIEWCLI`
+- Docker remains a bounded expert provider selected through the bootstrap or
+  later `vihs`
+- Docker `x86` is unsupported and fails closed with host-or-`x64` guidance
+- if VS Code was already open when the CLI updated settings, reload or restart
+  before trusting compare preflight
+
+When Docker is selected, the extension still derives the governed image from
+the current host and Docker daemon engine:
 
 - Windows host + Linux engine: governed Linux image
 - Windows host + Windows engine: governed Windows image
@@ -42,7 +67,16 @@ daemon engine:
 If the selected governed image is missing locally, the extension pulls it on
 first use before compare execution.
 
-Before the first compare on a fresh machine, confirm Docker is actually ready:
+Before the first compare on a fresh machine, confirm the relevant runtime is
+actually ready:
+
+```bash
+irm https://gitlab.com/svelderrainruiz/vi-history-suite/-/raw/develop/scripts/install-vihs-extension.ps1 | iex
+vihs
+vihs --validate
+```
+
+If you are using Docker, also confirm:
 
 ```bash
 docker version
@@ -50,20 +84,31 @@ docker info --format '{{.OSType}}'
 ```
 
 If those checks fail, install or start Docker before expecting image
-acquisition to begin.
+acquisition to begin. If the candidate host route reports a blocked runtime,
+correct provider, version, or bitness before expecting Compare to run.
 
 ## Installed User Flow
 
-1. Install the extension from the VS Code Marketplace or from a governed VSIX.
-2. Install or start Docker, then confirm `docker info` works in the same
-   session that will run VS Code.
-3. Open a trusted Git repository with an eligible LabVIEW VI.
-4. Run `VI History`.
-5. Select one commit checkbox.
-6. Select a second distinct commit checkbox.
-7. If the selected governed image is not already present but Docker is ready,
-   wait for first-use image acquisition.
-8. Review the generated comparison report.
+1. Install the extension from the VS Code Marketplace, from the exact released
+   VSIX, or from a candidate build when you intentionally want the next line.
+2. On the maintained public candidate, run the published Windows PowerShell
+   bootstrap
+   `irm https://gitlab.com/svelderrainruiz/vi-history-suite/-/raw/develop/scripts/install-vihs-extension.ps1 | iex`.
+3. Keep or change provider, LabVIEW year, and bitness through that bootstrap
+   or a later `vihs` run.
+4. If VS Code was already open when the bootstrap or `vihs` changed settings,
+   reload or restart the window only if the session still shows stale
+   provider or runtime facts.
+5. Run `vihs --validate`.
+6. Open a trusted Git repository with an eligible LabVIEW VI.
+7. Run `VI History`.
+8. Select exactly two retained revisions with the commit checkboxes.
+9. Review the explicit compare preflight section.
+10. Choose `Compare` for that exact selected/base pair.
+11. If Docker is selected and the governed image is not already present but
+    Docker is ready, wait for first-use image acquisition.
+12. Review the generated comparison report or the retained blocked/runtime
+    facts.
 
 Marketplace and exact-release users can stop after the installed-user flow
 above. The rest of this page covers source evaluation and Codespaces work.
@@ -85,8 +130,8 @@ Fast path:
 1. Open your fork in a Codespace or devcontainer on `develop`.
 2. Let browser VS Code finish `Setting up remote connection: Building codespace`.
 3. Press `F5` to open the extension development host.
-4. Open the target Git repository there and use the checkbox-selected compare
-   flow.
+4. Open the target Git repository there and use the explicit compare-preflight
+   workflow.
 
 If the Linux VS Code host dependencies need to be refreshed manually, run:
 

@@ -7,7 +7,8 @@ Active post-release program.
 Activation is now satisfied:
 
 - `PROGRAM-0003` is closed on the benchmark-proof packet under `TRANCHE-011`
-- `PROGRAM-0005` is active again on the breaking `1.0.0` Docker-only contract
+- `PROGRAM-0005` is active again on the installed local-`LabVIEWCLI`
+  contract reset under `TRANCHE-016`
 - the queue has promoted `TRANCHE-012` to `active`
 
 ## Purpose
@@ -21,7 +22,8 @@ control-plane upkeep an explicit home.
 
 Feature-layer execution-policy work is not owned by this sustainment program.
 That work remains explicit under active `PROGRAM-0005`, and the public-closeout
-rerun remains explicit under reopened `PROGRAM-0002`.
+record remains explicit under historical `PROGRAM-0002` plus the open
+runtime-provider public-acceptance gate.
 
 ## North Star
 
@@ -117,6 +119,10 @@ Every slice must preserve:
 - one governed installed-user entry surface so Marketplace readers land on
   local-use guidance first and source-evaluation/fork procedures stay
   explicitly secondary
+- one governed apply-plus-recovery-plus-assert contract for admitted
+  runner/operator hosts so live host drift and mid-session proof-host cleanup
+  can be proven from the repo instead of trusted from machine memory or
+  manual operator intervention
 
 ## First Implementation Slice
 
@@ -135,6 +141,11 @@ That retained slice now:
   contract
 - define the required authority/wiki/bundled-doc refresh steps for future
   sustainment slices
+- keep admitted runner/operator upkeep on repo-owned apply plus live
+  drift-assert surfaces when those hosts remain part of protected-branch
+  admission
+- keep admitted Windows proof-host contamination recovery on a repo-owned
+  mid-session recovery surface instead of manual host cleanup
 - stop short of claiming new product-layer expansion
 
 ## Success Condition
@@ -142,5 +153,5 @@ That retained slice now:
 This program is complete when `vi-history-suite` has a stable post-benchmark
 operating model for releases, benchmark refresh, and documentation/operator
 upkeep, with no ambiguity about where ongoing maintenance work belongs while
-reopened public-closeout or execution-policy work remains explicitly outside
-the sustainment bucket.
+historical public-closeout, the runtime-provider public-acceptance gate record,
+or execution-policy work remains explicitly outside the sustainment bucket.

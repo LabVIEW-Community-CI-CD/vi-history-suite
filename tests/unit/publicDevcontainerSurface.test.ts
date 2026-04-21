@@ -37,6 +37,7 @@ describe('public devcontainer surface', () => {
     }>('.vscode/tasks.json');
     const extensions = readJson<{ recommendations?: string[] }>('.vscode/extensions.json');
     const readme = readText('README.md');
+    const install = readText('INSTALL.md');
 
     expect(devcontainer.name).toBe('vi-history-suite');
     expect(devcontainer.image).toBe('mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm');
@@ -82,21 +83,14 @@ describe('public devcontainer surface', () => {
     );
     expect(extensions.recommendations).not.toEqual(expect.arrayContaining(['vitest.explorer']));
 
-    expect(readme).toContain('## If You Installed VI History Suite');
-    expect(
-      readme.includes('## Source Evaluation And Codespaces') ||
-        readme.includes('## Public Devcontainer And Codespaces')
-    ).toBe(true);
-    expect(readme).toContain('public GitHub facade is expected to support evaluation inside Codespaces or');
-    expect(readme).toContain('a local devcontainer');
-    expect(
-      readme.includes('The installed extension path is Docker-only and x64-only.') ||
-        readme.includes('Docker CLI plus a running Docker daemon are prerequisites for the first')
-    ).toBe(true);
-    expect(readme).toContain('A Linux-hosted development session uses the governed Linux container image.');
-    expect(readme).toContain('npm run public:host:bootstrap-linux');
-    expect(readme).toContain('npm run public:fixture:icon-editor');
-    expect(readme).toContain('repo-sibling `labview-icon-editor`');
-    expect(readme).toContain('No host LabVIEW installation is required for the installed extension path.');
+    expect(readme).toContain('## Install And Use');
+    expect(readme).toContain('## Need Source Evaluation Or Contribution?');
+    expect(readme).toContain('[INSTALL.md](./INSTALL.md)');
+    expect(readme).toContain('[CONTRIBUTING.md](./CONTRIBUTING.md)');
+    expect(install).toContain('The public repo is intended to support devcontainer/Codespaces evaluation');
+    expect(install).toContain('npm run public:host:bootstrap-linux');
+    expect(install).toContain('npm run public:fixture:icon-editor');
+    expect(install).toContain('visible sibling folder named');
+    expect(install).toContain('The public Linux cold-pull smoke lane is');
   });
 });

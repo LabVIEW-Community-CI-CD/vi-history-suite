@@ -78,7 +78,8 @@ describe('designGateRunner', () => {
         };
       },
       readFile: async (filePath) => {
-        if (filePath.endsWith('coverage/coverage-summary.json')) {
+        const normalizedFilePath = filePath.replace(/\\/g, '/');
+        if (normalizedFilePath.endsWith('coverage/coverage-summary.json')) {
           return JSON.stringify({
             total: {
               lines: { pct: 42.72 }
@@ -116,8 +117,10 @@ describe('designGateRunner', () => {
     expect(report.assuranceGateSummary).toBe('5 PASS, 0 FAIL, 1 N/A');
     expect(report.nextFocus).toBe('src/cli/runDesignGate.ts (0.0% lines)');
     expect(report.coverageFocus?.[0]?.relativePath).toBe('src/cli/runDesignGate.ts');
-    const markdownWrites = writes.get('/tmp/vi-history-suite/.cache/design-gate/latest-report.md') ?? [];
-    const jsonWrites = writes.get('/tmp/vi-history-suite/.cache/design-gate/latest-report.json') ?? [];
+    const markdownWrites =
+      writes.get(path.join('/tmp/vi-history-suite', '.cache', 'design-gate', 'latest-report.md')) ?? [];
+    const jsonWrites =
+      writes.get(path.join('/tmp/vi-history-suite', '.cache', 'design-gate', 'latest-report.json')) ?? [];
     expect(markdownWrites.length).toBe(7);
     expect(jsonWrites.length).toBe(7);
     expect(markdownWrites.some((contents) => contents.includes('## Coverage Focus'))).toBe(true);
@@ -153,7 +156,8 @@ describe('designGateRunner', () => {
         };
       },
       readFile: async (filePath) => {
-        if (filePath.endsWith('coverage/coverage-summary.json')) {
+        const normalizedFilePath = filePath.replace(/\\/g, '/');
+        if (normalizedFilePath.endsWith('coverage/coverage-summary.json')) {
           return JSON.stringify({
             '/tmp/vi-history-suite/src/commands/openViHistoryCommand.ts': {
               lines: { pct: 0, covered: 0, total: 134 }
@@ -179,7 +183,7 @@ describe('designGateRunner', () => {
     expect(report.completionState).toBe('complete');
     expect(report.nextFocus).toBe('src/commands/openViHistoryCommand.ts (0.0% lines)');
     expect(
-      writes.get('/tmp/vi-history-suite/.cache/design-gate/latest-report.json')
+      writes.get(path.join('/tmp/vi-history-suite', '.cache', 'design-gate', 'latest-report.json'))
     ).toContain('"status": "fail"');
   });
 
@@ -191,7 +195,7 @@ describe('designGateRunner', () => {
     ).resolves.toEqual({
       status: 'unavailable',
       reason:
-        'coverage-summary-unavailable:/tmp/vi-history-suite/coverage/coverage-summary.json:Error: missing coverage summary'
+        `coverage-summary-unavailable:${path.join('/tmp/vi-history-suite', 'coverage', 'coverage-summary.json')}:Error: missing coverage summary`
     });
   });
 
@@ -210,7 +214,7 @@ describe('designGateRunner', () => {
     ).resolves.toEqual({
       status: 'unavailable',
       reason:
-        'no-src-coverage-entries:/tmp/vi-history-suite/coverage/coverage-summary.json'
+        `no-src-coverage-entries:${path.join('/tmp/vi-history-suite', 'coverage', 'coverage-summary.json')}`
     });
   });
 
@@ -249,22 +253,22 @@ describe('designGateRunner', () => {
 
     expect(report.coverageFocus).toBeUndefined();
     expect(report.coverageFocusUnavailableReason).toBe(
-      'no-src-coverage-entries:/tmp/vi-history-suite/coverage/coverage-summary.json'
+      `no-src-coverage-entries:${path.join('/tmp/vi-history-suite', 'coverage', 'coverage-summary.json')}`
     );
     expect(report.nextFocus).toBeUndefined();
     expect(
-      writes.get('/tmp/vi-history-suite/.cache/design-gate/latest-report.json')
+      writes.get(path.join('/tmp/vi-history-suite', '.cache', 'design-gate', 'latest-report.json'))
     ).toContain(
-      '"coverageFocusUnavailableReason": "no-src-coverage-entries:/tmp/vi-history-suite/coverage/coverage-summary.json"'
+      `"coverageFocusUnavailableReason": "no-src-coverage-entries:${path.join('/tmp/vi-history-suite', 'coverage', 'coverage-summary.json').replace(/\\/g, '\\\\')}"`
     );
     expect(
-      writes.get('/tmp/vi-history-suite/.cache/design-gate/latest-report.md')
+      writes.get(path.join('/tmp/vi-history-suite', '.cache', 'design-gate', 'latest-report.md'))
     ).toContain(
-      'Coverage focus unavailable: no-src-coverage-entries:/tmp/vi-history-suite/coverage/coverage-summary.json'
+      `Coverage focus unavailable: no-src-coverage-entries:${path.join('/tmp/vi-history-suite', 'coverage', 'coverage-summary.json')}`
     );
-    expect(writes.get('/tmp/vi-history-suite/.cache/design-gate/latest-report.md')).not.toContain(
-      'Next focus:'
-    );
+    expect(
+      writes.get(path.join('/tmp/vi-history-suite', '.cache', 'design-gate', 'latest-report.md'))
+    ).not.toContain('Next focus:');
   });
 
   it('derives the next product tranche from the governed development queue after line coverage is saturated', async () => {
@@ -286,7 +290,8 @@ describe('designGateRunner', () => {
         stderr: ''
       }),
       readFile: async (filePath) => {
-        if (filePath.endsWith('coverage/coverage-summary.json')) {
+        const normalizedFilePath = filePath.replace(/\\/g, '/');
+        if (normalizedFilePath.endsWith('coverage/coverage-summary.json')) {
           return JSON.stringify({
             '/tmp/vi-history-suite/src/indexing/viEligibilityIndexer.ts': {
               lines: { pct: 100, covered: 227, total: 227 }
@@ -294,7 +299,7 @@ describe('designGateRunner', () => {
           });
         }
 
-        if (filePath.endsWith('docs/product/development-queue.json')) {
+        if (normalizedFilePath.endsWith('docs/product/development-queue.json')) {
           return JSON.stringify([
             {
               id: 'TRANCHE-001',
@@ -319,7 +324,7 @@ describe('designGateRunner', () => {
       'TRANCHE-001: Wire report preflight into report runtime planning and storage integration'
     );
     expect(
-      writes.get('/tmp/vi-history-suite/.cache/design-gate/latest-report.md')
+      writes.get(path.join('/tmp/vi-history-suite', '.cache', 'design-gate', 'latest-report.md'))
     ).toContain(
       'Next tranche: TRANCHE-001: Wire report preflight into report runtime planning and storage integration'
     );
@@ -330,7 +335,7 @@ describe('designGateRunner', () => {
       readDesignGateNextTranche('/tmp/vi-history-suite', async () => '[]')
     ).resolves.toEqual({
       status: 'unavailable',
-      reason: 'no-active-or-queued-development-tranche:/tmp/vi-history-suite/docs/product/development-queue.json'
+      reason: `no-active-or-queued-development-tranche:${path.join('/tmp/vi-history-suite', 'docs', 'product', 'development-queue.json')}`
     });
   });
 
@@ -342,7 +347,7 @@ describe('designGateRunner', () => {
     ).resolves.toEqual({
       status: 'unavailable',
       reason:
-        'development-queue-unavailable:/tmp/vi-history-suite/docs/product/development-queue.json:Error: missing queue'
+        `development-queue-unavailable:${path.join('/tmp/vi-history-suite', 'docs', 'product', 'development-queue.json')}:Error: missing queue`
     });
   });
 
@@ -379,15 +384,15 @@ describe('designGateRunner', () => {
     );
 
     expect(operations).toEqual([
-      'mkdir:/tmp/vi-history-suite/.cache/design-gate:{"recursive":true}',
-      'write:/tmp/vi-history-suite/.cache/design-gate/latest-report.json',
-      'write:/tmp/vi-history-suite/.cache/design-gate/latest-report.md'
+      `mkdir:${path.join('/tmp/vi-history-suite', '.cache', 'design-gate')}:{"recursive":true}`,
+      `write:${path.join('/tmp/vi-history-suite', '.cache', 'design-gate', 'latest-report.json')}`,
+      `write:${path.join('/tmp/vi-history-suite', '.cache', 'design-gate', 'latest-report.md')}`
     ]);
     expect(
-      writes.get('/tmp/vi-history-suite/.cache/design-gate/latest-report.json')
+      writes.get(path.join('/tmp/vi-history-suite', '.cache', 'design-gate', 'latest-report.json'))
     ).toContain('"status": "pass"');
     expect(
-      writes.get('/tmp/vi-history-suite/.cache/design-gate/latest-report.md')
+      writes.get(path.join('/tmp/vi-history-suite', '.cache', 'design-gate', 'latest-report.md'))
     ).toContain('# Design Gate Report');
   });
 

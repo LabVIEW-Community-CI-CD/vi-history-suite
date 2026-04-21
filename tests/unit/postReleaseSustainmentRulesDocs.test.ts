@@ -16,6 +16,14 @@ type SustainmentRules = {
     programId: string;
     state: string;
   };
+  nextRuntimeProviderPublicAcceptanceGate?: {
+    pathMd: string;
+    pathJson: string;
+    state: string;
+    trancheId: string;
+    issueId: string;
+    programId: string;
+  };
   releaseCadence: {
     model: string;
     versionLineContract: {
@@ -29,6 +37,8 @@ type SustainmentRules = {
       publicCodespaceBranch: string;
       integrationBranch?: string;
       releaseBranch?: string;
+      hotfixBranch?: string;
+      exactReleaseLineBranch?: string;
       nextLineBranchModel?: string;
     };
     maintainedSurfaces: string[];
@@ -74,9 +84,12 @@ type SustainmentRules = {
       model?: string;
       integrationBranch?: string;
       releaseBranch?: string;
+      hotfixBranch?: string;
+      exactReleaseLineBranch?: string;
       temporaryBranchPrefixes?: string[];
       promotionRules?: string[];
       requiredChecks?: string[];
+      governedLaneBehaviors?: Record<string, unknown>;
       laneResponsibilities?: Record<string, string[]>;
     };
     requiredAuthorityUpdates: string[];
@@ -117,7 +130,15 @@ describe('post-release sustainment rules package', () => {
       trancheId: 'TRANCHE-010',
       issueId: 'ISSUE-0407',
       programId: 'PROGRAM-0002',
-      state: 'reopened-on-docker-only-public-contract'
+      state: 'historical-docker-only-public-closeout'
+    });
+    expect(rules.nextRuntimeProviderPublicAcceptanceGate).toEqual({
+      pathMd: 'docs/product/runtime-provider-public-acceptance-gate.md',
+      pathJson: 'docs/product/runtime-provider-public-acceptance-gate.json',
+      state: 'closed',
+      trancheId: 'TRANCHE-016',
+      issueId: 'ISSUE-0412',
+      programId: 'PROGRAM-0005'
     });
 
     expect(rules.releaseCadence.model).toBe('event-driven');
@@ -126,14 +147,16 @@ describe('post-release sustainment rules package', () => {
       burnedExactVersionReleases: ['v1.0.2'],
       currentExactReleaseLine: 'v1.2.2',
       currentMainPackageLine: '1.2.2',
-      currentDevelopPackageLine: '1.2.2',
-      activeDevelopCandidateReleaseLine: 'v1.2.2',
-      activeReleaseCandidateBranch: null,
+      currentDevelopPackageLine: '1.3.0',
+      activeDevelopCandidateReleaseLine: 'v1.3.0',
+      activeReleaseCandidateBranch: 'release/1.3.0',
       publicDefaultBranch: 'main',
       publicCodespaceBranch: 'develop',
       integrationBranch: 'develop',
-      releaseBranch: 'main',
-      nextLineBranchModel: 'gitflow-lite'
+      releaseBranch: 'release/*',
+      hotfixBranch: 'hotfix/*',
+      exactReleaseLineBranch: 'main',
+      nextLineBranchModel: 'gitflow'
     });
     expect(rules.releaseCadence.maintainedSurfaces).toContain(
       'preview-evidence/vi-history-suite-<version>.vsix'
@@ -219,14 +242,14 @@ describe('post-release sustainment rules package', () => {
     );
     expect(rules.releaseCadence.activeOpeningDecision).toEqual(
       expect.objectContaining({
-        chosenBump: 'patch',
-        targetDevelopCandidateReleaseLine: 'v1.2.2'
+        chosenBump: 'minor',
+        targetDevelopCandidateReleaseLine: 'v1.3.0'
       })
     );
     expect(rules.releaseCadence.activeOpeningDecision?.rationale).toEqual(
       expect.arrayContaining([
-        'the next line governs exact-release closeout follow-through by making the protected back-merge of exact released main into develop part of the same release closeout instead of a separately elicited later task',
-        'the same line hardens first-run installed-user guidance and runtime-doctor recovery so machines without Docker installed or running do not look like broken image-acquisition cases'
+        'the next line adds a governed installed-user capability and supported workflow by promoting host-default Windows local LabVIEWCLI with bounded expert Docker instead of only hardening the exact released Docker-only surface',
+        'the v1.3.0 line keeps exact v1.2.2 as the truthful published baseline while opening the next candidate line required for runtime-provider public publication work'
       ])
     );
 
@@ -253,9 +276,11 @@ describe('post-release sustainment rules package', () => {
       'out-of-scope alternative Windows x86 provisioning that is not part of the current governed image contract'
     );
 
-    expect(rules.operatorSurfaceSustainment.branchModel.model).toBe('gitflow-lite');
+    expect(rules.operatorSurfaceSustainment.branchModel.model).toBe('gitflow');
     expect(rules.operatorSurfaceSustainment.branchModel.integrationBranch).toBe('develop');
-    expect(rules.operatorSurfaceSustainment.branchModel.releaseBranch).toBe('main');
+    expect(rules.operatorSurfaceSustainment.branchModel.releaseBranch).toBe('release/*');
+    expect(rules.operatorSurfaceSustainment.branchModel.hotfixBranch).toBe('hotfix/*');
+    expect(rules.operatorSurfaceSustainment.branchModel.exactReleaseLineBranch).toBe('main');
     expect(rules.operatorSurfaceSustainment.branchModel.temporaryBranchPrefixes).toEqual([
       'feature/',
       'release/',
@@ -264,10 +289,10 @@ describe('post-release sustainment rules package', () => {
     expect(rules.operatorSurfaceSustainment.branchModel.promotionRules).toEqual(
       expect.arrayContaining([
         'public GitHub default branch remains main so readers land on the latest exact released line by default',
-        'feature/* branches target develop',
+        'feature/* branches are cut from develop and merge back into develop',
         'the governed branch-baseline assertion surface fails closed when develop does not yet contain exact main before a new candidate line opens',
-        'release/* branches are cut from develop and merge to main plus back into develop',
-        'hotfix/* branches are cut from main and merge to main plus back into develop',
+        'release/* branches are cut from develop, merge into main, merge back into develop, and are deleted only after both merges complete',
+        'hotfix/* branches are cut from main, merge into main, merge back into develop, and are deleted only after both merges complete',
         'exact SemVer tags are cut from main only after the protected main pipeline succeeds',
         'local public-source promotion/check binds the intended checkout through --target-root or VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT and fails closed when the target repo is dirty',
         'candidate lines are not review-ready until the maintained public develop candidate head and maintained public wiki head are both published and retained in the authority candidate package',
@@ -279,10 +304,83 @@ describe('post-release sustainment rules package', () => {
       'docs_public_continuous_integration',
       'docs_internal_continuous_integration',
       'test_extension',
+      'windows_private_release_acceptance',
       'package_extension_preview',
       'Public Facade Package Preview / package-preview',
       'Public Facade Linux Smoke / public-facade-linux-smoke'
     ]);
+    expect(
+      rules.operatorSurfaceSustainment.branchModel?.governedLaneBehaviors
+    ).toEqual(
+      expect.objectContaining({
+        windows_private_release_acceptance: {
+          hostApplySurface: {
+            script: 'scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1',
+            scheduledTaskAction:
+              'powershell.exe -NoLogo -NoProfile -File "C:\\GitLab-Runner\\start-governed-runner-lanes.ps1"',
+            failurePolicy: 'fail-closed-unless-exactly-one-configured-manager-after-apply'
+          },
+          hostAssertionSurface: {
+            script: 'scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1',
+            wrapperScript: 'scripts/assertGovernedRunnerLanes.js',
+            packageScript: 'npm run gitlab:runner:assert',
+            verification: [
+              'bootstrap-hash-match',
+              'scheduled-task-action-match',
+              'scheduled-task-logon-trigger',
+              'request-concurrency-two',
+              'exactly-one-configured-runner-manager'
+            ],
+            failurePolicy: 'fail-closed-on-live-host-drift'
+          },
+          hostNativeMidSessionContaminationRecovery: {
+            trigger: 'windows-host-runtime-cleanup-failed',
+            recoveryScript:
+              'scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1',
+            recoveryTranscript:
+              'windows-private-release-evidence/host/proof-runtime-recovery.txt',
+            retryDelayMs: 5000,
+            maxProofRetries: 1,
+            firstFailureTranscript:
+              'windows-private-release-evidence/host/proof-run-pre-recovery.txt',
+            failurePolicy: 'fail-closed-after-repo-recovery-script-and-single-retry'
+          },
+          hostNativeMidSessionRecoveryRehearsal: {
+            script: 'scripts/runWindowsProofRuntimeRecoveryRehearsal.js',
+            packageScript: 'npm run gitlab:runner:windows:recovery:rehearse',
+            receiptRoot: '.cache/windows-proof-runtime-recovery-rehearsal',
+            latestReceipt: '.cache/windows-proof-runtime-recovery-rehearsal/latest.json',
+            requestedLabviewVersion: '2026',
+            requestedLabviewBitness: 'x64',
+            contaminationSeedMode: 'headless-labview-launch',
+            recoveryTranscriptLeaf: 'proof-runtime-recovery.txt',
+            failurePolicy: 'fail-closed-unless-clean-before-and-after-governed-recovery-rehearsal'
+          }
+        },
+        linux_assurance: {
+          hostApplySurface: {
+            script: 'scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh',
+            verification: ['systemctl-is-enabled', 'systemctl-is-active'],
+            failurePolicy: 'fail-closed-unless-service-enabled-and-active'
+          },
+          hostAssertionSurface: {
+            script: 'scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh',
+            wrapperScript: 'scripts/assertGovernedRunnerLanes.js',
+            packageScript: 'npm run gitlab:runner:assert',
+            verification: [
+              'helper-hash-match',
+              'service-unit-hash-match',
+              'request-concurrency-two',
+              'service-fragment-path-match',
+              'service-user-match',
+              'service-working-directory-match',
+              'exactly-one-configured-runner-process'
+            ],
+            failurePolicy: 'fail-closed-on-live-host-drift'
+          }
+        }
+      })
+    );
     expect(rules.operatorSurfaceSustainment.branchModel.laneResponsibilities).toEqual({
       'feature/*': [
         'focused tests for the changed surface',
@@ -355,6 +453,15 @@ describe('post-release sustainment rules package', () => {
     expect(rules.operatorSurfaceSustainment.requiredAuthorityUpdates).toContain(
       'docs/product/post-release-sustainment-rules.md'
     );
+    expect(rules.operatorSurfaceSustainment.requiredAuthorityUpdates).toContain(
+      'docs/product/runtime-provider-public-acceptance-gate.md'
+    );
+    expect(rules.operatorSurfaceSustainment.requiredAuthorityUpdates).toContain(
+      'docs/product/runtime-provider-public-acceptance-gate.json'
+    );
+    expect(rules.operatorSurfaceSustainment.requiredAuthorityUpdates).toContain(
+      'docs/product/linux-assurance-runner-lane.md'
+    );
     expect(rules.operatorSurfaceSustainment.requiredDerivedUpdatesWhenReaderFacingTruthChanges).toContain(
       'docs/product/wiki-publication-ledger.json'
     );
@@ -379,14 +486,14 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('## Operator And Documentation Upkeep Rules');
     expect(rulesDoc).toContain('public GitHub default branch: `main`');
     expect(rulesDoc).toContain('current exact released line: `v1.2.2`');
-    expect(rulesDoc).toContain('current develop package line on `develop`: `1.2.2`');
-    expect(rulesDoc).toContain('active exact release candidate line on `develop`: `v1.2.2`');
-    expect(rulesDoc).toContain('no newer `release/*` branch is active yet');
-    expect(rulesDoc).toContain('chosen bump: `patch`');
+    expect(rulesDoc).toContain('current develop package line on `develop`: `1.3.0`');
+    expect(rulesDoc).toContain('active exact release candidate line on `develop`: `v1.3.0`');
+    expect(rulesDoc).toContain('active release-candidate branch: `release/1.3.0`');
+    expect(rulesDoc).toContain('chosen bump: `minor`');
     expect(rulesDoc).toContain('develop');
-    expect(rulesDoc).toContain('release branch');
+    expect(rulesDoc).toContain('protected exact-release line');
     expect(rulesDoc).toContain('required checks');
-    expect(rulesDoc).toContain('gitflow-lite');
+    expect(rulesDoc).toContain('GitFlow');
     expect(rulesDoc).toContain('npm run branch:governance:assert');
     expect(rulesDoc).toContain('Hosted automation governance is now retained explicitly:');
     expect(rulesDoc).toContain('Lane-specific CI and gate responsibilities:');
@@ -403,19 +510,39 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('future sessions shall not treat an exact release as fully closed');
     expect(rulesDoc).toContain('installed-user entry surfaces');
     expect(rulesDoc).toContain('PROGRAM-0002');
+    expect(rulesDoc).toContain('historical public-closeout record');
+    expect(rulesDoc).toContain('runtime-provider-public-acceptance-gate.md');
+    expect(rulesDoc).toContain('linux-assurance-runner-lane.md');
     expect(rulesDoc).toContain('execution-policy bypass');
     expect(rulesDoc).toContain('ExecutionPolicy Bypass');
+    expect(rulesDoc).toContain('proof-run-pre-recovery.txt');
+    expect(rulesDoc).toContain('proof-runtime-recovery.txt');
+    expect(rulesDoc).toContain('single retry');
+    expect(rulesDoc).toContain('recover-windows-proof-runtime-surface.ps1');
+    expect(rulesDoc).toContain('runWindowsProofRuntimeRecoveryRehearsal.js');
+    expect(rulesDoc).toContain('npm run gitlab:runner:windows:recovery:rehearse');
+    expect(rulesDoc).toContain('.cache/windows-proof-runtime-recovery-rehearsal/latest.json');
+    expect(rulesDoc).toContain('apply-governed-runner-lanes.ps1');
+    expect(rulesDoc).toContain('assert-governed-runner-lanes.ps1');
+    expect(rulesDoc).toContain('apply-linux-assurance-runner.sh');
+    expect(rulesDoc).toContain('assert-linux-assurance-runner.sh');
+    expect(rulesDoc).toContain('scripts/assertGovernedRunnerLanes.js');
+    expect(rulesDoc).toContain('npm run gitlab:runner:assert');
+    expect(rulesDoc).toContain('without `ExecutionPolicy Bypass`');
 
+    expect(readme).toContain('## Authority And Release Control');
     expect(readme).toContain(
-      '[Post-Release Sustainment Rules](./docs/product/post-release-sustainment-rules.md)'
+      '[docs/product/public-release-candidate.md](./docs/product/public-release-candidate.md)'
     );
+    expect(readme).toContain('[Release Procedure](./docs/release-procedure.md)');
     expect(currentState).toContain(
       '[post-release-sustainment-rules.md](./post-release-sustainment-rules.md)'
     );
     expect(ship).toContain('[post-release-sustainment-rules.md](./post-release-sustainment-rules.md)');
     expect(program).toContain('[post-release-sustainment-rules.md](../post-release-sustainment-rules.md)');
     expect(issue).toContain('docs/product/post-release-sustainment-rules.md');
-    expect(issue).toContain('reopened `PROGRAM-0002`');
+    expect(issue).toContain('historical `PROGRAM-0002` closeout');
+    expect(issue).toContain('runtime-provider public-acceptance gate');
 
     expect(informationItemMap).toContain(
       '| Post-release sustainment rules | `docs/product/post-release-sustainment-rules.md` |'

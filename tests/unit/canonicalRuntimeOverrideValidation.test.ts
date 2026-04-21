@@ -86,7 +86,7 @@ describe('canonicalRuntimeOverrideValidation', () => {
     ).rejects.toThrow(/does not exist on the canonical Windows host/);
   });
 
-  it('resolves the effective runtime override bundle before validation', () => {
+  it('resolves the effective proof-admission bundle before validation', () => {
     expect(
       resolveCanonicalRuntimeOverrideArgs(
         {

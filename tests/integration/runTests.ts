@@ -1,6 +1,6 @@
 import * as fs from 'node:fs/promises';
 import * as fsSync from 'node:fs';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import * as path from 'node:path';
 
 import { downloadAndUnzipVSCode, runTests } from '@vscode/test-electron';
@@ -12,15 +12,32 @@ import {
 import { stageExtensionForWindowsHost } from '../../src/tooling/integrationHostStage';
 import { prepareIntegrationWorkspace } from './prepareTestWorkspace';
 
+const WINDOWS_CODE_PATH =
+  process.platform === 'win32'
+    ? 'C:\\Program Files\\Microsoft VS Code\\bin\\code.cmd'
+    : '/mnt/c/Program Files/Microsoft VS Code/bin/code';
+const WINDOWS_SYSTEM_ROOT = process.platform === 'win32' ? 'C:\\Windows' : '/mnt/c/Windows';
+const DEFAULT_WINDOWS_INTEGRATION_TEMP_ROOT =
+  process.platform === 'win32'
+    ? path.join(
+        process.env.LOCALAPPDATA?.trim() || 'C:\\Users\\sveld\\AppData\\Local',
+        'Temp',
+        'vihs-integration-runtime'
+      )
+    : '/mnt/c/Users/sveld/AppData/Local/Temp/vihs-integration-runtime';
+
 async function main(): Promise<void> {
   const repoRoot = path.resolve(__dirname, '..', '..', '..');
   const extensionTestsEntry = path.resolve(__dirname, 'suite', 'index.js');
-  const windowsCodePath = '/mnt/c/Program Files/Microsoft VS Code/Code.exe';
+  const windowsCodePath = WINDOWS_CODE_PATH;
   const hostStrategy = inspectIntegrationHostStrategy(windowsCodePath, process.env.VI_HISTORY_SUITE_INTEGRATION_HOST, {
     windowsCodeAlreadyRunning: isWindowsCodeAlreadyRunning
   });
   const useWindowsHost = hostStrategy.mode === 'windows';
   const integrationRuntimeRoot = await selectIntegrationRuntimeRoot(repoRoot, useWindowsHost);
+  const windowsProfile = useWindowsHost
+    ? buildWindowsIntegrationProfile(integrationRuntimeRoot)
+    : undefined;
 
   const metadata = await prepareIntegrationWorkspace(
     path.join(integrationRuntimeRoot, 'workspace')
@@ -30,7 +47,10 @@ async function main(): Promise<void> {
   let vscodeExecutablePath: string;
   let extensionDevelopmentPath = repoRoot;
   let extensionTestsPath = extensionTestsEntry;
-  let testEnv: Record<string, string> = buildDecisionRecordAutomationEnv();
+  let testEnv: Record<string, string> = {
+    ...buildDecisionRecordAutomationEnv(),
+    ...buildIntegrationControlEnv()
+  };
   let stagedExtensionRoot: string | undefined;
 
   try {
@@ -44,12 +64,16 @@ async function main(): Promise<void> {
       extensionTestsPath = toWindowsPath(
         path.join(stagedExtensionRoot, 'out-tests', 'tests', 'integration', 'suite', 'index.js')
       );
-      process.chdir('/mnt/c/Windows');
+      process.chdir(WINDOWS_SYSTEM_ROOT);
       testEnv = {
-        ...buildWindowsExtensionHostEnv(launchArgs[0]),
-        ...buildDecisionRecordAutomationEnv()
+        ...buildWindowsExtensionHostEnv(launchArgs[0], {
+          appDataWindowsPath: windowsProfile!.windowsAppDataRoot
+        }),
+        ...buildDecisionRecordAutomationEnv(),
+        ...buildIntegrationControlEnv()
       };
       launchArgs[0] = toWindowsPath(metadata.workspacePath);
+      launchArgs.push(`--user-data-dir=${windowsProfile!.windowsUserDataDirectory}`);
       await writeRuntimeConfig(
         path.join(stagedExtensionRoot, 'out-tests', 'tests', 'integration', 'test-runtime.json'),
         {
@@ -71,19 +95,103 @@ async function main(): Promise<void> {
       );
     }
 
-    await runTests({
-      vscodeExecutablePath,
-      extensionDevelopmentPath,
-      extensionTestsPath,
-      launchArgs,
-      extensionTestsEnv: testEnv
-    });
+    if (useWindowsHost && process.platform === 'win32') {
+      await runNativeWindowsVsCodeTests({
+        vscodeExecutablePath,
+        extensionDevelopmentPath,
+        extensionTestsPath,
+        launchArgs,
+        extensionTestsEnv: testEnv
+      });
+    } else {
+      await runTests({
+        vscodeExecutablePath,
+        extensionDevelopmentPath,
+        extensionTestsPath,
+        launchArgs,
+        extensionTestsEnv: testEnv
+      });
+    }
   } finally {
     await fs.rm(metadata.workspacePath, { recursive: true, force: true });
     if (stagedExtensionRoot) {
       await fs.rm(stagedExtensionRoot, { recursive: true, force: true });
     }
+    if (windowsProfile) {
+      await cleanupDirectoryBestEffort(windowsProfile.linuxProfileRoot);
+    }
   }
+}
+
+async function runNativeWindowsVsCodeTests(options: {
+  vscodeExecutablePath: string;
+  extensionDevelopmentPath: string;
+  extensionTestsPath: string;
+  launchArgs: string[];
+  extensionTestsEnv: Record<string, string>;
+}): Promise<void> {
+  const args = [
+    '--no-sandbox',
+    '--disable-gpu-sandbox',
+    '--disable-updates',
+    '--skip-welcome',
+    '--skip-release-notes',
+    '--disable-workspace-trust',
+    `--extensionTestsPath=${options.extensionTestsPath}`,
+    `--extensionDevelopmentPath=${options.extensionDevelopmentPath}`,
+    ...options.launchArgs
+  ];
+  const environment = {
+    ...process.env,
+    ...options.extensionTestsEnv
+  };
+
+  await new Promise<void>((resolve, reject) => {
+    const child = spawn(
+      'powershell.exe',
+      [
+        '-NoProfile',
+        '-ExecutionPolicy',
+        'Bypass',
+        '-EncodedCommand',
+        encodePowerShellCommand(buildWindowsCodeInvocationScript(options.vscodeExecutablePath, args))
+      ],
+      {
+      cwd: WINDOWS_SYSTEM_ROOT,
+      env: environment,
+      shell: false,
+      stdio: ['ignore', 'pipe', 'pipe']
+      }
+    );
+
+    child.stdout.on('data', (chunk) => process.stdout.write(chunk));
+    child.stderr.on('data', (chunk) => process.stderr.write(chunk));
+    child.on('error', reject);
+    child.on('close', (code) => {
+      if (code === 0) {
+        resolve();
+        return;
+      }
+
+      reject(new Error(`Windows integration host failed with code ${String(code ?? 'unknown')}.`));
+    });
+  });
+}
+
+function buildWindowsCodeInvocationScript(command: string, args: string[]): string {
+  const escapedCommand = command.replace(/'/g, "''");
+  const escapedArgs = args.map((value) => `'${value.replace(/'/g, "''")}'`).join(', ');
+  return [
+    "$ErrorActionPreference = 'Stop'",
+    `$code = '${escapedCommand}'`,
+    `$arguments = @(${escapedArgs})`,
+    '& $code @arguments',
+    'exit $LASTEXITCODE'
+  ].join('\n');
+}
+
+function encodePowerShellCommand(script: string): string {
+  return Buffer.from(script, 'utf16le').toString('base64');
 }
 
 function buildDecisionRecordAutomationEnv(): Record<string, string> {
@@ -96,6 +204,21 @@ function buildDecisionRecordAutomationEnv(): Record<string, string> {
     VI_HISTORY_SUITE_DECISION_RATIONALE:
       'Integration automation uses a stable bounded rationale to avoid UI prompts during the extension-host lane.'
   };
+}
+
+function buildIntegrationControlEnv(): Record<string, string> {
+  const controlEnv: Record<string, string> = {
+    VI_HISTORY_SUITE_DISABLE_PERSISTENT_USER_PATH_ADMISSION: '1'
+  };
+  const proofOutputDirectory = (
+    process.env.VI_HISTORY_SUITE_RUNTIME_SETTINGS_LIVE_SESSION_PROOF_OUTPUT_DIR ?? ''
+  ).trim();
+  if (proofOutputDirectory) {
+    controlEnv.VI_HISTORY_SUITE_RUNTIME_SETTINGS_LIVE_SESSION_PROOF_OUTPUT_DIR =
+      proofOutputDirectory;
+  }
+
+  return controlEnv;
 }
 
 void main().catch((error) => {
@@ -120,7 +243,8 @@ function toWindowsPath(value: string): string {
 }
 
 function buildWindowsExtensionHostEnv(
-  workspaceWindowsPath: string
+  workspaceWindowsPath: string,
+  options: { appDataWindowsPath?: string } = {}
 ): Record<string, string> {
   const environment = readWindowsEnvironment();
   const windowsPath = environment.Path ?? environment.PATH ?? '';
@@ -130,26 +254,51 @@ function buildWindowsExtensionHostEnv(
     environment,
     safeDirectoryEntries.map((value) => ({ key: 'safe.directory', value }))
   );
+  const withProfileOverrides =
+    options.appDataWindowsPath && options.appDataWindowsPath.trim().length > 0
+      ? {
+          ...withSafeDirectory,
+          APPDATA: options.appDataWindowsPath
+        }
+      : withSafeDirectory;
   if (!gitDirectory) {
-    return withSafeDirectory;
+    return withProfileOverrides;
   }
 
   const mergedPath = prependWindowsPathEntry(windowsPath, gitDirectory);
   return {
-    ...withSafeDirectory,
+    ...withProfileOverrides,
     PATH: mergedPath,
     Path: mergedPath
+  };
+}
+
+function buildWindowsIntegrationProfile(integrationRuntimeRoot: string): {
+  linuxProfileRoot: string;
+  windowsAppDataRoot: string;
+  windowsUserDataDirectory: string;
+} {
+  const runProfileId = `${Date.now().toString(16)}-${process.pid}`;
+  const linuxProfileRoot = path.join(integrationRuntimeRoot, `windows-profile-${runProfileId}`);
+  const linuxAppDataRoot = path.join(linuxProfileRoot, 'AppData', 'Roaming');
+  const windowsAppDataRoot = toWindowsPath(linuxAppDataRoot);
+  return {
+    linuxProfileRoot,
+    windowsAppDataRoot,
+    windowsUserDataDirectory: path.win32.join(windowsAppDataRoot, 'Code')
   };
 }
 
 function isWindowsCodeAlreadyRunning(): boolean {
   try {
     const output = execFileSync(
-      '/mnt/c/Windows/System32/tasklist.exe',
+      process.platform === 'win32'
+        ? 'C:\\Windows\\System32\\tasklist.exe'
+        : '/mnt/c/Windows/System32/tasklist.exe',
       ['/FI', 'IMAGENAME eq Code.exe', '/NH'],
       {
         encoding: 'utf8',
-        cwd: '/mnt/c/Windows'
+        cwd: WINDOWS_SYSTEM_ROOT
       }
     ).replace(/\r/g, '');
     return output
@@ -166,7 +315,7 @@ function readWindowsEnvironment(): Record<string, string> {
   try {
     output = execFileSync('cmd.exe', ['/d', '/s', '/c', 'set'], {
       encoding: 'utf8',
-      cwd: '/mnt/c/Windows'
+      cwd: WINDOWS_SYSTEM_ROOT
     }).replace(/\r/g, '');
   } catch {
     return {};
@@ -194,7 +343,7 @@ function resolveWindowsGitDirectory(): string | undefined {
   try {
     output = execFileSync('cmd.exe', ['/d', '/s', '/c', 'where git'], {
       encoding: 'utf8',
-      cwd: '/mnt/c/Windows'
+      cwd: WINDOWS_SYSTEM_ROOT
     });
   } catch {
     return undefined;
@@ -268,7 +417,7 @@ async function selectIntegrationRuntimeRoot(
     return repoCacheRoot;
   }
 
-  const windowsTempRoot = '/mnt/c/Users/sveld/AppData/Local/Temp/vihs-integration-runtime';
+  const windowsTempRoot = DEFAULT_WINDOWS_INTEGRATION_TEMP_ROOT;
   if (await canWriteDirectory(windowsTempRoot)) {
     return windowsTempRoot;
   }
@@ -290,6 +439,40 @@ async function canWriteDirectory(directoryPath: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+async function cleanupDirectoryBestEffort(directoryPath: string): Promise<void> {
+  const retryDelaysMs = [150, 300, 600, 1200];
+  for (let attempt = 0; attempt <= retryDelaysMs.length; attempt += 1) {
+    try {
+      await fs.rm(directoryPath, { recursive: true, force: true });
+      return;
+    } catch (error) {
+      if (!isRetriableWindowsCleanupError(error) || attempt === retryDelaysMs.length) {
+        process.stderr.write(
+          `[integration-cleanup] warning: unable to remove ${directoryPath}: ${
+            error instanceof Error ? error.message : String(error)
+          }\n`
+        );
+        return;
+      }
+      await sleep(retryDelaysMs[attempt]);
+    }
+  }
+}
+
+function isRetriableWindowsCleanupError(error: unknown): boolean {
+  const code =
+    typeof error === 'object' && error !== null && 'code' in error
+      ? String((error as { code?: unknown }).code ?? '')
+      : '';
+  return code === 'EBUSY' || code === 'EPERM' || code === 'ENOTEMPTY';
+}
+
+function sleep(delayMs: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, delayMs);
+  });
 }
 
 async function writeRuntimeConfig(

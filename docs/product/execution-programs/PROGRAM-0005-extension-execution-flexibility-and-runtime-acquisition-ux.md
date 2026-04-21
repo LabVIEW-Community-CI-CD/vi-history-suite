@@ -4,105 +4,279 @@
 
 Active post-release program.
 
-Reopen facts:
+Current facts:
 
-- `TRANCHE-013` landed the core Docker-only installed contract, engine-aware
-  image-selection rule, and public/internal documentation split baseline
-- `TRANCHE-015` is active on first-time installed-user Docker onboarding and
+- `TRANCHE-013` landed the current released Docker-only installed contract,
+  engine-aware image-selection rule, and public/internal documentation split
+  baseline
+- `TRANCHE-015` landed the current released first-run Docker onboarding and
   missing-Docker fail-closed guidance
-- the installed extension now depends on Docker for comparison generation
-- the old flexible installed-mode story is no longer valid repo truth
-- `PROGRAM-0002` now needs a later Docker-only public acceptance rerun before
-  the public closeout can be reclosed
+- the exact released installed extension still depends on Docker for
+  comparison generation while the replacement branch implementation remains
+  unpublished
+- `TRANCHE-016` is the active tranche for replacing that installed-user
+  contract with a host-default Windows local `LabVIEWCLI` workflow plus a
+  bounded expert Docker provider
+- `ISSUE-0412` is the active issue for the replacement direction
+- the control-plane reset is landed and the installed manifest/settings
+  contract slice is landed
+- the installed manifest now truthfully exposes
+  `viHistorySuite.runtimeProvider`, `viHistorySuite.labviewVersion`, and
+  `viHistorySuite.labviewBitness`
+- the generated settings CLI now persists provider, version, and bitness, and
+  that provider selection now flows into the governed host-default and Docker
+  runtime-admission path
+- the generated settings CLI is now proven through first-use launcher
+  materialization plus current-host launcher execution against a temporary
+  settings file
+- the explicit Windows proof lane `npm run test:integration:windows` now
+  proves the `.cmd` launcher path and the default no-`--settings-file` target
+  under a disposable `APPDATA\\Code\\User\\settings.json`, aligned to the
+  active disposable Windows integration-host profile
+- that same Windows proof lane now also proves that the governed CLI
+  validation surface reports `ready` plus `windows-container` / `labview-cli`
+  for the persisted `docker` / `2026` / `x64` bundle when Docker Desktop and
+  the governed Windows image are available on the canonical host
+- current real-host x64 evidence now narrows the next slice further: on this
+  canonical Windows host the persisted `host` / `2026` / `x64` bundle now
+  validates through the admitted x64 `LabVIEW.exe` plus installed x86
+  `LabVIEWCLI.exe` host bundle, and the governed x64 host proof now succeeds
+  on that same bundle when the proof command is given a bounded `300000ms`
+  runtime budget
+- the earlier retained `HARNESS-VHS-002` x64 host-only timeout receipt at
+  `180000ms` remains historical under-timed evidence only; the current
+  retained host truth is a generated report on `lv_icon.vi` under the same
+  mixed-bitness bundle, with `LabVIEWCLI.exe` observed at the banner snapshot
+  and `LabVIEW.exe` observed at exit
+- private-release proof focus is now explicit: close the Windows x64 host and
+  Windows-container lanes only for the active `v1.3.0` candidate; Windows x86
+  / 32-bit LabVIEW remains characterization-only and out of scope for that
+  release admission
+- WSL is not part of the active Windows x64 private-release path; the first
+  admission surfaces are native Windows host execution plus Docker Desktop in
+  Windows-container mode on the same Windows machine, with retained proof
+  receipts under `.cache/private-release/1.3.0/windows-x64-host/` and
+  `.cache/private-release/1.3.0/windows-x64-container/`
+- a governed live-session probe command now compares persisted
+  provider/version/bitness facts against active in-session VS Code runtime
+  settings and retains one per-run plus one latest probe packet (`JSON` and
+  `Markdown`) under extension-global storage
+- retained probe packets now also classify live uptake explicitly as
+  `in-session-updated` versus `reload-required` on each run
+- each retained probe packet now also carries cumulative retained history
+  counters and stance so point-in-time drift facts are packaged with current
+  policy evidence context
+- one local fail-closed packet gate now exists at
+  `npm run proof:runtime-settings-live-session:assert` so malformed or missing
+  retained probe evidence blocks admission, including latest-packet
+  `mutationTargetPersistedMatch=true` enforcement, latest-packet
+  `mutationTargetBaselineChanged=true` enforcement, and latest-packet
+  `historyProofStatus=re-evaluation-required` plus latest-packet
+  `historyStance=candidate-live-uptake-observed`, plus latest-packet
+  `liveUptakeObservation=in-session-updated`, latest-packet
+  `safeRestoreVerified=true`, latest-packet `providerDrift=false`,
+  explicit baseline/persisted provider
+  `host`/`docker` facts, plus retained
+  `historyReloadRequiredCount=0` plus retained
+  `historyInSessionUpdatedCount>=1` plus
+  `historyUnknownObservationCount=0`, with retained history total/count
+  integrity enforcement
+- one local history receipt now exists at
+  `npm run proof:runtime-settings-live-session:history` so retained probe runs
+  can be summarized into one bounded live-uptake stance plus explicit
+  not-fully-proven versus re-evaluation-required proof status, plus
+  mutation-target alignment receipts and baseline-switch receipts
+- one local policy-boundary assertion now exists at
+  `npm run proof:runtime-settings-live-session:policy:assert` so merges fail
+  closed when retained history no longer supports conditional stale-result guidance
+  or does not retain bidirectional CLI provider-selection mutation coverage
+  with explicit mutation-target alignment and baseline-switch receipts, and
+  when the latest retained probe observation no longer remains
+  `in-session-updated`, latest retained provider drift is not explicit
+  `false`, retained history includes one or more `reload-required`,
+  `providerDrift=true`, or missing provider-drift receipts, or retained
+  history includes one or more unknown observations, and when retained
+  safe-restore verification is not complete across retained runs
+- one repo-owned end-to-end proof runner now exists at
+  `npm run proof:runtime-settings-live-session`; it executes the governed
+  extension-host lane on the current supported host and snapshots the latest
+  probe packet, retained history receipt, policy-boundary receipt, and
+  integration logs under `.cache/runtime-settings-live-session-proof/latest/`
+- the remaining CLI proof gap is now narrower: direct mutation safety and
+  automatic live uptake around a live already-running VS Code session is still
+  not end-to-end proven across all runtime facts; probe mutation safe-restore
+  is now fail-closed and locally proven, and retained proof now observes
+  provider live uptake on the admitted bidirectional provider-mutation path, so
+  users should review Compare or runtime validation again after CLI updates and
+  reload or restart the window only if stale facts remain
+- the Windows exact-runtime preflight is now landed: installed compare
+  resolves one exact version+bitness LabVIEW executable plus matching
+  `LabVIEWCLI` surface and fails closed on missing, ambiguous, or
+  incompatible host resolution
+- the explicit compare workflow is now landed on this branch: second-selection
+  auto-run is removed, compare preflight shows selected/base commit plus
+  provider/version/bitness, and compare stays blocked until explicit
+  preflight-ready execution
+- historical released `repo-standards-review` `v0.2.9` compliance closeout is
+  retained on this branch, the current outer assurance lane now uses the
+  published `repo-standards-review` assurance-workbench `:main` image, and
+  the latest tagged release remains `v0.2.18`
+- retained gate decision now keeps `VHS-REQ-542` conditional stale-result
+  guidance as active truth while direct live-session uptake of updated settings
+  remains only partially proven, with probe packet plus local packet-gate
+  evidence now explicit
+- remaining work on this program is now narrower: live default-settings
+  uptake proof remains under active `ISSUE-0414`
+- `PROGRAM-0002` remains historical Docker-only public-closeout truth; it is
+  not the active gate for the next host-default installed contract
+- the retained branch handoff packet is
+  [issue-0412-promotion-and-publication-handoff.md](../issue-0412-promotion-and-publication-handoff.md)
+- the explicit public-acceptance gate record is
+  [runtime-provider-public-acceptance-gate.md](../runtime-provider-public-acceptance-gate.md)
 
 ## Purpose
 
-Implement the Docker-only installed execution contract, the current
-Docker-engine image-selection rules, and the public/internal documentation
-split needed for that contract to be supportable.
+Replace the current released Docker-only installed execution contract with one
+host-default Windows local-`LabVIEWCLI` installed-user contract that retains a
+bounded expert Docker provider, stays settings/CLI-driven, fails closed, and
+is explicit about compare preflight before execution starts.
 
 ## North Star
 
 An installed extension user:
 
-- uses one compare workflow with no provider-mode choice
-- relies on Docker for comparison generation
-- gets the governed Windows image when Docker is in Windows-engine mode
-- gets the governed Linux image when Docker is in Linux-engine mode
-- sees visible image-acquisition and next-action truth
-- can tell from the installed-user docs and runtime doctor whether Docker is
-  missing, not running yet, or merely still pulling the governed image
-- never has the extension probe or compete with host LabVIEW as fallback
+- uses one compare workflow with host as the default provider and Docker only
+  as an expert path selected through the generated settings CLI
+- keeps one LabVIEW version and one LabVIEW bitness as required runtime facts
+  across both provider classes
+- can seed provider, version, and bitness through a generated cross-platform
+  CLI that writes into user-profile storage on first use
+- runs comparison generation through either one governed local Windows bundle,
+  including the canonical x86 `LabVIEWCLI.exe` plus x64 `LabVIEW.exe` host
+  shape when that is what the machine actually installs, or one governed
+  Docker image family derived from the current Docker engine
+- sees selected/base commit plus provider, version, and bitness before compare
+  starts
+- must press an explicit `Compare` action instead of triggering compare on the
+  second commit selection
+- receives a fail-closed panel state and VS Code warning when the requested
+  provider/runtime bundle is missing, ambiguous, incompatible, or unsupported
+  such as Docker `x86`
+- does not see path-picking, image-family picking, or a general panel-side
+  provider picker as part of the installed-user compare contract
 
 ## Workstreams
 
-1. installed manifest and package metadata contract
-2. canonical Docker-only execution-request validation
-3. engine-aware Windows/Linux image selection and acquisition UX
-4. front-facing runtime truth in the panel, notifications, and packets
-5. authority, bundled-doc, internal wiki, and public GitHub user-surface
-   normalization
-6. first-run missing-Docker onboarding and fail-closed recovery guidance
-7. handoff to `PROGRAM-0002` for the next Gate D acceptance rerun
+1. control-plane reset from the Docker-only installed-user direction to the
+   host-default `LabVIEWCLI` plus expert-Docker replacement direction
+2. installed manifest/settings contract for required version + bitness plus
+   generated provider selection
+3. host runtime-resolution preflight and fail-closed validation
+4. expert Docker provider preflight and acquisition
+5. on-demand cross-platform settings CLI generation into user-profile storage
+6. explicit compare preflight UX in the history panel
+7. authority/bundled/public reader-surface normalization after implementation
+8. runtime-provider public acceptance gate after the replacement contract is
+   published
 
 ## Queue Mapping
 
-- `TRANCHE-013`
-  - `ISSUE-0410`
-- `TRANCHE-015`
-  - `ISSUE-0410`
+- historical implemented baseline:
+  - `TRANCHE-013`
+    - `ISSUE-0410`
+  - `TRANCHE-015`
+    - `ISSUE-0410`
+- active replacement direction:
+  - `TRANCHE-016`
+    - `ISSUE-0412`
 
 ## Exit Gates
 
-### Gate A: Installed Contract
+### Gate A: Control Plane
 
-- the installed extension exposes Docker-only compare generation
-- installed users no longer receive host-runtime mode or path knobs
-- installed compare execution constrains to x64 container surfaces
+- queue, current-state, README, ship control, execution policy, requirements,
+  RTM, and test plan promote `TRANCHE-016` / `ISSUE-0412` as the active
+  installed-user direction
+- the current released Docker-only baseline remains explicit as historical
+  implemented truth until replacement slices land
+- `ISSUE-0410`, `TRANCHE-013`, and `TRANCHE-015` are retained as superseded
+  direction rather than active destination
 
-### Gate B: Canonical Request
+### Gate B: Installed Settings And Runtime Preflight
 
-- provider selection validates one canonical Docker-only installed request
-- on Windows, the current Docker daemon engine selects the governed Windows or
-  governed Linux image truthfully
-- the installed extension does not probe host LabVIEW as fallback
+- the installed extension exposes the required LabVIEW version + bitness
+  settings contract
+- the settings contract can be seeded through a generated cross-platform CLI
+  launcher under user-profile storage rather than a prebuilt VSIX-shipped CLI
+- the current-host generated launcher path is proven end to end
+- host runtime resolution validates one canonical Windows `LabVIEWCLI`
+  request before compare can run
+- missing, ambiguous, or incompatible local runtime resolution fails closed
 
-### Gate C: Acquisition And Runtime Feedback
+### Gate C: Expert Docker Provider Contract
 
-- missing governed images are acquired with visible progress
-- the history panel, notifications, and retained packet surfaces expose the
-  selected provider, current engine, selected image, acquisition outcome, and
-  next action
-- missing-Docker first-run states tell the user to install or start Docker and
-  verify it before expecting image acquisition to begin
+- the installed-user contract defaults to host and admits Docker only through
+  the generated settings CLI
+- Docker preflight derives the governed Windows or Linux image family from the
+  current Docker engine instead of exposing image-family picking
+- Docker `x86` fails closed before compare starts with corrective guidance
+  toward host or `x64`
 
-### Gate D: Public/Internal Surface Split
+### Gate D: Explicit Compare Workflow
 
-- package metadata points extension users at the public GitHub facade
-- the private GitLab repo and internal GitLab wiki remain maintainer/control-
-  plane surfaces
-- bundled docs and public GitHub user docs remain aligned to the installed
-  Docker-only contract
+- the second commit selection no longer starts compare automatically
+- the compare preflight section shows selected/base commit plus provider,
+  version, and bitness
+- compare starts only from one explicit `Compare` action
 
-### Gate E: Public Acceptance Handoff
+### Gate E: Installed-User Surface Normalization
 
-- the repo retains one explicit handoff into `PROGRAM-0002` for the next
-  deterministic Gate D rerun on the Docker-only public bundle, including the
-  planned Linux-engine cold-pull acceptance case
+- authority/internal control-plane docs and branch runtime-doctor surfaces
+  describe host-default local `LabVIEWCLI` plus the bounded expert Docker
+  provider
+- bundled docs and public reader surfaces keep the exact released Docker-only
+  installed-user baseline until the replacement contract is truthfully
+  published and admitted through the explicit runtime-provider
+  public-acceptance gate
+- private/internal versus public reader-surface boundaries remain explicit
+
+### Gate F: Public Acceptance Gate
+
+- the repo retains one explicit runtime-provider public-acceptance gate for
+  the next deterministic public rerun after the local-`LabVIEWCLI` installed
+  contract is the truthful published bundle
+- `PROGRAM-0002` and `ISSUE-0407` remain retained as the historical
+  Docker-only public-closeout record instead of an active feature gate
+- the branch also retains one explicit promotion/publication handoff packet so
+  future sessions do not reopen completed standards work while deciding merge
+  and publication order
+- the unresolved live user-settings proof gap remains explicit until a
+  supported default-settings proof lane closes it; the current retained
+  proof lane is the live-session probe plus local packet gate
 
 ## Delivery Rules
 
 Every slice shall preserve:
 
-- no installed host fallback
-- no execution-policy bypass around canonical Docker-only validation
-- no silent Windows-versus-Linux image substitution beyond the current Docker
-  daemon engine
+- truthful current-release Docker-only baseline wording on bundled/public
+  reader surfaces until replacement code is actually published
+- truthful branch-implementation wording on authority/internal surfaces once
+  replacement slices are actually landed
+- no silent fallback away from the active installed-user contract or away from
+  an explicitly selected provider
+- no execution-policy bypass around canonical validation for the active
+  contract
+- no installed-user path-picking, image-family matrix, or general panel-side
+  provider picker
+- no PATH mutation and no prebuilt external CLI payload inside the VSIX
+- no automatic compare start on second selection
 - no public/internal documentation audience collapse
 
 ## Success Condition
 
-This program is complete when the installed extension can execute comparison
-work through one Docker-only x64 contract with engine-aware image selection,
-visible acquisition truth, coherent public/internal docs, and no reliance on
-host LabVIEW as part of the extension-user workflow.
+This program is complete when the installed Windows extension can execute
+comparison work through one host-default local `LabVIEWCLI` contract with
+required version plus bitness selection, one bounded expert Docker provider
+selected through the generated CLI, fail-closed runtime/provider resolution,
+explicit compare preflight, and coherent authority/public docs where bundled
+and public user surfaces are promoted only after truthful publication.

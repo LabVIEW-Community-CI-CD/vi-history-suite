@@ -17,6 +17,7 @@ const WINDOWS_X86_LABVIEW_EXE_PATH =
   'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe';
 const WINDOWS_LABVIEW_CLI_PATH =
   'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe';
+const WINDOWS_REPO_ROOT = 'D:\\tmp\\vi-history-suite';
 
 describe('runGitHubWindowsDashboardBenchmarkCli', () => {
   it('parses deterministic benchmark args with a deep Windows default', () => {
@@ -58,7 +59,7 @@ describe('runGitHubWindowsDashboardBenchmarkCli', () => {
         '--labview-exe-path',
         WINDOWS_LABVIEW_EXE_PATH
       ])
-    ).toThrow(/Canonical CreateComparisonReport overrides require both --labview-cli-path and --labview-exe-path/);
+    ).toThrow(/Canonical CreateComparisonReport proof-admission overrides require both --labview-cli-path and --labview-exe-path/);
     expect(() =>
       parseGitHubWindowsDashboardBenchmarkArgs([
         '--labview-cli-path',
@@ -202,7 +203,7 @@ describe('runGitHubWindowsDashboardBenchmarkCli', () => {
 
     await expect(
       runGitHubWindowsDashboardBenchmarkCli([], {
-        repoRoot: '/tmp/vi-history-suite',
+        repoRoot: WINDOWS_REPO_ROOT,
         runner,
         mkdir,
         writeFile,
@@ -235,7 +236,7 @@ describe('runGitHubWindowsDashboardBenchmarkCli', () => {
       })
     );
     expect(mkdir).toHaveBeenCalledWith(
-      '/tmp/vi-history-suite/.cache/github-experiments/windows-dashboard-benchmark/HARNESS-VHS-002',
+      'D:\\tmp\\vi-history-suite\\.cache\\github-experiments\\windows-dashboard-benchmark\\HARNESS-VHS-002',
       { recursive: true }
     );
     expect(writeFile.mock.calls[0]?.[0]).toContain('latest-progress.json');
@@ -316,7 +317,7 @@ describe('runGitHubWindowsDashboardBenchmarkCli', () => {
 
     await expect(
       runGitHubWindowsDashboardBenchmarkCli([], {
-        repoRoot: '/tmp/vi-history-suite',
+        repoRoot: WINDOWS_REPO_ROOT,
         runner,
         mkdir: vi.fn().mockResolvedValue(undefined),
         writeFile,

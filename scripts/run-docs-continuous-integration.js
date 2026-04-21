@@ -5,7 +5,7 @@ const fsp = require('node:fs/promises');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 
-const { createDocsGateSteps } = require('./run-docs-gate.js');
+const { createDocsGateSteps, resolveNodeToolArgs, resolveNodeToolCommand } = require('./run-docs-gate.js');
 
 const repoRoot = path.resolve(path.dirname(fs.realpathSync.native(__filename)), '..');
 const PUBLIC_DOCS_TEST_FILES = [
@@ -19,6 +19,9 @@ const INTERNAL_DOCS_TEST_FILES = [
   'tests/unit/debtLedgerDocs.test.ts',
   'tests/unit/executionPolicyDocs.test.ts',
   'tests/unit/governedProofDocs.test.ts',
+  'tests/unit/informationForUsersAudienceDocs.test.ts',
+  'tests/unit/informationForUsersQualityDocs.test.ts',
+  'tests/unit/informationForUsersSupportDocs.test.ts',
   'tests/unit/requirementsDocs.test.ts',
   'tests/unit/shipControlDocs.test.ts',
   'tests/unit/docsWorkbenchDocs.test.ts',
@@ -141,6 +144,7 @@ function resolveDocsContinuousIntegrationEvidenceDir(surface, explicitEvidenceDi
 
 function createDocsContinuousIntegrationSteps(options = {}) {
   const surface = options.surface ?? 'all';
+  const platform = options.platform ?? process.platform;
   const evidenceDir = resolveDocsContinuousIntegrationEvidenceDir(
     surface,
     options.evidenceDir,
@@ -156,8 +160,8 @@ function createDocsContinuousIntegrationSteps(options = {}) {
     {
       id: 'compile',
       title: 'Compile TypeScript surfaces',
-      command: 'npm',
-      args: ['run', 'compile'],
+      command: resolveNodeToolCommand('npm', platform),
+      args: resolveNodeToolArgs('npm', ['run', 'compile'], platform),
       stdoutFileName: 'compile.stdout.log',
       stderrFileName: 'compile.stderr.log'
     }
@@ -168,8 +172,8 @@ function createDocsContinuousIntegrationSteps(options = {}) {
       {
         id: 'public-docs-tests',
         title: 'Run public-user documentation alignment tests',
-        command: 'npx',
-        args: ['vitest', 'run', ...PUBLIC_DOCS_TEST_FILES],
+        command: resolveNodeToolCommand('npx', platform),
+        args: resolveNodeToolArgs('npx', ['vitest', 'run', ...PUBLIC_DOCS_TEST_FILES], platform),
         stdoutFileName: 'public-docs-tests.stdout.log',
         stderrFileName: 'public-docs-tests.stderr.log'
       },
@@ -204,8 +208,8 @@ function createDocsContinuousIntegrationSteps(options = {}) {
       {
         id: 'internal-docs-tests',
         title: 'Run internal-authority documentation alignment tests',
-        command: 'npx',
-        args: ['vitest', 'run', ...INTERNAL_DOCS_TEST_FILES],
+        command: resolveNodeToolCommand('npx', platform),
+        args: resolveNodeToolArgs('npx', ['vitest', 'run', ...INTERNAL_DOCS_TEST_FILES], platform),
         stdoutFileName: 'internal-docs-tests.stdout.log',
         stderrFileName: 'internal-docs-tests.stderr.log'
       },
@@ -315,17 +319,17 @@ function collectInstalledUserTruths(repoRootPath) {
   const html = fs.existsSync(userWorkflowPath) ? fs.readFileSync(userWorkflowPath, 'utf8') : '';
 
   return {
-    windowsAutoUsesDockerWhenInstalled: html.includes(
-      'on Windows, use the governed Windows container whenever Docker Desktop is installed'
+    hostDefaultProviderDocumented: html.includes(
+      'Windows defaults to local <code>LabVIEWCLI</code> when the persisted provider is absent'
     ),
-    noSilentProviderFallback: html.includes(
-      'no mode silently falls back to a different provider'
+    explicitProviderBundleValidationDocumented: html.includes(
+      '<code>vihs --validate</code> exposes whether the current bundle is <code>ready</code>, <code>needs-image-acquisition</code>, or blocked'
     ),
-    dockerRequiredHardStop: html.includes(
-      'if Docker is required but unavailable, the extension stops and tells you what to fix'
+    dockerExpertProviderDocumented: html.includes(
+      'Docker remains a bounded expert provider selected through the published install/bootstrap surface or later <code>vihs</code> updates'
     ),
-    providerChoiceAndProgressVisible: html.includes(
-      'compare progress, provider choice, and Windows image acquisition state stay visible'
+    providerAndProgressVisible: html.includes(
+      'compare progress, selected provider, current engine, selected image, acquisition state, and next action stay visible'
     )
   };
 }
@@ -407,10 +411,10 @@ function buildDocsContinuousIntegrationMarkdown(report) {
     '',
     '## Installed-User Truth Checks',
     '',
-    `- Windows auto uses Docker when installed: ${String(report.installedUserTruths.windowsAutoUsesDockerWhenInstalled)}`,
-    `- No silent provider fallback: ${String(report.installedUserTruths.noSilentProviderFallback)}`,
-    `- Docker-required hard stop documented: ${String(report.installedUserTruths.dockerRequiredHardStop)}`,
-    `- Provider choice and progress visibility documented: ${String(report.installedUserTruths.providerChoiceAndProgressVisible)}`,
+    `- Host-default provider documented: ${String(report.installedUserTruths.hostDefaultProviderDocumented)}`,
+    `- Explicit provider bundle validation documented: ${String(report.installedUserTruths.explicitProviderBundleValidationDocumented)}`,
+    `- Docker expert-provider boundary documented: ${String(report.installedUserTruths.dockerExpertProviderDocumented)}`,
+    `- Provider and progress visibility documented: ${String(report.installedUserTruths.providerAndProgressVisible)}`,
     '',
     '## Steps',
     '',
@@ -453,7 +457,8 @@ async function runDocsContinuousIntegration(argv = process.argv.slice(2), deps =
   const steps = createDocsContinuousIntegrationSteps({
     surface: parsed.surface,
     skipLinks: parsed.skipLinks,
-    evidenceDir
+    evidenceDir,
+    platform: deps.platform ?? process.platform
   });
   const stepResults = [];
   let status = 'passed';

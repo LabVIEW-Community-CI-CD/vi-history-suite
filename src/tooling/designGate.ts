@@ -51,6 +51,35 @@ export interface DevelopmentQueueEntry {
   summary: string;
 }
 
+export function resolveDesignGateCommand(
+  command: string,
+  platform = process.platform
+): string {
+  if (platform === 'win32') {
+    if (command === 'npm') {
+      return 'cmd.exe';
+    }
+
+    if (command === 'python3') {
+      return 'python';
+    }
+  }
+
+  return command;
+}
+
+export function resolveDesignGateArgs(
+  command: string,
+  args: string[],
+  platform = process.platform
+): string[] {
+  if (platform === 'win32' && command === 'npm') {
+    return ['/d', '/s', '/c', ['npm', ...args].join(' ')];
+  }
+
+  return args;
+}
+
 export function assertCompletedPassingDesignGateReport(
   report: Pick<DesignGateReport, 'status' | 'completionState' | 'pendingStepId' | 'pendingStepTitle'>
 ): void {
@@ -110,55 +139,64 @@ export function designGateAssuranceMirrorScriptPath(repoRoot: string): string {
 }
 
 export function isMountedWindowsPath(targetPath: string): boolean {
-  return path.resolve(targetPath).startsWith('/mnt/');
+  const normalizedTargetPath = targetPath.replace(/\\/g, '/');
+  return normalizedTargetPath.startsWith('/mnt/');
 }
 
 export function buildDesignGatePlan(
   repoRoot: string,
-  assuranceScriptPath = defaultAssuranceScriptPath()
+  assuranceScriptPath = defaultAssuranceScriptPath(),
+  platform = process.platform
 ): DesignGateStepSpec[] {
+  const integrationScript =
+    platform === 'win32' ? 'test:integration:windows' : 'test:integration';
+
   return [
     {
       id: 'branch-governance-baseline',
       title: 'Branch governance baseline',
-      command: 'npm',
-      args: ['run', 'branch:governance:assert']
+      command: resolveDesignGateCommand('npm', platform),
+      args: resolveDesignGateArgs('npm', ['run', 'branch:governance:assert'], platform)
     },
     {
       id: 'design-contract',
       title: 'Design contract',
-      command: 'npm',
-      args: ['run', 'test:design-contract']
+      command: resolveDesignGateCommand('npm', platform),
+      args: resolveDesignGateArgs('npm', ['run', 'test:design-contract'], platform)
     },
     {
       id: 'unit-and-coverage',
       title: 'Unit tests and coverage',
-      command: 'npm',
-      args: ['run', 'test']
+      command: resolveDesignGateCommand('npm', platform),
+      args: resolveDesignGateArgs('npm', ['run', 'test'], platform)
     },
     {
       id: 'extension-host-integration',
       title: 'VS Code extension-host integration',
-      command: 'npm',
-      args: ['run', 'test:integration']
+      command: resolveDesignGateCommand('npm', platform),
+      args: resolveDesignGateArgs('npm', ['run', integrationScript], platform)
     },
     {
       id: 'canonical-harness-smoke',
       title: 'Canonical harness smoke',
-      command: 'npm',
-      args: ['run', 'proof:run', '--', 'smoke']
+      command: resolveDesignGateCommand('npm', platform),
+      args: resolveDesignGateArgs('npm', ['run', 'proof:run', '--', 'smoke'], platform)
     },
     {
       id: 'documentation-continuous-integration',
       title: 'Documentation continuous integration',
-      command: 'npm',
-      args: ['run', 'docs:ci:core']
+      command: resolveDesignGateCommand('npm', platform),
+      args: resolveDesignGateArgs('npm', ['run', 'docs:ci:core'], platform)
     },
     {
       id: 'standards-assurance',
       title: 'Standards assurance',
-      command: 'python3',
-      args: [assuranceScriptPath, repoRoot, '--profile', 'quick-triage'],
+      command: resolveDesignGateCommand('python3', platform),
+      args: resolveDesignGateArgs(
+        'python3',
+        [assuranceScriptPath, repoRoot, '--profile', 'quick-triage'],
+        platform
+      ),
       timeoutMs: 180000
     }
   ];
@@ -198,15 +236,23 @@ export function extractWeakestCoverageFocus(
   limit = 5
 ): CoverageFocusEntry[] {
   const parsed = JSON.parse(coverageSummaryText) as Record<string, unknown>;
-  const repoSrcRoot = `${path.join(repoRoot, 'src')}${path.sep}`;
+  const normalizedRepoRoot = repoRoot.replace(/\\/g, '/').replace(/\/+$/, '');
+  const normalizedRepoSrcRoot = `${normalizedRepoRoot}/src/`;
 
   return Object.entries(parsed)
-    .filter(([key]) => key !== 'total' && key.startsWith(repoSrcRoot))
+    .filter(([key]) => {
+      if (key === 'total') {
+        return false;
+      }
+
+      return key.replace(/\\/g, '/').startsWith(normalizedRepoSrcRoot);
+    })
     .map(([key, value]) => {
       const typedValue = value as {
         lines?: { covered?: number; total?: number; pct?: number };
       };
-      const relativePath = path.relative(repoRoot, key).split(path.sep).join('/');
+      const normalizedKey = key.replace(/\\/g, '/');
+      const relativePath = normalizedKey.slice(normalizedRepoRoot.length + 1);
       const linesCovered = Number(typedValue.lines?.covered ?? 0);
       const linesTotal = Number(typedValue.lines?.total ?? 0);
       const linesPct = Number(typedValue.lines?.pct ?? 0);

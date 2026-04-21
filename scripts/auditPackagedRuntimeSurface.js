@@ -2,10 +2,11 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
-const { VSCE_PACKAGE_SPEC } = require('./runPinnedVsce');
+const { VSCE_PACKAGE_SPEC, buildPinnedVsceInvocation } = require('./runPinnedVsce');
 
 const repoRoot = path.resolve(path.dirname(fs.realpathSync.native(__filename)), '..');
 const manifestPath = path.join(repoRoot, 'package.json');
+const GOVERNED_RUNTIME_DEPENDENCIES = ['jsonc-parser'];
 const FORBIDDEN_PACKAGED_PATH_SEGMENTS = [
   '/node_modules/',
   '/.cache/',
@@ -30,17 +31,50 @@ function parseVsceListOutput(stdout) {
     .filter((line) => !line.startsWith('WARNING'));
 }
 
+function isGovernedRuntimeDependency(name) {
+  return GOVERNED_RUNTIME_DEPENDENCIES.includes(name);
+}
+
+function isGovernedRuntimeDependencyPath(packagedPath) {
+  const normalized = `/${packagedPath.replace(/^\/+/u, '')}`;
+  return GOVERNED_RUNTIME_DEPENDENCIES.some(
+    (name) => normalized === `/node_modules/${name}` || normalized.startsWith(`/node_modules/${name}/`)
+  );
+}
+
 function findRuntimeSurfaceViolations({ manifest, packagedPaths }) {
   const violations = [];
   const runtimeDependencies = Object.keys(manifest.dependencies ?? {});
-  if (runtimeDependencies.length > 0) {
+  const ungovernedRuntimeDependencies = runtimeDependencies.filter(
+    (name) => !isGovernedRuntimeDependency(name)
+  );
+  if (ungovernedRuntimeDependencies.length > 0) {
     violations.push(
-      `Runtime dependencies are not allowed in package.json: ${runtimeDependencies.join(', ')}`
+      `Ungoverned runtime dependencies are not allowed in package.json: ${ungovernedRuntimeDependencies.join(', ')}`
+    );
+  }
+
+  const missingGovernedDependencyPayloads = runtimeDependencies
+    .filter((name) => isGovernedRuntimeDependency(name))
+    .filter(
+      (name) =>
+        !packagedPaths.some((packagedPath) => {
+          const normalized = `/${packagedPath.replace(/^\/+/u, '')}`;
+          return normalized === `/node_modules/${name}` || normalized.startsWith(`/node_modules/${name}/`);
+        })
+    );
+
+  if (missingGovernedDependencyPayloads.length > 0) {
+    violations.push(
+      `Packaged VSIX surface is missing governed runtime dependency payloads: ${missingGovernedDependencyPayloads.join(', ')}`
     );
   }
 
   const forbiddenPaths = packagedPaths.filter((packagedPath) => {
     const normalized = `/${packagedPath.replace(/^\/+/u, '')}`;
+    if (isGovernedRuntimeDependencyPath(packagedPath)) {
+      return false;
+    }
     return (
       FORBIDDEN_PACKAGED_PATH_SEGMENTS.some((segment) => normalized.includes(segment)) ||
       FORBIDDEN_PACKAGED_PATH_SUFFIXES.some((suffix) => normalized.endsWith(suffix))
@@ -66,23 +100,20 @@ function findRuntimeSurfaceViolations({ manifest, packagedPaths }) {
   return violations;
 }
 
-function getNpmCommand() {
-  return process.platform === 'win32' ? 'npm.cmd' : 'npm';
-}
-
 function auditPackagedRuntimeSurface(deps = {}) {
   const cwd = deps.cwd ?? repoRoot;
   const spawnSyncImpl = deps.spawnSync ?? require('node:child_process').spawnSync;
   const stdout = deps.stdout ?? process.stdout;
   const stderr = deps.stderr ?? process.stderr;
   const manifest = deps.manifest ?? JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+  const invocation = buildPinnedVsceInvocation(['ls', '--dependencies', '--no-yarn'], deps);
 
   stdout.write(
     `[package-audit] Listing packaged VSIX surface via pinned ${VSCE_PACKAGE_SPEC}.\n`
   );
   const result = spawnSyncImpl(
-    getNpmCommand(),
-    ['exec', '--yes', '--package', VSCE_PACKAGE_SPEC, '--', 'vsce', 'ls', '--dependencies', '--no-yarn'],
+    invocation.command,
+    invocation.args,
     {
       cwd,
       encoding: 'utf8',
@@ -134,6 +165,7 @@ if (require.main === module) {
 }
 
 module.exports = {
+  GOVERNED_RUNTIME_DEPENDENCIES,
   FORBIDDEN_PACKAGE_NAMES,
   FORBIDDEN_PACKAGED_PATH_SEGMENTS,
   FORBIDDEN_PACKAGED_PATH_SUFFIXES,

@@ -13,6 +13,7 @@ import {
 
 const LINUX_LABVIEW_EXE_PATH = '/usr/local/natinst/LabVIEW-2026Q1-64/labview';
 const LINUX_LABVIEW_CLI_PATH = '/usr/local/bin/LabVIEWCLI';
+const WINDOWS_REPO_ROOT = 'D:\\tmp\\vi-history-suite';
 
 describe('runGitHubLinuxDashboardBenchmarkCli', () => {
   it('parses deterministic benchmark args with a hosted canonical default and high-history window', () => {
@@ -51,7 +52,7 @@ describe('runGitHubLinuxDashboardBenchmarkCli', () => {
     ).toThrow(/Unsupported value for --dashboard-commit-window/);
     expect(() =>
       parseGitHubLinuxDashboardBenchmarkArgs(['--labview-exe-path', LINUX_LABVIEW_EXE_PATH])
-    ).toThrow(/Canonical CreateComparisonReport overrides require both --labview-cli-path and --labview-exe-path/);
+    ).toThrow(/Canonical CreateComparisonReport proof-admission overrides require both --labview-cli-path and --labview-exe-path/);
     expect(() => parseGitHubLinuxDashboardBenchmarkArgs(['--labview-exe-path'])).toThrow(
       /Missing value for --labview-exe-path/
     );
@@ -184,7 +185,7 @@ describe('runGitHubLinuxDashboardBenchmarkCli', () => {
 
     await expect(
       runGitHubLinuxDashboardBenchmarkCli([], {
-        repoRoot: '/tmp/vi-history-suite',
+        repoRoot: WINDOWS_REPO_ROOT,
         runner,
         mkdir,
         writeFile,
@@ -206,8 +207,8 @@ describe('runGitHubLinuxDashboardBenchmarkCli', () => {
     expect(runner).toHaveBeenCalledWith(
       'HARNESS-VHS-001',
       expect.objectContaining({
-        cloneRoot: '/tmp/vi-history-suite/.cache/harnesses',
-        reportRoot: '/tmp/vi-history-suite/.cache/harness-reports',
+        cloneRoot: 'D:\\tmp\\vi-history-suite\\.cache\\harnesses',
+        reportRoot: 'D:\\tmp\\vi-history-suite\\.cache\\harness-reports',
         strictRsrcHeader: false,
         runtimePlatform: 'linux',
         dashboardCommitWindow: 1000,
@@ -219,7 +220,7 @@ describe('runGitHubLinuxDashboardBenchmarkCli', () => {
       })
     );
     expect(mkdir).toHaveBeenCalledWith(
-      '/tmp/vi-history-suite/.cache/github-experiments/linux-dashboard-benchmark/HARNESS-VHS-001',
+      'D:\\tmp\\vi-history-suite\\.cache\\github-experiments\\linux-dashboard-benchmark\\HARNESS-VHS-001',
       { recursive: true }
     );
     expect(writeFile).toHaveBeenCalledTimes(5);
@@ -305,7 +306,7 @@ describe('runGitHubLinuxDashboardBenchmarkCli', () => {
 
     await expect(
       runGitHubLinuxDashboardBenchmarkCli([], {
-        repoRoot: '/tmp/vi-history-suite',
+        repoRoot: WINDOWS_REPO_ROOT,
         runner,
         mkdir: vi.fn().mockResolvedValue(undefined),
         writeFile,
@@ -326,7 +327,9 @@ describe('runGitHubLinuxDashboardBenchmarkCli', () => {
     expect(writtenBodies[0]).toContain('"phase": "starting"');
     expect(writtenPaths.some((value) => value.endsWith('pair-failure-pair-0001.json'))).toBe(true);
     expect(writtenPaths.some((value) => value.endsWith('latest-summary.json'))).toBe(true);
-    expect(writtenPaths.some((value) => /HARNESS-VHS-001\/2026-04-04-180000000\.json$/.test(value))).toBe(true);
+    expect(
+      writtenPaths.some((value) => /HARNESS-VHS-001\\2026-04-04-180000000\.json$/.test(value))
+    ).toBe(true);
     expect(
       writtenBodies.some((value) => value.includes('"completionState": "failed"'))
     ).toBe(true);

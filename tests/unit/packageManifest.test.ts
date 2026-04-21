@@ -4,6 +4,9 @@ import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 interface ExtensionManifest {
+  main?: string;
+  browser?: string;
+  extensionKind?: string[];
   activationEvents?: string[];
   files?: string[];
   homepage?: string;
@@ -51,6 +54,7 @@ describe('extension manifest research alignment', () => {
     expect(manifest.activationEvents).toContain('onStartupFinished');
     expect(manifest.files).toEqual([
       'out/**',
+      'node_modules/jsonc-parser/**',
       'resources/**',
       'README.md',
       'CHANGELOG.md',
@@ -58,6 +62,9 @@ describe('extension manifest research alignment', () => {
     ]);
     expect(manifest.homepage).toBe('https://github.com/svelderrainruiz/vi-history-suite/wiki');
     expect(manifest.activationEvents).toContain('onCommand:labviewViHistory.open');
+    expect(manifest.activationEvents).toContain(
+      'onCommand:labviewViHistory.prepareLocalRuntimeSettingsCli'
+    );
     expect(manifest.activationEvents).toContain('onCommand:labviewViHistory.openDocumentation');
     expect(manifest.extensionDependencies).toContain('vscode.git');
     expect(manifest.contributes?.commands).toContainEqual({
@@ -68,6 +75,11 @@ describe('extension manifest research alignment', () => {
     expect(manifest.contributes?.commands).toContainEqual({
       command: 'labviewViHistory.openDocumentation',
       title: 'Open Documentation',
+      category: 'VI History'
+    });
+    expect(manifest.contributes?.commands).toContainEqual({
+      command: 'labviewViHistory.prepareLocalRuntimeSettingsCli',
+      title: 'Prepare Local Runtime Settings CLI',
       category: 'VI History'
     });
   });
@@ -87,23 +99,87 @@ describe('extension manifest research alignment', () => {
     );
   });
 
+  it('keeps the published review surface webview-panel-based with no timeline provider publication path', () => {
+    const manifest = readManifest();
+    const extensionSource = fs.readFileSync(
+      path.resolve(__dirname, '..', '..', 'src', 'extension.ts'),
+      'utf8'
+    );
+    const openCommandSource = fs.readFileSync(
+      path.resolve(__dirname, '..', '..', 'src', 'commands', 'openViHistoryCommand.ts'),
+      'utf8'
+    );
+    const activationEvents = manifest.activationEvents ?? [];
+    const contributedCommands = manifest.contributes?.commands ?? [];
+    const manifestSnapshot = JSON.stringify(manifest).toLowerCase();
+
+    expect(extensionSource).toContain('createOpenViHistoryCommand');
+    expect(extensionSource).not.toContain('TimelineProvider');
+    expect(extensionSource).not.toContain('registerTimeline');
+    expect(openCommandSource).toContain('createWebviewPanel');
+    expect(openCommandSource).not.toContain('TimelineProvider');
+    expect(openCommandSource).not.toContain('registerTimeline');
+    expect(activationEvents.some((event) => event.toLowerCase().includes('timeline'))).toBe(
+      false
+    );
+    expect(
+      contributedCommands.some((command) =>
+        (command.command ?? '').toLowerCase().includes('timeline')
+      )
+    ).toBe(false);
+    expect(manifestSnapshot).not.toContain('timelineprovider');
+    expect(manifestSnapshot).not.toContain('registertimeline');
+  });
+
+  it('keeps the desktop and remote-host boundary by excluding publishable web-target extension entrypoints', () => {
+    const manifest = readManifest();
+    const boundaryAdr = fs.readFileSync(
+      path.resolve(
+        __dirname,
+        '..',
+        '..',
+        'docs',
+        'architecture',
+        'adr',
+        'ADR-0003-workspace-report-storage-and-desktop-boundary.md'
+      ),
+      'utf8'
+    );
+
+    expect(manifest.main).toBe('./out/extension.js');
+    expect(manifest.browser).toBeUndefined();
+    expect(manifest.extensionKind ?? []).not.toContain('web');
+    expect(boundaryAdr).toContain('desktop and remote extension hosts');
+    expect(boundaryAdr).toContain('no publishable VS Code web target');
+  });
+
   it('declares limited untrusted-workspace support and restricts external tool settings', () => {
     const manifest = readManifest();
 
     expect(manifest.capabilities?.untrustedWorkspaces).toEqual({
       supported: 'limited',
       description:
-        'VI History disables background indexing and governed Docker comparison-report execution in untrusted workspaces.',
+        'VI History disables background indexing and installed comparison execution in untrusted workspaces.',
       restrictedConfigurations: [
-        'viHistorySuite.windowsContainerImage',
-        'viHistorySuite.linuxContainerImage'
+        'viHistorySuite.runtimeProvider',
+        'viHistorySuite.labviewVersion',
+        'viHistorySuite.labviewBitness'
       ]
     });
 
     expect(manifest.contributes?.configuration?.properties).toHaveProperty(
-      'viHistorySuite.windowsContainerImage'
+      'viHistorySuite.runtimeProvider'
     );
     expect(manifest.contributes?.configuration?.properties).toHaveProperty(
+      'viHistorySuite.labviewVersion'
+    );
+    expect(manifest.contributes?.configuration?.properties).toHaveProperty(
+      'viHistorySuite.labviewBitness'
+    );
+    expect(manifest.contributes?.configuration?.properties).not.toHaveProperty(
+      'viHistorySuite.windowsContainerImage'
+    );
+    expect(manifest.contributes?.configuration?.properties).not.toHaveProperty(
       'viHistorySuite.linuxContainerImage'
     );
     expect(manifest.contributes?.configuration?.properties).not.toHaveProperty(
@@ -118,12 +194,22 @@ describe('extension manifest research alignment', () => {
     expect(manifest.contributes?.configuration?.properties).not.toHaveProperty(
       'viHistorySuite.bitness'
     );
+    expect(
+      manifest.contributes?.configuration?.properties?.['viHistorySuite.runtimeProvider']
+    ).toEqual({
+      type: 'string',
+      enum: ['host', 'docker'],
+      description:
+        'Installed-user compare provider request. Host is the default local LabVIEWCLI path; docker is a bounded expert path selected through the generated settings CLI.'
+    });
   });
 
-  it('exposes the fast local VS Code loop, docs-package workbench, repo-jump, and preview refresh scripts', () => {
+  it('exposes the fast local VS Code loop, docs-package workbench, repo-jump, preview refresh scripts, and the governed JSONC runtime dependency', () => {
     const manifest = readManifest();
 
-    expect(manifest.dependencies ?? {}).toEqual({});
+    expect(manifest.dependencies ?? {}).toEqual({
+      'jsonc-parser': expect.any(String)
+    });
     expect(manifest.devDependencies).not.toHaveProperty('@vscode/vsce');
     expect(manifest.scripts?.['dev:watch']).toBe('tsc -p . --watch --preserveWatchOutput');
     expect(manifest.scripts?.['dev:workspace']).toContain('runDevHost.js --prepare-workspace-only');
@@ -171,6 +257,30 @@ describe('extension manifest research alignment', () => {
     );
     expect(manifest.scripts?.['docs:ci:internal:core']).toBe(
       'node scripts/run-docs-continuous-integration.js --surface internal --skip-links'
+    );
+    expect(manifest.scripts?.['assurance:release-gate']).toBe(
+      'node scripts/runAssuranceAudit.js --lane release-gate'
+    );
+    expect(manifest.scripts?.['assurance:26514:authority']).toBe(
+      'node scripts/runAssuranceAudit.js --lane 26514-authority'
+    );
+    expect(manifest.scripts?.['assurance:requirements']).toBe(
+      'node scripts/runAssuranceAudit.js --lane requirements'
+    );
+    expect(manifest.scripts?.['assurance:user-info']).toBe(
+      'node scripts/runAssuranceAudit.js --lane user-info'
+    );
+    expect(manifest.scripts?.['assurance:evidence-pack']).toBe(
+      'node scripts/runAssuranceAudit.js --lane evidence-pack'
+    );
+    expect(manifest.scripts?.['assurance:uplift']).toBe(
+      'node scripts/runAssuranceAudit.js --lane uplift'
+    );
+    expect(manifest.scripts?.['gitlab:git-credential:refresh']).toBe(
+      'node scripts/refreshLocalGitLabGitCredential.js'
+    );
+    expect(manifest.scripts?.['gitlab:private-release:publish']).toBe(
+      'node scripts/publishWindowsPrivateRelease.js'
     );
     expect(manifest.scripts?.['branch:governance:assert']).toBe(
       'node scripts/assertGovernedBranchBaseline.js'
@@ -263,16 +373,19 @@ describe('extension manifest research alignment', () => {
       'npm run compile && node out/cli/runVerifyDesignGateCompletion.js'
     );
     expect(manifest.scripts?.['test:design-contract']).toBe(
-      'npm exec -- vitest run tests/unit/packageManifest.test.ts tests/unit/comparisonRuntimeLocator.test.ts tests/unit/runGovernedProofCli.test.ts tests/unit/governedLegacyProofEntrypoints.test.ts tests/unit/governedProofDocs.test.ts tests/unit/githubLinuxBenchmarkWorkflow.test.ts tests/unit/githubWindowsBenchmarkWorkflow.test.ts tests/unit/designGate.test.ts tests/unit/designGateRunner.test.ts tests/unit/preparePublicRepoCloneScript.test.ts tests/unit/preparePublicTestFixtureScript.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicFacadeLinuxSmoke.test.ts tests/unit/publicGithubSourcePromotion.test.ts tests/unit/publicProductGateDPreflight.test.ts'
+      'npm exec -- vitest run tests/unit/packageManifest.test.ts tests/unit/comparisonRuntimeLocator.test.ts tests/unit/runGovernedProofCli.test.ts tests/unit/governedLegacyProofEntrypoints.test.ts tests/unit/governedProofDocs.test.ts tests/unit/githubLinuxBenchmarkWorkflow.test.ts tests/unit/githubWindowsBenchmarkWorkflow.test.ts tests/unit/designGate.test.ts tests/unit/designGateRunner.test.ts tests/unit/preparePublicRepoCloneScript.test.ts tests/unit/preparePublicTestFixtureScript.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicFacadeLinuxSmoke.test.ts tests/unit/publicGithubSourcePromotion.test.ts tests/unit/publicProductGateDPreflight.test.ts tests/unit/runWindowsIntegrationHost.test.ts'
     );
     expect(manifest.scripts?.['proof:run']).toBe(
       'npm run compile && node out/cli/runGovernedProof.js'
+    );
+    expect(manifest.scripts?.['proof:runtime-settings-live-session']).toBe(
+      'node scripts/runRuntimeSettingsLiveSessionProof.js'
     );
     expect(manifest.scripts?.['test:integration:linux']).toBe(
       'node scripts/runLinuxIntegrationHost.js'
     );
     expect(manifest.scripts?.['test:integration:windows']).toBe(
-      'VI_HISTORY_SUITE_INTEGRATION_HOST=windows npm run test:integration'
+      'node scripts/runWindowsIntegrationHost.js'
     );
     expect(manifest.scripts?.['package:audit']).toBe(
       'node scripts/auditPackagedRuntimeSurface.js'

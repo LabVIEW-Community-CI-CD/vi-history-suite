@@ -14,10 +14,10 @@ function readJson<T>(relativePath: string): T {
 }
 
 describe('release governance package', () => {
-  it('retains the semver decision framework and gitflow-lite branch/ci topology', () => {
+  it('retains the semver decision framework and GitFlow branch/ci topology', () => {
     const rules = readJson<any>('docs/product/post-release-sustainment-rules.json');
     const adr = readText(
-      'docs/architecture/adr/ADR-0030-semver-decision-framework-and-gitflow-lite-branch-ci-topology.md'
+      'docs/architecture/adr/ADR-0030-semver-decision-framework-and-gitflow-branch-ci-topology.md'
     );
     const adr0 = readText(
       'docs/architecture/adr/ADR-0028-governed-authority-to-public-source-promotion-system.md'
@@ -65,12 +65,12 @@ describe('release governance package', () => {
     expect(rules.releaseCadence.semverDecisionFramework.patch).toContain(
       'fixes or hardens an existing workflow, release rule, procedure, branch policy, or CI posture without breaking the exact released contract'
     );
-    expect(rules.releaseCadence.activeOpeningDecision.chosenBump).toBe('patch');
+    expect(rules.releaseCadence.activeOpeningDecision.chosenBump).toBe('minor');
     expect(rules.releaseCadence.activeOpeningDecision.targetDevelopCandidateReleaseLine).toBe(
-      'v1.2.2'
+      'v1.3.0'
     );
     expect(rules.releaseCadence.versionLineContract.publicDefaultBranch).toBe('main');
-    expect(rules.operatorSurfaceSustainment.branchModel.model).toBe('gitflow-lite');
+    expect(rules.operatorSurfaceSustainment.branchModel.model).toBe('gitflow');
     expect(rules.operatorSurfaceSustainment.branchModel.temporaryBranchPrefixes).toEqual([
       'feature/',
       'release/',
@@ -86,11 +86,11 @@ describe('release governance package', () => {
       'exact SemVer tags only after merged main is green'
     );
 
-    expect(adr).toContain('# ADR-0030: SemVer Decision Framework And Gitflow-Lite Branch/CI Topology');
+    expect(adr).toContain('# ADR-0030: SemVer Decision Framework And GitFlow Branch/CI Topology');
     expect(adr).toContain('choose `major` for intentional breaking contract changes');
     expect(adr).toContain('choose `minor` for additive governed capability changes');
     expect(adr).toContain('choose `patch` for fixes, hardening, governance, documentation-package, or');
-    expect(adr).toContain('keep the public GitHub default branch on `main`');
+    expect(adr).toContain('protected exact-release line and public default branch');
     expect(adr).toContain('`feature/*`');
     expect(adr).toContain('`release/*`');
     expect(adr).toContain('`hotfix/*`');
@@ -127,24 +127,24 @@ describe('release governance package', () => {
     expect(adr8).toContain('vi-history-suite-expert-agent-reviewer');
     expect(adr8).toContain('exact tagging and Marketplace publication blocked until the latest');
     expect(hostedGovernance).toContain('# Hosted CI Governance');
-    expect(hostedGovernance).toContain('current `develop` package line: `1.2.2`');
-    expect(hostedGovernance).toContain('active exact release candidate line on `develop`: `v1.2.2`');
-    expect(hostedGovernance).toContain('no newer `release/*` branch is active yet');
-    expect(hostedGovernance).toContain('chosen bump: `patch`');
+    expect(hostedGovernance).toContain('current `develop` package line: `1.3.0`');
+    expect(hostedGovernance).toContain('active exact release candidate line on `develop`: `v1.3.0`');
+    expect(hostedGovernance).toContain('active release-candidate branch: `release/1.3.0`');
+    expect(hostedGovernance).toContain('chosen bump: `minor`');
     expect(hostedGovernance).toContain('npm run branch:governance:assert');
-    expect(hostedGovernanceJson.openingDecision.chosenBump).toBe('patch');
+    expect(hostedGovernanceJson.openingDecision.chosenBump).toBe('minor');
     expect(hostedGovernanceJson.authorityGitLab.mergeGate).toBe(
       'only_allow_merge_if_pipeline_succeeds'
     );
     expect(hostedGovernanceJson.githubExperiment.requiredForExactRelease).toBe(false);
 
-    expect(srs).toContain('public GitHub `main` remains the default branch and exact release branch');
+    expect(srs).toContain('public GitHub `main` remains the default branch and protected exact-release line');
     expect(srs).toContain('PR-driven focused admission on `feature/*`');
     expect(srs).toContain('push plus PR validation for `release/*` and `hotfix/*`');
     expect(srs).toContain('continuously classify current and future governed findings for ADR impact');
     expect(srs).toContain('governed public GitHub workflow matrix');
     expect(srs).toContain('governed hosted automation matrix');
-    expect(srs).toContain('short-lived `feature/*` work shall rely on merge-request admission');
+    expect(srs).toContain('`feature/*` branches are cut from `develop` and merge back into `develop`');
     expect(srs).toContain('fail closed on branch-model contradictions');
     expect(srs).toContain('VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT');
     expect(srs).toContain('fail closed when the bound target repo is dirty');
@@ -172,7 +172,7 @@ describe('release governance package', () => {
     expect(srs).toContain('missing Docker CLI or a stopped Docker daemon');
     expect(srs).toContain('VHS-REQ-529');
     expect(srs).toContain('vi-history-suite-expert-agent-reviewer');
-    expect(rtm).toContain('public GitHub `main` remains the default branch and exact release branch');
+    expect(rtm).toContain('public GitHub `main` remains the default branch and protected exact-release line');
     expect(rtm).toContain('PR-driven focused admission on `feature/*`');
     expect(rtm).toContain('push plus PR validation for `release/*` and `hotfix/*`');
     expect(rtm).toContain('Continuously classify current and future governed findings for ADR impact');
@@ -196,9 +196,8 @@ describe('release governance package', () => {
     expect(rtm).toContain('VHS-REQ-528');
     expect(rtm).toContain('VHS-REQ-529');
     expect(testPlan).toContain('public-default-branch');
-    expect(testPlan).toContain('keeps GitHub `main` stable');
-    expect(testPlan).toContain('PR-driven feature admission and push validation on `release/*` and');
-    expect(testPlan).toContain('`hotfix/*`');
+    expect(testPlan).toContain('governed `GitFlow` branch model');
+    expect(testPlan).toContain('release/hotfix merge-backs into `develop`');
     expect(testPlan).toContain('finding-to-ADR discipline');
     expect(testPlan).toContain('`no-adr-impact`');
     expect(testPlan).toContain('TEST-UNIT-324');
@@ -228,6 +227,24 @@ describe('release governance package', () => {
     expect(testPlan).toContain('TEST-DOC-101');
     expect(testPlan).toContain('TEST-DOC-102');
     expect(testPlan).toContain('TEST-DOC-103');
+    expect(readText('docs/release-procedure.md')).toContain(
+      'node scripts/resolveLocalGitLabApiToken.js --json'
+    );
+    expect(readText('docs/release-procedure.md')).toContain(
+      '%USERPROFILE%\\.config\\codex\\secrets\\vi-history-suite.gitlab-api-token.txt'
+    );
+    expect(readText('docs/release-procedure.md')).toContain(
+      '$HOME/.config/codex/secrets/vi-history-suite.gitlab-api-token.txt'
+    );
+    expect(readText('docs/release-procedure.md')).toContain(
+      'node scripts/queueGovernedMergeRequest.js'
+    );
+    expect(readText('docs/release-procedure.md')).toContain(
+      'npm run gitlab:git-credential:refresh'
+    );
+    expect(readText('docs/release-procedure.md')).toContain(
+      'git ls-remote origin HEAD'
+    );
     expect(rules.operatorSurfaceSustainment.branchModel.findingAdrDiscipline).toEqual(
       expect.arrayContaining([
         'every governed finding is classified before slice closeout as adr-update-required or no-adr-impact'

@@ -1,0 +1,61 @@
+name: LabVIEW version support request
+description: Request support for a missing or newer LabVIEW version or bitness
+title: "[LabVIEW version]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template when the install/bootstrap flow or `vihs` surfaces a missing, unsupported, or not-yet-implemented LabVIEW version path.
+  - type: input
+    id: requested_labview_version
+    attributes:
+      label: Requested LabVIEW year
+      description: Example `2027`
+    validations:
+      required: true
+  - type: dropdown
+    id: requested_bitness
+    attributes:
+      label: Requested bitness
+      options:
+        - x64
+        - x86
+    validations:
+      required: true
+  - type: dropdown
+    id: requested_provider
+    attributes:
+      label: Requested provider
+      options:
+        - host
+        - docker
+    validations:
+      required: true
+  - type: textarea
+    id: current_guidance
+    attributes:
+      label: Current guidance or failure output
+      description: Paste the exact bootstrap, `vihs`, or `vihs --validate` guidance you received
+    validations:
+      required: true
+  - type: textarea
+    id: user_goal
+    attributes:
+      label: What are you trying to do?
+      description: Describe the repo task, compare flow, or install path you need this version for
+    validations:
+      required: true
+  - type: textarea
+    id: local_environment
+    attributes:
+      label: Local environment
+      description: Include installed LabVIEW paths, Windows version, and any relevant Docker details
+    validations:
+      required: true
+  - type: textarea
+    id: additional_context
+    attributes:
+      label: Additional context
+      description: Anything else that would help reproduce or prioritize the request

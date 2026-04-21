@@ -2,7 +2,11 @@
 
 ## Status
 
-Accepted
+Superseded
+
+- superseded by `ADR-0038` for the active develop-line installed-user
+  execution contract
+- retained as the exact released `v1.2.2` Docker-only installed baseline
 
 ## Context
 
@@ -12,7 +16,8 @@ host-native versus Docker behavior, ambient LabVIEW state, and multiple mode
 knobs even though the main goal is simply "pick two commits and generate a VI
 comparison report."
 
-That is now the wrong contract for the installed extension.
+That is now the wrong contract for the active develop-line installed
+extension, but it remains the exact released `v1.2.2` baseline.
 
 The product direction has changed materially:
 
@@ -56,10 +61,10 @@ Adopt a Docker-only installed extension execution contract.
 8. Host-native LabVIEW remains a governed maintainer proof surface only. It is
    not part of the installed extension compare contract.
 9. `ADR-0006` remains historical context for why isolation matters, but this
-   ADR supersedes it as the primary installed extension execution-policy
-   decision.
-10. Canonical validation of the installed request for this Docker-only policy
-    is governed by `ADR-0026`.
+   ADR remained the primary installed extension execution-policy decision only
+   for the exact released Docker-only baseline.
+10. Canonical validation of the installed request for that Docker-only policy
+    is retained in `ADR-0026`.
 
 ## Rationale
 
@@ -92,6 +97,14 @@ Adopt a Docker-only installed extension execution contract.
   installed-user execution
 - public and internal docs must now stay aligned around a stronger audience
   split
+
+## Historical Note
+
+`ADR-0038` supersedes this ADR for the active develop-line installed-user
+contract.
+
+This ADR remains authoritative only for the exact released Docker-only
+baseline that shipped at `v1.2.2`.
 
 ## Implementation Surface
 

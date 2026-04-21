@@ -32,6 +32,52 @@
 - local coverage is generated
 - no blocking defect is left in the initial command or history flow
 
+## Information-For-Users Coverage
+
+- retained planning and style-governance controls
+- retained audience and task
+- retained topic architecture
+- retained delivery profile
+- retained navigation and search posture
+- retained specialized-support posture
+- retained accessibility baseline
+- retained glossary discipline
+- retained documentation change-control
+- retained docs-quality gate
+- retained release proof
+- explicit `26514` claim boundary
+- bounded document set
+- selected process duties in `26514 §§5-6`
+- selected product duties in `26514 §§7-9`
+- Markdown-based repo documentation scope
+- release-versioned evidence model
+- Information planning and style governance
+- Audience and task profile depth
+- Topic architecture and section role mapping
+- Delivery profile coverage
+- Navigation and search posture
+- FAQ and quick-reference governance
+- Accessibility baseline
+- Glossary discipline
+- Documentation change control
+- Documentation quality gate
+- Release proof packet
+
+Information-for-users review cases:
+
+- `TEST-114 information-for-users navigation and claim-boundary review`
+- `TEST-115 information plan and style-governance review`
+- `TEST-116 audience and task profile review`
+- `TEST-117 topic architecture review`
+- `TEST-118 delivery-profile review`
+- `TEST-119 navigation and search review`
+- `TEST-120 specialized-support review`
+- `TEST-121 accessibility baseline review`
+- `TEST-122 documentation change-control review`
+- `TEST-123 documentation quality gate review`
+- `TEST-124 release-proof review`
+- `TEST-125 glossary discipline review`
+
 ## Coverage Targets
 
 | Metric | Target | Evidence |
@@ -199,8 +245,8 @@
   tranche
 - `TEST-UNIT-059`: validate the VI History panel exposes a checkbox on every
   retained commit row, keeps compare generation/opening controls off the
-  extension-user row-action surface, and routes compare generation through the
-  second checkbox selection
+  extension-user row-action surface, and routes compare selection through
+  explicit compare preflight after two distinct checkbox selections
 - `TEST-UNIT-060`: validate the comparison-report action fails closed when
   workspace-scoped storage is unavailable and the command surfaces the stable
   warning
@@ -223,13 +269,16 @@
 - `TEST-UNIT-071`: validate the host-native comparison-report execution runner
   stages revision blobs, runs the governed command, retains stdout/stderr
   artifacts, and records explicit failure reasons
-- `TEST-UNIT-063`: validate explicit runtime settings override auto-discovery,
-  Windows registry/install-root discovery is retained, and runtime selection
-  chooses the governed host-native engine deterministically
+- `TEST-UNIT-063`: validate governed internal/runtime-proof override inputs
+  still override auto-discovery, Windows registry/install-root discovery is
+  retained, and runtime selection chooses the governed host-native engine
+  deterministically
 - `TEST-UNIT-064`: validate runtime discovery retains explicit Linux/macOS
   availability constraints and fallback behavior when CLI tooling is missing
-- `TEST-UNIT-066`: validate the extension manifest exposes `labviewCliPath`
-  and keeps all external runtime settings restricted in untrusted workspaces
+- `TEST-UNIT-066`: validate the extension manifest does not expose
+  `labviewCliPath`, `labviewExePath`, `bitness`, `executionMode`, or public
+  image settings, while keeping the admitted installed-user runtime settings
+  restricted in untrusted workspaces
 - `TEST-DOC-001`: review the extension design summary and SRS to confirm
   rename following remains explicitly best effort rather than a guaranteed
   history-rewrite contract
@@ -242,7 +291,7 @@
   WebviewPanel-only surface, desktop/remote-host boundary, and no-publish
   TimelineProvider policy
 - `TEST-DOC-005`: review architecture for the Windows 64-bit runtime-provider
-  boundary and the future isolated container execution path
+  boundary and the bounded expert isolated container execution path
 - `TEST-DOC-006`: review architecture for the dedicated extension-user Windows
   64-bit `labview2026q1` container isolation policy and confirm it remains
   separate from host-native 32-bit execution
@@ -293,10 +342,20 @@
 - `TEST-INTEG-003`: run the real extension-host report action and retain a
   truthful runtime-selection summary that justifies either `ready-for-runtime`
   or `blocked-runtime` on the active host
+- `TEST-INTEG-009`: run the real extension-host repo-terminal admission path
+  and prove `vihs` is available as a bare command in a supported repo-opened
+  terminal session, can switch the persisted provider request between `host`
+  and `docker` while writing LabVIEW version and bitness facts, and does so
+  without hidden-path reconstruction, a mandatory prepare-first flow, manual
+  shell-profile editing, or admin elevation; the explicit Windows proof lane
+  is `npm run test:integration:windows`, which proves arbitrary-cwd invocation
+  plus the default no-`--settings-file` target under a disposable
+  `APPDATA\\Code\\User\\settings.json`, aligned to the active disposable
+  Windows integration-host profile
 - `TEST-UNIT-072`: prove the canonical comparison-report smoke runner selects a
   retained compare pair, persists report artifacts, and records runtime facts
 - `TEST-UNIT-073`: prove the canonical comparison-report smoke CLI parses
-  runtime-selection overrides and prints a deterministic success summary
+  bounded proof-admission overrides and prints a deterministic success summary
 - `TEST-UNIT-074`: prove the runtime locator retains actionable missing-runtime
   and missing-tool notes for blocked report generation
 - `TEST-UNIT-075`: prove the runtime executor normalizes win32 interop paths,
@@ -469,7 +528,7 @@
   observed-process arrays and renders them as `none` on the retained panel HTML
 - `TEST-UNIT-131`: prove the Windows-container provider fails closed with
   `windows-container-image-unavailable` before command execution when selected
-  without a configured image
+  without a resolved governing image
 - `TEST-UNIT-132`: prove container-reported NI diagnostic log paths only map
   into host-readable storage when they remain under the governed runtime root
 - `TEST-UNIT-133`: prove NI diagnostic logs that report `LabVIEW launched
@@ -945,10 +1004,11 @@
   host runs to the current published benchmark image tag unless explicitly
   overridden, and fail closed when only a stale launch receipt remains and no
   live host Linux benchmark container exists
-- `TEST-UNIT-257`: verify the packaged runtime-surface audit rejects declared
-  runtime npm dependencies, rejects packaged `node_modules` or transient/test
-  artifacts such as `.cache` and `.vscode-test`, and allows the current
-  compiled-only VSIX surface
+- `TEST-UNIT-257`: verify the packaged runtime-surface audit rejects ungoverned
+  runtime npm dependencies, rejects missing payload for a governed runtime
+  dependency such as `jsonc-parser`, rejects ungoverned packaged `node_modules`
+  or transient/test artifacts such as `.cache` and `.vscode-test`, and allows
+  the current governed runtime VSIX surface
 - `TEST-UNIT-258`: verify the root manifest excludes packaging-only npm
   tooling from default `npm ci`, while the guarded package path still invokes
   the pinned `vsce` package on demand through the dedicated helper script
@@ -960,10 +1020,11 @@
   repo-support classification, keep chronology/docs visible, and keep the
   checkbox-selected compare flow available on generic repositories while making
   deeper benchmark and maintainer host-review governance explicit
-- `TEST-UNIT-317`: verify the second checkbox selection triggers compare
-  generation automatically for the exact newer-selected and older-base pair,
-  and that a retained window of only two commits is enough to use the primary
-  extension-user compare flow
+- `TEST-UNIT-317`: verify the current implemented checkbox workflow treats two
+  distinct checkbox selections as the explicit compare-preflight entrypoint for
+  the exact newer-selected and older-base pair, and that a retained window of
+  only two commits is enough to use the current primary extension-user compare
+  flow
 - `TEST-UNIT-318`: verify generated-report and retained-packet compare views
   now lead with a white-background comparison-context block that surfaces the
   selected/base commit hash, date, author, and subject facts, while runtime
@@ -1114,19 +1175,21 @@
   non-canonical exact-pair diagnosis argument bundles, including partial
   selected/base hashes, incomplete canonical runtime bundles, Windows
   bitness/path contradictions, and wrong executable basenames for explicit
-  runtime override paths
+  proof-admission runtime paths
 - `TEST-UNIT-294`: verify canonical Windows exact-pair proof fails closed when
-  explicit runtime override paths are missing on the canonical host, when
-  stale `LabVIEW.exe` / `LabVIEWCLI.exe` / `LVCompare.exe` processes are
-  already running, or when the selected `LabVIEW.ini`-derived VI Server port
-  already has a listener before launch
+  explicit Windows proof-admission runtime paths are missing on the canonical
+  host, when stale `LabVIEW.exe` / `LabVIEWCLI.exe` / `LVCompare.exe`
+  processes are already running, or when the selected `LabVIEW.ini`-derived
+  VI Server port already has a listener before launch
 - `TEST-UNIT-295`: verify the shared PROGRAM-0003 CLI admission layer rejects
-  contradictory explicit runtime override bundles across exact-pair smoke,
-  dashboard smoke, decision-record, and Windows/Linux benchmark entrypoints
-- `TEST-UNIT-296`: verify canonical Windows explicit runtime override bundles
-  reject Windows path bundles only when they contradict the selected runtime
-  bitness, while the canonical x86 `LabVIEWCLI.exe` plus x64 `LabVIEW.exe`
-  bundle still passes admission control for governed host x64 proof
+  contradictory explicit proof-admission override bundles across exact-pair
+  smoke, dashboard smoke, decision-record, and Windows/Linux benchmark
+  entrypoints
+- `TEST-UNIT-296`: verify canonical Windows explicit proof-admission override
+  bundles reject Windows path bundles only when they contradict the selected
+  runtime bitness, while the canonical x86 `LabVIEWCLI.exe` plus x64
+  `LabVIEW.exe` bundle still passes admission control for governed host x64
+  proof
 - `TEST-UNIT-297`: verify the debt-retirement contract package remains
   machine-checkable: the contract/taxonomy/ledger docs stay discoverable in
   the authority control plane, and the machine-readable debt ledger keeps
@@ -1140,10 +1203,10 @@
   published-image defaulting, and stale-launch-receipt fail-closed behavior
 - `TEST-DOC-036`: review README, current-state, release procedure, and
   ADR-0015 and confirm the packaged VSIX surface is documented as a compile-
-  and-audit guarded compiled-only surface that fails closed on runtime
-  `node_modules`, `.cache`, or `.vscode-test` leakage and keeps packaging-only
-  toolchain dependencies out of the default compile/test/benchmark install
-  surface
+  and-audit guarded surface that fails closed on ungoverned runtime
+  `node_modules`, missing governed dependency payloads, `.cache`, or
+  `.vscode-test` leakage while keeping packaging-only toolchain dependencies
+  out of the default compile/test/benchmark install surface
 - `TEST-DOC-037`: review README, current-state, and ADR-0016 and confirm the
   canonical host Linux benchmark lane and the private GitHub experiment lane
   are governed to stay aligned on the same authority-repo commit and published
@@ -1262,23 +1325,24 @@
 - `TEST-DOC-057`: review current-state, harnesses, PROGRAM-0003, ISSUE-0408,
   and ADR-0021 and confirm canonical exact-pair diagnosis arguments are
   documented as fail-closed on incomplete selected/base hashes, incomplete
-  canonical runtime bundles, or contradictory Windows bitness/runtime override
-  paths, rather than allowing ambiguous experiment launches to proceed
+  canonical runtime bundles, or contradictory Windows bitness/proof-admission
+  runtime paths, rather than allowing ambiguous experiment launches to proceed
 - `TEST-DOC-058`: review current-state, harnesses, canonical exact-pair
   diagnosis guidance, PROGRAM-0003, ISSUE-0408, and ADR-0021 and confirm the
   canonical Windows proof surface is documented as requiring existing explicit
-  runtime paths plus a clean host runtime surface before launch, including no
-  stale LabVIEW-related processes and no preexisting listener on the selected
-  `LabVIEW.ini` VI Server port
+  Windows proof-admission runtime paths plus a clean host runtime surface
+  before launch, including no stale LabVIEW-related processes and no
+  preexisting listener on the selected `LabVIEW.ini` VI Server port
 - `TEST-DOC-059`: review current-state, harnesses, canonical exact-pair
   diagnosis guidance, PROGRAM-0003, ISSUE-0408, and ADR-0022 and confirm the
-  PROGRAM-0003 runtime-override admission contract is documented as shared
-  across dashboard-smoke, decision-record, exact-pair smoke, and the
-  Windows/Linux benchmark CLIs rather than living in one diagnosis entrypoint
+  PROGRAM-0003 proof-admission contract for explicit proof-admission override
+  inputs is documented as shared across dashboard-smoke, decision-record,
+  exact-pair smoke, and the Windows/Linux benchmark CLIs rather than living
+  in one diagnosis entrypoint
 - `TEST-DOC-060`: review current-state, harnesses, canonical exact-pair
   diagnosis guidance, PROGRAM-0003, ISSUE-0408, and ADR-0022 and confirm
-  explicit Windows runtime override bundles are documented as invalid when
-  they mix x86 and x64 paths, even when `--bitness` is omitted
+  explicit Windows proof-admission override bundles are documented as invalid
+  when they mix x86 and x64 paths, even when `--bitness` is omitted
 - `TEST-DOC-061`: review README, current-state, documentation workbench,
   wiki-authority map, debt-retirement contract, debt taxonomy, and ADR-0023
   and confirm the repo documents one no-silent-debt contract instead of
@@ -1292,36 +1356,33 @@
   surfaces represent the debt-retirement contract and debt ledger rather than
   hiding those control-plane surfaces in authority docs only
 - `TEST-UNIT-298`: verify PROGRAM-0003 benchmark-proof subcommands validate the
-  effective runtime override bundle after CLI/env/default synthesis, reject
-  non-canonical env-derived explicit Windows bundles, and keep default Windows
-  benchmark runtime settings undefined when no explicit override is requested
-- `TEST-UNIT-299`: verify the installed extension exposes only
-  `viHistorySuite.windowsContainerImage` and
-  `viHistorySuite.linuxContainerImage`, does not expose `executionMode` or
-  installed host-runtime knobs, and keeps the Docker-only execution-policy
-  package aligned across README, current-state, extension-execution-policy,
-  ADR-0025, queue/program/issue docs, debt ledger, and published reader
-  surfaces
+  effective proof-admission bundle after CLI/env/default synthesis, reject
+  non-canonical env-derived explicit Windows bundles, and keep default
+  Windows benchmark runtime settings undefined when no explicit override is
+  requested
+- `TEST-UNIT-299`: verify the authority package keeps the exact released
+  Docker-only image-settings baseline explicit while the active branch
+  manifest/settings surface exposes `viHistorySuite.labviewVersion` and
+  `viHistorySuite.labviewBitness`, omits `executionMode` and public image
+  settings, treats Docker as a generated-CLI-selected expert provider, and
+  keeps older execution-mode-only runtime doctor summaries readable as legacy
+  provider-request evidence
 - `TEST-DOC-064`: review current-state, PROGRAM-0003, ISSUE-0408, canonical
   exact-pair diagnosis guidance, ADR-0024, and the debt ledger and confirm the
-  repo documents effective runtime override bundle validation rather than a raw
-  CLI-only rule, including the removal of hidden explicit Windows defaults
+  repo documents effective proof-admission bundle validation rather than a
+  raw CLI-only rule, including the removal of hidden explicit Windows defaults
 - `TEST-DOC-065`: review README, current-state, extension-execution-policy,
-  ADR-0025, PROGRAM-0005, ISSUE-0410, and the debt ledger and confirm the
-  current Docker-only installed contract, engine-aware Windows/Linux image
-  selection, no-host-fallback rule, Docker-required hard stops, visible image-
-  pull progress, and user-facing provider/acquisition transparency are all
-  explicit
-- `TEST-DOC-066`: review the wiki coverage matrix, publication ledger,
-  User-Workflow, Requirements-And-Verification, Current-State, Architecture,
-  and Architecture-Decision-Records pages and confirm the execution-policy
-  package and current `PROGRAM-0005` control plane are represented on the
-  published reader surfaces
+  ADR-0025, ADR-0038, PROGRAM-0005, ISSUE-0410, ISSUE-0412, and the debt
+  ledger and confirm the current released Docker-only installed contract
+  remains explicit while `ADR-0038` and the active control plane now promote
+  the host-default local-`LabVIEWCLI` plus expert-Docker replacement
+  direction without mis-stating the released Docker-first behavior as the
+  active installed-user contract
 - `TEST-UNIT-300`: verify the execution-policy control-plane package keeps
-  canonical Docker-only execution-request validation, engine-aware Windows/Linux
-  image selection, Docker hard stops, and the retired execution-policy debt
-  item aligned across authority docs after the manifest removes
-  `viHistorySuite.executionMode`
+  the no-bypass rule, the historical Docker-only execution-request-validation
+  baseline, and the active host-default local-`LabVIEWCLI` plus expert-Docker
+  replacement direction aligned across authority docs and runtime-settings
+  ingestion after the manifest removed `viHistorySuite.executionMode`
 - `TEST-UNIT-301`: verify the Windows benchmark summary fails closed when any
   retained pair is `runtimeExecutionState=not-available`, retains the blocked
   reason as terminal benchmark truth, snapshots immutable per-run
@@ -1329,20 +1390,11 @@
   comparable-prefix packet selection prefer the latest eligible timestamped
   proof within one proof root
 - `TEST-DOC-067`: review extension-execution-policy, ADR-0025, ADR-0026,
-  PROGRAM-0005, ISSUE-0410, current-state, and the debt ledger and confirm the
-  current package makes canonical Docker-only request validation, engine-aware
-  Windows/Linux image selection, Docker hard stops, visible acquisition-state
-  truth, live in-panel compare-runtime progress, the in-panel latest compare-
-  runtime summary, the concise compare blocked/failure warning surface, the
-  concise compare success surface, structured history-panel compare-runtime
-  detail rendering, reopened-panel compare-runtime persistence, and Docker-
-  corrective guidance explicit
-- `TEST-DOC-068`: review User-Workflow, Requirements-And-Verification,
-  Current-State, Architecture, Architecture-Decision-Records, Development-Queue,
-  Debt-Retirement-Contract, and Debt-Ledger pages and confirm the published
-  reader surfaces represent ADR-0026 plus the current Docker-only installed
-  contract, engine-aware Windows/Linux image selection, and the public/internal
-  audience split instead of the older mode-based story
+  ADR-0038, PROGRAM-0005, ISSUE-0410, ISSUE-0412, current-state, and the debt
+  ledger and confirm the authority package now keeps canonical Docker-only
+  request validation explicit as historical implemented truth for the released
+  line while `ADR-0038` governs the active host-default local-`LabVIEWCLI`
+  plus expert-Docker transition without claiming it is already shipped
 - `TEST-DOC-069`: review README, current-state, harnesses, PROGRAM-0003, and
   ISSUE-0408 and confirm contaminated Windows benchmark-image reruns are
   documented as fail-closed `not-available` benchmark truth with immutable
@@ -1411,8 +1463,8 @@
   earlier background sidecar wrapper
 - `TEST-UNIT-315`: verify the shared Windows host runtime-surface helper
   parses observed `LabVIEW.exe` / `LabVIEWCLI.exe` / `LVCompare.exe` process
-  facts deterministically and fails closed when cleanup PowerShell returns an
-  error
+  facts deterministically, uses bounded PID-tree plus image-name forced
+  cleanup, and fails closed when cleanup PowerShell returns an error
 - `TEST-SMOKE-003`: inventory the installed LabVIEWCLI operation set from
   `C:\Program Files (x86)\National Instruments\Shared\LabVIEW CLI\Operations`,
   add the repo-supplied `PrintToSingleFileHtml` additional operation from the
@@ -1480,7 +1532,7 @@
   `public:gate-d:prepare-cold-pull`; and retains a readable Markdown packet
   shape for the recorded public-product acceptance preflight
 - `TEST-UNIT-320`: verify the next-line governance package keeps the
-  post-release SemVer decision framework, the `gitflow-lite` branch model, the
+  post-release SemVer decision framework, the governed `GitFlow` branch model, the
   lane-specific CI and `design:gate` posture, the public-default-branch
   decision that keeps GitHub `main` stable for casual readers while `develop`
   remains the explicit evaluation branch, and the `v1.0.5` exact / `v1.0.6`
@@ -1523,12 +1575,14 @@
 - `TEST-DOC-085`: review README, current-state, release-procedure,
   PROGRAM-0004, ISSUE-0409, ADR-0030, SRS, RTM, and the test plan and confirm
   the next-line control plane now retains explicit `major`/`minor`/`patch`
-  choice criteria, a governed `gitflow-lite` branch topology, the explicit
-  rule that public GitHub `main` stays the default branch while `develop`
-  remains the evaluation branch, and lane-specific CI plus `design:gate`
-  obligations for `feature/*`, `develop`, `release/*`, `hotfix/*`, and `main`,
-  including PR-driven feature admission and push validation on `release/*` and
-  `hotfix/*`
+  choice criteria, a governed `GitFlow` branch topology, the explicit
+  rule that public GitHub `main` stays the default branch while `release/*`
+  remains the release-candidate branch family and `develop` remains the
+  evaluation branch, and lane-specific CI plus `design:gate` obligations for
+  `feature/*`, `develop`, `release/*`, `hotfix/*`, and `main`, including
+  `feature/*` branches cut from `develop` and merged back into `develop`,
+  release/hotfix merge-backs into `develop`, and push validation on
+  `release/*` and `hotfix/*`
 - `TEST-DOC-086`: review PROGRAM-0004, ISSUE-0409, sustainment rules, SRS,
   RTM, and the test plan and confirm the repo now retains a continuous
   finding-to-requirement discipline that forces governed findings to either
@@ -1550,10 +1604,11 @@
 - `TEST-DOC-077`: review documentation-workbench, current-state, SRS, and RTM
   and confirm the documentation continuous-integration contract now retains
   docs-integration evidence, bundle-drift checks, wiki doctor/plan facts, and
-  explicit installed-user execution-policy truth checks for Docker-first
-  Windows `auto`, no silent fallback, Docker-required hard stops, and
-  front-facing provider/progress guidance, while the governed package path
-  refreshes bundled installed-user docs before VSIX creation
+  explicit installed-user execution-policy truth checks for Docker-only
+  compare execution, engine-aware Windows/Linux image selection,
+  Docker-required hard stops without host fallback, and front-facing
+  provider/progress guidance, while the governed package path refreshes
+  bundled installed-user docs before VSIX creation
 - `TEST-DOC-078`: review current-state, PROGRAM-0003, ISSUE-0408, SRS, RTM,
   and the test plan and confirm the repo now retains a LabVIEW 2026-only
   Windows host operation matrix that runs the x64 tranche first and gates the
@@ -1653,8 +1708,9 @@
   merge-request admission instead of a generic preview push lane
 - `TEST-UNIT-327`: read `docs/cm/cm-plan.md`, sustainment rules, release
   procedure, current-state, README, and the hosted automation matrix and
-  confirm they all agree that `develop` is the integration branch and `main`
-  is the exact release branch
+  confirm they all agree that `develop` is the integration branch, `main` is
+  the protected exact-release line, and `release/*` / `hotfix/*` are the
+  governed short-lived promotion lanes
 - `TEST-UNIT-328`: verify `promotePublicGithubSource` honors
   `VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT` when no explicit `--target-root` is
   supplied and fails closed on dirty target repos before comparison or write
@@ -1706,6 +1762,259 @@
   the `vi-history-suite-expert-agent-reviewer` skill identity, the exact
   published public repo/wiki heads under review, the latest retained verdict,
   and the blocking no-findings rule before `tag-eligible`
+- `TEST-UNIT-341`: verify the installed-user manifest/settings contract
+  exposes `viHistorySuite.labviewVersion` and
+  `viHistorySuite.labviewBitness`, keeps host as the default installed-user
+  direction, avoids general Docker/image-family settings on the public
+  installed-user surface, and reads the installed-user runtime facts through
+  the host-local runtime-settings surface
+- `TEST-UNIT-342`: verify Windows runtime preflight requires version and
+  bitness, resolves exactly one local LabVIEW + `LabVIEWCLI` installation, and
+  fails closed when the requested runtime is missing, ambiguous, or
+  incompatible
+- `TEST-UNIT-343`: verify selecting the second commit no longer auto-runs
+  compare, and the compare preflight renders selected/base commit plus LabVIEW
+  version, bitness, and provider before the explicit `Compare` action
+- `TEST-UNIT-344`: verify missing, unresolved, or unsupported provider/runtime
+  selection blocks compare in the panel and emits a VS Code warning
+  notification
+- `TEST-UNIT-345`: verify the governed `vihs` surface resolves as a bare
+  command in supported admitted Windows PowerShell sessions, including VS Code
+  integrated terminals and standalone PowerShell windows reached through
+  governed user-scope admission, writes provider plus
+  `viHistorySuite.labviewVersion` and `viHistorySuite.labviewBitness`, and
+  stays inside user-owned installation doctrine without hidden-path
+  reconstruction, a mandatory prepare-first flow, manual shell-profile
+  editing, admin elevation, machine-wide install doctrine, or a prebuilt
+  VSIX-shipped CLI payload; real current-host execution remains traced
+  separately by `TEST-INTEG-009`, and the CLI plus the settings-driven
+  compare-preflight/runtime-doctor surfaces warn users to reload or restart
+  the window only when an already-running session still shows stale provider or
+  runtime facts
+- `TEST-UNIT-346`: verify the installed compare contract defaults to host and
+  admits Docker only as a bounded expert provider persisted and rechecked
+  through the admitted `vihs` terminal settings surface
+- `TEST-UNIT-347`: verify Docker preflight derives the governed image family
+  from the current engine and fails closed on unsupported Docker `x86` with
+  host/`x64` corrective guidance
+- `TEST-UNIT-348`: verify compare preflight shows provider as read-only text
+  and retains an explicit CLI update hint when provider/runtime settings need
+  correction
+- `TEST-349` / `TEST-UNIT-349`: verify installed compare preflight admits `ready` only
+  after the governing runtime-selection layer confirms the active
+  provider/version/bitness bundle, and that settings-only fallback cannot
+  surface a publishable runtime-backed ready state
+- `TEST-UNIT-350`: verify the `vihs` settings surface, compare-preflight
+  surface, and runtime-doctor surface retain conditional stale-result
+  guidance while live uptake of CLI-written settings into an already-running
+  VS Code session is still only partially proven, and that retained
+  persisted-versus-live probe packet plus local packet/history/policy-gate
+  evidence remains explicit for that boundary, while the repo-owned
+  `npm run proof:runtime-settings-live-session` wrapper snapshots the current
+  packet/history/policy bundle into one reviewable receipt directory
+- `TEST-UNIT-351`: verify the `vihs` settings surface accepts governed VS Code
+  settings targets with JSONC comments or trailing commas, names the effective
+  settings target in update or validation output, preserves unrelated settings
+  content, rejects unsupported workspace-target widening, and rewrites only
+  provider/version/bitness facts
+- `TEST-UNIT-352`: verify the bare `vihs` terminal entrypoint either executes
+  through the governed runtime contract or fails closed with one actionable
+  missing-or-stale runtime dependency message that restores the admitted
+  terminal surface without hidden-path reconstruction
+- `TEST-UNIT-353`: verify `vihs` with no arguments seeds missing settings to
+  `host/windows/2026/x64`, reads back the current provider/platform/version/bitness
+  bundle, prints exact copyable next commands, and, on interactive TTY
+  surfaces, admits Enter-through confirmation or guided selection of supported
+  provider/platform/version/bitness values while failing closed with explicit
+  unsupported or not-yet-implemented path guidance
+- `TEST-UNIT-354`: verify the `vihs` surface exposes `vihs --validate` as one
+  governed validation action that reports persisted provider/version/bitness
+  truth plus runtime-validation outcome, and that the no-argument interactive
+  confirmation flow invokes that same bounded validation after persisting
+  settings without reopening path-picking or a panel-side provider picker
+- `TEST-UNIT-355`: verify Windows host runtime validation accepts the
+  governed mixed-bitness x64 host bundle when the canonical host resolves
+  `C:\Program Files\National Instruments\LabVIEW 2026\LabVIEW.exe` together
+  with the installed x86
+  `C:\Program Files (x86)\National Instruments\Shared\LabVIEW CLI\LabVIEWCLI.exe`
+  instead of failing closed with `labview-cli-not-found-for-bitness`
+- `TEST-INTEG-010`: prove the bare `vihs` terminal entrypoint runtime
+  dependency contract on the supported host surface and retain the actionable
+  failure mode that restores the admitted terminal surface when the governed
+  runtime dependency is unavailable or stale
+- `TEST-INTEG-011`: prove the governed `vihs` validation action reports the
+  persisted provider/version/bitness bundle and the bounded runtime-validation
+  outcome from a real extension-host session; the explicit Windows lane shall
+  prove that a persisted `docker` / `2026` / `x64` bundle validates as `ready`
+  with `windows-container` plus `labview-cli` when Docker Desktop and the
+  governed Windows image are available
+- `TEST-INTEG-012`: prove the explicit Windows x64 host lane reports a
+  persisted `host` / `2026` / `x64` bundle as `ready` on the canonical host
+  when the admitted local runtime shape is x64 `LabVIEW.exe` plus the
+  canonical installed x86 `LabVIEWCLI.exe`
+- `TEST-SMOKE-020`: prove the canonical Windows host-operation matrix closes
+  the remaining LabVIEW 2026 x64 release prerequisite-operation seams or
+  retains one exact bounded blocker receipt per unresolved x64 seam, while any
+  retained x86 lane output stays explicit non-release characterization only
+- `TEST-SMOKE-021`: prove `CreateComparisonReport` admission on the supported
+  LabVIEW 2026 x64 host bundle, or retain the exact bounded blocker receipt
+  when that bundle remains non-admissible after prerequisite closeout; the
+  retained x64 bundle shall treat the installed x86 `LabVIEWCLI.exe` plus x64
+  `LabVIEW.exe` host shape as the first private-release proof surface, and the
+  retained x64 success receipt shall keep the direct `CreateComparisonReport`
+  command-line proof, the derived VI Server port (`3363`), the bounded
+  `300000ms` runtime budget, the banner observation that `LabVIEWCLI.exe` was
+  seen while `LabVIEW.exe` was absent, the exit observation that
+  `LabVIEW.exe` was observed, and the final generated-report outcome
+- `TEST-SMOKE-022`: if a Windows x86 host-bundle rerun is retained, preserve
+  the exact bounded `CreateComparisonReport` characterization receipt without
+  treating that rerun as part of current release admission; the retained x86
+  receipt shall keep the direct `CreateComparisonReport` command-line proof,
+  the derived VI Server port (`3364`), the banner observation that
+  `LabVIEWCLI.exe` was seen while `LabVIEW.exe` was absent, and the final
+  `command-timed-out` outcome
+- `TEST-DOC-106`: review current-state, `PROGRAM-0005`, `ISSUE-0412`, the
+  SRS, RTM, test plan, command reference, FAQ, and `ISSUE-0414` roadmap and
+  confirm the retained live-session conditional stale-result guidance plus
+  supporting probe, packet/history/policy gates, and repo-owned proof-receipt
+  surface remain explicit until direct active-session uptake is end-to-end
+  proven
+- `TEST-DOC-107`: review the manifest, terminal-entrypoint surface, SRS, RTM,
+  and the test plan and confirm the bare `vihs` contract plus its copyable
+  command and interactive-discovery posture remain explicit instead of relying
+  on chat-memory doctrine
+- `TEST-DOC-108`: review current-state, the host-operation matrix docs, the
+  tracked host `CreateComparisonReport` packet, the SRS, RTM, and the test
+  plan and confirm the remaining LabVIEW 2026 prerequisite-operation seams
+  plus the direct x64/x86 `CreateComparisonReport` blocker receipts are
+  retained as explicit host-proof gates instead of informal notes
+- `TEST-DOC-109`: review README, current-state, `PROGRAM-0005`, `ISSUE-0412`,
+  the branch handoff packet, the runtime-provider public-acceptance gate
+  packet, the release procedure, the SRS, RTM, and the test plan and confirm
+  bundled/public installed-user surfaces remain on the exact released
+  Docker-only baseline until the host-default provider contract clears the
+  explicit governed public-acceptance gate
+- `TEST-DOC-110`: review current-state, `PROGRAM-0005`, `ISSUE-0412`, the
+  command reference, the FAQ, the SRS, the RTM, and the test plan and confirm
+  the active Windows x64 private-release route is native Windows only: host
+  validation admits the governed mixed-bitness LabVIEW bundle, Docker proof
+  admits Docker Desktop Windows-container execution, and WSL is retained
+  historical context only rather than an admitted installed-user or
+  private-release dependency
+- `TEST-UNIT-356`: verify the governed Windows private-release acceptance
+  script keeps the canonical `HARNESS-VHS-002` `lv_icon.vi` selected/base pair,
+  retains separate host and Windows-container command plans, and emits the
+  machine-readable runner manifest under `windows-private-release-evidence/`
+- `TEST-DOC-111`: review `.gitlab-ci.yml`, hosted governance, sustainment,
+  current-state, the private-release packet, the runner-lane contract, the
+  SRS, the RTM, and the test plan and confirm preview and exact packaging now
+  depend on the tagged Windows shell-runner acceptance lane
+- `TEST-UNIT-357`: verify the hosted CI governance package, `.gitlab-ci.yml`,
+  README, current-state, and the release procedure retain the published
+  `repo-standards-review` assurance-workbench lane, its
+  `assurance_release_gate` job name, the published image reference, and the
+  preview/exact packaging dependency on that lane
+- `TEST-DOC-112`: review `.gitlab-ci.yml`, hosted governance, README,
+  current-state, the release procedure, the SRS, the RTM, and the test plan
+  and confirm the published assurance-workbench `release-gate` lane is now a
+  required GitLab governance check that blocks preview and exact packaging
+- `TEST-UNIT-358`: verify `scripts/runAssuranceAudit.js` stages the governed
+  `repo` and `authority-docs` targets, excludes transient or non-authority
+  paths, and builds the expected local-skill command plan
+- `TEST-UNIT-359`: verify `.gitlab-ci.yml`, the Linux assurance runner-lane
+  contract, the hosted-governance package, and `package.json` retain the
+  separate self-hosted Linux assurance lane plus the required
+  `assurance:*` command surface
+- `TEST-UNIT-360`: verify preview and exact packaging now depend on
+  `assurance_release_gate`, `assurance_26514_authority`,
+  `assurance_requirements_quality`, and
+  `assurance_external_user_information`, while `assurance_audit_packet`
+  remains advisory only
+- `TEST-UNIT-361`: verify the contradiction-guard test family keeps the
+  assurance baseline split, exact released versus active candidate scope
+  split, requirements-to-user-doc semantics, and authority-doc metadata
+  coherence explicit
+- `TEST-UNIT-362`: verify the repo-owned runner host asset pack retains the
+  Windows apply/bootstrap scripts, the Linux apply/helper scripts, and the
+  Linux assurance `systemd` unit, and that the lane docs, hosted governance,
+  the private-release packet, and the wider control plane point to those exact
+  asset paths plus repo-owned fail-closed host apply/update behavior
+- `TEST-UNIT-363`: verify the repo-owned Windows bootstrap clears stale
+  `LabVIEW`, `LabVIEWCLI`, and `LVCompare` before cold runner admission, uses
+  bounded PID-tree plus image-name forced descendant termination, and fails
+  closed when contamination remains
+- `TEST-UNIT-364`: verify the Windows private-release acceptance wrapper
+    preserves the first failed host proof transcript, runs the repo-owned
+    Windows proof runtime recovery script, retains
+    `proof-runtime-recovery.txt`, waits `5000` ms, retries the host-native
+    proof once when the shared Windows cleanup seam fails before proof
+    execution, and still fails closed when that recovery step plus retry is
+    not eligible or cannot restore a clean host surface
+- `TEST-UNIT-365`: verify the repo-owned runner drift-assert surfaces keep the
+  admitted Windows and Linux assertion commands explicit, keep the combined
+  wrapper and `npm run gitlab:runner:assert` package surface explicit, and
+  fail closed when the Windows assertion is requested from a non-Windows host
+- `TEST-UNIT-366`: verify the Windows proof runtime recovery rehearsal surface
+  fails closed unless the admitted Windows host starts clean, seeds one
+  headless LabVIEW contamination, runs the repo-owned recovery script,
+  retains the rehearsal receipt plus `proof-runtime-recovery.txt`, and proves
+  the post-recovery runtime surface is clean again
+- `TEST-UNIT-367`: verify the published Windows PowerShell install bootstrap
+  runs the Marketplace install for `svelderrainruiz.vi-history-suite`,
+  materializes the admitted `vihs` launchers, derives platform from the
+  current host, prompts only for provider/LabVIEW year/bitness when
+  interactive, and on non-interactive surfaces seeds or retains the governed
+  default `host/windows/2026/x64` bundle plus exact follow-up `vihs` commands
+  without claiming raw `code --install-extension` interactivity
+- `TEST-DOC-113`: review `.gitlab-ci.yml`, `linux-assurance-runner-lane.md`,
+  hosted governance, current-state, README, and the release procedure and
+  confirm the Linux assurance lane is separate from the Windows proof lane,
+  authenticates locally, pulls the latest external image, and owns the
+  blocking plus advisory assurance jobs truthfully
+- `TEST-DOC-114`: review README, current-state, the release procedure, FAQ,
+  command reference, SRS, RTM, and the contradiction-guard tests and confirm
+  the repo keeps the `:main` versus `v0.2.18` baseline split, the exact
+  released `v1.2.2` versus active `v1.3.0` scope split, the requirements/user-
+  doc semantics, and authority-doc metadata coherence explicit
+- `TEST-DOC-115`: review the runner-lane contracts, hosted governance,
+  private-release packet, information-item map, README, current-state,
+  release procedure, SRS, RTM, and the new asset-pack test and confirm the
+  governed runner host asset pack and repo-owned apply surfaces are versioned,
+  recoverable without untracked machine-only startup files, and explicit about
+  fail-closed host apply/update behavior
+- `TEST-DOC-116`: review the runner-lane contract, hosted governance,
+  private-release packet, README, current-state, release procedure, SRS, RTM,
+  and the test plan and confirm the Windows proof lane retains cold-admission
+  stale-runtime cleanup plus fail-closed startup semantics after restart or
+  logon
+- `TEST-DOC-117`: review the Windows runner-lane contract, hosted governance,
+    private-release packet, README, current-state, release procedure, sustainment
+    rules, SRS, RTM, and the test plan and confirm the bounded host-native
+    contamination-recovery retry is explicit: `proof-run-pre-recovery.txt` is
+    retained, `recover-windows-proof-runtime-surface.ps1` is invoked,
+    `proof-runtime-recovery.txt` is retained, the retry waits `5000` ms, only
+    one retry is admitted, and the lane still fails closed if that recovery
+    step plus retry cannot restore a clean host surface
+- `TEST-DOC-118`: review the runner-lane contracts, hosted governance,
+  private-release packet, README, current-state, release procedure, sustainment
+  package, SRS, RTM, and the test plan and confirm the repo-owned live
+  drift-assert surfaces and the combined wrapper are explicit about exact
+  scheduled-task/bootstrap state, installed helper/service/bootstrap hash
+  matching, `request_concurrency = 2`, and live runner/service process checks
+- `TEST-DOC-119`: review the Windows runner-lane contract, hosted governance,
+  private-release packet, README, current-state, release procedure, sustainment
+  package, SRS, RTM, and the test plan and confirm the repo-owned Windows
+  proof runtime recovery rehearsal surface is explicit: it uses
+  `runWindowsProofRuntimeRecoveryRehearsal.js`, is admitted through
+  `npm run gitlab:runner:windows:recovery:rehearse`, seeds one headless
+  LabVIEW contamination, and refreshes
+  `.cache/windows-proof-runtime-recovery-rehearsal/latest.json`
+- `TEST-DOC-120`: review the SRS, RTM, test plan, README, INSTALL, command
+  reference, FAQ, and `scripts/install-vihs-extension.ps1` and confirm the
+  governed interactive install surface is the published Windows PowerShell
+  bootstrap rather than raw `code --install-extension` alone, with exact
+  follow-up `vihs` commands and Windows-host-derived platform posture kept
+  explicit
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are
@@ -1765,6 +2074,18 @@
   confirm exact tagging and Marketplace publication now remain blocked until
   the retained `vi-history-suite-expert-agent-reviewer` gate against the exact
   published public candidate heads returns no findings
+- `TEST-DOC-104`: review README, current-state, ship control, development
+  queue, extension-execution-policy, PROGRAM-0005, ISSUE-0410, and ISSUE-0412
+  and confirm the control plane now keeps the current released Docker-only
+  installed contract explicit while promoting `TRANCHE-016` /
+  `ISSUE-0412` as the active direction
+- `TEST-DOC-105`: review SRS, RTM, and the test plan and confirm the active
+  develop-line installed-user replacement contract is explicit and truthfully
+  traced around required LabVIEW version + bitness settings, host-default
+  local `LabVIEWCLI`, bounded expert Docker admission through the bare `vihs`
+  surface, explicit compare preflight, panel + warning fail-closed behavior,
+  and the Windows exact-runtime-selection fail-closed behavior retained under
+  `VHS-REQ-532`
 - `TEST-GATE-001`: run `npm run design:gate` and retain the latest design-gate
   report artifacts under `.cache/design-gate/`
 - `TEST-GATE-002`: run `npm run design:gate` and retain weakest-source

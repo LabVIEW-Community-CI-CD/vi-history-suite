@@ -29,8 +29,9 @@ export interface MultiReportDashboardLatestRunExperimentRecord {
     historyWindowMode: 'auto' | 'capped';
     maxHistoryEntries: number;
     effectiveHistoryEntryCeiling: number;
-    executionMode: 'docker-only';
-    bitness: 'x64';
+    providerRequest: 'host' | 'docker';
+    labviewVersion?: string;
+    labviewBitness?: 'x86' | 'x64';
     windowsContainerImage?: string;
     linuxContainerImage?: string;
   };
@@ -99,7 +100,11 @@ export interface MultiReportDashboardLatestRunRecord {
 }
 
 export function buildDashboardLatestRunFilePath(workspaceStorageRoot: string): string {
-  return path.join(workspaceStorageRoot, 'dashboards', DASHBOARD_LATEST_RUN_FILENAME);
+  return joinPreservingExplicitPathStyle(
+    workspaceStorageRoot,
+    'dashboards',
+    DASHBOARD_LATEST_RUN_FILENAME
+  );
 }
 
 export function attachDashboardEtaAccuracyContext(
@@ -129,7 +134,10 @@ export function buildDashboardLatestRunRecord(options: {
     source: options.source,
     workspaceStorageRoot: options.workspaceStorageRoot,
     artifactPaths: {
-      dashboardsDirectory: path.join(options.workspaceStorageRoot, 'dashboards'),
+      dashboardsDirectory: joinPreservingExplicitPathStyle(
+        options.workspaceStorageRoot,
+        'dashboards'
+      ),
       dashboardDirectory: options.dashboard.record.artifactPlan.dashboardDirectory,
       dashboardJsonFilePath: options.dashboard.jsonFilePath,
       dashboardHtmlFilePath: options.dashboard.htmlFilePath,
@@ -163,4 +171,12 @@ export function buildDashboardLatestRunRecord(options: {
     etaAccuracyRecord: options.etaAccuracyRecord,
     experiment: options.experiment
   };
+}
+
+function joinPreservingExplicitPathStyle(rootPath: string, ...segments: string[]): string {
+  if (rootPath.startsWith('/')) {
+    return path.posix.join(rootPath, ...segments.map((segment) => segment.replace(/\\/g, '/')));
+  }
+
+  return path.join(rootPath, ...segments);
 }

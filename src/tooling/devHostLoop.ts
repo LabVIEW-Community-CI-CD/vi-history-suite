@@ -56,10 +56,49 @@ export interface LaunchViHistoryDevHostDeps {
 }
 
 const DEFAULT_WINDOWS_CODE_PATH_CANDIDATES = [
-  '/mnt/c/Program Files/Microsoft VS Code/Code.exe',
-  '/mnt/c/Users/sveld/AppData/Local/Programs/Microsoft VS Code/Code.exe'
+  'C:\\Program Files\\Microsoft VS Code\\Code.exe',
+  'C:\\Users\\sveld\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe'
 ];
-const DEFAULT_WINDOWS_RUNTIME_ROOT = '/mnt/c/Users/sveld/AppData/Local/Temp/vihs-dev-host';
+const DEFAULT_WINDOWS_RUNTIME_ROOT = 'C:\\Users\\sveld\\AppData\\Local\\Temp\\vihs-dev-host';
+
+function usesExplicitPosixPathStyle(rootPath: string): boolean {
+  return rootPath.startsWith('/');
+}
+
+function usesExplicitWindowsPathStyle(rootPath: string): boolean {
+  return /^[A-Za-z]:[\\/]/.test(rootPath) || rootPath.startsWith('\\\\');
+}
+
+function joinPreservingExplicitPathStyle(rootPath: string, ...segments: string[]): string {
+  if (usesExplicitPosixPathStyle(rootPath)) {
+    return path.posix.join(rootPath, ...segments.map((segment) => segment.replace(/\\/g, '/')));
+  }
+
+  if (usesExplicitWindowsPathStyle(rootPath)) {
+    return path.win32.join(rootPath, ...segments.map((segment) => segment.replace(/\//g, '\\')));
+  }
+
+  return path.join(rootPath, ...segments);
+}
+
+function normalizeDevHostLaunchPath(value: string): string {
+  const trimmed = value.trim();
+  if (usesExplicitWindowsPathStyle(trimmed)) {
+    return path.win32.normalize(trimmed);
+  }
+
+  if (trimmed.startsWith('/mnt/') && trimmed.length > 7) {
+    const driveLetter = trimmed[5].toUpperCase();
+    const remainder = trimmed.slice(7).replaceAll('/', '\\');
+    return path.win32.normalize(`${driveLetter}:\\${remainder}`);
+  }
+
+  if (usesExplicitPosixPathStyle(trimmed)) {
+    return path.posix.normalize(trimmed);
+  }
+
+  return path.normalize(trimmed);
+}
 
 export function getViHistoryDevHostUsage(): string {
   return [
@@ -130,27 +169,31 @@ export function parseViHistoryDevHostArgs(argv: string[]): ViHistoryDevHostCliAr
   };
 }
 
-export function toWindowsPath(
-  value: string,
-  distroName: string = (process.env.WSL_DISTRO_NAME ?? 'Ubuntu').trim() || 'Ubuntu'
-): string {
-  if (value.startsWith('/mnt/') && value.length > 7) {
-    const driveLetter = value[5].toUpperCase();
-    const remainder = value.slice(7).replaceAll('/', '\\');
-    return `${driveLetter}:\\${remainder}`;
+export function toWindowsPath(value: string): string {
+  const trimmed = value.trim();
+  if (/^[A-Za-z]:[\\/]/.test(trimmed) || trimmed.startsWith('\\\\')) {
+    return path.win32.normalize(trimmed);
   }
 
-  if (value.startsWith('/')) {
-    return `\\\\wsl.localhost\\${distroName}${value.replaceAll('/', '\\')}`;
+  if (trimmed.startsWith('/mnt/') && trimmed.length > 7) {
+    const driveLetter = trimmed[5].toUpperCase();
+    const remainder = trimmed.slice(7).replaceAll('/', '\\');
+    return path.win32.normalize(`${driveLetter}:\\${remainder}`);
   }
 
-  return value;
+  if (trimmed.startsWith('/')) {
+    throw new Error(
+      `Unsupported non-Windows path for Windows dev-host execution: ${value}.`
+    );
+  }
+
+  return path.win32.normalize(trimmed.replaceAll('/', '\\'));
 }
 
 export async function canWriteDirectory(directoryPath: string): Promise<boolean> {
   try {
     await fs.mkdir(directoryPath, { recursive: true });
-    const probePath = path.join(
+    const probePath = joinPreservingExplicitPathStyle(
       directoryPath,
       `.vihs-write-probe-${process.pid}-${Date.now().toString(16)}`
     );
@@ -170,7 +213,7 @@ export async function resolveViHistoryDevHostRuntimeRoot(
     return DEFAULT_WINDOWS_RUNTIME_ROOT;
   }
 
-  const repoCacheRoot = path.join(repoRoot, '.cache', 'dev-host');
+  const repoCacheRoot = joinPreservingExplicitPathStyle(repoRoot, '.cache', 'dev-host');
   await fs.mkdir(repoCacheRoot, { recursive: true });
   return repoCacheRoot;
 }
@@ -289,12 +332,14 @@ export function buildViHistoryDevHostLaunchPlan(options: {
   preparedFixtureWorkspace: boolean;
   extensionMode: 'direct' | 'staged';
 }): ViHistoryDevHostLaunchPlan {
-  const userDataDir = path.join(options.runtimeRoot, 'user-data');
-  const extensionsDir = path.join(options.runtimeRoot, 'extensions');
-  const windowsWorkspacePath = toWindowsPath(options.workspacePath);
-  const windowsExtensionDevelopmentPath = toWindowsPath(options.extensionDevelopmentPath);
-  const windowsUserDataDir = toWindowsPath(userDataDir);
-  const windowsExtensionsDir = toWindowsPath(extensionsDir);
+  const userDataDir = joinPreservingExplicitPathStyle(options.runtimeRoot, 'user-data');
+  const extensionsDir = joinPreservingExplicitPathStyle(options.runtimeRoot, 'extensions');
+  const windowsWorkspacePath = normalizeDevHostLaunchPath(options.workspacePath);
+  const windowsExtensionDevelopmentPath = normalizeDevHostLaunchPath(
+    options.extensionDevelopmentPath
+  );
+  const windowsUserDataDir = normalizeDevHostLaunchPath(userDataDir);
+  const windowsExtensionsDir = normalizeDevHostLaunchPath(extensionsDir);
   const launchArgs = [
     '--new-window',
     '--disable-workspace-trust',
@@ -350,8 +395,18 @@ export function formatViHistoryDevHostSummary(
   ];
 
   if (workspaceMetadata) {
-    lines.push(`Eligible fixture: ${path.join(workspaceMetadata.workspacePath, workspaceMetadata.eligibleRelativePath)}`);
-    lines.push(`Ineligible fixture: ${path.join(workspaceMetadata.workspacePath, workspaceMetadata.ineligibleRelativePath)}`);
+    lines.push(
+      `Eligible fixture: ${joinPreservingExplicitPathStyle(
+        workspaceMetadata.workspacePath,
+        workspaceMetadata.eligibleRelativePath
+      )}`
+    );
+    lines.push(
+      `Ineligible fixture: ${joinPreservingExplicitPathStyle(
+        workspaceMetadata.workspacePath,
+        workspaceMetadata.ineligibleRelativePath
+      )}`
+    );
   }
 
   lines.push('Next step: keep `npm run dev:watch` running, then use `Developer: Reload Window` inside the dev host after code changes.');

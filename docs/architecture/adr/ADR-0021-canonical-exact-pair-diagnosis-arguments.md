@@ -9,11 +9,13 @@ Accepted
 `PROGRAM-0003` now depends on targeted exact-pair diagnosis reruns to explain
 the first invalid governed benchmark surfaces.
 
-Those reruns have become sensitive to operator-supplied runtime arguments:
+Those reruns have become sensitive to operator-supplied proof-admission
+arguments:
 
 - Windows exact-pair proof can be affected by multiple installed LabVIEW
   versions
-- explicit runtime overrides can accidentally mix engines, executable paths,
+- bounded proof-admission overrides can accidentally mix engines, executable
+  paths,
   and bitness
 - partial selected/base hashes can target the right selected revision while
   still weakening the retained proof contract for the exact pair under
@@ -32,7 +34,8 @@ Adopt canonical fail-closed argument validation for exact-pair
    - `--selected-hash`
    - `--base-hash`
    - both must be full 40-character git hashes
-2. Explicit runtime override paths shall require matching authority selectors:
+2. Explicit proof-admission runtime paths shall require matching authority
+   selectors:
    - `--platform`
    - when explicit canonical runtime paths are used, both
      `--labview-cli-path` and `--labview-exe-path` are required
@@ -48,9 +51,9 @@ Adopt canonical fail-closed argument validation for exact-pair
    diagnosis reference so future sessions do not have to reconstruct the valid
    bundles from tests or source alone.
 
-The wider PROGRAM-0003 admission-control boundary, including shared runtime
-override validation across sibling CLIs and Windows host-surface contamination
-preflight, is governed separately by `ADR-0022`.
+The wider PROGRAM-0003 admission-control boundary, including shared
+proof-admission validation across sibling CLIs and Windows host-surface
+contamination preflight, is governed separately by `ADR-0022`.
 
 ## Consequences
 
@@ -66,9 +69,10 @@ preflight, is governed separately by `ADR-0022`.
 ### Negative
 
 - ad hoc diagnosis commands become stricter and less forgiving
-- operators must provide a complete canonical bundle when they want explicit
-  runtime overrides
-- existing habits that relied on partial overrides must be updated
+- operators must provide a complete canonical bundle when they want bounded
+  proof-admission overrides
+- existing habits that relied on partial proof-admission overrides must be
+  updated
 
 ## Implementation Surface
 

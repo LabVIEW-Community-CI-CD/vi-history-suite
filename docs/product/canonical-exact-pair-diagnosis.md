@@ -9,11 +9,17 @@ benchmark evidence.
 This document defines the exact-pair-specific admission contract for
 `runGovernedProof report-smoke`.
 
-The wider shared runtime-override admission control for the public
-governed-proof surface and its `PROGRAM-0003` subcommands is governed
-separately in `ADR-0022`. Exact-pair diagnosis
-inherits that shared layer, inherits the effective runtime bundle validation
-rule from `ADR-0024`, and then adds the selected/base pair contract below.
+The `--execution-mode` flags named here are bounded exact-pair diagnosis inputs
+for governed proof reruns. They are not installed-user extension settings, not
+panel/provider UX, and not public evidence that the active extension contract
+still exposes `executionMode`.
+
+The wider shared proof-admission control for explicit proof-admission override
+inputs on the public governed-proof surface and its `PROGRAM-0003`
+subcommands is governed separately in `ADR-0022`. Exact-pair diagnosis
+inherits that shared layer, inherits the effective proof-admission bundle
+validation rule from `ADR-0024`, and then adds the selected/base pair
+contract below.
 
 ## Canonical Profiles
 
@@ -63,11 +69,11 @@ Windows container provider rather than the host-native surface.
 
 - `--selected-hash` and `--base-hash` must be supplied together.
 - Both hashes must be full 40-character git hashes.
-- Shared `PROGRAM-0003` runtime-override validation still applies here:
-  - explicit runtime override paths require matching `--platform` and
+- Shared `PROGRAM-0003` proof-admission validation still applies here:
+  - explicit proof-admission runtime paths require matching `--platform` and
     canonical `CreateComparisonReport` path bundles
   - CLI arguments, environment variables, and subcommand-local defaults are
-    validated as one effective runtime bundle before execution begins
+    validated as one effective proof-admission bundle before execution begins
   - the same admission layer now governs `runGovernedProof` subcommands for
     `dashboard-smoke`, `decision-record`, `report-smoke`, `benchmark-linux`,
     and `benchmark-windows`
@@ -78,10 +84,10 @@ Windows container provider rather than the host-native surface.
 - Explicit runtime paths must match their governed executable basenames:
   - `LabVIEWCLI.exe`
   - `LabVIEW.exe`
-- On the canonical Windows host, explicit runtime override paths must exist
-  before the harness runs.
-- Explicit Windows runtime override paths must resolve to one coherent x86 or
-  x64 bundle even when `--bitness` is omitted.
+- On the canonical Windows host, explicit Windows proof-admission runtime
+  paths must exist before the harness runs.
+- Explicit Windows proof-admission runtime paths must resolve to one coherent
+  x86 or x64 bundle even when `--bitness` is omitted.
 - Windows `--bitness` must not contradict explicit
   `Program Files` / `Program Files (x86)` runtime paths.
 - Canonical Windows host-native diagnosis requires a clean host runtime
@@ -124,6 +130,9 @@ This document governs one public proof surface only:
 - `npm run proof:run -- report-smoke ...`
 
 It does not publish a public engine selector or a public `LVCompare` override.
+It also does not reopen `executionMode` as installed-user product doctrine;
+that flag remains a bounded proof-surface admission input for exact-pair
+diagnosis only.
 Any retained `LVCompare` receipts remain internal parity evidence carried by
 benchmark packets and control-plane docs, not by the public operator CLI
 contract.

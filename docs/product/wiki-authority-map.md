@@ -103,16 +103,23 @@ That requires:
 2. Run `npm run wiki:workbench:plan` or
    `npm run docs:workbench:wiki:plan` to resolve the current published page set
    and next-page target from the governed ledger.
-3. Draft or update only the wiki page sections touched by the latest completed
+3. If the target is an already-published page whose authority docs changed
+   materially, keep `nextPage = null` closed and run
+   `npm run wiki:workbench:prepare -- --page-id <published-page-id>` or
+   `npm run docs:workbench:wiki:prepare -- --page-id <published-page-id>` to
+   retain a governed refresh pack without reopening the publication ledger.
+4. Draft or update only the wiki page sections touched by the latest completed
    tranche.
-4. Prefer requirement and ADR wording over inferred implementation detail.
-5. Cite repo-relative doc paths for every substantive product claim.
-6. If a needed fact exists only in source or tests, stop and first promote that
+5. Prefer requirement and ADR wording over inferred implementation detail.
+6. Cite repo-relative doc paths for every substantive product claim.
+7. If a needed fact exists only in source or tests, stop and first promote that
    fact into the governed docs stack.
-7. Use `npm run wiki:workbench:prepare` or
+8. Use `npm run wiki:workbench:prepare` or
    `npm run docs:workbench:wiki:prepare` to retain the page-authority bundle
-   and publication-prep receipt before any real wiki publication step.
-8. When substantial documentation-package edits are needed, use the documented
+   and publication-prep receipt before any real wiki publication step. Update
+   the publication ledgers only after a new page is actually pushed or an
+   already-published page is refreshed and its publication metadata changes.
+9. When substantial documentation-package edits are needed, use the documented
    workbench in [../documentation-workbench.md](../documentation-workbench.md)
    before widening into wiki drafting.
 

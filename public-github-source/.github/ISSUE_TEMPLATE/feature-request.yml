@@ -1,5 +1,5 @@
 name: Feature request
-description: Request a public-product enhancement
+description: Request an install, configuration, validation, or compare improvement
 title: "[Feature]: "
 labels:
   - enhancement
@@ -7,11 +7,24 @@ body:
   - type: markdown
     attributes:
       value: |
-        Keep requests bounded to the public product surface: Docker-only compare workflow, public docs, and public development path.
+        Keep requests bounded to the public installed-user surface and public documentation.
   - type: textarea
-    id: problem
+    id: user_goal
     attributes:
-      label: Problem to solve
+      label: What are you trying to do?
+    validations:
+      required: true
+  - type: dropdown
+    id: affected_surface
+    attributes:
+      label: Which surface should improve?
+      options:
+        - Install bootstrap
+        - `vihs`
+        - `vihs --validate`
+        - Compare preflight or compare execution
+        - Documentation
+        - Other
     validations:
       required: true
   - type: textarea
@@ -20,6 +33,15 @@ body:
       label: Proposed improvement
     validations:
       required: true
+  - type: textarea
+    id: affected_versions
+    attributes:
+      label: Affected provider, LabVIEW year, or bitness
+      description: Include the exact combinations that matter if known
+  - type: textarea
+    id: workaround
+    attributes:
+      label: Current workaround or fallback
   - type: textarea
     id: alternatives
     attributes:

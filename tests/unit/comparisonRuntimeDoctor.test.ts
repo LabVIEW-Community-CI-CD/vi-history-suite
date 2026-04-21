@@ -42,7 +42,7 @@ describe('comparisonRuntimeDoctor', () => {
 
     expect(lines).toEqual([
       'Selected provider=unavailable; engine=none; platform=win32; bitness=x64.',
-      'Selected execution mode=auto.',
+      'Provider request=auto.',
       'Provider decision: rejected windows-container because Windows container image nationalinstruments/labview:2026q1-windows was not available to the current host.',
       'Provider decision: rejected host-native because A supported LabVIEW 2026 executable was located, but neither LabVIEWCLI nor LVCompare was located for host-native comparison-report execution.',
       'Selection notes: Configured LabVIEW CLI path was missing.',
@@ -109,7 +109,7 @@ describe('comparisonRuntimeDoctor', () => {
     expect(lines).toContain(
       'Selected provider=host-native; engine=labview-cli; platform=win32; bitness=x86.'
     );
-    expect(lines).toContain('Selected execution mode=host-only.');
+    expect(lines).toContain('Provider request=host.');
     expect(lines).toContain(
       'Selected runtime tools: LabVIEW=C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe | LabVIEWCLI=C:\\Program Files\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe.'
     );
@@ -132,6 +132,109 @@ describe('comparisonRuntimeDoctor', () => {
     expect(lines).toContain('Observed process names: LabVIEWCLI.exe.');
     expect(lines.at(-1)).toBe(
       'Next action: use the retained runtime notes, stdout/stderr artifacts, and diagnostic log to correct the runtime environment, then rerun comparison report generation.'
+    );
+  });
+
+  it('uses bounded host guidance for host-native CreateComparisonReport timeouts where LabVIEW never appears', () => {
+    const lines = buildComparisonRuntimeDoctorSummaryFromFacts({
+      reportStatus: 'ready-for-runtime',
+      runtimeSelection: {
+        platform: 'win32',
+        bitness: 'x64',
+        provider: 'host-native',
+        engine: 'labview-cli',
+        labviewExe: {
+          kind: 'labview-exe',
+          path: 'C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.exe',
+          source: 'configured',
+          exists: true,
+          bitness: 'x64'
+        },
+        labviewCli: {
+          kind: 'labview-cli',
+          path: 'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe',
+          source: 'configured',
+          exists: true,
+          bitness: 'x86'
+        },
+        notes: ['Host-native execution was selected.'],
+        registryQueryPlans: [],
+        candidates: []
+      },
+      runtimeExecution: {
+        state: 'failed',
+        attempted: true,
+        reportExists: false,
+        failureReason: 'command-timed-out',
+        diagnosticReason: 'labview-cli-timeout-no-labview-through-exit',
+        diagnosticNotes: [
+          'Comparison-report runtime timed out after 120000ms.',
+          'LabVIEW CLI timed out without generating a report; at the retained cli-log-banner snapshot, LabVIEWCLI.exe was observed while LabVIEW.exe was not observed, and no LabVIEW-related processes remained at the retained process-exit snapshot.'
+        ],
+        observedProcessNames: ['LabVIEWCLI.exe'],
+        exitObservedProcessNames: []
+      }
+    });
+
+    expect(lines).toContain('Runtime failure reason: command-timed-out.');
+    expect(lines).toContain(
+      'Runtime diagnostic reason: labview-cli-timeout-no-labview-through-exit.'
+    );
+    expect(lines.at(-1)).toBe(
+      'Next action: review the retained runtime process observations and confirm the selected LabVIEW 2026 host bundle, then rerun comparison report generation or switch to a Docker-backed compare path if the host-native CreateComparisonReport seam remains blocked.'
+    );
+  });
+
+  it('uses password-protected guidance when the retained runtime diagnosis proves protected VI revisions', () => {
+    const lines = buildComparisonRuntimeDoctorSummaryFromFacts({
+      reportStatus: 'ready-for-runtime',
+      runtimeSelection: {
+        platform: 'win32',
+        requestedProvider: 'docker',
+        bitness: 'x64',
+        provider: 'windows-container',
+        engine: 'labview-cli',
+        windowsContainerImage: 'nationalinstruments/labview:2026q1-windows',
+        providerDecisions: [
+          {
+            provider: 'windows-container',
+            outcome: 'selected',
+            reason: 'provider-request-docker-selected-windows-container',
+            detail:
+              'Docker daemon was reachable in windows-container mode with governed Windows container image nationalinstruments/labview:2026q1-windows present locally because the Docker provider was requested.'
+          },
+          {
+            provider: 'host-native',
+            outcome: 'rejected',
+            reason: 'provider-request-docker-rejected-host-native',
+            detail:
+              'Host-native execution was not selected because the Docker provider was requested.'
+          }
+        ],
+        notes: [
+          'Docker daemon was reachable in windows-container mode with governed Windows container image nationalinstruments/labview:2026q1-windows present locally because the Docker provider was requested.'
+        ],
+        registryQueryPlans: [],
+        candidates: []
+      },
+      runtimeExecution: {
+        state: 'failed',
+        attempted: true,
+        reportExists: false,
+        failureReason: 'command-exited-nonzero',
+        diagnosticReason: 'labview-cli-vi-password-protected',
+        diagnosticLogSourcePath: 'C:\\vi-history-suite\\container-temp\\lvtemporary_73141.log',
+        diagnosticNotes: [
+          'LabVIEW CLI connected to LabVIEW before CreateComparisonReport failed because one or both selected VI revisions are password protected.'
+        ]
+      }
+    });
+
+    expect(lines).toContain('Provider request=docker.');
+    expect(lines).toContain('Runtime failure reason: command-exited-nonzero.');
+    expect(lines).toContain('Runtime diagnostic reason: labview-cli-vi-password-protected.');
+    expect(lines.at(-1)).toBe(
+      'Next action: choose a revision pair whose selected/base VI is not password protected, or remove password protection before rerunning comparison report generation.'
     );
   });
 
@@ -176,7 +279,7 @@ describe('comparisonRuntimeDoctor', () => {
     expect(lines).toContain(
       'Selected provider=windows-container; engine=labview-cli; platform=win32; bitness=x64.'
     );
-    expect(lines).toContain('Selected execution mode=docker-only.');
+    expect(lines).toContain('Provider request=docker.');
     expect(lines).toContain(
       'Selected runtime tools: ContainerImage=nationalinstruments/labview:2026q1-windows.'
     );
@@ -237,9 +340,121 @@ describe('comparisonRuntimeDoctor', () => {
       }
     });
 
-    expect(lines).toContain('Selected execution mode=docker-only.');
+    expect(lines).toContain('Provider request=docker.');
     expect(lines.at(-1)).toBe(
       'Next action: repair Docker connectivity or image registry access, then pull the governed Windows container image and rerun comparison report generation.'
+    );
+  });
+
+  it('uses explicit next action guidance when installed runtime settings are missing', () => {
+    const lines = buildComparisonRuntimeDoctorSummaryFromFacts({
+      reportStatus: 'blocked-runtime',
+      runtimeSelection: {
+        platform: 'win32',
+        executionMode: 'host-only',
+        bitness: 'x64',
+        provider: 'unavailable',
+        blockedReason: 'labview-version-required',
+        providerDecisions: [
+          {
+            provider: 'host-native',
+            outcome: 'rejected',
+            reason: 'host-native-labview-version-required',
+            detail:
+              'Host-native execution was not selected because installed compare requires a LabVIEW version setting before runtime preflight can proceed.'
+          }
+        ],
+        notes: [
+          'Installed compare requires viHistorySuite.labviewVersion before local runtime preflight can proceed.'
+        ],
+        registryQueryPlans: [],
+        candidates: []
+      },
+      runtimeExecution: {
+        state: 'not-available',
+        attempted: false,
+        reportExists: false,
+        blockedReason: 'labview-version-required',
+        diagnosticNotes: []
+      }
+    });
+
+    expect(lines).toContain('Runtime blocked reason: labview-version-required.');
+    expect(lines.at(-1)).toBe(
+      'Next action: set viHistorySuite.labviewVersion. Then rerun comparison report generation. If this already-running VS Code session still shows stale provider or runtime facts after the CLI update, reload or restart the window and try again.'
+    );
+  });
+
+  it('uses Docker-backed guidance when the requested host provider is blocked by a contaminated Windows runtime surface', () => {
+    const lines = buildComparisonRuntimeDoctorSummaryFromFacts({
+      reportStatus: 'blocked-runtime',
+      runtimeSelection: {
+        platform: 'win32',
+        requestedProvider: 'host',
+        bitness: 'x64',
+        provider: 'unavailable',
+        blockedReason: 'windows-host-runtime-surface-contaminated',
+        hostLabviewIniPath:
+          'C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.ini',
+        hostLabviewTcpPort: 3363,
+        hostRuntimeConflictDetected: true,
+        providerDecisions: [],
+        notes: [],
+        registryQueryPlans: [],
+        candidates: []
+      },
+      runtimeExecution: {
+        state: 'not-available',
+        attempted: false,
+        reportExists: false,
+        blockedReason: 'windows-host-runtime-surface-contaminated',
+        diagnosticNotes: []
+      }
+    });
+
+    expect(lines).toContain(
+      'Settings freshness: if this already-running VS Code session still shows stale provider or runtime facts after the generated settings CLI update, reload or restart the window and retry.'
+    );
+    expect(lines.at(-1)).toBe(
+      'Next action: close existing LabVIEW/LabVIEWCLI/LVCompare sessions, clear the governed VI Server listener on the selected port, or switch to a Docker-backed compare path, then rerun comparison report generation.'
+    );
+  });
+
+  it('uses explicit next action guidance when the persisted provider is invalid', () => {
+    const lines = buildComparisonRuntimeDoctorSummaryFromFacts({
+      reportStatus: 'blocked-runtime',
+      runtimeSelection: {
+        platform: 'win32',
+        bitness: 'x64',
+        provider: 'unavailable',
+        blockedReason: 'installed-provider-invalid',
+        providerDecisions: [
+          {
+            provider: 'windows-container',
+            outcome: 'rejected',
+            reason: 'invalid-installed-provider',
+            detail:
+              'Docker container execution was not selected because viHistorySuite.runtimeProvider must be either host or docker.'
+          }
+        ],
+        notes: [
+          'Installed compare requires viHistorySuite.runtimeProvider to be either host or docker before runtime preflight can proceed.'
+        ],
+        registryQueryPlans: [],
+        candidates: []
+      },
+      runtimeExecution: {
+        state: 'not-available',
+        attempted: false,
+        reportExists: false,
+        blockedReason: 'installed-provider-invalid',
+        diagnosticNotes: []
+      }
+    });
+
+    expect(lines).toContain('Runtime blocked reason: installed-provider-invalid.');
+    expect(lines.at(-1)).toBe(
+      'Next action: set viHistorySuite.runtimeProvider to host or docker. Then rerun comparison report generation. If this already-running VS Code session still shows stale provider or runtime facts after the CLI update, reload or restart the window and try again.'
     );
   });
 
@@ -269,8 +484,40 @@ describe('comparisonRuntimeDoctor', () => {
     });
 
     expect(lines.at(-1)).toBe(
-      'Next action: install Docker Desktop, start it once, and confirm `docker info` succeeds or change execution mode, then rerun comparison report generation.'
+      'Next action: install Docker Desktop, start it once, and confirm `docker info` succeeds or set viHistorySuite.runtimeProvider to host, then rerun comparison report generation.'
     );
+    expect(lines).toContain('Runtime blocked reason: docker-provider-unavailable.');
+  });
+
+  it('uses the same recovery guidance for the explicit docker provider unavailable path', () => {
+    const lines = buildComparisonRuntimeDoctorSummaryFromFacts({
+      reportStatus: 'blocked-runtime',
+      runtimeSelection: {
+        platform: 'win32',
+        requestedProvider: 'docker',
+        bitness: 'x64',
+        provider: 'windows-container',
+        blockedReason: 'docker-provider-unavailable',
+        windowsContainerDockerCliAvailable: false,
+        windowsContainerDaemonReachable: false,
+        providerDecisions: [],
+        notes: [],
+        registryQueryPlans: [],
+        candidates: []
+      },
+      runtimeExecution: {
+        state: 'not-available',
+        attempted: false,
+        reportExists: false,
+        blockedReason: 'docker-provider-unavailable',
+        diagnosticNotes: []
+      }
+    });
+
+    expect(lines.at(-1)).toBe(
+      'Next action: install Docker Desktop, start it once, and confirm `docker info` succeeds or set viHistorySuite.runtimeProvider to host, then rerun comparison report generation.'
+    );
+    expect(lines).toContain('Runtime blocked reason: docker-provider-unavailable.');
   });
 
   it('tells Linux users to reconnect the daemon when Docker is installed but not reachable', () => {
@@ -299,8 +546,9 @@ describe('comparisonRuntimeDoctor', () => {
     });
 
     expect(lines.at(-1)).toBe(
-      'Next action: start or reconnect the Docker daemon and confirm `docker info` succeeds or change execution mode, then rerun comparison report generation.'
+      'Next action: start or reconnect the Docker daemon and confirm `docker info` succeeds or set viHistorySuite.runtimeProvider to host, then rerun comparison report generation.'
     );
+    expect(lines).toContain('Runtime blocked reason: docker-provider-unavailable.');
   });
 
   it('surfaces host runtime facts and acquisition-failure guidance when auto mode selected Docker from a contaminated windows host surface', () => {
@@ -355,7 +603,7 @@ describe('comparisonRuntimeDoctor', () => {
       }
     });
 
-    expect(lines).toContain('Selected execution mode=auto.');
+    expect(lines).toContain('Provider request=auto.');
     expect(lines).toContain(
       'Selected runtime tools: ContainerImage=nationalinstruments/labview:2026q1-windows | DockerCliAvailable=yes | DockerDaemonReachable=yes | ContainerHostMode=windows | ContainerCapability=yes | ContainerImagePresent=no | ContainerAcquisitionState=failed | HostLabVIEW.ini=C:\\Program Files\\National Instruments\\LabVIEW 2026 Q1\\LabVIEW.ini | HostVITcpPort=3363 | HostConflictDetected=yes.'
     );

@@ -56,11 +56,23 @@ directly to the public GitHub source repo.
   mirror of the authority repo.
 - Public source publication shall be one-way: normalize in GitLab authority
   first, then promote outward.
+- Exact public `main` shall keep the exact released `v1.2.2` Docker-only
+  installed-user contract until a newer exact release is actually published.
+- Maintained public candidate heads on public `develop` may publish the opened
+  `v1.3.0` host-default Windows local `LabVIEWCLI` contract once that
+  candidate state is retained in
+  `docs/product/public-release-candidate.{md,json}`.
+- Public source publication shall not silently mix exact-release Docker-only
+  wording with `v1.3.0` candidate host-default wording on the same maintained
+  surface; the exact-release baseline and the maintained candidate lane shall stay explicit.
 - Public source publication shall be recorded in the dedicated public source
   publication ledger, not in the internal GitLab wiki ledger or the public
   GitHub wiki ledger.
-- The public source repo shall foreground the Docker-only installed extension
+- Exact public `main` shall foreground the Docker-only installed extension
   contract, public devcontainer/Codespaces support, and the checkbox-selected
   two-commit compare flow.
+- Maintained public `develop` candidate publication may foreground the
+  host-default Windows local `LabVIEWCLI` contract plus bounded expert Docker
+  once the opened `v1.3.0` candidate line is the retained public candidate.
 - Internal benchmark governance, control-plane docs, and maintainer review
   material remain excluded from the published public source surface.

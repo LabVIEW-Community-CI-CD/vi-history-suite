@@ -1,0 +1,192 @@
+{
+  "packetId": "private-release-windows-x64-v1.3.0",
+  "status": "published-private-release",
+  "scope": {
+    "supportClaim": "windows-x64-private-release-only",
+    "supportedProofLanes": [
+      "windows-host-native",
+      "windows-container"
+    ],
+    "nonScope": [
+      "linux-installed-user-support",
+      "linux-proof-as-active-private-release-claim",
+      "windows-x86-labview-release-support",
+      "wsl-active-support",
+      "exact-semver-tagging",
+      "marketplace-publication",
+      "main-promotion"
+    ]
+  },
+  "governingSequence": {
+    "docsBranch": {
+      "name": "feature/windows-private-release-docs-26514",
+      "mergedBaselineCommit": "376dd881ecbe0ab9f474500c20f7719f84d72d85"
+    },
+    "publicationBranch": {
+      "name": "feature/windows-private-release-v1.3.0-refresh",
+      "publishedSourceCommit": "e26ac6f504152e02e61572cb6aa0d8345f3af2bb"
+    },
+    "nextDeferredBranch": "feature/linux-runtime-variant"
+  },
+  "packageEvidence": {
+    "versionLine": "1.3.0",
+    "vsixPath": "preview-evidence/vi-history-suite-1.3.0.vsix",
+    "sha256": "F46CCB721B1AB772408EB2CFDBDFFCA917E41229D38E9F624CE107C795D53EA8",
+    "sizeBytes": 493630
+  },
+  "publication": {
+    "status": "published",
+    "releaseChannel": "gitlab-private-release",
+    "releaseTag": "private-v1.3.0-windows-x64",
+    "releaseName": "Windows x64 Private Release v1.3.0",
+    "releaseUrl": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.0-windows-x64",
+    "publishCommand": "npm run gitlab:private-release:publish",
+    "sourceBranch": "feature/windows-private-release-v1.3.0-refresh",
+    "sourceCommit": "e26ac6f504152e02e61572cb6aa0d8345f3af2bb",
+    "vsixDirectAssetUrl": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.0-windows-x64/downloads/private-releases/windows-x64/vi-history-suite-1.3.0.vsix",
+    "checksumDirectAssetUrl": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.0-windows-x64/downloads/private-releases/windows-x64/vi-history-suite-1.3.0.vsix.sha256",
+    "publishReceipt": ".cache/private-release-publish/latest/private-release-publish.json"
+  },
+  "scenario": {
+    "harnessId": "HARNESS-VHS-002",
+    "repositoryUrl": "https://github.com/ni/labview-icon-editor.git",
+    "targetRelativePath": "resource/plugins/lv_icon.vi",
+    "selectedHash": "8741bb08026c104100720c0ef48621e4ab7762fd",
+    "baseHash": "c188cdec606aac3b17d8b17274baa19eef3e4017",
+    "repositoryHead": "778ab99a485342f992d169261d5d30b828b00736"
+  },
+  "proofLanes": [
+    {
+      "laneId": "windows-host-x64",
+      "status": "succeeded",
+      "generatedAt": "2026-04-19T05:52:06.961Z",
+      "runtimeProvider": "host-native",
+      "runtimeEngine": "labview-cli",
+      "runtimeExecutable": "C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe",
+      "runtimeLabviewIniPath": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.ini",
+      "runtimeLabviewTcpPort": 3363,
+      "retainedRoot": ".cache/private-release/1.3.0/windows-x64-host/"
+    },
+    {
+      "laneId": "windows-container-x64",
+      "status": "succeeded",
+      "generatedAt": "2026-04-19T05:40:59.691Z",
+      "runtimeProvider": "windows-container",
+      "runtimeEngine": "labview-cli",
+      "runtimeExecutable": "powershell.exe",
+      "runtimeLabviewIniPath": "C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.ini",
+      "runtimeLabviewTcpPort": 3363,
+      "retainedRoot": ".cache/private-release/1.3.0/windows-x64-container/"
+    }
+  ],
+  "providerSelectionEvidence": {
+    "hostSettingsWrite": ".cache/private-release/1.3.0/windows-x64-host/settings-write.txt",
+    "hostProofRun": ".cache/private-release/1.3.0/windows-x64-host/proof-run.txt",
+    "containerSettingsWrite": ".cache/private-release/1.3.0/windows-x64-container/settings-write.txt",
+    "containerSettingsValidate": ".cache/private-release/1.3.0/windows-x64-container/settings-validate.txt",
+    "containerProofRun": ".cache/private-release/1.3.0/windows-x64-container/proof-run.txt"
+  },
+  "gitlabRunnerLane": {
+    "jobName": "windows_private_release_acceptance",
+    "governedCli": "npm run acceptance:windows:private-release",
+    "governedScript": "scripts/runWindowsPrivateReleaseAcceptance.js",
+    "runnerDescription": "ghost",
+    "runnerId": 52775990,
+    "runnerTags": [
+      "windows",
+      "x64",
+      "labview-host",
+      "docker-windows",
+      "private-release"
+    ],
+    "runnerContractDoc": "docs/product/windows-private-release-runner-lane.md",
+    "artifactRoot": "windows-private-release-evidence/",
+    "expectedManifestPath": "windows-private-release-evidence/manifest.json",
+    "hostInstallState": "current-user-scheduled-task-bootstrap-active",
+    "hostApplySurface": {
+      "windowsApplyScript": "scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1",
+      "scheduledTaskAction": "powershell.exe -NoLogo -NoProfile -File \"C:\\GitLab-Runner\\start-governed-runner-lanes.ps1\"",
+      "failurePolicy": "fail-closed-unless-exactly-one-configured-manager-after-apply"
+    },
+    "hostAssertionSurface": {
+      "runnerAssertionWrapperScript": "scripts/assertGovernedRunnerLanes.js",
+      "runnerAssertionPackageScript": "npm run gitlab:runner:assert",
+      "windowsAssertScript": "scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1",
+      "linuxAssertScript": "scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh",
+      "failurePolicy": "fail-closed-on-live-host-drift"
+    },
+    "coldAdmissionRuntimeCleanup": {
+      "processNames": [
+        "LabVIEW",
+        "LabVIEWCLI",
+        "LVCompare"
+      ],
+      "terminationStrategy": [
+        "stop-process-force-by-pid",
+        "taskkill-pid-tree",
+        "taskkill-image-tree"
+      ],
+      "failurePolicy": "fail-closed-before-runner-start"
+    },
+    "midSessionRuntimeRecovery": {
+      "laneId": "windows-host-native",
+      "trigger": "windows-host-runtime-cleanup-failed",
+      "recoveryScript": "scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1",
+      "recoveryTranscript": "windows-private-release-evidence/host/proof-runtime-recovery.txt",
+      "retryDelayMs": 5000,
+      "maxProofRetries": 1,
+      "firstFailureTranscript": "windows-private-release-evidence/host/proof-run-pre-recovery.txt",
+      "failurePolicy": "fail-closed-after-repo-recovery-script-and-single-retry"
+    },
+    "midSessionRecoveryRehearsal": {
+      "governedScript": "scripts/runWindowsProofRuntimeRecoveryRehearsal.js",
+      "packageScript": "npm run gitlab:runner:windows:recovery:rehearse",
+      "receiptRoot": ".cache/windows-proof-runtime-recovery-rehearsal",
+      "latestReceipt": ".cache/windows-proof-runtime-recovery-rehearsal/latest.json",
+      "requestedLabviewVersion": "2026",
+      "requestedLabviewBitness": "x64",
+      "contaminationSeedMode": "headless-labview-launch",
+      "recoveryTranscriptLeaf": "proof-runtime-recovery.txt",
+      "failurePolicy": "fail-closed-unless-clean-before-and-after-governed-recovery-rehearsal"
+    },
+    "repoOwnedOperatorAssets": {
+      "windowsApplyScript": "scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1",
+      "windowsBootstrapScript": "scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1",
+      "windowsAssertScript": "scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1",
+      "windowsRecoveryScript": "scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1",
+      "windowsRecoveryRehearsalScript": "scripts/runWindowsProofRuntimeRecoveryRehearsal.js",
+      "linuxApplyScript": "scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh",
+      "linuxHelperScript": "scripts/gitlab-runner/linux/start-linux-assurance.sh",
+      "linuxServiceUnit": "scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service",
+      "linuxAssertScript": "scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh",
+      "runnerAssertionWrapperScript": "scripts/assertGovernedRunnerLanes.js",
+      "runnerAssertionPackageScript": "npm run gitlab:runner:assert",
+      "runnerRecoveryRehearsalPackageScript": "npm run gitlab:runner:windows:recovery:rehearse"
+    },
+    "firstRetainedReceipt": {
+      "mergeRequestIid": 91,
+      "pipelineId": 2463649610,
+      "jobId": 13988738012,
+      "commitSha": "d154a47bf1211d9a9fe8bc4c10352989780d1810",
+      "status": "success",
+      "queuedDurationSeconds": 0.51449,
+      "durationSeconds": 257.909998,
+      "finishedAt": "2026-04-19T15:12:02.212Z",
+      "webUrl": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/jobs/13988738012",
+      "artifactsFile": "artifacts.zip",
+      "artifactsSizeBytes": 1729689
+    }
+  },
+  "validationPack": [
+    "npm run design:gate",
+    "py -3 C:\\Users\\sveld\\.codex\\skills\\repo-standards-review\\scripts\\run_assurance.py . --profile release-gate",
+    "npm run package:audit",
+    "npm run package -- --out \"preview-evidence/vi-history-suite-1.3.0.vsix\""
+  ],
+  "nextMove": [
+    "use the published private-v1.3.0-windows-x64 GitLab release as the controlled Windows-only install surface for 1.3.0 feedback",
+    "keep exact SemVer/public release, Marketplace publication, and main promotion on the later governed release/* to main to develop path",
+    "keep Linux deferred until the exact/public 1.3.0 line closes and open Linux LabVIEW 64-bit only on the next release after 1.3.0",
+    "keep Windows x86 / 32-bit LabVIEW out of scope for the active v1.3.0 release claim and treat any retained x86 evidence as later non-blocking characterization only"
+  ]
+}

@@ -6,33 +6,36 @@ Retain one governed hosted-automation matrix so GitLab authority pipelines,
 public GitHub required checks, and GitHub experiment workflows stop being
 raw-YAML-only truth.
 
-This document is the control-plane summary of the governed `1.2.2` patch line.
-The exact public release is now `v1.2.2`; `main` carries `1.2.2`, `develop`
-still carries `1.2.2`, and the line retains the protected back-merge
-follow-through requirement before the next opening decision.
+This document is the control-plane summary of the governed `1.3.0` exact-tag
+and Marketplace-closeout opening. The exact public release remains `v1.2.2`;
+`main` carries `1.2.2`, `develop` carries `1.3.0`, and the clean published-
+surface review gate has now reopened the protected closeout lane on
+`release/1.3.0`.
 
 ## Opening Decision
 
 - current exact release line: `v1.2.2`
 - current `main` package line: `1.2.2`
-- current `develop` package line: `1.2.2`
-- active exact release candidate line on `develop`: `v1.2.2`
-- no newer `release/*` branch is active yet
-- chosen bump: `patch`
-- rationale: this line governs exact-release closeout follow-through so the
-  protected back-merge of exact released `main` into `develop` no longer waits
-  for a separate human prompt
-- rationale: this line also hardens first-run missing-Docker guidance so
-  fresh-machine installed users are told to install or start Docker before
-  image acquisition is expected
+- current `develop` package line: `1.3.0`
+- active exact release candidate line on `develop`: `v1.3.0`
+- active release-candidate branch: `release/1.3.0`
+- chosen bump: `minor`
+- rationale: this line opens a new governed installed-user capability and
+  supported workflow by promoting host-default Windows local `LabVIEWCLI`
+  with bounded expert Docker
+- rationale: exact `v1.2.2` remains the truthful published baseline while the
+  next public candidate and review gates are reopened on `v1.3.0`
 
 ## Branch Model
 
-- `main`: exact release branch and public default branch
+- `main`: protected exact-release line and public default branch
 - `develop`: integration and public-evaluation branch
-- `feature/*`: short-lived merge-request-driven development lane
-- `release/*`: release-candidate lane cut from `develop`
-- `hotfix/*`: exact-line repair lane cut from `main`
+- `feature/*`: short-lived development lane cut from `develop` and merged back
+  into `develop`
+- `release/*`: release-candidate lane cut from `develop`, merged into `main`,
+  merged back into `develop`, and deleted only after both merges complete
+- `hotfix/*`: exact-line repair lane cut from `main`, merged into `main`,
+  merged back into `develop`, and deleted only after both merges complete
 
 ## Authority GitLab
 
@@ -50,20 +53,120 @@ Lane admission:
   admitted
 - exact `vX.Y.Z` tags: exact release evidence lane
 
+Runner lanes:
+
+- `linux-assurance`: local authenticated self-hosted Linux shell-runner lane
+  for external standards assurance; it pulls the latest published
+  `repo-standards-review` assurance-workbench `:main` image before each
+  assurance job and is governed by
+  [linux-assurance-runner-lane.md](./linux-assurance-runner-lane.md)
+- `windows-private-release`: tagged Windows current-user shell-runner lane for
+  native Windows host plus Windows-container proof; it is governed by
+  [windows-private-release-runner-lane.md](./windows-private-release-runner-lane.md)
+
+Runner operator hardening:
+
+- `linux-assurance`: admitted config path
+  `~/.gitlab-runner/config.toml`, per-runner
+  `request_concurrency = 2`, and steady-state lifecycle owned by Ubuntu
+  `systemd` unit `vihs-linux-assurance-runner.service`, with repo-owned host
+  assets at `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh`,
+  `scripts/gitlab-runner/linux/start-linux-assurance.sh`,
+  `scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service`, and
+  `scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh`, with the
+  admitted Windows-host wrapper retained at
+  `scripts/assertGovernedRunnerLanes.js` via `npm run gitlab:runner:assert`;
+  the Linux apply surface fails closed unless the admitted `systemd` service
+  is both enabled and active after apply, and the Linux assertion surface
+  fails closed unless the installed helper and service unit still match the
+  repo asset pack, `request_concurrency = 2` is still present, the admitted
+  fragment path/user/working directory remain exact, and exactly one
+  configured runner process is live
+- `windows-private-release`: admitted config path
+  `C:\GitLab-Runner\config.toml`, per-runner
+  `request_concurrency = 2`, scheduled bootstrap surface
+  `C:\GitLab-Runner\start-governed-runner-lanes.ps1`, scheduled task
+  `VIHS Governed Runner Lanes`, duplicate-manager collapse so exactly one
+  current-user runner manager remains per config, cold-admission fail-closed
+  cleanup of stale `LabVIEW` / `LabVIEWCLI` / `LVCompare` runtime processes
+  before the runner starts using bounded `Stop-Process` plus
+  `taskkill /PID /T /F` and `taskkill /IM /T /F`, the repo-owned bootstrap
+  asset `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1`, and
+  the repo-owned drift assertion surface
+  `scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1`; the
+  combined Windows-host wrapper remains
+  `scripts/assertGovernedRunnerLanes.js` via `npm run gitlab:runner:assert`;
+  the operator-only recovery rehearsal wrapper is
+  `scripts/runWindowsProofRuntimeRecoveryRehearsal.js` via
+  `npm run gitlab:runner:windows:recovery:rehearse`, retaining the latest
+  receipt at `.cache/windows-proof-runtime-recovery-rehearsal/latest.json`;
+  the repo-owned apply surface
+  `scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1`
+  keeps the scheduled-task action on
+  `powershell.exe -NoLogo -NoProfile -File "C:\GitLab-Runner\start-governed-runner-lanes.ps1"`
+  without `ExecutionPolicy Bypass` and fails closed unless exactly one
+  configured runner manager remains after apply, while the Windows assertion
+  surface fails closed unless the installed bootstrap hash still matches the
+  repo source, that exact scheduled-task action plus its logon trigger remain
+  intact, `request_concurrency = 2` remains in
+  `C:\GitLab-Runner\config.toml`, and exactly one configured runner manager is
+  live
+
 Job ownership:
 
 - `docs_link_check`, `docs_continuous_integration`,
   `docs_public_continuous_integration`, `docs_internal_continuous_integration`:
   docs integrity on merge requests, governed branch lanes, and exact tags
+- `assurance_release_gate`: blocking Linux-assurance lane on merge requests,
+  governed branch lanes, and exact tags; it stages the bounded repo scope,
+  pulls the latest published
+  `registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main`
+  image on the local authenticated self-hosted Linux runner, and runs the
+  bounded `release-gate` audit against that staged target through the
+  repo-owned wrapper
+- `assurance_26514_authority`: blocking Linux-assurance lane that stages the
+  governed authority-docs scope and retains the `documentation-proof` output
+- `assurance_requirements_quality`: blocking Linux-assurance lane that runs the
+  governed requirements-quality checker
+- `assurance_external_user_information`: blocking Linux-assurance lane that
+  runs the governed external user-information checker
+- `assurance_audit_packet`: advisory Linux-assurance lane that retains the
+  bounded `evidence-pack` and `compliance-uplift` outputs without blocking
+  packaging
 - `test_extension`: compile, test, and coverage gate on merge requests,
   governed branch lanes, and exact tags
-- `package_extension_preview`: preview VSIX packaging on `develop`, `main`,
-  `release/*`, `hotfix/*`, and exact tags; no generic `feature/*` push lane
+  - `windows_private_release_acceptance`: tagged Windows shell-runner lane that
+    retains the canonical Windows x64 private-release acceptance evidence for
+    `resource/plugins/lv_icon.vi` on both host-native and Windows-container
+    providers before preview or exact packaging continues; when the host-native
+    proof exits at the shared Windows cleanup seam, it retains
+    `windows-private-release-evidence/host/proof-run-pre-recovery.txt`, runs
+    `scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1`,
+    retains `windows-private-release-evidence/host/proof-runtime-recovery.txt`,
+    waits `5000` ms, retries that host-native proof once, and fails closed if
+    the repo-owned recovery step plus retry still cannot restore a clean host
+    surface; the same admitted Windows host also retains one governed recovery
+    rehearsal surface via
+    `scripts/runWindowsProofRuntimeRecoveryRehearsal.js` /
+    `npm run gitlab:runner:windows:recovery:rehearse`, which fails closed
+    unless the host starts clean, seeds one headless LabVIEW contamination,
+    runs that same recovery script, and refreshes
+    `.cache/windows-proof-runtime-recovery-rehearsal/latest.json`
+- `package_extension_preview`: preview VSIX packaging on merge requests into
+  protected branch lanes, on `develop`, `main`, `release/*`, `hotfix/*`, and
+  exact tags; it now depends on the blocking Linux assurance lanes
+  `assurance_release_gate`, `assurance_26514_authority`,
+  `assurance_requirements_quality`, and
+  `assurance_external_user_information`, plus `test_extension` and
+  `windows_private_release_acceptance`, and there is still no generic
+  `feature/*` push lane
 - `publish_docs_authoring_image`: publication-support lane on `main` and exact
   tags only
 - `wiki_workbench_prepare_published`: documentation-publication preparation on
   `main` only
-- `release_extension`: exact-version release lane on exact tags only
+- `release_extension`: exact-version release lane on exact tags only, now
+  blocked on the same blocking Linux assurance lanes, `test_extension`, and
+  `windows_private_release_acceptance`
 
 Design-gate boundary:
 
@@ -72,8 +175,8 @@ Design-gate boundary:
 - `npm run design:gate` now starts with `npm run branch:governance:assert`
   so the gate fails closed when `develop` has not yet absorbed exact `main`
 - exact release closeout also remains incomplete until the protected
-  back-merge into `develop` and the resulting green `develop` pipeline are
-  retained as part of the same release follow-through
+  back-merge of exact released `main` into `develop` and the resulting green
+  `develop` pipeline are retained as part of the same release follow-through
 - `npm run design:gate:assert-complete` remains the retained assertion surface
 - GitLab does not pretend that local design-gate proof is a GitHub-style named
   required check
@@ -131,4 +234,6 @@ When hosted automation truth changes, update together:
 - `docs/requirements/rtm.csv`
 - `docs/testing/test-plan.md`
 - this hosted governance package
+- `docs/product/windows-private-release-runner-lane.md`
+- `docs/product/linux-assurance-runner-lane.md`
 - affected workflow YAML

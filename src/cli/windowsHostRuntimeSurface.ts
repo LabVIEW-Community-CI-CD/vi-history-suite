@@ -1,5 +1,10 @@
 import { execFile } from 'node:child_process';
 
+const WINDOWS_HOST_RUNTIME_PROCESS_NAMES = ['LabVIEW', 'LabVIEWCLI', 'LVCompare'] as const;
+const WINDOWS_HOST_RUNTIME_IMAGE_NAMES = ['LabVIEW.exe', 'LabVIEWCLI.exe', 'LVCompare.exe'] as const;
+const WINDOWS_HOST_RUNTIME_CLEANUP_TIMEOUT_SECONDS = 10;
+const WINDOWS_HOST_RUNTIME_CLEANUP_POLL_INTERVAL_MS = 500;
+
 export interface WindowsHostRuntimeProcessRecord {
   processName: string;
   pid: number;
@@ -23,7 +28,7 @@ export async function inspectWindowsHostRuntimeSurface(
   const execFileImpl = deps.execFileImpl ?? execFile;
   const stdout = await execWindowsPowershellCommand(
     [
-      '$names = @("LabVIEW","LabVIEWCLI","LVCompare")',
+      `$names = @(${renderWindowsHostRuntimeProcessNamesForPowershell()})`,
       '$procs = @(Get-Process -Name $names -ErrorAction SilentlyContinue | Select-Object ProcessName,Id,Path)',
       'if ($procs.Count -eq 0) { "[]" } else { $procs | ConvertTo-Json -Compress }'
     ].join('; '),
@@ -42,20 +47,7 @@ export async function cleanupWindowsHostRuntimeSurface(
   deps: WindowsHostRuntimeSurfaceDeps = {}
 ): Promise<void> {
   const execFileImpl = deps.execFileImpl ?? execFile;
-  await execWindowsPowershellCommand(
-    [
-      '$names = @("LabVIEW","LabVIEWCLI","LVCompare")',
-      'Stop-Process -Name $names -Force -ErrorAction SilentlyContinue',
-      'Start-Sleep -Milliseconds 250',
-      '$remaining = @(Get-Process -Name $names -ErrorAction SilentlyContinue | Select-Object -ExpandProperty ProcessName)',
-      'if ($remaining.Count -gt 0) {',
-      "  Write-Error ('Windows host runtime cleanup failed; remaining processes: ' + ($remaining -join ', '))",
-      '  exit 1',
-      '}',
-      'exit 0'
-    ].join('; '),
-    execFileImpl
-  );
+  await execWindowsPowershellCommand(buildWindowsHostRuntimeCleanupCommand(), execFileImpl);
 }
 
 export async function launchWindowsHeadlessLabview(
@@ -142,4 +134,42 @@ function escapePowershellSingleQuotedString(value: string): string {
 
 function defaultNowIso(): string {
   return new Date().toISOString();
+}
+
+function renderWindowsHostRuntimeProcessNamesForPowershell(): string {
+  return WINDOWS_HOST_RUNTIME_PROCESS_NAMES.map((processName) => `"${processName}"`).join(', ');
+}
+
+function renderWindowsHostRuntimeImageNamesForPowershell(): string {
+  return WINDOWS_HOST_RUNTIME_IMAGE_NAMES.map((imageName) => `"${imageName}"`).join(', ');
+}
+
+function buildWindowsHostRuntimeCleanupCommand(): string {
+  return [
+    `$names = @(${renderWindowsHostRuntimeProcessNamesForPowershell()})`,
+    `$imageNames = @(${renderWindowsHostRuntimeImageNamesForPowershell()})`,
+    `$deadlineUtc = [DateTime]::UtcNow.AddSeconds(${WINDOWS_HOST_RUNTIME_CLEANUP_TIMEOUT_SECONDS})`,
+    'while ($true) {',
+    '  $remaining = @(Get-Process -Name $names -ErrorAction SilentlyContinue | Sort-Object ProcessName,Id | Select-Object ProcessName,Id)',
+    '  if ($remaining.Count -eq 0) {',
+    '    exit 0',
+    '  }',
+    '  foreach ($proc in $remaining) {',
+    '    Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue',
+    '    cmd.exe /c "taskkill /PID $($proc.Id) /T /F >NUL 2>NUL" | Out-Null',
+    '  }',
+    '  foreach ($imageName in $imageNames) {',
+    '    cmd.exe /c "taskkill /IM $imageName /T /F >NUL 2>NUL" | Out-Null',
+    '  }',
+    `  Start-Sleep -Milliseconds ${WINDOWS_HOST_RUNTIME_CLEANUP_POLL_INTERVAL_MS}`,
+    '  $stillRemaining = @(Get-Process -Name $names -ErrorAction SilentlyContinue | Sort-Object ProcessName,Id | Select-Object -ExpandProperty ProcessName)',
+    '  if ($stillRemaining.Count -eq 0) {',
+    '    exit 0',
+    '  }',
+    '  if ([DateTime]::UtcNow -ge $deadlineUtc) {',
+    "    Write-Error ('Windows host runtime cleanup failed; remaining processes: ' + ($stillRemaining -join ', '))",
+    '    exit 1',
+    '  }',
+    '}'
+  ].join('; ');
 }

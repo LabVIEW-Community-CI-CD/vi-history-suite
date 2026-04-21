@@ -521,10 +521,10 @@ async function runHostNativeExecution(
         commandResult.exitCode === 0 &&
         reportExists;
       const failureClassification = commandResult.cancelled
-        ? {
-            reason: 'command-cancelled',
-            notes: ['Comparison-report runtime was cancelled before completion.']
-          }
+        ? classifyCancelledRuntimeFailure({
+            engine: record.runtimeSelection.engine,
+            diagnosticReason: diagnostics.reason
+          })
         : commandResult.timedOut
         ? {
             reason: 'command-timed-out',
@@ -543,6 +543,15 @@ async function runHostNativeExecution(
             processObservation: processObservation?.bannerSnapshot,
             exitProcessObservation: processObservation?.exitSnapshot
           });
+      const timeoutDiagnostic = commandResult.timedOut
+        ? classifyTimedOutRuntimeDiagnostic({
+            engine: record.runtimeSelection.engine,
+            processObservation: processObservation?.bannerSnapshot,
+            exitProcessObservation: processObservation?.exitSnapshot
+          })
+        : {
+            notes: []
+          };
       const retainedLabviewIniPath =
         windowsContainerRuntimeFacts.labviewIniPath ?? windowsLabviewTcpSettings.labviewIniPath;
       const retainedLabviewTcpPort =
@@ -552,6 +561,7 @@ async function runHostNativeExecution(
         windowsLabviewTcpSettings.notes,
         windowsContainerRuntimeFacts.notes,
         diagnostics.notes,
+        timeoutDiagnostic.notes,
         finalizedReport.validationNotes,
         failureClassification.notes
       );
@@ -561,7 +571,7 @@ async function runHostNativeExecution(
         attempted: true,
         reportExists,
         failureReason: succeeded ? undefined : failureClassification.reason,
-        diagnosticReason: diagnostics.reason,
+        diagnosticReason: diagnostics.reason ?? timeoutDiagnostic.reason,
         diagnosticNotes,
         diagnosticLogSourcePath: diagnostics.sourcePath,
         diagnosticLogArtifactPath: diagnostics.artifactPath,
@@ -1140,6 +1150,17 @@ function shouldAttemptWindowsHeadlessRecovery(
     record.runtimeSelection.engine === 'labview-cli' &&
     execution.state === 'failed' &&
     execution.diagnosticReason === 'labview-cli-call-by-reference' &&
+    wasWindowsHeadlessLabviewCliExecutionRequested(record, execution)
+  );
+}
+
+function wasWindowsHeadlessLabviewCliExecutionRequested(
+  record: ComparisonReportPacketRecord,
+  execution: ComparisonReportRuntimeExecution
+): boolean {
+  return (
+    record.runtimeSelection.provider === 'windows-container' ||
+    record.runtimeSelection.headlessRequested === true ||
     isHeadlessLabviewCliExecution(execution.args)
   );
 }
@@ -1179,9 +1200,27 @@ async function attemptLabviewCliHeadlessSessionReset(
     record.runtimeSelection.labviewExe?.path,
     labviewTcpPort
   );
+  const windowsContainerImage =
+    record.runtimeSelection.containerImage?.trim() ||
+    record.runtimeSelection.windowsContainerImage?.trim();
   const linuxContainerImage = record.runtimeSelection.containerImage?.trim();
   const closeCommandPlan =
-    record.runtimeSelection.provider === 'linux-container' && linuxContainerImage
+    record.runtimeSelection.provider === 'windows-container' && windowsContainerImage
+      ? buildWindowsContainerCommandPlan(record, baseCloseCommandPlan, {
+          hostReportDirectory:
+            normalizeWindowsInteropPath(path.dirname(executionContext.reportFilePath)) ??
+            path.win32.dirname(executionContext.reportFilePath),
+          hostTempDirectory:
+            normalizeWindowsInteropPath(
+              executionContext.diagnosticPathMapping?.hostRoot ??
+                path.join(path.dirname(executionContext.reportFilePath), 'container-temp')
+            ) ??
+            path.win32.join(path.win32.dirname(executionContext.reportFilePath), 'container-temp'),
+          containerWorkspaceRoot: WINDOWS_CONTAINER_WORKSPACE_ROOT,
+          containerImage: windowsContainerImage,
+          processPlatform: executionContext.reportFilePath.includes('\\') ? 'win32' : 'linux'
+        }) ?? baseCloseCommandPlan
+      : record.runtimeSelection.provider === 'linux-container' && linuxContainerImage
       ? buildLinuxContainerCommandPlan(record, baseCloseCommandPlan, {
           hostReportDirectory: path.dirname(executionContext.reportFilePath),
           hostTempDirectory:
@@ -1697,12 +1736,20 @@ function buildLinuxContainerWorkspaceLayout(
     leftFilename,
     rightFilename,
     reportFilename,
-    leftFilePath: path.join(hostLayout.stagingDirectory, leftFilename),
-    rightFilePath: path.join(hostLayout.stagingDirectory, rightFilename),
-    reportFilePath: path.join(hostLayout.reportDirectory, reportFilename),
+    leftFilePath: joinPreservingExplicitPathStyle(hostLayout.stagingDirectory, leftFilename),
+    rightFilePath: joinPreservingExplicitPathStyle(hostLayout.stagingDirectory, rightFilename),
+    reportFilePath: joinPreservingExplicitPathStyle(hostLayout.reportDirectory, reportFilename),
     reportIdentityFilenames: [leftFilename, rightFilename],
     reportTextReplacements: replacements
   };
+}
+
+function joinPreservingExplicitPathStyle(rootPath: string, ...segments: string[]): string {
+  if (rootPath.startsWith('/')) {
+    return path.posix.join(rootPath, ...segments.map((segment) => segment.replace(/\\/g, '/')));
+  }
+
+  return path.join(rootPath, ...segments);
 }
 
 function buildLinuxContainerRuntimeFilenameAlias(filename: string): string {
@@ -1884,7 +1931,10 @@ export async function prepareWindowsContainerExecutionContext(
     };
   }
 
-  const hostTempDirectory = path.join(hostLayout.reportDirectory, 'container-temp');
+  const hostTempDirectory = joinPreservingExplicitPathStyle(
+    hostLayout.reportDirectory,
+    'container-temp'
+  );
   const hostTempDirectoryWindows = path.win32.join(hostReportDirectory, 'container-temp');
   await deps.mkdir(hostTempDirectory, { recursive: true });
 
@@ -1978,7 +2028,10 @@ export async function prepareLinuxContainerExecutionContext(
     };
   }
 
-  const hostTempDirectory = path.join(hostLayout.reportDirectory, 'container-temp');
+  const hostTempDirectory = joinPreservingExplicitPathStyle(
+    hostLayout.reportDirectory,
+    'container-temp'
+  );
   await deps.mkdir(hostTempDirectory, { recursive: true });
   const workspaceLayout = buildLinuxContainerWorkspaceLayout(record, hostLayout);
   if (workspaceLayout.leftFilePath !== hostLayout.leftFilePath) {
@@ -2755,6 +2808,9 @@ export function classifyLabviewCliDiagnosticText(
 } {
   const notes: string[] = [];
   const launchSucceeded = /LabVIEW launched successfully\./i.test(diagnosticText);
+  const connectedToLabview = /Connection established with LabVIEW at port number \d+\./i.test(
+    diagnosticText
+  );
   const invalidPathLines = diagnosticText.match(/^.*path invalid or does not exist:\s*.+$/gim);
   if (invalidPathLines && invalidPathLines.length > 0) {
     notes.push(
@@ -2804,8 +2860,20 @@ export function classifyLabviewCliDiagnosticText(
     };
   }
 
+  if (/VI is password protected\./i.test(diagnosticText)) {
+    notes.push(
+      connectedToLabview
+        ? 'LabVIEW CLI connected to LabVIEW before CreateComparisonReport failed because one or both selected VI revisions are password protected.'
+        : 'LabVIEW CLI could not generate a comparison report because one or both selected VI revisions are password protected.'
+    );
+    return {
+      reason: 'labview-cli-vi-password-protected',
+      notes: connectedToLabview ? notes : appendLaunchConfirmationNote(notes, launchSucceeded)
+    };
+  }
+
   if (
-    /Connection established with LabVIEW at port number \d+\./i.test(diagnosticText) &&
+    connectedToLabview &&
     /Error code\s*:\s*66\b/i.test(diagnosticText) &&
     /Call By Reference/i.test(diagnosticText)
   ) {
@@ -2924,6 +2992,72 @@ function classifyRuntimeFailure(options: {
   return {
     reason: 'report-file-not-generated',
     notes: []
+  };
+}
+
+function classifyCancelledRuntimeFailure(options: {
+  engine?: 'labview-cli' | 'lvcompare';
+  diagnosticReason?: string;
+}): {
+  reason: string;
+  notes: string[];
+} {
+  if (
+    options.engine === 'labview-cli' &&
+    options.diagnosticReason === 'labview-cli-call-by-reference'
+  ) {
+    return {
+      reason: 'command-exited-nonzero',
+      notes: [
+        'Comparison-report runtime retained a LabVIEW CLI Error 66 / Call By Reference failure before a cancellation-shaped transport exit was observed.'
+      ]
+    };
+  }
+
+  return {
+    reason: 'command-cancelled',
+    notes: ['Comparison-report runtime was cancelled before completion.']
+  };
+}
+
+function classifyTimedOutRuntimeDiagnostic(options: {
+  engine?: 'labview-cli' | 'lvcompare';
+  processObservation?: RuntimeProcessObservation;
+  exitProcessObservation?: RuntimeProcessObservation;
+}): {
+  reason?: string;
+  notes: string[];
+} {
+  if (
+    options.engine !== 'labview-cli' ||
+    options.processObservation?.trigger !== 'cli-log-banner' ||
+    !options.processObservation.labviewCliProcessObserved ||
+    options.processObservation.labviewProcessObserved
+  ) {
+    return {
+      notes: []
+    };
+  }
+
+  if (
+    options.exitProcessObservation?.trigger === 'process-exit' &&
+    !options.exitProcessObservation.labviewProcessObserved &&
+    !options.exitProcessObservation.labviewCliProcessObserved &&
+    !options.exitProcessObservation.lvcompareProcessObserved
+  ) {
+    return {
+      reason: 'labview-cli-timeout-no-labview-through-exit',
+      notes: [
+        'LabVIEW CLI timed out without generating a report; at the retained cli-log-banner snapshot, LabVIEWCLI.exe was observed while LabVIEW.exe was not observed, and no LabVIEW-related processes remained at the retained process-exit snapshot.'
+      ]
+    };
+  }
+
+  return {
+    reason: 'labview-cli-timeout-no-labview-at-banner-snapshot',
+    notes: [
+      'LabVIEW CLI timed out without generating a report; at the retained cli-log-banner snapshot, LabVIEWCLI.exe was observed while LabVIEW.exe was not observed.'
+    ]
   };
 }
 

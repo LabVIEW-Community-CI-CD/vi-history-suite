@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import * as path from 'node:path';
+
 import { HARNESS_VHS_001 } from '../../src/harness/canonicalHarnesses';
 import {
   ensureHarnessClone,
@@ -20,9 +22,11 @@ describe('ensureHarnessClone', () => {
         mkdir,
         runGit
       })
-    ).resolves.toBe('/tmp/harnesses/ni-labview-icon-editor');
+    ).resolves.toBe(path.join('/tmp/harnesses', 'ni-labview-icon-editor'));
 
-    expect(stat).toHaveBeenCalledWith('/tmp/harnesses/ni-labview-icon-editor/.git');
+    expect(stat).toHaveBeenCalledWith(
+      path.join('/tmp/harnesses', 'ni-labview-icon-editor', '.git')
+    );
     expect(mkdir).not.toHaveBeenCalled();
     expect(runGit).not.toHaveBeenCalled();
   });
@@ -38,7 +42,7 @@ describe('ensureHarnessClone', () => {
         mkdir,
         runGit
       })
-    ).resolves.toBe('/tmp/harnesses/ni-labview-icon-editor');
+    ).resolves.toBe(path.join('/tmp/harnesses', 'ni-labview-icon-editor'));
 
     expect(mkdir).toHaveBeenCalledWith('/tmp/harnesses', { recursive: true });
     expect(runGit).toHaveBeenCalledWith(
@@ -46,7 +50,7 @@ describe('ensureHarnessClone', () => {
         'clone',
         '--filter=blob:none',
         'https://github.com/ni/labview-icon-editor.git',
-        '/tmp/harnesses/ni-labview-icon-editor'
+        path.join('/tmp/harnesses', 'ni-labview-icon-editor')
       ],
       '/tmp/harnesses'
     );
@@ -115,11 +119,13 @@ describe('runHarnessSmoke', () => {
       }
     );
 
-    expect(mkdir).toHaveBeenCalledWith('/tmp/reports/HARNESS-VHS-001', { recursive: true });
+    expect(mkdir).toHaveBeenCalledWith(path.join('/tmp/reports', 'HARNESS-VHS-001'), {
+      recursive: true
+    });
     expect(result.report).toEqual({
       harnessId: 'HARNESS-VHS-001',
       repositoryUrl: 'https://github.com/ni/labview-icon-editor.git',
-      cloneDirectory: '/tmp/harnesses/ni-labview-icon-editor',
+      cloneDirectory: path.join('/tmp/harnesses', 'ni-labview-icon-editor'),
       targetRelativePath: 'Tooling/deployment/VIP_Pre-Install Custom Action.vi',
       head: 'abcdef1234567890',
       tracked: true,
@@ -129,16 +135,20 @@ describe('runHarnessSmoke', () => {
       commits: model.commits,
       generatedAt: '2026-04-02T00:00:00.000Z'
     });
-    expect(result.reportJsonPath).toBe('/tmp/reports/HARNESS-VHS-001/report.json');
-    expect(result.reportMarkdownPath).toBe('/tmp/reports/HARNESS-VHS-001/report.md');
-    expect(result.reportHtmlPath).toBe('/tmp/reports/HARNESS-VHS-001/report.html');
-    expect(writes.get('/tmp/reports/HARNESS-VHS-001/report.json')).toContain(
+    expect(result.reportJsonPath).toBe(path.join('/tmp/reports', 'HARNESS-VHS-001', 'report.json'));
+    expect(result.reportMarkdownPath).toBe(
+      path.join('/tmp/reports', 'HARNESS-VHS-001', 'report.md')
+    );
+    expect(result.reportHtmlPath).toBe(
+      path.join('/tmp/reports', 'HARNESS-VHS-001', 'report.html')
+    );
+    expect(writes.get(path.join('/tmp/reports', 'HARNESS-VHS-001', 'report.json'))).toContain(
       '"harnessId": "HARNESS-VHS-001"'
     );
-    expect(writes.get('/tmp/reports/HARNESS-VHS-001/report.md')).toContain(
+    expect(writes.get(path.join('/tmp/reports', 'HARNESS-VHS-001', 'report.md'))).toContain(
       'Commit count: 2'
     );
-    expect(writes.get('/tmp/reports/HARNESS-VHS-001/report.html')).toContain(
+    expect(writes.get(path.join('/tmp/reports', 'HARNESS-VHS-001', 'report.html'))).toContain(
       'Harness Smoke Report'
     );
   });
@@ -209,7 +219,7 @@ describe('runHarnessSmoke', () => {
       );
 
       expect(result.report.generatedAt).toBe('2026-04-03T01:02:03.000Z');
-      expect(writes.get('/tmp/reports/HARNESS-VHS-001/report.json')).toContain(
+      expect(writes.get(path.join('/tmp/reports', 'HARNESS-VHS-001', 'report.json'))).toContain(
         '"generatedAt": "2026-04-03T01:02:03.000Z"'
       );
     } finally {

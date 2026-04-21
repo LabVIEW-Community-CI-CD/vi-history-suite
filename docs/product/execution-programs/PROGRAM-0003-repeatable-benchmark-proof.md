@@ -186,28 +186,31 @@ executable basenames, and Windows bitness/path contradictions before a
 targeted rerun can start.
 
 `VHS-REQ-450` now governs the canonical Windows host runtime surface too:
-explicit Windows runtime override paths must exist before the rerun starts,
-and host-native Windows comparison execution now fails closed when preflight
-detects stale `LabVIEW.exe` / `LabVIEWCLI.exe` / `LVCompare.exe` sessions or
-a preexisting listener on the selected `LabVIEW.ini`-derived VI Server port.
+explicit Windows proof-admission runtime paths must exist before the rerun
+starts, and host-native Windows comparison execution now fails closed when
+preflight detects stale `LabVIEW.exe` / `LabVIEWCLI.exe` / `LVCompare.exe`
+sessions or a preexisting listener on the selected `LabVIEW.ini`-derived VI
+Server port.
 That same proof tightening also makes the current host capability explicit:
 only the x86 `LabVIEWCLI.exe` path exists locally on the canonical machine,
 while both x86 and x64 LabVIEW 2026 runtime paths exist. The governed host
 bundle is therefore the canonical x86 CLI plus the selected x86 or x64
 `LabVIEW.exe` surface rather than a same-bitness CLI requirement.
 
-`VHS-REQ-451` lifts canonical runtime-override validation into a shared
-PROGRAM-0003 admission layer rather than keeping it trapped inside
+`VHS-REQ-451` lifts canonical proof-admission validation for explicit
+proof-admission override bundles into a shared PROGRAM-0003 admission layer
+rather than keeping it trapped inside
 `runGovernedProof report-smoke` alone. The one public `runGovernedProof`
 surface and its `dashboard-smoke`, `decision-record`, `report-smoke`,
 `benchmark-linux`, and `benchmark-windows` subcommands now reject
-contradictory runtime bundles before they can generate retained evidence.
+contradictory proof-admission bundles before they can generate retained
+evidence.
 
 `VHS-REQ-452` tightens that shared admission layer further on Windows:
-explicit runtime override paths now fail closed only when they contradict the
-selected runtime bitness. The canonical x86 `LabVIEWCLI.exe` plus x64
-`LabVIEW.exe` bundle is admitted when that x64 LabVIEW 2026 surface is the
-selected governed host runtime.
+explicit Windows proof-admission runtime paths now fail closed only when they
+contradict the selected runtime bitness. The canonical x86 `LabVIEWCLI.exe`
+plus x64 `LabVIEW.exe` bundle is admitted when that x64 LabVIEW 2026 surface
+is the selected governed host runtime.
 
 While refreshed benchmark images republish, the next governed PROGRAM-0003
 move is now explicit too: run the retained `runGovernedProof
@@ -222,28 +225,41 @@ local canonical `labview-ci-cd/actions/VICompareTooling` tree for the
 sample fixtures for the fixture-backed operations,
 and keep `CreateComparisonReport` gated until those simpler host operations
 have been exercised first.
-Fresh canonical-host evidence on `2026-04-06` now narrows that follow-on lane
-further. The governed host-operation matrix now runs `LabVIEWCLI` through the
-retained foreground PowerShell path instead of the older background sidecar
-wrapper, and the corrected warm-headless x64-then-x86 ledger proves that
-`ExecuteBuildSpec`, `MassCompile`, `RunVI`, `RunVIAnalyzer`, and
-`PrintToSingleFileHtml` succeed cleanly on both admitted LabVIEW 2026 host
-surfaces. `CloseLabVIEW -Headless` succeeds on x64 too, but the same x86
-`CloseLabVIEW -Headless` case still leaves both `LabVIEW.exe` and
-`LabVIEWCLI.exe` hot until diagnostic cleanup. `RunUnitTests` on both x86 and
-x64 connects to the governed VI Server port and then exits `1` with `-350053`
-missing/bad operation files. So the stale `linux-headless-recursive-load`
-wording is now known to be too broad: the active canonical-host seam is the
-x86 `CloseLabVIEW` session-close path plus the cross-bitness `RunUnitTests`
-operation-admission failure, with `CreateComparisonReport` still correctly
-gated behind those remaining prerequisites rather than a broad Linux-only or
-generic host-attach story.
+Fresh canonical-host evidence on `2026-04-14` now retains the next blocker
+more strictly than the older `2026-04-06` warm-headless ledger. The governed
+host-operation matrix still runs `LabVIEWCLI` through the retained foreground
+PowerShell path, but the fresh cold-only receipt at
+`.cache/governed-proof/windows-host-operation-matrix/2026-04-14T07-59-35-969Z/host-operation-matrix.json`
+proves that every x64 cold prerequisite case now leaves `LabVIEWCLI.exe` hot
+long enough to retain `post-run-runtime-surface-contaminated`, even though the
+runner cleans the host surface again afterward. That means the x64 tranche no
+longer completes cleanly under cold attach, and the same governed run
+correctly gates the x86 tranche as `x64-tranche-did-not-complete-cleanly`.
+So the active canonical-host seam is now the x64 cold-attach contamination
+path; the older warm-headless x64 success and x86 `CloseLabVIEW` /
+`RunUnitTests` seams remain useful historical evidence, but they are not the
+newest admission truth. The host-operation matrix therefore still keeps
+`CreateComparisonReport` gated behind the fresh x64 cold-host blocker instead
+of reopening report admission prematurely.
+Fresh direct canonical-host report proof on that same date now retains the
+bundle-specific blocker more explicitly in the tracked packet
+`docs/product/benchmark-packets/HARNESS-VHS-001-windows-host-create-comparison-proof-2026-04-14.md`
+plus the raw governed roots
+`.cache/governed-proof/windows-host-create-comparison-proof/2026-04-14/x64/`
+and `.cache/governed-proof/windows-host-create-comparison-proof/2026-04-14/x86/`.
+Both supported host bundles reached canonical `CreateComparisonReport`
+execution, derived explicit VI Server ports (`3363` for x64 and `3364` for
+x86), observed only `LabVIEWCLI.exe` at the retained banner snapshot, retained
+no LabVIEW-related processes at exit, and still timed out after `120000ms`
+without a generated report. So `VHS-REQ-548` is now satisfied as exact bounded
+blocker retention for both supported bundles, not only as prerequisite gating.
 
-`ADR-0024` plus `VHS-REQ-457..458` now tighten that PROGRAM-0003 admission
-layer one step further: governed proof subcommands validate the effective runtime bundle
-after CLI arguments, environment variables, and subcommand-local defaults have
-been resolved, and the Windows benchmark CLI no longer injects hidden explicit
-Windows executable defaults when no explicit override was requested.
+`ADR-0024` plus `VHS-REQ-457..458` now tighten that PROGRAM-0003
+proof-admission layer one step further: governed proof subcommands validate
+the effective proof-admission bundle after CLI arguments, environment
+variables, and subcommand-local defaults have been resolved, and the Windows
+benchmark CLI no longer injects hidden explicit Windows executable defaults
+when no explicit override was requested.
 
 `VHS-REQ-476` closes a separate Windows benchmark-proof contamination seam that
 the latest canonical-host rerun exposed. With stale non-headless host

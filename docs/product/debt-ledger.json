@@ -54,7 +54,7 @@
       ],
       "discoveredContext": "PROGRAM-0003 exact-pair Windows diagnosis hardening",
       "nextGate": null,
-      "exitCriteria": "Exact-pair diagnosis fails closed on incomplete selected/base pairs and contradictory runtime override bundles before any retained evidence is generated.",
+      "exitCriteria": "Exact-pair diagnosis fails closed on incomplete selected/base pairs and contradictory proof-admission override bundles before any retained evidence is generated.",
       "retirementCommit": "3dab8fda2f1a924b22f3d1614df6c3c070377844",
       "acceptedExceptionRationale": null
     },
@@ -155,12 +155,12 @@
     },
     {
       "id": "DEBT-0005",
-      "title": "Synthesized effective runtime override bundles previously bypassed canonical admission control",
+      "title": "Synthesized effective proof-admission bundles previously bypassed canonical admission control",
       "debtClass": "control-plane",
       "status": "retired",
       "severity": "high",
       "contaminationRisk": "high",
-      "summary": "PROGRAM-0003 benchmark entrypoints could synthesize an explicit effective runtime bundle from CLI arguments, environment variables, and entrypoint-local defaults after raw CLI validation had already passed, weakening canonical admission truth.",
+      "summary": "PROGRAM-0003 benchmark entrypoints could synthesize an explicit effective proof-admission bundle from CLI arguments, environment variables, and entrypoint-local defaults after raw CLI validation had already passed, weakening canonical admission truth.",
       "owner": {
         "trancheId": "TRANCHE-011",
         "issueId": "ISSUE-0408",
@@ -183,7 +183,7 @@
       ],
       "discoveredContext": "PROGRAM-0003 effective runtime-override validation hardening",
       "nextGate": null,
-      "exitCriteria": "Benchmark-proof entrypoints validate the effective runtime override bundle after CLI/env/default synthesis, and no hidden explicit Windows runtime executable default is injected when the operator did not request an explicit override.",
+      "exitCriteria": "Benchmark-proof entrypoints validate the effective proof-admission bundle after CLI/env/default synthesis, and no hidden explicit Windows runtime executable default is injected when the operator did not request an explicit override.",
       "retirementCommit": "2f4ced0",
       "acceptedExceptionRationale": null
     },

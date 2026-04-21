@@ -2,7 +2,7 @@
   "name": "vi-history-suite",
   "displayName": "VI History Suite",
   "description": "VS Code extension for content-detected LabVIEW VI history review in Git repositories.",
-  "version": "1.2.2",
+  "version": "1.3.0",
   "publisher": "svelderrainruiz",
   "license": "SEE LICENSE IN LICENSE",
   "private": true,
@@ -20,10 +20,11 @@
   "capabilities": {
     "untrustedWorkspaces": {
       "supported": "limited",
-      "description": "VI History disables background indexing and governed Docker comparison-report execution in untrusted workspaces.",
+      "description": "VI History disables background indexing and installed comparison execution in untrusted workspaces.",
       "restrictedConfigurations": [
-        "viHistorySuite.windowsContainerImage",
-        "viHistorySuite.linuxContainerImage"
+        "viHistorySuite.runtimeProvider",
+        "viHistorySuite.labviewVersion",
+        "viHistorySuite.labviewBitness"
       ]
     }
   },
@@ -34,6 +35,7 @@
   "main": "./out/extension.js",
   "files": [
     "out/**",
+    "node_modules/jsonc-parser/**",
     "resources/**",
     "README.md",
     "CHANGELOG.md",
@@ -42,6 +44,7 @@
   "activationEvents": [
     "onStartupFinished",
     "onCommand:labviewViHistory.open",
+    "onCommand:labviewViHistory.prepareLocalRuntimeSettingsCli",
     "onCommand:labviewViHistory.openDocumentation"
   ],
   "extensionDependencies": [
@@ -57,6 +60,11 @@
       {
         "command": "labviewViHistory.openDocumentation",
         "title": "Open Documentation",
+        "category": "VI History"
+      },
+      {
+        "command": "labviewViHistory.prepareLocalRuntimeSettingsCli",
+        "title": "Prepare Local Runtime Settings CLI",
         "category": "VI History"
       }
     ],
@@ -107,15 +115,25 @@
           "maximum": 5000,
           "description": "Explicit retained-commit ceiling when historyWindowMode is capped."
         },
-        "viHistorySuite.windowsContainerImage": {
+        "viHistorySuite.runtimeProvider": {
           "type": "string",
-          "default": "nationalinstruments/labview:2026q1-windows",
-          "description": "Required governed Windows-engine LabVIEW container image for Docker-only comparison-report execution when Docker runs in Windows-container mode."
+          "enum": [
+            "host",
+            "docker"
+          ],
+          "description": "Installed-user compare provider request. Host is the default local LabVIEWCLI path; docker is a bounded expert path selected through the generated settings CLI."
         },
-        "viHistorySuite.linuxContainerImage": {
+        "viHistorySuite.labviewVersion": {
           "type": "string",
-          "default": "nationalinstruments/labview:2026q1-linux",
-          "description": "Required governed Linux-engine LabVIEW container image for Docker-only comparison-report execution when Docker runs in Linux-container mode."
+          "description": "Required installed-user LabVIEW major version for local Windows LabVIEWCLI comparison preflight. Example: 2026."
+        },
+        "viHistorySuite.labviewBitness": {
+          "type": "string",
+          "enum": [
+            "x86",
+            "x64"
+          ],
+          "description": "Required installed-user LabVIEW bitness for local Windows LabVIEWCLI comparison preflight."
         }
       }
     }
@@ -142,6 +160,16 @@
     "docs:ci:public:core": "node scripts/run-docs-continuous-integration.js --surface public --skip-links",
     "docs:ci:internal": "node scripts/run-docs-continuous-integration.js --surface internal",
     "docs:ci:internal:core": "node scripts/run-docs-continuous-integration.js --surface internal --skip-links",
+    "assurance:release-gate": "node scripts/runAssuranceAudit.js --lane release-gate",
+    "assurance:26514:authority": "node scripts/runAssuranceAudit.js --lane 26514-authority",
+    "assurance:requirements": "node scripts/runAssuranceAudit.js --lane requirements",
+    "assurance:user-info": "node scripts/runAssuranceAudit.js --lane user-info",
+    "assurance:evidence-pack": "node scripts/runAssuranceAudit.js --lane evidence-pack",
+    "assurance:uplift": "node scripts/runAssuranceAudit.js --lane uplift",
+    "gitlab:git-credential:refresh": "node scripts/refreshLocalGitLabGitCredential.js",
+    "gitlab:private-release:publish": "node scripts/publishWindowsPrivateRelease.js",
+    "gitlab:runner:assert": "node scripts/assertGovernedRunnerLanes.js",
+    "gitlab:runner:windows:recovery:rehearse": "npm run compile && node scripts/runWindowsProofRuntimeRecoveryRehearsal.js",
     "branch:governance:assert": "node scripts/assertGovernedBranchBaseline.js",
     "public:host:bootstrap-linux": "node scripts/bootstrapLinuxVsCodeHost.js install",
     "public:smoke:linux": "npm run compile && node scripts/runPublicFacadeLinuxSmoke.js",
@@ -177,14 +205,19 @@
     "design:gate": "npm run compile && node out/cli/runDesignGate.js",
     "design:gate:assert-complete": "npm run compile && node out/cli/runVerifyDesignGateCompletion.js",
     "proof:run": "npm run compile && node out/cli/runGovernedProof.js",
-    "test:design-contract": "npm exec -- vitest run tests/unit/packageManifest.test.ts tests/unit/comparisonRuntimeLocator.test.ts tests/unit/runGovernedProofCli.test.ts tests/unit/governedLegacyProofEntrypoints.test.ts tests/unit/governedProofDocs.test.ts tests/unit/githubLinuxBenchmarkWorkflow.test.ts tests/unit/githubWindowsBenchmarkWorkflow.test.ts tests/unit/designGate.test.ts tests/unit/designGateRunner.test.ts tests/unit/preparePublicRepoCloneScript.test.ts tests/unit/preparePublicTestFixtureScript.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicFacadeLinuxSmoke.test.ts tests/unit/publicGithubSourcePromotion.test.ts tests/unit/publicProductGateDPreflight.test.ts",
+    "proof:runtime-settings-live-session": "node scripts/runRuntimeSettingsLiveSessionProof.js",
+    "acceptance:windows:private-release": "npm run compile && node scripts/runWindowsPrivateReleaseAcceptance.js",
+    "proof:runtime-settings-live-session:assert": "node scripts/assertRuntimeSettingsLiveSessionProbePacket.js",
+    "proof:runtime-settings-live-session:history": "node scripts/printRuntimeSettingsLiveSessionProbeHistory.js",
+    "proof:runtime-settings-live-session:policy:assert": "node scripts/assertRuntimeSettingsLiveSessionPolicyBoundary.js",
+    "test:design-contract": "npm exec -- vitest run tests/unit/packageManifest.test.ts tests/unit/comparisonRuntimeLocator.test.ts tests/unit/runGovernedProofCli.test.ts tests/unit/governedLegacyProofEntrypoints.test.ts tests/unit/governedProofDocs.test.ts tests/unit/githubLinuxBenchmarkWorkflow.test.ts tests/unit/githubWindowsBenchmarkWorkflow.test.ts tests/unit/designGate.test.ts tests/unit/designGateRunner.test.ts tests/unit/preparePublicRepoCloneScript.test.ts tests/unit/preparePublicTestFixtureScript.test.ts tests/unit/publicDevcontainerSurface.test.ts tests/unit/publicFacadeLinuxSmoke.test.ts tests/unit/publicGithubSourcePromotion.test.ts tests/unit/publicProductGateDPreflight.test.ts tests/unit/runWindowsIntegrationHost.test.ts",
     "pretest": "npm run compile",
     "preview:refresh": "npm run package && node -e \"const fs=require('node:fs'); const p=require('./package.json'); const name=p.name+'-'+p.version+'.vsix'; fs.copyFileSync(name, 'preview-evidence/'+name); fs.copyFileSync(name, '/mnt/c/Users/sveld/Downloads/'+name); console.log('Refreshed '+name);\"",
     "test": "vitest run --coverage",
     "test:integration:compile": "tsc -p tsconfig.integration.json",
     "test:integration": "npm run compile && npm run test:integration:compile && node out-tests/tests/integration/runTests.js",
     "test:integration:linux": "node scripts/runLinuxIntegrationHost.js",
-    "test:integration:windows": "VI_HISTORY_SUITE_INTEGRATION_HOST=windows npm run test:integration",
+    "test:integration:windows": "node scripts/runWindowsIntegrationHost.js",
     "test:watch": "vitest",
     "package:audit": "node scripts/auditPackagedRuntimeSurface.js",
     "package": "npm run compile && npm run docs:bundle && npm run package:audit && node scripts/runPinnedVsce.js package"
@@ -192,11 +225,14 @@
   "devDependencies": {
     "@types/node": "^24.6.0",
     "@types/vscode": "^1.90.0",
-    "@vitest/coverage-v8": "^4.1.2",
+    "@vitest/coverage-v8": "^4.1.4",
     "@vscode/test-electron": "^2.5.2",
     "marked": "^17.0.5",
     "rimraf": "^6.0.1",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.2"
+    "vitest": "^4.1.4"
+  },
+  "dependencies": {
+    "jsonc-parser": "^3.3.1"
   }
 }

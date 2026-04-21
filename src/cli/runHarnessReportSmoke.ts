@@ -59,16 +59,16 @@ export function getHarnessReportSmokeUsage(): string {
     '  --selected-hash <hash>    Target a specific selected revision instead of the default first compare pair.',
     '  --base-hash <hash>        Assert the targeted selected revision uses this base revision.',
     '  --runtime-timeout-ms <ms> Bound runtime execution for targeted or default report-smoke diagnosis.',
-    '  --platform <value>        Override runtime detection platform for report-tool selection.',
-    '  --execution-mode <value>  Override provider selection with auto, host-only, or docker-only.',
-    '  --bitness <value>  Set explicit runtime bitness for report-tool selection.',
-    '  --labview-cli-path <path> Provide an explicit LabVIEWCLI path for report-tool selection.',
-    '  --labview-exe-path <path> Provide an explicit LabVIEW executable path for report-tool selection.',
+    '  --platform <value>        Set the proof-admission platform for report-tool selection.',
+    '  --execution-mode <value>  Set the proof-admission provider override to auto, host-only, or docker-only.',
+    '  --bitness <value>         Set explicit proof-admission runtime bitness for report-tool selection.',
+    '  --labview-cli-path <path> Provide an explicit proof-admission LabVIEWCLI path for report-tool selection.',
+    '  --labview-exe-path <path> Provide an explicit proof-admission LabVIEW executable path for report-tool selection.',
     '  --help                    Print this help and exit without running the harness.',
     '',
     'Canonical diagnosis rules:',
     '  --selected-hash requires --base-hash, and both hashes must be full 40-character git ids.',
-    '  Explicit runtime override paths require matching --platform selection and canonical LabVIEWCLI paths.',
+    '  Explicit proof-admission runtime paths require matching --platform selection and canonical LabVIEWCLI paths.',
     '  Windows bitness overrides must agree with any explicit Program Files / Program Files (x86) runtime paths.'
   ].join('\n');
 }

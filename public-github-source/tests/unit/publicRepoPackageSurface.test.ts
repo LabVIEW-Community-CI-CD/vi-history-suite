@@ -14,7 +14,7 @@ function readJson<T>(relativePath: string): T {
 }
 
 describe('public repo package surface', () => {
-  it('keeps the public repo on the Docker-only public product contract', () => {
+  it('keeps the public repo on the exact-release main baseline while opening the host-default develop candidate', () => {
     const manifest = readJson<{
       scripts?: Record<string, string>;
       version?: string;
@@ -24,15 +24,20 @@ describe('public repo package surface', () => {
     const install = readText('INSTALL.md');
     const support = readText('SUPPORT.md');
     const contributing = readText('CONTRIBUTING.md');
+    const bugReport = readText('.github/ISSUE_TEMPLATE/bug-report.yml');
+    const labviewVersionRequest = readText('.github/ISSUE_TEMPLATE/labview-version-support.yml');
+    const featureRequest = readText('.github/ISSUE_TEMPLATE/feature-request.yml');
+    const issueConfig = readText('.github/ISSUE_TEMPLATE/config.yml');
     const bundledUserWorkflow = readText('resources/bundled-docs/pages/user-workflow.html');
     const bundledComparisonReview = readText(
       'resources/bundled-docs/pages/comparison-reports-and-dashboard-review.html'
     );
     const previewWorkflow = readText('.github/workflows/public-facade-package-preview.yml');
 
-    expect(manifest.version).toBe('1.2.2');
+    expect(manifest.version).toBe('1.3.0');
     expect(manifest.files).toEqual([
       'out/**',
+      'node_modules/jsonc-parser/**',
       'resources/**',
       'README.md',
       'CHANGELOG.md',
@@ -63,48 +68,29 @@ describe('public repo package surface', () => {
     expect(manifest.scripts).not.toHaveProperty('proof:run');
     expect(manifest.scripts).not.toHaveProperty('benchmark:github:latest');
 
-    expect(readme).toContain('Docker-only compare execution');
-    expect(readme).toContain('devcontainer or Codespace');
-    expect(readme).toContain('source-facing product surface');
-    expect(readme).toContain('## If You Installed VI History Suite');
+    expect(readme).toContain('## Install And Use');
+    expect(readme).toContain('install-vihs-extension.ps1');
+    expect(readme).toContain('Press `Enter` to keep the current settings');
+    expect(readme).toContain('## Supported Today');
+    expect(readme).toContain('vihs --validate');
+    expect(readme).toContain('Review the explicit compare preflight');
+    expect(readme).toContain('Choose `Compare`');
+    expect(readme).toContain('LabVIEW years `2020` through `2026`');
+    expect(readme).toContain('`docker/windows` is supported for `2026` `x64` only');
+    expect(readme).toContain('Report A Problem Or Request Support');
+    expect(readme).toContain('LabVIEW version support request');
+    expect(readme).toContain('Need Source Evaluation Or Contribution?');
     expect(readme).toContain('You do not need to fork this repo or choose a branch to use the installed');
     expect(readme).toContain('extension locally.');
-    expect(readme).toContain('Fastest First Fork-Owner Run');
-    expect(readme).toContain('Copy the main branch only');
-    expect(readme).toContain('Codespace repository configuration');
-    expect(readme).toContain('16-core');
-    expect(readme).toContain('supported first-time machine');
-    expect(readme).toContain('This README keeps only the short summary.');
-    expect(readme).toContain('npm run public:host:bootstrap-linux');
-    expect(readme).toContain('npm run public:fixture:icon-editor');
-    expect(readme).toContain('npm run public:repo:clone');
-    expect(readme).toContain('Reference Manual For Any Public Repo');
-    expect(readme).toContain('review the changes of a LabVIEW VI between two commits');
-    expect(readme).toContain('https://github.com/<owner>/<repo>.git');
-    expect(readme).toContain('Paste the repo URL when prompted');
-    expect(readme).toContain('Supported repo URLs are public `https://github.com/...` and');
-    expect(readme).toContain('`https://gitlab.com/...` only.');
-    expect(readme).toContain('Hampel Software Engineering');
-    expect(readme).toContain('repo-sibling `labview-icon-editor`');
-    expect(readme).toContain('/workspaces/labview-icon-editor');
-    expect(readme).toContain('/workspaces/hse-logger');
-    expect(readme).toContain('/workspaces/SerialPortNuggets');
-    expect(readme).toContain('Review-Public-LabVIEW-VI-Changes');
-    expect(readme).toContain('remote default branch');
-    expect(readme).toContain('Use the exact path printed by the command');
-    expect(readme).toContain('public default branch and tracks the latest exact released');
-    expect(readme).toContain('GitHub opens this public repo on `main` by default');
-    expect(readme).toContain('Docker CLI plus a running Docker daemon are prerequisites for the first');
-    expect(readme).toContain('If Docker is not installed yet, not running yet');
-    expect(readme).toContain('public GitHub default branch: `main`');
-    expect(readme).toContain('public Codespaces evaluation branch: `develop`');
-    expect(readme).toContain(
-      'retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`'
-    );
-    expect(readme).toContain('Refresh-Codespace-Repositories');
-    expect(readme).not.toContain('Manual-Actor-Framework-Clone');
-    expect(install).toContain('Windows host + Linux engine');
-    expect(install).toContain('host LabVIEW');
+    expect(readme).toContain('[INSTALL.md](./INSTALL.md)');
+    expect(readme).toContain('[CONTRIBUTING.md](./CONTRIBUTING.md)');
+    expect(readme).toContain('Use `main` when you only need the latest exact released source.');
+    expect(install).toContain('exact released `main` / Marketplace `1.2.2`: Docker-only and x64-only');
+    expect(install).toContain('maintained public `develop` candidate: host-default Windows local');
+    expect(install).toContain('install-vihs-extension.ps1');
+    expect(install).toContain('vihs');
+    expect(install).toContain('vihs --validate');
+    expect(install).toContain('explicit compare preflight');
     expect(install).toContain('npm run public:host:bootstrap-linux');
     expect(install).toContain('npm run public:fixture:icon-editor');
     expect(install).toContain('npm run public:repo:clone');
@@ -113,15 +99,26 @@ describe('public repo package surface', () => {
     expect(install).toContain('canonical first-time procedures');
     expect(install).toContain('Supported repo URLs are public `https://github.com/...` and');
     expect(install).toContain("docker info --format '{{.OSType}}'");
-    expect(install).toContain('If those checks fail, install or start Docker before expecting image');
+    expect(install).toContain('If the candidate host route reports a blocked runtime');
     expect(install).toContain('Review-Public-LabVIEW-VI-Changes');
     expect(install).toContain('remote default branch automatically');
     expect(install).toContain('available fallback treated as best-effort');
     expect(install).toContain('Refresh-Codespace-Repositories');
     expect(install).not.toContain('Manual-Actor-Framework-Clone');
     expect(install).not.toContain('Vitest not found');
-    expect(support).toContain('docker info --format');
-    expect(support).toContain('does not use host LabVIEW as an installed-user fallback path');
+    expect(support).toContain('runtime-provider issues on the maintained public candidate');
+    expect(support).toContain('local Windows `LabVIEWCLI` preflight and readiness issues');
+    expect(support).toContain('vihs --validate');
+    expect(support).toContain('maintained public `develop` opens host-default Windows local `LabVIEWCLI`');
+    expect(bugReport).toContain('install, settings, validation, or compare problem');
+    expect(bugReport).toContain('What command or surface failed?');
+    expect(bugReport).toContain('`vihs --validate` output');
+    expect(labviewVersionRequest).toContain('LabVIEW version support request');
+    expect(labviewVersionRequest).toContain('Requested LabVIEW year');
+    expect(featureRequest).toContain('install, configuration, validation, or compare improvement');
+    expect(featureRequest).toContain('Which surface should improve?');
+    expect(issueConfig).toContain('Install and release guide');
+    expect(issueConfig).toContain('User workflow');
     expect(contributing).toContain('source-available and intentionally restrictive');
     expect(contributing).toContain('npm run public:host:bootstrap-linux');
     expect(contributing).toContain('npm run public:fixture:icon-editor');

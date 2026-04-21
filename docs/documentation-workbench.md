@@ -43,6 +43,7 @@ the entrypoint at the repo root you want to operate on:
 ```bash
 docker run --rm -it \
   -v "$(dirname "$PWD")":/repo-parent \
+  -v vi-history-suite-docs-node-modules:/repo-parent/vi-history-suite/node_modules \
   -e VIHS_DOCS_WORKSPACE=/repo-parent/vi-history-suite \
   -w /repo-parent/vi-history-suite \
   vi-history-suite-docs-authoring:local \
@@ -106,6 +107,11 @@ The workbench entrypoint honors `VIHS_DOCS_WORKSPACE`, falls back to
 `CI_PROJECT_DIR` in GitLab CI when that directory contains the repo package,
 and only then falls back to `/workspace`, so future cross-repo wiki iteration
 is not locked to one mount path.
+
+The Docker helper also mounts a repo-specific container-owned `node_modules`
+volume and the entrypoint refreshes it from `package-lock.json`, so Linux
+workbench runs do not inherit incompatible host-platform optional bindings from
+the mounted repo tree.
 
 When invoked from this canonical WSL environment through the package scripts,
 the Docker-first workbench commands prefer `docker.exe --context desktop-linux`
@@ -192,8 +198,14 @@ The intended flow is:
 3. run `prepare` to materialize a page-authority bundle, current wiki copy
    when present, a draft wiki file, and a publication-prep receipt
    - if `docs/product/wiki-publication-ledger.json` already retains
-     `nextPage = null`, `prepare` now retains a governed no-op completion
-     receipt instead of failing on the already-finished wiki state
+     `nextPage = null`, `prepare` without `--page-id` now retains a governed
+     no-op completion receipt instead of failing on the already-finished wiki
+     state
+   - if a materially changed authority doc requires refreshing an already
+     published wiki page, rerun `prepare` with `--page-id <published-page-id>`;
+     the retained receipt switches to `refresh-existing-page` and the
+     publication ledger still stays unchanged until the refreshed page is
+     actually pushed or its publication metadata changes
 4. run `sync-bundled-docs` only after the staged wiki state and publication
    ledger are ready
 5. treat the tranche as finished only when
@@ -235,10 +247,10 @@ adds first-class evidence for future sessions:
 - retained internal-only local evidence under `.cache/docs-integration/internal/latest/`
 - retained CI evidence under `docs-integration-evidence/`
 - explicit installed-user truth checks for:
-  - Docker-first Windows `auto` behavior when Docker Desktop is installed
-  - no silent provider fallback
-  - hard stops when Docker is required but unusable
-  - front-facing provider/progress visibility in the bundled installed-user guide
+  - Docker-only compare execution in the bundled installed-user guide
+  - engine-aware Windows/Linux image selection
+  - Docker-required hard stops without host fallback
+  - front-facing provider and progress visibility in the bundled installed-user guide
 - explicit package-path freshness:
   - `npm run package` reruns `npm run docs:bundle` before `vsce package`
   - stale bundled installed-user docs are therefore unshippable through the
@@ -395,3 +407,9 @@ bundled-doc surface stay governed inside the main repo. When the same tranche
 retires, defers, or newly discovers meaningful technical/documentation debt,
 update the debt contract surfaces in the same documentation tranche instead of
 leaving that carryover implicit.
+
+For already-published page refreshes, use
+`npm run wiki:workbench:prepare -- --page-id <published-page-id>` or
+`npm run docs:workbench:wiki:prepare -- --page-id <published-page-id>` first.
+Keep the publication ledgers unchanged until the refreshed wiki page is
+actually pushed and its retained publication metadata is updated.

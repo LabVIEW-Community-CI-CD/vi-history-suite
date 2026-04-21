@@ -14,15 +14,88 @@
 - The current exact released line is `v1.2.2`.
 - The burned exact released line is `v1.0.2`.
 - The current published package line on `main` is `1.2.2`.
-- The current develop package line on `develop` is `1.2.2`.
-- The active exact release candidate line on `develop` is `v1.2.2`.
-- No newer `release/*` branch is active yet.
+- The current develop package line on `develop` is `1.3.0`.
+- The active exact release candidate line on `develop` is `v1.3.0`.
+- The active release-candidate branch is `release/1.3.0`.
+- The retained Windows x64 private-release packet remains prep-only evidence
+  for `v1.3.0`; it does not imply exact tagging, public GitHub release,
+  `main` promotion, or VS Code Marketplace publication.
+- Windows x86 / 32-bit LabVIEW remains out of scope for that `v1.3.0`
+  pre-release sequence; any retained x86 host evidence is characterization
+  only and does not expand the Windows x64 private-release claim.
+- The tracked Windows x64 private-release packet for that prep sequence is:
+  - `docs/product/private-release-windows-x64-v1.3.0.md`
+  - `docs/product/private-release-windows-x64-v1.3.0.json`
+- The governed private-release publish surface for that sequence is:
+  - `npm run gitlab:private-release:publish`
+  - current retained private-release tag: `private-v1.3.0-windows-x64`
+- The governed Windows runner-lane contract for that prep sequence is:
+  - `docs/product/windows-private-release-runner-lane.md`
+- The governed external assurance lane for that prep sequence is:
+  - `docs/product/linux-assurance-runner-lane.md`
+  - blocking jobs `assurance_release_gate`, `assurance_26514_authority`,
+    `assurance_requirements_quality`, and
+    `assurance_external_user_information`
+  - advisory job `assurance_audit_packet`
+- The repo-owned runner host asset pack, apply surfaces, and live drift
+  assertions for those lanes are:
+  - `scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1`
+  - `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1`
+  - `scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1`
+  - `scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1`
+  - `scripts/runWindowsProofRuntimeRecoveryRehearsal.js` via
+    `npm run gitlab:runner:windows:recovery:rehearse`
+  - `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh`
+  - `scripts/gitlab-runner/linux/start-linux-assurance.sh`
+  - `scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service`
+  - `scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh`
+  - `scripts/assertGovernedRunnerLanes.js` via `npm run gitlab:runner:assert`
+- The Windows apply surface keeps the scheduled task on
+  `powershell.exe -NoLogo -NoProfile -File "C:\GitLab-Runner\start-governed-runner-lanes.ps1"`
+  without `ExecutionPolicy Bypass` and fails closed unless exactly one
+  configured runner manager remains after apply.
+- The Windows drift assertion surface fails closed unless the installed
+  bootstrap still matches the repo source, the scheduled task retains that
+  exact action plus its logon trigger, `C:\GitLab-Runner\config.toml` still
+  contains `request_concurrency = 2`, and exactly one configured runner
+  manager is live.
+- The Windows bootstrap clears stale `LabVIEW`, `LabVIEWCLI`, and `LVCompare`
+  before cold runner admission with bounded `Stop-Process`,
+  `taskkill /PID /T /F`, and `taskkill /IM /T /F`, and fails closed if
+  contamination remains.
+- The Linux apply surface installs the helper and service unit and fails
+  closed unless `vihs-linux-assurance-runner.service` is both enabled and
+  active after apply.
+- The Linux drift assertion surface fails closed unless the installed helper
+  and service unit still match the repo source, `~/.gitlab-runner/config.toml`
+  still contains `request_concurrency = 2`, the admitted service fragment/user
+  and working directory remain exact, and exactly one configured runner
+  process is live.
+- When the host-native Windows proof exits on that same cleanup seam, the
+  acceptance wrapper retains
+  `windows-private-release-evidence/host/proof-run-pre-recovery.txt`, runs
+  `scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1`,
+  retains `windows-private-release-evidence/host/proof-runtime-recovery.txt`,
+  waits `5000` ms, retries the host-native proof once, and still fails closed
+  if the repo-owned recovery step plus retry cannot restore a clean host
+  surface.
+- The Windows proof runtime recovery rehearsal surface is
+  `scripts/runWindowsProofRuntimeRecoveryRehearsal.js` via
+  `npm run gitlab:runner:windows:recovery:rehearse`; it fails closed unless
+  the admitted Windows host starts clean, seeds one headless LabVIEW
+  contamination on the governed host-native `2026` `x64` runtime, runs the
+  same repo-owned recovery script, and retains the latest rehearsal receipt at
+  `.cache/windows-proof-runtime-recovery-rehearsal/latest.json`.
+- Public Linux smoke, exact tagging, Marketplace publication, and `main`
+  promotion remain out of scope for that private-release-prep sequence.
 - The public GitHub default branch is `main` because it carries the latest
   exact released source line.
 - The public Codespaces evaluation branch is `develop`.
 - The integration branch is `develop`.
-- The release branch is `main`.
-- The next-line branch model is `gitflow-lite` with temporary
+- The protected exact-release line is `main`.
+- The release-candidate branch family is `release/*`.
+- The hotfix branch family is `hotfix/*`.
+- The next-line branch model is `GitFlow` with temporary
   `feature/*`, `release/*`, and `hotfix/*` lanes.
 - The hosted automation governance matrix is retained in:
   - `docs/product/hosted-ci-governance.md`
@@ -48,6 +121,9 @@
 - The repo also publishes a separate docs-authoring workbench image for
   documentation-package iteration:
   `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
+- The protected-branch release-gate CI lane uses the published external
+  assurance-workbench image on the local authenticated self-hosted Linux assurance runner lane:
+  `registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main`
 - Documentation-package coherence and future wiki seeding are tracked in:
   - `docs/product/documentation-coherence-ledger.md`
   - `docs/product/wiki-seed-plan.md`
@@ -63,17 +139,32 @@
 
 ## Steps
 
+For the current `v1.3.0` Windows-only private-release line, run
+`npm run gitlab:private-release:publish` after the packet and validation pack
+are green so the controlled private GitLab release stays current before any
+exact/public `release/*` promotion begins.
+
 1. Ensure branch promotion followed the governed branch model.
    - Before opening or promoting the next candidate line, run
      `npm run branch:governance:assert` or let `npm run design:gate` run it
      first.
    - Fail closed if `develop` does not yet contain the exact released `main`
      baseline.
-   - Land integration work on `develop`.
-   - Promote release candidates from `develop` into `main`.
-   - Do not tag from `develop`.
-   - Do not rely on direct pushes to a protected release branch as the primary
-     release path.
+   - Feature branches are cut from `develop` and merge back into `develop`.
+   - Cut `feature/*` branches from `develop` only and merge them back into
+     `develop`.
+   - Release branches are cut from `develop`, merge into `main`, and merge
+     back into `develop`.
+   - Cut `release/*` branches from `develop`, merge the same `release/*`
+     branch into `main`, merge that `release/*` branch back into `develop`,
+     and delete it only after both merges complete.
+   - Delete the release branch only after both merges complete.
+   - Cut `hotfix/*` branches from `main`, merge the same `hotfix/*` branch
+     into `main`, merge that `hotfix/*` branch back into `develop`, and
+     delete it only after both merges complete.
+   - Do not tag from `develop`, `feature/*`, `release/*`, or `hotfix/*`.
+   - Do not rely on direct pushes to a protected exact-release line as the
+     primary release path.
 2. Ensure `main` is in a governed baseline state.
    - Either wait for `npm run design:gate` to exit `0`, or run
      `npm run design:gate:assert-complete` against the retained latest report
@@ -96,6 +187,17 @@
      when one combined local report is more convenient.
 6. Run compile, test, coverage generation, and VSIX packaging through GitLab
    CI.
+   - the blocking Linux assurance jobs now run through the repo-owned
+     `npm run assurance:*` wrapper on the local authenticated self-hosted Linux
+     runner lane, which pulls the latest published
+     `repo-standards-review` assurance-workbench `:main` image before each
+     job:
+     - `assurance_release_gate`
+     - `assurance_26514_authority`
+     - `assurance_requirements_quality`
+     - `assurance_external_user_information`
+   - `assurance_audit_packet` is advisory only and retains the non-blocking
+     `evidence-pack` and `compliance-uplift` outputs.
    - The guarded `npm run package` path now runs compile,
      `npm run docs:bundle`, `npm run package:audit`, and then `vsce package`.
      Stale bundled installed-user docs are therefore unshippable through the
@@ -103,9 +205,10 @@
    - Packaging-only npm tooling is intentionally excluded from the default
      repo `npm ci` surface and is invoked only on demand through the pinned
      `scripts/runPinnedVsce.js` helper when packaging is requested.
-   - Packaging must fail closed if the packaged surface includes runtime
-     `node_modules` or transient/test artifacts such as `.cache` or
-     `.vscode-test`.
+   - Packaging must fail closed if the packaged surface includes ungoverned
+     runtime `node_modules`, if a governed runtime dependency payload is
+     missing, or if transient/test artifacts such as `.cache` or
+     `.vscode-test` would ship.
 7. Retain release evidence under `release-evidence/`.
 8. Review the generated release record and release manifest before any
    downstream distribution step.
@@ -117,6 +220,9 @@
    under `resources/bundled-docs/`.
 12. When the public Docker product contract changes materially, rerun the
     public-facade Linux smoke lane through:
+    - these Linux checks remain exact/public-release or source-evaluation
+      surfaces; they are not part of the current Windows-only private-release
+      prep route
     - local `npm run public:smoke:linux`
     - local `npm run public:gate-d:preflight`
     - local `npm run public:gate-d:prepare-cold-pull` immediately before the
@@ -151,6 +257,22 @@
 16. Back-merge the exact released `main` line into `develop` before claiming
     exact closeout is complete or opening the next candidate line.
     - use the protected merge path, not an ungoverned local-only shortcut
+    - refresh repo-local Git HTTPS transport through
+      `npm run gitlab:git-credential:refresh` instead of depending on
+      remembered keyring or credential-manager state after host restart
+    - for local GitLab API automation, resolve the repo token through
+      `node scripts/resolveLocalGitLabApiToken.js --json`; the governed local
+      path is `%USERPROFILE%\.config\codex\secrets\vi-history-suite.gitlab-api-token.txt`
+      on Windows hosts and
+      `$HOME/.config/codex/secrets/vi-history-suite.gitlab-api-token.txt` on
+      Linux/WSL hosts
+    - `npm run gitlab:git-credential:refresh` uses that same token source,
+      rewrites the repo-local `credential.https://gitlab.com.username`
+      setting, replaces stale `gitlab.com` credentials, and read-proves access
+      with `git ls-remote origin HEAD`
+    - queue merge requests through
+      `node scripts/queueGovernedMergeRequest.js --source-branch <branch> --target-branch develop --title <title> --description-file <path> --auto-merge --remove-source-branch`
+      instead of depending on remembered `glab` auth state
     - wait for the resulting `develop` pipeline to succeed
     - retain that merged-and-green `develop` state as part of the same exact
       release closeout evidence instead of waiting for a later human prompt
@@ -159,6 +281,8 @@
     - local authority-green proof is necessary but not sufficient
     - the maintained public `develop` candidate head must be live
     - the maintained public wiki head must be live
+    - the next installed-user publication boundary must remain explicit in
+      `docs/product/runtime-provider-public-acceptance-gate.{md,json}`
     - both published heads must be retained in
       `docs/product/public-release-candidate.{md,json}`
     - do not open the next expert-agent review gate until that `review-ready`
@@ -224,8 +348,8 @@
   exact `v1.0.6`, exact `v1.1.0`, exact `v1.2.0`, `v1.2.1`, or exact
   `v1.2.2` release
   evidence.
-- The current develop package line on `develop` is `1.2.2`, the active exact
-  release candidate line on `develop` is `v1.2.2`, and no newer `release/*`
+- The current develop package line on `develop` is `1.3.0`, the active exact
+  release candidate line on `develop` is `v1.3.0`, and no newer `release/*`
   branch is active yet.
 - The packaged extension homepage now points installed users to the maintained
   public wiki home, while the repo root remains the source and control-plane

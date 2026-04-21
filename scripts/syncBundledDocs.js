@@ -3,6 +3,7 @@
 const fsSync = require('node:fs');
 const fs = require('node:fs/promises');
 const path = require('node:path');
+const { spawnSync } = require('node:child_process');
 
 const defaultRepoRoot = path.resolve(
   path.dirname(fsSync.realpathSync.native(__filename)),
@@ -118,9 +119,17 @@ const bundledPageConfigs = {
         '- VS Code Marketplace listing under `svelderrainruiz.vi-history-suite`',
         '- exact released VSIX from the matching GitHub release',
         '- local package output via `npm run package` when you intentionally test from source',
+        '- published Windows PowerShell bootstrap `irm https://gitlab.com/svelderrainruiz/vi-history-suite/-/raw/develop/scripts/install-vihs-extension.ps1 | iex` on the maintained candidate line',
         '- packaged bundled docs through `VI History: Open Documentation` or the history-panel `Open docs` action',
         '',
-        'Before the first compare on a fresh machine, install or start Docker and confirm `docker info` works in the same session that will run VS Code.'
+        'Current runtime contract for this build:',
+        '',
+        '- Windows defaults to local `LabVIEWCLI` when the persisted provider is absent',
+        '- Docker remains a bounded expert provider selected through the published install/bootstrap surface or later `vihs` updates',
+        '- run the published PowerShell bootstrap once, then use `vihs` or `vihs --validate` as the admitted follow-up commands',
+        '- if VS Code was already open when the generated settings CLI changed settings, reload or restart before trusting compare preflight',
+        '- run `vihs --validate` before the first compare on a fresh machine',
+        '- if Docker is selected, confirm `docker info` works in the same session that runs VS Code'
       ].join('\n'),
       'Release Procedure Summary': [
         'Use the Marketplace listing for everyday installs or the exact released VSIX when you need the retained tagged build.',
@@ -128,11 +137,14 @@ const bundledPageConfigs = {
         'Quick verification flow:',
         '',
         '1. install the extension from the Marketplace or from the exact released VSIX',
-        '2. install or start Docker, then confirm `docker info` succeeds',
-        '3. reload VS Code if you just installed or updated the extension',
-        '4. open `VI History` on an eligible VI inside a trusted Git workspace',
-        '5. select two distinct commit checkboxes to generate the compare',
-        '6. use `Open docs` if you need the version-matched installed guide'
+        '2. on the maintained candidate line, run `irm https://gitlab.com/svelderrainruiz/vi-history-suite/-/raw/develop/scripts/install-vihs-extension.ps1 | iex`',
+        '3. keep or change provider, LabVIEW year, and bitness through that bootstrap or a later `vihs` run',
+        '4. run `vihs --validate`',
+        '5. if VS Code was already open when the bootstrap or later `vihs` update changed settings, reload or restart the window only if stale facts remain',
+        '6. open `VI History` on an eligible VI inside a trusted Git workspace',
+        '7. select exactly two retained revisions with the commit checkboxes',
+        '8. review the explicit compare preflight section and choose `Compare`',
+        '9. use `Open docs` if you need the version-matched installed guide'
       ].join('\n')
     }
   },
@@ -147,17 +159,28 @@ const bundledPageConfigs = {
       'Bundled Documentation'
     ],
     replacements: {
+      'Preconditions': [
+        'The shipped extension-user workflow assumes:',
+        '',
+        '- the extension is installed from the VS Code Marketplace, the current exact released VSIX, or a preview VSIX when you intentionally want the next candidate',
+        '- the workspace is trusted',
+        '- the target file is a tracked LabVIEW VI in a Git repository',
+        '- at least two commits modify that VI',
+        '- for the exact released `main` path: Docker is installed and running on the current host, and `docker info` succeeds in the same session that launched VS Code',
+        '- for the maintained public `develop` candidate: the published Windows PowerShell bootstrap or a later `vihs` run persists the provider, LabVIEW version, and LabVIEW bitness bundle',
+        '- if VS Code was already open when the generated settings CLI changed the provider bundle, the window is reloaded or restarted before compare preflight is trusted'
+      ].join('\n'),
       'Execution Policy': [
-        'Comparison generation is Docker-only in the installed extension.',
+        'Comparison generation follows the current provider-explicit installed contract.',
         '',
         'Current installed rules:',
         '',
-        '- the extension no longer exposes `viHistorySuite.executionMode`, host-runtime path overrides, or a user-facing bitness selector',
-        '- compare execution is constrained to governed x64 container surfaces',
-        '- on Windows, the current Docker daemon engine selects the governed Windows image when `OSType=windows` and the governed Linux image when `OSType=linux`',
-        '- on Linux hosts, the governed Linux image is the installed compare surface',
-        '- if the selected governed image is missing, the extension shows image-pull progress before runtime launch',
-        '- if Docker CLI is missing, the daemon is unreachable, or the current engine cannot satisfy the governed request, the extension hard-stops and does not probe host LabVIEW',
+        '- Windows defaults to local `LabVIEWCLI` when the persisted provider is absent',
+        '- Docker remains a bounded expert provider selected through the published install/bootstrap surface or later `vihs` updates',
+        '- `viHistorySuite.labviewVersion` and `viHistorySuite.labviewBitness` stay explicit across both provider classes',
+        '- `vihs --validate` exposes whether the current bundle is `ready`, `needs-image-acquisition`, or blocked',
+        '- if Docker is selected, the extension derives the governed Windows or Linux image family from the current engine and fails closed on unsupported `x86`',
+        '- if the chosen provider bundle is blocked, compare stops with next-step guidance instead of silently switching provider classes',
         '- compare progress, selected provider, current engine, selected image, acquisition state, and next action stay visible in the history panel while the action runs'
       ].join('\n'),
       'Repository Support': [
@@ -182,10 +205,11 @@ const bundledPageConfigs = {
         'The embedded compare view now leads with a white `Comparison context` block that foregrounds selected/base commit hash, date, author, and subject facts before any deeper runtime evidence.',
         'Runtime diagnostics remain retained, but they stay on packet/runtime evidence surfaces instead of leading the embedded compare view.',
         '',
-        'Checkbox-selected pair behavior is explicit:',
+        'Exact-pair compare behavior is explicit:',
         '',
-        '- select any first retained revision with the checkbox column',
-        '- select the second retained revision to generate a comparison report automatically for that exact pair',
+        '- select exactly two retained revisions with the checkbox column',
+        '- review the explicit compare preflight section for the exact selected/base pair plus runtime facts',
+        '- choose `Compare` to generate or reopen retained comparison evidence for that exact pair',
         '- the newer selected revision becomes `selected` and the older selected revision becomes `base`',
         '- the oldest retained revision is still selectable as the older/base side of a checkbox-selected pair',
         '',
@@ -199,10 +223,13 @@ const bundledPageConfigs = {
         '   - VI signature',
         '   - retained commit chronology',
         '3. Use the checkbox column to choose the exact two retained revisions you want to compare.',
+        '4. Review the explicit compare preflight section for the exact selected/base pair.',
+        '5. Choose `Compare`.',
         '',
         'The current action model is:',
         '',
-        '- `Checkboxes`: the primary and only extension-user compare control; selecting the second retained revision triggers the comparison automatically',
+        '- `Checkboxes`: define the exact selected/base pair you want to compare',
+        '- `Compare`: generates or reopens retained comparison evidence for the exact admitted pair',
         '- `Open at commit`: open the selected retained revision',
         '- `Copy hash`: copy the retained commit hash',
         '- `Open docs`: open the bundled user documentation that ships with the installed extension version',
@@ -211,6 +238,8 @@ const bundledPageConfigs = {
         '',
         '- any retained window with at least two commits is enough to use VI History',
         '- the adjacent-pair text in a row is chronology context only; the two checked revisions define the exact compare pair',
+        '- the newer selected revision becomes `selected` and the older selected revision becomes `base`',
+        '- the oldest retained revision is still selectable as the older/base side of a checkbox-selected pair',
         '- there is no separate dashboard or decision-record step in the extension-user compare flow'
       ].join('\n'),
       'Trust, Progress, And Cancellation': [
@@ -268,11 +297,14 @@ const bundledPageConfigs = {
         '- one bounded next action'
       ].join('\n'),
       'Checkbox-Selected Pair Review': [
-        'At the history-panel level, comparison review is checkbox-driven.',
+        'At the history-panel level, comparison review is pair-selection first.',
         '',
-        '- the primary compare path is selecting two retained revisions with the checkbox column',
-        '- the second checkbox selection generates the comparison automatically for that exact selected/base pair',
+        '- use the checkbox column to select exactly two retained revisions',
+        '- review the explicit compare preflight section for the exact selected/base pair plus runtime facts',
+        '- choose `Compare` to generate or reopen retained comparison evidence for that exact pair',
+        '- the newer selected revision becomes `selected` and the older selected revision becomes `base`',
         '- the oldest retained revision can still serve as the older/base side of a checkbox-selected pair',
+        '- there is no auto-run compare trigger on the second checkbox selection',
         '- there is no separate compare button on commit rows for extension users',
         '- retained comparison evidence opens from the checkbox-selected pair instead of falling back to VS Code text diff on binary VI content'
       ].join('\n'),
@@ -302,6 +334,36 @@ function escapeAttribute(value) {
 async function readPublicationLedger(ledgerPath) {
   const raw = await fs.readFile(ledgerPath, 'utf8');
   return JSON.parse(raw);
+}
+
+async function readPublishedWikiMarkdown(paths, page, deps = {}) {
+  const readFile = deps.readFile ?? fs.readFile;
+
+  if (!page?.wikiCommit) {
+    const markdownPath = path.join(paths.wikiRepoRoot, page.wikiFileName);
+    return readFile(markdownPath, 'utf8');
+  }
+
+  const gitShow = (deps.spawnSync ?? spawnSync)(
+    'git',
+    ['-C', paths.wikiRepoRoot, 'show', `${page.wikiCommit}:${page.wikiFileName}`],
+    {
+      encoding: 'utf8'
+    }
+  );
+
+  if (gitShow.error) {
+    throw gitShow.error;
+  }
+
+  if (gitShow.status !== 0) {
+    const stderr = (gitShow.stderr ?? '').trim();
+    throw new Error(
+      `Failed to read published wiki page ${page.wikiFileName} at ${page.wikiCommit}: ${stderr || `git exited ${gitShow.status}`}`
+    );
+  }
+
+  return gitShow.stdout;
 }
 
 function rewriteAnchors(html, pagesByWikiTarget) {
@@ -430,10 +492,10 @@ function stripExcludedListOnlyLinks(markdown, pagesByWikiTarget) {
   return filteredLines.join('\n').replace(/\n{3,}/g, '\n\n');
 }
 
-async function renderPublishedPage(marked, pageId, markdownPath, pagesByWikiTarget) {
-  const markdown = await fs.readFile(markdownPath, 'utf8');
+async function renderPublishedPage(marked, page, paths, pagesByWikiTarget, deps = {}) {
+  const markdown = await readPublishedWikiMarkdown(paths, page, deps);
   const sanitizedMarkdown = stripExcludedListOnlyLinks(
-    selectBundledSections(stripAuthorityPrelude(markdown), pageId),
+    selectBundledSections(stripAuthorityPrelude(markdown), page.id),
     pagesByWikiTarget
   );
   const html = marked.parse(sanitizedMarkdown, {
@@ -473,13 +535,13 @@ async function buildBundledDocsOutput(paths, deps = {}) {
   const files = new Map();
 
   for (const page of publishedPages) {
-    const markdownPath = path.join(paths.wikiRepoRoot, page.wikiFileName);
     const pageFileName = `${page.id}.html`;
     const renderedHtml = await renderPublishedPage(
       marked,
-      page.id,
-      markdownPath,
-      pagesByWikiTarget
+      page,
+      paths,
+      pagesByWikiTarget,
+      deps
     );
 
     files.set(path.posix.join('pages', pageFileName), renderedHtml);
@@ -730,6 +792,7 @@ module.exports = {
   normalizeBundleFileForComparison,
   normalizeRepoRelativePath,
   parseBundledDocsArgs,
+  readPublishedWikiMarkdown,
   resolveBundledDocsPaths,
   runBundledDocsSync,
   writeBundledDocs

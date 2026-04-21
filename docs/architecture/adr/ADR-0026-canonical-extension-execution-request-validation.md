@@ -2,13 +2,17 @@
 
 ## Status
 
-Accepted
+Superseded
+
+- superseded by `ADR-0038` for the active develop-line installed-user
+  execution request
+- retained as the exact released `v1.2.2` Docker-only validation baseline
 
 ## Context
 
-`ADR-0025` now defines a Docker-only installed extension contract, but that
-still needs one canonical admission boundary before the extension claims a
-provider is runnable.
+`ADR-0025` defined a Docker-only installed extension contract for the exact
+released baseline, but that still needed one canonical admission boundary
+before the extension claimed a provider was runnable.
 
 Installed comparison execution can still become non-canonical if the extension
 mixes partially validated facts such as:
@@ -88,7 +92,7 @@ installed extension contract.
 - future implementation must keep the Windows and Linux image contracts aligned
   with the actual Docker-engine selector
 
-## Current Implementation Note
+## Historical Implementation Note
 
 The current repo now lands this contract in bounded slices rather than leaving
 it as queued intent only:
@@ -100,6 +104,14 @@ it as queued intent only:
   governed Windows or governed Linux image is the canonical target
 - visible image-pull progress and front-facing acquisition-state UX are now
   part of the active `PROGRAM-0005` package
+
+## Historical Note
+
+`ADR-0038` supersedes this ADR for the active develop-line installed-user
+execution request.
+
+This ADR remains authoritative only for the exact released Docker-only
+validation baseline that shipped at `v1.2.2`.
 
 ## Implementation Surface
 

@@ -14,6 +14,7 @@ const WINDOWS_LABVIEW_CLI_PATH =
   'C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe';
 const WINDOWS_LABVIEW_EXE_PATH =
   'C:\\Program Files (x86)\\National Instruments\\LabVIEW 2026\\LabVIEW.exe';
+const WINDOWS_REPO_ROOT = 'D:\\tmp\\vi-history-suite';
 
 describe('runHarnessDashboardSmokeCli', () => {
   it('parses deterministic dashboard smoke args', () => {
@@ -77,7 +78,7 @@ describe('runHarnessDashboardSmokeCli', () => {
         '--labview-exe-path',
         WINDOWS_LABVIEW_EXE_PATH
       ])
-    ).toThrow(/Canonical CreateComparisonReport overrides require both --labview-cli-path and --labview-exe-path/);
+    ).toThrow(/Canonical CreateComparisonReport proof-admission overrides require both --labview-cli-path and --labview-exe-path/);
     expect(getHarnessDashboardSmokeUsage()).toContain('--dashboard-commit-window');
   });
 
@@ -141,7 +142,7 @@ describe('runHarnessDashboardSmokeCli', () => {
           WINDOWS_LABVIEW_EXE_PATH
         ],
         {
-          repoRoot: '/tmp/vi-history-suite',
+          repoRoot: WINDOWS_REPO_ROOT,
           runner,
           stdout: {
             write(text: string) {
@@ -153,8 +154,8 @@ describe('runHarnessDashboardSmokeCli', () => {
     ).resolves.toBe('pass');
 
     expect(runner).toHaveBeenCalledWith('HARNESS-VHS-001', {
-      cloneRoot: '/tmp/vi-history-suite/.cache/harnesses',
-      reportRoot: '/tmp/vi-history-suite/.cache/harness-reports',
+      cloneRoot: 'D:\\tmp\\vi-history-suite\\.cache\\harnesses',
+      reportRoot: 'D:\\tmp\\vi-history-suite\\.cache\\harness-reports',
       strictRsrcHeader: false,
       runtimePlatform: 'win32',
       dashboardCommitWindow: 4,

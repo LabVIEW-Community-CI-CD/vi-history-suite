@@ -1,0 +1,57 @@
+{
+  "gateId": "RUNTIME-PROVIDER-PUBLIC-ACCEPTANCE-GATE",
+  "status": "closed",
+  "historicalPublicCloseout": {
+    "trancheId": "TRANCHE-010",
+    "issueId": "ISSUE-0407",
+    "programId": "PROGRAM-0002",
+    "state": "closed-docker-only-public-contract"
+  },
+  "activeImplementationDirection": {
+    "trancheId": "TRANCHE-016",
+    "issueId": "ISSUE-0412",
+    "programId": "PROGRAM-0005"
+  },
+  "releasedPublicBaseline": {
+    "version": "v1.2.2",
+    "contract": "docker-only-installed-user"
+  },
+  "closedAt": "2026-04-14T10:45:07Z",
+  "closureEvidence": {
+    "publishedPublicDevelopCandidateCommit": "b1de8c5",
+    "publishedPublicWikiHeadCommit": "fc6af3c",
+    "retainedExpertAgentReviewVerdict": "no-findings",
+    "retainedExpertAgentReviewAt": "2026-04-14T10:30:20Z",
+    "retainedCandidatePackagePaths": [
+      "docs/product/public-release-candidate.md",
+      "docs/product/public-release-candidate.json"
+    ]
+  },
+  "retainedBranchTransitionPacket": "docs/product/issue-0412-promotion-and-publication-handoff.md",
+  "alreadySatisfiedAdmissionInputs": [
+    "generated settings CLI persists provider, LabVIEW version, and bitness",
+    "default compare preflight on supported Windows surfaces is now runtime-backed instead of settings-only",
+    "live-session guidance is explicit: reload or restart when Code is already open and settings have changed",
+    "JSONC comments and trailing commas are now governed settings-target inputs",
+    "generated launcher surfaces now fail closed on missing node or stale launcher state",
+    "prepare-command trust and settings-target governance is explicit",
+    "governed CLI validation and readback is retained for the persisted provider, version, and bitness bundle",
+    "host operation-matrix proof is retained with the remaining 2026 prerequisite seams explicit",
+    "direct x64 and x86 host-native CreateComparisonReport blocker packets are retained with ready-for-runtime admission facts and timeout receipts",
+    "runtime-doctor and packet/dashboard surfaces now use provider-based wording instead of stale executionMode narration"
+  ],
+  "remainingGateCriteria": [],
+  "closureCriteriaSatisfied": [
+    "publication-alignment slices promoted truthful maintained public candidate surfaces for the host-default contract",
+    "exact public main, exact public wiki, exact bundled installed-user docs, and Marketplace reader surfaces remain on the exact released Docker-only baseline until a newer exact release is published",
+    "maintained public develop candidate and maintained public candidate wiki heads now publish b1de8c5 and fc6af3c and are retained in docs/product/public-release-candidate.md and docs/product/public-release-candidate.json",
+    "the governed public acceptance rerun is retained on those published candidate heads with a no-findings verdict",
+    "the host-default installed contract is now truthfully published and accepted on the governed public surface"
+  ],
+  "nonCriteria": [
+    "reopening PROGRAM-0002 or ISSUE-0407 as active feature work",
+    "treating local authority-green proof as equivalent to public acceptance",
+    "rewriting public or bundled installed-user surfaces ahead of truthful candidate publication"
+  ],
+  "nextMove": "feature/runtime-provider-live-session-gate-decision"
+}

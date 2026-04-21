@@ -4,7 +4,9 @@ import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const repoRoot = path.resolve(__dirname, '..', '..');
-const publicWikiRoot = path.resolve(repoRoot, '..', 'vi-history-suite.github.wiki');
+const publicWikiRoot =
+  process.env.VIHS_PUBLIC_GITHUB_WIKI_REPO_ROOT ??
+  path.resolve(repoRoot, '..', 'vi-history-suite.github.wiki');
 
 function readAuthorityText(relativePath: string): string {
   return fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');

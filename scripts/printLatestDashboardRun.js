@@ -279,10 +279,11 @@ function compareCandidates(left, right) {
 }
 
 function getDiscoveryPriority(filePath) {
+  const normalized = normalizePortablePath(filePath);
   if (isRepoVscodeTestPath(filePath)) {
     return 0;
   }
-  if (filePath.includes(`${path.sep}.cache${path.sep}harness-reports${path.sep}`)) {
+  if (normalized.includes('/.cache/harness-reports/')) {
     return 1;
   }
   if (isCurrentHomeWorkspaceArtifactPath(filePath)) {
@@ -292,7 +293,7 @@ function getDiscoveryPriority(filePath) {
 }
 
 function isRepoVscodeTestPath(filePath) {
-  return filePath.includes(`${path.sep}.vscode-test${path.sep}`);
+  return normalizePortablePath(filePath).includes('/.vscode-test/');
 }
 
 function isHostWorkspaceArtifactPath(filePath) {
@@ -300,6 +301,14 @@ function isHostWorkspaceArtifactPath(filePath) {
 }
 
 function isCurrentHomeWorkspaceArtifactPath(filePath) {
+  const normalizedFilePath = normalizePortablePath(filePath);
+  if (
+    normalizedFilePath.includes('/appdata/roaming/code/user/workspacestorage/') ||
+    normalizedFilePath.includes('/.config/code/user/workspacestorage/')
+  ) {
+    return true;
+  }
+
   const home = os.homedir();
   if (!home) {
     return false;
@@ -308,7 +317,9 @@ function isCurrentHomeWorkspaceArtifactPath(filePath) {
     path.join(home, '.config', 'Code', 'User', 'workspaceStorage'),
     path.join(home, 'AppData', 'Roaming', 'Code', 'User', 'workspaceStorage')
   ];
-  return candidates.some((candidate) => filePath.startsWith(candidate + path.sep));
+  return candidates.some((candidate) =>
+    normalizedFilePath.startsWith(`${normalizePortablePath(candidate)}/`)
+  );
 }
 
 function findFilesNamed(root, filename) {
@@ -335,10 +346,11 @@ function findFilesNamed(root, filename) {
         continue;
       }
       if (entry.isFile() && entry.name === filename) {
+        const normalizedEntryPath = normalizePortablePath(entryPath);
         if (
-          entryPath.includes(`${path.sep}${EXTENSION_ID}${path.sep}`) ||
-          entryPath.includes(`${path.sep}workspace-storage${path.sep}`) ||
-          entryPath.includes(`${path.sep}.cache${path.sep}harness-reports${path.sep}`)
+          normalizedEntryPath.includes(`/${EXTENSION_ID}/`) ||
+          normalizedEntryPath.includes('/workspace-storage/') ||
+          normalizedEntryPath.includes('/.cache/harness-reports/')
         ) {
           results.push(entryPath);
         }
@@ -376,6 +388,12 @@ function safeReadDir(root) {
   } catch {
     return [];
   }
+}
+
+function normalizePortablePath(candidatePath) {
+  return typeof candidatePath === 'string'
+    ? candidatePath.replaceAll('\\', '/').toLowerCase()
+    : '';
 }
 
 function formatLatestDashboardRun(latest) {

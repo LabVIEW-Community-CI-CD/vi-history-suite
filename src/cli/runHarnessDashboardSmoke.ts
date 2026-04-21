@@ -47,10 +47,10 @@ export function getHarnessDashboardSmokeUsage(): string {
     'Options:',
     '  --harness-id <id>              Select the canonical harness to run.',
     '  --strict-rsrc-header           Require RSRC header validation during VI detection.',
-    '  --platform <value>             Override runtime detection platform for report-tool selection.',
-    '  --bitness <value>       Set explicit runtime bitness for report-tool selection.',
-    '  --labview-cli-path <path>      Provide an explicit LabVIEWCLI path for report-tool selection.',
-    '  --labview-exe-path <path>      Provide an explicit LabVIEW executable path for report-tool selection.',
+    '  --platform <value>             Set the proof-admission platform for report-tool selection.',
+    '  --bitness <value>              Set explicit proof-admission runtime bitness for report-tool selection.',
+    '  --labview-cli-path <path>      Provide an explicit proof-admission LabVIEWCLI path for report-tool selection.',
+    '  --labview-exe-path <path>      Provide an explicit proof-admission LabVIEW executable path for report-tool selection.',
     '  --dashboard-commit-window <n>  Limit the retained dashboard window to at least 3 commits.',
     '  --help                         Print this help and exit without running the harness.'
   ].join('\n');
@@ -171,8 +171,8 @@ export async function runHarnessDashboardSmokeCli(
   });
 
   const repoRoot = deps.repoRoot ?? path.resolve(__dirname, '..', '..');
-  const cloneRoot = path.resolve(repoRoot, '.cache', 'harnesses');
-  const reportRoot = path.resolve(repoRoot, '.cache', 'harness-reports');
+  const cloneRoot = joinPreservingExplicitPathStyle(repoRoot, '.cache', 'harnesses');
+  const reportRoot = joinPreservingExplicitPathStyle(repoRoot, '.cache', 'harness-reports');
 
   const result = await (deps.runner ?? runHarnessDashboardSmoke)(args.harnessId, {
     cloneRoot,
@@ -272,3 +272,23 @@ export function maybeRunHarnessDashboardSmokeCliAsMain(
 }
 
 maybeRunHarnessDashboardSmokeCliAsMain();
+
+function usesExplicitPosixPathStyle(rootPath: string): boolean {
+  return rootPath.startsWith('/');
+}
+
+function usesExplicitWindowsPathStyle(rootPath: string): boolean {
+  return /^[A-Za-z]:[\\/]/.test(rootPath) || rootPath.startsWith('\\\\');
+}
+
+function joinPreservingExplicitPathStyle(rootPath: string, ...segments: string[]): string {
+  if (usesExplicitPosixPathStyle(rootPath)) {
+    return path.posix.join(rootPath, ...segments.map((segment) => segment.replace(/\\/g, '/')));
+  }
+
+  if (usesExplicitWindowsPathStyle(rootPath)) {
+    return path.win32.join(rootPath, ...segments.map((segment) => segment.replace(/\//g, '\\')));
+  }
+
+  return path.join(rootPath, ...segments);
+}

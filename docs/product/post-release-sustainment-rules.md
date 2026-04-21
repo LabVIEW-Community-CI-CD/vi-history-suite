@@ -13,21 +13,30 @@ scattered across queue summaries, ship history, and benchmark notes.
 - tranche: `TRANCHE-012`
 - issue: `ISSUE-0409`
 - execution program: `PROGRAM-0004`
-- parallel public-closeout lane: `TRANCHE-010` / `PROGRAM-0002` is reopened on
-  the `1.0.0` Docker-only public contract
+- historical public-closeout record: `TRANCHE-010` / `PROGRAM-0002` is closed
+  on the Docker-only public contract
+- runtime-provider public-acceptance gate record:
+  [runtime-provider-public-acceptance-gate.md](./runtime-provider-public-acceptance-gate.md)
+  is now closed cleanly on the retained published candidate heads
 
 The sustainment lane now owns the only active post-release driver seat. It does
-not absorb `PROGRAM-0002`, `PROGRAM-0003`, or `PROGRAM-0005` into generic
-maintenance language; those programs remain explicit when they reopen or stay
-active.
+not absorb the historical `PROGRAM-0002` closeout, `PROGRAM-0003`,
+`PROGRAM-0005`, or the runtime-provider public-acceptance gate record into
+generic maintenance language; those surfaces remain explicit when they are
+historical or active.
 
 The current release branch model is explicit too:
 
 - `develop` is the integration branch
-- `main` is the release branch
+- `main` is the protected exact-release line and public default branch
+- `feature/*` branches are cut from `develop` and merge back into `develop`
+- `release/*` branches are cut from `develop`, merge into `main`, merge back
+  into `develop`, and are deleted only after both merges complete
+- `hotfix/*` branches are cut from `main`, merge into `main`, merge back into
+  `develop`, and are deleted only after both merges complete
 - protected-branch promotion shall use required checks instead of operator
   memory
-- the next sustained topology is `gitflow-lite`, adding explicit
+- the next sustained topology is `GitFlow`, adding explicit
   `feature/*`, `release/*`, and `hotfix/*` lanes around those long-lived
   branches instead of treating all post-release work as generic `develop`
   traffic
@@ -63,30 +72,33 @@ Current version-line contract:
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.2.2`
 - current published package line on `main`: `1.2.2`
-- current develop package line on `develop`: `1.2.2`
-- active exact release candidate line on `develop`: `v1.2.2`
-- no newer `release/*` branch is active yet
+- current develop package line on `develop`: `1.3.0`
+- active exact release candidate line on `develop`: `v1.3.0`
+- active release-candidate branch: `release/1.3.0`
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
-- release branch: `main`
-- next-line branch model: `gitflow-lite`
+- protected exact-release line: `main`
+- release-candidate branch family: `release/*`
+- hotfix branch family: `hotfix/*`
+- next-line branch model: `GitFlow`
 
 Latest recorded opening decision for the current line:
 
-- chosen bump: `patch`
-- target exact candidate line: `v1.2.2`
-- rationale: the next line governs VS Code Marketplace publication as an
-  exact-release closeout follow-through surface by making the protected
-  back-merge of exact released `main` into `develop` part of the same release
-  closeout instead of a separately elicited later task
-- rationale: the same line hardens first-run installed-user guidance and
-  runtime-doctor recovery so machines without Docker installed or running do
-  not look like broken image-acquisition cases
-- rejected `minor`: the slice hardens and redirects an existing released
-  distribution surface instead of adding a new product capability
-- rejected `major`: no exact `v1.2.1` runtime or workflow contract is being
-  intentionally broken or removed
+- chosen bump: `minor`
+- target exact candidate line: `v1.3.0`
+- rationale: the next line adds a governed installed-user capability and
+  supported workflow by promoting host-default Windows local `LabVIEWCLI` with
+  bounded expert Docker instead of only hardening the exact released
+  Docker-only surface
+- rationale: the `v1.3.0` line keeps exact `v1.2.2` as the truthful published
+  baseline while opening the next candidate line required for runtime-provider
+  public publication work
+- rejected `patch`: the slice now opens a new governed capability line instead
+  of only hardening the already-published exact `v1.2.2` contract
+- rejected `major`: no exact `v1.2.2` public or maintainer contract is being
+  intentionally broken or removed; the published baseline remains intact until
+  the next candidate is actually published
 
 Strict SemVer rule after an exact release:
 
@@ -219,6 +231,11 @@ When sustainment-affecting truth changes, update these surfaces together:
   publication truth changes
 - `hosted-ci-governance.md` and `hosted-ci-governance.json` when hosted
   branch-protection or workflow responsibility changes
+- `windows-private-release-runner-lane.md` when the tagged Windows private-release
+  acceptance lane, runner identity, or retained evidence contract changes
+- `linux-assurance-runner-lane.md` when the separate Linux assurance runner
+  lane, external image-auth contract, or retained blocking/advisory assurance
+  lane ownership changes
 - SRS, RTM, and test plan when normative behavior changes
 - wiki coverage/publication ledgers when reader-facing authority changes
 - published wiki pages that represent the changed authority docs
@@ -234,7 +251,7 @@ Required branch-model and CI posture:
   owners land on the latest exact released line by default
 - protected-branch promotion uses required checks instead of direct operator
   trust
-- `feature/*` lanes target `develop`
+- `feature/*` lanes are cut from `develop` and merge back into `develop`
 - `npm run branch:governance:assert` shall fail closed before a new candidate
   line opens when `develop` does not yet contain the exact released `main`
   baseline, and `npm run design:gate` shall keep that assertion first in the
@@ -242,10 +259,12 @@ Required branch-model and CI posture:
 - exact release closeout remains incomplete until the exact released `main`
   line has been back-merged into `develop` through the protected path and the
   resulting `develop` pipeline is green
-- `release/*` lanes are cut from `develop`, validate the release candidate, and
-  merge to `main` plus back into `develop`
-- `hotfix/*` lanes are cut from `main`, fix one exact release line, and merge
-  to `main` plus back into `develop`
+- `release/*` lanes are cut from `develop`, validate the release candidate,
+  merge to `main`, merge back into `develop`, and are deleted only after both
+  merges complete
+- `hotfix/*` lanes are cut from `main`, fix one exact release line, merge to
+  `main`, merge back into `develop`, and are deleted only after both merges
+  complete
 - local public-source promotion/check binds the intended checkout through
   `--target-root` or `VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT` and fails closed
   when the target repo is dirty
@@ -254,6 +273,7 @@ Required branch-model and CI posture:
   - GitLab `docs_public_continuous_integration`
   - GitLab `docs_internal_continuous_integration`
   - GitLab `test_extension`
+  - GitLab `windows_private_release_acceptance`
   - GitLab `package_extension_preview`
   - GitHub `Public Facade Package Preview / package-preview`
   - GitHub `Public Facade Linux Smoke / public-facade-linux-smoke`
@@ -267,6 +287,36 @@ Hosted automation governance is now retained explicitly:
   `package-preview` and `public-facade-linux-smoke`
 - GitHub benchmark workflows are characterization-only experiment lanes and
   are not exact-release required checks
+- GitLab `windows_private_release_acceptance` now retains one bounded
+  host-native retry when the shared Windows cleanup seam fails before proof
+  execution, preserving `windows-private-release-evidence/host/proof-run-pre-recovery.txt`,
+  running `scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1`,
+  retaining `windows-private-release-evidence/host/proof-runtime-recovery.txt`,
+  and still failing closed after that single retry if the repo-owned recovery
+  step cannot restore a clean proof surface
+- GitLab runner upkeep now uses repo-owned apply and live drift-assert
+  surfaces:
+  `scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1` keeps the
+  scheduled task on ambient execution policy without `ExecutionPolicy Bypass`
+  and fails closed unless exactly one configured Windows runner manager
+  remains after apply; `scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1`
+  fails closed unless the installed bootstrap hash, exact scheduled-task
+  action plus logon trigger, `request_concurrency = 2`, and one live
+  configured Windows runner manager remain intact; while
+  `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh` fails closed
+  unless `vihs-linux-assurance-runner.service` finishes `enabled` and `active`;
+  `scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh` fails closed
+  unless the installed helper/service unit hashes, `request_concurrency = 2`,
+  admitted service fragment/user/working directory, and one live configured
+  Linux runner process remain intact; and the admitted Windows-host wrapper
+  for both lane assertions is `scripts/assertGovernedRunnerLanes.js` via
+  `npm run gitlab:runner:assert`; the operator-only Windows recovery rehearsal
+  wrapper is `scripts/runWindowsProofRuntimeRecoveryRehearsal.js` via
+  `npm run gitlab:runner:windows:recovery:rehearse`, and it fails closed
+  unless the admitted Windows host starts clean, seeds one headless LabVIEW
+  contamination, runs that same repo-owned recovery script, and refreshes the
+  latest retained rehearsal receipt at
+  `.cache/windows-proof-runtime-recovery-rehearsal/latest.json`
 - the authoritative matrix for those distinctions is:
   - `docs/product/hosted-ci-governance.md`
   - `docs/product/hosted-ci-governance.json`

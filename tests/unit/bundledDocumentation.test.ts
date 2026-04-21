@@ -14,13 +14,19 @@ const extensionUri = {
   fsPath: repoRoot
 };
 
+function normalizePathSeparators(input: string): string {
+  return input.replace(/\\/g, '/');
+}
+
 describe('bundled documentation', () => {
   it('retains a curated extension-user bundle instead of mirroring every published wiki page', async () => {
     const { manifest, manifestFilePath } = await readBundledDocumentationManifest(
       extensionUri as never
     );
 
-    expect(manifestFilePath).toMatch(/resources\/bundled-docs\/manifest\.json$/);
+    expect(normalizePathSeparators(manifestFilePath)).toMatch(
+      /resources\/bundled-docs\/manifest\.json$/
+    );
     expect(manifest.bundleAudience).toBe('extension-users');
     expect(manifest.defaultPageId).toBe('overview');
     expect(manifest.pages.map((page) => page.id)).toEqual([
@@ -49,10 +55,18 @@ describe('bundled documentation', () => {
     expect(loaded?.pageBodyHtml).toContain('<h2>Repository Support</h2>');
     expect(loaded?.pageBodyHtml).toContain('<h2>Primary Review Flow</h2>');
     expect(loaded?.pageBodyHtml).toContain('<h2>Comparison Report Flow</h2>');
-    expect(loaded?.pageBodyHtml).toContain('Comparison generation is Docker-only in the installed extension');
-    expect(loaded?.pageBodyHtml).toContain('the current Docker daemon engine selects the governed Windows image');
-    expect(loaded?.pageBodyHtml).toContain('the governed Linux image when <code>OSType=linux</code>');
-    expect(loaded?.pageBodyHtml).toContain('the extension hard-stops and does not probe host LabVIEW');
+    expect(loaded?.pageBodyHtml).toContain(
+      'Windows defaults to local <code>LabVIEWCLI</code> when the persisted provider is absent'
+    );
+    expect(loaded?.pageBodyHtml).toContain(
+      'Docker remains a bounded expert provider selected through the published install/bootstrap surface or later <code>vihs</code> updates'
+    );
+    expect(loaded?.pageBodyHtml).toContain(
+      'the current bundle is <code>ready</code>, <code>needs-image-acquisition</code>, or blocked'
+    );
+    expect(loaded?.pageBodyHtml).toContain(
+      'compare stops with next-step guidance instead of silently switching provider classes'
+    );
     expect(loaded?.pageBodyHtml).toContain('compare progress, selected provider, current engine, selected image, acquisition state, and next action stay visible');
     expect(loaded?.pageBodyHtml).not.toContain('Read Next');
     expect(loaded?.pageBodyHtml).not.toContain('data-external-href=');
@@ -66,8 +80,13 @@ describe('bundled documentation', () => {
     expect(loaded?.pageBodyHtml).toContain('VI History is available on any trusted Git repository that contains eligible LabVIEW VIs');
     expect(loaded?.pageBodyHtml).toContain('the checkbox-selected compare workflow is repo-agnostic');
     expect(loaded?.pageBodyHtml).toContain('The packaged guide is intentionally concise');
-    expect(loaded?.pageBodyHtml).toContain('the primary and only extension-user compare control');
-    expect(loaded?.pageBodyHtml).toContain('select the second retained revision to generate a comparison report automatically for that exact pair');
+    expect(loaded?.pageBodyHtml).toContain(
+      '<code>Checkboxes</code>: define the exact selected/base pair you want to compare'
+    );
+    expect(loaded?.pageBodyHtml).toContain(
+      '<code>Compare</code>: generates or reopens retained comparison evidence for the exact admitted pair'
+    );
+    expect(loaded?.pageBodyHtml).toContain('Review the explicit compare preflight section for the exact selected/base pair');
     expect(loaded?.pageBodyHtml).toContain('the oldest retained revision is still selectable as the older/base side of a checkbox-selected pair');
     expect(loaded?.pageBodyHtml).toContain('there is no separate dashboard or decision-record step in the extension-user compare flow');
     expect(loaded?.pageBodyHtml).not.toContain('<code>Diff prev</code>');
@@ -95,7 +114,15 @@ describe('bundled documentation', () => {
       extensionUri as never,
       'comparison-reports-and-dashboard-review'
     );
-    expect(comparisonLoaded?.pageBodyHtml).toContain('the primary compare path is selecting two retained revisions with the checkbox column');
+    expect(comparisonLoaded?.pageBodyHtml).toContain(
+      'use the checkbox column to select exactly two retained revisions'
+    );
+    expect(comparisonLoaded?.pageBodyHtml).toContain(
+      'there is no auto-run compare trigger on the second checkbox selection'
+    );
+    expect(comparisonLoaded?.pageBodyHtml).toContain(
+      'choose <code>Compare</code> to generate or reopen retained comparison evidence for that exact pair'
+    );
     expect(comparisonLoaded?.pageBodyHtml).toContain('white <code>Comparison context</code> block');
     expect(comparisonLoaded?.pageBodyHtml).toContain('selected/base commit hash, date, author, and subject facts');
     expect(comparisonLoaded?.pageBodyHtml).toContain('do not lead the embedded compare view');

@@ -33,16 +33,16 @@ source inference or chat memory.
 
 ## Latest Coherence Pass
 
-- Date: `2026-04-05`
+- Date: `2026-04-20`
 - Repo docs gate:
-  - command: `node scripts/run-docs-continuous-integration.js --skip-links`
+  - command: `node scripts/run-docs-gate.js`
   - result: `pass`
-- Repo design gate:
-  - command: `npm run design:gate`
-  - result: `pass`
+- Repo docs-workbench gate:
+  - command: `node scripts/runDocsWorkbenchDocker.js gate`
+  - result: `pass` on the Linux Docker engine
 - Standards-guided release gate:
   - command:
-    `python3 /mnt/c/Users/sveld/.codex/skills/repo-standards-review/scripts/run_assurance.py /home/sveld/code/standards/vi-history-suite --profile release-gate`
+    `py -3 "$env:USERPROFILE\\.codex\\skills\\repo-standards-review\\scripts\\run_assurance.py" . --profile release-gate`
   - result:
     `coverage PASS`, `cm PASS`, `req PASS`, `arch PASS`, `doc PASS`, `dod PASS`
 
@@ -64,6 +64,7 @@ source inference or chat memory.
 | DOC-009 | recurrence prevention | the repo had no automated docs-gate check that would fail when SRS/RTM/test-plan parity or the key research-facing dashboard/history traces drifted again | added `tests/unit/requirementsDocs.test.ts` to the repo-native docs gate and current-state surface so future drift fails closed in CI and local docs iteration |
 | DOC-010 | post-release control plane | the active post-release tranche, issue, and execution program were documented across queue, ship, README, current-state, `PROGRAM-0002`, and `ISSUE-0407`, but there was no dedicated docs-gate check to fail when those identities or the open Gate C-D truth drifted | added `tests/unit/postReleaseControlPlaneDocs.test.ts`, wired it into the docs gate, and reflected that gate in the current-state/docs-package control plane |
 | DOC-014 | installed-user docs CI and packaging freshness | the repo could prove authority-doc coherence yet still risk shipping stale bundled installed-user HTML or underemphasizing the Docker-first Windows execution truth that matters most to extension users | added a retained docs continuous-integration lane with installed-user truth checks, made `syncBundledDocs.js` deterministic on unchanged content, and wired `npm run package` to rerun `npm run docs:bundle` so stale bundled docs cannot ship through the governed package path |
+| DOC-015 | docs-workbench dependency isolation and control-plane follow-through | the Linux docs-workbench gate could inherit incompatible host-mounted optional bindings from the repo `node_modules`, and the higher-level ADR/current-state/coherence surfaces still described the older workbench contract | isolated a container-owned `node_modules` surface for the docs workbench, refreshed it from `package-lock.json`, reran the Linux workbench gate successfully, and aligned `ADR-0012`, current-state, and this ledger to the governed runtime-root and dependency-isolation contract |
 
 ## Current Internal Status
 
@@ -74,6 +75,10 @@ source inference or chat memory.
   installed-user execution-policy truth checks, the key research-facing
   history-panel/dashboard trace surfaces, and active post-release control-plane
   coherence for `TRANCHE-010` / `ISSUE-0407` / `PROGRAM-0002`.
+- The docs-workbench gate now passes on the active Linux Docker engine, and
+  the higher-level ADR/current-state/coherence surfaces now agree on
+  runtime-root resolution plus container-owned dependency refresh for the docs
+  authoring image.
 - The cross-repo jump surface now distinguishes authority repo, private GitHub
   experiment mirror, public facade, wiki repo, and assurance skill without
   confusing the experiment mirror with authority or public distribution.
@@ -87,19 +92,23 @@ source inference or chat memory.
 
 ## Residual External Risks
 
-- The companion `repo-standards-review` release is tagged locally as `v0.2.2`,
-  but GitLab release-publication proof could not be confirmed through the local
-  API path on this machine.
-- The docs-authoring image is fully wired in the repo and CI, but local Docker
-  runtime proof is still environment-dependent on this machine.
+- The companion `repo-standards-review` source of truth now splits cleanly:
+  the latest tagged release is `v0.2.18`, while the active rolling outer
+  assurance lane is `assurance-workbench:main`; older local references such as
+  `v0.2.2` are historical only.
+- The docs-authoring image is fully wired in the repo and CI, and the
+  repo-native workbench gate now passes on the active Linux Docker engine on
+  this machine, but future local proof still depends on Docker availability
+  and engine state.
 - `research-implementation-index.json` remains a curated capability-status
   surface rather than a full 1:1 requirement-trace database, so future audits
   should continue treating SRS plus RTM as the primary formal trace surfaces.
 
 ## Next Documentation Moves
 
-1. Keep the docs gate and standards-review release gate green after each
-   documentation tranche.
+1. Keep both `node scripts/run-docs-gate.js` and
+   `node scripts/runDocsWorkbenchDocker.js gate` green after docs-workbench or
+   control-plane changes, along with the standards-review release gate.
 2. Treat `tests/unit/requirementsDocs.test.ts` as the first stop when
    requirements, RTM, test-plan, or research-control-plane edits fail the docs
    gate, and widen that test rather than relying on ad hoc manual audits.

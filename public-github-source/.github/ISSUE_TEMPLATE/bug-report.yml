@@ -1,5 +1,5 @@
 name: Bug report
-description: Report a problem in the public VI History Suite product surface
+description: Report an install, settings, validation, or compare problem
 title: "[Bug]: "
 labels:
   - bug
@@ -7,34 +7,97 @@ body:
   - type: markdown
     attributes:
       value: |
-        Use this template for public product issues only. Do not include private GitLab control-plane material.
+        Use this template for public installed-user issues only. Do not include private GitLab control-plane material.
+        Before filing, keep the exact `vihs --validate` output and the command or UI step that failed.
+  - type: dropdown
+    id: install_route
+    attributes:
+      label: Install route
+      options:
+        - Marketplace install bootstrap on Windows PowerShell
+        - Exact released Marketplace line (`1.2.2`)
+        - Preview VSIX or other non-Marketplace package
+    validations:
+      required: true
   - type: input
     id: extension_version
     attributes:
       label: Extension version
-      description: Example `1.0.0` or preview VSIX version
+      description: Example `1.3.0` or preview VSIX version
     validations:
       required: true
-  - type: dropdown
-    id: host
-    attributes:
-      label: Host and Docker engine
-      options:
-        - Windows host + Linux engine
-        - Windows host + Windows engine
-        - Linux host
-    validations:
-      required: true
-  - type: input
-    id: docker_version
-    attributes:
-      label: Docker version
-      description: Output from `docker version`
   - type: input
     id: vscode_version
     attributes:
       label: VS Code version
       description: Output from `code --version`
+    validations:
+      required: true
+  - type: input
+    id: windows_and_powershell
+    attributes:
+      label: Windows and PowerShell version
+      description: Example Windows 11 24H2, PowerShell 7.5
+    validations:
+      required: true
+  - type: dropdown
+    id: failing_surface
+    attributes:
+      label: What command or surface failed?
+      options:
+        - Install bootstrap
+        - `vihs`
+        - `vihs --validate`
+        - `VI History` compare preflight
+        - `Compare`
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: workspace_trusted
+    attributes:
+      label: Was the VS Code workspace trusted?
+      options:
+        - "Yes"
+        - "No"
+        - Not sure
+    validations:
+      required: true
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Selected provider
+      options:
+        - host
+        - docker
+        - Not sure
+    validations:
+      required: true
+  - type: input
+    id: labview_year
+    attributes:
+      label: Selected LabVIEW year
+      description: Example `2026`
+  - type: dropdown
+    id: bitness
+    attributes:
+      label: Selected bitness
+      options:
+        - x64
+        - x86
+        - Not sure
+  - type: textarea
+    id: validate_output
+    attributes:
+      label: `vihs --validate` output
+      description: Paste the exact output, or say that you could not run it
+    validations:
+      required: true
+  - type: input
+    id: docker_details
+    attributes:
+      label: Docker details if relevant
+      description: Example `docker version` and `docker info --format '{{.OSType}}'`
   - type: textarea
     id: expected
     attributes:
@@ -51,6 +114,6 @@ body:
     id: reproduction
     attributes:
       label: Reproduction steps
-      description: Include whether this was a cold image pull or warm image run
+      description: Include the exact command, setting change, or compare step that reproduces the problem
     validations:
       required: true

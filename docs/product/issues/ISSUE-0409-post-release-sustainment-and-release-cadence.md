@@ -14,7 +14,7 @@ Activation is now satisfied:
 
 - `PROGRAM-0003` is now closed on the benchmark-proof packet under
   `TRANCHE-011`
-- `PROGRAM-0005` is active again under `TRANCHE-013`
+- `PROGRAM-0005` is active again under `TRANCHE-016`
 - `TRANCHE-012` is now the active queue tranche
 
 ## Scope
@@ -47,9 +47,12 @@ Activation is now satisfied:
   local-use documentation first instead of repo/fork/branch guidance
 - benchmark refresh cadence and image contract upkeep
 - operator-surface and documentation-workbench sustainment
+- repo-owned recovery plus live drift assertion surfaces for sustained
+  runner/operator contracts
 - post-release control-plane maintenance
 - not the active extension execution-contract program under `PROGRAM-0005`
-- not the reopened public-closeout rerun under `PROGRAM-0002`
+- not the historical Docker-only public closeout under `PROGRAM-0002`
+- not the runtime-provider public-acceptance gate record
 
 ## Non-Goals
 
@@ -60,7 +63,8 @@ Activation is now satisfied:
 
 - completed `PROGRAM-0003`
 - active `PROGRAM-0005`
-- reopened `PROGRAM-0002`
+- historical `PROGRAM-0002` closeout
+- explicit runtime-provider public-acceptance gate
 - truthful current-state and queue surfaces
 
 ## Acceptance Criteria
@@ -68,6 +72,9 @@ Activation is now satisfied:
 - sustainment operating rules are explicit in the control plane
 - release and benchmark refresh cadence are bounded and discoverable
 - operator/documentation upkeep has a governed maintenance path
+- sustained runner/operator lanes retain repo-owned apply, recovery, plus
+  live drift-assert surfaces instead of depending on host memory between
+  applies or mid-session operator intervention
 - future release lines carry an explicit SemVer-decision and branch-lane CI model
 - future governed findings either update the requirement package in the same
   slice or retain an explicit no-impact rationale
@@ -116,9 +123,16 @@ Activation is now satisfied:
 - keep extending the sustainment package when required release follow-through,
   such as the back-merge of exact `main` into `develop`, still depends on
   operator prompting instead of retained closeout rules
+- keep extending the sustainment package when admitted runner hosts have
+  repo-owned apply surfaces but still lack repo-owned live drift assertions
+  for their current installed state
+- keep extending the sustainment package when admitted Windows proof lanes
+  still need manual operator cleanup instead of a retained repo-owned
+  mid-session recovery surface
 - keep extending the sustainment package when exact-tag eligibility still
   depends on ad hoc manual review instead of a retained expert-agent review
   skill and no-findings verdict against the exact published public candidate
   surfaces
-- stop short of absorbing the active `PROGRAM-0005` or reopened `PROGRAM-0002`
-  work into generic sustainment language
+- stop short of absorbing the active `PROGRAM-0005`, the historical
+  `PROGRAM-0002` closeout, or the explicit runtime-provider public-acceptance
+  gate into generic sustainment language

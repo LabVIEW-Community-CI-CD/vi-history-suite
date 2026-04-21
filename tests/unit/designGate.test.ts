@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import * as path from 'node:path';
 
 import {
   assertCompletedPassingDesignGateReport,
@@ -13,13 +14,15 @@ import {
   extractWeakestCoverageFocus,
   extractAssuranceGateSummary,
   isMountedWindowsPath,
+  resolveDesignGateArgs,
+  resolveDesignGateCommand,
   renderDesignGateMarkdown,
   selectNextDevelopmentTranche
 } from '../../src/tooling/designGate';
 
 describe('designGate tooling', () => {
   it('builds the governed local design gate plan in the expected order', () => {
-    const plan = buildDesignGatePlan('/tmp/vi-history-suite', '/tmp/run_assurance.py');
+    const plan = buildDesignGatePlan('/tmp/vi-history-suite', '/tmp/run_assurance.py', 'linux');
 
     expect(plan).toEqual([
       {
@@ -68,6 +71,79 @@ describe('designGate tooling', () => {
     ]);
   });
 
+  it('uses native Windows entrypoints for npm and Python in the governed design gate plan', () => {
+    const plan = buildDesignGatePlan(
+      'C:/repo/vi-history-suite',
+      'C:/Users/sveld/.codex/skills/repo-standards-review/scripts/run_assurance.py',
+      'win32'
+    );
+
+    expect(plan).toEqual([
+      {
+        id: 'branch-governance-baseline',
+        title: 'Branch governance baseline',
+        command: 'cmd.exe',
+        args: ['/d', '/s', '/c', 'npm run branch:governance:assert']
+      },
+      {
+        id: 'design-contract',
+        title: 'Design contract',
+        command: 'cmd.exe',
+        args: ['/d', '/s', '/c', 'npm run test:design-contract']
+      },
+      {
+        id: 'unit-and-coverage',
+        title: 'Unit tests and coverage',
+        command: 'cmd.exe',
+        args: ['/d', '/s', '/c', 'npm run test']
+      },
+      {
+        id: 'extension-host-integration',
+        title: 'VS Code extension-host integration',
+        command: 'cmd.exe',
+        args: ['/d', '/s', '/c', 'npm run test:integration:windows']
+      },
+      {
+        id: 'canonical-harness-smoke',
+        title: 'Canonical harness smoke',
+        command: 'cmd.exe',
+        args: ['/d', '/s', '/c', 'npm run proof:run -- smoke']
+      },
+      {
+        id: 'documentation-continuous-integration',
+        title: 'Documentation continuous integration',
+        command: 'cmd.exe',
+        args: ['/d', '/s', '/c', 'npm run docs:ci:core']
+      },
+      {
+        id: 'standards-assurance',
+        title: 'Standards assurance',
+        command: 'python',
+        args: [
+          'C:/Users/sveld/.codex/skills/repo-standards-review/scripts/run_assurance.py',
+          'C:/repo/vi-history-suite',
+          '--profile',
+          'quick-triage'
+        ],
+        timeoutMs: 180000
+      }
+    ]);
+  });
+
+  it('resolves native command entrypoints deterministically for Linux and Windows', () => {
+    expect(resolveDesignGateCommand('npm', 'linux')).toBe('npm');
+    expect(resolveDesignGateCommand('python3', 'linux')).toBe('python3');
+    expect(resolveDesignGateCommand('npm', 'win32')).toBe('cmd.exe');
+    expect(resolveDesignGateCommand('python3', 'win32')).toBe('python');
+    expect(resolveDesignGateArgs('npm', ['run', 'test'], 'win32')).toEqual([
+      '/d',
+      '/s',
+      '/c',
+      'npm run test'
+    ]);
+    expect(resolveDesignGateArgs('python3', ['tool.py'], 'win32')).toEqual(['tool.py']);
+  });
+
   it('prefers explicit and Linux-local assurance script candidates before the Windows-mounted fallback', () => {
     expect(
       defaultAssuranceScriptPathCandidates('/home/tester', {
@@ -76,18 +152,26 @@ describe('designGate tooling', () => {
       })
     ).toEqual([
       '/opt/assurance/run_assurance.py',
-      '/workspace/codex/skills/repo-standards-review/scripts/run_assurance.py',
-      '/home/tester/.codex/skills/repo-standards-review/scripts/run_assurance.py',
+      path.join('/workspace/codex', 'skills', 'repo-standards-review', 'scripts', 'run_assurance.py'),
+      path.join('/home/tester', '.codex', 'skills', 'repo-standards-review', 'scripts', 'run_assurance.py'),
       '/mnt/c/Users/sveld/.codex/skills/repo-standards-review/scripts/run_assurance.py'
     ]);
   });
 
   it('derives deterministic repo-local mirror paths for the assurance skill and detects mounted Windows paths', () => {
     expect(designGateAssuranceMirrorRoot('/tmp/vi-history-suite')).toBe(
-      '/tmp/vi-history-suite/.cache/design-gate/assurance-skill/repo-standards-review'
+      path.join('/tmp/vi-history-suite', '.cache', 'design-gate', 'assurance-skill', 'repo-standards-review')
     );
     expect(designGateAssuranceMirrorScriptPath('/tmp/vi-history-suite')).toBe(
-      '/tmp/vi-history-suite/.cache/design-gate/assurance-skill/repo-standards-review/scripts/run_assurance.py'
+      path.join(
+        '/tmp/vi-history-suite',
+        '.cache',
+        'design-gate',
+        'assurance-skill',
+        'repo-standards-review',
+        'scripts',
+        'run_assurance.py'
+      )
     );
     expect(isMountedWindowsPath('/mnt/c/Users/sveld/.codex/skills/repo-standards-review/scripts/run_assurance.py')).toBe(true);
     expect(isMountedWindowsPath('/home/sveld/code/tools/repo-standards-review/scripts/run_assurance.py')).toBe(false);
@@ -105,16 +189,16 @@ describe('designGate tooling', () => {
 
   it('renders retained report paths and markdown summary deterministically', () => {
     expect(designGateReportJsonPath('/tmp/vi-history-suite')).toBe(
-      '/tmp/vi-history-suite/.cache/design-gate/latest-report.json'
+      path.join('/tmp/vi-history-suite', '.cache', 'design-gate', 'latest-report.json')
     );
     expect(designGateReportMarkdownPath('/tmp/vi-history-suite')).toBe(
-      '/tmp/vi-history-suite/.cache/design-gate/latest-report.md'
+      path.join('/tmp/vi-history-suite', '.cache', 'design-gate', 'latest-report.md')
     );
     expect(designGateCoverageSummaryPath('/tmp/vi-history-suite')).toBe(
-      '/tmp/vi-history-suite/coverage/coverage-summary.json'
+      path.join('/tmp/vi-history-suite', 'coverage', 'coverage-summary.json')
     );
     expect(designGateDevelopmentQueuePath('/tmp/vi-history-suite')).toBe(
-      '/tmp/vi-history-suite/docs/product/development-queue.json'
+      path.join('/tmp/vi-history-suite', 'docs', 'product', 'development-queue.json')
     );
 
     const markdown = renderDesignGateMarkdown({

@@ -23,14 +23,15 @@ describe('repo-agnostic checkbox workflow docs', () => {
       'ADR-0017-bounded-repo-family-support.md'
     );
 
-    for (const content of [readme, currentState, srs, rtm, testPlan, adr]) {
+    for (const content of [currentState, srs, rtm, testPlan, adr]) {
       expect(content).toContain('repo-agnostic');
     }
 
-    expect(readme).toContain('VI History is available in any trusted Git repository');
+    expect(readme).toContain('Open a trusted Git repo containing an eligible LabVIEW VI.');
+    expect(readme).toContain('review any public repo:');
     expect(currentState).toContain('Repo-agnostic support with governed-evidence depth');
-    expect(srs).toContain('generic repositories may use the core checkbox-selected compare flow');
-    expect(rtm).toContain('generic repositories may use the core checkbox-selected compare flow');
+    expect(srs).toContain('checkbox-selected compare flow');
+    expect(rtm).toContain('checkbox-selected compare flow');
     expect(testPlan).toContain('checkbox-selected compare flow available on generic repositories');
   });
 
@@ -48,11 +49,13 @@ describe('repo-agnostic checkbox workflow docs', () => {
     }
 
     expect(srs).toContain('at least two commits as sufficient');
-    expect(srs).toContain('only extension-user compare control');
+    expect(srs).toContain('explicit compare-preflight pair');
     expect(srs).toContain('oldest retained row explicitly selectable as the base side of a checkbox-selected compare');
     expect(rtm).toContain('two retained commits are enough to use VI History');
+    expect(rtm).toContain('explicit compare-preflight pair');
     expect(testPlan).toContain('checkbox-only');
-    expect(bundledSync).toContain('the primary and only extension-user compare control');
+    expect(bundledSync).toContain('`Checkboxes`: define the exact selected/base pair you want to compare');
+    expect(bundledSync).toContain('`Compare`: generates or reopens retained comparison evidence for the exact admitted pair');
     expect(bundledSync).toContain('the oldest retained revision is still selectable as the older/base side of a checkbox-selected pair');
     expect(bundledSync).not.toContain('review-scenarios-and-decision-records');
   });

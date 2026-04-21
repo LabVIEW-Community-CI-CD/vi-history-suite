@@ -63,13 +63,13 @@
   - canonical exact-pair diagnosis still adds its own selected/base pair rule:
     `--selected-hash` / `--base-hash` must form a full 40-character
     selected/base pair
-  - on the canonical Windows host, those explicit runtime paths must exist,
-    and host-native exact-pair diagnosis now blocks before launch when stale
-    `LabVIEW.exe` / `LabVIEWCLI.exe` / `LVCompare.exe` sessions or a
-    preexisting listener on the selected `LabVIEW.ini`-derived VI Server port
-    would contaminate the rerun
-  - explicit Windows runtime override paths now fail closed only when they
-    contradict the selected runtime bitness, while the canonical x86
+  - on the canonical Windows host, those explicit Windows proof-admission
+    runtime paths must exist, and host-native exact-pair diagnosis now blocks
+    before launch when stale `LabVIEW.exe` / `LabVIEWCLI.exe` / `LVCompare.exe`
+    sessions or a preexisting listener on the selected
+    `LabVIEW.ini`-derived VI Server port would contaminate the rerun
+  - explicit Windows proof-admission runtime paths now fail closed only when
+    they contradict the selected runtime bitness, while the canonical x86
     `LabVIEWCLI.exe` plus x64 `LabVIEW.exe` bundle remains admitted for
     governed host x64 proof
   - on the current canonical machine, only the x86 `LabVIEWCLI.exe` path
