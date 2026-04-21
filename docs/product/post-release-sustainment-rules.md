@@ -68,13 +68,13 @@ Current version-line contract:
 
 - retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`,
   `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`,
-  `v1.2.2`
+  `v1.2.2`, `v1.3.0`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.2.2`
-- current published package line on `main`: `1.2.2`
-- current develop package line on `develop`: `1.3.0`
-- active exact release candidate line on `develop`: `v1.3.0`
-- active release-candidate branch: `release/1.3.0`
+- current exact released line: `v1.3.0`
+- current published package line on `main`: `1.3.0`
+- current develop package line on `develop`: `1.3.1`
+- active exact release candidate line on `develop`: `v1.3.1`
+- active release-candidate branch: `release/1.3.1`
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
@@ -83,7 +83,24 @@ Current version-line contract:
 - hotfix branch family: `hotfix/*`
 - next-line branch model: `GitFlow`
 
-Latest recorded opening decision for the current line:
+Active opening decision that opens exact `v1.3.1`:
+
+- chosen bump: `patch`
+- target exact candidate line: `v1.3.1`
+- rationale: the next line hardens the published host-default Windows local
+  `LabVIEWCLI` workflow and retained live-session proof/control surfaces
+  without adding another governed capability line
+- rationale: exact `v1.3.0` remains the truthful published baseline while
+  `v1.3.1` opens on `develop` for `ISSUE-0414` proof-depth and
+  release-control follow-through
+- rejected `minor`: the remaining active work hardens and clarifies the
+  published `v1.3.0` host-default contract instead of adding another governed
+  capability line
+- rejected `major`: no exact `v1.3.0` public or maintainer contract is being
+  intentionally broken or removed; the published baseline remains supported
+  while `v1.3.1` opens
+
+Historical opening decision that opened exact `v1.3.0`:
 
 - chosen bump: `minor`
 - target exact candidate line: `v1.3.0`

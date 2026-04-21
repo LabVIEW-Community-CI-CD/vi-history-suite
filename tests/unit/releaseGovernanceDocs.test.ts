@@ -65,9 +65,9 @@ describe('release governance package', () => {
     expect(rules.releaseCadence.semverDecisionFramework.patch).toContain(
       'fixes or hardens an existing workflow, release rule, procedure, branch policy, or CI posture without breaking the exact released contract'
     );
-    expect(rules.releaseCadence.activeOpeningDecision.chosenBump).toBe('minor');
+    expect(rules.releaseCadence.activeOpeningDecision.chosenBump).toBe('patch');
     expect(rules.releaseCadence.activeOpeningDecision.targetDevelopCandidateReleaseLine).toBe(
-      'v1.3.0'
+      'v1.3.1'
     );
     expect(rules.releaseCadence.versionLineContract.publicDefaultBranch).toBe('main');
     expect(rules.operatorSurfaceSustainment.branchModel.model).toBe('gitflow');
@@ -127,12 +127,12 @@ describe('release governance package', () => {
     expect(adr8).toContain('vi-history-suite-expert-agent-reviewer');
     expect(adr8).toContain('exact tagging and Marketplace publication blocked until the latest');
     expect(hostedGovernance).toContain('# Hosted CI Governance');
-    expect(hostedGovernance).toContain('current `develop` package line: `1.3.0`');
-    expect(hostedGovernance).toContain('active exact release candidate line on `develop`: `v1.3.0`');
-    expect(hostedGovernance).toContain('active release-candidate branch: `release/1.3.0`');
-    expect(hostedGovernance).toContain('chosen bump: `minor`');
+    expect(hostedGovernance).toContain('current `develop` package line: `1.3.1`');
+    expect(hostedGovernance).toContain('active exact release candidate line on `develop`: `v1.3.1`');
+    expect(hostedGovernance).toContain('active release-candidate branch: `release/1.3.1`');
+    expect(hostedGovernance).toContain('chosen bump: `patch`');
     expect(hostedGovernance).toContain('npm run branch:governance:assert');
-    expect(hostedGovernanceJson.openingDecision.chosenBump).toBe('minor');
+    expect(hostedGovernanceJson.openingDecision.chosenBump).toBe('patch');
     expect(hostedGovernanceJson.authorityGitLab.mergeGate).toBe(
       'only_allow_merge_if_pipeline_succeeds'
     );

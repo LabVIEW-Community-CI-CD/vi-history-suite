@@ -6,25 +6,42 @@ Retain one governed hosted-automation matrix so GitLab authority pipelines,
 public GitHub required checks, and GitHub experiment workflows stop being
 raw-YAML-only truth.
 
-This document is the control-plane summary of the governed `1.3.0` exact-tag
-and Marketplace-closeout opening. The exact public release remains `v1.2.2`;
-`main` carries `1.2.2`, `develop` carries `1.3.0`, and the clean published-
-surface review gate has now reopened the protected closeout lane on
-`release/1.3.0`.
+This document is the control-plane summary of the governed `v1.3.0`
+exact-tag, public-release, Marketplace publication, and exact-closeout
+sequence. The exact public release now serves `v1.3.0`, `main` carries
+`1.3.0`, `develop` now carries `1.3.1` as the next candidate line, the
+Marketplace listing serves `1.3.0`, authority `main` `9587a99` is
+back-merged into `develop` `04b07bd`, the resulting `develop` pipeline
+`2467081960` is green, protected `develop` `0f4db5e` is now green through
+pipeline `2468407077`, and `release/1.3.1` is open from that merged-green
+state.
 
-## Opening Decision
+## Current Exact Closeout State
 
-- current exact release line: `v1.2.2`
-- current `main` package line: `1.2.2`
+- current exact release line: `v1.3.0`
+- current `main` package line: `1.3.0`
 - current `develop` package line: `1.3.0`
-- active exact release candidate line on `develop`: `v1.3.0`
-- active release-candidate branch: `release/1.3.0`
-- chosen bump: `minor`
-- rationale: this line opens a new governed installed-user capability and
-  supported workflow by promoting host-default Windows local `LabVIEWCLI`
-  with bounded expert Docker
-- rationale: exact `v1.2.2` remains the truthful published baseline while the
-  next public candidate and review gates are reopened on `v1.3.0`
+- active exact release candidate line on `develop`: none; exact `v1.3.0`
+  closeout is complete and the next SemVer line is not open yet
+- active release-candidate branch: none
+- protected back-merge proof: authority `main` `9587a99` into `develop`
+  `04b07bd`
+- resulting `develop` pipeline: `2467081960` `success`
+
+## Active Opening Decision For v1.3.1
+
+- current exact release line: `v1.3.0`
+- current `main` package line: `1.3.0`
+- current `develop` package line: `1.3.1`
+- active exact release candidate line on `develop`: `v1.3.1`
+- active release-candidate branch: `release/1.3.1`
+- chosen bump: `patch`
+- rationale: this line hardens the published host-default Windows local
+  `LabVIEWCLI` workflow and retained live-session proof/control surfaces
+  without opening another governed installed-user capability line
+- rationale: exact `v1.3.0` remains the truthful published baseline while the
+  `v1.3.1` patch line opens on `develop` for `ISSUE-0414` proof-depth and
+  release-control follow-through
 
 ## Branch Model
 
@@ -174,9 +191,9 @@ Design-gate boundary:
   governance-heavy slices
 - `npm run design:gate` now starts with `npm run branch:governance:assert`
   so the gate fails closed when `develop` has not yet absorbed exact `main`
-- exact release closeout also remains incomplete until the protected
-  back-merge of exact released `main` into `develop` and the resulting green
-  `develop` pipeline are retained as part of the same release follow-through
+- exact release closeout only becomes complete after the protected back-merge
+  of exact released `main` into `develop` and the resulting green `develop`
+  pipeline are retained as part of the same release follow-through
 - `npm run design:gate:assert-complete` remains the retained assertion surface
 - GitLab does not pretend that local design-gate proof is a GitHub-style named
   required check

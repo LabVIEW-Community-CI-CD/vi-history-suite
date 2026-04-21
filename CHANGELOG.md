@@ -8,6 +8,32 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.3.1] - 2026-04-20
+
+### Changed
+
+- `v1.3.0` remains the exact public release line on `main`, while `develop`
+  now carries `1.3.1` as the next exact candidate line
+- the `1.3.1` opening decision is now governed as a `patch` line because the
+  remaining active work hardens the published host-default Windows local
+  `LabVIEWCLI` workflow and retained live-session proof/control surfaces
+  without adding a new public workflow or breaking the exact `v1.3.0`
+  contract
+- the first `ISSUE-0414` implementation slice now aligns the installed
+  settings CLI, compare-preflight, and runtime-doctor guidance to the retained
+  conditional stale-result rule: review Compare or runtime validation again
+  after CLI updates and reload or restart only if the current session still
+  shows stale provider or runtime facts
+- the retained `ISSUE-0414` proof bundle now also carries and enforces
+  bidirectional provider-selection coverage plus explicit
+  alignment/baseline-switch receipts on latest-packet, policy-boundary, and
+  proof-receipt surfaces, and a fresh governed Windows proof receipt dated
+  `2026-04-21T06:48:16.064Z` satisfies that strengthened boundary on the
+  admitted host
+- exact `v1.3.0` closeout remains retained complete on authority, while
+  `v1.3.1` remains a pre-release candidate line that still requires current
+  public-candidate review plus later exact-release publication gates
+
 ## [1.3.0] - 2026-04-14
 
 ### Changed

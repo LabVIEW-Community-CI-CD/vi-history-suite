@@ -56,23 +56,25 @@ directly to the public GitHub source repo.
   mirror of the authority repo.
 - Public source publication shall be one-way: normalize in GitLab authority
   first, then promote outward.
-- Exact public `main` shall keep the exact released `v1.2.2` Docker-only
-  installed-user contract until a newer exact release is actually published.
-- Maintained public candidate heads on public `develop` may publish the opened
-  `v1.3.0` host-default Windows local `LabVIEWCLI` contract once that
-  candidate state is retained in
-  `docs/product/public-release-candidate.{md,json}`.
-- Public source publication shall not silently mix exact-release Docker-only
-  wording with `v1.3.0` candidate host-default wording on the same maintained
-  surface; the exact-release baseline and the maintained candidate lane shall stay explicit.
+- Exact public `main` shall keep the exact released `v1.3.0` host-default
+  Windows local `LabVIEWCLI` contract with bounded expert Docker until a newer
+  exact release is actually published.
+- The maintained public `develop` candidate for `v1.3.1` now publishes
+  `ab293d5`, and the current published candidate heads `ab293d5` / `141c39e`
+  are now `review-ready` in `docs/product/public-release-candidate.{md,json}`.
+- Public source publication shall not silently mix the exact-release
+  `v1.3.0` contract with any later candidate wording on the same maintained
+  surface; the exact-release baseline and any later candidate lane shall stay
+  explicit.
 - Public source publication shall be recorded in the dedicated public source
   publication ledger, not in the internal GitLab wiki ledger or the public
   GitHub wiki ledger.
-- Exact public `main` shall foreground the Docker-only installed extension
-  contract, public devcontainer/Codespaces support, and the checkbox-selected
-  two-commit compare flow.
-- Maintained public `develop` candidate publication may foreground the
-  host-default Windows local `LabVIEWCLI` contract plus bounded expert Docker
-  once the opened `v1.3.0` candidate line is the retained public candidate.
+- Exact public `main` shall foreground the host-default Windows local
+  `LabVIEWCLI` contract plus bounded expert Docker, public
+  devcontainer/Codespaces support, and the checkbox-selected two-commit
+  compare flow.
+- Maintained public `develop` candidate publication may foreground a later
+  candidate contract only after that later line becomes the retained public
+  candidate.
 - Internal benchmark governance, control-plane docs, and maintainer review
   material remain excluded from the published public source surface.

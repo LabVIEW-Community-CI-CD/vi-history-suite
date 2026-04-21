@@ -78,21 +78,18 @@ Installed-user help:
 
 ## Supported Today
 
-- exact released Marketplace line `1.2.2`: Docker-only and x64-only
-- maintained `develop` candidate line `1.3.0`: Windows PowerShell bootstrap
-  plus `vihs`, with default `host/windows/2026/x64`, local `LabVIEWCLI`, and
-  bounded expert Docker
-- for the exact released Docker-only line, install or start Docker Desktop or
-  Docker before the first compare
+- Windows defaults to local `LabVIEWCLI`
+- run `vihs --validate` before the first compare on a fresh machine
+- right-click a `.vi`, `.ctl`, or `.vit` file in the Explorer, or use the
+  editor-title `VI History` action, to start a comparison
+- if Docker is selected, install or start Docker Desktop or Docker before the
+  first compare
 - host Windows LabVIEW years `2020` through `2026` are selectable when they
   are installed locally
 - `docker/windows` is supported for `2026` `x64` only
 - Docker years before `2026` are unsupported
 - `docker/linux` for `2026` and `host/linux` are not currently implemented
 - blocked or unsupported paths fail closed with explicit next-step guidance
-- exact released baseline reminder:
-  install or start Docker Desktop or Docker before the first compare on the
-  Docker-only line
 
 ## Report A Problem Or Request Support
 
@@ -196,13 +193,26 @@ Authority release facts:
 
 - `SHIP-0001`: releasable `v0.2.0` VSIX product
 - landed ship tranche: `TRANCHE-009`
-- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`, `v1.2.2`
+- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`, `v1.2.2`, `v1.3.0`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.2.2`
-- current published package line on `main`: `1.2.2`
-- current develop package line on `develop`: `1.3.0`
-- active exact release candidate line on `develop`: `v1.3.0`
-- active release-candidate branch: `release/1.3.0`
+- current exact released line: `v1.3.0`
+- current published package line on `main`: `1.3.0`
+- current develop package line on `develop`: `1.3.1`
+- active exact release candidate line on `develop`: `v1.3.1`
+- active release-candidate branch: `release/1.3.1`
+- active Windows x64 private-release-prep slice: `release/1.3.1`
+- active Windows x64 private-release packet:
+  [docs/product/private-release-windows-x64-v1.3.1.md](./docs/product/private-release-windows-x64-v1.3.1.md)
+- active Windows x64 private-release packet JSON:
+  [docs/product/private-release-windows-x64-v1.3.1.json](./docs/product/private-release-windows-x64-v1.3.1.json)
+- current Windows x64 private GitLab release: `private-v1.3.1-windows-x64`
+- current private GitLab release URL:
+  `https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.1-windows-x64`
+- current Windows x64 private-release publish receipt:
+  `.cache/private-release-publish/latest/private-release-publish.json`
+- retained Windows x64 historical prior-line private-release packet: `v1.3.0`
+- fresh `v1.3.1` Windows host/container acceptance receipt set:
+  `windows-private-release-evidence/manifest.json`
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
@@ -219,7 +229,7 @@ Authority release facts:
 - `TRANCHE-010`: public-source facade and public-product acceptance is a closed tranche
 - active control-plane direction:
   [PROGRAM-0005](./docs/product/execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md),
-  `TRANCHE-012`, `TRANCHE-016`, and `ISSUE-0412`
+  `TRANCHE-012`, `TRANCHE-016`, `ISSUE-0412`, and `ISSUE-0414`
 - preview install surface: `preview-evidence/vi-history-suite-<version>.vsix`
 - governed tagged release artifact and release manifest live under
   `release-evidence/`

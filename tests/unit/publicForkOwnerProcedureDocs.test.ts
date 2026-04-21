@@ -60,9 +60,13 @@ describe('public fork-owner procedure docs', () => {
     expect(quickstartCollapsed).toContain('/workspaces/labview-icon-editor');
     expect(quickstartCollapsed).toContain('resource/plugins/lv_icon.vi');
     expect(quickstartCollapsed).toContain('VI History panel');
+    expect(quickstartCollapsed).toContain('Review the explicit compare preflight section');
+    expect(quickstartCollapsed).toContain('Choose `Compare`');
+    expect(quickstartCollapsed).toContain('compare does not auto-run when the second distinct checkbox is selected');
     expect(quickstartCollapsed).toContain('delete that fork and create it again');
     expect(quickstartCollapsed).toContain('do not repair the fork in place');
     expect(quickstartCollapsed).toContain('Only if Codespace setup was interrupted');
+    expect(quickstartCollapsed).not.toContain('triggers comparison generation automatically');
     expect(quickstartCollapsed).not.toContain('Vitest not found');
     expect(quickstartCollapsed).not.toContain(
       'If you already ran it before and want the latest upstream develop'
@@ -127,17 +131,17 @@ describe('public fork-owner procedure docs', () => {
 
     expect(installCollapsed).toContain('Refresh-Codespace-Repositories');
     expect(installCollapsed).toContain('Review-Public-LabVIEW-VI-Changes');
+    expect(installCollapsed).toContain('Fork Codespace Quickstart');
     expect(installCollapsed).toContain('npm run public:repo:clone');
-    expect(installCollapsed).toContain('brand new fork');
-    expect(installCollapsed).toContain('brand new Codespace');
-    expect(installCollapsed).toContain('reviewing the changes of a LabVIEW VI between two commits');
+    expect(installCollapsed).not.toContain('brand new fork');
+    expect(installCollapsed).not.toContain('brand new Codespace');
     expect(installCollapsed).not.toContain('Vitest not found');
     expect(readmeCollapsed).toContain('Review-Public-LabVIEW-VI-Changes');
-    expect(readmeCollapsed).toContain('npm run public:repo:clone');
-    expect(readmeCollapsed).toContain('brand new fork');
-    expect(readmeCollapsed).toContain('brand new Codespace');
+    expect(readmeCollapsed).toContain('Fork Codespace Quickstart');
     expect(readmeCollapsed).toContain('Refresh-Codespace-Repositories');
-    expect(readmeCollapsed).toContain('Hampel Software Engineering');
+    expect(readmeCollapsed).not.toContain('brand new fork');
+    expect(readmeCollapsed).not.toContain('brand new Codespace');
+    expect(readmeCollapsed).not.toContain('Hampel Software Engineering');
     expect(readmeCollapsed).not.toContain('Manual-Actor-Framework-Clone');
   });
 });

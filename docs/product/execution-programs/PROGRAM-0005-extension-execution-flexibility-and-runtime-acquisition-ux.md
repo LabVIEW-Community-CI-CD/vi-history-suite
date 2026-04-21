@@ -102,6 +102,18 @@ Current facts:
   extension-host lane on the current supported host and snapshots the latest
   probe packet, retained history receipt, policy-boundary receipt, and
   integration logs under `.cache/runtime-settings-live-session-proof/latest/`
+- the latest retained governed Windows proof receipt at
+  `.cache/runtime-settings-live-session-proof/latest/runtime-settings-live-session-proof.json`
+  was refreshed on `2026-04-21T06:48:16.064Z`; latest retained packet
+  `2026-04-21T06-45-35-068Z` now keeps
+  `liveUptakeObservation=in-session-updated`, `providerDrift=false`,
+  `historyReloadRequiredCount=0`, `historyInSessionUpdatedCount=2`,
+  `historyUnknownObservationCount=0`,
+  `historyStance=candidate-live-uptake-observed`,
+  `historyProofStatus=re-evaluation-required`, and
+  `providerSelectionCoverage=bidirectional-selection-observed` with explicit
+  retained host-plus-docker mutation coverage plus zero retained
+  alignment/baseline-switch unknowns or mismatches
 - the remaining CLI proof gap is now narrower: direct mutation safety and
   automatic live uptake around a live already-running VS Code session is still
   not end-to-end proven across all runtime facts; probe mutation safe-restore
@@ -125,8 +137,10 @@ Current facts:
   guidance as active truth while direct live-session uptake of updated settings
   remains only partially proven, with probe packet plus local packet-gate
   evidence now explicit
-- remaining work on this program is now narrower: live default-settings
-  uptake proof remains under active `ISSUE-0414`
+- no further `ISSUE-0414` implementation slice is currently required before
+  the next public candidate publication step; remaining work now moves to
+  authority/public reader-surface normalization and the next maintained public
+  candidate publication act
 - `PROGRAM-0002` remains historical Docker-only public-closeout truth; it is
   not the active gate for the next host-default installed contract
 - the retained branch handoff packet is

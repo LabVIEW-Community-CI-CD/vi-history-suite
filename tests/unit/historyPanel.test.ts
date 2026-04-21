@@ -149,7 +149,7 @@ describe('renderHistoryPanelHtml', () => {
       'Next action: review compare preflight, then choose Compare to surface the selected provider and any acquisition state here.'
     );
     expect(html).toContain(
-      'Next action: set viHistorySuite.labviewVersion and viHistorySuite.labviewBitness, then review compare preflight before choosing Compare.'
+      'Next action: use the generated settings CLI to set viHistorySuite.labviewVersion and viHistorySuite.labviewBitness, then review compare preflight before choosing Compare.'
     );
     expect(html).toContain(
       'Provider is read-only here. Use the generated settings CLI to update provider, LabVIEW version, or LabVIEW bitness when correction is required.'

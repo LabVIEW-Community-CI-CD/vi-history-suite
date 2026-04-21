@@ -11,14 +11,23 @@
 - The first retained exact-version release is `v0.2.0`, with retained artifact
   `vi-history-suite-0.2.0.vsix` and manifest
   `release-evidence/release-manifest.json`.
-- The current exact released line is `v1.2.2`.
+- The current exact released line is `v1.3.0`.
 - The burned exact released line is `v1.0.2`.
-- The current published package line on `main` is `1.2.2`.
-- The current develop package line on `develop` is `1.3.0`.
-- The active exact release candidate line on `develop` is `v1.3.0`.
-- The active release-candidate branch is `release/1.3.0`.
-- The retained Windows x64 private-release packet remains prep-only evidence
-  for `v1.3.0`; it does not imply exact tagging, public GitHub release,
+- The current published package line on `main` is `1.3.0`.
+- The current develop package line on `develop` is `1.3.1`.
+- The active exact release candidate line on `develop` is `v1.3.1`.
+- The active release-candidate branch is `release/1.3.1`.
+- The active Windows x64 private-release-prep slice is `release/1.3.1`.
+- The active Windows x64 private-release packet is:
+  - `docs/product/private-release-windows-x64-v1.3.1.md`
+  - `docs/product/private-release-windows-x64-v1.3.1.json`
+- The controlled `v1.3.1` Windows x64 private GitLab release is now published
+  at `https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.1-windows-x64`,
+  with the retained publish receipt at
+  `.cache/private-release-publish/latest/private-release-publish.json`.
+- Fresh local `v1.3.1` acceptance evidence remains retained at
+  `windows-private-release-evidence/manifest.json`.
+- That private-release act does not imply exact tagging, public GitHub release,
   `main` promotion, or VS Code Marketplace publication.
 - Windows x86 / 32-bit LabVIEW remains out of scope for that `v1.3.0`
   pre-release sequence; any retained x86 host evidence is characterization
@@ -28,7 +37,7 @@
   - `docs/product/private-release-windows-x64-v1.3.0.json`
 - The governed private-release publish surface for that sequence is:
   - `npm run gitlab:private-release:publish`
-  - current retained private-release tag: `private-v1.3.0-windows-x64`
+  - current retained private-release tag: `private-v1.3.1-windows-x64`
 - The governed Windows runner-lane contract for that prep sequence is:
   - `docs/product/windows-private-release-runner-lane.md`
 - The governed external assurance lane for that prep sequence is:
@@ -139,10 +148,10 @@
 
 ## Steps
 
-For the current `v1.3.0` Windows-only private-release line, run
-`npm run gitlab:private-release:publish` after the packet and validation pack
-are green so the controlled private GitLab release stays current before any
-exact/public `release/*` promotion begins.
+For the current `v1.3.1` Windows-only private-release line, the controlled
+GitLab release is retained at `private-v1.3.1-windows-x64` after the packet
+and validation pack are green; exact/public `release/*` promotion still stays
+separate afterward.
 
 1. Ensure branch promotion followed the governed branch model.
    - Before opening or promoting the next candidate line, run
@@ -342,15 +351,15 @@ exact/public `release/*` promotion begins.
   `13779604462`.
 - `v1.0.2` is retained as a burned release because the immutable tag published
   before the exact authority docs CI failure was discovered.
-- The current published package line on `main` is `1.2.2`, tracked in
+- The current published package line on `main` is `1.3.0`, tracked in
   `CHANGELOG.md`, and it should not rewrite the retained `v0.2.0`, `v1.0.0`,
   `v1.0.1`, burned `v1.0.2`, exact `v1.0.3`, exact `v1.0.4`, exact `v1.0.5`,
-  exact `v1.0.6`, exact `v1.1.0`, exact `v1.2.0`, `v1.2.1`, or exact
-  `v1.2.2` release
-  evidence.
-- The current develop package line on `develop` is `1.3.0`, the active exact
-  release candidate line on `develop` is `v1.3.0`, and no newer `release/*`
-  branch is active yet.
+  exact `v1.0.6`, exact `v1.1.0`, exact `v1.2.0`, exact `v1.2.1`, exact
+  `v1.2.2`, or exact `v1.3.0` release evidence.
+- The current develop package line on `develop` is `1.3.0`, exact `v1.3.0`
+  closeout is complete on authority `main` `9587a99` back-merged into
+  `develop` `04b07bd` with green pipeline `2467081960`, and no newer
+  `release/*` branch is active yet.
 - The packaged extension homepage now points installed users to the maintained
   public wiki home, while the repo root remains the source and control-plane
   surface.

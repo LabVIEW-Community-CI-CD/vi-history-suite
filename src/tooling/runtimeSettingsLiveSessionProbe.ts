@@ -31,6 +31,11 @@ export type RuntimeSettingsLiveSessionProofStatus =
   | 'not-fully-proven'
   | 're-evaluation-required';
 
+export type RuntimeSettingsLiveSessionProviderSelectionCoverage =
+  | 'bidirectional-selection-observed'
+  | 'single-provider-only'
+  | 'insufficient-evidence';
+
 export interface RuntimeSettingsLiveSessionProbeSummary {
   outcome: 'probed-runtime-settings-live-session';
   settingsFilePath?: string;
@@ -70,8 +75,18 @@ export interface RuntimeSettingsLiveSessionProbeSummaryWithPacket
   historyReloadRequiredCount: number;
   historyInSessionUpdatedCount: number;
   historyUnknownObservationCount: number;
+  mutationTargetHostCount: number;
+  mutationTargetDockerCount: number;
+  mutationTargetUnknownCount: number;
+  mutationTargetPersistedMatchCount: number;
+  mutationTargetPersistedMismatchCount: number;
+  mutationTargetPersistedUnknownCount: number;
+  mutationTargetBaselineChangedCount: number;
+  mutationTargetBaselineUnchangedCount: number;
+  mutationTargetBaselineUnknownCount: number;
   historyStance: RuntimeSettingsLiveSessionHistoryStance;
   historyProofStatus: RuntimeSettingsLiveSessionProofStatus;
+  providerSelectionCoverage: RuntimeSettingsLiveSessionProviderSelectionCoverage;
 }
 
 export function buildRuntimeSettingsLiveSessionProbeSummary(

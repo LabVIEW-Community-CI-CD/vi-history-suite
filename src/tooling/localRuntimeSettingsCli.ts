@@ -385,7 +385,7 @@ export async function runLocalRuntimeSettingsCli(
   );
   writeLine(
     deps.stdout ?? process.stdout,
-    'If this already-running VS Code session still shows stale provider or runtime facts after the CLI update, reload or restart the window and retry Compare or runtime validation.'
+    'Review Compare or runtime validation again after the CLI update. Reload or restart the window only if this already-running VS Code session still shows stale provider or runtime facts.'
   );
 
   return {

@@ -2,13 +2,13 @@
 <h2>Preconditions</h2>
 <p>The shipped extension-user workflow assumes:</p>
 <ul>
-<li>the extension is installed from the VS Code Marketplace, the current exact released VSIX, or a preview VSIX when you intentionally want the next candidate</li>
+<li>the extension is installed from the VS Code Marketplace, from <code>code --install-extension</code>, or from a VSIX</li>
 <li>the workspace is trusted</li>
 <li>the target file is a tracked LabVIEW VI in a Git repository</li>
 <li>at least two commits modify that VI</li>
-<li>for the exact released <code>main</code> path: Docker is installed and running on the current host, and <code>docker info</code> succeeds in the same session that launched VS Code</li>
-<li>for the maintained public <code>develop</code> candidate: the published Windows PowerShell bootstrap or a later <code>vihs</code> run persists the provider, LabVIEW version, and LabVIEW bitness bundle</li>
-<li>if VS Code was already open when the generated settings CLI changed the provider bundle, the window is reloaded or restarted before compare preflight is trusted</li>
+<li>the runtime has been selected with <code>vihs</code></li>
+<li><code>vihs --validate</code> has been run at least once on the current machine</li>
+<li>if Docker is selected, <code>docker info</code> succeeds in the same session that launched VS Code</li>
 </ul>
 <h2>Execution Policy</h2>
 <p>Comparison generation follows the current provider-explicit installed contract.</p>

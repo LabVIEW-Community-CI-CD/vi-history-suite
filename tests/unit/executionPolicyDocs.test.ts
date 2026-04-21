@@ -107,7 +107,7 @@ describe('execution-policy control plane', () => {
     expect(readme).toContain('TRANCHE-012');
     expect(readme).toContain('TRANCHE-016');
     expect(readme).toContain('ISSUE-0412');
-    expect(readme).toContain('Docker-only');
+    expect(readme).toContain('`docker/windows` is supported for `2026` `x64` only');
     expect(readme).toContain('local `LabVIEWCLI`');
     expect(readme).toContain('bounded expert Docker');
     expect(readme).toContain('install or start Docker Desktop or Docker');
@@ -130,7 +130,7 @@ describe('execution-policy control plane', () => {
     expect(currentState).toContain('assurance lane uses the published `repo-standards-review`');
     expect(currentState).toContain('assurance-workbench `:main` image');
     expect(currentState).toContain('latest tagged release remains `v0.2.18`');
-    expect(currentState).toContain('remaining active slices are the unresolved live active-settings');
+    expect(currentState).toContain('no further `ISSUE-0414` implementation slice is currently required');
     expect(currentState).toContain('`TRANCHE-012`: Post-release sustainment and release cadence');
     expect(currentState).toContain(
       '[PROGRAM-0005: Extension Execution Flexibility And Runtime Acquisition UX](./execution-programs/PROGRAM-0005-extension-execution-flexibility-and-runtime-acquisition-ux.md)'
@@ -220,7 +220,9 @@ describe('execution-policy control plane', () => {
     expect(program).toContain('local `LabVIEWCLI`');
     expect(program).toContain('TRANCHE-016');
     expect(program).toContain('Windows exact-runtime preflight is now landed');
-    expect(program).toContain('remaining work on this program is now narrower');
+    expect(program).toContain(
+      'no further `ISSUE-0414` implementation slice is currently required'
+    );
     expect(program).toContain('proves the `.cmd` launcher path');
     expect(program).toContain('APPDATA\\\\Code\\\\User\\\\settings.json');
     expect(program).toContain('current-host launcher execution against a temporary');

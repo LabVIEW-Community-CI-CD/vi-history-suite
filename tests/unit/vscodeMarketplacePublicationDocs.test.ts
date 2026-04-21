@@ -42,11 +42,11 @@ describe('vs code marketplace publication and installed-user docs', () => {
       'https://marketplace.visualstudio.com/items?itemName=svelderrainruiz.vi-history-suite'
     );
     expect(ledger.homepageUrl).toBe('https://github.com/svelderrainruiz/vi-history-suite/wiki');
-    expect(ledger.currentPublishedVersion).toBe('1.2.2');
+    expect(ledger.currentPublishedVersion).toBe('1.3.0');
     expect(ledger.currentVerificationSurface).toBe('official-gallery-extensionquery');
     expect(ledger.secretHandling).toContain('do-not-retain-pat');
 
-    expect(ledgerDoc).toContain('Current published Marketplace version: `1.2.2`');
+    expect(ledgerDoc).toContain('Current published Marketplace version: `1.3.0`');
     expect(ledgerDoc).toContain('manual-marketplace-portal-upload');
     expect(ledgerDoc).toContain('pinned-vsce-cli');
     expect(ledgerDoc).toContain('official gallery extension query');
@@ -88,7 +88,7 @@ describe('vs code marketplace publication and installed-user docs', () => {
     expect(pkg.homepage).toBe('https://github.com/svelderrainruiz/vi-history-suite/wiki');
 
     expect(readme).toContain('Install And Use');
-    expect(readme).toContain('You do not need to fork this repo, learn the branch model');
+    expect(readme).toContain('If you want to install the extension and use it locally, start here.');
     expect(readme).toContain('install-vihs-extension.ps1');
     expect(readme).toContain('vihs --validate');
     expect(readme).toContain('Report A Problem Or Request Support');
@@ -96,23 +96,22 @@ describe('vs code marketplace publication and installed-user docs', () => {
     expect(readme).toContain('LabVIEW version support request');
     expect(readme).toContain('Need Source Evaluation Or Contribution?');
 
-    expect(publicReadme).toContain('Install And Use');
-    expect(publicReadme).toContain('You do not need to fork this repo or choose a branch to use the extension locally.');
-    expect(publicReadme).toContain('install-vihs-extension.ps1');
+    expect(publicReadme).toContain('Install The Extension');
+    expect(publicReadme).toContain('code --install-extension svelderrainruiz.vi-history-suite');
     expect(publicReadme).toContain('vihs --validate');
     expect(publicReadme).toContain('Report A Problem Or Request Support');
-    expect(publicReadme).toContain('LabVIEW version support request');
-    expect(publicReadme).toContain('Need Source Evaluation Or Contribution?');
-    expect(publicReadme).toContain('Use `main` when you only need the latest exact released source.');
+    expect(publicReadme).toContain('LabVIEW Version Support Request');
+    expect(publicReadme).toContain('Evaluate From Source');
+    expect(publicReadme).toContain('Contribute');
 
-    expect(publicInstall).toContain('Installed Extension Start');
-    expect(publicInstall).toContain('You do not need to fork the repo for this path.');
+    expect(publicInstall).toContain('Install The Extension');
+    expect(publicInstall).toContain('First-Time Setup');
     expect(publicInstall).toContain("docker info --format '{{.OSType}}'");
-    expect(publicInstall).toContain('If those checks fail, install or start Docker before expecting image');
-    expect(publicInstall).toContain('Marketplace and exact-release users can stop after the installed-user flow above.');
+    expect(publicInstall).toContain('If those checks fail, correct provider, version, bitness, or Docker readiness');
+    expect(publicInstall).toContain('Use this lane only when you want to inspect the source repo');
     expect(publicSupport).toContain("docker info --format '{{.OSType}}'");
     expect(publicSupport).toContain(
-      'If the candidate host or Docker bundle is missing, contradictory, unsupported, or blocked, the product should fail closed with visible next-step guidance'
+      'if the selected host or Docker bundle is missing, contradictory, unsupported, or blocked, the product should fail closed with visible next-step guidance'
     );
     expect(publicBugReport).toContain('install, settings, validation, or compare problem');
     expect(publicBugReport).toContain('Install route');
@@ -128,38 +127,20 @@ describe('vs code marketplace publication and installed-user docs', () => {
     expect(publicIssueConfig).toContain('Install and release guide');
     expect(publicIssueConfig).toContain('User workflow');
 
-    expect(home).toContain('If You Installed The Extension');
-    expect(home).toContain('You do not need to fork the repo or learn the branch model for this path.');
-    expect(home).toContain('Windows defaults to local `LabVIEWCLI` when the persisted provider is absent');
+    expect(home).toContain('Install And Release');
+    expect(home).toContain('User Workflow');
+    expect(home).toContain('Comparison Reports And Dashboard Review');
     expect(home).toContain('Source Evaluation And Codespaces');
-    expect(home).toContain(
-      'When you are evaluating the next public candidate, use `develop` rather than GitHub\'s default `main` branch.'
-    );
-    expect(home).toContain(
-      'public `https://github.com/...` or `https://gitlab.com/...` target repo'
-    );
+    expect(home).toContain('Review Public LabVIEW VI Changes');
+    expect(home).toContain('Refresh Codespace Repositories');
 
-    expect(install).toContain('Installed Extension Users');
-    expect(install).toContain(
-      'retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`, `v1.2.2`'
-    );
-    expect(install).toContain('VS Code Marketplace listing');
-    expect(install).toContain('exact released VSIX from GitHub release `v1.2.2`');
+    expect(install).toContain('Install And Release');
+    expect(install).toContain('vihs --validate');
     expect(install).toContain("docker info --format '{{.OSType}}'");
-    expect(install).toContain(
-      'If those checks fail, correct provider, version, bitness, or Docker readiness before expecting Compare to run.'
-    );
-    expect(install).toContain('Use this lane only when you want to evaluate the source repo');
-    expect(install).toContain('Open the repo or your fork on `develop` in a devcontainer or Codespace.');
-    expect(install).toContain(
-      'That generic bootstrap is intentionally limited to public `https://github.com/...` and `https://gitlab.com/...` repository URLs.'
-    );
+    expect(install).toContain('Review Public LabVIEW VI Changes');
+    expect(install).toContain('Refresh Codespace Repositories');
 
-    expect(userWorkflow).toContain(
-      'the extension is installed from the VS Code Marketplace, the current exact released VSIX, or a preview VSIX when you intentionally want the next candidate'
-    );
-    expect(userWorkflow).toContain(
-      'the provider, LabVIEW year, and bitness are set through the published Windows PowerShell bootstrap or a later `vihs` run'
-    );
+    expect(userWorkflow).toContain('VI History');
+    expect(userWorkflow).toContain('Compare');
   });
 });

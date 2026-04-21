@@ -30,12 +30,12 @@ describe('hosted ci governance docs', () => {
 
     expect(matrix.openingDecision).toEqual(
       expect.objectContaining({
-        currentExactReleaseLine: 'v1.2.2',
-        currentMainPackageLine: '1.2.2',
-        currentDevelopPackageLine: '1.3.0',
-        activeDevelopCandidateReleaseLine: 'v1.3.0',
-        activeReleaseCandidateBranch: 'release/1.3.0',
-        chosenBump: 'minor'
+        currentExactReleaseLine: 'v1.3.0',
+        currentMainPackageLine: '1.3.0',
+        currentDevelopPackageLine: '1.3.1',
+        activeDevelopCandidateReleaseLine: 'v1.3.1',
+        activeReleaseCandidateBranch: 'release/1.3.1',
+        chosenBump: 'patch'
       })
     );
     expect(matrix.authorityGitLab.mergeGate).toBe('only_allow_merge_if_pipeline_succeeds');
@@ -207,16 +207,17 @@ describe('hosted ci governance docs', () => {
       })
     );
 
-    expect(matrixDoc).toContain('current exact release line: `v1.2.2`');
-    expect(matrixDoc).toContain('current `main` package line: `1.2.2`');
-    expect(matrixDoc).toContain('current `develop` package line: `1.3.0`');
-    expect(matrixDoc).toContain('active exact release candidate line on `develop`: `v1.3.0`');
-    expect(matrixDoc).toContain('active release-candidate branch: `release/1.3.0`');
-    expect(matrixDoc).toContain('chosen bump: `minor`');
+    expect(matrixDoc).toContain('current exact release line: `v1.3.0`');
+    expect(matrixDoc).toContain('current `main` package line: `1.3.0`');
+    expect(matrixDoc).toContain('current `develop` package line: `1.3.1`');
+    expect(matrixDoc).toContain('active exact release candidate line on `develop`: `v1.3.1`');
+    expect(matrixDoc).toContain('active release-candidate branch: `release/1.3.1`');
+    expect(matrixDoc).toContain('chosen bump: `patch`');
     expect(matrixDoc).toContain('npm run branch:governance:assert');
     expect(matrixDoc).toContain('merge gate: `only_allow_merge_if_pipeline_succeeds=true`');
     expect(matrixDoc).toContain('classification: characterization-only experiment automation');
-    expect(matrixDoc).toContain('back-merge of exact released `main` into `develop`');
+    expect(matrixDoc).toContain('protected back-merge');
+    expect(matrixDoc).toContain('resulting green `develop`');
     expect(matrixDoc).toContain('linux-assurance');
     expect(matrixDoc).toContain('`windows_private_release_acceptance`');
     expect(matrixDoc).toContain('`assurance_release_gate`');

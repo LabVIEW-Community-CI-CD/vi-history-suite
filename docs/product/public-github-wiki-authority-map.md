@@ -48,14 +48,16 @@ directly to the public user wiki.
 - The public GitHub wiki is a curated extension-user reader surface.
 - It shall not mirror the internal GitLab wiki wholesale.
 - Exact public release wiki pages and bundled installed-user docs shall keep
-  the exact released `v1.2.2` Docker-only installed-user contract until a
-  newer exact release is actually published.
-- Maintained public candidate wiki heads may publish the opened `v1.3.0`
-  host-default Windows local `LabVIEWCLI` contract once that candidate state
-  is retained in `docs/product/public-release-candidate.{md,json}`.
-- Public wiki publication shall not silently mix exact-release Docker-only
-  wording with `v1.3.0` candidate host-default wording on the same maintained
-  wiki head; exact-release and candidate surfaces shall stay explicit.
+  the exact released `v1.3.0` host-default Windows local `LabVIEWCLI`
+  contract with bounded expert Docker until a newer exact release is actually
+  published.
+- The maintained public candidate wiki head is now `141c39e`, the maintained
+  public `develop` candidate head now publishes `ab293d5`, and the current
+  published candidate heads `ab293d5` / `141c39e` are now `review-ready` in
+  `docs/product/public-release-candidate.{md,json}`.
+- Public wiki publication shall not silently mix the exact-release `v1.3.0`
+  wording with any later candidate wording on the same maintained wiki head;
+  exact-release and candidate surfaces shall stay explicit.
 - Public wiki publication must be recorded in the dedicated public publication
   ledger, not the internal GitLab wiki ledger.
 - Bundled installed-user documentation should stay aligned with the public user

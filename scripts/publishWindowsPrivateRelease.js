@@ -142,6 +142,10 @@ function resolvePrivateReleaseVsixPath(version) {
   return path.join('preview-evidence', `vi-history-suite-${version}.vsix`);
 }
 
+function resolvePrivateReleasePacketJsonPath(version) {
+  return path.join('docs', 'product', `private-release-windows-x64-v${version}.json`);
+}
+
 function resolvePrivateReleaseChecksumPath(vsixPath) {
   return `${vsixPath}.sha256`;
 }
@@ -233,7 +237,7 @@ function buildPrivateReleaseDescription(context) {
     `- SHA-256: \`${context.sha256}\``,
     `- Size: \`${context.sizeBytes}\` bytes`,
     '',
-    'This retained private release is the governed Windows-only v1.3.0 install surface for controlled testing before any exact public-release closeout.'
+    `This retained private release is the governed Windows-only v${context.versionLine} install surface for controlled testing before any exact public-release closeout.`
   ].join('\n');
 }
 
@@ -527,8 +531,9 @@ async function runPublishWindowsPrivateRelease(argv = process.argv.slice(2), dep
   ensureCleanWorktree(parsed.allowDirty, deps.spawnSync ?? spawnSync, repoRootPath);
 
   const packageManifest = readPackageManifest(repoRootPath, fsApi);
-  const packet = readPrivateReleasePacket(repoRootPath, DEFAULT_PACKET_JSON_PATH, fsApi);
   const version = packageManifest.version;
+  const packetJsonPath = resolvePrivateReleasePacketJsonPath(version);
+  const packet = readPrivateReleasePacket(repoRootPath, packetJsonPath, fsApi);
   if (packet?.packageEvidence?.versionLine !== version) {
     throw new Error(
       `Private-release packet version ${String(packet?.packageEvidence?.versionLine ?? '')} does not match package.json version ${version}.`
@@ -555,9 +560,10 @@ async function runPublishWindowsPrivateRelease(argv = process.argv.slice(2), dep
   const checksumAbsolutePath = path.join(repoRootPath, checksumRelativePath);
   const releaseDescription = buildPrivateReleaseDescription({
     releaseName,
+    versionLine: version,
     sourceBranch,
     commitSha,
-    packetJsonPath: DEFAULT_PACKET_JSON_PATH,
+    packetJsonPath,
     vsixFileName: path.basename(vsixRelativePath),
     sha256: 'pending',
     sizeBytes: 0
@@ -580,9 +586,10 @@ async function runPublishWindowsPrivateRelease(argv = process.argv.slice(2), dep
 
   const populatedDescription = buildPrivateReleaseDescription({
     releaseName,
+    versionLine: version,
     sourceBranch,
     commitSha,
-    packetJsonPath: DEFAULT_PACKET_JSON_PATH,
+    packetJsonPath,
     vsixFileName: path.basename(vsixRelativePath),
     sha256: metadata.sha256,
     sizeBytes: metadata.sizeBytes
@@ -704,6 +711,7 @@ module.exports = {
   resolvePrivateReleaseTag,
   resolvePrivateReleaseName,
   resolvePrivateReleaseVsixPath,
+  resolvePrivateReleasePacketJsonPath,
   resolvePrivateReleaseChecksumPath,
   resolveDirectAssetPath,
   buildBrowserReleaseUrl,

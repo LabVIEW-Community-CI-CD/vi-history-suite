@@ -143,13 +143,13 @@ describe('post-release sustainment rules package', () => {
 
     expect(rules.releaseCadence.model).toBe('event-driven');
     expect(rules.releaseCadence.versionLineContract).toEqual({
-      retainedExactVersionReleases: ['v0.2.0', 'v1.0.0', 'v1.0.1', 'v1.0.2', 'v1.0.3', 'v1.0.4', 'v1.0.5', 'v1.0.6', 'v1.1.0', 'v1.2.0', 'v1.2.1', 'v1.2.2'],
+      retainedExactVersionReleases: ['v0.2.0', 'v1.0.0', 'v1.0.1', 'v1.0.2', 'v1.0.3', 'v1.0.4', 'v1.0.5', 'v1.0.6', 'v1.1.0', 'v1.2.0', 'v1.2.1', 'v1.2.2', 'v1.3.0'],
       burnedExactVersionReleases: ['v1.0.2'],
-      currentExactReleaseLine: 'v1.2.2',
-      currentMainPackageLine: '1.2.2',
-      currentDevelopPackageLine: '1.3.0',
-      activeDevelopCandidateReleaseLine: 'v1.3.0',
-      activeReleaseCandidateBranch: 'release/1.3.0',
+      currentExactReleaseLine: 'v1.3.0',
+      currentMainPackageLine: '1.3.0',
+      currentDevelopPackageLine: '1.3.1',
+      activeDevelopCandidateReleaseLine: 'v1.3.1',
+      activeReleaseCandidateBranch: 'release/1.3.1',
       publicDefaultBranch: 'main',
       publicCodespaceBranch: 'develop',
       integrationBranch: 'develop',
@@ -242,14 +242,14 @@ describe('post-release sustainment rules package', () => {
     );
     expect(rules.releaseCadence.activeOpeningDecision).toEqual(
       expect.objectContaining({
-        chosenBump: 'minor',
-        targetDevelopCandidateReleaseLine: 'v1.3.0'
+        chosenBump: 'patch',
+        targetDevelopCandidateReleaseLine: 'v1.3.1'
       })
     );
     expect(rules.releaseCadence.activeOpeningDecision?.rationale).toEqual(
       expect.arrayContaining([
-        'the next line adds a governed installed-user capability and supported workflow by promoting host-default Windows local LabVIEWCLI with bounded expert Docker instead of only hardening the exact released Docker-only surface',
-        'the v1.3.0 line keeps exact v1.2.2 as the truthful published baseline while opening the next candidate line required for runtime-provider public publication work'
+        'the next line hardens the published host-default Windows local LabVIEWCLI workflow and retained live-session proof/control surfaces without adding another governed capability line',
+        'exact v1.3.0 remains the truthful published baseline while the v1.3.1 patch line opens on develop for ISSUE-0414 proof-depth and release-control follow-through'
       ])
     );
 
@@ -485,11 +485,11 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('## Benchmark Refresh Rules');
     expect(rulesDoc).toContain('## Operator And Documentation Upkeep Rules');
     expect(rulesDoc).toContain('public GitHub default branch: `main`');
-    expect(rulesDoc).toContain('current exact released line: `v1.2.2`');
-    expect(rulesDoc).toContain('current develop package line on `develop`: `1.3.0`');
-    expect(rulesDoc).toContain('active exact release candidate line on `develop`: `v1.3.0`');
-    expect(rulesDoc).toContain('active release-candidate branch: `release/1.3.0`');
-    expect(rulesDoc).toContain('chosen bump: `minor`');
+    expect(rulesDoc).toContain('current exact released line: `v1.3.0`');
+    expect(rulesDoc).toContain('current develop package line on `develop`: `1.3.1`');
+    expect(rulesDoc).toContain('active exact release candidate line on `develop`: `v1.3.1`');
+    expect(rulesDoc).toContain('active release-candidate branch: `release/1.3.1`');
+    expect(rulesDoc).toContain('chosen bump: `patch`');
     expect(rulesDoc).toContain('develop');
     expect(rulesDoc).toContain('protected exact-release line');
     expect(rulesDoc).toContain('required checks');

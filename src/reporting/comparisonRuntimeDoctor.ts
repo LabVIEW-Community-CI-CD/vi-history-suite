@@ -260,7 +260,7 @@ function deriveRuntimeDoctorNextAction(options: {
 }
 
 function buildRuntimeSettingsReloadAction(settingsAction: string, finalAction: string): string {
-  return `Next action: ${settingsAction}. Then ${finalAction}. If this already-running VS Code session still shows stale provider or runtime facts after the CLI update, reload or restart the window and try again.`;
+  return `Next action: ${settingsAction}. Then ${finalAction}. Review Compare or runtime validation again after the CLI update. Reload or restart the window only if this already-running VS Code session still shows stale provider or runtime facts.`;
 }
 
 function deriveRuntimeDoctorSettingsFreshnessNote(options: {
@@ -281,7 +281,7 @@ function deriveRuntimeDoctorSettingsFreshnessNote(options: {
     return undefined;
   }
 
-  return 'Settings freshness: if this already-running VS Code session still shows stale provider or runtime facts after the generated settings CLI update, reload or restart the window and retry.';
+  return 'Settings freshness: review Compare or runtime validation again after the generated settings CLI update. Reload or restart the window only if this already-running VS Code session still shows stale provider or runtime facts.';
 }
 
 function deriveRequestedProviderIntent(selection: {

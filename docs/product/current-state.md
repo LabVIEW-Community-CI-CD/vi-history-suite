@@ -154,14 +154,24 @@ Latest landed ship target:
 - retained release pipeline: `2428809456`
 - retained release job: `13779604462`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.2.2`
-- current published package line on `main`: `1.2.2`
-- current develop package line on `develop`: `1.3.0`
-- active exact release candidate line on `develop`: `v1.3.0`
-- active release-candidate branch: `release/1.3.0`
-- current Windows x64 private GitLab release: `private-v1.3.0-windows-x64`
+- current exact released line: `v1.3.0`
+- current published package line on `main`: `1.3.0`
+- current develop package line on `develop`: `1.3.1`
+- active exact release candidate line on `develop`: `v1.3.1`
+- active release-candidate branch: `release/1.3.1`
+- active Windows x64 private-release-prep slice: `release/1.3.1`
+- active Windows x64 private-release packet:
+  [private-release-windows-x64-v1.3.1.md](./private-release-windows-x64-v1.3.1.md)
+- active Windows x64 private-release packet JSON:
+  [private-release-windows-x64-v1.3.1.json](./private-release-windows-x64-v1.3.1.json)
+- current Windows x64 private GitLab release: `private-v1.3.1-windows-x64`
 - private GitLab release URL:
-  `https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.0-windows-x64`
+  `https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.1-windows-x64`
+- current Windows x64 private-release publish receipt:
+  `.cache/private-release-publish/latest/private-release-publish.json`
+- retained Windows x64 historical prior-line private-release packet: `v1.3.0`
+- fresh `v1.3.1` Windows host/container acceptance receipt set:
+  `windows-private-release-evidence/manifest.json`
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
@@ -229,16 +239,22 @@ Latest landed ship target:
 - current changelog: [CHANGELOG.md](../../CHANGELOG.md)
 - docs-workbench image: `registry.gitlab.com/svelderrainruiz/vi-history-suite/docs-authoring:main`
 - assurance-workbench image: `registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main`
-- remaining blockers: none on exact `v1.2.2`; public `main` publishes
-  `86b19a2`, the public GitHub release `v1.2.2` is live, the official gallery
-  extension query verifies Marketplace version `1.2.2` for
-  `svelderrainruiz.vi-history-suite`, and the latest retained expert-agent
-  verdict returned no findings on those exact published public release
-  surfaces; the next `v1.3.0` candidate now publishes public `develop`
-  `b1de8c5` plus public wiki head `fc6af3c`, the post-publication
-  expert-agent review now also retains no findings on those live candidate
-  heads, and the runtime-provider public-acceptance gate is now closed on that
-  published candidate pair
+- remaining blockers: exact `v1.3.0` remains closed cleanly; authority `main`
+  `9587a99` was back-merged into `develop` as `04b07bd` through the protected
+  path, the resulting `develop` pipeline `2467081960` is green, public
+  `main` publishes `0ea58af`, public GitHub release `v1.3.0` is live, the
+  official gallery extension query verifies Marketplace version `1.3.0` for
+  `svelderrainruiz.vi-history-suite`, the maintained public `develop`
+  candidate now publishes `ab293d5`, the last clean expert-agent-reviewed
+  public source/wiki heads remain `0f19f4b` / `53b5348`, the maintained
+  public wiki head now publishes `141c39e`, the exact published heads
+  `ab293d5` / `141c39e` closed the published-surface reopening gate cleanly,
+  authority exact-release reopening is now retained on `release/1.3.1` from
+  merged-green `develop` `0f4db5e` with green release-branch pipeline
+  `2468432598`, the controlled Windows x64 private GitLab release is now
+  published separately, and the next exact-release act is protected `main`
+  promotion because the latest expert-agent review on the exact published heads returned
+  `no findings; exact release / Marketplace publish may proceed`
 
 Current active and recently closed tranches:
 
@@ -408,12 +424,15 @@ Post-release tranches:
     surface so Marketplace users land on maintained local-use documentation
     first, while repo/fork/Codespaces procedures remain explicit secondary
     source-evaluation lanes
-  - the exact public `main` line now publishes `86b19a2`, the maintained
-    public `develop` candidate now publishes `b1de8c5`, the public wiki
-    candidate head now publishes `fc6af3c`, the VS Code Marketplace item
-    verifies `1.2.2`, and the later public candidate line is now reopened on
-    `v1.3.0` instead of remaining attached to the historical exact `1.2.2`
-    publication closeout
+  - the exact public `main` line now publishes `0ea58af`, the maintained
+    public `develop` candidate now publishes `ab293d5`, the last clean
+    expert-agent-reviewed public source/wiki heads remain `0f19f4b` /
+    `53b5348`, the maintained public wiki head now publishes `141c39e`, the
+    VS Code Marketplace item verifies `1.3.0`, and exact `v1.3.0` closeout is
+    now complete on authority `main` `9587a99` back-merged into `develop`
+    `04b07bd` with green pipeline `2467081960`; the next exact line is now
+    `v1.3.1` and is now `tag-eligible` for exact-release reopening on
+    published-surface grounds
   - sustainment does not absorb the active `TRANCHE-016` local-LabVIEWCLI
     contract reset, the historical `TRANCHE-010` Docker-only public closeout,
     or the runtime-provider public-acceptance gate record
@@ -538,6 +557,18 @@ Post-release tranches:
     extension-host lane on the current supported host and snapshots the latest
     probe packet, retained history receipt, policy-boundary receipt, and
     integration logs under `.cache/runtime-settings-live-session-proof/latest/`
+  - the latest retained governed Windows proof receipt at
+    `.cache/runtime-settings-live-session-proof/latest/runtime-settings-live-session-proof.json`
+    was refreshed on `2026-04-21T06:48:16.064Z`; its latest retained packet run
+    `2026-04-21T06-45-35-068Z` now satisfies the strengthened branch boundary
+    with `liveUptakeObservation=in-session-updated`,
+    `providerDrift=false`, `historyReloadRequiredCount=0`,
+    `historyInSessionUpdatedCount=2`, `historyUnknownObservationCount=0`,
+    `historyStance=candidate-live-uptake-observed`,
+    `historyProofStatus=re-evaluation-required`,
+    `providerSelectionCoverage=bidirectional-selection-observed`, explicit
+    retained host-plus-docker mutation coverage, and zero retained
+    alignment/baseline-switch unknowns or mismatches
   - the remaining CLI proof gap is now narrower: direct live mutation of the
     already-running VS Code session is not yet end-to-end proven on this line;
     probe mutation safe-restore is now fail-closed and locally proven, and
@@ -553,8 +584,10 @@ Post-release tranches:
     `v0.2.18`
   - the retained gate decision now keeps reload-or-restart guidance active
     while direct live-session uptake of updated settings remains unproven
-  - the remaining active slices are the unresolved live active-settings uptake
-    seam and later exact-release promotion once the candidate line is admitted
+  - no further `ISSUE-0414` implementation slice is currently required before
+    the next public candidate publication step; the remaining work on this
+    line is authority/public reader-surface retention and public-candidate
+    publication once the maintained public heads are ready to move
   - retained handoff packet:
     [issue-0412-promotion-and-publication-handoff.md](./issue-0412-promotion-and-publication-handoff.md)
   - explicit public-acceptance gate:
@@ -575,8 +608,14 @@ Post-release tranches:
 - `TRANCHE-014`: Public Codespaces public-repo bootstrap
   - closed issue: [ISSUE-0411 Public Codespaces Public-Repo Bootstrap](./issues/ISSUE-0411-public-codespaces-public-repo-bootstrap.md)
   - closed execution program: [PROGRAM-0006: Public Codespaces Public-Repo Bootstrap](./execution-programs/PROGRAM-0006-public-codespaces-public-repo-bootstrap.md)
-  - exact public `main` now publishes `v1.2.2`, while the later public
-    `develop` line is now reopened as the next exact candidate line `v1.3.0`
+  - exact public `main` now publishes `v1.3.0`, and the maintained public
+    `v1.3.1` `develop` line now publishes `ab293d5`, and the current
+    expert-agent review on the published source/wiki heads now reports
+    `no findings; exact release / Marketplace publish may proceed`, the
+    published-surface reopening gate is closed cleanly, authority exact-release
+    reopening is now retained on `release/1.3.1`, the controlled Windows x64
+    private GitLab release is now published separately, and protected `main`
+    promotion is the next separate act while Marketplace remains `1.3.0`
   - the first `1.2.0` correction repaired branch-governance admission by
     realigning exact `main` back into `develop` before feature work continues
   - the line now adds one generic public-repo bootstrap surface for public
@@ -584,9 +623,12 @@ Post-release tranches:
     helper path separate
   - Sergio's documented brand-new-fork and brand-new-Codespace rerun passes on
     `Examples/Logging with Helper-VIs.vi`, the exact public `main` line now
-    publishes `86b19a2`, and the maintained public wiki/reference-manual
-    package now publishes `fc6af3c` for the next `v1.3.0` candidate while the
-    exact `v1.2.2` closeout stays retained
+    publishes `0ea58af`, the maintained public `develop` candidate now
+    publishes `ab293d5`, the VS Code Marketplace listing now serves `1.3.0`,
+    the maintained public wiki/reference-manual package now publishes
+    `141c39e`, the last clean expert-agent-reviewed public source/wiki heads
+    remain `0f19f4b` / `53b5348`, and exact `v1.3.0` closeout is complete on
+    authority `develop` `04b07bd`
 
 Historical public closeout and runtime-provider public-acceptance gate record:
 
@@ -614,7 +656,7 @@ Historical public closeout and runtime-provider public-acceptance gate record:
     installed-user overview
   - the canonical Gate D blocker on `resource/plugins/lv_icon.vi` is retired,
     while `v1.0.2` is now retained as a burned exact release and the current
-    exact public GitHub release line is `v1.2.2`
+    exact public GitHub release line is `v1.3.0`
   - the public branch model is now explicit: `develop` is the integration and
     Codespaces-evaluation branch, `release/*` is the release-candidate lane,
     and `main` remains the protected exact-release line

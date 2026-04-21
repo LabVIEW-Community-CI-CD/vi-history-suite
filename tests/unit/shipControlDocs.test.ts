@@ -93,7 +93,7 @@ describe('ship-control direction system', () => {
     expect(matrix.activeIssueId).toBe('ISSUE-0406');
     expect(matrix.activeTrancheId).toBe('TRANCHE-009');
     expect(matrix.currentPackageVersion).toBe('0.2.0');
-    expect(pkg.version).toBe('1.3.0');
+    expect(pkg.version).toBe('1.3.1');
     expect(matrix.releaseTarget).toBe('v0.2.0');
     expect(matrix.targetVsixArtifact).toBe('vi-history-suite-0.2.0.vsix');
     expect(matrix.targetReleaseManifest).toBe('release-evidence/release-manifest.json');
@@ -200,13 +200,18 @@ describe('ship-control direction system', () => {
     expect(readme).toContain('npm run design:gate:assert-complete');
     expect(readme).toContain('- `SHIP-0001`: releasable `v0.2.0` VSIX product');
     expect(readme).toContain('- landed ship tranche: `TRANCHE-009`');
-    expect(readme).toContain('- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`, `v1.2.2`');
+    expect(readme).toContain('- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`, `v1.2.2`, `v1.3.0`');
     expect(readme).toContain('- burned exact release line: `v1.0.2`');
-    expect(readme).toContain('- current exact released line: `v1.2.2`');
-    expect(readme).toContain('- current published package line on `main`: `1.2.2`');
-    expect(readme).toContain('- current develop package line on `develop`: `1.3.0`');
-    expect(readme).toContain('- active exact release candidate line on `develop`: `v1.3.0`');
-    expect(readme).toContain('- active release-candidate branch: `release/1.3.0`');
+    expect(readme).toContain('- current exact released line: `v1.3.0`');
+    expect(readme).toContain('- current published package line on `main`: `1.3.0`');
+    expect(readme).toContain('- current develop package line on `develop`: `1.3.1`');
+    expect(readme).toContain('- active exact release candidate line on `develop`: `v1.3.1`');
+    expect(readme).toContain('- active release-candidate branch: `release/1.3.1`');
+    expect(readme).toContain('- active Windows x64 private-release-prep slice: `release/1.3.1`');
+    expect(readme).toContain('docs/product/private-release-windows-x64-v1.3.1.md');
+    expect(readme).toContain('docs/product/private-release-windows-x64-v1.3.1.json');
+    expect(readme).toContain('private-v1.3.1-windows-x64');
+    expect(readme).toContain('.cache/private-release-publish/latest/private-release-publish.json');
     expect(readme).toContain('- public GitHub default branch: `main`');
     expect(readme).toContain('- public Codespaces evaluation branch: `develop`');
     expect(readme).toContain('- integration branch: `develop`');
@@ -241,11 +246,16 @@ describe('ship-control direction system', () => {
     expect(currentState).toContain('- landed ship tranche: `TRANCHE-009`');
     expect(currentState).toContain('- retained release artifact: `vi-history-suite-0.2.0.vsix`');
     expect(currentState).toContain('- burned exact release line: `v1.0.2`');
-    expect(currentState).toContain('- current exact released line: `v1.2.2`');
-    expect(currentState).toContain('- current published package line on `main`: `1.2.2`');
-    expect(currentState).toContain('- current develop package line on `develop`: `1.3.0`');
-    expect(currentState).toContain('- active exact release candidate line on `develop`: `v1.3.0`');
-    expect(currentState).toContain('- active release-candidate branch: `release/1.3.0`');
+    expect(currentState).toContain('- current exact released line: `v1.3.0`');
+    expect(currentState).toContain('- current published package line on `main`: `1.3.0`');
+    expect(currentState).toContain('- current develop package line on `develop`: `1.3.1`');
+    expect(currentState).toContain('- active exact release candidate line on `develop`: `v1.3.1`');
+    expect(currentState).toContain('- active release-candidate branch: `release/1.3.1`');
+    expect(currentState).toContain('- active Windows x64 private-release-prep slice: `release/1.3.1`');
+    expect(currentState).toContain('[private-release-windows-x64-v1.3.1.md](./private-release-windows-x64-v1.3.1.md)');
+    expect(currentState).toContain('[private-release-windows-x64-v1.3.1.json](./private-release-windows-x64-v1.3.1.json)');
+    expect(currentState).toContain('private-v1.3.1-windows-x64');
+    expect(currentState).toContain('.cache/private-release-publish/latest/private-release-publish.json');
     expect(currentState).toContain('- public GitHub default branch: `main`');
     expect(currentState).toContain('- public Codespaces evaluation branch: `develop`');
     expect(currentState).toContain('- integration branch: `develop`');
@@ -303,12 +313,17 @@ describe('ship-control direction system', () => {
     expect(releaseProcedure).toContain('[release readiness matrix](./product/release-readiness-matrix.json)');
     expect(releaseProcedure).toContain('vi-history-suite-0.2.0.vsix');
     expect(releaseProcedure).toContain('release-evidence/release-manifest.json');
-    expect(releaseProcedure).toContain('current exact released line is `v1.2.2`');
+    expect(releaseProcedure).toContain('current exact released line is `v1.3.0`');
     expect(releaseProcedure).toContain('burned exact released line is `v1.0.2`');
-    expect(releaseProcedure).toContain("current published package line on `main` is `1.2.2`");
-    expect(releaseProcedure).toContain("current develop package line on `develop` is `1.3.0`");
-    expect(releaseProcedure).toContain('active exact release candidate line on `develop` is `v1.3.0`');
-    expect(releaseProcedure).toContain('The active release-candidate branch is `release/1.3.0`');
+    expect(releaseProcedure).toContain("current published package line on `main` is `1.3.0`");
+    expect(releaseProcedure).toContain("current develop package line on `develop` is `1.3.1`");
+    expect(releaseProcedure).toContain('active exact release candidate line on `develop` is `v1.3.1`');
+    expect(releaseProcedure).toContain('The active release-candidate branch is `release/1.3.1`');
+    expect(releaseProcedure).toContain('The active Windows x64 private-release-prep slice is `release/1.3.1`.');
+    expect(releaseProcedure).toContain('docs/product/private-release-windows-x64-v1.3.1.md');
+    expect(releaseProcedure).toContain('docs/product/private-release-windows-x64-v1.3.1.json');
+    expect(releaseProcedure).toContain('The controlled `v1.3.1` Windows x64 private GitLab release is now published');
+    expect(releaseProcedure).toContain('private-v1.3.1-windows-x64');
     expect(releaseProcedure).toContain('public GitHub default branch is `main`');
     expect(releaseProcedure).toContain('public Codespaces evaluation branch is `develop`');
     expect(releaseProcedure).toContain('integration branch is `develop`');
@@ -348,7 +363,9 @@ describe('ship-control direction system', () => {
     expect(bundledInstallPage).toContain(
       'VS Code Marketplace listing under <code>svelderrainruiz.vi-history-suite</code>'
     );
-    expect(bundledInstallPage).toContain('local package output via <code>npm run package</code>');
+    expect(bundledInstallPage).toContain(
+      '<code>code --install-extension svelderrainruiz.vi-history-suite</code>'
+    );
     expect(bundledInstallPage).toContain('exact released VSIX from the matching GitHub release');
     expect(bundledInstallPage).toContain(
       'packaged bundled docs through <code>VI History: Open Documentation</code>'
@@ -358,6 +375,7 @@ describe('ship-control direction system', () => {
     expect(bundledInstallPage).toContain('<h2>Release Procedure Summary</h2>');
     expect(bundledInstallPage).toContain('open <code>VI History</code> on an eligible VI');
     expect(bundledInstallPage).not.toContain('Retained exact release: <code>v0.2.0</code>');
+    expect(changelog).toContain('## [1.3.1] - 2026-04-20');
     expect(changelog).toContain('## [1.3.0] - 2026-04-14');
     expect(changelog).toContain('## [1.2.2] - 2026-04-07');
     expect(changelog).toContain('## [1.2.0] - 2026-04-07');
