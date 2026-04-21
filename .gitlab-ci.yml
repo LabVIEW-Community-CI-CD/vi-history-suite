@@ -100,13 +100,16 @@ docs_internal_continuous_integration:
     VIHS_ASSURANCE_IMAGE: registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main
   before_script:
     - |
+      export DOCKER_CONFIG="$(mktemp -d)"
+      chmod 700 "${DOCKER_CONFIG}"
+      trap 'rm -rf "${DOCKER_CONFIG}"' EXIT
       if [ -n "${VIHS_ASSURANCE_REGISTRY_USER}" ] && [ -n "${VIHS_ASSURANCE_REGISTRY_PASSWORD}" ]; then
         printf '%s' "${VIHS_ASSURANCE_REGISTRY_PASSWORD}" | docker login registry.gitlab.com --username "${VIHS_ASSURANCE_REGISTRY_USER}" --password-stdin
       elif [ -n "${VIHS_ASSURANCE_REGISTRY_USER}" ] || [ -n "${VIHS_ASSURANCE_REGISTRY_PASSWORD}" ]; then
         echo "VIHS_ASSURANCE_REGISTRY_USER and VIHS_ASSURANCE_REGISTRY_PASSWORD must be set together." >&2
         exit 1
       fi
-    - docker pull "${VIHS_ASSURANCE_IMAGE}"
+      docker pull "${VIHS_ASSURANCE_IMAGE}"
 
 assurance_release_gate:
   extends: .linux_assurance_runner
