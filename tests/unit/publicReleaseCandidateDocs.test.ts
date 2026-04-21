@@ -35,6 +35,16 @@ describe('public release candidate control surface', () => {
       publishedPublicWiki?: { publishedHeadCommit?: string; status?: string };
       candidateReadiness?: Record<string, string>;
       localProofs?: {
+        localInstalledVsixPreview?: {
+          status?: string;
+          version?: string;
+          vsixPath?: string;
+          checksumPath?: string;
+          sha256?: string;
+          sizeBytes?: number;
+          builtAt?: string;
+          buildCommand?: string;
+        };
         issue0414LiveSessionProof?: {
           status?: string;
           receiptPath?: string;
@@ -135,8 +145,8 @@ describe('public release candidate control surface', () => {
       ])
     );
     expect(candidate.publishedPublicSource).toMatchObject({
-      publishedCommit: '0ea58af',
-      status: 'published-exact-v1.3.0-main'
+      publishedCommit: 'ad351ed',
+      status: 'published-exact-v1.3.1-main'
     });
     expect(candidate.publicDevelopCandidate).toMatchObject({
       branch: 'develop',
@@ -150,13 +160,23 @@ describe('public release candidate control surface', () => {
     });
     expect(candidate.candidateReadiness).toMatchObject({
       authorityBaseline: 'v1.3.0-exact-closeout-complete-v1.3.1-opened-on-develop',
-      localInstalledVsix: 'not-yet-built-for-v1.3.1',
+      localInstalledVsix: 'built-v1.3.2-hotfix-preview-with-marketplace-icon-retained',
       historicalPublicRepoBootstrapBaseline: 'exact-v1.2.0-human-baseline-retained',
       authorityIssue0414ImplementationState: 'closed-clean-before-next-public-candidate-step',
       authorityIssue0414LiveSessionProof: 'fresh-governed-windows-proof-retained',
       publishedSurfaceExpertAgentReview: 'no-findings-on-current-v1.3.1-published-heads',
       runtimeProviderPublicAcceptanceGate: 'closed-on-published-v1.3.0-candidate-heads-retained',
-      exactPublicRelease: 'v1.3.0-github-release-and-marketplace-published'
+      exactPublicRelease: 'v1.3.1-github-release-published-marketplace-pending'
+    });
+    expect(candidate.localProofs?.localInstalledVsixPreview).toMatchObject({
+      status: 'passed',
+      version: '1.3.2',
+      vsixPath: 'preview-evidence/vi-history-suite-1.3.2.vsix',
+      checksumPath: 'preview-evidence/vi-history-suite-1.3.2.vsix.sha256',
+      sha256: '49CA509AC1F26F21200002DBB83DA46EBBED432CCAA2FC9F3056C16545734F68',
+      sizeBytes: 993985,
+      builtAt: '2026-04-21T16:26:55.5516553Z',
+      buildCommand: 'npm run package -- --out "preview-evidence/vi-history-suite-1.3.2.vsix"'
     });
     expect(candidate.localProofs?.issue0414LiveSessionProof).toMatchObject({
       status: 'passed',
@@ -192,12 +212,12 @@ describe('public release candidate control surface', () => {
       ])
     );
     expect(candidate.exactRelease).toMatchObject({
-      version: 'v1.3.0',
-      gitHubAssetName: 'vi-history-suite-1.3.0.vsix',
+      version: 'v1.3.1',
+      gitHubAssetName: 'vi-history-suite-1.3.1.vsix',
       marketplaceVersion: '1.3.0'
     });
     expect(candidate.exactReleaseReopening).toMatchObject({
-      status: 'reopened-on-authority-release-1.3.1-branch',
+      status: 'exact-tag-and-public-github-release-published-marketplace-pending',
       releaseBranch: 'release/1.3.1',
       mergedGreenDevelopCommit: '0f4db5e',
       mergedGreenDevelopPipelineId: 2468407077,
@@ -205,7 +225,10 @@ describe('public release candidate control surface', () => {
       releaseBranchCommit: '3fe766a',
       releaseBranchPipelineId: 2468432598,
       releaseBranchPipelineStatus: 'success',
-      nextSeparateAct: 'protected-main-promotion',
+      authorityMainCommit: 'a841a2f',
+      authorityTag: 'v1.3.1',
+      publicGitHubExactCommit: 'ad351ed',
+      nextSeparateAct: 'marketplace-publication',
       marketplaceVersionRetained: '1.3.0'
     });
     expect(candidate.historicalHumanProofs?.latestSubmission).toMatchObject({
@@ -251,9 +274,12 @@ describe('public release candidate control surface', () => {
     expect(candidate.activeBlockers).toEqual([]);
 
     expect(candidateMarkdown).toContain('Version line: `1.3.1`');
-    expect(candidateMarkdown).toContain('Published public source commit: `0ea58af`');
+    expect(candidateMarkdown).toContain('Published public source commit: `ad351ed`');
     expect(candidateMarkdown).toContain('Public `develop` candidate commit: `ab293d5`');
     expect(candidateMarkdown).toContain('Published public wiki head: `141c39e`');
+    expect(candidateMarkdown).toContain(
+      '`built-v1.3.2-hotfix-preview-with-marketplace-icon-retained`'
+    );
     expect(candidateMarkdown).toContain('`closed-clean-before-next-public-candidate-step`');
     expect(candidateMarkdown).toContain('`fresh-governed-windows-proof-retained`');
     expect(candidateMarkdown).toContain('Published-surface expert-agent review:');
@@ -285,29 +311,30 @@ describe('public release candidate control surface', () => {
     expect(candidateMarkdown).toContain(
       'Those prior findings are now folded into the current published candidate'
     );
-    expect(candidateMarkdown).toContain(
-      'closed the published-surface gate cleanly, and that `tag-eligible`'
-    );
-    expect(candidateMarkdown).toContain(
-      'separate later acts for `v1.3.1`'
-    );
+    expect(candidateMarkdown).toContain('the exact tag');
+    expect(candidateMarkdown).toContain('public GitHub exact release on');
     expect(candidateMarkdown).toContain(
       'private GitLab release for exact `v1.3.1`'
     );
+    expect(candidateMarkdown).toContain('preview-evidence/vi-history-suite-1.3.2.vsix');
+    expect(candidateMarkdown).toContain('preview-evidence/vi-history-suite-1.3.2.vsix.sha256');
     expect(candidateMarkdown).toContain(
-      'reopening state is now retained on authority `release/1.3.1` from'
+      '49CA509AC1F26F21200002DBB83DA46EBBED432CCAA2FC9F3056C16545734F68'
     );
+    expect(candidateMarkdown).toContain('VS Code Marketplace publication remains pending');
     expect(candidateMarkdown).toContain('Exact closeout is now retained complete');
 
     expect(currentState).toContain('current exact released line: `v1.3.0`');
+    expect(currentState).toContain('current published package line on `main`: `1.3.1`');
     expect(currentState).toContain('current develop package line on `develop`: `1.3.1`');
-    expect(currentState).toContain('active exact release candidate line on `develop`: `v1.3.1`');
+    expect(currentState).toContain('active exact release candidate line on `develop`: none');
+    expect(currentState).toContain('active exact hotfix candidate line on `main`: `v1.3.2`');
     expect(currentState).toContain('`ab293d5`');
     expect(currentState).toContain('`0f19f4b` / `53b5348`');
     expect(currentState).toContain('`141c39e`');
-    expect(currentState).toContain('public GitHub release `v1.3.0` is live');
-    expect(currentState).toContain('authority exact-release reopening is now retained on `release/1.3.1`');
-    expect(currentState).toContain('the next exact-release act is protected `main`');
+    expect(currentState).toContain('public GitHub exact release `v1.3.1` is live');
+    expect(currentState).toContain('the separate public GitHub exact release');
+    expect(currentState).toContain('Marketplace publication is the next separate act');
     expect(currentState).toContain('`no findings; exact release / Marketplace publish may proceed`');
 
     expect(srs).toContain('VHS-REQ-527');

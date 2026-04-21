@@ -33,11 +33,15 @@ describe('public Codespaces public-repo bootstrap docs', () => {
     expect(currentState).toContain('canonical `npm run public:fixture:icon-editor` helper-backed path');
     expect(currentState).toContain('generic `npm run public:repo:clone` surface');
     expect(currentState).toContain('current exact released line: `v1.3.0`');
-    expect(currentState).toContain('active exact release candidate line on `develop`: `v1.3.1`');
+    expect(currentState).toContain('active exact release candidate line on `develop`: none');
+    expect(currentState).toContain('active exact hotfix candidate line on `main`: `v1.3.2`');
     expect(currentState).toContain(
       'authority exact-release reopening is now retained on `release/1.3.1`'
     );
-    expect(currentState).toContain('the next exact-release act is protected `main`');
+    expect(currentState).toContain(
+      'the active exact hotfix lane is now'
+    );
+    expect(currentState).toContain('`hotfix/v1.3.2-marketplace-icon` from exact `main`');
 
     expect(candidate).toContain(
       'Decision: helper-backed canonical path plus generic public-repo reference manual'
@@ -49,7 +53,7 @@ describe('public Codespaces public-repo bootstrap docs', () => {
     expect(candidate).toContain('Published-surface expert-agent review:');
     expect(candidate).toContain('`no-findings-on-current-v1.3.1-published-heads`');
     expect(candidate).toContain('Required skill: `vi-history-suite-expert-agent-reviewer`');
-    expect(candidate).toContain('Exact public release: `v1.3.0-github-release-and-marketplace-published`');
+    expect(candidate).toContain('Exact public release: `v1.3.1-github-release-published-marketplace-pending`');
     expect(candidate).toContain('remains historical exact');
     expect(candidate).toContain('`v1.2.0` baseline evidence only');
     expect(candidate).toContain('Runtime-provider public-acceptance gate remains closed');

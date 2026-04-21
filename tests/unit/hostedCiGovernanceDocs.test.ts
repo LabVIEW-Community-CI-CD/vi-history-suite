@@ -31,10 +31,12 @@ describe('hosted ci governance docs', () => {
     expect(matrix.openingDecision).toEqual(
       expect.objectContaining({
         currentExactReleaseLine: 'v1.3.0',
-        currentMainPackageLine: '1.3.0',
+        currentMainPackageLine: '1.3.1',
         currentDevelopPackageLine: '1.3.1',
-        activeDevelopCandidateReleaseLine: 'v1.3.1',
-        activeReleaseCandidateBranch: 'release/1.3.1',
+        activeDevelopCandidateReleaseLine: null,
+        activeReleaseCandidateBranch: null,
+        activeHotfixCandidateReleaseLine: 'v1.3.2',
+        activeHotfixBranch: 'hotfix/v1.3.2-marketplace-icon',
         chosenBump: 'patch'
       })
     );
@@ -208,11 +210,14 @@ describe('hosted ci governance docs', () => {
     );
 
     expect(matrixDoc).toContain('current exact release line: `v1.3.0`');
-    expect(matrixDoc).toContain('current `main` package line: `1.3.0`');
+    expect(matrixDoc).toContain('current `main` package line: `1.3.1`');
     expect(matrixDoc).toContain('current `develop` package line: `1.3.1`');
-    expect(matrixDoc).toContain('active exact release candidate line on `develop`: `v1.3.1`');
-    expect(matrixDoc).toContain('active release-candidate branch: `release/1.3.1`');
+    expect(matrixDoc).toContain('active exact release candidate line on `develop`: none');
+    expect(matrixDoc).toContain('active release-candidate branch: none');
+    expect(matrixDoc).toContain('active exact hotfix candidate line on `main`: `v1.3.2`');
+    expect(matrixDoc).toContain('active hotfix branch: `hotfix/v1.3.2-marketplace-icon`');
     expect(matrixDoc).toContain('chosen bump: `patch`');
+    expect(matrixDoc).toContain('Active Opening Decision For v1.3.2');
     expect(matrixDoc).toContain('npm run branch:governance:assert');
     expect(matrixDoc).toContain('merge gate: `only_allow_merge_if_pipeline_succeeds=true`');
     expect(matrixDoc).toContain('classification: characterization-only experiment automation');

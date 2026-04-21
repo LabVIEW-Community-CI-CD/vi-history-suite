@@ -8,6 +8,18 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.3.2] - 2026-04-21
+
+### Changed
+
+- exact public GitHub `v1.3.1` remains immutable while VS Code Marketplace
+  still serves `1.3.0`, so `v1.3.2` opens as a governed hotfix line from
+  exact `main` instead of mutating the already-published `v1.3.1` GitHub
+  asset
+- the packaged extension surface now carries the first governed Marketplace
+  icon path at `resources/marketplace/vi-history-suite-icon.png` through the
+  extension manifest instead of relying on listing-only operator memory
+
 ## [1.3.1] - 2026-04-20
 
 ### Changed

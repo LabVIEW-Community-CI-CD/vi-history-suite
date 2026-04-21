@@ -7,14 +7,12 @@ public GitHub required checks, and GitHub experiment workflows stop being
 raw-YAML-only truth.
 
 This document is the control-plane summary of the governed `v1.3.0`
-exact-tag, public-release, Marketplace publication, and exact-closeout
-sequence. The exact public release now serves `v1.3.0`, `main` carries
-`1.3.0`, `develop` now carries `1.3.1` as the next candidate line, the
-Marketplace listing serves `1.3.0`, authority `main` `9587a99` is
-back-merged into `develop` `04b07bd`, the resulting `develop` pipeline
-`2467081960` is green, protected `develop` `0f4db5e` is now green through
-pipeline `2468407077`, and `release/1.3.1` is open from that merged-green
-state.
+exact-closeout plus the later `v1.3.1` exact-tag/public-GitHub-release
+sequence. The current exact-closeout baseline still remains `v1.3.0`, `main`
+now carries `1.3.1`, `develop` still carries `1.3.1`, the separate public
+GitHub exact release now serves `v1.3.1`, the Marketplace listing still
+serves `1.3.0`, and `hotfix/v1.3.2-marketplace-icon` is now the active
+hotfix lane from exact `main`.
 
 ## Current Exact Closeout State
 
@@ -28,20 +26,22 @@ state.
   `04b07bd`
 - resulting `develop` pipeline: `2467081960` `success`
 
-## Active Opening Decision For v1.3.1
+## Active Opening Decision For v1.3.2
 
 - current exact release line: `v1.3.0`
-- current `main` package line: `1.3.0`
+- current `main` package line: `1.3.1`
 - current `develop` package line: `1.3.1`
-- active exact release candidate line on `develop`: `v1.3.1`
-- active release-candidate branch: `release/1.3.1`
+- active exact release candidate line on `develop`: none
+- active release-candidate branch: none
+- active exact hotfix candidate line on `main`: `v1.3.2`
+- active hotfix branch: `hotfix/v1.3.2-marketplace-icon`
 - chosen bump: `patch`
-- rationale: this line hardens the published host-default Windows local
-  `LabVIEWCLI` workflow and retained live-session proof/control surfaces
-  without opening another governed installed-user capability line
-- rationale: exact `v1.3.0` remains the truthful published baseline while the
-  `v1.3.1` patch line opens on `develop` for `ISSUE-0414` proof-depth and
-  release-control follow-through
+- rationale: this line hardens the already-published exact package surface by
+  adding the missing Marketplace icon without opening another governed
+  installed-user capability line
+- rationale: public GitHub exact `v1.3.1` is already immutable while VS Code
+  Marketplace still serves `1.3.0`, so `v1.3.2` opens as a hotfix from
+  `main` instead of mutating the retained `v1.3.1` GitHub asset
 
 ## Branch Model
 

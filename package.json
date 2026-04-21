@@ -2,7 +2,7 @@
   "name": "vi-history-suite",
   "displayName": "VI History Suite",
   "description": "VS Code extension for content-detected LabVIEW VI history review in Git repositories.",
-  "version": "1.3.1",
+  "version": "1.3.2",
   "publisher": "svelderrainruiz",
   "license": "SEE LICENSE IN LICENSE",
   "private": true,
@@ -32,6 +32,7 @@
     "Other",
     "SCM Providers"
   ],
+  "icon": "resources/marketplace/vi-history-suite-icon.png",
   "main": "./out/extension.js",
   "files": [
     "out/**",

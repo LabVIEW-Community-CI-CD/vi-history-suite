@@ -4,6 +4,7 @@ import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 interface ExtensionManifest {
+  icon?: string;
   main?: string;
   browser?: string;
   extensionKind?: string[];
@@ -60,6 +61,7 @@ describe('extension manifest research alignment', () => {
       'CHANGELOG.md',
       'LICENSE'
     ]);
+    expect(manifest.icon).toBe('resources/marketplace/vi-history-suite-icon.png');
     expect(manifest.homepage).toBe('https://github.com/svelderrainruiz/vi-history-suite/wiki');
     expect(manifest.activationEvents).toContain('onCommand:labviewViHistory.open');
     expect(manifest.activationEvents).toContain(

@@ -33,6 +33,9 @@ type SustainmentRules = {
       currentMainPackageLine: string;
       currentDevelopPackageLine?: string;
       activeDevelopCandidateReleaseLine?: string | null;
+      activeReleaseCandidateBranch?: string | null;
+      activeHotfixCandidateReleaseLine?: string | null;
+      activeHotfixBranch?: string | null;
       publicDefaultBranch?: string;
       publicCodespaceBranch: string;
       integrationBranch?: string;
@@ -59,6 +62,7 @@ type SustainmentRules = {
     activeOpeningDecision?: {
       chosenBump?: string;
       targetDevelopCandidateReleaseLine?: string;
+      targetHotfixCandidateReleaseLine?: string;
       rationale?: string[];
       rejectedAlternatives?: Record<string, string>;
     };
@@ -146,10 +150,12 @@ describe('post-release sustainment rules package', () => {
       retainedExactVersionReleases: ['v0.2.0', 'v1.0.0', 'v1.0.1', 'v1.0.2', 'v1.0.3', 'v1.0.4', 'v1.0.5', 'v1.0.6', 'v1.1.0', 'v1.2.0', 'v1.2.1', 'v1.2.2', 'v1.3.0'],
       burnedExactVersionReleases: ['v1.0.2'],
       currentExactReleaseLine: 'v1.3.0',
-      currentMainPackageLine: '1.3.0',
+      currentMainPackageLine: '1.3.1',
       currentDevelopPackageLine: '1.3.1',
-      activeDevelopCandidateReleaseLine: 'v1.3.1',
-      activeReleaseCandidateBranch: 'release/1.3.1',
+      activeDevelopCandidateReleaseLine: null,
+      activeReleaseCandidateBranch: null,
+      activeHotfixCandidateReleaseLine: 'v1.3.2',
+      activeHotfixBranch: 'hotfix/v1.3.2-marketplace-icon',
       publicDefaultBranch: 'main',
       publicCodespaceBranch: 'develop',
       integrationBranch: 'develop',
@@ -243,13 +249,13 @@ describe('post-release sustainment rules package', () => {
     expect(rules.releaseCadence.activeOpeningDecision).toEqual(
       expect.objectContaining({
         chosenBump: 'patch',
-        targetDevelopCandidateReleaseLine: 'v1.3.1'
+        targetHotfixCandidateReleaseLine: 'v1.3.2'
       })
     );
     expect(rules.releaseCadence.activeOpeningDecision?.rationale).toEqual(
       expect.arrayContaining([
-        'the next line hardens the published host-default Windows local LabVIEWCLI workflow and retained live-session proof/control surfaces without adding another governed capability line',
-        'exact v1.3.0 remains the truthful published baseline while the v1.3.1 patch line opens on develop for ISSUE-0414 proof-depth and release-control follow-through'
+        'the next line hardens the already-published exact package surface by adding the missing Marketplace icon without changing the installed-user workflow or widening the governed capability line',
+        'public GitHub exact v1.3.1 is already immutable while VS Code Marketplace still serves 1.3.0, so v1.3.2 opens as a hotfix from main instead of mutating the retained v1.3.1 GitHub asset'
       ])
     );
 
@@ -486,10 +492,15 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('## Operator And Documentation Upkeep Rules');
     expect(rulesDoc).toContain('public GitHub default branch: `main`');
     expect(rulesDoc).toContain('current exact released line: `v1.3.0`');
+    expect(rulesDoc).toContain('current published package line on `main`: `1.3.1`');
     expect(rulesDoc).toContain('current develop package line on `develop`: `1.3.1`');
-    expect(rulesDoc).toContain('active exact release candidate line on `develop`: `v1.3.1`');
-    expect(rulesDoc).toContain('active release-candidate branch: `release/1.3.1`');
+    expect(rulesDoc).toContain('active exact release candidate line on `develop`: none');
+    expect(rulesDoc).toContain('active release-candidate branch: none');
+    expect(rulesDoc).toContain('active exact hotfix candidate line on `main`: `v1.3.2`');
+    expect(rulesDoc).toContain('active hotfix branch: `hotfix/v1.3.2-marketplace-icon`');
     expect(rulesDoc).toContain('chosen bump: `patch`');
+    expect(rulesDoc).toContain('Active opening decision that opens hotfix exact `v1.3.2`:');
+    expect(rulesDoc).toContain('Historical opening decision that opened exact `v1.3.1`:');
     expect(rulesDoc).toContain('develop');
     expect(rulesDoc).toContain('protected exact-release line');
     expect(rulesDoc).toContain('required checks');
