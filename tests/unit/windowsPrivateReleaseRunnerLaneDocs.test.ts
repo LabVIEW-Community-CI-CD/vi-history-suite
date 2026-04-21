@@ -23,6 +23,9 @@ describe('windows private release runner lane docs', () => {
     const packageManifest = readJson<{ scripts?: Record<string, string> }>('package.json');
 
     expect(gitlabCi).toContain('windows_private_release_acceptance:');
+    expect(gitlabCi).toContain('governed_runner_admission:');
+    expect(gitlabCi).toContain('stage: admission');
+    expect(gitlabCi).toContain('governed-runner-admission-evidence/');
     expect(gitlabCi).toContain('- windows');
     expect(gitlabCi).toContain('- docker-windows');
     expect(gitlabCi).toContain('npm run acceptance:windows:private-release');
@@ -42,14 +45,20 @@ describe('windows private release runner lane docs', () => {
     expect(runnerLaneDoc).toContain('request_concurrency = 2');
     expect(runnerLaneDoc).toContain('retries the repo-owned Linux assurance helper up to `12` times');
     expect(runnerLaneDoc).toContain('VIHS Governed Runner Lanes');
+    expect(runnerLaneDoc).toContain('C:\\GitLab-Runner\\receipts\\governed-runner-startup\\latest.json');
     expect(runnerLaneDoc).toContain('apply-governed-runner-lanes.ps1');
     expect(runnerLaneDoc).toContain('start-governed-runner-lanes.ps1');
+    expect(runnerLaneDoc).toContain('doctor-governed-runner-lanes.ps1');
     expect(runnerLaneDoc).toContain('assert-governed-runner-lanes.ps1');
     expect(runnerLaneDoc).toContain('recover-windows-proof-runtime-surface.ps1');
     expect(runnerLaneDoc).toContain('runWindowsProofRuntimeRecoveryRehearsal.js');
+    expect(runnerLaneDoc).toContain('scripts/doctorGovernedRunnerLanes.js');
+    expect(runnerLaneDoc).toContain('npm run gitlab:runner:doctor');
     expect(runnerLaneDoc).toContain('scripts/assertGovernedRunnerLanes.js');
     expect(runnerLaneDoc).toContain('npm run gitlab:runner:assert');
     expect(runnerLaneDoc).toContain('npm run gitlab:runner:windows:recovery:rehearse');
+    expect(runnerLaneDoc).toContain('governed_runner_admission');
+    expect(runnerLaneDoc).toContain('governed-runner-admission-evidence/runner-doctor.json');
     expect(runnerLaneDoc).toContain('-NoLogo -NoProfile -File');
     expect(runnerLaneDoc).not.toContain('ExecutionPolicy Bypass -File');
     expect(runnerLaneDoc).toContain('fails closed unless exactly one configured');
@@ -77,16 +86,21 @@ describe('windows private release runner lane docs', () => {
 
     expect(sustainmentDoc).toContain('windows-private-release-runner-lane.md');
     expect(sustainmentDoc).toContain('GitLab `windows_private_release_acceptance`');
+    expect(sustainmentDoc).toContain('GitLab `governed_runner_admission`');
     expect(sustainmentDoc).toContain('scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1');
     expect(sustainmentDoc).toContain('linux-assurance-runner-lane.md');
 
     expect(hostedGovernanceDoc).toContain('`windows_private_release_acceptance`');
+    expect(hostedGovernanceDoc).toContain('`governed_runner_admission`');
     expect(hostedGovernanceDoc).toContain('retains the canonical Windows x64 private-release acceptance evidence');
     expect(hostedGovernanceDoc).toContain('VIHS Governed Runner Lanes');
     expect(hostedGovernanceDoc).toContain('apply-governed-runner-lanes.ps1');
     expect(hostedGovernanceDoc).toContain('start-governed-runner-lanes.ps1');
+    expect(hostedGovernanceDoc).toContain('doctor-governed-runner-lanes.ps1');
     expect(hostedGovernanceDoc).toContain('assert-governed-runner-lanes.ps1');
     expect(hostedGovernanceDoc).toContain('runWindowsProofRuntimeRecoveryRehearsal.js');
+    expect(hostedGovernanceDoc).toContain('scripts/doctorGovernedRunnerLanes.js');
+    expect(hostedGovernanceDoc).toContain('npm run gitlab:runner:doctor');
     expect(hostedGovernanceDoc).toContain('scripts/assertGovernedRunnerLanes.js');
     expect(hostedGovernanceDoc).toContain('npm run gitlab:runner:assert');
     expect(hostedGovernanceDoc).toContain('npm run gitlab:runner:windows:recovery:rehearse');
@@ -132,11 +146,13 @@ describe('windows private release runner lane docs', () => {
             failurePolicy: 'fail-closed-before-runner-start'
           },
           repoOwnedBootstrapScript: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',
+          repoOwnedDoctorScript: 'scripts/gitlab-runner/windows/doctor-governed-runner-lanes.ps1',
           repoOwnedAssertScript: 'scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1',
           repoOwnedRecoveryScript:
             'scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1',
           repoOwnedRecoveryRehearsalScript: 'scripts/runWindowsProofRuntimeRecoveryRehearsal.js',
           repoOwnedLinuxHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
+          repoOwnedLinuxDoctorScript: 'scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh',
           linuxAssuranceBootstrap: {
             distro: 'Ubuntu',
             bootstrapCommand: '$HOME/gitlab-runner/start-linux-assurance.sh',
@@ -144,6 +160,28 @@ describe('windows private release runner lane docs', () => {
             wakeDelaySeconds: 10,
             failurePolicy: 'fail-closed-unless-linux-assurance-helper-observes-live-service'
           },
+          startupReceipt: {
+            latestPath: 'C:\\GitLab-Runner\\receipts\\governed-runner-startup\\latest.json',
+            schema: 'vi-history-suite/governed-runner-startup@v1',
+            requiredFacts: [
+              'duplicate-runner-collapse',
+              'cold-admission-runtime-cleanup',
+              'linux-helper-attempts',
+              'linux-helper-receipt-links',
+              'runner-process-count-after',
+              'healthy'
+            ]
+          },
+          doctorSurface: {
+            script: 'scripts/gitlab-runner/windows/doctor-governed-runner-lanes.ps1',
+            linuxDoctorScript: 'scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh',
+            wrapperScript: 'scripts/doctorGovernedRunnerLanes.js',
+            packageScript: 'npm run gitlab:runner:doctor',
+            failurePolicy:
+              'non-mutating-readback; combined surface may fail closed on drift when requested'
+          },
+          combinedDoctorScript: 'scripts/doctorGovernedRunnerLanes.js',
+          combinedDoctorPackageScript: 'npm run gitlab:runner:doctor',
           combinedAssertionScript: 'scripts/assertGovernedRunnerLanes.js',
           combinedAssertionPackageScript: 'npm run gitlab:runner:assert',
           recoveryRehearsal: {
@@ -173,6 +211,14 @@ describe('windows private release runner lane docs', () => {
         })
       })
     );
+    expect(hostedGovernanceJson.authorityGitLab.jobs.governed_runner_admission).toEqual(
+      expect.objectContaining({
+        classification: 'required-governance-check',
+        stage: 'admission',
+        packageScript: 'npm run gitlab:runner:doctor',
+        evidenceRoot: 'governed-runner-admission-evidence/'
+      })
+    );
     expect(
       hostedGovernanceJson.authorityGitLab.jobs.windows_private_release_acceptance
         .runtimeContaminationRecovery
@@ -189,6 +235,9 @@ describe('windows private release runner lane docs', () => {
 
     expect(packageManifest.scripts?.['acceptance:windows:private-release']).toBe(
       'node ./node_modules/typescript/bin/tsc -p . && node scripts/runWindowsPrivateReleaseAcceptance.js'
+    );
+    expect(packageManifest.scripts?.['gitlab:runner:doctor']).toBe(
+      'node scripts/doctorGovernedRunnerLanes.js'
     );
     expect(packageManifest.scripts?.['gitlab:runner:assert']).toBe(
       'node scripts/assertGovernedRunnerLanes.js'

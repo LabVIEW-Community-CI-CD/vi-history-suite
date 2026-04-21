@@ -12,6 +12,8 @@ host/container compare scenario.
 
 ## Governing Surfaces
 
+- fail-fast GitLab admission job before the assurance lanes:
+  `governed_runner_admission`
 - GitLab jobs:
   - `assurance_release_gate`
   - `assurance_26514_authority`
@@ -105,12 +107,18 @@ The governed host asset pack for this lane is versioned in the repo:
   `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh`
 - Linux helper script:
   `scripts/gitlab-runner/linux/start-linux-assurance.sh`
+- Linux doctor script:
+  `scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh`
 - Linux service unit:
   `scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service`
 - Linux drift assertion script:
   `scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh`
+- Cross-lane doctor wrapper from the admitted Windows host:
+  `scripts/doctorGovernedRunnerLanes.js` via `npm run gitlab:runner:doctor`
 - Cross-lane wrapper from the admitted Windows host:
   `scripts/assertGovernedRunnerLanes.js` via `npm run gitlab:runner:assert`
+- latest retained startup receipt:
+  `$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json`
 
 The Linux apply script is the repo-owned update surface for the admitted
 service contract. It first normalizes `~/.gitlab-runner/config.toml` to retain
@@ -131,8 +139,18 @@ The helper script remains the bounded cross-OS recovery surface invoked from
 the Windows logon bootstrap. It fails closed unless the admitted config still
 retains both concurrency facts and the paired `systemd` service reports
 `enabled`, `active`, and exactly one configured runner process before the
-Windows bootstrap continues. The service unit remains the admitted
+Windows bootstrap continues. It now also reconciles the live config back to
+the admitted dual-concurrency contract when post-reset drift is observed and
+writes a machine-readable startup receipt under
+`$HOME/gitlab-runner/receipts/linux-assurance-startup/` before declaring the
+Linux assurance surface healthy. The service unit remains the admitted
 steady-state lifecycle owner on the Linux host.
+
+The Linux doctor script is the repo-owned non-destructive readback surface for
+the admitted lane. It reports the live service state, configured concurrency,
+runner-process count, latest startup-receipt facts, and any drift issues
+without mutating host state. The combined wrapper can run that same doctor
+surface from the admitted Windows host and fail closed when requested.
 
 ## Apply Or Update On The Admitted Host
 
@@ -161,6 +179,25 @@ lane by running:
 ```powershell
 npm run gitlab:runner:assert -- --surface linux
 ```
+
+## Diagnose Live Host State
+
+From the repo root inside the admitted Ubuntu host:
+
+```bash
+bash ./scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh
+```
+
+From the admitted Windows host, the combined wrapper can diagnose this Linux
+lane or both lanes by running:
+
+```powershell
+npm run gitlab:runner:doctor -- --surface linux
+npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence
+```
+
+The second command is the fail-fast admission surface retained in GitLab job
+`governed_runner_admission`.
 
 ## Manual Registration Pack
 
@@ -205,6 +242,15 @@ Each retained evidence root shall include:
   checker JSON payload
 - any lane-specific rendered report such as `release-gate-scorecard.txt`,
   `documentation-proof.txt`, or `risk-register.txt`
+
+Post-reset operator receipts and doctor evidence are retained separately:
+
+- Linux startup receipt:
+  `$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json`
+- GitLab fail-fast admission evidence:
+  `governed-runner-admission-evidence/runner-doctor.json`
+- GitLab fail-fast admission summary:
+  `governed-runner-admission-evidence/runner-doctor.md`
 
 ## Stop Rules
 

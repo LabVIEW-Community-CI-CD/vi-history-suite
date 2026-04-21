@@ -203,6 +203,7 @@
         "dirty public-source/wiki worktrees are controlled publication surfaces: preserve unrelated dirt, patch overlapping maintained files narrowly, and pause only on direct unresolved conflicts"
       ],
       "requiredChecks": [
+        "governed_runner_admission",
         "docs_continuous_integration",
         "docs_public_continuous_integration",
         "docs_internal_continuous_integration",
@@ -213,11 +214,29 @@
         "Public Facade Linux Smoke / public-facade-linux-smoke"
       ],
       "governedLaneBehaviors": {
+        "governed_runner_admission": {
+          "stage": "admission",
+          "packageScript": "npm run gitlab:runner:doctor",
+          "command": "npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence",
+          "evidenceRoot": "governed-runner-admission-evidence/",
+          "failurePolicy": "fail-fast-before-docs-assurance-test-package-and-release-stages"
+        },
         "windows_private_release_acceptance": {
           "hostApplySurface": {
             "script": "scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1",
             "scheduledTaskAction": "powershell.exe -NoLogo -NoProfile -File \"C:\\GitLab-Runner\\start-governed-runner-lanes.ps1\"",
             "failurePolicy": "fail-closed-unless-exactly-one-configured-manager-after-apply"
+          },
+          "startupReceiptSurface": {
+            "script": "scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1",
+            "latestReceipt": "C:\\GitLab-Runner\\receipts\\governed-runner-startup\\latest.json",
+            "failurePolicy": "fail-closed-unless-bootstrap-refreshes-governed-startup-receipt"
+          },
+          "hostDoctorSurface": {
+            "script": "scripts/gitlab-runner/windows/doctor-governed-runner-lanes.ps1",
+            "wrapperScript": "scripts/doctorGovernedRunnerLanes.js",
+            "packageScript": "npm run gitlab:runner:doctor",
+            "failurePolicy": "non-mutating-readback; combined surface may fail closed on drift when requested"
           },
           "linuxAssuranceBootstrap": {
             "script": "scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1",
@@ -285,9 +304,21 @@
               "config-request-concurrency-two",
               "systemctl-is-enabled",
               "systemctl-is-active",
-              "exactly-one-configured-runner-process"
+              "exactly-one-configured-runner-process",
+              "writes-startup-receipt"
             ],
             "failurePolicy": "fail-closed-unless-wsl-bootstrap-observes-live-linux-assurance-service"
+          },
+          "startupReceiptSurface": {
+            "script": "scripts/gitlab-runner/linux/start-linux-assurance.sh",
+            "latestReceipt": "$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json",
+            "failurePolicy": "fail-closed-unless-helper-refreshes-governed-startup-receipt"
+          },
+          "hostDoctorSurface": {
+            "script": "scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh",
+            "wrapperScript": "scripts/doctorGovernedRunnerLanes.js",
+            "packageScript": "npm run gitlab:runner:doctor",
+            "failurePolicy": "non-mutating-readback; combined surface may fail closed on drift when requested"
           },
           "hostAssertionSurface": {
             "script": "scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh",

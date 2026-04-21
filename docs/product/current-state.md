@@ -189,23 +189,38 @@ Latest landed ship target:
 - `hotfix/*` branches are cut from `main`, merge into `main`, merge back into
   `develop`, and are deleted only after both merges complete
 - hosted automation governance matrix: [hosted-ci-governance.md](./hosted-ci-governance.md)
-- repo-owned runner host asset pack, apply surfaces, and live drift
-  assertions:
+- repo-owned runner host asset pack, startup receipts, doctor surfaces, apply
+  surfaces, and live drift assertions:
   - `scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1`
   - `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1`
+  - `scripts/gitlab-runner/windows/doctor-governed-runner-lanes.ps1`
   - `scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1`
   - `scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1`
   - `scripts/runWindowsProofRuntimeRecoveryRehearsal.js` via
     `npm run gitlab:runner:windows:recovery:rehearse`
   - `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh`
   - `scripts/gitlab-runner/linux/start-linux-assurance.sh`
+  - `scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh`
   - `scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service`
   - `scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh`
+  - `scripts/doctorGovernedRunnerLanes.js` via
+    `npm run gitlab:runner:doctor`
   - `scripts/assertGovernedRunnerLanes.js` via `npm run gitlab:runner:assert`
+  - latest Windows startup receipt:
+    `C:\GitLab-Runner\receipts\governed-runner-startup\latest.json`
+  - latest Linux startup receipt:
+    `$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json`
+  - fail-fast GitLab runner admission job: `governed_runner_admission`
+  - fail-fast GitLab runner admission command:
+    `npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence`
   - the Windows apply surface keeps the scheduled task on
     `powershell.exe -NoLogo -NoProfile -File "C:\GitLab-Runner\start-governed-runner-lanes.ps1"`
     without `ExecutionPolicy Bypass` and fails closed unless exactly one
     configured runner manager remains after apply
+  - the Windows bootstrap now writes a machine-readable startup receipt that
+    records duplicate-collapse, cold-admission cleanup, Linux-helper retry,
+    and receipt-link facts before the current-user runner contract is
+    considered healthy
   - the Windows drift assertion surface fails closed unless the installed
     bootstrap still matches the repo source, the scheduled task retains that
     exact action plus its logon trigger, `C:\GitLab-Runner\config.toml` still
@@ -219,6 +234,10 @@ Latest landed ship target:
     Linux assurance helper until it proves the paired
     `vihs-linux-assurance-runner.service` is `enabled`, `active`, and singular,
     failing closed otherwise
+  - the Linux helper now reconciles `~/.gitlab-runner/config.toml` back to
+    `concurrent = 2` plus `request_concurrency = 2`, restarts the admitted
+    `systemd` service when needed, and writes a machine-readable startup
+    receipt before it reports the Linux assurance surface healthy
   - the Linux apply surface installs the helper and service unit and fails
     closed unless `~/.gitlab-runner/config.toml` first retains
     `concurrent = 2` plus `request_concurrency = 2` and
@@ -230,6 +249,11 @@ Latest landed ship target:
     `request_concurrency = 2`, the admitted service fragment/user and working
     directory remain exact, the service is still `enabled` and `active`, and
     exactly one configured runner process is live
+  - the repo-owned doctor surfaces now read both live runner state and the
+    retained startup receipts, and the fail-fast
+    `governed_runner_admission` job runs those doctor surfaces in the
+    `admission` stage so docs, assurance, test, package, and release work do
+    not queue behind unreconciled post-reset runner drift
   - when the host-native Windows proof exits on that same cleanup seam, the
     acceptance wrapper retains
     `windows-private-release-evidence/host/proof-run-pre-recovery.txt`, runs

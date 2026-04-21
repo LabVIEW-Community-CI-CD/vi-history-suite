@@ -47,27 +47,39 @@
   - `docs/product/windows-private-release-runner-lane.md`
 - The governed external assurance lane for that prep sequence is:
   - `docs/product/linux-assurance-runner-lane.md`
+  - fail-fast admission job `governed_runner_admission`
+  - fail-fast admission evidence root `governed-runner-admission-evidence/`
   - blocking jobs `assurance_release_gate`, `assurance_26514_authority`,
     `assurance_requirements_quality`, and
     `assurance_external_user_information`
   - advisory job `assurance_audit_packet`
-- The repo-owned runner host asset pack, apply surfaces, and live drift
-  assertions for those lanes are:
+- The repo-owned runner host asset pack, startup receipts, doctor surfaces,
+  apply surfaces, and live drift assertions for those lanes are:
   - `scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1`
   - `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1`
+  - `scripts/gitlab-runner/windows/doctor-governed-runner-lanes.ps1`
   - `scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1`
   - `scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1`
   - `scripts/runWindowsProofRuntimeRecoveryRehearsal.js` via
     `npm run gitlab:runner:windows:recovery:rehearse`
   - `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh`
   - `scripts/gitlab-runner/linux/start-linux-assurance.sh`
+  - `scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh`
   - `scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service`
   - `scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh`
+  - `scripts/doctorGovernedRunnerLanes.js` via `npm run gitlab:runner:doctor`
   - `scripts/assertGovernedRunnerLanes.js` via `npm run gitlab:runner:assert`
+  - latest Windows startup receipt:
+    `C:\GitLab-Runner\receipts\governed-runner-startup\latest.json`
+  - latest Linux startup receipt:
+    `$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json`
 - The Windows apply surface keeps the scheduled task on
   `powershell.exe -NoLogo -NoProfile -File "C:\GitLab-Runner\start-governed-runner-lanes.ps1"`
   without `ExecutionPolicy Bypass` and fails closed unless exactly one
   configured runner manager remains after apply.
+- The Windows bootstrap writes a machine-readable startup receipt for duplicate
+  collapse, cold-admission cleanup, Linux-helper retry, and current-user
+  runner readiness before the governed Windows lane is treated as healthy.
 - The Windows drift assertion surface fails closed unless the installed
   bootstrap still matches the repo source, the scheduled task retains that
   exact action plus its logon trigger, `C:\GitLab-Runner\config.toml` still
@@ -81,6 +93,10 @@
   Linux assurance helper until it proves the paired
   `vihs-linux-assurance-runner.service` is `enabled`, `active`, and singular,
   failing closed otherwise.
+- The Linux helper now reconciles `~/.gitlab-runner/config.toml` back to
+  `concurrent = 2` plus `request_concurrency = 2`, restarts the admitted
+  `systemd` service when needed, and writes a machine-readable startup receipt
+  before it reports the Linux assurance surface healthy.
 - The Linux apply surface installs the helper and service unit and fails
   closed unless `~/.gitlab-runner/config.toml` first retains
   `concurrent = 2` plus `request_concurrency = 2` and
@@ -92,6 +108,11 @@
   admitted service fragment/user and working directory remain exact, the
   service is still enabled and active, and exactly one configured runner
   process is live.
+- The fail-fast `governed_runner_admission` job runs first in the GitLab
+  `admission` stage through
+  `npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence`
+  and blocks docs, assurance, test, package, and release stages whenever the
+  post-reset Windows or Linux runner contract drifts.
 - When the host-native Windows proof exits on that same cleanup seam, the
   acceptance wrapper retains
   `windows-private-release-evidence/host/proof-run-pre-recovery.txt`, runs
@@ -208,6 +229,10 @@ separate afterward.
      when one combined local report is more convenient.
 6. Run compile, test, coverage generation, and VSIX packaging through GitLab
    CI.
+   - the fail-fast `governed_runner_admission` lane now runs first in the
+     `admission` stage and retains `governed-runner-admission-evidence/`; do
+     not treat later pending stages as trustworthy until that doctor lane is
+     green
    - the blocking Linux assurance jobs now run through the repo-owned
      `npm run assurance:*` wrapper on the local authenticated self-hosted Linux
      runner lane, which pulls the latest published

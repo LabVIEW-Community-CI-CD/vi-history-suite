@@ -24,6 +24,9 @@ describe('linux assurance runner lane docs', () => {
     const packageManifest = readJson<{ scripts?: Record<string, string> }>('package.json');
 
     expect(gitlabCi).toContain('assurance_release_gate:');
+    expect(gitlabCi).toContain('governed_runner_admission:');
+    expect(gitlabCi).toContain('stage: admission');
+    expect(gitlabCi).toContain('npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence');
     expect(gitlabCi).toContain('assurance_26514_authority:');
     expect(gitlabCi).toContain('assurance_requirements_quality:');
     expect(gitlabCi).toContain('assurance_external_user_information:');
@@ -60,12 +63,19 @@ describe('linux assurance runner lane docs', () => {
     expect(runnerLaneDoc).toContain('vihs-linux-assurance-runner.service');
     expect(runnerLaneDoc).toContain('scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
     expect(runnerLaneDoc).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
+    expect(runnerLaneDoc).toContain('scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh');
     expect(runnerLaneDoc).toContain('scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service');
     expect(runnerLaneDoc).toContain('scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh');
+    expect(runnerLaneDoc).toContain('scripts/doctorGovernedRunnerLanes.js');
+    expect(runnerLaneDoc).toContain('npm run gitlab:runner:doctor');
     expect(runnerLaneDoc).toContain('scripts/assertGovernedRunnerLanes.js');
     expect(runnerLaneDoc).toContain('npm run gitlab:runner:assert');
+    expect(runnerLaneDoc).toContain('$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json');
+    expect(runnerLaneDoc).toContain('governed_runner_admission');
+    expect(runnerLaneDoc).toContain('governed-runner-admission-evidence/runner-doctor.json');
     expect(runnerLaneDoc).toContain('bash ./scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
     expect(runnerLaneDoc).toContain('bash ./scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh');
+    expect(runnerLaneDoc).toContain('bash ./scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh');
     expect(runnerLaneDoc).toContain('fails closed unless the configuration is normalized');
     expect(runnerLaneDoc).toContain('fails closed unless the installed helper');
     expect(runnerLaneDoc).toContain('separate from the Windows private-release proof lane');
@@ -77,10 +87,14 @@ describe('linux assurance runner lane docs', () => {
     expect(hostedGovernanceDoc).toContain('vihs-linux-assurance-runner.service');
     expect(hostedGovernanceDoc).toContain('scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
     expect(hostedGovernanceDoc).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
+    expect(hostedGovernanceDoc).toContain('scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh');
     expect(hostedGovernanceDoc).toContain('scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service');
     expect(hostedGovernanceDoc).toContain('scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh');
+    expect(hostedGovernanceDoc).toContain('scripts/doctorGovernedRunnerLanes.js');
+    expect(hostedGovernanceDoc).toContain('npm run gitlab:runner:doctor');
     expect(hostedGovernanceDoc).toContain('scripts/assertGovernedRunnerLanes.js');
     expect(hostedGovernanceDoc).toContain('npm run gitlab:runner:assert');
+    expect(hostedGovernanceDoc).toContain('governed_runner_admission');
     expect(hostedGovernanceDoc).toContain('windows-private-release');
     expect(hostedGovernanceJson.authorityGitLab.runnerLanes.linuxAssurance).toEqual(
       expect.objectContaining({
@@ -94,10 +108,32 @@ describe('linux assurance runner lane docs', () => {
           serviceUnit: 'vihs-linux-assurance-runner.service',
           repoOwnedApplyScript: 'scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh',
           repoOwnedHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
+          repoOwnedDoctorScript: 'scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh',
           repoOwnedServiceUnit: 'scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service',
           repoOwnedAssertScript: 'scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh',
+          combinedDoctorScript: 'scripts/doctorGovernedRunnerLanes.js',
+          combinedDoctorPackageScript: 'npm run gitlab:runner:doctor',
           combinedAssertionScript: 'scripts/assertGovernedRunnerLanes.js',
           combinedAssertionPackageScript: 'npm run gitlab:runner:assert',
+          startupReceipt: {
+            latestPath: '$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json',
+            schema: 'vi-history-suite/linux-assurance-startup@v1',
+            requiredFacts: [
+              'config-hash-before-after',
+              'service-state-before-after',
+              'global-concurrency-before-after',
+              'request-concurrency-before-after',
+              'runner-process-count-after',
+              'healthy'
+            ]
+          },
+          doctorSurface: {
+            script: 'scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh',
+            wrapperScript: 'scripts/doctorGovernedRunnerLanes.js',
+            packageScript: 'npm run gitlab:runner:doctor',
+            failurePolicy:
+              'non-mutating-readback; combined surface may fail closed on drift when requested'
+          },
           applyVerification: {
             requiredUser: 'sveld',
             requiredHome: '/home/sveld',
@@ -119,7 +155,8 @@ describe('linux assurance runner lane docs', () => {
               'config-request-concurrency-two',
               'systemctl-is-enabled',
               'systemctl-is-active',
-              'exactly-one-configured-runner-process'
+              'exactly-one-configured-runner-process',
+              'writes-startup-receipt'
             ],
             failurePolicy: 'fail-closed-unless-wsl-bootstrap-observes-live-linux-assurance-service'
           },
@@ -139,6 +176,14 @@ describe('linux assurance runner lane docs', () => {
             failurePolicy: 'fail-closed-on-live-host-drift'
           }
         })
+      })
+    );
+    expect(hostedGovernanceJson.authorityGitLab.jobs.governed_runner_admission).toEqual(
+      expect.objectContaining({
+        classification: 'required-governance-check',
+        stage: 'admission',
+        packageScript: 'npm run gitlab:runner:doctor',
+        evidenceRoot: 'governed-runner-admission-evidence/'
       })
     );
     expect(hostedGovernanceJson.authorityGitLab.jobs.assurance_audit_packet.classification).toBe(
@@ -168,6 +213,9 @@ describe('linux assurance runner lane docs', () => {
     );
     expect(packageManifest.scripts?.['gitlab:runner:assert']).toBe(
       'node scripts/assertGovernedRunnerLanes.js'
+    );
+    expect(packageManifest.scripts?.['gitlab:runner:doctor']).toBe(
+      'node scripts/doctorGovernedRunnerLanes.js'
     );
   });
 });

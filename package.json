@@ -170,6 +170,7 @@
     "gitlab:git-credential:refresh": "node scripts/refreshLocalGitLabGitCredential.js",
     "gitlab:private-release:publish": "node scripts/publishWindowsPrivateRelease.js",
     "gitlab:runner:assert": "node scripts/assertGovernedRunnerLanes.js",
+    "gitlab:runner:doctor": "node scripts/doctorGovernedRunnerLanes.js",
     "gitlab:runner:windows:recovery:rehearse": "npm run compile && node scripts/runWindowsProofRuntimeRecoveryRehearsal.js",
     "branch:governance:assert": "node scripts/assertGovernedBranchBaseline.js",
     "public:host:bootstrap-linux": "node scripts/bootstrapLinuxVsCodeHost.js install",

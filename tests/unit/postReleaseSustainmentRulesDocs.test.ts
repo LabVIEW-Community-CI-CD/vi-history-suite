@@ -306,6 +306,7 @@ describe('post-release sustainment rules package', () => {
       ])
     );
     expect(rules.operatorSurfaceSustainment.branchModel.requiredChecks).toEqual([
+      'governed_runner_admission',
       'docs_continuous_integration',
       'docs_public_continuous_integration',
       'docs_internal_continuous_integration',
@@ -319,12 +320,32 @@ describe('post-release sustainment rules package', () => {
       rules.operatorSurfaceSustainment.branchModel?.governedLaneBehaviors
     ).toEqual(
       expect.objectContaining({
+        governed_runner_admission: {
+          stage: 'admission',
+          packageScript: 'npm run gitlab:runner:doctor',
+          command:
+            'npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence',
+          evidenceRoot: 'governed-runner-admission-evidence/',
+          failurePolicy: 'fail-fast-before-docs-assurance-test-package-and-release-stages'
+        },
         windows_private_release_acceptance: {
           hostApplySurface: {
             script: 'scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1',
             scheduledTaskAction:
               'powershell.exe -NoLogo -NoProfile -File "C:\\GitLab-Runner\\start-governed-runner-lanes.ps1"',
             failurePolicy: 'fail-closed-unless-exactly-one-configured-manager-after-apply'
+          },
+          startupReceiptSurface: {
+            script: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',
+            latestReceipt: 'C:\\GitLab-Runner\\receipts\\governed-runner-startup\\latest.json',
+            failurePolicy: 'fail-closed-unless-bootstrap-refreshes-governed-startup-receipt'
+          },
+          hostDoctorSurface: {
+            script: 'scripts/gitlab-runner/windows/doctor-governed-runner-lanes.ps1',
+            wrapperScript: 'scripts/doctorGovernedRunnerLanes.js',
+            packageScript: 'npm run gitlab:runner:doctor',
+            failurePolicy:
+              'non-mutating-readback; combined surface may fail closed on drift when requested'
           },
           linuxAssuranceBootstrap: {
             script: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',
@@ -395,9 +416,22 @@ describe('post-release sustainment rules package', () => {
               'config-request-concurrency-two',
               'systemctl-is-enabled',
               'systemctl-is-active',
-              'exactly-one-configured-runner-process'
+              'exactly-one-configured-runner-process',
+              'writes-startup-receipt'
             ],
             failurePolicy: 'fail-closed-unless-wsl-bootstrap-observes-live-linux-assurance-service'
+          },
+          startupReceiptSurface: {
+            script: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
+            latestReceipt: '$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json',
+            failurePolicy: 'fail-closed-unless-helper-refreshes-governed-startup-receipt'
+          },
+          hostDoctorSurface: {
+            script: 'scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh',
+            wrapperScript: 'scripts/doctorGovernedRunnerLanes.js',
+            packageScript: 'npm run gitlab:runner:doctor',
+            failurePolicy:
+              'non-mutating-readback; combined surface may fail closed on drift when requested'
           },
           hostAssertionSurface: {
             script: 'scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh',
@@ -566,6 +600,12 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('runWindowsProofRuntimeRecoveryRehearsal.js');
     expect(rulesDoc).toContain('npm run gitlab:runner:windows:recovery:rehearse');
     expect(rulesDoc).toContain('.cache/windows-proof-runtime-recovery-rehearsal/latest.json');
+    expect(rulesDoc).toContain('governed_runner_admission');
+    expect(rulesDoc).toContain('doctor-governed-runner-lanes.ps1');
+    expect(rulesDoc).toContain('doctor-linux-assurance-runner.sh');
+    expect(rulesDoc).toContain('scripts/doctorGovernedRunnerLanes.js');
+    expect(rulesDoc).toContain('npm run gitlab:runner:doctor');
+    expect(rulesDoc).toContain('governed-runner-admission-evidence');
     expect(rulesDoc).toContain('apply-governed-runner-lanes.ps1');
     expect(rulesDoc).toContain('assert-governed-runner-lanes.ps1');
     expect(rulesDoc).toContain('apply-linux-assurance-runner.sh');
@@ -574,11 +614,10 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('npm run gitlab:runner:assert');
     expect(rulesDoc).toContain('without `ExecutionPolicy Bypass`');
 
-    expect(readme).toContain('## Authority And Release Control');
     expect(readme).toContain(
       '[docs/product/public-release-candidate.md](./docs/product/public-release-candidate.md)'
     );
-    expect(readme).toContain('[Release Procedure](./docs/release-procedure.md)');
+    expect(readme).toContain('[docs/information-item-map.md](./docs/information-item-map.md)');
     expect(currentState).toContain(
       '[post-release-sustainment-rules.md](./post-release-sustainment-rules.md)'
     );

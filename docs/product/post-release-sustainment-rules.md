@@ -304,6 +304,7 @@ Required branch-model and CI posture:
   `--target-root` or `VIHS_PUBLIC_GITHUB_SOURCE_REPO_ROOT` and fails closed
   when the target repo is dirty
 - the required checks are:
+  - GitLab `governed_runner_admission`
   - GitLab `docs_continuous_integration`
   - GitLab `docs_public_continuous_integration`
   - GitLab `docs_internal_continuous_integration`
@@ -329,8 +330,16 @@ Hosted automation governance is now retained explicitly:
   retaining `windows-private-release-evidence/host/proof-runtime-recovery.txt`,
   and still failing closed after that single retry if the repo-owned recovery
   step cannot restore a clean proof surface
-- GitLab runner upkeep now uses repo-owned apply and live drift-assert
-  surfaces:
+- GitLab runner upkeep now uses repo-owned startup-receipt, doctor, apply, and
+  live drift-assert surfaces:
+  `governed_runner_admission` runs
+  `npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence`
+  in the `admission` stage before docs, assurance, test, package, and release
+  work can queue; `scripts/gitlab-runner/windows/doctor-governed-runner-lanes.ps1`
+  and `scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh` are the
+  lane-local non-destructive doctor surfaces, and
+  `scripts/doctorGovernedRunnerLanes.js` via `npm run gitlab:runner:doctor`
+  is the admitted Windows-host wrapper for those doctor reads;
   `scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1` keeps the
   scheduled task on ambient execution policy without `ExecutionPolicy Bypass`
   and fails closed unless exactly one configured Windows runner manager
@@ -340,11 +349,17 @@ Hosted automation governance is now retained explicitly:
   configured Windows runner manager remain intact; while
   `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1` also wakes
   Ubuntu and retries the repo-owned Linux assurance helper until it proves the
-  paired Linux service is enabled, active, and singular;
+  paired Linux service is enabled, active, and singular, writing the latest
+  Windows startup receipt to
+  `C:\GitLab-Runner\receipts\governed-runner-startup\latest.json`;
   `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh` fails closed
   unless `~/.gitlab-runner/config.toml` retains `concurrent = 2` plus
   `request_concurrency = 2` and
   `vihs-linux-assurance-runner.service` finishes `enabled` and `active`;
+  `scripts/gitlab-runner/linux/start-linux-assurance.sh` now reconciles the
+  live config back to that dual-concurrency contract, restarts the admitted
+  service when needed, and writes the latest Linux startup receipt to
+  `$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json`;
   `scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh` fails closed
   unless the installed helper/service unit hashes, `concurrent = 2`,
   `request_concurrency = 2`, admitted service fragment/user/working

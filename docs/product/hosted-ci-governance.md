@@ -89,19 +89,26 @@ Runner operator hardening:
   `systemd` unit `vihs-linux-assurance-runner.service`, with repo-owned host
   assets at `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh`,
   `scripts/gitlab-runner/linux/start-linux-assurance.sh`,
+  `scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh`,
   `scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service`, and
   `scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh`, with the
-  admitted Windows-host wrapper retained at
-  `scripts/assertGovernedRunnerLanes.js` via `npm run gitlab:runner:assert`;
-  the Linux apply surface first normalizes both concurrency facts and then
-  fails closed unless the admitted `systemd` service is both enabled and
-  active after apply; the Windows bootstrap now retries the Linux helper as a
-  bounded post-reset readiness gate; and the Linux assertion surface fails
-  closed unless the installed helper and service unit still match the repo
-  asset pack, `concurrent = 2` plus `request_concurrency = 2` are still
-  present, the admitted fragment path/user/working directory remain exact, the
-  service is still enabled and active, and exactly one configured runner
-  process is live
+  admitted Windows-host wrappers retained at
+  `scripts/doctorGovernedRunnerLanes.js` via `npm run gitlab:runner:doctor`
+  and `scripts/assertGovernedRunnerLanes.js` via
+  `npm run gitlab:runner:assert`; the Linux apply surface first normalizes
+  both concurrency facts and then fails closed unless the admitted `systemd`
+  service is both enabled and active after apply; the Windows bootstrap now
+  retries the Linux helper as a bounded post-reset readiness gate; the helper
+  itself reconciles the live config back to `concurrent = 2` plus
+  `request_concurrency = 2`, restarts the admitted service when needed, and
+  writes a machine-readable startup receipt under
+  `$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json`; the
+  Linux doctor surface reports current concurrency, service, process, and
+  receipt facts; and the Linux assertion surface fails closed unless the
+  installed helper and service unit still match the repo asset pack,
+  `concurrent = 2` plus `request_concurrency = 2` are still present, the
+  admitted fragment path/user/working directory remain exact, the service is
+  still enabled and active, and exactly one configured runner process is live
 - `windows-private-release`: admitted config path
   `C:\GitLab-Runner\config.toml`, per-runner
   `request_concurrency = 2`, scheduled bootstrap surface
@@ -113,11 +120,15 @@ Runner operator hardening:
   `LabVIEW` / `LabVIEWCLI` / `LVCompare` runtime processes before the runner
   starts using bounded `Stop-Process` plus `taskkill /PID /T /F` and
   `taskkill /IM /T /F`, the repo-owned bootstrap asset
-  `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1`, and the
+  `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1`, the
+  repo-owned doctor surface
+  `scripts/gitlab-runner/windows/doctor-governed-runner-lanes.ps1`, and the
   repo-owned drift assertion surface
   `scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1`; the
-  combined Windows-host wrapper remains
-  `scripts/assertGovernedRunnerLanes.js` via `npm run gitlab:runner:assert`;
+  combined Windows-host wrappers remain
+  `scripts/doctorGovernedRunnerLanes.js` via `npm run gitlab:runner:doctor`
+  and `scripts/assertGovernedRunnerLanes.js` via
+  `npm run gitlab:runner:assert`;
   the operator-only recovery rehearsal wrapper is
   `scripts/runWindowsProofRuntimeRecoveryRehearsal.js` via
   `npm run gitlab:runner:windows:recovery:rehearse`, retaining the latest
@@ -132,10 +143,18 @@ Runner operator hardening:
   repo source, that exact scheduled-task action plus its logon trigger remain
   intact, `request_concurrency = 2` remains in
   `C:\GitLab-Runner\config.toml`, and exactly one configured runner manager is
-  live
+  live; the Windows bootstrap now writes a machine-readable startup receipt
+  under `C:\GitLab-Runner\receipts\governed-runner-startup\latest.json`, and
+  the Windows doctor surface reports the task, runner-process, startup-receipt,
+  and Linux-helper receipt facts without mutating host state
 
 Job ownership:
 
+- `governed_runner_admission`: blocking Windows-host `admission` stage lane on
+  merge requests, governed branch lanes, and exact tags; it runs
+  `npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence`
+  so docs, assurance, test, package, and release jobs fail fast on post-reset
+  runner drift instead of waiting behind missing or degraded runner capacity
 - `docs_link_check`, `docs_continuous_integration`,
   `docs_public_continuous_integration`, `docs_internal_continuous_integration`:
   docs integrity on merge requests, governed branch lanes, and exact tags

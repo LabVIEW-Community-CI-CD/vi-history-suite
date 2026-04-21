@@ -52,6 +52,14 @@ describe('hosted ci governance docs', () => {
         'vX.Y.Z-tags'
       ])
     );
+    expect(matrix.authorityGitLab.jobs.governed_runner_admission).toEqual(
+      expect.objectContaining({
+        classification: 'required-governance-check',
+        stage: 'admission',
+        packageScript: 'npm run gitlab:runner:doctor',
+        evidenceRoot: 'governed-runner-admission-evidence/'
+      })
+    );
     expect(matrix.authorityGitLab.jobs.windows_private_release_acceptance).toEqual(
       expect.objectContaining({
         classification: 'required-governance-check',
@@ -112,10 +120,32 @@ describe('hosted ci governance docs', () => {
           serviceUnit: 'vihs-linux-assurance-runner.service',
           repoOwnedApplyScript: 'scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh',
           repoOwnedHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
+          repoOwnedDoctorScript: 'scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh',
           repoOwnedServiceUnit: 'scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service',
           repoOwnedAssertScript: 'scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh',
+          combinedDoctorScript: 'scripts/doctorGovernedRunnerLanes.js',
+          combinedDoctorPackageScript: 'npm run gitlab:runner:doctor',
           combinedAssertionScript: 'scripts/assertGovernedRunnerLanes.js',
           combinedAssertionPackageScript: 'npm run gitlab:runner:assert',
+          startupReceipt: {
+            latestPath: '$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json',
+            schema: 'vi-history-suite/linux-assurance-startup@v1',
+            requiredFacts: [
+              'config-hash-before-after',
+              'service-state-before-after',
+              'global-concurrency-before-after',
+              'request-concurrency-before-after',
+              'runner-process-count-after',
+              'healthy'
+            ]
+          },
+          doctorSurface: {
+            script: 'scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh',
+            wrapperScript: 'scripts/doctorGovernedRunnerLanes.js',
+            packageScript: 'npm run gitlab:runner:doctor',
+            failurePolicy:
+              'non-mutating-readback; combined surface may fail closed on drift when requested'
+          },
           applyVerification: {
             requiredUser: 'sveld',
             requiredHome: '/home/sveld',
@@ -137,7 +167,8 @@ describe('hosted ci governance docs', () => {
               'config-request-concurrency-two',
               'systemctl-is-enabled',
               'systemctl-is-active',
-              'exactly-one-configured-runner-process'
+              'exactly-one-configured-runner-process',
+              'writes-startup-receipt'
             ],
             failurePolicy: 'fail-closed-unless-wsl-bootstrap-observes-live-linux-assurance-service'
           },
@@ -187,11 +218,13 @@ describe('hosted ci governance docs', () => {
             failurePolicy: 'fail-closed-before-runner-start'
           },
           repoOwnedBootstrapScript: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',
+          repoOwnedDoctorScript: 'scripts/gitlab-runner/windows/doctor-governed-runner-lanes.ps1',
           repoOwnedAssertScript: 'scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1',
           repoOwnedRecoveryScript:
             'scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1',
           repoOwnedRecoveryRehearsalScript: 'scripts/runWindowsProofRuntimeRecoveryRehearsal.js',
           repoOwnedLinuxHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
+          repoOwnedLinuxDoctorScript: 'scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh',
           linuxAssuranceBootstrap: {
             distro: 'Ubuntu',
             bootstrapCommand: '$HOME/gitlab-runner/start-linux-assurance.sh',
@@ -199,6 +232,28 @@ describe('hosted ci governance docs', () => {
             wakeDelaySeconds: 10,
             failurePolicy: 'fail-closed-unless-linux-assurance-helper-observes-live-service'
           },
+          startupReceipt: {
+            latestPath: 'C:\\GitLab-Runner\\receipts\\governed-runner-startup\\latest.json',
+            schema: 'vi-history-suite/governed-runner-startup@v1',
+            requiredFacts: [
+              'duplicate-runner-collapse',
+              'cold-admission-runtime-cleanup',
+              'linux-helper-attempts',
+              'linux-helper-receipt-links',
+              'runner-process-count-after',
+              'healthy'
+            ]
+          },
+          doctorSurface: {
+            script: 'scripts/gitlab-runner/windows/doctor-governed-runner-lanes.ps1',
+            linuxDoctorScript: 'scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh',
+            wrapperScript: 'scripts/doctorGovernedRunnerLanes.js',
+            packageScript: 'npm run gitlab:runner:doctor',
+            failurePolicy:
+              'non-mutating-readback; combined surface may fail closed on drift when requested'
+          },
+          combinedDoctorScript: 'scripts/doctorGovernedRunnerLanes.js',
+          combinedDoctorPackageScript: 'npm run gitlab:runner:doctor',
           combinedAssertionScript: 'scripts/assertGovernedRunnerLanes.js',
           combinedAssertionPackageScript: 'npm run gitlab:runner:assert',
           recoveryRehearsal: {
@@ -255,6 +310,7 @@ describe('hosted ci governance docs', () => {
     expect(matrixDoc).toContain('resulting green `develop`');
     expect(matrixDoc).toContain('linux-assurance');
     expect(matrixDoc).toContain('`windows_private_release_acceptance`');
+    expect(matrixDoc).toContain('`governed_runner_admission`');
     expect(matrixDoc).toContain('`assurance_release_gate`');
     expect(matrixDoc).toContain('`assurance_26514_authority`');
     expect(matrixDoc).toContain('`assurance_requirements_quality`');
@@ -268,6 +324,11 @@ describe('hosted ci governance docs', () => {
     expect(matrixDoc).toContain('apply-linux-assurance-runner.sh');
     expect(matrixDoc).toContain('apply-governed-runner-lanes.ps1');
     expect(matrixDoc).toContain('cold-admission fail-closed');
+    expect(matrixDoc).toContain('doctor-governed-runner-lanes.ps1');
+    expect(matrixDoc).toContain('doctor-linux-assurance-runner.sh');
+    expect(matrixDoc).toContain('scripts/doctorGovernedRunnerLanes.js');
+    expect(matrixDoc).toContain('npm run gitlab:runner:doctor');
+    expect(matrixDoc).toContain('governed-runner-admission-evidence');
     expect(matrixDoc).toContain(
       '`LabVIEW` / `LabVIEWCLI` / `LVCompare` runtime processes'
     );
@@ -304,6 +365,9 @@ describe('hosted ci governance docs', () => {
     );
     expect(gitlabCi).toContain(`- if: '$CI_COMMIT_BRANCH =~ /^release\\/.+$/'`);
     expect(gitlabCi).toContain(`- if: '$CI_COMMIT_BRANCH =~ /^hotfix\\/.+$/'`);
+    expect(gitlabCi).toContain('governed_runner_admission:');
+    expect(gitlabCi).toContain('stage: admission');
+    expect(gitlabCi).toContain('npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence');
     expect(gitlabCi).toContain('windows_private_release_acceptance:');
     expect(gitlabCi).toContain('npm run acceptance:windows:private-release');
     expect(gitlabCi).toContain('windows-private-release-evidence/');
@@ -325,22 +389,24 @@ describe('hosted ci governance docs', () => {
     expect(cmPlan).toContain(
       '`develop` is the working integration branch, `feature/*` branches are cut from `develop` and merge back into `develop`, `release/*` branches are cut from `develop`, merge into `main`, merge back into `develop`, and are deleted only after both merges complete, and `main` remains the protected exact-release line'
     );
-    expect(readme).toContain('[Hosted CI Governance](./docs/product/hosted-ci-governance.md)');
-    expect(readme).toContain(
-      '- hosted automation governance matrix: [docs/product/hosted-ci-governance.md]'
-    );
-    expect(readme).toContain('## Authority And Release Control');
-    expect(readme).toContain('[Release Procedure](./docs/release-procedure.md)');
+    expect(readme).toContain('[docs/product/public-release-candidate.md](./docs/product/public-release-candidate.md)');
+    expect(readme).toContain('[docs/information-item-map.md](./docs/information-item-map.md)');
     expect(currentState).toContain('[hosted-ci-governance.md](./hosted-ci-governance.md)');
     expect(currentState).toContain(
       '- hosted automation governance matrix: [hosted-ci-governance.md](./hosted-ci-governance.md)'
     );
+    expect(currentState).toContain('governed_runner_admission');
     expect(currentState).toContain('assurance_release_gate');
     expect(currentState).toContain('assurance_26514_authority');
+    expect(currentState).toContain('doctor-governed-runner-lanes.ps1');
+    expect(currentState).toContain('doctor-linux-assurance-runner.sh');
+    expect(currentState).toContain('npm run gitlab:runner:doctor');
     expect(currentState).toContain('registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main');
     expect(releaseProcedure).toContain('The hosted automation governance matrix is retained in:');
+    expect(releaseProcedure).toContain('governed_runner_admission');
     expect(releaseProcedure).toContain('assurance_release_gate');
     expect(releaseProcedure).toContain('assurance_26514_authority');
+    expect(releaseProcedure).toContain('npm run gitlab:runner:doctor');
     expect(releaseProcedure).toContain('repo-standards-review/assurance-workbench:main');
 
     expect(linuxBenchmarkWorkflow).toContain('name: Linux Runtime Benchmark Experiment');

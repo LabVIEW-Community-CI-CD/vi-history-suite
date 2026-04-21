@@ -1970,6 +1970,15 @@ Information-for-users review cases:
   interactive, and on non-interactive surfaces seeds or retains the governed
   default `host/windows/2026/x64` bundle plus exact follow-up `vihs` commands
   without claiming raw `code --install-extension` interactivity
+- `TEST-UNIT-368`: verify the governed runner startup/doctor substrate writes
+  machine-readable Windows and Linux startup receipts, exposes repo-owned
+  lane-local doctor scripts plus the combined `npm run gitlab:runner:doctor`
+  wrapper, and can fail closed on drift without mutating healthy hosts
+- `TEST-UNIT-369`: verify GitLab retains one fail-fast
+  `governed_runner_admission` lane in the `admission` stage that runs the
+  combined doctor surface with `--fail-on-drift`, retains
+  `governed-runner-admission-evidence/`, and blocks downstream docs,
+  assurance, test, package, and release work when runner drift is detected
 - `TEST-DOC-113`: review `.gitlab-ci.yml`, `linux-assurance-runner-lane.md`,
   hosted governance, current-state, README, and the release procedure and
   confirm the Linux assurance lane is separate from the Windows proof lane,
@@ -2021,6 +2030,16 @@ Information-for-users review cases:
   bootstrap rather than raw `code --install-extension` alone, with exact
   follow-up `vihs` commands and Windows-host-derived platform posture kept
   explicit
+- `TEST-DOC-121`: review the runner-lane contracts, hosted governance,
+  private-release packet, information-item map, current-state, release
+  procedure, SRS, RTM, and test plan and confirm the governed runner package
+  now retains startup receipts plus repo-owned doctor surfaces for both lanes
+  without relying on ad hoc post-reset shell history
+- `TEST-DOC-122`: review `.gitlab-ci.yml`, hosted governance, sustainment
+  rules, the runner-lane contracts, current-state, release procedure, SRS,
+  RTM, and test plan and confirm `governed_runner_admission` runs first as a
+  fail-fast admission gate with retained doctor evidence before later docs,
+  assurance, test, package, and release stages queue
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are

@@ -142,6 +142,7 @@ describe('windows private release packet docs', () => {
     expect(packetDoc).toContain('repo-controlled host asset pack and apply surfaces are versioned under');
     expect(packetDoc).toContain('scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1');
     expect(packetDoc).toContain('scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1');
+    expect(packetDoc).toContain('scripts/gitlab-runner/windows/doctor-governed-runner-lanes.ps1');
     expect(packetDoc).toContain('scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1');
     expect(packetDoc).toContain('scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1');
     expect(packetDoc).toContain('scripts/runWindowsProofRuntimeRecoveryRehearsal.js');
@@ -166,8 +167,14 @@ describe('windows private release packet docs', () => {
     expect(packetDoc).toContain('headless LabVIEW contamination');
     expect(packetDoc).toContain('scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
     expect(packetDoc).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
+    expect(packetDoc).toContain('scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh');
     expect(packetDoc).toContain('scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service');
     expect(packetDoc).toContain('scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh');
+    expect(packetDoc).toContain('scripts/doctorGovernedRunnerLanes.js');
+    expect(packetDoc).toContain('npm run gitlab:runner:doctor');
+    expect(packetDoc).toContain('governed_runner_admission');
+    expect(packetDoc).toContain('C:\\GitLab-Runner\\receipts\\governed-runner-startup\\latest.json');
+    expect(packetDoc).toContain('$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json');
     expect(packetDoc).toContain('## Private Release Publication');
     expect(packetDoc).toContain('npm run gitlab:private-release:publish');
     expect(packetDoc).toContain('private-v1.3.0-windows-x64');
@@ -226,21 +233,39 @@ describe('windows private release packet docs', () => {
         artifactRoot: 'windows-private-release-evidence/',
         expectedManifestPath: 'windows-private-release-evidence/manifest.json',
         hostInstallState: 'current-user-scheduled-task-bootstrap-active',
-        hostApplySurface: {
+        governedRunnerAdmission: expect.objectContaining({
+          jobName: 'governed_runner_admission',
+          packageScript: 'npm run gitlab:runner:doctor',
+          evidenceRoot: 'governed-runner-admission-evidence/',
+          failurePolicy: 'fail-fast-before-docs-assurance-test-package-and-release-stages'
+        }),
+        startupReceipts: expect.objectContaining({
+          windowsLatest: 'C:\\GitLab-Runner\\receipts\\governed-runner-startup\\latest.json',
+          linuxLatest: '$HOME/gitlab-runner/receipts/linux-assurance-startup/latest.json'
+        }),
+        hostApplySurface: expect.objectContaining({
           windowsApplyScript: 'scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1',
           scheduledTaskAction:
             'powershell.exe -NoLogo -NoProfile -File "C:\\GitLab-Runner\\start-governed-runner-lanes.ps1"',
           failurePolicy: 'fail-closed-unless-exactly-one-configured-manager-after-apply'
-        },
-        linuxBootstrapReadiness: {
+        }),
+        linuxBootstrapReadiness: expect.objectContaining({
           script: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',
           distro: 'Ubuntu',
           bootstrapCommand: '$HOME/gitlab-runner/start-linux-assurance.sh',
           wakeAttempts: 12,
           wakeDelaySeconds: 10,
           failurePolicy: 'fail-closed-unless-linux-assurance-helper-observes-live-service'
-        },
-        hostAssertionSurface: {
+        }),
+        hostDoctorSurface: expect.objectContaining({
+          windowsDoctorScript: 'scripts/gitlab-runner/windows/doctor-governed-runner-lanes.ps1',
+          linuxDoctorScript: 'scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh',
+          runnerDoctorWrapperScript: 'scripts/doctorGovernedRunnerLanes.js',
+          runnerDoctorPackageScript: 'npm run gitlab:runner:doctor',
+          failurePolicy:
+            'non-mutating-readback; combined surface may fail closed on drift when requested'
+        }),
+        hostAssertionSurface: expect.objectContaining({
           runnerAssertionWrapperScript: 'scripts/assertGovernedRunnerLanes.js',
           runnerAssertionPackageScript: 'npm run gitlab:runner:assert',
           windowsAssertScript: 'scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1',
@@ -250,8 +275,8 @@ describe('windows private release packet docs', () => {
             globalConcurrency: 2,
             requestConcurrency: 2
           }
-        },
-        coldAdmissionRuntimeCleanup: {
+        }),
+        coldAdmissionRuntimeCleanup: expect.objectContaining({
           processNames: ['LabVIEW', 'LabVIEWCLI', 'LVCompare'],
           terminationStrategy: [
             'stop-process-force-by-pid',
@@ -259,8 +284,8 @@ describe('windows private release packet docs', () => {
             'taskkill-image-tree'
           ],
           failurePolicy: 'fail-closed-before-runner-start'
-        },
-        midSessionRuntimeRecovery: {
+        }),
+        midSessionRuntimeRecovery: expect.objectContaining({
           laneId: 'windows-host-native',
           trigger: 'windows-host-runtime-cleanup-failed',
           recoveryScript: 'scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1',
@@ -269,8 +294,8 @@ describe('windows private release packet docs', () => {
           maxProofRetries: 1,
           firstFailureTranscript: 'windows-private-release-evidence/host/proof-run-pre-recovery.txt',
           failurePolicy: 'fail-closed-after-repo-recovery-script-and-single-retry'
-        },
-        midSessionRecoveryRehearsal: {
+        }),
+        midSessionRecoveryRehearsal: expect.objectContaining({
           governedScript: 'scripts/runWindowsProofRuntimeRecoveryRehearsal.js',
           packageScript: 'npm run gitlab:runner:windows:recovery:rehearse',
           receiptRoot: '.cache/windows-proof-runtime-recovery-rehearsal',
@@ -280,22 +305,26 @@ describe('windows private release packet docs', () => {
           contaminationSeedMode: 'headless-labview-launch',
           recoveryTranscriptLeaf: 'proof-runtime-recovery.txt',
           failurePolicy: 'fail-closed-unless-clean-before-and-after-governed-recovery-rehearsal'
-        },
-        repoOwnedOperatorAssets: {
+        }),
+        repoOwnedOperatorAssets: expect.objectContaining({
           windowsApplyScript: 'scripts/gitlab-runner/windows/apply-governed-runner-lanes.ps1',
           windowsBootstrapScript: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',
+          windowsDoctorScript: 'scripts/gitlab-runner/windows/doctor-governed-runner-lanes.ps1',
           windowsAssertScript: 'scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1',
           windowsRecoveryScript:
             'scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1',
           windowsRecoveryRehearsalScript: 'scripts/runWindowsProofRuntimeRecoveryRehearsal.js',
           linuxApplyScript: 'scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh',
           linuxHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
+          linuxDoctorScript: 'scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh',
           linuxServiceUnit: 'scripts/gitlab-runner/linux/vihs-linux-assurance-runner.service',
           linuxAssertScript: 'scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh',
+          runnerDoctorWrapperScript: 'scripts/doctorGovernedRunnerLanes.js',
+          runnerDoctorPackageScript: 'npm run gitlab:runner:doctor',
           runnerAssertionWrapperScript: 'scripts/assertGovernedRunnerLanes.js',
           runnerAssertionPackageScript: 'npm run gitlab:runner:assert',
           runnerRecoveryRehearsalPackageScript: 'npm run gitlab:runner:windows:recovery:rehearse'
-        }
+        })
       })
     );
     expect(packetJson.gitlabRunnerLane.firstRetainedReceipt).toEqual({
