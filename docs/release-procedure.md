@@ -16,7 +16,7 @@
 - The current published package line on `main` is `1.3.0`.
 - The current develop package line on `develop` is `1.3.1`.
 - The active exact release candidate line on `develop` is `v1.3.1`.
-- The active release-candidate branch is none.
+- The active release-candidate branch is `release/1.3.1`.
 - The retained Windows x64 private-release packet remains historical prep-only
   evidence for exact `v1.3.0`; `v1.3.1` has not reopened private-release
   preparation yet, and that historical packet still does not imply exact

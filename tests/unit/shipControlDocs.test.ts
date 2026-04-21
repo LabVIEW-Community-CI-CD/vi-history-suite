@@ -206,7 +206,7 @@ describe('ship-control direction system', () => {
     expect(readme).toContain('- current published package line on `main`: `1.3.0`');
     expect(readme).toContain('- current develop package line on `develop`: `1.3.1`');
     expect(readme).toContain('- active exact release candidate line on `develop`: `v1.3.1`');
-    expect(readme).toContain('- active release-candidate branch: none');
+    expect(readme).toContain('- active release-candidate branch: `release/1.3.1`');
     expect(readme).toContain('- public GitHub default branch: `main`');
     expect(readme).toContain('- public Codespaces evaluation branch: `develop`');
     expect(readme).toContain('- integration branch: `develop`');
@@ -245,7 +245,7 @@ describe('ship-control direction system', () => {
     expect(currentState).toContain('- current published package line on `main`: `1.3.0`');
     expect(currentState).toContain('- current develop package line on `develop`: `1.3.1`');
     expect(currentState).toContain('- active exact release candidate line on `develop`: `v1.3.1`');
-    expect(currentState).toContain('- active release-candidate branch: none');
+    expect(currentState).toContain('- active release-candidate branch: `release/1.3.1`');
     expect(currentState).toContain('- public GitHub default branch: `main`');
     expect(currentState).toContain('- public Codespaces evaluation branch: `develop`');
     expect(currentState).toContain('- integration branch: `develop`');
@@ -308,7 +308,7 @@ describe('ship-control direction system', () => {
     expect(releaseProcedure).toContain("current published package line on `main` is `1.3.0`");
     expect(releaseProcedure).toContain("current develop package line on `develop` is `1.3.1`");
     expect(releaseProcedure).toContain('active exact release candidate line on `develop` is `v1.3.1`');
-    expect(releaseProcedure).toContain('The active release-candidate branch is none');
+    expect(releaseProcedure).toContain('The active release-candidate branch is `release/1.3.1`');
     expect(releaseProcedure).toContain('public GitHub default branch is `main`');
     expect(releaseProcedure).toContain('public Codespaces evaluation branch is `develop`');
     expect(releaseProcedure).toContain('integration branch is `develop`');

@@ -199,7 +199,7 @@ Authority release facts:
 - current published package line on `main`: `1.3.0`
 - current develop package line on `develop`: `1.3.1`
 - active exact release candidate line on `develop`: `v1.3.1`
-- active release-candidate branch: none
+- active release-candidate branch: `release/1.3.1`
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
