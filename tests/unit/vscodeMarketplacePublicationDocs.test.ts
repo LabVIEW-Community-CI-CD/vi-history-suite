@@ -159,7 +159,7 @@ describe('vs code marketplace publication and installed-user docs', () => {
       'the extension is installed from the VS Code Marketplace, the current exact released VSIX, or a preview VSIX when you intentionally want the next candidate'
     );
     expect(userWorkflow).toContain(
-      'the provider, LabVIEW version, and LabVIEW bitness are persisted through `vihs-runtime-settings`'
+      'the provider, LabVIEW year, and bitness are set through the published Windows PowerShell bootstrap or a later `vihs` run'
     );
   });
 });
