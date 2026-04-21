@@ -6,10 +6,11 @@ Retain one governed hosted-automation matrix so GitLab authority pipelines,
 public GitHub required checks, and GitHub experiment workflows stop being
 raw-YAML-only truth.
 
-This document is the control-plane summary of the governed `1.3.0` candidate
-opening. The exact public release remains `v1.2.2`; `main` carries `1.2.2`,
-`develop` now carries `1.3.0`, and the line retains the protected
-post-publication acceptance gates before exact tagging can reopen.
+This document is the control-plane summary of the governed `1.3.0` exact-tag
+and Marketplace-closeout opening. The exact public release remains `v1.2.2`;
+`main` carries `1.2.2`, `develop` carries `1.3.0`, and the clean published-
+surface review gate has now reopened the protected closeout lane on
+`release/1.3.0`.
 
 ## Opening Decision
 
@@ -17,7 +18,7 @@ post-publication acceptance gates before exact tagging can reopen.
 - current `main` package line: `1.2.2`
 - current `develop` package line: `1.3.0`
 - active exact release candidate line on `develop`: `v1.3.0`
-- no newer `release/*` branch is active yet
+- active release-candidate branch: `release/1.3.0`
 - chosen bump: `minor`
 - rationale: this line opens a new governed installed-user capability and
   supported workflow by promoting host-default Windows local `LabVIEWCLI`

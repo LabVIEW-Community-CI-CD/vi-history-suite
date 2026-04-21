@@ -158,10 +158,10 @@ Latest landed ship target:
 - current published package line on `main`: `1.2.2`
 - current develop package line on `develop`: `1.3.0`
 - active exact release candidate line on `develop`: `v1.3.0`
+- active release-candidate branch: `release/1.3.0`
 - current Windows x64 private GitLab release: `private-v1.3.0-windows-x64`
 - private GitLab release URL:
   `https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.0-windows-x64`
-- no newer `release/*` branch is active yet
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`

@@ -16,12 +16,10 @@
 - The current published package line on `main` is `1.2.2`.
 - The current develop package line on `develop` is `1.3.0`.
 - The active exact release candidate line on `develop` is `v1.3.0`.
-- No newer `release/*` branch is active yet.
-- The current `v1.3.0` pre-release sequence remains Windows x64 private-release
-  only: clean the user-facing docs on a docs-only feature branch first, then
-  prepare the Windows packet and publish or refresh the governed private
-  GitLab release on a separate feature branch before any `release/*` branch
-  is cut.
+- The active release-candidate branch is `release/1.3.0`.
+- The retained Windows x64 private-release packet remains prep-only evidence
+  for `v1.3.0`; it does not imply exact tagging, public GitHub release,
+  `main` promotion, or VS Code Marketplace publication.
 - Windows x86 / 32-bit LabVIEW remains out of scope for that `v1.3.0`
   pre-release sequence; any retained x86 host evidence is characterization
   only and does not expand the Windows x64 private-release claim.

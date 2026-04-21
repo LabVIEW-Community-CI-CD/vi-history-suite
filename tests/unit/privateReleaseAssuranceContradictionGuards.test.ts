@@ -33,7 +33,9 @@ describe('private release assurance contradiction guards', () => {
     expect(readme).toContain('maintained `develop` candidate line `1.3.0`: Windows PowerShell bootstrap');
     expect(currentState).toContain('current exact released line: `v1.2.2`');
     expect(currentState).toContain('active exact release candidate line on `develop`: `v1.3.0`');
-    expect(releaseProcedure).toContain('The current `v1.3.0` pre-release sequence remains Windows x64 private-release');
+    expect(releaseProcedure).toContain(
+      'The retained Windows x64 private-release packet remains prep-only evidence'
+    );
   });
 
   it('keeps the requirements-to-user-doc assurance semantics aligned', () => {
