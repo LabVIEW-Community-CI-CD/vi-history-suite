@@ -159,9 +159,19 @@ Latest landed ship target:
 - current develop package line on `develop`: `1.3.1`
 - active exact release candidate line on `develop`: `v1.3.1`
 - active release-candidate branch: `release/1.3.1`
-- current Windows x64 private GitLab release: `private-v1.3.0-windows-x64`
+- active Windows x64 private-release-prep slice: `release/1.3.1`
+- active Windows x64 private-release packet:
+  [private-release-windows-x64-v1.3.1.md](./private-release-windows-x64-v1.3.1.md)
+- active Windows x64 private-release packet JSON:
+  [private-release-windows-x64-v1.3.1.json](./private-release-windows-x64-v1.3.1.json)
+- current Windows x64 private GitLab release: `private-v1.3.1-windows-x64`
 - private GitLab release URL:
-  `https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.0-windows-x64`
+  `https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.1-windows-x64`
+- current Windows x64 private-release publish receipt:
+  `.cache/private-release-publish/latest/private-release-publish.json`
+- retained Windows x64 historical prior-line private-release packet: `v1.3.0`
+- fresh `v1.3.1` Windows host/container acceptance receipt set:
+  `windows-private-release-evidence/manifest.json`
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
@@ -237,10 +247,13 @@ Latest landed ship target:
   `svelderrainruiz.vi-history-suite`, the maintained public `develop`
   candidate now publishes `ab293d5`, the last clean expert-agent-reviewed
   public source/wiki heads remain `0f19f4b` / `53b5348`, the maintained
-  public wiki head now publishes `141c39e`, and the new `v1.3.1` patch line
-  is now `tag-eligible` for exact-release reopening on published-surface
-  grounds because the latest expert-agent review on the exact published heads
-  `ab293d5` / `141c39e` returned
+  public wiki head now publishes `141c39e`, the exact published heads
+  `ab293d5` / `141c39e` closed the published-surface reopening gate cleanly,
+  authority exact-release reopening is now retained on `release/1.3.1` from
+  merged-green `develop` `0f4db5e` with green release-branch pipeline
+  `2468432598`, the controlled Windows x64 private GitLab release is now
+  published separately, and the next exact-release act is protected `main`
+  promotion because the latest expert-agent review on the exact published heads returned
   `no findings; exact release / Marketplace publish may proceed`
 
 Current active and recently closed tranches:
@@ -598,9 +611,11 @@ Post-release tranches:
   - exact public `main` now publishes `v1.3.0`, and the maintained public
     `v1.3.1` `develop` line now publishes `ab293d5`, and the current
     expert-agent review on the published source/wiki heads now reports
-    `no findings; exact release / Marketplace publish may proceed`, making
-    the current published candidate `tag-eligible` for exact-release
-    reopening while Marketplace remains `1.3.0`
+    `no findings; exact release / Marketplace publish may proceed`, the
+    published-surface reopening gate is closed cleanly, authority exact-release
+    reopening is now retained on `release/1.3.1`, the controlled Windows x64
+    private GitLab release is now published separately, and protected `main`
+    promotion is the next separate act while Marketplace remains `1.3.0`
   - the first `1.2.0` correction repaired branch-governance admission by
     realigning exact `main` back into `develop` before feature work continues
   - the line now adds one generic public-repo bootstrap surface for public

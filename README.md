@@ -200,6 +200,19 @@ Authority release facts:
 - current develop package line on `develop`: `1.3.1`
 - active exact release candidate line on `develop`: `v1.3.1`
 - active release-candidate branch: `release/1.3.1`
+- active Windows x64 private-release-prep slice: `release/1.3.1`
+- active Windows x64 private-release packet:
+  [docs/product/private-release-windows-x64-v1.3.1.md](./docs/product/private-release-windows-x64-v1.3.1.md)
+- active Windows x64 private-release packet JSON:
+  [docs/product/private-release-windows-x64-v1.3.1.json](./docs/product/private-release-windows-x64-v1.3.1.json)
+- current Windows x64 private GitLab release: `private-v1.3.1-windows-x64`
+- current private GitLab release URL:
+  `https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.1-windows-x64`
+- current Windows x64 private-release publish receipt:
+  `.cache/private-release-publish/latest/private-release-publish.json`
+- retained Windows x64 historical prior-line private-release packet: `v1.3.0`
+- fresh `v1.3.1` Windows host/container acceptance receipt set:
+  `windows-private-release-evidence/manifest.json`
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`

@@ -196,6 +196,18 @@ describe('public release candidate control surface', () => {
       gitHubAssetName: 'vi-history-suite-1.3.0.vsix',
       marketplaceVersion: '1.3.0'
     });
+    expect(candidate.exactReleaseReopening).toMatchObject({
+      status: 'reopened-on-authority-release-1.3.1-branch',
+      releaseBranch: 'release/1.3.1',
+      mergedGreenDevelopCommit: '0f4db5e',
+      mergedGreenDevelopPipelineId: 2468407077,
+      mergedGreenDevelopPipelineStatus: 'success',
+      releaseBranchCommit: '3fe766a',
+      releaseBranchPipelineId: 2468432598,
+      releaseBranchPipelineStatus: 'success',
+      nextSeparateAct: 'protected-main-promotion',
+      marketplaceVersionRetained: '1.3.0'
+    });
     expect(candidate.historicalHumanProofs?.latestSubmission).toMatchObject({
       outcome: 'passed-human-review',
       relativePath: 'Examples/Logging with Helper-VIs.vi',
@@ -247,7 +259,7 @@ describe('public release candidate control surface', () => {
     expect(candidateMarkdown).toContain('Published-surface expert-agent review:');
     expect(candidateMarkdown).toContain('`no-findings-on-current-v1.3.1-published-heads`');
     expect(candidateMarkdown).toContain('`closed-on-published-v1.3.0-candidate-heads-retained`');
-    expect(candidateMarkdown).toContain('private-v1.3.0-windows-x64');
+    expect(candidateMarkdown).toContain('private-v1.3.1-windows-x64');
     expect(candidateMarkdown).toContain('Required skill: `vi-history-suite-expert-agent-reviewer`');
     expect(candidateMarkdown).toContain('The maintained public `develop` candidate for `v1.3.1` now publishes');
     expect(candidateMarkdown).toContain('FINDING-1.2.2-001-MISSING-DOCKER-FIRST-RUN-BOUNDARY');
@@ -265,7 +277,7 @@ describe('public release candidate control surface', () => {
       'no findings; exact release / Marketplace publish may proceed'
     );
     expect(candidateMarkdown).toContain(
-      'The current published `v1.3.1` candidate heads `ab293d5` / `141c39e` are'
+      'The current published `v1.3.1` candidate heads `ab293d5` / `141c39e`'
     );
     expect(candidateMarkdown).toContain(
       'Prior retained expert-agent review:'
@@ -274,10 +286,16 @@ describe('public release candidate control surface', () => {
       'Those prior findings are now folded into the current published candidate'
     );
     expect(candidateMarkdown).toContain(
-      '`tag-eligible` for exact-release reopening on published-surface grounds'
+      'closed the published-surface gate cleanly, and that `tag-eligible`'
     );
     expect(candidateMarkdown).toContain(
       'separate later acts for `v1.3.1`'
+    );
+    expect(candidateMarkdown).toContain(
+      'private GitLab release for exact `v1.3.1`'
+    );
+    expect(candidateMarkdown).toContain(
+      'reopening state is now retained on authority `release/1.3.1` from'
     );
     expect(candidateMarkdown).toContain('Exact closeout is now retained complete');
 
@@ -288,7 +306,8 @@ describe('public release candidate control surface', () => {
     expect(currentState).toContain('`0f19f4b` / `53b5348`');
     expect(currentState).toContain('`141c39e`');
     expect(currentState).toContain('public GitHub release `v1.3.0` is live');
-    expect(currentState).toContain('`v1.3.1` and is now `tag-eligible`');
+    expect(currentState).toContain('authority exact-release reopening is now retained on `release/1.3.1`');
+    expect(currentState).toContain('the next exact-release act is protected `main`');
     expect(currentState).toContain('`no findings; exact release / Marketplace publish may proceed`');
 
     expect(srs).toContain('VHS-REQ-527');

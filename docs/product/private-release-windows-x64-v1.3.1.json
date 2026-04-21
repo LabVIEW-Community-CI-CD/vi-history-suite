@@ -1,0 +1,180 @@
+{
+  "packetId": "private-release-windows-x64-v1.3.1",
+  "status": "published-private-release",
+  "scope": {
+    "supportClaim": "windows-x64-private-release-only",
+    "supportedProofLanes": [
+      "windows-host-native",
+      "windows-container"
+    ],
+    "nonScope": [
+      "linux-installed-user-support",
+      "linux-proof-as-active-private-release-claim",
+      "windows-x86-labview-release-support",
+      "wsl-active-support",
+      "exact-semver-tagging",
+      "marketplace-publication",
+      "main-promotion"
+    ]
+  },
+  "governingSequence": {
+    "reopeningBranch": {
+      "name": "release/1.3.1",
+      "branchHeadCommit": "3fe766a"
+    },
+    "mergedGreenDevelopBaseline": {
+      "commit": "0f4db5e",
+      "pipelineId": 2468407077,
+      "pipelineStatus": "success"
+    },
+    "releaseBranchPipeline": {
+      "pipelineId": 2468432598,
+      "pipelineStatus": "success"
+    },
+    "localBuildState": {
+      "status": "dirty-local-private-release-published",
+      "notes": [
+        "The preview VSIX, governed acceptance receipts, and private-release publication act were retained from the authority release/1.3.1 worktree with local release-control, packet-retention, and publish-path updates present in the worktree."
+      ]
+    },
+    "freshAcceptanceManifest": {
+      "manifestPath": "windows-private-release-evidence/manifest.json",
+      "generatedAt": "2026-04-21T14:14:27.778Z"
+    },
+    "retainedHistoricalPublishedPacket": {
+      "packetDocPath": "docs/product/private-release-windows-x64-v1.3.0.md",
+      "packetJsonPath": "docs/product/private-release-windows-x64-v1.3.0.json",
+      "releaseTag": "private-v1.3.0-windows-x64"
+    }
+  },
+  "packageEvidence": {
+    "versionLine": "1.3.1",
+    "vsixPath": "preview-evidence/vi-history-suite-1.3.1.vsix",
+    "sha256": "D211FC16CE9213F005C6DA9C6ED4FD14F8B298648C1446A3891B2BD697A0CFC5",
+    "sizeBytes": 495214,
+    "generatedAt": "2026-04-21T14:06:14.4953320Z",
+    "buildCommand": "npm run package -- --out \"preview-evidence/vi-history-suite-1.3.1.vsix\""
+  },
+  "publication": {
+    "status": "published",
+    "releaseChannel": "gitlab-private-release",
+    "releaseTag": "private-v1.3.1-windows-x64",
+    "releaseName": "Windows x64 Private Release v1.3.1",
+    "releaseUrl": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.1-windows-x64",
+    "publishCommand": "npm run gitlab:private-release:publish -- --skip-package --allow-dirty",
+    "sourceBranch": "release/1.3.1",
+    "sourceCommit": "3fe766ab5eb6ef6652e3ab8a50e6392730d1fb7f",
+    "vsixDirectAssetUrl": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.1-windows-x64/downloads/private-releases/windows-x64/vi-history-suite-1.3.1.vsix",
+    "checksumDirectAssetUrl": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.1-windows-x64/downloads/private-releases/windows-x64/vi-history-suite-1.3.1.vsix.sha256",
+    "publishReceipt": ".cache/private-release-publish/latest/private-release-publish.json",
+    "retainedHistoricalReleaseTag": "private-v1.3.0-windows-x64",
+    "retainedHistoricalReleaseUrl": "https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.0-windows-x64"
+  },
+  "scenario": {
+    "status": "retained-from-governed-v1.3.1-acceptance-run",
+    "harnessId": "HARNESS-VHS-002",
+    "repositoryUrl": "https://github.com/ni/labview-icon-editor.git",
+    "targetRelativePath": "resource/plugins/lv_icon.vi",
+    "selectedHashBaseline": "8741bb08026c104100720c0ef48621e4ab7762fd",
+    "baseHashBaseline": "c188cdec606aac3b17d8b17274baa19eef3e4017",
+    "repositoryHeadBaseline": "778ab99a485342f992d169261d5d30b828b00736"
+  },
+  "proofLanes": [
+    {
+      "laneId": "windows-host-x64",
+      "status": "succeeded",
+      "generatedAt": "2026-04-21T14:13:42.907Z",
+      "providerRequest": "host",
+      "proofExecutionMode": "host-only",
+      "settingsFilePath": "host/settings-file.json",
+      "transcripts": {
+        "settingsWrite": "host/settings-write.txt",
+        "proofRun": "host/proof-run.txt"
+      },
+      "proofAttemptCount": 1,
+      "retainedRoot": "windows-private-release-evidence/host/",
+      "copiedHarnessReportRoot": "host/harness-report",
+      "report": {
+        "reportStatus": "ready-for-runtime",
+        "runtimeExecutionState": "succeeded",
+        "runtimeProvider": "host-native",
+        "runtimeEngine": "labview-cli",
+        "runtimeExecutable": "C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.exe",
+        "runtimeLabviewIniPath": "C:\\Program Files\\National Instruments\\LabVIEW 2026\\LabVIEW.ini",
+        "runtimeLabviewTcpPort": 3363,
+        "generatedReportExists": true,
+        "comparisonReportJson": "host/harness-report/comparison-report-smoke.json",
+        "comparisonReportMarkdown": "host/harness-report/comparison-report-smoke.md",
+        "comparisonReportHtml": "host/harness-report/comparison-report-smoke.html"
+      }
+    },
+    {
+      "laneId": "windows-container-x64",
+      "status": "succeeded",
+      "generatedAt": "2026-04-21T14:14:27.725Z",
+      "providerRequest": "docker",
+      "proofExecutionMode": "docker-only",
+      "settingsFilePath": "container/settings-file.json",
+      "transcripts": {
+        "settingsWrite": "container/settings-write.txt",
+        "settingsValidate": "container/settings-validate.txt",
+        "proofRun": "container/proof-run.txt"
+      },
+      "proofAttemptCount": 1,
+      "retainedRoot": "windows-private-release-evidence/container/",
+      "copiedHarnessReportRoot": "container/harness-report",
+      "report": {
+        "reportStatus": "ready-for-runtime",
+        "runtimeExecutionState": "succeeded",
+        "runtimeProvider": "windows-container",
+        "runtimeEngine": "labview-cli",
+        "runtimeExecutable": "powershell.exe",
+        "runtimeLabviewIniPath": "C:\\Program Files (x86)\\National Instruments\\Shared\\LabVIEW CLI\\LabVIEWCLI.ini",
+        "runtimeLabviewTcpPort": 3363,
+        "generatedReportExists": true,
+        "comparisonReportJson": "container/harness-report/comparison-report-smoke.json",
+        "comparisonReportMarkdown": "container/harness-report/comparison-report-smoke.md",
+        "comparisonReportHtml": "container/harness-report/comparison-report-smoke.html"
+      }
+    }
+  ],
+  "gitlabRunnerLane": {
+    "jobName": "windows_private_release_acceptance",
+    "governedCli": "npm run acceptance:windows:private-release",
+    "governedScript": "scripts/runWindowsPrivateReleaseAcceptance.js",
+    "runnerContractDoc": "docs/product/windows-private-release-runner-lane.md",
+    "artifactRoot": "windows-private-release-evidence/",
+    "expectedManifestPath": "windows-private-release-evidence/manifest.json",
+    "v1_3_1ReceiptStatus": "retained-local-governed-receipt",
+    "receiptGeneratedAt": "2026-04-21T14:14:27.778Z",
+    "boundedRecoveryTriggered": false
+  },
+  "validationPack": {
+    "packageBaseline": [
+      "npm run package -- --out \"preview-evidence/vi-history-suite-1.3.1.vsix\"",
+      "Get-FileHash preview-evidence\\vi-history-suite-1.3.1.vsix -Algorithm SHA256"
+    ],
+    "acceptanceBaseline": [
+      "npm run acceptance:windows:private-release",
+      "windows-private-release-evidence/manifest.json"
+    ],
+    "prepGateBaseline": [
+      "npm run design:gate",
+      "py -3 C:\\Users\\sveld\\.codex\\skills\\repo-standards-review\\scripts\\run_assurance.py . --profile release-gate"
+    ],
+    "publicationBaseline": [
+      "npm run gitlab:private-release:publish -- --skip-package --allow-dirty",
+      ".cache/private-release-publish/latest/private-release-publish.json"
+    ],
+    "remainingGovernedCloseout": [
+      "protected-main-promotion",
+      "exact-semver-tagging",
+      "public-github-exact-release-publication",
+      "marketplace-publication"
+    ]
+  },
+  "nextMove": [
+    "keep the published private-v1.3.1-windows-x64 GitLab release as the controlled Windows x64 install surface for this line",
+    "retain exact-tag, public GitHub exact release, and Marketplace acts as separate later steps"
+  ]
+}
