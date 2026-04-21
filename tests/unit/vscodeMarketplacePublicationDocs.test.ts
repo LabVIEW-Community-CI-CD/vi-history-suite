@@ -128,11 +128,9 @@ describe('vs code marketplace publication and installed-user docs', () => {
     expect(publicIssueConfig).toContain('Install and release guide');
     expect(publicIssueConfig).toContain('User workflow');
 
-    expect(home).toContain('Install The Extension');
-    expect(home).toContain('code --install-extension svelderrainruiz.vi-history-suite');
-    expect(home).toContain('VI History: Prepare Local Runtime Settings CLI');
-    expect(home).toContain('Compare A VI');
-    expect(home).toContain('Support And Troubleshooting');
+    expect(home).toContain('Install And Release');
+    expect(home).toContain('User Workflow');
+    expect(home).toContain('Comparison Reports And Dashboard Review');
     expect(home).toContain('Source Evaluation And Codespaces');
     expect(home).toContain('Review Public LabVIEW VI Changes');
     expect(home).toContain('Refresh Codespace Repositories');
