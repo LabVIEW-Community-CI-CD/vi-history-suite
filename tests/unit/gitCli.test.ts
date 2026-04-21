@@ -22,6 +22,11 @@ import {
 
 const tempDirectories: string[] = [];
 
+function normalizeAssertPath(candidatePath: string): string {
+  const normalized = path.normalize(candidatePath);
+  return process.platform === 'win32' ? normalized.toLowerCase() : normalized;
+}
+
 async function createTempGitRepo(): Promise<string> {
   const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'vihs-git-cli-'));
   tempDirectories.push(repoRoot);
@@ -134,7 +139,7 @@ describe('gitCli parsing', () => {
     const trackedFiles = await listTrackedFiles(repoRoot);
 
     expect(head).toMatch(/^[0-9a-f]{40}$/);
-    expect(path.normalize(resolvedRoot)).toBe(path.normalize(repoRoot));
+    expect(normalizeAssertPath(resolvedRoot)).toBe(normalizeAssertPath(repoRoot));
     expect(trackedFiles).toEqual(['folder with spaces/other.vi', 'nested/sample.vi']);
   });
 

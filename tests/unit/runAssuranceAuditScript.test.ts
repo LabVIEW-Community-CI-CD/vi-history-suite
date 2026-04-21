@@ -4,9 +4,11 @@ import { describe, expect, it } from 'vitest';
 
 const {
   buildContainerInvocation,
+  getWindowsPythonExecutableCandidates,
   buildRunAssuranceArgs,
   parseArgs,
   resolveExecutor,
+  resolvePythonInvocation,
   selectScopePaths
 } = require('../../scripts/runAssuranceAudit.js') as {
   buildContainerInvocation: (
@@ -17,6 +19,7 @@ const {
     platform?: NodeJS.Platform
   ) => { command: string; args: string[] };
   buildRunAssuranceArgs: (lane: string, targetPath: string, rawOutputRoot: string) => string[];
+  getWindowsPythonExecutableCandidates: (env?: Record<string, string>) => string[];
   parseArgs: (argv: string[]) => {
     lane: string;
     repoRoot: string;
@@ -24,6 +27,11 @@ const {
     executor: string;
   };
   resolveExecutor: (explicitExecutor?: string, env?: Record<string, string>) => string;
+  resolvePythonInvocation: (
+    env?: Record<string, string>,
+    platform?: NodeJS.Platform,
+    existsSyncImpl?: (candidate: string) => boolean
+  ) => { command: string; args: string[] };
   selectScopePaths: (scope: string, trackedFiles: string[]) => string[];
 };
 
@@ -158,5 +166,42 @@ describe('run assurance audit script', () => {
   it('resolves the assurance executor from explicit or environment input', () => {
     expect(resolveExecutor('container', {})).toBe('container');
     expect(resolveExecutor('', { VIHS_ASSURANCE_EXECUTOR: 'local-skill' })).toBe('local-skill');
+  });
+
+  it('prefers explicit and deterministic Windows Python toolchains before falling back to py -3', () => {
+    const windowsEnv = {
+      LocalAppData: 'C:\\Users\\tester\\AppData\\Local'
+    };
+
+    expect(getWindowsPythonExecutableCandidates(windowsEnv).slice(0, 5)).toEqual([
+      'C:\\Users\\tester\\AppData\\Local\\Programs\\Python\\Python313\\python.exe',
+      'C:\\Users\\tester\\AppData\\Local\\Programs\\Python\\Python312\\python.exe',
+      'C:\\Users\\tester\\AppData\\Local\\Programs\\Python\\Python311\\python.exe',
+      'C:\\Users\\tester\\AppData\\Local\\Programs\\Python\\Python310\\python.exe',
+      'C:\\Users\\tester\\AppData\\Local\\Programs\\Python\\Python39\\python.exe'
+    ]);
+    expect(
+      resolvePythonInvocation({
+        VIHS_ASSURANCE_PYTHON: 'D:\\tools\\python\\python.exe'
+      }, 'win32')
+    ).toEqual({
+      command: 'D:\\tools\\python\\python.exe',
+      args: []
+    });
+    expect(
+      resolvePythonInvocation(
+        windowsEnv,
+        'win32',
+        (candidate) =>
+          candidate === 'C:\\Users\\tester\\AppData\\Local\\Programs\\Python\\Python312\\python.exe'
+      )
+    ).toEqual({
+      command: 'C:\\Users\\tester\\AppData\\Local\\Programs\\Python\\Python312\\python.exe',
+      args: []
+    });
+    expect(resolvePythonInvocation(windowsEnv, 'win32', () => false)).toEqual({
+      command: 'py',
+      args: ['-3']
+    });
   });
 });

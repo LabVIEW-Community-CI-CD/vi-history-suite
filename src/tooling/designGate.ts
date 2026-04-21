@@ -1,3 +1,4 @@
+import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
@@ -53,7 +54,9 @@ export interface DevelopmentQueueEntry {
 
 export function resolveDesignGateCommand(
   command: string,
-  platform = process.platform
+  platform = process.platform,
+  environment: NodeJS.ProcessEnv = process.env,
+  pathExists: (candidate: string) => boolean = (candidate) => fs.existsSync(candidate)
 ): string {
   if (platform === 'win32') {
     if (command === 'npm') {
@@ -61,7 +64,7 @@ export function resolveDesignGateCommand(
     }
 
     if (command === 'python3') {
-      return 'python';
+      return resolveWindowsPythonCommand(environment, pathExists);
     }
   }
 
@@ -71,13 +74,67 @@ export function resolveDesignGateCommand(
 export function resolveDesignGateArgs(
   command: string,
   args: string[],
-  platform = process.platform
+  platform = process.platform,
+  environment: NodeJS.ProcessEnv = process.env,
+  pathExists: (candidate: string) => boolean = (candidate) => fs.existsSync(candidate)
 ): string[] {
   if (platform === 'win32' && command === 'npm') {
     return ['/d', '/s', '/c', ['npm', ...args].join(' ')];
   }
 
+  if (platform === 'win32' && command === 'python3') {
+    const resolvedCommand = resolveWindowsPythonCommand(environment, pathExists);
+    return resolvedCommand === 'py' ? ['-3', ...args] : args;
+  }
+
   return args;
+}
+
+export function getWindowsPythonExecutableCandidates(
+  environment: NodeJS.ProcessEnv = process.env
+): string[] {
+  const candidates = new Set<string>();
+  const versionDirectories = ['Python313', 'Python312', 'Python311', 'Python310', 'Python39'];
+  const localAppData = environment.LocalAppData?.trim();
+  const programRoots = [
+    environment.ProgramW6432,
+    environment.ProgramFiles,
+    environment['ProgramFiles(x86)']
+  ].filter((value): value is string => Boolean(value && value.trim().length > 0));
+
+  if (localAppData) {
+    for (const versionDirectory of versionDirectories) {
+      candidates.add(
+        path.win32.join(localAppData, 'Programs', 'Python', versionDirectory, 'python.exe')
+      );
+    }
+  }
+
+  for (const programRoot of programRoots) {
+    for (const versionDirectory of versionDirectories) {
+      candidates.add(path.win32.join(programRoot, versionDirectory, 'python.exe'));
+    }
+  }
+
+  return [...candidates];
+}
+
+export function resolveWindowsPythonCommand(
+  environment: NodeJS.ProcessEnv = process.env,
+  pathExists: (candidate: string) => boolean = (candidate) => fs.existsSync(candidate)
+): string {
+  const explicit = environment.VI_HISTORY_SUITE_ASSURANCE_PYTHON?.trim();
+  if (explicit) {
+    return explicit;
+  }
+
+  for (const candidate of getWindowsPythonExecutableCandidates(environment)) {
+    if (pathExists(candidate)) {
+      return candidate;
+    }
+  }
+
+  return 'py';
 }
 
 export function assertCompletedPassingDesignGateReport(
@@ -146,7 +203,9 @@ export function isMountedWindowsPath(targetPath: string): boolean {
 export function buildDesignGatePlan(
   repoRoot: string,
   assuranceScriptPath = defaultAssuranceScriptPath(),
-  platform = process.platform
+  platform = process.platform,
+  environment: NodeJS.ProcessEnv = process.env,
+  pathExists: (candidate: string) => boolean = (candidate) => fs.existsSync(candidate)
 ): DesignGateStepSpec[] {
   const integrationScript =
     platform === 'win32' ? 'test:integration:windows' : 'test:integration';
@@ -155,47 +214,79 @@ export function buildDesignGatePlan(
     {
       id: 'branch-governance-baseline',
       title: 'Branch governance baseline',
-      command: resolveDesignGateCommand('npm', platform),
-      args: resolveDesignGateArgs('npm', ['run', 'branch:governance:assert'], platform)
+      command: resolveDesignGateCommand('npm', platform, environment, pathExists),
+      args: resolveDesignGateArgs(
+        'npm',
+        ['run', 'branch:governance:assert'],
+        platform,
+        environment,
+        pathExists
+      )
     },
     {
       id: 'design-contract',
       title: 'Design contract',
-      command: resolveDesignGateCommand('npm', platform),
-      args: resolveDesignGateArgs('npm', ['run', 'test:design-contract'], platform)
+      command: resolveDesignGateCommand('npm', platform, environment, pathExists),
+      args: resolveDesignGateArgs(
+        'npm',
+        ['run', 'test:design-contract'],
+        platform,
+        environment,
+        pathExists
+      )
     },
     {
       id: 'unit-and-coverage',
       title: 'Unit tests and coverage',
-      command: resolveDesignGateCommand('npm', platform),
-      args: resolveDesignGateArgs('npm', ['run', 'test'], platform)
+      command: resolveDesignGateCommand('npm', platform, environment, pathExists),
+      args: resolveDesignGateArgs('npm', ['run', 'test'], platform, environment, pathExists)
     },
     {
       id: 'extension-host-integration',
       title: 'VS Code extension-host integration',
-      command: resolveDesignGateCommand('npm', platform),
-      args: resolveDesignGateArgs('npm', ['run', integrationScript], platform)
+      command: resolveDesignGateCommand('npm', platform, environment, pathExists),
+      args: resolveDesignGateArgs(
+        'npm',
+        ['run', integrationScript],
+        platform,
+        environment,
+        pathExists
+      )
     },
     {
       id: 'canonical-harness-smoke',
       title: 'Canonical harness smoke',
-      command: resolveDesignGateCommand('npm', platform),
-      args: resolveDesignGateArgs('npm', ['run', 'proof:run', '--', 'smoke'], platform)
+      command: resolveDesignGateCommand('npm', platform, environment, pathExists),
+      args: resolveDesignGateArgs(
+        'npm',
+        ['run', 'proof:run', '--', 'smoke'],
+        platform,
+        environment,
+        pathExists
+      )
     },
     {
       id: 'documentation-continuous-integration',
       title: 'Documentation continuous integration',
-      command: resolveDesignGateCommand('npm', platform),
-      args: resolveDesignGateArgs('npm', ['run', 'docs:ci:core'], platform)
+      command: resolveDesignGateCommand('npm', platform, environment, pathExists),
+      args: resolveDesignGateArgs(
+        'npm',
+        ['run', 'docs:ci:core'],
+        platform,
+        environment,
+        pathExists
+      )
     },
     {
       id: 'standards-assurance',
       title: 'Standards assurance',
-      command: resolveDesignGateCommand('python3', platform),
+      command: resolveDesignGateCommand('python3', platform, environment, pathExists),
       args: resolveDesignGateArgs(
         'python3',
         [assuranceScriptPath, repoRoot, '--profile', 'quick-triage'],
-        platform
+        platform,
+        environment,
+        pathExists
       ),
       timeoutMs: 180000
     }
