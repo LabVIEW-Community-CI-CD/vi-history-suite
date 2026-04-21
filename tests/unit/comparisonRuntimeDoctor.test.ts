@@ -381,7 +381,7 @@ describe('comparisonRuntimeDoctor', () => {
 
     expect(lines).toContain('Runtime blocked reason: labview-version-required.');
     expect(lines.at(-1)).toBe(
-      'Next action: set viHistorySuite.labviewVersion. Then rerun comparison report generation. If this already-running VS Code session still shows stale provider or runtime facts after the CLI update, reload or restart the window and try again.'
+      'Next action: set viHistorySuite.labviewVersion. Then rerun comparison report generation. Review Compare or runtime validation again after the CLI update. Reload or restart the window only if this already-running VS Code session still shows stale provider or runtime facts.'
     );
   });
 
@@ -413,7 +413,7 @@ describe('comparisonRuntimeDoctor', () => {
     });
 
     expect(lines).toContain(
-      'Settings freshness: if this already-running VS Code session still shows stale provider or runtime facts after the generated settings CLI update, reload or restart the window and retry.'
+      'Settings freshness: review Compare or runtime validation again after the generated settings CLI update. Reload or restart the window only if this already-running VS Code session still shows stale provider or runtime facts.'
     );
     expect(lines.at(-1)).toBe(
       'Next action: close existing LabVIEW/LabVIEWCLI/LVCompare sessions, clear the governed VI Server listener on the selected port, or switch to a Docker-backed compare path, then rerun comparison report generation.'
@@ -454,7 +454,7 @@ describe('comparisonRuntimeDoctor', () => {
 
     expect(lines).toContain('Runtime blocked reason: installed-provider-invalid.');
     expect(lines.at(-1)).toBe(
-      'Next action: set viHistorySuite.runtimeProvider to host or docker. Then rerun comparison report generation. If this already-running VS Code session still shows stale provider or runtime facts after the CLI update, reload or restart the window and try again.'
+      'Next action: set viHistorySuite.runtimeProvider to host or docker. Then rerun comparison report generation. Review Compare or runtime validation again after the CLI update. Reload or restart the window only if this already-running VS Code session still shows stale provider or runtime facts.'
     );
   });
 

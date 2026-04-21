@@ -83,14 +83,13 @@ describe('public devcontainer surface', () => {
     );
     expect(extensions.recommendations).not.toEqual(expect.arrayContaining(['vitest.explorer']));
 
-    expect(readme).toContain('## Install And Use');
     expect(readme).toContain('## Need Source Evaluation Or Contribution?');
     expect(readme).toContain('[INSTALL.md](./INSTALL.md)');
     expect(readme).toContain('[CONTRIBUTING.md](./CONTRIBUTING.md)');
-    expect(install).toContain('The public repo is intended to support devcontainer/Codespaces evaluation');
+    expect(install).toContain('This route remains useful for source evaluation');
     expect(install).toContain('npm run public:host:bootstrap-linux');
     expect(install).toContain('npm run public:fixture:icon-editor');
-    expect(install).toContain('visible sibling folder named');
-    expect(install).toContain('The public Linux cold-pull smoke lane is');
+    expect(install).toContain('npm run public:repo:clone');
+    expect(install).toContain('If you want a generic public GitHub or GitLab repo instead');
   });
 });

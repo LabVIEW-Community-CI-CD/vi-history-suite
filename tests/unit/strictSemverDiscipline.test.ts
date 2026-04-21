@@ -90,23 +90,23 @@ describe('strict semver discipline', () => {
     expect(versionLineContract.releaseBranch).toBe('release/*');
     expect(versionLineContract.hotfixBranch).toBe('hotfix/*');
     expect(versionLineContract.exactReleaseLineBranch).toBe('main');
-    expect(pkg.version).toBe('1.3.0');
+    expect(pkg.version).toBe('1.3.1');
     expect(versionLineContract.currentMainPackageLine).toBe('1.3.0');
-    expect(versionLineContract.currentDevelopPackageLine).toBe('1.3.0');
-    expect(versionLineContract.activeDevelopCandidateReleaseLine).toBeNull();
+    expect(versionLineContract.currentDevelopPackageLine).toBe('1.3.1');
+    expect(versionLineContract.activeDevelopCandidateReleaseLine).toBe('v1.3.1');
     expect(versionLineContract.activeReleaseCandidateBranch).toBeNull();
     expect(versionLineContract.publicDefaultBranch).toBe('main');
     expect(pkg.version).toBe(versionLineContract.currentDevelopPackageLine);
     expect(versionLineContract.publicCodespaceBranch).toBe('develop');
     expect(compareSemver(versionLineContract.currentMainPackageLine, exactReleaseLine)).toBe(0);
-    expect(compareSemver(versionLineContract.currentMainPackageLine, pkg.version)).toBe(0);
+    expect(compareSemver(versionLineContract.currentMainPackageLine, pkg.version)).toBeLessThan(0);
     expect(compareSemver(pkg.version, activeCandidateReleaseLine)).toBe(0);
-    expect(compareSemver(pkg.version, exactReleaseLine)).toBe(0);
+    expect(compareSemver(pkg.version, exactReleaseLine)).toBeGreaterThan(0);
     expect(readme).toContain('- burned exact release line: `v1.0.2`');
     expect(readme).toContain('- current exact released line: `v1.3.0`');
     expect(readme).toContain('- current published package line on `main`: `1.3.0`');
-    expect(readme).toContain('- current develop package line on `develop`: `1.3.0`');
-    expect(readme).toContain('- active exact release candidate line on `develop`: none; exact `v1.3.0`');
+    expect(readme).toContain('- current develop package line on `develop`: `1.3.1`');
+    expect(readme).toContain('- active exact release candidate line on `develop`: `v1.3.1`');
     expect(readme).toContain('- active release-candidate branch: none');
     expect(readme).toContain('- public GitHub default branch: `main`');
     expect(readme).toContain('- public Codespaces evaluation branch: `develop`');
@@ -116,8 +116,8 @@ describe('strict semver discipline', () => {
     expect(currentState).toContain('- burned exact release line: `v1.0.2`');
     expect(currentState).toContain('- current exact released line: `v1.3.0`');
     expect(currentState).toContain('- current published package line on `main`: `1.3.0`');
-    expect(currentState).toContain('- current develop package line on `develop`: `1.3.0`');
-    expect(currentState).toContain('- active exact release candidate line on `develop`: none; exact `v1.3.0`');
+    expect(currentState).toContain('- current develop package line on `develop`: `1.3.1`');
+    expect(currentState).toContain('- active exact release candidate line on `develop`: `v1.3.1`');
     expect(currentState).toContain('- active release-candidate branch: none');
     expect(currentState).toContain('- public GitHub default branch: `main`');
     expect(currentState).toContain('- public Codespaces evaluation branch: `develop`');
@@ -127,8 +127,8 @@ describe('strict semver discipline', () => {
     expect(releaseProcedure).toContain('The current exact released line is `v1.3.0`.');
     expect(releaseProcedure).toContain('The burned exact released line is `v1.0.2`.');
     expect(releaseProcedure).toContain("The current published package line on `main` is `1.3.0`.");
-    expect(releaseProcedure).toContain('The current develop package line on `develop` is `1.3.0`.');
-    expect(releaseProcedure).toContain('The active exact release candidate line on `develop` is none; exact');
+    expect(releaseProcedure).toContain('The current develop package line on `develop` is `1.3.1`.');
+    expect(releaseProcedure).toContain('The active exact release candidate line on `develop` is `v1.3.1`.');
     expect(releaseProcedure).toContain('The active release-candidate branch is none.');
     expect(releaseProcedure).toContain('The public GitHub default branch is `main`');
     expect(releaseProcedure).toContain('`main` shall match that exact release line');
@@ -158,6 +158,7 @@ describe('strict semver discipline', () => {
     expect(sustainmentRules.releaseCadence.strictSemverRule).toContain(
       'future sessions shall not treat a burned exact release as the green release baseline for later publication'
     );
+    expect(changelog).toContain('## [1.3.1] - 2026-04-20');
     expect(changelog).toContain('## [1.3.0] - 2026-04-14');
     expect(changelog).toContain('## [1.2.2] - 2026-04-07');
     expect(changelog).toContain('## [1.2.1] - 2026-04-07');

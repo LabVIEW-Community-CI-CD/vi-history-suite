@@ -161,8 +161,18 @@ function validateProbePacket(summary) {
   const historyReloadRequiredCount = requireNumber('historyReloadRequiredCount');
   const historyInSessionUpdatedCount = requireNumber('historyInSessionUpdatedCount');
   const historyUnknownObservationCount = requireNumber('historyUnknownObservationCount');
+  const mutationTargetHostCount = requireNumber('mutationTargetHostCount');
+  const mutationTargetDockerCount = requireNumber('mutationTargetDockerCount');
+  const mutationTargetUnknownCount = requireNumber('mutationTargetUnknownCount');
+  const mutationTargetPersistedMatchCount = requireNumber('mutationTargetPersistedMatchCount');
+  const mutationTargetPersistedMismatchCount = requireNumber('mutationTargetPersistedMismatchCount');
+  const mutationTargetPersistedUnknownCount = requireNumber('mutationTargetPersistedUnknownCount');
+  const mutationTargetBaselineChangedCount = requireNumber('mutationTargetBaselineChangedCount');
+  const mutationTargetBaselineUnchangedCount = requireNumber('mutationTargetBaselineUnchangedCount');
+  const mutationTargetBaselineUnknownCount = requireNumber('mutationTargetBaselineUnknownCount');
   const historyStance = requireString('historyStance');
   const historyProofStatus = requireString('historyProofStatus');
+  const providerSelectionCoverage = requireString('providerSelectionCoverage');
 
   if (
     typeof safeRestoreApplied === 'boolean' &&
@@ -269,6 +279,16 @@ function validateProbePacket(summary) {
       `historyProofStatus must be not-fully-proven or re-evaluation-required, received ${historyProofStatus}`
     );
   }
+  if (
+    providerSelectionCoverage &&
+    providerSelectionCoverage !== 'bidirectional-selection-observed' &&
+    providerSelectionCoverage !== 'single-provider-only' &&
+    providerSelectionCoverage !== 'insufficient-evidence'
+  ) {
+    failures.push(
+      `providerSelectionCoverage must be bidirectional-selection-observed, single-provider-only, or insufficient-evidence, received ${providerSelectionCoverage}`
+    );
+  }
 
   if (
     typeof providerDrift === 'boolean' &&
@@ -319,6 +339,52 @@ function validateProbePacket(summary) {
       );
     }
   }
+  if (
+    typeof historyTotalRuns === 'number' &&
+    typeof mutationTargetHostCount === 'number' &&
+    typeof mutationTargetDockerCount === 'number' &&
+    typeof mutationTargetUnknownCount === 'number'
+  ) {
+    const expectedTotal =
+      mutationTargetHostCount + mutationTargetDockerCount + mutationTargetUnknownCount;
+    if (historyTotalRuns !== expectedTotal) {
+      failures.push(
+        `historyTotalRuns must equal mutationTargetHostCount + mutationTargetDockerCount + mutationTargetUnknownCount (${expectedTotal})`
+      );
+    }
+  }
+  if (
+    typeof historyTotalRuns === 'number' &&
+    typeof mutationTargetPersistedMatchCount === 'number' &&
+    typeof mutationTargetPersistedMismatchCount === 'number' &&
+    typeof mutationTargetPersistedUnknownCount === 'number'
+  ) {
+    const expectedTotal =
+      mutationTargetPersistedMatchCount +
+      mutationTargetPersistedMismatchCount +
+      mutationTargetPersistedUnknownCount;
+    if (historyTotalRuns !== expectedTotal) {
+      failures.push(
+        `historyTotalRuns must equal mutationTargetPersistedMatchCount + mutationTargetPersistedMismatchCount + mutationTargetPersistedUnknownCount (${expectedTotal})`
+      );
+    }
+  }
+  if (
+    typeof historyTotalRuns === 'number' &&
+    typeof mutationTargetBaselineChangedCount === 'number' &&
+    typeof mutationTargetBaselineUnchangedCount === 'number' &&
+    typeof mutationTargetBaselineUnknownCount === 'number'
+  ) {
+    const expectedTotal =
+      mutationTargetBaselineChangedCount +
+      mutationTargetBaselineUnchangedCount +
+      mutationTargetBaselineUnknownCount;
+    if (historyTotalRuns !== expectedTotal) {
+      failures.push(
+        `historyTotalRuns must equal mutationTargetBaselineChangedCount + mutationTargetBaselineUnchangedCount + mutationTargetBaselineUnknownCount (${expectedTotal})`
+      );
+    }
+  }
 
   if (
     historyStance &&
@@ -341,6 +407,23 @@ function validateProbePacket(summary) {
         : 'not-fully-proven';
     if (historyProofStatus && historyProofStatus !== expectedProofStatus) {
       failures.push(`historyProofStatus must match historyStance (${expectedProofStatus})`);
+    }
+  }
+  if (
+    providerSelectionCoverage &&
+    typeof mutationTargetHostCount === 'number' &&
+    typeof mutationTargetDockerCount === 'number'
+  ) {
+    const expectedCoverage =
+      mutationTargetHostCount > 0 && mutationTargetDockerCount > 0
+        ? 'bidirectional-selection-observed'
+        : mutationTargetHostCount > 0 || mutationTargetDockerCount > 0
+          ? 'single-provider-only'
+          : 'insufficient-evidence';
+    if (providerSelectionCoverage !== expectedCoverage) {
+      failures.push(
+        `providerSelectionCoverage must match retained mutation target counts (${expectedCoverage})`
+      );
     }
   }
   if (historyProofStatus === 'not-fully-proven') {
@@ -366,6 +449,60 @@ function validateProbePacket(summary) {
   if (typeof historyUnknownObservationCount === 'number' && historyUnknownObservationCount > 0) {
     failures.push(
       'historyUnknownObservationCount must remain 0 for latest retained probe packet evidence'
+    );
+  }
+  if (
+    providerSelectionCoverage &&
+    providerSelectionCoverage !== 'bidirectional-selection-observed'
+  ) {
+    failures.push(
+      'providerSelectionCoverage must remain bidirectional-selection-observed for latest retained probe packet evidence'
+    );
+  }
+  if (
+    typeof mutationTargetHostCount === 'number' &&
+    typeof mutationTargetDockerCount === 'number' &&
+    (mutationTargetHostCount < 1 || mutationTargetDockerCount < 1)
+  ) {
+    failures.push(
+      'mutationTargetHostCount and mutationTargetDockerCount must each remain at least 1 for latest retained probe packet evidence'
+    );
+  }
+  if (typeof mutationTargetUnknownCount === 'number' && mutationTargetUnknownCount > 0) {
+    failures.push(
+      'mutationTargetUnknownCount must remain 0 for latest retained probe packet evidence'
+    );
+  }
+  if (
+    typeof mutationTargetPersistedMismatchCount === 'number' &&
+    mutationTargetPersistedMismatchCount > 0
+  ) {
+    failures.push(
+      'mutationTargetPersistedMismatchCount must remain 0 for latest retained probe packet evidence'
+    );
+  }
+  if (
+    typeof mutationTargetPersistedUnknownCount === 'number' &&
+    mutationTargetPersistedUnknownCount > 0
+  ) {
+    failures.push(
+      'mutationTargetPersistedUnknownCount must remain 0 for latest retained probe packet evidence'
+    );
+  }
+  if (
+    typeof mutationTargetBaselineUnchangedCount === 'number' &&
+    mutationTargetBaselineUnchangedCount > 0
+  ) {
+    failures.push(
+      'mutationTargetBaselineUnchangedCount must remain 0 for latest retained probe packet evidence'
+    );
+  }
+  if (
+    typeof mutationTargetBaselineUnknownCount === 'number' &&
+    mutationTargetBaselineUnknownCount > 0
+  ) {
+    failures.push(
+      'mutationTargetBaselineUnknownCount must remain 0 for latest retained probe packet evidence'
     );
   }
 
@@ -413,6 +550,7 @@ function run(argv = process.argv.slice(2), deps = {}) {
   stdout.write(`- driftDetected: ${summary.driftDetected ? 'yes' : 'no'}\n`);
   stdout.write(`- liveUptakeObservation: ${summary.liveUptakeObservation}\n`);
   stdout.write(`- historyStance: ${summary.historyStance}\n`);
+  stdout.write(`- providerSelectionCoverage: ${summary.providerSelectionCoverage}\n`);
   return {
     outcome: 'pass',
     packetPath,

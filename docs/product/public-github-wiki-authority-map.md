@@ -51,8 +51,9 @@ directly to the public user wiki.
   the exact released `v1.3.0` host-default Windows local `LabVIEWCLI`
   contract with bounded expert Docker until a newer exact release is actually
   published.
-- No later public candidate wiki head is open yet; a future candidate wiki
-  contract may publish only after that later line is opened and retained in
+- The maintained public candidate wiki head is now `141c39e`, the maintained
+  public `develop` candidate head now publishes `ab293d5`, and the current
+  published candidate heads `ab293d5` / `141c39e` are now `review-ready` in
   `docs/product/public-release-candidate.{md,json}`.
 - Public wiki publication shall not silently mix the exact-release `v1.3.0`
   wording with any later candidate wording on the same maintained wiki head;

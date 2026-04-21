@@ -33,10 +33,10 @@ describe('public Codespaces public-repo bootstrap docs', () => {
     expect(currentState).toContain('canonical `npm run public:fixture:icon-editor` helper-backed path');
     expect(currentState).toContain('generic `npm run public:repo:clone` surface');
     expect(currentState).toContain('current exact released line: `v1.3.0`');
+    expect(currentState).toContain('active exact release candidate line on `develop`: `v1.3.1`');
     expect(currentState).toContain(
-      'active exact release candidate line on `develop`: none; exact `v1.3.0`'
+      '`v1.3.1` and is now `tag-eligible` for exact-release reopening on'
     );
-    expect(currentState).toContain('the next SemVer line is not open yet');
 
     expect(candidate).toContain(
       'Decision: helper-backed canonical path plus generic public-repo reference manual'
@@ -46,7 +46,7 @@ describe('public Codespaces public-repo bootstrap docs', () => {
     expect(candidate).toContain('Generic bootstrap command:');
     expect(candidate).toContain('npm run public:repo:clone -- --repo-url <https-url>');
     expect(candidate).toContain('Published-surface expert-agent review:');
-    expect(candidate).toContain('`no-findings-post-publication-v1.3.0-candidate`');
+    expect(candidate).toContain('`no-findings-on-current-v1.3.1-published-heads`');
     expect(candidate).toContain('Required skill: `vi-history-suite-expert-agent-reviewer`');
     expect(candidate).toContain('Exact public release: `v1.3.0-github-release-and-marketplace-published`');
     expect(candidate).toContain('remains historical exact');

@@ -179,7 +179,7 @@ describe('localRuntimeSettingsCli', () => {
     expect(stdout.join('')).toContain('viHistorySuite.labviewVersion=2026');
     expect(stdout.join('')).toContain('viHistorySuite.labviewBitness=x64');
     expect(stdout.join('')).toContain(
-      'If this already-running VS Code session still shows stale provider or runtime facts after the CLI update, reload or restart the window'
+      'Review Compare or runtime validation again after the CLI update. Reload or restart the window only if this already-running VS Code session still shows stale provider or runtime facts.'
     );
   });
 

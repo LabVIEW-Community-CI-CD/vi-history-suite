@@ -465,6 +465,55 @@ describe('assertRuntimeSettingsLiveSessionProbePacket script', () => {
     );
   });
 
+  it('fails validation when retained mutation target receipts are not fully explicit', () => {
+    const failures = probeGate.validateProbePacket({
+      outcome: 'probed-runtime-settings-live-session',
+      packetRunId: '2026-04-14T13-07-33-123Z',
+      packetJsonPath: '/tmp/packet.json',
+      packetMarkdownPath: '/tmp/packet.md',
+      latestPacketJsonPath: '/tmp/latest-summary.json',
+      latestPacketMarkdownPath: '/tmp/latest-summary.md',
+      baselinePersistedProvider: 'docker',
+      persistedProvider: 'host',
+      mutationProviderTarget: 'host',
+      mutationTargetPersistedMatch: true,
+      mutationTargetBaselineChanged: true,
+      liveUptakeObservation: 'in-session-updated',
+      safeRestoreApplied: true,
+      safeRestoreVerified: true,
+      providerDrift: false,
+      versionDrift: false,
+      bitnessDrift: false,
+      driftDetected: false,
+      historyTotalRuns: 3,
+      historyReloadRequiredCount: 0,
+      historyInSessionUpdatedCount: 3,
+      historyUnknownObservationCount: 0,
+      mutationTargetHostCount: 1,
+      mutationTargetDockerCount: 1,
+      mutationTargetUnknownCount: 1,
+      mutationTargetPersistedMatchCount: 2,
+      mutationTargetPersistedMismatchCount: 0,
+      mutationTargetPersistedUnknownCount: 1,
+      mutationTargetBaselineChangedCount: 2,
+      mutationTargetBaselineUnchangedCount: 0,
+      mutationTargetBaselineUnknownCount: 1,
+      historyStance: 'candidate-live-uptake-observed',
+      historyProofStatus: 're-evaluation-required',
+      providerSelectionCoverage: 'bidirectional-selection-observed'
+    });
+
+    expect(failures).toContain(
+      'mutationTargetUnknownCount must remain 0 for latest retained probe packet evidence'
+    );
+    expect(failures).toContain(
+      'mutationTargetPersistedUnknownCount must remain 0 for latest retained probe packet evidence'
+    );
+    expect(failures).toContain(
+      'mutationTargetBaselineUnknownCount must remain 0 for latest retained probe packet evidence'
+    );
+  });
+
   it('fails validation when history total does not exactly match observation-class sum', () => {
     const failures = probeGate.validateProbePacket({
       outcome: 'probed-runtime-settings-live-session',
@@ -633,8 +682,18 @@ describe('assertRuntimeSettingsLiveSessionProbePacket script', () => {
           historyReloadRequiredCount: 0,
           historyInSessionUpdatedCount: 2,
           historyUnknownObservationCount: 0,
+          mutationTargetHostCount: 1,
+          mutationTargetDockerCount: 1,
+          mutationTargetUnknownCount: 0,
+          mutationTargetPersistedMatchCount: 2,
+          mutationTargetPersistedMismatchCount: 0,
+          mutationTargetPersistedUnknownCount: 0,
+          mutationTargetBaselineChangedCount: 2,
+          mutationTargetBaselineUnchangedCount: 0,
+          mutationTargetBaselineUnknownCount: 0,
           historyStance: 'candidate-live-uptake-observed',
-          historyProofStatus: 're-evaluation-required'
+          historyProofStatus: 're-evaluation-required',
+          providerSelectionCoverage: 'bidirectional-selection-observed'
         },
         null,
         2
@@ -654,5 +713,6 @@ describe('assertRuntimeSettingsLiveSessionProbePacket script', () => {
     expect(result.outcome).toBe('pass');
     expect(result.packetPath).toBe(packetPath);
     expect(stdout.join('')).toContain('Runtime settings live-session probe packet: pass');
+    expect(stdout.join('')).toContain('providerSelectionCoverage: bidirectional-selection-observed');
   });
 });

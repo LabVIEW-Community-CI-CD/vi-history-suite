@@ -59,10 +59,9 @@ directly to the public GitHub source repo.
 - Exact public `main` shall keep the exact released `v1.3.0` host-default
   Windows local `LabVIEWCLI` contract with bounded expert Docker until a newer
   exact release is actually published.
-- No later public candidate line is open yet; future public `develop`
-  publication may foreground a later candidate contract only after that later
-  line is opened and retained in
-  `docs/product/public-release-candidate.{md,json}`.
+- The maintained public `develop` candidate for `v1.3.1` now publishes
+  `ab293d5`, and the current published candidate heads `ab293d5` / `141c39e`
+  are now `review-ready` in `docs/product/public-release-candidate.{md,json}`.
 - Public source publication shall not silently mix the exact-release
   `v1.3.0` contract with any later candidate wording on the same maintained
   surface; the exact-release baseline and any later candidate lane shall stay

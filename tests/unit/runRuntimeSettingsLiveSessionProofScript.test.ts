@@ -281,6 +281,16 @@ describe('runRuntimeSettingsLiveSessionProof script', () => {
           historyReloadRequiredCount: 0,
           historyInSessionUpdatedCount: 1,
           historyUnknownObservationCount: 0,
+          mutationTargetHostCount: 1,
+          mutationTargetDockerCount: 1,
+          mutationTargetUnknownCount: 0,
+          mutationTargetPersistedMatchCount: 1,
+          mutationTargetPersistedMismatchCount: 0,
+          mutationTargetPersistedUnknownCount: 0,
+          mutationTargetBaselineChangedCount: 1,
+          mutationTargetBaselineUnchangedCount: 0,
+          mutationTargetBaselineUnknownCount: 0,
+          providerSelectionCoverage: 'bidirectional-selection-observed',
           providerDrift: false,
           packetJsonPath: 'C:\\retained\\probe-summary.json',
           packetMarkdownPath: 'C:\\retained\\probe-summary.md',
@@ -323,7 +333,11 @@ describe('runRuntimeSettingsLiveSessionProof script', () => {
     expect(receiptJson.status).toBe('failed');
     expect(receiptJson.historyReceipt?.summary?.stance).toBe('candidate-live-uptake-observed');
     expect(receiptJson.historyReceipt?.summary?.proofStatus).toBe('re-evaluation-required');
+    expect(receiptJson.historyReceipt?.summary?.providerSelectionCoverage).toBe(
+      'bidirectional-selection-observed'
+    );
     expect(receiptJson.policyBoundary?.summary?.latestProviderDrift).toBe(false);
+    expect(receiptJson.policyBoundary?.summary?.mutationTargetUnknownCount).toBe(0);
 
     const receiptMarkdown = await fs.readFile(
       path.join(evidenceDir, 'runtime-settings-live-session-proof.md'),
@@ -332,7 +346,11 @@ describe('runRuntimeSettingsLiveSessionProof script', () => {
     expect(receiptMarkdown).toContain('History stance: `candidate-live-uptake-observed`');
     expect(receiptMarkdown).toContain('Proof status: `re-evaluation-required`');
     expect(receiptMarkdown).toContain('In-session-updated runs: `1`');
+    expect(receiptMarkdown).toContain(
+      'Provider selection coverage: `bidirectional-selection-observed`'
+    );
     expect(receiptMarkdown).toContain('Latest provider drift: `false`');
+    expect(receiptMarkdown).toContain('Mutation target unknown runs: `0`');
     expect(receiptMarkdown).toContain('Per-run packet JSON: `C:\\retained\\probe-summary.json`');
   });
 });

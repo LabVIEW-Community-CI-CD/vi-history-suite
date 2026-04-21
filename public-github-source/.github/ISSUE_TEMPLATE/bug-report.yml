@@ -14,8 +14,9 @@ body:
     attributes:
       label: Install route
       options:
-        - Marketplace install bootstrap on Windows PowerShell
-        - Exact released Marketplace line (`1.2.2`)
+        - VS Code Extensions view
+        - `code --install-extension svelderrainruiz.vi-history-suite`
+        - Exact released Marketplace line (`1.3.0`)
         - Preview VSIX or other non-Marketplace package
     validations:
       required: true
@@ -23,7 +24,7 @@ body:
     id: extension_version
     attributes:
       label: Extension version
-      description: Example `1.3.0` or preview VSIX version
+      description: Example `1.3.0`, `1.3.1`, or preview VSIX version
     validations:
       required: true
   - type: input
