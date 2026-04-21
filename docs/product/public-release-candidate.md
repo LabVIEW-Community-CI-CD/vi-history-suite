@@ -73,22 +73,27 @@
 - The prior retained expert-agent review on `eecdfeb` / `2638ea9` found two
   published-surface findings, and those findings are now folded into the
   current published candidate heads.
-- The current published `v1.3.1` candidate heads `ab293d5` / `141c39e` are
-  now `tag-eligible` for exact-release reopening on published-surface grounds.
+- The current published `v1.3.1` candidate heads `ab293d5` / `141c39e`
+  closed the published-surface gate cleanly, and that `tag-eligible`
+  reopening state is now retained on authority `release/1.3.1` from
+  merged-green `develop` `0f4db5e` with green release-branch pipeline
+  `2468432598`.
 
 ## Local Proof
 
 - `npm run branch:governance:assert`, `npm run docs:gate:core`,
   `npm run design:gate`, and `npm run design:gate:assert-complete` all passed
   on the authority tranche before public publication and exact closeout.
-- The controlled Windows-only private GitLab release for exact `v1.3.0`
-  remains published at
-  `https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.0-windows-x64`.
-- Exact-release reopening is now admitted from the clean published candidate
-  heads `ab293d5` / `141c39e`, but private-release preparation, exact tagging,
-  public GitHub exact release, and VS Code Marketplace publication remain
-  separate later acts for `v1.3.1`.
-- `v1.3.1` has not reopened private-release preparation yet.
+- The controlled Windows-only private GitLab release for exact `v1.3.1`
+  is now published at
+  `https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.1-windows-x64`.
+- Exact-release reopening is now retained on authority `release/1.3.1` from
+  merged-green `develop` `0f4db5e`, but private-release preparation, exact
+  tagging, public GitHub exact release, and VS Code Marketplace publication
+  remain separate later acts for `v1.3.1`.
+- Exact-release reopening remains active on authority `release/1.3.1`, and
+  exact tagging, public GitHub exact release, and VS Code Marketplace
+  publication remain separate later acts after this private-release act.
 - Installed-user docs, bundled docs, and runtime-doctor next actions now treat
   missing Docker CLI or a stopped daemon as a first-run prerequisite boundary.
 - Fresh governed `ISSUE-0414` Windows live-session proof is retained at
@@ -185,6 +190,8 @@
   `v1.3.0` candidate heads (`0f19f4b` / `53b5348`).
 - No published-surface blocker remains on the current `v1.3.1` candidate
   heads `ab293d5` / `141c39e`.
-- The current published `v1.3.1` candidate heads are `tag-eligible` for the
-  next exact-release reopening act while VS Code Marketplace remains retained
-  at `1.3.0`.
+- The current published `v1.3.1` candidate heads have already closed the
+  published-surface reopening gate, authority exact-release reopening is now
+  retained on `release/1.3.1`, the controlled Windows x64 private GitLab
+  release is now published separately, and protected `main` promotion is the
+  next separate act while VS Code Marketplace remains retained at `1.3.0`.

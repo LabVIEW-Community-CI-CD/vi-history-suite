@@ -34,7 +34,7 @@ describe('hosted ci governance docs', () => {
         currentMainPackageLine: '1.3.0',
         currentDevelopPackageLine: '1.3.1',
         activeDevelopCandidateReleaseLine: 'v1.3.1',
-        activeReleaseCandidateBranch: null,
+        activeReleaseCandidateBranch: 'release/1.3.1',
         chosenBump: 'patch'
       })
     );
@@ -211,7 +211,7 @@ describe('hosted ci governance docs', () => {
     expect(matrixDoc).toContain('current `main` package line: `1.3.0`');
     expect(matrixDoc).toContain('current `develop` package line: `1.3.1`');
     expect(matrixDoc).toContain('active exact release candidate line on `develop`: `v1.3.1`');
-    expect(matrixDoc).toContain('active release-candidate branch: none');
+    expect(matrixDoc).toContain('active release-candidate branch: `release/1.3.1`');
     expect(matrixDoc).toContain('chosen bump: `patch`');
     expect(matrixDoc).toContain('npm run branch:governance:assert');
     expect(matrixDoc).toContain('merge gate: `only_allow_merge_if_pipeline_succeeds=true`');

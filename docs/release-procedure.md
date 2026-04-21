@@ -16,12 +16,19 @@
 - The current published package line on `main` is `1.3.0`.
 - The current develop package line on `develop` is `1.3.1`.
 - The active exact release candidate line on `develop` is `v1.3.1`.
-- The active release-candidate branch is none.
-- The retained Windows x64 private-release packet remains historical prep-only
-  evidence for exact `v1.3.0`; `v1.3.1` has not reopened private-release
-  preparation yet, and that historical packet still does not imply exact
-  tagging, public GitHub release, `main` promotion, or VS Code Marketplace
-  publication.
+- The active release-candidate branch is `release/1.3.1`.
+- The active Windows x64 private-release-prep slice is `release/1.3.1`.
+- The active Windows x64 private-release packet is:
+  - `docs/product/private-release-windows-x64-v1.3.1.md`
+  - `docs/product/private-release-windows-x64-v1.3.1.json`
+- The controlled `v1.3.1` Windows x64 private GitLab release is now published
+  at `https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.1-windows-x64`,
+  with the retained publish receipt at
+  `.cache/private-release-publish/latest/private-release-publish.json`.
+- Fresh local `v1.3.1` acceptance evidence remains retained at
+  `windows-private-release-evidence/manifest.json`.
+- That private-release act does not imply exact tagging, public GitHub release,
+  `main` promotion, or VS Code Marketplace publication.
 - Windows x86 / 32-bit LabVIEW remains out of scope for that `v1.3.0`
   pre-release sequence; any retained x86 host evidence is characterization
   only and does not expand the Windows x64 private-release claim.
@@ -30,7 +37,7 @@
   - `docs/product/private-release-windows-x64-v1.3.0.json`
 - The governed private-release publish surface for that sequence is:
   - `npm run gitlab:private-release:publish`
-  - current retained private-release tag: `private-v1.3.0-windows-x64`
+  - current retained private-release tag: `private-v1.3.1-windows-x64`
 - The governed Windows runner-lane contract for that prep sequence is:
   - `docs/product/windows-private-release-runner-lane.md`
 - The governed external assurance lane for that prep sequence is:
@@ -141,10 +148,10 @@
 
 ## Steps
 
-For the current `v1.3.0` Windows-only private-release line, run
-`npm run gitlab:private-release:publish` after the packet and validation pack
-are green so the controlled private GitLab release stays current before any
-exact/public `release/*` promotion begins.
+For the current `v1.3.1` Windows-only private-release line, the controlled
+GitLab release is retained at `private-v1.3.1-windows-x64` after the packet
+and validation pack are green; exact/public `release/*` promotion still stays
+separate afterward.
 
 1. Ensure branch promotion followed the governed branch model.
    - Before opening or promoting the next candidate line, run
