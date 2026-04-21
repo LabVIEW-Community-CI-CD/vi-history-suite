@@ -1938,7 +1938,9 @@ Information-for-users review cases:
   Windows apply/bootstrap scripts, the Linux apply/helper scripts, and the
   Linux assurance `systemd` unit, and that the lane docs, hosted governance,
   the private-release packet, and the wider control plane point to those exact
-  asset paths plus repo-owned fail-closed host apply/update behavior
+  asset paths plus repo-owned fail-closed host apply/update behavior, bounded
+  post-reset Windows-to-WSL Linux-helper recovery, and the admitted Linux
+  `concurrent = 2` plus `request_concurrency = 2` contract
 - `TEST-UNIT-363`: verify the repo-owned Windows bootstrap clears stale
   `LabVIEW`, `LabVIEWCLI`, and `LVCompare` before cold runner admission, uses
   bounded PID-tree plus image-name forced descendant termination, and fails
@@ -1954,6 +1956,8 @@ Information-for-users review cases:
   admitted Windows and Linux assertion commands explicit, keep the combined
   wrapper and `npm run gitlab:runner:assert` package surface explicit, and
   fail closed when the Windows assertion is requested from a non-Windows host
+  or when the admitted Linux `concurrent = 2` plus `request_concurrency = 2`
+  contract or live enabled/active service state drifts
 - `TEST-UNIT-366`: verify the Windows proof runtime recovery rehearsal surface
   fails closed unless the admitted Windows host starts clean, seeds one
   headless LabVIEW contamination, runs the repo-owned recovery script,
@@ -1981,7 +1985,8 @@ Information-for-users review cases:
   release procedure, SRS, RTM, and the new asset-pack test and confirm the
   governed runner host asset pack and repo-owned apply surfaces are versioned,
   recoverable without untracked machine-only startup files, and explicit about
-  fail-closed host apply/update behavior
+  fail-closed host apply/update behavior, bounded reboot-time Windows-to-WSL
+  Linux assurance recovery, and the retained Linux dual-concurrency contract
 - `TEST-DOC-116`: review the runner-lane contract, hosted governance,
   private-release packet, README, current-state, release procedure, SRS, RTM,
   and the test plan and confirm the Windows proof lane retains cold-admission
@@ -2000,7 +2005,8 @@ Information-for-users review cases:
   package, SRS, RTM, and the test plan and confirm the repo-owned live
   drift-assert surfaces and the combined wrapper are explicit about exact
   scheduled-task/bootstrap state, installed helper/service/bootstrap hash
-  matching, `request_concurrency = 2`, and live runner/service process checks
+  matching, Linux `concurrent = 2` plus `request_concurrency = 2`, enabled and
+  active Linux service state, and live runner/service process checks
 - `TEST-DOC-119`: review the Windows runner-lane contract, hosted governance,
   private-release packet, README, current-state, release procedure, sustainment
   package, SRS, RTM, and the test plan and confirm the repo-owned Windows

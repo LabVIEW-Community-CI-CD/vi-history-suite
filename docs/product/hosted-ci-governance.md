@@ -84,7 +84,7 @@ Runner lanes:
 Runner operator hardening:
 
 - `linux-assurance`: admitted config path
-  `~/.gitlab-runner/config.toml`, per-runner
+  `~/.gitlab-runner/config.toml`, top-level `concurrent = 2`, per-runner
   `request_concurrency = 2`, and steady-state lifecycle owned by Ubuntu
   `systemd` unit `vihs-linux-assurance-runner.service`, with repo-owned host
   assets at `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh`,
@@ -93,23 +93,28 @@ Runner operator hardening:
   `scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh`, with the
   admitted Windows-host wrapper retained at
   `scripts/assertGovernedRunnerLanes.js` via `npm run gitlab:runner:assert`;
-  the Linux apply surface fails closed unless the admitted `systemd` service
-  is both enabled and active after apply, and the Linux assertion surface
-  fails closed unless the installed helper and service unit still match the
-  repo asset pack, `request_concurrency = 2` is still present, the admitted
-  fragment path/user/working directory remain exact, and exactly one
-  configured runner process is live
+  the Linux apply surface first normalizes both concurrency facts and then
+  fails closed unless the admitted `systemd` service is both enabled and
+  active after apply; the Windows bootstrap now retries the Linux helper as a
+  bounded post-reset readiness gate; and the Linux assertion surface fails
+  closed unless the installed helper and service unit still match the repo
+  asset pack, `concurrent = 2` plus `request_concurrency = 2` are still
+  present, the admitted fragment path/user/working directory remain exact, the
+  service is still enabled and active, and exactly one configured runner
+  process is live
 - `windows-private-release`: admitted config path
   `C:\GitLab-Runner\config.toml`, per-runner
   `request_concurrency = 2`, scheduled bootstrap surface
   `C:\GitLab-Runner\start-governed-runner-lanes.ps1`, scheduled task
   `VIHS Governed Runner Lanes`, duplicate-manager collapse so exactly one
-  current-user runner manager remains per config, cold-admission fail-closed
-  cleanup of stale `LabVIEW` / `LabVIEWCLI` / `LVCompare` runtime processes
-  before the runner starts using bounded `Stop-Process` plus
-  `taskkill /PID /T /F` and `taskkill /IM /T /F`, the repo-owned bootstrap
-  asset `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1`, and
-  the repo-owned drift assertion surface
+  current-user runner manager remains per config, bounded Ubuntu wake-up plus
+  Linux-helper retries fail closed unless the paired Linux assurance service
+  comes up after reboot, cold-admission fail-closed cleanup of stale
+  `LabVIEW` / `LabVIEWCLI` / `LVCompare` runtime processes before the runner
+  starts using bounded `Stop-Process` plus `taskkill /PID /T /F` and
+  `taskkill /IM /T /F`, the repo-owned bootstrap asset
+  `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1`, and the
+  repo-owned drift assertion surface
   `scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1`; the
   combined Windows-host wrapper remains
   `scripts/assertGovernedRunnerLanes.js` via `npm run gitlab:runner:assert`;

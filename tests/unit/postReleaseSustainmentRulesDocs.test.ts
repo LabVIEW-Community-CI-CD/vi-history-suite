@@ -326,6 +326,19 @@ describe('post-release sustainment rules package', () => {
               'powershell.exe -NoLogo -NoProfile -File "C:\\GitLab-Runner\\start-governed-runner-lanes.ps1"',
             failurePolicy: 'fail-closed-unless-exactly-one-configured-manager-after-apply'
           },
+          linuxAssuranceBootstrap: {
+            script: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',
+            distro: 'Ubuntu',
+            bootstrapCommand: '$HOME/gitlab-runner/start-linux-assurance.sh',
+            wakeAttempts: 12,
+            wakeDelaySeconds: 10,
+            verification: [
+              'systemctl-is-enabled',
+              'systemctl-is-active',
+              'exactly-one-configured-runner-process'
+            ],
+            failurePolicy: 'fail-closed-unless-linux-assurance-helper-observes-live-service'
+          },
           hostAssertionSurface: {
             script: 'scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1',
             wrapperScript: 'scripts/assertGovernedRunnerLanes.js',
@@ -366,8 +379,25 @@ describe('post-release sustainment rules package', () => {
         linux_assurance: {
           hostApplySurface: {
             script: 'scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh',
-            verification: ['systemctl-is-enabled', 'systemctl-is-active'],
-            failurePolicy: 'fail-closed-unless-service-enabled-and-active'
+            verification: [
+              'node-available',
+              'config-global-concurrency-two',
+              'config-request-concurrency-two',
+              'systemctl-is-enabled',
+              'systemctl-is-active'
+            ],
+            failurePolicy: 'fail-closed-unless-config-normalized-and-service-enabled-and-active'
+          },
+          helperReadinessSurface: {
+            script: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
+            verification: [
+              'config-global-concurrency-two',
+              'config-request-concurrency-two',
+              'systemctl-is-enabled',
+              'systemctl-is-active',
+              'exactly-one-configured-runner-process'
+            ],
+            failurePolicy: 'fail-closed-unless-wsl-bootstrap-observes-live-linux-assurance-service'
           },
           hostAssertionSurface: {
             script: 'scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh',
@@ -376,7 +406,10 @@ describe('post-release sustainment rules package', () => {
             verification: [
               'helper-hash-match',
               'service-unit-hash-match',
+              'global-concurrency-two',
               'request-concurrency-two',
+              'systemctl-is-enabled',
+              'systemctl-is-active',
               'service-fragment-path-match',
               'service-user-match',
               'service-working-directory-match',

@@ -215,14 +215,21 @@ Latest landed ship target:
     `LVCompare` before cold runner admission with bounded `Stop-Process`,
     `taskkill /PID /T /F`, and `taskkill /IM /T /F`, and fails closed if
     contamination remains
+  - the same Windows bootstrap also wakes Ubuntu and retries the repo-owned
+    Linux assurance helper until it proves the paired
+    `vihs-linux-assurance-runner.service` is `enabled`, `active`, and singular,
+    failing closed otherwise
   - the Linux apply surface installs the helper and service unit and fails
-    closed unless `vihs-linux-assurance-runner.service` is both enabled and
-    active after apply
+    closed unless `~/.gitlab-runner/config.toml` first retains
+    `concurrent = 2` plus `request_concurrency = 2` and
+    `vihs-linux-assurance-runner.service` is both enabled and active after
+    apply
   - the Linux drift assertion surface fails closed unless the installed helper
     and service unit still match the repo source,
-    `~/.gitlab-runner/config.toml` still contains
+    `~/.gitlab-runner/config.toml` still contains `concurrent = 2` plus
     `request_concurrency = 2`, the admitted service fragment/user and working
-    directory remain exact, and exactly one configured runner process is live
+    directory remain exact, the service is still `enabled` and `active`, and
+    exactly one configured runner process is live
   - when the host-native Windows proof exits on that same cleanup seam, the
     acceptance wrapper retains
     `windows-private-release-evidence/host/proof-run-pre-recovery.txt`, runs

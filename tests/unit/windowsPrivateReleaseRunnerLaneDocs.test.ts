@@ -40,6 +40,7 @@ describe('windows private release runner lane docs', () => {
     expect(runnerLaneDoc).toContain('linux-assurance-runner-lane.md');
     expect(runnerLaneDoc).toContain('C:\\GitLab-Runner\\config.toml');
     expect(runnerLaneDoc).toContain('request_concurrency = 2');
+    expect(runnerLaneDoc).toContain('retries the repo-owned Linux assurance helper up to `12` times');
     expect(runnerLaneDoc).toContain('VIHS Governed Runner Lanes');
     expect(runnerLaneDoc).toContain('apply-governed-runner-lanes.ps1');
     expect(runnerLaneDoc).toContain('start-governed-runner-lanes.ps1');
@@ -90,6 +91,7 @@ describe('windows private release runner lane docs', () => {
     expect(hostedGovernanceDoc).toContain('npm run gitlab:runner:assert');
     expect(hostedGovernanceDoc).toContain('npm run gitlab:runner:windows:recovery:rehearse');
     expect(hostedGovernanceDoc).toContain('request_concurrency = 2');
+    expect(hostedGovernanceDoc).toContain('Ubuntu wake-up plus');
     expect(hostedGovernanceDoc).toContain('cold-admission fail-closed');
     expect(hostedGovernanceDoc).toContain(
       '`LabVIEW` / `LabVIEWCLI` / `LVCompare` runtime processes'
@@ -135,6 +137,13 @@ describe('windows private release runner lane docs', () => {
             'scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1',
           repoOwnedRecoveryRehearsalScript: 'scripts/runWindowsProofRuntimeRecoveryRehearsal.js',
           repoOwnedLinuxHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
+          linuxAssuranceBootstrap: {
+            distro: 'Ubuntu',
+            bootstrapCommand: '$HOME/gitlab-runner/start-linux-assurance.sh',
+            wakeAttempts: 12,
+            wakeDelaySeconds: 10,
+            failurePolicy: 'fail-closed-unless-linux-assurance-helper-observes-live-service'
+          },
           combinedAssertionScript: 'scripts/assertGovernedRunnerLanes.js',
           combinedAssertionPackageScript: 'npm run gitlab:runner:assert',
           recoveryRehearsal: {

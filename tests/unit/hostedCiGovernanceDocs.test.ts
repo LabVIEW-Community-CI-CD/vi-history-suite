@@ -106,6 +106,7 @@ describe('hosted ci governance docs', () => {
         runnerContractDoc: 'docs/product/linux-assurance-runner-lane.md',
         operatorModel: expect.objectContaining({
           configPath: '~/.gitlab-runner/config.toml',
+          globalConcurrency: 2,
           requestConcurrency: 2,
           lifecycleOwner: 'systemd',
           serviceUnit: 'vihs-linux-assurance-runner.service',
@@ -118,14 +119,36 @@ describe('hosted ci governance docs', () => {
           applyVerification: {
             requiredUser: 'sveld',
             requiredHome: '/home/sveld',
-            checks: ['systemctl-is-enabled', 'systemctl-is-active'],
-            failurePolicy: 'fail-closed-unless-service-enabled-and-active'
+            checks: [
+              'node-available',
+              'config-global-concurrency-two',
+              'config-request-concurrency-two',
+              'systemctl-is-enabled',
+              'systemctl-is-active'
+            ],
+            failurePolicy: 'fail-closed-unless-config-normalized-and-service-enabled-and-active'
+          },
+          helperVerification: {
+            distro: 'Ubuntu',
+            wakeAttempts: 12,
+            wakeDelaySeconds: 10,
+            checks: [
+              'config-global-concurrency-two',
+              'config-request-concurrency-two',
+              'systemctl-is-enabled',
+              'systemctl-is-active',
+              'exactly-one-configured-runner-process'
+            ],
+            failurePolicy: 'fail-closed-unless-wsl-bootstrap-observes-live-linux-assurance-service'
           },
           assertVerification: {
             checks: [
               'helper-hash-match',
               'service-unit-hash-match',
+              'global-concurrency-two',
               'request-concurrency-two',
+              'systemctl-is-enabled',
+              'systemctl-is-active',
               'service-fragment-path-match',
               'service-user-match',
               'service-working-directory-match',
@@ -169,6 +192,13 @@ describe('hosted ci governance docs', () => {
             'scripts/gitlab-runner/windows/recover-windows-proof-runtime-surface.ps1',
           repoOwnedRecoveryRehearsalScript: 'scripts/runWindowsProofRuntimeRecoveryRehearsal.js',
           repoOwnedLinuxHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
+          linuxAssuranceBootstrap: {
+            distro: 'Ubuntu',
+            bootstrapCommand: '$HOME/gitlab-runner/start-linux-assurance.sh',
+            wakeAttempts: 12,
+            wakeDelaySeconds: 10,
+            failurePolicy: 'fail-closed-unless-linux-assurance-helper-observes-live-service'
+          },
           combinedAssertionScript: 'scripts/assertGovernedRunnerLanes.js',
           combinedAssertionPackageScript: 'npm run gitlab:runner:assert',
           recoveryRehearsal: {
@@ -231,6 +261,7 @@ describe('hosted ci governance docs', () => {
     expect(matrixDoc).toContain('`assurance_external_user_information`');
     expect(matrixDoc).toContain('`assurance_audit_packet`');
     expect(matrixDoc).toContain('repo-standards-review');
+    expect(matrixDoc).toContain('concurrent = 2');
     expect(matrixDoc).toContain('request_concurrency = 2');
     expect(matrixDoc).toContain('vihs-linux-assurance-runner.service');
     expect(matrixDoc).toContain('VIHS Governed Runner Lanes');
@@ -263,6 +294,7 @@ describe('hosted ci governance docs', () => {
     expect(matrixDoc).toContain('scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh');
     expect(matrixDoc).toContain('scripts/assertGovernedRunnerLanes.js');
     expect(matrixDoc).toContain('npm run gitlab:runner:assert');
+    expect(matrixDoc).toContain('Ubuntu wake-up plus');
     expect(adr).toContain('GitLab authority uses protected branches plus');
     expect(adr).toContain('GitHub benchmark workflows remain governed characterization lanes');
 

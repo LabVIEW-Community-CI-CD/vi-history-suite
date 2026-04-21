@@ -55,6 +55,7 @@ describe('linux assurance runner lane docs', () => {
     expect(runnerLaneDoc).toContain('VIHS_ASSURANCE_REGISTRY_USER');
     expect(runnerLaneDoc).toContain('VIHS_ASSURANCE_REGISTRY_PASSWORD');
     expect(runnerLaneDoc).toContain('~/.gitlab-runner/config.toml');
+    expect(runnerLaneDoc).toContain('concurrent = 2');
     expect(runnerLaneDoc).toContain('request_concurrency = 2');
     expect(runnerLaneDoc).toContain('vihs-linux-assurance-runner.service');
     expect(runnerLaneDoc).toContain('scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
@@ -65,12 +66,13 @@ describe('linux assurance runner lane docs', () => {
     expect(runnerLaneDoc).toContain('npm run gitlab:runner:assert');
     expect(runnerLaneDoc).toContain('bash ./scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
     expect(runnerLaneDoc).toContain('bash ./scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh');
-    expect(runnerLaneDoc).toContain('fails closed unless the service');
+    expect(runnerLaneDoc).toContain('fails closed unless the configuration is normalized');
     expect(runnerLaneDoc).toContain('fails closed unless the installed helper');
     expect(runnerLaneDoc).toContain('separate from the Windows private-release proof lane');
 
     expect(windowsRunnerLaneDoc).toContain('linux-assurance-runner-lane.md');
     expect(hostedGovernanceDoc).toContain('linux-assurance');
+    expect(hostedGovernanceDoc).toContain('concurrent = 2');
     expect(hostedGovernanceDoc).toContain('request_concurrency = 2');
     expect(hostedGovernanceDoc).toContain('vihs-linux-assurance-runner.service');
     expect(hostedGovernanceDoc).toContain('scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
@@ -86,6 +88,7 @@ describe('linux assurance runner lane docs', () => {
         runnerContractDoc: 'docs/product/linux-assurance-runner-lane.md',
         operatorModel: expect.objectContaining({
           configPath: '~/.gitlab-runner/config.toml',
+          globalConcurrency: 2,
           requestConcurrency: 2,
           lifecycleOwner: 'systemd',
           serviceUnit: 'vihs-linux-assurance-runner.service',
@@ -98,14 +101,36 @@ describe('linux assurance runner lane docs', () => {
           applyVerification: {
             requiredUser: 'sveld',
             requiredHome: '/home/sveld',
-            checks: ['systemctl-is-enabled', 'systemctl-is-active'],
-            failurePolicy: 'fail-closed-unless-service-enabled-and-active'
+            checks: [
+              'node-available',
+              'config-global-concurrency-two',
+              'config-request-concurrency-two',
+              'systemctl-is-enabled',
+              'systemctl-is-active'
+            ],
+            failurePolicy: 'fail-closed-unless-config-normalized-and-service-enabled-and-active'
+          },
+          helperVerification: {
+            distro: 'Ubuntu',
+            wakeAttempts: 12,
+            wakeDelaySeconds: 10,
+            checks: [
+              'config-global-concurrency-two',
+              'config-request-concurrency-two',
+              'systemctl-is-enabled',
+              'systemctl-is-active',
+              'exactly-one-configured-runner-process'
+            ],
+            failurePolicy: 'fail-closed-unless-wsl-bootstrap-observes-live-linux-assurance-service'
           },
           assertVerification: {
             checks: [
               'helper-hash-match',
               'service-unit-hash-match',
+              'global-concurrency-two',
               'request-concurrency-two',
+              'systemctl-is-enabled',
+              'systemctl-is-active',
               'service-fragment-path-match',
               'service-user-match',
               'service-working-directory-match',

@@ -338,12 +338,18 @@ Hosted automation governance is now retained explicitly:
   fails closed unless the installed bootstrap hash, exact scheduled-task
   action plus logon trigger, `request_concurrency = 2`, and one live
   configured Windows runner manager remain intact; while
+  `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1` also wakes
+  Ubuntu and retries the repo-owned Linux assurance helper until it proves the
+  paired Linux service is enabled, active, and singular;
   `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh` fails closed
-  unless `vihs-linux-assurance-runner.service` finishes `enabled` and `active`;
+  unless `~/.gitlab-runner/config.toml` retains `concurrent = 2` plus
+  `request_concurrency = 2` and
+  `vihs-linux-assurance-runner.service` finishes `enabled` and `active`;
   `scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh` fails closed
-  unless the installed helper/service unit hashes, `request_concurrency = 2`,
-  admitted service fragment/user/working directory, and one live configured
-  Linux runner process remain intact; and the admitted Windows-host wrapper
+  unless the installed helper/service unit hashes, `concurrent = 2`,
+  `request_concurrency = 2`, admitted service fragment/user/working
+  directory, enabled/active service state, and one live configured Linux
+  runner process remain intact; and the admitted Windows-host wrapper
   for both lane assertions is `scripts/assertGovernedRunnerLanes.js` via
   `npm run gitlab:runner:assert`; the operator-only Windows recovery rehearsal
   wrapper is `scripts/runWindowsProofRuntimeRecoveryRehearsal.js` via

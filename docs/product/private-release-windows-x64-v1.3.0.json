@@ -108,12 +108,24 @@
       "scheduledTaskAction": "powershell.exe -NoLogo -NoProfile -File \"C:\\GitLab-Runner\\start-governed-runner-lanes.ps1\"",
       "failurePolicy": "fail-closed-unless-exactly-one-configured-manager-after-apply"
     },
+    "linuxBootstrapReadiness": {
+      "script": "scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1",
+      "distro": "Ubuntu",
+      "bootstrapCommand": "$HOME/gitlab-runner/start-linux-assurance.sh",
+      "wakeAttempts": 12,
+      "wakeDelaySeconds": 10,
+      "failurePolicy": "fail-closed-unless-linux-assurance-helper-observes-live-service"
+    },
     "hostAssertionSurface": {
       "runnerAssertionWrapperScript": "scripts/assertGovernedRunnerLanes.js",
       "runnerAssertionPackageScript": "npm run gitlab:runner:assert",
       "windowsAssertScript": "scripts/gitlab-runner/windows/assert-governed-runner-lanes.ps1",
       "linuxAssertScript": "scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh",
-      "failurePolicy": "fail-closed-on-live-host-drift"
+      "failurePolicy": "fail-closed-on-live-host-drift",
+      "linuxConcurrencyContract": {
+        "globalConcurrency": 2,
+        "requestConcurrency": 2
+      }
     },
     "coldAdmissionRuntimeCleanup": {
       "processNames": [

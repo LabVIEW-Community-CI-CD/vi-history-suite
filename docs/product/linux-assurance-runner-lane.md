@@ -85,13 +85,17 @@ The first governed path is the protected-variable route retained in
 The admitted operator contract for the current Linux assurance host is:
 
 - runner config path: `~/.gitlab-runner/config.toml`
+- top-level runner concurrency: `concurrent = 2`
 - per-runner request concurrency: `request_concurrency = 2`
 - steady-state lifecycle owner: Ubuntu `systemd`
 - admitted service unit: `vihs-linux-assurance-runner.service`
 
-The governed recovery model after a host reboot is to restore Ubuntu and let
-`vihs-linux-assurance-runner.service` own restart and keep-alive. The lane
-shall not depend on a long-lived interactive `gitlab-runner run` shell.
+The governed recovery model after a host reboot is to restore Ubuntu, let
+`vihs-linux-assurance-runner.service` own steady-state restart and keep-alive,
+and let the repo-owned Windows bootstrap invoke
+`scripts/gitlab-runner/linux/start-linux-assurance.sh` as a bounded readiness
+gate. The lane shall not depend on a long-lived interactive
+`gitlab-runner run` shell or on a fire-and-forget detached helper.
 
 ## Repo-Owned Host Assets
 
@@ -109,20 +113,26 @@ The governed host asset pack for this lane is versioned in the repo:
   `scripts/assertGovernedRunnerLanes.js` via `npm run gitlab:runner:assert`
 
 The Linux apply script is the repo-owned update surface for the admitted
-service contract. It copies the helper, installs the service unit, reloads
-`systemd`, enables and starts the service, and fails closed unless the service
+service contract. It first normalizes `~/.gitlab-runner/config.toml` to retain
+both `concurrent = 2` and `request_concurrency = 2`, then copies the helper,
+installs the service unit, reloads `systemd`, enables and starts the service,
+and fails closed unless the configuration is normalized and the service
 finishes `enabled` and `active`.
 
 The Linux assertion surface is the repo-owned live drift check for the
 admitted helper/service contract. It fails closed unless the installed helper
 and service unit still match the repo source, `~/.gitlab-runner/config.toml`
-still contains `request_concurrency = 2`, the admitted service fragment path,
-user, and working directory remain exact, and exactly one configured runner
-process is live.
+still contains `concurrent = 2` plus `request_concurrency = 2`, the admitted
+service fragment path, user, and working directory remain exact, the service
+is still `enabled` and `active`, and exactly one configured runner process is
+live.
 
 The helper script remains the bounded cross-OS recovery surface invoked from
-the Windows logon bootstrap. The service unit remains the admitted steady-state
-lifecycle owner on the Linux host.
+the Windows logon bootstrap. It fails closed unless the admitted config still
+retains both concurrency facts and the paired `systemd` service reports
+`enabled`, `active`, and exactly one configured runner process before the
+Windows bootstrap continues. The service unit remains the admitted
+steady-state lifecycle owner on the Linux host.
 
 ## Apply Or Update On The Admitted Host
 

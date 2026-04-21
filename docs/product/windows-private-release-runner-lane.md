@@ -97,6 +97,10 @@ Current host activation state:
 - per-runner request concurrency: `request_concurrency = 2`
 - startup script collapses duplicate `gitlab-runner.exe` manager processes for
   the same config before ensuring exactly one current-user manager remains
+- on each logon bootstrap, the same script wakes the admitted Ubuntu distro,
+  retries the repo-owned Linux assurance helper up to `12` times with `10`
+  second pauses, and fails closed unless that helper proves the paired
+  `vihs-linux-assurance-runner.service` is `enabled`, `active`, and singular
 - on cold admission, the startup script clears stale `LabVIEW`,
   `LabVIEWCLI`, and `LVCompare` processes before the current-user runner
   starts with bounded `Stop-Process`, `taskkill /PID /T /F`, and
@@ -134,7 +138,8 @@ runner manager remains after apply.
 
 The Windows bootstrap script remains the repo-owned source of truth for
 duplicate collapse, cold-admission runtime cleanup, current-user runner
-launch, and WSL wake-up on user logon.
+launch, and bounded WSL wake-up plus Linux-assurance readiness recovery on
+user logon.
 
 The Windows assertion surface is the repo-owned live drift check for the
 admitted scheduled-task/bootstrap contract. It fails closed unless the
@@ -187,6 +192,12 @@ The admitted Linux helper path consumed by the bootstrap remains:
 ```powershell
 wsl.exe -d Ubuntu bash -lc '$HOME/gitlab-runner/start-linux-assurance.sh'
 ```
+
+The repo-owned Windows bootstrap now treats that Linux helper as a bounded
+readiness gate instead of a fire-and-forget launch. It retries the helper up
+to `12` times with `10` second pauses and fails closed unless the helper exits
+`0` after confirming the paired Linux assurance service is `enabled`,
+`active`, and singular.
 
 The bootstrap only performs stale-runtime cleanup before cold runner
 admission. If no governed current-user runner manager is active, it forcibly

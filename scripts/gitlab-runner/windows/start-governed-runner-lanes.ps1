@@ -6,6 +6,10 @@ $runnerConfig = Join-Path $runnerRoot 'config.toml'
 $logDir = Join-Path $runnerRoot 'logs'
 $stdoutLog = Join-Path $logDir 'gitlab-runner-stdout.log'
 $stderrLog = Join-Path $logDir 'gitlab-runner-stderr.log'
+$linuxAssuranceDistro = 'Ubuntu'
+$linuxAssuranceBootstrapCommand = '$HOME/gitlab-runner/start-linux-assurance.sh'
+$linuxAssuranceWakeAttempts = 12
+$linuxAssuranceWakeDelaySeconds = 10
 $windowsProofRuntimeProcessNames = @(
   'LabVIEW'
   'LabVIEWCLI'
@@ -77,6 +81,25 @@ function Clear-WindowsProofRuntimeSurface {
   }
 }
 
+function Start-LinuxAssuranceSurface {
+  $lastBootstrapFailure = ''
+
+  for ($attempt = 1; $attempt -le $linuxAssuranceWakeAttempts; $attempt++) {
+    $bootstrapOutput = & wsl.exe -d $linuxAssuranceDistro bash -lc $linuxAssuranceBootstrapCommand 2>&1
+    $bootstrapExitCode = $LASTEXITCODE
+    if ($bootstrapExitCode -eq 0) {
+      return
+    }
+
+    $lastBootstrapFailure = [string]::Join([Environment]::NewLine, @($bootstrapOutput | ForEach-Object { "$_" }))
+    if ($attempt -lt $linuxAssuranceWakeAttempts) {
+      Start-Sleep -Seconds $linuxAssuranceWakeDelaySeconds
+    }
+  }
+
+  throw "Governed Linux assurance bootstrap failed after $linuxAssuranceWakeAttempts attempts for distro $linuxAssuranceDistro. Last failure: $lastBootstrapFailure"
+}
+
 if (-not (Test-Path -LiteralPath $logDir)) {
   New-Item -ItemType Directory -Path $logDir | Out-Null
 }
@@ -96,4 +119,4 @@ if ($windowsRunners.Count -eq 0) {
 
 $windowsRunners = Remove-DuplicateWindowsRunners
 
-wsl.exe -d Ubuntu bash -lc '$HOME/gitlab-runner/start-linux-assurance.sh' | Out-Null
+Start-LinuxAssuranceSurface
