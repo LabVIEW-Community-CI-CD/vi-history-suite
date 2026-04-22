@@ -30,6 +30,14 @@
   `npm run public:github:exact:transaction:assess`.
 - The retained public GitHub exact transaction receipt is
   `.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json`.
+- The active software-factory governance foundation branch on `develop` is
+  `feature/software-factory-governance-foundation`.
+- The software factory assessment package script is
+  `npm run software:factory:assess`.
+- The retained software factory assessment receipt is
+  `.cache/software-factory-orchestrator/latest/software-factory-state.json`.
+- The software-factory contract is assess-only in this slice; later publish
+  phases are not yet admitted.
 - The active Windows x64 private-release-prep slice is the historical
   `release/1.3.1` lane.
 - The active Windows x64 private-release packet is:
@@ -178,6 +186,11 @@
   for the current exact line, the governed next step is repair in place
   unless `npm run public:github:exact:transaction:assess` retains that repair
   is impossible.
+- No GitHub release publication, Marketplace publication, or other production
+  mutation shall occur outside the repo-owned factory/orchestrator contract.
+- Exact `v1.3.6` remains the sole production recovery case until the
+  repo-owned factory/orchestrator contract retains a later safe repair or
+  publish phase explicitly.
 - Exact release closeout is not complete until the exact released `main` line
   has also been back-merged into `develop` through the protected path and the
   resulting `develop` pipeline is green.
@@ -315,6 +328,8 @@ separate afterward.
     - before any further public GitHub exact-release repair or VS Code
       Marketplace act, run
       `npm run public:github:exact:transaction:assess`
+    - retain the broader software-factory boundary assessment through
+      `npm run software:factory:assess`
     - the current retained `v1.3.6` draft-publishability probe is still
       blocked because draft release `312363117` is readable by id but exact-tag
       release lookup still returns `404`, immutable releases are enabled, and

@@ -320,6 +320,58 @@ describe('post-release sustainment rules package', () => {
         'the new repo-owned transaction controller now fails closed on that partial-public state, retains the non-mutating draft-publishability probe against release 312363117, and freezes later openings until npm run public:github:exact:transaction:assess proves a safe repair or retains the exact blocker or impossibility state'
       ])
     );
+    expect((rules as any).softwareFactoryGovernance).toEqual({
+      status: 'assess-only-foundation-open',
+      activeFoundationBranch: 'feature/software-factory-governance-foundation',
+      packageScript: 'npm run software:factory:assess',
+      receiptPath: '.cache/software-factory-orchestrator/latest/software-factory-state.json',
+      currentPhase: 'assess',
+      plannedFuturePhases: ['rehearse', 'repair', 'publish', 'verify'],
+      soleProductionRecoveryTarget: 'v1.3.6',
+      productionMutationAllowed: false,
+      authorityBoundary: ['GitLab develop -> release/* -> protected main'],
+      stagingBoundary: [
+        'GitFlow feature/*, release/*, and hotfix/* lanes with required checks and retained receipts'
+      ],
+      productionBoundary: ['public GitHub main/tag/release', 'VS Code Marketplace listing'],
+      recoveryBoundary: [
+        'repair-in-place first when public GitHub main, tag, or draft release already exist',
+        'current blocker remains draft release 312363117 with draft-release-tag-lookup-unavailable'
+      ],
+      trustModel: [
+        'Windows operator host',
+        'self-hosted Windows runner lane',
+        'self-hosted Linux assurance runner lane',
+        'GitLab authority state',
+        'public GitHub release state',
+        'VS Code Marketplace state',
+        'local token locators and retained receipts'
+      ],
+      environmentBaseline: [
+        'standard Windows installs only',
+        'Git for Windows',
+        'Node.js 22 LTS',
+        'Python 3.12 x64',
+        'Ubuntu-24.04 Linux assurance lane'
+      ],
+      rehearsalPolicy: [
+        'production is not the first proof surface',
+        'assess now and retain later rehearse/repair/publish/verify phases explicitly before future production acts'
+      ],
+      incidentClasses: [
+        'production-partial-public-state',
+        'production-mutation-policy-violation',
+        'runner-or-host-readiness-drift',
+        'credential-or-capability-boundary-missing',
+        'externally-blocked-publication',
+        'externally-impossible-publication'
+      ],
+      approvalModel: [
+        'assess is repo-owned and automatic',
+        'later GitHub-release publish requires explicit production approval',
+        'later VS Code Marketplace publish requires explicit production approval'
+      ]
+    });
 
     expect(rules.benchmarkRefreshCadence.model).toBe('event-driven-bounded');
     expect(rules.benchmarkRefreshCadence.acceptedComparablePrefix).toEqual({
@@ -650,6 +702,12 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('active hotfix branch: none');
     expect(rulesDoc).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
     expect(rulesDoc).toContain('later SemVer openings are frozen while the current exact public GitHub');
+    expect(rulesDoc).toContain('## Software Factory Governance Foundation');
+    expect(rulesDoc).toContain('`feature/software-factory-governance-foundation`');
+    expect(rulesDoc).toContain('`npm run software:factory:assess`');
+    expect(rulesDoc).toContain('.cache/software-factory-orchestrator/latest/software-factory-state.json');
+    expect(rulesDoc).toContain('sole production recovery target: `v1.3.6`');
+    expect(rulesDoc).toContain('no GitHub release publication, VS Code Marketplace publication, or other');
     expect(rulesDoc).toContain('chosen bump: `patch`');
     expect(rulesDoc).toContain('Current control decision for public exact hardening:');
     expect(rulesDoc).toContain('Historical opening decision that opened exact `v1.3.1`:');
@@ -722,6 +780,12 @@ describe('post-release sustainment rules package', () => {
     );
     expect(informationItemMap).toContain(
       '| Machine-readable post-release sustainment rules | `docs/product/post-release-sustainment-rules.json` |'
+    );
+    expect(informationItemMap).toContain(
+      '| Software factory orchestrator contract | `scripts/runSoftwareFactoryOrchestrator.js` |'
+    );
+    expect(informationItemMap).toContain(
+      '| Software factory assessment receipt | `.cache/software-factory-orchestrator/latest/software-factory-state.json` |'
     );
   });
 });

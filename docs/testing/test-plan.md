@@ -1995,6 +1995,14 @@ Information-for-users review cases:
   current draft-release id when present, the last published GitHub release
   baseline, the retained Marketplace version, and the transaction-assessment
   package script and receipt path
+- `TEST-UNIT-373`: verify the software-factory orchestrator assessment surface
+  remains assess-only, classifies authority/staging/production/recovery
+  boundaries, writes receipt-backed factory state, and does not admit any
+  production mutation in this foundation slice
+- `TEST-UNIT-374`: verify the software-factory orchestrator assessment surface
+  retains the trust model, environment baseline, rehearsal policy, incident
+  classes, recovery rules, approval model, the frozen no-bump posture, and
+  exact `v1.3.6` as the sole production recovery case
 - `TEST-DOC-113`: review `.gitlab-ci.yml`, `linux-assurance-runner-lane.md`,
   hosted governance, current-state, README, and the release procedure and
   confirm the Linux assurance lane is separate from the Windows proof lane,
@@ -2076,6 +2084,17 @@ Information-for-users review cases:
   published GitHub release baseline, retained Marketplace version, the
   transaction-assessment package script and receipt path, and the current
   non-mutating draft-publishability plus publishability-probe results
+- `TEST-DOC-126`: review the architecture overview, current-state, release
+  procedure, post-release sustainment rules, public-release candidate package,
+  SRS, RTM, and the test plan and confirm the repo now retains a
+  software-factory foundation with explicit authority/staging/production/
+  recovery boundaries plus one assess-only orchestrator contract
+- `TEST-DOC-127`: review README, current-state, release procedure, the
+  sustainment package, the public-release candidate package, the information
+  item map, SRS, RTM, and the test plan and confirm exact `v1.3.6` remains
+  the sole frozen production recovery case, the active foundation branch and
+  factory package script/receipt path are explicit, and GitHub release /
+  Marketplace mutation remain forbidden in this slice
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are

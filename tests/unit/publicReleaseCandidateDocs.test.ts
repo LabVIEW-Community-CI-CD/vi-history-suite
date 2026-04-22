@@ -173,6 +173,18 @@ describe('public release candidate control surface', () => {
       publicGitHubExactTransactionReceiptPath:
         '.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json'
     });
+    expect(candidate.softwareFactoryGovernance).toEqual({
+      status: 'assess-only-foundation-open-no-production-mutation',
+      activeFeatureBranch: 'feature/software-factory-governance-foundation',
+      packageScript: 'npm run software:factory:assess',
+      receiptPath: '.cache/software-factory-orchestrator/latest/software-factory-state.json',
+      currentPhase: 'assess',
+      plannedFuturePhases: ['rehearse', 'repair', 'publish', 'verify'],
+      soleProductionRecoveryTarget: 'v1.3.6',
+      productionMutationAllowed: false,
+      rule:
+        'no GitHub release publication, Marketplace publication, or other production mutation may occur through this foundation slice while the retained v1.3.6 recovery case remains open'
+    });
 
     expect(candidate.activeBlockers).toEqual([
       expect.objectContaining({
@@ -184,6 +196,8 @@ describe('public release candidate control surface', () => {
     expect(candidateMarkdown).toContain('Version line: `1.3.6`');
     expect(candidateMarkdown).toContain('Published public source commit: `bd81bfe`');
     expect(candidateMarkdown).toContain('Feature-lane public GitHub release hardening branch: none');
+    expect(candidateMarkdown).toContain('Software-factory governance foundation branch:');
+    expect(candidateMarkdown).toContain('`feature/software-factory-governance-foundation`');
     expect(candidateMarkdown).toContain('`released-v1.3.6-authority-evidence-retained`');
     expect(candidateMarkdown).toContain(
       '`required-before-any-further-public-github-release-or-marketplace-act`'
@@ -207,6 +221,14 @@ describe('public release candidate control surface', () => {
     expect(candidateMarkdown).toContain(
       '.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json'
     );
+    expect(candidateMarkdown).toContain('`npm run software:factory:assess`');
+    expect(candidateMarkdown).toContain(
+      '.cache/software-factory-orchestrator/latest/software-factory-state.json'
+    );
+    expect(candidateMarkdown).toContain('sole production recovery case');
+    expect(candidateMarkdown).toContain(
+      'GitHub release publication, Marketplace publication, or other production'
+    );
     expect(candidateMarkdown).toContain('Public GitHub exact still serves `v1.3.1`');
     expect(candidateMarkdown).toContain('repair in place through `npm run public:github:exact:transaction:assess`');
 
@@ -217,7 +239,9 @@ describe('public release candidate control surface', () => {
       'active feature-lane public GitHub release hardening branch on `develop`:'
     );
     expect(currentState).toContain('none');
+    expect(currentState).toContain('active software-factory governance foundation branch on `develop`');
     expect(currentState).toContain('npm run public:github:exact:transaction:assess');
+    expect(currentState).toContain('npm run software:factory:assess');
     expect(currentState).toContain('separate public GitHub exact release publication: blocked; public `main` now');
     expect(currentState).toContain('can read that draft by id with status `200`');
     expect(currentState).toContain('retained authority release manifest non-mutatively');
@@ -228,14 +252,26 @@ describe('public release candidate control surface', () => {
     expect(srs).toContain('VHS-REQ-566');
     expect(srs).toContain('VHS-REQ-567');
     expect(srs).toContain('VHS-REQ-568');
+    expect(srs).toContain('VHS-REQ-569');
+    expect(srs).toContain('VHS-REQ-570');
+    expect(srs).toContain('VHS-REQ-571');
+    expect(srs).toContain('VHS-REQ-572');
     expect(rtm).toContain('VHS-REQ-566');
     expect(rtm).toContain('VHS-REQ-567');
     expect(rtm).toContain('VHS-REQ-568');
+    expect(rtm).toContain('VHS-REQ-569');
+    expect(rtm).toContain('VHS-REQ-570');
+    expect(rtm).toContain('VHS-REQ-571');
+    expect(rtm).toContain('VHS-REQ-572');
     expect(testPlan).toContain('TEST-UNIT-370');
     expect(testPlan).toContain('TEST-UNIT-371');
     expect(testPlan).toContain('TEST-UNIT-372');
+    expect(testPlan).toContain('TEST-UNIT-373');
+    expect(testPlan).toContain('TEST-UNIT-374');
     expect(testPlan).toContain('TEST-DOC-123');
     expect(testPlan).toContain('TEST-DOC-124');
     expect(testPlan).toContain('TEST-DOC-125');
+    expect(testPlan).toContain('TEST-DOC-126');
+    expect(testPlan).toContain('TEST-DOC-127');
   });
 });
