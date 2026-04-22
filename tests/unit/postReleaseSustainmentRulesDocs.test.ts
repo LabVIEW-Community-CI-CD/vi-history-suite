@@ -147,15 +147,15 @@ describe('post-release sustainment rules package', () => {
 
     expect(rules.releaseCadence.model).toBe('event-driven');
     expect(rules.releaseCadence.versionLineContract).toEqual({
-      retainedExactVersionReleases: ['v0.2.0', 'v1.0.0', 'v1.0.1', 'v1.0.2', 'v1.0.3', 'v1.0.4', 'v1.0.5', 'v1.0.6', 'v1.1.0', 'v1.2.0', 'v1.2.1', 'v1.2.2', 'v1.3.0'],
+      retainedExactVersionReleases: ['v0.2.0', 'v1.0.0', 'v1.0.1', 'v1.0.2', 'v1.0.3', 'v1.0.4', 'v1.0.5', 'v1.0.6', 'v1.1.0', 'v1.2.0', 'v1.2.1', 'v1.2.2', 'v1.3.0', 'v1.3.1', 'v1.3.2'],
       burnedExactVersionReleases: ['v1.0.2'],
-      currentExactReleaseLine: 'v1.3.0',
-      currentMainPackageLine: '1.3.1',
+      currentExactReleaseLine: 'v1.3.2',
+      currentMainPackageLine: '1.3.2',
       currentDevelopPackageLine: '1.3.1',
       activeDevelopCandidateReleaseLine: null,
       activeReleaseCandidateBranch: null,
-      activeHotfixCandidateReleaseLine: 'v1.3.2',
-      activeHotfixBranch: 'hotfix/v1.3.2-marketplace-icon',
+      activeHotfixCandidateReleaseLine: 'v1.3.3',
+      activeHotfixBranch: 'hotfix/v1.3.3-public-exact-retry',
       publicDefaultBranch: 'main',
       publicCodespaceBranch: 'develop',
       integrationBranch: 'develop',
@@ -249,13 +249,13 @@ describe('post-release sustainment rules package', () => {
     expect(rules.releaseCadence.activeOpeningDecision).toEqual(
       expect.objectContaining({
         chosenBump: 'patch',
-        targetHotfixCandidateReleaseLine: 'v1.3.2'
+        targetHotfixCandidateReleaseLine: 'v1.3.3'
       })
     );
     expect(rules.releaseCadence.activeOpeningDecision?.rationale).toEqual(
       expect.arrayContaining([
-        'the next line hardens the already-published exact package surface by adding the missing Marketplace icon without changing the installed-user workflow or widening the governed capability line',
-        'public GitHub exact v1.3.1 is already immutable while VS Code Marketplace still serves 1.3.0, so v1.3.2 opens as a hotfix from main instead of mutating the retained v1.3.1 GitHub asset'
+        'the next line hardens the already-tagged exact package surface by fixing stale authority-side public-source validation expectations without changing the installed-user workflow or widening the governed capability line',
+        'authority exact v1.3.2 is already immutable while public GitHub exact v1.3.1 and VS Code Marketplace 1.3.0 still define the published surfaces, so v1.3.3 opens as a hotfix from main instead of mutating the retained v1.3.2 authority tag'
       ])
     );
 
@@ -558,15 +558,15 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('## Benchmark Refresh Rules');
     expect(rulesDoc).toContain('## Operator And Documentation Upkeep Rules');
     expect(rulesDoc).toContain('public GitHub default branch: `main`');
-    expect(rulesDoc).toContain('current exact released line: `v1.3.0`');
-    expect(rulesDoc).toContain('current published package line on `main`: `1.3.1`');
+    expect(rulesDoc).toContain('current exact released line: `v1.3.2`');
+    expect(rulesDoc).toContain('current published package line on `main`: `1.3.2`');
     expect(rulesDoc).toContain('current develop package line on `develop`: `1.3.1`');
     expect(rulesDoc).toContain('active exact release candidate line on `develop`: none');
     expect(rulesDoc).toContain('active release-candidate branch: none');
-    expect(rulesDoc).toContain('active exact hotfix candidate line on `main`: `v1.3.2`');
-    expect(rulesDoc).toContain('active hotfix branch: `hotfix/v1.3.2-marketplace-icon`');
+    expect(rulesDoc).toContain('active exact hotfix candidate line on `main`: `v1.3.3`');
+    expect(rulesDoc).toContain('active hotfix branch: `hotfix/v1.3.3-public-exact-retry`');
     expect(rulesDoc).toContain('chosen bump: `patch`');
-    expect(rulesDoc).toContain('Active opening decision that opens hotfix exact `v1.3.2`:');
+    expect(rulesDoc).toContain('Active opening decision that opens hotfix exact `v1.3.3`:');
     expect(rulesDoc).toContain('Historical opening decision that opened exact `v1.3.1`:');
     expect(rulesDoc).toContain('develop');
     expect(rulesDoc).toContain('protected exact-release line');

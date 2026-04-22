@@ -33,18 +33,20 @@
         "v1.2.0",
         "v1.2.1",
         "v1.2.2",
-        "v1.3.0"
+        "v1.3.0",
+        "v1.3.1",
+        "v1.3.2"
       ],
       "burnedExactVersionReleases": [
         "v1.0.2"
       ],
-      "currentExactReleaseLine": "v1.3.0",
-      "currentMainPackageLine": "1.3.1",
+      "currentExactReleaseLine": "v1.3.2",
+      "currentMainPackageLine": "1.3.2",
       "currentDevelopPackageLine": "1.3.1",
       "activeDevelopCandidateReleaseLine": null,
       "activeReleaseCandidateBranch": null,
-      "activeHotfixCandidateReleaseLine": "v1.3.2",
-      "activeHotfixBranch": "hotfix/v1.3.2-marketplace-icon",
+      "activeHotfixCandidateReleaseLine": "v1.3.3",
+      "activeHotfixBranch": "hotfix/v1.3.3-public-exact-retry",
       "publicDefaultBranch": "main",
       "publicCodespaceBranch": "develop",
       "integrationBranch": "develop",
@@ -125,14 +127,14 @@
     "activeOpeningDecision": {
       "recordedAt": "2026-04-21",
       "chosenBump": "patch",
-      "targetHotfixCandidateReleaseLine": "v1.3.2",
+      "targetHotfixCandidateReleaseLine": "v1.3.3",
       "rationale": [
-        "the next line hardens the already-published exact package surface by adding the missing Marketplace icon without changing the installed-user workflow or widening the governed capability line",
-        "public GitHub exact v1.3.1 is already immutable while VS Code Marketplace still serves 1.3.0, so v1.3.2 opens as a hotfix from main instead of mutating the retained v1.3.1 GitHub asset"
+        "the next line hardens the already-tagged exact package surface by fixing stale authority-side public-source validation expectations without changing the installed-user workflow or widening the governed capability line",
+        "authority exact v1.3.2 is already immutable while public GitHub exact v1.3.1 and VS Code Marketplace 1.3.0 still define the published surfaces, so v1.3.3 opens as a hotfix from main instead of mutating the retained v1.3.2 authority tag"
       ],
       "rejectedAlternatives": {
-        "minor": "the icon change hardens an existing packaged surface rather than adding a new governed capability or supported workflow",
-        "major": "no exact public or maintainer contract is intentionally broken or removed; the retained v1.3.1 GitHub exact release stays intact while the fix advances to a separate hotfix line"
+        "minor": "the validation fix hardens an existing packaged surface rather than adding a new governed capability or supported workflow",
+        "major": "no exact public or maintainer contract is intentionally broken or removed; the retained v1.3.1 GitHub exact release stays intact while the validation fix advances to a separate hotfix line"
       }
     },
     "explicitNonTriggers": [

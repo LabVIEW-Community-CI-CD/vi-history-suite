@@ -27,8 +27,8 @@ describe('repo-agnostic checkbox workflow docs', () => {
       expect(content).toContain('repo-agnostic');
     }
 
-    expect(readme).toContain('Open a trusted Git repo containing an eligible LabVIEW VI.');
-    expect(readme).toContain('review any public repo:');
+    expect(readme).toContain('Open a trusted Git repository that contains a `.vi`, `.ctl`, or `.vit`');
+    expect(readme).toContain('evaluate a public repo in Codespaces:');
     expect(currentState).toContain('Repo-agnostic support with governed-evidence depth');
     expect(srs).toContain('checkbox-selected compare flow');
     expect(rtm).toContain('checkbox-selected compare flow');
