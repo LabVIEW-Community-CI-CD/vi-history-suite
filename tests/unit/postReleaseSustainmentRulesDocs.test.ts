@@ -321,20 +321,24 @@ describe('post-release sustainment rules package', () => {
       ])
     );
     expect((rules as any).softwareFactoryGovernance).toEqual({
-      status: 'rehearse-repair-contract-open',
-      activeFeatureBranch: 'feature/software-factory-rehearse-repair-contract',
+      status: 'publish-verify-contract-open',
+      activeFeatureBranch: 'feature/software-factory-publish-verify-contract',
       packageScripts: {
         assess: 'npm run software:factory:assess',
         rehearse: 'npm run software:factory:rehearse',
-        repair: 'npm run software:factory:repair'
+        repair: 'npm run software:factory:repair',
+        publish: 'npm run software:factory:publish',
+        verify: 'npm run software:factory:verify'
       },
       receiptPaths: {
         assess: '.cache/software-factory-orchestrator/latest/software-factory-state.json',
         rehearse: '.cache/software-factory-orchestrator/latest/rehearse/software-factory-state.json',
-        repair: '.cache/software-factory-orchestrator/latest/repair/software-factory-state.json'
+        repair: '.cache/software-factory-orchestrator/latest/repair/software-factory-state.json',
+        publish: '.cache/software-factory-orchestrator/latest/publish/software-factory-state.json',
+        verify: '.cache/software-factory-orchestrator/latest/verify/software-factory-state.json'
       },
       admittedNonProductionPhases: ['assess', 'rehearse', 'repair'],
-      plannedFuturePhases: ['publish', 'verify'],
+      guardedNonMutatingContractPhases: ['publish', 'verify'],
       soleProductionRecoveryTarget: 'v1.3.6',
       productionMutationAllowed: false,
       authorityBoundary: ['GitLab develop -> release/* -> protected main'],
@@ -364,7 +368,7 @@ describe('post-release sustainment rules package', () => {
       ],
       rehearsalPolicy: [
         'production is not the first proof surface',
-        'retain the admitted assess/rehearse/repair non-production phases before any later publish/verify production phase opens'
+        'retain the admitted assess/rehearse/repair non-production phases plus guarded non-mutating publish/verify contracts before any later mutating production phase opens'
       ],
       incidentClasses: [
         'production-partial-public-state',
@@ -376,6 +380,7 @@ describe('post-release sustainment rules package', () => {
       ],
       approvalModel: [
         'assess, rehearse, and repair are repo-owned and automatic non-production phases',
+        'publish and verify are repo-owned and automatic guarded non-mutating contract phases',
         'later GitHub-release publish requires explicit production approval',
         'later VS Code Marketplace publish requires explicit production approval'
       ]
@@ -711,16 +716,24 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
     expect(rulesDoc).toContain('later SemVer openings are frozen while the current exact public GitHub');
     expect(rulesDoc).toContain('## Software Factory Governance Contract');
-    expect(rulesDoc).toContain('`feature/software-factory-rehearse-repair-contract`');
+    expect(rulesDoc).toContain('`feature/software-factory-publish-verify-contract`');
     expect(rulesDoc).toContain('`npm run software:factory:assess`');
     expect(rulesDoc).toContain('`npm run software:factory:rehearse`');
     expect(rulesDoc).toContain('`npm run software:factory:repair`');
+    expect(rulesDoc).toContain('`npm run software:factory:publish`');
+    expect(rulesDoc).toContain('`npm run software:factory:verify`');
     expect(rulesDoc).toContain('.cache/software-factory-orchestrator/latest/software-factory-state.json');
     expect(rulesDoc).toContain(
       '.cache/software-factory-orchestrator/latest/rehearse/software-factory-state.json'
     );
     expect(rulesDoc).toContain(
       '.cache/software-factory-orchestrator/latest/repair/software-factory-state.json'
+    );
+    expect(rulesDoc).toContain(
+      '.cache/software-factory-orchestrator/latest/publish/software-factory-state.json'
+    );
+    expect(rulesDoc).toContain(
+      '.cache/software-factory-orchestrator/latest/verify/software-factory-state.json'
     );
     expect(rulesDoc).toContain('sole production recovery target: `v1.3.6`');
     expect(rulesDoc).toContain('no GitHub release publication, VS Code Marketplace publication, or other');
@@ -808,6 +821,12 @@ describe('post-release sustainment rules package', () => {
     );
     expect(informationItemMap).toContain(
       '| Software factory repair receipt | `.cache/software-factory-orchestrator/latest/repair/software-factory-state.json` |'
+    );
+    expect(informationItemMap).toContain(
+      '| Software factory publish receipt | `.cache/software-factory-orchestrator/latest/publish/software-factory-state.json` |'
+    );
+    expect(informationItemMap).toContain(
+      '| Software factory verify receipt | `.cache/software-factory-orchestrator/latest/verify/software-factory-state.json` |'
     );
   });
 });

@@ -191,7 +191,7 @@ Authority release facts:
 - active feature-lane public GitHub release hardening branch on `develop`:
   none
 - active software-factory governance branch on `develop`:
-  `feature/software-factory-rehearse-repair-contract`
+  `feature/software-factory-publish-verify-contract`
 - later SemVer openings are frozen while the current exact public GitHub transaction remains incomplete
 - active pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
@@ -206,16 +206,25 @@ Authority release facts:
   `npm run software:factory:rehearse`
 - software factory repair package script:
   `npm run software:factory:repair`
+- software factory publish package script:
+  `npm run software:factory:publish`
+- software factory verify package script:
+  `npm run software:factory:verify`
 - retained software factory assessment receipt:
   `.cache/software-factory-orchestrator/latest/software-factory-state.json`
 - retained software factory rehearsal receipt:
   `.cache/software-factory-orchestrator/latest/rehearse/software-factory-state.json`
 - retained software factory repair receipt:
   `.cache/software-factory-orchestrator/latest/repair/software-factory-state.json`
+- retained software factory publish receipt:
+  `.cache/software-factory-orchestrator/latest/publish/software-factory-state.json`
+- retained software factory verify receipt:
+  `.cache/software-factory-orchestrator/latest/verify/software-factory-state.json`
 - software-factory phase contract:
-  assess, rehearse, and repair now; publish and verify later
+  assess, rehearse, and repair remain admitted non-production phases, and
+  publish / verify are now retained as guarded non-mutating contract phases
 - no GitHub release publication, Marketplace publication, or other production
-  mutation is permitted through the software-factory non-production
+  mutation is permitted through the software-factory guarded non-mutating
   slice while exact `v1.3.6` remains the sole production recovery case
 - active Windows x64 private-release-prep slice: historical `release/1.3.1`
 - active Windows x64 private-release packet:

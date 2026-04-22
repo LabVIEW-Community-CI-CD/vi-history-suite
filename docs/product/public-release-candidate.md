@@ -13,7 +13,7 @@
 - Integration branch: `develop`
 - Feature-lane public GitHub release hardening branch: none
 - Software-factory governance branch:
-  `feature/software-factory-rehearse-repair-contract`
+  `feature/software-factory-publish-verify-contract`
 - Later SemVer openings are frozen while the current exact public GitHub
   transaction remains incomplete
 - Protected exact-release line: `main`
@@ -115,16 +115,21 @@
   proof surfaces:
   `npm run software:factory:assess`,
   `npm run software:factory:rehearse`, and
-  `npm run software:factory:repair`.
+  `npm run software:factory:repair`,
+  `npm run software:factory:publish`, and
+  `npm run software:factory:verify`.
 - The retained software-factory receipt paths are
   `.cache/software-factory-orchestrator/latest/software-factory-state.json`,
   `.cache/software-factory-orchestrator/latest/rehearse/software-factory-state.json`,
+  `.cache/software-factory-orchestrator/latest/repair/software-factory-state.json`,
+  `.cache/software-factory-orchestrator/latest/publish/software-factory-state.json`,
   and
-  `.cache/software-factory-orchestrator/latest/repair/software-factory-state.json`.
+  `.cache/software-factory-orchestrator/latest/verify/software-factory-state.json`.
 - That factory contract retains `v1.3.6` as the sole production recovery case,
   defines authority/staging/production/recovery boundaries, rehearses the
   retained non-mutating in-place repair candidate, retains the deferred
-  non-mutating repair contract, and still forbids GitHub release publication,
+  non-mutating repair contract, retains guarded non-mutating publish and
+  verify contracts, and still forbids GitHub release publication,
   Marketplace publication, or other production mutation in this slice.
 - Current retained transaction facts: public `main` `bd81bfe`, public tag
   `v1.3.6`, draft release `312363117`, exact VSIX
@@ -253,4 +258,5 @@
   `untagged-*` URL.
 - The software-factory non-production contract keeps this same `v1.3.6` state
   frozen as the only production recovery target before any future GitHub or
-  Marketplace act.
+  Marketplace act, even though guarded non-mutating `publish` / `verify`
+  contract phases are now retained locally.

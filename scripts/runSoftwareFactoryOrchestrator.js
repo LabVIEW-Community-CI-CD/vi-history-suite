@@ -6,7 +6,7 @@ const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 
 const repoRoot = path.resolve(path.dirname(fs.realpathSync.native(__filename)), '..');
-const PHASES = ['assess', 'rehearse', 'repair'];
+const PHASES = ['assess', 'rehearse', 'repair', 'publish', 'verify'];
 const DEFAULT_EVIDENCE_ROOT = path.join(repoRoot, '.cache', 'software-factory-orchestrator', 'latest');
 const DEFAULT_EVIDENCE_DIR = DEFAULT_EVIDENCE_ROOT;
 const DEFAULT_TRANSACTION_RECEIPT_PATH =
@@ -14,12 +14,16 @@ const DEFAULT_TRANSACTION_RECEIPT_PATH =
 const DEFAULT_PHASE_EVIDENCE_DIRS = {
   assess: DEFAULT_EVIDENCE_ROOT,
   rehearse: path.join(DEFAULT_EVIDENCE_ROOT, 'rehearse'),
-  repair: path.join(DEFAULT_EVIDENCE_ROOT, 'repair')
+  repair: path.join(DEFAULT_EVIDENCE_ROOT, 'repair'),
+  publish: path.join(DEFAULT_EVIDENCE_ROOT, 'publish'),
+  verify: path.join(DEFAULT_EVIDENCE_ROOT, 'verify')
 };
 const DEFAULT_PHASE_RECEIPT_PATHS = {
   assess: '.cache/software-factory-orchestrator/latest/software-factory-state.json',
   rehearse: '.cache/software-factory-orchestrator/latest/rehearse/software-factory-state.json',
-  repair: '.cache/software-factory-orchestrator/latest/repair/software-factory-state.json'
+  repair: '.cache/software-factory-orchestrator/latest/repair/software-factory-state.json',
+  publish: '.cache/software-factory-orchestrator/latest/publish/software-factory-state.json',
+  verify: '.cache/software-factory-orchestrator/latest/verify/software-factory-state.json'
 };
 
 function getDefaultEvidenceDirForPhase(phase) {
@@ -28,9 +32,9 @@ function getDefaultEvidenceDirForPhase(phase) {
 
 function getUsage() {
   return [
-    'Usage: node scripts/runSoftwareFactoryOrchestrator.js [--phase <assess|rehearse|repair>] [--evidence-dir <path>] [--help]',
+    'Usage: node scripts/runSoftwareFactoryOrchestrator.js [--phase <assess|rehearse|repair|publish|verify>] [--evidence-dir <path>] [--help]',
     '',
-    'Assess, rehearse, or retain the non-mutating repair contract for the vi-history-suite software-factory control plane.',
+    'Assess, rehearse, repair, or retain the guarded non-mutating publish/verify contracts for the vi-history-suite software-factory control plane.',
     '',
     'All admitted phases in this slice are non-production only. They do not publish to GitHub, publish to VS Code Marketplace,',
     'or mutate any production surface.'
@@ -143,18 +147,21 @@ function determineStatus(phases) {
 function buildCommonSections(facts, phase, options = {}) {
   const currentPhaseReceiptPath =
     options.currentPhaseReceiptPath ?? DEFAULT_PHASE_RECEIPT_PATHS[phase];
-  const admittedPhases = ['assess', 'rehearse', 'repair'];
+  const admittedNonProductionPhases = ['assess', 'rehearse', 'repair'];
+  const guardedNonMutatingContractPhases = ['publish', 'verify'];
+  const supportedPhases = [...admittedNonProductionPhases, ...guardedNonMutatingContractPhases];
   const marketplacePhaseStatus = facts.publicGitHubReleasePublished === true ? 'ready' : 'blocked';
 
   return {
-    schema: 'vi-history-suite/software-factory-orchestrator@v2',
+    schema: 'vi-history-suite/software-factory-orchestrator@v3',
     recordedAt: facts.recordedAt,
     repoRoot: facts.repoRoot,
     currentBranch: facts.currentBranch,
     contract: {
       currentPhase: phase,
-      supportedPhases: admittedPhases,
-      plannedPhases: ['publish', 'verify'],
+      supportedPhases,
+      admittedNonProductionPhases,
+      guardedNonMutatingContractPhases,
       assessOnly: false,
       nonProductionOnly: true,
       productionMutationAllowed: false,
@@ -215,7 +222,8 @@ function buildCommonSections(facts, phase, options = {}) {
     },
     rehearsalPolicy: {
       policy: 'production-is-not-the-first-proof-surface',
-      admittedNonProductionPhases: admittedPhases,
+      admittedNonProductionPhases,
+      guardedNonMutatingContractPhases,
       requiredSurfaces: [
         facts.preTagPublicExactProofPackageScript,
         facts.publicGitHubExactTransactionPackageScript,
@@ -223,7 +231,7 @@ function buildCommonSections(facts, phase, options = {}) {
         'npm run design:gate'
       ],
       rule:
-        'Future production publication acts must stay blocked until the factory control plane proves the recovery case through repo-owned assessment, non-production rehearsal, and non-production repair-contract phases before later publish/verify phases are admitted.'
+        'Future production publication acts must stay blocked until the factory control plane proves the recovery case through repo-owned assessment, non-production rehearsal, the non-production repair contract, and the guarded non-mutating publish/verify contracts before any later production mutation phase is admitted.'
     },
     incidentClasses: [
       'production-partial-public-state',
@@ -252,6 +260,8 @@ function buildCommonSections(facts, phase, options = {}) {
       assess: 'repo-owned automatic',
       rehearse: 'repo-owned automatic non-production phase',
       repair: 'repo-owned automatic non-production repair-contract phase',
+      publish: 'repo-owned automatic guarded non-mutating publish-contract phase',
+      verify: 'repo-owned automatic guarded non-mutating verify-contract phase',
       publishPublicGitHubRelease: 'explicit later production approval required',
       publishMarketplace: 'explicit later production approval required'
     },
@@ -259,12 +269,16 @@ function buildCommonSections(facts, phase, options = {}) {
       packageScripts: {
         assess: 'npm run software:factory:assess',
         rehearse: 'npm run software:factory:rehearse',
-        repair: 'npm run software:factory:repair'
+        repair: 'npm run software:factory:repair',
+        publish: 'npm run software:factory:publish',
+        verify: 'npm run software:factory:verify'
       },
       receiptPaths: {
         assess: DEFAULT_PHASE_RECEIPT_PATHS.assess,
         rehearse: DEFAULT_PHASE_RECEIPT_PATHS.rehearse,
-        repair: DEFAULT_PHASE_RECEIPT_PATHS.repair
+        repair: DEFAULT_PHASE_RECEIPT_PATHS.repair,
+        publish: DEFAULT_PHASE_RECEIPT_PATHS.publish,
+        verify: DEFAULT_PHASE_RECEIPT_PATHS.verify
       },
       currentPhaseReceiptPath
     },
@@ -291,10 +305,26 @@ function buildPhaseSummary(phase, facts) {
     };
   }
 
+  if (phase === 'repair') {
+    return {
+      currentPhaseLabel: 'repair',
+      summary:
+        `The non-production repair contract retains the deferred in-place ${facts.exactLine} recovery plan for draft release ${releaseId} without admitting any write action.`
+    };
+  }
+
+  if (phase === 'publish') {
+    return {
+      currentPhaseLabel: 'publish',
+      summary:
+        `The guarded non-mutating publish contract retains the exact ${facts.exactLine} transition requirements for draft release ${releaseId} without admitting any production mutation.`
+    };
+  }
+
   return {
-    currentPhaseLabel: 'repair',
+    currentPhaseLabel: 'verify',
     summary:
-      `The non-production repair contract retains the deferred in-place ${facts.exactLine} recovery plan for draft release ${releaseId} without admitting any write action.`
+      `The guarded non-mutating verify contract retains the exact ${facts.exactLine} publication-verification expectations around draft release ${releaseId} without admitting any production mutation.`
   };
 }
 
@@ -313,7 +343,8 @@ function createAssessPhases(facts, marketplacePhaseStatus) {
     {
       id: 'production-mutation-policy',
       status: 'pass',
-      summary: 'The software-factory control plane now admits only non-production assess, rehearse, and repair-contract phases; GitHub release and Marketplace publication remain forbidden.'
+      summary:
+        'The software-factory control plane now admits assess, rehearse, and repair plus guarded non-mutating publish/verify contract phases; GitHub release and Marketplace publication remain forbidden.'
     },
     {
       id: 'recovery-case',
@@ -401,7 +432,95 @@ function createRepairPhases(facts, marketplacePhaseStatus) {
       status: facts.blockerCode ? 'blocked' : 'pass',
       summary: facts.blockerCode
         ? `Repair remains non-mutating and blocked by ${facts.blockerCode}; later publish/verify phases are not yet admitted.`
-        : 'Repair remains non-mutating, but the current recovery case is ready for later explicit publish/verify approval.'
+        : 'Repair remains non-mutating, but the current recovery case is ready for later guarded publish/verify contract retention.'
+    },
+    {
+      id: 'marketplace-boundary',
+      status: marketplacePhaseStatus,
+      summary: marketplacePhaseStatus === 'blocked'
+        ? `Marketplace stays blocked at ${facts.marketplaceVersion} until the public GitHub exact release closes cleanly.`
+        : 'Marketplace may proceed only after the public GitHub exact release is fully closed.'
+    }
+  ];
+}
+
+function createPublishPhases(facts, marketplacePhaseStatus) {
+  const publishContractReady =
+    facts.repairInPlaceRequired &&
+    facts.repairInPlaceAllowed &&
+    facts.releaseAssetsRetainedAgainstManifest &&
+    facts.draftPublishabilityByIdStatusCode === 200 &&
+    facts.draftPublishabilityTagMatchesAuthority === true;
+
+  return [
+    {
+      id: 'authority-boundary',
+      status: 'pass',
+      summary: `Authority remains GitLab ${facts.integrationBranch} -> ${facts.exactReleaseLineBranch} with ${facts.exactLine} retained as the current exact line.`
+    },
+    {
+      id: 'staging-boundary',
+      status: 'pass',
+      summary: `GitFlow staging remains enforced through ${facts.integrationBranch}, ${facts.releaseBranchFamily}, ${facts.hotfixBranchFamily}, and the active software-factory branch ${facts.activeFeatureBranch}.`
+    },
+    {
+      id: 'publish-contract',
+      status: publishContractReady ? 'pass' : 'blocked',
+      summary: publishContractReady
+        ? `The guarded publish contract retains the exact ${facts.exactLine} release draft, manifest-backed assets, and in-place transition preconditions without performing a publish mutation.`
+        : `The guarded publish contract cannot yet retain a trustworthy in-place transition because the current ${facts.exactLine} draft state is missing one or more retained prerequisites.`
+    },
+    {
+      id: 'publish-mutation-boundary',
+      status: 'blocked',
+      summary: facts.blockerCode
+        ? `Publish remains contract-only and blocked by ${facts.blockerCode}; GitHub release publication is still forbidden in this slice.`
+        : 'Publish remains contract-only; GitHub release publication still requires later explicit production approval even if the current blocker clears.'
+    },
+    {
+      id: 'marketplace-boundary',
+      status: marketplacePhaseStatus,
+      summary: marketplacePhaseStatus === 'blocked'
+        ? `Marketplace stays blocked at ${facts.marketplaceVersion} until the public GitHub exact release closes cleanly.`
+        : 'Marketplace may proceed only after the public GitHub exact release is fully closed.'
+    }
+  ];
+}
+
+function createVerifyPhases(facts, marketplacePhaseStatus) {
+  const verifyContractReady =
+    Boolean(facts.exactLine) &&
+    Boolean(facts.publicGitHubTag) &&
+    facts.releaseAssetsRetainedAgainstManifest;
+  const githubReleaseVerified = facts.publicGitHubLastPublishedRelease === facts.exactLine;
+  const marketplaceVersionExpected = String(facts.exactLine ?? '').replace(/^v/, '');
+  const marketplaceVerified = facts.marketplaceVersion === marketplaceVersionExpected;
+
+  return [
+    {
+      id: 'authority-boundary',
+      status: 'pass',
+      summary: `Authority remains GitLab ${facts.integrationBranch} -> ${facts.exactReleaseLineBranch} with ${facts.exactLine} retained as the current exact line.`
+    },
+    {
+      id: 'staging-boundary',
+      status: 'pass',
+      summary: `GitFlow staging remains enforced through ${facts.integrationBranch}, ${facts.releaseBranchFamily}, ${facts.hotfixBranchFamily}, and the active software-factory branch ${facts.activeFeatureBranch}.`
+    },
+    {
+      id: 'verify-contract',
+      status: verifyContractReady ? 'pass' : 'blocked',
+      summary: verifyContractReady
+        ? `The guarded verify contract retains the exact ${facts.exactLine} GitHub-release and Marketplace verification expectations without performing any production mutation.`
+        : `The guarded verify contract cannot yet retain the exact ${facts.exactLine} verification expectations because the retained publication facts remain incomplete.`
+    },
+    {
+      id: 'verify-production-readiness',
+      status: githubReleaseVerified && marketplaceVerified ? 'pass' : 'blocked',
+      summary:
+        githubReleaseVerified && marketplaceVerified
+          ? `Verification expectations are satisfied: GitHub exact release ${facts.exactLine} and Marketplace ${marketplaceVersionExpected} are both live.`
+          : `Verification remains contract-only: GitHub still publishes ${facts.publicGitHubLastPublishedRelease ?? 'unknown'}, Marketplace still serves ${facts.marketplaceVersion ?? 'unknown'}, and no production verification claim is admitted yet.`
     },
     {
       id: 'marketplace-boundary',
@@ -497,6 +616,79 @@ function repairFactoryState(facts) {
   };
 }
 
+function publishFactoryState(facts) {
+  const common = buildCommonSections(facts, 'publish');
+  const phases = createPublishPhases(facts, common.marketplacePhaseStatus);
+  const publishContractReady = phases.find((phase) => phase.id === 'publish-contract')?.status === 'pass';
+  const phaseSummary = buildPhaseSummary('publish', facts);
+
+  return {
+    ...common,
+    status: determineStatus(phases),
+    phaseSummary,
+    publishContract: {
+      status: publishContractReady ? 'pass' : 'blocked',
+      nonMutating: true,
+      mutationPermitted: false,
+      packageScript: 'npm run software:factory:publish',
+      receiptPath: DEFAULT_PHASE_RECEIPT_PATHS.publish,
+      targetMode: 'publish-in-place-guard',
+      targetTag: facts.exactLine,
+      targetDraftReleaseId: facts.publicGitHubDraftReleaseId,
+      targetDraftReleaseUrl: facts.draftReleaseUrl,
+      authorityReleaseManifestPath: facts.authorityReleaseManifestPath,
+      exactAssetsRetainedAgainstManifest: facts.releaseAssetsRetainedAgainstManifest,
+      draftReleaseReadableById: facts.draftPublishabilityByIdStatusCode === 200,
+      draftReleaseTagMatchesAuthority: facts.draftPublishabilityTagMatchesAuthority,
+      safePublishTransitionProven: facts.safeToAttemptRepairPublish,
+      currentBlockerCode: facts.blockerCode,
+      deferredWriteAction: 'publish-existing-github-draft-release-in-place',
+      nextAllowedAction: facts.nextAllowedAction,
+      rule:
+        'This guarded publish contract remains non-mutating; it retains the exact in-place publish preconditions and still forbids GitHub release publication in this slice.'
+    },
+    phases
+  };
+}
+
+function verifyFactoryState(facts) {
+  const common = buildCommonSections(facts, 'verify');
+  const phases = createVerifyPhases(facts, common.marketplacePhaseStatus);
+  const verifyContractReady = phases.find((phase) => phase.id === 'verify-contract')?.status === 'pass';
+  const phaseSummary = buildPhaseSummary('verify', facts);
+
+  return {
+    ...common,
+    status: determineStatus(phases),
+    phaseSummary,
+    verifyContract: {
+      status: verifyContractReady ? 'pass' : 'blocked',
+      nonMutating: true,
+      mutationPermitted: false,
+      packageScript: 'npm run software:factory:verify',
+      receiptPath: DEFAULT_PHASE_RECEIPT_PATHS.verify,
+      targetMode: 'post-publish-verify-guard',
+      targetTag: facts.exactLine,
+      targetDraftReleaseId: facts.publicGitHubDraftReleaseId,
+      expectedGitHubRelease: facts.exactLine,
+      expectedMarketplaceVersion: String(facts.exactLine ?? '').replace(/^v/, ''),
+      currentPublishedGitHubRelease: facts.publicGitHubLastPublishedRelease,
+      currentMarketplaceVersion: facts.marketplaceVersion,
+      currentBlockerCode: facts.blockerCode,
+      deferredReadActions: [
+        'verify-public-github-release-publication',
+        'verify-public-github-release-assets-and-checksums',
+        'verify-marketplace-remains-blocked-until-github-release-closes',
+        'verify-marketplace-v1.3.6-after-github-release-publication'
+      ],
+      nextAllowedAction: facts.nextAllowedAction,
+      rule:
+        'This guarded verify contract remains non-mutating; it retains the exact post-publish verification expectations and still forbids any production mutation in this slice.'
+    },
+    phases
+  };
+}
+
 function buildPhaseReport(facts, phase) {
   if (phase === 'assess') {
     return assessFactoryState(facts);
@@ -506,7 +698,15 @@ function buildPhaseReport(facts, phase) {
     return rehearseFactoryState(facts);
   }
 
-  return repairFactoryState(facts);
+  if (phase === 'repair') {
+    return repairFactoryState(facts);
+  }
+
+  if (phase === 'publish') {
+    return publishFactoryState(facts);
+  }
+
+  return verifyFactoryState(facts);
 }
 
 function buildMarkdown(report) {
@@ -550,6 +750,39 @@ function buildMarkdown(report) {
     );
   }
 
+  if (report.publishContract) {
+    extraSections.push(
+      '## Publish Contract',
+      '',
+      `- Status: \`${report.publishContract.status}\``,
+      `- Package script: \`${report.publishContract.packageScript}\``,
+      `- Receipt path: \`${report.publishContract.receiptPath}\``,
+      `- Target mode: \`${report.publishContract.targetMode}\``,
+      `- Target draft release: \`${report.publishContract.targetDraftReleaseId}\``,
+      `- Mutation permitted: \`${report.publishContract.mutationPermitted}\``,
+      `- Current blocker: \`${report.publishContract.currentBlockerCode ?? 'none'}\``,
+      `- Deferred write action: \`${report.publishContract.deferredWriteAction}\``,
+      ''
+    );
+  }
+
+  if (report.verifyContract) {
+    extraSections.push(
+      '## Verify Contract',
+      '',
+      `- Status: \`${report.verifyContract.status}\``,
+      `- Package script: \`${report.verifyContract.packageScript}\``,
+      `- Receipt path: \`${report.verifyContract.receiptPath}\``,
+      `- Target mode: \`${report.verifyContract.targetMode}\``,
+      `- Expected GitHub release: \`${report.verifyContract.expectedGitHubRelease}\``,
+      `- Expected Marketplace version: \`${report.verifyContract.expectedMarketplaceVersion}\``,
+      `- Current GitHub release: \`${report.verifyContract.currentPublishedGitHubRelease ?? 'unknown'}\``,
+      `- Current Marketplace version: \`${report.verifyContract.currentMarketplaceVersion ?? 'unknown'}\``,
+      `- Deferred read actions: ${report.verifyContract.deferredReadActions.join(', ')}`,
+      ''
+    );
+  }
+
   return [
     '# Software Factory Orchestrator Receipt',
     '',
@@ -559,7 +792,8 @@ function buildMarkdown(report) {
     `- Current phase: \`${report.contract.currentPhase}\``,
     `- Phase summary: ${report.phaseSummary.summary}`,
     `- Supported phases: \`${report.contract.supportedPhases.join(', ')}\``,
-    `- Planned phases: \`${report.contract.plannedPhases.join(', ')}\``,
+    `- Admitted non-production phases: \`${report.contract.admittedNonProductionPhases.join(', ')}\``,
+    `- Guarded non-mutating contract phases: \`${report.contract.guardedNonMutatingContractPhases.join(', ')}\``,
     `- Non-production only: \`${report.contract.nonProductionOnly}\``,
     `- Production mutation allowed: \`${report.contract.productionMutationAllowed}\``,
     `- Sole production recovery target: \`${report.semverFreeze.soleProductionRecoveryTarget}\``,
@@ -575,7 +809,8 @@ function buildMarkdown(report) {
     '',
     '## Mutation Policy',
     '',
-    '- This contract admits only non-production assess, rehearse, and repair phases.',
+    '- This contract admits non-production `assess`, `rehearse`, and `repair` plus guarded non-mutating `publish` and `verify` contract phases.',
+    '- The `publish` and `verify` phases here are contract-definition/readiness surfaces only; they do not publish to GitHub or VS Code Marketplace.',
     '- No GitHub release publication, Marketplace publication, or other production mutation is permitted in this slice.',
     '- Production publish phases require later explicit approval after the frozen recovery case is closed.',
     '',
@@ -598,6 +833,8 @@ function buildMarkdown(report) {
     `- assess script: \`${report.receiptContract.packageScripts.assess}\``,
     `- rehearse script: \`${report.receiptContract.packageScripts.rehearse}\``,
     `- repair script: \`${report.receiptContract.packageScripts.repair}\``,
+    `- publish script: \`${report.receiptContract.packageScripts.publish}\``,
+    `- verify script: \`${report.receiptContract.packageScripts.verify}\``,
     receiptLines,
     '',
     '## Phases',
@@ -653,7 +890,7 @@ function collectFacts(fsApi = fs, spawnImpl = spawnSync) {
     activeFeatureBranch:
       softwareFactoryGovernance.activeFeatureBranch ??
       softwareFactoryGovernance.activeFoundationBranch ??
-      'feature/software-factory-rehearse-repair-contract',
+      'feature/software-factory-publish-verify-contract',
     integrationBranch: versionLineContract.integrationBranch,
     exactReleaseLineBranch: versionLineContract.exactReleaseLineBranch,
     releaseBranchFamily: versionLineContract.releaseBranch,
@@ -816,6 +1053,8 @@ module.exports = {
   parseArgs,
   repairFactoryState,
   rehearseFactoryState,
+  publishFactoryState,
+  verifyFactoryState,
   runAssessment,
   toRelativeReportPath
 };

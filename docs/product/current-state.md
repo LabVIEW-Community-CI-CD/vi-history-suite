@@ -164,7 +164,7 @@ Latest landed ship target:
 - active feature-lane public GitHub release hardening branch on `develop`:
   none
 - active software-factory governance branch on `develop`:
-  `feature/software-factory-rehearse-repair-contract`
+  `feature/software-factory-publish-verify-contract`
 - later SemVer openings are frozen while the current exact public GitHub
   transaction remains incomplete
 - active pre-tag public-exact proof package script:
@@ -180,14 +180,23 @@ Latest landed ship target:
   `npm run software:factory:rehearse`
 - software factory repair package script:
   `npm run software:factory:repair`
+- software factory publish package script:
+  `npm run software:factory:publish`
+- software factory verify package script:
+  `npm run software:factory:verify`
 - retained software factory assessment receipt:
   `.cache/software-factory-orchestrator/latest/software-factory-state.json`
 - retained software factory rehearsal receipt:
   `.cache/software-factory-orchestrator/latest/rehearse/software-factory-state.json`
 - retained software factory repair receipt:
   `.cache/software-factory-orchestrator/latest/repair/software-factory-state.json`
+- retained software factory publish receipt:
+  `.cache/software-factory-orchestrator/latest/publish/software-factory-state.json`
+- retained software factory verify receipt:
+  `.cache/software-factory-orchestrator/latest/verify/software-factory-state.json`
 - software-factory contract phases:
-  `assess`, `rehearse`, and `repair` now; `publish` / `verify` later
+  `assess`, `rehearse`, and `repair` remain admitted non-production phases;
+  `publish` / `verify` are retained as guarded non-mutating contract phases
 - current software-factory mutation policy:
   no GitHub release publication, Marketplace publication, or other production
   mutation is permitted through this non-production slice
