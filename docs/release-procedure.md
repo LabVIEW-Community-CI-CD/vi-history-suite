@@ -14,9 +14,9 @@
 - The current exact released line is `v1.3.5`.
 - The burned exact released line is `v1.0.2`.
 - The current published package line on `main` is `1.3.5`.
-- The current develop package line on `develop` is `1.3.5`.
-- The active exact release candidate line on `develop` is none.
-- The active release-candidate branch is none.
+- The current develop package line on `develop` is `1.3.6`.
+- The active exact release candidate line on `develop` is `v1.3.6`.
+- The active release-candidate branch is `release/1.3.6`.
 - The active exact hotfix candidate line on `main` is none.
 - The active hotfix branch is none.
 - The active feature-lane public-exact hardening branch on `develop` is none.
@@ -400,12 +400,14 @@ separate afterward.
   `v1.2.2`, exact `v1.3.0`, exact `v1.3.1`, exact `v1.3.2`, exact `v1.3.3`,
   exact `v1.3.4`, exact `v1.3.5`, or separate public GitHub exact `v1.3.1`
   release evidence.
-- The current develop package line on `develop` is `1.3.5`, public GitHub
-  exact release `v1.3.1` now publishes separately on `ad351ed`, VS Code
-  Marketplace remains `1.3.0`, no exact hotfix lane is currently open, and
-  remaining public-exact validation hardening is now retained directly on
-  `develop` until `npm run public:exact:pretag:proof` plus GitLab
-  `public_exact_pretag_proof` close cleanly before any later exact reopen.
+- The current develop package line on `develop` is `1.3.6`, public GitHub
+  exact release `v1.3.1` now publishes separately on `ad351ed`,
+  `release/1.3.6` is now the active exact-retry branch from merged-green
+  `develop`, VS Code Marketplace remains `1.3.0`, no exact hotfix lane is
+  currently open, and the reopened public-exact retry remains blocked until
+  `npm run public:exact:pretag:proof` plus GitLab
+  `public_exact_pretag_proof` close cleanly against the promoted public
+  facade.
 - The packaged extension homepage now points installed users to the maintained
   public wiki home, while the repo root remains the source and control-plane
   surface.

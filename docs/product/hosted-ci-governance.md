@@ -8,11 +8,12 @@ raw-YAML-only truth.
 
 This document is the control-plane summary of the governed historical
 `v1.3.0` exact-closeout plus the later exact/public release follow-through.
-Authority exact `main` now carries tagged `v1.3.5`, `develop` now carries
-`1.3.5`, the separate public GitHub exact release still serves `v1.3.1`, the
+Authority exact `main` now carries tagged `v1.3.5`, `develop` still carries
+`1.3.5`, `release/1.3.6` is now open from merged-green `develop` `189aa3a`,
+the separate public GitHub exact release still serves `v1.3.1`, the
 Marketplace listing still serves `1.3.0`, no exact hotfix lane is currently
-open, and the remaining public-exact validation hardening is now retained
-directly on `develop` before any later exact reopen.
+open, and the reopened public-exact retry remains blocked behind the retained
+pre-tag proof.
 
 ## Current Exact Closeout State
 
@@ -30,9 +31,9 @@ directly on `develop` before any later exact reopen.
 
 - current exact release line: `v1.3.5`
 - current `main` package line: `1.3.5`
-- current `develop` package line: `1.3.5`
-- active exact release candidate line on `develop`: none
-- active release-candidate branch: none
+- current `develop` package line: `1.3.6`
+- active exact release candidate line on `develop`: `v1.3.6`
+- active release-candidate branch: `release/1.3.6`
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public-exact hardening branch on `develop`: none
@@ -41,12 +42,13 @@ directly on `develop` before any later exact reopen.
   `npm run public:exact:pretag:proof`
 - pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
 - chosen bump: `patch`
-- rationale: the remaining public-exact validation hardening now returns to
-  short-lived `feature/*` branches from `develop` instead of reopening
-  `main` for another exact hotfix attempt
-- rationale: any later exact reopen stays blocked until
-  `npm run public:exact:pretag:proof` and GitLab `public_exact_pretag_proof`
-  pass cleanly against the promoted public facade before a later tag act
+- rationale: authority exact `v1.3.5` remains immutable while the separate
+  public GitHub exact release still serves `v1.3.1` and VS Code Marketplace
+  still serves `1.3.0`, so `release/1.3.6` now opens from merged-green
+  `develop` for the next governed public-exact retry
+- rationale: `npm run public:exact:pretag:proof` and GitLab
+  `public_exact_pretag_proof` remain fail-closed gates on `develop` before
+  any later exact tag act from the reopened line
 
 ## Branch Model
 

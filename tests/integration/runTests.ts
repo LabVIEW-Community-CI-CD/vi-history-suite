@@ -7,15 +7,13 @@ import { downloadAndUnzipVSCode, runTests } from '@vscode/test-electron';
 
 import {
   assertLinuxVsCodeRuntimeReady,
-  inspectIntegrationHostStrategy
+  inspectIntegrationHostStrategy,
+  resolveStandardWindowsCodeCliPath
 } from '../../src/tooling/integrationHostRuntime';
 import { stageExtensionForWindowsHost } from '../../src/tooling/integrationHostStage';
 import { prepareIntegrationWorkspace } from './prepareTestWorkspace';
 
-const WINDOWS_CODE_PATH =
-  process.platform === 'win32'
-    ? 'C:\\Program Files\\Microsoft VS Code\\bin\\code.cmd'
-    : '/mnt/c/Program Files/Microsoft VS Code/bin/code';
+const WINDOWS_CODE_PATH = resolveStandardWindowsCodeCliPath();
 const WINDOWS_SYSTEM_ROOT = process.platform === 'win32' ? 'C:\\Windows' : '/mnt/c/Windows';
 const DEFAULT_WINDOWS_INTEGRATION_TEMP_ROOT =
   process.platform === 'win32'

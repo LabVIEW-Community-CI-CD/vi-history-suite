@@ -181,9 +181,9 @@ Authority release facts:
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.3.5`
 - current published package line on `main`: `1.3.5`
-- current develop package line on `develop`: `1.3.5`
-- active exact release candidate line on `develop`: none
-- active release-candidate branch: none
+- current develop package line on `develop`: `1.3.6`
+- active exact release candidate line on `develop`: `v1.3.6`
+- active release-candidate branch: `release/1.3.6`
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public-exact hardening branch on `develop`: none

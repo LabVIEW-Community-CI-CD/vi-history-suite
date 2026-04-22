@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 const {
   buildContainerInvocation,
+  buildLocalSkillInvocation,
   getWindowsPythonExecutableCandidates,
   buildRunAssuranceArgs,
   parseArgs,
@@ -17,6 +18,14 @@ const {
     rawOutputRoot: string,
     env?: Record<string, string>,
     platform?: NodeJS.Platform
+  ) => { command: string; args: string[] };
+  buildLocalSkillInvocation: (
+    lane: string,
+    targetPath: string,
+    rawOutputRoot: string,
+    env?: Record<string, string>,
+    platform?: NodeJS.Platform,
+    existsSyncImpl?: (candidate: string) => boolean
   ) => { command: string; args: string[] };
   buildRunAssuranceArgs: (lane: string, targetPath: string, rawOutputRoot: string) => string[];
   getWindowsPythonExecutableCandidates: (env?: Record<string, string>) => string[];
@@ -202,6 +211,41 @@ describe('run assurance audit script', () => {
     expect(resolvePythonInvocation(windowsEnv, 'win32', () => false)).toEqual({
       command: 'py',
       args: ['-3']
+    });
+  });
+
+  it('falls back to the admitted WSL Python assurance surface when Windows Python is unavailable', () => {
+    const invocation = buildLocalSkillInvocation(
+      'release-gate',
+      'C:\\repo\\staged-target',
+      'C:\\repo\\raw-output',
+      {
+        SystemRoot: 'C:\\Windows',
+        VIHS_LINUX_ASSURANCE_DISTRO: 'Ubuntu-24.04',
+        VIHS_ASSURANCE_SKILL_ROOT: 'C:\\skills\\repo-standards-review'
+      },
+      'win32',
+      (candidate) =>
+        candidate === 'C:\\Windows\\System32\\wsl.exe' ||
+        candidate === 'C:\\skills\\repo-standards-review\\scripts\\run_assurance.py'
+    );
+
+    expect(invocation).toEqual({
+      command: 'C:\\Windows\\System32\\wsl.exe',
+      args: [
+        '-d',
+        'Ubuntu-24.04',
+        '--exec',
+        'python3',
+        '/mnt/c/skills/repo-standards-review/scripts/run_assurance.py',
+        '/mnt/c/repo/staged-target',
+        '--profile',
+        'release-gate',
+        '--output',
+        'gate-scorecard',
+        '--save-dir',
+        '/mnt/c/repo/raw-output'
+      ]
     });
   });
 });
