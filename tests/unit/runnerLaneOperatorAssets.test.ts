@@ -63,7 +63,10 @@ describe('runner lane operator assets', () => {
     expect(windowsBootstrap).toContain("$runnerRoot = 'C:\\GitLab-Runner'");
     expect(windowsBootstrap).toContain("Start-Process -FilePath $runnerExe");
     expect(windowsBootstrap).toContain('Stop-Process -Id $duplicateWindowsRunner.ProcessId -Force');
-    expect(windowsBootstrap).toContain("$linuxAssuranceDistro = 'Ubuntu'");
+    expect(windowsBootstrap).toContain(
+      "$linuxAssuranceDistroOverrideEnvironmentVariable = 'VIHS_LINUX_ASSURANCE_DISTRO'"
+    );
+    expect(windowsBootstrap).toContain("$linuxAssuranceDistro = 'Ubuntu-24.04'");
     expect(windowsBootstrap).toContain(
       "$linuxAssuranceBootstrapCommand = '$HOME/gitlab-runner/start-linux-assurance.sh'"
     );
@@ -174,7 +177,8 @@ describe('runner lane operator assets', () => {
     expect(windowsLaneDoc).toContain('installed bootstrap hash still matches the repo source');
     expect(windowsLaneDoc).toContain('scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
     expect(windowsLaneDoc).toContain('scripts/gitlab-runner/linux/start-linux-assurance.sh');
-    expect(windowsLaneDoc).toContain('retries the repo-owned Linux assurance helper up');
+    expect(windowsLaneDoc).toContain('repo-owned Linux');
+    expect(windowsLaneDoc).toContain('assurance helper up to `12` times');
     expect(windowsLaneDoc).toContain('powershell.exe -NoLogo -NoProfile -File .\\scripts\\gitlab-runner\\windows\\apply-governed-runner-lanes.ps1');
     expect(linuxLaneDoc).toContain('concurrent = 2');
     expect(linuxLaneDoc).toContain('scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh');
@@ -219,7 +223,8 @@ describe('runner lane operator assets', () => {
         combinedAssertionScript: 'scripts/assertGovernedRunnerLanes.js',
         combinedAssertionPackageScript: 'npm run gitlab:runner:assert',
         helperVerification: {
-          distro: 'Ubuntu',
+          distro: 'Ubuntu-24.04',
+          distroOverrideEnvironmentVariable: 'VIHS_LINUX_ASSURANCE_DISTRO',
           wakeAttempts: 12,
           wakeDelaySeconds: 10,
           checks: [
@@ -246,7 +251,8 @@ describe('runner lane operator assets', () => {
         repoOwnedLinuxHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
         repoOwnedLinuxDoctorScript: 'scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh',
         linuxAssuranceBootstrap: {
-          distro: 'Ubuntu',
+          distro: 'Ubuntu-24.04',
+          distroOverrideEnvironmentVariable: 'VIHS_LINUX_ASSURANCE_DISTRO',
           bootstrapCommand: '$HOME/gitlab-runner/start-linux-assurance.sh',
           wakeAttempts: 12,
           wakeDelaySeconds: 10,
@@ -300,7 +306,8 @@ describe('runner lane operator assets', () => {
         }),
         linuxBootstrapReadiness: expect.objectContaining({
           script: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',
-          distro: 'Ubuntu',
+          distro: 'Ubuntu-24.04',
+          distroOverrideEnvironmentVariable: 'VIHS_LINUX_ASSURANCE_DISTRO',
           bootstrapCommand: '$HOME/gitlab-runner/start-linux-assurance.sh',
           wakeAttempts: 12,
           wakeDelaySeconds: 10,
@@ -435,7 +442,8 @@ describe('runner lane operator assets', () => {
     expect(windowsLaneDoc).toContain('stale `LabVIEW`,');
     expect(windowsLaneDoc).toContain('`LabVIEWCLI`, and `LVCompare` processes');
     expect(windowsLaneDoc).toContain('fails closed if any remain');
-    expect(hostedGovernanceDoc).toContain('cold-admission fail-closed');
+    expect(hostedGovernanceDoc).toContain('cold-admission');
+    expect(hostedGovernanceDoc).toContain('fail-closed cleanup');
     expect(hostedGovernanceDoc).toContain(
       '`LabVIEW` / `LabVIEWCLI` / `LVCompare` runtime processes'
     );

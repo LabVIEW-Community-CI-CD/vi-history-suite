@@ -90,8 +90,9 @@ Runner operator hardening:
 
 - `linux-assurance`: admitted config path
   `~/.gitlab-runner/config.toml`, top-level `concurrent = 2`, per-runner
-  `request_concurrency = 2`, and steady-state lifecycle owned by Ubuntu
-  `systemd` unit `vihs-linux-assurance-runner.service`, with repo-owned host
+  `request_concurrency = 2`, and steady-state lifecycle owned by the admitted
+  Linux assurance distro `systemd` unit `vihs-linux-assurance-runner.service`,
+  defaulting to `Ubuntu-24.04`, with repo-owned host
   assets at `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh`,
   `scripts/gitlab-runner/linux/start-linux-assurance.sh`,
   `scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh`,
@@ -119,9 +120,11 @@ Runner operator hardening:
   `request_concurrency = 2`, scheduled bootstrap surface
   `C:\GitLab-Runner\start-governed-runner-lanes.ps1`, scheduled task
   `VIHS Governed Runner Lanes`, duplicate-manager collapse so exactly one
-  current-user runner manager remains per config, bounded Ubuntu wake-up plus
-  Linux-helper retries fail closed unless the paired Linux assurance service
-  comes up after reboot, cold-admission fail-closed cleanup of stale
+  current-user runner manager remains per config, bounded Linux-distro wake-up
+  plus Linux-helper retries fail closed unless the paired Linux assurance
+  service comes up after reboot, defaulting to `Ubuntu-24.04` unless
+  `VIHS_LINUX_ASSURANCE_DISTRO` overrides the distro name, cold-admission
+  fail-closed cleanup of stale
   `LabVIEW` / `LabVIEWCLI` / `LVCompare` runtime processes before the runner
   starts using bounded `Stop-Process` plus `taskkill /PID /T /F` and
   `taskkill /IM /T /F`, the repo-owned bootstrap asset

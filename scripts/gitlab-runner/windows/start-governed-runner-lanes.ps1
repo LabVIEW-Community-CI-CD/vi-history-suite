@@ -7,7 +7,14 @@ $logDir = Join-Path $runnerRoot 'logs'
 $stdoutLog = Join-Path $logDir 'gitlab-runner-stdout.log'
 $stderrLog = Join-Path $logDir 'gitlab-runner-stderr.log'
 $startupReceiptRoot = Join-Path $runnerRoot 'receipts\governed-runner-startup'
-$linuxAssuranceDistro = 'Ubuntu'
+$linuxAssuranceDistroOverrideEnvironmentVariable = 'VIHS_LINUX_ASSURANCE_DISTRO'
+$linuxAssuranceDistro = [Environment]::GetEnvironmentVariable($linuxAssuranceDistroOverrideEnvironmentVariable)
+if ([string]::IsNullOrWhiteSpace($linuxAssuranceDistro)) {
+  $linuxAssuranceDistro = 'Ubuntu-24.04'
+}
+else {
+  $linuxAssuranceDistro = $linuxAssuranceDistro.Trim()
+}
 $linuxAssuranceBootstrapCommand = '$HOME/gitlab-runner/start-linux-assurance.sh'
 $linuxAssuranceWakeAttempts = 12
 $linuxAssuranceWakeDelaySeconds = 10
@@ -36,6 +43,7 @@ $script:startupReceipt = [ordered]@{
   coldAdmissionRuntimeCleanupAttempted = $false
   linuxAssuranceBootstrap = [ordered]@{
     distro = $linuxAssuranceDistro
+    distroOverrideEnvironmentVariable = $linuxAssuranceDistroOverrideEnvironmentVariable
     bootstrapCommand = $linuxAssuranceBootstrapCommand
     wakeAttempts = $linuxAssuranceWakeAttempts
     wakeDelaySeconds = $linuxAssuranceWakeDelaySeconds

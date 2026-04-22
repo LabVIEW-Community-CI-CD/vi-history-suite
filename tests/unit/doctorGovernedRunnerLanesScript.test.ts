@@ -3,7 +3,7 @@ import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const script = require(path.resolve(__dirname, '..', '..', 'scripts', 'doctorGovernedRunnerLanes.js')) as {
-  parseArgs: (argv: string[], platform?: string) => {
+  parseArgs: (argv: string[], platform?: string, env?: NodeJS.ProcessEnv) => {
     helpRequested: boolean;
     surface: string;
     linuxDistro: string;
@@ -42,7 +42,7 @@ describe('doctor governed runner lanes script', () => {
       expect.objectContaining({
         helpRequested: false,
         surface: 'all',
-        linuxDistro: 'Ubuntu',
+        linuxDistro: 'Ubuntu-24.04',
         failOnDrift: false
       })
     );
@@ -50,8 +50,20 @@ describe('doctor governed runner lanes script', () => {
       expect.objectContaining({
         helpRequested: false,
         surface: 'linux',
-        linuxDistro: 'Ubuntu',
+        linuxDistro: 'Ubuntu-24.04',
         failOnDrift: false
+      })
+    );
+  });
+
+  it('admits an override for the Linux distro name', () => {
+    expect(
+      script.parseArgs([], 'win32', {
+        VIHS_LINUX_ASSURANCE_DISTRO: 'Custom-Ubuntu'
+      })
+    ).toEqual(
+      expect.objectContaining({
+        linuxDistro: 'Custom-Ubuntu'
       })
     );
   });
@@ -72,11 +84,11 @@ describe('doctor governed runner lanes script', () => {
         )
       ]
     });
-    expect(script.buildLinuxDoctorInvocation('D:\\repo', 'Ubuntu', 'win32')).toEqual({
+    expect(script.buildLinuxDoctorInvocation('D:\\repo', 'Ubuntu-24.04', 'win32')).toEqual({
       command: 'wsl.exe',
       args: [
         '-d',
-        'Ubuntu',
+        'Ubuntu-24.04',
         'bash',
         '-lc',
         "bash '/mnt/d/repo/scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh'"
@@ -89,7 +101,7 @@ describe('doctor governed runner lanes script', () => {
     const summary = script.runDoctor(
       {
         surface: 'all',
-        linuxDistro: 'Ubuntu',
+        linuxDistro: 'Ubuntu-24.04',
         repoRoot: 'D:\\repo'
       },
       {
@@ -129,7 +141,7 @@ describe('doctor governed runner lanes script', () => {
       expect.objectContaining({
         platform: 'win32',
         surface: 'all',
-        linuxDistro: 'Ubuntu',
+        linuxDistro: 'Ubuntu-24.04',
         healthy: true,
         issues: [],
         windows: {
@@ -151,7 +163,7 @@ describe('doctor governed runner lanes script', () => {
       script.runDoctor(
         {
           surface: 'linux',
-          linuxDistro: 'Ubuntu',
+          linuxDistro: 'Ubuntu-24.04',
           repoRoot: '/tmp/repo',
           failOnDrift: true
         },
@@ -172,7 +184,7 @@ describe('doctor governed runner lanes script', () => {
       script.runDoctor(
         {
           surface: 'windows',
-          linuxDistro: 'Ubuntu',
+          linuxDistro: 'Ubuntu-24.04',
           repoRoot: '/tmp/repo'
         },
         {

@@ -4,7 +4,16 @@ const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 
 const DEFAULT_REPO_ROOT = path.resolve(__dirname, '..');
-const DEFAULT_LINUX_DISTRO = 'Ubuntu';
+const DEFAULT_LINUX_DISTRO = 'Ubuntu-24.04';
+const LINUX_DISTRO_OVERRIDE_ENVIRONMENT_VARIABLE = 'VIHS_LINUX_ASSURANCE_DISTRO';
+
+function resolveDefaultLinuxDistro(env = process.env) {
+  const override = env[LINUX_DISTRO_OVERRIDE_ENVIRONMENT_VARIABLE];
+  if (typeof override === 'string' && override.trim().length > 0) {
+    return override.trim();
+  }
+  return DEFAULT_LINUX_DISTRO;
+}
 
 function getUsage() {
   return [
@@ -16,11 +25,11 @@ function getUsage() {
   ].join('\n');
 }
 
-function parseArgs(argv, platform = process.platform) {
+function parseArgs(argv, platform = process.platform, env = process.env) {
   const parsed = {
     helpRequested: false,
     surface: platform === 'win32' ? 'all' : 'linux',
-    linuxDistro: DEFAULT_LINUX_DISTRO,
+    linuxDistro: resolveDefaultLinuxDistro(env),
     repoRoot: DEFAULT_REPO_ROOT
   };
 
@@ -162,7 +171,8 @@ function runAssertions(options, dependencies = {}) {
   const platform = dependencies.platform ?? process.platform;
   const executeCommand = dependencies.executeCommand ?? runProcess;
   const repoRoot = path.resolve(options.repoRoot ?? DEFAULT_REPO_ROOT);
-  const linuxDistro = options.linuxDistro ?? DEFAULT_LINUX_DISTRO;
+  const linuxDistro =
+    options.linuxDistro ?? resolveDefaultLinuxDistro(dependencies.env ?? process.env);
   const includeWindows = options.surface === 'all' || options.surface === 'windows';
   const includeLinux = options.surface === 'all' || options.surface === 'linux';
 
@@ -213,6 +223,7 @@ module.exports = {
   formatCommand,
   getUsage,
   parseArgs,
+  resolveDefaultLinuxDistro,
   runAssertions,
   windowsPathToWslPath
 };

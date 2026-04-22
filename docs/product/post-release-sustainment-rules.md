@@ -361,9 +361,10 @@ Hosted automation governance is now retained explicitly:
   action plus logon trigger, `request_concurrency = 2`, and one live
   configured Windows runner manager remain intact; while
   `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1` also wakes
-  Ubuntu and retries the repo-owned Linux assurance helper until it proves the
-  paired Linux service is enabled, active, and singular, writing the latest
-  Windows startup receipt to
+  the admitted Linux assurance distro, defaulting to `Ubuntu-24.04` unless
+  `VIHS_LINUX_ASSURANCE_DISTRO` overrides it, and retries the repo-owned
+  Linux assurance helper until it proves the paired Linux service is enabled,
+  active, and singular, writing the latest Windows startup receipt to
   `C:\GitLab-Runner\receipts\governed-runner-startup\latest.json`;
   `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh` fails closed
   unless `~/.gitlab-runner/config.toml` retains `concurrent = 2` plus

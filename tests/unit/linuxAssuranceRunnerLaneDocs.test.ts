@@ -147,7 +147,8 @@ describe('linux assurance runner lane docs', () => {
             failurePolicy: 'fail-closed-unless-config-normalized-and-service-enabled-and-active'
           },
           helperVerification: {
-            distro: 'Ubuntu',
+            distro: 'Ubuntu-24.04',
+            distroOverrideEnvironmentVariable: 'VIHS_LINUX_ASSURANCE_DISTRO',
             wakeAttempts: 12,
             wakeDelaySeconds: 10,
             checks: [

@@ -6,6 +6,8 @@ import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const repoRoot = path.resolve(__dirname, '..', '..');
+const admittedWslDistro =
+  process.env.VIHS_DOCS_WSL_DISTRO ?? process.env.VIHS_LINUX_ASSURANCE_DISTRO ?? 'Ubuntu-24.04';
 
 function readText(relativePath: string): string {
   return fs.readFileSync(path.join(repoRoot, relativePath), 'utf8');
@@ -50,9 +52,14 @@ function removeTreeWithRetry(targetPath: string) {
 function toWslPath(hostPath: string): string {
   const normalizedHostPath =
     process.platform === 'win32' ? hostPath.replace(/\\/g, '/') : hostPath;
-  const result = spawnSync('wsl.exe', ['wslpath', '-a', '-u', normalizedHostPath], {
-    encoding: 'utf8'
-  });
+  const result =
+    process.platform === 'win32'
+      ? spawnSync('wsl.exe', ['-d', admittedWslDistro, 'wslpath', '-a', '-u', normalizedHostPath], {
+          encoding: 'utf8'
+        })
+      : spawnSync('wslpath', ['-a', '-u', normalizedHostPath], {
+          encoding: 'utf8'
+        });
 
   if (result.status !== 0) {
     throw new Error(result.stderr || `Failed to convert path to WSL form: ${hostPath}`);
@@ -243,6 +250,8 @@ describe('documentation-package workbench', () => {
         ? spawnSync(
             'wsl.exe',
             [
+              '-d',
+              admittedWslDistro,
               'bash',
               '-lc',
               `CI_PROJECT_DIR='${toWslPath(workspaceRoot)}' '${toWslPath(entrypointPath)}' bash -lc pwd`

@@ -3,7 +3,7 @@ import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const script = require(path.resolve(__dirname, '..', '..', 'scripts', 'assertGovernedRunnerLanes.js')) as {
-  parseArgs: (argv: string[], platform?: string) => {
+  parseArgs: (argv: string[], platform?: string, env?: NodeJS.ProcessEnv) => {
     helpRequested: boolean;
     surface: string;
     linuxDistro: string;
@@ -35,14 +35,26 @@ describe('assert governed runner lanes script', () => {
       expect.objectContaining({
         helpRequested: false,
         surface: 'all',
-        linuxDistro: 'Ubuntu'
+        linuxDistro: 'Ubuntu-24.04'
       })
     );
     expect(script.parseArgs([], 'linux')).toEqual(
       expect.objectContaining({
         helpRequested: false,
         surface: 'linux',
-        linuxDistro: 'Ubuntu'
+        linuxDistro: 'Ubuntu-24.04'
+      })
+    );
+  });
+
+  it('admits an override for the Linux distro name', () => {
+    expect(
+      script.parseArgs([], 'win32', {
+        VIHS_LINUX_ASSURANCE_DISTRO: 'Custom-Ubuntu'
+      })
+    ).toEqual(
+      expect.objectContaining({
+        linuxDistro: 'Custom-Ubuntu'
       })
     );
   });
@@ -73,11 +85,11 @@ describe('assert governed runner lanes script', () => {
         )
       ]
     });
-    expect(script.buildLinuxAssertionInvocation('D:\\repo', 'Ubuntu', 'win32')).toEqual({
+    expect(script.buildLinuxAssertionInvocation('D:\\repo', 'Ubuntu-24.04', 'win32')).toEqual({
       command: 'wsl.exe',
       args: [
         '-d',
-        'Ubuntu',
+        'Ubuntu-24.04',
         'bash',
         '-lc',
         "bash '/mnt/d/repo/scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh'"
@@ -90,7 +102,7 @@ describe('assert governed runner lanes script', () => {
     const summary = script.runAssertions(
       {
         surface: 'all',
-        linuxDistro: 'Ubuntu',
+        linuxDistro: 'Ubuntu-24.04',
         repoRoot: 'D:\\repo'
       },
       {
@@ -130,7 +142,7 @@ describe('assert governed runner lanes script', () => {
       expect.objectContaining({
         platform: 'win32',
         surface: 'all',
-        linuxDistro: 'Ubuntu',
+        linuxDistro: 'Ubuntu-24.04',
         windows: {
           lane: 'windows',
           runnerProcessIds: [1234]
@@ -148,7 +160,7 @@ describe('assert governed runner lanes script', () => {
       script.runAssertions(
         {
           surface: 'windows',
-          linuxDistro: 'Ubuntu',
+          linuxDistro: 'Ubuntu-24.04',
           repoRoot: '/tmp/repo'
         },
         {

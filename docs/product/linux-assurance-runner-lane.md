@@ -89,14 +89,17 @@ The admitted operator contract for the current Linux assurance host is:
 - runner config path: `~/.gitlab-runner/config.toml`
 - top-level runner concurrency: `concurrent = 2`
 - per-runner request concurrency: `request_concurrency = 2`
-- steady-state lifecycle owner: Ubuntu `systemd`
+- steady-state lifecycle owner: admitted Linux assurance distro `systemd`
 - admitted service unit: `vihs-linux-assurance-runner.service`
 
-The governed recovery model after a host reboot is to restore Ubuntu, let
+The governed recovery model after a host reboot is to restore the admitted
+Linux assurance distro, defaulting to `Ubuntu-24.04`, let
 `vihs-linux-assurance-runner.service` own steady-state restart and keep-alive,
 and let the repo-owned Windows bootstrap invoke
 `scripts/gitlab-runner/linux/start-linux-assurance.sh` as a bounded readiness
-gate. The lane shall not depend on a long-lived interactive
+gate. The Windows/bootstrap and combined-wrapper surfaces admit
+`VIHS_LINUX_ASSURANCE_DISTRO` when the governed WSL distro name changes. The
+lane shall not depend on a long-lived interactive
 `gitlab-runner run` shell or on a fire-and-forget detached helper.
 
 ## Repo-Owned Host Assets
@@ -154,20 +157,21 @@ surface from the admitted Windows host and fail closed when requested.
 
 ## Apply Or Update On The Admitted Host
 
-From the repo root inside the admitted Ubuntu host:
+From the repo root inside the admitted Linux assurance distro:
 
 ```bash
 bash ./scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh
 ```
 
-The admitted first host shape is the Ubuntu user `sveld`, so the repo-owned
-service unit intentionally retains `/home/sveld` and `User=sveld`. If the
-admitted host user or home path changes later, update the repo-owned asset,
-the hosted-governance package, and this lane contract together.
+The admitted first host shape is distro `Ubuntu-24.04` with user `sveld`, so
+the repo-owned service unit intentionally retains `/home/sveld` and
+`User=sveld`. If the admitted host distro label, user, or home path changes
+later, update the repo-owned asset, the hosted-governance package, and this
+lane contract together.
 
 ## Assert Live Host Drift
 
-From the repo root inside the admitted Ubuntu host:
+From the repo root inside the admitted Linux assurance distro:
 
 ```bash
 bash ./scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh
@@ -182,7 +186,7 @@ npm run gitlab:runner:assert -- --surface linux
 
 ## Diagnose Live Host State
 
-From the repo root inside the admitted Ubuntu host:
+From the repo root inside the admitted Linux assurance distro:
 
 ```bash
 bash ./scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh
