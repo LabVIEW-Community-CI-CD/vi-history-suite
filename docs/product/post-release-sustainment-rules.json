@@ -51,7 +51,7 @@
       "activeReleaseCandidateBranch": null,
       "activeHotfixCandidateReleaseLine": null,
       "activeHotfixBranch": null,
-      "activeFeatureBranch": "feature/public-github-release-transaction-hardening",
+      "activeFeatureBranch": null,
       "preTagPublicExactProofPackageScript": "npm run public:exact:pretag:proof",
       "preTagPublicExactProofJob": "public_exact_pretag_proof",
       "publicGitHubExactTransactionPackageScript": "npm run public:github:exact:transaction:assess",
@@ -143,7 +143,7 @@
     "activeOpeningDecision": {
       "recordedAt": "2026-04-22",
       "chosenBump": "patch",
-      "targetFeatureBranch": "feature/public-github-release-transaction-hardening",
+      "targetFeatureBranch": null,
       "preTagPublicExactProofPackageScript": "npm run public:exact:pretag:proof",
       "preTagPublicExactProofJob": "public_exact_pretag_proof",
       "publicGitHubExactTransactionPackageScript": "npm run public:github:exact:transaction:assess",

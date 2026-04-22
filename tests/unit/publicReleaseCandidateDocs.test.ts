@@ -28,7 +28,7 @@ describe('public release candidate control surface', () => {
       role: 'source-of-truth',
       integrationBranch: 'develop',
       releaseBranch: 'main',
-      featureHardeningBranch: 'feature/public-github-release-transaction-hardening',
+      featureHardeningBranch: null,
       semverDiscipline: 'strict-post-release-bumps'
     });
     expect(candidate.authorityRepo.requiredChecks).toEqual(
@@ -116,7 +116,7 @@ describe('public release candidate control surface', () => {
       status:
         'authority-v1.3.6-tagged-public-main-and-tag-published-release-draft-only-repair-in-place-frozen',
       hotfixBranch: null,
-      featureBranch: 'feature/public-github-release-transaction-hardening',
+      featureBranch: null,
       authorityMainCommit: '3cb238334100d01d5cfe7998e17e20a7b497b3fb',
       authorityTag: 'v1.3.6',
       publicGitHubExactCommit: 'bd81bfe6743348c9138c3f0f4967c790a235184f',
@@ -145,7 +145,7 @@ describe('public release candidate control surface', () => {
 
     expect(candidateMarkdown).toContain('Version line: `1.3.6`');
     expect(candidateMarkdown).toContain('Published public source commit: `bd81bfe`');
-    expect(candidateMarkdown).toContain('`feature/public-github-release-transaction-hardening`');
+    expect(candidateMarkdown).toContain('Feature-lane public GitHub release hardening branch: none');
     expect(candidateMarkdown).toContain('`released-v1.3.6-authority-evidence-retained`');
     expect(candidateMarkdown).toContain(
       '`required-before-any-further-public-github-release-or-marketplace-act`'
@@ -167,7 +167,7 @@ describe('public release candidate control surface', () => {
     expect(currentState).toContain(
       'active feature-lane public GitHub release hardening branch on `develop`:'
     );
-    expect(currentState).toContain('feature/public-github-release-transaction-hardening');
+    expect(currentState).toContain('none');
     expect(currentState).toContain('npm run public:github:exact:transaction:assess');
     expect(currentState).toContain('separate public GitHub exact release publication: blocked; public `main` now');
     expect(currentState).toContain('VS Code Marketplace retained published version: `1.3.0`');

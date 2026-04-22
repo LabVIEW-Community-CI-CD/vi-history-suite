@@ -106,9 +106,7 @@ describe('strict semver discipline', () => {
     expect(versionLineContract.activeReleaseCandidateBranch).toBeNull();
     expect(versionLineContract.activeHotfixCandidateReleaseLine).toBeNull();
     expect(versionLineContract.activeHotfixBranch).toBeNull();
-    expect((versionLineContract as any).activeFeatureBranch).toBe(
-      'feature/public-github-release-transaction-hardening'
-    );
+    expect((versionLineContract as any).activeFeatureBranch).toBeNull();
     expect(versionLineContract.publicDefaultBranch).toBe('main');
     expect(versionLineContract.currentDevelopPackageLine).toBe(pkg.version);
     expect(versionLineContract.publicCodespaceBranch).toBe('develop');
@@ -124,6 +122,7 @@ describe('strict semver discipline', () => {
     expect(readme).toContain('- active exact hotfix candidate line on `main`: none');
     expect(readme).toContain('- active hotfix branch: none');
     expect(readme).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
+    expect(readme).toContain('none');
     expect(readme).toContain('npm run public:exact:pretag:proof');
     expect(readme).toContain('public_exact_pretag_proof');
     expect(readme).toContain('npm run public:github:exact:transaction:assess');
@@ -145,6 +144,7 @@ describe('strict semver discipline', () => {
     expect(currentState).toContain('- active exact hotfix candidate line on `main`: none');
     expect(currentState).toContain('- active hotfix branch: none');
     expect(currentState).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
+    expect(currentState).toContain('none');
     expect(currentState).toContain('npm run public:exact:pretag:proof');
     expect(currentState).toContain('public_exact_pretag_proof');
     expect(currentState).toContain('npm run public:github:exact:transaction:assess');
@@ -166,6 +166,7 @@ describe('strict semver discipline', () => {
     expect(releaseProcedure).toContain('The active exact hotfix candidate line on `main` is none.');
     expect(releaseProcedure).toContain('The active hotfix branch is none.');
     expect(releaseProcedure).toContain('The active feature-lane public GitHub release hardening branch on `develop`');
+    expect(releaseProcedure).toContain('is none.');
     expect(releaseProcedure).toContain('npm run public:exact:pretag:proof');
     expect(releaseProcedure).toContain('public_exact_pretag_proof');
     expect(releaseProcedure).toContain('npm run public:github:exact:transaction:assess');

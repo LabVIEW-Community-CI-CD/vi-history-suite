@@ -12,9 +12,9 @@ Authority exact `main` now carries tagged `v1.3.6`, `develop` still carries
 `1.3.6`, public GitHub `main` plus tag now publish the partial `v1.3.6`
 transaction, the last published GitHub release still serves `v1.3.1`, the
 Marketplace listing still serves `1.3.0`, no exact hotfix lane is currently
-open, and the remaining publication work is retained on
-`feature/public-github-release-transaction-hardening` as an in-place repair
-slice rather than another SemVer opening.
+open, no active feature-lane public GitHub hardening branch remains open, and
+the remaining publication work is retained directly on `develop` as an
+in-place repair slice rather than another SemVer opening.
 
 ## Current Exact Closeout State
 
@@ -38,7 +38,7 @@ slice rather than another SemVer opening.
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
-  `feature/public-github-release-transaction-hardening`
+  none
 - later SemVer openings are frozen while the current exact public GitHub
   transaction remains incomplete
 - pre-tag public-exact proof package script:

@@ -66,9 +66,7 @@ describe('release governance package', () => {
       'fixes or hardens an existing workflow, release rule, procedure, branch policy, or CI posture without breaking the exact released contract'
     );
     expect(rules.releaseCadence.activeOpeningDecision.chosenBump).toBe('patch');
-    expect(rules.releaseCadence.activeOpeningDecision.targetFeatureBranch).toBe(
-      'feature/public-github-release-transaction-hardening'
-    );
+    expect(rules.releaseCadence.activeOpeningDecision.targetFeatureBranch).toBeNull();
     expect(rules.releaseCadence.versionLineContract.publicDefaultBranch).toBe('main');
     expect(rules.operatorSurfaceSustainment.branchModel.model).toBe('gitflow');
     expect(rules.operatorSurfaceSustainment.branchModel.temporaryBranchPrefixes).toEqual([
@@ -133,7 +131,7 @@ describe('release governance package', () => {
     expect(hostedGovernance).toContain('active exact hotfix candidate line on `main`: none');
     expect(hostedGovernance).toContain('active hotfix branch: none');
     expect(hostedGovernance).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
-    expect(hostedGovernance).toContain('`feature/public-github-release-transaction-hardening`');
+    expect(hostedGovernance).toContain('none');
     expect(hostedGovernance).toContain('chosen bump: `patch`');
     expect(hostedGovernance).toContain('public_exact_pretag_proof');
     expect(hostedGovernance).toContain('npm run public:exact:pretag:proof');
