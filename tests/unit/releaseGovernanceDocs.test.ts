@@ -234,30 +234,48 @@ describe('release governance package', () => {
     expect(testPlan).toContain('TEST-DOC-103');
     expect(testPlan).toContain('TEST-UNIT-373');
     expect(testPlan).toContain('TEST-UNIT-374');
+    expect(testPlan).toContain('TEST-UNIT-375');
+    expect(testPlan).toContain('TEST-UNIT-376');
     expect(testPlan).toContain('TEST-DOC-126');
     expect(testPlan).toContain('TEST-DOC-127');
+    expect(testPlan).toContain('TEST-DOC-128');
+    expect(testPlan).toContain('TEST-DOC-129');
     expect(srs).toContain('VHS-REQ-569');
     expect(srs).toContain('VHS-REQ-570');
     expect(srs).toContain('VHS-REQ-571');
     expect(srs).toContain('VHS-REQ-572');
+    expect(srs).toContain('VHS-REQ-573');
+    expect(srs).toContain('VHS-REQ-574');
     expect(srs).toContain('repo-owned software-factory orchestrator assessment surface');
+    expect(srs).toContain('non-production software-factory rehearsal surface');
+    expect(srs).toContain('non-production software-factory repair-contract surface');
     expect(srs).toContain('trust model, environment baseline, rehearsal policy, incident classes');
     expect(srs).toContain('sole production recovery case');
-    expect(srs).toContain('production mutation remain forbidden in this foundation slice');
+    expect(srs).toContain('production mutation remain forbidden in this slice');
     expect(rtm).toContain('VHS-REQ-569');
     expect(rtm).toContain('VHS-REQ-570');
     expect(rtm).toContain('VHS-REQ-571');
     expect(rtm).toContain('VHS-REQ-572');
+    expect(rtm).toContain('VHS-REQ-573');
+    expect(rtm).toContain('VHS-REQ-574');
     expect(rtm).toContain('scripts/runSoftwareFactoryOrchestrator.js');
     expect(readText('docs/architecture/overview.md')).toContain(
-      '## Software Factory Governance Foundation'
+      '## Software Factory Governance Contract'
     );
     expect(readText('docs/release-procedure.md')).toContain(
       'npm run software:factory:assess'
     );
+    expect(readText('docs/release-procedure.md')).toContain(
+      'npm run software:factory:rehearse'
+    );
+    expect(readText('docs/release-procedure.md')).toContain(
+      'npm run software:factory:repair'
+    );
     expect(readText('README.md')).toContain('software factory assessment package script');
+    expect(readText('README.md')).toContain('software factory rehearsal package script');
+    expect(readText('README.md')).toContain('software factory repair package script');
     expect(readText('docs/product/current-state.md')).toContain(
-      'active software-factory governance foundation branch on `develop`'
+      'active software-factory governance branch on `develop`'
     );
     expect(readText('docs/release-procedure.md')).toContain(
       'node scripts/resolveLocalGitLabApiToken.js --json'

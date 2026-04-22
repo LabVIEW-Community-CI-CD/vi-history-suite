@@ -11,123 +11,109 @@ const orchestrator = require(path.join(
   'runSoftwareFactoryOrchestrator.js'
 )) as {
   DEFAULT_EVIDENCE_DIR: string;
-  DEFAULT_TRANSACTION_RECEIPT_PATH: string;
-  assessFactoryState: (facts: Record<string, unknown>) => {
-    status: string;
-    contract: {
-      currentPhase: string;
-      supportedPhases: string[];
-      plannedPhases: string[];
-      assessOnly: boolean;
-      productionMutationAllowed: boolean;
-      activeFoundationBranch: string;
-    };
-    semverFreeze: {
-      status: string;
-      openingNewSemverAllowed: boolean;
-      soleProductionRecoveryTarget: string;
-    };
-    currentIncident: {
-      blockerCode: string | null;
-      status: string;
-    };
-    recoveryRules: {
-      repairInPlaceRequired: boolean;
-      repairInPlaceAllowed: boolean;
-      nextAllowedAction: string;
-    };
-    productionBoundary: {
-      publicGitHubDraftReleaseId: number;
-      publicGitHubLastPublishedRelease: string;
-      vscodeMarketplaceVersion: string;
-    };
-    phases: Array<{ id: string; status: string; summary: string }>;
-  };
+  DEFAULT_PHASE_RECEIPT_PATHS: Record<string, string>;
+  PHASES: string[];
+  assessFactoryState: (facts: Record<string, unknown>) => Record<string, any>;
+  rehearseFactoryState: (facts: Record<string, unknown>) => Record<string, any>;
+  repairFactoryState: (facts: Record<string, unknown>) => Record<string, any>;
   buildMarkdown: (report: Record<string, any>) => string;
   parseArgs: (argv: string[]) => {
     helpRequested: boolean;
+    phase: string;
     evidenceDir: string;
   };
 };
 
+const baseFacts = {
+  recordedAt: '2026-04-22T23:59:59.000Z',
+  repoRoot: 'C:/dev/vihs',
+  currentBranch: 'feature/software-factory-rehearse-repair-contract',
+  activeFeatureBranch: 'feature/software-factory-rehearse-repair-contract',
+  integrationBranch: 'develop',
+  exactReleaseLineBranch: 'main',
+  releaseBranchFamily: 'release/*',
+  hotfixBranchFamily: 'hotfix/*',
+  featureBranchFamily: 'feature/*',
+  exactLine: 'v1.3.6',
+  packageLine: '1.3.6',
+  developPackageLine: '1.3.6',
+  semverFrozen: true,
+  semverFreezeRationale:
+    'Later SemVer openings remain frozen while the current exact public GitHub repair state on v1.3.6 stays incomplete.',
+  requiredChecks: ['public_exact_pretag_proof', 'test_extension'],
+  preTagPublicExactProofPackageScript: 'npm run public:exact:pretag:proof',
+  publicGitHubExactTransactionPackageScript: 'npm run public:github:exact:transaction:assess',
+  publicGitHubExactTransactionReceiptPath:
+    '.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json',
+  publicGitHubMainCommit: 'bd81bfe6743348c9138c3f0f4967c790a235184f',
+  publicGitHubTag: 'v1.3.6',
+  publicGitHubDraftReleaseId: 312363117,
+  publicGitHubLastPublishedRelease: 'v1.3.1',
+  blockerCode: 'draft-release-tag-lookup-unavailable',
+  blockerSummary:
+    'Immutable releases are enabled while exact-tag release lookup still returns 404.',
+  repairInPlaceRequired: true,
+  repairInPlaceAllowed: true,
+  nextAllowedAction:
+    'repair-the-existing-v1.3.6-public-github-release-only-after-safe-publishability-is-proven',
+  publicGitHubReleasePublished: false,
+  marketplaceItem: 'svelderrainruiz.vi-history-suite',
+  marketplaceVersion: '1.3.0',
+  authorityReleaseManifestPath:
+    '.cache/gitlab-release-artifacts/v1.3.6/expanded/release-evidence/release-manifest.json',
+  releaseAssetsRetainedAgainstManifest: true,
+  draftPublishabilityByIdStatusCode: 200,
+  draftPublishabilityTagMatchesAuthority: true,
+  safeToAttemptRepairPublish: false,
+  draftReleaseUrl:
+    'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/untagged-308c75957d1c8136f871',
+  draftReleaseTargetCommitish: 'main',
+  draftReleaseLookupStatusCode: 404,
+  immutableReleasesEnabled: true,
+  immutableReleasesEnforcedByOwner: false
+};
+
 describe('software factory orchestrator contract', () => {
-  it('parses default and explicit evidence-dir arguments', () => {
+  it('parses default and explicit phase/evidence-dir arguments', () => {
     expect(orchestrator.parseArgs([])).toEqual({
       helpRequested: false,
+      phase: 'assess',
       evidenceDir: orchestrator.DEFAULT_EVIDENCE_DIR
     });
 
-    const explicitDir = path.resolve('tmp', 'factory-assess');
-    expect(orchestrator.parseArgs(['--evidence-dir', explicitDir])).toEqual({
-      helpRequested: false,
-      evidenceDir: explicitDir
-    });
+    const explicitDir = path.resolve('tmp', 'factory-rehearse');
+    expect(orchestrator.parseArgs(['--phase', 'rehearse', '--evidence-dir', explicitDir])).toEqual(
+      {
+        helpRequested: false,
+        phase: 'rehearse',
+        evidenceDir: explicitDir
+      }
+    );
   });
 
-  it('retains an assess-only blocked factory state for the frozen v1.3.6 recovery case', () => {
-    const report = orchestrator.assessFactoryState({
-      recordedAt: '2026-04-22T23:59:59.000Z',
-      repoRoot: 'C:/dev/vihs',
-      currentBranch: 'feature/software-factory-governance-foundation',
-      activeFoundationBranch: 'feature/software-factory-governance-foundation',
-      integrationBranch: 'develop',
-      exactReleaseLineBranch: 'main',
-      releaseBranchFamily: 'release/*',
-      hotfixBranchFamily: 'hotfix/*',
-      featureBranchFamily: 'feature/*',
-      exactLine: 'v1.3.6',
-      packageLine: '1.3.6',
-      developPackageLine: '1.3.6',
-      semverFrozen: true,
-      semverFreezeRationale:
-        'Later SemVer openings remain frozen while the current exact public GitHub repair state on v1.3.6 stays incomplete.',
-      requiredChecks: ['public_exact_pretag_proof', 'test_extension'],
-      preTagPublicExactProofPackageScript: 'npm run public:exact:pretag:proof',
-      publicGitHubExactTransactionPackageScript:
-        'npm run public:github:exact:transaction:assess',
-      publicGitHubExactTransactionReceiptPath:
-        '.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json',
-      publicGitHubMainCommit: 'bd81bfe6743348c9138c3f0f4967c790a235184f',
-      publicGitHubTag: 'v1.3.6',
-      publicGitHubDraftReleaseId: 312363117,
-      publicGitHubLastPublishedRelease: 'v1.3.1',
-      blockerCode: 'draft-release-tag-lookup-unavailable',
-      blockerSummary:
-        'Immutable releases are enabled while exact-tag release lookup still returns 404.',
-      repairInPlaceRequired: true,
-      repairInPlaceAllowed: true,
-      nextAllowedAction:
-        'repair-the-existing-v1.3.6-public-github-release-only-after-safe-publishability-is-proven',
-      publicGitHubReleasePublished: false,
-      marketplaceItem: 'svelderrainruiz.vi-history-suite',
-      marketplaceVersion: '1.3.0'
-    });
+  it('retains an assess-phase blocked factory state for the frozen v1.3.6 recovery case', () => {
+    const report = orchestrator.assessFactoryState(baseFacts);
 
     expect(report.status).toBe('blocked');
     expect(report.contract).toEqual(
       expect.objectContaining({
         currentPhase: 'assess',
-        supportedPhases: ['assess'],
-        plannedPhases: ['rehearse', 'repair', 'publish', 'verify'],
-        assessOnly: true,
+        supportedPhases: ['assess', 'rehearse', 'repair'],
+        plannedPhases: ['publish', 'verify'],
+        assessOnly: false,
+        nonProductionOnly: true,
         productionMutationAllowed: false,
-        activeFoundationBranch: 'feature/software-factory-governance-foundation'
+        activeFeatureBranch: 'feature/software-factory-rehearse-repair-contract'
       })
     );
-    expect(report.semverFreeze).toEqual({
-      status: 'frozen',
-      openingNewSemverAllowed: false,
-      soleProductionRecoveryTarget: 'v1.3.6',
-      rationale:
-        'Later SemVer openings remain frozen while the current exact public GitHub repair state on v1.3.6 stays incomplete.'
-    });
-    expect(report.currentIncident).toEqual({
-      id: 'FACTORY-INCIDENT-v1.3.6',
-      class: 'production-partial-public-state',
-      status: 'blocked',
-      blockerCode: 'draft-release-tag-lookup-unavailable',
-      blockerSummary:
-        'Immutable releases are enabled while exact-tag release lookup still returns 404.'
+    expect(report.receiptContract).toEqual({
+      packageScripts: {
+        assess: 'npm run software:factory:assess',
+        rehearse: 'npm run software:factory:rehearse',
+        repair: 'npm run software:factory:repair'
+      },
+      receiptPaths: orchestrator.DEFAULT_PHASE_RECEIPT_PATHS,
+      currentPhaseReceiptPath: '.cache/software-factory-orchestrator/latest/software-factory-state.json'
     });
     expect(report.recoveryRules).toEqual({
       repairInPlaceRequired: true,
@@ -139,13 +125,6 @@ describe('software factory orchestrator contract', () => {
       nextAllowedAction:
         'repair-the-existing-v1.3.6-public-github-release-only-after-safe-publishability-is-proven'
     });
-    expect(report.productionBoundary).toEqual(
-      expect.objectContaining({
-        publicGitHubDraftReleaseId: 312363117,
-        publicGitHubLastPublishedRelease: 'v1.3.1',
-        vscodeMarketplaceVersion: '1.3.0'
-      })
-    );
     expect(report.phases).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: 'authority-boundary', status: 'pass' }),
@@ -156,73 +135,96 @@ describe('software factory orchestrator contract', () => {
     );
   });
 
-  it('renders the factory boundaries and frozen recovery case in markdown', () => {
-    const markdown = orchestrator.buildMarkdown({
-      recordedAt: '2026-04-22T23:59:59.000Z',
-      status: 'blocked',
-      currentBranch: 'feature/software-factory-governance-foundation',
-      contract: {
-        currentPhase: 'assess',
-        supportedPhases: ['assess'],
-        plannedPhases: ['rehearse', 'repair', 'publish', 'verify'],
-        productionMutationAllowed: false,
-        activeFoundationBranch: 'feature/software-factory-governance-foundation'
-      },
-      semverFreeze: {
-        soleProductionRecoveryTarget: 'v1.3.6',
-        status: 'frozen'
-      },
-      authorityBoundary: {
-        integrationBranch: 'develop',
-        exactReleaseLineBranch: 'main',
-        currentExactLine: 'v1.3.6',
-        releaseBranchFamily: 'release/*',
-        hotfixBranchFamily: 'hotfix/*'
-      },
-      stagingBoundary: {
-        branchModel: 'gitflow'
-      },
-      productionBoundary: {
-        publicGitHubMainCommit: 'bd81bfe',
-        publicGitHubTag: 'v1.3.6',
-        vscodeMarketplaceVersion: '1.3.0'
-      },
-      currentIncident: {
-        blockerCode: 'draft-release-tag-lookup-unavailable'
-      },
-      recoveryRules: {
-        nextAllowedAction:
-          'repair-the-existing-v1.3.6-public-github-release-only-after-safe-publishability-is-proven'
-      },
-      trustModel: {
-        authoritySurfaces: ['GitLab authority repo'],
-        productionSurfaces: ['public GitHub main/tag/release', 'VS Code Marketplace'],
-        operatorSurfaces: ['Windows operator host'],
-        secretClasses: ['GitHub token', 'VS Code Marketplace PAT']
-      },
-      environmentBaseline: {
-        operatorHost: 'Windows host with standard installs only',
-        standardToolchains: ['Git for Windows', 'Node.js 22 LTS', 'Python 3.12 x64'],
-        linuxAssuranceDistro: 'Ubuntu-24.04',
-        standardsSkill: 'repo-standards-review preflight must pass before governed requirements/control-surface edits'
-      },
-      phases: [
-        {
-          id: 'recovery-case',
-          status: 'blocked',
-          summary: 'Recovery remains frozen on v1.3.6: draft-release-tag-lookup-unavailable.'
-        }
-      ]
+  it('retains a non-production rehearse contract without admitting production mutation', () => {
+    const report = orchestrator.rehearseFactoryState(baseFacts);
+
+    expect(report.status).toBe('blocked');
+    expect(report.contract.currentPhase).toBe('rehearse');
+    expect(report.rehearsalContract).toEqual({
+      status: 'pass',
+      nonMutating: true,
+      packageScript: 'npm run software:factory:rehearse',
+      receiptPath: '.cache/software-factory-orchestrator/latest/rehearse/software-factory-state.json',
+      transactionReceiptPath:
+        '.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json',
+      targetTag: 'v1.3.6',
+      targetDraftReleaseId: 312363117,
+      targetDraftReleaseUrl:
+        'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/untagged-308c75957d1c8136f871',
+      authorityReleaseManifestPath:
+        '.cache/gitlab-release-artifacts/v1.3.6/expanded/release-evidence/release-manifest.json',
+      exactAssetsRetainedAgainstManifest: true,
+      draftReleaseReadableById: true,
+      draftReleaseTagMatchesAuthority: true,
+      immutableReleasesEnabled: true,
+      safePublishTransitionProven: false,
+      nextAllowedAction:
+        'repair-the-existing-v1.3.6-public-github-release-only-after-safe-publishability-is-proven'
     });
+    expect(report.phases).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'rehearsal-readiness', status: 'pass' }),
+        expect.objectContaining({ id: 'rehearsal-publishability-boundary', status: 'blocked' })
+      ])
+    );
+  });
+
+  it('retains a non-production repair contract with deferred write actions only', () => {
+    const report = orchestrator.repairFactoryState(baseFacts);
+
+    expect(report.status).toBe('blocked');
+    expect(report.contract.currentPhase).toBe('repair');
+    expect(report.repairContract).toEqual({
+      status: 'pass',
+      nonMutating: true,
+      mutationPermitted: false,
+      packageScript: 'npm run software:factory:repair',
+      receiptPath: '.cache/software-factory-orchestrator/latest/repair/software-factory-state.json',
+      targetMode: 'repair-in-place',
+      targetTag: 'v1.3.6',
+      targetDraftReleaseId: 312363117,
+      targetDraftReleaseUrl:
+        'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/untagged-308c75957d1c8136f871',
+      authorityReleaseManifestPath:
+        '.cache/gitlab-release-artifacts/v1.3.6/expanded/release-evidence/release-manifest.json',
+      exactAssetsRetainedAgainstManifest: true,
+      draftReleaseReadableById: true,
+      draftReleaseTagMatchesAuthority: true,
+      safePublishTransitionProven: false,
+      currentBlockerCode: 'draft-release-tag-lookup-unavailable',
+      nextAllowedAction:
+        'repair-the-existing-v1.3.6-public-github-release-only-after-safe-publishability-is-proven',
+      deferredWriteActions: [
+        'publish-existing-github-draft-release-in-place',
+        'verify-public-github-release-publication',
+        'verify-marketplace-remains-blocked-until-github-release-closes',
+        'publish-vscode-marketplace-v1.3.6-after-github-release-verification'
+      ],
+      rule:
+        'This repair contract remains non-mutating; later publish and verify phases still require separate explicit production approval after safe publishability is proven.'
+    });
+    expect(report.phases).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'repair-contract', status: 'pass' }),
+        expect.objectContaining({ id: 'repair-write-boundary', status: 'blocked' })
+      ])
+    );
+  });
+
+  it('renders the admitted non-production phases and deferred repair actions in markdown', () => {
+    const markdown = orchestrator.buildMarkdown(orchestrator.repairFactoryState(baseFacts));
 
     expect(markdown).toContain('# Software Factory Orchestrator Receipt');
-    expect(markdown).toContain('Current phase: `assess`');
-    expect(markdown).toContain('Sole production recovery target: `v1.3.6`');
-    expect(markdown).toContain('Production mutation allowed: `false`');
-    expect(markdown).toContain('public GitHub `bd81bfe` / tag `v1.3.6`, Marketplace `1.3.0`');
-    expect(markdown).toContain('repair-the-existing-v1.3.6-public-github-release-only-after-safe-publishability-is-proven');
+    expect(markdown).toContain('Current phase: `repair`');
+    expect(markdown).toContain('Supported phases: `assess, rehearse, repair`');
+    expect(markdown).toContain('Planned phases: `publish, verify`');
+    expect(markdown).toContain('Non-production only: `true`');
+    expect(markdown).toContain('`npm run software:factory:rehearse`');
+    expect(markdown).toContain('`npm run software:factory:repair`');
+    expect(markdown).toContain('.cache/software-factory-orchestrator/latest/rehearse/software-factory-state.json');
+    expect(markdown).toContain('.cache/software-factory-orchestrator/latest/repair/software-factory-state.json');
+    expect(markdown).toContain('## Repair Contract');
+    expect(markdown).toContain('Deferred write actions: publish-existing-github-draft-release-in-place');
     expect(markdown).toContain('No GitHub release publication, Marketplace publication, or other production mutation is permitted in this slice.');
-    expect(markdown).toContain('GitLab authority repo');
-    expect(markdown).toContain('GitHub token, VS Code Marketplace PAT');
   });
 });

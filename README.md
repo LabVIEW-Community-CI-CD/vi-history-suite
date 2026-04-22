@@ -190,8 +190,8 @@ Authority release facts:
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
   none
-- active software-factory governance foundation branch on `develop`:
-  `feature/software-factory-governance-foundation`
+- active software-factory governance branch on `develop`:
+  `feature/software-factory-rehearse-repair-contract`
 - later SemVer openings are frozen while the current exact public GitHub transaction remains incomplete
 - active pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
@@ -202,12 +202,20 @@ Authority release facts:
   `.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json`
 - software factory assessment package script:
   `npm run software:factory:assess`
+- software factory rehearsal package script:
+  `npm run software:factory:rehearse`
+- software factory repair package script:
+  `npm run software:factory:repair`
 - retained software factory assessment receipt:
   `.cache/software-factory-orchestrator/latest/software-factory-state.json`
+- retained software factory rehearsal receipt:
+  `.cache/software-factory-orchestrator/latest/rehearse/software-factory-state.json`
+- retained software factory repair receipt:
+  `.cache/software-factory-orchestrator/latest/repair/software-factory-state.json`
 - software-factory phase contract:
-  assess now; rehearse, repair, publish, and verify later
+  assess, rehearse, and repair now; publish and verify later
 - no GitHub release publication, Marketplace publication, or other production
-  mutation is permitted through the software-factory governance foundation
+  mutation is permitted through the software-factory non-production
   slice while exact `v1.3.6` remains the sole production recovery case
 - active Windows x64 private-release-prep slice: historical `release/1.3.1`
 - active Windows x64 private-release packet:

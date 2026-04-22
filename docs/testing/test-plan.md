@@ -1996,13 +1996,21 @@ Information-for-users review cases:
   baseline, the retained Marketplace version, and the transaction-assessment
   package script and receipt path
 - `TEST-UNIT-373`: verify the software-factory orchestrator assessment surface
-  remains assess-only, classifies authority/staging/production/recovery
-  boundaries, writes receipt-backed factory state, and does not admit any
-  production mutation in this foundation slice
+  classifies authority/staging/production/recovery boundaries, writes
+  receipt-backed factory state, and does not admit any production mutation in
+  this non-production slice
 - `TEST-UNIT-374`: verify the software-factory orchestrator assessment surface
   retains the trust model, environment baseline, rehearsal policy, incident
   classes, recovery rules, approval model, the frozen no-bump posture, and
   exact `v1.3.6` as the sole production recovery case
+- `TEST-UNIT-375`: verify the non-production `software:factory:rehearse`
+  surface reuses the retained exact-transaction facts, writes a rehearsal
+  receipt, and proves the frozen `v1.3.6` in-place repair candidate remains
+  readable by id with manifest-backed exact assets
+- `TEST-UNIT-376`: verify the non-production `software:factory:repair`
+  surface writes the deferred in-place `v1.3.6` repair contract, retains the
+  deferred write actions, and still enforces a no-write boundary before any
+  later publish/verify phase is admitted
 - `TEST-DOC-113`: review `.gitlab-ci.yml`, `linux-assurance-runner-lane.md`,
   hosted governance, current-state, README, and the release procedure and
   confirm the Linux assurance lane is separate from the Windows proof lane,
@@ -2087,14 +2095,28 @@ Information-for-users review cases:
 - `TEST-DOC-126`: review the architecture overview, current-state, release
   procedure, post-release sustainment rules, public-release candidate package,
   SRS, RTM, and the test plan and confirm the repo now retains a
-  software-factory foundation with explicit authority/staging/production/
-  recovery boundaries plus one assess-only orchestrator contract
+  software-factory governance contract with explicit authority/staging/
+  production/recovery boundaries plus the admitted non-production `assess`,
+  `rehearse`, and `repair` phases
 - `TEST-DOC-127`: review README, current-state, release procedure, the
   sustainment package, the public-release candidate package, the information
   item map, SRS, RTM, and the test plan and confirm exact `v1.3.6` remains
-  the sole frozen production recovery case, the active foundation branch and
-  factory package script/receipt path are explicit, and GitHub release /
-  Marketplace mutation remain forbidden in this slice
+  the sole frozen production recovery case, the active software-factory branch
+  plus the assess/rehearse/repair scripts and receipt paths are explicit, and
+  GitHub release / Marketplace mutation remain forbidden in this slice
+- `TEST-DOC-128`: review README, current-state, release procedure, the
+  sustainment package, the public-release candidate package, SRS, RTM, and
+  the test plan and confirm the repo now retains one non-production
+  `software:factory:rehearse` surface plus receipt path that reuses the exact
+  transaction receipt and proves the retained `v1.3.6` in-place repair
+  candidate is still readable by id and still carries the manifest-backed
+  exact assets
+- `TEST-DOC-129`: review README, current-state, release procedure, the
+  sustainment package, the public-release candidate package, the information
+  item map, SRS, RTM, and the test plan and confirm the repo now retains one
+  non-production `software:factory:repair` surface plus receipt path that
+  records the deferred in-place `v1.3.6` repair contract, deferred write
+  actions, and the no-write boundary before later publish/verify phases
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are

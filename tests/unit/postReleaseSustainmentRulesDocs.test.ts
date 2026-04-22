@@ -321,12 +321,20 @@ describe('post-release sustainment rules package', () => {
       ])
     );
     expect((rules as any).softwareFactoryGovernance).toEqual({
-      status: 'assess-only-foundation-open',
-      activeFoundationBranch: 'feature/software-factory-governance-foundation',
-      packageScript: 'npm run software:factory:assess',
-      receiptPath: '.cache/software-factory-orchestrator/latest/software-factory-state.json',
-      currentPhase: 'assess',
-      plannedFuturePhases: ['rehearse', 'repair', 'publish', 'verify'],
+      status: 'rehearse-repair-contract-open',
+      activeFeatureBranch: 'feature/software-factory-rehearse-repair-contract',
+      packageScripts: {
+        assess: 'npm run software:factory:assess',
+        rehearse: 'npm run software:factory:rehearse',
+        repair: 'npm run software:factory:repair'
+      },
+      receiptPaths: {
+        assess: '.cache/software-factory-orchestrator/latest/software-factory-state.json',
+        rehearse: '.cache/software-factory-orchestrator/latest/rehearse/software-factory-state.json',
+        repair: '.cache/software-factory-orchestrator/latest/repair/software-factory-state.json'
+      },
+      admittedNonProductionPhases: ['assess', 'rehearse', 'repair'],
+      plannedFuturePhases: ['publish', 'verify'],
       soleProductionRecoveryTarget: 'v1.3.6',
       productionMutationAllowed: false,
       authorityBoundary: ['GitLab develop -> release/* -> protected main'],
@@ -356,7 +364,7 @@ describe('post-release sustainment rules package', () => {
       ],
       rehearsalPolicy: [
         'production is not the first proof surface',
-        'assess now and retain later rehearse/repair/publish/verify phases explicitly before future production acts'
+        'retain the admitted assess/rehearse/repair non-production phases before any later publish/verify production phase opens'
       ],
       incidentClasses: [
         'production-partial-public-state',
@@ -367,7 +375,7 @@ describe('post-release sustainment rules package', () => {
         'externally-impossible-publication'
       ],
       approvalModel: [
-        'assess is repo-owned and automatic',
+        'assess, rehearse, and repair are repo-owned and automatic non-production phases',
         'later GitHub-release publish requires explicit production approval',
         'later VS Code Marketplace publish requires explicit production approval'
       ]
@@ -702,10 +710,18 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('active hotfix branch: none');
     expect(rulesDoc).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
     expect(rulesDoc).toContain('later SemVer openings are frozen while the current exact public GitHub');
-    expect(rulesDoc).toContain('## Software Factory Governance Foundation');
-    expect(rulesDoc).toContain('`feature/software-factory-governance-foundation`');
+    expect(rulesDoc).toContain('## Software Factory Governance Contract');
+    expect(rulesDoc).toContain('`feature/software-factory-rehearse-repair-contract`');
     expect(rulesDoc).toContain('`npm run software:factory:assess`');
+    expect(rulesDoc).toContain('`npm run software:factory:rehearse`');
+    expect(rulesDoc).toContain('`npm run software:factory:repair`');
     expect(rulesDoc).toContain('.cache/software-factory-orchestrator/latest/software-factory-state.json');
+    expect(rulesDoc).toContain(
+      '.cache/software-factory-orchestrator/latest/rehearse/software-factory-state.json'
+    );
+    expect(rulesDoc).toContain(
+      '.cache/software-factory-orchestrator/latest/repair/software-factory-state.json'
+    );
     expect(rulesDoc).toContain('sole production recovery target: `v1.3.6`');
     expect(rulesDoc).toContain('no GitHub release publication, VS Code Marketplace publication, or other');
     expect(rulesDoc).toContain('chosen bump: `patch`');
@@ -786,6 +802,12 @@ describe('post-release sustainment rules package', () => {
     );
     expect(informationItemMap).toContain(
       '| Software factory assessment receipt | `.cache/software-factory-orchestrator/latest/software-factory-state.json` |'
+    );
+    expect(informationItemMap).toContain(
+      '| Software factory rehearsal receipt | `.cache/software-factory-orchestrator/latest/rehearse/software-factory-state.json` |'
+    );
+    expect(informationItemMap).toContain(
+      '| Software factory repair receipt | `.cache/software-factory-orchestrator/latest/repair/software-factory-state.json` |'
     );
   });
 });

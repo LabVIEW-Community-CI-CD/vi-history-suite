@@ -41,7 +41,7 @@
 | Report subsystem | report planning, runtime/tool selection, runtime execution, mutable packet storage, pair-archive retention, multi-report dashboard preparation, and provider isolation policy | TypeScript / Node |
 | Harness smoke runner | clone-on-demand canonical harness verification | TypeScript / Node CLI |
 | Governance pack | requirements, tests, ADRs, traceability | Markdown / CSV |
-| Software factory orchestrator | assess-only production-governance control plane across authority, staging, production, and recovery surfaces with resumable receipts | Node CLI / JSON / Markdown receipts |
+| Software factory orchestrator | non-production governance control plane with assess, rehearse, and repair contracts across authority, staging, production, and recovery surfaces with resumable receipts | Node CLI / JSON / Markdown receipts |
 | Documentation-package workbench | requirements, ADR, RTM, release-readiness, and wiki-authority iteration | Docker / Node / Markdown tooling |
 | Bundled documentation pack | version-matched local user docs derived from the published wiki set and packaged inside the extension | HTML fragments / JSON manifest / WebviewPanel |
 | Cross-repo navigation surface | local jump map and repo-entrypoint CLI for the product repo, wiki repo, and companion assurance skill repo | Markdown / JSON / TypeScript CLI |
@@ -125,7 +125,7 @@
 - GitHub-hosted Linux benchmarks are retained diagnostic evidence only; they do
   not replace GitLab authority or Windows installed-user proof
 
-## Software Factory Governance Foundation
+## Software Factory Governance Contract
 
 - Authority boundary:
   GitLab remains the authority source and branch-control system through
@@ -149,12 +149,14 @@
   the supported operator baseline is a Windows host with standard installs plus
   the admitted `Ubuntu-24.04` Linux assurance lane.
 - Rehearsal policy:
-  the software factory must assess and later rehearse non-production or
-  retained proof states before any future production mutation phase is opened.
+  the software factory must assess, rehearse, and retain a non-mutating
+  repair contract against retained proof states before any future production
+  mutation phase is opened.
 - Approval model:
-  this initial contract is assess-only; later GitHub-release and Marketplace
-  publish phases still require explicit production approval instead of being
-  implied by local green proof alone.
+  the current contract admits only non-production `assess`, `rehearse`, and
+  `repair`; later GitHub-release and Marketplace publish phases still require
+  explicit production approval instead of being implied by local green proof
+  alone.
 
 ## ADR Index
 
