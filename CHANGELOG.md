@@ -4,9 +4,19 @@ This changelog is the governed version-line summary for `vi-history-suite`.
 
 Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`,
-`v1.2.1`, `v1.2.2`, `v1.3.0`, `v1.3.1`, `v1.3.2`, and `v1.3.3`.
+`v1.2.1`, `v1.2.2`, `v1.3.0`, `v1.3.1`, `v1.3.2`, `v1.3.3`, and `v1.3.4`.
 
 Burned exact-version releases now include `v1.0.2`.
+
+## [1.3.5] - 2026-04-21
+
+### Changed
+
+- exact authority `v1.3.4` on `main` remains immutable while the public GitHub
+  exact release still serves `v1.3.1` and VS Code Marketplace still serves
+  `1.3.0`, so `v1.3.5` reopens the exact line narrowly from `main`
+- the authority-side public-source validation surfaces now relax the remaining
+  stale public facade changelog expectation before the next public GitHub exact-release retry
 
 ## [1.3.4] - 2026-04-21
 

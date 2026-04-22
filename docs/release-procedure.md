@@ -11,14 +11,14 @@
 - The first retained exact-version release is `v0.2.0`, with retained artifact
   `vi-history-suite-0.2.0.vsix` and manifest
   `release-evidence/release-manifest.json`.
-- The current exact released line is `v1.3.3`.
+- The current exact released line is `v1.3.4`.
 - The burned exact released line is `v1.0.2`.
-- The current published package line on `main` is `1.3.3`.
-- The current develop package line on `develop` is `1.3.2`.
+- The current published package line on `main` is `1.3.4`.
+- The current develop package line on `develop` is `1.3.3`.
 - The active exact release candidate line on `develop` is none.
 - The active release-candidate branch is none.
-- The active exact hotfix candidate line on `main` is `v1.3.4`.
-- The active hotfix branch is `hotfix/v1.3.4-public-exact-retry`.
+- The active exact hotfix candidate line on `main` is `v1.3.5`.
+- The active hotfix branch is `hotfix/v1.3.5-public-exact-retry`.
 - The active Windows x64 private-release-prep slice is the historical
   `release/1.3.1` lane.
 - The active Windows x64 private-release packet is:
@@ -388,17 +388,17 @@ separate afterward.
   `13779604462`.
 - `v1.0.2` is retained as a burned release because the immutable tag published
   before the exact authority docs CI failure was discovered.
-- The current published package line on `main` is `1.3.3`, tracked in
+- The current published package line on `main` is `1.3.4`, tracked in
   `CHANGELOG.md`, and it should not rewrite the retained `v0.2.0`, `v1.0.0`,
   `v1.0.1`, burned `v1.0.2`, exact `v1.0.3`, exact `v1.0.4`, exact `v1.0.5`,
   exact `v1.0.6`, exact `v1.1.0`, exact `v1.2.0`, exact `v1.2.1`, exact
   `v1.2.2`, exact `v1.3.0`, exact `v1.3.1`, exact `v1.3.2`, exact `v1.3.3`,
-  or separate public GitHub exact `v1.3.1` release evidence.
-- The current develop package line on `develop` is `1.3.2`, public GitHub
+  exact `v1.3.4`, or separate public GitHub exact `v1.3.1` release evidence.
+- The current develop package line on `develop` is `1.3.3`, public GitHub
   exact release `v1.3.1` now publishes separately on `ad351ed`, VS Code
-  Marketplace remains `1.3.0`, and `hotfix/v1.3.4-public-exact-retry` is the
-  active hotfix lane for the last stale public-source validation surface that
-  blocked the public GitHub exact-release act from authority `v1.3.3`.
+  Marketplace remains `1.3.0`, and `hotfix/v1.3.5-public-exact-retry` is the
+  active hotfix lane for the remaining stale public-source validation surface
+  that blocked the public GitHub exact-release act from authority `v1.3.4`.
 - The packaged extension homepage now points installed users to the maintained
   public wiki home, while the repo root remains the source and control-plane
   surface.

@@ -13,17 +13,17 @@
     "developPipelineStatus": "success"
   },
   "openingDecision": {
-    "currentExactReleaseLine": "v1.3.3",
-    "currentMainPackageLine": "1.3.3",
-    "currentDevelopPackageLine": "1.3.2",
+    "currentExactReleaseLine": "v1.3.4",
+    "currentMainPackageLine": "1.3.4",
+    "currentDevelopPackageLine": "1.3.3",
     "activeDevelopCandidateReleaseLine": null,
     "activeReleaseCandidateBranch": null,
-    "activeHotfixCandidateReleaseLine": "v1.3.4",
-    "activeHotfixBranch": "hotfix/v1.3.4-public-exact-retry",
+    "activeHotfixCandidateReleaseLine": "v1.3.5",
+    "activeHotfixBranch": "hotfix/v1.3.5-public-exact-retry",
     "chosenBump": "patch",
     "rationale": [
       "the next line hardens the already-tagged exact package surface by fixing stale authority-side public-source validation expectations without opening another governed installed-user capability line",
-      "authority exact v1.3.3 is already immutable while public GitHub exact v1.3.1 and VS Code Marketplace 1.3.0 still define the published surfaces, so v1.3.4 opens as a hotfix from main instead of mutating retained v1.3.3 authority evidence"
+      "authority exact v1.3.4 is already immutable while public GitHub exact v1.3.1 and VS Code Marketplace 1.3.0 still define the published surfaces, so v1.3.5 opens as a hotfix from main instead of mutating retained v1.3.4 authority evidence"
     ],
     "rejectedAlternatives": {
       "minor": "the validation fix hardens an existing packaged surface rather than adding a new governed capability or supported workflow",
@@ -38,7 +38,7 @@
     "hotfixBranch": "hotfix/*",
     "exactReleaseLineBranch": "main",
     "activeReleaseCandidateBranch": null,
-    "activeHotfixBranch": "hotfix/v1.3.4-public-exact-retry",
+    "activeHotfixBranch": "hotfix/v1.3.5-public-exact-retry",
     "temporaryBranchPrefixes": [
       "feature/",
       "release/",
