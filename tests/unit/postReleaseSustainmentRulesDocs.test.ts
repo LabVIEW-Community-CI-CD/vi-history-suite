@@ -147,15 +147,18 @@ describe('post-release sustainment rules package', () => {
 
     expect(rules.releaseCadence.model).toBe('event-driven');
     expect(rules.releaseCadence.versionLineContract).toEqual({
-      retainedExactVersionReleases: ['v0.2.0', 'v1.0.0', 'v1.0.1', 'v1.0.2', 'v1.0.3', 'v1.0.4', 'v1.0.5', 'v1.0.6', 'v1.1.0', 'v1.2.0', 'v1.2.1', 'v1.2.2', 'v1.3.0', 'v1.3.1', 'v1.3.2', 'v1.3.3', 'v1.3.4'],
+      retainedExactVersionReleases: ['v0.2.0', 'v1.0.0', 'v1.0.1', 'v1.0.2', 'v1.0.3', 'v1.0.4', 'v1.0.5', 'v1.0.6', 'v1.1.0', 'v1.2.0', 'v1.2.1', 'v1.2.2', 'v1.3.0', 'v1.3.1', 'v1.3.2', 'v1.3.3', 'v1.3.4', 'v1.3.5'],
       burnedExactVersionReleases: ['v1.0.2'],
-      currentExactReleaseLine: 'v1.3.4',
-      currentMainPackageLine: '1.3.4',
-      currentDevelopPackageLine: '1.3.3',
-      activeDevelopCandidateReleaseLine: null,
-      activeReleaseCandidateBranch: null,
-      activeHotfixCandidateReleaseLine: 'v1.3.5',
-      activeHotfixBranch: 'hotfix/v1.3.5-public-exact-retry',
+      currentExactReleaseLine: 'v1.3.5',
+      currentMainPackageLine: '1.3.5',
+      currentDevelopPackageLine: '1.3.6',
+      activeDevelopCandidateReleaseLine: 'v1.3.6',
+      activeReleaseCandidateBranch: 'release/1.3.6',
+      activeHotfixCandidateReleaseLine: null,
+      activeHotfixBranch: null,
+      activeFeatureBranch: null,
+      preTagPublicExactProofPackageScript: 'npm run public:exact:pretag:proof',
+      preTagPublicExactProofJob: 'public_exact_pretag_proof',
       publicDefaultBranch: 'main',
       publicCodespaceBranch: 'develop',
       integrationBranch: 'develop',
@@ -191,6 +194,7 @@ describe('post-release sustainment rules package', () => {
         'future sessions shall not treat an unreleased SemVer bump as complete until the matching public tag, public GitHub release, and VS Code Marketplace version are all published',
         'future sessions shall not keep landing post-release changes on the previous exact release version number',
         'future sessions shall not treat a burned exact release as the green release baseline for later publication',
+        'future sessions shall keep exact tagging blocked until npm run public:exact:pretag:proof passes cleanly against the promoted public facade and GitLab public_exact_pretag_proof retains the same proof',
         'future sessions shall not treat an exact release as fully closed until the matching released main line has been back-merged into develop through the protected path and the resulting develop pipeline is green',
         'future sessions shall not treat a candidate line as review-ready until the maintained public develop candidate head and maintained public wiki head are both published and retained in the authority candidate package',
         'future sessions shall keep exact tagging blocked until the post-publication expert-agent review gate closes with no findings against the exact published public candidate heads retained in the authority candidate package',
@@ -249,13 +253,16 @@ describe('post-release sustainment rules package', () => {
     expect(rules.releaseCadence.activeOpeningDecision).toEqual(
       expect.objectContaining({
         chosenBump: 'patch',
-        targetHotfixCandidateReleaseLine: 'v1.3.5'
+        targetFeatureBranch: null,
+        targetReleaseBranch: 'release/1.3.6',
+        preTagPublicExactProofPackageScript: 'npm run public:exact:pretag:proof',
+        preTagPublicExactProofJob: 'public_exact_pretag_proof'
       })
     );
     expect(rules.releaseCadence.activeOpeningDecision?.rationale).toEqual(
       expect.arrayContaining([
-        'the next line hardens the already-tagged exact package surface by fixing stale authority-side public-source validation expectations without changing the installed-user workflow or widening the governed capability line',
-        'authority exact v1.3.4 is already immutable while public GitHub exact v1.3.1 and VS Code Marketplace 1.3.0 still define the published surfaces, so v1.3.5 opens as a hotfix from main instead of mutating the retained v1.3.4 authority tag'
+        'authority exact v1.3.5 remains immutable while the separate public GitHub exact release still serves v1.3.1 and VS Code Marketplace 1.3.0 still define the published surfaces, so release/1.3.6 now opens from merged-green develop for the next governed public-exact retry',
+        'npm run public:exact:pretag:proof and GitLab public_exact_pretag_proof remain fail-closed gates on develop before any later exact tag act from the reopened line'
       ])
     );
 
@@ -307,6 +314,7 @@ describe('post-release sustainment rules package', () => {
     );
     expect(rules.operatorSurfaceSustainment.branchModel.requiredChecks).toEqual([
       'governed_runner_admission',
+      'public_exact_pretag_proof',
       'docs_continuous_integration',
       'docs_public_continuous_integration',
       'docs_internal_continuous_integration',
@@ -327,6 +335,14 @@ describe('post-release sustainment rules package', () => {
             'npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence',
           evidenceRoot: 'governed-runner-admission-evidence/',
           failurePolicy: 'fail-fast-before-docs-assurance-test-package-and-release-stages'
+        },
+        public_exact_pretag_proof: {
+          stage: 'test',
+          packageScript: 'npm run public:exact:pretag:proof',
+          command:
+            'npm run public:exact:pretag:proof -- --evidence-dir public-exact-pretag-proof-evidence',
+          evidenceRoot: 'public-exact-pretag-proof-evidence/',
+          failurePolicy: 'fail-closed-before-any-later-exact-reopen-or-tag'
         },
         windows_private_release_acceptance: {
           hostApplySurface: {
@@ -349,7 +365,8 @@ describe('post-release sustainment rules package', () => {
           },
           linuxAssuranceBootstrap: {
             script: 'scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1',
-            distro: 'Ubuntu',
+            distro: 'Ubuntu-24.04',
+            distroOverrideEnvironmentVariable: 'VIHS_LINUX_ASSURANCE_DISTRO',
             bootstrapCommand: '$HOME/gitlab-runner/start-linux-assurance.sh',
             wakeAttempts: 12,
             wakeDelaySeconds: 10,
@@ -558,15 +575,17 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('## Benchmark Refresh Rules');
     expect(rulesDoc).toContain('## Operator And Documentation Upkeep Rules');
     expect(rulesDoc).toContain('public GitHub default branch: `main`');
-    expect(rulesDoc).toContain('current exact released line: `v1.3.4`');
-    expect(rulesDoc).toContain('current published package line on `main`: `1.3.4`');
-    expect(rulesDoc).toContain('current develop package line on `develop`: `1.3.3`');
-    expect(rulesDoc).toContain('active exact release candidate line on `develop`: none');
-    expect(rulesDoc).toContain('active release-candidate branch: none');
-    expect(rulesDoc).toContain('active exact hotfix candidate line on `main`: `v1.3.5`');
-    expect(rulesDoc).toContain('active hotfix branch: `hotfix/v1.3.5-public-exact-retry`');
+    expect(rulesDoc).toContain('current exact released line: `v1.3.5`');
+    expect(rulesDoc).toContain('current published package line on `main`: `1.3.5`');
+    expect(rulesDoc).toContain('current develop package line on `develop`: `1.3.6`');
+    expect(rulesDoc).toContain('active exact release candidate line on `develop`: `v1.3.6`');
+    expect(rulesDoc).toContain('active release-candidate branch: `release/1.3.6`');
+    expect(rulesDoc).toContain('active exact hotfix candidate line on `main`: none');
+    expect(rulesDoc).toContain('active hotfix branch: none');
+    expect(rulesDoc).toContain('active feature-lane public-exact hardening branch on `develop`: none');
+    expect(rulesDoc).toContain('pre-tag public-exact proof hardening is now retained directly on `develop`');
     expect(rulesDoc).toContain('chosen bump: `patch`');
-    expect(rulesDoc).toContain('Active opening decision that opens hotfix exact `v1.3.5`:');
+    expect(rulesDoc).toContain('Current control decision for public exact hardening:');
     expect(rulesDoc).toContain('Historical opening decision that opened exact `v1.3.1`:');
     expect(rulesDoc).toContain('develop');
     expect(rulesDoc).toContain('protected exact-release line');
@@ -601,6 +620,7 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('npm run gitlab:runner:windows:recovery:rehearse');
     expect(rulesDoc).toContain('.cache/windows-proof-runtime-recovery-rehearsal/latest.json');
     expect(rulesDoc).toContain('governed_runner_admission');
+    expect(rulesDoc).toContain('public_exact_pretag_proof');
     expect(rulesDoc).toContain('doctor-governed-runner-lanes.ps1');
     expect(rulesDoc).toContain('doctor-linux-assurance-runner.sh');
     expect(rulesDoc).toContain('scripts/doctorGovernedRunnerLanes.js');
@@ -612,6 +632,8 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('assert-linux-assurance-runner.sh');
     expect(rulesDoc).toContain('scripts/assertGovernedRunnerLanes.js');
     expect(rulesDoc).toContain('npm run gitlab:runner:assert');
+    expect(rulesDoc).toContain('npm run public:exact:pretag:proof');
+    expect(rulesDoc).toContain('public-exact-pretag-proof-evidence');
     expect(rulesDoc).toContain('without `ExecutionPolicy Bypass`');
 
     expect(readme).toContain(

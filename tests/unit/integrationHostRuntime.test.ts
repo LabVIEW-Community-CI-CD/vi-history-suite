@@ -9,6 +9,7 @@ import {
   collectMissingLinuxSharedLibraries,
   inspectIntegrationHostStrategy,
   normalizeIntegrationHostOverride,
+  resolveStandardWindowsCodeCliPath,
   VI_HISTORY_SUITE_LINUX_BOOTSTRAP_COMMAND
 } from '../../src/tooling/integrationHostRuntime';
 
@@ -64,6 +65,29 @@ describe('integrationHostRuntime', () => {
     ).toEqual({
       mode: 'windows'
     });
+  });
+
+  it('resolves only the standard stable Windows VS Code CLI install locations', () => {
+    expect(
+      resolveStandardWindowsCodeCliPath('win32', 'C:\\Users\\sveld\\AppData\\Local', {
+        existsSync: (candidate) => candidate === 'C:\\Program Files\\Microsoft VS Code\\bin\\code.cmd'
+      })
+    ).toBe('C:\\Program Files\\Microsoft VS Code\\bin\\code.cmd');
+
+    expect(
+      resolveStandardWindowsCodeCliPath('win32', 'C:\\Users\\sveld\\AppData\\Local', {
+        existsSync: (candidate) =>
+          candidate ===
+          'C:\\Users\\sveld\\AppData\\Local\\Programs\\Microsoft VS Code\\bin\\code.cmd'
+      })
+    ).toBe('C:\\Users\\sveld\\AppData\\Local\\Programs\\Microsoft VS Code\\bin\\code.cmd');
+
+    expect(
+      resolveStandardWindowsCodeCliPath('linux', 'C:\\Users\\sveld\\AppData\\Local', {
+        existsSync: (candidate) =>
+          candidate === '/mnt/c/Users/sveld/AppData/Local/Programs/Microsoft VS Code/bin/code'
+      })
+    ).toBe('/mnt/c/Users/sveld/AppData/Local/Programs/Microsoft VS Code/bin/code');
   });
 
   it('deduplicates missing Linux runtime libraries across the VS Code runtime tree', async () => {

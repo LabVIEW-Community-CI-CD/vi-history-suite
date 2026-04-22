@@ -400,6 +400,24 @@ test_extension:
     - if: '$CI_COMMIT_BRANCH =~ /^hotfix\/.+$/'
     - if: '$CI_COMMIT_TAG =~ /^v\d+\.\d+\.\d+$/'
 
+public_exact_pretag_proof:
+  stage: test
+  image: node:24
+  script:
+    - npm ci
+    - npm run public:exact:pretag:proof -- --evidence-dir public-exact-pretag-proof-evidence
+  artifacts:
+    when: always
+    expire_in: never
+    paths:
+      - public-exact-pretag-proof-evidence/
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_BRANCH =~ /^release\/.+$/'
+    - if: '$CI_COMMIT_BRANCH =~ /^hotfix\/.+$/'
+
 windows_private_release_acceptance:
   stage: test
   tags:

@@ -8,11 +8,12 @@ raw-YAML-only truth.
 
 This document is the control-plane summary of the governed historical
 `v1.3.0` exact-closeout plus the later exact/public release follow-through.
-Authority exact `main` now carries tagged `v1.3.4`, `develop` still carries
-`1.3.3`, the separate public GitHub exact release still serves `v1.3.1`, the
-Marketplace listing still serves `1.3.0`, and
-`hotfix/v1.3.5-public-exact-retry` is now the active hotfix lane from exact
-authority `v1.3.4`.
+Authority exact `main` now carries tagged `v1.3.5`, `develop` still carries
+`1.3.5`, `release/1.3.6` is now open from merged-green `develop` `189aa3a`,
+the separate public GitHub exact release still serves `v1.3.1`, the
+Marketplace listing still serves `1.3.0`, no exact hotfix lane is currently
+open, and the reopened public-exact retry remains blocked behind the retained
+pre-tag proof.
 
 ## Current Exact Closeout State
 
@@ -26,23 +27,28 @@ authority `v1.3.4`.
   `04b07bd`
 - resulting `develop` pipeline: `2467081960` `success`
 
-## Active Opening Decision For v1.3.5
+## Current Control Decision For Public Exact Hardening
 
-- current exact release line: `v1.3.4`
-- current `main` package line: `1.3.4`
-- current `develop` package line: `1.3.3`
-- active exact release candidate line on `develop`: none
-- active release-candidate branch: none
-- active exact hotfix candidate line on `main`: `v1.3.5`
-- active hotfix branch: `hotfix/v1.3.5-public-exact-retry`
+- current exact release line: `v1.3.5`
+- current `main` package line: `1.3.5`
+- current `develop` package line: `1.3.6`
+- active exact release candidate line on `develop`: `v1.3.6`
+- active release-candidate branch: `release/1.3.6`
+- active exact hotfix candidate line on `main`: none
+- active hotfix branch: none
+- active feature-lane public-exact hardening branch on `develop`: none
+- pre-tag public-exact proof hardening is now retained directly on `develop`
+- pre-tag public-exact proof package script:
+  `npm run public:exact:pretag:proof`
+- pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
 - chosen bump: `patch`
-- rationale: this line hardens the already-tagged exact package surface by
-  fixing stale authority-side public-source validation expectations without
-  opening another governed installed-user capability line
-- rationale: authority exact `v1.3.4` remains immutable while public GitHub
-  exact `v1.3.1` and VS Code Marketplace `1.3.0` still define the published
-  surfaces, so `v1.3.5` opens as a hotfix from `main` instead of mutating
-  retained `v1.3.4` authority evidence
+- rationale: authority exact `v1.3.5` remains immutable while the separate
+  public GitHub exact release still serves `v1.3.1` and VS Code Marketplace
+  still serves `1.3.0`, so `release/1.3.6` now opens from merged-green
+  `develop` for the next governed public-exact retry
+- rationale: `npm run public:exact:pretag:proof` and GitLab
+  `public_exact_pretag_proof` remain fail-closed gates on `develop` before
+  any later exact tag act from the reopened line
 
 ## Branch Model
 
@@ -86,8 +92,9 @@ Runner operator hardening:
 
 - `linux-assurance`: admitted config path
   `~/.gitlab-runner/config.toml`, top-level `concurrent = 2`, per-runner
-  `request_concurrency = 2`, and steady-state lifecycle owned by Ubuntu
-  `systemd` unit `vihs-linux-assurance-runner.service`, with repo-owned host
+  `request_concurrency = 2`, and steady-state lifecycle owned by the admitted
+  Linux assurance distro `systemd` unit `vihs-linux-assurance-runner.service`,
+  defaulting to `Ubuntu-24.04`, with repo-owned host
   assets at `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh`,
   `scripts/gitlab-runner/linux/start-linux-assurance.sh`,
   `scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh`,
@@ -115,9 +122,11 @@ Runner operator hardening:
   `request_concurrency = 2`, scheduled bootstrap surface
   `C:\GitLab-Runner\start-governed-runner-lanes.ps1`, scheduled task
   `VIHS Governed Runner Lanes`, duplicate-manager collapse so exactly one
-  current-user runner manager remains per config, bounded Ubuntu wake-up plus
-  Linux-helper retries fail closed unless the paired Linux assurance service
-  comes up after reboot, cold-admission fail-closed cleanup of stale
+  current-user runner manager remains per config, bounded Linux-distro wake-up
+  plus Linux-helper retries fail closed unless the paired Linux assurance
+  service comes up after reboot, defaulting to `Ubuntu-24.04` unless
+  `VIHS_LINUX_ASSURANCE_DISTRO` overrides the distro name, cold-admission
+  fail-closed cleanup of stale
   `LabVIEW` / `LabVIEWCLI` / `LVCompare` runtime processes before the runner
   starts using bounded `Stop-Process` plus `taskkill /PID /T /F` and
   `taskkill /IM /T /F`, the repo-owned bootstrap asset
@@ -156,6 +165,11 @@ Job ownership:
   `npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence`
   so docs, assurance, test, package, and release jobs fail fast on post-reset
   runner drift instead of waiting behind missing or degraded runner capacity
+- `public_exact_pretag_proof`: blocking pre-tag public-facade proof lane on
+  merge requests, `develop`, `main`, `release/*`, and `hotfix/*`; it runs
+  `npm run public:exact:pretag:proof -- --evidence-dir public-exact-pretag-proof-evidence`
+  so any later exact reopen fails closed before tag creation when the promoted
+  public facade still diverges from authority truth
 - `docs_link_check`, `docs_continuous_integration`,
   `docs_public_continuous_integration`, `docs_internal_continuous_integration`:
   docs integrity on merge requests, governed branch lanes, and exact tags

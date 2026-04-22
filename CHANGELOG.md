@@ -8,6 +8,17 @@ Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,
 
 Burned exact-version releases now include `v1.0.2`.
 
+## [1.3.6] - 2026-04-22
+
+### Changed
+
+- exact authority `v1.3.5` on `main` remains immutable while the separate
+  public GitHub exact release still serves `v1.3.1` and VS Code Marketplace
+  still serves `1.3.0`, so `release/1.3.6` now opens from merged-green
+  `develop` for the next governed public-exact retry
+- the fail-closed public exact pre-tag proof remains retained directly on
+  `develop` while `release/1.3.6` carries the next exact-retry line
+
 ## [1.3.5] - 2026-04-21
 
 ### Changed

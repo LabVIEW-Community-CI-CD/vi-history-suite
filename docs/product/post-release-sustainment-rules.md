@@ -68,15 +68,20 @@ Current version-line contract:
 
 - retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`,
   `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`,
-  `v1.2.2`, `v1.3.0`, `v1.3.1`, `v1.3.2`, `v1.3.3`, `v1.3.4`
+  `v1.2.2`, `v1.3.0`, `v1.3.1`, `v1.3.2`, `v1.3.3`, `v1.3.4`, `v1.3.5`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.3.4`
-- current published package line on `main`: `1.3.4`
-- current develop package line on `develop`: `1.3.3`
-- active exact release candidate line on `develop`: none
-- active release-candidate branch: none
-- active exact hotfix candidate line on `main`: `v1.3.5`
-- active hotfix branch: `hotfix/v1.3.5-public-exact-retry`
+- current exact released line: `v1.3.5`
+- current published package line on `main`: `1.3.5`
+- current develop package line on `develop`: `1.3.6`
+- active exact release candidate line on `develop`: `v1.3.6`
+- active release-candidate branch: `release/1.3.6`
+- active exact hotfix candidate line on `main`: none
+- active hotfix branch: none
+- active feature-lane public-exact hardening branch on `develop`: none
+- pre-tag public-exact proof hardening is now retained directly on `develop`
+- pre-tag public-exact proof package script:
+  `npm run public:exact:pretag:proof`
+- pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
@@ -85,23 +90,27 @@ Current version-line contract:
 - hotfix branch family: `hotfix/*`
 - next-line branch model: `GitFlow`
 
-Active opening decision that opens hotfix exact `v1.3.5`:
+Current control decision for public exact hardening:
 
 - chosen bump: `patch`
-- target exact hotfix candidate line: `v1.3.5`
-- rationale: the next line hardens the already-tagged exact package surface by
-  fixing stale authority-side public-source validation expectations without
-  changing the installed-user workflow or opening another governed capability
-  line
-- rationale: authority exact `v1.3.4` is already immutable while public
-  GitHub exact `v1.3.1` and VS Code Marketplace `1.3.0` still define the
-  published surfaces, so `v1.3.5` opens as a hotfix from `main` instead of
-  mutating the retained `v1.3.4` authority tag
-- rejected `minor`: the icon change hardens an existing packaged surface
-  rather than adding a new governed capability or supported workflow
+- active feature-lane public-exact hardening branch: none
+- pre-tag public-exact proof hardening is now retained directly on `develop`
+- rationale: authority exact `v1.3.5` remains immutable while the separate
+  public GitHub exact release still serves `v1.3.1` and VS Code Marketplace
+  `1.3.0` still define the published surfaces, so `release/1.3.6` now opens
+  from merged-green `develop` for the next governed public-exact retry
+- rationale: `npm run public:exact:pretag:proof` and GitLab
+  `public_exact_pretag_proof` remain fail-closed gates on `develop` before
+  any later exact tag act from the reopened line
+- rejected `hotfix`: repeated exact reopen lines on `main` for brittle
+  public-source validation repairs deviated from the governed GitFlow path, so
+  the next exact retry now opens on `release/1.3.6` from `develop` instead of
+  reopening `main`
+- rejected `minor`: the validation hardening still does not add a new governed
+  capability or supported installed-user workflow
 - rejected `major`: no exact public or maintainer contract is intentionally
   broken or removed; the retained `v1.3.1` GitHub exact release stays intact
-  while the validation fix advances to a separate hotfix line
+  while the gating fix advances on a feature lane
 
 Historical opening decision that opened exact `v1.3.1`:
 
@@ -307,6 +316,7 @@ Required branch-model and CI posture:
   when the target repo is dirty
 - the required checks are:
   - GitLab `governed_runner_admission`
+  - GitLab `public_exact_pretag_proof`
   - GitLab `docs_continuous_integration`
   - GitLab `docs_public_continuous_integration`
   - GitLab `docs_internal_continuous_integration`
@@ -350,9 +360,10 @@ Hosted automation governance is now retained explicitly:
   action plus logon trigger, `request_concurrency = 2`, and one live
   configured Windows runner manager remain intact; while
   `scripts/gitlab-runner/windows/start-governed-runner-lanes.ps1` also wakes
-  Ubuntu and retries the repo-owned Linux assurance helper until it proves the
-  paired Linux service is enabled, active, and singular, writing the latest
-  Windows startup receipt to
+  the admitted Linux assurance distro, defaulting to `Ubuntu-24.04` unless
+  `VIHS_LINUX_ASSURANCE_DISTRO` overrides it, and retries the repo-owned
+  Linux assurance helper until it proves the paired Linux service is enabled,
+  active, and singular, writing the latest Windows startup receipt to
   `C:\GitLab-Runner\receipts\governed-runner-startup\latest.json`;
   `scripts/gitlab-runner/linux/apply-linux-assurance-runner.sh` fails closed
   unless `~/.gitlab-runner/config.toml` retains `concurrent = 2` plus
@@ -375,6 +386,9 @@ Hosted automation governance is now retained explicitly:
   contamination, runs that same repo-owned recovery script, and refreshes the
   latest retained rehearsal receipt at
   `.cache/windows-proof-runtime-recovery-rehearsal/latest.json`
+- the fail-closed pre-tag public-exact proof lane now runs
+  `npm run public:exact:pretag:proof -- --evidence-dir public-exact-pretag-proof-evidence`
+  before any later exact reopen or tag act can truthfully proceed
 - the authoritative matrix for those distinctions is:
   - `docs/product/hosted-ci-governance.md`
   - `docs/product/hosted-ci-governance.json`
@@ -382,7 +396,8 @@ Hosted automation governance is now retained explicitly:
 Lane-specific CI and gate responsibilities:
 
 - `feature/*`: focused tests plus any affected doc/design gates before merge to
-  `develop`
+  `develop`; public-exact validation hardening also retains
+  `npm run public:exact:pretag:proof` before any later exact reopen is allowed
 - `develop`: required checks plus `npm run design:gate` and
   `npm run design:gate:assert-complete` for governance or architecture work
 - `release/*`: full required checks, design gates, release-readiness

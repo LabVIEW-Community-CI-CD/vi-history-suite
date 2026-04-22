@@ -30,13 +30,16 @@ describe('hosted ci governance docs', () => {
 
     expect(matrix.openingDecision).toEqual(
       expect.objectContaining({
-        currentExactReleaseLine: 'v1.3.4',
-        currentMainPackageLine: '1.3.4',
-        currentDevelopPackageLine: '1.3.3',
-        activeDevelopCandidateReleaseLine: null,
-        activeReleaseCandidateBranch: null,
-        activeHotfixCandidateReleaseLine: 'v1.3.5',
-        activeHotfixBranch: 'hotfix/v1.3.5-public-exact-retry',
+        currentExactReleaseLine: 'v1.3.5',
+        currentMainPackageLine: '1.3.5',
+        currentDevelopPackageLine: '1.3.6',
+        activeDevelopCandidateReleaseLine: 'v1.3.6',
+        activeReleaseCandidateBranch: 'release/1.3.6',
+        activeHotfixCandidateReleaseLine: null,
+        activeHotfixBranch: null,
+        activeFeatureBranch: null,
+        preTagPublicExactProofPackageScript: 'npm run public:exact:pretag:proof',
+        preTagPublicExactProofJob: 'public_exact_pretag_proof',
         chosenBump: 'patch'
       })
     );
@@ -58,6 +61,14 @@ describe('hosted ci governance docs', () => {
         stage: 'admission',
         packageScript: 'npm run gitlab:runner:doctor',
         evidenceRoot: 'governed-runner-admission-evidence/'
+      })
+    );
+    expect(matrix.authorityGitLab.jobs.public_exact_pretag_proof).toEqual(
+      expect.objectContaining({
+        classification: 'required-governance-check',
+        stage: 'test',
+        packageScript: 'npm run public:exact:pretag:proof',
+        evidenceRoot: 'public-exact-pretag-proof-evidence/'
       })
     );
     expect(matrix.authorityGitLab.jobs.windows_private_release_acceptance).toEqual(
@@ -159,7 +170,8 @@ describe('hosted ci governance docs', () => {
             failurePolicy: 'fail-closed-unless-config-normalized-and-service-enabled-and-active'
           },
           helperVerification: {
-            distro: 'Ubuntu',
+            distro: 'Ubuntu-24.04',
+            distroOverrideEnvironmentVariable: 'VIHS_LINUX_ASSURANCE_DISTRO',
             wakeAttempts: 12,
             wakeDelaySeconds: 10,
             checks: [
@@ -226,7 +238,8 @@ describe('hosted ci governance docs', () => {
           repoOwnedLinuxHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
           repoOwnedLinuxDoctorScript: 'scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh',
           linuxAssuranceBootstrap: {
-            distro: 'Ubuntu',
+            distro: 'Ubuntu-24.04',
+            distroOverrideEnvironmentVariable: 'VIHS_LINUX_ASSURANCE_DISTRO',
             bootstrapCommand: '$HOME/gitlab-runner/start-linux-assurance.sh',
             wakeAttempts: 12,
             wakeDelaySeconds: 10,
@@ -296,15 +309,17 @@ describe('hosted ci governance docs', () => {
 
     expect(matrixDoc).toContain('current exact release line: `v1.3.0`');
     expect(matrixDoc).toContain('current `main` package line: `1.3.0`');
-    expect(matrixDoc).toContain('current exact release line: `v1.3.4`');
-    expect(matrixDoc).toContain('current `main` package line: `1.3.4`');
-    expect(matrixDoc).toContain('current `develop` package line: `1.3.3`');
-    expect(matrixDoc).toContain('active exact release candidate line on `develop`: none');
-    expect(matrixDoc).toContain('active release-candidate branch: none');
-    expect(matrixDoc).toContain('active exact hotfix candidate line on `main`: `v1.3.5`');
-    expect(matrixDoc).toContain('active hotfix branch: `hotfix/v1.3.5-public-exact-retry`');
+    expect(matrixDoc).toContain('current exact release line: `v1.3.5`');
+    expect(matrixDoc).toContain('current `main` package line: `1.3.5`');
+    expect(matrixDoc).toContain('current `develop` package line: `1.3.6`');
+    expect(matrixDoc).toContain('active exact release candidate line on `develop`: `v1.3.6`');
+    expect(matrixDoc).toContain('active release-candidate branch: `release/1.3.6`');
+    expect(matrixDoc).toContain('active exact hotfix candidate line on `main`: none');
+    expect(matrixDoc).toContain('active hotfix branch: none');
+    expect(matrixDoc).toContain('active feature-lane public-exact hardening branch on `develop`: none');
+    expect(matrixDoc).toContain('pre-tag public-exact proof hardening is now retained directly on `develop`');
     expect(matrixDoc).toContain('chosen bump: `patch`');
-    expect(matrixDoc).toContain('Active Opening Decision For v1.3.5');
+    expect(matrixDoc).toContain('Current Control Decision For Public Exact Hardening');
     expect(matrixDoc).toContain('npm run branch:governance:assert');
     expect(matrixDoc).toContain('merge gate: `only_allow_merge_if_pipeline_succeeds=true`');
     expect(matrixDoc).toContain('classification: characterization-only experiment automation');
@@ -313,6 +328,7 @@ describe('hosted ci governance docs', () => {
     expect(matrixDoc).toContain('linux-assurance');
     expect(matrixDoc).toContain('`windows_private_release_acceptance`');
     expect(matrixDoc).toContain('`governed_runner_admission`');
+    expect(matrixDoc).toContain('`public_exact_pretag_proof`');
     expect(matrixDoc).toContain('`assurance_release_gate`');
     expect(matrixDoc).toContain('`assurance_26514_authority`');
     expect(matrixDoc).toContain('`assurance_requirements_quality`');
@@ -325,11 +341,14 @@ describe('hosted ci governance docs', () => {
     expect(matrixDoc).toContain('VIHS Governed Runner Lanes');
     expect(matrixDoc).toContain('apply-linux-assurance-runner.sh');
     expect(matrixDoc).toContain('apply-governed-runner-lanes.ps1');
-    expect(matrixDoc).toContain('cold-admission fail-closed');
+    expect(matrixDoc).toContain('cold-admission');
+    expect(matrixDoc).toContain('fail-closed cleanup');
     expect(matrixDoc).toContain('doctor-governed-runner-lanes.ps1');
     expect(matrixDoc).toContain('doctor-linux-assurance-runner.sh');
     expect(matrixDoc).toContain('scripts/doctorGovernedRunnerLanes.js');
     expect(matrixDoc).toContain('npm run gitlab:runner:doctor');
+    expect(matrixDoc).toContain('npm run public:exact:pretag:proof');
+    expect(matrixDoc).toContain('public-exact-pretag-proof-evidence');
     expect(matrixDoc).toContain('governed-runner-admission-evidence');
     expect(matrixDoc).toContain(
       '`LabVIEW` / `LabVIEWCLI` / `LVCompare` runtime processes'
@@ -357,7 +376,9 @@ describe('hosted ci governance docs', () => {
     expect(matrixDoc).toContain('scripts/gitlab-runner/linux/assert-linux-assurance-runner.sh');
     expect(matrixDoc).toContain('scripts/assertGovernedRunnerLanes.js');
     expect(matrixDoc).toContain('npm run gitlab:runner:assert');
-    expect(matrixDoc).toContain('Ubuntu wake-up plus');
+    expect(matrixDoc).toContain('bounded Linux-distro wake-up');
+    expect(matrixDoc).toContain('Ubuntu-24.04');
+    expect(matrixDoc).toContain('VIHS_LINUX_ASSURANCE_DISTRO');
     expect(adr).toContain('GitLab authority uses protected branches plus');
     expect(adr).toContain('GitHub benchmark workflows remain governed characterization lanes');
 
@@ -368,8 +389,10 @@ describe('hosted ci governance docs', () => {
     expect(gitlabCi).toContain(`- if: '$CI_COMMIT_BRANCH =~ /^release\\/.+$/'`);
     expect(gitlabCi).toContain(`- if: '$CI_COMMIT_BRANCH =~ /^hotfix\\/.+$/'`);
     expect(gitlabCi).toContain('governed_runner_admission:');
+    expect(gitlabCi).toContain('public_exact_pretag_proof:');
     expect(gitlabCi).toContain('stage: admission');
     expect(gitlabCi).toContain('npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence');
+    expect(gitlabCi).toContain('npm run public:exact:pretag:proof -- --evidence-dir public-exact-pretag-proof-evidence');
     expect(gitlabCi).toContain('windows_private_release_acceptance:');
     expect(gitlabCi).toContain('npm run acceptance:windows:private-release');
     expect(gitlabCi).toContain('windows-private-release-evidence/');
@@ -398,6 +421,7 @@ describe('hosted ci governance docs', () => {
       '- hosted automation governance matrix: [hosted-ci-governance.md](./hosted-ci-governance.md)'
     );
     expect(currentState).toContain('governed_runner_admission');
+    expect(currentState).toContain('public_exact_pretag_proof');
     expect(currentState).toContain('assurance_release_gate');
     expect(currentState).toContain('assurance_26514_authority');
     expect(currentState).toContain('doctor-governed-runner-lanes.ps1');
@@ -406,6 +430,7 @@ describe('hosted ci governance docs', () => {
     expect(currentState).toContain('registry.gitlab.com/svelderrainruiz/repo-standards-review/assurance-workbench:main');
     expect(releaseProcedure).toContain('The hosted automation governance matrix is retained in:');
     expect(releaseProcedure).toContain('governed_runner_admission');
+    expect(releaseProcedure).toContain('public_exact_pretag_proof');
     expect(releaseProcedure).toContain('assurance_release_gate');
     expect(releaseProcedure).toContain('assurance_26514_authority');
     expect(releaseProcedure).toContain('npm run gitlab:runner:doctor');

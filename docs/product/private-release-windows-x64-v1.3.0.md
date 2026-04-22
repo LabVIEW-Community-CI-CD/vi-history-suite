@@ -139,7 +139,9 @@ publishes the controlled Windows-only install asset.
     `LVCompare` before cold runner admission with bounded `Stop-Process`,
     `taskkill /PID /T /F`, and `taskkill /IM /T /F`, and fails closed if
     contamination remains
-  - that same Windows bootstrap also wakes Ubuntu and retries the repo-owned
+  - that same Windows bootstrap also wakes the admitted Linux assurance
+    distro, defaulting to `Ubuntu-24.04` unless
+    `VIHS_LINUX_ASSURANCE_DISTRO` overrides it, and retries the repo-owned
     Linux assurance helper until it proves the paired
     `vihs-linux-assurance-runner.service` is `enabled`, `active`, and singular
   - when the host-native proof exits on that same cleanup seam, the acceptance

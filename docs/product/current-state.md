@@ -154,13 +154,18 @@ Latest landed ship target:
 - retained release pipeline: `2428809456`
 - retained release job: `13779604462`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.3.4`
-- current published package line on `main`: `1.3.4`
-- current develop package line on `develop`: `1.3.3`
-- active exact release candidate line on `develop`: none
-- active release-candidate branch: none
-- active exact hotfix candidate line on `main`: `v1.3.5`
-- active hotfix branch: `hotfix/v1.3.5-public-exact-retry`
+- current exact released line: `v1.3.5`
+- current published package line on `main`: `1.3.5`
+- current develop package line on `develop`: `1.3.6`
+- active exact release candidate line on `develop`: `v1.3.6`
+- active release-candidate branch: `release/1.3.6`
+- active exact hotfix candidate line on `main`: none
+- active hotfix branch: none
+- active feature-lane public-exact hardening branch on `develop`: none
+- pre-tag public-exact proof hardening is now retained directly on `develop`
+- active pre-tag public-exact proof package script:
+  `npm run public:exact:pretag:proof`
+- active pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
 - active Windows x64 private-release-prep slice: historical `release/1.3.1`
 - active Windows x64 private-release packet:
   [private-release-windows-x64-v1.3.1.md](./private-release-windows-x64-v1.3.1.md)
@@ -230,8 +235,10 @@ Latest landed ship target:
     `LVCompare` before cold runner admission with bounded `Stop-Process`,
     `taskkill /PID /T /F`, and `taskkill /IM /T /F`, and fails closed if
     contamination remains
-  - the same Windows bootstrap also wakes Ubuntu and retries the repo-owned
-    Linux assurance helper until it proves the paired
+  - the same Windows bootstrap also wakes the admitted Linux assurance distro,
+    defaulting to `Ubuntu-24.04` unless `VIHS_LINUX_ASSURANCE_DISTRO`
+    overrides it, and retries the repo-owned Linux assurance helper until it
+    proves the paired
     `vihs-linux-assurance-runner.service` is `enabled`, `active`, and singular,
     failing closed otherwise
   - the Linux helper now reconciles `~/.gitlab-runner/config.toml` back to
@@ -284,13 +291,15 @@ Latest landed ship target:
   public source/wiki heads remain `0f19f4b` / `53b5348`, the maintained
   public wiki head now publishes `141c39e`, the exact published heads
   `ab293d5` / `141c39e` closed the published-surface reopening gate cleanly,
-  authority exact-release reopening is now retained on `release/1.3.1` from
-  merged-green `develop` `0f4db5e` with green release-branch pipeline
-  `2468432598`, the controlled Windows x64 private GitLab release is now
-  published separately, exact tag `v1.3.1` and the separate public GitHub
-  exact release on `ad351ed` are now live, VS Code Marketplace still serves
-  `1.3.0`, and the active exact hotfix lane is now
-  `hotfix/v1.3.5-public-exact-retry` from exact `v1.3.4` `main`
+  authority exact `v1.3.5` is now tagged on `main` `8f0069d`, the controlled
+  Windows x64 private GitLab release remains published separately, the
+  separate public GitHub exact release on `ad351ed` still serves `v1.3.1`,
+  `release/1.3.6` is now open from merged-green `develop` `189aa3a`, VS Code
+  Marketplace still serves `1.3.0`, no exact hotfix lane is currently open,
+  and the reopened public-exact retry remains blocked until
+  `npm run public:exact:pretag:proof` plus GitLab
+  `public_exact_pretag_proof` close cleanly against the promoted public
+  facade.
 
 Current active and recently closed tranches:
 

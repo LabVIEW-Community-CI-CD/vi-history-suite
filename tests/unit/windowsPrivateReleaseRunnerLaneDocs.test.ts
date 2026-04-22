@@ -43,7 +43,8 @@ describe('windows private release runner lane docs', () => {
     expect(runnerLaneDoc).toContain('linux-assurance-runner-lane.md');
     expect(runnerLaneDoc).toContain('C:\\GitLab-Runner\\config.toml');
     expect(runnerLaneDoc).toContain('request_concurrency = 2');
-    expect(runnerLaneDoc).toContain('retries the repo-owned Linux assurance helper up to `12` times');
+    expect(runnerLaneDoc).toContain('repo-owned Linux');
+    expect(runnerLaneDoc).toContain('assurance helper up to `12` times');
     expect(runnerLaneDoc).toContain('VIHS Governed Runner Lanes');
     expect(runnerLaneDoc).toContain('C:\\GitLab-Runner\\receipts\\governed-runner-startup\\latest.json');
     expect(runnerLaneDoc).toContain('apply-governed-runner-lanes.ps1');
@@ -105,8 +106,11 @@ describe('windows private release runner lane docs', () => {
     expect(hostedGovernanceDoc).toContain('npm run gitlab:runner:assert');
     expect(hostedGovernanceDoc).toContain('npm run gitlab:runner:windows:recovery:rehearse');
     expect(hostedGovernanceDoc).toContain('request_concurrency = 2');
-    expect(hostedGovernanceDoc).toContain('Ubuntu wake-up plus');
-    expect(hostedGovernanceDoc).toContain('cold-admission fail-closed');
+    expect(hostedGovernanceDoc).toContain('bounded Linux-distro wake-up');
+    expect(hostedGovernanceDoc).toContain('Ubuntu-24.04');
+    expect(hostedGovernanceDoc).toContain('VIHS_LINUX_ASSURANCE_DISTRO');
+    expect(hostedGovernanceDoc).toContain('cold-admission');
+    expect(hostedGovernanceDoc).toContain('fail-closed cleanup');
     expect(hostedGovernanceDoc).toContain(
       '`LabVIEW` / `LabVIEWCLI` / `LVCompare` runtime processes'
     );
@@ -154,7 +158,8 @@ describe('windows private release runner lane docs', () => {
           repoOwnedLinuxHelperScript: 'scripts/gitlab-runner/linux/start-linux-assurance.sh',
           repoOwnedLinuxDoctorScript: 'scripts/gitlab-runner/linux/doctor-linux-assurance-runner.sh',
           linuxAssuranceBootstrap: {
-            distro: 'Ubuntu',
+            distro: 'Ubuntu-24.04',
+            distroOverrideEnvironmentVariable: 'VIHS_LINUX_ASSURANCE_DISTRO',
             bootstrapCommand: '$HOME/gitlab-runner/start-linux-assurance.sh',
             wakeAttempts: 12,
             wakeDelaySeconds: 10,
