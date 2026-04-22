@@ -72,9 +72,9 @@ Current version-line contract:
 - burned exact release line: `v1.0.2`
 - current exact released line: `v1.3.5`
 - current published package line on `main`: `1.3.5`
-- current develop package line on `develop`: `1.3.5`
-- active exact release candidate line on `develop`: none
-- active release-candidate branch: none
+- current develop package line on `develop`: `1.3.6`
+- active exact release candidate line on `develop`: `v1.3.6`
+- active release-candidate branch: `release/1.3.6`
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
 - active feature-lane public-exact hardening branch on `develop`: none
@@ -95,18 +95,17 @@ Current control decision for public exact hardening:
 - chosen bump: `patch`
 - active feature-lane public-exact hardening branch: none
 - pre-tag public-exact proof hardening is now retained directly on `develop`
-- rationale: the remaining stale public-exact validation hardening now returns
-  to short-lived `feature/*` branches from `develop` instead of reopening
-  `main` for another exact hotfix attempt
-- rationale: authority exact `v1.3.5` remains immutable while public GitHub
-  exact `v1.3.1` and VS Code Marketplace `1.3.0` still define the published
-  surfaces, so any later exact reopen stays blocked until
-  `npm run public:exact:pretag:proof` and GitLab `public_exact_pretag_proof`
-  pass cleanly against the promoted public facade
+- rationale: authority exact `v1.3.5` remains immutable while the separate
+  public GitHub exact release still serves `v1.3.1` and VS Code Marketplace
+  `1.3.0` still define the published surfaces, so `release/1.3.6` now opens
+  from merged-green `develop` for the next governed public-exact retry
+- rationale: `npm run public:exact:pretag:proof` and GitLab
+  `public_exact_pretag_proof` remain fail-closed gates on `develop` before
+  any later exact tag act from the reopened line
 - rejected `hotfix`: repeated exact reopen lines on `main` for brittle
-  public-source validation repairs deviated from the governed GitFlow path,
-  so the remaining hardening now stays retained on `develop` behind the
-  fail-closed pre-tag proof gate
+  public-source validation repairs deviated from the governed GitFlow path, so
+  the next exact retry now opens on `release/1.3.6` from `develop` instead of
+  reopening `main`
 - rejected `minor`: the validation hardening still does not add a new governed
   capability or supported installed-user workflow
 - rejected `major`: no exact public or maintainer contract is intentionally

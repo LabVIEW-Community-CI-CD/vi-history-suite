@@ -20,6 +20,10 @@ export interface CollectMissingLinuxSharedLibrariesDeps {
   execFileSync?: typeof execFileSync;
 }
 
+export interface ResolveStandardWindowsCodeCliPathDeps {
+  existsSync?: (filePath: string) => boolean;
+}
+
 export const VI_HISTORY_SUITE_LINUX_BOOTSTRAP_COMMAND =
   'npm run public:host:bootstrap-linux';
 
@@ -69,6 +73,38 @@ export const VI_HISTORY_SUITE_LINUX_RUNTIME_PACKAGES = {
     'xvfb'
   ]
 } as const;
+
+function toWslMountedPath(windowsPath: string): string {
+  const normalized = windowsPath.replace(/\\/g, '/');
+  const driveMatch = /^([A-Za-z]):(.*)$/.exec(normalized);
+  if (!driveMatch) {
+    return normalized;
+  }
+
+  return `/mnt/${driveMatch[1].toLowerCase()}${driveMatch[2]}`;
+}
+
+export function resolveStandardWindowsCodeCliPath(
+  platform = process.platform,
+  localAppData = process.env.LOCALAPPDATA,
+  deps: ResolveStandardWindowsCodeCliPathDeps = {}
+): string {
+  const existsSync = deps.existsSync ?? fsSync.existsSync;
+  const normalizedLocalAppData =
+    localAppData?.trim().replace(/\//g, '\\') || 'C:\\Users\\sveld\\AppData\\Local';
+  const windowsCandidates = [
+    'C:\\Program Files\\Microsoft VS Code\\bin\\code.cmd',
+    path.win32.join(normalizedLocalAppData, 'Programs', 'Microsoft VS Code', 'bin', 'code.cmd')
+  ];
+  const platformCandidates =
+    platform === 'win32'
+      ? windowsCandidates
+      : windowsCandidates.map((candidate) =>
+          toWslMountedPath(candidate).replace(/\/code\.cmd$/, '/code')
+        );
+
+  return platformCandidates.find((candidate) => existsSync(candidate)) ?? platformCandidates[0];
+}
 
 export function normalizeIntegrationHostOverride(
   value: string | undefined

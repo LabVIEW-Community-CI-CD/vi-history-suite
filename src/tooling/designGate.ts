@@ -137,6 +137,33 @@ export function resolveWindowsPythonCommand(
   return 'py';
 }
 
+function quotePosixShellArg(value: string): string {
+  return `'${value.replace(/'/g, `'\"'\"'`)}'`;
+}
+
+function toWslMountedPath(windowsPath: string): string {
+  const normalized = windowsPath.replace(/\\/g, '/');
+  const driveMatch = /^([A-Za-z]):(.*)$/.exec(normalized);
+  if (!driveMatch) {
+    return normalized;
+  }
+
+  return `/mnt/${driveMatch[1].toLowerCase()}${driveMatch[2]}`;
+}
+
+function resolveWindowsWslExecutable(
+  environment: NodeJS.ProcessEnv = process.env,
+  pathExists: (candidate: string) => boolean = (candidate) => fs.existsSync(candidate)
+): string | null {
+  const systemRoot = environment.SystemRoot?.trim() || 'C:\\Windows';
+  const candidate = path.win32.join(systemRoot, 'System32', 'wsl.exe');
+  return pathExists(candidate) ? candidate : null;
+}
+
+function resolveWindowsAssuranceDistro(environment: NodeJS.ProcessEnv = process.env): string {
+  return environment.VIHS_LINUX_ASSURANCE_DISTRO?.trim() || 'Ubuntu-24.04';
+}
+
 export function assertCompletedPassingDesignGateReport(
   report: Pick<DesignGateReport, 'status' | 'completionState' | 'pendingStepId' | 'pendingStepTitle'>
 ): void {
@@ -202,7 +229,7 @@ export function isMountedWindowsPath(targetPath: string): boolean {
 
 export function buildDesignGatePlan(
   repoRoot: string,
-  assuranceScriptPath = defaultAssuranceScriptPath(),
+  _assuranceScriptPath = defaultAssuranceScriptPath(),
   platform = process.platform,
   environment: NodeJS.ProcessEnv = process.env,
   pathExists: (candidate: string) => boolean = (candidate) => fs.existsSync(candidate)
@@ -293,15 +320,15 @@ export function buildDesignGatePlan(
     {
       id: 'standards-assurance',
       title: 'Standards assurance',
-      command: resolveDesignGateCommand('python3', platform, environment, pathExists),
+      command: resolveDesignGateCommand('npm', platform, environment, pathExists),
       args: resolveDesignGateArgs(
-        'python3',
-        [assuranceScriptPath, repoRoot, '--profile', 'quick-triage'],
+        'npm',
+        ['run', 'assurance:release-gate'],
         platform,
         environment,
         pathExists
       ),
-      timeoutMs: 180000
+      timeoutMs: 300000
     }
   ];
 }

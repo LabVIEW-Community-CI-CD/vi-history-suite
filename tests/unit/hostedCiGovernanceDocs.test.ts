@@ -32,9 +32,9 @@ describe('hosted ci governance docs', () => {
       expect.objectContaining({
         currentExactReleaseLine: 'v1.3.5',
         currentMainPackageLine: '1.3.5',
-        currentDevelopPackageLine: '1.3.5',
-        activeDevelopCandidateReleaseLine: null,
-        activeReleaseCandidateBranch: null,
+        currentDevelopPackageLine: '1.3.6',
+        activeDevelopCandidateReleaseLine: 'v1.3.6',
+        activeReleaseCandidateBranch: 'release/1.3.6',
         activeHotfixCandidateReleaseLine: null,
         activeHotfixBranch: null,
         activeFeatureBranch: null,
@@ -311,9 +311,9 @@ describe('hosted ci governance docs', () => {
     expect(matrixDoc).toContain('current `main` package line: `1.3.0`');
     expect(matrixDoc).toContain('current exact release line: `v1.3.5`');
     expect(matrixDoc).toContain('current `main` package line: `1.3.5`');
-    expect(matrixDoc).toContain('current `develop` package line: `1.3.5`');
-    expect(matrixDoc).toContain('active exact release candidate line on `develop`: none');
-    expect(matrixDoc).toContain('active release-candidate branch: none');
+    expect(matrixDoc).toContain('current `develop` package line: `1.3.6`');
+    expect(matrixDoc).toContain('active exact release candidate line on `develop`: `v1.3.6`');
+    expect(matrixDoc).toContain('active release-candidate branch: `release/1.3.6`');
     expect(matrixDoc).toContain('active exact hotfix candidate line on `main`: none');
     expect(matrixDoc).toContain('active hotfix branch: none');
     expect(matrixDoc).toContain('active feature-lane public-exact hardening branch on `develop`: none');

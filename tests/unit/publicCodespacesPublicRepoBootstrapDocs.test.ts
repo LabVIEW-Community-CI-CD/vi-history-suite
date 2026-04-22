@@ -33,10 +33,10 @@ describe('public Codespaces public-repo bootstrap docs', () => {
     expect(currentState).toContain('canonical `npm run public:fixture:icon-editor` helper-backed path');
     expect(currentState).toContain('generic `npm run public:repo:clone` surface');
     expect(currentState).toContain('current exact released line: `v1.3.5`');
-    expect(currentState).toContain('active exact release candidate line on `develop`: none');
+    expect(currentState).toContain('active exact release candidate line on `develop`: `v1.3.6`');
     expect(currentState).toContain('active exact hotfix candidate line on `main`: none');
     expect(currentState).toContain(
-      'authority exact-release reopening is now retained on `release/1.3.1`'
+      '`release/1.3.6` is now open from merged-green `develop` `189aa3a`'
     );
     expect(currentState).toContain('active feature-lane public-exact hardening branch on `develop`: none');
     expect(currentState).toContain('public_exact_pretag_proof');
@@ -55,7 +55,7 @@ describe('public Codespaces public-repo bootstrap docs', () => {
       'Exact public release:'
     );
     expect(candidate).toContain(
-      '`v1.3.1-github-release-published-v1.3.5-authority-tagged-public-exact-retry-blocked-until-pretag-proof`'
+      '`v1.3.1-github-release-published-v1.3.6-release-open-public-exact-retry-blocked-until-pretag-proof`'
     );
     expect(candidate).toContain('remains historical exact');
     expect(candidate).toContain('`v1.2.0` baseline evidence only');

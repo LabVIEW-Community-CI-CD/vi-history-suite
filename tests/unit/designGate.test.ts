@@ -73,9 +73,9 @@ describe('designGate tooling', () => {
       {
         id: 'standards-assurance',
         title: 'Standards assurance',
-        command: 'python3',
-        args: ['/tmp/run_assurance.py', '/tmp/vi-history-suite', '--profile', 'quick-triage'],
-        timeoutMs: 180000
+        command: 'npm',
+        args: ['run', 'assurance:release-gate'],
+        timeoutMs: 300000
       }
     ]);
   });
@@ -141,14 +141,9 @@ describe('designGate tooling', () => {
       {
         id: 'standards-assurance',
         title: 'Standards assurance',
-        command: expectedPython,
-        args: [
-          'C:/Users/sveld/.codex/skills/repo-standards-review/scripts/run_assurance.py',
-          'C:/repo/vi-history-suite',
-          '--profile',
-          'quick-triage'
-        ],
-        timeoutMs: 180000
+        command: 'cmd.exe',
+        args: ['/d', '/s', '/c', 'npm run assurance:release-gate'],
+        timeoutMs: 300000
       }
     ]);
   });

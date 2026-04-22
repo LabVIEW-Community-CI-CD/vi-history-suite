@@ -268,6 +268,51 @@ function resolvePythonInvocation(
   return { command: 'python3', args: [] };
 }
 
+function toWslMountedPath(candidatePath) {
+  const normalized = String(candidatePath).replace(/\\/g, '/');
+  const driveMatch = /^([A-Za-z]):(.*)$/.exec(normalized);
+  if (!driveMatch) {
+    return normalized;
+  }
+
+  return `/mnt/${driveMatch[1].toLowerCase()}${driveMatch[2]}`;
+}
+
+function resolveWindowsWslExecutable(env = process.env, existsSyncImpl = fs.existsSync) {
+  const systemRoot = `${env.SystemRoot || 'C:\\Windows'}`.trim();
+  const candidate = path.win32.join(systemRoot, 'System32', 'wsl.exe');
+  return existsSyncImpl(candidate) ? candidate : '';
+}
+
+function resolveWindowsAssuranceDistro(env = process.env) {
+  return `${env.VIHS_LINUX_ASSURANCE_DISTRO || 'Ubuntu-24.04'}`.trim() || 'Ubuntu-24.04';
+}
+
+function normalizeWslAssuranceArgument(argument) {
+  return /^[A-Za-z]:[\\/]/u.test(argument) || String(argument).includes('\\')
+    ? toWslMountedPath(argument)
+    : String(argument);
+}
+
+function buildWslPythonInvocation(scriptPath, scriptArgs, env = process.env, existsSyncImpl = fs.existsSync) {
+  const wslExecutable = resolveWindowsWslExecutable(env, existsSyncImpl);
+  if (!wslExecutable) {
+    return null;
+  }
+
+  return {
+    command: wslExecutable,
+    args: [
+      '-d',
+      resolveWindowsAssuranceDistro(env),
+      '--exec',
+      'python3',
+      toWslMountedPath(scriptPath),
+      ...scriptArgs.map((argument) => normalizeWslAssuranceArgument(argument))
+    ]
+  };
+}
+
 function runProcess(command, args, options = {}) {
   const result = spawnSync(command, args, {
     cwd: options.cwd,
@@ -420,23 +465,51 @@ function buildRunAssuranceArgs(lane, targetPath, rawOutputRoot) {
   ];
 }
 
-function buildLocalSkillInvocation(lane, targetPath, rawOutputRoot, env = process.env) {
+function buildLocalSkillInvocation(
+  lane,
+  targetPath,
+  rawOutputRoot,
+  env = process.env,
+  platform = process.platform,
+  existsSyncImpl = fs.existsSync
+) {
   const laneConfig = ensureLaneConfig(lane);
-  const skillRoot = resolveSkillRoot(env);
-  const python = resolvePythonInvocation(env);
+  const skillRoot = resolveSkillRoot(env, existsSyncImpl);
+  const python = resolvePythonInvocation(env, platform, existsSyncImpl);
 
   if (lane === 'requirements' || lane === 'user-info') {
     const scriptPath = path.join(skillRoot, 'scripts', laneConfig.scriptName);
+    const scriptArgs = [targetPath, '--json'];
+    if (platform === 'win32' && python.command === 'py') {
+      const wslInvocation = buildWslPythonInvocation(scriptPath, scriptArgs, env, existsSyncImpl);
+      if (wslInvocation) {
+        return wslInvocation;
+      }
+    }
+
     return {
       command: python.command,
-      args: [...python.args, scriptPath, targetPath, '--json']
+      args: [...python.args, scriptPath, ...scriptArgs]
     };
   }
 
   const runAssurancePath = path.join(skillRoot, 'scripts', 'run_assurance.py');
+  const scriptArgs = buildRunAssuranceArgs(lane, targetPath, rawOutputRoot);
+  if (platform === 'win32' && python.command === 'py') {
+    const wslInvocation = buildWslPythonInvocation(
+      runAssurancePath,
+      scriptArgs,
+      env,
+      existsSyncImpl
+    );
+    if (wslInvocation) {
+      return wslInvocation;
+    }
+  }
+
   return {
     command: python.command,
-    args: [...python.args, runAssurancePath, ...buildRunAssuranceArgs(lane, targetPath, rawOutputRoot)]
+    args: [...python.args, runAssurancePath, ...scriptArgs]
   };
 }
 
