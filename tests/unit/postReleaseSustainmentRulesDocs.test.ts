@@ -147,18 +147,21 @@ describe('post-release sustainment rules package', () => {
 
     expect(rules.releaseCadence.model).toBe('event-driven');
     expect(rules.releaseCadence.versionLineContract).toEqual({
-      retainedExactVersionReleases: ['v0.2.0', 'v1.0.0', 'v1.0.1', 'v1.0.2', 'v1.0.3', 'v1.0.4', 'v1.0.5', 'v1.0.6', 'v1.1.0', 'v1.2.0', 'v1.2.1', 'v1.2.2', 'v1.3.0', 'v1.3.1', 'v1.3.2', 'v1.3.3', 'v1.3.4', 'v1.3.5'],
+      retainedExactVersionReleases: ['v0.2.0', 'v1.0.0', 'v1.0.1', 'v1.0.2', 'v1.0.3', 'v1.0.4', 'v1.0.5', 'v1.0.6', 'v1.1.0', 'v1.2.0', 'v1.2.1', 'v1.2.2', 'v1.3.0', 'v1.3.1', 'v1.3.2', 'v1.3.3', 'v1.3.4', 'v1.3.5', 'v1.3.6'],
       burnedExactVersionReleases: ['v1.0.2'],
-      currentExactReleaseLine: 'v1.3.5',
-      currentMainPackageLine: '1.3.5',
+      currentExactReleaseLine: 'v1.3.6',
+      currentMainPackageLine: '1.3.6',
       currentDevelopPackageLine: '1.3.6',
-      activeDevelopCandidateReleaseLine: 'v1.3.6',
-      activeReleaseCandidateBranch: 'release/1.3.6',
+      activeDevelopCandidateReleaseLine: null,
+      activeReleaseCandidateBranch: null,
       activeHotfixCandidateReleaseLine: null,
       activeHotfixBranch: null,
-      activeFeatureBranch: null,
+      activeFeatureBranch: 'feature/public-github-release-transaction-hardening',
       preTagPublicExactProofPackageScript: 'npm run public:exact:pretag:proof',
       preTagPublicExactProofJob: 'public_exact_pretag_proof',
+      publicGitHubExactTransactionPackageScript: 'npm run public:github:exact:transaction:assess',
+      publicGitHubExactTransactionReceiptPath:
+        '.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json',
       publicDefaultBranch: 'main',
       publicCodespaceBranch: 'develop',
       integrationBranch: 'develop',
@@ -195,6 +198,9 @@ describe('post-release sustainment rules package', () => {
         'future sessions shall not keep landing post-release changes on the previous exact release version number',
         'future sessions shall not treat a burned exact release as the green release baseline for later publication',
         'future sessions shall keep exact tagging blocked until npm run public:exact:pretag:proof passes cleanly against the promoted public facade and GitLab public_exact_pretag_proof retains the same proof',
+        'future sessions shall assess any partially public exact GitHub transaction through npm run public:github:exact:transaction:assess before any further public GitHub release or VS Code Marketplace act',
+        'future sessions shall not open a later SemVer line while the current exact line still retains a blocked public GitHub or VS Code Marketplace transaction',
+        'future sessions shall repair the current exact line in place instead of burning a new version whenever public GitHub main, the exact tag, or a draft release already exist for that same exact line unless the retained transaction controller proves that repair is impossible',
         'future sessions shall not treat an exact release as fully closed until the matching released main line has been back-merged into develop through the protected path and the resulting develop pipeline is green',
         'future sessions shall not treat a candidate line as review-ready until the maintained public develop candidate head and maintained public wiki head are both published and retained in the authority candidate package',
         'future sessions shall keep exact tagging blocked until the post-publication expert-agent review gate closes with no findings against the exact published public candidate heads retained in the authority candidate package',
@@ -253,16 +259,18 @@ describe('post-release sustainment rules package', () => {
     expect(rules.releaseCadence.activeOpeningDecision).toEqual(
       expect.objectContaining({
         chosenBump: 'patch',
-        targetFeatureBranch: null,
-        targetReleaseBranch: 'release/1.3.6',
+        targetFeatureBranch: 'feature/public-github-release-transaction-hardening',
         preTagPublicExactProofPackageScript: 'npm run public:exact:pretag:proof',
-        preTagPublicExactProofJob: 'public_exact_pretag_proof'
+        preTagPublicExactProofJob: 'public_exact_pretag_proof',
+        publicGitHubExactTransactionPackageScript: 'npm run public:github:exact:transaction:assess',
+        publicGitHubExactTransactionReceiptPath:
+          '.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json'
       })
     );
     expect(rules.releaseCadence.activeOpeningDecision?.rationale).toEqual(
       expect.arrayContaining([
-        'authority exact v1.3.5 remains immutable while the separate public GitHub exact release still serves v1.3.1 and VS Code Marketplace 1.3.0 still define the published surfaces, so release/1.3.6 now opens from merged-green develop for the next governed public-exact retry',
-        'npm run public:exact:pretag:proof and GitLab public_exact_pretag_proof remain fail-closed gates on develop before any later exact tag act from the reopened line'
+        'authority exact v1.3.6 is already tagged on main, public GitHub main and tag are already published, and a draft GitHub release with exact assets already exists, so the governed next step is repair in place rather than another SemVer opening',
+        'the new repo-owned transaction controller now fails closed on that partial-public state and freezes later openings until npm run public:github:exact:transaction:assess proves a safe repair or retains that repair is impossible'
       ])
     );
 
@@ -575,15 +583,17 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('## Benchmark Refresh Rules');
     expect(rulesDoc).toContain('## Operator And Documentation Upkeep Rules');
     expect(rulesDoc).toContain('public GitHub default branch: `main`');
-    expect(rulesDoc).toContain('current exact released line: `v1.3.5`');
-    expect(rulesDoc).toContain('current published package line on `main`: `1.3.5`');
+    expect(rulesDoc).toContain('current exact released line: `v1.3.6`');
+    expect(rulesDoc).toContain('current published package line on `main`: `1.3.6`');
     expect(rulesDoc).toContain('current develop package line on `develop`: `1.3.6`');
-    expect(rulesDoc).toContain('active exact release candidate line on `develop`: `v1.3.6`');
-    expect(rulesDoc).toContain('active release-candidate branch: `release/1.3.6`');
+    expect(rulesDoc).toContain('`feature/public-github-release-transaction-hardening`');
+    expect(rulesDoc).toContain('`npm run public:github:exact:transaction:assess`');
+    expect(rulesDoc).toContain('active exact release candidate line on `develop`: none');
+    expect(rulesDoc).toContain('active release-candidate branch: none');
     expect(rulesDoc).toContain('active exact hotfix candidate line on `main`: none');
     expect(rulesDoc).toContain('active hotfix branch: none');
-    expect(rulesDoc).toContain('active feature-lane public-exact hardening branch on `develop`: none');
-    expect(rulesDoc).toContain('pre-tag public-exact proof hardening is now retained directly on `develop`');
+    expect(rulesDoc).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
+    expect(rulesDoc).toContain('later SemVer openings are frozen while the current exact public GitHub');
     expect(rulesDoc).toContain('chosen bump: `patch`');
     expect(rulesDoc).toContain('Current control decision for public exact hardening:');
     expect(rulesDoc).toContain('Historical opening decision that opened exact `v1.3.1`:');

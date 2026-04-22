@@ -2,14 +2,12 @@
   "schema": "vi-history-suite/public-release-candidate@v1",
   "versionLine": "1.3.6",
   "burnedExactReleaseLine": "v1.0.2",
-  "recordedAt": "2026-04-21",
+  "recordedAt": "2026-04-22",
   "authorityRepo": {
     "role": "source-of-truth",
     "integrationBranch": "develop",
     "releaseBranch": "main",
-    "activeExactReleaseCandidateLine": "v1.3.6",
-    "activeReleaseCandidateBranch": "release/1.3.6",
-    "featureHardeningBranch": null,
+    "featureHardeningBranch": "feature/public-github-release-transaction-hardening",
     "requiredChecks": [
       "public_exact_pretag_proof",
       "docs_continuous_integration",
@@ -24,9 +22,9 @@
   },
   "publishedPublicSource": {
     "repoUrl": "https://github.com/svelderrainruiz/vi-history-suite",
-    "publishedCommit": "ad351ed",
+    "publishedCommit": "bd81bfe",
     "publicationLedgerPath": "docs/product/public-github-source-publication-ledger.json",
-    "status": "published-exact-v1.3.1-main"
+    "status": "published-main-and-tag-v1.3.6-release-draft-only"
   },
   "publicDevelopCandidate": {
     "branch": "develop",
@@ -52,8 +50,8 @@
     "status": "published-v1.3.1-candidate-wiki-head"
   },
   "candidateReadiness": {
-    "authorityBaseline": "v1.3.5-tagged-on-main-release-v1.3.6-open-pretag-proof-retained-on-develop",
-    "localInstalledVsix": "not-yet-built-for-v1.3.6",
+    "authorityBaseline": "v1.3.6-tagged-on-main-public-main-and-tag-published-release-draft-only",
+    "localInstalledVsix": "released-v1.3.6-authority-evidence-retained",
     "localPublicDevcontainer": "v1.1.0-published-baseline",
     "localPublicFixtureHelper": "v1.1.0-published-baseline",
     "historicalPublicRepoBootstrapBaseline": "exact-v1.2.0-human-baseline-retained",
@@ -62,7 +60,8 @@
     "publishedSurfaceExpertAgentReview": "no-findings-on-current-v1.3.1-published-heads",
     "runtimeProviderPublicAcceptanceGate": "closed-on-published-v1.3.0-candidate-heads-retained",
     "preTagPublicExactProofGate": "required-before-any-later-exact-reopen",
-    "exactPublicRelease": "v1.3.1-github-release-published-v1.3.6-release-open-public-exact-retry-blocked-until-pretag-proof"
+    "publicGitHubExactTransactionGate": "required-before-any-further-public-github-release-or-marketplace-act",
+    "exactPublicRelease": "v1.3.1-github-release-published-v1.3.6-public-main-and-tag-published-release-draft-only"
   },
   "findingClassifications": [
     {
@@ -115,28 +114,50 @@
     "releaseBranch": "main"
   },
   "exactReleaseReopening": {
-    "status": "authority-v1.3.5-tagged-release-v1.3.6-open-public-github-exact-retry-blocked-until-pretag-proof",
+    "status": "authority-v1.3.6-tagged-public-main-and-tag-published-release-draft-only-repair-in-place-frozen",
     "hotfixBranch": null,
-    "featureBranch": null,
-    "releaseBranch": "release/1.3.6",
-    "authorityMainCommit": "8f0069d",
-    "authorityTag": "v1.3.5",
-    "publicGitHubExactCommit": "ad351ed",
+    "featureBranch": "feature/public-github-release-transaction-hardening",
+    "authorityMainCommit": "3cb238334100d01d5cfe7998e17e20a7b497b3fb",
+    "authorityTag": "v1.3.6",
+    "publicGitHubExactCommit": "bd81bfe6743348c9138c3f0f4967c790a235184f",
+    "publicGitHubExactTag": "v1.3.6",
     "publicGitHubReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.1",
-    "nextSeparateAct": "build-v1.3.6-governed-preview-vsix",
+    "publicGitHubDraftReleaseId": 312363117,
+    "publicGitHubDraftReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/untagged-308c75957d1c8136f871",
+    "nextSeparateAct": "repair-existing-v1.3.6-public-github-release-in-place-through-transaction-controller",
     "marketplaceVersionRetained": "1.3.0",
     "preTagPublicExactProofPackageScript": "npm run public:exact:pretag:proof",
-    "preTagPublicExactProofJob": "public_exact_pretag_proof"
+    "preTagPublicExactProofJob": "public_exact_pretag_proof",
+    "publicGitHubExactTransactionPackageScript": "npm run public:github:exact:transaction:assess",
+    "publicGitHubExactTransactionReceiptPath": ".cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json"
   },
   "localProofs": {
     "localInstalledVsixPreview": {
-      "status": "not-yet-built-for-v1.3.6",
+      "status": "released-v1.3.6-authority-evidence-retained",
       "version": "1.3.6",
-      "vsixPath": "preview-evidence/vi-history-suite-1.3.6.vsix",
-      "checksumPath": "preview-evidence/vi-history-suite-1.3.6.vsix.sha256",
-      "buildCommand": "npm run package -- --out \"preview-evidence/vi-history-suite-1.3.6.vsix\"",
+      "vsixPath": ".cache/gitlab-release-artifacts/v1.3.6/expanded/release-evidence/vi-history-suite-1.3.6.vsix",
+      "checksumPath": ".cache/gitlab-release-artifacts/v1.3.6/expanded/release-evidence/vi-history-suite-1.3.6.vsix.sha256",
+      "buildCommand": "not-applicable-authority-exact-v1.3.6-already-built",
       "gatingPackageScript": "npm run public:exact:pretag:proof",
       "gatingGitLabJob": "public_exact_pretag_proof"
+    },
+    "publicGitHubExactTransaction": {
+      "status": "blocked-v1.3.6-release-draft-repair-in-place-required",
+      "packageScript": "npm run public:github:exact:transaction:assess",
+      "receiptPath": ".cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json",
+      "authorityTag": "v1.3.6",
+      "authorityMainCommit": "3cb238334100d01d5cfe7998e17e20a7b497b3fb",
+      "publicMainCommit": "bd81bfe6743348c9138c3f0f4967c790a235184f",
+      "publicTag": "v1.3.6",
+      "draftReleaseId": 312363117,
+      "draftReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/untagged-308c75957d1c8136f871",
+      "vsixAssetName": "vi-history-suite-1.3.6.vsix",
+      "vsixAssetSha256": "4cba0367deacc6c1917958b47a2c227692ef373fda8b8b964203a0b955906beb",
+      "checksumAssetSha256": "7e2554c4685938b0db66cf02d04ef0292cb440ffc596ab201579252af0d038d0",
+      "openingNewSemverAllowed": false,
+      "repairInPlaceRequired": true,
+      "repairInPlaceAllowed": true,
+      "nextAllowedAction": "repair-the-existing-v1.3.6-public-github-release-only-after-safe-publishability-is-proven"
     },
     "privateRelease": {
       "status": "current-v1.3.1-private-release-published",
@@ -244,9 +265,9 @@
   },
   "activeBlockers": [
     {
-      "id": "BLOCKER-PUBLIC-EXACT-PRETAG-PROOF",
+      "id": "BLOCKER-PUBLIC-GITHUB-EXACT-TRANSACTION",
       "status": "open",
-      "summary": "Any later public GitHub exact-release retry stays blocked until npm run public:exact:pretag:proof and GitLab public_exact_pretag_proof pass cleanly against the promoted public facade."
+      "summary": "Exact v1.3.6 already publishes public GitHub main plus tag and retains draft release 312363117 with the exact assets, so no later SemVer opening, public GitHub release act, or Marketplace act may proceed until npm run public:github:exact:transaction:assess proves a safe repair-in-place path or retains that repair is impossible."
     }
   ]
 }

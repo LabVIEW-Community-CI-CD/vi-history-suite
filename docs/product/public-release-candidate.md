@@ -2,19 +2,19 @@
 
 - Version line: `1.3.6`
 - Burned exact release line: `v1.0.2`
-- Recorded at: `2026-04-21`
+- Recorded at: `2026-04-22`
 - Authority source of truth: GitLab `develop` -> `release/*` -> `main`
-- Published public source commit: `ad351ed`
+- Published public source commit: `bd81bfe`
 - Public `develop` candidate commit: `ab293d5`
 - Published public wiki head: `141c39e`
 
 ## Branch Model
 
 - Integration branch: `develop`
-- Active exact release candidate line: `v1.3.6`
-- Active release-candidate branch: `release/1.3.6`
-- Feature-lane public-exact hardening branch: none
-- Pre-tag public-exact proof hardening is now retained directly on `develop`
+- Feature-lane public GitHub release hardening branch:
+  `feature/public-github-release-transaction-hardening`
+- Later SemVer openings are frozen while the current exact public GitHub
+  transaction remains incomplete
 - Protected exact-release line: `main`
 - Release-candidate branch family: `release/*`
 - Hotfix branch family: `hotfix/*`
@@ -31,9 +31,9 @@
 ## Readiness
 
 - Authority baseline:
-  `v1.3.5-tagged-on-main-release-v1.3.6-open-pretag-proof-retained-on-develop`
+  `v1.3.6-tagged-on-main-public-main-and-tag-published-release-draft-only`
 - Local installed VSIX build:
-  `not-yet-built-for-v1.3.6`
+  `released-v1.3.6-authority-evidence-retained`
 - Local public devcontainer: `v1.1.0-published-baseline`
 - Local public fixture helper: `v1.1.0-published-baseline`
 - Historical public repo bootstrap baseline:
@@ -48,8 +48,10 @@
   `closed-on-published-v1.3.0-candidate-heads-retained`
 - Pre-tag public-exact proof gate:
   `required-before-any-later-exact-reopen`
+- Public GitHub exact transaction gate:
+  `required-before-any-further-public-github-release-or-marketplace-act`
 - Exact public release:
-  `v1.3.1-github-release-published-v1.3.6-release-open-public-exact-retry-blocked-until-pretag-proof`
+  `v1.3.1-github-release-published-v1.3.6-public-main-and-tag-published-release-draft-only`
 
 ## Exact Release Baseline
 
@@ -64,9 +66,12 @@
 
 ## Public Publication
 
-- The exact published public source head on `main` still publishes `ad351ed`,
-  and the separate public GitHub exact release `v1.3.1` is retained in
+- Public GitHub `main` now publishes `bd81bfe`, and the separate public source
+  publication is retained in
   `docs/product/public-github-source-publication-ledger.{md,json}`.
+- Public GitHub tag `v1.3.6` is now live, but the GitHub release publication
+  is still blocked on draft release `312363117`; the last published GitHub
+  release remains `v1.3.1`.
 - The maintained public `develop` candidate for `v1.3.1` still publishes
   `ab293d5` through GitHub PR `#38` and remains retained in
   `docs/product/public-github-source-publication-ledger.{md,json}`.
@@ -75,26 +80,36 @@
 - The latest retained expert-agent review still covers the current published
   source/wiki heads `ab293d5` / `141c39e` and returned
   `no findings; exact release / Marketplace publish may proceed`.
-- Authority exact `v1.3.5` is already tagged on `main` `8f0069d`, and
-  `release/1.3.6` is now open from merged-green `develop` `189aa3a` for the
-  next exact retry, but the separate public GitHub exact release act is still
-  pending; the retained pre-tag proof stays on `develop`, and the reopened
-  retry remains blocked until `npm run public:exact:pretag:proof` plus GitLab
-  `public_exact_pretag_proof` pass cleanly against the promoted public facade.
+- Authority exact `v1.3.6` is already tagged on `main`
+  `3cb238334100d01d5cfe7998e17e20a7b497b3fb`, and the governed next step is
+  repair in place through `npm run public:github:exact:transaction:assess`
+  instead of another SemVer opening.
 
 ## Local Proof
 
 - `npm run branch:governance:assert`, `npm run docs:gate:core`,
   `npm run design:gate`, and `npm run design:gate:assert-complete` passed on
-  the authority tranche before `v1.3.3` exact tagging.
+  the authority tranche before `v1.3.6` exact tagging.
 - `npm run public:exact:pretag:proof` is now the fail-closed local proof
   surface for any later exact reopen, and GitLab `public_exact_pretag_proof`
   retains the matching CI proof through
   `npm run public:exact:pretag:proof -- --evidence-dir public-exact-pretag-proof-evidence`.
-- `release/1.3.6` is now the active exact reopen line, but no governed
-  `1.3.6` preview VSIX is retained yet; the next preview build stays blocked
-  until the same fail-closed pre-tag proof remains clean against the promoted
-  public facade.
+- The retained authority exact `v1.3.6` VSIX evidence now lives at
+  `.cache/gitlab-release-artifacts/v1.3.6/expanded/release-evidence/vi-history-suite-1.3.6.vsix`
+  with matching checksum file
+  `.cache/gitlab-release-artifacts/v1.3.6/expanded/release-evidence/vi-history-suite-1.3.6.vsix.sha256`.
+- Public GitHub exact transaction assessment is now a separate fail-closed
+  local proof surface:
+  `npm run public:github:exact:transaction:assess`.
+- The retained transaction receipt path is
+  `.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json`.
+- Current retained transaction facts: public `main` `bd81bfe`, public tag
+  `v1.3.6`, draft release `312363117`, exact VSIX
+  `vi-history-suite-1.3.6.vsix`, VSIX SHA-256
+  `4cba0367deacc6c1917958b47a2c227692ef373fda8b8b964203a0b955906beb`,
+  checksum-asset SHA-256
+  `7e2554c4685938b0db66cf02d04ef0292cb440ffc596ab201579252af0d038d0`,
+  `openingNewSemverAllowed=false`, and `repairInPlaceRequired=true`.
 - The controlled Windows-only private GitLab release for exact `v1.3.1`
   remains published at
   `https://gitlab.com/svelderrainruiz/vi-history-suite/-/releases/private-v1.3.1-windows-x64`.
@@ -188,6 +203,9 @@
 - No published-surface blocker remains on the current `v1.3.1` candidate
   heads `ab293d5` / `141c39e`.
 - Public GitHub exact still serves `v1.3.1`, VS Code Marketplace remains
-  retained at `1.3.0`, and any later retry of the public GitHub exact-release
-  act stays blocked until the reopened-line pre-tag public-exact proof closes
-  cleanly.
+  retained at `1.3.0`, while public GitHub `main` plus tag already publish
+  `v1.3.6`.
+- Draft release `312363117` already retains the exact `v1.3.6` assets, so the
+  no-bump repair rule now blocks any later SemVer opening until
+  `npm run public:github:exact:transaction:assess` proves a safe in-place
+  repair path or retains that repair is impossible.

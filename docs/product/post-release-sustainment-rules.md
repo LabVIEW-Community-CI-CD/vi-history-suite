@@ -68,20 +68,27 @@ Current version-line contract:
 
 - retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`,
   `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`,
-  `v1.2.2`, `v1.3.0`, `v1.3.1`, `v1.3.2`, `v1.3.3`, `v1.3.4`, `v1.3.5`
+  `v1.2.2`, `v1.3.0`, `v1.3.1`, `v1.3.2`, `v1.3.3`, `v1.3.4`, `v1.3.5`,
+  `v1.3.6`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.3.5`
-- current published package line on `main`: `1.3.5`
+- current exact released line: `v1.3.6`
+- current published package line on `main`: `1.3.6`
 - current develop package line on `develop`: `1.3.6`
-- active exact release candidate line on `develop`: `v1.3.6`
-- active release-candidate branch: `release/1.3.6`
+- active exact release candidate line on `develop`: none
+- active release-candidate branch: none
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
-- active feature-lane public-exact hardening branch on `develop`: none
-- pre-tag public-exact proof hardening is now retained directly on `develop`
+- active feature-lane public GitHub release hardening branch on `develop`:
+  `feature/public-github-release-transaction-hardening`
+- later SemVer openings are frozen while the current exact public GitHub
+  transaction remains incomplete
 - pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
+- public GitHub exact transaction assessment package script:
+  `npm run public:github:exact:transaction:assess`
+- public GitHub exact transaction receipt:
+  `.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json`
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
@@ -93,24 +100,25 @@ Current version-line contract:
 Current control decision for public exact hardening:
 
 - chosen bump: `patch`
-- active feature-lane public-exact hardening branch: none
-- pre-tag public-exact proof hardening is now retained directly on `develop`
-- rationale: authority exact `v1.3.5` remains immutable while the separate
-  public GitHub exact release still serves `v1.3.1` and VS Code Marketplace
-  `1.3.0` still define the published surfaces, so `release/1.3.6` now opens
-  from merged-green `develop` for the next governed public-exact retry
-- rationale: `npm run public:exact:pretag:proof` and GitLab
-  `public_exact_pretag_proof` remain fail-closed gates on `develop` before
-  any later exact tag act from the reopened line
-- rejected `hotfix`: repeated exact reopen lines on `main` for brittle
-  public-source validation repairs deviated from the governed GitFlow path, so
-  the next exact retry now opens on `release/1.3.6` from `develop` instead of
-  reopening `main`
-- rejected `minor`: the validation hardening still does not add a new governed
-  capability or supported installed-user workflow
-- rejected `major`: no exact public or maintainer contract is intentionally
-  broken or removed; the retained `v1.3.1` GitHub exact release stays intact
-  while the gating fix advances on a feature lane
+- active feature-lane public GitHub release hardening branch:
+  `feature/public-github-release-transaction-hardening`
+- rationale: authority exact `v1.3.6` is already tagged on `main`, public
+  GitHub `main` plus tag are already published, and draft release `312363117`
+  already retains the exact assets, so the governed next step is repair in
+  place rather than another SemVer opening
+- rationale: the repo-owned transaction controller now fails closed on that
+  partial-public state and freezes later openings until
+  `npm run public:github:exact:transaction:assess` proves a safe repair or
+  retains that repair is impossible
+- rejected `hotfix`: opening another exact-line repair from `main` would
+  repeat the immutable-release churn instead of repairing the current
+  partially public `v1.3.6` line in place
+- rejected `minor`: the transaction hardening fixes publication control and
+  exact-release recovery discipline; it does not add a new governed capability
+  or supported installed-user workflow
+- rejected `major`: no governed public or maintainer contract is intentionally
+  being removed; this slice hardens publication control so the current exact
+  line can close safely without another burned release
 
 Historical opening decision that opened exact `v1.3.1`:
 
@@ -166,6 +174,16 @@ Strict SemVer rule after an exact release:
 - future sessions shall not treat an exact release as fully closed until the
   matching released `main` line has been back-merged into `develop` through
   the protected path and the resulting `develop` pipeline is green
+- future sessions shall assess any partially public exact GitHub transaction
+  through `npm run public:github:exact:transaction:assess` before any further
+  public GitHub release or VS Code Marketplace act
+- future sessions shall not open a later SemVer line while the current exact
+  line still retains a blocked public GitHub or VS Code Marketplace
+  transaction
+- future sessions shall repair the current exact line in place instead of
+  burning a new version whenever public GitHub `main`, the exact tag, or a
+  draft release already exist for that same exact line unless the retained
+  transaction controller proves that repair is impossible
 - future sessions shall not treat a candidate line as `review-ready` until the
   maintained public `develop` candidate head and maintained public wiki head
   are both published and retained in the authority candidate package

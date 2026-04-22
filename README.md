@@ -177,20 +177,25 @@ Authority release facts:
 
 - `SHIP-0001`: releasable `v0.2.0` VSIX product
 - landed ship tranche: `TRANCHE-009`
-- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`, `v1.2.2`, `v1.3.0`, `v1.3.1`, `v1.3.2`, `v1.3.3`, `v1.3.4`, `v1.3.5`
+- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`, `v1.2.2`, `v1.3.0`, `v1.3.1`, `v1.3.2`, `v1.3.3`, `v1.3.4`, `v1.3.5`, `v1.3.6`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.3.5`
-- current published package line on `main`: `1.3.5`
+- current exact released line: `v1.3.6`
+- current published package line on `main`: `1.3.6`
 - current develop package line on `develop`: `1.3.6`
-- active exact release candidate line on `develop`: `v1.3.6`
-- active release-candidate branch: `release/1.3.6`
+- active exact release candidate line on `develop`: none
+- active release-candidate branch: none
 - active exact hotfix candidate line on `main`: none
 - active hotfix branch: none
-- active feature-lane public-exact hardening branch on `develop`: none
-- pre-tag public-exact proof hardening is now retained directly on `develop`
+- active feature-lane public GitHub release hardening branch on `develop`:
+  `feature/public-github-release-transaction-hardening`
+- later SemVer openings are frozen while the current exact public GitHub transaction remains incomplete
 - active pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
 - active pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
+- public GitHub exact transaction assessment package script:
+  `npm run public:github:exact:transaction:assess`
+- retained public GitHub exact transaction receipt:
+  `.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json`
 - active Windows x64 private-release-prep slice: historical `release/1.3.1`
 - active Windows x64 private-release packet:
   [docs/product/private-release-windows-x64-v1.3.1.md](./docs/product/private-release-windows-x64-v1.3.1.md)
@@ -204,7 +209,7 @@ Authority release facts:
 - retained Windows x64 historical prior-line private-release packet: `v1.3.0`
 - fresh `v1.3.1` Windows host/container acceptance receipt set:
   `windows-private-release-evidence/manifest.json`
-- separate public GitHub exact release: `v1.3.1` on `ad351ed`
+- separate public GitHub exact release publication: blocked; public `main` now publishes `bd81bfe`, public tag `v1.3.6` is live, draft release `312363117` retains the exact assets, and the last published GitHub release remains `v1.3.1`
 - VS Code Marketplace retained published version: `1.3.0`
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
