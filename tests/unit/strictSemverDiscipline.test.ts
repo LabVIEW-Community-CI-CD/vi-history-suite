@@ -88,20 +88,21 @@ describe('strict semver discipline', () => {
       'v1.2.2',
       'v1.3.0',
       'v1.3.1',
-      'v1.3.2'
+      'v1.3.2',
+      'v1.3.3'
     ]);
     expect(versionLineContract.burnedExactVersionReleases).toEqual(['v1.0.2']);
     expect(versionLineContract.integrationBranch).toBe('develop');
     expect(versionLineContract.releaseBranch).toBe('release/*');
     expect(versionLineContract.hotfixBranch).toBe('hotfix/*');
     expect(versionLineContract.exactReleaseLineBranch).toBe('main');
-    expect(pkg.version).toBe('1.3.3');
-    expect(versionLineContract.currentMainPackageLine).toBe('1.3.2');
-    expect(versionLineContract.currentDevelopPackageLine).toBe('1.3.1');
+    expect(pkg.version).toBe('1.3.4');
+    expect(versionLineContract.currentMainPackageLine).toBe('1.3.3');
+    expect(versionLineContract.currentDevelopPackageLine).toBe('1.3.2');
     expect(versionLineContract.activeDevelopCandidateReleaseLine).toBeNull();
     expect(versionLineContract.activeReleaseCandidateBranch).toBeNull();
-    expect(versionLineContract.activeHotfixCandidateReleaseLine).toBe('v1.3.3');
-    expect(versionLineContract.activeHotfixBranch).toBe('hotfix/v1.3.3-public-exact-retry');
+    expect(versionLineContract.activeHotfixCandidateReleaseLine).toBe('v1.3.4');
+    expect(versionLineContract.activeHotfixBranch).toBe('hotfix/v1.3.4-public-exact-retry');
     expect(versionLineContract.publicDefaultBranch).toBe('main');
     expect(versionLineContract.currentDevelopPackageLine).not.toBe(pkg.version);
     expect(versionLineContract.publicCodespaceBranch).toBe('develop');
@@ -110,13 +111,13 @@ describe('strict semver discipline', () => {
     expect(compareSemver(pkg.version, activeCandidateReleaseLine)).toBe(0);
     expect(compareSemver(pkg.version, exactReleaseLine)).toBeGreaterThan(0);
     expect(readme).toContain('- burned exact release line: `v1.0.2`');
-    expect(readme).toContain('- current exact released line: `v1.3.2`');
-    expect(readme).toContain('- current published package line on `main`: `1.3.2`');
-    expect(readme).toContain('- current develop package line on `develop`: `1.3.1`');
+    expect(readme).toContain('- current exact released line: `v1.3.3`');
+    expect(readme).toContain('- current published package line on `main`: `1.3.3`');
+    expect(readme).toContain('- current develop package line on `develop`: `1.3.2`');
     expect(readme).toContain('- active exact release candidate line on `develop`: none');
     expect(readme).toContain('- active release-candidate branch: none');
-    expect(readme).toContain('- active exact hotfix candidate line on `main`: `v1.3.3`');
-    expect(readme).toContain('- active hotfix branch: `hotfix/v1.3.3-public-exact-retry`');
+    expect(readme).toContain('- active exact hotfix candidate line on `main`: `v1.3.4`');
+    expect(readme).toContain('- active hotfix branch: `hotfix/v1.3.4-public-exact-retry`');
     expect(readme).toContain('- active Windows x64 private-release-prep slice: historical `release/1.3.1`');
     expect(readme).toContain('docs/product/private-release-windows-x64-v1.3.1.md');
     expect(readme).toContain('- public GitHub default branch: `main`');
@@ -127,13 +128,13 @@ describe('strict semver discipline', () => {
     expect(readme).toContain('- separate public GitHub exact release: `v1.3.1` on `ad351ed`');
     expect(readme).toContain('- VS Code Marketplace retained published version: `1.3.0`');
     expect(currentState).toContain('- burned exact release line: `v1.0.2`');
-    expect(currentState).toContain('- current exact released line: `v1.3.2`');
-    expect(currentState).toContain('- current published package line on `main`: `1.3.2`');
-    expect(currentState).toContain('- current develop package line on `develop`: `1.3.1`');
+    expect(currentState).toContain('- current exact released line: `v1.3.3`');
+    expect(currentState).toContain('- current published package line on `main`: `1.3.3`');
+    expect(currentState).toContain('- current develop package line on `develop`: `1.3.2`');
     expect(currentState).toContain('- active exact release candidate line on `develop`: none');
     expect(currentState).toContain('- active release-candidate branch: none');
-    expect(currentState).toContain('- active exact hotfix candidate line on `main`: `v1.3.3`');
-    expect(currentState).toContain('- active hotfix branch: `hotfix/v1.3.3-public-exact-retry`');
+    expect(currentState).toContain('- active exact hotfix candidate line on `main`: `v1.3.4`');
+    expect(currentState).toContain('- active hotfix branch: `hotfix/v1.3.4-public-exact-retry`');
     expect(currentState).toContain('- active Windows x64 private-release-prep slice: historical `release/1.3.1`');
     expect(currentState).toContain('private-release-windows-x64-v1.3.1.md');
     expect(currentState).toContain('- public GitHub default branch: `main`');
@@ -143,14 +144,14 @@ describe('strict semver discipline', () => {
     expect(currentState).toContain('- release-candidate branch family: `release/*`');
     expect(currentState).toContain('- separate public GitHub exact release: `v1.3.1` on `ad351ed`');
     expect(currentState).toContain('- VS Code Marketplace retained published version: `1.3.0`');
-    expect(releaseProcedure).toContain('The current exact released line is `v1.3.2`.');
+    expect(releaseProcedure).toContain('The current exact released line is `v1.3.3`.');
     expect(releaseProcedure).toContain('The burned exact released line is `v1.0.2`.');
-    expect(releaseProcedure).toContain("The current published package line on `main` is `1.3.2`.");
-    expect(releaseProcedure).toContain('The current develop package line on `develop` is `1.3.1`.');
+    expect(releaseProcedure).toContain("The current published package line on `main` is `1.3.3`.");
+    expect(releaseProcedure).toContain('The current develop package line on `develop` is `1.3.2`.');
     expect(releaseProcedure).toContain('The active exact release candidate line on `develop` is none.');
     expect(releaseProcedure).toContain('The active release-candidate branch is none.');
-    expect(releaseProcedure).toContain('The active exact hotfix candidate line on `main` is `v1.3.3`.');
-    expect(releaseProcedure).toContain('The active hotfix branch is `hotfix/v1.3.3-public-exact-retry`.');
+    expect(releaseProcedure).toContain('The active exact hotfix candidate line on `main` is `v1.3.4`.');
+    expect(releaseProcedure).toContain('The active hotfix branch is `hotfix/v1.3.4-public-exact-retry`.');
     expect(releaseProcedure).toContain('The active Windows x64 private-release-prep slice is the historical');
     expect(releaseProcedure).toContain('docs/product/private-release-windows-x64-v1.3.1.md');
     expect(releaseProcedure).toContain('The public GitHub default branch is `main`');
@@ -181,7 +182,7 @@ describe('strict semver discipline', () => {
     expect(sustainmentRules.releaseCadence.strictSemverRule).toContain(
       'future sessions shall not treat a burned exact release as the green release baseline for later publication'
     );
-    expect(changelog).toContain('## [1.3.3] - 2026-04-21');
+    expect(changelog).toContain('## [1.3.4] - 2026-04-21');
     expect(changelog).toContain('## [1.3.1] - 2026-04-20');
     expect(changelog).toContain('## [1.3.0] - 2026-04-14');
     expect(changelog).toContain('## [1.2.2] - 2026-04-07');
