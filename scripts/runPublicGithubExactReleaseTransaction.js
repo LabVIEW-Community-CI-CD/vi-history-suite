@@ -23,7 +23,7 @@ const githubToken = require(path.join(repoRoot, 'scripts', 'resolveLocalGitHubTo
 
 function getUsage() {
   return [
-    'Usage: node scripts/runPublicGithubExactReleaseTransaction.js [--tag <vX.Y.Z>] [--owner <github-owner>] [--repo <github-repo>] [--github-token-path <path>] [--marketplace-item <publisher.extension>] [--evidence-dir <path>] [--help]',
+    'Usage: node scripts/runPublicGithubExactReleaseTransaction.js [--tag <vX.Y.Z>] [--draft-release-id <id>] [--owner <github-owner>] [--repo <github-repo>] [--github-token-path <path>] [--marketplace-item <publisher.extension>] [--evidence-dir <path>] [--help]',
     '',
     'Assess the public GitHub exact-release transaction fail-closed and retain a resumable phase receipt.',
     '',
@@ -44,6 +44,7 @@ function parseArgs(argv) {
     owner: DEFAULT_OWNER,
     repo: DEFAULT_REPO,
     tag: null,
+    draftReleaseId: null,
     evidenceDir: DEFAULT_EVIDENCE_DIR,
     githubTokenPath: null,
     marketplaceItem: DEFAULT_MARKETPLACE_ITEM
@@ -63,6 +64,20 @@ function parseArgs(argv) {
         throw new Error('Missing value for --tag');
       }
       parsed.tag = value.trim();
+      index += 1;
+      continue;
+    }
+
+    if (argument === '--draft-release-id') {
+      const value = argv[index + 1];
+      if (!value) {
+        throw new Error('Missing value for --draft-release-id');
+      }
+      const parsedValue = Number.parseInt(value.trim(), 10);
+      if (!Number.isInteger(parsedValue) || parsedValue <= 0) {
+        throw new Error('--draft-release-id must be a positive integer');
+      }
+      parsed.draftReleaseId = parsedValue;
       index += 1;
       continue;
     }
@@ -352,6 +367,7 @@ function buildPhase(id, title, status, summary, details = {}) {
 }
 
 function buildPublishabilityProbe(facts, assetPhaseStatus) {
+  const draftPublishabilityProbe = buildDraftPublishabilityProbe(facts, assetPhaseStatus);
   const immutableReleasePolicyStatusCode = facts.immutableReleasePolicy?.statusCode ?? null;
   const immutableReleasesEnabled = facts.immutableReleasePolicy?.enabled ?? null;
   const immutableReleasesEnforcedByOwner = facts.immutableReleasePolicy?.enforcedByOwner ?? null;
@@ -370,11 +386,13 @@ function buildPublishabilityProbe(facts, assetPhaseStatus) {
   );
   const exactAssetsRetained = assetPhaseStatus === 'pass';
 
-  let blockerCode = null;
+  let blockerCode = draftPublishabilityProbe.blockerCode ?? null;
   let rationale =
     'The non-mutating publishability probe confirms the immutable-release policy, draft tag lookup, target commitish, draft URL, and retained assets for a safe in-place publish attempt.';
 
-  if (!draftReleaseDiscoveredByList) {
+  if (draftPublishabilityProbe.safeToAttemptPublishDraftInPlace !== true) {
+    rationale = `The non-mutating draft-publishability probe is blocked: ${draftPublishabilityProbe.rationale}`;
+  } else if (!draftReleaseDiscoveredByList) {
     blockerCode = 'draft-release-missing';
     rationale = 'No retained draft release was found for the current exact line.';
   } else if (!draftReleaseIsDraft) {
@@ -407,6 +425,11 @@ function buildPublishabilityProbe(facts, assetPhaseStatus) {
     safeToAttemptRepairPublish: blockerCode === null,
     blockerCode,
     rationale,
+    draftPublishabilityStatus: draftPublishabilityProbe.status,
+    draftPublishabilityBlockerCode: draftPublishabilityProbe.blockerCode,
+    draftPublishabilityReleaseId: draftPublishabilityProbe.requestedDraftReleaseId,
+    draftPublishabilityByIdStatusCode: draftPublishabilityProbe.draftReleaseByIdStatusCode,
+    draftPublishabilitySafeToAttemptPublish: draftPublishabilityProbe.safeToAttemptPublishDraftInPlace,
     immutableReleasePolicyStatusCode,
     immutableReleasesEnabled,
     immutableReleasesEnforcedByOwner,
@@ -418,6 +441,100 @@ function buildPublishabilityProbe(facts, assetPhaseStatus) {
     draftReleaseDiscoveredByTag,
     draftReleaseHtmlUrl,
     draftReleaseHtmlUrlUsesUntaggedPath,
+    exactAssetsRetained
+  };
+}
+
+function buildDraftPublishabilityProbe(facts, assetPhaseStatus) {
+  const immutableReleasePolicyStatusCode = facts.immutableReleasePolicy?.statusCode ?? null;
+  const immutableReleasesEnabled = facts.immutableReleasePolicy?.enabled ?? null;
+  const immutableReleasesEnforcedByOwner = facts.immutableReleasePolicy?.enforcedByOwner ?? null;
+  const requestedDraftReleaseId = facts.publicReleaseByIdLookup?.requestedDraftReleaseId ?? null;
+  const draftReleaseByIdStatusCode = facts.publicReleaseByIdLookup?.statusCode ?? null;
+  const draftRelease = facts.publicRelease ?? null;
+  const draftReleaseResolvedById = draftReleaseByIdStatusCode === 200;
+  const draftReleaseId = draftRelease?.id ?? null;
+  const draftReleaseIdMatchesRequested =
+    requestedDraftReleaseId !== null && draftReleaseId === requestedDraftReleaseId;
+  const draftReleaseIsDraft = draftRelease?.draft === true;
+  const draftReleaseTag = draftRelease?.tag_name ?? null;
+  const draftReleaseTagMatchesAuthority = draftReleaseTag === facts.authority.tag;
+  const draftReleaseTargetCommitish = draftRelease?.target_commitish ?? null;
+  const draftReleaseTargetsMain = draftReleaseTargetCommitish === 'main';
+  const draftReleaseImmutable = draftRelease?.immutable === true;
+  const draftReleaseLookupByTagStatusCode = facts.publicReleaseLookup?.statusCode ?? null;
+  const draftReleaseHtmlUrl = draftRelease?.html_url ?? null;
+  const draftReleaseHtmlUrlUsesUntaggedPath = Boolean(
+    draftReleaseHtmlUrl && draftReleaseHtmlUrl.includes('/untagged-')
+  );
+  const exactAssetsRetained = assetPhaseStatus === 'pass';
+
+  let blockerCode = null;
+  let rationale =
+    'The non-mutating draft-publishability probe confirms the retained draft release by id, its tag binding, target commitish, immutable-release posture, and exact asset set before any in-place publish attempt is considered.';
+
+  if (requestedDraftReleaseId === null) {
+    blockerCode = 'draft-release-id-unresolved';
+    rationale = 'No retained draft release id is available for the current exact line.';
+  } else if (!draftReleaseResolvedById) {
+    blockerCode = 'draft-release-id-lookup-failed';
+    rationale = `Draft release ${requestedDraftReleaseId} could not be read back by id.`;
+  } else if (!draftReleaseIdMatchesRequested) {
+    blockerCode = 'draft-release-id-mismatch';
+    rationale = `Draft release lookup by id did not return the requested release ${requestedDraftReleaseId}.`;
+  } else if (!draftReleaseIsDraft) {
+    blockerCode = 'draft-release-not-draft';
+    rationale = `Release ${requestedDraftReleaseId} is no longer a draft.`;
+  } else if (!draftReleaseTagMatchesAuthority) {
+    blockerCode = 'draft-release-tag-mismatch';
+    rationale = `Draft release ${requestedDraftReleaseId} does not retain authority tag ${facts.authority.tag}.`;
+  } else if (!draftReleaseTargetsMain) {
+    blockerCode = 'draft-release-target-commitish-mismatch';
+    rationale = `Draft release ${requestedDraftReleaseId} does not target public GitHub main.`;
+  } else if (immutableReleasePolicyStatusCode !== 200) {
+    blockerCode = 'immutable-release-policy-unconfirmed';
+    rationale =
+      'The controller could not prove the repo immutable-release policy non-mutatively, so the draft publishability state remains unconfirmed.';
+  } else if (draftReleaseLookupByTagStatusCode !== 200) {
+    blockerCode = 'draft-release-tag-lookup-unavailable';
+    rationale =
+      `Draft release ${requestedDraftReleaseId} is readable by id and still carries the exact assets, but immutable releases are enabled while exact-tag release lookup still returns ${draftReleaseLookupByTagStatusCode}, so a safe in-place draft publish transition cannot yet be proven non-mutatively.`;
+  } else if (draftReleaseHtmlUrlUsesUntaggedPath) {
+    blockerCode = 'draft-release-html-url-still-untagged';
+    rationale =
+      `Draft release ${requestedDraftReleaseId} still resolves through an untagged GitHub release URL, so the controller cannot yet prove a safe exact-tag publish transition.`;
+  } else if (draftReleaseImmutable) {
+    blockerCode = 'draft-release-already-immutable';
+    rationale =
+      `Draft release ${requestedDraftReleaseId} is already immutable, so the controller cannot prove an in-place draft publish transition.`;
+  } else if (!exactAssetsRetained) {
+    blockerCode = 'draft-release-assets-mismatch';
+    rationale =
+      `Draft release ${requestedDraftReleaseId} does not yet fully match the retained exact assets.`;
+  }
+
+  return {
+    status: blockerCode === null ? 'pass' : 'blocked',
+    safeToAttemptPublishDraftInPlace: blockerCode === null,
+    blockerCode,
+    rationale,
+    requestedDraftReleaseId,
+    draftReleaseByIdStatusCode,
+    draftReleaseResolvedById,
+    draftReleaseId,
+    draftReleaseIdMatchesRequested,
+    draftReleaseIsDraft,
+    draftReleaseTag,
+    draftReleaseTagMatchesAuthority,
+    draftReleaseTargetCommitish,
+    draftReleaseTargetsMain,
+    draftReleaseImmutable,
+    draftReleaseLookupByTagStatusCode,
+    draftReleaseHtmlUrl,
+    draftReleaseHtmlUrlUsesUntaggedPath,
+    immutableReleasePolicyStatusCode,
+    immutableReleasesEnabled,
+    immutableReleasesEnforcedByOwner,
     exactAssetsRetained
   };
 }
@@ -537,6 +654,21 @@ function assessTransaction(facts) {
     )
   );
 
+  const draftPublishabilityProbe = buildDraftPublishabilityProbe(facts, assetPhaseStatus);
+  phases.push(
+    buildPhase(
+      'public-release-draft-publishability',
+      'Public GitHub draft release publishability proven',
+      draftPublishabilityProbe.safeToAttemptPublishDraftInPlace ? 'pass' : 'blocked',
+      draftPublishabilityProbe.safeToAttemptPublishDraftInPlace
+        ? 'The non-mutating draft-publishability probe proves a safe in-place publish transition for the retained draft release.'
+        : `The non-mutating draft-publishability probe is blocked: ${draftPublishabilityProbe.rationale}`,
+      {
+        draftPublishabilityProbe
+      }
+    )
+  );
+
   const publishabilityProbe = buildPublishabilityProbe(facts, assetPhaseStatus);
   const publishabilityBlocked = publishabilityProbe.safeToAttemptRepairPublish !== true;
   phases.push(
@@ -605,6 +737,7 @@ function assessTransaction(facts) {
   return {
     status: assessmentStatus,
     phases,
+    draftPublishabilityProbe,
     publishabilityProbe,
     semverFreeze: {
       status: openingNewSemverAllowed ? 'clear' : 'frozen',
@@ -653,6 +786,20 @@ function buildMarkdown(report) {
     `- Public GitHub main: ${report.publicSource.mainSha ?? 'unknown'}`,
     `- Public GitHub tag: ${report.publicSource.tagRef ?? 'missing'}`,
     `- Marketplace version: ${report.marketplace.currentPublishedVersion ?? 'unknown'}`,
+    '',
+    '## Draft Publishability Probe',
+    '',
+    `- Status: ${report.draftPublishabilityProbe.status}`,
+    `- Safe in-place draft publish attempt allowed: ${report.draftPublishabilityProbe.safeToAttemptPublishDraftInPlace}`,
+    `- Requested draft release id: ${report.draftPublishabilityProbe.requestedDraftReleaseId ?? 'unknown'}`,
+    `- Draft release by-id status: ${report.draftPublishabilityProbe.draftReleaseByIdStatusCode ?? 'unknown'}`,
+    `- Draft release id matches requested: ${report.draftPublishabilityProbe.draftReleaseIdMatchesRequested}`,
+    `- Draft release tag matches authority: ${report.draftPublishabilityProbe.draftReleaseTagMatchesAuthority}`,
+    `- Blocker code: ${report.draftPublishabilityProbe.blockerCode ?? 'none'}`,
+    `- Rationale: ${report.draftPublishabilityProbe.rationale}`,
+    `- Draft release target commitish: ${report.draftPublishabilityProbe.draftReleaseTargetCommitish ?? 'unknown'}`,
+    `- Draft release tag lookup status: ${report.draftPublishabilityProbe.draftReleaseLookupByTagStatusCode ?? 'unknown'}`,
+    `- Draft release uses untagged URL: ${report.draftPublishabilityProbe.draftReleaseHtmlUrlUsesUntaggedPath}`,
     '',
     '## Publishability Probe',
     '',
@@ -770,17 +917,16 @@ async function runAssessment(argv = process.argv.slice(2), deps = {}) {
   const matchedRelease = Array.isArray(releasesResponse.json)
     ? releasesResponse.json.find((release) => release.tag_name === tag) ?? null
     : null;
-  const publicRelease =
-    matchedRelease && matchedRelease.url
-      ? (
-          await (deps.fetchGitHubJson ?? fetchGitHubJson)(
-            parsed.owner,
-            parsed.repo,
-            matchedRelease.url.replace(`https://api.github.com/repos/${parsed.owner}/${parsed.repo}`, ''),
-            token
-          )
-        ).json
-      : null;
+  const requestedDraftReleaseId = parsed.draftReleaseId ?? matchedRelease?.id ?? null;
+  const releaseByIdResponse = requestedDraftReleaseId
+    ? await (deps.fetchGitHubJson ?? fetchGitHubJson)(
+        parsed.owner,
+        parsed.repo,
+        `/releases/${requestedDraftReleaseId}`,
+        token
+      )
+    : { statusCode: 0, json: null };
+  const publicRelease = releaseByIdResponse.statusCode === 200 ? releaseByIdResponse.json : null;
   const releaseManifest = readReleaseManifest(tag, fsApi);
   const packageVersion =
     releaseManifest?.manifest?.packageVersion ??
@@ -828,6 +974,10 @@ async function runAssessment(argv = process.argv.slice(2), deps = {}) {
     publicReleaseLookup: {
       statusCode: releaseByTagResponse.statusCode
     },
+    publicReleaseByIdLookup: {
+      requestedDraftReleaseId,
+      statusCode: requestedDraftReleaseId ? releaseByIdResponse.statusCode : null
+    },
     publicReleases,
     publicRelease: publicRelease
       ? {
@@ -857,6 +1007,7 @@ async function runAssessment(argv = process.argv.slice(2), deps = {}) {
     publicSource: facts.publicSource,
     immutableReleasePolicy: facts.immutableReleasePolicy,
     publicReleaseLookup: facts.publicReleaseLookup,
+    publicReleaseByIdLookup: facts.publicReleaseByIdLookup,
     publicRelease: facts.publicRelease,
     publicReleases: facts.publicReleases,
     releaseManifest: facts.releaseManifest
@@ -871,6 +1022,7 @@ async function runAssessment(argv = process.argv.slice(2), deps = {}) {
       : null,
     marketplace: facts.marketplace,
     phases: assessment.phases,
+    draftPublishabilityProbe: assessment.draftPublishabilityProbe,
     publishabilityProbe: assessment.publishabilityProbe,
     semverFreeze: assessment.semverFreeze,
     repairInPlace: assessment.repairInPlace

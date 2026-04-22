@@ -52,6 +52,14 @@ type SustainmentRules = {
         draftReleaseLookupStatusCode: number;
         draftReleaseHtmlUrlUsesUntaggedPath: boolean;
       };
+      publicGitHubExactDraftPublishabilityProbe?: {
+        status: string;
+        blockerCode: string;
+        draftReleaseId: number;
+        draftReleaseByIdStatusCode: number;
+        draftReleaseTagMatchesAuthority: boolean;
+        safeToAttemptPublish: boolean;
+      };
       publicDefaultBranch?: string;
       publicCodespaceBranch: string;
       integrationBranch?: string;
@@ -189,6 +197,14 @@ describe('post-release sustainment rules package', () => {
         draftReleaseLookupStatusCode: 404,
         draftReleaseHtmlUrlUsesUntaggedPath: true
       },
+      publicGitHubExactDraftPublishabilityProbe: {
+        status: 'blocked',
+        blockerCode: 'draft-release-tag-lookup-unavailable',
+        draftReleaseId: 312363117,
+        draftReleaseByIdStatusCode: 200,
+        draftReleaseTagMatchesAuthority: true,
+        safeToAttemptPublish: false
+      },
       publicDefaultBranch: 'main',
       publicCodespaceBranch: 'develop',
       integrationBranch: 'develop',
@@ -226,7 +242,7 @@ describe('post-release sustainment rules package', () => {
           'future sessions shall not treat a burned exact release as the green release baseline for later publication',
           'future sessions shall keep exact tagging blocked until npm run public:exact:pretag:proof passes cleanly against the promoted public facade and GitLab public_exact_pretag_proof retains the same proof',
           'future sessions shall assess any partially public exact GitHub transaction through npm run public:github:exact:transaction:assess before any further public GitHub release or VS Code Marketplace act',
-          "future sessions shall retain the controller's non-mutating immutable-release publishability probe before any in-place public GitHub release repair attempt",
+          "future sessions shall retain the controller's non-mutating draft-publishability probe before any in-place public GitHub release repair attempt",
           'future sessions shall not open a later SemVer line while the current exact line still retains a blocked public GitHub or VS Code Marketplace transaction',
           'future sessions shall repair the current exact line in place instead of burning a new version whenever public GitHub main, the exact tag, or a draft release already exist for that same exact line unless the retained transaction controller proves that repair is impossible',
         'future sessions shall not treat an exact release as fully closed until the matching released main line has been back-merged into develop through the protected path and the resulting develop pipeline is green',
@@ -298,7 +314,7 @@ describe('post-release sustainment rules package', () => {
     expect(rules.releaseCadence.activeOpeningDecision?.rationale).toEqual(
       expect.arrayContaining([
         'authority exact v1.3.6 is already tagged on main, public GitHub main and tag are already published, and a draft GitHub release with exact assets already exists, so the governed next step is repair in place rather than another SemVer opening',
-        'the new repo-owned transaction controller now fails closed on that partial-public state, retains the non-mutating immutable-release publishability probe, and freezes later openings until npm run public:github:exact:transaction:assess proves a safe repair or retains the exact blocker or impossibility state'
+        'the new repo-owned transaction controller now fails closed on that partial-public state, retains the non-mutating draft-publishability probe against release 312363117, and freezes later openings until npm run public:github:exact:transaction:assess proves a safe repair or retains the exact blocker or impossibility state'
       ])
     );
 
@@ -617,6 +633,9 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('active feature-lane public GitHub release hardening branch on `develop`:');
     expect(rulesDoc).toContain('none');
     expect(rulesDoc).toContain('`npm run public:github:exact:transaction:assess`');
+    expect(rulesDoc).toContain('draft release `312363117` is readable by id with status `200`');
+    expect(rulesDoc).toContain('still matches');
+    expect(rulesDoc).toContain('authority tag `v1.3.6`');
     expect(rulesDoc).toContain('immutable releases `enabled=true`, `enforced_by_owner=false`');
     expect(rulesDoc).toContain('exact-tag release lookup returns `404`');
     expect(rulesDoc).toContain('draft still serves an `untagged-*` URL');
@@ -646,8 +665,8 @@ describe('post-release sustainment rules package', () => {
     expect(rulesDoc).toContain('design:gate');
     expect(rulesDoc).toContain('burned exact release line');
     expect(rulesDoc).toContain('VS Code Marketplace exact publication state');
-    expect(rulesDoc).toContain("future sessions shall retain the controller's non-mutating immutable-release");
-    expect(rulesDoc).toContain('publishability probe before any in-place public GitHub release repair');
+    expect(rulesDoc).toContain("future sessions shall retain the controller's non-mutating");
+    expect(rulesDoc).toContain('draft-publishability probe before any in-place public GitHub release repair');
     expect(rulesDoc).toContain('future sessions shall not treat an exact release as fully closed');
     expect(rulesDoc).toContain('installed-user entry surfaces');
     expect(rulesDoc).toContain('PROGRAM-0002');

@@ -126,6 +126,12 @@
     "publicGitHubDraftReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/untagged-308c75957d1c8136f871",
     "publicGitHubPublishabilityProbeStatus": "blocked",
     "publicGitHubPublishabilityBlockerCode": "draft-release-tag-lookup-unavailable",
+    "publicGitHubDraftPublishabilityProbeStatus": "blocked",
+    "publicGitHubDraftPublishabilityBlockerCode": "draft-release-tag-lookup-unavailable",
+    "publicGitHubDraftPublishabilityProbeReleaseId": 312363117,
+    "publicGitHubDraftPublishabilityByIdStatusCode": 200,
+    "publicGitHubDraftPublishabilityTagMatchesAuthority": true,
+    "publicGitHubDraftPublishabilitySafeToAttemptPublish": false,
     "publicGitHubImmutableReleasesEnabled": true,
     "publicGitHubImmutableReleasesEnforcedByOwner": false,
     "publicGitHubDraftReleaseTargetCommitish": "main",
@@ -164,6 +170,13 @@
       "publishabilityProbeStatus": "blocked",
       "publishabilityBlockerCode": "draft-release-tag-lookup-unavailable",
       "publishabilityBlockerSummary": "Immutable releases are enabled, but the retained draft is still discoverable only by id/list; release lookup by the exact tag remains unavailable.",
+      "draftPublishabilityProbeStatus": "blocked",
+      "draftPublishabilityBlockerCode": "draft-release-tag-lookup-unavailable",
+      "draftPublishabilityBlockerSummary": "Draft release 312363117 is readable by id and still carries the exact assets, but immutable releases are enabled while exact-tag release lookup still returns 404, so a safe in-place draft publish transition cannot yet be proven non-mutatively.",
+      "draftPublishabilityProbeReleaseId": 312363117,
+      "draftPublishabilityByIdStatusCode": 200,
+      "draftPublishabilityTagMatchesAuthority": true,
+      "draftPublishabilitySafeToAttemptPublish": false,
       "immutableReleasePolicyStatusCode": 200,
       "immutableReleasesEnabled": true,
       "immutableReleasesEnforcedByOwner": false,
@@ -286,7 +299,7 @@
     {
       "id": "BLOCKER-PUBLIC-GITHUB-EXACT-TRANSACTION",
       "status": "open",
-      "summary": "Exact v1.3.6 already publishes public GitHub main plus tag and retains draft release 312363117 with the exact assets, but immutable releases are enabled while release lookup by the exact tag still returns 404 and the draft still uses an untagged URL, so no later SemVer opening, public GitHub release act, or Marketplace act may proceed until npm run public:github:exact:transaction:assess proves a safe repair-in-place path or retains that repair is impossible."
+      "summary": "Exact v1.3.6 already publishes public GitHub main plus tag and retains draft release 312363117 with the exact assets; the new non-mutating draft-publishability probe can read that draft by id and confirms it still matches the authority tag, but immutable releases are enabled while exact-tag release lookup still returns 404 and the draft still uses an untagged URL, so no later SemVer opening, public GitHub release act, or Marketplace act may proceed until npm run public:github:exact:transaction:assess proves a safe repair-in-place path or retains that repair is impossible."
     }
   ]
 }
