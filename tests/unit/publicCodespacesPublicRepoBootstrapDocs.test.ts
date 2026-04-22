@@ -32,13 +32,13 @@ describe('public Codespaces public-repo bootstrap docs', () => {
     expect(currentState).toContain('`TRANCHE-014`: Public Codespaces public-repo bootstrap');
     expect(currentState).toContain('canonical `npm run public:fixture:icon-editor` helper-backed path');
     expect(currentState).toContain('generic `npm run public:repo:clone` surface');
-    expect(currentState).toContain('current exact released line: `v1.3.2`');
+    expect(currentState).toContain('current exact released line: `v1.3.3`');
     expect(currentState).toContain('active exact release candidate line on `develop`: none');
-    expect(currentState).toContain('active exact hotfix candidate line on `main`: `v1.3.3`');
+    expect(currentState).toContain('active exact hotfix candidate line on `main`: `v1.3.4`');
     expect(currentState).toContain(
       'authority exact-release reopening is now retained on `release/1.3.1`'
     );
-    expect(currentState).toContain('`hotfix/v1.3.3-public-exact-retry` from exact `v1.3.2` `main`');
+    expect(currentState).toContain('`hotfix/v1.3.4-public-exact-retry` from exact `v1.3.3` `main`');
 
     expect(candidate).toContain(
       'Decision: helper-backed canonical path plus generic public-repo reference manual'
@@ -54,7 +54,7 @@ describe('public Codespaces public-repo bootstrap docs', () => {
       'Exact public release:'
     );
     expect(candidate).toContain(
-      '`v1.3.1-github-release-published-v1.3.2-public-retry-pending`'
+      '`v1.3.1-github-release-published-v1.3.4-public-retry-pending`'
     );
     expect(candidate).toContain('remains historical exact');
     expect(candidate).toContain('`v1.2.0` baseline evidence only');

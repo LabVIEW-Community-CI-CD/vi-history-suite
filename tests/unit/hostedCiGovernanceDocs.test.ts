@@ -30,13 +30,13 @@ describe('hosted ci governance docs', () => {
 
     expect(matrix.openingDecision).toEqual(
       expect.objectContaining({
-        currentExactReleaseLine: 'v1.3.2',
-        currentMainPackageLine: '1.3.2',
-        currentDevelopPackageLine: '1.3.1',
+        currentExactReleaseLine: 'v1.3.3',
+        currentMainPackageLine: '1.3.3',
+        currentDevelopPackageLine: '1.3.2',
         activeDevelopCandidateReleaseLine: null,
         activeReleaseCandidateBranch: null,
-        activeHotfixCandidateReleaseLine: 'v1.3.3',
-        activeHotfixBranch: 'hotfix/v1.3.3-public-exact-retry',
+        activeHotfixCandidateReleaseLine: 'v1.3.4',
+        activeHotfixBranch: 'hotfix/v1.3.4-public-exact-retry',
         chosenBump: 'patch'
       })
     );
@@ -296,15 +296,15 @@ describe('hosted ci governance docs', () => {
 
     expect(matrixDoc).toContain('current exact release line: `v1.3.0`');
     expect(matrixDoc).toContain('current `main` package line: `1.3.0`');
-    expect(matrixDoc).toContain('current exact release line: `v1.3.2`');
-    expect(matrixDoc).toContain('current `main` package line: `1.3.2`');
-    expect(matrixDoc).toContain('current `develop` package line: `1.3.1`');
+    expect(matrixDoc).toContain('current exact release line: `v1.3.3`');
+    expect(matrixDoc).toContain('current `main` package line: `1.3.3`');
+    expect(matrixDoc).toContain('current `develop` package line: `1.3.2`');
     expect(matrixDoc).toContain('active exact release candidate line on `develop`: none');
     expect(matrixDoc).toContain('active release-candidate branch: none');
-    expect(matrixDoc).toContain('active exact hotfix candidate line on `main`: `v1.3.3`');
-    expect(matrixDoc).toContain('active hotfix branch: `hotfix/v1.3.3-public-exact-retry`');
+    expect(matrixDoc).toContain('active exact hotfix candidate line on `main`: `v1.3.4`');
+    expect(matrixDoc).toContain('active hotfix branch: `hotfix/v1.3.4-public-exact-retry`');
     expect(matrixDoc).toContain('chosen bump: `patch`');
-    expect(matrixDoc).toContain('Active Opening Decision For v1.3.3');
+    expect(matrixDoc).toContain('Active Opening Decision For v1.3.4');
     expect(matrixDoc).toContain('npm run branch:governance:assert');
     expect(matrixDoc).toContain('merge gate: `only_allow_merge_if_pipeline_succeeds=true`');
     expect(matrixDoc).toContain('classification: characterization-only experiment automation');
