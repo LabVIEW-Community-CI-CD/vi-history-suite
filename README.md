@@ -177,15 +177,15 @@ Authority release facts:
 
 - `SHIP-0001`: releasable `v0.2.0` VSIX product
 - landed ship tranche: `TRANCHE-009`
-- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`, `v1.2.2`, `v1.3.0`, `v1.3.1`, `v1.3.2`
+- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`, `v1.2.2`, `v1.3.0`, `v1.3.1`, `v1.3.2`, `v1.3.3`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.3.2`
-- current published package line on `main`: `1.3.2`
-- current develop package line on `develop`: `1.3.1`
+- current exact released line: `v1.3.3`
+- current published package line on `main`: `1.3.3`
+- current develop package line on `develop`: `1.3.2`
 - active exact release candidate line on `develop`: none
 - active release-candidate branch: none
-- active exact hotfix candidate line on `main`: `v1.3.3`
-- active hotfix branch: `hotfix/v1.3.3-public-exact-retry`
+- active exact hotfix candidate line on `main`: `v1.3.4`
+- active hotfix branch: `hotfix/v1.3.4-public-exact-retry`
 - active Windows x64 private-release-prep slice: historical `release/1.3.1`
 - active Windows x64 private-release packet:
   [docs/product/private-release-windows-x64-v1.3.1.md](./docs/product/private-release-windows-x64-v1.3.1.md)

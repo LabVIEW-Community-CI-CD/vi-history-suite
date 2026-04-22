@@ -34,7 +34,7 @@ describe('public repo package surface', () => {
     );
     const previewWorkflow = readText('.github/workflows/public-facade-package-preview.yml');
 
-    expect(manifest.version).toBe('1.3.3');
+    expect(manifest.version).toBe('1.3.4');
     expect(manifest.files).toEqual([
       'out/**',
       'node_modules/jsonc-parser/**',
@@ -152,10 +152,10 @@ describe('public repo package surface', () => {
     expect(previewWorkflow).toContain('npm run package -- --out artifacts/vi-history-suite-public-preview.vsix');
     const changelog = readText('CHANGELOG.md');
     expect(changelog).toContain('Retained exact-version releases now include `v0.2.0`, `v1.0.0`, `v1.0.1`,');
-    expect(changelog).toContain('`v1.2.1`.');
-    expect(changelog).toContain('## [1.3.3] - 2026-04-21');
-    expect(changelog).toContain('`v1.3.2` remains immutable while the public GitHub exact release still serves `v1.3.1`');
-    expect(changelog).toContain('stale authority-side public-source validation expectations');
+    expect(changelog).toContain('`v1.3.3`.');
+    expect(changelog).toContain('## [1.3.4] - 2026-04-21');
+    expect(changelog).toContain('`v1.3.3` on `main` remains immutable while the public GitHub exact release still serves `v1.3.1`');
+    expect(changelog).toContain('last stale public facade changelog expectation');
     expect(changelog).toContain('## [1.3.2] - 2026-04-21');
     expect(changelog).toContain('## [1.3.0] - 2026-04-14');
   });
