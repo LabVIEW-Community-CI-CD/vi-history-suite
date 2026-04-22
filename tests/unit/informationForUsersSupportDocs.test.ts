@@ -68,22 +68,23 @@ describe('information-for-users support docs', () => {
     expect(faq).toContain('npm run proof:runtime-settings-live-session');
     expect(faq).toContain('.cache/runtime-settings-live-session-proof/latest/');
 
-    expect(readme).toContain('Install And Use');
-    expect(readme).toContain('If you want to install the extension and use it locally, start here.');
-    expect(readme).toContain('install-vihs-extension.ps1');
+    expect(readme).toContain('Install The Extension');
+    expect(readme).toContain('code --install-extension svelderrainruiz.vi-history-suite');
     expect(readme).toContain('vihs --validate');
+    expect(readme).toContain('Compare A VI');
     expect(readme).toContain('Report A Problem Or Request Support');
     expect(readme).toContain('issues/new/choose');
-    expect(readme).toContain('LabVIEW version support request');
-    expect(readme).toContain('Need Source Evaluation Or Contribution?');
+    expect(readme).toContain('LabVIEW Version Support Request');
+    expect(readme).toContain('Evaluate From Source');
+    expect(readme).toContain('Contribute');
     expect(readme).toContain('Authority And Release Control');
 
-    expect(install).toContain('Active `develop` Windows x64 Private-Release Candidate');
-    expect(install).toContain('The active `develop` candidate is a Windows x64 private-release route.');
-    expect(install).toContain('install-vihs-extension.ps1');
+    expect(install).toContain('Install The Extension');
+    expect(install).toContain('code --install-extension svelderrainruiz.vi-history-suite');
+    expect(install).toContain('Source Evaluation And Codespaces');
     expect(install).toContain('vihs --validate');
-    expect(install).toContain('Docker Desktop in Windows-container mode only when using the bounded expert');
-    expect(install).toContain('The active private-release claim on `develop` is Windows x64 only.');
+    expect(install).toContain('Use this lane only when you want to inspect the source repo');
+    expect(install).toContain('docker info --format');
 
     expect(commandReference).toContain('npm run docs:workbench:gate');
     expect(commandReference).toContain('install-vihs-extension.ps1');
@@ -114,7 +115,7 @@ describe('information-for-users support docs', () => {
     expect(commandReference).toContain('npm run assurance:release-gate');
     expect(commandReference).toContain('npm run assurance:26514:authority');
     expect(commandReference).toContain('npm run assurance:user-info');
-    expect(readme).toContain('install-vihs-extension.ps1');
+    expect(readme).toContain('code --install-extension svelderrainruiz.vi-history-suite');
     expect(readme).toContain('vihs --validate');
   });
 });

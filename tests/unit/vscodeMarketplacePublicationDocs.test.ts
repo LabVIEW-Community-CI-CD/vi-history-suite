@@ -87,14 +87,14 @@ describe('vs code marketplace publication and installed-user docs', () => {
 
     expect(pkg.homepage).toBe('https://github.com/svelderrainruiz/vi-history-suite/wiki');
 
-    expect(readme).toContain('Install And Use');
-    expect(readme).toContain('If you want to install the extension and use it locally, start here.');
-    expect(readme).toContain('install-vihs-extension.ps1');
+    expect(readme).toContain('Install The Extension');
+    expect(readme).toContain('code --install-extension svelderrainruiz.vi-history-suite');
     expect(readme).toContain('vihs --validate');
     expect(readme).toContain('Report A Problem Or Request Support');
-    expect(readme).toContain('issues/new/choose');
-    expect(readme).toContain('LabVIEW version support request');
-    expect(readme).toContain('Need Source Evaluation Or Contribution?');
+    expect(readme).toContain('Issue Chooser');
+    expect(readme).toContain('LabVIEW Version Support Request');
+    expect(readme).toContain('Evaluate From Source');
+    expect(readme).toContain('Contribute');
 
     expect(publicReadme).toContain('Install The Extension');
     expect(publicReadme).toContain('code --install-extension svelderrainruiz.vi-history-suite');
