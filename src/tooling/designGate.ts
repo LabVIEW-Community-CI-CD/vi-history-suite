@@ -278,6 +278,19 @@ export function buildDesignGatePlan(
       )
     },
     {
+      id: 'public-exact-pretag-proof',
+      title: 'Public exact pre-tag proof',
+      command: resolveDesignGateCommand('npm', platform, environment, pathExists),
+      args: resolveDesignGateArgs(
+        'npm',
+        ['run', 'public:exact:pretag:proof'],
+        platform,
+        environment,
+        pathExists
+      ),
+      timeoutMs: 300000
+    },
+    {
       id: 'standards-assurance',
       title: 'Standards assurance',
       command: resolveDesignGateCommand('python3', platform, environment, pathExists),

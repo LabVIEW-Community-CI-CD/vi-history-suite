@@ -68,15 +68,20 @@ Current version-line contract:
 
 - retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`,
   `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`,
-  `v1.2.2`, `v1.3.0`, `v1.3.1`, `v1.3.2`, `v1.3.3`, `v1.3.4`
+  `v1.2.2`, `v1.3.0`, `v1.3.1`, `v1.3.2`, `v1.3.3`, `v1.3.4`, `v1.3.5`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.3.4`
-- current published package line on `main`: `1.3.4`
-- current develop package line on `develop`: `1.3.3`
+- current exact released line: `v1.3.5`
+- current published package line on `main`: `1.3.5`
+- current develop package line on `develop`: `1.3.5`
 - active exact release candidate line on `develop`: none
 - active release-candidate branch: none
-- active exact hotfix candidate line on `main`: `v1.3.5`
-- active hotfix branch: `hotfix/v1.3.5-public-exact-retry`
+- active exact hotfix candidate line on `main`: none
+- active hotfix branch: none
+- active feature-lane public-exact hardening branch on `develop`:
+  `feature/public-exact-pretag-proof`
+- pre-tag public-exact proof package script:
+  `npm run public:exact:pretag:proof`
+- pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
@@ -85,23 +90,27 @@ Current version-line contract:
 - hotfix branch family: `hotfix/*`
 - next-line branch model: `GitFlow`
 
-Active opening decision that opens hotfix exact `v1.3.5`:
+Current control decision for public exact hardening:
 
 - chosen bump: `patch`
-- target exact hotfix candidate line: `v1.3.5`
-- rationale: the next line hardens the already-tagged exact package surface by
-  fixing stale authority-side public-source validation expectations without
-  changing the installed-user workflow or opening another governed capability
-  line
-- rationale: authority exact `v1.3.4` is already immutable while public
-  GitHub exact `v1.3.1` and VS Code Marketplace `1.3.0` still define the
-  published surfaces, so `v1.3.5` opens as a hotfix from `main` instead of
-  mutating the retained `v1.3.4` authority tag
-- rejected `minor`: the icon change hardens an existing packaged surface
-  rather than adding a new governed capability or supported workflow
+- active feature-lane public-exact hardening branch:
+  `feature/public-exact-pretag-proof`
+- rationale: the remaining stale public-exact validation hardening now returns
+  to short-lived `feature/*` branches from `develop` instead of reopening
+  `main` for another exact hotfix attempt
+- rationale: authority exact `v1.3.5` remains immutable while public GitHub
+  exact `v1.3.1` and VS Code Marketplace `1.3.0` still define the published
+  surfaces, so any later exact reopen stays blocked until
+  `npm run public:exact:pretag:proof` and GitLab `public_exact_pretag_proof`
+  pass cleanly against the promoted public facade
+- rejected `hotfix`: repeated exact reopen lines on `main` for brittle
+  public-source validation repairs deviated from the governed GitFlow path,
+  so the remaining hardening now lives on `feature/*` from `develop`
+- rejected `minor`: the validation hardening still does not add a new governed
+  capability or supported installed-user workflow
 - rejected `major`: no exact public or maintainer contract is intentionally
   broken or removed; the retained `v1.3.1` GitHub exact release stays intact
-  while the validation fix advances to a separate hotfix line
+  while the gating fix advances on a feature lane
 
 Historical opening decision that opened exact `v1.3.1`:
 
@@ -307,6 +316,7 @@ Required branch-model and CI posture:
   when the target repo is dirty
 - the required checks are:
   - GitLab `governed_runner_admission`
+  - GitLab `public_exact_pretag_proof`
   - GitLab `docs_continuous_integration`
   - GitLab `docs_public_continuous_integration`
   - GitLab `docs_internal_continuous_integration`
@@ -375,6 +385,9 @@ Hosted automation governance is now retained explicitly:
   contamination, runs that same repo-owned recovery script, and refreshes the
   latest retained rehearsal receipt at
   `.cache/windows-proof-runtime-recovery-rehearsal/latest.json`
+- the fail-closed pre-tag public-exact proof lane now runs
+  `npm run public:exact:pretag:proof -- --evidence-dir public-exact-pretag-proof-evidence`
+  before any later exact reopen or tag act can truthfully proceed
 - the authoritative matrix for those distinctions is:
   - `docs/product/hosted-ci-governance.md`
   - `docs/product/hosted-ci-governance.json`
@@ -382,7 +395,8 @@ Hosted automation governance is now retained explicitly:
 Lane-specific CI and gate responsibilities:
 
 - `feature/*`: focused tests plus any affected doc/design gates before merge to
-  `develop`
+  `develop`; public-exact validation hardening also retains
+  `npm run public:exact:pretag:proof` before any later exact reopen is allowed
 - `develop`: required checks plus `npm run design:gate` and
   `npm run design:gate:assert-complete` for governance or architecture work
 - `release/*`: full required checks, design gates, release-readiness

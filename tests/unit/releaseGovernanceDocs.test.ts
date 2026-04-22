@@ -66,8 +66,8 @@ describe('release governance package', () => {
       'fixes or hardens an existing workflow, release rule, procedure, branch policy, or CI posture without breaking the exact released contract'
     );
     expect(rules.releaseCadence.activeOpeningDecision.chosenBump).toBe('patch');
-    expect(rules.releaseCadence.activeOpeningDecision.targetHotfixCandidateReleaseLine).toBe(
-      'v1.3.5'
+    expect(rules.releaseCadence.activeOpeningDecision.targetFeatureBranch).toBe(
+      'feature/public-exact-pretag-proof'
     );
     expect(rules.releaseCadence.versionLineContract.publicDefaultBranch).toBe('main');
     expect(rules.operatorSurfaceSustainment.branchModel.model).toBe('gitflow');
@@ -127,12 +127,15 @@ describe('release governance package', () => {
     expect(adr8).toContain('vi-history-suite-expert-agent-reviewer');
     expect(adr8).toContain('exact tagging and Marketplace publication blocked until the latest');
     expect(hostedGovernance).toContain('# Hosted CI Governance');
-    expect(hostedGovernance).toContain('current `develop` package line: `1.3.3`');
+    expect(hostedGovernance).toContain('current `develop` package line: `1.3.5`');
     expect(hostedGovernance).toContain('active exact release candidate line on `develop`: none');
     expect(hostedGovernance).toContain('active release-candidate branch: none');
-    expect(hostedGovernance).toContain('active exact hotfix candidate line on `main`: `v1.3.5`');
-    expect(hostedGovernance).toContain('active hotfix branch: `hotfix/v1.3.5-public-exact-retry`');
+    expect(hostedGovernance).toContain('active exact hotfix candidate line on `main`: none');
+    expect(hostedGovernance).toContain('active hotfix branch: none');
+    expect(hostedGovernance).toContain('feature/public-exact-pretag-proof');
     expect(hostedGovernance).toContain('chosen bump: `patch`');
+    expect(hostedGovernance).toContain('public_exact_pretag_proof');
+    expect(hostedGovernance).toContain('npm run public:exact:pretag:proof');
     expect(hostedGovernance).toContain('npm run branch:governance:assert');
     expect(hostedGovernanceJson.openingDecision.chosenBump).toBe('patch');
     expect(hostedGovernanceJson.authorityGitLab.mergeGate).toBe(

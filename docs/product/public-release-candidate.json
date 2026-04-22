@@ -7,7 +7,9 @@
     "role": "source-of-truth",
     "integrationBranch": "develop",
     "releaseBranch": "main",
+    "featureHardeningBranch": "feature/public-exact-pretag-proof",
     "requiredChecks": [
+      "public_exact_pretag_proof",
       "docs_continuous_integration",
       "docs_public_continuous_integration",
       "docs_internal_continuous_integration",
@@ -48,8 +50,8 @@
     "status": "published-v1.3.1-candidate-wiki-head"
   },
   "candidateReadiness": {
-    "authorityBaseline": "v1.3.4-tagged-on-main-v1.3.5-hotfix-opened-on-main",
-    "localInstalledVsix": "not-yet-built-v1.3.5-hotfix-public-exact-retry",
+    "authorityBaseline": "v1.3.5-tagged-on-main-feature-public-exact-pretag-proof-open-on-develop",
+    "localInstalledVsix": "not-required-until-next-exact-reopen",
     "localPublicDevcontainer": "v1.1.0-published-baseline",
     "localPublicFixtureHelper": "v1.1.0-published-baseline",
     "historicalPublicRepoBootstrapBaseline": "exact-v1.2.0-human-baseline-retained",
@@ -57,7 +59,8 @@
     "authorityIssue0414LiveSessionProof": "fresh-governed-windows-proof-retained",
     "publishedSurfaceExpertAgentReview": "no-findings-on-current-v1.3.1-published-heads",
     "runtimeProviderPublicAcceptanceGate": "closed-on-published-v1.3.0-candidate-heads-retained",
-    "exactPublicRelease": "v1.3.1-github-release-published-v1.3.5-public-retry-pending"
+    "preTagPublicExactProofGate": "required-before-any-later-exact-reopen",
+    "exactPublicRelease": "v1.3.1-github-release-published-v1.3.5-authority-tagged-public-exact-retry-blocked-until-pretag-proof"
   },
   "findingClassifications": [
     {
@@ -110,22 +113,27 @@
     "releaseBranch": "main"
   },
   "exactReleaseReopening": {
-    "status": "authority-v1.3.4-tagged-public-github-exact-retry-pending",
-    "hotfixBranch": "hotfix/v1.3.5-public-exact-retry",
-    "authorityMainCommit": "e5fba169",
-    "authorityTag": "v1.3.4",
+    "status": "authority-v1.3.5-tagged-public-github-exact-retry-blocked-until-pretag-proof",
+    "hotfixBranch": null,
+    "featureBranch": "feature/public-exact-pretag-proof",
+    "authorityMainCommit": "8f0069d",
+    "authorityTag": "v1.3.5",
     "publicGitHubExactCommit": "ad351ed",
     "publicGitHubReleaseUrl": "https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.1",
-    "nextSeparateAct": "public-github-exact-release",
-    "marketplaceVersionRetained": "1.3.0"
+    "nextSeparateAct": "feature-lane-public-exact-hardening",
+    "marketplaceVersionRetained": "1.3.0",
+    "preTagPublicExactProofPackageScript": "npm run public:exact:pretag:proof",
+    "preTagPublicExactProofJob": "public_exact_pretag_proof"
   },
   "localProofs": {
     "localInstalledVsixPreview": {
-      "status": "pending",
+      "status": "not-required-until-next-exact-reopen",
       "version": "1.3.5",
       "vsixPath": "preview-evidence/vi-history-suite-1.3.5.vsix",
       "checksumPath": "preview-evidence/vi-history-suite-1.3.5.vsix.sha256",
-      "buildCommand": "npm run package -- --out \"preview-evidence/vi-history-suite-1.3.5.vsix\""
+      "buildCommand": "npm run package -- --out \"preview-evidence/vi-history-suite-1.3.5.vsix\"",
+      "gatingPackageScript": "npm run public:exact:pretag:proof",
+      "gatingGitLabJob": "public_exact_pretag_proof"
     },
     "privateRelease": {
       "status": "current-v1.3.1-private-release-published",
@@ -231,5 +239,11 @@
     "refreshWikiPage": "Refresh-Codespace-Repositories",
     "requiredReviewEnvironment": "brand-new-fork-plus-brand-new-codespace"
   },
-  "activeBlockers": []
+  "activeBlockers": [
+    {
+      "id": "BLOCKER-PUBLIC-EXACT-PRETAG-PROOF",
+      "status": "open",
+      "summary": "Any later public GitHub exact-release retry stays blocked until npm run public:exact:pretag:proof and GitLab public_exact_pretag_proof pass cleanly against the promoted public facade."
+    }
+  ]
 }

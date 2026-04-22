@@ -13,21 +13,25 @@
     "developPipelineStatus": "success"
   },
   "openingDecision": {
-    "currentExactReleaseLine": "v1.3.4",
-    "currentMainPackageLine": "1.3.4",
-    "currentDevelopPackageLine": "1.3.3",
+    "currentExactReleaseLine": "v1.3.5",
+    "currentMainPackageLine": "1.3.5",
+    "currentDevelopPackageLine": "1.3.5",
     "activeDevelopCandidateReleaseLine": null,
     "activeReleaseCandidateBranch": null,
-    "activeHotfixCandidateReleaseLine": "v1.3.5",
-    "activeHotfixBranch": "hotfix/v1.3.5-public-exact-retry",
+    "activeHotfixCandidateReleaseLine": null,
+    "activeHotfixBranch": null,
+    "activeFeatureBranch": "feature/public-exact-pretag-proof",
+    "preTagPublicExactProofPackageScript": "npm run public:exact:pretag:proof",
+    "preTagPublicExactProofJob": "public_exact_pretag_proof",
     "chosenBump": "patch",
     "rationale": [
-      "the next line hardens the already-tagged exact package surface by fixing stale authority-side public-source validation expectations without opening another governed installed-user capability line",
-      "authority exact v1.3.4 is already immutable while public GitHub exact v1.3.1 and VS Code Marketplace 1.3.0 still define the published surfaces, so v1.3.5 opens as a hotfix from main instead of mutating retained v1.3.4 authority evidence"
+      "remaining public-exact validation hardening now returns to short-lived feature/* branches from develop instead of reopening main for another exact hotfix attempt",
+      "any later exact reopen stays blocked until the governed pre-tag public-exact proof passes cleanly against the promoted public facade through npm run public:exact:pretag:proof and GitLab public_exact_pretag_proof"
     ],
     "rejectedAlternatives": {
-      "minor": "the validation fix hardens an existing packaged surface rather than adding a new governed capability or supported workflow",
-      "major": "no exact public or maintainer contract is intentionally broken or removed; the retained v1.3.1 GitHub exact release stays intact while the validation fix advances to a separate hotfix line"
+      "hotfix": "repeated exact reopen lines on main for brittle public-source validation repairs deviated from the governed GitFlow path, so the remaining hardening now lives on feature/* from develop",
+      "minor": "the validation hardening still does not add a new governed capability or supported installed-user workflow",
+      "major": "no exact public or maintainer contract is intentionally broken or removed; the retained v1.3.1 GitHub exact release stays intact while the gating fix advances on a feature lane"
     }
   },
   "branchModel": {
@@ -38,7 +42,8 @@
     "hotfixBranch": "hotfix/*",
     "exactReleaseLineBranch": "main",
     "activeReleaseCandidateBranch": null,
-    "activeHotfixBranch": "hotfix/v1.3.5-public-exact-retry",
+    "activeHotfixBranch": null,
+    "activeFeatureBranch": "feature/public-exact-pretag-proof",
     "temporaryBranchPrefixes": [
       "feature/",
       "release/",
@@ -287,6 +292,21 @@
         "command": "npm run gitlab:runner:doctor -- --surface all --fail-on-drift --evidence-dir governed-runner-admission-evidence",
         "evidenceRoot": "governed-runner-admission-evidence/",
         "failurePolicy": "fail-fast-before-docs-assurance-test-package-and-release-stages"
+      },
+      "public_exact_pretag_proof": {
+        "classification": "required-governance-check",
+        "stage": "test",
+        "admittedRefs": [
+          "merge_request_event",
+          "develop",
+          "release/*",
+          "hotfix/*",
+          "main"
+        ],
+        "packageScript": "npm run public:exact:pretag:proof",
+        "command": "npm run public:exact:pretag:proof -- --evidence-dir public-exact-pretag-proof-evidence",
+        "evidenceRoot": "public-exact-pretag-proof-evidence/",
+        "failurePolicy": "fail-closed-before-any-later-exact-reopen-or-tag"
       },
       "docs_link_check": {
         "classification": "required-governance-check",

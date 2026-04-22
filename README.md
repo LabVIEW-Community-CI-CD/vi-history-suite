@@ -177,15 +177,20 @@ Authority release facts:
 
 - `SHIP-0001`: releasable `v0.2.0` VSIX product
 - landed ship tranche: `TRANCHE-009`
-- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`, `v1.2.2`, `v1.3.0`, `v1.3.1`, `v1.3.2`, `v1.3.3`, `v1.3.4`
+- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`, `v1.2.2`, `v1.3.0`, `v1.3.1`, `v1.3.2`, `v1.3.3`, `v1.3.4`, `v1.3.5`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.3.4`
-- current published package line on `main`: `1.3.4`
-- current develop package line on `develop`: `1.3.3`
+- current exact released line: `v1.3.5`
+- current published package line on `main`: `1.3.5`
+- current develop package line on `develop`: `1.3.5`
 - active exact release candidate line on `develop`: none
 - active release-candidate branch: none
-- active exact hotfix candidate line on `main`: `v1.3.5`
-- active hotfix branch: `hotfix/v1.3.5-public-exact-retry`
+- active exact hotfix candidate line on `main`: none
+- active hotfix branch: none
+- active feature-lane public-exact hardening branch on `develop`:
+  `feature/public-exact-pretag-proof`
+- active pre-tag public-exact proof package script:
+  `npm run public:exact:pretag:proof`
+- active pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
 - active Windows x64 private-release-prep slice: historical `release/1.3.1`
 - active Windows x64 private-release packet:
   [docs/product/private-release-windows-x64-v1.3.1.md](./docs/product/private-release-windows-x64-v1.3.1.md)

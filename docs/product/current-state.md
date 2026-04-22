@@ -154,13 +154,18 @@ Latest landed ship target:
 - retained release pipeline: `2428809456`
 - retained release job: `13779604462`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.3.4`
-- current published package line on `main`: `1.3.4`
-- current develop package line on `develop`: `1.3.3`
+- current exact released line: `v1.3.5`
+- current published package line on `main`: `1.3.5`
+- current develop package line on `develop`: `1.3.5`
 - active exact release candidate line on `develop`: none
 - active release-candidate branch: none
-- active exact hotfix candidate line on `main`: `v1.3.5`
-- active hotfix branch: `hotfix/v1.3.5-public-exact-retry`
+- active exact hotfix candidate line on `main`: none
+- active hotfix branch: none
+- active feature-lane public-exact hardening branch on `develop`:
+  `feature/public-exact-pretag-proof`
+- active pre-tag public-exact proof package script:
+  `npm run public:exact:pretag:proof`
+- active pre-tag public-exact proof GitLab job: `public_exact_pretag_proof`
 - active Windows x64 private-release-prep slice: historical `release/1.3.1`
 - active Windows x64 private-release packet:
   [private-release-windows-x64-v1.3.1.md](./private-release-windows-x64-v1.3.1.md)
@@ -288,9 +293,13 @@ Latest landed ship target:
   merged-green `develop` `0f4db5e` with green release-branch pipeline
   `2468432598`, the controlled Windows x64 private GitLab release is now
   published separately, exact tag `v1.3.1` and the separate public GitHub
-  exact release on `ad351ed` are now live, VS Code Marketplace still serves
-  `1.3.0`, and the active exact hotfix lane is now
-  `hotfix/v1.3.5-public-exact-retry` from exact `v1.3.4` `main`
+  exact release on `ad351ed` are now live, authority exact `v1.3.5` is now
+  tagged on `main` `8f0069d`, VS Code Marketplace still serves `1.3.0`, no
+  exact hotfix lane is currently open, and the remaining public-exact
+  validation hardening now proceeds on `feature/public-exact-pretag-proof`
+  from `develop` `9004102` until `npm run public:exact:pretag:proof` plus
+  GitLab `public_exact_pretag_proof` close cleanly before any later exact
+  reopen.
 
 Current active and recently closed tranches:
 
