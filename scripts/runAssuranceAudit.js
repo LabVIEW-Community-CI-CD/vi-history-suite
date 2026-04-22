@@ -198,20 +198,30 @@ function resolveExecutor(explicitExecutor, env = process.env) {
   return candidate;
 }
 
-function defaultSkillRootCandidates(env = process.env, homeDirectory = os.homedir()) {
+function defaultSkillRootCandidates(
+  env = process.env,
+  homeDirectory = os.homedir(),
+  platform = process.platform
+) {
+  const pathApi = platform === 'win32' ? path.win32 : path;
   return [
     `${env.VIHS_ASSURANCE_SKILL_ROOT || ''}`.trim(),
-    path.join(homeDirectory, '.codex', 'skills', 'repo-standards-review'),
-    path.join(homeDirectory, '.codex', 'skills', 'repo-standards-review'),
+    pathApi.join(homeDirectory, '.codex', 'skills', 'repo-standards-review'),
+    pathApi.join(homeDirectory, '.codex', 'skills', 'repo-standards-review'),
     '/mnt/c/Users/sveld/.codex/skills/repo-standards-review'
   ].filter((candidate, index, values) => candidate && values.indexOf(candidate) === index);
 }
 
-function resolveSkillRoot(env = process.env, existsSyncImpl = fs.existsSync) {
-  for (const candidate of defaultSkillRootCandidates(env)) {
-    const scriptPath = path.join(candidate, 'scripts', 'run_assurance.py');
+function resolveSkillRoot(
+  env = process.env,
+  existsSyncImpl = fs.existsSync,
+  platform = process.platform
+) {
+  const pathApi = platform === 'win32' ? path.win32 : path;
+  for (const candidate of defaultSkillRootCandidates(env, os.homedir(), platform)) {
+    const scriptPath = pathApi.join(candidate, 'scripts', 'run_assurance.py');
     if (existsSyncImpl(scriptPath)) {
-      return path.resolve(candidate);
+      return platform === 'win32' ? path.win32.normalize(candidate) : path.resolve(candidate);
     }
   }
 
@@ -474,7 +484,7 @@ function buildLocalSkillInvocation(
   existsSyncImpl = fs.existsSync
 ) {
   const laneConfig = ensureLaneConfig(lane);
-  const skillRoot = resolveSkillRoot(env, existsSyncImpl);
+  const skillRoot = resolveSkillRoot(env, existsSyncImpl, platform);
   const python = resolvePythonInvocation(env, platform, existsSyncImpl);
 
   if (lane === 'requirements' || lane === 'user-info') {
