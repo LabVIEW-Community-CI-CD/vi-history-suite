@@ -154,13 +154,13 @@ Latest landed ship target:
 - retained release pipeline: `2428809456`
 - retained release job: `13779604462`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.3.0`
-- current published package line on `main`: `1.3.1`
+- current exact released line: `v1.3.2`
+- current published package line on `main`: `1.3.2`
 - current develop package line on `develop`: `1.3.1`
 - active exact release candidate line on `develop`: none
 - active release-candidate branch: none
-- active exact hotfix candidate line on `main`: `v1.3.2`
-- active hotfix branch: `hotfix/v1.3.2-marketplace-icon`
+- active exact hotfix candidate line on `main`: `v1.3.3`
+- active hotfix branch: `hotfix/v1.3.3-public-exact-retry`
 - active Windows x64 private-release-prep slice: historical `release/1.3.1`
 - active Windows x64 private-release packet:
   [private-release-windows-x64-v1.3.1.md](./private-release-windows-x64-v1.3.1.md)
@@ -290,7 +290,7 @@ Latest landed ship target:
   published separately, exact tag `v1.3.1` and the separate public GitHub
   exact release on `ad351ed` are now live, VS Code Marketplace still serves
   `1.3.0`, and the active exact hotfix lane is now
-  `hotfix/v1.3.2-marketplace-icon` from exact `main`
+  `hotfix/v1.3.3-public-exact-retry` from exact `v1.3.2` `main`
 
 Current active and recently closed tranches:
 
