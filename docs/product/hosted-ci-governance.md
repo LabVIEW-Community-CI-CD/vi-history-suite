@@ -8,11 +8,11 @@ raw-YAML-only truth.
 
 This document is the control-plane summary of the governed historical
 `v1.3.0` exact-closeout plus the later exact/public release follow-through.
-Authority exact `main` now carries tagged `v1.3.3`, `develop` still carries
-`1.3.2`, the separate public GitHub exact release still serves `v1.3.1`, the
+Authority exact `main` now carries tagged `v1.3.4`, `develop` still carries
+`1.3.3`, the separate public GitHub exact release still serves `v1.3.1`, the
 Marketplace listing still serves `1.3.0`, and
-`hotfix/v1.3.4-public-exact-retry` is now the active hotfix lane from exact
-authority `v1.3.3`.
+`hotfix/v1.3.5-public-exact-retry` is now the active hotfix lane from exact
+authority `v1.3.4`.
 
 ## Current Exact Closeout State
 
@@ -26,23 +26,23 @@ authority `v1.3.3`.
   `04b07bd`
 - resulting `develop` pipeline: `2467081960` `success`
 
-## Active Opening Decision For v1.3.4
+## Active Opening Decision For v1.3.5
 
-- current exact release line: `v1.3.3`
-- current `main` package line: `1.3.3`
-- current `develop` package line: `1.3.2`
+- current exact release line: `v1.3.4`
+- current `main` package line: `1.3.4`
+- current `develop` package line: `1.3.3`
 - active exact release candidate line on `develop`: none
 - active release-candidate branch: none
-- active exact hotfix candidate line on `main`: `v1.3.4`
-- active hotfix branch: `hotfix/v1.3.4-public-exact-retry`
+- active exact hotfix candidate line on `main`: `v1.3.5`
+- active hotfix branch: `hotfix/v1.3.5-public-exact-retry`
 - chosen bump: `patch`
 - rationale: this line hardens the already-tagged exact package surface by
   fixing stale authority-side public-source validation expectations without
   opening another governed installed-user capability line
-- rationale: authority exact `v1.3.3` remains immutable while public GitHub
+- rationale: authority exact `v1.3.4` remains immutable while public GitHub
   exact `v1.3.1` and VS Code Marketplace `1.3.0` still define the published
-  surfaces, so `v1.3.4` opens as a hotfix from `main` instead of mutating
-  retained `v1.3.3` authority evidence
+  surfaces, so `v1.3.5` opens as a hotfix from `main` instead of mutating
+  retained `v1.3.4` authority evidence
 
 ## Branch Model
 
