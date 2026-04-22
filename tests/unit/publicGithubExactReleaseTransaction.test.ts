@@ -107,6 +107,33 @@ const transaction = require(path.join(
       nextAllowedAction: string;
     };
   };
+  buildPublishedReleaseVerificationGate: (
+    facts: Record<string, unknown>,
+    assessment: {
+      phases: Array<{ id: string; status: string; summary: string }>;
+    }
+  ) => {
+    status: string;
+    blockerCode: string | null;
+    rationale: string;
+    allowed: boolean;
+    releaseId: number | null;
+    exactTagLookupStatusCode: number | null;
+    htmlUrlUsesUntaggedPath: boolean;
+  };
+  buildReleasePublishExecutionGate: (
+    facts: Record<string, unknown>,
+    assessment: {
+      phases: Array<{ id: string; status: string; summary: string }>;
+      publishabilityProbe: { blockerCode: string | null };
+    }
+  ) => {
+    status: string;
+    blockerCode: string | null;
+    rationale: string;
+    requestedDraftReleaseId: number | null;
+    allowed: boolean;
+  };
   buildMarkdown: (report: {
     recordedAt: string;
     repoRoot: string;
@@ -208,6 +235,14 @@ const transaction = require(path.join(
     argv?: string[],
     deps?: Record<string, unknown>
   ) => Promise<{ outcome: string; report?: Record<string, unknown> }>;
+  runPublish: (
+    argv?: string[],
+    deps?: Record<string, unknown>
+  ) => Promise<{ outcome: string; report?: Record<string, unknown> }>;
+  runVerify: (
+    argv?: string[],
+    deps?: Record<string, unknown>
+  ) => Promise<{ outcome: string; report?: Record<string, unknown> }>;
 };
 
 function createReleaseManifestFs(
@@ -247,6 +282,7 @@ describe('public GitHub exact-release transaction controller', () => {
   it('retains a deterministic CLI contract and latest-tag resolver', () => {
     expect(transaction.parseArgs([])).toEqual({
       helpRequested: false,
+      mode: 'assess',
       owner: 'svelderrainruiz',
       repo: 'vi-history-suite',
       tag: null,
@@ -257,6 +293,8 @@ describe('public GitHub exact-release transaction controller', () => {
     });
     expect(
       transaction.parseArgs([
+        '--mode',
+        'publish',
         '--tag',
         'v1.3.6',
         '--draft-release-id',
@@ -274,6 +312,7 @@ describe('public GitHub exact-release transaction controller', () => {
       ])
     ).toEqual({
       helpRequested: false,
+      mode: 'publish',
       owner: 'owner',
       repo: 'repo',
       tag: 'v1.3.6',
@@ -285,6 +324,7 @@ describe('public GitHub exact-release transaction controller', () => {
     expect(transaction.getUsage()).toContain('--github-token-path');
     expect(transaction.getUsage()).toContain('--marketplace-item');
     expect(transaction.getUsage()).toContain('--draft-release-id');
+    expect(transaction.getUsage()).toContain('--mode <assess|publish|verify>');
     expect(transaction.DEFAULT_OWNER).toBe('svelderrainruiz');
     expect(transaction.DEFAULT_REPO).toBe('vi-history-suite');
     expect(transaction.DEFAULT_MARKETPLACE_ITEM).toBe('svelderrainruiz.vi-history-suite');
@@ -812,6 +852,248 @@ describe('public GitHub exact-release transaction controller', () => {
       expect(markdownReport).toContain('Requested draft release id: 312363117');
       expect(markdownReport).toContain('Blocker code: draft-release-tag-lookup-unavailable');
       expect(markdownReport).toContain('Next allowed action: repair-the-existing-v1.3.6-public-github-release-only-after-safe-publishability-is-proven');
+    } finally {
+      fs.rmSync(evidenceDir, { recursive: true, force: true });
+    }
+  });
+
+  it('publishes and verifies the retained v1.3.6 draft release in place by release id once the exact assets are already retained', async () => {
+    const evidenceDir = path.join(
+      repoRoot,
+      '.cache',
+      'test-public-github-exact-release-transaction-publish'
+    );
+    fs.rmSync(evidenceDir, { recursive: true, force: true });
+    const releaseManifestFs = createReleaseManifestFs();
+    let published = false;
+    const releaseApiUrl =
+      'https://api.github.com/repos/svelderrainruiz/vi-history-suite/releases/312363117';
+
+    const createReleaseJson = () => ({
+      id: 312363117,
+      tag_name: 'v1.3.6',
+      draft: !published,
+      prerelease: false,
+      created_at: '2026-04-22T17:45:17Z',
+      published_at: published ? '2026-04-22T21:30:00Z' : null,
+      html_url: published
+        ? 'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.6'
+        : 'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/untagged-308c75957d1c8136f871',
+      target_commitish: 'main',
+      immutable: false,
+      assets: [
+        {
+          id: 1,
+          name: 'vi-history-suite-1.3.6.vsix',
+          size: 495214,
+          state: 'uploaded',
+          digest: 'sha256:4cba0367deacc6c1917958b47a2c227692ef373fda8b8b964203a0b955906beb',
+          download_count: 0,
+          browser_download_url: published
+            ? 'https://github.com/svelderrainruiz/vi-history-suite/releases/download/v1.3.6/vi-history-suite-1.3.6.vsix'
+            : 'https://github.com/svelderrainruiz/vi-history-suite/releases/download/untagged-308c75957d1c8136f871/vi-history-suite-1.3.6.vsix'
+        },
+        {
+          id: 2,
+          name: 'vi-history-suite-1.3.6.vsix.sha256',
+          size: 120,
+          state: 'uploaded',
+          digest: 'sha256:7e2554c4685938b0db66cf02d04ef0292cb440ffc596ab201579252af0d038d0',
+          download_count: 0,
+          browser_download_url: published
+            ? 'https://github.com/svelderrainruiz/vi-history-suite/releases/download/v1.3.6/vi-history-suite-1.3.6.vsix.sha256'
+            : 'https://github.com/svelderrainruiz/vi-history-suite/releases/download/untagged-308c75957d1c8136f871/vi-history-suite-1.3.6.vsix.sha256'
+        }
+      ]
+    });
+
+    try {
+      const commonDeps = {
+        now: () => '2026-04-22T21:30:00.000Z',
+        env: {
+          [process.env.USERPROFILE ? 'USERPROFILE' : 'HOME']: process.env.USERPROFILE ?? process.env.HOME,
+          VIHS_GITHUB_TOKEN_FILE: path.join(repoRoot, '.cache', 'tests', 'github-token.txt')
+        },
+        fs: {
+          ...releaseManifestFs,
+          existsSync: (targetPath: fs.PathLike) => {
+            const normalized = path.normalize(String(targetPath));
+            if (
+              normalized.endsWith(path.normalize(path.join('.cache', 'tests', 'github-token.txt')))
+            ) {
+              return true;
+            }
+            return releaseManifestFs.existsSync(targetPath);
+          },
+          readFileSync: (targetPath: fs.PathOrFileDescriptor, encoding?: BufferEncoding | null) => {
+            const normalized = path.normalize(String(targetPath));
+            if (
+              normalized.endsWith(path.normalize(path.join('.cache', 'tests', 'github-token.txt')))
+            ) {
+              return 'github-token';
+            }
+            return releaseManifestFs.readFileSync(targetPath, encoding as BufferEncoding);
+          }
+        },
+        spawnImpl: (command: string, args: string[]) => {
+          expect(command).toBe('git');
+          const joined = args.join(' ');
+          if (joined === 'rev-parse --verify origin/main') {
+            return { status: 0, stdout: '3cb238334100d01d5cfe7998e17e20a7b497b3fb', stderr: '' };
+          }
+          if (joined === 'rev-parse --verify refs/tags/v1.3.6') {
+            return { status: 0, stdout: '044399a598735ad87082d64e01d8c92a8c77b5ef', stderr: '' };
+          }
+          if (joined === 'rev-list -n 1 v1.3.6') {
+            return { status: 0, stdout: '3cb238334100d01d5cfe7998e17e20a7b497b3fb', stderr: '' };
+          }
+          if (joined === 'worktree list --porcelain') {
+            return { status: 0, stdout: `worktree ${repoRoot}`, stderr: '' };
+          }
+          throw new Error(`Unexpected git invocation: ${joined}`);
+        },
+        fetchGitHubJson: async (_owner: string, _repo: string, endpoint: string) => {
+          if (endpoint === '/branches/main') {
+            return {
+              statusCode: 200,
+              json: { commit: { sha: 'bd81bfe6743348c9138c3f0f4967c790a235184f' } }
+            };
+          }
+          if (endpoint === '/git/ref/tags/v1.3.6') {
+            return {
+              statusCode: 200,
+              json: {
+                ref: 'refs/tags/v1.3.6',
+                object: { type: 'tag', sha: '4e2e2f92bd733336eb81e496b1cc4facc4410016' }
+              }
+            };
+          }
+          if (endpoint === '/git/tags/4e2e2f92bd733336eb81e496b1cc4facc4410016') {
+            return {
+              statusCode: 200,
+              json: {
+                object: { sha: 'bd81bfe6743348c9138c3f0f4967c790a235184f' }
+              }
+            };
+          }
+          if (endpoint === '/releases?per_page=100') {
+            return {
+              statusCode: 200,
+              json: [
+                {
+                  id: 311813620,
+                  tag_name: 'v1.3.1',
+                  draft: false,
+                  prerelease: false,
+                  created_at: '2026-04-21T14:00:00Z',
+                  published_at: '2026-04-21T14:05:00Z',
+                  html_url:
+                    'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.1',
+                  immutable: true
+                },
+                {
+                  id: 312363117,
+                  tag_name: 'v1.3.6',
+                  draft: !published,
+                  prerelease: false,
+                  created_at: '2026-04-22T17:45:17Z',
+                  published_at: published ? '2026-04-22T21:30:00Z' : null,
+                  html_url: published
+                    ? 'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/v1.3.6'
+                    : 'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/untagged-308c75957d1c8136f871',
+                  immutable: false,
+                  url: releaseApiUrl
+                }
+              ]
+            };
+          }
+          if (endpoint === '/immutable-releases') {
+            return {
+              statusCode: 200,
+              json: {
+                enabled: true,
+                enforced_by_owner: false
+              }
+            };
+          }
+          if (endpoint === '/releases/tags/v1.3.6') {
+            return published
+              ? { statusCode: 200, json: createReleaseJson() }
+              : { statusCode: 404, json: { message: 'Not Found' } };
+          }
+          if (endpoint === '/releases/312363117') {
+            return {
+              statusCode: 200,
+              json: createReleaseJson()
+            };
+          }
+
+          throw new Error(`Unexpected GitHub endpoint: ${endpoint}`);
+        },
+        mutateGitHubJson: async (
+          _owner: string,
+          _repo: string,
+          endpoint: string,
+          _token: string,
+          method: string,
+          payload: { draft: boolean }
+        ) => {
+          expect(endpoint).toBe('/releases/312363117');
+          expect(method).toBe('PATCH');
+          expect(payload).toEqual({ draft: false });
+          published = true;
+          return {
+            statusCode: 200,
+            bodyText: JSON.stringify(createReleaseJson()),
+            json: createReleaseJson()
+          };
+        },
+        fetchMarketplaceState: async () => ({
+          statusCode: 200,
+          marketplaceItem: 'svelderrainruiz.vi-history-suite',
+          currentPublishedVersion: '1.3.0',
+          found: true
+        }),
+        publishVerificationRetryCount: 2,
+        publishVerificationRetryDelayMs: 0
+      };
+
+      await expect(
+        transaction.runPublish(
+          ['--tag', 'v1.3.6', '--draft-release-id', '312363117', '--evidence-dir', evidenceDir],
+          commonDeps
+        )
+      ).resolves.toMatchObject({
+        outcome: 'published'
+      });
+
+      const publishReport = JSON.parse(
+        fs.readFileSync(path.join(evidenceDir, 'public-github-exact-release-transaction.json'), 'utf8')
+      ) as {
+        mode: string;
+        publicReleaseLookup: { statusCode: number };
+        publicRelease: { draft: boolean; published_at: string | null; html_url: string };
+        verifyGate: { status: string; allowed: boolean; blockerCode: string | null };
+      };
+      expect(publishReport.mode).toBe('publish');
+      expect(publishReport.publicReleaseLookup.statusCode).toBe(200);
+      expect(publishReport.publicRelease.draft).toBe(false);
+      expect(publishReport.publicRelease.published_at).toBe('2026-04-22T21:30:00Z');
+      expect(publishReport.publicRelease.html_url).toContain('/releases/tag/v1.3.6');
+      expect(publishReport.verifyGate).toMatchObject({
+        status: 'pass',
+        allowed: true,
+        blockerCode: null
+      });
+
+      await expect(
+        transaction.runVerify(
+          ['--tag', 'v1.3.6', '--draft-release-id', '312363117', '--evidence-dir', evidenceDir],
+          commonDeps
+        )
+      ).resolves.toMatchObject({
+        outcome: 'verified'
+      });
     } finally {
       fs.rmSync(evidenceDir, { recursive: true, force: true });
     }

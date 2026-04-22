@@ -2010,7 +2010,17 @@ Information-for-users review cases:
 - `TEST-UNIT-376`: verify the non-production `software:factory:repair`
   surface writes the deferred in-place `v1.3.6` repair contract, retains the
   deferred write actions, and still enforces a no-write boundary before any
-  later publish/verify phase is admitted
+  later mutating production phase is admitted
+- `TEST-UNIT-377`: verify the guarded non-mutating
+  `software:factory:publish` surface writes the exact `v1.3.6`
+  publish-contract receipt, retains the manifest-backed publish preconditions
+  plus the deferred GitHub draft-release write action, and still enforces a
+  no-write boundary
+- `TEST-UNIT-378`: verify the guarded non-mutating
+  `software:factory:verify` surface writes the exact `v1.3.6`
+  verify-contract receipt, retains the expected public GitHub release and
+  VS Code Marketplace verification facts, and keeps verification claims
+  blocked until those production surfaces actually close
 - `TEST-DOC-113`: review `.gitlab-ci.yml`, `linux-assurance-runner-lane.md`,
   hosted governance, current-state, README, and the release procedure and
   confirm the Linux assurance lane is separate from the Windows proof lane,
@@ -2116,7 +2126,19 @@ Information-for-users review cases:
   item map, SRS, RTM, and the test plan and confirm the repo now retains one
   non-production `software:factory:repair` surface plus receipt path that
   records the deferred in-place `v1.3.6` repair contract, deferred write
-  actions, and the no-write boundary before later publish/verify phases
+  actions, and the no-write boundary before later mutating production phases
+- `TEST-DOC-130`: review README, current-state, release procedure, the
+  sustainment package, the public-release candidate package, the information
+  item map, SRS, RTM, and the test plan and confirm the repo now retains one
+  guarded non-mutating `software:factory:publish` surface plus receipt path
+  that records the exact `v1.3.6` publish preconditions, deferred GitHub
+  draft-release write action, and continued no-write boundary
+- `TEST-DOC-131`: review README, current-state, release procedure, the
+  sustainment package, the public-release candidate package, the information
+  item map, SRS, RTM, and the test plan and confirm the repo now retains one
+  guarded non-mutating `software:factory:verify` surface plus receipt path
+  that records the exact `v1.3.6` GitHub-release and Marketplace verification
+  expectations while verification claims remain blocked
 - `TEST-DOC-090`: review hosted governance, sustainment, README, current-state,
   release procedure, and ADR-0033 and confirm the retained hosted automation
   matrix explains which hosted checks are exact-release gates and which are

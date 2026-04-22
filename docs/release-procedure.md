@@ -31,22 +31,30 @@
 - The retained public GitHub exact transaction receipt is
   `.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json`.
 - The active software-factory governance branch on `develop` is
-  `feature/software-factory-rehearse-repair-contract`.
+  `feature/software-factory-publish-verify-contract`.
 - The software factory assessment package script is
   `npm run software:factory:assess`.
 - The software factory rehearsal package script is
   `npm run software:factory:rehearse`.
 - The software factory repair package script is
   `npm run software:factory:repair`.
+- The software factory publish package script is
+  `npm run software:factory:publish`.
+- The software factory verify package script is
+  `npm run software:factory:verify`.
 - The retained software factory assessment receipt is
   `.cache/software-factory-orchestrator/latest/software-factory-state.json`.
 - The retained software factory rehearsal receipt is
   `.cache/software-factory-orchestrator/latest/rehearse/software-factory-state.json`.
 - The retained software factory repair receipt is
   `.cache/software-factory-orchestrator/latest/repair/software-factory-state.json`.
-- The software-factory contract admits only non-production `assess`,
-  `rehearse`, and `repair`; later `publish` and `verify` phases are not yet
-  admitted.
+- The retained software factory publish receipt is
+  `.cache/software-factory-orchestrator/latest/publish/software-factory-state.json`.
+- The retained software factory verify receipt is
+  `.cache/software-factory-orchestrator/latest/verify/software-factory-state.json`.
+- The software-factory contract admits non-production `assess`,
+  `rehearse`, and `repair` plus guarded non-mutating `publish` and `verify`
+  contract phases; no production mutation is admitted in this slice.
 - The active Windows x64 private-release-prep slice is the historical
   `release/1.3.1` lane.
 - The active Windows x64 private-release packet is:

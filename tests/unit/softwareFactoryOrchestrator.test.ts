@@ -16,6 +16,8 @@ const orchestrator = require(path.join(
   assessFactoryState: (facts: Record<string, unknown>) => Record<string, any>;
   rehearseFactoryState: (facts: Record<string, unknown>) => Record<string, any>;
   repairFactoryState: (facts: Record<string, unknown>) => Record<string, any>;
+  publishFactoryState: (facts: Record<string, unknown>) => Record<string, any>;
+  verifyFactoryState: (facts: Record<string, unknown>) => Record<string, any>;
   buildMarkdown: (report: Record<string, any>) => string;
   parseArgs: (argv: string[]) => {
     helpRequested: boolean;
@@ -27,8 +29,8 @@ const orchestrator = require(path.join(
 const baseFacts = {
   recordedAt: '2026-04-22T23:59:59.000Z',
   repoRoot: 'C:/dev/vihs',
-  currentBranch: 'feature/software-factory-rehearse-repair-contract',
-  activeFeatureBranch: 'feature/software-factory-rehearse-repair-contract',
+  currentBranch: 'feature/software-factory-publish-verify-contract',
+  activeFeatureBranch: 'feature/software-factory-publish-verify-contract',
   integrationBranch: 'develop',
   exactReleaseLineBranch: 'main',
   releaseBranchFamily: 'release/*',
@@ -98,19 +100,22 @@ describe('software factory orchestrator contract', () => {
     expect(report.contract).toEqual(
       expect.objectContaining({
         currentPhase: 'assess',
-        supportedPhases: ['assess', 'rehearse', 'repair'],
-        plannedPhases: ['publish', 'verify'],
+        supportedPhases: ['assess', 'rehearse', 'repair', 'publish', 'verify'],
+        admittedNonProductionPhases: ['assess', 'rehearse', 'repair'],
+        guardedNonMutatingContractPhases: ['publish', 'verify'],
         assessOnly: false,
         nonProductionOnly: true,
         productionMutationAllowed: false,
-        activeFeatureBranch: 'feature/software-factory-rehearse-repair-contract'
+        activeFeatureBranch: 'feature/software-factory-publish-verify-contract'
       })
     );
     expect(report.receiptContract).toEqual({
       packageScripts: {
         assess: 'npm run software:factory:assess',
         rehearse: 'npm run software:factory:rehearse',
-        repair: 'npm run software:factory:repair'
+        repair: 'npm run software:factory:repair',
+        publish: 'npm run software:factory:publish',
+        verify: 'npm run software:factory:verify'
       },
       receiptPaths: orchestrator.DEFAULT_PHASE_RECEIPT_PATHS,
       currentPhaseReceiptPath: '.cache/software-factory-orchestrator/latest/software-factory-state.json'
@@ -211,20 +216,100 @@ describe('software factory orchestrator contract', () => {
     );
   });
 
+  it('retains a guarded non-mutating publish contract without admitting any production write action', () => {
+    const report = orchestrator.publishFactoryState(baseFacts);
+
+    expect(report.status).toBe('blocked');
+    expect(report.contract.currentPhase).toBe('publish');
+    expect(report.publishContract).toEqual({
+      status: 'pass',
+      nonMutating: true,
+      mutationPermitted: false,
+      packageScript: 'npm run software:factory:publish',
+      receiptPath: '.cache/software-factory-orchestrator/latest/publish/software-factory-state.json',
+      targetMode: 'publish-in-place-guard',
+      targetTag: 'v1.3.6',
+      targetDraftReleaseId: 312363117,
+      targetDraftReleaseUrl:
+        'https://github.com/svelderrainruiz/vi-history-suite/releases/tag/untagged-308c75957d1c8136f871',
+      authorityReleaseManifestPath:
+        '.cache/gitlab-release-artifacts/v1.3.6/expanded/release-evidence/release-manifest.json',
+      exactAssetsRetainedAgainstManifest: true,
+      draftReleaseReadableById: true,
+      draftReleaseTagMatchesAuthority: true,
+      safePublishTransitionProven: false,
+      currentBlockerCode: 'draft-release-tag-lookup-unavailable',
+      deferredWriteAction: 'publish-existing-github-draft-release-in-place',
+      nextAllowedAction:
+        'repair-the-existing-v1.3.6-public-github-release-only-after-safe-publishability-is-proven',
+      rule:
+        'This guarded publish contract remains non-mutating; it retains the exact in-place publish preconditions and still forbids GitHub release publication in this slice.'
+    });
+    expect(report.phases).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'publish-contract', status: 'pass' }),
+        expect.objectContaining({ id: 'publish-mutation-boundary', status: 'blocked' })
+      ])
+    );
+  });
+
+  it('retains a guarded non-mutating verify contract without claiming live publication verification', () => {
+    const report = orchestrator.verifyFactoryState(baseFacts);
+
+    expect(report.status).toBe('blocked');
+    expect(report.contract.currentPhase).toBe('verify');
+    expect(report.verifyContract).toEqual({
+      status: 'pass',
+      nonMutating: true,
+      mutationPermitted: false,
+      packageScript: 'npm run software:factory:verify',
+      receiptPath: '.cache/software-factory-orchestrator/latest/verify/software-factory-state.json',
+      targetMode: 'post-publish-verify-guard',
+      targetTag: 'v1.3.6',
+      targetDraftReleaseId: 312363117,
+      expectedGitHubRelease: 'v1.3.6',
+      expectedMarketplaceVersion: '1.3.6',
+      currentPublishedGitHubRelease: 'v1.3.1',
+      currentMarketplaceVersion: '1.3.0',
+      currentBlockerCode: 'draft-release-tag-lookup-unavailable',
+      deferredReadActions: [
+        'verify-public-github-release-publication',
+        'verify-public-github-release-assets-and-checksums',
+        'verify-marketplace-remains-blocked-until-github-release-closes',
+        'verify-marketplace-v1.3.6-after-github-release-publication'
+      ],
+      nextAllowedAction:
+        'repair-the-existing-v1.3.6-public-github-release-only-after-safe-publishability-is-proven',
+      rule:
+        'This guarded verify contract remains non-mutating; it retains the exact post-publish verification expectations and still forbids any production mutation in this slice.'
+    });
+    expect(report.phases).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'verify-contract', status: 'pass' }),
+        expect.objectContaining({ id: 'verify-production-readiness', status: 'blocked' })
+      ])
+    );
+  });
+
   it('renders the admitted non-production phases and deferred repair actions in markdown', () => {
-    const markdown = orchestrator.buildMarkdown(orchestrator.repairFactoryState(baseFacts));
+    const markdown = orchestrator.buildMarkdown(orchestrator.verifyFactoryState(baseFacts));
 
     expect(markdown).toContain('# Software Factory Orchestrator Receipt');
-    expect(markdown).toContain('Current phase: `repair`');
-    expect(markdown).toContain('Supported phases: `assess, rehearse, repair`');
-    expect(markdown).toContain('Planned phases: `publish, verify`');
+    expect(markdown).toContain('Current phase: `verify`');
+    expect(markdown).toContain('Supported phases: `assess, rehearse, repair, publish, verify`');
+    expect(markdown).toContain('Admitted non-production phases: `assess, rehearse, repair`');
+    expect(markdown).toContain('Guarded non-mutating contract phases: `publish, verify`');
     expect(markdown).toContain('Non-production only: `true`');
     expect(markdown).toContain('`npm run software:factory:rehearse`');
     expect(markdown).toContain('`npm run software:factory:repair`');
+    expect(markdown).toContain('`npm run software:factory:publish`');
+    expect(markdown).toContain('`npm run software:factory:verify`');
     expect(markdown).toContain('.cache/software-factory-orchestrator/latest/rehearse/software-factory-state.json');
     expect(markdown).toContain('.cache/software-factory-orchestrator/latest/repair/software-factory-state.json');
-    expect(markdown).toContain('## Repair Contract');
-    expect(markdown).toContain('Deferred write actions: publish-existing-github-draft-release-in-place');
+    expect(markdown).toContain('.cache/software-factory-orchestrator/latest/publish/software-factory-state.json');
+    expect(markdown).toContain('.cache/software-factory-orchestrator/latest/verify/software-factory-state.json');
+    expect(markdown).toContain('## Verify Contract');
+    expect(markdown).toContain('Deferred read actions: verify-public-github-release-publication');
     expect(markdown).toContain('No GitHub release publication, Marketplace publication, or other production mutation is permitted in this slice.');
   });
 });

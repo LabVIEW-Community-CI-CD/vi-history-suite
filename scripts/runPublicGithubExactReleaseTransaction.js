@@ -23,13 +23,17 @@ const githubToken = require(path.join(repoRoot, 'scripts', 'resolveLocalGitHubTo
 
 function getUsage() {
   return [
-    'Usage: node scripts/runPublicGithubExactReleaseTransaction.js [--tag <vX.Y.Z>] [--draft-release-id <id>] [--owner <github-owner>] [--repo <github-repo>] [--github-token-path <path>] [--marketplace-item <publisher.extension>] [--evidence-dir <path>] [--help]',
+    'Usage: node scripts/runPublicGithubExactReleaseTransaction.js [--mode <assess|publish|verify>] [--tag <vX.Y.Z>] [--draft-release-id <id>] [--owner <github-owner>] [--repo <github-repo>] [--github-token-path <path>] [--marketplace-item <publisher.extension>] [--evidence-dir <path>] [--help]',
     '',
-    'Assess the public GitHub exact-release transaction fail-closed and retain a resumable phase receipt.',
+    'Assess, publish, or verify the public GitHub exact-release transaction fail-closed and retain a resumable phase receipt.',
     '',
-    'This surface is assessment-only: it does not publish, mutate GitHub releases, or open a new SemVer line.',
+    'Modes:',
+    '  assess  Evaluate the retained transaction state without mutating GitHub or Marketplace.',
+    '  publish Publish the retained draft release in place only when the by-id draft, authority tag, target commitish, and retained assets already match and the only remaining blocker is tag lookup.',
+    '  verify  Confirm the public GitHub exact release is published and canonical without touching Marketplace.',
     '',
     'Defaults:',
+    '  mode:              assess',
     `  owner:             ${DEFAULT_OWNER}`,
     `  repo:              ${DEFAULT_REPO}`,
     `  marketplace-item:  ${DEFAULT_MARKETPLACE_ITEM}`,
@@ -38,9 +42,16 @@ function getUsage() {
   ].join('\n');
 }
 
+function assertKnownMode(mode) {
+  if (!['assess', 'publish', 'verify'].includes(mode)) {
+    throw new Error(`Unknown mode: ${mode}`);
+  }
+}
+
 function parseArgs(argv) {
   const parsed = {
     helpRequested: false,
+    mode: 'assess',
     owner: DEFAULT_OWNER,
     repo: DEFAULT_REPO,
     tag: null,
@@ -55,6 +66,17 @@ function parseArgs(argv) {
 
     if (argument === '--help' || argument === '-h') {
       parsed.helpRequested = true;
+      continue;
+    }
+
+    if (argument === '--mode') {
+      const value = argv[index + 1];
+      if (!value) {
+        throw new Error('Missing value for --mode');
+      }
+      assertKnownMode(value.trim());
+      parsed.mode = value.trim();
+      index += 1;
       continue;
     }
 
@@ -336,6 +358,22 @@ async function fetchGitHubJson(owner, repo, endpoint, token) {
   });
 }
 
+async function mutateGitHubJson(owner, repo, endpoint, token, method, payload) {
+  return httpsJsonRequest(
+    `https://api.github.com/repos/${owner}/${repo}${endpoint}`,
+    {
+      method,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github+json',
+        'Content-Type': 'application/json',
+        'User-Agent': 'vi-history-suite-public-release-transaction'
+      }
+    },
+    JSON.stringify(payload)
+  );
+}
+
 async function fetchMarketplaceState(marketplaceItem) {
   const response = await httpsJsonRequest(
     'https://marketplace.visualstudio.com/_apis/public/gallery/extensionquery',
@@ -572,6 +610,104 @@ function buildDraftPublishabilityProbe(facts, assetPhaseStatus) {
     immutableReleasesEnabled,
     immutableReleasesEnforcedByOwner,
     exactAssetsRetained
+  };
+}
+
+function findPhaseStatus(phases, phaseId) {
+  return phases.find((phase) => phase.id === phaseId)?.status ?? 'blocked';
+}
+
+function buildReleasePublishExecutionGate(facts, assessment) {
+  const assetPhasePass = findPhaseStatus(assessment.phases, 'public-release-assets') === 'pass';
+  const draftRelease = facts.publicRelease ?? null;
+  const requestedDraftReleaseId = facts.publicReleaseByIdLookup?.requestedDraftReleaseId ?? null;
+
+  let blockerCode = null;
+  let rationale =
+    'The retained draft is readable by id, still matches the authority tag, still targets public GitHub main, and still carries the exact authority assets, so the repo-owned controller may publish it in place by release id.';
+
+  if (assessment.publishabilityProbe.blockerCode !== 'draft-release-tag-lookup-unavailable') {
+    blockerCode = assessment.publishabilityProbe.blockerCode ?? 'publishability-not-proven';
+    rationale =
+      'The only admitted in-place publish recovery path in this slice is the exact retained draft-id case where tag lookup is the sole remaining blocker.';
+  } else if (requestedDraftReleaseId === null) {
+    blockerCode = 'draft-release-id-unresolved';
+    rationale = 'No retained draft release id is available for an in-place publish attempt.';
+  } else if (facts.publicReleaseByIdLookup?.statusCode !== 200) {
+    blockerCode = 'draft-release-id-lookup-failed';
+    rationale = `Draft release ${requestedDraftReleaseId} could not be read by id before publish.`;
+  } else if (!draftRelease || draftRelease.id !== requestedDraftReleaseId) {
+    blockerCode = 'draft-release-id-mismatch';
+    rationale = `Draft release ${requestedDraftReleaseId} did not resolve as the retained release record.`;
+  } else if (draftRelease.draft !== true) {
+    blockerCode = 'draft-release-not-draft';
+    rationale = `Release ${requestedDraftReleaseId} is no longer a draft, so the draft publish path is no longer active.`;
+  } else if (draftRelease.tag_name !== facts.authority.tag) {
+    blockerCode = 'draft-release-tag-mismatch';
+    rationale = `Draft release ${requestedDraftReleaseId} no longer retains authority tag ${facts.authority.tag}.`;
+  } else if (draftRelease.target_commitish !== 'main') {
+    blockerCode = 'draft-release-target-commitish-mismatch';
+    rationale = `Draft release ${requestedDraftReleaseId} does not target public GitHub main.`;
+  } else if (!assetPhasePass) {
+    blockerCode = 'draft-release-assets-mismatch';
+    rationale = `Draft release ${requestedDraftReleaseId} does not fully match the retained authority assets.`;
+  }
+
+  return {
+    status: blockerCode === null ? 'pass' : 'blocked',
+    blockerCode,
+    rationale,
+    requestedDraftReleaseId,
+    allowed: blockerCode === null
+  };
+}
+
+function buildPublishedReleaseVerificationGate(facts, assessment) {
+  const assetPhasePass = findPhaseStatus(assessment.phases, 'public-release-assets') === 'pass';
+  const release = facts.publicRelease ?? null;
+  const exactTagLookupStatusCode = facts.publicReleaseLookup?.statusCode ?? null;
+  const htmlUrlUsesUntaggedPath = Boolean(
+    release?.html_url && release.html_url.includes('/untagged-')
+  );
+
+  let blockerCode = null;
+  let rationale =
+    'The public GitHub exact release is now discoverable by exact tag, no longer draft, published, and still retains the exact authority assets.';
+
+  if (!release) {
+    blockerCode = 'public-release-missing';
+    rationale = `No public GitHub release record was found for ${facts.authority.tag}.`;
+  } else if (exactTagLookupStatusCode !== 200) {
+    blockerCode = 'public-release-tag-lookup-unavailable';
+    rationale = `Public GitHub release lookup by exact tag ${facts.authority.tag} still returns ${exactTagLookupStatusCode}.`;
+  } else if (release.tag_name !== facts.authority.tag) {
+    blockerCode = 'public-release-tag-mismatch';
+    rationale = `Public GitHub release ${release.id} does not retain authority tag ${facts.authority.tag}.`;
+  } else if (release.draft === true) {
+    blockerCode = 'public-release-still-draft';
+    rationale = `Public GitHub release ${release.id} still reports draft=true.`;
+  } else if (!release.published_at) {
+    blockerCode = 'public-release-published-at-missing';
+    rationale = `Public GitHub release ${release.id} still has no published_at timestamp.`;
+  } else if (release.target_commitish !== 'main') {
+    blockerCode = 'public-release-target-commitish-mismatch';
+    rationale = `Public GitHub release ${release.id} does not target public GitHub main.`;
+  } else if (htmlUrlUsesUntaggedPath) {
+    blockerCode = 'public-release-html-url-still-untagged';
+    rationale = `Public GitHub release ${release.id} still resolves through an untagged URL.`;
+  } else if (!assetPhasePass) {
+    blockerCode = 'public-release-assets-mismatch';
+    rationale = `Public GitHub release ${release.id} no longer matches the retained authority assets.`;
+  }
+
+  return {
+    status: blockerCode === null ? 'pass' : 'blocked',
+    blockerCode,
+    rationale,
+    allowed: blockerCode === null,
+    releaseId: release?.id ?? null,
+    exactTagLookupStatusCode,
+    htmlUrlUsesUntaggedPath
   };
 }
 
@@ -877,35 +1013,14 @@ function buildMarkdown(report) {
   return `${lines.join('\n')}\n`;
 }
 
-async function runAssessment(argv = process.argv.slice(2), deps = {}) {
-  const parsed = parseArgs(argv);
-  const stdout = deps.stdout ?? process.stdout;
-  const now = deps.now ?? (() => new Date().toISOString());
-  const fsApi = deps.fs ?? fs;
-
-  if (parsed.helpRequested) {
-    stdout.write(`${getUsage()}\n`);
-    return { outcome: 'help' };
-  }
-
-  const tag = parsed.tag ?? resolveLatestExactTag(deps.spawnImpl);
-  const tokenEnv = { ...(deps.env ?? process.env) };
-  if (parsed.githubTokenPath) {
-    tokenEnv[githubToken.GITHUB_TOKEN_FILE_ENV] = parsed.githubTokenPath;
-  }
-  const token = deps.readGitHubToken
-    ? deps.readGitHubToken(tokenEnv, fsApi)
-    : githubToken.readGitHubToken(tokenEnv, fsApi);
-
-  await fsp.rm(parsed.evidenceDir, { recursive: true, force: true });
-  await fsp.mkdir(parsed.evidenceDir, { recursive: true });
-
-  const authorityMainSha = resolveGitCommitish('origin/main', deps.spawnImpl);
-  const authorityTagObjectSha = resolveGitCommitish(`refs/tags/${tag}`, deps.spawnImpl);
-  const authorityTagCommitSha = resolveTagCommit(tag, deps.spawnImpl);
+async function collectTransactionFacts(parsed, deps, token, fsApi) {
+  const tag = parsed.tag;
   const branchPackageVersion = JSON.parse(
     fsApi.readFileSync(path.join(repoRoot, 'package.json'), 'utf8')
   ).version;
+  const authorityMainSha = resolveGitCommitish('origin/main', deps.spawnImpl);
+  const authorityTagObjectSha = resolveGitCommitish(`refs/tags/${tag}`, deps.spawnImpl);
+  const authorityTagCommitSha = resolveTagCommit(tag, deps.spawnImpl);
 
   const branchResponse = await (deps.fetchGitHubJson ?? fetchGitHubJson)(
     parsed.owner,
@@ -983,7 +1098,7 @@ async function runAssessment(argv = process.argv.slice(2), deps = {}) {
         ).json?.object?.sha ?? null
       : tagResponse.json?.object?.sha ?? null;
 
-  const facts = {
+  return {
     authority: {
       tag,
       packageVersion,
@@ -1023,24 +1138,27 @@ async function runAssessment(argv = process.argv.slice(2), deps = {}) {
           id: publicRelease.id,
           tag_name: publicRelease.tag_name,
           draft: publicRelease.draft,
-        prerelease: publicRelease.prerelease,
-        created_at: publicRelease.created_at,
-        published_at: publicRelease.published_at,
-        html_url: publicRelease.html_url,
-        target_commitish: publicRelease.target_commitish ?? null,
-        immutable: publicRelease.immutable === true,
-        assets: extractReleaseAssets(publicRelease)
-      }
+          prerelease: publicRelease.prerelease,
+          created_at: publicRelease.created_at,
+          published_at: publicRelease.published_at,
+          html_url: publicRelease.html_url,
+          target_commitish: publicRelease.target_commitish ?? null,
+          immutable: publicRelease.immutable === true,
+          assets: extractReleaseAssets(publicRelease)
+        }
       : null,
     releaseManifest,
     marketplace
   };
+}
 
-  const assessment = assessTransaction(facts);
-  const report = {
+function buildReport(facts, assessment, evidenceDir, recordedAt) {
+  return {
     schema: 'vi-history-suite/public-github-exact-release-transaction@v1',
-    recordedAt: now(),
+    recordedAt,
     repoRoot,
+    evidenceDir: toRelativeReportPath(evidenceDir),
+    mode: 'assess',
     status: assessment.status,
     authority: facts.authority,
     publicSource: facts.publicSource,
@@ -1067,17 +1185,53 @@ async function runAssessment(argv = process.argv.slice(2), deps = {}) {
     semverFreeze: assessment.semverFreeze,
     repairInPlace: assessment.repairInPlace
   };
+}
 
+async function writeReport(evidenceDir, report) {
+  await fsp.rm(evidenceDir, { recursive: true, force: true });
+  await fsp.mkdir(evidenceDir, { recursive: true });
   await fsp.writeFile(
-    path.join(parsed.evidenceDir, 'public-github-exact-release-transaction.json'),
+    path.join(evidenceDir, 'public-github-exact-release-transaction.json'),
     `${JSON.stringify(report, null, 2)}\n`,
     'utf8'
   );
   await fsp.writeFile(
-    path.join(parsed.evidenceDir, 'public-github-exact-release-transaction.md'),
+    path.join(evidenceDir, 'public-github-exact-release-transaction.md'),
     buildMarkdown(report),
     'utf8'
   );
+}
+
+function delay(ms) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+async function runAssessment(argv = process.argv.slice(2), deps = {}) {
+  const parsed = parseArgs(argv);
+  const stdout = deps.stdout ?? process.stdout;
+  const now = deps.now ?? (() => new Date().toISOString());
+  const fsApi = deps.fs ?? fs;
+
+  if (parsed.helpRequested) {
+    stdout.write(`${getUsage()}\n`);
+    return { outcome: 'help' };
+  }
+
+  parsed.tag = parsed.tag ?? resolveLatestExactTag(deps.spawnImpl);
+  const tokenEnv = { ...(deps.env ?? process.env) };
+  if (parsed.githubTokenPath) {
+    tokenEnv[githubToken.GITHUB_TOKEN_FILE_ENV] = parsed.githubTokenPath;
+  }
+  const token = deps.readGitHubToken
+    ? deps.readGitHubToken(tokenEnv, fsApi)
+    : githubToken.readGitHubToken(tokenEnv, fsApi);
+  const facts = await collectTransactionFacts(parsed, deps, token, fsApi);
+  const assessment = assessTransaction(facts);
+  const report = buildReport(facts, assessment, parsed.evidenceDir, now());
+  report.mode = parsed.mode;
+  await writeReport(parsed.evidenceDir, report);
 
   if (assessment.status !== 'pass') {
     throw new Error(
@@ -1088,8 +1242,133 @@ async function runAssessment(argv = process.argv.slice(2), deps = {}) {
   return { outcome: 'pass', report };
 }
 
+async function runPublish(argv = process.argv.slice(2), deps = {}) {
+  const parsed = parseArgs(argv);
+  const stdout = deps.stdout ?? process.stdout;
+  const now = deps.now ?? (() => new Date().toISOString());
+  const fsApi = deps.fs ?? fs;
+
+  if (parsed.helpRequested) {
+    stdout.write(`${getUsage()}\n`);
+    return { outcome: 'help' };
+  }
+
+  parsed.mode = 'publish';
+  parsed.tag = parsed.tag ?? resolveLatestExactTag(deps.spawnImpl);
+  const tokenEnv = { ...(deps.env ?? process.env) };
+  if (parsed.githubTokenPath) {
+    tokenEnv[githubToken.GITHUB_TOKEN_FILE_ENV] = parsed.githubTokenPath;
+  }
+  const token = deps.readGitHubToken
+    ? deps.readGitHubToken(tokenEnv, fsApi)
+    : githubToken.readGitHubToken(tokenEnv, fsApi);
+
+  const initialFacts = await collectTransactionFacts(parsed, deps, token, fsApi);
+  const initialAssessment = assessTransaction(initialFacts);
+  const publishGate = buildReleasePublishExecutionGate(initialFacts, initialAssessment);
+  const initialReport = buildReport(initialFacts, initialAssessment, parsed.evidenceDir, now());
+  initialReport.mode = parsed.mode;
+  initialReport.publishGate = publishGate;
+  await writeReport(parsed.evidenceDir, initialReport);
+
+  if (!publishGate.allowed) {
+    throw new Error(`Public GitHub exact-release publish is blocked: ${publishGate.rationale}`);
+  }
+
+  const mutate = deps.mutateGitHubJson ?? mutateGitHubJson;
+  const publishResponse = await mutate(
+    parsed.owner,
+    parsed.repo,
+    `/releases/${publishGate.requestedDraftReleaseId}`,
+    token,
+    'PATCH',
+    { draft: false }
+  );
+  if (publishResponse.statusCode !== 200) {
+    throw new Error(
+      `GitHub draft release publish failed for ${publishGate.requestedDraftReleaseId}: ${publishResponse.statusCode} ${publishResponse.bodyText || ''}`.trim()
+    );
+  }
+
+  const retryCount = deps.publishVerificationRetryCount ?? 8;
+  const retryDelayMs = deps.publishVerificationRetryDelayMs ?? 2000;
+  let finalFacts = null;
+  let finalAssessment = null;
+  let verifyGate = null;
+  for (let attempt = 0; attempt < retryCount; attempt += 1) {
+    finalFacts = await collectTransactionFacts(parsed, deps, token, fsApi);
+    finalAssessment = assessTransaction(finalFacts);
+    verifyGate = buildPublishedReleaseVerificationGate(finalFacts, finalAssessment);
+    if (verifyGate.allowed) {
+      break;
+    }
+    if (attempt < retryCount - 1) {
+      await delay(retryDelayMs);
+    }
+  }
+
+  const finalReport = buildReport(finalFacts, finalAssessment, parsed.evidenceDir, now());
+  finalReport.mode = parsed.mode;
+  finalReport.publishGate = publishGate;
+  finalReport.verifyGate = verifyGate;
+  await writeReport(parsed.evidenceDir, finalReport);
+
+  if (!verifyGate.allowed) {
+    throw new Error(`Public GitHub exact-release publish verification is blocked: ${verifyGate.rationale}`);
+  }
+
+  return { outcome: 'published', report: finalReport };
+}
+
+async function runVerify(argv = process.argv.slice(2), deps = {}) {
+  const parsed = parseArgs(argv);
+  const stdout = deps.stdout ?? process.stdout;
+  const now = deps.now ?? (() => new Date().toISOString());
+  const fsApi = deps.fs ?? fs;
+
+  if (parsed.helpRequested) {
+    stdout.write(`${getUsage()}\n`);
+    return { outcome: 'help' };
+  }
+
+  parsed.mode = 'verify';
+  parsed.tag = parsed.tag ?? resolveLatestExactTag(deps.spawnImpl);
+  const tokenEnv = { ...(deps.env ?? process.env) };
+  if (parsed.githubTokenPath) {
+    tokenEnv[githubToken.GITHUB_TOKEN_FILE_ENV] = parsed.githubTokenPath;
+  }
+  const token = deps.readGitHubToken
+    ? deps.readGitHubToken(tokenEnv, fsApi)
+    : githubToken.readGitHubToken(tokenEnv, fsApi);
+
+  const facts = await collectTransactionFacts(parsed, deps, token, fsApi);
+  const assessment = assessTransaction(facts);
+  const verifyGate = buildPublishedReleaseVerificationGate(facts, assessment);
+  const report = buildReport(facts, assessment, parsed.evidenceDir, now());
+  report.mode = parsed.mode;
+  report.verifyGate = verifyGate;
+  await writeReport(parsed.evidenceDir, report);
+
+  if (!verifyGate.allowed) {
+    throw new Error(`Public GitHub exact-release verify is blocked: ${verifyGate.rationale}`);
+  }
+
+  return { outcome: 'verified', report };
+}
+
+async function runCli(argv = process.argv.slice(2), deps = {}) {
+  const parsed = parseArgs(argv);
+  if (parsed.mode === 'publish') {
+    return runPublish(argv, deps);
+  }
+  if (parsed.mode === 'verify') {
+    return runVerify(argv, deps);
+  }
+  return runAssessment(argv, deps);
+}
+
 if (require.main === module) {
-  runAssessment().catch((error) => {
+  runCli().catch((error) => {
     console.error(String(error));
     process.exitCode = 1;
   });
@@ -1102,15 +1381,23 @@ module.exports = {
   DEFAULT_REPO,
   assessTransaction,
   buildMarkdown,
+  buildPublishedReleaseVerificationGate,
+  buildReleasePublishExecutionGate,
+  collectTransactionFacts,
   computeFileSha256,
+  delay,
   extractReleaseAssets,
   fetchGitHubJson,
   fetchMarketplaceState,
   getUsage,
+  mutateGitHubJson,
   parseArgs,
   parseSemverTag,
   readReleaseManifest,
   resolveLatestExactTag,
   resolveReleaseManifestPath,
-  runAssessment
+  runAssessment,
+  runCli,
+  runPublish,
+  runVerify
 };

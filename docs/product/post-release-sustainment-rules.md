@@ -134,21 +134,29 @@ Current control decision for public exact hardening:
 ## Software Factory Governance Contract
 
 - active software-factory branch on `develop`:
-  `feature/software-factory-rehearse-repair-contract`
+  `feature/software-factory-publish-verify-contract`
 - factory assessment package script:
   `npm run software:factory:assess`
 - factory rehearsal package script:
   `npm run software:factory:rehearse`
 - factory repair package script:
   `npm run software:factory:repair`
+- factory publish package script:
+  `npm run software:factory:publish`
+- factory verify package script:
+  `npm run software:factory:verify`
 - factory assessment receipt:
   `.cache/software-factory-orchestrator/latest/software-factory-state.json`
 - factory rehearsal receipt:
   `.cache/software-factory-orchestrator/latest/rehearse/software-factory-state.json`
 - factory repair receipt:
   `.cache/software-factory-orchestrator/latest/repair/software-factory-state.json`
-- current factory phases: `assess`, `rehearse`, `repair`
-- planned later phases: `publish`, `verify`
+- factory publish receipt:
+  `.cache/software-factory-orchestrator/latest/publish/software-factory-state.json`
+- factory verify receipt:
+  `.cache/software-factory-orchestrator/latest/verify/software-factory-state.json`
+- current factory phases:
+  `assess`, `rehearse`, `repair`, `publish`, `verify`
 - sole production recovery target: `v1.3.6`
 - production mutation policy:
   no GitHub release publication, VS Code Marketplace publication, or other
@@ -170,10 +178,12 @@ Current control decision for public exact hardening:
 - environment baseline:
   standard Windows installs plus admitted `Ubuntu-24.04` Linux assurance lane
 - rehearsal policy:
-  production is not the first proof surface; retain assess, rehearse, and the
-  non-mutating repair contract before any later publish/verify step
+  production is not the first proof surface; retain assess, rehearse, the
+  non-mutating repair contract, and guarded non-mutating publish/verify
+  contracts before any later mutating production phase opens
 - approval model:
   assess, rehearse, and repair are automatic and repo-owned non-production
+  phases; publish and verify are automatic guarded non-mutating contract
   phases; later GitHub-release and Marketplace publish phases still require
   explicit production approval
 

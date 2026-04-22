@@ -174,24 +174,28 @@ describe('public release candidate control surface', () => {
         '.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json'
     });
     expect(candidate.softwareFactoryGovernance).toEqual({
-      status: 'rehearse-repair-contract-open-no-production-mutation',
-      activeFeatureBranch: 'feature/software-factory-rehearse-repair-contract',
+      status: 'publish-verify-contract-open-no-production-mutation',
+      activeFeatureBranch: 'feature/software-factory-publish-verify-contract',
       packageScripts: {
         assess: 'npm run software:factory:assess',
         rehearse: 'npm run software:factory:rehearse',
-        repair: 'npm run software:factory:repair'
+        repair: 'npm run software:factory:repair',
+        publish: 'npm run software:factory:publish',
+        verify: 'npm run software:factory:verify'
       },
       receiptPaths: {
         assess: '.cache/software-factory-orchestrator/latest/software-factory-state.json',
         rehearse: '.cache/software-factory-orchestrator/latest/rehearse/software-factory-state.json',
-        repair: '.cache/software-factory-orchestrator/latest/repair/software-factory-state.json'
+        repair: '.cache/software-factory-orchestrator/latest/repair/software-factory-state.json',
+        publish: '.cache/software-factory-orchestrator/latest/publish/software-factory-state.json',
+        verify: '.cache/software-factory-orchestrator/latest/verify/software-factory-state.json'
       },
       admittedNonProductionPhases: ['assess', 'rehearse', 'repair'],
-      plannedFuturePhases: ['publish', 'verify'],
+      guardedNonMutatingContractPhases: ['publish', 'verify'],
       soleProductionRecoveryTarget: 'v1.3.6',
       productionMutationAllowed: false,
       rule:
-        'no GitHub release publication, Marketplace publication, or other production mutation may occur through this non-production slice while the retained v1.3.6 recovery case remains open'
+        'no GitHub release publication, Marketplace publication, or other production mutation may occur through this guarded non-mutating publish/verify contract slice while the retained v1.3.6 recovery case remains open'
     });
 
     expect(candidate.activeBlockers).toEqual([
@@ -205,7 +209,7 @@ describe('public release candidate control surface', () => {
     expect(candidateMarkdown).toContain('Published public source commit: `bd81bfe`');
     expect(candidateMarkdown).toContain('Feature-lane public GitHub release hardening branch: none');
     expect(candidateMarkdown).toContain('Software-factory governance branch:');
-    expect(candidateMarkdown).toContain('`feature/software-factory-rehearse-repair-contract`');
+    expect(candidateMarkdown).toContain('`feature/software-factory-publish-verify-contract`');
     expect(candidateMarkdown).toContain('`released-v1.3.6-authority-evidence-retained`');
     expect(candidateMarkdown).toContain(
       '`required-before-any-further-public-github-release-or-marketplace-act`'
@@ -232,6 +236,8 @@ describe('public release candidate control surface', () => {
     expect(candidateMarkdown).toContain('`npm run software:factory:assess`');
     expect(candidateMarkdown).toContain('`npm run software:factory:rehearse`');
     expect(candidateMarkdown).toContain('`npm run software:factory:repair`');
+    expect(candidateMarkdown).toContain('`npm run software:factory:publish`');
+    expect(candidateMarkdown).toContain('`npm run software:factory:verify`');
     expect(candidateMarkdown).toContain(
       '.cache/software-factory-orchestrator/latest/software-factory-state.json'
     );
@@ -240,6 +246,12 @@ describe('public release candidate control surface', () => {
     );
     expect(candidateMarkdown).toContain(
       '.cache/software-factory-orchestrator/latest/repair/software-factory-state.json'
+    );
+    expect(candidateMarkdown).toContain(
+      '.cache/software-factory-orchestrator/latest/publish/software-factory-state.json'
+    );
+    expect(candidateMarkdown).toContain(
+      '.cache/software-factory-orchestrator/latest/verify/software-factory-state.json'
     );
     expect(candidateMarkdown).toContain('sole production recovery case');
     expect(candidateMarkdown).toContain('still forbids GitHub release publication,');
@@ -261,11 +273,19 @@ describe('public release candidate control surface', () => {
     expect(currentState).toContain('npm run software:factory:assess');
     expect(currentState).toContain('npm run software:factory:rehearse');
     expect(currentState).toContain('npm run software:factory:repair');
+    expect(currentState).toContain('npm run software:factory:publish');
+    expect(currentState).toContain('npm run software:factory:verify');
     expect(currentState).toContain(
       '.cache/software-factory-orchestrator/latest/rehearse/software-factory-state.json'
     );
     expect(currentState).toContain(
       '.cache/software-factory-orchestrator/latest/repair/software-factory-state.json'
+    );
+    expect(currentState).toContain(
+      '.cache/software-factory-orchestrator/latest/publish/software-factory-state.json'
+    );
+    expect(currentState).toContain(
+      '.cache/software-factory-orchestrator/latest/verify/software-factory-state.json'
     );
     expect(currentState).toContain('separate public GitHub exact release publication: blocked; public `main` now');
     expect(currentState).toContain('can read that draft by id with status `200`');
@@ -283,6 +303,8 @@ describe('public release candidate control surface', () => {
     expect(srs).toContain('VHS-REQ-572');
     expect(srs).toContain('VHS-REQ-573');
     expect(srs).toContain('VHS-REQ-574');
+    expect(srs).toContain('VHS-REQ-575');
+    expect(srs).toContain('VHS-REQ-576');
     expect(rtm).toContain('VHS-REQ-566');
     expect(rtm).toContain('VHS-REQ-567');
     expect(rtm).toContain('VHS-REQ-568');
@@ -292,6 +314,8 @@ describe('public release candidate control surface', () => {
     expect(rtm).toContain('VHS-REQ-572');
     expect(rtm).toContain('VHS-REQ-573');
     expect(rtm).toContain('VHS-REQ-574');
+    expect(rtm).toContain('VHS-REQ-575');
+    expect(rtm).toContain('VHS-REQ-576');
     expect(testPlan).toContain('TEST-UNIT-370');
     expect(testPlan).toContain('TEST-UNIT-371');
     expect(testPlan).toContain('TEST-UNIT-372');
@@ -299,6 +323,8 @@ describe('public release candidate control surface', () => {
     expect(testPlan).toContain('TEST-UNIT-374');
     expect(testPlan).toContain('TEST-UNIT-375');
     expect(testPlan).toContain('TEST-UNIT-376');
+    expect(testPlan).toContain('TEST-UNIT-377');
+    expect(testPlan).toContain('TEST-UNIT-378');
     expect(testPlan).toContain('TEST-DOC-123');
     expect(testPlan).toContain('TEST-DOC-124');
     expect(testPlan).toContain('TEST-DOC-125');
@@ -306,5 +332,7 @@ describe('public release candidate control surface', () => {
     expect(testPlan).toContain('TEST-DOC-127');
     expect(testPlan).toContain('TEST-DOC-128');
     expect(testPlan).toContain('TEST-DOC-129');
+    expect(testPlan).toContain('TEST-DOC-130');
+    expect(testPlan).toContain('TEST-DOC-131');
   });
 });

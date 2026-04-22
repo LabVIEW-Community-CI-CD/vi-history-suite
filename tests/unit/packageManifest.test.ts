@@ -312,7 +312,13 @@ describe('extension manifest research alignment', () => {
       'node scripts/runPublicExactPretagProof.js'
     );
     expect(manifest.scripts?.['public:github:exact:transaction:assess']).toBe(
-      'node scripts/runPublicGithubExactReleaseTransaction.js'
+      'node scripts/runPublicGithubExactReleaseTransaction.js --mode assess'
+    );
+    expect(manifest.scripts?.['public:github:exact:transaction:publish']).toBe(
+      'node scripts/runPublicGithubExactReleaseTransaction.js --mode publish'
+    );
+    expect(manifest.scripts?.['public:github:exact:transaction:verify']).toBe(
+      'node scripts/runPublicGithubExactReleaseTransaction.js --mode verify'
     );
     expect(manifest.scripts?.['software:factory:assess']).toBe(
       'node scripts/runSoftwareFactoryOrchestrator.js --phase assess'
@@ -322,6 +328,12 @@ describe('extension manifest research alignment', () => {
     );
     expect(manifest.scripts?.['software:factory:repair']).toBe(
       'node scripts/runSoftwareFactoryOrchestrator.js --phase repair'
+    );
+    expect(manifest.scripts?.['software:factory:publish']).toBe(
+      'node scripts/runSoftwareFactoryOrchestrator.js --phase publish'
+    );
+    expect(manifest.scripts?.['software:factory:verify']).toBe(
+      'node scripts/runSoftwareFactoryOrchestrator.js --phase verify'
     );
     expect(manifest.scripts?.['dashboard:latest']).toBe(
       'node scripts/printLatestDashboardRun.js'
