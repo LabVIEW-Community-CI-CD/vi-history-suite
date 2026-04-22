@@ -163,6 +163,8 @@ Latest landed ship target:
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
   none
+- active software-factory governance foundation branch on `develop`:
+  `feature/software-factory-governance-foundation`
 - later SemVer openings are frozen while the current exact public GitHub
   transaction remains incomplete
 - active pre-tag public-exact proof package script:
@@ -172,6 +174,15 @@ Latest landed ship target:
   `npm run public:github:exact:transaction:assess`
 - retained public GitHub exact transaction receipt:
   `.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json`
+- software factory assessment package script:
+  `npm run software:factory:assess`
+- retained software factory assessment receipt:
+  `.cache/software-factory-orchestrator/latest/software-factory-state.json`
+- software-factory contract phases:
+  `assess` now, `rehearse` / `repair` / `publish` / `verify` later
+- current software-factory mutation policy:
+  no GitHub release publication, Marketplace publication, or other production
+  mutation is permitted through this foundation slice
 - active Windows x64 private-release-prep slice: historical `release/1.3.1`
 - active Windows x64 private-release packet:
   [private-release-windows-x64-v1.3.1.md](./private-release-windows-x64-v1.3.1.md)
@@ -307,7 +318,11 @@ Latest landed ship target:
   and later SemVer openings are now frozen while the retained `v1.3.6` public
   GitHub repair state on `develop` uses
   `npm run public:github:exact:transaction:assess` to prove or reject a safe
-  in-place repair path before any further public or Marketplace act.
+  in-place repair path before any further public or Marketplace act; the new
+  software-factory governance foundation now retains that same `v1.3.6` line
+  as the sole production recovery case and limits the repo-owned factory
+  contract to assess-only classification until a later approved repair/publish
+  phase exists.
 
 Current active and recently closed tranches:
 

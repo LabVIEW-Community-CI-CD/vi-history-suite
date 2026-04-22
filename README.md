@@ -153,6 +153,8 @@ documents instead of treating this README as the only manual:
 - [Blocker Ledger](./docs/product/blocker-ledger.json)
 - public release candidate:
   [docs/product/public-release-candidate.md](./docs/product/public-release-candidate.md)
+- software factory assessment contract:
+  [scripts/runSoftwareFactoryOrchestrator.js](./scripts/runSoftwareFactoryOrchestrator.js)
 - [Documentation Coherence Ledger](./docs/product/documentation-coherence-ledger.md)
 - [Wiki Authority Map](./docs/product/wiki-authority-map.md)
 - [Wiki Coverage Matrix](./docs/product/wiki-coverage-matrix.json)
@@ -188,6 +190,8 @@ Authority release facts:
 - active hotfix branch: none
 - active feature-lane public GitHub release hardening branch on `develop`:
   none
+- active software-factory governance foundation branch on `develop`:
+  `feature/software-factory-governance-foundation`
 - later SemVer openings are frozen while the current exact public GitHub transaction remains incomplete
 - active pre-tag public-exact proof package script:
   `npm run public:exact:pretag:proof`
@@ -196,6 +200,15 @@ Authority release facts:
   `npm run public:github:exact:transaction:assess`
 - retained public GitHub exact transaction receipt:
   `.cache/public-github-exact-release-transaction/latest/public-github-exact-release-transaction.json`
+- software factory assessment package script:
+  `npm run software:factory:assess`
+- retained software factory assessment receipt:
+  `.cache/software-factory-orchestrator/latest/software-factory-state.json`
+- software-factory phase contract:
+  assess now; rehearse, repair, publish, and verify later
+- no GitHub release publication, Marketplace publication, or other production
+  mutation is permitted through the software-factory governance foundation
+  slice while exact `v1.3.6` remains the sole production recovery case
 - active Windows x64 private-release-prep slice: historical `release/1.3.1`
 - active Windows x64 private-release packet:
   [docs/product/private-release-windows-x64-v1.3.1.md](./docs/product/private-release-windows-x64-v1.3.1.md)

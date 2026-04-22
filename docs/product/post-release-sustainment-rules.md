@@ -131,6 +131,43 @@ Current control decision for public exact hardening:
   being removed; this slice hardens publication control so the current exact
   line can close safely without another burned release
 
+## Software Factory Governance Foundation
+
+- active foundation branch on `develop`:
+  `feature/software-factory-governance-foundation`
+- factory assessment package script:
+  `npm run software:factory:assess`
+- factory assessment receipt:
+  `.cache/software-factory-orchestrator/latest/software-factory-state.json`
+- current factory phase: `assess`
+- planned later phases: `rehearse`, `repair`, `publish`, `verify`
+- sole production recovery target: `v1.3.6`
+- production mutation policy:
+  no GitHub release publication, VS Code Marketplace publication, or other
+  production mutation is permitted through this foundation slice
+- authority boundary:
+  GitLab `develop` -> `release/*` -> protected `main`
+- staging boundary:
+  GitFlow `feature/*`, `release/*`, and `hotfix/*` lanes with required checks
+  and retained receipts before protected promotion
+- production boundary:
+  public GitHub `main` / tag / release plus the VS Code Marketplace listing
+- recovery boundary:
+  retained partial-public incidents are repair-in-place first; the current one
+  remains blocked on draft release `312363117`
+- trust model:
+  operator host, self-hosted runners, local token locators, GitLab authority,
+  public GitHub, Marketplace, and retained receipts are governed system
+  surfaces rather than ambient assumptions
+- environment baseline:
+  standard Windows installs plus admitted `Ubuntu-24.04` Linux assurance lane
+- rehearsal policy:
+  production is not the first proof surface; retain assess and later rehearse
+  phases before any later repair/publish step
+- approval model:
+  assess is automatic and repo-owned; later GitHub-release and Marketplace
+  publish phases still require explicit production approval
+
 Historical opening decision that opened exact `v1.3.1`:
 
 - chosen bump: `patch`

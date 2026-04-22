@@ -41,6 +41,7 @@
 | Report subsystem | report planning, runtime/tool selection, runtime execution, mutable packet storage, pair-archive retention, multi-report dashboard preparation, and provider isolation policy | TypeScript / Node |
 | Harness smoke runner | clone-on-demand canonical harness verification | TypeScript / Node CLI |
 | Governance pack | requirements, tests, ADRs, traceability | Markdown / CSV |
+| Software factory orchestrator | assess-only production-governance control plane across authority, staging, production, and recovery surfaces with resumable receipts | Node CLI / JSON / Markdown receipts |
 | Documentation-package workbench | requirements, ADR, RTM, release-readiness, and wiki-authority iteration | Docker / Node / Markdown tooling |
 | Bundled documentation pack | version-matched local user docs derived from the published wiki set and packaged inside the extension | HTML fragments / JSON manifest / WebviewPanel |
 | Cross-repo navigation surface | local jump map and repo-entrypoint CLI for the product repo, wiki repo, and companion assurance skill repo | Markdown / JSON / TypeScript CLI |
@@ -123,6 +124,37 @@
   mirrored into the assurance skill instead of being rediscovered per session
 - GitHub-hosted Linux benchmarks are retained diagnostic evidence only; they do
   not replace GitLab authority or Windows installed-user proof
+
+## Software Factory Governance Foundation
+
+- Authority boundary:
+  GitLab remains the authority source and branch-control system through
+  `develop`, `release/*`, and protected `main`.
+- Staging boundary:
+  `feature/*`, `release/*`, and `hotfix/*` remain temporary GitFlow lanes with
+  required proof and receipt surfaces before any protected promotion.
+- Production boundary:
+  public GitHub `main` / tag / release and the VS Code Marketplace listing are
+  production mutation surfaces and are not to be changed directly from ad hoc
+  operator choreography.
+- Recovery boundary:
+  partial-public states are retained as governed recovery cases; the current
+  one is frozen on exact `v1.3.6` until the repo-owned controller proves a safe
+  repair path.
+- Trust model:
+  the Windows operator host, self-hosted runner lanes, local token locators,
+  GitLab authority state, public GitHub state, Marketplace state, and retained
+  receipts are all first-class system surfaces rather than ambient assumptions.
+- Environment baseline:
+  the supported operator baseline is a Windows host with standard installs plus
+  the admitted `Ubuntu-24.04` Linux assurance lane.
+- Rehearsal policy:
+  the software factory must assess and later rehearse non-production or
+  retained proof states before any future production mutation phase is opened.
+- Approval model:
+  this initial contract is assess-only; later GitHub-release and Marketplace
+  publish phases still require explicit production approval instead of being
+  implied by local green proof alone.
 
 ## ADR Index
 

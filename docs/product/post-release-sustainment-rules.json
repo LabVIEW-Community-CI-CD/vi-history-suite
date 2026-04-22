@@ -186,6 +186,68 @@
       "unrelated docs or feature notes that do not affect install or release truth"
     ]
   },
+  "softwareFactoryGovernance": {
+    "status": "assess-only-foundation-open",
+    "activeFoundationBranch": "feature/software-factory-governance-foundation",
+    "packageScript": "npm run software:factory:assess",
+    "receiptPath": ".cache/software-factory-orchestrator/latest/software-factory-state.json",
+    "currentPhase": "assess",
+    "plannedFuturePhases": [
+      "rehearse",
+      "repair",
+      "publish",
+      "verify"
+    ],
+    "soleProductionRecoveryTarget": "v1.3.6",
+    "productionMutationAllowed": false,
+    "authorityBoundary": [
+      "GitLab develop -> release/* -> protected main"
+    ],
+    "stagingBoundary": [
+      "GitFlow feature/*, release/*, and hotfix/* lanes with required checks and retained receipts"
+    ],
+    "productionBoundary": [
+      "public GitHub main/tag/release",
+      "VS Code Marketplace listing"
+    ],
+    "recoveryBoundary": [
+      "repair-in-place first when public GitHub main, tag, or draft release already exist",
+      "current blocker remains draft release 312363117 with draft-release-tag-lookup-unavailable"
+    ],
+    "trustModel": [
+      "Windows operator host",
+      "self-hosted Windows runner lane",
+      "self-hosted Linux assurance runner lane",
+      "GitLab authority state",
+      "public GitHub release state",
+      "VS Code Marketplace state",
+      "local token locators and retained receipts"
+    ],
+    "environmentBaseline": [
+      "standard Windows installs only",
+      "Git for Windows",
+      "Node.js 22 LTS",
+      "Python 3.12 x64",
+      "Ubuntu-24.04 Linux assurance lane"
+    ],
+    "rehearsalPolicy": [
+      "production is not the first proof surface",
+      "assess now and retain later rehearse/repair/publish/verify phases explicitly before future production acts"
+    ],
+    "incidentClasses": [
+      "production-partial-public-state",
+      "production-mutation-policy-violation",
+      "runner-or-host-readiness-drift",
+      "credential-or-capability-boundary-missing",
+      "externally-blocked-publication",
+      "externally-impossible-publication"
+    ],
+    "approvalModel": [
+      "assess is repo-owned and automatic",
+      "later GitHub-release publish requires explicit production approval",
+      "later VS Code Marketplace publish requires explicit production approval"
+    ]
+  },
   "benchmarkRefreshCadence": {
     "model": "event-driven-bounded",
     "acceptedComparablePrefix": {
