@@ -70,13 +70,13 @@ Current version-line contract:
   `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`,
   `v1.2.2`, `v1.3.0`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.3.0`
-- current published package line on `main`: `1.3.1`
+- current exact released line: `v1.3.2`
+- current published package line on `main`: `1.3.2`
 - current develop package line on `develop`: `1.3.1`
 - active exact release candidate line on `develop`: none
 - active release-candidate branch: none
-- active exact hotfix candidate line on `main`: `v1.3.2`
-- active hotfix branch: `hotfix/v1.3.2-marketplace-icon`
+- active exact hotfix candidate line on `main`: `v1.3.3`
+- active hotfix branch: `hotfix/v1.3.3-public-exact-retry`
 - public GitHub default branch: `main`
 - public Codespaces evaluation branch: `develop`
 - integration branch: `develop`
@@ -85,21 +85,23 @@ Current version-line contract:
 - hotfix branch family: `hotfix/*`
 - next-line branch model: `GitFlow`
 
-Active opening decision that opens hotfix exact `v1.3.2`:
+Active opening decision that opens hotfix exact `v1.3.3`:
 
 - chosen bump: `patch`
-- target exact hotfix candidate line: `v1.3.2`
-- rationale: the next line hardens the already-published exact package surface
-  by adding the missing Marketplace icon without changing the installed-user
-  workflow or opening another governed capability line
-- rationale: public GitHub exact `v1.3.1` is already immutable while VS Code
-  Marketplace still serves `1.3.0`, so `v1.3.2` opens as a hotfix from
-  `main` instead of mutating the retained `v1.3.1` GitHub asset
+- target exact hotfix candidate line: `v1.3.3`
+- rationale: the next line hardens the already-tagged exact package surface by
+  fixing stale authority-side public-source validation expectations without
+  changing the installed-user workflow or opening another governed capability
+  line
+- rationale: authority exact `v1.3.2` is already immutable while public
+  GitHub exact `v1.3.1` and VS Code Marketplace `1.3.0` still define the
+  published surfaces, so `v1.3.3` opens as a hotfix from `main` instead of
+  mutating the retained `v1.3.2` authority tag
 - rejected `minor`: the icon change hardens an existing packaged surface
   rather than adding a new governed capability or supported workflow
 - rejected `major`: no exact public or maintainer contract is intentionally
   broken or removed; the retained `v1.3.1` GitHub exact release stays intact
-  while the fix advances to a separate hotfix line
+  while the validation fix advances to a separate hotfix line
 
 Historical opening decision that opened exact `v1.3.1`:
 

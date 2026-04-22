@@ -3,49 +3,43 @@
 `vi-history-suite` is a Visual Studio Code extension for reviewing LabVIEW VI
 history in Git repositories.
 
-## Install And Use
+## Install The Extension
 
-If you want to install the extension and use it locally, start here. You do
-not need to fork this repo, learn the branch model, or read the internal
-release-control material first.
+Use one of these install surfaces:
 
-In Windows PowerShell, run:
+- install from the VS Code Extensions view
+- run `code --install-extension svelderrainruiz.vi-history-suite`
+- install the released VSIX when you intentionally need that exact package
 
-```powershell
-irm https://gitlab.com/svelderrainruiz/vi-history-suite/-/raw/develop/scripts/install-vihs-extension.ps1 | iex
-```
+First-time setup:
 
-The bootstrap:
+1. Open or restart VS Code once after installation.
+2. Open an integrated terminal and run `vihs`.
+3. If `vihs` is not available yet, run
+   `VI History: Prepare Local Runtime Settings CLI` from the Command Palette,
+   then run `vihs` again.
+4. Choose the runtime you want to use, then confirm the LabVIEW year and
+   bitness.
+5. Run `vihs --validate`.
 
-- installs or updates the Marketplace extension
-- seeds missing settings to `host/windows/2026/x64`
-- reads back the current settings so you can press `Enter` to keep them or
-  change provider, LabVIEW year, and bitness
-- prints the follow-up `vihs` commands for later changes and validation
+## Compare A VI
 
-Then:
-
-1. Run `vihs --validate`.
-2. Open a trusted Git repo containing an eligible LabVIEW VI.
-3. Run `VI History`.
-4. Select exactly two retained revisions with the commit checkboxes.
-5. Review the explicit compare preflight.
-6. Choose `Compare`.
+1. Open a trusted Git repository that contains a `.vi`, `.ctl`, or `.vit`
+   file.
+2. Right-click the file in the Explorer and choose `VI History`, or use the
+   `VI History` button in the editor title when the file is open.
+3. Select exactly two revisions with the checkbox column.
+4. Review the compare preflight.
+5. Choose `Compare`.
 
 Installed-user help:
 
-- Home:
-  `https://github.com/svelderrainruiz/vi-history-suite/wiki`
-- Install and release:
-  `https://github.com/svelderrainruiz/vi-history-suite/wiki/Install-And-Release`
-- User workflow:
-  `https://github.com/svelderrainruiz/vi-history-suite/wiki/User-Workflow`
-- Comparison reports and dashboard review:
-  `https://github.com/svelderrainruiz/vi-history-suite/wiki/Comparison-Reports-And-Dashboard-Review`
-- FAQ:
-  [docs/information-for-users/faq.md](./docs/information-for-users/faq.md)
-- Command reference:
-  [docs/information-for-users/command-reference.md](./docs/information-for-users/command-reference.md)
+- [Home](https://github.com/svelderrainruiz/vi-history-suite/wiki)
+- [Install And Release](https://github.com/svelderrainruiz/vi-history-suite/wiki/Install-And-Release)
+- [User Workflow](https://github.com/svelderrainruiz/vi-history-suite/wiki/User-Workflow)
+- [Comparison Reports And Dashboard Review](https://github.com/svelderrainruiz/vi-history-suite/wiki/Comparison-Reports-And-Dashboard-Review)
+- [FAQ](./docs/information-for-users/faq.md)
+- [Command Reference](./docs/information-for-users/command-reference.md)
 
 ## Topic Roles
 
@@ -96,14 +90,10 @@ Installed-user help:
 If install, `vihs`, `vihs --validate`, or compare do not work as expected, use
 the public GitHub issue templates:
 
-- issue chooser:
-  `https://github.com/svelderrainruiz/vi-history-suite/issues/new/choose`
-- bug report:
-  `https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=bug-report.yml`
-- LabVIEW version support request:
-  `https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=labview-version-support.yml`
-- feature request:
-  `https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=feature-request.yml`
+- [Issue Chooser](https://github.com/svelderrainruiz/vi-history-suite/issues/new/choose)
+- [Bug Report](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=bug-report.yml)
+- [LabVIEW Version Support Request](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=labview-version-support.yml)
+- [Feature Request](https://github.com/svelderrainruiz/vi-history-suite/issues/new?template=feature-request.yml)
 
 Useful issue facts:
 
@@ -117,7 +107,8 @@ Useful issue facts:
 ## Common Tasks
 
 - use the installed extension:
-  run the Windows PowerShell bootstrap, then `vihs --validate`, then `VI History`
+  install from the VS Code Extensions view, `code --install-extension`, or an
+  exact released VSIX, then run `vihs --validate`, then `VI History`
 - run proof surfaces:
   `npm run proof:run -- report-smoke` and
   `npm run proof:run -- host-operation-matrix`
@@ -135,29 +126,22 @@ Useful issue facts:
 - command lookup:
   [docs/information-for-users/command-reference.md](./docs/information-for-users/command-reference.md)
 - issue reporting:
-  `https://github.com/svelderrainruiz/vi-history-suite/issues/new/choose`
+  [Issue Chooser](https://github.com/svelderrainruiz/vi-history-suite/issues/new/choose)
 - maintainers and release-control:
   use the authority routes below instead of treating the README as the only
   manual
 
-## Need Source Evaluation Or Contribution?
+## Evaluate From Source
 
-Installed users can stop above. Source evaluation and contribution are
-separate from the first-use install path:
+- [INSTALL.md](./INSTALL.md)
+- [Fork Codespace Quickstart](https://github.com/svelderrainruiz/vi-history-suite/wiki/Fork-Codespace-Quickstart)
+- [Review Public LabVIEW VI Changes](https://github.com/svelderrainruiz/vi-history-suite/wiki/Review-Public-LabVIEW-VI-Changes)
+- [Refresh Codespace Repositories](https://github.com/svelderrainruiz/vi-history-suite/wiki/Refresh-Codespace-Repositories)
 
-- public install and evaluation guide:
-  [INSTALL.md](./INSTALL.md)
-- contribution guide:
-  [CONTRIBUTING.md](./CONTRIBUTING.md)
-- public sample quickstart:
-  `https://github.com/svelderrainruiz/vi-history-suite/wiki/Fork-Codespace-Quickstart`
-- review any public repo:
-  `https://github.com/svelderrainruiz/vi-history-suite/wiki/Review-Public-LabVIEW-VI-Changes`
-- refresh an existing Codespace:
-  `https://github.com/svelderrainruiz/vi-history-suite/wiki/Refresh-Codespace-Repositories`
+## Contribute
 
-Use `main` when you only need the latest exact released source. Use `develop`
-when you are evaluating the next public candidate.
+- [CONTRIBUTING.md](./CONTRIBUTING.md)
+- [Issue Chooser](https://github.com/svelderrainruiz/vi-history-suite/issues/new/choose)
 
 ## Authority And Release Control
 
@@ -193,15 +177,15 @@ Authority release facts:
 
 - `SHIP-0001`: releasable `v0.2.0` VSIX product
 - landed ship tranche: `TRANCHE-009`
-- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`, `v1.2.2`, `v1.3.0`
+- retained exact-version releases: `v0.2.0`, `v1.0.0`, `v1.0.1`, `v1.0.2`, `v1.0.3`, `v1.0.4`, `v1.0.5`, `v1.0.6`, `v1.1.0`, `v1.2.0`, `v1.2.1`, `v1.2.2`, `v1.3.0`, `v1.3.1`, `v1.3.2`
 - burned exact release line: `v1.0.2`
-- current exact released line: `v1.3.0`
-- current published package line on `main`: `1.3.1`
+- current exact released line: `v1.3.2`
+- current published package line on `main`: `1.3.2`
 - current develop package line on `develop`: `1.3.1`
 - active exact release candidate line on `develop`: none
 - active release-candidate branch: none
-- active exact hotfix candidate line on `main`: `v1.3.2`
-- active hotfix branch: `hotfix/v1.3.2-marketplace-icon`
+- active exact hotfix candidate line on `main`: `v1.3.3`
+- active hotfix branch: `hotfix/v1.3.3-public-exact-retry`
 - active Windows x64 private-release-prep slice: historical `release/1.3.1`
 - active Windows x64 private-release packet:
   [docs/product/private-release-windows-x64-v1.3.1.md](./docs/product/private-release-windows-x64-v1.3.1.md)
